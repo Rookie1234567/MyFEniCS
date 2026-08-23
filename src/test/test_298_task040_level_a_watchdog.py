@@ -11,6 +11,7 @@ from benchmarks import task040_level_a_watchdog as watchdog
 from benchmarks.task040_level_a_watchdog import (
     TASK040_LEVEL_A_HARD_STOP_BYTES,
     TASK040_V1_1_SCALAR_KRYLOV_FLAG,
+    TASK040_V1_2_INTERFACE_SCHUR_FLAG,
     build_task040_level_a_watchdog_plan,
     main,
 )
@@ -56,6 +57,55 @@ def test_task040_v1_1_opt_in_does_not_change_legacy_plan(tmp_path) -> None:
         "forbidden",
     ):
         assert scalar[key] == legacy[key]
+
+
+def test_task040_v1_2_interface_schur_is_explicit_and_frozen(tmp_path, capsys) -> None:
+    plan = build_task040_level_a_watchdog_plan(
+        input_path=tmp_path / "input.dat",
+        exact_spool_root=tmp_path / "spool",
+        run_directory=tmp_path / "run",
+        source_sha="c" * 40,
+        interface_schur=True,
+    )
+    assert plan["schema"] == "task040.v1_2.interface_schur.v1"
+    assert plan["method"] == "task040_v1_2_interface_schur"
+    assert plan["profile"] == "task040.v1_2.h4.run_b.v1"
+    assert plan["interface_schur"] is True
+    assert plan["probe_manifest_sha256"] == (
+        "7a03b2cf80fe5081d1fe1248b9d4c79f3ef4e955a8014e905c2f2ca82797baad"
+    )
+    assert plan["selected_manifest_sha256"] == (
+        "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+    )
+    assert plan["exact_spool_catalog_sha256"] == (
+        "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384"
+    )
+    assert plan["absolute_terminate_memory_bytes"] == TASK040_LEVEL_A_HARD_STOP_BYTES
+    assert plan["swap_limit_bytes"] == 0
+    assert plan["worker_argv"].count(TASK040_V1_2_INTERFACE_SCHUR_FLAG) == 1
+    assert TASK040_V1_1_SCALAR_KRYLOV_FLAG not in plan["worker_argv"]
+    assert not (tmp_path / "run").exists()
+    assert (
+        main(
+            [
+                "--dry-run",
+                "--input",
+                str(tmp_path / "input.dat"),
+                "--exact-spool-root",
+                str(tmp_path / "spool"),
+                "--run-directory",
+                str(tmp_path / "run"),
+                "--source-sha",
+                "c" * 40,
+                TASK040_V1_2_INTERFACE_SCHUR_FLAG,
+            ]
+        )
+        == 0
+    )
+    output = json.loads(capsys.readouterr().out)
+    assert output["worker_argv"].count(TASK040_V1_2_INTERFACE_SCHUR_FLAG) == 1
+    assert output["method"] == plan["method"]
+    assert not (tmp_path / "run").exists()
 
 
 def test_task040_watchdog_dry_run_is_frozen_and_unique(tmp_path, capsys) -> None:

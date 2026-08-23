@@ -1067,6 +1067,8 @@ def test_task040_v1_1_batch_reuses_one_right_pc_and_zero_initial_guesses() -> No
         assert result["ksp_destroy_count"] == 1
         assert result["ksp_destroyed"] is True
         assert result["zero_initial_guess_all_rhs"] is True
+        assert "phase1_frozen_gate" not in result
+        assert "stop_on_frozen_gate" not in result
         assert set(result["phase1"]) == set(labels)
         assert all(
             set(record["checkpoints"]) == {"0", "4", "8", "16"}
@@ -1101,6 +1103,24 @@ def test_task040_v1_1_batch_reuses_one_right_pc_and_zero_initial_guesses() -> No
         assert negative["ksp_setup_count"] == 1
         assert negative["ksp_destroy_count"] == 1
         assert negative["ksp_destroyed"] is True
+        frozen = run_v1_1_right_preconditioned_fgmres_batch(
+            operator,
+            rhs_by_label,
+            IdentityAction(),
+            labels=labels,
+            resource_callback=lambda: {
+                "all_status_readable": True,
+                "rss_bytes": 2**20,
+                "swap_bytes": 0,
+                "pass": True,
+            },
+            stop_on_frozen_gate=True,
+        )
+        assert frozen["phase1_frozen_gate"] is True
+        assert frozen["conditional_32_authorized"] is False
+        assert frozen["phase2"] == {}
+        assert frozen["ksp_setup_count"] == 1
+        assert frozen["ksp_destroy_count"] == 1
         assert len(checkpoint_rows) >= 15
     finally:
         for rhs in rhs_by_label.values():

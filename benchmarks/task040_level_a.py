@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
 import os
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
+from dolfinx import fem
 
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
@@ -20,11 +24,36 @@ from benchmarks.task039_v3_7_orchestration import (
     _load_v5_fixed_budget_spool_shards,
     _v9_frozen_holdout_identity,
 )
+from benchmarks.task039_v4_selected_mode_packet import (
+    stream_task039_v4_selected_mode_columns,
+)
 from benchmarks.task039_v3_side_oracle import _build_research_explicit_side_components
 from src.io.input_validation import (
     load_and_resolve,
     simulation_config_3d_from_normalized,
 )
+from src.common.modes_3d import outgoing_port_modes_3d
+from src.coupling.hybrid_internal_modes import (
+    _ReusableInterfaceLifter,
+    _trace_from_streamed_local_values,
+)
+from src.modes.cross_section_spaces import (
+    build_cross_section_spaces,
+    build_matching_cross_section,
+)
+from src.solvers.hybrid_interface_basis import (
+    build_artificial_gamma_column,
+    build_group_basis_columns,
+    build_lower_fourier_trace_columns,
+    build_mass_dual_from_active_vec,
+    canonical_external_mode_metadata_sha256,
+    collect_streamed_trace_basis,
+)
+from src.solvers.hybrid_interface_schur import (
+    build_petsc_interface_schur_oracle,
+    build_distributed_petrov_action,
+)
+from src.solvers.hybrid_interface_run_b import build_v1_3_projected_transmission
 from src.runners.task039_hybrid_iterative import make_task039_hybrid_iterative_profile
 from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
 from src.solvers.hybrid_layer_block import (
@@ -55,6 +84,32 @@ TASK040_V1_1_SCALAR_KRYLOV_FLAG = "--v1-1-scalar-krylov"
 TASK040_V1_1_METHOD = "task040_v1_1_scalar_krylov"
 TASK040_V1_1_SCHEMA = "task040.v1_1.scalar_krylov.v1"
 TASK040_V1_1_PROFILE_ID = "task040.v1_1.h4.bottom.scalar_krylov.v1"
+TASK040_V1_2_INTERFACE_SCHUR_FLAG = "--v1-2-interface-schur"
+TASK040_V1_2_METHOD = "task040_v1_2_interface_schur"
+TASK040_V1_2_SCHEMA = "task040.v1_2.interface_schur.v1"
+TASK040_V1_2_PROFILE_ID = "task040.v1_2.h4.run_b.v1"
+TASK040_V1_2_PROBE_MANIFEST = (
+    "benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/"
+    "task040_v1_2_probe_manifest_v1.json"
+)
+TASK040_V1_2_PROBE_MANIFEST_SHA256 = (
+    "7a03b2cf80fe5081d1fe1248b9d4c79f3ef4e955a8014e905c2f2ca82797baad"
+)
+TASK040_V1_2_INPUT_SHA256 = (
+    "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811"
+)
+TASK040_V1_2_PHYSICAL_MODEL_SHA256 = (
+    "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c"
+)
+TASK040_V1_2_SELECTED_MANIFEST_SHA256 = (
+    "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+)
+TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256 = (
+    "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384"
+)
+TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256 = (
+    "dde523dc62c73f7bd50953958fde42d42d0cfd5756c16329b16915e13c4742da"
+)
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -66,6 +121,17 @@ __all__ = (
     "TASK040_V1_1_METHOD",
     "TASK040_V1_1_SCHEMA",
     "TASK040_V1_1_PROFILE_ID",
+    "TASK040_V1_2_INTERFACE_SCHUR_FLAG",
+    "TASK040_V1_2_METHOD",
+    "TASK040_V1_2_SCHEMA",
+    "TASK040_V1_2_PROFILE_ID",
+    "TASK040_V1_2_PROBE_MANIFEST",
+    "TASK040_V1_2_PROBE_MANIFEST_SHA256",
+    "TASK040_V1_2_INPUT_SHA256",
+    "TASK040_V1_2_PHYSICAL_MODEL_SHA256",
+    "TASK040_V1_2_SELECTED_MANIFEST_SHA256",
+    "TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256",
+    "TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256",
     "build_task040_level_a_plan",
     "level_a_bottom_beta",
     "run_task040_level_a",
@@ -78,6 +144,45 @@ def level_a_bottom_beta(cfg: Any) -> complex:
     return complex(cfg.k0) * complex(cfg.substrate_index)
 
 
+def _v1_2_identity_pass(
+    *,
+    identity_observed: Mapping[str, Any],
+    frozen_identity: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+    exact_identities: Mapping[str, Any],
+) -> bool:
+    """Check the frozen Run-B identity before constructing V1-3 factors."""
+
+    return bool(
+        identity_observed["input_sha256"] == frozen_identity["input_sha256"]
+        and identity_observed["physical_model_sha256"]
+        == frozen_identity["physical_model_sha256"]
+        and identity_observed["selected_identity_physical_sha256"]
+        == frozen_identity["physical_model_sha256"]
+        and identity_observed["selected_manifest_sha256"]
+        == frozen_identity["selected_manifest_sha256"]
+        and identity_observed["selected_identity_sha256"]
+        == frozen_identity["selected_identity_sha256"]
+        and identity_observed["selected_selection_sha256"]
+        == frozen_identity["selected_selection_sha256"]
+        and identity_observed["resolved_config_sha256"]
+        == frozen_identity["exact_spool_resolved_config_sha256"]
+        and identity_observed["spool_catalog_sha256"]
+        == TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256
+        and identity_observed["upper_mode_key_sha256"]
+        == manifest["upper_selected_packet_basis"]["positive_mode_keys_sha256"]
+        and identity_observed["upper_beta_sha256"]
+        == manifest["upper_selected_packet_basis"]["positive_beta_sha256"]
+        and identity_observed["lower_mode_key_sha256"]
+        == manifest["lower_fourier_floquet_basis"]["canonical_key_list_sha256"]
+        and identity_observed["lower_resolved_mode_metadata_sha256"]
+        == TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256
+        and identity_observed["lower_resolved_mode_metadata_sha256"]
+        != identity_observed["lower_legacy_beta_metadata_sha256"]
+        and identity_observed["exact_output_identity_sha256"] == exact_identities
+    )
+
+
 def build_task040_level_a_plan(
     *,
     input_path: str | Path,
@@ -85,6 +190,7 @@ def build_task040_level_a_plan(
     run_directory: str | Path,
     source_sha: str,
     scalar_krylov: bool = False,
+    interface_schur: bool = False,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
 
@@ -121,6 +227,8 @@ def build_task040_level_a_plan(
             "response_packet",
         ],
     }
+    if scalar_krylov and interface_schur:
+        raise ValueError("Task040 V1-1 and V1-2 routes are mutually exclusive")
     if scalar_krylov:
         plan.update(
             {
@@ -129,6 +237,31 @@ def build_task040_level_a_plan(
                 "profile": TASK040_V1_1_PROFILE_ID,
                 "scalar_krylov": True,
                 "research_only": True,
+            }
+        )
+    if interface_schur:
+        plan.update(
+            {
+                "schema": TASK040_V1_2_SCHEMA,
+                "method": TASK040_V1_2_METHOD,
+                "profile": TASK040_V1_2_PROFILE_ID,
+                "interface_schur": True,
+                "research_only": True,
+                "probe_manifest": TASK040_V1_2_PROBE_MANIFEST,
+                "probe_manifest_sha256": TASK040_V1_2_PROBE_MANIFEST_SHA256,
+                "expected_input_sha256": TASK040_V1_2_INPUT_SHA256,
+                "expected_physical_model_sha256": (TASK040_V1_2_PHYSICAL_MODEL_SHA256),
+                "expected_selected_manifest_sha256": (
+                    TASK040_V1_2_SELECTED_MANIFEST_SHA256
+                ),
+                "expected_exact_spool_catalog_sha256": (
+                    TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256
+                ),
+                # Keep these frozen aliases for the established dry-run
+                # contract; runtime observations are recorded separately.
+                "selected_manifest_sha256": TASK040_V1_2_SELECTED_MANIFEST_SHA256,
+                "exact_spool_catalog_sha256": (TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256),
+                "v1_3_conditional": True,
             }
         )
     return plan
@@ -237,6 +370,1304 @@ def _destroy_explicit_components(components: Any) -> bool:
     return bool(destroyed)
 
 
+def _v1_2_complex(value: Any) -> complex:
+    if isinstance(value, (list, tuple)) and len(value) == 2:
+        return complex(float(value[0]), float(value[1]))
+    return complex(value)
+
+
+def _v1_2_mode_key(mode: Any) -> dict[str, Any]:
+    return {
+        "m": int(mode.m),
+        "n": int(mode.n),
+        "polarization": str(mode.polarization),
+        "side": str(mode.side),
+    }
+
+
+def _v1_2_load_manifest() -> tuple[Path, dict[str, Any]]:
+    root = Path(__file__).resolve().parents[1]
+    path = root / TASK040_V1_2_PROBE_MANIFEST
+    payload = path.read_bytes()
+    digest = hashlib.sha256(payload).hexdigest()
+    if digest != TASK040_V1_2_PROBE_MANIFEST_SHA256:
+        raise ValueError("Task040 V1-2 probe manifest hash mismatch")
+    return path, json.loads(payload)
+
+
+def _v1_2_local_interface_rows(
+    condensed: Any,
+    support: Mapping[str, Any],
+    gamma_rows_local: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    constraints = condensed.trace_constraints
+    owned_original = {int(value) for value in constraints.owned_active_original_dofs}
+    original_to_active = {
+        int(key): int(value) for key, value in constraints.original_to_active.items()
+    }
+    by_active: dict[int, int] = {}
+    for original in support["raw_support"]:
+        original = int(original)
+        if original in owned_original:
+            if original not in original_to_active:
+                raise ValueError("V1-2 artificial support lacks active identity")
+            active = original_to_active[original]
+            if active in by_active:
+                raise ValueError("V1-2 local support has duplicate active rows")
+            by_active[active] = original
+    gamma = np.asarray(gamma_rows_local, dtype=PETSc.IntType)
+    if set(by_active) != {int(value) for value in gamma}:
+        raise ValueError("V1-2 local raw/active support does not match Gamma rows")
+    plane_original = np.asarray(
+        [by_active[int(value)] for value in gamma], dtype=PETSc.IntType
+    )
+    return plane_original, gamma.copy()
+
+
+def _v1_2_build_lower_basis(
+    *,
+    cfg: Any,
+    system: Any,
+    spaces: Any,
+    condensed: Any,
+    support: Mapping[str, Any],
+    gamma_rows_local: np.ndarray,
+    interface_z: float,
+    authority: Mapping[str, Any],
+) -> dict[str, Any]:
+    modes = [mode for mode in outgoing_port_modes_3d(cfg) if mode.side == "bottom"]
+    expected_keys = tuple(authority["keys"])
+    expected_metadata = tuple(authority["modes"])
+    if len(modes) != int(authority["count"]):
+        raise ValueError("V1-2 lower mode count differs from resolved authority")
+    mode_by_token = {
+        json.dumps(_v1_2_mode_key(mode), sort_keys=True, separators=(",", ":")): mode
+        for mode in modes
+    }
+    if len(mode_by_token) != len(modes):
+        raise ValueError("V1-2 lower mode keys are duplicated")
+    plane_original, gamma = _v1_2_local_interface_rows(
+        condensed, support, gamma_rows_local
+    )
+    lifter = _ReusableInterfaceLifter(
+        system,
+        target_space=system.V,
+        interface_z_nm=interface_z,
+        plane_cell_side="lower",
+    )
+    xy = np.asarray(spaces.transverse.mesh.geometry.x, dtype=np.float64)[:, :2]
+
+    def trace_to_gamma(_values: np.ndarray, info: Mapping[str, Any]) -> np.ndarray:
+        token = json.dumps(
+            {
+                "m": int(info["m"]),
+                "n": int(info["n"]),
+                "polarization": str(info["polarization"]),
+                "side": str(info["side"]),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        mode = mode_by_token.get(token)
+        if mode is None:
+            raise ValueError("V1-2 lower Fourier mode is absent from authority")
+        trace = fem.Function(spaces.transverse)
+        e_vector = np.asarray(mode.e_vector[:2], dtype=np.complex128)
+        alpha = complex(mode.alpha)
+        transverse_beta = complex(mode.k_vector[2])
+
+        def values(points: np.ndarray) -> np.ndarray:
+            phase = np.exp(
+                1j
+                * (
+                    alpha * points[0]
+                    + complex(mode.gamma) * points[1]
+                    + transverse_beta * interface_z
+                )
+            )
+            return np.vstack((phase * e_vector[0], phase * e_vector[1]))
+
+        try:
+            trace.interpolate(values)
+            trace.x.scatter_forward()
+            return build_artificial_gamma_column(
+                trace,
+                system=system,
+                condensed=condensed,
+                interface_z_nm=interface_z,
+                plane_cell_side="lower",
+                plane_original_dofs=plane_original,
+                gamma_rows_local=gamma,
+                lifter=lifter,
+            )
+        finally:
+            del trace
+
+    result = build_lower_fourier_trace_columns(
+        modes,
+        xy,
+        interface_z,
+        expected_count=int(authority["count"]),
+        expected_keys=expected_keys,
+        expected_key_sha256=str(authority["canonical_key_list_sha256"]),
+        expected_metadata=expected_metadata,
+        expected_metadata_sha256=canonical_external_mode_metadata_sha256(
+            expected_metadata
+        ),
+        frozen_manifest_beta_metadata_sha256=str(authority["beta_metadata_sha256"]),
+        trace_to_gamma=trace_to_gamma,
+    )
+    result["left"] = np.asarray(result["values"], dtype=np.complex128).copy()
+    result["resolved_mode_metadata_sha256"] = canonical_external_mode_metadata_sha256(
+        expected_metadata
+    )
+    result["legacy_manifest_beta_metadata_sha256"] = str(
+        authority["beta_metadata_sha256"]
+    )
+    return result
+
+
+def _v1_2_build_upper_basis(
+    *,
+    system: Any,
+    spaces: Any,
+    condensed: Any,
+    support: Mapping[str, Any],
+    gamma_rows_local: np.ndarray,
+    interface_z: float,
+    selected_manifest: Path,
+    selected_identity: Mapping[str, Any],
+    selected_payload: Mapping[str, Any],
+    expected_mode_key_sha256: str,
+    expected_beta_sha256: str,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    selection = selected_payload["selection"]["positive"]
+    expected_keys = tuple(selection["mode_keys"])
+    expected_betas = tuple(_v1_2_complex(value) for value in selection["beta"])
+    plane_original, gamma = _v1_2_local_interface_rows(
+        condensed, support, gamma_rows_local
+    )
+    lifter = _ReusableInterfaceLifter(
+        system,
+        target_space=system.V,
+        interface_z_nm=interface_z,
+        plane_cell_side="upper",
+    )
+
+    def trace_from_values(
+        values: np.ndarray, info: Mapping[str, Any], role: str
+    ) -> np.ndarray:
+        trace = _trace_from_streamed_local_values(
+            values,
+            spaces,
+            info["ownership_range"],
+            name=f"task040_v1_2_upper_{role}",
+        )
+        try:
+            return build_artificial_gamma_column(
+                trace,
+                system=system,
+                condensed=condensed,
+                interface_z_nm=interface_z,
+                plane_cell_side="upper",
+                plane_original_dofs=plane_original,
+                gamma_rows_local=gamma,
+                lifter=lifter,
+            )
+        finally:
+            del trace
+
+    def stream(callback: Callable[..., None]) -> Mapping[str, Any]:
+        return stream_task039_v4_selected_mode_columns(
+            selected_manifest,
+            identity=selected_identity,
+            expected_manifest_sha256=TASK040_V1_2_SELECTED_MANIFEST_SHA256,
+            branch="positive",
+            indices=tuple(range(int(selected_payload["mode_count"]))),
+            callback=callback,
+            comm=comm,
+        )
+
+    result = collect_streamed_trace_basis(
+        stream,
+        indices=tuple(range(int(selected_payload["mode_count"]))),
+        trace_from_values=trace_from_values,
+        expected_mode_keys=expected_keys,
+        expected_mode_key_sha256=str(expected_mode_key_sha256),
+        expected_betas=expected_betas,
+        expected_selected_packet_beta_sha256=str(expected_beta_sha256),
+    )
+    return result
+
+
+def _v1_2_scalar_gamma_apply(
+    *,
+    condensed: Any,
+    group: int,
+    gamma_rows: np.ndarray,
+    masses: Sequence[Any],
+    beta: complex,
+) -> Callable[[PETSc.Vec, PETSc.Vec], None]:
+    mass_indices = (0,) if int(group) == 0 else (1,) if int(group) == 2 else (0, 1)
+    q = -1j * complex(beta)
+
+    def apply(source: PETSc.Vec, target: PETSc.Vec) -> None:
+        active = condensed.create_active_vector()
+        image = active.duplicate()
+        try:
+            first, last = map(int, active.getOwnershipRange())
+            rows = np.asarray(gamma_rows, dtype=np.int64)
+            if len(rows) and (int(rows.min()) < first or int(rows.max()) >= last):
+                raise ValueError("V1-2 Gamma rows do not match active ownership")
+            active.set(0.0)
+            if len(rows):
+                active.array[rows - first] = source.array
+            active.assemble()
+            target.set(0.0)
+            for index in mass_indices:
+                image.set(0.0)
+                masses[index].matrix.mult(active, image)
+                if len(rows):
+                    target.array[:] += q * image.array[rows - first]
+            target.assemble()
+        finally:
+            image.destroy()
+            active.destroy()
+
+    return apply
+
+
+def _v1_2_restrict_exact_probes(
+    *,
+    spool: Mapping[str, Any],
+    labels: Sequence[str],
+    expected_identities: Mapping[str, str],
+    template_matrix: PETSc.Mat,
+    lower_rows: np.ndarray,
+    upper_rows: np.ndarray,
+) -> tuple[dict[str, dict[str, np.ndarray]], dict[str, str]]:
+    result: dict[str, dict[str, np.ndarray]] = {}
+    observed_output_ids: dict[str, str] = {}
+    for label in labels:
+        shards = spool[label]["exact_output"]["shards"]
+        observed_identities = []
+        for shard in shards:
+            identity = shard.get("source_identity", {}).get("vector_identity", {})
+            observed = identity.get("global_sha256")
+            if not isinstance(observed, str):
+                raise ValueError(
+                    f"V1-2 exact-output vector identity is missing for {label}"
+                )
+            observed_identities.append(observed)
+        if (
+            not observed_identities
+            or len(set(observed_identities)) != 1
+            or observed_identities[0] != expected_identities[label]
+        ):
+            raise ValueError(
+                f"V1-2 exact-output identity mismatch across ranks for {label}"
+            )
+        observed_output_ids[label] = observed_identities[0]
+        template = template_matrix.createVecLeft()
+        vector = None
+        try:
+            vector = _load_v5_blr_reference_spool_remapped(
+                spool[label]["exact_output"], template
+            )
+            first, last = map(int, vector.getOwnershipRange())
+            for rows in (lower_rows, upper_rows):
+                if len(rows) and (int(rows.min()) < first or int(rows.max()) >= last):
+                    raise ValueError("V1-2 exact-output rows are not locally owned")
+            result[label] = {
+                "lower": np.asarray(
+                    vector.array[lower_rows - first], dtype=np.complex128
+                ).copy(),
+                "upper": np.asarray(
+                    vector.array[upper_rows - first], dtype=np.complex128
+                ).copy(),
+            }
+        finally:
+            template.destroy()
+            if vector is not None:
+                vector.destroy()
+    return result, observed_output_ids
+
+
+def _v1_2_group_probe_values(
+    group_rows: np.ndarray,
+    lower_rows: np.ndarray,
+    lower_values: np.ndarray,
+    upper_rows: np.ndarray,
+    upper_values: np.ndarray,
+) -> np.ndarray:
+    lower_map = {int(row): value for row, value in zip(lower_rows, lower_values)}
+    upper_map = {int(row): value for row, value in zip(upper_rows, upper_values)}
+    values = np.empty(len(group_rows), dtype=np.complex128)
+    for index, row in enumerate(group_rows):
+        if int(row) in lower_map:
+            values[index] = lower_map[int(row)]
+        elif int(row) in upper_map:
+            values[index] = upper_map[int(row)]
+        else:
+            raise ValueError("V1-2 group Gamma row is not in either interface")
+    return values
+
+
+def _v1_2_relative_error(left: PETSc.Vec, right: PETSc.Vec) -> float:
+    difference = left.duplicate()
+    try:
+        left.copy(difference)
+        difference.axpy(PETSc.ScalarType(-1.0), right)
+        return float(difference.norm()) / max(float(right.norm()), 1.0e-30)
+    finally:
+        difference.destroy()
+
+
+def _v1_2_probe_actions(
+    *,
+    labels: Sequence[str],
+    traces: Mapping[str, Mapping[str, np.ndarray]],
+    oracle: Any,
+    petrov_actions: Sequence[Any],
+    scalar_apply: Sequence[Callable[[PETSc.Vec, PETSc.Vec], None]],
+    gamma_rows: Sequence[np.ndarray],
+) -> list[dict[str, Any]]:
+    reports: list[dict[str, Any]] = []
+    for label in labels:
+        for group in range(3):
+            source = oracle.create_group_gamma_vector(group)
+            scalar_target = source.duplicate()
+            exact_target = source.duplicate()
+            projected_target = source.duplicate()
+            try:
+                values = _v1_2_group_probe_values(
+                    gamma_rows[group],
+                    gamma_rows[0],
+                    traces[label]["lower"],
+                    gamma_rows[2],
+                    traces[label]["upper"],
+                )
+                source.array[:] = values
+                source.assemble()
+                scalar_apply[group](source, scalar_target)
+                oracle.apply_directed_neighbor(group, source, exact_target)
+                petrov_actions[group].apply(source, projected_target)
+                reports.append(
+                    {
+                        "label": label,
+                        "kind": "physical",
+                        "group": group,
+                        "scalar_exact_relative": _v1_2_relative_error(
+                            scalar_target, exact_target
+                        ),
+                        "projected_exact_relative": _v1_2_relative_error(
+                            projected_target, exact_target
+                        ),
+                        "scalar_norm": float(scalar_target.norm()),
+                        "exact_norm": float(exact_target.norm()),
+                        "projected_norm": float(projected_target.norm()),
+                        "contractions": _v1_2_vec_contractions(
+                            source, scalar_target, exact_target, projected_target
+                        ),
+                    }
+                )
+            finally:
+                projected_target.destroy()
+                exact_target.destroy()
+                scalar_target.destroy()
+                source.destroy()
+    return reports
+
+
+def _v1_2_complex_pairs(values: np.ndarray) -> list[list[float]]:
+    return [
+        [float(complex(value).real), float(complex(value).imag)]
+        for value in np.asarray(values, dtype=np.complex128).reshape(-1)
+    ]
+
+
+def _v1_2_scalar_pair(value: Any) -> list[float]:
+    value = complex(value)
+    return [float(value.real), float(value.imag)]
+
+
+def _v1_2_matrix_pairs(value: np.ndarray) -> list[list[list[float]]]:
+    matrix = np.asarray(value, dtype=np.complex128)
+    if matrix.ndim != 2:
+        raise ValueError("V1-2 contraction must be a matrix")
+    return [[_v1_2_scalar_pair(item) for item in row] for row in matrix]
+
+
+def _v1_2_json_finite(value: Any) -> bool:
+    try:
+        return bool(np.isfinite(np.asarray(value, dtype=np.float64)).all())
+    except (TypeError, ValueError):
+        return False
+
+
+def _v1_2_vec_contractions(
+    source: PETSc.Vec,
+    scalar: PETSc.Vec,
+    exact: PETSc.Vec,
+    projected: PETSc.Vec,
+) -> dict[str, list[float]]:
+    """Record only distributed Vec dot products, never FE-sized values."""
+
+    return {
+        "source_h_source": _v1_2_scalar_pair(source.dot(source)),
+        "scalar_h_scalar": _v1_2_scalar_pair(scalar.dot(scalar)),
+        "exact_h_exact": _v1_2_scalar_pair(exact.dot(exact)),
+        "projected_h_projected": _v1_2_scalar_pair(projected.dot(projected)),
+        "scalar_h_exact": _v1_2_scalar_pair(scalar.dot(exact)),
+        "projected_h_exact": _v1_2_scalar_pair(projected.dot(exact)),
+    }
+
+
+def _v1_2_probe_coefficients(seed: int, count: int) -> np.ndarray:
+    if int(count) <= 0:
+        raise ValueError("V1-2 probe basis must be non-empty")
+    indices = np.arange(int(count), dtype=np.int64)
+    phase = ((int(seed) + 1) * (indices + 1)) % 104729
+    return np.exp(2j * np.pi * phase / 104729.0).astype(np.complex128)
+
+
+def _v1_2_seed_interface_active_row(
+    seed: int, interface_rows_global: Sequence[int]
+) -> int:
+    rows = tuple(int(row) for row in interface_rows_global)
+    if not rows:
+        raise ValueError("V1-2 interface seed has no Gamma rows")
+    return rows[int(seed) % len(rows)]
+
+
+def _v1_2_global_interface_row_identity(
+    oracle: Any, comm: MPI.Intracomm
+) -> dict[str, dict[str, Any]]:
+    identity: dict[str, dict[str, Any]] = {}
+    for interface, group in (("lower", 0), ("upper", 2)):
+        local_rows = oracle.group_gamma_rows_local(group)
+        global_rows = tuple(
+            int(row) for part in comm.allgather(local_rows.tolist()) for row in part
+        )
+        array = np.asarray(global_rows, dtype=np.int64)
+        identity[interface] = {
+            "global_rows": list(global_rows),
+            "size": int(array.size),
+            "sha256": hashlib.sha256(array.tobytes()).hexdigest(),
+        }
+    return identity
+
+
+def _v1_2_interface_probes(
+    *,
+    manifest: Mapping[str, Any],
+    oracle: Any,
+    petrov_actions: Sequence[Any],
+    scalar_apply: Sequence[Callable[[PETSc.Vec, PETSc.Vec], None]],
+    z_group: Sequence[np.ndarray],
+    comm: MPI.Intracomm,
+) -> list[dict[str, Any]]:
+    reports: list[dict[str, Any]] = []
+    seed_groups = manifest["fixed_probe_seeds"]
+    for interface, (group, seed_key) in enumerate(((0, "lower"), (2, "upper"))):
+        basis = np.asarray(z_group[group], dtype=np.complex128)
+        for probe_kind, seeds in (
+            ("modal_combination", seed_groups["modal_combinations"][seed_key]),
+            ("complement", seed_groups["complements"][seed_key]),
+        ):
+            for seed in seeds:
+                source_values = np.zeros(basis.shape[0], dtype=np.complex128)
+                if probe_kind == "modal_combination":
+                    source_values[:] = basis @ _v1_2_probe_coefficients(
+                        int(seed), basis.shape[1]
+                    )
+                else:
+                    first, last = petrov_actions[group].ownership_range
+                    packed_row = int(seed) % int(petrov_actions[group].global_rows)
+                    if first <= packed_row < last:
+                        source_values[packed_row - first] = 1.0
+                source = petrov_actions[group].synthesize_owner_rows(source_values)
+                scalar_target = source.duplicate()
+                exact_target = source.duplicate()
+                projected_target = source.duplicate()
+                try:
+                    y_before = petrov_actions[group].project_owner_rows(source)
+                    if probe_kind == "complement":
+                        factors = petrov_actions[group].projected_woodbury_factors()
+                        local_coefficients = np.asarray(
+                            factors["V"].conj().T
+                            @ np.asarray(source.array, dtype=np.complex128),
+                            dtype=np.complex128,
+                        )
+                        coefficients = np.empty_like(local_coefficients)
+                        comm.Allreduce(local_coefficients, coefficients, op=MPI.SUM)
+                        projected_values = source_values - basis @ coefficients
+                        source.destroy()
+                        source = petrov_actions[group].synthesize_owner_rows(
+                            projected_values
+                        )
+                        norm = float(source.norm())
+                        if norm <= 1.0e-30:
+                            raise ValueError("V1-2 complement projection is zero")
+                        source.scale(PETSc.ScalarType(1.0 / norm))
+                        y_after = petrov_actions[group].project_owner_rows(source)
+                    else:
+                        y_after = y_before
+                    scalar_apply[group](source, scalar_target)
+                    oracle.apply_directed_neighbor(group, source, exact_target)
+                    petrov_actions[group].apply(source, projected_target)
+                    reports.append(
+                        {
+                            "interface": interface,
+                            "group": group,
+                            "kind": probe_kind,
+                            "label": f"{seed_key}_{probe_kind}_{int(seed)}",
+                            "seed": int(seed),
+                            "scalar_exact_relative": _v1_2_relative_error(
+                                scalar_target, exact_target
+                            ),
+                            "projected_exact_relative": _v1_2_relative_error(
+                                projected_target, exact_target
+                            ),
+                            "YH_before_projection": _v1_2_complex_pairs(y_before),
+                            "YH_after_projection": _v1_2_complex_pairs(y_after),
+                            "complement_orthogonality_relative": (
+                                float(np.linalg.norm(y_after))
+                                / max(float(np.linalg.norm(y_before)), 1.0e-30)
+                                if probe_kind == "complement"
+                                else None
+                            ),
+                            "contractions": _v1_2_vec_contractions(
+                                source,
+                                scalar_target,
+                                exact_target,
+                                projected_target,
+                            ),
+                            "finite": bool(
+                                np.isfinite(source.array).all()
+                                and np.isfinite(scalar_target.array).all()
+                                and np.isfinite(exact_target.array).all()
+                                and np.isfinite(projected_target.array).all()
+                            ),
+                        }
+                    )
+                finally:
+                    projected_target.destroy()
+                    exact_target.destroy()
+                    scalar_target.destroy()
+                    source.destroy()
+    return reports
+
+
+def _v1_2_middle_cross_interface_samples(
+    *,
+    manifest: Mapping[str, Any],
+    oracle: Any,
+    petrov_actions: Sequence[Any],
+    z_group: Sequence[np.ndarray],
+    comm: MPI.Intracomm,
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    """Sample the retained middle Schur, separately from the neighbor map."""
+
+    seed_groups = manifest["fixed_probe_seeds"]
+    group = 1
+    basis = np.asarray(z_group[group], dtype=np.complex128)
+    lower_count = int(np.asarray(z_group[0]).shape[1])
+    middle_rows = oracle.group_gamma_rows_local(group)
+    lower_rows = set(map(int, oracle.group_gamma_rows_local(0)))
+    upper_rows = set(map(int, oracle.group_gamma_rows_local(2)))
+    interface_identity = _v1_2_global_interface_row_identity(oracle, comm)
+    interface_rows_global = {
+        interface: tuple(identity["global_rows"])
+        for interface, identity in interface_identity.items()
+    }
+    reports: list[dict[str, Any]] = []
+    for interface, column_slice, seed_key in (
+        ("lower", slice(0, lower_count), "lower"),
+        ("upper", slice(lower_count, None), "upper"),
+    ):
+        interface_basis = basis[:, column_slice]
+        for probe_kind, seeds in (
+            ("modal_combination", seed_groups["modal_combinations"][seed_key]),
+            ("complement", seed_groups["complements"][seed_key]),
+        ):
+            for seed in seeds:
+                source_values = np.zeros(basis.shape[0], dtype=np.complex128)
+                if probe_kind == "modal_combination":
+                    source_values[:] = interface_basis @ _v1_2_probe_coefficients(
+                        int(seed), interface_basis.shape[1]
+                    )
+                else:
+                    active_row = _v1_2_seed_interface_active_row(
+                        int(seed), interface_rows_global[seed_key]
+                    )
+                    local_matches = np.asarray(
+                        [int(row) == active_row for row in middle_rows],
+                        dtype=np.int32,
+                    )
+                    if int(comm.allreduce(int(local_matches.sum()), op=MPI.SUM)) != 1:
+                        raise ValueError(
+                            "V1-2 middle complement seed has no unique owner"
+                        )
+                    source_values[local_matches.astype(bool)] = 1.0
+                    factors = petrov_actions[group].projected_woodbury_factors()
+                    local_coefficients = np.asarray(
+                        factors["V"].conj().T
+                        @ np.asarray(source_values, dtype=np.complex128),
+                        dtype=np.complex128,
+                    )
+                    coefficients = np.empty_like(local_coefficients)
+                    comm.Allreduce(local_coefficients, coefficients, op=MPI.SUM)
+                    source_values = source_values - basis @ coefficients
+                source = petrov_actions[group].synthesize_owner_rows(source_values)
+                target = oracle.create_group_gamma_vector(group)
+                try:
+                    if probe_kind == "complement":
+                        norm = float(source.norm())
+                        if norm <= 1.0e-30:
+                            raise ValueError("V1-2 middle complement is zero")
+                        source.scale(PETSc.ScalarType(1.0 / norm))
+                    oracle.apply_group(group, source, target)
+                    source_h_source = _v1_2_scalar_pair(source.dot(source))
+                    target_values = np.asarray(target.array, dtype=np.complex128)
+                    if interface == "lower":
+                        same_mask = np.asarray(
+                            [int(row) in lower_rows for row in middle_rows],
+                            dtype=bool,
+                        )
+                        cross_mask = np.asarray(
+                            [int(row) in upper_rows for row in middle_rows],
+                            dtype=bool,
+                        )
+                    else:
+                        same_mask = np.asarray(
+                            [int(row) in upper_rows for row in middle_rows],
+                            dtype=bool,
+                        )
+                        cross_mask = np.asarray(
+                            [int(row) in lower_rows for row in middle_rows],
+                            dtype=bool,
+                        )
+                    if np.any(same_mask & cross_mask):
+                        raise ValueError("middle Gamma interface masks overlap")
+                    if not np.all(same_mask | cross_mask):
+                        raise ValueError(
+                            "middle Gamma row is not in either interface support"
+                        )
+                    same_local = float(
+                        np.real(
+                            np.vdot(target_values[same_mask], target_values[same_mask])
+                        )
+                    )
+                    cross_local = float(
+                        np.real(
+                            np.vdot(
+                                target_values[cross_mask],
+                                target_values[cross_mask],
+                            )
+                        )
+                    )
+                    same_squared = float(comm.allreduce(same_local, op=MPI.SUM))
+                    cross_squared = float(comm.allreduce(cross_local, op=MPI.SUM))
+                    total_squared = same_squared + cross_squared
+                    same_interface_norm = math.sqrt(max(same_squared, 0.0))
+                    cross_interface_norm = math.sqrt(max(cross_squared, 0.0))
+                    total_norm = math.sqrt(max(total_squared, 0.0))
+                    middle_h_middle = _v1_2_scalar_pair(target.dot(target))
+                    source_h_middle = _v1_2_scalar_pair(source.dot(target))
+                    identity = interface_identity[seed_key]
+                    seed_identity = {}
+                    if probe_kind == "complement":
+                        interface_row_index = int(seed) % int(identity["size"])
+                        seed_identity = {
+                            "selected_active_row": int(
+                                identity["global_rows"][interface_row_index]
+                            ),
+                            "interface_row_index": interface_row_index,
+                            "interface_size": int(identity["size"]),
+                            "interface_rows_global_order_sha256": identity["sha256"],
+                        }
+                    reports.append(
+                        {
+                            "label": f"middle_{seed_key}_{probe_kind}_{int(seed)}",
+                            "interface": interface,
+                            "group": group,
+                            "source_group": group,
+                            "kind": probe_kind,
+                            "seed": int(seed),
+                            "response": "middle_group1_schur",
+                            "direction": "apply_group",
+                            **seed_identity,
+                            "contractions": {
+                                "source_h_source": source_h_source,
+                                "middle_h_middle": middle_h_middle,
+                                "source_h_middle": source_h_middle,
+                            },
+                            "source_norm": float(source.norm()),
+                            "middle_norm": total_norm,
+                            "same_interface_norm": same_interface_norm,
+                            "cross_interface_norm": cross_interface_norm,
+                            "total_norm": total_norm,
+                            "partition_disjoint": True,
+                            "partition_complete": True,
+                            "cross_to_total": (
+                                cross_interface_norm / total_norm
+                                if total_norm > 0.0
+                                else 0.0
+                            ),
+                            "finite": bool(
+                                np.isfinite(source.array).all()
+                                and np.isfinite(target.array).all()
+                            ),
+                        }
+                    )
+                finally:
+                    target.destroy()
+                    source.destroy()
+    return reports, interface_identity
+
+
+def _run_v1_2_interface_schur(
+    *,
+    cfg: Any,
+    system: Any,
+    bare_f: PETSc.Mat,
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    group_rows: Sequence[np.ndarray],
+    group_audit: dict[str, Any],
+    supports: Sequence[Mapping[str, Any]],
+    masses: Sequence[Any],
+    exact_spool_root: str | Path,
+    beta: complex,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None,
+    resource_callback: Callable[[], Mapping[str, Any]] | None,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    manifest_path, manifest = _v1_2_load_manifest()
+    identity = manifest["identity"]
+    selected_manifest = (
+        Path(__file__).resolve().parents[1] / identity["selected_manifest"]
+    )
+    selected_manifest_sha256 = hashlib.sha256(
+        selected_manifest.read_bytes()
+    ).hexdigest()
+    selected_payload = json.loads(selected_manifest.read_text(encoding="utf-8"))
+    selected_identity_path = selected_manifest.with_name("identity.json")
+    selected_identity = json.loads(selected_identity_path.read_text(encoding="utf-8"))
+    if selected_payload.get("identity_sha256") != identity["selected_identity_sha256"]:
+        raise ValueError("V1-2 selected identity SHA differs from frozen manifest")
+    if (
+        selected_payload.get("selection_sha256")
+        != identity["selected_selection_sha256"]
+    ):
+        raise ValueError("V1-2 selected selection SHA differs from frozen manifest")
+    resolved_path = Path(exact_spool_root).resolve().parent / "resolved_config.json"
+    resolved = json.loads(resolved_path.read_text(encoding="utf-8"))
+    resolved_modes = resolved["derived"]["external_mode_inventory"]
+    lower_authority = {
+        **resolved_modes,
+        "keys": tuple(
+            key for key in resolved_modes["keys"] if str(key["side"]) == "bottom"
+        ),
+        "modes": tuple(
+            mode for mode in resolved_modes["modes"] if str(mode["side"]) == "bottom"
+        ),
+        "count": int(resolved_modes["counts"]["bottom"]),
+        "canonical_key_list_sha256": manifest["lower_fourier_floquet_basis"][
+            "canonical_key_list_sha256"
+        ],
+        "beta_metadata_sha256": manifest["lower_fourier_floquet_basis"][
+            "beta_metadata_sha256"
+        ],
+    }
+    if _v1_2_build_hash := manifest["identity"]["exact_spool_resolved_config_sha256"]:
+        if hashlib.sha256(resolved_path.read_bytes()).hexdigest() != _v1_2_build_hash:
+            raise ValueError("V1-2 resolved lower-mode authority hash mismatch")
+    cross_section = build_matching_cross_section(system.cfg, "stage4_xy", comm=comm)
+    spaces = build_cross_section_spaces(
+        cross_section, transverse_degree=int(system.cfg.nedelec_degree)
+    )
+    condensed = system.static_condensation.condensed
+    oracle = None
+    petrov_actions: list[Any] = []
+    projected_action = None
+    projected_owner = None
+    owner_transferred = False
+    exact_after: dict[str, Any] | None = None
+    source_vectors: dict[str, PETSc.Vec] = {}
+    try:
+        oracle = build_petsc_interface_schur_oracle(bare_f, group_rows, supports)
+        gamma_rows = tuple(oracle.group_gamma_rows_local(group) for group in range(3))
+        lower = _v1_2_build_lower_basis(
+            cfg=cfg,
+            system=system,
+            spaces=spaces,
+            condensed=condensed,
+            support=supports[0],
+            gamma_rows_local=gamma_rows[0],
+            interface_z=float(manifest["interfaces"]["lower"]["z"]),
+            authority=lower_authority,
+        )
+        upper = _v1_2_build_upper_basis(
+            system=system,
+            spaces=spaces,
+            condensed=condensed,
+            support=supports[1],
+            gamma_rows_local=gamma_rows[2],
+            interface_z=float(manifest["interfaces"]["upper"]["z"]),
+            selected_manifest=selected_manifest,
+            selected_identity=selected_identity,
+            selected_payload=selected_payload,
+            expected_mode_key_sha256=manifest["upper_selected_packet_basis"][
+                "positive_mode_keys_sha256"
+            ],
+            expected_beta_sha256=manifest["upper_selected_packet_basis"][
+                "positive_beta_sha256"
+            ],
+            comm=comm,
+        )
+        lower_y_audit: dict[str, Any] = {}
+        upper_y_audit: dict[str, Any] = {}
+        lower_y = build_mass_dual_from_active_vec(
+            masses[0], condensed, gamma_rows[0], lower["left"], lower_y_audit
+        )
+        upper_y = build_mass_dual_from_active_vec(
+            masses[1], condensed, gamma_rows[2], upper["left"], upper_y_audit
+        )
+        z_group = tuple(
+            build_group_basis_columns(
+                group,
+                gamma_rows[group],
+                gamma_rows[0],
+                lower["values"],
+                gamma_rows[2],
+                upper["right"],
+            )
+            for group in range(3)
+        )
+        y_group = tuple(
+            build_group_basis_columns(
+                group,
+                gamma_rows[group],
+                gamma_rows[0],
+                lower_y,
+                gamma_rows[2],
+                upper_y,
+            )
+            for group in range(3)
+        )
+        scalar_apply = tuple(
+            _v1_2_scalar_gamma_apply(
+                condensed=condensed,
+                group=group,
+                gamma_rows=gamma_rows[group],
+                masses=masses,
+                beta=beta,
+            )
+            for group in range(3)
+        )
+        for group in range(3):
+            layout = oracle.create_group_gamma_vector(group)
+            try:
+                petrov_actions.append(
+                    build_distributed_petrov_action(
+                        layout,
+                        scalar_apply[group],
+                        lambda source, target, group=group: (
+                            oracle.apply_directed_neighbor(group, source, target)
+                        ),
+                        z_group[group],
+                        y_group[group],
+                        local_row_ids=gamma_rows[group],
+                    )
+                )
+            finally:
+                layout.destroy()
+        spool_identity, spool_manifest_sha, catalog = _v9_frozen_holdout_identity(
+            exact_spool_root, comm
+        )
+        if spool_manifest_sha != TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256:
+            raise ValueError("V1-2 exact spool catalog is not frozen")
+        spool = _load_v5_fixed_budget_spool_shards(
+            exact_spool_root,
+            comm,
+            packet_identity=spool_identity,
+            manifest_sha256=spool_manifest_sha,
+        )
+        labels = tuple(manifest["physical_probes"]["labels"])
+        exact_identities = manifest["physical_probes"]["exact_output_identity_sha256"]
+        traces, observed_exact_ids = _v1_2_restrict_exact_probes(
+            spool=spool,
+            labels=labels,
+            expected_identities=exact_identities,
+            template_matrix=bare_f,
+            lower_rows=gamma_rows[0],
+            upper_rows=gamma_rows[2],
+        )
+        probe_reports = _v1_2_probe_actions(
+            labels=labels,
+            traces=traces,
+            oracle=oracle,
+            petrov_actions=petrov_actions,
+            scalar_apply=scalar_apply,
+            gamma_rows=gamma_rows,
+        )
+        interface_probe_reports = _v1_2_interface_probes(
+            manifest=manifest,
+            oracle=oracle,
+            petrov_actions=petrov_actions,
+            scalar_apply=scalar_apply,
+            z_group=z_group,
+            comm=comm,
+        )
+        (
+            middle_cross_interface_reports,
+            middle_cross_interface_identity,
+        ) = _v1_2_middle_cross_interface_samples(
+            manifest=manifest,
+            oracle=oracle,
+            petrov_actions=petrov_actions,
+            z_group=z_group,
+            comm=comm,
+        )
+        exact_ready = oracle.diagnostics
+        petrov_diagnostics = [action.diagnostics for action in petrov_actions]
+        petrov_contractions = [
+            {
+                name: _v1_2_matrix_pairs(value)
+                for name, value in action.projected_contractions.items()
+                if name in {"gram", "scalar", "exact"}
+            }
+            for action in petrov_actions
+        ]
+        group_layouts = [
+            {
+                **oracle.group_gamma_layout(group),
+                "basis_global_replicated": False,
+                "fe_numeric_allgather": False,
+            }
+            for group in range(3)
+        ]
+        identity_observed = {
+            "probe_manifest_sha256": hashlib.sha256(
+                manifest_path.read_bytes()
+            ).hexdigest(),
+            "input_sha256": str(input_sha256),
+            "physical_model_sha256": str(physical_model_sha256),
+            "selected_manifest_sha256": selected_manifest_sha256,
+            "selected_identity_sha256": selected_payload.get("identity_sha256"),
+            "selected_selection_sha256": selected_payload.get("selection_sha256"),
+            "selected_identity_physical_sha256": selected_identity.get(
+                "physical_sha256"
+            ),
+            "resolved_config_sha256": hashlib.sha256(
+                resolved_path.read_bytes()
+            ).hexdigest(),
+            "spool_catalog_sha256": spool_manifest_sha,
+            "exact_output_identity_sha256": dict(observed_exact_ids),
+            "upper_mode_key_sha256": upper["mode_key_sha256"],
+            "upper_beta_sha256": upper["selected_packet_beta_sha256"],
+            "lower_mode_key_sha256": lower["mode_key_sha256"],
+            "lower_resolved_mode_metadata_sha256": lower[
+                "resolved_mode_metadata_sha256"
+            ],
+            "lower_legacy_beta_metadata_sha256": lower[
+                "legacy_manifest_beta_metadata_sha256"
+            ],
+        }
+        identity_pass = _v1_2_identity_pass(
+            identity_observed=identity_observed,
+            frozen_identity=identity,
+            manifest=manifest,
+            exact_identities=exact_identities,
+        )
+        resource_observed = (
+            dict(resource_callback()) if resource_callback is not None else None
+        )
+        resource_pass = bool(
+            resource_observed is not None
+            and resource_observed.get("all_status_readable") is True
+            and int(resource_observed.get("rss_bytes", -1))
+            < TASK040_LEVEL_A_HARD_STOP_BYTES
+            and int(resource_observed.get("swap_bytes", -1)) == 0
+        )
+        v1_2_gate = {
+            "identity_pass": identity_pass,
+            "projection_pass": all(
+                all(np.isfinite(values).all() for values in matrix)
+                for matrix in (lower["values"], upper["right"], upper["left"])
+            ),
+            "finite_pass": all(
+                np.isfinite(report["projected_exact_relative"])
+                and all(
+                    _v1_2_json_finite(value)
+                    for value in report["contractions"].values()
+                )
+                for report in probe_reports
+            )
+            and all(report["finite"] for report in interface_probe_reports)
+            and all(report["finite"] for report in middle_cross_interface_reports),
+            "gram_pass": all(
+                petrov_diagnostics[group]["gram"]["rank"]
+                == petrov_diagnostics[group]["small_replicated_shapes"]["gram"][0]
+                for group in range(3)
+            ),
+            "complement_pass": all(
+                report["kind"] != "complement"
+                or report["complement_orthogonality_relative"] <= 1.0e-8
+                for report in interface_probe_reports
+            ),
+            "factor_pass": exact_ready.get("factor_count_ready") == 3,
+            "lifecycle_pass": False,
+            "resource_pass": resource_pass,
+            "middle_cross_interface_pass": bool(
+                len(middle_cross_interface_reports) == 8
+                and all(
+                    report["finite"]
+                    and report["source_norm"] > 0.0
+                    and report["middle_norm"] > 0.0
+                    for report in middle_cross_interface_reports
+                )
+            ),
+        }
+        _emit(
+            marker_callback,
+            "v1_2_exact_oracle_ready",
+            factor_count_ready=exact_ready["factor_count_ready"],
+            group_count=3,
+            lower_mode_count=int(lower["mode_count"]),
+            upper_mode_count=int(selected_payload["mode_count"]),
+        )
+        oracle.destroy()
+        exact_after = oracle.diagnostics
+        oracle = None
+        v1_2_gate["factor_pass"] = bool(
+            exact_ready.get("factor_count_ready") == 3
+            and exact_after.get("factor_count_after_cleanup") == 0
+            and exact_after.get("destroyed") is True
+        )
+        v1_2_gate["lifecycle_pass"] = bool(
+            exact_ready.get("factor_count_ready") == 3
+            and exact_after.get("factor_count_after_cleanup") == 0
+        )
+        v1_2_gate["pass"] = all(v1_2_gate.values())
+        _emit(
+            marker_callback,
+            "v1_2_exact_oracle_released",
+            factor_count_after_cleanup=exact_after["factor_count_after_cleanup"],
+        )
+        if v1_2_gate["pass"]:
+            projected_action, projected_owner, projected_diagnostics = (
+                build_v1_3_projected_transmission(
+                    bare_f=bare_f,
+                    group_rows=list(group_rows),
+                    interface_masses=list(masses),
+                    beta=beta,
+                    group_audit=group_audit,
+                    petrov_actions=petrov_actions,
+                )
+            )
+            _emit(
+                marker_callback,
+                "v1_3_projected_ready",
+                **dict(projected_diagnostics),
+            )
+        else:
+            projected_diagnostics = {"v1_3_not_run": "v1_2_gate_failed"}
+        projected_ready = (
+            projected_owner.diagnostics if projected_owner is not None else None
+        )
+        projected_audit = None
+        projected_screen = None
+        projected_inventory = None
+        if projected_action is not None and projected_owner is not None:
+            for label in TASK040_LEVEL_A_SOURCE_LABELS:
+                template = bare_f.createVecLeft()
+                try:
+                    source_vectors[label] = _load_v5_blr_reference_spool_remapped(
+                        spool[label]["rhs"], template
+                    )
+                finally:
+                    template.destroy()
+            projected_inventory = {
+                "observed": True,
+                "factor_count_ready": int(projected_ready["factor_count_ready"]),
+                "cross_section_factor_count_ready": int(
+                    projected_ready["factor_count_ready"]
+                ),
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "oracle_only": True,
+                "scalable_candidate": False,
+            }
+            if projected_inventory["factor_count_ready"] != 3:
+                raise RuntimeError("V1-3 scalar factor inventory is not exactly three")
+            projected_audit = audit_petsc_level_a_one_apply(
+                projected_action,
+                bare_f,
+                source_vectors,
+                projected_inventory,
+                collect_scalar_contractions=True,
+            )
+            projected_screen = run_v1_1_right_preconditioned_fgmres_batch(
+                bare_f,
+                {
+                    label: source_vectors[label]
+                    for label in TASK040_LEVEL_A_SOURCE_LABELS[1:]
+                },
+                projected_action,
+                labels=TASK040_LEVEL_A_SOURCE_LABELS[1:],
+                resource_callback=resource_callback,
+                stop_on_frozen_gate=True,
+                checkpoint_callback=lambda row: _emit(
+                    marker_callback, "v1_3_fgmres_checkpoint", **dict(row)
+                ),
+            )
+            for vector in source_vectors.values():
+                vector.destroy()
+            source_vectors.clear()
+        for action in petrov_actions:
+            action.destroy()
+        petrov_actions.clear()
+        route_result = {
+            "result": {
+                "schema": TASK040_V1_2_SCHEMA,
+                "method": TASK040_V1_2_METHOD,
+                "profile": TASK040_V1_2_PROFILE_ID,
+                "source_sha": str(source_sha),
+                "input_sha256": str(input_sha256),
+                "physical_model_sha256": str(physical_model_sha256),
+                "selected_manifest_sha256": selected_manifest_sha256,
+                "exact_spool_catalog_sha256": (spool_manifest_sha),
+                "sequence": list(TASK040_LEVEL_A_SEQUENCE),
+                "beta": {
+                    "formula": "cfg.k0 * complex(cfg.substrate_index)",
+                    "value": [float(beta.real), float(beta.imag)],
+                    "q": [float((-1j * beta).real), float((-1j * beta).imag)],
+                    "authority": TASK040_LEVEL_A_BETA_AUTHORITY,
+                },
+                "interface_schur_raw": {
+                    "basis_global_replicated": False,
+                    "fe_numeric_allgather": False,
+                    "probe_manifest_sha256": identity_observed["probe_manifest_sha256"],
+                    "lower": {
+                        "mode_count": int(lower["mode_count"]),
+                        "mode_key_sha256": lower["mode_key_sha256"],
+                        "legacy_beta_metadata_sha256": lower[
+                            "legacy_manifest_beta_metadata_sha256"
+                        ],
+                        "resolved_mode_metadata_sha256": lower[
+                            "resolved_mode_metadata_sha256"
+                        ],
+                    },
+                    "upper": {
+                        "mode_count": int(upper["mode_keys"].__len__()),
+                        "mode_key_sha256": upper["mode_key_sha256"],
+                        "beta_sha256": upper["selected_packet_beta_sha256"],
+                        "branch_authority": upper["branch_authority"],
+                        "qep_calls": upper["qep_calls"],
+                    },
+                    "exact_output_identity_sha256": dict(observed_exact_ids),
+                    "exact_output_metadata_hash_validation": True,
+                    "spool_catalog_sha256": spool_manifest_sha,
+                    "spool_catalog": catalog,
+                    "groups": [
+                        {
+                            "group": group,
+                            "span_size": int(z_group[group].shape[1]),
+                            "gamma_layout": group_layouts[group],
+                            "z_shape_local": list(z_group[group].shape),
+                            "y_shape_local": list(y_group[group].shape),
+                            "petrov": petrov_diagnostics[group],
+                            "projected_contractions": petrov_contractions[group],
+                        }
+                        for group in range(3)
+                    ],
+                    "physical_probes": probe_reports,
+                    "incoming_neighbor_map": {
+                        "map": "block_diagonal_neighbor_transmission",
+                        "response": "apply_directed_neighbor",
+                        "probe_count": len(interface_probe_reports),
+                    },
+                    "interface_probes": interface_probe_reports,
+                    "middle_cross_interface_sampled_response": (
+                        middle_cross_interface_reports
+                    ),
+                    "middle_cross_interface_identity": (
+                        middle_cross_interface_identity
+                    ),
+                    "probes": probe_reports + interface_probe_reports,
+                    "exact_oracle": exact_ready,
+                    "exact_oracle_after_cleanup": exact_after,
+                    "factor_inventory": {
+                        "ready": exact_ready.get("factor_count_ready"),
+                        "after": exact_after.get("factor_count_after_cleanup"),
+                        "simultaneous_max": exact_ready.get("factor_count_ready"),
+                        "full_side": exact_ready.get("full_side_exact_factor_count", 0),
+                        "global_direct": exact_ready.get(
+                            "global_direct_factor_count", 0
+                        ),
+                        "nested_ksp": exact_ready.get("nested_ksp_count", 0),
+                    },
+                    "lifecycle": {
+                        "exact_factor_count_ready": exact_ready.get(
+                            "factor_count_ready"
+                        ),
+                        "exact_factor_count_after_cleanup": exact_after.get(
+                            "factor_count_after_cleanup"
+                        ),
+                        "simultaneous_factor_count_max": exact_ready.get(
+                            "factor_count_ready"
+                        ),
+                    },
+                    "v1_2_gate": v1_2_gate,
+                    "identity_observed": identity_observed,
+                    "resource_observed": resource_observed,
+                    "v1_3_conditional": projected_diagnostics,
+                    "v1_3_factor_inventory": projected_inventory
+                    if projected_action is not None
+                    else None,
+                    "v1_3_one_apply": projected_audit,
+                    "v1_3_screen": projected_screen,
+                },
+                "source_loading": {
+                    "rhs_vectors_loaded": len(TASK040_LEVEL_A_SOURCE_LABELS)
+                    if projected_action is not None
+                    else 0,
+                    "exact_output_vectors_loaded": len(labels),
+                    "exact_output_metadata_hash_validation_only": False,
+                },
+                "pde_solve": "not_run",
+                "top": "not_run",
+                "scalable_candidate": False,
+            },
+            "action": projected_action,
+            "owner": projected_owner,
+        }
+        owner_transferred = True
+        return route_result
+    finally:
+        for vector in source_vectors.values():
+            vector.destroy()
+        for action in reversed(petrov_actions):
+            action.destroy()
+        if not owner_transferred:
+            if projected_owner is not None:
+                projected_owner.destroy()
+                projected_owner = None
+                projected_action = None
+            elif projected_action is not None:
+                projected_action.destroy()
+                projected_action = None
+        if oracle is not None:
+            oracle.destroy()
+        del spaces, cross_section
+
+
 def run_task040_level_a(
     cfg: Any,
     profile: Any,
@@ -244,13 +1675,29 @@ def run_task040_level_a(
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     exact_spool_root: str | Path,
     source_sha: str,
+    input_sha256: str | None = None,
+    physical_model_sha256: str | None = None,
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     side_system_builder: Callable[..., Any] | None = None,
     scalar_krylov: bool = False,
+    interface_schur: bool = False,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run the six-source Level-A audit; all numerical work stays in src."""
 
+    if scalar_krylov and interface_schur:
+        raise ValueError("Task040 V1-1 and V1-2 routes are mutually exclusive")
+    if interface_schur:
+        for name, value in (
+            ("input_sha256", input_sha256),
+            ("physical_model_sha256", physical_model_sha256),
+        ):
+            if (
+                not isinstance(value, str)
+                or len(value) != 64
+                or any(character not in "0123456789abcdef" for character in value)
+            ):
+                raise ValueError(f"Task040 V1-2 requires a real 64-character {name}")
     system = None
     components = None
     action = None
@@ -260,7 +1707,11 @@ def run_task040_level_a(
     masses: list[Any] = []
     result: dict[str, Any] | None = None
     cleanup: dict[str, Any] = {}
-    _emit(marker_callback, "construction_begin", method=TASK040_LEVEL_A_METHOD)
+    _emit(
+        marker_callback,
+        "construction_begin",
+        method=TASK040_V1_2_METHOD if interface_schur else TASK040_LEVEL_A_METHOD,
+    )
     try:
         if side_system_builder is None:
             system = assemble_hybrid_local_dtn_action_system(
@@ -329,6 +1780,28 @@ def run_task040_level_a(
             beta=[beta.real, beta.imag],
             q=[(-1j * beta).real, (-1j * beta).imag],
         )
+        if interface_schur:
+            route = _run_v1_2_interface_schur(
+                cfg=cfg,
+                system=system,
+                bare_f=bare_f,
+                source_sha=source_sha,
+                input_sha256=str(input_sha256),
+                physical_model_sha256=str(physical_model_sha256),
+                group_rows=group_rows,
+                group_audit=group_audit,
+                supports=supports,
+                masses=masses,
+                exact_spool_root=exact_spool_root,
+                beta=beta,
+                marker_callback=marker_callback,
+                resource_callback=resource_callback,
+                comm=comm,
+            )
+            action = route["action"]
+            owner = route["owner"]
+            result = route["result"]
+            return result
         action, owner, oracle_diagnostics = build_level_a_oracle(
             bare_f=bare_f,
             group_rows=group_rows,
@@ -491,8 +1964,11 @@ def run_task040_level_a(
                 "ready": ready_owner,
                 "after": owner.diagnostics,
             }
+            owner = None
+            action = None
         elif action is not None:
             action.destroy()
+            action = None
         for mass in masses:
             mass.destroy()
         if components is not None:
@@ -503,16 +1979,31 @@ def run_task040_level_a(
         _emit(marker_callback, "cleanup", **cleanup)
         if result is not None:
             result["cleanup"] = cleanup
+            if interface_schur:
+                raw = result.get("interface_schur_raw")
+                if isinstance(raw, dict):
+                    lifecycle = raw.setdefault("lifecycle", {})
+                    lifecycle["worker_cleanup"] = cleanup
+                    factor_owner = cleanup.get("factor_owner")
+                    after_owner = (
+                        factor_owner.get("after", {})
+                        if isinstance(factor_owner, dict)
+                        else {}
+                    )
+                    lifecycle["action_destroyed"] = action is None
+                    lifecycle["factor_destroyed"] = bool(
+                        not factor_owner or after_owner.get("destroyed") is True
+                    )
     if result is None:
         raise RuntimeError("Task040 Level-A did not produce a result")
     return result
 
 
-def _load_cfg(input_path: str | Path) -> tuple[Any, Any]:
+def _load_cfg(input_path: str | Path) -> tuple[Any, Any, str, str]:
     spec = load_and_resolve(input_path)
     cfg = simulation_config_3d_from_normalized(spec.as_jsonable())
     profile = make_task039_hybrid_iterative_profile(480, 8, mesh_target_nm=4.0)
-    return cfg, profile
+    return cfg, profile, spec.input_sha256, spec.physical_model_sha256
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -523,6 +2014,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
     parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
+    parser.add_argument(TASK040_V1_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
     args = parser.parse_args(argv)
@@ -532,12 +2024,13 @@ def main(argv: list[str] | None = None) -> int:
         run_directory=args.run_directory,
         source_sha=args.source_sha,
         scalar_krylov=args.v1_1_scalar_krylov,
+        interface_schur=args.v1_2_interface_schur,
     )
     if args.dry_run:
         if MPI.COMM_WORLD.rank == 0:
             print(json.dumps(plan, sort_keys=True))
         return 0
-    cfg, profile = _load_cfg(args.input)
+    cfg, profile, input_sha256, physical_model_sha256 = _load_cfg(args.input)
     marker_callback = _file_marker_callback(
         args.memory_stages,
         args.memory_markers,
@@ -548,12 +2041,15 @@ def main(argv: list[str] | None = None) -> int:
         profile,
         exact_spool_root=args.exact_spool_root,
         source_sha=args.source_sha,
+        input_sha256=input_sha256,
+        physical_model_sha256=physical_model_sha256,
         marker_callback=marker_callback,
         scalar_krylov=args.v1_1_scalar_krylov,
+        interface_schur=args.v1_2_interface_schur,
         resource_callback=(
             lambda: (
                 _worker_current_resource(MPI.COMM_WORLD)
-                if args.v1_1_scalar_krylov
+                if args.v1_1_scalar_krylov or args.v1_2_interface_schur
                 else None
             )
         ),

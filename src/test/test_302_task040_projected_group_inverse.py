@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers.hybrid_interface_schur import (
+    build_distributed_petrov_action,
+    build_petsc_interface_schur_oracle,
     build_fixed_projected_group_inverse,
 )
+from src.solvers.hybrid_interface_run_b import build_v1_3_projected_transmission
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
+from src.solvers.hybrid_side_impedance import ArtificialZTraceMass
 
 
 def _dense_base() -> np.ndarray:
@@ -187,3 +193,137 @@ def test_fixed_projected_group_inverse_singular_k_cleans_borrowed_state():
     finally:
         layout.destroy()
         factor.destroy()
+
+
+def test_v1_3_projected_transmission_owns_three_base_factors_and_sweep(monkeypatch):
+    base = np.diag(
+        np.asarray(
+            [
+                2.0 + 0.1j,
+                2.2 - 0.2j,
+                2.4 + 0.3j,
+                2.6 - 0.1j,
+                2.8 + 0.2j,
+                3.0 - 0.3j,
+            ]
+        )
+    )
+    base += 0.04j * np.triu(np.ones((6, 6), dtype=np.complex128), 1)
+    base += 0.03 * np.tril(np.ones((6, 6), dtype=np.complex128), -1)
+    matrix = _distributed_matrix(base)
+    first, last = map(int, matrix.getOwnershipRange())
+    global_groups = ((0, 1), (0, 2, 3, 5), (4, 5))
+    group_rows = tuple(
+        np.asarray([row for row in rows if first <= row < last], dtype=PETSc.IntType)
+        for rows in global_groups
+    )
+    supports = (
+        {"active_support": (0,)},
+        {"active_support": (5,)},
+    )
+    oracle = build_petsc_interface_schur_oracle(matrix, group_rows, supports)
+    petrov: list[Any] = []
+    layouts: list[PETSc.Vec] = []
+    masses: list[ArtificialZTraceMass] = []
+    sweep = owner = None
+    try:
+        for row in (0, 5):
+            values = np.zeros((6, 6), dtype=np.complex128)
+            values[row, row] = 1.0
+            masses.append(
+                ArtificialZTraceMass(
+                    _distributed_matrix(values), {"interface_z": float(row)}
+                )
+            )
+        for group in range(3):
+            gamma_rows = oracle.group_gamma_rows_local(group)
+            layout = oracle.create_group_gamma_vector(group)
+            layouts.append(layout)
+            width = 2 if group == 1 else 1
+            z_local = np.zeros((len(gamma_rows), width), dtype=np.complex128)
+            y_local = np.zeros_like(z_local)
+            for local, row in enumerate(gamma_rows):
+                column = 0 if int(row) == 0 else min(1, width - 1)
+                z_local[local, column] = 1.0 + 0.2j * (group + 1)
+                y_local[local, column] = 1.3 - 0.1j * (group + 1)
+
+            def scalar_apply(source, target):
+                source.copy(target)
+
+            def exact_apply(source, target, group=group):
+                oracle.apply_group(group, source, target)
+
+            petrov.append(
+                build_distributed_petrov_action(
+                    layout,
+                    scalar_apply,
+                    exact_apply,
+                    z_local,
+                    y_local,
+                    local_row_ids=gamma_rows,
+                )
+            )
+        assert oracle.diagnostics["factor_count_ready"] == 3
+        oracle.destroy()
+        assert oracle.diagnostics["factor_count_after_cleanup"] == 0
+        oracle = None
+        sweep, owner, diagnostics = build_v1_3_projected_transmission(
+            bare_f=matrix,
+            group_rows=group_rows,
+            interface_masses=tuple(masses),
+            beta=0.7 + 0.2j,
+            group_audit={"interface_support_coverage": []},
+            petrov_actions=tuple(petrov),
+        )
+        assert diagnostics["factor_count_ready"] == 3
+        assert diagnostics["projected_factor_count_ready"] == 3
+        assert diagnostics["simultaneous_factor_count_max"] == 3
+        assert sweep.diagnostics["sweep_mode"] == "multiplicative_schwarz"
+        assert sweep.diagnostics["multiplicative_sequence"] == [0, 1, 2, 2, 1, 0]
+        destroy_events: list[str] = []
+        for auxiliary in owner._auxiliary_owners:
+            original_destroy = auxiliary.destroy
+
+            def destroy_projected(original_destroy=original_destroy):
+                destroy_events.append("projected")
+                original_destroy()
+
+            monkeypatch.setattr(auxiliary, "destroy", destroy_projected)
+        for factor in owner._factors:
+            original_destroy = factor.destroy
+
+            def destroy_base(original_destroy=original_destroy):
+                destroy_events.append("base")
+                original_destroy()
+
+            monkeypatch.setattr(factor, "destroy", destroy_base)
+        source = matrix.createVecRight()
+        target = matrix.createVecLeft()
+        repeated = matrix.createVecLeft()
+        try:
+            _set_global(source, np.asarray([1.0 + 0.2j * i for i in range(6)]))
+            sweep.apply(source, target)
+            sweep.apply(source, repeated)
+            assert np.isfinite(target.norm())
+            assert np.allclose(_collect_global(target), _collect_global(repeated))
+            assert sweep.diagnostics["apply_count"] == 2
+        finally:
+            source.destroy()
+            target.destroy()
+            repeated.destroy()
+    finally:
+        if owner is not None:
+            assert owner.diagnostics["factor_count_ready"] == 3
+            owner.destroy()
+            assert owner.diagnostics["factor_count_ready"] == 0
+            assert owner.diagnostics["auxiliary_owner_count"] == 0
+            assert destroy_events == ["projected"] * 3 + ["base"] * 3
+        for carrier in petrov:
+            carrier.destroy()
+        for layout in layouts:
+            layout.destroy()
+        if oracle is not None:
+            oracle.destroy()
+        for mass in masses:
+            mass.destroy()
+        matrix.destroy()

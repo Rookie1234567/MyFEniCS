@@ -355,6 +355,7 @@ def run_v1_1_right_preconditioned_fgmres_batch(
     labels: Sequence[str],
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     checkpoint_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    stop_on_frozen_gate: bool = False,
 ) -> dict[str, Any]:
     """Run the opt-in V1-1 two-phase batch right-FGMRES screen.
 
@@ -536,6 +537,40 @@ def run_v1_1_right_preconditioned_fgmres_batch(
                 for value in phase1_r16_values
             )
         )
+        phase1_frozen_gate = any(
+            all(
+                isinstance(
+                    phase_one[label]["checkpoints"]
+                    .get(checkpoint, {})
+                    .get("true_residual_relative"),
+                    (int, float),
+                )
+                and np.isfinite(
+                    float(
+                        phase_one[label]["checkpoints"][checkpoint][
+                            "true_residual_relative"
+                        ]
+                    )
+                )
+                and float(
+                    phase_one[label]["checkpoints"][checkpoint][
+                        "true_residual_relative"
+                    ]
+                )
+                <= 1.0e-2
+                for label in labels
+            )
+            and all(
+                float(
+                    phase_one[label]["checkpoints"][checkpoint][
+                        "true_residual_relative"
+                    ]
+                )
+                <= 1.0e-3
+                for label in labels[:3]
+            )
+            for checkpoint in ("4", "8", "16")
+        )
         resource = (
             dict(resource_callback())
             if resource_callback is not None
@@ -543,7 +578,10 @@ def run_v1_1_right_preconditioned_fgmres_batch(
         )
         resource_pass = bool(resource.get("pass") is True)
         conditional_32_authorized = bool(
-            all(phase_one_gate.values()) and resource_pass and not all_five_r16_ge_0p9
+            all(phase_one_gate.values())
+            and resource_pass
+            and not all_five_r16_ge_0p9
+            and not (stop_on_frozen_gate and phase1_frozen_gate)
         )
         if conditional_32_authorized:
             for label in labels:
@@ -566,6 +604,8 @@ def run_v1_1_right_preconditioned_fgmres_batch(
                 else (
                     "all_five_r16_ge_0p9"
                     if all_five_r16_ge_0p9
+                    else "frozen_gate_pass"
+                    if stop_on_frozen_gate and phase1_frozen_gate
                     else "phase1_all_source_or_resource_gate_failed"
                 )
             ),
@@ -577,6 +617,13 @@ def run_v1_1_right_preconditioned_fgmres_batch(
             "zero_initial_guess_all_rhs": True,
             "research_only": True,
         }
+        if stop_on_frozen_gate:
+            result.update(
+                {
+                    "phase1_frozen_gate": phase1_frozen_gate,
+                    "stop_on_frozen_gate": True,
+                }
+            )
     finally:
         ksp.destroy()
         pc_context.destroy()

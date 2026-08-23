@@ -20,6 +20,7 @@ from benchmarks.task040_level_a import (
     TASK040_LEVEL_A_THREADS,
     TASK040_LEVEL_A_TIMEOUT_SECONDS,
     TASK040_V1_1_SCALAR_KRYLOV_FLAG,
+    TASK040_V1_2_INTERFACE_SCHUR_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -54,7 +55,7 @@ def _sha256(path: Path) -> str:
 def _worker_command(plan: dict[str, Any]) -> list[str]:
     run_directory = Path(plan["run_directory"])
     worker_directory = Path(plan["worker_run_directory"])
-    return [
+    command = [
         "mpiexec",
         "-n",
         str(TASK040_LEVEL_A_MPI_SIZE),
@@ -73,7 +74,12 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         str(run_directory / "memory_stages.jsonl"),
         "--memory-markers",
         str(run_directory / "memory_stage_markers.raw.jsonl"),
-    ] + ([TASK040_V1_1_SCALAR_KRYLOV_FLAG] if plan.get("scalar_krylov") is True else [])
+    ]
+    if plan.get("scalar_krylov") is True:
+        command.append(TASK040_V1_1_SCALAR_KRYLOV_FLAG)
+    if plan.get("interface_schur") is True:
+        command.append(TASK040_V1_2_INTERFACE_SCHUR_FLAG)
+    return command
 
 
 def build_task040_level_a_watchdog_plan(
@@ -83,6 +89,7 @@ def build_task040_level_a_watchdog_plan(
     run_directory: str | Path,
     source_sha: str,
     scalar_krylov: bool = False,
+    interface_schur: bool = False,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
         input_path=input_path,
@@ -90,6 +97,7 @@ def build_task040_level_a_watchdog_plan(
         run_directory=run_directory,
         source_sha=source_sha,
         scalar_krylov=scalar_krylov,
+        interface_schur=interface_schur,
     )
     plan["watchdog"] = {
         "sample_interval_seconds": SAMPLE_INTERVAL_SECONDS,
@@ -304,6 +312,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
     parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
+    parser.add_argument(TASK040_V1_2_INTERFACE_SCHUR_FLAG, action="store_true")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
@@ -311,6 +320,7 @@ def main(argv: list[str] | None = None) -> int:
         run_directory=args.run_directory,
         source_sha=args.source_sha,
         scalar_krylov=args.v1_1_scalar_krylov,
+        interface_schur=args.v1_2_interface_schur,
     )
     if args.dry_run:
         print(json.dumps(plan, indent=2, sort_keys=True))

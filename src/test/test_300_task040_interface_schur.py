@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.task040_level_a import _v1_2_relative_error
 from src.solvers.hybrid_interface_schur import (
     NumpyInterfaceSchurOracle,
     ProjectedExactPetrovAction,
@@ -27,6 +29,27 @@ def _tiny_groups() -> tuple[tuple[int, ...], ...]:
 
 def _tiny_interfaces() -> tuple[tuple[int, ...], ...]:
     return ((2, 3), (6,))
+
+
+def test_v1_2_relative_error_preserves_both_vec_inputs() -> None:
+    comm = MPI.COMM_WORLD
+    left = PETSc.Vec().createMPI((None, 4), comm=comm)
+    right = left.duplicate()
+    try:
+        left.array[:] = 2.0 + 0.5j
+        right.array[:] = 1.0 - 0.25j
+        left_before = left.array.copy()
+        right_before = right.array.copy()
+        observed = _v1_2_relative_error(left, right)
+        expected = float(np.linalg.norm(left_before - right_before)) / max(
+            float(np.linalg.norm(right_before)), 1.0e-30
+        )
+        assert observed == pytest.approx(expected)
+        assert np.array_equal(left.array, left_before)
+        assert np.array_equal(right.array, right_before)
+    finally:
+        right.destroy()
+        left.destroy()
 
 
 def _reference_schur(
@@ -135,6 +158,13 @@ def _collect_vec(vector: PETSc.Vec) -> np.ndarray:
     return result
 
 
+def _collect_gamma_rows(oracle, group: int) -> np.ndarray:
+    parts = MPI.COMM_WORLD.allgather(
+        np.asarray(oracle.group_gamma_rows_local(group), dtype=np.int64)
+    )
+    return np.concatenate(parts) if parts else np.empty(0, dtype=np.int64)
+
+
 def _distributed_operator(layout: PETSc.Vec, dense: np.ndarray) -> PETSc.Mat:
     comm = MPI.COMM_WORLD
     local_size = layout.getLocalSize()
@@ -216,6 +246,106 @@ def test_petsc_interface_schur_distributed_action_and_cleanup():
         bare.destroy()
 
 
+def test_petsc_directed_neighbor_matches_asymmetric_three_block_reference():
+    """The V1-2 target map uses adjacent Schur blocks, not its own block."""
+
+    bare = _petsc_bare()
+    oracle = None
+    vectors: list[PETSc.Vec] = []
+    try:
+        first, last = map(int, bare.getOwnershipRange())
+        global_groups = _tiny_groups()
+        local_groups = tuple(
+            np.asarray(
+                [row for row in rows if first <= row < last], dtype=PETSc.IntType
+            )
+            for rows in global_groups
+        )
+        oracle = build_petsc_interface_schur_oracle(
+            bare, local_groups, _tiny_interfaces()
+        )
+        dense = _petsc_bare_dense()
+        group_schur = {
+            group: _reference_schur(
+                dense,
+                global_groups[group],
+                tuple(
+                    row
+                    for row in global_groups[group]
+                    if row in _tiny_interfaces()[0] + _tiny_interfaces()[1]
+                ),
+            )
+            for group in range(3)
+        }
+        group_gamma = {
+            group: tuple(
+                row
+                for row in global_groups[group]
+                if row in _tiny_interfaces()[0] + _tiny_interfaces()[1]
+            )
+            for group in range(3)
+        }
+        for group in range(3):
+            source = oracle.create_group_gamma_vector(group)
+            target = source.duplicate()
+            vectors.extend((source, target))
+            source.set(0.0)
+            source.array[:] = np.asarray(
+                (0.31 + 0.07j)
+                * (
+                    np.arange(
+                        source.getOwnershipRange()[0], source.getOwnershipRange()[1]
+                    )
+                    + 1
+                )
+                + (0.02 - 0.03j) * (group + 1),
+                dtype=PETSc.ScalarType,
+            )
+            source.assemble()
+            oracle.apply_directed_neighbor(group, source, target)
+            observed = _collect_vec(target)
+            source_values = _collect_vec(source)
+            if group == 0:
+                middle_values = np.zeros(len(group_gamma[1]), dtype=np.complex128)
+                for row, value in zip(group_gamma[0], source_values):
+                    middle_values[group_gamma[1].index(row)] = value
+                middle_result = group_schur[1] @ middle_values
+                expected = np.asarray(
+                    [
+                        middle_result[group_gamma[1].index(row)]
+                        for row in group_gamma[0]
+                    ],
+                    dtype=np.complex128,
+                )
+            elif group == 2:
+                middle_values = np.zeros(len(group_gamma[1]), dtype=np.complex128)
+                for row, value in zip(group_gamma[2], source_values):
+                    middle_values[group_gamma[1].index(row)] = value
+                middle_result = group_schur[1] @ middle_values
+                expected = np.asarray(
+                    [
+                        middle_result[group_gamma[1].index(row)]
+                        for row in group_gamma[2]
+                    ],
+                    dtype=np.complex128,
+                )
+            else:
+                lower_positions = [group_gamma[1].index(row) for row in group_gamma[0]]
+                upper_positions = [group_gamma[1].index(row) for row in group_gamma[2]]
+                lower_result = group_schur[0] @ source_values[lower_positions]
+                upper_result = group_schur[2] @ source_values[upper_positions]
+                expected = np.zeros(len(group_gamma[1]), dtype=np.complex128)
+                expected[lower_positions] += lower_result
+                expected[upper_positions] += upper_result
+            assert np.allclose(observed, expected, atol=1.0e-12, rtol=0.0)
+    finally:
+        for vector in reversed(vectors):
+            vector.destroy()
+        if oracle is not None:
+            oracle.destroy()
+        bare.destroy()
+
+
 def test_distributed_petrov_owner_rows_and_small_contractions():
     from src.solvers.hybrid_interface_schur import build_distributed_petrov_action
 
@@ -281,6 +411,17 @@ def test_distributed_petrov_owner_rows_and_small_contractions():
         assert np.allclose(
             contractions["exact"], y_global.conj().T @ exact_dense @ z_global
         )
+        factors = carrier.projected_woodbury_factors()
+        local_u = factors["U"]
+        local_v = factors["V"]
+        gathered_u = np.vstack(MPI.COMM_WORLD.allgather(local_u))
+        gathered_v = np.vstack(MPI.COMM_WORLD.allgather(local_v))
+        assert np.allclose(factors["G"], y_global.conj().T @ z_global)
+        delta_global = (exact_dense - scalar_dense) @ z_global
+        expected_update = delta_global @ np.linalg.solve(
+            factors["G"], y_global.conj().T
+        )
+        assert np.allclose(gathered_u @ gathered_v.conj().T, expected_update)
         coefficients = np.asarray([0.4 - 0.7j, -0.2 + 0.3j])
         source = carrier.synthesize_owner_rows(local_z @ coefficients)
         target = source.duplicate()

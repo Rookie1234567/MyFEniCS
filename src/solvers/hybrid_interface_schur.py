@@ -382,6 +382,9 @@ class PetscInterfaceSchurOracle:
         if len(group_rows) != 3 or len(interface_supports) != 2:
             raise ValueError("V1-2 PETSc Schur needs three groups and two interfaces")
         self._blocks: list[_PetscInterfaceSchurBlock] = []
+        self._row_copy_indices: dict[
+            tuple[int, int], tuple[np.ndarray, np.ndarray]
+        ] = {}
         self._destroyed = False
         supports: list[np.ndarray] = []
         for support in interface_supports:
@@ -411,6 +414,178 @@ class PetscInterfaceSchurOracle:
             self.destroy()
             raise
         self.interface_supports = tuple(supports)
+        try:
+            lower_rows = set(map(int, self._blocks[0].gamma_rows))
+            middle_rows = set(map(int, self._blocks[1].gamma_rows))
+            upper_rows = set(map(int, self._blocks[2].gamma_rows))
+            lower_support = set(map(int, self.interface_supports[0]))
+            upper_support = set(map(int, self.interface_supports[1]))
+            local_identity_ok = (
+                lower_rows == middle_rows.intersection(lower_support)
+                and upper_rows == middle_rows.intersection(upper_support)
+                and middle_rows == (lower_rows | upper_rows)
+            )
+            if not bool(
+                bare.getComm().tompi4py().allreduce(local_identity_ok, op=MPI.LAND)
+            ):
+                raise ValueError(
+                    "shared Gamma row ownership is not aligned across groups"
+                )
+            for source_group in range(3):
+                source_positions = {
+                    int(row): index
+                    for index, row in enumerate(self._blocks[source_group].gamma_rows)
+                }
+                for target_group in range(3):
+                    source_indices: list[int] = []
+                    target_indices: list[int] = []
+                    for target_index, row in enumerate(
+                        self._blocks[target_group].gamma_rows
+                    ):
+                        source_index = source_positions.get(int(row))
+                        if source_index is not None:
+                            source_indices.append(source_index)
+                            target_indices.append(target_index)
+                    self._row_copy_indices[(source_group, target_group)] = (
+                        np.asarray(source_indices, dtype=np.intp),
+                        np.asarray(target_indices, dtype=np.intp),
+                    )
+        except Exception:
+            self.destroy()
+            raise
+
+    def _copy_group_rows(
+        self,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+        source_group: int,
+        target_group: int,
+        *,
+        add: bool = False,
+    ) -> None:
+        source_indices, target_indices = self._row_copy_indices[
+            (int(source_group), int(target_group))
+        ]
+        if not add:
+            target.set(0.0)
+        if add:
+            target.array[target_indices] += source.array[source_indices]
+        else:
+            target.array[target_indices] = source.array[source_indices]
+        target.assemble()
+
+    def _neighbor_block_apply(
+        self,
+        target_group: int,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        target_group = int(target_group)
+        if target_group not in (0, 1, 2):
+            raise ValueError("directed-neighbor target group must be 0, 1, or 2")
+        target_block = self._blocks[target_group]
+        if (
+            source.getSize() != target_block._gamma_rhs.getSize()
+            or target.getSize() != target_block._gamma_output.getSize()
+        ):
+            raise ValueError("directed-neighbor Vec layout does not match target group")
+        if target_group == 0:
+            neighbor = 1
+            neighbor_source = self._blocks[neighbor]._gamma_rhs.duplicate()
+            neighbor_target = self._blocks[neighbor]._gamma_output.duplicate()
+            try:
+                self._copy_group_rows(
+                    source,
+                    neighbor_source,
+                    target_group,
+                    neighbor,
+                )
+                self._blocks[neighbor].apply(neighbor_source, neighbor_target)
+                self._copy_group_rows(
+                    neighbor_target,
+                    target,
+                    neighbor,
+                    target_group,
+                )
+            finally:
+                neighbor_target.destroy()
+                neighbor_source.destroy()
+            return
+        if target_group == 2:
+            neighbor = 1
+            neighbor_source = self._blocks[neighbor]._gamma_rhs.duplicate()
+            neighbor_target = self._blocks[neighbor]._gamma_output.duplicate()
+            try:
+                self._copy_group_rows(
+                    source,
+                    neighbor_source,
+                    target_group,
+                    neighbor,
+                )
+                self._blocks[neighbor].apply(neighbor_source, neighbor_target)
+                self._copy_group_rows(
+                    neighbor_target,
+                    target,
+                    neighbor,
+                    target_group,
+                )
+            finally:
+                neighbor_target.destroy()
+                neighbor_source.destroy()
+            return
+
+        lower_source = self._blocks[0]._gamma_rhs.duplicate()
+        upper_source = self._blocks[2]._gamma_rhs.duplicate()
+        lower_target = self._blocks[0]._gamma_output.duplicate()
+        upper_target = self._blocks[2]._gamma_output.duplicate()
+        try:
+            self._copy_group_rows(
+                source,
+                lower_source,
+                target_group,
+                0,
+            )
+            self._copy_group_rows(
+                source,
+                upper_source,
+                target_group,
+                2,
+            )
+            self._blocks[0].apply(lower_source, lower_target)
+            self._blocks[2].apply(upper_source, upper_target)
+            self._copy_group_rows(
+                lower_target,
+                target,
+                0,
+                1,
+            )
+            self._copy_group_rows(
+                upper_target,
+                target,
+                2,
+                1,
+                add=True,
+            )
+        finally:
+            upper_target.destroy()
+            lower_target.destroy()
+            upper_source.destroy()
+            lower_source.destroy()
+
+    def apply_directed_neighbor(
+        self, target_group: int, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        """Apply the frozen neighbor transmission map for one target group.
+
+        Group 0 receives group 1's lower-directed Schur, group 2 receives
+        group 1's upper-directed Schur, and group 1 receives the block-diagonal
+        group 0/group 2 neighbor maps.  Compressed Gamma vectors are remapped
+        by original active-row identity; no FE-sized numeric gather is used.
+        """
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        self._neighbor_block_apply(target_group, source, target)
 
     def apply_group(
         self,
@@ -486,6 +661,12 @@ class PetscInterfaceSchurOracle:
             "global_direct_factor_count": 0,
             "nested_ksp_count": 0,
             "dense_materialization": False,
+            "directed_blocks": {
+                "group0_to_lower": "group1.lower",
+                "group1_to_lower": "group0.lower",
+                "group1_to_upper": "group2.upper",
+                "group2_to_upper": "group1.upper",
+            },
             "group_blocks": [block.diagnostics for block in self._blocks],
         }
 
@@ -495,6 +676,7 @@ class PetscInterfaceSchurOracle:
         for block in reversed(self._blocks):
             block.destroy()
         self._blocks.clear()
+        self._row_copy_indices.clear()
         self._destroyed = True
 
 
@@ -516,6 +698,7 @@ class PetscDistributedPetrovAction:
         exact_apply: Callable[[PETSc.Vec, PETSc.Vec], None],
         local_z: np.ndarray,
         local_y: np.ndarray,
+        local_row_ids: np.ndarray | None = None,
     ) -> None:
         self._comm = layout.getComm().tompi4py()
         self._template = layout.duplicate()
@@ -523,6 +706,11 @@ class PetscDistributedPetrovAction:
         self._exact_apply = exact_apply
         self._local_z = np.asarray(local_z, dtype=np.complex128).copy()
         self._local_y = np.asarray(local_y, dtype=np.complex128).copy()
+        self._local_row_ids = (
+            None
+            if local_row_ids is None
+            else np.asarray(local_row_ids, dtype=np.int64).copy()
+        )
         self._delta_local = np.empty((0, 0), dtype=np.complex128)
         self._gram = np.empty((0, 0), dtype=np.complex128)
         self._projected_scalar = np.empty((0, 0), dtype=np.complex128)
@@ -555,6 +743,14 @@ class PetscDistributedPetrovAction:
             )
             if not self._comm.allreduce(local_finite, op=MPI.LAND):
                 raise ValueError("Petrov owner-row arrays are not finite")
+            row_ids_valid = self._local_row_ids is None or (
+                self._local_row_ids.ndim == 1
+                and self._local_row_ids.size == local_rows
+                and np.all(self._local_row_ids >= 0)
+                and np.unique(self._local_row_ids).size == self._local_row_ids.size
+            )
+            if not self._comm.allreduce(bool(row_ids_valid), op=MPI.LAND):
+                raise ValueError("Petrov local row identities have the wrong shape")
             self.global_rows = global_rows
             self.local_rows = local_rows
             self.span_size = span_min
@@ -616,6 +812,22 @@ class PetscDistributedPetrovAction:
         local = self._local_y.conj().T @ np.asarray(source.array, dtype=np.complex128)
         return self._allreduce_small(local)
 
+    @property
+    def gamma_rows_local(self) -> np.ndarray | None:
+        """Return a copy of the optional owner-local Gamma row identities."""
+
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        return None if self._local_row_ids is None else self._local_row_ids.copy()
+
+    @property
+    def ownership_range(self) -> tuple[int, int]:
+        """Return the compressed Vec ownership range used by the carrier."""
+
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        return tuple(self._ownership_range)
+
     def _build_projected_columns(self) -> None:
         local_rows = self.local_rows
         scalar_projected_local = np.empty(
@@ -664,6 +876,23 @@ class PetscDistributedPetrovAction:
             "delta": self._projected_exact - self._projected_scalar,
         }
 
+    def projected_woodbury_factors(self) -> dict[str, np.ndarray]:
+        """Export owner-local ``U=delta`` and ``V=Y G^-H`` copies.
+
+        The adjoint factor is obtained with the carrier's SVD solve for
+        ``G^-1 Y^H``; no normal equations or global basis replication are
+        introduced.  The arrays are caller-owned tiny/local copies.
+        """
+
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        v_adjoint = self._solve_gram(self._local_y.conj().T)
+        return {
+            "U": self._delta_local.copy(),
+            "V": v_adjoint.conj().T.copy(),
+            "G": self._gram.copy(),
+        }
+
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed:
             raise RuntimeError("distributed Petrov action is destroyed")
@@ -694,6 +923,9 @@ class PetscDistributedPetrovAction:
             "global_rows": self.global_rows,
             "local_rows": self.local_rows,
             "ownership_range": list(self._ownership_range),
+            "gamma_rows_local_count": (
+                None if self._local_row_ids is None else int(self._local_row_ids.size)
+            ),
             "z_shape_local": list(self._local_z.shape),
             "y_shape_local": list(self._local_y.shape),
             "basis_global_replicated": False,
@@ -719,6 +951,7 @@ class PetscDistributedPetrovAction:
         self._template.destroy()
         self._local_z = np.empty((0, 0), dtype=np.complex128)
         self._local_y = np.empty((0, 0), dtype=np.complex128)
+        self._local_row_ids = None
         self._delta_local = np.empty((0, 0), dtype=np.complex128)
         self._gram = np.empty((0, 0), dtype=np.complex128)
         self._projected_scalar = np.empty((0, 0), dtype=np.complex128)
@@ -930,11 +1163,12 @@ def build_distributed_petrov_action(
     exact_apply: Callable[[PETSc.Vec, PETSc.Vec], None],
     local_z: np.ndarray,
     local_y: np.ndarray,
+    local_row_ids: np.ndarray | None = None,
 ) -> PetscDistributedPetrovAction:
     """Build a distributed owner-row carrier from a caller-owned Vec layout."""
 
     return PetscDistributedPetrovAction(
-        layout, scalar_apply, exact_apply, local_z, local_y
+        layout, scalar_apply, exact_apply, local_z, local_y, local_row_ids
     )
 
 

@@ -1392,10 +1392,12 @@ class _LevelAOracleOwner:
         action: PetscSideImpedanceTransmissionAction,
         factors: Sequence[Any],
         parent: PETSc.Vec,
+        auxiliary_owners: Sequence[Any] = (),
     ) -> None:
         self._action = action
         self._factors = list(factors)
         self._parent = parent
+        self._auxiliary_owners = list(auxiliary_owners)
         self._destroyed = False
 
     @property
@@ -1404,6 +1406,9 @@ class _LevelAOracleOwner:
             "factor_count_ready": len(self._factors) if not self._destroyed else 0,
             "factor_count_after_cleanup": 0 if self._destroyed else None,
             "action_destroyed": self._action is None,
+            "auxiliary_owner_count": (
+                0 if self._destroyed else len(self._auxiliary_owners)
+            ),
             "parent_released": bool(self._destroyed),
             "destroyed": bool(self._destroyed),
         }
@@ -1414,6 +1419,9 @@ class _LevelAOracleOwner:
         if self._action is not None:
             self._action.destroy()
             self._action = None
+        for auxiliary in reversed(self._auxiliary_owners):
+            auxiliary.destroy()
+        self._auxiliary_owners.clear()
         for factor in reversed(self._factors):
             factor.destroy()
         self._factors.clear()
@@ -1472,6 +1480,15 @@ def build_level_a_oracle(
     interface_masses: Sequence[ArtificialZTraceMass],
     beta: complex,
     group_audit: Mapping[str, Any],
+    _projected_local_solve_factory: Callable[
+        [Sequence[Any]],
+        tuple[
+            Sequence[Callable[[PETSc.Vec, PETSc.Vec], None]],
+            Sequence[Any],
+            Mapping[str, Any],
+        ],
+    ]
+    | None = None,
 ) -> tuple[PetscSideImpedanceTransmissionAction, Any, dict[str, Any]]:
     """Build the opt-in Level-A PC and its factor-only cleanup owner."""
 
@@ -1490,6 +1507,8 @@ def build_level_a_oracle(
     parent = bare_f.createVecRight()
     action = None
     owner = None
+    auxiliary_owners: list[Any] = []
+    projected_diagnostics: Mapping[str, Any] = {}
     builder_entered = False
     try:
         for rows in group_rows:
@@ -1583,12 +1602,19 @@ def build_level_a_oracle(
         def bare_identity_audit() -> bool:
             return _petsc_matrix_hash(bare_f) == bare_hash
 
+        local_solve = tuple(factor.solve for factor in factors)
+        if _projected_local_solve_factory is not None:
+            local_solve, auxiliary_owners, projected_diagnostics = (
+                _projected_local_solve_factory(tuple(factors))
+            )
+            if len(local_solve) != 3:
+                raise ValueError("Projected Level-A route needs three local solves")
         builder_entered = True
         action = build_petsc_side_impedance_transmission_action(
             parent_template=parent,
             local_templates=templates,
             scatters=scatters,
-            local_solve=tuple(factor.solve for factor in factors),
+            local_solve=local_solve,
             coupling_left=(),
             coupling_right=(),
             interface_normals=((1, -1), (1, -1)),
@@ -1642,12 +1668,16 @@ def build_level_a_oracle(
             "full_side_exact_factor_count": 0,
             "global_direct_factor_count": 0,
             "nested_ksp_count": 0,
+            **dict(projected_diagnostics),
         }
         action_result = action
-        owner = _LevelAOracleOwner(action_result, factors, parent)
+        owner = _LevelAOracleOwner(
+            action_result, factors, parent, auxiliary_owners=auxiliary_owners
+        )
         action = None
         factors = []
         parent = None
+        auxiliary_owners = []
         return action_result, owner, diagnostics
     except Exception:
         if owner is not None:
@@ -1668,6 +1698,8 @@ def build_level_a_oracle(
                 matrix.destroy()
         for block in blocks:
             block.destroy()
+        for auxiliary in reversed(auxiliary_owners):
+            auxiliary.destroy()
         for factor in factors:
             factor.destroy()
         if parent is not None:
