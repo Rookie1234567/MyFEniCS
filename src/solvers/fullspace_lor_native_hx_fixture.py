@@ -47,6 +47,101 @@ from .fullspace_lor_transfer import (
 from .fullspace_mpc_action import build_fullspace_mpc_form_action
 
 
+L2_SOURCE_NAMES = ("random", "gradient", "curl", "checkerboard")
+L2_RHO_LIMITS = {
+    "random": 0.45,
+    "gradient": 0.25,
+    "curl": 0.45,
+    "checkerboard": 0.60,
+}
+L2_CG_RTOL = 1.0e-8
+L2_CG_MAX_IT = 40
+L2_REPEAT_LIMIT = 1.0e-13
+
+
+def l2_source_formula(name: str) -> str:
+    """Return the frozen source definition used by the L2 oracle."""
+
+    formulas = {
+        "random": (
+            "analytic deterministic pseudo-random edge field from fixed "
+            "noninteger trigonometric frequencies and phases"
+        ),
+        "gradient": "grad(sin(2*pi*sx)*sin(2*pi*sy)*sin(2*pi*sz))",
+        "curl": "curl((0,0,sin(2*pi*sx)*sin(2*pi*sy)*sin(2*pi*sz)))",
+        "checkerboard": (
+            "R4 fixed 8-cycle field: "
+            "(high_x*high_y*high_z, high_y*high_z, high_z*high_x)"
+        ),
+    }
+    try:
+        return formulas[name]
+    except KeyError as exc:
+        raise ValueError(f"unknown L2 source {name!r}") from exc
+
+
+def _l2_unit_coordinates(coordinates: np.ndarray, cfg: Any) -> tuple[np.ndarray, ...]:
+    x, y, z = np.asarray(coordinates, dtype=np.float64)
+    sx = (x - float(cfg.x_min)) / (float(cfg.x_max) - float(cfg.x_min))
+    sy = (y - float(cfg.y_min)) / (float(cfg.y_max) - float(cfg.y_min))
+    sz = (z - float(cfg.domain_z_min)) / (
+        float(cfg.domain_z_max) - float(cfg.domain_z_min)
+    )
+    return sx, sy, sz
+
+
+def _l2_analytic_values(name: str, coordinates: np.ndarray, cfg: Any) -> np.ndarray:
+    sx, sy, sz = _l2_unit_coordinates(coordinates, cfg)
+    pi = np.pi
+    ax = 2.0 * pi / (float(cfg.x_max) - float(cfg.x_min))
+    ay = 2.0 * pi / (float(cfg.y_max) - float(cfg.y_min))
+    az = 2.0 * pi / (float(cfg.domain_z_max) - float(cfg.domain_z_min))
+    sin_x = np.sin(2.0 * pi * sx)
+    sin_y = np.sin(2.0 * pi * sy)
+    sin_z = np.sin(2.0 * pi * sz)
+    cos_x = np.cos(2.0 * pi * sx)
+    cos_y = np.cos(2.0 * pi * sy)
+    cos_z = np.cos(2.0 * pi * sz)
+    if name == "random":
+        return np.vstack(
+            (
+                np.sin(2.0 * pi * (1.37 * sx + 0.23))
+                * np.cos(2.0 * pi * (0.73 * sy + 0.11))
+                * np.sin(2.0 * pi * (1.19 * sz + 0.37)),
+                np.cos(2.0 * pi * (0.91 * sx + 0.07))
+                * np.sin(2.0 * pi * (1.41 * sy + 0.29))
+                * np.cos(2.0 * pi * (0.67 * sz + 0.19)),
+                np.sin(2.0 * pi * (1.23 * sx + 0.31))
+                * np.sin(2.0 * pi * (0.83 * sy + 0.17))
+                * np.cos(2.0 * pi * (1.07 * sz + 0.41)),
+            )
+        ).astype(np.complex128)
+    if name == "gradient":
+        return np.vstack(
+            (
+                ax * cos_x * sin_y * sin_z,
+                ay * sin_x * cos_y * sin_z,
+                az * sin_x * sin_y * cos_z,
+            )
+        ).astype(np.complex128)
+    if name == "curl":
+        return np.vstack(
+            (
+                ay * sin_x * cos_y * sin_z,
+                -ax * cos_x * sin_y * sin_z,
+                np.zeros_like(sin_x),
+            )
+        ).astype(np.complex128)
+    if name == "checkerboard":
+        high_x = np.sin(8.0 * ax * (coordinates[0] - float(cfg.x_min)))
+        high_y = np.sin(8.0 * ay * (coordinates[1] - float(cfg.y_min)))
+        high_z = np.sin(8.0 * az * (coordinates[2] - float(cfg.domain_z_min)))
+        return np.vstack(
+            (high_x * high_y * high_z, high_y * high_z, high_z * high_x)
+        ).astype(np.complex128)
+    raise ValueError(f"unknown analytic L2 source {name!r}")
+
+
 def _refined_axis(values: np.ndarray, degree: int) -> np.ndarray:
     nodes = _gll_nodes(degree)
     pieces: list[float] = []
@@ -645,6 +740,7 @@ class RealL2PositiveHXFixture:
         self.degree = degree
         self.comm = comm
         cfg = target_stage4_config(degree=degree, h_nm=50.0)
+        self.cfg = cfg
         plan = _stage4_axis_plan(cfg, comm.size)
         self.high_mesh = _structured_hexa_mesh(
             comm,
@@ -884,6 +980,32 @@ class RealL2PositiveHXFixture:
             "high_action_audit": self.high_action.audit,
             "hx_audit": self.hx.audit,
         }
+
+    def build_l2_source(self, name: str) -> tuple[PETSc.Vec, dict[str, Any]]:
+        """Build one frozen, finalized-MPC primal source for the L2 oracle."""
+
+        formula = l2_source_formula(name)
+        function = fem.Function(self.high_floquet.mpc.function_space)
+        vector = function.x.petsc_vec
+        function.interpolate(
+            lambda coordinates: _l2_analytic_values(name, coordinates, self.cfg)
+        )
+        function.x.scatter_forward()
+        self.high_floquet.mpc.homogenize(function)
+        function.x.scatter_forward()
+        result = vector.copy()
+        del function
+        return result, {
+            "name": name,
+            "formula": formula,
+            "phase_application": "algebraic_slave_zero_action_internal_finalized_mpc_once",
+            "primal_role": "full_fe",
+        }
+
+    def apply_high_action_copy(self, source: PETSc.Vec) -> PETSc.Vec:
+        """Copy the borrowed matrix-free action result without destroying it."""
+
+        return self.high_action.apply(source).copy()
 
     def apply_high(self) -> tuple[PETSc.Vec, PETSc.Vec]:
         first = self.high_action.apply(self.high_source).copy()
@@ -1195,6 +1317,151 @@ class RealL2PositiveHXFixture:
         self.roundtrip = None
 
 
+class L2HighActionShellContext:
+    """Matrix-free B_h shell that copies, never destroys, action outputs."""
+
+    def __init__(self, fixture: RealL2PositiveHXFixture) -> None:
+        self.fixture = fixture
+
+    def mult(
+        self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        result = self.fixture.apply_high_action_copy(source)
+        try:
+            result.copy(target)
+        finally:
+            result.destroy()
+
+
+class L2HXPCContext:
+    """Python PC shell for one fixed owner-local HX application."""
+
+    def __init__(self, fixture: RealL2PositiveHXFixture) -> None:
+        self.fixture = fixture
+        self.apply_count = 0
+
+    def apply(
+        self, _pc: PETSc.PC, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        result = self.fixture.apply_high_preconditioner(source)
+        try:
+            result.copy(target)
+        finally:
+            result.destroy()
+        self.apply_count += 1
+
+
+def build_l2_high_action_shell(
+    fixture: RealL2PositiveHXFixture,
+) -> tuple[PETSc.Mat, L2HighActionShellContext]:
+    """Create the matrix-free high-order B_h shell used by fixed CG."""
+
+    context = L2HighActionShellContext(fixture)
+    matrix = PETSc.Mat().createPython(
+        fixture.high_action.matrix.getSizes(),
+        context=context,
+        comm=fixture.comm,
+    )
+    matrix.setUp()
+    return matrix, context
+
+
+def build_l2_cg_solver(
+    fixture: RealL2PositiveHXFixture,
+) -> tuple[PETSc.KSP, PETSc.Mat, L2HXPCContext]:
+    """Build the frozen zero-guess CG + Python-HX shell solver."""
+
+    operator, _operator_context = build_l2_high_action_shell(fixture)
+    pc_context = L2HXPCContext(fixture)
+    ksp = PETSc.KSP().create(fixture.comm)
+    ksp.setOperators(operator)
+    ksp.setType("cg")
+    ksp.setInitialGuessNonzero(False)
+    ksp.setTolerances(rtol=L2_CG_RTOL, atol=0.0, max_it=L2_CG_MAX_IT)
+    ksp.setPCSide(PETSc.PC.Side.LEFT)
+    pc = ksp.getPC()
+    pc.setType("python")
+    pc.setPythonContext(pc_context)
+    ksp.setUp()
+    return ksp, operator, pc_context
+
+
+def l2_one_apply(
+    fixture: RealL2PositiveHXFixture, primal_source: PETSc.Vec
+) -> dict[str, Any]:
+    """Form r=B_h u and apply M_H^{-1} once to a primal source u."""
+
+    input_before = np.asarray(
+        primal_source.getArray(readonly=True), dtype=np.complex128
+    ).copy()
+    residual = fixture.apply_high_action_copy(primal_source)
+    output = fixture.apply_high_preconditioner(residual)
+    applied_output = fixture.apply_high_action_copy(output)
+    true_residual = residual.copy()
+    true_residual.axpy(PETSc.ScalarType(-1.0), applied_output)
+    residual_norm = float(residual.norm())
+    rho = float(true_residual.norm() / max(residual_norm, np.finfo(float).tiny))
+    input_unchanged = bool(
+        np.array_equal(
+            input_before,
+            np.asarray(primal_source.getArray(readonly=True), dtype=np.complex128),
+        )
+    )
+    return {
+        "residual": residual,
+        "output": output,
+        "applied_output": applied_output,
+        "true_residual": true_residual,
+        "rho": rho,
+        "input_unchanged": input_unchanged,
+        "residual_norm": residual_norm,
+    }
+
+
+def solve_l2_cg(
+    fixture: RealL2PositiveHXFixture, rhs: PETSc.Vec
+) -> dict[str, Any]:
+    """Run the fixed CG shell once and return owned resources plus true facts."""
+
+    ksp, operator, pc_context = build_l2_cg_solver(fixture)
+    solution = operator.createVecRight()
+    solution.set(0.0 + 0.0j)
+    ksp.solve(rhs, solution)
+    action = fixture.apply_high_action_copy(solution)
+    true_residual = rhs.copy()
+    true_residual.axpy(PETSc.ScalarType(-1.0), action)
+    rhs_norm = float(rhs.norm())
+    return {
+        "ksp": ksp,
+        "operator": operator,
+        "pc_context": pc_context,
+        "solution": solution,
+        "action": action,
+        "true_residual": true_residual,
+        "reason": int(ksp.getConvergedReason()),
+        "iterations": int(ksp.getIterationNumber()),
+        "reported_residual_norm": float(ksp.getResidualNorm()),
+        "true_residual_relative": float(
+            true_residual.norm() / max(rhs_norm, np.finfo(float).tiny)
+        ),
+    }
+
+
+def destroy_l2_cg_result(result: dict[str, Any]) -> None:
+    """Release the vectors, shell and KSP returned by :func:`solve_l2_cg`."""
+
+    for name in ("true_residual", "action", "solution"):
+        vector = result.pop(name, None)
+        if vector is not None:
+            vector.destroy()
+    ksp = result.pop("ksp", None)
+    if ksp is not None:
+        ksp.destroy()
+    operator = result.pop("operator", None)
+    if operator is not None:
+        operator.destroy()
+
+
 def _local_transfer_work_identity(degree: int) -> float:
     """Bounded single-cell residual restriction/primal reconstruction oracle."""
 
@@ -1222,4 +1489,20 @@ def build_real_l2_positive_hx_fixture(
     return RealL2PositiveHXFixture(degree, comm)
 
 
-__all__ = ("RealL2PositiveHXFixture", "build_real_l2_positive_hx_fixture")
+__all__ = (
+    "L2_CG_MAX_IT",
+    "L2_CG_RTOL",
+    "L2_RHO_LIMITS",
+    "L2_SOURCE_NAMES",
+    "L2_REPEAT_LIMIT",
+    "L2HXPCContext",
+    "L2HighActionShellContext",
+    "RealL2PositiveHXFixture",
+    "build_l2_cg_solver",
+    "build_l2_high_action_shell",
+    "build_real_l2_positive_hx_fixture",
+    "destroy_l2_cg_result",
+    "l2_one_apply",
+    "l2_source_formula",
+    "solve_l2_cg",
+)
