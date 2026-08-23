@@ -15,12 +15,13 @@ from typing import Any
 
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.task040_level_a import (
-    TASK040_LEVEL_A_HARD_STOP_BYTES,
+    TASK040_LEVEL_A_HARD_STOP_BYTES as _TASK040_LEVEL_A_HARD_STOP_BYTES,
     TASK040_LEVEL_A_MPI_SIZE,
     TASK040_LEVEL_A_THREADS,
     TASK040_LEVEL_A_TIMEOUT_SECONDS,
     TASK040_V1_1_SCALAR_KRYLOV_FLAG,
     TASK040_V1_2_INTERFACE_SCHUR_FLAG,
+    TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -30,6 +31,7 @@ from benchmarks.watchdog_process_control import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TASK040_LEVEL_A_HARD_STOP_BYTES = _TASK040_LEVEL_A_HARD_STOP_BYTES
 SAMPLE_INTERVAL_SECONDS = 0.5
 HEARTBEAT_SECONDS = 60.0
 SWAP_LIMIT_BYTES = 0
@@ -79,6 +81,8 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(TASK040_V1_1_SCALAR_KRYLOV_FLAG)
     if plan.get("interface_schur") is True:
         command.append(TASK040_V1_2_INTERFACE_SCHUR_FLAG)
+    if plan.get("packet_producer") is True:
+        command.append(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG)
     return command
 
 
@@ -90,6 +94,7 @@ def build_task040_level_a_watchdog_plan(
     source_sha: str,
     scalar_krylov: bool = False,
     interface_schur: bool = False,
+    packet_producer: bool = False,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
         input_path=input_path,
@@ -98,17 +103,23 @@ def build_task040_level_a_watchdog_plan(
         source_sha=source_sha,
         scalar_krylov=scalar_krylov,
         interface_schur=interface_schur,
+        packet_producer=packet_producer,
     )
+    worker_directory = Path(plan["run_directory"]) / "worker"
+    if packet_producer:
+        plan["packet_root"] = str(worker_directory / "interface_packet")
     plan["watchdog"] = {
         "sample_interval_seconds": SAMPLE_INTERVAL_SECONDS,
         "heartbeat_seconds": HEARTBEAT_SECONDS,
-        "absolute_terminate_memory_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+        "absolute_terminate_memory_bytes": plan["absolute_terminate_memory_bytes"],
         "swap_limit_bytes": SWAP_LIMIT_BYTES,
         "process_group": True,
         "terminate_entire_process_group": True,
         "resource_authority": "task034_wsl_resources.resource_authority_sample",
     }
-    plan["worker_run_directory"] = str(Path(plan["run_directory"]) / "worker")
+    if packet_producer:
+        plan["watchdog"]["preferred_memory_bytes"] = plan["preferred_memory_bytes"]
+    plan["worker_run_directory"] = str(worker_directory)
     plan["worker_argv"] = _worker_command(plan)
     plan["runner_reuse"] = {
         "task040_worker": "benchmarks/task040_level_a.py",
@@ -161,6 +172,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             f"Task040 worker output directory already exists: {worker_directory}"
         )
     command = list(plan["worker_argv"])
+    hard_stop_bytes = int(plan["absolute_terminate_memory_bytes"])
     started = time.monotonic()
     sample_count = 0
     peak_rss_bytes = 0
@@ -240,7 +252,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 termination_reason = "natural_exit"
                 process_control = terminate_process_tree(process)
                 break
-            if rss_bytes >= TASK040_LEVEL_A_HARD_STOP_BYTES:
+            if rss_bytes >= hard_stop_bytes:
                 termination_reason = "absolute_memory_limit"
             elif (
                 swap_bytes > SWAP_LIMIT_BYTES
@@ -273,7 +285,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         "peak_rss_bytes": peak_rss_bytes,
         "peak_swap_bytes": peak_swap_bytes,
         "peak_dedicated_cgroup_swap_bytes": peak_dedicated_cgroup_swap_bytes,
-        "hard_stop_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+        "hard_stop_bytes": hard_stop_bytes,
         "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
         "all_status_readable": all_status_readable,
         "dedicated_cgroup_present": dedicated_cgroup_present,
@@ -289,6 +301,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             if path.is_file()
         },
     }
+    if plan.get("packet_producer") is True:
+        summary["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     return (
         0
@@ -313,6 +327,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-sha", required=True)
     parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
     parser.add_argument(TASK040_V1_2_INTERFACE_SCHUR_FLAG, action="store_true")
+    parser.add_argument(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG, action="store_true")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
@@ -321,6 +336,7 @@ def main(argv: list[str] | None = None) -> int:
         source_sha=args.source_sha,
         scalar_krylov=args.v1_1_scalar_krylov,
         interface_schur=args.v1_2_interface_schur,
+        packet_producer=args.v2_interface_packet_producer,
     )
     if args.dry_run:
         print(json.dumps(plan, indent=2, sort_keys=True))

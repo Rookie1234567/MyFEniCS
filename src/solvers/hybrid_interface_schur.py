@@ -906,10 +906,13 @@ class PetscDistributedPetrovAction:
 
         if self._destroyed:
             raise RuntimeError("distributed Petrov action is destroyed")
+        self._local_z = np.empty((0, 0), dtype=np.complex128)
         v_adjoint = self._solve_gram(self._local_y.conj().T)
+        np.conjugate(v_adjoint.T, out=self._local_y)
+        del v_adjoint
         factors = {
             "U": self._delta_local,
-            "V": v_adjoint.conj().T,
+            "V": self._local_y,
             "G": self._gram,
             "projected_scalar": self._projected_scalar,
             "projected_exact": self._projected_exact,
@@ -917,7 +920,6 @@ class PetscDistributedPetrovAction:
         self._template.destroy()
         self._scalar_apply = None
         self._exact_apply = None
-        self._local_z = np.empty((0, 0), dtype=np.complex128)
         self._local_y = np.empty((0, 0), dtype=np.complex128)
         self._local_row_ids = None
         self._delta_local = np.empty((0, 0), dtype=np.complex128)

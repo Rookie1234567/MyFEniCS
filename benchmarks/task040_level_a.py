@@ -49,6 +49,16 @@ from src.solvers.hybrid_interface_basis import (
     canonical_external_mode_metadata_sha256,
     collect_streamed_trace_basis,
 )
+from src.solvers.hybrid_interface_packet import (
+    PacketGroup,
+    finalize_manifest,
+    write_group_shard,
+)
+from src.solvers.hybrid_interface_packet_dolfinx import (
+    build_dolfinx_plane_gamma_layout,
+    build_gamma_canonical_layout,
+    canonicalize_owner_local_basis_in_place,
+)
 from src.solvers.hybrid_interface_schur import (
     build_petsc_interface_schur_oracle,
     build_distributed_petrov_action,
@@ -110,6 +120,12 @@ TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256 = (
 TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256 = (
     "dde523dc62c73f7bd50953958fde42d42d0cfd5756c16329b16915e13c4742da"
 )
+TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG = "--v2-interface-packet-producer"
+TASK040_V2_INTERFACE_PACKET_METHOD = "task040_v2_interface_packet_producer"
+TASK040_V2_INTERFACE_PACKET_SCHEMA = "task040.v2.interface_packet_producer.v1"
+TASK040_V2_INTERFACE_PACKET_PROFILE_ID = "task040.v2.a1.interface_packet_producer.v1"
+TASK040_V2_INTERFACE_PACKET_PREFERRED_BYTES = 45 * 2**30
+TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES = 55 * 2**30
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -125,6 +141,12 @@ __all__ = (
     "TASK040_V1_2_METHOD",
     "TASK040_V1_2_SCHEMA",
     "TASK040_V1_2_PROFILE_ID",
+    "TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG",
+    "TASK040_V2_INTERFACE_PACKET_METHOD",
+    "TASK040_V2_INTERFACE_PACKET_SCHEMA",
+    "TASK040_V2_INTERFACE_PACKET_PROFILE_ID",
+    "TASK040_V2_INTERFACE_PACKET_PREFERRED_BYTES",
+    "TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -191,6 +213,7 @@ def build_task040_level_a_plan(
     source_sha: str,
     scalar_krylov: bool = False,
     interface_schur: bool = False,
+    packet_producer: bool = False,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
 
@@ -227,8 +250,11 @@ def build_task040_level_a_plan(
             "response_packet",
         ],
     }
-    if scalar_krylov and interface_schur:
-        raise ValueError("Task040 V1-1 and V1-2 routes are mutually exclusive")
+    if (
+        sum(bool(value) for value in (scalar_krylov, interface_schur, packet_producer))
+        > 1
+    ):
+        raise ValueError("Task040 research routes are mutually exclusive")
     if scalar_krylov:
         plan.update(
             {
@@ -264,10 +290,40 @@ def build_task040_level_a_plan(
                 "v1_3_conditional": True,
             }
         )
+    if packet_producer:
+        plan.update(
+            {
+                "schema": TASK040_V2_INTERFACE_PACKET_SCHEMA,
+                "method": TASK040_V2_INTERFACE_PACKET_METHOD,
+                "profile": TASK040_V2_INTERFACE_PACKET_PROFILE_ID,
+                "packet_producer": True,
+                "research_only": True,
+                "pde_solve": "not_run",
+                "qep_calls": 0,
+                "v1_3_conditional": False,
+                "absolute_terminate_memory_bytes": (
+                    TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES
+                ),
+                "preferred_memory_bytes": TASK040_V2_INTERFACE_PACKET_PREFERRED_BYTES,
+                "packet_root": str(run_directory / "interface_packet"),
+                "forbidden": [
+                    "v1_3_projected_transmission",
+                    "fgmres",
+                    "qep",
+                    "pde_solve",
+                    "global_direct_factor",
+                    "full_side_factor",
+                ],
+                "packet_complete_required": True,
+            }
+        )
     return plan
 
 
-def _worker_current_resource(comm: MPI.Intracomm) -> dict[str, Any]:
+def _worker_current_resource(
+    comm: MPI.Intracomm,
+    hard_limit_bytes: int = TASK040_LEVEL_A_HARD_STOP_BYTES,
+) -> dict[str, Any]:
     authority = resource_authority_sample(os.getpid(), include_smaps=False)
     process_tree = authority["process_tree"]
     job_cgroup = authority["job_cgroup"]
@@ -310,8 +366,9 @@ def _worker_current_resource(comm: MPI.Intracomm) -> dict[str, Any]:
         "all_status_readable": readable,
         "source": "worker_process_tree_and_dedicated_cgroup",
         "pass": bool(
-            readable and rss_bytes < TASK040_LEVEL_A_HARD_STOP_BYTES and swap_bytes == 0
+            readable and rss_bytes < int(hard_limit_bytes) and swap_bytes == 0
         ),
+        "hard_limit_bytes": int(hard_limit_bytes),
     }
 
 
@@ -1147,6 +1204,273 @@ def _v1_2_middle_cross_interface_samples(
     return reports, interface_identity
 
 
+def _v2_build_packet_layouts(
+    *,
+    system: Any,
+    condensed: Any,
+    supports: Sequence[Mapping[str, Any]],
+    gamma_rows: Sequence[np.ndarray],
+    lower_z: float,
+    upper_z: float,
+    comm: MPI.Intracomm,
+) -> tuple[Any, Any, Any]:
+    """Build the three owner-local canonical packet layouts."""
+
+    lower_original, _ = _v1_2_local_interface_rows(
+        condensed, supports[0], gamma_rows[0]
+    )
+    upper_original, _ = _v1_2_local_interface_rows(
+        condensed, supports[1], gamma_rows[2]
+    )
+    lower_layout = build_dolfinx_plane_gamma_layout(
+        function_space=system.V,
+        condensed=condensed,
+        floquet_data=getattr(system, "floquet_data", None),
+        interface_z_nm=lower_z,
+        plane_cell_side="lower",
+        plane_original_dofs=lower_original,
+        gamma_rows_local=gamma_rows[0],
+        plane_identity={"route": "v2_interface_packet", "group": "group0"},
+    )
+    upper_layout = build_dolfinx_plane_gamma_layout(
+        function_space=system.V,
+        condensed=condensed,
+        floquet_data=getattr(system, "floquet_data", None),
+        interface_z_nm=upper_z,
+        plane_cell_side="upper",
+        plane_original_dofs=upper_original,
+        gamma_rows_local=gamma_rows[2],
+        plane_identity={"route": "v2_interface_packet", "group": "group2"},
+    )
+    middle_blocks = tuple(
+        placement.block
+        for layout in (lower_layout, upper_layout)
+        for placement in layout.blocks
+    )
+    middle_layout = build_gamma_canonical_layout(
+        middle_blocks,
+        gamma_rows[1],
+        plane_identity={
+            "route": "v2_interface_packet",
+            "group": "group1",
+            "planes": ["lower", "upper"],
+            "interface_z_nm": [lower_z, upper_z],
+            "phase_convention": "stored_raw=phase*E*canonical",
+        },
+        comm=comm,
+    )
+    return lower_layout, middle_layout, upper_layout
+
+
+def _v2_prepare_packet_shards(
+    *,
+    packet_root: str | Path,
+    petrov_actions: Sequence[Any],
+    packet_layouts: Sequence[Any],
+    petrov_diagnostics: Sequence[Mapping[str, Any]],
+    identity_observed: Mapping[str, Any],
+    z_shapes: Sequence[Sequence[int]],
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    selected_manifest_sha256: str,
+    spool_catalog_sha256: str,
+    probe_manifest_sha256: str,
+    lower_metadata: Mapping[str, Any],
+    upper_metadata: Mapping[str, Any],
+    physical_probe_reports: Sequence[Mapping[str, Any]],
+    interface_probe_reports: Sequence[Mapping[str, Any]],
+    middle_cross_interface_reports: Sequence[Mapping[str, Any]],
+    middle_cross_interface_identity: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Detach one Petrov action at a time and write its owner-local shard."""
+
+    descriptors: list[dict[str, Any]] = []
+    small_matrices: dict[str, np.ndarray] = {}
+    for group, action in enumerate(petrov_actions):
+        ownership_range = tuple(int(value) for value in action.ownership_range)
+        factors = action.detach_projected_woodbury_factors()
+        values_u = factors["U"]
+        values_v = factors["V"]
+        canonical = canonicalize_owner_local_basis_in_place(
+            packet_layouts[group], values_u, values_v
+        )
+        descriptors.append(
+            write_group_shard(
+                packet_root,
+                PacketGroup(f"group{group}", canonical.keys, canonical.U, canonical.V),
+                comm=comm,
+                ownership_range=ownership_range,
+            )
+        )
+        if comm.rank == 0:
+            small_matrices.update(
+                {
+                    f"gram_group{group}": np.asarray(factors["G"]),
+                    f"projected_scalar_group{group}": np.asarray(
+                        factors["projected_scalar"]
+                    ),
+                    f"projected_exact_group{group}": np.asarray(
+                        factors["projected_exact"]
+                    ),
+                }
+            )
+        del canonical, values_u, values_v, factors
+    return {
+        "descriptors": descriptors,
+        "small_matrices": small_matrices if comm.rank == 0 else None,
+        "provenance": {
+            "schema": "task040.v2.interface_packet_producer.v1",
+            "source_sha": str(source_sha),
+            "input_sha256": str(input_sha256),
+            "physical_model_sha256": str(physical_model_sha256),
+            "selected_manifest_sha256": str(selected_manifest_sha256),
+            "exact_spool_catalog_sha256": str(spool_catalog_sha256),
+            "probe_manifest_sha256": str(probe_manifest_sha256),
+            "qep_calls": 0,
+            "pde_solve": "not_run",
+            "v1_3_built": False,
+        },
+        "diagnostics": {
+            "group_order": ["group0", "group1", "group2"],
+            "groups": [
+                {
+                    "group": group,
+                    "span_size": int(z_shapes[group][1]),
+                    "gamma_layout": {
+                        **dict(packet_layouts[group].audit),
+                        **(
+                            {
+                                "global_size": int(
+                                    middle_cross_interface_identity[interface]["size"]
+                                ),
+                                "gamma_rows_global_order_sha256": (
+                                    middle_cross_interface_identity[interface]["sha256"]
+                                ),
+                            }
+                            if (
+                                interface := (
+                                    "lower"
+                                    if group == 0
+                                    else "upper"
+                                    if group == 2
+                                    else None
+                                )
+                            )
+                            is not None
+                            else {}
+                        ),
+                    },
+                    "petrov": dict(petrov_diagnostics[group]),
+                }
+                for group in range(3)
+            ],
+            "identity_observed": dict(identity_observed),
+            "probe_manifest_sha256": identity_observed["probe_manifest_sha256"],
+            "input_sha256": identity_observed["input_sha256"],
+            "physical_model_sha256": identity_observed["physical_model_sha256"],
+            "selected_manifest_sha256": identity_observed["selected_manifest_sha256"],
+            "lower": {
+                "mode_count": int(lower_metadata["mode_count"]),
+                "mode_key_sha256": lower_metadata["mode_key_sha256"],
+                "legacy_beta_metadata_sha256": lower_metadata[
+                    "legacy_manifest_beta_metadata_sha256"
+                ],
+                "resolved_mode_metadata_sha256": lower_metadata[
+                    "resolved_mode_metadata_sha256"
+                ],
+            },
+            "upper": {
+                "mode_count": int(len(upper_metadata["mode_keys"])),
+                "mode_key_sha256": upper_metadata["mode_key_sha256"],
+                "beta_sha256": upper_metadata["selected_packet_beta_sha256"],
+                "branch_authority": upper_metadata["branch_authority"],
+                "qep_calls": int(upper_metadata["qep_calls"]),
+            },
+            "exact_output_identity_sha256": dict(
+                identity_observed["exact_output_identity_sha256"]
+            ),
+            "incoming_neighbor_map": {
+                "map": "block_diagonal_neighbor_transmission",
+                "response": "apply_directed_neighbor",
+                "probe_count": len(interface_probe_reports),
+            },
+            "probes": list(physical_probe_reports) + list(interface_probe_reports),
+            "lower_resolved_mode_metadata_sha256": lower_metadata[
+                "resolved_mode_metadata_sha256"
+            ],
+            "upper_mode_key_sha256": upper_metadata["mode_key_sha256"],
+            "upper_beta_sha256": upper_metadata["selected_packet_beta_sha256"],
+            "basis_global_replicated": False,
+            "fe_numeric_allgather": False,
+            "physical_probe_reports": list(physical_probe_reports),
+            "interface_probe_reports": list(interface_probe_reports),
+            "middle_cross_interface_sampled_response": list(
+                middle_cross_interface_reports
+            ),
+            "middle_cross_interface_identity": dict(middle_cross_interface_identity),
+            "projected_matrix_names": {
+                f"group{group}": {
+                    "gram": f"gram_group{group}",
+                    "scalar": f"projected_scalar_group{group}",
+                    "exact": f"projected_exact_group{group}",
+                }
+                for group in range(3)
+            },
+            "factor_inventory": {
+                "ready": 3,
+                "after": 0,
+                "simultaneous_max": 3,
+                "full_side": 0,
+                "global_direct": 0,
+                "nested_ksp": 0,
+            },
+        },
+        "expected_group_counts": {
+            f"group{group}": int(packet_layouts[group].audit["global_row_count"])
+            for group in range(3)
+        },
+    }
+
+
+def _v2_finalize_packet(
+    *,
+    packet_root: str | Path,
+    pending: Mapping[str, Any],
+    exact_ready: Mapping[str, Any],
+    exact_after: Mapping[str, Any],
+    v1_2_gate: Mapping[str, Any],
+    diagnostics: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    packet_diagnostics = {
+        **dict(pending["diagnostics"]),
+        **dict(diagnostics),
+        "v1_2_gate": dict(v1_2_gate),
+        "factor_lifecycle": {
+            "exact_oracle_ready": dict(exact_ready),
+            "exact_oracle_after_cleanup": dict(exact_after),
+            "factor_count_ready": int(exact_ready["factor_count_ready"]),
+            "factor_count_after_cleanup": int(
+                exact_after["factor_count_after_cleanup"]
+            ),
+            "simultaneous_factor_count_max": int(exact_ready["factor_count_ready"]),
+        },
+        "packet_complete": True,
+    }
+    return finalize_manifest(
+        packet_root,
+        list(pending["descriptors"]),
+        provenance=dict(pending["provenance"]),
+        group_names=("group0", "group1", "group2"),
+        expected_group_counts=dict(pending["expected_group_counts"]),
+        small_matrices=pending["small_matrices"],
+        diagnostics=packet_diagnostics,
+        comm=comm,
+    )
+
+
 def _run_v1_2_interface_schur(
     *,
     cfg: Any,
@@ -1163,6 +1487,8 @@ def _run_v1_2_interface_schur(
     beta: complex,
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None,
     resource_callback: Callable[[], Mapping[str, Any]] | None,
+    producer_mode: bool = False,
+    packet_root: str | Path | None = None,
     comm: MPI.Intracomm,
 ) -> dict[str, Any]:
     manifest_path, manifest = _v1_2_load_manifest()
@@ -1216,6 +1542,9 @@ def _run_v1_2_interface_schur(
     projected_owner = None
     owner_transferred = False
     exact_after: dict[str, Any] | None = None
+    packet_layouts: tuple[Any, Any, Any] | None = None
+    packet_pending: dict[str, Any] | None = None
+    packet_manifest: dict[str, Any] | None = None
     source_vectors: dict[str, PETSc.Vec] = {}
     try:
         oracle = build_petsc_interface_schur_oracle(bare_f, group_rows, supports)
@@ -1355,22 +1684,40 @@ def _run_v1_2_interface_schur(
         )
         exact_ready = oracle.diagnostics
         petrov_diagnostics = [action.diagnostics for action in petrov_actions]
-        petrov_contractions = [
-            {
-                name: _v1_2_matrix_pairs(value)
-                for name, value in action.projected_contractions.items()
-                if name in {"gram", "scalar", "exact"}
-            }
-            for action in petrov_actions
-        ]
-        group_layouts = [
-            {
-                **oracle.group_gamma_layout(group),
-                "basis_global_replicated": False,
-                "fe_numeric_allgather": False,
-            }
-            for group in range(3)
-        ]
+        petrov_contractions = None
+        if not producer_mode:
+            petrov_contractions = [
+                {
+                    name: _v1_2_matrix_pairs(value)
+                    for name, value in action.projected_contractions.items()
+                    if name in {"gram", "scalar", "exact"}
+                }
+                for action in petrov_actions
+            ]
+        if producer_mode:
+            if packet_root is None:
+                raise ValueError("V2 producer requires a worker packet root")
+            packet_layouts = _v2_build_packet_layouts(
+                system=system,
+                condensed=condensed,
+                supports=supports,
+                gamma_rows=gamma_rows,
+                lower_z=float(manifest["interfaces"]["lower"]["z"]),
+                upper_z=float(manifest["interfaces"]["upper"]["z"]),
+                comm=comm,
+            )
+        if producer_mode:
+            assert packet_layouts is not None
+            group_layouts = [dict(layout.audit) for layout in packet_layouts]
+        else:
+            group_layouts = [
+                {
+                    **oracle.group_gamma_layout(group),
+                    "basis_global_replicated": False,
+                    "fe_numeric_allgather": False,
+                }
+                for group in range(3)
+            ]
         identity_observed = {
             "probe_manifest_sha256": hashlib.sha256(
                 manifest_path.read_bytes()
@@ -1411,8 +1758,24 @@ def _run_v1_2_interface_schur(
             resource_observed is not None
             and resource_observed.get("all_status_readable") is True
             and int(resource_observed.get("rss_bytes", -1))
-            < TASK040_LEVEL_A_HARD_STOP_BYTES
+            < (
+                TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES
+                if producer_mode
+                else TASK040_LEVEL_A_HARD_STOP_BYTES
+            )
             and int(resource_observed.get("swap_bytes", -1)) == 0
+        )
+        preferred_resource_pass = bool(
+            resource_observed is not None
+            and resource_observed.get("all_status_readable") is True
+            and int(resource_observed.get("rss_bytes", -1))
+            <= TASK040_V2_INTERFACE_PACKET_PREFERRED_BYTES
+            and int(resource_observed.get("swap_bytes", -1)) == 0
+        )
+        condition_pass = all(
+            np.isfinite(float(petrov_diagnostics[group]["gram"]["condition"]))
+            and float(petrov_diagnostics[group]["gram"]["condition"]) <= 1.0e12
+            for group in range(3)
         )
         v1_2_gate = {
             "identity_pass": identity_pass,
@@ -1453,6 +1816,52 @@ def _run_v1_2_interface_schur(
                 )
             ),
         }
+        if producer_mode:
+            v1_2_gate["condition_pass"] = condition_pass
+            v1_2_gate["preferred_resource_pass"] = preferred_resource_pass
+            z_shapes = tuple(
+                tuple(int(value) for value in matrix.shape) for matrix in z_group
+            )
+            y_shapes = tuple(
+                tuple(int(value) for value in matrix.shape) for matrix in y_group
+            )
+            for key in ("values", "left"):
+                lower.pop(key, None)
+            for key in ("right", "left"):
+                upper.pop(key, None)
+            del spool, traces, scalar_apply, z_group, y_group, lower_y, upper_y
+            if not all(
+                bool(value)
+                for name, value in v1_2_gate.items()
+                if name
+                not in {"factor_pass", "lifecycle_pass", "preferred_resource_pass"}
+            ):
+                raise RuntimeError(
+                    "V2 producer stopped before packet export: V1-2 probe Gate failed"
+                )
+            assert packet_layouts is not None
+            packet_pending = _v2_prepare_packet_shards(
+                packet_root=packet_root,
+                petrov_actions=petrov_actions,
+                packet_layouts=packet_layouts,
+                petrov_diagnostics=petrov_diagnostics,
+                identity_observed=identity_observed,
+                z_shapes=z_shapes,
+                source_sha=source_sha,
+                input_sha256=input_sha256,
+                physical_model_sha256=physical_model_sha256,
+                selected_manifest_sha256=selected_manifest_sha256,
+                spool_catalog_sha256=spool_catalog_sha256,
+                probe_manifest_sha256=identity_observed["probe_manifest_sha256"],
+                lower_metadata=lower,
+                upper_metadata=upper,
+                physical_probe_reports=probe_reports,
+                interface_probe_reports=interface_probe_reports,
+                middle_cross_interface_reports=middle_cross_interface_reports,
+                middle_cross_interface_identity=middle_cross_interface_identity,
+                comm=comm,
+            )
+            packet_layouts = None
         _emit(
             marker_callback,
             "v1_2_exact_oracle_ready",
@@ -1473,13 +1882,39 @@ def _run_v1_2_interface_schur(
             exact_ready.get("factor_count_ready") == 3
             and exact_after.get("factor_count_after_cleanup") == 0
         )
-        v1_2_gate["pass"] = all(v1_2_gate.values())
+        v1_2_gate["pass"] = all(
+            bool(value)
+            for name, value in v1_2_gate.items()
+            if name != "preferred_resource_pass"
+        )
         _emit(
             marker_callback,
             "v1_2_exact_oracle_released",
             factor_count_after_cleanup=exact_after["factor_count_after_cleanup"],
         )
-        if v1_2_gate["pass"]:
+        if producer_mode:
+            if not v1_2_gate["pass"]:
+                raise RuntimeError(
+                    "V2 producer exact factor lifecycle did not close 3->0"
+                )
+            assert packet_pending is not None
+            packet_manifest = _v2_finalize_packet(
+                packet_root=packet_root,
+                pending=packet_pending,
+                exact_ready=exact_ready,
+                exact_after=exact_after,
+                v1_2_gate=v1_2_gate,
+                diagnostics={
+                    "identity_observed": identity_observed,
+                    "middle_cross_interface_sampled_response": (
+                        middle_cross_interface_reports
+                    ),
+                    "middle_cross_interface_identity": middle_cross_interface_identity,
+                },
+                comm=comm,
+            )
+            projected_diagnostics = {"v1_3_not_run": "producer_route_disables_v1_3"}
+        elif v1_2_gate["pass"]:
             projected_action, projected_owner, projected_diagnostics = (
                 build_v1_3_projected_transmission(
                     bare_f=bare_f,
@@ -1555,9 +1990,21 @@ def _run_v1_2_interface_schur(
         petrov_actions.clear()
         route_result = {
             "result": {
-                "schema": TASK040_V1_2_SCHEMA,
-                "method": TASK040_V1_2_METHOD,
-                "profile": TASK040_V1_2_PROFILE_ID,
+                "schema": (
+                    TASK040_V2_INTERFACE_PACKET_SCHEMA
+                    if producer_mode
+                    else TASK040_V1_2_SCHEMA
+                ),
+                "method": (
+                    TASK040_V2_INTERFACE_PACKET_METHOD
+                    if producer_mode
+                    else TASK040_V1_2_METHOD
+                ),
+                "profile": (
+                    TASK040_V2_INTERFACE_PACKET_PROFILE_ID
+                    if producer_mode
+                    else TASK040_V1_2_PROFILE_ID
+                ),
                 "source_sha": str(source_sha),
                 "input_sha256": str(input_sha256),
                 "physical_model_sha256": str(physical_model_sha256),
@@ -1598,12 +2045,33 @@ def _run_v1_2_interface_schur(
                     "groups": [
                         {
                             "group": group,
-                            "span_size": int(z_group[group].shape[1]),
+                            "span_size": int(
+                                z_shapes[group][1]
+                                if producer_mode
+                                else z_group[group].shape[1]
+                            ),
                             "gamma_layout": group_layouts[group],
-                            "z_shape_local": list(z_group[group].shape),
-                            "y_shape_local": list(y_group[group].shape),
+                            "z_shape_local": list(
+                                z_shapes[group]
+                                if producer_mode
+                                else z_group[group].shape
+                            ),
+                            "y_shape_local": list(
+                                y_shapes[group]
+                                if producer_mode
+                                else y_group[group].shape
+                            ),
                             "petrov": petrov_diagnostics[group],
-                            "projected_contractions": petrov_contractions[group],
+                            "projected_contractions": (
+                                petrov_contractions[group]
+                                if petrov_contractions is not None
+                                else {
+                                    "storage": "packet_small_matrices",
+                                    "gram": f"gram_group{group}",
+                                    "scalar": f"projected_scalar_group{group}",
+                                    "exact": f"projected_exact_group{group}",
+                                }
+                            ),
                         }
                         for group in range(3)
                     ],
@@ -1668,6 +2136,10 @@ def _run_v1_2_interface_schur(
             "action": projected_action,
             "owner": projected_owner,
         }
+        if producer_mode:
+            route_result["result"]["interface_schur_raw"].update(
+                {"packet": packet_manifest, "producer_route": True}
+            )
         owner_transferred = True
         return route_result
     finally:
@@ -1701,13 +2173,18 @@ def run_task040_level_a(
     side_system_builder: Callable[..., Any] | None = None,
     scalar_krylov: bool = False,
     interface_schur: bool = False,
+    packet_producer: bool = False,
+    packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run the six-source Level-A audit; all numerical work stays in src."""
 
-    if scalar_krylov and interface_schur:
-        raise ValueError("Task040 V1-1 and V1-2 routes are mutually exclusive")
-    if interface_schur:
+    if (
+        sum(bool(value) for value in (scalar_krylov, interface_schur, packet_producer))
+        > 1
+    ):
+        raise ValueError("Task040 research routes are mutually exclusive")
+    if interface_schur or packet_producer:
         for name, value in (
             ("input_sha256", input_sha256),
             ("physical_model_sha256", physical_model_sha256),
@@ -1730,7 +2207,13 @@ def run_task040_level_a(
     _emit(
         marker_callback,
         "construction_begin",
-        method=TASK040_V1_2_METHOD if interface_schur else TASK040_LEVEL_A_METHOD,
+        method=(
+            TASK040_V2_INTERFACE_PACKET_METHOD
+            if packet_producer
+            else TASK040_V1_2_METHOD
+            if interface_schur
+            else TASK040_LEVEL_A_METHOD
+        ),
     )
     try:
         if side_system_builder is None:
@@ -1800,7 +2283,7 @@ def run_task040_level_a(
             beta=[beta.real, beta.imag],
             q=[(-1j * beta).real, (-1j * beta).imag],
         )
-        if interface_schur:
+        if interface_schur or packet_producer:
             route = _run_v1_2_interface_schur(
                 cfg=cfg,
                 system=system,
@@ -1816,6 +2299,8 @@ def run_task040_level_a(
                 beta=beta,
                 marker_callback=marker_callback,
                 resource_callback=resource_callback,
+                producer_mode=packet_producer,
+                packet_root=packet_root,
                 comm=comm,
             )
             action = route["action"]
@@ -1999,7 +2484,7 @@ def run_task040_level_a(
         _emit(marker_callback, "cleanup", **cleanup)
         if result is not None:
             result["cleanup"] = cleanup
-            if interface_schur:
+            if interface_schur or packet_producer:
                 raw = result.get("interface_schur_raw")
                 if isinstance(raw, dict):
                     lifecycle = raw.setdefault("lifecycle", {})
@@ -2035,6 +2520,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-sha", required=True)
     parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
     parser.add_argument(TASK040_V1_2_INTERFACE_SCHUR_FLAG, action="store_true")
+    parser.add_argument(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG, action="store_true")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
     args = parser.parse_args(argv)
@@ -2045,6 +2531,7 @@ def main(argv: list[str] | None = None) -> int:
         source_sha=args.source_sha,
         scalar_krylov=args.v1_1_scalar_krylov,
         interface_schur=args.v1_2_interface_schur,
+        packet_producer=args.v2_interface_packet_producer,
     )
     if args.dry_run:
         if MPI.COMM_WORLD.rank == 0:
@@ -2066,12 +2553,29 @@ def main(argv: list[str] | None = None) -> int:
         marker_callback=marker_callback,
         scalar_krylov=args.v1_1_scalar_krylov,
         interface_schur=args.v1_2_interface_schur,
+        packet_producer=args.v2_interface_packet_producer,
         resource_callback=(
             lambda: (
-                _worker_current_resource(MPI.COMM_WORLD)
-                if args.v1_1_scalar_krylov or args.v1_2_interface_schur
+                _worker_current_resource(
+                    MPI.COMM_WORLD,
+                    hard_limit_bytes=(
+                        TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES
+                        if args.v2_interface_packet_producer
+                        else TASK040_LEVEL_A_HARD_STOP_BYTES
+                    ),
+                )
+                if (
+                    args.v1_1_scalar_krylov
+                    or args.v1_2_interface_schur
+                    or args.v2_interface_packet_producer
+                )
                 else None
             )
+        ),
+        packet_root=(
+            Path(args.run_directory) / "interface_packet"
+            if args.v2_interface_packet_producer
+            else None
         ),
     )
     if MPI.COMM_WORLD.rank == 0:

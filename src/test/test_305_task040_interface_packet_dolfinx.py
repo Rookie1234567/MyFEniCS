@@ -322,11 +322,13 @@ def test_petrov_detach_transfers_u_without_copy_and_releases_resident_state() ->
             (z_global @ coefficients)[first:last], dtype=PETSc.ScalarType
         )
         original_delta = action._delta_local
+        original_y = action._local_y
         action.apply(source, target)
         exact_apply(source, direct)
         assert np.allclose(_collect_rows(target), _collect_rows(direct), atol=1.0e-12)
         factors = action.detach_projected_woodbury_factors()
         assert factors["U"] is original_delta
+        assert factors["V"] is original_y
         if factors["U"].size:
             assert np.shares_memory(factors["U"], original_delta)
         assert np.allclose(factors["G"], y_global.conj().T @ z_global)
