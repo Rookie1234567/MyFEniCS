@@ -7,7 +7,9 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
+from benchmarks.run_task038_full3d_lor_hx_krylov import _vec_global_norm_ratio
 from benchmarks.task038_full3d_lor_hx_krylov_checker import (
     K0_GMRES_MAX_IT,
     K0_GMRES_RESTART,
@@ -339,6 +341,7 @@ def test_k1_checker_rejects_mutated_raw_rho_alpha_and_old_l2(tmp_path: Path) -> 
     record["one_apply"]["rho_alpha"] = 0.0
     record["old_l2_reference"]["rho"] = 0.0
     record["old_l2_reference"]["limit"] = 0.4
+    record["forbidden"].pop("production_pc_alpha_applied")
     record_path.write_text(json.dumps(record), encoding="utf-8")
     result = check_suite_record(record_path)
     assert result["passed"] is False
@@ -346,6 +349,26 @@ def test_k1_checker_rejects_mutated_raw_rho_alpha_and_old_l2(tmp_path: Path) -> 
     assert any("alpha" in item for item in result["contract_errors"])
     assert any("old L2 rho" in item for item in result["contract_errors"])
     assert any("old L2 limit" in item for item in result["contract_errors"])
+    assert any("forbidden.production_pc_alpha_applied" in item for item in result["contract_errors"])
+
+
+def test_k1_rho_uses_norm_ratio_not_relative_difference() -> None:
+    class FakeVec:
+        def __init__(self, values: np.ndarray) -> None:
+            self.values = values
+
+        def norm(self) -> float:
+            return float(np.linalg.norm(self.values))
+
+    true_residual = FakeVec(np.asarray([3.0 + 4.0j, 0.0j]))
+    residual = FakeVec(np.asarray([1.0 + 0.0j, 1.0 + 0.0j]))
+    norm_ratio = _vec_global_norm_ratio(true_residual, residual)
+    relative_difference = float(
+        np.linalg.norm(true_residual.values - residual.values)
+        / np.linalg.norm(residual.values)
+    )
+    assert norm_ratio == pytest.approx(5.0 / np.sqrt(2.0))
+    assert not np.isclose(norm_ratio, relative_difference)
 
 
 def test_k1_one_apply_numeric_failures_are_gate_failures(tmp_path: Path) -> None:

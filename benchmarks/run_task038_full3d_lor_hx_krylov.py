@@ -77,6 +77,13 @@ def _vec_relative(left: Any, right: Any) -> float:
     return numerator / denominator
 
 
+def _vec_global_norm_ratio(numerator: Any, denominator: Any) -> float:
+    """Return ``||numerator||_2 / ||denominator||_2`` using PETSc norms."""
+
+    denominator_norm = max(float(denominator.norm()), np.finfo(float).tiny)
+    return float(numerator.norm()) / denominator_norm
+
+
 def _vec_finite(comm: MPI.Comm, vector: Any) -> bool:
     local = bool(np.all(np.isfinite(vector.getArray(readonly=True))))
     return bool(comm.allreduce(1 if local else 0, op=MPI.MIN))
@@ -591,7 +598,7 @@ def run_suite_worker(
         true_residual = residual.copy()
         true_residual.axpy(-1.0, applied_output)
         repeat_relative = _vec_relative(pc_repeat, pc_output)
-        rho = _vec_relative(true_residual, residual)
+        rho = _vec_global_norm_ratio(true_residual, residual)
         finite = True
         for vector in (
             source_before,
@@ -798,6 +805,7 @@ def run_suite_worker(
                     "evidence_root_gather_only": True,
                 },
                 "forbidden": {
+                    "production_pc_alpha_applied": False,
                     "global_numeric_allgather": False,
                     "high_order_global_aij": False,
                     "global_dense_transfer": False,
