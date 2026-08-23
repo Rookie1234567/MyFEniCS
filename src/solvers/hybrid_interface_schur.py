@@ -26,10 +26,21 @@ __all__ = (
     "NumpyInterfaceSchurOracle",
     "PetscInterfaceSchurOracle",
     "ProjectedExactPetrovAction",
+    "PetscDistributedPetrovAction",
     "build_numpy_interface_schur_oracle",
     "build_petsc_interface_schur_oracle",
+    "build_distributed_petrov_action",
     "project_petrov_columns",
 )
+
+
+def _small_svd_diagnostics(matrix: np.ndarray) -> dict[str, Any]:
+    singular_values = np.linalg.svd(matrix, compute_uv=False)
+    return {
+        "rank": int(np.linalg.matrix_rank(matrix)),
+        "singular_values": singular_values.tolist(),
+        "condition": float(singular_values[0] / singular_values[-1]),
+    }
 
 
 class _NumpyInterfaceSchurBlock:
@@ -403,6 +414,26 @@ class PetscInterfaceSchurOracle:
             raise RuntimeError("PETSc interface Schur oracle is destroyed")
         self._blocks[int(group)].apply(source, target)
 
+    def group_gamma_layout(self, group: int) -> dict[str, Any]:
+        """Return the public distributed layout for one interface Gamma block."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        vector = self._blocks[int(group)]._gamma_rhs
+        first, last = map(int, vector.getOwnershipRange())
+        return {
+            "global_size": int(vector.getSize()),
+            "local_size": int(vector.getLocalSize()),
+            "ownership_range": [first, last],
+        }
+
+    def create_group_gamma_vector(self, group: int) -> PETSc.Vec:
+        """Create an owned Gamma Vec; the caller owns and destroys it."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        return self._blocks[int(group)]._gamma_rhs.duplicate()
+
     @property
     def diagnostics(self) -> dict[str, Any]:
         if self._destroyed:
@@ -446,6 +477,240 @@ def build_petsc_interface_schur_oracle(
     interface_supports: Sequence[Mapping[str, Any] | Sequence[int]],
 ) -> PetscInterfaceSchurOracle:
     return PetscInterfaceSchurOracle(bare, group_rows, interface_supports)
+
+
+class PetscDistributedPetrovAction:
+    """Owner-row Petrov carrier with only replicated small contractions."""
+
+    def __init__(
+        self,
+        layout: PETSc.Vec,
+        scalar_apply: Callable[[PETSc.Vec, PETSc.Vec], None],
+        exact_apply: Callable[[PETSc.Vec, PETSc.Vec], None],
+        local_z: np.ndarray,
+        local_y: np.ndarray,
+    ) -> None:
+        self._comm = layout.getComm().tompi4py()
+        self._template = layout.duplicate()
+        self._scalar_apply = scalar_apply
+        self._exact_apply = exact_apply
+        self._local_z = np.asarray(local_z, dtype=np.complex128).copy()
+        self._local_y = np.asarray(local_y, dtype=np.complex128).copy()
+        self._delta_local = np.empty((0, 0), dtype=np.complex128)
+        self._gram = np.empty((0, 0), dtype=np.complex128)
+        self._projected_scalar = np.empty((0, 0), dtype=np.complex128)
+        self._projected_exact = np.empty((0, 0), dtype=np.complex128)
+        self._gram_svd: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+        self._ownership_range = tuple(map(int, layout.getOwnershipRange()))
+        self._destroyed = False
+        self.apply_count = 0
+        self.scalar_apply_count = 0
+        self.exact_apply_count = 0
+        try:
+            local_rows = int(self._template.getLocalSize())
+            global_rows = int(self._template.getSize())
+            local_shape_valid = (
+                self._local_z.ndim == 2
+                and self._local_y.ndim == 2
+                and self._local_z.shape == self._local_y.shape
+                and self._local_z.shape[0] == local_rows
+                and self._local_z.shape[1] > 0
+            )
+            local_span = int(self._local_z.shape[1]) if self._local_z.ndim == 2 else -1
+            shape_valid = bool(self._comm.allreduce(local_shape_valid, op=MPI.LAND))
+            span_min = int(self._comm.allreduce(local_span, op=MPI.MIN))
+            span_max = int(self._comm.allreduce(local_span, op=MPI.MAX))
+            if not shape_valid or span_min <= 0 or span_min != span_max:
+                raise ValueError("Petrov owner-row arrays have incompatible shapes")
+            local_finite = bool(
+                np.all(np.isfinite(self._local_z))
+                and np.all(np.isfinite(self._local_y))
+            )
+            if not self._comm.allreduce(local_finite, op=MPI.LAND):
+                raise ValueError("Petrov owner-row arrays are not finite")
+            self.global_rows = global_rows
+            self.local_rows = local_rows
+            self.span_size = span_min
+            self._gram = self._allreduce_small(self._local_y.conj().T @ self._local_z)
+            self._gram_svd = self._factor_small_gram(self._gram)
+            self._build_projected_columns()
+        except Exception:
+            self.destroy()
+            raise
+
+    def _allreduce_small(self, local: np.ndarray) -> np.ndarray:
+        value = np.asarray(local, dtype=np.complex128)
+        result = np.empty_like(value)
+        self._comm.Allreduce(value, result, op=MPI.SUM)
+        return result
+
+    @staticmethod
+    def _factor_small_gram(
+        gram: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        u, singular_values, vh = np.linalg.svd(gram, full_matrices=False)
+        if singular_values.size == 0 or singular_values[-1] <= (
+            np.finfo(float).eps * max(float(singular_values[0]), 1.0)
+        ):
+            raise ValueError("distributed Petrov Gram is singular")
+        return u, singular_values, vh
+
+    def _solve_gram(self, rhs: np.ndarray) -> np.ndarray:
+        if self._gram_svd is None:
+            raise RuntimeError("distributed Petrov Gram is unavailable")
+        u, singular_values, vh = self._gram_svd
+        rhs = np.asarray(rhs, dtype=np.complex128)
+        if rhs.ndim == 1:
+            return vh.conj().T @ ((u.conj().T @ rhs) / singular_values)
+        return vh.conj().T @ ((u.conj().T @ rhs) / singular_values[:, None])
+
+    def _synthesize_owner_rows(self, local_values: np.ndarray) -> PETSc.Vec:
+        values = np.asarray(local_values, dtype=np.complex128)
+        if values.ndim != 1 or values.size != self.local_rows:
+            raise ValueError("owner-row vector has the wrong local size")
+        vector = self._template.duplicate()
+        vector.array[:] = np.asarray(values, dtype=PETSc.ScalarType)
+        return vector
+
+    def _check_layout(self, vector: PETSc.Vec) -> None:
+        if (
+            vector.getSize() != self.global_rows
+            or vector.getLocalSize() != self.local_rows
+            or tuple(map(int, vector.getOwnershipRange())) != self._ownership_range
+        ):
+            raise ValueError("Petrov Vec has the wrong ownership layout")
+
+    def project_owner_rows(self, source: PETSc.Vec) -> np.ndarray:
+        """Return the replicated small vector Yᴴ source."""
+
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        self._check_layout(source)
+        local = self._local_y.conj().T @ np.asarray(source.array, dtype=np.complex128)
+        return self._allreduce_small(local)
+
+    def _build_projected_columns(self) -> None:
+        local_rows = self.local_rows
+        scalar_projected_local = np.empty(
+            (self.span_size, self.span_size), dtype=np.complex128
+        )
+        exact_projected_local = np.empty_like(scalar_projected_local)
+        self._delta_local = np.empty((local_rows, self.span_size), dtype=np.complex128)
+        for column in range(self.span_size):
+            source = self._synthesize_owner_rows(self._local_z[:, column])
+            scalar_target = self._template.duplicate()
+            exact_target = self._template.duplicate()
+            try:
+                self._scalar_apply(source, scalar_target)
+                self.scalar_apply_count += 1
+                self._exact_apply(source, exact_target)
+                self.exact_apply_count += 1
+                scalar_local = np.asarray(scalar_target.array, dtype=np.complex128)
+                exact_local = np.asarray(exact_target.array, dtype=np.complex128)
+                self._delta_local[:, column] = exact_local - scalar_local
+                scalar_projected_local[:, column] = (
+                    self._local_y.conj().T @ scalar_local
+                )
+                exact_projected_local[:, column] = self._local_y.conj().T @ exact_local
+            finally:
+                exact_target.destroy()
+                scalar_target.destroy()
+                source.destroy()
+        self._projected_scalar = self._allreduce_small(scalar_projected_local)
+        self._projected_exact = self._allreduce_small(exact_projected_local)
+
+    def synthesize_owner_rows(self, local_values: np.ndarray) -> PETSc.Vec:
+        """Create one distributed Vec from owner-local values; caller destroys it."""
+
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        return self._synthesize_owner_rows(local_values)
+
+    @property
+    def projected_contractions(self) -> dict[str, np.ndarray]:
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        return {
+            "gram": self._gram.copy(),
+            "scalar": self._projected_scalar.copy(),
+            "exact": self._projected_exact.copy(),
+            "delta": self._projected_exact - self._projected_scalar,
+        }
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        if (
+            source.getSize() != self.global_rows
+            or target.getSize() != self.global_rows
+            or source.getLocalSize() != self.local_rows
+            or target.getLocalSize() != self.local_rows
+        ):
+            raise ValueError("Petrov source/target has the wrong Vec layout")
+        self._check_layout(source)
+        self._check_layout(target)
+        self._scalar_apply(source, target)
+        self.scalar_apply_count += 1
+        coefficients = self._solve_gram(self.project_owner_rows(source))
+        target.array[:] += np.asarray(
+            self._delta_local @ coefficients, dtype=PETSc.ScalarType
+        )
+        self.apply_count += 1
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        if self._destroyed:
+            return {"destroyed": True, "apply_count": self.apply_count}
+
+        return {
+            "schema": "task040.v1_2.distributed_petrov_action.v1",
+            "global_rows": self.global_rows,
+            "local_rows": self.local_rows,
+            "ownership_range": list(self._ownership_range),
+            "z_shape_local": list(self._local_z.shape),
+            "y_shape_local": list(self._local_y.shape),
+            "basis_global_replicated": False,
+            "fe_numeric_allgather": False,
+            "small_replicated_shapes": {
+                "gram": list(self._gram.shape),
+                "projected_scalar": list(self._projected_scalar.shape),
+                "projected_exact": list(self._projected_exact.shape),
+            },
+            "gram": _small_svd_diagnostics(self._gram),
+            "projected_scalar": _small_svd_diagnostics(self._projected_scalar),
+            "projected_exact": _small_svd_diagnostics(self._projected_exact),
+            "column_action_count": self.span_size,
+            "scalar_apply_count": self.scalar_apply_count,
+            "exact_apply_count": self.exact_apply_count,
+            "apply_count": self.apply_count,
+            "destroyed": self._destroyed,
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._template.destroy()
+        self._local_z = np.empty((0, 0), dtype=np.complex128)
+        self._local_y = np.empty((0, 0), dtype=np.complex128)
+        self._delta_local = np.empty((0, 0), dtype=np.complex128)
+        self._gram = np.empty((0, 0), dtype=np.complex128)
+        self._projected_scalar = np.empty((0, 0), dtype=np.complex128)
+        self._projected_exact = np.empty((0, 0), dtype=np.complex128)
+        self._destroyed = True
+
+
+def build_distributed_petrov_action(
+    layout: PETSc.Vec,
+    scalar_apply: Callable[[PETSc.Vec, PETSc.Vec], None],
+    exact_apply: Callable[[PETSc.Vec, PETSc.Vec], None],
+    local_z: np.ndarray,
+    local_y: np.ndarray,
+) -> PetscDistributedPetrovAction:
+    """Build a distributed owner-row carrier from a caller-owned Vec layout."""
+
+    return PetscDistributedPetrovAction(
+        layout, scalar_apply, exact_apply, local_z, local_y
+    )
 
 
 def project_petrov_columns(

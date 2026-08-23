@@ -135,6 +135,24 @@ def _collect_vec(vector: PETSc.Vec) -> np.ndarray:
     return result
 
 
+def _distributed_operator(layout: PETSc.Vec, dense: np.ndarray) -> PETSc.Mat:
+    comm = MPI.COMM_WORLD
+    local_size = layout.getLocalSize()
+    global_size = layout.getSize()
+    matrix = PETSc.Mat().createAIJ(
+        size=((local_size, global_size), (local_size, global_size)),
+        nnz=global_size,
+        comm=comm,
+    )
+    first, last = map(int, matrix.getOwnershipRange())
+    assert (first, last) == tuple(map(int, layout.getOwnershipRange()))
+    for row in range(first, last):
+        for col in range(global_size):
+            matrix.setValue(row, col, PETSc.ScalarType(dense[row, col]))
+    matrix.assemble()
+    return matrix
+
+
 def test_petsc_interface_schur_distributed_action_and_cleanup():
     comm = MPI.COMM_WORLD
     bare = _petsc_bare()
@@ -158,9 +176,10 @@ def test_petsc_interface_schur_distributed_action_and_cleanup():
             expected_groups = _tiny_groups()
             expected_interfaces = _tiny_interfaces()
             saw_local_empty_gamma = False
-            for group_index, block in enumerate(oracle._blocks):
-                source = block._gamma_rhs.duplicate()
-                target = block._gamma_output.duplicate()
+            for group_index in range(3):
+                layout = oracle.group_gamma_layout(group_index)
+                source = oracle.create_group_gamma_vector(group_index)
+                target = source.duplicate()
                 try:
                     source.set(0.0)
                     source.array[:] = np.asarray(
@@ -184,7 +203,7 @@ def test_petsc_interface_schur_distributed_action_and_cleanup():
                     assert np.allclose(
                         _collect_vec(target), expected, atol=1.0e-12, rtol=0.0
                     )
-                    saw_local_empty_gamma |= block.gamma_rows.size == 0
+                    saw_local_empty_gamma |= layout["local_size"] == 0
                 finally:
                     target.destroy()
                     source.destroy()
@@ -194,4 +213,141 @@ def test_petsc_interface_schur_distributed_action_and_cleanup():
             oracle.destroy()
             assert oracle.diagnostics["factor_count_after_cleanup"] == 0
     finally:
+        bare.destroy()
+
+
+def test_distributed_petrov_owner_rows_and_small_contractions():
+    from src.solvers.hybrid_interface_schur import build_distributed_petrov_action
+
+    bare = _petsc_bare()
+    oracle = None
+    layout = None
+    scalar_matrix = None
+    exact_matrix = None
+    carrier = None
+    try:
+        first, last = map(int, bare.getOwnershipRange())
+        local_groups = tuple(
+            np.asarray(
+                [row for row in rows if first <= row < last], dtype=PETSc.IntType
+            )
+            for rows in _tiny_groups()
+        )
+        oracle = build_petsc_interface_schur_oracle(
+            bare, local_groups, _tiny_interfaces()
+        )
+        layout = oracle.create_group_gamma_vector(1)
+        scalar_dense = np.asarray(
+            [
+                [2.0 + 0.1j, 0.2 - 0.3j, 0.1],
+                [0.1 + 0.2j, 1.7, 0.4j],
+                [0.05, 0.3, 1.2],
+            ],
+            dtype=np.complex128,
+        )
+        exact_dense = scalar_dense.copy()
+        exact_dense[0, 0] += 0.7 - 0.2j
+        exact_dense[1, 2] -= 0.2 + 0.1j
+        scalar_matrix = _distributed_operator(layout, scalar_dense)
+        exact_matrix = _distributed_operator(layout, exact_dense)
+        z_global = np.asarray(
+            [
+                [1.0 + 0.2j, 0.1 - 0.3j],
+                [0.4 - 0.2j, 1.0 + 0.1j],
+                [0.2 + 0.5j, -0.3 + 0.4j],
+            ],
+            dtype=np.complex128,
+        )
+        y_global = z_global.copy()
+        y_global[:, 0] = (1.3 + 0.2j) * z_global[:, 0] + (0.15 - 0.1j) * z_global[:, 1]
+        y_global[:, 1] = (0.8 - 0.3j) * z_global[:, 1]
+        local_first, local_last = map(int, layout.getOwnershipRange())
+        local_z = z_global[local_first:local_last]
+        local_y = y_global[local_first:local_last]
+        carrier = build_distributed_petrov_action(
+            layout,
+            scalar_matrix.mult,
+            exact_matrix.mult,
+            local_z,
+            local_y,
+        )
+        contractions = carrier.projected_contractions
+        assert np.allclose(contractions["gram"], y_global.conj().T @ z_global)
+        assert not np.allclose(y_global, z_global)
+        assert not np.allclose(contractions["gram"], np.eye(2))
+        assert np.allclose(
+            contractions["scalar"], y_global.conj().T @ scalar_dense @ z_global
+        )
+        assert np.allclose(
+            contractions["exact"], y_global.conj().T @ exact_dense @ z_global
+        )
+        coefficients = np.asarray([0.4 - 0.7j, -0.2 + 0.3j])
+        source = carrier.synthesize_owner_rows(local_z @ coefficients)
+        target = source.duplicate()
+        direct = source.duplicate()
+        try:
+            carrier.apply(source, target)
+            exact_matrix.mult(source, direct)
+            assert np.allclose(_collect_vec(target), _collect_vec(direct), atol=1.0e-12)
+            span_result = _collect_vec(target)
+            repeated = source.duplicate()
+            try:
+                carrier.apply(source, repeated)
+                assert np.allclose(_collect_vec(repeated), _collect_vec(target))
+            finally:
+                repeated.destroy()
+        finally:
+            direct.destroy()
+            target.destroy()
+            source.destroy()
+        _u, _s, vh = np.linalg.svd(y_global.conj().T, full_matrices=True)
+        complement = vh[-1].conj()
+        source = carrier.synthesize_owner_rows(complement[local_first:local_last])
+        target = source.duplicate()
+        direct = source.duplicate()
+        try:
+            carrier.apply(source, target)
+            scalar_matrix.mult(source, direct)
+            assert np.allclose(_collect_vec(target), _collect_vec(direct), atol=1.0e-12)
+            complement_result = _collect_vec(target)
+        finally:
+            direct.destroy()
+            target.destroy()
+            source.destroy()
+        combined_source = carrier.synthesize_owner_rows(
+            (1.1 - 0.4j) * (local_z @ coefficients)
+            + (-0.3 + 0.2j) * complement[local_first:local_last]
+        )
+        combined_target = combined_source.duplicate()
+        try:
+            carrier.apply(combined_source, combined_target)
+            expected_combined = (1.1 - 0.4j) * span_result + (
+                -0.3 + 0.2j
+            ) * complement_result
+            assert np.allclose(
+                _collect_vec(combined_target), expected_combined, atol=1.0e-12
+            )
+        finally:
+            combined_target.destroy()
+            combined_source.destroy()
+        diagnostics = carrier.diagnostics
+        assert diagnostics["basis_global_replicated"] is False
+        assert diagnostics["fe_numeric_allgather"] is False
+        assert diagnostics["small_replicated_shapes"]["gram"] == [2, 2]
+        assert diagnostics["column_action_count"] == 2
+        assert diagnostics["apply_count"] == 4
+        if MPI.COMM_WORLD.size >= 4:
+            assert MPI.COMM_WORLD.allreduce(layout.getLocalSize() == 0, op=MPI.LOR)
+    finally:
+        if carrier is not None:
+            carrier.destroy()
+            assert carrier.diagnostics["destroyed"] is True
+        if layout is not None:
+            layout.destroy()
+        if exact_matrix is not None:
+            exact_matrix.destroy()
+        if scalar_matrix is not None:
+            scalar_matrix.destroy()
+        if oracle is not None:
+            oracle.destroy()
         bare.destroy()
