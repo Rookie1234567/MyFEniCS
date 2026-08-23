@@ -227,6 +227,11 @@ def _synthetic_record(
         },
         "runtime": rank_facts[0]["runtime"],
         "rank_facts": rank_facts,
+        "closeout": {
+            "metadata_allgather": True,
+            "metadata_allgather_scope": "rank_runtime_and_five_scalar_facts_only",
+            "global_numeric_allgather": False,
+        },
         "settings": {
             "ksp_type": "gmres",
             "pc_side": "right",
@@ -306,6 +311,32 @@ def _synthetic_record(
         "artifacts": descriptors,
         "status": "facts_written_no_worker_classification",
     }
+    common_markers = [
+        "rank_metadata_collect_enter",
+        "rank_metadata_collect_exit",
+        "record_written",
+    ]
+    root_markers = [
+        "rank_metadata_collect_enter",
+        "rank_metadata_collect_exit",
+        "record_build_begin",
+        "record_build_end",
+        "record_encode_begin",
+        "record_encode_end",
+        "record_write_begin",
+        "record_write_end",
+        "record_written",
+    ]
+    for rank in range(mpi_size):
+        stages = root_markers if rank == 0 else common_markers
+        marker_path = raw_dir / f"stage-rank{rank}.jsonl"
+        marker_path.write_text(
+            "".join(
+                json.dumps({"rank": rank, "stage": stage, "time": index}) + "\n"
+                for index, stage in enumerate(stages)
+            ),
+            encoding="utf-8",
+        )
     record_path.write_text(json.dumps(record, indent=2), encoding="utf-8")
     return record_path
 
@@ -512,3 +543,21 @@ def test_k1_checker_rejects_formula_and_settings_mutations(tmp_path: Path) -> No
     assert result["passed"] is False
     assert any("source formula" in item for item in result["contract_errors"])
     assert any("setting pc_side" in item for item in result["contract_errors"])
+
+
+def test_k1_closeout_requires_metadata_scope_and_ordered_markers(tmp_path: Path) -> None:
+    missing_audit = _synthetic_record(tmp_path, source_name="gradient")
+    record = json.loads(missing_audit.read_text())
+    record.pop("closeout")
+    missing_audit.write_text(json.dumps(record), encoding="utf-8")
+    result = check_suite_record(missing_audit)
+    assert result["passed"] is False
+    assert any("closeout audit" in item for item in result["contract_errors"])
+
+    bad_markers = _synthetic_record(tmp_path, source_name="curl")
+    marker_path = Path(json.loads(bad_markers.read_text())["raw_dir"]) / "stage-rank0.jsonl"
+    lines = marker_path.read_text(encoding="utf-8").splitlines()
+    marker_path.write_text("\n".join(reversed(lines)) + "\n", encoding="utf-8")
+    result = check_suite_record(bad_markers)
+    assert result["passed"] is False
+    assert any("marker order" in item for item in result["contract_errors"])

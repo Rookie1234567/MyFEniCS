@@ -120,6 +120,54 @@ def _json_bytes(value: Any) -> bytes:
     )
 
 
+def _closeout_record(
+    comm: MPI.Comm,
+    raw_dir: Path,
+    record_path: Path,
+    rank_fact: dict[str, Any],
+    build_record: Any,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Close one MPI record with symmetric metadata and root-write handoff."""
+
+    _append_stage_marker(raw_dir, "rank_metadata_collect_enter", comm.rank)
+    rank_facts = comm.allgather(rank_fact)
+    _append_stage_marker(raw_dir, "rank_metadata_collect_exit", comm.rank)
+
+    result: dict[str, Any] = {"ok": False}
+    if comm.rank == 0:
+        try:
+            _append_stage_marker(raw_dir, "record_build_begin", comm.rank)
+            record = build_record(rank_facts)
+            _append_stage_marker(raw_dir, "record_build_end", comm.rank)
+            _append_stage_marker(raw_dir, "record_encode_begin", comm.rank)
+            payload = _json_bytes(record)
+            _append_stage_marker(raw_dir, "record_encode_end", comm.rank)
+            _append_stage_marker(raw_dir, "record_write_begin", comm.rank)
+            record_path.write_bytes(payload)
+            _append_stage_marker(raw_dir, "record_write_end", comm.rank)
+            result = {"ok": True, "record_bytes": int(len(payload))}
+        except Exception as exc:
+            result = {
+                "ok": False,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            }
+            try:
+                _append_stage_marker(raw_dir, "record_closeout_failed", comm.rank)
+            except Exception as marker_exc:
+                result["marker_error"] = f"{type(marker_exc).__name__}: {marker_exc}"
+
+    result = comm.bcast(result, root=0)
+    if not result.get("ok", False):
+        raise RuntimeError(
+            "K1 record closeout failed: "
+            f"{result.get('error_type', 'UnknownError')}: {result.get('error', '')}"
+        )
+    _append_stage_marker(raw_dir, "record_written", comm.rank)
+    comm.barrier()
+    return rank_facts, result
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -698,16 +746,15 @@ def run_suite_worker(
             "iterations": int(k1_result["iterations"]),
             "reason": int(k1_result["reason"]),
         }
-        rank_facts = comm.gather(rank_fact, root=0)
-        if comm.rank == 0:
+        def build_record(all_rank_facts: list[dict[str, Any]]) -> dict[str, Any]:
             count_ranges = {
                 key: {
-                    "min": min(int(item[key]) for item in rank_facts),
-                    "max": max(int(item[key]) for item in rank_facts),
+                    "min": min(int(item[key]) for item in all_rank_facts),
+                    "max": max(int(item[key]) for item in all_rank_facts),
                 }
                 for key in ("matvec_count", "pc_apply_count", "monitor_action_count")
             }
-            record = {
+            return {
                 "schema": K1_SCHEMA,
                 "stage": "k1-suite",
                 "scope": "krylov_requalification_suite",
@@ -737,7 +784,12 @@ def run_suite_worker(
                 ],
                 "source": source,
                 "runtime": runtime,
-                "rank_facts": rank_facts,
+                "rank_facts": all_rank_facts,
+                "closeout": {
+                    "metadata_allgather": True,
+                    "metadata_allgather_scope": "rank_runtime_and_five_scalar_facts_only",
+                    "global_numeric_allgather": False,
+                },
                 "settings": K0_SETTINGS.as_dict(),
                 "old_l2_reference": {
                     "record_sha256": OLD_L2_RECORD_SHA,
@@ -814,21 +866,24 @@ def run_suite_worker(
                 "artifacts": artifacts,
                 "status": "facts_written_no_worker_classification",
             }
-            record_path.write_bytes(_json_bytes(record))
+
+        rank_facts, closeout = _closeout_record(
+            comm, raw_dir, record_path, rank_fact, build_record
+        )
+        if comm.rank == 0:
             print(
                 json.dumps(
                     {
                         "record": str(record_path),
                         "case": case,
                         "source": source_name,
-                        "status": record["status"],
+                        "status": "facts_written_no_worker_classification",
+                        "record_bytes": closeout["record_bytes"],
                     },
                     sort_keys=True,
                 ),
                 flush=True,
             )
-        _append_stage_marker(raw_dir, "record_written", comm.rank)
-        comm.barrier()
     finally:
         if k1_result is not None:
             destroy_k0_gmres_result(k1_result)

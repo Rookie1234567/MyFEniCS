@@ -802,6 +802,71 @@ def _check_k1_command(
         errors.append("K1 command provenance does not close with record identity")
 
 
+def _check_k1_closeout(record: dict[str, Any], errors: list[str]) -> None:
+    closeout = record.get("closeout")
+    if not isinstance(closeout, dict):
+        errors.append("K1 closeout audit is missing")
+        return
+    if closeout.get("metadata_allgather") is not True:
+        errors.append("K1 closeout metadata_allgather must be true")
+    if closeout.get("metadata_allgather_scope") != (
+        "rank_runtime_and_five_scalar_facts_only"
+    ):
+        errors.append("K1 closeout metadata_allgather scope is not frozen")
+    if closeout.get("global_numeric_allgather") is not False:
+        errors.append("K1 closeout global_numeric_allgather must be false")
+
+    raw_dir = Path(str(record.get("raw_dir", ""))).resolve()
+    mpi_size = record.get("mpi_size")
+    if not isinstance(mpi_size, int) or mpi_size < 1:
+        return
+    marker_rows: dict[int, list[str]] = {}
+    for rank in range(mpi_size):
+        path = raw_dir / f"stage-rank{rank}.jsonl"
+        if not path.is_file():
+            errors.append(f"K1 closeout marker file is missing for rank {rank}")
+            continue
+        stages: list[str] = []
+        try:
+            for line in path.read_text(encoding="utf-8").splitlines():
+                item = json.loads(line)
+                if item.get("rank") != rank or not isinstance(item.get("stage"), str):
+                    raise ValueError("marker rank/stage does not close")
+                stages.append(item["stage"])
+        except Exception as exc:
+            errors.append(f"K1 closeout marker rank {rank} is invalid: {exc}")
+            continue
+        marker_rows[rank] = stages
+        common = (
+            "rank_metadata_collect_enter",
+            "rank_metadata_collect_exit",
+            "record_written",
+        )
+        positions = [stages.index(stage) if stage in stages else -1 for stage in common]
+        if any(position < 0 for position in positions) or positions != sorted(positions):
+            errors.append(f"K1 closeout marker order is incomplete for rank {rank}")
+        if stages.count("record_written") != 1:
+            errors.append(f"K1 closeout record_written count is not one for rank {rank}")
+
+    root_stages = marker_rows.get(0, [])
+    root_required = (
+        "record_build_begin",
+        "record_build_end",
+        "record_encode_begin",
+        "record_encode_end",
+        "record_write_begin",
+        "record_write_end",
+    )
+    root_positions = [
+        root_stages.index(stage) if stage in root_stages else -1
+        for stage in root_required
+    ]
+    if any(position < 0 for position in root_positions) or root_positions != sorted(root_positions):
+        errors.append("K1 root closeout marker sequence is incomplete")
+    if root_stages and "record_closeout_failed" in root_stages:
+        errors.append("K1 record contains a closeout failure marker")
+
+
 def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> None:
     if record.get("schema") != K1_SCHEMA:
         errors.append("K1 schema is not frozen")
@@ -817,6 +882,7 @@ def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> None:
     degree, mpi_size = K1_CASE_SPECS[case]
     if record.get("degree") != degree or record.get("mpi_size") != mpi_size:
         errors.append("K1 case degree/MPI identity does not close")
+    _check_k1_closeout(record, errors)
     source = record.get("source")
     if not isinstance(source, dict):
         errors.append("K1 source identity is missing")
