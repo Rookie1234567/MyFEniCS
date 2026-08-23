@@ -28,9 +28,11 @@ __all__ = (
     "PetscInterfaceSchurOracle",
     "ProjectedExactPetrovAction",
     "PetscDistributedPetrovAction",
+    "PetscFixedProjectedGroupInverse",
     "build_numpy_interface_schur_oracle",
     "build_petsc_interface_schur_oracle",
     "build_distributed_petrov_action",
+    "build_fixed_projected_group_inverse",
     "project_petrov_columns",
 )
 
@@ -724,6 +726,204 @@ class PetscDistributedPetrovAction:
         self._destroyed = True
 
 
+class PetscFixedProjectedGroupInverse:
+    """Distributed Woodbury inverse over one borrowed exact base factor.
+
+    The represented operator is ``A = B + U V^H``.  ``B`` is supplied only
+    through a factor-like object exposing ``solve(source, target)``.  U, V,
+    and ``W = B^-1 U`` remain owner-local; only
+    ``K = I + V^H W`` and its SVD are replicated.  This is a research-only
+    carrier for the conditional V1-3 path, not a KSP or a full-side inverse.
+    """
+
+    def __init__(
+        self,
+        template: PETSc.Vec,
+        base_factor: Any,
+        local_u: np.ndarray,
+        local_v: np.ndarray,
+    ) -> None:
+        if not callable(getattr(base_factor, "solve", None)):
+            raise TypeError("base_factor must expose solve(source, target)")
+        self._comm = template.getComm().tompi4py()
+        self._template = template.duplicate()
+        self._base_factor = base_factor
+        self._ownership_range = tuple(map(int, template.getOwnershipRange()))
+        self.global_rows = int(template.getSize())
+        self.local_rows = int(template.getLocalSize())
+        self._local_u = np.asarray(local_u, dtype=np.complex128).copy()
+        self._local_v = np.asarray(local_v, dtype=np.complex128).copy()
+        self._w_local: np.ndarray | None = None
+        self._k: np.ndarray | None = None
+        self._k_svd: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+        self._base_solution = None
+        self._destroyed = False
+        self.apply_count = 0
+        self.base_solve_count = 0
+        try:
+            local_shape_valid = bool(
+                self._local_u.ndim == 2
+                and self._local_v.ndim == 2
+                and self._local_u.shape == self._local_v.shape
+                and self._local_u.shape[0] == self.local_rows
+                and self._local_u.shape[1] > 0
+            )
+            local_rank = int(self._local_u.shape[1]) if self._local_u.ndim == 2 else -1
+            shape_valid = bool(self._comm.allreduce(local_shape_valid, op=MPI.LAND))
+            rank_min = int(self._comm.allreduce(local_rank, op=MPI.MIN))
+            rank_max = int(self._comm.allreduce(local_rank, op=MPI.MAX))
+            if not shape_valid or rank_min <= 0 or rank_min != rank_max:
+                raise ValueError(
+                    "Woodbury owner-local U/V arrays have incompatible shapes"
+                )
+            finite = bool(
+                np.all(np.isfinite(self._local_u))
+                and np.all(np.isfinite(self._local_v))
+            )
+            if not self._comm.allreduce(finite, op=MPI.LAND):
+                raise ValueError("Woodbury owner-local U/V arrays are not finite")
+            self.rank = rank_min
+            self._base_solution = self._template.duplicate()
+            u_vector = self._template.duplicate()
+            w_vector = self._template.duplicate()
+            w_local = np.empty((self.local_rows, self.rank), dtype=np.complex128)
+            try:
+                for column in range(self.rank):
+                    u_vector.array[:] = np.asarray(
+                        self._local_u[:, column], dtype=PETSc.ScalarType
+                    )
+                    u_vector.assemble()
+                    self._base_factor.solve(u_vector, w_vector)
+                    self.base_solve_count += 1
+                    w_local[:, column] = np.asarray(w_vector.array, dtype=np.complex128)
+            finally:
+                w_vector.destroy()
+                u_vector.destroy()
+            local_k = self._local_v.conj().T @ w_local
+            k = self._allreduce_small(local_k)
+            k += np.eye(self.rank, dtype=np.complex128)
+            self._k_svd = self._factor_small(k)
+            self._w_local = w_local
+            self._k = k
+        except Exception:
+            self.destroy()
+            raise
+
+    def _allreduce_small(self, value: np.ndarray) -> np.ndarray:
+        result = np.empty_like(np.asarray(value, dtype=np.complex128))
+        self._comm.Allreduce(np.asarray(value, dtype=np.complex128), result, op=MPI.SUM)
+        return result
+
+    @staticmethod
+    def _factor_small(
+        matrix: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        u, singular_values, vh = np.linalg.svd(matrix, full_matrices=False)
+        if singular_values.size == 0 or not np.all(np.isfinite(singular_values)):
+            raise ValueError("Woodbury small K SVD is not finite")
+        tolerance = (
+            np.finfo(float).eps
+            * max(matrix.shape)
+            * max(float(singular_values[0]), 1.0)
+        )
+        if singular_values[-1] <= tolerance:
+            raise ValueError("Woodbury small K is singular")
+        return u, singular_values, vh
+
+    def _solve_small(self, rhs: np.ndarray) -> np.ndarray:
+        if self._k_svd is None:
+            raise RuntimeError("Woodbury small K is unavailable")
+        u, singular_values, vh = self._k_svd
+        return vh.conj().T @ ((u.conj().T @ rhs) / singular_values)
+
+    def _check_layout(self, vector: PETSc.Vec) -> None:
+        if (
+            int(vector.getSize()) != self.global_rows
+            or int(vector.getLocalSize()) != self.local_rows
+            or tuple(map(int, vector.getOwnershipRange())) != self._ownership_range
+        ):
+            raise ValueError("Woodbury Vec has the wrong ownership layout")
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        """Apply ``(B + U V^H)^-1`` to distributed ``source``."""
+
+        if self._destroyed:
+            raise RuntimeError("Woodbury group inverse is destroyed")
+        self._check_layout(source)
+        self._check_layout(target)
+        if self._w_local is None:
+            raise RuntimeError("Woodbury owner-local W is unavailable")
+        self._base_factor.solve(source, self._base_solution)
+        self.base_solve_count += 1
+        local_rhs = self._local_v.conj().T @ np.asarray(
+            self._base_solution.array, dtype=np.complex128
+        )
+        coefficients = self._solve_small(self._allreduce_small(local_rhs))
+        self._base_solution.copy(target)
+        target.array[:] -= np.asarray(
+            self._w_local @ coefficients, dtype=PETSc.ScalarType
+        )
+        finite = bool(
+            np.all(np.isfinite(coefficients)) and np.all(np.isfinite(target.array))
+        )
+        if not self._comm.allreduce(finite, op=MPI.LAND):
+            raise FloatingPointError(
+                "Woodbury group inverse produced non-finite values"
+            )
+        self.apply_count += 1
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        if self._destroyed:
+            return {
+                "schema": "task040.v1_3.fixed_projected_group_inverse.v1",
+                "destroyed": True,
+                "apply_count": self.apply_count,
+                "base_solve_count": self.base_solve_count,
+                "base_factor_reference_released": True,
+            }
+        if self._k is None or self._w_local is None or self._k_svd is None:
+            raise RuntimeError("Woodbury diagnostics requested before setup")
+        singular_values = self._k_svd[1]
+        return {
+            "schema": "task040.v1_3.fixed_projected_group_inverse.v1",
+            "operator_identity": "B_plus_U_VH",
+            "global_rows": self.global_rows,
+            "local_rows": self.local_rows,
+            "ownership_range": list(self._ownership_range),
+            "owner_local_u_shape": list(self._local_u.shape),
+            "owner_local_v_shape": list(self._local_v.shape),
+            "owner_local_w_shape": list(self._w_local.shape),
+            "small_replicated_shapes": {"K": list(self._k.shape)},
+            "K_rank": int(np.linalg.matrix_rank(self._k)),
+            "K_singular_values": singular_values.tolist(),
+            "K_condition_number": float(singular_values[0] / singular_values[-1]),
+            "normal_equations": False,
+            "fe_numeric_allgather": False,
+            "nested_ksp_count": 0,
+            "base_factor_borrowed": True,
+            "base_factor_reference_released": False,
+            "apply_count": self.apply_count,
+            "base_solve_count": self.base_solve_count,
+            "destroyed": False,
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        if self._base_solution is not None:
+            self._base_solution.destroy()
+            self._base_solution = None
+        self._template.destroy()
+        self._local_u = np.empty((0, 0), dtype=np.complex128)
+        self._local_v = np.empty((0, 0), dtype=np.complex128)
+        self._w_local = None
+        self._k = None
+        self._k_svd = None
+        self._base_factor = None
+        self._destroyed = True
+
+
 def build_distributed_petrov_action(
     layout: PETSc.Vec,
     scalar_apply: Callable[[PETSc.Vec, PETSc.Vec], None],
@@ -735,6 +935,22 @@ def build_distributed_petrov_action(
 
     return PetscDistributedPetrovAction(
         layout, scalar_apply, exact_apply, local_z, local_y
+    )
+
+
+def build_fixed_projected_group_inverse(
+    template: PETSc.Vec,
+    base_factor: Any,
+    local_u: np.ndarray,
+    local_v: np.ndarray,
+) -> PetscFixedProjectedGroupInverse:
+    """Build the opt-in distributed ``B + U V^H`` inverse carrier."""
+
+    return PetscFixedProjectedGroupInverse(
+        template,
+        base_factor,
+        local_u,
+        local_v,
     )
 
 
