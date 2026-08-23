@@ -6,7 +6,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 
@@ -510,6 +510,178 @@ def _watchdog_pass(
         return False
 
 
+def _timeline_resource_audit(
+    run: Mapping[str, Any],
+    watchdog: Mapping[str, Any],
+    timeline_rows: Sequence[Mapping[str, Any]] | None,
+    *,
+    watchdog_raw_pass: bool,
+    timeline_sha256: str | None,
+    run_summary_sha256: str,
+) -> dict[str, Any]:
+    raw_status = watchdog.get("all_status_readable")
+    raw_swap_status = watchdog.get("swap_authority_readable")
+    base = {
+        "available": timeline_rows is not None,
+        "applicable": False,
+        "pass": False,
+        "raw_summary_all_status_readable": raw_status,
+        "raw_summary_swap_authority_readable": raw_swap_status,
+        "raw_sample_count": watchdog.get("sample_count"),
+        "raw_peak_rss_bytes": watchdog.get("peak_rss_bytes"),
+        "excluded_terminal_teardown_count": 0,
+        "authoritative_sample_count": 0,
+        "derived_all_status_readable": False,
+        "derived_swap_authority_readable": False,
+        "derived_peak_rss_bytes": 0,
+        "derived_peak_swap_bytes": 0,
+        "derived_peak_dedicated_cgroup_swap_bytes": 0,
+        "timeline_sha256": timeline_sha256,
+        "timeline_hash_bound": False,
+        "count_binding_pass": False,
+    }
+    if watchdog_raw_pass or raw_status is not False or raw_swap_status is not False:
+        return base
+    base["applicable"] = True
+    if timeline_rows is None:
+        return base
+    expected_timeline_sha = watchdog.get("artifact_hashes", {}).get(
+        "process_tree_samples.jsonl"
+    )
+    base["timeline_hash_bound"] = bool(
+        isinstance(timeline_sha256, str)
+        and isinstance(expected_timeline_sha, str)
+        and timeline_sha256 == expected_timeline_sha
+    )
+    rows = list(timeline_rows)
+    if not rows or not base["timeline_hash_bound"]:
+        return base
+    if watchdog.get("sample_count") != len(rows):
+        return base
+    if any(
+        field in row
+        for row in rows
+        for field in (
+            "authoritative_sample",
+            "terminal_teardown_excluded",
+            "sample_process_alive_before",
+            "sample_process_alive_after",
+            "post_sample_return_code",
+        )
+    ):
+        return base
+    last = rows[-1]
+    try:
+        last_authority = last["resource_authority"]
+        last_process_tree = last_authority["process_tree"]
+        last_job_cgroup = last_authority.get("job_cgroup", {})
+        last_ok = (
+            last.get("stage") == "cleanup"
+            and last.get("stage_status") == "complete"
+            and last_process_tree["pids"]
+            and last_process_tree["all_status_readable"] is False
+            and last.get("swap_bytes") == 0
+            and last_process_tree["swap_bytes"] == 0
+            and (
+                not last_job_cgroup.get("dedicated_job_cgroup")
+                or last_job_cgroup.get("swap_current_bytes") == 0
+            )
+        )
+    except (KeyError, TypeError, ValueError):
+        return base
+    if not last_ok:
+        return base
+    base["excluded_terminal_teardown_count"] = 1
+    authoritative_rows = rows[:-1]
+    if not authoritative_rows:
+        return base
+    peak_rss = 0
+    peak_swap = 0
+    peak_dedicated_swap = 0
+    for row in authoritative_rows:
+        try:
+            authority = row["resource_authority"]
+            process_tree = authority["process_tree"]
+            job_cgroup = authority.get("job_cgroup", {})
+            rss_bytes = row["rss_bytes"]
+            swap_bytes = row["swap_bytes"]
+            process_swap = process_tree["swap_bytes"]
+            if (
+                not process_tree["pids"]
+                or process_tree["all_status_readable"] is not True
+                or not _finite(rss_bytes)
+                or float(rss_bytes) < 0
+                or swap_bytes != 0
+                or process_swap != 0
+            ):
+                return base
+            peak_rss = max(peak_rss, int(rss_bytes))
+            peak_swap = max(peak_swap, int(swap_bytes), int(process_swap))
+            if job_cgroup.get("dedicated_job_cgroup"):
+                dedicated_swap = job_cgroup.get("swap_current_bytes")
+                if dedicated_swap is None:
+                    return base
+                peak_dedicated_swap = max(peak_dedicated_swap, int(dedicated_swap))
+                if dedicated_swap != 0:
+                    return base
+        except (KeyError, TypeError, ValueError):
+            return base
+    derived_swap_readable = True
+    base.update(
+        {
+            "authoritative_sample_count": len(authoritative_rows),
+            "derived_all_status_readable": True,
+            "derived_swap_authority_readable": derived_swap_readable,
+            "derived_peak_rss_bytes": peak_rss,
+            "derived_peak_swap_bytes": peak_swap,
+            "derived_peak_dedicated_cgroup_swap_bytes": peak_dedicated_swap,
+        }
+    )
+    excluded_count = int(base["excluded_terminal_teardown_count"])
+    count_binding = watchdog.get("sample_count") == (
+        len(authoritative_rows) + excluded_count
+    )
+    base["count_binding_pass"] = count_binding
+    audited_watchdog = dict(watchdog)
+    audited_watchdog.update(
+        {
+            "all_status_readable": True,
+            "sample_count": len(authoritative_rows),
+            "swap_authority_readable": derived_swap_readable,
+            "peak_rss_bytes": peak_rss,
+            "peak_swap_bytes": peak_swap,
+            "peak_dedicated_cgroup_swap_bytes": peak_dedicated_swap,
+        }
+    )
+    summary_matches = (
+        watchdog.get("peak_rss_bytes") == peak_rss
+        and watchdog.get("peak_swap_bytes") == peak_swap
+        and watchdog.get("peak_dedicated_cgroup_swap_bytes") == peak_dedicated_swap
+    )
+    run_hash_valid = (
+        watchdog.get("run_summary_present") is True
+        and bool(run_summary_sha256)
+        and watchdog.get("run_summary_sha256") == run_summary_sha256
+    )
+    base.update(
+        {
+            "summary_peak_matches_derived": summary_matches,
+            "run_summary_hash_valid": run_hash_valid,
+            "pass": bool(
+                summary_matches
+                and run_hash_valid
+                and base["timeline_hash_bound"]
+                and count_binding
+                and _watchdog_pass(run, audited_watchdog, run_summary_sha256)
+                and peak_rss < RESOURCE_LIMIT_BYTES
+                and peak_swap == 0
+                and peak_dedicated_swap == 0
+            ),
+        }
+    )
+    return base
+
+
 def _source_binding_pass(
     run: Mapping[str, Any],
     watchdog: Mapping[str, Any],
@@ -552,6 +724,8 @@ def recompute_v2_consumer(
     manifest_sha256: str = TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
     run_summary_sha256: str = "",
     expected_source_sha: str | None = None,
+    timeline_rows: Sequence[Mapping[str, Any]] | None = None,
+    timeline_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Recompute V2-B evidence without reading worker status/pass fields."""
 
@@ -559,6 +733,20 @@ def recompute_v2_consumer(
     if not isinstance(raw, Mapping):
         raw = {}
     screen = _screen_checks(raw)
+    watchdog_raw_pass = _watchdog_pass(
+        run_summary, watchdog_summary, run_summary_sha256
+    )
+    timeline_audit = _timeline_resource_audit(
+        run_summary,
+        watchdog_summary,
+        timeline_rows,
+        timeline_sha256=timeline_sha256,
+        watchdog_raw_pass=watchdog_raw_pass,
+        run_summary_sha256=run_summary_sha256,
+    )
+    watchdog_pass = watchdog_raw_pass
+    if timeline_audit["applicable"]:
+        watchdog_pass = timeline_audit["pass"] is True
     checks = {
         "identity": _identity_pass(run_summary, raw, packet_manifest, manifest_sha256),
         "source_binding": _source_binding_pass(
@@ -568,7 +756,8 @@ def recompute_v2_consumer(
         "inventory_lifecycle": _inventory_and_lifecycle_pass(raw),
         "one_apply_implementation": _one_apply_pass(raw),
         "fgmres_contract": screen["contract_pass"],
-        "watchdog": _watchdog_pass(run_summary, watchdog_summary, run_summary_sha256),
+        "watchdog": watchdog_pass,
+        "watchdog_raw": watchdog_raw_pass,
     }
     identity_pass = (
         checks["identity"] and checks["representation"] and checks["source_binding"]
@@ -601,6 +790,7 @@ def recompute_v2_consumer(
         "numerical_pass": screen.get("numerical_pass") is True,
         "classification": classification,
         "gate_pass": classification == "PROJECTED_EXACT_TRANSMISSION_PASS",
+        "legacy_lifecycle_audit": timeline_audit,
     }
 
 
@@ -618,10 +808,22 @@ def check_v2_consumer(
     watchdog_path = Path(
         watchdog_summary_path or run_directory / "watchdog_summary.json"
     )
+    timeline_path = run_directory / "process_tree_samples.jsonl"
     manifest_path = Path(packet_root) / "manifest.json"
     run_summary = json.loads(run_path.read_text(encoding="utf-8"))
     packet_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     watchdog_summary = json.loads(watchdog_path.read_text(encoding="utf-8"))
+    timeline_rows: list[dict[str, Any]] | None = None
+    timeline_sha256: str | None = None
+    if timeline_path.is_file():
+        timeline_rows = []
+        timeline_sha256 = _sha256(timeline_path)
+        try:
+            for line in timeline_path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    timeline_rows.append(json.loads(line))
+        except (OSError, json.JSONDecodeError):
+            timeline_rows = []
     return recompute_v2_consumer(
         run_summary,
         watchdog_summary,
@@ -629,6 +831,8 @@ def check_v2_consumer(
         manifest_sha256=_sha256(manifest_path),
         run_summary_sha256=_sha256(run_path),
         expected_source_sha=expected_source_sha,
+        timeline_rows=timeline_rows,
+        timeline_sha256=timeline_sha256,
     )
 
 

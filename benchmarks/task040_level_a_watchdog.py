@@ -188,6 +188,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     hard_stop_bytes = int(plan["absolute_terminate_memory_bytes"])
     started = time.monotonic()
     sample_count = 0
+    terminal_teardown_excluded_count = 0
     peak_rss_bytes = 0
     peak_swap_bytes = 0
     all_status_readable = True
@@ -224,23 +225,30 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             job_cgroup = authority["job_cgroup"]
             has_cgroup = bool(job_cgroup["dedicated_job_cgroup"])
             live_sample = bool(process_tree.get("pids"))
-            if live_sample:
+            post_sample_return_code = process.poll()
+            terminal_teardown_excluded = post_sample_return_code is not None
+            authoritative_sample = live_sample and not terminal_teardown_excluded
+            peak_rss_bytes = max(peak_rss_bytes, rss_bytes)
+            peak_swap_bytes = max(peak_swap_bytes, swap_bytes)
+            dedicated_cgroup_present = dedicated_cgroup_present or has_cgroup
+            dedicated_swap = None
+            if has_cgroup:
+                dedicated_swap = job_cgroup["swap_current_bytes"]
+                if dedicated_swap is not None:
+                    peak_dedicated_cgroup_swap_bytes = max(
+                        peak_dedicated_cgroup_swap_bytes, int(dedicated_swap)
+                    )
+            if authoritative_sample:
                 sample_count += 1
-                peak_rss_bytes = max(peak_rss_bytes, rss_bytes)
-                peak_swap_bytes = max(peak_swap_bytes, swap_bytes)
                 all_status_readable = all_status_readable and bool(
                     process_tree["all_status_readable"]
                 )
-                dedicated_cgroup_present = dedicated_cgroup_present or has_cgroup
                 if has_cgroup:
-                    dedicated_swap = job_cgroup["swap_current_bytes"]
                     dedicated_cgroup_swap_readable = (
                         dedicated_cgroup_swap_readable and dedicated_swap is not None
                     )
-                    if dedicated_swap is not None:
-                        peak_dedicated_cgroup_swap_bytes = max(
-                            peak_dedicated_cgroup_swap_bytes, int(dedicated_swap)
-                        )
+            elif terminal_teardown_excluded:
+                terminal_teardown_excluded_count += 1
             stage, status = _latest_stage(stages_path)
             row = {
                 "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -250,6 +258,11 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 "rss_bytes": rss_bytes,
                 "swap_bytes": swap_bytes,
                 "resource_authority": authority,
+                "authoritative_sample": authoritative_sample,
+                "terminal_teardown_excluded": terminal_teardown_excluded,
+                "sample_process_alive_before": True,
+                "sample_process_alive_after": not terminal_teardown_excluded,
+                "post_sample_return_code": post_sample_return_code,
             }
             _write_jsonl(timeline, row)
             if elapsed - previous_heartbeat >= HEARTBEAT_SECONDS:
@@ -260,11 +273,24 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                     flush=True,
                 )
                 previous_heartbeat = elapsed
-            return_code = process.poll()
-            if not live_sample and return_code is not None:
-                termination_reason = "natural_exit"
+            if terminal_teardown_excluded:
+                if rss_bytes >= hard_stop_bytes:
+                    termination_reason = "absolute_memory_limit"
+                elif swap_bytes > SWAP_LIMIT_BYTES or (
+                    dedicated_swap is not None and dedicated_swap > SWAP_LIMIT_BYTES
+                ):
+                    termination_reason = "swap_detected"
+                else:
+                    termination_reason = "natural_exit"
                 process_control = terminate_process_tree(process)
                 break
+            if not authoritative_sample:
+                if elapsed >= TASK040_LEVEL_A_TIMEOUT_SECONDS:
+                    termination_reason = "wall_timeout"
+                    process_control = terminate_process_tree(process)
+                    break
+                time.sleep(SAMPLE_INTERVAL_SECONDS)
+                continue
             if rss_bytes >= hard_stop_bytes:
                 termination_reason = "absolute_memory_limit"
             elif (
@@ -295,6 +321,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         "return_code": process.returncode,
         "process_control": process_control,
         "sample_count": sample_count,
+        "authoritative_sample_count": sample_count,
+        "terminal_teardown_excluded_count": terminal_teardown_excluded_count,
         "peak_rss_bytes": peak_rss_bytes,
         "peak_swap_bytes": peak_swap_bytes,
         "peak_dedicated_cgroup_swap_bytes": peak_dedicated_cgroup_swap_bytes,

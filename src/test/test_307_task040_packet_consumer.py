@@ -470,6 +470,28 @@ def _consumer_run_fixture() -> tuple[
     return run, watchdog, manifest
 
 
+def _consumer_timeline_row(
+    *, readable: bool, stage: str, stage_status: str = "running"
+) -> dict[str, object]:
+    return {
+        "stage": stage,
+        "stage_status": stage_status,
+        "rss_bytes": 1,
+        "swap_bytes": 0,
+        "resource_authority": {
+            "process_tree": {
+                "pids": [1],
+                "all_status_readable": readable,
+                "swap_bytes": 0,
+            },
+            "job_cgroup": {
+                "dedicated_job_cgroup": False,
+                "swap_current_bytes": 0,
+            },
+        },
+    }
+
+
 def _provenance() -> dict[str, object]:
     return {
         "schema": "task040.v2.interface_packet_producer.v1",
@@ -691,3 +713,93 @@ def test_v2_consumer_checker_recomputes_gate_and_classifies_tamper():
         expected_source_sha="e" * 40,
     )
     assert source_result["classification"] == "PACKET_COORDINATE_IDENTITY_FAIL"
+
+
+def test_v2_consumer_checker_excludes_legacy_terminal_teardown() -> None:
+    run, watchdog, manifest = _consumer_run_fixture()
+    raw = run["interface_packet_raw"]
+    screen = raw["fgmres_screen"]
+    for item in screen["phase1"].values():
+        for checkpoint in ("4", "8", "16"):
+            item["checkpoints"][checkpoint]["true_residual_relative"] = 0.99
+            item["checkpoints"][checkpoint]["reported_relative_residual"] = 0.99
+    screen["phase2"] = {}
+    screen["conditional_32_authorized"] = False
+    raw["first_preferred_checkpoint"] = None
+    watchdog["all_status_readable"] = False
+    watchdog["swap_authority_readable"] = False
+    watchdog["sample_count"] = 3
+    watchdog["artifact_hashes"] = {"process_tree_samples.jsonl": "timeline-sha"}
+    timeline = [
+        _consumer_timeline_row(readable=True, stage="running"),
+        _consumer_timeline_row(readable=True, stage="running"),
+        _consumer_timeline_row(
+            readable=False, stage="cleanup", stage_status="complete"
+        ),
+    ]
+    result = consumer_checker.recompute_v2_consumer(
+        run,
+        watchdog,
+        manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha=run["source_sha"],
+        timeline_rows=timeline,
+        timeline_sha256="timeline-sha",
+    )
+    audit = result["legacy_lifecycle_audit"]
+    assert result["checks"]["watchdog_raw"] is False
+    assert result["checks"]["watchdog"] is True
+    assert result["resource_pass"] is True
+    assert result["classification"] == "THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT"
+    assert audit["raw_summary_all_status_readable"] is False
+    assert audit["raw_summary_swap_authority_readable"] is False
+    assert audit["excluded_terminal_teardown_count"] == 1
+    assert audit["authoritative_sample_count"] == 2
+    assert audit["derived_all_status_readable"] is True
+    assert audit["derived_swap_authority_readable"] is True
+    assert audit["derived_peak_rss_bytes"] == 1
+    assert audit["timeline_sha256"] == "timeline-sha"
+    assert audit["timeline_hash_bound"] is True
+    assert audit["count_binding_pass"] is True
+
+
+@pytest.mark.parametrize("case", ("hash_mismatch", "nonterminal"))
+def test_v2_consumer_checker_rejects_malformed_teardown_timeline(case: str) -> None:
+    run, watchdog, manifest = _consumer_run_fixture()
+    watchdog["all_status_readable"] = False
+    watchdog["swap_authority_readable"] = False
+    if case == "hash_mismatch":
+        watchdog["artifact_hashes"] = {
+            "process_tree_samples.jsonl": "different-timeline"
+        }
+        timeline = [
+            _consumer_timeline_row(readable=True, stage="running"),
+            _consumer_timeline_row(readable=True, stage="running"),
+            _consumer_timeline_row(
+                readable=False, stage="cleanup", stage_status="complete"
+            ),
+        ]
+    elif case == "nonterminal":
+        watchdog["artifact_hashes"] = {"process_tree_samples.jsonl": "bad-timeline"}
+        timeline = [
+            _consumer_timeline_row(readable=True, stage="running"),
+            _consumer_timeline_row(readable=False, stage="running"),
+        ]
+    else:
+        raise AssertionError(case)
+    result = consumer_checker.recompute_v2_consumer(
+        run,
+        watchdog,
+        manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha=run["source_sha"],
+        timeline_rows=timeline,
+        timeline_sha256="bad-timeline",
+    )
+    assert result["checks"]["watchdog"] is False
+    assert result["resource_pass"] is False
+    assert result["legacy_lifecycle_audit"]["pass"] is False
+    if case == "hash_mismatch":
+        assert result["legacy_lifecycle_audit"]["timeline_hash_bound"] is False
