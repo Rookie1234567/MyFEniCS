@@ -1,0 +1,163 @@
+{
+  "schema": "task040.v2.interface_schur_packet_producer.compact.v1",
+  "task": "Task040",
+  "stage": "V2-A1",
+  "status": "completed_diagnostic_oracle",
+  "classification": "ORACLE_RESOURCE_TARGET_PASS",
+  "qualification_boundary": "packet_complete_diagnostic_only; V2-B_pending",
+  "source_sha": "942c43881e4162085348c48b09c79fbbdac18cd9",
+  "checker_fix_sha": "bd70ab98009de2a2b45561793be6418a6a9bfcc8",
+  "formal_root": "results/task040_v2_interface_packet_producer_mpi8_942c4388",
+  "frozen_identity": {
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "selected_mode_packet_manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "selected_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "probe_manifest": "benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_probe_manifest_v1.json",
+    "probe_manifest_sha256": "7a03b2cf80fe5081d1fe1248b9d4c79f3ef4e955a8014e905c2f2ca82797baad",
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "exact_spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "resolved_config_sha256": "f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883",
+    "lower_mode_key_sha256": "046afb0b3d3531f728dc958c1b0c8a321ffa51fb8a0e6ecf6834d462d5ab37e5",
+    "lower_resolved_mode_metadata_sha256": "dde523dc62c73f7bd50953958fde42d42d0cfd5756c16329b16915e13c4742da",
+    "lower_legacy_beta_metadata_sha256": "a58a3c6bc335bb5ae7f6b929a7abce4c193dedb27b115f17304091afb353318c",
+    "upper_mode_key_sha256": "089d6abfac9f482e7f6001988b9d1c12b1721c09a86749cdefcbfc4f22e82673",
+    "upper_beta_sha256": "aee266f602bf704ffbc3d7551be661b05e1663f84205012bfe26c8fd5983f6c9",
+    "mpi": 8,
+    "threads": 1,
+    "qep_calls": 0,
+    "pde_solve": "not_run",
+    "fgmres": "not_run",
+    "ordinary_defaults_changed": false
+  },
+  "resource": {
+    "method": "task040_v2_interface_packet_producer",
+    "return_code": 0,
+    "termination_reason": "natural_exit",
+    "wall_seconds_process_sample": 1202.5501016210765,
+    "peak_rss_bytes": 30823858176,
+    "peak_rss_gib": 28.706954956054688,
+    "preferred_memory_bytes": 48318382080,
+    "preferred_class": "preferred_le_45_gib",
+    "preferred_pass": true,
+    "hard_stop_bytes": 59055800320,
+    "hard_stop_triggered": false,
+    "swap_bytes": 0,
+    "all_status_readable": true,
+    "sample_count": 2385,
+    "a2_fallback": "not_run_not_needed",
+    "pss_uss": "not_recorded_not_available"
+  },
+  "packet": {
+    "root": "results/task040_v2_interface_packet_producer_mpi8_942c4388/worker/interface_packet",
+    "manifest_sha256": "19de50f3cdb32766bf6f13fc55c9ac498b21a9a00ddc261768d7d55b7c9da8b0",
+    "packet_complete": true,
+    "file_count": 34,
+    "bytes": 653804117,
+    "owner_row_shard_count": 24,
+    "small_matrix_file_count": 9,
+    "global_gamma_counts": {
+      "group0": 7560,
+      "group1": 15120,
+      "group2": 7560
+    },
+    "modal_spans": {
+      "group0": 296,
+      "group1": 776,
+      "group2": 480
+    },
+    "gram_rank": {
+      "group0": 296,
+      "group1": 776,
+      "group2": 480
+    },
+    "gram_condition": {
+      "group0": 187.9352369709664,
+      "group1": 1075856.58741676,
+      "group2": 113913.61949721041
+    },
+    "mapping_sha256": {
+      "group0": "57fd081412137c192a763081cdc272c235eea4f8b2aedaf77d501ed0eeed9d49",
+      "group1": "d7b00977379ec82f9ecd50b9f43ae35e8b355774a9d869ed33631826f373f8d5",
+      "group2": "884b4c6216b9c20d3ac6d03452c9a698c7d78b2eed4ccc8ae165d9603a8bb08d"
+    },
+    "checker_raw_authority": {
+      "probe_count": 23,
+      "physical_count": 15,
+      "interface_count": 8,
+      "middle_cross_count": 8,
+      "complement_count": 4,
+      "max_projected_exact_relative": 1.0281892054707484,
+      "max_projected_exact_relative_is_v2b_gate": false
+    },
+    "representation": {
+      "basis_global_replicated": false,
+      "numeric_allgather": false,
+      "fe_numeric_allgather": false,
+      "dense_schur_materialization": false
+    }
+  },
+  "factor_lifecycle": {
+    "exact_oracle_factor_count_ready": 3,
+    "exact_oracle_factor_count_after_cleanup": 0,
+    "simultaneous_factor_count_max": 3,
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0,
+    "action_destroyed": true,
+    "factor_cleanup_observed": true
+  },
+  "identity_observed": {
+    "exact_output_identity_sha256": {
+      "modal_traction_positive": "3100fd4f186ba720ef8ef030e4fc45749d6726927e420102884d71016b0fe8cb",
+      "modal_traction_negative": "a7a42879e64d78e3de3f956747806b628f01fa482bece281a8b20bda1bf065e4",
+      "external_dtn_coupling": "f0f1c970644aebe13a7fe94806205f83c02c5ea90554ccc2987bd5720d7c37f8",
+      "fixed_random_repeat_0": "5322aabafa153d073e635fd80aa1f729f7e1c9c98dab2032ef3f2a67d6860baa",
+      "fixed_random_repeat_1": "51429f3bd4db63c6cb870d10b7e6f757ac82255fa8871bb4af9d8449eeaa2c93"
+    }
+  },
+  "checker": {
+    "command": "python -m benchmarks.check_task040_v2_packet --packet-root results/task040_v2_interface_packet_producer_mpi8_942c4388/worker/interface_packet --watchdog-summary results/task040_v2_interface_packet_producer_mpi8_942c4388/watchdog_summary.json",
+    "source_commit_sha": "bd70ab98009de2a2b45561793be6418a6a9bfcc8",
+    "source_file_sha256": "c534713ef85df88f0396ae11f466eda0f624d5877b62e6e53c315829d8bf869a",
+    "first_attempt": {
+      "output": "results/task040_v2_interface_packet_producer_mpi8_942c4388/checker_recomputed.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failure": "implementation_schema_failure: physical reports in the real producer schema have no finite marker; the pre-fix checker required it"
+    },
+    "after_fix": {
+      "output": "results/task040_v2_interface_packet_producer_mpi8_942c4388/checker_recomputed_after_fix.json",
+      "sha256": "3af14190afd9b8e84a2529bf63f2bda348d465d0d47bba166c3682a0b2b32536",
+      "return_code": 0,
+      "packet_complete": true,
+      "checks_all_pass": true
+    },
+    "fix_validation": {
+      "serial_test306": "6/6 passed",
+      "mpi2_test306": "6/6 passed",
+      "mpi4_test306": "6/6 passed",
+      "ruff_format_compileall_diff": "passed"
+    }
+  },
+  "raw_hashes": {
+    "worker/run_summary.json": "e427f2e21f3fd55cad09243ca03636976f2e7537381343261754a63ae7d49678",
+    "watchdog_summary.json": "9821701019fd64392009b28245606112e97224e304c910de7d7b9561fb4ac388",
+    "memory_stage_markers.raw.jsonl": "291a27e6bad62c0311199a8e8a4ffbb00b49fe43643b64e2f0b2c0851a10b42b",
+    "memory_stages.jsonl": "6c9d0b1f496a4800d605d393c531cc494b61faceba1f6f2d62b486d4fd8eb2c2",
+    "process_tree_samples.jsonl": "1259dd06b07c01566d1c3f725c0792d9b8e99e8b36bec6fccbd27cbed5712c6d",
+    "worker_stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "checker_recomputed.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "checker_recomputed_after_fix.json": "3af14190afd9b8e84a2529bf63f2bda348d465d0d47bba166c3682a0b2b32536",
+    "interface_packet_manifest.json": "19de50f3cdb32766bf6f13fc55c9ac498b21a9a00ddc261768d7d55b7c9da8b0"
+  },
+  "not_run": {
+    "v2_a2_fallback": "not_run_not_needed",
+    "v2_b": "pending; no consumer created or run",
+    "v2_c_to_v2_f": "not_run_by_gate",
+    "pde": "not_run",
+    "qep": "not_run",
+    "fgmres": "not_run"
+  },
+  "boundary": "This producer establishes a hash-bound diagnostic/oracle packet only. It is not a scalable side inverse, not a V2-B consumer result, and not a full-workflow saving tier. The inherited V1 resource-stop evidence remains unchanged."
+}

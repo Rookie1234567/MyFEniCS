@@ -20,6 +20,7 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 | V1-6 | bottom/top/both/full Hybrid | not_run_by_gate | V1-5 未运行 |
 | V1-7 | conditional h3 scalability probe | not_run_by_gate | V1-6 未运行 |
 | V1-8 | evidence/docs closeout | completed | 本页、compact record 与 `response_v2.md` 已完成并通过轻量合同检查 |
+| V2-A1 | interface-Schur packet producer | completed_diagnostic_oracle | packet 完整、独立 checker 通过；这是诊断/oracle authority，不是 scalable side inverse 或 V2-B 结果 |
 
 ## 正式身份与最新 Run B 资源
 
@@ -88,3 +89,36 @@ information，也不能判断完整 Hybrid 或 0.7 nm feasibility。若未来继
 
 完整 raw 和日志留在 ignored `results/`；轻量证据见
 [V1-2 resource-stop compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_v1_3_run_b_resource_stop_v1.json)。
+
+## V2-A1 producer 结果
+
+V2-A1 使用独立 producer 进程在同一冻结 5nm/1deg/phi0/S/p6h4/M480/MPI8 配置下完成
+hash-bound interface-Schur packet。它的作用是把人工截面的精确信息整理成后续 consumer
+可以读取的诊断包；它没有运行 PDE、QEP、FGMRES，也没有构造 V1-3 projected factor。
+
+| 项目 | 实际结果 |
+|---|---|
+| producer source / checker-fix SHA | `942c43881e4162085348c48b09c79fbbdac18cd9` / `bd70ab98009de2a2b45561793be6418a6a9bfcc8` |
+| formal root | `results/task040_v2_interface_packet_producer_mpi8_942c4388` |
+| exit / wall | natural exit, rc0 / `1202.5501016210765 s` |
+| peak / preferred / hard | `30,823,858,176 B = 28.706954956054688 GiB` / `<=45 GiB` pass / `55 GiB` 未触发 |
+| swap / A2 fallback | `0 B` / `not_run_not_needed` |
+| packet | 34 files, 653,804,117 B；24 owner-row shards |
+| Gamma rows / modal spans | `7560/15120/7560` / `296/776/480` |
+| Gram rank / condition | `296/776/480` / `187.9352369709664`, `1075856.58741676`, `113913.61949721041` |
+| reports | physical/interface/middle/complement `15/8/8/4` |
+| lifecycle | exact oracle `3 -> 0`；full/global/nested `0/0/0` |
+
+首次 checker 失败是 schema implementation failure：真实 physical report 没有 `finite` marker，
+但其显式数值字段和 contractions 全部 finite；旧 checker 错误要求该 marker。修复后
+serial/MPI2/MPI4 的 test306 均为 `6/6 passed`，fresh checker `rc0`。producer packet、
+历史失败输出和 V1 resource stop 均保留，未被改写为算法负结果。
+
+本次 packet 只证明 diagnostic/oracle authority 和可复核的 owner-row 数据包完成；
+`max_projected_exact_relative=1.0281892054707484` 不是 V2-B Gate。V2-B consumer 仍为
+`pending`，当前没有新的 full-workflow saving tier；完整 workflow baseline 仍以
+`93.377006531 GiB` direct 和 `80.025856018 GiB` exact-side iterative 为准。详细身份、
+raw hashes 和 checker 输出见
+[V2-A1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v2_interface_schur_packet_producer_v1.json)
+与
+[V2-A1 producer outcome](interface_schur_packet_producer.md)。
