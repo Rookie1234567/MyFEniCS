@@ -1,8 +1,10 @@
-"""Thin K0 worker for the independent Krylov LOR-HX requalification lane.
+"""Thin K0/K1 worker for the independent Krylov LOR-HX requalification lane.
 
-The worker records one p2/h50 MPI1 attempt.  Numerical construction remains
-in ``src.solvers.fullspace_lor_hx_krylov`` and the existing positive fixture;
-this file only owns provenance, canonical evidence, and lifecycle markers.
+The historical K0 route records one p2/h50 MPI1 attempt; the K1 suite route
+parameterizes the four frozen degree/MPI cases and four frozen sources.
+Numerical construction remains in ``src.solvers.fullspace_lor_hx_krylov`` and
+the existing positive fixture; this file only owns provenance, canonical
+evidence, and lifecycle markers.
 """
 
 from __future__ import annotations
@@ -36,7 +38,11 @@ from src.solvers.fullspace_lor_hx_krylov import (
     run_k0_gmres,
     two_direction_linearity,
 )
-from src.solvers.fullspace_lor_native_hx_fixture import RealL2PositiveHXFixture
+from src.solvers.fullspace_lor_native_hx_fixture import (
+    L2_SOURCE_NAMES,
+    RealL2PositiveHXFixture,
+    l2_source_formula,
+)
 
 
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
@@ -50,6 +56,34 @@ OLD_L2_RECORD_SHA = "0a6ccfdb6a28b003167046e3ca3fc5e4de0d40825784786319661901a65
 OLD_L2_RHO = 1.7348663090876784
 OLD_L2_LIMIT = 0.45
 OLD_L2_CLASSIFICATION = "CONTROLLED_NEGATIVE_BY_POSITIVE_AUXILIARY_CONTRACTION_GATE"
+K0_WORKER_RECORD_SHA = "87594e2c06de8ea031dad0ce8ac364626dcc2dbb6d9ff8846ad6f19663d9098d"
+K0_CHECKER_V2_SHA = "0ad2b91aceb08b5cdd5ae68944f3625689f0a3f38c2ae0dfeb43461a827df807"
+K1_SCHEMA = "task038.lor-native-complex-hx.k1-suite-record.v1"
+K1_CASE_SPECS = {
+    "p2-mpi1": (2, 1),
+    "p2-mpi2": (2, 2),
+    "p3-mpi1": (3, 1),
+    "p3-mpi2": (3, 2),
+}
+K1_SOURCE_NAMES = tuple(L2_SOURCE_NAMES)
+
+
+def _vec_relative(left: Any, right: Any) -> float:
+    difference = left.copy()
+    difference.axpy(-1.0, right)
+    numerator = float(difference.norm())
+    denominator = max(float(right.norm()), np.finfo(float).tiny)
+    difference.destroy()
+    return numerator / denominator
+
+
+def _vec_finite(comm: MPI.Comm, vector: Any) -> bool:
+    local = bool(np.all(np.isfinite(vector.getArray(readonly=True))))
+    return bool(comm.allreduce(1 if local else 0, op=MPI.MIN))
+
+
+def _global_bool(comm: MPI.Comm, value: bool) -> bool:
+    return bool(comm.allreduce(1 if value else 0, op=MPI.MIN))
 
 
 def _jsonable(value: Any) -> Any:
@@ -505,21 +539,342 @@ def run_worker(
             fixture.destroy()
 
 
+def run_suite_worker(
+    raw_dir: Path,
+    record_path: Path,
+    expected_source_sha: str,
+    expected_mpi_size: int,
+    case: str,
+    source_name: str,
+) -> None:
+    """Record one parameterized K1 degree/MPI/source suite member."""
+
+    comm = MPI.COMM_WORLD
+    try:
+        degree, case_mpi_size = K1_CASE_SPECS[case]
+    except KeyError as exc:
+        raise ValueError(f"unsupported K1 suite case {case!r}") from exc
+    if source_name not in K1_SOURCE_NAMES:
+        raise ValueError(f"unsupported K1 suite source {source_name!r}")
+    if expected_mpi_size != case_mpi_size or comm.size != case_mpi_size:
+        raise ValueError("K1 case and MPI size do not agree")
+
+    _prepare_paths(raw_dir, record_path, comm, stage="k1-suite")
+    _append_stage_marker(raw_dir, "paths_ready", comm.rank)
+    root = Path.cwd()
+    source = _source_identity(root, expected_source_sha) if comm.rank == 0 else None
+    source = comm.bcast(source, root=0)
+    source["probe_rank"] = 0
+    source["probe_scope"] = "rank0_git_probe_broadcast"
+    _append_stage_marker(raw_dir, "source_identity_broadcast", comm.rank)
+    runtime = _runtime_identity(root, expected_mpi_size)
+    _append_stage_marker(raw_dir, "runtime_identity", comm.rank)
+
+    fixture = None
+    source_before = source_after = residual = None
+    residual_before = residual_after = None
+    pc_output = pc_repeat = applied_output = true_residual = None
+    final_solution = final_action = final_true_residual = None
+    k1_result: dict[str, Any] | None = None
+    artifacts: list[dict[str, Any]] = []
+    try:
+        fixture = RealL2PositiveHXFixture(degree, comm)
+        _append_stage_marker(raw_dir, "fixture_built", comm.rank)
+        source_before, source_facts = fixture.build_l2_source(source_name)
+        residual = fixture.apply_high_action_copy(source_before)
+        source_after = source_before.copy()
+        residual_before = residual.copy()
+        pc_output = fixture.apply_high_preconditioner(residual)
+        pc_repeat = fixture.apply_high_preconditioner(residual)
+        residual_after = residual.copy()
+        applied_output = fixture.apply_high_action_copy(pc_output)
+        true_residual = residual.copy()
+        true_residual.axpy(-1.0, applied_output)
+        repeat_relative = _vec_relative(pc_repeat, pc_output)
+        rho = _vec_relative(true_residual, residual)
+        finite = True
+        for vector in (
+            source_before,
+            source_after,
+            residual,
+            pc_output,
+            pc_repeat,
+            applied_output,
+            true_residual,
+        ):
+            finite = _vec_finite(comm, vector) and finite
+        source_unchanged = _global_bool(
+            comm, np.array_equal(source_before.array, source_after.array)
+        )
+        residual_input_unchanged = _global_bool(
+            comm, np.array_equal(residual_before.array, residual_after.array)
+        )
+        _append_stage_marker(raw_dir, "suite_one_apply", comm.rank)
+
+        k1_result = run_k0_gmres(fixture, residual)
+        final_solution = k1_result["solution"].copy()
+        final_action = fixture.apply_high_action_copy(k1_result["solution"])
+        final_true_residual = residual.copy()
+        final_true_residual.axpy(-1.0, final_action)
+        _append_stage_marker(raw_dir, "suite_krylov_solved", comm.rank)
+
+        one_apply_roles: dict[str, dict[str, str] | None] = {}
+        prefix = f"k1_{source_name}"
+        one_apply_roles["source_before"] = _write_canonical_role(
+            comm, fixture, raw_dir, f"{prefix}_source_before", source_before, "primal", artifacts
+        )
+        one_apply_roles["source_after"] = _write_canonical_role(
+            comm, fixture, raw_dir, f"{prefix}_source_after", source_after, "primal", artifacts
+        )
+        for role, vector, vector_role in (
+            ("residual_before", residual_before, "dual"),
+            ("residual_after", residual_after, "dual"),
+            ("residual", residual, "dual"),
+            ("pc_output", pc_output, "primal"),
+            ("pc_repeat", pc_repeat, "primal"),
+            ("applied_output", applied_output, "dual"),
+            ("true_residual", true_residual, "dual"),
+        ):
+            one_apply_roles[role] = _write_canonical_role(
+                comm, fixture, raw_dir, f"{prefix}_{role}", vector, vector_role, artifacts
+            )
+
+        checkpoint_records: dict[str, dict[str, Any]] = {}
+        for checkpoint in K0_CHECKPOINTS:
+            status = k1_result["checkpoint_status"][checkpoint]
+            item: dict[str, Any] = {"status": status}
+            if status == "measured":
+                vectors = k1_result["checkpoints"][checkpoint]
+                roles: dict[str, dict[str, str]] = {}
+                for role, vector, vector_role in (
+                    ("solution", vectors["solution"], "primal"),
+                    ("action", vectors["action"], "dual"),
+                    ("true_residual", vectors["true_residual"], "dual"),
+                ):
+                    roles[role] = _write_canonical_role(
+                        comm,
+                        fixture,
+                        raw_dir,
+                        f"{prefix}_checkpoint_{checkpoint}_{role}",
+                        vector,
+                        vector_role,
+                        artifacts,
+                    )
+                item["artifacts"] = roles
+            checkpoint_records[str(checkpoint)] = item
+
+        final_roles = {
+            "solution": _write_canonical_role(
+                comm, fixture, raw_dir, f"{prefix}_final_solution", final_solution, "primal", artifacts
+            ),
+            "action": _write_canonical_role(
+                comm, fixture, raw_dir, f"{prefix}_final_action", final_action, "dual", artifacts
+            ),
+            "true_residual": _write_canonical_role(
+                comm,
+                fixture,
+                raw_dir,
+                f"{prefix}_final_true_residual",
+                final_true_residual,
+                "dual",
+                artifacts,
+            ),
+        }
+        _append_stage_marker(raw_dir, "canonical_packets_gathered", comm.rank)
+
+        rank_fact = {
+            "rank": int(comm.rank),
+            "runtime": runtime,
+            "matvec_count": int(k1_result["operator_context"].matvec_count),
+            "pc_apply_count": int(k1_result["pc_context"].apply_count),
+            "monitor_action_count": int(k1_result["monitor_action_count"]),
+            "iterations": int(k1_result["iterations"]),
+            "reason": int(k1_result["reason"]),
+        }
+        rank_facts = comm.gather(rank_fact, root=0)
+        if comm.rank == 0:
+            count_ranges = {
+                key: {
+                    "min": min(int(item[key]) for item in rank_facts),
+                    "max": max(int(item[key]) for item in rank_facts),
+                }
+                for key in ("matvec_count", "pc_apply_count", "monitor_action_count")
+            }
+            record = {
+                "schema": K1_SCHEMA,
+                "stage": "k1-suite",
+                "scope": "krylov_requalification_suite",
+                "case": case,
+                "degree": degree,
+                "source_name": source_name,
+                "mpi_size": expected_mpi_size,
+                "raw_dir": str(raw_dir.resolve()),
+                "command": [
+                    str(Path(sys.executable).resolve()),
+                    "-m",
+                    "benchmarks.run_task038_full3d_lor_hx_krylov",
+                    "--stage",
+                    "k1-suite",
+                    "--case",
+                    case,
+                    "--source",
+                    source_name,
+                    "--raw-dir",
+                    str(raw_dir.resolve()),
+                    "--record",
+                    str(record_path.resolve()),
+                    "--expected-source-sha",
+                    expected_source_sha,
+                    "--expected-mpi-size",
+                    str(expected_mpi_size),
+                ],
+                "source": source,
+                "runtime": runtime,
+                "rank_facts": rank_facts,
+                "settings": K0_SETTINGS.as_dict(),
+                "old_l2_reference": {
+                    "record_sha256": OLD_L2_RECORD_SHA,
+                    "rho": OLD_L2_RHO,
+                    "limit": OLD_L2_LIMIT,
+                    "classification": OLD_L2_CLASSIFICATION,
+                },
+                "linearity_authority": {
+                    "status": "引用K0 authority，不在K1重复计算",
+                    "record_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_v1.json",
+                    "record_sha256": K0_WORKER_RECORD_SHA,
+                    "checker_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_check_v2.json",
+                    "checker_sha256": K0_CHECKER_V2_SHA,
+                    "old_one_apply_rho": OLD_L2_RHO,
+                    "old_one_apply_classification": OLD_L2_CLASSIFICATION,
+                },
+                "source_facts": {
+                    **_jsonable(source_facts),
+                    "name": source_name,
+                    "formula": l2_source_formula(source_name),
+                    "phase_application": K0_PHASE_APPLICATION,
+                    "primal_role": "full_fe",
+                },
+                "one_apply": {
+                    "artifacts": one_apply_roles,
+                    "input_role": "dual",
+                    "output_role": "primal",
+                    "rho": float(rho),
+                    "rho_status": "diagnostic_only_not_a_gate",
+                    "residual_norm": float(residual.norm()),
+                    "finite": finite,
+                    "source_unchanged": source_unchanged,
+                    "residual_input_unchanged": residual_input_unchanged,
+                    "repeat_relative": float(repeat_relative),
+                    "alpha_status": "not_repeated_by_contract",
+                },
+                "krylov": {
+                    "history": k1_result["history"],
+                    "checkpoints": checkpoint_records,
+                    "final_artifacts": final_roles,
+                    "reason": int(k1_result["reason"]),
+                    "iterations": int(k1_result["iterations"]),
+                    "first_true_pass_iteration": k1_result["first_true_pass_iteration"],
+                    "late_true_pass_iteration": k1_result["late_true_pass_iteration"],
+                    "qualification_pass": bool(k1_result["qualification_pass"]),
+                    "reported_final_residual": k1_result["reported_final_residual"],
+                    "final_true_residual": float(
+                        final_true_residual.norm()
+                        / max(float(residual.norm()), np.finfo(float).tiny)
+                    ),
+                    "matvec_count": int(k1_result["operator_context"].matvec_count),
+                    "pc_apply_count": int(k1_result["pc_context"].apply_count),
+                    "monitor_action_count": int(k1_result["monitor_action_count"]),
+                    "final_action_count": 1,
+                },
+                "count_ranges": count_ranges,
+                "fixture_audit": _jsonable(fixture.audit),
+                "hx_audit_after_k1": _jsonable(fixture.hx.audit),
+                "production": {
+                    "production_pc_alpha_applied": False,
+                    "global_numeric_allgather": False,
+                    "high_order_global_aij": False,
+                    "global_dense_transfer": False,
+                    "global_direct_coarse": False,
+                    "evidence_root_gather_only": True,
+                },
+                "forbidden": {
+                    "global_numeric_allgather": False,
+                    "high_order_global_aij": False,
+                    "global_dense_transfer": False,
+                    "global_direct_coarse": False,
+                },
+                "artifacts": artifacts,
+                "status": "facts_written_no_worker_classification",
+            }
+            record_path.write_bytes(_json_bytes(record))
+            print(
+                json.dumps(
+                    {
+                        "record": str(record_path),
+                        "case": case,
+                        "source": source_name,
+                        "status": record["status"],
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+        _append_stage_marker(raw_dir, "record_written", comm.rank)
+        comm.barrier()
+    finally:
+        if k1_result is not None:
+            destroy_k0_gmres_result(k1_result)
+        _destroy_vectors(
+            [
+                final_true_residual,
+                final_action,
+                final_solution,
+                true_residual,
+                residual_after,
+                residual_before,
+                applied_output,
+                pc_repeat,
+                pc_output,
+                residual,
+                source_after,
+                source_before,
+            ]
+        )
+        if fixture is not None:
+            fixture.destroy()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--stage", choices=("k0", "k1-suite"), default="k0")
     parser.add_argument("--case", required=True)
+    parser.add_argument("--source")
     parser.add_argument("--raw-dir", required=True, type=Path)
     parser.add_argument("--record", required=True, type=Path)
     parser.add_argument("--expected-source-sha", required=True)
     parser.add_argument("--expected-mpi-size", required=True, type=int)
     args = parser.parse_args(argv)
-    run_worker(
-        args.raw_dir,
-        args.record,
-        args.expected_source_sha,
-        args.expected_mpi_size,
-        args.case,
-    )
+    if args.stage == "k1-suite":
+        if args.source is None:
+            parser.error("--source is required for --stage k1-suite")
+        run_suite_worker(
+            args.raw_dir,
+            args.record,
+            args.expected_source_sha,
+            args.expected_mpi_size,
+            args.case,
+            args.source,
+        )
+    else:
+        if args.source is not None:
+            parser.error("--source is only valid for --stage k1-suite")
+        run_worker(
+            args.raw_dir,
+            args.record,
+            args.expected_source_sha,
+            args.expected_mpi_size,
+            args.case,
+        )
     return 0
 
 

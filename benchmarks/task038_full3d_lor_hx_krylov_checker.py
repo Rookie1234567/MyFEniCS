@@ -1,4 +1,4 @@
-"""Independent checker for the K0 Krylov requalification facts.
+"""Independent checker for K0 facts and the parameterized K1 suite.
 
 The checker reads only JSON and ``.npy`` artifacts.  It intentionally does
 not import the runner, the HX fixture, PETSc, MPI, or any solver module.
@@ -44,6 +44,37 @@ K0_DIRECTION_INPUT_ROLE = (
 K0_DIRECTION_COEFFICIENTS = (0.375 + 0.25j, -0.625 + 0.5j)
 K0_RUNNER_MODULE = "benchmarks.run_task038_full3d_lor_hx_krylov"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
+K1_SCHEMA = "task038.lor-native-complex-hx.k1-suite-record.v1"
+K1_CHECKER_SCHEMA = "task038.lor-native-complex-hx.k1-suite-check.v1"
+K1_RUNNER_MODULE = "benchmarks.run_task038_full3d_lor_hx_krylov"
+K1_CASE_SPECS = {
+    "p2-mpi1": (2, 1),
+    "p2-mpi2": (2, 2),
+    "p3-mpi1": (3, 1),
+    "p3-mpi2": (3, 2),
+}
+K1_SOURCE_NAMES = ("random", "gradient", "curl", "checkerboard")
+K1_SOURCE_FORMULAS = {
+    "random": (
+        "analytic deterministic pseudo-random edge field from fixed "
+        "noninteger trigonometric frequencies and phases"
+    ),
+    "gradient": "grad(sin(2*pi*sx)*sin(2*pi*sy)*sin(2*pi*sz))",
+    "curl": "curl((0,0,sin(2*pi*sx)*sin(2*pi*sy)*sin(2*pi*sz)))",
+    "checkerboard": (
+        "R4 fixed 8-cycle field: "
+        "(high_x*high_y*high_z, high_y*high_z, high_z*high_x)"
+    ),
+}
+K1_PHASE_APPLICATION = K0_PHASE_APPLICATION
+K1_K0_RECORD_SHA = "87594e2c06de8ea031dad0ce8ac364626dcc2dbb6d9ff8846ad6f19663d9098d"
+K1_K0_CHECKER_SHA = "0ad2b91aceb08b5cdd5ae68944f3625689f0a3f38c2ae0dfeb43461a827df807"
+K1_LINEARITY_STATUS = "引用K0 authority，不在K1重复计算"
+K1_SUITE_ORDER = tuple(
+    f"{case}/{source}"
+    for case in K1_CASE_SPECS
+    for source in K1_SOURCE_NAMES
+)
 
 
 def _sha256(path: Path) -> str:
@@ -79,7 +110,11 @@ def _artifact_path(raw_dir: Path, descriptor: dict[str, Any]) -> Path:
 
 
 def _read_array(
-    record: dict[str, Any], descriptors: dict[str, dict[str, Any]], name: str
+    record: dict[str, Any],
+    descriptors: dict[str, dict[str, Any]],
+    name: str,
+    *,
+    require_finite: bool = True,
 ) -> tuple[np.ndarray | None, str | None]:
     descriptor = descriptors.get(name)
     if descriptor is None:
@@ -98,7 +133,7 @@ def _read_array(
             raise ValueError("dtype mismatch")
         if list(array.shape) != list(descriptor["shape"]):
             raise ValueError("shape mismatch")
-        if not _finite(array):
+        if require_finite and not _finite(array):
             raise ValueError("non-finite values")
         return array, None
     except Exception as exc:
@@ -111,15 +146,27 @@ def _load_pair(
     roles: dict[str, Any],
     role: str,
     errors: list[str],
+    *,
+    allow_nonfinite: bool = False,
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
     names = roles.get(role)
     if not isinstance(names, dict) or set(names) != {"keys", "values"}:
         errors.append(f"canonical role {role} is missing keys/values names")
         return None, None
-    keys, error = _read_array(record, descriptors, str(names["keys"]))
+    keys, error = _read_array(
+        record,
+        descriptors,
+        str(names["keys"]),
+        require_finite=not allow_nonfinite,
+    )
     if error:
         errors.append(error)
-    values, error = _read_array(record, descriptors, str(names["values"]))
+    values, error = _read_array(
+        record,
+        descriptors,
+        str(names["values"]),
+        require_finite=not allow_nonfinite,
+    )
     if error:
         errors.append(error)
     if keys is not None:
@@ -717,6 +764,581 @@ def _check_krylov(
     return {"first_true_pass": first_true_pass, "early_pass": early_pass}
 
 
+def _check_k1_command(
+    record: dict[str, Any], record_path: Path, errors: list[str]
+) -> None:
+    command = record.get("command")
+    source = record.get("source")
+    if not isinstance(command, list) or not all(
+        isinstance(item, str) for item in command
+    ):
+        errors.append("K1 command provenance is missing or malformed")
+        return
+    if not isinstance(source, dict):
+        errors.append("K1 command provenance has no source identity")
+        return
+    expected = [
+        command[0] if command else "",
+        "-m",
+        K1_RUNNER_MODULE,
+        "--stage",
+        "k1-suite",
+        "--case",
+        str(record.get("case")),
+        "--source",
+        str(record.get("source_name")),
+        "--raw-dir",
+        str(Path(str(record.get("raw_dir", ""))).resolve()),
+        "--record",
+        str(record_path.resolve()),
+        "--expected-source-sha",
+        str(source.get("expected_sha")),
+        "--expected-mpi-size",
+        str(record.get("mpi_size")),
+    ]
+    if not command or not Path(command[0]).is_absolute():
+        errors.append("K1 command Python executable must be absolute")
+    if command != expected:
+        errors.append("K1 command provenance does not close with record identity")
+
+
+def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> None:
+    if record.get("schema") != K1_SCHEMA:
+        errors.append("K1 schema is not frozen")
+    if record.get("stage") != "k1-suite" or record.get("scope") != "krylov_requalification_suite":
+        errors.append("K1 stage/scope is not frozen")
+    case = record.get("case")
+    source_name = record.get("source_name")
+    if not isinstance(case, str) or case not in K1_CASE_SPECS:
+        errors.append("K1 case is not one of the four frozen cases")
+        return
+    if not isinstance(source_name, str) or source_name not in K1_SOURCE_NAMES:
+        errors.append("K1 source is not one of the four frozen sources")
+    degree, mpi_size = K1_CASE_SPECS[case]
+    if record.get("degree") != degree or record.get("mpi_size") != mpi_size:
+        errors.append("K1 case degree/MPI identity does not close")
+    source = record.get("source")
+    if not isinstance(source, dict):
+        errors.append("K1 source identity is missing")
+    else:
+        sha_values = tuple(source.get(key) for key in ("expected_sha", "commit_sha_start", "commit_sha_end"))
+        if not all(isinstance(value, str) and SHA40.fullmatch(value) for value in sha_values):
+            errors.append("K1 source identity SHA fields are not full hex")
+        elif not (sha_values[0] == sha_values[1] == sha_values[2]):
+            errors.append("K1 source identity SHA fields do not close")
+        if source.get("branch") != BRANCH:
+            errors.append("K1 source branch is not frozen")
+        if source.get("clean_start") is not True or source.get("clean_end") is not True:
+            errors.append("K1 source is not clean")
+        if source.get("probe_rank") != 0 or source.get("probe_scope") != "rank0_git_probe_broadcast":
+            errors.append("K1 source identity was not root-probed and broadcast")
+    runtime = record.get("runtime")
+    if not isinstance(runtime, dict):
+        errors.append("K1 runtime identity is missing")
+    else:
+        for key, expected in (
+            ("qualified_activation", "1"),
+            ("mpi_size", mpi_size),
+            ("petsc_scalar_type", "complex128"),
+            ("petsc_int_type", "int32"),
+        ):
+            if runtime.get(key) != expected:
+                errors.append(f"K1 runtime.{key} is not {expected!r}")
+        for key in ("sys_executable", "qualified_venv_bin_resolved"):
+            if not isinstance(runtime.get(key), str) or not Path(runtime[key]).is_absolute():
+                errors.append(f"K1 runtime.{key} is missing or not absolute")
+    rank_facts = record.get("rank_facts")
+    if not isinstance(rank_facts, list) or len(rank_facts) != mpi_size:
+        errors.append("K1 rank_facts do not cover exactly the case MPI ranks")
+    else:
+        ranks = [item.get("rank") for item in rank_facts if isinstance(item, dict)]
+        if sorted(ranks) != list(range(mpi_size)):
+            errors.append("K1 rank_facts rank IDs are not complete")
+        for item in rank_facts:
+            if not isinstance(item, dict):
+                errors.append("malformed K1 rank fact")
+                continue
+            rank_runtime = item.get("runtime")
+            if not isinstance(rank_runtime, dict):
+                errors.append("K1 rank runtime identity is missing")
+            elif isinstance(runtime, dict):
+                for key in (
+                    "qualified_activation",
+                    "mpi_size",
+                    "petsc_scalar_type",
+                    "petsc_int_type",
+                    "sys_executable",
+                    "qualified_venv_bin_resolved",
+                ):
+                    if rank_runtime.get(key) != runtime.get(key):
+                        errors.append(f"K1 rank runtime.{key} mismatch")
+            for key in ("matvec_count", "pc_apply_count", "monitor_action_count", "iterations", "reason"):
+                if not isinstance(item.get(key), int) or item[key] < 0:
+                    errors.append(f"K1 rank fact {key} is missing or invalid")
+        ranges = record.get("count_ranges")
+        if not isinstance(ranges, dict):
+            errors.append("K1 count_ranges are missing")
+        else:
+            for key in ("matvec_count", "pc_apply_count", "monitor_action_count"):
+                if all(
+                    isinstance(item.get(key), int) and item[key] >= 0
+                    for item in rank_facts
+                ):
+                    expected_range = {
+                        "min": min(int(item[key]) for item in rank_facts),
+                        "max": max(int(item[key]) for item in rank_facts),
+                    }
+                    if ranges.get(key) != expected_range:
+                        errors.append(f"K1 count range {key} does not close")
+                    if expected_range["min"] != expected_range["max"]:
+                        errors.append(f"K1 collective count {key} differs across ranks")
+            krylov = record.get("krylov")
+            if isinstance(krylov, dict):
+                for key in ("matvec_count", "pc_apply_count", "monitor_action_count"):
+                    if krylov.get(key) != rank_facts[0].get(key):
+                        errors.append(f"K1 krylov count {key} does not close with rank 0")
+                for key in ("iterations", "reason"):
+                    if any(item.get(key) != krylov.get(key) for item in rank_facts):
+                        errors.append(f"K1 rank fact {key} does not close")
+    settings = record.get("settings")
+    expected_settings = {
+        "ksp_type": "gmres",
+        "pc_side": "right",
+        "norm_type": "unpreconditioned",
+        "restart": K0_GMRES_RESTART,
+        "max_it": K0_GMRES_MAX_IT,
+        "rtol": K0_GMRES_RTOL,
+        "atol": K0_GMRES_ATOL,
+        "initial_guess_nonzero": False,
+    }
+    if not isinstance(settings, dict):
+        errors.append("K1 settings are missing")
+    else:
+        for key, expected in expected_settings.items():
+            if settings.get(key) != expected:
+                errors.append(f"K1 setting {key} is not frozen")
+    source_facts = record.get("source_facts")
+    if not isinstance(source_facts, dict):
+        errors.append("K1 source_facts are missing")
+    else:
+        if source_facts.get("name") != source_name:
+            errors.append("K1 source_facts name mismatch")
+        expected_formula = K1_SOURCE_FORMULAS.get(source_name) if isinstance(source_name, str) else None
+        if source_facts.get("formula") != expected_formula:
+            errors.append("K1 source formula changed")
+        if source_facts.get("phase_application") != K1_PHASE_APPLICATION:
+            errors.append("K1 phase application changed")
+    linearity = record.get("linearity_authority")
+    if not isinstance(linearity, dict):
+        errors.append("K1 linearity authority is missing")
+    else:
+        if linearity.get("status") != K1_LINEARITY_STATUS:
+            errors.append("K1 linearity authority status changed")
+        if linearity.get("record_sha256") != K1_K0_RECORD_SHA:
+            errors.append("K1 K0 record authority SHA changed")
+        if linearity.get("checker_sha256") != K1_K0_CHECKER_SHA:
+            errors.append("K1 K0 checker authority SHA changed")
+        if linearity.get("old_one_apply_rho") != OLD_L2_RHO:
+            errors.append("K1 old one-apply rho boundary changed")
+        if linearity.get("old_one_apply_classification") != OLD_L2_CLASSIFICATION:
+            errors.append("K1 old one-apply classification changed")
+    old_l2 = record.get("old_l2_reference")
+    if not isinstance(old_l2, dict):
+        errors.append("K1 old_l2_reference is missing")
+    else:
+        if old_l2.get("record_sha256") != OLD_L2_RECORD_SHA:
+            errors.append("K1 old L2 record SHA changed")
+        if old_l2.get("rho") != OLD_L2_RHO:
+            errors.append("K1 old L2 rho changed")
+        if old_l2.get("limit") != OLD_L2_LIMIT:
+            errors.append("K1 old L2 limit changed")
+        if old_l2.get("classification") != OLD_L2_CLASSIFICATION:
+            errors.append("K1 old L2 classification changed")
+    one_apply = record.get("one_apply")
+    if not isinstance(one_apply, dict) or one_apply.get("alpha_status") != "not_repeated_by_contract":
+        errors.append("K1 alpha must be not_repeated_by_contract")
+    elif any(key in one_apply for key in ("alpha", "alpha_star", "rho_alpha")):
+        errors.append("K1 one_apply must not contain alpha diagnostic values")
+    for section_name in ("production", "forbidden"):
+        section = record.get(section_name)
+        if not isinstance(section, dict):
+            errors.append(f"K1 {section_name} audit is missing")
+            continue
+        for key in (
+            "production_pc_alpha_applied",
+            "global_numeric_allgather",
+            "high_order_global_aij",
+            "global_dense_transfer",
+            "global_direct_coarse",
+        ):
+            if section.get(key) is not False:
+                errors.append(f"K1 {section_name}.{key} must be false")
+
+
+def _check_k1_one_apply(
+    record: dict[str, Any],
+    descriptors: dict[str, dict[str, Any]],
+    errors: list[str],
+    gate_failures: list[str],
+) -> tuple[np.ndarray | None, dict[str, Any]]:
+    section = record.get("one_apply")
+    if not isinstance(section, dict):
+        errors.append("K1 one_apply is missing")
+        return None, {}
+    roles = section.get("artifacts")
+    if not isinstance(roles, dict):
+        errors.append("K1 one_apply artifacts are missing")
+        return None, {}
+    loaded = {
+        role: _load_pair(
+            record,
+            descriptors,
+            roles,
+            role,
+            errors,
+            allow_nonfinite=True,
+        )
+        for role in (
+            "source_before",
+            "source_after",
+            "residual_before",
+            "residual_after",
+            "residual",
+            "pc_output",
+            "pc_repeat",
+            "applied_output",
+            "true_residual",
+        )
+    }
+    source_before_keys, source_before = loaded["source_before"]
+    source_after_keys, source_after = loaded["source_after"]
+    residual_before_keys, residual_before = loaded["residual_before"]
+    residual_after_keys, residual_after = loaded["residual_after"]
+    residual_keys, residual = loaded["residual"]
+    pc_keys, pc_output = loaded["pc_output"]
+    pc_repeat_keys, pc_repeat = loaded["pc_repeat"]
+    applied_keys, applied = loaded["applied_output"]
+    true_keys, true = loaded["true_residual"]
+    _same_keys(source_before_keys, source_after_keys, "K1 source before/after", errors)
+    _same_keys(residual_before_keys, residual_after_keys, "K1 residual before/after", errors)
+    _same_keys(residual_before_keys, residual_keys, "K1 residual snapshots", errors)
+    _same_keys(residual_keys, applied_keys, "K1 residual/action", errors)
+    _same_keys(residual_keys, true_keys, "K1 residual/true residual", errors)
+    _same_keys(pc_keys, pc_repeat_keys, "K1 PC output/repeat", errors)
+    source_unchanged = source_before is not None and source_after is not None and np.array_equal(source_before, source_after)
+    input_unchanged = residual_before is not None and residual_after is not None and np.array_equal(residual_before, residual_after)
+    if section.get("source_unchanged") is not source_unchanged:
+        errors.append("K1 source_unchanged does not match raw arrays")
+    if section.get("residual_input_unchanged") is not input_unchanged:
+        errors.append("K1 residual_input_unchanged does not match raw arrays")
+    if not source_unchanged:
+        gate_failures.append("K1 primal source was modified")
+    if not input_unchanged:
+        gate_failures.append("K1 dual residual input was modified")
+    if section.get("input_role") != "dual" or section.get("output_role") != "primal":
+        errors.append("K1 one_apply roles are not dual input/primal output")
+    repeat = _relative(pc_repeat, pc_output) if pc_repeat is not None and pc_output is not None else None
+    if repeat is not None:
+        try:
+            stored_repeat = float(section["repeat_relative"])
+        except (KeyError, TypeError, ValueError):
+            stored_repeat = None
+            errors.append("K1 repeat_relative is missing or non-numeric")
+        if stored_repeat is not None and abs(stored_repeat - repeat) > K0_REPEAT_LIMIT:
+            errors.append("K1 stored repeat_relative does not match raw arrays")
+        if repeat > K0_REPEAT_LIMIT:
+            gate_failures.append(f"K1 PC repeat {repeat} > {K0_REPEAT_LIMIT}")
+    rho = None
+    if residual is not None and applied is not None and true is not None:
+        recomputed_true = residual - applied
+        true_error = _relative(true, recomputed_true)
+        rho = float(np.linalg.norm(recomputed_true) / max(float(np.linalg.norm(residual)), np.finfo(float).tiny))
+        if true_error > K0_REPEAT_LIMIT:
+            errors.append(f"K1 true residual artifact mismatch {true_error}")
+        try:
+            stored_rho = float(section["rho"])
+        except (KeyError, TypeError, ValueError):
+            stored_rho = None
+            errors.append("K1 diagnostic rho is missing or non-numeric")
+        if stored_rho is not None and abs(stored_rho - rho) > 1.0e-13:
+            errors.append("K1 diagnostic rho does not match raw arrays")
+        if section.get("rho_status") != "diagnostic_only_not_a_gate":
+            errors.append("K1 rho is not marked diagnostic-only")
+    finite = all(
+        pair[1] is not None and _finite(pair[1]) for pair in loaded.values()
+    )
+    if section.get("finite") is not finite:
+        errors.append("K1 finite fact does not match raw arrays")
+    if not finite:
+        gate_failures.append("K1 one-apply raw values are non-finite")
+    return residual, {
+        "residual_keys": residual_keys,
+        "rho": rho,
+        "source_unchanged": source_unchanged,
+        "input_unchanged": input_unchanged,
+    }
+
+
+def _check_k1_final(
+    record: dict[str, Any],
+    descriptors: dict[str, dict[str, Any]],
+    residual_keys: np.ndarray | None,
+    residual: np.ndarray | None,
+    errors: list[str],
+    gate_failures: list[str],
+) -> dict[str, Any]:
+    krylov = record.get("krylov")
+    if not isinstance(krylov, dict):
+        errors.append("K1 krylov facts are missing")
+        return {}
+    final_roles = krylov.get("final_artifacts")
+    if not isinstance(final_roles, dict):
+        errors.append("K1 final canonical artifacts are missing")
+        return {}
+    loaded = {
+        role: _load_pair(record, descriptors, final_roles, role, errors)
+        for role in ("solution", "action", "true_residual")
+    }
+    solution_keys, solution = loaded["solution"]
+    action_keys, action = loaded["action"]
+    true_keys, true = loaded["true_residual"]
+    _same_keys(action_keys, true_keys, "K1 final action/true residual", errors)
+    _same_keys(residual_keys, action_keys, "K1 final residual/action", errors)
+    if residual is not None and action is not None and true is not None:
+        recomputed = residual - action
+        if residual.shape != action.shape:
+            errors.append("K1 final residual/action shape mismatch")
+        else:
+            if _relative(true, recomputed) > K0_REPEAT_LIMIT:
+                errors.append("K1 final true residual does not equal residual-action")
+            final_relative = float(np.linalg.norm(recomputed) / max(float(np.linalg.norm(residual)), np.finfo(float).tiny))
+            history = krylov.get("history")
+            if isinstance(history, list) and history:
+                row = history[-1]
+                try:
+                    history_relative = float(row["explicit_true_residual"])
+                except (KeyError, TypeError, ValueError):
+                    history_relative = None
+                    errors.append("K1 final history residual is missing or non-numeric")
+                if history_relative is not None and abs(history_relative - final_relative) > 1.0e-13:
+                    errors.append("K1 final canonical residual disagrees with final history")
+            try:
+                stored_final = float(krylov["final_true_residual"])
+            except (KeyError, TypeError, ValueError):
+                stored_final = None
+                errors.append("K1 final_true_residual is missing or non-numeric")
+            if stored_final is not None and abs(stored_final - final_relative) > 1.0e-13:
+                errors.append("K1 stored final_true_residual disagrees with raw arrays")
+    else:
+        final_relative = None
+    if solution is None or not _finite(solution):
+        errors.append("K1 final primal solution is missing or non-finite")
+    if krylov.get("final_action_count") != 1:
+        errors.append("K1 final action evidence count must be exactly one")
+    return {
+        "solution_keys": solution_keys,
+        "solution": solution,
+        "action_keys": action_keys,
+        "action": action,
+        "true_keys": true_keys,
+        "true": true,
+        "final_relative": final_relative,
+    }
+
+
+def check_suite_record(record_path: str | Path) -> dict[str, Any]:
+    """Independently check one K1 suite record."""
+
+    record_path = Path(record_path).resolve()
+    errors: list[str] = []
+    gate_failures: list[str] = []
+    try:
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {"schema": K1_CHECKER_SCHEMA, "passed": False, "contract_errors": [f"cannot parse record: {exc}"], "gate_failures": []}
+    if not isinstance(record, dict):
+        return {"schema": K1_CHECKER_SCHEMA, "passed": False, "contract_errors": ["record root is not an object"], "gate_failures": []}
+    _check_k1_identity(record, errors)
+    _check_k1_command(record, record_path, errors)
+    descriptors_list = record.get("artifacts")
+    descriptors: dict[str, dict[str, Any]] = {}
+    if not isinstance(descriptors_list, list):
+        errors.append("K1 artifacts list is missing")
+    else:
+        for descriptor in descriptors_list:
+            if not isinstance(descriptor, dict) or not isinstance(descriptor.get("name"), str):
+                errors.append("malformed K1 artifact descriptor")
+                continue
+            name = descriptor["name"]
+            if name in descriptors:
+                errors.append(f"duplicate K1 artifact descriptor {name}")
+            descriptors[name] = descriptor
+    residual, one_facts = _check_k1_one_apply(
+        record,
+        descriptors,
+        errors,
+        gate_failures,
+    )
+    _check_krylov(record, descriptors, residual, errors, gate_failures)
+    final = _check_k1_final(
+        record,
+        descriptors,
+        one_facts.get("residual_keys"),
+        residual,
+        errors,
+        gate_failures,
+    )
+    return {
+        "schema": K1_CHECKER_SCHEMA,
+        "passed": not errors and not gate_failures,
+        "contract_errors": errors,
+        "gate_failures": gate_failures,
+        "facts": {
+            "case": record.get("case"),
+            "source": record.get("source_name"),
+            "degree": record.get("degree"),
+            "mpi_size": record.get("mpi_size"),
+            "first_true_pass": record.get("krylov", {}).get("first_true_pass_iteration") if isinstance(record.get("krylov"), dict) else None,
+            "rho": one_facts.get("rho"),
+            "final_relative": final.get("final_relative"),
+        },
+    }
+
+
+def check_suite_records(record_paths: list[str | Path]) -> dict[str, Any]:
+    """Check exactly the frozen 16-record K1 suite and MPI pairs."""
+
+    paths = [Path(path).resolve() for path in record_paths]
+    contract_errors: list[str] = []
+    gate_failures: list[str] = []
+    individual: dict[str, dict[str, Any]] = {}
+    records: dict[str, dict[str, Any]] = {}
+    observed_order: list[str] = []
+    if len(paths) != len(K1_SUITE_ORDER):
+        contract_errors.append(
+            f"K1 aggregate requires exactly {len(K1_SUITE_ORDER)} records"
+        )
+    for path in paths:
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            contract_errors.append(f"cannot parse {path}: {exc}")
+            continue
+        if not isinstance(record, dict):
+            contract_errors.append(f"record root is not an object: {path}")
+            continue
+        key = f"{record.get('case')}/{record.get('source_name')}"
+        observed_order.append(key)
+        if key in records:
+            contract_errors.append(f"duplicate K1 suite case {key}")
+        records[key] = record
+        individual[key] = check_suite_record(path)
+    missing = sorted(set(K1_SUITE_ORDER) - set(records))
+    unknown = sorted(set(records) - set(K1_SUITE_ORDER))
+    if missing:
+        contract_errors.append(f"missing K1 suite cases: {missing}")
+    if unknown:
+        contract_errors.append(f"unknown K1 suite cases: {unknown}")
+    if observed_order != list(K1_SUITE_ORDER):
+        contract_errors.append("K1 suite records are not in the frozen case/source order")
+    for key, result in individual.items():
+        for item in result.get("contract_errors", []):
+            contract_errors.append(f"{key}: {item}")
+        for item in result.get("gate_failures", []):
+            gate_failures.append(f"{key}: {item}")
+    cross_mpi: dict[str, float] = {}
+    if not contract_errors:
+        for degree in (2, 3):
+            for source in K1_SOURCE_NAMES:
+                left_key = f"p{degree}-mpi1/{source}"
+                right_key = f"p{degree}-mpi2/{source}"
+                left = records[left_key]
+                right = records[right_key]
+                left_desc = {item["name"]: item for item in left["artifacts"]}
+                right_desc = {item["name"]: item for item in right["artifacts"]}
+                left_residual_keys, left_residual = _load_pair(
+                    left,
+                    left_desc,
+                    left["one_apply"]["artifacts"],
+                    "residual",
+                    contract_errors,
+                    allow_nonfinite=True,
+                )
+                right_residual_keys, right_residual = _load_pair(
+                    right,
+                    right_desc,
+                    right["one_apply"]["artifacts"],
+                    "residual",
+                    contract_errors,
+                    allow_nonfinite=True,
+                )
+                left_final = _check_k1_final(
+                    left,
+                    left_desc,
+                    left_residual_keys,
+                    left_residual,
+                    contract_errors,
+                    [],
+                )
+                right_final = _check_k1_final(
+                    right,
+                    right_desc,
+                    right_residual_keys,
+                    right_residual,
+                    contract_errors,
+                    [],
+                )
+                for role in ("solution", "action", "residual"):
+                    if role == "residual":
+                        left_keys, left_values = left_residual_keys, left_residual
+                        right_keys, right_values = right_residual_keys, right_residual
+                    else:
+                        left_keys = left_final[f"{role}_keys"]
+                        right_keys = right_final[f"{role}_keys"]
+                        left_values = left_final[role]
+                        right_values = right_final[role]
+                    if left_keys is None or right_keys is None:
+                        contract_errors.append(
+                            f"missing cross-MPI {role} for {source}/p{degree}"
+                        )
+                        continue
+                    aligned = _reorder_values_by_keys(
+                        right_keys,
+                        right_values,
+                        left_keys,
+                        f"cross-MPI {role} p{degree}/{source}",
+                        contract_errors,
+                    )
+                    if aligned is None:
+                        continue
+                    difference = _relative(left_values, aligned)
+                    cross_mpi[f"p{degree}/{source}/{role}"] = difference
+                    if not np.isfinite(difference) or difference > 1.0e-12:
+                        gate_failures.append(
+                            f"cross-MPI {role} (RHS for residual) mismatch {difference} "
+                            f"for p{degree}/{source}"
+                        )
+        for source in K1_SOURCE_NAMES:
+            for mpi in (1, 2):
+                p2 = records[f"p2-mpi{mpi}/{source}"]["krylov"]
+                p3 = records[f"p3-mpi{mpi}/{source}"]["krylov"]
+                if int(p3["iterations"]) > int(p2["iterations"]) + 10:
+                    gate_failures.append(
+                        f"p3 iterations exceed p2+10 for MPI{mpi}/{source}"
+                    )
+    passed = not contract_errors and not gate_failures
+    return {
+        "schema": K1_CHECKER_SCHEMA,
+        "stage": "k1-suite",
+        "passed": passed,
+        "contract_errors": contract_errors,
+        "gate_failures": gate_failures,
+        "expected_order": list(K1_SUITE_ORDER),
+        "individual": {key: result for key, result in individual.items()},
+        "cross_mpi_relative": cross_mpi,
+    }
+
+
 def check_record(record_path: str | Path) -> dict[str, Any]:
     """Independently classify one K0 record without changing it."""
 
@@ -791,10 +1413,22 @@ def check_record(record_path: str | Path) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--record", required=True, type=Path)
+    parser.add_argument("--stage", choices=("k0", "k1-suite"), default="k0")
+    parser.add_argument("--record", type=Path)
+    parser.add_argument("--records", nargs="+", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
-    result = check_record(args.record)
+    if args.stage == "k1-suite":
+        if args.records:
+            result = check_suite_records(args.records)
+        elif args.record is not None:
+            result = check_suite_record(args.record)
+        else:
+            parser.error("--stage k1-suite requires --record or --records")
+    else:
+        if args.record is None or args.records:
+            parser.error("K0 checker requires exactly one --record")
+        result = check_record(args.record)
     encoded = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output is not None:
         args.output.write_text(encoded, encoding="utf-8")
