@@ -6,10 +6,13 @@ from copy import deepcopy
 
 import pytest
 
+from benchmarks import check_task040_v2_consumer as consumer_checker
 from benchmarks.task040_level_a import (
     TASK040_LEVEL_A_HARD_STOP_BYTES,
+    TASK040_LEVEL_A_SOURCE_LABELS,
     TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG,
     TASK040_V2_INTERFACE_PACKET_CONSUMER_METHOD,
+    TASK040_V2_INTERFACE_PACKET_CONSUMER_PROFILE_ID,
     TASK040_V2_INTERFACE_PACKET_CONSUMER_SCHEMA,
     TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
     _run_v2_packet_consumer,
@@ -18,6 +21,279 @@ from benchmarks.task040_level_a import (
     build_task040_level_a_plan,
 )
 from benchmarks.task040_level_a_watchdog import build_task040_level_a_watchdog_plan
+
+
+def _consumer_checker_manifest() -> dict[str, object]:
+    provenance = consumer_checker._expected_provenance()
+    identity = {
+        "input_sha256": provenance["input_sha256"],
+        "physical_model_sha256": provenance["physical_model_sha256"],
+        "selected_manifest_sha256": provenance["selected_manifest_sha256"],
+        "spool_catalog_sha256": provenance["exact_spool_catalog_sha256"],
+        "probe_manifest_sha256": provenance["probe_manifest_sha256"],
+        "exact_output_identity_sha256": {
+            label: f"{index + 1:064x}"
+            for index, label in enumerate(TASK040_LEVEL_A_SOURCE_LABELS[1:])
+        },
+    }
+    rows = (7560, 15120, 7560)
+    spans = (296, 776, 480)
+    diagnostic_groups = [
+        {
+            "group": index,
+            "span_size": spans[index],
+            "gamma_layout": {
+                "global_row_count": rows[index],
+                **({} if index == 1 else {"global_size": rows[index]}),
+            },
+        }
+        for index in range(3)
+    ]
+    return {
+        "schema": "task040.interface_schur_packet.v1",
+        "packet_complete": True,
+        "group_order": ["group0", "group1", "group2"],
+        "rank_count": 8,
+        "basis_global_replicated": False,
+        "numeric_allgather": False,
+        "fe_numeric_allgather": False,
+        "provenance": provenance,
+        "groups": {
+            name: {"global_count": rows[index]}
+            for index, name in enumerate(("group0", "group1", "group2"))
+        },
+        "diagnostics": {
+            "groups": diagnostic_groups,
+            "identity_observed": identity,
+        },
+    }
+
+
+def _consumer_checkpoint(value: float) -> dict[str, object]:
+    return {
+        "finite": True,
+        "reported_relative_residual": value,
+        "true_residual_relative": value,
+    }
+
+
+def _consumer_screen() -> dict[str, object]:
+    labels = list(TASK040_LEVEL_A_SOURCE_LABELS[1:])
+    phase1_values = {"0": 1.0, "4": 0.5, "8": 0.2, "16": 0.1}
+    phase2_values = {**phase1_values, "32": 1.0e-4}
+
+    def phase(values: dict[str, float], max_it: int) -> dict[str, object]:
+        return {
+            label: {
+                "checkpoints": {
+                    key: _consumer_checkpoint(value) for key, value in values.items()
+                },
+                "max_it": max_it,
+                "restart": 32,
+                "shared_ksp": True,
+                "zero_initial_guess": True,
+                "zero_initial_guess_count": 1,
+                "pc_side": "right",
+                "ksp_breakdown": False,
+                "true_residual_matvec_count": len(values) - 1,
+                "right_pc_apply_count": 4 if max_it == 16 else 5,
+            }
+            for label in labels
+        }
+
+    return {
+        "schema": "task040.v1_1.right_fgmres_batch.v1",
+        "labels": labels,
+        "phase1": phase(phase1_values, 16),
+        "phase2": phase(phase2_values, 32),
+        "resource_at_phase_boundary": {
+            "rss_bytes": 1,
+            "swap_bytes": 0,
+            "all_status_readable": True,
+        },
+        "conditional_32_authorized": True,
+        "phase1_frozen_gate": False,
+        "stop_on_frozen_gate": True,
+        "ksp_setup_count": 1,
+        "ksp_destroy_count": 1,
+        "ksp_destroyed": True,
+        "right_pc_apply_count": 45,
+        "single_right_pc_setup": True,
+        "zero_initial_guess_all_rhs": True,
+    }
+
+
+def _consumer_run_fixture() -> tuple[
+    dict[str, object], dict[str, object], dict[str, object]
+]:
+    manifest = _consumer_checker_manifest()
+    labels = list(TASK040_LEVEL_A_SOURCE_LABELS)
+    reports = [
+        {
+            "label": label,
+            "source_norm": 0.0 if index == 0 else 1.0,
+            "output_norm": 0.0 if index == 0 else 1.0,
+            "true_residual_norm": 0.0 if index == 0 else 0.5,
+            "true_residual_relative": None if index == 0 else 0.5,
+            "repeat_error": 0.0,
+            "finite": True,
+            "physical_zero": index == 0,
+        }
+        for index, label in enumerate(labels)
+    ]
+    factor_inventory = {
+        "observed": True,
+        "factor_count_ready": 3,
+        "cross_section_factor_count_ready": 3,
+        "exact_interface_oracle_factor_count": 0,
+        "full_side_exact_factor_count": 0,
+        "global_direct_factor_count": 0,
+        "nested_ksp_count": 0,
+        "oracle_only": True,
+        "scalable_candidate": False,
+    }
+    one_apply = {
+        "reports": reports,
+        "action_identity": {
+            "carrier": "petsc_vecscatter",
+            "global_numpy_copy": False,
+            "subdomain_vectors_global_numpy_copy": False,
+            "restriction_prolongation_pass": True,
+            "bare_operator_unchanged": True,
+        },
+        "gate": {
+            "finite_pass": False,
+            "zero_map_pass": False,
+            "action_identity_pass": False,
+            "repeat_pass": False,
+            "linearity_pass": False,
+            "factor_inventory_pass": False,
+            "linearity_relative_error": 0.0,
+            "pass": False,
+        },
+        "factor_inventory": factor_inventory,
+        "formal_source_apply_count": 6,
+        "repeat_audit_apply_count": 6,
+        "linearity_audit_apply_count": 1,
+        "action_apply_count_delta": 13,
+    }
+    lifecycle = {
+        "factor_count_ready": 3,
+        "factor_count_after_cleanup": 0,
+        "projected_inverse_count_after_cleanup": 0,
+        "simultaneous_factor_count_max": 3,
+        "action_destroyed": True,
+        "factor_destroyed": True,
+        "worker_cleanup": {
+            "factor_owner": {
+                "ready": {"factor_count_ready": 3, "auxiliary_owner_count": 3},
+                "after": {
+                    "factor_count_after_cleanup": 0,
+                    "auxiliary_owner_count": 0,
+                    "destroyed": True,
+                },
+            }
+        },
+    }
+    groups = [
+        {
+            "group": index,
+            "global_row_count": rows,
+            "span_size": span,
+            "pass": False,
+            "local": {
+                "U_relative_error": 0.0,
+                "V_relative_error": 0.0,
+                "max_relative_error": 0.0,
+                "pass": False,
+            },
+            "collective_max_relative_error": 0.0,
+        }
+        for index, (rows, span) in enumerate(
+            zip((7560, 15120, 7560), (296, 776, 480), strict=True)
+        )
+    ]
+    provenance = manifest["provenance"]
+    raw = {
+        "packet_consumer": True,
+        "producer_source_sha": consumer_checker.EXPECTED_PRODUCER_SOURCE_SHA,
+        "packet_manifest_sha256": TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        "packet_provenance": provenance,
+        "basis_global_replicated": False,
+        "fe_numeric_allgather": False,
+        "groups": groups,
+        "remap_pass": False,
+        "factor_inventory": factor_inventory,
+        "projected_diagnostics": {
+            "projected_factor_count_ready": 3,
+            "scalar_base_factor_count": 3,
+            "projected_inverse_factor_count": 3,
+            "basis_global_replicated": False,
+            "fe_numeric_allgather": False,
+            "exact_interface_oracle_factor_count": 0,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "oracle_only": True,
+            "scalable_candidate": False,
+        },
+        "one_apply": one_apply,
+        "fgmres_screen": _consumer_screen(),
+        "first_preferred_checkpoint": 32,
+        "action_destroyed": True,
+        "factor_destroyed": True,
+        "lifecycle": lifecycle,
+        "source_loading": {
+            "labels": labels,
+            "rhs_vectors_loaded": 6,
+            "exact_output_vectors_loaded": 0,
+            "exact_output_metadata_hash_validation_only": True,
+        },
+        "forbidden_routes": [
+            "qep",
+            "exact_interface_oracle",
+            "outer_ksp",
+            "recovery",
+            "top",
+            "full_hybrid",
+            "response_packet",
+            "exact_output_vector_load",
+        ],
+    }
+    source_sha = "d" * 40
+    run = {
+        "schema": "task040.v2.interface_packet_consumer.v1",
+        "method": "task040_v2_interface_packet_consumer",
+        "profile": TASK040_V2_INTERFACE_PACKET_CONSUMER_PROFILE_ID,
+        "source_sha": source_sha,
+        "input_sha256": provenance["input_sha256"],
+        "physical_model_sha256": provenance["physical_model_sha256"],
+        "selected_manifest_sha256": provenance["selected_manifest_sha256"],
+        "exact_spool_catalog_sha256": provenance["exact_spool_catalog_sha256"],
+        "packet_manifest_sha256": TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        "packet_producer_source_sha": consumer_checker.EXPECTED_PRODUCER_SOURCE_SHA,
+        "rhs_vectors_loaded": 6,
+        "exact_output_vectors_loaded": 0,
+        "qep_calls": 0,
+        "pde_solve": "not_run",
+        "interface_packet_raw": raw,
+    }
+    watchdog = {
+        "method": "task040_v2_interface_packet_consumer",
+        "source_sha": source_sha,
+        "hard_stop_bytes": consumer_checker.RESOURCE_LIMIT_BYTES,
+        "termination_reason": "natural_exit",
+        "return_code": 0,
+        "run_summary_present": True,
+        "run_summary_sha256": "f" * 64,
+        "all_status_readable": True,
+        "swap_authority_readable": True,
+        "peak_swap_bytes": 0,
+        "peak_dedicated_cgroup_swap_bytes": 0,
+        "peak_rss_bytes": 1,
+        "sample_count": 1,
+    }
+    return run, watchdog, manifest
 
 
 def _provenance() -> dict[str, object]:
@@ -151,3 +427,93 @@ def test_consumer_provenance_is_frozen_and_route_does_not_use_exact_oracle():
     assert "build_petsc_interface_schur_oracle" not in names
     assert "stream_task039_v4_selected_mode_columns" not in names
     assert "outgoing_port_modes_3d" not in names
+
+
+def test_v2_consumer_checker_recomputes_gate_and_classifies_tamper():
+    run, watchdog, manifest = _consumer_run_fixture()
+    result = consumer_checker.recompute_v2_consumer(
+        run,
+        watchdog,
+        manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha=run["source_sha"],
+    )
+    assert result["classification"] == "PROJECTED_EXACT_TRANSMISSION_PASS"
+    assert result["gate_pass"] is True
+    assert result["derived"]["first_preferred_checkpoint"] == 32
+    assert result["checks"]["one_apply_implementation"] is True
+
+    resource_run, resource_watchdog, resource_manifest = deepcopy(
+        (run, watchdog, manifest)
+    )
+    resource_watchdog["peak_rss_bytes"] = consumer_checker.RESOURCE_LIMIT_BYTES
+    resource_watchdog["sample_count"] = 0
+    resource_result = consumer_checker.recompute_v2_consumer(
+        resource_run,
+        resource_watchdog,
+        resource_manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha=resource_run["source_sha"],
+    )
+    assert resource_result["classification"] == "PROJECTED_CONSUMER_RESOURCE_FAIL"
+
+    remap_run, remap_watchdog, remap_manifest = deepcopy((run, watchdog, manifest))
+    remap_run["interface_packet_raw"]["groups"][0]["local"]["U_relative_error"] = 1.0e-9
+    remap_result = consumer_checker.recompute_v2_consumer(
+        remap_run,
+        remap_watchdog,
+        remap_manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha=remap_run["source_sha"],
+    )
+    assert remap_result["classification"] == "PACKET_COORDINATE_IDENTITY_FAIL"
+
+    numeric_run, numeric_watchdog, numeric_manifest = deepcopy(
+        (run, watchdog, manifest)
+    )
+    numeric_run["interface_packet_raw"]["fgmres_screen"]["phase2"][
+        "modal_traction_positive"
+    ]["checkpoints"]["32"]["true_residual_relative"] = 0.1
+    numeric_run["interface_packet_raw"]["first_preferred_checkpoint"] = None
+    numeric_result = consumer_checker.recompute_v2_consumer(
+        numeric_run,
+        numeric_watchdog,
+        numeric_manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha=numeric_run["source_sha"],
+    )
+    assert (
+        numeric_result["classification"]
+        == "THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT"
+    )
+
+    lifecycle_run, lifecycle_watchdog, lifecycle_manifest = deepcopy(
+        (run, watchdog, manifest)
+    )
+    lifecycle_run["interface_packet_raw"]["lifecycle"]["worker_cleanup"][
+        "factor_owner"
+    ]["after"]["factor_count_after_cleanup"] = 1
+    lifecycle_result = consumer_checker.recompute_v2_consumer(
+        lifecycle_run,
+        lifecycle_watchdog,
+        lifecycle_manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha=lifecycle_run["source_sha"],
+    )
+    assert lifecycle_result["classification"] == "IMPLEMENTATION_FAILURE"
+
+    source_run, source_watchdog, source_manifest = deepcopy((run, watchdog, manifest))
+    source_result = consumer_checker.recompute_v2_consumer(
+        source_run,
+        source_watchdog,
+        source_manifest,
+        manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+        run_summary_sha256="f" * 64,
+        expected_source_sha="e" * 40,
+    )
+    assert source_result["classification"] == "PACKET_COORDINATE_IDENTITY_FAIL"
