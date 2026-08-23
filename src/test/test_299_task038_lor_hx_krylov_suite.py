@@ -9,7 +9,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from benchmarks.run_task038_full3d_lor_hx_krylov import _vec_global_norm_ratio
+from benchmarks.run_task038_full3d_lor_hx_krylov import (
+    _precompute_closeout_scalars,
+    _vec_global_norm_ratio,
+)
 from benchmarks.task038_full3d_lor_hx_krylov_checker import (
     K0_GMRES_MAX_IT,
     K0_GMRES_RESTART,
@@ -312,11 +315,15 @@ def _synthetic_record(
         "status": "facts_written_no_worker_classification",
     }
     common_markers = [
+        "record_scalar_collectives_begin",
+        "record_scalar_collectives_end",
         "rank_metadata_collect_enter",
         "rank_metadata_collect_exit",
         "record_written",
     ]
     root_markers = [
+        "record_scalar_collectives_begin",
+        "record_scalar_collectives_end",
         "rank_metadata_collect_enter",
         "rank_metadata_collect_exit",
         "record_build_begin",
@@ -400,6 +407,41 @@ def test_k1_rho_uses_norm_ratio_not_relative_difference() -> None:
     )
     assert norm_ratio == pytest.approx(5.0 / np.sqrt(2.0))
     assert not np.isclose(norm_ratio, relative_difference)
+
+
+def test_k1_closeout_scalar_helper_precomputes_global_norm_facts(tmp_path: Path) -> None:
+    class FakeComm:
+        rank = 0
+
+    class FakeVec:
+        def __init__(self, norm_value: float) -> None:
+            self.norm_value = norm_value
+            self.calls = 0
+
+        def norm(self) -> float:
+            self.calls += 1
+            return self.norm_value
+
+    residual = FakeVec(5.0)
+    true_residual = FakeVec(2.0)
+    facts = _precompute_closeout_scalars(
+        FakeComm(), tmp_path, residual, true_residual
+    )
+    assert facts == {
+        "residual_norm": 5.0,
+        "final_true_residual_norm": 2.0,
+        "final_true_relative": 0.4,
+    }
+    assert residual.calls == 1
+    assert true_residual.calls == 1
+    markers = [
+        json.loads(line)["stage"]
+        for line in (tmp_path / "stage-rank0.jsonl").read_text().splitlines()
+    ]
+    assert markers == [
+        "record_scalar_collectives_begin",
+        "record_scalar_collectives_end",
+    ]
 
 
 def test_k1_one_apply_numeric_failures_are_gate_failures(tmp_path: Path) -> None:

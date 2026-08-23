@@ -838,6 +838,8 @@ def _check_k1_closeout(record: dict[str, Any], errors: list[str]) -> None:
             continue
         marker_rows[rank] = stages
         common = (
+            "record_scalar_collectives_begin",
+            "record_scalar_collectives_end",
             "rank_metadata_collect_enter",
             "rank_metadata_collect_exit",
             "record_written",

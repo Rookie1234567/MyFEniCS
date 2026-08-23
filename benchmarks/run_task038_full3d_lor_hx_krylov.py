@@ -84,6 +84,26 @@ def _vec_global_norm_ratio(numerator: Any, denominator: Any) -> float:
     return float(numerator.norm()) / denominator_norm
 
 
+def _precompute_closeout_scalars(
+    comm: MPI.Comm,
+    raw_dir: Path,
+    residual: Any,
+    final_true_residual: Any,
+) -> dict[str, float]:
+    """Compute the MPI-global norms before root-only record construction."""
+
+    _append_stage_marker(raw_dir, "record_scalar_collectives_begin", comm.rank)
+    residual_norm = float(residual.norm())
+    final_true_residual_norm = float(final_true_residual.norm())
+    _append_stage_marker(raw_dir, "record_scalar_collectives_end", comm.rank)
+    return {
+        "residual_norm": residual_norm,
+        "final_true_residual_norm": final_true_residual_norm,
+        "final_true_relative": final_true_residual_norm
+        / max(residual_norm, np.finfo(float).tiny),
+    }
+
+
 def _vec_finite(comm: MPI.Comm, vector: Any) -> bool:
     local = bool(np.all(np.isfinite(vector.getArray(readonly=True))))
     return bool(comm.allreduce(1 if local else 0, op=MPI.MIN))
@@ -736,6 +756,9 @@ def run_suite_worker(
             ),
         }
         _append_stage_marker(raw_dir, "canonical_packets_gathered", comm.rank)
+        closeout_scalars = _precompute_closeout_scalars(
+            comm, raw_dir, residual, final_true_residual
+        )
 
         rank_fact = {
             "rank": int(comm.rank),
@@ -819,7 +842,7 @@ def run_suite_worker(
                     "output_role": "primal",
                     "rho": float(rho),
                     "rho_status": "diagnostic_only_not_a_gate",
-                    "residual_norm": float(residual.norm()),
+                    "residual_norm": closeout_scalars["residual_norm"],
                     "finite": finite,
                     "source_unchanged": source_unchanged,
                     "residual_input_unchanged": residual_input_unchanged,
@@ -836,10 +859,7 @@ def run_suite_worker(
                     "late_true_pass_iteration": k1_result["late_true_pass_iteration"],
                     "qualification_pass": bool(k1_result["qualification_pass"]),
                     "reported_final_residual": k1_result["reported_final_residual"],
-                    "final_true_residual": float(
-                        final_true_residual.norm()
-                        / max(float(residual.norm()), np.finfo(float).tiny)
-                    ),
+                    "final_true_residual": closeout_scalars["final_true_relative"],
                     "matvec_count": int(k1_result["operator_context"].matvec_count),
                     "pc_apply_count": int(k1_result["pc_context"].apply_count),
                     "monitor_action_count": int(k1_result["monitor_action_count"]),
