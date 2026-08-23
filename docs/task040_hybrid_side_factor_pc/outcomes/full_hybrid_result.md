@@ -11,3 +11,8 @@ Hybrid、global operator、DtN、M480 和物理输入不变；T40-3 的组件负
 
 Full Hybrid 仍为 `not_run_by_gate`。最新 root 没有 QEP、global Hybrid action、recovery、
 true residual、R/T/A 或完整 workflow 资源结果。V1-2 资源停止不是 full Hybrid 失败。
+
+## V2-G 收口
+
+V2-E full Hybrid 为 `not_run_by_gate`。V2-B2 的真实 projected-transmission 数值负结果
+阻止后续进入；本轮没有 QEP、global action、recovery、R/T/A 或完整 workflow 资源结果。

@@ -1480,6 +1480,24 @@ tier.
 
 Evidence: [Task040 V1-8 compact record](../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_v1_3_run_b_resource_stop_v1.json)。
 
+### Task040 V2-A1/V2-B2 interface-Schur packet 分进程证据
+
+V2-A1 producer 将人工截面的 owner-row `U/V/G` 和小型投影证据写成 hash-bound packet；
+V2-B2 consumer 在 fresh MPI8 进程中按 canonical key 重分发并运行 projected
+transmission screen。producer 与 consumer 是两个独立 component 进程，下面的 wall 不能
+相加为完整 workflow 时间；两者也都不是 scalable side inverse 或 production qualification。
+
+| Model ID | 方法/范围 | 数值与资源 | status | evidence |
+|---|---|---|---|---|
+| `task040_v2_interface_packet_producer_mpi8` | V2-A1 packet producer；三组 owner-row canonical packet；不运行 PDE/QEP/FGMRES | source=`942c43881e4162085348c48b09c79fbbdac18cd9`；peak=`30,823,858,176 B = 28.706954956054688 GiB`；wall=`1202.5501016210765 s`；swap=0；Gamma=`7560/15120/7560`；span=`296/776/480`；factor=`3→0` | `completed_diagnostic_oracle` | [compact](../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v2_interface_schur_packet_producer_v1.json)、[outcome](task040_hybrid_side_factor_pc/outcomes/interface_schur_packet_producer.md) |
+| `task040_v2_projected_packet_consumer_mpi8` | V2-B2 fresh consumer；canonical owner remap、three projected group factors、one-apply 与五源 right-FGMRES | source=`40b25d3281d9ce1707f6069607bfdbbf6a3ab48d`；peak=`34,846,629,888 B = 32.453453064 GiB`；process-sample wall=`1077.3351624270435 s`；swap=0；remap=`7560/15120/7560`；five `r16>=0.9`；32 not authorized；factor=`3→0` | `controlled_numerical_negative / THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT` | [compact](../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v2_projected_transmission_consumer_v1.json)、[outcome](task040_hybrid_side_factor_pc/outcomes/projected_transmission_consumer.md) |
+
+consumer 原始 watchdog summary 因末尾 cleanup teardown sample 的退出竞态保留了
+`all_status_readable=false`；独立 legacy lifecycle audit 以 timeline hash、
+`2137=2136+1`、前 2136 行可读且 swap=0 的证据重算 resource pass。它没有改写 raw summary，
+也不改变 projected transmission 的数值负结果。V2-C、V2-D、V2-E、V2-F 均为
+`not_run_by_gate`。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

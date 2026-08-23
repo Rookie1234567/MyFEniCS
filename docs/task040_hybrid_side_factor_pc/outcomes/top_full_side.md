@@ -10,3 +10,8 @@ top factor、residual、RSS、wall 或 swap 结论。
 
 Top full-side 为 `not_run_by_gate`。V1-2 硬停止后没有创建 top factor、residual、physical
 output 或资源测点；最新峰值不能作为 top 或完整 workflow 的测量。
+
+## V2-G 收口
+
+V2-E top full-side 为 `not_run_by_gate`。V2-B2 projected-transmission 数值负结果触发
+停止，未创建 top factor，也未运行 top/full workflow 测量。

@@ -10,3 +10,8 @@ memory exponent、RSS、wall 或 swap 观测，也没有 0.7 nm 外推。
 
 V1-7 h3 scaling 仍为 `not_run_by_gate`。没有生成 h3 DoF、retained-byte exponent、RSS、wall
 或 0.7 nm 外推；最新 V1-2 组件硬停止不能作为 scaling 测点。
+
+## V2-G 收口
+
+V2-F h3 scaling 为 `not_run_by_gate`。V2-B2 数值 Gate 已失败，没有 h3 DoF、retained-byte
+exponent、RSS/wall scaling 或 0.7 nm 外推。

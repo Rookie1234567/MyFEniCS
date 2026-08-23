@@ -10,3 +10,8 @@ bottom full-side setup、factor、true residual、physics 或资源结果。
 
 V1-6 bottom full-side 仍为 `not_run_by_gate`。Run B 在 projected screen 资格化前停止，因此
 没有测得 bottom full-side factor、true residual、physical output 或 workflow RSS。
+
+## V2-G 收口
+
+V2-E bottom full-side 为 `not_run_by_gate`。V2-B2 数值 Gate 未通过，因此没有构造 bottom
+full-side factor 或运行完整物理/资源测量。

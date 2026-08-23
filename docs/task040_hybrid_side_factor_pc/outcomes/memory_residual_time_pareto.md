@@ -13,6 +13,7 @@
 | V1-1 scalar component | five `r16 >= 0.9` | `27.790115356445312` | `669.4473022361053 s` | `0` | directional negative |
 | V1-2 Run B | no numerical rho serialized | `45.05752944946289` | `1485.4694942460628 s` | `0` | resource hard stop |
 | V2-A1 packet producer | packet diagnostics only；不作 V2-B residual 结论 | `28.706954956054688` | `1202.5501016210765 s` | `0` | oracle resource target pass |
+| V2-B2 projected packet consumer | 五个 `r16 >= 0.9`；32 未授权；preferred checkpoint `null` | `32.453453064` | `1077.3351624270435 s` | `0` | `THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT` |
 
 最新 V1-2 root 的 hard stop 是 `48,318,382,080 B`（45 GiB），峰值是
 `48,380,153,856 B = 45.05752944946289 GiB`。watchdog 以
@@ -33,10 +34,12 @@ T40-3 的 `28.333576202392578 GiB` 和 V1-1 的 `27.790115356445312 GiB` 是组�
 是 hard-stop attempt，不是通过的 side PC。
 
 V2-A1 的 `28.706954956054688 GiB` 同样只是独立 packet producer 的诊断/oracle 组件峰值。
-它完成了 owner-row packet 和独立 checker 复核，但没有运行 V2-B consumer、projected
-transmission 或完整 Hybrid，因此不能建立新的 saving tier，也不能与 direct baseline 做
-节省比例比较。`max_projected_exact_relative=1.0281892054707484` 只是 producer raw
-diagnostic，不是 V2-B 数值 Gate；V2-B 仍为 `pending`。
+V2-B2 consumer 的 raw peak 为 `34,846,629,888 B = 32.453453064 GiB`，process-sample
+wall 为 `1077.3351624270435 s`；它完成了资源/身份/remap Gate，但五个 `r16` 均仍不低于
+0.9，故没有建立新的 saving tier。producer wall `1202.5501016210765 s` 与 consumer
+wall 是两个分进程 component 时间，不能相加冒充完整 workflow 的 cold/reuse 时间。
+`max_projected_exact_relative=1.0281892054707484` 只是 producer raw diagnostic，不是
+V2-B 数值 Gate。两者都不能与 direct baseline 做节省比例比较。
 
 V1-4 至 V1-7、Level B、top、full Hybrid 和 h3 scaling 均
 `not_run_by_gate`，所以没有 cold/reuse/full workflow peak、完整 residual-time 曲线或

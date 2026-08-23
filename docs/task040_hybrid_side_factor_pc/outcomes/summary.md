@@ -21,6 +21,9 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 | V1-7 | conditional h3 scalability probe | not_run_by_gate | V1-6 未运行 |
 | V1-8 | evidence/docs closeout | completed | 本页、compact record 与 `response_v2.md` 已完成并通过轻量合同检查 |
 | V2-A1 | interface-Schur packet producer | completed_diagnostic_oracle | packet 完整、独立 checker 通过；这是诊断/oracle authority，不是 scalable side inverse 或 V2-B 结果 |
+| V2-B2 | fresh projected-transmission consumer | controlled numerical negative | resource/identity/remap 通过；五个 `r16 >= 0.9`，32 未授权；`THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT` |
+| V2-C–V2-F | analytic / Level B / full-side / h3 | not_run_by_gate | V2-B2 数值 Gate 失败后按决策树停止 |
+| V2-G | evidence/docs closeout | prepared_pending_review | compact record、consumer outcome、response_v3 与本页同步完成，待审阅 |
 
 ## 正式身份与最新 Run B 资源
 
@@ -115,10 +118,35 @@ serial/MPI2/MPI4 的 test306 均为 `6/6 passed`，fresh checker `rc0`。produce
 历史失败输出和 V1 resource stop 均保留，未被改写为算法负结果。
 
 本次 packet 只证明 diagnostic/oracle authority 和可复核的 owner-row 数据包完成；
-`max_projected_exact_relative=1.0281892054707484` 不是 V2-B Gate。V2-B consumer 仍为
-`pending`，当前没有新的 full-workflow saving tier；完整 workflow baseline 仍以
+`max_projected_exact_relative=1.0281892054707484` 不是 V2-B Gate。V2-B2 consumer 已完成
+一次正式 fresh screen，但数值 Gate 为负，当前没有新的 full-workflow saving tier；完整 workflow baseline 仍以
 `93.377006531 GiB` direct 和 `80.025856018 GiB` exact-side iterative 为准。详细身份、
 raw hashes 和 checker 输出见
 [V2-A1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v2_interface_schur_packet_producer_v1.json)
 与
 [V2-A1 producer outcome](interface_schur_packet_producer.md)。
+
+## V2-B2 fresh projected-transmission consumer
+
+consumer 从 V2-A1 packet 读取并按 canonical key 重新分发 owner-row；它没有重建 exact
+interface oracle、QEP 或 PDE。formal process-sample wall 为
+`1077.3351624270435 s`（raw timeline 最后一行），producer 的
+`1202.5501016210765 s` 是另一个进程的 component wall，二者不能相加成 cold/reuse 或
+完整 workflow 时间。
+
+| 项目 | 实际结果 |
+|---|---|
+| source / checker fix | `40b25d3281d9ce1707f6069607bfdbbf6a3ab48d` / `0919ed2fa3bd1541f543057721fff84fa110f3d4` |
+| formal root | `results/task040_v2_projected_packet_consumer_mpi8_40b25d32` |
+| exit / peak / swap | natural exit, rc0 / `34,846,629,888 B = 32.453453064 GiB` / `0 B` |
+| process-sample wall | `1077.3351624270435 s` |
+| remap | `7560/15120/7560` global rows；local target `912/1842/930`；roundtrip `0` |
+| one-apply | implementation subset pass；6/6/1 applies，delta `13` |
+| FGMRES | phase1 `0/4/8/16` finite；五个 `r16 >= 0.9`；conditional32 `false`；first preferred `null` |
+| lifecycle | same three group factors viewed as ready/projected `3`；cleanup `0/0`；simultaneous max `3` |
+| classification | `THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT` |
+
+原始 watchdog 因最后一个 cleanup-complete teardown sample 的退出竞态报告 unreadable；原始
+文件没有改写。独立 legacy lifecycle audit 绑定 timeline hash，验证 `2137=2136+1`、前
+`2136` 行可读且 swap 为零，得到 derived resource pass。这个修正只解决 telemetry lifecycle
+语义，不能改变五源残差的数值负结果。组件峰值也不能称为完整 workflow saving tier。
