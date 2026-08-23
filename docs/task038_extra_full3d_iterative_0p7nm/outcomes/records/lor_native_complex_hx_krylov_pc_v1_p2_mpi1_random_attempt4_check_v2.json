@@ -1,0 +1,15 @@
+{
+  "contract_errors": [],
+  "facts": {
+    "case": "p2-mpi1",
+    "degree": 2,
+    "final_relative": 9.30461052749549e-09,
+    "first_true_pass": 58,
+    "mpi_size": 1,
+    "rho": 1.7348663090876784,
+    "source": "random"
+  },
+  "gate_failures": [],
+  "passed": true,
+  "schema": "task038.lor-native-complex-hx.k1-suite-check.v1"
+}

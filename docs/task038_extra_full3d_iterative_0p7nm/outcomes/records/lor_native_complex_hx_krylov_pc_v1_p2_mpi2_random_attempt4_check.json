@@ -1,0 +1,20 @@
+{
+  "contract_errors": [
+    "K1 rank fact reason is missing or invalid",
+    "K1 rank fact reason is missing or invalid"
+  ],
+  "facts": {
+    "case": "p2-mpi2",
+    "degree": 2,
+    "final_relative": 5.885599406046585e-09,
+    "first_true_pass": 196,
+    "mpi_size": 2,
+    "rho": 1.9817117335135692,
+    "source": "random"
+  },
+  "gate_failures": [
+    "true residual passes only after the 80-step qualification window"
+  ],
+  "passed": false,
+  "schema": "task038.lor-native-complex-hx.k1-suite-check.v1"
+}
