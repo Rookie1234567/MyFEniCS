@@ -1,0 +1,14 @@
+{
+  "contract_errors": [
+    "canonical key mismatch for linearity/input/residual",
+    "linearity directions do not reconstruct the residual"
+  ],
+  "facts": {
+    "first_case": "p2-mpi1",
+    "old_l2_limit": 0.45,
+    "old_l2_rho": 1.7348663090876784
+  },
+  "gate_failures": [],
+  "passed": false,
+  "schema": "task038.lor-native-complex-hx.k0-check.v1"
+}

@@ -1,0 +1,11 @@
+{
+  "contract_errors": [],
+  "facts": {
+    "first_case": "p2-mpi1",
+    "old_l2_limit": 0.45,
+    "old_l2_rho": 1.7348663090876784
+  },
+  "gate_failures": [],
+  "passed": true,
+  "schema": "task038.lor-native-complex-hx.k0-check.v1"
+}

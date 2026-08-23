@@ -1,0 +1,59 @@
+{
+  "schema": "task038.lor-native-complex-hx.k0-resource.v1",
+  "stage": "k0",
+  "case": "p2-mpi1-random",
+  "source": {
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "worker_source_sha": "4fa7eeb55e985a6a9c128cd4139049513eaf1f21"
+  },
+  "worker": {
+    "record": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_v1.json",
+    "record_sha256": "87594e2c06de8ea031dad0ce8ac364626dcc2dbb6d9ff8846ad6f19663d9098d",
+    "returncode": 0,
+    "termination": "worker_returned_without_external_termination"
+  },
+  "checker": {
+    "v1": {
+      "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_check_v1.json",
+      "sha256": "2d34c00d31dfa384dd78bc07702711dec89a38ec93f5b3a02a3f08db83668823",
+      "returncode": 1,
+      "passed": false,
+      "classification": "contract_only_failure",
+      "contract_errors": [
+        "canonical key mismatch for linearity/input/residual",
+        "linearity directions do not reconstruct the residual"
+      ],
+      "gate_failures": []
+    },
+    "v2": {
+      "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_check_v2.json",
+      "sha256": "0ad2b91aceb08b5cdd5ae68944f3625689f0a3f38c2ae0dfeb43461a827df807",
+      "returncode": 0,
+      "passed": true,
+      "contract_errors": [],
+      "gate_failures": []
+    }
+  },
+  "resource": {
+    "time_log": "benchmarks/artifacts/task038_extra_full3d_lor_hx_krylov_v1/4fa7eeb55e985a6a9c128cd4139049513eaf1f21/time-v-p2-mpi1-random.log",
+    "time_log_sha256": "9aeca1ca98d0486722042e4ed8b4179c5efd8a40184603caeadd6e6bf7e218f1",
+    "wall_seconds": 11.4,
+    "max_rss_bytes": 129908736,
+    "gnu_time_swaps": 0,
+    "memory_scope": "single MPI1 process GNU time maximum RSS; not process-tree or cgroup peak",
+    "system_swap_baseline_bytes": 16625664,
+    "system_swap_baseline_scope": "host /proc/swaps baseline; not worker swap"
+  },
+  "evidence": {
+    "marker_sha256": "24138c1be699c46a83719aed5a255f2dad5713ef0d2b7c7f7e71d0f0d3387be4",
+    "raw_file_count": 75,
+    "raw_manifest_sha256": "88a8955668e1dfcc378e3ac17c725cc050466b8d9503b5c1e47d29830d7d6c0c",
+    "no_orphan_after": true
+  },
+  "old_l2_reference": {
+    "record_sha256": "0a6ccfdb6a28b003167046e3ca3fc5e4de0d40825784786319661901a65389f3",
+    "rho": 1.7348663090876784,
+    "limit": 0.45,
+    "classification": "CONTROLLED_NEGATIVE_BY_POSITIVE_AUXILIARY_CONTRACTION_GATE"
+  }
+}
