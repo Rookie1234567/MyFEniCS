@@ -200,6 +200,35 @@ def test_l1_stage_markers_are_per_rank_append_only_and_flush(tmp_path: Path) -> 
     assert all(isinstance(json.loads(line)["time"], float) for line in lines)
 
 
+def test_l1_apply_copy_preserves_borrowed_action_output() -> None:
+    class Borrowed:
+        def __init__(self) -> None:
+            self.value = None
+            self.destroy_calls = 0
+
+        def copy(self):
+            return type("OwnedCopy", (), {"value": self.value})()
+
+        def destroy(self) -> None:
+            self.destroy_calls += 1
+
+    class FakeAction:
+        def __init__(self) -> None:
+            self.output = Borrowed()
+
+        def apply(self, value):
+            self.output.value = value
+            return self.output
+
+    action = FakeAction()
+    first = runner._apply_copy(action, 1)
+    second = runner._apply_copy(action, 2)
+    assert first.value == 1
+    assert second.value == 2
+    assert first is not second
+    assert action.output.destroy_calls == 0
+
+
 def test_l1_checker_canonical_internal_and_mpi_mutations_fail() -> None:
     record = _identity_record("p2-mpi1", "measured")
     arrays = _canonical_arrays()

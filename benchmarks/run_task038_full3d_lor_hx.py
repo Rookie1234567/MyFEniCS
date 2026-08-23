@@ -293,11 +293,7 @@ def _periodic_action(space: Any, floquet: Any):
 
 
 def _apply_copy(action: Any, vector: Any):
-    result = action.apply(vector)
-    try:
-        return result.copy()
-    finally:
-        result.destroy()
+    return action.apply(vector).copy()
 
 
 def _periodic_evidence(degree: int, transfer: Any, comm: MPI.Comm, raw_dir: Path):
