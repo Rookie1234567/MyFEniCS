@@ -12,6 +12,7 @@ element-sized matrix or forms a global direct factor.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
@@ -41,6 +42,11 @@ def _small_svd_diagnostics(matrix: np.ndarray) -> dict[str, Any]:
         "singular_values": singular_values.tolist(),
         "condition": float(singular_values[0] / singular_values[-1]),
     }
+
+
+def _int_array_sha256(values: np.ndarray) -> str:
+    array = np.ascontiguousarray(np.asarray(values, dtype=np.int64))
+    return hashlib.sha256(array.tobytes()).hexdigest()
 
 
 class _NumpyInterfaceSchurBlock:
@@ -421,11 +427,30 @@ class PetscInterfaceSchurOracle:
             raise RuntimeError("PETSc interface Schur oracle is destroyed")
         vector = self._blocks[int(group)]._gamma_rhs
         first, last = map(int, vector.getOwnershipRange())
+        rows = self.group_gamma_rows_local(group)
+        comm = vector.getComm().tompi4py()
+        global_rows = np.asarray(
+            [row for part in comm.allgather(rows.tolist()) for row in part],
+            dtype=np.int64,
+        )
+        if len(global_rows) != int(vector.getSize()):
+            raise ValueError("Gamma row metadata does not match Vec global size")
+        if len(np.unique(global_rows)) != len(global_rows):
+            raise ValueError("Gamma row metadata contains duplicate global rows")
         return {
             "global_size": int(vector.getSize()),
             "local_size": int(vector.getLocalSize()),
             "ownership_range": [first, last],
+            "gamma_rows_local_sha256": _int_array_sha256(rows),
+            "gamma_rows_global_order_sha256": _int_array_sha256(global_rows),
         }
+
+    def group_gamma_rows_local(self, group: int) -> np.ndarray:
+        """Return a copy of the original active rows in Gamma Vec order."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        return self._blocks[int(group)].gamma_rows.copy()
 
     def create_group_gamma_vector(self, group: int) -> PETSc.Vec:
         """Create an owned Gamma Vec; the caller owns and destroys it."""

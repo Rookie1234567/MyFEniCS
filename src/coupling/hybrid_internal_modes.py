@@ -511,13 +511,22 @@ def _function_space_polynomial_degree(space) -> int:
     return degree
 
 
-def _interface_owned_cells(system: HybridLocalDtnSystem) -> np.ndarray:
+def _interface_owned_cells(
+    system: HybridLocalDtnSystem,
+    *,
+    interface_z_nm: float | None = None,
+    plane_cell_side: str | None = None,
+) -> np.ndarray:
     msh = system.local_mesh.mesh
     tdim = msh.topology.dim
     num_owned = msh.topology.index_map(tdim).size_local
     coordinates = np.asarray(msh.geometry.x)
     geometry_dofmap = np.asarray(msh.geometry.dofmap)
-    interface_z = system.local_mesh.interface_z_nm
+    interface_z = (
+        system.local_mesh.interface_z_nm
+        if interface_z_nm is None
+        else float(interface_z_nm)
+    )
     tolerance = 1.0e-10 * max(
         system.local_mesh.mesh_data.mesh_axis_cell_stats["x"]["max"],
         system.local_mesh.mesh_data.mesh_axis_cell_stats["y"]["max"],
@@ -526,19 +535,31 @@ def _interface_owned_cells(system: HybridLocalDtnSystem) -> np.ndarray:
     cells: list[int] = []
     for cell in range(num_owned):
         z_values = coordinates[geometry_dofmap[cell], 2]
-        if system.side == "bottom":
+        if interface_z_nm is not None:
+            if plane_cell_side not in {"lower", "upper"}:
+                raise ValueError(
+                    "arbitrary artificial planes require plane_cell_side='lower' or 'upper'"
+                )
+            boundary = (
+                np.max(z_values) if plane_cell_side == "lower" else np.min(z_values)
+            )
+            touches = abs(float(boundary) - interface_z) <= tolerance
+        elif system.side == "bottom":
             touches = abs(float(np.max(z_values)) - interface_z) <= tolerance
         else:
             touches = abs(float(np.min(z_values)) - interface_z) <= tolerance
         if touches:
             cells.append(cell)
     local = np.asarray(cells, dtype=np.int32)
-    expected = system.local_mesh.global_interface_facet_count
-    actual = int(msh.comm.allreduce(len(local), op=MPI.SUM))
-    if actual != expected:
-        raise RuntimeError(
-            f"{system.side} interface-adjacent cell count {actual} != {expected}."
-        )
+    if interface_z_nm is None:
+        expected = system.local_mesh.global_interface_facet_count
+        actual = int(msh.comm.allreduce(len(local), op=MPI.SUM))
+        if actual != expected:
+            raise RuntimeError(
+                f"{system.side} interface-adjacent cell count {actual} != {expected}."
+            )
+    elif int(msh.comm.allreduce(len(local), op=MPI.SUM)) == 0:
+        raise RuntimeError("arbitrary artificial plane has no adjacent owned cells")
     return local
 
 
@@ -570,7 +591,14 @@ def lift_cross_section_vector_to_local_interface(
 class _ReusableInterfaceLifter:
     """Reuse target space and point ownership for many fields on one interface."""
 
-    def __init__(self, system: HybridLocalDtnSystem, *, target_space=None) -> None:
+    def __init__(
+        self,
+        system: HybridLocalDtnSystem,
+        *,
+        target_space=None,
+        interface_z_nm: float | None = None,
+        plane_cell_side: str | None = None,
+    ) -> None:
         self.system = system
         msh = system.local_mesh.mesh
         if target_space is None:
@@ -586,7 +614,11 @@ class _ReusableInterfaceLifter:
                 ),
             )
         self.target = fem.Function(target_space)
-        self.cells = _interface_owned_cells(system)
+        self.cells = _interface_owned_cells(
+            system,
+            interface_z_nm=interface_z_nm,
+            plane_cell_side=plane_cell_side,
+        )
         self.interpolation_points = np.asarray(
             cpp.fem.interpolation_coords(
                 target_space.element._cpp_object,
