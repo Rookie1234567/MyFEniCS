@@ -13,6 +13,8 @@ from src.solvers.fullspace_lor_native_hx import (
     LOR_HX_EDGE_JACOBI_OMEGA,
     LOR_HX_FORBIDDEN_PC_TYPES,
     LOR_HX_GAMG_MAX_LEVELS,
+    LOR_HX_VARIANT_ADDITIVE,
+    LOR_HX_VARIANT_SEQUENTIAL,
     NativeComplexLORHX,
 )
 from src.solvers.fullspace_lor_transfer import (
@@ -81,7 +83,12 @@ def _pi_block(local, axis: int) -> np.ndarray:
     return block
 
 
-def _build_case(degree: int, comm: MPI.Comm):
+def _build_case(
+    degree: int,
+    comm: MPI.Comm,
+    *,
+    variant: str = LOR_HX_VARIANT_SEQUENTIAL,
+):
     local = build_local_lor_transfer(degree)
     edge_count = int(local.lor_matrix.shape[0])
     node_count = int(local.lor_gradient.shape[1])
@@ -156,6 +163,7 @@ def _build_case(degree: int, comm: MPI.Comm):
         gradient_adjoint,
         prolongations,
         restrictions,
+        variant=variant,
     )
     return local, hx, (
         edge_matrix,
@@ -165,6 +173,40 @@ def _build_case(degree: int, comm: MPI.Comm):
         *prolongations,
         *restrictions,
     )
+
+
+def _manual_additive_sum(
+    hx: NativeComplexLORHX,
+    residual: PETSc.Vec,
+    gradient: PETSc.Mat,
+    gradient_adjoint: PETSc.Mat,
+    prolongations: tuple[PETSc.Mat, ...],
+    restrictions: tuple[PETSc.Mat, ...],
+) -> PETSc.Vec:
+    result = residual.duplicate()
+    result.set(0.0 + 0.0j)
+    edge_delta = residual.duplicate()
+    hx._edge_jacobi(residual, edge_delta)
+    result.axpy(1.0 + 0.0j, edge_delta)
+
+    def add_term(restriction: PETSc.Mat, prolongation: PETSc.Mat) -> None:
+        nodal_rhs = hx._nodal_matrix.createVecRight()
+        nodal_delta = nodal_rhs.duplicate()
+        restriction.mult(residual, nodal_rhs)
+        nodal_delta.set(0.0 + 0.0j)
+        hx._nodal_ksp.solve(nodal_rhs, nodal_delta)
+        prolongation.mult(nodal_delta, edge_delta)
+        result.axpy(1.0 + 0.0j, edge_delta)
+        nodal_rhs.destroy()
+        nodal_delta.destroy()
+
+    add_term(gradient_adjoint, gradient)
+    for restriction, prolongation in zip(restrictions, prolongations, strict=True):
+        add_term(restriction, prolongation)
+    hx._edge_jacobi(residual, edge_delta)
+    result.axpy(1.0 + 0.0j, edge_delta)
+    edge_delta.destroy()
+    return result
 
 
 def test_l2_vector_nodal_interpolation_adjoint_and_edge_length() -> None:
@@ -299,6 +341,124 @@ def test_l2_serial_positive_hx_contract(degree: int) -> None:
         _destroy_case(hx, matrices)
 
 
+def test_l2_default_and_explicit_v1_are_identical() -> None:
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("serial algebra case")
+    local, hx, matrices = _build_case(2, MPI.COMM_SELF)
+    explicit = NativeComplexLORHX(
+        matrices[0],
+        matrices[1],
+        matrices[2],
+        matrices[3],
+        matrices[4:7],
+        matrices[7:10],
+        variant=LOR_HX_VARIANT_SEQUENTIAL,
+    )
+    source = matrices[0].createVecRight()
+    source.array[:] = np.sin(np.arange(source.getLocalSize()) + 0.375) + 1j * np.cos(
+        np.arange(source.getLocalSize()) * 0.75
+    )
+    try:
+        first = hx.apply(source)
+        second = explicit.apply(source)
+        assert np.array_equal(first.array, second.array)
+        assert hx.audit["variant"] == LOR_HX_VARIANT_SEQUENTIAL
+        assert explicit.audit["variant"] == LOR_HX_VARIANT_SEQUENTIAL
+        first.destroy()
+        second.destroy()
+    finally:
+        source.destroy()
+        explicit.destroy()
+        _destroy_case(hx, matrices)
+
+
+def test_l2_additive_v2_is_direct_same_residual_sum_and_linear() -> None:
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("serial algebra case")
+    local, hx, matrices = _build_case(2, MPI.COMM_SELF, variant=LOR_HX_VARIANT_ADDITIVE)
+    edge_matrix, _nodal_matrix, gradient, gradient_adjoint = matrices[:4]
+    prolongations = matrices[4:7]
+    restrictions = matrices[7:10]
+    r1 = edge_matrix.createVecRight()
+    r2 = edge_matrix.createVecRight()
+    values = np.arange(r1.getLocalSize(), dtype=np.float64)
+    r1.array[:] = np.sin(values + 0.125) + 1j * np.cos(0.625 * values + 0.5)
+    r2.array[:] = np.cos(0.375 * values + 0.75) + 1j * np.sin(0.875 * values + 0.25)
+    coefficient_a = 0.375 + 0.25j
+    coefficient_b = -0.625 + 0.5j
+    combined = r1.duplicate()
+    r1.copy(combined)
+    combined.scale(coefficient_a)
+    combined.axpy(coefficient_b, r2)
+    before = {
+        "r1": r1.array.copy(),
+        "r2": r2.array.copy(),
+        "combined": combined.array.copy(),
+    }
+    expected = first = repeat = second = combined_output = expected_linear = None
+
+    def relative(left: PETSc.Vec, right: PETSc.Vec) -> float:
+        difference = left.duplicate()
+        left.copy(difference)
+        difference.axpy(-1.0 + 0.0j, right)
+        value = float(difference.norm() / max(right.norm(), np.finfo(float).tiny))
+        difference.destroy()
+        return value
+
+    try:
+        expected = _manual_additive_sum(
+            hx,
+            r1,
+            gradient,
+            gradient_adjoint,
+            prolongations,
+            restrictions,
+        )
+        first = hx.apply(r1)
+        second = hx.apply(r2)
+        combined_output = hx.apply(combined)
+        repeat = hx.apply(r1)
+        expected_linear = first.duplicate()
+        first.copy(expected_linear)
+        expected_linear.scale(coefficient_a)
+        expected_linear.axpy(coefficient_b, second)
+        direct_relative = relative(first, expected)
+        linear_relative = relative(combined_output, expected_linear)
+        repeat_relative = relative(repeat, first)
+        projection = np.vdot(r1.array, r2.array) / np.vdot(r1.array, r1.array)
+        assert np.linalg.norm(r2.array - projection * r1.array) > 1.0e-12
+        assert direct_relative <= 1.0e-12
+        assert linear_relative <= 1.0e-12
+        assert repeat_relative <= 1.0e-13
+        assert np.array_equal(r1.array, before["r1"])
+        assert np.array_equal(r2.array, before["r2"])
+        assert np.array_equal(combined.array, before["combined"])
+        assert np.all(np.isfinite(first.array))
+        assert np.all(np.isfinite(second.array))
+        assert np.all(np.isfinite(combined_output.array))
+        assert hx.audit["variant"] == LOR_HX_VARIANT_ADDITIVE
+        assert hx.audit["composition"] == "additive"
+        assert hx.audit["original_residual_for_all_corrections"] is True
+        assert hx.audit["edge_jacobi_correction_count"] == 2
+        assert hx.audit["nodal_correction_count"] == 4
+        assert hx.audit["hierarchy_object_count"] == 1
+    finally:
+        for vector in (
+            expected_linear,
+            combined_output,
+            second,
+            repeat,
+            first,
+            expected,
+            combined,
+            r2,
+            r1,
+        ):
+            if vector is not None:
+                vector.destroy()
+        _destroy_case(hx, matrices)
+
+
 def test_l2_p2_mpi2_block_ownership_smoke() -> None:
     if MPI.COMM_WORLD.size != 2:
         pytest.skip("run this focused ownership smoke with mpiexec -n 2")
@@ -330,6 +490,44 @@ def test_l2_p2_mpi2_block_ownership_smoke() -> None:
         assert audit["global_numeric_allgather"] is False
         first.destroy()
         second.destroy()
+        source.destroy()
+    finally:
+        _destroy_case(distributed_hx, distributed_matrices)
+
+
+def test_l2_p2_mpi2_additive_ownership_smoke() -> None:
+    if MPI.COMM_WORLD.size != 2:
+        pytest.skip("run this focused ownership smoke with mpiexec -n 2")
+    comm = MPI.COMM_WORLD
+    _local, distributed_hx, distributed_matrices = _build_case(
+        2, comm, variant=LOR_HX_VARIANT_ADDITIVE
+    )
+    distributed_edge = distributed_matrices[0]
+    try:
+        start, stop = distributed_edge.getOwnershipRange()
+        source = distributed_edge.createVecRight()
+        source.array[:] = np.sin(np.arange(start, stop) + 0.25) + 1j * np.cos(
+            0.5 * np.arange(start, stop) + 0.75
+        )
+        before = source.array.copy()
+        first = distributed_hx.apply(source)
+        second = distributed_hx.apply(source)
+        difference = first.duplicate()
+        difference.array[:] = first.array - second.array
+        numerator = np.sqrt(
+            comm.allreduce(float(np.vdot(difference.array, difference.array).real), op=MPI.SUM)
+        )
+        denominator = np.sqrt(
+            comm.allreduce(float(np.vdot(first.array, first.array).real), op=MPI.SUM)
+        )
+        assert numerator / max(denominator, np.finfo(float).tiny) <= 1.0e-13
+        assert np.array_equal(source.array, before)
+        assert np.all(np.isfinite(first.array))
+        assert distributed_hx.audit["variant"] == LOR_HX_VARIANT_ADDITIVE
+        assert distributed_hx.audit["original_residual_for_all_corrections"] is True
+        first.destroy()
+        second.destroy()
+        difference.destroy()
         source.destroy()
     finally:
         _destroy_case(distributed_hx, distributed_matrices)

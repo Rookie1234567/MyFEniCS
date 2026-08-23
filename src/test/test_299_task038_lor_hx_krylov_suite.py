@@ -15,14 +15,27 @@ from benchmarks.run_task038_full3d_lor_hx_krylov import (
 )
 from benchmarks.task038_full3d_lor_hx_krylov_checker import (
     K0_GMRES_MAX_IT,
+    K0_DIRECTION_CONSTRUCTION,
+    K0_DIRECTION_COEFFICIENTS,
+    K0_DIRECTION_INPUT_ROLE,
     K0_GMRES_RESTART,
     K0_GMRES_RTOL,
     K0_FIRST_PASS_MAX_IT,
     K1_CASE_SPECS,
     K1_CHECKER_SCHEMA,
+    K1_V2_CHECKER_SCHEMA,
     K1_LINEARITY_STATUS,
     K1_SOURCE_FORMULAS,
     K1_SOURCE_NAMES,
+    K1_V2_SCHEMA,
+    K1_VARIANT_ADDITIVE,
+    K1_VARIANT_SEQUENTIAL,
+    ADDITIVE_AUTHORITY_CASE,
+    ADDITIVE_AUTHORITY_NAME,
+    ADDITIVE_AUTHORITY_SOURCE,
+    _canonical_direction_mask,
+    _canonical_key_set_sha256,
+    additive_authority_identity_sha256,
     OLD_L2_CLASSIFICATION,
     OLD_L2_RECORD_SHA,
     OLD_L2_RHO,
@@ -79,6 +92,7 @@ def _synthetic_record(
     *,
     iterations: int = 1,
     reason: int = 2,
+    variant: str = K1_VARIANT_SEQUENTIAL,
     permute_dual: bool = False,
     mutate_final_solution: bool = False,
     mutate_final_action: bool = False,
@@ -193,12 +207,13 @@ def _synthetic_record(
         "true_residual": _role(raw_dir, "final_true", stored_dual_keys, true_residual, descriptors),
     }
     record = {
-        "schema": "task038.lor-native-complex-hx.k1-suite-record.v1",
+        "schema": K1_V2_SCHEMA if variant == K1_VARIANT_ADDITIVE else "task038.lor-native-complex-hx.k1-suite-record.v1",
         "stage": "k1-suite",
         "scope": "krylov_requalification_suite",
         "case": case,
         "degree": degree,
         "source_name": source_name,
+        "variant": variant,
         "mpi_size": mpi_size,
         "raw_dir": str(raw_dir.resolve()),
         "command": [
@@ -253,13 +268,32 @@ def _synthetic_record(
             "limit": 0.45,
             "classification": OLD_L2_CLASSIFICATION,
         },
-        "linearity_authority": {
-            "status": K1_LINEARITY_STATUS,
-            "record_sha256": "87594e2c06de8ea031dad0ce8ac364626dcc2dbb6d9ff8846ad6f19663d9098d",
-            "checker_sha256": "0ad2b91aceb08b5cdd5ae68944f3625689f0a3f38c2ae0dfeb43461a827df807",
-            "old_one_apply_rho": OLD_L2_RHO,
-            "old_one_apply_classification": OLD_L2_CLASSIFICATION,
-        },
+        "linearity_authority": (
+            {
+                "status": K1_LINEARITY_STATUS,
+                "record_sha256": "87594e2c06de8ea031dad0ce8ac364626dcc2dbb6d9ff8846ad6f19663d9098d",
+                "checker_sha256": "0ad2b91aceb08b5cdd5ae68944f3625689f0a3f38c2ae0dfeb43461a827df807",
+                "old_one_apply_rho": OLD_L2_RHO,
+                "old_one_apply_classification": OLD_L2_CLASSIFICATION,
+            }
+            if variant == K1_VARIANT_SEQUENTIAL
+            else {
+                "status": (
+                    "measured_additive_authority"
+                    if case == ADDITIVE_AUTHORITY_CASE
+                    and source_name == ADDITIVE_AUTHORITY_SOURCE
+                    else "referenced_additive_authority"
+                ),
+                "authority_case": ADDITIVE_AUTHORITY_CASE,
+                "authority_source": ADDITIVE_AUTHORITY_SOURCE,
+                "authority_variant": K1_VARIANT_ADDITIVE,
+                "authority_record_name": ADDITIVE_AUTHORITY_NAME,
+                "authority_source_sha": "a" * 40,
+                "authority_identity_sha256": additive_authority_identity_sha256(
+                    "a" * 40
+                ),
+            }
+        ),
         "source_facts": {
             "name": source_name,
             "formula": K1_SOURCE_FORMULAS[source_name],
@@ -301,6 +335,7 @@ def _synthetic_record(
         },
         "production": {
             "production_pc_alpha_applied": False,
+            "pc_variant": variant,
             "global_numeric_allgather": False,
             "high_order_global_aij": False,
             "global_dense_transfer": False,
@@ -316,6 +351,109 @@ def _synthetic_record(
         "artifacts": descriptors,
         "status": "facts_written_no_worker_classification",
     }
+    if variant == K1_VARIANT_ADDITIVE:
+        record["command"].extend(("--pc-variant", K1_VARIANT_ADDITIVE))
+        record["pc_composition"] = {
+            "variant": K1_VARIANT_ADDITIVE,
+            "composition": "additive",
+            "original_residual_for_all_corrections": True,
+            "edge_jacobi_correction_count": 2,
+            "nodal_correction_count": 4,
+            "direct_sum": True,
+            "residual_updates_between_terms": False,
+            "terms": [
+                "edge_jacobi_pre",
+                "gradient",
+                "vector_x",
+                "vector_y",
+                "vector_z",
+                "edge_jacobi_post",
+            ],
+        }
+        record["fixture_audit"] = {
+            "hx_audit": {
+                "variant": K1_VARIANT_ADDITIVE,
+                "composition": "additive",
+                "original_residual_for_all_corrections": True,
+                "edge_jacobi_correction_count": 2,
+                "nodal_correction_count": 4,
+                "one_shared_scalar_hierarchy": True,
+                "hierarchy_object_count": 1,
+                "one_v_cycle_per_nodal_correction": True,
+            }
+        }
+        if case == ADDITIVE_AUTHORITY_CASE and source_name == ADDITIVE_AUTHORITY_SOURCE:
+            direction_mask = _canonical_direction_mask(stored_dual_keys)
+            direction_r1 = np.where(direction_mask, stored_residual, 0.0 + 0.0j)
+            direction_r2 = stored_residual - direction_r1
+            coefficient_a, coefficient_b = K0_DIRECTION_COEFFICIENTS
+            direction_combined = coefficient_a * direction_r1 + coefficient_b * direction_r2
+            output_p1 = np.asarray(
+                [0.75 + 0.25j, -0.5 + 0.125j, 1.25 - 0.75j],
+                dtype=np.complex128,
+            )
+            output_p2 = np.asarray(
+                [-0.25 + 0.5j, 0.875 - 0.25j, 0.5 + 0.625j],
+                dtype=np.complex128,
+            )
+            output_combined = coefficient_a * output_p1 + coefficient_b * output_p2
+            linearity_roles = {
+                "r1": _role(
+                    raw_dir, "linearity_r1", stored_dual_keys, direction_r1, descriptors
+                ),
+                "r2": _role(
+                    raw_dir, "linearity_r2", stored_dual_keys, direction_r2, descriptors
+                ),
+                "combined": _role(
+                    raw_dir,
+                    "linearity_combined",
+                    stored_dual_keys,
+                    direction_combined,
+                    descriptors,
+                ),
+                "p1": _role(raw_dir, "linearity_p1", output_keys, output_p1, descriptors),
+                "p2": _role(raw_dir, "linearity_p2", output_keys, output_p2, descriptors),
+                "pcombined": _role(
+                    raw_dir, "linearity_pcombined", output_keys, output_combined, descriptors
+                ),
+                "pcombined_repeat": _role(
+                    raw_dir,
+                    "linearity_pcombined_repeat",
+                    output_keys,
+                    output_combined.copy(),
+                    descriptors,
+                ),
+            }
+            record["linearity_authority"]["authority_record_path"] = str(
+                record_path.resolve()
+            )
+            record["linearity"] = {
+                "construction": K0_DIRECTION_CONSTRUCTION,
+                "input_role": "dual",
+                "input_semantics": K0_DIRECTION_INPUT_ROLE,
+                "output_role": "primal",
+                "output_semantics": "full_fe_primal_canonical_packets",
+                "input_key_set_sha256": _canonical_key_set_sha256(stored_dual_keys),
+                "output_key_set_sha256": _canonical_key_set_sha256(output_keys),
+                "direction_mask": direction_mask.tolist(),
+                "coefficient_a": {
+                    "real": float(coefficient_a.real),
+                    "imag": float(coefficient_a.imag),
+                },
+                "coefficient_b": {
+                    "real": float(coefficient_b.real),
+                    "imag": float(coefficient_b.imag),
+                },
+                "direction_norms": [
+                    float(np.linalg.norm(direction_r1)),
+                    float(np.linalg.norm(direction_r2)),
+                ],
+                "relative": 0.0,
+                "repeat_relative": 0.0,
+                "finite": True,
+                "input_unchanged": True,
+                "artifacts": linearity_roles,
+            }
     common_markers = [
         "record_scalar_collectives_begin",
         "record_scalar_collectives_end",
@@ -371,6 +509,104 @@ def test_k1_synthetic_record_accepts_nested_final_and_checkpoint_facts(tmp_path:
     result = check_suite_record(_synthetic_record(tmp_path))
     assert result["schema"] == K1_CHECKER_SCHEMA
     assert result["passed"] is True, result
+
+
+def test_k1_additive_v2_schema_and_mixed_aggregate_are_explicit(tmp_path: Path) -> None:
+    additive = _synthetic_record(
+        tmp_path / "single",
+        variant=K1_VARIANT_ADDITIVE,
+    )
+    single_result = check_suite_record(additive)
+    assert single_result["schema"] == K1_V2_CHECKER_SCHEMA
+    assert single_result["variant"] == K1_VARIANT_ADDITIVE
+    assert single_result["passed"] is True, single_result
+
+    additive_paths = [
+        _synthetic_record(
+            tmp_path / "all-v2",
+            case,
+            source,
+            variant=K1_VARIANT_ADDITIVE,
+        )
+        for case in K1_CASE_SPECS
+        for source in K1_SOURCE_NAMES
+    ]
+    additive_result = check_suite_records(additive_paths)
+    assert additive_result["passed"] is True, additive_result
+    assert additive_result["variant"] == K1_VARIANT_ADDITIVE
+
+    mixed_source_paths = [
+        _synthetic_record(
+            tmp_path / "mixed-source",
+            case,
+            source,
+            variant=K1_VARIANT_ADDITIVE,
+        )
+        for case in K1_CASE_SPECS
+        for source in K1_SOURCE_NAMES
+    ]
+    mixed_source = next(
+        path
+        for path in mixed_source_paths
+        if path.name == "p2-mpi2-random.json"
+    )
+    mixed_source_record = json.loads(mixed_source.read_text(encoding="utf-8"))
+    replacement_sha = "b" * 40
+    mixed_source_record["source"]["expected_sha"] = replacement_sha
+    mixed_source_record["source"]["commit_sha_start"] = replacement_sha
+    mixed_source_record["source"]["commit_sha_end"] = replacement_sha
+    expected_sha_index = mixed_source_record["command"].index(
+        "--expected-source-sha"
+    ) + 1
+    mixed_source_record["command"][expected_sha_index] = replacement_sha
+    mixed_source_record["linearity_authority"]["authority_source_sha"] = replacement_sha
+    mixed_source_record["linearity_authority"][
+        "authority_identity_sha256"
+    ] = additive_authority_identity_sha256(replacement_sha)
+    mixed_source.write_text(json.dumps(mixed_source_record), encoding="utf-8")
+    assert check_suite_record(mixed_source)["passed"] is True
+    mixed_source_result = check_suite_records(mixed_source_paths)
+    assert mixed_source_result["passed"] is False
+    assert any(
+        "authority_source_sha" in item
+        for item in mixed_source_result["contract_errors"]
+    )
+
+    missing_authority = _synthetic_record(
+        tmp_path / "missing-authority", variant=K1_VARIANT_ADDITIVE
+    )
+    missing_record = json.loads(missing_authority.read_text(encoding="utf-8"))
+    missing_record.pop("linearity")
+    missing_authority.write_text(json.dumps(missing_record), encoding="utf-8")
+    missing_result = check_suite_record(missing_authority)
+    assert missing_result["passed"] is False
+    assert any("measured additive authority linearity" in item for item in missing_result["contract_errors"])
+
+    wrong_authority = _synthetic_record(
+        tmp_path / "wrong-authority", variant=K1_VARIANT_ADDITIVE
+    )
+    wrong_record = json.loads(wrong_authority.read_text(encoding="utf-8"))
+    wrong_record["linearity_authority"]["authority_variant"] = K1_VARIANT_SEQUENTIAL
+    wrong_authority.write_text(json.dumps(wrong_record), encoding="utf-8")
+    wrong_result = check_suite_record(wrong_authority)
+    assert wrong_result["passed"] is False
+    assert any("authority_variant" in item for item in wrong_result["contract_errors"])
+
+    mixed_paths = [
+        _synthetic_record(
+            tmp_path / "mixed-v2",
+            case,
+            source,
+            variant=K1_VARIANT_SEQUENTIAL
+            if case == "p2-mpi1" and source == "random"
+            else K1_VARIANT_ADDITIVE,
+        )
+        for case in K1_CASE_SPECS
+        for source in K1_SOURCE_NAMES
+    ]
+    mixed_result = check_suite_records(mixed_paths)
+    assert mixed_result["passed"] is False
+    assert any("mixes v1/v2" in item for item in mixed_result["contract_errors"])
 
 
 def test_k1_accepts_signed_reason_and_rejects_zero_or_negative_count(

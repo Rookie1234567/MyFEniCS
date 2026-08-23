@@ -733,12 +733,19 @@ def _high_source(space: Any, floquet: Any) -> PETSc.Vec:
 class RealL2PositiveHXFixture:
     """Actual structured p-refined positive auxiliary fixture."""
 
-    def __init__(self, degree: int, comm: MPI.Comm = MPI.COMM_WORLD) -> None:
+    def __init__(
+        self,
+        degree: int,
+        comm: MPI.Comm = MPI.COMM_WORLD,
+        *,
+        variant: str = "sequential-v1",
+    ) -> None:
         degree = int(degree)
         if degree not in (2, 3):
             raise ValueError("the focused real L2 fixture supports degree 2 or 3")
         self.degree = degree
         self.comm = comm
+        self.variant = variant
         cfg = target_stage4_config(degree=degree, h_nm=50.0)
         self.cfg = cfg
         plan = _stage4_axis_plan(cfg, comm.size)
@@ -893,6 +900,7 @@ class RealL2PositiveHXFixture:
             self.gradient_adjoint,
             self.vector_prolongations,
             self.vector_restrictions,
+            variant=variant,
         )
         self.lor_source = _high_source(self.lor_edge_space, self.lor_edge_floquet)
         self.reference_transfer = build_reference_factor_lor_transfer(degree)
@@ -937,7 +945,12 @@ class RealL2PositiveHXFixture:
         edge_slave = int(comm.allreduce(edge_slave, op=MPI.SUM))
         node_slave = int(self.lor_node_constraint_audit["global_slave_rows"])
         return {
-            "schema": "task038.l2.real-positive-hx-fixture.v1",
+            "schema": (
+                "task038.l2.real-positive-hx-fixture.v2"
+                if self.variant == "additive-v2"
+                else "task038.l2.real-positive-hx-fixture.v1"
+            ),
+            "variant": self.variant,
             "degree": self.degree,
             "high_cell_count": high_cells,
             "lor_cell_count": lor_cells,
@@ -1484,9 +1497,12 @@ def _local_transfer_work_identity(degree: int) -> float:
 
 
 def build_real_l2_positive_hx_fixture(
-    degree: int, comm: MPI.Comm = MPI.COMM_WORLD
+    degree: int,
+    comm: MPI.Comm = MPI.COMM_WORLD,
+    *,
+    variant: str = "sequential-v1",
 ) -> RealL2PositiveHXFixture:
-    return RealL2PositiveHXFixture(degree, comm)
+    return RealL2PositiveHXFixture(degree, comm, variant=variant)
 
 
 __all__ = (

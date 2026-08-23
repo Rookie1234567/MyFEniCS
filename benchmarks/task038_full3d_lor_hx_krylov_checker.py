@@ -45,7 +45,11 @@ K0_DIRECTION_COEFFICIENTS = (0.375 + 0.25j, -0.625 + 0.5j)
 K0_RUNNER_MODULE = "benchmarks.run_task038_full3d_lor_hx_krylov"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 K1_SCHEMA = "task038.lor-native-complex-hx.k1-suite-record.v1"
+K1_V2_SCHEMA = "task038.lor-native-complex-hx.k1-suite-record.v2"
 K1_CHECKER_SCHEMA = "task038.lor-native-complex-hx.k1-suite-check.v1"
+K1_V2_CHECKER_SCHEMA = "task038.lor-native-complex-hx.k1-suite-check.v2"
+K1_VARIANT_SEQUENTIAL = "sequential-v1"
+K1_VARIANT_ADDITIVE = "additive-v2"
 K1_RUNNER_MODULE = "benchmarks.run_task038_full3d_lor_hx_krylov"
 K1_CASE_SPECS = {
     "p2-mpi1": (2, 1),
@@ -70,11 +74,30 @@ K1_PHASE_APPLICATION = K0_PHASE_APPLICATION
 K1_K0_RECORD_SHA = "87594e2c06de8ea031dad0ce8ac364626dcc2dbb6d9ff8846ad6f19663d9098d"
 K1_K0_CHECKER_SHA = "0ad2b91aceb08b5cdd5ae68944f3625689f0a3f38c2ae0dfeb43461a827df807"
 K1_LINEARITY_STATUS = "引用K0 authority，不在K1重复计算"
+ADDITIVE_AUTHORITY_CASE = "p2-mpi1"
+ADDITIVE_AUTHORITY_SOURCE = "random"
+ADDITIVE_AUTHORITY_NAME = "additive-v2-p2-mpi1-random-authority"
 K1_SUITE_ORDER = tuple(
     f"{case}/{source}"
     for case in K1_CASE_SPECS
     for source in K1_SOURCE_NAMES
 )
+
+
+def additive_authority_identity_sha256(source_sha: str) -> str:
+    """Hash the fixed additive-v2 authority identity without record data."""
+
+    payload = json.dumps(
+        {
+            "case": ADDITIVE_AUTHORITY_CASE,
+            "source": ADDITIVE_AUTHORITY_SOURCE,
+            "variant": K1_VARIANT_ADDITIVE,
+            "source_sha": source_sha,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _sha256(path: Path) -> str:
@@ -764,8 +787,28 @@ def _check_krylov(
     return {"first_true_pass": first_true_pass, "early_pass": early_pass}
 
 
+def _k1_variant(record: dict[str, Any], errors: list[str]) -> str | None:
+    schema = record.get("schema")
+    if schema == K1_SCHEMA:
+        variant = record.get("variant", K1_VARIANT_SEQUENTIAL)
+        if variant != K1_VARIANT_SEQUENTIAL:
+            errors.append("K1 v1 schema requires sequential-v1 variant")
+            return None
+        return K1_VARIANT_SEQUENTIAL
+    if schema == K1_V2_SCHEMA:
+        if record.get("variant") != K1_VARIANT_ADDITIVE:
+            errors.append("K1 v2 schema requires explicit additive-v2 variant")
+            return None
+        return K1_VARIANT_ADDITIVE
+    errors.append("K1 schema is not a supported v1/v2 schema")
+    return None
+
+
 def _check_k1_command(
-    record: dict[str, Any], record_path: Path, errors: list[str]
+    record: dict[str, Any],
+    record_path: Path,
+    errors: list[str],
+    variant: str | None,
 ) -> None:
     command = record.get("command")
     source = record.get("source")
@@ -796,6 +839,8 @@ def _check_k1_command(
         "--expected-mpi-size",
         str(record.get("mpi_size")),
     ]
+    if variant == K1_VARIANT_ADDITIVE:
+        expected.extend(("--pc-variant", K1_VARIANT_ADDITIVE))
     if not command or not Path(command[0]).is_absolute():
         errors.append("K1 command Python executable must be absolute")
     if command != expected:
@@ -869,16 +914,58 @@ def _check_k1_closeout(record: dict[str, Any], errors: list[str]) -> None:
         errors.append("K1 record contains a closeout failure marker")
 
 
-def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> None:
-    if record.get("schema") != K1_SCHEMA:
-        errors.append("K1 schema is not frozen")
+def _check_additive_authority(record: dict[str, Any], errors: list[str]) -> None:
+    authority = record.get("linearity_authority")
+    if not isinstance(authority, dict):
+        errors.append("K1 additive-v2 linearity authority is missing")
+        return
+    source = record.get("source")
+    source_sha = source.get("expected_sha") if isinstance(source, dict) else None
+    expected_member = (
+        record.get("case") == ADDITIVE_AUTHORITY_CASE
+        and record.get("source_name") == ADDITIVE_AUTHORITY_SOURCE
+    )
+    expected_status = (
+        "measured_additive_authority"
+        if expected_member
+        else "referenced_additive_authority"
+    )
+    if authority.get("status") != expected_status:
+        errors.append("K1 additive-v2 authority status does not match the frozen member")
+    expected = {
+        "authority_case": ADDITIVE_AUTHORITY_CASE,
+        "authority_source": ADDITIVE_AUTHORITY_SOURCE,
+        "authority_variant": K1_VARIANT_ADDITIVE,
+        "authority_record_name": ADDITIVE_AUTHORITY_NAME,
+    }
+    for key, value in expected.items():
+        if authority.get(key) != value:
+            errors.append(f"K1 additive authority {key} is not frozen")
+    if not isinstance(source_sha, str) or not SHA40.fullmatch(source_sha):
+        errors.append("K1 additive authority source SHA is unavailable")
+    else:
+        if authority.get("authority_source_sha") != source_sha:
+            errors.append("K1 additive authority source SHA does not close")
+        if authority.get("authority_identity_sha256") != additive_authority_identity_sha256(source_sha):
+            errors.append("K1 additive authority identity hash does not close")
+    if expected_member:
+        if not isinstance(authority.get("authority_record_path"), str):
+            errors.append("K1 additive authority record path is missing")
+        if not isinstance(record.get("linearity"), dict):
+            errors.append("K1 measured additive authority linearity facts are missing")
+    elif "linearity" in record:
+        errors.append("K1 additive reference record must not carry measured linearity facts")
+
+
+def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> str | None:
+    variant = _k1_variant(record, errors)
     if record.get("stage") != "k1-suite" or record.get("scope") != "krylov_requalification_suite":
         errors.append("K1 stage/scope is not frozen")
     case = record.get("case")
     source_name = record.get("source_name")
     if not isinstance(case, str) or case not in K1_CASE_SPECS:
         errors.append("K1 case is not one of the four frozen cases")
-        return
+        return variant
     if not isinstance(source_name, str) or source_name not in K1_SOURCE_NAMES:
         errors.append("K1 source is not one of the four frozen sources")
     degree, mpi_size = K1_CASE_SPECS[case]
@@ -1005,7 +1092,9 @@ def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> None:
         if source_facts.get("phase_application") != K1_PHASE_APPLICATION:
             errors.append("K1 phase application changed")
     linearity = record.get("linearity_authority")
-    if not isinstance(linearity, dict):
+    if variant == K1_VARIANT_ADDITIVE:
+        _check_additive_authority(record, errors)
+    elif not isinstance(linearity, dict):
         errors.append("K1 linearity authority is missing")
     else:
         if linearity.get("status") != K1_LINEARITY_STATUS:
@@ -1049,6 +1138,61 @@ def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> None:
         ):
             if section.get(key) is not False:
                 errors.append(f"K1 {section_name}.{key} must be false")
+    production = record.get("production")
+    if isinstance(production, dict) and "pc_variant" in production:
+        if production.get("pc_variant") != variant:
+            errors.append("K1 production.pc_variant does not close with schema variant")
+    if variant == K1_VARIANT_ADDITIVE:
+        if not isinstance(production, dict) or production.get("pc_variant") != K1_VARIANT_ADDITIVE:
+            errors.append("K1 additive-v2 production variant is missing")
+        composition = record.get("pc_composition")
+        expected_terms = [
+            "edge_jacobi_pre",
+            "gradient",
+            "vector_x",
+            "vector_y",
+            "vector_z",
+            "edge_jacobi_post",
+        ]
+        if not isinstance(composition, dict):
+            errors.append("K1 additive-v2 composition audit is missing")
+        else:
+            expected_composition = {
+                "variant": K1_VARIANT_ADDITIVE,
+                "composition": "additive",
+                "original_residual_for_all_corrections": True,
+                "edge_jacobi_correction_count": 2,
+                "nodal_correction_count": 4,
+                "direct_sum": True,
+                "residual_updates_between_terms": False,
+                "terms": expected_terms,
+            }
+            for key, expected in expected_composition.items():
+                if composition.get(key) != expected:
+                    errors.append(f"K1 additive-v2 composition.{key} is not frozen")
+        fixture_audit = record.get("fixture_audit")
+        hx_audit = (
+            fixture_audit.get("hx_audit")
+            if isinstance(fixture_audit, dict)
+            else None
+        )
+        if not isinstance(fixture_audit, dict) or not isinstance(hx_audit, dict):
+            errors.append("K1 additive-v2 HX audit is missing")
+        else:
+            expected_hx = {
+                "variant": K1_VARIANT_ADDITIVE,
+                "composition": "additive",
+                "original_residual_for_all_corrections": True,
+                "edge_jacobi_correction_count": 2,
+                "nodal_correction_count": 4,
+                "one_shared_scalar_hierarchy": True,
+                "hierarchy_object_count": 1,
+                "one_v_cycle_per_nodal_correction": True,
+            }
+            for key, expected in expected_hx.items():
+                if hx_audit.get(key) != expected:
+                    errors.append(f"K1 additive-v2 hx_audit.{key} is not frozen")
+    return variant
 
 
 def _check_k1_one_apply(
@@ -1234,8 +1378,8 @@ def check_suite_record(record_path: str | Path) -> dict[str, Any]:
         return {"schema": K1_CHECKER_SCHEMA, "passed": False, "contract_errors": [f"cannot parse record: {exc}"], "gate_failures": []}
     if not isinstance(record, dict):
         return {"schema": K1_CHECKER_SCHEMA, "passed": False, "contract_errors": ["record root is not an object"], "gate_failures": []}
-    _check_k1_identity(record, errors)
-    _check_k1_command(record, record_path, errors)
+    variant = _check_k1_identity(record, errors)
+    _check_k1_command(record, record_path, errors, variant)
     descriptors_list = record.get("artifacts")
     descriptors: dict[str, dict[str, Any]] = {}
     if not isinstance(descriptors_list, list):
@@ -1255,6 +1399,20 @@ def check_suite_record(record_path: str | Path) -> dict[str, Any]:
         errors,
         gate_failures,
     )
+    if (
+        variant == K1_VARIANT_ADDITIVE
+        and isinstance(record.get("linearity_authority"), dict)
+        and record["linearity_authority"].get("status")
+        == "measured_additive_authority"
+    ):
+        _check_linearity(
+            record,
+            descriptors,
+            residual,
+            one_facts.get("residual_keys"),
+            errors,
+            gate_failures,
+        )
     _check_krylov(record, descriptors, residual, errors, gate_failures)
     final = _check_k1_final(
         record,
@@ -1265,7 +1423,8 @@ def check_suite_record(record_path: str | Path) -> dict[str, Any]:
         gate_failures,
     )
     return {
-        "schema": K1_CHECKER_SCHEMA,
+        "schema": K1_V2_CHECKER_SCHEMA if variant == K1_VARIANT_ADDITIVE else K1_CHECKER_SCHEMA,
+        "variant": variant,
         "passed": not errors and not gate_failures,
         "contract_errors": errors,
         "gate_failures": gate_failures,
@@ -1290,6 +1449,8 @@ def check_suite_records(record_paths: list[str | Path]) -> dict[str, Any]:
     individual: dict[str, dict[str, Any]] = {}
     records: dict[str, dict[str, Any]] = {}
     observed_order: list[str] = []
+    observed_schemas: set[Any] = set()
+    observed_variants: set[Any] = set()
     if len(paths) != len(K1_SUITE_ORDER):
         contract_errors.append(
             f"K1 aggregate requires exactly {len(K1_SUITE_ORDER)} records"
@@ -1303,6 +1464,12 @@ def check_suite_records(record_paths: list[str | Path]) -> dict[str, Any]:
         if not isinstance(record, dict):
             contract_errors.append(f"record root is not an object: {path}")
             continue
+        observed_schemas.add(record.get("schema"))
+        observed_variants.add(
+            record.get("variant", K1_VARIANT_SEQUENTIAL)
+            if record.get("schema") == K1_SCHEMA
+            else record.get("variant")
+        )
         key = f"{record.get('case')}/{record.get('source_name')}"
         observed_order.append(key)
         if key in records:
@@ -1317,11 +1484,49 @@ def check_suite_records(record_paths: list[str | Path]) -> dict[str, Any]:
         contract_errors.append(f"unknown K1 suite cases: {unknown}")
     if observed_order != list(K1_SUITE_ORDER):
         contract_errors.append("K1 suite records are not in the frozen case/source order")
+    if len(observed_schemas) != 1 or len(observed_variants) != 1:
+        contract_errors.append("K1 aggregate mixes v1/v2 schemas or variants")
+    aggregate_variant = next(iter(observed_variants), None)
+    if aggregate_variant not in (K1_VARIANT_SEQUENTIAL, K1_VARIANT_ADDITIVE):
+        contract_errors.append("K1 aggregate variant is missing or unsupported")
     for key, result in individual.items():
         for item in result.get("contract_errors", []):
             contract_errors.append(f"{key}: {item}")
         for item in result.get("gate_failures", []):
             gate_failures.append(f"{key}: {item}")
+    if aggregate_variant == K1_VARIANT_ADDITIVE:
+        authority_key = f"{ADDITIVE_AUTHORITY_CASE}/{ADDITIVE_AUTHORITY_SOURCE}"
+        measured = records.get(authority_key)
+        measured_authority = (
+            measured.get("linearity_authority")
+            if isinstance(measured, dict)
+            else None
+        )
+        if not isinstance(measured_authority, dict) or measured_authority.get(
+            "status"
+        ) != "measured_additive_authority":
+            contract_errors.append(
+                "K1 additive aggregate has no measured p2-mpi1/random authority"
+            )
+        else:
+            authority_fields = (
+                "authority_source_sha",
+                "authority_identity_sha256",
+                "authority_variant",
+                "authority_case",
+                "authority_source",
+                "authority_record_name",
+            )
+            for key in K1_SUITE_ORDER:
+                if key == authority_key:
+                    continue
+                referenced = records.get(key, {}).get("linearity_authority", {})
+                for field in authority_fields:
+                    if referenced.get(field) != measured_authority.get(field):
+                        contract_errors.append(
+                            f"{key}: additive authority {field} does not match "
+                            "measured p2-mpi1/random authority"
+                        )
     cross_mpi: dict[str, float] = {}
     if not contract_errors:
         for degree in (2, 3):
@@ -1404,7 +1609,10 @@ def check_suite_records(record_paths: list[str | Path]) -> dict[str, Any]:
                     )
     passed = not contract_errors and not gate_failures
     return {
-        "schema": K1_CHECKER_SCHEMA,
+        "schema": K1_V2_CHECKER_SCHEMA
+        if aggregate_variant == K1_VARIANT_ADDITIVE
+        else K1_CHECKER_SCHEMA,
+        "variant": aggregate_variant,
         "stage": "k1-suite",
         "passed": passed,
         "contract_errors": contract_errors,

@@ -19,6 +19,8 @@ from petsc4py import PETSc
 LOR_HX_EDGE_JACOBI_OMEGA = 2.0 / 3.0
 LOR_HX_GAMG_MAX_LEVELS = 8
 LOR_HX_VECTOR_AXES = ("x", "y", "z")
+LOR_HX_VARIANT_SEQUENTIAL = "sequential-v1"
+LOR_HX_VARIANT_ADDITIVE = "additive-v2"
 LOR_HX_FORBIDDEN_PC_TYPES = frozenset(
     {"lu", "cholesky", "redundant", "hypre", "ams"}
 )
@@ -53,8 +55,13 @@ class NativeComplexLORHX:
         gradient_adjoint: Any,
         vector_prolongations: Sequence[Any],
         vector_restrictions: Sequence[Any],
+        *,
+        variant: str = LOR_HX_VARIANT_SEQUENTIAL,
     ) -> None:
         self._destroyed = False
+        if variant not in (LOR_HX_VARIANT_SEQUENTIAL, LOR_HX_VARIANT_ADDITIVE):
+            raise ValueError(f"unsupported LOR-HX variant {variant!r}")
+        self._variant = variant
         self._edge_matrix = edge_matrix
         self._nodal_matrix = nodal_matrix
         self._gradient = gradient
@@ -163,7 +170,18 @@ class NativeComplexLORHX:
         if self._destroyed:
             raise RuntimeError("HX object has been destroyed")
         return {
-            "schema": "task038.lor-native-complex-hx.v1",
+            "schema": (
+                "task038.lor-native-complex-hx.v2"
+                if self._variant == LOR_HX_VARIANT_ADDITIVE
+                else "task038.lor-native-complex-hx.v1"
+            ),
+            "variant": self._variant,
+            "composition": (
+                "additive" if self._variant == LOR_HX_VARIANT_ADDITIVE else "sequential"
+            ),
+            "original_residual_for_all_corrections": self._variant
+            == LOR_HX_VARIANT_ADDITIVE,
+            "edge_jacobi_correction_count": 2,
             "edge_jacobi_omega": LOR_HX_EDGE_JACOBI_OMEGA,
             "edge_jacobi_pre": True,
             "edge_jacobi_post": True,
@@ -218,6 +236,81 @@ class NativeComplexLORHX:
         self._edge_matrix.mult(edge_delta, edge_action)
         residual.axpy(-1.0 + 0.0j, edge_action)
 
+    def _additive_correction(
+        self,
+        restriction: Any,
+        prolongation: Any,
+        original_residual: PETSc.Vec,
+        result: PETSc.Vec,
+        edge_delta: PETSc.Vec,
+        nodal_rhs: PETSc.Vec,
+        nodal_delta: PETSc.Vec,
+    ) -> None:
+        """Add one correction evaluated from the unchanged original residual."""
+
+        restriction.mult(original_residual, nodal_rhs)
+        nodal_delta.set(0.0 + 0.0j)
+        self._nodal_ksp.solve(nodal_rhs, nodal_delta)
+        prolongation.mult(nodal_delta, edge_delta)
+        result.axpy(1.0 + 0.0j, edge_delta)
+
+    def _apply_additive(
+        self, residual: PETSc.Vec, output: PETSc.Vec | None
+    ) -> PETSc.Vec:
+        """Apply the frozen additive composition without residual updates."""
+
+        owns_output = output is None
+        result = residual.duplicate() if owns_output else output
+        original_residual = residual.duplicate()
+        edge_delta = residual.duplicate()
+        nodal_rhs = self._nodal_matrix.createVecRight()
+        nodal_delta = nodal_rhs.duplicate()
+        try:
+            result.set(0.0 + 0.0j)
+            residual.copy(original_residual)
+            self._edge_jacobi(original_residual, edge_delta)
+            result.axpy(1.0 + 0.0j, edge_delta)
+            self._additive_correction(
+                self._gradient_adjoint,
+                self._gradient,
+                original_residual,
+                result,
+                edge_delta,
+                nodal_rhs,
+                nodal_delta,
+            )
+            for restriction, prolongation in zip(
+                self._vector_restrictions,
+                self._vector_prolongations,
+                strict=True,
+            ):
+                self._additive_correction(
+                    restriction,
+                    prolongation,
+                    original_residual,
+                    result,
+                    edge_delta,
+                    nodal_rhs,
+                    nodal_delta,
+                )
+            self._edge_jacobi(original_residual, edge_delta)
+            result.axpy(1.0 + 0.0j, edge_delta)
+            if not _finite_local(result):
+                raise FloatingPointError("HX output is non-finite")
+            self._apply_count += 1
+            self._last_correction_count = 4
+            self._last_output_finite = True
+            return result
+        except BaseException:
+            if owns_output:
+                result.destroy()
+            raise
+        finally:
+            original_residual.destroy()
+            edge_delta.destroy()
+            nodal_rhs.destroy()
+            nodal_delta.destroy()
+
     def apply(self, residual: PETSc.Vec, output: PETSc.Vec | None = None) -> PETSc.Vec:
         """Apply the fixed HX sequence and return an owned PETSc vector."""
 
@@ -225,6 +318,8 @@ class NativeComplexLORHX:
             raise RuntimeError("HX object has been destroyed")
         if residual.getSize() != _shape(self._edge_matrix)[0]:
             raise ValueError("residual has an unexpected LOR edge size")
+        if self._variant == LOR_HX_VARIANT_ADDITIVE:
+            return self._apply_additive(residual, output)
         owns_output = output is None
         result = residual.duplicate() if owns_output else output
         edge_residual = residual.duplicate()
@@ -294,6 +389,8 @@ __all__ = [
     "LOR_HX_EDGE_JACOBI_OMEGA",
     "LOR_HX_FORBIDDEN_PC_TYPES",
     "LOR_HX_GAMG_MAX_LEVELS",
+    "LOR_HX_VARIANT_ADDITIVE",
+    "LOR_HX_VARIANT_SEQUENTIAL",
     "LOR_HX_VECTOR_AXES",
     "NativeComplexLORHX",
 ]

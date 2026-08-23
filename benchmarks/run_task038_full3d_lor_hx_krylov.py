@@ -59,6 +59,12 @@ OLD_L2_CLASSIFICATION = "CONTROLLED_NEGATIVE_BY_POSITIVE_AUXILIARY_CONTRACTION_G
 K0_WORKER_RECORD_SHA = "87594e2c06de8ea031dad0ce8ac364626dcc2dbb6d9ff8846ad6f19663d9098d"
 K0_CHECKER_V2_SHA = "0ad2b91aceb08b5cdd5ae68944f3625689f0a3f38c2ae0dfeb43461a827df807"
 K1_SCHEMA = "task038.lor-native-complex-hx.k1-suite-record.v1"
+K1_V2_SCHEMA = "task038.lor-native-complex-hx.k1-suite-record.v2"
+K1_VARIANT_SEQUENTIAL = "sequential-v1"
+K1_VARIANT_ADDITIVE = "additive-v2"
+ADDITIVE_AUTHORITY_CASE = "p2-mpi1"
+ADDITIVE_AUTHORITY_SOURCE = "random"
+ADDITIVE_AUTHORITY_NAME = "additive-v2-p2-mpi1-random-authority"
 K1_CASE_SPECS = {
     "p2-mpi1": (2, 1),
     "p2-mpi2": (2, 2),
@@ -66,6 +72,20 @@ K1_CASE_SPECS = {
     "p3-mpi2": (3, 2),
 }
 K1_SOURCE_NAMES = tuple(L2_SOURCE_NAMES)
+
+
+def additive_authority_identity_sha256(source_sha: str) -> str:
+    payload = json.dumps(
+        {
+            "case": ADDITIVE_AUTHORITY_CASE,
+            "source": ADDITIVE_AUTHORITY_SOURCE,
+            "variant": K1_VARIANT_ADDITIVE,
+            "source_sha": source_sha,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _vec_relative(left: Any, right: Any) -> float:
@@ -286,6 +306,64 @@ def _write_numpy_role(
     artifacts.append(_artifact(raw_dir, key_name, keys))
     artifacts.append(_artifact(raw_dir, value_name, np.asarray(values, dtype=np.complex128)))
     return {"keys": key_name, "values": value_name}
+
+
+def _build_additive_linearity_evidence(
+    fixture: Any,
+    residual: Any,
+    pc_output: Any,
+) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
+    """Measure additive-v2 linearity on the fixed K0 canonical directions."""
+
+    from src.solvers.hcurl_canonical_vector_dolfinx import (
+        extract_canonical_full_fe_packets,
+        reconstruct_canonical_full_fe_dual_vector,
+    )
+
+    residual_packets = _sort_packets(_canonical_packets(fixture, residual, "dual"))
+    input_packet_keys = [key for key, _value in residual_packets]
+    input_keys = np.asarray(
+        [_packet_digest(key) for key in input_packet_keys], dtype="<U64"
+    )
+    residual_values = np.asarray(
+        [value for _key, value in residual_packets], dtype=np.complex128
+    )
+    output_packets = _sort_packets(_canonical_packets(fixture, pc_output, "primal"))
+    output_keys = np.asarray(
+        [_packet_digest(key) for key, _value in output_packets], dtype="<U64"
+    )
+
+    def apply_canonical(values: np.ndarray) -> np.ndarray:
+        vector = reconstruct_canonical_full_fe_dual_vector(
+            fixture.high_space,
+            fixture.high_floquet.mpc,
+            [
+                (key, complex(value))
+                for key, value in zip(input_packet_keys, values, strict=True)
+            ],
+        )
+        output = fixture.apply_high_preconditioner(vector)
+        try:
+            packets = extract_canonical_full_fe_packets(
+                fixture.high_space, output, fixture.high_floquet
+            )[0]
+            values_by_key = {
+                _packet_digest(key): complex(value) for key, value in packets
+            }
+            if set(values_by_key) != set(output_keys.tolist()):
+                raise RuntimeError("additive linearity output key set changed")
+            return np.asarray(
+                [values_by_key[key] for key in output_keys], dtype=np.complex128
+            )
+        finally:
+            output.destroy()
+            vector.destroy()
+
+    return (
+        two_direction_linearity(apply_canonical, residual_values, input_keys, output_keys),
+        input_keys,
+        output_keys,
+    )
 
 
 def _destroy_vectors(vectors: list[Any]) -> None:
@@ -621,6 +699,8 @@ def run_suite_worker(
     expected_mpi_size: int,
     case: str,
     source_name: str,
+    *,
+    pc_variant: str = K1_VARIANT_SEQUENTIAL,
 ) -> None:
     """Record one parameterized K1 degree/MPI/source suite member."""
 
@@ -631,6 +711,8 @@ def run_suite_worker(
         raise ValueError(f"unsupported K1 suite case {case!r}") from exc
     if source_name not in K1_SOURCE_NAMES:
         raise ValueError(f"unsupported K1 suite source {source_name!r}")
+    if pc_variant not in (K1_VARIANT_SEQUENTIAL, K1_VARIANT_ADDITIVE):
+        raise ValueError(f"unsupported K1 PC variant {pc_variant!r}")
     if expected_mpi_size != case_mpi_size or comm.size != case_mpi_size:
         raise ValueError("K1 case and MPI size do not agree")
 
@@ -652,8 +734,11 @@ def run_suite_worker(
     final_solution = final_action = final_true_residual = None
     k1_result: dict[str, Any] | None = None
     artifacts: list[dict[str, Any]] = []
+    additive_linearity: dict[str, Any] | None = None
+    additive_linearity_input_keys: np.ndarray | None = None
+    additive_linearity_output_keys: np.ndarray | None = None
     try:
-        fixture = RealL2PositiveHXFixture(degree, comm)
+        fixture = RealL2PositiveHXFixture(degree, comm, variant=pc_variant)
         _append_stage_marker(raw_dir, "fixture_built", comm.rank)
         source_before, source_facts = fixture.build_l2_source(source_name)
         residual = fixture.apply_high_action_copy(source_before)
@@ -686,6 +771,17 @@ def run_suite_worker(
         )
         _append_stage_marker(raw_dir, "suite_one_apply", comm.rank)
 
+        if (
+            pc_variant == K1_VARIANT_ADDITIVE
+            and case == ADDITIVE_AUTHORITY_CASE
+            and source_name == ADDITIVE_AUTHORITY_SOURCE
+        ):
+            (
+                additive_linearity,
+                additive_linearity_input_keys,
+                additive_linearity_output_keys,
+            ) = _build_additive_linearity_evidence(fixture, residual, pc_output)
+
         k1_result = run_k0_gmres(fixture, residual)
         final_solution = k1_result["solution"].copy()
         final_action = fixture.apply_high_action_copy(k1_result["solution"])
@@ -713,6 +809,19 @@ def run_suite_worker(
             one_apply_roles[role] = _write_canonical_role(
                 comm, fixture, raw_dir, f"{prefix}_{role}", vector, vector_role, artifacts
             )
+
+        additive_linearity_roles: dict[str, dict[str, str]] = {}
+        if additive_linearity is not None and comm.rank == 0:
+            for role, values in additive_linearity["direction_values"].items():
+                additive_linearity_roles[role] = _write_numpy_role(
+                    raw_dir,
+                    f"{prefix}_linearity_{role}",
+                    values,
+                    artifacts,
+                    additive_linearity_input_keys
+                    if role in {"r1", "r2", "combined"}
+                    else additive_linearity_output_keys,
+                )
 
         checkpoint_records: dict[str, dict[str, Any]] = {}
         for checkpoint in K0_CHECKPOINTS:
@@ -777,34 +886,38 @@ def run_suite_worker(
                 }
                 for key in ("matvec_count", "pc_apply_count", "monitor_action_count")
             }
-            return {
-                "schema": K1_SCHEMA,
+            command = [
+                str(Path(sys.executable).resolve()),
+                "-m",
+                "benchmarks.run_task038_full3d_lor_hx_krylov",
+                "--stage",
+                "k1-suite",
+                "--case",
+                case,
+                "--source",
+                source_name,
+                "--raw-dir",
+                str(raw_dir.resolve()),
+                "--record",
+                str(record_path.resolve()),
+                "--expected-source-sha",
+                expected_source_sha,
+                "--expected-mpi-size",
+                str(expected_mpi_size),
+            ]
+            if pc_variant == K1_VARIANT_ADDITIVE:
+                command.extend(("--pc-variant", K1_VARIANT_ADDITIVE))
+            record = {
+                "schema": K1_V2_SCHEMA if pc_variant == K1_VARIANT_ADDITIVE else K1_SCHEMA,
                 "stage": "k1-suite",
                 "scope": "krylov_requalification_suite",
                 "case": case,
                 "degree": degree,
                 "source_name": source_name,
+                "variant": pc_variant,
                 "mpi_size": expected_mpi_size,
                 "raw_dir": str(raw_dir.resolve()),
-                "command": [
-                    str(Path(sys.executable).resolve()),
-                    "-m",
-                    "benchmarks.run_task038_full3d_lor_hx_krylov",
-                    "--stage",
-                    "k1-suite",
-                    "--case",
-                    case,
-                    "--source",
-                    source_name,
-                    "--raw-dir",
-                    str(raw_dir.resolve()),
-                    "--record",
-                    str(record_path.resolve()),
-                    "--expected-source-sha",
-                    expected_source_sha,
-                    "--expected-mpi-size",
-                    str(expected_mpi_size),
-                ],
+                "command": command,
                 "source": source,
                 "runtime": runtime,
                 "rank_facts": all_rank_facts,
@@ -820,15 +933,38 @@ def run_suite_worker(
                     "limit": OLD_L2_LIMIT,
                     "classification": OLD_L2_CLASSIFICATION,
                 },
-                "linearity_authority": {
-                    "status": "引用K0 authority，不在K1重复计算",
-                    "record_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_v1.json",
-                    "record_sha256": K0_WORKER_RECORD_SHA,
-                    "checker_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_check_v2.json",
-                    "checker_sha256": K0_CHECKER_V2_SHA,
-                    "old_one_apply_rho": OLD_L2_RHO,
-                    "old_one_apply_classification": OLD_L2_CLASSIFICATION,
-                },
+                "linearity_authority": (
+                    {
+                        "status": "引用K0 authority，不在K1重复计算",
+                        "record_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_v1.json",
+                        "record_sha256": K0_WORKER_RECORD_SHA,
+                        "checker_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_p2_mpi1_random_check_v2.json",
+                        "checker_sha256": K0_CHECKER_V2_SHA,
+                        "old_one_apply_rho": OLD_L2_RHO,
+                        "old_one_apply_classification": OLD_L2_CLASSIFICATION,
+                    }
+                    if pc_variant == K1_VARIANT_SEQUENTIAL
+                    else {
+                        "status": (
+                            "measured_additive_authority"
+                            if additive_linearity is not None
+                            else "referenced_additive_authority"
+                        ),
+                        "authority_case": ADDITIVE_AUTHORITY_CASE,
+                        "authority_source": ADDITIVE_AUTHORITY_SOURCE,
+                        "authority_variant": K1_VARIANT_ADDITIVE,
+                        "authority_record_name": ADDITIVE_AUTHORITY_NAME,
+                        "authority_source_sha": expected_source_sha,
+                        "authority_identity_sha256": additive_authority_identity_sha256(
+                            expected_source_sha
+                        ),
+                        **(
+                            {"authority_record_path": str(record_path.resolve())}
+                            if additive_linearity is not None
+                            else {}
+                        ),
+                    }
+                ),
                 "source_facts": {
                     **_jsonable(source_facts),
                     "name": source_name,
@@ -870,6 +1006,7 @@ def run_suite_worker(
                 "hx_audit_after_k1": _jsonable(fixture.hx.audit),
                 "production": {
                     "production_pc_alpha_applied": False,
+                    "pc_variant": pc_variant,
                     "global_numeric_allgather": False,
                     "high_order_global_aij": False,
                     "global_dense_transfer": False,
@@ -886,6 +1023,48 @@ def run_suite_worker(
                 "artifacts": artifacts,
                 "status": "facts_written_no_worker_classification",
             }
+            if pc_variant == K1_VARIANT_ADDITIVE:
+                record["pc_composition"] = {
+                    "variant": K1_VARIANT_ADDITIVE,
+                    "composition": "additive",
+                    "original_residual_for_all_corrections": True,
+                    "edge_jacobi_correction_count": 2,
+                    "nodal_correction_count": 4,
+                    "direct_sum": True,
+                    "residual_updates_between_terms": False,
+                    "terms": [
+                        "edge_jacobi_pre",
+                        "gradient",
+                        "vector_x",
+                        "vector_y",
+                        "vector_z",
+                        "edge_jacobi_post",
+                    ],
+                }
+                if additive_linearity is not None:
+                    record["linearity"] = {
+                        "construction": additive_linearity["construction"],
+                        "input_role": additive_linearity["input_role"],
+                        "input_semantics": K0_DIRECTION_INPUT_ROLE,
+                        "output_role": additive_linearity["output_role"],
+                        "output_semantics": "full_fe_primal_canonical_packets",
+                        "input_key_set_sha256": additive_linearity[
+                            "input_key_set_sha256"
+                        ],
+                        "output_key_set_sha256": additive_linearity[
+                            "output_key_set_sha256"
+                        ],
+                        "direction_mask": additive_linearity["direction_mask"],
+                        "coefficient_a": additive_linearity["coefficient_a"],
+                        "coefficient_b": additive_linearity["coefficient_b"],
+                        "direction_norms": additive_linearity["direction_norms"],
+                        "relative": additive_linearity["relative"],
+                        "repeat_relative": additive_linearity["repeat_relative"],
+                        "finite": additive_linearity["finite"],
+                        "input_unchanged": additive_linearity["input_unchanged"],
+                        "artifacts": additive_linearity_roles,
+                    }
+            return record
 
         rank_facts, closeout = _closeout_record(
             comm, raw_dir, record_path, rank_fact, build_record
@@ -936,6 +1115,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--record", required=True, type=Path)
     parser.add_argument("--expected-source-sha", required=True)
     parser.add_argument("--expected-mpi-size", required=True, type=int)
+    parser.add_argument(
+        "--pc-variant",
+        choices=(K1_VARIANT_SEQUENTIAL, K1_VARIANT_ADDITIVE),
+        default=K1_VARIANT_SEQUENTIAL,
+    )
     args = parser.parse_args(argv)
     if args.stage == "k1-suite":
         if args.source is None:
@@ -947,10 +1131,13 @@ def main(argv: list[str] | None = None) -> int:
             args.expected_mpi_size,
             args.case,
             args.source,
+            pc_variant=args.pc_variant,
         )
     else:
         if args.source is not None:
             parser.error("--source is only valid for --stage k1-suite")
+        if args.pc_variant != K1_VARIANT_SEQUENTIAL:
+            parser.error("--pc-variant is only valid for --stage k1-suite")
         run_worker(
             args.raw_dir,
             args.record,
