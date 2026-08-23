@@ -175,7 +175,8 @@ def test_l2_vector_nodal_interpolation_adjoint_and_edge_length() -> None:
     x = np.arange(node_count, dtype=np.float64) + (0.25 + 0.5j)
     y = np.arange(edge_count, dtype=np.float64) + (0.75 - 0.125j)
     ones = np.ones(node_count, dtype=np.complex128)
-    axis_count = 3 * (3 + 1) ** 2 // 3
+    degree = 3
+    axis_count = degree * (degree + 1) ** 2
     for axis in range(3):
         interpolation = _pi_block(local, axis)
         adjoint = interpolation.conj().T
@@ -187,9 +188,23 @@ def test_l2_vector_nodal_interpolation_adjoint_and_edge_length() -> None:
         edge = axis * axis_count
         start = tuple(starts[edge])
         end = tuple(ends[edge])
+        assert np.count_nonzero(np.abs(interpolation[edge]) > 0.0) == 2
+        assert np.count_nonzero(
+            np.abs(
+                interpolation[axis * axis_count : (axis + 1) * axis_count, :]
+            )
+            > 0.0
+        ) == 2 * axis_count
+        assert np.count_nonzero(
+            np.abs(interpolation[: axis * axis_count, :]) > 0.0
+        ) == 0
+        assert np.count_nonzero(
+            np.abs(interpolation[(axis + 1) * axis_count :, :]) > 0.0
+        ) == 0
         expected_length = local.widths[axis] * (
             local.nodes[end[axis]] - local.nodes[start[axis]]
         )
+        assert expected_length > 0.0
         assert abs(np.sum(interpolation[edge] @ ones) - expected_length) <= 1.0e-14
 
 

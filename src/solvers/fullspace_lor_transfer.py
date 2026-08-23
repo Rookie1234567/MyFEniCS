@@ -553,6 +553,31 @@ class ReferenceFactorLorTransfer:
             )
         return result
 
+    def lor_to_high_adjoint_many(self, values: np.ndarray) -> np.ndarray:
+        """Apply the Hermitian adjoint of the retained LOR-to-high action."""
+
+        vectors = np.asarray(values, dtype=np.complex128)
+        if (
+            vectors.ndim != 2
+            or vectors.shape[1] != self.edge_count
+            or vectors.shape[0] < 1
+            or vectors.shape[0] > LOR_BATCH_CELL_CAP
+        ):
+            raise ValueError("high dual batch has an unexpected fixed-batch shape")
+        result = np.empty_like(vectors)
+        block_size = int(self.degree * (self.degree + 1) ** 2)
+        for axis, (rows, tensor) in enumerate(
+            zip(self.high_edge_groups, self.inverse_tensors, strict=True)
+        ):
+            block = vectors[:, rows]
+            result[:, axis * block_size : (axis + 1) * block_size] = np.einsum(
+                "bh,hijk->bijk",
+                block,
+                np.conjugate(tensor),
+                optimize=True,
+            ).reshape(vectors.shape[0], block_size)
+        return result
+
     def high_to_lor(self, values: np.ndarray) -> np.ndarray:
         vector = np.asarray(values, dtype=np.complex128)
         if vector.shape != (self.edge_count,):

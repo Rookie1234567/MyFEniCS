@@ -309,6 +309,80 @@ class CanonicalLORSubedgeTopology:
         owned_values.setflags(write=False)
         return self.owned_edge_ids, owned_values
 
+    def route_owner_cell_chunks_additive(
+        self, chunks: Iterable[tuple[int, np.ndarray]]
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Route cell contributions whose shared edges must be summed.
+
+        This is the dual counterpart of :meth:`route_owner_cell_chunks`.
+        Cell contributions are accumulated in the local unique-edge buffer and
+        then reduced once at the deterministic edge owners.  It deliberately
+        does not apply the primal shared-value consistency test.
+        """
+
+        local_unique_values = np.zeros(
+            self.unique_edge_ids.size, dtype=np.complex128
+        )
+        seen = np.zeros(self.unique_edge_ids.size, dtype=np.bool_)
+        expected_cell = 0
+        for cell_start, values in chunks:
+            cell_start = int(cell_start)
+            values = np.asarray(values, dtype=np.complex128)
+            if cell_start != expected_cell:
+                raise ValueError("cell chunks must be contiguous and canonical ordered")
+            if values.ndim != 2 or values.shape[1] != self.edge_count:
+                raise ValueError("cell chunk has an unexpected edge dimension")
+            cell_count = int(values.shape[0])
+            if cell_count < 1 or cell_count > int(self.audit["apply_chunk_cell_cap"]):
+                raise ValueError("cell chunk exceeds the fixed streaming cap")
+            cell_end = cell_start + cell_count
+            if cell_end > self.cell_edge_ids.shape[0]:
+                raise ValueError("cell chunk exceeds the local cell inventory")
+            phase = self.phase_values[self.cell_phase_codes[cell_start:cell_end]]
+            canonical = (
+                values
+                * self.cell_orientation[cell_start:cell_end]
+                / phase
+            )
+            flat_ids = self.cell_edge_ids[cell_start:cell_end].reshape(-1)
+            positions = np.searchsorted(self.unique_edge_ids, flat_ids)
+            if np.any(positions >= self.unique_edge_ids.size) or not np.array_equal(
+                self.unique_edge_ids[
+                    np.minimum(positions, self.unique_edge_ids.size - 1)
+                ],
+                flat_ids,
+            ):
+                raise ValueError("cell chunk contains an unknown packed edge id")
+            positions_by_cell = positions.reshape((cell_count, self.edge_count))
+            values_by_cell = canonical.reshape((cell_count, self.edge_count))
+            for cell_offset in range(cell_count):
+                cell_positions = positions_by_cell[cell_offset]
+                np.add.at(local_unique_values, cell_positions, values_by_cell[cell_offset])
+                seen[cell_positions] = True
+            expected_cell = cell_end
+        if expected_cell != self.cell_edge_ids.shape[0] or not np.all(seen):
+            raise ValueError("streaming chunks did not cover every local cell edge")
+
+        send_values = local_unique_values[self.owner_schedule["send_order"]]
+        received_values, _ = _alltoallv(
+            self.comm,
+            send_values,
+            self.owner_schedule["send_counts"],
+            MPI.DOUBLE_COMPLEX,
+            recv_counts=self.owner_schedule["receive_counts"],
+        )
+        sort_order = self.owner_received_sort_order
+        sorted_ids = self.owner_received_sorted_ids
+        sorted_values = received_values[sort_order]
+        if sorted_values.size:
+            owned_values = np.add.reduceat(
+                sorted_values, self.owner_received_group_starts
+            ).astype(np.complex128, copy=False)
+        else:
+            owned_values = np.empty(0, dtype=np.complex128)
+        owned_values.setflags(write=False)
+        return self.owned_edge_ids, owned_values
+
     def pull_owner_unique_values(
         self, owned_ids: np.ndarray, owned_values: np.ndarray
     ) -> np.ndarray:
@@ -375,6 +449,7 @@ def global_lor_edge_roundtrip(
     from petsc4py import PETSc
 
     comm = function_space.mesh.comm
+    work_space = floquet_data.mpc.function_space
     topology = build_canonical_lor_subedge_topology(
         function_space, floquet_data, transfer
     )
@@ -390,13 +465,13 @@ def global_lor_edge_roundtrip(
         canonical_batch: list[np.ndarray] = []
         for cell in range(topology.cell_edge_ids.shape[0]):
             local_dofs = np.asarray(
-                function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                work_space.dofmap.cell_dofs(cell), dtype=np.int32
             )
             raw = np.asarray(
                 source_field.x.array[local_dofs], dtype=np.complex128
             ).copy()
             canonical = raw.copy()
-            function_space.element.Tt_apply(
+            work_space.element.Tt_apply(
                 canonical, np.asarray([cell_info[cell]], dtype=np.uint32), 1
             )
             canonical_batch.append(canonical)
@@ -418,8 +493,8 @@ def global_lor_edge_roundtrip(
 
     owner_ids, owner_values = topology.route_owner_cell_chunks(cell_chunks())
     unique_values = topology.pull_owner_unique_values(owner_ids, owner_values)
-    roundtrip = fem.Function(function_space)
-    multiplicity = fem.Function(function_space)
+    roundtrip = fem.Function(work_space)
+    multiplicity = fem.Function(work_space)
     roundtrip.x.array[:] = 0.0
     multiplicity.x.array[:] = 0.0
     for cell_start in range(0, topology.cell_edge_ids.shape[0], LOR_BATCH_CELL_CAP):
@@ -432,10 +507,10 @@ def global_lor_edge_roundtrip(
         canonical_batch = transfer.lor_to_high_many(pulled_lor)
         for offset, cell in enumerate(range(cell_start, cell_end)):
             local_dofs = np.asarray(
-                function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                work_space.dofmap.cell_dofs(cell), dtype=np.int32
             )
             stored = canonical_batch[offset].copy()
-            function_space.element.T_apply(
+            work_space.element.T_apply(
                 stored, np.asarray([cell_info[cell]], dtype=np.uint32), 1
             )
             roundtrip.x.array[local_dofs] += stored
@@ -446,7 +521,7 @@ def global_lor_edge_roundtrip(
     multiplicity.x.petsc_vec.ghostUpdate(
         addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
     )
-    owned = int(function_space.dofmap.index_map.size_local)
+    owned = int(work_space.dofmap.index_map.size_local)
     if np.any(np.real(multiplicity.x.array[:owned]) <= 0.0):
         raise AssertionError("real-cell transfer did not cover owned rows")
     roundtrip.x.array[:owned] /= multiplicity.x.array[:owned]

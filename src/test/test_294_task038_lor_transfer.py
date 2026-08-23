@@ -200,6 +200,24 @@ def test_l1_single_cell_transfer_derham_and_spectral_gate(degree: int) -> None:
     assert audit["owner_local_maps"] is False
 
 
+@pytest.mark.parametrize("degree", [2, 3])
+def test_l1_reference_factor_adjoint_many_matches_dense(degree: int) -> None:
+    dense = build_local_lor_transfer(degree)
+    reference = build_reference_factor_lor_transfer(degree)
+    dual = np.arange(dense.lor_to_high_matrix.shape[0], dtype=np.float64) + (
+        0.25 + 0.5j
+    )
+    expected = dense.lor_to_high_matrix.conj().T @ dual
+    observed = reference.lor_to_high_adjoint_many(dual[None, :])[0]
+    relative = np.linalg.norm(observed - expected) / max(
+        np.linalg.norm(expected), np.finfo(float).tiny
+    )
+    assert relative <= 1.0e-12
+    np.testing.assert_array_equal(
+        observed, reference.lor_to_high_adjoint_many(dual[None, :])[0]
+    )
+
+
 def test_l1_spectral_condition_cross_degree_gate() -> None:
     audits = {degree: build_local_lor_transfer(degree).audit for degree in (2, 3, 6)}
     assert audits[6]["spectral_condition"] <= 2.0 * max(
@@ -209,6 +227,10 @@ def test_l1_spectral_condition_cross_degree_gate() -> None:
 
 def test_l1_p6_reference_factor_action_has_bounded_retained_payload() -> None:
     dense = build_local_lor_transfer(6)
+    dual = np.arange(dense.lor_to_high_matrix.shape[0], dtype=np.float64) + (
+        0.25 + 0.5j
+    )
+    dense_adjoint = dense.lor_to_high_matrix.conj().T @ dual
     probe = np.arange(dense.high_to_lor_matrix.shape[1], dtype=np.float64) + (
         0.125 + 0.25j
     )
@@ -219,6 +241,7 @@ def test_l1_p6_reference_factor_action_has_bounded_retained_payload() -> None:
     reference = build_reference_factor_lor_transfer(6)
     factor_lor = reference.high_to_lor(probe)
     factor_high = reference.lor_to_high(factor_lor)
+    factor_adjoint = reference.lor_to_high_adjoint_many(dual[None, :])[0]
     batch_one_lor = reference.high_to_lor_many(probe[None, :])[0]
     batch_one_high = reference.lor_to_high_many(batch_one_lor[None, :])[0]
     batch_input = np.repeat(probe[None, :], LOR_BATCH_CELL_CAP, axis=0)
@@ -283,6 +306,9 @@ def test_l1_p6_reference_factor_action_has_bounded_retained_payload() -> None:
     assert audit["reference_factor_batch_cell_cap"] == LOR_BATCH_CELL_CAP
     assert forward_relative <= 1.0e-12
     assert inverse_relative <= 1.0e-12
+    assert np.linalg.norm(factor_adjoint - dense_adjoint) / max(
+        np.linalg.norm(dense_adjoint), np.finfo(float).tiny
+    ) <= 1.0e-12
     assert batch_forward_relative <= 1.0e-12
     assert batch_inverse_relative <= 1.0e-12
     assert np.linalg.norm(batch_one_lor - factor_lor) / max(
@@ -422,7 +448,10 @@ def test_l1_periodic_mpc_canonical_source_action_identity(degree: int) -> None:
     assert lor_topology.audit["per_apply_global_sort"] is False
     assert lor_topology.audit["apply_chunk_cell_cap"] == LOR_BATCH_CELL_CAP
     assert lor_topology.audit["projected_p6_h10_packed_map_bytes"] == 288_054_144
-    assert lor_topology.audit["projected_p6_h10_transfer_batch_scratch_bytes"] == 2 * LOR_BATCH_CELL_CAP * 882 * 16
+    assert lor_topology.audit["projected_p6_h10_transfer_batch_scratch_bytes"] == (
+        2 * LOR_BATCH_CELL_CAP * 882 * 16
+        + LOR_BATCH_CELL_CAP * (882 // 3) * 16
+    )
     assert (
         lor_topology.audit["apply_scratch_upper_bound_bytes"]
         < lor_topology.audit["projected_p6_h10_packed_map_bytes"]
