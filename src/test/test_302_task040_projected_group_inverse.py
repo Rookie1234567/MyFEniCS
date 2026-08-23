@@ -15,6 +15,7 @@ from src.solvers.hybrid_interface_schur import (
     build_fixed_projected_group_inverse,
 )
 from src.solvers.hybrid_interface_run_b import build_v1_3_projected_transmission
+from src.solvers.hybrid_interface_run_b import build_v2_packet_projected_transmission
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 from src.solvers.hybrid_side_impedance import ArtificialZTraceMass
 
@@ -324,6 +325,115 @@ def test_v1_3_projected_transmission_owns_three_base_factors_and_sweep(monkeypat
             layout.destroy()
         if oracle is not None:
             oracle.destroy()
+        for mass in masses:
+            mass.destroy()
+        matrix.destroy()
+
+
+def test_v2_packet_projected_transmission_matches_v1_factory_without_oracle():
+    base = np.diag(
+        np.asarray(
+            [2.0 + 0.1j, 2.2 - 0.2j, 2.4 + 0.3j, 2.6 - 0.1j, 2.8 + 0.2j, 3.0 - 0.3j]
+        )
+    )
+    base += 0.04j * np.triu(np.ones((6, 6), dtype=np.complex128), 1)
+    base += 0.03 * np.tril(np.ones((6, 6), dtype=np.complex128), -1)
+    matrix = _distributed_matrix(base)
+    first, last = map(int, matrix.getOwnershipRange())
+    global_groups = ((0, 1), (0, 2, 3, 5), (4, 5))
+    group_rows = tuple(
+        np.asarray([row for row in rows if first <= row < last], dtype=PETSc.IntType)
+        for rows in global_groups
+    )
+    masses: list[ArtificialZTraceMass] = []
+    v1_owner = v2_owner = None
+    vectors: list[PETSc.Vec] = []
+
+    class PayloadPetrov:
+        def __init__(self, rows, factors):
+            self.gamma_rows_local = rows
+            self._factors = factors
+
+        def projected_woodbury_factors(self):
+            return self._factors
+
+    try:
+        for row in (0, 5):
+            values = np.zeros((6, 6), dtype=np.complex128)
+            values[row, row] = 1.0
+            masses.append(
+                ArtificialZTraceMass(
+                    _distributed_matrix(values), {"interface_z": float(row)}
+                )
+            )
+        gamma_factors: list[dict[str, np.ndarray]] = []
+        petrov: list[PayloadPetrov] = []
+        for group, rows in enumerate(group_rows):
+            width = 2 if group == 1 else 1
+            local_u = np.empty((len(rows), width), dtype=np.complex128)
+            local_v = np.empty_like(local_u)
+            for local, row in enumerate(rows):
+                for column in range(width):
+                    local_u[local, column] = 0.01 * (int(row) + 1) * (column + 1)
+                    local_u[local, column] += 0.02j * (group + column + 1)
+                    local_v[local, column] = 0.015 * (int(row) + 2) * (column + 1)
+                    local_v[local, column] -= 0.01j * (group + 2 * column + 1)
+            factors = {"U": local_u, "V": local_v}
+            gamma_factors.append(factors)
+            petrov.append(PayloadPetrov(rows.copy(), factors))
+
+        v1_sweep, v1_owner, v1_diagnostics = build_v1_3_projected_transmission(
+            bare_f=matrix,
+            group_rows=group_rows,
+            interface_masses=tuple(masses),
+            beta=0.7 + 0.2j,
+            group_audit={"interface_support_coverage": []},
+            petrov_actions=tuple(petrov),
+        )
+        assert v1_diagnostics["projected_factor_count_ready"] == 3
+        assert v1_diagnostics["v1_3_projected"] is True
+        assert "packet_consumer" not in v1_diagnostics
+        source = matrix.createVecRight()
+        v1_target = matrix.createVecLeft()
+        vectors.extend((source, v1_target))
+        _set_global(source, np.asarray([1.0 + 0.2j * i for i in range(6)]))
+        v1_sweep.apply(source, v1_target)
+        expected = _collect_global(v1_target)
+        v1_owner.destroy()
+        v1_owner = None
+
+        v2_sweep, v2_owner, v2_diagnostics = build_v2_packet_projected_transmission(
+            bare_f=matrix,
+            group_rows=group_rows,
+            interface_masses=tuple(masses),
+            beta=0.7 + 0.2j,
+            group_audit={"interface_support_coverage": []},
+            gamma_rows=group_rows,
+            gamma_factors=tuple(gamma_factors),
+        )
+        assert v2_diagnostics["packet_consumer"] is True
+        assert v2_diagnostics["scalar_base_factor_count"] == 3
+        assert v2_diagnostics["projected_inverse_factor_count"] == 3
+        assert v2_diagnostics["exact_interface_oracle_factor_count"] == 0
+        assert v2_diagnostics["full_side_exact_factor_count"] == 0
+        assert v2_diagnostics["global_direct_factor_count"] == 0
+        assert v2_diagnostics["nested_ksp_count"] == 0
+        assert v2_diagnostics["fe_numeric_allgather"] is False
+        assert v2_diagnostics["basis_global_replicated"] is False
+        assert v2_diagnostics["oracle_only"] is True
+        assert v2_diagnostics.get("v1_3_projected") is not True
+        assert "no_fe_numeric_allgather" not in v2_diagnostics
+        v2_target = matrix.createVecLeft()
+        vectors.append(v2_target)
+        v2_sweep.apply(source, v2_target)
+        assert np.allclose(_collect_global(v2_target), expected, rtol=0.0, atol=1.0e-11)
+    finally:
+        for vector in vectors:
+            vector.destroy()
+        if v2_owner is not None:
+            v2_owner.destroy()
+        if v1_owner is not None:
+            v1_owner.destroy()
         for mass in masses:
             mass.destroy()
         matrix.destroy()

@@ -16,6 +16,7 @@ from src.solvers.hybrid_interface_packet_dolfinx import (
     build_dolfinx_plane_gamma_layout,
     build_gamma_canonical_layout,
     canonicalize_owner_local_basis_in_place,
+    audit_owner_local_basis_round_trip,
     make_gamma_entity_block,
     reconstruct_owner_local_basis,
 )
@@ -112,6 +113,23 @@ def test_canonical_block_round_trip_uses_fresh_raw_order_and_transform() -> None
     expected_v = target.canonical_to_raw @ canonical_v
     assert np.allclose(rebuilt.U, expected_u, rtol=0.0, atol=1.0e-12)
     assert np.allclose(rebuilt.V, expected_v, rtol=0.0, atol=1.0e-12)
+    audit = audit_owner_local_basis_round_trip(
+        target_layout,
+        rebuilt.U,
+        rebuilt.V,
+        finalized,
+    )
+    assert audit["pass"] is True
+    assert audit["max_relative_error"] <= 1.0e-12
+    tampered_u = rebuilt.U.copy()
+    tampered_u[0, 0] += 1.0e-5
+    tampered = audit_owner_local_basis_round_trip(
+        target_layout,
+        tampered_u,
+        rebuilt.V,
+        finalized,
+    )
+    assert tampered["pass"] is False
 
 
 def _plane_owned_rows(function_space, plane_z: float) -> np.ndarray:

@@ -34,6 +34,7 @@ __all__ = (
     "build_dolfinx_plane_gamma_layout",
     "canonicalize_owner_local_basis_in_place",
     "reconstruct_owner_local_basis",
+    "audit_owner_local_basis_round_trip",
 )
 
 
@@ -483,3 +484,69 @@ def reconstruct_owner_local_basis(
     if not np.isfinite(raw_U).all() or not np.isfinite(raw_V).all():
         raise ValueError("reconstructed owner-local U/V arrays are nonfinite")
     return RawOwnerLocalBasis(layout.gamma_rows_local, raw_U, raw_V)
+
+
+def audit_owner_local_basis_round_trip(
+    layout: GammaCanonicalLayout,
+    raw_U: np.ndarray,
+    raw_V: np.ndarray,
+    canonical_basis: CanonicalOwnerLocalBasis,
+    *,
+    tolerance: float = 1.0e-12,
+) -> dict[str, Any]:
+    """Audit canonical-packet to raw owner-row reconstruction blockwise.
+
+    Only one entity block is materialized at a time.  The returned errors are
+    owner-local diagnostics; no FE-sized numeric array is gathered or copied.
+    """
+
+    raw_U, raw_V = _validate_basis_arrays(layout, raw_U, raw_V)
+    keys = _normalise_keys(canonical_basis.keys)
+    canonical_U = np.asarray(canonical_basis.U)
+    canonical_V = np.asarray(canonical_basis.V)
+    if (
+        canonical_U.dtype != np.dtype(np.complex128)
+        or canonical_V.dtype != np.dtype(np.complex128)
+        or canonical_U.ndim != 2
+        or canonical_V.shape != canonical_U.shape
+        or canonical_U.shape[0] != len(keys)
+    ):
+        raise ValueError("canonical packet U/V arrays have the wrong shape")
+    if not np.isfinite(canonical_U).all() or not np.isfinite(canonical_V).all():
+        raise ValueError("canonical packet U/V arrays are nonfinite")
+    if set(keys) != set(layout.canonical_keys):
+        raise ValueError("canonical packet keys do not cover the current layout")
+    source_positions = {key: index for index, key in enumerate(keys)}
+    u_error = 0.0
+    v_error = 0.0
+    for placement in layout.blocks:
+        block = placement.block
+        positions = placement.positions
+        source = np.asarray(
+            [source_positions[key] for key in block.canonical_keys],
+            dtype=np.int64,
+        )
+        expected_U = block.canonical_to_raw @ canonical_U[source, :]
+        expected_V = block.canonical_to_raw @ canonical_V[source, :]
+        actual_U = raw_U[positions, :]
+        actual_V = raw_V[positions, :]
+        u_error = max(
+            u_error,
+            float(np.linalg.norm(actual_U - expected_U))
+            / max(float(np.linalg.norm(expected_U)), 1.0e-30),
+        )
+        v_error = max(
+            v_error,
+            float(np.linalg.norm(actual_V - expected_V))
+            / max(float(np.linalg.norm(expected_V)), 1.0e-30),
+        )
+    maximum = max(u_error, v_error)
+    return {
+        "U_relative_error": u_error,
+        "V_relative_error": v_error,
+        "max_relative_error": maximum,
+        "tolerance": float(tolerance),
+        "pass": bool(np.isfinite(maximum) and maximum <= tolerance),
+        "block_count": len(layout.blocks),
+        "basis_global_replicated": False,
+    }
