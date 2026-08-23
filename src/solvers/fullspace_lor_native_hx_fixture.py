@@ -910,6 +910,9 @@ class RealL2PositiveHXFixture:
             self.lor_edge_floquet,
             self.lor_p1_transfer,
         )
+        self._raw_edge_orientation_factors = (
+            self._build_raw_edge_orientation_factors()
+        )
         self.roundtrip, self.lor_owner_packet, self.transfer_error, self.lor_topology = (
             global_lor_edge_roundtrip(
                 self.high_space,
@@ -944,6 +947,23 @@ class RealL2PositiveHXFixture:
         edge_slave = int(self.lor_edge_floquet.num_local_slaves)
         edge_slave = int(comm.allreduce(edge_slave, op=MPI.SUM))
         node_slave = int(self.lor_node_constraint_audit["global_slave_rows"])
+        orientation_factors = self._raw_edge_orientation_factors
+        orientation_count = int(
+            comm.allreduce(orientation_factors.size, op=MPI.SUM)
+        )
+        orientation_minus = int(
+            comm.allreduce(
+                int(np.count_nonzero(orientation_factors < 0)), op=MPI.SUM
+            )
+        )
+        orientation_plus = int(
+            comm.allreduce(
+                int(np.count_nonzero(orientation_factors > 0)), op=MPI.SUM
+            )
+        )
+        orientation_bytes = int(
+            comm.allreduce(int(orientation_factors.nbytes), op=MPI.SUM)
+        )
         return {
             "schema": (
                 "task038.l2.real-positive-hx-fixture.v2"
@@ -972,6 +992,12 @@ class RealL2PositiveHXFixture:
             "de_rham_map_audit": self.de_rham_audit,
             "phase_application": "finalized_floquet_mpc_once",
             "slave_master_complete": True,
+            "raw_edge_orientation_factor_count": orientation_count,
+            "raw_edge_orientation_plus_count": orientation_plus,
+            "raw_edge_orientation_minus_count": orientation_minus,
+            "raw_edge_orientation_factor_bytes": orientation_bytes,
+            "raw_edge_orientation_consistent": True,
+            "raw_edge_orientation_owned_rows_closed": True,
             "mu_inverse": [float(self.mu_inverse.real), float(self.mu_inverse.imag)],
             "k0_squared_abs_epsilon": float(self.mass_coefficient.real),
             "piecewise_coefficients": {
@@ -993,6 +1019,63 @@ class RealL2PositiveHXFixture:
             "high_action_audit": self.high_action.audit,
             "hx_audit": self.hx.audit,
         }
+
+    def _build_raw_edge_orientation_factors(self) -> np.ndarray:
+        """Cache the p1 N1curl sign for each owned raw edge row."""
+
+        raw_index_map = self.lor_edge_space.dofmap.index_map
+        owned_count = int(raw_index_map.size_local)
+        row_start, row_stop = self.edge_matrix.getOwnershipRange()
+        if int(row_stop - row_start) != owned_count:
+            raise RuntimeError("raw edge orientation ownership does not close")
+        factors = np.zeros(owned_count, dtype=np.int8)
+        seen = np.zeros(owned_count, dtype=bool)
+        work_space = self.lor_edge_floquet.mpc.function_space
+        work_index_map = work_space.dofmap.index_map
+        work_storage_global_ids = np.asarray(
+            work_index_map.local_to_global(
+                np.arange(
+                    int(work_index_map.size_local + work_index_map.num_ghosts),
+                    dtype=np.int32,
+                )
+            ),
+            dtype=np.int64,
+        )
+        cell_info = np.asarray(
+            self.lor_mesh.topology.get_cell_permutation_info(), dtype=np.uint32
+        )
+        cell_count = int(self.lor_mesh.topology.index_map(3).size_local)
+        for cell in range(cell_count):
+            local_dofs = np.asarray(
+                work_space.dofmap.cell_dofs(cell), dtype=np.int32
+            )
+            for raw_index in self._lor_p1_transfer_local_indices[cell]:
+                raw_index = int(raw_index)
+                basis = np.zeros(local_dofs.size, dtype=np.complex128)
+                basis[raw_index] = 1.0 + 0.0j
+                work_space.element.Tt_apply(
+                    basis, np.asarray([cell_info[cell]], dtype=np.uint32), 1
+                )
+                factor = complex(basis[raw_index])
+                if (
+                    abs(factor.imag) > 1.0e-14
+                    or abs(abs(factor.real) - 1.0) > 1.0e-14
+                ):
+                    raise RuntimeError("p1 raw edge orientation is not a sign")
+                raw_global = int(
+                    work_storage_global_ids[int(local_dofs[raw_index])]
+                )
+                if raw_global < int(row_start) or raw_global >= int(row_stop):
+                    continue
+                position = raw_global - int(row_start)
+                sign = np.int8(1 if factor.real > 0.0 else -1)
+                if seen[position] and factors[position] != sign:
+                    raise RuntimeError("raw edge orientation is inconsistent")
+                factors[position] = sign
+                seen[position] = True
+        if not np.all(seen):
+            raise RuntimeError("raw edge orientation owned rows are incomplete")
+        return factors
 
     def build_l2_source(self, name: str) -> tuple[PETSc.Vec, dict[str, Any]]:
         """Build one frozen, finalized-MPC primal source for the L2 oracle."""
@@ -1235,13 +1318,18 @@ class RealL2PositiveHXFixture:
         raw_map = self._raw_edge_canonical_map()
         vector = self.edge_matrix.createVecRight()
         start, stop = vector.getOwnershipRange()
+        orientation_factors = self._raw_edge_orientation_factors
+        if orientation_factors.size != int(stop - start):
+            raise RuntimeError("raw edge orientation vector has wrong ownership")
         for global_id in range(int(start), int(stop)):
             canonical_id, phase_code = raw_map[global_id]
             position = int(np.searchsorted(low_ids, canonical_id))
             if position >= low_ids.size or int(low_ids[position]) != canonical_id:
                 raise RuntimeError("raw LOR dual row has no canonical owner value")
             vector.array[global_id - int(start)] = (
-                low_unique[position] if int(phase_code) == 0 else 0.0
+                low_unique[position] / orientation_factors[global_id - int(start)]
+                if int(phase_code) == 0
+                else 0.0
             )
         return vector
 

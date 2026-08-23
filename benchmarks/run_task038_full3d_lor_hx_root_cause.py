@@ -145,21 +145,31 @@ def _node_pairs(fixture: Any, vector: Any) -> list[tuple[str, complex]]:
     index_map = space.dofmap.index_map
     owned = int(index_map.size_local)
     coordinates = np.asarray(space.tabulate_dof_coordinates(), dtype=np.float64)
-    global_ids = np.asarray(
-        index_map.local_to_global(np.arange(owned, dtype=np.int32)), dtype=np.int64
-    )
-    slave_slots = np.asarray(fixture.lor_node_floquet.slaves, dtype=np.int32)
-    slave_ids = set(
-        int(value)
-        for value in index_map.local_to_global(slave_slots)
-        if int(value) < int(index_map.size_global)
-    )
     values = np.asarray(vector.getArray(readonly=True), dtype=np.complex128)
     pairs: list[tuple[str, complex]] = []
-    for local, global_id in enumerate(global_ids):
-        coordinate = ",".join(float(value).hex() for value in coordinates[local])
-        kind = "slave" if int(global_id) in slave_ids else "master"
-        pairs.append((f"node:{kind}:{coordinate}", complex(values[local])))
+    for local in range(owned):
+        indices = tuple(
+            int(np.argmin(np.abs(np.asarray(axis, dtype=np.float64) - value)))
+            for axis, value in zip(fixture.refined_axes, coordinates[local], strict=True)
+        )
+        if any(
+            not np.isclose(
+                float(fixture.refined_axes[axis][index]),
+                float(coordinates[local, axis]),
+                rtol=1.0e-12,
+                atol=1.0e-12,
+            )
+            for axis, index in enumerate(indices)
+        ):
+            raise ValueError("node coordinate is not on the fixed refined lattice")
+        pairs.append(
+            (
+                "node:lattice:" + ",".join(str(index) for index in indices),
+                complex(values[local]),
+            )
+        )
+    if len({key for key, _value in pairs}) != len(pairs):
+        raise ValueError("duplicate owned node lattice key")
     return pairs
 
 

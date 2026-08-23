@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 
+from benchmarks.run_task038_full3d_lor_hx_root_cause import _node_pairs
 from src.solvers.fullspace_lor_native_hx_fixture import (
     build_real_l2_positive_hx_fixture,
 )
@@ -117,6 +118,76 @@ def _global_residual_transfer_work_identity(fixture) -> float:
     return relative
 
 
+def _assert_raw_orientation_roundtrip(fixture) -> None:
+    source, _audit = fixture.build_l2_source("random")
+    residual = fixture.apply_high_action_copy(source)
+    owner_ids, owner_values = fixture._restrict_high_dual(residual)
+    low = fixture._full_lor_dual_vector_from_high_owner_packet(
+        owner_ids, owner_values
+    )
+    routed_ids, routed_values = fixture._route_low_owner_packet(low)
+    assert np.array_equal(owner_ids, routed_ids)
+    numerator = fixture.comm.allreduce(
+        float(
+            np.vdot(
+                np.asarray(owner_values - routed_values, dtype=np.complex128),
+                np.asarray(owner_values - routed_values, dtype=np.complex128),
+            ).real
+        ),
+        op=MPI.SUM,
+    )
+    denominator = fixture.comm.allreduce(
+        float(np.vdot(owner_values, owner_values).real), op=MPI.SUM
+    )
+    relative = float(
+        np.sqrt(max(numerator, 0.0))
+        / max(np.sqrt(max(denominator, 0.0)), np.finfo(float).tiny)
+    )
+    assert relative <= 1.0e-12
+    low.destroy()
+    residual.destroy()
+    source.destroy()
+
+
+def _assert_orientation_audit(fixture) -> None:
+    audit = fixture.audit
+    count = int(audit["raw_edge_orientation_factor_count"])
+    assert count == int(fixture.edge_matrix.getSize()[0])
+    assert audit["raw_edge_orientation_plus_count"] + audit[
+        "raw_edge_orientation_minus_count"
+    ] == count
+    assert audit["raw_edge_orientation_factor_bytes"] == count
+    assert audit["raw_edge_orientation_consistent"] is True
+    assert audit["raw_edge_orientation_owned_rows_closed"] is True
+    if fixture.comm.size == 1:
+        assert audit["raw_edge_orientation_minus_count"] == 0
+    if fixture.comm.size == 2:
+        assert audit["raw_edge_orientation_minus_count"] > 0
+
+
+def _assert_node_lattice_keys(fixture) -> None:
+    vector = fixture.node_matrix.createVecRight()
+    try:
+        local_pairs = _node_pairs(fixture, vector)
+        gathered = fixture.comm.gather([key for key, _value in local_pairs], root=0)
+        if fixture.comm.rank == 0:
+            keys = [key for part in gathered for key in part]
+            expected = {
+                "node:lattice:" + ",".join(str(index) for index in (ix, iy, iz))
+                for ix in range(len(fixture.refined_axes[0]))
+                for iy in range(len(fixture.refined_axes[1]))
+                for iz in range(len(fixture.refined_axes[2]))
+            }
+            assert len(keys) == len(expected)
+            assert len(set(keys)) == len(expected)
+            if fixture.degree == 2:
+                assert len(expected) == 385
+            assert set(keys) == expected
+            assert all("master" not in key and "slave" not in key for key in keys)
+    finally:
+        vector.destroy()
+
+
 def _assert_fixture(fixture) -> None:
     audit = fixture.audit
     assert audit["high_order_matrix_free"] is True
@@ -181,6 +252,9 @@ def test_l2_real_positive_fullspace_fixture(degree: int) -> None:
     fixture = build_real_l2_positive_hx_fixture(degree, MPI.COMM_WORLD)
     try:
         _assert_fixture(fixture)
+        _assert_orientation_audit(fixture)
+        _assert_raw_orientation_roundtrip(fixture)
+        _assert_node_lattice_keys(fixture)
         rng = np.random.default_rng(20260823)
         edge_hermitian, edge_positive = _matrix_work_identity(
             fixture.edge_matrix, rng
@@ -242,6 +316,9 @@ def test_l2_real_p2_mpi2_full_row_ownership_full_chain() -> None:
     fixture = build_real_l2_positive_hx_fixture(2, MPI.COMM_WORLD)
     try:
         _assert_fixture(fixture)
+        _assert_orientation_audit(fixture)
+        _assert_raw_orientation_roundtrip(fixture)
+        _assert_node_lattice_keys(fixture)
         assert _global_residual_transfer_work_identity(fixture) <= 1.0e-12
         high_first, high_second = fixture.apply_high()
         lor_first, lor_second = fixture.apply_lor()
