@@ -1,0 +1,18 @@
+{
+  "case": "p2-mpi1",
+  "contract_errors": [],
+  "diagnostics": {
+    "artifact_count": 166,
+    "outer_history_labels": [
+      "exact_nodal",
+      "production"
+    ],
+    "production_pcgamg_vs_exact_nodal": 0.09628612077864442,
+    "role_count": 83
+  },
+  "gate_failures": [],
+  "passed": true,
+  "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_hx_m0_v1/9f44464eda27590492dcfe0432129a126625b5cc/p2-mpi1/record.json",
+  "record_sha256": "5c038d233afefb45020f33ad2feb5b16b673a47541fcbc0e57f017522975daf5",
+  "schema": "task038.lor-native-complex-hx.m0-check.v1"
+}

@@ -1,0 +1,118 @@
+{
+  "schema": "task038.lor-native-complex-hx.m0-postfailure-diagnostic.v1",
+  "stage": "m0",
+  "diagnostic_only": true,
+  "not_formal": true,
+  "source": {
+    "sha": "9f44464eda27590492dcfe0432129a126625b5cc",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "base_sha": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+    "mpi_case": "p2/h50 random"
+  },
+  "classification": "M0_HARD_STOP_TRANSFER_MPC_OWNER_ALGEBRA_MISMATCH",
+  "boundary": {
+    "formal_pass": false,
+    "m0_qualification": "closed_by_review_v8_section_12_hard_stop",
+    "reason": "orientation placement repair did not close the remaining MPC/owner algebra mismatch",
+    "m1_to_m7": "NOT_RUN_BY_M0_HARD_STOP",
+    "no_gate_relaxation": true,
+    "no_parameter_scan": true
+  },
+  "immutable_authorities": {
+    "old_l2_record_sha256": "0a6ccfdb6a28b003167046e3ca3fc5e4de0d40825784786319661901a65389f3",
+    "old_l2_one_apply_rho": 1.7348663090876784,
+    "old_l2_one_apply_limit": 0.45,
+    "old_l2_classification": "FAIL"
+  },
+  "edge_placement": {
+    "diagnostic_meaning": "current canonical owner packet placed into raw rows versus orientation-aware placement",
+    "owner_roundtrip_relative": {
+      "mpi1_current": 0.0,
+      "mpi1_orientation_aware": 0.0,
+      "mpi2_current": 0.5849607443002511,
+      "mpi2_orientation_aware": 2.060948712431624e-17
+    },
+    "first_edge_pre_relative": {
+      "mpi1_current_vs_orientation_aware": 0.0,
+      "mpi2_current_vs_orientation_aware": 0.2898861945930992,
+      "mpi2_exact_pair_edge_pre": 1.2841132186933526e-15
+    },
+    "orientation_aware_adjoint_relative_mpi2": {
+      "gradient": 2.5037197364122333e-16,
+      "pi_x": 2.08990182089594e-16,
+      "pi_y": 4.2142852883030456e-18,
+      "pi_z": 5.862316766423091e-16
+    },
+    "direct_nodal_residual": {
+      "mpi1": 5.310854724390275e-16,
+      "mpi2": 4.602617923986701e-16
+    }
+  },
+  "orientation_signs": {
+    "raw_row_mismatch_count": 0,
+    "mpi1": {
+      "negative_cell_edge_references": 0,
+      "positive_cell_edge_references": 2880,
+      "owned_map_minus_factors": 0,
+      "owned_map_plus_factors": 3952
+    },
+    "mpi2": {
+      "negative_cell_edge_references": 92,
+      "positive_cell_edge_references": 2788,
+      "owned_map_minus_factors": 208,
+      "owned_map_plus_factors": 3744
+    },
+    "phase_rows": 220,
+    "phase_slave_mismatch_count": 0
+  },
+  "map_and_mpc_diagnostic": {
+    "sign_only_corrected_gradient_rhs": 0.20630212828353248,
+    "owner_consistent_ghost_relation_gradient_rhs": 2.396070826157907e-15,
+    "remote_relation_inconsistency_count": 37,
+    "owner_consistent_gradient_nodal_delta": 0.11660480519091415,
+    "fixed_lattice_node_matrix_action": 0.08847380943557186,
+    "node_matrix_shape": [385, 385],
+    "direct_residual_approximately": 5e-16,
+    "interpretation": "owner-consistent node metadata closes the gradient RHS comparison but not the nodal solution or the remaining components"
+  },
+  "temporary_evidence": {
+    "not_tracked": true,
+    "files": [
+      {
+        "path": "/tmp/task038_m0_orientation_round2.py",
+        "bytes": 14329,
+        "sha256": "68d3a682ffbb7ace36136f64662ed6d9317e1d0327b31663cd8ada4a6f466bf9"
+      },
+      {
+        "path": "/tmp/task038_m0_map_alignment.py",
+        "bytes": 4848,
+        "sha256": "30981d0a11f3460b59ccbddd1998c7df6a4cd34b21937e0a61a001984dd7e157"
+      },
+      {
+        "path": "/tmp/task038_m0_global_node_relation_oracle.py",
+        "bytes": 8621,
+        "sha256": "a47275274332fd50c66be780676bd62f6f16187ea0e86f44a5c9cb77db955236"
+      },
+      {
+        "path": "/tmp/task038_m0_orientation_round2_mpi1.npz",
+        "bytes": 975072,
+        "sha256": "76458f97372912993f45fbda6e6ef52d83929045eead76a97f02ff55f5fde230"
+      },
+      {
+        "path": "/tmp/task038_m0_orientation_round2_mpi2.npz",
+        "bytes": 979924,
+        "sha256": "e2974939bb73fb3c6580f9fbd669bdd0783b8bf89d9240ad0ab6cdbb1b7ba08a"
+      },
+      {
+        "path": "/tmp/task038_m0_global_node_relation_mpi1.npz",
+        "bytes": 478493,
+        "sha256": "631d89cb80bf0378413a9bf1201b9817118761247d8aaac36a92e2334705f45f"
+      },
+      {
+        "path": "/tmp/task038_m0_global_node_relation_mpi2.npz",
+        "bytes": 480109,
+        "sha256": "98b6d2df9bb0de7afacffcec2a21752c8760d732108a66e146022c019427ed04"
+      }
+    ]
+  }
+}
