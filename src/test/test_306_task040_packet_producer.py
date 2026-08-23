@@ -74,7 +74,11 @@ def _physical_report(label: str, group: int) -> dict[str, object]:
         "label": label,
         "group": group,
         "kind": "physical",
-        "finite": True,
+        "exact_norm": 1.0,
+        "scalar_norm": 1.0,
+        "projected_norm": 1.0,
+        "scalar_exact_relative": 1.0,
+        "projected_exact_relative": 1.0,
         "contractions": _contractions(),
     }
 
@@ -717,6 +721,31 @@ def test_task040_v2_checker_rejects_identity_seed_and_provenance_tamper(
                 error = str(exc)
         error = comm.bcast(error, root=0)
         assert error is not None
+
+
+def test_task040_v2_checker_rejects_nonfinite_physical_contraction(tmp_path: Path):
+    comm = MPI.COMM_WORLD
+    root = _shared_root(tmp_path, comm, "nonfinite_physical")
+    _write_fixture(root, comm)
+    error = None
+    if comm.rank == 0:
+        manifest_path = root / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["diagnostics"]["physical_probe_reports"][0]["contractions"][
+            "exact_h_exact"
+        ] = [float("nan"), 0.0]
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        try:
+            check_v2_packet(
+                root,
+                expected_group_counts=(2, 4, 2),
+                expected_rank_count=comm.size,
+                expected_span_sizes=(1, 1, 1),
+            )
+        except ValueError as exc:
+            error = str(exc)
+    error = comm.bcast(error, root=0)
+    assert error is not None
 
 
 def test_task040_v2_resource_authority_keeps_legacy_45_and_producer_55(

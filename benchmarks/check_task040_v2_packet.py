@@ -175,9 +175,34 @@ def _report_checks(diagnostics: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(middle, list) or len(middle) != 8:
         raise ValueError("packet middle-cross reports are incomplete")
     complement_count = 0
-    for report in [*physical, *interface]:
+    for report in physical:
+        if not isinstance(report, dict):
+            raise ValueError("packet physical report is malformed")
+        for name in (
+            "scalar_exact_relative",
+            "projected_exact_relative",
+            "scalar_norm",
+            "exact_norm",
+            "projected_norm",
+        ):
+            value = report.get(name)
+            if not isinstance(value, (int, float)) or not np.isfinite(value):
+                raise ValueError(f"packet physical report field {name} is invalid")
+        contractions = report.get("contractions")
+        if not isinstance(contractions, dict):
+            raise ValueError("packet probe contractions are missing")
+        for name in (
+            "source_h_source",
+            "scalar_h_scalar",
+            "exact_h_exact",
+            "scalar_h_exact",
+            "projected_h_projected",
+            "projected_h_exact",
+        ):
+            _pair(contractions[name])
+    for report in interface:
         if not isinstance(report, dict) or report.get("finite") is not True:
-            raise ValueError("packet physical/interface report is not finite")
+            raise ValueError("packet interface report is not finite")
         contractions = report.get("contractions")
         if not isinstance(contractions, dict):
             raise ValueError("packet probe contractions are missing")
