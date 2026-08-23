@@ -5,3 +5,8 @@
 T40-12 的 p6/h3 bottom scaling probe 只有在 h4 scalable candidate 通过数值和资源 Gate
 后才允许启动。T40-3 transmission mechanism 未通过，所以没有 h3 DoF、PC retained bytes、
 memory exponent、RSS、wall 或 swap 观测，也没有 0.7 nm 外推。
+
+## V1-8 收口
+
+V1-7 h3 scaling 仍为 `not_run_by_gate`。没有生成 h3 DoF、retained-byte exponent、RSS、wall
+或 0.7 nm 外推；最新 V1-2 组件硬停止不能作为 scaling 测点。

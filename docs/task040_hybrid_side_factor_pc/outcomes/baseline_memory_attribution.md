@@ -52,3 +52,14 @@ absolute hard stop 为 48,318,382,080 B。这个组件峰值不能当作完整 b
 `TRANSMISSION_MECHANISM_FAIL`；详情见
 [T40-3 transmission outcome](transmission_mechanism_oracle.md) 和
 [compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_level_a_bare_f_transmission_v1.json)。
+
+## V1-8 Run B 资源停止
+
+新的 Run B root 到达 `v1_2_exact_oracle_ready`（三个 factor），随后到达
+`v1_2_exact_oracle_released`（factor count 为零）。watchdog 仍观测到
+`48,380,153,856 B = 45.05752944946289 GiB`，略高于 `48,318,382,080 B` 的硬停止线，
+并在 swap 为零时终止完整进程组。这是资源/生命周期边界，不是 projected transmission
+的资格通过或失败。逻辑上的 factor 释放不表示 PETSc/MPI 分配或 allocator 页面已经同步
+从 RSS 消失。
+
+详见 [resource-stop compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_v1_3_run_b_resource_stop_v1.json)。

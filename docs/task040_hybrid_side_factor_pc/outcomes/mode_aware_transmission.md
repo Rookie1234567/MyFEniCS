@@ -1,6 +1,7 @@
 # V1-3/V1-4 mode-aware transmission
 
-状态：V1-3 `not_run`，V1-4 `not_run`。本页只冻结后续两级 transmission oracle，不把计划写成数值结果。
+状态：V1-3 `setup_started_but_not_ready / not_qualified_due_resource_stop`，V1-4
+`not_run_by_gate`。本页只记录未完成的 setup，不把计划写成数值结果。
 
 ## V1-3 projected-exact route
 
@@ -28,6 +29,14 @@ V1-3 复用同一五个非零 source、physical zero、三组 exact factors、`[
 
 ## 当前结论边界
 
-V1-3/V1-4 尚未运行，因此 mode span coverage、projected exact error、analytic error、near-cutoff behavior 和对 0.7 nm 的资格均为 `not_run`。T40-3 只裁决固定 normal-incidence scalar candidate；不能据此声称 mode-aware transmission、bounded patch、coarse information 或完整 Hybrid 不可行。
+V1-3 只完成了未就绪的 setup，因此 mode span coverage、projected exact error、near-cutoff behavior 和对 0.7 nm 的资格均为 `not_available`；V1-4 的 analytic error 为 `not_run`。T40-3 只裁决固定 normal-incidence scalar candidate；不能据此声称 mode-aware transmission、bounded patch、coarse information 或完整 Hybrid 不可行。
 
 两阶段都继续绑定 inherited audit 中的 branch/HEAD、input/physical/selected/external-key hash、bare-F、resource authority 和禁止项；任何 missing left/right/traction identity、ABI/resource/nonfinite 或真实 Gate 失败都保留 raw 并停止，不翻符号、不调参、不重跑 producer。
+
+## V1-8 状态
+
+V1-2 到达 exact-oracle ready/release，随后 V1-3 projected transmission setup 开始；MPI8
+进程组在 `projected_ready`、one-apply 或 FGMRES checkpoint 前被 45 GiB watchdog 停止。
+因此 V1-3 为 `setup_started_but_not_ready / not_qualified_due_resource_stop`，numerical
+capacity 为 `NOT_EVALUATED`；V1-4 仍为 `not_run_by_gate`。不能将此次停止分类为
+`THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT`。

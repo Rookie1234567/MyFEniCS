@@ -1,0 +1,191 @@
+{
+  "schema": "task040.v1_2_v1_3.run_b.resource_stop.compact.v1",
+  "task": "Task040",
+  "stage": "V1-8",
+  "status": "controlled_resource_stop",
+  "classification": "V1_2_RESOURCE_HARD_STOP_BEFORE_NUMERICAL_QUALIFICATION",
+  "classification_detail": "The MPI8 Run B reached exact-oracle construction and release, then the watchdog stopped the process group at the absolute memory limit before V1-2 probe serialization or V1-3 checkpoint evaluation. This is a resource/lifecycle stop, not a transmission-algebra result.",
+  "source_sha": "16ecba568be901325e53c3652aa10bb432de5a6b",
+  "formal_root": "results/task040_v1_2_v1_3_run_b_mpi8_16ecba56",
+  "frozen_identity": {
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "selected_mode_packet_manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "selected_mode_packet_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "probe_manifest": "benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_probe_manifest_v1.json",
+    "probe_manifest_sha256": "7a03b2cf80fe5081d1fe1248b9d4c79f3ef4e955a8014e905c2f2ca82797baad",
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "exact_spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "mpi": 8,
+    "threads": 1,
+    "qep_calls": 0,
+    "pde_solve": "not_run",
+    "ordinary_defaults_changed": false
+  },
+  "formal_attempt": {
+    "method": "task040_v1_2_interface_schur",
+    "watchdog_schema": "task040.level_a.watchdog.v1",
+    "timeout_seconds": 21600,
+    "hard_stop_bytes": 48318382080,
+    "swap_contract_bytes": 0,
+    "termination_reason": "absolute_memory_limit",
+    "return_code": 1,
+    "all_status_readable": true,
+    "swap_authority_readable": true,
+    "process_group_terminated": true,
+    "sigterm_sent": true,
+    "sigkill_required": false,
+    "worker_exited": true,
+    "run_summary_present": false
+  },
+  "resource": {
+    "peak_rss_bytes": 48380153856,
+    "peak_rss_gib": 45.05752944946289,
+    "hard_stop_gib": 45.0,
+    "bytes_over_hard_stop": 61771776,
+    "peak_swap_bytes": 0,
+    "peak_dedicated_cgroup_swap_bytes": 0,
+    "sample_count": 2945,
+    "wall_seconds_process_sample": 1485.4694942460628,
+    "peak_source": "watchdog.process_tree.rss_bytes / outer rss_bytes authority",
+    "pss_bytes": null,
+    "uss_bytes": null,
+    "pss_uss_status": "not_recorded_not_inferred"
+  },
+  "stage_evidence": {
+    "reached": [
+      "construction_begin",
+      "system_ready",
+      "interface_mass_ready_lower",
+      "interface_mass_ready_upper",
+      "projection_begin",
+      "v1_2_exact_oracle_ready",
+      "v1_2_exact_oracle_released"
+    ],
+    "exact_oracle_ready": {
+      "factor_count_ready": 3,
+      "group_count": 3,
+      "lower_mode_count": 296,
+      "upper_mode_count": 480
+    },
+    "exact_oracle_after_cleanup": {
+      "factor_count_after_cleanup": 0,
+      "release_marker_observed": true
+    },
+    "not_reached": [
+      "v1_2_gate_serialization",
+      "v1_2_probe_reports_serialization",
+      "v1_3_projected_ready",
+      "v1_3_one_apply",
+      "v1_3_fgmres_checkpoints",
+      "run_summary_serialization"
+    ],
+    "interpretation": "The exact-oracle release marker proves the three oracle factors were released in the observed lifecycle; it does not qualify the projected transmission or prove its numerical action."
+  },
+  "factor_lifecycle": {
+    "system_ready": {
+      "direct_factor_count": 0,
+      "global_A_materialized": false,
+      "matrix_free": true
+    },
+    "exact_oracle": {
+      "ready": 3,
+      "after_cleanup": 0,
+      "observed": true
+    },
+    "v1_3_projected_owner": "not_created_or_not_observed_before_stop",
+    "simultaneous_factor_peak": 3,
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0,
+    "qep_calls": 0,
+    "pde_solve": "not_run"
+  },
+  "numeric_qualification": {
+    "v1_2": "not_qualified_due_resource_stop",
+    "v1_3": "setup_started_but_not_ready",
+    "v1_3_status": "not_qualified_due_resource_stop",
+    "v1_3_numerical_capacity": "NOT_EVALUATED",
+    "per_probe_metrics": "not_serialized",
+    "classification": "not_a_numerical_negative",
+    "scalar_or_exact_transmission_comparison": "not_available",
+    "fgmres_checkpoints": "not_run",
+    "three_group_mode_subspace_or_sweep_failure": false
+  },
+  "checker": {
+    "command": "python -m benchmarks.check_task040_v1_run_b --run-root results/task040_v1_2_v1_3_run_b_mpi8_16ecba56",
+    "source": "benchmarks/check_task040_v1_run_b.py",
+    "checker_file_sha256": "ac1f124c2aaf086e7d12c82c2b516a30c542e1a7e2dd707b198890d19d28dbe8",
+    "status": "not_completed",
+    "reason": "worker/run_summary.json is absent because the watchdog stopped the group before worker summary serialization",
+    "worker_gate_status_used": false,
+    "raw_watchdog_resource_audit": true,
+    "raw_numeric_gate_recomputed": false
+  },
+  "raw_hashes": {
+    "latest": {
+      "watchdog_summary.json": "502d35ecfd3ddbc1c2007dd7c971fcb32cb2988d0f975029f12d6cff37f83554",
+      "memory_stage_markers.raw.jsonl": "311c440ad0ce592e00de924ea32d33832b2c76b4826af50c77b2dae681a3f189",
+      "memory_stages.jsonl": "438b89761275583e2d68e70c10e40820ae08d90414b1d899195a1adb3d2daabe",
+      "process_tree_samples.jsonl": "ea4f39bc6518b072dad65fb7b04346478e6b769637d08f50235d295c91ab4244",
+      "worker_stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prior_implementation_failures": {
+      "a3585c44": {
+        "root": "results/task040_v1_2_v1_3_run_b_mpi8_a3585c44",
+        "source_sha": "a3585c449f1ae1f9fb439ae905fe727efccb8aa7",
+        "classification": "implementation_failure",
+        "first_error": "KeyError: resolved_modes['counts']['bottom']; frozen schema is counts.per_side.bottom",
+        "peak_rss_bytes": 23784337408,
+        "peak_swap_bytes": 0,
+        "watchdog_summary.json": "6a0e50287167cc5ef0ba6b182c95e924c4daebf05290cce170c03a7a79cb97f1",
+        "memory_stage_markers.raw.jsonl": "8c48341d4fa29ba15a9019e2cfad04835f33340641eb72225207ececfdf97e43",
+        "memory_stages.jsonl": "b98973424f6e22e935976f03055a2007578ec6a6005ec6f01557fa5da7d26319",
+        "process_tree_samples.jsonl": "ab681924884564d39631eff5f7e911fbe1868a3515b750d8d1d5730231b9b2ca",
+        "worker_stdout.txt": "c78a7c6be6aee3b71543072012dde3db5b1376c923a747f74c6da860a9b94a27"
+      },
+      "618c668d": {
+        "root": "results/task040_v1_2_v1_3_run_b_mpi8_618c668d",
+        "source_sha": "618c668d750f228c9eae457c8b69eda5d2cfcfda",
+        "classification": "implementation_failure",
+        "first_error": "ValueError: selected packet manifest SHA was compared with the frozen exact-spool catalog SHA",
+        "peak_rss_bytes": 29573197824,
+        "peak_swap_bytes": 0,
+        "watchdog_summary.json": "f710a08ae33d474f55a2f34608b417e4a273f114852d41e50cb55ccbd162f5e6",
+        "memory_stage_markers.raw.jsonl": "b77095f7e209e81e2411bc01c6c84c194cd698687c27528a31fa0d3324a7dc67",
+        "memory_stages.jsonl": "a5f503c5184a446fefa107ea145424ba6691c7d5bd74b57ef816f8f7444e4860",
+        "process_tree_samples.jsonl": "8d3a69840bdbb0fb7a9a642d9c9adfe74b52e824af694668b9d5398b9bd1bc02",
+        "worker_stdout.txt": "ae6089d26153d273e6b6023a9f448ce1b52619b7f1dc52b7b01bbff208e9e728"
+      }
+    }
+  },
+  "baseline_boundary": {
+    "direct_full_workflow_gib": 93.377006531,
+    "exact_side_iterative_full_workflow_gib": 80.025856018,
+    "t40_3_component_gib": 28.333576202392578,
+    "latest_run_b_peak_gib": 45.05752944946289,
+    "latest_run_b_is_full_workflow_saving_tier": false,
+    "pss_uss_from_rss": false
+  },
+  "not_run_by_gate": {
+    "V1-2_numerical_qualification": "resource hard stop before probe serialization and gate record",
+    "V1-3_projected_exact_transmission": "setup_started_but_not_ready: not_qualified_due_resource_stop; no projected_ready marker or one-apply/FGMRES checkpoint",
+    "V1-4_analytic_mode_aware": "not_run_by_gate",
+    "V1-5_bounded_patch": "not_run_by_gate",
+    "V1-6_bottom_top_both_full_hybrid": "not_run_by_gate",
+    "V1-7_h3_scaling": "not_run_by_gate",
+    "Level_B": "not_run_by_gate"
+  },
+  "tests": {
+    "qualified_activation": "passed; _MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+    "json_parse": "passed for compact record and frozen probe manifest",
+    "markdown_links": "passed",
+    "markdown_math_delimiter": "passed",
+    "git_diff_check": "passed",
+    "compileall": "passed in qualified environment",
+    "check_benchmarks_no_write": "302/302 passed",
+    "full_pytest": "not_run",
+    "new_pde_or_formal": "not_run"
+  }
+}

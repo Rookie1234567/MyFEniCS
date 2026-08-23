@@ -7,3 +7,9 @@ Gate。由于 T40-3 `TRANSMISSION_MECHANISM_FAIL`，本阶段未运行；没有 
 residual、factor cap、FGMRES checkpoint、RSS、wall 或 swap 数值。
 
 不能据此判断 bottom bare-F 的所有 iterative side inverse 都不可行。
+
+## V1-8 收口
+
+V1-5 bottom scalable PC 及其 Level-B 前置阶段仍为 `not_run_by_gate`：V1-2 在 exact probe
+Gate 前触及资源线，没有生成 bottom scalable residual、factor cap、checkpoint、RSS 或 wall
+结果。V1-2 峰值是停止的组件尝试，不是 bottom PC 资格结果。

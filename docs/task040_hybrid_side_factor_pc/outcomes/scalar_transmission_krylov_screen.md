@@ -29,7 +29,7 @@ c = \frac{|b^H y|}{\lVert b\rVert_2\lVert y\rVert_2}.
 
 ## 当前边界
 
-V1-1 的固定 scalar FGMRES 已被独立分类为 directional negative；这不等于完整任务失败，也不裁决 mode-aware V1-2。不得由该结果推断 damping、coarse information 或具体替代机制；不得翻 q/sign、调 beta 或重跑 T40-3。V1-2 在本阶段只冻结 probe manifest、实现和 focused tests，不运行真实 Schur action。
+V1-1 的固定 scalar FGMRES 已被独立分类为 directional negative；这不等于完整任务失败，也不裁决 mode-aware V1-2。不得由该结果推断 damping、coarse information 或具体替代机制；不得翻 q/sign、调 beta 或重跑 T40-3。V1-2 随后按冻结 probe manifest 正式尝试一次；它到达 exact oracle ready/release 后因资源硬停止，没有形成真实 Schur action 的可序列化 probe 指标。
 
 ## V1-1 formal result
 
@@ -69,3 +69,10 @@ All five phase-one `r16` values are at least 0.9, and the required 0.25-decade t
 The raw-report checker was run with `python -m benchmarks.check_task040_level_a --run-root results/task040_v1_1_scalar_krylov_mpi8_bf029cbd`. It recomputed contractions, alpha, rho, normalized cross-correlation, checkpoint status, lifecycle, and watchdog resource fields; worker status was not trusted. Identity, finite, zero-map, linearity/repeat, RP, interface mass/support, bare-F, factor, resource and lifecycle checks passed, but the numerical checkpoint Gate failed. Classification is `SCALAR_TRANSMISSION_DIRECTIONAL_FAIL`, not an implementation/resource failure: the fixed scalar transmission candidate is closed, while V1-2 mode-aware/interface-Schur research remains the next planned route.
 
 The full 5x5 complex normalized B-vs-Y matrix is hash-bound in `checker_recomputed.json`; the absolute matrix, in source-label order, is recorded in the compact record.
+
+## V1-2/V1-8 边界
+
+V1-1 的 scalar directional negative 不变。后续 V1-2 Run B 在 exact oracle 释放后触及资源线，
+没有产生 scalar-versus-exact Schur contractions。因此本页不新增关于 scalar 尺度、相位、mode
+coverage 或 projected transmission 的结论。V1-2 resource-stop compact record 保留三个
+Run B root 及其 artifact 哈希。

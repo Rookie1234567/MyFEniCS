@@ -1,5 +1,24 @@
 # 项目开发进度：Task000–Task037b
 
+## 2026-08-23：Task040 V1 Run B resource-stop closeout
+
+Task040 在冻结 5 nm、1°、phi=0、S、p6h4、M480、MPI8 身份下完成了 T40-3 和 V1-1
+组件证据；T40-3 是固定一阶人工截面传输的真实数值负结果，V1-1 是固定 scalar
+Krylov 的 directional negative。随后唯一的 V1-2/V1-3 Run B 尝试在 exact oracle
+ready/release（factor `3 -> 0`）后触发 `45 GiB` watchdog hard stop，峰值为
+`48,380,153,856 B = 45.05752944946289 GiB`，swap `0`；没有 serialized V1-2
+probe 或 V1-3 checkpoint。该结果是资源/生命周期停止，不是 transmission algebra 失败，
+也不是新的 full-workflow memory tier。
+
+两个此前的 Run B implementation-failure roots（resolved-config count schema、selected
+manifest/catalog identity）和最新 raw root均保留；V1-3 为
+`setup_started_but_not_ready / not_qualified_due_resource_stop`，numerical capacity
+为 `NOT_EVALUATED`；V1-4 至 V1-7、Level B、top、full Hybrid 和 h3 scaling 为
+`not_run_by_gate`。详见
+[`Task040 V1-8 summary`](task040_hybrid_side_factor_pc/outcomes/summary.md)、
+[`response_v2`](task040_hybrid_side_factor_pc/response_v2.md) 和
+[`compact record`](../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_v1_3_run_b_resource_stop_v1.json)。
+
 ## 2026-08-10：Task037b frozen M10 结项与 Review V7 selective-merge capability
 
 Task037b 在 reviewed Task37b source `361908dd71fc12734b8ac19881d6e0d3aaae5d56` 的

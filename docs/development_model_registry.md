@@ -1461,6 +1461,25 @@ The 28.333576202392578 GiB value is a bottom component, not a full-workflow memo
 record does not establish bounded local-patch failure, coarse-space necessity, full Hybrid
 failure, or 0.7 nm infeasibility; those questions remain outside the executed evidence.
 
+### Task040 V1 Run B resource hard stop
+
+Review V1 Run B was attempted once at source
+`16ecba568be901325e53c3652aa10bb432de5a6b`, with the same frozen 5 nm, 1° grazing, phi=0,
+S, p6h4, M480, MPI8 and 45 GiB watchdog contract. Two earlier roots remain implementation
+failures: `a3585c44` used the wrong resolved-config count path, and `618c668d` mixed the selected
+packet manifest SHA with the exact-spool catalog SHA. Neither is a numerical result.
+
+The final root `results/task040_v1_2_v1_3_run_b_mpi8_16ecba56` reached exact-oracle ready with
+three factors (`lower=296`, `upper=480`) and recorded release to factor count zero. The watchdog
+then terminated the process group at `absolute_memory_limit`: peak RSS
+`48,380,153,856 B = 45.05752944946289 GiB`, hard stop `48,318,382,080 B`, swap `0`,
+all status readable, no SIGKILL required. No V1-2 probe serialization, V1-3 checkpoint, top,
+full Hybrid or h3 result exists. This is a resource/lifecycle stop before numerical
+qualification, not evidence of transmission-algebra failure and not a new full-workflow memory
+tier.
+
+Evidence: [Task040 V1-8 compact record](../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_v1_3_run_b_resource_stop_v1.json)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

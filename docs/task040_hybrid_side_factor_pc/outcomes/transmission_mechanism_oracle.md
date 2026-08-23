@@ -78,3 +78,11 @@ rho 是“本次局部 action 后剩余的裸 F 残差”相对于源大小的�
 它不是算法结果。当前正式 root 是真实 transmission numerical negative；不翻转符号、
 不扫描 beta、不重跑、不进入 Level B。后续阶段没有产生任何数值结果，详见
 [summary](summary.md) 与 [response_v1.md](../response_v1.md)。
+
+## V1-8 Run B 是独立的资源结果
+
+较早的 T40-3 数值负结果仍为 `TRANSMISSION_MECHANISM_FAIL`，五个 rho 不变。后续 V1-2
+Run B 不是第二个传输负结果：它到达 exact oracle ready/release (`3 -> 0`)，随后在
+`45.05752944946289 GiB`、probe 指标写出前停止。V1-3 setup 已开始但未到 ready，尚无
+one-apply/FGMRES 数值；更后续路线为 `not_run_by_gate`。最新证据不能判断 exact/projected
+transmission mechanism 是否通过。

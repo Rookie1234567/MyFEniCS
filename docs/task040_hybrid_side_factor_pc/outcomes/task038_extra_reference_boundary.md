@@ -47,3 +47,9 @@ own frozen Task040 implementation, sources, factors, watchdog, and checker; no N
 residual or packed-factor result was reused as a numerical pass. The T40-3 negative
 therefore does not reclassify Task038-extra, and Task040 provides no new evidence for
 bounded local-patch capacity, coarse-space necessity, full Hybrid feasibility, or 0.7 nm.
+
+## Task040 V1-8 边界
+
+Task038-extra 仍只是只读架构背景。V1-2 Run B 使用 Task040 自身的输入，没有复用 N2 数值。
+停止发生在 exact oracle 释放之后、V1-2 probe 指标序列化之前；它不能证明 N2 packed solve、
+bounded local PC 或 coarse space 必须存在，也不能证明它们不可能。

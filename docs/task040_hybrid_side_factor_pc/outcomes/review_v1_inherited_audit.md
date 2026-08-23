@@ -53,19 +53,29 @@ raw 中实测 `beta=[1.2490577109579148, 0.005471156202149664]`，`q=[0.00547115
 | 阶段 | 状态 | 继承/下一步 |
 |---|---|---|
 | V1-0 | completed, docs-only | 本页及三个相邻 planned pages |
-| V1-1 | not_run | 固定 scalar 的 optimal scaling/correlation 与 FGMRES screen |
-| V1-2 | not_run | sampled discrete interface Schur/Steklov oracle |
-| V1-3 | not_run | projected-exact mode-subspace transmission |
+| V1-1 | controlled_numerical_negative | 固定 scalar screen 已完成；五个 `r16 >= 0.9`，32 not run |
+| V1-2 | resource_stop_before_qualification | exact oracle `3 -> 0`；45 GiB hard stop，probe 未序列化 |
+| V1-3 | setup_started_but_not_ready | projected-exact setup started; no ready/checkpoint; numerical capacity `NOT_EVALUATED` |
 | V1-4 | not_run | analytic mode-aware transmission |
 | V1-5 | not_run | conditional bounded-patch Level B |
 | V1-6 | not_run | conditional bottom/top/both/full Hybrid |
 | V1-7 | not_run | conditional h3/p6 scaling probe |
-| V1-8 | not_run | outcomes、独立 checker、`response_v2.md` |
+| V1-8 | prepared_pending_review | outcomes、独立 evidence record、`response_v2.md` 已生成 |
 
-T40-3 的负结果不能外推为所有 impedance Schwarz、FGMRES、mode-aware transmission、bounded patch、coarse information 或 0.7 nm infeasible。V1-1 必须先测固定 scalar action 的 Krylov 能力；只有对应 Gate 通过才可进入后续依赖阶段。
+T40-3 的负结果不能外推为所有 impedance Schwarz、FGMRES、mode-aware transmission、bounded patch、coarse information 或 0.7 nm infeasible。V1-1 已实际完成但为 directional negative；V1-2 随后因 resource hard stop 未完成 numerical qualification，后续依赖阶段因此保持未运行。
 
 ## 禁止路线
 
 本继承审计及 V1 扩展均禁止：beta/sign/damping、mode count、sweep/order/partition、restart、ILU/BLR/drop 扫描；second-order/rational impedance；自动 coarse；dynamic DtN、QEP/M/global operator 或 ordinary default 改动；direct/exact-side producer 重跑；Task39 response packet 重跑；Full3D、0.7 nm PDE、并发 heavy；以及把未通过 scalar transmission 的结果直接升级为 bounded patch、top、full Hybrid 或生产 PC 资格。
 
 所有后续阶段必须保持一个 heavy、qualified ABI、MPI8、threads=1、swap=0、6 小时上限；任何 identity/ABI/resource/nonfinite 或阶段 Gate 失败都保留 raw 并停止依赖链，不翻符号、不调参、不重跑。
+
+## V1-8 收口修正
+
+V1-2 在冻结 MPI8 路线上正式尝试一次。运行到达 exact-oracle ready/release
+（`factor_count=3` 后为 `0`），随后 watchdog 在 `48,380,153,856 B = 45.05752944946289 GiB`
+停止进程组；没有 V1-2 probe serialization 或 V1-3 checkpoint。V1-2 为
+`not_qualified_due_resource_stop`，不是数值负结果。V1-3 setup 已开始但未到 ready，状态为
+`setup_started_but_not_ready`、numerical capacity 为 `NOT_EVALUATED`，不能归类为
+`THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT`。V1-4 至 V1-7、Level B、top 和 full
+Hybrid 为 `not_run_by_gate`。前两个 root 仍保留为实现失败，未被覆盖。

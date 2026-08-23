@@ -78,3 +78,18 @@ but all five nonzero-source rho values exceeded the T40-3 transmission Gate. Thi
 controlled numerical negative, so T40-4 through T40-12 are `not_run_by_gate`. No
 response packet, direct side factor, QEP, Full Hybrid, or 0.7 nm PDE was rerun or
 created in this closeout.
+
+## V1-8 收口更新
+
+继承审计内容不变。后续 V1 Run B 使用了相同的冻结输入、物理模型、selected packet、exact-spool
+catalog、MPI8 和 45 GiB watchdog 合同。前两个 root 仍是实现失败：分别是 resolved-config
+的 `counts.per_side.bottom` 接线错误，以及 selected manifest 与 spool catalog 身份混用。第三个
+root `results/task040_v1_2_v1_3_run_b_mpi8_16ecba56` 是真实资源硬停止，不是数值传输结果：
+已观测 exact oracle ready/release `3 -> 0`，但 V1-2 probe serialization 未完成；V1-3 setup
+已开始但未到 ready 或 checkpoint。
+
+V1-2 为 `not_qualified_due_resource_stop`；V1-3 为
+`setup_started_but_not_ready / not_qualified_due_resource_stop`，数值 capacity 为
+`NOT_EVALUATED`；V1-4 至 V1-7、Level B、top/full Hybrid 和 h3 scaling 为
+`not_run_by_gate`。完整 raw root 及其哈希绑定在
+[V1-8 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_v1_3_run_b_resource_stop_v1.json)。

@@ -43,3 +43,9 @@ restriction/prolongation 均通过；三个 cross-section exact factor 仅为
 
 因此本次是正式数值负结果 `TRANSMISSION_MECHANISM_FAIL`，不是实现错误或资源停止。
 T40-4 及以后依赖阶段不运行；不调 beta、不翻符号、不改变阻抗或 sweep。
+
+## V1-8 资源边界
+
+V1-2 Run B 保留了本页的接口身份，并到达两个 artificial-interface mass 阶段以及 exact-oracle
+ready/release markers。随后在接口 probe record 序列化前触及 45 GiB watchdog 线。这不是修改
+`q`、法向符号、beta 或 sweep 顺序的依据；身份继续冻结，projected transmission 仍未资格化。
