@@ -54,6 +54,7 @@ from src.solvers.hybrid_interface_packet import (
     PacketGroup,
     finalize_manifest,
     load_packet_shard,
+    redistribute_packet_group_rows,
     write_group_shard,
 )
 from src.solvers.hybrid_interface_packet_dolfinx import (
@@ -2443,6 +2444,43 @@ def _run_v2_packet_consumer(
                 global_row_count=expected_count,
             )
 
+            redistribution_started = time.perf_counter()
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_owner_redistribute_begin",
+                group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
+                source_local_rows=int(packet_group.U.shape[0]),
+                target_local_rows=len(layout.canonical_keys),
+            )
+            try:
+                redistributed_group, redistribution_audit = (
+                    redistribute_packet_group_rows(
+                        packet_group,
+                        layout.canonical_keys,
+                        comm=comm,
+                    )
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f"V2 packet stage packet_group_owner_redistribute failed: {exc}"
+                ) from exc
+            redistribution_marker = dict(redistribution_audit)
+            redistribution_marker.pop("span_size", None)
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_owner_redistribute_ready",
+                group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
+                started=redistribution_started,
+                **redistribution_marker,
+            )
+            del packet_group, loaded
+
             reconstruct_started = time.perf_counter()
             _v2_group_marker(
                 marker_callback,
@@ -2457,7 +2495,9 @@ def _run_v2_packet_consumer(
             local_error = None
             try:
                 canonical_basis = CanonicalOwnerLocalBasis(
-                    tuple(packet_group.keys), packet_group.U, packet_group.V
+                    tuple(redistributed_group.keys),
+                    redistributed_group.U,
+                    redistributed_group.V,
                 )
                 raw_basis = reconstruct_owner_local_basis(
                     layout,
@@ -2532,6 +2572,7 @@ def _run_v2_packet_consumer(
                     "span_size": span_size,
                     "local_row_count": int(layout.audit["local_row_count"]),
                     "local": audit,
+                    "owner_redistribution": redistribution_audit,
                     "collective_max_relative_error": global_error,
                     "pass": bool(audit["pass"] and global_error <= 1.0e-12),
                 }
@@ -2546,7 +2587,7 @@ def _run_v2_packet_consumer(
                 comm=comm,
                 collective_max_relative_error=global_error,
             )
-            del raw_basis, canonical_basis, packet_group, loaded
+            del raw_basis, canonical_basis, redistributed_group
 
         if manifest is None or provenance is None:
             raise RuntimeError("V2 packet did not provide a manifest")

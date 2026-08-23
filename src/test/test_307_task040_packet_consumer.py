@@ -27,6 +27,11 @@ from benchmarks.task040_level_a import (
     build_task040_level_a_plan,
 )
 from benchmarks.task040_level_a_watchdog import build_task040_level_a_watchdog_plan
+from src.solvers.hybrid_interface_packet import (
+    PacketGroup,
+    canonical_key_json,
+    redistribute_packet_group_rows,
+)
 from src.solvers.hybrid_interface_packet_dolfinx import (
     build_gamma_canonical_layout,
     make_gamma_entity_block,
@@ -44,6 +49,8 @@ def test_v2_group_markers_have_ordered_stage_fields() -> None:
     stages = (
         "packet_group_load_begin",
         "packet_group_load_ready",
+        "packet_group_owner_redistribute_begin",
+        "packet_group_owner_redistribute_ready",
         "packet_group_reconstruct_begin",
         "packet_group_reconstruct_ready",
         "packet_group_roundtrip_audit_begin",
@@ -52,6 +59,7 @@ def test_v2_group_markers_have_ordered_stage_fields() -> None:
     )
     timed_ready_stages = {
         "packet_group_load_ready",
+        "packet_group_owner_redistribute_ready",
         "packet_group_reconstruct_ready",
         "packet_group_roundtrip_audit_ready",
     }
@@ -111,6 +119,81 @@ def test_v2_packet_reconstruct_mismatch_is_collective() -> None:
             comm,
             "packet_group_reconstruct",
             local_error,
+        )
+
+
+def test_v2_packet_owner_redistribution_changes_owners_and_order() -> None:
+    comm = MPI.COMM_WORLD
+    global_indices = tuple(range(8))
+    keys = tuple(canonical_key_json({"row": index}) for index in global_indices)
+
+    source_indices = tuple(
+        index for index in global_indices if (index + 1) % comm.size == comm.rank
+    )
+    target_indices = [
+        index for index in global_indices if index % comm.size == comm.rank
+    ]
+    if comm.size == 1 or comm.rank % 2:
+        target_indices.reverse()
+
+    def row(index: int, offset: float) -> list[complex]:
+        return [
+            complex(index + 1.0, offset + index),
+            complex(10.0 + index, -offset - index),
+        ]
+
+    source = PacketGroup(
+        "group0",
+        tuple(keys[index] for index in source_indices),
+        np.asarray([row(index, 0.25) for index in source_indices], dtype=np.complex128),
+        np.asarray([row(index, 0.75) for index in source_indices], dtype=np.complex128),
+    )
+    target_keys = tuple(keys[index] for index in target_indices)
+    redistributed, audit = redistribute_packet_group_rows(
+        source,
+        target_keys,
+        comm=comm,
+    )
+    expected_u = np.asarray(
+        [row(index, 0.25) for index in target_indices], dtype=np.complex128
+    )
+    expected_v = np.asarray(
+        [row(index, 0.75) for index in target_indices], dtype=np.complex128
+    )
+    assert redistributed.keys == target_keys
+    np.testing.assert_allclose(redistributed.U, expected_u)
+    np.testing.assert_allclose(redistributed.V, expected_v)
+    assert audit["source_global_row_count"] == 8
+    assert audit["target_global_row_count"] == 8
+    assert audit["source_target_key_bijection"] is True
+    assert audit["canonical_key_metadata_allgather"] is True
+    assert audit["numeric_allgather"] is False
+    assert audit["basis_global_replicated"] is False
+
+
+def test_v2_packet_owner_redistribution_rejects_global_target_duplicate() -> None:
+    comm = MPI.COMM_WORLD
+    keys = tuple(canonical_key_json({"row": index}) for index in range(8))
+    source_indices = tuple(
+        index for index in range(8) if (index + 1) % comm.size == comm.rank
+    )
+    target_indices = [index for index in range(8) if index % comm.size == comm.rank]
+    if comm.rank == 0:
+        target_indices[0] = 1
+    source = PacketGroup(
+        "group0",
+        tuple(keys[index] for index in source_indices),
+        np.ones((len(source_indices), 1), dtype=np.complex128),
+        np.ones((len(source_indices), 1), dtype=np.complex128),
+    )
+    with pytest.raises(
+        ValueError,
+        match=r"collective packet owner redistribution metadata failed",
+    ):
+        redistribute_packet_group_rows(
+            source,
+            tuple(keys[index] for index in target_indices),
+            comm=comm,
         )
 
 

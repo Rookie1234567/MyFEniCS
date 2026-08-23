@@ -42,6 +42,7 @@ __all__ = (
     "load_packet_shard",
     "load_small_matrix",
     "remap_group_rows",
+    "redistribute_packet_group_rows",
 )
 
 
@@ -720,3 +721,180 @@ def remap_group_rows(group: PacketGroup, target_keys: Any) -> np.ndarray:
         raise ValueError(f"canonical remap coverage mismatch for {name}")
     positions = {key: index for index, key in enumerate(source_keys)}
     return np.asarray([positions[key] for key in target], dtype=np.int64)
+
+
+def redistribute_packet_group_rows(
+    source_group: PacketGroup,
+    target_keys: Any,
+    *,
+    comm: MPI.Intracomm = MPI.COMM_WORLD,
+) -> tuple[PacketGroup, dict[str, Any]]:
+    """Redistribute canonical rows from producer owners to fresh owners.
+
+    Canonical keys are replicated as metadata to establish the source and
+    target owner directories.  Numeric U/V rows travel once through an
+    object ``alltoall``; no numeric basis is gathered to a rank zero process.
+    """
+
+    source_keys: tuple[str, ...] = ()
+    target: tuple[str, ...] = ()
+    source_name = str(source_group.name)
+    source_u = np.empty((0, 0), dtype=np.complex128)
+    source_v = np.empty((0, 0), dtype=np.complex128)
+    local_error: str | None = None
+    try:
+        source_name, source_keys, source_u, source_v = _validated_group(source_group)
+        target = _normalise_keys(target_keys, label="target canonical keys")
+    except Exception as exc:
+        local_error = f"{type(exc).__name__}: {exc}"
+
+    metadata = comm.allgather(
+        {
+            "rank": int(comm.rank),
+            "error": local_error,
+            "group": source_name,
+            "source_keys": source_keys,
+            "source_row_count": len(source_keys),
+            "target_keys": target,
+            "target_row_count": len(target),
+            "span_size": int(source_u.shape[1]) if source_u.ndim == 2 else -1,
+            "dtype": str(source_u.dtype),
+        }
+    )
+    first_error = next(
+        (
+            (int(item["rank"]), str(item["error"]))
+            for item in metadata
+            if item["error"] is not None
+        ),
+        None,
+    )
+    if first_error is not None:
+        rank, error = first_error
+        raise ValueError(
+            "collective packet owner redistribution metadata failed on first "
+            f"failing rank {rank}: {error}"
+        )
+
+    source_owner: dict[str, int] = {}
+    target_owner: dict[str, int] = {}
+    validation_error: str | None = None
+    try:
+        groups = {str(item["group"]) for item in metadata}
+        if groups != {source_name}:
+            raise ValueError("source group names differ across ranks")
+        spans = {int(item["span_size"]) for item in metadata}
+        dtypes = {str(item["dtype"]) for item in metadata}
+        if len(spans) != 1 or next(iter(spans), -1) < 0:
+            raise ValueError("source packet span differs across ranks")
+        if dtypes != {"complex128"}:
+            raise ValueError("source packet U/V dtype is not complex128")
+        for item in metadata:
+            rank = int(item["rank"])
+            for key in item["source_keys"]:
+                if key in source_owner:
+                    raise ValueError("source canonical keys are duplicated")
+                source_owner[str(key)] = rank
+            for key in item["target_keys"]:
+                if key in target_owner:
+                    raise ValueError("target canonical keys are duplicated")
+                target_owner[str(key)] = rank
+        if set(source_owner) != set(target_owner):
+            raise ValueError("source and target canonical key sets differ")
+    except Exception as exc:
+        validation_error = f"{type(exc).__name__}: {exc}"
+    if validation_error is not None:
+        raise ValueError(
+            "collective packet owner redistribution metadata failed: "
+            f"{validation_error}"
+        )
+
+    span_size = next(iter({int(item["span_size"]) for item in metadata}))
+    target_positions = {key: index for index, key in enumerate(target)}
+    send_payload: list[tuple[str, tuple[str, ...], np.ndarray, np.ndarray]] = []
+    rows_sent = 0
+    for destination in range(comm.size):
+        positions = [
+            index
+            for index, key in enumerate(source_keys)
+            if target_owner[key] == destination
+        ]
+        keys = tuple(source_keys[index] for index in positions)
+        rows_sent += len(keys)
+        send_payload.append(
+            (
+                source_name,
+                keys,
+                source_u[positions, :],
+                source_v[positions, :],
+            )
+        )
+    received = comm.alltoall(send_payload)
+
+    output_u = np.empty((len(target), span_size), dtype=np.complex128)
+    output_v = np.empty_like(output_u)
+    assigned = np.zeros(len(target), dtype=bool)
+    post_error: str | None = None
+    rows_received = 0
+    try:
+        for payload in received:
+            if len(payload) != 4:
+                raise ValueError("owner redistribution received malformed payload")
+            name, keys, values_u, values_v = payload
+            if name != source_name:
+                raise ValueError("owner redistribution received the wrong group")
+            values_u = np.asarray(values_u)
+            values_v = np.asarray(values_v)
+            if (
+                values_u.dtype != np.dtype(np.complex128)
+                or values_v.dtype != np.dtype(np.complex128)
+                or values_u.ndim != 2
+                or values_v.shape != values_u.shape
+                or values_u.shape[1] != span_size
+                or values_u.shape[0] != len(keys)
+            ):
+                raise ValueError("owner redistribution received a shape/dtype mismatch")
+            if not np.isfinite(values_u).all() or not np.isfinite(values_v).all():
+                raise ValueError("owner redistribution received nonfinite U/V")
+            rows_received += len(keys)
+            for offset, key in enumerate(keys):
+                if key not in target_positions:
+                    raise ValueError("owner redistribution received an unknown key")
+                position = target_positions[key]
+                if assigned[position]:
+                    raise ValueError("owner redistribution received a duplicate key")
+                output_u[position, :] = values_u[offset, :]
+                output_v[position, :] = values_v[offset, :]
+                assigned[position] = True
+        if not bool(np.all(assigned)):
+            raise ValueError("owner redistribution is missing target keys")
+    except Exception as exc:
+        post_error = f"{type(exc).__name__}: {exc}"
+    post_errors = comm.allgather(post_error)
+    first_post_error = next(
+        ((rank, error) for rank, error in enumerate(post_errors) if error is not None),
+        None,
+    )
+    if first_post_error is not None:
+        rank, error = first_post_error
+        raise ValueError(
+            "collective packet owner redistribution payload failed on first "
+            f"failing rank {rank}: {error}"
+        )
+
+    audit = {
+        "source_local_row_count": len(source_keys),
+        "target_local_row_count": len(target),
+        "source_global_row_count": len(source_owner),
+        "target_global_row_count": len(target_owner),
+        "span_size": span_size,
+        "rows_sent": rows_sent,
+        "rows_received": rows_received,
+        "source_rank_count": int(comm.size),
+        "target_rank_count": int(comm.size),
+        "source_target_key_bijection": True,
+        "canonical_key_metadata_allgather": True,
+        "numeric_allgather": False,
+        "basis_global_replicated": False,
+    }
+    return PacketGroup(source_name, target, output_u, output_v), audit
