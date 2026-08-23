@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from benchmarks import task038_full3d_lor_hx_checker as checker
+from benchmarks import run_task038_full3d_lor_hx as runner
 
 
 def _identity_record(case: str, status: str) -> dict:
@@ -182,6 +183,21 @@ def test_l1_checker_requires_exact_five_cases_and_accepts_p6_na(tmp_path: Path) 
     assert result["records"][0]["source_sha"] == "a" * 40
     assert any("duplicate cases" in error for error in result["errors"])
     assert any("aggregate missing cases" in error for error in result["errors"])
+
+
+def test_l1_stage_markers_are_per_rank_append_only_and_flush(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    runner._append_stage_marker(raw_dir, "paths_ready", 1)
+    runner._append_stage_marker(raw_dir, "source_identity_closed", 1)
+    marker_path = raw_dir / "stage-rank1.jsonl"
+    lines = marker_path.read_text(encoding="utf-8").splitlines()
+    assert [json.loads(line)["stage"] for line in lines] == [
+        "paths_ready",
+        "source_identity_closed",
+    ]
+    assert all(json.loads(line)["rank"] == 1 for line in lines)
+    assert all(isinstance(json.loads(line)["time"], float) for line in lines)
 
 
 def test_l1_checker_canonical_internal_and_mpi_mutations_fail() -> None:

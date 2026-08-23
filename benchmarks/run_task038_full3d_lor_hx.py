@@ -204,6 +204,20 @@ def _prepare_paths(raw_dir: Path, record_path: Path, comm: MPI.Comm) -> None:
     comm.barrier()
 
 
+def _append_stage_marker(raw_dir: Path, stage: str, rank: int) -> None:
+    marker_path = raw_dir / f"stage-rank{int(rank)}.jsonl"
+    with marker_path.open("a", encoding="utf-8") as stream:
+        stream.write(
+            json.dumps(
+                {"stage": stage, "rank": int(rank), "time": time.time()},
+                sort_keys=True,
+            )
+            + "\n"
+        )
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
 def _parse_case(case: str) -> tuple[int, int]:
     if case not in EXPECTED_CASES:
         raise ValueError(f"unsupported L1 case {case!r}")
@@ -286,7 +300,7 @@ def _apply_copy(action: Any, vector: Any):
         result.destroy()
 
 
-def _periodic_evidence(degree: int, transfer: Any, comm: MPI.Comm):
+def _periodic_evidence(degree: int, transfer: Any, comm: MPI.Comm, raw_dir: Path):
     from src.solvers.fullspace_lor_topology import global_lor_edge_roundtrip
     from src.solvers.hcurl_canonical_vector_dolfinx import (
         extract_canonical_full_fe_dual_packets,
@@ -294,16 +308,20 @@ def _periodic_evidence(degree: int, transfer: Any, comm: MPI.Comm):
     )
 
     space, floquet = _periodic_context(comm, degree)
+    _append_stage_marker(raw_dir, "periodic_context_built", comm.rank)
     field = _periodic_source(space, floquet)
+    _append_stage_marker(raw_dir, "periodic_source_built", comm.rank)
     action = _periodic_action(space, floquet)
     roundtrip, lor_packets, local_transfer_error, topology = global_lor_edge_roundtrip(
         space, floquet, field, transfer
     )
+    _append_stage_marker(raw_dir, "global_roundtrip_built", comm.rank)
     source = field.x.petsc_vec.copy()
     mapped_source = roundtrip.x.petsc_vec.copy()
     observed = _apply_copy(action, source)
     mapped_observed = _apply_copy(action, mapped_source)
     repeated = _apply_copy(action, mapped_source)
+    _append_stage_marker(raw_dir, "positive_action_applied", comm.rank)
     source_packets = extract_canonical_full_fe_packets(space, source, floquet)[0]
     mapped_source_packets = extract_canonical_full_fe_packets(
         space, mapped_source, floquet
@@ -328,6 +346,7 @@ def _periodic_evidence(degree: int, transfer: Any, comm: MPI.Comm):
         ),
         root=0,
     )
+    _append_stage_marker(raw_dir, "canonical_packets_gathered", comm.rank)
     result = None
     if comm.rank == 0:
         source_keys, source_values = _merge_canonical_packets(
@@ -538,6 +557,7 @@ def main() -> int:
     raw_dir = args.raw_dir.resolve()
     record_path = args.record.resolve()
     _prepare_paths(raw_dir, record_path, comm)
+    _append_stage_marker(raw_dir, "paths_ready", comm.rank)
     source = None
     runtime = None
     periodic = None
@@ -552,10 +572,13 @@ def main() -> int:
         source, source_error = comm.bcast((source, source_error), root=0)
         if source_error is not None:
             raise RuntimeError(f"{source_error[0]}: {source_error[1]}")
+        _append_stage_marker(raw_dir, "source_identity_closed", comm.rank)
         runtime = _runtime_identity(root, args.expected_mpi_size)
+        _append_stage_marker(raw_dir, "runtime_identity", comm.rank)
         local, reference, build_wall = _build_case(degree)
+        _append_stage_marker(raw_dir, "local_transfer_built", comm.rank)
         if degree in {2, 3}:
-            periodic = _periodic_evidence(degree, reference, comm)
+            periodic = _periodic_evidence(degree, reference, comm, raw_dir)
     except Exception as exc:
         setup_error = (type(exc).__name__, str(exc))
     failed = comm.allreduce(int(setup_error is not None), op=MPI.MAX)
@@ -587,6 +610,7 @@ def main() -> int:
             periodic,
         )
     comm.barrier()
+    _append_stage_marker(raw_dir, "record_written", comm.rank)
     return 0
 
 
