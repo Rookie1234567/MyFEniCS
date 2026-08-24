@@ -164,13 +164,13 @@ def _prepare_paths(raw_dir: Path, record_path: Path, comm: Any) -> None:
     comm.barrier()
 
 
-def _marker(raw_dir: Path, name: str, source_sha: str, comm: Any, **facts: Any) -> int:
+def _marker(marker_root: Path, name: str, source_sha: str, comm: Any, **facts: Any) -> int:
     if name not in MARKERS:
         raise ValueError(f"unknown S2 marker {name}")
     wall_time_ns = time.time_ns() if comm.rank == 0 else None
     wall_time_ns = comm.bcast(wall_time_ns, root=0)
     if comm.rank == 0:
-        path = raw_dir / "markers" / f"{name}.json"
+        path = marker_root / "markers" / f"{name}.json"
         path.write_bytes(
             json.dumps(
                 {

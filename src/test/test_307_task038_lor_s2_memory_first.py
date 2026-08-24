@@ -584,6 +584,27 @@ def test_s2_paths_and_checker_output_fail_closed(tmp_path):
         )
 
 
+def test_marker_allows_raw_dir_fact_without_argument_collision(tmp_path):
+    marker_root = tmp_path / "raw"
+    (marker_root / "markers").mkdir(parents=True)
+    raw_dir_fact = str(marker_root.resolve())
+    wall_time_ns = runner._marker(
+        marker_root,
+        "paths_ready",
+        SOURCE_SHA,
+        MPI.COMM_SELF,
+        raw_dir=raw_dir_fact,
+    )
+    marker_path = marker_root / "markers" / "paths_ready.json"
+    payload = json.loads(marker_path.read_text(encoding="utf-8"))
+    assert payload["marker"] == "paths_ready"
+    assert payload["source_sha"] == SOURCE_SHA
+    assert payload["facts"]["raw_dir"] == raw_dir_fact
+    assert payload["wall_time_ns"] == wall_time_ns
+    assert "NaN" not in marker_path.read_text(encoding="utf-8")
+    assert "Infinity" not in marker_path.read_text(encoding="utf-8")
+
+
 def test_watchdog_path_and_terminal_race_contract(tmp_path):
     worker_raw = tmp_path / "worker_raw"
     worker_raw.mkdir()
