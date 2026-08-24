@@ -739,6 +739,7 @@ class RealL2PositiveHXFixture:
         comm: MPI.Comm = MPI.COMM_WORLD,
         *,
         variant: str = "sequential-v1",
+        build_hx: bool = True,
     ) -> None:
         degree = int(degree)
         if degree not in (2, 3):
@@ -746,6 +747,7 @@ class RealL2PositiveHXFixture:
         self.degree = degree
         self.comm = comm
         self.variant = variant
+        self.build_hx = bool(build_hx)
         cfg = target_stage4_config(degree=degree, h_nm=50.0)
         self.cfg = cfg
         plan = _stage4_axis_plan(cfg, comm.size)
@@ -845,10 +847,6 @@ class RealL2PositiveHXFixture:
         self.lor_edge_floquet = build_double_floquet_mpc(
             self.lor_edge_space, lor_data, low_cfg
         )
-        self.lor_node_floquet, node_constraint_audit = _scalar_periodic_mpc(
-            self.lor_node_space, low_cfg
-        )
-        self.lor_node_constraint_audit = node_constraint_audit
         (
             self.lor_mu_coefficient,
             self.lor_mass_coefficient,
@@ -861,47 +859,70 @@ class RealL2PositiveHXFixture:
             self.lor_mu_coefficient * ufl.inner(ufl.curl(lor_u), ufl.curl(lor_v))
             + self.lor_mass_coefficient * ufl.inner(lor_u, lor_v)
         ) * ufl.dx
-        node_u = ufl.TrialFunction(self.lor_node_space)
-        node_v = ufl.TestFunction(self.lor_node_space)
-        self.node_form = (
-            self.lor_mu_coefficient * ufl.inner(ufl.grad(node_u), ufl.grad(node_v))
-            + self.lor_mass_coefficient * node_u * ufl.conj(node_v)
-        ) * ufl.dx
         self.edge_matrix = _assemble_sparse(
             self.edge_form, mpc=self.lor_edge_floquet.mpc
         )
-        self.node_matrix = _assemble_sparse(
-            self.node_form, mpc=self.lor_node_floquet
-        )
-        (
-            self.gradient,
-            map_tail,
-            self.de_rham_audit,
-            self.lor_edge_records,
-        ) = _de_rham_maps(
-            self.lor_edge_space,
-            self.lor_node_space,
-            self.lor_edge_floquet.mpc,
-            self.lor_node_floquet,
-            self.edge_matrix,
-            self.node_matrix,
-        )
-        self.gradient_adjoint = map_tail[0]
-        self.vector_prolongations = tuple(map_tail[1:])
-        self.vector_restrictions = tuple(
-            _hermitian_transpose(matrix) for matrix in self.vector_prolongations
-        )
-        from .fullspace_lor_native_hx import NativeComplexLORHX
+        if self.build_hx:
+            self.lor_node_floquet, node_constraint_audit = _scalar_periodic_mpc(
+                self.lor_node_space, low_cfg
+            )
+            self.lor_node_constraint_audit = node_constraint_audit
+            node_u = ufl.TrialFunction(self.lor_node_space)
+            node_v = ufl.TestFunction(self.lor_node_space)
+            self.node_form = (
+                self.lor_mu_coefficient * ufl.inner(ufl.grad(node_u), ufl.grad(node_v))
+                + self.lor_mass_coefficient * node_u * ufl.conj(node_v)
+            ) * ufl.dx
+            self.node_matrix = _assemble_sparse(
+                self.node_form, mpc=self.lor_node_floquet
+            )
+            (
+                self.gradient,
+                map_tail,
+                self.de_rham_audit,
+                self.lor_edge_records,
+            ) = _de_rham_maps(
+                self.lor_edge_space,
+                self.lor_node_space,
+                self.lor_edge_floquet.mpc,
+                self.lor_node_floquet,
+                self.edge_matrix,
+                self.node_matrix,
+            )
+            self.gradient_adjoint = map_tail[0]
+            self.vector_prolongations = tuple(map_tail[1:])
+            self.vector_restrictions = tuple(
+                _hermitian_transpose(matrix) for matrix in self.vector_prolongations
+            )
+            from .fullspace_lor_native_hx import NativeComplexLORHX
 
-        self.hx = NativeComplexLORHX(
-            self.edge_matrix,
-            self.node_matrix,
-            self.gradient,
-            self.gradient_adjoint,
-            self.vector_prolongations,
-            self.vector_restrictions,
-            variant=variant,
-        )
+            self.hx = NativeComplexLORHX(
+                self.edge_matrix,
+                self.node_matrix,
+                self.gradient,
+                self.gradient_adjoint,
+                self.vector_prolongations,
+                self.vector_restrictions,
+                variant=variant,
+            )
+        else:
+            self.lor_node_floquet = None
+            self.lor_node_constraint_audit = {
+                "constructed": False,
+                "scalar_node_matrix": False,
+                "global_numeric_allgather": False,
+            }
+            self.node_form = None
+            self.node_matrix = None
+            self.gradient = None
+            self.gradient_adjoint = None
+            self.vector_prolongations = ()
+            self.vector_restrictions = ()
+            self.de_rham_audit = {"constructed": False}
+            self.lor_edge_records, _metadata_bytes = _edge_records(
+                self.lor_edge_space, self.lor_node_space
+            )
+            self.hx = None
         self.lor_source = _high_source(self.lor_edge_space, self.lor_edge_floquet)
         self.reference_transfer = build_reference_factor_lor_transfer(degree)
         self.lor_p1_transfer = _P1IdentityTransfer()
@@ -930,7 +951,6 @@ class RealL2PositiveHXFixture:
     def _make_audit(self) -> dict[str, Any]:
         comm = self.comm
         edge_map = self.lor_edge_space.dofmap.index_map
-        node_map = self.lor_node_space.dofmap.index_map
         high_map = self.high_space.dofmap.index_map
         high_cells = int(
             comm.allreduce(
@@ -946,7 +966,12 @@ class RealL2PositiveHXFixture:
         )
         edge_slave = int(self.lor_edge_floquet.num_local_slaves)
         edge_slave = int(comm.allreduce(edge_slave, op=MPI.SUM))
-        node_slave = int(self.lor_node_constraint_audit["global_slave_rows"])
+        node_map = self.lor_node_space.dofmap.index_map
+        node_slave = (
+            int(self.lor_node_constraint_audit["global_slave_rows"])
+            if self.build_hx
+            else 0
+        )
         orientation_factors = self._raw_edge_orientation_factors
         orientation_count = int(
             comm.allreduce(orientation_factors.size, op=MPI.SUM)
@@ -984,7 +1009,9 @@ class RealL2PositiveHXFixture:
             "high_order_matrix_free": True,
             "high_order_global_aij": False,
             "lor_edge_matrix_type": str(self.edge_matrix.getType()),
-            "lor_node_matrix_type": str(self.node_matrix.getType()),
+            "lor_node_matrix_type": (
+                str(self.node_matrix.getType()) if self.node_matrix is not None else None
+            ),
             "global_transfer_matrix": False,
             "global_numeric_allgather": False,
             "metadata_allgather": False,
@@ -1017,7 +1044,16 @@ class RealL2PositiveHXFixture:
             ),
             "residual_transfer_scope": "global_owner_routed_adjoint_and_primal",
             "high_action_audit": self.high_action.audit,
-            "hx_audit": self.hx.audit,
+            "hx_audit": (
+                self.hx.audit
+                if self.hx is not None
+                else {
+                    "constructed": False,
+                    "high_order_aij": False,
+                    "global_transfer_matrix": False,
+                    "global_numeric_allgather": False,
+                }
+            ),
         }
 
     def _build_raw_edge_orientation_factors(self) -> np.ndarray:

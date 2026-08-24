@@ -241,6 +241,7 @@ def test_foundation_is_e_only_and_settings_are_frozen() -> None:
     assert runner.RESTART == 20
     assert runner.CHECKPOINT_INTERVAL == 500
     assert runner.SOURCE_NAME == "random"
+    assert runner.WATCHDOG_RSS_LIMIT == 500_000_000
 
 
 def test_exact_apply_uses_the_current_residual() -> None:
@@ -269,6 +270,7 @@ def test_checkpoint_and_watchdog_contract_helpers() -> None:
     assert runner._watchdog_stop_reason(authority) is None
     authority["process_tree"]["rss_bytes"] = 500_000_000
     assert runner._watchdog_stop_reason(authority) == "process_tree_rss_limit"
+    assert runner._watchdog_stop_reason(authority, 2_000_000_000) is None
     authority["process_tree"]["rss_bytes"] = 1
     authority["process_tree"]["swap_bytes"] = 1
     assert runner._watchdog_stop_reason(authority) == "process_tree_swap_nonzero"
@@ -337,6 +339,8 @@ def test_watchdog_dispatch_preserves_worker_remainder() -> None:
         "/tmp/record.json",
         "--source-sha",
         SOURCE_SHA,
+        "--watchdog-rss-limit-bytes",
+        "2000000000",
         "--worker-command",
         "--",
         *worker_command,
@@ -369,6 +373,8 @@ def test_watchdog_main_subprocess_natural_closeout_and_fail_closed_reuse(tmp_pat
         str(worker_record),
         "--source-sha",
         SOURCE_SHA,
+        "--watchdog-rss-limit-bytes",
+        "2000000000",
         "--worker-command",
         "--",
         *worker_command,
@@ -380,6 +386,7 @@ def test_watchdog_main_subprocess_natural_closeout_and_fail_closed_reuse(tmp_pat
     assert compact["natural_exit"] is True
     assert compact["no_orphan"] is True
     assert compact["returncode"] == 0
+    assert compact["watchdog_rss_limit_bytes"] == 2_000_000_000
     assert not worker_raw.exists()
     second = subprocess.run(command, cwd=repo, capture_output=True, text=True, check=False)
     assert second.returncode != 0

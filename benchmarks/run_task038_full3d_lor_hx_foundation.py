@@ -813,7 +813,9 @@ def run_foundation_worker(
             fixture.destroy()
 
 
-def _watchdog_stop_reason(authority: Mapping[str, Any]) -> str | None:
+def _watchdog_stop_reason(
+    authority: Mapping[str, Any], rss_limit_bytes: int = WATCHDOG_RSS_LIMIT
+) -> str | None:
     tree = authority.get("process_tree", {})
     if not bool(tree.get("all_status_readable", False)):
         return "authority_unreadable"
@@ -822,7 +824,7 @@ def _watchdog_stop_reason(authority: Mapping[str, Any]) -> str | None:
     cgroup = authority.get("job_cgroup", {})
     if bool(cgroup.get("dedicated_job_cgroup", False)) and int(cgroup.get("swap_current_bytes", -1)) != 0:
         return "dedicated_cgroup_swap_nonzero"
-    if int(tree.get("rss_bytes", -1)) >= WATCHDOG_RSS_LIMIT:
+    if int(tree.get("rss_bytes", -1)) >= int(rss_limit_bytes):
         return "process_tree_rss_limit"
     return None
 
@@ -851,8 +853,13 @@ def _watchdog_main(argv: list[str]) -> int:
     parser.add_argument("--worker-raw-dir", type=Path, required=True)
     parser.add_argument("--worker-record", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
+    parser.add_argument(
+        "--watchdog-rss-limit-bytes", type=int, default=WATCHDOG_RSS_LIMIT
+    )
     parser.add_argument("--worker-command", nargs=argparse.REMAINDER, required=True)
     args = parser.parse_args(_watchdog_argv_without_separator(argv))
+    if args.watchdog_rss_limit_bytes <= 0:
+        parser.error("--watchdog-rss-limit-bytes must be a positive integer")
     command = list(args.worker_command)
     if not command:
         raise SystemExit("missing worker command")
@@ -885,7 +892,7 @@ def _watchdog_main(argv: list[str]) -> int:
                 "authority": _jsonable(authority),
             }
             samples.append(sample)
-            reason = _watchdog_stop_reason(authority)
+            reason = _watchdog_stop_reason(authority, args.watchdog_rss_limit_bytes)
             if reason is not None:
                 stop_reason = reason
                 termination = terminate_process_tree(process)
@@ -928,7 +935,7 @@ def _watchdog_main(argv: list[str]) -> int:
         "peak_process_tree_rss_bytes": max(rss_values, default=-1),
         "max_process_tree_swap_bytes": max(swap_values, default=-1),
         "watchdog_poll_seconds": WATCHDOG_POLL_SECONDS,
-        "watchdog_rss_limit_bytes": WATCHDOG_RSS_LIMIT,
+        "watchdog_rss_limit_bytes": int(args.watchdog_rss_limit_bytes),
         "raw_sha256": _sha256(args.watchdog_raw),
     }
     args.watchdog_compact.write_bytes(_json_bytes(compact))
