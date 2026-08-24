@@ -2,9 +2,25 @@
 
 ## 状态
 
-`pending_conditional_not_run`。本页冻结 V3-1 的输入、公式和 Gate；尚未读取 packet 数值矩阵、尚未组装
-PDE 或 PETSc/MUMPS factor，也未运行 QEP/heavy。V3-1 结果必须在代码与 focused tests 完成后
-补写，不能把计划字段当成 measured evidence。
+V3-1 的 pure-Numpy tiny oracle 已通过；但 immutable V2 packet 的矩阵语义不是 Review
+要求的三个 local-group Schur。因此本次 packet 结论为
+`COUPLED_PACKET_INFORMATION_INCOMPLETE`，不是数值 Gate 失败。没有组装 PDE、
+PETSc/MUMPS factor 或 QEP；V3-2 在该信息缺口按 Review 决策树闭合前不进入。
+
+输入绑定：packet manifest SHA256
+`19de50f3cdb32766bf6f13fc55c9ac498b21a9a00ddc261768d7d55b7c9da8b0`，producer source
+`942c43881e4162085348c48b09c79fbbdac18cd9`。独立结果保存在 ignored artifact
+`results/task040_v3_1_coupled_interface_checker.json`，其 SHA256 为
+`d108bf40ae6bed5cb9508e620ce858b9595a68356453cc841701ed2ffaa7095a`；该文件保留为
+首次错误语义判定的证据，未覆盖或改写 raw。以下语义纠偏以源码调用链和同一 immutable
+packet 只读重算为准。
+
+本次 corrected checker source 为 `0713073cbaca8cf43423d7c92ed2408d3f6b586a`，新的
+只读输出为
+`results/task040_v3_1_coupled_interface_checker_corrected_0713073c.json`，SHA256
+`fa1626edfb959eb700b3fd5954a53ebd2d57a8e1ecae046ca5a55175297b4e4e`，rc=2 仅表示上述
+information-incomplete 分类；首次错误 artifact `d108...` 仍只作为保留证据。Compact record
+为 `benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v3_1_coupled_interface_packet_audit_v1.json`。
 
 ## 固定 ordering 与输入
 
@@ -16,13 +32,58 @@ PDE 或 PETSc/MUMPS factor，也未运行 QEP/heavy。V3-1 结果必须在代码
 | group1 | 776 | lower 296 后 upper 480 |
 | group2 | 480 | upper |
 
-每组保留 `G=Y^H Z`、`projected_scalar=Y^H S_scalar Z` 和
-`projected_exact=Y^H S_exact Z` 的 shape、rank、singular values、condition 与 SHA256。
-所有矩阵必须为 finite complex128；不能从 worker status 推断 Gate。
+## 旧 V2 矩阵与 Review V3 目标的语义映射
+
+V1/V2 runner 在构造 Petrov action 时把 `exact_apply` 绑定到
+`oracle.apply_directed_neighbor`；只有 middle-cross 采样显式调用
+`oracle.apply_group(1)`。因此旧 packet 的三个矩阵实际是：
+
+| 旧矩阵 | 实际响应 | 不是 |
+|---|---|---|
+| `projected_exact_group0` | `Y0^H R_{1→0} Z0`，middle `S1` 的 lower restriction | `Y0^H S0 Z0` |
+| `projected_exact_group1` | `Y1^H blockdiag(S0,S2) Z1`，incoming neighbor map | `Y1^H S1 Z1` |
+| `projected_exact_group2` | `Y2^H R_{1→2} Z2`，middle `S1` 的 upper restriction | `Y2^H S2 Z2` |
+
+源码中的 `_neighbor_block_apply` 对 group1 明确分别调用 group0/group2，再把两个结果
+相加；对 group0/group2 则调用 middle group1 后只提取同侧行，cross 输出不进入旧矩阵。
+相反，已有 middle-cross reports 的 `apply_group(1)` 响应测得 lower→upper 最大
+`0.6677254509073904`、upper→lower 最大 `0.14544366781366302`。这证明 cross 响应真实
+存在，而旧 group1 矩阵为 block diagonal 不能代表它。
+
+Review V3 需要的是
+
+```math
+E_g=Y_g^H S_g Z_g,\qquad
+E_{joint}=E_1+\operatorname{blockdiag}(E_0,E_2),
+```
+
+其中 `E1` 必须含完整的 `S1_LU` 和 `S1_UL`。当前 packet 没有 full middle-group local
+Schur contraction，至少缺少这两个 projected cross blocks，故 `joint_projected_exact`
+由旧矩阵拼出的零 LU/UL 只能作为 directed-neighbor structural diagnostic。
+
+旧 packet 的 owner-local factors 也要按其真实含义读取：
+`U=delta=(directed_neighbor-scalar)Z`，`V=Y G^-H`。由 `V G^H` 可恢复 `Y`，但一般
+不能由 `U` 反解 `Z`。因此若后续 V3-2 需要实际 owner-row `Z_Gamma/Y_Gamma`，`Z` 是
+除 middle local Schur 小矩阵之外的第二个信息缺口；不能把 `U` 冒充 `Z`。
+
+每组保留 `G=Y^H Z`、`projected_scalar=Y^H S_scalar Z` 和旧路径的
+`projected_exact` 的 shape、rank、singular values、condition 与 SHA256。所有矩阵必须为
+finite complex128；不能从 worker status 推断 Gate。这里的旧 `projected_exact` 不能直接
+改名为 `Y^H S_group Z`。
+
+本次重算的 rank/condition 摘要如下；`G` 是各 group 的 basis-overlap，不把三组 `G`
+相加成没有定义的 `joint_gram`：
+
+| group | G rank/condition | scalar rank/condition | exact rank/condition |
+|---|---:|---:|---:|
+| group0 | 296 / 187.9352369709664 | 296 / 485.6835752939591 | 296 / 2574.21018122354 |
+| group1 | 776 / 1075856.58741676 | 776 / 24161239.65736498 | 776 / 68955135.07396042 |
+| group2 | 480 / 113913.61949721041 | 480 / 2973370.637320133 | 480 / 349369.0475535463 |
 
 ## 联合矩阵
 
-三组矩阵按相同的 left/right dual 和 coefficient convention 组合：
+以下联合切分仍保留，作为旧 directed-neighbor 矩阵的结构诊断；它不是本次 V3 的
+`E_joint` 资格结论。三组矩阵按相同的 left/right dual 和 coefficient convention 组合：
 
 ```math
 E_{joint}=E_1+\operatorname{blockdiag}(E_0,E_2).
@@ -41,6 +102,21 @@ E_{UL} & E_{UU}
 norm、rank 和 hash，并保留 incoming/block-diagonal map 与 middle cross-interface response
 的语义区别。
 
+旧矩阵拼出的 structural `joint_projected_exact` 为 776×776、rank 776、condition
+`80081760.2949406`；四 block 为：
+
+| block | shape | Frobenius norm | relative norm | rank | SHA256 |
+|---|---:|---:|---:|---:|---|
+| LL | 296×296 | 1053759.949377419 | 0.999981218749935 | 296 | `a74495e8ba75e6dc05966fcaba0c5277569c4b6979211d0384db9907c8a48b75` |
+| LU | 296×480 | 0.0 | 0.0 | 0 | `0d72237d289ccc4f4a6eb3e78b5c20e7f50da39b0856192100901993d2ce8e11` |
+| UL | 480×296 | 0.0 | 0.0 | 0 | `0d72237d289ccc4f4a6eb3e78b5c20e7f50da39b0856192100901993d2ce8e11` |
+| UU | 480×480 | 6458.401699644151 | 0.0061287966074270355 | 480 | `2c6b26d74c27eb27319d89fcf7824c24ab4dc2c58562c10ff4e55199fd5f6548` |
+
+LU/UL 的零值是 packet 中实际重算出的 incoming projected-exact 结构诊断，不是 core
+主动把 cross block 清零；但它也不能冒充 full middle Schur 的 cross block。独立
+middle-Schur sampled response 另有非零 cross energy：lower→upper 最大
+`0.6677254509073904`，upper→lower 最大 `0.14544366781366302`。二者不能互相冒充。
+
 求解允许使用 complex SVD、rank-revealing QR 或直接 Petrov solve；禁止 normal equations。
 不得创建 FE-sized dense interface matrix，也不得 allgather FE numeric 或复制完整 basis。
 
@@ -56,16 +132,42 @@ focused fixture 必须是 complex、non-Hermitian、三分区 block-tridiagonal 
 matrix/action relative error 与 full residual 目标均为 `<=1e-12`。另按 physical、modal、
 complement、middle lower-to-upper、middle upper-to-lower 分组汇总 scalar-exact、
 projected-exact、in-span、complement orthogonality 和 cross-interface energy ratio。
+独立 tiny authority 实测 matrix、action、solution 和 full residual 的相对误差均 `<=1e-12`；
+删除 LU/UL 的 negative control 明确失败。
+
+本次分解（最大值）为：
+
+| evidence group | count | scalar-exact | projected-exact / in-span | complement orthogonality | cross energy |
+|---|---:|---:|---:|---:|---:|
+| physical | 15 | 1.0221912938677724 | 1.020350476820021 | — | — |
+| modal combination | 4 | 1.0349183911337543 | 2.4890293803065003e-08 |  — | — |
+| complement | 4 | 1.0281892054707482 | 1.0281892054707484 | 5.446980708086963e-13 | — |
+| middle lower→upper | 4 | not serialized | not serialized | — | 0.6677254509073904 |
+| middle upper→lower | 4 | not serialized | not serialized | — | 0.14544366781366302 |
 
 ## V3-1 Gate 与停止条件
 
-通过需要：packet identity/hash exact、joint finite、full expected rank 或明确的数值 rank、
-condition `<=1e12`、cross-block ordering identity、tiny oracle 全部通过，并证明现有 packet
-足够构造 joint operator。若缺少只能从同一 producer 已有内存结果序列化的一个 small matrix，
-才允许一次最小 schema enhancement；若必须重新求解物理问题，分类：
+已通过的只是 packet identity/hash、三组 shape/rank/condition、旧 structural matrix 的
+finite/shape/rank/hash、lower-then-upper ordering 以及 tiny independent oracle。scalar
+joint 仍保留 finite/rank/condition 诊断，但不作为独立数值停止 Gate；`<=1e12` 的正式
+condition Gate必须施加在真正的 projected-exact `E_joint` 上。由于
+`local_middle_schur_evidence=false`，整体不是 V3-1 algebra evidence valid，而是
+`COUPLED_PACKET_INFORMATION_INCOMPLETE`，不能分类为数值失败。
 
-```text
-COUPLED_PACKET_INFORMATION_INCOMPLETE
-```
+按 Review §8.5 的最小合法补强，优先在 producer 仍持有 oracle 与 basis 时，对 group1
+全部 776 列计算并保存一个明确命名的
+`projected_middle_group_schur = Y1^H S1 Z1` 小矩阵；不得重命名旧三个矩阵。它的 LL/UU
+可与旧 group0/group2 directed-neighbor 矩阵做身份交叉核对，随后才可构造
+`projected_middle_group_schur + old projected_exact_group1` 的联合代数。若 V3-2 还要求
+consumer 直接持有 `Z`，则还需按冻结 lower/selected-upper authority、QEP=0 重建 `Z`，或
+新增 owner-row Z shard；这属于第二个信息补强，当前不擅自改 schema、不重跑 producer。
 
-V3-1 不授权 V3-2 formal；当前尚无 measured rank、condition、block norm 或 failure metrics。
+## 验证
+
+qualified activation 下：serial `test_308_task040_coupled_interface.py` 为 4 passed；
+MPI2 与 MPI4 同一文件各 rank 均为 3 passed、1 skipped（immutable packet 只在 serial
+读取）。既有 packet/consumer 回归为 20 passed。Ruff、format、compileall、Markdown
+合同与 `git diff --check` 均通过。
+
+V3-2 不在当前信息不完整的 V3-1 证据之后进入；按 Review 决策树，在合法补强闭合后
+连续进入 V3-2。

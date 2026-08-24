@@ -1,0 +1,140 @@
+{
+  "schema": "task040.v3.1.coupled_interface_packet_audit.compact.v1",
+  "task": "Task040",
+  "stage": "V3-1",
+  "status": "controlled_information_incomplete",
+  "classification": "COUPLED_PACKET_INFORMATION_INCOMPLETE",
+  "source": {
+    "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+    "source_sha": "0713073cbaca8cf43423d7c92ed2408d3f6b586a",
+    "producer_source_sha": "942c43881e4162085348c48b09c79fbbdac18cd9",
+    "packet_manifest_sha256": "19de50f3cdb32766bf6f13fc55c9ac498b21a9a00ddc261768d7d55b7c9da8b0",
+    "packet_root": "results/task040_v2_interface_packet_producer_mpi8_942c4388/worker/interface_packet"
+  },
+  "checker_evidence": {
+    "first_incorrect_artifact": "results/task040_v3_1_coupled_interface_checker.json",
+    "first_incorrect_artifact_sha256": "d108bf40ae6bed5cb9508e620ce858b9595a68356453cc841701ed2ffaa7095a",
+    "corrected_artifact": "results/task040_v3_1_coupled_interface_checker_corrected_0713073c.json",
+    "corrected_artifact_sha256": "fa1626edfb959eb700b3fd5954a53ebd2d57a8e1ecae046ca5a55175297b4e4e",
+    "corrected_return_code": 2,
+    "raw_overwritten": false
+  },
+  "frozen_identity": {
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "selected_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "probe_manifest_sha256": "7a03b2cf80fe5081d1fe1248b9d4c79f3ef4e955a8014e905c2f2ca82797baad",
+    "exact_spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "mpi": 8,
+    "threads": 1
+  },
+  "ordering": {
+    "group_order": ["group0", "group1", "group2"],
+    "global_gamma_rows": [7560, 15120, 7560],
+    "spans": [296, 776, 480],
+    "lower_mode_key_sha256": "046afb0b3d3531f728dc958c1b0c8a321ffa51fb8a0e6ecf6834d462d5ab37e5",
+    "upper_mode_key_sha256": "089d6abfac9f482e7f6001988b9d1c12b1721c09a86749cdefcbfc4f22e82673",
+    "upper_beta_sha256": "aee266f602bf704ffbc3d7551be661b05e1663f84205012bfe26c8fd5983f6c9",
+    "upper_branch": "positive/forward",
+    "qep_calls": 0,
+    "group1_contract": "lower then upper"
+  },
+  "semantic_mapping": {
+    "projected_scalar": "Y^H S_scalar Z",
+    "projected_exact": "directed_neighbor_transmission",
+    "group0": "Y0^H R_1_to_0 Z0, not Y0^H S0 Z0",
+    "group1": "Y1^H blockdiag(S0,S2) Z1, not Y1^H S1 Z1",
+    "group2": "Y2^H R_1_to_2 Z2, not Y2^H S2 Z2",
+    "required_joint": "E1 + blockdiag(E0,E2)",
+    "missing_local_middle_projected_exact": true,
+    "missing_local_middle_blocks": ["S1_LU", "S1_UL"],
+    "middle_cross_response_present": true,
+    "z_gamma_in_packet": false,
+    "y_reconstructible_from_v_g": true,
+    "z_reconstructible_from_u": false
+  },
+  "checks": {
+    "manifest_hash": true,
+    "packet_authority": true,
+    "group_order": true,
+    "span_sizes": true,
+    "group_gram_diagnostics": true,
+    "joint_scalar_diagnostics": true,
+    "joint_exact_structural_diagnostic": true,
+    "joint_exact_blocks": true,
+    "ordering_identity": true,
+    "report_decomposition": true,
+    "local_middle_schur_evidence": false,
+    "packet_sufficient": false
+  },
+  "old_structural_joint_exact": {
+    "shape": [776, 776],
+    "rank": 776,
+    "condition": 80081760.2949406,
+    "blocks": {
+      "LL": {
+        "shape": [296, 296],
+        "frobenius_norm": 1053759.949377419,
+        "relative_frobenius_norm": 0.999981218749935,
+        "rank": 296,
+        "sha256": "a74495e8ba75e6dc05966fcaba0c5277569c4b6979211d0384db9907c8a48b75"
+      },
+      "LU": {
+        "shape": [296, 480],
+        "frobenius_norm": 0.0,
+        "relative_frobenius_norm": 0.0,
+        "rank": 0,
+        "sha256": "0d72237d289ccc4f4a6eb3e78b5c20e7f50da39b0856192100901993d2ce8e11"
+      },
+      "UL": {
+        "shape": [480, 296],
+        "frobenius_norm": 0.0,
+        "relative_frobenius_norm": 0.0,
+        "rank": 0,
+        "sha256": "0d72237d289ccc4f4a6eb3e78b5c20e7f50da39b0856192100901993d2ce8e11"
+      },
+      "UU": {
+        "shape": [480, 480],
+        "frobenius_norm": 6458.401699644151,
+        "relative_frobenius_norm": 0.0061287966074270355,
+        "rank": 480,
+        "sha256": "2c6b26d74c27eb27319d89fcf7824c24ab4dc2c58562c10ff4e55199fd5f6548"
+      }
+    }
+  },
+  "middle_cross": {
+    "report_count": 8,
+    "lower_to_upper_count": 4,
+    "upper_to_lower_count": 4,
+    "lower_to_upper_cross_energy_ratio_max": 0.6677254509073904,
+    "upper_to_lower_cross_energy_ratio_max": 0.14544366781366302
+  },
+  "failure_decomposition": {
+    "physical_count": 15,
+    "interface_count": 8,
+    "modal_combination_count": 4,
+    "complement_count": 4
+  },
+  "tiny_authority": {
+    "complex_nonhermitian": true,
+    "matrix_relative_error_le_1e-12": true,
+    "action_relative_error_le_1e-12": true,
+    "solution_relative_error_le_1e-12": true,
+    "full_relative_residual_le_1e-12": true,
+    "omitted_cross_control_fails": true
+  },
+  "next_minimal_strengthening": {
+    "small_matrix": "projected_middle_group_schur = Y1^H S1 Z1",
+    "construction": "apply_group(1) to all 776 frozen Z1 columns while oracle and basis remain alive",
+    "joint_after_strengthening": "projected_middle_group_schur + old projected_exact_group1",
+    "z_plan": "rebuild Z in a later fresh consumer from frozen lower/selected-upper authority with QEP=0; recover Y as V G^H",
+    "producer_rerun": "not_run_pending_review"
+  },
+  "not_run": {
+    "v3_2": "pending_conditional_not_run",
+    "producer_extension": "not_run",
+    "formal": "not_run",
+    "pde": "not_run",
+    "qep": "not_run"
+  }
+}
