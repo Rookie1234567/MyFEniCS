@@ -239,6 +239,7 @@ def _canonical_raw_map(
     *,
     owner_ids: np.ndarray,
     local_permutations: np.ndarray,
+    validate_local_owner_layout: bool = True,
 ) -> dict[str, np.ndarray]:
     from .fullspace_lor_topology import _pack_canonical_edges
     upper = np.asarray([axis.size - 1 for axis in axes], dtype=np.int32)
@@ -282,7 +283,9 @@ def _canonical_raw_map(
     active_ids = canonical[active]
     if np.unique(active_ids).size != active_ids.size:
         raise RuntimeError("active raw edge canonical map is not unique")
-    if not np.array_equal(np.sort(active_ids), np.sort(owner_ids)):
+    if validate_local_owner_layout and not np.array_equal(
+        np.sort(active_ids), np.sort(owner_ids)
+    ):
         raise RuntimeError("active raw edge canonical map does not cover owner ids")
     work_space = edge_space
     cell_info = np.asarray(work_space.mesh.topology.get_cell_permutation_info(), dtype=np.uint32)

@@ -7,10 +7,9 @@ topology is the parent-cell p-refined topology already retained by the
 ``build_hx=False`` L2 fixture; a separate raw p1 topology is used only to
 bridge those owner packets to ``fixture.lor_edge_space``.
 
-The next MPI2 increment must replace the local coarse-axis endpoint check with
-global reductions/configuration endpoints and must replace the reused raw-map
-same-owner-layout assumption with a distributed canonical/raw closure. Those
-two boundaries are intentionally not hidden by an MPI1 guard here.
+Coarse-axis endpoints are checked against the resolved configuration, and the
+raw-map active-owner closure is distributed with metadata-only uint32 routing;
+no local raw-owner/canonical-owner layout identity is assumed.
 """
 
 from __future__ import annotations
@@ -36,7 +35,11 @@ from .fullspace_lor_native_hx_fixture import (
     _p1_transfer_local_indices,
     RealL2PositiveHXFixture,
 )
-from .fullspace_lor_topology import build_canonical_lor_subedge_topology
+from .fullspace_lor_topology import (
+    _alltoallv,
+    _group_by_owner,
+    build_canonical_lor_subedge_topology,
+)
 
 
 A2_SCHEMA = "task038.lor-edge-geometric-mg.global-implicit.v1"
@@ -215,13 +218,20 @@ class ImplicitLORTransferCase:
             np.asarray(axis[:: self.degree], dtype=np.float64)
             for axis in fixture.refined_axes
         )
-        mesh_coordinates = np.asarray(fixture.high_mesh.geometry.x, dtype=np.float64)
         for axis, values in enumerate(coarse_axes):
             if values.size < 2 or not np.all(np.diff(values) > 0.0):
                 raise RuntimeError("coarse axes are not strictly increasing")
-            if not np.isclose(values[0], np.min(mesh_coordinates[:, axis])):
+        expected_endpoints = (
+            (float(fixture.cfg.x_min), float(fixture.cfg.x_max)),
+            (float(fixture.cfg.y_min), float(fixture.cfg.y_max)),
+            (float(fixture.cfg.domain_z_min), float(fixture.cfg.domain_z_max)),
+        )
+        for axis, (values, endpoints) in enumerate(
+            zip(coarse_axes, expected_endpoints, strict=True)
+        ):
+            if not np.isclose(values[0], endpoints[0]):
                 raise RuntimeError("coarse axis lower endpoint does not close")
-            if not np.isclose(values[-1], np.max(mesh_coordinates[:, axis])):
+            if not np.isclose(values[-1], endpoints[1]):
                 raise RuntimeError("coarse axis upper endpoint does not close")
         self.coarse_raw_map = _canonical_raw_map(
             self.coarse_space,
@@ -230,6 +240,10 @@ class ImplicitLORTransferCase:
             coarse_axes,
             owner_ids=self.coarse_topology.owned_edge_ids,
             local_permutations=self.coarse_local_permutations,
+            validate_local_owner_layout=False,
+        )
+        self.coarse_raw_map_facts = self._distributed_raw_map_facts(
+            self.coarse_raw_map, self.coarse_topology
         )
         del coarse_node_space
 
@@ -247,6 +261,10 @@ class ImplicitLORTransferCase:
             fixture.refined_axes,
             owner_ids=self.fine_raw_topology.owned_edge_ids,
             local_permutations=fixture._lor_p1_transfer_local_indices,
+            validate_local_owner_layout=False,
+        )
+        self.fine_raw_map_facts = self._distributed_raw_map_facts(
+            self.fine_raw_map, self.fine_raw_topology
         )
         count_ids, count_values = _owner_incidence_counts(
             self.fine_parent_topology
@@ -258,25 +276,89 @@ class ImplicitLORTransferCase:
         self._destroyed = False
 
     @staticmethod
-    def _raw_map_facts(raw_map: dict[str, np.ndarray], owner_ids: np.ndarray) -> dict[str, Any]:
+    def _raw_map_facts(
+        raw_map: dict[str, np.ndarray],
+        owner_ids: np.ndarray,
+        *,
+        validate_owner_layout: bool = True,
+    ) -> dict[str, Any]:
         phase = np.asarray(raw_map["phase_codes"])
         canonical = np.asarray(raw_map["canonical_ids"])
         active = phase == 0
         active_ids = canonical[active]
         if np.unique(active_ids).size != active_ids.size:
             raise RuntimeError("active raw rows are not unique")
-        if not np.array_equal(np.sort(active_ids), np.sort(owner_ids)):
+        if validate_owner_layout and not np.array_equal(
+            np.sort(active_ids), np.sort(owner_ids)
+        ):
             raise RuntimeError("active raw rows do not cover owner IDs")
         factors = np.asarray(raw_map["orientation_factors"])
         if not np.all(np.isin(factors, (-1, 1))):
             raise RuntimeError("raw edge orientation factors are not signs")
-        return {
+        facts = {
             "owned_raw_rows": int(canonical.size),
             "active_raw_rows": int(np.count_nonzero(active)),
             "phase_rows": int(np.count_nonzero(~active)),
-            "active_owner_bijection": True,
+            "active_raw_local_unique": True,
             "orientation_minus_count": int(np.count_nonzero(factors < 0)),
         }
+        if validate_owner_layout:
+            facts["active_owner_bijection"] = True
+        return facts
+
+    @classmethod
+    def _distributed_raw_map_facts(
+        cls, raw_map: dict[str, np.ndarray], topology: Any
+    ) -> dict[str, Any]:
+        """Close active raw rows against packed owners with metadata-only routing."""
+
+        local = cls._raw_map_facts(
+            raw_map, topology.owned_edge_ids, validate_owner_layout=False
+        )
+        comm = topology.comm
+        active_ids = np.asarray(
+            raw_map["canonical_ids"][np.asarray(raw_map["phase_codes"]) == 0],
+            dtype=np.uint32,
+        )
+        _order, send_counts, _displacements, send_ids = _group_by_owner(
+            active_ids, comm.size
+        )
+        received_ids, _receive_counts = _alltoallv(
+            comm, send_ids, send_counts, MPI.UNSIGNED
+        )
+        received_ids = np.asarray(received_ids, dtype=np.uint32)
+        if np.unique(received_ids).size != received_ids.size:
+            raise RuntimeError("canonical owner received duplicate raw ids")
+        received_sorted = np.sort(received_ids)
+        expected_ids = np.asarray(topology.owned_edge_ids, dtype=np.uint32)
+        if not np.array_equal(received_sorted, expected_ids):
+            raise RuntimeError(
+                "distributed raw/canonical owner inventories do not close"
+            )
+        factors = np.asarray(raw_map["orientation_factors"], dtype=np.int8)
+        local.update(
+            {
+                "canonical_owner_closure": "exact_sorted_set_once",
+                "active_owner_bijection": True,
+                "canonical_owner_received_rows": int(received_ids.size),
+                "global_owned_raw_rows": int(
+                    comm.allreduce(local["owned_raw_rows"], op=MPI.SUM)
+                ),
+                "global_active_raw_rows": int(
+                    comm.allreduce(local["active_raw_rows"], op=MPI.SUM)
+                ),
+                "global_phase_rows": int(
+                    comm.allreduce(local["phase_rows"], op=MPI.SUM)
+                ),
+                "global_orientation_minus_count": int(
+                    comm.allreduce(int(np.count_nonzero(factors < 0)), op=MPI.SUM)
+                ),
+                "global_orientation_plus_count": int(
+                    comm.allreduce(int(np.count_nonzero(factors > 0)), op=MPI.SUM)
+                ),
+            }
+        )
+        return local
 
     def _make_audit(self) -> dict[str, Any]:
         mpi_size = int(self.fixture.comm.size)
@@ -306,7 +388,8 @@ class ImplicitLORTransferCase:
             "hx_hierarchy_built": False,
             "pcgamg_hierarchy_built": False,
             "numeric_allgather": False,
-            "owner_route": "typed_complex128_alltoallv",
+            "setup_closure_route": "typed_uint32_metadata_alltoallv",
+            "apply_owner_route": "typed_complex128_alltoallv",
             "coarse_basix_to_lor_order": self.local_transfer.coarse_basix_to_lor_order.tolist(),
             "q_custom_shape": list(self.q_custom.shape),
             "coarse_space_global_rows": int(
@@ -315,12 +398,8 @@ class ImplicitLORTransferCase:
             "fine_raw_space_global_rows": int(
                 self.fixture.lor_edge_space.dofmap.index_map.size_global
             ),
-            "coarse_raw_map": self._raw_map_facts(
-                self.coarse_raw_map, self.coarse_topology.owned_edge_ids
-            ),
-            "fine_raw_map": self._raw_map_facts(
-                self.fine_raw_map, self.fine_raw_topology.owned_edge_ids
-            ),
+            "coarse_raw_map": dict(self.coarse_raw_map_facts),
+            "fine_raw_map": dict(self.fine_raw_map_facts),
             "fine_parent_owner_count": int(
                 self.fine_parent_topology.owned_edge_ids.size
             ),
