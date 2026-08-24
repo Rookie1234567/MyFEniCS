@@ -1,0 +1,181 @@
+{
+  "schema": "task038.memory-first.p0-authority-compact.v1",
+  "stage": "p0",
+  "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+  "production_variant": "sequential-v1-multiplicative",
+  "formal_case": "p2-h50-mpi1-random",
+  "attempts": {
+    "cc0f322": {
+      "source_sha": "cc0f32268f46b67efbcbe19293c73bf1d725a309",
+      "worker_rc": 0,
+      "checker_rc": 1,
+      "classification": "CONTROLLED_STOP_EVIDENCE_LAYER_FAILURE_NOT_NUMERICAL",
+      "record": {
+        "path": "benchmarks/artifacts/task038_extra_full3d_memory_first_p0_v1/cc0f322/p2_h50_mpi1/record.json",
+        "sha256": "6f5985c513cbd6b1a1626ee11cc75de15af4c21976320bfcc94e754a8fb27434"
+      },
+      "checker": {
+        "path": "benchmarks/artifacts/task038_extra_full3d_memory_first_p0_v1/cc0f322/p2_h50_mpi1/check.json",
+        "sha256": "5cae40c066cd849eedcea240b6080edd21366dbd31bbe30911591c39702daa91"
+      },
+      "manifest_sha256": "961364528c9304f5ce71918d4fefa2aadacd3ad3c53f6d6e704fd212d5424ae2",
+      "raw": {
+        "path": "benchmarks/artifacts/task038_extra_full3d_memory_first_p0_v1/cc0f322/p2_h50_mpi1/raw",
+        "file_count": 15,
+        "inventory_sha256": "30cb5227b5764e939c6fe690402997da3ef8f8a741d0a88f267a92f4726d91b2",
+        "marker_sha256": "dfad7c6b473c998cbe708a819b593cbc80205ec1496c59ac240f4eaee79bc5fd"
+      },
+      "contract_errors": {
+        "count": 10,
+        "fact": "PC artifact descriptor name/role differed from logical record keys"
+      },
+      "gate_failures": {
+        "count": 4,
+        "fact": "shared /init.scope swap_current 13799424 B was incorrectly treated as dedicated swap"
+      },
+      "resource_boundary": {
+        "process_tree_swap_bytes": 0,
+        "dedicated_cgroup": false,
+        "job_no_swap": true,
+        "shared_cgroup_swap_diagnostic_bytes": 13799424
+      },
+      "numeric_reclassification": "forbidden; not a numerical algorithm failure and not PASS"
+    },
+    "ba901631": {
+      "source_sha": "ba9016310d09c388a953fce93d9e71761343311f",
+      "worker_rc": 0,
+      "checker_rc": 0,
+      "passed": true,
+      "record": {
+        "path": "benchmarks/artifacts/task038_extra_full3d_memory_first_p0_v2/ba90163/p2_h50_mpi1/record.json",
+        "sha256": "8f1c4c91ebb1670bb19d1ba315625409dbd486fd8b46431e57628f51799d5fef"
+      },
+      "checker": {
+        "path": "benchmarks/artifacts/task038_extra_full3d_memory_first_p0_v2/ba90163/p2_h50_mpi1/check.json",
+        "sha256": "7ba42a63f7bb1c83b366fb44d7d001de6d8fb53b2a65f9b1fb9bce5acb61db93"
+      },
+      "manifest_sha256": "a57a9db235f7607a998fbdb2c94e32685ce781fa6676f2865e1c1c14f50b4444",
+      "raw": {
+        "path": "benchmarks/artifacts/task038_extra_full3d_memory_first_p0_v2/ba90163/p2_h50_mpi1/raw",
+        "file_count": 15,
+        "inventory_sha256": "ffffdc83c6810f7e79caf490313e3f7fbf897f1939fa768145e07e587b0547c3",
+        "marker_sha256": "46228e841e34244ab4767e2d31feabb360384624b1cbb3a99229b003956c96a0"
+      },
+      "source": {
+        "clean_start": true,
+        "clean_end": true,
+        "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm"
+      },
+      "runtime": {
+        "qualified_activation": "1",
+        "mpi_size": 1,
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "threads": {
+          "MKL_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1"
+        },
+        "petsc4py": "3.19.6",
+        "dolfinx": "0.10.0.post2"
+      },
+      "gates": {
+        "checkpoint_roundtrip_relative": 0.0,
+        "checkpoint_roundtrip_limit": 1e-13,
+        "restart_boundary_true_residual_relative": 0.0,
+        "restart_boundary_limit": 1e-12,
+        "next_cycle_first_true_residual_relative": 0.0,
+        "next_cycle_limit": 1e-11,
+        "pc_linearity_relative": 4.345224260821012e-16,
+        "pc_linearity_limit": 1e-12,
+        "pc_repeat_relative": 0.0,
+        "pc_repeat_limit": 1e-13,
+        "pc_input_unchanged_relative": 0.0,
+        "finite": true,
+        "primal_slave_constraint_absolute": 0.0,
+        "primal_slave_constraint_limit": 1e-12
+      },
+      "cycles": [
+        {
+          "label": "production",
+          "start_iteration": 0,
+          "end_iteration": 20,
+          "explicit_true_residual": 0.0002885866622208196,
+          "reported_final_residual": 0.16825690432906304,
+          "reason": -3,
+          "matvec_count": 20,
+          "pc_apply_count": 21,
+          "process_tree_rss_bytes": 139026432,
+          "process_tree_swap_bytes": 0,
+          "dedicated_cgroup_observed": false,
+          "dedicated_cgroup_swap_bytes": null
+        },
+        {
+          "label": "restored_restart",
+          "start_iteration": 20,
+          "end_iteration": 40,
+          "explicit_true_residual": 1.688759138396504e-06,
+          "reported_final_residual": 0.0009846102470475948,
+          "reason": -3,
+          "matvec_count": 21,
+          "pc_apply_count": 21,
+          "process_tree_rss_bytes": 141615104,
+          "process_tree_swap_bytes": 0,
+          "dedicated_cgroup_observed": false,
+          "dedicated_cgroup_swap_bytes": null
+        },
+        {
+          "label": "continuous_reference_0_20",
+          "start_iteration": 0,
+          "end_iteration": 20,
+          "explicit_true_residual": 0.0002885866622208196,
+          "reason": -3,
+          "matvec_count": 20,
+          "pc_apply_count": 21,
+          "process_tree_rss_bytes": 143278080,
+          "process_tree_swap_bytes": 0,
+          "dedicated_cgroup_observed": false,
+          "dedicated_cgroup_swap_bytes": null
+        },
+        {
+          "label": "continuous_reference_20_40",
+          "start_iteration": 20,
+          "end_iteration": 40,
+          "explicit_true_residual": 1.688759138396504e-06,
+          "reason": -3,
+          "matvec_count": 21,
+          "pc_apply_count": 21,
+          "process_tree_rss_bytes": 143278080,
+          "process_tree_swap_bytes": 0,
+          "dedicated_cgroup_observed": false,
+          "dedicated_cgroup_swap_bytes": null
+        }
+      ],
+      "gnu_time": {
+        "wall_seconds": 7.66,
+        "max_rss_kb": 125104,
+        "swaps": 0,
+        "scope": "single MPI1 worker /usr/bin/time -v, not process-tree authority"
+      },
+      "pc_legality": {
+        "finite": true,
+        "linearity_relative": 4.345224260821012e-16,
+        "repeat_relative": 0.0,
+        "input_unchanged_relative": 0.0,
+        "slave_constraint_absolute": 0.0,
+        "phase_application": "finalized_floquet_mpc_once",
+        "high_order_global_aij": false,
+        "global_direct_coarse": false,
+        "numeric_allgather": false
+      }
+    }
+  },
+  "old_authorities": {
+    "old_l2_one_apply_rho": 1.7348663090876784,
+    "old_l2_classification": "CONTROLLED_NEGATIVE_BY_POSITIVE_AUXILIARY_CONTRACTION_GATE",
+    "old_k1_v1_80_step": "FAIL",
+    "additive_v2": "CLOSED"
+  },
+  "p1_entry": "ALLOWED_BY_P0_PASS",
+  "p1_p6_pde_status": "NOT_RUN_BY_SCOPE"
+}

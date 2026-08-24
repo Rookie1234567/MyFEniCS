@@ -1,0 +1,40 @@
+{
+  "schema": "task038.memory-first.p0-checker-compact.v1",
+  "checker": "benchmarks/task038_full3d_lor_hx_p0_checker.py",
+  "independent_recomputation": true,
+  "attempt_results": {
+    "cc0f322": {
+      "record_sha256": "6f5985c513cbd6b1a1626ee11cc75de15af4c21976320bfcc94e754a8fb27434",
+      "checker_sha256": "5cae40c066cd849eedcea240b6080edd21366dbd31bbe30911591c39702daa91",
+      "passed": false,
+      "contract_errors": 10,
+      "gate_failures": 4,
+      "classification": "PRESERVED_EVIDENCE_LAYER_NEGATIVE_NOT_NUMERICAL"
+    },
+    "ba901631": {
+      "record_sha256": "8f1c4c91ebb1670bb19d1ba315625409dbd486fd8b46431e57628f51799d5fef",
+      "checker_sha256": "7ba42a63f7bb1c83b366fb44d7d001de6d8fb53b2a65f9b1fb9bce5acb61db93",
+      "passed": true,
+      "contract_errors": [],
+      "gate_failures": [],
+      "source_sha": "ba9016310d09c388a953fce93d9e71761343311f"
+    }
+  },
+  "authority_decision": "ba901631 fresh v2 is the P0 PASS authority; cc0f322 remains immutable negative evidence",
+  "checks": {
+    "source_sha_bound": true,
+    "record_checker_hash_bound": true,
+    "checkpoint_manifest_hash_bound": true,
+    "solution_only_checkpoint": true,
+    "no_numeric_allgather": true,
+    "process_tree_swap_zero": true,
+    "dedicated_cgroup_false_shared_init_scope": true,
+    "old_authorities_unchanged": true
+  },
+  "next_stage": {
+    "p1_allowed": true,
+    "p1_formal_run": false,
+    "p6_formal_run": false,
+    "pde_run": false
+  }
+}
