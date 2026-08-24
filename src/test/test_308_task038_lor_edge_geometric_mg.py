@@ -42,6 +42,27 @@ def test_local_q_edge_is_fixed_four_edge_histopolation(degree: int) -> None:
 
 
 @pytest.mark.parametrize("degree", [2, 3])
+def test_local_q_edge_exposes_basix_to_custom_column_order(degree: int) -> None:
+    transfer = build_local_lor_edge_geometric_transfer(degree)
+    basix_to_lor = transfer.coarse_basix_to_lor_order
+    lor_to_basix = np.argsort(basix_to_lor)
+    assert np.array_equal(basix_to_lor[lor_to_basix], np.arange(12))
+    assert not np.array_equal(basix_to_lor, lor_to_basix)
+
+    custom_vector = np.asarray(
+        [0.25 + 0.5j * index for index in range(12)], dtype=np.complex128
+    )
+    basix_vector = custom_vector[basix_to_lor]
+    custom_columns = transfer.edge_transfer[:, lor_to_basix]
+    assert np.allclose(
+        transfer.edge_transfer @ basix_vector,
+        custom_columns @ custom_vector,
+        rtol=0.0,
+        atol=1.0e-13,
+    )
+
+
+@pytest.mark.parametrize("degree", [2, 3])
 def test_independent_edge_and_curl_oracles_and_derham(degree: int) -> None:
     transfer = build_local_lor_edge_geometric_transfer(degree)
     assert transfer.audit["edge_line_integral_oracle_relative"] <= DE_RHAM_LIMIT

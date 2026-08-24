@@ -210,6 +210,7 @@ def _curl_face_oracle(
 class LocalLorEdgeGeometricTransfer:
     degree: int
     high_edge_interpolation: np.ndarray
+    coarse_basix_to_lor_order: np.ndarray
     edge_transfer_unmasked: np.ndarray
     edge_transfer: np.ndarray
     node_transfer: np.ndarray
@@ -283,8 +284,9 @@ def build_local_lor_edge_geometric_transfer(
         dtype=np.float64,
     )
     node_transfer = np.asarray(local.h1_transfer @ node_interpolation)
+    coarse_basix_to_lor_order = _basix_to_lor_edge_order()
     coarse_gradient, _coarse_curl, _coarse_faces = _build_incidence(1)
-    coarse_gradient = coarse_gradient[_basix_to_lor_edge_order()]
+    coarse_gradient = coarse_gradient[coarse_basix_to_lor_order]
     fine_gradient = np.asarray(local.lor_gradient)
     fine_curl = np.asarray(local.lor_curl_incidence)
     direct_edge_integral = _edge_line_integral_oracle(
@@ -358,11 +360,13 @@ def build_local_lor_edge_geometric_transfer(
         fine_curl,
         direct_edge_integral,
         direct_curl_flux,
+        coarse_basix_to_lor_order,
     ):
         array.setflags(write=False)
     return LocalLorEdgeGeometricTransfer(
         degree=degree,
         high_edge_interpolation=high_edge_interpolation,
+        coarse_basix_to_lor_order=coarse_basix_to_lor_order,
         edge_transfer_unmasked=edge_transfer_unmasked,
         edge_transfer=edge_transfer,
         node_transfer=node_transfer,
