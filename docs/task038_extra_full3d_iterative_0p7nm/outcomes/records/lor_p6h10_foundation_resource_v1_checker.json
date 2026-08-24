@@ -1,0 +1,213 @@
+{
+  "classification": "RETAINED_MEMORY_GATE_PASS",
+  "contract_errors": [],
+  "gate_failures": [],
+  "metrics": {
+    "external_retained_rss_bytes": 983363584,
+    "known_retained_bytes": 249126201,
+    "repeat_count": 10,
+    "repeat_identity": {
+      "high_positive": {
+        "digest": "5466647450fcafa5a659ca3c65bebb4879cdbfd4af91d95bc0b1d1924ec4a6de",
+        "digests_identical": true,
+        "norms": [
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984,
+          294614.13313286984
+        ],
+        "norms_identical": true,
+        "repeat_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "lift_lor_to_high": {
+        "digest": "0e0bb7c08be9129ce31e9e7f2b311a3080d56fdff9e82e25574542f27bac1549",
+        "digests_identical": true,
+        "norms": [
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215,
+          68392.01311131215
+        ],
+        "norms_identical": true,
+        "repeat_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "lor_edge_matvec": {
+        "digest": "f2e5126cafdbddef0b9ad6fdf23736b07a847570645d58067463481a00f8231e",
+        "digests_identical": true,
+        "norms": [
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692,
+          28758.90365388692
+        ],
+        "norms_identical": true,
+        "repeat_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "physical_volume_dtn": {
+        "digest": "4a9b909232d7fa81c68682ef815ec5f7c5d2cdd82c37140647c75df286a7cceb",
+        "digests_identical": true,
+        "norms": [
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559,
+          272307.7081219559
+        ],
+        "norms_identical": true,
+        "repeat_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "restrict_high_to_lor": {
+        "digest": "738704044a500ef801ad4d5636f7d2c24094025334a344527debae3ce393480f",
+        "digests_identical": true,
+        "norms": [
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115,
+          298222.4465525115
+        ],
+        "norms_identical": true,
+        "repeat_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      }
+    },
+    "repeat_rss_growth_bytes": 0,
+    "repeat_rss_rows": [
+      983363584,
+      983363584,
+      983363584,
+      983363584,
+      983363584,
+      983363584,
+      983363584,
+      983363584,
+      983363584,
+      983363584
+    ],
+    "retained_rss_bytes": 983363584,
+    "retained_swap_bytes": 0,
+    "transfer_batch_scratch_bytes": 1053696,
+    "unattributed_remainder_bytes": 734237383
+  },
+  "passed": true,
+  "resource": {
+    "all_status_readable": true,
+    "max_process_tree_swap_bytes": 0,
+    "natural_exit": true,
+    "no_orphan": true,
+    "peak_process_tree_rss_bytes": 983363584,
+    "retained_peak_process_tree_rss_bytes": 983363584,
+    "retained_peak_process_tree_swap_bytes": 0,
+    "retained_sample_count": 9,
+    "sample_count": 659,
+    "source_sha": "12adebdf0e5e78de33818e97fd35cd870fef3a4e",
+    "stop_reason": "natural_exit",
+    "watchdog_compact": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/watchdog.json",
+    "watchdog_compact_sha256": "5e5b6feeaba4e69bd0306bfd39300f6ea4c68598cc879f3af831dca1a3c11aa6",
+    "watchdog_raw": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/watchdog.raw.jsonl",
+    "watchdog_raw_sha256": "cc354f7142f57e210002fe5b7636e2f16528ac5d89340bd857e46b5c83282fc9",
+    "watchdog_rss_limit_bytes": 1800000000,
+    "worker_command": [
+      "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task038_full3d_lor_s2_memory_first",
+      "--stage",
+      "s2",
+      "--case",
+      "p6-h10-mpi1",
+      "--raw-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/worker_raw",
+      "--record",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_p6h10_foundation_resource_v1.json",
+      "--expected-source-sha",
+      "12adebdf0e5e78de33818e97fd35cd870fef3a4e",
+      "--expected-mpi-size",
+      "1",
+      "--input",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat"
+    ]
+  },
+  "schema": "task038.full3d.lor-memory-first.s2-check.v1"
+}
