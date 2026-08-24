@@ -161,8 +161,34 @@ V3-1 augmented evidence 已完成；未预写，表内只记录实测结论。
 |---|---|---|---|
 | V3-0 | inherited audit | `docs_completed_pending_review` | 已绑定 V2 packet、身份、基线与禁止项；无数值运行 |
 | V3-1 | packet-only coupled algebra | `completed_with_augmented_packet_pass` | legacy V2 packet 首次审计仍为 `COUPLED_PACKET_INFORMATION_INCOMPLETE`；augmented middle Schur packet 独立 checker 通过，joint rank/condition 与四 block 已绑定 |
-| V3-2 | full-span 776 mechanism | `pending_conditional_not_run` | V3-1 augmented 已完成，尚未启动 V3-2 code 或 MPI8 formal |
-| V3-3 | bounded rank 64/128/256/512 | `pending_conditional_not_run` | 仅在 V3-2 通过后授权 |
-| V3-4 | packet-independent production | `pending_conditional_not_run` | 仅在 bounded coarse 通过后授权 |
-| V3-5–V3-7 | Level B、bottom/top/full、h3 | `pending_conditional_not_run` | 前置 Gate 未完成 |
-| V3-8 | evidence / response_v4 | `pending_closeout` | 尚无 V3-2 以后 candidate 结果可收口 |
+| V3-2 | full-span 776 mechanism | `completed_numerical_negative` | `COUPLED_INTERFACE_FULL_SPAN_NUMERICAL_FAIL`；identity/resource/lifecycle通过，五源 full bare-F residual不足 |
+| V3-3 | bounded rank 64/128/256/512 | `not_run_by_v3_2_numerical_gate` | V3-2 数值 Gate 未通过，未选择 rank |
+| V3-4 | packet-independent production | `not_run_by_v3_2_numerical_gate` | V3-3 未运行，未建立 packet-independent candidate |
+| V3-5–V3-7 | Level B、bottom/top/full、h3 | `not_run_by_v3_2_numerical_gate` | V3-2 数值 Gate 后停止 |
+| V3-8 | evidence / response_v4 | `completed` | compact record、consumer outcome、summary、Pareto、test summary 与 response_v4 已绑定 |
+
+## V3-2 full-span formal consumer
+
+V3-2 的 full776 联合接口 consumer 在固定 `5 nm / 1° / phi=0 / S / p6h4 / M480 / MPI8`
+身份下自然退出 `rc=0`。它把三个独立 projected inverse 加 sweep 替换为显式
+`LL/LU/UL/UU` 联合 reduced solve，并保留三个 group factor；没有构造 exact-interface
+oracle、full-side/global factor，QEP 为 `0`、PDE 为 `not_run`。
+
+| 证据 | 实测值 |
+|---|---|
+| source / checker | `c11aea058d01e86052d5490a71575a375e3fe207` / `0fbc33d07d27f8e4b2bce9c2bae2704ea9372c7b` |
+| joint | `776×776`，rank `776`，condition `72530856.63880321` |
+| remap | global rows `7560/15120/7560`，group1 local `1902→1884`，roundtrip `0` |
+| one-apply | action count `15`；zero/repeat/linearity/coarse/factor identity 全真 |
+| FGMRES | 五源 r16=`0.9706859881–0.9832307912`；32/64 未授权；first preferred `null` |
+| resources | `28,044,996,608 B = 26.118938446045 GiB`，swap `0`，wall `892.680907273083 s` |
+| lifecycle | group factors `3→0`，reduced factor `1→0`，exact/full/global/nested `0/0/0/0` |
+| final classification | `COUPLED_INTERFACE_FULL_SPAN_NUMERICAL_FAIL`，`evidence_valid=true` |
+
+这证明 full-span 联合机制的身份、资源和实现证据成立，但当前 296/480 mode span 与
+harmonic lift 对完整 bare-F 的残差改善不足；它不能被表述为 production、完整 workflow 或
+0.7 nm 资格。V3-3 至 V3-7 均为 `not_run_by_v3_2_numerical_gate`，V3-8 仅完成证据收口。
+
+完整字段和 artifact hash 见
+[V3-2 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v3_2_full_span_consumer_v1.json)
+与 [V3-2 outcome](coupled_interface_consumer.md)。

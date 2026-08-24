@@ -1,6 +1,6 @@
 # T40-4 bounded patch PC
 
-## Status: not_run_by_gate
+## Status: not_run_by_v3_2_numerical_gate
 
 T40-4 原计划把人工截面 oracle 收缩为真正有固定局部行数上限的 patch/class factor，并
 测试 owner routing。T40-3 的 mandatory rho 已失败（最小也为 14.24201480051629，最大为
@@ -21,3 +21,9 @@ capacity 仍为 `not_run_by_gate`。没有新的 `max_local_rows`、local-factor
 V2-D bounded patch Level B 为 `not_run_by_gate`：V2-B2 projected-transmission 的五源
 数值 Gate 已触发真实负结果，按决策树不进入 Level B。本状态不等于 bounded patch 算法
 失败。
+
+## V3-5 gate status
+
+`not_run_by_v3_2_numerical_gate`。V3-2 full-span coupled consumer 的五源 true residual
+未通过，未进入 bounded local patch；本阶段没有新的 `max_local_rows`、factor、RSS 或 residual
+测量，不能把未运行写成 bounded patch 数值失败。

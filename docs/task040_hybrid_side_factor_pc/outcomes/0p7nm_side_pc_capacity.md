@@ -1,6 +1,6 @@
 # 0.7 nm side-PC capacity boundary
 
-## Status: not_run_by_gate
+## Status: not_run_by_v3_2_numerical_gate
 
 Task040 没有取得 0.7 nm 资格结论。T40-3 的固定三组、固定一阶 impedance 和固定
 forward/backward sweep 是真实数值负结果；V1-1 的 scalar Krylov 也是 directional fail。
@@ -21,3 +21,9 @@ Hybrid 或 h3 当作已测试失败。
 这提示固定标量一阶 impedance 缺少人工截面上的跨截面/多模切向传播耦合信息，并排除了
 “只是 local solve 不准”作为 T40-3 的充分解释。但这不能外推为所有 bounded local PC、coarse
 space、完整 Hybrid 或 0.7 nm 都不可行。
+
+## V3 gate status
+
+`not_run_by_v3_2_numerical_gate`。V3-2 full-span consumer 的 identity、lifecycle 和资源通过，
+但 full bare-F true residual 未通过；因此没有 0.7 nm candidate、h3 scaling 或 production
+side-PC 资格结论。该组件结果也不证明 296/480 trace 数学对所有问题都无用。

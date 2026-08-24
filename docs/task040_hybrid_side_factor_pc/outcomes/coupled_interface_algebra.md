@@ -172,8 +172,9 @@ MPI2 与 MPI4 同一文件各 rank 均为 3 passed、1 skipped（immutable packe
 读取）。既有 packet/consumer 回归为 20 passed。Ruff、format、compileall、Markdown
 合同与 `git diff --check` 均通过。
 
-V3-2 尚未启动，状态为 `pending_conditional_not_run`；augmented V3-1 通过后按 Review
-决策树可连续进入，但本轮不写入 V3-2 代码或正式结果。
+V3-2 已完成一次 full-span formal，状态为
+`completed_numerical_negative`；正式数值结论见 [V3-2 consumer outcome](coupled_interface_consumer.md)。
+本页仍保留 V3-1 packet-only algebra 的历史与 augmented 通过证据，不把它改写成 V3-2 数值通过。
 
 ## augmented 补强结果
 

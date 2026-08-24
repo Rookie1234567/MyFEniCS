@@ -1,4 +1,4 @@
-# T40/V1/V2 memory–residual–time Pareto boundary
+# T40/V1/V2/V3 memory–residual–time Pareto boundary
 
 这里的峰值都是 process-tree RSS；它们只在同一阶段、同一资源口径下比较。组件峰值不能
 直接代表完整工作流的节省。
@@ -14,6 +14,7 @@
 | V1-2 Run B | no numerical rho serialized | `45.05752944946289` | `1485.4694942460628 s` | `0` | resource hard stop |
 | V2-A1 packet producer | packet diagnostics only；不作 V2-B residual 结论 | `28.706954956054688` | `1202.5501016210765 s` | `0` | oracle resource target pass |
 | V2-B2 projected packet consumer | 五个 `r16 >= 0.9`；32 未授权；preferred checkpoint `null` | `32.453453064` | `1077.3351624270435 s` | `0` | `THREE_GROUP_MODE_SUBSPACE_OR_SWEEP_INSUFFICIENT` |
+| V3-2 full-span coupled consumer | 五个 `r16 = 0.9706859881–0.9832307912`；32/64 未授权；preferred `null` | `26.118938446045` | `892.680907273083 s` | `0` | `COUPLED_INTERFACE_FULL_SPAN_NUMERICAL_FAIL` |
 
 最新 V1-2 root 的 hard stop 是 `48,318,382,080 B`（45 GiB），峰值是
 `48,380,153,856 B = 45.05752944946289 GiB`。watchdog 以
@@ -41,7 +42,12 @@ wall 是两个分进程 component 时间，不能相加冒充完整 workflow 的
 `max_projected_exact_relative=1.0281892054707484` 只是 producer raw diagnostic，不是
 V2-B 数值 Gate。两者都不能与 direct baseline 做节省比例比较。
 
-V1-4 至 V1-7、Level B、top、full Hybrid 和 h3 scaling 均
-`not_run_by_gate`，所以没有 cold/reuse/full workflow peak、完整 residual-time 曲线或
-PC-specific h-scaling。下一轮若获授权，先解决 phase-separated lifetime/packet persistence
-或有证据的 collective heap trim，再重新建立可比较的资源点；本轮不提出实现。
+V3-2 的 `26.118938446045 GiB` 与 `892.680907273083 s` 是同一 MPI8 full-span consumer
+组件进程的 process-tree RSS 与 process-sample wall。它在 identity、joint、生命周期和资源
+上成立，但五个 full bare-F true residual 仍约 `0.9707–0.9832`，所以不是新的完整 workflow
+saving tier，也不能与 producer、V2 consumer 或 inherited full workflow 时间相加。
+
+V3-3 至 V3-7、bounded local patch、bottom/top/both/full Hybrid、h3/0.7 nm 均
+`not_run_by_v3_2_numerical_gate`；V1/V2 的历史 `not_run_by_gate` 结论保持不变。因此没有
+cold/reuse/full workflow peak、完整 residual-time 曲线或 PC-specific h-scaling。V3-2 的
+组件点只能说明本次 mechanism oracle 的资源边界，不能说明 production 或 0.7 nm 可行。

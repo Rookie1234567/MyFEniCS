@@ -1,6 +1,6 @@
 # T40-9 top full side
 
-## Status: not_run_by_gate
+## Status: not_run_by_v3_2_numerical_gate
 
 T40-9 的 top route 依赖 bottom 路线资格，且只能在前置 Gate 通过后执行。由于 T40-3
 mandatory rho、worst rho 和 preferred rho 均失败，top bare-F/full-side 没有运行；没有
@@ -15,3 +15,8 @@ output 或资源测点；最新峰值不能作为 top 或完整 workflow 的测�
 
 V2-E top full-side 为 `not_run_by_gate`。V2-B2 projected-transmission 数值负结果触发
 停止，未创建 top factor，也未运行 top/full workflow 测量。
+
+## V3-6 gate status
+
+`not_run_by_v3_2_numerical_gate`。V3-2 full-span numerical Gate 未通过；top full-side 没有
+启动，没有 top factor、residual、RSS 或物理结果。

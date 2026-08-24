@@ -2,7 +2,8 @@
 
 ## 状态
 
-`pending_conditional_not_run`。只有 V3-2 full-span mechanism 通过后才允许进入；当前不选择 rank、不运行
+`not_run_by_v3_2_numerical_gate`。V3-2 full-span mechanism 的 identity/resource Gate 通过，但数值
+Gate 未通过；因此不选择 rank、不运行
 FGMRES、不构造任何 coarse factor。
 
 ## 冻结的候选集合
@@ -34,5 +35,5 @@ FULL_SPAN_MECHANISM_PASS_BUT_BOUNDED_COARSE_NOT_ESTABLISHED
 
 ## 当前边界
 
-V3-3 的 rank screen、资源、残差、factor inventory 和正式 root 均为 `pending_conditional_not_run`；本页
-不预写任何 bounded coarse 通过或扩展性结论。
+V3-3 的 rank screen、资源、残差、factor inventory 和正式 root 均为
+`not_run_by_v3_2_numerical_gate`；本页不预写任何 bounded coarse 通过或扩展性结论。

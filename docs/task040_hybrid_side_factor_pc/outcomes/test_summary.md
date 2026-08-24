@@ -18,7 +18,7 @@
 | check_benchmarks --no-write | `302/302 passed` |
 | Ruff / format | implementation stages passed；本轮仅修改 Markdown/JSON |
 | full repository pytest | `not_run` |
-| PDE/QEP | `not_run`；V3-1 component producer completed |
+| PDE/QEP | `not_run`；V3-1 component producer and V3-2 full-span component consumer completed |
 
 V1-2 Run B 的独立 checker 命令为：
 
@@ -78,4 +78,12 @@ heavy/MPI/PDE。
 | current complete documentation-contract file | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py`；`13 passed, 1 failed`，唯一失败仍为 Case104 registration gap；未修改 `test_26` |
 | augmented formal evidence | manifest/run/watchdog SHA 与 source 绑定；factor `3→0`；RSS/swap `28.426311493 GiB / 0 B`；joint rank `776`，condition `72530856.63880321` |
 | legacy preservation | immutable V2 packet 仍记录 `COUPLED_PACKET_INFORMATION_INCOMPLETE`；未覆盖首次错误 artifact |
-| V3-2 | `pending_conditional_not_run`；本轮未运行代码、PDE 或 MPI8 formal |
+| V3-2 formal consumer | source `c11aea058d01e86052d5490a71575a375e3fe207`；worker natural rc0；独立 checker rc2，分类 `COUPLED_INTERFACE_FULL_SPAN_NUMERICAL_FAIL`；evidence_valid=true，resource/identity/lifecycle checks 全真 |
+| V3-2 formal resource | peak `28,044,996,608 B = 26.118938446045 GiB`；swap `0`；1770/1770 authoritative samples；process-sample wall `892.680907273083 s` |
+| V3-2 numerical screen | 五源 phase1 `r4/r8/r16` 均 finite；r16=`0.9706859881–0.9832307912`；conditional32/64=false；first preferred=null |
+| V3-2 compact/evidence | record JSON parse、raw/checker hash binding 和 V3 outcome 已更新；首次 checker rc2 artifact 保留，修复后 checker 不改变 raw |
+| V3-2 focused checker/runner regression | `python -m pytest -q src/test/test_312_task040_v3_2_checker.py src/test/test_311_task040_v3_2_runner.py`；`36 passed` |
+| V3-2 immutable checker | `python -m benchmarks.check_task040_v3_full_span --run-root results/task040_v3_2_full_span_mpi8_c11aea05 --packet-root results/task040_v3_1_middle_schur_producer_mpi8_fa1720d8/worker/interface_packet --expected-source-sha c11aea058d01e86052d5490a71575a375e3fe207`；`rc=2`，预期数值负结果 |
+| documentation registry | `python -m pytest -q src/test/test_183_development_model_registry_markdown.py`；`5 passed` |
+| full documentation-contract file | `python -m pytest -q src/test/test_26_documentation_contract.py`；`13 passed, 1 failed`，唯一失败仍是已有 Case104 numbered-case registration gap |
+| V3-8 benchmark no-write | `python -m benchmarks.check_benchmarks --no-write`；`302/302 passed` |
