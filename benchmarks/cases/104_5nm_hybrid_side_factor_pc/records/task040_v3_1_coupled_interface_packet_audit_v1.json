@@ -2,9 +2,9 @@
   "schema": "task040.v3.1.coupled_interface_packet_audit.compact.v1",
   "task": "Task040",
   "stage": "V3-1",
-  "status": "controlled_information_incomplete",
-  "classification": "COUPLED_PACKET_INFORMATION_INCOMPLETE",
-  "source": {
+  "status": "augmented_supplement_pass",
+  "classification": "COUPLED_INTERFACE_ALGEBRA_EVIDENCE_VALID",
+  "legacy_packet_source": {
     "branch": "codex/20260822-task40-hybrid-side-factor-pc",
     "source_sha": "0713073cbaca8cf43423d7c92ed2408d3f6b586a",
     "producer_source_sha": "942c43881e4162085348c48b09c79fbbdac18cd9",
@@ -53,7 +53,7 @@
     "y_reconstructible_from_v_g": true,
     "z_reconstructible_from_u": false
   },
-  "checks": {
+  "legacy_packet_checks": {
     "manifest_hash": true,
     "packet_authority": true,
     "group_order": true,
@@ -128,13 +128,151 @@
     "construction": "apply_group(1) to all 776 frozen Z1 columns while oracle and basis remain alive",
     "joint_after_strengthening": "projected_middle_group_schur + old projected_exact_group1",
     "z_plan": "rebuild Z in a later fresh consumer from frozen lower/selected-upper authority with QEP=0; recover Y as V G^H",
-    "producer_rerun": "not_run_pending_review"
+    "producer_rerun": "completed_in_augmented_evidence"
   },
   "not_run": {
     "v3_2": "pending_conditional_not_run",
-    "producer_extension": "not_run",
+    "producer_extension": "completed_in_augmented_evidence",
     "formal": "not_run",
     "pde": "not_run",
     "qep": "not_run"
+  },
+  "legacy_packet_history": {
+    "classification": "COUPLED_PACKET_INFORMATION_INCOMPLETE",
+    "packet_sufficient": false,
+    "packet_manifest_sha256": "19de50f3cdb32766bf6f13fc55c9ac498b21a9a00ddc261768d7d55b7c9da8b0",
+    "preserved_first_failure_artifact": "results/task040_v3_1_coupled_interface_checker.json",
+    "meaning": "V2 directed-neighbor matrices lacked the full middle local Schur cross blocks; this historical conclusion is not overwritten."
+  },
+  "augmented_evidence": {
+    "stage": "V3-1",
+    "classification": "COUPLED_INTERFACE_ALGEBRA_EVIDENCE_VALID",
+    "packet_sufficient": true,
+    "producer_source_sha": "fa1720d8f137de81023cd45d6a43262d386e6521",
+    "checker_source_sha": "9e79443ccf808372feb24160d89c13eb9f0ac4eb",
+    "formal_root": "results/task040_v3_1_middle_schur_producer_mpi8_fa1720d8",
+    "formal_hashes": {
+      "packet_manifest_sha256": "f480189663ef293ec4f809818e322186d75a205f725a3aa35dc12c2d24aad209",
+      "run_summary_sha256": "b44700081d48c96f4380e3111cd5f25ff57dfc64f0fab24afbd7a8a710f2bc7a",
+      "watchdog_summary_sha256": "cb61e59830443c2169bd388af7710de2af95d5e2ec59d128c207c1bbd05dbf03",
+      "checker_artifact": "results/task040_v3_1_middle_schur_producer_mpi8_fa1720d8/checker_recomputed_augmented_9e79443c.json",
+      "checker_artifact_sha256": "ddace4647e2dddefc72fc92cb2af4cf3f1a7c22b3cc258f064bf6d17b3860267"
+    },
+    "ordering_identity": {
+      "group_order": ["group0", "group1", "group2"],
+      "lower_mode_count": 296,
+      "upper_mode_count": 480,
+      "group1_span": 776,
+      "group1_contract": "lower then upper",
+      "lower_mode_key_sha256": "046afb0b3d3531f728dc958c1b0c8a321ffa51fb8a0e6ecf6834d462d5ab37e5",
+      "upper_mode_key_sha256": "089d6abfac9f482e7f6001988b9d1c12b1721c09a86749cdefcbfc4f22e82673",
+      "upper_beta_sha256": "aee266f602bf704ffbc3d7551be661b05e1663f84205012bfe26c8fd5983f6c9",
+      "upper_branch": "positive/forward",
+      "upper_qep_calls": 0
+    },
+    "resource_lifecycle": {
+      "return_code": 0,
+      "termination_reason": "natural_exit",
+      "wall_seconds": 1344.65377977991,
+      "peak_rss_bytes": 30522519552,
+      "peak_rss_gib": 28.426311492919922,
+      "peak_swap_bytes": 0,
+      "preferred_class": "preferred_le_45_gib",
+      "factor_count_ready": 3,
+      "projected_inverse_count_ready": 3,
+      "factor_count_after_cleanup": 0,
+      "projected_inverse_count_after_cleanup": 0,
+      "simultaneous_factor_max": 3,
+      "exact_interface_factor_count": 0,
+      "full_side_factor_count": 0,
+      "global_factor_count": 0,
+      "nested_ksp_count": 0,
+      "basis_global_replicated": false,
+      "fe_numeric_allgather": false,
+      "pde_solve": "not_run",
+      "qep_calls": 0
+    },
+    "additional_middle_matrix": {
+      "name": "projected_middle_group_schur",
+      "semantic": "Y1^H [oracle.apply_group(1)] Z1",
+      "schema": "task040.v3.middle_group_schur_projection.v1",
+      "shape": [776, 776],
+      "dtype": "complex128",
+      "apply_count": 776,
+      "rank": 776,
+      "condition": 205176529.82325,
+      "sigma_max": 251698.74850828125,
+      "sigma_min": 0.0012267423994601525,
+      "content_sha256": "f6f2712e7ed4c8c8fb0fd1764076f7218c1548bf62020abfc6f8a6ddd8998f52",
+      "file_sha256": "201d69133ab9004454ddb522903695a87d4f939bc75c8a3453c1cb98766bb2a4",
+      "lower_identity_relative_error": 3.690489479705948e-14,
+      "upper_identity_relative_error": 8.947677926466937e-15
+    },
+    "joint_projected_exact": {
+      "definition": "projected_middle_group_schur + projected_exact_group1",
+      "shape": [776, 776],
+      "dtype": "complex128",
+      "rank": 776,
+      "condition": 72530856.63880321,
+      "sigma_max": 282171.4484566674,
+      "sigma_min": 0.0038903642054285183,
+      "content_sha256": "ed7c973c92ff4704a687c9d61032930bb458076e552892c988990cf893e6e035",
+      "condition_gate_le_1e12": true
+    },
+    "four_blocks": {
+      "LL": {
+        "shape": [296, 296],
+        "frobenius_norm": 1052857.3530587784,
+        "relative_frobenius_norm": 0.999337702197316,
+        "rank": 296,
+        "sha256": "4be30638ca6ca7e6d6980ef45fa53250755d76961b336b60360f4b06a187dbe0"
+      },
+      "LU": {
+        "shape": [296, 480],
+        "frobenius_norm": 36531.317719106126,
+        "relative_frobenius_norm": 0.03467432981456654,
+        "rank": 296,
+        "sha256": "1033fcc0d2d5ff2b0a3a018870f839b6e131d39a01de4d205fd3d496fc97db9e"
+      },
+      "UL": {
+        "shape": [480, 296],
+        "frobenius_norm": 9728.7850526928,
+        "relative_frobenius_norm": 0.00923424400417028,
+        "rank": 296,
+        "sha256": "969e15b2d61f185bb276bab40904235343f118ef0a4d1aef2a6b05c61c048972"
+      },
+      "UU": {
+        "shape": [480, 480],
+        "frobenius_norm": 6371.749206867203,
+        "relative_frobenius_norm": 0.006047855574042572,
+        "rank": 480,
+        "sha256": "3935fc7fbd064d333dfdc53fb738076a0273b9c2529274d648e11777369c6d09"
+      }
+    },
+    "middle_cross_sampled_response": {
+      "reports": 8,
+      "lower_to_upper_cross_energy_ratio_max": 0.6677254509073904,
+      "upper_to_lower_cross_energy_ratio_max": 0.14544366781366302
+    },
+    "checks": {
+      "manifest_hash": true,
+      "run_summary_hash": true,
+      "watchdog_hash": true,
+      "packet_authority": true,
+      "ordering_identity": true,
+      "middle_matrix": true,
+      "joint_exact": true,
+      "joint_exact_blocks": true,
+      "local_middle_schur_evidence": true,
+      "factor_lifecycle": true,
+      "watchdog": true,
+      "report_decomposition": true
+    },
+    "tests": {
+      "serial_test_308": "6 passed",
+      "mpi2_test_308": "3 passed, 3 skipped",
+      "mpi4_test_308": "3 passed, 3 skipped",
+      "ruff_format_compileall_diff_check": "passed"
+    }
   }
 }

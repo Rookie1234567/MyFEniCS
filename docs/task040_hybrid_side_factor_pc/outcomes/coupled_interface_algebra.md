@@ -1,6 +1,9 @@
 # V3-1 联合接口代数审计
 
-## 状态
+## legacy packet 首次审计状态
+
+当前 V3-1 最终结论为 augmented packet PASS，详见文末“augmented 补强结果”；以下正文
+保留 immutable V2 packet 的首次审计历史。
 
 V3-1 的 pure-Numpy tiny oracle 已通过；但 immutable V2 packet 的矩阵语义不是 Review
 要求的三个 local-group Schur。因此本次 packet 结论为
@@ -169,5 +172,32 @@ MPI2 与 MPI4 同一文件各 rank 均为 3 passed、1 skipped（immutable packe
 读取）。既有 packet/consumer 回归为 20 passed。Ruff、format、compileall、Markdown
 合同与 `git diff --check` 均通过。
 
-V3-2 不在当前信息不完整的 V3-1 证据之后进入；按 Review 决策树，在合法补强闭合后
-连续进入 V3-2。
+V3-2 尚未启动，状态为 `pending_conditional_not_run`；augmented V3-1 通过后按 Review
+决策树可连续进入，但本轮不写入 V3-2 代码或正式结果。
+
+## augmented 补强结果
+
+V3-1 按 Review §8.5 对 producer 做了唯一一次最小补强：只增加
+`projected_middle_group_schur = Y1^H [oracle.apply_group(1)] Z1`，没有重命名或改变旧的
+`projected_exact_group*` 语义。它补上了 middle local Schur 的 LU/UL 信息；以下 PASS
+只属于 augmented packet，不回写旧 packet 的首次审计结论。
+
+| 项目 | augmented 实测证据 |
+|---|---|
+| producer / checker source | `fa1720d8f137de81023cd45d6a43262d386e6521` / `9e79443ccf808372feb24160d89c13eb9f0ac4eb` |
+| formal root / exit | `results/task040_v3_1_middle_schur_producer_mpi8_fa1720d8` / natural exit, rc=0 |
+| 三个 formal SHA | manifest `f480189663ef293ec4f809818e322186d75a205f725a3aa35dc12c2d24aad209`；run `b44700081d48c96f4380e3111cd5f25ff57dfc64f0fab24afbd7a8a710f2bc7a`；watchdog `cb61e59830443c2169bd388af7710de2af95d5e2ec59d128c207c1bbd05dbf03` |
+| checker artifact | `checker_recomputed_augmented_9e79443c.json`，SHA `ddace4647e2dddefc72fc92cb2af4cf3f1a7c22b3cc258f064bf6d17b3860267`，JSON 可序列化，rc=0 |
+| wall / RSS / swap | `1344.65377977991 s` / `30,522,519,552 B = 28.426311493 GiB` / `0 B` |
+| factor lifecycle | ready/projected `3`（同一组三个 group factors 的两种视图）→ cleanup `0`；simultaneous max `3` |
+| packet flags | `basis_global_replicated=false`、`fe_numeric_allgather=false`、exact/full/global/nested `0`、QEP `0`、PDE `not_run` |
+| augmented matrix | shape `776×776`，rank `776`，condition `205176529.82325`，σmax `251698.74850828125`，σmin `0.0012267423994601525`；content SHA `f6f2712e7ed4c8c8fb0fd1764076f7218c1548bf62020abfc6f8a6ddd8998f52`；file SHA `201d69133ab9004454ddb522903695a87d4f939bc75c8a3453c1cb98766bb2a4` |
+| true joint exact | `projected_middle_group_schur + projected_exact_group1`；rank `776`，condition `72530856.63880321`，σmax `282171.4484566674`，σmin `0.0038903642054285183`，hash `ed7c973c92ff4704a687c9d61032930bb458076e552892c988990cf893e6e035` |
+| LL / LU / UL / UU | shapes `296×296 / 296×480 / 480×296 / 480×480`；ranks `296 / 296 / 296 / 480`；Frobenius norms `1052857.3530587784 / 36531.317719106126 / 9728.7850526928 / 6371.749206867203`；relative norms `0.999337702197316 / 0.03467432981456654 / 0.00923424400417028 / 0.006047855574042572` |
+| block hashes | LL `4be30638ca6ca7e6d6980ef45fa53250755d76961b336b60360f4b06a187dbe0`；LU `1033fcc0d2d5ff2b0a3a018870f839b6e131d39a01de4d205fd3d496fc97db9e`；UL `969e15b2d61f185bb276bab40904235343f118ef0a4d1aef2a6b05c61c048972`；UU `3935fc7fbd064d333dfdc53fb738076a0273b9c2529274d648e11777369c6d09` |
+| LL / UU identity | `3.690489479705948e-14` / `8.947677926466937e-15` |
+| middle cross sampled | 8 reports；lower→upper `0.6677254509073904`，upper→lower `0.14544366781366302` |
+| independent classification | `COUPLED_INTERFACE_ALGEBRA_EVIDENCE_VALID`；全部 augmented checker checks 为真 |
+
+最终验证：serial `test_308_task040_coupled_interface.py` 为 `6 passed`；MPI2、MPI4
+分别为 `3 passed, 3 skipped`；Ruff、format、compileall、`git diff --check` 均通过。

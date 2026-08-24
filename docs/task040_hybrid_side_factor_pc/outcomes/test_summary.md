@@ -18,7 +18,7 @@
 | check_benchmarks --no-write | `302/302 passed` |
 | Ruff / format | implementation stages passed；本轮仅修改 Markdown/JSON |
 | full repository pytest | `not_run` |
-| new PDE/QEP/heavy | `not_run` |
+| PDE/QEP | `not_run`；V3-1 component producer completed |
 
 V1-2 Run B 的独立 checker 命令为：
 
@@ -67,3 +67,15 @@ fresh checker 读取原 packet，不修改 producer 数值 artifact；输出为
 代码 focused 20 tests、Ruff、format、compileall 沿用同一
 `0919ed2fa3bd1541f543057721fff84fa110f3d4` 的已通过结果；文档改动没有触发重复
 heavy/MPI/PDE。
+
+## V3-1 augmented packet
+
+| 检查 | 结果 |
+|---|---|
+| augmented checker source / artifact | `9e79443ccf808372feb24160d89c13eb9f0ac4eb`；`checker_recomputed_augmented_9e79443c.json` SHA `ddace4647e2dddefc72fc92cb2af4cf3f1a7c22b3cc258f064bf6d17b3860267` |
+| augmented CLI | rc `0`；JSON 可序列化；`packet_sufficient=true`；`COUPLED_INTERFACE_ALGEBRA_EVIDENCE_VALID` |
+| test308 final | serial `6 passed`；MPI2 `3 passed, 3 skipped`；MPI4 `3 passed, 3 skipped` |
+| current complete documentation-contract file | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py`；`13 passed, 1 failed`，唯一失败仍为 Case104 registration gap；未修改 `test_26` |
+| augmented formal evidence | manifest/run/watchdog SHA 与 source 绑定；factor `3→0`；RSS/swap `28.426311493 GiB / 0 B`；joint rank `776`，condition `72530856.63880321` |
+| legacy preservation | immutable V2 packet 仍记录 `COUPLED_PACKET_INFORMATION_INCOMPLETE`；未覆盖首次错误 artifact |
+| V3-2 | `pending_conditional_not_run`；本轮未运行代码、PDE 或 MPI8 formal |

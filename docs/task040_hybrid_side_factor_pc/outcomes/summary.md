@@ -154,15 +154,15 @@ interface oracle、QEP 或 PDE。formal process-sample wall 为
 ## V3 启动状态
 
 V3 只研究把三个独立 projected inverse 加 sweep 改为 lower/upper 联合接口 reduced solve；
-物理、bare `F`、M480、DtN、global Hybrid 和 ordinary defaults 均冻结。V3-0 已完成继承审计，
-V3-1 及以后不预写通过。
+物理、bare `F`、M480、DtN、global Hybrid 和 ordinary defaults 均冻结。V3-0 已完成继承审计；
+V3-1 augmented evidence 已完成；未预写，表内只记录实测结论。
 
 | 阶段 | 范围 | 状态 | 当前事实 |
 |---|---|---|---|
 | V3-0 | inherited audit | `docs_completed_pending_review` | 已绑定 V2 packet、身份、基线与禁止项；无数值运行 |
-| V3-1 | packet-only coupled algebra | `pending_conditional_not_run` | 等待 pure-Numpy joint assembly、tiny oracle 和 packet Gate |
-| V3-2 | full-span 776 mechanism | `pending_conditional_not_run` | V3-1 未完成，未启动 MPI8 formal |
+| V3-1 | packet-only coupled algebra | `completed_with_augmented_packet_pass` | legacy V2 packet 首次审计仍为 `COUPLED_PACKET_INFORMATION_INCOMPLETE`；augmented middle Schur packet 独立 checker 通过，joint rank/condition 与四 block 已绑定 |
+| V3-2 | full-span 776 mechanism | `pending_conditional_not_run` | V3-1 augmented 已完成，尚未启动 V3-2 code 或 MPI8 formal |
 | V3-3 | bounded rank 64/128/256/512 | `pending_conditional_not_run` | 仅在 V3-2 通过后授权 |
 | V3-4 | packet-independent production | `pending_conditional_not_run` | 仅在 bounded coarse 通过后授权 |
 | V3-5–V3-7 | Level B、bottom/top/full、h3 | `pending_conditional_not_run` | 前置 Gate 未完成 |
-| V3-8 | evidence / response_v4 | `pending_closeout` | 尚无 V3 数值结果可收口 |
+| V3-8 | evidence / response_v4 | `pending_closeout` | 尚无 V3-2 以后 candidate 结果可收口 |
