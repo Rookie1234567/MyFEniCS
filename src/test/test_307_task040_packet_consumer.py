@@ -603,6 +603,36 @@ def test_consumer_gamma_rows_follow_interface_sets_and_group_order():
     assert upper.tolist() == [7, 9, 13]
 
 
+def test_consumer_gamma_rows_preserve_owner_local_global_contract():
+    """Globally replicated support metadata is filtered to local owner rows."""
+    comm = MPI.COMM_WORLD
+    local_rows = [row for row in range(8) if row % comm.size == comm.rank]
+    lower_local = [row for row in reversed(local_rows) if row < 4]
+    middle_local = list(reversed(local_rows))
+    upper_local = [row for row in reversed(local_rows) if row >= 4]
+    supports = (
+        {"active_support": list(range(4))},
+        {"active_support": list(range(4, 8))},
+    )
+
+    lower, middle, upper = _v2_packet_gamma_rows(
+        supports,
+        (lower_local, middle_local, upper_local),
+    )
+
+    assert lower.tolist() == lower_local
+    assert middle.tolist() == [row for row in middle_local if row < 8]
+    assert upper.tolist() == upper_local
+    for observed, expected in (
+        (lower, range(4)),
+        (middle, range(8)),
+        (upper, range(4, 8)),
+    ):
+        gathered = [row for rows in comm.allgather(observed.tolist()) for row in rows]
+        assert sorted(gathered) == list(expected)
+        assert len(gathered) == len(set(gathered))
+
+
 def test_consumer_provenance_is_frozen_and_route_does_not_use_exact_oracle():
     actual = _provenance()
     validated = _v2_packet_provenance(

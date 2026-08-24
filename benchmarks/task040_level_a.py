@@ -2884,8 +2884,8 @@ def _run_v3_2_coupled_interface_consumer(
         action = build_petsc_coupled_full_side_action(
             bare_f=bare_f,
             group_rows=group_rows,
-            lower_support=supports[0],
-            upper_support=supports[1],
+            lower_support=packet_gamma_rows[0],
+            upper_support=packet_gamma_rows[2],
             gamma_rows_local=packet_gamma_rows[1],
             local_z=local_z,
             local_y=local_y,
