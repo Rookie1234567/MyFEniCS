@@ -61,8 +61,8 @@ def _synthetic_record(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
         "e_final_constraint": _role(raw, "e_final_constraint", "constraint", ["high-slave:0"], [0]),
     }
     owner_artifacts = {
-        "e_low_input_owner": _role(raw, "e_low_input_owner", "dual", ["owner:0", "owner:1"], [1, 2]),
-        "e_low_solution_owner": _role(raw, "e_low_solution_owner", "primal", ["owner:1", "owner:0"], [1, 2]),
+        "e_low_input_owner": _role(raw, "e_low_input_owner", "dual", ["owner:2", "owner:10"], [1, 2]),
+        "e_low_solution_owner": _role(raw, "e_low_solution_owner", "primal", ["owner:10", "owner:2"], [1, 2]),
     }
     indptr = np.asarray([0, 1, 2], dtype=np.int32)
     indices = np.asarray([0, 1], dtype=np.int32)
@@ -169,7 +169,7 @@ def _synthetic_record(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
             "max_it": 10000, "residual_replacement": True, "zero_initial_guess": True, "residual_limit": 1e-8,
             "checkpoint_interval": 500, "first_checkpoint_iteration": None, "direct_backend": "petsc-preonly-lu-mumps",
         },
-        "fixture_audit": {"global_transfer_matrix": False, "global_numeric_allgather": False, "high_order_global_aij": False, "hx_audit": {"global_transfer_matrix": False, "high_order_aij": False}, "phase_application": "finalized_floquet_mpc_once", "slave_master_complete": True},
+        "fixture_audit": {"global_transfer_matrix": False, "global_numeric_allgather": False, "high_order_global_aij": False, "hx_audit": {"global_transfer_matrix": False, "high_order_aij": False}, "phase_application": "finalized_floquet_mpc_once", "slave_master_complete": True, "lor_full_edge_rows": 2, "lor_edge_slave_rows": 0},
         "production_forbidden": {"high_order_global_aij": False, "global_dense_transfer": False, "global_direct_coarse": False, "global_numeric_allgather": False},
         "route_audit": {"owner_inventory_equal": True, "owner_count": 2, "high_to_lor_owner_route": True, "lor_to_high_owner_route": True, "orientation_consistent": True, "phase_application": "finalized_floquet_mpc_once", "slave_master_complete": True},
         "canonical_artifacts": artifacts,

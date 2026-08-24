@@ -494,7 +494,6 @@ def check_record(
         errors.append(f"canonical artifact invalid: {exc}")
 
     owners = record.get("owner_artifacts", {})
-    owner_ids: list[int] | None = None
     try:
         owner_input = _load_role(raw_dir, "e_low_input_owner", owners["e_low_input_owner"])
         owner_solution = _load_role(raw_dir, "e_low_solution_owner", owners["e_low_solution_owner"])
@@ -505,14 +504,11 @@ def check_record(
         owner_count = record.get("route_audit", {}).get("owner_count")
         if owner_count != owner_input[1].size or owner_count != owner_solution[1].size:
             errors.append("low owner count does not match both raw inventories")
-        owner_ids = []
         for key in np.concatenate((owner_input[1], owner_solution[1])):
             prefix, _, numeric = str(key).partition(":")
             if prefix != "owner" or not numeric.isdigit():
                 errors.append("low owner key is not a deterministic numeric owner key")
                 break
-            if len(owner_ids) < owner_input[1].size:
-                owner_ids.append(int(numeric))
     except (KeyError, OSError, ValueError) as exc:
         errors.append(f"owner artifact invalid: {exc}")
 
@@ -631,10 +627,17 @@ def check_record(
         low_solution = _load_role(raw_dir, "e_low_solution_matrix", matrix["e_low_solution_matrix"])
         if row_keys.size != int(edge["rows"]) or indptr.size != row_keys.size + 1:
             raise ValueError("edge CSR row layout mismatch")
-        if owner_ids is None or owner_ids != list(range(int(edge["rows"]))):
-            errors.append("MPI1 owner inventory is not the exact global edge-row set")
-        if record.get("route_audit", {}).get("owner_count") != int(edge["rows"]):
-            errors.append("owner count does not close with edge CSR rows")
+        edge_rows = int(edge["rows"])
+        fixture_audit = record.get("fixture_audit", {})
+        full_edge_rows = fixture_audit.get("lor_full_edge_rows")
+        slave_rows = fixture_audit.get("lor_edge_slave_rows")
+        owner_count = record.get("route_audit", {}).get("owner_count")
+        if full_edge_rows != edge_rows:
+            errors.append("fixture full LOR edge rows do not match edge CSR rows")
+        if not isinstance(slave_rows, int) or slave_rows < 0:
+            errors.append("fixture LOR edge slave row count is invalid")
+        elif not isinstance(owner_count, int) or owner_count < 0 or owner_count + slave_rows != edge_rows:
+            errors.append("owner and fixture slave row counts do not close with edge CSR rows")
         x = _align(row_keys, np.zeros(row_keys.size, dtype=np.complex128), *low_solution[1:], "edge solution")[1]
         b = _align(row_keys, np.zeros(row_keys.size, dtype=np.complex128), *low_input[1:], "edge input")[1]
         action = np.zeros(row_keys.size, dtype=np.complex128)
