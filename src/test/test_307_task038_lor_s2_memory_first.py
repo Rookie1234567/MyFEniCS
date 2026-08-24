@@ -406,6 +406,20 @@ def test_high_positive_apply_keeps_borrowed_output_alive_across_repeats():
     assert action.destroy_count == 1
 
 
+def test_streaming_transfer_exposes_existing_nodes_without_copy():
+    from src.solvers.fullspace_lor_memory_first_foundation import _streaming_transfer
+
+    transfer = _streaming_transfer()
+    nodes = transfer.nodes
+    assert nodes is transfer._delegate.nodes
+    assert nodes.dtype == np.dtype(np.float64)
+    assert nodes.shape == (7,)
+    assert np.all(np.isfinite(nodes))
+    assert np.all(np.diff(nodes) > 0.0)
+    assert transfer.audit["global_transfer_matrix"] is False
+    assert transfer.audit["dense_derivation_workspace_retained"] is False
+
+
 def test_restart20_reserve_is_real_and_fixed():
     template = PETSc.Vec().create(comm=PETSc.COMM_SELF)
     template.setSizes(4)

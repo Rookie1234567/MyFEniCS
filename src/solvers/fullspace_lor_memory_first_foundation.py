@@ -203,6 +203,10 @@ def _streaming_transfer():
             self._delegate = delegate
             self.audit = dict(facts)
 
+        @property
+        def nodes(self) -> np.ndarray:
+            return self._delegate.nodes
+
         def high_to_lor_many(self, values: np.ndarray) -> np.ndarray:
             return self._delegate.high_to_lor_many(values)
 
