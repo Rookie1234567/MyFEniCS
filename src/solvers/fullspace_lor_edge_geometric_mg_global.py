@@ -23,6 +23,13 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from .fullspace_lor_edge_geometric_mg import build_local_lor_edge_geometric_transfer
+from .fullspace_lor_edge_geometric_mg import (
+    CHEBYSHEV_DEGREE,
+    LAMBDA_HI_FACTOR,
+    LAMBDA_LO_FACTOR,
+    POWER_STEPS,
+)
+from .fullspace_lor_hx_root_cause import DiagnosticDirectSolver
 from .fullspace_lor_memory_first_foundation import (
     _canonical_raw_map,
     _fill_raw_vector,
@@ -44,6 +51,246 @@ from .fullspace_lor_topology import (
 
 A2_SCHEMA = "task038.lor-edge-geometric-mg.global-implicit.v1"
 A2_CELL_BATCH = 32
+
+
+class FixedChebyshevJacobiPETSc:
+    """Fixed Jacobi-scaled degree-three Chebyshev action on a PETSc matrix."""
+
+    def __init__(self, matrix: PETSc.Mat) -> None:
+        rows, columns = matrix.getSize()
+        if rows != columns or rows <= 0:
+            raise ValueError("Chebyshev matrix must be nonempty and square")
+        self.matrix = matrix
+        self._destroyed = False
+        diagonal = matrix.createVecRight()
+        matrix.getDiagonal(diagonal)
+        values = np.asarray(diagonal.array, dtype=np.complex128)
+        if (
+            not np.all(np.isfinite(values))
+            or np.any(np.abs(values.imag) > 1.0e-12)
+            or np.any(values.real <= 0.0)
+        ):
+            diagonal.destroy()
+            raise ValueError("Chebyshev Jacobi diagonal must be positive")
+        self._inv_sqrt = matrix.createVecRight()
+        self._inv_sqrt.array[:] = 1.0 / np.sqrt(values.real)
+        diagonal.destroy()
+
+        self._scaled_input = matrix.createVecRight()
+        self._scaled_action = matrix.createVecLeft()
+        power_vector = matrix.createVecRight()
+        power_action = matrix.createVecLeft()
+        self.matrix_mult_count = 0
+        self.power_matrix_mult_count = 0
+        try:
+            start, stop = power_vector.getOwnershipRange()
+            global_rows = int(rows)
+            indices = np.arange(start + 1, stop + 1, dtype=np.float64)
+            reverse = np.arange(
+                global_rows - start, global_rows - stop, -1.0, dtype=np.float64
+            )
+            power_vector.array[:] = indices + 1j * reverse
+            norm = float(power_vector.norm())
+            if not np.isfinite(norm) or norm == 0.0:
+                raise FloatingPointError("Chebyshev power vector is invalid")
+            power_vector.scale(1.0 / norm)
+            history: list[float] = []
+            for _ in range(POWER_STEPS):
+                self._apply_scaled_into(power_vector, power_action)
+                norm = float(power_action.norm())
+                if not np.isfinite(norm) or norm == 0.0:
+                    raise FloatingPointError("Chebyshev power estimate is invalid")
+                power_action.copy(power_vector)
+                power_vector.scale(1.0 / norm)
+                self._apply_scaled_into(power_vector, power_action)
+                rayleigh = power_vector.dot(power_action)
+                value = float(np.real(rayleigh))
+                if (
+                    not np.isfinite(value)
+                    or value <= 0.0
+                    or abs(float(np.imag(rayleigh))) > 1.0e-10 * max(value, 1.0)
+                ):
+                    raise FloatingPointError("Chebyshev power estimate is invalid")
+                history.append(value)
+            self.power_history = tuple(history)
+        finally:
+            power_vector.destroy()
+            power_action.destroy()
+
+        self.power_matrix_mult_count = int(self.matrix_mult_count)
+        self.lambda_power10 = float(self.power_history[-1])
+        self.lambda_hi = LAMBDA_HI_FACTOR * self.lambda_power10
+        self.lambda_lo = LAMBDA_LO_FACTOR * self.lambda_hi
+        if not np.isfinite(self.lambda_hi) or not 0.0 < self.lambda_lo < self.lambda_hi:
+            self.destroy()
+            raise FloatingPointError("Chebyshev spectral window is invalid")
+        self._rhs_scaled = matrix.createVecRight()
+        self._residual = matrix.createVecLeft()
+        self._direction = matrix.createVecRight()
+        self._solution = matrix.createVecRight()
+        self._action = matrix.createVecLeft()
+        self.apply_count = 0
+        self.last_apply_facts: dict[str, object] = {}
+        self._destroyed = False
+
+    def _apply_scaled_into(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self._scaled_input.pointwiseMult(self._inv_sqrt, source)
+        self.matrix.mult(self._scaled_input, self._scaled_action)
+        target.pointwiseMult(self._inv_sqrt, self._scaled_action)
+        self.matrix_mult_count += 1
+
+    def apply_into(self, rhs: PETSc.Vec, target: PETSc.Vec) -> dict[str, object]:
+        if self._destroyed:
+            raise RuntimeError("PETSc Chebyshev smoother has been destroyed")
+        if rhs.getSize() != self.matrix.getSize()[0] or target.getSize() != self.matrix.getSize()[0]:
+            raise ValueError("Chebyshev Vec size does not match matrix")
+        before = self.matrix_mult_count
+        self._rhs_scaled.pointwiseMult(self._inv_sqrt, rhs)
+        center = 0.5 * (self.lambda_hi + self.lambda_lo)
+        half_width = 0.5 * (self.lambda_hi - self.lambda_lo)
+        sigma = center / half_width
+        rho = 1.0 / sigma
+        self._rhs_scaled.copy(self._direction)
+        self._direction.scale(1.0 / center)
+        self._direction.copy(self._solution)
+        for _ in range(1, CHEBYSHEV_DEGREE):
+            self._apply_scaled_into(self._solution, self._action)
+            self._rhs_scaled.copy(self._residual)
+            self._residual.axpy(-1.0, self._action)
+            rho_new = 1.0 / (2.0 * sigma - rho)
+            self._direction.scale(rho_new * rho)
+            self._direction.axpy(2.0 * rho_new / half_width, self._residual)
+            self._solution.axpy(1.0, self._direction)
+            rho = rho_new
+        target.pointwiseMult(self._inv_sqrt, self._solution)
+        self.apply_count += 1
+        facts = {
+            "matrix_mult_count": int(self.matrix_mult_count - before),
+            "apply_count": int(self.apply_count),
+        }
+        self.last_apply_facts = facts
+        return facts
+
+    def apply(self, rhs: PETSc.Vec) -> PETSc.Vec:
+        target = self.matrix.createVecRight()
+        try:
+            self.apply_into(rhs, target)
+        except Exception:
+            target.destroy()
+            raise
+        return target
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        for name in (
+            "_inv_sqrt",
+            "_scaled_input",
+            "_scaled_action",
+            "_rhs_scaled",
+            "_residual",
+            "_direction",
+            "_solution",
+            "_action",
+        ):
+            vector = getattr(self, name, None)
+            if vector is not None:
+                vector.destroy()
+                setattr(self, name, None)
+
+
+class FixedOneVCycle:
+    """One frozen fine Chebyshev/coarse-direct/fine Chebyshev cycle."""
+
+    def __init__(self, case: "ImplicitLORTransferCase") -> None:
+        if int(case.degree) not in (2, 3):
+            raise ValueError("fixed one-V-cycle coarse direct solve supports p2/p3 only")
+        self.case = case
+        self.fine_matrix = case.fixture.edge_matrix
+        self.coarse_matrix = case.coarse_matrix
+        self.smoother = FixedChebyshevJacobiPETSc(self.fine_matrix)
+        self.coarse_solver = DiagnosticDirectSolver(
+            self.coarse_matrix, label=f"p{case.degree}-coarse-vcycle"
+        )
+        self._z_pre = self.fine_matrix.createVecRight()
+        self._fine_action = self.fine_matrix.createVecLeft()
+        self._fine_residual = self.fine_matrix.createVecLeft()
+        self._z = self.fine_matrix.createVecRight()
+        self._post_action = self.fine_matrix.createVecLeft()
+        self._post_residual = self.fine_matrix.createVecLeft()
+        self._post_correction = self.fine_matrix.createVecRight()
+        self.apply_count = 0
+        self.last_apply_facts: dict[str, object] = {}
+        self._destroyed = False
+
+    def apply_into(self, rhs: PETSc.Vec, target: PETSc.Vec) -> dict[str, object]:
+        if self._destroyed:
+            raise RuntimeError("one-V-cycle has been destroyed")
+        before_matrix = self.smoother.matrix_mult_count
+        self.smoother.apply_into(rhs, self._z_pre)
+        self.fine_matrix.mult(self._z_pre, self._fine_action)
+        rhs.copy(self._fine_residual)
+        self._fine_residual.axpy(-1.0, self._fine_action)
+        coarse_rhs = self.case.apply_adjoint(self._fine_residual)
+        coarse_solution = None
+        fine_correction = None
+        try:
+            coarse_solution, coarse_facts = self.coarse_solver.solve_lean(coarse_rhs)
+            fine_correction = self.case.apply_primal(coarse_solution)
+            self._z_pre.copy(self._z)
+            self._z.axpy(1.0, fine_correction)
+        finally:
+            if fine_correction is not None:
+                fine_correction.destroy()
+            if coarse_solution is not None:
+                coarse_solution.destroy()
+            coarse_rhs.destroy()
+        self.fine_matrix.mult(self._z, self._post_action)
+        rhs.copy(self._post_residual)
+        self._post_residual.axpy(-1.0, self._post_action)
+        self.smoother.apply_into(self._post_residual, self._post_correction)
+        self._z.copy(target)
+        target.axpy(1.0, self._post_correction)
+        self.apply_count += 1
+        facts = {
+            "fine_smoother_matrix_mult_count": int(self.smoother.matrix_mult_count - before_matrix),
+            "fine_matrix_mult_count": 2,
+            "transfer_primal_count": 1,
+            "transfer_adjoint_count": 1,
+            "coarse_factor_solve_count": int(self.coarse_solver.solve_count),
+            "coarse_solver_backend": coarse_facts["backend"],
+            "coarse_finite": coarse_facts["finite"],
+        }
+        self.last_apply_facts = facts
+        return facts
+
+    def apply(self, rhs: PETSc.Vec) -> PETSc.Vec:
+        target = self.fine_matrix.createVecRight()
+        try:
+            self.apply_into(rhs, target)
+        except Exception:
+            target.destroy()
+            raise
+        return target
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        # The MUMPS factor is released before the case-owned matrices.
+        self.coarse_solver.destroy()
+        for vector in (
+            self._z_pre,
+            self._fine_action,
+            self._fine_residual,
+            self._z,
+            self._post_action,
+            self._post_residual,
+            self._post_correction,
+        ):
+            vector.destroy()
+        self.smoother.destroy()
 
 
 def _owner_incidence_counts(topology: Any) -> tuple[np.ndarray, np.ndarray]:
@@ -552,6 +799,8 @@ def build_implicit_lor_transfer_case(
 __all__ = [
     "A2_CELL_BATCH",
     "A2_SCHEMA",
+    "FixedChebyshevJacobiPETSc",
+    "FixedOneVCycle",
     "ImplicitLORTransferCase",
     "build_implicit_lor_transfer_case",
 ]
