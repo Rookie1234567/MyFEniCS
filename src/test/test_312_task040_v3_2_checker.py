@@ -553,6 +553,16 @@ def _check(mode: str = "early") -> dict[str, object]:
     )
 
 
+def test_v3_checker_binds_packet_to_its_producer_watchdog(tmp_path) -> None:
+    packet_root = tmp_path / "producer" / "worker" / "interface_packet"
+    packet_root.mkdir(parents=True)
+    with pytest.raises(FileNotFoundError, match="producer watchdog summary"):
+        checker._producer_watchdog_summary_path(packet_root)
+    watchdog = packet_root.parent.parent / "watchdog_summary.json"
+    watchdog.write_text("{}", encoding="utf-8")
+    assert checker._producer_watchdog_summary_path(packet_root) == watchdog.resolve()
+
+
 def test_v3_checker_positive_is_independent_and_json_serializable() -> None:
     result = _check()
     assert result["classification"] == "COUPLED_INTERFACE_FULL_SPAN_PASS"

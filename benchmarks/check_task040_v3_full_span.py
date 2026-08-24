@@ -105,6 +105,14 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _producer_watchdog_summary_path(packet_root: str | Path) -> Path:
+    """Locate the immutable producer watchdog bound to this packet root."""
+    path = Path(packet_root).resolve().parent.parent / "watchdog_summary.json"
+    if not path.is_file():
+        raise FileNotFoundError(f"producer watchdog summary is missing: {path}")
+    return path
+
+
 def _matrix_content_sha256(matrix: np.ndarray) -> str:
     values = np.ascontiguousarray(np.asarray(matrix, dtype=np.complex128))
     return hashlib.sha256(values.tobytes()).hexdigest()
@@ -1125,7 +1133,10 @@ def check_v3_full_span(
         if line.strip()
     ]
     try:
-        packet_audit = recompute_v3_1_augmented_packet(packet_root)
+        producer_watchdog_path = _producer_watchdog_summary_path(packet_root)
+        packet_audit = recompute_v3_1_augmented_packet(
+            packet_root, watchdog_summary_path=producer_watchdog_path
+        )
         packet_audit = dict(packet_audit)
         packet_audit["group1_gram_content_sha256"] = _matrix_content_sha256(
             load_small_matrix(Path(packet_root), "gram_group1")
