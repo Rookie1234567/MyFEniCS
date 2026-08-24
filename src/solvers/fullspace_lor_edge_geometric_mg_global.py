@@ -29,7 +29,11 @@ from .fullspace_lor_edge_geometric_mg import (
     LAMBDA_LO_FACTOR,
     POWER_STEPS,
 )
-from .fullspace_lor_hx_root_cause import DiagnosticDirectSolver
+from .fullspace_lor_hx_root_cause import (
+    DiagnosticDirectSolver,
+    lift_low_primal,
+    low_input_from_high_dual,
+)
 from .fullspace_lor_memory_first_foundation import (
     _canonical_raw_map,
     _fill_raw_vector,
@@ -291,6 +295,52 @@ class FixedOneVCycle:
         ):
             vector.destroy()
         self.smoother.destroy()
+
+
+class HighLORGeometricVcyclePC:
+    """Adapt one frozen LOR V-cycle to the high-space dual/primal interface.
+
+    The transfer case owns the single ``build_hx=False`` fixture.  This adapter
+    owns the V-cycle and releases it before releasing that transfer case.  The
+    returned high-space vector is newly allocated; no borrowed action output is
+    retained or destroyed here.
+    """
+
+    def __init__(self, transfer_case: "ImplicitLORTransferCase") -> None:
+        if transfer_case._destroyed:
+            raise RuntimeError("cannot attach a PC to a destroyed transfer case")
+        self.transfer_case = transfer_case
+        self.vcycle = FixedOneVCycle(transfer_case)
+        self.apply_count = 0
+        self._destroyed = False
+
+    def apply(self, high_residual: PETSc.Vec) -> PETSc.Vec:
+        if self._destroyed:
+            raise RuntimeError("high LOR V-cycle PC has been destroyed")
+        low_rhs, _owner_packet = low_input_from_high_dual(
+            self.transfer_case.fixture, high_residual
+        )
+        low_solution = None
+        try:
+            low_solution = self.vcycle.apply(low_rhs)
+            high_solution = lift_low_primal(
+                self.transfer_case.fixture, low_solution
+            )
+        finally:
+            if low_solution is not None:
+                low_solution.destroy()
+            low_rhs.destroy()
+        self.apply_count += 1
+        return high_solution
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        self.vcycle.destroy()
+        self.transfer_case.destroy()
+        self.vcycle = None
+        self.transfer_case = None
 
 
 def _owner_incidence_counts(topology: Any) -> tuple[np.ndarray, np.ndarray]:
@@ -801,6 +851,7 @@ __all__ = [
     "A2_SCHEMA",
     "FixedChebyshevJacobiPETSc",
     "FixedOneVCycle",
+    "HighLORGeometricVcyclePC",
     "ImplicitLORTransferCase",
     "build_implicit_lor_transfer_case",
 ]
