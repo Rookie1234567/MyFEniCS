@@ -1,4 +1,10 @@
-# V3-4 packet-independent production side inverse
+# V4-6 packet-independent production side inverse
+
+## V4-0 状态
+
+`planned_conditional_not_run`。V4-0 只完成继承审计；V4-6 必须等待 V4-3/V4-4 形成可重建的
+selection rule 和 V4-5 bounded coarse 结果，本页没有 production candidate 或新的数值/资源
+证据。原有 V3-4 历史合同保留如下，作为 V4-6 的前置边界而非当前结果。
 
 ## 状态
 
