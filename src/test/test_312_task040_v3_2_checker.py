@@ -351,8 +351,15 @@ def _fixture(
             "upper_mode_key_sha256": UPPER_MODE_KEYS,
             "upper_beta_sha256": UPPER_BETA,
             "gram_relative_error": 0.0,
+            "gram_block_relative_errors": {
+                "LL": 0.0,
+                "LU": 0.0,
+                "UL": 0.0,
+                "UU": 0.0,
+            },
             "packet_gram_sha256": "g" * 64,
             "recomputed_gram_sha256": "g" * 64,
+            "y_authority": "current_lower_upper_left_basis_trace_mass_dual",
         },
         "joint": {
             "shape": [776, 776],
@@ -584,6 +591,8 @@ def test_v3_checker_factor_lifecycle_tamper_is_implementation(field: str) -> Non
         "joint_block",
         "phase1_trend",
         "watchdog_peak",
+        "y_authority",
+        "gram_block_error",
     ),
 )
 def test_v3_checker_implementation_contract_tamper(tamper: str) -> None:
@@ -602,6 +611,10 @@ def test_v3_checker_implementation_contract_tamper(tamper: str) -> None:
         raw["fgmres_screen"]["phase1"][NONZERO[0]]["checkpoints"]["16"][
             "true_residual_relative"
         ] = 0.9
+    elif tamper == "y_authority":
+        raw["z_reconstruction"]["y_authority"] = "packet_v_recovery"
+    elif tamper == "gram_block_error":
+        raw["z_reconstruction"]["gram_block_relative_errors"]["LU"] = 1.0e-9
     else:
         watchdog["peak_rss_bytes"] = 999
     result = checker.recompute_v3_full_span(

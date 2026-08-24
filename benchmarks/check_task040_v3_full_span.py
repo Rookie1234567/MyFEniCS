@@ -330,6 +330,18 @@ def _representation_checks(
     remap = raw.get("group1_remap", {})
     audit = remap.get("audit", {}) if isinstance(remap, Mapping) else {}
     z = raw.get("z_reconstruction", {})
+    gram_block_errors = z.get("gram_block_relative_errors")
+    gram_blocks_pass = True
+    if gram_block_errors is not None:
+        gram_blocks_pass = bool(
+            isinstance(gram_block_errors, Mapping)
+            and all(
+                name in gram_block_errors
+                and _finite(gram_block_errors[name])
+                and float(gram_block_errors[name]) <= 1.0e-10
+                for name in ("LL", "LU", "UL", "UU")
+            )
+        )
     return {
         "remap": (
             _finite(remap.get("collective_max_relative_error"))
@@ -348,9 +360,11 @@ def _representation_checks(
             == "aee266f602bf704ffbc3d7551be661b05e1663f84205012bfe26c8fd5983f6c9"
             and _finite(z.get("gram_relative_error"))
             and float(z["gram_relative_error"]) <= 1.0e-10
+            and z.get("y_authority") == "current_lower_upper_left_basis_trace_mass_dual"
             and z.get("packet_gram_sha256")
             == z.get("recomputed_gram_sha256")
             == packet_audit.get("group1_gram_content_sha256")
+            and gram_blocks_pass
         ),
         "bare_f_unchanged": (
             raw.get("bare_f_identity", {}).get("before")

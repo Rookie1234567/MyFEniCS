@@ -23,6 +23,7 @@ from src.solvers.hybrid_interface_fgmres import (
     decide_v3_continuation,
     run_v3_full_span_right_fgmres_batch,
 )
+from src.solvers.hybrid_interface_basis import build_group_basis_columns
 from src.solvers.hybrid_interface_packet import recover_owner_local_y_from_packet_v
 from src.solvers.hybrid_side_impedance import _petsc_matrix_hash
 from src.test.test_310_task040_petsc_full_side_coupled import (
@@ -89,6 +90,43 @@ def test_packet_v_recovers_y_and_rejects_u_semantics() -> None:
     u = rng.normal(size=(5, 2)) + 1j * rng.normal(size=(5, 2))
     false_y = recover_owner_local_y_from_packet_v(u, gram)
     assert np.linalg.norm(false_y - y) / np.linalg.norm(y) > 1.0e-3
+
+
+def test_packet_v_conditioning_diagnostic_and_direct_group_y_authority() -> None:
+    rng = np.random.default_rng(31)
+    gram = np.diag(np.asarray([1.0, 1.0e-6, 0.4 + 0.2j, 0.7 - 0.1j])).astype(
+        np.complex128
+    )
+    y = rng.normal(size=(9, 4)) + 1j * rng.normal(size=(9, 4))
+    u, singular_values, vh = np.linalg.svd(gram)
+    x = vh.conj().T @ ((u.conj().T @ y.conj().T) / singular_values[:, None])
+    packet_v = x.conj().T
+    recovered = recover_owner_local_y_from_packet_v(packet_v, gram)
+    relative = np.linalg.norm(recovered - y) / np.linalg.norm(y)
+    assert np.isfinite(relative)
+    assert relative < 1.0e-8
+    assert singular_values[0] / singular_values[-1] >= 1.0e6
+
+    lower_rows = np.asarray([10, 12])
+    upper_rows = np.asarray([11, 13])
+    group_rows = np.asarray([12, 11, 13, 10])
+    lower_y = np.asarray(
+        [[1.0 + 0.2j, 2.0 - 0.1j], [3.0 + 0.4j, 4.0 + 0.3j]],
+        dtype=np.complex128,
+    )
+    upper_y = np.asarray(
+        [[5.0 - 0.2j, 6.0 + 0.1j], [7.0 + 0.5j, 8.0 - 0.4j]],
+        dtype=np.complex128,
+    )
+    direct = build_group_basis_columns(
+        1, group_rows, lower_rows, lower_y, upper_rows, upper_y
+    )
+    expected = np.zeros((4, 4), dtype=np.complex128)
+    expected[0, :2] = lower_y[1]
+    expected[1, 2:] = upper_y[0]
+    expected[2, 2:] = upper_y[1]
+    expected[3, :2] = lower_y[0]
+    assert np.array_equal(direct, expected)
 
 
 def test_v3_fgmres_has_zero_start_and_frozen_checkpoint_shape() -> None:
