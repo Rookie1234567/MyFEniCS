@@ -13,6 +13,7 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks import run_task038_full3d_lor_hx_p0 as p0_runner
 from benchmarks.task038_full3d_lor_hx_p0_checker import (
     check_record,
     residual_pair_bound,
@@ -75,6 +76,9 @@ def _resource() -> dict[str, object]:
         "process_tree_swap_bytes": 0,
         "memory_authority_bytes": 1,
         "all_status_readable": True,
+        "dedicated_cgroup_observed": False,
+        "dedicated_cgroup_path": "/init.scope",
+        "dedicated_cgroup_readable": True,
         "dedicated_cgroup_swap_bytes": None,
         "job_no_swap": True,
     }
@@ -514,6 +518,60 @@ def test_checker_recomputes_pc_and_uses_outer_record_with_raw_subdirectory(tmp_p
     mutated = check_record(record_path)
     assert not mutated["passed"]
     assert mutated["contract_errors"]
+
+
+def test_pc_artifact_descriptor_names_match_logical_keys(tmp_path: Path) -> None:
+    record_path, _raw_dir = _synthetic_record(tmp_path)
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    for name in PC_NAMES:
+        artifact = record["artifacts"][name]
+        assert artifact["name"] == name
+        assert artifact["role"] == name
+    record["artifacts"]["output_first"]["name"] = "pc_output_first"
+    record_path.write_text(json.dumps(record, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    checked = check_record(record_path)
+    assert not checked["passed"]
+    assert any("name/role identity" in error for error in checked["contract_errors"])
+
+
+def test_shared_cgroup_swap_diagnostic_is_not_a_swap_gate(monkeypatch: pytest.MonkeyPatch) -> None:
+    authority = {
+        "process_tree": {
+            "root_pid": 1,
+            "rss_bytes": 2,
+            "swap_bytes": 0,
+            "all_status_readable": True,
+        },
+        "job_cgroup": {
+            "dedicated_job_cgroup": False,
+            "path": "/init.scope",
+            "readable": True,
+            "swap_current_bytes": 13_799_424,
+        },
+        "memory_authority_bytes": 2,
+        "job_no_swap": True,
+    }
+    monkeypatch.setattr(p0_runner, "resource_authority_sample", lambda _pid: authority)
+    sample = p0_runner._resource_sample()
+    assert sample["dedicated_cgroup_observed"] is False
+    assert sample["dedicated_cgroup_path"] == "/init.scope"
+    assert sample["dedicated_cgroup_swap_bytes"] is None
+
+
+def test_dedicated_cgroup_nonzero_swap_is_a_gate(tmp_path: Path) -> None:
+    record_path, _raw_dir = _synthetic_record(tmp_path)
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    for label in ("production_first_cycle", "restart", "continuous_reference"):
+        for cycle in record["outer"][label]["cycles"]:
+            cycle["resource"]["dedicated_cgroup_observed"] = True
+            cycle["resource"]["dedicated_cgroup_path"] = "/job.slice/test"
+            cycle["resource"]["dedicated_cgroup_readable"] = True
+            cycle["resource"]["dedicated_cgroup_swap_bytes"] = 1
+    record_path.write_text(json.dumps(record, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    checked = check_record(record_path)
+    assert not checked["passed"]
+    assert not checked["contract_errors"]
+    assert any("dedicated cgroup swap is nonzero" in failure for failure in checked["gate_failures"])
 
 
 def test_checkpoint_checker_rejects_extra_numeric_file(tmp_path: Path) -> None:

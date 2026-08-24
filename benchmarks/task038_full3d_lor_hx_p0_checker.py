@@ -468,11 +468,23 @@ def _check_cycle(
             errors.append(f"cycle {index} process-tree status was not readable")
         if resource.get("process_tree_swap_bytes") != 0:
             gates.append(f"cycle {index} process-tree swap is nonzero")
+        dedicated_observed = resource.get("dedicated_cgroup_observed")
+        dedicated_path = resource.get("dedicated_cgroup_path")
+        dedicated_readable = resource.get("dedicated_cgroup_readable")
+        if not isinstance(dedicated_observed, bool):
+            errors.append(f"cycle {index} dedicated cgroup identity is missing")
+        if not isinstance(dedicated_path, str) or not dedicated_path:
+            errors.append(f"cycle {index} dedicated cgroup path is missing")
         dedicated_swap = resource.get("dedicated_cgroup_swap_bytes")
-        if dedicated_swap is not None and (
-            not isinstance(dedicated_swap, int) or dedicated_swap != 0
-        ):
-            gates.append(f"cycle {index} dedicated cgroup swap is nonzero")
+        if dedicated_observed is True:
+            if dedicated_readable is not True:
+                errors.append(f"cycle {index} dedicated cgroup is not readable")
+            if not isinstance(dedicated_swap, int) or dedicated_swap < 0:
+                errors.append(f"cycle {index} dedicated cgroup swap is missing or invalid")
+            elif dedicated_swap != 0:
+                gates.append(f"cycle {index} dedicated cgroup swap is nonzero")
+        elif dedicated_observed is False and dedicated_swap is not None:
+            errors.append(f"cycle {index} non-dedicated cgroup must not report swap")
         if resource.get("job_no_swap") is not True:
             gates.append(f"cycle {index} resource authority reports swap")
 

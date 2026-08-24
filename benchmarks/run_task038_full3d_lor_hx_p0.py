@@ -157,13 +157,19 @@ def _resource_sample() -> dict[str, Any]:
     authority = resource_authority_sample(os.getpid())
     process_tree = authority["process_tree"]
     cgroup = authority["job_cgroup"]
+    dedicated = bool(cgroup["dedicated_job_cgroup"])
     return {
         "scope": "process_tree_and_dedicated_cgroup_when_available",
         "root_pid": int(process_tree["root_pid"]),
         "process_tree_rss_bytes": int(process_tree["rss_bytes"]),
         "process_tree_swap_bytes": int(process_tree["swap_bytes"]),
         "all_status_readable": bool(process_tree["all_status_readable"]),
-        "dedicated_cgroup_swap_bytes": cgroup.get("swap_current_bytes"),
+        "dedicated_cgroup_observed": dedicated,
+        "dedicated_cgroup_path": cgroup.get("path"),
+        "dedicated_cgroup_readable": bool(cgroup.get("readable")),
+        "dedicated_cgroup_swap_bytes": (
+            cgroup.get("swap_current_bytes") if dedicated else None
+        ),
         "memory_authority_bytes": int(authority["memory_authority_bytes"]),
         "job_no_swap": bool(authority["job_no_swap"]),
         "resource_authority": "task034.resource_authority_sample",
@@ -267,34 +273,34 @@ def _pc_legality(
     slave_constraint = float(comm.allreduce(local_slave_max, op=MPI.MAX))
     artifacts = {
         "input_first_before": _save_sharded_vector(
-            raw_dir, "pc_input_first_before", before["first"], comm
+            raw_dir, "input_first_before", before["first"], comm
         ),
         "input_first_after": _save_sharded_vector(
-            raw_dir, "pc_input_first_after", after["first"], comm
+            raw_dir, "input_first_after", after["first"], comm
         ),
         "input_second_before": _save_sharded_vector(
-            raw_dir, "pc_input_second_before", before["second"], comm
+            raw_dir, "input_second_before", before["second"], comm
         ),
         "input_second_after": _save_sharded_vector(
-            raw_dir, "pc_input_second_after", after["second"], comm
+            raw_dir, "input_second_after", after["second"], comm
         ),
         "input_combined_before": _save_sharded_vector(
-            raw_dir, "pc_input_combined_before", before["combined"], comm
+            raw_dir, "input_combined_before", before["combined"], comm
         ),
         "input_combined_after": _save_sharded_vector(
-            raw_dir, "pc_input_combined_after", after["combined"], comm
+            raw_dir, "input_combined_after", after["combined"], comm
         ),
         "output_first": _save_sharded_vector(
-            raw_dir, "pc_output_first", first_output, comm
+            raw_dir, "output_first", first_output, comm
         ),
         "output_second": _save_sharded_vector(
-            raw_dir, "pc_output_second", second_output, comm
+            raw_dir, "output_second", second_output, comm
         ),
         "output_combined": _save_sharded_vector(
-            raw_dir, "pc_output_combined", combined_output, comm
+            raw_dir, "output_combined", combined_output, comm
         ),
         "output_repeat": _save_sharded_vector(
-            raw_dir, "pc_output_repeat", repeat_output, comm
+            raw_dir, "output_repeat", repeat_output, comm
         ),
     }
     facts = {
