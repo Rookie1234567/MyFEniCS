@@ -223,7 +223,11 @@ def _pc_legality(
         _finite(comm, vector)
         for vector in (first, second, combined, output_first, output_second, output_combined, output_repeat)
     )
-    slave_rows = np.asarray(fixture.high_floquet.mpc.slaves, dtype=np.int32)
+    slave_rows_all = np.asarray(fixture.high_floquet.mpc.slaves, dtype=np.int64).reshape(-1)
+    local_size = int(output_first.getLocalSize())
+    slave_rows = np.unique(
+        np.sort(slave_rows_all[(slave_rows_all >= 0) & (slave_rows_all < local_size)])
+    ).astype(np.int32, copy=False)
     slave_max = max(
         (
             float(np.max(np.abs(vector.array[slave_rows])))
@@ -263,6 +267,7 @@ def _pc_legality(
         "finite": bool(finite),
         "input_unchanged": bool(inputs_unchanged and np.array_equal(before_residual.array, residual.array)),
         "slave_constraint_absolute": slave_max,
+        "slave_rows_local_total": int(slave_rows_all.size),
         "slave_rows_local": int(slave_rows.size),
         "slave_local_indices": [int(value) for value in slave_rows.tolist()],
         "slave_master_complete": bool(audit.get("slave_master_complete", False)),
@@ -379,7 +384,7 @@ def run_p1_worker(
     _append_stage_marker(raw_dir, "p1_runtime_identity", comm.rank)
 
     fixture = None
-    source_vector = rhs = pc_output = pc_action = final_action = final_true = None
+    source_vector = rhs = pc_output = pc_action = final_action = final_true = final_solution = None
     result: dict[str, Any] | None = None
     try:
         fixture = RealL2PositiveHXFixture(degree, comm, variant=VARIANT)

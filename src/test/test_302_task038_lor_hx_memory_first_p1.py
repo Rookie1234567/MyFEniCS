@@ -671,3 +671,26 @@ def test_p1_checker_import_surface_and_fixed_case_contract() -> None:
     assert not imported.intersection({"petsc4py", "mpi4py", "dolfinx", "src", "benchmarks"})
     assert len(SUITE_ORDER) == 16
     assert tuple(CASES) == ("p2-mpi1", "p2-mpi2", "p3-mpi1", "p3-mpi2")
+
+
+def test_p1_owned_slave_filter_and_cleanup_initialization_contract() -> None:
+    runner_path = Path(__file__).parents[2] / "benchmarks" / "run_task038_full3d_lor_hx_memory_first.py"
+    source = runner_path.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    pc_node = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == "_pc_legality")
+    worker_node = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == "run_p1_worker")
+    pc_source = ast.get_source_segment(source, pc_node)
+    assert pc_source is not None
+    assert "getLocalSize()" in pc_source
+    assert "slave_rows_all" in pc_source
+    assert "np.unique" in pc_source and "np.sort" in pc_source
+    assert "slave_rows_local_total" in pc_source
+    worker_source = ast.get_source_segment(source, worker_node)
+    assert worker_source is not None
+    try_position = worker_source.index("    try:")
+    assert "final_solution = None" in worker_source[:try_position]
+
+    all_rows = np.asarray([-1, 0, 5, 5, 8, 99], dtype=np.int64)
+    local_size = 9
+    owned = np.unique(np.sort(all_rows[(all_rows >= 0) & (all_rows < local_size)]))
+    assert owned.tolist() == [0, 5, 8]
