@@ -577,6 +577,51 @@ def test_p1_cycle_final_and_checkpoint_cadence_close_fail_closed(tmp_path: Path)
     assert any("checkpoint boundary" in item for item in cadence_result["contract_errors"])
 
 
+def test_p1_nonfixed_checkpoint_boundary_uses_facts_not_status(tmp_path: Path) -> None:
+    import shutil
+
+    record = _synthetic_record(tmp_path / "boundary", "p2-mpi1", "random")
+    payload = json.loads(record.read_text(encoding="utf-8"))
+    raw = Path(payload["raw_dir"])
+    old_manifest = Path(payload["checkpoint_facts"][0]["manifest_path"])
+    new_dir = raw / "checkpoint-400"
+    shutil.copytree(old_manifest.parent, new_dir)
+    new_manifest = new_dir / "manifest.json"
+    manifest = json.loads(new_manifest.read_text(encoding="utf-8"))
+    manifest["iteration"] = 400
+    new_manifest.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+    new_fact = dict(payload["checkpoint_facts"][0])
+    new_fact["iteration"] = 400
+    new_fact["manifest_path"] = str(new_manifest.resolve())
+    new_fact["manifest_sha256"] = _sha(new_manifest)
+    payload["checkpoint_facts"].append(new_fact)
+    extra_cycles = []
+    for index in range(10, 20):
+        extra_cycle = dict(payload["cycles"][-1])
+        extra_cycle.update(
+            {
+                "cycle_index": index,
+                "start_iteration": index * 20,
+                "end_iteration": (index + 1) * 20,
+            }
+        )
+        extra_cycles.append(extra_cycle)
+    payload["cycles"].extend(extra_cycles)
+    for fact in payload["rank_facts"]:
+        fact["cycle_ledger"].extend(dict(cycle) for cycle in extra_cycles)
+        fact["iterations"] = 400
+    payload["final"]["iterations"] = 400
+    payload["count_ranges"]["iterations"] = {"min": 400, "max": 400}
+    record.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    result = check_record(record)
+    assert result["passed"] is True, result
+
+    payload["checkpoint_facts"].pop()
+    record.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    missing = check_record(record)
+    assert any("checkpoint boundary 400" in item for item in missing["contract_errors"])
+
+
 def test_p1_nested_process_tree_resource_facts_are_checked(tmp_path: Path) -> None:
     record = _synthetic_record(tmp_path, "p2-mpi1", "random")
     payload = json.loads(record.read_text(encoding="utf-8"))

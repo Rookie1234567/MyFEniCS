@@ -554,9 +554,12 @@ def _check_cycle_ledger(record: dict[str, Any], errors: list[str], gates: list[s
             continue
         end = cycle.get("end_iteration")
         if isinstance(end, int) and end > 0 and end % CHECKPOINT_INTERVAL == 0:
-            status = statuses.get(str(end), {}).get("status") if isinstance(statuses, dict) else None
-            if status != "measured" or end not in measured:
+            if end not in measured:
                 errors.append(f"P1 reached checkpoint boundary {end} has no measured raw checkpoint")
+            elif str(end) in {str(point) for point in CHECKPOINT_POINTS}:
+                status = statuses.get(str(end), {}).get("status") if isinstance(statuses, dict) else None
+                if status != "measured":
+                    errors.append(f"P1 reached checkpoint boundary {end} status is not measured")
     rank_facts = record.get("rank_facts")
     if isinstance(rank_facts, list):
         for fact in rank_facts:
