@@ -385,6 +385,8 @@ def run_restart20_cycles(
     initial_solution: PETSc.Vec | None = None,
     start_iteration: int | None = None,
     checkpoint_writer: Callable[[int, PETSc.Vec, float], Mapping[str, Any]] | None = None,
+    first_checkpoint_iteration: int | None = MANDATORY_FIRST_CHECKPOINT,
+    checkpoint_interval: int = CHECKPOINT_INTERVAL,
     cycle_observer: Callable[[int, PETSc.Vec, Mapping[str, Any]], None] | None = None,
     stop_on_true_residual: bool = True,
 ) -> dict[str, Any]:
@@ -408,6 +410,19 @@ def run_restart20_cycles(
         or start_iteration > max_it
     ):
         raise ValueError("max_it must be a positive multiple of restart=20")
+    checkpoint_interval = int(checkpoint_interval)
+    if checkpoint_interval <= 0 or checkpoint_interval % GMRES_RESTART != 0:
+        raise ValueError("checkpoint_interval must be a positive multiple of restart=20")
+    if first_checkpoint_iteration is not None:
+        first_checkpoint_iteration = int(first_checkpoint_iteration)
+        if (
+            first_checkpoint_iteration <= 0
+            or first_checkpoint_iteration % GMRES_RESTART != 0
+            or first_checkpoint_iteration > max_it
+        ):
+            raise ValueError(
+                "first_checkpoint_iteration must be a positive restart boundary or None"
+            )
     if not np.isfinite(residual_limit) or residual_limit < 0.0:
         raise ValueError("residual limit must be finite and non-negative")
 
@@ -495,10 +510,12 @@ def run_restart20_cycles(
             cumulative_iteration = cycle_start + local_iterations
 
             checkpoint_info = None
-            if checkpoint_writer is not None and (
-                cumulative_iteration == MANDATORY_FIRST_CHECKPOINT
-                or cumulative_iteration % CHECKPOINT_INTERVAL == 0
-            ):
+            checkpoint_due = cumulative_iteration % checkpoint_interval == 0
+            if first_checkpoint_iteration is not None:
+                checkpoint_due = checkpoint_due or (
+                    cumulative_iteration == first_checkpoint_iteration
+                )
+            if checkpoint_writer is not None and checkpoint_due:
                 checkpoint_info = dict(
                     checkpoint_writer(cumulative_iteration, solution, explicit_relative)
                 )
@@ -549,6 +566,8 @@ def run_restart20_cycles(
                 "residual_limit": residual_limit,
                 "residual_replacement": True,
                 "initial_guess_nonzero": bool(initial_solution is not None),
+                "first_checkpoint_iteration": first_checkpoint_iteration,
+                "checkpoint_interval": checkpoint_interval,
             },
             "initial_true_residual": float(initial_true_relative),
             "cycles": cycles,
