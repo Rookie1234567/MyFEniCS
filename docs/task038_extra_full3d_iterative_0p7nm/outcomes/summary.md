@@ -44,3 +44,21 @@ P1 cycle RSS 是 rank-root process-tree ledger；MPI2 不含 launcher。GNU `/us
 ## 证据与合入边界
 
 轻量入口为 `outcomes/records/memory_first_small_v2.json`、`outcomes/records/memory_first_small_v2_checker.json`；9 案 record/check/raw 路径和 SHA 逐项绑定，p3 的旧 `check.json` 与修正 `check_v2.json` 同时保留。P1 runner/checker 代码可审阅，但当前 multiplicative-v1 memory-first family 因 p3 p-robust convergence 关闭；不得整体合入 ordinary default。V8 negative 和所有失败 raw 均 `do-not-delete`。若要继续，必须先有新 review 决定新的正确性/性能路线，不能用 restart、omega、shift 或扫描绕过本 hard stop。
+
+## Review V10 Q0 closeout
+
+V10 Q0 只执行了 p3/h50、MPI1、random 的 exact-reference triage。它用小模型的直接 LU/MUMPS 解替代近似辅助 solve，目的是区分“LOR 基础代数有问题”与“近似 HX/PCGAMG 不够强”；这不是生产算法变更。
+
+| 阶段 | 状态 | 关键事实 |
+|---|---|---|
+| Q0 Reference E | `LOR_AUXILIARY_FOUNDATION_FAIL` | 500 步/25 cycles 后 explicit rho=`4.203423379090078e-4 > 1e-8`；exact edge residual=`9.13154427545479e-16` |
+| Q0 Reference N | diagnostic only | final rho=`2.1958595524302254e-3`；四个 nodal direct residual 均约 `5.13e-16–5.24e-16`；一个 raw evidence 坐标混用相对差=`2.8019257502717445` |
+| Q1–Q5 | `not_run_by_Q0_hard_stop` | 不再运行 p3 50k、p6 setup、p6 positive 或 physical Maxwell |
+
+E/N 的 finite、repeat、input unchanged、high primal constraint、high RHS repeat、owner route、orientation、phase-once 均有 raw evidence。最大 cycle process-tree RSS=`185102336 B`、swap=`0`；GNU time 单 worker Maximum RSS=`293908 KiB`，不是 process-tree/cgroup authority。
+
+本次 worker 因路径抄写实际使用 `task038_extra3d_q0_v10` 和 `task038_extra3d_iterative_0p7nm`；完成后两份 compact 才做 byte-preserving relocation 到含 `full3d` 的 `outcomes/records/`，内部实际 command/raw/record 字段未改。见 [p3 exact-reference triage](p3_exact_reference_triage.md) 及 relocated records。该 Q0 hard stop 不改变旧 V8/V9 negative、P0 PASS 或 additive-v2 CLOSED，也不证明 p6/h10、2 TiB 或 0.7 nm PDE 可行。
+
+N 的 `0.0` 仅是由 `remaining + edge_action` 推出的 inferred/derived re-encoded initial 与自身的定义性比较；现有 raw 没有独立保存的重编码初始 packet，因此它不作为整个 replay PASS 证据。正式 checker 的 `2.8019257502717445` FAIL 原样保留。
+
+Q0 code-only commit `47c3e5b1ab7205ac5cd8f37b63f33e0a6f46355f` 新增的是 research benchmark harness、独立 checker 和 focused test；production numerical core 与 ordinary default 未改。Q0 focused test 为 `7 passed`，旧 `test300`+`test302` M0/P1 回归为 `26 passed`，compileall/AST/diff-check 通过；Ruff 在资格化环境不可用且未安装。formal 结束、Q6 提交前的 measured Git snapshot 为 ahead/behind=`1/0`；当前未提交项只有 Q6 docs/compact，最终 closeout commit/push 状态不在本摘要中预填。

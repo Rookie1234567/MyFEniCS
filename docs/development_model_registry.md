@@ -1458,3 +1458,13 @@ R4 overall is `FAIL / CONTROLLED_STOP_RESOURCE`; R5/T6-S, T6-F, official E/H/RTA
 | `task038_v9_P1_memory_first_small_v2` | source `891ef7fba8cb7d154ad9cac61d67652f02063fbb`；p2/p3 × MPI1/MPI2，固定 `restart=20`、`max_it=2000`；实际 9/16 | 8 p2 cases PASS；`p3-mpi1/random` 在 2000 steps 后 explicit true residual `0.01027838962263555 > 1e-8` | `FAILED_AT_FIXED_MEMORY_ITERATION_CAP`；p3 cycle process-tree peak `155860992 B`，process-tree/rank swap `0`，GNU time `Swaps=0`；共享 cgroup 只作 diagnostic，不是 dedicated Gate | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/memory_first_small_v2.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2.md` |
 
 P1 剩余 7 个 frozen cases 与 P2–P7 均为 `not_run_by_gate`。本登记不包含 p6 setup、PDE、official physics 或 `<2 GB` complete-workflow authority；完整 raw arrays/checkpoints 仍在 ignored formal root，compact 只保存 hash-bound 标量摘要。
+
+## Task038-extra Review V10：Q0 exact-reference controlled negative
+
+本条登记 Review V10 Q0 的正式受控负结果，不改写 V8/V9 的历史结论。Q0 用小模型 exact LU/MUMPS 辅助 solve 检查当前 LOR-HX 路线的基础代数；它不是 production PC、p6 或 Maxwell PDE 结果。
+
+| Model ID | source / scope | measured result | resource / status | evidence |
+|---|---|---|---|---|
+| `task038_v10_Q0_exact_reference_p3_mpi1_random` | source `47c3e5b1ab7205ac5cd8f37b63f33e0a6f46355f`；p3/h50；MPI1；random；Reference E/N | E exact edge residual `9.13154427545479e-16`，但 500 步后 explicit rho `4.203423379090078e-4 > 1e-8`；N 四项 direct nodal residual `5.134041203635995e-16–5.241317476841507e-16`，final rho `2.1958595524302254e-3` 仅 diagnostic；N pre evidence composition `2.8019257502717445` | `LOR_AUXILIARY_FOUNDATION_FAIL`；cycle process-tree RSS `185102336 B`，swap `0`；GNU time Maximum RSS `293908 KiB`、Swaps `0`（单 worker 口径） | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/p3_exact_reference_triage.md`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1_checker.json`; raw root remains ignored at actual command path `benchmarks/artifacts/task038_extra3d_q0_v10/47c3e5b1ab7205ac5cd8f37b63f33e0a6f46355f/p3-mpi1/random` |
+
+现有代码路径显示 Q0 的 N composition 混用了原 owner packet 与 raw-low dual re-encoding；raw 没有单独保存重编码后的初始 `n_low_input`。因此 trace 的 `remaining + edge_action` 是 inferred/derived re-encoded initial，与自身相对差 `0.0` 只是定义性比较；它与直接保存的 `n_low_input` 差为 `2.8019257502717445`。这支持把 checker failure 定位为 evidence-coordinate defect，但不独立证明整个 N replay PASS；N checker FAIL 原样保留，也不影响 E hard stop。Q1–Q5 均 `not_run_by_Q0_hard_stop`；没有 p6、0.7 nm PDE、2 TiB complete-workflow 或 official physics authority。
