@@ -274,6 +274,19 @@ def test_checkpoint_and_watchdog_contract_helpers() -> None:
     authority["process_tree"]["rss_bytes"] = 1
     authority["process_tree"]["swap_bytes"] = 1
     assert runner._watchdog_stop_reason(authority) == "process_tree_swap_nonzero"
+    unreadable = {"process_tree": {"rss_bytes": 100, "swap_bytes": 0, "all_status_readable": False}}
+    assert runner._watchdog_stop_reason(unreadable) == "authority_unreadable"
+
+    class FakeProcess:
+        def __init__(self, result: int | None) -> None:
+            self.result = result
+
+        def poll(self) -> int | None:
+            return self.result
+
+    assert runner._watchdog_terminal_exit_race(FakeProcess(0), "authority_unreadable")
+    assert not runner._watchdog_terminal_exit_race(FakeProcess(None), "authority_unreadable")
+    assert not runner._watchdog_terminal_exit_race(FakeProcess(0), "process_tree_swap_nonzero")
     assert "args.worker_raw_dir.mkdir" not in Path(runner.__file__).read_text(encoding="utf-8")
 
 
@@ -387,6 +400,7 @@ def test_watchdog_main_subprocess_natural_closeout_and_fail_closed_reuse(tmp_pat
     assert compact["no_orphan"] is True
     assert compact["returncode"] == 0
     assert compact["watchdog_rss_limit_bytes"] == 2_000_000_000
+    assert compact["terminal_exit_race_discard_count"] == 0
     assert not worker_raw.exists()
     second = subprocess.run(command, cwd=repo, capture_output=True, text=True, check=False)
     assert second.returncode != 0

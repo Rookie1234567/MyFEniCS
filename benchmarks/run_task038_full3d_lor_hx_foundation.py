@@ -829,6 +829,10 @@ def _watchdog_stop_reason(
     return None
 
 
+def _watchdog_terminal_exit_race(process: Any, reason: str | None) -> bool:
+    return reason == "authority_unreadable" and process.poll() is not None
+
+
 def _validate_watchdog_paths(worker_raw_dir: Path, watchdog_paths: tuple[Path, ...]) -> None:
     worker_root = worker_raw_dir.resolve()
     for path in watchdog_paths:
@@ -876,6 +880,7 @@ def _watchdog_main(argv: list[str]) -> int:
     started = time.monotonic()
     stop_reason = "natural_exit"
     termination: dict[str, Any] = {"requested": False, "method": "natural_exit"}
+    terminal_exit_race_discard_count = 0
     with args.watchdog_log.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
             command,
@@ -893,6 +898,11 @@ def _watchdog_main(argv: list[str]) -> int:
             }
             samples.append(sample)
             reason = _watchdog_stop_reason(authority, args.watchdog_rss_limit_bytes)
+            if _watchdog_terminal_exit_race(process, reason):
+                samples.pop()
+                terminal_exit_race_discard_count = 1
+                stop_reason = "natural_exit"
+                break
             if reason is not None:
                 stop_reason = reason
                 termination = terminate_process_tree(process)
@@ -936,6 +946,7 @@ def _watchdog_main(argv: list[str]) -> int:
         "max_process_tree_swap_bytes": max(swap_values, default=-1),
         "watchdog_poll_seconds": WATCHDOG_POLL_SECONDS,
         "watchdog_rss_limit_bytes": int(args.watchdog_rss_limit_bytes),
+        "terminal_exit_race_discard_count": terminal_exit_race_discard_count,
         "raw_sha256": _sha256(args.watchdog_raw),
     }
     args.watchdog_compact.write_bytes(_json_bytes(compact))
