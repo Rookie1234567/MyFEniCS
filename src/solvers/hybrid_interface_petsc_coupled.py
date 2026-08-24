@@ -121,6 +121,8 @@ class PetscCoupledFullSideAction:
         self._joint_rank = 0
         self._joint_condition = float("nan")
         self._joint_singular_values: tuple[float, ...] = ()
+        self._coarse_residual_last_apply: float | None = None
+        self._coarse_residual_history: list[dict[str, Any]] = []
         self._gamma_global_rows = 0
         self._gamma_rows_local = np.empty(0, dtype=np.int64)
         self._gamma_owner_order_sha256 = _row_hash(self._gamma_rows_local)
@@ -406,7 +408,24 @@ class PetscCoupledFullSideAction:
     def _solve_joint(self, rhs: np.ndarray) -> np.ndarray:
         u, singular_values, vh = self._joint_svd
         projected = u.conj().T @ rhs
-        return vh.conj().T @ (projected / singular_values)
+        coefficients = vh.conj().T @ (projected / singular_values)
+        coarse_residual = self._joint @ coefficients - rhs
+        rhs_norm = float(np.linalg.norm(rhs))
+        residual_relative = float(
+            np.linalg.norm(coarse_residual) / max(rhs_norm, 1.0e-30)
+        )
+        self._coarse_residual_last_apply = residual_relative
+        self._coarse_residual_history.append(
+            {
+                "apply": self._apply_count + 1,
+                "relative": residual_relative,
+                "rhs_norm": rhs_norm,
+                "finite": bool(
+                    np.isfinite(residual_relative) and np.isfinite(rhs_norm)
+                ),
+            }
+        )
+        return coefficients
 
     def _base_correction(self, source: PETSc.Vec) -> None:
         self._base.set(0.0)
@@ -511,12 +530,14 @@ class PetscCoupledFullSideAction:
             "joint_rank": self._joint_rank,
             "joint_condition": self._joint_condition,
             "joint_singular_values": list(self._joint_singular_values),
+            "coarse_residual_last_apply": self._coarse_residual_last_apply,
+            "coarse_residual_history": list(self._coarse_residual_history),
             "cross_section_group_factor_count": factor_ready,
             "exact_interface_schur_oracle_object_count": 0,
             "full_side_exact_factor_count": 0,
             "global_direct_factor_count": 0,
-            "reduced_dense_factor_count": 0 if self._destroyed else 1,
             "nested_ksp_count": 0,
+            "reduced_dense_factor_count": 0 if self._destroyed else 1,
             "normal_equations": False,
             "fe_numeric_allgather": False,
             "basis_owner_local": True,

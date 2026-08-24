@@ -23,6 +23,7 @@ from benchmarks.task040_level_a import (
     TASK040_V1_2_INTERFACE_SCHUR_FLAG,
     TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG,
     TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG,
+    TASK040_V3_2_COUPLED_INTERFACE_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -84,7 +85,15 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(TASK040_V1_2_INTERFACE_SCHUR_FLAG)
     if plan.get("packet_producer") is True:
         command.append(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG)
-    if plan.get("packet_consumer") is True:
+    if plan.get("coupled_interface") is True:
+        command.extend(
+            [
+                TASK040_V3_2_COUPLED_INTERFACE_FLAG,
+                "--interface-packet-root",
+                str(plan["interface_packet_root"]),
+            ]
+        )
+    elif plan.get("packet_consumer") is True:
         command.extend(
             [
                 TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG,
@@ -105,6 +114,7 @@ def build_task040_level_a_watchdog_plan(
     interface_schur: bool = False,
     packet_producer: bool = False,
     packet_consumer: bool = False,
+    coupled_interface: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -116,6 +126,7 @@ def build_task040_level_a_watchdog_plan(
         interface_schur=interface_schur,
         packet_producer=packet_producer,
         packet_consumer=packet_consumer,
+        coupled_interface=coupled_interface,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -370,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V1_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG, action="store_true")
     parser.add_argument(TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG, action="store_true")
+    parser.add_argument(TASK040_V3_2_COUPLED_INTERFACE_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_watchdog_plan(
@@ -381,6 +393,7 @@ def main(argv: list[str] | None = None) -> int:
         interface_schur=args.v1_2_interface_schur,
         packet_producer=args.v2_interface_packet_producer,
         packet_consumer=args.v2_interface_packet_consumer,
+        coupled_interface=args.v3_2_coupled_interface,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:

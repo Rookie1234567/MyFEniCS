@@ -41,6 +41,7 @@ __all__ = (
     "finalize_manifest",
     "load_packet_shard",
     "load_small_matrix",
+    "recover_owner_local_y_from_packet_v",
     "remap_group_rows",
     "redistribute_packet_group_rows",
 )
@@ -592,8 +593,10 @@ def _load_group(root: Path, record: dict[str, Any], group_name: str) -> PacketGr
         raise ValueError(f"packet shard hash mismatch for {group_name}")
     with np.load(path, allow_pickle=False) as arrays:
         keys = tuple(str(value) for value in arrays["keys"].tolist())
-        U = np.asarray(arrays["U"], dtype=np.complex128)
-        V = np.asarray(arrays["V"], dtype=np.complex128)
+        U = np.asarray(arrays["U"])
+        V = np.asarray(arrays["V"])
+        if U.dtype != np.dtype(np.complex128) or V.dtype != np.dtype(np.complex128):
+            raise ValueError(f"packet U/V dtype is not complex128 for {group_name}")
     group_name, keys, U, V = _validated_group(PacketGroup(group_name, keys, U, V))
     if canonical_key_sha256(keys) != record["key_order_sha256"]:
         raise ValueError(f"packet shard key order hash mismatch for {group_name}")
@@ -628,12 +631,43 @@ def load_small_matrix(root: str | Path, name: str) -> np.ndarray:
         raise ValueError(f"small packet matrix hash mismatch: {name}")
     with path.open("rb") as stream:
         values = np.load(stream, allow_pickle=False)
-    matrix = np.asarray(values, dtype=np.complex128)
+    if values.dtype != np.dtype(np.complex128):
+        raise ValueError(f"small packet matrix dtype is not complex128: {name}")
+    matrix = np.asarray(values)
     if matrix.ndim != 2 or list(matrix.shape) != list(record["shape"]):
         raise ValueError(f"small packet matrix shape mismatch: {name}")
     if matrix.dtype != np.dtype(record["dtype"]):
         raise ValueError(f"small packet matrix dtype mismatch: {name}")
     return matrix
+
+
+def recover_owner_local_y_from_packet_v(
+    local_v: np.ndarray, gram: np.ndarray
+) -> np.ndarray:
+    """Recover owner-local ``Y`` from packet ``V = Y G^{-H}``.
+
+    ``U`` is a correction action and is intentionally not accepted here: it
+    has no basis-vector meaning and cannot be used to reconstruct ``Z`` or
+    ``Y``.  The returned array is the one final local ``Y`` payload needed by
+    a fresh coupled consumer.
+    """
+
+    values = np.asarray(local_v)
+    matrix = np.asarray(gram)
+    if values.ndim != 2 or matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError("packet V and Gram must be two-dimensional")
+    if values.dtype != np.dtype(np.complex128) or matrix.dtype != np.dtype(
+        np.complex128
+    ):
+        raise ValueError("packet V and Gram must be complex128")
+    if values.shape[1] != matrix.shape[0]:
+        raise ValueError("packet V column count differs from Gram size")
+    if not np.isfinite(values).all() or not np.isfinite(matrix).all():
+        raise ValueError("packet V or Gram is nonfinite")
+    result = values @ matrix.conj().T
+    if not np.isfinite(result).all():
+        raise ValueError("recovered packet Y is nonfinite")
+    return result
 
 
 def load_packet_shard(
