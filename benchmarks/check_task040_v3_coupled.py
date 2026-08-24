@@ -16,6 +16,7 @@ from src.solvers.hybrid_interface_coupled import (
     CONDITION_LIMIT,
     EXPECTED_SPAN_SIZES,
     assemble_coupled_interface_matrices,
+    matrix_diagnostics,
 )
 
 FROZEN_PACKET_MANIFEST_SHA256 = (
@@ -31,8 +32,23 @@ FROZEN_UPPER_MODE_KEY_SHA256 = (
 FROZEN_UPPER_BETA_SHA256 = (
     "aee266f602bf704ffbc3d7551be661b05e1663f84205012bfe26c8fd5983f6c9"
 )
+AUGMENTED_PRODUCER_SOURCE_SHA = "fa1720d8f137de81023cd45d6a43262d386e6521"
+AUGMENTED_PACKET_MANIFEST_SHA256 = (
+    "f480189663ef293ec4f809818e322186d75a205f725a3aa35dc12c2d24aad209"
+)
+AUGMENTED_RUN_SUMMARY_SHA256 = (
+    "b44700081d48c96f4380e3111cd5f25ff57dfc64f0fab24afbd7a8a710f2bc7a"
+)
+AUGMENTED_WATCHDOG_SUMMARY_SHA256 = (
+    "cb61e59830443c2169bd388af7710de2af95d5e2ec59d128c207c1bbd05dbf03"
+)
+AUGMENTED_MATRIX_SCHEMA = "task040.v3.middle_group_schur_projection.v1"
 
-__all__ = ["recompute_v3_1_packet", "main"]
+__all__ = [
+    "recompute_v3_1_augmented_packet",
+    "recompute_v3_1_packet",
+    "main",
+]
 
 
 def _sha256(path: Path) -> str:
@@ -103,6 +119,69 @@ def _load_projected_matrices(
     return groups, {"matrices": descriptors}
 
 
+def _load_augmented_middle_matrix(
+    root: Path, manifest: dict[str, Any]
+) -> tuple[np.ndarray, dict[str, Any]]:
+    name = "projected_middle_group_schur"
+    records = manifest.get("small_matrices")
+    diagnostics = manifest.get("diagnostics", {})
+    additional = diagnostics.get("additional_projected_matrices", {})
+    record = records.get(name) if isinstance(records, dict) else None
+    metadata = additional.get(name) if isinstance(additional, dict) else None
+    if not isinstance(record, dict) or not isinstance(metadata, dict):
+        raise ValueError("augmented middle Schur descriptor is missing")
+    if metadata.get("schema") != AUGMENTED_MATRIX_SCHEMA:
+        raise ValueError("augmented middle Schur schema is invalid")
+    if metadata.get("semantic") != "Y1^H [oracle.apply_group(1)] Z1":
+        raise ValueError("augmented middle Schur semantic is invalid")
+    if metadata.get("matrix_name") != name or metadata.get("name") != name:
+        raise ValueError("augmented middle Schur name is invalid")
+    matrix = load_small_matrix(root, name)
+    expected_shape = (EXPECTED_SPAN_SIZES[1], EXPECTED_SPAN_SIZES[1])
+    if matrix.shape != expected_shape or not np.isfinite(matrix).all():
+        raise ValueError("augmented middle Schur shape or finite check failed")
+    recomputed = matrix_diagnostics(matrix, expected_shape=expected_shape)
+    if _sha256(root / str(record["path"])) != record.get("sha256"):
+        raise ValueError("augmented middle Schur file hash mismatch")
+    if (
+        record.get("shape") != list(expected_shape)
+        or record.get("dtype") != "complex128"
+    ):
+        raise ValueError("augmented middle Schur record shape or dtype is invalid")
+    if (
+        metadata.get("shape") != list(expected_shape)
+        or metadata.get("dtype") != "complex128"
+    ):
+        raise ValueError("augmented middle Schur metadata shape or dtype is invalid")
+    if (
+        metadata.get("finite") is not True
+        or metadata.get("apply_count") != expected_shape[0]
+    ):
+        raise ValueError("augmented middle Schur metadata is incomplete")
+    if metadata.get("rank") != recomputed["rank"] or not _finite(
+        metadata.get("condition")
+    ):
+        raise ValueError("augmented middle Schur diagnostics are inconsistent")
+    if not np.isclose(
+        float(metadata["condition"]),
+        float(recomputed["condition"]),
+        rtol=1.0e-12,
+        atol=0.0,
+    ):
+        raise ValueError("augmented middle Schur condition mismatch")
+    return matrix, {
+        "record": {
+            "name": name,
+            "path": str(record["path"]),
+            "sha256": record["sha256"],
+            "shape": list(record["shape"]),
+            "dtype": record["dtype"],
+        },
+        "metadata": metadata,
+        "recomputed": recomputed,
+    }
+
+
 def _maximum(metrics: list[dict[str, Any]], name: str) -> float | None:
     values = [float(item[name]) for item in metrics if _finite(item.get(name))]
     return max(values) if values else None
@@ -171,7 +250,9 @@ def _semantic_mapping(diagnostics: dict[str, Any]) -> dict[str, Any]:
         and all(item.get("response") == "middle_group1_schur" for item in middle)
         and any(float(item.get("cross_to_total", 0.0)) > 0.0 for item in middle)
     )
-    local_middle_matrix = diagnostics.get("projected_middle_group_schur")
+    local_middle_matrix = diagnostics.get("additional_projected_matrices", {}).get(
+        "projected_middle_group_schur"
+    )
     return {
         "incoming_neighbor_map": {
             "map": incoming.get("map"),
@@ -288,6 +369,261 @@ def _joint_checks(
             "joint assembly is additive and does not sum Grams"
         ),
         "group_count": len(group_matrices),
+    }
+
+
+def _relative_error(left: np.ndarray, right: np.ndarray) -> float:
+    return float(
+        np.linalg.norm(left - right) / max(np.linalg.norm(right), np.finfo(float).tiny)
+    )
+
+
+def _augmented_joint_checks(
+    group_matrices: list[dict[str, np.ndarray]], middle_matrix: np.ndarray
+) -> dict[str, Any]:
+    lower_span, _middle_span, upper_span = EXPECTED_SPAN_SIZES
+    legacy_assembled = assemble_coupled_interface_matrices(group_matrices)
+    legacy_checks = _joint_checks(legacy_assembled, group_matrices)
+    joint = middle_matrix + group_matrices[1]["projected_exact"]
+    joint_diagnostic = matrix_diagnostics(
+        joint, expected_shape=(EXPECTED_SPAN_SIZES[1], EXPECTED_SPAN_SIZES[1])
+    )
+    slices = {
+        "LL": (slice(0, lower_span), slice(0, lower_span)),
+        "LU": (slice(0, lower_span), slice(lower_span, lower_span + upper_span)),
+        "UL": (slice(lower_span, lower_span + upper_span), slice(0, lower_span)),
+        "UU": (
+            slice(lower_span, lower_span + upper_span),
+            slice(lower_span, lower_span + upper_span),
+        ),
+    }
+    full_norm = max(float(np.linalg.norm(joint, ord="fro")), np.finfo(float).tiny)
+    block_diagnostics = {}
+    for name, (row_slice, column_slice) in slices.items():
+        block = np.asarray(joint[row_slice, column_slice], dtype=np.complex128)
+        block_diagnostics[name] = {
+            **matrix_diagnostics(block, square=False),
+            "frobenius_norm": float(np.linalg.norm(block, ord="fro")),
+            "relative_frobenius_norm": float(
+                np.linalg.norm(block, ord="fro") / full_norm
+            ),
+        }
+    middle_diagnostic = matrix_diagnostics(
+        middle_matrix, expected_shape=(EXPECTED_SPAN_SIZES[1], EXPECTED_SPAN_SIZES[1])
+    )
+    lower_error = _relative_error(
+        middle_matrix[:lower_span, :lower_span], group_matrices[0]["projected_exact"]
+    )
+    upper_error = _relative_error(
+        middle_matrix[lower_span:, lower_span:], group_matrices[2]["projected_exact"]
+    )
+    legacy_difference = _relative_error(
+        joint, legacy_assembled["joint_projected_exact"]
+    )
+    expected_shapes = {
+        "LL": [lower_span, lower_span],
+        "LU": [lower_span, upper_span],
+        "UL": [upper_span, lower_span],
+        "UU": [upper_span, upper_span],
+    }
+    blocks_pass = all(
+        item["shape"] == expected_shapes[name]
+        and item["dtype"] == "complex128"
+        and _finite(item["rank"])
+        and isinstance(item["sha256"], str)
+        and len(item["sha256"]) == 64
+        for name, item in block_diagnostics.items()
+    )
+    exact_gate_pass = (
+        joint_diagnostic["rank"] == EXPECTED_SPAN_SIZES[1]
+        and _finite(joint_diagnostic["condition"])
+        and joint_diagnostic["condition"] <= CONDITION_LIMIT
+    )
+    return {
+        "joint": joint,
+        "legacy_structural_joint": legacy_assembled["joint_projected_exact"],
+        "joint_diagnostics": joint_diagnostic,
+        "joint_exact_blocks": block_diagnostics,
+        "additional_middle_diagnostics": middle_diagnostic,
+        "lower_identity_relative_error": lower_error,
+        "upper_identity_relative_error": upper_error,
+        "legacy_structural_difference_relative": legacy_difference,
+        "group_gram_pass": legacy_checks["group_gram_pass"],
+        "joint_scalar_diagnostic_pass": legacy_checks["joint_scalar_diagnostic_pass"],
+        "joint_exact_structural_diagnostic_pass": exact_gate_pass,
+        "joint_exact_blocks_pass": blocks_pass,
+        "ordering_pass": all(
+            item["shape"] == expected_shapes[name]
+            for name, item in block_diagnostics.items()
+        ),
+        "joint_exact_block_norms": {
+            name: float(item["frobenius_norm"])
+            for name, item in block_diagnostics.items()
+        },
+        "joint_exact_block_ranks": {
+            name: int(item["rank"]) for name, item in block_diagnostics.items()
+        },
+        "joint_exact_block_hashes": {
+            name: item["sha256"] for name, item in block_diagnostics.items()
+        },
+    }
+
+
+def recompute_v3_1_augmented_packet(
+    packet_root: str | Path,
+    *,
+    watchdog_summary_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Recompute the V3-1 packet after the middle-group Schur extension."""
+
+    root = Path(packet_root)
+    manifest_path = root / "manifest.json"
+    manifest_bytes = manifest_path.read_bytes()
+    manifest = json.loads(manifest_bytes)
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    if manifest_sha256 != AUGMENTED_PACKET_MANIFEST_SHA256:
+        raise ValueError("augmented packet manifest hash is not frozen")
+    if (
+        manifest.get("provenance", {}).get("source_sha")
+        != AUGMENTED_PRODUCER_SOURCE_SHA
+    ):
+        raise ValueError("augmented packet producer source is not frozen")
+    packet_result = check_v2_packet(
+        root,
+        expected_span_sizes=EXPECTED_SPAN_SIZES,
+        watchdog_summary_path=watchdog_summary_path,
+    )
+    group_matrices, matrix_files = _load_projected_matrices(root, manifest)
+    middle_matrix, middle_files = _load_augmented_middle_matrix(root, manifest)
+    augmented = _augmented_joint_checks(group_matrices, middle_matrix)
+    diagnostics = manifest["diagnostics"]
+    decomposition = _failure_decomposition(diagnostics)
+    semantic_mapping = _semantic_mapping(diagnostics)
+    group_diagnostics = diagnostics["groups"]
+    ordering_identity = {
+        "producer_source_sha": manifest["provenance"].get("source_sha"),
+        "lower_mode_count": diagnostics.get("lower", {}).get("mode_count"),
+        "lower_mode_key_sha256": diagnostics.get("lower", {}).get("mode_key_sha256"),
+        "upper_mode_count": diagnostics.get("upper", {}).get("mode_count"),
+        "upper_mode_key_sha256": diagnostics.get("upper", {}).get("mode_key_sha256"),
+        "upper_beta_sha256": diagnostics.get("upper", {}).get("beta_sha256"),
+        "upper_branch_authority": diagnostics.get("upper", {}).get("branch_authority"),
+        "upper_qep_calls": diagnostics.get("upper", {}).get("qep_calls"),
+        "group1_span_size": group_diagnostics[1].get("span_size"),
+        "group1_planes": group_diagnostics[1]
+        .get("gamma_layout", {})
+        .get("plane_identity", {})
+        .get("planes"),
+        "contract": "build_group_basis_columns: lower then upper",
+    }
+    ordering_identity_pass = (
+        ordering_identity["producer_source_sha"] == AUGMENTED_PRODUCER_SOURCE_SHA
+        and ordering_identity["lower_mode_count"] == EXPECTED_SPAN_SIZES[0]
+        and ordering_identity["lower_mode_key_sha256"] == FROZEN_LOWER_MODE_KEY_SHA256
+        and ordering_identity["upper_mode_count"] == EXPECTED_SPAN_SIZES[2]
+        and ordering_identity["upper_mode_key_sha256"] == FROZEN_UPPER_MODE_KEY_SHA256
+        and ordering_identity["upper_beta_sha256"] == FROZEN_UPPER_BETA_SHA256
+        and ordering_identity["upper_branch_authority"] == "positive/forward"
+        and ordering_identity["upper_qep_calls"] == 0
+        and ordering_identity["group1_span_size"] == EXPECTED_SPAN_SIZES[1]
+        and ordering_identity["group1_planes"] == ["lower", "upper"]
+    )
+    middle_metadata = middle_files["metadata"]
+    middle_diagnostic = augmented["additional_middle_diagnostics"]
+    middle_metadata_pass = (
+        middle_metadata.get("schema") == AUGMENTED_MATRIX_SCHEMA
+        and middle_metadata.get("semantic") == "Y1^H [oracle.apply_group(1)] Z1"
+        and middle_metadata.get("apply_count") == EXPECTED_SPAN_SIZES[1]
+        and middle_metadata.get("rank") == middle_diagnostic["rank"]
+        and middle_metadata.get("finite") is True
+        and _finite(middle_metadata.get("condition"))
+        and augmented["lower_identity_relative_error"] <= 1.0e-12
+        and augmented["upper_identity_relative_error"] <= 1.0e-12
+    )
+    watchdog_hash_pass = False
+    run_summary_hash_pass = False
+    if watchdog_summary_path is not None:
+        summary_path = Path(watchdog_summary_path)
+        worker_summary = summary_path.parent / "worker" / "run_summary.json"
+        watchdog_hash_pass = _sha256(summary_path) == AUGMENTED_WATCHDOG_SUMMARY_SHA256
+        run_summary_hash_pass = _sha256(worker_summary) == AUGMENTED_RUN_SUMMARY_SHA256
+    checks = {
+        "manifest_hash": manifest_sha256 == AUGMENTED_PACKET_MANIFEST_SHA256,
+        "producer_source": ordering_identity_pass,
+        "packet_authority": packet_result["packet_complete"] is True,
+        "group_order": manifest.get("group_order") == ["group0", "group1", "group2"],
+        "span_sizes": packet_result["small_matrices"]["groups"]
+        and [
+            item["gram_shape"][0] for item in packet_result["small_matrices"]["groups"]
+        ]
+        == list(EXPECTED_SPAN_SIZES),
+        "group_gram_diagnostics": augmented["group_gram_pass"],
+        "joint_scalar_diagnostics": augmented["joint_scalar_diagnostic_pass"],
+        "middle_matrix": middle_metadata_pass,
+        "joint_exact": augmented["joint_exact_structural_diagnostic_pass"],
+        "joint_exact_blocks": augmented["joint_exact_blocks_pass"],
+        "ordering_identity": ordering_identity_pass,
+        "report_decomposition": decomposition["physical"]["count"] == 15
+        and decomposition["modal_combination"]["count"] == 4
+        and decomposition["complement"]["count"] == 4
+        and decomposition["middle_lower_to_upper"]["count"] == 4
+        and decomposition["middle_upper_to_lower"]["count"] == 4,
+        "local_middle_schur_evidence": semantic_mapping[
+            "local_group_schur_evidence_pass"
+        ],
+        "watchdog_hash": watchdog_hash_pass,
+        "run_summary_hash": run_summary_hash_pass,
+    }
+    identity_checks = (
+        "manifest_hash",
+        "producer_source",
+        "packet_authority",
+        "group_order",
+        "span_sizes",
+        "ordering_identity",
+        "report_decomposition",
+        "local_middle_schur_evidence",
+    )
+    if not all(checks[name] for name in identity_checks):
+        classification = "COUPLED_PACKET_INFORMATION_INCOMPLETE"
+    elif not checks["joint_exact"]:
+        classification = "COUPLED_INTERFACE_NUMERICAL_GATE_FAIL"
+    elif not checks["watchdog_hash"] or not checks["run_summary_hash"]:
+        classification = "COUPLED_INTERFACE_RESOURCE_GATE_FAIL"
+    elif not all(checks.values()):
+        classification = "COUPLED_INTERFACE_IMPLEMENTATION_FAILURE"
+    else:
+        classification = "COUPLED_INTERFACE_ALGEBRA_EVIDENCE_VALID"
+    return {
+        "schema": "task040.v3.coupled_interface.augmented.recomputed.v1",
+        "augmented": True,
+        "manifest_sha256": manifest_sha256,
+        "producer_source_sha": manifest["provenance"]["source_sha"],
+        "group_order": manifest["group_order"],
+        "span_sizes": list(EXPECTED_SPAN_SIZES),
+        "matrix_files": {
+            "groups": matrix_files,
+            "projected_middle_group_schur": middle_files,
+        },
+        "joint_diagnostics": augmented["joint_diagnostics"],
+        "joint_exact_blocks": augmented["joint_exact_blocks"],
+        "additional_middle_diagnostics": middle_diagnostic,
+        "additional_middle_metadata": middle_metadata,
+        "identity_relative_errors": {
+            "lower": augmented["lower_identity_relative_error"],
+            "upper": augmented["upper_identity_relative_error"],
+        },
+        "legacy_structural_difference_relative": augmented[
+            "legacy_structural_difference_relative"
+        ],
+        "semantic_mapping": semantic_mapping,
+        "ordering_identity": ordering_identity,
+        "failure_decomposition": decomposition,
+        "v2_packet_checks": packet_result["checks"],
+        "watchdog": packet_result["watchdog"],
+        "checks": checks,
+        "classification": classification,
+        "packet_sufficient": all(checks.values()),
     }
 
 
@@ -410,12 +746,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--packet-root", required=True)
     parser.add_argument("--watchdog-summary")
     parser.add_argument("--output")
+    parser.add_argument("--augmented", action="store_true")
     args = parser.parse_args(argv)
     try:
-        result = recompute_v3_1_packet(
-            args.packet_root,
-            watchdog_summary_path=args.watchdog_summary,
+        checker = (
+            recompute_v3_1_augmented_packet if args.augmented else recompute_v3_1_packet
         )
+        result = checker(args.packet_root, watchdog_summary_path=args.watchdog_summary)
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         result = {
             "schema": "task040.v3.coupled_interface.recomputed.v1",

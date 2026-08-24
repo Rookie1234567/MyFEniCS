@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
 import pytest
 from mpi4py import MPI
 
-from benchmarks.check_task040_v3_coupled import recompute_v3_1_packet
+from benchmarks.check_task040_v3_coupled import (
+    _load_augmented_middle_matrix,
+    recompute_v3_1_augmented_packet,
+    recompute_v3_1_packet,
+)
 from src.solvers.hybrid_interface_coupled import (
     assemble_coupled_interface_matrices,
     matrix_diagnostics,
@@ -236,6 +241,8 @@ def test_immutable_v2_packet_lacks_v3_local_middle_schur() -> None:
         "report_decomposition": True,
         "local_middle_schur_evidence": False,
     }
+    assert result["v2_packet_checks"]["factor_lifecycle"] is True
+    assert result["v2_packet_checks"]["watchdog"] is True
     assert result["checks"]["joint_exact_structural_diagnostic"] is True
     assert set(result["joint_exact_blocks"]) == {"LL", "LU", "UL", "UU"}
     assert result["span_sizes"] == [296, 776, 480]
@@ -265,3 +272,69 @@ def test_immutable_v2_packet_lacks_v3_local_middle_schur() -> None:
     assert semantics["z_gamma_in_packet"] is False
     assert semantics["y_reconstructible_from_v_g"] is True
     assert semantics["z_reconstructible_from_u"] is False
+
+
+def test_augmented_packet_recomputes_true_middle_joint() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size != 1:
+        pytest.skip("the augmented packet audit is run once in serial")
+    root = Path(__file__).resolve().parents[2]
+    packet_root = (
+        root
+        / "results/task040_v3_1_middle_schur_producer_mpi8_fa1720d8/worker/interface_packet"
+    )
+    watchdog = (
+        root
+        / "results/task040_v3_1_middle_schur_producer_mpi8_fa1720d8/watchdog_summary.json"
+    )
+    if not packet_root.is_dir() or not watchdog.is_file():
+        pytest.skip("augmented V3-1 packet evidence is unavailable")
+    result = recompute_v3_1_augmented_packet(
+        packet_root, watchdog_summary_path=watchdog
+    )
+    assert result["packet_sufficient"] is True
+    assert result["classification"] == "COUPLED_INTERFACE_ALGEBRA_EVIDENCE_VALID"
+    assert all(result["checks"].values())
+    assert result["additional_middle_metadata"]["apply_count"] == 776
+    assert result["additional_middle_diagnostics"]["rank"] == 776
+    assert result["joint_diagnostics"]["rank"] == 776
+    assert result["joint_diagnostics"]["condition"] <= 1.0e12
+    assert result["identity_relative_errors"]["lower"] <= 1.0e-12
+    assert result["identity_relative_errors"]["upper"] <= 1.0e-12
+    assert set(result["joint_exact_blocks"]) == {"LL", "LU", "UL", "UU"}
+    assert result["joint_exact_blocks"]["LL"]["shape"] == [296, 296]
+    assert result["joint_exact_blocks"]["LU"]["shape"] == [296, 480]
+    assert result["joint_exact_blocks"]["UL"]["shape"] == [480, 296]
+    assert result["joint_exact_blocks"]["UU"]["shape"] == [480, 480]
+    assert result["joint_exact_blocks"]["LU"]["frobenius_norm"] > 0.0
+    assert result["joint_exact_blocks"]["UL"]["frobenius_norm"] > 0.0
+    assert result["checks"]["manifest_hash"] is True
+    assert result["checks"]["run_summary_hash"] is True
+    assert result["checks"]["watchdog_hash"] is True
+    assert result["v2_packet_checks"]["factor_lifecycle"] is True
+    assert result["v2_packet_checks"]["watchdog"] is True
+    assert json.dumps(result, sort_keys=True)
+    assert all(
+        np.isfinite(block["frobenius_norm"])
+        for block in result["joint_exact_blocks"].values()
+    )
+
+
+def test_augmented_middle_metadata_tamper_fails_closed() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size != 1:
+        pytest.skip("the augmented packet audit is run once in serial")
+    root = Path(__file__).resolve().parents[2]
+    packet_root = (
+        root
+        / "results/task040_v3_1_middle_schur_producer_mpi8_fa1720d8/worker/interface_packet"
+    )
+    manifest_path = packet_root / "manifest.json"
+    if not manifest_path.is_file():
+        pytest.skip("augmented V3-1 packet evidence is unavailable")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["diagnostics"]["additional_projected_matrices"][
+        "projected_middle_group_schur"
+    ]["schema"] = "tampered"
+    with pytest.raises(ValueError, match="schema"):
+        _load_augmented_middle_matrix(packet_root, manifest)
