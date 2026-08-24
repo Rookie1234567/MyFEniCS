@@ -835,6 +835,14 @@ def _validate_watchdog_paths(worker_raw_dir: Path, watchdog_paths: tuple[Path, .
             raise ValueError(f"watchdog artifact must be sibling of worker raw_dir: {resolved}")
 
 
+def _watchdog_argv_without_separator(argv: list[str]) -> list[str]:
+    normalized = list(argv)
+    marker = normalized.index("--worker-command")
+    if marker + 1 < len(normalized) and normalized[marker + 1] == "--":
+        del normalized[marker + 1]
+    return normalized
+
+
 def _watchdog_main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Foundation E process-tree watchdog")
     parser.add_argument("--watchdog-raw", type=Path, required=True)
@@ -844,8 +852,8 @@ def _watchdog_main(argv: list[str]) -> int:
     parser.add_argument("--worker-record", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
     parser.add_argument("--worker-command", nargs=argparse.REMAINDER, required=True)
-    args = parser.parse_args(argv)
-    command = [item for item in args.worker_command if item != "--"]
+    args = parser.parse_args(_watchdog_argv_without_separator(argv))
+    command = list(args.worker_command)
     if not command:
         raise SystemExit("missing worker command")
     for path in (args.worker_raw_dir, args.worker_record, args.watchdog_raw, args.watchdog_compact, args.watchdog_log):
@@ -928,6 +936,9 @@ def _watchdog_main(argv: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    if raw_argv and raw_argv[0] == "--watchdog":
+        return _watchdog_main(raw_argv[1:])
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--watchdog", action="store_true")
     parser.add_argument("--stage", choices=("foundation-e",))
@@ -936,9 +947,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--record", type=Path)
     parser.add_argument("--expected-source-sha")
     parser.add_argument("--expected-mpi-size", type=int)
-    args, remainder = parser.parse_known_args(argv)
-    if args.watchdog:
-        return _watchdog_main((argv or sys.argv[1:])[1:] if argv and argv[0] == "--watchdog" else remainder)
+    args = parser.parse_args(raw_argv)
     required = (args.stage, args.case, args.raw_dir, args.record, args.expected_source_sha, args.expected_mpi_size)
     if any(value is None for value in required):
         parser.error("worker mode requires stage, case, raw-dir, record, expected-source-sha, expected-mpi-size")

@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -308,6 +310,80 @@ def test_watchdog_artifacts_are_siblings_and_last_sample_is_not_post_exit() -> N
     with pytest.raises(ValueError):
         runner._validate_watchdog_paths(raw_dir, (raw_dir / "watchdog.json",))
     runner._validate_watchdog_paths(raw_dir, (raw_dir.parent / "watchdog.json",))
+
+
+def test_watchdog_dispatch_preserves_worker_remainder() -> None:
+    worker_command = [
+        "/abs/python",
+        "-m",
+        "benchmarks.run_task038_full3d_lor_hx_foundation",
+        "--stage",
+        "foundation-e",
+        "--case",
+        "p3-mpi1",
+        "--raw-dir",
+        "/tmp/worker_raw",
+    ]
+    watchdog_args = [
+        "--watchdog-raw",
+        "/tmp/watchdog.raw.jsonl",
+        "--watchdog-compact",
+        "/tmp/watchdog.json",
+        "--watchdog-log",
+        "/tmp/worker.log",
+        "--worker-raw-dir",
+        "/tmp/worker_raw",
+        "--worker-record",
+        "/tmp/record.json",
+        "--source-sha",
+        SOURCE_SHA,
+        "--worker-command",
+        "--",
+        *worker_command,
+    ]
+    assert runner._watchdog_argv_without_separator(watchdog_args)[-len(worker_command) :] == worker_command
+
+
+def test_watchdog_main_subprocess_natural_closeout_and_fail_closed_reuse(tmp_path: Path) -> None:
+    repo = Path(runner.__file__).resolve().parents[1]
+    worker_raw = tmp_path / "worker_raw"
+    watchdog_raw = tmp_path / "watchdog.raw.jsonl"
+    watchdog_compact = tmp_path / "watchdog.json"
+    watchdog_log = tmp_path / "worker.log"
+    worker_record = tmp_path / "record.json"
+    worker_command = [sys.executable, "-c", "import time; time.sleep(0.35)"]
+    command = [
+        sys.executable,
+        "-m",
+        "benchmarks.run_task038_full3d_lor_hx_foundation",
+        "--watchdog",
+        "--watchdog-raw",
+        str(watchdog_raw),
+        "--watchdog-compact",
+        str(watchdog_compact),
+        "--watchdog-log",
+        str(watchdog_log),
+        "--worker-raw-dir",
+        str(worker_raw),
+        "--worker-record",
+        str(worker_record),
+        "--source-sha",
+        SOURCE_SHA,
+        "--worker-command",
+        "--",
+        *worker_command,
+    ]
+    first = subprocess.run(command, cwd=repo, capture_output=True, text=True, check=False)
+    assert first.returncode == 0, first.stderr
+    compact = json.loads(watchdog_compact.read_text(encoding="utf-8"))
+    assert compact["worker_command"] == worker_command
+    assert compact["natural_exit"] is True
+    assert compact["no_orphan"] is True
+    assert compact["returncode"] == 0
+    assert not worker_raw.exists()
+    second = subprocess.run(command, cwd=repo, capture_output=True, text=True, check=False)
+    assert second.returncode != 0
+    assert not worker_raw.exists()
 
 
 def test_checker_recomputes_synthetic_raw_and_rejects_checkpoint_extra(tmp_path: Path) -> None:
