@@ -24,7 +24,10 @@ from src.solvers.hybrid_interface_fgmres import (
     run_v3_full_span_right_fgmres_batch,
 )
 from src.solvers.hybrid_interface_basis import build_group_basis_columns
-from src.solvers.hybrid_interface_packet import recover_owner_local_y_from_packet_v
+from src.solvers.hybrid_interface_packet import (
+    recover_owner_local_y_from_packet_v,
+    transfer_right_basis_to_packet_gram,
+)
 from src.solvers.hybrid_side_impedance import _petsc_matrix_hash
 from src.test.test_310_task040_petsc_full_side_coupled import (
     _carrier,
@@ -127,6 +130,65 @@ def test_packet_v_conditioning_diagnostic_and_direct_group_y_authority() -> None
     expected[2, 2:] = upper_y[1]
     expected[3, :2] = lower_y[0]
     assert np.array_equal(direct, expected)
+
+
+def test_packet_dual_right_transfer_nonunitary_complex_and_rank_gate() -> None:
+    rng = np.random.default_rng(47)
+    lower = np.asarray(
+        [[1.4 + 0.2j, 0.3 - 0.1j], [0.1 + 0.4j, 1.8 - 0.3j]],
+        dtype=np.complex128,
+    )
+    upper = np.asarray(
+        [
+            [1.2 - 0.1j, 0.2 + 0.3j, 0.1 - 0.2j],
+            [0.4 + 0.1j, 1.6 + 0.2j, 0.3 + 0.4j],
+            [0.2 - 0.3j, 0.1 + 0.2j, 1.1 + 0.5j],
+        ],
+        dtype=np.complex128,
+    )
+    gram = np.zeros((5, 5), dtype=np.complex128)
+    gram[:2, :2] = lower
+    gram[2:, 2:] = upper
+    transfer = np.zeros_like(gram)
+    transfer[:2, :2] = np.asarray(
+        [[1.1 + 0.2j, 0.4 - 0.1j], [0.0 + 0.3j, 0.9 - 0.2j]],
+        dtype=np.complex128,
+    )
+    transfer[2:, 2:] = np.asarray(
+        [
+            [1.0 + 0.1j, 0.2, 0.0],
+            [0.1 - 0.2j, 0.8 + 0.2j, 0.3],
+            [0.0 + 0.1j, 0.0, 1.2 - 0.1j],
+        ],
+        dtype=np.complex128,
+    )
+    cross = gram @ np.linalg.inv(transfer)
+    current_z = rng.normal(size=(7, 5)) + 1j * rng.normal(size=(7, 5))
+    aligned, diagnostics = transfer_right_basis_to_packet_gram(
+        gram,
+        cross,
+        np.asarray(current_z, dtype=np.complex128),
+        lower_span=2,
+        upper_span=3,
+    )
+    assert (
+        np.linalg.norm(aligned - current_z @ transfer) / np.linalg.norm(aligned)
+        <= 1e-12
+    )
+    assert diagnostics["schema"] == "task040.v3.packet_dual_right_transfer.v1"
+    assert diagnostics["post_gram_relative_error"] <= 1e-12
+    assert diagnostics["post_block_relative_errors"]["LU"] <= 1e-12
+    assert diagnostics["right_transfer"]["offdiagonal_norm"] == {"LU": 0.0, "UL": 0.0}
+    singular_cross = cross.copy()
+    singular_cross[:2, :2] = 0.0
+    with pytest.raises(ValueError, match="right-transfer LL rank"):
+        transfer_right_basis_to_packet_gram(
+            gram,
+            singular_cross,
+            np.asarray(current_z, dtype=np.complex128),
+            lower_span=2,
+            upper_span=3,
+        )
 
 
 def test_v3_fgmres_has_zero_start_and_frozen_checkpoint_shape() -> None:

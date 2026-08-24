@@ -42,6 +42,7 @@ __all__ = (
     "load_packet_shard",
     "load_small_matrix",
     "recover_owner_local_y_from_packet_v",
+    "transfer_right_basis_to_packet_gram",
     "remap_group_rows",
     "redistribute_packet_group_rows",
 )
@@ -668,6 +669,205 @@ def recover_owner_local_y_from_packet_v(
     if not np.isfinite(result).all():
         raise ValueError("recovered packet Y is nonfinite")
     return result
+
+
+def transfer_right_basis_to_packet_gram(
+    packet_gram: np.ndarray,
+    cross_gram: np.ndarray,
+    current_z: np.ndarray,
+    *,
+    lower_span: int,
+    upper_span: int,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Right-transfer fresh ``Z`` into the packet dual Gram convention.
+
+    ``cross_gram`` is the distributed small contraction ``Yp^H Zc`` where
+    ``Yp`` is recovered from packet ``V`` and ``G``.  Only the diagonal lower
+    and upper blocks are solved:
+
+    ``B_LL T_L = G_LL`` and ``B_UU T_U = G_UU``.
+
+    The transfer is an SVD Petrov solve, never a normal-equations solve.  It
+    returns one owner-local ``Zc @ blockdiag(T_L, T_U)`` array and compact
+    pre/post diagnostics for the formal Gate.
+    """
+
+    packet = np.asarray(packet_gram)
+    cross = np.asarray(cross_gram)
+    z_values = np.asarray(current_z)
+    if (
+        packet.dtype != np.dtype(np.complex128)
+        or cross.dtype != np.dtype(np.complex128)
+        or z_values.dtype != np.dtype(np.complex128)
+    ):
+        raise ValueError("packet right-transfer arrays must be complex128")
+    if (
+        packet.ndim != 2
+        or packet.shape[0] != packet.shape[1]
+        or cross.shape != packet.shape
+        or z_values.ndim != 2
+        or z_values.shape[1] != packet.shape[1]
+    ):
+        raise ValueError("packet right-transfer arrays have incompatible shapes")
+    if lower_span <= 0 or upper_span <= 0:
+        raise ValueError("packet right-transfer spans must be positive")
+    if lower_span + upper_span != packet.shape[0]:
+        raise ValueError("packet right-transfer spans do not match Gram size")
+    if not np.isfinite(packet).all() or not np.isfinite(cross).all():
+        raise ValueError("packet right-transfer Gram is nonfinite")
+    if not np.isfinite(z_values).all():
+        raise ValueError("packet right-transfer Z is nonfinite")
+
+    slices = {
+        "LL": (slice(0, lower_span), slice(0, lower_span)),
+        "LU": (slice(0, lower_span), slice(lower_span, None)),
+        "UL": (slice(lower_span, None), slice(0, lower_span)),
+        "UU": (slice(lower_span, None), slice(lower_span, None)),
+    }
+
+    def summary(value: np.ndarray, reference: np.ndarray) -> dict[str, Any]:
+        singular_values = np.linalg.svd(value, compute_uv=False)
+        rank = int(np.linalg.matrix_rank(value))
+        condition = None
+        if value.shape[0] == value.shape[1]:
+            condition = (
+                float(singular_values[0] / singular_values[-1])
+                if singular_values.size and singular_values[-1] > 0.0
+                else float("inf")
+            )
+        return {
+            "shape": [int(item) for item in value.shape],
+            "rank": rank,
+            "condition": condition,
+            "norm": float(np.linalg.norm(value)),
+            "sha256": _array_sha256(np.ascontiguousarray(value)),
+            "relative_to_packet": float(
+                np.linalg.norm(value - reference)
+                / max(np.linalg.norm(reference), 1.0e-30)
+            ),
+        }
+
+    def solve_block(
+        name: str, matrix: np.ndarray, rhs: np.ndarray
+    ) -> tuple[np.ndarray, dict[str, Any]]:
+        u, singular_values, vh = np.linalg.svd(matrix, full_matrices=False)
+        if singular_values.size == 0 or not np.isfinite(singular_values).all():
+            raise ValueError(f"right-transfer {name} SVD is nonfinite")
+        tolerance = np.finfo(float).eps * max(matrix.shape) * singular_values[0]
+        rank = int(np.count_nonzero(singular_values > tolerance))
+        condition = (
+            float(singular_values[0] / singular_values[-1])
+            if singular_values[-1] > 0.0
+            else float("inf")
+        )
+        if rank != matrix.shape[0]:
+            raise ValueError(f"right-transfer {name} rank {rank} != {matrix.shape[0]}")
+        solution = vh.conj().T @ ((u.conj().T @ rhs) / singular_values[:, None])
+        residual = float(
+            np.linalg.norm(matrix @ solution - rhs) / max(np.linalg.norm(rhs), 1.0e-30)
+        )
+        transfer_singular_values = np.linalg.svd(solution, compute_uv=False)
+        transfer_condition = (
+            float(transfer_singular_values[0] / transfer_singular_values[-1])
+            if transfer_singular_values[-1] > 0.0
+            else float("inf")
+        )
+        if (
+            not np.isfinite(solution).all()
+            or not np.isfinite(residual)
+            or residual > 1.0e-10
+            or not np.isfinite(transfer_condition)
+        ):
+            raise ValueError(
+                f"right-transfer {name} backward error/condition failed: "
+                f"residual={residual!r}, condition={transfer_condition!r}"
+            )
+        return solution, {
+            "rank": rank,
+            "condition": condition,
+            "residual_relative": residual,
+            "transfer_condition": transfer_condition,
+        }
+
+    cross_blocks = {
+        name: cross[row_slice, column_slice]
+        for name, (row_slice, column_slice) in slices.items()
+    }
+    packet_blocks = {
+        name: packet[row_slice, column_slice]
+        for name, (row_slice, column_slice) in slices.items()
+    }
+    transfer_lower, lower_diagnostics = solve_block(
+        "LL", cross_blocks["LL"], packet_blocks["LL"]
+    )
+    transfer_upper, upper_diagnostics = solve_block(
+        "UU", cross_blocks["UU"], packet_blocks["UU"]
+    )
+    transfer = np.zeros_like(packet)
+    transfer[:lower_span, :lower_span] = transfer_lower
+    transfer[lower_span:, lower_span:] = transfer_upper
+    post = cross @ transfer
+    post_relative = float(
+        np.linalg.norm(post - packet) / max(np.linalg.norm(packet), 1.0e-30)
+    )
+    post_block_relative = {
+        name: float(
+            np.linalg.norm(
+                post[row_slice, column_slice] - packet[row_slice, column_slice]
+            )
+            / max(np.linalg.norm(packet[row_slice, column_slice]), 1.0e-30)
+        )
+        for name, (row_slice, column_slice) in slices.items()
+    }
+    transfer_offdiagonal_norm = {
+        "LU": float(np.linalg.norm(transfer[:lower_span, lower_span:])),
+        "UL": float(np.linalg.norm(transfer[lower_span:, :lower_span])),
+    }
+    cross_offdiagonal_norm = {
+        "LU": float(np.linalg.norm(cross_blocks["LU"])),
+        "UL": float(np.linalg.norm(cross_blocks["UL"])),
+    }
+    if (
+        not np.isfinite(post).all()
+        or post_relative > 1.0e-10
+        or any(
+            not np.isfinite(value) or value > 1.0e-10
+            for value in post_block_relative.values()
+        )
+        or any(
+            not np.isfinite(value) or value > 1.0e-12
+            for value in cross_offdiagonal_norm.values()
+        )
+    ):
+        raise ValueError(
+            "packet right-transfer post Gram Gate failed: "
+            f"relative={post_relative!r}, blocks={post_block_relative!r}, "
+            f"cross_offdiagonal={cross_offdiagonal_norm!r}"
+        )
+    aligned = z_values @ transfer
+    if not np.isfinite(aligned).all():
+        raise ValueError("packet right-transfer produced nonfinite Z")
+    diagnostics = {
+        "schema": "task040.v3.packet_dual_right_transfer.v1",
+        "y_authority": "packet_dual_from_VG",
+        "z_authority": "fresh_lower_fourier_upper_selected_right_transfer",
+        "cross_gram": {
+            "sha256": _array_sha256(np.ascontiguousarray(cross)),
+            "blocks": {
+                name: summary(cross_blocks[name], packet_blocks[name])
+                for name in slices
+            },
+            "offdiagonal_norm": cross_offdiagonal_norm,
+        },
+        "right_transfer": {
+            "blocks": {"LL": lower_diagnostics, "UU": upper_diagnostics},
+            "offdiagonal_norm": transfer_offdiagonal_norm,
+        },
+        "post_gram_sha256": _array_sha256(np.ascontiguousarray(post)),
+        "post_gram_relative_error": post_relative,
+        "post_block_relative_errors": post_block_relative,
+    }
+    return aligned, diagnostics
 
 
 def load_packet_shard(

@@ -108,7 +108,7 @@ def _packet_audit() -> dict[str, object]:
             "sha256": "m" * 64,
             "condition": checker.EXPECTED_JOINT_CONDITION,
         },
-        "group1_gram_content_sha256": "g" * 64,
+        "group1_gram_content_sha256": "a" * 64,
         "failure_decomposition": {
             "physical": {"count": 15},
             "modal_combination": {"count": 4},
@@ -357,9 +357,78 @@ def _fixture(
                 "UL": 0.0,
                 "UU": 0.0,
             },
-            "packet_gram_sha256": "g" * 64,
-            "recomputed_gram_sha256": "g" * 64,
-            "y_authority": "current_lower_upper_left_basis_trace_mass_dual",
+            "packet_gram_sha256": "a" * 64,
+            "recomputed_gram_sha256": "b" * 64,
+            "y_authority": "packet_dual_from_VG",
+            "z_authority": "fresh_lower_fourier_upper_selected_right_transfer",
+            "right_transfer": {
+                "schema": "task040.v3.packet_dual_right_transfer.v1",
+                "y_authority": "packet_dual_from_VG",
+                "z_authority": "fresh_lower_fourier_upper_selected_right_transfer",
+                "cross_gram": {
+                    "sha256": "b" * 64,
+                    "blocks": {
+                        "LL": {
+                            "shape": [296, 296],
+                            "rank": 296,
+                            "condition": 2.0,
+                            "norm": 1.0,
+                            "sha256": "c" * 64,
+                            "relative_to_packet": 0.0,
+                        },
+                        "LU": {
+                            "shape": [296, 480],
+                            "rank": 0,
+                            "condition": None,
+                            "norm": 0.0,
+                            "sha256": "d" * 64,
+                            "relative_to_packet": 0.0,
+                        },
+                        "UL": {
+                            "shape": [480, 296],
+                            "rank": 0,
+                            "condition": None,
+                            "norm": 0.0,
+                            "sha256": "e" * 64,
+                            "relative_to_packet": 0.0,
+                        },
+                        "UU": {
+                            "shape": [480, 480],
+                            "rank": 480,
+                            "condition": 2.0,
+                            "norm": 1.0,
+                            "sha256": "f" * 64,
+                            "relative_to_packet": 0.0,
+                        },
+                    },
+                    "offdiagonal_norm": {"LU": 0.0, "UL": 0.0},
+                },
+                "right_transfer": {
+                    "blocks": {
+                        "LL": {
+                            "rank": 296,
+                            "condition": 2.0,
+                            "residual_relative": 0.0,
+                            "transfer_condition": 2.0,
+                        },
+                        "UU": {
+                            "rank": 480,
+                            "condition": 2.0,
+                            "residual_relative": 0.0,
+                            "transfer_condition": 2.0,
+                        },
+                    },
+                    "offdiagonal_norm": {"LU": 0.0, "UL": 0.0},
+                },
+                "post_gram_sha256": "b" * 64,
+                "post_gram_relative_error": 0.0,
+                "post_block_relative_errors": {
+                    "LL": 0.0,
+                    "LU": 0.0,
+                    "UL": 0.0,
+                    "UU": 0.0,
+                },
+            },
         },
         "joint": {
             "shape": [776, 776],
@@ -490,6 +559,9 @@ def test_v3_checker_positive_is_independent_and_json_serializable() -> None:
     assert result["gate_pass"] is True
     assert result["screen"]["first_preferred_checkpoint"] == 4
     assert all(result["checks"].values())
+    positive_run, _, _ = _fixture()
+    positive_z = positive_run["coupled_interface_raw"]["z_reconstruction"]
+    assert positive_z["packet_gram_sha256"] != positive_z["recomputed_gram_sha256"]
     assert json.loads(json.dumps(result))["gate_pass"] is True
 
     run, watchdog, rows = _fixture()
@@ -593,6 +665,9 @@ def test_v3_checker_factor_lifecycle_tamper_is_implementation(field: str) -> Non
         "watchdog_peak",
         "y_authority",
         "gram_block_error",
+        "packet_gram_hash",
+        "right_transfer_post",
+        "right_transfer_cross",
     ),
 )
 def test_v3_checker_implementation_contract_tamper(tamper: str) -> None:
@@ -612,9 +687,21 @@ def test_v3_checker_implementation_contract_tamper(tamper: str) -> None:
             "true_residual_relative"
         ] = 0.9
     elif tamper == "y_authority":
-        raw["z_reconstruction"]["y_authority"] = "packet_v_recovery"
+        raw["z_reconstruction"]["y_authority"] = (
+            "current_lower_upper_left_basis_trace_mass_dual"
+        )
     elif tamper == "gram_block_error":
         raw["z_reconstruction"]["gram_block_relative_errors"]["LU"] = 1.0e-9
+    elif tamper == "packet_gram_hash":
+        raw["z_reconstruction"]["packet_gram_sha256"] = "x" * 64
+    elif tamper == "right_transfer_post":
+        raw["z_reconstruction"]["right_transfer"]["post_block_relative_errors"][
+            "LL"
+        ] = 1.0e-9
+    elif tamper == "right_transfer_cross":
+        raw["z_reconstruction"]["right_transfer"]["cross_gram"]["offdiagonal_norm"][
+            "LU"
+        ] = 1.0e-9
     else:
         watchdog["peak_rss_bytes"] = 999
     result = checker.recompute_v3_full_span(

@@ -56,7 +56,9 @@ from src.solvers.hybrid_interface_packet import (
     finalize_manifest,
     load_packet_shard,
     load_small_matrix,
+    recover_owner_local_y_from_packet_v,
     redistribute_packet_group_rows,
+    transfer_right_basis_to_packet_gram,
     write_group_shard,
 )
 from src.solvers.hybrid_interface_packet_dolfinx import (
@@ -2771,7 +2773,9 @@ def _run_v3_2_coupled_interface_consumer(
             max_relative_error=collective_remap_error,
         )
 
-        del raw_basis, canonical_basis, redistributed, packet_group, loaded
+        local_v = raw_basis.V
+        local_y = recover_owner_local_y_from_packet_v(local_v, gram)
+        del local_v, raw_basis, canonical_basis, redistributed, packet_group, loaded
         raw_basis = None
         canonical_basis = None
 
@@ -2816,69 +2820,45 @@ def _run_v3_2_coupled_interface_consumer(
             packet_gamma_rows[2],
             upper["right"],
         )
-        lower_y_audit: dict[str, Any] = {}
-        upper_y_audit: dict[str, Any] = {}
-        lower_y = build_mass_dual_from_active_vec(
-            masses[0], condensed, packet_gamma_rows[0], lower["left"], lower_y_audit
-        )
-        upper_y = build_mass_dual_from_active_vec(
-            masses[1], condensed, packet_gamma_rows[2], upper["left"], upper_y_audit
-        )
-        local_y = build_group_basis_columns(
-            1,
-            packet_gamma_rows[1],
-            packet_gamma_rows[0],
-            lower_y,
-            packet_gamma_rows[2],
-            upper_y,
-        )
-        del lower_y, upper_y
         if (
             local_y.shape != local_z.shape
             or not np.isfinite(local_y).all()
             or not np.isfinite(local_z).all()
         ):
             raise ValueError("V3-2 reconstructed owner-local Z/Y shape is invalid")
-        local_gram = local_y.conj().T @ local_z
-        observed_gram = np.empty_like(local_gram)
-        comm.Allreduce(local_gram, observed_gram, op=MPI.SUM)
-        gram_relative_error = float(
-            np.linalg.norm(observed_gram - gram) / max(np.linalg.norm(gram), 1.0e-30)
-        )
         lower_span = int(lower["left"].shape[1])
         upper_span = int(upper["left"].shape[1])
-        if lower_span + upper_span != int(gram.shape[0]):
-            raise ValueError("V3-2 direct dual basis spans do not match packet Gram")
-        block_slices = {
-            "LL": (slice(0, lower_span), slice(0, lower_span)),
-            "LU": (slice(0, lower_span), slice(lower_span, None)),
-            "UL": (slice(lower_span, None), slice(0, lower_span)),
-            "UU": (slice(lower_span, None), slice(lower_span, None)),
-        }
-        gram_block_relative_errors = {
-            name: float(
-                np.linalg.norm(
-                    observed_gram[row_slice, column_slice]
-                    - gram[row_slice, column_slice]
-                )
-                / max(np.linalg.norm(gram[row_slice, column_slice]), 1.0e-30)
-            )
-            for name, (row_slice, column_slice) in block_slices.items()
-        }
-        observed_gram_sha256 = _v3_matrix_hash(observed_gram)
-        y_authority = "current_lower_upper_left_basis_trace_mass_dual"
+        local_gram = local_y.conj().T @ local_z
+        cross_gram = np.empty_like(local_gram)
+        comm.Allreduce(local_gram, cross_gram, op=MPI.SUM)
+        local_z, transfer_diagnostics = transfer_right_basis_to_packet_gram(
+            gram,
+            cross_gram,
+            local_z,
+            lower_span=lower_span,
+            upper_span=upper_span,
+        )
+        gram_relative_error = float(transfer_diagnostics["post_gram_relative_error"])
+        gram_block_relative_errors = dict(
+            transfer_diagnostics["post_block_relative_errors"]
+        )
+        observed_gram_sha256 = str(transfer_diagnostics["post_gram_sha256"])
+        y_authority = str(transfer_diagnostics["y_authority"])
         _emit(
             marker_callback,
             "v3_z_y_gram_audit",
+            cross_gram=transfer_diagnostics["cross_gram"],
+            right_transfer=transfer_diagnostics["right_transfer"],
             gram_relative_error=gram_relative_error,
             gram_block_relative_errors=gram_block_relative_errors,
             packet_gram_sha256=packet_gram_sha256,
             recomputed_gram_sha256=observed_gram_sha256,
             y_authority=y_authority,
+            z_authority=transfer_diagnostics["z_authority"],
         )
         if not np.isfinite(gram_relative_error) or gram_relative_error > 1.0e-10:
             raise ValueError(
-                "V3-2 direct trace-mass Y/Z Gram differs from packet Gram: "
+                "V3-2 packet-dual right-transfer Gram differs from packet Gram: "
                 f"relative={gram_relative_error!r}, "
                 f"blocks={gram_block_relative_errors!r}, "
                 f"packet_sha={packet_gram_sha256}, observed_sha={observed_gram_sha256}, "
@@ -2893,6 +2873,8 @@ def _run_v3_2_coupled_interface_consumer(
             gram_sha256=observed_gram_sha256,
             gram_block_relative_errors=gram_block_relative_errors,
             y_authority=y_authority,
+            z_authority=transfer_diagnostics["z_authority"],
+            right_transfer=transfer_diagnostics,
         )
         del lower, upper, spaces, cross_section, middle, legacy_group1, gram
         lower = None
@@ -3085,6 +3067,8 @@ def _run_v3_2_coupled_interface_consumer(
                     "recomputed_gram_sha256": observed_gram_sha256,
                     "gram_block_relative_errors": gram_block_relative_errors,
                     "y_authority": y_authority,
+                    "z_authority": transfer_diagnostics["z_authority"],
+                    "right_transfer": transfer_diagnostics,
                     "layout_summary": layout_summary,
                 },
                 "one_apply": one_apply,

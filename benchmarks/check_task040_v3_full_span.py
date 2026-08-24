@@ -89,6 +89,14 @@ def _finite(value: Any) -> bool:
     )
 
 
+def _sha256_text(value: Any) -> bool:
+    return bool(
+        isinstance(value, str)
+        and len(value) == 64
+        and all(char in "0123456789abcdef" for char in value)
+    )
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -342,6 +350,83 @@ def _representation_checks(
                 for name in ("LL", "LU", "UL", "UU")
             )
         )
+    transfer = z.get("right_transfer", {})
+    cross_gram = transfer.get("cross_gram", {})
+    cross_blocks = cross_gram.get("blocks", {})
+    transfer_blocks = transfer.get("right_transfer", {}).get("blocks", {})
+    expected_shapes = {
+        "LL": [296, 296],
+        "LU": [296, 480],
+        "UL": [480, 296],
+        "UU": [480, 480],
+    }
+    expected_cross_ranks = {"LL": 296, "LU": 0, "UL": 0, "UU": 480}
+    cross_blocks_pass = bool(
+        isinstance(cross_blocks, Mapping)
+        and all(
+            isinstance(cross_blocks.get(name), Mapping)
+            and cross_blocks[name].get("shape") == expected_shapes[name]
+            and cross_blocks[name].get("rank") == expected_cross_ranks[name]
+            and _finite(cross_blocks[name].get("norm"))
+            and _sha256_text(cross_blocks[name].get("sha256"))
+            and _finite(cross_blocks[name].get("relative_to_packet"))
+            and (
+                _finite(cross_blocks[name].get("condition"))
+                if name in {"LL", "UU"}
+                else cross_blocks[name].get("condition") is None
+            )
+            for name in expected_shapes
+        )
+    )
+    transfer_blocks_pass = bool(
+        isinstance(transfer_blocks, Mapping)
+        and all(
+            isinstance(transfer_blocks.get(name), Mapping)
+            and _finite(transfer_blocks[name].get("condition"))
+            and _finite(transfer_blocks[name].get("transfer_condition"))
+            and _finite(transfer_blocks[name].get("residual_relative"))
+            and float(transfer_blocks[name]["residual_relative"]) <= 1.0e-10
+            and transfer_blocks[name].get("rank") == expected_cross_ranks[name]
+            for name in ("LL", "UU")
+        )
+    )
+    cross_offdiagonal_pass = bool(
+        isinstance(cross_gram, Mapping)
+        and all(
+            _finite(cross_gram.get("offdiagonal_norm", {}).get(name))
+            and float(cross_gram["offdiagonal_norm"][name]) <= 1.0e-12
+            for name in ("LU", "UL")
+        )
+        and _sha256_text(cross_gram.get("sha256"))
+    )
+    transfer_offdiagonal_pass = bool(
+        isinstance(transfer.get("right_transfer"), Mapping)
+        and all(
+            _finite(transfer["right_transfer"].get("offdiagonal_norm", {}).get(name))
+            and float(transfer["right_transfer"]["offdiagonal_norm"][name]) <= 1.0e-12
+            for name in ("LU", "UL")
+        )
+    )
+    post_transfer_pass = bool(
+        transfer.get("schema") == "task040.v3.packet_dual_right_transfer.v1"
+        and transfer.get("y_authority") == "packet_dual_from_VG"
+        and transfer.get("z_authority")
+        == "fresh_lower_fourier_upper_selected_right_transfer"
+        and _sha256_text(transfer.get("post_gram_sha256"))
+        and transfer.get("post_gram_sha256") == z.get("recomputed_gram_sha256")
+        and _finite(transfer.get("post_gram_relative_error"))
+        and float(transfer["post_gram_relative_error"]) <= 1.0e-10
+        and isinstance(transfer.get("post_block_relative_errors"), Mapping)
+        and all(
+            _finite(transfer["post_block_relative_errors"].get(name))
+            and float(transfer["post_block_relative_errors"][name]) <= 1.0e-10
+            for name in expected_shapes
+        )
+        and cross_blocks_pass
+        and transfer_blocks_pass
+        and cross_offdiagonal_pass
+        and transfer_offdiagonal_pass
+    )
     return {
         "remap": (
             _finite(remap.get("collective_max_relative_error"))
@@ -360,11 +445,14 @@ def _representation_checks(
             == "aee266f602bf704ffbc3d7551be661b05e1663f84205012bfe26c8fd5983f6c9"
             and _finite(z.get("gram_relative_error"))
             and float(z["gram_relative_error"]) <= 1.0e-10
-            and z.get("y_authority") == "current_lower_upper_left_basis_trace_mass_dual"
+            and z.get("y_authority") == "packet_dual_from_VG"
+            and z.get("z_authority")
+            == "fresh_lower_fourier_upper_selected_right_transfer"
             and z.get("packet_gram_sha256")
-            == z.get("recomputed_gram_sha256")
             == packet_audit.get("group1_gram_content_sha256")
+            and _sha256_text(z.get("recomputed_gram_sha256"))
             and gram_blocks_pass
+            and post_transfer_pass
         ),
         "bare_f_unchanged": (
             raw.get("bare_f_identity", {}).get("before")
