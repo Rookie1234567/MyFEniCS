@@ -6,7 +6,9 @@ import ast
 import hashlib
 import json
 import inspect
+import os
 import shutil
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -382,6 +384,16 @@ def test_batch_entrypoint_is_explicit_and_uses_no_old_slepc_settings() -> None:
     )
     assert args.case == "batch"
     assert runner.BATCH_SCHEMA.endswith(".batch")
+
+
+def test_worker_command_preserves_qualified_executable_and_module() -> None:
+    argv = ["--stage", "s1", "--case", "p2-mpi1", "--raw-dir", "/tmp/raw"]
+    command = runner._worker_command(argv)
+    assert command[0] == os.path.abspath(sys.executable)
+    assert command[0] == str(Path(sys.executable).absolute())
+    assert command[0] != str(Path(sys.executable).resolve())
+    assert command[1:3] == ["-m", runner.WORKER_MODULE]
+    assert command[3:] == argv
 
 
 def test_batch_gate_uses_real_threshold_and_limits() -> None:

@@ -36,6 +36,11 @@ STAGE = "s1"
 H_NM = 50.0
 CASES = {"p2-mpi1": 2, "p3-mpi1": 3}
 SOURCE_NAME = "random"
+WORKER_MODULE = "benchmarks.run_task038_full3d_lor_spectral_audit_v2"
+
+
+def _worker_command(argv: list[str]) -> list[str]:
+    return [os.path.abspath(sys.executable), "-m", WORKER_MODULE, *argv]
 
 
 def _jsonable(value: Any) -> Any:
@@ -342,7 +347,7 @@ def run_worker(args: argparse.Namespace) -> int:
     repo = Path(__file__).resolve().parents[1]
     raw_dir = Path(args.raw_dir).resolve()
     record_path = Path(args.record).resolve()
-    command = [str(Path(sys.executable).resolve()), *sys.argv[1:]]
+    command = _worker_command(sys.argv[1:])
     if args.case == "batch":
         return run_batch(args, repo, raw_dir, record_path, command)
     _prepare_paths(raw_dir, record_path)
