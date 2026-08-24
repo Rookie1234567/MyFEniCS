@@ -1393,12 +1393,28 @@ def _v2_prepare_packet_shards(
     interface_probe_reports: Sequence[Mapping[str, Any]],
     middle_cross_interface_reports: Sequence[Mapping[str, Any]],
     middle_cross_interface_identity: Mapping[str, Any],
+    middle_group_schur: Mapping[str, Any],
     comm: MPI.Intracomm,
 ) -> dict[str, Any]:
     """Detach one Petrov action at a time and write its owner-local shard."""
 
     descriptors: list[dict[str, Any]] = []
     small_matrices: dict[str, np.ndarray] = {}
+    lower_span, middle_span, upper_span = (
+        int(z_shapes[group][1]) for group in range(3)
+    )
+    if middle_span != lower_span + upper_span:
+        raise ValueError("projected middle Schur spans do not form lower plus upper")
+    middle_projected = np.asarray(middle_group_schur["projected"], dtype=np.complex128)
+    if (
+        middle_projected.shape != (middle_span, middle_span)
+        or not np.isfinite(middle_projected).all()
+    ):
+        raise ValueError(
+            "projected middle group Schur has the wrong shape or finite values"
+        )
+    lower_error: float | None = None
+    upper_error: float | None = None
     for group, action in enumerate(petrov_actions):
         ownership_range = tuple(int(value) for value in action.ownership_range)
         factors = action.detach_projected_woodbury_factors()
@@ -1427,7 +1443,75 @@ def _v2_prepare_packet_shards(
                     ),
                 }
             )
+        if group == 0:
+            reference = middle_projected[:lower_span, :lower_span]
+            lower_error = float(
+                np.linalg.norm(factors["projected_exact"] - reference)
+                / max(np.linalg.norm(reference), np.finfo(float).tiny)
+            )
+        elif group == 2:
+            reference = middle_projected[lower_span:middle_span, lower_span:middle_span]
+            upper_error = float(
+                np.linalg.norm(factors["projected_exact"] - reference)
+                / max(np.linalg.norm(reference), np.finfo(float).tiny)
+            )
+        if group == 2 and (
+            lower_error is None
+            or upper_error is None
+            or lower_error > 1.0e-12
+            or upper_error > 1.0e-12
+        ):
+            raise ValueError(
+                "projected middle Schur diagonal blocks do not match group exact"
+            )
         del canonical, values_u, values_v, factors
+    middle_metadata = {
+        key: value for key, value in middle_group_schur.items() if key != "projected"
+    }
+    middle_metadata.update(
+        {
+            "schema": "task040.v3.middle_group_schur_projection.v1",
+            "storage": "packet_small_matrices",
+            "matrix_name": "projected_middle_group_schur",
+            "lower_identity_relative_error": lower_error,
+            "upper_identity_relative_error": upper_error,
+            "cross_blocks": {
+                "LU_frobenius_norm": float(
+                    np.linalg.norm(
+                        middle_projected[:lower_span, lower_span:middle_span], ord="fro"
+                    )
+                ),
+                "UL_frobenius_norm": float(
+                    np.linalg.norm(
+                        middle_projected[lower_span:middle_span, :lower_span], ord="fro"
+                    )
+                ),
+                "LU_relative_frobenius_norm": float(
+                    np.linalg.norm(
+                        middle_projected[:lower_span, lower_span:middle_span], ord="fro"
+                    )
+                    / max(
+                        np.linalg.norm(middle_projected, ord="fro"),
+                        np.finfo(float).tiny,
+                    )
+                ),
+                "UL_relative_frobenius_norm": float(
+                    np.linalg.norm(
+                        middle_projected[lower_span:middle_span, :lower_span], ord="fro"
+                    )
+                    / max(
+                        np.linalg.norm(middle_projected, ord="fro"),
+                        np.finfo(float).tiny,
+                    )
+                ),
+            },
+            "joint_exact_definition": (
+                "projected_middle_group_schur + projected_exact_group1"
+            ),
+        }
+    )
+    if comm.rank == 0:
+        small_matrices["projected_middle_group_schur"] = middle_projected
     return {
         "descriptors": descriptors,
         "small_matrices": small_matrices if comm.rank == 0 else None,
@@ -1528,6 +1612,9 @@ def _v2_prepare_packet_shards(
                     "exact": f"projected_exact_group{group}",
                 }
                 for group in range(3)
+            },
+            "additional_projected_matrices": {
+                "projected_middle_group_schur": middle_metadata,
             },
             "factor_inventory": {
                 "ready": 3,
@@ -1656,6 +1743,8 @@ def _run_v1_2_interface_schur(
     packet_layouts: tuple[Any, Any, Any] | None = None
     packet_pending: dict[str, Any] | None = None
     packet_manifest: dict[str, Any] | None = None
+    middle_group_schur: dict[str, Any] | None = None
+    middle_group_schur_metadata: dict[str, Any] | None = None
     source_vectors: dict[str, PETSc.Vec] = {}
     try:
         oracle = build_petsc_interface_schur_oracle(bare_f, group_rows, supports)
@@ -1793,6 +1882,12 @@ def _run_v1_2_interface_schur(
             z_group=z_group,
             comm=comm,
         )
+        if producer_mode:
+            middle_group_schur = petrov_actions[1].project_additional_action(
+                lambda source, target: oracle.apply_group(1, source, target),
+                name="projected_middle_group_schur",
+                semantic="Y1^H [oracle.apply_group(1)] Z1",
+            )
         exact_ready = oracle.diagnostics
         petrov_diagnostics = [action.diagnostics for action in petrov_actions]
         petrov_contractions = None
@@ -1970,9 +2065,16 @@ def _run_v1_2_interface_schur(
                 interface_probe_reports=interface_probe_reports,
                 middle_cross_interface_reports=middle_cross_interface_reports,
                 middle_cross_interface_identity=middle_cross_interface_identity,
+                middle_group_schur=middle_group_schur,
                 comm=comm,
             )
+            middle_group_schur_metadata = dict(
+                packet_pending["diagnostics"]["additional_projected_matrices"][
+                    "projected_middle_group_schur"
+                ]
+            )
             packet_layouts = None
+            middle_group_schur = None
         _emit(
             marker_callback,
             "v1_2_exact_oracle_ready",
@@ -2249,7 +2351,13 @@ def _run_v1_2_interface_schur(
         }
         if producer_mode:
             route_result["result"]["interface_schur_raw"].update(
-                {"packet": packet_manifest, "producer_route": True}
+                {
+                    "packet": packet_manifest,
+                    "producer_route": True,
+                    "additional_projected_matrices": {
+                        "projected_middle_group_schur": middle_group_schur_metadata,
+                    },
+                }
             )
         owner_transferred = True
         return route_result

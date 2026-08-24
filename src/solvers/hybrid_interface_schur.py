@@ -722,6 +722,7 @@ class PetscDistributedPetrovAction:
         self.apply_count = 0
         self.scalar_apply_count = 0
         self.exact_apply_count = 0
+        self._additional_action_counts: dict[str, int] = {}
         try:
             local_rows = int(self._template.getLocalSize())
             global_rows = int(self._template.getSize())
@@ -877,6 +878,65 @@ class PetscDistributedPetrovAction:
             "delta": self._projected_exact - self._projected_scalar,
         }
 
+    def project_additional_action(
+        self,
+        action: Callable[[PETSc.Vec, PETSc.Vec], None],
+        *,
+        name: str,
+        semantic: str,
+    ) -> dict[str, Any]:
+        """Project one extra distributed action on the retained owner basis.
+
+        This is a narrow producer-only hook for a small Petrov matrix such as
+        ``Y1^H [oracle.apply_group(1)] Z1``.  It reuses one source and target
+        Vec for all columns and only allreduces the resulting small matrix;
+        no FE-sized numeric data or normal equations are introduced.
+        """
+
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        if not callable(action):
+            raise TypeError("additional Petrov action must be callable")
+        projected_local = np.empty(
+            (self.span_size, self.span_size), dtype=np.complex128
+        )
+        local_y_h = self._local_y.conj().T
+        source = self._template.duplicate()
+        target = self._template.duplicate()
+        apply_count = 0
+        try:
+            for column in range(self.span_size):
+                source.array[:] = np.asarray(
+                    self._local_z[:, column], dtype=PETSc.ScalarType
+                )
+                source.assemble()
+                target.set(0.0)
+                action(source, target)
+                target.assemble()
+                target_local = np.asarray(target.array, dtype=np.complex128)
+                projected_local[:, column] = local_y_h @ target_local
+                apply_count += 1
+        finally:
+            target.destroy()
+            source.destroy()
+        projected = self._allreduce_small(projected_local)
+        if not np.isfinite(projected).all():
+            raise ValueError(f"additional Petrov projection {name} is nonfinite")
+        self._additional_action_counts[name] = (
+            self._additional_action_counts.get(name, 0) + apply_count
+        )
+        return {
+            "name": str(name),
+            "semantic": str(semantic),
+            "projected": projected,
+            "shape": [int(item) for item in projected.shape],
+            "dtype": "complex128",
+            "finite": True,
+            **_small_svd_diagnostics(projected),
+            "apply_count": int(apply_count),
+            "total_apply_count": int(self._additional_action_counts[name]),
+        }
+
     def projected_woodbury_factors(self) -> dict[str, np.ndarray]:
         """Export owner-local ``U=delta`` and ``V=Y G^-H`` copies.
 
@@ -959,6 +1019,7 @@ class PetscDistributedPetrovAction:
                 "detached": self._detached,
                 "resident_local_rows": int(self._local_z.shape[0]),
                 "apply_count": self.apply_count,
+                "additional_action_counts": dict(self._additional_action_counts),
             }
 
         return {
@@ -985,6 +1046,7 @@ class PetscDistributedPetrovAction:
             "scalar_apply_count": self.scalar_apply_count,
             "exact_apply_count": self.exact_apply_count,
             "apply_count": self.apply_count,
+            "additional_action_counts": dict(self._additional_action_counts),
             "detached": self._detached,
             "destroyed": self._destroyed,
         }

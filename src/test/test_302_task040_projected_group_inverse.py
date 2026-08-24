@@ -437,3 +437,146 @@ def test_v2_packet_projected_transmission_matches_v1_factory_without_oracle():
         for mass in masses:
             mass.destroy()
         matrix.destroy()
+
+
+def test_petrov_additional_middle_group_projection_recovers_cross_blocks():
+    base = np.diag(
+        np.asarray(
+            [4.0 + 0.1j, 4.2 - 0.2j, 4.4 + 0.3j, 4.6 - 0.1j, 4.8 + 0.2j, 5.0 - 0.3j]
+        )
+    )
+    row = np.arange(6, dtype=float)[:, None]
+    column = np.arange(6, dtype=float)[None, :]
+    off_diagonal = 0.015 * (row + 1.0) + 0.01j * (column + 2.0)
+    base += off_diagonal * (1.0 - np.eye(6, dtype=np.complex128))
+    matrix = _distributed_matrix(base)
+    first, last = map(int, matrix.getOwnershipRange())
+    global_groups = ((0, 1, 2), tuple(range(6)), (3, 4, 5))
+    group_rows = tuple(
+        np.asarray([row for row in rows if first <= row < last], dtype=PETSc.IntType)
+        for rows in global_groups
+    )
+    supports = (
+        {"active_support": (0, 2)},
+        {"active_support": (3, 5)},
+    )
+    oracle = build_petsc_interface_schur_oracle(matrix, group_rows, supports)
+    layouts: list[PETSc.Vec] = []
+    carriers: list[Any] = []
+    try:
+        lower_y = np.asarray(
+            [[1.0 + 0.1j, 0.2 - 0.1j], [0.1 + 0.2j, 1.3 - 0.2j]],
+            dtype=np.complex128,
+        )
+        upper_y = np.asarray(
+            [[1.1 + 0.2j, -0.1 + 0.1j], [0.25 - 0.15j, 0.9 + 0.3j]],
+            dtype=np.complex128,
+        )
+        global_gamma = (0, 2, 3, 5)
+        y_global = np.zeros((4, 4), dtype=np.complex128)
+        y_global[:2, :2] = lower_y
+        y_global[2:, 2:] = upper_y
+        blocks = ((0, 1), (0, 1, 2, 3), (2, 3))
+        for group, columns in enumerate(blocks):
+            gamma_rows = oracle.group_gamma_rows_local(group)
+            layout = oracle.create_group_gamma_vector(group)
+            layouts.append(layout)
+            z_local = np.zeros((len(gamma_rows), len(columns)), dtype=np.complex128)
+            y_local = np.zeros_like(z_local)
+            for local, row_id in enumerate(gamma_rows):
+                global_column = global_gamma.index(int(row_id))
+                column_index = columns.index(global_column)
+                z_local[local, column_index] = 1.0
+                y_local[local, :] = y_global[global_column, list(columns)]
+
+            def scalar_apply(source, target):
+                source.copy(target)
+
+            def exact_apply(source, target, group=group):
+                oracle.apply_directed_neighbor(group, source, target)
+
+            carriers.append(
+                build_distributed_petrov_action(
+                    layout,
+                    scalar_apply,
+                    exact_apply,
+                    z_local,
+                    y_local,
+                    local_row_ids=gamma_rows,
+                )
+            )
+
+        additional = carriers[1].project_additional_action(
+            lambda source, target: oracle.apply_group(1, source, target),
+            name="projected_middle_group_schur",
+            semantic="Y1^H [oracle.apply_group(1)] Z1",
+        )
+        repeated = carriers[1].project_additional_action(
+            lambda source, target: oracle.apply_group(1, source, target),
+            name="projected_middle_group_schur",
+            semantic="Y1^H [oracle.apply_group(1)] Z1",
+        )
+        np.testing.assert_allclose(
+            additional["projected"], repeated["projected"], rtol=0.0, atol=1.0e-12
+        )
+        assert additional["shape"] == [4, 4]
+        assert additional["finite"] is True
+        assert additional["apply_count"] == 4
+        assert additional["total_apply_count"] == 4
+        assert repeated["total_apply_count"] == 8
+        assert carriers[1].diagnostics["additional_action_counts"] == {
+            "projected_middle_group_schur": 8
+        }
+
+        old_lower = carriers[0].projected_contractions["exact"]
+        old_middle = carriers[1].projected_contractions["exact"]
+        old_upper = carriers[2].projected_contractions["exact"]
+        assert np.linalg.norm(old_middle[:2, 2:]) == 0.0
+        assert np.linalg.norm(old_middle[2:, :2]) == 0.0
+        np.testing.assert_allclose(
+            additional["projected"][:2, :2], old_lower, rtol=0.0, atol=1.0e-12
+        )
+        np.testing.assert_allclose(
+            additional["projected"][2:, 2:], old_upper, rtol=0.0, atol=1.0e-12
+        )
+        legacy_structural = old_middle.copy()
+        legacy_structural[:2, :2] += old_lower
+        legacy_structural[2:, 2:] += old_upper
+        assert np.linalg.norm(legacy_structural[:2, 2:]) == 0.0
+        assert np.linalg.norm(legacy_structural[2:, :2]) == 0.0
+
+        gamma = np.asarray(global_gamma, dtype=int)
+        interior = np.asarray([1, 4], dtype=int)
+        authority = base[np.ix_(gamma, gamma)] - base[np.ix_(gamma, interior)] @ (
+            np.linalg.solve(
+                base[np.ix_(interior, interior)], base[np.ix_(interior, gamma)]
+            )
+        )
+        expected = y_global.conj().T @ authority
+        relative_error = np.linalg.norm(additional["projected"] - expected) / max(
+            np.linalg.norm(expected), np.finfo(float).tiny
+        )
+        assert relative_error <= 1.0e-12
+        assert np.linalg.norm(additional["projected"][:2, 2:]) > 0.0
+        assert np.linalg.norm(additional["projected"][2:, :2]) > 0.0
+        joint = additional["projected"] + old_middle
+        joint_expected = expected + old_middle
+        joint_relative_error = np.linalg.norm(joint - joint_expected) / max(
+            np.linalg.norm(joint_expected), np.finfo(float).tiny
+        )
+        assert joint_relative_error <= 1.0e-12
+        assert np.linalg.norm(joint - legacy_structural) > 1.0e-8
+        carriers[1].destroy()
+        with pytest.raises(RuntimeError, match="destroyed"):
+            carriers[1].project_additional_action(
+                lambda source, target: oracle.apply_group(1, source, target),
+                name="projected_middle_group_schur",
+                semantic="Y1^H [oracle.apply_group(1)] Z1",
+            )
+    finally:
+        for carrier in carriers:
+            carrier.destroy()
+        for layout in layouts:
+            layout.destroy()
+        oracle.destroy()
+        matrix.destroy()
