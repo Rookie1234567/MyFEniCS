@@ -20,34 +20,40 @@ import sys
 import time
 from typing import Any
 
-import numpy as np
-from mpi4py import MPI
-
-from benchmarks.run_task038_full3d_lor_hx import (
-    _append_stage_marker,
-    _l2_canonical_payload,
-    _l2_gather_payload,
-    _prepare_paths,
-    _runtime_identity,
-    _source_identity,
-)
-from benchmarks.run_task038_full3d_lor_hx_krylov import _closeout_record
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
 )
-from src.solvers.fullspace_memory_first_krylov import (
-    destroy_krylov_result,
-    run_restart20_cycles,
-    write_solution_checkpoint,
-)
-from src.solvers.fullspace_lor_hx_root_cause import (
-    DiagnosticDirectSolver,
-    lift_low_primal,
-    low_input_from_high_dual,
-)
-from src.solvers.fullspace_lor_native_hx_fixture import RealL2PositiveHXFixture
+
+
+_WATCHDOG_CLI = len(sys.argv) > 1 and sys.argv[1] == "--watchdog"
+if not _WATCHDOG_CLI:
+    import numpy as np
+    from mpi4py import MPI
+
+    from benchmarks.run_task038_full3d_lor_hx import (
+        _append_stage_marker,
+        _l2_canonical_payload,
+        _l2_gather_payload,
+        _prepare_paths,
+        _runtime_identity,
+        _source_identity,
+    )
+    from benchmarks.run_task038_full3d_lor_hx_krylov import _closeout_record
+    from src.solvers.fullspace_memory_first_krylov import (
+        destroy_krylov_result,
+        run_restart20_cycles,
+        write_solution_checkpoint,
+    )
+    from src.solvers.fullspace_lor_hx_root_cause import (
+        DiagnosticDirectSolver,
+        lift_low_primal,
+        low_input_from_high_dual,
+    )
+    from src.solvers.fullspace_lor_native_hx_fixture import RealL2PositiveHXFixture
+else:
+    np = None
 
 
 SCHEMA = "task038.lor-native-complex-hx.foundation-e-record.v1"
@@ -84,9 +90,9 @@ def _jsonable(value: Any) -> Any:
         return {str(key): _jsonable(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
         return [_jsonable(item) for item in value]
-    if isinstance(value, np.ndarray):
+    if np is not None and isinstance(value, np.ndarray):
         return [_jsonable(item) for item in value.tolist()]
-    if isinstance(value, (np.integer, np.floating, np.bool_)):
+    if np is not None and isinstance(value, (np.integer, np.floating, np.bool_)):
         return _jsonable(value.item())
     if isinstance(value, complex):
         return {"real": float(value.real), "imag": float(value.imag)}
