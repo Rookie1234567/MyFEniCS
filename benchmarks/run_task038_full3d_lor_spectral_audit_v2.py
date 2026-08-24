@@ -23,6 +23,8 @@ from petsc4py import PETSc
 
 from src.solvers.fullspace_lor_global_audit import (
     EIGEN_RESIDUAL_LIMIT,
+    HIGH_ACTION_LIMIT,
+    WORK_LIMIT,
     audit_fixture,
 )
 from src.solvers.fullspace_lor_native_hx_fixture import RealL2PositiveHXFixture

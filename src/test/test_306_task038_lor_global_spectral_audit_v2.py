@@ -384,6 +384,27 @@ def test_batch_entrypoint_is_explicit_and_uses_no_old_slepc_settings() -> None:
     assert runner.BATCH_SCHEMA.endswith(".batch")
 
 
+def test_batch_gate_uses_real_threshold_and_limits() -> None:
+    facts = {
+        "numerical_rank": 3,
+        "tested_dimension": 3,
+        "high_action_relatives": [0.0],
+        "work_relatives": [0.0],
+        "pull_relatives": [0.0],
+        "hermitian_defects": {"A_pull": 0.0},
+        "spd": {"B_L": {"positive_definite": True}, "A_pull": {"positive_definite": True}},
+        "spectral": {
+            "status": "solved",
+            "smallest": {"eigenvalue": 1.0, "residual_relative": 0.0},
+            "largest": {"eigenvalue": 4.0, "residual_relative": 0.0},
+        },
+        "condition": 4.0,
+    }
+    assert runner._batch_case_is_closed(facts)
+    facts["spectral"]["smallest"]["eigenvalue"] = 0.0
+    assert not runner._batch_case_is_closed(facts)
+
+
 def test_batch_checker_preserves_fixed_case_order_and_condition_growth(tmp_path: Path) -> None:
     first_path, first_raw, source_sha, _first_watchdog = _synthetic_record(tmp_path / "first")
     second_path, second_raw, _source_sha, _second_watchdog = _synthetic_record(tmp_path / "second")
