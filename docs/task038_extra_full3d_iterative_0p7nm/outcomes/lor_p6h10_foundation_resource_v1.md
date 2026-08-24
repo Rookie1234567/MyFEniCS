@@ -66,7 +66,7 @@ mesh、space 和 MPC 的 C++ 对象没有可审查的独立 byte counter。上�
 
 ## 保留的实现缺陷尝试
 
-以下两次尝试都发生在 fixture 构造前，均不是数值 Gate，也没有被重分类为通过；ignored roots 原样保留。
+以下两次尝试均在 `fixture_built` marker 写出前停止，未形成合格 fixture/record；它们不是数值或资源 Gate，也没有被重分类为通过；ignored roots 原样保留。
 
 | source/root | 事实 | watchdog.json SHA256 | watchdog.raw.jsonl SHA256 | worker.log SHA256 |
 |---|---|---|---|---|
@@ -84,7 +84,7 @@ mesh、space 和 MPC 的 C++ 对象没有可审查的独立 byte counter。上�
 | watchdog compact | `benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/watchdog.json` | `5e5b6feeaba4e69bd0306bfd39300f6ea4c68598cc879f3af831dca1a3c11aa6` |
 | watchdog raw ledger | `benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/watchdog.raw.jsonl` | `cc354f7142f57e210002fe5b7636e2f16528ac5d89340bd857e46b5c83282fc9` |
 | apply ledger | `benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/worker_raw/apply_ledger.json` | `a06b176d361a8a341b1077f5b340ea8aa2a2fb1993c5a9f23b3261a4fa3698b2` |
-| worker log | `benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/worker.log` | `e3b0c44298fc1c149afaf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| worker log | `benchmarks/artifacts/task038_extra_full3d_lor_p6h10_foundation_resource_v1/12adebdf0e5e78de33818e97fd35cd870fef3a4e/s2-p6-h10-mpi1/worker.log` | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
 
 The worker log is empty; its SHA is nevertheless recorded as part of the evidence manifest. Marker files are under the same worker raw `markers/` directory and are bound by the record's marker sequence: `paths_ready`, `source_runtime_closed`, `fixture_built`, `reserve_built`, `apply_ledger_written`, `retained_ready`, `record_written`.
 
