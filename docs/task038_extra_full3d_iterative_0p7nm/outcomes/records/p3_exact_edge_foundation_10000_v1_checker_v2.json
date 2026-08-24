@@ -1,0 +1,12 @@
+{
+  "contract_errors": [],
+  "gate_failures": [],
+  "metrics": {
+    "checkpoint_count": 6,
+    "final_true_residual": 9.260562270838936e-09,
+    "iterations": 3020
+  },
+  "passed": true,
+  "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1.json",
+  "schema": "task038.lor-native-complex-hx.foundation-e-check.v1"
+}
