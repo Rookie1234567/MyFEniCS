@@ -1,0 +1,116 @@
+{
+  "schema": "task038.lor-native-complex-hx.global-spectral-audit.failure.v1",
+  "evidence_kind": "mechanical_summary_of_immutable_attempt",
+  "stage": "global-spectral-audit",
+  "case": "p3-mpi1",
+  "source_sha": "4bd610954da0d6aa01fbc6440f67f6604381e6a2",
+  "attempt_count": 1,
+  "worker_returncode": 1,
+  "classification": "CONTROLLED_NEGATIVE_GHEP_NONCONVERGENCE",
+  "fixed_spectral_attempt": {
+    "endpoint": "smallest",
+    "slepc_reason": -1,
+    "converged": 0,
+    "max_it": 500,
+    "lambda": null,
+    "numerical_rank": null,
+    "condition": null,
+    "status": "spectral_not_established"
+  },
+  "worker_record_generated": false,
+  "worker_record_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_global_lor_spectral_audit_v1.json",
+  "checker_status": "NOT_RUN_NO_WORKER_RECORD",
+  "checker_output_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_global_lor_spectral_audit_v1_checker.json",
+  "marker_sequence": [
+    "setup",
+    "source_runtime_closed",
+    "layout_closed",
+    "operators_built",
+    "high_action_legality"
+  ],
+  "watchdog": {
+    "elapsed_seconds": 975.9366048850352,
+    "sample_count": 3880,
+    "poll_seconds": 0.25,
+    "peak_process_tree_rss_bytes": 176119808,
+    "rss_limit_bytes": 500000000,
+    "max_process_tree_swap_bytes": 0,
+    "all_status_readable": true,
+    "no_orphan": true,
+    "stop_reason": "natural_exit",
+    "natural_exit": false,
+    "natural_exit_explanation": "The watchdog exited after the worker returned rc=1; the worker did not complete naturally with rc=0."
+  },
+  "shared_cgroup_diagnostic": {
+    "path": "/init.scope",
+    "dedicated": false,
+    "swap_current_bytes": 13799424,
+    "counts_as_task_swap_gate": false,
+    "explanation": "This is a shared non-dedicated cgroup diagnostic and is not the process-tree swap Gate."
+  },
+  "worker_command": [
+    "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "-m",
+    "benchmarks.run_task038_full3d_lor_spectral_audit",
+    "--stage",
+    "global-spectral-audit",
+    "--case",
+    "p3-mpi1",
+    "--raw-dir",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_global_spectral_audit_v1/4bd610954da0d6aa01fbc6440f67f6604381e6a2/p3-mpi1/worker_raw",
+    "--record",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_global_lor_spectral_audit_v1.json",
+    "--expected-source-sha",
+    "4bd610954da0d6aa01fbc6440f67f6604381e6a2",
+    "--expected-mpi-size",
+    "1"
+  ],
+  "evidence": {
+    "watchdog_raw": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_lor_global_spectral_audit_v1/4bd610954da0d6aa01fbc6440f67f6604381e6a2/p3-mpi1/watchdog.raw.jsonl",
+      "sha256": "f06ccf3a825bd2ecc4b2446a069209b2222227d676f551743e42099c05963450"
+    },
+    "worker_log": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_lor_global_spectral_audit_v1/4bd610954da0d6aa01fbc6440f67f6604381e6a2/p3-mpi1/worker.log",
+      "sha256": "2a54020d2d91a0053c14209b91155972f83c6352369c29f5799866a2357f7dd0"
+    },
+    "marker": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_lor_global_spectral_audit_v1/4bd610954da0d6aa01fbc6440f67f6604381e6a2/p3-mpi1/worker_raw/stage-rank0.jsonl",
+      "sha256": "d519fd38a03adb9320c21f178d8597ff49b58024705be8c29ec3c82298dff100"
+    },
+    "watchdog_compact": {
+      "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_global_lor_spectral_audit_v1_watchdog.json",
+      "sha256": "55e2ae1299eace079aaf943422acd912052b869d5eaaaa147a88c9ad3142b9c3"
+    }
+  },
+  "prior_evidence_unchanged": {
+    "old_q0": [
+      {
+        "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1.json",
+        "sha256": "2d767143ce3b28ac9a4b45962faf370770e1e637f05b4f0b62bb279fe7f6ca82"
+      },
+      {
+        "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1_checker.json",
+        "sha256": "be70e0e559fea32023dfde58e4ede11009574c18f51e4b914d9b5034832a35ea"
+      }
+    ],
+    "foundation": [
+      {
+        "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1.json",
+        "sha256": "ab98d01a99d22e69fd2ed9132bf64d8703e30ff4589a3120e17ed31a6d7beac0"
+      },
+      {
+        "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1_checker.json",
+        "sha256": "be501f7ad99bb8bd5b7372e53d4748cce8696492ffbc6efa2b6450a9c27ca510"
+      },
+      {
+        "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1_checker_v2.json",
+        "sha256": "b42675cc9b3d6729f18c1ae744742fefbfe312ded30b5db2ada098664db98525"
+      },
+      {
+        "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1_watchdog.json",
+        "sha256": "9c08f9f94073fb53c335c143829672b24bb0dad402d5199eea26efc6d01800cc"
+      }
+    ]
+  }
+}
