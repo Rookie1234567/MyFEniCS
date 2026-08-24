@@ -14,7 +14,7 @@
 | formal case | p2 / h50 / random / MPI1 |
 | P0 结论 | **PASS（以 ba901631 fresh v2 为 authority）** |
 | 后续资格 | 允许进入 P1 评审/实现 |
-| 本文未做 | P1、p6、PDE、完整 0.7nm workflow 均未运行 |
+| P0 closeout 当时未做 | P1、p6、PDE、完整 0.7nm workflow 均未运行；P1 后续状态见本文末尾 |
 
 ## 两次 formal attempt
 
@@ -76,3 +76,9 @@ GNU `/usr/bin/time -v` 的单进程观察为 wall=`7.66 s`、max RSS=`125104 kB`
 ## 边界
 
 P0 PASS 表明固定 p2/h50/MPI1 的内存生命周期、checkpoint/restart、residual authority、PC legality 和 provenance 合同闭合。它不表示 P1、p6、MPI2、PDE 或完整 0.7nm 计算已经通过；这些项目仍等待后续 Review 授权与独立 Gate。
+
+## V9 P1 后续状态
+
+V9 在保持上述 P0 PASS 和旧负证据不变的前提下，实际运行了 P1 v2 的 9/16 个 small cases：8 个 p2 案通过，p3/h50 MPI1/random 在固定 2000 步后未达到最终真残差限值。该案的独立 `check_v2` 只有数值 Gate 失败，最终显式真残差为 `0.01027838962263555 > 1e-8`，因此当前 memory-first multiplicative-v1 family 按 V9 关闭；剩余 7 案及 P2–P7 均为 `not_run_by_gate`。详细事实见 `outcomes/memory_first_small_v2.md`、`outcomes/records/memory_first_small_v2.json` 和 `outcomes/records/memory_first_small_v2_checker.json`。
+
+这不是内存或 swap 失败：已运行案的 process-tree/rank swap 与 GNU time `Swaps` 均为 0；共享 `/init.scope` 的 `13,799,424 B` 只作 non-dedicated diagnostic，不能当作资源 Gate。失败含义是固定内存、固定 `restart=20` 和 `max_it=2000` 下，p3 random 的残差仍不够小，不能从下降趋势外推 p-robust 收敛或 p6/h10 物理可行性。

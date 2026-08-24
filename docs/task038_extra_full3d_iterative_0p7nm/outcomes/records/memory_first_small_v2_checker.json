@@ -1,0 +1,65 @@
+{
+  "schema": "task038.memory_first_small.v2.checker-compact",
+  "stage": "P1",
+  "checker_implementation_sha": "24c0aa332d956313b1b484c81a91cfdcd5b5f07a",
+  "worker_source_sha": "891ef7fba8cb7d154ad9cac61d67652f02063fbb",
+  "classification": "FAILED_AT_FIXED_MEMORY_ITERATION_CAP",
+  "authority": {
+    "gate": "final explicit true residual",
+    "limit": 1e-08,
+    "failed_case": "p3-mpi1/random",
+    "observed": 0.01027838962263555,
+    "iterations": 2000,
+    "reason": "fixed total iteration cap reached; no residual Gate pass",
+    "contract_errors": [],
+    "gate_failures": ["final true residual rho 0.01027838962263555 > 1e-08"]
+  },
+  "campaign": {
+    "expected_cases": 16,
+    "completed_cases": 9,
+    "passed_cases": 8,
+    "failed_cases": 1,
+    "not_run_cases": [
+      "p3-mpi1/gradient",
+      "p3-mpi1/curl",
+      "p3-mpi1/checkerboard",
+      "p3-mpi2/random",
+      "p3-mpi2/gradient",
+      "p3-mpi2/curl",
+      "p3-mpi2/checkerboard"
+    ],
+    "aggregate": "not_run_by_gate",
+    "aggregate_pass": false
+  },
+  "downstream": {
+    "P2": "not_run_by_gate",
+    "P3": "not_run_by_gate",
+    "P4": "not_run_by_gate",
+    "P5": "not_run_by_gate",
+    "P6": "not_run_by_gate",
+    "P7": "not_run_by_gate"
+  },
+  "resource_boundary": {
+    "process_tree_swap_bytes": 0,
+    "gnu_time_swaps": 0,
+    "shared_cgroup_swap_bytes": 13799424,
+    "shared_cgroup_is_not_a_gate": true,
+    "p3_cycle_process_tree_peak_rss_bytes": 155860992,
+    "memory_failure": false
+  },
+  "evidence_notes": {
+    "p3_record_sha256": "bb3017db9234c464e55dc6827d0c50d55441c77bb4471cd24a041b1af2f53e4c",
+    "p3_check_v2_sha256": "8702c22a1965a9d776dc10b3bc6135930f8e8cf46c907d1df825ade63753ec5a",
+    "p3_old_check_sha256": "d7d270113aa01aeecadf6edd52a9cd5eae7a31cdc2ac1a71d87967fd4130ccdf",
+    "p3_old_check_note": "旧 checker 将非固定 400/600/... checkpoint 要求错误地放进 checkpoint_status；check_v2 已去除该 evidence-layer defect，未改变数值结论",
+    "raw_arrays": "retained only in ignored formal root; not copied to tracked compact"
+  },
+  "preserved_authorities": {
+    "old_l2_one_apply_rho": 1.7348663090876784,
+    "old_l2_one_apply_limit": 0.45,
+    "old_v1_80_step_performance": "FAIL",
+    "additive_v2": "CLOSED",
+    "v8_m0_negative": "preserved",
+    "P0": "PASS"
+  }
+}

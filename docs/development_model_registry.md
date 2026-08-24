@@ -1447,3 +1447,14 @@ outcomes。完整证据固定在
 | `task038_r4_candidate_C` | final source `ea7fc96…` | focused fixed second-order local impedance authority; one p6/h10 physical formal attempt | focused tests pass；formal worker stopped before record | `CONTROLLED_STOP_HARD_12_GIB`; process-tree peak `12,942,209,024 B`, wall `406.7977727999969 s`, swap 0, return `-15`, `hard_stop_12_gib`; rho and formal payload not run | `t5_sweep_candidate_c_v2.json` and ignored watchdog raw/compact |
 
 R4 overall is `FAIL / CONTROLLED_STOP_RESOURCE`; R5/T6-S, T6-F, official E/H/RTA, R/T/A, T7–T9 and full 0.7 nm remain `not_run`. The `<2 GB` strategic target is not met: Candidate A's 5.145 GB and gradient's 1.324 GB are sweep process-tree observations, not full PDE memory certification. `outcomes/summary.md` and `docs/development_progress.md` remain T9-closeout records and are intentionally not rewritten as completed.
+
+## Task038-extra Review V9：P1 memory-first controlled negative
+
+本条登记 Review V9 P8 的正式受控负结果，不改写旧 Task038/V8 negative。memory-first 是每 20 步释放 GMRES 基、只保留当前解并重算显式真残差，以控制长期内存；它不保证高 p 阶在固定迭代上限内收敛。
+
+| Model ID | source / scope | measured result | resource / status | evidence |
+|---|---|---|---|---|
+| `task038_v9_P0_memory_first_authority` | P0 fresh source `ba9016310d09c388a953fce93d9e71761343311f`；p2/h50/MPI1 | checkpoint/restart、explicit residual、PC legality 和 provenance PASS | P0 PASS；不是 p6/PDE 结果 | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_authority_contract.md` |
+| `task038_v9_P1_memory_first_small_v2` | source `891ef7fba8cb7d154ad9cac61d67652f02063fbb`；p2/p3 × MPI1/MPI2，固定 `restart=20`、`max_it=2000`；实际 9/16 | 8 p2 cases PASS；`p3-mpi1/random` 在 2000 steps 后 explicit true residual `0.01027838962263555 > 1e-8` | `FAILED_AT_FIXED_MEMORY_ITERATION_CAP`；p3 cycle process-tree peak `155860992 B`，process-tree/rank swap `0`，GNU time `Swaps=0`；共享 cgroup 只作 diagnostic，不是 dedicated Gate | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/memory_first_small_v2.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2.md` |
+
+P1 剩余 7 个 frozen cases 与 P2–P7 均为 `not_run_by_gate`。本登记不包含 p6 setup、PDE、official physics 或 `<2 GB` complete-workflow authority；完整 raw arrays/checkpoints 仍在 ignored formal root，compact 只保存 hash-bound 标量摘要。
