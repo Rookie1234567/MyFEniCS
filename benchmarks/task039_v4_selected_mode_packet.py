@@ -101,6 +101,9 @@ class Task039V4SelectedModeMmapContext:
             "mode_key": descriptor["mode_keys"][mode_index],
             "ownership_range": list(self.packet["ownership_range"]),
             "global_size": int(self.packet["global_size"]),
+            "passive_branch_valid": bool(
+                descriptor["passive_branch_valid"][mode_index]
+            ),
         }
 
     def release(self) -> None:
@@ -417,6 +420,7 @@ def stream_task039_v4_selected_mode_columns(
                     "beta": pair["beta"],
                     "ownership_range": pair["ownership_range"],
                     "global_size": pair["global_size"],
+                    "passive_branch_valid": bool(pair["passive_branch_valid"]),
                     "batch_size": 1,
                 },
             )

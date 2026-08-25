@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
@@ -20,11 +21,79 @@ from ..solvers.hcurl_assembly_time_condensation import (
 )
 from .hybrid_one_cell_exact_traction import (
     ExactOneCellCoupling,
+    TraceIdentityGateError,
     require_congruent_trace_identity,
     split_exact_local_amplitude_blocks,
     transfer_congruent_endpoint_columns,
     transfer_congruent_endpoint_dual_columns,
 )
+
+
+def _selected_mode_source_factor_event(
+    stage_callback: Callable[[str, Mapping[str, Any]], None] | None,
+    stage: str,
+    detail: Mapping[str, Any],
+) -> None:
+    if stage_callback is not None:
+        stage_callback(stage, detail)
+
+
+class ExactOneCellSourceIdentityError(RuntimeError):
+    """A primal/dual current-layout identity gate rejected one-cell sources."""
+
+
+def _collective_source_identity_gate(
+    comm,
+    local_error: ExactOneCellSourceIdentityError | None,
+) -> None:
+    """Make an explicit source identity failure a rank-symmetric decision."""
+
+    payload = None
+    if local_error is not None:
+        payload = {
+            "message": str(local_error),
+            "stage": getattr(local_error, "stage", "source_identity"),
+        }
+    gathered = comm.allgather(payload)
+    first = next((item for item in gathered if item is not None), None)
+    if first is not None:
+        error = ExactOneCellSourceIdentityError(str(first["message"]))
+        error.stage = str(first["stage"])
+        error.local_errors = gathered
+        raise error
+
+
+def select_negative_bottom_backward_column(
+    forward_flux: Any,
+    backward_flux: Any,
+    *,
+    left_rows: int,
+    right_rows: int,
+    forward_factor: complex,
+    backward_factor: complex,
+) -> np.ndarray:
+    """Select the frozen negative column after the exact ``/mu`` split.
+
+    The exact one-cell splitter expects isolated forward/backward blocks.  The
+    negative branch is therefore represented by ``(1, mu)`` and read from
+    ``bottom_backward[:, 1]``; this helper keeps that source-definition wiring
+    explicit and directly testable.
+    """
+
+    forward = np.asarray(forward_flux, dtype=np.complex128).reshape(-1)
+    backward = np.asarray(backward_flux, dtype=np.complex128).reshape(-1)
+    if forward.shape != backward.shape:
+        raise ValueError("negative exact flux columns must have matching shapes")
+    zero = np.zeros_like(forward)
+    split = split_exact_local_amplitude_blocks(
+        np.column_stack((zero, forward)),
+        np.column_stack((zero, backward)),
+        left_rows=int(left_rows),
+        right_rows=int(right_rows),
+        forward_factors=(1.0 + 0.0j, complex(forward_factor)),
+        backward_factors=(1.0 + 0.0j, complex(backward_factor)),
+    )
+    return np.asarray(split["bottom_backward"][:, 1], dtype=np.complex128).copy()
 
 
 @dataclass(frozen=True)
@@ -192,6 +261,422 @@ def _lift_port_columns(
         field.x.scatter_forward()
         columns.append(_active_values_for_port(field, condensed, rows))
     return np.column_stack(columns)
+
+
+def build_exact_one_cell_selected_traction_columns(
+    cfg,
+    selected_traces: Mapping[str, Any],
+    *,
+    positive_beta: complex,
+    negative_beta: complex,
+    positive_passive_branch_valid: bool,
+    negative_passive_branch_valid: bool,
+    bottom_system,
+    work_dir: Path,
+    stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> tuple[np.ndarray, dict[str, dict[str, np.ndarray]], dict[str, Any]]:
+    """Build positive/negative frozen columns with one one-cell factor.
+
+    The first and second ``apply_columns`` calls are independent source
+    regenerations for the two selected traces.  Both branches share one
+    current-layout one-cell action and its one interior MUMPS factor; the
+    action is destroyed before this function returns.
+    """
+
+    required = {"positive", "negative"}
+    if set(selected_traces) != required:
+        raise ValueError("Selected exact one-cell traces must contain both branches.")
+    if bottom_system.side != "bottom":
+        raise ValueError("Selected exact one-cell source requires the bottom system.")
+    if bottom_system.static_condensation is None:
+        raise ValueError("Selected exact one-cell source requires condensation.")
+    if not all(np.isfinite(complex(value)) for value in (positive_beta, negative_beta)):
+        raise ValueError("Selected exact one-cell betas must be finite.")
+    if not positive_passive_branch_valid or not negative_passive_branch_valid:
+        raise ValueError("Selected exact one-cell branches are not passive-certified.")
+
+    from ..solvers.one_cell_trace_schur import (
+        EndpointModeLifter,
+        _active_values_for_port,
+        build_one_cell_two_port_schur_action,
+        identify_endpoint_active_rows,
+    )
+    from ..modes.stable_propagation import build_two_sided_propagation
+
+    comm = bottom_system.local_mesh.mesh.comm
+    work_dir = Path(work_dir)
+    if comm.rank == 0:
+        work_dir.mkdir(parents=True, exist_ok=True)
+    comm.Barrier()
+    one_cfg = _one_cell_config(cfg, comm.size)
+    mesh_data = V = floquet = condensed = action = None
+    lifecycle: dict[str, Any] = {
+        "factor_count_before": 0,
+        "factor_count_ready": None,
+        "factor_count_after": None,
+        "factor_destroyed_before_return": None,
+        "factor_matrix_alive_after_return": None,
+        "mat_solve_call_count": 0,
+        "rhs_columns_solved": 0,
+        "apply_count": 0,
+        "factor_construction_count": 0,
+        "peak_simultaneous_factor_count": 0,
+        "full_side_factor_overlap": False,
+    }
+    audit: dict[str, Any] = {
+        "modal_traction_model": "full3d_one_cell_exact_schur",
+        "propagation_model": "full3d_uniform_cg",
+        "propagation_axial_fem_degree": int(one_cfg.nedelec_degree),
+        "propagation_axial_h_nm": 10.0,
+        "selected_columns": {"positive": 281, "negative": 283},
+        "qep_calls": 0,
+        "top_system_constructed": False,
+        "full_coupling_constructed": False,
+        "three_group_factor_count": 0,
+        "one_cell_factor_lifecycle": lifecycle,
+        "primal_endpoint_identity": None,
+        "dual_endpoint_transfer": None,
+        "raw_global_row_remap": False,
+    }
+    try:
+        mesh_data = build_airbox_mesh_3d(one_cfg, work_dir / "mesh")
+        V = _create_nedelec_space(mesh_data.mesh, one_cfg)
+        bilinear, _ = _build_variational_forms(
+            mesh_data.mesh,
+            mesh_data,
+            one_cfg,
+            V,
+        )
+        floquet = build_double_floquet_mpc(V, mesh_data, one_cfg)
+        condensed = build_unconstrained_assembly_time_condensation(
+            fem.form(bilinear),
+            V,
+            mesh_data.cell_tags,
+            mpc=floquet.mpc,
+            materialize_global_matrix=True,
+        )
+        if condensed.matrix is None:
+            raise RuntimeError("Selected exact one-cell source needs a sparse matrix.")
+        tdim = mesh_data.mesh.topology.dim
+        left_facets = mesh.locate_entities_boundary(
+            mesh_data.mesh,
+            tdim - 1,
+            lambda x: np.isclose(x[2], one_cfg.domain_z_min),
+        )
+        right_facets = mesh.locate_entities_boundary(
+            mesh_data.mesh,
+            tdim - 1,
+            lambda x: np.isclose(x[2], one_cfg.domain_z_max),
+        )
+        one_rows = identify_endpoint_active_rows(
+            V,
+            condensed,
+            left_facets=left_facets,
+            right_facets=right_facets,
+        )
+        action = build_one_cell_two_port_schur_action(condensed.matrix, one_rows)
+        lifecycle["factor_count_ready"] = 1
+        lifecycle["factor_construction_count"] = 1
+        lifecycle["peak_simultaneous_factor_count"] = 1
+        _selected_mode_source_factor_event(
+            stage_callback,
+            "v5_one_cell_source_factor_ready",
+            {
+                "factor_count": 1,
+                "factor_construction_count": 1,
+                "active": 1,
+                "peak_simultaneous_factor_count": 1,
+                "factor_kind": "one_cell_interior_schur_mumps",
+                "selected_columns": [281, 283],
+                "top_system_constructed": False,
+                "full_coupling_constructed": False,
+                "full_side_factor_active": 0,
+            },
+        )
+
+        propagation_modes = (
+            SimpleNamespace(
+                beta=complex(positive_beta),
+                direction="forward",
+                passive_branch_valid=bool(positive_passive_branch_valid),
+            ),
+            SimpleNamespace(
+                beta=complex(negative_beta),
+                direction="backward",
+                passive_branch_valid=bool(negative_passive_branch_valid),
+            ),
+        )
+        propagation = build_two_sided_propagation(
+            propagation_modes,
+            10.0,
+            propagation_model="full3d_uniform_cg",
+            axial_fem_degree=int(one_cfg.nedelec_degree),
+            axial_h_nm=10.0,
+        )
+        lifter = EndpointModeLifter(
+            V,
+            max(float(one_cfg.period_x), float(one_cfg.period_y)),
+        )
+
+        def endpoint_values(trace) -> tuple[np.ndarray, np.ndarray]:
+            field = lifter.lift(trace)
+            floquet.mpc.homogenize(field)
+            field.x.scatter_forward()
+            return (
+                _active_values_for_port(field, condensed, one_rows.left_active),
+                _active_values_for_port(field, condensed, one_rows.right_active),
+            )
+
+        positive_left, positive_right = endpoint_values(selected_traces["positive"])
+        negative_left, negative_right = endpoint_values(selected_traces["negative"])
+        left_columns = np.column_stack((positive_left, negative_left))
+        bottom_rows = _local_interface_active_rows(bottom_system)
+        bottom_direct = _lift_port_columns(
+            bottom_system.V,
+            bottom_system.floquet_data.mpc,
+            bottom_system.static_condensation.condensed,
+            bottom_rows,
+            (selected_traces["positive"], selected_traces["negative"]),
+            max(float(cfg.period_x), float(cfg.period_y)),
+        )
+        primal_transferred, primal_audit = transfer_congruent_endpoint_columns(
+            left_columns,
+            V,
+            condensed,
+            floquet,
+            one_rows.left_active,
+            bottom_system.V,
+            bottom_system.static_condensation.condensed,
+            bottom_system.floquet_data,
+            bottom_rows,
+            source_endpoint="left",
+            target_endpoint="right",
+        )
+        primal_identity = None
+        primal_error = None
+        try:
+            primal_identity = require_congruent_trace_identity(
+                primal_transferred,
+                bottom_direct,
+                side="bottom",
+            )
+        except TraceIdentityGateError as exc:
+            primal_error = ExactOneCellSourceIdentityError(
+                "selected modal primal endpoint/current-interface identity failed"
+            )
+            primal_error.stage = "primal_endpoint_identity"
+            primal_error.identity_gate_cause = str(exc)
+        _collective_source_identity_gate(comm, primal_error)
+        if primal_identity is None:
+            raise AssertionError("collective primal identity returned no audit")
+        primal_identity["entity_transfer"] = primal_audit
+        audit["primal_endpoint_identity"] = primal_identity
+
+        positive_directional = np.vstack(
+            (
+                positive_left[:, None],
+                positive_right[:, None] * propagation.forward.factors[0],
+            )
+        )
+        positive_left_repeat, positive_right_repeat = endpoint_values(
+            selected_traces["positive"]
+        )
+        negative_left_repeat, negative_right_repeat = endpoint_values(
+            selected_traces["negative"]
+        )
+        negative_directional = np.vstack(
+            (
+                negative_left[:, None] * propagation.backward.factors[0],
+                negative_right[:, None],
+            )
+        )
+        directional = np.column_stack((positive_directional, negative_directional))
+        repeat_directional = np.column_stack(
+            (
+                np.vstack(
+                    (
+                        positive_left_repeat[:, None],
+                        positive_right_repeat[:, None] * propagation.forward.factors[0],
+                    )
+                ),
+                np.vstack(
+                    (
+                        negative_left_repeat[:, None] * propagation.backward.factors[0],
+                        negative_right_repeat[:, None],
+                    )
+                ),
+            )
+        )
+        first_flux = action.apply_columns(directional)
+        lifecycle["apply_count"] = 1
+        lifecycle["mat_solve_call_count"] = 1
+        lifecycle["rhs_columns_solved"] = 2
+        _selected_mode_source_factor_event(
+            stage_callback,
+            "v5_one_cell_source_factor_apply",
+            {
+                "factor_count": 1,
+                "active": 1,
+                "apply_count": 1,
+                "mat_solve_call_count": 1,
+                "rhs_columns_solved": 2,
+            },
+        )
+        repeat_flux = action.apply_columns(repeat_directional)
+        lifecycle["apply_count"] = 2
+        lifecycle["mat_solve_call_count"] = 2
+        lifecycle["rhs_columns_solved"] = 4
+        _selected_mode_source_factor_event(
+            stage_callback,
+            "v5_one_cell_source_factor_apply",
+            {
+                "factor_count": 1,
+                "active": 1,
+                "apply_count": 2,
+                "mat_solve_call_count": 2,
+                "rhs_columns_solved": 4,
+            },
+        )
+        left_count = len(one_rows.left_active)
+        first_split = split_exact_local_amplitude_blocks(
+            np.column_stack((first_flux[:, 0], np.zeros_like(first_flux[:, 0]))),
+            np.column_stack((np.zeros_like(first_flux[:, 1]), first_flux[:, 1])),
+            left_rows=left_count,
+            right_rows=len(one_rows.right_active),
+            forward_factors=(propagation.forward.factors[0], 1.0 + 0.0j),
+            backward_factors=(1.0 + 0.0j, propagation.backward.factors[0]),
+        )
+        repeat_split = split_exact_local_amplitude_blocks(
+            np.column_stack((repeat_flux[:, 0], np.zeros_like(repeat_flux[:, 0]))),
+            np.column_stack((np.zeros_like(repeat_flux[:, 1]), repeat_flux[:, 1])),
+            left_rows=left_count,
+            right_rows=len(one_rows.right_active),
+            forward_factors=(propagation.forward.factors[0], 1.0 + 0.0j),
+            backward_factors=(1.0 + 0.0j, propagation.backward.factors[0]),
+        )
+        negative_first = select_negative_bottom_backward_column(
+            first_flux[:, 0],
+            first_flux[:, 1],
+            left_rows=left_count,
+            right_rows=len(one_rows.right_active),
+            forward_factor=1.0 + 0.0j,
+            backward_factor=propagation.backward.factors[0],
+        )
+        bottom_flux = np.column_stack(
+            (first_split["bottom_forward"][:, 0], negative_first)
+        )
+        negative_repeat = select_negative_bottom_backward_column(
+            repeat_flux[:, 0],
+            repeat_flux[:, 1],
+            left_rows=left_count,
+            right_rows=len(one_rows.right_active),
+            forward_factor=1.0 + 0.0j,
+            backward_factor=propagation.backward.factors[0],
+        )
+        repeat_bottom_flux = np.column_stack(
+            (repeat_split["bottom_forward"][:, 0], negative_repeat)
+        )
+        dual_transferred, dual_audit = transfer_congruent_endpoint_dual_columns(
+            bottom_flux,
+            V,
+            condensed,
+            floquet,
+            one_rows.left_active,
+            bottom_system.V,
+            bottom_system.static_condensation.condensed,
+            bottom_system.floquet_data,
+            bottom_rows,
+            source_endpoint="left",
+            target_endpoint="right",
+        )
+        repeat_transferred, repeat_dual_audit = (
+            transfer_congruent_endpoint_dual_columns(
+                repeat_bottom_flux,
+                V,
+                condensed,
+                floquet,
+                one_rows.left_active,
+                bottom_system.V,
+                bottom_system.static_condensation.condensed,
+                bottom_system.floquet_data,
+                bottom_rows,
+                source_endpoint="left",
+                target_endpoint="right",
+            )
+        )
+        dual_error = None
+        if (
+            not np.isfinite(dual_transferred).all()
+            or not np.isfinite(repeat_transferred).all()
+        ):
+            dual_error = ExactOneCellSourceIdentityError(
+                "selected modal dual transfer is non-finite"
+            )
+            dual_error.stage = "dual_endpoint_identity"
+        for repeat_name, dual_audit_item in (
+            ("first", dual_audit),
+            ("repeat", repeat_dual_audit),
+        ):
+            reconstruction_error = float(
+                dual_audit_item["dual_inverse_map_reconstruction_error"]
+            )
+            if not np.isfinite(reconstruction_error):
+                dual_error = ExactOneCellSourceIdentityError(
+                    f"selected modal {repeat_name} dual transfer is non-finite"
+                )
+                dual_error.stage = "dual_endpoint_identity"
+            elif reconstruction_error > 1.0e-12:
+                dual_error = ExactOneCellSourceIdentityError(
+                    f"selected modal {repeat_name} dual inverse-map identity "
+                    f"failed: {reconstruction_error:.6e} > 1e-12"
+                )
+                dual_error.stage = "dual_endpoint_identity"
+        _collective_source_identity_gate(comm, dual_error)
+        audit["dual_endpoint_transfer"] = {
+            "first": dual_audit,
+            "repeat": repeat_dual_audit,
+        }
+        return (
+            bottom_rows.copy(),
+            {
+                "positive": {
+                    "values": dual_transferred[:, 0].copy(),
+                    "repeat_values": repeat_transferred[:, 0].copy(),
+                },
+                "negative": {
+                    "values": dual_transferred[:, 1].copy(),
+                    "repeat_values": repeat_transferred[:, 1].copy(),
+                },
+            },
+            audit,
+        )
+    finally:
+        if action is not None:
+            action.destroy()
+            lifecycle["factor_count_after"] = 0 if action._destroyed else None
+            lifecycle["factor_destroyed_before_return"] = bool(action._destroyed)
+            lifecycle["factor_matrix_alive_after_return"] = not bool(action._destroyed)
+            _selected_mode_source_factor_event(
+                stage_callback,
+                "v5_one_cell_source_factor_destroyed",
+                {
+                    "factor_count": lifecycle["factor_count_after"],
+                    "factor_destroyed": lifecycle["factor_destroyed_before_return"],
+                    "factor_matrix_alive": lifecycle[
+                        "factor_matrix_alive_after_return"
+                    ],
+                    "factor_construction_count": lifecycle["factor_construction_count"],
+                    "mat_solve_call_count": lifecycle["mat_solve_call_count"],
+                    "rhs_columns_solved": lifecycle["rhs_columns_solved"],
+                    "apply_count": lifecycle["apply_count"],
+                    "active": 0,
+                    "full_side_factor_active": 0,
+                },
+            )
+        if condensed is not None:
+            condensed.destroy()
+        if floquet is not None and getattr(floquet, "mpc", None) is not None:
+            floquet.mpc.destroy()
 
 
 def build_exact_one_cell_traction_matrices(
@@ -644,4 +1129,10 @@ def build_exact_one_cell_traction_matrices(
             )
 
 
-__all__ = ["ExactOneCellMatrixBuild", "build_exact_one_cell_traction_matrices"]
+__all__ = [
+    "ExactOneCellMatrixBuild",
+    "ExactOneCellSourceIdentityError",
+    "build_exact_one_cell_selected_traction_columns",
+    "build_exact_one_cell_traction_matrices",
+    "select_negative_bottom_backward_column",
+]

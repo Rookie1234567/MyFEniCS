@@ -7,6 +7,9 @@ import hashlib
 import json
 import math
 import os
+import shutil
+import subprocess
+import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
@@ -18,7 +21,10 @@ from mpi4py import MPI
 from petsc4py import PETSc
 from dolfinx import fem
 
-from benchmarks.task034_wsl_resources import resource_authority_sample
+from benchmarks.task034_wsl_resources import (
+    resource_authority_sample,
+    wsl_memory_snapshot,
+)
 from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
 from benchmarks.task039_v3_7_orchestration import (
     _load_v5_blr_reference_spool_remapped,
@@ -48,6 +54,7 @@ from src.solvers.hybrid_interface_basis import (
     build_lower_fourier_trace_columns,
     build_mass_dual_from_active_vec,
     canonical_external_mode_metadata_sha256,
+    canonical_mode_keys_sha256,
     collect_streamed_trace_basis,
 )
 from src.solvers.hybrid_interface_packet import (
@@ -94,6 +101,13 @@ from src.solvers.hybrid_interface_petsc_coupled import (
 )
 from src.runners.task039_hybrid_iterative import make_task039_hybrid_iterative_profile
 from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
+from src.solvers.hybrid_bare_f_authority import (
+    V5_BARE_F_METHOD,
+    V5_BARE_F_SCHEMA,
+    V5_BARE_F_SOURCE_LABELS,
+    build_v5_operator_semantics_audit,
+    run_current_bare_f_authority,
+)
 from src.solvers.hybrid_layer_block import (
     run_v1_1_right_preconditioned_fgmres_batch,
 )
@@ -187,6 +201,25 @@ TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_PROFILE_ID = (
 )
 TASK040_V4_FROZEN_BRANCH = "codex/20260822-task40-hybrid-side-factor-pc"
 TASK040_V4_FROZEN_AUTHORITY_SOURCE_SHA = "112ac4913a531ae5c5aab941ac88f005a95b9dc4"
+TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG = "--v5-fresh-bare-f-authority"
+TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD = V5_BARE_F_METHOD
+TASK040_V5_FRESH_BARE_F_AUTHORITY_SCHEMA = V5_BARE_F_SCHEMA
+TASK040_V5_FRESH_BARE_F_AUTHORITY_PROFILE_ID = (
+    "task040.v5.h4.current_layout_bare_f_authority.v1"
+)
+TASK040_V5_FRESH_BARE_F_PREFERRED_BYTES = 55 * 2**30
+TASK040_V5_FRESH_BARE_F_WARNING_BYTES = 58 * 2**30
+TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES = 64 * 2**30
+TASK040_V5_FRESH_BARE_F_MIN_AVAILABLE_BYTES = 90 * 2**30
+TASK040_V5_FRESH_BARE_F_MIN_DISK_BYTES = 20 * 2**30
+TASK040_V5_REQUIRED_THREAD_ENV = (
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS",
+    "BLIS_NUM_THREADS",
+)
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -226,6 +259,11 @@ __all__ = (
     "TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_PROFILE_ID",
     "TASK040_V4_FROZEN_BRANCH",
     "TASK040_V4_FROZEN_AUTHORITY_SOURCE_SHA",
+    "TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG",
+    "TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD",
+    "TASK040_V5_FRESH_BARE_F_AUTHORITY_SCHEMA",
+    "TASK040_V5_FRESH_BARE_F_AUTHORITY_PROFILE_ID",
+    "TASK040_V5_REQUIRED_THREAD_ENV",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -296,6 +334,7 @@ def build_task040_level_a_plan(
     packet_consumer: bool = False,
     coupled_interface: bool = False,
     v4_exact_authority_compatibility: bool = False,
+    v5_fresh_bare_f_authority: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -343,6 +382,7 @@ def build_task040_level_a_plan(
                 packet_consumer,
                 coupled_interface,
                 v4_exact_authority_compatibility,
+                v5_fresh_bare_f_authority,
             )
         )
         > 1
@@ -517,6 +557,50 @@ def build_task040_level_a_plan(
                 ],
             }
         )
+    if v5_fresh_bare_f_authority:
+        plan.update(
+            {
+                "schema": TASK040_V5_FRESH_BARE_F_AUTHORITY_SCHEMA,
+                "method": TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD,
+                "profile": TASK040_V5_FRESH_BARE_F_AUTHORITY_PROFILE_ID,
+                "v5_fresh_bare_f_authority": True,
+                "research_only": True,
+                "oracle_only": True,
+                "scalable_candidate": False,
+                "fresh_current_layout": True,
+                "source_labels": list(V5_BARE_F_SOURCE_LABELS),
+                "absolute_terminate_memory_bytes": (
+                    TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES
+                ),
+                "preferred_memory_bytes": TASK040_V5_FRESH_BARE_F_PREFERRED_BYTES,
+                "warning_memory_bytes": TASK040_V5_FRESH_BARE_F_WARNING_BYTES,
+                "minimum_mem_available_bytes": TASK040_V5_FRESH_BARE_F_MIN_AVAILABLE_BYTES,
+                "minimum_disk_free_bytes": TASK040_V5_FRESH_BARE_F_MIN_DISK_BYTES,
+                "qep_calls": 0,
+                "pde_solve": "not_run",
+                "external_dtn_coupling": "rhs_only_minimal_surface_objects",
+                "factor_lifecycle": (
+                    "one_source_side_one_cell_factor_then_one_full_side_bare_f_factor_"
+                    "1_to_0_each_no_overlap"
+                ),
+                "forbidden": [
+                    "research_exact_side_lu_action",
+                    "woodbury_inverse",
+                    "physical_dtn_operator",
+                    "explicit_C_matrix",
+                    "explicit_D_matrix",
+                    "explicit_H_matrix",
+                    "outer_ksp",
+                    "qep",
+                    "interface_mass",
+                    "group_factor",
+                    "physical_A_side_factor",
+                    "full_hybrid",
+                    "pde_solve",
+                    "raw_global_row_remap",
+                ],
+            }
+        )
     return plan
 
 
@@ -569,6 +653,440 @@ def _worker_current_resource(
             readable and rss_bytes < int(hard_limit_bytes) and swap_bytes == 0
         ),
         "hard_limit_bytes": int(hard_limit_bytes),
+    }
+
+
+def _v5_bare_f_resource_preflight(
+    comm: MPI.Intracomm,
+    run_directory: str | Path,
+) -> dict[str, Any]:
+    """Check V5 producer headroom before any mesh or PETSc matrix is built."""
+
+    memory = wsl_memory_snapshot()
+    available = memory.get("mem_available_bytes")
+    disk = shutil.disk_usage(Path(run_directory).resolve().parent)
+    current = _worker_current_resource(
+        comm,
+        hard_limit_bytes=TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES,
+    )
+    local = {
+        "mem_available_bytes": available,
+        "disk_free_bytes": int(disk.free),
+        "swap_bytes": int(current["swap_bytes"]),
+        "all_status_readable": bool(current["all_status_readable"]),
+        "pass": bool(
+            isinstance(available, int)
+            and available >= TASK040_V5_FRESH_BARE_F_MIN_AVAILABLE_BYTES
+            and int(disk.free) >= TASK040_V5_FRESH_BARE_F_MIN_DISK_BYTES
+            and int(current["swap_bytes"]) == 0
+            and bool(current["all_status_readable"])
+        ),
+    }
+    states = comm.allgather(local)
+    passed = bool(comm.allreduce(bool(local["pass"]), op=MPI.LAND))
+    return {
+        "status": "pass" if passed else "not_run_by_resource_preflight",
+        "pass": passed,
+        "minimum_mem_available_bytes": TASK040_V5_FRESH_BARE_F_MIN_AVAILABLE_BYTES,
+        "minimum_disk_free_bytes": TASK040_V5_FRESH_BARE_F_MIN_DISK_BYTES,
+        "hard_stop_bytes": TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES,
+        "ranks": states,
+        "current_worker_resource": current,
+    }
+
+
+def _v5_runtime_environment_preflight(
+    comm: MPI.Intracomm,
+    *,
+    watchdog_enabled: bool,
+    bottom_route_only: bool,
+) -> dict[str, Any]:
+    """Record and gate the actual V5 worker runtime, not its plan claims."""
+
+    executable = str(sys.executable)
+    resolved_executable = str(Path(sys.executable).resolve())
+    qualified_activation = os.environ.get(
+        "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
+    ) == "1"
+    thread_environment = {
+        name: os.environ.get(name) for name in TASK040_V5_REQUIRED_THREAD_ENV
+    }
+    thread_values_are_one = all(
+        value == "1" for value in thread_environment.values()
+    )
+    scalar_dtype = np.dtype(PETSc.ScalarType)
+    int_dtype = np.dtype(PETSc.IntType)
+    repository_root = Path(__file__).resolve().parents[1]
+    executable_is_qualified = False
+    try:
+        Path(executable).absolute().relative_to(repository_root / ".venv")
+        executable_is_qualified = True
+    except ValueError:
+        executable_is_qualified = False
+    local = {
+        "comm_size": int(comm.size),
+        "petsc_scalar_type": str(scalar_dtype),
+        "petsc_int_type": str(int_dtype),
+        "qualified_activation": qualified_activation,
+        "sys_executable": executable,
+        "resolved_executable": resolved_executable,
+        "executable_is_repository_venv": executable_is_qualified,
+        "thread_environment": thread_environment,
+        "threads_per_rank": 1 if thread_values_are_one else None,
+        "process_tree_watchdog_enabled": bool(watchdog_enabled),
+        "bottom_route_only": bool(bottom_route_only),
+    }
+    checks = {
+        "mpi_size": local["comm_size"] == TASK040_LEVEL_A_MPI_SIZE,
+        "petsc_scalar_complex128": scalar_dtype == np.dtype(np.complex128),
+        "petsc_int_type_recorded": bool(str(int_dtype)),
+        "qualified_activation": qualified_activation,
+        "repository_venv_executable": executable_is_qualified,
+        "threads_one": thread_values_are_one,
+        "process_tree_watchdog_enabled": bool(watchdog_enabled),
+        "bottom_route_only": bool(bottom_route_only),
+    }
+    local["checks"] = checks
+    local["pass"] = all(checks.values())
+    states = comm.allgather(local)
+    passed = bool(comm.allreduce(bool(local["pass"]), op=MPI.LAND))
+    collective_checks = {
+        name: all(bool(state.get("checks", {}).get(name)) for state in states)
+        for name in checks
+    }
+    return {
+        "status": "pass" if passed else "not_run_by_resource_preflight",
+        "pass": passed,
+        "checks": collective_checks,
+        "expected": {
+            "mpi_size": TASK040_LEVEL_A_MPI_SIZE,
+            "petsc_scalar_type": "complex128",
+            "qualified_activation": True,
+            "threads_per_rank": 1,
+            "process_tree_watchdog_enabled": True,
+            "bottom_route_only": True,
+        },
+        "ranks": states,
+    }
+
+
+def _v5_authority_identity_preflight(
+    *,
+    comm: MPI.Intracomm,
+    input_path: str | Path | None,
+    input_sha256: str,
+    physical_model_sha256: str,
+    source_sha: str,
+    watchdog_enabled: bool,
+    bottom_route_only: bool,
+) -> dict[str, Any]:
+    """Bind the fresh producer to the frozen source and metadata identities.
+
+    This is deliberately metadata-only.  It reads the tracked probe manifest,
+    selected-packet metadata, resolved configuration bytes, and the official
+    input bytes; it never opens a frozen numerical ``.npy`` array.
+    """
+
+    root = Path(__file__).resolve().parents[1]
+    checks: dict[str, bool] = {}
+    failures: list[str] = []
+
+    def check(name: str, value: bool) -> None:
+        checks[name] = bool(value)
+        if not value:
+            failures.append(name)
+
+    observed: dict[str, Any] = {
+        "input_sha256": str(input_sha256),
+        "physical_model_sha256": str(physical_model_sha256),
+        "source_sha": str(source_sha),
+        "input_path": None if input_path is None else str(Path(input_path)),
+    }
+    external_mode_authority: dict[str, Any] | None = None
+    expected = {
+        "input_sha256": TASK040_V1_2_INPUT_SHA256,
+        "physical_model_sha256": TASK040_V1_2_PHYSICAL_MODEL_SHA256,
+        "selected_manifest_sha256": TASK040_V1_2_SELECTED_MANIFEST_SHA256,
+        "resolved_config_sha256": None,
+        "probe_manifest_sha256": TASK040_V1_2_PROBE_MANIFEST_SHA256,
+        "branch": TASK040_V4_FROZEN_BRANCH,
+        "upstream_ref": f"origin/{TASK040_V4_FROZEN_BRANCH}",
+        "upstream_sha": str(source_sha),
+        "ahead_count": 0,
+        "behind_count": 0,
+    }
+    try:
+        probe_path, probe_manifest = _v1_2_load_manifest()
+        probe_identity = probe_manifest["identity"]
+        probe_sha256 = hashlib.sha256(probe_path.read_bytes()).hexdigest()
+        observed["probe_manifest_sha256"] = probe_sha256
+        check(
+            "probe_manifest_sha256",
+            probe_sha256 == TASK040_V1_2_PROBE_MANIFEST_SHA256,
+        )
+
+        selected_path = root / str(probe_identity["selected_manifest"])
+        selected_payload = json.loads(selected_path.read_bytes())
+        selected_sha256 = hashlib.sha256(selected_path.read_bytes()).hexdigest()
+        selected_identity = selected_path.with_name("identity.json")
+        selected_identity_payload = json.loads(selected_identity.read_bytes())
+        selected_identity_sha256 = hashlib.sha256(
+            json.dumps(
+                selected_identity_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        observed.update(
+            {
+                "selected_manifest_sha256": selected_sha256,
+                "selected_identity_sha256": selected_identity_sha256,
+                "selected_manifest_path": str(selected_path),
+            }
+        )
+        expected["selected_identity_sha256"] = str(
+            probe_identity["selected_identity_sha256"]
+        )
+        check(
+            "selected_manifest_sha256",
+            selected_sha256
+            == str(probe_identity["selected_manifest_sha256"])
+            == TASK040_V1_2_SELECTED_MANIFEST_SHA256,
+        )
+        check(
+            "selected_identity_sha256",
+            selected_identity_sha256
+            == str(probe_identity["selected_identity_sha256"])
+            == str(selected_payload["identity_sha256"]),
+        )
+
+        resolved_path = root / str(
+            probe_manifest["lower_fourier_floquet_basis"]["authority_path"]
+        )
+        resolved_bytes = resolved_path.read_bytes()
+        resolved_sha256 = hashlib.sha256(resolved_bytes).hexdigest()
+        resolved_payload = json.loads(resolved_bytes)
+        resolved_inventory = resolved_payload["derived"]["external_mode_inventory"]
+        bottom_keys = tuple(
+            key for key in resolved_inventory["keys"] if str(key["side"]) == "bottom"
+        )
+        bottom_metadata = tuple(
+            mode
+            for mode in resolved_inventory["modes"]
+            if str(mode["side"]) == "bottom"
+        )
+        lower_authority = probe_manifest["lower_fourier_floquet_basis"]
+        external_mode_authority = {
+            "count": int(lower_authority["count"]),
+            "canonical_keys": bottom_keys,
+            "beta_metadata": bottom_metadata,
+            "canonical_key_list_sha256": str(
+                lower_authority["canonical_key_list_sha256"]
+            ),
+            "beta_metadata_sha256": str(lower_authority["beta_metadata_sha256"]),
+            "resolved_config_sha256": resolved_sha256,
+            "index177_key": bottom_keys[177] if len(bottom_keys) > 177 else None,
+        }
+        observed.update(
+            {
+                "resolved_config_sha256": resolved_sha256,
+                "resolved_config_path": str(resolved_path),
+                "external_mode_count": len(bottom_keys),
+                "external_mode_key_list_sha256": canonical_mode_keys_sha256(
+                    bottom_keys
+                ),
+                "external_mode_beta_metadata_sha256": (
+                    canonical_external_mode_metadata_sha256(bottom_metadata)
+                ),
+                "external_mode_index177_key": external_mode_authority["index177_key"],
+            }
+        )
+        expected["resolved_config_sha256"] = str(
+            probe_identity["exact_spool_resolved_config_sha256"]
+        )
+        check(
+            "resolved_config_sha256",
+            resolved_sha256
+            == str(probe_identity["exact_spool_resolved_config_sha256"]),
+        )
+        check(
+            "external_mode_count",
+            len(bottom_keys) == int(lower_authority["count"]) == 296,
+        )
+        check(
+            "external_mode_key_list_sha256",
+            observed["external_mode_key_list_sha256"]
+            == str(lower_authority["canonical_key_list_sha256"])
+            == "046afb0b3d3531f728dc958c1b0c8a321ffa51fb8a0e6ecf6834d462d5ab37e5",
+        )
+        check(
+            "external_mode_beta_metadata_sha256",
+            observed["external_mode_beta_metadata_sha256"]
+            == str(lower_authority["beta_metadata_sha256"])
+            == "a58a3c6bc335bb5ae7f6b929a7abce4c193dedb27b115f17304091afb353318c",
+        )
+        check(
+            "external_mode_resolved_authority_sha256",
+            resolved_sha256
+            == str(lower_authority["authority_sha256"])
+            == "f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883",
+        )
+        check("external_mode_index177_present", len(bottom_keys) > 177)
+
+        if input_path is None:
+            check("input_path_present", False)
+        else:
+            actual_input_sha256 = hashlib.sha256(
+                Path(input_path).read_bytes()
+            ).hexdigest()
+            observed["input_file_sha256"] = actual_input_sha256
+            check("input_file_sha256", actual_input_sha256 == str(input_sha256))
+        check(
+            "input_sha256_frozen",
+            str(input_sha256) == TASK040_V1_2_INPUT_SHA256,
+        )
+        check(
+            "physical_model_sha256_frozen",
+            str(physical_model_sha256) == TASK040_V1_2_PHYSICAL_MODEL_SHA256,
+        )
+        check(
+            "probe_input_sha256",
+            str(probe_identity["input_sha256"]) == TASK040_V1_2_INPUT_SHA256,
+        )
+        check(
+            "probe_physical_model_sha256",
+            str(probe_identity["physical_model_sha256"])
+            == TASK040_V1_2_PHYSICAL_MODEL_SHA256,
+        )
+        check(
+            "selected_payload_physical_sha256",
+            str(selected_payload["identity"]["physical_sha256"])
+            == TASK040_V1_2_PHYSICAL_MODEL_SHA256,
+        )
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        failures.append(f"metadata_exception:{type(exc).__name__}")
+        observed["exception"] = f"{type(exc).__name__}: {exc}"
+
+    actual_head: str | None = None
+    actual_branch: str | None = None
+    upstream_ref: str | None = None
+    upstream_sha: str | None = None
+    ahead_count: int | None = None
+    behind_count: int | None = None
+    dirty: str | None = None
+    try:
+
+        def git_output(arguments: list[str]) -> str:
+            return subprocess.run(
+                arguments,
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+
+        actual_head = git_output(["git", "rev-parse", "HEAD"])
+        actual_branch = git_output(["git", "symbolic-ref", "--short", "HEAD"])
+        upstream_ref = git_output(
+            ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"]
+        )
+        upstream_sha = git_output(["git", "rev-parse", "@{upstream}"])
+        ahead_behind = git_output(
+            ["git", "rev-list", "--left-right", "--count", "HEAD...@{upstream}"]
+        ).split()
+        if len(ahead_behind) != 2:
+            raise ValueError("git ahead/behind output is not a pair")
+        ahead_count, behind_count = map(int, ahead_behind)
+        dirty = git_output(["git", "status", "--porcelain", "--untracked-files=all"])
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        failures.append(f"git_identity_exception:{type(exc).__name__}")
+        observed["git_exception"] = f"{type(exc).__name__}: {exc}"
+    observed.update(
+        {
+            "committed_source_sha": actual_head,
+            "branch": actual_branch,
+            "upstream_ref": upstream_ref,
+            "upstream_sha": upstream_sha,
+            "ahead_count": ahead_count,
+            "behind_count": behind_count,
+            "worktree_porcelain": dirty,
+        }
+    )
+    expected_upstream_ref = str(expected["upstream_ref"])
+    check("committed_source_sha", actual_head == str(source_sha))
+    check("branch_exact", actual_branch == TASK040_V4_FROZEN_BRANCH)
+    check("upstream_ref_exact", upstream_ref == expected_upstream_ref)
+    check("upstream_sha", upstream_sha == str(source_sha))
+    check("ahead_count_zero", ahead_count == 0)
+    check("behind_count_zero", behind_count == 0)
+    check("ahead_behind_zero", ahead_count == 0 and behind_count == 0)
+    check("worktree_clean", dirty == "")
+
+    operator_semantics_audit = build_v5_operator_semantics_audit(
+        source_sha=source_sha,
+        provenance={"observed": observed, "expected": expected, "checks": checks},
+    )
+    check(
+        "modal_source_identity",
+        bool(operator_semantics_audit["modal_source_identity"]["pass"]),
+    )
+    runtime_preflight = _v5_runtime_environment_preflight(
+        comm,
+        watchdog_enabled=watchdog_enabled,
+        bottom_route_only=bottom_route_only,
+    )
+    for name, value in runtime_preflight["checks"].items():
+        check(f"runtime_{name}", bool(value))
+
+    return {
+        "status": "pass" if not failures else "identity_fail",
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "observed": observed,
+        "expected": expected,
+        "operator_semantics_audit": operator_semantics_audit,
+        "external_mode_authority": external_mode_authority,
+        "runtime_preflight": runtime_preflight,
+        "authority": {
+            "probe_manifest": str(probe_path)
+            if "probe_path" in locals()
+            else str(root / TASK040_V1_2_PROBE_MANIFEST),
+            "selected_manifest": observed.get("selected_manifest_path"),
+            "resolved_config": observed.get("resolved_config_path"),
+        },
+    }
+
+
+def _v5_write_operator_semantics_audit(
+    comm: MPI.Intracomm,
+    run_directory: str | Path,
+    audit: Mapping[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Persist the compact semantics audit before any PETSc system build."""
+
+    if not isinstance(audit, Mapping):
+        return None
+    run_root = Path(run_directory)
+    path = run_root / "operator_semantics_audit.json"
+    if comm.rank == 0:
+        run_root.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            raise FileExistsError(f"V5 operator audit already exists: {path}")
+        temporary = path.with_name(f".{path.name}.tmp")
+        temporary.write_text(
+            json.dumps(dict(audit), sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary, path)
+        file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    else:
+        file_sha256 = None
+    file_sha256 = comm.bcast(file_sha256, root=0)
+    return {
+        "path": str(path.relative_to(run_root)),
+        "sha256": str(file_sha256),
+        "content_sha256": str(audit.get("record_sha256", "")),
     }
 
 
@@ -695,6 +1213,72 @@ def _v1_2_load_manifest() -> tuple[Path, dict[str, Any]]:
     if digest != TASK040_V1_2_PROBE_MANIFEST_SHA256:
         raise ValueError("Task040 V1-2 probe manifest hash mismatch")
     return path, json.loads(payload)
+
+
+def _v5_selected_mode_provider(
+    comm: MPI.Intracomm,
+) -> Callable[[str, int], Mapping[str, Any]]:
+    """Return the runner-owned, hash-bound one-column selected-mode reader."""
+
+    _probe_path, probe_manifest = _v1_2_load_manifest()
+    identity = probe_manifest["identity"]
+    root = Path(__file__).resolve().parents[1]
+    manifest_path = root / identity["selected_manifest"]
+    selected_identity = json.loads(
+        manifest_path.with_name("identity.json").read_text(encoding="utf-8")
+    )
+    selected_manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    if selected_manifest_sha256 != TASK040_V1_2_SELECTED_MANIFEST_SHA256:
+        raise ValueError("V5 selected-mode manifest hash is not frozen")
+
+    def provide(branch: str, index: int) -> Mapping[str, Any]:
+        captured: dict[str, Any] = {}
+
+        def capture(
+            returned_index: int,
+            right_local: np.ndarray,
+            left_local: np.ndarray,
+            packet_info: Mapping[str, Any],
+        ) -> None:
+            if int(returned_index) != int(index):
+                raise RuntimeError("selected-mode provider returned the wrong index")
+            captured.update(
+                {
+                    "right_local": np.asarray(right_local, dtype=np.complex128).copy(),
+                    "left_local": np.asarray(left_local, dtype=np.complex128).copy(),
+                    **dict(packet_info),
+                }
+            )
+
+        stream_task039_v4_selected_mode_columns(
+            manifest_path,
+            identity=selected_identity,
+            expected_manifest_sha256=selected_manifest_sha256,
+            branch=str(branch),
+            indices=(int(index),),
+            callback=capture,
+            comm=comm,
+        )
+        if not captured:
+            raise RuntimeError("selected-mode provider captured no packet column")
+        captured.update(
+            {
+                "manifest_path": str(manifest_path),
+                "manifest_sha256": selected_manifest_sha256,
+                "identity_sha256": str(
+                    hashlib.sha256(
+                        json.dumps(
+                            selected_identity,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                    ).hexdigest()
+                ),
+            }
+        )
+        return captured
+
+    return provide
 
 
 def _v1_2_lower_mode_count(resolved_modes: Mapping[str, Any]) -> int:
@@ -4063,7 +4647,9 @@ def run_task040_level_a(
     *,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     exact_spool_root: str | Path,
+    run_directory: str | Path | None = None,
     source_sha: str,
+    input_path: str | Path | None = None,
     input_sha256: str | None = None,
     physical_model_sha256: str | None = None,
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
@@ -4074,8 +4660,11 @@ def run_task040_level_a(
     packet_consumer: bool = False,
     coupled_interface: bool = False,
     v4_exact_authority_compatibility: bool = False,
+    v5_fresh_bare_f_authority: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
+    watchdog_enabled: bool = False,
+    bottom_route_only: bool = False,
 ) -> dict[str, Any]:
     """Run the six-source Level-A audit; all numerical work stays in src."""
 
@@ -4089,17 +4678,26 @@ def run_task040_level_a(
                 packet_consumer,
                 coupled_interface,
                 v4_exact_authority_compatibility,
+                v5_fresh_bare_f_authority,
             )
         )
         > 1
     ):
         raise ValueError("Task040 research routes are mutually exclusive")
+    if v5_fresh_bare_f_authority:
+        if run_directory is None:
+            raise ValueError("V5 fresh authority requires a separate run_directory")
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError("V5 run_directory must not be the frozen exact spool root")
+        if input_path is None:
+            raise ValueError("V5 fresh authority requires the official input_path")
     if (
         interface_schur
         or packet_producer
         or packet_consumer
         or coupled_interface
         or v4_exact_authority_compatibility
+        or v5_fresh_bare_f_authority
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -4134,6 +4732,8 @@ def run_task040_level_a(
             if packet_consumer
             else TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_METHOD
             if v4_exact_authority_compatibility
+            else TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD
+            if v5_fresh_bare_f_authority
             else TASK040_V1_2_METHOD
             if interface_schur
             else TASK040_LEVEL_A_METHOD
@@ -4158,6 +4758,150 @@ def run_task040_level_a(
             values_retained=False,
         )
         return preflight["result"]
+    if v5_fresh_bare_f_authority:
+        identity_preflight = _v5_authority_identity_preflight(
+            comm=comm,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            source_sha=source_sha,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+        )
+        identity_preflight["operator_semantics_audit_file"] = (
+            _v5_write_operator_semantics_audit(
+                comm,
+                run_directory,
+                identity_preflight.get("operator_semantics_audit"),
+            )
+        )
+        if not identity_preflight["pass"]:
+            runtime_failures = [
+                failure
+                for failure in identity_preflight["failures"]
+                if str(failure).startswith("runtime_")
+            ]
+            runtime_preflight_failed = bool(runtime_failures)
+            stop_status = (
+                "not_run_by_resource_preflight"
+                if runtime_preflight_failed
+                else "not_run_by_identity_preflight"
+            )
+            stop_classification = (
+                "FRESH_BARE_F_AUTHORITY_RESOURCE_BLOCKED"
+                if runtime_preflight_failed
+                else "FRESH_BARE_F_AUTHORITY_IDENTITY_FAIL"
+            )
+            _emit(
+                marker_callback,
+                "v5_runtime_preflight_stop"
+                if runtime_preflight_failed
+                else "v5_identity_preflight_stop",
+                identity_status=identity_preflight["status"],
+                identity_failures=identity_preflight["failures"],
+                runtime_failures=runtime_failures,
+                system_created=False,
+                qep_calls=0,
+            )
+            return {
+                "schema": TASK040_V5_FRESH_BARE_F_AUTHORITY_SCHEMA,
+                "method": TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD,
+                "profile": TASK040_V5_FRESH_BARE_F_AUTHORITY_PROFILE_ID,
+                "status": stop_status,
+                "classification": stop_classification,
+                "source_sha": str(source_sha),
+                "input_sha256": str(input_sha256),
+                "physical_model_sha256": str(physical_model_sha256),
+                "identity_preflight": identity_preflight,
+                "runtime_preflight": identity_preflight.get("runtime_preflight"),
+                "preflight_failure_category": (
+                    "runtime_environment" if runtime_preflight_failed else None
+                ),
+                "system_created": False,
+                "rhs_vectors_loaded": 0,
+                "exact_output_vectors_loaded": 0,
+                "factor_lifecycle": {
+                    "factor_count_before_solve": 0,
+                    "factor_count_after_cleanup": 0,
+                },
+                "external_dtn_coupling": {
+                    "status": stop_status,
+                    "matrix_objects_constructed": None,
+                },
+                "qep_calls": 0,
+                "pde_solve": "not_run",
+                "outer_ksp": "not_run",
+            }
+        resource_preflight = _v5_bare_f_resource_preflight(
+            comm,
+            run_directory,
+        )
+        if not resource_preflight["pass"]:
+            rank_resource = resource_preflight["ranks"][comm.rank]
+            _emit(
+                marker_callback,
+                "v5_resource_preflight_stop",
+                resource_status=resource_preflight["status"],
+                mem_available_bytes=rank_resource["mem_available_bytes"],
+                disk_free_bytes=rank_resource["disk_free_bytes"],
+                swap_bytes=rank_resource["swap_bytes"],
+                system_created=False,
+                qep_calls=0,
+            )
+            return {
+                "schema": TASK040_V5_FRESH_BARE_F_AUTHORITY_SCHEMA,
+                "method": TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD,
+                "profile": TASK040_V5_FRESH_BARE_F_AUTHORITY_PROFILE_ID,
+                "status": "not_run_by_resource_preflight",
+                "classification": "FRESH_BARE_F_AUTHORITY_RESOURCE_BLOCKED",
+                "source_sha": str(source_sha),
+                "input_sha256": str(input_sha256),
+                "physical_model_sha256": str(physical_model_sha256),
+                "resource_preflight": resource_preflight,
+                "system_created": False,
+                "rhs_vectors_loaded": 0,
+                "exact_output_vectors_loaded": 0,
+                "factor_lifecycle": {
+                    "factor_count_before_solve": 0,
+                    "factor_count_after_cleanup": 0,
+                },
+                "external_dtn_coupling": {
+                    "status": "not_run_by_resource_preflight",
+                    "matrix_objects_constructed": None,
+                },
+                "qep_calls": 0,
+                "pde_solve": "not_run",
+                "outer_ksp": "not_run",
+            }
+        current_resolved_config_sha256 = identity_preflight.get("observed", {}).get(
+            "resolved_config_sha256"
+        )
+        if current_resolved_config_sha256 is None:
+            current_resolved_config_sha256 = identity_preflight.get(
+                "external_mode_authority", {}
+            ).get("resolved_config_sha256")
+        result = run_current_bare_f_authority(
+            cfg,
+            profile,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            provenance=identity_preflight,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            selected_mode_provider=_v5_selected_mode_provider(comm),
+            external_mode_authority=identity_preflight["external_mode_authority"],
+            external_mode_current_resolved_config_sha256=(
+                None
+                if current_resolved_config_sha256 is None
+                else str(current_resolved_config_sha256)
+            ),
+            marker_callback=(
+                lambda stage, detail: _emit(marker_callback, stage, **dict(detail))
+            ),
+            comm=comm,
+        )
+        result["resource_preflight"] = resource_preflight
+        return result
     try:
         if side_system_builder is None:
             system = assemble_hybrid_local_dtn_action_system(
@@ -4538,9 +5282,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG, action="store_true"
     )
+    parser.add_argument(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
+    parser.add_argument("--watchdog-enabled", action="store_true")
+    parser.add_argument("--bottom-route-only", action="store_true")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_plan(
         input_path=args.input,
@@ -4553,6 +5300,7 @@ def main(argv: list[str] | None = None) -> int:
         packet_consumer=args.v2_interface_packet_consumer,
         coupled_interface=args.v3_2_coupled_interface,
         v4_exact_authority_compatibility=args.v4_exact_authority_compatibility,
+        v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -4569,7 +5317,9 @@ def main(argv: list[str] | None = None) -> int:
         cfg,
         profile,
         exact_spool_root=args.exact_spool_root,
+        run_directory=args.run_directory,
         source_sha=args.source_sha,
+        input_path=args.input,
         input_sha256=input_sha256,
         physical_model_sha256=physical_model_sha256,
         marker_callback=marker_callback,
@@ -4579,6 +5329,7 @@ def main(argv: list[str] | None = None) -> int:
         packet_consumer=args.v2_interface_packet_consumer,
         coupled_interface=args.v3_2_coupled_interface,
         v4_exact_authority_compatibility=args.v4_exact_authority_compatibility,
+        v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -4586,6 +5337,8 @@ def main(argv: list[str] | None = None) -> int:
                     hard_limit_bytes=(
                         TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES
                         if args.v2_interface_packet_producer
+                        else TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES
+                        if args.v5_fresh_bare_f_authority
                         else TASK040_LEVEL_A_HARD_STOP_BYTES
                     ),
                 )
@@ -4596,6 +5349,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v2_interface_packet_consumer
                     or args.v3_2_coupled_interface
                     or args.v4_exact_authority_compatibility
+                    or args.v5_fresh_bare_f_authority
                 )
                 else None
             )
@@ -4607,6 +5361,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.v2_interface_packet_consumer or args.v3_2_coupled_interface
             else None
         ),
+        watchdog_enabled=args.watchdog_enabled,
+        bottom_route_only=args.bottom_route_only,
     )
     if MPI.COMM_WORLD.rank == 0:
         run_directory = Path(args.run_directory)

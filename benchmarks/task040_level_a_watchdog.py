@@ -25,6 +25,7 @@ from benchmarks.task040_level_a import (
     TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG,
     TASK040_V3_2_COUPLED_INTERFACE_FLAG,
     TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG,
+    TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -88,6 +89,9 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG)
     if plan.get("v4_exact_authority_compatibility") is True:
         command.append(TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG)
+    if plan.get("v5_fresh_bare_f_authority") is True:
+        command.append(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG)
+        command.extend(("--watchdog-enabled", "--bottom-route-only"))
     if plan.get("coupled_interface") is True:
         command.extend(
             [
@@ -119,6 +123,7 @@ def build_task040_level_a_watchdog_plan(
     packet_consumer: bool = False,
     coupled_interface: bool = False,
     v4_exact_authority_compatibility: bool = False,
+    v5_fresh_bare_f_authority: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -132,6 +137,7 @@ def build_task040_level_a_watchdog_plan(
         packet_consumer=packet_consumer,
         coupled_interface=coupled_interface,
         v4_exact_authority_compatibility=v4_exact_authority_compatibility,
+        v5_fresh_bare_f_authority=v5_fresh_bare_f_authority,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -146,8 +152,18 @@ def build_task040_level_a_watchdog_plan(
         "terminate_entire_process_group": True,
         "resource_authority": "task034_wsl_resources.resource_authority_sample",
     }
-    if packet_producer:
-        plan["watchdog"]["preferred_memory_bytes"] = plan["preferred_memory_bytes"]
+    if v5_fresh_bare_f_authority:
+        plan["watchdog"].update(
+            {
+                "preferred_memory_bytes": int(plan["preferred_memory_bytes"]),
+                "warning_memory_bytes": int(plan["warning_memory_bytes"]),
+                "hard_stop_bytes": int(plan["absolute_terminate_memory_bytes"]),
+                "process_tree_watchdog_enabled": True,
+                "bottom_route_only": True,
+            }
+        )
+    elif packet_producer:
+        plan["watchdog"]["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
     plan["worker_run_directory"] = str(worker_directory)
     plan["worker_argv"] = _worker_command(plan)
     plan["runner_reuse"] = {
@@ -214,6 +230,42 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     previous_heartbeat = -HEARTBEAT_SECONDS
     termination_reason = "natural_exit"
     process_control: dict[str, Any] = {}
+    v5_thresholds_enabled = bool(plan.get("v5_fresh_bare_f_authority"))
+    threshold_observation_count = 0
+    resource_thresholds: dict[str, Any] = {}
+    if v5_thresholds_enabled:
+        resource_thresholds = {
+            "preferred": {
+                "bytes": int(plan["preferred_memory_bytes"]),
+                "crossed": False,
+                "first_sample": None,
+                "first_elapsed_seconds": None,
+            },
+            "warning": {
+                "bytes": int(plan["warning_memory_bytes"]),
+                "crossed": False,
+                "first_sample": None,
+                "first_elapsed_seconds": None,
+            },
+            "hard_stop": {
+                "bytes": int(plan["absolute_terminate_memory_bytes"]),
+                "crossed": False,
+                "first_sample": None,
+                "first_elapsed_seconds": None,
+            },
+        }
+
+    def observe_v5_thresholds(rss_bytes: int, elapsed: float) -> None:
+        nonlocal threshold_observation_count
+        if not v5_thresholds_enabled:
+            return
+        threshold_observation_count += 1
+        for threshold in resource_thresholds.values():
+            if not threshold["crossed"] and int(rss_bytes) >= int(threshold["bytes"]):
+                threshold["crossed"] = True
+                threshold["first_sample"] = threshold_observation_count
+                threshold["first_elapsed_seconds"] = float(elapsed)
+
     with (
         stdout_path.open("w", encoding="utf-8") as stdout,
         timeline_path.open("w", encoding="utf-8") as timeline,
@@ -238,6 +290,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             process_tree = authority["process_tree"]
             rss_bytes = int(process_tree["rss_bytes"])
             swap_bytes = int(process_tree["swap_bytes"])
+            observe_v5_thresholds(rss_bytes, elapsed)
             job_cgroup = authority["job_cgroup"]
             has_cgroup = bool(job_cgroup["dedicated_job_cgroup"])
             live_sample = bool(process_tree.get("pids"))
@@ -358,7 +411,28 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             if path.is_file()
         },
     }
-    if plan.get("packet_producer") is True:
+    if v5_thresholds_enabled:
+        peak = int(peak_rss_bytes)
+        if peak >= int(plan["absolute_terminate_memory_bytes"]):
+            resource_classification = "hard_stop_threshold_crossed"
+        elif peak >= int(plan["warning_memory_bytes"]):
+            resource_classification = "warning_threshold_crossed"
+        elif peak >= int(plan["preferred_memory_bytes"]):
+            resource_classification = "preferred_threshold_crossed"
+        else:
+            resource_classification = "within_preferred_threshold"
+        summary.update(
+            {
+                "preferred_memory_bytes": int(plan["preferred_memory_bytes"]),
+                "warning_memory_bytes": int(plan["warning_memory_bytes"]),
+                "hard_stop_bytes": int(plan["absolute_terminate_memory_bytes"]),
+                "resource_thresholds": resource_thresholds,
+                "resource_threshold_observation_count": threshold_observation_count,
+                "resource_classification": resource_classification,
+                "final_resource_classification": resource_classification,
+            }
+        )
+    elif plan.get("packet_producer") is True:
         summary["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     return (
@@ -390,6 +464,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG, action="store_true"
     )
+    parser.add_argument(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_watchdog_plan(
@@ -403,6 +478,7 @@ def main(argv: list[str] | None = None) -> int:
         packet_consumer=args.v2_interface_packet_consumer,
         coupled_interface=args.v3_2_coupled_interface,
         v4_exact_authority_compatibility=args.v4_exact_authority_compatibility,
+        v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:

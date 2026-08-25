@@ -19,6 +19,10 @@ EXACT_ONE_CELL_TRACTION_MODEL = "full3d_one_cell_exact_schur"
 EXACT_ROW_IDENTITY_TOLERANCE = 1.0e-10
 
 
+class TraceIdentityGateError(RuntimeError):
+    """A finite, shape-valid trace comparison failed its numerical gate."""
+
+
 def _columns(values: Any, name: str) -> np.ndarray:
     array = np.asarray(values, dtype=np.complex128)
     if array.ndim != 2:
@@ -79,7 +83,7 @@ def require_congruent_trace_identity(
         tolerance=tolerance,
     )
     if audit["pass"] is not True:
-        raise RuntimeError(
+        raise TraceIdentityGateError(
             f"{side} exact/local primal trace identity failed: "
             f"relative_l2={audit['relative_l2']:.6e}, "
             f"limit={audit['tolerance']:.6e}."
@@ -631,6 +635,7 @@ __all__ = [
     "EXACT_ONE_CELL_TRACTION_MODEL",
     "EXACT_ROW_IDENTITY_TOLERANCE",
     "ExactOneCellCoupling",
+    "TraceIdentityGateError",
     "congruent_trace_identity",
     "embed_exact_trace_columns_dense_reference",
     "exact_model_record",
