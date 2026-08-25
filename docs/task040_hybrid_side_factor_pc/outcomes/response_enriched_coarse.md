@@ -2,8 +2,8 @@
 
 ## 状态
 
-`planned_conditional_not_run`。本页冻结 train/holdout、方向来源和 bounded rank；没有
-创建 coarse、没有读取 exact output values 作为运行时 basis，也没有预写通过。
+`not_run_by_v4_1_identity_gate`。本页仍冻结 train/holdout、方向来源和 bounded rank；
+V4-1 identity stop 未授权创建 coarse，也没有读取 exact output values 作为运行时 basis。
 
 ## V4-3 train/holdout
 
@@ -29,3 +29,12 @@ SVD/RRQR 形成 response directions。
 V4-5 若通过，只允许最多两个 rank 进入五源连续 FGMRES `16/32/64/128`、条件 `256`；即使
 通过，当前仍是 response-enriched oracle，直到 V4-6 fresh reconstruction 移除 exact
 authority 依赖后才可讨论 bounded local patch。
+
+## Review V4-1 当前收口
+
+V4-3 response enrichment 与 V4-5 bounded rank（`64/128/256/512`）均未运行。固定的
+train/holdout、`R1/R2/R3`、basis、rank、lifted bare-F residual 和任何 accuracy 数值均未
+生成；`not_run_by_v4_1_identity_gate` 是前置 canonical source-row identity 未资格化，
+不是 response/coarse 算法失败。V4-2、V4-3、V4-5 后续映射均保持未授权，不能把缺少数据写成
+无 signal 或 overfit。证据边界见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

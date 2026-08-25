@@ -1,0 +1,228 @@
+{
+  "schema": "task040.v4_1.exact_authority_compatibility_record.v1",
+  "task": "Task040",
+  "stage": "V4-1",
+  "status": "controlled_identity_negative",
+  "classification": "EXACT_AUTHORITY_NOT_COMPATIBLE_WITH_CURRENT_BARE_F",
+  "evidence_valid": true,
+  "checker_pass": true,
+  "gate_pass": false,
+  "failure_code": "CANONICAL_SOURCE_ROW_BINDING_UNAVAILABLE",
+  "failure_reason": "canonical source-row binding unavailable/incompatible",
+  "identity": {
+    "branch": "codex/20260822-task40-hybrid-side-factor-pc",
+    "frozen_labels": [
+      "modal_traction_positive",
+      "modal_traction_negative",
+      "external_dtn_coupling",
+      "fixed_random_repeat_0",
+      "fixed_random_repeat_1"
+    ],
+    "formal_source_sha": "9f3d6e39cb607125a773b35d9a2a9f7459c7f2dc",
+    "checker_source_sha": "4b70adfb6707464aaed4309ece5bca179dd60b57",
+    "freeze_source_sha": "112ac4913a531ae5c5aab941ac88f005a95b9dc4",
+    "spool_producer_source_sha": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "selected_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "probe_manifest_sha256": "7a03b2cf80fe5081d1fe1248b9d4c79f3ef4e955a8014e905c2f2ca82797baad",
+    "selected_identity_sha256": "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9",
+    "spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "resolved_config_sha256": "f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883"
+  },
+  "exact_output_identity_sha256": {
+    "modal_traction_positive": "3100fd4f186ba720ef8ef030e4fc45749d6726927e420102884d71016b0fe8cb",
+    "modal_traction_negative": "a7a42879e64d78e3de3f956747806b628f01fa482bece281a8b20bda1bf065e4",
+    "external_dtn_coupling": "f0f1c970644aebe13a7fe94806205f83c02c5ea90554ccc2987bd5720d7c37f8",
+    "fixed_random_repeat_0": "5322aabafa153d073e635fd80aa1f729f7e1c9c98dab2032ef3f2a67d6860baa",
+    "fixed_random_repeat_1": "51429f3bd4db63c6cb870d10b7e6f757ac82255fa8871bb4af9d8449eeaa2c93"
+  },
+  "formal_evidence": {
+    "formal_root": "results/task040_v4_1_exact_authority_compatibility_mpi8_9f3d6e39",
+    "formal_authority_root": "results/task040_v4_1_exact_authority_compatibility_mpi8_9f3d6e39",
+    "formal_schema": "task040.v4.exact_authority_compatibility.v1",
+    "formal_method": "task040_v4_exact_authority_compatibility",
+    "formal_profile": "task040.v4.h4.exact_authority_compatibility.v1",
+    "checker_return_code": 0,
+    "checker_artifact": "results/task040_v4_1_exact_authority_compatibility_mpi8_9f3d6e39/checker_recomputed_after_4b70adfb.json",
+    "checker_artifact_sha256": "71ab1274b3b236679ff19b403875b0109f6f3e3c1bb1f02e2642ee69d44f97d8",
+    "formal_raw_sha256": {
+      "worker/run_summary.json": "ace70fc037df8dfb7acb3e2653392f594ea74951077c6b60ec51cc15641a08cb",
+      "watchdog_summary.json": "f035b5d7fa28e2bdac8696fd4aa98586eaf2952b17a9c513de9e90f352c718a0",
+      "memory_stage_markers.raw.jsonl": "61b8de92162eefa9be80fcf58a4baf2db5afcb3049251fb12d9f48431c323ba3",
+      "memory_stages.jsonl": "2d7fd70f82f870cd93f2d6d15d2b4d1517ec09beae6e88542085839e89f74485",
+      "process_tree_samples.jsonl": "6d527b367eaa19a610a2eb601bba1e8abaaa79e9dca86e6d9d955ca0dd051827",
+      "worker_stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checker_read_files": 105,
+    "checker_checks": 37,
+    "checker_checks_all_true": true,
+    "checker_npy_read": false,
+    "formal_file_count": 6,
+    "spool_json_file_count": 96
+  },
+  "identity_gate": {
+    "identity_failures": ["canonical_source_binding"],
+    "identity_checks": {
+      "input_sha256": true,
+      "physical_model_sha256": true,
+      "frozen_branch": true,
+      "freeze_source": true,
+      "selected_manifest": true,
+      "resolved_config": true,
+      "packet_manifest": true,
+      "spool_catalog": true,
+      "spool_producer_source": true,
+      "exact_output_metadata": true,
+      "canonical_source_binding": false
+    },
+    "canonical_source_binding": {
+      "missing_entries": [
+        "modal_traction_positive:rhs",
+        "modal_traction_positive:exact_output",
+        "modal_traction_negative:rhs",
+        "modal_traction_negative:exact_output",
+        "external_dtn_coupling:rhs",
+        "external_dtn_coupling:exact_output",
+        "fixed_random_repeat_0:rhs",
+        "fixed_random_repeat_0:exact_output",
+        "fixed_random_repeat_1:rhs",
+        "fixed_random_repeat_1:exact_output"
+      ],
+      "descriptor_available": false,
+      "descriptor_complete": false,
+      "bridge_qualified": false,
+      "pass": false,
+      "array_hash_metadata_validated": true,
+      "formal_raw_npy_mmap_hash_read": true,
+      "formal_array_hash_validation_only": true,
+      "checker_numeric_npy_read": false,
+      "numeric_vectors_constructed": false,
+      "values_retained": false,
+      "raw_global_row_remap_used": false,
+      "raw_global_row_remap_forbidden": true
+    }
+  },
+  "residual_gate": {
+    "bare_f_threshold": 1e-09,
+    "bare_f": {
+      "modal_traction_positive": {"observed": null, "status": "not_run_by_identity_gate"},
+      "modal_traction_negative": {"observed": null, "status": "not_run_by_identity_gate"},
+      "external_dtn_coupling": {"observed": null, "status": "not_run_by_identity_gate"},
+      "fixed_random_repeat_0": {"observed": null, "status": "not_run_by_identity_gate"},
+      "fixed_random_repeat_1": {"observed": null, "status": "not_run_by_identity_gate"}
+    },
+    "a_side_explanatory": {
+      "modal_traction_positive": {"observed": null, "status": "not_run_by_identity_gate"},
+      "modal_traction_negative": {"observed": null, "status": "not_run_by_identity_gate"},
+      "external_dtn_coupling": {"observed": null, "status": "not_run_by_identity_gate"},
+      "fixed_random_repeat_0": {"observed": null, "status": "not_run_by_identity_gate"},
+      "fixed_random_repeat_1": {"observed": null, "status": "not_run_by_identity_gate"}
+    },
+    "reports_count": 0,
+    "numerical_gate_pass": null
+  },
+  "lifecycle": {
+    "system_created": false,
+    "explicit_bare_f_created": false,
+    "interface_masses_built": false,
+    "rhs_vectors_loaded": 0,
+    "exact_output_vectors_loaded": 0,
+    "factor_inventory": {
+      "exact_output_vectors_loaded": 0,
+      "full_side_exact_factor_count": 0,
+      "global_direct_factor_count": 0,
+      "cross_section_group_factor_count": 0,
+      "reduced_dense_factor_count": 0,
+      "factor_objects_created": 0
+    },
+    "qep_calls": 0,
+    "pde_solve": "not_run",
+    "runner_resource_authority": {
+      "status": "not_run_by_identity_gate",
+      "sample_count": 0,
+      "all_status_readable": null,
+      "swap_authority_readable": null,
+      "swap_zero_authoritative": null
+    }
+  },
+  "watchdog_resource": {
+    "mpi_size": 8,
+    "threads_per_rank": 1,
+    "return_code": 0,
+    "termination_reason": "natural_exit",
+    "sample_count": 20,
+    "authoritative_sample_count": 20,
+    "last_process_sample_seconds": 9.697888669999884,
+    "peak_rss_bytes": 1764352000,
+    "peak_rss_gib": 1.643180847167969,
+    "swap_bytes": 0,
+    "dedicated_cgroup_swap_bytes": 0,
+    "all_status_readable": true,
+    "swap_authority_readable": true,
+    "process_group_exited": true,
+    "worker_exited": true,
+    "sigkill_required": false
+  },
+  "not_run_by_gate": {
+    "raw_downstream": {
+      "projection": "not_run_by_gate",
+      "lift": "not_run_by_gate",
+      "trace": "not_run_by_gate",
+      "dual": "not_run_by_gate",
+      "response": "not_run_by_gate",
+      "fgmres": "not_run_by_gate",
+      "coarse": "not_run_by_gate",
+      "level_b": "not_run_by_gate",
+      "full_hybrid": "not_run_by_gate",
+      "h3": "not_run_by_gate"
+    },
+    "review_v4": {
+      "projection": "not_run_by_v4_1_identity_gate",
+      "dual": "not_run_by_v4_1_identity_gate",
+      "bare_f_residual": "not_run_by_v4_1_identity_gate",
+      "a_side_explanatory_residual": "not_run_by_v4_1_identity_gate",
+      "trace": "not_run_by_v4_1_identity_gate",
+      "lift": "not_run_by_v4_1_identity_gate",
+      "V4-2": "not_run_by_v4_1_identity_gate",
+      "V4-3": "not_run_by_v4_1_identity_gate",
+      "V4-4": "not_run_by_v4_1_identity_gate",
+      "V4-5": "not_run_by_v4_1_identity_gate",
+      "V4-6": "not_run_by_v4_1_identity_gate",
+      "V4-7": "not_run_by_v4_1_identity_gate",
+      "V4-8": "not_run_by_v4_1_identity_gate",
+      "V4-9": "not_run_by_v4_1_identity_gate",
+      "V4-10": "not_run_by_v4_1_identity_gate",
+      "basis_rank_selection": "not_run_by_v4_1_identity_gate",
+      "true_residual_checkpoints": "not_run_by_v4_1_identity_gate",
+      "train_holdout": "not_run_by_v4_1_identity_gate"
+    }
+  },
+  "invalid_attempts": [
+    {
+      "formal_root": "results/task040_v4_1_exact_authority_compatibility_mpi8_a64d33e6",
+      "source_sha": "a64d33e6fd01a3f23d27fb326b9b2efa694142f3",
+      "classification": "implementation_failure",
+      "formal_authority": false,
+      "reason": "raw global-row remap across different ownership layouts; residuals are not authoritative"
+    },
+    {
+      "formal_root": "results/task040_v4_1_exact_authority_compatibility_mpi8_1c68da98",
+      "source_sha": "1c68da98e0cde6676e3e2f81ae67a424befae062",
+      "classification": "incomplete_superseded",
+      "formal_authority": false,
+      "reason": "incomplete superseded implementation attempt; not a formal conclusion"
+    }
+  ],
+  "evidence_paths": {
+    "formal_root": "results/task040_v4_1_exact_authority_compatibility_mpi8_9f3d6e39",
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "probe_manifest": "benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v1_2_probe_manifest_v1.json",
+    "checker_artifact": "results/task040_v4_1_exact_authority_compatibility_mpi8_9f3d6e39/checker_recomputed_after_4b70adfb.json",
+    "record": "benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json",
+    "raw_artifacts": "ignored",
+    "compact_record": "tracked"
+  },
+  "boundary": "This evidence proves that the frozen exact spool lacks a qualified canonical source-row bridge. It does not prove that the vectors are numerically wrong, does not prove that the bare-F residual failed, and does not assess trace, lift, preconditioning, full Hybrid, or 0.7nm scalability."
+}

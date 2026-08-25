@@ -2,8 +2,9 @@
 
 ## 状态
 
-`planned_not_run`。本页只冻结三种 trace 到三维 group 的对照，不宣称任何 lift 或 residual
-结果。
+`not_run_by_v4_1_identity_gate`。V4-1 在 system/F/interface mass/Vec 之前因 canonical
+source-row binding 缺失而停止；本页只冻结三种 trace 到三维 group 的对照，不宣称任何 lift
+或 residual 结果。
 
 ## 固定对照
 
@@ -38,3 +39,12 @@ back-substitution。不得把 packet `U` 重新解释为 `Z`，也不得调用�
 `CURRENT_SPAN_INSUFFICIENT`；若 `tB` 有效而 `tP` 明显更差，才可标记
 `DUAL_PROJECTION_INSUFFICIENT`。若 exact trace 本身未通过 §7.6，则必须先分类
 `EXACT_TRACE_LIFT_IDENTITY_NOT_ESTABLISHED` 并停止，不得跳过该 Gate。
+
+## Review V4-1 当前状态
+
+exact、Petrov、metric-best 三种 trace 均没有生成；五个 solution relative error、五个
+bare-F true residual、finite/repeat/linearity 和 factor lifecycle 均没有数值。这里的
+`not_run_by_v4_1_identity_gate` 不是 lift 算法失败，而是冻结 exact 输出无法安全重建到
+当前 bare-F 行身份，所以 V4-1 没有获得进入 lift 的授权。A-side explanatory residual 也
+没有运行，不能替代 bare-F residual。compact 证据见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

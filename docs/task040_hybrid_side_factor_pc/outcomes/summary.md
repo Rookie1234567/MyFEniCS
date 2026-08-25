@@ -5,6 +5,28 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 在人工截面附近保留必要的信息，以减少内存；但它必须先证明传递方向正确，再谈完整 Hybrid。
 本页把已完成的 T40-3、V1-1 与 V1-2 Run B 分开登记，不能把组件峰值当作完整工作流节省。
 
+## Review V4 当前收口
+
+| 项目 | 当前结论 | 证据边界 |
+|---|---|---|
+| V4-1 exact-authority preflight | `controlled_identity_negative`；`EXACT_AUTHORITY_NOT_COMPATIBLE_WITH_CURRENT_BARE_F` | 唯一 identity failure 为 `canonical_source_binding` / `CANONICAL_SOURCE_ROW_BINDING_UNAVAILABLE` |
+| 身份证据 | 5 labels、80 个目标 JSON、96 个 spool JSON；11 项 identity checks 中 10 项通过 | metadata self-hash、array/local hash metadata、producer 8/8、exact identities、input/physical/selected/probe/spool/resolved/source/branch 均通过；canonical descriptor/source-row binding 没有 |
+| 原始检查器 | `checker_pass=true`、`evidence_valid=true`、`gate_pass=false` | 37/37 checks；105 read files；无 NPY 数值读取；checker artifact SHA `71ab1274b3b236679ff19b403875b0109f6f3e3c1bb1f02e2642ee69d44f97d8` |
+| 构造与数值 | system/F/interface mass/Vec/factor/QEP/PDE 均未构造或未运行 | bare-F、A_side、trace/dual/projection/lift、response/FGMRES/coarse/Level B/full Hybrid/h3 均无数值 |
+| 资源 | watchdog MPI8、threads1、rc0 natural、20/20 samples、最后 sample `9.697888669999884 s`、peak `1764352000 B = 1.643180847167969 GiB`、swap0 | runner 内部 resource authority 为 sample0、`not_run_by_identity_gate`；metadata preflight 不是 Pareto solver 点 |
+| V4-2→V4-10 | `not_run_by_v4_1_identity_gate` | 没有新的 R/T/A、DoF、field、rank、scaling 或 production 资格数据 |
+
+“canonical source-row bridge”可以直译成“把旧文件中的行号对应回当前物理自由度的地图”。
+冻结 spool 的文件和 hash 虽然正确，但没有这张地图；旧 MPI8 ownership 与当前布局不同，因而
+不能把 raw PETSc global row 直接搬运成当前 `F` 的数学行。这个结论不是数值 residual 失败，
+不是 exact vectors 错误的证明，也不是 trace/lift/PC 失败；它只说明当前冻结 exact output
+不能安全重建到 current bare `F`。完整受控记录见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
+
+正式 V4 root 是唯一的 `9f3d6e39` root。旧 root `a64d33e6` 是跨 ownership 的 raw-row remap
+`implementation_failure`，`1c68da98` 是 `incomplete_superseded`；两者保留但不混入当前 formal
+数值或资源结论。
+
 ## 阶段总表
 
 | 阶段 | 作用范围 | 状态 | 关键事实 |

@@ -1,6 +1,6 @@
 # T40-12 conditional h3 scaling
 
-## Status: not_run_by_v3_2_numerical_gate
+## Status: not_run_by_v4_1_identity_gate
 
 T40-12 的 p6/h3 bottom scaling probe 只有在 h4 scalable candidate 通过数值和资源 Gate
 后才允许启动。T40-3 transmission mechanism 未通过，所以没有 h3 DoF、PC retained bytes、
@@ -20,3 +20,11 @@ exponent、RSS/wall scaling 或 0.7 nm 外推。
 
 `not_run_by_v3_2_numerical_gate`。V3-2 full-span residual 未通过，未运行 bounded coarse、
 h3 或 0.7 nm scaling；没有新的 DoF、retained-byte、RSS、wall 或近线性内存证据。
+
+## Review V4-1 当前状态
+
+`not_run_by_v4_1_identity_gate`。V4-9/V4-10 的 h3、p6 和 0.7 nm scaling 没有启动；没有
+DoF、retained bytes、rank、rows、RSS、wall、swap 或内存增长数据，也没有 convergence claim。
+V4-1 在 system/F/Vec/factor 之前因 canonical source-row bridge 缺失而受控停止，这不是
+h-refinement 或 scaling 算法失败。详见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

@@ -2,8 +2,8 @@
 
 ## 状态
 
-`planned_conditional_not_run`。V4-4 不是生产 solver qualification，只在 V4-3 有 signal
-或 Review 条件允许时，用有限连续 FGMRES 采集困难接口方向。
+`not_run_by_v4_1_identity_gate`。V4-4 不是生产 solver qualification；V4-1 的 canonical
+identity stop 没有授权进入 V4-3/V4-4，因此没有用连续 FGMRES 采集困难接口方向。
 
 ## 冻结采样合同
 
@@ -26,3 +26,12 @@ direction 及其摘要；不得 FE-sized numeric allgather、每 rank 复制完�
 `LATE_KRYLOV_ACCELERATION_OBSERVED`、`SLOW_BUT_INFORMATIVE` 或 `PURE_STAGNATION`。
 若 V4-3 也无 signal 且这里为 pure stagnation，停止当前 coarse family；长迭代不能包装成
 0.7 nm production pass。
+
+## Review V4-1 当前收口
+
+V4-4 的两源 training（`external_dtn_coupling`、`fixed_random_repeat_0`）、holdout、
+`16/32/64/128` 及条件 `256` 均没有生成；没有 Krylov direction、Ritz direction、rank、
+true residual 或 train/holdout 数据。原因是 V4-1 在任何 system/F/Vec 构造之前因
+`CANONICAL_SOURCE_ROW_BINDING_UNAVAILABLE` 停止，而不是长方向采样或 FGMRES 算法失败。
+后续阶段统一为 `not_run_by_v4_1_identity_gate`，不得据此给 production 或 0.7 nm 结论。
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

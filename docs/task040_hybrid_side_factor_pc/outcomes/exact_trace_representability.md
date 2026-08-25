@@ -2,8 +2,9 @@
 
 ## 状态
 
-`planned_not_run`。V4-0 只完成 identity audit；本页不预写 trace、projection 或 lift
-通过，也没有加载 exact-output 数组或启动 MPI/PDE。
+`controlled_identity_negative`（controlled identity stop）。V4-1 的独立 raw checker 已验证 metadata/hash 身份，但在构造
+system、F、interface mass、Vec、factor、QEP 或 PDE 之前停止；本页不把未运行的 trace、
+projection 或 lift 写成数值失败。
 
 ## 唯一问题
 
@@ -21,7 +22,7 @@ residual 不得混用。
 
 | 项目 | V4-1 固定合同 | 当前结果 |
 |---|---|---|
-| authority | 五个冻结 label；metadata/hash 先核验 | `not_run` |
+| authority | 五个冻结 label；先核验 metadata/hash，再检查 canonical source-row binding | metadata/hash identity 已核验；`canonical_source_binding=false`，数值重建 `not_run_by_identity_gate` |
 | projection | 当前 Petrov 与 interface-mass metric best 两种投影 | `not_run` |
 | lift | exact trace、Petrov trace、best trace 三种同构 group back-sub | `not_run` |
 | formal operator | `F_b` action/hash；A-side 仅解释字段 | `not_run` |
@@ -36,3 +37,47 @@ keys，不假设 PETSc global row 顺序稳定。
 `EXACT_AUTHORITY_NOT_COMPATIBLE_WITH_CURRENT_BARE_F`，不是通过调阈值或重建 factor 解决的
 implementation bug。若 tiny/exact algebra 证明只是 orientation、owner 或 action 接线错误，
 才可按 Review V4 §4 做最小修复并绑定新 SHA。
+
+## Review V4-1 当前收口
+
+这里的 canonical source-row bridge，通俗地说，就是一张把每个存储行重新指回稳定物理自由度
+的地图，也就是 source-row 到 canonical physical key 的映射。当前文件的 array hash 和
+metadata 自哈希正确；NPY values 确实存在，但 formal 只做 mmap/hash 校验，没有构造 PETSc
+Vec，也没有保留 values。冻结 exact spool 缺少这张 source-row 到 canonical physical key 的
+映射/bridge；旧 PETSc global row 只能说明“当时存在哪里”，不能说明“数学上代表什么”。当前
+旧 MPI8 ownership 与新构造布局不同，因此不能把 raw global row 当作可重建的 operator identity。
+
+| identity check | 实测结果 |
+|---|---|
+| input SHA256 | `true` |
+| physical model SHA256 | `true` |
+| frozen branch | `true` |
+| freeze source | `true` |
+| selected manifest | `true` |
+| resolved config | `true` |
+| packet manifest | `true` |
+| spool catalog | `true` |
+| spool producer source（10 label:role，8/8） | `true` |
+| exact-output metadata identity（五标签） | `true` |
+| `canonical_source_binding`（canonical source binding） | `false`；唯一 identity failure |
+
+缺失项恰为以下 10 项：
+
+`modal_traction_positive:rhs`、`modal_traction_positive:exact_output`、
+`modal_traction_negative:rhs`、`modal_traction_negative:exact_output`、
+`external_dtn_coupling:rhs`、`external_dtn_coupling:exact_output`、
+`fixed_random_repeat_0:rhs`、`fixed_random_repeat_0:exact_output`、
+`fixed_random_repeat_1:rhs`、`fixed_random_repeat_1:exact_output`。
+
+| 项目 | 阈值/合同 | 当前实测状态 |
+|---|---|---|
+| bare-F true residual，五源 | `<=1e-9` | 无数值；`not_run_by_identity_gate` |
+| A-side explanatory residual，五源 | 仅解释，不替代 bare-F | 无数值；`not_run_by_identity_gate` |
+| exact/Petrov/metric-best trace | Review V4 固定三种对照 | `not_run_by_identity_gate` |
+| projection | Petrov 与 metric-best | `not_run_by_identity_gate` |
+| lift | 三种 trace 的 group lift | `not_run_by_identity_gate` |
+
+`descriptor_available`、`descriptor_complete`、`bridge_qualified` 和 `pass` 均为 `false`；
+array metadata hash 已验证，但 numeric vectors 未构造、values 未保留、raw-row remap 未使用且
+被禁止。正式结论与 37/37 checks、105 read files、无 NPY 的 compact record 绑定：
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

@@ -1,6 +1,6 @@
 # T40-4 bounded patch PC
 
-## Status: not_run_by_v3_2_numerical_gate
+## Status: not_run_by_v4_1_identity_gate
 
 T40-4 原计划把人工截面 oracle 收缩为真正有固定局部行数上限的 patch/class factor，并
 测试 owner routing。T40-3 的 mandatory rho 已失败（最小也为 14.24201480051629，最大为
@@ -27,3 +27,12 @@ V2-D bounded patch Level B 为 `not_run_by_gate`：V2-B2 projected-transmission 
 `not_run_by_v3_2_numerical_gate`。V3-2 full-span coupled consumer 的五源 true residual
 未通过，未进入 bounded local patch；本阶段没有新的 `max_local_rows`、factor、RSS 或 residual
 测量，不能把未运行写成 bounded patch 数值失败。
+
+## Review V4-1 当前状态
+
+`not_run_by_v4_1_identity_gate`。V4-7 bounded patch/Level B 在构造 system、裸 `F`、interface
+mass、PETSc Vec 和 factor 之前停止；没有生成 `max_local_rows`、局部 factor、patch residual、
+rank、DoF、RSS 或 wall 数据。原因是冻结 exact spool 没有能把旧 raw row 绑定到当前物理自由度的
+canonical source-row bridge（通俗地说，就是缺少“文件行号对应哪个物理未知量”的地图），不是
+bounded patch 算法失败。V4-2 至 V4-10 均由该身份门阻止，见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

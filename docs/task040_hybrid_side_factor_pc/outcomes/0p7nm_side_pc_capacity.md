@@ -1,6 +1,6 @@
 # 0.7 nm side-PC capacity boundary
 
-## Status: not_run_by_v3_2_numerical_gate
+## Status: not_run_by_v4_1_identity_gate
 
 Task040 没有取得 0.7 nm 资格结论。T40-3 的固定三组、固定一阶 impedance 和固定
 forward/backward sweep 是真实数值负结果；V1-1 的 scalar Krylov 也是 directional fail。
@@ -27,3 +27,11 @@ space、完整 Hybrid 或 0.7 nm 都不可行。
 `not_run_by_v3_2_numerical_gate`。V3-2 full-span consumer 的 identity、lifecycle 和资源通过，
 但 full bare-F true residual 未通过；因此没有 0.7 nm candidate、h3 scaling 或 production
 side-PC 资格结论。该组件结果也不证明 296/480 trace 数学对所有问题都无用。
+
+## Review V4-1 当前状态
+
+`not_run_by_v4_1_identity_gate`。V4-9/V4-10 和 0.7 nm candidate 均未运行；没有新的 DoF、
+R/T/A、field、rank、memory、scaling 或 production side-PC 数据，因此没有 0.7 nm 资格结论。
+V4-1 的 controlled identity negative 只说明冻结 exact output 缺少可资格化的 canonical
+source-row bridge，不是该算法、trace/lift 或 0.7 nm 问题的数值失败。见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

@@ -1,6 +1,6 @@
 # T40-9 top full side
 
-## Status: not_run_by_v3_2_numerical_gate
+## Status: not_run_by_v4_1_identity_gate
 
 T40-9 的 top route 依赖 bottom 路线资格，且只能在前置 Gate 通过后执行。由于 T40-3
 mandatory rho、worst rho 和 preferred rho 均失败，top bare-F/full-side 没有运行；没有
@@ -20,3 +20,11 @@ V2-E top full-side 为 `not_run_by_gate`。V2-B2 projected-transmission 数值�
 
 `not_run_by_v3_2_numerical_gate`。V3-2 full-span numerical Gate 未通过；top full-side 没有
 启动，没有 top factor、residual、RSS 或物理结果。
+
+## Review V4-1 当前状态
+
+`not_run_by_v4_1_identity_gate`。V4-8 top route 未构造 top system/F、factor 或 physical solve，
+因此没有 residual、R/T/A、DoF、RSS、wall 或 swap 数据。V4-1 的 canonical source-row bridge
+身份门先于这些对象停止；不能把 top route 记为算法失败，也不能从该受控停止推出 production
+或 0.7 nm 结论。详见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

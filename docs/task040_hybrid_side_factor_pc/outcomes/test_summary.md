@@ -87,3 +87,23 @@ heavy/MPI/PDE。
 | documentation registry | `python -m pytest -q src/test/test_183_development_model_registry_markdown.py`；`5 passed` |
 | full documentation-contract file | `python -m pytest -q src/test/test_26_documentation_contract.py`；`13 passed, 1 failed`，唯一失败仍是已有 Case104 numbered-case registration gap |
 | V3-8 benchmark no-write | `python -m benchmarks.check_benchmarks --no-write`；`302/302 passed` |
+
+## Review V4-1 final checker and focused tests
+
+| 检查 | 结果 |
+|---|---|
+| test313 serial | `12 passed` |
+| test313 MPI2 | `12 tests per rank passed` |
+| test313 MPI4 | `12 tests per rank passed`；仅有 pytest 临时目录清理 warning，不影响结果 |
+| test314 checker | `22 passed` |
+| Ruff / compileall / diff-check | 均通过 |
+| documentation contract + repository principles | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_24_repository_work_principles.py`；`20 passed, 1 failed`；唯一失败是既有 Case104 numbered-case registration gap，未修改测试 |
+| committed V4-1 checker | `rc=0`；`37/37 checks`；`105 read files`；无 NPY 读取 |
+| formal MPI8 | metadata-only controlled identity stop；未运行 numerical solver/PDE |
+| full repository pytest | `not_run` |
+| CI | 未声称 CI 通过；以上为本地证据 |
+
+V4-1 在构造 system、裸 `F`、interface mass、Vec、factor、QEP 和 PDE 前停止。除唯一的
+`canonical_source_binding` 外，冻结身份检查通过；V4-2 至 V4-10 以及本轮额外 PDE/QEP 均
+`not_run_by_v4_1_identity_gate`。证据与状态见
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。

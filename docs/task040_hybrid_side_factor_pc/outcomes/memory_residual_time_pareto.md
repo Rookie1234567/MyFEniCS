@@ -51,3 +51,16 @@ V3-3 至 V3-7、bounded local patch、bottom/top/both/full Hybrid、h3/0.7 nm �
 `not_run_by_v3_2_numerical_gate`；V1/V2 的历史 `not_run_by_gate` 结论保持不变。因此没有
 cold/reuse/full workflow peak、完整 residual-time 曲线或 PC-specific h-scaling。V3-2 的
 组件点只能说明本次 mechanism oracle 的资源边界，不能说明 production 或 0.7 nm 可行。
+
+## Review V4-1 metadata-only identity preflight
+
+| 路线 | residual / rho | peak RSS GiB | wall / sample | swap | 状态 |
+|---|---|---:|---:|---:|---|
+| V4-1 exact-authority metadata preflight | 无 residual；`not_run_by_identity_gate` | 1.643180847167969 | 最后 watchdog sample `9.697888669999884 s`（不是 workflow wall） | 0 | metadata-only identity preflight |
+
+该点只检查原始 JSON、spool 元数据和 watchdog 证据：MPI8、每 rank 1 thread、20/20
+authoritative samples，process-tree peak 为 `1764352000 B`，dedicated cgroup swap 为 0。
+runner 自身的 resource authority 是 `not_run_by_identity_gate`、sample count 0，因为
+system/F/Vec 没有构造。它不是 solver Pareto 点，不能与完整 workflow/direct 的节省比例、
+residual 或 wall 直接比较，也不能据此宣称 side inverse 可扩展。
+[V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
