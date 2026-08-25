@@ -92,6 +92,9 @@ class RouteBNestedHierarchyExtension:
 
 def build_route_b_nested_hierarchy_extension(
     foundation: Any,
+    *,
+    local_transfer_62: Any = None,
+    local_transfer_21: Any = None,
 ) -> RouteBNestedHierarchyExtension:
     """Build the fixed Route-B extension from one existing S2 foundation."""
 
@@ -126,11 +129,17 @@ def build_route_b_nested_hierarchy_extension(
             validate_canonical_owner_identity=True,
         )
         transfer_62 = _OwnerPacketTransfer(
-            level6, level2, build_local_interlevel_edge_transfer(6, 2),
+            level6,
+            level2,
+            (local_transfer_62 if local_transfer_62 is not None
+             else build_local_interlevel_edge_transfer(6, 2)),
             allowed_pairs=ROUTE_B_PAIRS, route_schema=ROUTE_B_SCHEMA,
         )
         transfer_21 = _OwnerPacketTransfer(
-            level2, level1, build_local_interlevel_edge_transfer(2, 1),
+            level2,
+            level1,
+            (local_transfer_21 if local_transfer_21 is not None
+             else build_local_interlevel_edge_transfer(2, 1)),
             allowed_pairs=ROUTE_B_PAIRS, route_schema=ROUTE_B_SCHEMA,
         )
         return RouteBNestedHierarchyExtension(

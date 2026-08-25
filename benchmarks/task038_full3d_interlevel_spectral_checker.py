@@ -1,4 +1,4 @@
-"""Independent NumPy checker for the V12 Route-A R1 evidence record."""
+"""Independent NumPy checker for the V12 Route-A/R3 evidence records."""
 
 from __future__ import annotations
 
@@ -17,6 +17,15 @@ from scipy.linalg import eigh
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_interlevel_spectral"
 SCHEMA = "task038.full3d.interlevel-spectral.r1-record.v1"
+ROUTE_B = "B"
+ROUTE_B_SCHEMA = "task038.full3d.interlevel-spectral.r3-record.v1"
+ROUTE_B_MARKER_SCHEMA = "task038.full3d.interlevel-spectral.r3-marker.v1"
+ROUTE_B_CHECK_SCHEMA = "task038.full3d.interlevel-spectral.r3-check.v1"
+ROUTE_B_PROBE_SCHEMA = "task038.route-b.global-probe.v1"
+ROUTE_B_STAGE = "r3"
+ROUTE_B_LEVELS = (6, 2, 1)
+ROUTE_B_PAIRS = ((6, 2), (2, 1))
+ROUTE_B_CANDIDATE = "lor_edge_geometric_mg_6_2_1_nested_v1"
 MARKER_SCHEMA = "task038.full3d.interlevel-spectral.r1-marker.v1"
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 PROBE_NAMES = (
@@ -30,6 +39,11 @@ SOURCE_GENERATION = {
     "checkerboard": "native_l2_analytic_values:checkerboard",
     "physical_component_derived": "s2_physical_rhs.compose_then_high_dual_restrict_then_p63_adjoint",
     "r3_long_tail_derived": "r3_canonical_full_fe_dual_packets_then_high_dual_restrict_then_p63_adjoint",
+}
+ROUTE_B_SOURCE_GENERATION = {
+    **SOURCE_GENERATION,
+    "physical_component_derived": "s2_physical_rhs.compose_then_high_dual_restrict_then_p62_adjoint",
+    "r3_long_tail_derived": "r3_canonical_full_fe_dual_packets_then_high_dual_restrict_then_p62_adjoint",
 }
 MATERIAL_ROLE_TAGS = {"air": 1, "substrate": 2, "grating": 3}
 R3_LONG_TAIL_MANIFEST_SHA256 = (
@@ -62,6 +76,42 @@ FAIL_MARKERS = (
     "startup", "preflight", "foundation", "class_inventory", "classes_complete",
     "local_gate_failed", "level3_not_run", "probes_not_run", "release",
 )
+ROUTE_B_PASS_MARKERS = (
+    "startup", "preflight", "foundation", "class_inventory", "classes_complete",
+    "level2_complete", "probes_complete", "release",
+)
+ROUTE_B_FAIL_MARKERS = (
+    "startup", "preflight", "foundation", "class_inventory", "classes_complete",
+    "local_gate_failed", "level2_not_run", "probes_not_run", "release",
+)
+
+
+def _profile(record: dict[str, Any]) -> dict[str, Any] | None:
+    route = record.get("route", "A")
+    if route == "A":
+        return {
+            "route": "A", "schema": SCHEMA, "stage": "r1",
+            "marker_schema": MARKER_SCHEMA, "check_schema": "task038.full3d.interlevel-spectral.r1-check.v1",
+            "levels": (6, 3), "pair": (6, 3), "coarse_key": "b3",
+            "rank": 144, "lambda_min": 0.10, "lambda_max": 10.0,
+            "condition": 100.0, "energy": None, "adjoint": 1.0e-12,
+            "q_mode": "interval", "q_limit": (0.10, 10.0),
+            "source_generation": SOURCE_GENERATION,
+            "pass_markers": PASS_MARKERS, "fail_markers": FAIL_MARKERS,
+        }
+    if route == ROUTE_B:
+        return {
+            "route": ROUTE_B, "schema": ROUTE_B_SCHEMA, "stage": ROUTE_B_STAGE,
+            "candidate": ROUTE_B_CANDIDATE,
+            "marker_schema": ROUTE_B_MARKER_SCHEMA, "check_schema": ROUTE_B_CHECK_SCHEMA,
+            "levels": ROUTE_B_LEVELS, "pair": (6, 2), "coarse_key": "b2",
+            "rank": 54, "lambda_min": 0.50, "lambda_max": 2.0,
+            "condition": 4.0, "energy": 1.0e-9, "adjoint": 1.0e-11,
+            "q_mode": "center", "q_limit": 1.0e-9,
+            "source_generation": ROUTE_B_SOURCE_GENERATION,
+            "pass_markers": ROUTE_B_PASS_MARKERS, "fail_markers": ROUTE_B_FAIL_MARKERS,
+        }
+    return None
 
 
 def _reject_constant(value: str) -> None:
@@ -119,12 +169,16 @@ def _complex_pair(value: Any) -> complex | None:
     return result if np.isfinite(result.real) and np.isfinite(result.imag) else None
 
 
-def _check_runtime_provenance(record: dict[str, Any], record_path: Path, expected_sha: str,
-                              errors: list[str]) -> bool:
+def _check_runtime_provenance(
+    record: dict[str, Any], record_path: Path, expected_sha: str,
+    errors: list[str], profile: dict[str, Any],
+) -> bool:
     provenance_error = False
-    if record.get("schema") != SCHEMA:
+    if record.get("schema") != profile["schema"]:
         errors.append("record schema mismatch")
-    if record.get("stage") != "r1" or record.get("case") != "p6-h10-mpi1":
+    if profile["route"] == ROUTE_B and record.get("candidate") != ROUTE_B_CANDIDATE:
+        errors.append("Route-B candidate identity mismatch")
+    if record.get("stage") != profile["stage"] or record.get("case") != "p6-h10-mpi1":
         errors.append("stage/case mismatch")
     if record.get("degree") != 6 or record.get("h_nm") != 10.0 or record.get("wavelength_nm") != 13.5 or record.get("mpi_size") != 1:
         errors.append("fixed p6/h10/MPI1 identity mismatch")
@@ -159,28 +213,36 @@ def _check_runtime_provenance(record: dict[str, Any], record_path: Path, expecte
     command = record.get("command")
     raw_dir = record.get("raw_dir")
     record_string = record.get("record_path")
-    if not isinstance(command, list) or len(command) != 19 or not all(isinstance(value, str) for value in command) or not isinstance(raw_dir, str) or not isinstance(record_string, str):
+    expected_command_length = 21 if profile["route"] == ROUTE_B else 19
+    if not isinstance(command, list) or len(command) != expected_command_length or not all(isinstance(value, str) for value in command) or not isinstance(raw_dir, str) or not isinstance(record_string, str):
         errors.append("worker command/raw path is missing")
         provenance_error = True
     else:
-        expected_prefix = ["-m", MODULE, "--stage", "r1", "--case", "p6-h10-mpi1"]
         runtime_executable = runtime.get("sys_executable") if isinstance(runtime, dict) else None
-        if not Path(command[0]).is_absolute() or command[0] != runtime_executable or command[1:7] != expected_prefix:
-            errors.append("worker command executable/module/stage/case mismatch")
-            provenance_error = True
-        expected_tail = [
+        expected_input = str((Path(__file__).resolve().parents[1] / "input/templates/full3d_iterative_example.dat").resolve())
+        expected_command = [
+            str(runtime_executable), "-m", MODULE,
+            "--stage", profile["stage"], "--case", "p6-h10-mpi1",
             "--raw-dir", raw_dir, "--record", record_string,
-            "--expected-source-sha", expected_sha, "--expected-mpi-size", "1",
-            "--input", str((Path(__file__).resolve().parents[1] / "input/templates/full3d_iterative_example.dat").resolve()),
+            "--expected-source-sha", expected_sha,
+            "--expected-mpi-size", "1", "--input", expected_input,
             "--r3-long-tail-manifest",
         ]
-        if command[7:17] != expected_tail[:10] or command[17] != "--r3-long-tail-manifest":
-            errors.append("worker command path/SHA/MPI binding mismatch")
+        manifest_path = None
+        provenance = record.get("provenance")
+        if isinstance(provenance, dict):
+            manifest_path = provenance.get("r3_long_tail_manifest_path")
+        expected_command.append(str(manifest_path))
+        if profile["route"] == ROUTE_B:
+            expected_command.extend(("--route", "b"))
+        if not Path(command[0]).is_absolute() or command != expected_command:
+            errors.append("worker command executable/module/stage/case mismatch")
             provenance_error = True
-        if command[15] != "--input" or command[16] != expected_tail[9]:
-            errors.append("worker command input binding mismatch")
+        if profile["route"] == ROUTE_B and record.get("route") != ROUTE_B:
+            errors.append("Route-B route identity is missing")
             provenance_error = True
-        if not Path(command[18]).is_absolute() or record_string == raw_dir:
+        manifest_index = 18 if profile["route"] == "A" else 18
+        if not Path(command[manifest_index]).is_absolute() or record_string == raw_dir:
             errors.append("worker command R3 manifest binding is missing")
             provenance_error = True
     input_identity = record.get("input_identity")
@@ -200,7 +262,7 @@ def _check_runtime_provenance(record: dict[str, Any], record_path: Path, expecte
             or actual_manifest_sha != R3_LONG_TAIL_MANIFEST_SHA256
             or p.get("r3_long_tail_manifest_sha256") != actual_manifest_sha
             or not isinstance(command, list)
-            or len(command) != 19
+            or len(command) != (21 if profile["route"] == ROUTE_B else 19)
             or command[18] != str(r3_path.resolve())
         ):
             errors.append("R3 manifest is missing or SHA-bound identity failed")
@@ -296,9 +358,12 @@ def _check_watchdog(compact_path: Path, record: dict[str, Any], record_path: Pat
     }
 
 
-def _check_markers(record: dict[str, Any], raw_dir: Path, expected_sha: str, errors: list[str]) -> None:
+def _check_markers(
+    record: dict[str, Any], raw_dir: Path, expected_sha: str,
+    errors: list[str], profile: dict[str, Any],
+) -> None:
     info = record.get("markers")
-    expected = PASS_MARKERS if record.get("local_gate_passed") is True else FAIL_MARKERS if record.get("local_gate_passed") is False else ()
+    expected = profile["pass_markers"] if record.get("local_gate_passed") is True else profile["fail_markers"] if record.get("local_gate_passed") is False else ()
     if not isinstance(info, dict) or tuple(info.get("names", ())) != expected:
         errors.append("marker list mismatch")
         return
@@ -315,7 +380,7 @@ def _check_markers(record: dict[str, Any], raw_dir: Path, expected_sha: str, err
             continue
         try:
             row = _read_json(path)
-            if row.get("schema") != MARKER_SCHEMA or row.get("marker") != name or row.get("source_sha") != expected_sha:
+            if row.get("schema") != profile["marker_schema"] or row.get("marker") != name or row.get("source_sha") != expected_sha:
                 errors.append(f"marker identity mismatch: {name}")
             timestamp = row["wall_time_ns"]
             if type(timestamp) is not int or timestamp <= 0 or not isinstance(wall_times, dict) or wall_times.get(name) != timestamp:
@@ -333,7 +398,7 @@ def _check_markers(record: dict[str, Any], raw_dir: Path, expected_sha: str, err
             closeout_facts = closeout_row.get("facts")
             closeout_time = closeout_row.get("wall_time_ns")
             release_time = wall_times.get("release") if isinstance(wall_times, dict) else None
-            if closeout_row.get("schema") != MARKER_SCHEMA or closeout_row.get("marker") != "record_closeout" or closeout_row.get("source_sha") != expected_sha or type(closeout_time) is not int or type(release_time) is not int or closeout_time <= release_time or not isinstance(closeout_facts, dict) or closeout_facts.get("record_path") != str(record.get("record_path")) or closeout_facts.get("record_sha256") != _sha256(Path(str(record.get("record_path")))):
+            if closeout_row.get("schema") != profile["marker_schema"] or closeout_row.get("marker") != "record_closeout" or closeout_row.get("source_sha") != expected_sha or type(closeout_time) is not int or type(release_time) is not int or closeout_time <= release_time or not isinstance(closeout_facts, dict) or closeout_facts.get("record_path") != str(record.get("record_path")) or closeout_facts.get("record_sha256") != _sha256(Path(str(record.get("record_path")))):
                 errors.append("record_closeout marker is not bound to the written record")
         except (OSError, ValueError, KeyError, TypeError) as exc:
             errors.append(f"record_closeout marker unreadable: {exc}")
@@ -344,7 +409,9 @@ def _check_markers(record: dict[str, Any], raw_dir: Path, expected_sha: str, err
         errors.append("marker sequence is not monotonic")
 
 
-def _check_level_topology(architecture: Any, errors: list[str]) -> None:
+def _check_level_topology(
+    architecture: Any, errors: list[str], level_names: tuple[int, ...] = (6, 3),
+) -> None:
     """Close the compact parent/raw topology facts without loading topology arrays."""
 
     if not isinstance(architecture, dict) or not isinstance(architecture.get("levels"), dict):
@@ -356,7 +423,8 @@ def _check_level_topology(architecture: Any, errors: list[str]) -> None:
         "cell_permutation": "Tt_before_high_to_lor_and_T_after_lor_to_high",
         "floquet_phase": "complete_slave_edge_mapped_to_master_once",
     }
-    for level_name in ("level6", "level3"):
+    for degree in level_names:
+        level_name = f"level{degree}"
         level = architecture["levels"].get(level_name)
         if not isinstance(level, dict):
             errors.append(f"level facts missing: {level_name}")
@@ -423,7 +491,119 @@ def _endpoint_residual(g: np.ndarray, b: np.ndarray, value: float, vector: np.nd
     return float(np.linalg.norm(residual) / denominator)
 
 
-def _check_class(item: dict[str, Any], arrays: dict[str, np.ndarray], errors: list[str], gates: list[str]) -> dict[str, Any]:
+def _check_nested_class(
+    item: dict[str, Any], arrays: dict[str, np.ndarray], errors: list[str],
+    gates: list[str], profile: dict[str, Any],
+) -> dict[str, Any]:
+    identity = item.get("class_identity")
+    digest = item.get("class_digest")
+    if not isinstance(identity, dict) or not isinstance(digest, str) or _semantic_sha(identity) != digest:
+        errors.append("nested material class identity/digest mismatch")
+        return {}
+    prefix = f"class_{digest}"
+    p62 = arrays.get("p62")
+    b2 = arrays.get(f"{prefix}__b2")
+    b6p = arrays.get(f"{prefix}__b6p")
+    eigenvector_min = arrays.get(f"{prefix}__eigenvector_min")
+    eigenvector_max = arrays.get(f"{prefix}__eigenvector_max")
+    required = (p62, b2, b6p, eigenvector_min, eigenvector_max)
+    if any(value is None for value in required):
+        errors.append(f"nested material class arrays missing: {digest}")
+        return {}
+    if any(value.dtype != np.dtype("complex128") for value in required):
+        errors.append(f"nested material class dtype mismatch: {digest}")
+        return {}
+    if p62.shape != (882, 54) or b2.shape != (54, 54) or b6p.shape != (882, 54) or eigenvector_min.shape != (54,) or eigenvector_max.shape != (54,):
+        errors.append(f"nested material class array shape mismatch: {digest}")
+        return {}
+    g62 = p62.conj().T @ b6p
+    singular = np.linalg.svd(p62, compute_uv=False)
+    threshold = max(p62.shape) * np.finfo(float).eps * float(singular[0])
+    rank = int(np.count_nonzero(singular > threshold))
+    b2_values = np.linalg.eigvalsh(b2)
+    g_values = np.linalg.eigvalsh(g62)
+    defect_b2, defect_g = _hermitian_defect(b2), _hermitian_defect(g62)
+    minimum_b2, minimum_g = float(b2_values[0]), float(g_values[0])
+    try:
+        values, _vectors = eigh(g62, b2, driver="gvd", check_finite=True)
+    except (np.linalg.LinAlgError, ValueError):
+        gates.append(f"nested class {digest} generalized eigensolver failed")
+        return {"class_digest": digest, "rank": rank, "finite": False, "gate_passed": False}
+    lambda_min, lambda_max = float(values[0]), float(values[-1])
+    condition = lambda_max / lambda_min if lambda_min > 0.0 else math.inf
+    residual_min = _endpoint_residual(g62, b2, lambda_min, eigenvector_min)
+    residual_max = _endpoint_residual(g62, b2, lambda_max, eigenvector_max)
+    nested_energy = float(
+        np.linalg.norm(g62 - b2) / max(np.linalg.norm(b2), np.finfo(float).tiny)
+    )
+    finite = bool(all(np.all(np.isfinite(value)) for value in (
+        p62, b2, b6p, eigenvector_min, eigenvector_max, singular,
+        b2_values, g_values, values,
+    )))
+    checks = (
+        (rank == profile["rank"], "rank"),
+        (defect_b2 <= HERMITIAN_LIMIT, "B2 Hermitian"),
+        (defect_g <= HERMITIAN_LIMIT, "G62 Hermitian"),
+        (minimum_b2 > 0.0, "B2 SPD"), (minimum_g > 0.0, "G62 SPD"),
+        (lambda_min >= profile["lambda_min"], "lambda_min"),
+        (lambda_max <= profile["lambda_max"], "lambda_max"),
+        (condition <= profile["condition"], "condition"),
+        (residual_min <= ENDPOINT_LIMIT, "smallest endpoint residual"),
+        (residual_max <= ENDPOINT_LIMIT, "largest endpoint residual"),
+        (nested_energy <= float(profile["energy"]), "nested energy"),
+        (finite, "finite"),
+    )
+    for passed, label in checks:
+        if not passed:
+            gates.append(f"nested class {digest} {label} failed")
+    actual = (
+        (rank, "rank"), (float(singular[-1]), "sigma_min"),
+        (float(singular[0]), "sigma_max"), (defect_b2, "hermitian_defect_b2"),
+        (defect_g, "hermitian_defect_g62"), (minimum_b2, "minimum_eigenvalue_b2"),
+        (minimum_g, "minimum_eigenvalue_g62"), (lambda_min, "lambda_min"),
+        (lambda_max, "lambda_max"), (condition, "spectral_condition"),
+        (residual_min, "endpoint_residual_min"),
+        (residual_max, "endpoint_residual_max"),
+        (nested_energy, "nested_energy_relative"),
+    )
+    for value, key in actual:
+        if not _close(float(value), item.get(key)):
+            errors.append(f"nested material class stored field mismatch: {key}")
+    if (
+        item.get("method") != "lor_edge_geometric_mg_6_2_1_nested_v1"
+        or item.get("p62_shape") != [882, 54]
+        or item.get("b2_shape") != [54, 54]
+        or item.get("b6p_shape") != [882, 54]
+        or item.get("nested_tiled_geometric") is not True
+        or item.get("generic_high_polynomial_reconstruction") is not False
+        or item.get("b6_dense_retained") is not False
+        or item.get("g62_dense_retained") is not False
+    ):
+        errors.append(f"nested material class fixed architecture facts mismatch: {digest}")
+    if item.get("strict_spd_b2") is not bool(minimum_b2 > 0.0) or item.get("strict_spd_g62") is not bool(minimum_g > 0.0):
+        errors.append(f"nested material class SPD facts mismatch: {digest}")
+    if item.get("finite") is not finite:
+        errors.append(f"nested material class finite field mismatch: {digest}")
+    gate_passed = bool(all(passed for passed, _label in checks))
+    if item.get("gate_passed") is not gate_passed:
+        errors.append(f"nested material class stored Gate mismatch: {digest}")
+    return {
+        "class_digest": digest, "rank": rank, "sigma_min": float(singular[-1]),
+        "sigma_max": float(singular[0]), "lambda_min": lambda_min,
+        "lambda_max": lambda_max, "spectral_condition": condition,
+        "nested_energy_relative": nested_energy,
+        "endpoint_residual_min": residual_min,
+        "endpoint_residual_max": residual_max, "finite": finite,
+        "gate_passed": gate_passed,
+    }
+
+
+def _check_class(
+    item: dict[str, Any], arrays: dict[str, np.ndarray], errors: list[str],
+    gates: list[str], profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if profile is not None and profile["route"] == ROUTE_B:
+        return _check_nested_class(item, arrays, errors, gates, profile)
     identity = item.get("class_identity")
     digest = item.get("class_digest")
     if not isinstance(identity, dict) or not isinstance(digest, str) or _semantic_sha(identity) != digest:
@@ -505,18 +685,26 @@ def _check_probe(
     gates: list[str],
     expected_coarse_rows: int,
     expected_fine_rows: int,
+    *,
+    coarse_action_key: str = "b3",
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     name = item.get("name")
     roles = item.get("raw_roles")
     if not isinstance(name, str) or not isinstance(roles, dict):
         errors.append("probe name/raw roles missing")
         return {}
-    required = tuple((key, roles.get(key)) for key in ("source_before", "source_after", "source2", "projected", "projected_repeat", "projected2", "projected_combo", "fine_dual", "adjoint", "b3", "b6p"))
+    if profile is not None and profile["route"] == "B":
+        if item.get("schema") != ROUTE_B_PROBE_SCHEMA:
+            errors.append(f"Route-B probe schema mismatch: {name}")
+        if item.get("coarse_action_role") != "B2":
+            errors.append(f"Route-B probe coarse action role mismatch: {name}")
+    required = tuple((key, roles.get(key)) for key in ("source_before", "source_after", "source2", "projected", "projected_repeat", "projected2", "projected_combo", "fine_dual", "adjoint", coarse_action_key, "b6p"))
     if any(not isinstance(key, str) or key not in arrays for _role, key in required):
         errors.append(f"probe raw roles missing: {name}")
         return {}
-    x, xa, x2, p, pr, p2, pc, y, ph, b3, b6p = (arrays[key] for _role, key in required)
-    coarse = (x, xa, x2, ph, b3)
+    x, xa, x2, p, pr, p2, pc, y, ph, coarse_action, b6p = (arrays[key] for _role, key in required)
+    coarse = (x, xa, x2, ph, coarse_action)
     fine = (p, pr, p2, pc, y, b6p)
     if (
         any(value.dtype != np.dtype("complex128") or value.ndim != 1 or value.size == 0 for value in coarse + fine)
@@ -532,13 +720,13 @@ def _check_probe(
     rhs_abs = float(abs(rhs))
     absolute_defect = float(abs(lhs - rhs))
     adjoint = float(absolute_defect / max(lhs_abs, rhs_abs, np.finfo(float).tiny))
-    ec, ef = np.vdot(x, b3), np.vdot(p, b6p)
+    ec, ef = np.vdot(x, coarse_action), np.vdot(p, b6p)
     if not (np.isfinite(ec.real) and np.isfinite(ec.imag) and abs(ec) > 0.0):
         gates.append(f"probe {name} coarse energy denominator invalid")
         ratio = complex(np.nan, np.nan)
     else:
         ratio = ef / ec
-    finite = bool(all(np.all(np.isfinite(value)) for value in (x, xa, x2, p, pr, p2, pc, y, ph, b3, b6p)))
+    finite = bool(all(np.all(np.isfinite(value)) for value in (x, xa, x2, p, pr, p2, pc, y, ph, coarse_action, b6p)))
     unchanged = _digest(x) == _digest(xa) == item.get("source_before_digest") == item.get("source_after_digest")
     source_norm = float(np.linalg.norm(x))
     source_finite = bool(np.all(np.isfinite(x)))
@@ -547,13 +735,20 @@ def _check_probe(
         gates.append(f"probe {name} nonfinite")
     if not source_finite or not source_nonzero:
         gates.append(f"probe {name} source is zero")
-    if repeat > REPEAT_LIMIT:
+    repeat_limit = REPEAT_LIMIT if profile is None else (1.0e-13)
+    linearity_limit = LINEARITY_LIMIT if profile is None else (1.0e-12)
+    adjoint_limit = ADJOINT_LIMIT if profile is None else float(profile["adjoint"])
+    if repeat > repeat_limit:
         gates.append(f"probe {name} repeat failed")
-    if linearity > LINEARITY_LIMIT:
+    if linearity > linearity_limit:
         gates.append(f"probe {name} linearity failed")
-    if adjoint > ADJOINT_LIMIT:
+    if adjoint > adjoint_limit:
         gates.append(f"probe {name} adjoint failed")
-    if not PROBE_MIN <= ratio.real <= PROBE_MAX or abs(ratio.imag) > HERMITIAN_LIMIT:
+    if profile is not None and profile["q_mode"] == "center":
+        q_failed = abs(ratio.real - 1.0) > float(profile["q_limit"])
+    else:
+        q_failed = not PROBE_MIN <= ratio.real <= PROBE_MAX
+    if q_failed or abs(ratio.imag) > HERMITIAN_LIMIT:
         gates.append(f"probe {name} q outside frozen interval")
     if not unchanged or item.get("input_unchanged") is not True:
         gates.append(f"probe {name} input changed")
@@ -563,7 +758,10 @@ def _check_probe(
         errors.append(f"probe {name} stored finite/source fact mismatch")
     if not _close(source_norm, item.get("source_norm")):
         errors.append(f"probe {name} stored field mismatch: source_norm")
-    if item.get("source_generation") != SOURCE_GENERATION.get(name):
+    expected_generation = (
+        SOURCE_GENERATION if profile is None else profile["source_generation"]
+    )
+    if item.get("source_generation") != expected_generation.get(name):
         errors.append(f"probe {name} source-generation identity mismatch")
     for actual, key in ((float(ratio.real), "q"), (float(abs(ratio.imag)), "q_imag_defect"), (repeat, "repeat_relative"), (linearity, "linearity_relative"), (adjoint, "adjoint_work_relative")):
         if not _close(actual, item.get(key)):
@@ -585,6 +783,182 @@ def _check_probe(
         "adjoint_absolute_defect": absolute_defect,
         "finite": finite,
         "input_unchanged": unchanged,
+    }
+
+
+def _check_local_transfer(
+    name: str, matrix: np.ndarray | None, facts: Any, errors: list[str],
+    gates: list[str], expected_shape: tuple[int, int], profile: dict[str, Any],
+) -> dict[str, Any]:
+    if matrix is None or not isinstance(facts, dict):
+        errors.append(f"Route-B local transfer missing: {name}")
+        return {}
+    if matrix.dtype != np.dtype("complex128") or matrix.shape != expected_shape or not np.all(np.isfinite(matrix)):
+        errors.append(f"Route-B local transfer raw shape/dtype/finite mismatch: {name}")
+        return {}
+    local_map = facts.get("local_map")
+    if not isinstance(local_map, dict):
+        errors.append(f"Route-B local transfer map audit missing: {name}")
+        return {}
+    expected_pair = [6, 2] if name == "6_2" else [2, 1]
+    if facts.get("pair") != expected_pair:
+        errors.append(f"Route-B local transfer pair mismatch: {name}")
+    if facts.get("global_transfer_matrix") is not False:
+        errors.append(f"Route-B local transfer reports global map: {name}")
+    if facts.get("numeric_allgather") is not False:
+        errors.append(f"Route-B local transfer reports numeric allgather: {name}")
+    node_shape = (343, 27) if name == "6_2" else (27, 8)
+    observed = {
+        "edge_rows": int(matrix.shape[0]), "edge_cols": int(matrix.shape[1]),
+        "edge_exact_nnz": int(np.count_nonzero(matrix)),
+        "edge_numeric_bytes": int(matrix.nbytes),
+        "node_rows": node_shape[0], "node_cols": node_shape[1],
+    }
+    audit = facts.get("local_transfer")
+    if not isinstance(audit, dict):
+        errors.append(f"Route-B local transfer local audit missing: {name}")
+        return observed
+    if (
+        audit.get("schema") != "task038.local_interlevel_edge_transfer.v1"
+        or audit.get("fine_degree") != expected_pair[0]
+        or audit.get("coarse_degree") != expected_pair[1]
+        or audit.get("edge_dtype") != "complex128"
+        or audit.get("node_dtype") != "complex128"
+    ):
+        errors.append(f"Route-B local transfer fixed identity mismatch: {name}")
+    for key, expected in (
+        ("line_integral_histopolation", True),
+        ("simple_injection", False),
+        ("structural_projection", True),
+        ("structural_forbidden_nnz_after", 0),
+        ("oracle_workspace_retained", False),
+    ):
+        if audit.get(key) is not expected:
+            errors.append(f"Route-B local transfer structural fact mismatch: {name}.{key}")
+    observed.update({
+        "node_exact_nnz": audit.get("node_nnz"),
+        "node_numeric_bytes": audit.get("node_numeric_bytes"),
+    })
+    for key, value in observed.items():
+        if local_map.get(key) != value:
+            errors.append(f"Route-B local transfer stored field mismatch: {name}.{key}")
+    if list(audit.get("edge_shape", ())) != list(expected_shape) or list(audit.get("node_shape", ())) != list(node_shape):
+        errors.append(f"Route-B local transfer audit shape mismatch: {name}")
+    for key, expected in (
+        ("edge_nnz", observed["edge_exact_nnz"]),
+        ("edge_numeric_bytes", observed["edge_numeric_bytes"]),
+        ("node_nnz", observed["node_exact_nnz"]),
+        ("node_numeric_bytes", observed["node_numeric_bytes"]),
+    ):
+        if audit.get(key) != expected:
+            errors.append(f"Route-B local transfer audit field mismatch: {name}.{key}")
+    limits = {
+        "edge_line_integral_relative": 1.0e-11,
+        "curl_flux_relative": 1.0e-11,
+        "gradient_commuting_relative": 1.0e-11,
+        "node_transfer_relative": 1.0e-11,
+        "adjoint_work_relative": float(profile["adjoint"]),
+        "linearity_relative": 1.0e-12,
+        "repeat_relative": 1.0e-13,
+    }
+    for key, limit in limits.items():
+        value = audit.get(key)
+        if not _finite(value):
+            errors.append(f"Route-B local transfer field is nonfinite: {name}.{key}")
+        elif float(value) > limit:
+            gates.append(f"Route-B local transfer {name}.{key} exceeds limit")
+    if audit.get("input_unchanged") is not True or audit.get("finite") is not True:
+        gates.append(f"Route-B local transfer {name} finite/input Gate failed")
+    if audit.get("global_transfer_matrix") is not False:
+        errors.append(f"Route-B local transfer {name} reports global transfer")
+    if name == "6_2":
+        if audit.get("gll_subset_exact") is not True:
+            errors.append("Route-B P62 GLL subset identity is not exact")
+        if audit.get("coarse_gll_subset_indices") != [0, 3, 6]:
+            errors.append("Route-B P62 GLL subset indices mismatch")
+        if (
+            not isinstance(audit.get("coarse_gll_subset_coordinate_identity"), list)
+            or audit.get("coarse_gll_subset_coordinate_identity")
+            != audit.get("fine_gll_subset_coordinate_identity")
+        ):
+            errors.append("Route-B P62 GLL subset coordinates are not identical")
+        if audit.get("nested_tiled_geometric") is not True or audit.get("generic_high_polynomial_reconstruction") is not False:
+            errors.append("Route-B P62 geometric construction identity mismatch")
+        if audit.get("shared_consistency") is not True:
+            gates.append("Route-B P62 shared consistency failed")
+        composition = audit.get("p62_p21_composition_relative")
+        if not _finite(composition):
+            errors.append("Route-B P62/P21 composition is missing/nonfinite")
+        elif float(composition) > 1.0e-11:
+            gates.append("Route-B P62/P21 composition failed")
+    return {
+        "name": name, "shape": [int(value) for value in matrix.shape],
+        "nnz": int(np.count_nonzero(matrix)), "finite": bool(np.all(np.isfinite(matrix))),
+    }
+
+
+def _check_owner_probe(
+    item: Any, arrays: dict[str, np.ndarray], errors: list[str], gates: list[str],
+    expected_coarse_rows: int, expected_fine_rows: int,
+) -> dict[str, Any]:
+    if not isinstance(item, dict) or not isinstance(item.get("raw_roles"), dict):
+        errors.append("Route-B owner probe facts/roles missing")
+        return {}
+    if item.get("schema") != ROUTE_B_PROBE_SCHEMA:
+        errors.append("Route-B owner probe schema mismatch")
+    if item.get("name") != "owner_packet_deterministic":
+        errors.append("Route-B owner probe name mismatch")
+    if item.get("pair") != [2, 1]:
+        errors.append("Route-B owner probe pair mismatch")
+    if item.get("source_generation") != "deterministic_owner_packet_p21":
+        errors.append("Route-B owner probe source identity mismatch")
+    roles = item["raw_roles"]
+    required = tuple(
+        (key, roles.get(key)) for key in (
+            "source_before", "source_after", "source2", "projected",
+            "projected_repeat", "projected2", "projected_combo", "fine_dual", "adjoint",
+        )
+    )
+    if any(not isinstance(key, str) or key not in arrays for _name, key in required):
+        errors.append("Route-B owner probe raw roles missing")
+        return {}
+    source, source_after, source2, projected, repeated, projected2, combo, fine_dual, adjoint = (
+        arrays[key] for _name, key in required
+    )
+    coarse = (source, source_after, source2, adjoint)
+    fine = (projected, repeated, projected2, combo, fine_dual)
+    if any(value.dtype != np.dtype("complex128") or value.ndim != 1 or value.size == 0 for value in coarse + fine) or any(value.shape != (expected_coarse_rows,) for value in coarse) or any(value.shape != (expected_fine_rows,) for value in fine):
+        errors.append("Route-B owner probe shape closure failed")
+        return {}
+    repeat = float(np.linalg.norm(repeated - projected) / max(np.linalg.norm(projected), np.finfo(float).tiny))
+    linearity = float(np.linalg.norm(combo - ALPHA * projected - BETA * projected2) / max(np.linalg.norm(combo), np.finfo(float).tiny))
+    lhs, rhs = np.vdot(projected, fine_dual), np.vdot(source, adjoint)
+    adjoint_relative = float(abs(lhs - rhs) / max(abs(lhs), abs(rhs), np.finfo(float).tiny))
+    finite = bool(all(np.all(np.isfinite(value)) for value in coarse + fine))
+    unchanged = _digest(source) == _digest(source_after) == item.get("source_before_digest") == item.get("source_after_digest")
+    source_norm = float(np.linalg.norm(source))
+    source_finite = bool(np.all(np.isfinite(source)))
+    source_nonzero = bool(source_norm > 0.0)
+    for value, limit, label in ((repeat, 1.0e-13, "repeat"), (linearity, 1.0e-12, "linearity"), (adjoint_relative, 1.0e-11, "adjoint")):
+        if not np.isfinite(value) or value > limit:
+            gates.append(f"Route-B owner probe {label} failed")
+    if not finite or not unchanged or item.get("finite") is not True or item.get("input_unchanged") is not True or item.get("phase_once") is not True:
+        gates.append("Route-B owner probe finite/input/phase failed")
+    if not source_finite or not source_nonzero:
+        gates.append("Route-B owner probe source finite/nonzero Gate failed")
+    for actual, key in ((repeat, "repeat_relative"), (linearity, "linearity_relative"), (adjoint_relative, "adjoint_work_relative")):
+        if not _close(actual, item.get(key)):
+            errors.append(f"Route-B owner probe stored field mismatch: {key}")
+    if (
+        item.get("source_finite") is not source_finite
+        or item.get("source_nonzero") is not source_nonzero
+        or not _close(source_norm, item.get("source_norm"))
+    ):
+        errors.append("Route-B owner probe stored source facts mismatch")
+    return {
+        "name": item.get("name"), "repeat_relative": repeat,
+        "linearity_relative": linearity, "adjoint_work_relative": adjoint_relative,
+        "finite": finite, "input_unchanged": unchanged,
     }
 
 
@@ -691,11 +1065,15 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
     for forbidden_record_field in ("status", "passed", "classification"):
         if forbidden_record_field in record:
             errors.append(f"worker record must not contain {forbidden_record_field}")
-    provenance_error = _check_runtime_provenance(record, record_path, expected_sha, errors)
+    profile = _profile(record)
+    if profile is None:
+        errors.append("unknown interlevel route profile")
+        profile = _profile({})
+    provenance_error = _check_runtime_provenance(record, record_path, expected_sha, errors, profile)
     raw_dir = Path(str(record.get("raw_dir", ""))).resolve()
     if not raw_dir.is_absolute() or not raw_dir.is_dir():
         errors.append("raw_dir missing/invalid")
-    _check_markers(record, raw_dir, expected_sha, errors)
+    _check_markers(record, raw_dir, expected_sha, errors, profile)
     lifecycle_failures: list[str] = []
     resource = _check_watchdog(
         watchdog_compact, record, record_path, expected_sha, errors, gates, lifecycle_failures,
@@ -704,9 +1082,11 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
     forbidden = architecture.get("forbidden") if isinstance(architecture, dict) else None
     required_forbidden = {
         "global_high_order_aij", "global_transfer_matrix", "numeric_allgather",
-        "p1_global_direct_factor", "p1_built", "smoother_built", "ksp_created",
+        "p1_global_direct_factor", "smoother_built", "ksp_created",
         "physical_solve", "recovery",
     }
+    if profile["route"] == "A":
+        required_forbidden.add("p1_built")
     if not isinstance(forbidden, dict):
         errors.append("forbidden architecture facts are missing")
     else:
@@ -720,13 +1100,12 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
                 errors.append(f"forbidden object was reported built: {key}")
     if isinstance(architecture, dict):
         if record.get("local_gate_passed") is True:
-            _check_level_topology(architecture, errors)
+            _check_level_topology(architecture, errors, profile["levels"])
         elif record.get("local_gate_passed") is False:
             levels = architecture.get("levels")
-            expected_levels = {
-                "level6": (True, False),
-                "level3": (False, True),
-            }
+            expected_levels = {"level6": (True, False)}
+            for degree in profile["levels"][1:]:
+                expected_levels[f"level{degree}"] = (False, True)
             if not isinstance(levels, dict):
                 errors.append("local Gate level facts are missing")
             else:
@@ -738,7 +1117,7 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
                         or facts.get("not_run_by_local_gate") is not not_run
                     ):
                         errors.append(f"local Gate level lifecycle mismatch: {name}")
-        for group, names in {
+        nested_names = {
             "case": (
                 "global_high_order_aij", "global_dense_transfer", "global_numeric_allgather",
                 "numeric_allgather", "scalar_node_matrix_built", "global_direct_coarse_built",
@@ -747,10 +1126,18 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
             ),
             "extension": (
                 "global_high_order_aij", "global_transfer_matrix", "numeric_allgather",
-                "p1_global_direct_factor", "p1_built", "smoother_built", "ksp_created",
+                "p1_global_direct_factor", "smoother_built", "ksp_created",
                 "physical_solve", "recovery",
             ),
-        }.items():
+        }
+        if profile["route"] == "A":
+            nested_names["extension"] = nested_names["extension"][:3] + ("p1_built",) + nested_names["extension"][3:]
+        else:
+            nested_names["extension"] = nested_names["extension"] + (
+                "p6_exact_factor", "hx_hierarchy_built", "pcgamg_hierarchy_built",
+                "retains_per_apply_history",
+            )
+        for group, names in nested_names.items():
             nested = architecture.get(group)
             if not isinstance(nested, dict):
                 errors.append(f"nested architecture audit is missing: {group}")
@@ -760,26 +1147,56 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
                         errors.append(f"nested architecture fact is missing/nonboolean: {group}.{name}")
                     elif nested[name]:
                         errors.append(f"nested forbidden object was reported built: {group}.{name}")
-    if record.get("local_gate_passed") is False and record.get("not_run_by_local_gate") != ["level3", "global_probes"]:
+        if profile["route"] == ROUTE_B:
+            for name, expected in (
+                ("level1_raw_matrix_built", record.get("local_gate_passed") is True),
+                ("level1_global_direct_factor", False),
+                ("p1_global_direct_factor", False),
+            ):
+                if architecture.get(name) is not expected:
+                    errors.append(f"Route-B architecture fact mismatch: {name}")
+    expected_not_run = (
+        ["level2", "global_probes", "owner_probe"]
+        if profile["route"] == ROUTE_B else ["level3", "global_probes"]
+    )
+    if record.get("local_gate_passed") is False and record.get("not_run_by_local_gate") != expected_not_run:
         errors.append("local Gate not-run ledger is not exact")
     settings = record.get("settings")
     frozen_settings = {
         "probe_names": list(PROBE_NAMES),
-        "probe_alpha": [0.37, 0.19],
-        "probe_beta": [-0.23, 0.41],
+        "probe_alpha": [0.37, 0.19], "probe_beta": [-0.23, 0.41],
         "source_canonicalization": "owner_roundtrip_reduced_primal",
-        "rank": 144, "levels": [6, 3], "transfer_pair": [6, 3],
-        "lambda_min_limit": 0.10, "lambda_max_limit": 10.0,
-        "condition_limit": 100.0, "hermitian_limit": 1.0e-12,
-        "endpoint_residual_limit": 1.0e-10, "adjoint_limit": 1.0e-12,
+        "rank": profile["rank"], "levels": list(profile["levels"]),
+        "transfer_pair": list(profile["pair"]),
+        "lambda_min_limit": profile["lambda_min"],
+        "lambda_max_limit": profile["lambda_max"],
+        "condition_limit": profile["condition"],
+        "hermitian_limit": 1.0e-12,
+        "endpoint_residual_limit": ENDPOINT_LIMIT,
+        "adjoint_limit": profile["adjoint"],
         "linearity_limit": 1.0e-12, "repeat_limit": 1.0e-13,
-        "probe_q_interval": [0.10, 10.0],
         "phase_once": "once_in_canonical_owner_route",
     }
+    if profile["route"] == "A":
+        frozen_settings["probe_q_interval"] = [0.10, 10.0]
+    else:
+        frozen_settings["nested_energy_limit"] = 1.0e-9
+        frozen_settings["probe_q_center"] = 1.0
+        frozen_settings["probe_q_abs_limit"] = 1.0e-9
     if not isinstance(settings, dict) or any(settings.get(key) != value for key, value in frozen_settings.items()):
         errors.append("Route-A settings/probe order mismatch")
     provenance_facts = record.get("provenance")
-    if not isinstance(provenance_facts, dict) or provenance_facts.get("p63_constructed_once") is not True or provenance_facts.get("p63_construction_count") != 1 or provenance_facts.get("p63_construction_source") != "build_local_interlevel_edge_transfer(6,3)":
+    if profile["route"] == ROUTE_B:
+        if (
+            not isinstance(provenance_facts, dict)
+            or provenance_facts.get("p62_constructed_once") is not True
+            or provenance_facts.get("p62_construction_count") != 1
+            or provenance_facts.get("p62_construction_source") != "build_local_interlevel_edge_transfer(6,2)"
+            or provenance_facts.get("p21_construction_count") != 1
+            or provenance_facts.get("p21_construction_source") != "build_local_interlevel_edge_transfer(2,1)"
+        ):
+            errors.append("P62/P21 construction identity is not closed")
+    elif not isinstance(provenance_facts, dict) or provenance_facts.get("p63_constructed_once") is not True or provenance_facts.get("p63_construction_count") != 1 or provenance_facts.get("p63_construction_source") != "build_local_interlevel_edge_transfer(6,3)":
         errors.append("P63 construction identity is not closed")
     raw_descriptor = record.get("raw_arrays")
     probes = record.get("probes")
@@ -807,24 +1224,53 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
                                 arrays[name] = value
             except (OSError, ValueError, EOFError) as exc:
                 errors.append(f"raw NPZ unreadable: {exc}")
-    p63 = arrays.get("p63")
-    p63_audit = record.get("p63_audit")
-    if p63 is None or p63.dtype != np.dtype("complex128") or p63.ndim != 2 or p63.shape != (882, 144) or not isinstance(p63_audit, dict):
-        errors.append("P63 raw array is missing or has wrong shape")
+    if profile["route"] == ROUTE_B:
+        p62 = arrays.get("p62")
+        p21 = arrays.get("p21")
+        for name, value, expected in (("p62", p62, (882, 54)), ("p21", p21, (54, 12))):
+            audit = record.get(f"{name}_audit")
+            if value is None or value.dtype != np.dtype("complex128") or value.ndim != 2 or value.shape != expected or not isinstance(audit, dict):
+                errors.append(f"{name.upper()} raw array is missing or has wrong shape")
+                continue
+            singular = np.linalg.svd(value, compute_uv=False)
+            threshold = max(value.shape) * np.finfo(float).eps * float(singular[0])
+            facts = {
+                "shape": [int(expected[0]), int(expected[1])], "dtype": "complex128",
+                "sigma_min": float(singular[-1]), "sigma_max": float(singular[0]),
+                "rank_threshold": float(threshold),
+                "rank": int(np.count_nonzero(singular > threshold)),
+                "finite": bool(np.all(np.isfinite(value))),
+            }
+            for key, actual in facts.items():
+                if audit.get(key) != actual:
+                    errors.append(f"{name.upper()} stored field mismatch: {key}")
+            if not facts["finite"]:
+                gates.append(f"{name.upper()} finite Gate failed")
+        local_transfers = record.get("local_transfers")
+        if not isinstance(local_transfers, dict):
+            errors.append("Route-B local transfer audit is missing")
+        else:
+            _check_local_transfer("6_2", p62, local_transfers.get("6_2"), errors, gates, (882, 54), profile)
+            _check_local_transfer("2_1", p21, local_transfers.get("2_1"), errors, gates, (54, 12), profile)
     else:
-        singular = np.linalg.svd(p63, compute_uv=False)
-        threshold = max(p63.shape) * np.finfo(float).eps * float(singular[0])
-        p63_values = {
-            "shape": [882, 144], "dtype": "complex128", "sigma_min": float(singular[-1]),
-            "sigma_max": float(singular[0]), "rank_threshold": float(threshold),
-            "rank": int(np.count_nonzero(singular > threshold)),
-            "finite": bool(np.all(np.isfinite(p63))),
-        }
-        for key, value in p63_values.items():
-            if p63_audit.get(key) != value:
-                errors.append(f"P63 stored field mismatch: {key}")
-        if p63_values["rank"] != 144:
-            gates.append("P63 rank Gate failed")
+        p63 = arrays.get("p63")
+        p63_audit = record.get("p63_audit")
+        if p63 is None or p63.dtype != np.dtype("complex128") or p63.ndim != 2 or p63.shape != (882, 144) or not isinstance(p63_audit, dict):
+            errors.append("P63 raw array is missing or has wrong shape")
+        else:
+            singular = np.linalg.svd(p63, compute_uv=False)
+            threshold = max(p63.shape) * np.finfo(float).eps * float(singular[0])
+            p63_values = {
+                "shape": [882, 144], "dtype": "complex128", "sigma_min": float(singular[-1]),
+                "sigma_max": float(singular[0]), "rank_threshold": float(threshold),
+                "rank": int(np.count_nonzero(singular > threshold)),
+                "finite": bool(np.all(np.isfinite(p63))),
+            }
+            for key, value in p63_values.items():
+                if p63_audit.get(key) != value:
+                    errors.append(f"P63 stored field mismatch: {key}")
+            if p63_values["rank"] != 144:
+                gates.append("P63 rank Gate failed")
     classes = record.get("material_classes")
     inventory = record.get("material_inventory")
     class_metrics: list[dict[str, Any]] = []
@@ -834,7 +1280,7 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
         _check_material_inventory(inventory, classes, errors)
         for item in classes:
             if isinstance(item, dict):
-                class_metrics.append(_check_class(item, arrays, errors, gates))
+                class_metrics.append(_check_class(item, arrays, errors, gates, profile))
     local_gate_passed = record.get("local_gate_passed")
     if type(local_gate_passed) is not bool:
         errors.append("local_gate_passed is missing/nonboolean")
@@ -845,18 +1291,23 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
         if local_gate_passed != computed_local_gate:
             errors.append("local_gate_passed disagrees with independent class metrics")
     if isinstance(raw_descriptor, dict) and isinstance(raw_descriptor.get("arrays"), dict):
-        allowed = {"p63"}
+        allowed = {"p62", "p21"} if profile["route"] == ROUTE_B else {"p63"}
         for item in classes if isinstance(classes, list) else ():
             if isinstance(item, dict) and isinstance(item.get("class_digest"), str):
                 prefix = f"class_{item['class_digest']}"
-                allowed.update({f"{prefix}__b3", f"{prefix}__b6p", f"{prefix}__eigenvector_min", f"{prefix}__eigenvector_max"})
+                class_coarse_key = "b2" if profile["route"] == ROUTE_B else "b3"
+                allowed.update({f"{prefix}__{class_coarse_key}", f"{prefix}__b6p", f"{prefix}__eigenvector_min", f"{prefix}__eigenvector_max"})
         for item in probes if isinstance(probes, list) else ():
             if isinstance(item, dict) and isinstance(item.get("raw_roles"), dict):
                 allowed.update(value for value in item["raw_roles"].values() if isinstance(value, str))
+        owner_probe = record.get("owner_probe")
+        if isinstance(owner_probe, dict) and isinstance(owner_probe.get("raw_roles"), dict):
+            allowed.update(value for value in owner_probe["raw_roles"].values() if isinstance(value, str))
         extra = set(raw_descriptor["arrays"]) - allowed
         if extra:
             errors.append(f"unknown raw array roles: {sorted(extra)}")
     probe_metrics: list[dict[str, Any]] = []
+    owner_metrics: dict[str, Any] = {}
     descriptors = raw_descriptor.get("arrays", {}) if isinstance(raw_descriptor, dict) else {}
     if record.get("local_gate_passed") is True and (not isinstance(probes, list) or [item.get("name") for item in probes if isinstance(item, dict)] != list(PROBE_NAMES)):
         errors.append("probe identities/order are not frozen")
@@ -869,7 +1320,9 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
             if not isinstance(levels, dict):
                 errors.append("probe dimension authority is missing: architecture.levels")
             else:
-                for level_name, label in (("level3", "coarse"), ("level6", "fine")):
+                coarse_level_name = f"level{profile['pair'][1]}"
+                fine_level_name = f"level{profile['pair'][0]}"
+                for level_name, label in ((coarse_level_name, "coarse"), (fine_level_name, "fine")):
                     level = levels.get(level_name)
                     matrix = level.get("matrix") if isinstance(level, dict) else None
                     rows = matrix.get("rows") if isinstance(matrix, dict) else None
@@ -892,8 +1345,32 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
                             gates,
                             expected_rows["coarse"],
                             expected_rows["fine"],
+                            coarse_action_key=profile["coarse_key"],
+                            profile=profile,
                         )
                     )
+            if profile["route"] == ROUTE_B:
+                level2 = levels.get("level2") if isinstance(levels, dict) else None
+                level1 = levels.get("level1") if isinstance(levels, dict) else None
+                matrix2 = level2.get("matrix") if isinstance(level2, dict) else None
+                matrix1 = level1.get("matrix") if isinstance(level1, dict) else None
+                rows2 = matrix2.get("rows") if isinstance(matrix2, dict) else None
+                rows1 = matrix1.get("rows") if isinstance(matrix1, dict) else None
+                owner_probe = record.get("owner_probe")
+                if type(rows2) is not int or type(rows1) is not int or rows2 <= 0 or rows1 <= 0:
+                    errors.append("Route-B owner probe dimension authority is missing")
+                else:
+                    owner_metrics = _check_owner_probe(
+                        owner_probe, arrays, errors, gates, rows1, rows2,
+                    )
+                if owner_probe is None:
+                    errors.append("Route-B owner probe is missing")
+            else:
+                owner_metrics = None
+        else:
+            owner_metrics = None
+    if profile["route"] == ROUTE_B and record.get("local_gate_passed") is False and record.get("owner_probe") is not None:
+        errors.append("Route-B local Gate negative must not contain owner probe facts")
     if provenance_error:
         classification = "INPUT_PROVENANCE_INVALID"
     elif lifecycle_failures:
@@ -906,14 +1383,17 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
         classification = "CLOSED_BY_INTERLEVEL_SPECTRAL_GATE"
     else:
         classification = "STRUCTURALLY_QUALIFIED"
+    metrics = {"classes": class_metrics, "probes": probe_metrics, "resource": resource}
+    if profile["route"] == ROUTE_B:
+        metrics["owner_probe"] = owner_metrics
     return {
-        "schema": "task038.full3d.interlevel-spectral.r1-check.v1",
+        "schema": profile["check_schema"],
         "passed": classification == "STRUCTURALLY_QUALIFIED",
         "classification": classification,
         "contract_errors": errors,
         "gate_failures": gates,
         "execution_lifecycle_failures": lifecycle_failures,
-        "metrics": {"classes": class_metrics, "probes": probe_metrics, "resource": resource},
+        "metrics": metrics,
         "record": {"path": str(record_path.resolve()), "sha256": _sha256(record_path)},
         "expected_source_sha": expected_sha,
     }

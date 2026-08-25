@@ -34,6 +34,12 @@ SOURCE_GENERATION = {
     "physical_component_derived": "s2_physical_rhs.compose_then_high_dual_restrict_then_p63_adjoint",
     "r3_long_tail_derived": "r3_canonical_full_fe_dual_packets_then_high_dual_restrict_then_p63_adjoint",
 }
+ROUTE_B_PROBE_SCHEMA = "task038.route-b.global-probe.v1"
+ROUTE_B_SOURCE_GENERATION = {
+    **SOURCE_GENERATION,
+    "physical_component_derived": "s2_physical_rhs.compose_then_high_dual_restrict_then_p62_adjoint",
+    "r3_long_tail_derived": "r3_canonical_full_fe_dual_packets_then_high_dual_restrict_then_p62_adjoint",
+}
 
 
 def _semantic_sha(value: Any) -> str:
@@ -556,12 +562,104 @@ def measure_probe(
             vector.destroy()
 
 
+def measure_owner_probe(
+    extension: Any, *,
+    pair: tuple[int, int] = (2, 1),
+    probe_schema: str = ROUTE_B_PROBE_SCHEMA,
+) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
+    """Measure one deterministic owner-packet P/P^H probe without a matrix."""
+
+    fine_level, coarse_level = _probe_levels(
+        extension, fine_degree=pair[0], coarse_degree=pair[1]
+    )
+    seed = _deterministic_seed(coarse_level, 71.0)
+    seed2 = _deterministic_seed(coarse_level, 73.0)
+    fine_seed = _deterministic_seed(fine_level, 79.0)
+    source = source2 = fine_dual = None
+    projected = projected_repeat = projected2 = projected_combo = combo = adjoint = None
+    try:
+        source = _canonical_primal(coarse_level, seed)
+        source2 = _canonical_primal(coarse_level, seed2)
+        fine_dual = _canonical_primal(fine_level, fine_seed)
+        source_before = _vector_array(source)
+        source_before_digest = _vector_digest(source)
+        projected = _apply_pair(extension, pair, source, adjoint=False)
+        projected_repeat = _apply_pair(extension, pair, source, adjoint=False)
+        projected2 = _apply_pair(extension, pair, source2, adjoint=False)
+        combo = source.copy()
+        combo.scale(ALPHA)
+        combo.axpy(BETA, source2)
+        projected_combo = _apply_pair(extension, pair, combo, adjoint=False)
+        adjoint = _apply_pair(extension, pair, fine_dual, adjoint=True)
+        source_after = _vector_array(source)
+        values = {
+            "source_before": source_before,
+            "source_after": source_after,
+            "source2": _vector_array(source2),
+            "projected": _vector_array(projected),
+            "projected_repeat": _vector_array(projected_repeat),
+            "projected2": _vector_array(projected2),
+            "projected_combo": _vector_array(projected_combo),
+            "fine_dual": _vector_array(fine_dual),
+            "adjoint": _vector_array(adjoint),
+        }
+        lhs = np.vdot(values["projected"], values["fine_dual"])
+        rhs = np.vdot(values["source_before"], values["adjoint"])
+        repeat = _relative(values["projected_repeat"], values["projected"])
+        linearity = _relative(
+            values["projected_combo"],
+            ALPHA * values["projected"] + BETA * values["projected2"],
+        )
+        phase_once = all(
+            level.parent_topology.audit.get("phase_application") == "once_in_canonical_owner_route"
+            and level.parent_topology.audit.get("slave_master_complete") is True
+            for level in (fine_level, coarse_level)
+        )
+        finite = bool(all(np.all(np.isfinite(value)) for value in values.values()))
+        source_norm = float(np.linalg.norm(source_before))
+        facts = {
+            "schema": probe_schema,
+            "name": "owner_packet_deterministic",
+            "pair": [int(pair[0]), int(pair[1])],
+            "source_generation": "deterministic_owner_packet_p21",
+            "source_norm": source_norm,
+            "source_finite": bool(np.all(np.isfinite(source_before))),
+            "source_nonzero": bool(source_norm > 0.0),
+            "adjoint_work_relative": _relative(
+                np.asarray([lhs]), np.asarray([rhs])
+            ),
+            "linearity_relative": linearity,
+            "repeat_relative": repeat,
+            "finite": finite,
+            "input_unchanged": bool(np.array_equal(source_before, source_after)),
+            "phase_once": phase_once,
+            "source_before_digest": source_before_digest,
+            "source_after_digest": _digest_array(source_after),
+        }
+        return facts, values
+    finally:
+        for vector in (
+            seed, seed2, fine_seed, source, source2, fine_dual, projected,
+            projected_repeat, projected2, projected_combo, combo, adjoint,
+        ):
+            if vector is not None:
+                vector.destroy()
+
+
+def _digest_array(value: np.ndarray) -> str:
+    return hashlib.sha256(
+        np.ascontiguousarray(value, dtype=np.complex128).view(np.uint8)
+    ).hexdigest()
+
+
 __all__ = [
     "ALPHA",
     "BETA",
     "MATERIAL_INVENTORY_SCHEMA",
     "PROBE_NAMES",
     "PROBE_SCHEMA",
+    "ROUTE_B_PROBE_SCHEMA",
+    "ROUTE_B_SOURCE_GENERATION",
     "R3_LONG_TAIL_MANIFEST_SHA256",
     "R3_LONG_TAIL_SOURCE_SHA",
     "audit_material_classes",
@@ -570,6 +668,7 @@ __all__ = [
     "build_material_class_inventory_from_rows",
     "build_probe_source",
     "measure_probe",
+    "measure_owner_probe",
     "_probe_levels",
     "source_generation_identity",
 ]
