@@ -1669,3 +1669,32 @@ def test_selected_builder_initializes_one_cell_config_before_mesh(
             bottom_system=bottom_system,
             work_dir=tmp_path,
         )
+
+
+def test_optional_mpc_cleanup_is_capability_gated() -> None:
+    no_destroy = SimpleNamespace(mpc=SimpleNamespace())
+    assert one_cell_builder._cleanup_optional_mpc(no_destroy) == {
+        "mpc_present": True,
+        "destroy_called": False,
+    }
+
+    calls: list[int] = []
+
+    class Destroyable:
+        def destroy(self) -> None:
+            calls.append(1)
+
+    with_destroy = SimpleNamespace(mpc=Destroyable())
+    assert one_cell_builder._cleanup_optional_mpc(with_destroy) == {
+        "mpc_present": True,
+        "destroy_called": True,
+    }
+    assert calls == [1]
+    assert one_cell_builder._cleanup_optional_mpc(SimpleNamespace(mpc=None)) == {
+        "mpc_present": False,
+        "destroy_called": False,
+    }
+    assert one_cell_builder._cleanup_optional_mpc(None) == {
+        "mpc_present": False,
+        "destroy_called": False,
+    }

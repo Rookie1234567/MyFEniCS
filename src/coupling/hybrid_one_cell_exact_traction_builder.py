@@ -38,6 +38,19 @@ def _selected_mode_source_factor_event(
         stage_callback(stage, detail)
 
 
+def _cleanup_optional_mpc(floquet: Any | None) -> dict[str, bool]:
+    """Call an MPC destroy hook only when the backend exposes one."""
+
+    mpc = getattr(floquet, "mpc", None) if floquet is not None else None
+    if mpc is None:
+        return {"mpc_present": False, "destroy_called": False}
+    destroy = getattr(mpc, "destroy", None)
+    if not callable(destroy):
+        return {"mpc_present": True, "destroy_called": False}
+    destroy()
+    return {"mpc_present": True, "destroy_called": True}
+
+
 class ExactOneCellSourceIdentityError(RuntimeError):
     """A primal/dual current-layout identity gate rejected one-cell sources."""
 
@@ -675,8 +688,7 @@ def build_exact_one_cell_selected_traction_columns(
             )
         if condensed is not None:
             condensed.destroy()
-        if floquet is not None and getattr(floquet, "mpc", None) is not None:
-            floquet.mpc.destroy()
+        _cleanup_optional_mpc(floquet)
 
 
 def build_exact_one_cell_traction_matrices(
