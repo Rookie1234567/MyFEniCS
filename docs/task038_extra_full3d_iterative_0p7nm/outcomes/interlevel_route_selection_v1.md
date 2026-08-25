@@ -1,10 +1,10 @@
-# Review V12 R0：interlevel route selection v1
+# Review V12：interlevel route selection v1（截至 R4.2）
 
 ## 当前结论
 
-R0 的合同、阈值和历史证据仍然冻结；R0 本身仍是 `CONTRACT_READY / measured-not-run`。截至 R3，Route B 已完成一次独立的 p6/h10/MPI1 结构资格审计并通过，但这不是正定求解器或 PDE 通过，也不改变旧 S5 负结果。
+R0 的合同、阈值和历史证据仍然冻结。R3 Route B 结构资格通过后，R4.2 已完成一次 p6/h10/MPI1 setup-only 资源与生命周期审计；离线 checker-v2 判为 `SETUP_EVIDENCE_PASS`，可进入 R4.3 四类 positive，但这不是 solver 或 PDE 通过，也不改变任何旧负结果。
 
-| 项目 | 截至 R3 的状态 | 边界 |
+| 项目 | 截至 R4.2 的状态 | 边界 |
 | --- | --- | --- |
 | R0 contract freeze | `CONTRACT_READY / measured-not-run` | 保留 R0 规则；不代表任何路线通过 |
 | Route A：p6→p3 固定谱审计 | `CLOSED_BY_INTERLEVEL_SPECTRAL_GATE` | 首次 shape-contract invalid 与修正后的有效 checker 结论均保留；唯一真实 Gate 是 gradient global adjoint |
@@ -12,7 +12,8 @@ R0 的合同、阈值和历史证据仍然冻结；R0 本身仍是 `CONTRACT_REA
 | Route B v2 | `STRUCTURALLY_QUALIFIED` | 可进入 R4 审核边界；不是 positive solver pass |
 | 当前 route_B | `STRUCTURALLY_QUALIFIED_FOR_R4` | `selected_hierarchy=NOT_SELECTED` |
 | Route C | `not_run_by_gate` | 未进入 |
-| R4 | `authorized_pending / not_run` | R3 已放行，尚未执行 |
+| R4.2 Route-B setup | `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3` | 仅 setup、10 次 apply、资源与生命周期；不是 solver/PDE pass |
+| R4.3 四类 positive | `authorized_pending / not_run` | R4.2 已放行；random/gradient/curl/checkerboard 尚未运行 |
 | R5–R7 | `not_run_by_gate` | Route B 尚未失败，Route C 未进入 |
 | R8–R12 | `not_run_by_gate` | 需 R4 positive hierarchy 通过后条件进入 |
 
@@ -107,9 +108,48 @@ Route B v2 的正式 record/checker 为：
 
 ignored artifact root 为 `benchmarks/artifacts/task038_extra_full3d_interlevel_spectral_r3_route_b_v2/91e27ebb4bdcf9de302c12cc5a19ae8eaa78b8c1/p6-h10-mpi1/`。其中 watchdog raw/compact/log/worker NPZ 的 SHA256 依次为：`e876c42e83472ab0bed998d185c3629c661a8b285ce93c9f192f8b3a4f0456a2`、`bec9aae08b5b2a2bb130ddc1ba4d198062b5d753dd020880084e1fe2dca511d4`、`e13d3496e6c68adc8c838ae47c80689f1a716220c99dd628ff91ca9a66045be9`、`7296bac69bb8a46a878661a86e18eac99f5246e6eda71a5b28e5dbe7fdd2fa8c`。
 
-`current route_B=STRUCTURALLY_QUALIFIED_FOR_R4` 只表示满足进入 R4 审阅的结构前置条件；`selected_hierarchy=NOT_SELECTED`。R4 为 `authorized_pending / not_run`，R5–R7 和 R8–R12 为 `not_run_by_gate`，Route C 未进入。R4 尚未运行四类最终求解，因此不能写成 `POSITIVE_AUXILIARY_PASS` 或 solver/PDE pass。
+`current route_B=STRUCTURALLY_QUALIFIED_FOR_R4` 只表示满足进入 R4 审阅的结构前置条件；`selected_hierarchy=NOT_SELECTED`。R4.2 setup 已为 `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3`，R4.3 四类 positive 为 `authorized_pending / not_run`；R5–R7 和 R8–R12 为 `not_run_by_gate`，Route C 未进入。尚未运行四类最终求解，因此不能写成 `POSITIVE_AUXILIARY_PASS` 或 solver/PDE pass。
 
 Route B 的 compensated summation 只用于 Route B 内积归约，固定 `1e-11` adjoint Gate 没有放宽；Route A 仍使用原 `np.vdot` 测量语义。
+
+### R4.2：Route-B setup-only evidence
+
+R4.2 只验证三层层次结构能否完成 setup、固定 10 次 PC apply、资源观测和有序销毁；它没有运行四类 positive source、solver 或 PDE。
+
+第一次 setup formal 的 worker 自然退出，资源事实本身没有越过 hard line，但 checker-v1 永久保留为 `CONTRACT_INVALID`。它只有以下三项 audit contract mismatch，不是数值失败，也不是资源失败：
+
+1. PETSc/MUMPS factor component memory telemetry unavailable；
+2. local/global factor-memory facts 因上述 unavailable 状态未按合法分支闭合；
+3. `stage_facts.transfer_counts` 使用真实的 `_total` 键，而 checker-v1 查找了简化键。
+
+checker-v2 没有重跑 setup worker，而是对同一冻结 worker record 和同一 watchdog compact 做离线重判，修正上述 checker 合同后得到：
+
+| R4.2 setup fact | 实测值/状态 |
+| --- | --- |
+| worker source SHA | `6d5cada617418f9bbdefe4efcb97309a059fac1b` |
+| checker 修复 clean HEAD | `9976441a47dc50ea894c3163903c7934d30cfb3d` |
+| classification | `SETUP_EVIDENCE_PASS` |
+| 当前边界 | `resource-qualified-for-R4.3`；不是 solver/PDE pass |
+| cold peak / retained peak | `1,005,158,400 B` / `1,005,158,400 B` |
+| process-tree swap | `0 B` |
+| 10-apply RSS span | `0 B` |
+| linearity / repeat | `7.06986634291602e-16` / `0` |
+| independent input relative | `0.9986105202023134` |
+| maximum p1 residual | `2.9151260036108388e-16` |
+| p1 matrix rows / NNZ / factor NNZ | `1067 / 37253 / 131203` |
+| PETSc factor component memory | unavailable；不计入 known bytes |
+| known ledger / unattributed remainder | `306,110,231 B` / `699,048,169 B` |
+
+这里的 “factor memory unavailable” 不是说 MUMPS factor 实际占用为零，而是 PETSc 没有提供可用的 component byte telemetry；因此不能用零冒充测量值。完整 process-tree RSS 才是本次资源权威，它包含该 factor 以及无法拆分的其他运行时分配；在 ledger 中，未能拆分的部分保留在 `unattributed`，避免重复计算或虚构 factor 字节。
+
+| Evidence | 路径 | SHA256 |
+| --- | --- | --- |
+| setup worker record | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1.json` | `b3e80fa90f472020558e6d4f007a38683098f83e4b7f63d20338d2e1f36477e7` |
+| setup watchdog compact（tracked copy） | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1_watchdog.json` | `32297af93a63548bdd22324352488897bfe601343dc3e9b7fa4d362e20722b25` |
+| checker-v1 | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1_checker.json` | `cadc080c402f0d38ee0adc8952fd93f574fb714394dfc52579f3e8292e9a4fec` |
+| checker-v2（同一 worker evidence 的离线重判） | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1_checker_v2.json` | `7ad5e7112f4ae536baaacdd9341a5b0bdbf3f11447f752c16a1e92fddc452f64` |
+
+当前 `selected_hierarchy=NOT_SELECTED`。R4.3 的 random/gradient/curl/checkerboard 四个 positive case 仍为 pending/not_run；R8 及以后继续为 `not_run_by_gate`，不能把 setup resource qualification 写成最终 solver 或 PDE 通过。
 
 ## 不可变历史证据
 
