@@ -184,6 +184,10 @@ def _canonical_transfer_authority(degree: int, transfer):
 def test_l1_single_cell_transfer_derham_and_spectral_gate(degree: int) -> None:
     transfer = build_local_lor_transfer(degree)
     audit = transfer.audit
+    expected_edge_count = 3 * degree * (degree + 1) ** 2
+    assert transfer.edge_count == expected_edge_count
+    assert transfer.edge_count == transfer.high_to_lor_matrix.shape[0]
+    assert transfer.edge_count == transfer.lor_to_high_matrix.shape[1]
     assert audit["high_edge_dofs"] == audit["lor_edge_dofs"]
     assert audit["high_to_lor_identity_relative"] <= 1.0e-12
     assert audit["lor_to_high_identity_relative"] <= 1.0e-12

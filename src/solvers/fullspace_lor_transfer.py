@@ -484,6 +484,10 @@ class LocalLorTransfer:
             raise ValueError("LOR vector has an unexpected local dimension")
         return self.lor_to_high_matrix @ vector
 
+    @property
+    def edge_count(self) -> int:
+        return int(3 * self.degree * (self.degree + 1) ** 2)
+
 
 @dataclass(frozen=True)
 class ReferenceFactorLorTransfer:
