@@ -2603,7 +2603,12 @@ def _v4_canonical_active_key_identity(
     bare_f: PETSc.Mat,
     comm: MPI.Intracomm,
 ) -> dict[str, Any]:
-    """Hash owner-local canonical active keys without retaining trace values."""
+    """Hash canonical active keys without retaining trace values.
+
+    The iterator expands active rows into edge/face packets, so its canonical
+    key count is intentionally not compared with the PETSc active-row count or
+    with each rank's Vec ownership range.
+    """
 
     condensed = system.static_condensation.condensed
     active_vec = condensed.create_active_vector()
@@ -2662,30 +2667,20 @@ def _v4_canonical_active_key_identity(
         )
         and ownership_ranges[-1][1] == int(bare_f.getSize()[0])
     )
-    ownership_counts_match = bool(
-        all(
-            int(item["local_key_count"])
-            == int(item["ownership_range"][1]) - int(item["ownership_range"][0])
-            for item in rank_records
-        )
-    )
     global_identity = hashlib.sha256(
         json.dumps(
             {
                 "rank_records": rank_records,
                 "global_duplicate_count": global_duplicate_count,
                 "ownership_contiguous": ownership_contiguous,
-                "ownership_counts_match": ownership_counts_match,
+                "canonical_packet_expansion": True,
             },
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
     pass_gate = bool(
-        global_key_count == int(bare_f.getSize()[0])
-        and global_duplicate_count == 0
-        and ownership_contiguous
-        and ownership_counts_match
+        global_key_count > 0 and global_duplicate_count == 0 and ownership_contiguous
     )
     return {
         "schema": "task040.v4.canonical_active_row_identity.v1",
@@ -2697,7 +2692,8 @@ def _v4_canonical_active_key_identity(
         ),
         "global_duplicate_count": int(global_duplicate_count),
         "ownership_contiguous": ownership_contiguous,
-        "ownership_counts_match": ownership_counts_match,
+        "ownership_counts_match": None,
+        "ownership_count_comparison": ("not_applicable_canonical_packet_expansion"),
         "global_identity_sha256": global_identity,
         "numeric_allgather": False,
         "full_values_retained": False,

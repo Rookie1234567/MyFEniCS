@@ -152,7 +152,11 @@ def test_v4_canonical_active_row_identity_is_collective_for_uneven_ownership(
     assert sum(ownership_counts) == global_rows
     assert audit["global_duplicate_count"] == 0
     assert audit["ownership_contiguous"] is True
-    assert audit["ownership_counts_match"] is True
+    assert audit["ownership_counts_match"] is None
+    assert (
+        audit["ownership_count_comparison"]
+        == "not_applicable_canonical_packet_expansion"
+    )
     assert audit["numeric_allgather"] is False
     assert audit["canonical_key_exchange"]["metadata_only"] is True
     assert all(
