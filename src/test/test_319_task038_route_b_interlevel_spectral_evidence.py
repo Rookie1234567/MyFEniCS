@@ -41,7 +41,9 @@ def _refresh_closeout(record_path: Path, marker_dir: Path) -> None:
     _write_json(closeout_path, closeout)
 
 
-def _local_transfer_facts(pair: tuple[int, int], matrix: np.ndarray) -> dict[str, object]:
+def _local_transfer_facts(
+    pair: tuple[int, int], matrix: np.ndarray, *, include_nnz: bool = True,
+) -> dict[str, object]:
     node_shape = (343, 27) if pair == (6, 2) else (27, 8)
     node = np.ones(node_shape, dtype=np.complex128)
     audit = {
@@ -49,7 +51,6 @@ def _local_transfer_facts(pair: tuple[int, int], matrix: np.ndarray) -> dict[str
         "edge_shape": tuple(matrix.shape), "node_shape": node_shape,
         "edge_dtype": "complex128", "node_dtype": "complex128",
         "edge_numeric_bytes": int(matrix.nbytes), "node_numeric_bytes": int(node.nbytes),
-        "edge_nnz": int(np.count_nonzero(matrix)), "node_nnz": int(np.count_nonzero(node)),
         "coarse_transform_condition": 1.0,
         "edge_line_integral_relative": 0.0, "curl_flux_relative": 0.0,
         "gradient_commuting_relative": 0.0, "node_transfer_relative": 0.0,
@@ -72,6 +73,9 @@ def _local_transfer_facts(pair: tuple[int, int], matrix: np.ndarray) -> dict[str
             "coarse_gll_subset_coordinate_identity": subset,
             "fine_gll_subset_coordinate_identity": list(subset),
         })
+    if include_nnz:
+        audit["edge_nnz"] = int(np.count_nonzero(matrix))
+        audit["node_nnz"] = int(np.count_nonzero(node))
     fake_transfer = SimpleNamespace(
         fine_degree=pair[0], coarse_degree=pair[1],
         edge_transfer=matrix, node_transfer=node, audit=audit,
@@ -456,12 +460,28 @@ def test_route_b_wrong_b2_role_is_rejected(tmp_path: Path, monkeypatch: pytest.M
 
 def test_route_b_compact_helper_uses_real_transfer_audit() -> None:
     matrix = np.eye(54, dtype=np.complex128)
-    compact = _local_transfer_facts((6, 2), matrix)
+    compact = _local_transfer_facts((6, 2), matrix, include_nnz=False)
     assert "local_map" in compact and "local_transfer" in compact
     assert compact["pair"] == [6, 2]
     assert compact["local_map"]["edge_rows"] == 54
     assert compact["local_transfer"]["edge_nnz"] == 54
+    assert compact["local_transfer"]["node_nnz"] == 343 * 27
     assert "import numpy as np" in inspect.getsource(worker.run_worker)
+
+
+def test_compensated_vdot_closes_cancellation_in_both_independent_helpers() -> None:
+    from src.solvers.fullspace_lor_interlevel_spectral_dolfinx import _compensated_vdot
+
+    left = np.ones(3, dtype=np.complex128)
+    right = np.asarray(
+        [1.0e16 + 1.0e16j, 1.0 + 2.0j, -1.0e16 - 1.0e16j],
+        dtype=np.complex128,
+    )
+    ordinary = np.vdot(left, right)
+    expected = 1.0 + 2.0j
+    assert ordinary.real != expected.real
+    assert _compensated_vdot(left, right) == expected
+    assert checker._compensated_vdot(left, right) == expected
 
 
 def test_route_b_stage_contract_is_explicit() -> None:

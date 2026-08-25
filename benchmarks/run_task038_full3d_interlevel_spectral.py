@@ -166,6 +166,8 @@ def _compact_local_transfer(transfer: Any) -> dict[str, Any]:
     edge = np.ascontiguousarray(np.asarray(transfer.edge_transfer, dtype=np.complex128))
     node = np.ascontiguousarray(np.asarray(transfer.node_transfer, dtype=np.complex128))
     audit = dict(transfer.audit)
+    audit["edge_nnz"] = int(np.count_nonzero(edge))
+    audit["node_nnz"] = int(np.count_nonzero(node))
     return {
         "pair": [int(transfer.fine_degree), int(transfer.coarse_degree)],
         "global_transfer_matrix": bool(audit["global_transfer_matrix"]),

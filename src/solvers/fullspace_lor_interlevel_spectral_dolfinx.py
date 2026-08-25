@@ -442,6 +442,16 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
     return float(np.linalg.norm(left - right) / max(np.linalg.norm(right), np.finfo(float).tiny))
 
 
+def _compensated_vdot(left: np.ndarray, right: np.ndarray) -> complex:
+    left_values = np.asarray(left, dtype=np.complex128).reshape(-1)
+    right_values = np.asarray(right, dtype=np.complex128).reshape(-1)
+    products = np.conjugate(left_values) * right_values
+    return complex(
+        math.fsum(float(value.real) for value in products),
+        math.fsum(float(value.imag) for value in products),
+    )
+
+
 def measure_probe(
     name: str, foundation: Any, extension: Any, source: Any, *,
     fine_degree: int = 6, coarse_degree: int = 3,
@@ -510,6 +520,12 @@ def measure_probe(
             and audit.get("slave_master_complete") is True
             for audit in topology_audits
         )
+        if coarse_action_role == "B2":
+            adjoint_lhs = _compensated_vdot(projected_values, fine_dual_values)
+            adjoint_rhs = _compensated_vdot(source_before, adjoint_values)
+        else:
+            adjoint_lhs = np.vdot(projected_values, fine_dual_values)
+            adjoint_rhs = np.vdot(source_before, adjoint_values)
         facts = {
             "schema": probe_schema,
             "name": name,
@@ -522,8 +538,7 @@ def measure_probe(
             "source_finite": source_finite,
             "source_nonzero": source_nonzero,
             "adjoint_work_relative": _relative(
-                np.asarray([np.vdot(projected_values, fine_dual_values)]),
-                np.asarray([np.vdot(source_before, adjoint_values)]),
+                np.asarray([adjoint_lhs]), np.asarray([adjoint_rhs])
             ),
             "linearity_relative": _relative(
                 projected_combo_values,
@@ -603,8 +618,8 @@ def measure_owner_probe(
             "fine_dual": _vector_array(fine_dual),
             "adjoint": _vector_array(adjoint),
         }
-        lhs = np.vdot(values["projected"], values["fine_dual"])
-        rhs = np.vdot(values["source_before"], values["adjoint"])
+        lhs = _compensated_vdot(values["projected"], values["fine_dual"])
+        rhs = _compensated_vdot(values["source_before"], values["adjoint"])
         repeat = _relative(values["projected_repeat"], values["projected"])
         linearity = _relative(
             values["projected_combo"],

@@ -155,6 +155,16 @@ def _digest(array: np.ndarray) -> str:
     return hashlib.sha256(np.ascontiguousarray(array, dtype=np.complex128).view(np.uint8)).hexdigest()
 
 
+def _compensated_vdot(left: np.ndarray, right: np.ndarray) -> complex:
+    left_values = np.asarray(left, dtype=np.complex128).reshape(-1)
+    right_values = np.asarray(right, dtype=np.complex128).reshape(-1)
+    products = np.conjugate(left_values) * right_values
+    return complex(
+        math.fsum(float(value.real) for value in products),
+        math.fsum(float(value.imag) for value in products),
+    )
+
+
 def _raw_digest(array: np.ndarray) -> str:
     return hashlib.sha256(np.ascontiguousarray(array).view(np.uint8)).hexdigest()
 
@@ -715,7 +725,10 @@ def _check_probe(
         return {}
     repeat = float(np.linalg.norm(pr - p) / max(np.linalg.norm(p), np.finfo(float).tiny))
     linearity = float(np.linalg.norm(pc - ALPHA * p - BETA * p2) / max(np.linalg.norm(pc), np.finfo(float).tiny))
-    lhs, rhs = np.vdot(p, y), np.vdot(x, ph)
+    if profile is not None and profile["route"] == "B":
+        lhs, rhs = _compensated_vdot(p, y), _compensated_vdot(x, ph)
+    else:
+        lhs, rhs = np.vdot(p, y), np.vdot(x, ph)
     lhs_abs = float(abs(lhs))
     rhs_abs = float(abs(rhs))
     absolute_defect = float(abs(lhs - rhs))
@@ -932,7 +945,7 @@ def _check_owner_probe(
         return {}
     repeat = float(np.linalg.norm(repeated - projected) / max(np.linalg.norm(projected), np.finfo(float).tiny))
     linearity = float(np.linalg.norm(combo - ALPHA * projected - BETA * projected2) / max(np.linalg.norm(combo), np.finfo(float).tiny))
-    lhs, rhs = np.vdot(projected, fine_dual), np.vdot(source, adjoint)
+    lhs, rhs = _compensated_vdot(projected, fine_dual), _compensated_vdot(source, adjoint)
     adjoint_relative = float(abs(lhs - rhs) / max(abs(lhs), abs(rhs), np.finfo(float).tiny))
     finite = bool(all(np.all(np.isfinite(value)) for value in coarse + fine))
     unchanged = _digest(source) == _digest(source_after) == item.get("source_before_digest") == item.get("source_after_digest")
