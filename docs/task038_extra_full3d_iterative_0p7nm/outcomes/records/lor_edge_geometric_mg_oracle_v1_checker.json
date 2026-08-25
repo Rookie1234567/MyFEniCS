@@ -1,0 +1,29 @@
+{
+  "schema": "task038.full3d.lor-edge-geometric-mg.s4-check-closeout.v1",
+  "source_aggregate_path": "benchmarks/artifacts/task038_extra_full3d_lor_edge_geometric_mg_v1/2b2df645418ee28c68681832661e58993897166d/aggregate_check.json",
+  "source_aggregate_sha256": "56b7eec1435abc69a38c38af056d8803e8f62a3ff6768b87faa594670c916c4e",
+  "source_aggregate_status": {
+    "passed": true,
+    "contract_errors": [],
+    "gate_failures": [],
+    "individual_count": 16,
+    "mpi_pair_count": 8,
+    "all_individual_cases_passed": true,
+    "all_mpi_pairs_within_dynamic_bound": true,
+    "all_pair_provenance_match": true
+  },
+  "source_sha_split": {
+    "p2_mpi1_cases": "ca5171ac3bd6dd6ab333619cd76fd771524520e6",
+    "remaining_12_cases": "2b2df645418ee28c68681832661e58993897166d"
+  },
+  "resource_summary": {
+    "max_process_tree_peak_bytes": 286695424,
+    "max_process_tree_swap_bytes": 0,
+    "strict_peak_limit_bytes": 500000000,
+    "all_status_readable": true,
+    "all_natural_exit": true,
+    "all_no_orphan": true
+  },
+  "note": "Deterministic closeout summary of the existing aggregate checker; no individual case was rerun and no historical status was reclassified.",
+  "qualification_scope": "S4 small-case oracle only; S5 is a separate p6 capacity Gate"
+}

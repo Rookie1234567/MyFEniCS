@@ -2375,3 +2375,19 @@ Task038 用一个显式 `.dat` 文件统一描述 geometry、materials、inciden
 | T6 resource boundary | RSS `6585.01953125 MiB`；数值 Gate 通过，但 preferred resource boundary 未满足；这不是数值失败。 |
 | 尚未运行项 | current-same-SHA Hybrid iterative MPI1 formal = `not_run`；T4/T5 selected-field capability = `not_run_by_capability`。 |
 | 详细入口 | [`Task038 outcomes summary`](task038_input_driven_configuration/outcomes/summary.md)、[`response_v1`](task038_input_driven_configuration/response_v1.md)、[`Review V1`](task038_input_driven_configuration/review_report_v1.md)。 |
+
+## 49. Task038-extra Review V11 S6 closeout
+
+Review V11 的 S1 global transfer/rank/spectral audit、S2 p6/h10 foundation live-set audit 和 S4 p2/p3 LOR-edge small oracle 已按各自范围完成。S5 只完成了 p6/h10 6→3→1 hierarchy 的 setup、identity、lifecycle 与 capacity audit；其资源证据通过，但 6→3 rediscretized energy relative 为 `0.04115402900674629 > 1e-9`，所以 `lor_edge_geometric_mg_v1` 在 S5 关闭，不能提升为 solver 或 production capability。
+
+| lane | status | measured boundary |
+|---|---|---|
+| S1 | pass | p2 rank 768、p3 rank 2538；peak 788,987,904 B、swap 0 |
+| S2 | pass | p6/h10 rows 173,802；cold/retained 983,363,584 B；swap 0 |
+| S4 | pass at small-oracle scope | 16/16 cases、8/8 MPI pairs；aggregate SHA `56b7eec1435abc69a38c38af056d8803e8f62a3ff6768b87faa594670c916c4e` |
+| S5 | failed algebra Gate | 6→3 energy `0.04115402900674629`；3→1 `2.7851655955739857e-15`；external peak 1,207,476,224 B、swap 0 |
+| S6+ | not_run_by_gate | no repair, p1 distributed coarse solver, p6 physical Maxwell, p6/h5 or 0.7 nm PDE |
+
+The immediate blocker is 6→3 interlevel energy consistency, not yet the p1 distributed coarse solver. A supplemental local diagnosis found non-nested p3/p6 GLL nodes and a naive tiled composition defect `0.23558864802518256`; no tiled repair or parameter scan was implemented. The old Q0 negative, foundation-E pass, old spectral controlled negative, HX/PCGAMG closure and ba40358 probe-domain-invalid archive remain immutable. Ordinary default and `master` were not changed.
+
+S6 evidence and explanation are in [`Task038-extra V11 summary`](task038_extra_full3d_iterative_0p7nm/outcomes/summary.md), [`S4 oracle outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/lor_edge_geometric_mg_oracle_v1.md), [`S5 capacity outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/lor_edge_geometric_mg_p6_capacity_v1.md) and [`response_v11`](task038_extra_full3d_iterative_0p7nm/response_v11.md). This is a docs-only closeout; no CI claim is made.

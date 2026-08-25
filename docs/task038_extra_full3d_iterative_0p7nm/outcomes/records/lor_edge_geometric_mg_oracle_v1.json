@@ -1,0 +1,64 @@
+{
+  "schema": "task038.full3d.lor-edge-geometric-mg.s4-closeout.v1",
+  "scope": "deterministic_summary_of_existing_aggregate_checker",
+  "source_aggregate": {
+    "path": "benchmarks/artifacts/task038_extra_full3d_lor_edge_geometric_mg_v1/2b2df645418ee28c68681832661e58993897166d/aggregate_check.json",
+    "sha256": "56b7eec1435abc69a38c38af056d8803e8f62a3ff6768b87faa594670c916c4e",
+    "passed": true,
+    "contract_errors": [],
+    "gate_failures": []
+  },
+  "source_sha_split": {
+    "p2_mpi1": "ca5171ac3bd6dd6ab333619cd76fd771524520e6",
+    "all_other_cases": "2b2df645418ee28c68681832661e58993897166d"
+  },
+  "case_order": [
+    "p2-mpi1/random",
+    "p2-mpi1/gradient",
+    "p2-mpi1/curl",
+    "p2-mpi1/checkerboard",
+    "p2-mpi2/random",
+    "p2-mpi2/gradient",
+    "p2-mpi2/curl",
+    "p2-mpi2/checkerboard",
+    "p3-mpi1/random",
+    "p3-mpi1/gradient",
+    "p3-mpi1/curl",
+    "p3-mpi1/checkerboard",
+    "p3-mpi2/random",
+    "p3-mpi2/gradient",
+    "p3-mpi2/curl",
+    "p3-mpi2/checkerboard"
+  ],
+  "individual_count": 16,
+  "individual": [
+    {"case":"p2-mpi1","source":"random","iterations":60,"rho":3.9948626309604484e-09,"peak_process_tree_rss_bytes":141017088,"swap_bytes":0,"source_sha":"ca5171ac3bd6dd6ab333619cd76fd771524520e6","passed":true},
+    {"case":"p2-mpi1","source":"gradient","iterations":60,"rho":3.25310382535185e-10,"peak_process_tree_rss_bytes":141168640,"swap_bytes":0,"source_sha":"ca5171ac3bd6dd6ab333619cd76fd771524520e6","passed":true},
+    {"case":"p2-mpi1","source":"curl","iterations":60,"rho":5.091224143942273e-10,"peak_process_tree_rss_bytes":141119488,"swap_bytes":0,"source_sha":"ca5171ac3bd6dd6ab333619cd76fd771524520e6","passed":true},
+    {"case":"p2-mpi1","source":"checkerboard","iterations":60,"rho":3.417129297272225e-09,"peak_process_tree_rss_bytes":140943360,"swap_bytes":0,"source_sha":"ca5171ac3bd6dd6ab333619cd76fd771524520e6","passed":true},
+    {"case":"p2-mpi2","source":"random","iterations":60,"rho":4.136064677452021e-09,"peak_process_tree_rss_bytes":264179712,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p2-mpi2","source":"gradient","iterations":60,"rho":3.2856679620394e-10,"peak_process_tree_rss_bytes":264032256,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p2-mpi2","source":"curl","iterations":60,"rho":5.130698689690218e-10,"peak_process_tree_rss_bytes":263917568,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p2-mpi2","source":"checkerboard","iterations":60,"rho":3.5462840455740654e-09,"peak_process_tree_rss_bytes":264196096,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi1","source":"random","iterations":2000,"rho":9.891883798422905e-09,"peak_process_tree_rss_bytes":154349568,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi1","source":"gradient","iterations":2220,"rho":9.58588584878323e-09,"peak_process_tree_rss_bytes":154468352,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi1","source":"curl","iterations":2560,"rho":8.8655645455621e-09,"peak_process_tree_rss_bytes":154873856,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi1","source":"checkerboard","iterations":2340,"rho":9.074003354422413e-09,"peak_process_tree_rss_bytes":154214400,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi2","source":"random","iterations":1880,"rho":9.933358713345764e-09,"peak_process_tree_rss_bytes":286695424,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi2","source":"gradient","iterations":2500,"rho":9.372360341341475e-09,"peak_process_tree_rss_bytes":284643328,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi2","source":"curl","iterations":2960,"rho":9.844698995593758e-09,"peak_process_tree_rss_bytes":286298112,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true},
+    {"case":"p3-mpi2","source":"checkerboard","iterations":2220,"rho":9.618468797692642e-09,"peak_process_tree_rss_bytes":285081600,"swap_bytes":0,"source_sha":"2b2df645418ee28c68681832661e58993897166d","passed":true}
+  ],
+  "mpi_pair_count": 8,
+  "pair_count_passed": 8,
+  "pair_source_names": ["random", "gradient", "curl", "checkerboard"],
+  "pair_provenance_match": true,
+  "pair_dynamic_bound_passed": true,
+  "resource_summary": {
+    "max_process_tree_peak_bytes": 286695424,
+    "max_process_tree_swap_bytes": 0,
+    "all_individual_peaks_below_500000000": true,
+    "all_individual_swaps_zero": true
+  },
+  "qualification_scope": "S4 small-case oracle only; not a p6 production solver, not a PDE or physical Maxwell result"
+}
