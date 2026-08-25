@@ -737,8 +737,8 @@ def _fill_high_from_unique(space: Any, floquet: Any, topology: Any, transfer: An
         raise RuntimeError("high lift multiplicity does not cover owned rows")
     field.x.array[:owned] /= multiplicity.x.array[:owned]
     field.x.petsc_vec.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
-    floquet.mpc.homogenize(field)
     floquet.mpc.backsubstitution(field)
+    floquet.mpc.homogenize(field)
     field.x.scatter_forward()
     field.x.petsc_vec.copy(target)
     del multiplicity, field

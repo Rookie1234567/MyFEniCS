@@ -59,6 +59,7 @@ class RouteBNestedVcycle:
         self._work: list[Any] = []
         self._destroyed = False
         self.apply_count = 0
+        self.max_p1_relative_residual = 0.0
         self._transfer_counts = {
             "6_2_primal": 0,
             "6_2_adjoint": 0,
@@ -197,6 +198,9 @@ class RouteBNestedVcycle:
         self._transfer_into((2, 1), self._r2, self._rhs1, adjoint=True)
         order.append("p21_adjoint")
         level1_relative_residual = self._solve_level1_into()
+        self.max_p1_relative_residual = max(
+            self.max_p1_relative_residual, float(level1_relative_residual)
+        )
         order.append("level1_exact_solve")
 
         self._transfer_into((2, 1), self._solution1, self._correction2, adjoint=False)

@@ -1115,24 +1115,9 @@ class RealL2PositiveHXFixture:
 
     def build_l2_source(self, name: str) -> tuple[PETSc.Vec, dict[str, Any]]:
         """Build one frozen, finalized-MPC primal source for the L2 oracle."""
-
-        formula = l2_source_formula(name)
-        function = fem.Function(self.high_floquet.mpc.function_space)
-        vector = function.x.petsc_vec
-        function.interpolate(
-            lambda coordinates: _l2_analytic_values(name, coordinates, self.cfg)
+        return build_frozen_fullspace_primal_source(
+            self.high_space, self.high_floquet, self.cfg, name
         )
-        function.x.scatter_forward()
-        self.high_floquet.mpc.homogenize(function)
-        function.x.scatter_forward()
-        result = vector.copy()
-        del function
-        return result, {
-            "name": name,
-            "formula": formula,
-            "phase_application": "algebraic_slave_zero_action_internal_finalized_mpc_once",
-            "primal_role": "full_fe",
-        }
 
     def apply_high_action_copy(self, source: PETSc.Vec) -> PETSc.Vec:
         """Copy the borrowed matrix-free action result without destroying it."""
@@ -1454,6 +1439,33 @@ class RealL2PositiveHXFixture:
         self.roundtrip = None
 
 
+def build_frozen_fullspace_primal_source(
+    space: Any, floquet: Any, cfg: Any, name: str
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Build one finalized frozen analytic full-space primal source.
+
+    Interpolation uses the frozen analytic definitions above, then applies the
+    algebraic slave-zero MPC sequence used by the existing L2 oracle.  This is
+    shared by the positive-evidence worker and the existing L2 oracle; workers
+    do not reimplement source formulas or use a global-index ramp.
+    """
+
+    formula = l2_source_formula(name)
+    function = fem.Function(floquet.mpc.function_space)
+    function.interpolate(lambda coordinates: _l2_analytic_values(name, coordinates, cfg))
+    function.x.scatter_forward()
+    floquet.mpc.homogenize(function)
+    function.x.scatter_forward()
+    result = function.x.petsc_vec.copy()
+    del function
+    return result, {
+        "name": name,
+        "formula": formula,
+        "phase_application": "algebraic_slave_zero_action_internal_finalized_mpc_once",
+        "primal_role": "full_fe",
+    }
+
+
 class L2HighActionShellContext:
     """Matrix-free B_h shell that copies, never destroys, action outputs."""
 
@@ -1640,6 +1652,7 @@ __all__ = (
     "RealL2PositiveHXFixture",
     "build_l2_cg_solver",
     "build_l2_high_action_shell",
+    "build_frozen_fullspace_primal_source",
     "build_real_l2_positive_hx_fixture",
     "destroy_l2_cg_result",
     "l2_one_apply",
