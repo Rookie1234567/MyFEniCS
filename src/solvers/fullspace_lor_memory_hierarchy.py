@@ -19,6 +19,7 @@ from .fullspace_lor_edge_geometric_mg import (
 )
 from .fullspace_lor_transfer import (
     LOR_BATCH_CELL_CAP,
+    _edge_endpoints,
     build_local_lor_transfer,
 )
 
@@ -79,6 +80,37 @@ def _node_transfer(
     return np.ascontiguousarray(
         fine_h1 @ interpolation @ np.linalg.solve(coarse_h1, np.eye(coarse_h1.shape[0]))
     )
+
+
+def _structural_trace_mask(
+    fine_degree: int, coarse_degree: int
+) -> np.ndarray:
+    """Return the reference-cell boundary-plane support mask for an edge map."""
+
+    fine_start, fine_end = _edge_endpoints(int(fine_degree))
+    coarse_start, coarse_end = _edge_endpoints(int(coarse_degree))
+    mask = np.ones(
+        (fine_start.shape[0], coarse_start.shape[0]), dtype=bool
+    )
+    for row, (start, end) in enumerate(zip(fine_start, fine_end, strict=True)):
+        boundary_planes = tuple(
+            (axis, int(start[axis]))
+            for axis in range(3)
+            if int(start[axis]) == int(end[axis])
+            and int(start[axis]) in (0, int(fine_degree))
+        )
+        if not boundary_planes:
+            continue
+        for column, (coarse_row, coarse_column) in enumerate(
+            zip(coarse_start, coarse_end, strict=True)
+        ):
+            mask[row, column] = all(
+                int(coarse_row[axis]) == int(coarse_column[axis])
+                and int(coarse_row[axis])
+                == (0 if position == 0 else int(coarse_degree))
+                for axis, position in boundary_planes
+            )
+    return mask
 
 
 def _probe_facts(edge_transfer: np.ndarray) -> dict[str, object]:
@@ -199,6 +231,11 @@ def _independent_facts(
     ):
         raise ValueError("interlevel map contains non-finite values")
 
+    structural_mask = _structural_trace_mask(fine_degree, coarse_degree)
+    forbidden = edge_transfer[~structural_mask]
+    if np.any(forbidden != 0.0):
+        raise ValueError("structural forbidden edge entries are not exact zero")
+
     curl_incidence = fine_curl @ edge_transfer
     gradient_left = fine_gradient @ node_transfer
     gradient_right = edge_transfer @ coarse_gradient
@@ -238,6 +275,11 @@ def _independent_facts(
         "simple_injection": False,
         "global_transfer_matrix": False,
         "oracle_workspace_retained": False,
+        "structural_projection": True,
+        "structural_forbidden_entry_count": int(np.count_nonzero(~structural_mask)),
+        "structural_forbidden_nnz_after": int(np.count_nonzero(forbidden)),
+        "structural_removed_nonzero_count": 0,
+        "structural_removed_max_abs": 0.0,
     }
     limits = (
         ("edge_line_integral_relative", EDGE_QUADRATURE_LIMIT),
@@ -373,8 +415,18 @@ def build_local_interlevel_edge_transfer(
         node_transfer = _node_transfer(
             fine_local, coarse_local, pair[0], pair[1]
         )
+    edge_transfer = np.ascontiguousarray(edge_transfer, dtype=np.complex128)
+    structural_mask = _structural_trace_mask(pair[0], pair[1])
+    removed = edge_transfer[~structural_mask]
+    removed_nonzero_count = int(np.count_nonzero(removed))
+    removed_max_abs = float(np.max(np.abs(removed))) if removed.size else 0.0
+    edge_transfer[~structural_mask] = 0.0
     audit = _independent_facts(
         pair[0], pair[1], edge_transfer, node_transfer
+    )
+    audit.update(
+        structural_removed_nonzero_count=removed_nonzero_count,
+        structural_removed_max_abs=removed_max_abs,
     )
     return LocalInterlevelEdgeTransfer(
         pair[0], pair[1], edge_transfer, node_transfer, audit

@@ -16,6 +16,8 @@ from src.solvers.fullspace_lor_memory_hierarchy import (
     INTERLEVEL_BATCH_CELL_CAP,
     LINEARITY_LIMIT,
     REPEAT_LIMIT,
+    _edge_endpoints,
+    _structural_trace_mask,
     audit_local_interlevel_transfer,
     build_local_interlevel_edge_transfer,
 )
@@ -64,6 +66,71 @@ def test_interlevel_shape_bytes_and_independent_audit(
     assert transfer.audit["line_integral_histopolation"] is True
     assert transfer.audit["oracle_workspace_retained"] is False
     assert transfer.audit["global_transfer_matrix"] is False
+    allowed = _structural_trace_mask(fine_degree, coarse_degree)
+    assert np.count_nonzero(transfer.edge_transfer[~allowed]) == 0
+    assert transfer.audit["structural_projection"] is True
+    assert transfer.audit["structural_forbidden_entry_count"] == int(
+        np.count_nonzero(~allowed)
+    )
+    assert transfer.audit["structural_forbidden_nnz_after"] == 0
+    assert transfer.audit["structural_removed_nonzero_count"] > 0
+    assert transfer.audit["structural_removed_max_abs"] > 0.0
+
+
+def _shared_face_trace_ratio(transfer, axis: int) -> float:
+    fine_degree = int(transfer.fine_degree)
+    coarse_degree = int(transfer.coarse_degree)
+    fine_start, fine_end = _edge_endpoints(fine_degree)
+    coarse_start, _coarse_end = _edge_endpoints(coarse_degree)
+    cells: list[dict[tuple[tuple[int, ...], tuple[int, ...]], complex]] = []
+    for cell in range(2):
+        offset = np.zeros(3, dtype=np.int32)
+        if cell:
+            offset[axis] = 1
+        coarse = np.empty(coarse_start.shape[0], dtype=np.complex128)
+        for column, start in enumerate(coarse_start):
+            on_shared_face = int(start[axis]) == (
+                coarse_degree if cell == 0 else 0
+            )
+            if on_shared_face:
+                coarse[column] = 0.0
+            else:
+                coarse[column] = (1000.0 + 17.0 * column) * (cell + 1) + 1j * (
+                    3.0 + column + 11.0 * cell
+                )
+        fine_values = transfer.apply_primal_many(coarse)
+        cell_values: dict[tuple[tuple[int, ...], tuple[int, ...]], complex] = {}
+        shared_coordinate = fine_degree if cell == 0 else 0
+        for row, (start, end) in enumerate(zip(fine_start, fine_end, strict=True)):
+            if (
+                int(start[axis]) != int(end[axis])
+                or int(start[axis]) != shared_coordinate
+            ):
+                continue
+            shifted_start = tuple(
+                (np.asarray(start) + offset * fine_degree).tolist()
+            )
+            shifted_end = tuple((np.asarray(end) + offset * fine_degree).tolist())
+            cell_values[(shifted_start, shifted_end)] = fine_values[row]
+        cells.append(cell_values)
+    common = set(cells[0]).intersection(cells[1])
+    assert common
+    values = np.asarray(
+        [cells[0][key] for key in common] + [cells[1][key] for key in common],
+        dtype=np.complex128,
+    )
+    assert np.array_equal(values, np.zeros_like(values))
+    return max(
+        abs(cells[0][key] - cells[1][key])
+        / (1.0e-12 * max(1.0, abs(cells[0][key]), abs(cells[1][key])))
+        for key in common
+    )
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2])
+def test_structural_projection_blocks_shared_face_leakage(interlevel, axis: int) -> None:
+    _fine_degree, _coarse_degree, transfer = interlevel
+    assert _shared_face_trace_ratio(transfer, axis) <= 1.0
 
 
 def test_interlevel_apply_and_hand_checked_adjoint(
@@ -114,8 +181,11 @@ def test_mutated_map_fails_independent_audit(
 ) -> None:
     fine_degree, coarse_degree, transfer = interlevel
     bad_edge = transfer.edge_transfer.copy()
-    bad_edge[0, 0] += 0.125 + 0.25j
-    with pytest.raises(ValueError):
+    forbidden_row, forbidden_column = np.argwhere(
+        ~_structural_trace_mask(fine_degree, coarse_degree)
+    )[0]
+    bad_edge[forbidden_row, forbidden_column] = 0.125 + 0.25j
+    with pytest.raises(ValueError, match="structural forbidden"):
         audit_local_interlevel_transfer(
             fine_degree,
             coarse_degree,
