@@ -492,3 +492,24 @@ def test_s5_runtime_fixed_builder_and_forbidden_contract() -> None:
     assert "global_transfer_matrix = True" not in source
     assert "numeric_allgather = True" not in source
     assert "build_s5_hierarchy_extension(foundation" in source
+
+
+def test_s5_build_level_refined_axis_lazy_import_provenance() -> None:
+    path = Path(__file__).parents[1] / "solvers" / "fullspace_lor_memory_hierarchy_runtime.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    build_level = next(
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "_build_level"
+    )
+    geometry_names: list[str] = []
+    fixture_names: list[str] = []
+    for node in ast.walk(build_level):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        names = [alias.name for alias in node.names]
+        if node.module == "src.geometry.mesh_builder_3d":
+            geometry_names.extend(names)
+        if node.module and node.module.endswith("fullspace_lor_native_hx_fixture"):
+            fixture_names.extend(names)
+    assert "_refined_axis" not in geometry_names
+    assert "_refined_axis" in fixture_names

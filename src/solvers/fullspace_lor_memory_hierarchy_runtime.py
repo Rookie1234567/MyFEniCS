@@ -389,11 +389,11 @@ def _build_level(foundation, degree: int, parent_axes):
     from dolfinx import default_real_type, fem
     from src.constraints.floquet_3d import build_double_floquet_mpc
     from src.geometry.mesh_builder_3d import (_mark_boundary_facets, _mark_cells,
-                                              _refined_axis, _structured_hexa_mesh)
+                                              _structured_hexa_mesh)
     from .fullspace_lor_memory_first_foundation import _canonical_raw_map
     from .fullspace_lor_native_hx_fixture import (_P1IdentityTransfer, _assemble_sparse,
                                                   _edge_records, _p1_transfer_local_indices,
-                                                  _piecewise_positive_coefficients)
+                                                  _piecewise_positive_coefficients, _refined_axis)
     from .fullspace_lor_topology import build_canonical_lor_subedge_topology
     from .fullspace_lor_transfer import build_local_lor_transfer
 
