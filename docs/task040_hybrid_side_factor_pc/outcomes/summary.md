@@ -27,6 +27,28 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 `implementation_failure`，`1c68da98` 是 `incomplete_superseded`；两者保留但不混入当前 formal
 数值或资源结论。
 
+## Review V4 实现范围、下一步与 selective merge 边界
+
+V4 整轮的实现范围包括：`src/solvers/hybrid_exact_authority_compat.py` 诊断兼容性 helper；
+`benchmarks/task040_level_a.py` 的互斥 opt-in metadata preflight/identity-stop route；
+`benchmarks/task040_level_a_watchdog.py` 的 route/marker 透传；对应的 test313 serial/MPI2/MPI4
+回归；独立 checker `benchmarks/check_task040_v4_exact_authority.py` 及 test314。现有 ordinary
+production solver 路径和默认行为没有改变，但这些 helper/opt-in route 也不构成 production
+side inverse 资格。
+
+| 依赖组 | 文件归属与边界 |
+|---|---|
+| production numerical/core | 现有 production 数值路径/default 未改变；V4 helper 不作为 production qualification |
+| reusable runner/watchdog | `benchmarks/task040_level_a.py`、`benchmarks/task040_level_a_watchdog.py`、`src/test/test_313_task040_v4_exact_authority.py`；只新增 opt-in route，依赖 helper，不改变其他 route 默认行为 |
+| checker/benchmark | `benchmarks/check_task040_v4_exact_authority.py`、`src/test/test_314_task040_v4_exact_authority_checker.py`；独立 raw 重算，不读 numeric NPY |
+| compact evidence/docs | compact record、16 个 outcomes 文档、`response_v5.md` |
+| research-only / do-not-merge | diagnostic helper、ignored formal/invalid roots，以及 raw-row remap 和无效 residual/未完成路径；不得当作 production side inverse |
+
+若未来继续，第一步必须经新的 Review 授权，取得与 source SHA 绑定、可逆、覆盖完整、满足
+Floquet consistency 且通过 round-trip 的旧 source-row 到 canonical physical key bridge；仍
+禁止重建 full-side exact factor。在该 bridge 资格化之前，V4-2→V4-10 不得运行。merge
+approval 仍为 **NO**。
+
 ## 阶段总表
 
 | 阶段 | 作用范围 | 状态 | 关键事实 |

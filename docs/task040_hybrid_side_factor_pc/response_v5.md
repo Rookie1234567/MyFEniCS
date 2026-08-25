@@ -228,16 +228,18 @@ convergence。下一次若要进入后续 Gate，必须先在禁止重建 full-s
 
 ## Selective merge 依赖组
 
-本轮只收口文档和已批准的 checker/compact evidence；merge approval 仍为 **NO**。
+V4 整轮包含诊断兼容性 helper、互斥的 opt-in metadata preflight/identity-stop route、独立
+raw checker，以及本次 compact/document closeout；这不等于修改了 ordinary production
+solver 的默认数值行为。merge approval 仍为 **NO**。
 
 | 依赖组 | 本轮状态、数值行为与依赖 | fresh PDE evidence / 合入顺序 |
 |---|---|---|
-| production numerical/core | 未改变；没有新的 bare-F、QEP、PDE 或 production 数值 | 无 fresh PDE evidence；不得以本轮结论合入 production numerical/core |
-| reusable runner/watchdog | 本轮只引用既有 metadata preflight 资源口径；没有扩大 runner/watchdog 改动 | watchdog raw 已有独立证据；若未来改 runner，需单独 focused regression 后再审 |
-| checker/benchmark | V4-1 独立 raw checker 已提交，绑定 checker source `4b70adfb...`；不调用 solver、不读 numeric NPY | checker rc0/37 checks；可作为 checker/benchmark 组候选，仍需监督审查 |
-| compact evidence/docs | compact record 不变，SHA `5ededd4b...`；本轮更新指定 16 个 outcomes/summary 文档并新增本响应 | 无 PDE；先审阅文档和 evidence 链，再决定是否纳入 evidence/docs |
-| research-only | 两个旧 invalid roots 仅作历史审计，不提升为结论 | 不合入 production；保留 raw evidence 供审计 |
-| do-not-merge | raw global-row remap 路线、a64 residual、1c68 未完成路线、任何未运行的后续算法结论 | 明确不合入；不得通过隐藏死代码或旧 residual 改写 V4 结论 |
+| production numerical/core | 现有 production 求解路径和 ordinary defaults 未改变；`src/solvers/hybrid_exact_authority_compat.py` 是诊断兼容性 helper，不是 production qualification | 无 fresh PDE evidence；不得以本轮结论提升 production numerical/core |
+| reusable runner/watchdog | `benchmarks/task040_level_a.py` 新增互斥 opt-in V4 metadata preflight/identity-stop route；`benchmarks/task040_level_a_watchdog.py` 透传该 route/marker；依赖上述 helper；`src/test/test_313_task040_v4_exact_authority.py` 覆盖 serial/MPI2/MPI4 | 不改变其他 route 默认行为；test313 serial/MPI2/MPI4 通过后，仍需独立 review 才能合入 runner/watchdog |
+| checker/benchmark | `benchmarks/check_task040_v4_exact_authority.py` 与 `src/test/test_314_task040_v4_exact_authority_checker.py`；checker 独立重算 raw JSON/metadata，不调用 solver、不读 numeric NPY | checker `rc=0`、37/37 checks；这是 checker/benchmark evidence，不是 PDE 数值资格 |
+| compact evidence/docs | `benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json`、16 个 outcomes 文档和 `response_v5.md` | compact SHA 保持 `5ededd4b...`；只记录受控身份停止，不产生 fresh PDE evidence |
+| research-only | 上述诊断 helper、opt-in V4 preflight，以及 ignored formal root 和两个 invalid roots；它们不能被称为 production side inverse | 保留 raw evidence 供审计；不按 production 顺序合入 |
+| do-not-merge | raw global-row remap 路线、a64 无效 residual、1c68 未完成路径和任何未运行的后续算法结论 | 明确不合入；不得通过隐藏死代码或旧 residual 改写 V4 结论 |
 
 ## 证据入口
 
