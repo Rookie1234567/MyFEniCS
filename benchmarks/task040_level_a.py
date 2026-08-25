@@ -18,7 +18,6 @@ from mpi4py import MPI
 from petsc4py import PETSc
 from dolfinx import fem
 
-from benchmarks.canonical_vector_artifacts import canonical_key_json_bytes
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
 from benchmarks.task039_v3_7_orchestration import (
@@ -70,9 +69,6 @@ from src.solvers.hybrid_interface_packet_dolfinx import (
     canonicalize_owner_local_basis_in_place,
     reconstruct_owner_local_basis,
 )
-from src.solvers.hcurl_canonical_vector_dolfinx import (
-    iter_canonical_active_trace_packets,
-)
 from src.solvers.hybrid_interface_schur import (
     build_petsc_interface_schur_oracle,
     build_distributed_petrov_action,
@@ -86,9 +82,12 @@ from src.solvers.hybrid_interface_fgmres import (
     run_v3_full_span_right_fgmres_batch,
 )
 from src.solvers.hybrid_exact_authority_compat import (
+    V4_CANONICAL_SOURCE_BINDING_REASON,
+    V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE,
     V4_EXACT_AUTHORITY_FAILURE,
     V4_EXACT_AUTHORITY_LABELS,
-    audit_exact_authority_petsc,
+    canonical_binding_failure_audit,
+    inspect_canonical_source_authority,
 )
 from src.solvers.hybrid_interface_petsc_coupled import (
     build_petsc_coupled_full_side_action,
@@ -492,10 +491,11 @@ def build_task040_level_a_plan(
                 "research_only": True,
                 "oracle_only": True,
                 "scalable_candidate": False,
-                "bare_f_compatibility": True,
+                "bare_f_compatibility": "not_run_by_identity_gate",
                 "read_only_exact_outputs": True,
-                "exact_output_labels": list(V4_EXACT_AUTHORITY_LABELS),
-                "exact_output_vectors_loaded": 5,
+                "expected_exact_output_labels": list(V4_EXACT_AUTHORITY_LABELS),
+                "expected_exact_output_count": len(V4_EXACT_AUTHORITY_LABELS),
+                "exact_output_vectors_loaded": 0,
                 "pde_solve": "not_run",
                 "qep_calls": 0,
                 "forbidden": [
@@ -2598,175 +2598,221 @@ def _v3_packet_provenance(
     return dict(provenance)
 
 
-def _v4_canonical_active_key_identity(
-    system: Any,
-    bare_f: PETSc.Mat,
-    comm: MPI.Intracomm,
+def _v4_spool_metadata_identity(
+    spool: Mapping[str, Mapping[str, Any]],
+    labels: Sequence[str],
+    expected_ids: Mapping[str, str],
+    *,
+    expected_mpi_size: int,
 ) -> dict[str, Any]:
-    """Hash canonical active keys without retaining trace values.
-
-    The iterator expands active rows into edge/face packets, so its canonical
-    key count is intentionally not compared with the PETSc active-row count or
-    with each rank's Vec ownership range.
-    """
-
-    condensed = system.static_condensation.condensed
-    active_vec = condensed.create_active_vector()
-    digest = hashlib.sha256()
-    keys: set[tuple[Any, ...]] = set()
-    encoded_keys: list[bytes] = []
-    local_duplicate_count = 0
-    try:
-        active_vec.set(0.0)
-        active_vec.assemble()
-        for packet in iter_canonical_active_trace_packets(
-            condensed, system.V, system.floquet_data, active_vec
-        ):
-            key = packet[0]
-            if key in keys:
-                local_duplicate_count += 1
-            keys.add(key)
-            encoded = canonical_key_json_bytes(key)
-            encoded_keys.append(encoded)
-            digest.update(len(encoded).to_bytes(8, "big"))
-            digest.update(encoded)
-        local_record = {
-            "rank": int(comm.rank),
-            "ownership_range": list(map(int, active_vec.getOwnershipRange())),
-            "local_key_count": int(len(keys)),
-            "local_key_order_sha256": digest.hexdigest(),
-            "local_duplicate_count": int(local_duplicate_count),
-        }
-    finally:
-        active_vec.destroy()
-    key_buckets: list[list[bytes]] = [[] for _ in range(int(comm.size))]
-    for encoded in encoded_keys:
-        key_digest = hashlib.sha256(encoded).digest()
-        owner = int.from_bytes(key_digest[:8], "big") % int(comm.size)
-        key_buckets[owner].append(encoded)
-    received_key_buckets = comm.alltoall(key_buckets)
-    received_keys = [encoded for bucket in received_key_buckets for encoded in bucket]
-    local_partition_duplicate_count = len(received_keys) - len(set(received_keys))
-    global_duplicate_count = int(
-        comm.allreduce(local_partition_duplicate_count, op=MPI.SUM)
-    )
-    rank_records = comm.allgather(local_record)
-    rank_records = sorted(rank_records, key=lambda item: int(item["rank"]))
-    global_key_count = sum(int(item["local_key_count"]) for item in rank_records)
-    ownership_ranges = [
-        tuple(map(int, item["ownership_range"])) for item in rank_records
-    ]
-    ownership_contiguous = bool(
-        ownership_ranges
-        and ownership_ranges[0][0] == 0
-        and all(
-            previous[1] == current[0]
-            for previous, current in zip(
-                ownership_ranges, ownership_ranges[1:], strict=False
-            )
+    observed: dict[str, str | None] = {}
+    checks: dict[str, bool] = {}
+    shard_counts: dict[str, int] = {}
+    expected_mpi_size = int(expected_mpi_size)
+    for label in labels:
+        shards = spool.get(label, {}).get("exact_output", {}).get("shards", ())
+        if not isinstance(shards, Sequence) or isinstance(shards, (str, bytes)):
+            shards = ()
+        identities = tuple(
+            shard.get("source_identity", {})
+            .get("vector_identity", {})
+            .get("global_sha256")
+            if isinstance(shard, Mapping)
+            else None
+            for shard in shards
         )
-        and ownership_ranges[-1][1] == int(bare_f.getSize()[0])
-    )
-    global_identity = hashlib.sha256(
-        json.dumps(
-            {
-                "rank_records": rank_records,
-                "global_duplicate_count": global_duplicate_count,
-                "ownership_contiguous": ownership_contiguous,
-                "canonical_packet_expansion": True,
-            },
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
-    pass_gate = bool(
-        global_key_count > 0 and global_duplicate_count == 0 and ownership_contiguous
-    )
-    return {
-        "schema": "task040.v4.canonical_active_row_identity.v1",
-        "rank_records": rank_records,
-        "global_key_count": int(global_key_count),
-        "bare_f_global_rows": int(bare_f.getSize()[0]),
-        "summed_local_duplicate_count": int(
-            sum(int(item["local_duplicate_count"]) for item in rank_records)
-        ),
-        "global_duplicate_count": int(global_duplicate_count),
-        "ownership_contiguous": ownership_contiguous,
-        "ownership_counts_match": None,
-        "ownership_count_comparison": ("not_applicable_canonical_packet_expansion"),
-        "global_identity_sha256": global_identity,
-        "numeric_allgather": False,
-        "full_values_retained": False,
-        "canonical_key_exchange": {
-            "algorithm": "hash_partitioned_alltoall",
-            "metadata_only": True,
-            "local_key_count": int(len(encoded_keys)),
-            "received_key_count": int(len(received_keys)),
-        },
-        "pass": pass_gate,
-    }
-
-
-def _v4_probe_identity_check(
-    label: str,
-    expected: Mapping[str, Any],
-    observed: Mapping[str, Any],
-) -> dict[str, Any]:
-    observed_identity = observed.get("identity", {})
-    checks = {
-        "label": observed.get("label") == label,
-        "seed": observed.get("seed") == expected["seed"],
-        "source": observed.get("source") == expected["source"],
-        "rhs_identity_sha256": (
-            observed_identity.get("global_sha256") == expected["rhs_identity_sha256"]
-        ),
-    }
-    if "resolved_column" in expected:
-        checks["resolved_column"] = (
-            observed.get("resolved_column") == expected["resolved_column"]
+        shard_counts[label] = len(identities)
+        value = identities[0] if identities and len(set(identities)) == 1 else None
+        observed[label] = value
+        checks[label] = bool(
+            len(identities) == expected_mpi_size
+            and value is not None
+            and value == expected_ids[label]
         )
     return {
-        "label": label,
-        "expected": dict(expected),
-        "observed": dict(observed),
+        "expected": dict(expected_ids),
+        "expected_mpi_size": expected_mpi_size,
+        "observed": observed,
+        "shard_counts": shard_counts,
         "checks": checks,
         "pass": all(checks.values()),
+        "array_hash_validation_only": True,
+        "numeric_vectors_constructed": False,
+        "values_retained": False,
     }
 
 
-def _run_v4_exact_authority_compatibility(
+def _v4_spool_producer_source_identity(
+    spool: Mapping[str, Mapping[str, Any]],
+    labels: Sequence[str],
     *,
-    system: Any,
-    bare_f: PETSc.Mat,
+    expected_source_sha: str,
+    expected_mpi_size: int,
+) -> dict[str, Any]:
+    per_entry: dict[str, dict[str, Any]] = {}
+    observed: set[str] = set()
+    expected_source_sha = str(expected_source_sha)
+    expected_mpi_size = int(expected_mpi_size)
+    for label in labels:
+        for role in ("rhs", "exact_output"):
+            role_record = spool.get(label, {}).get(role, {})
+            shards = role_record.get("shards", ())
+            if not isinstance(shards, Sequence) or isinstance(shards, (str, bytes)):
+                shards = ()
+            values: list[str | None] = []
+            for shard in shards:
+                source_identity = (
+                    shard.get("source_identity") if isinstance(shard, Mapping) else None
+                )
+                packet_wrapper = (
+                    source_identity.get("packet_identity")
+                    if isinstance(source_identity, Mapping)
+                    else None
+                )
+                value = (
+                    packet_wrapper.get("source_sha")
+                    if isinstance(packet_wrapper, Mapping)
+                    else None
+                )
+                values.append(value if isinstance(value, str) else None)
+                if isinstance(value, str):
+                    observed.add(value)
+            valid_values = [
+                value
+                for value in values
+                if isinstance(value, str)
+                and len(value) == 40
+                and all(character in "0123456789abcdef" for character in value)
+            ]
+            shard_count = len(values)
+            valid_source_sha_count = len(valid_values)
+            expected_match_count = sum(value == expected_source_sha for value in values)
+            per_entry[f"{label}:{role}"] = {
+                "expected_mpi_size": expected_mpi_size,
+                "shard_count": shard_count,
+                "valid_source_sha_count": valid_source_sha_count,
+                "expected_match_count": expected_match_count,
+                "observed_source_shas": sorted(
+                    {value for value in values if isinstance(value, str)}
+                ),
+                "check": bool(
+                    shard_count == expected_mpi_size
+                    and valid_source_sha_count == expected_mpi_size
+                    and expected_match_count == expected_mpi_size
+                    and all(value == expected_source_sha for value in values)
+                ),
+            }
+    overall_pass = bool(
+        len(per_entry) == 2 * len(tuple(labels))
+        and all(item["check"] for item in per_entry.values())
+    )
+    return {
+        "expected_source_sha": expected_source_sha,
+        "expected_mpi_size": expected_mpi_size,
+        "observed_source_sha": next(iter(observed)) if len(observed) == 1 else None,
+        "observed_source_shas": sorted(observed),
+        "per_label_role": per_entry,
+        "pass": overall_pass,
+    }
+
+
+def _v4_identity_stop_result(
+    *,
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    identity: Mapping[str, Any],
+    source_binding: Mapping[str, Any],
+    labels: Sequence[str],
+    resource_samples: Mapping[str, Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    audit = canonical_binding_failure_audit(
+        identity=identity,
+        source_binding=source_binding,
+        labels=labels,
+    )
+    samples = dict(resource_samples or {})
+    resource_authority = {
+        "status": "not_run_by_identity_gate",
+        "sample_count": len(samples),
+        "all_status_readable": None,
+        "swap_authority_readable": None,
+        "swap_zero_authoritative": None,
+    }
+    audit["resource_authority"] = resource_authority
+    factor_inventory = audit["factor_inventory"]
+    failure_code = str(
+        source_binding.get("failure_code", V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE)
+    )
+    failure_reason = str(
+        source_binding.get("reason", V4_CANONICAL_SOURCE_BINDING_REASON)
+    )
+    return {
+        "action": None,
+        "owner": None,
+        "result": {
+            "schema": TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_SCHEMA,
+            "method": TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_METHOD,
+            "profile": TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_PROFILE_ID,
+            "source_sha": str(source_sha),
+            "input_sha256": str(input_sha256),
+            "physical_model_sha256": str(physical_model_sha256),
+            "identity_observed": dict(identity),
+            "identity_pass": False,
+            "identity_failure_code": failure_code,
+            "identity_failure_reason": failure_reason,
+            "exact_authority": audit,
+            "numerical_gate_pass": None,
+            "residual_status": "not_run_by_identity_gate",
+            "gate_pass": False,
+            "classification": V4_EXACT_AUTHORITY_FAILURE,
+            "source_loading": {
+                "labels": list(labels),
+                "rhs_vectors_loaded": 0,
+                "exact_output_vectors_loaded": 0,
+                "exact_output_metadata_hash_validation_only": True,
+                "array_hash_validation_only": True,
+                "numeric_vectors_constructed": False,
+                "values_retained": False,
+                "raw_global_row_remap_used": False,
+                "canonical_reconstruction": "not_run_by_identity_gate",
+            },
+            "resource_samples": samples,
+            "resource_authority": resource_authority,
+            "factor_inventory": factor_inventory,
+            "qep_calls": 0,
+            "pde_solve": "not_run",
+            "projection": "not_run_by_gate",
+            "lift": "not_run_by_gate",
+            "not_run_by_gate": dict(audit["downstream"]),
+            "construction": {
+                "system_created": False,
+                "explicit_bare_f_created": False,
+                "interface_masses_built": False,
+                "qep_called": False,
+                "pde_solved": False,
+            },
+        },
+    }
+
+
+def _v4_source_authority_preflight(
+    *,
     exact_spool_root: str | Path,
     source_sha: str,
     input_sha256: str,
     physical_model_sha256: str,
-    system_inventory: Mapping[str, Any],
     comm: MPI.Intracomm,
-    resource_callback: Callable[[], Mapping[str, Any]] | None,
 ) -> dict[str, Any]:
-    """Audit the frozen five exact outputs before any interface construction."""
+    """Validate source-row metadata before constructing the PDE system."""
 
-    resource_samples: dict[str, dict[str, Any]] = {}
-
-    def sample_resource(stage: str) -> None:
-        if resource_callback is None:
-            return
-        sample = resource_callback()
-        if not isinstance(sample, Mapping):
-            raise TypeError("Task040 V4 resource callback must return a mapping")
-        resource_samples[stage] = dict(sample)
-
-    sample_resource("v4_authority_begin")
     manifest_path, manifest = _v1_2_load_manifest()
     identity = manifest["identity"]
+    labels = tuple(manifest["physical_probes"]["labels"])
+    if labels != V4_EXACT_AUTHORITY_LABELS:
+        raise ValueError("V4 exact authority manifest labels are not frozen")
     selected_manifest = (
         Path(__file__).resolve().parents[1] / identity["selected_manifest"]
-    )
-    selected_payload = json.loads(selected_manifest.read_text(encoding="utf-8"))
-    selected_identity = json.loads(
-        selected_manifest.with_name("identity.json").read_text(encoding="utf-8")
     )
     selected_manifest_sha256 = hashlib.sha256(
         selected_manifest.read_bytes()
@@ -2786,302 +2832,140 @@ def _run_v4_exact_authority_compatibility(
         packet_identity=packet_identity,
         manifest_sha256=packet_manifest_sha256,
     )
-    sample_resource("v4_spool_identity_ready")
-    canonical_identity = _v4_canonical_active_key_identity(system, bare_f, comm)
-    labels = tuple(manifest["physical_probes"]["labels"])
+    source_binding = inspect_canonical_source_authority(spool, labels=labels)
+    source_binding.update(
+        {
+            "array_hash_validation_only": True,
+            "numeric_vectors_constructed": False,
+            "values_retained": False,
+            "raw_npy_mmap_hash_read": True,
+        }
+    )
     expected_ids = dict(manifest["physical_probes"]["exact_output_identity_sha256"])
-    probe_authority = dict(manifest["physical_probes"]["probe_identities"])
-    if labels != V4_EXACT_AUTHORITY_LABELS:
-        raise ValueError("V4 exact authority manifest labels are not frozen")
-    rhs_vectors: dict[str, PETSc.Vec] = {}
-    exact_vectors: dict[str, PETSc.Vec] = {}
-    try:
-        bare_right = bare_f.createVecRight()
-        try:
-            bare_right_ownership = list(map(int, bare_right.getOwnershipRange()))
-        finally:
-            bare_right.destroy()
-        exact_vector_ownership: dict[str, list[int]] = {}
-        observed_ids: dict[str, str] = {}
-        source_metadata: dict[str, Mapping[str, Any]] = {}
-        for label in labels:
-            identities = [
-                shard.get("source_identity", {})
-                .get("vector_identity", {})
-                .get("global_sha256")
-                for shard in spool[label]["exact_output"]["shards"]
-            ]
-            if (
-                not identities
-                or len(set(identities)) != 1
-                or identities[0] != expected_ids[label]
-                or any(
-                    candidate != identities for candidate in comm.allgather(identities)
-                )
-            ):
-                raise ValueError(f"V4 exact-output identity mismatch for {label}")
-            observed_ids[label] = str(identities[0])
-            source_metadata[label] = dict(spool[label]["rhs"]["probe_metadata"])
-            rhs_template = bare_f.createVecLeft()
-            exact_template = bare_f.createVecRight()
-            try:
-                rhs_vectors[label] = _load_v5_blr_reference_spool_remapped(
-                    spool[label]["rhs"], rhs_template
-                )
-                exact_vectors[label] = _load_v5_blr_reference_spool_remapped(
-                    spool[label]["exact_output"], exact_template
-                )
-                exact_vector_ownership[label] = list(
-                    map(int, exact_vectors[label].getOwnershipRange())
-                )
-            finally:
-                rhs_template.destroy()
-                exact_template.destroy()
-        sample_resource("v4_exact_vectors_loaded")
-        probe_identity_checks: dict[str, dict[str, Any]] = {}
-        for label in labels:
-            probe_identity_checks[label] = _v4_probe_identity_check(
-                label, probe_authority[label], source_metadata[label]
-            )
-        probe_identity_pass = all(
-            item["pass"] for item in probe_identity_checks.values()
-        )
-        upper_authority = manifest["upper_selected_packet_basis"]
-        lower_authority = manifest["lower_fourier_floquet_basis"]
-        fixed_probe_authority = manifest["fixed_probe_seeds"]
-        group_authority = manifest["groups_and_sequence"]
-        interface_authority = manifest["interfaces"]
-        scalar_authority = manifest["scalar_baseline"]
-        identity_observed = {
-            "source_sha": str(source_sha),
-            "frozen_branch": manifest["freeze"]["branch"],
-            "frozen_authority_source_sha": manifest["freeze"]["source_sha_at_freeze"],
-            "input_sha256": str(input_sha256),
-            "physical_model_sha256": str(physical_model_sha256),
-            "probe_manifest_sha256": hashlib.sha256(
-                manifest_path.read_bytes()
-            ).hexdigest(),
-            "selected_manifest_sha256": selected_manifest_sha256,
-            "spool_packet_manifest_sha256": str(packet_manifest_sha256),
-            "selected_identity_sha256": selected_payload.get("identity_sha256"),
-            "selected_selection_sha256": selected_payload.get("selection_sha256"),
-            "selected_identity_physical_sha256": selected_identity.get(
-                "physical_sha256"
+    output_identity = _v4_spool_metadata_identity(
+        spool,
+        labels,
+        expected_ids,
+        expected_mpi_size=int(identity["mpi_size"]),
+    )
+    producer_identity = _v4_spool_producer_source_identity(
+        spool,
+        labels,
+        expected_source_sha=str(identity["exact_spool_source_sha"]),
+        expected_mpi_size=int(identity["mpi_size"]),
+    )
+    identity_checks = {
+        "input_sha256": {
+            "observed": str(input_sha256),
+            "expected": str(identity["input_sha256"]),
+            "pass": str(input_sha256) == str(identity["input_sha256"]),
+        },
+        "physical_model_sha256": {
+            "observed": str(physical_model_sha256),
+            "expected": str(identity["physical_model_sha256"]),
+            "pass": str(physical_model_sha256)
+            == str(identity["physical_model_sha256"]),
+        },
+        "frozen_branch": {
+            "observed": manifest["freeze"]["branch"],
+            "expected": TASK040_V4_FROZEN_BRANCH,
+            "pass": manifest["freeze"]["branch"] == TASK040_V4_FROZEN_BRANCH,
+        },
+        "freeze_source": {
+            "observed": manifest["freeze"]["source_sha_at_freeze"],
+            "expected": TASK040_V4_FROZEN_AUTHORITY_SOURCE_SHA,
+            "pass": manifest["freeze"]["source_sha_at_freeze"]
+            == TASK040_V4_FROZEN_AUTHORITY_SOURCE_SHA,
+        },
+        "selected_manifest": {
+            "observed_sha256": selected_manifest_sha256,
+            "expected_sha256": identity["selected_manifest_sha256"],
+            "frozen_sha256": TASK040_V1_2_SELECTED_MANIFEST_SHA256,
+            "pass": bool(
+                selected_manifest_sha256
+                == identity["selected_manifest_sha256"]
+                == TASK040_V1_2_SELECTED_MANIFEST_SHA256
             ),
-            "resolved_config_sha256": resolved_sha256,
-            "spool_catalog_sha256": spool_catalog_sha256,
-            "packet_identity": dict(packet_identity),
-            "packet_manifest_sha256": str(packet_manifest_sha256),
-            "exact_output_identity_sha256": observed_ids,
-            "canonical_active_row_keys": canonical_identity,
-            "bare_f_right_ownership": bare_right_ownership,
-            "exact_vector_ownership": exact_vector_ownership,
-            "probe_authority": probe_authority,
-            "probe_identity_checks": probe_identity_checks,
-            "probe_identity_pass": bool(probe_identity_pass),
-            "fixed_probe_authority": {
-                "coefficient_formula": fixed_probe_authority["coefficient_formula"],
-                "coefficient_index_domains": fixed_probe_authority[
-                    "coefficient_index_domains"
-                ],
-                "count_per_interface": fixed_probe_authority["count_per_interface"],
-                "normalization": fixed_probe_authority["normalization"],
-                "orthogonalization": fixed_probe_authority["orthogonalization"],
-            },
-            "group_authority": {
-                "groups": group_authority["groups"],
-                "sequence": group_authority["sequence"],
-                "interface_support_must_be_in_both_adjacent_groups": (
-                    group_authority["interface_support_must_be_in_both_adjacent_groups"]
-                ),
-            },
-            "interface_authority": {
-                "orientation": interface_authority["orientation"],
-                "lower_normal_contract": interface_authority["lower"][
-                    "normal_contract"
-                ],
-                "upper_normal_contract": interface_authority["upper"][
-                    "normal_contract"
-                ],
-            },
-            "scalar_authority": {
-                "authority": scalar_authority["authority"],
-                "beta_formula": scalar_authority["beta_formula"],
-                "q_formula": scalar_authority["q_formula"],
-                "same_authority_at_both_interfaces": scalar_authority[
-                    "same_authority_at_both_interfaces"
-                ],
-            },
-            "lower_fourier_floquet_authority": {
-                "count": lower_authority["count"],
-                "key_fields": lower_authority["key_fields"],
-                "canonical_order": lower_authority["canonical_order"],
-                "canonical_key_list_sha256": lower_authority[
-                    "canonical_key_list_sha256"
-                ],
-                "branch_rule": lower_authority["branch_rule"],
-                "beta_formula": lower_authority["beta_formula"],
-                "beta_metadata_sha256": lower_authority["beta_metadata_sha256"],
-            },
-            "upper_selected_packet_basis": {
-                "positive_branch": upper_authority["positive_branch"],
-                "positive_direction": upper_authority["positive_direction"],
-                "positive_sign": upper_authority["positive_sign"],
-                "negative_branch_identity": upper_authority["negative_branch_identity"],
-                "negative_sign": upper_authority["negative_sign"],
-                "positive_mode_keys_sha256": upper_authority[
-                    "positive_mode_keys_sha256"
-                ],
-                "negative_mode_keys_sha256": upper_authority[
-                    "negative_mode_keys_sha256"
-                ],
-                "normalization_authority": upper_authority["normalization_authority"],
-            },
-            "system_inventory": dict(system_inventory),
-        }
-        identity_pass = bool(
-            identity_observed["source_sha"]
-            and len(identity_observed["source_sha"]) == 40
-            and all(
-                character in "0123456789abcdef"
-                for character in identity_observed["source_sha"]
-            )
-            and identity_observed["frozen_branch"] == TASK040_V4_FROZEN_BRANCH
-            and identity_observed["frozen_authority_source_sha"]
-            == TASK040_V4_FROZEN_AUTHORITY_SOURCE_SHA
-            and identity_observed["input_sha256"] == TASK040_V1_2_INPUT_SHA256
-            and identity_observed["physical_model_sha256"]
-            == TASK040_V1_2_PHYSICAL_MODEL_SHA256
-            and identity_observed["selected_identity_physical_sha256"]
-            == TASK040_V1_2_PHYSICAL_MODEL_SHA256
-            and identity_observed["probe_manifest_sha256"]
-            == TASK040_V1_2_PROBE_MANIFEST_SHA256
-            and identity_observed["selected_manifest_sha256"]
-            == TASK040_V1_2_SELECTED_MANIFEST_SHA256
-            and identity_observed["spool_packet_manifest_sha256"]
-            == TASK040_V1_2_SELECTED_MANIFEST_SHA256
-            and identity_observed["selected_identity_sha256"]
-            == identity["selected_identity_sha256"]
-            and identity_observed["selected_selection_sha256"]
-            == identity["selected_selection_sha256"]
-            and identity_observed["resolved_config_sha256"]
-            == identity["exact_spool_resolved_config_sha256"]
-            and identity_observed["spool_catalog_sha256"]
-            == TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256
-            and identity_observed["exact_output_identity_sha256"] == expected_ids
-            and identity_observed["canonical_active_row_keys"]["pass"] is True
-            and identity_observed["fixed_probe_authority"]["coefficient_formula"]
-            == "c_j = exp(2*pi*i*((seed+1)*(j+1) mod 104729)/104729)"
-            and identity_observed["fixed_probe_authority"]["count_per_interface"]
-            == {"complement": 2, "modal": 2}
-            and identity_observed["fixed_probe_authority"]["normalization"]
-            == "existing trace inner product; finite nonzero norm required"
-            and identity_observed["fixed_probe_authority"]["orthogonalization"]
-            == "c <- c - Z*(Y^H c) using frozen Y dual; normalize after projection"
-            and identity_observed["group_authority"]["groups"]
-            == [[0, 1], [2, 3], [4, 5]]
-            and identity_observed["group_authority"]["sequence"] == [0, 1, 2, 2, 1, 0]
-            and identity_observed["interface_authority"]["orientation"][
-                "mass_integrated_once"
-            ]
-            is True
-            and identity_observed["interface_authority"]["orientation"][
-                "support_pair_must_be_exact"
-            ]
-            is True
-            and identity_observed["interface_authority"]["orientation"][
-                "outward_normal_signs"
-            ]
-            == {"lower": [1, -1], "upper": [1, -1]}
-            and identity_observed["scalar_authority"]["beta_formula"]
-            == "cfg.k0 * complex(cfg.substrate_index)"
-            and identity_observed["scalar_authority"]["q_formula"] == "-1j * beta"
-            and identity_observed["scalar_authority"][
-                "same_authority_at_both_interfaces"
-            ]
-            is True
-            and identity_observed["lower_fourier_floquet_authority"]["count"] == 296
-            and identity_observed["lower_fourier_floquet_authority"]["key_fields"]
-            == ["m", "n", "polarization", "side"]
-            and identity_observed["lower_fourier_floquet_authority"]["canonical_order"]
-            == "authority file order"
-            and identity_observed["lower_fourier_floquet_authority"]["branch_rule"]
-            == "positive_sqrt non-negative real/imaginary branch; is_propagating and near_rayleigh retain authority classification"
-            and identity_observed["upper_selected_packet_basis"]["positive_branch"]
-            == "positive"
-            and identity_observed["upper_selected_packet_basis"]["positive_direction"]
-            == "forward"
-            and identity_observed["upper_selected_packet_basis"]["positive_sign"] == 1
-            and identity_observed["upper_selected_packet_basis"]["negative_sign"] == -1
-            and identity_observed["upper_selected_packet_basis"][
-                "normalization_authority"
-            ]["must_validate_left_right_together"]
-            is True
-            and all(
-                ownership == identity_observed["bare_f_right_ownership"]
-                for ownership in identity_observed["exact_vector_ownership"].values()
-            )
-            and identity_observed["probe_identity_pass"] is True
-            and system_inventory.get("matrix_free") is True
-            and system_inventory.get("global_A_materialized") is False
-            and system_inventory.get("direct_factor_count") == 0
+        },
+        "resolved_config": {
+            "observed_sha256": resolved_sha256,
+            "expected_sha256": identity["exact_spool_resolved_config_sha256"],
+            "pass": resolved_sha256 == identity["exact_spool_resolved_config_sha256"],
+        },
+        "packet_manifest": {
+            "observed_sha256": str(packet_manifest_sha256),
+            "expected_sha256": str(identity["selected_manifest_sha256"]),
+            "pass": str(packet_manifest_sha256)
+            == str(identity["selected_manifest_sha256"]),
+        },
+        "spool_catalog": {
+            "observed_sha256": str(spool_catalog_sha256),
+            "expected_sha256": str(identity["exact_spool_catalog_sha256"]),
+            "frozen_sha256": TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256,
+            "pass": bool(
+                str(spool_catalog_sha256)
+                == str(identity["exact_spool_catalog_sha256"])
+                == TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256
+            ),
+        },
+        "spool_producer_source": producer_identity,
+        "exact_output_metadata": output_identity,
+        "canonical_source_binding": source_binding,
+    }
+    identity_failures = [
+        name for name, check in identity_checks.items() if check.get("pass") is not True
+    ]
+    identity_observed = {
+        "source_sha": str(source_sha),
+        "current_source_sha": str(source_sha),
+        "spool_producer_source_sha": producer_identity["observed_source_sha"],
+        "spool_producer_source_identity": producer_identity,
+        "input_sha256": str(input_sha256),
+        "physical_model_sha256": str(physical_model_sha256),
+        "frozen_branch": manifest["freeze"]["branch"],
+        "task040_manifest_freeze_source_sha": manifest["freeze"][
+            "source_sha_at_freeze"
+        ],
+        "probe_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "selected_manifest_sha256": selected_manifest_sha256,
+        "spool_packet_manifest_sha256": str(packet_manifest_sha256),
+        "resolved_config_sha256": resolved_sha256,
+        "spool_catalog_sha256": spool_catalog_sha256,
+        "identity_checks": identity_checks,
+        "identity_failures": identity_failures,
+        "identity_checks_pass": not identity_failures,
+        "packet_identity": dict(packet_identity),
+        "labels": list(labels),
+        "exact_output_metadata_identity": output_identity,
+        "source_canonical_authority": source_binding,
+        "source_ownership": {
+            label: {
+                role: source_binding["entries"]
+                .get(label, {})
+                .get(role, {})
+                .get("ownership_ranges", [])
+                for role in ("rhs", "exact_output")
+            }
+            for label in labels
+        },
+        "probe_authority": dict(manifest["physical_probes"]["probe_identities"]),
+        "system_inventory": {
+            "system_created": False,
+            "explicit_bare_f_created": False,
+        },
+    }
+    if source_binding["bridge_qualified"]:
+        raise RuntimeError(
+            "V4 canonical bridge reports qualified without an implemented loader"
         )
-        audit = audit_exact_authority_petsc(
-            bare_f,
-            system.A,
-            rhs_vectors,
-            exact_vectors,
-            source_metadata=source_metadata,
-            exact_output_identity_sha256=observed_ids,
-            identity=identity_observed,
-            bare_matrix_hash=_petsc_matrix_hash,
-        )
-        numerical_gate_pass = bool(audit["gate_pass"])
-        gate_pass = bool(identity_pass and numerical_gate_pass)
-        classification = (
-            audit["classification"] if gate_pass else V4_EXACT_AUTHORITY_FAILURE
-        )
-        next_status = (
-            "not_run_pending_next_v4_stage" if gate_pass else "not_run_by_gate"
-        )
-        audit["numerical_gate_pass"] = numerical_gate_pass
-        audit["numerical_classification"] = audit["classification"]
-        audit["identity_pass"] = identity_pass
-        audit["gate_pass"] = gate_pass
-        audit["classification"] = classification
-        return {
-            "result": {
-                "schema": TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_SCHEMA,
-                "method": TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_METHOD,
-                "profile": TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_PROFILE_ID,
-                "source_sha": str(source_sha),
-                "identity_observed": identity_observed,
-                "identity_pass": identity_pass,
-                "exact_authority": audit,
-                "numerical_gate_pass": numerical_gate_pass,
-                "gate_pass": gate_pass,
-                "classification": classification,
-                "source_loading": {
-                    "labels": list(labels),
-                    "rhs_vectors_loaded": len(labels),
-                    "exact_output_vectors_loaded": len(labels),
-                    "exact_output_metadata_hash_validation_only": False,
-                },
-                "resource_samples": resource_samples,
-                "factor_inventory": audit["factor_inventory"],
-                "qep_calls": 0,
-                "pde_solve": "not_run",
-                "projection": next_status,
-                "lift": next_status,
-            },
-            "action": None,
-            "owner": None,
-        }
-    finally:
-        for vector in rhs_vectors.values():
-            vector.destroy()
-        for vector in exact_vectors.values():
-            vector.destroy()
+    return _v4_identity_stop_result(
+        source_sha=source_sha,
+        input_sha256=input_sha256,
+        physical_model_sha256=physical_model_sha256,
+        identity=identity_observed,
+        source_binding=source_binding,
+        labels=labels,
+    )
 
 
 def _v3_matrix_hash(matrix: np.ndarray) -> str:
@@ -4255,6 +4139,25 @@ def run_task040_level_a(
             else TASK040_LEVEL_A_METHOD
         ),
     )
+    if v4_exact_authority_compatibility:
+        preflight = _v4_source_authority_preflight(
+            exact_spool_root=exact_spool_root,
+            source_sha=source_sha,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            comm=comm,
+        )
+        _emit(
+            marker_callback,
+            "v4_identity_stop",
+            failure_code=preflight["result"]["identity_failure_code"],
+            residual_status="not_run_by_identity_gate",
+            system_created=False,
+            array_hash_validation_only=True,
+            numeric_vectors_constructed=False,
+            values_retained=False,
+        )
+        return preflight["result"]
     try:
         if side_system_builder is None:
             system = assemble_hybrid_local_dtn_action_system(
@@ -4273,10 +4176,6 @@ def run_task040_level_a(
         system_inventory_ok = (
             system_inventory.get("direct_factor_count") == 0
             and system_inventory.get("global_A_materialized") is False
-            and (
-                not v4_exact_authority_compatibility
-                or system_inventory.get("matrix_free") is True
-            )
         )
         if not bool(comm.allreduce(system_inventory_ok, op=MPI.LAND)):
             raise RuntimeError(
@@ -4292,22 +4191,6 @@ def run_task040_level_a(
         )
         components = _build_research_explicit_side_components(system)
         bare_f = components.F
-        if v4_exact_authority_compatibility:
-            route = _run_v4_exact_authority_compatibility(
-                system=system,
-                bare_f=bare_f,
-                exact_spool_root=exact_spool_root,
-                source_sha=source_sha,
-                input_sha256=str(input_sha256),
-                physical_model_sha256=str(physical_model_sha256),
-                system_inventory=system_inventory,
-                comm=comm,
-                resource_callback=resource_callback,
-            )
-            action = route["action"]
-            owner = route["owner"]
-            result = route["result"]
-            return result
         z_values = system.local_mesh.z_values
         interface_z = (float(z_values[2]), float(z_values[4]))
         for index, interface in enumerate(interface_z):

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -9,177 +11,224 @@ from petsc4py import PETSc
 import benchmarks.task040_level_a as level_a
 import benchmarks.task040_level_a_watchdog as watchdog
 from src.solvers.hybrid_exact_authority_compat import (
+    V4_CANONICAL_SOURCE_BRIDGE_NOT_QUALIFIED,
+    V4_CANONICAL_SOURCE_BINDING_REASON,
+    V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE,
     V4_EXACT_AUTHORITY_FAILURE,
     V4_EXACT_AUTHORITY_LABELS,
     audit_exact_authority_petsc,
+    canonical_binding_failure_audit,
+    inspect_canonical_source_authority,
 )
 
 
-def test_v4_probe_identity_check_allows_random_without_resolved_column() -> None:
-    expected = {
-        "seed": 773,
-        "source": "fixed_owner_range_formula",
-        "rhs_identity_sha256": "a" * 64,
+def _canonical_descriptor(index: int = 0) -> dict[str, str]:
+    return {
+        "map_path": f"canonical-source-map-{index}.jsonl",
+        "map_sha256": f"{index + 1:064x}",
+        "source_sha": "a" * 40,
+        "run_identity_sha256": "b" * 64,
+        "partition_sha256": "c" * 64,
+        "key_set_sha256": "d" * 64,
     }
-    observed = {
-        "label": "fixed_random_repeat_0",
-        "seed": 773,
-        "source": "fixed_owner_range_formula",
-        "identity": {"global_sha256": "a" * 64},
+
+
+def _canonical_spool(*, complete: bool) -> dict[str, dict[str, dict[str, object]]]:
+    spool = {}
+    for label in V4_EXACT_AUTHORITY_LABELS:
+        spool[label] = {}
+        for role in ("rhs", "exact_output"):
+            shard = {"ownership_range": [0, 3]}
+            if complete:
+                shard["canonical_source_authority"] = _canonical_descriptor()
+            spool[label][role] = {"shards": [shard]}
+    return spool
+
+
+def _preflight_metadata_spool(expected_ids: dict[str, str]):
+    spool = _canonical_spool(complete=False)
+    for label in V4_EXACT_AUTHORITY_LABELS:
+        for role in ("rhs", "exact_output"):
+            shards = []
+            for rank in range(8):
+                shard = {"ownership_range": [3 * rank, 3 * (rank + 1)]}
+                shard["source_identity"] = {
+                    "packet_identity": {
+                        "source_sha": ("7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f"),
+                    },
+                    "vector_identity": {
+                        "global_sha256": expected_ids[label],
+                    },
+                }
+                shards.append(shard)
+            spool[label][role]["shards"] = shards
+            if role == "rhs":
+                spool[label][role]["probe_metadata"] = {"label": label}
+    return spool
+
+
+def test_v4_source_authority_inventory_stops_without_canonical_map() -> None:
+    report = inspect_canonical_source_authority(_canonical_spool(complete=False))
+    assert report["pass"] is False
+    assert report["failure_code"] == V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE
+    assert report["reason"] == V4_CANONICAL_SOURCE_BINDING_REASON
+    assert len(report["missing_entries"]) == 2 * len(V4_EXACT_AUTHORITY_LABELS)
+    assert report["array_hash_validation_only"] is None
+    assert report["numeric_vectors_constructed"] is False
+    assert report["values_retained"] is False
+    assert report["canonical_map_opened"] is False
+    assert report["entries"][V4_EXACT_AUTHORITY_LABELS[0]]["rhs"][
+        "ownership_ranges"
+    ] == [[0, 3]]
+
+
+def test_v4_source_authority_descriptor_alone_is_not_bridge_qualified() -> None:
+    report = inspect_canonical_source_authority(_canonical_spool(complete=True))
+    assert report["descriptor_complete"] is True
+    assert report["descriptor_available"] is True
+    assert report["bridge_qualified"] is False
+    assert report["pass"] is False
+    assert report["failure_code"] == V4_CANONICAL_SOURCE_BRIDGE_NOT_QUALIFIED
+    assert report["missing_entries"] == []
+    assert report["malformed_entries"] == []
+    assert report["inconsistent_fields"] == []
+    json.loads(json.dumps(report, sort_keys=True))
+
+
+def test_v4_identity_stop_keeps_numerical_fields_not_run() -> None:
+    source_binding = inspect_canonical_source_authority(
+        _canonical_spool(complete=False)
+    )
+    audit = canonical_binding_failure_audit(
+        identity={"source_sha": "a" * 40},
+        source_binding=source_binding,
+    )
+    assert audit["classification"] == V4_EXACT_AUTHORITY_FAILURE
+    assert audit["failure_code"] == V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE
+    assert audit["residual_status"] == "not_run_by_identity_gate"
+    assert audit["finite_pass"] is None
+    assert audit["bare_f_residual_pass"] is None
+    assert audit["repeat_pass"] is None
+    assert audit["numerical_gate_pass"] is None
+    json.loads(json.dumps(audit, sort_keys=True))
+
+
+def test_v4_source_authority_collective_state_is_consistent() -> None:
+    report = inspect_canonical_source_authority(_canonical_spool(complete=False))
+    state = {
+        "pass": report["pass"],
+        "failure_code": report["failure_code"],
+        "missing_count": len(report["missing_entries"]),
     }
-    check = level_a._v4_probe_identity_check(
-        "fixed_random_repeat_0", expected, observed
-    )
-    assert check["pass"] is True
-    assert "resolved_column" not in check["checks"]
+    assert all(candidate == state for candidate in MPI.COMM_WORLD.allgather(state))
 
 
-def test_v4_canonical_active_row_identity_streams_keys_and_rejects_duplicate(
-    monkeypatch,
-) -> None:
-    class FakeVec:
-        def __init__(self):
-            self.destroyed = False
-
-        def set(self, _value):
-            return None
-
-        def assemble(self):
-            return None
-
-        def getOwnershipRange(self):
-            return (0, 2)
-
-        def destroy(self):
-            self.destroyed = True
-
-    class FakeCondensed:
-        def __init__(self):
-            self.vector = FakeVec()
-
-        def create_active_vector(self):
-            return self.vector
-
-    class FakeSystem:
-        def __init__(self):
-            self.static_condensation = type(
-                "Static", (), {"condensed": FakeCondensed()}
-            )()
-            self.V = object()
-            self.floquet_data = object()
-
-    class FakeMat:
-        def getSize(self):
-            return (2, 2)
-
-    system = FakeSystem()
-    keys = [("active_trace", 1), ("active_trace", 2)]
+def test_v4_source_preflight_fails_closed_after_array_hash_only_validation(
+    monkeypatch, tmp_path
+):
+    _manifest_path, manifest = level_a._v1_2_load_manifest()
+    expected_ids = dict(manifest["physical_probes"]["exact_output_identity_sha256"])
+    spool = _preflight_metadata_spool(expected_ids)
+    resolved_path = tmp_path / "worker" / "resolved_config.json"
+    resolved_path.parent.mkdir()
+    resolved_path.write_text("{}\n", encoding="utf-8")
     monkeypatch.setattr(
         level_a,
-        "iter_canonical_active_trace_packets",
-        lambda *_args: ((key, 0.0j) for key in keys),
+        "_v9_frozen_holdout_identity",
+        lambda *_args, **_kwargs: (
+            {"packet": "identity"},
+            manifest["identity"]["selected_manifest_sha256"],
+            {},
+        ),
     )
-    first = level_a._v4_canonical_active_key_identity(system, FakeMat(), MPI.COMM_SELF)
-    second = level_a._v4_canonical_active_key_identity(system, FakeMat(), MPI.COMM_SELF)
-    assert first["pass"] is True
-    assert first["global_identity_sha256"] == second["global_identity_sha256"]
-    assert first["summed_local_duplicate_count"] == 0
-    assert first["numeric_allgather"] is False
-    assert first["full_values_retained"] is False
-    assert system.static_condensation.condensed.vector.destroyed is True
-
     monkeypatch.setattr(
         level_a,
-        "iter_canonical_active_trace_packets",
-        lambda *_args: ((keys[0], 0.0j), (keys[0], 0.0j)),
+        "_v1_2_validate_spool_identity",
+        lambda **_kwargs: manifest["identity"]["exact_spool_catalog_sha256"],
     )
-    duplicate = level_a._v4_canonical_active_key_identity(
-        system, FakeMat(), MPI.COMM_SELF
-    )
-    assert duplicate["pass"] is False
-    assert duplicate["summed_local_duplicate_count"] == 1
-
-
-def test_v4_canonical_active_row_identity_is_collective_for_uneven_ownership(
-    monkeypatch,
-) -> None:
-    comm = MPI.COMM_WORLD
-    rank = int(comm.rank)
-    size = int(comm.size)
-    local_count = 1 + int(rank == size - 1)
-    local_start = sum(
-        1 + int(previous_rank == size - 1) for previous_rank in range(rank)
-    )
-    local_end = local_start + local_count
-    global_rows = size + 1
-
-    class FakeVec:
-        def set(self, _value):
-            return None
-
-        def assemble(self):
-            return None
-
-        def getOwnershipRange(self):
-            return (local_start, local_end)
-
-        def destroy(self):
-            return None
-
-    class FakeCondensed:
-        def create_active_vector(self):
-            return FakeVec()
-
-    class FakeSystem:
-        static_condensation = type("Static", (), {"condensed": FakeCondensed()})()
-        V = object()
-        floquet_data = object()
-
-    class FakeMat:
-        def getSize(self):
-            return (global_rows, global_rows)
-
-    local_keys = [("active_trace", index) for index in range(local_start, local_end)]
     monkeypatch.setattr(
         level_a,
-        "iter_canonical_active_trace_packets",
-        lambda *_args: ((key, 0.0j) for key in local_keys),
+        "_load_v5_fixed_budget_spool_shards",
+        lambda *_args, **_kwargs: spool,
     )
-    audit = level_a._v4_canonical_active_key_identity(FakeSystem(), FakeMat(), comm)
-    ownership_counts = comm.allgather(local_count)
-    assert audit["pass"] is True
-    assert audit["global_key_count"] == global_rows
-    assert sum(ownership_counts) == global_rows
-    assert audit["global_duplicate_count"] == 0
-    assert audit["ownership_contiguous"] is True
-    assert audit["ownership_counts_match"] is None
+    result = level_a._v4_source_authority_preflight(
+        exact_spool_root=tmp_path / "worker" / "spool",
+        source_sha="1" * 40,
+        input_sha256=manifest["identity"]["input_sha256"],
+        physical_model_sha256=manifest["identity"]["physical_model_sha256"],
+        comm=MPI.COMM_SELF,
+    )
+    record = result["result"]
+    identity = record["identity_observed"]
+    assert record["identity_failure_code"] == V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE
+    assert record["residual_status"] == "not_run_by_identity_gate"
+    assert identity["current_source_sha"] == "1" * 40
+    assert identity["spool_producer_source_sha"] == (
+        "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f"
+    )
     assert (
-        audit["ownership_count_comparison"]
-        == "not_applicable_canonical_packet_expansion"
+        identity["task040_manifest_freeze_source_sha"]
+        == manifest["freeze"]["source_sha_at_freeze"]
     )
-    assert audit["numeric_allgather"] is False
-    assert audit["canonical_key_exchange"]["metadata_only"] is True
-    assert all(
-        record["local_key_count"]
-        == record["ownership_range"][1] - record["ownership_range"][0]
-        for record in audit["rank_records"]
+    assert identity["source_canonical_authority"]["array_hash_validation_only"] is True
+    assert (
+        identity["source_canonical_authority"]["numeric_vectors_constructed"] is False
     )
+    assert identity["source_canonical_authority"]["values_retained"] is False
+    assert identity["identity_checks"]["spool_producer_source"]["pass"] is True
+    assert identity["identity_checks"]["exact_output_metadata"]["pass"] is True
+    assert identity["identity_checks"]["input_sha256"]["pass"] is True
+    assert identity["identity_checks"]["physical_model_sha256"]["pass"] is True
+    assert identity["identity_checks"]["frozen_branch"]["pass"] is True
+    assert identity["identity_checks"]["freeze_source"]["pass"] is True
+    assert identity["identity_checks"]["packet_manifest"]["pass"] is True
+    assert identity["identity_checks"]["spool_catalog"]["pass"] is True
+    assert identity["identity_checks"]["canonical_source_binding"]["pass"] is False
+    assert "resolved_config" in identity["identity_failures"]
+    assert "canonical_source_binding" in identity["identity_failures"]
+    assert identity["identity_checks_pass"] is False
+    json.loads(json.dumps(result, sort_keys=True))
 
-    if size > 1:
-        duplicate_keys = list(local_keys)
-        if rank == size - 1:
-            duplicate_keys[0] = ("active_trace", 0)
-        monkeypatch.setattr(
-            level_a,
-            "iter_canonical_active_trace_packets",
-            lambda *_args: ((key, 0.0j) for key in duplicate_keys),
-        )
-        duplicate = level_a._v4_canonical_active_key_identity(
-            FakeSystem(), FakeMat(), comm
-        )
-        assert duplicate["global_key_count"] == global_rows
-        assert duplicate["global_duplicate_count"] > 0
-        assert duplicate["pass"] is False
+
+def test_v4_missing_source_sha_on_one_shard_cannot_pass() -> None:
+    expected = "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f"
+    spool = _preflight_metadata_spool(
+        {label: "x" * 64 for label in V4_EXACT_AUTHORITY_LABELS}
+    )
+    del spool[V4_EXACT_AUTHORITY_LABELS[0]]["rhs"]["shards"][0]["source_identity"][
+        "packet_identity"
+    ]["source_sha"]
+    report = level_a._v4_spool_producer_source_identity(
+        spool,
+        V4_EXACT_AUTHORITY_LABELS,
+        expected_source_sha=expected,
+        expected_mpi_size=8,
+    )
+    entry = report["per_label_role"][f"{V4_EXACT_AUTHORITY_LABELS[0]}:rhs"]
+    assert report["pass"] is False
+    assert entry["shard_count"] == 8
+    assert entry["valid_source_sha_count"] == 7
+    assert entry["expected_match_count"] == 7
+    assert entry["check"] is False
+    json.loads(json.dumps(report, sort_keys=True))
+
+
+def test_v4_exact_output_metadata_requires_expected_shard_count() -> None:
+    _manifest_path, manifest = level_a._v1_2_load_manifest()
+    expected_ids = dict(manifest["physical_probes"]["exact_output_identity_sha256"])
+    spool = _preflight_metadata_spool(expected_ids)
+    label = V4_EXACT_AUTHORITY_LABELS[0]
+    del spool[label]["exact_output"]["shards"][-1]
+    report = level_a._v4_spool_metadata_identity(
+        spool,
+        V4_EXACT_AUTHORITY_LABELS,
+        expected_ids,
+        expected_mpi_size=8,
+    )
+    assert report["shard_counts"][label] == 7
+    assert report["checks"][label] is False
+    assert report["pass"] is False
+    json.loads(json.dumps(report, sort_keys=True))
 
 
 def _matrix(values: np.ndarray) -> PETSc.Mat:
@@ -345,64 +394,24 @@ def test_hash_change_or_nonrepeatable_operator_fails_gate() -> None:
         matrix.destroy()
 
 
-def test_v4_runner_returns_before_interface_mass_and_cleans_up(monkeypatch, tmp_path):
-    class FakeSystem:
-        inventory = {
-            "matrix_free": True,
-            "global_A_materialized": False,
-            "direct_factor_count": 0,
+def test_v4_identity_preflight_skips_system_builder_and_is_json_safe(
+    monkeypatch, tmp_path
+):
+    stop = {
+        "result": {
+            "schema": "task040.v4.exact_authority_compatibility.v1",
+            "identity_failure_code": V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE,
+            "residual_status": "not_run_by_identity_gate",
+            "construction": {"system_created": False},
         }
-
-        def __init__(self):
-            self.destroyed = False
-
-        def destroy(self):
-            self.destroyed = True
-
-    class FakeComponents:
-        F = object()
-
-    system = FakeSystem()
-    components = FakeComponents()
-    cleanup = {"components": False}
-
-    def resource_callback():
-        return {"pass": True}
-
-    def fake_route(**kwargs):
-        assert kwargs["system"] is system
-        assert kwargs["bare_f"] is components.F
-        assert kwargs["resource_callback"] is resource_callback
-        return {
-            "action": None,
-            "owner": None,
-            "result": {
-                "schema": "task040.v4.exact_authority_compatibility.v1",
-                "factor_inventory": {
-                    "full_side_exact_factor_count": 0,
-                    "global_direct_factor_count": 0,
-                    "cross_section_group_factor_count": 0,
-                    "reduced_dense_factor_count": 0,
-                },
-            },
-        }
-
-    def fail_mass(*_args, **_kwargs):
-        raise AssertionError("V4 compatibility route must precede interface mass")
-
+    }
     monkeypatch.setattr(
-        level_a, "_build_research_explicit_side_components", lambda _system: components
+        level_a, "_v4_source_authority_preflight", lambda **_kwargs: stop
     )
-    monkeypatch.setattr(level_a, "_run_v4_exact_authority_compatibility", fake_route)
-    monkeypatch.setattr(level_a, "audit_artificial_z_interface_support", fail_mass)
-    monkeypatch.setattr(
-        level_a, "assemble_reduced_artificial_interface_tangential_mass", fail_mass
-    )
-    monkeypatch.setattr(
-        level_a,
-        "_destroy_explicit_components",
-        lambda _components: cleanup.__setitem__("components", True) or cleanup,
-    )
+
+    def fail_builder(**_kwargs):
+        raise AssertionError("V4 identity stop must precede system construction")
+
     result = level_a.run_task040_level_a(
         object(),
         object(),
@@ -410,14 +419,13 @@ def test_v4_runner_returns_before_interface_mass_and_cleans_up(monkeypatch, tmp_
         source_sha="a" * 40,
         input_sha256="b" * 64,
         physical_model_sha256="c" * 64,
-        side_system_builder=lambda **_kwargs: system,
+        side_system_builder=fail_builder,
         v4_exact_authority_compatibility=True,
-        resource_callback=resource_callback,
     )
-    assert result["factor_inventory"]["full_side_exact_factor_count"] == 0
-    assert result["factor_inventory"]["global_direct_factor_count"] == 0
-    assert cleanup["components"] is True
-    assert system.destroyed is True
+    assert result["identity_failure_code"] == V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE
+    assert result["residual_status"] == "not_run_by_identity_gate"
+    assert result["construction"]["system_created"] is False
+    json.loads(json.dumps(result, sort_keys=True))
 
 
 def test_v4_plan_and_watchdog_contract(tmp_path):
@@ -438,8 +446,10 @@ def test_v4_plan_and_watchdog_contract(tmp_path):
     )
     assert plan["v4_exact_authority_compatibility"] is True
     assert plan["research_only"] is True
-    assert plan["bare_f_compatibility"] is True
+    assert plan["bare_f_compatibility"] == "not_run_by_identity_gate"
     assert plan["read_only_exact_outputs"] is True
+    assert plan["expected_exact_output_count"] == 5
+    assert plan["exact_output_vectors_loaded"] == 0
     assert plan["qep_calls"] == 0
     assert plan["pde_solve"] == "not_run"
     assert "outer_ksp" in plan["forbidden"]
