@@ -1,0 +1,178 @@
+{
+  "schema": "task038.full3d.interlevel-route-selection.v1",
+  "stage": "r0",
+  "status": "CONTRACT_READY",
+  "classification": "CONTRACT_READY_MEASURED_NOT_RUN",
+  "provenance": {
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "source_sha": "9a5015fa04cc92a586baa20a19608af1d0131327",
+    "source_sha_semantics": "clean HEAD before the uncommitted R0 contract delta",
+    "input_identity": {
+      "path_relative": "input/templates/full3d_iterative_example.dat",
+      "raw_bytes": 2119,
+      "raw_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+      "resolved_bytes": 4076,
+      "resolved_sha256": "78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+    },
+    "artifact_scope": "R0 compact contract only; no R1 raw artifact was created"
+  },
+  "route_order": ["A", "B", "C"],
+  "route_a": {
+    "name": "p6_to_p3_spectrum_route",
+    "rank": 144,
+    "hermitian_limit": 1e-12,
+    "endpoint_residual_limit": 1e-10,
+    "lambda_min_limit": 0.1,
+    "lambda_max_limit": 10.0,
+    "condition_limit": 100.0,
+    "probe_count": 6,
+    "probe_q_interval": [0.1, 10.0],
+    "probe_names": [
+      "random",
+      "gradient",
+      "curl",
+      "checkerboard",
+      "physical_component_derived",
+      "r3_long_tail_derived"
+    ],
+    "material_class_required_fields": [
+      "class_digest",
+      "material_coefficient_identity",
+      "geometry_jacobian_identity",
+      "rank",
+      "sigma_min",
+      "sigma_max",
+      "hermitian_defect_b3",
+      "hermitian_defect_g63",
+      "minimum_eigenvalue_b3",
+      "minimum_eigenvalue_g63",
+      "lambda_min",
+      "lambda_max",
+      "spectral_condition",
+      "endpoint_residual_min",
+      "endpoint_residual_max",
+      "finite"
+    ],
+    "status": "not_run",
+    "measurement_scope": "R1_not_authorized"
+  },
+  "route_b": {
+    "status": "conditional_not_run",
+    "implemented": false,
+    "activation": "only_after_Route_A_gate_failure"
+  },
+  "route_c": {
+    "status": "conditional_not_run",
+    "implemented": false,
+    "activation": "only_after_Route_A_and_Route_B_failure"
+  },
+  "route_decision_contract": {
+    "route_a_fail": "B",
+    "route_a_pass": "R2"
+  },
+  "execution": {
+    "r1_spectrum": "not_run",
+    "r2_positive": "not_run",
+    "heavy_formal": "not_run"
+  },
+  "raw_artifacts": [],
+  "preserved_v11_s5": {
+    "record_sha256": "2a2731325cc0fc75b5efb1445c812e0660b4987b96ad88de2a471d623887e181",
+    "checker_sha256": "cb74710a144aac0db18741c6328fe4ec2b25e61c9535c6c0d4c1ec686f108221",
+    "energy_gate_limit": 1e-9,
+    "energy_6_to_3": 0.04115402900674629,
+    "energy_3_to_1": 2.7851655955739857e-15,
+    "status": "RESOURCE_OR_ALGEBRA_GATE_FAILED",
+    "preserved_without_modification": true
+  },
+  "frozen_evidence": [
+    {
+      "name": "v10_q0_reference_triage",
+      "status": "controlled_negative",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1.json", "sha256": "2d767143ce3b28ac9a4b45962faf370770e1e637f05b4f0b62bb279fe7f6ca82"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1_checker.json", "sha256": "be70e0e559fea32023dfde58e4ede11009574c18f51e4b914d9b5034832a35ea"}
+      ]
+    },
+    {
+      "name": "foundation_e_3020_pass",
+      "status": "pass",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1.json", "sha256": "ab98d01a99d22e69fd2ed9132bf64d8703e30ff4589a3120e17ed31a6d7beac0"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1_checker_v2.json", "sha256": "b42675cc9b3d6729f18c1ae744742fefbfe312ded30b5db2ada098664db98525"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_edge_foundation_10000_v1_watchdog.json", "sha256": "9c08f9f94073fb53c335c143829672b24bb0dad402d5199eea26efc6d01800cc"}
+      ]
+    },
+    {
+      "name": "old_slepc_nonconvergence",
+      "status": "controlled_negative",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_global_lor_spectral_audit_v1_failure.json", "sha256": "595779b0997f2631a2abb6f78fec739767a4c2a944c34eb61a31d11d116607a6"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_global_lor_spectral_audit_v1_watchdog.json", "sha256": "55e2ae1299eace079aaf943422acd912052b869d5eaaaa147a88c9ad3142b9c3"}
+      ]
+    },
+    {
+      "name": "hx_pcgamg_closure",
+      "status": "closed",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_oracle_v1.json", "sha256": "eaea740a3b379066204f9b4055e217718305a708d912cc2cdd9ba72339672f50"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_krylov_pc_additive_v2_campaign_v1.json", "sha256": "55801084cd59659d66a4e05b048340e038105d533e0c60667fd8558dc4988f2c"}
+      ]
+    },
+    {
+      "name": "v11_s1_global_spectral_pass",
+      "status": "pass",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_global_spectral_audit_v2.json", "sha256": "8ffa8f1e74392bbd062314e0656d56c3bc464520c541d3a4668a52fad0a2ab09"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_global_spectral_audit_v2_checker.json", "sha256": "acec3b84f2e8001335bf362aa509e5a809657d5af11b33a847e51fd63cf1a5e3"}
+      ]
+    },
+    {
+      "name": "v11_s2_resource_pass",
+      "status": "pass",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_p6h10_foundation_resource_v1.json", "sha256": "70f8f865a8943297364fdb2fdcbcbf164ceb4f56af8c48285bcca5f8af196a24"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_p6h10_foundation_resource_v1_checker.json", "sha256": "4f6834a02948fb8d86031ce609d467889a70bef3f143cb1c2f2c1af78cc5605a"}
+      ]
+    },
+    {
+      "name": "v11_s4_oracle_pass",
+      "status": "pass_small_oracle_scope",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_oracle_v1.json", "sha256": "5d132e21915c1a3fb1fa9af0c1fe3a4b711005b8bdedac08e04ee56b96b1cfb6"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_oracle_v1_checker.json", "sha256": "8e2b552fbc773bda94d2605a5a8184e1d3ee35929964e84903a80c1fa39bb38b"}
+      ],
+      "source_aggregate": {
+        "path": "benchmarks/artifacts/task038_extra_full3d_lor_edge_geometric_mg_v1/2b2df645418ee28c68681832661e58993897166d/aggregate_check.json",
+        "sha256": "56b7eec1435abc69a38c38af056d8803e8f62a3ff6768b87faa594670c916c4e",
+        "availability": "ignored_raw_digest_preserved_indirectly"
+      }
+    },
+    {
+      "name": "v11_s5_exact_energy_gate_failure",
+      "status": "failed_algebra_gate",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_p6_capacity_v1.json", "sha256": "2a2731325cc0fc75b5efb1445c812e0660b4987b96ad88de2a471d623887e181"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_p6_capacity_v1_checker.json", "sha256": "cb74710a144aac0db18741c6328fe4ec2b25e61c9535c6c0d4c1ec686f108221"}
+      ]
+    },
+    {
+      "name": "ba40358_probe_domain_invalid",
+      "status": "controlled_negative_probe_domain_invalid",
+      "immutable": true,
+      "artifacts": [
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_p6_capacity_v1_probe_invalid_ba40358.json", "sha256": "ad8bbc3dfd81ba489efd6a4b2c24530c43f68484facc43020f9c5044f3be2a3f"},
+        {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_p6_capacity_v1_checker_probe_invalid_ba40358.json", "sha256": "93423f917256edd40ac13727af2feac58e4dcc63dde29a229742e6b960f5aaa8"}
+      ]
+    }
+  ]
+}
