@@ -361,6 +361,137 @@ def _external_mode_record(mode: Any) -> dict[str, Any]:
     }
 
 
+def _canonicalize_external_modes_by_authority(
+    external_modes: tuple[Any, ...] | list[Any],
+    authority: Mapping[str, Any] | None,
+    *,
+    current_resolved_config_sha256: str | None = None,
+) -> tuple[tuple[Any, ...], dict[str, Any]]:
+    """Validate and use the frozen resolved-config key order for V5 modes.
+
+    ``outgoing_port_modes_3d`` and the frozen resolved configuration contain
+    the same physical modes, but their polarization loop order is not an
+    authority identity.  Reordering only this opt-in V5 stream preserves the
+    mode objects and lets the validator compare ordered metadata/indexes.  All
+    key and per-key mode metadata checks happen before any resolved column is
+    selected.  A mismatch is a controlled identity stop, not an implementation
+    fallback.
+    """
+
+    if authority is None:
+        raise FreshBareFAuthorityIdentityError(
+            "EXTERNAL_MODE_AUTHORITY_UNAVAILABLE",
+            "current external mode authority was not supplied",
+            stage="external_mode_canonicalization",
+        )
+    modes = tuple(mode for mode in external_modes if str(mode.side) == "bottom")
+    expected_keys = tuple(authority["canonical_keys"])
+    expected_records = tuple(authority["beta_metadata"])
+
+    def mode_key(record: Mapping[str, Any]) -> dict[str, Any]:
+        return {field: record[field] for field in ("side", "m", "n", "polarization")}
+
+    raw_records = tuple(_external_mode_record(mode) for mode in modes)
+    raw_keys = tuple(mode_key(record) for record in raw_records)
+    raw_tokens = tuple(_canonical_key_token(key) for key in raw_keys)
+    expected_tokens = tuple(_canonical_key_token(key) for key in expected_keys)
+    by_token: dict[str, Any] = {}
+    records_by_token: dict[str, dict[str, Any]] = {}
+    for mode in modes:
+        record = _external_mode_record(mode)
+        key = mode_key(record)
+        token = _canonical_key_token(key)
+        if token in by_token:
+            continue
+        by_token[token] = mode
+        records_by_token[token] = record
+    expected_by_token = {
+        token: dict(record) for token, record in zip(expected_tokens, expected_records)
+    }
+    expected_resolved_config_sha256 = str(authority["resolved_config_sha256"])
+    legacy_beta_metadata_sha256 = str(authority["legacy_beta_metadata_sha256"])
+    expected_legacy_beta_metadata_sha256 = str(
+        authority["legacy_beta_metadata_sha256_expected"]
+    )
+    checks = {
+        "count": (
+            len(modes) == int(authority["count"]) == len(expected_keys)
+            and len(expected_records) == len(expected_keys)
+        ),
+        "raw_key_unique": len(set(raw_tokens)) == len(raw_tokens),
+        "authority_key_unique": len(set(expected_tokens)) == len(expected_tokens),
+        "key_set": set(raw_tokens) == set(expected_tokens),
+        "resolved_config_sha256": (
+            current_resolved_config_sha256 is not None
+            and _is_valid_sha256_text(str(current_resolved_config_sha256))
+            and _is_valid_sha256_text(expected_resolved_config_sha256)
+            and str(current_resolved_config_sha256) == expected_resolved_config_sha256
+        ),
+        "legacy_beta_metadata_sha256": (
+            _is_valid_sha256_text(legacy_beta_metadata_sha256)
+            and _is_valid_sha256_text(expected_legacy_beta_metadata_sha256)
+            and legacy_beta_metadata_sha256 == expected_legacy_beta_metadata_sha256
+        ),
+    }
+    checks["per_key_metadata"] = bool(
+        checks["raw_key_unique"]
+        and checks["authority_key_unique"]
+        and checks["key_set"]
+        and len(expected_records) == len(expected_keys)
+        and set(expected_by_token) == set(expected_tokens)
+        and all(
+            records_by_token[token] == expected_by_token[token]
+            for token in expected_tokens
+        )
+    )
+    canonical_modes = (
+        tuple(by_token[token] for token in expected_tokens)
+        if all(
+            checks[name]
+            for name in ("count", "raw_key_unique", "authority_key_unique", "key_set")
+        )
+        else modes
+    )
+    canonical_records = tuple(_external_mode_record(mode) for mode in canonical_modes)
+    canonical_keys = tuple(mode_key(record) for record in canonical_records)
+    canonical_key_hash = canonical_mode_keys_sha256(canonical_keys)
+    canonical_metadata_hash = canonical_external_mode_metadata_sha256(canonical_records)
+    checks["canonical_key_list_sha256"] = canonical_key_hash == str(
+        authority["canonical_key_list_sha256"]
+    )
+    checks["resolved_mode_metadata_sha256"] = canonical_metadata_hash == str(
+        authority["resolved_mode_metadata_sha256"]
+    )
+    audit = {
+        "raw_count": len(raw_records),
+        "canonical_count": len(canonical_records),
+        "raw_key_list_sha256": canonical_mode_keys_sha256(raw_keys),
+        "raw_mode_metadata_sha256": canonical_external_mode_metadata_sha256(
+            raw_records
+        ),
+        "canonical_key_list_sha256": canonical_key_hash,
+        "canonical_mode_metadata_sha256": canonical_metadata_hash,
+        "raw_index177_key": raw_keys[177] if len(raw_keys) > 177 else None,
+        "canonical_index177_key": (
+            canonical_keys[177] if len(canonical_keys) > 177 else None
+        ),
+        "order_changed": raw_keys != canonical_keys,
+        "permutation_only": bool(
+            checks["per_key_metadata"] and raw_keys != canonical_keys
+        ),
+        "checks": checks,
+        "pass": all(checks.values()),
+    }
+    if not audit["pass"]:
+        raise FreshBareFAuthorityIdentityError(
+            "EXTERNAL_MODE_AUTHORITY_FAIL",
+            "current external mode stream cannot be bound to frozen authority",
+            stage="external_mode_canonicalization",
+            details={"external_mode_canonicalization": audit},
+        )
+    return canonical_modes, audit
+
+
 def validate_external_mode_authority(
     external_modes: tuple[Any, ...] | list[Any],
     authority: Mapping[str, Any],
@@ -396,9 +527,7 @@ def validate_external_mode_authority(
         "resolved_mode_metadata_sha256": canonical_external_mode_metadata_sha256(
             records
         ),
-        "legacy_beta_metadata_sha256": str(
-            authority["legacy_beta_metadata_sha256"]
-        ),
+        "legacy_beta_metadata_sha256": str(authority["legacy_beta_metadata_sha256"]),
         "index177_key": keys[177] if len(keys) > 177 else None,
         "resolved_config_sha256": current_resolved_config_sha256,
     }
@@ -1098,6 +1227,15 @@ def assemble_current_bare_f_authority_system(
         modes = tuple(
             mode for mode in outgoing_port_modes_3d(cfg) if str(mode.side) == side
         )
+        modes, external_mode_canonicalization = (
+            _canonicalize_external_modes_by_authority(
+                modes,
+                external_mode_authority,
+                current_resolved_config_sha256=(
+                    external_mode_current_resolved_config_sha256
+                ),
+            )
+        )
         external_column = int(
             V5_BARE_F_SOURCE_SPECS["external_dtn_coupling"]["resolved_column"]
         )
@@ -1148,6 +1286,7 @@ def assemble_current_bare_f_authority_system(
                 "minimal_external_coupling_kind_count": 0,
                 "external_mode_authority_required": external_mode_authority is not None,
                 "external_mode_authority": None,
+                "external_mode_canonicalization": external_mode_canonicalization,
                 "one_cell_source_factor_events": [],
                 "one_cell_source_factor_active": 0,
                 "one_cell_source_factor_peak": 0,

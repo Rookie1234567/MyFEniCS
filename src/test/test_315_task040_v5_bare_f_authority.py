@@ -298,32 +298,51 @@ def _synthetic_external_mode_authority() -> tuple[
     modes = tuple(
         SimpleNamespace(
             side="bottom",
-            m=index,
+            m=index // 2,
             n=0,
-            polarization="s",
-            beta=0.5 + 0.001j * index,
+            polarization="s" if index % 2 == 0 else "p",
+            beta=0.5 + 0.001j * (index // 2),
             propagating=True,
             rayleigh_warning=False,
         )
         for index in range(296)
     )
     records = tuple(authority._external_mode_record(mode) for mode in modes)
+    record_by_key = {
+        json.dumps(
+            {
+                "side": item["side"],
+                "m": item["m"],
+                "n": item["n"],
+                "polarization": item["polarization"],
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ): item
+        for item in records
+    }
     keys = tuple(
         {
-            "side": item["side"],
-            "m": item["m"],
-            "n": item["n"],
-            "polarization": item["polarization"],
+            "side": "bottom",
+            "m": index,
+            "n": 0,
+            "polarization": polarization,
         }
-        for item in records
+        for index in range(148)
+        for polarization in ("p", "s")
     )
+    expected_records = tuple(
+        record_by_key[json.dumps(key, sort_keys=True, separators=(",", ":"))]
+        for key in keys
+    )
+    assert len(records) == len(expected_records) == 296
     return modes, {
         "count": 296,
         "canonical_keys": keys,
-        "beta_metadata": records,
+        "beta_metadata": expected_records,
         "canonical_key_list_sha256": authority.canonical_mode_keys_sha256(keys),
         "resolved_mode_metadata_sha256": authority.canonical_external_mode_metadata_sha256(
-            records
+            expected_records
         ),
         "legacy_beta_metadata_sha256": "a" * 64,
         "legacy_beta_metadata_sha256_expected": "a" * 64,
@@ -337,8 +356,13 @@ def test_external_mode_authority_validator_rejects_key_order_beta_index_and_hash
     None
 ):
     modes, expected = _synthetic_external_mode_authority()
-    audit = authority.validate_external_mode_authority(
+    ordered, _ordering_audit = authority._canonicalize_external_modes_by_authority(
         modes,
+        expected,
+        current_resolved_config_sha256=expected["current_resolved_config_sha256"],
+    )
+    audit = authority.validate_external_mode_authority(
+        ordered,
         expected,
         current_resolved_config_sha256=expected["current_resolved_config_sha256"],
     )
@@ -374,13 +398,92 @@ def test_external_mode_authority_validator_rejects_key_order_beta_index_and_hash
     for mutation, check_name in mutations:
         with pytest.raises(authority.ExternalModeAuthorityIdentityError) as exc_info:
             authority.validate_external_mode_authority(
-                modes,
+                ordered,
                 mutation,
                 current_resolved_config_sha256=expected[
                     "current_resolved_config_sha256"
                 ],
             )
         assert exc_info.value.checks[check_name] is False
+
+
+def test_external_mode_stream_is_reordered_to_frozen_authority_before_validation() -> (
+    None
+):
+    modes, expected = _synthetic_external_mode_authority()
+    raw_records = tuple(authority._external_mode_record(mode) for mode in modes)
+    assert modes[177].polarization == "p"
+    assert raw_records[177]["polarization"] == "p"
+    ordered, audit = authority._canonicalize_external_modes_by_authority(
+        modes,
+        expected,
+        current_resolved_config_sha256=expected["current_resolved_config_sha256"],
+    )
+    ordered_keys = tuple(
+        {
+            "side": str(mode.side),
+            "m": int(mode.m),
+            "n": int(mode.n),
+            "polarization": str(mode.polarization),
+        }
+        for mode in ordered
+    )
+    assert ordered_keys == expected["canonical_keys"]
+    assert ordered[177].polarization == "s"
+    assert audit["permutation_only"] is True
+    assert audit["raw_key_list_sha256"] != audit["canonical_key_list_sha256"]
+    assert audit["raw_mode_metadata_sha256"] != audit["canonical_mode_metadata_sha256"]
+    audit = authority.validate_external_mode_authority(
+        ordered,
+        expected,
+        current_resolved_config_sha256=expected["current_resolved_config_sha256"],
+    )
+    assert audit["pass"] is True
+
+    mutations = []
+    duplicate_modes = list(modes)
+    duplicate_modes[1] = duplicate_modes[0]
+    mutations.append((tuple(duplicate_modes), "raw_key_unique"))
+    mutations.append((modes[:1], "count"))
+    beta_changed = list(modes)
+    beta_changed[0] = SimpleNamespace(**{**vars(beta_changed[0]), "beta": 9.0 + 0.0j})
+    mutations.append((tuple(beta_changed), "per_key_metadata"))
+    classification_changed = list(modes)
+    classification_changed[0] = SimpleNamespace(
+        **{**vars(classification_changed[0]), "propagating": False}
+    )
+    mutations.append((tuple(classification_changed), "per_key_metadata"))
+    rayleigh_changed = list(modes)
+    rayleigh_changed[0] = SimpleNamespace(
+        **{**vars(rayleigh_changed[0]), "rayleigh_warning": True}
+    )
+    mutations.append((tuple(rayleigh_changed), "per_key_metadata"))
+    for mutated_modes, check_name in mutations:
+        with pytest.raises(authority.FreshBareFAuthorityIdentityError) as exc_info:
+            authority._canonicalize_external_modes_by_authority(
+                mutated_modes,
+                expected,
+                current_resolved_config_sha256=expected[
+                    "current_resolved_config_sha256"
+                ],
+            )
+        assert (
+            exc_info.value.details["external_mode_canonicalization"]["checks"][
+                check_name
+            ]
+            is False
+        )
+    with pytest.raises(authority.FreshBareFAuthorityIdentityError) as exc_info:
+        authority._canonicalize_external_modes_by_authority(modes, None)
+    assert exc_info.value.failure_code == "EXTERNAL_MODE_AUTHORITY_UNAVAILABLE"
+    with pytest.raises(authority.FreshBareFAuthorityIdentityError) as exc_info:
+        authority._canonicalize_external_modes_by_authority(modes, expected)
+    assert (
+        exc_info.value.details["external_mode_canonicalization"]["checks"][
+            "resolved_config_sha256"
+        ]
+        is False
+    )
 
 
 def test_v5_identity_preflight_binds_distinct_resolved_and_legacy_hashes(
@@ -749,9 +852,7 @@ def test_current_active_target_rows_real_mpi_vec_owner_scatter() -> None:
             all_ownership_ranges=all_ownership_ranges,
             all_target_row_shards=all_target_row_shards,
         )
-        gathered_rows = [
-            row for shard in all_target_row_shards for row in shard
-        ]
+        gathered_rows = [row for shard in all_target_row_shards for row in shard]
         assert owned.tolist() == [True] * len(target_rows)
         assert len(gathered_rows) == global_size
         assert len(gathered_rows) == len(set(gathered_rows))
