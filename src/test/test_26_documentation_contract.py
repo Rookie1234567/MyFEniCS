@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import re
 import unittest
@@ -74,6 +75,7 @@ ACTIVE_RESEARCH_CASES = {
     "095_high_order_local_hp_resource_envelope",
     "096_hybrid_channel_memory_closure",
     "097_goal_oriented_exact_sequence_hp_adaptivity",
+    "104_5nm_hybrid_side_factor_pc",
 }
 CLOSED_RESEARCH_RECORD_CASES = {
     "100_static_condensed_full3d_iterative": (
@@ -172,6 +174,10 @@ def _read(path: Path) -> str:
 
 def _load(path: Path) -> dict:
     return json.loads(_read(path))
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 class DocumentationContractTests(unittest.TestCase):
@@ -393,7 +399,49 @@ class DocumentationContractTests(unittest.TestCase):
                     self.assertTrue((folder / name).exists(), name)
                 config = _load(folder / "config.json")
                 self.assertFalse(config["ordinary_default_changed"])
-                if case.startswith("094_"):
+                if case == "104_5nm_hybrid_side_factor_pc":
+                    for name in ("schema.json", "expected.json"):
+                        self.assertTrue((folder / name).is_file(), name)
+                    schema = _load(folder / "schema.json")
+                    expected = _load(folder / "expected.json")
+                    self.assertEqual(schema["$id"], config["schema_version"])
+                    self.assertEqual(config["schema_version"], expected["schema_version"])
+                    self.assertEqual(config["case_id"], expected["case_id"])
+                    for key in (
+                        "status",
+                        "classification",
+                        "canonical",
+                        "production_qualified",
+                        "ordinary_default_changed",
+                        "pde_run_in_v4",
+                    ):
+                        self.assertEqual(config[key], expected[key], key)
+                    self.assertEqual(
+                        config["compact_record"], expected["compact_record"]
+                    )
+                    compact = ROOT / config["compact_record"]["path"]
+                    self.assertTrue(compact.is_file(), "compact record")
+                    self.assertEqual(
+                        _sha256(compact), config["compact_record"]["sha256"]
+                    )
+                    self.assertEqual(config["identity"], {
+                        "formal_source_sha": "9f3d6e39cb607125a773b35d9a2a9f7459c7f2dc",
+                        "checker_source_sha": "4b70adfb6707464aaed4309ece5bca179dd60b57",
+                        "checker_artifact_sha256": "71ab1274b3b236679ff19b403875b0109f6f3e3c1bb1f02e2642ee69d44f97d8",
+                        "failure": "canonical_source_binding",
+                        "failure_code": "CANONICAL_SOURCE_ROW_BINDING_UNAVAILABLE",
+                    })
+                    self.assertEqual(config["boundaries"], expected["boundaries"])
+                    self.assertEqual(
+                        set(config["v4_downstream"]),
+                        {f"V4-{number}" for number in range(2, 11)},
+                    )
+                    self.assertEqual(
+                        config["v4_downstream"], expected["v4_downstream"]
+                    )
+                    self.assertNotIn("T2_A0", config)
+                    self.assertNotIn("T3", config)
+                elif case.startswith("094_"):
                     self.assertTrue(
                         (folder / "expected.json").is_file(),
                         "expected.json",
@@ -579,6 +627,19 @@ class DocumentationContractTests(unittest.TestCase):
                 records = sorted((folder / "records").glob("*.json"))
                 self.assertGreaterEqual(len(records), 2)
                 readme = _read(folder / "README.md")
+                if case == "104_5nm_hybrid_side_factor_pc":
+                    for phrase in (
+                        "active_research_controlled_identity_negative",
+                        "EXACT_AUTHORITY_NOT_COMPATIBLE_WITH_CURRENT_BARE_F",
+                        "ordinary defaults",
+                        "V4-2",
+                        "not_run_by_v4_1_identity_gate",
+                    ):
+                        self.assertIn(phrase, readme)
+                    command = _read(folder / "test_command.txt").strip()
+                    self.assertIn("python -m json.tool", command)
+                    for forbidden in ("mpiexec", "run_3d", "watchdog", "pde"):
+                        self.assertNotIn(forbidden, command.lower())
                 if case.startswith("095_"):
                     self.assertIn(
                         "fixed rectangular block grating",

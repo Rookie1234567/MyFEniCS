@@ -1,0 +1,39 @@
+{
+  "schema_version": "task040.case104.active_research.v1",
+  "case_id": "104_5nm_hybrid_side_factor_pc",
+  "stage": "V4-1",
+  "status": "active_research_controlled_identity_negative",
+  "classification": "EXACT_AUTHORITY_NOT_COMPATIBLE_WITH_CURRENT_BARE_F",
+  "canonical": false,
+  "production_qualified": false,
+  "ordinary_default_changed": false,
+  "pde_run_in_v4": false,
+  "compact_record": {
+    "path": "benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json",
+    "sha256": "5ededd4bb9acfb9e4e3a403a410cecb37fb1490e7bf6056ca4644c7bfda7c36a"
+  },
+  "identity": {
+    "formal_source_sha": "9f3d6e39cb607125a773b35d9a2a9f7459c7f2dc",
+    "checker_source_sha": "4b70adfb6707464aaed4309ece5bca179dd60b57",
+    "checker_artifact_sha256": "71ab1274b3b236679ff19b403875b0109f6f3e3c1bb1f02e2642ee69d44f97d8",
+    "failure": "canonical_source_binding",
+    "failure_code": "CANONICAL_SOURCE_ROW_BINDING_UNAVAILABLE"
+  },
+  "boundaries": {
+    "production": "not_qualified",
+    "canonical_source_row_bridge": "unavailable_in_frozen_exact_spool",
+    "ordinary_defaults": "unchanged",
+    "pde": "not_run_in_v4"
+  },
+  "v4_downstream": {
+    "V4-2": "not_run_by_v4_1_identity_gate",
+    "V4-3": "not_run_by_v4_1_identity_gate",
+    "V4-4": "not_run_by_v4_1_identity_gate",
+    "V4-5": "not_run_by_v4_1_identity_gate",
+    "V4-6": "not_run_by_v4_1_identity_gate",
+    "V4-7": "not_run_by_v4_1_identity_gate",
+    "V4-8": "not_run_by_v4_1_identity_gate",
+    "V4-9": "not_run_by_v4_1_identity_gate",
+    "V4-10": "not_run_by_v4_1_identity_gate"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task040.case104.active_research.v1",
+  "title": "Task040 Case104 active research controlled identity contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "status",
+    "classification",
+    "canonical",
+    "production_qualified",
+    "ordinary_default_changed",
+    "pde_run_in_v4",
+    "compact_record",
+    "identity",
+    "boundaries",
+    "v4_downstream"
+  ],
+  "properties": {
+    "schema_version": {"const": "task040.case104.active_research.v1"},
+    "case_id": {"const": "104_5nm_hybrid_side_factor_pc"},
+    "status": {"const": "active_research_controlled_identity_negative"},
+    "classification": {"const": "EXACT_AUTHORITY_NOT_COMPATIBLE_WITH_CURRENT_BARE_F"},
+    "canonical": {"const": false},
+    "production_qualified": {"const": false},
+    "ordinary_default_changed": {"const": false},
+    "pde_run_in_v4": {"const": false},
+    "compact_record": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "const": "benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json"
+        },
+        "sha256": {"pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "identity": {"type": "object"},
+    "boundaries": {"type": "object"},
+    "v4_downstream": {
+      "type": "object",
+      "minProperties": 9,
+      "propertyNames": {"pattern": "^V4-(?:[2-9]|10)$"},
+      "additionalProperties": {"const": "not_run_by_v4_1_identity_gate"}
+    }
+  },
+  "additionalProperties": true
+}
