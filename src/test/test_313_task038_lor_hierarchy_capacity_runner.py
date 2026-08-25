@@ -78,6 +78,7 @@ def _probe_arrays() -> tuple[dict[str, np.ndarray], dict]:
             "linearity_relative": 0.0,
             "adjoint_relative": 0.0,
             "energy_relative": 0.0,
+            "coarse_primal_source": checker.COARSE_PRIMAL_SOURCE,
             "energy_coarse": [float(ec.real), float(ec.imag)],
             "energy_fine": [float(ec.real), float(ec.imag)],
             "energy_imag_defect": abs(float(ec.imag)),
@@ -453,6 +454,85 @@ def test_action_probe_executes_with_local_numpy_and_real_action_facts(monkeypatc
     assert facts["input_unchanged"] is True
     assert set(arrays) == {"a6_input", "a6_out1", "a6_out2"}
     assert all(vector.destroyed for vector in matrix.vectors)
+
+
+def test_transfer_probe_roundtrips_legal_coarse_primal_and_destroys_seeds(monkeypatch):
+    class FakeVec:
+        def __init__(self, owner):
+            self.owner = owner
+            self.array = np.zeros(3, dtype=np.complex128)
+            self.destroy_count = 0
+
+        def getOwnershipRange(self):
+            return 0, self.array.size
+
+        def getArray(self, readonly=True):
+            return self.array
+
+        def assemble(self):
+            return None
+
+        def destroy(self):
+            self.destroy_count += 1
+
+    class FakeMatrix:
+        def __init__(self, owner):
+            self.owner = owner
+            self.vectors = []
+
+        def _new(self):
+            vector = FakeVec(self.owner)
+            self.vectors.append(vector)
+            return vector
+
+        def createVecRight(self):
+            return self._new()
+
+        def createVecLeft(self):
+            return self._new()
+
+        def mult(self, source, target):
+            target.array[:] = source.array
+
+    class FakeLevel:
+        def __init__(self, owner):
+            self.matrix = FakeMatrix(owner)
+
+        def primal_to_owner(self, source):
+            assert source.array[1] != 0.0
+            return np.array([source.array[0], source.array[2]], dtype=np.complex128)
+
+        def owner_to_primal(self, packet):
+            vector = self.matrix.createVecRight()
+            vector.array[:] = (packet[0], 0.0, packet[1])
+            return vector
+
+    class FakeExtension:
+        def __init__(self):
+            self.levels = {1: FakeLevel("coarse"), 3: FakeLevel("fine")}
+
+        def apply_primal(self, pair, source):
+            assert source.array[1] == 0.0
+            result = self.levels[pair[0]].matrix.createVecRight()
+            result.array[:] = source.array
+            return result
+
+        def apply_adjoint(self, pair, source):
+            result = self.levels[pair[1]].matrix.createVecRight()
+            result.array[:] = source.array
+            return result
+
+    extension = FakeExtension()
+    arrays = {}
+    monkeypatch.setattr(
+        runner, "_vector_digest", lambda vec: _digest(vec.getArray(readonly=True)), raising=False
+    )
+    facts = runner._transfer_probe(extension, (3, 1), arrays)
+
+    assert facts["coarse_primal_source"] == runner.COARSE_PRIMAL_SOURCE
+    assert facts["energy_relative"] == 0.0
+    assert facts["finite"] is True
+    assert all(vector.destroy_count == 1 for level in extension.levels.values() for vector in level.matrix.vectors)
 
 
 def test_semantic_tree_nested_mapping_is_deterministic_and_rejects_object():

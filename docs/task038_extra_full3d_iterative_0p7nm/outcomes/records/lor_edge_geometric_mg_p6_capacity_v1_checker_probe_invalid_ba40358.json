@@ -1,0 +1,109 @@
+{
+  "classification": "RESOURCE_OR_ALGEBRA_GATE_FAILED",
+  "contract_errors": [],
+  "gate_failures": [
+    "transfer 6-3 energy failed",
+    "transfer 3-1 energy failed"
+  ],
+  "metrics": {
+    "fingerprint": {
+      "exact_identity": true,
+      "first_sha256": "75028f34d3462ad49cf7db4712e48c4d3ca38467ae9687b4f78e96488cae499b",
+      "rebuild_sha256": "75028f34d3462ad49cf7db4712e48c4d3ca38467ae9687b4f78e96488cae499b"
+    },
+    "probe_metrics": {
+      "actions": {
+        "1": {
+          "finite": true,
+          "input_unchanged": true,
+          "repeat_relative": 0.0
+        },
+        "3": {
+          "finite": true,
+          "input_unchanged": true,
+          "repeat_relative": 0.0
+        },
+        "6": {
+          "finite": true,
+          "input_unchanged": true,
+          "repeat_relative": 0.0
+        }
+      },
+      "rebuild_actions": {
+        "6": {
+          "finite": true,
+          "input_unchanged": true,
+          "repeat_relative": 0.0
+        }
+      },
+      "smoothers": {
+        "3": {
+          "finite": true,
+          "repeat_relative": 0.0
+        },
+        "6": {
+          "finite": true,
+          "repeat_relative": 0.0
+        }
+      },
+      "transfers": {
+        "3-1": {
+          "adjoint_relative": 1.733756183951221e-15,
+          "energy_relative": 0.21760526236081526,
+          "finite": true,
+          "linearity_relative": 1.3679388646656595e-16,
+          "repeat_relative": 0.0
+        },
+        "6-3": {
+          "adjoint_relative": 1.2865066317766304e-14,
+          "energy_relative": 0.14842980780902681,
+          "finite": true,
+          "linearity_relative": 3.0795110632853766e-16,
+          "repeat_relative": 0.0
+        }
+      }
+    },
+    "retained_known_bytes": 296345065,
+    "retained_unattributed_bytes": 901898775
+  },
+  "passed": false,
+  "resource": {
+    "all_status_readable": true,
+    "max_process_tree_swap_bytes": 0,
+    "natural_exit": true,
+    "no_orphan": true,
+    "peak_process_tree_rss_bytes": 1198243840,
+    "retained_peak_process_tree_rss_bytes": 1198243840,
+    "retained_peak_process_tree_swap_bytes": 0,
+    "retained_sample_count": 9,
+    "sample_count": 1939,
+    "source_sha": "ba40358e8b3e5cc6971ea7ff273d24d41b8b5c52",
+    "stop_reason": "natural_exit",
+    "watchdog_compact": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_edge_geometric_mg_p6_capacity_v1/ba40358e8b3e5cc6971ea7ff273d24d41b8b5c52/s5-p6-h10-mpi1/watchdog.json",
+    "watchdog_compact_sha256": "127e52921d757b525049726aafd6cdb1790b1fa0359a6eb0023d74f7f486cf6b",
+    "watchdog_poll_seconds": 0.25,
+    "watchdog_raw": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_edge_geometric_mg_p6_capacity_v1/ba40358e8b3e5cc6971ea7ff273d24d41b8b5c52/s5-p6-h10-mpi1/watchdog.raw.jsonl",
+    "watchdog_raw_sha256": "8f32e3a906130a879bc691a9dd648fc255fcb4fca3c45ce73def22e5867e1b74",
+    "watchdog_rss_limit_bytes": 2000000000,
+    "worker_command": [
+      "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task038_full3d_lor_hierarchy_capacity",
+      "--stage",
+      "s5",
+      "--case",
+      "p6-h10-mpi1",
+      "--raw-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_lor_edge_geometric_mg_p6_capacity_v1/ba40358e8b3e5cc6971ea7ff273d24d41b8b5c52/s5-p6-h10-mpi1/worker_raw",
+      "--record",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_p6_capacity_v1.json",
+      "--expected-source-sha",
+      "ba40358e8b3e5cc6971ea7ff273d24d41b8b5c52",
+      "--expected-mpi-size",
+      "1",
+      "--input",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat"
+    ]
+  },
+  "schema": "task038.full3d.lor-hierarchy-capacity.s5-check.v1"
+}

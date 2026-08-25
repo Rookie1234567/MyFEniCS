@@ -36,6 +36,7 @@ RESERVE_AUXILIARY = 4
 RESERVE_COUNT = RESERVE_BASIS + RESERVE_AUXILIARY
 ALPHA = 0.37 + 0.19j
 BETA = -0.23 + 0.41j
+COARSE_PRIMAL_SOURCE = "owner_roundtrip_reduced_primal"
 def _marker(marker_root: Path, name: str, source_sha: str, comm: Any, **facts: Any) -> int:
     if name not in MARKERS:
         raise ValueError(f"unknown S5 marker: {name}")
@@ -206,15 +207,18 @@ def _transfer_probe(extension: Any, pair: tuple[int, int], arrays: dict[str, Any
     fine = extension.levels[pair[0]]
     coarse = extension.levels[pair[1]]
     tag = f"{pair[0]}{pair[1]}"
-    x = coarse.matrix.createVecRight()
-    x2 = coarse.matrix.createVecRight()
+    seed = coarse.matrix.createVecRight()
+    seed2 = coarse.matrix.createVecRight()
+    x = x2 = None
     combo = coarse.matrix.createVecRight()
     y = fine.matrix.createVecRight()
     ca = coarse.matrix.createVecLeft()
     fa = fine.matrix.createVecLeft()
     try:
-        _fill_deterministic(x, 0.1 + pair[1])
-        _fill_deterministic(x2, 0.7 + pair[0])
+        _fill_deterministic(seed, 0.1 + pair[1])
+        _fill_deterministic(seed2, 0.7 + pair[0])
+        x = coarse.owner_to_primal(coarse.primal_to_owner(seed))
+        x2 = coarse.owner_to_primal(coarse.primal_to_owner(seed2))
         _fill_deterministic(y, 0.3 + pair[1])
         x_before, y_before = _vector_digest(x), _vector_digest(y)
         px1 = extension.apply_primal(pair, x)
@@ -258,6 +262,7 @@ def _transfer_probe(extension: Any, pair: tuple[int, int], arrays: dict[str, Any
             "energy_fine": [float(ef.real), float(ef.imag)],
             "energy_relative": float(abs(ef - ec) / max(abs(ec), 1.0e-300)),
             "energy_imag_defect": float(max(abs(ec.imag), abs(ef.imag))),
+            "coarse_primal_source": COARSE_PRIMAL_SOURCE,
             "finite": bool(all(np.all(np.isfinite(v)) for v in (
                 x_values, x2_values, y_values, px1_values, px_repeat_values, px2_values,
                 pcombo_values, phy_values, coarse_action, fine_action
@@ -269,7 +274,7 @@ def _transfer_probe(extension: Any, pair: tuple[int, int], arrays: dict[str, Any
             "y_after_digest": _vector_digest(y),
         }
     finally:
-        for name in ("x", "x2", "combo", "y", "ca", "fa", "px1", "px_repeat", "px2", "pcombo", "phy"):
+        for name in ("seed", "seed2", "x", "x2", "combo", "y", "ca", "fa", "px1", "px_repeat", "px2", "pcombo", "phy"):
             value = locals().get(name)
             if value is not None:
                 value.destroy()

@@ -32,6 +32,7 @@ MARKERS = (
 )
 ALPHA = 0.37 + 0.19j
 BETA = -0.23 + 0.41j
+COARSE_PRIMAL_SOURCE = "owner_roundtrip_reduced_primal"
 COLD_LIMIT = 2_000_000_000
 RETAINED_LIMIT = 1_800_000_000
 REPEAT_LIMIT = 1.0e-13
@@ -377,6 +378,8 @@ def _check_probes(record: dict[str, Any], raw_dir: Path, errors: list[str], gate
         if not _same_shape({"y": y, "px1": px1, "px_repeat": px_repeat, "px2": px2, "pcombo": pcombo, "fine_action": fine_action}, errors, f"transfer {pair_name} fine"):
             continue
         stored = first.get("transfers", {}).get(pair_name, {})
+        _error(errors, stored.get("coarse_primal_source") != COARSE_PRIMAL_SOURCE,
+               f"transfer {pair_name} coarse primal source is not owner-roundtrip")
         repeat = float(np.linalg.norm(px_repeat - px1) / max(float(np.linalg.norm(px1)), 1.0e-300))
         linearity = float(np.linalg.norm(pcombo - ALPHA * px1 - BETA * px2) / max(float(np.linalg.norm(pcombo)), 1.0e-300))
         lhs, rhs = np.vdot(px1, y), np.vdot(x, phy)
