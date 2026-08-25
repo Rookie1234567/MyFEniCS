@@ -204,14 +204,27 @@ class _S5Level:
     def route_dual_blocks(self, blocks):
         return self.parent_topology.route_owner_cell_chunks_additive(blocks)
 
-    def _parent_to_raw(self, packet):
+    def _parent_to_raw_into(self, packet, target):
         from .fullspace_lor_memory_first_foundation import _fill_raw_vector
 
         ids, values = _packet(packet)
         unique = self.raw_topology.pull_owner_unique_values(ids, values)
-        target = self.matrix.createVecRight()
         _fill_raw_vector(target, unique, self.raw_map, self.raw_topology.unique_edge_ids)
         return target
+
+    def _parent_to_raw(self, packet):
+        target = self.matrix.createVecRight()
+        try:
+            return self._parent_to_raw_into(packet, target)
+        except Exception:
+            target.destroy()
+            raise
+
+    def owner_to_primal_into(self, packet, target):
+        return self._parent_to_raw_into(packet, target)
+
+    def owner_to_dual_into(self, packet, target):
+        return self._parent_to_raw_into(packet, target)
 
     def owner_to_primal(self, packet):
         return self._parent_to_raw(packet)
@@ -266,7 +279,7 @@ class _OwnerPacketTransfer:
             audit["schema"] = route_schema
         self.audit = MappingProxyType(audit)
 
-    def apply_primal(self, source):
+    def apply_primal_into(self, source, target):
         packet = self.coarse.primal_to_owner(source)
 
         def blocks():
@@ -279,9 +292,17 @@ class _OwnerPacketTransfer:
 
         packet = self.fine.route_primal_blocks(blocks())
         self.primal_apply_count += 1
-        return self.fine.owner_to_primal(packet)
+        return self.fine.owner_to_primal_into(packet, target)
 
-    def apply_adjoint(self, source):
+    def apply_primal(self, source):
+        target = self.fine.matrix.createVecRight()
+        try:
+            return self.apply_primal_into(source, target)
+        except Exception:
+            target.destroy()
+            raise
+
+    def apply_adjoint_into(self, source, target):
         packet = self.fine.dual_to_owner(source)
 
         def blocks():
@@ -294,7 +315,15 @@ class _OwnerPacketTransfer:
 
         packet = self.coarse.route_dual_blocks(blocks())
         self.adjoint_apply_count += 1
-        return self.coarse.owner_to_dual(packet)
+        return self.coarse.owner_to_dual_into(packet, target)
+
+    def apply_adjoint(self, source):
+        target = self.coarse.matrix.createVecRight()
+        try:
+            return self.apply_adjoint_into(source, target)
+        except Exception:
+            target.destroy()
+            raise
 
 
 class S5HierarchyExtension:

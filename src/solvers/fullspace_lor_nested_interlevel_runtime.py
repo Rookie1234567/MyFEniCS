@@ -70,12 +70,30 @@ class RouteBNestedHierarchyExtension:
         self.pair_levels(pair)
         return self.transfers[pair].apply_primal(source)
 
+    def apply_primal_into(
+        self, pair: tuple[int, int], source: Any, target: Any
+    ) -> Any:
+        if self._destroyed:
+            raise RuntimeError("Route-B hierarchy has been destroyed")
+        pair = tuple(int(value) for value in pair)
+        self.pair_levels(pair)
+        return self.transfers[pair].apply_primal_into(source, target)
+
     def apply_adjoint(self, pair: tuple[int, int], source: Any) -> Any:
         if self._destroyed:
             raise RuntimeError("Route-B hierarchy has been destroyed")
         pair = tuple(int(value) for value in pair)
         self.pair_levels(pair)
         return self.transfers[pair].apply_adjoint(source)
+
+    def apply_adjoint_into(
+        self, pair: tuple[int, int], source: Any, target: Any
+    ) -> Any:
+        if self._destroyed:
+            raise RuntimeError("Route-B hierarchy has been destroyed")
+        pair = tuple(int(value) for value in pair)
+        self.pair_levels(pair)
+        return self.transfers[pair].apply_adjoint_into(source, target)
 
     def destroy(self) -> None:
         if self._destroyed:

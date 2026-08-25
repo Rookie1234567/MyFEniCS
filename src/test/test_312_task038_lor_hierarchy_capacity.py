@@ -327,6 +327,7 @@ class _FakeS5Level:
         self.matrix = matrix
         self.parent_topology = _FakeTopology(local_size, block_count, raw=False)
         self.raw_topology = _FakeTopology(local_size, block_count, raw=True)
+        self.matrix.vector_size = int(self.raw_topology.unique_edge_ids.size)
         self.incidence_unique = np.ones(
             self.parent_topology.unique_edge_ids.size, dtype=np.float64
         )
@@ -372,8 +373,19 @@ class _FakeS5Level:
     def route_dual_blocks(self, blocks):
         return self.parent_topology.route_owner_cell_chunks_additive(blocks)
 
+    def _parent_to_raw_into(self, packet, target):
+        target[...] = self.raw_topology.pull_owner_unique_values(*packet)
+        return target
+
     def _parent_to_raw(self, packet):
-        return self.raw_topology.pull_owner_unique_values(*packet).copy()
+        target = self.matrix.createVecRight()
+        return self._parent_to_raw_into(packet, target)
+
+    def owner_to_primal_into(self, packet, target):
+        return self._parent_to_raw_into(packet, target)
+
+    def owner_to_dual_into(self, packet, target):
+        return self._parent_to_raw_into(packet, target)
 
     def owner_to_primal(self, packet):
         return self._parent_to_raw(packet)
@@ -400,6 +412,10 @@ class _FakeMatrix:
     def __init__(self, name: str) -> None:
         self.name = name
         self.destroy_count = 0
+        self.vector_size = 0
+
+    def createVecRight(self):
+        return np.zeros(self.vector_size, dtype=np.complex128)
 
     def destroy(self):
         self.destroy_count += 1
