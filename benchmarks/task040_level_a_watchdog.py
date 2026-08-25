@@ -24,6 +24,7 @@ from benchmarks.task040_level_a import (
     TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG,
     TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG,
     TASK040_V3_2_COUPLED_INTERFACE_FLAG,
+    TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -85,6 +86,8 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(TASK040_V1_2_INTERFACE_SCHUR_FLAG)
     if plan.get("packet_producer") is True:
         command.append(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG)
+    if plan.get("v4_exact_authority_compatibility") is True:
+        command.append(TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG)
     if plan.get("coupled_interface") is True:
         command.extend(
             [
@@ -115,6 +118,7 @@ def build_task040_level_a_watchdog_plan(
     packet_producer: bool = False,
     packet_consumer: bool = False,
     coupled_interface: bool = False,
+    v4_exact_authority_compatibility: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -127,6 +131,7 @@ def build_task040_level_a_watchdog_plan(
         packet_producer=packet_producer,
         packet_consumer=packet_consumer,
         coupled_interface=coupled_interface,
+        v4_exact_authority_compatibility=v4_exact_authority_compatibility,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -382,6 +387,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG, action="store_true")
     parser.add_argument(TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG, action="store_true")
     parser.add_argument(TASK040_V3_2_COUPLED_INTERFACE_FLAG, action="store_true")
+    parser.add_argument(
+        TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG, action="store_true"
+    )
     parser.add_argument("--interface-packet-root")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_watchdog_plan(
@@ -394,6 +402,7 @@ def main(argv: list[str] | None = None) -> int:
         packet_producer=args.v2_interface_packet_producer,
         packet_consumer=args.v2_interface_packet_consumer,
         coupled_interface=args.v3_2_coupled_interface,
+        v4_exact_authority_compatibility=args.v4_exact_authority_compatibility,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
