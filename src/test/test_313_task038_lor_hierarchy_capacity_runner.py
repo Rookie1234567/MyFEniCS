@@ -26,8 +26,6 @@ def _sha(path: Path) -> str:
 
 
 def _digest(value: np.ndarray) -> str:
-    if hasattr(value, "getArray"):
-        value = value.getArray(readonly=True)
     return hashlib.sha256(np.ascontiguousarray(value, dtype=np.complex128).view(np.uint8)).hexdigest()
 
 
@@ -423,7 +421,9 @@ def test_action_probe_executes_with_local_numpy_and_real_action_facts(monkeypatc
         def mult(self, source, target):
             target.array[:] = 2.0 * source.array
 
-    monkeypatch.setattr(runner, "_vector_digest", _digest, raising=False)
+    monkeypatch.setattr(
+        runner, "_vector_digest", lambda vec: _digest(vec.getArray(readonly=True)), raising=False
+    )
     matrix = FakeMatrix()
     arrays = {}
     facts = runner._action_probe(SimpleNamespace(degree=6, matrix=matrix), arrays)
