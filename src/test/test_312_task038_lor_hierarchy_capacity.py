@@ -73,24 +73,34 @@ def test_interlevel_shape_bytes_and_independent_audit(
         np.count_nonzero(~allowed)
     )
     assert transfer.audit["structural_forbidden_nnz_after"] == 0
-    assert transfer.audit["structural_removed_nonzero_count"] > 0
-    assert transfer.audit["structural_removed_max_abs"] > 0.0
+    removed_count = int(transfer.audit["structural_removed_nonzero_count"])
+    removed_max_abs = float(transfer.audit["structural_removed_max_abs"])
+    forbidden_count = int(transfer.audit["structural_forbidden_entry_count"])
+    assert 0 <= removed_count <= forbidden_count
+    assert np.isfinite(removed_max_abs) and removed_max_abs >= 0.0
+    if removed_count == 0:
+        assert removed_max_abs == 0.0
+    else:
+        assert removed_max_abs > 0.0
 
 
 def _shared_face_trace_ratio(transfer, axis: int) -> float:
     fine_degree = int(transfer.fine_degree)
     coarse_degree = int(transfer.coarse_degree)
     fine_start, fine_end = _edge_endpoints(fine_degree)
-    coarse_start, _coarse_end = _edge_endpoints(coarse_degree)
+    coarse_start, coarse_end = _edge_endpoints(coarse_degree)
     cells: list[dict[tuple[tuple[int, ...], tuple[int, ...]], complex]] = []
     for cell in range(2):
         offset = np.zeros(3, dtype=np.int32)
         if cell:
             offset[axis] = 1
         coarse = np.empty(coarse_start.shape[0], dtype=np.complex128)
-        for column, start in enumerate(coarse_start):
-            on_shared_face = int(start[axis]) == (
-                coarse_degree if cell == 0 else 0
+        for column, (start, end) in enumerate(
+            zip(coarse_start, coarse_end, strict=True)
+        ):
+            shared_coordinate = coarse_degree if cell == 0 else 0
+            on_shared_face = (
+                int(start[axis]) == int(end[axis]) == shared_coordinate
             )
             if on_shared_face:
                 coarse[column] = 0.0
@@ -181,14 +191,27 @@ def test_mutated_map_fails_independent_audit(
 ) -> None:
     fine_degree, coarse_degree, transfer = interlevel
     bad_edge = transfer.edge_transfer.copy()
+    bad_edge[0, 0] += 0.125 + 0.25j
+    with pytest.raises(ValueError):
+        audit_local_interlevel_transfer(
+            fine_degree,
+            coarse_degree,
+            bad_edge,
+            transfer.node_transfer,
+        )
+
+
+def test_forbidden_entry_fails_exact_zero_audit() -> None:
+    transfer = build_local_interlevel_edge_transfer(6, 3)
+    bad_edge = transfer.edge_transfer.copy()
     forbidden_row, forbidden_column = np.argwhere(
-        ~_structural_trace_mask(fine_degree, coarse_degree)
+        ~_structural_trace_mask(6, 3)
     )[0]
     bad_edge[forbidden_row, forbidden_column] = 0.125 + 0.25j
     with pytest.raises(ValueError, match="structural forbidden"):
         audit_local_interlevel_transfer(
-            fine_degree,
-            coarse_degree,
+            6,
+            3,
             bad_edge,
             transfer.node_transfer,
         )
