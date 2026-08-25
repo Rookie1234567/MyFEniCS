@@ -497,7 +497,15 @@ def _check_class(item: dict[str, Any], arrays: dict[str, np.ndarray], errors: li
     }
 
 
-def _check_probe(item: dict[str, Any], arrays: dict[str, np.ndarray], descriptors: dict[str, Any], errors: list[str], gates: list[str]) -> dict[str, Any]:
+def _check_probe(
+    item: dict[str, Any],
+    arrays: dict[str, np.ndarray],
+    descriptors: dict[str, Any],
+    errors: list[str],
+    gates: list[str],
+    expected_coarse_rows: int,
+    expected_fine_rows: int,
+) -> dict[str, Any]:
     name = item.get("name")
     roles = item.get("raw_roles")
     if not isinstance(name, str) or not isinstance(roles, dict):
@@ -510,13 +518,20 @@ def _check_probe(item: dict[str, Any], arrays: dict[str, np.ndarray], descriptor
     x, xa, x2, p, pr, p2, pc, y, ph, b3, b6p = (arrays[key] for _role, key in required)
     coarse = (x, xa, x2, ph, b3)
     fine = (p, pr, p2, pc, y, b6p)
-    if any(value.dtype != np.dtype("complex128") or value.ndim != 1 or value.size == 0 for value in coarse + fine) or any(value.shape != (144,) for value in coarse) or any(value.shape != (882,) for value in fine):
+    if (
+        any(value.dtype != np.dtype("complex128") or value.ndim != 1 or value.size == 0 for value in coarse + fine)
+        or any(value.shape != (expected_coarse_rows,) for value in coarse)
+        or any(value.shape != (expected_fine_rows,) for value in fine)
+    ):
         errors.append(f"probe shape closure failed: {name}")
         return {}
     repeat = float(np.linalg.norm(pr - p) / max(np.linalg.norm(p), np.finfo(float).tiny))
     linearity = float(np.linalg.norm(pc - ALPHA * p - BETA * p2) / max(np.linalg.norm(pc), np.finfo(float).tiny))
     lhs, rhs = np.vdot(p, y), np.vdot(x, ph)
-    adjoint = float(abs(lhs - rhs) / max(abs(lhs), abs(rhs), np.finfo(float).tiny))
+    lhs_abs = float(abs(lhs))
+    rhs_abs = float(abs(rhs))
+    absolute_defect = float(abs(lhs - rhs))
+    adjoint = float(absolute_defect / max(lhs_abs, rhs_abs, np.finfo(float).tiny))
     ec, ef = np.vdot(x, b3), np.vdot(p, b6p)
     if not (np.isfinite(ec.real) and np.isfinite(ec.imag) and abs(ec) > 0.0):
         gates.append(f"probe {name} coarse energy denominator invalid")
@@ -559,7 +574,18 @@ def _check_probe(item: dict[str, Any], arrays: dict[str, np.ndarray], descriptor
     energy_imag = float(max(abs(ec.imag), abs(ef.imag)))
     if not _close(energy_imag, item.get("energy_imag_defect")):
         errors.append(f"probe {name} stored field mismatch: energy_imag_defect")
-    return {"name": name, "q": float(ratio.real), "repeat_relative": repeat, "linearity_relative": linearity, "adjoint_work_relative": adjoint, "finite": finite, "input_unchanged": unchanged}
+    return {
+        "name": name,
+        "q": float(ratio.real),
+        "repeat_relative": repeat,
+        "linearity_relative": linearity,
+        "adjoint_work_relative": adjoint,
+        "adjoint_lhs_abs": lhs_abs,
+        "adjoint_rhs_abs": rhs_abs,
+        "adjoint_absolute_defect": absolute_defect,
+        "finite": finite,
+        "input_unchanged": unchanged,
+    }
 
 
 def _check_material_inventory(inventory: Any, classes: Any, errors: list[str]) -> list[dict[str, Any]]:
@@ -837,9 +863,37 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
     elif record.get("local_gate_passed") is False and probes != []:
         errors.append("local Gate negative must not contain probe facts")
     else:
-        for item in probes:
-            if isinstance(item, dict):
-                probe_metrics.append(_check_probe(item, arrays, descriptors, errors, gates))
+        expected_rows: dict[str, int] = {}
+        levels = architecture.get("levels") if isinstance(architecture, dict) else None
+        if record.get("local_gate_passed") is True:
+            if not isinstance(levels, dict):
+                errors.append("probe dimension authority is missing: architecture.levels")
+            else:
+                for level_name, label in (("level3", "coarse"), ("level6", "fine")):
+                    level = levels.get(level_name)
+                    matrix = level.get("matrix") if isinstance(level, dict) else None
+                    rows = matrix.get("rows") if isinstance(matrix, dict) else None
+                    cols = matrix.get("cols") if isinstance(matrix, dict) else None
+                    if type(rows) is not int or rows <= 0 or type(cols) is not int or cols <= 0 or rows != cols:
+                        errors.append(f"probe dimension authority is not square/positive: {level_name}")
+                    else:
+                        expected_rows[label] = rows
+        if record.get("local_gate_passed") is True and set(expected_rows) != {"coarse", "fine"}:
+            errors.append("probe dimension authority is incomplete")
+        elif record.get("local_gate_passed") is True:
+            for item in probes:
+                if isinstance(item, dict):
+                    probe_metrics.append(
+                        _check_probe(
+                            item,
+                            arrays,
+                            descriptors,
+                            errors,
+                            gates,
+                            expected_rows["coarse"],
+                            expected_rows["fine"],
+                        )
+                    )
     if provenance_error:
         classification = "INPUT_PROVENANCE_INVALID"
     elif lifecycle_failures:

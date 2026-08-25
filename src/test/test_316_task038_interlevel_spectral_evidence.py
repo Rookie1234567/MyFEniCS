@@ -84,6 +84,10 @@ def _synthetic_architecture() -> dict[str, object]:
         levels[name] = {
             "parent_global_unique_rows": 100,
             "raw_global_unique_rows": 100,
+            "matrix": {
+                "rows": 7 if name == "level3" else 11,
+                "cols": 7 if name == "level3" else 11,
+            },
             "parent_topology": parent,
             "raw_topology": raw,
         }
@@ -163,14 +167,15 @@ def _synthetic_record(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
             "gate_failures": [],
         })
     probes: list[dict[str, object]] = []
+    probe_transfer = np.vstack((np.eye(7, dtype=np.complex128), np.zeros((4, 7), dtype=np.complex128)))
     for index, name in enumerate(PROBE_NAMES):
-        x = (np.arange(144, dtype=np.float64) + 1.0 + index) + 1j * (index + 0.5)
-        x2 = (np.arange(144, dtype=np.float64) + 2.0 + index) - 1j * (index + 0.25)
-        projected = p63 @ x
-        projected2 = p63 @ x2
+        x = (np.arange(7, dtype=np.float64) + 1.0 + index) + 1j * (index + 0.5)
+        x2 = (np.arange(7, dtype=np.float64) + 2.0 + index) - 1j * (index + 0.25)
+        projected = probe_transfer @ x
+        projected2 = probe_transfer @ x2
         combo = checker.ALPHA * projected + checker.BETA * projected2
-        fine_dual = (np.arange(882, dtype=np.float64) + 0.5) + 1j * (index + 0.75)
-        adjoint = p63.conj().T @ fine_dual
+        fine_dual = (np.arange(11, dtype=np.float64) + 0.5) + 1j * (index + 0.75)
+        adjoint = probe_transfer.conj().T @ fine_dual
         roles = worker._probe_array_roles(name)
         values = {
             "source_before": x, "source_after": x.copy(), "source2": x2,
@@ -402,6 +407,15 @@ def test_npz_descriptor_and_fine_coarse_shape_fail_closed(tmp_path: Path) -> Non
     result = checker.check_record(record_path, compact, EXPECTED_SHA)
     assert result["passed"] is False
     assert any("descriptor" in error or "shape" in error for error in result["contract_errors"])
+
+
+def test_probe_shape_must_match_level_matrix_authority(tmp_path: Path) -> None:
+    record_path, compact, record = _synthetic_record(tmp_path)
+    record["architecture"]["levels"]["level3"]["matrix"] = {"rows": 8, "cols": 8}
+    _write_json(record_path, record)
+    result = checker.check_record(record_path, compact, EXPECTED_SHA)
+    assert result["passed"] is False
+    assert any("probe shape closure failed" in error for error in result["contract_errors"])
 
 
 def test_checker_uses_generalized_hermitian_endpoint(tmp_path: Path) -> None:
