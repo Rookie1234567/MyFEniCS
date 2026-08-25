@@ -1,0 +1,883 @@
+"""Independent NumPy checker for the V12 Route-A R1 evidence record."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+from pathlib import Path
+import re
+from typing import Any
+
+import numpy as np
+from scipy.linalg import eigh
+
+
+BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
+MODULE = "benchmarks.run_task038_full3d_interlevel_spectral"
+SCHEMA = "task038.full3d.interlevel-spectral.r1-record.v1"
+MARKER_SCHEMA = "task038.full3d.interlevel-spectral.r1-marker.v1"
+WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
+PROBE_NAMES = (
+    "random", "gradient", "curl", "checkerboard",
+    "physical_component_derived", "r3_long_tail_derived",
+)
+SOURCE_GENERATION = {
+    "random": "native_l2_analytic_values:random",
+    "gradient": "native_l2_analytic_values:gradient",
+    "curl": "native_l2_analytic_values:curl",
+    "checkerboard": "native_l2_analytic_values:checkerboard",
+    "physical_component_derived": "s2_physical_rhs.compose_then_high_dual_restrict_then_p63_adjoint",
+    "r3_long_tail_derived": "r3_canonical_full_fe_dual_packets_then_high_dual_restrict_then_p63_adjoint",
+}
+MATERIAL_ROLE_TAGS = {"air": 1, "substrate": 2, "grating": 3}
+R3_LONG_TAIL_MANIFEST_SHA256 = (
+    "62c7824e1032b1a14078d158b0e403b9087dc862bf00386fdce08535e4d76dce"
+)
+R3_LONG_TAIL_SOURCE_SHA = "2c8fca90c7300b85b30021081868b699c0b306d2"
+EXPECTED_INPUT_BYTES = 2119
+EXPECTED_INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
+EXPECTED_RESOLVED_BYTES = 4076
+EXPECTED_RESOLVED_SHA256 = "78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad"
+EXPECTED_PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+ALPHA = 0.37 + 0.19j
+BETA = -0.23 + 0.41j
+HERMITIAN_LIMIT = 1.0e-12
+ENDPOINT_LIMIT = 1.0e-10
+LAMBDA_MIN_LIMIT = 0.10
+LAMBDA_MAX_LIMIT = 10.0
+CONDITION_LIMIT = 100.0
+PROBE_MIN = 0.10
+PROBE_MAX = 10.0
+ADJOINT_LIMIT = 1.0e-12
+LINEARITY_LIMIT = 1.0e-12
+REPEAT_LIMIT = 1.0e-13
+WATCHDOG_RSS_LIMIT = 2_000_000_000
+PASS_MARKERS = (
+    "startup", "preflight", "foundation", "class_inventory", "classes_complete",
+    "level3_complete", "probes_complete", "release",
+)
+FAIL_MARKERS = (
+    "startup", "preflight", "foundation", "class_inventory", "classes_complete",
+    "local_gate_failed", "level3_not_run", "probes_not_run", "release",
+)
+
+
+def _reject_constant(value: str) -> None:
+    raise ValueError(f"non-finite JSON constant is forbidden: {value}")
+
+
+def _read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_constant)
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _semantic_sha(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _finite(value: Any) -> bool:
+    return type(value) in (int, float) and bool(np.isfinite(float(value)))
+
+
+def _close(actual: float, reported: Any) -> bool:
+    return _finite(reported) and bool(np.isclose(actual, float(reported), rtol=1.0e-10, atol=1.0e-12))
+
+
+def _inside(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _digest(array: np.ndarray) -> str:
+    return hashlib.sha256(np.ascontiguousarray(array, dtype=np.complex128).view(np.uint8)).hexdigest()
+
+
+def _raw_digest(array: np.ndarray) -> str:
+    return hashlib.sha256(np.ascontiguousarray(array).view(np.uint8)).hexdigest()
+
+
+def _complex_pair(value: Any) -> complex | None:
+    if not isinstance(value, list) or len(value) != 2:
+        return None
+    try:
+        result = complex(float(value[0]), float(value[1]))
+    except (TypeError, ValueError):
+        return None
+    return result if np.isfinite(result.real) and np.isfinite(result.imag) else None
+
+
+def _check_runtime_provenance(record: dict[str, Any], record_path: Path, expected_sha: str,
+                              errors: list[str]) -> bool:
+    provenance_error = False
+    if record.get("schema") != SCHEMA:
+        errors.append("record schema mismatch")
+    if record.get("stage") != "r1" or record.get("case") != "p6-h10-mpi1":
+        errors.append("stage/case mismatch")
+    if record.get("degree") != 6 or record.get("h_nm") != 10.0 or record.get("wavelength_nm") != 13.5 or record.get("mpi_size") != 1:
+        errors.append("fixed p6/h10/MPI1 identity mismatch")
+    if record.get("branch") != BRANCH:
+        errors.append("branch mismatch")
+        provenance_error = True
+    source = record.get("source")
+    if not isinstance(source, dict):
+        errors.append("source identity is missing")
+        provenance_error = True
+    else:
+        for name in ("start", "end"):
+            item = source.get(name)
+            if not isinstance(item, dict) or item.get("commit_sha") != expected_sha or item.get("branch") != BRANCH or item.get("clean") is not True:
+                errors.append(f"source {name} identity is not closed")
+                provenance_error = True
+    runtime = record.get("runtime")
+    if not isinstance(runtime, dict):
+        errors.append("runtime identity is missing")
+        provenance_error = True
+    else:
+        if runtime.get("qualified_activation") != "1":
+            errors.append("qualified activation mismatch")
+            provenance_error = True
+        if runtime.get("mpi_size") != 1 or runtime.get("scalar_dtype") != "complex128" or runtime.get("int_dtype") != "int32":
+            errors.append("runtime ABI mismatch")
+            provenance_error = True
+        threads = runtime.get("threads")
+        if not isinstance(threads, dict) or any(threads.get(name) != "1" for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")):
+            errors.append("thread identity mismatch")
+            provenance_error = True
+    command = record.get("command")
+    raw_dir = record.get("raw_dir")
+    record_string = record.get("record_path")
+    if not isinstance(command, list) or len(command) != 19 or not all(isinstance(value, str) for value in command) or not isinstance(raw_dir, str) or not isinstance(record_string, str):
+        errors.append("worker command/raw path is missing")
+        provenance_error = True
+    else:
+        expected_prefix = ["-m", MODULE, "--stage", "r1", "--case", "p6-h10-mpi1"]
+        runtime_executable = runtime.get("sys_executable") if isinstance(runtime, dict) else None
+        if not Path(command[0]).is_absolute() or command[0] != runtime_executable or command[1:7] != expected_prefix:
+            errors.append("worker command executable/module/stage/case mismatch")
+            provenance_error = True
+        expected_tail = [
+            "--raw-dir", raw_dir, "--record", record_string,
+            "--expected-source-sha", expected_sha, "--expected-mpi-size", "1",
+            "--input", str((Path(__file__).resolve().parents[1] / "input/templates/full3d_iterative_example.dat").resolve()),
+            "--r3-long-tail-manifest",
+        ]
+        if command[7:17] != expected_tail[:10] or command[17] != "--r3-long-tail-manifest":
+            errors.append("worker command path/SHA/MPI binding mismatch")
+            provenance_error = True
+        if command[15] != "--input" or command[16] != expected_tail[9]:
+            errors.append("worker command input binding mismatch")
+            provenance_error = True
+        if not Path(command[18]).is_absolute() or record_string == raw_dir:
+            errors.append("worker command R3 manifest binding is missing")
+            provenance_error = True
+    input_identity = record.get("input_identity")
+    if not isinstance(input_identity, dict) or input_identity.get("path_relative") != "input/templates/full3d_iterative_example.dat" or input_identity.get("raw_bytes") != EXPECTED_INPUT_BYTES or input_identity.get("raw_sha256") != EXPECTED_INPUT_SHA256 or input_identity.get("resolved_bytes") != EXPECTED_RESOLVED_BYTES or input_identity.get("resolved_sha256") != EXPECTED_RESOLVED_SHA256 or input_identity.get("physical_model_sha256") != EXPECTED_PHYSICAL_MODEL_SHA256:
+        errors.append("fixed input identity mismatch")
+        provenance_error = True
+    p = record.get("provenance")
+    if not isinstance(p, dict) or p.get("r3_long_tail_expected_sha256") != R3_LONG_TAIL_MANIFEST_SHA256 or p.get("r3_long_tail_source_sha") != R3_LONG_TAIL_SOURCE_SHA:
+        errors.append("R3 provenance identity mismatch")
+        provenance_error = True
+    else:
+        r3_path = Path(str(p.get("r3_long_tail_manifest_path", "")))
+        actual_manifest_sha = _sha256(r3_path) if r3_path.is_file() else None
+        if (
+            not r3_path.is_absolute()
+            or not r3_path.is_file()
+            or actual_manifest_sha != R3_LONG_TAIL_MANIFEST_SHA256
+            or p.get("r3_long_tail_manifest_sha256") != actual_manifest_sha
+            or not isinstance(command, list)
+            or len(command) != 19
+            or command[18] != str(r3_path.resolve())
+        ):
+            errors.append("R3 manifest is missing or SHA-bound identity failed")
+            provenance_error = True
+    if record.get("record_path") != str(record_path.resolve()) or not Path(str(raw_dir)).is_absolute() or Path(str(raw_dir)).resolve() == record_path.resolve():
+        errors.append("record path identity mismatch")
+        provenance_error = True
+    return provenance_error
+
+
+def _check_watchdog(compact_path: Path, record: dict[str, Any], record_path: Path,
+                    expected_sha: str, errors: list[str], gates: list[str],
+                    lifecycle_failures: list[str]) -> dict[str, Any]:
+    try:
+        compact = _read_json(compact_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"watchdog compact unreadable: {exc}")
+        return {}
+    if compact.get("schema") != WATCHDOG_SCHEMA:
+        errors.append("watchdog schema mismatch")
+    if compact.get("source_sha") != expected_sha:
+        errors.append("watchdog source SHA mismatch")
+    if compact.get("worker_command") != record.get("command"):
+        errors.append("watchdog worker command mismatch")
+    if Path(str(compact.get("worker_record", ""))).resolve() != record_path.resolve():
+        errors.append("watchdog worker record mismatch")
+    if Path(str(compact.get("worker_raw_dir", ""))).resolve() != Path(str(record.get("raw_dir", ""))).resolve():
+        errors.append("watchdog worker raw path mismatch")
+    raw_path = Path(str(compact.get("watchdog_raw", "")))
+    samples: list[dict[str, Any]] = []
+    if not raw_path.is_absolute() or not raw_path.is_file():
+        errors.append("watchdog raw ledger missing/relative")
+    else:
+        if _sha256(raw_path) != compact.get("raw_sha256"):
+            errors.append("watchdog raw SHA mismatch")
+        for number, line in enumerate(raw_path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line, parse_constant=_reject_constant)
+            except (ValueError, json.JSONDecodeError) as exc:
+                errors.append(f"watchdog raw line {number} invalid: {exc}")
+                continue
+            if isinstance(row, dict):
+                samples.append(row)
+            else:
+                errors.append(f"watchdog raw line {number} is not an object")
+    rss: list[int] = []
+    swaps: list[int] = []
+    readable: list[bool] = []
+    for row in samples:
+        tree = row.get("authority", {}).get("process_tree", {})
+        if type(tree.get("rss_bytes")) is not int or tree["rss_bytes"] < 0:
+            errors.append("watchdog RSS sample invalid")
+        else:
+            rss.append(int(tree["rss_bytes"]))
+        if type(tree.get("swap_bytes")) is not int or tree["swap_bytes"] < 0:
+            errors.append("watchdog swap sample invalid")
+        else:
+            swaps.append(int(tree["swap_bytes"]))
+        readable.append(tree.get("all_status_readable") is True)
+    peak = max(rss, default=-1)
+    swap = max(swaps, default=-1)
+    all_readable = bool(samples) and len(readable) == len(samples) and all(readable)
+    if compact.get("sample_count") != len(samples) or compact.get("peak_process_tree_rss_bytes") != peak or compact.get("max_process_tree_swap_bytes") != swap or compact.get("all_status_readable") is not all_readable:
+        errors.append("watchdog compact is not raw-derived")
+    if compact.get("watchdog_poll_seconds") != 0.25 or compact.get("watchdog_rss_limit_bytes") != WATCHDOG_RSS_LIMIT:
+        errors.append("watchdog frozen settings mismatch")
+    if compact.get("returncode") != 0:
+        lifecycle_failures.append("watchdog worker returncode is nonzero")
+    if compact.get("natural_exit") is not True:
+        lifecycle_failures.append("watchdog did not report natural_exit")
+    if compact.get("no_orphan") is not True:
+        lifecycle_failures.append("watchdog reported an orphan")
+    if compact.get("stop_reason") != "natural_exit":
+        lifecycle_failures.append("watchdog stop_reason is not natural_exit")
+    if not all_readable or peak < 0 or peak >= WATCHDOG_RSS_LIMIT or swap != 0:
+        gates.append("external watchdog resource Gate failed")
+    return {
+        "sample_count": len(samples),
+        "peak_process_tree_rss_bytes": peak,
+        "max_process_tree_swap_bytes": swap,
+        "all_status_readable": all_readable,
+        "natural_exit": compact.get("natural_exit"),
+        "no_orphan": compact.get("no_orphan"),
+        "stop_reason": compact.get("stop_reason"),
+        "watchdog_compact": str(compact_path.resolve()),
+        "watchdog_compact_sha256": _sha256(compact_path),
+        "watchdog_raw": str(raw_path.resolve()),
+        "watchdog_raw_sha256": _sha256(raw_path) if raw_path.is_file() else None,
+        "resource_gate_failed": bool(not all_readable or peak < 0 or peak >= WATCHDOG_RSS_LIMIT or swap != 0),
+        "execution_lifecycle_failed": bool(lifecycle_failures),
+    }
+
+
+def _check_markers(record: dict[str, Any], raw_dir: Path, expected_sha: str, errors: list[str]) -> None:
+    info = record.get("markers")
+    expected = PASS_MARKERS if record.get("local_gate_passed") is True else FAIL_MARKERS if record.get("local_gate_passed") is False else ()
+    if not isinstance(info, dict) or tuple(info.get("names", ())) != expected:
+        errors.append("marker list mismatch")
+        return
+    names = tuple(info["names"])
+    wall_times = info.get("wall_time_ns")
+    if not isinstance(wall_times, dict) or set(wall_times) != set(names):
+        errors.append("record marker wall-time map is not exact")
+    marker_dir = raw_dir / str(info.get("relative_dir", ""))
+    times = []
+    for name in names:
+        path = marker_dir / f"{name}.json"
+        if not _inside(path, raw_dir) or not path.is_file():
+            errors.append(f"marker missing/escaped: {name}")
+            continue
+        try:
+            row = _read_json(path)
+            if row.get("schema") != MARKER_SCHEMA or row.get("marker") != name or row.get("source_sha") != expected_sha:
+                errors.append(f"marker identity mismatch: {name}")
+            timestamp = row["wall_time_ns"]
+            if type(timestamp) is not int or timestamp <= 0 or not isinstance(wall_times, dict) or wall_times.get(name) != timestamp:
+                errors.append(f"marker wall-time mismatch: {name}")
+            else:
+                times.append(timestamp)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            errors.append(f"marker unreadable: {name}: {exc}")
+    closeout = marker_dir / "record_closeout.json"
+    if not closeout.is_file():
+        errors.append("record_closeout marker is missing")
+    else:
+        try:
+            closeout_row = _read_json(closeout)
+            closeout_facts = closeout_row.get("facts")
+            closeout_time = closeout_row.get("wall_time_ns")
+            release_time = wall_times.get("release") if isinstance(wall_times, dict) else None
+            if closeout_row.get("schema") != MARKER_SCHEMA or closeout_row.get("marker") != "record_closeout" or closeout_row.get("source_sha") != expected_sha or type(closeout_time) is not int or type(release_time) is not int or closeout_time <= release_time or not isinstance(closeout_facts, dict) or closeout_facts.get("record_path") != str(record.get("record_path")) or closeout_facts.get("record_sha256") != _sha256(Path(str(record.get("record_path")))):
+                errors.append("record_closeout marker is not bound to the written record")
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            errors.append(f"record_closeout marker unreadable: {exc}")
+    allowed_files = {f"{name}.json" for name in names} | {"record_closeout.json"}
+    if marker_dir.is_dir() and {path.name for path in marker_dir.glob("*.json")} != allowed_files:
+        errors.append("marker directory contains an unauthorized marker")
+    if len(times) == len(names) and times != sorted(times):
+        errors.append("marker sequence is not monotonic")
+
+
+def _check_level_topology(architecture: Any, errors: list[str]) -> None:
+    """Close the compact parent/raw topology facts without loading topology arrays."""
+
+    if not isinstance(architecture, dict) or not isinstance(architecture.get("levels"), dict):
+        errors.append("level topology facts are missing")
+        return
+    required_text = {
+        "phase_application": "once_in_canonical_owner_route",
+        "edge_orientation": "dolfinx_cell_permutation_Tt_then_T",
+        "cell_permutation": "Tt_before_high_to_lor_and_T_after_lor_to_high",
+        "floquet_phase": "complete_slave_edge_mapped_to_master_once",
+    }
+    for level_name in ("level6", "level3"):
+        level = architecture["levels"].get(level_name)
+        if not isinstance(level, dict):
+            errors.append(f"level facts missing: {level_name}")
+            continue
+        parent = level.get("parent_topology")
+        raw = level.get("raw_topology")
+        if not isinstance(parent, dict) or not isinstance(raw, dict):
+            errors.append(f"parent/raw topology facts missing: {level_name}")
+            continue
+        for role, topology in (("parent", parent), ("raw", raw)):
+            for name, expected in (
+                ("owner_local_maps", True),
+                ("numeric_allgather", False),
+                ("global_transfer_matrix", False),
+                ("slave_master_complete", True),
+            ):
+                if topology.get(name) is not expected:
+                    errors.append(f"{level_name}.{role}.{name} is not closed")
+            for name, expected in required_text.items():
+                if topology.get(name) != expected:
+                    errors.append(f"{level_name}.{role}.{name} identity mismatch")
+            if type(topology.get("global_unique_edge_count")) is not int or topology["global_unique_edge_count"] <= 0:
+                errors.append(f"{level_name}.{role}.global_unique_edge_count invalid")
+            for name in ("local_unique_edge_count", "owned_unique_edge_count"):
+                if type(topology.get(name)) is not int or topology[name] <= 0:
+                    errors.append(f"{level_name}.{role}.{name} invalid")
+        if isinstance(parent.get("global_unique_edge_count"), int) and isinstance(raw.get("global_unique_edge_count"), int):
+            if parent["global_unique_edge_count"] != raw["global_unique_edge_count"]:
+                errors.append(f"{level_name} parent/raw global topology inventory mismatch")
+        for role, key in (("parent", "parent_global_unique_rows"), ("raw", "raw_global_unique_rows")):
+            if level.get(key) != level[role + "_topology"].get("global_unique_edge_count"):
+                errors.append(f"{level_name}.{key} is not bound to topology audit")
+
+
+def _load_array(name: str, loaded: Any, descriptor: dict[str, Any], errors: list[str]) -> np.ndarray | None:
+    if name not in loaded.files:
+        errors.append(f"raw array missing: {name}")
+        return None
+    if not isinstance(descriptor, dict) or not isinstance(descriptor.get("dtype"), str) or not isinstance(descriptor.get("shape"), list) or not isinstance(descriptor.get("sha256"), str):
+        errors.append(f"raw array descriptor malformed: {name}")
+        return None
+    value = np.asarray(loaded[name])
+    try:
+        expected_shape = tuple(int(item) for item in descriptor["shape"])
+    except (TypeError, ValueError):
+        errors.append(f"raw array shape descriptor malformed: {name}")
+        return None
+    if str(value.dtype) != descriptor.get("dtype") or value.shape != expected_shape or value.dtype.hasobject:
+        errors.append(f"raw array descriptor mismatch: {name}")
+        return None
+    if _raw_digest(value) != descriptor.get("sha256") or not np.all(np.isfinite(value)):
+        errors.append(f"raw array SHA/finite mismatch: {name}")
+        return None
+    return np.ascontiguousarray(value)
+
+
+def _hermitian_defect(matrix: np.ndarray) -> float:
+    return float(np.linalg.norm(matrix - matrix.conj().T) / max(np.linalg.norm(matrix), np.finfo(float).tiny))
+
+
+def _endpoint_residual(g: np.ndarray, b: np.ndarray, value: float, vector: np.ndarray) -> float:
+    residual = g @ vector - value * (b @ vector)
+    denominator = max(np.linalg.norm(g @ vector), abs(value) * np.linalg.norm(b @ vector), np.finfo(float).tiny)
+    return float(np.linalg.norm(residual) / denominator)
+
+
+def _check_class(item: dict[str, Any], arrays: dict[str, np.ndarray], errors: list[str], gates: list[str]) -> dict[str, Any]:
+    identity = item.get("class_identity")
+    digest = item.get("class_digest")
+    if not isinstance(identity, dict) or not isinstance(digest, str) or _semantic_sha(identity) != digest:
+        errors.append("material class identity/digest mismatch")
+        return {}
+    prefix = f"class_{digest}"
+    p63 = arrays.get("p63")
+    b3 = arrays.get(f"{prefix}__b3")
+    b6p = arrays.get(f"{prefix}__b6p")
+    eigenvector_min = arrays.get(f"{prefix}__eigenvector_min")
+    eigenvector_max = arrays.get(f"{prefix}__eigenvector_max")
+    if p63 is None:
+        errors.append("P63 is unavailable for material class recomputation")
+        return {}
+    if b3 is None or b6p is None or eigenvector_min is None or eigenvector_max is None:
+        errors.append(f"material class arrays missing: {digest}")
+        return {}
+    if b3.dtype != np.dtype("complex128") or b6p.dtype != np.dtype("complex128") or eigenvector_min.dtype != np.dtype("complex128") or eigenvector_max.dtype != np.dtype("complex128"):
+        errors.append(f"material class dtype mismatch: {digest}")
+        return {}
+    if b3.shape != (144, 144) or b6p.shape != (882, 144) or eigenvector_min.shape != (144,) or eigenvector_max.shape != (144,):
+        errors.append(f"material class array shape mismatch: {digest}")
+        return {}
+    g63 = p63.conj().T @ b6p
+    singular = np.linalg.svd(p63, compute_uv=False)
+    threshold = max(p63.shape) * np.finfo(float).eps * float(singular[0])
+    rank = int(np.count_nonzero(singular > threshold))
+    b3_values = np.linalg.eigvalsh(b3)
+    g_values = np.linalg.eigvalsh(g63)
+    defect_b3, defect_g = _hermitian_defect(b3), _hermitian_defect(g63)
+    minimum_b3, minimum_g = float(b3_values[0]), float(g_values[0])
+    try:
+        values, vectors = eigh(g63, b3, driver="gvd", check_finite=True)
+    except (np.linalg.LinAlgError, ValueError):
+        gates.append(f"class {digest} generalized eigensolver failed")
+        return {"class_digest": digest, "rank": rank, "finite": False, "gate_passed": False}
+    lambda_min, lambda_max = float(values[0]), float(values[-1])
+    residual_min = _endpoint_residual(g63, b3, lambda_min, eigenvector_min)
+    residual_max = _endpoint_residual(g63, b3, lambda_max, eigenvector_max)
+    condition = lambda_max / lambda_min if lambda_min > 0.0 else math.inf
+    finite = bool(all(np.all(np.isfinite(value)) for value in (p63, b3, b6p, eigenvector_min, eigenvector_max, singular, b3_values, g_values, values, vectors)))
+    reported = item
+    checks = (
+        (rank == 144, "rank"), (defect_b3 <= HERMITIAN_LIMIT, "B3 Hermitian"),
+        (defect_g <= HERMITIAN_LIMIT, "G63 Hermitian"), (minimum_b3 > 0.0, "B3 SPD"),
+        (minimum_g > 0.0, "G63 SPD"), (lambda_min >= LAMBDA_MIN_LIMIT, "lambda_min"),
+        (lambda_max <= LAMBDA_MAX_LIMIT, "lambda_max"), (condition <= CONDITION_LIMIT, "condition"),
+        (residual_min <= ENDPOINT_LIMIT, "smallest endpoint residual"),
+        (residual_max <= ENDPOINT_LIMIT, "largest endpoint residual"), (finite, "finite"),
+        (np.linalg.norm(eigenvector_min) > 0.0, "smallest endpoint eigenvector"),
+        (np.linalg.norm(eigenvector_max) > 0.0, "largest endpoint eigenvector"),
+    )
+    for passed, label in checks:
+        if not passed:
+            gates.append(f"class {digest} {label} failed")
+    for actual, key in ((rank, "rank"), (float(singular[-1]), "sigma_min"), (float(singular[0]), "sigma_max"), (defect_b3, "hermitian_defect_b3"), (defect_g, "hermitian_defect_g63"), (minimum_b3, "minimum_eigenvalue_b3"), (minimum_g, "minimum_eigenvalue_g63"), (lambda_min, "lambda_min"), (lambda_max, "lambda_max"), (condition, "spectral_condition"), (residual_min, "endpoint_residual_min"), (residual_max, "endpoint_residual_max")):
+        if not _close(float(actual), reported.get(key)):
+            errors.append(f"material class stored field mismatch: {key}")
+    if reported.get("finite") is not finite:
+        errors.append("material class finite field mismatch")
+    gate_passed = bool(all(passed for passed, _label in checks))
+    if reported.get("gate_passed") is not gate_passed:
+        errors.append(f"material class stored Gate mismatch: {digest}")
+    return {
+        "class_digest": digest, "rank": rank, "sigma_min": float(singular[-1]),
+        "sigma_max": float(singular[0]), "lambda_min": lambda_min,
+        "lambda_max": lambda_max, "spectral_condition": condition,
+        "endpoint_residual_min": residual_min, "endpoint_residual_max": residual_max,
+        "finite": finite,
+        "gate_passed": gate_passed,
+    }
+
+
+def _check_probe(item: dict[str, Any], arrays: dict[str, np.ndarray], descriptors: dict[str, Any], errors: list[str], gates: list[str]) -> dict[str, Any]:
+    name = item.get("name")
+    roles = item.get("raw_roles")
+    if not isinstance(name, str) or not isinstance(roles, dict):
+        errors.append("probe name/raw roles missing")
+        return {}
+    required = tuple((key, roles.get(key)) for key in ("source_before", "source_after", "source2", "projected", "projected_repeat", "projected2", "projected_combo", "fine_dual", "adjoint", "b3", "b6p"))
+    if any(not isinstance(key, str) or key not in arrays for _role, key in required):
+        errors.append(f"probe raw roles missing: {name}")
+        return {}
+    x, xa, x2, p, pr, p2, pc, y, ph, b3, b6p = (arrays[key] for _role, key in required)
+    coarse = (x, xa, x2, ph, b3)
+    fine = (p, pr, p2, pc, y, b6p)
+    if any(value.dtype != np.dtype("complex128") or value.ndim != 1 or value.size == 0 for value in coarse + fine) or any(value.shape != (144,) for value in coarse) or any(value.shape != (882,) for value in fine):
+        errors.append(f"probe shape closure failed: {name}")
+        return {}
+    repeat = float(np.linalg.norm(pr - p) / max(np.linalg.norm(p), np.finfo(float).tiny))
+    linearity = float(np.linalg.norm(pc - ALPHA * p - BETA * p2) / max(np.linalg.norm(pc), np.finfo(float).tiny))
+    lhs, rhs = np.vdot(p, y), np.vdot(x, ph)
+    adjoint = float(abs(lhs - rhs) / max(abs(lhs), abs(rhs), np.finfo(float).tiny))
+    ec, ef = np.vdot(x, b3), np.vdot(p, b6p)
+    if not (np.isfinite(ec.real) and np.isfinite(ec.imag) and abs(ec) > 0.0):
+        gates.append(f"probe {name} coarse energy denominator invalid")
+        ratio = complex(np.nan, np.nan)
+    else:
+        ratio = ef / ec
+    finite = bool(all(np.all(np.isfinite(value)) for value in (x, xa, x2, p, pr, p2, pc, y, ph, b3, b6p)))
+    unchanged = _digest(x) == _digest(xa) == item.get("source_before_digest") == item.get("source_after_digest")
+    source_norm = float(np.linalg.norm(x))
+    source_finite = bool(np.all(np.isfinite(x)))
+    source_nonzero = bool(source_norm > 0.0)
+    if not finite:
+        gates.append(f"probe {name} nonfinite")
+    if not source_finite or not source_nonzero:
+        gates.append(f"probe {name} source is zero")
+    if repeat > REPEAT_LIMIT:
+        gates.append(f"probe {name} repeat failed")
+    if linearity > LINEARITY_LIMIT:
+        gates.append(f"probe {name} linearity failed")
+    if adjoint > ADJOINT_LIMIT:
+        gates.append(f"probe {name} adjoint failed")
+    if not PROBE_MIN <= ratio.real <= PROBE_MAX or abs(ratio.imag) > HERMITIAN_LIMIT:
+        gates.append(f"probe {name} q outside frozen interval")
+    if not unchanged or item.get("input_unchanged") is not True:
+        gates.append(f"probe {name} input changed")
+    if item.get("phase_once") is not True:
+        gates.append(f"probe {name} phase contract failed")
+    if item.get("finite") is not finite or item.get("source_finite") is not source_finite or item.get("source_nonzero") is not source_nonzero:
+        errors.append(f"probe {name} stored finite/source fact mismatch")
+    if not _close(source_norm, item.get("source_norm")):
+        errors.append(f"probe {name} stored field mismatch: source_norm")
+    if item.get("source_generation") != SOURCE_GENERATION.get(name):
+        errors.append(f"probe {name} source-generation identity mismatch")
+    for actual, key in ((float(ratio.real), "q"), (float(abs(ratio.imag)), "q_imag_defect"), (repeat, "repeat_relative"), (linearity, "linearity_relative"), (adjoint, "adjoint_work_relative")):
+        if not _close(actual, item.get(key)):
+            errors.append(f"probe {name} stored field mismatch: {key}")
+    for actual, key in ((ec, "energy_coarse"), (ef, "energy_fine")):
+        if _complex_pair(item.get(key)) is None or not np.isclose(actual, _complex_pair(item.get(key)), rtol=1.0e-10, atol=1.0e-12):
+            errors.append(f"probe {name} stored energy mismatch: {key}")
+    energy_imag = float(max(abs(ec.imag), abs(ef.imag)))
+    if not _close(energy_imag, item.get("energy_imag_defect")):
+        errors.append(f"probe {name} stored field mismatch: energy_imag_defect")
+    return {"name": name, "q": float(ratio.real), "repeat_relative": repeat, "linearity_relative": linearity, "adjoint_work_relative": adjoint, "finite": finite, "input_unchanged": unchanged}
+
+
+def _check_material_inventory(inventory: Any, classes: Any, errors: list[str]) -> list[dict[str, Any]]:
+    if not isinstance(inventory, dict) or inventory.get("schema") != "task038.full3d.route-a.material-inventory.v1":
+        errors.append("material inventory schema mismatch")
+        return []
+    items = inventory.get("classes")
+    if type(inventory.get("class_count")) is not int or not isinstance(items, list) or inventory["class_count"] != len(items):
+        errors.append("material inventory class count is not closed")
+        return []
+    if inventory.get("exact_float64_identity") is not True or inventory.get("numeric_allgather") is not False:
+        errors.append("material inventory exact/no-allgather facts are not closed")
+    digests = [item.get("class_digest") if isinstance(item, dict) else None for item in items]
+    if any(not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None for value in digests) or len(set(digests)) != len(digests) or digests != sorted(digests):
+        errors.append("material inventory digest order/format is not closed")
+    local_total = 0
+    global_total = 0
+    observed_roles: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict) or not isinstance(item.get("class_identity"), dict):
+            errors.append("material inventory class identity is missing")
+            continue
+        identity = item["class_identity"]
+        digest = item.get("class_digest")
+        role = item.get("material_role")
+        tag = item.get("tag")
+        if role not in MATERIAL_ROLE_TAGS or type(tag) is not int:
+            errors.append(f"material inventory role/tag is invalid: {digest}")
+        else:
+            observed_roles.add(role)
+            if tag != MATERIAL_ROLE_TAGS[role]:
+                errors.append(f"material inventory role/tag mapping mismatch: {digest}")
+        if _semantic_sha(identity) != digest:
+            errors.append(f"material inventory digest is not identity-bound: {digest}")
+        material = identity.get("material_coefficient_identity", {})
+        geometry = identity.get("geometry_jacobian_identity", {})
+        if (
+            material.get("material_role") != role
+            or material.get("class_name") != f"{role}_tag_{tag}"
+        ):
+            errors.append(f"material inventory role/class identity mismatch: {digest}")
+        try:
+            curl_coefficient = float(material["curl_coefficient"])
+            mass_coefficient = float(material["mass_coefficient"])
+            coefficient_identity_ok = (
+                math.isfinite(curl_coefficient) and curl_coefficient > 0.0
+                and math.isfinite(mass_coefficient) and mass_coefficient > 0.0
+                and material.get("curl_coefficient_float64_hex") == curl_coefficient.hex()
+                and material.get("mass_coefficient_float64_hex") == mass_coefficient.hex()
+            )
+            widths = geometry["widths"]
+            width_values = [float(value) for value in widths]
+            geometry_identity_ok = (
+                isinstance(widths, list) and len(width_values) == 3
+                and all(math.isfinite(value) and value > 0.0 for value in width_values)
+                and geometry.get("widths_float64_hex") == [value.hex() for value in width_values]
+            )
+        except (KeyError, TypeError, ValueError, OverflowError):
+            coefficient_identity_ok = False
+            geometry_identity_ok = False
+        if not coefficient_identity_ok:
+            errors.append(f"material coefficient float64 identity mismatch: {digest}")
+        if not geometry_identity_ok:
+            errors.append(f"geometry float64 identity mismatch: {digest}")
+        if type(item.get("cell_count_local")) is not int or item["cell_count_local"] <= 0 or type(item.get("cell_count_global")) is not int or item["cell_count_global"] <= 0:
+            errors.append(f"material class cell count invalid: {digest}")
+        else:
+            local_total += item["cell_count_local"]
+            global_total += item["cell_count_global"]
+    if type(inventory.get("cell_count_local")) is not int or local_total != inventory.get("cell_count_local"):
+        errors.append("material inventory local cell count is not closed")
+    if type(inventory.get("cell_count_global")) is not int or global_total != inventory.get("cell_count_global"):
+        errors.append("material inventory global cell count is not closed")
+    if not {"air", "grating", "substrate"}.issubset(observed_roles):
+        errors.append("material inventory does not cover air/grating/substrate roles")
+    by_digest = {item.get("class_digest"): item for item in items if isinstance(item, dict)}
+    if not isinstance(classes, list) or [item.get("class_digest") for item in classes if isinstance(item, dict)] != digests:
+        errors.append("material audit class order/coverage is not exact")
+    for item in classes if isinstance(classes, list) else ():
+        if not isinstance(item, dict) or item.get("class_digest") not in by_digest:
+            errors.append("material audit class is not in inventory")
+            continue
+        inventory_item = by_digest[item["class_digest"]]
+        if (
+            item.get("class_identity") != inventory_item.get("class_identity")
+            or item.get("material_role") != inventory_item.get("material_role")
+            or item.get("tag") != inventory_item.get("tag")
+            or item.get("class_digest_matches_inventory") is not True
+        ):
+            errors.append(f"material audit identity mismatch: {item['class_digest']}")
+    return items
+
+
+def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -> dict[str, Any]:
+    errors: list[str] = []
+    gates: list[str] = []
+    try:
+        record = _read_json(record_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return {"passed": False, "classification": "CONTRACT_INVALID", "contract_errors": [str(exc)], "gate_failures": []}
+    if not isinstance(record, dict):
+        return {"passed": False, "classification": "CONTRACT_INVALID", "contract_errors": ["record is not an object"], "gate_failures": []}
+    for forbidden_record_field in ("status", "passed", "classification"):
+        if forbidden_record_field in record:
+            errors.append(f"worker record must not contain {forbidden_record_field}")
+    provenance_error = _check_runtime_provenance(record, record_path, expected_sha, errors)
+    raw_dir = Path(str(record.get("raw_dir", ""))).resolve()
+    if not raw_dir.is_absolute() or not raw_dir.is_dir():
+        errors.append("raw_dir missing/invalid")
+    _check_markers(record, raw_dir, expected_sha, errors)
+    lifecycle_failures: list[str] = []
+    resource = _check_watchdog(
+        watchdog_compact, record, record_path, expected_sha, errors, gates, lifecycle_failures,
+    )
+    architecture = record.get("architecture")
+    forbidden = architecture.get("forbidden") if isinstance(architecture, dict) else None
+    required_forbidden = {
+        "global_high_order_aij", "global_transfer_matrix", "numeric_allgather",
+        "p1_global_direct_factor", "p1_built", "smoother_built", "ksp_created",
+        "physical_solve", "recovery",
+    }
+    if not isinstance(forbidden, dict):
+        errors.append("forbidden architecture facts are missing")
+    else:
+        for key in required_forbidden:
+            if type(forbidden.get(key)) is not bool:
+                errors.append(f"required forbidden fact is missing/nonboolean: {key}")
+        for key, value in forbidden.items():
+            if type(value) is not bool:
+                errors.append(f"forbidden fact is not boolean: {key}")
+            elif value:
+                errors.append(f"forbidden object was reported built: {key}")
+    if isinstance(architecture, dict):
+        if record.get("local_gate_passed") is True:
+            _check_level_topology(architecture, errors)
+        elif record.get("local_gate_passed") is False:
+            levels = architecture.get("levels")
+            expected_levels = {
+                "level6": (True, False),
+                "level3": (False, True),
+            }
+            if not isinstance(levels, dict):
+                errors.append("local Gate level facts are missing")
+            else:
+                for name, (foundation_built, not_run) in expected_levels.items():
+                    facts = levels.get(name)
+                    if (
+                        not isinstance(facts, dict)
+                        or facts.get("foundation_built") is not foundation_built
+                        or facts.get("not_run_by_local_gate") is not not_run
+                    ):
+                        errors.append(f"local Gate level lifecycle mismatch: {name}")
+        for group, names in {
+            "case": (
+                "global_high_order_aij", "global_dense_transfer", "global_numeric_allgather",
+                "numeric_allgather", "scalar_node_matrix_built", "global_direct_coarse_built",
+                "recovery_field_arrays_built", "p6_exact_edge_factor_built", "hx_hierarchy_built",
+                "pcgamg_hierarchy_built", "physical_solve", "recovery",
+            ),
+            "extension": (
+                "global_high_order_aij", "global_transfer_matrix", "numeric_allgather",
+                "p1_global_direct_factor", "p1_built", "smoother_built", "ksp_created",
+                "physical_solve", "recovery",
+            ),
+        }.items():
+            nested = architecture.get(group)
+            if not isinstance(nested, dict):
+                errors.append(f"nested architecture audit is missing: {group}")
+            else:
+                for name in names:
+                    if type(nested.get(name)) is not bool:
+                        errors.append(f"nested architecture fact is missing/nonboolean: {group}.{name}")
+                    elif nested[name]:
+                        errors.append(f"nested forbidden object was reported built: {group}.{name}")
+    if record.get("local_gate_passed") is False and record.get("not_run_by_local_gate") != ["level3", "global_probes"]:
+        errors.append("local Gate not-run ledger is not exact")
+    settings = record.get("settings")
+    frozen_settings = {
+        "probe_names": list(PROBE_NAMES),
+        "probe_alpha": [0.37, 0.19],
+        "probe_beta": [-0.23, 0.41],
+        "source_canonicalization": "owner_roundtrip_reduced_primal",
+        "rank": 144, "levels": [6, 3], "transfer_pair": [6, 3],
+        "lambda_min_limit": 0.10, "lambda_max_limit": 10.0,
+        "condition_limit": 100.0, "hermitian_limit": 1.0e-12,
+        "endpoint_residual_limit": 1.0e-10, "adjoint_limit": 1.0e-12,
+        "linearity_limit": 1.0e-12, "repeat_limit": 1.0e-13,
+        "probe_q_interval": [0.10, 10.0],
+        "phase_once": "once_in_canonical_owner_route",
+    }
+    if not isinstance(settings, dict) or any(settings.get(key) != value for key, value in frozen_settings.items()):
+        errors.append("Route-A settings/probe order mismatch")
+    provenance_facts = record.get("provenance")
+    if not isinstance(provenance_facts, dict) or provenance_facts.get("p63_constructed_once") is not True or provenance_facts.get("p63_construction_count") != 1 or provenance_facts.get("p63_construction_source") != "build_local_interlevel_edge_transfer(6,3)":
+        errors.append("P63 construction identity is not closed")
+    raw_descriptor = record.get("raw_arrays")
+    probes = record.get("probes")
+    arrays: dict[str, np.ndarray] = {}
+    if not isinstance(raw_descriptor, dict):
+        errors.append("raw array descriptor missing")
+    else:
+        raw_path = raw_dir / str(raw_descriptor.get("relative_path", ""))
+        if not _inside(raw_path, raw_dir) or not raw_path.is_file():
+            errors.append("raw NPZ missing/escaped")
+        elif _sha256(raw_path) != raw_descriptor.get("sha256"):
+            errors.append("raw NPZ SHA mismatch")
+        else:
+            try:
+                with np.load(raw_path, allow_pickle=False) as loaded:
+                    descriptors = raw_descriptor.get("arrays")
+                    if not isinstance(descriptors, dict):
+                        errors.append("raw array descriptor map is missing/malformed")
+                    elif set(loaded.files) != set(descriptors):
+                        errors.append("NPZ keys and raw descriptor keys are not exact")
+                    else:
+                        for name, descriptor in descriptors.items():
+                            value = _load_array(name, loaded, descriptor, errors)
+                            if value is not None:
+                                arrays[name] = value
+            except (OSError, ValueError, EOFError) as exc:
+                errors.append(f"raw NPZ unreadable: {exc}")
+    p63 = arrays.get("p63")
+    p63_audit = record.get("p63_audit")
+    if p63 is None or p63.dtype != np.dtype("complex128") or p63.ndim != 2 or p63.shape != (882, 144) or not isinstance(p63_audit, dict):
+        errors.append("P63 raw array is missing or has wrong shape")
+    else:
+        singular = np.linalg.svd(p63, compute_uv=False)
+        threshold = max(p63.shape) * np.finfo(float).eps * float(singular[0])
+        p63_values = {
+            "shape": [882, 144], "dtype": "complex128", "sigma_min": float(singular[-1]),
+            "sigma_max": float(singular[0]), "rank_threshold": float(threshold),
+            "rank": int(np.count_nonzero(singular > threshold)),
+            "finite": bool(np.all(np.isfinite(p63))),
+        }
+        for key, value in p63_values.items():
+            if p63_audit.get(key) != value:
+                errors.append(f"P63 stored field mismatch: {key}")
+        if p63_values["rank"] != 144:
+            gates.append("P63 rank Gate failed")
+    classes = record.get("material_classes")
+    inventory = record.get("material_inventory")
+    class_metrics: list[dict[str, Any]] = []
+    if not isinstance(classes, list) or not isinstance(inventory, dict) or not isinstance(inventory.get("classes"), list) or len(classes) != len(inventory["classes"]):
+        errors.append("material class inventory/records are not closed")
+    else:
+        _check_material_inventory(inventory, classes, errors)
+        for item in classes:
+            if isinstance(item, dict):
+                class_metrics.append(_check_class(item, arrays, errors, gates))
+    local_gate_passed = record.get("local_gate_passed")
+    if type(local_gate_passed) is not bool:
+        errors.append("local_gate_passed is missing/nonboolean")
+    else:
+        computed_local_gate = bool(class_metrics) and all(
+            metric.get("gate_passed") is True for metric in class_metrics
+        )
+        if local_gate_passed != computed_local_gate:
+            errors.append("local_gate_passed disagrees with independent class metrics")
+    if isinstance(raw_descriptor, dict) and isinstance(raw_descriptor.get("arrays"), dict):
+        allowed = {"p63"}
+        for item in classes if isinstance(classes, list) else ():
+            if isinstance(item, dict) and isinstance(item.get("class_digest"), str):
+                prefix = f"class_{item['class_digest']}"
+                allowed.update({f"{prefix}__b3", f"{prefix}__b6p", f"{prefix}__eigenvector_min", f"{prefix}__eigenvector_max"})
+        for item in probes if isinstance(probes, list) else ():
+            if isinstance(item, dict) and isinstance(item.get("raw_roles"), dict):
+                allowed.update(value for value in item["raw_roles"].values() if isinstance(value, str))
+        extra = set(raw_descriptor["arrays"]) - allowed
+        if extra:
+            errors.append(f"unknown raw array roles: {sorted(extra)}")
+    probe_metrics: list[dict[str, Any]] = []
+    descriptors = raw_descriptor.get("arrays", {}) if isinstance(raw_descriptor, dict) else {}
+    if record.get("local_gate_passed") is True and (not isinstance(probes, list) or [item.get("name") for item in probes if isinstance(item, dict)] != list(PROBE_NAMES)):
+        errors.append("probe identities/order are not frozen")
+    elif record.get("local_gate_passed") is False and probes != []:
+        errors.append("local Gate negative must not contain probe facts")
+    else:
+        for item in probes:
+            if isinstance(item, dict):
+                probe_metrics.append(_check_probe(item, arrays, descriptors, errors, gates))
+    if provenance_error:
+        classification = "INPUT_PROVENANCE_INVALID"
+    elif lifecycle_failures:
+        classification = "EXECUTION_LIFECYCLE_FAILED"
+    elif resource.get("resource_gate_failed") is True:
+        classification = "RESOURCE_GATE_FAILED"
+    elif errors:
+        classification = "CONTRACT_INVALID"
+    elif gates:
+        classification = "CLOSED_BY_INTERLEVEL_SPECTRAL_GATE"
+    else:
+        classification = "STRUCTURALLY_QUALIFIED"
+    return {
+        "schema": "task038.full3d.interlevel-spectral.r1-check.v1",
+        "passed": classification == "STRUCTURALLY_QUALIFIED",
+        "classification": classification,
+        "contract_errors": errors,
+        "gate_failures": gates,
+        "execution_lifecycle_failures": lifecycle_failures,
+        "metrics": {"classes": class_metrics, "probes": probe_metrics, "resource": resource},
+        "record": {"path": str(record_path.resolve()), "sha256": _sha256(record_path)},
+        "expected_source_sha": expected_sha,
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--record", type=Path, required=True)
+    parser.add_argument("--watchdog-compact", type=Path, required=True)
+    parser.add_argument("--expected-source-sha", required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args(argv)
+    if args.output.exists():
+        raise FileExistsError(f"checker output already exists: {args.output}")
+    result = check_record(args.record.resolve(), args.watchdog_compact.resolve(), args.expected_source_sha)
+    args.output.write_text(json.dumps(result, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    return 0 if result["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -153,7 +153,16 @@ def _assemble_lor_matrix(
     degree: int,
     nodes: np.ndarray,
     widths: tuple[float, float, float],
+    *,
+    curl_coefficient: float = 1.0,
+    mass_coefficient: float = 1.0,
 ) -> np.ndarray:
+    curl_coefficient = float(curl_coefficient)
+    mass_coefficient = float(mass_coefficient)
+    if not np.isfinite(curl_coefficient) or not np.isfinite(mass_coefficient):
+        raise ValueError("LOR coefficients must be finite")
+    if curl_coefficient <= 0.0 or mass_coefficient <= 0.0:
+        raise ValueError("LOR coefficients must be positive")
     edge_count = 3 * degree * (degree + 1) ** 2
     matrix = np.zeros((edge_count, edge_count), dtype=np.complex128)
     quadrature, weights = np.polynomial.legendre.leggauss(3)
@@ -180,10 +189,16 @@ def _assemble_lor_matrix(
                                 * weights[iz]
                                 * float(np.prod(cell_widths))
                             )
-                            local += weight * (
-                                curls @ curls.conj().T
-                                + values @ values.conj().T
-                            )
+                            if curl_coefficient == 1.0 and mass_coefficient == 1.0:
+                                local += weight * (
+                                    curls @ curls.conj().T
+                                    + values @ values.conj().T
+                                )
+                            else:
+                                local += weight * (
+                                    curl_coefficient * (curls @ curls.conj().T)
+                                    + mass_coefficient * (values @ values.conj().T)
+                                )
                 edge_ids = _cell_edges(i, j, k, degree)
                 matrix[np.ix_(edge_ids, edge_ids)] += local
     return np.ascontiguousarray(matrix)
