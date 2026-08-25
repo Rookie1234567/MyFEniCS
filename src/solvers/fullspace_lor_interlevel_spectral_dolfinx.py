@@ -1,8 +1,9 @@
-"""DOLFINx adapter for the V12 Route-A material/probe evidence layer.
+"""DOLFINx adapter for shared Route-A/Route-B interlevel probe evidence.
 
 The module keeps mesh, MPC, and vector construction here.  It deliberately
 does not create a global transfer or a solver; the retained numerical payload
-is supplied by the small local Route-A core and owner-packet bridge.
+is supplied by the small local spectral cores and owner-packet bridges.  The
+Route-A schema and default calls remain unchanged.
 """
 
 from __future__ import annotations
@@ -40,11 +41,41 @@ def _semantic_sha(value: Any) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def source_generation_identity(name: str) -> str:
+def source_generation_identity(
+    name: str, source_generation: Mapping[str, str] | None = None,
+) -> str:
+    source_generation = SOURCE_GENERATION if source_generation is None else source_generation
     try:
-        return SOURCE_GENERATION[name]
+        return source_generation[name]
     except KeyError as exc:
-        raise ValueError(f"unknown Route-A source {name!r}") from exc
+        raise ValueError(f"unknown source {name!r}") from exc
+
+
+def _probe_levels(
+    extension: Any, *, fine_degree: int, coarse_degree: int,
+) -> tuple[Any, Any]:
+    pair = (int(fine_degree), int(coarse_degree))
+    if hasattr(extension, "pair_levels"):
+        fine, coarse = extension.pair_levels(pair)
+        return fine, coarse
+    levels = getattr(extension, "levels", None)
+    if isinstance(levels, Mapping):
+        try:
+            return levels[pair[0]], levels[pair[1]]
+        except KeyError as exc:
+            raise ValueError(f"probe levels are missing pair {pair}") from exc
+    if pair == (6, 3) and isinstance(levels, tuple) and len(levels) == 2:
+        return levels[0], levels[1]
+    raise ValueError("probe extension does not expose the requested explicit levels")
+
+
+def _apply_pair(extension: Any, pair: tuple[int, int], source: Any, *, adjoint: bool):
+    method = extension.apply_adjoint if adjoint else extension.apply_primal
+    if hasattr(extension, "pair_levels"):
+        return method(pair, source)
+    if pair != (6, 3):
+        raise ValueError("the legacy Route-A extension only exposes pair (6, 3)")
+    return method(source)
 
 
 def _owned_cell_widths(function_space: Any, cell: int) -> tuple[float, float, float]:
@@ -219,6 +250,51 @@ def audit_material_classes(
     return audits, arrays
 
 
+def audit_nested_material_classes(
+    inventory: Mapping[str, Any], p62: np.ndarray,
+) -> tuple[list[dict[str, Any]], dict[str, np.ndarray]]:
+    """Audit all exact classes with one retained nested P62 map."""
+
+    from .fullspace_lor_nested_interlevel import build_nested_material_class
+
+    audits: list[dict[str, Any]] = []
+    arrays: dict[str, np.ndarray] = {
+        "p62": np.asarray(p62, dtype=np.complex128).copy()
+    }
+    for item in inventory["classes"]:
+        identity = item["class_identity"]
+        material = identity["material_coefficient_identity"]
+        geometry = identity["geometry_jacobian_identity"]
+        result = build_nested_material_class(
+            class_name=str(material["class_name"]),
+            widths=tuple(geometry["widths"]),
+            curl_coefficient=float(material["curl_coefficient"]),
+            mass_coefficient=float(material["mass_coefficient"]),
+            material_role=str(material["material_role"]),
+            p62=p62,
+        )
+        audit = dict(result.audit)
+        audit.update({
+            "class_identity": identity,
+            "class_digest_matches_inventory": (
+                audit["class_digest"] == item["class_digest"]
+            ),
+            "tag": int(item["tag"]),
+            "material_role": str(item["material_role"]),
+            "cell_count_local": int(item["cell_count_local"]),
+            "cell_count_global": int(
+                item.get("cell_count_global", item["cell_count_local"])
+            ),
+        })
+        audits.append(audit)
+        prefix = f"class_{item['class_digest']}"
+        for role in ("b2", "b6p", "eigenvector_min", "eigenvector_max"):
+            arrays[f"{prefix}__{role}"] = np.asarray(
+                result.retained[role]
+            ).copy()
+    return audits, arrays
+
+
 def _vector_array(vector: Any) -> np.ndarray:
     return np.asarray(vector.getArray(readonly=True), dtype=np.complex128).copy()
 
@@ -282,20 +358,32 @@ def _physical_rhs_high_dual(foundation: Any) -> Any:
     return target
 
 
-def _coarse_from_high_dual(foundation: Any, extension: Any, high_dual: Any) -> Any:
+def _coarse_from_high_dual(
+    foundation: Any, extension: Any, high_dual: Any, *,
+    fine_degree: int = 6, coarse_degree: int = 3,
+) -> Any:
     low_dual = foundation.low_matrix.createVecRight()
     coarse_dual = None
     try:
         foundation.restrict_into(high_dual, low_dual)
-        coarse_dual = extension.apply_adjoint(low_dual)
-        return _canonical_primal(extension.levels[1], coarse_dual)
+        coarse_dual = _apply_pair(
+            extension, (int(fine_degree), int(coarse_degree)), low_dual,
+            adjoint=True,
+        )
+        _fine_level, coarse_level = _probe_levels(
+            extension, fine_degree=fine_degree, coarse_degree=coarse_degree
+        )
+        return _canonical_primal(coarse_level, coarse_dual)
     finally:
         low_dual.destroy()
         if coarse_dual is not None:
             coarse_dual.destroy()
 
 
-def _r3_coarse_source(foundation: Any, extension: Any, packets: Any) -> Any:
+def _r3_coarse_source(
+    foundation: Any, extension: Any, packets: Any, *,
+    fine_degree: int = 6, coarse_degree: int = 3,
+) -> Any:
     from src.solvers.hcurl_canonical_vector_dolfinx import (
         reconstruct_canonical_full_fe_dual_vector,
     )
@@ -304,39 +392,67 @@ def _r3_coarse_source(foundation: Any, extension: Any, packets: Any) -> Any:
         foundation.high_space, foundation.high_floquet.mpc, packets
     )
     try:
-        return _coarse_from_high_dual(foundation, extension, high_dual)
+        return _coarse_from_high_dual(
+            foundation, extension, high_dual,
+            fine_degree=fine_degree, coarse_degree=coarse_degree,
+        )
     finally:
         high_dual.destroy()
 
 
 def build_probe_source(
-    name: str, foundation: Any, extension: Any, r3_packets: Any,
+    name: str, foundation: Any, extension: Any, r3_packets: Any, *,
+    fine_degree: int = 6, coarse_degree: int = 3,
+    probe_schema: str = PROBE_SCHEMA,
+    source_generation: Mapping[str, str] = SOURCE_GENERATION,
 ) -> Any:
     if name not in PROBE_NAMES:
-        raise ValueError(f"unknown frozen Route-A probe: {name}")
-    level3 = extension.levels[1]
+        label = "Route-A" if probe_schema == PROBE_SCHEMA else "interlevel"
+        raise ValueError(f"unknown frozen {label} probe: {name}")
+    source_generation_identity(name, source_generation)
+    _fine_level, coarse_level = _probe_levels(
+        extension, fine_degree=fine_degree, coarse_degree=coarse_degree
+    )
     if name in {"random", "gradient", "curl", "checkerboard"}:
-        return _analytic_source(level3, foundation, name)
+        return _analytic_source(coarse_level, foundation, name)
     if name == "physical_component_derived":
         high_dual = _physical_rhs_high_dual(foundation)
         try:
-            return _coarse_from_high_dual(foundation, extension, high_dual)
+            return _coarse_from_high_dual(
+                foundation, extension, high_dual,
+                fine_degree=fine_degree, coarse_degree=coarse_degree,
+            )
         finally:
             high_dual.destroy()
     if r3_packets is None:
         raise ValueError("R3 canonical packets are required for the frozen tail probe")
-    return _r3_coarse_source(foundation, extension, r3_packets)
+    return _r3_coarse_source(
+        foundation, extension, r3_packets,
+        fine_degree=fine_degree, coarse_degree=coarse_degree,
+    )
 
 
 def _relative(left: np.ndarray, right: np.ndarray) -> float:
     return float(np.linalg.norm(left - right) / max(np.linalg.norm(right), np.finfo(float).tiny))
 
 
-def measure_probe(name: str, foundation: Any, extension: Any, source: Any) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
+def measure_probe(
+    name: str, foundation: Any, extension: Any, source: Any, *,
+    fine_degree: int = 6, coarse_degree: int = 3,
+    probe_schema: str = PROBE_SCHEMA,
+    source_generation: Mapping[str, str] = SOURCE_GENERATION,
+    coarse_action_role: str = "B3",
+) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
     """Measure one probe and return scalar facts plus checker-owned raw arrays."""
 
-    level3 = extension.levels[1]
-    level6 = extension.levels[0]
+    if coarse_action_role not in {"B3", "B2"}:
+        raise ValueError("coarse action role must be B3 or B2")
+    coarse_action_key = "b2" if coarse_action_role == "B2" else "b3"
+    pair = (int(fine_degree), int(coarse_degree))
+    level6, level3 = _probe_levels(
+        extension, fine_degree=fine_degree, coarse_degree=coarse_degree
+    )
+    source_generation_identity(name, source_generation)
     source_before = _vector_array(source)
     source_norm = float(np.linalg.norm(source_before))
     source_finite = bool(np.all(np.isfinite(source_before)) and np.isfinite(source_norm))
@@ -344,18 +460,18 @@ def measure_probe(name: str, foundation: Any, extension: Any, source: Any) -> tu
     if source_before.ndim != 1 or source_before.size == 0 or not source_finite or not source_nonzero:
         raise ValueError(f"Route-A probe source {name} must be nonzero and finite before apply")
     source_before_digest = _vector_digest(source)
-    projected = extension.apply_primal(source)
-    projected_repeat = extension.apply_primal(source)
+    projected = _apply_pair(extension, pair, source, adjoint=False)
+    projected_repeat = _apply_pair(extension, pair, source, adjoint=False)
     seed2 = _deterministic_seed(level3, 17.0)
     source2 = _canonical_primal(level3, seed2)
     seed2.destroy()
-    projected2 = extension.apply_primal(source2)
+    projected2 = _apply_pair(extension, pair, source2, adjoint=False)
     combo = source.copy()
     combo.scale(ALPHA)
     combo.axpy(BETA, source2)
-    projected_combo = extension.apply_primal(combo)
+    projected_combo = _apply_pair(extension, pair, combo, adjoint=False)
     fine_dual = _deterministic_seed(level6, 31.0)
-    adjoint = extension.apply_adjoint(fine_dual)
+    adjoint = _apply_pair(extension, pair, fine_dual, adjoint=True)
     b3 = level3.matrix.createVecLeft()
     level3.matrix.mult(source, b3)
     b6p = level6.matrix.createVecLeft()
@@ -389,7 +505,7 @@ def measure_probe(name: str, foundation: Any, extension: Any, source: Any) -> tu
             for audit in topology_audits
         )
         facts = {
-            "schema": PROBE_SCHEMA,
+            "schema": probe_schema,
             "name": name,
             "q": float(ratio.real),
             "q_imag_defect": float(abs(ratio.imag)),
@@ -417,8 +533,10 @@ def measure_probe(name: str, foundation: Any, extension: Any, source: Any) -> tu
             "phase_once": phase_once,
             "source_before_digest": source_before_digest,
             "source_after_digest": hashlib.sha256(np.ascontiguousarray(source_after).view(np.uint8)).hexdigest(),
-            "source_generation": source_generation_identity(name),
+            "source_generation": source_generation_identity(name, source_generation),
         }
+        if probe_schema != PROBE_SCHEMA:
+            facts["coarse_action_role"] = str(coarse_action_role)
         arrays = {
             "source_before": source_before,
             "source_after": source_after,
@@ -429,7 +547,7 @@ def measure_probe(name: str, foundation: Any, extension: Any, source: Any) -> tu
             "projected_combo": projected_combo_values,
             "fine_dual": fine_dual_values,
             "adjoint": adjoint_values,
-            "b3": b3_values,
+            coarse_action_key: b3_values,
             "b6p": b6p_values,
         }
         return facts, arrays
@@ -447,9 +565,11 @@ __all__ = [
     "R3_LONG_TAIL_MANIFEST_SHA256",
     "R3_LONG_TAIL_SOURCE_SHA",
     "audit_material_classes",
+    "audit_nested_material_classes",
     "build_material_class_inventory",
     "build_material_class_inventory_from_rows",
     "build_probe_source",
     "measure_probe",
+    "_probe_levels",
     "source_generation_identity",
 ]

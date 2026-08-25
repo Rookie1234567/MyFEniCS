@@ -17,6 +17,9 @@ from .fullspace_lor_memory_hierarchy import (
 S5_SCHEMA = "task038.lor-memory-hierarchy.runtime.v1"
 S5_LEVELS = (6, 3, 1)
 S5_PAIRS = ((6, 3), (3, 1))
+ROUTE_B_SCHEMA = "task038.lor-memory-hierarchy.route-b.runtime.v1"
+ROUTE_B_LEVELS = (6, 2, 1)
+ROUTE_B_PAIRS = ((6, 2), (2, 1))
 S5_BATCH_CELL_CAP = INTERLEVEL_BATCH_CELL_CAP
 S5_CHEBYSHEV_LEVELS = (6, 3)
 S5_FORBIDDEN_FACTS = ("global_high_order_aij", "global_transfer_matrix",
@@ -77,7 +80,10 @@ class _S5Level:
                  raw_map: Mapping[str, np.ndarray], raw_permutations: np.ndarray,
                  incidence_unique: np.ndarray, parent_space: Any = None,
                  parent_floquet: Any = None, owned_objects: Iterable[Any] = (),
-                 foundation_owned: bool = False) -> None:
+                 foundation_owned: bool = False,
+                 allowed_levels: tuple[int, ...] = S5_LEVELS,
+                 route_schema: str = S5_SCHEMA,
+                 validate_canonical_owner_identity: bool = True) -> None:
         self.degree, self.matrix = int(degree), matrix
         self.raw_space, self.raw_floquet = raw_space, raw_floquet
         self.parent_topology, self.raw_topology = parent_topology, raw_topology
@@ -87,8 +93,25 @@ class _S5Level:
         self._owned_objects = tuple(owned_objects)
         self.foundation_owned, self._destroyed = bool(foundation_owned), False
         parent_cells = int(parent_topology.cell_edge_ids.shape[0])
-        if not np.array_equal(parent_topology.owned_edge_ids, raw_topology.owned_edge_ids):
+        if validate_canonical_owner_identity and not np.array_equal(
+            parent_topology.owned_edge_ids, raw_topology.owned_edge_ids
+        ):
             raise ValueError("parent/raw owner inventories do not close")
+        for topology in (parent_topology, raw_topology):
+            owned = np.asarray(topology.owned_edge_ids)
+            unique = np.asarray(topology.unique_edge_ids)
+            if owned.ndim != 1 or unique.ndim != 1 or (
+                owned.size and np.any(owned[1:] <= owned[:-1])
+            ) or (unique.size and np.any(unique[1:] <= unique[:-1])):
+                raise ValueError("parent/raw canonical owner inventory is not closed")
+            if owned.dtype != np.dtype(np.uint32) or unique.dtype != np.dtype(np.uint32):
+                raise ValueError("parent/raw canonical ids must be uint32 arrays")
+            if int(topology.audit["global_unique_edge_count"]) <= 0:
+                raise ValueError("parent/raw global canonical inventory is empty")
+        if int(parent_topology.audit["global_unique_edge_count"]) != int(
+            raw_topology.audit["global_unique_edge_count"]
+        ):
+            raise ValueError("parent/raw global canonical inventories disagree")
         if self.raw_permutations.shape != (
             int(raw_space.mesh.topology.index_map(3).size_local), 12
         ):
@@ -98,10 +121,10 @@ class _S5Level:
         self.incidence_unique = np.asarray(incidence_unique, dtype=np.float64)
         facts = _matrix_facts(matrix)
         self.audit = MappingProxyType({
-            "schema": S5_SCHEMA, "level": self.degree,
+            "schema": route_schema, "level": self.degree,
             "level_role": "foundation_lor_level6" if self.degree == 6 else f"refined_lor_level{self.degree}",
             "foundation_owned": self.foundation_owned,
-            "parent_metadata_only": self.degree == 3,
+            "parent_metadata_only": self.degree in (2, 3),
             "parent_matrix_built": False,
             "parent_local_owned_rows": int(parent_topology.owned_edge_ids.size),
             "parent_local_unique_rows": int(parent_topology.unique_edge_ids.size),
@@ -127,10 +150,10 @@ class _S5Level:
                 "raw_map_bytes": int(sum(value.nbytes for value in raw_map.values())),
             },
         })
-        if self.degree not in S5_LEVELS or any(
+        if self.degree not in allowed_levels or any(
             self.audit[name] is not False for name in S5_FORBIDDEN_FACTS
         ):
-            raise ValueError("S5 level or forbidden-object facts are not closed")
+            raise ValueError("hierarchy level or forbidden-object facts are not closed")
 
     @property
     def parent_block_count(self) -> int:
@@ -210,21 +233,23 @@ class _S5Level:
 
 class _OwnerPacketTransfer:
     def __init__(self, fine: _S5Level, coarse: _S5Level,
-                 local_transfer: LocalInterlevelEdgeTransfer):
+                 local_transfer: LocalInterlevelEdgeTransfer,
+                 *, allowed_pairs: tuple[tuple[int, int], ...] = S5_PAIRS,
+                 route_schema: str = S5_SCHEMA):
         pair = (fine.degree, coarse.degree)
         expected = (
             3 * fine.degree * (fine.degree + 1) ** 2,
             3 * coarse.degree * (coarse.degree + 1) ** 2,
         )
-        if pair not in S5_PAIRS or fine.parent_block_count != coarse.parent_block_count:
-            raise ValueError("S5 parent topology pair is not closed")
+        if pair not in allowed_pairs or fine.parent_block_count != coarse.parent_block_count:
+            raise ValueError("owner-packet parent topology pair is not closed")
         if local_transfer.edge_shape != expected:
-            raise ValueError("S5 local transfer shape is not closed")
+            raise ValueError("owner-packet local transfer shape is not closed")
         self.fine, self.coarse, self.local_transfer = fine, coarse, local_transfer
         self.primal_apply_count = self.adjoint_apply_count = 0
         edge = np.asarray(local_transfer.edge_transfer)
         node = np.asarray(local_transfer.node_transfer)
-        self.audit = MappingProxyType({"pair": pair,
+        audit = {"pair": pair,
             "batch_cell_cap": S5_BATCH_CELL_CAP, "global_transfer_matrix": False,
             "numeric_allgather": False,
             "orientation_phase_scope": "owned by parent topology routes",
@@ -236,7 +261,10 @@ class _OwnerPacketTransfer:
                 "node_exact_nnz": int(np.count_nonzero(node)),
                 "node_numeric_bytes": int(node.nbytes),
             },
-            "local_transfer": dict(local_transfer.audit)})
+            "local_transfer": dict(local_transfer.audit)}
+        if route_schema != S5_SCHEMA:
+            audit["schema"] = route_schema
+        self.audit = MappingProxyType(audit)
 
     def apply_primal(self, source):
         packet = self.coarse.primal_to_owner(source)
@@ -383,7 +411,14 @@ def _owner_multiplicity(topology):
     return np.asarray(incidence_unique, dtype=np.float64)
 
 
-def _build_level(foundation, degree: int, parent_axes):
+def _build_level(
+    foundation, degree: int, parent_axes, *, allowed_levels=S5_LEVELS,
+    route_schema: str = S5_SCHEMA, level_suffix: str = "s5",
+    validate_canonical_owner_identity: bool = True,
+):
+    degree = int(degree)
+    if degree not in (1, 2, 3) or degree not in tuple(int(value) for value in allowed_levels):
+        raise ValueError("requested hierarchy degree is not enabled for this route")
     import ufl
     from basix.ufl import element
     from dolfinx import default_real_type, fem
@@ -397,14 +432,13 @@ def _build_level(foundation, degree: int, parent_axes):
     from .fullspace_lor_topology import build_canonical_lor_subedge_topology
     from .fullspace_lor_transfer import build_local_lor_transfer
 
-    degree = int(degree)
     cfg, comm = foundation.cfg, foundation.high_mesh.comm
     if degree == 1:
         mesh = foundation.high_mesh
         facets, cells = foundation.high_data.facet_tags, foundation.high_data.cell_tags
         axes = parent_axes
-    elif degree == 3:
-        axes = tuple(_refined_axis(values, 3) for values in parent_axes)
+    elif degree in (2, 3):
+        axes = tuple(_refined_axis(values, degree) for values in parent_axes)
         mesh = _structured_hexa_mesh(
             comm, *axes,
             preserve_input_partition=cfg.stage4_preserve_structured_input_partition,
@@ -412,12 +446,12 @@ def _build_level(foundation, degree: int, parent_axes):
         facets, _ = _mark_boundary_facets(mesh, cfg)
         cells = _mark_cells(mesh, cfg)
     else:
-        raise ValueError("S5 lower degree is fixed at 3 or 1")
+        raise ValueError("supported lower degrees are fixed at 2, 3, and 1")
     data = SimpleNamespace(mesh=mesh, cell_tags=cells, facet_tags=facets)
     low_cfg = copy.deepcopy(cfg)
     low_cfg.nedelec_degree = low_cfg.visualization_degree = 1
     low_cfg.nedelec_trace_degree = low_cfg.nedelec_interior_degree = None
-    low_cfg.case_name = f"{cfg.case_name}_s5_lor_p{degree}"
+    low_cfg.case_name = f"{cfg.case_name}_{level_suffix}_lor_p{degree}"
     raw_space = fem.functionspace(
         mesh, element("N1curl", mesh.basix_cell(), 1, dtype=np.float64)
     )
@@ -447,22 +481,26 @@ def _build_level(foundation, degree: int, parent_axes):
     )
     del node_space, records, mu, mass
     owned = [matrix, raw_floquet]
-    if degree == 3:
+    if degree in (2, 3):
         parent_data = SimpleNamespace(
             mesh=foundation.high_mesh,
             cell_tags=foundation.high_data.cell_tags,
             facet_tags=foundation.high_data.facet_tags,
         )
         parent_cfg = copy.deepcopy(cfg)
-        parent_cfg.nedelec_degree = parent_cfg.visualization_degree = 3
+        parent_cfg.nedelec_degree = parent_cfg.visualization_degree = degree
         parent_cfg.nedelec_trace_degree = parent_cfg.nedelec_interior_degree = None
         parent_space = fem.functionspace(
             foundation.high_mesh,
-            element("N1curl", foundation.high_mesh.basix_cell(), 3, dtype=default_real_type),
+            element("N1curl", foundation.high_mesh.basix_cell(), degree, dtype=default_real_type),
         )
         parent_floquet = build_double_floquet_mpc(parent_space, parent_data, parent_cfg)
+        parent_transfer = (
+            build_local_lor_transfer(3)
+            if degree == 3 else build_local_lor_transfer(2)
+        )
         parent_topology = build_canonical_lor_subedge_topology(
-            parent_space, parent_floquet, build_local_lor_transfer(3)
+            parent_space, parent_floquet, parent_transfer
         )
         owned.append(parent_floquet)
     else:
@@ -471,10 +509,15 @@ def _build_level(foundation, degree: int, parent_axes):
         raw_floquet=raw_floquet, parent_topology=parent_topology,
         raw_topology=raw_topology, raw_map=raw_map,
         raw_permutations=permutations, incidence_unique=_owner_multiplicity(parent_topology),
-        parent_space=parent_space, parent_floquet=parent_floquet, owned_objects=owned)
+        parent_space=parent_space, parent_floquet=parent_floquet, owned_objects=owned,
+        allowed_levels=allowed_levels, route_schema=route_schema,
+        validate_canonical_owner_identity=validate_canonical_owner_identity)
 
 
-def _build_level6(foundation):
+def _build_level6(
+    foundation, *, allowed_levels=S5_LEVELS, route_schema: str = S5_SCHEMA,
+    validate_canonical_owner_identity: bool = True,
+):
     return _S5Level(
         degree=6, matrix=foundation.low_matrix,
         raw_space=foundation.low_edge_space, raw_floquet=foundation.low_floquet,
@@ -482,7 +525,9 @@ def _build_level6(foundation):
         raw_topology=foundation.low_topology, raw_map=foundation.low_raw_map,
         raw_permutations=foundation.low_p1_transfer_local_indices,
         incidence_unique=_owner_multiplicity(foundation.high_topology),
-        owned_objects=(), foundation_owned=True,
+        owned_objects=(), foundation_owned=True, allowed_levels=allowed_levels,
+        route_schema=route_schema,
+        validate_canonical_owner_identity=validate_canonical_owner_identity,
     )
 
 
@@ -525,6 +570,9 @@ def build_s5_hierarchy_extension(foundation: Any) -> S5HierarchyExtension:
         raise
 
 
-__all__ = ["S5_BATCH_CELL_CAP", "S5_CHEBYSHEV_LEVELS", "S5_FORBIDDEN_FACTS",
-           "S5_HIERARCHY_RUNTIME", "S5_LEVELS", "S5_PAIRS", "S5_SCHEMA",
-           "S5HierarchyExtension", "build_s5_hierarchy_extension"]
+__all__ = [
+    "ROUTE_B_LEVELS", "ROUTE_B_PAIRS", "ROUTE_B_SCHEMA",
+    "S5_BATCH_CELL_CAP", "S5_CHEBYSHEV_LEVELS", "S5_FORBIDDEN_FACTS",
+    "S5_HIERARCHY_RUNTIME", "S5_LEVELS", "S5_PAIRS", "S5_SCHEMA",
+    "S5HierarchyExtension", "build_s5_hierarchy_extension",
+]
