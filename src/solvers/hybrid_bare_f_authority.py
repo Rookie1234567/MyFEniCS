@@ -1624,13 +1624,19 @@ def _validate_current_active_target_rows(
     current_global_size: int,
     current_ownership_range: tuple[int, int],
     all_ownership_ranges: tuple[tuple[int, int], ...],
-    all_target_row_shards: tuple[tuple[int, ...], ...],
+    all_target_row_shards: tuple[tuple[int, ...], ...] | None = None,
+    input_scope: str = "owner_local",
+    all_target_row_hashes: tuple[str, ...] | None = None,
+    all_target_value_hashes: tuple[str, ...] | None = None,
+    all_target_row_lengths: tuple[int, ...] | None = None,
 ) -> tuple[np.ndarray, dict[str, Any]]:
-    """Validate owner-local one-cell target rows against the active Vec layout."""
+    """Validate owner-local or replicated-global target rows against active Vec."""
 
     rows = np.asarray(target_rows, dtype=np.int64)
     data = np.asarray(values, dtype=np.complex128)
     global_size = int(current_global_size)
+    if input_scope not in {"owner_local", "replicated_global"}:
+        raise ValueError(f"unsupported current active target-row scope: {input_scope}")
     if rows.ndim != 1 or data.ndim != 1:
         raise ValueError("current active target rows and values must be vectors")
     if len(rows) != len(data):
@@ -1648,8 +1654,6 @@ def _validate_current_active_target_rows(
     )
     if current_range not in normalized_ranges:
         raise ValueError("current Vec ownership range is absent from the MPI layout")
-    if len(normalized_ranges) != len(all_target_row_shards):
-        raise ValueError("MPI ownership and target-row shard counts differ")
     if any(
         len(ownership_range) != 2
         or not 0 <= ownership_range[0] <= ownership_range[1] <= global_size
@@ -1672,11 +1676,82 @@ def _validate_current_active_target_rows(
         raise ValueError("current active target rows contain duplicates")
     if global_size <= 0 or any(row < 0 or row >= global_size for row in local_rows):
         raise ValueError("current active target rows are outside the F bounds")
-    if any(row < current_range[0] or row >= current_range[1] for row in local_rows):
-        raise ValueError("current active target row is outside its owner range")
+    if input_scope == "replicated_global":
+        if (
+            all_target_row_hashes is None
+            or all_target_value_hashes is None
+            or all_target_row_lengths is None
+        ):
+            raise ValueError(
+                "replicated-global target rows require collective hashes and lengths"
+            )
+        row_hash = _sha256_owned_array(np.asarray(rows, dtype=np.int64))
+        value_hash = _sha256_owned_array(data)
+        row_hashes = tuple(str(value) for value in all_target_row_hashes)
+        value_hashes = tuple(str(value) for value in all_target_value_hashes)
+        row_lengths = tuple(int(value) for value in all_target_row_lengths)
+        if not (
+            len(row_hashes)
+            == len(value_hashes)
+            == len(row_lengths)
+            == len(normalized_ranges)
+        ):
+            raise ValueError("replicated-global consensus shard counts differ")
+        rows_consensus = all(value == row_hash for value in row_hashes)
+        values_consensus = all(value == value_hash for value in value_hashes)
+        lengths_consensus = all(value == len(local_rows) for value in row_lengths)
+        if not rows_consensus:
+            raise ValueError("replicated-global target row hashes differ across MPI ranks")
+        if not values_consensus:
+            raise ValueError(
+                "replicated-global target value hashes differ across MPI ranks"
+            )
+        if not lengths_consensus:
+            raise ValueError("replicated-global target row lengths differ across MPI ranks")
+        owner_rows_by_rank = tuple(
+            tuple(
+                row
+                for row in local_rows
+                if ownership_range[0] <= row < ownership_range[1]
+            )
+            for ownership_range in normalized_ranges
+        )
+        owned = np.asarray(
+            [current_range[0] <= row < current_range[1] for row in local_rows],
+            dtype=bool,
+        )
+        return owned, {
+            "input_scope": "replicated_global",
+            "target_row_count": int(len(rows)),
+            "current_owned_target_row_count": int(np.count_nonzero(owned)),
+            "target_row_sha256": row_hash,
+            "global_row_consensus_sha256": row_hash,
+            "global_value_consensus_sha256": value_hash,
+            "global_size": global_size,
+            "current_ownership_range": list(current_range),
+            "owner_coverage": {
+                "pass": True,
+                "global_target_row_count": len(local_rows),
+                "global_unique_target_row_count": len(set(local_rows)),
+                "owner_row_counts": [len(shard) for shard in owner_rows_by_rank],
+                "owner_rows_cover_global_target": (
+                    sum(len(shard) for shard in owner_rows_by_rank) == len(local_rows)
+                ),
+                "rows_consensus": rows_consensus,
+                "values_consensus": values_consensus,
+                "lengths_consensus": lengths_consensus,
+                "mpi_size": len(normalized_ranges),
+            },
+        }
+    if all_target_row_shards is None:
+        raise ValueError("owner-local target rows require complete MPI row shards")
+    if len(normalized_ranges) != len(all_target_row_shards):
+        raise ValueError("MPI ownership and target-row shard counts differ")
     normalized_shards = tuple(
         tuple(int(row) for row in shard) for shard in all_target_row_shards
     )
+    if any(row < current_range[0] or row >= current_range[1] for row in local_rows):
+        raise ValueError("current active target row is outside its owner range")
     flattened_rows = [row for shard in normalized_shards for row in shard]
     if len(flattened_rows) != len(set(flattened_rows)):
         raise ValueError("current active target rows overlap across MPI shards")
@@ -1693,8 +1768,12 @@ def _validate_current_active_target_rows(
     first, last = current_range
     owned = np.ones(len(rows), dtype=bool)
     return owned, {
+        "input_scope": "owner_local",
         "target_row_count": int(len(rows)),
+        "current_owned_target_row_count": int(len(rows)),
         "target_row_sha256": _sha256_owned_array(rows),
+        "global_row_consensus_sha256": None,
+        "global_value_consensus_sha256": None,
         "global_size": global_size,
         "current_ownership_range": [first, last],
         "owner_coverage": {
@@ -1744,9 +1823,18 @@ def _selected_mode_internal_traction_vector(
             f"one-cell source target rows are invalid: {exc}",
             stage="source_mapping",
         )
-    target_row_shards = tuple(
-        tuple(int(row) for row in shard)
-        for shard in system.comm.allgather(local_target_rows)
+    target_row_hashes = tuple(
+        str(value)
+        for value in system.comm.allgather(
+            _sha256_owned_array(np.asarray(target_rows, dtype=np.int64))
+        )
+    )
+    target_value_hashes = tuple(
+        str(value)
+        for value in system.comm.allgather(_sha256_owned_array(values))
+    )
+    target_row_lengths = tuple(
+        int(value) for value in system.comm.allgather(len(local_target_rows))
     )
     validation_error = local_row_error
     if validation_error is None:
@@ -1757,7 +1845,10 @@ def _selected_mode_internal_traction_vector(
                 current_global_size=int(vector.getSize()),
                 current_ownership_range=current_ownership,
                 all_ownership_ranges=all_ownership,
-                all_target_row_shards=target_row_shards,
+                input_scope="replicated_global",
+                all_target_row_hashes=target_row_hashes,
+                all_target_value_hashes=target_value_hashes,
+                all_target_row_lengths=target_row_lengths,
             )
         except ValueError as exc:
             validation_error = FreshBareFAuthorityIdentityError(

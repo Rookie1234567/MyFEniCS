@@ -843,6 +843,92 @@ def test_current_active_target_rows_accept_different_owner_local_shards() -> Non
     }
 
 
+def test_replicated_global_target_rows_map_to_complementary_owner_masks() -> None:
+    rows = np.asarray([1, 3], dtype=np.int64)
+    values = np.asarray([2.0 + 3.0j, 4.0 - 5.0j], dtype=np.complex128)
+    row_hash = authority._sha256_owned_array(np.asarray(rows, dtype=np.int64))
+    value_hash = authority._sha256_owned_array(values)
+    row_hashes = (row_hash, row_hash)
+    value_hashes = (value_hash, value_hash)
+    row_lengths = (2, 2)
+    owned_left, audit_left = authority._validate_current_active_target_rows(
+        rows,
+        values,
+        current_global_size=4,
+        current_ownership_range=(0, 2),
+        all_ownership_ranges=((0, 2), (2, 4)),
+        input_scope="replicated_global",
+        all_target_row_hashes=row_hashes,
+        all_target_value_hashes=value_hashes,
+        all_target_row_lengths=row_lengths,
+    )
+    owned_right, audit_right = authority._validate_current_active_target_rows(
+        rows,
+        values,
+        current_global_size=4,
+        current_ownership_range=(2, 4),
+        all_ownership_ranges=((0, 2), (2, 4)),
+        input_scope="replicated_global",
+        all_target_row_hashes=row_hashes,
+        all_target_value_hashes=value_hashes,
+        all_target_row_lengths=row_lengths,
+    )
+    assert owned_left.tolist() == [True, False]
+    assert owned_right.tolist() == [False, True]
+    for audit, owned_count in ((audit_left, 1), (audit_right, 1)):
+        assert audit["input_scope"] == "replicated_global"
+        assert audit["owner_coverage"]["global_target_row_count"] == 2
+        assert audit["current_owned_target_row_count"] == owned_count
+        assert audit["global_row_consensus_sha256"] == audit_left[
+            "global_row_consensus_sha256"
+        ]
+        assert audit["global_value_consensus_sha256"] == audit_left[
+            "global_value_consensus_sha256"
+        ]
+        assert audit["owner_coverage"]["pass"] is True
+
+    with pytest.raises(ValueError, match="row hashes differ across MPI ranks"):
+        authority._validate_current_active_target_rows(
+            rows,
+            values,
+            current_global_size=4,
+            current_ownership_range=(0, 2),
+            all_ownership_ranges=((0, 2), (2, 4)),
+            input_scope="replicated_global",
+            all_target_row_hashes=(row_hash, "0" * 64),
+            all_target_value_hashes=value_hashes,
+            all_target_row_lengths=row_lengths,
+        )
+    with pytest.raises(ValueError, match="value hashes differ across MPI ranks"):
+        authority._validate_current_active_target_rows(
+            rows,
+            values,
+            current_global_size=4,
+            current_ownership_range=(0, 2),
+            all_ownership_ranges=((0, 2), (2, 4)),
+            input_scope="replicated_global",
+            all_target_row_hashes=row_hashes,
+            all_target_value_hashes=(value_hash, "1" * 64),
+            all_target_row_lengths=row_lengths,
+        )
+    out_of_bounds_rows = np.asarray([1, 4], dtype=np.int64)
+    with pytest.raises(ValueError, match="outside the F bounds"):
+        authority._validate_current_active_target_rows(
+            out_of_bounds_rows,
+            values,
+            current_global_size=4,
+            current_ownership_range=(0, 2),
+            all_ownership_ranges=((0, 2), (2, 4)),
+            input_scope="replicated_global",
+            all_target_row_hashes=(
+                authority._sha256_owned_array(out_of_bounds_rows),
+                authority._sha256_owned_array(out_of_bounds_rows),
+            ),
+            all_target_value_hashes=value_hashes,
+            all_target_row_lengths=row_lengths,
+        )
+
+
 def test_current_active_target_rows_real_mpi_vec_owner_scatter() -> None:
     comm = MPI.COMM_WORLD
     global_size = max(4 * int(comm.size), 2)
@@ -874,6 +960,64 @@ def test_current_active_target_rows_real_mpi_vec_owner_scatter() -> None:
         assert set(gathered_rows) == set(range(global_size))
         assert audit["owner_coverage"]["pass"] is True
         assert comm.allreduce(bool(np.all(owned)), op=MPI.LAND)
+    finally:
+        vector.destroy()
+
+
+def test_current_active_target_rows_real_mpi_vec_replicated_source() -> None:
+    comm = MPI.COMM_WORLD
+    global_size = 4
+    vector = PETSc.Vec().createMPI((PETSc.DECIDE, global_size), comm=comm)
+    try:
+        ownership_range = tuple(map(int, vector.getOwnershipRange()))
+        all_ownership_ranges = tuple(comm.allgather(ownership_range))
+        rows = np.asarray([1, 3], dtype=PETSc.IntType)
+        values = np.asarray([11.0 + 0.0j, 22.0 + 0.0j], dtype=np.complex128)
+        all_target_row_hashes = tuple(
+            str(value)
+            for value in comm.allgather(
+                authority._sha256_owned_array(np.asarray(rows, dtype=np.int64))
+            )
+        )
+        all_target_value_hashes = tuple(
+            str(value)
+            for value in comm.allgather(authority._sha256_owned_array(values))
+        )
+        all_target_row_lengths = tuple(
+            int(value) for value in comm.allgather(len(rows))
+        )
+        owned, audit = authority._validate_current_active_target_rows(
+            rows,
+            values,
+            current_global_size=int(vector.getSize()),
+            current_ownership_range=ownership_range,
+            all_ownership_ranges=all_ownership_ranges,
+            input_scope="replicated_global",
+            all_target_row_hashes=all_target_row_hashes,
+            all_target_value_hashes=all_target_value_hashes,
+            all_target_row_lengths=all_target_row_lengths,
+        )
+        vector.setValues(
+            rows[owned], values[owned], addv=PETSc.InsertMode.ADD_VALUES
+        )
+        vector.assemble()
+        gathered = np.concatenate(
+            tuple(
+                np.asarray(local, dtype=np.complex128)
+                for local in comm.allgather(
+                    vector.getArray(readonly=True).copy()
+                )
+            )
+        )
+        np.testing.assert_allclose(gathered, [0.0, 11.0, 0.0, 22.0])
+        assert audit["input_scope"] == "replicated_global"
+        assert audit["owner_coverage"]["pass"] is True
+        expected_owned = np.asarray(
+            [ownership_range[0] <= int(row) < ownership_range[1] for row in rows],
+            dtype=bool,
+        )
+        np.testing.assert_array_equal(owned, expected_owned)
+        assert comm.allreduce(int(np.count_nonzero(owned)), op=MPI.SUM) == 2
     finally:
         vector.destroy()
 
