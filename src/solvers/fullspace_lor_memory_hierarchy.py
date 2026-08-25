@@ -2,7 +2,7 @@
 
 The module keeps only bounded cell-local arrays.  It does not construct a
 distributed object or a numerical hierarchy; those concerns belong to later
-stages.  The two supported maps are fixed at 6<-3 and 3<-1.
+stages.  The supported maps are fixed at 6<-3, 3<-1, 6<-2, and 2<-1.
 """
 
 from __future__ import annotations
@@ -13,18 +13,23 @@ import basix
 import numpy as np
 
 from .fullspace_lor_edge_geometric_mg import (
+    _basix_to_lor_edge_order,
     _curl_face_oracle,
     _edge_line_integral_oracle,
     build_local_lor_edge_geometric_transfer,
 )
 from .fullspace_lor_transfer import (
     LOR_BATCH_CELL_CAP,
+    _build_incidence,
+    _edge_id,
     _edge_endpoints,
+    _face_descriptors,
+    _gll_nodes,
     build_local_lor_transfer,
 )
 
 
-INTERLEVEL_PAIRS = ((6, 3), (3, 1))
+INTERLEVEL_PAIRS = ((6, 3), (3, 1), (6, 2), (2, 1))
 INTERLEVEL_BATCH_CELL_CAP = LOR_BATCH_CELL_CAP
 EDGE_QUADRATURE_LIMIT = 1.0e-11
 GRADIENT_LIMIT = 1.0e-11
@@ -32,6 +37,8 @@ CURL_LIMIT = 1.0e-11
 ADJOINT_LIMIT = 1.0e-12
 LINEARITY_LIMIT = 1.0e-12
 REPEAT_LIMIT = 1.0e-13
+NESTED_SHARED_EDGE_LIMIT = 1.0e-12
+NESTED_COMPOSITION_LIMIT = 1.0e-11
 
 
 def _relative(left: np.ndarray, right: np.ndarray) -> float:
@@ -80,6 +87,328 @@ def _node_transfer(
     return np.ascontiguousarray(
         fine_h1 @ interpolation @ np.linalg.solve(coarse_h1, np.eye(coarse_h1.shape[0]))
     )
+
+
+def _nested_subset_facts() -> dict[str, object]:
+    fine_nodes = np.asarray(_gll_nodes(6), dtype=np.float64)
+    coarse_nodes = np.asarray(_gll_nodes(2), dtype=np.float64)
+    subset_indices: list[int] = []
+    for value in coarse_nodes:
+        matches = np.flatnonzero(fine_nodes == value)
+        if matches.size != 1:
+            raise ValueError("p2 GLL nodes are not an exact p6 subset")
+        subset_indices.append(int(matches[0]))
+    if not np.array_equal(fine_nodes[subset_indices], coarse_nodes):
+        raise ValueError("p2 GLL subset coordinate identity is not exact")
+    return {
+        "gll_subset_exact": True,
+        "coarse_gll_subset_indices": subset_indices,
+        "coarse_gll_subset_coordinate_identity": [
+            float(value).hex() for value in coarse_nodes
+        ],
+        "fine_gll_subset_coordinate_identity": [
+            float(value).hex() for value in fine_nodes[subset_indices]
+        ],
+    }
+
+
+def _nested_parent_cell(
+    start: np.ndarray, end: np.ndarray
+) -> tuple[int, tuple[int, int, int]]:
+    axis = int(np.argmax(np.asarray(end, dtype=np.int32) - start))
+    parent = [0 if int(value) <= 3 else 1 for value in start]
+    parent[axis] = int(start[axis]) // 3
+    return axis, tuple(parent)
+
+
+def _nested_p62_geometry_maps() -> tuple[np.ndarray, np.ndarray]:
+    """Build the unique-owner p2-to-p6 nested geometric maps.
+
+    Each p6 edge is assigned once by the fixed half-open parent-cell rule.
+    The four same-axis p2 edge columns receive the tangent-length ratio times
+    Q1 barycentric weights in the two transverse coordinates.
+    """
+
+    fine_nodes = np.asarray(_gll_nodes(6), dtype=np.float64)
+    coarse_nodes = np.asarray(_gll_nodes(2), dtype=np.float64)
+    starts, ends = _edge_endpoints(6)
+    edge_transfer = np.zeros((882, 54), dtype=np.complex128)
+    for row, (start, end) in enumerate(zip(starts, ends, strict=True)):
+        axis, parent = _nested_parent_cell(start, end)
+        tangent_start = int(start[axis])
+        coarse_length = coarse_nodes[parent[axis] + 1] - coarse_nodes[parent[axis]]
+        fine_length = fine_nodes[tangent_start + 1] - fine_nodes[tangent_start]
+        tangent_ratio = float(fine_length / coarse_length)
+        transverse_axes = tuple(value for value in range(3) if value != axis)
+        for first_bit in (0, 1):
+            for second_bit in (0, 1):
+                bits = {transverse_axes[0]: first_bit, transverse_axes[1]: second_bit}
+                coarse_start = list(parent)
+                weight = tangent_ratio
+                for transverse_axis in transverse_axes:
+                    local_coordinate = float(
+                        (fine_nodes[int(start[transverse_axis])]
+                         - coarse_nodes[parent[transverse_axis]])
+                        / (coarse_nodes[parent[transverse_axis] + 1]
+                           - coarse_nodes[parent[transverse_axis]])
+                    )
+                    bit = bits[transverse_axis]
+                    coarse_start[transverse_axis] = parent[transverse_axis] + bit
+                    weight *= local_coordinate if bit else 1.0 - local_coordinate
+                column = _edge_id(axis, *coarse_start, 2)
+                edge_transfer[row, column] = weight
+
+    node_transfer = np.zeros((343, 27), dtype=np.complex128)
+    for k in range(7):
+        for j in range(7):
+            for i in range(7):
+                indices = (i, j, k)
+                parent = tuple(0 if value <= 3 else 1 for value in indices)
+                local = tuple(
+                    float(
+                        (fine_nodes[index] - coarse_nodes[parent[axis]])
+                        / (coarse_nodes[parent[axis] + 1]
+                           - coarse_nodes[parent[axis]])
+                    )
+                    for axis, index in enumerate(indices)
+                )
+                row = i + 7 * (j + 7 * k)
+                for dk in (0, 1):
+                    for dj in (0, 1):
+                        for di in (0, 1):
+                            column = parent[0] + di + 3 * (
+                                parent[1] + dj + 3 * (parent[2] + dk)
+                            )
+                            node_transfer[row, column] = np.prod(
+                                [
+                                    coordinate if bit else 1.0 - coordinate
+                                    for coordinate, bit in zip(
+                                        local, (di, dj, dk), strict=True
+                                    )
+                                ]
+                            )
+    return (
+        np.ascontiguousarray(edge_transfer),
+        np.ascontiguousarray(node_transfer),
+    )
+
+
+def _nested_quadrature_maps() -> tuple[
+    np.ndarray, np.ndarray, np.ndarray, dict[str, float | int | bool]
+]:
+    """Independently integrate p1 N1E edge and face-curl basis functions."""
+
+    element = _n1e(1)
+    node_element = _scalar(1)
+    columns = np.argsort(_basix_to_lor_edge_order())
+    quadrature, weights = np.polynomial.legendre.leggauss(7)
+    fine_nodes = np.asarray(_gll_nodes(6), dtype=np.float64)
+    coarse_nodes = np.asarray(_gll_nodes(2), dtype=np.float64)
+    local_edges = _edge_endpoints(3)
+    local_edge_axes = np.argmax(local_edges[1] - local_edges[0], axis=1)
+    local_faces = _face_descriptors(3)
+    fine_faces = _face_descriptors(6)
+    fine_face_lookup = {tuple(value): index for index, value in enumerate(fine_faces)}
+    coarse_edges = _edge_endpoints(1)
+    coarse_edge_axes = np.argmax(coarse_edges[1] - coarse_edges[0], axis=1)
+    edge_oracle = np.zeros((882, 54), dtype=np.complex128)
+    curl_oracle = np.zeros((len(fine_faces), 54), dtype=np.complex128)
+    edge_seen = np.zeros(882, dtype=bool)
+    face_seen = np.zeros(len(fine_faces), dtype=bool)
+    shared_edge_checks = 0
+    shared_face_checks = 0
+    shared_edge_max_abs = 0.0
+    shared_face_max_abs = 0.0
+
+    def local_edge_map(local_nodes: tuple[np.ndarray, ...]) -> np.ndarray:
+        result = np.zeros((144, 12), dtype=np.complex128)
+        for row, (start, end) in enumerate(zip(*local_edges, strict=True)):
+            axis = int(local_edge_axes[row])
+            a = float(local_nodes[axis][start[axis]])
+            b = float(local_nodes[axis][end[axis]])
+            points = (quadrature + 1.0) * (b - a) / 2.0 + a
+            base = np.asarray(
+                [local_nodes[d][start[d]] for d in range(3)], dtype=np.float64
+            )
+            samples = np.repeat(base[None, :], points.size, axis=0)
+            samples[:, axis] = points
+            values = element.tabulate(0, samples)[0, :, :, axis]
+            result[row] = (weights * (b - a) / 2.0) @ values
+        return np.ascontiguousarray(result[:, columns])
+
+    def local_curl_map(local_nodes: tuple[np.ndarray, ...]) -> np.ndarray:
+        result = np.zeros((len(local_faces), 12), dtype=np.complex128)
+        for row, (axis, normal_sign, i, j, k) in enumerate(local_faces):
+            if axis == 2:
+                a, b = local_nodes[0][i], local_nodes[0][i + 1]
+                c, d = local_nodes[1][j], local_nodes[1][j + 1]
+                u = (quadrature + 1.0) * (b - a) / 2.0 + a
+                v = (quadrature + 1.0) * (d - c) / 2.0 + c
+                samples = np.asarray(
+                    [(x, y, local_nodes[2][k]) for y in v for x in u],
+                    dtype=np.float64,
+                )
+                face_weight = np.outer(weights, weights) * (b - a) * (d - c) / 4.0
+                component = 2
+            elif axis == 0:
+                a, b = local_nodes[1][j], local_nodes[1][j + 1]
+                c, d = local_nodes[2][k], local_nodes[2][k + 1]
+                u = (quadrature + 1.0) * (b - a) / 2.0 + a
+                v = (quadrature + 1.0) * (d - c) / 2.0 + c
+                samples = np.asarray(
+                    [(local_nodes[0][i], x, y) for y in v for x in u],
+                    dtype=np.float64,
+                )
+                face_weight = np.outer(weights, weights) * (b - a) * (d - c) / 4.0
+                component = 0
+            else:
+                a, b = local_nodes[0][i], local_nodes[0][i + 1]
+                c, d = local_nodes[2][k], local_nodes[2][k + 1]
+                u = (quadrature + 1.0) * (b - a) / 2.0 + a
+                v = (quadrature + 1.0) * (d - c) / 2.0 + c
+                samples = np.asarray(
+                    [(x, local_nodes[1][j], y) for y in v for x in u],
+                    dtype=np.float64,
+                )
+                face_weight = np.outer(weights, weights) * (b - a) * (d - c) / 4.0
+                component = 1
+            derivatives = element.tabulate(1, samples)
+            curls = np.stack(
+                (
+                    derivatives[2, :, :, 2] - derivatives[3, :, :, 1],
+                    derivatives[3, :, :, 0] - derivatives[1, :, :, 2],
+                    derivatives[1, :, :, 1] - derivatives[2, :, :, 0],
+                ),
+                axis=2,
+            )
+            result[row] = float(normal_sign) * (
+                face_weight.reshape(-1) @ curls[:, :, component]
+            )
+        return np.ascontiguousarray(result[:, columns])
+
+    for ck in range(2):
+        for cj in range(2):
+            for ci in range(2):
+                local_nodes = tuple(
+                    (fine_nodes[3 * parent : 3 * parent + 4] - coarse_nodes[parent])
+                    / (coarse_nodes[parent + 1] - coarse_nodes[parent])
+                    for parent in (ci, cj, ck)
+                )
+                local_edge = local_edge_map(local_nodes)
+                local_curl = local_curl_map(local_nodes)
+                for row, start in enumerate(local_edges[0]):
+                    axis = int(local_edge_axes[row])
+                    fine_id = _edge_id(
+                        axis,
+                        3 * ci + int(start[0]),
+                        3 * cj + int(start[1]),
+                        3 * ck + int(start[2]),
+                        6,
+                    )
+                    value = np.zeros(54, dtype=np.complex128)
+                    for column, coarse_start in enumerate(coarse_edges[0]):
+                        coarse_axis = int(coarse_edge_axes[column])
+                        coarse_id = _edge_id(
+                            coarse_axis,
+                            ci + int(coarse_start[0]),
+                            cj + int(coarse_start[1]),
+                            ck + int(coarse_start[2]),
+                            2,
+                        )
+                        value[coarse_id] = local_edge[row, column]
+                    if edge_seen[fine_id]:
+                        shared_edge_checks += 1
+                        shared_edge_max_abs = max(
+                            shared_edge_max_abs,
+                            float(np.max(np.abs(edge_oracle[fine_id] - value))),
+                        )
+                    else:
+                        edge_oracle[fine_id] = value
+                        edge_seen[fine_id] = True
+                for row, (axis, normal_sign, i, j, k) in enumerate(local_faces):
+                    fine_face_id = fine_face_lookup[
+                        (
+                            axis,
+                            normal_sign,
+                            3 * ci + i,
+                            3 * cj + j,
+                            3 * ck + k,
+                        )
+                    ]
+                    value = np.zeros(54, dtype=np.complex128)
+                    for column, coarse_start in enumerate(coarse_edges[0]):
+                        coarse_axis = int(coarse_edge_axes[column])
+                        coarse_id = _edge_id(
+                            coarse_axis,
+                            ci + int(coarse_start[0]),
+                            cj + int(coarse_start[1]),
+                            ck + int(coarse_start[2]),
+                            2,
+                        )
+                        value[coarse_id] = local_curl[row, column]
+                    if face_seen[fine_face_id]:
+                        shared_face_checks += 1
+                        shared_face_max_abs = max(
+                            shared_face_max_abs,
+                            float(np.max(np.abs(curl_oracle[fine_face_id] - value))),
+                        )
+                    else:
+                        curl_oracle[fine_face_id] = value
+                        face_seen[fine_face_id] = True
+
+    node_oracle = np.zeros((343, 27), dtype=np.complex128)
+    geometry = np.asarray(basix.geometry(basix.CellType.hexahedron))
+    for k in range(7):
+        for j in range(7):
+            for i in range(7):
+                indices = (i, j, k)
+                parent = tuple(0 if value <= 3 else 1 for value in indices)
+                local = np.asarray(
+                    [
+                        (fine_nodes[index] - coarse_nodes[parent[axis]])
+                        / (coarse_nodes[parent[axis] + 1]
+                           - coarse_nodes[parent[axis]])
+                        for axis, index in enumerate(indices)
+                    ],
+                    dtype=np.float64,
+                )
+                values = node_element.tabulate(0, local[None, :])[0, 0, :, 0]
+                row = i + 7 * (j + 7 * k)
+                for column, vertex in enumerate(geometry):
+                    bits = tuple(int(value) for value in vertex)
+                    coarse_id = parent[0] + bits[0] + 3 * (
+                        parent[1] + bits[1] + 3 * (parent[2] + bits[2])
+                    )
+                    node_oracle[row, coarse_id] = values[column]
+    if not np.all(edge_seen) or not np.all(face_seen):
+        raise RuntimeError("nested quadrature owner inventories are incomplete")
+    return (
+        edge_oracle,
+        curl_oracle,
+        node_oracle,
+        {
+            "shared_edge_checks": shared_edge_checks,
+            "shared_face_checks": shared_face_checks,
+            "shared_edge_max_abs": shared_edge_max_abs,
+            "shared_face_max_abs": shared_face_max_abs,
+            "shared_consistency": bool(
+                shared_edge_max_abs <= NESTED_SHARED_EDGE_LIMIT
+                and shared_face_max_abs <= NESTED_SHARED_EDGE_LIMIT
+            ),
+        },
+    )
+
+
+def _nested_p62_composition_relative(edge_transfer: np.ndarray) -> float:
+    p21_authority = build_local_lor_edge_geometric_transfer(2)
+    p61_authority = build_local_lor_edge_geometric_transfer(6)
+    p21 = p21_authority.edge_transfer[
+        :, np.argsort(p21_authority.coarse_basix_to_lor_order)
+    ]
+    p61 = p61_authority.edge_transfer[
+        :, np.argsort(p61_authority.coarse_basix_to_lor_order)
+    ]
+    return _relative(edge_transfer @ p21, p61)
 
 
 def _structural_trace_mask(
@@ -161,12 +490,56 @@ def _independent_facts(
     fine_degree = int(fine_degree)
     coarse_degree = int(coarse_degree)
     if (fine_degree, coarse_degree) not in INTERLEVEL_PAIRS:
-        raise ValueError("only (6, 3) and (3, 1) interlevel maps are supported")
+        raise ValueError(
+            "only (6, 3), (3, 1), (6, 2), and (2, 1) interlevel maps are supported"
+        )
     edge_transfer = np.asarray(edge_transfer, dtype=np.complex128)
     node_transfer = np.asarray(node_transfer, dtype=np.complex128)
+    if (fine_degree, coarse_degree) == (6, 2):
+        if edge_transfer.shape != (882, 54) or node_transfer.shape != (343, 27):
+            raise ValueError("nested (6,2) map shapes are not closed")
+        early_mask = _structural_trace_mask(6, 2)
+        if np.any(edge_transfer[~early_mask] != 0.0):
+            raise ValueError("structural forbidden edge entries are not exact zero")
     node_reference = None
-    if (fine_degree, coarse_degree) == (3, 1):
-        authority = build_local_lor_edge_geometric_transfer(3)
+    subset_facts: dict[str, object] = {}
+    nested_facts: dict[str, object] = {}
+    if (fine_degree, coarse_degree) == (6, 2):
+        expected_shape = (882, 54)
+        expected_node_shape = (343, 27)
+        (
+            edge_oracle,
+            curl_oracle,
+            node_reference,
+            shared_facts,
+        ) = _nested_quadrature_maps()
+        fine_gradient, fine_curl, _ = _build_incidence(6)
+        coarse_gradient, _, _ = _build_incidence(2)
+        cond = 1.0
+        subset_facts = _nested_subset_facts()
+        composition_relative = _nested_p62_composition_relative(edge_transfer)
+        if shared_facts["shared_consistency"] is not True:
+            raise ValueError("nested shared edge/face consistency failed")
+        if float(composition_relative) > NESTED_COMPOSITION_LIMIT:
+            raise ValueError(
+                "nested P62*P21 composition exceeds the fixed limit: "
+                f"{composition_relative:.17g} > {NESTED_COMPOSITION_LIMIT:.17g}"
+            )
+        nested_facts = {
+            "nested_tiled_geometric": True,
+            "generic_high_polynomial_reconstruction": False,
+            "deterministic_owner_policy": "fine_edge_half_open_parent_cell",
+            "edge_nnz": int(np.count_nonzero(edge_transfer)),
+            "node_nnz": int(np.count_nonzero(node_transfer)),
+            "shared_edge_checks": int(shared_facts["shared_edge_checks"]),
+            "shared_face_checks": int(shared_facts["shared_face_checks"]),
+            "shared_edge_max_abs": float(shared_facts["shared_edge_max_abs"]),
+            "shared_face_max_abs": float(shared_facts["shared_face_max_abs"]),
+            "shared_consistency": bool(shared_facts["shared_consistency"]),
+            "p62_p21_composition_relative": float(composition_relative),
+        }
+    elif coarse_degree == 1:
+        authority = build_local_lor_edge_geometric_transfer(fine_degree)
         basix_to_lor = np.asarray(
             authority.coarse_basix_to_lor_order, dtype=np.int32
         )
@@ -280,6 +653,8 @@ def _independent_facts(
         "structural_forbidden_nnz_after": int(np.count_nonzero(forbidden)),
         "structural_removed_nonzero_count": 0,
         "structural_removed_max_abs": 0.0,
+        **subset_facts,
+        **nested_facts,
     }
     limits = (
         ("edge_line_integral_relative", EDGE_QUADRATURE_LIMIT),
@@ -312,7 +687,7 @@ def audit_local_interlevel_transfer(
 
 
 class LocalInterlevelEdgeTransfer:
-    """Immutable bounded cell-local transfer for exactly one S5 pair."""
+    """Immutable bounded cell-local transfer for one fixed supported pair."""
 
     __slots__ = (
         "fine_degree",
@@ -383,9 +758,13 @@ def build_local_interlevel_edge_transfer(
 
     pair = (int(fine_degree), int(coarse_degree))
     if pair not in INTERLEVEL_PAIRS:
-        raise ValueError("only (fine, coarse)=(6, 3) or (3, 1) is supported")
-    if pair == (3, 1):
-        authority = build_local_lor_edge_geometric_transfer(3)
+        raise ValueError(
+            "only (fine, coarse)=(6, 3), (3, 1), (6, 2), or (2, 1) is supported"
+        )
+    if pair == (6, 2):
+        edge_transfer, node_transfer = _nested_p62_geometry_maps()
+    elif pair[1] == 1:
+        authority = build_local_lor_edge_geometric_transfer(pair[0])
         custom_columns = np.argsort(authority.coarse_basix_to_lor_order)
         edge_transfer = np.asarray(
             authority.edge_transfer[:, custom_columns], dtype=np.complex128
