@@ -63,7 +63,7 @@ def _audit_sources() -> tuple[dict, dict, dict]:
     return case, extension, vcycle | {"p1_exact_factor": True, "p1_factor_ksp_created": True}
 
 
-def _ledger(stage: str, factor_memory: int, reserve_bytes: int) -> dict:
+def _ledger(stage: str, factor_memory: int, reserve_bytes: int, factor_memory_available: bool) -> dict:
     foundation_known = {"foundation_array_bytes": 10}
     route_known = {
         "level2_matrix_index_bytes": 1, "level1_matrix_index_bytes": 1,
@@ -72,9 +72,10 @@ def _ledger(stage: str, factor_memory: int, reserve_bytes: int) -> dict:
         "level6_smoother_work_vector_bytes": 128,
         "level2_smoother_work_vector_bytes": 128,
         "vcycle_work_vector_bytes": 64,
-        "p1_factor_memory_bytes": factor_memory,
         "restart_reserve_numeric_bytes": reserve_bytes,
     }
+    if factor_memory_available:
+        route_known["p1_factor_memory_bytes"] = factor_memory
     known = {**{f"foundation_{key}": value for key, value in foundation_known.items()}, **route_known}
     return {
         "scope": "synthetic measured components",
@@ -97,7 +98,7 @@ def _ledger(stage: str, factor_memory: int, reserve_bytes: int) -> dict:
     }
 
 
-def _fixed_architecture() -> dict:
+def _fixed_architecture(factor_memory_available: bool = True) -> dict:
     case, extension, vcycle = _audit_sources()
     return {
         "case_audit": case,
@@ -114,10 +115,10 @@ def _fixed_architecture() -> dict:
             "backend": "petsc-preonly-lu-mumps", "factor_solver_type": "mumps",
             "matrix_rows": 4, "matrix_cols": 4, "matrix_nnz": 4,
             "factor_matrix_nnz": 4, "setup_count": 1, "solve_count": 10,
-            "petsc_reported_factor_memory_available": True,
-            "petsc_reported_factor_memory_bytes": 4096,
-            "petsc_reported_factor_memory_local_bytes": 4096,
-            "petsc_reported_factor_memory_global_bytes": 4096,
+            "petsc_reported_factor_memory_available": factor_memory_available,
+            "petsc_reported_factor_memory_bytes": 4096 if factor_memory_available else 0,
+            "petsc_reported_factor_memory_local_bytes": 4096 if factor_memory_available else 0,
+            "petsc_reported_factor_memory_global_bytes": 4096 if factor_memory_available else 0,
         },
     }
 
@@ -167,7 +168,10 @@ def _write_checkpoint(raw: Path, iteration: int, identity: dict, source_sha: str
     }
 
 
-def _record_base(tmp_path: Path, stage: str, positive_iterations: int = 500) -> tuple[Path, Path, dict]:
+def _record_base(
+    tmp_path: Path, stage: str, positive_iterations: int = 500,
+    factor_memory_available: bool = True,
+) -> tuple[Path, Path, dict]:
     raw = tmp_path / "worker_raw"
     raw.mkdir()
     record_path = tmp_path / "record.json"
@@ -184,7 +188,7 @@ def _record_base(tmp_path: Path, stage: str, positive_iterations: int = 500) -> 
         "raw_sha256": _sha(INPUT_PATH), "resolved_bytes": 1, "resolved_sha256": "c" * 64,
         "physical_model_sha256": "d" * 64,
     }
-    architecture = _fixed_architecture()
+    architecture = _fixed_architecture(factor_memory_available)
     architecture["level1_factor"]["solve_count"] = 10 if stage == "setup" else positive_iterations
     before = None
     source_generation = None
@@ -238,7 +242,10 @@ def _record_base(tmp_path: Path, stage: str, positive_iterations: int = 500) -> 
                      "residual_replacement": True, "checkpoint_interval": 500, "cold_rss_limit_bytes": checker.COLD_LIMIT,
                      "retained_rss_limit_bytes": checker.RETAINED_LIMIT, "setup_growth_limit_bytes": checker.GROWTH_LIMIT},
         "architecture": architecture,
-        "retained_ledger": _ledger(stage, 4096, 1600 if stage == "setup" else 0),
+        "retained_ledger": _ledger(
+            stage, 4096 if factor_memory_available else 0,
+            1600 if stage == "setup" else 0, factor_memory_available,
+        ),
         "retained_ready_wall_time_ns": 1_000_000_000,
         "retained_observed_wall_time_ns": 3_000_000_000,
         "retained_dwell_seconds": 2.0,
@@ -265,7 +272,7 @@ def _record_base(tmp_path: Path, stage: str, positive_iterations: int = 500) -> 
                                  "finite": True, "input_unchanged": True, "legal_high_primal": True,
                                  "rss_span_bytes": 9, "max_swap_bytes": 0, "max_p1_relative_residual": 0.0,
                                  "p1_solve_count": 10, "outer_ksp_create_count": 0, "outer_ksp_destroy_count": 0,
-                                 "transfer_counts": {f"{a}_{b}_{kind}": 10 for a, b in checker.PAIRS for kind in ("primal", "adjoint")},
+                                 "transfer_counts": {f"transfer_{a}_{b}_{kind}_total": 10 for a, b in checker.PAIRS for kind in ("primal", "adjoint")},
                                  "reserve": reserve}
     else:
         rhs = np.asarray([1.0 + 0.0j, 2.0 - 1.0j], dtype=np.complex128)
@@ -300,7 +307,7 @@ def _record_base(tmp_path: Path, stage: str, positive_iterations: int = 500) -> 
                                  "matvec_count": positive_iterations, "pc_apply_count": positive_iterations, "explicit_action_count": cycle_count + 4, "rhs_action_count": 1,
                                  "final_action_recheck_count": 1, "rhs_repeat_action_count": 1, "ksp_create_count": cycle_count, "ksp_destroy_count": cycle_count,
                                  "outer_ksp_create_count": cycle_count, "outer_ksp_destroy_count": cycle_count, "vcycle_apply_count": positive_iterations, "p1_solve_count": positive_iterations,
-                                 "max_p1_relative_residual": 0.0, "transfer_counts": {f"{a}_{b}_{kind}": positive_iterations for a, b in checker.PAIRS for kind in ("primal", "adjoint")},
+                                 "max_p1_relative_residual": 0.0, "transfer_counts": {f"transfer_{a}_{b}_{kind}_total": positive_iterations for a, b in checker.PAIRS for kind in ("primal", "adjoint")},
                                  "raw": {"relative_path": raw_path.name, "sha256": _sha(raw_path), "arrays": arrays,
                                          "rank": 0, "ownership_range": [0, 2], "local_size": 2, "global_size": 2},
                                  "checkpoint_facts": checkpoints,
@@ -516,6 +523,77 @@ def test_valid_setup_and_positive_evidence(tmp_path, stage):
     record, watchdog, _ = _record_base(tmp_path, stage)
     result = checker.check_record(record, watchdog, SOURCE_SHA)
     assert result["passed"], result
+
+
+@pytest.mark.parametrize("stage", ("setup", "positive"))
+def test_unavailable_factor_memory_explicit_zero_is_valid(tmp_path, stage):
+    record_path, watchdog_path, record = _record_base(
+        tmp_path, stage, factor_memory_available=False
+    )
+    factor = record["architecture"]["level1_factor"]
+    assert factor["petsc_reported_factor_memory_available"] is False
+    assert factor["petsc_reported_factor_memory_bytes"] == 0
+    assert "p1_factor_memory_bytes" not in record["retained_ledger"]["route_b"]["known_bytes"]
+    result = checker.check_record(record_path, watchdog_path, SOURCE_SHA)
+    assert result["passed"], result
+
+
+@pytest.mark.parametrize("mutation", ("false_positive", "true_zero", "route_pseudocount"))
+def test_factor_memory_availability_branches_fail_closed(tmp_path, mutation):
+    available = {
+        "false_positive": False,
+        "true_zero": True,
+        "route_pseudocount": False,
+    }[mutation]
+    record_path, watchdog_path, record = _record_base(
+        tmp_path, "setup", factor_memory_available=available
+    )
+    factor = record["architecture"]["level1_factor"]
+    if mutation == "false_positive":
+        for key in (
+            "petsc_reported_factor_memory_bytes",
+            "petsc_reported_factor_memory_local_bytes",
+            "petsc_reported_factor_memory_global_bytes",
+        ):
+            factor[key] = 1
+    elif mutation == "true_zero":
+        for key in (
+            "petsc_reported_factor_memory_bytes",
+            "petsc_reported_factor_memory_local_bytes",
+            "petsc_reported_factor_memory_global_bytes",
+        ):
+            factor[key] = 0
+    else:
+        route = record["retained_ledger"]["route_b"]
+        route["known_bytes"]["p1_factor_memory_bytes"] = 0
+        known = record["retained_ledger"]["known_bytes"]
+        known["p1_factor_memory_bytes"] = 0
+        record["retained_ledger"]["known_total_bytes"] = sum(known.values())
+        record["retained_ledger"]["unattributed_remainder_bytes"] = (
+            record["retained_ledger"]["measured_process_tree_rss_bytes"]
+            - record["retained_ledger"]["known_total_bytes"]
+        )
+    _write_record_with_closeout(record_path, record)
+    result = checker.check_record(record_path, watchdog_path, SOURCE_SHA)
+    assert not result["passed"], result
+    assert any("factor memory" in error for error in result["contract_errors"]), result
+
+
+@pytest.mark.parametrize("stage", ("setup", "positive"))
+@pytest.mark.parametrize("mutation", ("missing", "wrong_key"))
+def test_transfer_count_keys_are_exact_and_real(tmp_path, stage, mutation):
+    record_path, watchdog_path, record = _record_base(tmp_path, stage)
+    counts = record["stage_facts"]["transfer_counts"]
+    actual_key = "transfer_6_2_primal_total"
+    if mutation == "missing":
+        counts.pop(actual_key)
+    else:
+        counts["6_2_primal"] = counts.pop(actual_key)
+    _write_record_with_closeout(record_path, record)
+    result = checker.check_record(record_path, watchdog_path, SOURCE_SHA)
+    assert not result["passed"], result
+    expected = "setup transfer aggregate" if stage == "setup" else "positive cumulative transfer"
+    assert any(expected in error for error in result["contract_errors"]), result
 
 
 @pytest.mark.parametrize(

@@ -26,6 +26,11 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 CASE = "p6-h10-mpi1"
 LEVELS = (6, 2, 1)
 PAIRS = ((6, 2), (2, 1))
+TRANSFER_COUNT_KEYS = tuple(
+    f"transfer_{fine}_{coarse}_{kind}_total"
+    for fine, coarse in PAIRS
+    for kind in ("primal", "adjoint")
+)
 SOURCES = ("random", "gradient", "curl", "checkerboard")
 MPI_SIZE = 1
 DEGREE = 6
@@ -143,6 +148,21 @@ def _hex64(value: Any) -> bool:
 
 def _close(left: Any, right: Any, tolerance: float = 1.0e-12) -> bool:
     return _finite(left) and _finite(right) and abs(float(left) - float(right)) <= tolerance
+
+
+def _transfer_counts_closed(value: Any, expected: Any) -> bool:
+    return (
+        isinstance(value, dict)
+        and isinstance(expected, int)
+        and not isinstance(expected, bool)
+        and set(value) == set(TRANSFER_COUNT_KEYS)
+        and all(
+            isinstance(value[key], int)
+            and not isinstance(value[key], bool)
+            and value[key] == expected
+            for key in TRANSFER_COUNT_KEYS
+        )
+    )
 
 
 def _path_inside(path: Path, root: Path) -> bool:
@@ -456,12 +476,39 @@ def _check_architecture(record: dict[str, Any], errors: list[str]) -> None:
     positive_ints = ("matrix_rows", "matrix_cols", "matrix_nnz", "factor_matrix_nnz", "setup_count")
     if factor.get("backend") != "petsc-preonly-lu-mumps" or factor.get("factor_solver_type") != "mumps" or any(not isinstance(factor.get(key), int) or factor[key] <= 0 for key in positive_ints):
         errors.append("p1 factor matrix/setup facts are incomplete")
-    if factor.get("petsc_reported_factor_memory_available") is not True:
-        errors.append("PETSc-reported p1 factor memory is unavailable")
+    available = factor.get("petsc_reported_factor_memory_available")
     local = factor.get("petsc_reported_factor_memory_local_bytes")
     global_value = factor.get("petsc_reported_factor_memory_global_bytes")
-    if not isinstance(local, int) or local <= 0 or global_value != local or factor.get("petsc_reported_factor_memory_bytes") != local:
-        errors.append("p1 factor local/global memory facts are not closed")
+    summary = factor.get("petsc_reported_factor_memory_bytes")
+    ledger = record.get("retained_ledger", {})
+    route = ledger.get("route_b", {}) if isinstance(ledger, dict) else {}
+    route_known = route.get("known_bytes") if isinstance(route, dict) else None
+    known = ledger.get("known_bytes") if isinstance(ledger, dict) else None
+    memory_values = (local, global_value, summary)
+    if not isinstance(available, bool):
+        errors.append("p1 factor memory availability flag is missing or not boolean")
+    elif available:
+        if any(not isinstance(value, int) or isinstance(value, bool) or value <= 0 for value in memory_values) or global_value != local or summary != local:
+            errors.append("available p1 factor memory facts are not positive and closed")
+        if (
+            not isinstance(route_known, dict)
+            or not isinstance(known, dict)
+            or route.get("p1_factor_memory_bytes") != local
+            or route_known.get("p1_factor_memory_bytes") != local
+            or known.get("p1_factor_memory_bytes") != local
+        ):
+            errors.append("available p1 factor memory is missing from the Route-B ledger")
+    else:
+        if any(not isinstance(value, int) or isinstance(value, bool) or value != 0 for value in memory_values):
+            errors.append("unavailable p1 factor memory facts must be explicit zero")
+        if (
+            not isinstance(route_known, dict)
+            or not isinstance(known, dict)
+            or route.get("p1_factor_memory_bytes") != 0
+            or "p1_factor_memory_bytes" in route_known
+            or "p1_factor_memory_bytes" in known
+        ):
+            errors.append("unavailable p1 factor memory must remain in the unattributed remainder")
     stage = record.get("stage_facts", {})
     if factor.get("solve_count") != stage.get("p1_solve_count"):
         errors.append("p1 factor solve count does not close the stage count")
@@ -530,8 +577,8 @@ def _check_setup(record: dict[str, Any], errors: list[str], gates: list[str]) ->
         errors.append("setup does not contain the fixed ten apply labels/count")
     if stage.get("p1_solve_count") != 10:
         errors.append("setup p1 solve count is not exactly ten")
-    transfer_counts = stage.get("transfer_counts", {})
-    if any(transfer_counts.get(f"{a}_{b}_{kind}") != 10 for a, b in PAIRS for kind in ("primal", "adjoint")):
+    transfer_counts = stage.get("transfer_counts")
+    if not _transfer_counts_closed(transfer_counts, 10):
         errors.append("setup transfer aggregate counts are not exactly ten")
     if stage.get("outer_ksp_create_count") != 0 or stage.get("outer_ksp_destroy_count") != 0:
         errors.append("setup unexpectedly created an outer KSP")
@@ -695,8 +742,8 @@ def _check_positive(record: dict[str, Any], raw_dir: Path, errors: list[str], ga
         errors.append("positive V-cycle/p1 counts do not close over PC applications")
     if stage.get("explicit_action_count") != stage.get("ksp_create_count", -1) + 4 or stage.get("rhs_action_count") != 1 or stage.get("final_action_recheck_count") != 1 or stage.get("rhs_repeat_action_count") != 1:
         errors.append("positive explicit action count does not close initial/repeat/cycle/final actions")
-    transfer_counts = stage.get("transfer_counts", {})
-    if any(transfer_counts.get(f"{a}_{b}_{kind}") != stage.get("pc_apply_count") for a, b in PAIRS for kind in ("primal", "adjoint")):
+    transfer_counts = stage.get("transfer_counts")
+    if not _transfer_counts_closed(transfer_counts, stage.get("pc_apply_count")):
         errors.append("positive cumulative transfer counts do not close")
     if not _finite(stage.get("max_p1_relative_residual")) or float(stage["max_p1_relative_residual"]) > 1.0e-11:
         gates.append("numerical: positive maximum p1 residual exceeded 1e-11")
