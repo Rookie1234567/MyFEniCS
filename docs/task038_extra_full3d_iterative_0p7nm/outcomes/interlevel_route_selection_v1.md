@@ -2,15 +2,19 @@
 
 ## 当前结论
 
-R0 只冻结下一阶段的审计合同，并检查证据身份；它没有运行新的矩阵、谱计算、MPI、PDE 或 S5 重跑。因此当前结论是：`CONTRACT_READY / measured-not-run`。这表示“规则已经写清楚并可由独立 checker 重算”，不表示 Route A、B 或 C 已通过。
+R0 的合同、阈值和历史证据仍然冻结；R0 本身仍是 `CONTRACT_READY / measured-not-run`。截至 R3，Route B 已完成一次独立的 p6/h10/MPI1 结构资格审计并通过，但这不是正定求解器或 PDE 通过，也不改变旧 S5 负结果。
 
-| 项目 | R0 状态 | 边界 |
+| 项目 | 截至 R3 的状态 | 边界 |
 | --- | --- | --- |
-| Route A：p6→p3 的固定谱审计 | `not_run` | 只能在 R1 获准后测量 |
-| Route B | `conditional_not_run` | 只有 Route A Gate 失败后才可进入 |
-| Route C | `conditional_not_run` | 只有 Route A、B 都失败后才可进入 |
-| R2 正定 GMRES | `not_run` | 只有 Route A 全部 Gate 通过后才可进入 |
-| heavy/MPI/PDE | `not_run` | 本轮明确禁止 |
+| R0 contract freeze | `CONTRACT_READY / measured-not-run` | 保留 R0 规则；不代表任何路线通过 |
+| Route A：p6→p3 固定谱审计 | `CLOSED_BY_INTERLEVEL_SPECTRAL_GATE` | 首次 shape-contract invalid 与修正后的有效 checker 结论均保留；唯一真实 Gate 是 gradient global adjoint |
+| Route B v1 | `CONTRACT_INVALID` | canonical watchdog command mismatch 与 p21 compact NNZ authority 缺失；不重分类 |
+| Route B v2 | `STRUCTURALLY_QUALIFIED` | 可进入 R4 审核边界；不是 positive solver pass |
+| 当前 route_B | `STRUCTURALLY_QUALIFIED_FOR_R4` | `selected_hierarchy=NOT_SELECTED` |
+| Route C | `not_run_by_gate` | 未进入 |
+| R4 | `authorized_pending / not_run` | R3 已放行，尚未执行 |
+| R5–R7 | `not_run_by_gate` | Route B 尚未失败，Route C 未进入 |
+| R8–R12 | `not_run_by_gate` | 需 R4 positive hierarchy 通过后条件进入 |
 
 ## 这份合同要解决什么问题
 
@@ -53,6 +57,59 @@ R0 只固定定义和门槛；没有填写任何 `q`、特征值或 rank 的实�
 | `finite` | 有限性事实 |
 
 Route A 失败时，冻结 A 的失败事实并按顺序考虑 Route B；Route A 全部通过时，下一步只能是 R2。R0 不实现这两个后续动作，也不预填它们的结果。
+
+## 截至 R3 的权威状态
+
+下面的状态是对 R0 合同的追加冻结，不覆盖任何旧 record/checker。Route B 的“结构资格”只表示 transfer、局部谱和 owner-packet 证据闭合，不能被理解为已经完成 PDE、长 Krylov 或正定求解器资格。
+
+### Route A：已关闭的 p6→p3 路线
+
+正式 raw source SHA 为 `083869115abe398288360b034bb9762c90838437`。第一次 checker 的 shape-contract invalid 原样保留；修正 shape authority 后的有效 checker 结论为 `CLOSED_BY_INTERLEVEL_SPECTRAL_GATE`，不能把前者删除或把后者改成通过。
+
+| Route A 事实 | 实测值/状态 |
+| --- | --- |
+| material classes | 10 个；class/inventory 证据完整 |
+| process-tree peak / swap | `1,397,800,960 B` / `0 B`，资源通过 |
+| 唯一真实数值 Gate | gradient global adjoint `2.8964367576123248e-11 > 1e-12` |
+| 结论 | `CLOSED_BY_INTERLEVEL_SPECTRAL_GATE` |
+
+这次失败不是资源失败，也没有重分类 V11 S5。V11 S5 的 6→3 exact-energy negative 仍永久为 `0.04115402900674629 > 1e-9`；3→1 的 `2.7851655955739857e-15` 仍只是同一旧审计中的通过项。
+
+### Route B v1：保留的无效尝试
+
+Route B v1 的两个 tracked compact record/checker 保持 `CONTRACT_INVALID`。原因是 canonical watchdog command mismatch，以及 p21 compact 中缺少实际 NNZ authority。该次尝试观察到的普通 `np.vdot` gradient raw diagnostic 为 `1.2478518260614706e-11`；它只属于这个 invalid attempt，不能当作 Route B v2 结论，也没有放宽任何 Gate。
+
+### Route B v2：结构资格通过
+
+Route B v2 使用 source SHA `91e27ebb4bdcf9de302c12cc5a19ae8eaa78b8c1`，candidate 为 `lor_edge_geometric_mg_6_2_1_nested_v1`，levels 为 `6→2→1`，pairs 为 `6→2` 与 `2→1`。独立 checker 结论为 `STRUCTURALLY_QUALIFIED`，所有 contract、spectral 和 lifecycle errors/gates 为空。
+
+| 项目 | Route B v2 实测摘要 |
+| --- | --- |
+| exact material classes | `10/10`，全部 rank `54`，覆盖 air/substrate/grating |
+| lambda min / max | `0.9999999999999957–0.9999999999999972` / `1.0000000000000022–1.0000000000000036` |
+| spectral condition | `1.0000000000000056–1.000000000000007` |
+| endpoint residual | 最大 `3.899736900063366e-15` |
+| nested energy relative | `3.432582537434375e-16–4.326247611440155e-16` |
+| 6→2 local map | edge `882×54`, NNZ `2178`；node `343×27`，NNZ `1331` |
+| 2→1 local map | edge `54×12`，NNZ `96`；node `27×8`，NNZ `216` |
+| 6→2 local identities | line `1.3088791445326982e-16`、curl `3.938121244967759e-16`、gradient `5.659676773682285e-17`、adjoint `1.7761352040861508e-15` |
+| 2→1 local identities | line `3.0764064324107323e-16`、curl `6.976907435801284e-16`、gradient `1.0759403332071913e-15`、adjoint `1.0777112852233726e-16` |
+| global probes | 固定六源的 `q` 范围 `0.9999999999999725–1.000000000000014`；最大 adjoint relative `2.1526744277731597e-13`；最大 energy relative `2.7628585938262692e-14`；repeat `0` |
+| owner probe | adjoint `2.625232868301171e-18`、linearity `1.2732475304017576e-16`、repeat `0` |
+| watchdog | peak `1,294,950,400 B`、swap `0 B`、natural exit、no orphan |
+
+六个 global probe 的固定顺序仍为 `random`、`gradient`、`curl`、`checkerboard`、`physical_component_derived`、`r3_long_tail_derived`；所有 probe finite、input unchanged、phase-once、linearity 和 repeat 事实均通过。R3 long-tail 输入绑定 manifest SHA `62c7824e1032b1a14078d158b0e403b9087dc862bf00386fdce08535e4d76dce`。
+
+Route B v2 的正式 record/checker 为：
+
+- `outcomes/records/lor_edge_geometric_mg_r3_route_b_v2.json`，SHA256 `4c3f9f23f22bc9e20cef8992d99db86f8eda159951b78b016685214bbc274b68`；
+- `outcomes/records/lor_edge_geometric_mg_r3_route_b_v2_checker.json`，SHA256 `c48b91a1d6d395e52707a7b680f0227ef4794cfaf1589af8a9ea9627c466fadf`。
+
+ignored artifact root 为 `benchmarks/artifacts/task038_extra_full3d_interlevel_spectral_r3_route_b_v2/91e27ebb4bdcf9de302c12cc5a19ae8eaa78b8c1/p6-h10-mpi1/`。其中 watchdog raw/compact/log/worker NPZ 的 SHA256 依次为：`e876c42e83472ab0bed998d185c3629c661a8b285ce93c9f192f8b3a4f0456a2`、`bec9aae08b5b2a2bb130ddc1ba4d198062b5d753dd020880084e1fe2dca511d4`、`e13d3496e6c68adc8c838ae47c80689f1a716220c99dd628ff91ca9a66045be9`、`7296bac69bb8a46a878661a86e18eac99f5246e6eda71a5b28e5dbe7fdd2fa8c`。
+
+`current route_B=STRUCTURALLY_QUALIFIED_FOR_R4` 只表示满足进入 R4 审阅的结构前置条件；`selected_hierarchy=NOT_SELECTED`。R4 为 `authorized_pending / not_run`，R5–R7 和 R8–R12 为 `not_run_by_gate`，Route C 未进入。R4 尚未运行四类最终求解，因此不能写成 `POSITIVE_AUXILIARY_PASS` 或 solver/PDE pass。
+
+Route B 的 compensated summation 只用于 Route B 内积归约，固定 `1e-11` adjoint Gate 没有放宽；Route A 仍使用原 `np.vdot` 测量语义。
 
 ## 不可变历史证据
 
