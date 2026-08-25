@@ -1121,6 +1121,19 @@ def _emit(
         callback(stage, detail)
 
 
+def _forward_v5_marker(
+    callback: Callable[[str, Mapping[str, Any]], None] | None,
+    event_stage: str,
+    detail: Mapping[str, Any],
+) -> None:
+    """Forward V5 marker detail without colliding with the event stage key."""
+
+    payload = dict(detail)
+    if "stage" in payload:
+        payload["identity_stage"] = payload.pop("stage")
+    _emit(callback, event_stage, **payload)
+
+
 def _v2_collective_stage_error(
     comm: MPI.Intracomm,
     stage: str,
@@ -4918,7 +4931,7 @@ def run_task040_level_a(
                 else str(current_resolved_config_sha256)
             ),
             marker_callback=(
-                lambda stage, detail: _emit(marker_callback, stage, **dict(detail))
+                lambda stage, detail: _forward_v5_marker(marker_callback, stage, detail)
             ),
             comm=comm,
         )

@@ -549,6 +549,21 @@ def test_v5_identity_preflight_binds_distinct_resolved_and_legacy_hashes(
     assert result["checks"]["external_mode_legacy_beta_metadata_sha256"] is True
 
 
+def test_v5_marker_forwarding_separates_event_and_identity_stage() -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+    level_a._forward_v5_marker(
+        lambda stage, detail: events.append((stage, dict(detail))),
+        "v5_bare_f_identity_stop",
+        {"stage": "source_mapping", "factor_count": 0},
+    )
+    assert events == [
+        (
+            "v5_bare_f_identity_stop",
+            {"identity_stage": "source_mapping", "factor_count": 0},
+        )
+    ]
+
+
 def test_external_mode_authority_validator_does_not_swallow_implementation_error(
     monkeypatch,
 ) -> None:
