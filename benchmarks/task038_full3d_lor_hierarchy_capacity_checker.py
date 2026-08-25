@@ -73,6 +73,9 @@ LOCAL_LEGALITY_FACTS = (
     "edge_line_integral_relative", "curl_flux_relative", "gradient_commuting_relative",
     "node_transfer_relative", "adjoint_work_relative", "linearity_relative",
     "repeat_relative", "line_integral_histopolation", "simple_injection",
+    "structural_projection", "structural_forbidden_entry_count",
+    "structural_forbidden_nnz_after", "structural_removed_nonzero_count",
+    "structural_removed_max_abs",
 )
 
 
@@ -135,6 +138,37 @@ def _finite_number(value: Any) -> bool:
 
 def _positive_int(value: Any) -> bool:
     return type(value) is int and value > 0
+
+
+def _check_structural_local_legality(
+    value: Any, label: str, errors: list[str]
+) -> None:
+    if not isinstance(value, dict):
+        errors.append(f"{label} structural audit is missing")
+        return
+    _error(errors, value.get("structural_projection") is not True,
+           f"{label} structural projection is not enabled")
+    forbidden_count = value.get("structural_forbidden_entry_count")
+    _error(errors, type(forbidden_count) is not int or forbidden_count <= 0,
+           f"{label} structural forbidden entry count is invalid")
+    _error(errors, value.get("structural_forbidden_nnz_after") != 0,
+           f"{label} structural forbidden entries are not exact zero")
+    removed_count = value.get("structural_removed_nonzero_count")
+    _error(errors, type(removed_count) is not int or removed_count < 0 or (
+        type(forbidden_count) is int
+        and (removed_count > forbidden_count)
+    ), f"{label} structural removed count is invalid")
+    removed_max_abs = value.get("structural_removed_max_abs")
+    removed_max_finite = _finite_number(removed_max_abs)
+    _error(errors, not removed_max_finite or float(removed_max_abs) < 0.0,
+           f"{label} structural removed maximum is invalid")
+    if (
+        type(removed_count) is int
+        and removed_max_finite
+        and float(removed_max_abs) >= 0.0
+    ):
+        _error(errors, (removed_count == 0) != (float(removed_max_abs) == 0.0),
+               f"{label} structural removal facts are not closed")
 
 
 def _array(data: dict[str, np.ndarray], key: str, errors: list[str]) -> np.ndarray | None:
@@ -653,6 +687,11 @@ def _check_record(record_path: Path, watchdog_path: Path, expected_sha: str) -> 
         for key in LOCAL_MAP_FACTS:
             _error(errors, not _positive_int(local.get(key)), f"transfer {name} local map missing: {key}")
         _error(errors, transfer.get("global_transfer_matrix") is not False or transfer.get("numeric_allgather") is not False, f"transfer {name} is not implicit")
+        _check_structural_local_legality(
+            transfer.get("local_transfer"),
+            f"transfer {name}",
+            errors,
+        )
         arrays = transfer.get("local_transfer_arrays", {})
         _error(errors, not isinstance(arrays, dict), f"transfer {name} local array descriptors are missing")
         if isinstance(arrays, dict):

@@ -147,7 +147,11 @@ def _fingerprint_payload() -> dict:
                 "gradient_commuting_relative": 0.0, "node_transfer_relative": 0.0,
                 "adjoint_work_relative": 0.0, "linearity_relative": 0.0,
                 "repeat_relative": 0.0, "line_integral_histopolation": True,
-                "simple_injection": False}
+                "simple_injection": False, "structural_projection": True,
+                "structural_forbidden_entry_count": 12,
+                "structural_forbidden_nnz_after": 0,
+                "structural_removed_nonzero_count": 1,
+                "structural_removed_max_abs": 0.25}
     transfers = {
         name: {"pair": list(pair), "local_map": dict(local_map),
                "edge_transfer": descriptor, "node_transfer": descriptor,
@@ -199,6 +203,11 @@ def _valid_case(tmp_path: Path):
         "linearity_relative": 0.0, "repeat_relative": 0.0,
         "finite": True, "input_unchanged": True,
         "line_integral_histopolation": True, "simple_injection": False,
+        "structural_projection": True,
+        "structural_forbidden_entry_count": 12,
+        "structural_forbidden_nnz_after": 0,
+        "structural_removed_nonzero_count": 1,
+        "structural_removed_max_abs": 0.25,
     }
     edge_descriptor = runner._array_descriptor(np.array([[1.0 + 0.0j, 0.5j]], dtype=np.complex128))
     transfers = {
@@ -314,7 +323,7 @@ def test_valid_record_and_checker_pass(tmp_path):
     assert result["classification"] == "P6_LOR_EDGE_HIERARCHY_RESOURCE_PASS_WITH_COARSE_SOLVER_OPEN"
 
 
-@pytest.mark.parametrize("mutation", ("energy", "adjoint", "factor", "fingerprint", "marker"))
+@pytest.mark.parametrize("mutation", ("energy", "adjoint", "factor", "fingerprint", "marker", "structural"))
 def test_representative_contract_mutations_fail_closed(tmp_path, mutation):
     record_path, compact, _raw, record, _compact_value = _valid_case(tmp_path)
     if mutation == "energy":
@@ -325,11 +334,22 @@ def test_representative_contract_mutations_fail_closed(tmp_path, mutation):
         record["architecture"]["forbidden"]["p6_exact_factor"] = True
     elif mutation == "fingerprint":
         record["fingerprint"]["rebuild"]["sha256"] = "b" * 64
+    elif mutation == "structural":
+        for transfer in record["architecture"]["transfers"].values():
+            transfer["local_transfer"]["structural_forbidden_nnz_after"] = 1
+        for name in ("first", "rebuild"):
+            payload = record["fingerprint"][name]["payload"]
+            for transfer in payload["transfers"].values():
+                transfer["local_legality"]["structural_forbidden_nnz_after"] = 1
+            record["fingerprint"][name]["sha256"] = runner._semantic_sha256(payload)
+        record["fingerprint"]["exact_identity"] = True
     else:
         (Path(record["raw_dir"]) / "markers" / "probes_complete.json").unlink()
     record_path.write_text(json.dumps(record, allow_nan=False) + "\n", encoding="utf-8")
     result = checker.check_record(record_path, compact, SOURCE_SHA)
     assert not result["passed"]
+    if mutation == "structural":
+        assert result["classification"] == "CONTRACT_INVALID"
 
 
 @pytest.mark.parametrize("field,value", (("rss", checker.COLD_LIMIT), ("retained", checker.RETAINED_LIMIT), ("swap", 1)))

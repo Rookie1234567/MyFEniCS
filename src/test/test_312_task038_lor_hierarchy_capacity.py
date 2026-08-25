@@ -201,17 +201,17 @@ def test_mutated_map_fails_independent_audit(
         )
 
 
-def test_forbidden_entry_fails_exact_zero_audit() -> None:
-    transfer = build_local_interlevel_edge_transfer(6, 3)
+def test_forbidden_entry_fails_exact_zero_audit(interlevel) -> None:
+    fine_degree, coarse_degree, transfer = interlevel
     bad_edge = transfer.edge_transfer.copy()
     forbidden_row, forbidden_column = np.argwhere(
-        ~_structural_trace_mask(6, 3)
+        ~_structural_trace_mask(fine_degree, coarse_degree)
     )[0]
     bad_edge[forbidden_row, forbidden_column] = 0.125 + 0.25j
     with pytest.raises(ValueError, match="structural forbidden"):
         audit_local_interlevel_transfer(
-            6,
-            3,
+            fine_degree,
+            coarse_degree,
             bad_edge,
             transfer.node_transfer,
         )

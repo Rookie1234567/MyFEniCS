@@ -341,7 +341,11 @@ def _fingerprint(extension: Any) -> tuple[str, dict[str, Any]]:
         legality_keys = ("edge_line_integral_relative", "curl_flux_relative",
                          "gradient_commuting_relative", "node_transfer_relative",
                          "adjoint_work_relative", "linearity_relative", "repeat_relative",
-                         "line_integral_histopolation", "simple_injection")
+                         "line_integral_histopolation", "simple_injection",
+                         "structural_projection", "structural_forbidden_entry_count",
+                         "structural_forbidden_nnz_after",
+                         "structural_removed_nonzero_count",
+                         "structural_removed_max_abs")
         return {"pair": [int(audit["pair"][0]), int(audit["pair"][1])],
                 "local_map": {key: local[key] for key in local_keys},
                 "edge_transfer": _array_descriptor(transfer.local_transfer.edge_transfer),
