@@ -322,9 +322,11 @@ def _synthetic_external_mode_authority() -> tuple[
         "canonical_keys": keys,
         "beta_metadata": records,
         "canonical_key_list_sha256": authority.canonical_mode_keys_sha256(keys),
-        "beta_metadata_sha256": authority.canonical_external_mode_metadata_sha256(
+        "resolved_mode_metadata_sha256": authority.canonical_external_mode_metadata_sha256(
             records
         ),
+        "legacy_beta_metadata_sha256": "a" * 64,
+        "legacy_beta_metadata_sha256_expected": "a" * 64,
         "resolved_config_sha256": "e" * 64,
         "current_resolved_config_sha256": "e" * 64,
         "index177_key": keys[177],
@@ -341,6 +343,10 @@ def test_external_mode_authority_validator_rejects_key_order_beta_index_and_hash
         current_resolved_config_sha256=expected["current_resolved_config_sha256"],
     )
     assert audit["pass"] is True
+    assert (
+        expected["resolved_mode_metadata_sha256"]
+        != expected["legacy_beta_metadata_sha256"]
+    )
     mutations: list[tuple[dict[str, object], str]] = []
     reordered = copy.deepcopy(expected)
     reordered["canonical_keys"] = tuple(reversed(reordered["canonical_keys"]))
@@ -352,14 +358,19 @@ def test_external_mode_authority_validator_rejects_key_order_beta_index_and_hash
     index_changed = copy.deepcopy(expected)
     index_changed["index177_key"] = {"side": "bottom", "m": -1}
     mutations.append((index_changed, "index177_key"))
-    for field in (
-        "canonical_key_list_sha256",
-        "beta_metadata_sha256",
-        "resolved_config_sha256",
+    for field, check_name in (
+        ("canonical_key_list_sha256", "canonical_key_list_sha256"),
+        ("resolved_mode_metadata_sha256", "resolved_mode_metadata_sha256"),
+        ("legacy_beta_metadata_sha256", "legacy_beta_metadata_sha256"),
+        (
+            "legacy_beta_metadata_sha256_expected",
+            "legacy_beta_metadata_sha256",
+        ),
+        ("resolved_config_sha256", "resolved_config_sha256"),
     ):
         changed = copy.deepcopy(expected)
         changed[field] = "0" * 64
-        mutations.append((changed, field))
+        mutations.append((changed, check_name))
     for mutation, check_name in mutations:
         with pytest.raises(authority.ExternalModeAuthorityIdentityError) as exc_info:
             authority.validate_external_mode_authority(
@@ -370,6 +381,69 @@ def test_external_mode_authority_validator_rejects_key_order_beta_index_and_hash
                 ],
             )
         assert exc_info.value.checks[check_name] is False
+
+
+def test_v5_identity_preflight_binds_distinct_resolved_and_legacy_hashes(
+    monkeypatch,
+) -> None:
+    def fake_git_run(arguments, **_kwargs):
+        command = tuple(arguments[1:])
+        outputs = {
+            ("rev-parse", "HEAD"): "a" * 40,
+            ("symbolic-ref", "--short", "HEAD"): level_a.TASK040_V4_FROZEN_BRANCH,
+            (
+                "rev-parse",
+                "--abbrev-ref",
+                "--symbolic-full-name",
+                "@{upstream}",
+            ): f"origin/{level_a.TASK040_V4_FROZEN_BRANCH}",
+            ("rev-parse", "@{upstream}"): "a" * 40,
+            ("rev-list", "--left-right", "--count", "HEAD...@{upstream}"): "0 0",
+            ("status", "--porcelain", "--untracked-files=all"): "",
+        }
+        return SimpleNamespace(stdout=outputs[command])
+
+    monkeypatch.setattr(level_a.subprocess, "run", fake_git_run)
+    monkeypatch.setattr(
+        level_a,
+        "_v5_runtime_environment_preflight",
+        lambda _comm, **_kwargs: {
+            "pass": True,
+            "checks": {
+                "mpi_size": True,
+                "petsc_scalar_complex128": True,
+                "petsc_int_type_recorded": True,
+                "qualified_activation": True,
+                "repository_venv_executable": True,
+                "threads_one": True,
+                "process_tree_watchdog_enabled": True,
+                "bottom_route_only": True,
+            },
+            "ranks": [{}],
+        },
+    )
+    result = level_a._v5_authority_identity_preflight(
+        comm=MPI.COMM_SELF,
+        input_path=(
+            Path("input/official/task039/")
+            / "5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+        ),
+        input_sha256=level_a.TASK040_V1_2_INPUT_SHA256,
+        physical_model_sha256=level_a.TASK040_V1_2_PHYSICAL_MODEL_SHA256,
+        source_sha="a" * 40,
+        watchdog_enabled=True,
+        bottom_route_only=True,
+    )
+    assert (
+        result["observed"]["external_mode_resolved_mode_metadata_sha256"]
+        == level_a.TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256
+    )
+    assert (
+        result["observed"]["external_mode_legacy_beta_metadata_sha256"]
+        == level_a.TASK040_V1_2_LOWER_LEGACY_BETA_METADATA_SHA256
+    )
+    assert result["checks"]["external_mode_resolved_mode_metadata_sha256"] is True
+    assert result["checks"]["external_mode_legacy_beta_metadata_sha256"] is True
 
 
 def test_external_mode_authority_validator_does_not_swallow_implementation_error(

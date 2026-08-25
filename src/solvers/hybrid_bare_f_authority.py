@@ -393,7 +393,12 @@ def validate_external_mode_authority(
     observed = {
         "count": len(records),
         "canonical_key_list_sha256": canonical_mode_keys_sha256(keys),
-        "beta_metadata_sha256": canonical_external_mode_metadata_sha256(records),
+        "resolved_mode_metadata_sha256": canonical_external_mode_metadata_sha256(
+            records
+        ),
+        "legacy_beta_metadata_sha256": str(
+            authority["legacy_beta_metadata_sha256"]
+        ),
         "index177_key": keys[177] if len(keys) > 177 else None,
         "resolved_config_sha256": current_resolved_config_sha256,
     }
@@ -402,7 +407,12 @@ def validate_external_mode_authority(
     expected = {
         "count": int(authority["count"]),
         "canonical_key_list_sha256": str(authority["canonical_key_list_sha256"]),
-        "beta_metadata_sha256": str(authority["beta_metadata_sha256"]),
+        "resolved_mode_metadata_sha256": str(
+            authority["resolved_mode_metadata_sha256"]
+        ),
+        "legacy_beta_metadata_sha256": str(
+            authority["legacy_beta_metadata_sha256_expected"]
+        ),
         "resolved_config_sha256": expected_resolved_config_sha256,
         "index177_key": authority["index177_key"],
     }
@@ -414,8 +424,15 @@ def validate_external_mode_authority(
             == expected["canonical_key_list_sha256"]
         ),
         "beta_metadata": records == expected_records,
-        "beta_metadata_sha256": (
-            observed["beta_metadata_sha256"] == expected["beta_metadata_sha256"]
+        "resolved_mode_metadata_sha256": (
+            observed["resolved_mode_metadata_sha256"]
+            == expected["resolved_mode_metadata_sha256"]
+        ),
+        "legacy_beta_metadata_sha256": (
+            _is_valid_sha256_text(observed["legacy_beta_metadata_sha256"])
+            and _is_valid_sha256_text(expected["legacy_beta_metadata_sha256"])
+            and observed["legacy_beta_metadata_sha256"]
+            == expected["legacy_beta_metadata_sha256"]
         ),
         "index177_key": observed["index177_key"] == expected["index177_key"],
         "resolved_config_sha256": (

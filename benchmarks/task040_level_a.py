@@ -163,6 +163,9 @@ TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256 = (
 TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256 = (
     "dde523dc62c73f7bd50953958fde42d42d0cfd5756c16329b16915e13c4742da"
 )
+TASK040_V1_2_LOWER_LEGACY_BETA_METADATA_SHA256 = (
+    "a58a3c6bc335bb5ae7f6b929a7abce4c193dedb27b115f17304091afb353318c"
+)
 TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG = "--v2-interface-packet-producer"
 TASK040_V2_INTERFACE_PACKET_METHOD = "task040_v2_interface_packet_producer"
 TASK040_V2_INTERFACE_PACKET_SCHEMA = "task040.v2.interface_packet_producer.v1"
@@ -271,6 +274,7 @@ __all__ = (
     "TASK040_V1_2_SELECTED_MANIFEST_SHA256",
     "TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256",
     "TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256",
+    "TASK040_V1_2_LOWER_LEGACY_BETA_METADATA_SHA256",
     "build_task040_level_a_plan",
     "level_a_bottom_beta",
     "run_task040_level_a",
@@ -883,7 +887,15 @@ def _v5_authority_identity_preflight(
             "canonical_key_list_sha256": str(
                 lower_authority["canonical_key_list_sha256"]
             ),
-            "beta_metadata_sha256": str(lower_authority["beta_metadata_sha256"]),
+            "resolved_mode_metadata_sha256": canonical_external_mode_metadata_sha256(
+                bottom_metadata
+            ),
+            "legacy_beta_metadata_sha256": str(
+                lower_authority["beta_metadata_sha256"]
+            ),
+            "legacy_beta_metadata_sha256_expected": (
+                TASK040_V1_2_LOWER_LEGACY_BETA_METADATA_SHA256
+            ),
             "resolved_config_sha256": resolved_sha256,
             "index177_key": bottom_keys[177] if len(bottom_keys) > 177 else None,
         }
@@ -895,8 +907,11 @@ def _v5_authority_identity_preflight(
                 "external_mode_key_list_sha256": canonical_mode_keys_sha256(
                     bottom_keys
                 ),
-                "external_mode_beta_metadata_sha256": (
+                "external_mode_resolved_mode_metadata_sha256": (
                     canonical_external_mode_metadata_sha256(bottom_metadata)
+                ),
+                "external_mode_legacy_beta_metadata_sha256": str(
+                    lower_authority["beta_metadata_sha256"]
                 ),
                 "external_mode_index177_key": external_mode_authority["index177_key"],
             }
@@ -920,10 +935,17 @@ def _v5_authority_identity_preflight(
             == "046afb0b3d3531f728dc958c1b0c8a321ffa51fb8a0e6ecf6834d462d5ab37e5",
         )
         check(
-            "external_mode_beta_metadata_sha256",
-            observed["external_mode_beta_metadata_sha256"]
-            == str(lower_authority["beta_metadata_sha256"])
-            == "a58a3c6bc335bb5ae7f6b929a7abce4c193dedb27b115f17304091afb353318c",
+            "external_mode_resolved_mode_metadata_sha256",
+            observed["external_mode_resolved_mode_metadata_sha256"]
+            == str(external_mode_authority["resolved_mode_metadata_sha256"])
+            == TASK040_V1_2_LOWER_RESOLVED_MODE_METADATA_SHA256,
+        )
+        check(
+            "external_mode_legacy_beta_metadata_sha256",
+            observed["external_mode_legacy_beta_metadata_sha256"]
+            == str(external_mode_authority["legacy_beta_metadata_sha256"])
+            == str(external_mode_authority["legacy_beta_metadata_sha256_expected"])
+            == TASK040_V1_2_LOWER_LEGACY_BETA_METADATA_SHA256,
         )
         check(
             "external_mode_resolved_authority_sha256",
