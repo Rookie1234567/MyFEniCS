@@ -173,6 +173,7 @@ def _transfer_record_facts(transfer: Any) -> dict[str, Any]:
     }
     return facts
 def _action_probe(level: Any, arrays: dict[str, Any], prefix: str = "a") -> dict[str, Any]:
+    import numpy as np
     matrix = level.matrix
     source = matrix.createVecRight()
     out1 = matrix.createVecLeft()

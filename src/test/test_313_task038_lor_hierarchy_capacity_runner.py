@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -25,6 +26,8 @@ def _sha(path: Path) -> str:
 
 
 def _digest(value: np.ndarray) -> str:
+    if hasattr(value, "getArray"):
+        value = value.getArray(readonly=True)
     return hashlib.sha256(np.ascontiguousarray(value, dtype=np.complex128).view(np.uint8)).hexdigest()
 
 
@@ -383,6 +386,53 @@ def test_runner_checker_semantic_hash_is_identical():
     assert runner._semantic_sha256(payload) != hashlib.sha256(
         runner._semantic_bytes(payload) + b"\n"
     ).hexdigest()
+
+
+def test_action_probe_executes_with_local_numpy_and_real_action_facts(monkeypatch):
+    class FakeVec:
+        def __init__(self):
+            self.array = np.zeros(3, dtype=np.complex128)
+            self.destroyed = False
+
+        def getOwnershipRange(self):
+            return 0, self.array.size
+
+        def assemble(self):
+            return None
+
+        def getArray(self, readonly=True):
+            return self.array
+
+        def destroy(self):
+            self.destroyed = True
+
+    class FakeMatrix:
+        def __init__(self):
+            self.vectors = []
+
+        def createVecRight(self):
+            vector = FakeVec()
+            self.vectors.append(vector)
+            return vector
+
+        def createVecLeft(self):
+            vector = FakeVec()
+            self.vectors.append(vector)
+            return vector
+
+        def mult(self, source, target):
+            target.array[:] = 2.0 * source.array
+
+    monkeypatch.setattr(runner, "_vector_digest", _digest, raising=False)
+    matrix = FakeMatrix()
+    arrays = {}
+    facts = runner._action_probe(SimpleNamespace(degree=6, matrix=matrix), arrays)
+
+    assert facts["finite"] is True
+    assert facts["diff_norm"] == 0.0
+    assert facts["input_unchanged"] is True
+    assert set(arrays) == {"a6_input", "a6_out1", "a6_out2"}
+    assert all(vector.destroyed for vector in matrix.vectors)
 
 
 def test_semantic_tree_nested_mapping_is_deterministic_and_rejects_object():
