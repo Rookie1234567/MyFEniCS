@@ -63,6 +63,7 @@ ordinary_default_changed = false
 pde_run_in_v4            = false
 ```
 
-Case104 不能证明 0.7 nm production 可行，也不能证明旧 vectors 数值错误。若继续 V5，首步
-只能在新的 review 授权下建立 hash-bound、可逆、覆盖完整、Floquet-consistent 且 round-trip
-通过的 source-row 到 canonical key bridge；在此之前不运行 V4-2 至 V4-10 后续路线。
+Case104 不能证明 0.7 nm production 可行，也不能证明旧 vectors 数值错误。若继续 V5，应按
+当前 Review V5 先完成 operator-semantics audit，再做 fresh current-layout bottom bare-F
+authority；旧 raw-row remap 仍禁止，旧 source-row bridge 不再是主路线。当前 V4-2 至 V4-10
+仍保持 `not_run_by_v4_1_identity_gate`，后续路线须服从新 authority 的 Gate。
