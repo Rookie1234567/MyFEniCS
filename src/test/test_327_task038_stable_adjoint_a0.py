@@ -213,8 +213,19 @@ def test_a0_shard_merge_cross_mpi_and_runner_authority_shape() -> None:
         "p1_global_direct_factor", "p1_built", "smoother_built", "ksp_created",
         "physical_solve", "recovery",
     )
+    case_audit = {
+        name: False for name in case_names if name not in ("physical_solve", "recovery")
+    }
+    case_audit.update({
+        "physical_action": {"pde_solved": False},
+        "recovery_field_arrays_built": False,
+        "global_transfer_matrix": False,
+    })
+    normalized_case = runner._a0_case_architecture(case_audit)
+    assert normalized_case["physical_solve"] is False
+    assert normalized_case["recovery"] is False
     forbidden = runner._forbidden_architecture(
-        {**{name: False for name in case_names}, "global_transfer_matrix": False},
+        normalized_case,
         {name: False for name in extension_names},
     )
     assert all(value is False for value in forbidden.values())

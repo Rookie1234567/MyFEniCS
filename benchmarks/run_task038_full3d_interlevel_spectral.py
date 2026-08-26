@@ -252,6 +252,17 @@ def _forbidden_architecture(
     return result
 
 
+def _a0_case_architecture(case_audit: Mapping[str, Any]) -> dict[str, Any]:
+    """Normalize A0's case facts from their authoritative nested audit fields."""
+
+    normalized = dict(case_audit)
+    normalized["physical_solve"] = bool(
+        case_audit["physical_action"]["pde_solved"]
+    )
+    normalized["recovery"] = bool(case_audit["recovery_field_arrays_built"])
+    return normalized
+
+
 def _a0_merge_inventory_groups(
     inventory_groups: list[Mapping[str, Any]],
 ) -> dict[str, Any]:
@@ -769,7 +780,7 @@ def run_a0_worker(
         case = build_s2_foundation_case(
             raw_dir, comm, cfg, resolved_config=resolved, resource_sample=None,
         )
-        case_audit = dict(case.audit)
+        case_audit = _a0_case_architecture(case.audit)
         emit("foundation", architecture=case_audit)
         inventory_local = build_material_class_inventory(case)
         emit(
