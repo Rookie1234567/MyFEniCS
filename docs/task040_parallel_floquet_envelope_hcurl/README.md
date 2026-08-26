@@ -1,5 +1,10 @@
 # Task040 并行研究：Floquet-carrier envelope H(curl)
 
+> **先读：** [feasibility_reassessment.md](feasibility_reassessment.md)。本路线现已明确降级为
+> `KNOWN_METHOD_FAMILY_BUT_PROJECT_FEASIBILITY_UNPROVEN`，只允许 E1/E2 tiny go/no-go；
+> 不作为当前 0.7 nm 主路线，不允许在 tiny Gate 前投入 heavy run、复杂 carrier adaptivity
+> 或大规模 local-carrier 开发。
+
 ## 0. 分支身份
 
 ```text
@@ -8,7 +13,7 @@ branch              = chatgpt/20260827-task40-parallel-floquet-envelope-hcurl
 base_commit         = 860141710514ee46bcaaccaaf21155f2308faa5d
 base_task40_branch  = codex/20260822-task40-hybrid-side-factor-pc
 creation_authority  = user explicit instruction on 2026-08-27
-status              = parallel research preparation
+status              = high-risk tiny feasibility only
 merge_approval      = NO
 ordinary_default    = unchanged
 master_write        = forbidden
@@ -19,14 +24,13 @@ task40_branch_write = forbidden from this branch
 
 - Codex 主线研究如何用 full-interface wave transmission、moving-PML 或 adaptive
   Schwarz 更好地求解当前 5 nm 细网格方程；
-- 本分支研究如何从离散层面减少“每个波长必须产生的体自由度”，即用满足同一 Floquet
-  相位的平面波载波承担快速振荡，让标准 Nédélec envelope 主要描述材料、几何和散射引起的
-  缓变部分。
+- 本分支只用很小的 manufactured/diffraction case 判断：用满足同一 Floquet 相位的平面波
+  载波承担快速振荡，是否真的能在完整 Maxwell observable 保持一致时减少总未知量。
 
-这条路线的目标不是立即替换现有 production solver，而是回答：
+这条路线不能被解释为已经找到 0.7 nm 解法。它只回答：
 
-> 能否在保持 `H(curl)` conformity、complex128、双 Floquet 和任意三维材料耦合的前提下，
-> 把 0.7 nm 问题的自由度增长从朴素三维均匀细化的 `lambda^-3` 包络显著压低？
+> 在保持 `H(curl)` conformity、complex128 和双 Floquet 的 tiny/regular case 中，carrier
+> enrichment是否有可重复、可量化的 DoF/内存收益；若 tiny case 都没有，立即停止。
 
 ## 1. 核心方法
 
@@ -41,25 +45,18 @@ task40_branch_write = forbidden from this branch
 ```
 
 每个 `u_alpha,h` 仍属于标准 `H(curl)` Nédélec 空间。快速振荡由
-`exp(i kappa_alpha dot x)` 表示，envelope 负责：
+`exp(i kappa_alpha dot x)` 表示，envelope 负责材料、几何和散射造成的剩余变化。
 
-```text
-material contrast
-non-separable 3D geometry
-mode conversion
-localized defect/interface fields
-carrier之间的耦合
-```
+阅读顺序：
 
-详细弱式、边界条件、矩阵结构、内存模型和 Gate 见：
+1. [feasibility_reassessment.md](feasibility_reassessment.md)
+2. [scalability_addendum.md](scalability_addendum.md)
+3. [theory_and_design.md](theory_and_design.md)
+4. [method_landscape.md](method_landscape.md)
+5. [codex_handoff.md](codex_handoff.md)
+6. [outcomes/lightweight_reference_validation.md](outcomes/lightweight_reference_validation.md)
 
-- [scalability_addendum.md](scalability_addendum.md)（**先读；覆盖 global carrier 扩展边界**）
-- [theory_and_design.md](theory_and_design.md)
-- [method_landscape.md](method_landscape.md)
-- [codex_handoff.md](codex_handoff.md)
-- [outcomes/lightweight_reference_validation.md](outcomes/lightweight_reference_validation.md)
-
-关键可扩展性边界：
+关键边界：
 
 ```text
 physical DtN external channel inventory
@@ -67,8 +64,8 @@ physical DtN external channel inventory
 volume carrier active set
 ```
 
-global carriers只用于早期机制验证，固定 `16`、条件 `32`；0.7 nm production目标是附着在
-局部全局 Nédélec support 上的 bounded carrier active sets。
+global carriers只允许 tiny E1/E2/E3 机制验证；最终 local carrier 设想在 E2 strong signal 前
+不得实施。
 
 ## 2. 已准备的代码
 
@@ -77,21 +74,7 @@ src/solvers/floquet_envelope_hcurl.py
 src/test/test_318_task040_parallel_floquet_envelope.py
 ```
 
-代码目前包含：
-
-```text
-2D direct/reciprocal lattice
-Bloch-compatible carrier generation
-Floquet multiplier identity audit
-shifted curl product rule
-cross-carrier phase
-isotropic Maxwell block reference density
-sampled carrier Gram/rank audit
-deterministic carrier pruning
-naive wavelength/memory scaling helpers
-UFL shifted-curl and block-integrand helpers
-```
-
+代码目前只包含参考代数、carrier identity、shifted curl、Gram/rank audit 和 UFL helper。
 它们均为 opt-in research helper，不从公共 solver API 导出，也不改变任何普通路径。
 
 ## 3. 当前证据边界
@@ -104,6 +87,7 @@ double-Floquet MPC integration
 PETSc MatNest/MatShell assembly
 DtN carrier mapping
 manufactured Maxwell PDE
+matched-accuracy DoF comparison
 5 nm authority comparison
 0.7 nm reduced PDE
 ```
