@@ -2391,3 +2391,16 @@ Review V11 的 S1 global transfer/rank/spectral audit、S2 p6/h10 foundation liv
 The immediate blocker is 6→3 interlevel energy consistency, not yet the p1 distributed coarse solver. A supplemental local diagnosis found non-nested p3/p6 GLL nodes and a naive tiled composition defect `0.23558864802518256`; no tiled repair or parameter scan was implemented. The old Q0 negative, foundation-E pass, old spectral controlled negative, HX/PCGAMG closure and ba40358 probe-domain-invalid archive remain immutable. Ordinary default and `master` were not changed.
 
 S6 evidence and explanation are in [`Task038-extra V11 summary`](task038_extra_full3d_iterative_0p7nm/outcomes/summary.md), [`S4 oracle outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/lor_edge_geometric_mg_oracle_v1.md), [`S5 capacity outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/lor_edge_geometric_mg_p6_capacity_v1.md) and [`response_v11`](task038_extra_full3d_iterative_0p7nm/response_v11.md). This is a docs-only closeout; no CI claim is made.
+
+## 50. Task038-extra Review V12 R12 closeout
+
+Review V12 在同一 extra 分支完成了 Route A、Route B、C1 和 C2 的阶段性审计收口。Route A 的 10 个 material classes 局部谱事实通过，但 gradient global adjoint 为 `2.8964367576123248e-11 > 1e-12`，所以路线关闭；Route B v2 的 `6→2→1` structural/setup 证据保留，R4.3 random 在 7000 步因性能趋势受控停止；C1 的 physical-canonical MPI identity 与 C2 的 nested owner work Gate 失败。最终 `selected_hierarchy=NONE`，没有 p6 positive、physical Maxwell、official physics 或 0.7 nm PDE 结果。
+
+| 项目 | 结果/边界 |
+|---|---|
+| C2 MPI1 diagnostic | `p6-h50`，source `f7d0ac41678b2d18be6c05c1eebfde87adcf9521`；`h3star→h1star` owned work `0.018392534459166617 > 1e-11` |
+| C2 resource scope | rank-worker max RSS `486,473,728 B`、rank swap `0 B`；不是 process-tree qualification |
+| compact evidence | [`nested_lor_edge_hmg_c2_mpi1_diagnostic_v1.json`](task038_extra_full3d_iterative_0p7nm/outcomes/records/nested_lor_edge_hmg_c2_mpi1_diagnostic_v1.json)，SHA `62a7bbce12dceb77254bae2ead9c8b3ddf8f9dc0d48b5349b5147f7434ecdf79` |
+| downstream | p6 positive/physical、R/T/A、h5、2 TiB 与 0.7 nm 均 `not_run_by_gate` |
+
+C2 第一对 transfer 与三个 level bridge 通过，第二对失败无法由现有事实唯一归因到某一条 production 公式，因此没有猜修。C2 local oracle/infrastructure 归为 research-only，owner runtime/test 归为 do-not-merge candidate evidence；ordinary default 未改变。阶段详情、下一架构比较和十问回答分别见 [`V12 route outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/interlevel_route_selection_v1.md)、[`next PC architecture`](task038_extra_full3d_iterative_0p7nm/outcomes/next_pc_architecture_after_v12.md) 和 [`response_v12`](task038_extra_full3d_iterative_0p7nm/response_v12.md)。

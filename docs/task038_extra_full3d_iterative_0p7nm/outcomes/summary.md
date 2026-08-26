@@ -105,3 +105,19 @@ The current work only updates docs and compact S6 summaries. Ordinary default, `
 | V10 Q1–Q5 | `not_run_by_Q0_hard_stop`；Q0 Reference E 的 500-step explicit rho=`4.2034233790900783e-4 > 1e-8`，foundation-E 后续 PASS 不覆盖该旧 negative | [`response_v10.md`](../response_v10.md)、[`lor_global_spectral_audit_v2.md`](lor_global_spectral_audit_v2.md) |
 
 这些 prior 事实与 V11 的 S4 16/16 小 oracle、S5 6→3 algebra failure 是不同阶段、不同对象和不同 Gate；任何一个不能被另一个替代。
+
+## Task038-extra Review V12 R12 终局索引
+
+V12 的最终选择为 `selected_hierarchy=NONE`。Route A 已因 gradient global adjoint `2.8964367576123248e-11 > 1e-12` 关闭；Route B v2 的 `6→2→1` structural/setup 资格仍保留，但 random 只运行至 7000 步并由用户受控停止；C1 的 MPI physical-canonical identity 与 C2 的 nested owner work 均未通过。因此没有 qualified multilevel PC、p6 positive 四源、p6 physical、official physics 或 0.7 nm / 2 TiB capacity 结果。
+
+| V12 终局项 | 状态 | 关键事实 |
+|---|---|---|
+| C1 same-mesh H(curl) | `CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE` | primal/dual cross-MPI coefficient relative `0.10049859821442367 / 0.004662851981572301`，均大于 `1e-11` |
+| C2 nested LOR-edge HMG | `CLOSED` | `h3star→h1star` owned-packet work `0.018392534459166617 > 1e-11`；MPI1 `p6/h50`，未运行 MPI2 |
+| C2 compact diagnostic | tracked record | `records/nested_lor_edge_hmg_c2_mpi1_diagnostic_v1.json`，SHA `62a7bbce12dceb77254bae2ead9c8b3ddf8f9dc0d48b5349b5147f7434ecdf79` |
+| C2 resources | diagnostic scope | rank-worker max RSS `486,473,728 B`、rank swap `0 B`；不是完整 process-tree qualification |
+| downstream | `not_run_by_gate` | p6 positive/physical、official E/H/R/T/A、h5、2 TiB 与 0.7 nm PDE |
+
+C2 的第一对 `h6→h3star` owned-packet work 为 `2.176782822433302e-15`，三个 level bridge 均通过；失败只出现在第二对，现有事实不能唯一归因于 incidence、orientation、phase、ordering 或 dual route，因此没有猜修或放宽阈值。C2 local transfer core只保留为 research-only local oracle/infrastructure，owner runtime/test 与诊断为 do-not-merge candidate evidence；ordinary default 未改变。
+
+V12 的下一步比较见 [`next_pc_architecture_after_v12.md`](next_pc_architecture_after_v12.md)，只讨论 BDDC/FETI-DP、GenEO/adaptive domain decomposition 和 matrix-free p-h 加分布式 algebraic coarse correction，不选择或实现新的 PC。完整十问回答见 [`response_v12.md`](../response_v12.md)。

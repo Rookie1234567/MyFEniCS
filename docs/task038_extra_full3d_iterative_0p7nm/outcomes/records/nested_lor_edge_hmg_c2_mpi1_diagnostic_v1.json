@@ -1,0 +1,134 @@
+{
+  "schema": "task038.nested_lor_edge_hmg.c2_mpi1_diagnostic.v1",
+  "candidate": "nested_lor_edge_hmg_v1",
+  "classification": "CLOSED",
+  "closeout_rule": "C2 hard Gate failure closes the candidate; no qualified multilevel PC in Review V12",
+  "execution": {
+    "head": "f7d0ac41678b2d18be6c05c1eebfde87adcf9521",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "upstream": "origin/codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "ahead_behind": "0/0",
+    "stage": "C2.1c MPI1 root-cause diagnostic",
+    "case": "p6-h50",
+    "mpi_size": 1,
+    "mpi2": "not_run",
+    "exit_code": 1,
+    "wall_seconds": 108.41,
+    "command": "source scripts/activate_myfenics_wsl.sh && export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 && capture_dir=$(mktemp -d /tmp/task038_c2_1c.XXXXXX) && export C2_CAPTURE_DIR=\"$capture_dir\" && /usr/bin/mpiexec -n 1 \"$(command -v python)\" -m pytest -q src/test/test_326_task038_lor_nested_hmg_mpi.py"
+  },
+  "qualification": {
+    "qualified_activation": true,
+    "threads_per_rank": 1,
+    "scalar_type": "complex128",
+    "index_type": "int32",
+    "source_generation": "fixed analytic gradient primal with backsubstitution; fixed slave-zero gradient dual",
+    "source_semantics_changed_for_diagnostic": false
+  },
+  "test_definition": {
+    "path": "src/test/test_326_task038_lor_nested_hmg_mpi.py",
+    "executed_sha256_before_opt_in_guard": "9266aee14f833670e5d981730734d8f5ba1b41d4509bec75a99244f65650c533",
+    "post_guard_sha256": "c02130b6e6df744d9e58df97c5cf2452f3f5e098fd657d699a2b76bb97983c93",
+    "correction": "default collection skips the real MPI smoke; TASK038_RUN_C2_1B_REAL=1 preserves the original failing body",
+    "failure_was_not_xfail_or_reclassified": true
+  },
+  "level_bridge": {
+    "h6": {
+      "parent_global_unique": 19872,
+      "raw_global_unique": 19872,
+      "parent_local_owned": 19872,
+      "raw_local_owned": 19872,
+      "primal_owner_roundtrip_relative": 0.0,
+      "dual_roundtrip_relative": 0.0,
+      "raw_owner_work_relative": 3.54641052899015e-16,
+      "raw_primal_representation_roundtrip_relative": 1.8371378231265485e-17
+    },
+    "h3star": {
+      "parent_global_unique": 2538,
+      "raw_global_unique": 2538,
+      "parent_local_owned": 2538,
+      "raw_local_owned": 2538,
+      "primal_owner_roundtrip_relative": 0.0,
+      "dual_roundtrip_relative": 0.0,
+      "raw_owner_work_relative": 4.096217945654923e-15,
+      "raw_primal_representation_roundtrip_relative": 4.9225275562986924e-17
+    },
+    "h1star": {
+      "parent_global_unique": 102,
+      "raw_global_unique": 102,
+      "parent_local_owned": 102,
+      "raw_local_owned": 102,
+      "primal_owner_roundtrip_relative": 0.0,
+      "dual_roundtrip_relative": 0.0,
+      "raw_owner_work_relative": 2.671632823616697e-16,
+      "raw_primal_representation_roundtrip_relative": 0.19459042014393269
+    },
+    "raw_primal_representation_note": "h1star differs only in constrained slave storage; owner-packet roundtrip and level work both pass"
+  },
+  "pair_work": {
+    "gate_limit": 1e-11,
+    "h6_to_h3star": {
+      "owned_packet_work_relative": 2.176782822433302e-15,
+      "raw_petsc_work_relative": 6.2401107576421675e-15,
+      "edge_shape": [882, 144],
+      "edge_exact_nnz": 1800,
+      "edge_numeric_bytes": 2032128,
+      "node_shape": [343, 64],
+      "node_exact_nnz": 1000,
+      "node_numeric_bytes": 351232
+    },
+    "h3star_to_h1star": {
+      "owned_packet_work_relative": 0.018392534459166617,
+      "raw_petsc_work_relative": 0.048176780898148176,
+      "edge_shape": [144, 12],
+      "edge_exact_nnz": 324,
+      "edge_numeric_bytes": 27648,
+      "node_shape": [64, 8],
+      "node_exact_nnz": 216,
+      "node_numeric_bytes": 8192
+    }
+  },
+  "resource": {
+    "rank_worker_max_rss_bytes": 486473728,
+    "rank_worker_max_swap_bytes": 0,
+    "resource_scope": "MPI1 rank-worker max from the test diagnostic; not a qualified process-tree peak",
+    "process_tree_qualified": false,
+    "rank_sum_rss_bytes": "not_measured",
+    "rank_sum_swap_bytes": "not_measured"
+  },
+  "violations": ["h3star->h1star transfer work"],
+  "captures": [
+    {
+      "path": "/tmp/task038_c2_1c.UVCkSF/primal_mpi1.json",
+      "sha256": "bd26e754e68872f36e6e22bffcb523fe17e88e6b9d30672da94318016046d8ec",
+      "bytes": 9278943,
+      "role": "primal",
+      "mpi_size": 1,
+      "packet_count": 21732,
+      "pair_scope": "only h6->h3star",
+      "cross_mpi_authority": false
+    },
+    {
+      "path": "/tmp/task038_c2_1c.UVCkSF/dual_mpi1.json",
+      "sha256": "060b097322d0e7d5c8b9d4c5f9eea4a8ba72ec140e2b909d1a5f68c68652c114",
+      "bytes": 1059538,
+      "role": "dual",
+      "mpi_size": 1,
+      "packet_count": 2538,
+      "pair_scope": "only h6->h3star",
+      "cross_mpi_authority": false
+    }
+  ],
+  "evidence_limits": [
+    "The raw stdout was not separately persisted; this compact preserves the executed facts reported by the test.",
+    "The two temporary captures cover only the first pair and MPI1; no cross-MPI identity conclusion is made.",
+    "No worker record, formal checker, process-tree qualification, MPI2 capture, C2.2, p6-h10, KSP, V-cycle, PDE, or official physics was run.",
+    "No unique production formula bug could be assigned among incidence, orientation, phase, ordering, and dual-route semantics from these facts alone."
+  ],
+  "downstream": {
+    "qualified_multilevel_pc_in_v12": false,
+    "selected_hierarchy": "NONE",
+    "c2_2": "not_run_by_gate",
+    "p6_h10": "not_run_by_gate",
+    "official_physics": "not_run_by_gate"
+  }
+}

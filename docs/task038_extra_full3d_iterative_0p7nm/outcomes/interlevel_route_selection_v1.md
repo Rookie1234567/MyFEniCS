@@ -1,24 +1,25 @@
-# Review V12：interlevel route selection v1（截至 C1 same-mesh identity closeout）
+# Review V12：interlevel route selection v1（截至 C2 closeout）
 
 ## 当前结论
 
-R0 的合同、阈值和历史证据仍然冻结。R3 Route B 结构资格通过后，R4.2 已完成一次 p6/h10/MPI1 setup-only 资源与生命周期审计；离线 checker-v2 判为 `SETUP_EVIDENCE_PASS`。R4.3 random 已运行到 checkpoint 7000 后由用户因性能趋势明确受控停止；这不是自然退出、不是 10000 步 numerical Gate 失败，也不改变任何旧负结果。随后 C1.1 只做同一 mesh 的 p3/p1 H(curl) owner/Floquet physical-canonical identity 诊断，local algebra 通过但 MPI1/MPI2 coefficient identity 未通过，因此 C1 已关闭。
+R0 的合同、阈值和历史证据仍然冻结。R3 Route B 结构资格通过后，R4.2 已完成一次 p6/h10/MPI1 setup-only 资源与生命周期审计；离线 checker-v2 判为 `SETUP_EVIDENCE_PASS`。R4.3 random 已运行到 checkpoint 7000 后由用户因性能趋势明确受控停止；这不是自然退出、不是 10000 步 numerical Gate 失败，也不改变任何旧负结果。随后 C1.1 只做同一 mesh 的 p3/p1 H(curl) owner/Floquet physical-canonical identity 诊断，local algebra 通过但 MPI1/MPI2 coefficient identity 未通过，因此 C1 已关闭。C2 的小型 MPI1 owner/topology 诊断随后发现 `h3star→h1star` work Gate 失败；按 Review V12 §11.3，C2 与本轮多层 PC 路线现已关闭。
 
-| 项目 | 截至 C1 closeout 的状态 | 边界 |
+| 项目 | 截至 C2 closeout 的状态 | 边界 |
 | --- | --- | --- |
 | R0 contract freeze | `CONTRACT_READY / measured-not-run` | 保留 R0 规则；不代表任何路线通过 |
 | Route A：p6→p3 固定谱审计 | `CLOSED_BY_INTERLEVEL_SPECTRAL_GATE` | 首次 shape-contract invalid 与修正后的有效 checker 结论均保留；唯一真实 Gate 是 gradient global adjoint |
 | Route B v1 | `CONTRACT_INVALID` | canonical watchdog command mismatch 与 p21 compact NNZ authority 缺失；不重分类 |
 | Route B v2 | `STRUCTURALLY_QUALIFIED` | 可进入 R4 审核边界；不是 positive solver pass |
-| 当前 route_B | `STRUCTURALLY_QUALIFIED_FOR_R4` | `selected_hierarchy=NOT_SELECTED` |
+| 当前 route_B | `STRUCTURALLY_QUALIFIED_FOR_R4`（历史结构资格） | `selected_hierarchy=NONE`；后续 positive/PC 资格未形成 |
 | Route C / C1 same-mesh H(curl) owner identity | `CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE` | local owner/MPC algebra 通过；physical canonical MPI identity 未通过；不是 p6 或 solver failure |
-| C2 | `authorized_next / not_started` | C1 已关闭；本轮未实现、未运行 C2 |
+| C2 nested LOR-edge HMG | `CLOSED` | `h3star→h1star` owned-packet work `0.018392534459166617 > 1e-11`；无 qualified multilevel PC |
 | R4.2 Route-B setup | `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3` | 仅 setup、10 次 apply、资源与生命周期；不是 solver/PDE pass |
 | R4.3 四类 positive | `random=USER_DIRECTED_CONTROLLED_STOP_AT_7000`；其余 `authorized_pending / not_run` | random 未完成 10000 步；gradient/curl/checkerboard 未运行 |
 | R5 | `Route B controlled stop / not selected` | random 在 7000 步受控停止；不构成 Route B positive solver 通过 |
 | R6 / C1 | `CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE` | same-mesh physical canonical MPI identity 未通过 |
-| R7 / C2 | `authorized_next / not_started` | C1 已关闭；本轮未实现、未运行 C2 |
-| R8–R12 | `not_run_by_gate` | 需 R4 positive hierarchy 通过后条件进入 |
+| R7 / C2 | `CLOSED` | C2 hard Gate 失败；停止 numerical implementation |
+| R8–R11 | `not_run_by_gate` | 没有 selected hierarchy 或 p6 positive qualification |
+| R12 | `docs_closeout` | 创建 C2 compact、候选架构比较和 `response_v12.md`；不代表 solver/physics 通过 |
 
 ## 这份合同要解决什么问题
 
@@ -111,7 +112,7 @@ Route B v2 的正式 record/checker 为：
 
 ignored artifact root 为 `benchmarks/artifacts/task038_extra_full3d_interlevel_spectral_r3_route_b_v2/91e27ebb4bdcf9de302c12cc5a19ae8eaa78b8c1/p6-h10-mpi1/`。其中 watchdog raw/compact/log/worker NPZ 的 SHA256 依次为：`e876c42e83472ab0bed998d185c3629c661a8b285ce93c9f192f8b3a4f0456a2`、`bec9aae08b5b2a2bb130ddc1ba4d198062b5d753dd020880084e1fe2dca511d4`、`e13d3496e6c68adc8c838ae47c80689f1a716220c99dd628ff91ca9a66045be9`、`7296bac69bb8a46a878661a86e18eac99f5246e6eda71a5b28e5dbe7fdd2fa8c`。
 
-`current route_B=STRUCTURALLY_QUALIFIED_FOR_R4` 只表示满足进入 R4 审阅的结构前置条件；`selected_hierarchy=NOT_SELECTED`。R4.2 setup 已为 `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3`，但 R4.3 random 在 7000 步仍有 `0.00814181052296021` 的显式真残差，用户因此拒绝继续承担预计十万级迭代成本并受控停止。Route B 不能据此被写成 positive solver 通过；C1.1 随后因 physical canonical MPI identity Gate 关闭，C2 为 `authorized_next / not_started`，R8–R12 仍为 `not_run_by_gate`。
+`Route B 当时的 structural 状态为 STRUCTURALLY_QUALIFIED_FOR_R4`，表示它满足进入 R4 审阅的结构前置条件；其后 R4.3 random 只到 7000 步并受控停止。当前全局结论是 `selected_hierarchy=NONE`。R4.2 setup 已为 `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3`，但 random 在 7000 步仍有 `0.00814181052296021` 的显式真残差，用户因此拒绝继续承担预计十万级迭代成本。Route B 不能据此被写成 positive solver 通过；C1.1 随后因 physical canonical MPI identity Gate 关闭，C2 的 MPI1 smoke 又在第二个 nested pair 触发 work Gate，故 `nested_lor_edge_hmg_v1=CLOSED`，R8–R11 为 `not_run_by_gate`，R12 仅为文档收口。
 
 Route B 的 compensated summation 只用于 Route B 内积归约，固定 `1e-11` adjoint Gate 没有放宽；Route A 仍使用原 `np.vdot` 测量语义。
 
@@ -152,7 +153,7 @@ checker-v2 没有重跑 setup worker，而是对同一冻结 worker record 和�
 | checker-v1 | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1_checker.json` | `cadc080c402f0d38ee0adc8952fd93f574fb714394dfc52579f3e8292e9a4fec` |
 | checker-v2（同一 worker evidence 的离线重判） | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1_checker_v2.json` | `7ad5e7112f4ae536baaacdd9341a5b0bdbf3f11447f752c16a1e92fddc452f64` |
 
-当前 `selected_hierarchy=NOT_SELECTED`。R4.3 random 已在 7000 步受控停止，gradient/curl/checkerboard 仍为 pending/not_run；C1.1 已因 MPI physical canonical identity Gate 关闭，C2 尚未开始；R8 及以后继续为 `not_run_by_gate`，不能把 setup resource qualification 写成最终 solver 或 PDE 通过。
+当前 `selected_hierarchy=NONE`。R4.3 random 已在 7000 步受控停止，gradient/curl/checkerboard 仍为 pending/not_run；C1.1 已因 MPI physical canonical identity Gate 关闭，C2 也已关闭；R8–R11 继续为 `not_run_by_gate`，不能把 setup resource qualification 写成最终 solver 或 PDE 通过。
 
 ### R4.3 Route-B random：用户受控停止
 
@@ -189,7 +190,7 @@ checkpoint 的 explicit true residual 历史如下；每个 manifest 均为 solu
 
 tracked compact 为 `outcomes/records/lor_edge_geometric_mg_r4_route_b_positive_random_controlled_stop_v1.json`，SHA256 为 `c1a646a8e6f6df381449c02b91ce43d3395fc096209006f803f1f02bc8f1b33e`。它从保留的 ignored artifact 逐项绑定 watchdog raw `ff05641730caa0b3e898518dd180c61287ecd4c8e61437cc76e391c8384d9a8e`、watchdog compact `c59c8453e9a3942c4bfd2e8386fcadfbfaffdfe6ca01fc845a69c365c41c285e`、worker log `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` 及全部 marker/checkpoint 文件；artifact root 和完整文件清单见 compact。worker record/checker 路径均明确记录为停止后按设计不存在。
 
-因此 Route B 目前仍保留其 structural/setup 历史，但不被选择为当前 hierarchy；这次只冻结性能受控停止事实。C1 `same_mesh_hcurl_pmg_v1` 的 owner identity 诊断随后已完成并因 cross-MPI physical canonical coefficient defect 关闭；C2 仍为 `authorized_next / not_started`，不能预先写成通过。
+因此 Route B 目前仍保留其 structural/setup 历史，但不被选择为当前 hierarchy；这次只冻结性能受控停止事实。C1 `same_mesh_hcurl_pmg_v1` 的 owner identity 诊断随后已完成并因 cross-MPI physical canonical coefficient defect 关闭；C2 已按下一节的 MPI1 work Gate 关闭，不能写成通过。
 
 ### C1.1 same-mesh H(curl) owner identity：关闭
 
@@ -222,6 +223,35 @@ compact record 为 `outcomes/records/same_mesh_hcurl_pmg_c1_mpi_identity_v1.json
 | entire `same_mesh_hcurl_pmg_v1` candidate | `CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE`；不是 selected/production merge |
 | C1.1 owner runtime / test | `research-only / do-not-merge candidate evidence`；physical MPI identity 未资格化 |
 | ordinary default | `unchanged`；未把 C1.1 接入默认路径 |
+
+### C2：nested LOR-edge HMG 已关闭
+
+C2.0 的纯局部 `h6→h3star→h1star` transfer 通过了固定节点子集、局部伴随和组合审计；C2.1a 只建立了 owner runtime scaffold。随后唯一一次 C2.1b/C2.1c 小型真实 MPI1 `p6/h50` smoke 使用固定 analytic primal（backsubstitution）和固定 slave-zero dual，逐层检查 raw/owner bridge，再检查两个 pair 的全局 work identity。它不是 p6/h10 formal、不是 KSP/V-cycle/PDE，也没有启动 MPI2。
+
+| C2.1c 事实 | 实测值/状态 |
+| --- | --- |
+| executed source / case / MPI | `f7d0ac41678b2d18be6c05c1eebfde87adcf9521` / `p6-h50` / MPI1 |
+| test exit / wall | `1` / `108.41 s`；仅因最终 violation assertion |
+| h6 bridge | primal owner roundtrip `0`；dual roundtrip `0`；raw/owner work `3.54641052899015e-16` |
+| h3star bridge | primal owner roundtrip `0`；dual roundtrip `0`；raw/owner work `4.096217945654923e-15` |
+| h1star bridge | primal owner roundtrip `0`；dual roundtrip `0`；raw/owner work `2.671632823616697e-16` |
+| h1star raw primal representation | `0.19459042014393269`；仅为 constrained slave storage 表示差异，owner packet roundtrip 为 `0` |
+| h6→h3star pair | owned-packet work `2.176782822433302e-15`；raw PETSc work `6.2401107576421675e-15` |
+| h3star→h1star pair | owned-packet work `0.018392534459166617 > 1e-11`；raw PETSc work `0.048176780898148176` |
+| resource scope | rank-worker max RSS `486473728 B`；rank swap `0 B`；不是完整 process-tree qualification |
+| violations | 仅 `h3star->h1star transfer work` |
+
+三个 level 的 owner inventories 与 bridge work 都闭合，第一对 transfer 也闭合；因此现有事实只能把失败隔离到 `h3star` 作为 fine level 时的 `h3star→h1star` owner-packet work。它不能在不再运行或构造反事实的情况下唯一归因于 incidence、orientation、phase、ordering 或 dual-route 中某一条 production 公式，故没有猜修。按 Review V12 §11.3，`nested_lor_edge_hmg_v1=CLOSED`，并且 V12 不再保留 qualified multilevel PC。
+
+诊断 record 为 [`nested_lor_edge_hmg_c2_mpi1_diagnostic_v1.json`](records/nested_lor_edge_hmg_c2_mpi1_diagnostic_v1.json)。测试文件修改前 SHA256 为 `9266aee14f833670e5d981730734d8f5ba1b41d4509bec75a99244f65650c533`；随后只加入默认 skip、显式 `TASK038_RUN_C2_1B_REAL=1` 才执行原始 smoke 的 archive guard，最终文件 SHA 为 `c02130b6e6df744d9e58df97c5cf2452f3f5e098fd657d699a2b76bb97983c93`，未改 source 或 algebra。两份仍存在的临时 capture 仅覆盖第一对和 MPI1：`primal_mpi1.json` SHA `bd26e754e68872f36e6e22bffcb523fe17e88e6b9d30672da94318016046d8ec`（9,278,943 B，21,732 packets），`dual_mpi1.json` SHA `060b097322d0e7d5c8b9d4c5f9eea4a8ba72ec140e2b909d1a5f68c68652c114`（1,059,538 B，2,538 packets）。它们不是跨 MPI authority；原始 stdout 没有单独持久化。
+
+| C2 选择性整合边界 | 决定 |
+| --- | --- |
+| C2.0 local nested transfer | `research-only retained local oracle/infrastructure`；不提升为 production PC |
+| C2.1a/b runtime 与 `test326` | `research-only / do-not-merge candidate evidence`；保留负结果，不接入 ordinary default |
+| `nested_lor_edge_hmg_v1` 整体 | `CLOSED`；没有 qualified multilevel PC |
+| selected hierarchy | `NONE` |
+| C2.2、p6/h10、physical Maxwell、official physics | `not_run_by_gate` |
 
 ## 不可变历史证据
 
