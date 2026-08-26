@@ -160,6 +160,75 @@ def same_mesh_positive_form(
     ) * ufl.dx
 
 
+def _same_mesh_level_config(cfg: Any, degree: int) -> Any:
+    if int(degree) == int(cfg.nedelec_degree):
+        return cfg
+    import copy
+
+    level_cfg = copy.deepcopy(cfg)
+    level_cfg.nedelec_degree = int(degree)
+    level_cfg.visualization_degree = int(degree)
+    level_cfg.nedelec_trace_degree = None
+    level_cfg.nedelec_interior_degree = None
+    level_cfg.case_name = f"{cfg.case_name}_same_mesh_p{int(degree)}"
+    return level_cfg
+
+
+def _build_same_mesh_levels(
+    cfg: Any, comm: Any, degrees: tuple[int, ...]
+) -> dict[str, Any]:
+    """Build one physical mesh and the requested same-mesh N1curl levels."""
+
+    from basix.ufl import element
+    from dolfinx import default_real_type, fem
+    from src.constraints.floquet_3d import build_double_floquet_mpc
+    from src.geometry.mesh_builder_3d import (
+        _mark_boundary_facets,
+        _mark_cells,
+        _stage4_axis_plan,
+        _structured_hexa_mesh,
+    )
+    from .fullspace_lor_native_hx_fixture import _piecewise_positive_coefficients
+
+    plan = _stage4_axis_plan(cfg, comm.size)
+    mesh = _structured_hexa_mesh(
+        comm,
+        plan.x_values,
+        plan.y_values,
+        plan.z_values,
+        preserve_input_partition=cfg.stage4_preserve_structured_input_partition,
+    )
+    facet_tags, _ = _mark_boundary_facets(mesh, cfg)
+    cell_tags = _mark_cells(mesh, cfg)
+    mesh_data = SimpleNamespace(
+        mesh=mesh, cell_tags=cell_tags, facet_tags=facet_tags
+    )
+    spaces: dict[int, Any] = {}
+    floquets: dict[int, Any] = {}
+    for degree in degrees:
+        degree = int(degree)
+        space = fem.functionspace(
+            mesh,
+            element("N1curl", mesh.basix_cell(), degree, dtype=default_real_type),
+        )
+        spaces[degree] = space
+        floquets[degree] = build_double_floquet_mpc(
+            space, mesh_data, _same_mesh_level_config(cfg, degree)
+        )
+    mu, mass, coefficient_audit = _piecewise_positive_coefficients(
+        mesh, cell_tags, cfg
+    )
+    return {
+        "mesh": mesh,
+        "mesh_data": mesh_data,
+        "spaces": spaces,
+        "floquets": floquets,
+        "mu": mu,
+        "mass": mass,
+        "coefficient_audit": coefficient_audit,
+    }
+
+
 def build_small_same_mesh_positive_case(
     cfg: Any,
     comm: Any,
@@ -178,20 +247,7 @@ def build_small_same_mesh_positive_case(
     if source_name not in {"random", "gradient", "curl", "checkerboard"}:
         raise ValueError("unsupported frozen same-mesh source")
 
-    import copy
-    from basix.ufl import element
-    from dolfinx import default_real_type, fem
-    from src.constraints.floquet_3d import build_double_floquet_mpc
-    from src.geometry.mesh_builder_3d import (
-        _mark_boundary_facets,
-        _mark_cells,
-        _stage4_axis_plan,
-        _structured_hexa_mesh,
-    )
-    from .fullspace_lor_native_hx_fixture import (
-        _piecewise_positive_coefficients,
-        build_frozen_fullspace_primal_source,
-    )
+    from .fullspace_lor_native_hx_fixture import build_frozen_fullspace_primal_source
     from .fullspace_same_mesh_hcurl_pmg_runtime import (
         build_same_mesh_hcurl_owner_transfer,
     )
@@ -200,40 +256,16 @@ def build_small_same_mesh_positive_case(
     )
     from .fullspace_mpc_action import build_fullspace_mpc_form_action
 
-    plan = _stage4_axis_plan(cfg, comm.size)
-    mesh = _structured_hexa_mesh(
-        comm,
-        plan.x_values,
-        plan.y_values,
-        plan.z_values,
-        preserve_input_partition=cfg.stage4_preserve_structured_input_partition,
-    )
-    facet_tags, _ = _mark_boundary_facets(mesh, cfg)
-    cell_tags = _mark_cells(mesh, cfg)
-    mesh_data = SimpleNamespace(
-        mesh=mesh, cell_tags=cell_tags, facet_tags=facet_tags
-    )
-    fine_space = fem.functionspace(
-        mesh,
-        element("N1curl", mesh.basix_cell(), 3, dtype=default_real_type),
-    )
-    coarse_space = fem.functionspace(
-        mesh,
-        element("N1curl", mesh.basix_cell(), 1, dtype=default_real_type),
-    )
-    fine_floquet = build_double_floquet_mpc(fine_space, mesh_data, cfg)
-    coarse_cfg = copy.deepcopy(cfg)
-    coarse_cfg.nedelec_degree = 1
-    coarse_cfg.visualization_degree = 1
-    coarse_cfg.nedelec_trace_degree = None
-    coarse_cfg.nedelec_interior_degree = None
-    coarse_cfg.case_name = f"{cfg.case_name}_same_mesh_p1"
-    coarse_floquet = build_double_floquet_mpc(
-        coarse_space, mesh_data, coarse_cfg
-    )
-    mu, mass, coefficient_audit = _piecewise_positive_coefficients(
-        mesh, cell_tags, cfg
-    )
+    levels = _build_same_mesh_levels(cfg, comm, (3, 1))
+    mesh = levels["mesh"]
+    mesh_data = levels["mesh_data"]
+    fine_space = levels["spaces"][3]
+    coarse_space = levels["spaces"][1]
+    fine_floquet = levels["floquets"][3]
+    coarse_floquet = levels["floquets"][1]
+    mu = levels["mu"]
+    mass = levels["mass"]
+    coefficient_audit = levels["coefficient_audit"]
     fine_matrix = assemble_same_mesh_positive_matrix(
         fine_space,
         fine_floquet,

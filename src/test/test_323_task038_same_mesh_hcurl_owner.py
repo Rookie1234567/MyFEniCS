@@ -369,18 +369,13 @@ def test_owner_rejects_duplicate_disagreement_and_destroy_is_bounded(context):
         owner.apply_primal(None)
 
 
-def test_owner_rejects_p6_to_p3_until_bounded_runtime_exists():
-    def fake_space(degree):
-        return SimpleNamespace(
-            element=SimpleNamespace(
-                basix_element=SimpleNamespace(degree=degree)
-            )
-        )
+def test_owner_public_pairs_include_the_p6_setup_pair():
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
+        SAME_MESH_OWNER_TRANSFER_PAIRS,
+    )
 
-    with pytest.raises(ValueError, match="unsupported"):
-        build_same_mesh_hcurl_owner_transfer(
-            fake_space(6), None, fake_space(3), None
-        )
+    assert (3, 1) in SAME_MESH_OWNER_TRANSFER_PAIRS
+    assert (6, 3) in SAME_MESH_OWNER_TRANSFER_PAIRS
 
 
 def test_runtime_source_is_owner_packet_only():

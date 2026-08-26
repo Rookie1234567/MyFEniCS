@@ -27,7 +27,7 @@ from .fullspace_same_mesh_hcurl_pmg import (
 
 ROW_CONSISTENCY_LIMIT = 1.0e-11
 OWNER_RUNTIME_SCHEMA = "task038.same_mesh_hcurl_owner_transfer.v1"
-SAME_MESH_OWNER_TRANSFER_PAIRS = ((3, 1),)
+SAME_MESH_OWNER_TRANSFER_PAIRS = ((3, 1), (6, 3))
 
 
 def _owner_ranges(index_map: Any, comm: Any) -> tuple[tuple[int, int], ...]:
@@ -531,6 +531,9 @@ class SameMeshHcurlOwnerTransfer:
                 "cell_count_local": cell_count,
                 "cell_count_global": global_cells,
                 "cell_map_cache_count": len(cache),
+                "local_cache_array_bytes": int(
+                    sum(int(transfer.matrix.nbytes) for transfer in cache.values())
+                ),
                 "nontrivial_cell_permutation_count_local": nontrivial,
                 "nontrivial_cell_permutation_present_global": nontrivial_present,
                 "canonical_global_digest": canonical_digest,
