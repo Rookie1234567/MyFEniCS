@@ -121,7 +121,10 @@ def _apply_local_adjoint_audit_only(
             dtype=np.complex128,
         )
         local_coarse = np.asarray(local_fine @ local_map, dtype=np.complex128)
-        phase = topology.phase_values[int(topology.cell_phase_codes[cell])]
+        phase = np.asarray(
+            topology.phase_values[topology.cell_phase_codes[cell]],
+            dtype=np.complex128,
+        )
         canonical = (
             local_coarse
             * np.asarray(topology.cell_orientation[cell], dtype=np.complex128)
@@ -272,8 +275,12 @@ def build_material_class_inventory(foundation: Any) -> dict[str, Any]:
     mu_function, mass_function, _audit = _piecewise_positive_coefficients(
         mesh, tags, cfg
     )
-    mu_values = np.asarray(mu_function.x.array[:local_cell_count], dtype=np.float64).copy()
-    mass_values = np.asarray(mass_function.x.array[:local_cell_count], dtype=np.float64).copy()
+    mu_values = np.asarray(
+        np.real(mu_function.x.array[:local_cell_count]), dtype=np.float64
+    ).copy()
+    mass_values = np.asarray(
+        np.real(mass_function.x.array[:local_cell_count]), dtype=np.float64
+    ).copy()
     role_by_tag = {
         int(cfg.tags.air): "air",
         int(cfg.tags.substrate): "substrate",

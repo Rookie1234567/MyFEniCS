@@ -111,9 +111,11 @@ def test_stable_core_and_independent_local_adjoint() -> None:
     class Topology:
         unique_edge_ids = np.asarray([10, 20], dtype=np.uint32)
         cell_edge_ids = np.asarray([[20, 10]], dtype=np.uint32)
-        cell_orientation = np.ones((1, 2), dtype=np.complex128)
-        cell_phase_codes = np.asarray([0], dtype=np.int32)
-        phase_values = np.asarray([1.0 + 0.0j], dtype=np.complex128)
+        cell_orientation = np.asarray([[1.0 + 0.0j, -1.0 + 0.0j]])
+        cell_phase_codes = np.asarray([[0, 1]], dtype=np.int32)
+        phase_values = np.asarray(
+            [1.0 + 0.0j, 0.5 + 0.5j], dtype=np.complex128
+        )
 
     class Level:
         parent_block_count = 1
@@ -152,7 +154,8 @@ def test_stable_core_and_independent_local_adjoint() -> None:
         Transfer.Local.edge_transfer
     )
     expected_by_key = np.asarray(
-        [expected_local[1], expected_local[0]], dtype=np.complex128
+        [expected_local[1] * (-1.0 + 0.0j) / (0.5 + 0.5j), expected_local[0]],
+        dtype=np.complex128,
     )
     assert np.array_equal(ids_out, np.asarray([10, 20], dtype=np.uint32))
     np.testing.assert_array_equal(values_out, expected_by_key)
