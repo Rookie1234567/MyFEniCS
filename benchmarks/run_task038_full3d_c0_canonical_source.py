@@ -79,7 +79,7 @@ def _finite_vector(vector: Any) -> bool:
 
 
 def _c0_marker(
-    raw_dir: Path,
+    marker_root: Path,
     name: str,
     source_sha: str,
     comm: Any,
@@ -97,7 +97,7 @@ def _c0_marker(
             "wall_time_ns": int(wall_time_ns),
             "facts": jsonable(facts),
         }
-        path = raw_dir / "markers" / f"{name}.json"
+        path = marker_root / "markers" / f"{name}.json"
         path.write_bytes(
             json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
             + b"\n"

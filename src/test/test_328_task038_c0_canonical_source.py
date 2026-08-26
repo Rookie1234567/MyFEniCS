@@ -54,10 +54,11 @@ def test_c0_marker_uses_explicit_serializer_binding(tmp_path) -> None:
         "source-sha",
         _MarkerComm(),
         lambda value: value,
+        raw_dir="worker-raw",
         answer=7,
     )
     payload = json.loads(marker_path.read_text())
-    assert payload["facts"] == {"answer": 7}
+    assert payload["facts"] == {"answer": 7, "raw_dir": "worker-raw"}
 
 
 def test_c0_packet_artifact_uses_explicit_serializer_binding(tmp_path) -> None:
