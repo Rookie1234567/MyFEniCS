@@ -53,10 +53,22 @@ carrier之间的耦合
 
 详细弱式、边界条件、矩阵结构、内存模型和 Gate 见：
 
+- [scalability_addendum.md](scalability_addendum.md)（**先读；覆盖 global carrier 扩展边界**）
 - [theory_and_design.md](theory_and_design.md)
 - [method_landscape.md](method_landscape.md)
 - [codex_handoff.md](codex_handoff.md)
 - [outcomes/lightweight_reference_validation.md](outcomes/lightweight_reference_validation.md)
+
+关键可扩展性边界：
+
+```text
+physical DtN external channel inventory
+!=
+volume carrier active set
+```
+
+global carriers只用于早期机制验证，固定 `16`、条件 `32`；0.7 nm production目标是附着在
+局部全局 Nédélec support 上的 bounded carrier active sets。
 
 ## 2. 已准备的代码
 
