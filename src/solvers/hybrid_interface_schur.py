@@ -61,6 +61,25 @@ def _int_array_sha256(values: np.ndarray) -> str:
     return hashlib.sha256(array.tobytes()).hexdigest()
 
 
+def _filter_rows_by_int_set(
+    rows: np.ndarray,
+    row_set: set[int],
+    *,
+    keep_members: bool,
+) -> np.ndarray:
+    """Filter rows with a caller-built integer membership set."""
+
+    values = np.asarray(rows)
+    return np.asarray(
+        [
+            row
+            for row in values
+            if (int(row) in row_set) == keep_members
+        ],
+        dtype=values.dtype,
+    )
+
+
 class _NumpyInterfaceSchurBlock:
     """One tiny dense block; production ownership is supplied by the PETSc class."""
 
@@ -273,9 +292,11 @@ class _PetscInterfaceSchurBlock:
         group_rows = np.asarray(group_rows, dtype=PETSc.IntType)
         if comm.allreduce(int(gamma_rows.size), op=MPI.SUM) == 0:
             raise ValueError("PETSc Schur block has no interface rows")
-        interior_rows = np.asarray(
-            [row for row in group_rows if row not in set(gamma_rows)],
-            dtype=PETSc.IntType,
+        gamma_row_set = {int(row) for row in gamma_rows}
+        interior_rows = _filter_rows_by_int_set(
+            group_rows,
+            gamma_row_set,
+            keep_members=False,
         )
         if comm.allreduce(int(interior_rows.size), op=MPI.SUM) == 0:
             raise ValueError("PETSc Schur block has no interior rows")
@@ -348,6 +369,47 @@ class _PetscInterfaceSchurBlock:
         self._factor.solve(self._interior_rhs, self._interior_solution)
         self._a_gi.mult(self._interior_solution, target)
 
+    def _check_interior_vector(self, vector: PETSc.Vec, *, label: str) -> None:
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur block is destroyed")
+        reference = self._interior_solution
+        if (
+            vector.getSize() != reference.getSize()
+            or vector.getLocalSize() != reference.getLocalSize()
+            or tuple(map(int, vector.getOwnershipRange()))
+            != tuple(map(int, reference.getOwnershipRange()))
+        ):
+            raise ValueError(f"PETSc {label} has the wrong interior layout")
+
+    def apply_interior_rhs_correction(
+        self, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        """Apply ``A_Gamma,I A_I,I^-1 b_I`` for a nonzero interior RHS."""
+
+        self._check_interior_vector(source, label="interior RHS")
+        self._check_vectors(self._gamma_rhs, target)
+        source.copy(self._interior_rhs)
+        self._factor.solve(self._interior_rhs, self._interior_solution)
+        self._a_gi.mult(self._interior_solution, target)
+
+    def solve_interior_with_rhs(
+        self,
+        source: PETSc.Vec,
+        interior_source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        """Solve ``A_II x_I = b_I - A_IGamma x_Gamma``."""
+
+        self._check_vectors(source, self._gamma_output)
+        self._check_interior_vector(interior_source, label="interior RHS")
+        self._check_interior_vector(target, label="interior solution")
+        interior_source.copy(self._interior_rhs)
+        self._a_ig.mult(source, self._interior_solution)
+        self._interior_rhs.axpy(
+            PETSc.ScalarType(-1.0), self._interior_solution
+        )
+        self._factor.solve(self._interior_rhs, target)
+
     def solve_interior(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         """Solve one group interior block for an independent full-state audit."""
 
@@ -355,14 +417,7 @@ class _PetscInterfaceSchurBlock:
             raise RuntimeError("PETSc interface Schur block is destroyed")
         if source.getSize() != self._gamma_rhs.getSize():
             raise ValueError("PETSc interior solve source has the wrong size")
-        reference = self._interior_solution
-        if (
-            target.getSize() != reference.getSize()
-            or target.getLocalSize() != reference.getLocalSize()
-            or tuple(map(int, target.getOwnershipRange()))
-            != tuple(map(int, reference.getOwnershipRange()))
-        ):
-            raise ValueError("PETSc interior solve target has the wrong layout")
+        self._check_interior_vector(target, label="interior solve target")
         self._a_ig.mult(source, self._interior_rhs)
         self._factor.solve(self._interior_rhs, target)
 
@@ -446,14 +501,16 @@ class PetscInterfaceSchurOracle:
             )
             supports.append(np.unique(np.asarray(values, dtype=PETSc.IntType)))
         interface_union = np.unique(np.concatenate(supports))
+        interface_union_set = {int(row) for row in interface_union}
         try:
             for index, rows in enumerate(group_rows):
                 group = np.asarray(rows, dtype=PETSc.IntType)
                 if len(np.unique(group)) != len(group):
                     raise ValueError("PETSc group rows must be unique")
-                gamma = np.asarray(
-                    [row for row in group if row in set(interface_union)],
-                    dtype=PETSc.IntType,
+                gamma = _filter_rows_by_int_set(
+                    group,
+                    interface_union_set,
+                    keep_members=True,
                 )
                 self._blocks.append(
                     _PetscInterfaceSchurBlock(
@@ -674,6 +731,18 @@ class PetscInterfaceSchurOracle:
             raise RuntimeError("PETSc interface Schur oracle is destroyed")
         self._blocks[int(group)].apply_interior_correction(source, target)
 
+    def apply_group_interior_rhs_correction(
+        self,
+        group: int,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        """Apply ``A_Gamma,I A_I,I^-1 b_I`` for one group."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        self._blocks[int(group)].apply_interior_rhs_correction(source, target)
+
     def group_gamma_layout(self, group: int) -> dict[str, Any]:
         """Return the public distributed layout for one interface Gamma block."""
 
@@ -706,6 +775,13 @@ class PetscInterfaceSchurOracle:
             raise RuntimeError("PETSc interface Schur oracle is destroyed")
         return self._blocks[int(group)].gamma_rows.copy()
 
+    def group_interior_rows_local(self, group: int) -> np.ndarray:
+        """Return a copy of one group's owner-local interior rows."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        return self._blocks[int(group)].interior_rows.copy()
+
     def create_group_gamma_vector(self, group: int) -> PETSc.Vec:
         """Create an owned Gamma Vec; the caller owns and destroys it."""
 
@@ -720,6 +796,19 @@ class PetscInterfaceSchurOracle:
             raise RuntimeError("PETSc interface Schur oracle is destroyed")
         return self._blocks[int(group)].create_interior_vector()
 
+    def group_interior_layout(self, group: int) -> dict[str, Any]:
+        """Return the public distributed layout for one interior block."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        vector = self._blocks[int(group)]._interior_solution
+        first, last = map(int, vector.getOwnershipRange())
+        return {
+            "global_size": int(vector.getSize()),
+            "local_size": int(vector.getLocalSize()),
+            "ownership_range": [first, last],
+        }
+
     def solve_group_interior(
         self,
         group: int,
@@ -731,6 +820,23 @@ class PetscInterfaceSchurOracle:
         if self._destroyed:
             raise RuntimeError("PETSc interface Schur oracle is destroyed")
         self._blocks[int(group)].solve_interior(source, target)
+
+    def solve_group_interior_with_rhs(
+        self,
+        group: int,
+        source: PETSc.Vec,
+        interior_source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        """Solve ``A_II x_I = b_I - A_IGamma source`` for one group."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        self._blocks[int(group)].solve_interior_with_rhs(
+            source,
+            interior_source,
+            target,
+        )
 
     @property
     def diagnostics(self) -> dict[str, Any]:
@@ -1376,18 +1482,168 @@ class PetscFullInterfaceSchurAction:
             upper.destroy()
             lower.destroy()
 
-    def build_full_eliminated_state(
-        self,
-        source: PETSc.Vec,
-    ) -> tuple[PETSc.Vec, dict[str, np.ndarray | int]]:
-        """Build one full active state using the three group interior solves.
+    def _check_active_vector_layout(self, source: PETSc.Vec) -> None:
+        bare = self._oracle._bare
+        bare_first, bare_last = map(int, bare.getOwnershipRange())
+        if (
+            source.getSize() != bare.getSize()[0]
+            or source.getLocalSize() != bare_last - bare_first
+            or tuple(map(int, source.getOwnershipRange()))
+            != (bare_first, bare_last)
+        ):
+            raise ValueError("active vector has the wrong bare-F layout")
 
-        This is an identity-audit helper, not the Schur action implementation:
-        the caller can apply the independent bare ``F`` to the returned state
-        and compare that residual with ``MatPython.mult``.  Only owner-local
-        Gamma/interior rows are assembled into the full active vector.
+    def _check_group_interior_layout(
+        self, group: int, vector: PETSc.Vec, *, label: str
+    ) -> None:
+        expected = self._oracle.group_interior_layout(group)
+        actual = {
+            "global_size": int(vector.getSize()),
+            "local_size": int(vector.getLocalSize()),
+            "ownership_range": [
+                int(value) for value in vector.getOwnershipRange()
+            ],
+        }
+        if actual != expected:
+            raise ValueError(f"{label} has the wrong group{group} layout")
+
+    def _normalize_group_interior_rhs(
+        self,
+        values: Mapping[int, PETSc.Vec] | Sequence[PETSc.Vec],
+    ) -> tuple[PETSc.Vec, PETSc.Vec, PETSc.Vec]:
+        if isinstance(values, Mapping):
+            if set(values) != {0, 1, 2}:
+                raise ValueError("interior RHS mapping must contain groups 0, 1, 2")
+            group_values = tuple(values[group] for group in range(3))
+        else:
+            try:
+                group_values = tuple(values)
+            except TypeError as exc:
+                raise TypeError("interior RHS values must be a 3-vector sequence") from exc
+            if len(group_values) != 3:
+                raise ValueError("interior RHS sequence must contain three vectors")
+        for group, vector in enumerate(group_values):
+            if not isinstance(vector, PETSc.Vec):
+                raise TypeError(f"group{group} interior RHS is not a PETSc Vec")
+            self._check_group_interior_layout(
+                group,
+                vector,
+                label="interior RHS",
+            )
+        return group_values  # type: ignore[return-value]
+
+    def extract_group_interior_from_active_vector(
+        self, source: PETSc.Vec, group: int
+    ) -> PETSc.Vec:
+        """Extract one group's owner-local ``b_I`` from an active RHS.
+
+        The returned vector is caller-owned.  Only rows owned by the current
+        PETSc rank are read; no active-vector values are gathered.
         """
 
+        self._check_live()
+        self._check_active_vector_layout(source)
+        group = int(group)
+        target = self._oracle.create_group_interior_vector(group)
+        rows = self._oracle.group_interior_rows_local(group)
+        first, last = map(int, source.getOwnershipRange())
+        try:
+            if rows.size != target.getLocalSize():
+                raise ValueError("group interior rows do not match the Vec layout")
+            if rows.size and not bool(np.all((rows >= first) & (rows < last))):
+                raise ValueError("group interior rows are not owned by this rank")
+            target.array[:] = np.asarray(
+                source.array[rows - first], dtype=PETSc.ScalarType
+            )
+            target.assemble()
+            return target
+        except Exception:
+            target.destroy()
+            raise
+
+    def build_condensed_rhs(
+        self,
+        gamma_rhs: PETSc.Vec,
+        interior_rhs_by_group: Mapping[int, PETSc.Vec] | Sequence[PETSc.Vec],
+    ) -> PETSc.Vec:
+        """Build ``g=b_Gamma-sum(A_GI A_II^-1 b_I)``.
+
+        The returned canonical Gamma vector is caller-owned.  The group
+        interior RHS vectors remain owned by the caller and are never mutated.
+        """
+
+        self._check_live()
+        self._check_layout(gamma_rhs)
+        group_rhs = self._normalize_group_interior_rhs(interior_rhs_by_group)
+        if (
+            self._group1_correction is None
+            or self._lower_target is None
+            or self._upper_target is None
+        ):
+            raise RuntimeError("full-interface scratch vectors are unavailable")
+        target = self.create_interface_vector()
+        scratch = {
+            0: self._lower_target,
+            1: self._group1_correction,
+            2: self._upper_target,
+        }
+        try:
+            gamma_rhs.copy(target)
+            for group in range(3):
+                self._oracle.apply_group_interior_rhs_correction(
+                    group,
+                    group_rhs[group],
+                    scratch[group],
+                )
+                scratch[group].scale(PETSc.ScalarType(-1.0))
+                self._scatters[group].scatter(
+                    scratch[group],
+                    target,
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                    mode=PETSc.ScatterMode.REVERSE,
+                )
+            target.assemble()
+            return target
+        except Exception:
+            target.destroy()
+            raise
+
+    def build_condensed_rhs_from_active_vector(
+        self, active_rhs: PETSc.Vec
+    ) -> tuple[PETSc.Vec, dict[int, PETSc.Vec], PETSc.Vec]:
+        """Extract ``b_Gamma,b_I`` and build the condensed RHS.
+
+        All three returned objects are caller-owned.  This is the reusable
+        entry point for exact qualification from a current-layout active RHS.
+        """
+
+        self._check_live()
+        self._check_active_vector_layout(active_rhs)
+        gamma_rhs: PETSc.Vec | None = None
+        interior_rhs: dict[int, PETSc.Vec] = {}
+        condensed_rhs: PETSc.Vec | None = None
+        try:
+            gamma_rhs = self.extract_interface_from_active_vector(active_rhs)
+            for group in range(3):
+                interior_rhs[group] = self.extract_group_interior_from_active_vector(
+                    active_rhs, group
+                )
+            condensed_rhs = self.build_condensed_rhs(gamma_rhs, interior_rhs)
+            return gamma_rhs, interior_rhs, condensed_rhs
+        except Exception:
+            if condensed_rhs is not None:
+                condensed_rhs.destroy()
+            for vector in interior_rhs.values():
+                vector.destroy()
+            if gamma_rhs is not None:
+                gamma_rhs.destroy()
+            raise
+
+    def _build_full_state_from_group_rhs(
+        self,
+        source: PETSc.Vec,
+        interior_rhs_by_group: tuple[PETSc.Vec, PETSc.Vec, PETSc.Vec] | None,
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
         self._check_live()
         self._check_layout(source)
         full = self._oracle._bare.createVecRight()
@@ -1397,15 +1653,27 @@ class PetscFullInterfaceSchurAction:
         interior_rows: set[int] = set()
         gamma_rows: set[int] = set()
         temporaries: list[PETSc.Vec] = []
+        interior_rhs_norms: list[float] = []
         try:
             for group in range(3):
                 group_source = self.restrict_group_interface(group, source)
                 interior = self._oracle.create_group_interior_vector(group)
                 temporaries.extend((group_source, interior))
-                self._oracle.solve_group_interior(group, group_source, interior)
-                interior.scale(PETSc.ScalarType(-1.0))
+                if interior_rhs_by_group is None:
+                    self._oracle.solve_group_interior(group, group_source, interior)
+                    interior.scale(PETSc.ScalarType(-1.0))
+                else:
+                    self._oracle.solve_group_interior_with_rhs(
+                        group,
+                        group_source,
+                        interior_rhs_by_group[group],
+                        interior,
+                    )
+                    interior_rhs_norms.append(
+                        float(interior_rhs_by_group[group].norm())
+                    )
                 gamma_rows_local = self._oracle.group_gamma_rows_local(group)
-                interior_rows_local = self._oracle._blocks[group].interior_rows.copy()
+                interior_rows_local = self._oracle.group_interior_rows_local(group)
                 if (
                     group_source.getLocalSize() != gamma_rows_local.size
                     or interior.getLocalSize() != interior_rows_local.size
@@ -1450,13 +1718,9 @@ class PetscFullInterfaceSchurAction:
                 raise ValueError(
                     "full-state rows do not cover the local bare-F ownership range"
                 )
-            global_assigned = int(
-                self._comm.allreduce(len(assigned), op=MPI.SUM)
-            )
+            global_assigned = int(self._comm.allreduce(len(assigned), op=MPI.SUM))
             global_gamma = int(self._comm.allreduce(len(gamma_rows), op=MPI.SUM))
-            global_interior = int(
-                self._comm.allreduce(len(interior_rows), op=MPI.SUM)
-            )
+            global_interior = int(self._comm.allreduce(len(interior_rows), op=MPI.SUM))
             if global_assigned != int(full.getSize()):
                 raise ValueError("full-state rows do not cover the bare-F size")
             if global_gamma + global_interior != int(full.getSize()):
@@ -1470,6 +1734,10 @@ class PetscFullInterfaceSchurAction:
                     sorted(interior_rows), dtype=np.int64
                 ),
                 "group_interior_solve_count": 3,
+                "interior_rhs_nonzero": bool(
+                    any(norm > 0.0 for norm in interior_rhs_norms)
+                ),
+                "interior_rhs_norms": interior_rhs_norms,
             }
         except Exception:
             full.destroy()
@@ -1477,6 +1745,30 @@ class PetscFullInterfaceSchurAction:
         finally:
             for vector in reversed(temporaries):
                 vector.destroy()
+
+    def build_full_state_from_condensed_solution(
+        self,
+        source: PETSc.Vec,
+        interior_rhs_by_group: Mapping[int, PETSc.Vec] | Sequence[PETSc.Vec],
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
+        """Recover ``x_I=A_II^-1(b_I-A_IGamma*x_Gamma)`` from ``x_Gamma``."""
+
+        group_rhs = self._normalize_group_interior_rhs(interior_rhs_by_group)
+        return self._build_full_state_from_group_rhs(source, group_rhs)
+
+    def build_full_eliminated_state(
+        self,
+        source: PETSc.Vec,
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
+        """Build one full active state using the three group interior solves.
+
+        This is an identity-audit helper, not the Schur action implementation:
+        the caller can apply the independent bare ``F`` to the returned state
+        and compare that residual with ``MatPython.mult``.  Only owner-local
+        Gamma/interior rows are assembled into the full active vector.
+        """
+
+        return self._build_full_state_from_group_rhs(source, None)
 
     def prolong_interface(
         self,

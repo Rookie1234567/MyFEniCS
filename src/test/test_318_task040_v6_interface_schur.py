@@ -10,6 +10,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers.hybrid_interface_schur import (
+    _filter_rows_by_int_set,
     build_canonical_interface_layout,
     build_owner_local_group_rows,
     build_petsc_full_interface_schur_action,
@@ -366,6 +367,152 @@ def test_v6_2_canonical_joint_action_matches_independent_full_elimination():
     assert action.diagnostics["destroyed"] is True
     assert action.diagnostics["factor_count_after_cleanup"] == 0
     assert action.diagnostics["group_factor_count"] == 0
+
+
+def test_v6_2_condensed_rhs_and_recovery_support_nonzero_interior_rhs():
+    dense = _dense_bare()
+    bare = _distributed_bare(dense)
+    oracle = None
+    matrix = None
+    action = None
+    active_rhs = None
+    gamma_rhs = None
+    interior_rhs = {}
+    condensed_rhs = None
+    solution = None
+    full_state = None
+    residual = None
+    extracted_residual = None
+    try:
+        canonical_layout = _canonical_layout(bare)
+        local_groups = _local_group_rows(bare)
+        first, last = map(int, bare.getOwnershipRange())
+        lower_local = np.asarray(
+            [row for row in LOWER_ROWS if first <= row < last], dtype=PETSc.IntType
+        )
+        upper_local = np.asarray(
+            [row for row in UPPER_ROWS if first <= row < last], dtype=PETSc.IntType
+        )
+        oracle = build_petsc_interface_schur_oracle(
+            bare, local_groups, (lower_local, upper_local)
+        )
+        matrix, action = build_petsc_full_interface_schur_action(
+            oracle,
+            canonical_layout=canonical_layout,
+        )
+
+        active_values = np.asarray(
+            [
+                0.8 - 0.4j,
+                -0.3 + 0.7j,
+                0.6 + 0.2j,
+                1.1 - 0.1j,
+                -0.9 + 0.5j,
+                0.25 + 0.8j,
+                -0.6 - 0.35j,
+            ],
+            dtype=np.complex128,
+        )
+        active_rhs = bare.createVecRight()
+        _set_global_values(active_rhs, active_values)
+        gamma_rhs, interior_rhs, condensed_rhs = (
+            action.build_condensed_rhs_from_active_vector(active_rhs)
+        )
+        expected_gamma = active_values[CANONICAL_ROWS]
+        assert np.linalg.norm(_collect_global_values(gamma_rhs) - expected_gamma) <= (
+            1.0e-12
+        )
+        interior_rows = np.asarray((0, 5, 6), dtype=np.int64)
+        expected_condensed = expected_gamma - dense[
+            np.ix_(CANONICAL_ROWS, interior_rows)
+        ] @ np.linalg.solve(
+            dense[np.ix_(interior_rows, interior_rows)], active_values[interior_rows]
+        )
+        assert (
+            np.linalg.norm(_collect_global_values(condensed_rhs) - expected_condensed)
+            <= 1.0e-11
+        )
+        assert np.linalg.norm(_collect_global_values(active_rhs) - active_values) <= (
+            1.0e-12
+        )
+
+        solution_values = np.asarray(
+            [0.45 + 0.2j, -0.7 + 0.15j, 0.3 - 0.6j, 0.9 + 0.4j],
+            dtype=np.complex128,
+        )
+        solution = action.create_interface_vector()
+        _set_global_values(solution, solution_values)
+        full_state, recovery_audit = action.build_full_state_from_condensed_solution(
+            solution,
+            interior_rhs,
+        )
+        assert recovery_audit["group_interior_solve_count"] == 3
+        assert recovery_audit["interior_rhs_nonzero"] is True
+        assert all(norm > 0.0 for norm in recovery_audit["interior_rhs_norms"])
+
+        residual = bare.createVecLeft()
+        bare.mult(full_state, residual)
+        residual.axpy(PETSc.ScalarType(-1.0), active_rhs)
+        extracted_residual = action.extract_interface_from_active_vector(residual)
+        observed_gamma_residual = _collect_global_values(extracted_residual)
+        expected_gamma_residual = _reference_full_schur(
+            dense, solution_values
+        ) - expected_condensed
+        assert (
+            np.linalg.norm(observed_gamma_residual - expected_gamma_residual)
+            <= 1.0e-10
+        )
+        observed_full_residual = _collect_global_values(residual)
+        assert np.linalg.norm(observed_full_residual[interior_rows]) <= 1.0e-10
+        assert np.linalg.norm(_collect_global_values(active_rhs) - active_values) <= (
+            1.0e-12
+        )
+    finally:
+        if extracted_residual is not None:
+            extracted_residual.destroy()
+        if residual is not None:
+            residual.destroy()
+        if full_state is not None:
+            full_state.destroy()
+        if condensed_rhs is not None:
+            condensed_rhs.destroy()
+        for vector in interior_rhs.values():
+            vector.destroy()
+        if gamma_rhs is not None:
+            gamma_rhs.destroy()
+        if solution is not None:
+            solution.destroy()
+        if active_rhs is not None:
+            active_rhs.destroy()
+        if matrix is not None:
+            matrix.destroy()
+        if action is not None:
+            action.destroy()
+        if oracle is not None and matrix is None:
+            oracle.destroy()
+        bare.destroy()
+
+
+def test_v6_2_prebuilt_row_membership_filter_preserves_large_coverage():
+    rows = np.arange(200_000, dtype=PETSc.IntType)
+    gamma = rows[::7]
+    gamma_set = {int(row) for row in gamma}
+    interior = _filter_rows_by_int_set(
+        rows,
+        gamma_set,
+        keep_members=False,
+    )
+    selected = _filter_rows_by_int_set(
+        rows,
+        gamma_set,
+        keep_members=True,
+    )
+    assert np.array_equal(selected, gamma)
+    assert np.array_equal(
+        np.sort(np.concatenate((selected, interior))),
+        rows,
+    )
+    assert np.intersect1d(selected, interior).size == 0
 
 
 def test_v6_2_owner_router_deduplicates_shared_rows_without_numeric_gather():
