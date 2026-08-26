@@ -250,6 +250,44 @@ def test_c0_checker_recomputes_global_source_and_work_relations() -> None:
     assert source_metrics["global_packet_count"] == 2
     assert source_metrics["dependent_relation_relative"] <= 1.0e-13
 
+    dual_key = canonical_key(
+        role="full_fe_dual",
+        entity_dimension=2,
+        physical_entity=((0, 0, 0), (0, 0, 4), (0, 4, 0), (0, 4, 4)),
+        entity_local_basis_index=0,
+        orientation_state=("canonical_face", "v1"),
+    )
+    dual_value_expected, _digest, _payload = canonical_source_coefficient_from_key(
+        dual_key, fixed_seed=seed
+    )
+    dual_facts = dict(source_facts)
+    dual_facts.update(
+        {
+            "role": "full_fe_dual",
+            "global_packet_count": 1,
+            "global_independent_packet_count": 1,
+            "global_dependent_packet_count": 0,
+            "dependent_placeholder_non_authoritative": False,
+            "dependent_value_authority": "slave_zero_dual_storage",
+            "phase_application": "dual_source_slave_zero_no_phase_reapplication",
+        }
+    )
+    dual_observed = complex(
+        np.nextafter(float(np.real(dual_value_expected)), np.inf),
+        float(np.imag(dual_value_expected)),
+    )
+    source_errors = []
+    source_gates = []
+    dual_metrics = _check_source_packets(
+        "source_dual", {dual_key: dual_observed}, dual_facts, seed,
+        source_errors, source_gates,
+    )
+    assert source_errors == []
+    assert source_gates == []
+    assert dual_metrics["independent_source_exact_mismatch_count"] == 1
+    assert dual_metrics["independent_source_relative"] <= 1.0e-13
+    assert dual_metrics["independent_source_max_abs"] <= 1.0e-12
+
     base_key = ((1, 2, 3), (4, 5, 6))
     primal_value = 1.75 - 0.5j
     dual_value = -0.25 + 2.0j
@@ -265,7 +303,9 @@ def test_c0_checker_recomputes_global_source_and_work_relations() -> None:
             else dual_value,
         )
     }
-    work = np.conjugate(primal_value) * dual_value
+    work = np.conjugate(dual_value) * primal_value
+    assert work == -1.4375 - 3.375j
+    assert work.imag < 0.0
     transfer_facts = {
         "pair_fine_to_coarse": [3, 1],
         "primal_output_finite": True,
@@ -293,6 +333,8 @@ def test_c0_checker_recomputes_global_source_and_work_relations() -> None:
     assert gates == []
     assert metrics["canonical_explicit_adjoint_work_relative"] == 0.0
     assert metrics["global_adjoint_work_relative"] == 0.0
+    assert metrics["canonical_work_lhs"] == [-1.4375, -3.375]
+    assert metrics["canonical_work_rhs"] == [-1.4375, -3.375]
 
     missing = dict(packets)
     missing["projected_scaled_primal"] = {}

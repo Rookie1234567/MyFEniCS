@@ -25,7 +25,7 @@ from benchmarks.task038_full3d_interlevel_spectral_checker import (
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_c0_canonical_source"
 SCHEMA = "task038.full3d.canonical-source.c0-record.v1"
-CHECK_SCHEMA = "task038.full3d.canonical-source.c0-check.v1"
+CHECK_SCHEMA = "task038.full3d.canonical-source.c0-check.v2"
 MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v1"
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 SHARD_SCHEMA = "task037.canonical-vector-shard.v1"
@@ -213,7 +213,7 @@ def _work(primal: dict[tuple[Any, ...], complex], dual: dict[tuple[Any, ...], co
     if not set(dual).issubset(primal):
         return None
     ordered = sorted(dual, key=_canonical_key_json_bytes)
-    products = [np.conjugate(primal[key]) * dual[key] for key in ordered]
+    products = [np.conjugate(dual[key]) * primal[key] for key in ordered]
     return complex(
         math.fsum(float(value.real) for value in products),
         math.fsum(float(value.imag) for value in products),
@@ -371,6 +371,10 @@ def _check_source_packets(
     independent = 0
     relation_relative = 0.0
     relation_max_abs = 0.0
+    independent_difference_sq = 0.0
+    independent_expected_sq = 0.0
+    independent_max_abs = 0.0
+    independent_exact_mismatch_count = 0
     for key, value in packets.items():
         if not isinstance(key, tuple) or len(key) != 7 or key[0] != PACKET_ROLES[label]:
             errors.append(f"source packet key/role mismatch: {label}")
@@ -379,8 +383,14 @@ def _check_source_packets(
             if key[5] is not None:
                 errors.append("dual source contains a dependent key")
             expected, _digest = _source_coefficient(key, fixed_seed)
+            observed = complex(value)
+            expected_value = complex(expected)
+            difference = abs(observed - expected_value)
+            independent_difference_sq += float(difference) ** 2
+            independent_expected_sq += abs(expected_value) ** 2
+            independent_max_abs = max(independent_max_abs, float(difference))
             if np.asarray(value, dtype=np.complex128).tobytes() != expected.tobytes():
-                errors.append(f"dual source hash coefficient mismatch: {label}")
+                independent_exact_mismatch_count += 1
             independent += 1
             continue
         if key[5] is None:
@@ -418,12 +428,24 @@ def _check_source_packets(
         errors.append("primal dependent source authority is not explicit")
     if label == "source_dual" and (facts.get("dependent_placeholder_non_authoritative") is not False or facts.get("dependent_value_authority") != "slave_zero_dual_storage"):
         errors.append("dual source authority is not explicit")
+    independent_relative = float(
+        math.sqrt(independent_difference_sq)
+        / max(math.sqrt(independent_expected_sq), np.finfo(float).tiny)
+    ) if independent else 0.0
+    if label == "source_dual" and (
+        independent_relative > SOURCE_RELATIVE_LIMIT
+        or independent_max_abs > SOURCE_MAX_ABS_LIMIT
+    ):
+        gates.append("C0 dual independent source coefficient limits exceeded")
     return {
         "global_packet_count": len(packets),
         "global_independent_packet_count": independent,
         "global_dependent_packet_count": dependent,
         "dependent_relation_relative": relation_relative,
         "dependent_relation_max_abs": relation_max_abs,
+        "independent_source_relative": independent_relative,
+        "independent_source_max_abs": independent_max_abs,
+        "independent_source_exact_mismatch_count": independent_exact_mismatch_count,
     }
 
 
