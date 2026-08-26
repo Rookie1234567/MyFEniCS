@@ -24,9 +24,9 @@ from benchmarks.task038_full3d_interlevel_spectral_checker import (
 
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_c0_canonical_source"
-SCHEMA = "task038.full3d.canonical-source.c0-record.v2"
-CHECK_SCHEMA = "task038.full3d.canonical-source.c0-check.v3"
-MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v2"
+SCHEMA = "task038.full3d.canonical-source.c0-record.v3"
+CHECK_SCHEMA = "task038.full3d.canonical-source.c0-check.v4"
+MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v3"
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 SHARD_SCHEMA = "task037.canonical-vector-shard.v1"
 MANIFEST_SCHEMA = "task037.canonical-vector-manifest.v1"
@@ -585,7 +585,9 @@ def _check_provenance(record: dict[str, Any], record_path: Path, expected_sha: s
         errors.append("C0 thread identity mismatch")
         failed = True
     raw_dir = record.get("raw_dir")
-    if not isinstance(raw_dir, str) or not Path(raw_dir).is_absolute() or record.get("record_path") != str(record_path.resolve()) or Path(raw_dir).resolve() == record_path.resolve():
+    raw_path = Path(raw_dir).resolve() if isinstance(raw_dir, str) else None
+    record_resolved = record_path.resolve()
+    if not isinstance(raw_dir, str) or not Path(raw_dir).is_absolute() or record.get("record_path") != str(record_resolved) or raw_path == record_resolved or raw_path.parent != record_resolved.parent:
         errors.append("C0 record/raw path identity mismatch")
         failed = True
     command = record.get("command")

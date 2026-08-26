@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 from benchmarks.run_task038_full3d_c0_canonical_source import (
@@ -10,6 +11,7 @@ from benchmarks.run_task038_full3d_c0_canonical_source import (
     SCHEMA as C0_RECORD_SCHEMA,
     _c0_marker,
     _packet_artifact,
+    _validate_c0_record_staging,
 )
 from benchmarks.task038_full3d_c0_canonical_source_checker import (
     ALPHA,
@@ -20,6 +22,7 @@ from benchmarks.task038_full3d_c0_canonical_source_checker import (
     PACKET_ROLES,
     SOURCE2_SCALE,
     _check_packet_relations,
+    _check_provenance,
     _check_source_packets,
     _load_packet_artifact,
     _scalar_relative,
@@ -63,13 +66,35 @@ def test_c0_marker_uses_explicit_serializer_binding(tmp_path) -> None:
         answer=7,
     )
     payload = json.loads(marker_path.read_text())
-    assert C0_RECORD_SCHEMA == "task038.full3d.canonical-source.c0-record.v2"
-    assert C0_MARKER_SCHEMA == "task038.full3d.canonical-source.c0-marker.v2"
+    assert C0_RECORD_SCHEMA == "task038.full3d.canonical-source.c0-record.v3"
+    assert C0_MARKER_SCHEMA == "task038.full3d.canonical-source.c0-marker.v3"
     assert C0_CHECK_RECORD_SCHEMA == C0_RECORD_SCHEMA
     assert C0_CHECK_MARKER_SCHEMA == C0_MARKER_SCHEMA
-    assert C0_CHECK_SCHEMA == "task038.full3d.canonical-source.c0-check.v3"
+    assert C0_CHECK_SCHEMA == "task038.full3d.canonical-source.c0-check.v4"
     assert payload["schema"] == C0_MARKER_SCHEMA
     assert payload["facts"] == {"answer": 7, "raw_dir": "worker-raw"}
+
+
+def test_c0_record_uses_ignored_sibling_staging(tmp_path) -> None:
+    raw_dir = tmp_path / "case" / "worker_raw"
+    record_path = tmp_path / "case" / "worker_record.json"
+    _validate_c0_record_staging(raw_dir, record_path)
+    errors: list[str] = []
+    record = {
+        "schema": C0_RECORD_SCHEMA,
+        "stage": "c0",
+        "case": "p3-h50-mpi1",
+        "mpi_size": 1,
+        "degree": 3,
+        "h_nm": 50.0,
+        "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+        "raw_dir": str(raw_dir),
+        "record_path": str(tmp_path / "tracked" / "record.json"),
+    }
+    assert _check_provenance(
+        record, Path(record["record_path"]), "source-sha", errors
+    )
+    assert "C0 record/raw path identity mismatch" in errors
 
 
 def test_c0_packet_artifact_uses_explicit_serializer_binding(tmp_path) -> None:

@@ -20,8 +20,8 @@ import numpy as np
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 STAGE = "c0"
 MODULE = "benchmarks.run_task038_full3d_c0_canonical_source"
-SCHEMA = "task038.full3d.canonical-source.c0-record.v2"
-MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v2"
+SCHEMA = "task038.full3d.canonical-source.c0-record.v3"
+MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v3"
 C0_CASES = ("p3-h50-mpi1", "p3-h50-mpi2")
 C0_DEGREE = 3
 C0_H_NM = 50.0
@@ -54,6 +54,13 @@ C0_FORBIDDEN_SOURCE_FIELDS = (
     "iteration order",
     "Python object hash",
 )
+
+
+def _validate_c0_record_staging(raw_dir: Path, record_path: Path) -> None:
+    raw_dir = raw_dir.resolve()
+    record_path = record_path.resolve()
+    if record_path.parent != raw_dir.parent or record_path == raw_dir:
+        raise ValueError("C0 worker record must be a raw-dir sibling")
 
 
 def _scalar_relative(left: complex, right: complex) -> float:
@@ -261,6 +268,7 @@ def run_c0_worker(
     raw_dir = (raw_dir if raw_dir.is_absolute() else root / raw_dir).resolve()
     record_path = (record_path if record_path.is_absolute() else root / record_path).resolve()
     input_path = (input_path if input_path.is_absolute() else root / input_path).resolve()
+    _validate_c0_record_staging(raw_dir, record_path)
     _prepare_paths(raw_dir, record_path, comm)
     marker_times: dict[str, int] = {}
     marker_names: list[str] = []
