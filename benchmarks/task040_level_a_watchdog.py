@@ -27,6 +27,7 @@ from benchmarks.task040_level_a import (
     TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG,
     TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG,
     TASK040_V5_ROUTE_C_FLAG,
+    TASK040_V6_2_INTERFACE_SCHUR_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -103,6 +104,12 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if plan.get("v5_route_c") is True:
         command.append(TASK040_V5_ROUTE_C_FLAG)
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
+    if plan.get("v6_2_interface_schur") is True:
+        command.append(TASK040_V6_2_INTERFACE_SCHUR_FLAG)
+        command.extend(
+            ("--watchdog-hard-stop-bytes", str(plan["watchdog"]["hard_stop_bytes"]))
+        )
+        command.extend(("--watchdog-enabled", "--bottom-route-only"))
     if plan.get("coupled_interface") is True:
         command.extend(
             [
@@ -136,6 +143,7 @@ def build_task040_level_a_watchdog_plan(
     v4_exact_authority_compatibility: bool = False,
     v5_fresh_bare_f_authority: bool = False,
     v5_route_c: bool = False,
+    v6_2_interface_schur: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -151,6 +159,7 @@ def build_task040_level_a_watchdog_plan(
         v4_exact_authority_compatibility=v4_exact_authority_compatibility,
         v5_fresh_bare_f_authority=v5_fresh_bare_f_authority,
         v5_route_c=v5_route_c,
+        v6_2_interface_schur=v6_2_interface_schur,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -185,6 +194,25 @@ def build_task040_level_a_watchdog_plan(
                 "route_c_resource_policy": "45_gib_hard_line_swap0",
                 "bottom_route_only": True,
                 "process_tree_watchdog_enabled": True,
+            }
+        )
+    elif v6_2_interface_schur:
+        plan["watchdog"].update(
+            {
+                "hard_stop_bytes": int(plan["absolute_terminate_memory_bytes"]),
+                "minimum_mem_available_bytes": int(
+                    plan["minimum_mem_available_bytes"]
+                ),
+                "minimum_disk_free_bytes": int(plan["minimum_disk_free_bytes"]),
+                "swap_limit_bytes": 0,
+                "timeout_seconds": int(plan["timeout_seconds"]),
+                "process_tree_watchdog_enabled": True,
+                "bottom_route_only": True,
+                "v6_2_identity_only": True,
+                "numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "root_metadata_gather": True,
+                "support_metadata_replicated": True,
             }
         )
     plan["worker_run_directory"] = str(worker_directory)
@@ -570,6 +598,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG, action="store_true")
     parser.add_argument(TASK040_V5_ROUTE_C_FLAG, action="store_true")
+    parser.add_argument(TASK040_V6_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument("--watchdog-enabled", action="store_true")
     parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
@@ -579,6 +608,12 @@ def main(argv: list[str] | None = None) -> int:
     ):
         parser.error(
             "Route C requires --watchdog-enabled and --bottom-route-only"
+        )
+    if args.v6_2_interface_schur and not (
+        args.watchdog_enabled and args.bottom_route_only
+    ):
+        parser.error(
+            "V6-2 interface Schur requires --watchdog-enabled and --bottom-route-only"
         )
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
@@ -593,6 +628,7 @@ def main(argv: list[str] | None = None) -> int:
         v4_exact_authority_compatibility=args.v4_exact_authority_compatibility,
         v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
         v5_route_c=args.v5_route_c,
+        v6_2_interface_schur=args.v6_2_interface_schur,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
