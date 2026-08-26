@@ -1,0 +1,181 @@
+{
+  "schema": "task038.same_mesh_hcurl_pmg.c0-v4-evidence.v1",
+  "classification": "C0_CANONICAL_SOURCE_PASS_MPI1_MPI2",
+  "scope": "V13 C0 physical canonical source and p3-to-p1 owner transfer only",
+  "source": {
+    "sha256": "4dc9b55cd3519a03b23c9d27779c0379cef84f66",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "case": "p3-h50",
+    "levels": [3, 1],
+    "pair_fine_to_coarse": [3, 1],
+    "fixed_seed": "task038-c0-physical-canonical-source-v1",
+    "canonical_source_schema": "task038.v13.c0.physical-canonical-source.v1",
+    "fine_lagrange_variant": "legendre",
+    "coarse_lagrange_variant": "legendre",
+    "numeric_scalar": "complex128",
+    "integer_type": "int32",
+    "mpi_sizes": [1, 2],
+    "threads": 1
+  },
+  "old_v12_c1_identity_negative": {
+    "classification": "CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE",
+    "record": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_c1_mpi_identity_v1.json",
+    "primal_relative": 0.10049859821442367,
+    "dual_relative": 0.004662851981572301,
+    "unchanged": true,
+    "interpretation": "V12 identity negative is retained and is not reclassified by C0 v4."
+  },
+  "worker_contract": {
+    "record_schema": "task038.full3d.canonical-source.c0-record.v3",
+    "marker_schema": "task038.full3d.canonical-source.c0-marker.v3",
+    "checker_schema": "task038.full3d.canonical-source.c0-check.v4",
+    "forbidden": {
+      "global_high_order_aij": false,
+      "global_transfer_matrix": false,
+      "numeric_allgather": false,
+      "p1_factor": false,
+      "smoother": false,
+      "ksp": false,
+      "physical_solve": false,
+      "recovery": false,
+      "static_condensation": false
+    },
+    "phase_application": "finalized_floquet_mpc_once",
+    "source_hash_fields": [
+      "role",
+      "physical_entity_geometry_key",
+      "entity_dimension",
+      "entity_local_basis_index",
+      "canonical_orientation_state",
+      "floquet_master_phase_state",
+      "fixed_seed"
+    ],
+    "forbidden_source_fields": [
+      "PETSc global row id",
+      "rank id",
+      "local row id",
+      "ownership range",
+      "iteration order",
+      "Python object hash"
+    ]
+  },
+  "runs": {
+    "mpi1": {
+      "record": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi1/worker_record.json",
+      "record_sha256": "cb9f3550a78536a25542002edf242f1f57a338b308ae656e702801b7936d1ce6",
+      "checker": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi1/checker.json",
+      "checker_sha256": "fd045daba810c2aa4f0f6cab833aa6f319574ed2912e888933b79de9df389a89",
+      "watchdog_compact": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi1/watchdog.compact.json",
+      "watchdog_compact_sha256": "943ee72c22719aadf6ddc040b734737f67bcb5391cc7fbe3fe571bd835f921ca",
+      "watchdog_raw": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi1/watchdog.raw.jsonl",
+      "watchdog_raw_sha256": "e023ba88dcc888653502d22eca81541d7194d91f391ecdd0d1f30fbf43396c9e",
+      "worker_log": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi1/worker.log",
+      "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "watchdog": {
+        "returncode": 0,
+        "natural_exit": true,
+        "no_orphan": true,
+        "all_status_readable": true,
+        "sample_count": 8,
+        "peak_process_tree_rss_bytes": 141524992,
+        "max_process_tree_swap_bytes": 0,
+        "poll_seconds": 0.25,
+        "rss_limit_bytes": 2000000000,
+        "launcher": "direct"
+      },
+      "packets": {
+        "source_primal": {"count": 162, "independent": 102, "dependent": 60, "missing": 0, "extra": 0, "duplicate": 0},
+        "source_dual": {"count": 2538, "independent": 2538, "dependent": 0, "missing": 0, "extra": 0, "duplicate": 0},
+        "projected_primal": {"missing": 0, "extra": 0, "relative": 0.0, "max_abs": 0.0},
+        "adjoint_dual": {"missing": 0, "extra": 0, "relative": 0.0, "max_abs": 0.0}
+      },
+      "source_facts": {
+        "primal_relative": 0.0,
+        "primal_max_abs": 0.0,
+        "primal_dependent_relation_relative": 1.9801606126261387e-16,
+        "primal_dependent_relation_max_abs": 2.237726045655905e-16,
+        "dual_relative": 1.3112141111956135e-17,
+        "dual_max_abs": 2.2887833992611187e-16,
+        "dual_exact_mismatch_count": 26
+      },
+      "transfer_facts": {
+        "global_adjoint_work_relative": 1.6024250121032939e-15,
+        "canonical_explicit_adjoint_work_relative": 9.104099771384807e-18,
+        "implemented_vs_explicit_vector_relative": 1.732205676136131e-17,
+        "linearity_relative": 1.377237509255599e-16,
+        "primal_repeat_relative": 0.0,
+        "adjoint_repeat_relative": 0.0,
+        "global_work_lhs": [778.4974588048732, -55.377425484797485],
+        "global_work_rhs": [778.4974588048719, -55.3774254847975]
+      }
+    },
+    "mpi2": {
+      "record": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi2/worker_record.json",
+      "record_sha256": "a68037b088f91a7546e824af981f0b2fb91a158036f9b8b5adb9e33aa4a138af",
+      "checker": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi2/checker.json",
+      "checker_sha256": "3d8d523f8ac7215ef93d25415469a0e5472f9fbb9e5c6c77c62ebb96419de5ef",
+      "watchdog_compact": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi2/watchdog.compact.json",
+      "watchdog_compact_sha256": "ece8662f106790ad90e89e3a296ae161496e7a389e292f80d25cd02d024a6cd4",
+      "watchdog_raw": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi2/watchdog.raw.jsonl",
+      "watchdog_raw_sha256": "76eac8c5cfbab647e0c102e5757fade1f0032287f0f04de8326ae44ddf2ad99d",
+      "worker_log": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v4/4dc9b55cd3519a03b23c9d27779c0379cef84f66/p3-h50-mpi2/worker.log",
+      "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "watchdog": {
+        "returncode": 0,
+        "natural_exit": true,
+        "no_orphan": true,
+        "all_status_readable": true,
+        "sample_count": 8,
+        "peak_process_tree_rss_bytes": 262807552,
+        "max_process_tree_swap_bytes": 0,
+        "poll_seconds": 0.25,
+        "rss_limit_bytes": 2000000000,
+        "launcher": "mpiexec_n2"
+      },
+      "packets": {
+        "source_primal": {"count": 162, "independent": 102, "dependent": 60, "missing": 0, "extra": 0, "duplicate": 0},
+        "source_dual": {"count": 2538, "independent": 2538, "dependent": 0, "missing": 0, "extra": 0, "duplicate": 0},
+        "projected_primal": {"missing": 0, "extra": 0, "relative": 7.098786108663455e-16, "max_abs": 2.3738609781529628e-15},
+        "adjoint_dual": {"missing": 0, "extra": 0, "relative": 4.1067748418222563e-16, "max_abs": 9.103828801926284e-15}
+      },
+      "source_facts": {
+        "primal_relative": 0.0,
+        "primal_max_abs": 0.0,
+        "primal_dependent_relation_relative": 1.9801606126261387e-16,
+        "primal_dependent_relation_max_abs": 2.237726045655905e-16,
+        "dual_relative": 2.012501428728352e-17,
+        "dual_max_abs": 2.2887833992611187e-16,
+        "dual_exact_mismatch_count": 94
+      },
+      "transfer_facts": {
+        "global_adjoint_work_relative": 5.8266238536862765e-16,
+        "canonical_explicit_adjoint_work_relative": 0.0,
+        "implemented_vs_explicit_vector_relative": 1.2248543800056866e-17,
+        "linearity_relative": 1.4396768382121543e-16,
+        "primal_repeat_relative": 0.0,
+        "adjoint_repeat_relative": 0.0,
+        "global_work_lhs": [778.4974588048715, -55.37742548479751],
+        "global_work_rhs": [778.4974588048719, -55.37742548479751]
+      }
+    }
+  },
+  "cross_mpi": {
+    "source_primal_relative": 0.0,
+    "source_primal_max_abs": 0.0,
+    "source_dual_relative": 1.950065385229289e-17,
+    "source_dual_max_abs": 2.2887833992611187e-16,
+    "projected_primal_relative": 7.098786108663455e-16,
+    "projected_primal_max_abs": 2.3738609781529628e-15,
+    "adjoint_dual_relative": 4.1067748418222563e-16,
+    "adjoint_dual_max_abs": 9.103828801926284e-15,
+    "missing": 0,
+    "extra": 0,
+    "duplicate": 0,
+    "all_gates_passed": true
+  },
+  "interpretation": {
+    "ordinary_default_changed": false,
+    "p6_or_physical_solver_run": false,
+    "next_boundary": "C1 small p3/h50 same-mesh positive candidate is pending review; no formal C1 run is included here."
+  }
+}
