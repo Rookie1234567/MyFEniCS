@@ -159,6 +159,7 @@ def test_stable_core_and_independent_local_adjoint() -> None:
 
 
 def test_a0_shard_merge_cross_mpi_and_runner_authority_shape() -> None:
+    assert "_jsonable" in runner.run_a0_worker.__code__.co_cellvars
     assert tuple(checker.PROBE_NAMES) == (
         "random", "gradient", "curl", "checkerboard",
         "physical_component_derived", "r3_long_tail_derived",

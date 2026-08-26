@@ -700,7 +700,8 @@ def run_a0_worker(
     from mpi4py import MPI
 
     from benchmarks.run_task038_full3d_lor_s2_memory_first import (
-        _input_identity, _prepare_paths, _runtime, _source_identity, _write_json,
+        _input_identity, _jsonable, _prepare_paths, _runtime, _source_identity,
+        _write_json,
     )
     from benchmarks.canonical_vector_artifacts import (
         read_canonical_manifest, read_canonical_packet_shards,
