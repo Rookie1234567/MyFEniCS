@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,9 @@ __all__ = (
     "make_live_canonical_roundtrip_callback",
     "load_owner_local_vector",
     "load_owner_local_vector_collective",
+    "LoadedExactQualificationRHS",
+    "load_and_condense_exact_rhs",
+    "run_exact_qualification_family",
     "validate_distributed_owner_vector",
     "run_exact_interface_fgmres",
 )
@@ -1287,6 +1291,409 @@ def load_owner_local_vector_collective(
         vector.destroy()
         raise
     return vector, {**local_audit, "distributed": distributed}
+
+
+@dataclass
+class LoadedExactQualificationRHS:
+    """Caller-owned vectors prepared for one exact current-layout source."""
+
+    active_rhs: PETSc.Vec
+    gamma_rhs: PETSc.Vec
+    interior_rhs_by_group: dict[int, PETSc.Vec]
+    condensed_rhs: PETSc.Vec
+    audit: dict[str, Any]
+    _destroyed: bool = False
+
+    def compact_audit(self) -> dict[str, Any]:
+        """Return JSON-safe adapter metadata without embedding PETSc objects."""
+
+        return {
+            **_compact_recovery_audit(self.audit),
+            "active_rhs_vec_retained": not self._destroyed,
+            "gamma_rhs_vec_retained": not self._destroyed,
+            "condensed_rhs_vec_retained": not self._destroyed,
+            "interior_rhs_group_count": len(self.interior_rhs_by_group),
+            "numeric_allgather": False,
+        }
+
+    def destroy(self) -> None:
+        """Destroy every vector exactly once; safe on success and failure paths."""
+
+        if self._destroyed:
+            return
+        vectors: list[PETSc.Vec] = [
+            self.condensed_rhs,
+            self.gamma_rhs,
+            *self.interior_rhs_by_group.values(),
+            self.active_rhs,
+        ]
+        destroyed: set[int] = set()
+        for vector in vectors:
+            if id(vector) in destroyed:
+                continue
+            destroyed.add(id(vector))
+            vector.destroy()
+        self._destroyed = True
+
+
+def _collect_petsc_vectors(value: Any) -> list[PETSc.Vec]:
+    """Collect PETSc Vec objects nested in a builder result.
+
+    A condensed-RHS builder can fail its return-shape contract after creating
+    vectors.  The adapter therefore inspects the returned mapping/sequence
+    before validating that contract, so those objects remain adapter-owned
+    and can be released without calling methods on arbitrary values.
+    """
+
+    vectors: list[PETSc.Vec] = []
+    visited: set[int] = set()
+
+    def visit(item: Any) -> None:
+        if isinstance(item, PETSc.Vec):
+            if id(item) not in visited:
+                visited.add(id(item))
+                vectors.append(item)
+            return
+        if isinstance(item, Mapping):
+            if id(item) in visited:
+                return
+            visited.add(id(item))
+            for nested in item.values():
+                visit(nested)
+            return
+        if isinstance(item, Sequence) and not isinstance(
+            item, (str, bytes, bytearray)
+        ):
+            if id(item) in visited:
+                return
+            visited.add(id(item))
+            for nested in item:
+                visit(nested)
+
+    visit(value)
+    return vectors
+
+
+def _destroy_petsc_vectors(vectors: Sequence[Any]) -> None:
+    """Destroy each identified PETSc Vec once, ignoring non-Vec values."""
+
+    destroyed: set[int] = set()
+    for vector in vectors:
+        if not isinstance(vector, PETSc.Vec) or id(vector) in destroyed:
+            continue
+        destroyed.add(id(vector))
+        vector.destroy()
+
+
+def load_and_condense_exact_rhs(
+    descriptor: Mapping[str, Any],
+    *,
+    base_directory: str | Path,
+    action: Any,
+    canonical_roundtrip: Callable[
+        [Mapping[str, Any], PETSc.Vec, np.ndarray], float
+    ],
+    template: PETSc.Vec | None = None,
+    comm: MPI.Intracomm = MPI.COMM_WORLD,
+    **validation: Any,
+) -> LoadedExactQualificationRHS:
+    """Load one V5 owner-row RHS and form its condensed current-layout RHS.
+
+    This is the consumer boundary between persisted V5 packets and the V6-2
+    Schur action.  The loader first proves the live canonical reconstruction,
+    then the action extracts ``b_Gamma``/``b_I`` and computes
+    ``g=b_Gamma-A_Gamma,I A_I,I^-1 b_I``.  All returned PETSc objects belong to
+    the caller and must be released with :meth:`LoadedExactQualificationRHS.destroy`.
+    """
+
+    builder = getattr(action, "build_condensed_rhs_from_active_vector", None)
+    if not callable(builder):
+        raise TypeError(
+            "exact qualification action lacks build_condensed_rhs_from_active_vector"
+        )
+    active_rhs: PETSc.Vec | None = None
+    gamma_rhs: PETSc.Vec | None = None
+    interior_rhs_by_group: dict[int, PETSc.Vec] = {}
+    condensed_rhs: PETSc.Vec | None = None
+    builder_owned_vectors: list[PETSc.Vec] = []
+    try:
+        active_rhs, load_audit = load_owner_local_vector_collective(
+            descriptor,
+            base_directory=base_directory,
+            template=template,
+            comm=comm,
+            canonical_roundtrip=canonical_roundtrip,
+            **validation,
+        )
+        result = builder(active_rhs)
+        builder_owned_vectors = _collect_petsc_vectors(result)
+        if not isinstance(result, tuple) or len(result) != 3:
+            raise TypeError(
+                "build_condensed_rhs_from_active_vector must return gamma, interior, condensed"
+            )
+        gamma_rhs, interior_values, condensed_rhs = result
+        if isinstance(interior_values, Mapping):
+            interior_rhs_by_group = {
+                int(group): vector for group, vector in interior_values.items()
+            }
+        else:
+            try:
+                sequence = tuple(interior_values)
+            except TypeError as exc:
+                raise TypeError("interior RHS result is not a group sequence") from exc
+            interior_rhs_by_group = {
+                group: vector for group, vector in enumerate(sequence)
+            }
+        if set(interior_rhs_by_group) != {0, 1, 2}:
+            raise ValueError("condensed RHS action must return groups 0, 1, 2")
+        vectors = (gamma_rhs, condensed_rhs, *interior_rhs_by_group.values())
+        if any(not isinstance(vector, PETSc.Vec) for vector in vectors):
+            raise TypeError("condensed RHS action returned a non-PETSc vector")
+        audit = {
+            "load": load_audit,
+            "condensed_rhs_built": True,
+            "interior_rhs_group_count": len(interior_rhs_by_group),
+            "numeric_allgather": False,
+            "full_numeric_replica": False,
+        }
+        return LoadedExactQualificationRHS(
+            active_rhs=active_rhs,
+            gamma_rhs=gamma_rhs,
+            interior_rhs_by_group=interior_rhs_by_group,
+            condensed_rhs=condensed_rhs,
+            audit=audit,
+        )
+    except Exception:
+        _destroy_petsc_vectors(
+            [
+                *builder_owned_vectors,
+                condensed_rhs,
+                gamma_rhs,
+                *interior_rhs_by_group.values(),
+                active_rhs,
+            ]
+        )
+        raise
+
+
+def run_exact_qualification_family(
+    descriptors: Mapping[str, Mapping[str, Any]],
+    *,
+    base_directory: str | Path,
+    interface_operator: PETSc.Mat,
+    bare_operator: PETSc.Mat,
+    schur_action: Any,
+    canonical_roundtrip: Callable[
+        [Mapping[str, Any], PETSc.Vec, np.ndarray], float
+    ]
+    | Mapping[str, Callable[[Mapping[str, Any], PETSc.Vec, np.ndarray], float]],
+    right_preconditioner: Any | None = None,
+    initial_labels: Sequence[str] | None = None,
+    restart: int = 32,
+    mandatory_checkpoints: Sequence[int] = (16, 32, 64, 128),
+    conditional_checkpoints: Sequence[int] = (256, 512),
+    authorize_conditional: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
+    resource_callback: Callable[[], Mapping[str, Any]] | None = None,
+    max_iterations: int | None = None,
+    checkpoint_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    accepted_solution_callback: (
+        Callable[[str, Mapping[str, Any], PETSc.Vec], None] | None
+    ) = None,
+    accepted_solution_consumer: (
+        Callable[
+            [str, Mapping[str, Any], PETSc.Vec, LoadedExactQualificationRHS], None
+        ]
+        | None
+    ) = None,
+    validation: Mapping[str, Any] | None = None,
+    full_residual_tolerance: float = 1.0e-9,
+) -> dict[str, Any]:
+    """Run one same-process exact-qualification source family.
+
+    The first two labels form the guarded qualification pair.  Remaining
+    sources are attempted only when both guarded sources reach the explicit
+    full-``F`` residual tolerance.  Each source owns its loader bundle and
+    accepted solution only for the duration of its callbacks; no PETSc Vec is
+    placed in the returned record.
+    """
+
+    if not isinstance(descriptors, Mapping) or not descriptors:
+        raise TypeError("exact qualification descriptors must be a nonempty mapping")
+    if not _finite_nonnegative(full_residual_tolerance) or full_residual_tolerance <= 0.0:
+        raise ValueError("exact qualification residual tolerance must be positive")
+    labels = tuple(str(label) for label in descriptors)
+    if len(set(labels)) != len(labels):
+        raise ValueError("exact qualification labels must be unique")
+    for label in labels:
+        descriptor = descriptors[label]
+        if not isinstance(descriptor, Mapping):
+            raise TypeError(f"descriptor for {label} is not a mapping")
+        if descriptor.get("label") != label:
+            raise ExactQualificationContractError(
+                f"descriptor label does not match family key: {label!r}"
+            )
+    guarded = tuple(
+        str(label) for label in (initial_labels or labels[:2])
+    )
+    if len(guarded) != 2 or len(set(guarded)) != 2:
+        raise ValueError("exact qualification needs two distinct initial labels")
+    if any(label not in descriptors for label in guarded):
+        raise ValueError("initial exact qualification label is missing")
+    ordered_labels = guarded + tuple(label for label in labels if label not in guarded)
+    validation_kwargs = dict(validation or {})
+    supplied_label = validation_kwargs.get("expected_label")
+    if supplied_label is not None and any(
+        str(supplied_label) != label for label in labels
+    ):
+        raise ValueError("one common expected_label cannot validate a source family")
+    source_records: list[dict[str, Any]] = []
+
+    def callback_for(label: str) -> Callable[[Mapping[str, Any], PETSc.Vec, np.ndarray], float]:
+        if isinstance(canonical_roundtrip, Mapping):
+            callback = canonical_roundtrip.get(label)
+            if not callable(callback):
+                raise TypeError(f"missing canonical roundtrip callback for {label}")
+            return callback
+        if not callable(canonical_roundtrip):
+            raise TypeError("canonical roundtrip must be callable or label-indexed")
+        return canonical_roundtrip
+
+    def run_source(label: str) -> dict[str, Any]:
+        bundle: LoadedExactQualificationRHS | None = None
+        accepted: PETSc.Vec | None = None
+        try:
+            bundle = load_and_condense_exact_rhs(
+                descriptors[label],
+                base_directory=base_directory,
+                action=schur_action,
+                canonical_roundtrip=callback_for(label),
+                comm=interface_operator.getComm().tompi4py(),
+                **{
+                    **validation_kwargs,
+                    "expected_label": label,
+                },
+            )
+
+            def source_checkpoint(row: Mapping[str, Any]) -> None:
+                if checkpoint_callback is not None:
+                    checkpoint_callback(label, row)
+
+            def source_accepted(row: Mapping[str, Any], vector: PETSc.Vec) -> None:
+                if accepted_solution_callback is not None:
+                    accepted_solution_callback(label, row, vector)
+
+            fgmres = run_exact_interface_fgmres(
+                interface_operator=interface_operator,
+                schur_action=schur_action,
+                bare_operator=bare_operator,
+                condensed_rhs=bundle.condensed_rhs,
+                active_rhs=bundle.active_rhs,
+                interior_rhs_by_group=bundle.interior_rhs_by_group,
+                right_preconditioner=right_preconditioner,
+                label=label,
+                restart=restart,
+                mandatory_checkpoints=mandatory_checkpoints,
+                conditional_checkpoints=conditional_checkpoints,
+                authorize_conditional=authorize_conditional,
+                resource_callback=resource_callback,
+                max_iterations=max_iterations,
+                checkpoint_callback=source_checkpoint,
+                accepted_solution_callback=(
+                    source_accepted if accepted_solution_callback is not None else None
+                ),
+            )
+            accepted = fgmres.pop("accepted_solution", None)
+            checkpoint_rows = [
+                row
+                for row in fgmres.get("checkpoint_history", [])
+                if isinstance(row, Mapping)
+            ]
+            accepted_row = next(
+                (
+                    row
+                    for row in reversed(checkpoint_rows)
+                    if bool(row.get("accepted_full_solution"))
+                ),
+                {},
+            )
+            accepted_solution_consumed = False
+            if accepted is not None and accepted_solution_consumer is not None:
+                accepted_solution_consumer(
+                    label,
+                    accepted_row,
+                    accepted,
+                    bundle,
+                )
+                accepted_solution_consumed = True
+            full_residuals = [
+                float(row["full_true_residual_relative"])
+                for row in checkpoint_rows
+                if _finite_nonnegative(row.get("full_true_residual_relative"))
+            ]
+            best_full_residual = min(full_residuals, default=float("inf"))
+            return {
+                "label": label,
+                "adapter": bundle.compact_audit(),
+                "fgmres": {
+                    **_json_safe_binding(fgmres),
+                    "accepted_solution_present": accepted is not None,
+                    "accepted_solution_released_by_driver": accepted is not None,
+                    "accepted_solution_consumed": accepted_solution_consumed,
+                },
+                "best_full_true_residual_relative": best_full_residual,
+                "full_residual_gate_pass": bool(
+                    np.isfinite(best_full_residual)
+                    and best_full_residual <= float(full_residual_tolerance)
+                ),
+            }
+        finally:
+            if accepted is not None:
+                accepted.destroy()
+            if bundle is not None:
+                bundle.destroy()
+
+    for label in ordered_labels[:2]:
+        source_records.append(run_source(label))
+    initial_pair_pass = all(
+        bool(record["full_residual_gate_pass"]) for record in source_records
+    )
+    skipped_labels: list[str] = []
+    if initial_pair_pass:
+        for label in ordered_labels[2:]:
+            source_records.append(run_source(label))
+    else:
+        skipped_labels.extend(ordered_labels[2:])
+    all_sources_gate_pass = bool(
+        initial_pair_pass
+        and len(source_records) == len(ordered_labels)
+        and all(bool(record["full_residual_gate_pass"]) for record in source_records)
+    )
+    return {
+        "schema": "task040.v6.exact_qualification_family.v1",
+        "status": (
+            "completed_initial_pair_and_remaining_sources"
+            if all_sources_gate_pass
+            else (
+                "stopped_before_remaining_sources"
+                if skipped_labels
+                else "completed_all_sources_gate_negative"
+            )
+        ),
+        "classification": (
+            "V6_EXACT_QUALIFICATION_READY"
+            if all_sources_gate_pass
+            else "V6_EXACT_QUALIFICATION_GATE_FAIL"
+        ),
+        "initial_labels": list(guarded),
+        "ordered_labels": list(ordered_labels),
+        "source_records": source_records,
+        "skipped_labels": skipped_labels,
+        "initial_pair_gate_pass": initial_pair_pass,
+        "all_sources_gate_pass": all_sources_gate_pass,
+        "full_residual_tolerance": float(full_residual_tolerance),
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+    }
 
 
 class _IdentityRightPreconditioner:

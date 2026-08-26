@@ -19,10 +19,12 @@ from src.solvers.hybrid_exact_qualification import (
     V5_VECTOR_SIDE,
     canonical_values_roundtrip_error,
     hash_array_bytes_sha256,
+    load_and_condense_exact_rhs,
     load_owner_local_vector,
     load_owner_local_vector_collective,
     make_live_canonical_roundtrip_callback,
     rank_local_shard_binding_sha256,
+    run_exact_qualification_family,
     run_exact_interface_fgmres,
     _next_iteration_boundary,
     validate_owner_vector_descriptor,
@@ -363,6 +365,202 @@ def test_live_roundtrip_rejects_tampered_persisted_layout_tokens() -> None:
         vector.destroy()
 
 
+class _TinyCondensedRhsAction:
+    def __init__(self) -> None:
+        self.seen_active_values: np.ndarray | None = None
+
+    def build_condensed_rhs_from_active_vector(
+        self,
+        active_rhs: PETSc.Vec,
+    ) -> tuple[PETSc.Vec, dict[int, PETSc.Vec], PETSc.Vec]:
+        self.seen_active_values = np.asarray(active_rhs.array, dtype=np.complex128).copy()
+        gamma_rhs = active_rhs.duplicate()
+        active_rhs.copy(gamma_rhs)
+        interior_rhs = {}
+        for group in range(3):
+            interior_rhs[group] = active_rhs.duplicate()
+            active_rhs.copy(interior_rhs[group])
+        condensed_rhs = active_rhs.duplicate()
+        active_rhs.copy(condensed_rhs)
+        return gamma_rhs, interior_rhs, condensed_rhs
+
+
+def test_loader_consumer_adapter_returns_caller_owned_condensed_rhs(
+    tmp_path: Path,
+) -> None:
+    descriptor = _make_descriptor(tmp_path)
+    frozen_tokens = tuple(
+        json.dumps(key, sort_keys=True, separators=(",", ":"))
+        for key in ({"row": 0}, {"row": 1}, {"row": 2})
+    )
+    frozen_values = np.asarray(
+        [1.0 + 0.5j, 2.0 - 0.25j, 3.0 + 0.75j], dtype=np.complex128
+    )
+    live_adapter = _LiveCanonicalAdapter(
+        frozen_tokens,
+        frozen_values,
+        [{"row": 0}, {"row": 2}],
+    )
+    live_roundtrip = make_live_canonical_roundtrip_callback(
+        live_adapter,
+        canonical_packets_for_vector=live_adapter.canonical_packets_for_vector,
+        canonical_to_current_roundtrip_relative=(
+            live_adapter.canonical_to_current_roundtrip_relative
+        ),
+        frozen_tokens=frozen_tokens,
+        frozen_values=frozen_values,
+    )
+    action = _TinyCondensedRhsAction()
+    bundle = load_and_condense_exact_rhs(
+        descriptor,
+        base_directory=tmp_path,
+        action=action,
+        canonical_roundtrip=live_roundtrip,
+        comm=MPI.COMM_SELF,
+        expected_source_sha256=SOURCE_SHA,
+        expected_input_sha256=HEX,
+        expected_physical_model_sha256=HEX,
+        expected_selected_manifest_sha256=HEX,
+        expected_resolved_config_sha256=HEX,
+        expected_operator_hash=HEX,
+    )
+    vectors = [
+        bundle.active_rhs,
+        bundle.gamma_rhs,
+        bundle.condensed_rhs,
+        *bundle.interior_rhs_by_group.values(),
+    ]
+    try:
+        assert bundle.audit["condensed_rhs_built"] is True
+        assert bundle.compact_audit()["numeric_allgather"] is False
+        assert len(bundle.interior_rhs_by_group) == 3
+        assert all(bool(vector) for vector in vectors)
+        np.testing.assert_allclose(
+            action.seen_active_values,
+            [1.0 + 0.5j, 3.0 + 0.75j],
+        )
+        json.dumps(bundle.compact_audit())
+    finally:
+        bundle.destroy()
+        bundle.destroy()
+    assert all(not bool(vector) for vector in vectors)
+
+
+class _RaisingCondensedRhsAction:
+    def __init__(self) -> None:
+        self.seen_active_rhs: PETSc.Vec | None = None
+
+    def build_condensed_rhs_from_active_vector(self, active_rhs: PETSc.Vec) -> Any:
+        self.seen_active_rhs = active_rhs
+        raise RuntimeError("builder sentinel")
+
+
+class _InvalidTupleCondensedRhsAction:
+    def __init__(self) -> None:
+        self.created: list[PETSc.Vec] = []
+        self.seen_active_rhs: PETSc.Vec | None = None
+
+    def build_condensed_rhs_from_active_vector(self, active_rhs: PETSc.Vec) -> Any:
+        self.seen_active_rhs = active_rhs
+        gamma_rhs = active_rhs.duplicate()
+        interior_rhs = {
+            group: active_rhs.duplicate() for group in range(3)
+        }
+        self.created = [gamma_rhs, *interior_rhs.values()]
+        return gamma_rhs, interior_rhs
+
+
+class _InvalidMemberCondensedRhsAction(_InvalidTupleCondensedRhsAction):
+    def build_condensed_rhs_from_active_vector(self, active_rhs: PETSc.Vec) -> Any:
+        self.seen_active_rhs = active_rhs
+        gamma_rhs = active_rhs.duplicate()
+        interior_rhs = {
+            group: active_rhs.duplicate() for group in range(3)
+        }
+        self.created = [gamma_rhs, *interior_rhs.values()]
+        return gamma_rhs, interior_rhs, object()
+
+
+def _adapter_descriptor_and_callback(
+    tmp_path: Path,
+    *,
+    label: str = "synthetic_rhs",
+) -> tuple[dict[str, Any], Any]:
+    descriptor = _make_descriptor(tmp_path, label=label)
+    frozen_tokens = tuple(
+        json.dumps(key, sort_keys=True, separators=(",", ":"))
+        for key in ({"row": 0}, {"row": 1}, {"row": 2})
+    )
+    frozen_values = np.asarray(
+        [1.0 + 0.5j, 2.0 - 0.25j, 3.0 + 0.75j], dtype=np.complex128
+    )
+    adapter = _LiveCanonicalAdapter(
+        frozen_tokens,
+        frozen_values,
+        [{"row": 0}, {"row": 2}],
+    )
+    callback = make_live_canonical_roundtrip_callback(
+        adapter,
+        canonical_packets_for_vector=adapter.canonical_packets_for_vector,
+        canonical_to_current_roundtrip_relative=(
+            adapter.canonical_to_current_roundtrip_relative
+        ),
+        frozen_tokens=frozen_tokens,
+        frozen_values=frozen_values,
+    )
+    return descriptor, callback
+
+
+def _run_adapter_expectation(
+    descriptor: dict[str, Any],
+    callback: Any,
+    action: Any,
+    tmp_path: Path,
+) -> None:
+    load_and_condense_exact_rhs(
+        descriptor,
+        base_directory=tmp_path,
+        action=action,
+        canonical_roundtrip=callback,
+        comm=MPI.COMM_SELF,
+        expected_source_sha256=SOURCE_SHA,
+        expected_input_sha256=HEX,
+        expected_physical_model_sha256=HEX,
+        expected_selected_manifest_sha256=HEX,
+        expected_resolved_config_sha256=HEX,
+        expected_operator_hash=HEX,
+    )
+
+
+def test_loader_adapter_preserves_builder_exception_and_cleans_active(
+    tmp_path: Path,
+) -> None:
+    descriptor, callback = _adapter_descriptor_and_callback(tmp_path)
+    action = _RaisingCondensedRhsAction()
+    with pytest.raises(RuntimeError, match="builder sentinel"):
+        _run_adapter_expectation(descriptor, callback, action, tmp_path)
+    assert action.seen_active_rhs is not None
+    assert not bool(action.seen_active_rhs)
+
+
+@pytest.mark.parametrize(
+    "action_type",
+    [_InvalidTupleCondensedRhsAction, _InvalidMemberCondensedRhsAction],
+)
+def test_loader_adapter_cleans_vectors_from_invalid_builder_result(
+    tmp_path: Path,
+    action_type: type[_InvalidTupleCondensedRhsAction],
+) -> None:
+    descriptor, callback = _adapter_descriptor_and_callback(tmp_path)
+    action = action_type()
+    with pytest.raises(TypeError):
+        _run_adapter_expectation(descriptor, callback, action, tmp_path)
+    assert action.seen_active_rhs is not None
+    assert not bool(action.seen_active_rhs)
+    assert action.created
+    assert all(not bool(vector) for vector in action.created)
+
+
 def test_loader_rejects_conflicting_nested_identity_and_unsafe_route(tmp_path: Path) -> None:
     descriptor = _make_descriptor(tmp_path)
     conflicting = deepcopy(descriptor)
@@ -468,6 +666,165 @@ class _CopyRecovery:
         result = candidate.duplicate()
         candidate.copy(result)
         return result, {"temporary_rows": np.arange(candidate.getLocalSize())}
+
+
+class _CombinedQualificationAction(_TinyCondensedRhsAction):
+    @staticmethod
+    def build_full_state_from_condensed_solution(
+        candidate: PETSc.Vec,
+        _interior_rhs: Any,
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
+        result = candidate.duplicate()
+        candidate.copy(result)
+        return result, {"temporary_rows": np.arange(candidate.getLocalSize())}
+
+
+class _ThirdSourceFailAction(_CombinedQualificationAction):
+    def __init__(self) -> None:
+        super().__init__()
+        self.recovery_calls = 0
+
+    def build_full_state_from_condensed_solution(
+        self,
+        candidate: PETSc.Vec,
+        interior_rhs: Any,
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
+        self.recovery_calls += 1
+        result, audit = super().build_full_state_from_condensed_solution(
+            candidate,
+            interior_rhs,
+        )
+        if self.recovery_calls > 2:
+            result.set(0.0)
+            result.assemble()
+        return result, audit
+
+
+def test_exact_qualification_family_consumes_accepted_solution_and_is_json_safe(
+    tmp_path: Path,
+) -> None:
+    first_descriptor, first_callback = _adapter_descriptor_and_callback(
+        tmp_path,
+        label="external_dtn_coupling",
+    )
+    second_descriptor, second_callback = _adapter_descriptor_and_callback(
+        tmp_path,
+        label="fixed_random_repeat_0",
+    )
+    matrix = _diagonal_matrix(
+        2,
+        MPI.COMM_SELF,
+        diagonal_values=np.asarray([1.0, 1.0]),
+    )
+    accepted: list[tuple[str, bool, np.ndarray]] = []
+    try:
+        action = _CombinedQualificationAction()
+        result = run_exact_qualification_family(
+            {
+                "external_dtn_coupling": first_descriptor,
+                "fixed_random_repeat_0": second_descriptor,
+            },
+            base_directory=tmp_path,
+            interface_operator=matrix,
+            bare_operator=matrix,
+            schur_action=action,
+            canonical_roundtrip={
+                "external_dtn_coupling": first_callback,
+                "fixed_random_repeat_0": second_callback,
+            },
+            initial_labels=("external_dtn_coupling", "fixed_random_repeat_0"),
+            mandatory_checkpoints=(1,),
+            conditional_checkpoints=(),
+            max_iterations=1,
+            validation={
+                "expected_source_sha256": SOURCE_SHA,
+                "expected_input_sha256": HEX,
+                "expected_physical_model_sha256": HEX,
+                "expected_selected_manifest_sha256": HEX,
+                "expected_resolved_config_sha256": HEX,
+                "expected_operator_hash": HEX,
+            },
+            accepted_solution_callback=lambda label, _row, vector: accepted.append(
+                (label, bool(vector), np.asarray(vector.array).copy())
+            ),
+        )
+        assert result["initial_pair_gate_pass"] is True
+        assert result["skipped_labels"] == []
+        assert len(result["source_records"]) == 2
+        assert all(record["full_residual_gate_pass"] for record in result["source_records"])
+        assert all(record["fgmres"]["accepted_solution_present"] for record in result["source_records"])
+        assert all(record["fgmres"]["accepted_solution_released_by_driver"] for record in result["source_records"])
+        assert all(item[1] for item in accepted)
+        json.dumps(result, sort_keys=True)
+    finally:
+        matrix.destroy()
+
+
+def test_exact_qualification_family_rejects_label_swap(tmp_path: Path) -> None:
+    descriptor, callback = _adapter_descriptor_and_callback(
+        tmp_path,
+        label="wrong_label",
+    )
+    matrix = _diagonal_matrix(2, MPI.COMM_SELF, diagonal_values=np.ones(2))
+    try:
+        with pytest.raises(ExactQualificationContractError, match="descriptor label"):
+            run_exact_qualification_family(
+                {
+                    "external_dtn_coupling": descriptor,
+                    "fixed_random_repeat_0": descriptor,
+                },
+                base_directory=tmp_path,
+                interface_operator=matrix,
+                bare_operator=matrix,
+                schur_action=_CombinedQualificationAction(),
+                canonical_roundtrip=callback,
+                initial_labels=("external_dtn_coupling", "fixed_random_repeat_0"),
+                mandatory_checkpoints=(1,),
+                conditional_checkpoints=(),
+                max_iterations=1,
+            )
+    finally:
+        matrix.destroy()
+
+
+def test_exact_qualification_family_does_not_ready_on_third_source_failure(
+    tmp_path: Path,
+) -> None:
+    descriptors: dict[str, dict[str, Any]] = {}
+    callbacks: dict[str, Any] = {}
+    labels = (
+        "external_dtn_coupling",
+        "fixed_random_repeat_0",
+        "third_source",
+    )
+    for label in labels:
+        descriptors[label], callbacks[label] = _adapter_descriptor_and_callback(
+            tmp_path,
+            label=label,
+        )
+    matrix = _diagonal_matrix(2, MPI.COMM_SELF, diagonal_values=np.ones(2))
+    try:
+        result = run_exact_qualification_family(
+            descriptors,
+            base_directory=tmp_path,
+            interface_operator=matrix,
+            bare_operator=matrix,
+            schur_action=_ThirdSourceFailAction(),
+            canonical_roundtrip=callbacks,
+            initial_labels=labels[:2],
+            mandatory_checkpoints=(1,),
+            conditional_checkpoints=(),
+            max_iterations=1,
+        )
+        assert result["initial_pair_gate_pass"] is True
+        assert result["all_sources_gate_pass"] is False
+        assert result["classification"] == "V6_EXACT_QUALIFICATION_GATE_FAIL"
+        assert result["status"] == "completed_all_sources_gate_negative"
+        assert result["skipped_labels"] == []
+        assert [record["label"] for record in result["source_records"]] == list(labels)
+        json.dumps(result, sort_keys=True)
+    finally:
+        matrix.destroy()
 
 
 def _diagonal_matrix(
