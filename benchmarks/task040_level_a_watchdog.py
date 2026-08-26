@@ -505,8 +505,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG, action="store_true")
     parser.add_argument(TASK040_V5_ROUTE_C_FLAG, action="store_true")
+    parser.add_argument("--watchdog-enabled", action="store_true")
+    parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
     args = parser.parse_args(argv)
+    if args.v5_route_c and not (
+        args.watchdog_enabled and args.bottom_route_only
+    ):
+        parser.error(
+            "Route C requires --watchdog-enabled and --bottom-route-only"
+        )
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
         exact_spool_root=args.exact_spool_root,

@@ -386,6 +386,30 @@ def test_route_c_watchdog_plan_uses_route_c_resource_contract() -> None:
     assert plan["watchdog"]["bottom_route_only"] is True
 
 
+def test_route_c_watchdog_cli_accepts_explicit_worker_controls(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result = watchdog.main(
+        [
+            "--dry-run",
+            "--input",
+            str(tmp_path / "input.dat"),
+            "--exact-spool-root",
+            str(tmp_path / "frozen"),
+            "--run-directory",
+            str(tmp_path / "route-c"),
+            "--source-sha",
+            "a" * 40,
+            "--v5-route-c",
+            "--watchdog-enabled",
+            "--bottom-route-only",
+        ]
+    )
+    assert result == 0
+    assert '"v5_route_c": true' in capsys.readouterr().out
+
+
 def test_route_c_resource_preflight_uses_45_gib_and_swap_zero(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
