@@ -206,6 +206,60 @@ def _slave_storage_max(field: Any, floquet: Any) -> float:
     return float(field.function_space.mesh.comm.allreduce(local, op=MPI.MAX))
 
 
+def explicit_owner_adjoint_audit_only(owner: Any, fine_source: Any) -> Any:
+    """Return an independent local ``Pᴴ`` plus direct coarse ``Cᴴ`` audit.
+
+    This audit path intentionally bypasses the production owner-adjoint
+    method.  It accumulates the bounded local maps directly and applies the
+    finalized coarse MPC metadata once as a dual reducer.
+    """
+
+    fine_field = fem.Function(owner.fine_space)
+    fine_source.copy(fine_field.x.petsc_vec)
+    fine_field.x.scatter_forward()
+    owner.fine_floquet.mpc.homogenize(fine_field)
+    fine_field.x.scatter_forward()
+    coarse_field = fem.Function(owner.coarse_space)
+    coarse_field.x.array[:] = 0.0
+    for record in owner._records:
+        values = np.asarray(
+            fine_field.x.array[record["fine_local"]], dtype=np.complex128
+        )
+        contribution = record["matrix"].conj().T @ (
+            values * record["authority"]
+        )
+        np.add.at(coarse_field.x.array, record["coarse_local"], contribution)
+    mpc = owner.coarse_floquet.mpc
+    coefficients, offsets = mpc.coefficients()
+    coefficients = np.asarray(coefficients, dtype=np.complex128)
+    offsets = np.asarray(offsets, dtype=np.int64)
+    raw = coarse_field.x.array.copy()
+    for slave in np.asarray(mpc.slaves, dtype=np.int64):
+        start = int(offsets[int(slave)])
+        stop = int(offsets[int(slave) + 1])
+        masters = np.asarray(mpc.masters.links(int(slave)), dtype=np.int64)
+        coarse_field.x.array[masters] += (
+            np.conjugate(coefficients[start:stop]) * raw[int(slave)]
+        )
+        coarse_field.x.array[int(slave)] = 0.0
+    coarse_field.x.petsc_vec.ghostUpdate(
+        addv=PETSc.InsertMode.ADD_VALUES,
+        mode=PETSc.ScatterMode.REVERSE,
+    )
+    coarse_field.x.scatter_forward()
+    target = create_vector(
+        [
+            (
+                owner.coarse_space.dofmap.index_map,
+                int(owner.coarse_space.dofmap.index_map_bs),
+            )
+        ]
+    )
+    coarse_field.x.petsc_vec.copy(target)
+    del fine_field, coarse_field
+    return target
+
+
 def _dual_reduction_metadata(
     mpc: Any, local_storage: int
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -688,4 +742,5 @@ __all__ = [
     "SAME_MESH_OWNER_TRANSFER_PAIRS",
     "SameMeshHcurlOwnerTransfer",
     "build_same_mesh_hcurl_owner_transfer",
+    "explicit_owner_adjoint_audit_only",
 ]

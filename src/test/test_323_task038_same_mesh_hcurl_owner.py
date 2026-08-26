@@ -26,6 +26,7 @@ from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
     OWNER_RUNTIME_SCHEMA,
     _resolve_owner_candidates,
     build_same_mesh_hcurl_owner_transfer,
+    explicit_owner_adjoint_audit_only,
 )
 
 
@@ -284,6 +285,8 @@ def test_owner_setup_and_explicit_oracle(context):
         adjoint, oracle_adjoint_field.x.petsc_vec
     )
     assert oracle_adjoint_relative <= 1.0e-11
+    audit_adjoint = explicit_owner_adjoint_audit_only(owner, fine_source.x.petsc_vec)
+    assert _relative(adjoint, audit_adjoint) <= 1.0e-11
 
     alpha = 0.37 - 0.19j
     beta = -0.23 + 0.41j
@@ -307,6 +310,7 @@ def test_owner_setup_and_explicit_oracle(context):
     adjoint.destroy()
     adjoint_repeat.destroy()
     oracle_adjoint.destroy()
+    audit_adjoint.destroy()
     repeated.destroy()
     output.destroy()
     oracle_output.destroy()

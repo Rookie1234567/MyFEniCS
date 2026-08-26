@@ -337,7 +337,8 @@ def _watchdog_command_validation(
 
 def _check_watchdog(compact_path: Path, record: dict[str, Any], record_path: Path,
                     expected_sha: str, errors: list[str], gates: list[str],
-                    lifecycle_failures: list[str], *, mpi_size: Any = None) -> dict[str, Any]:
+                    lifecycle_failures: list[str], *, mpi_size: Any = None,
+                    allow_mpiexec_n2: bool = False) -> dict[str, Any]:
     try:
         compact = _read_json(compact_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
@@ -350,7 +351,7 @@ def _check_watchdog(compact_path: Path, record: dict[str, Any], record_path: Pat
     command_valid, launcher_identity = _watchdog_command_validation(
         compact.get("worker_command"), record.get("command"),
         record.get("mpi_size") if mpi_size is None else mpi_size,
-        a0=record.get("schema") == A0_SCHEMA,
+        a0=record.get("schema") == A0_SCHEMA or allow_mpiexec_n2,
     )
     if not command_valid:
         errors.append("watchdog worker command mismatch")

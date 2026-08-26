@@ -35,6 +35,7 @@ from .hcurl_canonical_vector import (
     CanonicalPacket,
     canonical_key,
     canonical_packet,
+    canonical_source_coefficient_from_key,
 )
 
 __all__ = (
@@ -44,6 +45,8 @@ __all__ = (
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
     "extract_canonical_full_fe_dual_packets",
+    "build_physical_canonical_primal_source",
+    "build_physical_canonical_dual_source",
     "reconstruct_canonical_full_fe_function",
     "reconstruct_canonical_full_fe_dual_vector",
     "compare_hcurl_fields",
@@ -738,6 +741,183 @@ def _fresh_entity_inverse(
         master_key, phase, state = relation
         return physical_key, master_key, phase, transform, state
     return physical_key, None, 1.0 + 0.0j, transform, physical_state
+
+
+def _physical_canonical_source_packets(
+    function_space: Any,
+    floquet_data: Any,
+    fixed_seed: str,
+    *,
+    role: str,
+) -> tuple[CanonicalPacket, ...]:
+    """Build deterministic physical-key packets for one local source."""
+
+    if role not in {"full_fe", "full_fe_dual"}:
+        raise ValueError("unsupported physical canonical source role")
+    degree, _trace_positions, interior_positions = _space_data(function_space)
+    topology, _cell_info, owned_cells = _topology_data(function_space)
+    tolerance = mesh_coordinate_tolerance(function_space.mesh)
+    relations = _floquet_relations(floquet_data) if role == "full_fe" else {}
+    layout = function_space.dofmap.dof_layout
+    packets: list[CanonicalPacket] = []
+    for dimension in (1, 2):
+        cell_to_entity = topology.connectivity(topology.dim, dimension)
+        for entity, _cell in _owned_entity_incidents(function_space, dimension):
+            local_entity = int(
+                np.flatnonzero(
+                    np.asarray(cell_to_entity.links(_cell), dtype=np.int32)
+                    == int(entity)
+                )[0]
+            )
+            positions = np.asarray(
+                layout.entity_dofs(dimension, local_entity), dtype=np.int32
+            )
+            local_dofs = np.asarray(
+                function_space.dofmap.cell_dofs(_cell), dtype=np.int32
+            )[positions]
+            if role == "full_fe_dual":
+                slave_mask = _mpc_slave_mask(floquet_data.mpc, local_dofs)
+                if np.any(slave_mask) and not np.all(slave_mask):
+                    raise RuntimeError("Floquet entity block is partly constrained")
+                if np.all(slave_mask):
+                    continue
+            coordinates = _entity_coordinates(function_space, dimension, entity)
+            if role == "full_fe":
+                physical_key, master_key, phase, _transform, state = _fresh_entity_inverse(
+                    function_space, dimension, entity, degree, tolerance, relations
+                )
+            else:
+                physical_key = canonical_entity_key(coordinates, tolerance)
+                _transform, state = _physical_entity_transform(
+                    coordinates, dimension, degree, tolerance
+                )
+                master_key, phase = None, 1.0 + 0.0j
+            for basis in range(len(positions)):
+                key = canonical_key(
+                    role=role,
+                    entity_dimension=dimension,
+                    physical_entity=physical_key,
+                    entity_local_basis_index=basis,
+                    orientation_state=state,
+                    floquet_master=master_key,
+                    floquet_coefficient=phase,
+                )
+                value, _digest, _payload = canonical_source_coefficient_from_key(
+                    key, fixed_seed=fixed_seed
+                )
+                packets.append(canonical_packet(key, value))
+    for cell in range(int(owned_cells[0])):
+        local_dofs = np.asarray(
+            function_space.dofmap.cell_dofs(cell), dtype=np.int32
+        )
+        interior_slave_mask = _mpc_slave_mask(
+            floquet_data.mpc, local_dofs
+        )[interior_positions]
+        physical_key = canonical_entity_key(
+            _entity_coordinates(function_space, 3, cell), tolerance
+        )
+        for basis, (_position, is_slave) in enumerate(
+            zip(interior_positions, interior_slave_mask, strict=True)
+        ):
+            if role == "full_fe_dual" and bool(is_slave):
+                continue
+            key = canonical_key(
+                role=role,
+                entity_dimension=3,
+                physical_entity=physical_key,
+                entity_local_basis_index=basis,
+                orientation_state=("canonical_cell", "Tt_apply"),
+                floquet_master=None,
+                floquet_coefficient=1.0 + 0.0j,
+            )
+            value, _digest, _payload = canonical_source_coefficient_from_key(
+                key, fixed_seed=fixed_seed
+            )
+            packets.append(canonical_packet(key, value))
+    if not packets:
+        raise ValueError("physical canonical source has no local packets")
+    return tuple(packets)
+
+
+def build_physical_canonical_primal_source(
+    function_space: Any,
+    floquet_data: Any,
+    *,
+    fixed_seed: str,
+) -> tuple[Any, dict[str, Any]]:
+    """Build a legal primal field from deterministic physical canonical keys."""
+
+    packets = _physical_canonical_source_packets(
+        function_space, floquet_data, fixed_seed, role="full_fe"
+    )
+    field = reconstruct_canonical_full_fe_function(
+        function_space, packets, floquet_data
+    )
+    field.x.scatter_forward()
+    floquet_data.mpc.homogenize(field)
+    field.x.scatter_forward()
+    floquet_data.mpc.backsubstitution(field)
+    field.x.scatter_forward()
+    values = np.asarray(field.x.array, dtype=np.complex128)
+    independent_count = sum(key[5] is None for key, _value in packets)
+    comm = function_space.mesh.comm
+    local_finite = bool(np.all(np.isfinite(values)))
+    local_nonzero = bool(np.any(np.abs(values) > 0.0))
+    dependent_count = len(packets) - independent_count
+    return field, {
+        "schema": "task038.v13.c0.physical-canonical-source.v1",
+        "role": "full_fe",
+        "fixed_seed": fixed_seed,
+        "global_packet_count": int(comm.allreduce(len(packets), op=MPI.SUM)),
+        "global_independent_packet_count": int(
+            comm.allreduce(independent_count, op=MPI.SUM)
+        ),
+        "global_dependent_packet_count": int(
+            comm.allreduce(dependent_count, op=MPI.SUM)
+        ),
+        "dependent_placeholder_non_authoritative": True,
+        "dependent_value_authority": "finalized_mpc_master_phase_relation",
+        "source_finite": bool(comm.allreduce(local_finite, op=MPI.LAND)),
+        "source_nonzero": bool(comm.allreduce(local_nonzero, op=MPI.LOR)),
+        "source_generation": "physical_canonical_key_sha256_v1",
+        "phase_application": "finalized_floquet_mpc_once",
+    }
+
+
+def build_physical_canonical_dual_source(
+    function_space: Any,
+    floquet_data: Any,
+    *,
+    fixed_seed: str,
+) -> tuple[Any, dict[str, Any]]:
+    """Build a slave-zero dual vector from deterministic physical canonical keys."""
+
+    packets = _physical_canonical_source_packets(
+        function_space, floquet_data, fixed_seed, role="full_fe_dual"
+    )
+    vector = reconstruct_canonical_full_fe_dual_vector(
+        function_space, floquet_data.mpc, packets
+    )
+    values = np.asarray(vector.getArray(readonly=True), dtype=np.complex128)
+    comm = function_space.mesh.comm
+    local_finite = bool(np.all(np.isfinite(values)))
+    local_nonzero = bool(np.any(np.abs(values) > 0.0))
+    return vector, {
+        "schema": "task038.v13.c0.physical-canonical-source.v1",
+        "role": "full_fe_dual",
+        "fixed_seed": fixed_seed,
+        "global_packet_count": int(comm.allreduce(len(packets), op=MPI.SUM)),
+        "global_independent_packet_count": int(
+            comm.allreduce(len(packets), op=MPI.SUM)
+        ),
+        "global_dependent_packet_count": 0,
+        "dependent_placeholder_non_authoritative": False,
+        "dependent_value_authority": "slave_zero_dual_storage",
+        "source_finite": bool(comm.allreduce(local_finite, op=MPI.LAND)),
+        "source_nonzero": bool(comm.allreduce(local_nonzero, op=MPI.LOR)),
+        "source_generation": "physical_canonical_key_sha256_v1",
+        "phase_application": "dual_source_slave_zero_no_phase_reapplication",
+    }
 
 
 def reconstruct_canonical_full_fe_function(
