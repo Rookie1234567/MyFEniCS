@@ -1,0 +1,193 @@
+{
+  "schema": "task038.same-mesh-hcurl-pmg.c1-mpi-identity.v1",
+  "evidence_scope": "C1.1 same-mesh H(curl) owner/Floquet transfer physical canonical MPI identity diagnostic",
+  "classification": "CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE",
+  "authority": "physical canonical packet keys and coefficients from the existing DOLFINx extractors; PETSc global ids are not an identity",
+  "execution": {
+    "head": "66c0d0f8b751e0f9a5de753e996304c0eee19635",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "upstream": "origin/codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "ahead": 0,
+    "behind": 0,
+    "tracked_worktree_clean": true,
+    "implementation_files_committed": false,
+    "implementation_files": [
+      {
+        "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_runtime.py",
+        "content_sha256": "370cfdb434faab11833b3ae74d1392dbff28f73748944985384ea5677e8521d6"
+      },
+      {
+        "path": "src/test/test_323_task038_same_mesh_hcurl_owner.py",
+        "content_sha256": "bef1d8eed068e72f5caf389158305b1ebe54c59df11f68e8ac4160a4ce648a75"
+      }
+    ],
+    "qualification": {
+      "qualified_activation": "1",
+      "sys_executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "abi_preflight_mpi_size": 1,
+      "capture_mpi_sizes": [1, 2],
+      "scalar_dtype": "complex128",
+      "int_dtype": "int32",
+      "threads": {
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "linux_modules": {
+        "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+        "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+        "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+        "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
+      }
+    },
+    "commands": {
+      "abi_preflight": "source scripts/activate_myfenics_wsl.sh && python -c '<qualified ABI probe>'",
+      "mpi1_capture": "source scripts/activate_myfenics_wsl.sh && python /tmp/task038_c1_1_canonical_diag.py",
+      "mpi2_capture": "source scripts/activate_myfenics_wsl.sh && /usr/bin/mpiexec -n 2 /home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python /tmp/task038_c1_1_canonical_diag.py",
+      "canonical_compare": "source scripts/activate_myfenics_wsl.sh && python /tmp/task038_c1_1_canonical_diag.py --compare"
+    }
+  },
+  "input": {
+    "mesh": "test323 small structured same-mesh H(curl) fixture at h_nm=50.0",
+    "spaces": [3, 1],
+    "material_or_pde": "not applicable; local owner/Floquet transfer only"
+  },
+  "artifacts": {
+    "root": "benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_c1_v1/66c0d0f8b751e0f9a5de753e996304c0eee19635/C1",
+    "snapshots": [
+      {
+        "mpi_size": 1,
+        "relative_path": "benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_c1_v1/66c0d0f8b751e0f9a5de753e996304c0eee19635/C1/canonical_mpi1.json",
+        "sha256": "bfe32c5bf40e84b46a6ead84030b6fab630f3c224f73a06c5455beb6a9112e18",
+        "bytes": 1866292
+      },
+      {
+        "mpi_size": 2,
+        "relative_path": "benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_c1_v1/66c0d0f8b751e0f9a5de753e996304c0eee19635/C1/canonical_mpi2.json",
+        "sha256": "2cbdd72092729ff9e4c3e1b13fd38562bfba0d0ea66216b63d4a4cc6dded9e86",
+        "bytes": 1866491
+      }
+    ]
+  },
+  "canonical_key": {
+    "extractors": [
+      "src.solvers.hcurl_canonical_vector_dolfinx.extract_canonical_full_fe_packets",
+      "src.solvers.hcurl_canonical_vector_dolfinx.extract_canonical_full_fe_dual_packets"
+    ],
+    "components": [
+      "role",
+      "entity dimension",
+      "exact physical entity geometry key",
+      "entity-local basis index",
+      "canonical cell orientation/Tt_apply state",
+      "Floquet master/coefficient state where applicable"
+    ],
+    "matching": "compare_canonical_packets compares the physical key tuples; deterministic serialization sorting is only for snapshot digest",
+    "petsc_global_id": false,
+    "test_only_numeric_gather": true,
+    "packet_arrays_embedded": false
+  },
+  "packet_facts": {
+    "primal": {
+      "mpi1": {
+        "count": 3018,
+        "global_packet_count": 3018,
+        "local_packet_count": 3018,
+        "unique": true,
+        "local_duplicate_count": 0,
+        "summed_local_duplicate_count": 0,
+        "digest": "2b4515aad8145bd6821806660c9ec46fd6e5bd5a401baf8ce93d1c2d7727c32d",
+        "norm": 46012.73885397119
+      },
+      "mpi2": {
+        "count": 3018,
+        "global_packet_count": 3018,
+        "local_packet_count": 1491,
+        "unique": true,
+        "local_duplicate_count": 0,
+        "summed_local_duplicate_count": 0,
+        "digest": "69e5d87f6c01f26752ba4bced7637b193dc0e73389fc8aa81deb26327fe33ada",
+        "norm": 46012.73885397119
+      }
+    },
+    "dual": {
+      "mpi1": {
+        "count": 102,
+        "global_packet_count": 102,
+        "local_packet_count": 102,
+        "unique": true,
+        "local_duplicate_count": 0,
+        "summed_local_duplicate_count": 0,
+        "digest": "ef11893b1baa611c256448a37114d9572322811198135486ed368fa1d9a49041",
+        "norm": 110472.43155312448
+      },
+      "mpi2": {
+        "count": 102,
+        "global_packet_count": 102,
+        "local_packet_count": 47,
+        "unique": true,
+        "local_duplicate_count": 0,
+        "summed_local_duplicate_count": 0,
+        "digest": "a39c6ff165f158df9f6c088de72bf62fb3b5855e20bb2face74b11b602bc86fa",
+        "norm": 110156.98689143911
+      }
+    },
+    "dual_count_note": "The extractor audit produced 102 physical dual packets in both runs; the earlier 162 figure was not substituted because PETSc row counts are not physical canonical packet counts."
+  },
+  "cross_mpi_comparison": {
+    "primal": {
+      "common_key_count": 3018,
+      "missing_key_count": 0,
+      "extra_key_count": 0,
+      "duplicate_left_count": 0,
+      "duplicate_right_count": 0,
+      "relative_coefficient_l2": 0.10049859821442367,
+      "max_abs_coefficient_error": 1419.3738838735258,
+      "relative_tolerance": 1e-11,
+      "pass": false
+    },
+    "dual": {
+      "common_key_count": 102,
+      "missing_key_count": 0,
+      "extra_key_count": 0,
+      "duplicate_left_count": 0,
+      "duplicate_right_count": 0,
+      "relative_coefficient_l2": 0.004662851981572301,
+      "max_abs_coefficient_error": 158.69840952320158,
+      "relative_tolerance": 1e-11,
+      "pass": false
+    }
+  },
+  "local_algebra_facts": {
+    "mpi1": {
+      "global_work_relative": 2.19881490710446e-15,
+      "independent_oracle_adjoint_relative": 1.33244332519454e-16
+    },
+    "mpi2": {
+      "global_work_relative": 1.2691795700639537e-15,
+      "independent_oracle_adjoint_relative": 6.953347753035583e-17
+    },
+    "interpretation": "Local owner/MPC algebra and sparse audit oracle passed; these facts cannot replace cross-MPI physical canonical identity."
+  },
+  "validation": {
+    "test323_mpi1": "4 passed in 1.74s",
+    "test323_mpi2": "4 passed in 1.83s",
+    "compileall": "passed",
+    "ast_duplicate_literal_keys": "passed",
+    "git_diff_check": "passed",
+    "residual_mpi_processes": "none after completion",
+    "ordinary_compare_attempt": "PMIx sandbox listener failure before comparison; elevated comparison completed"
+  },
+  "merge_boundary": {
+    "local_transfer_core": "research-only retained local oracle/infrastructure; not selected for production merge",
+    "entire_same_mesh_hcurl_pmg_v1": "CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE; not selected for production merge",
+    "owner_runtime": "research-only / do-not-merge candidate evidence until physical MPI identity is qualified",
+    "owner_test": "research-only / do-not-merge candidate evidence",
+    "ordinary_default": "unchanged"
+  },
+  "downstream_boundary": {
+    "p6_h10": "not_run_by_gate",
+    "small_solver": "not_run_by_gate",
+    "C2": "authorized_next_not_started"
+  }
+}
