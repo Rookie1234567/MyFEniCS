@@ -83,8 +83,15 @@ class _S5Level:
                  foundation_owned: bool = False,
                  allowed_levels: tuple[int, ...] = S5_LEVELS,
                  route_schema: str = S5_SCHEMA,
-                 validate_canonical_owner_identity: bool = True) -> None:
+                 validate_canonical_owner_identity: bool = True,
+                 level_key: str | None = None,
+                 level_role: str | None = None,
+                 subinterval_count: int | None = None) -> None:
         self.degree, self.matrix = int(degree), matrix
+        self.level_key = level_key
+        self.subinterval_count = int(
+            self.degree if subinterval_count is None else subinterval_count
+        )
         self.raw_space, self.raw_floquet = raw_space, raw_floquet
         self.parent_topology, self.raw_topology = parent_topology, raw_topology
         self.raw_map = raw_map
@@ -150,6 +157,17 @@ class _S5Level:
                 "raw_map_bytes": int(sum(value.nbytes for value in raw_map.values())),
             },
         })
+        if level_key is not None or level_role is not None or subinterval_count is not None:
+            audit = dict(self.audit)
+            if level_key is not None:
+                audit["level_key"] = level_key
+                audit["level"] = level_key
+                audit["degree_semantics"] = "topology_subinterval_count_only"
+            if level_role is not None:
+                audit["level_role"] = level_role
+            if subinterval_count is not None:
+                audit["subinterval_count"] = self.subinterval_count
+            self.audit = MappingProxyType(audit)
         if self.degree not in allowed_levels or any(
             self.audit[name] is not False for name in S5_FORBIDDEN_FACTS
         ):
@@ -247,12 +265,15 @@ class _S5Level:
 class _OwnerPacketTransfer:
     def __init__(self, fine: _S5Level, coarse: _S5Level,
                  local_transfer: LocalInterlevelEdgeTransfer,
-                 *, allowed_pairs: tuple[tuple[int, int], ...] = S5_PAIRS,
-                 route_schema: str = S5_SCHEMA):
-        pair = (fine.degree, coarse.degree)
+                 *, allowed_pairs: tuple[tuple[Any, Any], ...] = S5_PAIRS,
+                 route_schema: str = S5_SCHEMA,
+                 pair_key: tuple[Any, Any] | None = None):
+        pair = (fine.degree, coarse.degree) if pair_key is None else tuple(pair_key)
+        fine_count = int(getattr(fine, "subinterval_count", fine.degree))
+        coarse_count = int(getattr(coarse, "subinterval_count", coarse.degree))
         expected = (
-            3 * fine.degree * (fine.degree + 1) ** 2,
-            3 * coarse.degree * (coarse.degree + 1) ** 2,
+            3 * fine_count * (fine_count + 1) ** 2,
+            3 * coarse_count * (coarse_count + 1) ** 2,
         )
         if pair not in allowed_pairs or fine.parent_block_count != coarse.parent_block_count:
             raise ValueError("owner-packet parent topology pair is not closed")

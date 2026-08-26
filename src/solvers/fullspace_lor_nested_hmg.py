@@ -631,6 +631,10 @@ class NestedHmgLocalTransfer:
             raise AttributeError("NestedHmgLocalTransfer is immutable")
         object.__setattr__(self, name, value)
 
+    @property
+    def edge_shape(self) -> tuple[int, int]:
+        return tuple(int(value) for value in self.edge_transfer.shape)
+
     def apply_primal_many(self, values: np.ndarray) -> np.ndarray:
         vectors = np.asarray(values, dtype=np.complex128)
         squeezed = vectors.ndim == 1
