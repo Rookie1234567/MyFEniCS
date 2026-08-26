@@ -84,6 +84,35 @@ ROUTE_B_FAIL_MARKERS = (
     "startup", "preflight", "foundation", "class_inventory", "classes_complete",
     "local_gate_failed", "level2_not_run", "probes_not_run", "release",
 )
+A0_SCHEMA = "task038.full3d.interlevel-stable-adjoint.a0-record.v1"
+A0_CHECK_SCHEMA = "task038.full3d.interlevel-stable-adjoint.a0-check.v1"
+A0_MARKER_SCHEMA = "task038.full3d.interlevel-stable-adjoint.a0-marker.v1"
+A0_RAW_SCHEMA = "task038.full3d.interlevel-stable-adjoint.a0-raw-manifest.v1"
+A0_CASES = ("p6-h10-mpi1", "p6-h10-mpi2")
+A0_MARKERS = (
+    "startup", "preflight", "foundation", "class_inventory", "classes_complete",
+    "level3_complete", "probes_complete", "release",
+)
+A0_PROBE_ROLES = (
+    "source_before", "source_after", "source2", "projected",
+    "projected_repeat", "projected2", "projected_combo", "fine_dual",
+    "adjoint", "b3", "b6p",
+    "fine_primal_local_ids", "fine_primal_local",
+    "fine_dual_local_ids", "fine_dual_local",
+    "coarse_source_local_ids", "coarse_source_local",
+    "explicit_adjoint_local_ids", "explicit_adjoint_local",
+    "implemented_adjoint_local_ids", "implemented_adjoint_local",
+    "implemented_adjoint_owner_ids", "implemented_adjoint_owner",
+)
+A0_LIMITS = {
+    "pairwise": 1.0e-13,
+    "compensated": 1.0e-12,
+    "vector": 1.0e-11,
+    "ordinary_bound_factor": 4.0,
+}
+A0_LOCAL_PASS_CLASSIFICATION = "A0_STABLE_ADJOINT_PASS_MPI1_ONLY"
+A0_PASS_CLASSIFICATION = "REOPENED_AFTER_STABLE_ADJOINT_CERTIFICATION"
+A0_GATE_CLASSIFICATION = "CLOSED_BY_VECTOR_OR_STABLE_ADJOINT_GATE"
 
 
 def _profile(record: dict[str, Any]) -> dict[str, Any] | None:
@@ -283,9 +312,32 @@ def _check_runtime_provenance(
     return provenance_error
 
 
+def _watchdog_command_validation(
+    actual: Any, expected: Any, mpi_size: Any, *, a0: bool,
+) -> tuple[bool, str]:
+    if a0 and mpi_size == 2:
+        if (
+            isinstance(actual, list)
+            and isinstance(expected, list)
+            and len(actual) >= 4
+            and isinstance(actual[0], str)
+            and Path(actual[0]).is_absolute()
+            and Path(actual[0]).name == "mpiexec"
+            and actual[1:3] == ["-n", "2"]
+            and actual[3:] == expected
+        ):
+            return True, "mpiexec_n2"
+        return False, "invalid"
+    if mpi_size == 1 and actual == expected:
+        return True, "direct"
+    if actual == expected:
+        return True, "direct"
+    return False, "invalid"
+
+
 def _check_watchdog(compact_path: Path, record: dict[str, Any], record_path: Path,
                     expected_sha: str, errors: list[str], gates: list[str],
-                    lifecycle_failures: list[str]) -> dict[str, Any]:
+                    lifecycle_failures: list[str], *, mpi_size: Any = None) -> dict[str, Any]:
     try:
         compact = _read_json(compact_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
@@ -295,7 +347,12 @@ def _check_watchdog(compact_path: Path, record: dict[str, Any], record_path: Pat
         errors.append("watchdog schema mismatch")
     if compact.get("source_sha") != expected_sha:
         errors.append("watchdog source SHA mismatch")
-    if compact.get("worker_command") != record.get("command"):
+    command_valid, launcher_identity = _watchdog_command_validation(
+        compact.get("worker_command"), record.get("command"),
+        record.get("mpi_size") if mpi_size is None else mpi_size,
+        a0=record.get("schema") == A0_SCHEMA,
+    )
+    if not command_valid:
         errors.append("watchdog worker command mismatch")
     if Path(str(compact.get("worker_record", ""))).resolve() != record_path.resolve():
         errors.append("watchdog worker record mismatch")
@@ -363,6 +420,8 @@ def _check_watchdog(compact_path: Path, record: dict[str, Any], record_path: Pat
         "watchdog_compact_sha256": _sha256(compact_path),
         "watchdog_raw": str(raw_path.resolve()),
         "watchdog_raw_sha256": _sha256(raw_path) if raw_path.is_file() else None,
+        "worker_command_launcher": launcher_identity,
+        "worker_command_valid": command_valid,
         "resource_gate_failed": bool(not all_readable or peak < 0 or peak >= WATCHDOG_RSS_LIMIT or swap != 0),
         "execution_lifecycle_failed": bool(lifecycle_failures),
     }
@@ -1066,7 +1125,1049 @@ def _check_material_inventory(inventory: Any, classes: Any, errors: list[str]) -
     return items
 
 
-def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -> dict[str, Any]:
+def _a0_roles(name: str) -> dict[str, str]:
+    if name not in PROBE_NAMES:
+        raise ValueError(f"unknown A0 probe name: {name}")
+    return {role: f"a0__{name}__{role}" for role in A0_PROBE_ROLES}
+
+
+def _a0_pairwise_sum(values: np.ndarray) -> complex:
+    current = np.asarray(values, dtype=np.complex128).reshape(-1).copy()
+    while current.size > 1:
+        pairs = current.size // 2
+        next_values = current[: 2 * pairs : 2] + current[1 : 2 * pairs : 2]
+        current = (
+            next_values
+            if current.size % 2 == 0
+            else np.concatenate((next_values, current[-1:]))
+        )
+    return complex(current[0]) if current.size else 0.0 + 0.0j
+
+
+def _a0_compensated_sum(values: np.ndarray) -> complex:
+    values = np.asarray(values, dtype=np.complex128).reshape(-1)
+    return complex(
+        math.fsum(float(value.real) for value in values),
+        math.fsum(float(value.imag) for value in values),
+    )
+
+
+def _a0_relative(left: complex, right: complex) -> float:
+    return float(abs(left - right) / max(abs(left), abs(right), np.finfo(float).tiny))
+
+
+def _a0_packet(
+    ids: Any, values: Any, label: str, errors: list[str],
+) -> tuple[np.ndarray, np.ndarray] | None:
+    ids = np.asarray(ids)
+    values = np.asarray(values)
+    if ids.dtype != np.dtype("uint32") or values.dtype != np.dtype("complex128"):
+        errors.append(f"A0 {label} packet dtype mismatch")
+        return None
+    if ids.ndim != 1 or values.ndim != 1 or ids.size == 0 or ids.shape != values.shape:
+        errors.append(f"A0 {label} packet shape mismatch")
+        return None
+    if np.any(ids[1:] <= ids[:-1]):
+        errors.append(f"A0 {label} packet keys are not strictly ascending")
+        return None
+    if not np.all(np.isfinite(values)):
+        errors.append(f"A0 {label} packet is nonfinite")
+        return None
+    return ids.copy(), values.copy()
+
+
+def _a0_merge_packets(
+    packets: list[tuple[int, np.ndarray, np.ndarray]], label: str,
+    errors: list[str], gates: list[str], *, mode: str,
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]] | None:
+    entries = sorted(
+        (int(key), int(rank), complex(value))
+        for rank, ids, values in packets
+        for key, value in zip(ids, values, strict=True)
+    )
+    if not entries:
+        errors.append(f"A0 {label} packet set is empty")
+        return None
+    merged_ids: list[int] = []
+    merged_values: list[complex] = []
+    duplicate_count = 0
+    max_abs_defect = 0.0
+    max_relative_defect = 0.0
+    index = 0
+    while index < len(entries):
+        key = entries[index][0]
+        group: list[complex] = []
+        while index < len(entries) and entries[index][0] == key:
+            group.append(entries[index][2])
+            index += 1
+        merged_ids.append(key)
+        if mode == "owner" and len(group) != 1:
+            errors.append(f"A0 {label} owner key is duplicated: {key}")
+        value = group[0]
+        if len(group) > 1:
+            duplicate_count += len(group) - 1
+            for candidate in group[1:]:
+                absolute = abs(candidate - value)
+                relative = absolute / max(abs(candidate), abs(value), np.finfo(float).tiny)
+                max_abs_defect = max(max_abs_defect, float(absolute))
+                max_relative_defect = max(max_relative_defect, float(relative))
+            if mode == "consistent" and max_relative_defect > 1.0e-11:
+                gates.append(f"A0 {label} duplicate canonical values disagree")
+            if mode == "sum":
+                value = sum(group, 0.0 + 0.0j)
+        merged_values.append(value)
+    return (
+        np.asarray(merged_ids, dtype=np.uint32),
+        np.asarray(merged_values, dtype=np.complex128),
+        {
+            "unique_count": len(merged_ids),
+            "duplicate_count": duplicate_count,
+            "max_abs_defect": max_abs_defect,
+            "max_relative_defect": max_relative_defect,
+        },
+    )
+
+
+def _a0_global_norm2(values: list[np.ndarray]) -> float:
+    return float(math.fsum(float(np.vdot(value, value).real) for value in values))
+
+
+def _a0_check_markers(
+    record: dict[str, Any], raw_dir: Path, record_path: Path,
+    expected_sha: str, errors: list[str],
+) -> None:
+    info = record.get("markers")
+    if not isinstance(info, dict) or tuple(info.get("names", ())) != A0_MARKERS:
+        errors.append("A0 marker list mismatch")
+        return
+    wall_times = info.get("wall_time_ns")
+    if not isinstance(wall_times, dict) or set(wall_times) != set(A0_MARKERS):
+        errors.append("A0 marker wall-time map is not exact")
+    marker_dir = raw_dir / str(info.get("relative_dir", ""))
+    times: list[int] = []
+    for name in A0_MARKERS:
+        path = marker_dir / f"{name}.json"
+        if not _inside(path, raw_dir) or not path.is_file():
+            errors.append(f"A0 marker missing/escaped: {name}")
+            continue
+        try:
+            item = _read_json(path)
+            timestamp = item["wall_time_ns"]
+            if (
+                item.get("schema") != A0_MARKER_SCHEMA
+                or item.get("marker") != name
+                or item.get("source_sha") != expected_sha
+                or type(timestamp) is not int
+                or not isinstance(wall_times, dict)
+                or wall_times.get(name) != timestamp
+            ):
+                errors.append(f"A0 marker identity mismatch: {name}")
+            else:
+                times.append(timestamp)
+        except (OSError, ValueError, KeyError, TypeError):
+            errors.append(f"A0 marker unreadable: {name}")
+    closeout = marker_dir / "record_closeout.json"
+    if not closeout.is_file():
+        errors.append("A0 record_closeout marker is missing")
+    else:
+        try:
+            item = _read_json(closeout)
+            facts = item.get("facts")
+            closeout_time = item.get("wall_time_ns")
+            release_time = wall_times.get("release") if isinstance(wall_times, dict) else None
+            if (
+                item.get("schema") != A0_MARKER_SCHEMA
+                or item.get("marker") != "record_closeout"
+                or item.get("source_sha") != expected_sha
+                or type(closeout_time) is not int
+                or type(release_time) is not int
+                or closeout_time <= release_time
+                or not isinstance(facts, dict)
+                or facts.get("record_path") != str(record_path.resolve())
+                or facts.get("record_sha256") != _sha256(record_path)
+            ):
+                errors.append("A0 record_closeout is not bound to the written record")
+        except (OSError, ValueError, KeyError, TypeError):
+            errors.append("A0 record_closeout is unreadable")
+    allowed = {f"{name}.json" for name in A0_MARKERS} | {"record_closeout.json"}
+    if marker_dir.is_dir() and {path.name for path in marker_dir.iterdir()} != allowed:
+        errors.append("A0 marker directory contains an unauthorized file")
+    if len(times) == len(A0_MARKERS) and times != sorted(times):
+        errors.append("A0 marker sequence is not monotonic")
+
+
+def _a0_check_provenance(
+    record: dict[str, Any], record_path: Path, expected_sha: str,
+    errors: list[str], raw_dir: Path,
+) -> bool:
+    failed = False
+    case = record.get("case")
+    expected_mpi = int(case.rsplit("mpi", 1)[-1]) if case in A0_CASES else None
+    if (
+        record.get("schema") != A0_SCHEMA
+        or record.get("stage") != "a0"
+        or expected_mpi is None
+        or record.get("mpi_size") != expected_mpi
+        or record.get("degree") != 6
+        or record.get("h_nm") != 10.0
+        or record.get("wavelength_nm") != 13.5
+        or record.get("branch") != BRANCH
+    ):
+        errors.append("A0 fixed stage/case identity mismatch")
+        failed = True
+    source = record.get("source")
+    if not isinstance(source, dict):
+        errors.append("A0 source identity is missing")
+        failed = True
+    else:
+        for name in ("start", "end"):
+            item = source.get(name)
+            if (
+                not isinstance(item, dict)
+                or item.get("commit_sha") != expected_sha
+                or item.get("branch") != BRANCH
+                or item.get("clean") is not True
+            ):
+                errors.append(f"A0 source {name} identity is not closed")
+                failed = True
+    runtime = record.get("runtime")
+    if not isinstance(runtime, dict):
+        errors.append("A0 runtime identity is missing")
+        failed = True
+    else:
+        if (
+            runtime.get("qualified_activation") != "1"
+            or runtime.get("mpi_size") != expected_mpi
+            or runtime.get("scalar_dtype") != "complex128"
+            or runtime.get("int_dtype") != "int32"
+            or not Path(str(runtime.get("sys_executable", ""))).is_absolute()
+        ):
+            errors.append("A0 runtime ABI identity mismatch")
+            failed = True
+        threads = runtime.get("threads")
+        if not isinstance(threads, dict) or any(
+            threads.get(name) != "1"
+            for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
+        ):
+            errors.append("A0 thread identity mismatch")
+            failed = True
+    command = record.get("command")
+    record_string = record.get("record_path")
+    if (
+        not isinstance(command, list)
+        or len(command) != 19
+        or not all(isinstance(value, str) for value in command)
+        or not isinstance(record_string, str)
+        or not isinstance(record.get("raw_dir"), str)
+        or not Path(str(record.get("raw_dir"))).is_absolute()
+        or record_string != str(record_path.resolve())
+        or str(record.get("raw_dir")) == str(record_path.resolve())
+        or not _inside(raw_dir, raw_dir.parent)
+    ):
+        errors.append("A0 command or artifact path identity is missing")
+        failed = True
+    else:
+        expected_input = str((Path(__file__).resolve().parents[1] / "input/templates/full3d_iterative_example.dat").resolve())
+        expected_command = [
+            str(runtime.get("sys_executable")), "-m", MODULE,
+            "--stage", "a0", "--case", case,
+            "--raw-dir", str(raw_dir), "--record", str(record_path.resolve()),
+            "--expected-source-sha", expected_sha,
+            "--expected-mpi-size", str(expected_mpi), "--input", expected_input,
+            "--r3-long-tail-manifest",
+        ]
+        provenance = record.get("provenance")
+        manifest_path = provenance.get("r3_long_tail_manifest_path") if isinstance(provenance, dict) else None
+        expected_command.append(str(manifest_path))
+        if command != expected_command or not Path(command[0]).is_absolute() or command[18] != str(manifest_path):
+            errors.append("A0 canonical worker command mismatch")
+            failed = True
+    input_identity = record.get("input_identity")
+    if (
+        not isinstance(input_identity, dict)
+        or input_identity.get("path_relative") != "input/templates/full3d_iterative_example.dat"
+        or input_identity.get("raw_bytes") != EXPECTED_INPUT_BYTES
+        or input_identity.get("raw_sha256") != EXPECTED_INPUT_SHA256
+        or input_identity.get("resolved_bytes") != EXPECTED_RESOLVED_BYTES
+        or input_identity.get("resolved_sha256") != EXPECTED_RESOLVED_SHA256
+        or input_identity.get("physical_model_sha256") != EXPECTED_PHYSICAL_MODEL_SHA256
+    ):
+        errors.append("A0 fixed input identity mismatch")
+        failed = True
+    provenance = record.get("provenance")
+    if (
+        not isinstance(provenance, dict)
+        or provenance.get("r3_long_tail_expected_sha256") != R3_LONG_TAIL_MANIFEST_SHA256
+        or provenance.get("r3_long_tail_source_sha") != R3_LONG_TAIL_SOURCE_SHA
+        or provenance.get("p63_constructed_once") is not True
+        or provenance.get("p63_construction_count") != 1
+        or provenance.get("p63_construction_source") != "build_local_interlevel_edge_transfer(6,3)"
+        or provenance.get("mpi_shard_count") != expected_mpi
+    ):
+        errors.append("A0 construction/provenance identity mismatch")
+        failed = True
+    else:
+        manifest_path = Path(str(provenance["r3_long_tail_manifest_path"]))
+        if (
+            not manifest_path.is_absolute()
+            or not manifest_path.is_file()
+            or _sha256(manifest_path) != R3_LONG_TAIL_MANIFEST_SHA256
+            or provenance.get("r3_long_tail_manifest_sha256") != R3_LONG_TAIL_MANIFEST_SHA256
+            or not isinstance(command, list)
+            or command[18] != str(manifest_path.resolve())
+        ):
+            errors.append("A0 R3 manifest identity is not hash-bound")
+            failed = True
+    settings = record.get("settings")
+    expected_settings = {
+        "probe_names": list(PROBE_NAMES),
+        "levels": [6, 3], "transfer_pair": [6, 3],
+        "canonical_key": "physical/canonical packed owner edge key",
+        "canonical_order": "sort by canonical key after rank-shard merge",
+        "canonical_packet_source": "topology canonical IDs; never PETSc row/local/rank order",
+        "ordinary_terms": "conjugate(original raw left) * original raw right",
+        "canonical_terms": "conjugate(key-aligned canonical values) * key-aligned canonical values",
+        "forward_bound_scope": "ordinary raw terms only",
+        "pairwise_limit": 1.0e-13, "compensated_limit": 1.0e-12,
+        "vector_limit": 1.0e-11, "ordinary_bound_factor": 4.0,
+        "phase_once": "once_in_canonical_owner_route", "mpi_sizes_supported": [1, 2],
+    }
+    if settings != expected_settings:
+        errors.append("A0 settings/canonical authority mismatch")
+    return failed
+
+
+def _a0_check_architecture(
+    record: dict[str, Any], errors: list[str],
+) -> None:
+    architecture = record.get("architecture")
+    if not isinstance(architecture, dict):
+        errors.append("A0 architecture is missing")
+        return
+    case_names = (
+        "global_high_order_aij", "global_dense_transfer", "global_numeric_allgather",
+        "numeric_allgather", "scalar_node_matrix_built", "global_direct_coarse_built",
+        "recovery_field_arrays_built", "p6_exact_edge_factor_built", "hx_hierarchy_built",
+        "pcgamg_hierarchy_built", "physical_solve", "recovery",
+    )
+    extension_names = (
+        "global_high_order_aij", "global_transfer_matrix", "numeric_allgather",
+        "p1_built", "p1_global_direct_factor", "smoother_built", "ksp_created",
+        "physical_solve", "recovery",
+    )
+    derived_names = (
+        "global_high_order_aij", "global_transfer_matrix", "numeric_allgather",
+        "p1_global_direct_factor", "p1_built", "smoother_built", "ksp_created",
+        "physical_solve", "recovery",
+    )
+    expected_forbidden = {
+        *(f"case.{name}" for name in case_names),
+        *(f"extension.{name}" for name in extension_names),
+        *derived_names,
+    }
+    forbidden = architecture.get("forbidden")
+    if not isinstance(forbidden, dict) or set(forbidden) != expected_forbidden:
+        errors.append("A0 forbidden architecture key set is not exact")
+    elif any(value is not False for value in forbidden.values()):
+        errors.append("A0 forbidden architecture fact is not false")
+    for group, names in {
+        "case": case_names, "extension": extension_names,
+    }.items():
+        nested = architecture.get(group)
+        if not isinstance(nested, dict):
+            errors.append(f"A0 nested architecture audit missing: {group}")
+        else:
+            for name in names:
+                if nested.get(name) is not False:
+                    errors.append(f"A0 nested forbidden fact is not false: {group}.{name}")
+    _check_level_topology(architecture, errors, (6, 3))
+
+
+def _a0_load_shards(
+    record: dict[str, Any], raw_dir: Path, errors: list[str],
+) -> tuple[list[tuple[int, dict[str, np.ndarray]]], dict[str, Any] | None]:
+    descriptor = record.get("raw_arrays")
+    if not isinstance(descriptor, dict) or descriptor.get("schema") != A0_RAW_SCHEMA:
+        errors.append("A0 raw manifest descriptor is missing or has the wrong schema")
+        return [], None
+    relative = descriptor.get("relative_path")
+    manifest_path = raw_dir / str(relative) if isinstance(relative, str) else raw_dir / "__missing__"
+    if not isinstance(relative, str) or not _inside(manifest_path, raw_dir) or not manifest_path.is_file():
+        errors.append("A0 raw manifest is missing or escaped")
+        return [], None
+    if _sha256(manifest_path) != descriptor.get("sha256"):
+        errors.append("A0 raw manifest SHA mismatch")
+        return [], None
+    try:
+        manifest = _read_json(manifest_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"A0 raw manifest unreadable: {exc}")
+        return [], None
+    case_mpi = record.get("mpi_size")
+    if type(case_mpi) is not int or case_mpi not in (1, 2):
+        errors.append("A0 MPI shard size is missing/noncanonical")
+        return [], None
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != A0_RAW_SCHEMA
+        or manifest.get("mpi_size") != case_mpi
+        or manifest.get("canonical_key_authority") != "physical/canonical packed edge key; no PETSc row, rank, or local order"
+        or descriptor.get("mpi_size") != case_mpi
+        or descriptor.get("shards") != manifest.get("shards")
+    ):
+        errors.append("A0 raw manifest authority mismatch")
+        return [], None
+    shard_list = manifest.get("shards")
+    if not isinstance(shard_list, list) or [item.get("rank") for item in shard_list if isinstance(item, dict)] != list(range(int(case_mpi))):
+        errors.append("A0 shard rank inventory is not exact")
+        return [], None
+    result: list[tuple[int, dict[str, np.ndarray]]] = []
+    for shard in shard_list:
+        if not isinstance(shard, dict) or type(shard.get("rank")) is not int:
+            errors.append("A0 shard descriptor is malformed")
+            continue
+        rank = int(shard["rank"])
+        relative_shard = shard.get("relative_path")
+        path = raw_dir / str(relative_shard) if isinstance(relative_shard, str) else raw_dir / "__missing__"
+        if not isinstance(relative_shard, str) or not _inside(path, raw_dir) or not path.is_file():
+            errors.append(f"A0 shard path missing/escaped: rank {rank}")
+            continue
+        if _sha256(path) != shard.get("sha256"):
+            errors.append(f"A0 shard SHA mismatch: rank {rank}")
+            continue
+        arrays_descriptor = shard.get("arrays")
+        if not isinstance(arrays_descriptor, dict):
+            errors.append(f"A0 shard array descriptor missing: rank {rank}")
+            continue
+        arrays: dict[str, np.ndarray] = {}
+        try:
+            with np.load(path, allow_pickle=False) as loaded:
+                if set(loaded.files) != set(arrays_descriptor):
+                    errors.append(f"A0 shard NPZ key set mismatch: rank {rank}")
+                else:
+                    for name, item in arrays_descriptor.items():
+                        value = _load_array(name, loaded, item, errors)
+                        if value is not None:
+                            arrays[name] = value
+        except (OSError, ValueError, EOFError, TypeError) as exc:
+            errors.append(f"A0 shard NPZ unreadable: rank {rank}: {exc}")
+        result.append((rank, arrays))
+    return result, manifest
+
+
+def _a0_expected_shard_keys(
+    class_digests: list[str], probe_names: tuple[str, ...],
+) -> set[str]:
+    keys = {"p63"}
+    for name in probe_names:
+        keys.update(_a0_roles(name).values())
+    for digest in class_digests:
+        prefix = f"class_{digest}"
+        keys.update(
+            f"{prefix}__{role}"
+            for role in ("b3", "b6p", "eigenvector_min", "eigenvector_max")
+        )
+    return keys
+
+
+def _a0_check_inventory_shards(
+    record: dict[str, Any], shards: list[tuple[int, dict[str, np.ndarray]]],
+    errors: list[str],
+) -> tuple[dict[str, np.ndarray], dict[str, list[tuple[int, dict[str, np.ndarray]]]]]:
+    inventory = record.get("material_inventory")
+    if not isinstance(inventory, dict) or not isinstance(inventory.get("classes"), list):
+        errors.append("A0 material inventory is missing")
+        return {}, {}
+    digests = [item.get("class_digest") for item in inventory["classes"] if isinstance(item, dict)]
+    by_rank = inventory.get("class_inventory_by_rank")
+    def valid_rank_items(items: Any) -> bool:
+        return (
+            isinstance(items, list)
+            and all(isinstance(item, str) for item in items)
+            and items == sorted(items)
+            and len(items) == len(set(items))
+            and all(item in digests for item in items)
+        )
+    if (
+        not isinstance(by_rank, list)
+        or len(by_rank) != record.get("mpi_size")
+        or not all(valid_rank_items(items) for items in by_rank)
+        or sorted(set(value for items in by_rank for value in items)) != sorted(digests)
+    ):
+        errors.append("A0 per-rank material inventory coverage is not exact")
+    merged: dict[str, np.ndarray] = {}
+    by_probe: dict[str, list[tuple[int, dict[str, np.ndarray]]] ] = {
+        name: [] for name in PROBE_NAMES
+    }
+    for rank, arrays in sorted(shards):
+        local_classes = by_rank[rank] if isinstance(by_rank, list) and rank < len(by_rank) else []
+        expected = _a0_expected_shard_keys(local_classes, PROBE_NAMES)
+        if set(arrays) != expected:
+            errors.append(f"A0 rank {rank} raw role set is not exact")
+        for name in PROBE_NAMES:
+            by_probe[name].append((rank, arrays))
+        if "p63" in arrays:
+            previous = merged.get("p63")
+            if previous is None:
+                merged["p63"] = arrays["p63"]
+            elif previous.shape != arrays["p63"].shape or not np.array_equal(previous, arrays["p63"]):
+                errors.append("A0 P63 differs between rank shards")
+        for digest in local_classes:
+            prefix = f"class_{digest}"
+            for role in ("b3", "b6p", "eigenvector_min", "eigenvector_max"):
+                key = f"{prefix}__{role}"
+                if key not in arrays:
+                    continue
+                previous = merged.get(key)
+                if previous is None:
+                    merged[key] = arrays[key]
+                elif previous.shape != arrays[key].shape or not np.array_equal(previous, arrays[key]):
+                    errors.append(f"A0 class raw array differs between shards: {key}")
+    return merged, by_probe
+
+
+def _a0_check_probe(
+    name: str, facts: Any, shard_arrays: list[tuple[int, dict[str, np.ndarray]]],
+    errors: list[str], gates: list[str], mpi_size: int,
+) -> dict[str, Any]:
+    roles = _a0_roles(name)
+    if not isinstance(facts, dict) or facts.get("name") != name or facts.get("raw_roles") != roles:
+        errors.append(f"A0 probe identity/role map mismatch: {name}")
+    expected_generation = SOURCE_GENERATION[name]
+    if isinstance(facts, dict) and facts.get("source_generation") != expected_generation:
+        errors.append(f"A0 source-generation identity mismatch: {name}")
+    required = tuple(roles.values())
+    local: list[tuple[int, dict[str, np.ndarray]]] = []
+    for rank, arrays in shard_arrays:
+        if any(key not in arrays for key in required):
+            errors.append(f"A0 probe raw roles missing: {name}, rank {rank}")
+            continue
+        values = {role: arrays[key] for role, key in roles.items()}
+        if any(
+            value.dtype != np.dtype("complex128") or value.ndim != 1 or value.size == 0
+            for role, value in values.items() if not role.endswith("_ids")
+        ):
+            errors.append(f"A0 probe raw vector dtype/shape mismatch: {name}, rank {rank}")
+            continue
+        local.append((rank, values))
+        for id_role, value_role in (
+            ("fine_primal_local_ids", "fine_primal_local"),
+            ("fine_dual_local_ids", "fine_dual_local"),
+            ("coarse_source_local_ids", "coarse_source_local"),
+            ("explicit_adjoint_local_ids", "explicit_adjoint_local"),
+            ("implemented_adjoint_local_ids", "implemented_adjoint_local"),
+            ("implemented_adjoint_owner_ids", "implemented_adjoint_owner"),
+        ):
+            if _a0_packet(values[id_role], values[value_role], f"{name}.{id_role}", errors) is None:
+                continue
+        if not np.array_equal(values["source_before"], values["source_after"]):
+            gates.append(f"A0 probe {name} input changed on rank {rank}")
+    if not local or len(local) != len(shard_arrays):
+        return {"name": name, "finite": False}
+
+    def packets(id_role: str, value_role: str) -> list[tuple[int, np.ndarray, np.ndarray]]:
+        result = []
+        for rank, values in local:
+            packet = _a0_packet(values[id_role], values[value_role], f"{name}.{value_role}", errors)
+            if packet is not None:
+                result.append((rank, packet[0], packet[1]))
+        return result
+
+    fine_primal = _a0_merge_packets(packets("fine_primal_local_ids", "fine_primal_local"), f"{name}.fine_primal", errors, gates, mode="consistent")
+    fine_dual = _a0_merge_packets(packets("fine_dual_local_ids", "fine_dual_local"), f"{name}.fine_dual", errors, gates, mode="consistent")
+    coarse_source = _a0_merge_packets(packets("coarse_source_local_ids", "coarse_source_local"), f"{name}.coarse_source", errors, gates, mode="consistent")
+    explicit = _a0_merge_packets(packets("explicit_adjoint_local_ids", "explicit_adjoint_local"), f"{name}.explicit_adjoint", errors, gates, mode="sum")
+    implemented = _a0_merge_packets(packets("implemented_adjoint_owner_ids", "implemented_adjoint_owner"), f"{name}.implemented_owner", errors, gates, mode="owner")
+    if any(value is None for value in (fine_primal, fine_dual, coarse_source, explicit, implemented)):
+        return {"name": name, "finite": False}
+    fine_ids, fine_values, fine_merge = fine_primal
+    dual_ids, dual_values, _dual_merge = fine_dual
+    coarse_ids, coarse_values, _coarse_merge = coarse_source
+    explicit_ids, explicit_values, explicit_merge = explicit
+    implemented_ids, implemented_values, owner_merge = implemented
+    if not (
+        np.array_equal(fine_ids, dual_ids)
+        and np.array_equal(coarse_ids, explicit_ids)
+        and np.array_equal(coarse_ids, implemented_ids)
+    ):
+        errors.append(f"A0 {name} canonical key sets are not closed")
+        return {"name": name, "finite": False}
+    lhs_terms = np.conjugate(fine_values) * dual_values
+    rhs_terms = np.conjugate(coarse_values) * implemented_values
+    explicit_terms = np.conjugate(coarse_values) * explicit_values
+    pairwise_lhs = _a0_pairwise_sum(lhs_terms)
+    pairwise_rhs = _a0_pairwise_sum(rhs_terms)
+    pairwise_explicit = _a0_pairwise_sum(explicit_terms)
+    compensated_lhs = _a0_compensated_sum(lhs_terms)
+    compensated_rhs = _a0_compensated_sum(rhs_terms)
+    compensated_explicit = _a0_compensated_sum(explicit_terms)
+    vector_difference = implemented_values - explicit_values
+    vector_difference_sq = float(math.fsum(float(abs(value) ** 2) for value in vector_difference))
+    vector_reference_sq = float(math.fsum(float(abs(value) ** 2) for value in explicit_values))
+    vector_relative = math.sqrt(max(vector_difference_sq, 0.0)) / max(math.sqrt(max(vector_reference_sq, 0.0)), np.finfo(float).tiny)
+    ordinary_lhs = sum(
+        (complex(np.vdot(values["projected"], values["fine_dual"])) for _rank, values in local),
+        0.0 + 0.0j,
+    )
+    ordinary_rhs = sum(
+        (complex(np.vdot(values["source_before"], values["adjoint"])) for _rank, values in local),
+        0.0 + 0.0j,
+    )
+    ordinary_lhs_terms = np.concatenate(
+        [np.conjugate(values["projected"]) * values["fine_dual"] for _rank, values in local]
+    )
+    ordinary_rhs_terms = np.concatenate(
+        [np.conjugate(values["source_before"]) * values["adjoint"] for _rank, values in local]
+    )
+    def bound(terms: np.ndarray) -> tuple[float, float, int]:
+        count = int(terms.size)
+        denominator = 1.0 - count * np.finfo(float).eps
+        gamma = count * np.finfo(float).eps / denominator if denominator > 0.0 else math.inf
+        return gamma * math.fsum(float(abs(value)) for value in terms), gamma, count
+    lhs_bound, lhs_gamma, lhs_count = bound(ordinary_lhs_terms)
+    rhs_bound, rhs_gamma, rhs_count = bound(ordinary_rhs_terms)
+    ordinary_defect = abs(ordinary_lhs - ordinary_rhs)
+    forward_bound = lhs_bound + rhs_bound
+    pairwise_vs_compensated = max(
+        _a0_relative(pairwise_lhs, compensated_lhs),
+        _a0_relative(pairwise_rhs, compensated_rhs),
+        _a0_relative(pairwise_explicit, compensated_explicit),
+    )
+    compensated_work = _a0_relative(compensated_lhs, compensated_rhs)
+    checks = (
+        (pairwise_vs_compensated <= A0_LIMITS["pairwise"], "pairwise_vs_compensated"),
+        (compensated_work <= A0_LIMITS["compensated"], "compensated_work"),
+        (vector_relative <= A0_LIMITS["vector"], "vector_adjoint"),
+        (ordinary_defect <= A0_LIMITS["ordinary_bound_factor"] * forward_bound, "ordinary_forward_bound"),
+    )
+    for passed, label in checks:
+        if not passed:
+            gates.append(f"A0 probe {name} {label} failed")
+    finite = bool(all(np.all(np.isfinite(value)) for _rank, values in local for value in values.values()))
+    if not finite:
+        gates.append(f"A0 probe {name} finite failed")
+    stable = {
+        "pairwise_vs_compensated_relative": float(pairwise_vs_compensated),
+        "compensated_work_relative": float(compensated_work),
+        "vector_adjoint_relative": float(vector_relative),
+        "ordinary_abs_work_defect": float(ordinary_defect),
+        "forward_error_bound_abs": float(forward_bound),
+        "ordinary_lhs": [float(ordinary_lhs.real), float(ordinary_lhs.imag)],
+        "ordinary_rhs": [float(ordinary_rhs.real), float(ordinary_rhs.imag)],
+        "lhs_gamma_n": float(lhs_gamma), "rhs_gamma_n": float(rhs_gamma),
+        "lhs_term_count": lhs_count, "rhs_term_count": rhs_count,
+        "canonical_owner_count": int(coarse_ids.size),
+        "canonical_duplicate_facts": {
+            "fine_primal": fine_merge,
+            "explicit_adjoint": explicit_merge,
+            "implemented_owner": owner_merge,
+        },
+    }
+    raw = {
+        "q": None,
+        "canonical_pairwise_lhs": [float(pairwise_lhs.real), float(pairwise_lhs.imag)],
+        "canonical_pairwise_rhs": [float(pairwise_rhs.real), float(pairwise_rhs.imag)],
+        "canonical_compensated_lhs": [float(compensated_lhs.real), float(compensated_lhs.imag)],
+        "canonical_compensated_rhs": [float(compensated_rhs.real), float(compensated_rhs.imag)],
+        "vector_adjoint_relative": float(vector_relative),
+        "ordinary_abs_work_defect": float(ordinary_defect),
+        "forward_error_bound_abs": float(forward_bound),
+        "canonical_key_count": int(coarse_ids.size),
+        "finite": finite,
+    }
+    for _rank, values in local:
+        ec = np.vdot(values["source_before"], values["b3"])
+        ef = np.vdot(values["projected"], values["b6p"])
+        raw.setdefault("energy_coarse", 0.0 + 0.0j)
+        raw.setdefault("energy_fine", 0.0 + 0.0j)
+        raw["energy_coarse"] += complex(ec)
+        raw["energy_fine"] += complex(ef)
+    ec = raw["energy_coarse"]
+    ef = raw["energy_fine"]
+    if not np.isfinite(ec.real) or not np.isfinite(ec.imag) or abs(ec) <= 0.0:
+        gates.append(f"A0 probe {name} coarse energy denominator invalid")
+        q = complex(math.nan, math.nan)
+    else:
+        q = ef / ec
+    raw["q"] = float(q.real)
+    raw["q_imag_defect"] = float(abs(q.imag))
+    raw["energy_imag_defect"] = float(max(abs(ec.imag), abs(ef.imag)))
+    raw["energy_coarse"] = [float(ec.real), float(ec.imag)]
+    raw["energy_fine"] = [float(ef.real), float(ef.imag)]
+    raw["ordinary_adjoint_work_relative"] = float(_a0_relative(ordinary_lhs, ordinary_rhs))
+    raw["repeat_relative"] = float(
+        math.sqrt(_a0_global_norm2([values["projected_repeat"] - values["projected"] for _rank, values in local]))
+        / max(math.sqrt(_a0_global_norm2([values["projected"] for _rank, values in local])), np.finfo(float).tiny)
+    )
+    raw["linearity_relative"] = float(
+        math.sqrt(_a0_global_norm2([values["projected_combo"] - ALPHA * values["projected"] - BETA * values["projected2"] for _rank, values in local]))
+        / max(math.sqrt(_a0_global_norm2([values["projected_combo"] for _rank, values in local])), np.finfo(float).tiny)
+    )
+    for value, limit, label in (
+        (raw["repeat_relative"], REPEAT_LIMIT, "repeat"),
+        (raw["linearity_relative"], LINEARITY_LIMIT, "linearity"),
+        (raw["q_imag_defect"], HERMITIAN_LIMIT, "q_imag"),
+        (raw["energy_imag_defect"], HERMITIAN_LIMIT, "energy_imag"),
+    ):
+        if not np.isfinite(value) or value > limit:
+            gates.append(f"A0 probe {name} {label} failed")
+    if not PROBE_MIN <= raw["q"] <= PROBE_MAX:
+        gates.append(f"A0 probe {name} q interval failed")
+    if mpi_size == 1 and isinstance(facts, dict):
+        if (
+            facts.get("source_before_digest") != _digest(local[0][1]["source_before"])
+            or facts.get("source_after_digest") != _digest(local[0][1]["source_after"])
+            or facts.get("source_finite") is not True
+            or facts.get("source_nonzero") is not bool(
+                np.linalg.norm(local[0][1]["source_before"]) > 0.0
+            )
+        ):
+            errors.append(f"A0 source digest/fact mismatch: {name}")
+        for actual, key in (
+            (raw["q"], "q"),
+            (raw["q_imag_defect"], "q_imag_defect"),
+            (raw["energy_imag_defect"], "energy_imag_defect"),
+            (raw["repeat_relative"], "repeat_relative"),
+            (raw["linearity_relative"], "linearity_relative"),
+            (raw["ordinary_adjoint_work_relative"], "adjoint_work_relative"),
+        ):
+            if not _close(actual, facts.get(key)):
+                errors.append(f"A0 probe stored field mismatch: {name}.{key}")
+        if facts.get("input_unchanged") is not True or not _close(
+            float(np.linalg.norm(local[0][1]["source_before"])), facts.get("source_norm")
+        ):
+            errors.append(f"A0 probe input/source fact mismatch: {name}")
+        stable_facts = facts.get("stable_adjoint")
+        if not isinstance(stable_facts, dict) or stable_facts.get("schema") != "task038.full3d.interlevel-stable-adjoint.a0.v1":
+            errors.append(f"A0 stable facts missing: {name}")
+        else:
+            for actual, key in (
+                (pairwise_vs_compensated, "pairwise_vs_compensated_relative"),
+                (compensated_work, "compensated_work_relative"),
+                (vector_relative, "vector_adjoint_relative"),
+                (ordinary_defect, "ordinary_abs_work_defect"),
+                (forward_bound, "forward_error_bound_abs"),
+            ):
+                if not _close(actual, stable_facts.get(key)):
+                    errors.append(f"A0 stable stored field mismatch: {name}.{key}")
+    return {
+        "name": name,
+        **raw,
+        **stable,
+        "_canonical_ids": coarse_ids,
+        "_implemented_values": implemented_values,
+        "_explicit_values": explicit_values,
+    }
+
+
+def _a0_key_relative(
+    left_ids: np.ndarray, left_values: np.ndarray,
+    right_ids: np.ndarray, right_values: np.ndarray,
+) -> float | None:
+    if not all(
+        isinstance(value, np.ndarray)
+        for value in (left_ids, left_values, right_ids, right_values)
+    ):
+        return None
+    if not np.array_equal(left_ids, right_ids):
+        return None
+    difference = left_values - right_values
+    return float(
+        math.sqrt(max(_a0_global_norm2([difference]), 0.0))
+        / max(math.sqrt(max(_a0_global_norm2([right_values]), 0.0)), np.finfo(float).tiny)
+    )
+
+
+def _a0_check_mpi1_reference(
+    record: dict[str, Any], current_metrics: list[dict[str, Any]],
+    reference_path: Path | None, expected_sha: str,
+    errors: list[str], gates: list[str],
+) -> dict[str, Any]:
+    mpi_size = record.get("mpi_size")
+    if mpi_size == 1:
+        if reference_path is not None:
+            errors.append("A0 MPI1 checker must not claim a cross-MPI reference")
+        return {"status": "mpi1_only_pending_mpi2"}
+    if mpi_size != 2:
+        return {"status": "not_available"}
+    if reference_path is None:
+        errors.append("A0 MPI2 checker requires --mpi1-reference")
+        return {"status": "missing_mpi1_reference"}
+    reference_path = reference_path.resolve()
+    if not reference_path.is_file() or reference_path == Path(str(record.get("record_path"))).resolve():
+        errors.append("A0 MPI1 reference record is missing or self-referential")
+        return {"status": "invalid_mpi1_reference"}
+    try:
+        reference = _read_json(reference_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"A0 MPI1 reference record unreadable: {exc}")
+        return {"status": "invalid_mpi1_reference"}
+    reference_errors: list[str] = []
+    reference_gates: list[str] = []
+    reference_raw_dir = Path(str(reference.get("raw_dir", ""))).resolve()
+    if isinstance(reference, dict):
+        reference_source = reference.get("source")
+    else:
+        reference_source = None
+    if (
+        not isinstance(reference, dict)
+        or reference.get("schema") != A0_SCHEMA
+        or reference.get("case") != "p6-h10-mpi1"
+        or reference.get("mpi_size") != 1
+        or reference.get("branch") != BRANCH
+        or not isinstance(reference_source, dict)
+        or not isinstance(reference_source.get("start"), dict)
+        or not isinstance(reference_source.get("end"), dict)
+        or reference_source["start"].get("commit_sha") != expected_sha
+        or reference_source["end"].get("commit_sha") != expected_sha
+    ):
+        reference_errors.append("MPI1 reference fixed identity mismatch")
+    if isinstance(reference, dict):
+        _a0_check_provenance(
+            reference, reference_path, expected_sha, reference_errors, reference_raw_dir,
+        )
+    reference_shards, _manifest = _a0_load_shards(reference, reference_raw_dir, reference_errors) if isinstance(reference, dict) else ([], None)
+    _merged, reference_probe_shards = _a0_check_inventory_shards(
+        reference, reference_shards, reference_errors,
+    ) if isinstance(reference, dict) else ({}, {})
+    reference_probes = reference.get("probes") if isinstance(reference, dict) else None
+    if not isinstance(reference_probes, list) or [item.get("name") for item in reference_probes if isinstance(item, dict)] != list(PROBE_NAMES):
+        reference_errors.append("MPI1 reference probe order is not exact")
+        reference_probes = []
+    reference_metrics: list[dict[str, Any]] = []
+    for name, item in zip(PROBE_NAMES, reference_probes, strict=True):
+        reference_metrics.append(
+            _a0_check_probe(
+                name, item, reference_probe_shards.get(name, []),
+                reference_errors, reference_gates, 1,
+            )
+        )
+    if reference_errors:
+        errors.extend(f"A0 MPI1 reference: {value}" for value in reference_errors)
+    if reference_gates:
+        gates.extend(f"A0 MPI1 reference: {value}" for value in reference_gates)
+    if len(reference_metrics) != len(current_metrics) or reference_errors or reference_gates:
+        return {
+            "status": "invalid_mpi1_reference",
+            "path": str(reference_path),
+            "sha256": _sha256(reference_path),
+        }
+    relative_fields = (
+        "q", "canonical_pairwise_lhs", "canonical_pairwise_rhs",
+        "canonical_compensated_lhs", "canonical_compensated_rhs",
+    )
+    normalized_defect_fields = (
+        "vector_adjoint_relative", "compensated_work_relative",
+        "pairwise_vs_compensated_relative",
+    )
+    comparisons: list[dict[str, Any]] = []
+    for current, prior in zip(current_metrics, reference_metrics, strict=True):
+        name = current.get("name")
+        key_relative_implemented = _a0_key_relative(
+            current.get("_canonical_ids"), current.get("_implemented_values"),
+            prior.get("_canonical_ids"), prior.get("_implemented_values"),
+        )
+        key_relative_explicit = _a0_key_relative(
+            current.get("_canonical_ids"), current.get("_explicit_values"),
+            prior.get("_canonical_ids"), prior.get("_explicit_values"),
+        )
+        if key_relative_implemented is None or key_relative_explicit is None:
+            errors.append(f"A0 cross-MPI canonical key mismatch: {name}")
+            continue
+        if key_relative_implemented > 1.0e-11 or key_relative_explicit > 1.0e-11:
+            gates.append(f"A0 cross-MPI canonical vector identity failed: {name}")
+        relative_differences: dict[str, float] = {}
+        for field in relative_fields:
+            left = current.get(field)
+            right = prior.get(field)
+            if isinstance(left, list) and isinstance(right, list):
+                left_complex = _complex_pair(left)
+                right_complex = _complex_pair(right)
+                difference = (
+                    math.inf if left_complex is None or right_complex is None else
+                    _a0_relative(left_complex, right_complex)
+                )
+            elif _finite(left) and _finite(right):
+                difference = _a0_relative(float(left), float(right))
+            else:
+                difference = math.inf
+            relative_differences[field] = difference
+            if not np.isfinite(difference) or difference > 1.0e-11:
+                gates.append(
+                    f"A0 cross-MPI stable scalar relative identity failed: {name}.{field}"
+                )
+        normalized_defect_differences: dict[str, float] = {}
+        for field in normalized_defect_fields:
+            left = current.get(field)
+            right = prior.get(field)
+            difference = (
+                float(abs(float(left) - float(right)))
+                if _finite(left) and _finite(right) else math.inf
+            )
+            normalized_defect_differences[field] = difference
+            if not np.isfinite(difference) or difference > 1.0e-11:
+                gates.append(
+                    f"A0 cross-MPI normalized defect absolute identity failed: {name}.{field}"
+                )
+        comparisons.append({
+            "name": name,
+            "implemented_vector_relative": float(key_relative_implemented),
+            "explicit_vector_relative": float(key_relative_explicit),
+            "stable_scalar_relative_differences": relative_differences,
+            "normalized_defect_absolute_differences": normalized_defect_differences,
+        })
+    return {
+        "status": "compared",
+        "path": str(reference_path),
+        "sha256": _sha256(reference_path),
+        "probe_comparisons": comparisons,
+        "relative_limit": 1.0e-11,
+        "normalized_defect_absolute_limit": 1.0e-11,
+    }
+
+
+def _check_a0_record(
+    record_path: Path, watchdog_compact: Path, expected_sha: str,
+    record: dict[str, Any], mpi1_reference: Path | None = None,
+) -> dict[str, Any]:
+    errors: list[str] = []
+    gates: list[str] = []
+    lifecycle_failures: list[str] = []
+    raw_dir = Path(str(record.get("raw_dir", ""))).resolve()
+    if not raw_dir.is_absolute() or not raw_dir.is_dir():
+        errors.append("A0 raw_dir is missing/invalid")
+    provenance_error = _a0_check_provenance(
+        record, record_path, expected_sha, errors, raw_dir,
+    )
+    _a0_check_markers(record, raw_dir, record_path, expected_sha, errors)
+    resource = _check_watchdog(
+        watchdog_compact, record, record_path, expected_sha,
+        errors, gates, lifecycle_failures, mpi_size=record.get("mpi_size"),
+    )
+    watchdog_raw = resource.get("watchdog_raw")
+    if watchdog_raw is not None and Path(str(watchdog_raw)).parent != raw_dir.parent:
+        errors.append("A0 watchdog raw is not a sibling of worker raw_dir")
+    _a0_check_architecture(record, errors)
+    if record.get("record_authority") != "raw-shards-only; checker derives A0 classification":
+        errors.append("A0 record authority is not raw-shards-only")
+
+    shards, _manifest = _a0_load_shards(record, raw_dir, errors)
+    merged_arrays, probe_shards = _a0_check_inventory_shards(
+        record, shards, errors,
+    )
+    p63 = merged_arrays.get("p63")
+    p63_audit = record.get("p63_audit")
+    if (
+        p63 is None
+        or p63.dtype != np.dtype("complex128")
+        or p63.shape != (882, 144)
+        or not isinstance(p63_audit, dict)
+    ):
+        errors.append("A0 P63 raw/audit shape closure failed")
+    else:
+        singular = np.linalg.svd(p63, compute_uv=False)
+        threshold = max(p63.shape) * np.finfo(float).eps * float(singular[0])
+        observed = {
+            "shape": [882, 144],
+            "dtype": "complex128",
+            "sigma_min": float(singular[-1]),
+            "sigma_max": float(singular[0]),
+            "rank_threshold": float(threshold),
+            "rank": int(np.count_nonzero(singular > threshold)),
+            "finite": bool(np.all(np.isfinite(p63))),
+        }
+        for key, value in observed.items():
+            if p63_audit.get(key) != value:
+                errors.append(f"A0 P63 stored field mismatch: {key}")
+        if observed["rank"] != 144 or not observed["finite"]:
+            gates.append("A0 P63 rank/finite Gate failed")
+
+    inventory = record.get("material_inventory")
+    classes = record.get("material_classes")
+    class_metrics: list[dict[str, Any]] = []
+    if (
+        not isinstance(inventory, dict)
+        or not isinstance(classes, list)
+        or not isinstance(inventory.get("classes"), list)
+        or len(classes) != len(inventory["classes"])
+    ):
+        errors.append("A0 material inventory/audits are not closed")
+    else:
+        _check_material_inventory(inventory, classes, errors)
+        for item in classes:
+            if isinstance(item, dict):
+                class_metrics.append(_check_class(item, merged_arrays, errors, gates))
+
+    probes = record.get("probes")
+    if not isinstance(probes, list) or [item.get("name") for item in probes if isinstance(item, dict)] != list(PROBE_NAMES):
+        errors.append("A0 probe identities/order are not frozen")
+        probes = []
+    probe_metrics: list[dict[str, Any]] = []
+    mpi_size = record.get("mpi_size") if type(record.get("mpi_size")) is int else -1
+    for name, item in zip(PROBE_NAMES, probes, strict=True):
+        probe_metrics.append(
+            _a0_check_probe(
+                name, item, probe_shards.get(name, []), errors, gates,
+                mpi_size,
+            )
+        )
+    cross_mpi = _a0_check_mpi1_reference(
+        record, probe_metrics, mpi1_reference, expected_sha, errors, gates,
+    )
+    if not shards:
+        errors.append("A0 has no readable raw rank shards")
+    elif len(shards) != record.get("mpi_size"):
+        errors.append("A0 raw shard count does not match MPI size")
+
+    classification: str
+    if provenance_error:
+        classification = "INPUT_PROVENANCE_INVALID"
+    elif lifecycle_failures:
+        classification = "EXECUTION_LIFECYCLE_FAILED"
+    elif resource.get("resource_gate_failed") is True:
+        classification = "RESOURCE_GATE_FAILED"
+    elif errors:
+        classification = "CONTRACT_INVALID"
+    elif gates:
+        classification = A0_GATE_CLASSIFICATION
+    elif record.get("mpi_size") == 1:
+        classification = A0_LOCAL_PASS_CLASSIFICATION
+    else:
+        classification = A0_PASS_CLASSIFICATION
+    public_probe_metrics = [
+        {key: value for key, value in item.items() if not key.startswith("_")}
+        for item in probe_metrics
+    ]
+    return {
+        "schema": A0_CHECK_SCHEMA,
+        "passed": classification in {
+            A0_LOCAL_PASS_CLASSIFICATION, A0_PASS_CLASSIFICATION,
+        },
+        "classification": classification,
+        "contract_errors": errors,
+        "gate_failures": gates,
+        "execution_lifecycle_failures": lifecycle_failures,
+        "metrics": {
+            "p63": {"shape": list(p63.shape)} if p63 is not None else {},
+            "classes": class_metrics,
+            "probes": public_probe_metrics,
+            "resource": resource,
+            "cross_mpi_identity": cross_mpi,
+            "raw_shards": {
+                "mpi_size": record.get("mpi_size"),
+                "rank_count": len(shards),
+                "canonical_merge": "physical key sort; consistent duplicates never averaged; explicit local contributions summed",
+            },
+        },
+        "record": {"path": str(record_path.resolve()), "sha256": _sha256(record_path)},
+        "expected_source_sha": expected_sha,
+    }
+
+
+def check_record(
+    record_path: Path, watchdog_compact: Path, expected_sha: str,
+    mpi1_reference: Path | None = None,
+) -> dict[str, Any]:
     errors: list[str] = []
     gates: list[str] = []
     try:
@@ -1075,6 +2176,24 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_sha: str) -
         return {"passed": False, "classification": "CONTRACT_INVALID", "contract_errors": [str(exc)], "gate_failures": []}
     if not isinstance(record, dict):
         return {"passed": False, "classification": "CONTRACT_INVALID", "contract_errors": ["record is not an object"], "gate_failures": []}
+    if record.get("schema") == A0_SCHEMA or record.get("stage") == "a0":
+        for forbidden_record_field in ("status", "passed", "classification"):
+            if forbidden_record_field in record:
+                return {
+                    "schema": A0_CHECK_SCHEMA,
+                    "passed": False,
+                    "classification": "CONTRACT_INVALID",
+                    "contract_errors": [
+                        f"worker record must not contain {forbidden_record_field}"
+                    ],
+                    "gate_failures": [],
+                    "execution_lifecycle_failures": [],
+                    "record": {"path": str(record_path.resolve()), "sha256": _sha256(record_path)},
+                    "expected_source_sha": expected_sha,
+                }
+        return _check_a0_record(
+            record_path, watchdog_compact, expected_sha, record, mpi1_reference,
+        )
     for forbidden_record_field in ("status", "passed", "classification"):
         if forbidden_record_field in record:
             errors.append(f"worker record must not contain {forbidden_record_field}")
@@ -1417,11 +2536,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--watchdog-compact", type=Path, required=True)
     parser.add_argument("--expected-source-sha", required=True)
+    parser.add_argument("--mpi1-reference", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.output.exists():
         raise FileExistsError(f"checker output already exists: {args.output}")
-    result = check_record(args.record.resolve(), args.watchdog_compact.resolve(), args.expected_source_sha)
+    result = check_record(
+        args.record.resolve(), args.watchdog_compact.resolve(),
+        args.expected_source_sha,
+        args.mpi1_reference.resolve() if args.mpi1_reference is not None else None,
+    )
     args.output.write_text(json.dumps(result, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     return 0 if result["passed"] else 1
 

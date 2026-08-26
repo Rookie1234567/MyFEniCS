@@ -84,6 +84,102 @@ def _apply_pair(extension: Any, pair: tuple[int, int], source: Any, *, adjoint: 
     return method(source)
 
 
+def _apply_local_adjoint_audit_only(
+    extension: Any, pair: tuple[int, int], source: Any,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return a local canonical packet from an independent local ``P.conj().T``.
+
+    The production owner reduction is deliberately not used here.  Cell
+    contributions are sorted and merged by the canonical packed edge key;
+    this returns the local unique canonical inventory.  A0's checker merges
+    these key-bound packets across ranks; this keeps the audit independent of
+    ``route_dual_blocks``.
+    """
+
+    fine_level, coarse_level = _probe_levels(
+        extension, fine_degree=pair[0], coarse_degree=pair[1]
+    )
+    transfer = getattr(extension, "_transfer", None)
+    if transfer is None:
+        transfers = getattr(extension, "transfers", None)
+        transfer = transfers[pair] if isinstance(transfers, Mapping) else None
+    if transfer is None:
+        raise ValueError("stable adjoint audit requires an owner transfer")
+    owner_packet = fine_level.dual_to_owner(source)
+    fine_ids = np.asarray(owner_packet[0])
+    if not np.array_equal(fine_ids, fine_level.parent_topology.unique_edge_ids):
+        raise ValueError("A0 independent adjoint fine canonical keys are not closed")
+
+    topology = coarse_level.parent_topology
+    contributions: list[tuple[int, complex]] = []
+    local_map = np.asarray(
+        transfer.local_transfer.edge_transfer.conj(), dtype=np.complex128
+    )
+    for cell in range(fine_level.parent_block_count):
+        local_fine = np.asarray(
+            fine_level.expand_dual(owner_packet, cell, cell + 1)[0],
+            dtype=np.complex128,
+        )
+        local_coarse = np.asarray(local_fine @ local_map, dtype=np.complex128)
+        phase = topology.phase_values[int(topology.cell_phase_codes[cell])]
+        canonical = (
+            local_coarse
+            * np.asarray(topology.cell_orientation[cell], dtype=np.complex128)
+            / phase
+        )
+        for edge_id, value in zip(
+            topology.cell_edge_ids[cell], canonical, strict=True
+        ):
+            contributions.append((int(edge_id), complex(value)))
+    contributions.sort(key=lambda item: item[0])
+    merged_ids: list[int] = []
+    merged_values: list[complex] = []
+    index = 0
+    while index < len(contributions):
+        key = contributions[index][0]
+        total = 0.0 + 0.0j
+        while index < len(contributions) and contributions[index][0] == key:
+            total += contributions[index][1]
+            index += 1
+        merged_ids.append(key)
+        merged_values.append(total)
+    ids = np.asarray(merged_ids, dtype=np.uint32)
+    values = np.asarray(merged_values, dtype=np.complex128)
+    expected_ids = np.asarray(topology.unique_edge_ids, dtype=np.uint32)
+    if ids.size != expected_ids.size or not np.array_equal(ids, expected_ids):
+        raise ValueError("independent local adjoint did not cover canonical edges")
+    return ids, values
+
+
+def _canonical_local_packet(level: Any, vector: Any, *, dual: bool) -> tuple[np.ndarray, np.ndarray]:
+    """Extract one exact-key local canonical packet without rank assumptions."""
+
+    packet = level.dual_to_owner(vector) if dual else level.primal_to_owner(vector)
+    ids = np.asarray(packet[0])
+    expected = np.asarray(level.parent_topology.unique_edge_ids)
+    if not np.array_equal(ids, expected):
+        raise ValueError("A0 local canonical packet does not match its topology")
+    return np.asarray(ids, dtype=np.uint32).copy(), np.asarray(
+        packet[1], dtype=np.complex128
+    ).copy()
+
+
+def _canonical_owner_packet_from_raw(level: Any, vector: Any) -> tuple[np.ndarray, np.ndarray]:
+    """Extract the implemented dual's canonical owner packet for A0 shards."""
+
+    from .fullspace_lor_edge_geometric_mg_global import _raw_dual_owner_packet
+
+    packet = _raw_dual_owner_packet(
+        level.raw_space, level.raw_floquet, level.raw_topology,
+        vector, level.raw_permutations,
+    )
+    ids = np.asarray(packet[0], dtype=np.uint32)
+    expected = np.asarray(level.parent_topology.owned_edge_ids, dtype=np.uint32)
+    if not np.array_equal(ids, expected):
+        raise ValueError("A0 implemented adjoint owner packet is not closed")
+    return ids.copy(), np.asarray(packet[1], dtype=np.complex128).copy()
+
+
 def _owned_cell_widths(function_space: Any, cell: int) -> tuple[float, float, float]:
     from .fullspace_lor_native_hx_fixture import _entity_coordinates
 
@@ -202,10 +298,18 @@ def build_material_class_inventory(foundation: Any) -> dict[str, Any]:
     comm = mesh.comm
     local_keys = tuple(item["class_digest"] for item in result["classes"])
     all_keys = comm.allgather(local_keys)
-    for item in result["classes"]:
-        item["cell_count_global"] = int(
-            comm.allreduce(int(item["cell_count_local"]), op=MPI.SUM)
+    all_digests = sorted({digest for keys in all_keys for digest in keys})
+    local_counts = {
+        str(item["class_digest"]): int(item["cell_count_local"])
+        for item in result["classes"]
+    }
+    global_counts: dict[str, int] = {}
+    for digest in all_digests:
+        global_counts[digest] = int(
+            comm.allreduce(local_counts.get(digest, 0), op=MPI.SUM)
         )
+    for item in result["classes"]:
+        item["cell_count_global"] = global_counts[str(item["class_digest"])]
     result["class_inventory_by_rank"] = [list(keys) for keys in all_keys]
     result["cell_count_local"] = local_cell_count
     result["cell_count_global"] = int(comm.allreduce(local_cell_count, op=MPI.SUM))
@@ -458,6 +562,7 @@ def measure_probe(
     probe_schema: str = PROBE_SCHEMA,
     source_generation: Mapping[str, str] = SOURCE_GENERATION,
     coarse_action_role: str = "B3",
+    stable_adjoint: bool = False,
 ) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
     """Measure one probe and return scalar facts plus checker-owned raw arrays."""
 
@@ -488,6 +593,10 @@ def measure_probe(
     projected_combo = _apply_pair(extension, pair, combo, adjoint=False)
     fine_dual = _deterministic_seed(level6, 31.0)
     adjoint = _apply_pair(extension, pair, fine_dual, adjoint=True)
+    if stable_adjoint:
+        explicit_adjoint_packet = _apply_local_adjoint_audit_only(
+            extension, pair, fine_dual
+        )
     b3 = level3.matrix.createVecLeft()
     level3.matrix.mult(source, b3)
     b6p = level6.matrix.createVecLeft()
@@ -500,6 +609,59 @@ def measure_probe(
         projected_combo_values = _vector_array(projected_combo)
         fine_dual_values = _vector_array(fine_dual)
         adjoint_values = _vector_array(adjoint)
+        if stable_adjoint:
+            implemented_local_packet = _canonical_local_packet(level3, adjoint, dual=True)
+            implemented_owner_packet = _canonical_owner_packet_from_raw(level3, adjoint)
+            explicit_ids, explicit_values = explicit_adjoint_packet
+            if not np.array_equal(implemented_local_packet[0], explicit_ids):
+                raise ValueError("stable adjoint local canonical IDs are not identical")
+            projected_packet = _canonical_local_packet(level6, projected, dual=False)
+            fine_dual_packet = _canonical_local_packet(level6, fine_dual, dual=True)
+            source_packet = _canonical_local_packet(level3, source, dual=False)
+            if not np.array_equal(projected_packet[0], fine_dual_packet[0]):
+                raise ValueError("stable lhs owner IDs are not identical")
+            if not np.array_equal(source_packet[0], implemented_local_packet[0]):
+                raise ValueError("stable rhs local canonical IDs are not identical")
+            stable_owner_arrays = {
+                "fine_primal_local_ids": np.asarray(
+                    projected_packet[0], dtype=np.uint32
+                ).copy(),
+                "fine_primal_local": np.asarray(
+                    projected_packet[1], dtype=np.complex128
+                ).copy(),
+                "fine_dual_local_ids": np.asarray(
+                    fine_dual_packet[0], dtype=np.uint32
+                ).copy(),
+                "fine_dual_local": np.asarray(
+                    fine_dual_packet[1], dtype=np.complex128
+                ).copy(),
+                "coarse_source_local_ids": np.asarray(
+                    source_packet[0], dtype=np.uint32
+                ).copy(),
+                "coarse_source_local": np.asarray(
+                    source_packet[1], dtype=np.complex128
+                ).copy(),
+                "explicit_adjoint_local_ids": np.asarray(
+                    explicit_ids, dtype=np.uint32
+                ).copy(),
+                "explicit_adjoint_local": np.asarray(
+                    explicit_values, dtype=np.complex128
+                ).copy(),
+                "implemented_adjoint_local_ids": np.asarray(
+                    implemented_local_packet[0], dtype=np.uint32
+                ).copy(),
+                "implemented_adjoint_local": np.asarray(
+                    implemented_local_packet[1], dtype=np.complex128
+                ).copy(),
+                "implemented_adjoint_owner_ids": np.asarray(
+                    implemented_owner_packet[0], dtype=np.uint32
+                ).copy(),
+                "implemented_adjoint_owner": np.asarray(
+                    implemented_owner_packet[1], dtype=np.complex128
+                ).copy(),
+            }
+        else:
+            stable_owner_arrays = {}
         b3_values = _vector_array(b3)
         b6p_values = _vector_array(b6p)
         ec = np.vdot(source_before, b3_values)
@@ -571,10 +733,16 @@ def measure_probe(
             coarse_action_key: b3_values,
             "b6p": b6p_values,
         }
+        if stable_adjoint:
+            arrays.update(stable_owner_arrays)
         return facts, arrays
     finally:
-        for vector in (projected, projected_repeat, source2, projected2, combo, fine_dual, adjoint, b3, b6p):
-            vector.destroy()
+        for vector in (
+            projected, projected_repeat, source2, projected2, combo, fine_dual,
+            adjoint, b3, b6p,
+        ):
+            if vector is not None:
+                vector.destroy()
 
 
 def measure_owner_probe(

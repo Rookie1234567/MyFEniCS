@@ -1,4 +1,4 @@
-"""Thin shared Route-A/Route-B p6/h10 material-class and interlevel worker."""
+"""Shared Route-A/Route-B worker with a prospective A0 stable-adjoint profile."""
 
 from __future__ import annotations
 
@@ -26,6 +26,16 @@ ROUTE_B_SCHEMA = "task038.full3d.interlevel-spectral.r3-record.v1"
 ROUTE_B_MARKER_SCHEMA = "task038.full3d.interlevel-spectral.r3-marker.v1"
 ROUTE_B_PROBE_SCHEMA = "task038.route-b.global-probe.v1"
 ROUTE_B_CANDIDATE = "lor_edge_geometric_mg_6_2_1_nested_v1"
+A0_STAGE = "a0"
+A0_CASES = ("p6-h10-mpi1", "p6-h10-mpi2")
+A0_SCHEMA = "task038.full3d.interlevel-stable-adjoint.a0-record.v1"
+A0_MARKER_SCHEMA = "task038.full3d.interlevel-stable-adjoint.a0-marker.v1"
+A0_RAW_SCHEMA = "task038.full3d.interlevel-stable-adjoint.a0-raw-manifest.v1"
+A0_MARKERS = (
+    "startup", "preflight", "foundation", "class_inventory", "classes_complete",
+    "level3_complete", "probes_complete", "release", "record_closeout",
+)
+A0_PROBE_NAMES = tuple(PROBE_NAMES)
 MARKERS = (
     "startup",
     "preflight",
@@ -129,6 +139,21 @@ def _probe_array_roles(name: str, *, coarse_action_role: str = "B3") -> dict[str
     }
 
 
+def _a0_probe_array_roles(name: str) -> dict[str, str]:
+    roles = (
+        "source_before", "source_after", "source2", "projected",
+        "projected_repeat", "projected2", "projected_combo", "fine_dual",
+        "adjoint", "b3", "b6p",
+        "fine_primal_local_ids", "fine_primal_local",
+        "fine_dual_local_ids", "fine_dual_local",
+        "coarse_source_local_ids", "coarse_source_local",
+        "explicit_adjoint_local_ids", "explicit_adjoint_local",
+        "implemented_adjoint_local_ids", "implemented_adjoint_local",
+        "implemented_adjoint_owner_ids", "implemented_adjoint_owner",
+    )
+    return {role: f"a0__{name}__{role}" for role in roles}
+
+
 def _owner_probe_array_roles() -> dict[str, str]:
     return {
         role: f"owner21__{role}"
@@ -225,6 +250,53 @@ def _forbidden_architecture(
         "recovery": bool(case_audit["recovery"] or extension_audit["recovery"]),
     })
     return result
+
+
+def _a0_merge_inventory_groups(
+    inventory_groups: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Merge local class rows while retaining the adapter's per-rank authority."""
+
+    inventory = dict(inventory_groups[0])
+    inventory_reference = inventory_groups[0]
+    for group in inventory_groups[1:]:
+        if (
+            group.get("schema") != inventory_reference.get("schema")
+            or group.get("exact_float64_identity")
+            is not inventory_reference.get("exact_float64_identity")
+            or group.get("numeric_allgather")
+            is not inventory_reference.get("numeric_allgather")
+            or group.get("cell_count_global")
+            != inventory_reference.get("cell_count_global")
+            or group.get("class_inventory_by_rank")
+            != inventory_reference.get("class_inventory_by_rank")
+        ):
+            raise RuntimeError("MPI material inventory authorities disagree")
+    inventory_items: dict[str, dict[str, Any]] = {}
+    for group in inventory_groups:
+        for item in group["classes"]:
+            digest = str(item["class_digest"])
+            existing = inventory_items.get(digest)
+            if existing is None:
+                inventory_items[digest] = dict(item)
+            else:
+                if any(
+                    existing.get(field) != item.get(field)
+                    for field in ("class_identity", "tag", "material_role")
+                ):
+                    raise RuntimeError("MPI material class identities disagree")
+                existing["cell_count_local"] += int(item["cell_count_local"])
+    inventory["classes"] = sorted(
+        inventory_items.values(), key=lambda item: item["class_digest"]
+    )
+    inventory["class_count"] = len(inventory["classes"])
+    inventory["cell_count_local"] = int(
+        sum(int(group["cell_count_local"]) for group in inventory_groups)
+    )
+    inventory["class_inventory_by_rank"] = [
+        list(items) for items in inventory_reference["class_inventory_by_rank"]
+    ]
+    return inventory
 
 
 def run_worker(
@@ -613,10 +685,331 @@ def run_worker(
             case.destroy()
 
 
+def run_a0_worker(
+    raw_dir: Path,
+    record_path: Path,
+    input_path: Path,
+    expected_sha: str,
+    expected_mpi: int,
+    r3_manifest: Path,
+    case_name: str,
+) -> None:
+    """Run the prospective A0 stable-adjoint profile with rank shards."""
+
+    import numpy as np
+    from mpi4py import MPI
+
+    from benchmarks.run_task038_full3d_lor_s2_memory_first import (
+        _input_identity, _prepare_paths, _runtime, _source_identity, _write_json,
+    )
+    from benchmarks.canonical_vector_artifacts import (
+        read_canonical_manifest, read_canonical_packet_shards,
+    )
+    from benchmarks.run_task038_full3d_r4 import _resolve_case
+    from src.solvers.fullspace_lor_interlevel_spectral import (
+        build_route_a_probe_extension_from_foundation,
+    )
+    from src.solvers.fullspace_lor_interlevel_spectral_dolfinx import (
+        R3_LONG_TAIL_MANIFEST_SHA256, audit_material_classes,
+        build_material_class_inventory, build_probe_source, measure_probe,
+        source_generation_identity,
+    )
+    from src.solvers.fullspace_lor_memory_first_foundation import (
+        build_s2_foundation_case,
+    )
+    from src.solvers.fullspace_lor_memory_hierarchy import (
+        build_local_interlevel_edge_transfer,
+    )
+    from src.solvers.fullspace_lor_stable_adjoint import (
+        audit_stable_adjoint,
+    )
+
+    comm = MPI.COMM_WORLD
+    if case_name not in A0_CASES or int(expected_mpi) not in (1, 2):
+        raise RuntimeError("A0 supports only p6/h10 MPI1 or MPI2")
+    if comm.size != int(expected_mpi) or case_name != f"p6-h10-mpi{comm.size}":
+        raise RuntimeError("A0 case and MPI size do not match")
+    root = Path(__file__).resolve().parents[1]
+    raw_dir = (raw_dir if raw_dir.is_absolute() else root / raw_dir).resolve()
+    record_path = (record_path if record_path.is_absolute() else root / record_path).resolve()
+    input_path = (input_path if input_path.is_absolute() else root / input_path).resolve()
+    r3_manifest = (r3_manifest if r3_manifest.is_absolute() else root / r3_manifest).resolve()
+    _prepare_paths(raw_dir, record_path, comm)
+    marker_times: dict[str, int] = {}
+    marker_names: list[str] = []
+
+    def emit(name: str, **facts: Any) -> None:
+        if name not in A0_MARKERS:
+            raise ValueError(f"unknown A0 marker: {name}")
+        marker_names.append(name)
+        marker_times[name] = _marker(
+            raw_dir, name, expected_sha, comm, _jsonable,
+            marker_schema=A0_MARKER_SCHEMA, **facts,
+        )
+
+    emit("startup", raw_dir=str(raw_dir), case=case_name)
+    runtime = _runtime(root, expected_sha, comm)
+    emit("preflight", runtime=runtime)
+    specification, cfg, resolved = _resolve_case(root, input_path, DEGREE, H_NM)
+    input_identity = _input_identity(root, input_path, specification, resolved)
+    r3_data = read_canonical_manifest(r3_manifest, R3_LONG_TAIL_MANIFEST_SHA256)
+    r3_shards = tuple(
+        r3_manifest.parent / item["filename"]
+        for item in r3_data["per_rank_shards"]
+    )
+    r3_packets = read_canonical_packet_shards(
+        r3_shards,
+        tuple(item["file_sha256"] for item in r3_data["per_rank_shards"]),
+    )
+    r3_sha = hashlib.sha256(r3_manifest.read_bytes()).hexdigest()
+    case = None
+    extension = None
+    try:
+        case = build_s2_foundation_case(
+            raw_dir, comm, cfg, resolved_config=resolved, resource_sample=None,
+        )
+        case_audit = dict(case.audit)
+        emit("foundation", architecture=case_audit)
+        inventory_local = build_material_class_inventory(case)
+        emit(
+            "class_inventory",
+            inventory={
+                key: value for key, value in inventory_local.items()
+                if key != "class_inventory_by_rank"
+            },
+        )
+        p63_transfer = build_local_interlevel_edge_transfer(6, 3)
+        class_audits_local, arrays = audit_material_classes(
+            inventory_local, p63_transfer.edge_transfer,
+        )
+        emit(
+            "classes_complete",
+            class_count=len(class_audits_local),
+            p63_shape=list(p63_transfer.edge_shape),
+        )
+        extension = build_route_a_probe_extension_from_foundation(
+            case, p63_transfer,
+        )
+        extension_audit = dict(extension.audit)
+        emit("level3_complete", extension=extension_audit)
+        probe_facts_local: list[dict[str, Any]] = []
+        for name in A0_PROBE_NAMES:
+            source = build_probe_source(name, case, extension, r3_packets)
+            try:
+                facts, probe_arrays = measure_probe(
+                    name, case, extension, source, stable_adjoint=True,
+                )
+            finally:
+                source.destroy()
+            roles = _a0_probe_array_roles(name)
+            local_arrays = {
+                role: probe_arrays[role]
+                for role in (
+                    "fine_primal_local_ids", "fine_primal_local",
+                    "fine_dual_local_ids", "fine_dual_local",
+                    "coarse_source_local_ids", "coarse_source_local",
+                    "explicit_adjoint_local_ids", "explicit_adjoint_local",
+                    "implemented_adjoint_local_ids", "implemented_adjoint_local",
+                )
+            }
+            if comm.size == 1:
+                stable_facts = audit_stable_adjoint(
+                    coarse_source=probe_arrays["source_before"],
+                    fine_primal=probe_arrays["projected"],
+                    fine_dual=probe_arrays["fine_dual"],
+                    implemented_adjoint=probe_arrays["adjoint"],
+                    explicit_adjoint=None,
+                    lhs_owner=(
+                        local_arrays["fine_primal_local_ids"],
+                        local_arrays["fine_primal_local"],
+                        local_arrays["fine_dual_local"],
+                    ),
+                    rhs_owner=(
+                        local_arrays["implemented_adjoint_local_ids"],
+                        local_arrays["coarse_source_local"],
+                        local_arrays["implemented_adjoint_local"],
+                        local_arrays["explicit_adjoint_local"],
+                    ),
+                    ordinary_lhs=(probe_arrays["projected"], probe_arrays["fine_dual"]),
+                    ordinary_rhs=(probe_arrays["source_before"], probe_arrays["adjoint"]),
+                    reduce_sum=comm.allreduce,
+                    reduce_count=lambda value: comm.allreduce(value, op=MPI.SUM),
+                    reduce_real=lambda value: float(comm.allreduce(value, op=MPI.SUM)),
+                )
+            else:
+                stable_facts = {
+                    "schema": "task038.full3d.interlevel-stable-adjoint.a0.v1",
+                    "scope": "per_rank_canonical_packets; checker_global_authority",
+                    "vector_norm_reduction": "checker_global_sum_of_squares_by_key",
+                }
+            for role, key in roles.items():
+                if role in probe_arrays:
+                    arrays[key] = probe_arrays[role]
+            facts["stable_adjoint"] = stable_facts
+            facts["raw_roles"] = roles
+            facts["source_generation"] = source_generation_identity(name)
+            probe_facts_local.append(facts)
+        emit(
+            "probes_complete",
+            probe_names=list(A0_PROBE_NAMES), probe_count=len(probe_facts_local),
+            raw_shards=True, checker_global_authority=True,
+        )
+        local_shard = _write_raw_arrays(
+            raw_dir, arrays, filename=f"a0_arrays.rank{comm.rank}.npz",
+        )
+        local_shard = {"rank": int(comm.rank), **local_shard}
+        shard_list = comm.gather(local_shard, root=0)
+        if comm.rank == 0:
+            shards = sorted(shard_list, key=lambda item: int(item["rank"]))
+            manifest_payload = {
+                "schema": A0_RAW_SCHEMA,
+                "mpi_size": int(comm.size),
+                "shards": shards,
+                "canonical_key_authority": "physical/canonical packed edge key; no PETSc row, rank, or local order",
+            }
+            manifest_path = raw_dir / "a0_arrays.manifest.json"
+            manifest_sha = _write_json(manifest_path, manifest_payload)
+            raw_manifest = {
+                "schema": A0_RAW_SCHEMA,
+                "relative_path": manifest_path.name,
+                "sha256": manifest_sha,
+                "mpi_size": int(comm.size),
+                "shards": shards,
+            }
+        else:
+            raw_manifest = None
+        raw_manifest = comm.bcast(raw_manifest, root=0)
+        inventory_groups = comm.gather(inventory_local, root=0)
+        audit_groups = comm.gather(class_audits_local, root=0)
+        if comm.rank == 0:
+            inventory = _a0_merge_inventory_groups(inventory_groups)
+            audit_items: dict[str, dict[str, Any]] = {}
+            for group in audit_groups:
+                for item in group:
+                    digest = str(item["class_digest"])
+                    existing = audit_items.get(digest)
+                    if existing is None:
+                        audit_items[digest] = dict(item)
+                    elif (
+                        existing.get("class_identity") != item.get("class_identity")
+                        or existing.get("tag") != item.get("tag")
+                        or existing.get("material_role") != item.get("material_role")
+                    ):
+                        raise RuntimeError("MPI class audit identities disagree")
+            merged_audits = sorted(
+                audit_items.values(), key=lambda item: item["class_digest"]
+            )
+            architecture = {
+                "case": case_audit,
+                "extension": extension_audit,
+                "forbidden": _forbidden_architecture(case_audit, extension_audit),
+                "levels": {
+                    "level6": dict(extension.levels[0].audit),
+                    "level3": dict(extension.levels[1].audit),
+                },
+            }
+            for degree, level in ((6, extension.levels[0]), (3, extension.levels[1])):
+                architecture["levels"][f"level{degree}"]["parent_topology"] = dict(
+                    level.parent_topology.audit
+                )
+                architecture["levels"][f"level{degree}"]["raw_topology"] = dict(
+                    level.raw_topology.audit
+                )
+            record = {
+                "schema": A0_SCHEMA,
+                "stage": A0_STAGE,
+                "case": case_name,
+                "degree": DEGREE,
+                "h_nm": H_NM,
+                "wavelength_nm": 13.5,
+                "mpi_size": int(comm.size),
+                "branch": BRANCH,
+                "raw_dir": str(raw_dir),
+                "record_path": str(record_path),
+                "command": [
+                    str(Path(sys.executable).absolute()), "-m", MODULE,
+                    "--stage", A0_STAGE, "--case", case_name,
+                    "--raw-dir", str(raw_dir), "--record", str(record_path),
+                    "--expected-source-sha", expected_sha,
+                    "--expected-mpi-size", str(expected_mpi),
+                    "--input", str(input_path),
+                    "--r3-long-tail-manifest", str(r3_manifest),
+                ],
+                "source": {"start": runtime["source"]},
+                "runtime": runtime,
+                "input_identity": input_identity,
+                "provenance": {
+                    "r3_long_tail_manifest_path": str(r3_manifest),
+                    "r3_long_tail_manifest_sha256": r3_sha,
+                    "r3_long_tail_expected_sha256": R3_LONG_TAIL_MANIFEST_SHA256,
+                    "r3_long_tail_source_sha": "2c8fca90c7300b85b30021081868b699c0b306d2",
+                    "p63_constructed_once": True,
+                    "p63_construction_count": 1,
+                    "p63_construction_source": "build_local_interlevel_edge_transfer(6,3)",
+                    "mpi_shard_count": int(comm.size),
+                },
+                "settings": {
+                    "probe_names": list(A0_PROBE_NAMES),
+                    "levels": [6, 3], "transfer_pair": [6, 3],
+                    "canonical_key": "physical/canonical packed owner edge key",
+                    "canonical_order": "sort by canonical key after rank-shard merge",
+                    "canonical_packet_source": "topology canonical IDs; never PETSc row/local/rank order",
+                    "ordinary_terms": "conjugate(original raw left) * original raw right",
+                    "canonical_terms": "conjugate(key-aligned canonical values) * key-aligned canonical values",
+                    "forward_bound_scope": "ordinary raw terms only",
+                    "pairwise_limit": 1.0e-13,
+                    "compensated_limit": 1.0e-12,
+                    "vector_limit": 1.0e-11,
+                    "ordinary_bound_factor": 4.0,
+                    "phase_once": "once_in_canonical_owner_route",
+                    "mpi_sizes_supported": [1, 2],
+                },
+                "architecture": architecture,
+                "material_inventory": inventory,
+                "material_classes": merged_audits,
+                "p63_audit": _transfer_matrix_facts(p63_transfer.edge_transfer),
+                "probes": probe_facts_local,
+                "raw_arrays": raw_manifest,
+                "markers": {
+                    "relative_dir": "markers",
+                    "names": list(marker_names),
+                    "wall_time_ns": dict(marker_times),
+                },
+                "record_authority": "raw-shards-only; checker derives A0 classification",
+            }
+        if extension is not None:
+            extension.destroy()
+            extension = None
+        case.destroy()
+        case = None
+        emit("release", destroyed=True)
+        source_end = _source_identity(root, expected_sha)
+        if comm.rank == 0:
+            record["source"]["end"] = source_end
+            record["markers"]["names"] = list(marker_names)
+            record["markers"]["wall_time_ns"] = dict(marker_times)
+            _write_json(record_path, record)
+        comm.barrier()
+        emit(
+            "record_closeout",
+            record_path=str(record_path),
+            record_sha256=(
+                hashlib.sha256(record_path.read_bytes()).hexdigest()
+                if comm.rank == 0 else None
+            ),
+        )
+    finally:
+        if extension is not None:
+            extension.destroy()
+        if case is not None:
+            case.destroy()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stage", choices=(STAGE, ROUTE_B_STAGE), required=True)
-    parser.add_argument("--case", choices=(CASE,), required=True)
+    # Legacy A/B contract remains choices=(STAGE, ROUTE_B_STAGE); A0 is opt-in.
+    parser.add_argument("--stage", choices=(STAGE, ROUTE_B_STAGE, A0_STAGE), required=True)
+    parser.add_argument("--case", choices=(CASE, *A0_CASES), required=True)
     parser.add_argument("--raw-dir", type=Path, required=True)
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--expected-source-sha", required=True)
@@ -625,6 +1018,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--r3-long-tail-manifest", type=Path, required=True)
     parser.add_argument("--route", choices=("a", "b"), default="a")
     args = parser.parse_args(argv)
+    if args.stage == A0_STAGE:
+        if args.route != "a":
+            parser.error("A0 uses the shared runner without --route")
+        run_a0_worker(
+            args.raw_dir, args.record, args.input, args.expected_source_sha,
+            args.expected_mpi_size, args.r3_long_tail_manifest, args.case,
+        )
+        return 0
+    if args.case != CASE:
+        parser.error("Route-A/Route-B p6/h10 worker is fixed to MPI1")
     if (args.route == ROUTE_B) != (args.stage == ROUTE_B_STAGE):
         parser.error("Route-A uses --stage r1 and Route-B uses --stage r3")
     run_worker(
