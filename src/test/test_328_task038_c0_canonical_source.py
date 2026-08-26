@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 from benchmarks.run_task038_full3d_c0_canonical_source import (
     MARKER_SCHEMA as C0_MARKER_SCHEMA,
     SCHEMA as C0_RECORD_SCHEMA,
@@ -79,6 +80,8 @@ def test_c0_record_uses_ignored_sibling_staging(tmp_path) -> None:
     raw_dir = tmp_path / "case" / "worker_raw"
     record_path = tmp_path / "case" / "worker_record.json"
     _validate_c0_record_staging(raw_dir, record_path)
+    with pytest.raises(ValueError, match="raw-dir sibling"):
+        _validate_c0_record_staging(raw_dir, tmp_path / "tracked" / "record.json")
     errors: list[str] = []
     record = {
         "schema": C0_RECORD_SCHEMA,
