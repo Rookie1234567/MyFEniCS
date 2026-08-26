@@ -2272,7 +2272,7 @@ def _plane_original_dofs(
     return original_rows, active_rows
 
 
-def _build_current_gamma_layout(
+def build_current_gamma_layout(
     system: CurrentBareFAuthoritySystem,
     *,
     name: str,
@@ -2303,7 +2303,7 @@ def _build_current_gamma_layout(
     )
 
 
-def _gamma_values_for_vector(
+def gamma_values_for_vector(
     vector: PETSc.Vec,
     layout: Any,
 ) -> np.ndarray:
@@ -2324,6 +2324,40 @@ def _gamma_values_for_vector(
     return values
 
 
+def compact_gamma_values_for_vector(
+    vector: PETSc.Vec,
+    layout: Any,
+) -> dict[str, Any]:
+    """Return only this rank's canonical Gamma values and key positions.
+
+    ``gamma_values_for_vector`` performs the authoritative raw-to-canonical
+    block transformation.  This wrapper drops the temporary full trace after
+    selecting the owner-local canonical positions, so Route C can persist a
+    compact shard instead of a full active-vector-sized masked Vec.
+    """
+
+    values = gamma_values_for_vector(vector, layout)
+    positions = np.concatenate(
+        [
+            np.asarray(placement.positions, dtype=np.int64)
+            for placement in layout.blocks
+        ]
+        if layout.blocks
+        else [np.asarray([], dtype=np.int64)]
+    )
+    if len(np.unique(positions)) != len(positions):
+        raise ValueError("Gamma canonical positions are not unique")
+    if np.any(positions < 0) or np.any(positions >= len(values)):
+        raise ValueError("Gamma canonical positions are out of bounds")
+    order = np.argsort(positions, kind="stable")
+    positions = np.asarray(positions[order], dtype=np.int64)
+    return {
+        "values": np.asarray(values[positions], dtype=np.complex128).copy(),
+        "canonical_positions": positions,
+        "canonical_key_count": len(layout.canonical_keys),
+    }
+
+
 def _write_gamma_trace_packet(
     *,
     root: Path,
@@ -2340,7 +2374,7 @@ def _write_gamma_trace_packet(
     canonical_layout_sha256: str,
 ) -> dict[str, Any]:
     rank_dir = root / f"rank{int(rank):04d}"
-    values = _gamma_values_for_vector(vector, layout)
+    values = gamma_values_for_vector(vector, layout)
     stem = f"bottom_{label}_{gamma_name.lower()}_exact_trace"
     array_path = rank_dir / f"{stem}.npy"
     metadata_path = rank_dir / f"{stem}.json"
@@ -3204,14 +3238,14 @@ def run_current_bare_f_authority(
         canonical_layout_path = rank_dir / "canonical_active_layout.json"
         canonical_layout_sha256 = _sha256_bytes(canonical_layout_path.read_bytes())
         gamma_layouts = {
-            "Gamma_L": _build_current_gamma_layout(
+            "Gamma_L": build_current_gamma_layout(
                 system,
                 name="Gamma_L",
                 plane_z_nm=float(system.local_mesh.z_values[2]),
                 plane_cell_side="lower",
                 frozen_z_index=2,
             ),
-            "Gamma_U": _build_current_gamma_layout(
+            "Gamma_U": build_current_gamma_layout(
                 system,
                 name="Gamma_U",
                 plane_z_nm=float(system.local_mesh.z_values[4]),
@@ -4307,6 +4341,9 @@ __all__ = (
     "assemble_current_bare_f_authority_system",
     "build_v5_operator_semantics_audit",
     "build_current_bare_f_rhs",
+    "build_current_gamma_layout",
+    "compact_gamma_values_for_vector",
+    "gamma_values_for_vector",
     "canonical_layout_tokens",
     "canonical_packets_for_vector",
     "_collective_raise_fresh_bare_f_identity",

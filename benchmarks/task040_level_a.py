@@ -105,8 +105,18 @@ from src.solvers.hybrid_bare_f_authority import (
     V5_BARE_F_METHOD,
     V5_BARE_F_SCHEMA,
     V5_BARE_F_SOURCE_LABELS,
+    assemble_current_bare_f_authority_system,
+    canonical_layout_tokens,
+    build_current_gamma_layout,
+    build_current_bare_f_rhs,
     build_v5_operator_semantics_audit,
+    compact_gamma_values_for_vector,
     run_current_bare_f_authority,
+)
+from src.solvers.hybrid_route_c import (
+    ROUTE_C_CHECKPOINTS,
+    ROUTE_C_LABELS,
+    run_route_c_online_fgmres,
 )
 from src.solvers.hybrid_layer_block import (
     run_v1_1_right_preconditioned_fgmres_batch,
@@ -215,6 +225,17 @@ TASK040_V5_FRESH_BARE_F_WARNING_BYTES = 58 * 2**30
 TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES = 64 * 2**30
 TASK040_V5_FRESH_BARE_F_MIN_AVAILABLE_BYTES = 90 * 2**30
 TASK040_V5_FRESH_BARE_F_MIN_DISK_BYTES = 20 * 2**30
+TASK040_V5_ROUTE_C_FLAG = "--v5-route-c"
+TASK040_V5_ROUTE_C_METHOD = "task040_v5_route_c_online_long_fgmres"
+TASK040_V5_ROUTE_C_SCHEMA = "task040.v5.route_c.online_long_fgmres.v1"
+TASK040_V5_ROUTE_C_PROFILE_ID = "task040.v5.h4.route_c.online_long_fgmres.v1"
+TASK040_V5_ROUTE_C_HARD_STOP_BYTES = 45 * 2**30
+TASK040_V5_ROUTE_C_HEADROOM_BYTES = 4 * 2**30
+TASK040_V5_ROUTE_C_MIN_AVAILABLE_BYTES = (
+    TASK040_V5_ROUTE_C_HARD_STOP_BYTES + TASK040_V5_ROUTE_C_HEADROOM_BYTES
+)
+TASK040_V5_ROUTE_C_MIN_DISK_BYTES = 20 * 2**30
+TASK040_V5_ROUTE_C_RESOURCE_BLOCKED = "ROUTE_C_RESOURCE_BLOCKED"
 TASK040_V5_REQUIRED_THREAD_ENV = (
     "OMP_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
@@ -266,6 +287,11 @@ __all__ = (
     "TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD",
     "TASK040_V5_FRESH_BARE_F_AUTHORITY_SCHEMA",
     "TASK040_V5_FRESH_BARE_F_AUTHORITY_PROFILE_ID",
+    "TASK040_V5_ROUTE_C_FLAG",
+    "TASK040_V5_ROUTE_C_METHOD",
+    "TASK040_V5_ROUTE_C_SCHEMA",
+    "TASK040_V5_ROUTE_C_PROFILE_ID",
+    "TASK040_V5_ROUTE_C_RESOURCE_BLOCKED",
     "TASK040_V5_REQUIRED_THREAD_ENV",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
@@ -339,6 +365,7 @@ def build_task040_level_a_plan(
     coupled_interface: bool = False,
     v4_exact_authority_compatibility: bool = False,
     v5_fresh_bare_f_authority: bool = False,
+    v5_route_c: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -387,6 +414,7 @@ def build_task040_level_a_plan(
                 coupled_interface,
                 v4_exact_authority_compatibility,
                 v5_fresh_bare_f_authority,
+                v5_route_c,
             )
         )
         > 1
@@ -605,6 +633,60 @@ def build_task040_level_a_plan(
                 ],
             }
         )
+    if v5_route_c:
+        plan.update(
+            {
+                "schema": TASK040_V5_ROUTE_C_SCHEMA,
+                "method": TASK040_V5_ROUTE_C_METHOD,
+                "profile": TASK040_V5_ROUTE_C_PROFILE_ID,
+                "v5_route_c": True,
+                "route_c_only": True,
+                "research_only": True,
+                "oracle_only": False,
+                "scalable_candidate": False,
+                "fresh_current_layout": True,
+                "source_labels": list(ROUTE_C_LABELS),
+                "restart": 32,
+                "checkpoints": list(ROUTE_C_CHECKPOINTS),
+                "conditional_checkpoint": 256,
+                "max_harmonic_ritz_directions_per_restart": 8,
+                "exact_output_vectors_loaded": 0,
+                "exact_packet_required": False,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "absolute_terminate_memory_bytes": TASK040_V5_ROUTE_C_HARD_STOP_BYTES,
+                "minimum_mem_available_bytes": TASK040_V5_ROUTE_C_MIN_AVAILABLE_BYTES,
+                "minimum_disk_free_bytes": TASK040_V5_ROUTE_C_MIN_DISK_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
+                "resource_classification": "route_c_resource_preflight",
+                "resource_policy": {
+                    "hard_stop_bytes": TASK040_V5_ROUTE_C_HARD_STOP_BYTES,
+                    "minimum_available_bytes": TASK040_V5_ROUTE_C_MIN_AVAILABLE_BYTES,
+                    "required_headroom_bytes": TASK040_V5_ROUTE_C_HEADROOM_BYTES,
+                    "minimum_disk_free_bytes": TASK040_V5_ROUTE_C_MIN_DISK_BYTES,
+                    "swap_limit_bytes": 0,
+                    "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
+                },
+                "qep_calls": 0,
+                "pde_solve": "not_run",
+                "factor_lifecycle": "three_group_diagnostic_factors_3_to_0",
+                "forbidden": [
+                    "full_side_exact_factor",
+                    "global_direct_factor",
+                    "exact_output_vector_load",
+                    "exact_packet_dependency",
+                    "physical_dtn_operator",
+                    "research_exact_side_lu_action",
+                    "woodbury_inverse",
+                    "qep",
+                    "top",
+                    "full_hybrid",
+                    "pde_solve",
+                    "response_packet",
+                ],
+            }
+        )
     return plan
 
 
@@ -663,6 +745,8 @@ def _worker_current_resource(
 def _v5_bare_f_resource_preflight(
     comm: MPI.Intracomm,
     run_directory: str | Path,
+    *,
+    hard_stop_bytes: int = TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES,
 ) -> dict[str, Any]:
     """Check V5 producer headroom before any mesh or PETSc matrix is built."""
 
@@ -671,7 +755,7 @@ def _v5_bare_f_resource_preflight(
     disk = shutil.disk_usage(Path(run_directory).resolve().parent)
     current = _worker_current_resource(
         comm,
-        hard_limit_bytes=TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES,
+        hard_limit_bytes=hard_stop_bytes,
     )
     local = {
         "mem_available_bytes": available,
@@ -693,9 +777,103 @@ def _v5_bare_f_resource_preflight(
         "pass": passed,
         "minimum_mem_available_bytes": TASK040_V5_FRESH_BARE_F_MIN_AVAILABLE_BYTES,
         "minimum_disk_free_bytes": TASK040_V5_FRESH_BARE_F_MIN_DISK_BYTES,
-        "hard_stop_bytes": TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES,
+        "hard_stop_bytes": int(hard_stop_bytes),
         "ranks": states,
         "current_worker_resource": current,
+    }
+
+
+def _route_c_resource_preflight(
+    comm: MPI.Intracomm,
+    run_directory: str | Path,
+    *,
+    hard_stop_bytes: int = TASK040_V5_ROUTE_C_HARD_STOP_BYTES,
+) -> dict[str, Any]:
+    """Check Route C headroom without the fresh-producer 90 GiB requirement."""
+
+    memory = wsl_memory_snapshot()
+    available = memory.get("mem_available_bytes")
+    disk = shutil.disk_usage(Path(run_directory).resolve().parent)
+    current = _worker_current_resource(
+        comm,
+        hard_limit_bytes=hard_stop_bytes,
+    )
+    minimum_available = int(hard_stop_bytes) + TASK040_V5_ROUTE_C_HEADROOM_BYTES
+    local = {
+        "mem_available_bytes": available,
+        "disk_free_bytes": int(disk.free),
+        "swap_bytes": int(current["swap_bytes"]),
+        "all_status_readable": bool(current["all_status_readable"]),
+        "pass": bool(
+            isinstance(available, int)
+            and available >= minimum_available
+            and int(disk.free) >= TASK040_V5_ROUTE_C_MIN_DISK_BYTES
+            and int(current["swap_bytes"]) == 0
+            and bool(current["all_status_readable"])
+            and bool(current["pass"])
+        ),
+    }
+    states = comm.allgather(local)
+    passed = bool(comm.allreduce(bool(local["pass"]), op=MPI.LAND))
+    return {
+        "route": "C",
+        "status": "pass" if passed else "not_run_by_resource_preflight",
+        "pass": passed,
+        "resource_classification": (
+            "route_c_headroom_pass" if passed else "route_c_resource_blocked"
+        ),
+        "minimum_mem_available_bytes": minimum_available,
+        "required_headroom_bytes": TASK040_V5_ROUTE_C_HEADROOM_BYTES,
+        "minimum_disk_free_bytes": TASK040_V5_ROUTE_C_MIN_DISK_BYTES,
+        "hard_stop_bytes": int(hard_stop_bytes),
+        "swap_limit_bytes": 0,
+        "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
+        "ranks": states,
+        "current_worker_resource": current,
+    }
+
+
+def _route_c_wall_observation(
+    *,
+    formal_elapsed_seconds: float,
+    krylov_elapsed_seconds: float,
+    last_krylov_elapsed_seconds: float | None,
+    observation_index: int,
+    budget_seconds: float = TASK040_LEVEL_A_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
+    """Build conservative wall-budget evidence for conditional checkpoint 256."""
+
+    interval = (
+        float(krylov_elapsed_seconds)
+        if last_krylov_elapsed_seconds is None
+        else float(krylov_elapsed_seconds) - float(last_krylov_elapsed_seconds)
+    )
+    predicted_remaining = interval * (3 if int(observation_index) == 0 else 1)
+    remaining = float(budget_seconds) - float(formal_elapsed_seconds)
+    predicted_total = float(formal_elapsed_seconds) + predicted_remaining
+    passed = bool(
+        np.isfinite(interval)
+        and interval >= 0.0
+        and np.isfinite(remaining)
+        and remaining > 0.0
+        and np.isfinite(predicted_total)
+        and predicted_total <= float(budget_seconds)
+    )
+    return {
+        "budget_seconds": float(budget_seconds),
+        "elapsed_seconds": float(formal_elapsed_seconds),
+        "formal_start_elapsed_seconds": float(formal_elapsed_seconds),
+        "krylov_elapsed_seconds": float(krylov_elapsed_seconds),
+        "interval_since_previous_128_seconds": float(interval),
+        "predicted_remaining_seconds": float(predicted_remaining),
+        "remaining_seconds": max(remaining, 0.0),
+        "predicted_total_seconds": float(predicted_total),
+        "observation_index": int(observation_index),
+        "formula": (
+            "predicted_total=formal_elapsed + interval * "
+            "(3 if first_128_observation else 1)"
+        ),
+        "pass": passed,
     }
 
 
@@ -1223,6 +1401,1096 @@ def _destroy_explicit_components(components: Any) -> bool:
             setattr(components, name, None)
         destroyed = destroyed and getattr(components, name, None) is None
     return bool(destroyed)
+
+
+def _route_c_atomic_npy(path: Path, values: np.ndarray) -> str:
+    """Persist one owner-local Route C basis vector and return its file hash."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    with temporary.open("wb") as stream:
+        np.save(stream, np.ascontiguousarray(values), allow_pickle=False)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _route_c_json_safe(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {str(key): _route_c_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_route_c_json_safe(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return [_route_c_json_safe(item) for item in value.tolist()]
+    if isinstance(value, np.generic):
+        return _route_c_json_safe(value.item())
+    if isinstance(value, complex):
+        return [float(value.real), float(value.imag)]
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    raise TypeError(f"Route C value is not JSON-safe: {type(value)!r}")
+
+
+def _route_c_atomic_json(path: Path, payload: Mapping[str, Any]) -> str:
+    """Write one Route C metadata artifact atomically and return its file hash."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    encoded = json.dumps(
+        _route_c_json_safe(payload),
+        indent=2,
+        sort_keys=True,
+    ).encode("utf-8") + b"\n"
+    with temporary.open("wb") as stream:
+        stream.write(encoded)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _route_c_local_vec_sha256(vector: PETSc.Vec) -> str:
+    values = np.asarray(vector.getArray(readonly=True), dtype=np.complex128)
+    return hashlib.sha256(np.ascontiguousarray(values).tobytes()).hexdigest()
+
+
+def _route_c_global_digest(comm: MPI.Intracomm, local_digest: str) -> str:
+    digests = comm.gather(str(local_digest), root=0)
+    if comm.rank == 0:
+        value = hashlib.sha256("\n".join(digests).encode("ascii")).hexdigest()
+    else:
+        value = None
+    return str(comm.bcast(value, root=0))
+
+
+def _route_c_source_definition_sha256(
+    label: str,
+    metadata: Mapping[str, Any],
+) -> str:
+    """Hash only rank-independent source semantics, not a shard/repeat."""
+
+    semantic = {
+        key: value
+        for key, value in metadata.items()
+        if key not in {"rhs_generation", "source_build_count"}
+    }
+    semantic["label"] = str(label)
+    encoded = json.dumps(
+        _route_c_json_safe(semantic),
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _route_c_collective_stage_error(
+    comm: MPI.Intracomm,
+    stage: str,
+    local_error: Exception | None,
+) -> None:
+    payload = None
+    if local_error is not None:
+        payload = {
+            "rank": int(comm.rank),
+            "type": type(local_error).__name__,
+            "message": str(local_error),
+        }
+    failures = comm.allgather(payload)
+    first = next((item for item in failures if item is not None), None)
+    if first is not None:
+        raise RuntimeError(
+            f"Route C {stage} failed on rank {first['rank']}: "
+            f"{first['type']}: {first['message']}"
+        )
+
+
+def _route_c_stop_result(
+    *,
+    status: str,
+    classification: str,
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    identity_preflight: Mapping[str, Any],
+    resource_preflight: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    return {
+        "schema": TASK040_V5_ROUTE_C_SCHEMA,
+        "method": TASK040_V5_ROUTE_C_METHOD,
+        "profile": TASK040_V5_ROUTE_C_PROFILE_ID,
+        "status": status,
+        "classification": classification,
+        "source_sha": str(source_sha),
+        "input_sha256": str(input_sha256),
+        "physical_model_sha256": str(physical_model_sha256),
+        "identity_preflight": _route_c_json_safe(identity_preflight),
+        "resource_preflight": (
+            None
+            if resource_preflight is None
+            else _route_c_json_safe(resource_preflight)
+        ),
+        "system_created": False,
+        "rhs_vectors_loaded": 0,
+        "exact_output_vectors_loaded": 0,
+        "full_side_exact_factor_count": 0,
+        "qep_calls": 0,
+        "pde_solve": "not_run",
+        "outer_ksp": "not_run",
+        "downstream": {
+            "projection": "not_run_by_route_c_preflight",
+            "lift": "not_run_by_route_c_preflight",
+            "response": "not_run_by_route_c_preflight",
+            "full_hybrid": "not_run_by_route_c_preflight",
+        },
+    }
+
+
+def _route_c_observed_qep_calls(inventory: Mapping[str, Any]) -> int:
+    """Require a real post-assembly QEP count before Route C continues."""
+
+    if "qep_calls" not in inventory:
+        raise RuntimeError("Route C assembly inventory omitted observed qep_calls")
+    observed = inventory["qep_calls"]
+    if isinstance(observed, bool) or not isinstance(observed, (int, np.integer)):
+        raise RuntimeError(f"Route C assembly qep_calls is not an integer: {observed!r}")
+    observed = int(observed)
+    if observed != 0:
+        raise RuntimeError(f"Route C assembly observed qep_calls={observed}")
+    return observed
+
+
+def _route_c_observed_external_contract(
+    inventory: Mapping[str, Any],
+    matrix_objects: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the observed minimal external RHS construction inventory."""
+
+    expected = {
+        "minimal_external_coupling_objects_constructed": 1,
+        "minimal_external_surface_component_count": 2,
+        "minimal_external_coupling_construction_call_count": 2,
+        "minimal_external_component_instances_total": 4,
+        "minimal_external_peak_live_components": 2,
+        "minimal_external_coupling_kind_count": 1,
+    }
+    observed = {name: inventory.get(name) for name in expected}
+    checks = {name: observed[name] == value for name, value in expected.items()}
+    observed_matrix_objects = {
+        name: matrix_objects.get(name) for name in ("C", "D", "H")
+    }
+    checks["c_d_h_zero"] = observed_matrix_objects == {"C": 0, "D": 0, "H": 0}
+    if not all(checks.values()):
+        raise RuntimeError(
+            "Route C minimal external RHS inventory failed: "
+            f"observed={observed!r}, matrix_objects={observed_matrix_objects!r}, "
+            f"checks={checks!r}"
+        )
+    return {
+        "status": "observed_minimal_rhs_only",
+        "path": "minimal_surface_rhs_only",
+        "observed": {**observed, "matrix_objects": observed_matrix_objects},
+        "expected": {**expected, "matrix_objects": {"C": 0, "D": 0, "H": 0}},
+        "checks": checks,
+        "pass": True,
+        "full_C_materialized": False,
+        "D_materialized": False,
+        "H_materialized": False,
+        "physical_dtn_operator_constructed": False,
+        "woodbury_inverse_constructed": False,
+    }
+
+
+def _route_c_observed_group_factor_lifecycle(
+    factor_ready: Mapping[str, Any],
+    factor_after: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the observed three-group PC lifecycle before recording it."""
+
+    ready_count = int(factor_ready.get("factor_count_ready", -1))
+    after_count = int(factor_after.get("factor_count_after_cleanup", -1))
+    if ready_count != 3 or after_count != 0:
+        raise RuntimeError(
+            "Route C group-factor lifecycle is not the observed 3-to-0 sequence: "
+            f"ready={factor_ready!r}, after={factor_after!r}"
+        )
+    if factor_after.get("destroyed") is not True:
+        raise RuntimeError("Route C group-factor owner was not observed destroyed")
+    if factor_after.get("action_destroyed") is not True:
+        raise RuntimeError("Route C group-factor action was not observed destroyed")
+    return {
+        "ready": dict(factor_ready),
+        "after": dict(factor_after),
+        "construction_count": ready_count,
+        "destruction_count": ready_count,
+        "simultaneous_factor_count_max": ready_count,
+        "pc_setup_count": 1,
+        "continuous_source_solve_count": 2,
+    }
+
+
+def _route_c_all_rank_artifact_index(
+    *,
+    rank_count: int,
+    source_records_by_rank: Sequence[Any],
+    gamma_layouts_by_rank: Sequence[Any],
+    canonical_active_layouts_by_rank: Sequence[Any],
+    interface_trace_artifacts_by_rank: Sequence[Any],
+    basis_artifacts_by_rank: Sequence[Any],
+) -> list[dict[str, Any]]:
+    """Build a strict rank-indexed manifest for every Route C artifact family."""
+
+    families = {
+        "source_records": source_records_by_rank,
+        "gamma_layouts": gamma_layouts_by_rank,
+        "canonical_active_layout": canonical_active_layouts_by_rank,
+        "interface_trace_artifacts": interface_trace_artifacts_by_rank,
+        "basis_artifacts": basis_artifacts_by_rank,
+    }
+    expected_count = int(rank_count)
+    if expected_count <= 0:
+        raise ValueError("Route C artifact index needs a positive rank count")
+    if any(not isinstance(items, Sequence) for items in families.values()):
+        raise ValueError("Route C artifact families must be gathered sequences")
+    if any(len(items) != expected_count for items in families.values()):
+        raise ValueError(
+            "Route C artifact family does not contain one entry per MPI rank"
+        )
+    return [
+        {
+            "rank": rank,
+            **{
+                name: families[name][rank]
+                for name in families
+            },
+        }
+        for rank in range(expected_count)
+    ]
+
+
+def _run_v5_route_c(
+    *,
+    cfg: Any,
+    profile: Any,
+    comm: MPI.Intracomm,
+    exact_spool_root: str | Path,
+    run_directory: str | Path,
+    source_sha: str,
+    input_path: str | Path,
+    input_sha256: str,
+    physical_model_sha256: str,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None,
+    resource_callback: Callable[[], Mapping[str, Any]] | None,
+    watchdog_enabled: bool,
+    bottom_route_only: bool,
+) -> dict[str, Any]:
+    """Run the metadata-preflighted, no-full-side-factor Route C screen."""
+
+    formal_started = time.perf_counter()
+    output_root = Path(run_directory).resolve()
+    frozen_root = Path(exact_spool_root).resolve()
+    try:
+        output_root.relative_to(frozen_root)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Route C output must not be below the frozen exact spool")
+    if not output_root.is_absolute():
+        raise ValueError("Route C output root must be absolute after resolution")
+
+    identity_preflight = _v5_authority_identity_preflight(
+        comm=comm,
+        input_path=input_path,
+        input_sha256=str(input_sha256),
+        physical_model_sha256=str(physical_model_sha256),
+        source_sha=str(source_sha),
+        watchdog_enabled=watchdog_enabled,
+        bottom_route_only=bottom_route_only,
+    )
+    audit_file = _v5_write_operator_semantics_audit(
+        comm,
+        output_root,
+        identity_preflight.get("operator_semantics_audit"),
+    )
+    identity_preflight = {
+        **identity_preflight,
+        "operator_semantics_audit_file": audit_file,
+    }
+    if not identity_preflight["pass"]:
+        return _route_c_stop_result(
+            status="not_run_by_identity_preflight",
+            classification="FRESH_BARE_F_AUTHORITY_IDENTITY_FAIL",
+            source_sha=source_sha,
+            input_sha256=input_sha256,
+            physical_model_sha256=physical_model_sha256,
+            identity_preflight=identity_preflight,
+        )
+
+    resource_preflight = _route_c_resource_preflight(
+        comm,
+        output_root,
+        hard_stop_bytes=TASK040_V5_ROUTE_C_HARD_STOP_BYTES,
+    )
+    _emit(
+        marker_callback,
+        "v5_route_c_resource_preflight",
+        status=resource_preflight["status"],
+        classification=resource_preflight["resource_classification"],
+        hard_stop_bytes=resource_preflight["hard_stop_bytes"],
+        minimum_mem_available_bytes=resource_preflight[
+            "minimum_mem_available_bytes"
+        ],
+        minimum_disk_free_bytes=resource_preflight["minimum_disk_free_bytes"],
+        swap_limit_bytes=resource_preflight["swap_limit_bytes"],
+        timeout_seconds=resource_preflight["timeout_seconds"],
+        **{"pass": resource_preflight["pass"]},
+    )
+    if not resource_preflight["pass"]:
+        return _route_c_stop_result(
+            status="not_run_by_resource_preflight",
+            classification=TASK040_V5_ROUTE_C_RESOURCE_BLOCKED,
+            source_sha=source_sha,
+            input_sha256=input_sha256,
+            physical_model_sha256=physical_model_sha256,
+            identity_preflight=identity_preflight,
+            resource_preflight=resource_preflight,
+        )
+
+    if comm.rank == 0:
+        output_root.mkdir(parents=True, exist_ok=True)
+    comm.barrier()
+    rank_root = output_root / f"rank{int(comm.rank):04d}"
+    rank_root.mkdir(parents=True, exist_ok=False)
+    comm.barrier()
+
+    system = None
+    action = None
+    owner = None
+    masses: list[Any] = []
+    rhs_by_label: dict[str, PETSc.Vec] = {}
+    source_records: dict[str, dict[str, Any]] = {}
+    trace_artifacts: dict[str, list[dict[str, Any]]] = {
+        label: [] for label in ROUTE_C_LABELS
+    }
+    basis_artifacts: list[dict[str, Any]] = []
+    cleanup: dict[str, Any] = {}
+    try:
+        system = assemble_current_bare_f_authority_system(
+            cfg,
+            side="bottom",
+            bottom_interface_z_nm=profile.bottom_interface_nm,
+            top_interface_z_nm=profile.top_interface_nm,
+            source_work_directory=output_root / "route_c_source",
+            selected_mode_provider=None,
+            external_mode_authority=identity_preflight["external_mode_authority"],
+            external_mode_current_resolved_config_sha256=str(
+                identity_preflight["observed"]["resolved_config_sha256"]
+            ),
+            comm=comm,
+        )
+        inventory = system.construction_inventory
+        matrix_objects = dict(system.dtn_objects_constructed)
+        observed_qep_calls = _route_c_observed_qep_calls(inventory)
+        if any(int(matrix_objects.get(name, 0)) != 0 for name in ("C", "D", "H")):
+            raise RuntimeError("Route C current bare-F assembly constructed C/D/H")
+        if any(
+            bool(inventory.get(name))
+            for name in (
+                "physical_dtn_operator_constructed",
+                "woodbury_inverse_constructed",
+                "research_exact_side_lu_action_called",
+            )
+        ):
+            raise RuntimeError("Route C assembly entered a forbidden side operator path")
+        _emit(
+            marker_callback,
+            "v5_route_c_system_ready",
+            side="bottom",
+            bare_f_rows=int(system.active_rows),
+            factored_operator="explicit_current_bare_F",
+            matrix_objects=matrix_objects,
+            qep_calls=observed_qep_calls,
+            physical_dtn_operator_constructed=False,
+            woodbury_inverse_constructed=False,
+            research_exact_side_lu_action_called=False,
+        )
+
+        tokens, key_set_sha256, layout_audit = canonical_layout_tokens(system)
+        layout_record = {
+            "schema": "task040.v5.route_c.current_active_layout.v1",
+            "rank": int(comm.rank),
+            "mpi_size": int(comm.size),
+            "global_size": int(system.F.getSize()[0]),
+            "local_size": len(tokens),
+            "ownership_range": list(map(int, system.F.getOwnershipRange())),
+            "canonical_key_set_sha256": str(key_set_sha256),
+            "canonical_keys": list(tokens),
+            "audit": _route_c_json_safe(layout_audit),
+            "raw_global_row_remap": False,
+        }
+        layout_path = rank_root / "canonical_active_layout.json"
+        layout_sha256 = _route_c_atomic_json(layout_path, layout_record)
+        layout_ownership_range = list(map(int, system.F.getOwnershipRange()))
+
+        z_values = system.local_mesh.z_values
+        gamma_layouts = {
+            "lower": build_current_gamma_layout(
+                system,
+                name="Gamma_L",
+                plane_z_nm=float(z_values[2]),
+                plane_cell_side="lower",
+                frozen_z_index=2,
+            ),
+            "upper": build_current_gamma_layout(
+                system,
+                name="Gamma_U",
+                plane_z_nm=float(z_values[4]),
+                plane_cell_side="upper",
+                frozen_z_index=4,
+            ),
+        }
+        gamma_layout_records: dict[str, dict[str, Any]] = {}
+        for component, layout in gamma_layouts.items():
+            gamma_name = "Gamma_L" if component == "lower" else "Gamma_U"
+            gamma_path = rank_root / f"{gamma_name.lower()}_layout.json"
+            gamma_payload = {
+                "schema": "task040.v5.route_c.gamma_layout.v1",
+                "gamma": gamma_name,
+                "rank": int(comm.rank),
+                "mpi_size": int(comm.size),
+                "gamma_rows_local": [int(row) for row in layout.gamma_rows_local],
+                "canonical_keys": list(layout.canonical_keys),
+                "canonical_key_order_sha256": layout.audit[
+                    "canonical_key_order_sha256"
+                ],
+                "plane_identity": _route_c_json_safe(layout.plane_identity),
+                "audit": _route_c_json_safe(layout.audit),
+                "canonical_active_layout_sha256": layout_sha256,
+                "raw_global_row_remap": False,
+            }
+            gamma_sha256 = _route_c_atomic_json(gamma_path, gamma_payload)
+            gamma_layout_records[component] = {
+                "name": gamma_name,
+                "path": str(gamma_path.relative_to(output_root)),
+                "sha256": gamma_sha256,
+                "canonical_key_order_sha256": str(
+                    layout.audit["canonical_key_order_sha256"]
+                ),
+                "local_row_count": len(layout.gamma_rows_local),
+                "plane_z_nm": float(z_values[2 if component == "lower" else 4]),
+            }
+        _emit(
+            marker_callback,
+            "v5_route_c_interface_projection_ready",
+            gamma_layouts=gamma_layout_records,
+            canonical_active_layout_sha256=layout_sha256,
+            replicated=False,
+        )
+
+        supports = []
+        for interface in (float(z_values[2]), float(z_values[4])):
+            supports.append(
+                audit_artificial_z_interface_support(
+                    system.V,
+                    system.static_condensation.condensed,
+                    interface,
+                )
+            )
+            masses.append(
+                assemble_reduced_artificial_interface_tangential_mass(
+                    system.V,
+                    system.static_condensation.condensed,
+                    supports[-1],
+                    bare_operator=system.F,
+                )
+            )
+        group_rows, group_audit = build_level_a_cell_recovery_group_rows(
+            system, system.F, supports
+        )
+        beta = level_a_bottom_beta(cfg)
+        action, owner, oracle_diagnostics = build_level_a_oracle(
+            bare_f=system.F,
+            group_rows=group_rows,
+            interface_masses=masses,
+            beta=beta,
+            group_audit=group_audit,
+        )
+        _emit(
+            marker_callback,
+            "v5_route_c_pc_ready",
+            factor_lifecycle=owner.diagnostics,
+            bare_f_operator_hash=_petsc_matrix_hash(system.F),
+            qep_calls=0,
+            full_side_exact_factor_count=0,
+        )
+        if owner.diagnostics.get("factor_count_ready") != 3:
+            raise RuntimeError("Route C did not observe three diagnostic group factors")
+
+        bare_f_operator_hash = _petsc_matrix_hash(system.F)
+        source_provenance = {
+            key: identity_preflight["observed"].get(key)
+            for key in (
+                "input_sha256",
+                "physical_model_sha256",
+                "selected_manifest_sha256",
+                "selected_identity_sha256",
+                "resolved_config_sha256",
+                "probe_manifest_sha256",
+                "source_sha",
+            )
+        }
+        rhs_id_to_label: dict[int, str] = {}
+        for label in ROUTE_C_LABELS:
+            first_rhs, first_metadata = build_current_bare_f_rhs(system, label)
+            rhs_by_label[label] = first_rhs
+            rhs_id_to_label[id(first_rhs)] = label
+            first_local_sha = _route_c_local_vec_sha256(first_rhs)
+            first_global_sha = _route_c_global_digest(comm, first_local_sha)
+            rhs_path = rank_root / "rhs" / f"{label}.npy"
+            rhs_array = np.asarray(first_rhs.getArray(readonly=True), dtype=np.complex128)
+            rhs_file_sha = _route_c_atomic_npy(rhs_path, rhs_array)
+            repeat_rhs = None
+            try:
+                repeat_rhs, repeat_metadata = build_current_bare_f_rhs(system, label)
+                difference = repeat_rhs.copy()
+                try:
+                    difference.axpy(PETSc.ScalarType(-1.0), first_rhs)
+                    relative = float(difference.norm()) / max(
+                        float(first_rhs.norm()), 1.0e-30
+                    )
+                finally:
+                    difference.destroy()
+                repeat_local_sha = _route_c_local_vec_sha256(repeat_rhs)
+                repeat_global_sha = _route_c_global_digest(comm, repeat_local_sha)
+                source_definition_sha256 = _route_c_source_definition_sha256(
+                    label, first_metadata
+                )
+                repeat_source_definition_sha256 = _route_c_source_definition_sha256(
+                    label, repeat_metadata
+                )
+                source_error = None
+                if (
+                    not np.isfinite(relative)
+                    or relative > 1.0e-12
+                    or source_definition_sha256 != repeat_source_definition_sha256
+                ):
+                    source_error = RuntimeError(
+                        f"Route C RHS repeat identity failed for {label}"
+                    )
+                _route_c_collective_stage_error(comm, f"rhs_repeat:{label}", source_error)
+            finally:
+                if repeat_rhs is not None:
+                    repeat_rhs.destroy()
+            source_definition_sha256 = _route_c_source_definition_sha256(
+                label, first_metadata
+            )
+            source_hashes = comm.allgather(source_definition_sha256)
+            if len(set(source_hashes)) != 1:
+                raise RuntimeError(f"Route C source definition differs by rank: {label}")
+            source_records[label] = {
+                "label": label,
+                "source_definition_sha256": source_definition_sha256,
+                "source_metadata": _route_c_json_safe(dict(first_metadata)),
+                "source_provenance": source_provenance,
+                "rhs": {
+                    "path": str(rhs_path.relative_to(output_root)),
+                    "file_sha256": rhs_file_sha,
+                    "local_array_sha256": first_local_sha,
+                    "global_array_sha256": first_global_sha,
+                    "dtype": "complex128",
+                    "global_size": int(first_rhs.getSize()),
+                    "ownership_range": list(map(int, first_rhs.getOwnershipRange())),
+                },
+                "rhs_repeat": {
+                    "relative_difference": float(relative),
+                    "threshold": 1.0e-12,
+                    "pass": True,
+                    "local_array_sha256": repeat_local_sha,
+                    "global_array_sha256": repeat_global_sha,
+                    "source_definition_sha256": repeat_source_definition_sha256,
+                },
+                "bare_f_operator_hash": bare_f_operator_hash,
+                "canonical_key_set_sha256": str(key_set_sha256),
+                "canonical_active_layout_sha256": layout_sha256,
+                "raw_global_row_remap": False,
+            }
+        external_dtn_contract = _route_c_observed_external_contract(
+            inventory,
+            system.dtn_objects_constructed,
+        )
+        _emit(
+            marker_callback,
+            "v5_route_c_source_ready",
+            labels=list(ROUTE_C_LABELS),
+            rhs_vectors_loaded=len(rhs_by_label),
+            exact_output_vectors_loaded=0,
+            external_dtn_coupling=external_dtn_contract,
+        )
+
+        trace_layouts = gamma_layouts
+
+        def write_gamma_shard(
+            vector: PETSc.Vec,
+            component: str,
+            path: Path,
+            *,
+            direction_space: str,
+            shard: Mapping[str, Any] | None = None,
+        ) -> dict[str, Any]:
+            layout = trace_layouts[component]
+            if shard is None:
+                shard = compact_gamma_values_for_vector(vector, layout)
+            values = np.asarray(shard["values"], dtype=np.complex128)
+            return {
+                "path": str(path.relative_to(output_root)),
+                "sha256": _route_c_atomic_npy(path, values),
+                "direction_space": direction_space,
+                "local_size": int(len(values)),
+                "canonical_active_layout_sha256": layout_sha256,
+                "gamma_layout_path": gamma_layout_records[component]["path"],
+                "gamma_layout_sha256": gamma_layout_records[component]["sha256"],
+                "canonical_key_order_sha256": gamma_layout_records[component][
+                    "canonical_key_order_sha256"
+                ],
+                "owner_local": True,
+                "replicated": False,
+            }
+
+        def interface_residual(
+            residual: PETSc.Vec,
+            rhs: PETSc.Vec,
+            iteration: int,
+        ) -> Mapping[str, Any]:
+            label = rhs_id_to_label.get(id(rhs), "unknown")
+            if label not in source_records:
+                raise ValueError("Route C residual callback received unknown RHS")
+            artifacts: dict[str, Any] = {}
+            local_norm_sq: dict[str, float] = {}
+            for component in ("lower", "upper"):
+                trace_path = (
+                    rank_root
+                    / "interface_traces"
+                    / label
+                    / f"iteration{int(iteration):04d}_{component}.npy"
+                )
+                shard = compact_gamma_values_for_vector(
+                    residual, trace_layouts[component]
+                )
+                values = np.asarray(shard["values"], dtype=np.complex128)
+                local_norm_sq[component] = float(np.vdot(values, values).real)
+                artifact = write_gamma_shard(
+                    residual,
+                    component,
+                    trace_path,
+                    direction_space="residual_solution_interface_trace",
+                    shard=shard,
+                )
+                artifact.update(
+                    {
+                        "norm": float(
+                            np.sqrt(
+                                max(
+                                    comm.allreduce(
+                                        local_norm_sq[component], op=MPI.SUM
+                                    ),
+                                    0.0,
+                                )
+                            )
+                        ),
+                        "source_definition_sha256": source_records[label][
+                            "source_definition_sha256"
+                        ],
+                        "bare_f_operator_hash": bare_f_operator_hash,
+                        "canonical_key_set_sha256": str(key_set_sha256),
+                        "source_provenance": source_provenance,
+                    }
+                )
+                artifacts[component] = artifact
+            joint_norm = float(
+                np.sqrt(
+                    max(
+                        comm.allreduce(
+                            local_norm_sq["lower"] + local_norm_sq["upper"],
+                            op=MPI.SUM,
+                        ),
+                        0.0,
+                    )
+                )
+            )
+            artifacts["joint"] = {
+                "kind": "derived_scalar_only",
+                "norm": joint_norm,
+                "derived_from": ["lower", "upper"],
+                "stored": False,
+                "source_definition_sha256": source_records[label][
+                    "source_definition_sha256"
+                ],
+                "bare_f_operator_hash": bare_f_operator_hash,
+                "canonical_key_set_sha256": str(key_set_sha256),
+            }
+            trace_artifacts[label].append(
+                {"iteration": int(iteration), "components": artifacts}
+            )
+            return {
+                "lower": artifacts["lower"]["norm"],
+                "upper": artifacts["upper"]["norm"],
+                "joint": artifacts["joint"]["norm"],
+                "iteration": int(iteration),
+                "source": "current_gamma_canonical_trace",
+                "joint_derived_from": ["lower", "upper"],
+            }
+
+        def interface_direction(
+            label: str,
+            restart: int,
+            direction_index: int,
+            residual_direction: PETSc.Vec,
+            response_direction: PETSc.Vec,
+            _metadata: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            response_shards: dict[str, dict[str, Any]] = {}
+            response_trace: dict[str, dict[str, Any]] = {}
+            residual_trace: dict[str, dict[str, Any]] = {}
+            for component in ("lower", "upper"):
+                response_path = (
+                    rank_root
+                    / "interface_direction_traces"
+                    / label
+                    / f"restart{int(restart):04d}_direction{int(direction_index):02d}"
+                    f"_response_{component}.npy"
+                )
+                residual_path = response_path.with_name(
+                    response_path.name.replace("_response_", "_residual_")
+                )
+                response_shard = compact_gamma_values_for_vector(
+                    response_direction, trace_layouts[component]
+                )
+                residual_shard = compact_gamma_values_for_vector(
+                    residual_direction, trace_layouts[component]
+                )
+                response_trace[component] = write_gamma_shard(
+                    response_direction,
+                    component,
+                    response_path,
+                    direction_space="preconditioned_response_direction_Z_y",
+                    shard=response_shard,
+                )
+                residual_trace[component] = write_gamma_shard(
+                    residual_direction,
+                    component,
+                    residual_path,
+                    direction_space="residual_space_V_y",
+                    shard=residual_shard,
+                )
+                response_shards[component] = {
+                    "values": np.asarray(
+                        response_shard["values"], dtype=np.complex128
+                    ).copy(),
+                    "canonical_positions": np.asarray(
+                        response_shard["canonical_positions"], dtype=np.int64
+                    ).copy(),
+                    "canonical_key_order_sha256": gamma_layout_records[component][
+                        "canonical_key_order_sha256"
+                    ],
+                }
+
+            return {
+                "lower": response_shards["lower"],
+                "upper": response_shards["upper"],
+                "audit": {
+                    "status": "pass",
+                    "projection_kind": "compact_owner_local_canonical_gamma_trace",
+                    "source_direction": "preconditioned_response_direction_Z_y",
+                    "replicated": False,
+                    "canonical_active_layout_sha256": layout_sha256,
+                    "gamma_layout_sha256": {
+                        component: gamma_layout_records[component]["sha256"]
+                        for component in ("lower", "upper")
+                    },
+                    "canonical_interface_trace": response_trace,
+                    "residual_interface_trace": residual_trace,
+                    "joint_derived": {
+                        "source_components": ["lower", "upper"],
+                        "storage": "scalar_inner_product_and_norm_only",
+                    },
+                    "source_definition_sha256": source_records[label][
+                        "source_definition_sha256"
+                    ],
+                    "bare_f_operator_hash": bare_f_operator_hash,
+                    "canonical_key_set_sha256": str(key_set_sha256),
+                    "source_provenance": source_provenance,
+                },
+            }
+
+        def persist_basis(
+            label: str,
+            restart: int,
+            direction_index: int,
+            residual_direction: PETSc.Vec,
+            response_direction: PETSc.Vec,
+            _metadata: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            base = (
+                rank_root
+                / "route_c_basis"
+                / label
+                / f"restart{int(restart):04d}_direction{int(direction_index):02d}"
+            )
+            residual_path = base.with_name(base.name + "_residual.npy")
+            response_path = base.with_name(base.name + "_response.npy")
+            residual_sha = _route_c_atomic_npy(
+                residual_path,
+                np.asarray(
+                    residual_direction.getArray(readonly=True), dtype=np.complex128
+                ),
+            )
+            response_sha = _route_c_atomic_npy(
+                response_path,
+                np.asarray(
+                    response_direction.getArray(readonly=True), dtype=np.complex128
+                ),
+            )
+            projection_audit = dict(
+                dict(_metadata["interface_direction_projection"])["audit"]
+            )
+            start, end = map(int, residual_direction.getOwnershipRange())
+            record = {
+                "status": "pass",
+                "label": label,
+                "restart": int(restart),
+                "direction_index": int(direction_index),
+                "owner_local": True,
+                "replicated": False,
+                "source_definition_sha256": source_records[label][
+                    "source_definition_sha256"
+                ],
+                "bare_f_operator_hash": bare_f_operator_hash,
+                "canonical_key_set_sha256": str(key_set_sha256),
+                "canonical_active_layout_sha256": layout_sha256,
+                "source_provenance": source_provenance,
+                "direction_mapping": dict(_metadata["direction_mapping"]),
+                "canonical_interface_trace": {
+                    "direction_space": "preconditioned_response_direction_Z_y",
+                    "components": projection_audit["canonical_interface_trace"],
+                },
+                "residual_interface_trace": {
+                    "direction_space": "residual_space_V_y",
+                    "components": projection_audit["residual_interface_trace"],
+                },
+                "residual_direction": {
+                    "kind": "residual_space_V_y",
+                    "path": str(residual_path.relative_to(output_root)),
+                    "sha256": residual_sha,
+                    "local_size": int(end - start),
+                    "ownership_range": [start, end],
+                },
+                "preconditioned_response_direction": {
+                    "kind": "response_space_Z_y",
+                    "path": str(response_path.relative_to(output_root)),
+                    "sha256": response_sha,
+                    "local_size": int(response_direction.getLocalSize()),
+                    "ownership_range": list(
+                        map(int, response_direction.getOwnershipRange())
+                    ),
+                },
+            }
+            basis_artifacts.append(record)
+            return record
+
+        krylov_started = time.perf_counter()
+        route_resource_observation_count = 0
+        last_krylov_observation: float | None = None
+
+        def route_resource_callback() -> Mapping[str, Any]:
+            nonlocal route_resource_observation_count, last_krylov_observation
+            if resource_callback is None:
+                return {
+                    "status": "not_provided",
+                    "pass": False,
+                    "rss_bytes": None,
+                    "swap_bytes": None,
+                    "wall_controlled": False,
+                    "wall_observation": {
+                        "budget_seconds": float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
+                        "elapsed_seconds": None,
+                        "remaining_seconds": None,
+                        "krylov_elapsed_seconds": None,
+                        "predicted_remaining_seconds": None,
+                        "predicted_total_seconds": None,
+                        "pass": False,
+                    },
+                }
+            observed = dict(resource_callback())
+            now = time.perf_counter()
+            formal_elapsed = float(now - formal_started)
+            krylov_elapsed = float(now - krylov_started)
+            source_index = int(route_resource_observation_count)
+            wall_observation = _route_c_wall_observation(
+                formal_elapsed_seconds=formal_elapsed,
+                krylov_elapsed_seconds=krylov_elapsed,
+                last_krylov_elapsed_seconds=last_krylov_observation,
+                observation_index=source_index,
+            )
+            wall_observation.update(
+                {
+                    "source_label_at_128": ROUTE_C_LABELS[
+                        min(source_index, len(ROUTE_C_LABELS) - 1)
+                    ],
+                    "source_observation_index": source_index,
+                    "setup_to_128_elapsed_seconds": krylov_elapsed,
+                }
+            )
+            observed["wall_observation"] = wall_observation
+            observed["wall_controlled"] = bool(wall_observation["pass"])
+            last_krylov_observation = krylov_elapsed
+            route_resource_observation_count += 1
+            return observed
+
+        route_result = run_route_c_online_fgmres(
+            system.F,
+            rhs_by_label,
+            right_preconditioner=action,
+            resource_callback=route_resource_callback,
+            interface_residual_callback=interface_residual,
+            interface_direction_callback=interface_direction,
+            checkpoint_callback=lambda row: _emit(
+                marker_callback,
+                "v5_route_c_checkpoint",
+                **dict(row),
+            ),
+            basis_callback=persist_basis,
+        )
+        route_gate = route_result["direction_audit_gate"]
+        if not route_gate["pass"]:
+            raise RuntimeError("Route C interface/basis persistence audit did not pass")
+
+        factor_ready = owner.diagnostics
+        owner.destroy()
+        factor_after = owner.diagnostics
+        owner = None
+        action = None
+        _emit(
+            marker_callback,
+            "v5_route_c_pc_destroyed",
+            factor_ready=factor_ready,
+            factor_after=factor_after,
+            no_overlap=True,
+        )
+        cleanup["group_factor_lifecycle"] = _route_c_observed_group_factor_lifecycle(
+            factor_ready,
+            factor_after,
+        )
+        cleanup["rhs_vectors_destroyed"] = len(rhs_by_label)
+        for vector in rhs_by_label.values():
+            vector.destroy()
+        rhs_by_label.clear()
+        for mass in masses:
+            mass.destroy()
+        masses.clear()
+        system.destroy()
+        system = None
+        cleanup["collective_heap"] = collective_heap_cleanup(comm)
+        cleanup["basis_artifact_count_local"] = len(basis_artifacts)
+        _emit(marker_callback, "v5_route_c_cleanup", **cleanup)
+        basis_by_rank = comm.gather(basis_artifacts, root=0)
+        source_by_rank = comm.gather(source_records, root=0)
+        trace_by_rank = comm.gather(trace_artifacts, root=0)
+        gamma_layouts_by_rank = comm.gather(gamma_layout_records, root=0)
+        active_layout_by_rank = comm.gather(
+            {
+                "path": str(layout_path.relative_to(output_root)),
+                "sha256": layout_sha256,
+                "canonical_key_set_sha256": str(key_set_sha256),
+                "local_key_count": len(tokens),
+                "ownership_range": layout_ownership_range,
+            },
+            root=0,
+        )
+        artifact_index_by_rank = (
+            _route_c_all_rank_artifact_index(
+                rank_count=comm.size,
+                source_records_by_rank=source_by_rank,
+                gamma_layouts_by_rank=gamma_layouts_by_rank,
+                canonical_active_layouts_by_rank=active_layout_by_rank,
+                interface_trace_artifacts_by_rank=trace_by_rank,
+                basis_artifacts_by_rank=basis_by_rank,
+            )
+            if comm.rank == 0
+            else None
+        )
+        result = {
+            "schema": TASK040_V5_ROUTE_C_SCHEMA,
+            "method": TASK040_V5_ROUTE_C_METHOD,
+            "profile": TASK040_V5_ROUTE_C_PROFILE_ID,
+            "status": "completed_route_c_screen",
+            "classification": route_result["signal"]["classification"],
+            "source_sha": str(source_sha),
+            "input_sha256": str(input_sha256),
+            "physical_model_sha256": str(physical_model_sha256),
+            "identity_preflight": identity_preflight,
+            "resource_preflight": resource_preflight,
+            "operator_semantics_audit": identity_preflight.get(
+                "operator_semantics_audit_file"
+            ),
+            "system_created": True,
+            "system_inventory": _route_c_json_safe(inventory),
+            "source_records_by_rank": source_by_rank if comm.rank == 0 else None,
+            "rhs_vectors_loaded": len(ROUTE_C_LABELS),
+            "exact_output_vectors_loaded": 0,
+            "exact_output_vectors_consumed": 0,
+            "full_side_exact_factor_count": 0,
+            "qep_calls": observed_qep_calls,
+            "pde_solve": "not_run",
+            "outer_ksp": "not_run",
+            "factored_operator": "explicit_current_bare_F",
+            "bare_f_operator_hash": bare_f_operator_hash,
+            "external_dtn_coupling": _route_c_json_safe(external_dtn_contract),
+            "gamma_layouts_by_rank": (
+                gamma_layouts_by_rank if comm.rank == 0 else None
+            ),
+            "canonical_active_layouts_by_rank": (
+                active_layout_by_rank if comm.rank == 0 else None
+            ),
+            "group_pc": {
+                "oracle_diagnostics": _route_c_json_safe(oracle_diagnostics),
+                "factor_lifecycle": cleanup["group_factor_lifecycle"],
+            },
+            "interface_trace_artifacts_by_rank": (
+                trace_by_rank if comm.rank == 0 else None
+            ),
+            "basis_artifacts_by_rank": basis_by_rank if comm.rank == 0 else None,
+            "artifact_index_by_rank": artifact_index_by_rank,
+            "route_c": route_result,
+            "cleanup": cleanup,
+            "downstream": {
+                "level_b": "not_run_by_route_c_screen",
+                "full_hybrid": "not_run_by_route_c_screen",
+                "h3": "not_run_by_route_c_screen",
+            },
+            "research_only": True,
+        }
+        if comm.rank == 0:
+            _route_c_atomic_json(output_root / "route_c_manifest.json", result)
+        comm.barrier()
+        return _route_c_json_safe(result)
+    finally:
+        if owner is not None:
+            owner.destroy()
+            owner = None
+            action = None
+        elif action is not None:
+            action.destroy()
+            action = None
+        for vector in rhs_by_label.values():
+            vector.destroy()
+        for mass in masses:
+            mass.destroy()
+        if system is not None:
+            system.destroy()
 
 
 def _v1_2_complex(value: Any) -> complex:
@@ -4696,6 +5964,7 @@ def run_task040_level_a(
     coupled_interface: bool = False,
     v4_exact_authority_compatibility: bool = False,
     v5_fresh_bare_f_authority: bool = False,
+    v5_route_c: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
@@ -4714,6 +5983,7 @@ def run_task040_level_a(
                 coupled_interface,
                 v4_exact_authority_compatibility,
                 v5_fresh_bare_f_authority,
+                v5_route_c,
             )
         )
         > 1
@@ -4726,6 +5996,13 @@ def run_task040_level_a(
             raise ValueError("V5 run_directory must not be the frozen exact spool root")
         if input_path is None:
             raise ValueError("V5 fresh authority requires the official input_path")
+    if v5_route_c:
+        if run_directory is None:
+            raise ValueError("Route C requires a separate run_directory")
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError("Route C run_directory must not be the frozen exact spool root")
+        if input_path is None:
+            raise ValueError("Route C requires the official input_path")
     if (
         interface_schur
         or packet_producer
@@ -4733,6 +6010,7 @@ def run_task040_level_a(
         or coupled_interface
         or v4_exact_authority_compatibility
         or v5_fresh_bare_f_authority
+        or v5_route_c
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -4769,6 +6047,8 @@ def run_task040_level_a(
             if v4_exact_authority_compatibility
             else TASK040_V5_FRESH_BARE_F_AUTHORITY_METHOD
             if v5_fresh_bare_f_authority
+            else TASK040_V5_ROUTE_C_METHOD
+            if v5_route_c
             else TASK040_V1_2_METHOD
             if interface_schur
             else TASK040_LEVEL_A_METHOD
@@ -4937,6 +6217,22 @@ def run_task040_level_a(
         )
         result["resource_preflight"] = resource_preflight
         return result
+    if v5_route_c:
+        return _run_v5_route_c(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            exact_spool_root=exact_spool_root,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            resource_callback=resource_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+        )
     try:
         if side_system_builder is None:
             system = assemble_hybrid_local_dtn_action_system(
@@ -5318,6 +6614,7 @@ def main(argv: list[str] | None = None) -> int:
         TASK040_V4_EXACT_AUTHORITY_COMPATIBILITY_FLAG, action="store_true"
     )
     parser.add_argument(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG, action="store_true")
+    parser.add_argument(TASK040_V5_ROUTE_C_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -5336,6 +6633,7 @@ def main(argv: list[str] | None = None) -> int:
         coupled_interface=args.v3_2_coupled_interface,
         v4_exact_authority_compatibility=args.v4_exact_authority_compatibility,
         v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
+        v5_route_c=args.v5_route_c,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -5365,6 +6663,7 @@ def main(argv: list[str] | None = None) -> int:
         coupled_interface=args.v3_2_coupled_interface,
         v4_exact_authority_compatibility=args.v4_exact_authority_compatibility,
         v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
+        v5_route_c=args.v5_route_c,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -5374,6 +6673,8 @@ def main(argv: list[str] | None = None) -> int:
                         if args.v2_interface_packet_producer
                         else TASK040_V5_FRESH_BARE_F_HARD_STOP_BYTES
                         if args.v5_fresh_bare_f_authority
+                        else TASK040_V5_ROUTE_C_HARD_STOP_BYTES
+                        if args.v5_route_c
                         else TASK040_LEVEL_A_HARD_STOP_BYTES
                     ),
                 )
@@ -5385,6 +6686,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v3_2_coupled_interface
                     or args.v4_exact_authority_compatibility
                     or args.v5_fresh_bare_f_authority
+                    or args.v5_route_c
                 )
                 else None
             )
