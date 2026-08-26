@@ -1,0 +1,1179 @@
+{
+  "schema": "task038.lor-edge-geometric-mg.r4.3.controlled-stop.v1",
+  "evidence_scope": "Route-B R4.3 positive random, p6/h10 MPI1; user-directed stop at checkpoint 7000",
+  "classification": "USER_DIRECTED_CONTROLLED_STOP_AT_7000",
+  "user_authorization": "explicit_user_instruction_after_checkpoint_7000",
+  "reason": "performance trend rejected; residual remained too high for the remaining budget",
+  "source": {
+    "sha256": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "clean_at_runtime_close": true,
+    "qualified_activation": "1",
+    "sys_executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "mpi_size": 1,
+    "scalar_dtype": "complex128",
+    "int_dtype": "int32",
+    "threads": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "input": {
+    "path_from_worker_command": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat",
+    "identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+    "case": "p6-h10-mpi1",
+    "stage": "positive",
+    "source": "random"
+  },
+  "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+  "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+  "worker_command": [
+    "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "-m",
+    "benchmarks.run_task038_full3d_lor_nested_positive",
+    "--stage",
+    "positive",
+    "--case",
+    "p6-h10-mpi1",
+    "--raw-dir",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw",
+    "--record",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_r4_route_b_positive_random_v1.json",
+    "--expected-source-sha",
+    "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+    "--expected-mpi-size",
+    "1",
+    "--input",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat",
+    "--source",
+    "random"
+  ],
+  "solver_identity": {
+    "workflow": "Route-B nested LOR positive",
+    "levels": [
+      6,
+      2,
+      1
+    ],
+    "pairs": [
+      [
+        6,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "ksp_type": "gmres",
+    "pc_side": "right",
+    "restart": 20,
+    "max_it": 10000,
+    "residual_replacement_interval": 20,
+    "checkpoint_interval": 500,
+    "initial_guess": "zero",
+    "explicit_true_residual_limit": 1e-08
+  },
+  "stop": {
+    "last_completed_checkpoint": 7000,
+    "last_explicit_true_residual": 0.00814181052296021,
+    "returncode": -15,
+    "shell_returncode": 241,
+    "natural_exit": false,
+    "watchdog_stop_reason_raw": "natural_exit",
+    "interpretation": "SIGTERM user-directed controlled stop; not natural exit",
+    "10000_step_numerical_gate": "incomplete_not_evaluated",
+    "final_true_residual": "not_recorded_after_controlled_stop"
+  },
+  "resource": {
+    "watchdog_schema": "task038.lor-native-complex-hx.foundation-e-watchdog.v1",
+    "poll_seconds": 0.25,
+    "rss_hard_limit_bytes": 2000000000,
+    "peak_process_tree_rss_bytes": 1005531136,
+    "max_process_tree_swap_bytes": 0,
+    "sample_count": 103379,
+    "all_status_readable": true,
+    "no_orphan": true,
+    "natural_exit": false
+  },
+  "architecture": {
+    "foundation_built": true,
+    "extension_built": true,
+    "vcycle_built": true,
+    "levels": [
+      6,
+      2,
+      1
+    ],
+    "pairs": [
+      [
+        6,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "chebyshev_degree": 3,
+    "power_steps": 10,
+    "pre_polynomial_count": 1,
+    "post_polynomial_count": 1,
+    "vcycle_count_at_build": 1,
+    "p1_exact_factor_oracle_built": true,
+    "p1_factor_backend": "petsc-preonly-lu-mumps",
+    "forbidden": {
+      "global_high_order_aij": false,
+      "global_transfer_matrix": false,
+      "global_numeric_allgather": false,
+      "global_direct_coarse_built": false,
+      "p6_exact_factor_built": false,
+      "level2_exact_factor_built": false,
+      "hx_hierarchy_built": false,
+      "pcgamg_hierarchy_built": false,
+      "physical_solve": false,
+      "recovery": false,
+      "recovery_field_arrays_built": false,
+      "scalar_node_matrix_built": false,
+      "p1_global_direct_factor": false
+    }
+  },
+  "checkpoint_history": [
+    {
+      "iteration": 500,
+      "explicit_true_residual": 0.07563116734336381,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-500/manifest.json",
+        "bytes": 893,
+        "sha256": "79db6ab1131923556f4f92d6dc899d6b45e41bf11818d5a6ec1b7b5a8266b724"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "2850f96fbeb3848ea383fc93402c665b83ded9557d82a9cc700e5fa0109ba768",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 1000,
+      "explicit_true_residual": 0.04385139771562173,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1000/manifest.json",
+        "bytes": 894,
+        "sha256": "0b70aac9b5d64cddbab0e667139d54fc8534f589f5baa3f1f9876650cfb7ae19"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "34bbe8a85d9c33e536a2a1d70701e95f9032f06d9f836330f3a7626351515fdc",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 1500,
+      "explicit_true_residual": 0.02947787626179562,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1500/manifest.json",
+        "bytes": 894,
+        "sha256": "27c9fb58a19a2832681038ed466df0b09cbe121b6cff7042158f8940beb63e49"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "fb9929d4b803de55d6c78badb40a74dbde3d18530ae4f78a4ade1e288823e9d7",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 2000,
+      "explicit_true_residual": 0.022688540727309393,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2000/manifest.json",
+        "bytes": 895,
+        "sha256": "8189f4e081537609a0f338eb76f0f0ba480808d171d0b775842ebd9893613317"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "b7f28c94050caac31d19b6ecb07328cc1ad194730875dc7481888184479298bc",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 2500,
+      "explicit_true_residual": 0.018703685886528456,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2500/manifest.json",
+        "bytes": 895,
+        "sha256": "22522cb76368cc0f94ea4eae3d5ad93364885abe468474689dc6e39434dbc012"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "50ca6237efbd70a585c0728418b8a2a4b908719515211d1e113325d4bc43d02f",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 3000,
+      "explicit_true_residual": 0.015877743518052306,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3000/manifest.json",
+        "bytes": 895,
+        "sha256": "1c3e570cbfdb7a43cf3e109c971db8912cf2ac58e0ef3ae618f9c0cd61d5fc10"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "3f4fdcbf81172182fd87a3736a8759e9fd29e01b7f3d76e9244b2dc3b244e33f",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 3500,
+      "explicit_true_residual": 0.013920666485138304,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3500/manifest.json",
+        "bytes": 895,
+        "sha256": "612c2626c59663fc73fd403b2c425e09939c0e6ea943b17bd750269f881f6a3f"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "38dc8d9869b2150b26191596e93e20d05bd69c733682a0d237e8a2c95b84e967",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 4000,
+      "explicit_true_residual": 0.012445206849355522,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4000/manifest.json",
+        "bytes": 895,
+        "sha256": "ae9b002cd029e71404f8821ccd8a9fd6fc90a9f6844c3e999096833e0ef0aa35"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "ce628f060faadfe4b4f6867b968eddc92802c87fcf530cfbb55d293cc0648682",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 4500,
+      "explicit_true_residual": 0.011272012163803188,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4500/manifest.json",
+        "bytes": 895,
+        "sha256": "fddf3419062aedadac8e5e7f7f1d64434c8097ece0257cf4ce5fa5d63372cadd"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "38a750ea2651015d2b54d752866c7a0e95a45d70b248bff75939414690625e05",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 5000,
+      "explicit_true_residual": 0.010397067842914887,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5000/manifest.json",
+        "bytes": 895,
+        "sha256": "5d42a4d464e8ee90dfcb38587963c25a059f53ef7b17c3a2c588502389f86bb3"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "3391a5052c9005f3aad6e01e6b21503d6ddc546b4e5b9003ab9bb34dd33d935b",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 5500,
+      "explicit_true_residual": 0.009664959033694237,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5500/manifest.json",
+        "bytes": 895,
+        "sha256": "41e2c8cb058c5f4e35f64af7f18def94f7d4d4ced13a656341ff97a14db0a834"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "a5ec51a7ae1fa8f9a658c320f189eae50fe2780ab35b4a087cfa1d3d2446a4ee",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 6000,
+      "explicit_true_residual": 0.009046801573164462,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6000/manifest.json",
+        "bytes": 895,
+        "sha256": "adac5ac8a207c8ae95f217b02fdbf9c38ce4efceb22d25f9ab924826de917e05"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "bd33d0cbb0e4bdb447aaebe0479a684154ef48a84456c3a6365fc01c3252dd33",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 6500,
+      "explicit_true_residual": 0.008556474837834631,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6500/manifest.json",
+        "bytes": 895,
+        "sha256": "f6d886a84a77c28f59b92ddd88aec54c97b263b983a53fe8ab677bbf070af65e"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "545d4451354fe17bfa055e8dc70c8248c92734ed49bc4a145a7fec4fcc521d1b",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    },
+    {
+      "iteration": 7000,
+      "explicit_true_residual": 0.00814181052296021,
+      "source_sha": "add3e9832b12a3d088fc0f1ff179f88fb41cf534",
+      "input_identity_sha256": "cc9b8e3f5aa69e795f2360113fa968dc4c88e6dec967ad40814d717779fd0044",
+      "operator_identity_sha256": "08095794479d5df8a3454bbd4c06987e8acc16ca8ee6052ed4dde9b1339bad28",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+      "solution_only": true,
+      "vector_roles": [
+        "solution"
+      ],
+      "forbidden_vector_roles": [
+        "action",
+        "residual",
+        "krylov_basis"
+      ],
+      "manifest": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-7000/manifest.json",
+        "bytes": 894,
+        "sha256": "1c97dc8801cdd9d847856bd679e051824d2fa6bda75ae809422daf58ab4c8a88"
+      },
+      "solution": {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-7000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "3ec1d0e39ceda60424b8e3c4be27741391b5d10ae94e065cd9108811a54c3dd1",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    }
+  ],
+  "markers": {
+    "sequence_completed_before_stop": [
+      "paths_ready",
+      "source_runtime_closed",
+      "foundation_built",
+      "extension_built",
+      "vcycle_built",
+      "positive_started"
+    ],
+    "artifacts": [
+      {
+        "marker": "paths_ready",
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/paths_ready.json",
+        "sha256": "e37de816daca09956312577b15d9940a4c9132edd9f94ffd1b623c02dd9c3384",
+        "wall_time_ns": 1787680583424452201
+      },
+      {
+        "marker": "source_runtime_closed",
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/source_runtime_closed.json",
+        "sha256": "0cf62dbff6b376ee46f9241c9b489d6eac708f49abc29ae30842b266391bf65e",
+        "wall_time_ns": 1787680583434836741
+      },
+      {
+        "marker": "foundation_built",
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/foundation_built.json",
+        "sha256": "83fdb31771421c8571f6891e5810b93a4dfe7ce99e452dc5e3d21ed65692c59d",
+        "wall_time_ns": 1787680728438722296
+      },
+      {
+        "marker": "extension_built",
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/extension_built.json",
+        "sha256": "48d9f2d552c072e05d9f46f9f71860b8673a49940c7201ea0af2545ae1e7285a",
+        "wall_time_ns": 1787680814920931302
+      },
+      {
+        "marker": "vcycle_built",
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/vcycle_built.json",
+        "sha256": "d15a08af215c7f2b329494979c29835dd5a41bc312915f859a5b2df0710b4480",
+        "wall_time_ns": 1787680815139501420
+      },
+      {
+        "marker": "positive_started",
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/positive_started.json",
+        "sha256": "17f2989d0f9feebdd6387124d7d1c007b71edbb499184ddb0ba68bfe6c70993f",
+        "wall_time_ns": 1787680815143636461
+      }
+    ]
+  },
+  "artifact": {
+    "root_relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1",
+    "watchdog_raw_sha256": "ff05641730caa0b3e898518dd180c61287ecd4c8e61437cc76e391c8384d9a8e",
+    "watchdog_compact_sha256": "c59c8453e9a3942c4bfd2e8386fcadfbfaffdfe6ca01fc845a69c365c41c285e",
+    "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "files": [
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/watchdog.raw.jsonl",
+        "bytes": 87396738,
+        "sha256": "ff05641730caa0b3e898518dd180c61287ecd4c8e61437cc76e391c8384d9a8e"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/watchdog.compact.json",
+        "bytes": 2105,
+        "sha256": "c59c8453e9a3942c4bfd2e8386fcadfbfaffdfe6ca01fc845a69c365c41c285e"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/paths_ready.json",
+        "bytes": 386,
+        "sha256": "e37de816daca09956312577b15d9940a4c9132edd9f94ffd1b623c02dd9c3384"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/source_runtime_closed.json",
+        "bytes": 762,
+        "sha256": "0cf62dbff6b376ee46f9241c9b489d6eac708f49abc29ae30842b266391bf65e"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/foundation_built.json",
+        "bytes": 7629,
+        "sha256": "83fdb31771421c8571f6891e5810b93a4dfe7ce99e452dc5e3d21ed65692c59d"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/extension_built.json",
+        "bytes": 674,
+        "sha256": "48d9f2d552c072e05d9f46f9f71860b8673a49940c7201ea0af2545ae1e7285a"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/vcycle_built.json",
+        "bytes": 875,
+        "sha256": "d15a08af215c7f2b329494979c29835dd5a41bc312915f859a5b2df0710b4480"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/markers/positive_started.json",
+        "bytes": 205,
+        "sha256": "17f2989d0f9feebdd6387124d7d1c007b71edbb499184ddb0ba68bfe6c70993f"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-500/manifest.json",
+        "bytes": 893,
+        "sha256": "79db6ab1131923556f4f92d6dc899d6b45e41bf11818d5a6ec1b7b5a8266b724"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "2850f96fbeb3848ea383fc93402c665b83ded9557d82a9cc700e5fa0109ba768",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1000/manifest.json",
+        "bytes": 894,
+        "sha256": "0b70aac9b5d64cddbab0e667139d54fc8534f589f5baa3f1f9876650cfb7ae19"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "34bbe8a85d9c33e536a2a1d70701e95f9032f06d9f836330f3a7626351515fdc",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1500/manifest.json",
+        "bytes": 894,
+        "sha256": "27c9fb58a19a2832681038ed466df0b09cbe121b6cff7042158f8940beb63e49"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-1500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "fb9929d4b803de55d6c78badb40a74dbde3d18530ae4f78a4ade1e288823e9d7",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2000/manifest.json",
+        "bytes": 895,
+        "sha256": "8189f4e081537609a0f338eb76f0f0ba480808d171d0b775842ebd9893613317"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "b7f28c94050caac31d19b6ecb07328cc1ad194730875dc7481888184479298bc",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2500/manifest.json",
+        "bytes": 895,
+        "sha256": "22522cb76368cc0f94ea4eae3d5ad93364885abe468474689dc6e39434dbc012"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-2500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "50ca6237efbd70a585c0728418b8a2a4b908719515211d1e113325d4bc43d02f",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3000/manifest.json",
+        "bytes": 895,
+        "sha256": "1c3e570cbfdb7a43cf3e109c971db8912cf2ac58e0ef3ae618f9c0cd61d5fc10"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "3f4fdcbf81172182fd87a3736a8759e9fd29e01b7f3d76e9244b2dc3b244e33f",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3500/manifest.json",
+        "bytes": 895,
+        "sha256": "612c2626c59663fc73fd403b2c425e09939c0e6ea943b17bd750269f881f6a3f"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-3500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "38dc8d9869b2150b26191596e93e20d05bd69c733682a0d237e8a2c95b84e967",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4000/manifest.json",
+        "bytes": 895,
+        "sha256": "ae9b002cd029e71404f8821ccd8a9fd6fc90a9f6844c3e999096833e0ef0aa35"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "ce628f060faadfe4b4f6867b968eddc92802c87fcf530cfbb55d293cc0648682",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4500/manifest.json",
+        "bytes": 895,
+        "sha256": "fddf3419062aedadac8e5e7f7f1d64434c8097ece0257cf4ce5fa5d63372cadd"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-4500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "38a750ea2651015d2b54d752866c7a0e95a45d70b248bff75939414690625e05",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5000/manifest.json",
+        "bytes": 895,
+        "sha256": "5d42a4d464e8ee90dfcb38587963c25a059f53ef7b17c3a2c588502389f86bb3"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "3391a5052c9005f3aad6e01e6b21503d6ddc546b4e5b9003ab9bb34dd33d935b",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5500/manifest.json",
+        "bytes": 895,
+        "sha256": "41e2c8cb058c5f4e35f64af7f18def94f7d4d4ced13a656341ff97a14db0a834"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-5500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "a5ec51a7ae1fa8f9a658c320f189eae50fe2780ab35b4a087cfa1d3d2446a4ee",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6000/manifest.json",
+        "bytes": 895,
+        "sha256": "adac5ac8a207c8ae95f217b02fdbf9c38ce4efceb22d25f9ab924826de917e05"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "bd33d0cbb0e4bdb447aaebe0479a684154ef48a84456c3a6365fc01c3252dd33",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6500/manifest.json",
+        "bytes": 895,
+        "sha256": "f6d886a84a77c28f59b92ddd88aec54c97b263b983a53fe8ab677bbf070af65e"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-6500/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "545d4451354fe17bfa055e8dc70c8248c92734ed49bc4a145a7fec4fcc521d1b",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-7000/manifest.json",
+        "bytes": 894,
+        "sha256": "1c97dc8801cdd9d847856bd679e051824d2fa6bda75ae809422daf58ab4c8a88"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task038_full3d_lor_nested_positive_v1/add3e9832b12a3d088fc0f1ff179f88fb41cf534/route-b-positive-random-p6-h10-mpi1/worker_raw/checkpoint-7000/solution_rank0.npy",
+        "bytes": 2780960,
+        "sha256": "3ec1d0e39ceda60424b8e3c4be27741391b5d10ae94e065cd9108811a54c3dd1",
+        "dtype": "complex128",
+        "shape": [
+          173802
+        ],
+        "rank": 0,
+        "ownership": {
+          "global_size": 173802,
+          "local_size": 173802,
+          "ownership_range": [
+            0,
+            173802
+          ],
+          "rank": 0
+        }
+      }
+    ]
+  },
+  "worker_record": {
+    "relative_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_r4_route_b_positive_random_v1.json",
+    "exists": false,
+    "status": "absent_by_design_after_controlled_stop"
+  },
+  "checker": {
+    "relative_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_r4_route_b_positive_random_v1_checker.json",
+    "exists": false,
+    "status": "absent_by_design_after_controlled_stop"
+  }
+}

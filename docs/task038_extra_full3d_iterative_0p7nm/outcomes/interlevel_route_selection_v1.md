@@ -1,20 +1,20 @@
-# Review V12：interlevel route selection v1（截至 R4.2）
+# Review V12：interlevel route selection v1（截至 R4.3 random 受控停止）
 
 ## 当前结论
 
-R0 的合同、阈值和历史证据仍然冻结。R3 Route B 结构资格通过后，R4.2 已完成一次 p6/h10/MPI1 setup-only 资源与生命周期审计；离线 checker-v2 判为 `SETUP_EVIDENCE_PASS`，可进入 R4.3 四类 positive，但这不是 solver 或 PDE 通过，也不改变任何旧负结果。
+R0 的合同、阈值和历史证据仍然冻结。R3 Route B 结构资格通过后，R4.2 已完成一次 p6/h10/MPI1 setup-only 资源与生命周期审计；离线 checker-v2 判为 `SETUP_EVIDENCE_PASS`。R4.3 random 已运行到 checkpoint 7000 后由用户因性能趋势明确受控停止；这不是自然退出、不是 10000 步 numerical Gate 失败，也不改变任何旧负结果。
 
-| 项目 | 截至 R4.2 的状态 | 边界 |
+| 项目 | 截至 R4.3 random 的状态 | 边界 |
 | --- | --- | --- |
 | R0 contract freeze | `CONTRACT_READY / measured-not-run` | 保留 R0 规则；不代表任何路线通过 |
 | Route A：p6→p3 固定谱审计 | `CLOSED_BY_INTERLEVEL_SPECTRAL_GATE` | 首次 shape-contract invalid 与修正后的有效 checker 结论均保留；唯一真实 Gate 是 gradient global adjoint |
 | Route B v1 | `CONTRACT_INVALID` | canonical watchdog command mismatch 与 p21 compact NNZ authority 缺失；不重分类 |
 | Route B v2 | `STRUCTURALLY_QUALIFIED` | 可进入 R4 审核边界；不是 positive solver pass |
 | 当前 route_B | `STRUCTURALLY_QUALIFIED_FOR_R4` | `selected_hierarchy=NOT_SELECTED` |
-| Route C | `not_run_by_gate` | 未进入 |
+| Route C | `C1 authorized_pending / not_started` | 用户已授权按 C1→C2 顺序继续；C1 未开始，C2 未进入 |
 | R4.2 Route-B setup | `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3` | 仅 setup、10 次 apply、资源与生命周期；不是 solver/PDE pass |
-| R4.3 四类 positive | `authorized_pending / not_run` | R4.2 已放行；random/gradient/curl/checkerboard 尚未运行 |
-| R5–R7 | `not_run_by_gate` | Route B 尚未失败，Route C 未进入 |
+| R4.3 四类 positive | `random=USER_DIRECTED_CONTROLLED_STOP_AT_7000`；其余 `authorized_pending / not_run` | random 未完成 10000 步；gradient/curl/checkerboard 未运行 |
+| R5–R7 | `C1 authorized_pending / C2 not_entered` | Route B 未被选为当前 hierarchy；C1 尚未开始，不能写成通过或关闭 |
 | R8–R12 | `not_run_by_gate` | 需 R4 positive hierarchy 通过后条件进入 |
 
 ## 这份合同要解决什么问题
@@ -108,7 +108,7 @@ Route B v2 的正式 record/checker 为：
 
 ignored artifact root 为 `benchmarks/artifacts/task038_extra_full3d_interlevel_spectral_r3_route_b_v2/91e27ebb4bdcf9de302c12cc5a19ae8eaa78b8c1/p6-h10-mpi1/`。其中 watchdog raw/compact/log/worker NPZ 的 SHA256 依次为：`e876c42e83472ab0bed998d185c3629c661a8b285ce93c9f192f8b3a4f0456a2`、`bec9aae08b5b2a2bb130ddc1ba4d198062b5d753dd020880084e1fe2dca511d4`、`e13d3496e6c68adc8c838ae47c80689f1a716220c99dd628ff91ca9a66045be9`、`7296bac69bb8a46a878661a86e18eac99f5246e6eda71a5b28e5dbe7fdd2fa8c`。
 
-`current route_B=STRUCTURALLY_QUALIFIED_FOR_R4` 只表示满足进入 R4 审阅的结构前置条件；`selected_hierarchy=NOT_SELECTED`。R4.2 setup 已为 `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3`，R4.3 四类 positive 为 `authorized_pending / not_run`；R5–R7 和 R8–R12 为 `not_run_by_gate`，Route C 未进入。尚未运行四类最终求解，因此不能写成 `POSITIVE_AUXILIARY_PASS` 或 solver/PDE pass。
+`current route_B=STRUCTURALLY_QUALIFIED_FOR_R4` 只表示满足进入 R4 审阅的结构前置条件；`selected_hierarchy=NOT_SELECTED`。R4.2 setup 已为 `SETUP_EVIDENCE_PASS / resource-qualified-for-R4.3`，但 R4.3 random 在 7000 步仍有 `0.00814181052296021` 的显式真残差，用户因此拒绝继续承担预计十万级迭代成本并受控停止。Route B 不能据此被写成 positive solver 通过；用户已授权下一步按 C1→C2 评估，C1 尚未开始，C2 未进入，R8–R12 仍为 `not_run_by_gate`。
 
 Route B 的 compensated summation 只用于 Route B 内积归约，固定 `1e-11` adjoint Gate 没有放宽；Route A 仍使用原 `np.vdot` 测量语义。
 
@@ -149,7 +149,44 @@ checker-v2 没有重跑 setup worker，而是对同一冻结 worker record 和�
 | checker-v1 | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1_checker.json` | `cadc080c402f0d38ee0adc8952fd93f574fb714394dfc52579f3e8292e9a4fec` |
 | checker-v2（同一 worker evidence 的离线重判） | `outcomes/records/lor_edge_geometric_mg_r4_route_b_setup_v1_checker_v2.json` | `7ad5e7112f4ae536baaacdd9341a5b0bdbf3f11447f752c16a1e92fddc452f64` |
 
-当前 `selected_hierarchy=NOT_SELECTED`。R4.3 的 random/gradient/curl/checkerboard 四个 positive case 仍为 pending/not_run；R8 及以后继续为 `not_run_by_gate`，不能把 setup resource qualification 写成最终 solver 或 PDE 通过。
+当前 `selected_hierarchy=NOT_SELECTED`。R4.3 random 已在 7000 步受控停止，gradient/curl/checkerboard 仍为 pending/not_run；R8 及以后继续为 `not_run_by_gate`，不能把 setup resource qualification 写成最终 solver 或 PDE 通过。
+
+### R4.3 Route-B random：用户受控停止
+
+该次只验证已批准的 Route-B positive random 长迭代路径，没有启动其他 source。用户在 checkpoint 7000 后明确停止，因为残差下降趋势仍不足以支持继续预计十万级迭代。此证据不是自然完成，也没有生成 worker final record 或 checker；10000 步 numerical Gate 保持 `incomplete_not_evaluated`。
+
+| 事实 | 原始测量/边界 |
+| --- | --- |
+| source / case / stage | `random` / `p6-h10-mpi1` / `positive`，source SHA `add3e9832b12a3d088fc0f1ff179f88fb41cf534` |
+| fixed solver identity | right GMRES，restart `20`，max `10000`，每 `20` 步 residual replacement，checkpoint `500`，zero initial |
+| last completed checkpoint | `7000`，explicit true residual `0.00814181052296021` |
+| watchdog | returncode `-15`（shell rc `241`），`natural_exit=false`，`no_orphan=true`，`all_status_readable=true` |
+| resource | process-tree peak `1,005,531,136 B`，swap `0 B`，`103379` samples，poll `0.25 s` |
+| marker sequence | `paths_ready → source_runtime_closed → foundation_built → extension_built → vcycle_built → positive_started`；未到 release/record closeout |
+| result boundary | `USER_DIRECTED_CONTROLLED_STOP_AT_7000 / performance trend rejected`；不是 `NUMERICAL_GATE_FAILED`，不构成 solver/PDE pass |
+
+checkpoint 的 explicit true residual 历史如下；每个 manifest 均为 solution-only，source SHA 与本案一致，并明确禁止保存 action/residual/krylov basis：
+
+| iteration | explicit true residual |
+|---:|---:|
+| 500 | 0.07563116734336381 |
+| 1000 | 0.04385139771562173 |
+| 1500 | 0.02947787626179562 |
+| 2000 | 0.022688540727309393 |
+| 2500 | 0.018703685886528456 |
+| 3000 | 0.015877743518052306 |
+| 3500 | 0.013920666485138304 |
+| 4000 | 0.012445206849355522 |
+| 4500 | 0.011272012163803188 |
+| 5000 | 0.010397067842914887 |
+| 5500 | 0.009664959033694237 |
+| 6000 | 0.009046801573164462 |
+| 6500 | 0.008556474837834631 |
+| 7000 | 0.00814181052296021 |
+
+tracked compact 为 `outcomes/records/lor_edge_geometric_mg_r4_route_b_positive_random_controlled_stop_v1.json`，SHA256 为 `c1a646a8e6f6df381449c02b91ce43d3395fc096209006f803f1f02bc8f1b33e`。它从保留的 ignored artifact 逐项绑定 watchdog raw `ff05641730caa0b3e898518dd180c61287ecd4c8e61437cc76e391c8384d9a8e`、watchdog compact `c59c8453e9a3942c4bfd2e8386fcadfbfaffdfe6ca01fc845a69c365c41c285e`、worker log `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` 及全部 marker/checkpoint 文件；artifact root 和完整文件清单见 compact。worker record/checker 路径均明确记录为停止后按设计不存在。
+
+因此 Route B 目前仍保留其 structural/setup 历史，但不被选择为当前 hierarchy；这次只冻结性能受控停止事实。下一步仅是用户已授权的 C1 `same_mesh_hcurl_pmg_v1` 设计/资格评估，尚未实现、运行或通过；若 C1 未通过，才按固定顺序评估 C2，不能预先关闭 C1/C2。
 
 ## 不可变历史证据
 
