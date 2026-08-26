@@ -1,0 +1,60 @@
+{
+  "schema": "task038.full3d.canonical-source.c0-mpi2-startup-failure.v1",
+  "classification": "LIFECYCLE_SOURCE_DIRTY_FROM_TRACKED_MPI1_RECORD",
+  "source_sha": "6f81a716a2781bce0db1d09c933544155f779480",
+  "case": "p3-h50-mpi2",
+  "mpi_size": 2,
+  "worker_command": [
+    "/usr/bin/mpiexec",
+    "-n",
+    "2",
+    "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "-m",
+    "benchmarks.run_task038_full3d_c0_canonical_source",
+    "--stage",
+    "c0",
+    "--case",
+    "p3-h50-mpi2",
+    "--raw-dir",
+    "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v3/6f81a716a2781bce0db1d09c933544155f779480/p3-h50-mpi2/worker_raw",
+    "--record",
+    "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_c0_p3_h50_mpi2_v3.json",
+    "--expected-source-sha",
+    "6f81a716a2781bce0db1d09c933544155f779480",
+    "--expected-mpi-size",
+    "2",
+    "--input",
+    "input/templates/full3d_iterative_example.dat",
+    "--fixed-seed",
+    "task038-c0-physical-canonical-source-v1"
+  ],
+  "watchdog": {
+    "returncode": 1,
+    "natural_exit": false,
+    "no_orphan": true,
+    "all_status_readable": true,
+    "peak_process_tree_rss_bytes": 227741696,
+    "max_process_tree_swap_bytes": 0,
+    "sample_count": 12,
+    "stop_reason": "natural_exit",
+    "poll_seconds": 0.25,
+    "rss_limit_bytes": 2000000000
+  },
+  "artifact_paths": {
+    "worker_raw": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v3/6f81a716a2781bce0db1d09c933544155f779480/p3-h50-mpi2/worker_raw",
+    "watchdog_raw": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v3/6f81a716a2781bce0db1d09c933544155f779480/p3-h50-mpi2/watchdog.raw.jsonl",
+    "watchdog_compact": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v3/6f81a716a2781bce0db1d09c933544155f779480/p3-h50-mpi2/watchdog.compact.json",
+    "worker_log": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v3/6f81a716a2781bce0db1d09c933544155f779480/p3-h50-mpi2/worker.log",
+    "startup_marker": "benchmarks/artifacts/task038_extra_full3d_c0_canonical_source_v3/6f81a716a2781bce0db1d09c933544155f779480/p3-h50-mpi2/worker_raw/markers/startup.json"
+  },
+  "artifact_sha256": {
+    "watchdog_raw": "0c15b04da6b6150e30902cf8f14064360b7c6c39902b1c39bbabebde892987f3",
+    "watchdog_compact": "3fe765676eab4de976919599102f659f21c458666c1cf2158dd19221f85a4c71",
+    "worker_log": "aa5e0969501c3df8d15ec64d5c1147406e14150f2e5e7138bba7face3eb4877e",
+    "startup_marker": "175d6697d9256577685773b735e1165ffea42610bda41017d8dff729ba0c6582"
+  },
+  "startup_error": "source not closed: sha=6f81a716a2781bce0db1d09c933544155f779480, branch=codex/20260820-task38-extra-full3d-iterative-0p7nm, status='?? docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_edge_geometric_mg_c0_p3_h50_mpi1_v3.json'",
+  "numerical_stage_entered": false,
+  "worker_record_created": false,
+  "checker_run": false
+}
