@@ -256,8 +256,12 @@ def _a0_case_architecture(case_audit: Mapping[str, Any]) -> dict[str, Any]:
     """Normalize A0's case facts from their authoritative nested audit fields."""
 
     normalized = dict(case_audit)
+    normalized["global_transfer_matrix"] = bool(
+        case_audit["global_dense_transfer"]
+    )
     normalized["physical_solve"] = bool(
-        case_audit["physical_action"]["pde_solved"]
+        case_audit["physical_action"]["ksp_created"]
+        or case_audit["physical_action"]["dtn_action"]["pde_solved"]
     )
     normalized["recovery"] = bool(case_audit["recovery_field_arrays_built"])
     return normalized
