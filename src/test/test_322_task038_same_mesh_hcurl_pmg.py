@@ -5,8 +5,10 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+import basix
 import numpy as np
 import pytest
+from basix.ufl import element as ufl_element
 
 from src.solvers.fullspace_same_mesh_hcurl_pmg import (
     MATERIAL_ENERGY_LIMIT,
@@ -49,6 +51,8 @@ def test_fixed_pairs_and_basix_metadata_are_explicit(transfers: dict[tuple[int, 
         assert transfer.audit["pair_fine_to_coarse"] == [fine, coarse]
         assert transfer.audit["shape"] == list(transfer.matrix.shape)
         assert transfer.audit["map_type"] == "covariantPiola"
+        assert transfer.audit["fine_lagrange_variant"] == "legendre"
+        assert transfer.audit["coarse_lagrange_variant"] == "legendre"
         assert transfer.audit["basix_interpolation"] is True
         assert transfer.audit["dof_functional_independent_audit"] is True
         assert transfer.audit["gate_passed"] is True
@@ -66,6 +70,24 @@ def test_fixed_pairs_and_basix_metadata_are_explicit(transfers: dict[tuple[int, 
             assert transfer.audit[name] <= limit
         assert transfer.matrix.dtype == np.complex128
         assert transfer.matrix.flags.writeable is False
+        fine_element = ufl_element(
+            "N1curl", "hexahedron", fine, dtype=np.float64
+        ).basix_element
+        coarse_element = ufl_element(
+            "N1curl", "hexahedron", coarse, dtype=np.float64
+        ).basix_element
+        assert transfer.audit["fine_lagrange_variant"] == (
+            fine_element.lagrange_variant.name
+        )
+        assert transfer.audit["coarse_lagrange_variant"] == (
+            coarse_element.lagrange_variant.name
+        )
+        np.testing.assert_allclose(
+            transfer.matrix,
+            basix.compute_interpolation_operator(coarse_element, fine_element),
+            rtol=0.0,
+            atol=0.0,
+        )
 
 
 def test_apply_adjoint_batch_and_input_contract(transfers: dict[tuple[int, int], object]) -> None:

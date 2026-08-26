@@ -335,6 +335,15 @@ class SameMeshHcurlOwnerTransfer:
             raise ValueError("owner transfer requires one shared mesh object")
         if local_transfer.audit["pair_fine_to_coarse"] != list(pair):
             raise ValueError("local transfer pair does not match spaces")
+        fine_variant = fine_space.element.basix_element.lagrange_variant.name
+        coarse_variant = coarse_space.element.basix_element.lagrange_variant.name
+        if (
+            local_transfer.audit["fine_lagrange_variant"] != fine_variant
+            or local_transfer.audit["coarse_lagrange_variant"] != coarse_variant
+        ):
+            raise ValueError(
+                "local transfer Basix Lagrange variants do not match runtime spaces"
+            )
         self.fine_space = fine_space
         self.coarse_space = coarse_space
         self.fine_floquet = fine_floquet
@@ -488,6 +497,8 @@ class SameMeshHcurlOwnerTransfer:
                 "pair_fine_to_coarse": [int(pair[0]), int(pair[1])],
                 "fine_degree": int(pair[0]),
                 "coarse_degree": int(pair[1]),
+                "fine_lagrange_variant": fine_variant,
+                "coarse_lagrange_variant": coarse_variant,
                 "fine_global_rows": int(fine_space.dofmap.index_map.size_global),
                 "coarse_global_rows": int(coarse_space.dofmap.index_map.size_global),
                 "fine_local_owned_rows": self._fine_owned_size,

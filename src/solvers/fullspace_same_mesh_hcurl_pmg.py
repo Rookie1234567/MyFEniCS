@@ -54,7 +54,7 @@ def _n1e(degree: int):
         basix.ElementFamily.N1E,
         basix.CellType.hexahedron,
         int(degree),
-        basix.LagrangeVariant.equispaced,
+        basix.LagrangeVariant.legendre,
     )
 
 
@@ -431,6 +431,8 @@ def build_same_mesh_hcurl_transfer(
         "basix_interpolation": True,
         "dof_functional_independent_audit": True,
         "map_type": str(coarse_element.map_type.name),
+        "coarse_lagrange_variant": str(coarse_element.lagrange_variant.name),
+        "fine_lagrange_variant": str(fine_element.lagrange_variant.name),
         "coarse_cell_info": int(coarse_cell_info),
         "fine_cell_info": int(fine_cell_info),
         "orientation_transform": "basix_FiniteElement_T_apply",

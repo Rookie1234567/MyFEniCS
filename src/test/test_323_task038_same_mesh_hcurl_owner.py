@@ -224,6 +224,8 @@ def test_owner_setup_and_explicit_oracle(context):
     audit = owner.audit
     assert audit["schema"] == OWNER_RUNTIME_SCHEMA
     assert audit["pair_fine_to_coarse"] == [3, 1]
+    assert audit["fine_lagrange_variant"] == "legendre"
+    assert audit["coarse_lagrange_variant"] == "legendre"
     assert audit["fine_global_rows"] == int(v3.dofmap.index_map.size_global)
     assert audit["coarse_global_rows"] == int(v1.dofmap.index_map.size_global)
     assert audit["global_transfer_matrix"] is False
@@ -247,6 +249,14 @@ def test_owner_setup_and_explicit_oracle(context):
     assert np.all(np.isfinite(output.getArray(readonly=True)))
     assert owner.last_apply_facts["shared_row_max_defect"] <= 1.0e-11
     assert owner.last_apply_facts["fine_mpc_constraint_residual"] <= 1.0e-11
+
+    interpolation_oracle = fem.Function(v3)
+    interpolation_oracle.interpolate(source)
+    f3.mpc.homogenize(interpolation_oracle)
+    interpolation_oracle.x.scatter_forward()
+    f3.mpc.backsubstitution(interpolation_oracle)
+    interpolation_oracle.x.scatter_forward()
+    assert _relative(output, interpolation_oracle.x.petsc_vec) <= 1.0e-11
 
     oracle = _explicit_oracle(v3, v1, _local)
     oracle_output = oracle.createVecLeft()
@@ -315,7 +325,14 @@ def test_owner_setup_and_explicit_oracle(context):
     output.destroy()
     oracle_output.destroy()
     oracle.destroy()
-    del oracle_adjoint_field, oracle_field, fine_source, second, source
+    del (
+        oracle_adjoint_field,
+        oracle_field,
+        interpolation_oracle,
+        fine_source,
+        second,
+        source,
+    )
 
 
 def test_owner_rejects_duplicate_disagreement_and_destroy_is_bounded(context):
