@@ -64,3 +64,31 @@ runner 自身的 resource authority 是 `not_run_by_identity_gate`、sample coun
 system/F/Vec 没有构造。它不是 solver Pareto 点，不能与完整 workflow/direct 的节省比例、
 residual 或 wall 直接比较，也不能据此宣称 side inverse 可扩展。
 [V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
+
+## Review V5 Route C 与 Pareto边界
+
+V5 Route C 是一个 metadata/hash-bound 的 current-layout screen，不是完整 workflow saving
+tier。独立 checker artifact 为
+`results/task040_v5_route_c_teardown_adjudication_b5b765ef/checker.json`，其 SHA256 为
+`2db1741dfa0bdb877d1a3f548f66d521ed27328724f1f32d1fbd0b96c49f0a23`。
+
+| 路线 | residual | peak process-tree RSS | wall | swap | 状态 |
+|---|---|---:|---:|---:|---|
+| V5-2 fresh bare-F authority | one-cell source `1→0`；无 full-side factor-ready、exact packet或bare-F residual | `45432283136 B`（约 `42.31 GiB`） | `21600 s` 窗口耗尽 | authority readable `0` | `FRESH_BARE_F_AUTHORITY_RESOURCE_BLOCKED` |
+| V5 Route C screen | external/fixed-random 的 r64/r128 已测 | `30254075904 B`（约 `28.17 GiB`） | timeline 最后 `13029.23296845 s` | raw observed `0` | `VALID_NEGATIVE_ROUTE_C_NO_SIGNAL_RESOURCE_AUTHORITY_GAP` |
+
+V5-2 的阈值为 preferred `59055800320 B`（55 GiB）、warning `62277025792 B`（58 GiB）、
+hard `68719476736 B`（64 GiB）；peak 未越过 hard。五个 current-layout RHS 与
+owner-sharded canonical/`Gamma_L`/`Gamma_U` layout 已写出，但 full-side diagnostic factor
+只到 `v5_bare_f_factor_setup_begin`，没有 factor-ready，不能把 OS teardown 当作 full-side
+factor `1→0`，也没有 residual Pareto 数值。该点是部分完成后的 wall/resource block，不是
+数值失败。
+
+Route C raw RSS 低于 `45 GiB` hard line `48318382080 B`，raw observed swap 最大值为 `0`；
+但两个中段 live-unreadable rows（5825/5826）使 RSS/swap authority completeness 不成立。
+末尾 21296/21297 的 cleanup-complete rows 才按严格 suffix 规则派生排除，故该点不能与
+完整 workflow 或 direct baseline 比较节省比例。`dedicated_cgroup_present=false`，不能把
+raw dedicated-swap 的 0 写成独立 authority。
+
+没有新的 bottom/top/both/full Hybrid、bounded rank、h3 或 0.7 nm Pareto 点；这些项目均为
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。

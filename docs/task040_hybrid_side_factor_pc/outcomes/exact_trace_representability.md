@@ -1,6 +1,11 @@
 # V4-1 exact trace representability
 
-## 状态
+## Review V5 当前状态
+
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 的 no-signal stop 与
+resource-authority gap 未授权本阶段；这不是 exact trace、projection 或 lift 算法失败。
+
+## Review V4 历史状态
 
 `controlled_identity_negative`（controlled identity stop）。V4-1 的独立 raw checker 已验证 metadata/hash 身份，但在构造
 system、F、interface mass、Vec、factor、QEP 或 PDE 之前停止；本页不把未运行的 trace、
@@ -38,7 +43,7 @@ keys，不假设 PETSc global row 顺序稳定。
 implementation bug。若 tiny/exact algebra 证明只是 orientation、owner 或 action 接线错误，
 才可按 Review V4 §4 做最小修复并绑定新 SHA。
 
-## Review V4-1 当前收口
+## Review V4 历史收口
 
 这里的 canonical source-row bridge，通俗地说，就是一张把每个存储行重新指回稳定物理自由度
 的地图，也就是 source-row 到 canonical physical key 的映射。当前文件的 array hash 和
@@ -81,3 +86,26 @@ Vec，也没有保留 values。冻结 exact spool 缺少这张 source-row 到 ca
 array metadata hash 已验证，但 numeric vectors 未构造、values 未保留、raw-row remap 未使用且
 被禁止。正式结论与 37/37 checks、105 read files、无 NPY 的 compact record 绑定：
 [V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
+
+## Review V5 当前收口
+
+本页的 exact/Petrov/metric-best 三种解 trace 与三维 lift 没有运行，状态为
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 只保存了两源在
+16/32/64/128 的 residual trace；这不是 exact authority packet，也不是 lift 结果。
+
+V5-2 的 fresh bare-F authority 在授权的 `21600 s` factor-construction 窗口内
+`FRESH_BARE_F_AUTHORITY_RESOURCE_BLOCKED`，没有可供 consumer 使用的 exact output。随后
+Route C 的独立重算得到两源 `ROUTE_C_NO_SIGNAL`，且 timeline 的中段 live-unreadable
+样本使 resource authority 不完整。因此没有新的 solution error、bare-F residual、
+orientation/Floquet lift 或 factor-free exact reconstruction 数值。此前 V4 的
+canonical source-row bridge 负结论仍只表示旧 spool 无法安全重构，不与本次 Route C
+residual 混用。
+
+| 项目 | V5 实际状态 |
+|---|---|
+| exact/Petrov/metric-best trace | `not_run_by_route_c_no_signal_and_resource_authority_gate` |
+| 三维 group lift / solution error | `not_run_by_route_c_no_signal_and_resource_authority_gate` |
+| bare-F 与 A-side residual | 无数值；未运行 |
+| V5-2 exact packet | 未生成；`exact_output_vectors_loaded=0` |
+
+[V5 Route C signal ledger](route_signal_ledger.md)；[V5-1 audit](authority_operator_semantics.md)。

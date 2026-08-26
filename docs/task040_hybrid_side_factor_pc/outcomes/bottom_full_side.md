@@ -1,6 +1,11 @@
 # T40-8 bottom full side
 
-## Status: not_run_by_v4_1_identity_gate
+## Review V5 当前状态
+
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 的 no-signal stop 与
+resource-authority gap 未授权 bottom full-side；不是 bottom full-side 数值失败。
+
+## Review V4 历史状态
 
 T40-8 需要先通过 Level-A transmission、bounded patch 和 bottom scalable PC 前置 Gate，
 然后才允许在冻结 DtN 和物理身份下构造完整 `A_bottom`。T40-3 rho Gate 失败，故没有
@@ -21,10 +26,18 @@ full-side factor 或运行完整物理/资源测量。
 `not_run_by_v3_2_numerical_gate`。V3-2 full-span residual Gate 未通过；bottom full-side 没有
 启动，未产生 factor、true residual、physics 或资源数据。
 
-## Review V4-1 当前状态
+## Review V4 历史收口
 
 `not_run_by_v4_1_identity_gate`。V4-8 bottom full-side 在 system/F/interface mass/Vec/factor
 之前停止；没有 `A_bottom`、true residual、物理输出、R/T/A、DoF、RSS、wall 或 swap 数据。旧
  exact spool 缺少可资格化的 canonical source-row bridge，不能把 raw global row 当成物理身份；
 这不是 bottom full-side 数值失败。见
 [V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
+
+## Review V5 当前收口
+
+bottom full `A_side` 没有运行，状态为
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 没有构造物理 DtN、
+完整 C/D/H 或 Woodbury inverse，也没有 bottom full-side residual、physics、R/T/A、factor
+或 workflow resource 数据。V5 的 `full_side_exact_factor_count=0` 是 raw inventory，
+不是 bottom full-side 已通过的证明。

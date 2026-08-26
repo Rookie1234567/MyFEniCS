@@ -1,6 +1,11 @@
 # V4-1 group lift identity
 
-## 状态
+## Review V5 当前状态
+
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 的 no-signal stop 与
+resource-authority gap 未授权本阶段；没有新的 lift 或 residual 数值。
+
+## Review V4 历史状态
 
 `not_run_by_v4_1_identity_gate`。V4-1 在 system/F/interface mass/Vec 之前因 canonical
 source-row binding 缺失而停止；本页只冻结三种 trace 到三维 group 的对照，不宣称任何 lift
@@ -40,7 +45,7 @@ back-substitution。不得把 packet `U` 重新解释为 `Z`，也不得调用�
 `DUAL_PROJECTION_INSUFFICIENT`。若 exact trace 本身未通过 §7.6，则必须先分类
 `EXACT_TRACE_LIFT_IDENTITY_NOT_ESTABLISHED` 并停止，不得跳过该 Gate。
 
-## Review V4-1 当前状态
+## Review V4 历史收口
 
 exact、Petrov、metric-best 三种 trace 均没有生成；五个 solution relative error、五个
 bare-F true residual、finite/repeat/linearity 和 factor lifecycle 均没有数值。这里的
@@ -48,3 +53,16 @@ bare-F true residual、finite/repeat/linearity 和 factor lifecycle 均没有数
 当前 bare-F 行身份，所以 V4-1 没有获得进入 lift 的授权。A-side explanatory residual 也
 没有运行，不能替代 bare-F residual。compact 证据见
 [V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
+
+## Review V5 当前收口
+
+exact、Petrov、metric-best 三种 trace 都没有生成，三维 group back-substitution 也没有
+运行，状态统一为 `not_run_by_route_c_no_signal_and_resource_authority_gate`。因此没有
+solution relative error、bare-F true residual、finite/repeat/linearity 数值；不能把
+Route C 的 interface residual trace 当成 exact-trace lift。
+
+Route C 的两个 screen RHS 在 iteration 128 触发 `ROUTE_C_NO_SIGNAL`，且 resource
+authority 仍有中段 live-unreadable rows。该 stop 发生在任何 bounded rank/Level B/top/full
+Hybrid 之前；A-side explanatory residual 同样未运行，不能替代 bare-F residual。
+
+[V5 Route C signal ledger](route_signal_ledger.md)。

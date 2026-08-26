@@ -1,6 +1,11 @@
 # V4-3/V4-5 response-enriched coarse
 
-## 状态
+## Review V5 当前状态
+
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 的 no-signal stop 与
+resource-authority gap 未授权本阶段的 coarse、rank 或 train/holdout；不是 coarse 算法失败。
+
+## Review V4 历史状态
 
 `not_run_by_v4_1_identity_gate`。本页仍冻结 train/holdout、方向来源和 bounded rank；
 V4-1 identity stop 未授权创建 coarse，也没有读取 exact output values 作为运行时 basis。
@@ -30,7 +35,7 @@ V4-5 若通过，只允许最多两个 rank 进入五源连续 FGMRES `16/32/64/
 通过，当前仍是 response-enriched oracle，直到 V4-6 fresh reconstruction 移除 exact
 authority 依赖后才可讨论 bounded local patch。
 
-## Review V4-1 当前收口
+## Review V4 历史收口
 
 V4-3 response enrichment 与 V4-5 bounded rank（`64/128/256/512`）均未运行。固定的
 train/holdout、`R1/R2/R3`、basis、rank、lifted bare-F residual 和任何 accuracy 数值均未
@@ -38,3 +43,14 @@ train/holdout、`R1/R2/R3`、basis、rank、lifted bare-F residual 和任何 acc
 不是 response/coarse 算法失败。V4-2、V4-3、V4-5 后续映射均保持未授权，不能把缺少数据写成
 无 signal 或 overfit。证据边界见
 [V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
+
+## Review V5 当前收口
+
+V5 没有进入 response-enriched coarse。Route C 的两个固定 screen RHS 均在 128 步满足
+no-signal stop 条件，且资源 authority 存在中段 live-unreadable 缺口；因此 R1/R2/R3、
+train/holdout、total-rank `64/128/256/512`、response basis 与 Level B 均为
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。没有新的 rank、basis、
+residual、内存或 wall 数据，也没有 overfit 结论。
+
+Route C 的方向审计虽观察到 canonical interface projection 与 basis persistence，且
+`replicated=false`，但这只证明采样产物的存储合同；它不是 response coarse 的正信号。

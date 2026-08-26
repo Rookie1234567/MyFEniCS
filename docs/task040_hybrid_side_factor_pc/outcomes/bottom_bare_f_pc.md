@@ -1,6 +1,11 @@
 # T40-5 bottom bare-F scalable PC
 
-## Status: not_run_by_v4_1_identity_gate
+## Review V5 当前状态
+
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 的 no-signal stop 与
+resource-authority gap 未授权 bottom scalable PC；不是 bottom PC 算法失败。
+
+## Review V4 历史状态
 
 T40-5 需要先有通过 T40-4 的 bounded patch core，再构造 bottom bare-F PC 并进行 one-apply
 Gate。由于 T40-3 `TRANSMISSION_MECHANISM_FAIL`，本阶段未运行；没有 bottom scalable PC
@@ -20,10 +25,19 @@ Gate 前触及资源线，没有生成 bottom scalable residual、factor cap、c
 bare-F production side inverse；没有新的 factor cap、full-side residual 或完整 workflow
 资源结果。历史 V1/T40-3 结论保持不变。
 
-## Review V4-1 当前状态
+## Review V4 历史收口
 
 `not_run_by_v4_1_identity_gate`。V4-8 bottom bare-F route 未构造 system、裸 `F`、interface
 mass、PETSc Vec 或 factor，也没有 one-apply、FGMRES、factor cap、DoF、R/T/A、RSS、wall 或
 swap 数据。冻结 exact output 的 source-row bridge 未资格化，所以不能安全重建 RHS/解向量；这是
 身份受控停止，不是 bottom PC 或算法失败。详见
 [V4-1 compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_v4_1_exact_authority_compatibility_v1.json)。
+
+## Review V5 当前收口
+
+V5 Route C 确实在 bottom current bare `F` 上完成了两个 RHS 的诊断 screen，但这不是
+bottom scalable side-PC qualification：三组诊断 factors 仅记录 `3→0`，full-side exact
+factor 为 `0`，而 Route C 在 128 步得到 no signal。bottom bare-F production candidate、
+bounded patch、Level B 与后续 A-side 均为
+`not_run_by_route_c_no_signal_and_resource_authority_gate`。不得把 Route C 的 bare-F
+action carrier 或两个 residual 当成通过的 production PC。

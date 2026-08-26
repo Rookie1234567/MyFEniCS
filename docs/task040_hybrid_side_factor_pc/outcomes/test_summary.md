@@ -20,6 +20,27 @@
 | full repository pytest | `not_run` |
 | PDE/QEP | `not_run`；V3-1 component producer and V3-2 full-span component consumer completed |
 
+## Review V5 当前检查与正式 Route C
+
+| 检查 | 结果 |
+|---|---|
+| consolidated closeout focused | 资格化 activation：`94 passed, 2 skipped in 11.31s` |
+| consolidated command | `python -m pytest -q src/test/test_298_task040_level_a_watchdog.py src/test/test_315_task040_v5_bare_f_authority.py src/test/test_316_task040_route_c.py src/test/test_317_task040_v5_route_c_checker.py src/test/test_24_repository_work_principles.py src/test/test_25_benchmark_contract.py src/test/test_26_documentation_contract.py` |
+| included test scope | test298 watchdog、test315 producer、test316 Route C、test317 checker、repository principles、benchmark contract、documentation contract |
+| qualified ABI preflight | exit `0`；activation `1`、Python `/home/Projects/MyFEniCS/.venv/bin/python`、PETSc `complex128`/`int32`、Linux DOLFINx/MPI stack |
+| V5 checker | checker CLI `rc=0`；`checker_pass=true`、`evidence_valid=true`、`gate_pass=false` |
+| explicit benchmark CLI | 资格化 activation：`python -m benchmarks.check_benchmarks --no-write`；`302/302 passed` |
+| post-doc contract smoke | 文档改动后：`python -m pytest -q src/test/test_24_repository_work_principles.py src/test/test_25_benchmark_contract.py src/test/test_26_documentation_contract.py`；`26 passed in 1.35s` |
+| formal Route C checker | source `7f1d8f978551f1aab44642c0a6501e3c71f4ef54`；raw read files `8`，无 NPY；独立重算 no-signal 与 teardown suffix |
+| formal Route C raw | worker natural `rc=0`；Route C `ROUTE_C_NO_SIGNAL`；outer observed `rc=2` 仅对应 telemetry/readability adjudication，不是 numerical exception |
+| final docs-related tests | 上述 consolidated run 已包含 test24、test25、test26；不另称 CI 或 full repository pytest |
+| full repository pytest | `not_run` |
+| additional PDE / QEP | `not_run`；Route C `qep_calls=0` |
+
+Route C 后续 bounded rank、packet-independent rebuild、Level B、bottom/top/both/full Hybrid、
+h3 和 0.7 nm PDE 均为 `not_run_by_route_c_no_signal_and_resource_authority_gate`。没有把
+普通 focused tests、checker 通过或 no-signal stop 写成 production/CI 通过。
+
 V1-2 Run B 的独立 checker 命令为：
 
 ```text

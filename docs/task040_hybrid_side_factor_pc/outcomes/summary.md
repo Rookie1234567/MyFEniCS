@@ -5,7 +5,10 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 在人工截面附近保留必要的信息，以减少内存；但它必须先证明传递方向正确，再谈完整 Hybrid。
 本页把已完成的 T40-3、V1-1 与 V1-2 Run B 分开登记，不能把组件峰值当作完整工作流节省。
 
-## Review V4 当前收口
+当前 V5 authority：`VALID_NEGATIVE_ROUTE_C_NO_SIGNAL_RESOURCE_AUTHORITY_GAP`；Route C
+no-signal stop 已触发，后续 V5 漏斗均为 `not_run_by_route_c_no_signal_and_resource_authority_gate`。
+
+## Review V4 历史收口
 
 | 项目 | 当前结论 | 证据边界 |
 |---|---|---|
@@ -26,6 +29,62 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 正式 V4 root 是唯一的 `9f3d6e39` root。旧 root `a64d33e6` 是跨 ownership 的 raw-row remap
 `implementation_failure`，`1c68da98` 是 `incomplete_superseded`；两者保留但不混入当前 formal
 数值或资源结论。
+
+## Review V5 当前收口
+
+| 项目 | 当前结论 | 证据边界 |
+|---|---|---|
+| V5-1 operator semantics | static source audit 已完成并 hash-bound；current modal source 保持 `full3d_one_cell_exact_schur` 定义 | 只完成语义/路径审计；runtime qualification 仍需数值 Gate |
+| V5-2 fresh bare-F authority | `FRESH_BARE_F_AUTHORITY_RESOURCE_BLOCKED` | 部分完成后授权 `21600 s` factor-construction 窗口耗尽；one-cell source factor `1→0`，五个 RHS/owner-sharded canonical/Gamma layout 已写出；full-side 只到 `v5_bare_f_factor_setup_begin`，无 factor-ready、无 exact packet |
+| Route C online screen | `ROUTE_C_NO_SIGNAL`；最终 checker classification `VALID_NEGATIVE_ROUTE_C_NO_SIGNAL_RESOURCE_AUTHORITY_GAP` | 两源到 128 步；no-signal 独立重算通过；resource authority 因中段 live-unreadable rows 不完整 |
+| Route C raw resource | raw RSS below hard、raw swap zero；authority completeness false | peak `30254075904 B` < `48318382080 B`（45 GiB）；第 5825/5826 行 live unreadable，末尾 21296/21297 才是可排除 cleanup suffix |
+| 后续 V5 漏斗 | 全部未运行 | `not_run_by_route_c_no_signal_and_resource_authority_gate`；不继续 rank、Level B、top、full Hybrid 或 h3 |
+
+Route C 的两个 RHS 是 `external_dtn_coupling` 与 `fixed_random_repeat_0`。它们的
+`(r64,r128,log10(r64/r128))` 分别为
+`(0.8906247440000827, 0.9116861468870889, -0.010150598869495011)` 和
+`(1.036891675911675, 1.0585987178847864, -0.008997975654488713)`；两者均满足
+`r128>0.9` 且下降小于 `0.05 decade`，共享稳定方向数为 `0`。因此这是停止 Gate，不是
+允许继续的 candidate pass。正式 raw root、derived checker 和独立信号账本分别见
+`results/task040_v5_route_c_online_long_fgmres_mpi8_b5b765ef_retry1`、
+`results/task040_v5_route_c_teardown_adjudication_b5b765ef/checker.json` 和
+[Route C signal ledger](route_signal_ledger.md)。
+
+V5 Route C 的实现范围是新鲜进程中的 bottom-only online screen：`system_created=true`、
+`rhs_vectors_loaded=2`、`exact_output_vectors_loaded=0`、`qep_calls=0`，三个诊断 group
+factor `3→0`，full-side exact factor `0`；external minimal RHS 的两次构造仍为 C/D/H `0`、
+component instances `4`、peak live components `2`。这些是本次 screen 的 inventory，不是
+production side inverse 或 full Hybrid 资格。
+
+V5-2 producer 的资源事实为：preferred `59055800320 B`（55 GiB）、warning
+`62277025792 B`（58 GiB）、hard `68719476736 B`（64 GiB），实测 peak
+`45432283136 B`、swap authority `0`。进程在 `21600 s` wall window 内未到 full-side
+factor-ready；因此 full-side bare-F factor 要求的 `1→0` 没有完成，OS teardown 不能被记作
+PETSc lifecycle pass。该 producer 不是 64 GiB hard stop、不是 numerical fail；Route C 的
+正式 screen 在另一个 fresh process 完成。
+
+### 实现范围 / 下一步 / selective merge 边界
+
+本轮实际触及的实现文件包括：`src/solvers/hybrid_exact_authority_compat.py`、
+`src/solvers/hybrid_bare_f_authority.py`、`src/solvers/hybrid_route_c.py`、
+`src/coupling/hybrid_one_cell_exact_traction_builder.py`、
+`benchmarks/task040_level_a.py`、`benchmarks/task040_level_a_watchdog.py`，以及对应的
+V4/V5 checker 与 focused tests。它们的 V5 route 是互斥 opt-in 的诊断路径；ordinary
+production solver/default 未改变，fresh evidence 也没有把这条路径提升为 production side
+inverse。
+
+若未来重新打开该问题，第一步必须先取得新的 Review 授权并重新定义 fresh current-layout
+authority 与资源证据；不得复用旧 raw-row remap，也仍禁止重建 full-side exact factor。当前
+`ROUTE_C_NO_SIGNAL` 与 resource-authority gap 之前，V5-2→V5-10 不得运行；merge approval
+仍为 **NO**。
+
+V5-1/V5-2 与 Route C 的 implementation、测试和边界见
+[operator semantics audit](authority_operator_semantics.md)、
+[fresh authority outcome](fresh_bare_f_authority.md) 和
+[V5 test summary](test_summary.md)。旧 V4 compact record 保持原字节不变；V5 checker 的
+evidence 是独立派生结果，不改写原 watchdog summary。下方较早的 V4 段落是历史记录；其中
+“未来先建立旧 bridge”的导航已由本节的 V5 fresh current-layout authority/Route C 结果取代，
+不能作为当前下一步指令。
 
 ## Review V4 实现范围、下一步与 selective merge 边界
 
