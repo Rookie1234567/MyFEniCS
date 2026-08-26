@@ -40,6 +40,13 @@ TASK040_LEVEL_A_HARD_STOP_BYTES = _TASK040_LEVEL_A_HARD_STOP_BYTES
 SAMPLE_INTERVAL_SECONDS = 0.5
 HEARTBEAT_SECONDS = 60.0
 SWAP_LIMIT_BYTES = 0
+_TERMINAL_CLEANUP_STAGES = frozenset(
+    {
+        "cleanup",
+        "v4_identity_stop",
+        "v5_route_c_cleanup",
+    }
+)
 THREAD_ENV = {
     "OMP_NUM_THREADS": str(TASK040_LEVEL_A_THREADS),
     "OPENBLAS_NUM_THREADS": "1",
@@ -206,6 +213,49 @@ def _latest_stage(path: Path) -> tuple[str, str]:
     return "process_start", "waiting_for_progress"
 
 
+def _terminal_teardown_sample_excluded(
+    *,
+    post_sample_return_code: int | None,
+    process_tree: dict[str, Any],
+    run_summary_path: Path,
+    latest_stage: str,
+    latest_stage_status: str,
+) -> bool:
+    """Recognize only the post-cleanup ``/proc`` teardown race.
+
+    A worker that is still live, or whose run summary/terminal cleanup stage is
+    not complete, remains an authoritative telemetry failure when its process
+    tree is unreadable.  The caller performs RSS and swap limits independently
+    before accepting this exclusion.
+    """
+    return bool(
+        post_sample_return_code is None
+        and run_summary_path.is_file()
+        and latest_stage in _TERMINAL_CLEANUP_STAGES
+        and latest_stage_status == "complete"
+        and process_tree.get("pids")
+        and process_tree.get("all_status_readable") is False
+    )
+
+
+def _terminal_teardown_termination_reason(
+    *,
+    rss_bytes: int,
+    swap_bytes: int,
+    dedicated_swap_bytes: int | None,
+    hard_stop_bytes: int,
+) -> str:
+    """Apply resource limits before accepting a natural teardown exit."""
+    if rss_bytes >= hard_stop_bytes:
+        return "absolute_memory_limit"
+    if swap_bytes > SWAP_LIMIT_BYTES or (
+        dedicated_swap_bytes is not None
+        and dedicated_swap_bytes > SWAP_LIMIT_BYTES
+    ):
+        return "swap_detected"
+    return "natural_exit"
+
+
 def _write_jsonl(stream: Any, payload: dict[str, Any]) -> None:
     stream.write(json.dumps(payload, sort_keys=True) + "\n")
     stream.flush()
@@ -228,6 +278,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     stdout_path = run_directory / "worker_stdout.txt"
     summary_path = run_directory / "watchdog_summary.json"
     worker_directory = Path(plan["worker_run_directory"])
+    run_summary = worker_directory / "run_summary.json"
     if worker_directory.exists():
         raise FileExistsError(
             f"Task040 worker output directory already exists: {worker_directory}"
@@ -312,8 +363,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             has_cgroup = bool(job_cgroup["dedicated_job_cgroup"])
             live_sample = bool(process_tree.get("pids"))
             post_sample_return_code = process.poll()
-            terminal_teardown_excluded = post_sample_return_code is not None
-            authoritative_sample = live_sample and not terminal_teardown_excluded
+            process_exited_during_sample = post_sample_return_code is not None
             peak_rss_bytes = max(peak_rss_bytes, rss_bytes)
             peak_swap_bytes = max(peak_swap_bytes, swap_bytes)
             dedicated_cgroup_present = dedicated_cgroup_present or has_cgroup
@@ -324,6 +374,18 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                     peak_dedicated_cgroup_swap_bytes = max(
                         peak_dedicated_cgroup_swap_bytes, int(dedicated_swap)
                     )
+            stage, status = _latest_stage(stages_path)
+            completed_cleanup_teardown = _terminal_teardown_sample_excluded(
+                post_sample_return_code=post_sample_return_code,
+                process_tree=process_tree,
+                run_summary_path=run_summary,
+                latest_stage=stage,
+                latest_stage_status=status,
+            )
+            terminal_teardown_excluded = (
+                process_exited_during_sample or completed_cleanup_teardown
+            )
+            authoritative_sample = live_sample and not terminal_teardown_excluded
             if authoritative_sample:
                 sample_count += 1
                 all_status_readable = all_status_readable and bool(
@@ -335,7 +397,6 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                     )
             elif terminal_teardown_excluded:
                 terminal_teardown_excluded_count += 1
-            stage, status = _latest_stage(stages_path)
             row = {
                 "timestamp_utc": datetime.now(timezone.utc).isoformat(),
                 "elapsed_seconds": elapsed,
@@ -360,16 +421,21 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 )
                 previous_heartbeat = elapsed
             if terminal_teardown_excluded:
-                if rss_bytes >= hard_stop_bytes:
-                    termination_reason = "absolute_memory_limit"
-                elif swap_bytes > SWAP_LIMIT_BYTES or (
-                    dedicated_swap is not None and dedicated_swap > SWAP_LIMIT_BYTES
-                ):
-                    termination_reason = "swap_detected"
-                else:
-                    termination_reason = "natural_exit"
-                process_control = terminate_process_tree(process)
-                break
+                termination_reason = _terminal_teardown_termination_reason(
+                    rss_bytes=rss_bytes,
+                    swap_bytes=swap_bytes,
+                    dedicated_swap_bytes=dedicated_swap,
+                    hard_stop_bytes=hard_stop_bytes,
+                )
+                if process_exited_during_sample or termination_reason != "natural_exit":
+                    process_control = terminate_process_tree(process)
+                    break
+                if elapsed >= TASK040_LEVEL_A_TIMEOUT_SECONDS:
+                    termination_reason = "wall_timeout"
+                    process_control = terminate_process_tree(process)
+                    break
+                time.sleep(SAMPLE_INTERVAL_SECONDS)
+                continue
             if not authoritative_sample:
                 if elapsed >= TASK040_LEVEL_A_TIMEOUT_SECONDS:
                     termination_reason = "wall_timeout"
@@ -394,7 +460,6 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             process_control = terminate_process_tree(process)
             break
 
-    run_summary = worker_directory / "run_summary.json"
     swap_authority_readable = all_status_readable and (
         not dedicated_cgroup_present or dedicated_cgroup_swap_readable
     )

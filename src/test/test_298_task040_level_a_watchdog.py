@@ -65,7 +65,14 @@ def _fake_resource_sample(readable: bool, rss_bytes: int) -> dict[str, object]:
     }
 
 
-def _run_fake_watchdog(monkeypatch, plan, polls, samples):
+def _run_fake_watchdog(
+    monkeypatch,
+    plan,
+    polls,
+    samples,
+    *,
+    latest_stage=None,
+):
     process = _FakeWatchdogProcess(polls, plan["worker_run_directory"])
     sample_iter = iter(samples)
 
@@ -79,6 +86,10 @@ def _run_fake_watchdog(monkeypatch, plan, polls, samples):
         "resource_authority_sample",
         lambda _pid, *, include_smaps=False: next(sample_iter),
     )
+
+    if latest_stage is not None:
+        monkeypatch.setattr(watchdog, "_latest_stage", lambda _path: latest_stage)
+
     monkeypatch.setattr(
         watchdog,
         "terminate_process_tree",
@@ -359,3 +370,39 @@ def test_task040_watchdog_keeps_live_unreadable_sample_as_failure(
     assert summary["terminal_teardown_excluded_count"] == 0
     assert summary["all_status_readable"] is False
     assert summary["swap_authority_readable"] is False
+
+
+def test_task040_watchdog_waits_for_completed_cleanup_teardown_sample(
+    tmp_path, monkeypatch
+) -> None:
+    plan = _plan(tmp_path)
+    result = _run_fake_watchdog(
+        monkeypatch,
+        plan,
+        polls=[None, None, None, None, 0],
+        samples=[
+            _fake_resource_sample(True, 100),
+            _fake_resource_sample(False, 200),
+        ],
+        latest_stage=("v5_route_c_cleanup", "complete"),
+    )
+    summary = json.loads(
+        (tmp_path / "run" / "watchdog_summary.json").read_text(encoding="utf-8")
+    )
+    assert result == 0
+    assert summary["sample_count"] == 1
+    assert summary["authoritative_sample_count"] == 1
+    assert summary["terminal_teardown_excluded_count"] == 1
+    assert summary["all_status_readable"] is True
+    assert summary["swap_authority_readable"] is True
+    assert summary["process_control"]["worker_exited"] is True
+    assert summary["process_control"]["process_group_exited"] is True
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "run" / "process_tree_samples.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    row = rows[-1]
+    assert row["authoritative_sample"] is False
+    assert row["terminal_teardown_excluded"] is True
