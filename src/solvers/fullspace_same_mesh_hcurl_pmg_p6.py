@@ -10,16 +10,20 @@ slave storage locations.
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
 from dolfinx import fem
 from dolfinx.la.petsc import create_vector
+from mpi4py import MPI
 from petsc4py import PETSc
 
 __all__ = (
     "accumulate_constrained_local_diagonal",
     "build_constrained_jacobi_diagonal",
+    "SameMeshP6MatrixFreeShell",
+    "SameMeshP6NestedVcycle",
 )
 
 
@@ -414,3 +418,352 @@ def build_constrained_jacobi_diagonal(
         mode=PETSc.ScatterMode.FORWARD,
     )
     return diagonal
+
+
+P6_NESTED_SCHEMA = "task038.same_mesh_hcurl_pmg.p6-nested.v1"
+P6_NESTED_LEVELS = (6, 3, 1)
+P6_NESTED_PAIRS = ((6, 3), (3, 1))
+
+
+class SameMeshP6MatrixFreeShell:
+    """PETSc shell owning one full-space p6 action and exact diagonal.
+
+    The shell owns and destroys ``action`` and ``diagonal`` exactly once.
+    Only the Vec returned by ``action.apply`` is borrowed and reusable.
+    """
+
+    def __init__(self, action: Any, diagonal: PETSc.Vec) -> None:
+        source_matrix = action.matrix
+        global_rows, global_columns = (int(value) for value in source_matrix.getSize())
+        local_rows, local_columns = (
+            int(value) for value in source_matrix.getLocalSize()
+        )
+        if global_rows != global_columns or local_rows != local_columns:
+            raise ValueError("p6 matrix-free shell requires a square action")
+        if (
+            int(diagonal.getSize()) != global_rows
+            or int(diagonal.getLocalSize()) != local_rows
+        ):
+            raise ValueError("p6 diagonal and action layouts differ")
+        action_audit = getattr(action, "audit", {})
+        if action_audit.get("slave_row_identity") is not True:
+            raise ValueError("p6 shell requires the full-space slave identity action")
+        self.action = action
+        self.diagonal = diagonal
+        self._global_rows = global_rows
+        self._local_rows = local_rows
+        self._matrix: PETSc.Mat | None = PETSc.Mat().createPython(
+            ((local_rows, global_rows), (local_columns, global_columns)),
+            context=self,
+            comm=source_matrix.getComm(),
+        )
+        self._matrix.setUp()
+        self._destroyed = False
+        self.audit = MappingProxyType(
+            {
+                "schema": P6_NESTED_SCHEMA,
+                "p6_matrix_free": True,
+                "p6_global_aij": False,
+                "global_dense_transfer": False,
+                "numeric_allgather": False,
+                "owns_action": True,
+                "owns_exact_diagonal": True,
+                "apply_output_ownership": "borrowed_reusable_copied_to_target",
+                "action_borrowed_output_copied": True,
+                "diagonal": "exact_constrained_jacobi",
+                "slave_row_identity": True,
+            }
+        )
+
+    @property
+    def matrix(self) -> PETSc.Mat:
+        if self._matrix is None:
+            raise RuntimeError("p6 matrix-free shell has been destroyed")
+        return self._matrix
+
+    def mult(
+        self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        if self._destroyed:
+            raise RuntimeError("p6 matrix-free shell has been destroyed")
+        # FullspaceMpcFormAction.apply returns its reusable borrowed Vec.
+        # The shell copies it and deliberately does not destroy it.
+        borrowed = self.action.apply(source)
+        borrowed.copy(target)
+
+    def getDiagonal(self, _matrix: PETSc.Mat, target: PETSc.Vec) -> None:
+        if self._destroyed:
+            raise RuntimeError("p6 matrix-free shell has been destroyed")
+        self.diagonal.copy(target)
+
+    def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
+        if self._destroyed:
+            return
+        matrix = self._matrix
+        self._matrix = None
+        self._destroyed = True
+        if matrix is not None and _matrix is None:
+            matrix.destroy()
+        diagonal = self.diagonal
+        action = self.action
+        self.diagonal = None
+        self.action = None
+        diagonal.destroy()
+        action.destroy()
+
+
+class SameMeshP6NestedVcycle:
+    """Fixed p6 -> p3 -> p1 composition with reusable PETSc work vectors."""
+
+    def __init__(
+        self,
+        p6_shell: SameMeshP6MatrixFreeShell,
+        lower_cycle: Any,
+        p63_transfer: Any,
+        p3_matrix: PETSc.Mat,
+        *,
+        smoother: Any | None = None,
+        owned_slave_indices: np.ndarray | None = None,
+        owns_lower_cycle: bool = False,
+        owns_p63_transfer: bool = False,
+        owns_p6_shell: bool = True,
+    ) -> None:
+        p6_matrix = p6_shell.matrix
+        p6_global = p6_matrix.getSize()
+        p6_local = p6_matrix.getLocalSize()
+        p3_global = p3_matrix.getSize()
+        p3_local = p3_matrix.getLocalSize()
+        if p6_global[0] != p6_global[1] or p3_global[0] != p3_global[1]:
+            raise ValueError("nested p6 cycle requires square level matrices")
+        for name in ("apply_primal_into", "apply_adjoint_into"):
+            if not callable(getattr(p63_transfer, name, None)):
+                raise TypeError(f"p6 cycle transfer lacks {name}")
+        if not callable(getattr(lower_cycle, "apply_into", None)):
+            raise TypeError("p6 cycle requires an existing lower V-cycle")
+        slaves = (
+            np.empty(0, dtype=np.int32)
+            if owned_slave_indices is None
+            else np.asarray(owned_slave_indices, dtype=np.int32)
+        )
+        if (
+            slaves.ndim != 1
+            or np.any(slaves < 0)
+            or np.any(slaves >= int(p6_local[1]))
+        ):
+            raise ValueError("p6 owned slave indices are outside target storage")
+        if np.unique(slaves).size != slaves.size:
+            raise ValueError("p6 owned slave indices are duplicated")
+        self.p6_shell = p6_shell
+        self.lower_cycle = lower_cycle
+        self.p63_transfer = p63_transfer
+        self.p3_matrix = p3_matrix
+        self._owns_lower_cycle = bool(owns_lower_cycle)
+        self._owns_p63_transfer = bool(owns_p63_transfer)
+        self._owns_p6_shell = bool(owns_p6_shell)
+        self._owned_slave_indices = np.ascontiguousarray(slaves).copy()
+        self._owned_slave_indices.flags.writeable = False
+        self._p6_rhs_layout = (int(p6_global[0]), int(p6_local[0]))
+        self._p6_target_layout = (int(p6_global[1]), int(p6_local[1]))
+        self._p3_rhs_layout = (int(p3_global[0]), int(p3_local[0]))
+        self._p3_target_layout = (int(p3_global[1]), int(p3_local[1]))
+        self._work: list[PETSc.Vec] = []
+        self.smoother = None
+        self._owns_smoother = smoother is None
+        self._destroyed = False
+        self.apply_count = 0
+        self._p63_primal_total = 0
+        self._p63_adjoint_total = 0
+        self._lower_cycle_total = 0
+        self._smoother_apply_total = 0
+        try:
+            if smoother is None:
+                from .fullspace_lor_edge_geometric_mg_global import (
+                    FixedChebyshevJacobiPETSc,
+                )
+
+                self.smoother = FixedChebyshevJacobiPETSc(p6_matrix)
+            else:
+                self.smoother = smoother
+            self._allocate_work()
+            self.audit = MappingProxyType(
+                {
+                    "schema": P6_NESTED_SCHEMA,
+                    "levels": list(P6_NESTED_LEVELS),
+                    "pairs": [list(pair) for pair in P6_NESTED_PAIRS],
+                    "p6_matrix_free": True,
+                    "p6_global_aij": False,
+                    "p3_sparse_allowed": True,
+                    "global_dense_transfer": False,
+                    "numeric_allgather": False,
+                    "smoother": "fixed_degree_3_chebyshev_jacobi",
+                    "smoother_instances": 1,
+                    "power_steps": 10,
+                    "pre_smoother_count": 1,
+                    "post_smoother_count": 1,
+                    "p63_primal_count": 1,
+                    "p63_adjoint_count": 1,
+                    "lower_cycle_count": 1,
+                    "p1_exact_factor": True,
+                    "retains_per_apply_history": False,
+                    "owned_slave_zeroing": True,
+                    "work_vector_count": len(self._work),
+                    "destroy_order": [
+                        "p6_smoother",
+                        "p6_cycle_work_vectors",
+                        "lower_cycle_if_owned",
+                        "p63_transfer_if_owned",
+                        "p6_shell_if_owned",
+                    ],
+                }
+            )
+            self.last_apply_facts: dict[str, object] = {}
+        except Exception:
+            self.destroy()
+            raise
+
+    def _allocate_work(self) -> None:
+        matrix = self.p6_shell.matrix
+
+        def add(vector: PETSc.Vec) -> PETSc.Vec:
+            self._work.append(vector)
+            return vector
+
+        self._p6_pre = add(matrix.createVecRight())
+        self._p6_action = add(matrix.createVecLeft())
+        self._p6_residual = add(matrix.createVecLeft())
+        self._p6_correction = add(matrix.createVecRight())
+        self._p6_solution = add(matrix.createVecRight())
+        self._p6_post_action = add(matrix.createVecLeft())
+        self._p6_post_residual = add(matrix.createVecLeft())
+        self._p6_post_correction = add(matrix.createVecRight())
+        self._p3_rhs = add(self.p3_matrix.createVecLeft())
+        self._p3_correction = add(self.p3_matrix.createVecRight())
+
+    @property
+    def matrix(self) -> PETSc.Mat:
+        return self.p6_shell.matrix
+
+    @property
+    def work_vectors(self) -> tuple[PETSc.Vec, ...]:
+        return tuple(self._work)
+
+    def _require_vector(
+        self, vector: PETSc.Vec, layout: tuple[int, int], name: str
+    ) -> None:
+        if (int(vector.getSize()), int(vector.getLocalSize())) != layout:
+            raise ValueError(f"{name} vector layout does not match the fixed cycle")
+
+    def _zero_owned_slaves(self, vector: PETSc.Vec) -> None:
+        if self._owned_slave_indices.size:
+            vector.array[self._owned_slave_indices] = 0.0 + 0.0j
+
+    def _owned_slave_max(self, vector: PETSc.Vec) -> float:
+        local = (
+            float(np.max(np.abs(vector.array[self._owned_slave_indices])))
+            if self._owned_slave_indices.size
+            else 0.0
+        )
+        comm = self.matrix.getComm().tompi4py()
+        return float(comm.allreduce(local, op=MPI.MAX))
+
+    def apply_into(self, rhs: PETSc.Vec, target: PETSc.Vec) -> dict[str, object]:
+        if self._destroyed:
+            raise RuntimeError("p6 nested V-cycle has been destroyed")
+        self._require_vector(rhs, self._p6_rhs_layout, "p6 dual residual")
+        self._require_vector(target, self._p6_target_layout, "p6 primal target")
+        order = ["p6_pre"]
+        self.smoother.apply_into(rhs, self._p6_pre)
+        self._smoother_apply_total += 1
+        self.matrix.mult(self._p6_pre, self._p6_action)
+        rhs.copy(self._p6_residual)
+        self._p6_residual.axpy(-1.0, self._p6_action)
+        order.append("p6_residual")
+        self.p63_transfer.apply_adjoint_into(
+            self._p6_residual, self._p3_rhs
+        )
+        self._p63_adjoint_total += 1
+        order.append("p6_to_p3_adjoint")
+        lower_facts = self.lower_cycle.apply_into(
+            self._p3_rhs, self._p3_correction
+        )
+        self._lower_cycle_total += 1
+        p1_solve_count = int(lower_facts["p1_solve_count"])
+        if p1_solve_count != 1:
+            raise RuntimeError("lower p3-to-p1 cycle did not perform one p1 solve")
+        order.append("p3_to_p1_cycle")
+        self.p63_transfer.apply_primal_into(
+            self._p3_correction, self._p6_correction
+        )
+        self._p63_primal_total += 1
+        self._zero_owned_slaves(self._p6_correction)
+        self._p6_pre.copy(self._p6_solution)
+        self._p6_solution.axpy(1.0, self._p6_correction)
+        order.append("p3_to_p6_primal")
+        self.matrix.mult(self._p6_solution, self._p6_post_action)
+        rhs.copy(self._p6_post_residual)
+        self._p6_post_residual.axpy(-1.0, self._p6_post_action)
+        self.smoother.apply_into(
+            self._p6_post_residual, self._p6_post_correction
+        )
+        self._smoother_apply_total += 1
+        self._p6_solution.axpy(1.0, self._p6_post_correction)
+        self._zero_owned_slaves(self._p6_solution)
+        self._p6_solution.copy(target)
+        order.append("p6_post")
+        output_norm = float(target.norm())
+        owned_slave_max = self._owned_slave_max(target)
+        if not np.isfinite(output_norm) or not np.isfinite(owned_slave_max):
+            raise RuntimeError("p6 nested V-cycle output is non-finite")
+        if owned_slave_max != 0.0:
+            raise RuntimeError("p6 nested V-cycle output is not slave-zero")
+        self.apply_count += 1
+        facts: dict[str, object] = {
+            "order": tuple(order),
+            "p6_pre_smoother_count": 1,
+            "p6_post_smoother_count": 1,
+            "p6_smoother_apply_count": 2,
+            "p6_smoother_apply_total": int(self._smoother_apply_total),
+            "p63_adjoint_count": 1,
+            "p63_primal_count": 1,
+            "p63_adjoint_total": int(self._p63_adjoint_total),
+            "p63_primal_total": int(self._p63_primal_total),
+            "lower_cycle_count": 1,
+            "lower_cycle_total": int(self._lower_cycle_total),
+            "p1_solve_count": p1_solve_count,
+            "output_finite": True,
+            "owned_slave_max": owned_slave_max,
+            "apply_count": int(self.apply_count),
+            "lower_cycle_facts": dict(lower_facts),
+        }
+        self.last_apply_facts = facts
+        return facts
+
+    def apply(self, rhs: PETSc.Vec) -> PETSc.Vec:
+        target = self.matrix.createVecRight()
+        try:
+            self.apply_into(rhs, target)
+        except Exception:
+            target.destroy()
+            raise
+        return target
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        smoother = self.smoother
+        self.smoother = None
+        if self._owns_smoother and smoother is not None:
+            smoother.destroy()
+        for vector in self._work:
+            vector.destroy()
+        self._work = []
+        if self._owns_lower_cycle:
+            self.lower_cycle.destroy()
+        if self._owns_p63_transfer:
+            self.p63_transfer.destroy()
+        if self._owns_p6_shell:
+            self.p6_shell.destroy()
+        self.lower_cycle = None
+        self.p63_transfer = None
+        self.p3_matrix = None
