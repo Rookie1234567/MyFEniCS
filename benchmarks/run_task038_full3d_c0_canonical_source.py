@@ -20,8 +20,8 @@ import numpy as np
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 STAGE = "c0"
 MODULE = "benchmarks.run_task038_full3d_c0_canonical_source"
-SCHEMA = "task038.full3d.canonical-source.c0-record.v1"
-MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v1"
+SCHEMA = "task038.full3d.canonical-source.c0-record.v2"
+MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v2"
 C0_CASES = ("p3-h50-mpi1", "p3-h50-mpi2")
 C0_DEGREE = 3
 C0_H_NM = 50.0

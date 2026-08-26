@@ -6,12 +6,17 @@ import json
 
 import numpy as np
 from benchmarks.run_task038_full3d_c0_canonical_source import (
+    MARKER_SCHEMA as C0_MARKER_SCHEMA,
+    SCHEMA as C0_RECORD_SCHEMA,
     _c0_marker,
     _packet_artifact,
 )
 from benchmarks.task038_full3d_c0_canonical_source_checker import (
     ALPHA,
     BETA,
+    CHECK_SCHEMA as C0_CHECK_SCHEMA,
+    MARKER_SCHEMA as C0_CHECK_MARKER_SCHEMA,
+    SCHEMA as C0_CHECK_RECORD_SCHEMA,
     PACKET_ROLES,
     SOURCE2_SCALE,
     _check_packet_relations,
@@ -58,6 +63,12 @@ def test_c0_marker_uses_explicit_serializer_binding(tmp_path) -> None:
         answer=7,
     )
     payload = json.loads(marker_path.read_text())
+    assert C0_RECORD_SCHEMA == "task038.full3d.canonical-source.c0-record.v2"
+    assert C0_MARKER_SCHEMA == "task038.full3d.canonical-source.c0-marker.v2"
+    assert C0_CHECK_RECORD_SCHEMA == C0_RECORD_SCHEMA
+    assert C0_CHECK_MARKER_SCHEMA == C0_MARKER_SCHEMA
+    assert C0_CHECK_SCHEMA == "task038.full3d.canonical-source.c0-check.v3"
+    assert payload["schema"] == C0_MARKER_SCHEMA
     assert payload["facts"] == {"answer": 7, "raw_dir": "worker-raw"}
 
 

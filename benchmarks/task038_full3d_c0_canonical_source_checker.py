@@ -24,9 +24,9 @@ from benchmarks.task038_full3d_interlevel_spectral_checker import (
 
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_c0_canonical_source"
-SCHEMA = "task038.full3d.canonical-source.c0-record.v1"
-CHECK_SCHEMA = "task038.full3d.canonical-source.c0-check.v2"
-MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v1"
+SCHEMA = "task038.full3d.canonical-source.c0-record.v2"
+CHECK_SCHEMA = "task038.full3d.canonical-source.c0-check.v3"
+MARKER_SCHEMA = "task038.full3d.canonical-source.c0-marker.v2"
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 SHARD_SCHEMA = "task037.canonical-vector-shard.v1"
 MANIFEST_SCHEMA = "task037.canonical-vector-manifest.v1"
