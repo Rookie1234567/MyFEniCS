@@ -491,6 +491,29 @@ class SameMeshHcurlOwnerTransfer:
         nontrivial_present = bool(
             self.comm.allreduce(int(nontrivial > 0), op=MPI.LOR)
         )
+        fine_mpc_index_map = fine_floquet.mpc.function_space.dofmap.index_map
+        fine_owned_scalar_size = int(fine_mpc_index_map.size_local) * int(
+            fine_floquet.mpc.function_space.dofmap.index_map_bs
+        )
+        fine_mpc_slaves = np.asarray(fine_floquet.mpc.slaves, dtype=np.int64)
+        fine_owned_mpc_count = int(
+            np.count_nonzero(
+                (fine_mpc_slaves >= 0) & (fine_mpc_slaves < fine_owned_scalar_size)
+            )
+        )
+        coarse_mpc_index_map = coarse_floquet.mpc.function_space.dofmap.index_map
+        coarse_owned_scalar_size = int(coarse_mpc_index_map.size_local) * int(
+            coarse_floquet.mpc.function_space.dofmap.index_map_bs
+        )
+        coarse_mpc_slaves = np.asarray(
+            coarse_floquet.mpc.slaves, dtype=np.int64
+        )
+        coarse_owned_mpc_count = int(
+            np.count_nonzero(
+                (coarse_mpc_slaves >= 0)
+                & (coarse_mpc_slaves < coarse_owned_scalar_size)
+            )
+        )
         self._audit = MappingProxyType(
             {
                 "schema": OWNER_RUNTIME_SCHEMA,
@@ -523,10 +546,10 @@ class SameMeshHcurlOwnerTransfer:
                 "coarse_phase_application": coarse_phase["phase_application"],
                 "coarse_dual_reduction": "C^H_once",
                 "fine_mpc_slave_count_global": int(
-                    self.comm.allreduce(len(fine_floquet.mpc.slaves), op=MPI.SUM)
+                    self.comm.allreduce(fine_owned_mpc_count, op=MPI.SUM)
                 ),
                 "coarse_mpc_slave_count_global": int(
-                    self.comm.allreduce(len(coarse_floquet.mpc.slaves), op=MPI.SUM)
+                    self.comm.allreduce(coarse_owned_mpc_count, op=MPI.SUM)
                 ),
                 "global_transfer_matrix": False,
                 "numeric_allgather": False,

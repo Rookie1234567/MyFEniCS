@@ -228,6 +228,24 @@ def test_owner_setup_and_explicit_oracle(context):
     assert audit["coarse_lagrange_variant"] == "legendre"
     assert audit["fine_global_rows"] == int(v3.dofmap.index_map.size_global)
     assert audit["coarse_global_rows"] == int(v1.dofmap.index_map.size_global)
+    for floquet, field_audit_key, expected in (
+        (f3, "fine_mpc_slave_count_global", 480),
+        (f1, "coarse_mpc_slave_count_global", 60),
+    ):
+        index_map = floquet.mpc.function_space.dofmap.index_map
+        owned_scalar_size = int(index_map.size_local) * int(
+            floquet.mpc.function_space.dofmap.index_map_bs
+        )
+        slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
+        owned_count = int(
+            np.count_nonzero(
+                (slaves >= 0) & (slaves < owned_scalar_size)
+            )
+        )
+        global_owned_count = int(
+            MPI.COMM_WORLD.allreduce(owned_count, op=MPI.SUM)
+        )
+        assert audit[field_audit_key] == global_owned_count == expected
     assert audit["global_transfer_matrix"] is False
     assert audit["numeric_allgather"] is False
     assert audit["static_condensation"] is False
