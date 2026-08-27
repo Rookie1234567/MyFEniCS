@@ -290,6 +290,61 @@ def test_checkpoint_and_watchdog_contract_helpers() -> None:
     assert "args.worker_raw_dir.mkdir" not in Path(runner.__file__).read_text(encoding="utf-8")
 
 
+def test_watchdog_retries_one_transient_unreadable_authority(monkeypatch: pytest.MonkeyPatch) -> None:
+    unreadable = {
+        "process_tree": {"rss_bytes": 100, "swap_bytes": 0, "all_status_readable": False, "pids": [7]}
+    }
+    readable = {
+        "process_tree": {"rss_bytes": 200, "swap_bytes": 0, "all_status_readable": True, "pids": [7]}
+    }
+    calls: list[int] = []
+    sleeps: list[float] = []
+
+    def sample(pid: int) -> dict[str, object]:
+        calls.append(pid)
+        return unreadable if len(calls) == 1 else readable
+
+    class LiveProcess:
+        pid = 123
+
+        def poll(self) -> None:
+            return None
+
+    monkeypatch.setattr(runner, "resource_authority_sample", sample)
+    monkeypatch.setattr(runner.time, "sleep", sleeps.append)
+    authority, retry_count, initial = runner._watchdog_authority_with_retry(LiveProcess())
+    assert calls == [123, 123]
+    assert sleeps == [0.01]
+    assert authority is readable
+    assert retry_count == 1
+    assert initial == unreadable["process_tree"]
+
+
+def test_watchdog_keeps_second_unreadable_authority_as_stop(monkeypatch: pytest.MonkeyPatch) -> None:
+    unreadable = {
+        "process_tree": {"rss_bytes": 100, "swap_bytes": 0, "all_status_readable": False, "pids": [7]}
+    }
+    calls: list[int] = []
+
+    def sample(pid: int) -> dict[str, object]:
+        calls.append(pid)
+        return unreadable
+
+    class LiveProcess:
+        pid = 456
+
+        def poll(self) -> None:
+            return None
+
+    monkeypatch.setattr(runner, "resource_authority_sample", sample)
+    monkeypatch.setattr(runner.time, "sleep", lambda seconds: None)
+    authority, retry_count, initial = runner._watchdog_authority_with_retry(LiveProcess())
+    assert calls == [456, 456]
+    assert retry_count == 1
+    assert initial == unreadable["process_tree"]
+    assert runner._watchdog_stop_reason(authority) == "authority_unreadable"
+
+
 def test_owner_identity_and_boundary_facts_are_order_independent_and_cumulative() -> None:
     assert runner._owner_key_identity(
         np.asarray(["owner:10", "owner:2"]), np.asarray(["owner:2", "owner:10"])
@@ -400,6 +455,8 @@ def test_watchdog_main_subprocess_natural_closeout_and_fail_closed_reuse(tmp_pat
     assert compact["no_orphan"] is True
     assert compact["returncode"] == 0
     assert compact["watchdog_rss_limit_bytes"] == 2_000_000_000
+    assert compact["authority_readability_retry_count"] == 0
+    assert compact["authority_readability_recovered_count"] == 0
     assert compact["terminal_exit_race_discard_count"] == 0
     assert not worker_raw.exists()
     second = subprocess.run(command, cwd=repo, capture_output=True, text=True, check=False)

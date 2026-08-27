@@ -839,6 +839,19 @@ def _watchdog_terminal_exit_race(process: Any, reason: str | None) -> bool:
     return reason == "authority_unreadable" and process.poll() is not None
 
 
+def _watchdog_authority_with_retry(
+    process: Any,
+) -> tuple[Mapping[str, Any], int, dict[str, Any] | None]:
+    authority = resource_authority_sample(process.pid)
+    process_tree = authority.get("process_tree", {})
+    if not bool(process_tree.get("all_status_readable", False)) and process.poll() is None:
+        initial_unreadable_process_tree = _jsonable(process_tree)
+        time.sleep(0.01)
+        authority = resource_authority_sample(process.pid)
+        return authority, 1, initial_unreadable_process_tree
+    return authority, 0, None
+
+
 def _validate_watchdog_paths(worker_raw_dir: Path, watchdog_paths: tuple[Path, ...]) -> None:
     worker_root = worker_raw_dir.resolve()
     for path in watchdog_paths:
@@ -896,15 +909,20 @@ def _watchdog_main(argv: list[str]) -> int:
             **worker_process_group_popen_kwargs(),
         )
         while process.poll() is None:
-            authority = resource_authority_sample(process.pid)
+            authority, retry_count, initial_unreadable_process_tree = (
+                _watchdog_authority_with_retry(process)
+            )
             sample = {
                 "wall_time_ns": time.time_ns(),
                 "elapsed_seconds": time.monotonic() - started,
                 "authority": _jsonable(authority),
+                "authority_readability_retry_count": retry_count,
             }
+            if initial_unreadable_process_tree is not None:
+                sample["initial_unreadable_process_tree"] = initial_unreadable_process_tree
             samples.append(sample)
             reason = _watchdog_stop_reason(authority, args.watchdog_rss_limit_bytes)
-            if _watchdog_terminal_exit_race(process, reason):
+            if retry_count == 0 and _watchdog_terminal_exit_race(process, reason):
                 samples.pop()
                 terminal_exit_race_discard_count = 1
                 stop_reason = "natural_exit"
@@ -931,6 +949,14 @@ def _watchdog_main(argv: list[str]) -> int:
         for sample in samples
         if "authority" in sample
     ]
+    authority_readability_retry_count = sum(
+        sample["authority_readability_retry_count"] for sample in samples
+    )
+    authority_readability_recovered_count = sum(
+        sample["authority_readability_retry_count"] == 1
+        and bool(sample["authority"]["process_tree"]["all_status_readable"])
+        for sample in samples
+    )
     compact = {
         "schema": WATCHDOG_SCHEMA,
         "source_sha": str(args.source_sha),
@@ -952,6 +978,8 @@ def _watchdog_main(argv: list[str]) -> int:
         "max_process_tree_swap_bytes": max(swap_values, default=-1),
         "watchdog_poll_seconds": WATCHDOG_POLL_SECONDS,
         "watchdog_rss_limit_bytes": int(args.watchdog_rss_limit_bytes),
+        "authority_readability_retry_count": authority_readability_retry_count,
+        "authority_readability_recovered_count": authority_readability_recovered_count,
         "terminal_exit_race_discard_count": terminal_exit_race_discard_count,
         "raw_sha256": _sha256(args.watchdog_raw),
     }
