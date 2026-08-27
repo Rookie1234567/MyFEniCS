@@ -1,0 +1,111 @@
+{
+  "schema": "task038.full3d.same-mesh-hcurl-pmg.p6-setup-jit-attempt.v1",
+  "classification": "worker_ffcx_jit_shared_cache_stale_source_startup_failure_before_setup",
+  "source": {
+    "sha": "8a4afc3bc6f48ca7e01294b0b403c8a23f564500",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "worktree_clean_before_attempt": true,
+    "expected_mpi_size": 1,
+    "input": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat"
+  },
+  "worker_command": [
+    "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "-m",
+    "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup",
+    "--stage",
+    "c1-p6-setup",
+    "--case",
+    "p6-h10-mpi1",
+    "--raw-dir",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v3/8a4afc3bc6f48ca7e01294b0b403c8a23f564500/p6-h10-mpi1/worker_raw",
+    "--record",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v3.json",
+    "--expected-source-sha",
+    "8a4afc3bc6f48ca7e01294b0b403c8a23f564500",
+    "--expected-mpi-size",
+    "1",
+    "--input",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat"
+  ],
+  "markers": {
+    "names": ["paths_ready"],
+    "last_marker": "paths_ready",
+    "marker_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v3/8a4afc3bc6f48ca7e01294b0b403c8a23f564500/p6-h10-mpi1/worker_raw/markers",
+    "paths_ready": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v3/8a4afc3bc6f48ca7e01294b0b403c8a23f564500/p6-h10-mpi1/worker_raw/markers/paths_ready.json",
+      "bytes": 390,
+      "sha256": "57e24bcdbf52fbcaad9ce78118b3ce3449abc8b6caaf0f6df4f38f9f37910554"
+    }
+  },
+  "stages": {
+    "bundle": "not_run",
+    "probe": "not_run",
+    "reserve": "not_run",
+    "setup": "not_run",
+    "numerical": "not_run",
+    "checker": "not_run"
+  },
+  "traceback": {
+    "phase": "build_p6_same_mesh_setup/fem.form(p6_form)",
+    "shared_cache_source": "/tmp/myfenics-xdg-cache-1000/fenics/libffcx_forms_04bca8cf60607d94e569e68721d47f5b5dc6c483.c",
+    "first_exception": "FileExistsError: [Errno 17] File exists",
+    "final_exception": "TimeoutError: JIT compilation timed out, probably due to a failed previous compile"
+  },
+  "watchdog": {
+    "schema": "task038.lor-native-complex-hx.foundation-e-watchdog.v1",
+    "returncode": 1,
+    "stop_reason": "natural_exit",
+    "natural_exit": false,
+    "no_orphan": true,
+    "sample_count": 54,
+    "all_status_readable": true,
+    "authority_readability_retry_count": 0,
+    "authority_readability_recovered_count": 0,
+    "peak_process_tree_rss_bytes": 291864576,
+    "max_process_tree_swap_bytes": 0,
+    "watchdog_poll_seconds": 0.25,
+    "watchdog_rss_limit_bytes": 2000000000,
+    "dedicated_job_cgroup": false,
+    "init_scope_swap_bytes": 4935680,
+    "process_tree_swap_gate": 0,
+    "non_dedicated_and_global_swap": "diagnostic_only_not_process_tree_gate"
+  },
+  "artifact_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v3/8a4afc3bc6f48ca7e01294b0b403c8a23f564500/p6-h10-mpi1",
+  "artifacts": {
+    "watchdog_raw": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v3/8a4afc3bc6f48ca7e01294b0b403c8a23f564500/p6-h10-mpi1/watchdog.raw.jsonl",
+      "bytes": 47559,
+      "sha256": "dc474bf825b1a0926a28f67feee36e98e73352c6224063857d15088663ab019a"
+    },
+    "watchdog_compact": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v3_watchdog.json",
+      "bytes": 2091,
+      "sha256": "955fcbcb87040a96dec239e6d824a366e5dfdb988be1febdecbd6abf9f0fd5f3"
+    },
+    "worker_log": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v3/8a4afc3bc6f48ca7e01294b0b403c8a23f564500/p6-h10-mpi1/worker.log",
+      "bytes": 3024,
+      "sha256": "f78f84b126ee549e663d39e9e7205706455babedd78fef9e52e84e238d3f5386"
+    },
+    "paths_ready_marker": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v3/8a4afc3bc6f48ca7e01294b0b403c8a23f564500/p6-h10-mpi1/worker_raw/markers/paths_ready.json",
+      "bytes": 390,
+      "sha256": "57e24bcdbf52fbcaad9ce78118b3ce3449abc8b6caaf0f6df4f38f9f37910554"
+    }
+  },
+  "outputs": {
+    "worker_record": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v3.json",
+      "exists": false
+    },
+    "checker_output": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v3_checker.json",
+      "exists": false
+    }
+  },
+  "gate_boundary": {
+    "actual_memory_gate": "not_triggered",
+    "actual_numerical_gate": "not_triggered",
+    "preserved_prior_attempts": "v1_v2_v3_artifacts_unchanged"
+  }
+}
