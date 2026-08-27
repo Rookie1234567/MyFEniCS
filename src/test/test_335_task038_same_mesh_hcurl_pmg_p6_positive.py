@@ -262,8 +262,11 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
             "pc_apply_count": 525,
             "explicit_action_count": 26,
             "driver_explicit_action_count": 26,
+            "rhs_action_count": 2,
+            "final_action_recheck_count": 1,
             "extra_action_count": 3,
             "explicit_action_count_total": 29,
+            "action_calls_total": 553,
             "ksp_destroy_count": 25,
             "elapsed_seconds": 1.0,
             "pc_apply_facts": pc_rows,
@@ -380,6 +383,13 @@ def _checker_mutation_case(tmp_path: Path, mutation: str) -> None:
         marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
         marker_value["facts"]["record_sha256"] = _sha(record_path)
         _write_json(record_marker, marker_value)
+    elif mutation == "action_ledger":
+        record["krylov"]["action_calls_total"] = 1
+        _write_json(record_path, record)
+        record_marker = record_path.parent / "worker_raw/markers/record_written.json"
+        marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
+        marker_value["facts"]["record_sha256"] = _sha(record_path)
+        _write_json(record_marker, marker_value)
     else:
         raise AssertionError(mutation)
     result = checker.check_record(record_path, watchdog_path, SOURCE_SHA)
@@ -388,7 +398,7 @@ def _checker_mutation_case(tmp_path: Path, mutation: str) -> None:
     json.dumps(result, allow_nan=False)
 
 
-@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash"))
+@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash", "action_ledger"))
 def test_checker_mutation_cases(tmp_path: Path, mutation: str) -> None:
     _checker_mutation_case(tmp_path, mutation)
 

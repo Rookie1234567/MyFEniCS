@@ -28,8 +28,8 @@ MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p6_positive"
 STAGE = "c1-p6-positive"
 CASE = "p6-h10-mpi1"
 SOURCES = ("random", "gradient", "curl", "checkerboard")
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v1"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v1"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v2"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v2"
 MARKERS = (
     "paths_ready",
     "bundle_built",
@@ -339,18 +339,23 @@ def _record(
     result: Mapping[str, Any],
     pc_apply_facts: list[Mapping[str, Any]],
     npz_facts: Mapping[str, Any],
-    extra_action_count: int,
+    action_calls: int,
 ) -> dict[str, Any]:
     krylov = {
         key: _jsonable(value)
         for key, value in result.items()
         if key != "final_solution"
     }
-    krylov["driver_explicit_action_count"] = int(result["explicit_action_count"])
-    krylov["extra_action_count"] = int(extra_action_count)
-    krylov["explicit_action_count_total"] = int(
-        result["explicit_action_count"] + extra_action_count
-    )
+    rhs_action_count = 2
+    final_action_recheck_count = 1
+    driver_explicit_action_count = int(result["explicit_action_count"])
+    extra_action_count = rhs_action_count + final_action_recheck_count
+    krylov["driver_explicit_action_count"] = driver_explicit_action_count
+    krylov["rhs_action_count"] = rhs_action_count
+    krylov["final_action_recheck_count"] = final_action_recheck_count
+    krylov["extra_action_count"] = extra_action_count
+    krylov["explicit_action_count_total"] = driver_explicit_action_count + extra_action_count
+    krylov["action_calls_total"] = int(action_calls + rhs_action_count)
     krylov["pc_apply_facts"] = _jsonable(pc_apply_facts)
     return {
         "schema": RECORD_SCHEMA,
@@ -690,7 +695,7 @@ def run_worker(args: argparse.Namespace) -> None:
             result=result,
             pc_apply_facts=pc_apply_facts,
             npz_facts=npz_facts,
-            extra_action_count=action_calls - int(result["explicit_action_count"]),
+            action_calls=action_calls,
         )
         record["source"]["owned_slave_indices"] = [int(value) for value in slaves]
         record["source"]["full_vector"]["array_sha256"] = _array_sha(source_before)
@@ -699,9 +704,6 @@ def run_worker(args: argparse.Namespace) -> None:
         record["krylov"]["final_true_residual_facts"] = _vector_facts(
             final_residual_values, slaves
         )
-        record["krylov"]["action_calls_total"] = int(action_calls)
-        record["krylov"]["rhs_action_count"] = 2
-        record["krylov"]["final_action_recheck_count"] = 1
         _emit_marker(
             raw_dir,
             "solve_complete",

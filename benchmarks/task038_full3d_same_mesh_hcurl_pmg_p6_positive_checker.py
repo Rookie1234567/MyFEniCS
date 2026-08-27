@@ -22,9 +22,9 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 STAGE = "c1-p6-positive"
 CASE = "p6-h10-mpi1"
 SOURCES = ("random", "gradient", "curl", "checkerboard")
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v1"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v1"
-CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-check.v1"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v2"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v2"
+CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-check.v2"
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 MARKERS = (
     "paths_ready",
@@ -465,8 +465,29 @@ def _check_krylov(record: Mapping[str, Any], errors: list[str], gates: list[str]
         _error(errors, "KSP destroy count does not equal the cycle count")
     if krylov.get("driver_explicit_action_count") != len(cycles) + 1:
         _error(errors, "driver explicit action count is not initial-plus-cycle")
-    if krylov.get("extra_action_count") != 3 or krylov.get("explicit_action_count_total") != len(cycles) + 4:
-        _error(errors, "extra action count does not close RHS/repeat/final recheck")
+    action_fields = {
+        "driver_explicit_action_count": krylov.get("driver_explicit_action_count"),
+        "rhs_action_count": krylov.get("rhs_action_count"),
+        "final_action_recheck_count": krylov.get("final_action_recheck_count"),
+        "extra_action_count": krylov.get("extra_action_count"),
+        "explicit_action_count_total": krylov.get("explicit_action_count_total"),
+        "action_calls_total": krylov.get("action_calls_total"),
+    }
+    if not all(type(value) is int for value in action_fields.values()):
+        _error(errors, "action ledger fields are not integers")
+    else:
+        rhs_action_count = action_fields["rhs_action_count"]
+        final_action_recheck_count = action_fields["final_action_recheck_count"]
+        extra_action_count = action_fields["extra_action_count"]
+        driver_explicit_action_count = action_fields["driver_explicit_action_count"]
+        explicit_action_count_total = action_fields["explicit_action_count_total"]
+        action_calls_total = action_fields["action_calls_total"]
+        if extra_action_count != rhs_action_count + final_action_recheck_count:
+            _error(errors, "extra action count does not close RHS/repeat/final recheck")
+        if explicit_action_count_total != driver_explicit_action_count + extra_action_count:
+            _error(errors, "explicit action total does not close driver and extra actions")
+        if action_calls_total != matvec_total + explicit_action_count_total:
+            _error(errors, "total action calls do not close matvec and explicit actions")
     final = krylov.get("final_true_residual")
     if not _finite_number(final):
         _gate(gates, "final explicit true residual is not finite")
