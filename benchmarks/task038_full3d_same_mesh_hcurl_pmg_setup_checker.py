@@ -19,9 +19,9 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup"
 STAGE = "c1-p6-setup"
 CASE = "p6-h10-mpi1"
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v2"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v2"
-CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-check.v1"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v3"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v3"
+CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-check.v2"
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 PROBE_SOURCE_SCHEMA = "task038.v13.c0.physical-canonical-source.v1"
 PROBE_SOURCE_GENERATION = "physical_canonical_key_sha256_v1"
@@ -81,8 +81,15 @@ def _finite(value: Any) -> bool:
 
 
 def _relative(left: np.ndarray, right: np.ndarray) -> float:
-    denominator = max(float(np.linalg.norm(right)), np.finfo(float).tiny)
-    return float(np.linalg.norm(left - right) / denominator)
+    with np.errstate(over="ignore", invalid="ignore"):
+        numerator = float(np.linalg.norm(left - right))
+        denominator = float(np.linalg.norm(right))
+    if not np.isfinite(numerator) or not np.isfinite(denominator):
+        return float(np.finfo(float).max)
+    if denominator == 0.0:
+        return 0.0 if numerator == 0.0 else float(np.finfo(float).max)
+    value = numerator / denominator
+    return value if np.isfinite(value) else float(np.finfo(float).max)
 
 
 def _error(errors: list[str], message: str) -> None:

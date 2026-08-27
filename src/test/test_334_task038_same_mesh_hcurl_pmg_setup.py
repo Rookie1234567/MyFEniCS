@@ -12,18 +12,22 @@ import numpy as np
 import pytest
 
 from benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup import (
+    ALPHA,
+    BETA,
     CASE,
     MARKER_SCHEMA,
     MODULE,
     RECORD_SCHEMA,
     STAGE,
     _emit_marker,
+    _populate_probe_combinations,
     _prepare_isolated_jit_cache,
     validate_record_staging,
     validate_setup_profile,
 )
 from benchmarks.task038_full3d_same_mesh_hcurl_pmg_setup_checker import (
     CHECKER_SCHEMA,
+    _relative,
     check_record,
 )
 
@@ -388,6 +392,27 @@ def test_setup_profile_and_staging_contracts(
         (raw_dir / "markers" / "paths_ready.json").read_text(encoding="utf-8")
     )
     assert marker["facts"]["worker_raw_dir"] == str(raw_dir)
+    class FakeVec:
+        def __init__(self, values: object) -> None:
+            self.values = np.asarray(values, dtype=np.complex128)
+
+        def set(self, value: complex) -> None:
+            self.values[...] = value
+
+        def axpy(self, alpha: complex, other: "FakeVec") -> None:
+            self.values[...] += alpha * other.values
+
+    x = FakeVec([1.0 + 2.0j, -0.5 + 0.25j])
+    y = FakeVec([0.75 - 1.0j, 2.0 + 0.5j])
+    vectors = [x, y, FakeVec([0.0, 0.0]), FakeVec([0.0, 0.0]), FakeVec([0.0, 0.0])]
+    x_before = x.values.copy()
+    y_before = y.values.copy()
+    _populate_probe_combinations(vectors)
+    np.testing.assert_array_equal(x.values, x_before)
+    np.testing.assert_array_equal(y.values, y_before)
+    np.testing.assert_allclose(vectors[2].values, ALPHA * x_before + BETA * y_before)
+    np.testing.assert_allclose(vectors[3].values, ALPHA * x_before)
+    np.testing.assert_allclose(vectors[4].values, BETA * y_before)
     with pytest.raises(ValueError):
         invalid = tmp_path / "invalid" / "worker_raw"
         validate_record_staging(invalid, invalid)
@@ -401,6 +426,10 @@ def test_checker_accepts_valid_setup_record(tmp_path: Path) -> None:
     assert result["classification"] == "C1_P6_SETUP_PASS"
     assert result["metrics"]["probe"]["local_entries"] == 4
     assert result["resource"]["retained_sample_count"] == 1
+    assert json.dumps(result, allow_nan=False)
+    assert np.isfinite(_relative(np.asarray([1.0 + 0.0j]), np.asarray([0.0 + 0.0j])))
+    assert _relative(np.asarray([1.0 + 0.0j]), np.asarray([0.0 + 0.0j])) > 1e-13
+    assert _relative(np.zeros(1, dtype=np.complex128), np.zeros(1, dtype=np.complex128)) == 0.0
 
 
 def test_checker_fails_closed_for_reserve_and_resource_mutations(tmp_path: Path) -> None:
@@ -442,6 +471,28 @@ def test_checker_fails_closed_for_reserve_and_resource_mutations(tmp_path: Path)
     assert result["passed"] is False
     assert result["classification"] == "C1_P6_SETUP_GATE_FAIL"
     assert result["contract_errors"] == []
+
+    record_path, watchdog_path, record = _valid_case(tmp_path / "zero-source")
+    npz_path = Path(record["raw_dir"]) / "setup_probes.npz"
+    with np.load(npz_path, allow_pickle=False) as data:
+        before = np.asarray(data["input_before"])
+        outputs = np.asarray(data["outputs"])
+    before[0:2] = 0.0
+    np.savez_compressed(
+        npz_path,
+        input_before=before,
+        input_after=before.copy(),
+        outputs=outputs,
+    )
+    record["probes"]["npz"]["bytes"] = int(npz_path.stat().st_size)
+    record["probes"]["npz"]["sha256"] = _sha256(npz_path)
+    _write_json(record_path, record)
+    result = check_record(record_path, watchdog_path, SOURCE_SHA)
+    assert result["passed"] is False
+    assert result["classification"] == "C1_P6_SETUP_GATE_FAIL"
+    assert result["contract_errors"] == []
+    assert json.dumps(result, allow_nan=False)
+    assert any("construction" in item for item in result["gate_failures"])
 
 
 def test_checker_is_independent_and_static_import_boundary() -> None:

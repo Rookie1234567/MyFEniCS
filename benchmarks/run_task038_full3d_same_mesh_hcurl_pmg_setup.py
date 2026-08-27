@@ -27,8 +27,8 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup"
 STAGE = "c1-p6-setup"
 CASE = "p6-h10-mpi1"
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v2"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v2"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v3"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v3"
 PROBE_SOURCE_SCHEMA = "task038.v13.c0.physical-canonical-source.v1"
 PROBE_SOURCE_GENERATION = "physical_canonical_key_sha256_v1"
 PROBE_SOURCE_ROLE = "full_fe_dual"
@@ -221,7 +221,6 @@ def _owned_slave_indices(bundle: Mapping[str, Any]) -> np.ndarray:
 
 
 def _probe_qualification(bundle: Mapping[str, Any]) -> dict[str, Any]:
-    from petsc4py import PETSc
     from src.solvers.hcurl_canonical_vector_dolfinx import (
         build_physical_canonical_dual_source,
     )
@@ -256,13 +255,7 @@ def _probe_qualification(bundle: Mapping[str, Any]) -> dict[str, Any]:
             if any(facts.get(key) != expected for key, expected in expected_facts.items()):
                 raise RuntimeError("canonical dual probe source facts are not qualified")
             source_facts.append(facts)
-        vectors[2].copy(vectors[0])
-        vectors[2].scale(PETSc.ScalarType(ALPHA))
-        vectors[2].axpy(PETSc.ScalarType(BETA), vectors[1])
-        vectors[3].copy(vectors[0])
-        vectors[3].scale(PETSc.ScalarType(ALPHA))
-        vectors[4].copy(vectors[1])
-        vectors[4].scale(PETSc.ScalarType(BETA))
+        _populate_probe_combinations(vectors)
         input_before = np.vstack(
             [np.asarray(vector.getArray(readonly=True), dtype=np.complex128).copy() for vector in vectors]
         )
@@ -305,6 +298,17 @@ def _probe_qualification(bundle: Mapping[str, Any]) -> dict[str, Any]:
         target.destroy()
         for vector in vectors:
             vector.destroy()
+
+
+def _populate_probe_combinations(vectors: list[Any]) -> None:
+    """Build the fixed probe combinations without mutating x or y."""
+    vectors[2].set(0)
+    vectors[2].axpy(ALPHA, vectors[0])
+    vectors[2].axpy(BETA, vectors[1])
+    vectors[3].set(0)
+    vectors[3].axpy(ALPHA, vectors[0])
+    vectors[4].set(0)
+    vectors[4].axpy(BETA, vectors[1])
 
 
 def _write_probe_npz(raw_dir: Path, probe: Mapping[str, Any]) -> dict[str, Any]:
@@ -564,6 +568,7 @@ __all__ = (
     "PROBE_LABELS",
     "RECORD_SCHEMA",
     "STAGE",
+    "_populate_probe_combinations",
     "validate_record_staging",
     "validate_setup_profile",
 )
