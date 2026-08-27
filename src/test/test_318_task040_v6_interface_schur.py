@@ -17,6 +17,10 @@ from src.solvers.hybrid_interface_schur import (
     build_petsc_interface_schur_oracle,
     build_v6_cell_recovery_owner_group_rows,
 )
+from src.solvers.hybrid_interface_packet_dolfinx import (
+    build_gamma_canonical_layout,
+    make_gamma_entity_block,
+)
 from src.solvers.hybrid_interface_packet import canonical_key_json
 
 
@@ -111,6 +115,36 @@ def _collect_global_values(vector: PETSc.Vec) -> np.ndarray:
     for start, values in pieces:
         result[start : start + values.size] = values
     return result
+
+
+def test_gamma_layout_cross_rank_duplicate_keys_fail_collectively() -> None:
+    """A root-only duplicate finding must be propagated before any hash bcast."""
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("run this collective regression with MPI2")
+    row = int(comm.rank)
+    block = make_gamma_entity_block(
+        name=f"rank{comm.rank}",
+        entity_dimension=1,
+        physical_entity={"rank": int(comm.rank)},
+        raw_row_ids=(row,),
+        canonical_to_raw=np.ones((1, 1), dtype=np.complex128),
+        orientation_state={"sign": 1},
+        canonical_key_records=({"shared_channel": 0},),
+    )
+
+    with pytest.raises(ValueError, match="duplicated across ranks"):
+        build_gamma_canonical_layout(
+            (block,),
+            (row,),
+            plane_identity={"test": "cross_rank_duplicate"},
+            comm=comm,
+        )
+
+    # This second collective is a liveness assertion: both ranks reached the
+    # common error branch instead of one rank raising before the bcast.
+    assert comm.allgather(True) == [True, True]
 
 
 def _reference_full_schur(dense: np.ndarray, source: np.ndarray) -> np.ndarray:

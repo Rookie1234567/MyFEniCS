@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -17,11 +19,229 @@ import benchmarks.check_task040_v6_2_interface_schur as checker
 import benchmarks.task040_level_a as level_a
 import benchmarks.task040_level_a_watchdog as watchdog
 import benchmarks.task040_v6_2_interface_schur as runner
+from src.solvers.hybrid_bare_f_authority import (
+    _source_definition_sha256,
+    _source_semantic_descriptor,
+)
+from src.solvers.hybrid_exact_qualification import ExactQualificationContractError
+from src.solvers.hybrid_interface_packet_dolfinx import (
+    build_gamma_canonical_layout,
+    make_gamma_entity_block,
+)
 
 
 FORMAL_SOURCE_SHA = "a" * 40
 CHECKER_SOURCE_SHA = "b" * 40
 HEX = "c" * 64
+
+
+def _tiny_gamma_layout(side: str) -> Any:
+    block = make_gamma_entity_block(
+        name=f"{side}_shared_lifecycle_block",
+        entity_dimension=1,
+        physical_entity=side,
+        raw_row_ids=(0,),
+        canonical_to_raw=np.eye(1, dtype=np.complex128),
+        orientation_state={"side": side, "orientation": 1},
+        floquet_master=0,
+        floquet_coefficient=1.0 + 0.0j,
+        canonical_key_records=(
+            {
+                "role": "active_trace",
+                "entity_dimension": 1,
+                "physical_entity": side,
+                "entity_local_basis_index": 0,
+                "orientation_state": {"side": side, "orientation": 1},
+                "floquet_master": 0,
+                "floquet_coefficient": [1.0, 0.0],
+            },
+        ),
+    )
+    return build_gamma_canonical_layout(
+        (block,),
+        (0,),
+        plane_identity={"side": side, "z_index": 2 if side == "lower" else 4},
+        comm=MPI.COMM_SELF,
+    )
+
+
+def _formal_descriptor(
+    root: Path,
+    *,
+    label: str,
+    rank: int = 0,
+    mpi_size: int = 1,
+    global_size: int = 2,
+    owner_range: tuple[int, int] = (0, 2),
+) -> dict[str, Any]:
+    frozen_source_sha = runner.V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA
+    provenance = {
+        "input_sha256": HEX,
+        "physical_model_sha256": HEX,
+        "selected_manifest_sha256": HEX,
+        "selected_identity_sha256": HEX,
+        "resolved_config_sha256": HEX,
+        "source_sha": frozen_source_sha,
+    }
+    source_definition_provenance = {
+        "committed_source_sha": frozen_source_sha,
+        **{field: HEX for field in provenance if field != "source_sha"},
+    }
+    source_metadata: dict[str, Any] = {
+        "source": "tiny_v6_2_fixture",
+        "kind": "canonical_random",
+        "source_sha": frozen_source_sha,
+        **{field: HEX for field in provenance if field != "source_sha"},
+        "seed": 761 + list(runner.V6_2_EXACT_QUALIFICATION_SOURCES).index(label),
+        "numeric_formula": "sha256(canonical_physical_key)+seed",
+    }
+    if label == "external_dtn_coupling":
+        source_metadata.update(
+            {
+                "kind": "minimal_surface_coupling_column",
+                "mode_index": 177,
+                "mode_key": {
+                    "side": "bottom",
+                    "m": 0,
+                    "n": 0,
+                    "polarization": "s",
+                },
+                "traction_coefficients": [[1.0, 0.0], [0.0, 1.0]],
+                "surface_quadrature_degree": 37,
+                "sign": -1.0,
+                "external_mode_authority": {
+                    "count": 296,
+                    "index177_key": {"mode": 177},
+                },
+            }
+        )
+    elif label.startswith("modal_traction_"):
+        source_metadata.update(
+            {
+                "kind": "current_layout_full3d_one_cell_exact_schur_column",
+                "selected_mode_packet_branch": (
+                    "positive" if label.endswith("positive") else "negative"
+                ),
+                "selected_mode_packet_index": 281 if label.endswith("positive") else 283,
+                "selected_mode_packet_mode_key": {
+                    "direction": "forward"
+                    if label.endswith("positive")
+                    else "backward",
+                    "kind": "lossy_propagating",
+                },
+                "selected_mode_packet_beta": [0.5, 0.01],
+                "selected_mode_packet_manifest_sha256": HEX,
+                "selected_mode_packet_identity_sha256": HEX,
+                "surface_load_convention": "frozen_full3d_one_cell_exact_schur",
+                "sign_convention": "matrix_column_as_stored/no_extra_sign",
+                "propagation_model": "full3d_uniform_cg",
+                "propagation_axial_fem_degree": 6,
+                "propagation_axial_h_nm": 10.0,
+            }
+        )
+    source_definition_descriptor = _source_semantic_descriptor(
+        label=label,
+        metadata=source_metadata,
+        provenance=source_definition_provenance,
+    )
+    source_definition_sha = _source_definition_sha256(
+        label=label,
+        metadata=source_metadata,
+        provenance=source_definition_provenance,
+    )
+    source_definition = {
+        **source_metadata,
+        "bare_f_operator_hash": HEX,
+        "canonical_key_set_sha256": HEX,
+        "provenance": source_definition_provenance,
+        "rhs_repeat": {
+            "finite": True,
+            "pass": True,
+            "relative_difference": 0.0,
+        },
+        "source_definition_descriptor": source_definition_descriptor,
+        "source_definition_sha256": source_definition_sha,
+    }
+    identity = {
+        "array_sha256": HEX,
+        "canonical_key_count_local": 2,
+        "canonical_key_set_sha256": HEX,
+        "dtype": "complex128",
+        "global_size": global_size,
+        "local_size": owner_range[1] - owner_range[0],
+        "owner_row_array_sha256": HEX,
+        "owner_row_order": "petsc_current_ownership_range",
+        "ownership_range": list(owner_range),
+        "raw_global_row_remap": False,
+        "global_sha256": HEX,
+        "canonical_to_current_roundtrip_relative": 0.0,
+    }
+    return {
+        "schema": "task040.v5.current_bare_f_authority_vector.v1",
+        "side": "bottom",
+        "label": label,
+        "role": "rhs",
+        "dtype": "complex128",
+        "global_size": global_size,
+        "local_size": owner_range[1] - owner_range[0],
+        "ownership_range": list(owner_range),
+        "metadata_path": f"rank{rank:04d}/bottom_{label}_rhs.json",
+        "array_path": f"rank{rank:04d}/bottom_{label}_rhs.npy",
+        "array_sha256": HEX,
+        "owner_row_array_path": f"rank{rank:04d}/bottom_{label}_rhs_owner_rows.npy",
+        "owner_row_array_sha256": HEX,
+        "owner_row_order": "petsc_current_ownership_range",
+        "canonical_layout_path": f"rank{rank:04d}/canonical_active_layout.json",
+        "canonical_layout_sha256": HEX,
+        "canonical_key_set_sha256": HEX,
+        "canonical_key_count_local": 2,
+        "global_sha256": HEX,
+        "source_definition_sha256": source_definition_sha,
+        "bare_f_operator_hash": HEX,
+        "canonical_to_current_roundtrip_relative": 0.0,
+        "rank_local_shard_binding_sha256": HEX,
+        "raw_global_row_remap": False,
+        "source_provenance": provenance,
+        "source_definition": source_definition,
+        "vector_identity": identity,
+    }
+
+
+def _formal_binding_fixture(tmp_path: Path) -> tuple[dict[str, Any], PETSc.Mat]:
+    frozen_root = tmp_path / "worker" / "bare_f_authority"
+    frozen_root.mkdir(parents=True)
+    labels = runner.V6_2_EXACT_QUALIFICATION_SOURCES
+    descriptors: dict[str, dict[str, Any]] = {}
+    for label in labels:
+        descriptor = _formal_descriptor(frozen_root, label=label)
+        metadata_path = frozen_root / descriptor["metadata_path"]
+        metadata_path.parent.mkdir(parents=True, exist_ok=True)
+        _write_json(metadata_path, descriptor)
+        descriptors[label] = json.loads(json.dumps(descriptor))
+    configuration = {
+        "descriptors": descriptors,
+        "canonical_roundtrip": {label: lambda *_args: 0.0 for label in labels},
+    }
+    matrix = PETSc.Mat().createAIJ(
+        size=((2, 2), (2, 2)), nnz=1, comm=PETSc.COMM_SELF
+    )
+    matrix.setValue(0, 0, PETSc.ScalarType(1.0))
+    matrix.setValue(1, 1, PETSc.ScalarType(1.0))
+    matrix.assemble()
+    return configuration, matrix
+
+
+def _formal_identity_preflight() -> dict[str, Any]:
+    return {
+        "pass": True,
+        "observed": {
+            "input_sha256": HEX,
+            "physical_model_sha256": HEX,
+            "selected_manifest_sha256": HEX,
+            "selected_identity_sha256": HEX,
+            "resolved_config_sha256": HEX,
+        },
+    }
 
 
 def _write_json(path: Path, payload: Any) -> str:
@@ -32,6 +252,422 @@ def _write_json(path: Path, payload: Any) -> str:
 
 def _qualification_plan() -> dict[str, Any]:
     return runner.build_v6_2_exact_qualification_plan()
+
+
+def test_v6_2_evidence_status_reports_executed_exact_and_continuation() -> None:
+    exact_summary = runner._compact_exact_stage_summary(
+        {
+            "status": "completed_exact_numerical_gate_negative_continuation_allowed",
+            "classification": "V6_EXACT_QUALIFICATION_GATE_FAIL",
+        }
+    )
+    continuation_summary = runner._compact_exact_stage_summary(
+        {
+            "status": "completed_v6_3_identity_probe",
+            "classification": "V6_3_IDENTITY_FAIL",
+        }
+    )
+
+    assert exact_summary["executed"] is True
+    assert continuation_summary["executed"] is True
+    assert (
+        runner._exact_pde_status(exact_summary)
+        == "exact_interface_fgmres_with_full_bare_f_residual_run"
+    )
+    assert runner._combined_v6_2_status(
+        identity_gate_pass=False,
+        exact_consensus=True,
+        exact_executed=True,
+        continuation_consensus=True,
+        continuation_executed=True,
+    ) == "completed_v6_2_identity_exact_qualification_and_v6_3_continuation"
+
+
+def test_v6_2_formal_binding_separates_frozen_rhs_and_current_source(
+    tmp_path: Path,
+) -> None:
+    configuration, matrix = _formal_binding_fixture(tmp_path)
+    frozen_root = tmp_path / "worker" / "bare_f_authority"
+    run_root = tmp_path / "fresh-run"
+    try:
+        bound = runner._bind_v6_2_formal_exact_configuration(
+            configuration,
+            exact_spool_root=frozen_root,
+            run_directory=run_root,
+            identity_preflight=_formal_identity_preflight(),
+            bare_operator=matrix,
+            bare_operator_hash=HEX,
+            source_sha=FORMAL_SOURCE_SHA,
+        )
+        assert (
+            bound["source_provenance"]["source_sha"]
+            == runner.V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA
+        )
+        assert bound["source_provenance"]["source_sha"] != FORMAL_SOURCE_SHA
+        assert (
+            bound["validation"]["expected_source_sha256"]
+            == runner.V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA
+        )
+        assert bound["validation"]["expected_operator_hash"] == HEX
+        assert bound["packet_root"] == str((run_root / "exact_packets").resolve())
+        assert bound["base_directory"] == str(frozen_root.resolve())
+    finally:
+        matrix.destroy()
+
+
+@pytest.mark.parametrize("mutation", ("root", "packet", "source", "descriptor", "operator", "callbacks"))
+def test_v6_2_formal_binding_rejects_untrusted_authority_mutations(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    configuration, matrix = _formal_binding_fixture(tmp_path)
+    frozen_root = tmp_path / "worker" / "bare_f_authority"
+    run_root = tmp_path / "fresh-run"
+    mutated = deepcopy(configuration)
+    if mutation == "root":
+        mutated["frozen_root"] = str(tmp_path / "other-root")
+    elif mutation == "packet":
+        mutated["packet_root"] = str(tmp_path / "caller-packet-root")
+    elif mutation == "source":
+        mutated["source_provenance"] = {
+            "source_sha": FORMAL_SOURCE_SHA,
+            "input_sha256": HEX,
+            "physical_model_sha256": HEX,
+            "selected_manifest_sha256": HEX,
+            "selected_identity_sha256": HEX,
+            "resolved_config_sha256": HEX,
+        }
+    elif mutation == "descriptor":
+        mutated["descriptors"]["external_dtn_coupling"]["source_provenance"][
+            "source_sha"
+        ] = FORMAL_SOURCE_SHA
+    elif mutation == "operator":
+        mutated["descriptors"]["external_dtn_coupling"][
+            "bare_f_operator_hash"
+        ] = "d" * 64
+    else:
+        mutated["canonical_roundtrip"].pop("fixed_random_repeat_0")
+    try:
+        with pytest.raises((TypeError, ValueError, runner.PETSc.Error)):
+            runner._bind_v6_2_formal_exact_configuration(
+                mutated,
+                exact_spool_root=frozen_root,
+                run_directory=run_root,
+                identity_preflight=_formal_identity_preflight(),
+                bare_operator=matrix,
+                bare_operator_hash=HEX,
+                source_sha=FORMAL_SOURCE_SHA,
+            )
+    finally:
+        matrix.destroy()
+
+
+def test_v6_2_formal_binding_rejects_shuffled_five_source_order(
+    tmp_path: Path,
+) -> None:
+    configuration, matrix = _formal_binding_fixture(tmp_path)
+    frozen_root = tmp_path / "worker" / "bare_f_authority"
+    try:
+        configuration["descriptors"] = dict(
+            reversed(tuple(configuration["descriptors"].items()))
+        )
+        with pytest.raises(ValueError, match="sources in order"):
+            runner._bind_v6_2_formal_exact_configuration(
+                configuration,
+                exact_spool_root=frozen_root,
+                run_directory=tmp_path / "fresh-run",
+                identity_preflight=_formal_identity_preflight(),
+                bare_operator=matrix,
+                bare_operator_hash=HEX,
+                source_sha=FORMAL_SOURCE_SHA,
+            )
+    finally:
+        matrix.destroy()
+
+
+def test_v6_2_exact_runner_wires_tolerance_and_negative_family(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exercise the real exact orchestration boundary without packet writes."""
+
+    configuration, matrix = _formal_binding_fixture(tmp_path)
+    frozen_root = tmp_path / "worker" / "bare_f_authority"
+    packet_root = tmp_path / "fresh-run" / "exact_packets"
+    labels = runner.V6_2_EXACT_QUALIFICATION_SOURCES
+    descriptors = configuration["descriptors"]
+    frozen_provenance = descriptors[labels[0]]["source_provenance"]
+    qualification_provenance = {
+        **frozen_provenance,
+        "source_sha": FORMAL_SOURCE_SHA,
+    }
+    descriptor_hashes = {
+        label: hashlib.sha256(
+            (frozen_root / descriptors[label]["metadata_path"]).read_bytes()
+        ).hexdigest()
+        for label in labels
+    }
+    lower = _tiny_gamma_layout("lower")
+    upper = _tiny_gamma_layout("upper")
+    captured_factory: dict[str, Any] = {}
+    captured_family: dict[str, Any] = {}
+
+    def fake_packet_consumer(**kwargs: Any) -> object:
+        captured_factory.update(kwargs)
+        return object()
+
+    def fake_family(
+        observed_descriptors: Mapping[str, Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        assert observed_descriptors is descriptors
+        assert tuple(observed_descriptors) == labels
+        captured_family.update(kwargs)
+        return {
+            "status": (
+                "completed_exact_numerical_gate_negative_continuation_allowed"
+            ),
+            "classification": "V6_EXACT_QUALIFICATION_GATE_FAIL",
+            "source_records": [
+                {
+                    "label": label,
+                    "full_residual_gate_pass": False,
+                    "packetization_gate_pass": False,
+                    "fgmres": {
+                        "packetization_gate_error": None,
+                        "checkpoint_history": [],
+                    },
+                }
+                for label in labels[:2]
+            ],
+            "all_sources_gate_pass": False,
+        }
+
+    monkeypatch.setattr(
+        runner,
+        "make_current_exact_solution_packet_consumer",
+        fake_packet_consumer,
+    )
+    monkeypatch.setattr(runner, "run_exact_qualification_family", fake_family)
+    tolerance = 4.0e-7
+    try:
+        result = runner.run_v6_2_exact_qualification_packets(
+            descriptors=descriptors,
+            base_directory=frozen_root,
+            interface_operator=matrix,
+            bare_operator=matrix,
+            schur_action=object(),
+            system=SimpleNamespace(name="live-system"),
+            canonical_layout=SimpleNamespace(name="joint-layout"),
+            lower_gamma_layout=lower,
+            upper_gamma_layout=upper,
+            canonical_roundtrip={label: lambda *_args: 0.0 for label in labels},
+            canonical_packets_for_vector=lambda *_args: (),
+            gamma_canonical_values_for_vector=lambda *_args: np.zeros(
+                1, dtype=np.complex128
+            ),
+            exact_output_canonical_roundtrip=lambda *_args: 0.0,
+            packet_root=packet_root,
+            frozen_root=frozen_root,
+            source_provenance=frozen_provenance,
+            qualification_source_provenance=qualification_provenance,
+            frozen_rhs_descriptor_metadata_sha256=descriptor_hashes,
+            comm=MPI.COMM_SELF,
+            max_iterations=1,
+            full_residual_tolerance=tolerance,
+        )
+        assert captured_factory["full_residual_tolerance"] == tolerance
+        assert captured_family["full_residual_tolerance"] == tolerance
+        assert captured_family["accepted_solution_consumer"] is not None
+        assert result["family"]["all_sources_gate_pass"] is False
+        assert result["packet_aggregate"] == {}
+        assert result["packet_aggregate_gate_pass"] is False
+        assert result["frozen_rhs_source_provenance"] == frozen_provenance
+        assert result["qualification_source_provenance"] == qualification_provenance
+        json.dumps(result, sort_keys=True)
+    finally:
+        lower = None
+        upper = None
+        matrix.destroy()
+
+
+class _SharedLifecycleAction:
+    def __init__(self) -> None:
+        self.diagnostics = {
+            "factor_lifecycle": {
+                "ready": 3,
+                "destroyed": False,
+                "after_cleanup": None,
+                "simultaneous_max": 3,
+            }
+        }
+
+    def destroy(self) -> None:
+        lifecycle = self.diagnostics["factor_lifecycle"]
+        lifecycle["destroyed"] = True
+        lifecycle["after_cleanup"] = 0
+
+
+def _shared_lifecycle_fixture() -> tuple[_SharedLifecycleAction, PETSc.Mat, Any, Any, Any]:
+    action = _SharedLifecycleAction()
+    matrix = PETSc.Mat().createAIJ(
+        size=((1, 1), (1, 1)), nnz=1, comm=PETSc.COMM_SELF
+    )
+    matrix.setValue(0, 0, PETSc.ScalarType(1.0))
+    matrix.assemble()
+    lower = _tiny_gamma_layout("lower")
+    upper = _tiny_gamma_layout("upper")
+    joint = SimpleNamespace(
+        lower_global_count=1,
+        upper_global_count=1,
+        audit={
+            "canonical_order": "Gamma_L_then_Gamma_U_by_physical_key",
+            "canonical_key_order_sha256": HEX,
+            "coverage_exact": True,
+            "canonical_position_bijection": True,
+            "owner_local_mapping": True,
+        },
+    )
+    return action, matrix, lower, upper, joint
+
+
+def test_v6_2_shared_lifecycle_keeps_objects_and_allows_numeric_negative_continuation() -> None:
+    action, matrix, lower, upper, joint = _shared_lifecycle_fixture()
+    exact_seen: dict[str, Any] = {}
+    continuation_seen: dict[str, Any] = {}
+    wrong = object()
+    qualification_source_provenance = {
+        "input_sha256": HEX,
+        "physical_model_sha256": HEX,
+        "selected_manifest_sha256": HEX,
+        "selected_identity_sha256": HEX,
+        "resolved_config_sha256": HEX,
+        "source_sha": "d" * 40,
+    }
+    frozen_rhs_descriptor_metadata_sha256 = {
+        label: HEX for label in runner.V6_2_EXACT_QUALIFICATION_SOURCES
+    }
+
+    def exact_runner(
+        *,
+        qualification_source_provenance: Mapping[str, Any],
+        frozen_rhs_descriptor_metadata_sha256: Mapping[str, str],
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        for key, expected in (
+            ("system", system),
+            ("schur_action", action),
+            ("interface_operator", matrix),
+            ("bare_operator", matrix),
+            ("lower_gamma_layout", lower),
+            ("upper_gamma_layout", upper),
+            ("canonical_layout", joint),
+        ):
+            assert kwargs[key] is expected
+        exact_seen.update(
+            {
+                **kwargs,
+                "qualification_source_provenance": qualification_source_provenance,
+                "frozen_rhs_descriptor_metadata_sha256": (
+                    frozen_rhs_descriptor_metadata_sha256
+                ),
+            }
+        )
+        return {
+            "status": "completed_exact_numerical_gate_negative_continuation_allowed",
+            "classification": "V6_EXACT_QUALIFICATION_GATE_FAIL",
+        }
+
+    def continuation(payload: Mapping[str, Any]) -> dict[str, Any]:
+        for key, expected in (
+            ("system", system),
+            ("schur_action", action),
+            ("interface_operator", matrix),
+            ("bare_operator", matrix),
+            ("lower_gamma_layout", lower),
+            ("upper_gamma_layout", upper),
+            ("canonical_layout", joint),
+        ):
+            assert payload[key] is expected
+        continuation_seen.update(payload)
+        return {"status": "completed_v6_3_identity_probe"}
+
+    system = SimpleNamespace(name="live-system")
+    try:
+        result = runner._run_v6_2_shared_current_lifecycle(
+            action=action,
+            system=system,
+            interface_operator=matrix,
+            bare_operator=matrix,
+            exact_configuration={
+                "system": wrong,
+                "schur_action": wrong,
+                "lower_gamma_layout": wrong,
+                "upper_gamma_layout": wrong,
+                "canonical_layout": wrong,
+                "qualification_source_provenance": qualification_source_provenance,
+                "frozen_rhs_descriptor_metadata_sha256": (
+                    frozen_rhs_descriptor_metadata_sha256
+                ),
+                "user_option": "preserved",
+            },
+            exact_runner=exact_runner,
+            expected_factor_count=3,
+            gamma_layouts={"lower": lower, "upper": upper},
+            canonical_layout=joint,
+            continuation=continuation,
+        )
+        assert exact_seen["user_option"] == "preserved"
+        assert exact_seen["qualification_source_provenance"] is (
+            qualification_source_provenance
+        )
+        assert exact_seen["frozen_rhs_descriptor_metadata_sha256"] is (
+            frozen_rhs_descriptor_metadata_sha256
+        )
+        assert result["same_live_action"] is True
+        assert result["same_layout_objects_injected"] is True
+        assert result["factor_lifecycle_after_exact"]["ready"] == 3
+        assert result["factor_lifecycle_after_continuation"]["ready"] == 3
+        assert continuation_seen["exact_qualification"]["classification"] == (
+            "V6_EXACT_QUALIFICATION_GATE_FAIL"
+        )
+        action.destroy()
+        assert action.diagnostics["factor_lifecycle"]["after_cleanup"] == 0
+        assert action.diagnostics["factor_lifecycle"]["destroyed"] is True
+    finally:
+        matrix.destroy()
+
+
+def test_v6_2_shared_lifecycle_packet_contract_blocks_continuation() -> None:
+    action, matrix, lower, upper, joint = _shared_lifecycle_fixture()
+    continuation_called = False
+
+    def exact_runner(**_kwargs: Any) -> dict[str, Any]:
+        raise ExactQualificationContractError("packet writer contract")
+
+    def continuation(_payload: Mapping[str, Any]) -> dict[str, Any]:
+        nonlocal continuation_called
+        continuation_called = True
+        return {}
+
+    try:
+        with pytest.raises(ExactQualificationContractError, match="packet writer"):
+            runner._run_v6_2_shared_current_lifecycle(
+                action=action,
+                system=SimpleNamespace(name="live-system"),
+                interface_operator=matrix,
+                bare_operator=matrix,
+                exact_configuration={},
+                exact_runner=exact_runner,
+                expected_factor_count=3,
+                gamma_layouts={"lower": lower, "upper": upper},
+                canonical_layout=joint,
+                continuation=continuation,
+            )
+        assert continuation_called is False
+        assert action.diagnostics["factor_lifecycle"]["destroyed"] is False
+    finally:
+        matrix.destroy()
 
 
 def _identity_gate() -> dict[str, bool]:

@@ -21,7 +21,11 @@ from mpi4py import MPI
 from .hcurl_canonical_vector_dolfinx import (
     iter_canonical_active_trace_plane_blocks,
 )
-from .hybrid_interface_packet import canonical_key_json, canonical_key_sha256
+from .hybrid_interface_packet import (
+    canonical_key_json,
+    canonical_key_set_sha256,
+    canonical_key_sha256,
+)
 
 __all__ = (
     "GammaEntityBlock",
@@ -297,21 +301,41 @@ def build_gamma_canonical_layout(
     summary = {
         "local_count": len(canonical_keys),
         "key_order_sha256": canonical_key_sha256(canonical_keys),
+        "key_set_sha256": canonical_key_set_sha256(canonical_keys),
     }
     summaries = [summary]
     global_count = len(rows)
+    global_keys = tuple(canonical_keys)
+    global_key_set_digest = canonical_key_set_sha256(global_keys)
     if comm is not None:
         summary = {"rank": int(comm.rank), **summary}
         summaries = comm.allgather(summary)
         global_count = sum(int(item["local_count"]) for item in summaries)
+        gathered_keys = comm.gather(tuple(canonical_keys), root=0)
+        global_key_error = None
+        global_key_value = None
+        if comm.rank == 0:
+            global_keys = tuple(key for part in gathered_keys for key in part)
+            if len(set(global_keys)) != len(global_keys):
+                global_key_error = "Gamma canonical keys are duplicated across ranks"
+            else:
+                global_key_value = canonical_key_set_sha256(global_keys)
+        global_key_error = comm.bcast(global_key_error, root=0)
+        if global_key_error is not None:
+            raise ValueError(global_key_error)
+        global_key_set_digest = comm.bcast(global_key_value, root=0)
     summaries = sorted(summaries, key=lambda item: int(item.get("rank", 0)))
     audit = {
         "local_row_count": int(len(rows)),
         "global_row_count": int(global_count),
         "local_block_count": int(len(placements)),
         "canonical_key_order_sha256": canonical_key_sha256(canonical_keys),
+        "canonical_key_set_local_sha256": canonical_key_set_sha256(canonical_keys),
+        "global_key_set_sha256": str(global_key_set_digest),
         "global_key_summary_sha256": _summary_hash(summaries),
-        "global_key_bijection": "requires_independent_checker",
+        "global_key_bijection": True,
+        "global_key_metadata_gather": "root_only",
+        "numeric_allgather": False,
         "basis_global_replicated": False,
         "fe_numeric_allgather": False,
         "plane_identity": _json_safe(plane_identity),
