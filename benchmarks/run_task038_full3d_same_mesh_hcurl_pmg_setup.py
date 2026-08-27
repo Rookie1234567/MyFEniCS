@@ -416,7 +416,10 @@ def run_worker(args: argparse.Namespace) -> None:
     npz: dict[str, Any] | None = None
     try:
         _emit_marker(
-            raw_dir, "paths_ready", args.expected_source_sha, raw_dir=str(raw_dir)
+            raw_dir,
+            "paths_ready",
+            args.expected_source_sha,
+            worker_raw_dir=str(raw_dir),
         )
         cfg = target_stage4_config(degree=6, h_nm=10.0)
         bundle = build_p6_same_mesh_setup(cfg, comm)

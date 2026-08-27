@@ -14,6 +14,7 @@ from benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup import (
     CASE,
     MODULE,
     STAGE,
+    _emit_marker,
     validate_record_staging,
     validate_setup_profile,
 )
@@ -354,6 +355,11 @@ def test_setup_profile_and_staging_contracts(tmp_path: Path) -> None:
     record_path.parent.mkdir(parents=True)
     validate_record_staging(raw_dir, record_path)
     assert raw_dir.is_dir() and (raw_dir / "markers").is_dir()
+    _emit_marker(raw_dir, "paths_ready", SOURCE_SHA, worker_raw_dir=str(raw_dir))
+    marker = json.loads(
+        (raw_dir / "markers" / "paths_ready.json").read_text(encoding="utf-8")
+    )
+    assert marker["facts"]["worker_raw_dir"] == str(raw_dir)
     with pytest.raises(ValueError):
         invalid = tmp_path / "invalid" / "worker_raw"
         validate_record_staging(invalid, invalid)
