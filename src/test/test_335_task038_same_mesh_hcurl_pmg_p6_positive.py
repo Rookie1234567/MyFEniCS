@@ -390,6 +390,14 @@ def _checker_mutation_case(tmp_path: Path, mutation: str) -> None:
         marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
         marker_value["facts"]["record_sha256"] = _sha(record_path)
         _write_json(record_marker, marker_value)
+    elif mutation == "action_roles":
+        record["krylov"]["rhs_action_count"] = 1
+        record["krylov"]["final_action_recheck_count"] = 2
+        _write_json(record_path, record)
+        record_marker = record_path.parent / "worker_raw/markers/record_written.json"
+        marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
+        marker_value["facts"]["record_sha256"] = _sha(record_path)
+        _write_json(record_marker, marker_value)
     else:
         raise AssertionError(mutation)
     result = checker.check_record(record_path, watchdog_path, SOURCE_SHA)
@@ -398,7 +406,7 @@ def _checker_mutation_case(tmp_path: Path, mutation: str) -> None:
     json.dumps(result, allow_nan=False)
 
 
-@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash", "action_ledger"))
+@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash", "action_ledger", "action_roles"))
 def test_checker_mutation_cases(tmp_path: Path, mutation: str) -> None:
     _checker_mutation_case(tmp_path, mutation)
 

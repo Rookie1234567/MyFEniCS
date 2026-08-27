@@ -482,6 +482,8 @@ def _check_krylov(record: Mapping[str, Any], errors: list[str], gates: list[str]
         driver_explicit_action_count = action_fields["driver_explicit_action_count"]
         explicit_action_count_total = action_fields["explicit_action_count_total"]
         action_calls_total = action_fields["action_calls_total"]
+        if rhs_action_count != 2 or final_action_recheck_count != 1:
+            _error(errors, "RHS and final-recheck action roles are not fixed")
         if extra_action_count != rhs_action_count + final_action_recheck_count:
             _error(errors, "extra action count does not close RHS/repeat/final recheck")
         if explicit_action_count_total != driver_explicit_action_count + extra_action_count:
