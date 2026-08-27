@@ -1,0 +1,91 @@
+{
+  "schema": "task038.full3d.same-mesh-hcurl-pmg.p6-setup-startup-attempt.v1",
+  "classification": "implementation_startup_failure_not_numerical_gate",
+  "source": {
+    "sha": "e3b54e8c8ff3001f1f6d41854964ea0cd1247d32",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "worktree_clean_before_attempt": true
+  },
+  "worker": {
+    "command": [
+      "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup",
+      "--stage",
+      "c1-p6-setup",
+      "--case",
+      "p6-h10-mpi1",
+      "--raw-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v1/e3b54e8c8ff3001f1f6d41854964ea0cd1247d32/p6-h10-mpi1/worker_raw",
+      "--record",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v1.json",
+      "--expected-source-sha",
+      "e3b54e8c8ff3001f1f6d41854964ea0cd1247d32",
+      "--expected-mpi-size",
+      "1",
+      "--input",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat"
+    ],
+    "error": {
+      "type": "TypeError",
+      "message": "_emit_marker() got multiple values for argument 'raw_dir'",
+      "file": "benchmarks/run_task038_full3d_same_mesh_hcurl_pmg_setup.py",
+      "line": 418
+    },
+    "last_marker": null,
+    "markers": [],
+    "stages": {
+      "setup": "not_run",
+      "bundle": "not_run",
+      "probe": "not_run",
+      "reserve": "not_run",
+      "numerical_gate": "not_run"
+    }
+  },
+  "watchdog": {
+    "returncode": 1,
+    "stop_reason": "natural_exit",
+    "natural_exit": false,
+    "no_orphan": true,
+    "sample_count": 4,
+    "peak_process_tree_rss_bytes": 118411264,
+    "max_process_tree_swap_bytes": 0,
+    "poll_seconds": 0.25,
+    "rss_limit_bytes": 2000000000
+  },
+  "retained": {
+    "status": "not_reached",
+    "sample_count": 0,
+    "peak_process_tree_rss_bytes": null,
+    "max_process_tree_swap_bytes": null
+  },
+  "artifacts": {
+    "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v1/e3b54e8c8ff3001f1f6d41854964ea0cd1247d32/p6-h10-mpi1",
+    "worker_raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v1/e3b54e8c8ff3001f1f6d41854964ea0cd1247d32/p6-h10-mpi1/worker_raw",
+    "marker_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v1/e3b54e8c8ff3001f1f6d41854964ea0cd1247d32/p6-h10-mpi1/worker_raw/markers",
+    "worker_record": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v1.json",
+      "exists": false
+    },
+    "watchdog_raw": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v1/e3b54e8c8ff3001f1f6d41854964ea0cd1247d32/p6-h10-mpi1/watchdog.raw.jsonl",
+      "bytes": 3389,
+      "sha256": "97ef5fbf8a808cad98dfd5ae8ecb76f30ac945edbcbbb86f54e092c91f56db57"
+    },
+    "watchdog_compact": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v1/e3b54e8c8ff3001f1f6d41854964ea0cd1247d32/p6-h10-mpi1/watchdog.compact.json",
+      "bytes": 2010,
+      "sha256": "018b5d29ae4ef17e7aca181f10e328d78dbb61d9541d9600edc9ab1e539b95cb"
+    },
+    "worker_log": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v1/e3b54e8c8ff3001f1f6d41854964ea0cd1247d32/p6-h10-mpi1/worker.log",
+      "bytes": 711,
+      "sha256": "d57e309babcee21367dc3ce5c3ead6f13afd10e3a18a919dfdb3ba0e7b29bdfe"
+    }
+  },
+  "checker": {
+    "run": false,
+    "reason": "worker_record_not_created"
+  },
+  "attempt_artifact_preserved": true
+}
