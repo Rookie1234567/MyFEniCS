@@ -464,6 +464,98 @@ def test_watchdog_main_subprocess_natural_closeout_and_fail_closed_reuse(tmp_pat
     assert not worker_raw.exists()
 
 
+def test_watchdog_main_discards_retry_exit_race_sample(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    watchdog_raw = tmp_path / "watchdog.raw.jsonl"
+    watchdog_compact = tmp_path / "watchdog.json"
+    watchdog_log = tmp_path / "worker.log"
+    worker_raw = tmp_path / "worker_raw"
+    worker_record = tmp_path / "record.json"
+    worker_command = [sys.executable, "-c", "pass"]
+    readable = {
+        "process_tree": {
+            "rss_bytes": 100,
+            "swap_bytes": 0,
+            "all_status_readable": True,
+            "pids": [731],
+        },
+        "job_cgroup": {"dedicated_job_cgroup": False},
+    }
+    unreadable = {
+        "process_tree": {
+            "rss_bytes": 200,
+            "swap_bytes": 0,
+            "all_status_readable": False,
+            "pids": [731, 732],
+        },
+        "job_cgroup": {"dedicated_job_cgroup": False},
+    }
+    sampled = iter((readable, unreadable, unreadable))
+    sample_pids: list[int] = []
+    sleeps: list[float] = []
+
+    class FakeProcess:
+        pid = 731
+
+        def __init__(self) -> None:
+            self.poll_values = iter((None, None, None, 0))
+
+        def poll(self) -> int | None:
+            return next(self.poll_values)
+
+        def wait(self) -> int:
+            return 0
+
+    process = FakeProcess()
+
+    def sample(pid: int) -> dict[str, object]:
+        sample_pids.append(pid)
+        return next(sampled)
+
+    terminated: list[object] = []
+    monkeypatch.setattr(runner, "resource_authority_sample", sample)
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(runner, "terminate_process_tree", lambda value: terminated.append(value) or {"process_group_exited": True})
+    monkeypatch.setattr(runner.time, "sleep", sleeps.append)
+
+    result = runner._watchdog_main(
+        [
+            "--watchdog-raw",
+            str(watchdog_raw),
+            "--watchdog-compact",
+            str(watchdog_compact),
+            "--watchdog-log",
+            str(watchdog_log),
+            "--worker-raw-dir",
+            str(worker_raw),
+            "--worker-record",
+            str(worker_record),
+            "--source-sha",
+            SOURCE_SHA,
+            "--watchdog-rss-limit-bytes",
+            "2000000000",
+            "--worker-command",
+            *worker_command,
+        ]
+    )
+    compact = json.loads(watchdog_compact.read_text(encoding="utf-8"))
+    raw_samples = [json.loads(line) for line in watchdog_raw.read_text(encoding="utf-8").splitlines()]
+    assert result == 0
+    assert sample_pids == [731, 731, 731]
+    assert sleeps == [runner.WATCHDOG_POLL_SECONDS, 0.01]
+    assert terminated == [process]
+    assert len(raw_samples) == 1
+    assert raw_samples[0]["authority"]["process_tree"]["all_status_readable"] is True
+    assert compact["natural_exit"] is True
+    assert compact["returncode"] == 0
+    assert compact["no_orphan"] is True
+    assert compact["all_status_readable"] is True
+    assert compact["stop_reason"] == "natural_exit"
+    assert compact["terminal_exit_race_discard_count"] == 1
+    assert compact["sample_count"] == 1
+
+
 def test_checker_recomputes_synthetic_raw_and_rejects_checkpoint_extra(tmp_path: Path) -> None:
     record_path, watchdog, _record = _synthetic_record(tmp_path)
     result = checker.check_record(record_path, watchdog, SOURCE_SHA)

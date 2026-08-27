@@ -922,7 +922,7 @@ def _watchdog_main(argv: list[str]) -> int:
                 sample["initial_unreadable_process_tree"] = initial_unreadable_process_tree
             samples.append(sample)
             reason = _watchdog_stop_reason(authority, args.watchdog_rss_limit_bytes)
-            if retry_count == 0 and _watchdog_terminal_exit_race(process, reason):
+            if _watchdog_terminal_exit_race(process, reason):
                 samples.pop()
                 terminal_exit_race_discard_count = 1
                 stop_reason = "natural_exit"
