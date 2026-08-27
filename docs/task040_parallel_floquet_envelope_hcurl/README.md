@@ -7,7 +7,8 @@
 >    Floquet FFT/Kronecker background inverse；
 > 3. [low_order_refined_hcurl.md](low_order_refined_hcurl.md)：固定 LOR matrix-free H(curl)，
 >    **不是** h/p 自适应；
-> 4. [feasibility_reassessment.md](feasibility_reassessment.md)：carrier enrichment已降级为
+> 4. [primary_references.md](primary_references.md)：primary papers及其证据边界；
+> 5. [feasibility_reassessment.md](feasibility_reassessment.md)：carrier enrichment已降级为
 >    `KNOWN_METHOD_FAMILY_BUT_PROJECT_FEASIBILITY_UNPROVEN`，只允许 tiny E1/E2/E3。
 
 ## 0. 分支身份
@@ -91,10 +92,12 @@ arbitrary-3D heterogeneity仍由exact A处理
 ```text
 src/solvers/floquet_background_hcurl.py
 src/test/test_319_task040_parallel_background_hcurl.py
+src/studies/run_floquet_background_symbol_smoke.py
 ```
 
 当前只验证 fully-periodic homogeneous Fourier symbol；open-z、DOLFINx、MPC和physical DtN
-仍未验证。
+仍未验证。轻量结果记录见
+[outcomes/structured_background_reference_validation.md](outcomes/structured_background_reference_validation.md)。
 
 ## 2. A2：fixed LOR matrix-free H(curl)
 
