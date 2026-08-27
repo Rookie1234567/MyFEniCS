@@ -147,6 +147,7 @@ class ProcessTreeSample:
     rss_bytes: int
     swap_bytes: int
     all_status_readable: bool
+    smaps_rollup_fallback_pids: tuple[int, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -170,10 +171,54 @@ def _status_memory_kib(fields: Mapping[str, str]) -> tuple[int | None, int | Non
     return rss_kib, swap_kib
 
 
+def _smaps_rollup_memory_kib(pid: int) -> tuple[int | None, int | None]:
+    try:
+        lines = Path(f"/proc/{int(pid)}/smaps_rollup").read_text(
+            encoding="utf-8", errors="ignore"
+        ).splitlines()
+    except OSError:
+        return None, None
+    values: dict[str, int] = {}
+    for line in lines:
+        key, separator, value = line.partition(":")
+        if separator and key in {"Rss", "Swap"}:
+            fields = value.split()
+            if len(fields) < 2 or fields[1] != "kB":
+                return None, None
+            try:
+                parsed = int(fields[0])
+            except ValueError:
+                return None, None
+            if parsed < 0:
+                return None, None
+            values[key] = parsed
+    if set(values) != {"Rss", "Swap"}:
+        return None, None
+    return values["Rss"], values["Swap"]
+
+
+def _resolve_process_memory_kib(
+    pid: int, fields: Mapping[str, str]
+) -> tuple[int | None, int | None, bool]:
+    rss_kib, swap_kib = _status_memory_kib(fields)
+    if rss_kib is not None and swap_kib is not None:
+        return rss_kib, swap_kib, False
+    smaps_rss_kib, smaps_swap_kib = _smaps_rollup_memory_kib(pid)
+    fallback_used = False
+    if rss_kib is None and smaps_rss_kib is not None:
+        rss_kib = smaps_rss_kib
+        fallback_used = True
+    if swap_kib is None and smaps_swap_kib is not None:
+        swap_kib = smaps_swap_kib
+        fallback_used = True
+    return rss_kib, swap_kib, fallback_used
+
+
 def process_tree_sample(root_pid: int) -> ProcessTreeSample:
     """Sample RSS and VmSwap for the root and every live descendant."""
 
     processes: dict[int, tuple[int, int | None, int | None]] = {}
+    smaps_rollup_fallback_pids: set[int] = set()
     try:
         entries = list(Path("/proc").iterdir())
     except OSError:
@@ -198,7 +243,9 @@ def process_tree_sample(root_pid: int) -> ProcessTreeSample:
             ppid = int(fields.get("PPid", "0"))
         except ValueError:
             ppid = 0
-        rss_kib, swap_kib = _status_memory_kib(fields)
+        rss_kib, swap_kib, fallback_used = _resolve_process_memory_kib(pid, fields)
+        if fallback_used:
+            smaps_rollup_fallback_pids.add(pid)
         processes[pid] = (ppid, rss_kib, swap_kib)
     selected = {int(root_pid)}
     changed = True
@@ -218,6 +265,9 @@ def process_tree_sample(root_pid: int) -> ProcessTreeSample:
         rss_bytes=sum(int(rss or 0) * 1024 for _ppid, rss, _swap in observed),
         swap_bytes=sum(int(swap or 0) * 1024 for _ppid, _rss, swap in observed),
         all_status_readable=readable,
+        smaps_rollup_fallback_pids=tuple(
+            sorted(pid for pid in smaps_rollup_fallback_pids if pid in selected)
+        ),
     )
 
 

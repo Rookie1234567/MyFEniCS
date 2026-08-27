@@ -356,6 +356,12 @@ class Task033Case090WatchdogTests(unittest.TestCase):
             (0, 0),
         )
         self.assertEqual(
+            wsl_resources._resolve_process_memory_kib(
+                999999, {"State": "Z (zombie)", "PPid": "1"}
+            ),
+            (0, 0, False),
+        )
+        self.assertEqual(
             wsl_resources._status_memory_kib(
                 {"State": "S (sleeping)", "VmRSS": "12 kB", "VmSwap": "3 kB"}
             ),
@@ -365,6 +371,50 @@ class Task033Case090WatchdogTests(unittest.TestCase):
             wsl_resources._status_memory_kib({"State": "R (running)"}),
             (None, None),
         )
+
+    def test_process_memory_resolver_prefers_status_and_falls_back_once(self) -> None:
+        with patch.object(
+            wsl_resources,
+            "_smaps_rollup_memory_kib",
+            side_effect=AssertionError("complete status must not use smaps_rollup"),
+        ):
+            self.assertEqual(
+                wsl_resources._resolve_process_memory_kib(
+                    999999, {"State": "R (running)", "VmRSS": "12 kB", "VmSwap": "3 kB"}
+                ),
+                (12, 3, False),
+            )
+
+        with patch.object(
+            wsl_resources, "_smaps_rollup_memory_kib", return_value=(41, 7)
+        ) as smaps:
+            self.assertEqual(
+                wsl_resources._resolve_process_memory_kib(123, {"State": "R (running)"}),
+                (41, 7, True),
+            )
+            smaps.assert_called_once_with(123)
+
+    def test_smaps_rollup_memory_is_fail_closed(self) -> None:
+        cases = (
+            "Rss: 41 kB\n",
+            "Rss: invalid kB\nSwap: 7 kB\n",
+        )
+        for contents in cases:
+            with patch.object(Path, "read_text", return_value=contents):
+                self.assertEqual(
+                    wsl_resources._smaps_rollup_memory_kib(123), (None, None)
+                )
+        with patch.object(Path, "read_text", side_effect=FileNotFoundError):
+            self.assertEqual(
+                wsl_resources._smaps_rollup_memory_kib(123), (None, None)
+            )
+        with patch.object(
+            wsl_resources, "_smaps_rollup_memory_kib", return_value=(None, None)
+        ):
+            self.assertEqual(
+                wsl_resources._resolve_process_memory_kib(123, {"State": "R (running)"}),
+                (None, None, False),
+            )
 
     def test_process_tree_status_exit_race_requires_confirmed_natural_exit(self) -> None:
         decision = {
