@@ -1,0 +1,108 @@
+{
+  "schema": "task038.full3d.same-mesh-hcurl-pmg.p6-setup-authority-attempt.v1",
+  "classification": "watchdog_authority_unreadable_controlled_stop_before_setup",
+  "source": {
+    "sha": "2059a4a3561ff69b36b4d4595a0deb595c998510",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "worktree_clean_before_attempt": true
+  },
+  "worker": {
+    "command": [
+      "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup",
+      "--stage",
+      "c1-p6-setup",
+      "--case",
+      "p6-h10-mpi1",
+      "--raw-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v2/2059a4a3561ff69b36b4d4595a0deb595c998510/p6-h10-mpi1/worker_raw",
+      "--record",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v2.json",
+      "--expected-source-sha",
+      "2059a4a3561ff69b36b4d4595a0deb595c998510",
+      "--expected-mpi-size",
+      "1",
+      "--input",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat"
+    ],
+    "last_marker": "paths_ready",
+    "last_marker_sha256": "1e8359af4efe2b5647b6b8e9f7838558cf847b39ef73fcb2a3e8e41eb658e67e",
+    "markers": ["paths_ready"],
+    "stages": {
+      "bundle": "not_run",
+      "probe": "not_run",
+      "reserve": "not_run",
+      "setup": "not_run",
+      "numerical_gate": "not_run"
+    },
+    "worker_log_empty": true
+  },
+  "watchdog": {
+    "returncode": -15,
+    "stop_reason": "authority_unreadable",
+    "natural_exit": false,
+    "no_orphan": true,
+    "sample_count": 118,
+    "last_elapsed_seconds": 29.44007521297317,
+    "peak_process_tree_rss_bytes": 1454944256,
+    "max_process_tree_swap_bytes": 0,
+    "poll_seconds": 0.25,
+    "rss_limit_bytes": 2000000000,
+    "last_readable_sample": {
+      "elapsed_seconds": 29.188335474929772,
+      "pids": [1298749, 1298750, 1298770, 1298771],
+      "rss_bytes": 1454944256,
+      "swap_bytes": 0,
+      "all_status_readable": true
+    },
+    "last_unreadable_sample": {
+      "elapsed_seconds": 29.44007521297317,
+      "pids": [1298749, 1298750, 1298770, 1298771],
+      "rss_bytes": 576221184,
+      "swap_bytes": 0,
+      "all_status_readable": false
+    },
+    "authority_boundary": {
+      "dedicated_job_cgroup": false,
+      "init_scope_swap_bytes": 4935680,
+      "wsl_global_swap_is_diagnostic_only": true,
+      "process_tree_swap_is_gate_authority": true
+    }
+  },
+  "retained": {
+    "status": "not_reached",
+    "sample_count": 0,
+    "peak_process_tree_rss_bytes": null,
+    "max_process_tree_swap_bytes": null
+  },
+  "artifacts": {
+    "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v2/2059a4a3561ff69b36b4d4595a0deb595c998510/p6-h10-mpi1",
+    "worker_raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v2/2059a4a3561ff69b36b4d4595a0deb595c998510/p6-h10-mpi1/worker_raw",
+    "marker_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v2/2059a4a3561ff69b36b4d4595a0deb595c998510/p6-h10-mpi1/worker_raw/markers",
+    "worker_record": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v2.json",
+      "exists": false
+    },
+    "watchdog_raw": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v2/2059a4a3561ff69b36b4d4595a0deb595c998510/p6-h10-mpi1/watchdog.raw.jsonl",
+      "bytes": 100059,
+      "sha256": "29d1da3df86a6e563c4f453658de8bcd9a743c855bf4d02298a243ba4d9eebb7"
+    },
+    "watchdog_compact": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v2/2059a4a3561ff69b36b4d4595a0deb595c998510/p6-h10-mpi1/watchdog.compact.json",
+      "bytes": 2024,
+      "sha256": "92a4afb7e08f483e8bcca5009b0b33e415b4d27035e464b27d2742c54bc32d3b"
+    },
+    "worker_log": {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v2/2059a4a3561ff69b36b4d4595a0deb595c998510/p6-h10-mpi1/worker.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "checker": {
+    "run": false,
+    "reason": "worker_record_not_created"
+  },
+  "attempt_artifact_preserved": true
+}
