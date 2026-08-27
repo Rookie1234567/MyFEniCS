@@ -19,8 +19,8 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup"
 STAGE = "c1-p6-setup"
 CASE = "p6-h10-mpi1"
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v1"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v1"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v2"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v2"
 CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-check.v1"
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 PROBE_SOURCE_SCHEMA = "task038.v13.c0.physical-canonical-source.v1"
@@ -141,11 +141,18 @@ def _check_provenance(
             _error(errors, f"worker record must not contain decision field {forbidden}")
     raw_value = _require(record, "raw_dir", errors, "record")
     stored_record = _require(record, "record_path", errors, "record")
+    _exact(record, "isolated_jit_cache", True, errors, "record")
+    jit_value = _require(record, "jit_cache_dir", errors, "record")
     raw_dir: Path | None = None
+    jit_cache_dir: Path | None = None
     if isinstance(raw_value, str) and Path(raw_value).is_absolute():
         raw_dir = Path(raw_value).resolve()
     else:
         _error(errors, "record.raw_dir must be absolute")
+    if isinstance(jit_value, str) and Path(jit_value).is_absolute():
+        jit_cache_dir = Path(jit_value).resolve()
+    else:
+        _error(errors, "record.jit_cache_dir must be absolute")
     if not isinstance(stored_record, str) or not Path(stored_record).is_absolute():
         _error(errors, "record.record_path must be absolute")
     elif Path(stored_record).resolve() != record_path.resolve():
@@ -155,8 +162,32 @@ def _check_provenance(
             _error(errors, "worker record path must differ from raw_dir")
         if not raw_dir.is_dir():
             _error(errors, "record.raw_dir does not exist")
-    provenance = _mapping(_require(record, "provenance", errors, "record"), errors, "record.provenance")
-    for key in ("source_sha", "branch", "clean_source_tree", "qualified_activation", "python_executable", "mpi_size", "petsc_scalar_type", "petsc_int_type", "threads", "abi_modules", "input_path", "input_sha256", "command"):
+    if raw_dir is not None and jit_cache_dir is not None:
+        expected_jit_cache = (raw_dir.parent / "jit_cache").resolve()
+        if jit_cache_dir != expected_jit_cache:
+            _error(errors, "record.jit_cache_dir is not raw_dir.parent/jit_cache")
+        if not jit_cache_dir.is_dir():
+            _error(errors, "record.jit_cache_dir does not exist")
+    provenance = _mapping(
+        _require(record, "provenance", errors, "record"), errors, "record.provenance"
+    )
+    for key in (
+        "source_sha",
+        "branch",
+        "clean_source_tree",
+        "qualified_activation",
+        "python_executable",
+        "mpi_size",
+        "petsc_scalar_type",
+        "petsc_int_type",
+        "threads",
+        "abi_modules",
+        "input_path",
+        "input_sha256",
+        "jit_cache_dir",
+        "isolated_jit_cache",
+        "command",
+    ):
         _require(provenance, key, errors, "record.provenance")
     _exact(provenance, "source_sha", expected_source_sha, errors, "provenance")
     _exact(provenance, "branch", BRANCH, errors, "provenance")
@@ -165,6 +196,9 @@ def _check_provenance(
     _exact(provenance, "mpi_size", 1, errors, "provenance")
     _exact(provenance, "petsc_scalar_type", "complex128", errors, "provenance")
     _exact(provenance, "petsc_int_type", "int32", errors, "provenance")
+    _exact(provenance, "isolated_jit_cache", True, errors, "provenance")
+    if jit_cache_dir is not None:
+        _exact(provenance, "jit_cache_dir", str(jit_cache_dir), errors, "provenance")
     threads = _mapping(provenance.get("threads"), errors, "provenance.threads")
     for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
         _exact(threads, name, "1", errors, "provenance.threads")
@@ -190,6 +224,7 @@ def _check_provenance(
         expected_tail = [
             "--stage", STAGE, "--case", CASE,
             "--raw-dir", str(raw_dir),
+            "--jit-cache-dir", str(jit_cache_dir) if jit_cache_dir is not None else "",
             "--record", str(record_path.resolve()),
             "--expected-source-sha", expected_source_sha,
             "--expected-mpi-size", "1",

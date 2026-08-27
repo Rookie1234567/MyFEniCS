@@ -27,8 +27,8 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup"
 STAGE = "c1-p6-setup"
 CASE = "p6-h10-mpi1"
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v1"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v1"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-record.v2"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v2"
 PROBE_SOURCE_SCHEMA = "task038.v13.c0.physical-canonical-source.v1"
 PROBE_SOURCE_GENERATION = "physical_canonical_key_sha256_v1"
 PROBE_SOURCE_ROLE = "full_fe_dual"
@@ -120,6 +120,19 @@ def validate_record_staging(raw_dir: Path, record_path: Path) -> None:
         raise FileNotFoundError("worker record parent must already exist")
     raw_dir.mkdir(parents=True, exist_ok=False)
     marker_dir.mkdir()
+
+
+def _prepare_isolated_jit_cache(raw_dir: Path, jit_cache_dir: Path) -> Path:
+    raw_dir = Path(raw_dir).resolve()
+    jit_cache_dir = Path(jit_cache_dir).resolve()
+    expected = (raw_dir.parent / "jit_cache").resolve()
+    if jit_cache_dir != expected:
+        raise ValueError("jit-cache-dir must equal raw_dir.parent/jit_cache")
+    if jit_cache_dir.exists():
+        raise FileExistsError("isolated jit cache already exists")
+    jit_cache_dir.mkdir(exist_ok=False)
+    os.environ["XDG_CACHE_HOME"] = str(jit_cache_dir)
+    return jit_cache_dir
 
 
 def _emit_marker(raw_dir: Path, name: str, source_sha: str, **facts: Any) -> None:
@@ -319,6 +332,7 @@ def _record(
     source: Mapping[str, Any],
     source_sha: str,
     input_path: Path,
+    jit_cache_dir: Path,
     command: list[str],
     setup_audit: Mapping[str, Any],
     reserve: Mapping[str, Any],
@@ -331,6 +345,8 @@ def _record(
         "source_sha": source_sha,
         "input_path": str(input_path.resolve()),
         "input_sha256": input_sha,
+        "jit_cache_dir": str(jit_cache_dir.resolve()),
+        "isolated_jit_cache": True,
         "command": list(command),
     }
     probe_facts = dict(probe)
@@ -349,6 +365,8 @@ def _record(
         "case": CASE,
         "raw_dir": str(raw_dir.resolve()),
         "record_path": str(record_path.resolve()),
+        "jit_cache_dir": str(jit_cache_dir.resolve()),
+        "isolated_jit_cache": True,
         "command": list(command),
         "provenance": _jsonable(provenance),
         "setup_audit": _jsonable(setup_audit),
@@ -364,6 +382,16 @@ def _record(
 
 
 def run_worker(args: argparse.Namespace) -> None:
+    root = Path(__file__).resolve().parents[1]
+    raw_dir = Path(args.raw_dir).resolve()
+    record_path = Path(args.record).resolve()
+    input_path = Path(args.input).resolve()
+    jit_cache_dir = Path(args.jit_cache_dir).resolve()
+    if not input_path.is_file():
+        raise FileNotFoundError(f"input template does not exist: {input_path}")
+    validate_record_staging(raw_dir, record_path)
+    _prepare_isolated_jit_cache(raw_dir, jit_cache_dir)
+
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.common.config_3d import target_stage4_config
@@ -381,14 +409,7 @@ def run_worker(args: argparse.Namespace) -> None:
     validate_setup_profile(args.stage, args.case, comm.size)
     if comm.size != 1:
         raise RuntimeError("setup worker is MPI1-only")
-    root = Path(__file__).resolve().parents[1]
-    raw_dir = Path(args.raw_dir).resolve()
-    record_path = Path(args.record).resolve()
-    input_path = Path(args.input).resolve()
-    if not input_path.is_file():
-        raise FileNotFoundError(f"input template does not exist: {input_path}")
     source = _source_facts(root, args.expected_source_sha)
-    validate_record_staging(raw_dir, record_path)
     command = [
         str(Path(sys.executable).resolve()),
         "-m",
@@ -399,6 +420,8 @@ def run_worker(args: argparse.Namespace) -> None:
         args.case,
         "--raw-dir",
         str(raw_dir),
+        "--jit-cache-dir",
+        str(jit_cache_dir),
         "--record",
         str(record_path),
         "--expected-source-sha",
@@ -420,6 +443,8 @@ def run_worker(args: argparse.Namespace) -> None:
             "paths_ready",
             args.expected_source_sha,
             worker_raw_dir=str(raw_dir),
+            jit_cache_dir=str(jit_cache_dir),
+            isolated_jit_cache=True,
         )
         cfg = target_stage4_config(degree=6, h_nm=10.0)
         bundle = build_p6_same_mesh_setup(cfg, comm)
@@ -487,6 +512,7 @@ def run_worker(args: argparse.Namespace) -> None:
             source=source,
             source_sha=args.expected_source_sha,
             input_path=input_path,
+            jit_cache_dir=jit_cache_dir,
             command=command,
             setup_audit=setup_audit,
             reserve=reserve_facts,
@@ -511,6 +537,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stage", choices=(STAGE,), required=True)
     parser.add_argument("--case", choices=(CASE,), required=True)
     parser.add_argument("--raw-dir", type=Path, required=True)
+    parser.add_argument("--jit-cache-dir", type=Path, required=True)
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--expected-source-sha", required=True)
     parser.add_argument("--expected-mpi-size", type=int, required=True)

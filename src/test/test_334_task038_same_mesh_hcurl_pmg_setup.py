@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -12,9 +13,12 @@ import pytest
 
 from benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup import (
     CASE,
+    MARKER_SCHEMA,
     MODULE,
+    RECORD_SCHEMA,
     STAGE,
     _emit_marker,
+    _prepare_isolated_jit_cache,
     validate_record_staging,
     validate_setup_profile,
 )
@@ -43,11 +47,13 @@ def _valid_case(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
     case_root.mkdir(parents=True)
     raw_dir = tmp_path / "artifact" / "worker_raw"
     marker_dir = raw_dir / "markers"
+    jit_cache_dir = raw_dir.parent / "jit_cache"
     record_path = tmp_path / "tracked" / "worker_record.json"
     watchdog_raw = case_root / "watchdog.raw.jsonl"
     watchdog_compact = case_root / "watchdog.compact.json"
     input_path = case_root / "full3d_iterative_example.dat"
     marker_dir.mkdir(parents=True)
+    jit_cache_dir.mkdir()
     record_path.parent.mkdir(parents=True)
     input_path.write_bytes(b"frozen input\n")
 
@@ -61,6 +67,8 @@ def _valid_case(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
         CASE,
         "--raw-dir",
         str(raw_dir.resolve()),
+        "--jit-cache-dir",
+        str(jit_cache_dir.resolve()),
         "--record",
         str(record_path.resolve()),
         "--expected-source-sha",
@@ -92,6 +100,8 @@ def _valid_case(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
         },
         "input_path": str(input_path.resolve()),
         "input_sha256": _sha256(input_path),
+        "jit_cache_dir": str(jit_cache_dir.resolve()),
+        "isolated_jit_cache": True,
         "command": command,
     }
     architecture = {
@@ -235,11 +245,13 @@ def _valid_case(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
         "npz": npz_facts,
     }
     record = {
-        "schema": "task038.full3d.same-mesh-hcurl-pmg.setup-record.v1",
+        "schema": RECORD_SCHEMA,
         "stage": STAGE,
         "case": CASE,
         "raw_dir": str(raw_dir.resolve()),
         "record_path": str(record_path.resolve()),
+        "jit_cache_dir": str(jit_cache_dir.resolve()),
+        "isolated_jit_cache": True,
         "command": command,
         "provenance": provenance,
         "setup_audit": audit,
@@ -290,7 +302,7 @@ def _valid_case(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
         _write_json(
             marker_dir / f"{name}.json",
             {
-                "schema": "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v1",
+                "schema": MARKER_SCHEMA,
                 "marker": name,
                 "source_sha": SOURCE_SHA,
                 "wall_time_ns": wall_time_ns,
@@ -346,7 +358,9 @@ def _valid_case(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
     return record_path, watchdog_compact, record
 
 
-def test_setup_profile_and_staging_contracts(tmp_path: Path) -> None:
+def test_setup_profile_and_staging_contracts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     validate_setup_profile(STAGE, CASE, 1)
     with pytest.raises(ValueError):
         validate_setup_profile(STAGE, CASE, 2)
@@ -355,6 +369,20 @@ def test_setup_profile_and_staging_contracts(tmp_path: Path) -> None:
     record_path.parent.mkdir(parents=True)
     validate_record_staging(raw_dir, record_path)
     assert raw_dir.is_dir() and (raw_dir / "markers").is_dir()
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    jit_cache_dir = _prepare_isolated_jit_cache(raw_dir, raw_dir.parent / "jit_cache")
+    assert jit_cache_dir == raw_dir.parent / "jit_cache"
+    assert os.environ["XDG_CACHE_HOME"] == str(jit_cache_dir)
+    with pytest.raises(FileExistsError):
+        _prepare_isolated_jit_cache(raw_dir, jit_cache_dir)
+    with pytest.raises(ValueError):
+        _prepare_isolated_jit_cache(raw_dir, raw_dir.parent / "other_jit_cache")
+    worker_source = (
+        Path(__file__).parents[2] / "benchmarks" / "run_task038_full3d_same_mesh_hcurl_pmg_setup.py"
+    ).read_text(encoding="utf-8")
+    assert worker_source.index("    _prepare_isolated_jit_cache(raw_dir, jit_cache_dir)") < worker_source.index(
+        "    from src.common.config_3d"
+    )
     _emit_marker(raw_dir, "paths_ready", SOURCE_SHA, worker_raw_dir=str(raw_dir))
     marker = json.loads(
         (raw_dir / "markers" / "paths_ready.json").read_text(encoding="utf-8")
@@ -382,6 +410,14 @@ def test_checker_fails_closed_for_reserve_and_resource_mutations(tmp_path: Path)
     result = check_record(record_path, watchdog_path, SOURCE_SHA)
     assert result["passed"] is False
     assert result["classification"] == "CONTRACT_INVALID"
+
+    record_path, watchdog_path, record = _valid_case(tmp_path / "jit-path")
+    record["jit_cache_dir"] = str(Path(record["raw_dir"]).parent / "not-jit-cache")
+    _write_json(record_path, record)
+    result = check_record(record_path, watchdog_path, SOURCE_SHA)
+    assert result["passed"] is False
+    assert result["classification"] == "CONTRACT_INVALID"
+    assert any("jit_cache_dir" in item for item in result["contract_errors"])
 
     record_path, watchdog_path, _ = _valid_case(tmp_path / "resource")
     compact = json.loads(watchdog_path.read_text(encoding="utf-8"))
