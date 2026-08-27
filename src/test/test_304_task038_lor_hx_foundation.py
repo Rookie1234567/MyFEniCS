@@ -284,9 +284,15 @@ def test_checkpoint_and_watchdog_contract_helpers() -> None:
         def poll(self) -> int | None:
             return self.result
 
-    assert runner._watchdog_terminal_exit_race(FakeProcess(0), "authority_unreadable")
-    assert not runner._watchdog_terminal_exit_race(FakeProcess(None), "authority_unreadable")
-    assert not runner._watchdog_terminal_exit_race(FakeProcess(0), "process_tree_swap_nonzero")
+    assert runner._watchdog_terminal_exit_race(
+        FakeProcess(0), "authority_unreadable", 0
+    )
+    assert not runner._watchdog_terminal_exit_race(
+        FakeProcess(None), "authority_unreadable", 0
+    )
+    assert not runner._watchdog_terminal_exit_race(
+        FakeProcess(0), "process_tree_swap_nonzero", 1
+    )
     assert "args.worker_raw_dir.mkdir" not in Path(runner.__file__).read_text(encoding="utf-8")
 
 
@@ -464,8 +470,9 @@ def test_watchdog_main_subprocess_natural_closeout_and_fail_closed_reuse(tmp_pat
     assert not worker_raw.exists()
 
 
+@pytest.mark.parametrize("grace_exits_zero", [True, False])
 def test_watchdog_main_discards_retry_exit_race_sample(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, grace_exits_zero: bool
 ) -> None:
     watchdog_raw = tmp_path / "watchdog.raw.jsonl"
     watchdog_compact = tmp_path / "watchdog.json"
@@ -498,16 +505,21 @@ def test_watchdog_main_discards_retry_exit_race_sample(
     class FakeProcess:
         pid = 731
 
-        def __init__(self) -> None:
-            self.poll_values = iter((None, None, None, 0))
+        def __init__(self, grace_exits_zero: bool) -> None:
+            self.poll_values = iter((None, None, None, None))
+            self.wait_timeouts: list[float | None] = []
+            self.grace_exits_zero = grace_exits_zero
 
         def poll(self) -> int | None:
             return next(self.poll_values)
 
-        def wait(self) -> int:
+        def wait(self, timeout: float | None = None) -> int:
+            self.wait_timeouts.append(timeout)
+            if timeout is not None and not self.grace_exits_zero:
+                raise subprocess.TimeoutExpired("worker", timeout)
             return 0
 
-    process = FakeProcess()
+    process = FakeProcess(grace_exits_zero)
 
     def sample(pid: int) -> dict[str, object]:
         sample_pids.append(pid)
@@ -541,19 +553,22 @@ def test_watchdog_main_discards_retry_exit_race_sample(
     )
     compact = json.loads(watchdog_compact.read_text(encoding="utf-8"))
     raw_samples = [json.loads(line) for line in watchdog_raw.read_text(encoding="utf-8").splitlines()]
-    assert result == 0
+    assert result == (0 if grace_exits_zero else 1)
     assert sample_pids == [731, 731, 731]
     assert sleeps == [runner.WATCHDOG_POLL_SECONDS, 0.01]
+    assert process.wait_timeouts == [runner.WATCHDOG_POLL_SECONDS, None]
     assert terminated == [process]
-    assert len(raw_samples) == 1
+    assert len(raw_samples) == (1 if grace_exits_zero else 2)
     assert raw_samples[0]["authority"]["process_tree"]["all_status_readable"] is True
-    assert compact["natural_exit"] is True
+    if not grace_exits_zero:
+        assert raw_samples[-1]["authority"]["process_tree"]["all_status_readable"] is False
+    assert compact["natural_exit"] is grace_exits_zero
     assert compact["returncode"] == 0
     assert compact["no_orphan"] is True
-    assert compact["all_status_readable"] is True
-    assert compact["stop_reason"] == "natural_exit"
-    assert compact["terminal_exit_race_discard_count"] == 1
-    assert compact["sample_count"] == 1
+    assert compact["all_status_readable"] is grace_exits_zero
+    assert compact["stop_reason"] == ("natural_exit" if grace_exits_zero else "authority_unreadable")
+    assert compact["terminal_exit_race_discard_count"] == int(grace_exits_zero)
+    assert compact["sample_count"] == len(raw_samples)
 
 
 def test_checker_recomputes_synthetic_raw_and_rejects_checkpoint_extra(tmp_path: Path) -> None:

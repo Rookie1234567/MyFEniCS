@@ -835,8 +835,21 @@ def _watchdog_stop_reason(
     return None
 
 
-def _watchdog_terminal_exit_race(process: Any, reason: str | None) -> bool:
-    return reason == "authority_unreadable" and process.poll() is not None
+def _watchdog_terminal_exit_race(
+    process: Any, reason: str | None, retry_count: int
+) -> bool:
+    if reason != "authority_unreadable":
+        return False
+    returncode = process.poll()
+    if returncode is not None:
+        return returncode == 0
+    if retry_count != 1:
+        return False
+    try:
+        returncode = process.wait(timeout=WATCHDOG_POLL_SECONDS)
+    except subprocess.TimeoutExpired:
+        return False
+    return returncode == 0
 
 
 def _watchdog_authority_with_retry(
@@ -922,7 +935,7 @@ def _watchdog_main(argv: list[str]) -> int:
                 sample["initial_unreadable_process_tree"] = initial_unreadable_process_tree
             samples.append(sample)
             reason = _watchdog_stop_reason(authority, args.watchdog_rss_limit_bytes)
-            if _watchdog_terminal_exit_race(process, reason):
+            if _watchdog_terminal_exit_race(process, reason, retry_count):
                 samples.pop()
                 terminal_exit_race_discard_count = 1
                 stop_reason = "natural_exit"
