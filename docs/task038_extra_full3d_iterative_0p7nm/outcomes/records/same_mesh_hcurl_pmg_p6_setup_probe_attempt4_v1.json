@@ -1,0 +1,250 @@
+{
+  "schema": "task038.full3d.same-mesh-hcurl-pmg.setup-probe-attempt.v1",
+  "classification": "SETUP_RESOURCE_AND_LIFECYCLE_MEASURED_PASS_BUT_PROBE_COPY_DIRECTION_IMPLEMENTATION_INVALID",
+  "qualification": {
+    "setup_resource_lifecycle": "measured_pass",
+    "probe": "invalid",
+    "checker": "invalid_zero_reference_overflow",
+    "candidate": "not_qualified",
+    "random": "not_run"
+  },
+  "execution": {
+    "source_sha": "0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "stage": "c1-p6-setup",
+    "case": "p6-h10-mpi1",
+    "mpi_size": 1,
+    "worker_returncode": 0,
+    "natural_exit": true,
+    "command": [
+      "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_setup",
+      "--stage", "c1-p6-setup",
+      "--case", "p6-h10-mpi1",
+      "--raw-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v4/0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf/p6-h10-mpi1/worker_raw",
+      "--jit-cache-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v4/0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf/p6-h10-mpi1/jit_cache",
+      "--record",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v4.json",
+      "--expected-source-sha", "0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf",
+      "--expected-mpi-size", "1",
+      "--input",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat"
+    ],
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "isolated_jit_cache": true,
+    "qualified_activation": "1",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "threads": {"MKL_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1"}
+  },
+  "artifact_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v4/0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf/p6-h10-mpi1",
+  "watchdog": {
+    "schema": "task038.lor-native-complex-hx.foundation-e-watchdog.v1",
+    "returncode": 0,
+    "stop_reason": "natural_exit",
+    "natural_exit": true,
+    "no_orphan": true,
+    "all_status_readable": true,
+    "sample_count": 21303,
+    "peak_process_tree_rss_bytes": 1515864064,
+    "max_process_tree_swap_bytes": 0,
+    "retained_window": {
+      "sample_count": 8,
+      "peak_process_tree_rss_bytes": 942346240,
+      "max_process_tree_swap_bytes": 0,
+      "ready_wall_time_ns": 1787797828058631508,
+      "observed_wall_time_ns": 1787797830062090897
+    },
+    "watchdog_poll_seconds": 0.25,
+    "watchdog_rss_limit_bytes": 2000000000,
+    "authority_readability_retry_count": 0,
+    "authority_readability_recovered_count": 0
+  },
+  "markers": {
+    "required_and_completed": [
+      "paths_ready", "bundle_built", "audit_ready", "reserve_built",
+      "pc_applies_complete", "retained_ready", "reserve_destroyed",
+      "bundle_destroyed", "record_written"
+    ],
+    "timestamps_ns": {
+      "paths_ready": 1787791962455565318,
+      "bundle_built": 1787797706083326203,
+      "audit_ready": 1787797706086962783,
+      "reserve_built": 1787797706100553812,
+      "pc_applies_complete": 1787797828055773064,
+      "retained_ready": 1787797828058631508,
+      "reserve_destroyed": 1787797830062090897,
+      "bundle_destroyed": 1787797830133814780,
+      "record_written": 1787797830149088286
+    },
+    "marker_sha256": {
+      "paths_ready": "1c2d927a36bbe099490ab2e1710f79f47372b161aa4ffaca7cfc2d5e1f7e037d",
+      "bundle_built": "87ed34ad3c6bdcab6af81b816e2783da025075571e7b99c37678fc23cea5bef0",
+      "audit_ready": "2a734101f35d2a177c372450b5f3c5fd7d20ed796b31ffec70fb876b3db2216f",
+      "reserve_built": "8ea4a35d7685d133bac6f25753c88425a8c365e6e877916464056aa8cdccfb3b",
+      "pc_applies_complete": "695c27d26227d6b16ad3ccf3278efe92d8cfd0a21e18b08b380392617d1d8b25",
+      "retained_ready": "bc21390eced9fb54d0d996176f75bab1a39378f72f379c79b7fdc8d772abdb6c",
+      "reserve_destroyed": "4217d55318b5a5e090f132517e0e476956630285cfe2598fe44595fb3373672b",
+      "bundle_destroyed": "cf2835ed478f83cbd02d6dd44690ca61727189dab21f15d7f96c12741d081722",
+      "record_written": "a545eda74f71c0827914fe0c30a06f82def2f97b95121aeadbb89b5e7f48c957"
+    }
+  },
+  "setup": {
+    "record_schema": "task038.full3d.same-mesh-hcurl-pmg.setup-record.v2",
+    "marker_schema": "task038.full3d.same-mesh-hcurl-pmg.setup-marker.v2",
+    "profile": {
+      "wavelength_nm": 13.5,
+      "mesh_target_size_nm": 10.0,
+      "levels": [6, 3, 1],
+      "pairs": [[6, 3], [3, 1]],
+      "same_physical_mesh": true,
+      "finalized_double_floquet_mpc_count": 3
+    },
+    "layouts": {
+      "p6": {"global_rows": 173802, "local_owned_rows": 173802, "local_storage_entries": 173802},
+      "p3": {"global_rows": 23073, "local_owned_rows": 23073, "local_storage_entries": 23073},
+      "p1": {"global_rows": 1067, "local_owned_rows": 1067, "local_storage_entries": 1067}
+    },
+    "matrices": {
+      "p3": {"rows": 23073, "cols": 23073, "local_rows": 23073, "local_cols": 23073, "global_nnz": 5717349, "petsc_reported_memory_bytes": {"local": null, "global": null}},
+      "p1": {"rows": 1067, "cols": 1067, "local_rows": 1067, "local_cols": 1067, "global_nnz": 37253, "petsc_reported_memory_bytes": {"local": null, "global": null}}
+    },
+    "p1_factor": {
+      "backend": "petsc-preonly-lu-mumps",
+      "factor_matrix_rows": 1067,
+      "factor_matrix_nnz": 131203,
+      "setup_count": 1,
+      "solve_count": 10,
+      "petsc_reported_memory_available": false,
+      "petsc_reported_memory_bytes": {"local": null, "global": null}
+    },
+    "reserve": {
+      "basis_count": 21,
+      "auxiliary_vector_count": 4,
+      "vector_count": 25,
+      "local_entries_per_vector": 173802,
+      "local_numeric_bytes": 69520800
+    },
+    "transfers": {
+      "p63": {"shape": [882, 144], "rank": 144, "full_column_rank": true, "curl_commuting_relative": 3.912345248798665e-15, "gradient_commuting_relative": 1.678741254851367e-14, "adjoint_work_relative": 1.1662055242221905e-15, "local_cache_array_bytes": 10160640, "nontrivial_cell_permutation_count_local": 82, "fine_global_rows": 173802, "coarse_global_rows": 23073, "fine_mpc_slave_count_global": 9210, "coarse_mpc_slave_count_global": 2337, "fine_lagrange_variant": "legendre", "coarse_lagrange_variant": "legendre"},
+      "p31": {"shape": [144, 12], "rank": 12, "full_column_rank": true, "curl_commuting_relative": 7.585439186100146e-16, "gradient_commuting_relative": 3.2005681089746924e-15, "adjoint_work_relative": 2.0129531087594483e-16, "local_cache_array_bytes": 138240, "nontrivial_cell_permutation_count_local": 82, "fine_global_rows": 23073, "coarse_global_rows": 1067, "fine_mpc_slave_count_global": 2337, "coarse_mpc_slave_count_global": 275, "fine_lagrange_variant": "legendre", "coarse_lagrange_variant": "legendre"}
+    },
+    "p6_action": {
+      "global_rows": 173802,
+      "local_owned_rows": 173802,
+      "local_storage_entries": 173802,
+      "constraint_count": 9210,
+      "owned_constraint_count": 9210,
+      "apply_count": 80,
+      "retained_local_bytes": 6151104,
+      "per_apply_temporary_bytes": 3564288,
+      "retained_dense_cell_tensor_count": 0,
+      "dense_cell_tensor_materialized_per_apply": false,
+      "global_matrix_materialized": false,
+      "global_constraint_matrix_materialized": false,
+      "global_condensed_schur_materialized": false,
+      "numeric_allgather": false,
+      "ksp_created": false,
+      "factor_count": 0,
+      "phase_application": "finalized_floquet_mpc_once",
+      "slave_row_identity": true
+    },
+    "ledger": {
+      "known_component_local_bytes": 70437440,
+      "components_local_bytes": {
+        "lower_smoother_local_numeric_bytes": 2953344,
+        "lower_work_local_numeric_bytes": 3021632,
+        "p31_transfer_local_cache_array_bytes": 138240,
+        "p63_transfer_local_cache_array_bytes": 10160640,
+        "p6_action_retained_local_bytes": 6151104,
+        "p6_exact_diagonal_local_numeric_bytes": 2780832,
+        "upper_smoother_local_numeric_bytes": 22246656,
+        "upper_work_local_numeric_bytes": 22984992,
+        "p3_matrix_reported_memory_local_bytes": null,
+        "p1_matrix_reported_memory_local_bytes": null,
+        "p1_factor_reported_memory_local_bytes": null
+      },
+      "global_facts": {"p6_exact_diagonal_global_numeric_bytes": 2780832},
+      "unavailable_components": ["p3_matrix_reported_memory_local_bytes", "p1_matrix_reported_memory_local_bytes", "p1_factor_reported_memory_local_bytes"],
+      "not_included": ["restart20_reserve", "outer_ksp", "source"],
+      "semantics": "known/measured component ledger; unavailable values are not estimated"
+    },
+    "architecture": {
+      "p6_matrix_free": true,
+      "p3_sparse_allowed": true,
+      "p1_sparse_allowed": true,
+      "p6_global_aij": false,
+      "high_order_global_aij": false,
+      "global_dense_transfer": false,
+      "global_transfer_matrix": false,
+      "numeric_allgather": false,
+      "p6_factor": false,
+      "outer_ksp_created": false,
+      "restart_reserve": false,
+      "physical_solve": false,
+      "dtn": false,
+      "recovery": false
+    }
+  },
+  "probe": {
+    "kind": "canonical_diagnostic_dual",
+    "source_generation": "physical_canonical_key_sha256_v1",
+    "source_role": "full_fe_dual",
+    "source_seeds": ["task038.v13.c1.p6-setup-probe-x-v1", "task038.v13.c1.p6-setup-probe-y-v1"],
+    "source_finite": true,
+    "source_nonzero": true,
+    "npz": {"relative_path": "setup_probes.npz", "bytes": 10211826, "sha256": "1034ff7e3713e643a1cd5f5697724fdcc77b9a82d25df3492bb8992ae9036a70", "input_before_shape": [5, 173802], "input_after_shape": [5, 173802], "outputs_shape": [10, 173802], "dtype": "complex128"},
+    "finite": true,
+    "input_unchanged": true,
+    "input_delta_norm": 0.0,
+    "owned_slave_count": 9210,
+    "owned_slave_max_abs": {"input_before": 0.0, "input_after": 0.0, "outputs": 0.0},
+    "alpha": {"real": 0.37, "imag": -0.19},
+    "beta": {"real": -0.23, "imag": 0.41},
+    "before_row_norms": [0.0, 0.0, 205.89849785048335, 0.0, 0.0],
+    "output_row_norms": [0.0, 0.0, 0.0, 6506.281660726001, 0.0, 0.0, 0.0, 0.0, 6506.281660726001, 0.0],
+    "observations": {
+      "x_row_norm": 0.0,
+      "y_row_norm": 0.0,
+      "alpha_x_row_norm": 0.0,
+      "beta_y_row_norm": 0.0,
+      "combo_norm": 205.89849785048335,
+      "nonzero_output_norm": 6506.281660726001,
+      "linearity_difference_norm": 6506.281660726001,
+      "linearity_expected_norm": 0.0,
+      "linearity_valid": false,
+      "old_checker_zero_reference_relative": "overflow_to_inf"
+    },
+    "root_cause": {
+      "file": "benchmarks/run_task038_full3d_same_mesh_hcurl_pmg_setup.py",
+      "lines": [259, 262, 264],
+      "description": "PETSc Vec.copy was called in the reverse direction; newly-zero destinations overwrote x and y before the combination rows were built."
+    }
+  },
+  "checker_attempt": {
+    "module": "benchmarks.task038_full3d_same_mesh_hcurl_pmg_setup_checker",
+    "invocation_count": 1,
+    "exit_code": 1,
+    "output_exists": false,
+    "error": "RuntimeWarning: overflow encountered in scalar divide in _relative, followed by ValueError: Out of range float values are not JSON compliant: inf",
+    "classification": "not_written_due_to_strict_json_rejection"
+  },
+  "artifact_hashes": {
+    "worker_record": {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v4.json", "bytes": 79229, "sha256": "d7136104cf7fc01e978fc008d4cc25e9573c0c2d829e0563b6e5cf7f136529b3"},
+    "watchdog_compact": {"path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_setup_v4_watchdog.json", "bytes": 2296, "sha256": "f78b2177fc80b2111539e8854a4d80ca2b452fa7a99fcc46258ffe21699495ef"},
+    "watchdog_raw": {"path": "benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v4/0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf/p6-h10-mpi1/watchdog.raw.jsonl", "bytes": 18755874, "sha256": "47e49bf48255552912a862b32f82c713b82eae5b95796354f0bada20101be5e2"},
+    "worker_log": {"path": "benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v4/0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf/p6-h10-mpi1/worker.log", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    "probe_npz": {"path": "benchmarks/artifacts/task038_extra_full3d_same_mesh_hcurl_pmg_p6_setup_v4/0d96a6f8eee5c9aab3a28ded9017c3578c2ec3cf/p6-h10-mpi1/worker_raw/setup_probes.npz", "bytes": 10211826, "sha256": "1034ff7e3713e643a1cd5f5697724fdcc77b9a82d25df3492bb8992ae9036a70"}
+  },
+  "boundary": {
+    "setup_resource_lifecycle": "measured_pass",
+    "probe_and_candidate_qualification": "invalid/not_qualified",
+    "actual_memory_gate": "not_failed",
+    "actual_numerical_gate": "not_evaluated_as_a_valid_probe",
+    "random": "not_run",
+    "old_v4_record_and_watchdog": "preserve unchanged"
+  }
+}
