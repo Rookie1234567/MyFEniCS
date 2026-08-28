@@ -68,7 +68,15 @@ def cgroup_snapshot(pid: int | str = "self") -> dict[str, Any]:
     # WSL commonly places all distro processes in /init.scope.  It is useful
     # diagnostic context, but it is not a dedicated job authority.
     relative = path.relative_to(Path("/sys/fs/cgroup")).as_posix()
-    dedicated = bool(relative not in {".", "", "init.scope"})
+    basename = Path(relative).name
+    session_scope = (
+        relative.startswith("user.slice/")
+        and basename.startswith("session-")
+        and basename.endswith(".scope")
+    )
+    dedicated = bool(
+        relative not in {".", "", "init.scope"} and not session_scope
+    )
     return {
         "path": f"/{relative}" if relative not in {".", ""} else "/",
         "readable": (path / "memory.current").is_file(),

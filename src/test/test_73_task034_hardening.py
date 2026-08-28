@@ -5,6 +5,7 @@ import inspect
 import os
 from pathlib import Path
 import unittest
+from unittest import mock
 import weakref
 
 import numpy as np
@@ -15,6 +16,7 @@ from benchmarks.run_task034_wsl_qualification import _dolfinx_mpc_abi_probe
 from benchmarks.task033_qep_qualification import resource_authority_gate
 from benchmarks.task034_numerical_blob_checker import build_record
 from benchmarks.task034_wsl_resources import (
+    cgroup_snapshot,
     effective_memory_limit,
     resource_authority_sample,
 )
@@ -137,6 +139,16 @@ class Task034HardeningTests(unittest.TestCase):
         self.assertFalse(sample["mumps_ooc_is_swap"])
         self.assertFalse(sample["windows_pagefile_is_linux_swap"])
         self.assertIn("pswpin_pages", sample["wsl_vm_global_swap_diagnostic"])
+
+    def test_native_session_scope_is_not_dedicated_job_cgroup(self) -> None:
+        with mock.patch(
+            "benchmarks.task034_wsl_resources.current_cgroup_path",
+            return_value=Path(
+                "/sys/fs/cgroup/user.slice/user-1000.slice/session-30.scope"
+            ),
+        ):
+            snapshot = cgroup_snapshot()
+        self.assertFalse(snapshot["dedicated_job_cgroup"])
 
     def test_nonzero_wsl_global_pswp_is_diagnostic_without_job_cgroup(self) -> None:
         gate = resource_authority_gate({

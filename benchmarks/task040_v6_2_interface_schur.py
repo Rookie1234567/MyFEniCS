@@ -1801,9 +1801,7 @@ def _resource_preflight(
         "comm_size": int(comm.size),
         "petsc_scalar_type": str(scalar),
         "petsc_int_type": str(PETSc.IntType),
-        "qualified_activation": os.environ.get(
-            "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
-        )
+        "qualified_activation": os.environ.get("MYFENICS_NATIVE_COMPLEX_ENV")
         == "1",
         "python": sys.executable,
         "mem_available_bytes": mem_available,
