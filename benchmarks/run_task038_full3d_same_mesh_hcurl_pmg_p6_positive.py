@@ -28,8 +28,27 @@ MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p6_positive"
 STAGE = "c1-p6-positive"
 CASE = "p6-h10-mpi1"
 SOURCES = ("random", "gradient", "curl", "checkerboard")
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v2"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v2"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v3"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v3"
+INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
+PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+EXPECTED_PHYSICAL_FIELDS = {
+    "model_id": "euv_grazing1_phi0",
+    "run_id": "euv_grazing1_phi0_full3d_iterative_mpi1",
+    "comparison_group": "euv_grazing1_phi0",
+    "wavelength_nm": 13.5,
+    "grazing_angle_deg": 1.0,
+    "incident_theta_deg": 89.0,
+    "incident_phi_deg": 0.0,
+    "polarization": "s",
+    "nedelec_degree": 6,
+    "mesh_target_size_nm": 10.0,
+    "mesh_cell_type": "hexahedron",
+    "mesh_spacing_mode": "boundary_fitted",
+    "boundary_model": "dtn_port",
+    "dtn_order_policy": "auto_propagating",
+    "dtn_assembly": "auxiliary",
+}
 MARKERS = (
     "paths_ready",
     "bundle_built",
@@ -453,7 +472,8 @@ def run_worker(args: argparse.Namespace) -> None:
 
     from mpi4py import MPI
     from petsc4py import PETSc
-    from src.common.config_3d import target_stage4_config
+    from src.io import load_and_resolve
+    from src.io.input_validation import simulation_config_3d_from_normalized
     from src.solvers.fullspace_lor_native_hx_fixture import (
         build_frozen_fullspace_primal_source,
     )
@@ -474,7 +494,34 @@ def run_worker(args: argparse.Namespace) -> None:
     comm = MPI.COMM_WORLD
     validate_profile(args.stage, args.case, args.source, comm.size)
     source = _source_facts(root, args.expected_source_sha, comm, PETSc)
-    cfg = target_stage4_config(degree=6, h_nm=10.0)
+    specification = load_and_resolve(input_path)
+    payload = specification.as_jsonable()
+    cfg = simulation_config_3d_from_normalized(payload)
+    incidence = payload["incidence"]
+    internal = payload["derived"]["internal"]
+    frozen_identity = {
+        "model_id": str(specification.identity["model_id"]),
+        "run_id": str(specification.identity["run_id"]),
+        "comparison_group": str(specification.identity["comparison_group"]),
+        "wavelength_nm": float(incidence["wavelength_nm"]),
+        "grazing_angle_deg": float(incidence["grazing_angle_deg"]),
+        "incident_theta_deg": float(internal["incident_theta_deg"]),
+        "incident_phi_deg": float(internal["incident_phi_deg"]),
+        "polarization": str(incidence["polarization"]),
+        "nedelec_degree": int(cfg.nedelec_degree),
+        "mesh_target_size_nm": float(cfg.mesh_target_size),
+        "mesh_cell_type": str(cfg.mesh_cell_type),
+        "mesh_spacing_mode": str(cfg.mesh_spacing_mode),
+        "boundary_model": str(cfg.stage4_boundary_model),
+        "dtn_order_policy": str(cfg.stage4_dtn_order_policy),
+        "dtn_assembly": str(cfg.stage4_dtn_assembly),
+    }
+    if (
+        specification.input_sha256 != INPUT_SHA256
+        or specification.physical_model_sha256 != PHYSICAL_MODEL_SHA256
+        or frozen_identity != EXPECTED_PHYSICAL_FIELDS
+    ):
+        raise RuntimeError("positive lane input is not the frozen exact 1-degree configuration")
     bundle: dict[str, Any] = {}
     result: dict[str, Any] | None = None
     source_vec: Any = None
@@ -533,17 +580,16 @@ def run_worker(args: argparse.Namespace) -> None:
             "full_source_array_sha256": _array_sha(source_before),
             "algebraic_input_array_sha256": _array_sha(algebraic_before),
             "input_path": str(input_path),
-            "input_sha256": _sha256_file(input_path),
+            "input_sha256": INPUT_SHA256,
+            "physical_model_sha256": PHYSICAL_MODEL_SHA256,
         }
         operator_authority = _operator_authority(setup_audit)
+        operator_authority["frozen_physical_configuration"] = _jsonable(frozen_identity)
         physical_authority = {
-            "profile": {
-                "wavelength_nm": 13.5,
-                "mesh_target_size_nm": 10.0,
-                "nedelec_degree": 6,
-                "same_physical_mesh": True,
-            },
-            "input_sha256": _sha256_file(input_path),
+            **frozen_identity,
+            "same_physical_mesh": True,
+            "input_sha256": INPUT_SHA256,
+            "physical_model_sha256": PHYSICAL_MODEL_SHA256,
             "coefficient_audit": _jsonable(bundle["coefficient_audit"]),
         }
         identities = {
@@ -552,7 +598,8 @@ def run_worker(args: argparse.Namespace) -> None:
             "operator_identity_authority": operator_authority,
             "operator_identity_sha256": _stable_sha(operator_authority),
             "physical_model_authority": physical_authority,
-            "physical_model_sha256": _stable_sha(physical_authority),
+            "physical_model_authority_sha256": _stable_sha(physical_authority),
+            "physical_model_sha256": PHYSICAL_MODEL_SHA256,
         }
         _emit_marker(
             raw_dir,
@@ -668,7 +715,8 @@ def run_worker(args: argparse.Namespace) -> None:
                 "case": CASE,
                 "source_name": args.source,
                 "input_path": str(input_path),
-                "input_sha256": _sha256_file(input_path),
+                "input_sha256": INPUT_SHA256,
+                "physical_model_sha256": PHYSICAL_MODEL_SHA256,
                 "raw_dir": str(raw_dir),
                 "checkpoint_root": str(checkpoint_root),
                 "record_path": str(record_path),

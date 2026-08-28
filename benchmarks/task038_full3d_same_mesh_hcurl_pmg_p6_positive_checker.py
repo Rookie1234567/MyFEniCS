@@ -22,9 +22,28 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 STAGE = "c1-p6-positive"
 CASE = "p6-h10-mpi1"
 SOURCES = ("random", "gradient", "curl", "checkerboard")
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v2"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v2"
-CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-check.v2"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v3"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v3"
+CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-check.v3"
+INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
+PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+EXPECTED_PHYSICAL_FIELDS = {
+    "model_id": "euv_grazing1_phi0",
+    "run_id": "euv_grazing1_phi0_full3d_iterative_mpi1",
+    "comparison_group": "euv_grazing1_phi0",
+    "wavelength_nm": 13.5,
+    "grazing_angle_deg": 1.0,
+    "incident_theta_deg": 89.0,
+    "incident_phi_deg": 0.0,
+    "polarization": "s",
+    "nedelec_degree": 6,
+    "mesh_target_size_nm": 10.0,
+    "mesh_cell_type": "hexahedron",
+    "mesh_spacing_mode": "boundary_fitted",
+    "boundary_model": "dtn_port",
+    "dtn_order_policy": "auto_propagating",
+    "dtn_assembly": "auxiliary",
+}
 WATCHDOG_SCHEMA = "task038.lor-native-complex-hx.foundation-e-watchdog.v1"
 MARKERS = (
     "paths_ready",
@@ -195,6 +214,10 @@ def _check_provenance(
         _error(errors, "input path is not the frozen template")
     elif provenance.get("input_sha256") != _sha256_file(input_path):
         _error(errors, "input SHA does not match the frozen template")
+    if provenance.get("input_sha256") != INPUT_SHA256:
+        _error(errors, "input SHA is not the frozen Task038 input")
+    if provenance.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256:
+        _error(errors, "physical-model SHA is not the frozen Task038 model")
     for key, expected in (
         ("stage", STAGE),
         ("case", CASE),
@@ -237,15 +260,35 @@ def _check_identities(record: Mapping[str, Any], errors: list[str]) -> None:
     if not isinstance(identities, Mapping):
         _error(errors, "identity authorities are missing")
         return
-    for name in (
-        "input_identity_authority",
-        "operator_identity_authority",
-        "physical_model_authority",
-    ):
+    for name in ("input_identity_authority", "operator_identity_authority"):
         authority = identities.get(name)
         digest = identities.get(name.replace("_authority", "_sha256"))
         if not isinstance(authority, Mapping) or not _hex64(digest) or digest != _stable_sha(authority):
             _error(errors, f"identity authority is missing or hash-inconsistent: {name}")
+    physical = identities.get("physical_model_authority")
+    physical_digest = identities.get("physical_model_authority_sha256")
+    if not isinstance(physical, Mapping) or not _hex64(physical_digest) or physical_digest != _stable_sha(physical):
+        _error(errors, "identity authority is missing or hash-inconsistent: physical_model_authority")
+        return
+    input_authority = identities.get("input_identity_authority")
+    if (
+        not isinstance(input_authority, Mapping)
+        or input_authority.get("input_sha256") != INPUT_SHA256
+        or input_authority.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256
+    ):
+        _error(errors, "input identity is not bound to the frozen input SHA")
+    if identities.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256:
+        _error(errors, "physical-model identity SHA is not the frozen model")
+    for key, expected in EXPECTED_PHYSICAL_FIELDS.items():
+        if physical.get(key) != expected:
+            _error(errors, f"frozen physical configuration mismatch: {key}")
+    if physical.get("input_sha256") != INPUT_SHA256:
+        _error(errors, "physical authority input SHA is not frozen")
+    if physical.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256:
+        _error(errors, "physical authority model SHA is not frozen")
+    operator = identities.get("operator_identity_authority")
+    if not isinstance(operator, Mapping) or operator.get("frozen_physical_configuration") != EXPECTED_PHYSICAL_FIELDS:
+        _error(errors, "operator identity is not bound to the frozen physical configuration")
 
 
 def _check_architecture(record: Mapping[str, Any], errors: list[str]) -> None:

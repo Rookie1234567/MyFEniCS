@@ -102,13 +102,35 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
     checkpoint_dir.mkdir()
     shard = checkpoint_dir / "solution_rank0.npy"
     np.save(shard, solution_values, allow_pickle=False)
-    identities = {
-        "input_identity_authority": {"source": "random", "input": "frozen"},
-        "operator_identity_authority": {"levels": [6, 3, 1], "matrix_free": True},
-        "physical_model_authority": {"same_mesh": True, "wavelength_nm": 13.5},
+    input_authority = {
+        "source_name": "random",
+        "source_facts": {"primal_role": "full_fe"},
+        "full_source_array_sha256": worker._array_sha(source_values),
+        "algebraic_input_array_sha256": worker._array_sha(input_values),
+        "input_path": str(INPUT.resolve()),
+        "input_sha256": checker.INPUT_SHA256,
+        "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256,
     }
-    for name, value in list(identities.items()):
-        identities[name.replace("_authority", "_sha256")] = _stable(value)
+    operator_authority = {
+        "levels": [6, 3, 1],
+        "matrix_free": True,
+        "frozen_physical_configuration": dict(checker.EXPECTED_PHYSICAL_FIELDS),
+    }
+    physical_authority = {
+        **checker.EXPECTED_PHYSICAL_FIELDS,
+        "same_physical_mesh": True,
+        "input_sha256": checker.INPUT_SHA256,
+        "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256,
+    }
+    identities = {
+        "input_identity_authority": input_authority,
+        "input_identity_sha256": _stable(input_authority),
+        "operator_identity_authority": operator_authority,
+        "operator_identity_sha256": _stable(operator_authority),
+        "physical_model_authority": physical_authority,
+        "physical_model_authority_sha256": _stable(physical_authority),
+        "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256,
+    }
     descriptor = {
         "relative_path": shard.name,
         "bytes": shard.stat().st_size,
@@ -192,7 +214,8 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
             "case": worker.CASE,
             "source_name": "random",
             "input_path": str(INPUT.resolve()),
-            "input_sha256": _sha(INPUT),
+            "input_sha256": checker.INPUT_SHA256,
+            "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256,
             "raw_dir": str(raw),
             "checkpoint_root": str(checkpoints),
             "record_path": str(record_path),
@@ -398,15 +421,25 @@ def _checker_mutation_case(tmp_path: Path, mutation: str) -> None:
         marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
         marker_value["facts"]["record_sha256"] = _sha(record_path)
         _write_json(record_marker, marker_value)
+    elif mutation == "wrong_physical_model":
+        record["provenance"]["physical_model_sha256"] = "0" * 64
+        record["identities"]["physical_model_sha256"] = "0" * 64
+        _write_json(record_path, record)
+        record_marker = record_path.parent / "worker_raw/markers/record_written.json"
+        marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
+        marker_value["facts"]["record_sha256"] = _sha(record_path)
+        _write_json(record_marker, marker_value)
     else:
         raise AssertionError(mutation)
     result = checker.check_record(record_path, watchdog_path, SOURCE_SHA)
     assert result["passed"] is False
     assert result["classification"] in {"CONTRACT_INVALID", "C1_P6_POSITIVE_GATE_FAIL"}
+    if mutation == "wrong_physical_model":
+        assert any("physical-model" in error for error in result["contract_errors"])
     json.dumps(result, allow_nan=False)
 
 
-@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash", "action_ledger", "action_roles"))
+@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash", "action_ledger", "action_roles", "wrong_physical_model"))
 def test_checker_mutation_cases(tmp_path: Path, mutation: str) -> None:
     _checker_mutation_case(tmp_path, mutation)
 
