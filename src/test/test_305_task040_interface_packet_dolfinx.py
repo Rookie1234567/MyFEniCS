@@ -386,6 +386,12 @@ def test_petrov_detach_transfers_u_without_copy_and_releases_resident_state() ->
 def _full_spectrum_fixture(comm):
     nx, ny, channels = 15, 7, 72
     total = nx * ny * channels
+    x_levels = [1000]
+    y_levels = [2000]
+    for index in range(nx):
+        x_levels.append(x_levels[-1] + 1000 + (1 if index % 2 == 0 else -1))
+    for index in range(ny):
+        y_levels.append(y_levels[-1] + 1000 + (1 if index % 2 == 0 else -1))
     first_cell = ny * nx * comm.rank // comm.size
     last_cell = ny * nx * (comm.rank + 1) // comm.size
     first, last = first_cell * channels, last_cell * channels
@@ -395,9 +401,14 @@ def _full_spectrum_fixture(comm):
     for cell in range(first_cell, last_cell):
         ix, iy = cell % nx, cell // nx
         geometry = {
-            "x_edge": ((ix, iy, 0), (ix + 1, iy, 0)),
-            "y_edge": ((ix, iy, 0), (ix, iy + 1, 0)),
-            "face": ((ix, iy, 0), (ix + 1, iy, 0), (ix, iy + 1, 0), (ix + 1, iy + 1, 0)),
+            "x_edge": ((x_levels[ix], y_levels[iy], 0), (x_levels[ix + 1], y_levels[iy], 0)),
+            "y_edge": ((x_levels[ix], y_levels[iy], 0), (x_levels[ix], y_levels[iy + 1], 0)),
+            "face": (
+                (x_levels[ix], y_levels[iy], 0),
+                (x_levels[ix + 1], y_levels[iy], 0),
+                (x_levels[ix], y_levels[iy + 1], 0),
+                (x_levels[ix + 1], y_levels[iy + 1], 0),
+            ),
         }
         for kind, count, dimension, offset in (
             ("x_edge", 6, 1, 0), ("y_edge", 6, 1, 6), ("face", 60, 2, 12)
@@ -429,12 +440,15 @@ def _full_spectrum_fixture(comm):
     )
     raw = np.empty(len(gamma_rows), dtype=np.complex128)
     nontrivial = False
+    x_index = {value: index for index, value in enumerate(x_levels)}
+    y_index = {value: index for index, value in enumerate(y_levels)}
     for placement in layout.blocks:
         block = placement.block
         points = np.asarray(block.physical_entity, dtype=np.int64)
         spans = np.ptp(points[:, :2], axis=0)
         offset = 12 if block.entity_dimension == 2 else 0 if spans[0] > 0 else 6
-        ix, iy = int(np.min(points[:, 0])), int(np.min(points[:, 1]))
+        ix = x_index[int(np.min(points[:, 0]))]
+        iy = y_index[int(np.min(points[:, 1]))]
         canonical = np.asarray(
             [
                 0.5

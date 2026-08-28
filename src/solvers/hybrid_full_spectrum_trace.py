@@ -66,23 +66,6 @@ def _channel(kind: str, basis: int) -> int:
     return _OFFSETS[kind] + int(basis)
 
 
-def _grid_index(value: float, origin: float, step: float, count: int) -> int:
-    coordinate = (float(value) - origin) / step
-    nearest = round(coordinate)
-    if abs(coordinate - nearest) > 1.0e-10:
-        raise ValueError("Gamma physical entity does not fall on the periodic grid")
-    return int(nearest) % int(count)
-
-
-def _extent_matches(spans: np.ndarray, expected: tuple[float, float]) -> bool:
-    return all(
-        abs(float(actual)) <= 1.0e-10
-        if step == 0.0
-        else abs(float(actual) / step - 1.0) <= 1.0e-10
-        for actual, step in zip(spans, expected, strict=True)
-    )
-
-
 def _local_records(layout: GammaCanonicalLayout) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for placement in layout.blocks:
@@ -121,27 +104,55 @@ def _routes(
             records.append(record)
     if not records:
         raise ValueError("Gamma canonical layout has no records")
-    coordinates = np.asarray(
-        [point for item in records for point in item["points"]], dtype=np.float64
+    x_levels = sorted(
+        {point[0] for item in records for point in item["points"]}
     )
-    x0, x1 = float(np.min(coordinates[:, 0])), float(np.max(coordinates[:, 0]))
-    y0, y1 = float(np.min(coordinates[:, 1])), float(np.max(coordinates[:, 1]))
-    hx, hy = (x1 - x0) / nx, (y1 - y0) / ny
-    if hx <= 0.0 or hy <= 0.0:
-        raise ValueError("Gamma geometry has no periodic extent")
+    y_levels = sorted(
+        {point[1] for item in records for point in item["points"]}
+    )
+    if len(x_levels) != nx + 1 or len(y_levels) != ny + 1:
+        raise ValueError(
+            "Gamma level inventory requires "
+            f"{nx + 1} x-levels and {ny + 1} y-levels; "
+            f"got {len(x_levels)} and {len(y_levels)}"
+        )
+    x_index = {value: index for index, value in enumerate(x_levels)}
+    y_index = {value: index for index, value in enumerate(y_levels)}
     seen: set[tuple[int, int, int]] = set()
     for item in records:
         kind = str(item["kind"])
-        points = np.asarray(item["points"], dtype=np.float64)
-        spans = np.ptp(points[:, :2], axis=0)
-        expected = {"x_edge": (hx, 0.0), "y_edge": (0.0, hy), "face": (hx, hy)}[
-            kind
-        ]
-        if not _extent_matches(spans, expected):
-            raise ValueError("Gamma entity extent is not one periodic cell")
-        anchor = np.min(points[:, :2], axis=0)
-        ix = _grid_index(anchor[0], x0, hx, nx)
-        iy = _grid_index(anchor[1], y0, hy, ny)
+        point_indices = {
+            (x_index[point[0]], y_index[point[1]])
+            for point in item["points"]
+        }
+        x_positions = sorted({point[0] for point in point_indices})
+        y_positions = sorted({point[1] for point in point_indices})
+        adjacent = {
+            "x_edge": (
+                len(point_indices) == 2
+                and len(x_positions) == 2
+                and x_positions[1] == x_positions[0] + 1
+                and len(y_positions) == 1
+            ),
+            "y_edge": (
+                len(point_indices) == 2
+                and len(x_positions) == 1
+                and len(y_positions) == 2
+                and y_positions[1] == y_positions[0] + 1
+            ),
+            "face": (
+                len(point_indices) == 4
+                and len(x_positions) == 2
+                and x_positions[1] == x_positions[0] + 1
+                and len(y_positions) == 2
+                and y_positions[1] == y_positions[0] + 1
+            ),
+        }[kind]
+        if not adjacent:
+            raise ValueError(
+                f"Gamma {kind} entity is non-adjacent or has the wrong level span"
+            )
+        ix, iy = x_positions[0], y_positions[0]
         channel = _channel(kind, int(item["basis"]))
         route = (channel, ix, iy)
         if route in seen:
