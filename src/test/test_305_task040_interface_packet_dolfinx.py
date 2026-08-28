@@ -20,6 +20,22 @@ from src.solvers.hybrid_interface_packet_dolfinx import (
     make_gamma_entity_block,
     reconstruct_owner_local_basis,
 )
+from src.solvers.hybrid_full_spectrum_trace import (
+    CanonicalModalArray,
+    build_canonical_full_spectrum_trace_transform,
+)
+from src.solvers.hybrid_full_spectrum_continuation import (
+    apply_owner_local_gamma_mass_covector,
+)
+from src.solvers.hybrid_full_spectrum_screen import (
+    _PairSpectralPC,
+    _classify,
+    _face_families,
+    _kernel,
+    _pairs,
+    _row_reorder,
+    _symbol,
+)
 from src.solvers.hybrid_interface_schur import build_distributed_petrov_action
 from src.solvers.hcurl_canonical_vector import canonical_key
 
@@ -365,3 +381,228 @@ def test_petrov_detach_transfers_u_without_copy_and_releases_resident_state() ->
         target.destroy()
         source.destroy()
         layout.destroy()
+
+
+def _full_spectrum_fixture(comm):
+    nx, ny, channels = 15, 7, 72
+    total = nx * ny * channels
+    first_cell = ny * nx * comm.rank // comm.size
+    last_cell = ny * nx * (comm.rank + 1) // comm.size
+    first, last = first_cell * channels, last_cell * channels
+    owned_rows = np.arange(first, last, dtype=np.int64)
+    gamma_rows = np.roll(owned_rows, 1) if len(owned_rows) > 1 else owned_rows
+    blocks = []
+    for cell in range(first_cell, last_cell):
+        ix, iy = cell % nx, cell // nx
+        geometry = {
+            "x_edge": ((ix, iy, 0), (ix + 1, iy, 0)),
+            "y_edge": ((ix, iy, 0), (ix, iy + 1, 0)),
+            "face": ((ix, iy, 0), (ix + 1, iy, 0), (ix, iy + 1, 0), (ix + 1, iy + 1, 0)),
+        }
+        for kind, count, dimension, offset in (
+            ("x_edge", 6, 1, 0), ("y_edge", 6, 1, 6), ("face", 60, 2, 12)
+        ):
+            transform = np.eye(count, dtype=np.complex128)
+            phase = 1.0 + 0.0j
+            orientation = "canonical"
+            if cell == first_cell == 0 and kind == "x_edge":
+                transform += 0.07 * np.diag(np.ones(count - 1), 1)
+                phase = 0.73 + 0.29j
+                orientation = "reversed-test"
+            rows = np.arange(cell * channels + offset, cell * channels + offset + count)
+            blocks.append(
+                make_gamma_entity_block(
+                    name=f"{kind}-{cell}",
+                    entity_dimension=dimension,
+                    physical_entity=geometry[kind],
+                    raw_row_ids=rows,
+                    canonical_to_raw=phase * transform,
+                    orientation_state=orientation,
+                    floquet_coefficient=phase,
+                )
+            )
+    layout = build_gamma_canonical_layout(
+        blocks,
+        gamma_rows,
+        plane_identity={"mesh_cells": [nx, ny], "test": "full-spectrum"},
+        comm=comm,
+    )
+    raw = np.empty(len(gamma_rows), dtype=np.complex128)
+    nontrivial = False
+    for placement in layout.blocks:
+        block = placement.block
+        points = np.asarray(block.physical_entity, dtype=np.int64)
+        spans = np.ptp(points[:, :2], axis=0)
+        offset = 12 if block.entity_dimension == 2 else 0 if spans[0] > 0 else 6
+        ix, iy = int(np.min(points[:, 0])), int(np.min(points[:, 1]))
+        canonical = np.asarray(
+            [
+                0.5
+                + 0.01
+                * (offset + int(json.loads(key)["entity_local_basis_index"]))
+                + 0.003j * (1 + ix + 2 * iy)
+                for key in block.canonical_keys
+            ],
+            dtype=np.complex128,
+        )
+        raw[placement.positions] = block.canonical_to_raw @ canonical
+        nontrivial = nontrivial or block.orientation_state == "reversed-test"
+    system = SimpleNamespace(local_mesh=SimpleNamespace(mesh_cells=(nx, ny)))
+    mass = PETSc.Mat().createAIJ(
+        size=((last - first, total), (last - first, total)), nnz=3, comm=comm
+    )
+    for row in range(first, last):
+        mass.setValue(row, row, PETSc.ScalarType(2.0 + 0.001 * (row % 11)))
+        if row + 1 < total:
+            mass.setValue(row, row + 1, PETSc.ScalarType(0.07))
+        if row:
+            mass.setValue(row, row - 1, PETSc.ScalarType(0.07))
+    mass.assemble()
+    dual, mass_audit = apply_owner_local_gamma_mass_covector(mass, layout, raw)
+    return layout, system, raw, dual, mass, mass_audit, nontrivial
+
+
+def test_canonical_full_spectrum_trace_transform_identity() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2):
+        pytest.skip("run the canonical full-spectrum identity with serial or MPI2")
+    layout, system, raw, dual, mass, mass_audit, nontrivial = _full_spectrum_fixture(comm)
+    transform = build_canonical_full_spectrum_trace_transform(system, layout, comm)
+    try:
+        assert comm.allreduce(nontrivial, op=MPI.LOR)
+        assert comm.allreduce(
+            any(abs(block.block.floquet_coefficient - 1.0) > 1.0e-12 for block in layout.blocks),
+            op=MPI.LOR,
+        )
+        assert comm.allreduce(int(mass.getInfo()["nz_used"]), op=MPI.SUM) > raw.size
+        assert mass_audit["matmult_count"] == 1
+        assert mass_audit["dense"] is False
+        assert mass_audit["numeric_allgather"] is False
+        assert mass_audit["local_gamma_count"] == len(layout.gamma_rows_local)
+        assert np.isfinite(mass_audit["source_norm"])
+        assert np.isfinite(mass_audit["output_norm"])
+        diagnostics = transform.identity_diagnostics(raw, dual)
+        assert diagnostics["coverage"] == {
+            "channel_count": 72,
+            "grid": [15, 7],
+            "global_plane_entries": 7560,
+            "modal_bound_entries": 105 * ((72 + comm.size - 1) // comm.size),
+        }
+        assert len(diagnostics["channel_inventory"]) == 72
+        assert len(diagnostics["harmonic_inventory"]) == 105
+        assert diagnostics["fft_norm"] == "ortho"
+        assert diagnostics["phase_once"] is True
+        assert diagnostics["phase_once_audit"]["fft_phase_applications"] == 0
+        assert diagnostics["numeric_allgather"] is False
+        assert diagnostics["full_plane_numeric_replica"] is False
+        if comm.size == 2:
+            assert diagnostics["max_numeric_buffer_entries"] < 7560
+        assert diagnostics["numeric_route"] == "bounded_channel_owner_alltoallv"
+        assert diagnostics["block_roundtrip_max"] <= 1.0e-10
+        assert diagnostics["primal_roundtrip_max"] <= 1.0e-10
+        assert diagnostics["dual_roundtrip_max"] <= 1.0e-10
+        assert diagnostics["dft_roundtrip_max"] <= 1.0e-10
+        assert diagnostics["parseval_pairing_relative_error"] <= 1.0e-10
+        primal = transform.forward_primal(raw)
+        expected_modal = []
+        for channel in primal.channel_ids:
+            canonical_grid = np.asarray(
+                [
+                    [
+                        0.5 + 0.01 * channel + 0.003j * (1 + ix + 2 * iy)
+                        for iy in range(7)
+                    ]
+                    for ix in range(15)
+                ],
+                dtype=np.complex128,
+            )
+            expected_modal.append(np.fft.fft2(canonical_grid, norm="ortho"))
+        assert np.allclose(
+            primal.values, np.asarray(expected_modal), rtol=0.0, atol=1.0e-10
+        )
+        for direction in ("forward", "inverse"):
+            route = diagnostics["numeric_collectives"][direction]
+            assert route["numeric_collective_count"] == 1
+            assert route["numeric_collective_types"] == ["Alltoallv"]
+            if comm.size == 2:
+                for field in (
+                    "local_send_entries",
+                    "local_receive_entries",
+                    "max_send_entries",
+                    "max_receive_entries",
+                ):
+                    assert route[field] < 7560
+                assert route["max_modal_entries"] <= diagnostics["coverage"]["modal_bound_entries"]
+                assert route["max_modal_entries"] < 7560
+        dual_modal = transform.forward_dual(dual)
+        assert np.allclose(transform.inverse_primal(primal), raw, rtol=0.0, atol=1.0e-10)
+        assert np.allclose(transform.inverse_dual(dual_modal), dual, rtol=0.0, atol=1.0e-10)
+    finally:
+        transform.close()
+        mass.destroy()
+
+
+def test_c3c_full_spectrum_pair_kernel_and_screen_contract() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2):
+        pytest.skip("run the C3c screen contract with serial or MPI2")
+    msh = mesh.create_unit_cube(
+        comm, 1, 1, 1, cell_type=mesh.CellType.hexahedron,
+        ghost_mode=mesh.GhostMode.shared_facet,
+    )
+    function_space = fem.functionspace(
+        msh, element("N1curl", msh.basix_cell(), 6, dtype=default_real_type)
+    )
+    system = SimpleNamespace(V=function_space)
+    pc = None
+    try:
+        families = _face_families(system)
+        assert set(families.values()) == {"x", "y"}
+        assert sum(name == "x" for name in families.values()) == 30
+        assert sum(name == "y" for name in families.values()) == 30
+        pairs = _pairs(system)
+        assert len(pairs) == 36
+        assert len({channel for pair in pairs for channel in pair}) == 72
+        rows = np.asarray([17, 3, 11])
+        reordered = _row_reorder(np.asarray([1, 2, 3]), rows, [11, 17, 3])
+        assert np.array_equal(_row_reorder(reordered, [11, 17, 3], rows), [1, 2, 3])
+        cfg = SimpleNamespace(
+            k0=1.3, substrate_index=1.1 + 0.0j, period_x=15.0, period_y=7.0,
+            kx=0.2, ky=0.3,
+        )
+        spectral = SimpleNamespace(
+            cfg=cfg, local_mesh=SimpleNamespace(z_values=np.asarray([0, 0, 0, 0, 1]))
+        )
+        q, phases, symbol = _symbol(spectral, (1.0, 1.1))
+        assert symbol["harmonic_count"] == 105 and np.all(np.isfinite(q))
+        assert np.any(np.abs(phases - 1.0) > 1.0e-12)
+        lower, upper = np.asarray([1 + 2j, 2 - 1j]), np.asarray([3 - 1j, -1 + 4j])
+        result = _kernel(lower, upper, q[0], phases[0], (1.0, 1.1), 0.2, 0.3)
+        doubled = _kernel(2 * lower, 2 * upper, q[0], phases[0], (1.0, 1.1), 0.2, 0.3)
+        assert all(np.all(np.isfinite(value)) for value in result)
+        assert np.allclose(doubled[0], 2 * result[0]) and np.allclose(doubled[1], 2 * result[1])
+        channels = tuple(range(comm.rank, 72, comm.size))
+        values = np.ones((len(channels), 15, 7), dtype=np.complex128)
+        pc = _PairSpectralPC(
+            None, None, None, (), (), pairs, (1.0, 1.1), q, phases, spectral, comm
+        )
+        routed = pc._route(
+            CanonicalModalArray(values, channels, (15, 7), True),
+            CanonicalModalArray(2 * values, channels, (15, 7), True),
+        )
+        assert all(np.all(np.isfinite(item.values)) for item in routed)
+        assert pc.audit["sequence"] == [0, 1, 2, 1, 0]
+        assert pc.audit["numeric_collective_count"] == 2
+        assert pc.audit["numeric_allgather"] is False
+        assert pc.audit["numeric_collective_types"] == ["Alltoallv", "Alltoallv"]
+        if comm.size == 2:
+            assert pc.audit["max_numeric_buffer_entries"] < 15120
+        def records(values):
+            return {label: {"residuals": dict(zip(("8", "16", "32", "64"), values))} for label in ("external_dtn_coupling", "fixed_random_repeat_0")}
+        assert _classify(records((1.0, 0.9, 0.5, 0.4)))[1] == "five_source_required"
+        assert _classify(records((1.0, 0.95, 0.9, 0.9)))[0] == "FULL_SPECTRUM_SWEEP_NO_SIGNAL"
+        assert _classify(records((1.0, 0.91, 0.9, 0.75)))[1] == "moving_pml_required"
+    finally:
+        if pc is not None:
+            pc.close()
+        del function_space, msh

@@ -28,6 +28,7 @@ from benchmarks.task040_level_a import (
     TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG,
     TASK040_V5_ROUTE_C_FLAG,
     TASK040_V6_2_INTERFACE_SCHUR_FLAG,
+    V7_SCALE_NORMALIZED_IDENTITY_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -105,12 +106,21 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if plan.get("v5_route_c") is True:
         command.append(TASK040_V5_ROUTE_C_FLAG)
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
-    if plan.get("v6_2_interface_schur") is True:
+    if plan.get("v7_scale_normalized_identity") is True:
+        command.append(V7_SCALE_NORMALIZED_IDENTITY_FLAG)
+    elif plan.get("v6_2_interface_schur") is True:
         command.append(TASK040_V6_2_INTERFACE_SCHUR_FLAG)
+    if plan.get("v7_scale_normalized_identity") is True or plan.get(
+        "v6_2_interface_schur"
+    ) is True:
         command.extend(
-            ("--watchdog-hard-stop-bytes", str(plan["watchdog"]["hard_stop_bytes"]))
+            (
+                "--watchdog-hard-stop-bytes",
+                str(plan["watchdog"]["hard_stop_bytes"]),
+                "--watchdog-enabled",
+                "--bottom-route-only",
+            )
         )
-        command.extend(("--watchdog-enabled", "--bottom-route-only"))
     if plan.get("coupled_interface") is True:
         command.extend(
             [
@@ -145,6 +155,7 @@ def build_task040_level_a_watchdog_plan(
     v5_fresh_bare_f_authority: bool = False,
     v5_route_c: bool = False,
     v6_2_interface_schur: bool = False,
+    v7_scale_normalized_identity: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -161,6 +172,7 @@ def build_task040_level_a_watchdog_plan(
         v5_fresh_bare_f_authority=v5_fresh_bare_f_authority,
         v5_route_c=v5_route_c,
         v6_2_interface_schur=v6_2_interface_schur,
+        v7_scale_normalized_identity=v7_scale_normalized_identity,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -197,27 +209,53 @@ def build_task040_level_a_watchdog_plan(
                 "process_tree_watchdog_enabled": True,
             }
         )
-    elif v6_2_interface_schur:
+    elif v7_scale_normalized_identity or v6_2_interface_schur:
         plan["watchdog"].update(
             {
                 "hard_stop_bytes": int(plan["absolute_terminate_memory_bytes"]),
-                "minimum_mem_available_bytes": int(
-                    plan["minimum_mem_available_bytes"]
-                ),
-                "minimum_disk_free_bytes": int(plan["minimum_disk_free_bytes"]),
                 "swap_limit_bytes": 0,
                 "timeout_seconds": int(plan["timeout_seconds"]),
                 "process_tree_watchdog_enabled": True,
                 "bottom_route_only": True,
-                "v6_2_identity_only": False,
-                "v6_2_exact_qualification": True,
-                "same_process_exact_lifecycle": True,
                 "numeric_allgather": False,
                 "full_interface_replica_per_rank": False,
-                "root_metadata_gather": True,
-                "support_metadata_replicated": True,
             }
         )
+        if v7_scale_normalized_identity:
+            plan["watchdog"].update(
+                {
+                    "v7_identity_preferred_memory_bytes": int(
+                        plan["preferred_memory_bytes"]
+                    ),
+                    "v7_identity_target_seconds": int(
+                        plan["identity_target_seconds"]
+                    ),
+                    "v7_identity_hard_seconds": int(
+                        plan["identity_hard_seconds"]
+                    ),
+                    "v7_scale_normalized_identity": True,
+                    "root_metadata_gather": bool(plan["root_metadata_gather"]),
+                    "metadata_only_descriptor_gather": bool(
+                        plan["metadata_only_descriptor_gather"]
+                    ),
+                }
+            )
+        else:
+            plan["watchdog"].update(
+                {
+                    "minimum_mem_available_bytes": int(
+                        plan["minimum_mem_available_bytes"]
+                    ),
+                    "minimum_disk_free_bytes": int(
+                        plan["minimum_disk_free_bytes"]
+                    ),
+                    "v6_2_identity_only": False,
+                    "v6_2_exact_qualification": True,
+                    "same_process_exact_lifecycle": True,
+                    "root_metadata_gather": True,
+                    "support_metadata_replicated": True,
+                }
+            )
     plan["worker_run_directory"] = str(worker_directory)
     plan["worker_argv"] = _worker_command(plan)
     plan["runner_reuse"] = {
@@ -604,6 +642,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG, action="store_true")
     parser.add_argument(TASK040_V5_ROUTE_C_FLAG, action="store_true")
     parser.add_argument(TASK040_V6_2_INTERFACE_SCHUR_FLAG, action="store_true")
+    parser.add_argument(V7_SCALE_NORMALIZED_IDENTITY_FLAG, action="store_true")
     parser.add_argument("--watchdog-enabled", action="store_true")
     parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
@@ -634,6 +673,7 @@ def main(argv: list[str] | None = None) -> int:
         v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
         v5_route_c=args.v5_route_c,
         v6_2_interface_schur=args.v6_2_interface_schur,
+        v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:

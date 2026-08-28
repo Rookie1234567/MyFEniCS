@@ -17,6 +17,7 @@ from bisect import bisect_right
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
+from uuid import uuid4
 
 import numpy as np
 from mpi4py import MPI
@@ -41,6 +42,7 @@ __all__ = (
     "build_numpy_interface_schur_oracle",
     "build_petsc_interface_schur_oracle",
     "build_petsc_full_interface_schur_action",
+    "build_petsc_d1_reference_interface_schur_mat",
     "build_distributed_petrov_action",
     "build_fixed_projected_group_inverse",
     "project_petrov_columns",
@@ -311,6 +313,7 @@ class _PetscInterfaceSchurBlock:
         self._a_gi = None
         self._a_ig = None
         self._factor = None
+        self._factor_identity: str | None = None
         self._gamma_rhs = None
         self._interior_rhs = None
         self._interior_solution = None
@@ -331,6 +334,11 @@ class _PetscInterfaceSchurBlock:
             self._factor.release_borrowed_matrix()
             a_ii.destroy()
             a_ii = None
+            runtime_token = comm.bcast(
+                uuid4().hex if comm.rank == 0 else None,
+                root=0,
+            )
+            self._factor_identity = f"{self.name}:{runtime_token}"
             self._gamma_rhs = self._a_ig.createVecRight()
             self._interior_rhs = self._a_ig.createVecLeft()
             self._interior_solution = self._a_gi.createVecRight()
@@ -368,6 +376,15 @@ class _PetscInterfaceSchurBlock:
         self._a_ig.mult(source, self._interior_rhs)
         self._factor.solve(self._interior_rhs, self._interior_solution)
         self._a_gi.mult(self._interior_solution, target)
+
+    def build_interior_rhs(
+        self, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        """Write ``A_IGamma*source`` into a caller-owned interior Vec."""
+
+        self._check_vectors(source, self._gamma_output)
+        self._check_interior_vector(target, label="interior RHS")
+        self._a_ig.mult(source, target)
 
     def _check_interior_vector(self, vector: PETSc.Vec, *, label: str) -> None:
         if self._destroyed:
@@ -421,6 +438,15 @@ class _PetscInterfaceSchurBlock:
         self._a_ig.mult(source, self._interior_rhs)
         self._factor.solve(self._interior_rhs, target)
 
+    def solve_interior_rhs(
+        self, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        """Solve a caller-provided ``A_IGamma*source`` with the existing factor."""
+
+        self._check_interior_vector(source, label="interior RHS")
+        self._check_interior_vector(target, label="interior solution")
+        self._factor.solve(source, target)
+
     def create_interior_vector(self) -> PETSc.Vec:
         """Create a caller-owned vector in this group's interior layout."""
 
@@ -442,7 +468,14 @@ class _PetscInterfaceSchurBlock:
             "name": self.name,
             "gamma_rows_local": int(self.gamma_rows.size),
             "interior_rows_local": int(self.interior_rows.size),
-            "factor": None if self._factor is None else self._factor.diagnostics,
+            "factor": (
+                None
+                if self._factor is None
+                else {
+                    **self._factor.diagnostics,
+                    "factor_identity": self._factor_identity,
+                }
+            ),
             "apply_count": self.apply_count,
             "destroyed": self._destroyed,
         }
@@ -730,6 +763,40 @@ class PetscInterfaceSchurOracle:
         if self._destroyed:
             raise RuntimeError("PETSc interface Schur oracle is destroyed")
         self._blocks[int(group)].apply_interior_correction(source, target)
+
+    def build_group_interior_rhs(
+        self,
+        group: int,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        """Write one group's ``A_IGamma*source`` into a caller-owned Vec."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        self._blocks[int(group)].build_interior_rhs(source, target)
+
+    def solve_group_interior_rhs(
+        self,
+        group: int,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        """Solve a caller-provided group RHS with its existing factor."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        self._blocks[int(group)].solve_interior_rhs(source, target)
+
+    def group_factor_diagnostics(self, group: int) -> dict[str, Any]:
+        """Return JSON-safe diagnostics for one live group factor."""
+
+        if self._destroyed:
+            raise RuntimeError("PETSc interface Schur oracle is destroyed")
+        factor = self._blocks[int(group)].diagnostics["factor"]
+        if factor is None:
+            raise RuntimeError("group factor is unavailable")
+        return dict(factor)
 
     def apply_group_interior_rhs_correction(
         self,
@@ -1384,6 +1451,20 @@ class PetscFullInterfaceSchurAction:
         ):
             raise ValueError("group Gamma Vec has the wrong ownership layout")
 
+    def _group_gamma_scratch(self, group: int) -> PETSc.Vec:
+        group = int(group)
+        if group == 0:
+            vector = self._lower_source
+        elif group == 1:
+            vector = self._group1_source
+        elif group == 2:
+            vector = self._upper_source
+        else:
+            raise ValueError("full-interface group must be 0, 1, or 2")
+        if vector is None:
+            raise RuntimeError("full-interface group scratch is unavailable")
+        return vector
+
     def create_interface_vector(self) -> PETSc.Vec:
         """Create a caller-owned Vec with the canonical joint Gamma layout."""
 
@@ -1391,6 +1472,23 @@ class PetscFullInterfaceSchurAction:
         if self._template is None:
             raise RuntimeError("full-interface layout template is unavailable")
         return self._template.duplicate()
+
+    def create_group_interior_vector(self, group: int) -> PETSc.Vec:
+        """Create a caller-owned Vec for one group's interior layout."""
+
+        self._check_live()
+        group = int(group)
+        if group not in (0, 1, 2):
+            raise ValueError("full-interface group must be 0, 1, or 2")
+        return self._oracle.create_group_interior_vector(group)
+
+    def group_gamma_rows_local(self, group: int) -> np.ndarray:
+        """Return a copy of one group's Gamma rows in Vec order."""
+        self._check_live()
+        group = int(group)
+        if group not in (0, 1, 2):
+            raise ValueError("full-interface group must be 0, 1, or 2")
+        return self._oracle.group_gamma_rows_local(group)
 
     def restrict_interface(self, source: PETSc.Vec) -> tuple[PETSc.Vec, PETSc.Vec]:
         """Restrict a canonical Gamma vector to owner-local L/U vectors."""
@@ -1438,6 +1536,57 @@ class PetscFullInterfaceSchurAction:
         except Exception:
             target.destroy()
             raise
+
+    def build_group_interior_rhs(
+        self,
+        group: int,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        """Write ``A_IGamma*x_Gamma`` for a canonical source.
+
+        ``source`` is canonical and caller-owned.  ``target`` is a
+        caller-owned group-interior RHS Vec.  The action uses its existing
+        construction-time scatter and group Gamma scratch; neither caller
+        Vec is retained or destroyed.
+        """
+
+        self._check_live()
+        self._check_layout(source)
+        group = int(group)
+        if group not in self._scatters:
+            raise ValueError("full-interface group must be 0, 1, or 2")
+        self._check_group_interior_layout(group, target, label="interior RHS")
+        group_source = self._group_gamma_scratch(group)
+        self._scatters[group].scatter(
+            source,
+            group_source,
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        self._oracle.build_group_interior_rhs(group, group_source, target)
+
+    def solve_group_interior_rhs(
+        self,
+        group: int,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        """Solve a caller-owned group RHS with the setup's existing factor."""
+
+        self._check_live()
+        group = int(group)
+        if group not in self._scatters:
+            raise ValueError("full-interface group must be 0, 1, or 2")
+        self._check_group_interior_layout(group, source, label="interior RHS")
+        self._check_group_interior_layout(group, target, label="interior solution")
+        self._oracle.solve_group_interior_rhs(group, source, target)
+
+    def group_factor_diagnostics(self, group: int) -> dict[str, Any]:
+        """Return the live JSON-safe factor diagnostics for one group."""
+
+        self._check_live()
+        return self._oracle.group_factor_diagnostics(group)
 
     def extract_interface_from_active_vector(self, source: PETSc.Vec) -> PETSc.Vec:
         """Extract Gamma rows from an active-vector result into canonical order.
@@ -1877,6 +2026,117 @@ class PetscFullInterfaceSchurAction:
         target.assemble()
         self._apply_count += 1
 
+    def apply_d1_reference(
+        self,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+        middle_boundary: PETSc.Vec,
+        middle_correction: PETSc.Vec,
+        lower_correction: PETSc.Vec,
+        upper_correction: PETSc.Vec,
+    ) -> None:
+        """Apply opt-in D1 with four caller-owned canonical contributions.
+
+        The six Vec arguments must be distinct and use their stated canonical
+        layouts.  The caller owns all six Vecs; this action only borrows them.
+        Each contribution is zeroed and receives exactly one reverse scatter,
+        then ``target`` uses the fixed order
+        ``+middle_boundary-middle_correction-lower_correction-upper_correction``.
+        """
+
+        self._check_live()
+        self._check_layout(source)
+        self._check_layout(target)
+        contributions = (
+            middle_boundary,
+            middle_correction,
+            lower_correction,
+            upper_correction,
+        )
+        for contribution in contributions:
+            self._check_layout(contribution)
+            contribution.set(0.0)
+        target.set(0.0)
+        if (
+            self._group1_source is None
+            or self._group1_boundary is None
+            or self._group1_correction is None
+            or self._lower_source is None
+            or self._lower_target is None
+            or self._upper_source is None
+            or self._upper_target is None
+        ):
+            raise RuntimeError("full-interface scratch vectors are unavailable")
+
+        self._scatters[1].scatter(
+            source,
+            self._group1_source,
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        self._oracle.apply_group_gamma_gamma(
+            1, self._group1_source, self._group1_boundary
+        )
+        self._scatters[1].scatter(
+            self._group1_boundary,
+            middle_boundary,
+            addv=PETSc.InsertMode.ADD_VALUES,
+            mode=PETSc.ScatterMode.REVERSE,
+        )
+        middle_boundary.assemble()
+
+        self._oracle.apply_group_interior_correction(
+            1, self._group1_source, self._group1_correction
+        )
+        self._scatters[1].scatter(
+            self._group1_correction,
+            middle_correction,
+            addv=PETSc.InsertMode.ADD_VALUES,
+            mode=PETSc.ScatterMode.REVERSE,
+        )
+        middle_correction.assemble()
+
+        self._scatters[0].scatter(
+            source,
+            self._lower_source,
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        self._oracle.apply_group_interior_correction(
+            0, self._lower_source, self._lower_target
+        )
+        self._scatters[0].scatter(
+            self._lower_target,
+            lower_correction,
+            addv=PETSc.InsertMode.ADD_VALUES,
+            mode=PETSc.ScatterMode.REVERSE,
+        )
+        lower_correction.assemble()
+
+        self._scatters[2].scatter(
+            source,
+            self._upper_source,
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        self._oracle.apply_group_interior_correction(
+            2, self._upper_source, self._upper_target
+        )
+        self._scatters[2].scatter(
+            self._upper_target,
+            upper_correction,
+            addv=PETSc.InsertMode.ADD_VALUES,
+            mode=PETSc.ScatterMode.REVERSE,
+        )
+        upper_correction.assemble()
+
+        target.axpy(PETSc.ScalarType(1.0), middle_boundary)
+        target.axpy(PETSc.ScalarType(-1.0), middle_correction)
+        target.axpy(PETSc.ScalarType(-1.0), lower_correction)
+        target.axpy(PETSc.ScalarType(-1.0), upper_correction)
+        target.assemble()
+        self._apply_count += 1
+
     @property
     def diagnostics(self) -> dict[str, Any]:
         if self._destroyed:
@@ -2009,6 +2269,85 @@ def build_petsc_full_interface_schur_action(
         matrix.destroy()
         raise
     return matrix, action
+
+
+_D1_REFERENCE_CONTRIBUTION_ORDER = (
+    "middle_boundary",
+    "middle_correction",
+    "lower_correction",
+    "upper_correction",
+)
+
+
+class _PetscD1ReferenceMatContext:
+    """Borrow one live action and own exactly four D1 contribution Vecs."""
+
+    def __init__(self, action: PetscFullInterfaceSchurAction) -> None:
+        self._action: PetscFullInterfaceSchurAction | None = action
+        self._scratch: tuple[PETSc.Vec, ...] = ()
+        self._destroyed = False
+        created: list[PETSc.Vec] = []
+        try:
+            for _name in _D1_REFERENCE_CONTRIBUTION_ORDER:
+                created.append(action.create_interface_vector())
+            self._scratch = tuple(created)
+        except Exception:
+            for vector in reversed(created):
+                vector.destroy()
+            self._action = None
+            self._destroyed = True
+            raise
+
+    def mult(
+        self,
+        _matrix: PETSc.Mat,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        action = self._action
+        if self._destroyed or action is None:
+            raise RuntimeError("D1 reference MatPython context is destroyed")
+        action.apply_d1_reference(source, target, *self._scratch)
+
+    def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
+        if self._destroyed:
+            return
+        for vector in self._scratch:
+            vector.destroy()
+        self._scratch = ()
+        self._action = None
+        self._destroyed = True
+
+
+def build_petsc_d1_reference_interface_schur_mat(
+    action: PetscFullInterfaceSchurAction,
+) -> PETSc.Mat:
+    """Create a caller-owned D1 MatPython matrix with borrowed action state."""
+
+    if not isinstance(action, PetscFullInterfaceSchurAction):
+        raise TypeError("D1 reference Mat requires a full-interface Schur action")
+    action._check_live()
+    if action._template is None:
+        raise RuntimeError("D1 reference Mat requires an interface layout template")
+    context = _PetscD1ReferenceMatContext(action)
+    sizes = (
+        (action._template.getLocalSize(), action.global_size),
+        (action._template.getLocalSize(), action.global_size),
+    )
+    matrix: PETSc.Mat | None = None
+    try:
+        matrix = PETSc.Mat().createPython(
+            sizes,
+            context=context,
+            comm=action.comm,
+        )
+        matrix.setUp()
+    except Exception:
+        context.destroy()
+        if matrix is not None:
+            matrix.destroy()
+        raise
+    return matrix
 
 
 def build_owner_local_group_rows(

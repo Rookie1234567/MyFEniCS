@@ -15,6 +15,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 import pytest
 
+import benchmarks.check_task040_v7_scale_normalized_identity as v7_checker
 import benchmarks.check_task040_v6_2_interface_schur as checker
 import benchmarks.task040_level_a as level_a
 import benchmarks.task040_level_a_watchdog as watchdog
@@ -264,6 +265,232 @@ def _write_json(path: Path, payload: Any) -> str:
     encoded = json.dumps(payload, sort_keys=True, indent=2).encode() + b"\n"
     path.write_bytes(encoded)
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _v7_raw_metric_fixture() -> dict[str, Any]:
+    ids = {str(group): f"group{group}:runtime" for group in range(3)}
+    alpha = {
+        "real": v7_checker.LINEARITY_ALPHA_REAL,
+        "imag": v7_checker.LINEARITY_ALPHA_IMAG,
+        "abs": v7_checker.LINEARITY_ALPHA_ABS,
+    }
+    structure = {
+        "layout": {
+            "global_size": 7,
+            "lower_global_rows": 4,
+            "upper_global_rows": 3,
+            "owner_local_mapping_count": 7,
+            "canonical_position_bijection": True,
+            "coverage_exact": True,
+            "owner_distributed": True,
+        },
+        "factor_count_ready": 3,
+        "factor_count_ready_observed": 3,
+        "numeric_allgather": False,
+        "fe_numeric_allgather": False,
+        "full_interface_numeric_replica": False,
+        "scratch_vectors_allocated_per_apply": 0,
+    }
+
+    def ratio_terms(kind: str) -> dict[str, Any]:
+        if kind == "identity":
+            terms = {"diff": 1.0e-12, "naction": 2.0, "nfull": 2.0}
+            ratio = v7_checker.identity_relative(terms)
+        elif kind == "backward":
+            terms = {"residual": 1.0e-13, "n_aii_x": 1.0, "n_rhs": 1.0}
+            ratio = v7_checker.backward_relative(terms)
+        else:
+            terms = {"diff": 1.0e-13, "n1": 1.0, "n2": 1.0}
+            ratio = v7_checker.repeat_relative(terms)
+        return {"terms": terms, "relative": ratio}
+
+    def group(group: int) -> dict[str, Any]:
+        before = 10 + group
+        after = before + 2
+
+        def diag(count: int) -> dict[str, Any]:
+            return {
+                "solve_count": count,
+                "factor_identity": ids[str(group)],
+                "readback": True,
+            }
+        return {
+            "group": group,
+            "rhs_norm": 1.0,
+            "solution1_norm": 1.0,
+            "solution2_norm": 1.0,
+            "repeat": ratio_terms("repeat"),
+            "solve_count_before": before,
+            "solve_count_after": after,
+            "solve_count_delta": 2,
+            "factor_identity_before": ids[str(group)],
+            "factor_identity_after": ids[str(group)],
+            "factor_diagnostics_before": diag(before),
+            "factor_diagnostics_after": diag(after),
+            "backward": ratio_terms("backward"),
+            "finite": True,
+        }
+
+    def identity(source: int, exponent: int) -> dict[str, Any]:
+        def variant(diff: float) -> dict[str, Any]:
+            terms = {"diff": diff, "naction": 2.0, "nfull": 2.0}
+            repeat = {"diff": 1.0e-13, "n1": 2.0, "n2": 2.0}
+            return {
+                "output_norm": 2.0,
+                "finite": True,
+                "identity": {
+                    "terms": terms,
+                    "relative": v7_checker.identity_relative(terms),
+                },
+                "repeat": {
+                    "terms": repeat,
+                    "relative": v7_checker.repeat_relative(repeat),
+                },
+            }
+
+        eta = {"diff": 1.0e-13, "nd0": 2.0, "nd1": 2.0}
+        return {
+            "source_index": source,
+            "scale_exponent": exponent,
+            "scale": float(2.0**exponent),
+            "source_norm": float(2.0**exponent),
+            "layer_a": {"groups": [group(value) for value in range(3)]},
+            "layer_c": {
+                "full": {
+                    "output_norm": 2.0,
+                    "interior_residual_norm": 1.0e-13,
+                    "finite": True,
+                },
+                "d0": variant(1.0e-12),
+                "d1": variant(2.0e-12),
+                "d0_d1": {
+                    "terms": eta,
+                    "eta": v7_checker.relative_from_terms(
+                        eta["diff"], eta["nd0"], eta["nd1"]
+                    ),
+                },
+                "contribution_output_norms": {
+                    name: {"output_norm": 0.5, "finite": True}
+                    for name in v7_checker.CONTRIBUTION_NAMES
+                },
+                "roundtrip_error": 1.0e-13,
+            },
+        }
+
+    def linearity(exponent: int) -> dict[str, Any]:
+        def linearity_entry() -> dict[str, Any]:
+            terms = {
+                "diff": 1.0e-13,
+                "ncombined": 2.0,
+                "nleft": 1.0,
+                "alpha_abs": v7_checker.LINEARITY_ALPHA_ABS,
+                "nright": 1.0,
+            }
+            return {"terms": terms, "relative": v7_checker.linearity_relative(terms)}
+
+        groups = {
+            name: (
+                1 if name.startswith("middle")
+                else 0 if name.startswith("lower") else 2
+            )
+            for name in v7_checker.CONTRIBUTION_NAMES
+        }
+        layer_b = {
+            name: {
+                "group": group_value,
+                "output_norms": {"left": 1.0, "right": 1.0, "combined": 2.0},
+                "repeat": ratio_terms("repeat"),
+                "linearity": linearity_entry(),
+                "finite": True,
+            }
+            for name, group_value in groups.items()
+        }
+        layer_c = {
+            name: {
+                "output_norms": {"left": 1.0, "right": 1.0, "combined": 2.0},
+                **linearity_entry(),
+                "finite": True,
+            }
+            for name in ("d0", "d1")
+        }
+        return {
+            "scale_exponent": exponent,
+            "scale": float(2.0**exponent),
+            "left_source_index": 10,
+            "right_source_index": 11,
+            "alpha": alpha,
+            "input_norms": {"left": 1.0, "right": 1.0, "combined": 2.0},
+            "layer_b": layer_b,
+            "layer_c": layer_c,
+        }
+
+    legacy = {
+        "scale_exponent": 0,
+        "scale": 1.0,
+        "deterministic": [
+            {
+                "vector_index": index,
+                "gamma_action_error": (
+                    1.0e-9
+                    if index == v7_checker.IDENTITY_SOURCE_INDICES[0]
+                    else 1.0e-12
+                ),
+                "full_interior_residual_error": 1.0e-13,
+                "roundtrip_error": 1.0e-13,
+                "repeat_error": 1.0e-13,
+            }
+            for index in v7_checker.IDENTITY_SOURCE_INDICES
+        ],
+        "zero_error": 0.0,
+        "linearity_error": 1.0e-13,
+        "thresholds": dict(v7_checker.LEGACY_THRESHOLDS),
+        "gate": {
+            **dict.fromkeys(v7_checker.LEGACY_THRESHOLDS, True),
+            "full_elimination_gamma": False,
+            "three_deterministic_vectors": True,
+        },
+        "gate_pass": False,
+        "relative_metrics_not_used": True,
+    }
+    return {
+        "schema": v7_checker.SCHEMA,
+        "status": "diagnostics_only",
+        "classification": "not_formal_adjudication",
+        "formal_adjudication": False,
+        "next_required_stage": "independent_raw_checker_then_formal_integration",
+        "safe_denominator": v7_checker.SAFE_DENOMINATOR,
+        "identity_source_indices": list(v7_checker.IDENTITY_SOURCE_INDICES),
+        "linearity_source_indices": list(v7_checker.LINEARITY_SOURCE_INDICES),
+        "scales": [
+            {"exponent": exponent, "scale": float(2.0**exponent)}
+            for exponent in v7_checker.SCALE_EXPONENTS
+        ],
+        "linearity_alpha": alpha,
+        "d1_contribution_order": list(v7_checker.CONTRIBUTION_NAMES),
+        "structure": {"before": structure, "after": structure},
+        "factor_setup": {
+            "same_action": True,
+            "same_factor_setup": True,
+            "factor_identity_by_group": ids,
+            "factor_readback_by_group": {
+                group: {"factor_identity": identity, "readback": True}
+                for group, identity in ids.items()
+            },
+        },
+        "identity_records": [
+            identity(source, exponent)
+            for exponent in v7_checker.SCALE_EXPONENTS
+            for source in v7_checker.IDENTITY_SOURCE_INDICES
+        ],
+        "linearity_records": [
+            linearity(exponent) for exponent in v7_checker.SCALE_EXPONENTS
+        ],
+        "legacy_v6_2_absolute_diagnostic": legacy,
+        "runner_claims": {
+            "gate_pass": False,
+            "classification": "forged_runner_claim",
+        },
+    }
 
 
 def _qualification_plan() -> dict[str, Any]:
@@ -2600,6 +2827,70 @@ def test_v6_2_plan_binds_resource_and_post_identity_qualification(
     assert "--watchdog-hard-stop-bytes" in watched["worker_argv"]
     assert watched["worker_argv"].count("--v6-2-interface-schur") == 1
 
+    v7_plan = level_a.build_task040_level_a_plan(
+        input_path=input_path,
+        exact_spool_root=spool_root,
+        run_directory=tmp_path / "v7-run",
+        source_sha=FORMAL_SOURCE_SHA,
+        v7_scale_normalized_identity=True,
+    )
+    assert v7_plan["v7_scale_normalized_identity"] is True
+    assert v7_plan["schema"] == runner.V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA
+    assert v7_plan["system_created"] is False
+    assert v7_plan["timeout_seconds"] == 21600
+    assert v7_plan["pde_solve"] == "full_spectrum_continuation_required"
+    assert v7_plan["full_spectrum_continuation"] == "required"
+    assert v7_plan["exact_qualification"] == "intentional_not_run_by_v7_direct_mainline"
+    assert v7_plan["root_metadata_gather"] is True
+    assert v7_plan["metadata_only_descriptor_gather"] is True
+    assert v7_plan["conditional_authorized"] == {"refinement": "one_evidence_driven_refinement", "separator_closure": "one_evidence_driven_separator_closure"}
+    assert {"threshold_relaxation", "refinement_count_or_parameter_scan", "repeated_separator_closure", "mumps_parameter_scan", "raw_petsc_row_fft"} <= set(v7_plan["forbidden"])
+    assert {"refinement", "separator_closure"}.isdisjoint(v7_plan["forbidden"])
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        level_a.build_task040_level_a_plan(
+            input_path=input_path,
+            exact_spool_root=spool_root,
+            run_directory=tmp_path / "v7-conflict",
+            source_sha=FORMAL_SOURCE_SHA,
+            v6_2_interface_schur=True,
+            v7_scale_normalized_identity=True,
+        )
+    v7_watched = watchdog.build_task040_level_a_watchdog_plan(
+        input_path=input_path,
+        exact_spool_root=spool_root,
+        run_directory=tmp_path / "v7-watchdog",
+        source_sha=FORMAL_SOURCE_SHA,
+        v7_scale_normalized_identity=True,
+    )
+    assert v7_watched["watchdog"]["hard_stop_bytes"] == 45 * 2**30
+    assert v7_watched["watchdog"]["timeout_seconds"] == 21600
+    assert v7_watched["watchdog"]["v7_identity_target_seconds"] == v7_plan["identity_target_seconds"]
+    assert v7_watched["watchdog"]["v7_identity_hard_seconds"] == v7_plan["identity_hard_seconds"]
+    assert v7_watched["watchdog"]["root_metadata_gather"] is True
+    assert v7_watched["watchdog"]["metadata_only_descriptor_gather"] is True
+    assert v7_watched["worker_argv"].count(
+        runner.V7_SCALE_NORMALIZED_IDENTITY_FLAG
+    ) == 1
+    assert "--v6-2-interface-schur" not in v7_watched["worker_argv"]
+
+    v7_stop_root = tmp_path / "v7-stop"
+    stopped = runner.run_v6_2_interface_schur(
+        None,
+        None,
+        comm=MPI.COMM_SELF,
+        exact_spool_root=tmp_path / "unavailable-frozen-root",
+        run_directory=v7_stop_root,
+        source_sha=FORMAL_SOURCE_SHA,
+        input_path=input_path,
+        input_sha256=HEX,
+        physical_model_sha256=HEX,
+        v7_scale_normalized_identity=True,
+    )
+    assert stopped["status"] == "not_run_by_v7_continuation_gate"
+    assert stopped["system_created"] is False
+    assert stopped["v7_progress_gate"]["exact_not_run"] is True
+    assert not v7_stop_root.exists()
+
 
 @pytest.mark.parametrize("restart", [True, False, 0, -1, 3.5, "32"])
 def test_v6_2_formal_numeric_options_reject_invalid_restart(
@@ -2693,6 +2984,154 @@ def test_v6_2_checker_validates_rank_artifacts_and_gate(tmp_path: Path) -> None:
     assert failed["evidence_checks"]["watchdog_audit"] is False
     assert failed["evidence_valid"] is False
     assert failed["checker_pass"] is False
+
+
+def test_v7_raw_checker_recomputes_metrics_and_rejects_tamper(
+    tmp_path: Path,
+) -> None:
+    payload = _v7_raw_metric_fixture()
+    checked = v7_checker.check_v7_scale_normalized_identity(payload)
+    assert checked["checker_pass"] is True
+    assert checked["evidence_valid"] is True
+    assert checked["formal_adjudication"] is False
+    assert checked["classification"] == "not_formal_adjudication"
+    assert checked["gate_candidates"]["d0_pass_candidate"] is True
+    assert checked["gate_candidates"]["d1_pass_candidate"] is True
+    assert checked["gate_candidates"]["legacy_absolute_gate"] is False
+    assert checked["selected_candidate"] == "d0_lower_memory"
+    assert checked["next_required_stage"] == (
+        "formal_integration_requires_full_spectrum_continuation"
+    )
+    assert checked["runner_claims"]["gate_pass"] is False
+
+    bundle_root = tmp_path / "v7-bundle"
+    rank_root = bundle_root / "rank0000"
+    rank_root.mkdir(parents=True)
+    descriptor = runner._write_v7_identity_bundle(
+        rank_root=rank_root,
+        output_root=bundle_root,
+        raw_metrics=payload,
+        checker_result=checked,
+        source_sha=FORMAL_SOURCE_SHA,
+        input_sha256=HEX,
+        physical_model_sha256=HEX,
+        elapsed_seconds=1.25,
+        selected_operator={"candidate": checked["selected_candidate"]},
+    )
+    bundle = json.loads(
+        (rank_root / "v7_scale_normalized_identity_bundle.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert descriptor["readback_valid"] is True
+    assert descriptor["sha256"] == runner.hash_file_sha256(
+        rank_root / "v7_scale_normalized_identity_bundle.json"
+    )
+    assert runner._v7_canonical_json_sha256(bundle["raw"]) == bundle["raw_sha256"] == descriptor["raw_sha256"]
+    assert runner._v7_canonical_json_sha256(bundle["checker"]) == bundle["checker_sha256"] == descriptor["checker_sha256"]
+    assert "bundle_sha256" not in bundle
+    consensus_input = {
+        "mpi_size": 1,
+        "evidence_valid": True,
+        "checker_pass": True,
+        "d0_pass_candidate": True,
+        "d1_pass_candidate": True,
+        "formal_adjudication": False,
+        "selected_candidate": "d0_lower_memory",
+        "next_required_stage": "formal_integration_requires_full_spectrum_continuation",
+        "expected_next_required_stage": "formal_integration_requires_full_spectrum_continuation",
+        "identity_elapsed_seconds": 1.25,
+        "bundle_readback_valid": True,
+    }
+    consensus = runner._v7_compact_decision_consensus(MPI.COMM_SELF, consensus_input)
+    assert consensus["metadata_only"] is True
+    assert consensus["evidence_valid_consensus"] is True
+    assert consensus["d0_pass_candidate"] is True
+    assert consensus["d1_pass_candidate"] is True
+    assert consensus["formal_adjudication"] is False
+    assert consensus["expected_next_required_stage"] == "formal_integration_requires_full_spectrum_continuation"
+    assert consensus["selected_candidate_consensus"] is True
+    assert consensus["mpi_size_8"] is False
+    assert consensus["pass"] is False
+
+    class MetadataComm:
+        size = 8
+
+        def allgather(self, value: Mapping[str, Any]) -> list[dict[str, Any]]:
+            return [dict(value) for _ in range(self.size)]
+
+    passed = runner._v7_compact_decision_consensus(
+        MetadataComm(), {**consensus_input, "mpi_size": 8}
+    )
+    assert passed["pass"] is True
+
+    forged_claim = deepcopy(payload)
+    forged_claim["runner_claims"]["gate_pass"] = True
+    forged = v7_checker.check_v7_scale_normalized_identity(forged_claim)
+    assert forged["checker_pass"] is True
+    assert forged["gate_candidates"]["d0_pass_candidate"] is True
+    assert forged["gate_candidates"]["d1_pass_candidate"] is True
+
+    raw_tamper = deepcopy(payload)
+    raw_tamper["identity_records"][0]["layer_c"]["d0"]["identity"]["terms"][
+        "diff"
+    ] = 1.0
+    rejected = v7_checker.check_v7_scale_normalized_identity(raw_tamper)
+    assert rejected["checker_pass"] is True
+    assert rejected["gate_candidates"]["d0_pass_candidate"] is False
+    assert rejected["gate_candidates"]["d1_pass_candidate"] is True
+    assert rejected["gate_candidates"]["partition_audit_trigger"] is False
+
+    both_tampered = deepcopy(raw_tamper)
+    both_tampered["identity_records"][0]["layer_c"]["d1"]["identity"]["terms"][
+        "diff"
+    ] = 1.0
+    both = v7_checker.check_v7_scale_normalized_identity(both_tampered)
+    assert both["checker_pass"] is False
+    assert both["gate_candidates"]["d0_pass_candidate"] is False
+    assert both["gate_candidates"]["d1_pass_candidate"] is False
+    assert both["gate_candidates"]["partition_audit_trigger"] is True
+    assert both["next_required_stage"] == "group_partition_closure_audit"
+
+    group_tamper = deepcopy(payload)
+    group_tamper["identity_records"][0]["layer_a"]["groups"][0]["repeat"][
+        "terms"
+    ]["diff"] = 1.0
+    refined = v7_checker.check_v7_scale_normalized_identity(group_tamper)
+    assert refined["checker_pass"] is False
+    assert refined["gate_candidates"]["group_refinement_trigger"] is True
+    assert refined["next_required_stage"] == "conditional_one_residual_correction"
+
+    layer_b_tamper = deepcopy(payload)
+    layer_b_tamper["linearity_records"][0]["layer_b"]["middle_boundary"][
+        "repeat"
+    ]["terms"]["diff"] = 1.0
+    layer_b_failed = v7_checker.check_v7_scale_normalized_identity(layer_b_tamper)
+    assert layer_b_failed["evidence_valid"] is True
+    assert layer_b_failed["gate_candidates"]["d0_identity"] is True
+    assert layer_b_failed["gate_candidates"]["d1_identity"] is True
+    assert layer_b_failed["gate_candidates"]["d0_pass_candidate"] is False
+    assert layer_b_failed["gate_candidates"]["d1_pass_candidate"] is False
+    assert layer_b_failed["gate_candidates"]["partition_audit_trigger"] is False
+    assert layer_b_failed["selected_candidate"] is None
+    assert layer_b_failed["next_required_stage"] == (
+        "resolve_group_local_or_structural_identity_gate"
+    )
+
+    assert v7_checker.relative_from_terms(1.0e-300, 0.0, 0.0) == 1.0
+    for mutation in ("source", "scale", "group"):
+        missing = deepcopy(payload)
+        if mutation == "source":
+            missing["identity_records"][0].pop("source_index")
+        elif mutation == "scale":
+            missing["identity_records"][0].pop("scale")
+        else:
+            missing["identity_records"][0]["layer_a"]["groups"][0].pop(
+                "group"
+            )
+        invalid = v7_checker.check_v7_scale_normalized_identity(missing)
+        assert invalid["evidence_valid"] is False
+        assert invalid["checker_pass"] is False
 
 
 def test_v6_2_checker_accepts_requested_checkpoint_happy_breakdown() -> None:

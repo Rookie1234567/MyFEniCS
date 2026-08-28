@@ -9,9 +9,12 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import benchmarks.check_task040_v7_scale_normalized_identity as v7_checker
+import benchmarks.task040_v6_2_interface_schur as v7_runner
 from src.solvers.hybrid_interface_schur import (
     _filter_rows_by_int_set,
     build_canonical_interface_layout,
+    build_petsc_d1_reference_interface_schur_mat,
     build_owner_local_group_rows,
     build_petsc_full_interface_schur_action,
     build_petsc_interface_schur_oracle,
@@ -208,6 +211,342 @@ def _apply(matrix: PETSc.Mat, action, values: np.ndarray) -> np.ndarray:
     finally:
         target.destroy()
         source.destroy()
+
+
+def test_v7_scaled_tiny_d0_d1_and_layer_a_contract():
+    """Keep scaled relative D1 evidence separate from the V6 absolute node."""
+
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2):
+        pytest.skip("run this V7 tiny contract with serial or MPI2")
+    dense = _dense_bare()
+    bare = _distributed_bare(dense)
+    oracle = None
+    matrix = None
+    d1_matrix = None
+    action = None
+    source = None
+    d0_target = None
+    d1_target = None
+    summed_target = None
+    contributions: list[PETSc.Vec] = []
+    group_vectors: list[tuple[PETSc.Vec, PETSc.Vec, PETSc.Vec]] = []
+    full_state = None
+    residual = None
+    try:
+        canonical_layout = _canonical_layout(bare)
+        first, last = map(int, bare.getOwnershipRange())
+        lower_local = np.asarray(
+            [row for row in LOWER_ROWS if first <= row < last], dtype=PETSc.IntType
+        )
+        upper_local = np.asarray(
+            [row for row in UPPER_ROWS if first <= row < last], dtype=PETSc.IntType
+        )
+        oracle = build_petsc_interface_schur_oracle(
+            bare, _local_group_rows(bare), (lower_local, upper_local)
+        )
+        matrix, action = build_petsc_full_interface_schur_action(
+            oracle,
+            canonical_layout=canonical_layout,
+        )
+        diagnostics = action.diagnostics
+        assert diagnostics["scratch_vector_count"] == 7
+        assert diagnostics["layout_template_vector_count"] == 1
+        assert diagnostics["preallocated_vector_count"] == 8
+        assert diagnostics["scratch_vectors_allocated_per_apply"] == 0
+        d1_matrix = build_petsc_d1_reference_interface_schur_mat(action)
+
+        source = action.create_interface_vector()
+        d0_target = action.create_interface_vector()
+        d1_target = action.create_interface_vector()
+        summed_target = action.create_interface_vector()
+        contributions = [action.create_interface_vector() for _ in range(4)]
+        base = np.asarray(
+            [0.7 - 0.2j, -0.4 + 0.3j, 0.2 + 0.6j, 1.1 - 0.5j],
+            dtype=np.complex128,
+        )
+        scale_records: list[dict[str, float | str]] = []
+        for scale in (2.0**-10, 1.0, 2.0**10):
+            values = scale * base
+            _set_global_values(source, values)
+            matrix.mult(source, d0_target)
+            action.apply_d1_reference(
+                source,
+                d1_target,
+                *contributions,
+            )
+            d1_matrix.mult(source, summed_target)
+            observed_d0 = _collect_global_values(d0_target)
+            observed_d1 = _collect_global_values(d1_target)
+            assert np.array_equal(
+                _collect_global_values(summed_target), observed_d1
+            )
+
+            summed_target.set(0.0)
+            for sign, contribution in zip(
+                (1.0, -1.0, -1.0, -1.0), contributions, strict=True
+            ):
+                summed_target.axpy(PETSc.ScalarType(sign), contribution)
+            summed_target.assemble()
+            assert np.array_equal(
+                _collect_global_values(summed_target), observed_d1
+            )
+
+            contribution_norms = tuple(
+                float(np.linalg.norm(_collect_global_values(contribution)))
+                for contribution in contributions
+            )
+            source_norm = float(np.linalg.norm(values))
+            reference, interior_reference = _full_elimination_residual(
+                dense, values
+            )
+            reference_norm = float(np.linalg.norm(reference))
+            d0_error = float(np.linalg.norm(observed_d0 - reference))
+            d1_error = float(np.linalg.norm(observed_d1 - reference))
+            d0_relative = d0_error / max(
+                float(np.linalg.norm(observed_d0)) + reference_norm,
+                1.0e-300,
+            )
+            d1_relative = d1_error / max(
+                float(np.linalg.norm(observed_d1)) + reference_norm,
+                1.0e-300,
+            )
+            d0_d1_error = float(np.linalg.norm(observed_d0 - observed_d1))
+            d0_d1_relative = d0_d1_error / max(
+                float(np.linalg.norm(observed_d0))
+                + float(np.linalg.norm(observed_d1)),
+                1.0e-300,
+            )
+            relative_pass = (
+                d0_relative <= 1.0e-10
+                and d1_relative <= 1.0e-10
+                and d0_d1_relative <= 1.0e-10
+            )
+            scale_records.append(
+                {
+                    "scale": float(scale),
+                    "source_norm": source_norm,
+                    "d0_norm": float(np.linalg.norm(observed_d0)),
+                    "d1_norm": float(np.linalg.norm(observed_d1)),
+                    "reference_norm": reference_norm,
+                    "d0_absolute_error": d0_error,
+                    "d1_absolute_error": d1_error,
+                    "d0_relative": d0_relative,
+                    "d1_relative": d1_relative,
+                    "eta_d0_d1": d0_d1_relative,
+                    "independent_full_interior_absolute_norm": float(
+                        np.linalg.norm(interior_reference)
+                    ),
+                    "middle_boundary_norm": contribution_norms[0],
+                    "middle_correction_norm": contribution_norms[1],
+                    "lower_correction_norm": contribution_norms[2],
+                    "upper_correction_norm": contribution_norms[3],
+                    "classification": (
+                        "TINY_RELATIVE_PASS"
+                        if relative_pass
+                        else "TINY_RELATIVE_FAIL"
+                    ),
+                }
+            )
+
+        assert len(scale_records) == 3
+        assert len({record["classification"] for record in scale_records}) == 1
+        assert all(
+            record["classification"] == "TINY_RELATIVE_PASS"
+            for record in scale_records
+        )
+        assert all(
+            np.isfinite(float(record[field]))
+            for record in scale_records
+            for field in (
+                "source_norm",
+                "d0_norm",
+                "d1_norm",
+                "reference_norm",
+                "d0_absolute_error",
+                "d1_absolute_error",
+                "d0_relative",
+                "d1_relative",
+                "eta_d0_d1",
+                "independent_full_interior_absolute_norm",
+                "middle_boundary_norm",
+                "middle_correction_norm",
+                "lower_correction_norm",
+                "upper_correction_norm",
+            )
+        )
+
+        _set_global_values(source, base)
+        factor_identities = []
+        for group in range(3):
+            rhs = action.create_group_interior_vector(group)
+            solution_first = action.create_group_interior_vector(group)
+            solution_second = action.create_group_interior_vector(group)
+            group_vectors.append((rhs, solution_first, solution_second))
+            factor_before = action.group_factor_diagnostics(group)
+            action.build_group_interior_rhs(group, source, rhs)
+            global_group_gamma_rows = np.asarray(
+                [
+                    row
+                    for row in GROUP_ROWS[group]
+                    if row in set(CANONICAL_ROWS.tolist())
+                ],
+                dtype=np.int64,
+            )
+            local_interior_rows = oracle.group_interior_rows_local(group)
+            local_positions = [
+                int(np.flatnonzero(CANONICAL_ROWS == row)[0])
+                for row in global_group_gamma_rows
+            ]
+            expected_rhs = dense[
+                np.ix_(local_interior_rows, global_group_gamma_rows)
+            ] @ base[local_positions]
+            assert np.linalg.norm(
+                np.asarray(rhs.array, dtype=np.complex128) - expected_rhs
+            ) <= 1.0e-10
+
+            action.solve_group_interior_rhs(group, rhs, solution_first)
+            action.solve_group_interior_rhs(group, rhs, solution_second)
+            factor_after = action.group_factor_diagnostics(group)
+            assert (
+                int(factor_after["solve_count"])
+                - int(factor_before["solve_count"])
+                == 2
+            )
+            assert factor_before["factor_identity"] == factor_after["factor_identity"]
+            assert (
+                factor_before["factor_identity"]
+                != factor_before["operator_identity"]
+            )
+            factor_identities.append(factor_after["factor_identity"])
+            local_difference = np.asarray(
+                solution_first.array - solution_second.array,
+                dtype=np.complex128,
+            )
+            local_first = np.asarray(solution_first.array, dtype=np.complex128)
+            local_second = np.asarray(solution_second.array, dtype=np.complex128)
+            difference_norm = np.sqrt(
+                comm.allreduce(
+                    float(np.vdot(local_difference, local_difference).real),
+                    op=MPI.SUM,
+                )
+            )
+            first_norm = np.sqrt(
+                comm.allreduce(
+                    float(np.vdot(local_first, local_first).real),
+                    op=MPI.SUM,
+                )
+            )
+            second_norm = np.sqrt(
+                comm.allreduce(
+                    float(np.vdot(local_second, local_second).real),
+                    op=MPI.SUM,
+                )
+            )
+            solve_repeat = float(
+                difference_norm / max(first_norm + second_norm, 1.0e-300)
+            )
+            assert np.isfinite(solve_repeat)
+            assert solve_repeat <= 1.0e-11
+        assert len(set(factor_identities)) == 3
+
+        full_state, _state_audit = action.build_full_eliminated_state(source)
+        residual = bare.createVecLeft()
+        bare.mult(full_state, residual)
+        residual_first, _residual_last = map(int, residual.getOwnershipRange())
+        backward_records = []
+        for group, (rhs, _solution_first, _solution_second) in enumerate(
+            group_vectors
+        ):
+            local_rows = oracle.group_interior_rows_local(group)
+            local_residual = np.asarray(
+                residual.array[local_rows - residual_first], dtype=np.complex128
+            )
+            local_rhs = np.asarray(rhs.array, dtype=np.complex128)
+            local_residual_norm_sq = float(np.vdot(local_residual, local_residual).real)
+            local_difference_norm_sq = float(
+                np.vdot(local_residual - local_rhs, local_residual - local_rhs).real
+            )
+            local_rhs_norm_sq = float(np.vdot(local_rhs, local_rhs).real)
+            residual_norm = np.sqrt(
+                comm.allreduce(local_residual_norm_sq, op=MPI.SUM)
+            )
+            difference_norm = np.sqrt(
+                comm.allreduce(local_difference_norm_sq, op=MPI.SUM)
+            )
+            rhs_norm = np.sqrt(comm.allreduce(local_rhs_norm_sq, op=MPI.SUM))
+            denominator = float(difference_norm + rhs_norm)
+            eta = float(residual_norm / max(denominator, 1.0e-300))
+            backward_records.append(
+                {
+                    "group": group,
+                    "eta": eta,
+                    "denominator": float(denominator),
+                }
+            )
+            assert np.isfinite(eta)
+            assert eta <= 1.0e-10
+        assert len(backward_records) == 3
+
+        raw_metrics = v7_runner.collect_v7_scale_normalized_identity_metrics(
+            comm, bare, matrix, action, oracle
+        )
+        checked_metrics = v7_checker.check_v7_scale_normalized_identity(raw_metrics)
+        assert raw_metrics["schema"] == v7_runner.V7_SCALE_NORMALIZED_IDENTITY_SCHEMA
+        assert checked_metrics["evidence_valid"] is True
+        assert checked_metrics["checker_pass"] is True
+        assert checked_metrics["formal_adjudication"] is False
+        assert checked_metrics["gate_candidates"]["d0_pass_candidate"] is True
+        assert checked_metrics["gate_candidates"]["d1_pass_candidate"] is True
+        assert [item["exponent"] for item in raw_metrics["scales"]] == [-10, 0, 10]
+        identity_records = raw_metrics["identity_records"]
+        linearity_records = raw_metrics["linearity_records"]
+        assert len(identity_records) == 9
+        assert len(linearity_records) == 3
+        assert all(
+            {item["group"] for item in record["layer_a"]["groups"]}
+            == {0, 1, 2}
+            for record in identity_records
+        )
+        contribution_names = set(v7_checker.CONTRIBUTION_NAMES)
+        assert all(
+            set(record["layer_b"]) == contribution_names
+            for record in linearity_records
+        )
+        assert all(
+            set(record["layer_c"]["contribution_output_norms"])
+            == contribution_names
+            for record in identity_records
+        )
+    finally:
+        if d1_matrix is not None:
+            d1_matrix.destroy()
+            assert action is not None and action.diagnostics["destroyed"] is False
+        if residual is not None:
+            residual.destroy()
+        if full_state is not None:
+            full_state.destroy()
+        for rhs, solution_first, solution_second in reversed(group_vectors):
+            solution_second.destroy()
+            solution_first.destroy()
+            rhs.destroy()
+        for contribution in reversed(contributions):
+            contribution.destroy()
+        if summed_target is not None:
+            summed_target.destroy()
+        if d1_target is not None:
+            d1_target.destroy()
+        if d0_target is not None:
+            d0_target.destroy()
+        if source is not None:
+            source.destroy()
+        if matrix is not None:
+            matrix.destroy()
+        if action is not None:
+            action.destroy()
+        if oracle is not None and matrix is None:
+            oracle.destroy()
+        bare.destroy()
 
 
 def test_v6_2_canonical_joint_action_matches_independent_full_elimination():

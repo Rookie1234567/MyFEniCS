@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import shutil
 import sys
@@ -26,6 +27,7 @@ from petsc4py import PETSc
 
 from src.solvers.hybrid_interface_schur import (
     build_canonical_interface_layout,
+    build_petsc_d1_reference_interface_schur_mat,
     build_petsc_full_interface_schur_action,
     build_petsc_interface_schur_oracle,
     build_v6_cell_recovery_owner_group_rows,
@@ -79,6 +81,29 @@ V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA = (
 V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH = (
     "a672183780b34a0f39739458a68f952a631316248955926fed697fb8d619ac5e"
 )
+V7_SCALE_NORMALIZED_IDENTITY_SCHEMA = (
+    "task040.v7.scale_normalized_identity.v1"
+)
+V7_SCALE_NORMALIZED_IDENTITY_FLAG = "--v7-scale-normalized-identity"
+V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA = (
+    "task040.v7.scale_normalized_identity.formal.v1"
+)
+V7_SCALE_NORMALIZED_IDENTITY_METHOD = "task040_v7_scale_normalized_identity"
+V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID = "task040.v7.h4.identity.v1"
+V7_IDENTITY_TARGET_SECONDS = 1800
+V7_IDENTITY_HARD_SECONDS = 3600
+V7_PREFERRED_MEMORY_BYTES = 35 * 2**30
+V7_SAFE_DENOMINATOR = 1.0e-300
+V7_IDENTITY_VECTOR_INDICES = (0, 1, 2)
+V7_LINEARITY_VECTOR_INDICES = (10, 11)
+V7_SCALE_EXPONENTS = (-10, 0, 10)
+V7_LINEARITY_ALPHA = 0.37 - 0.21j
+V7_D1_CONTRIBUTION_ORDER = (
+    "middle_boundary",
+    "middle_correction",
+    "lower_correction",
+    "upper_correction",
+)
 
 __all__ = (
     "V6_2_INTERFACE_SCHUR_FLAG",
@@ -94,9 +119,24 @@ __all__ = (
     "V6_2_EXACT_QUALIFICATION_SOURCES",
     "V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA",
     "V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH",
+    "V7_SCALE_NORMALIZED_IDENTITY_SCHEMA",
+    "V7_SCALE_NORMALIZED_IDENTITY_FLAG",
+    "V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA",
+    "V7_SCALE_NORMALIZED_IDENTITY_METHOD",
+    "V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID",
+    "V7_IDENTITY_TARGET_SECONDS",
+    "V7_IDENTITY_HARD_SECONDS",
+    "V7_PREFERRED_MEMORY_BYTES",
+    "V7_SAFE_DENOMINATOR",
+    "V7_IDENTITY_VECTOR_INDICES",
+    "V7_LINEARITY_VECTOR_INDICES",
+    "V7_SCALE_EXPONENTS",
+    "V7_LINEARITY_ALPHA",
+    "V7_D1_CONTRIBUTION_ORDER",
     "build_v6_2_exact_qualification_plan",
     "run_v6_2_exact_qualification_packets",
     "run_v6_2_interface_schur",
+    "collect_v7_scale_normalized_identity_metrics",
 )
 
 
@@ -1782,6 +1822,172 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _v7_canonical_json_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        _json_safe(value),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _write_v7_identity_bundle(
+    *,
+    rank_root: Path,
+    output_root: Path,
+    raw_metrics: Mapping[str, Any],
+    checker_result: Mapping[str, Any],
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    elapsed_seconds: float,
+    selected_operator: Mapping[str, Any],
+) -> dict[str, Any]:
+    raw = _json_safe(raw_metrics)
+    checked = _json_safe(checker_result)
+    payload = {
+        "schema": "task040.v7.scale_normalized_identity.bundle.v1",
+        "raw": raw,
+        "raw_sha256": _v7_canonical_json_sha256(raw),
+        "checker": checked,
+        "checker_sha256": _v7_canonical_json_sha256(checked),
+        "provenance": {
+            "source_sha": str(source_sha),
+            "input_sha256": str(input_sha256),
+            "physical_model_sha256": str(physical_model_sha256),
+            "rank": int(rank_root.name.removeprefix("rank")),
+        },
+        "timing": {
+            "identity_elapsed_seconds": float(elapsed_seconds),
+            "identity_target_seconds": V7_IDENTITY_TARGET_SECONDS,
+            "identity_hard_seconds": V7_IDENTITY_HARD_SECONDS,
+        },
+        "selected_operator": _json_safe(selected_operator),
+    }
+    bundle_path = rank_root / "v7_scale_normalized_identity_bundle.json"
+    bundle_sha = _write_json(bundle_path, payload)
+    readback_sha = hash_file_sha256(bundle_path)
+    if readback_sha != bundle_sha:
+        raise RuntimeError("V7 identity bundle hash reread failed")
+    reopened = json.loads(bundle_path.read_text(encoding="utf-8"))
+    if (
+        _v7_canonical_json_sha256(reopened["raw"]) != payload["raw_sha256"]
+        or _v7_canonical_json_sha256(reopened["checker"])
+        != payload["checker_sha256"]
+    ):
+        raise RuntimeError("V7 identity bundle logical hash reread failed")
+    return {
+        "rank": int(rank_root.name.removeprefix("rank")),
+        "path": str(bundle_path.relative_to(output_root)),
+        "sha256": bundle_sha,
+        "readback_sha256": readback_sha,
+        "readback_valid": True,
+        "bundle_readback_valid": True,
+        "raw_sha256": payload["raw_sha256"],
+        "checker_sha256": payload["checker_sha256"],
+        "formal_adjudication": False,
+        "d0_pass_candidate": bool(
+            checker_result.get("gate_candidates", {}).get("d0_pass_candidate")
+        ),
+        "d1_pass_candidate": bool(
+            checker_result.get("gate_candidates", {}).get("d1_pass_candidate")
+        ),
+        "evidence_valid": bool(checker_result.get("evidence_valid")),
+        "checker_pass": bool(checker_result.get("checker_pass")),
+        "selected_candidate": checker_result.get("selected_candidate"),
+        "next_required_stage": checker_result.get("next_required_stage"),
+        "expected_next_required_stage": (
+            "formal_integration_requires_full_spectrum_continuation"
+        ),
+    }
+
+
+def _v7_compact_decision_consensus(
+    comm: MPI.Intracomm, local: Mapping[str, Any]
+) -> dict[str, Any]:
+    decisions = comm.allgather(_json_safe(local))
+
+    def same(name: str) -> bool:
+        values = [
+            json.dumps(item.get(name), sort_keys=True, separators=(",", ":"))
+            for item in decisions
+        ]
+        return bool(values) and len(set(values)) == 1
+
+    elapsed = [item.get("identity_elapsed_seconds") for item in decisions]
+    elapsed_valid = all(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        for value in elapsed
+    )
+    common = {
+        name: local.get(name) if same(name) else None
+        for name in (
+            "evidence_valid",
+            "checker_pass",
+            "d0_pass_candidate",
+            "d1_pass_candidate",
+            "formal_adjudication",
+            "selected_candidate",
+            "next_required_stage",
+            "expected_next_required_stage",
+        )
+    }
+    common.update(
+        {
+            "mpi_size_8": all(item.get("mpi_size") == 8 for item in decisions),
+            "evidence_valid_consensus": same("evidence_valid"),
+            "checker_pass_consensus": same("checker_pass"),
+            "d0_pass_candidate_consensus": same("d0_pass_candidate"),
+            "d1_pass_candidate_consensus": same("d1_pass_candidate"),
+            "formal_adjudication_consensus": same("formal_adjudication"),
+            "selected_candidate_consensus": same("selected_candidate"),
+            "next_required_stage_consensus": same("next_required_stage"),
+            "expected_next_required_stage_consensus": same(
+                "expected_next_required_stage"
+            ),
+            "identity_elapsed_seconds_max": (
+                max(float(value) for value in elapsed) if elapsed_valid else None
+            ),
+            "identity_elapsed_target_seconds": V7_IDENTITY_TARGET_SECONDS,
+            "identity_elapsed_hard_seconds": V7_IDENTITY_HARD_SECONDS,
+            "identity_elapsed_target_exceeded": elapsed_valid
+            and any(float(value) > V7_IDENTITY_TARGET_SECONDS for value in elapsed),
+            "identity_elapsed_hard_gate": elapsed_valid
+            and all(float(value) <= V7_IDENTITY_HARD_SECONDS for value in elapsed),
+            "bundle_readback_valid": all(
+                item.get("bundle_readback_valid") is True for item in decisions
+            ),
+            "metadata_only": True,
+            "raw_metrics_allgathered": False,
+            "numeric_vectors_allgathered": False,
+        }
+    )
+    common["pass"] = bool(
+        common["mpi_size_8"]
+        and common["evidence_valid_consensus"]
+        and common["evidence_valid"] is True
+        and common["checker_pass_consensus"]
+        and common["checker_pass"] is True
+        and common["d0_pass_candidate_consensus"]
+        and common["d1_pass_candidate_consensus"]
+        and common["formal_adjudication_consensus"]
+        and common["formal_adjudication"] is False
+        and common["selected_candidate_consensus"]
+        and common["selected_candidate"] is not None
+        and common["next_required_stage_consensus"]
+        and common["expected_next_required_stage_consensus"]
+        and common["next_required_stage"]
+        == "formal_integration_requires_full_spectrum_continuation"
+        and common["identity_elapsed_hard_gate"]
+        and common["bundle_readback_valid"]
+    )
+    return common
+
+
 def _emit(
     callback: Callable[[str, Mapping[str, Any]], None] | None,
     stage: str,
@@ -1986,6 +2192,53 @@ def _stop_result(
     }
 
 
+def _v7_stop_result(
+    *,
+    status: str,
+    classification: str,
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    continuation_callable: bool,
+    mpi_size_8: bool,
+) -> dict[str, Any]:
+    identity_preflight = {
+        "status": status,
+        "pass": False,
+        "checks": {
+            "continuation_callable": continuation_callable,
+            "mpi_size_8": mpi_size_8,
+        },
+    }
+    result = _stop_result(
+        status=status,
+        classification=classification,
+        source_sha=source_sha,
+        input_sha256=input_sha256,
+        physical_model_sha256=physical_model_sha256,
+        identity_preflight=identity_preflight,
+        resource_preflight=None,
+    )
+    result.update(
+        {
+            "schema": V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA,
+            "method": V7_SCALE_NORMALIZED_IDENTITY_METHOD,
+            "profile": V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID,
+            "v7_scale_normalized_identity": True,
+            "formal_adjudication": False,
+            "v7_classification": classification,
+            "v7_progress_gate": {
+                "pass": False,
+                "continuation_callable": continuation_callable,
+                "mpi_size_8": mpi_size_8,
+                "system_created": False,
+                "exact_not_run": True,
+            },
+        }
+    )
+    return result
+
+
 def _fill_deterministic_interface_vector(vector: PETSc.Vec, vector_index: int) -> None:
     first, last = map(int, vector.getOwnershipRange())
     positions = np.arange(first, last, dtype=np.float64)
@@ -2127,6 +2380,553 @@ def _linearity_probe(
             vector.destroy()
 
 
+def _v7_fill_scaled_interface_vector(
+    vector: PETSc.Vec, index: int, scale: float
+) -> None:
+    _fill_deterministic_interface_vector(vector, index)
+    vector.scale(PETSc.ScalarType(scale))
+
+
+def _v7_diff(first: PETSc.Vec, second: PETSc.Vec) -> float:
+    value = first.duplicate()
+    try:
+        first.copy(value)
+        value.axpy(PETSc.ScalarType(-1.0), second)
+        return float(value.norm())
+    finally:
+        value.destroy()
+
+
+def _v7_ratio(diff: float, *norms: float) -> float:
+    return float(diff) / max(float(sum(norms)), V7_SAFE_DENOMINATOR)
+
+
+def _v7_repeat(first: PETSc.Vec, second: PETSc.Vec) -> dict[str, Any]:
+    n1, n2 = float(first.norm()), float(second.norm())
+    diff = _v7_diff(first, second)
+    return {
+        "terms": {"diff": diff, "n1": n1, "n2": n2},
+        "relative": _v7_ratio(diff, n1, n2),
+    }
+
+
+def _v7_identity(diff: float, naction: float, nfull: float) -> dict[str, Any]:
+    terms = {"diff": diff, "naction": naction, "nfull": nfull}
+    return {"terms": terms, "relative": _v7_ratio(diff, naction, nfull)}
+
+
+def _v7_linearity(
+    diff: float, ncombined: float, nleft: float, nright: float
+) -> dict[str, Any]:
+    terms = {
+        "diff": diff,
+        "ncombined": ncombined,
+        "nleft": nleft,
+        "alpha_abs": float(abs(V7_LINEARITY_ALPHA)),
+        "nright": nright,
+    }
+    return {
+        "terms": terms,
+        "relative": _v7_ratio(
+            diff, ncombined, nleft, float(abs(V7_LINEARITY_ALPHA)) * nright
+        ),
+    }
+
+
+def _v7_linear_diff(
+    combined: PETSc.Vec, left: PETSc.Vec, right: PETSc.Vec
+) -> float:
+    value = combined.duplicate()
+    try:
+        left.copy(value)
+        value.scale(PETSc.ScalarType(-1.0))
+        value.axpy(PETSc.ScalarType(1.0), combined)
+        value.axpy(PETSc.ScalarType(-V7_LINEARITY_ALPHA), right)
+        return float(value.norm())
+    finally:
+        value.destroy()
+
+
+def _v7_finite(comm: MPI.Intracomm, vectors: Sequence[PETSc.Vec]) -> bool:
+    local = all(bool(np.isfinite(np.asarray(vector.array)).all()) for vector in vectors)
+    return bool(comm.allreduce(local, op=MPI.LAND))
+
+
+def _v7_rows(residual: PETSc.Vec, rows: np.ndarray) -> np.ndarray:
+    first, last = map(int, residual.getOwnershipRange())
+    rows = np.asarray(rows, dtype=np.int64)
+    if rows.size and not bool(np.all((rows >= first) & (rows < last))):
+        raise ValueError("V7 residual rows are not owner-local")
+    return np.asarray(residual.array[rows - first], dtype=np.complex128)
+
+
+def _v7_norm(comm: MPI.Intracomm, values: np.ndarray) -> float:
+    local = float(np.vdot(np.asarray(values, dtype=np.complex128),
+                          np.asarray(values, dtype=np.complex128)).real)
+    return float(np.sqrt(max(float(comm.allreduce(local, op=MPI.SUM)), 0.0)))
+
+
+def _v7_full(
+    comm: MPI.Intracomm, bare: PETSc.Mat, action: Any, source: PETSc.Vec
+) -> tuple[PETSc.Vec, PETSc.Vec, PETSc.Vec, dict[str, Any], float]:
+    state, audit = action.build_full_eliminated_state(source)
+    residual = bare.createVecLeft()
+    try:
+        bare.mult(state, residual)
+        reference = action.extract_interface_from_active_vector(residual)
+        interior = _v7_rows(
+            residual, np.asarray(audit["interior_rows_local"], dtype=np.int64)
+        )
+        return state, residual, reference, audit, _v7_norm(comm, interior)
+    except Exception:
+        residual.destroy()
+        state.destroy()
+        raise
+
+
+def _v7_group_apply(
+    action: Any, oracle: Any, group: int, kind: str, source: PETSc.Vec,
+    target: PETSc.Vec,
+) -> None:
+    local = action.restrict_group_interface(group, source)
+    try:
+        if kind == "middle_boundary":
+            oracle.apply_group_gamma_gamma(1, local, target)
+        else:
+            oracle.apply_group_interior_correction(group, local, target)
+    finally:
+        local.destroy()
+
+
+def _v7_layer_b(
+    comm: MPI.Intracomm, action: Any, oracle: Any, left: PETSc.Vec,
+    right: PETSc.Vec, combined: PETSc.Vec,
+) -> dict[str, Any]:
+    specs = (
+        ("middle_boundary", 1, "middle_boundary"),
+        ("middle_correction", 1, "middle_correction"),
+        ("lower_correction", 0, "lower_correction"),
+        ("upper_correction", 2, "upper_correction"),
+    )
+    result = {}
+    for name, group, kind in specs:
+        outputs = {
+            label: oracle.create_group_gamma_vector(group)
+            for label in ("left", "right", "combined")
+        }
+        first = oracle.create_group_gamma_vector(group)
+        second = oracle.create_group_gamma_vector(group)
+        try:
+            for label, source in (
+                ("left", left), ("right", right), ("combined", combined)
+            ):
+                _v7_group_apply(action, oracle, group, kind, source, outputs[label])
+            _v7_group_apply(action, oracle, group, kind, left, first)
+            _v7_group_apply(action, oracle, group, kind, left, second)
+            norms = {label: float(value.norm()) for label, value in outputs.items()}
+            result[name] = {
+                "group": group,
+                "output_norms": norms,
+                "repeat": _v7_repeat(first, second),
+                "linearity": _v7_linearity(
+                    _v7_linear_diff(outputs["combined"], outputs["left"], outputs["right"]),
+                    norms["combined"], norms["left"], norms["right"],
+                ),
+                "finite": _v7_finite(
+                    comm, [*outputs.values(), first, second]
+                ),
+            }
+        finally:
+            second.destroy()
+            first.destroy()
+            for value in outputs.values():
+                value.destroy()
+    return result
+
+
+def _v7_layer_a(
+    comm: MPI.Intracomm, action: Any, oracle: Any, source: PETSc.Vec,
+    residual: PETSc.Vec,
+) -> list[dict[str, Any]]:
+    result = []
+    for group in range(3):
+        rhs = action.create_group_interior_vector(group)
+        solution1 = action.create_group_interior_vector(group)
+        solution2 = action.create_group_interior_vector(group)
+        try:
+            before = dict(action.group_factor_diagnostics(group))
+            action.build_group_interior_rhs(group, source, rhs)
+            action.solve_group_interior_rhs(group, rhs, solution1)
+            action.solve_group_interior_rhs(group, rhs, solution2)
+            after = dict(action.group_factor_diagnostics(group))
+            q = np.asarray(rhs.array, dtype=np.complex128)
+            r = _v7_rows(residual, oracle.group_interior_rows_local(group))
+            repeat = _v7_repeat(solution1, solution2)
+            before_count = int(before.get("solve_count", -1))
+            after_count = int(after.get("solve_count", -1))
+            residual_norm = _v7_norm(comm, r)
+            rhs_norm = float(rhs.norm())
+            n_aii_x = _v7_norm(comm, r - q)
+            result.append(
+                {
+                    "group": group,
+                    "rhs_norm": rhs_norm,
+                    "solution1_norm": float(solution1.norm()),
+                    "solution2_norm": float(solution2.norm()),
+                    "solve_count_before": before_count,
+                    "solve_count_after": after_count,
+                    "solve_count_delta": after_count - before_count,
+                    "factor_identity_before": before.get("factor_identity"),
+                    "factor_identity_after": after.get("factor_identity"),
+                    "factor_diagnostics_before": _json_safe(before),
+                    "factor_diagnostics_after": _json_safe(after),
+                    "backward": {
+                        "terms": {
+                            "residual": residual_norm,
+                            "n_aii_x": n_aii_x,
+                            "n_rhs": rhs_norm,
+                        },
+                        "relative": _v7_ratio(residual_norm, n_aii_x, rhs_norm),
+                    },
+                    "repeat": repeat,
+                    "finite": _v7_finite(comm, [rhs, solution1, solution2]),
+                }
+            )
+        finally:
+            solution2.destroy()
+            solution1.destroy()
+            rhs.destroy()
+    return result
+
+
+def _v7_variant(
+    comm: MPI.Intracomm, first: PETSc.Vec, second: PETSc.Vec,
+    reference: PETSc.Vec,
+) -> dict[str, Any]:
+    naction, nfull = float(first.norm()), float(reference.norm())
+    return {
+        "output_norm": naction,
+        "finite": _v7_finite(comm, [first]),
+        "identity": _v7_identity(_v7_diff(first, reference), naction, nfull),
+        "repeat": _v7_repeat(first, second),
+    }
+
+
+def _v7_apply_d1(
+    action: Any, source: PETSc.Vec, target: PETSc.Vec,
+    contributions: Mapping[str, PETSc.Vec],
+) -> None:
+    action.apply_d1_reference(
+        source, target, *(contributions[name] for name in V7_D1_CONTRIBUTION_ORDER)
+    )
+
+
+def _v7_identity_record(
+    comm: MPI.Intracomm, bare: PETSc.Mat, matrix: PETSc.Mat, action: Any,
+    oracle: Any, source_index: int, exponent: int, scale: float,
+) -> dict[str, Any]:
+    source = action.create_interface_vector()
+    d0_first, d0_second = (matrix.createVecLeft() for _ in range(2))
+    d1_first, d1_second = (action.create_interface_vector() for _ in range(2))
+    contributions = {
+        name: action.create_interface_vector()
+        for name in V7_D1_CONTRIBUTION_ORDER
+    }
+    first_contributions = {
+        name: action.create_interface_vector()
+        for name in V7_D1_CONTRIBUTION_ORDER
+    }
+    state = residual = reference = None
+    try:
+        _v7_fill_scaled_interface_vector(source, source_index, scale)
+        matrix.mult(source, d0_first)
+        matrix.mult(source, d0_second)
+        _v7_apply_d1(action, source, d1_first, contributions)
+        for name, contribution in contributions.items():
+            contribution.copy(first_contributions[name])
+        _v7_apply_d1(action, source, d1_second, contributions)
+        state, residual, reference, audit, interior_norm = _v7_full(
+            comm, bare, action, source
+        )
+        lower, upper = action.restrict_interface(source)
+        roundtrip = action.create_interface_vector()
+        try:
+            action.prolong_interface(lower, upper, roundtrip)
+            roundtrip_error = _v7_diff(source, roundtrip)
+        finally:
+            roundtrip.destroy()
+            upper.destroy()
+            lower.destroy()
+        d0_record = _v7_variant(comm, d0_first, d0_second, reference)
+        d1_record = _v7_variant(comm, d1_first, d1_second, reference)
+        d0_d1_diff = _v7_diff(d0_first, d1_first)
+        d0_norm, d1_norm = float(d0_first.norm()), float(d1_first.norm())
+        return {
+            "source_index": source_index,
+            "scale_exponent": exponent,
+            "scale": scale,
+            "source_norm": float(source.norm()),
+            "layer_a": {"groups": _v7_layer_a(
+                comm, action, oracle, source, residual
+            )},
+            "layer_c": {
+                "full": {
+                    "output_norm": float(reference.norm()),
+                    "interior_residual_norm": interior_norm,
+                    "finite": _v7_finite(comm, [reference]),
+                },
+                "d0": d0_record,
+                "d1": d1_record,
+                "d0_d1": {
+                    "terms": {"diff": d0_d1_diff, "nd0": d0_norm, "nd1": d1_norm},
+                    "eta": _v7_ratio(d0_d1_diff, d0_norm, d1_norm),
+                },
+                "contribution_output_norms": {
+                    name: {
+                        "output_norm": float(value.norm()),
+                        "finite": _v7_finite(comm, [value]),
+                    }
+                    for name, value in first_contributions.items()
+                },
+                "roundtrip_error": roundtrip_error,
+                "full_state_audit": _json_safe(audit),
+            },
+        }
+    finally:
+        for value in first_contributions.values():
+            value.destroy()
+        for value in contributions.values():
+            value.destroy()
+        for value in (d1_second, d1_first, d0_second, d0_first, source):
+            value.destroy()
+        if reference is not None:
+            reference.destroy()
+        if residual is not None:
+            residual.destroy()
+        if state is not None:
+            state.destroy()
+
+
+def _v7_linearity_record(
+    comm: MPI.Intracomm, matrix: PETSc.Mat, action: Any, oracle: Any,
+    exponent: int, scale: float,
+) -> dict[str, Any]:
+    left, right, combined = (
+        action.create_interface_vector() for _ in range(3)
+    )
+    d0 = {name: matrix.createVecLeft() for name in ("left", "right", "combined")}
+    d1 = {name: action.create_interface_vector() for name in d0}
+    contributions = {
+        name: action.create_interface_vector()
+        for name in V7_D1_CONTRIBUTION_ORDER
+    }
+    try:
+        _v7_fill_scaled_interface_vector(left, V7_LINEARITY_VECTOR_INDICES[0], scale)
+        _v7_fill_scaled_interface_vector(right, V7_LINEARITY_VECTOR_INDICES[1], scale)
+        left.copy(combined)
+        combined.axpy(PETSc.ScalarType(V7_LINEARITY_ALPHA), right)
+        input_norms = {
+            name: float(value.norm())
+            for name, value in (("left", left), ("right", right), ("combined", combined))
+        }
+        for name, source in (
+            ("left", left), ("right", right), ("combined", combined)
+        ):
+            matrix.mult(source, d0[name])
+            _v7_apply_d1(action, source, d1[name], contributions)
+
+        def variant(values: Mapping[str, PETSc.Vec]) -> dict[str, Any]:
+            norms = {name: float(value.norm()) for name, value in values.items()}
+            return {
+                "output_norms": norms,
+                **_v7_linearity(
+                    _v7_linear_diff(values["combined"], values["left"], values["right"]),
+                    norms["combined"], norms["left"], norms["right"],
+                ),
+                "finite": _v7_finite(comm, list(values.values())),
+            }
+
+        return {
+            "scale_exponent": exponent,
+            "scale": scale,
+            "left_source_index": V7_LINEARITY_VECTOR_INDICES[0],
+            "right_source_index": V7_LINEARITY_VECTOR_INDICES[1],
+            "alpha": {
+                "real": float(V7_LINEARITY_ALPHA.real),
+                "imag": float(V7_LINEARITY_ALPHA.imag),
+                "abs": float(abs(V7_LINEARITY_ALPHA)),
+            },
+            "input_norms": input_norms,
+            "layer_b": _v7_layer_b(comm, action, oracle, left, right, combined),
+            "layer_c": {"d0": variant(d0), "d1": variant(d1)},
+        }
+    finally:
+        for value in contributions.values():
+            value.destroy()
+        for value in d1.values():
+            value.destroy()
+        for value in d0.values():
+            value.destroy()
+        combined.destroy()
+        right.destroy()
+        left.destroy()
+
+
+def _v7_legacy_absolute_diagnostic(
+    matrix: PETSc.Mat, action: Any, identity_records: Sequence[Mapping[str, Any]],
+    linearity_records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    source, target = action.create_interface_vector(), matrix.createVecLeft()
+    try:
+        source.set(0.0)
+        source.assemble()
+        matrix.mult(source, target)
+        zero_error = float(target.norm())
+    finally:
+        target.destroy()
+        source.destroy()
+    records = sorted(
+        (item for item in identity_records if int(item["scale_exponent"]) == 0),
+        key=lambda item: int(item["source_index"]),
+    )
+    linearity = next(
+        item for item in linearity_records if int(item["scale_exponent"]) == 0
+    )
+    deterministic = [
+        {
+            "vector_index": int(item["source_index"]),
+            "gamma_action_error": float(item["layer_c"]["d0"]["identity"]["terms"]["diff"]),
+            "full_interior_residual_error": float(
+                item["layer_c"]["full"]["interior_residual_norm"]
+            ),
+            "roundtrip_error": float(item["layer_c"]["roundtrip_error"]),
+            "repeat_error": float(item["layer_c"]["d0"]["repeat"]["terms"]["diff"]),
+        }
+        for item in records
+    ]
+    thresholds = {
+        "zero_map": float(V6_2_ZERO_TOLERANCE),
+        "repeat": float(V6_2_ROUNDTRIP_TOLERANCE),
+        "linearity": float(V6_2_ROUNDTRIP_TOLERANCE),
+        "restriction_prolongation": float(V6_2_ROUNDTRIP_TOLERANCE),
+        "full_elimination_gamma": float(V6_2_ACTION_TOLERANCE),
+        "full_elimination_interior": float(V6_2_ACTION_TOLERANCE),
+    }
+    values = {
+        "zero_map": zero_error,
+        "repeat": max(item["repeat_error"] for item in deterministic),
+        "linearity": float(linearity["layer_c"]["d0"]["terms"]["diff"]),
+        "restriction_prolongation": max(item["roundtrip_error"] for item in deterministic),
+        "full_elimination_gamma": max(item["gamma_action_error"] for item in deterministic),
+        "full_elimination_interior": max(item["full_interior_residual_error"] for item in deterministic),
+    }
+    gate = {name: values[name] <= limit for name, limit in thresholds.items()}
+    gate["three_deterministic_vectors"] = len(deterministic) == 3
+    return {
+        "scale_exponent": 0,
+        "scale": 1.0,
+        "deterministic": deterministic,
+        "zero_error": zero_error,
+        "linearity_error": values["linearity"],
+        "thresholds": thresholds,
+        "gate": gate,
+        "gate_pass": bool(all(gate.values())),
+        "relative_metrics_not_used": True,
+    }
+
+
+def _v7_structural_diagnostics(action: Any) -> dict[str, Any]:
+    diagnostics = action.diagnostics
+    layout = diagnostics["interface_layout"]
+    return {
+        "layout": {
+            "global_size": int(layout["global_size"]),
+            "lower_global_rows": int(layout["lower_global_rows"]),
+            "upper_global_rows": int(layout["upper_global_rows"]),
+            "owner_local_mapping_count": int(layout["owner_local_mapping_count"]),
+            "canonical_position_bijection": bool(
+                layout["canonical_position_bijection"]
+            ),
+            "coverage_exact": bool(layout["coverage_exact"]),
+            "owner_distributed": bool(layout["owner_distributed"]),
+        },
+        "factor_count_ready": int(diagnostics["factor_count_ready"]),
+        "factor_count_ready_observed": int(
+            diagnostics["factor_count_ready_observed"]
+        ),
+        "numeric_allgather": bool(diagnostics["numeric_allgather"]),
+        "fe_numeric_allgather": bool(diagnostics["fe_numeric_allgather"]),
+        "full_interface_numeric_replica": bool(
+            diagnostics["full_interface_numeric_replica"]
+        ),
+        "scratch_vectors_allocated_per_apply": int(
+            diagnostics["scratch_vectors_allocated_per_apply"]
+        ),
+    }
+
+
+def collect_v7_scale_normalized_identity_metrics(
+    comm: MPI.Intracomm, bare: PETSc.Mat, matrix: PETSc.Mat, action: Any, oracle: Any
+) -> dict[str, Any]:
+    """Collect norms and raw terms only; this is not formal adjudication."""
+    structure_before = _v7_structural_diagnostics(action)
+    identities = [
+        _v7_identity_record(
+            comm, bare, matrix, action, oracle, source, exponent, float(2.0**exponent)
+        )
+        for exponent in V7_SCALE_EXPONENTS
+        for source in V7_IDENTITY_VECTOR_INDICES
+    ]
+    linearities = [
+        _v7_linearity_record(
+            comm, matrix, action, oracle, exponent, float(2.0**exponent)
+        )
+        for exponent in V7_SCALE_EXPONENTS
+    ]
+    structure_after = _v7_structural_diagnostics(action)
+    groups = identities[0]["layer_a"]["groups"]
+    return {
+        "schema": V7_SCALE_NORMALIZED_IDENTITY_SCHEMA,
+        "status": "diagnostics_only",
+        "classification": "not_formal_adjudication",
+        "formal_adjudication": False,
+        "next_required_stage": "independent_raw_checker_then_formal_integration",
+        "safe_denominator": float(V7_SAFE_DENOMINATOR),
+        "identity_source_indices": list(V7_IDENTITY_VECTOR_INDICES),
+        "linearity_source_indices": list(V7_LINEARITY_VECTOR_INDICES),
+        "scales": [
+            {"exponent": exponent, "scale": float(2.0**exponent)}
+            for exponent in V7_SCALE_EXPONENTS
+        ],
+        "linearity_alpha": {
+            "real": float(V7_LINEARITY_ALPHA.real),
+            "imag": float(V7_LINEARITY_ALPHA.imag),
+            "abs": float(abs(V7_LINEARITY_ALPHA)),
+        },
+        "d1_contribution_order": list(V7_D1_CONTRIBUTION_ORDER),
+        "structure": {"before": structure_before, "after": structure_after},
+        "factor_setup": {
+            "same_action": True,
+            "same_factor_setup": True,
+            "factor_identity_by_group": {
+                str(item["group"]): item["factor_identity_before"] for item in groups
+            },
+            "factor_readback_by_group": {
+                str(item["group"]): item["factor_diagnostics_before"] for item in groups
+            },
+        },
+        "identity_records": identities,
+        "linearity_records": linearities,
+        "legacy_v6_2_absolute_diagnostic": _v7_legacy_absolute_diagnostic(
+            matrix, action, identities, linearities
+        ),
+        "runner_claims": {
+            "gate_pass": None,
+            "classification": "not_formal_adjudication",
+        },
+    }
+
+
 def run_v6_2_interface_schur(
     cfg: Any,
     profile: Any,
@@ -2145,7 +2945,9 @@ def run_v6_2_interface_schur(
     watchdog_hard_stop_bytes: int | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     exact_qualification: Mapping[str, Any] | None = None,
+    v7_scale_normalized_identity: bool = False,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
+    v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run identity and exact qualification on one live current system."""
 
@@ -2172,6 +2974,26 @@ def run_v6_2_interface_schur(
     output_root, frozen_root = _assert_disjoint_roots(
         output_argument, exact_spool_root
     )
+    if v7_scale_normalized_identity and not callable(v7_continuation):
+        return _v7_stop_result(
+            status="not_run_by_v7_continuation_gate",
+            classification="V7_SCALE_NORMALIZED_IDENTITY_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            continuation_callable=False,
+            mpi_size_8=int(comm.size) == 8,
+        )
+    if v7_scale_normalized_identity and int(comm.size) != 8:
+        return _v7_stop_result(
+            status="not_run_by_v7_mpi_size_gate",
+            classification="V7_SCALE_NORMALIZED_IDENTITY_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            continuation_callable=True,
+            mpi_size_8=False,
+        )
     authority_root_error: str | None = None
     try:
         frozen_root = _v6_2_require_v5_rhs_authority_root(frozen_root)
@@ -2249,6 +3071,16 @@ def run_v6_2_interface_schur(
     system = None
     matrix = None
     action = None
+    v7_d1_matrix: PETSc.Mat | None = None
+    v7_raw_metrics: Mapping[str, Any] | None = None
+    v7_checker_result: Mapping[str, Any] | None = None
+    v7_bundle_descriptor: dict[str, Any] | None = None
+    v7_progress_gate: dict[str, Any] | None = None
+    v7_compact_consensus: dict[str, Any] | None = None
+    v7_rank_bundle_descriptors: list[dict[str, Any]] = []
+    v7_classification: str | None = None
+    v7_continuation_result: Mapping[str, Any] | None = None
+    v7_factor_lifecycle_after_continuation: Mapping[str, Any] | None = None
     shared_lifecycle: Mapping[str, Any] | None = None
     try:
         system = assemble_current_bare_f_authority_system(
@@ -2320,12 +3152,14 @@ def run_v6_2_interface_schur(
         first, last = map(int, system.F.getOwnershipRange())
         support_audits: dict[str, dict[str, Any]] = {}
         supports: list[np.ndarray] = []
+        interface_supports: dict[str, Mapping[str, Any]] = {}
         for name, z_value in (("lower", z_values[2]), ("upper", z_values[4])):
             support = audit_artificial_z_interface_support(
                 system.V,
                 system.static_condensation.condensed,
                 float(z_value),
             )
+            interface_supports[name] = support
             global_support = np.asarray(support["active_support"], dtype=np.int64)
             local_support = global_support[
                 (global_support >= first) & (global_support < last)
@@ -2488,7 +3322,160 @@ def run_v6_2_interface_schur(
             gate_pass=all(gate_before_cleanup.values()),
             vector_count=len(deterministic),
         )
-        if not all(bool(value) for value in gate_before_cleanup.values()):
+        if v7_scale_normalized_identity:
+            from benchmarks.check_task040_v7_scale_normalized_identity import (
+                check_v7_scale_normalized_identity,
+            )
+
+            v7_identity_started = time.perf_counter()
+            v7_raw_metrics = collect_v7_scale_normalized_identity_metrics(
+                comm, system.F, matrix, action, oracle
+            )
+            v7_checker_result = check_v7_scale_normalized_identity(v7_raw_metrics)
+            v7_identity_elapsed = max(
+                0.0, time.perf_counter() - v7_identity_started
+            )
+            selected_candidate = v7_checker_result.get("selected_candidate")
+            gate_candidates = v7_checker_result.get("gate_candidates", {})
+            selected_operator = {
+                "candidate": selected_candidate,
+                "kind": (
+                    "d1_reference_matshell"
+                    if selected_candidate == "fixed_order_d1"
+                    else "d0_matshell"
+                    if selected_candidate is not None
+                    else None
+                ),
+            }
+            bundle_error: str | None = None
+            try:
+                v7_bundle_descriptor = _write_v7_identity_bundle(
+                    rank_root=rank_root,
+                    output_root=output_root,
+                    raw_metrics=v7_raw_metrics,
+                    checker_result=v7_checker_result,
+                    source_sha=str(source_sha),
+                    input_sha256=str(input_sha256),
+                    physical_model_sha256=str(physical_model_sha256),
+                    elapsed_seconds=v7_identity_elapsed,
+                    selected_operator=selected_operator,
+                )
+            except Exception as exc:  # noqa: BLE001
+                bundle_error = f"{type(exc).__name__}: {exc}"
+            _collective_driver_error(
+                comm, "V7 identity bundle write", bundle_error
+            )
+            v7_compact_consensus = _v7_compact_decision_consensus(
+                comm,
+                {
+                    "mpi_size": int(comm.size),
+                    "evidence_valid": bool(
+                        v7_checker_result.get("evidence_valid")
+                    ),
+                    "checker_pass": bool(v7_checker_result.get("checker_pass")),
+                    "d0_pass_candidate": bool(
+                        gate_candidates.get("d0_pass_candidate")
+                    ),
+                    "d1_pass_candidate": bool(
+                        gate_candidates.get("d1_pass_candidate")
+                    ),
+                    "formal_adjudication": False,
+                    "selected_candidate": selected_candidate,
+                    "next_required_stage": v7_checker_result.get(
+                        "next_required_stage"
+                    ),
+                    "expected_next_required_stage": (
+                        "formal_integration_requires_full_spectrum_continuation"
+                    ),
+                    "identity_elapsed_seconds": v7_identity_elapsed,
+                    "bundle_readback_valid": bool(
+                        v7_bundle_descriptor["readback_valid"]
+                    ),
+                },
+            )
+            v7_rank_bundle_descriptors = comm.allgather(v7_bundle_descriptor)
+            v7_progress_gate = {
+                **v7_compact_consensus,
+                "rank_bundle_count": len(v7_rank_bundle_descriptors),
+            }
+            if not bool(v7_compact_consensus["evidence_valid"]):
+                v7_classification = "V7_SCALE_NORMALIZED_IDENTITY_EVIDENCE_FAIL"
+            elif not bool(v7_compact_consensus["checker_pass"]):
+                v7_classification = "V7_SCALE_NORMALIZED_IDENTITY_CHECKER_FAIL"
+            elif not bool(v7_compact_consensus["pass"]):
+                v7_classification = "V7_SCALE_NORMALIZED_IDENTITY_METADATA_FAIL"
+            else:
+                v7_classification = (
+                    "V7_SCALE_NORMALIZED_IDENTITY_CANDIDATE_PASS"
+                )
+            if bool(v7_progress_gate["pass"]):
+                if selected_candidate == "fixed_order_d1":
+                    v7_d1_matrix = build_petsc_d1_reference_interface_schur_mat(
+                        action
+                    )
+                    v7_interface_operator = v7_d1_matrix
+                elif selected_candidate in {"d0", "d0_lower_memory"}:
+                    v7_interface_operator = matrix
+                else:
+                    v7_interface_operator = None
+                if v7_interface_operator is not None:
+                    v7_continuation_result = v7_continuation(
+                        {
+                            "system": system,
+                            "formal_exact_configuration": bound_exact_configuration,
+                            "frozen_rhs_descriptors": bound_exact_configuration[
+                                "descriptors"
+                            ],
+                            "base_directory": bound_exact_configuration[
+                                "base_directory"
+                            ],
+                            "resource_callback": bound_exact_configuration[
+                                "resource_callback"
+                            ],
+                            "interface_operator": v7_interface_operator,
+                            "d0_interface_operator": matrix,
+                            "bare_operator": system.F,
+                            "schur_action": action,
+                            "lower_gamma_layout": gamma_layouts["lower"],
+                            "upper_gamma_layout": gamma_layouts["upper"],
+                            "interface_supports": interface_supports,
+                            "canonical_layout": canonical_layout,
+                            "factor_lifecycle": factor_before,
+                            "selected_operator": selected_operator,
+                            "v7_raw_metrics": v7_raw_metrics,
+                            "v7_checker": v7_checker_result,
+                            "v7_progress_gate": v7_progress_gate,
+                            "selected_candidate": selected_candidate,
+                        }
+                    )
+                    if not isinstance(v7_continuation_result, Mapping):
+                        raise TypeError("V7 continuation must return a mapping")
+                v7_factor_lifecycle_after_continuation = dict(
+                    action.diagnostics["factor_lifecycle"]
+                )
+                shared_lifecycle = {
+                    "status": "v7_identity_candidate_ready",
+                    "same_live_action": True,
+                    "interface_operator_selected": selected_candidate,
+                    "factor_lifecycle_before_continuation": factor_before,
+                    "factor_lifecycle_after_continuation": (
+                        v7_factor_lifecycle_after_continuation
+                    ),
+                    "continuation": v7_continuation_result,
+                }
+            else:
+                v7_factor_lifecycle_after_continuation = dict(
+                    action.diagnostics["factor_lifecycle"]
+                )
+                shared_lifecycle = {
+                    "status": "not_run_by_v7_progress_gate",
+                    "same_live_action": False,
+                    "factor_lifecycle_before_continuation": factor_before,
+                    "factor_lifecycle_after_continuation": (
+                        v7_factor_lifecycle_after_continuation
+                    ),
+                }
+        elif not all(bool(value) for value in gate_before_cleanup.values()):
             shared_lifecycle = {
                 "status": "not_run_by_v6_2_identity_gate",
                 "same_live_action": False,
@@ -2560,6 +3547,9 @@ def run_v6_2_interface_schur(
                     if isinstance(exact_result_for_marker.get("family"), Mapping)
                     else False,
                 )
+        if v7_d1_matrix is not None:
+            v7_d1_matrix.destroy()
+            v7_d1_matrix = None
         matrix.destroy()
         matrix = None
         action.destroy()
@@ -2585,6 +3575,111 @@ def run_v6_2_interface_schur(
             action_destroyed=bool(action_after.get("destroyed")),
             system_destroyed=True,
         )
+        if v7_scale_normalized_identity:
+            selected_candidate = (
+                None
+                if v7_compact_consensus is None
+                else v7_compact_consensus.get("selected_candidate")
+            )
+            v7_status = (
+                str(v7_continuation_result.get("status"))
+                if isinstance(v7_continuation_result, Mapping)
+                and v7_continuation_result.get("status") is not None
+                else (
+                    "completed_v7_scale_normalized_identity_candidate"
+                    if v7_progress_gate is not None
+                    and bool(v7_progress_gate.get("pass"))
+                    else "completed_v7_scale_normalized_identity_diagnostic"
+                )
+            )
+            v7_next_required_stage = (
+                v7_continuation_result.get("next_required_stage")
+                if isinstance(v7_continuation_result, Mapping)
+                and v7_continuation_result.get("next_required_stage") is not None
+                else (
+                    v7_compact_consensus.get("next_required_stage")
+                    if isinstance(v7_compact_consensus, Mapping)
+                    else "not_run_by_v7_continuation_gate"
+                )
+            )
+            legacy_classification = (
+                "V6_2_FULL_INTERFACE_SCHUR_PASS"
+                if identity_gate_pass
+                else "V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL"
+            )
+            v7_result = {
+                "schema": V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA,
+                "method": V7_SCALE_NORMALIZED_IDENTITY_METHOD,
+                "profile": V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID,
+                "status": v7_status,
+                "classification": (
+                    v7_continuation_result.get("classification")
+                    if isinstance(v7_continuation_result, Mapping)
+                    else "not_formal_adjudication"
+                ),
+                "formal_adjudication": (
+                    bool(v7_continuation_result.get("formal_adjudication", False))
+                    if isinstance(v7_continuation_result, Mapping)
+                    else False
+                ),
+                "continuation_evidence": _json_safe(v7_continuation_result),
+                "v7_scale_normalized_identity": True,
+                "v7_classification": v7_classification,
+                "source_sha": str(source_sha),
+                "input_sha256": str(input_sha256),
+                "physical_model_sha256": str(physical_model_sha256),
+                "identity_preflight": _json_safe(identity_preflight),
+                "resource_preflight": _json_safe(resource_preflight),
+                "system_created": True,
+                "identity_gate": identity_gate,
+                "gate_pass": identity_gate_pass,
+                "legacy_classification": legacy_classification,
+                "exact_qualification": (
+                    "intentional_not_run_by_v7_direct_mainline"
+                ),
+                "full_spectrum_continuation": "required",
+                "legacy_v6_2_absolute_diagnostic": _json_safe(
+                    v7_raw_metrics.get("legacy_v6_2_absolute_diagnostic")
+                    if isinstance(v7_raw_metrics, Mapping)
+                    else None
+                ),
+                "v7_progress_gate": _json_safe(v7_progress_gate),
+                "v7_bundle_descriptors": sorted(
+                    v7_rank_bundle_descriptors,
+                    key=lambda item: item["rank"],
+                ),
+                "v7_compact_consensus": _json_safe(v7_compact_consensus),
+                "selected_operator": _json_safe(selected_operator),
+                "factor_lifecycle": {
+                    "before_continuation": _json_safe(factor_before),
+                    "after_continuation": _json_safe(
+                        v7_factor_lifecycle_after_continuation
+                    ),
+                    "after_cleanup": _json_safe(factor_after),
+                },
+                "continuation": {
+                    "executed": v7_continuation_result is not None,
+                    "status": (
+                        v7_continuation_result.get("status")
+                        if isinstance(v7_continuation_result, Mapping)
+                        else "not_run_by_v7_progress_gate"
+                    ),
+                    "classification": (
+                        v7_continuation_result.get("classification")
+                        if isinstance(v7_continuation_result, Mapping)
+                        else None
+                    ),
+                },
+                "numeric_allgather": False,
+                "fe_numeric_allgather": False,
+                "full_interface_numeric_replica": False,
+                "next_required_stage": v7_next_required_stage,
+            }
+            if comm.rank == 0:
+                _write_json(output_root / "v7_manifest.json", v7_result)
+            v7_result = comm.bcast(v7_result if comm.rank == 0 else None, root=0)
+            comm.barrier()
+            return _json_safe(v7_result)
         exact_qualification_result = (
             None
             if shared_lifecycle is None
@@ -2959,6 +4054,8 @@ def run_v6_2_interface_schur(
         comm.barrier()
         return _json_safe(result)
     finally:
+        if v7_d1_matrix is not None:
+            v7_d1_matrix.destroy()
         if action is not None:
             action.destroy()
         if matrix is not None:

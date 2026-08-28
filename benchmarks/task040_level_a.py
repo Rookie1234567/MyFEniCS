@@ -43,6 +43,13 @@ from benchmarks.task040_v6_2_interface_schur import (
     V6_2_INTERFACE_SCHUR_PROFILE_ID,
     V6_2_INTERFACE_SCHUR_SCHEMA,
     V6_2_INTERFACE_UPPER_COUNT,
+    V7_IDENTITY_HARD_SECONDS,
+    V7_IDENTITY_TARGET_SECONDS,
+    V7_PREFERRED_MEMORY_BYTES,
+    V7_SCALE_NORMALIZED_IDENTITY_FLAG,
+    V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA,
+    V7_SCALE_NORMALIZED_IDENTITY_METHOD,
+    V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID,
     build_v6_2_exact_qualification_plan,
 )
 from src.io.input_validation import (
@@ -391,6 +398,7 @@ def build_task040_level_a_plan(
     v5_fresh_bare_f_authority: bool = False,
     v5_route_c: bool = False,
     v6_2_interface_schur: bool = False,
+    v7_scale_normalized_identity: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -441,6 +449,7 @@ def build_task040_level_a_plan(
                 v5_fresh_bare_f_authority,
                 v5_route_c,
                 v6_2_interface_schur,
+                v7_scale_normalized_identity,
             )
         )
         > 1
@@ -762,6 +771,52 @@ def build_task040_level_a_plan(
                     "qep",
                     "old_bool_recovery_mask",
                     "raw_global_row_remap",
+                ],
+            }
+        )
+    if v7_scale_normalized_identity:
+        plan.update(
+            {
+                "schema": V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA,
+                "method": V7_SCALE_NORMALIZED_IDENTITY_METHOD,
+                "profile": V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID,
+                "v7_scale_normalized_identity": True,
+                "research_only": True,
+                "oracle_only": True,
+                "scalable_candidate": False,
+                "continuation_required": True,
+                "continuation_ready": False,
+                "system_created": False,
+                "pde_solve": "full_spectrum_continuation_required",
+                "formal_adjudication": False,
+                "exact_qualification": (
+                    "intentional_not_run_by_v7_direct_mainline"
+                ),
+                "full_spectrum_continuation": "required",
+                "identity_target_seconds": V7_IDENTITY_TARGET_SECONDS,
+                "identity_hard_seconds": V7_IDENTITY_HARD_SECONDS,
+                "preferred_memory_bytes": V7_PREFERRED_MEMORY_BYTES,
+                "absolute_terminate_memory_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
+                "numeric_allgather": False,
+                "fe_numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "root_metadata_gather": True,
+                "metadata_only_descriptor_gather": True,
+                "conditional_authorized": {
+                    "refinement": "one_evidence_driven_refinement",
+                    "separator_closure": "one_evidence_driven_separator_closure",
+                },
+                "forbidden": [
+                    "threshold_relaxation",
+                    "refinement_count_or_parameter_scan",
+                    "repeated_separator_closure",
+                    "mumps_parameter_scan",
+                    "raw_petsc_row_fft",
+                    "qep",
+                    "full_side_factor",
                 ],
             }
         )
@@ -6042,11 +6097,13 @@ def run_task040_level_a(
     v5_fresh_bare_f_authority: bool = False,
     v5_route_c: bool = False,
     v6_2_interface_schur: bool = False,
+    v7_scale_normalized_identity: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
     bottom_route_only: bool = False,
     watchdog_hard_stop_bytes: int | None = None,
+    v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run the six-source Level-A audit; all numerical work stays in src."""
 
@@ -6063,6 +6120,7 @@ def run_task040_level_a(
                 v5_fresh_bare_f_authority,
                 v5_route_c,
                 v6_2_interface_schur,
+                v7_scale_normalized_identity,
             )
         )
         > 1
@@ -6089,6 +6147,19 @@ def run_task040_level_a(
             raise ValueError("V6-2 run_directory must not be the frozen exact spool root")
         if input_path is None:
             raise ValueError("V6-2 interface Schur requires the official input_path")
+    if v7_scale_normalized_identity:
+        if run_directory is None:
+            raise ValueError(
+                "V7 scale-normalized identity requires a separate run_directory"
+            )
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError(
+                "V7 run_directory must not be the frozen exact spool root"
+            )
+        if input_path is None:
+            raise ValueError(
+                "V7 scale-normalized identity requires the official input_path"
+            )
     if (
         interface_schur
         or packet_producer
@@ -6098,6 +6169,7 @@ def run_task040_level_a(
         or v5_fresh_bare_f_authority
         or v5_route_c
         or v6_2_interface_schur
+        or v7_scale_normalized_identity
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6136,6 +6208,8 @@ def run_task040_level_a(
             if v5_fresh_bare_f_authority
             else TASK040_V5_ROUTE_C_METHOD
             if v5_route_c
+            else V7_SCALE_NORMALIZED_IDENTITY_METHOD
+            if v7_scale_normalized_identity
             else TASK040_V6_2_INTERFACE_SCHUR_METHOD
             if v6_2_interface_schur
             else TASK040_V1_2_METHOD
@@ -6321,6 +6395,30 @@ def run_task040_level_a(
             resource_callback=resource_callback,
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
+        )
+    if v7_scale_normalized_identity:
+        from benchmarks.task040_v6_2_interface_schur import (
+            run_v6_2_interface_schur,
+        )
+
+        return run_v6_2_interface_schur(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            exact_spool_root=exact_spool_root,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            hard_stop_bytes=TASK040_LEVEL_A_HARD_STOP_BYTES,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+            resource_callback=resource_callback,
+            v7_scale_normalized_identity=True,
+            v7_continuation=v7_continuation,
         )
     if v6_2_interface_schur:
         from benchmarks.task040_v6_2_interface_schur import (
@@ -6727,6 +6825,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG, action="store_true")
     parser.add_argument(TASK040_V5_ROUTE_C_FLAG, action="store_true")
     parser.add_argument(TASK040_V6_2_INTERFACE_SCHUR_FLAG, action="store_true")
+    parser.add_argument(V7_SCALE_NORMALIZED_IDENTITY_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -6748,6 +6847,7 @@ def main(argv: list[str] | None = None) -> int:
         v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
         v5_route_c=args.v5_route_c,
         v6_2_interface_schur=args.v6_2_interface_schur,
+        v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -6760,6 +6860,13 @@ def main(argv: list[str] | None = None) -> int:
         args.memory_markers,
         enabled=MPI.COMM_WORLD.rank == 0,
     )
+    v7_continuation = None
+    if args.v7_scale_normalized_identity:
+        from src.solvers.hybrid_full_spectrum_screen import (
+            run_v7_full_spectrum_continuation,
+        )
+
+        v7_continuation = run_v7_full_spectrum_continuation
     result = run_task040_level_a(
         cfg,
         profile,
@@ -6779,6 +6886,7 @@ def main(argv: list[str] | None = None) -> int:
         v5_fresh_bare_f_authority=args.v5_fresh_bare_f_authority,
         v5_route_c=args.v5_route_c,
         v6_2_interface_schur=args.v6_2_interface_schur,
+        v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -6803,6 +6911,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v5_fresh_bare_f_authority
                     or args.v5_route_c
                     or args.v6_2_interface_schur
+                    or args.v7_scale_normalized_identity
                 )
                 else None
             )
@@ -6818,9 +6927,10 @@ def main(argv: list[str] | None = None) -> int:
         bottom_route_only=args.bottom_route_only,
         watchdog_hard_stop_bytes=(
             args.watchdog_hard_stop_bytes
-            if args.v6_2_interface_schur
+            if args.v6_2_interface_schur or args.v7_scale_normalized_identity
             else None
         ),
+        v7_continuation=v7_continuation,
     )
     if MPI.COMM_WORLD.rank == 0:
         run_directory = Path(args.run_directory)
