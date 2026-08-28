@@ -2969,6 +2969,7 @@ def run_v6_2_interface_schur(
 
     from benchmarks.task040_level_a import (
         _v5_authority_identity_preflight,
+        _v5_selected_mode_provider,
         _v5_write_operator_semantics_audit,
         audit_artificial_z_interface_support,
         build_current_gamma_layout,
@@ -3121,10 +3122,17 @@ def run_v6_2_interface_schur(
             bottom_interface_z_nm=float(profile.bottom_interface_nm),
             top_interface_z_nm=float(profile.top_interface_nm),
             source_work_directory=output_root / "source",
-            selected_mode_provider=None,
+            selected_mode_provider=(
+                _v5_selected_mode_provider(comm)
+                if v7_moving_pml_full_state
+                else None
+            ),
             external_mode_authority=identity_preflight["external_mode_authority"],
             external_mode_current_resolved_config_sha256=str(
                 identity_preflight["observed"]["resolved_config_sha256"]
+            ),
+            source_factor_marker_callback=(
+                marker_callback if v7_moving_pml_full_state else None
             ),
             comm=comm,
         )
