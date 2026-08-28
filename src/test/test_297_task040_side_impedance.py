@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import ufl
 from types import SimpleNamespace
 
 from basix.ufl import element
@@ -11,6 +12,11 @@ from dolfinx import default_real_type, fem, mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.common.config_3d import SimulationConfig3D
+from src.solvers.hcurl_assembly_time_condensation import (
+    build_unconstrained_assembly_time_condensation,
+)
+from src.solvers.hybrid_moving_pml import build_moving_pml_full_state_action
 from src.solvers.hybrid_side_impedance import (
     ArtificialZTraceMass,
     TASK040_BACKWARD_ORDER,
@@ -29,6 +35,66 @@ from src.solvers.hybrid_side_impedance import (
     build_side_impedance_transmission_action,
 )
 from src.solvers.hybrid_layer_block import run_v1_1_right_preconditioned_fgmres_batch
+
+
+def _moving_pml_tiny_fixture():
+    comm = MPI.COMM_WORLD
+    msh = mesh.create_unit_cube(
+        comm,
+        1,
+        1,
+        6,
+        cell_type=mesh.CellType.hexahedron,
+        ghost_mode=mesh.GhostMode.shared_facet,
+    )
+    cell_count = int(msh.topology.index_map(msh.topology.dim).size_local)
+    cell_tags = mesh.meshtags(
+        msh,
+        msh.topology.dim,
+        np.arange(cell_count, dtype=np.int32),
+        np.ones(cell_count, dtype=np.int32),
+    )
+    V = fem.functionspace(
+        msh,
+        element("N1curl", msh.basix_cell(), 2, dtype=default_real_type),
+    )
+    cfg = SimulationConfig3D(
+        lambda0=2.0 * np.pi,
+        n_air=1.0 + 0.05j,
+        mesh_cell_type="hexahedron",
+        nedelec_degree=2,
+    )
+    u = ufl.TrialFunction(V)
+    v = ufl.TestFunction(V)
+    dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+    compiled = fem.form(
+        (
+            PETSc.ScalarType(1.0 / cfg.mu_r) * ufl.inner(ufl.curl(u), ufl.curl(v))
+            - cfg.k0**2 * PETSc.ScalarType(cfg.eps_air) * ufl.inner(u, v)
+        )
+        * dx(1)
+    )
+    condensed = build_unconstrained_assembly_time_condensation(
+        compiled,
+        V,
+        cell_tags,
+        materialize_global_matrix=True,
+        retain_local_schur_for_matrix_free=True,
+    )
+    assert condensed.matrix is not None
+    z_values = np.linspace(0.0, 1.0, 7)
+    system = SimpleNamespace(
+        V=V,
+        cfg=cfg,
+        local_mesh=SimpleNamespace(
+            mesh=msh,
+            mesh_data=SimpleNamespace(mesh=msh, cell_tags=cell_tags),
+            z_values=z_values,
+        ),
+        static_condensation=SimpleNamespace(condensed=condensed),
+        floquet_data=SimpleNamespace(mpc=None),
+    )
+    return msh, V, system, condensed
 
 
 def _tiny_level_a_builder():
@@ -1199,3 +1265,112 @@ def test_task040_scalar_contractions_use_complex_petsc_dot_direction() -> None:
         for source in sources.values():
             source.destroy()
         bare.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size not in (1, 2),
+    reason="C6a moving-PML pilot is focused on serial and MPI2",
+)
+def test_task040_moving_pml_full_state_action_uses_fixed_core_collars() -> None:
+    comm = MPI.COMM_WORLD
+    _msh, V, system, condensed = _moving_pml_tiny_fixture()
+    bare = condensed.matrix
+    assert bare is not None
+    z_values = system.local_mesh.z_values
+    supports = tuple(
+        audit_artificial_z_interface_support(V, condensed, z_values[index])
+        for index in (2, 4)
+    )
+    action = None
+    source = None
+    output = None
+    try:
+        core_rows, _ = build_level_a_cell_recovery_group_rows(
+            system,
+            bare,
+            supports,
+        )
+        action = build_moving_pml_full_state_action(system, bare, core_rows)
+        source = bare.createVecRight()
+        output = bare.createVecLeft()
+        first, last = map(int, source.getOwnershipRange())
+        source.array[:] = np.asarray(
+            [0.2 + 0.03j * row for row in range(first, last)],
+            dtype=PETSc.ScalarType,
+        )
+        source.assemble()
+        action.apply(source, output)
+        assert comm.allreduce(bool(np.all(np.isfinite(output.array))), op=MPI.LAND)
+
+        diagnostics = action.diagnostics
+        assert diagnostics["sweep"] == [0, 1, 2, 2, 1, 0]
+        assert diagnostics["global_auxiliary_matrix"] is False
+        assert diagnostics["numeric_allgather"] is False
+        assert diagnostics["bare_f_unchanged"] is True
+        assert diagnostics["bare_f_hash_before"] == diagnostics["bare_f_hash_after"]
+        assert diagnostics["apply_count"] == 1
+        expected_layers = ({0, 1, 2, 3}, {0, 1, 2, 3, 4, 5}, {2, 3, 4, 5})
+        expected_collar = (2, 4, 2)
+        for group, expected in enumerate(expected_layers):
+            group_diagnostics = diagnostics["groups"][group]
+            layers = {
+                int(layer)
+                for packet in comm.allgather(
+                    group_diagnostics["selected_layer_counts_local"]
+                )
+                for layer, count in packet.items()
+                if count
+            }
+            assert layers == expected
+            assert group_diagnostics["selected_cells_global"] == len(expected)
+            assert group_diagnostics["collar_cells_global"] == expected_collar[group]
+            assert group_diagnostics["global_auxiliary_matrix"] is False
+            assert group_diagnostics["collar_prolongation_weight"] == 0.0
+            expected_counts = {
+                f"{side}:{material}": 0
+                for side in ("bottom", "top")
+                for material in ("air", "substrate", "grating")
+            }
+            if group in (0, 1):
+                expected_counts["top:air"] = 2
+            if group in (1, 2):
+                expected_counts["bottom:air"] = 2
+            assert group_diagnostics["collar_cell_counts_global"] == expected_counts
+            assert len(group_diagnostics["material_side_tags"]) == 6
+            owner = int(group_diagnostics["owner_rank"])
+            by_rank = comm.allgather(group_diagnostics)
+            owner_diagnostics = by_rank[owner]
+            assert owner_diagnostics["core_rows"] > 0
+            assert owner_diagnostics["collar_rows"] >= 0
+            assert owner_diagnostics["extended_factor_count"] == 0
+            assert owner_diagnostics["core_factor_count"] == 1
+            assert owner_diagnostics["core_factor_nnz"] >= 0
+            assert owner_diagnostics["core_factor_diagnostics"][
+                "factor_only_storage"
+            ] is True
+            owner_inner = owner_diagnostics["inner"]
+            assert owner_inner["iterations"] == 2
+            assert np.all(
+                np.isfinite(
+                    [
+                        owner_inner["initial_true_residual"],
+                        owner_inner["final_true_residual"],
+                        owner_inner["ratio"],
+                    ]
+                )
+            )
+            assert group_diagnostics["destroyed"] is False
+
+        action.destroy()
+        after_destroy = action.diagnostics
+        assert after_destroy["destroyed"] is True
+        assert after_destroy["groups"] == []
+        assert after_destroy["bare_f_unchanged"] is True
+    finally:
+        if output is not None:
+            output.destroy()
+        if source is not None:
+            source.destroy()
+        if action is not None:
+            action.destroy()
+        condensed.destroy()

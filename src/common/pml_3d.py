@@ -50,6 +50,27 @@ def _z_stretch_derivative(z, cfg: SimulationConfig3D, side: str):
     return 1.0 + 1j * cfg.pml_alpha / cfg.k0 * 3.0 * distance**2 / thickness
 
 
+def z_pml_diagonal_tensors(x, cfg: SimulationConfig3D, side: str, eps_background: complex):
+    """Return diagonal ``eps`` and ``mu^{-1}`` tensors for a z-only stretch."""
+
+    s_z = _z_stretch_derivative(x[2], cfg, side)
+    eps_pml = ufl.as_matrix(
+        (
+            (eps_background * s_z, 0.0, 0.0),
+            (0.0, eps_background * s_z, 0.0),
+            (0.0, 0.0, eps_background / s_z),
+        )
+    )
+    mu_inverse_pml = ufl.as_matrix(
+        (
+            (1.0 / s_z, 0.0, 0.0),
+            (0.0, 1.0 / s_z, 0.0),
+            (0.0, 0.0, s_z),
+        )
+    )
+    return eps_pml, mu_inverse_pml
+
+
 def z_pml_tensors(x, cfg: SimulationConfig3D, side: str, eps_background: complex):
     """Return full-vector Maxwell tensors for a z-only complex stretch.
 
