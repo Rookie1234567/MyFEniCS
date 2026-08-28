@@ -113,9 +113,14 @@ def _canonical_probe(layout) -> np.ndarray:
         raw[np.asarray(placement.positions, dtype=np.int64)] = (
             block.canonical_to_raw @ values
         )
-    if not np.isfinite(raw).all() or not np.any(raw):
-        raise ValueError("canonical full-spectrum probe is invalid")
     return raw
+
+
+def _validate_canonical_probe(comm, raw: np.ndarray) -> None:
+    finite = bool(comm.allreduce(bool(np.isfinite(raw).all()), op=MPI.LAND))
+    nonzero = bool(comm.allreduce(bool(np.any(raw)), op=MPI.LOR))
+    if not finite or not nonzero:
+        raise ValueError("canonical full-spectrum probe is invalid on all ranks")
 
 
 def _factor_snapshot(action) -> dict[str, Any]:
@@ -149,6 +154,7 @@ def _side_identity(system, comm, layout, support, bare_operator, z_value, masses
     transform = build_canonical_full_spectrum_trace_transform(system, layout, comm)
     transforms.append(transform)
     raw = _canonical_probe(layout)
+    _validate_canonical_probe(comm, raw)
     dual, mass_audit = apply_owner_local_gamma_mass_covector(mass.matrix, layout, raw)
     diagnostics = transform.identity_diagnostics(raw, dual)
     modal = transform.forward_primal(raw)

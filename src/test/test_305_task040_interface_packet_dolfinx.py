@@ -25,6 +25,8 @@ from src.solvers.hybrid_full_spectrum_trace import (
     build_canonical_full_spectrum_trace_transform,
 )
 from src.solvers.hybrid_full_spectrum_continuation import (
+    _canonical_probe,
+    _validate_canonical_probe,
     apply_owner_local_gamma_mass_covector,
 )
 from src.solvers.hybrid_full_spectrum_screen import (
@@ -554,6 +556,38 @@ def test_canonical_full_spectrum_trace_transform_identity() -> None:
     finally:
         transform.close()
         mass.destroy()
+
+
+def test_canonical_probe_empty_local_ownership_is_collective_safe() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2):
+        pytest.skip("run the canonical probe regression with serial or MPI2")
+    if comm.size == 1 or comm.rank == 0:
+        layout = SimpleNamespace(
+            gamma_rows_local=np.empty(0, dtype=np.int64),
+            blocks=(),
+        )
+    else:
+        layout = SimpleNamespace(
+            gamma_rows_local=np.asarray([0], dtype=np.int64),
+            blocks=(
+                SimpleNamespace(
+                    block=SimpleNamespace(
+                        canonical_keys=((0,),),
+                        canonical_to_raw=np.ones((1, 1), dtype=np.complex128),
+                    ),
+                    positions=np.asarray([0], dtype=np.int64),
+                ),
+            ),
+        )
+    raw = _canonical_probe(layout)
+    if comm.size == 1:
+        assert raw.size == 0
+        with pytest.raises(ValueError, match="invalid on all ranks"):
+            _validate_canonical_probe(comm, raw)
+    else:
+        _validate_canonical_probe(comm, raw)
+        assert comm.allreduce(raw.size == 0, op=MPI.LAND) is False
 
 
 def test_c3c_full_spectrum_pair_kernel_and_screen_contract() -> None:
