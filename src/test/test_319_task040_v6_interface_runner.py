@@ -2545,7 +2545,7 @@ def test_v6_2_resource_preflight_uses_observed_environment_gate(
     import benchmarks.task034_wsl_resources as resources
 
     hard_stop = 45 * 2**30
-    monkeypatch.setenv("_MYFENICS_WSL_QUALIFIED_ACTIVATION", "1")
+    monkeypatch.setenv("MYFENICS_NATIVE_COMPLEX_ENV", "1")
     for name in (
         "OMP_NUM_THREADS",
         "OPENBLAS_NUM_THREADS",

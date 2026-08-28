@@ -1277,7 +1277,7 @@ def test_v5_runtime_preflight_records_actual_environment(monkeypatch) -> None:
             assert op == MPI.LAND
             return value
 
-    monkeypatch.setenv("_MYFENICS_WSL_QUALIFIED_ACTIVATION", "1")
+    monkeypatch.setenv("MYFENICS_NATIVE_COMPLEX_ENV", "1")
     for name in level_a.TASK040_V5_REQUIRED_THREAD_ENV:
         monkeypatch.setenv(name, "1")
     result = level_a._v5_runtime_environment_preflight(

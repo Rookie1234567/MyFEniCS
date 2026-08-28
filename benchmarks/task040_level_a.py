@@ -965,9 +965,7 @@ def _v5_runtime_environment_preflight(
 
     executable = str(sys.executable)
     resolved_executable = str(Path(sys.executable).resolve())
-    qualified_activation = os.environ.get(
-        "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
-    ) == "1"
+    qualified_activation = os.environ.get("MYFENICS_NATIVE_COMPLEX_ENV") == "1"
     thread_environment = {
         name: os.environ.get(name) for name in TASK040_V5_REQUIRED_THREAD_ENV
     }
