@@ -17,6 +17,7 @@ import pytest
 
 import benchmarks.check_task040_v7_scale_normalized_identity as v7_checker
 import benchmarks.check_task040_v6_2_interface_schur as checker
+import benchmarks.check_task040_v7_moving_pml as moving_pml_checker
 import benchmarks.task040_level_a as level_a
 import benchmarks.task040_level_a_watchdog as watchdog
 import benchmarks.task040_v6_2_interface_schur as runner
@@ -3867,3 +3868,221 @@ def test_v6_2_vector_gate_rejects_duplicate_or_string_observation(
     )
     assert result["gate_pass"] is False
     assert result["gate_checks"][expected_gate] is False
+
+
+def test_v6_5_moving_pml_screen_recomputes_reason_and_negative_route() -> None:
+    labels = (
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+        "fixed_random_repeat_0",
+        "fixed_random_repeat_1",
+    )
+
+    def make_payload(rates: Mapping[str, tuple[float, float, float]]) -> dict[str, Any]:
+        sources = []
+        one_apply = []
+        action_count = 0
+        for label in labels:
+            r16, r32, r64 = rates[label]
+            one_before = action_count
+            one_after = one_before + 1
+            fgmres_before = one_after
+            fgmres_after = fgmres_before + 2
+            sources.append(
+                {
+                    "label": label,
+                    "finite": True,
+                    "max_it": 64,
+                    "restart": 32,
+                    "zero_initial_guess": True,
+                    "source_norm": 1.0,
+                    "ksp_reason": -3,
+                    "fgmres_action_apply_count_before": fgmres_before,
+                    "fgmres_action_apply_count_after": fgmres_after,
+                    "fgmres_action_apply_count_delta": 2,
+                    "right_pc_apply_count_delta": 2,
+                    "checkpoints": {
+                        str(iteration): {
+                            "iteration": iteration,
+                            "full_true_residual_relative": value,
+                            "finite": True,
+                        }
+                        for iteration, value in (
+                            (8, r16 * 2.0),
+                            (16, r16),
+                            (32, r32),
+                            (64, r64),
+                        )
+                    },
+                }
+            )
+            one_apply.append(
+                {
+                    "label": label,
+                    "action_apply_count_before": one_before,
+                    "action_apply_count_after": one_after,
+                    "action_apply_count_delta": 1,
+                    "source_norm": 1.0,
+                    "output_norm": 1.0,
+                    "true_residual_norm": 1.0,
+                    "true_residual_relative": 1.0,
+                    "finite": True,
+                }
+            )
+            action_count = fgmres_after
+        return {
+            "schema": moving_pml_checker.MOVING_PML_SCREEN_SCHEMA,
+            "executed": True,
+            "mpi_size": 8,
+            "source_order": list(labels),
+            "mandatory_checkpoints": [8, 16, 32, 64],
+            "fixed_configuration": {
+                "restart": 32,
+                "zero_initial_guess": True,
+                "pml_profile": "quadratic",
+                "integrated_attenuation": 6.0,
+                "z_collar_layers": 2,
+                "sweep": [0, 1, 2, 2, 1, 0],
+            },
+            "same_setup_action": True,
+            "bare_f_operator_hash_before": "d" * 64,
+            "bare_f_operator_hash_after": "d" * 64,
+            "bare_f_unchanged": True,
+            "one_apply": one_apply,
+            "sources": sources,
+            "conditional_128": [],
+            "v3_2_r64_baseline_available": False,
+            "moving_pml_diagnostics_after_cleanup": {
+                "apply_count": action_count,
+            },
+            "moving_pml_diagnostics": {
+                "global_auxiliary_matrix": False,
+                "numeric_allgather": False,
+            },
+            "numeric_allgather": False,
+            "full_interface_numeric_replica": False,
+            "factor_lifecycle": {
+                "before": {
+                    "global_ready": 3,
+                    "rank_ready": [
+                        {"rank": rank, "ready": 3 if rank == 0 else 0}
+                        for rank in range(8)
+                    ],
+                },
+                "after_cleanup": {
+                    "global_ready": 0,
+                    "rank_ready": [
+                        {"rank": rank, "ready": 0} for rank in range(8)
+                    ],
+                    "action_destroyed": True,
+                },
+                "cleanup": True,
+            },
+            "classification": "forged",
+            "next_required_stage": "forged",
+            "pass": False,
+        }
+
+    positive_rates = {label: (0.005, 0.01, 0.005) for label in labels}
+    positive = make_payload(positive_rates)
+    checked = moving_pml_checker.check_moving_pml_screen(positive)
+    assert checked["evidence_valid"] is True
+    assert checked["checker_pass"] is True
+    assert checked["pass"] is True
+    assert checked["classification"] == "PML_SWEEP_STRONG_OR_WEAK_POSITIVE"
+    assert checked["next_required_stage"] == "factor_free_local_service_required"
+
+    formal = {
+        "schema": moving_pml_checker.FORMAL_SCREEN_SCHEMA,
+        "raw_screen": positive,
+        "classification": "forged",
+        "pass": False,
+    }
+    formal_checked = moving_pml_checker.check_moving_pml_screen(formal)
+    assert formal_checked["evidence_valid"] is True
+    assert formal_checked["pass"] is True
+
+    no_signal_rates = dict(positive_rates)
+    no_signal_rates["external_dtn_coupling"] = (1.0, 1.0, 0.9)
+    no_signal_rates["fixed_random_repeat_0"] = (1.0, 1.0, 0.9)
+    no_signal = moving_pml_checker.check_moving_pml_screen(
+        make_payload(no_signal_rates)
+    )
+    assert no_signal["evidence_valid"] is True
+    assert no_signal["checker_pass"] is True
+    assert no_signal["pass"] is False
+    assert no_signal["classification"] == "PML_SWEEP_NO_SIGNAL"
+    assert no_signal["next_required_stage"] == "adaptive_schwarz_required"
+
+    mixed_rates = {label: (0.7, 0.7, 0.6) for label in labels}
+    mixed_payload = make_payload(mixed_rates)
+    conditional = []
+    conditional_before = mixed_payload["sources"][-1][
+        "fgmres_action_apply_count_after"
+    ]
+    for label in labels:
+        conditional_after = conditional_before + 2
+        conditional.append(
+            {
+                "label": label,
+                "max_it": 128,
+                "restart": 32,
+                "zero_initial_guess": True,
+                "fgmres_action_apply_count_before": conditional_before,
+                "fgmres_action_apply_count_after": conditional_after,
+                "fgmres_action_apply_count_delta": 2,
+                "right_pc_apply_count_delta": 2,
+                "checkpoints": {
+                    "128": {
+                        "iteration": 128,
+                        "full_true_residual_relative": 0.6,
+                        "finite": True,
+                    }
+                },
+            }
+        )
+        conditional_before = conditional_after
+    mixed_payload["conditional_128"] = conditional
+    mixed_payload["moving_pml_diagnostics_after_cleanup"]["apply_count"] = (
+        conditional_before
+    )
+    mixed = moving_pml_checker.check_moving_pml_screen(mixed_payload)
+    assert mixed["evidence_valid"] is True
+    assert mixed["classification"] == "PML_SWEEP_INCONCLUSIVE"
+    assert mixed["recomputed"]["strongly_unstable"] is False
+
+    not_reached = make_payload(positive_rates)
+    not_reached["sources"][0]["ksp_reason"] = "DIVERGED_BREAKDOWN"
+    not_reached["sources"][0]["checkpoints"] = {
+        str(iteration): {
+            "iteration": iteration,
+            "not_reached": True,
+            "finite": False,
+            "value": None,
+        }
+        for iteration in (8, 16, 32, 64)
+    }
+    not_reached_result = moving_pml_checker.check_moving_pml_screen(not_reached)
+    assert not_reached_result["evidence_valid"] is True
+    assert not_reached_result["classification"] == "PML_SWEEP_NO_SIGNAL"
+
+    unstable = make_payload(positive_rates)
+    unstable["sources"][0]["ksp_reason"] = "DIVERGED_BREAKDOWN"
+    unstable_result = moving_pml_checker.check_moving_pml_screen(unstable)
+    assert unstable_result["evidence_valid"] is True
+    assert unstable_result["classification"] == "PML_SWEEP_NO_SIGNAL"
+    assert unstable_result["recomputed"]["strongly_unstable"] is True
+
+    forged = make_payload(positive_rates)
+    forged["classification"] = "PML_SWEEP_NO_SIGNAL"
+    forged["pass"] = False
+    forged_result = moving_pml_checker.check_moving_pml_screen(forged)
+    assert forged_result["pass"] is True
+    assert forged_result["runner_claims"]["claims_are_authority"] is False
+
+    malformed = make_payload(positive_rates)
+    del malformed["sources"][0]["checkpoints"]["32"]
+    malformed_result = moving_pml_checker.check_moving_pml_screen(malformed)
+    assert malformed_result["evidence_valid"] is False
+    assert malformed_result["classification"] == "INVALID_EVIDENCE"

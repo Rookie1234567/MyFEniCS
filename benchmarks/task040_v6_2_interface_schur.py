@@ -104,6 +104,10 @@ V7_D1_CONTRIBUTION_ORDER = (
     "lower_correction",
     "upper_correction",
 )
+V7_MOVING_PML_FULL_STATE_FLAG = "--v7-moving-pml-full-state"
+V7_MOVING_PML_FULL_STATE_METHOD = "task040_v6_5_moving_pml_full_state"
+V7_MOVING_PML_FULL_STATE_SCHEMA = "task040.v6_5.moving_pml_full_state.v1"
+V7_MOVING_PML_FULL_STATE_PROFILE_ID = "task040.v6_5.moving_pml.full_state.v1"
 
 __all__ = (
     "V6_2_INTERFACE_SCHUR_FLAG",
@@ -133,6 +137,10 @@ __all__ = (
     "V7_SCALE_EXPONENTS",
     "V7_LINEARITY_ALPHA",
     "V7_D1_CONTRIBUTION_ORDER",
+    "V7_MOVING_PML_FULL_STATE_FLAG",
+    "V7_MOVING_PML_FULL_STATE_METHOD",
+    "V7_MOVING_PML_FULL_STATE_SCHEMA",
+    "V7_MOVING_PML_FULL_STATE_PROFILE_ID",
     "build_v6_2_exact_qualification_plan",
     "run_v6_2_exact_qualification_packets",
     "run_v6_2_interface_schur",
@@ -2946,6 +2954,7 @@ def run_v6_2_interface_schur(
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     exact_qualification: Mapping[str, Any] | None = None,
     v7_scale_normalized_identity: bool = False,
+    v7_moving_pml_full_state: bool = False,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
     v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -2994,6 +3003,29 @@ def run_v6_2_interface_schur(
             continuation_callable=True,
             mpi_size_8=False,
         )
+    if v7_moving_pml_full_state and int(comm.size) != 8:
+        moving_stop = _stop_result(
+            status="not_run_by_v7_moving_pml_mpi_size_gate",
+            classification="V7_MOVING_PML_FULL_STATE_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            identity_preflight={
+                "status": "mpi_size_gate",
+                "pass": False,
+                "checks": {"mpi_size_8": False},
+            },
+            resource_preflight=None,
+        )
+        moving_stop.update(
+            {
+                "schema": V7_MOVING_PML_FULL_STATE_SCHEMA,
+                "method": V7_MOVING_PML_FULL_STATE_METHOD,
+                "profile": V7_MOVING_PML_FULL_STATE_PROFILE_ID,
+                "formal_adjudication": False,
+            }
+        )
+        return moving_stop
     authority_root_error: str | None = None
     try:
         frozen_root = _v6_2_require_v5_rhs_authority_root(frozen_root)
@@ -3176,78 +3208,214 @@ def run_v6_2_interface_schur(
             bool(audit.get("support_metadata_replicated"))
             for audit in support_audits.values()
         )
-        oracle = build_petsc_interface_schur_oracle(system.F, group_rows, supports)
-        matrix, action = build_petsc_full_interface_schur_action(
-            oracle,
-            canonical_layout=canonical_layout,
-            own_oracle=True,
-        )
-        action_before = action.diagnostics
+        if v7_moving_pml_full_state:
+            oracle = None
+            matrix = None
+            action = None
+            action_before = {}
+        else:
+            oracle = build_petsc_interface_schur_oracle(
+                system.F, group_rows, supports
+            )
+            matrix, action = build_petsc_full_interface_schur_action(
+                oracle,
+                canonical_layout=canonical_layout,
+                own_oracle=True,
+            )
+            action_before = action.diagnostics
         bare_operator_hash = _petsc_matrix_hash(system.F)
         binding_error: str | None = None
         bound_exact_configuration: dict[str, Any] | None = None
-        try:
-            from src.solvers.hybrid_bare_f_authority import (
-                canonical_packets_for_vector,
-                canonical_to_current_roundtrip_relative,
-                gamma_values_for_vector,
-            )
-            from src.solvers.hybrid_exact_qualification import (
-                make_live_persisted_canonical_roundtrip_callback,
-            )
-
-            live_persisted_roundtrip = (
-                make_live_persisted_canonical_roundtrip_callback(
-                    system,
-                    canonical_packets_for_vector=canonical_packets_for_vector,
-                    canonical_to_current_roundtrip_relative=(
-                        canonical_to_current_roundtrip_relative
-                    ),
-                )
-            )
-            live_resource_callback = _v6_2_live_resource_callback(
+        moving_resource_callback: Callable[[], Mapping[str, Any]] | None = None
+        if v7_moving_pml_full_state:
+            moving_resource_callback = _v6_2_live_resource_callback(
                 resource_callback,
                 comm=comm,
                 formal_sequence_started=formal_sequence_started,
                 hard_stop_bytes=int(hard_stop_bytes),
                 budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
             )
-            numeric_options = _v6_2_formal_numeric_options(exact_qualification)
-            numeric_options.update(
-                {
-                    "canonical_roundtrip": {
-                        label: live_persisted_roundtrip
-                        for label in V6_2_EXACT_QUALIFICATION_SOURCES
-                    },
-                    "canonical_packets_for_vector": canonical_packets_for_vector,
-                    "gamma_canonical_values_for_vector": gamma_values_for_vector,
-                    "exact_output_canonical_roundtrip": (
-                        canonical_to_current_roundtrip_relative
+        else:
+            try:
+                from src.solvers.hybrid_bare_f_authority import (
+                    canonical_packets_for_vector,
+                    canonical_to_current_roundtrip_relative,
+                    gamma_values_for_vector,
+                )
+                from src.solvers.hybrid_exact_qualification import (
+                    make_live_persisted_canonical_roundtrip_callback,
+                )
+
+                live_persisted_roundtrip = (
+                    make_live_persisted_canonical_roundtrip_callback(
+                        system,
+                        canonical_packets_for_vector=canonical_packets_for_vector,
+                        canonical_to_current_roundtrip_relative=(
+                            canonical_to_current_roundtrip_relative
+                        ),
+                    )
+                )
+                live_resource_callback = _v6_2_live_resource_callback(
+                    resource_callback,
+                    comm=comm,
+                    formal_sequence_started=formal_sequence_started,
+                    hard_stop_bytes=int(hard_stop_bytes),
+                    budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
+                )
+                numeric_options = _v6_2_formal_numeric_options(exact_qualification)
+                numeric_options.update(
+                    {
+                        "canonical_roundtrip": {
+                            label: live_persisted_roundtrip
+                            for label in V6_2_EXACT_QUALIFICATION_SOURCES
+                        },
+                        "canonical_packets_for_vector": canonical_packets_for_vector,
+                        "gamma_canonical_values_for_vector": gamma_values_for_vector,
+                        "exact_output_canonical_roundtrip": (
+                            canonical_to_current_roundtrip_relative
+                        ),
+                        "resource_callback": live_resource_callback,
+                        "authorize_conditional": (
+                            lambda gate_input: _v6_2_conditional_authorizer(
+                                gate_input,
+                                hard_stop_bytes=int(hard_stop_bytes),
+                                budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
+                            )
+                        ),
+                    }
+                )
+                bound_exact_configuration = _bind_v6_2_formal_exact_configuration(
+                    numeric_options,
+                    exact_spool_root=frozen_root,
+                    run_directory=output_root,
+                    identity_preflight=identity_preflight,
+                    bare_operator=system.F,
+                    bare_operator_hash=bare_operator_hash,
+                    source_sha=str(source_sha),
+                )
+            except Exception as exc:
+                binding_error = f"{type(exc).__name__}: {exc}"
+            _collective_driver_error(
+                comm, "formal exact authority binding", binding_error
+            )
+            if bound_exact_configuration is None:
+                raise RuntimeError("formal exact authority binding produced no config")
+        if v7_moving_pml_full_state and int(comm.size) != 8:
+            raise RuntimeError("moving-PML formal screen requires MPI size 8")
+        if v7_moving_pml_full_state:
+            from benchmarks.check_task040_v7_moving_pml import (
+                check_moving_pml_screen,
+            )
+            from src.solvers.hybrid_bare_f_authority import (
+                V5_BARE_F_SOURCE_LABELS,
+                build_current_bare_f_rhs,
+            )
+            from src.solvers.hybrid_moving_pml import (
+                build_moving_pml_full_state_action,
+            )
+            from src.solvers.hybrid_moving_pml_screen import (
+                run_v7_moving_pml_full_state,
+            )
+
+            rhs_by_label: dict[str, PETSc.Vec] = {}
+            source_build_audits: dict[str, Mapping[str, Any]] = {}
+            moving_action = None
+            try:
+                for label in V5_BARE_F_SOURCE_LABELS:
+                    rhs, source_audit = build_current_bare_f_rhs(system, label)
+                    rhs_by_label[label] = rhs
+                    source_build_audits[label] = source_audit
+                moving_action = build_moving_pml_full_state_action(
+                    system, system.F, group_rows
+                )
+                _emit(
+                    marker_callback,
+                    "v7_moving_pml_setup",
+                    status="complete",
+                    factor_ready=3,
+                    rhs_source="build_current_bare_f_rhs",
+                )
+                _emit(
+                    marker_callback,
+                    "v7_moving_pml_sources",
+                    status="started",
+                    source_count=5,
+                )
+                screen_raw = run_v7_moving_pml_full_state(
+                    {
+                        "bare_operator": system.F,
+                        "rhs_by_label": rhs_by_label,
+                        "moving_action": moving_action,
+                        "resource_callback": moving_resource_callback,
+                        "source_build_audits": source_build_audits,
+                    }
+                )
+                _emit(
+                    marker_callback,
+                    "v7_moving_pml_sources",
+                    status="complete",
+                    source_count=len(screen_raw.get("sources", ())),
+                )
+                _emit(
+                    marker_callback,
+                    "v7_moving_pml_checkpoints",
+                    status="complete",
+                    mandatory_checkpoints=screen_raw.get("mandatory_checkpoints"),
+                )
+                screen_checker = check_moving_pml_screen(screen_raw)
+                moving_result = {
+                    "schema": V7_MOVING_PML_FULL_STATE_SCHEMA,
+                    "method": V7_MOVING_PML_FULL_STATE_METHOD,
+                    "profile": V7_MOVING_PML_FULL_STATE_PROFILE_ID,
+                    "status": "completed_moving_pml_screen",
+                    "raw_screen": screen_raw,
+                    "checker": screen_checker,
+                    "classification": screen_checker["classification"],
+                    "route_signal": screen_checker["route_signal"],
+                    "next_required_stage": screen_checker[
+                        "next_required_stage"
+                    ],
+                    "evidence_valid": screen_checker["evidence_valid"],
+                    "checker_pass": screen_checker["checker_pass"],
+                    "pass": screen_checker["pass"],
+                    "formal_adjudication": False,
+                    "source_sha": str(source_sha),
+                    "input_sha256": str(input_sha256),
+                    "physical_model_sha256": str(physical_model_sha256),
+                    "identity_preflight": _json_safe(identity_preflight),
+                    "resource_preflight": _json_safe(resource_preflight),
+                    "system_inventory": _json_safe(system.construction_inventory),
+                    "support_audits": _json_safe(support_audits),
+                    "group_rows": _json_safe(group_audit),
+                    "rhs_source": "build_current_bare_f_rhs",
+                    "rhs_vectors_loaded": len(rhs_by_label),
+                    "qep_calls": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "frozen_rhs_authority_root": str(frozen_root),
+                    "frozen_rhs_authority_use": (
+                        "identity_preflight_only_not_used_for_numeric_rhs"
                     ),
-                    "resource_callback": live_resource_callback,
-                    "authorize_conditional": (
-                        lambda gate_input: _v6_2_conditional_authorizer(
-                            gate_input,
-                            hard_stop_bytes=int(hard_stop_bytes),
-                            budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
-                        )
+                    "exact_qualification": (
+                        "intentional_not_run_by_v7_direct_mainline"
                     ),
+                    "full_spectrum_continuation": "not_run_by_moving_pml_route",
+                    "pde_solve": "moving_pml_full_state_screen",
+                    "cleanup_stage": "v7_moving_pml_cleanup",
                 }
-            )
-            bound_exact_configuration = _bind_v6_2_formal_exact_configuration(
-                numeric_options,
-                exact_spool_root=frozen_root,
-                run_directory=output_root,
-                identity_preflight=identity_preflight,
-                bare_operator=system.F,
-                bare_operator_hash=bare_operator_hash,
-                source_sha=str(source_sha),
-            )
-        except Exception as exc:
-            binding_error = f"{type(exc).__name__}: {exc}"
-        _collective_driver_error(comm, "formal exact authority binding", binding_error)
-        if bound_exact_configuration is None:
-            raise RuntimeError("formal exact authority binding produced no config")
+                _write_json(rank_root / "v7_moving_pml.json", moving_result)
+                if comm.rank == 0:
+                    _write_json(output_root / "v7_moving_pml.json", moving_result)
+                comm.barrier()
+                moving_result = comm.bcast(
+                    moving_result if comm.rank == 0 else None, root=0
+                )
+                return _json_safe(moving_result)
+            finally:
+                for rhs in rhs_by_label.values():
+                    rhs.destroy()
+                if moving_action is not None:
+                    moving_action.destroy()
         deterministic = [
             _one_identity_probe(comm, system.F, matrix, action, index)
             for index in range(3)
@@ -4062,3 +4230,10 @@ def run_v6_2_interface_schur(
             matrix.destroy()
         if system is not None:
             system.destroy()
+            if v7_moving_pml_full_state:
+                _emit(
+                    marker_callback,
+                    "v7_moving_pml_cleanup",
+                    status="complete",
+                    system_destroyed=True,
+                )

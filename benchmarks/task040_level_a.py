@@ -45,6 +45,10 @@ from benchmarks.task040_v6_2_interface_schur import (
     V6_2_INTERFACE_UPPER_COUNT,
     V7_IDENTITY_HARD_SECONDS,
     V7_IDENTITY_TARGET_SECONDS,
+    V7_MOVING_PML_FULL_STATE_FLAG,
+    V7_MOVING_PML_FULL_STATE_METHOD,
+    V7_MOVING_PML_FULL_STATE_PROFILE_ID,
+    V7_MOVING_PML_FULL_STATE_SCHEMA,
     V7_PREFERRED_MEMORY_BYTES,
     V7_SCALE_NORMALIZED_IDENTITY_FLAG,
     V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA,
@@ -399,6 +403,7 @@ def build_task040_level_a_plan(
     v5_route_c: bool = False,
     v6_2_interface_schur: bool = False,
     v7_scale_normalized_identity: bool = False,
+    v7_moving_pml_full_state: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -450,6 +455,7 @@ def build_task040_level_a_plan(
                 v5_route_c,
                 v6_2_interface_schur,
                 v7_scale_normalized_identity,
+                v7_moving_pml_full_state,
             )
         )
         > 1
@@ -817,6 +823,54 @@ def build_task040_level_a_plan(
                     "raw_petsc_row_fft",
                     "qep",
                     "full_side_factor",
+                ],
+            }
+        )
+    if v7_moving_pml_full_state:
+        plan.update(
+            {
+                "schema": V7_MOVING_PML_FULL_STATE_SCHEMA,
+                "method": V7_MOVING_PML_FULL_STATE_METHOD,
+                "profile": V7_MOVING_PML_FULL_STATE_PROFILE_ID,
+                "v7_moving_pml_full_state": True,
+                "research_only": True,
+                "oracle_only": True,
+                "scalable_candidate": False,
+                "pde_solve": "moving_pml_full_state_screen",
+                "exact_qualification": (
+                    "intentional_not_run_by_v7_moving_pml_mainline"
+                ),
+                "full_spectrum_continuation": "not_run_by_moving_pml_route",
+                "source_order": [
+                    "modal_traction_positive",
+                    "modal_traction_negative",
+                    "external_dtn_coupling",
+                    "fixed_random_repeat_0",
+                    "fixed_random_repeat_1",
+                ],
+                "mandatory_checkpoints": [8, 16, 32, 64],
+                "conditional_checkpoints": [128],
+                "fixed_configuration": {
+                    "restart": 32,
+                    "zero_initial_guess": True,
+                    "pml_profile": "quadratic",
+                    "integrated_attenuation": 6.0,
+                    "z_collar_layers": 2,
+                    "sweep": [0, 1, 2, 2, 1, 0],
+                },
+                "preferred_memory_bytes": 35 * 2**30,
+                "absolute_terminate_memory_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
+                "numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "forbidden": [
+                    "threshold_relaxation",
+                    "pml_parameter_scan",
+                    "ilu_or_extended_factor",
+                    "full_side_factor",
+                    "qep",
                 ],
             }
         )
@@ -6098,6 +6152,7 @@ def run_task040_level_a(
     v5_route_c: bool = False,
     v6_2_interface_schur: bool = False,
     v7_scale_normalized_identity: bool = False,
+    v7_moving_pml_full_state: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
@@ -6121,6 +6176,7 @@ def run_task040_level_a(
                 v5_route_c,
                 v6_2_interface_schur,
                 v7_scale_normalized_identity,
+                v7_moving_pml_full_state,
             )
         )
         > 1
@@ -6160,6 +6216,19 @@ def run_task040_level_a(
             raise ValueError(
                 "V7 scale-normalized identity requires the official input_path"
             )
+    if v7_moving_pml_full_state:
+        if run_directory is None:
+            raise ValueError(
+                "V7 moving-PML full-state screen requires a separate run_directory"
+            )
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError(
+                "V7 moving-PML run_directory must not be the frozen exact spool root"
+            )
+        if input_path is None:
+            raise ValueError(
+                "V7 moving-PML full-state screen requires the official input_path"
+            )
     if (
         interface_schur
         or packet_producer
@@ -6170,6 +6239,7 @@ def run_task040_level_a(
         or v5_route_c
         or v6_2_interface_schur
         or v7_scale_normalized_identity
+        or v7_moving_pml_full_state
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6210,6 +6280,8 @@ def run_task040_level_a(
             if v5_route_c
             else V7_SCALE_NORMALIZED_IDENTITY_METHOD
             if v7_scale_normalized_identity
+            else V7_MOVING_PML_FULL_STATE_METHOD
+            if v7_moving_pml_full_state
             else TASK040_V6_2_INTERFACE_SCHUR_METHOD
             if v6_2_interface_schur
             else TASK040_V1_2_METHOD
@@ -6395,6 +6467,29 @@ def run_task040_level_a(
             resource_callback=resource_callback,
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
+        )
+    if v7_moving_pml_full_state:
+        from benchmarks.task040_v6_2_interface_schur import (
+            run_v6_2_interface_schur,
+        )
+
+        return run_v6_2_interface_schur(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            exact_spool_root=exact_spool_root,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            hard_stop_bytes=TASK040_LEVEL_A_HARD_STOP_BYTES,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+            resource_callback=resource_callback,
+            v7_moving_pml_full_state=True,
         )
     if v7_scale_normalized_identity:
         from benchmarks.task040_v6_2_interface_schur import (
@@ -6826,6 +6921,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V5_ROUTE_C_FLAG, action="store_true")
     parser.add_argument(TASK040_V6_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument(V7_SCALE_NORMALIZED_IDENTITY_FLAG, action="store_true")
+    parser.add_argument(V7_MOVING_PML_FULL_STATE_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -6848,6 +6944,7 @@ def main(argv: list[str] | None = None) -> int:
         v5_route_c=args.v5_route_c,
         v6_2_interface_schur=args.v6_2_interface_schur,
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
+        v7_moving_pml_full_state=args.v7_moving_pml_full_state,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -6887,6 +6984,7 @@ def main(argv: list[str] | None = None) -> int:
         v5_route_c=args.v5_route_c,
         v6_2_interface_schur=args.v6_2_interface_schur,
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
+        v7_moving_pml_full_state=args.v7_moving_pml_full_state,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -6912,6 +7010,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v5_route_c
                     or args.v6_2_interface_schur
                     or args.v7_scale_normalized_identity
+                    or args.v7_moving_pml_full_state
                 )
                 else None
             )
@@ -6927,7 +7026,9 @@ def main(argv: list[str] | None = None) -> int:
         bottom_route_only=args.bottom_route_only,
         watchdog_hard_stop_bytes=(
             args.watchdog_hard_stop_bytes
-            if args.v6_2_interface_schur or args.v7_scale_normalized_identity
+            if args.v6_2_interface_schur
+            or args.v7_scale_normalized_identity
+            or args.v7_moving_pml_full_state
             else None
         ),
         v7_continuation=v7_continuation,

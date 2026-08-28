@@ -28,6 +28,7 @@ from benchmarks.task040_level_a import (
     TASK040_V5_FRESH_BARE_F_AUTHORITY_FLAG,
     TASK040_V5_ROUTE_C_FLAG,
     TASK040_V6_2_INTERFACE_SCHUR_FLAG,
+    V7_MOVING_PML_FULL_STATE_FLAG,
     V7_SCALE_NORMALIZED_IDENTITY_FLAG,
     build_task040_level_a_plan,
 )
@@ -48,6 +49,7 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "v4_identity_stop",
         "v5_route_c_cleanup",
         "v6_2_cleanup",
+        "v7_moving_pml_cleanup",
     }
 )
 THREAD_ENV = {
@@ -106,11 +108,15 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if plan.get("v5_route_c") is True:
         command.append(TASK040_V5_ROUTE_C_FLAG)
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
-    if plan.get("v7_scale_normalized_identity") is True:
+    if plan.get("v7_moving_pml_full_state") is True:
+        command.append(V7_MOVING_PML_FULL_STATE_FLAG)
+    elif plan.get("v7_scale_normalized_identity") is True:
         command.append(V7_SCALE_NORMALIZED_IDENTITY_FLAG)
     elif plan.get("v6_2_interface_schur") is True:
         command.append(TASK040_V6_2_INTERFACE_SCHUR_FLAG)
-    if plan.get("v7_scale_normalized_identity") is True or plan.get(
+    if plan.get("v7_moving_pml_full_state") is True or plan.get(
+        "v7_scale_normalized_identity"
+    ) is True or plan.get(
         "v6_2_interface_schur"
     ) is True:
         command.extend(
@@ -156,6 +162,7 @@ def build_task040_level_a_watchdog_plan(
     v5_route_c: bool = False,
     v6_2_interface_schur: bool = False,
     v7_scale_normalized_identity: bool = False,
+    v7_moving_pml_full_state: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -173,6 +180,7 @@ def build_task040_level_a_watchdog_plan(
         v5_route_c=v5_route_c,
         v6_2_interface_schur=v6_2_interface_schur,
         v7_scale_normalized_identity=v7_scale_normalized_identity,
+        v7_moving_pml_full_state=v7_moving_pml_full_state,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -209,7 +217,11 @@ def build_task040_level_a_watchdog_plan(
                 "process_tree_watchdog_enabled": True,
             }
         )
-    elif v7_scale_normalized_identity or v6_2_interface_schur:
+    elif (
+        v7_moving_pml_full_state
+        or v7_scale_normalized_identity
+        or v6_2_interface_schur
+    ):
         plan["watchdog"].update(
             {
                 "hard_stop_bytes": int(plan["absolute_terminate_memory_bytes"]),
@@ -221,7 +233,20 @@ def build_task040_level_a_watchdog_plan(
                 "full_interface_replica_per_rank": False,
             }
         )
-        if v7_scale_normalized_identity:
+        if v7_moving_pml_full_state:
+            plan["watchdog"].update(
+                {
+                    "v7_moving_pml_full_state": True,
+                    "source_order": list(plan["source_order"]),
+                    "mandatory_checkpoints": list(plan["mandatory_checkpoints"]),
+                    "fixed_configuration": dict(plan["fixed_configuration"]),
+                    "pml_profile": "quadratic",
+                    "integrated_attenuation": 6.0,
+                    "numeric_allgather": False,
+                    "full_interface_replica_per_rank": False,
+                }
+            )
+        elif v7_scale_normalized_identity:
             plan["watchdog"].update(
                 {
                     "v7_identity_preferred_memory_bytes": int(
@@ -643,6 +668,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V5_ROUTE_C_FLAG, action="store_true")
     parser.add_argument(TASK040_V6_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument(V7_SCALE_NORMALIZED_IDENTITY_FLAG, action="store_true")
+    parser.add_argument(V7_MOVING_PML_FULL_STATE_FLAG, action="store_true")
     parser.add_argument("--watchdog-enabled", action="store_true")
     parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
@@ -674,6 +700,7 @@ def main(argv: list[str] | None = None) -> int:
         v5_route_c=args.v5_route_c,
         v6_2_interface_schur=args.v6_2_interface_schur,
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
+        v7_moving_pml_full_state=args.v7_moving_pml_full_state,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
