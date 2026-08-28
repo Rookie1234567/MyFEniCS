@@ -46,6 +46,7 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "cleanup",
         "v4_identity_stop",
         "v5_route_c_cleanup",
+        "v6_2_cleanup",
     }
 )
 THREAD_ENV = {
@@ -208,7 +209,9 @@ def build_task040_level_a_watchdog_plan(
                 "timeout_seconds": int(plan["timeout_seconds"]),
                 "process_tree_watchdog_enabled": True,
                 "bottom_route_only": True,
-                "v6_2_identity_only": True,
+                "v6_2_identity_only": False,
+                "v6_2_exact_qualification": True,
+                "same_process_exact_lifecycle": True,
                 "numeric_allgather": False,
                 "full_interface_replica_per_rank": False,
                 "root_metadata_gather": True,
@@ -488,6 +491,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             process_control = terminate_process_tree(process)
             break
 
+    elapsed_seconds = time.monotonic() - started
     swap_authority_readable = all_status_readable and (
         not dedicated_cgroup_present or dedicated_cgroup_swap_readable
     )
@@ -499,6 +503,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         "termination_reason": termination_reason,
         "return_code": process.returncode,
         "process_control": process_control,
+        "elapsed_seconds": elapsed_seconds,
         "sample_count": sample_count,
         "authoritative_sample_count": sample_count,
         "terminal_teardown_excluded_count": terminal_teardown_excluded_count,

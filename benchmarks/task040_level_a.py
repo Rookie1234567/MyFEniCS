@@ -730,8 +730,12 @@ def build_task040_level_a_plan(
                 "full_side_exact_factor_count": 0,
                 "global_direct_factor_count": 0,
                 "qep_calls": 0,
-                "pde_solve": "not_run",
+                "pde_solve": (
+                    "exact_interface_fgmres_with_full_bare_f_residual_run"
+                ),
                 "factor_lifecycle": "three_group_mechanism_oracle_3_to_0",
+                "same_process_exact_lifecycle": True,
+                "v6_2_identity_only": False,
                 "numeric_allgather": False,
                 "fe_numeric_allgather": False,
                 "full_interface_replica_per_rank": False,
@@ -755,7 +759,6 @@ def build_task040_level_a_plan(
                     "dense_15120_schur",
                     "global_numeric_allgather",
                     "full_interface_replica_per_rank",
-                    "pde_solve",
                     "qep",
                     "old_bool_recovery_mask",
                     "raw_global_row_remap",
@@ -6341,6 +6344,7 @@ def run_task040_level_a(
             bottom_route_only=bottom_route_only,
             hard_stop_bytes=TASK040_LEVEL_A_HARD_STOP_BYTES,
             watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+            resource_callback=resource_callback,
         )
     try:
         if side_system_builder is None:

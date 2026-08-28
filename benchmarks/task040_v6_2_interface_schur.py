@@ -14,6 +14,7 @@ import json
 import os
 import shutil
 import sys
+import time
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,9 @@ V6_2_INTERFACE_SCHUR_FLAG = "--v6-2-interface-schur"
 V6_2_INTERFACE_SCHUR_METHOD = "task040_v6_2_full_interface_schur"
 V6_2_INTERFACE_SCHUR_SCHEMA = "task040.v6_2.full_interface_schur.v1"
 V6_2_INTERFACE_SCHUR_PROFILE_ID = "task040.v6_2.h4.full_interface.v1"
+V6_2_FORMAL_SEQUENCE_START_SCOPE = (
+    "run_v6_2_interface_schur_entry_before_preflight_and_artifact_setup"
+)
 V6_2_INTERFACE_LOWER_COUNT = 7560
 V6_2_INTERFACE_UPPER_COUNT = 7560
 V6_2_INTERFACE_JOINT_COUNT = (
@@ -76,6 +80,7 @@ __all__ = (
     "V6_2_INTERFACE_SCHUR_METHOD",
     "V6_2_INTERFACE_SCHUR_SCHEMA",
     "V6_2_INTERFACE_SCHUR_PROFILE_ID",
+    "V6_2_FORMAL_SEQUENCE_START_SCOPE",
     "V6_2_INTERFACE_LOWER_COUNT",
     "V6_2_INTERFACE_UPPER_COUNT",
     "V6_2_INTERFACE_JOINT_COUNT",
@@ -90,21 +95,30 @@ __all__ = (
 
 
 def build_v6_2_exact_qualification_plan() -> dict[str, Any]:
-    """Describe the post-identity qualification path without running it.
+    """Describe the same-process exact qualification path.
 
-    This contract is emitted by the identity runner so a later formal run has
-    one auditable sequence: the first two current-layout sources must pass
-    before the remaining three are attempted.  It deliberately contains no
-    numerical result and does not authorize a heavy run by itself.
+    The plan is configuration/provenance, not a numerical result.  The actual
+    run keeps the three group factors alive across identity, exact
+    qualification, and any later continuation before the one final cleanup.
     """
 
     return {
-        "status": "designed_not_run",
+        "status": "configured_same_process_exact",
+        "execution_mode": "same_process_exact_then_v6_3_continuation",
+        "identity_only": False,
         "source_order": list(V6_2_EXACT_QUALIFICATION_SOURCES),
         "rhs_layout": "current_canonical_active_keys_owner_local",
         "interface_rhs": "g=b_Gamma-A_GammaI*A_II^-1*b_I",
         "checkpoints": [16, 32, 64, 128],
         "conditional_checkpoints": [256, 512],
+        "conditional_authority": {
+            "256": "r128<=0.8 or log10(r64/r128)>=0.10",
+            "512": (
+                "r256<=1e-2 and full_residual_history_monotone and "
+                "current_rss<45GiB and swap=0 and elapsed<21600s; "
+                "final watchdog peak_rss<45GiB"
+            ),
+        },
         "solution_recovery": (
             "x_I=A_II^-1*(b_I-A_I,Gamma*x_Gamma)"
         ),
@@ -123,9 +137,10 @@ def build_v6_2_exact_qualification_plan() -> dict[str, Any]:
             "aggregate": "all_rank_role_manifests_rehashed_and_reopened",
         },
         "one_cell_source_factor": "not_reexecuted",
-        "full_side_exact_factor": "not_constructed_in_identity_runner",
+        "full_side_exact_factor": "not_constructed; bare-F is used only for explicit residual",
         "frozen_owner_row_arrays": (
-            "not_loaded; complex PETSc owner-order values, never row ids"
+            "loaded per source only after fixed metadata/shard/canonical/live-roundtrip "
+            "validation; complex PETSc owner-order values, never row ids"
         ),
     }
 
@@ -736,6 +751,7 @@ def _run_v6_2_shared_current_lifecycle(
     gamma_layouts: Mapping[str, Any],
     canonical_layout: Any,
     continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
+    checkpoint_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Keep identity, exact packets, and later services on one live action.
 
@@ -814,6 +830,7 @@ def _run_v6_2_shared_current_lifecycle(
             "lower_gamma_layout": gamma_layouts["lower"],
             "upper_gamma_layout": gamma_layouts["upper"],
             "canonical_layout": canonical_layout,
+            "checkpoint_callback": checkpoint_callback,
         }
     )
     exact_result = exact_runner(**configuration)
@@ -1078,6 +1095,19 @@ def run_v6_2_exact_qualification_packets(
         full_residual_tolerance=full_residual_tolerance,
     )
 
+    initial_pair_gate_pass = bool(family.get("initial_pair_gate_pass"))
+    publication_error: str | None = None
+    if not initial_pair_gate_pass and int(comm.rank) == 0:
+        try:
+            if packet_output_root.exists():
+                shutil.rmtree(packet_output_root)
+        except Exception as exc:
+            publication_error = f"{type(exc).__name__}: {exc}"
+    _collective_driver_error(
+        comm, "initial-pair packet publication", publication_error
+    )
+    initial_pair_packet_root_exists = packet_output_root.exists()
+
     packet_records: dict[str, Mapping[str, Any]] = {}
     local_error: str | None = None
     try:
@@ -1159,6 +1189,15 @@ def run_v6_2_exact_qualification_packets(
         "source_order": list(V6_2_EXACT_QUALIFICATION_SOURCES),
         "family": family,
         "packet_root": str(packet_output_root),
+        "initial_pair_publication": {
+            "initial_pair_gate_pass": initial_pair_gate_pass,
+            "status": (
+                "passed_then_published"
+                if initial_pair_gate_pass
+                else "failed_then_discarded"
+            ),
+            "packet_root_exists_after_gate": initial_pair_packet_root_exists,
+        },
         "aggregate_root": str(aggregate_root),
         "frozen_input_root": str(frozen_input_root),
         "frozen_rhs_source_provenance": _json_safe(source_provenance),
@@ -1311,12 +1350,47 @@ def _compact_exact_stage_summary(value: Any) -> dict[str, Any]:
             if isinstance(family, Mapping)
             else False
         ),
+        "initial_pair_publication": _json_safe(
+            value.get("initial_pair_publication")
+        ),
         "packet_aggregate_gate_pass": bool(
             value.get("packet_aggregate_gate_pass", False)
         ),
         "source_residual_ledger": source_residual_ledger,
         "packet_aggregate_refs": packet_aggregate_refs,
         "authority_identity_chain": public_identity_chain,
+    }
+
+
+def _build_exact_qualification_artifact_reference(
+    *,
+    rank: int,
+    mpi_size: int,
+    exact_rank_path: Path,
+    output_root: Path,
+    source_sha: str,
+    exact_result: Mapping[str, Any],
+    formal_sequence_start_scope: str,
+) -> dict[str, Any]:
+    """Build the hash-bound outer reference for one exact rank detail."""
+
+    frozen_provenance = exact_result.get("frozen_rhs_source_provenance", {})
+    frozen_descriptor_hashes = exact_result.get(
+        "frozen_rhs_descriptor_metadata_sha256", {}
+    )
+    if not isinstance(frozen_provenance, Mapping):
+        raise TypeError("exact result frozen provenance is not a mapping")
+    return {
+        "rank": int(rank),
+        "mpi_size": int(mpi_size),
+        "path": str(exact_rank_path.relative_to(output_root)),
+        "sha256": "",
+        "qualification_source_sha": str(source_sha),
+        "frozen_rhs_source_sha": str(frozen_provenance.get("source_sha", "")),
+        "frozen_rhs_descriptor_metadata_sha256": _json_safe(
+            frozen_descriptor_hashes
+        ),
+        "formal_sequence_start_scope": str(formal_sequence_start_scope),
     }
 
 
@@ -1351,6 +1425,268 @@ def _combined_v6_2_status(
         if identity_gate_pass
         else "completed_v6_2_identity_gate_negative"
     )
+
+
+_V6_2_FORMAL_NUMERIC_OPTIONS = frozenset({"restart"})
+_V6_2_FIXED_EXACT_OPTIONS: dict[str, Any] = {
+    "mandatory_checkpoints": (16, 32, 64, 128),
+    "conditional_checkpoints": (256, 512),
+    "max_iterations": 512,
+    "full_residual_tolerance": 1.0e-9,
+    "right_preconditioner": None,
+}
+
+
+def _v6_2_formal_numeric_options(
+    configuration: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Accept only numerical knobs from a formal caller.
+
+    Descriptors, roots, provenance, validation, and physical callbacks are
+    authority data.  They are deliberately not caller-configurable on the
+    combined benchmark path; they are derived below from the live system and
+    the fixed V5 descriptor root.
+    """
+
+    if configuration is None:
+        return {}
+    if not isinstance(configuration, Mapping):
+        raise TypeError("V6-2 formal exact configuration must be a mapping")
+    unsupported = sorted(
+        set(configuration)
+        - _V6_2_FORMAL_NUMERIC_OPTIONS
+        - set(_V6_2_FIXED_EXACT_OPTIONS)
+    )
+    if unsupported:
+        raise ValueError(
+            "V6-2 formal exact configuration contains non-knob authority fields: "
+            f"{unsupported}"
+        )
+    options = {
+        key: configuration[key]
+        for key in configuration
+        if key in _V6_2_FORMAL_NUMERIC_OPTIONS
+    }
+    if "restart" in options:
+        restart = options["restart"]
+        if (
+            isinstance(restart, bool)
+            or not isinstance(restart, (int, np.integer))
+            or int(restart) <= 0
+        ):
+            raise ValueError(
+                "V6-2 formal exact restart must be a positive integer"
+            )
+        options["restart"] = int(restart)
+    for key, expected in _V6_2_FIXED_EXACT_OPTIONS.items():
+        if key in configuration:
+            observed = configuration[key]
+            if key in {"mandatory_checkpoints", "conditional_checkpoints"}:
+                observed = tuple(observed)
+            if observed != expected:
+                raise ValueError(
+                    f"V6-2 formal fixed option {key} must equal {expected!r}"
+                )
+        options[key] = expected
+    return options
+
+
+def _v6_2_conditional_authorizer(
+    gate_input: Mapping[str, Any],
+    *,
+    hard_stop_bytes: int,
+    budget_seconds: float,
+) -> dict[str, Any]:
+    """Apply the Review V6 256/512 rules to observed checkpoint data.
+
+    Missing or non-finite observations are a conservative denial.  The
+    surrounding FGMRES driver supplies the collective decision protocol, so
+    this function performs no MPI operation and never creates a rank-local
+    branch by itself.
+    """
+
+    history = gate_input.get("checkpoint_history")
+    checkpoint = gate_input.get("checkpoint")
+    if not isinstance(history, Sequence) or isinstance(history, (str, bytes)):
+        history = ()
+    try:
+        checkpoint_value = int(checkpoint)
+    except (TypeError, ValueError):
+        checkpoint_value = -1
+    by_iteration: dict[int, float] = {}
+    for item in history:
+        if not isinstance(item, Mapping):
+            continue
+        try:
+            iteration = int(item["iteration"])
+            residual = float(item["full_true_residual_relative"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if np.isfinite(residual) and residual >= 0.0:
+            by_iteration[iteration] = residual
+    resource = gate_input.get("resource_snapshot")
+    if not isinstance(resource, Mapping):
+        resource = {}
+    try:
+        rss_bytes = int(resource["rss_bytes"])
+        swap_bytes = float(resource["swap_bytes"])
+    except (KeyError, TypeError, ValueError):
+        rss_bytes = -1
+        swap_bytes = float("nan")
+    resource_pass = bool(
+        resource.get("pass") is True
+        and rss_bytes >= 0
+        and rss_bytes < int(hard_stop_bytes)
+        and np.isfinite(swap_bytes)
+        and swap_bytes == 0.0
+        and resource.get("all_status_readable") is True
+    )
+    wall = resource.get("wall_observation")
+    if not isinstance(wall, Mapping):
+        wall = {}
+    try:
+        elapsed = float(wall["elapsed_seconds"])
+        observed_budget = float(wall["budget_seconds"])
+    except (KeyError, TypeError, ValueError):
+        elapsed = float("nan")
+        observed_budget = float("nan")
+    wall_pass = bool(
+        np.isfinite(elapsed)
+        and elapsed >= 0.0
+        and np.isfinite(observed_budget)
+        and observed_budget == float(budget_seconds)
+        and elapsed < float(budget_seconds)
+    )
+
+    residual_gate = False
+    residual_observation: dict[str, Any] = {
+        "checkpoint": checkpoint_value,
+        "r64": by_iteration.get(64),
+        "r128": by_iteration.get(128),
+        "r256": by_iteration.get(256),
+        "drop_64_to_128_decade": None,
+        "monotone_history": False,
+        "required_checkpoint_iterations": [16, 32, 64, 128, 256],
+        "observed_checkpoint_sequence": [
+            iteration for iteration, _value in sorted(by_iteration.items())
+        ],
+    }
+    if checkpoint_value == 128:
+        r64 = by_iteration.get(64)
+        r128 = by_iteration.get(128)
+        direct_threshold = r128 is not None and r128 <= 0.8
+        drop_gate = False
+        if r64 is not None and r128 is not None and r64 > 0.0 and r128 > 0.0:
+            drop = float(np.log10(r64 / r128))
+            residual_observation["drop_64_to_128_decade"] = drop
+            drop_gate = drop >= 0.10
+        residual_observation["r128_threshold_gate"] = bool(direct_threshold)
+        residual_observation["drop_64_to_128_gate"] = bool(drop_gate)
+        residual_gate = bool(direct_threshold or drop_gate)
+        target = 256
+    elif checkpoint_value == 256:
+        r256 = by_iteration.get(256)
+        ordered = sorted(by_iteration.items())
+        required = (16, 32, 64, 128, 256)
+        required_present = all(iteration in by_iteration for iteration in required)
+        monotone = required_present and all(
+            value <= previous + 1.0e-14
+            for (_, previous), (_, value) in zip(ordered, ordered[1:], strict=False)
+        )
+        residual_observation["monotone_history"] = monotone
+        residual_observation["required_checkpoint_set_complete"] = required_present
+        residual_gate = r256 is not None and r256 <= 1.0e-2 and monotone
+        target = 512
+    else:
+        target = None
+    if target == 256:
+        # Review V6 makes 256 a residual-only conditional checkpoint.  The
+        # current resource sample is retained as evidence, but an external
+        # watchdog remains the authority for hard-stop enforcement and the
+        # sample must not become an additional solver Gate here.
+        authorized = residual_gate
+    elif target == 512:
+        authorized = residual_gate and resource_pass and wall_pass
+    else:
+        authorized = False
+    return {
+        "authorized": bool(authorized),
+        "target_checkpoint": target,
+        "residual_gate": bool(residual_gate),
+        "resource_gate": bool(resource_pass),
+        "wall_gate": bool(wall_pass) if target == 512 else None,
+        "resource_observation": {
+            "current_rss_bytes": rss_bytes,
+            "current_swap_bytes": swap_bytes,
+            "current_sample_only": True,
+            "external_watchdog_hard_stop_crossed": resource.get(
+                "hard_stop_crossed"
+            ),
+            "dedicated_cgroup_memory_peak_bytes": resource.get(
+                "dedicated_cgroup_memory_peak_bytes"
+            ),
+            "dedicated_cgroup_swap_peak_bytes": resource.get(
+                "dedicated_cgroup_swap_peak_bytes"
+            ),
+            "all_status_readable": resource.get("all_status_readable"),
+            "pass": resource.get("pass"),
+        },
+        "wall_observation": {
+            "elapsed_seconds": elapsed,
+            "budget_seconds": observed_budget,
+        },
+        "residual_observation": residual_observation,
+        "rule": (
+            "256: r128<=0.8 or log10(r64/r128)>=0.10; "
+            "512: r256<=1e-2 and monotone history and resource/wall gates"
+        ),
+    }
+
+
+def _v6_2_live_resource_callback(
+    resource_callback: Callable[[], Mapping[str, Any]] | None,
+    *,
+    comm: MPI.Intracomm,
+    formal_sequence_started: float,
+    hard_stop_bytes: int,
+    budget_seconds: float,
+) -> Callable[[], Mapping[str, Any]]:
+    """Bind a collective resource sampler to one monotonic formal start."""
+
+    def observe() -> Mapping[str, Any]:
+        if resource_callback is None:
+            return {
+                "status": "not_provided",
+                "pass": False,
+                "rss_bytes": None,
+                "swap_bytes": None,
+                "all_status_readable": False,
+                "hard_limit_bytes": int(hard_stop_bytes),
+                "wall_observation": {
+                    "budget_seconds": float(budget_seconds),
+                    "elapsed_seconds": None,
+                    "pass": False,
+                },
+            }
+        observed = resource_callback()
+        if not isinstance(observed, Mapping):
+            raise TypeError("V6-2 exact resource callback must return a mapping")
+        local_elapsed = max(
+            0.0, float(time.perf_counter() - formal_sequence_started)
+        )
+        elapsed = float(comm.allreduce(local_elapsed, op=MPI.MAX))
+        result = dict(observed)
+        result["hard_limit_bytes"] = int(hard_stop_bytes)
+        result["formal_sequence_elapsed_seconds"] = elapsed
+        result["wall_observation"] = {
+            "budget_seconds": float(budget_seconds),
+            "elapsed_seconds": elapsed,
+            "pass": bool(elapsed < float(budget_seconds)),
+            "formula": "elapsed=MAX_rank(monotonic_now-formal_sequence_start)",
+        }
+        return result
+
+    return observe
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> str:
@@ -1541,6 +1877,7 @@ def _stop_result(
     physical_model_sha256: str,
     identity_preflight: Mapping[str, Any],
     resource_preflight: Mapping[str, Any] | None,
+    formal_sequence_start_scope: str = V6_2_FORMAL_SEQUENCE_START_SCOPE,
 ) -> dict[str, Any]:
     return {
         "schema": V6_2_INTERFACE_SCHUR_SCHEMA,
@@ -1551,6 +1888,7 @@ def _stop_result(
         "source_sha": str(source_sha),
         "input_sha256": str(input_sha256),
         "physical_model_sha256": str(physical_model_sha256),
+        "formal_sequence_start_scope": formal_sequence_start_scope,
         "identity_preflight": _json_safe(identity_preflight),
         "resource_preflight": (
             None if resource_preflight is None else _json_safe(resource_preflight)
@@ -1728,10 +2066,18 @@ def run_v6_2_interface_schur(
     bottom_route_only: bool = False,
     hard_stop_bytes: int = 45 * 2**30,
     watchdog_hard_stop_bytes: int | None = None,
+    resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     exact_qualification: Mapping[str, Any] | None = None,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Run the V6-2 identity route after metadata/resource preflight."""
+    """Run identity and exact qualification on one live current system."""
+
+    # This is the single clock origin for the whole worker sequence.  It must
+    # include authority/root, ABI/resource preflight, directory setup, system
+    # assembly, identity probes, exact qualification, and any continuation.
+    # Do not move it below a preflight or artifact-write boundary.
+    formal_sequence_started = time.perf_counter()
+    formal_sequence_start_scope = V6_2_FORMAL_SEQUENCE_START_SCOPE
 
     from benchmarks.task040_level_a import (
         _v5_authority_identity_preflight,
@@ -1740,6 +2086,7 @@ def run_v6_2_interface_schur(
         build_current_gamma_layout,
         _petsc_matrix_hash,
         assemble_current_bare_f_authority_system,
+        TASK040_LEVEL_A_TIMEOUT_SECONDS,
     )
 
     output_argument = Path(run_directory)
@@ -1748,15 +2095,14 @@ def run_v6_2_interface_schur(
     output_root, frozen_root = _assert_disjoint_roots(
         output_argument, exact_spool_root
     )
-    if exact_qualification is not None:
-        authority_root_error: str | None = None
-        try:
-            frozen_root = _v6_2_require_v5_rhs_authority_root(frozen_root)
-        except Exception as exc:
-            authority_root_error = f"{type(exc).__name__}: {exc}"
-        _collective_driver_error(
-            comm, "V5 RHS authority-root preflight", authority_root_error
-        )
+    authority_root_error: str | None = None
+    try:
+        frozen_root = _v6_2_require_v5_rhs_authority_root(frozen_root)
+    except Exception as exc:
+        authority_root_error = f"{type(exc).__name__}: {exc}"
+    _collective_driver_error(
+        comm, "V5 RHS authority-root preflight", authority_root_error
+    )
 
     identity_preflight = _v5_authority_identity_preflight(
         comm=comm,
@@ -1788,6 +2134,7 @@ def run_v6_2_interface_schur(
             physical_model_sha256=str(physical_model_sha256),
             identity_preflight=identity_preflight,
             resource_preflight=None,
+            formal_sequence_start_scope=formal_sequence_start_scope,
         )
 
     resource_preflight = _resource_preflight(
@@ -1812,6 +2159,7 @@ def run_v6_2_interface_schur(
             physical_model_sha256=str(physical_model_sha256),
             identity_preflight=identity_preflight,
             resource_preflight=resource_preflight,
+            formal_sequence_start_scope=formal_sequence_start_scope,
         )
 
     if comm.rank == 0:
@@ -1925,26 +2273,70 @@ def run_v6_2_interface_schur(
         )
         action_before = action.diagnostics
         bare_operator_hash = _petsc_matrix_hash(system.F)
-        bound_exact_configuration = exact_qualification
-        if exact_qualification is not None:
-            binding_error: str | None = None
-            try:
-                bound_exact_configuration = _bind_v6_2_formal_exact_configuration(
-                    exact_qualification,
-                    exact_spool_root=frozen_root,
-                    run_directory=output_root,
-                    identity_preflight=identity_preflight,
-                    bare_operator=system.F,
-                    bare_operator_hash=bare_operator_hash,
-                    source_sha=str(source_sha),
-                )
-            except Exception as exc:
-                binding_error = f"{type(exc).__name__}: {exc}"
-            _collective_driver_error(
-                comm, "formal exact authority binding", binding_error
+        binding_error: str | None = None
+        bound_exact_configuration: dict[str, Any] | None = None
+        try:
+            from src.solvers.hybrid_bare_f_authority import (
+                canonical_packets_for_vector,
+                canonical_to_current_roundtrip_relative,
+                gamma_values_for_vector,
             )
-            if bound_exact_configuration is None:
-                raise RuntimeError("formal exact authority binding produced no config")
+            from src.solvers.hybrid_exact_qualification import (
+                make_live_persisted_canonical_roundtrip_callback,
+            )
+
+            live_persisted_roundtrip = (
+                make_live_persisted_canonical_roundtrip_callback(
+                    system,
+                    canonical_packets_for_vector=canonical_packets_for_vector,
+                    canonical_to_current_roundtrip_relative=(
+                        canonical_to_current_roundtrip_relative
+                    ),
+                )
+            )
+            live_resource_callback = _v6_2_live_resource_callback(
+                resource_callback,
+                comm=comm,
+                formal_sequence_started=formal_sequence_started,
+                hard_stop_bytes=int(hard_stop_bytes),
+                budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
+            )
+            numeric_options = _v6_2_formal_numeric_options(exact_qualification)
+            numeric_options.update(
+                {
+                    "canonical_roundtrip": {
+                        label: live_persisted_roundtrip
+                        for label in V6_2_EXACT_QUALIFICATION_SOURCES
+                    },
+                    "canonical_packets_for_vector": canonical_packets_for_vector,
+                    "gamma_canonical_values_for_vector": gamma_values_for_vector,
+                    "exact_output_canonical_roundtrip": (
+                        canonical_to_current_roundtrip_relative
+                    ),
+                    "resource_callback": live_resource_callback,
+                    "authorize_conditional": (
+                        lambda gate_input: _v6_2_conditional_authorizer(
+                            gate_input,
+                            hard_stop_bytes=int(hard_stop_bytes),
+                            budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
+                        )
+                    ),
+                }
+            )
+            bound_exact_configuration = _bind_v6_2_formal_exact_configuration(
+                numeric_options,
+                exact_spool_root=frozen_root,
+                run_directory=output_root,
+                identity_preflight=identity_preflight,
+                bare_operator=system.F,
+                bare_operator_hash=bare_operator_hash,
+                source_sha=str(source_sha),
+            )
+        except Exception as exc:
+            binding_error = f"{type(exc).__name__}: {exc}"
+        _collective_driver_error(comm, "formal exact authority binding", binding_error)
+        if bound_exact_configuration is None:
+            raise RuntimeError("formal exact authority binding produced no config")
         deterministic = [
             _one_identity_probe(comm, system.F, matrix, action, index)
             for index in range(3)
@@ -2019,28 +2411,77 @@ def run_v6_2_interface_schur(
             gate_pass=all(gate_before_cleanup.values()),
             vector_count=len(deterministic),
         )
-        if v6_3_continuation is not None and exact_qualification is None:
-            raise ValueError(
-                "V6-3 continuation requires the same-process exact qualification"
+        if not all(bool(value) for value in gate_before_cleanup.values()):
+            shared_lifecycle = {
+                "status": "not_run_by_v6_2_identity_gate",
+                "same_live_action": False,
+            }
+        else:
+            exact_checkpoint_callback = None
+            if marker_callback is not None:
+
+                def exact_checkpoint_callback(
+                    label: str, row: Mapping[str, Any]
+                ) -> None:
+                    if not isinstance(row, Mapping):
+                        raise TypeError("V6-2 exact checkpoint marker row is not a mapping")
+                    _emit(
+                        marker_callback,
+                        "v6_2_exact_checkpoint",
+                        status="complete",
+                        label=str(label),
+                        iteration=int(row["iteration"]),
+                        checkpoint_kind=str(row["checkpoint_kind"]),
+                        full_true_residual=float(
+                            row["full_true_residual_norm"]
+                        ),
+                        full_true_residual_relative=float(
+                            row["full_true_residual_relative"]
+                        ),
+                    )
+
+            continuation_callback = v6_3_continuation
+            if marker_callback is not None and v6_3_continuation is not None:
+
+                def continuation_callback(
+                    payload: Mapping[str, Any],
+                ) -> Mapping[str, Any]:
+                    continuation_result = v6_3_continuation(payload)
+                    if not isinstance(continuation_result, Mapping):
+                        return continuation_result
+                    _emit(
+                        marker_callback,
+                        "v6_3_continuation",
+                        status="complete",
+                        classification=continuation_result.get("classification"),
+                    )
+                    return continuation_result
+
+            shared_lifecycle = _run_v6_2_shared_current_lifecycle(
+                action=action,
+                system=system,
+                interface_operator=matrix,
+                bare_operator=system.F,
+                exact_configuration=bound_exact_configuration,
+                exact_runner=run_v6_2_exact_qualification_packets,
+                expected_factor_count=int(factor_before["ready"]),
+                gamma_layouts=gamma_layouts,
+                canonical_layout=canonical_layout,
+                continuation=continuation_callback,
+                checkpoint_callback=exact_checkpoint_callback,
             )
-        if exact_qualification is not None:
-            if not all(bool(value) for value in gate_before_cleanup.values()):
-                shared_lifecycle = {
-                    "status": "not_run_by_v6_2_identity_gate",
-                    "same_live_action": False,
-                }
-            else:
-                shared_lifecycle = _run_v6_2_shared_current_lifecycle(
-                    action=action,
-                    system=system,
-                    interface_operator=matrix,
-                    bare_operator=system.F,
-                    exact_configuration=bound_exact_configuration,
-                    exact_runner=run_v6_2_exact_qualification_packets,
-                    expected_factor_count=int(factor_before["ready"]),
-                    gamma_layouts=gamma_layouts,
-                    canonical_layout=canonical_layout,
-                    continuation=v6_3_continuation,
+            exact_result_for_marker = shared_lifecycle.get("exact_qualification")
+            if isinstance(exact_result_for_marker, Mapping):
+                _emit(
+                    marker_callback,
+                    "v6_2_exact_qualification",
+                    status="complete",
+                    classification=exact_result_for_marker.get("classification"),
+                    all_sources_gate_pass=exact_result_for_marker.get(
+                        "family", {}
+                    ).get("all_sources_gate_pass")
+                    if isinstance(exact_result_for_marker.get("family"), Mapping)
+                    else False,
                 )
         matrix.destroy()
         matrix = None
@@ -2058,6 +2499,15 @@ def run_v6_2_interface_schur(
         action = None
         system.destroy()
         system = None
+        _emit(
+            marker_callback,
+            "v6_2_cleanup",
+            status="complete",
+            factor_construction_count=int(factor_before.get("ready", 0)),
+            factor_after_cleanup=int(factor_after.get("after_cleanup", -1)),
+            action_destroyed=bool(action_after.get("destroyed")),
+            system_destroyed=True,
+        )
         exact_qualification_result = (
             None
             if shared_lifecycle is None
@@ -2084,15 +2534,18 @@ def run_v6_2_interface_schur(
             frozen_descriptor_hashes = exact_qualification_result.get(
                 "frozen_rhs_descriptor_metadata_sha256", {}
             )
-            descriptor_binding_sha = exact_qualification_result.get(
-                "frozen_rhs_descriptor_metadata_binding_sha256"
-            )
             exact_rank_payload = {
                 "schema": "task040.v6_2.exact_qualification_rank_artifact.v1",
                 "rank": int(comm.rank),
                 "mpi_size": int(comm.size),
                 "qualification_source_sha": str(source_sha),
                 "bare_f_operator_hash": str(bare_operator_hash),
+                "frozen_rhs_source_sha": str(
+                    exact_qualification_result.get(
+                        "frozen_rhs_source_provenance", {}
+                    ).get("source_sha", "")
+                ),
+                "formal_sequence_start_scope": formal_sequence_start_scope,
                 "frozen_rhs_source_provenance": _json_safe(
                     exact_qualification_result.get(
                         "frozen_rhs_source_provenance", {}
@@ -2106,9 +2559,6 @@ def run_v6_2_interface_schur(
                 "frozen_rhs_descriptor_metadata_sha256": _json_safe(
                     frozen_descriptor_hashes
                 ),
-                "frozen_rhs_descriptor_metadata_binding_sha256": _json_safe(
-                    descriptor_binding_sha
-                ),
                 "exact_result": _json_safe(exact_qualification_result),
             }
             exact_rank_sha = _write_json(exact_rank_path, exact_rank_payload)
@@ -2116,17 +2566,18 @@ def run_v6_2_interface_schur(
                 raise RuntimeError(
                     "V6-2 exact qualification rank artifact hash reread failed"
                 )
-            exact_qualification_artifact = {
-                "rank": int(comm.rank),
-                "path": str(exact_rank_path.relative_to(output_root)),
-                "sha256": exact_rank_sha,
-                "qualification_source_sha": str(source_sha),
-                "frozen_rhs_source_sha": str(
-                    exact_qualification_result.get(
-                        "frozen_rhs_source_provenance", {}
-                    ).get("source_sha", "")
-                ),
-            }
+            exact_qualification_artifact = (
+                _build_exact_qualification_artifact_reference(
+                    rank=int(comm.rank),
+                    mpi_size=int(comm.size),
+                    exact_rank_path=exact_rank_path,
+                    output_root=output_root,
+                    source_sha=str(source_sha),
+                    exact_result=exact_qualification_result,
+                    formal_sequence_start_scope=formal_sequence_start_scope,
+                )
+            )
+            exact_qualification_artifact["sha256"] = exact_rank_sha
         exact_stage_summary = _compact_exact_stage_summary(
             exact_qualification_result
         )
@@ -2135,14 +2586,25 @@ def run_v6_2_interface_schur(
             if shared_lifecycle is None
             else shared_lifecycle.get("continuation")
         )
-        continuation_stage_summary = _compact_exact_stage_summary(
-            continuation_result
+        continuation_stage_summary = (
+            _compact_exact_stage_summary(continuation_result)
+            if continuation_result is not None
+            else {
+                "executed": False,
+                "status": (
+                    "not_run_by_v6_2_exact_qualification_continuation_not_configured"
+                ),
+                "classification": None,
+                "all_sources_gate_pass": False,
+                "packet_aggregate_gate_pass": False,
+            }
         )
         exact_pde_status = _exact_pde_status(exact_stage_summary)
         rank_artifact = {
             "schema": "task040.v6_2.rank_artifact.v1",
             "rank": int(comm.rank),
             "mpi_size": int(comm.size),
+            "formal_sequence_start_scope": formal_sequence_start_scope,
             "source_sha": str(source_sha),
             "input_sha256": str(input_sha256),
             "physical_model_sha256": str(physical_model_sha256),
@@ -2208,6 +2670,9 @@ def run_v6_2_interface_schur(
             "rank": int(comm.rank),
             "path": str(rank_path.relative_to(output_root)),
             "sha256": rank_sha,
+            "formal_sequence_start_scope": rank_artifact[
+                "formal_sequence_start_scope"
+            ],
             "canonical_mapping_count": len(canonical_layout.local_row_to_position),
             "canonical_mapping_sha256": rank_artifact["canonical_mapping_sha256"],
             "factor_lifecycle_after": rank_artifact["factor_lifecycle_after"],
@@ -2244,6 +2709,9 @@ def run_v6_2_interface_schur(
                 "exact_output_vectors_loaded"
             )
             pde_consensus, pde_status, _pde_statuses = consensus_value("pde_solve")
+            formal_scope_consensus, formal_scope, _formal_scopes = consensus_value(
+                "formal_sequence_start_scope"
+            )
             factor_after_by_rank = [
                 item["factor_lifecycle_after"] for item in rank_descriptors
             ]
@@ -2280,6 +2748,7 @@ def run_v6_2_interface_schur(
                     and continuation_consensus
                     and exact_count_consensus
                     and pde_consensus
+                    and formal_scope_consensus
                 ),
             }
             exact_qualification_artifacts = [
@@ -2327,6 +2796,9 @@ def run_v6_2_interface_schur(
                 "method": V6_2_INTERFACE_SCHUR_METHOD,
                 "profile": V6_2_INTERFACE_SCHUR_PROFILE_ID,
                 "mpi_size": int(comm.size),
+                "formal_sequence_start_scope": (
+                    formal_scope if formal_scope_consensus else None
+                ),
                 "status": combined_status,
                 "classification": (
                     "V6_2_FULL_INTERFACE_SCHUR_PASS"
@@ -2383,12 +2855,24 @@ def run_v6_2_interface_schur(
                 ),
                 "downstream": {
                     "v6_3_full_spectrum": continuation_summary,
-                    "v6_4_route_a_b": "not_run_by_v6_2_identity_only",
-                    "v6_5_moving_pml": "not_run_by_v6_2_identity_only",
-                    "v6_6_adaptive_schwarz": "not_run_by_v6_2_identity_only",
-                    "v6_7_factor_free_local_service": "not_run_by_v6_2_identity_only",
-                    "v6_8_full_hybrid": "not_run_by_v6_2_identity_only",
-                    "v6_9_capacity": "not_run_by_v6_2_identity_only",
+                    "v6_4_route_a_b": (
+                        "not_run_by_v6_2_exact_qualification_continuation_not_configured"
+                    ),
+                    "v6_5_moving_pml": (
+                        "not_run_by_v6_2_exact_qualification_continuation_not_configured"
+                    ),
+                    "v6_6_adaptive_schwarz": (
+                        "not_run_by_v6_2_exact_qualification_continuation_not_configured"
+                    ),
+                    "v6_7_factor_free_local_service": (
+                        "not_run_by_v6_2_exact_qualification_continuation_not_configured"
+                    ),
+                    "v6_8_full_hybrid": (
+                        "not_run_by_v6_2_exact_qualification_continuation_not_configured"
+                    ),
+                    "v6_9_capacity": (
+                        "not_run_by_v6_2_exact_qualification_continuation_not_configured"
+                    ),
                 },
                 "exact_qualification_plan": build_v6_2_exact_qualification_plan(),
                 "research_only": True,

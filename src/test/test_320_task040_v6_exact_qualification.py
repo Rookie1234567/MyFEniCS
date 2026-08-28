@@ -31,6 +31,7 @@ from src.solvers.hybrid_exact_qualification import (
     make_current_exact_packet_identity_provider,
     make_current_exact_solution_packet_consumer,
     make_current_exact_packet_writer,
+    _normalize_packet_identity,
     rank_local_shard_binding_sha256,
     run_exact_qualification_family,
     run_exact_interface_fgmres,
@@ -1752,8 +1753,21 @@ def test_production_packet_writer_and_aggregate_handles_uneven_canonical_shards(
             },
             forbidden_root=forbidden_root,
         )
+        assert aggregate["schema"] == (
+            "task040.v6.current_exact_packet_rank_manifest.v1"
+        )
         assert aggregate["mpi_size"] == comm.size
         assert aggregate["rank_count"] == comm.size
+        assert aggregate["role_count"] == 4
+        assert aggregate["role_count_per_rank"] == 4
+        assert aggregate["source_provenance"] == provenance
+        assert aggregate["qualification_source_provenance"] == {
+            **provenance,
+            "source_sha": "d" * 40,
+        }
+        assert aggregate["bare_f_operator_hash"] == HEX
+        assert aggregate["numeric_allgather"] is False
+        assert aggregate["full_numeric_replica"] is False
         assert aggregate["frozen_rhs_descriptor_metadata_sha256_by_rank"][
             comm.rank
         ] == descriptor_metadata_hashes
@@ -1766,6 +1780,16 @@ def test_production_packet_writer_and_aggregate_handles_uneven_canonical_shards(
             )
         ) == (1 if comm.size == 1 else comm.size)
         assert len(aggregate["frozen_rhs_descriptor_metadata_binding_sha256"]) == 64
+        aggregate_payload = json.loads(Path(aggregate["path"]).read_text())
+        assert aggregate_payload["schema"] == aggregate["schema"]
+        assert aggregate_payload["rank_count"] == comm.size
+        assert aggregate_payload["role_count"] == 4
+        assert aggregate_payload["role_count_per_rank"] == 4
+        assert aggregate_payload["source_provenance"] == provenance
+        assert aggregate_payload["bare_f_operator_hash"] == HEX
+        assert aggregate_payload["numeric_allgather"] is False
+        assert aggregate_payload["full_numeric_replica"] is False
+        assert len(aggregate_payload["rank_manifests"]) == comm.size
         assert hash_file_sha256(Path(aggregate["path"])) == aggregate["sha256"]
         assert identities["gamma_l_canonical"]["gamma_transform_sha256"] != HEX
         comm.Barrier()
@@ -2280,6 +2304,50 @@ def test_fgmres_nondivisor_restart_respects_checkpoint_boundary() -> None:
         assert "6" not in result["checkpoints"]
         assert all(isinstance(row["recovery"], dict) for row in result["checkpoints"].values())
     finally:
+        active_rhs.destroy()
+        condensed_rhs.destroy()
+        matrix.destroy()
+
+
+def test_fgmres_reports_nonrequested_early_final_iteration() -> None:
+    """An Arnoldi happy breakdown is reported even without a requested point."""
+
+    matrix = _diagonal_matrix(
+        2,
+        MPI.COMM_SELF,
+        diagonal_values=np.asarray([1.0, 1.0]),
+    )
+    active_rhs = matrix.createVecRight()
+    condensed_rhs = matrix.createVecRight()
+    _fill_vector(active_rhs, np.asarray([1.0 + 0.0j, 2.0 + 0.0j]))
+    _fill_vector(condensed_rhs, np.asarray([1.0 + 0.0j, 2.0 + 0.0j]))
+    accepted = None
+    try:
+        result = run_exact_interface_fgmres(
+            interface_operator=matrix,
+            schur_action=_CopyRecovery(),
+            bare_operator=matrix,
+            condensed_rhs=condensed_rhs,
+            active_rhs=active_rhs,
+            interior_rhs_by_group={},
+            right_preconditioner=None,
+            label="early-final",
+            restart=3,
+            mandatory_checkpoints=(4,),
+            conditional_checkpoints=(),
+            max_iterations=4,
+        )
+        accepted = result.pop("accepted_solution")
+        assert accepted is not None
+        assert result["checkpoints"] == {}
+        assert result["early_final_record"]["iteration"] == 1
+        assert result["checkpoint_history"][0]["checkpoint_kind"] == "early_final"
+        assert result["final_iteration"] == 1
+        assert result["stopped_at_happy_breakdown"] is True
+        json.dumps(result, sort_keys=True)
+    finally:
+        if accepted is not None:
+            accepted.destroy()
         active_rhs.destroy()
         condensed_rhs.destroy()
         matrix.destroy()

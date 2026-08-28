@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
@@ -23,7 +23,11 @@ from src.solvers.hybrid_bare_f_authority import (
     _source_definition_sha256,
     _source_semantic_descriptor,
 )
-from src.solvers.hybrid_exact_qualification import ExactQualificationContractError
+from src.solvers.hybrid_exact_qualification import (
+    ExactQualificationContractError,
+    hash_array_bytes_sha256,
+    write_current_exact_solution_packet,
+)
 from src.solvers.hybrid_interface_packet_dolfinx import (
     build_gamma_canonical_layout,
     make_gamma_entity_block,
@@ -254,6 +258,21 @@ def _qualification_plan() -> dict[str, Any]:
     return runner.build_v6_2_exact_qualification_plan()
 
 
+def _legacy_qualification_plan() -> dict[str, Any]:
+    plan = _qualification_plan()
+    plan.update(
+        {
+            "status": "designed_not_run",
+            "execution_mode": "identity_only",
+            "identity_only": True,
+            "frozen_owner_row_arrays": (
+                "not_loaded; complex PETSc owner-order values, never row ids"
+            ),
+        }
+    )
+    return plan
+
+
 def test_v6_2_evidence_status_reports_executed_exact_and_continuation() -> None:
     exact_summary = runner._compact_exact_stage_summary(
         {
@@ -389,7 +408,7 @@ def test_v6_2_exact_runner_wires_tolerance_and_negative_family(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Exercise the real exact orchestration boundary without packet writes."""
+    """Exercise discarded partial packets at the exact orchestration boundary."""
 
     configuration, matrix = _formal_binding_fixture(tmp_path)
     frozen_root = tmp_path / "worker" / "bare_f_authority"
@@ -423,6 +442,9 @@ def test_v6_2_exact_runner_wires_tolerance_and_negative_family(
         assert observed_descriptors is descriptors
         assert tuple(observed_descriptors) == labels
         captured_family.update(kwargs)
+        first_label, second_label = labels[:2]
+        packet_root.mkdir(parents=True, exist_ok=True)
+        (packet_root / "partial.json").write_text("{}")
         return {
             "status": (
                 "completed_exact_numerical_gate_negative_continuation_allowed"
@@ -430,16 +452,28 @@ def test_v6_2_exact_runner_wires_tolerance_and_negative_family(
             "classification": "V6_EXACT_QUALIFICATION_GATE_FAIL",
             "source_records": [
                 {
-                    "label": label,
+                    "label": first_label,
+                    "full_residual_gate_pass": True,
+                    "packetization_gate_pass": True,
+                    "fgmres": {
+                        "packetization_gate_error": None,
+                        "checkpoint_history": [],
+                        "accepted_solution_packet_audit": {
+                            "packet_write": {"partial": "dummy"},
+                        },
+                    },
+                },
+                {
+                    "label": second_label,
                     "full_residual_gate_pass": False,
                     "packetization_gate_pass": False,
                     "fgmres": {
                         "packetization_gate_error": None,
                         "checkpoint_history": [],
                     },
-                }
-                for label in labels[:2]
+                },
             ],
+            "initial_pair_gate_pass": False,
             "all_sources_gate_pass": False,
         }
 
@@ -482,6 +516,13 @@ def test_v6_2_exact_runner_wires_tolerance_and_negative_family(
         assert result["family"]["all_sources_gate_pass"] is False
         assert result["packet_aggregate"] == {}
         assert result["packet_aggregate_gate_pass"] is False
+        assert result["packet_root"] == str(packet_root)
+        assert not packet_root.exists()
+        assert result["initial_pair_publication"] == {
+            "initial_pair_gate_pass": False,
+            "status": "failed_then_discarded",
+            "packet_root_exists_after_gate": False,
+        }
         assert result["frozen_rhs_source_provenance"] == frozen_provenance
         assert result["qualification_source_provenance"] == qualification_provenance
         json.dumps(result, sort_keys=True)
@@ -740,6 +781,12 @@ def _rank_artifact(rank: int, identity: dict[str, bool]) -> dict[str, Any]:
         "zero_error": 0.0,
         "linearity_error": 0.0,
         "identity_gate": identity,
+        "gate_pass": all(identity.values()),
+        "classification": (
+            "V6_2_FULL_INTERFACE_SCHUR_PASS"
+            if all(identity.values())
+            else "V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL"
+        ),
         "factor_lifecycle_before": {
             "ready": 3,
             "after_cleanup": None,
@@ -758,14 +805,50 @@ def _rank_artifact(rank: int, identity: dict[str, bool]) -> dict[str, Any]:
         "raw_global_row_remap": False,
         "exact_output_vectors_loaded": 0,
         "pde_solve": "not_run",
-        "exact_qualification_plan": _qualification_plan(),
+        "exact_qualification_plan": _legacy_qualification_plan(),
     }
 
 
 def _make_checker_fixture(tmp_path: Path) -> tuple[Path, Path]:
     root = tmp_path / "formal"
     root.mkdir()
-    audit_sha = _write_json(root / "operator_semantics_audit.json", {"pass": True})
+    operator_audit = {
+        "schema": "task040.v5.operator_semantics_audit.v1",
+        "source_sha": FORMAL_SOURCE_SHA,
+        "pass": True,
+        "checks": {"operator_identity": True},
+        "current_authority": {
+            "static_path_identity": True,
+            "operator": "explicit_current_bare_F",
+            "factor": "ResearchExactFactorInverse(F)",
+            "C_D_H_constructed": {"C": 0, "D": 0, "H": 0},
+            "qep_calls": 0,
+            "top_system_constructed": False,
+            "full_coupling_constructed": False,
+            "woodbury_inverse": False,
+            "physical_dtn_operator": False,
+        },
+        "modal_source_identity": {
+            "pass": True,
+            "repair": {
+                "qep_calls": 0,
+                "top_system_constructed": False,
+                "full_coupling_constructed": False,
+                "scalar_cg_substitution": False,
+            },
+        },
+    }
+    operator_audit["record_sha256"] = hashlib.sha256(
+        json.dumps(
+            operator_audit,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    audit_sha = _write_json(
+        root / "operator_semantics_audit.json",
+        operator_audit,
+    )
     identity = _identity_gate()
     descriptors = []
     artifacts = []
@@ -791,7 +874,7 @@ def _make_checker_fixture(tmp_path: Path) -> tuple[Path, Path]:
         "profile": "task040.v6_2.h4.full_interface.v1",
         "mpi_size": checker.EXPECTED_MPI_SIZE,
         "status": "completed_v6_2_identity",
-        "classification": "ignored_prefilled_value",
+        "classification": "V6_2_FULL_INTERFACE_SCHUR_PASS",
         "source_sha": FORMAL_SOURCE_SHA,
         "input_sha256": HEX,
         "physical_model_sha256": HEX,
@@ -800,6 +883,7 @@ def _make_checker_fixture(tmp_path: Path) -> tuple[Path, Path]:
         "operator_semantics_audit": {
             "path": "operator_semantics_audit.json",
             "sha256": audit_sha,
+            "content_sha256": operator_audit["record_sha256"],
         },
         "system_created": True,
         "system_inventory": {},
@@ -837,6 +921,7 @@ def _make_checker_fixture(tmp_path: Path) -> tuple[Path, Path]:
         "zero_error": 0.0,
         "linearity_error": 0.0,
         "identity_gate": identity,
+        "gate_pass": all(identity.values()),
         "factor_lifecycle": {
             "before": {"ready": 3, "after_cleanup": None, "simultaneous_max": 3},
             "after_by_rank": after,
@@ -853,12 +938,1485 @@ def _make_checker_fixture(tmp_path: Path) -> tuple[Path, Path]:
         "raw_global_row_remap": False,
         "rank_artifacts": descriptors,
         "downstream": {},
-        "exact_qualification_plan": _qualification_plan(),
+        "exact_qualification_plan": _legacy_qualification_plan(),
         "research_only": True,
     }
     manifest_path = root / "v6_2_manifest.json"
+    run_summary_path = root / "run_summary.json"
+    run_summary_sha = _write_json(
+        run_summary_path,
+        {"schema": "task040.level_a.run_summary.v1", "status": "complete"},
+    )
+    _write_json(
+        root.parent / "watchdog_summary.json",
+        {
+            "schema": "task040.level_a.watchdog.v1",
+            "method": manifest["method"],
+            "source_sha": manifest["source_sha"],
+            "termination_reason": "natural_exit",
+            "return_code": 0,
+            "elapsed_seconds": 1.0,
+            "authoritative_sample_count": 1,
+            "peak_rss_bytes": 1024,
+            "peak_swap_bytes": 0,
+            "peak_dedicated_cgroup_swap_bytes": 0,
+            "hard_stop_bytes": 45 * 2**30,
+            "timeout_seconds": 21600.0,
+            "all_status_readable": True,
+            "swap_authority_readable": True,
+            "run_summary_present": True,
+            "run_summary_sha256": run_summary_sha,
+        },
+    )
     _write_json(manifest_path, manifest)
     return root, manifest_path
+
+
+def _make_packet_aggregate_checker_fixture(
+    tmp_path: Path,
+) -> tuple[
+    Path,
+    dict[str, Any],
+    dict[int, dict[str, dict[str, Any]]],
+    dict[str, str],
+    dict[str, str],
+]:
+    """Build a small-file, eight-rank packet aggregate for raw checker tests."""
+
+    root = tmp_path / "packet-formal"
+    packet_root = root / "packets"
+    root.mkdir()
+    frozen_provenance = {
+        "input_sha256": HEX,
+        "physical_model_sha256": HEX,
+        "selected_manifest_sha256": HEX,
+        "selected_identity_sha256": HEX,
+        "resolved_config_sha256": HEX,
+        "source_sha": checker.EXPECTED_FROZEN_RHS_SOURCE_SHA,
+    }
+    qualification_provenance = {
+        **frozen_provenance,
+        "source_sha": FORMAL_SOURCE_SHA,
+    }
+    expected_by_rank: dict[int, dict[str, dict[str, Any]]] = {}
+    rank_manifests: list[dict[str, Any]] = []
+    for rank in range(checker.EXPECTED_MPI_SIZE):
+        canonical_values = np.asarray([rank + 1.0 + 0.5j], dtype=np.complex128)
+        owner_values = np.asarray([10.0 + rank + 0.25j], dtype=np.complex128)
+        gamma_lower_values = np.arange(
+            945, dtype=np.float64
+        ).astype(np.complex128) + (rank + 1.0j)
+        gamma_upper_values = np.arange(
+            945, dtype=np.float64
+        ).astype(np.complex128) + (2 * rank + 1.0j)
+        arrays = {
+            "exact_output_canonical": canonical_values,
+            "exact_output_owner_rows": owner_values,
+            "gamma_l_canonical": gamma_lower_values,
+            "gamma_u_canonical": gamma_upper_values,
+        }
+
+        def identity(role: str, values: np.ndarray) -> dict[str, Any]:
+            if role == "exact_output_canonical":
+                return {
+                    "label": "aggregate_checker",
+                    "role": role,
+                    "dtype": "complex128",
+                    "rank": rank,
+                    "mpi_size": checker.EXPECTED_MPI_SIZE,
+                    "value_sha256": hash_array_bytes_sha256(values),
+                    "source_definition_sha256": HEX,
+                    "bare_f_operator_hash": HEX,
+                    "canonical_layout_sha256": "d" * 64,
+                    "canonical_key_set_sha256": HEX,
+                    "source_provenance": deepcopy(frozen_provenance),
+                    "canonical_key_count_local": 1,
+                    "global_active_size": checker.EXPECTED_MPI_SIZE,
+                    "canonical_key_order_sha256": f"{rank + 1:064x}",
+                    "canonical_key_set_local_sha256": f"{rank + 11:064x}",
+                    "canonical_roundtrip_relative": 0.0,
+                }
+            if role == "exact_output_owner_rows":
+                return {
+                    "label": "aggregate_checker",
+                    "role": role,
+                    "dtype": "complex128",
+                    "rank": rank,
+                    "mpi_size": checker.EXPECTED_MPI_SIZE,
+                    "value_sha256": hash_array_bytes_sha256(values),
+                    "source_definition_sha256": HEX,
+                    "bare_f_operator_hash": HEX,
+                    "canonical_layout_sha256": "d" * 64,
+                    "canonical_key_set_sha256": HEX,
+                    "source_provenance": deepcopy(frozen_provenance),
+                    "local_size": 1,
+                    "global_size": checker.EXPECTED_MPI_SIZE,
+                    "ownership_range": [rank, rank + 1],
+                    "owner_row_order": "petsc_current_ownership_range",
+                }
+            side = "e" if role == "gamma_l_canonical" else "f"
+            return {
+                "label": "aggregate_checker",
+                "role": role,
+                "dtype": "complex128",
+                "rank": rank,
+                "mpi_size": checker.EXPECTED_MPI_SIZE,
+                "value_sha256": hash_array_bytes_sha256(values),
+                "source_definition_sha256": HEX,
+                "bare_f_operator_hash": HEX,
+                "canonical_layout_sha256": side * 64,
+                "canonical_key_set_sha256": HEX,
+                "source_provenance": deepcopy(frozen_provenance),
+                "canonical_key_count_local": 945,
+                "canonical_global_size": 7560,
+                "canonical_key_order_sha256": f"{rank + 21:064x}",
+                "canonical_key_set_local_sha256": f"{rank + 31:064x}",
+                "gamma_transform_sha256": f"{rank + 41:064x}",
+            }
+
+        identities = {
+            role: identity(role, values) for role, values in arrays.items()
+        }
+        packets = write_current_exact_solution_packet(
+            root=packet_root,
+            rank=rank,
+            label="aggregate_checker",
+            packet_values=arrays,
+            packet_identities=identities,
+        )
+        expected_by_rank[rank] = packets
+        rank_manifests.append({"rank": rank, "roles": packets})
+
+    descriptor_hashes_by_rank = [
+        {
+            source_label: f"{rank + 1:064x}"
+            for source_label in checker._EXACT_SOURCE_ORDER
+        }
+        for rank in range(checker.EXPECTED_MPI_SIZE)
+    ]
+    descriptor_binding = hashlib.sha256(
+        json.dumps(
+            descriptor_hashes_by_rank,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    payload = {
+        "schema": "task040.v6.current_exact_packet_rank_manifest.v1",
+        "label": "aggregate_checker",
+        "mpi_size": checker.EXPECTED_MPI_SIZE,
+        "rank_count": checker.EXPECTED_MPI_SIZE,
+        "role_count": 4,
+        "role_count_per_rank": 4,
+        "source_provenance": frozen_provenance,
+        "bare_f_operator_hash": HEX,
+        "qualification_source_provenance": qualification_provenance,
+        "frozen_rhs_descriptor_metadata_sha256_by_rank": descriptor_hashes_by_rank,
+        "frozen_rhs_descriptor_metadata_binding_sha256": descriptor_binding,
+        "rank_manifests": rank_manifests,
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+    }
+    aggregate_path = root / "aggregate.json"
+    aggregate_sha = _write_json(aggregate_path, payload)
+    descriptor = {
+        "schema": "task040.v6.current_exact_packet_rank_manifest.v1",
+        "path": aggregate_path.name,
+        "sha256": aggregate_sha,
+        "label": "aggregate_checker",
+        "mpi_size": checker.EXPECTED_MPI_SIZE,
+        "rank_count": checker.EXPECTED_MPI_SIZE,
+        "role_count": 4,
+        "role_count_per_rank": 4,
+        "source_provenance": frozen_provenance,
+        "qualification_source_provenance": qualification_provenance,
+        "bare_f_operator_hash": HEX,
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+        "frozen_rhs_descriptor_metadata_sha256_by_rank": descriptor_hashes_by_rank,
+        "frozen_rhs_descriptor_metadata_binding_sha256": descriptor_binding,
+    }
+    return (
+        root,
+        descriptor,
+        expected_by_rank,
+        frozen_provenance,
+        qualification_provenance,
+    )
+
+
+def _rewrite_packet_for_checker_tamper(
+    packet: Mapping[str, Any],
+    *,
+    updates: Mapping[str, Any],
+    values: np.ndarray | None = None,
+) -> dict[str, Any]:
+    """Rewrite a role's artifact chain and return its self-consistent record."""
+
+    updated = dict(packet)
+    updated.update(updates)
+    array_path = Path(str(packet["array_path"]))
+    if values is not None:
+        np.save(array_path, np.asarray(values, dtype=np.complex128), allow_pickle=False)
+        updated["value_sha256"] = hash_array_bytes_sha256(values)
+        updated["array_sha256"] = updated["value_sha256"]
+        updated["shard_sha256"] = hashlib.sha256(array_path.read_bytes()).hexdigest()
+    metadata_path = Path(str(packet["path"]))
+    manifest_path = Path(str(packet["manifest_path"]))
+    metadata = json.loads(metadata_path.read_text())
+    manifest = json.loads(manifest_path.read_text())
+    metadata.update(updates)
+    manifest.update(updates)
+    if values is not None:
+        metadata.update(
+            {
+                "value_sha256": updated["value_sha256"],
+                "array_sha256": updated["array_sha256"],
+                "shard_sha256": updated["shard_sha256"],
+            }
+        )
+        manifest.update(
+            {
+                "value_sha256": updated["value_sha256"],
+                "array_sha256": updated["array_sha256"],
+                "shard_sha256": updated["shard_sha256"],
+            }
+        )
+    updated["metadata_sha256"] = _write_json(metadata_path, metadata)
+    manifest["metadata_sha256"] = updated["metadata_sha256"]
+    updated["manifest_sha256"] = _write_json(manifest_path, manifest)
+    return updated
+
+
+def _rewrite_checker_aggregate(
+    root: Path,
+    descriptor: Mapping[str, Any],
+    *,
+    rank: int,
+    role: str,
+    packet: Mapping[str, Any],
+) -> dict[str, Any]:
+    aggregate_path = root / str(descriptor["path"])
+    payload = json.loads(aggregate_path.read_text())
+    payload["rank_manifests"][rank]["roles"][role] = packet
+    aggregate_sha = _write_json(aggregate_path, payload)
+    result = dict(descriptor)
+    result["sha256"] = aggregate_sha
+    return result
+
+
+def _executed_provenance(source_sha: str) -> dict[str, str]:
+    return {
+        "input_sha256": HEX,
+        "physical_model_sha256": HEX,
+        "selected_manifest_sha256": HEX,
+        "selected_identity_sha256": HEX,
+        "resolved_config_sha256": HEX,
+        "source_sha": source_sha,
+    }
+
+
+def _executed_checkpoint(
+    label: str,
+    iteration: int,
+    relative: float,
+    *,
+    accepted: bool,
+    gamma_rows_local_count: int = 0,
+    active_local_size: int = 1,
+) -> dict[str, Any]:
+    if not 0 <= gamma_rows_local_count <= active_local_size:
+        raise ValueError("synthetic recovery counts must partition the active rows")
+    return {
+        "label": label,
+        "iteration": iteration,
+        "restart": 32,
+        "checkpoint_kind": "mandatory",
+        "interface_true_residual_norm": relative,
+        "interface_true_residual_relative": relative,
+        "full_true_residual_norm": relative,
+        "full_true_residual_relative": relative,
+        "rhs_norm_denominator": 1.0,
+        "interface_rhs_norm_denominator": 1.0,
+        "full_residual_tolerance": 1.0e-9,
+        "finite": True,
+        "accepted_full_solution": accepted,
+        "recovery": {
+            "gamma_rows_local": {
+                "count": gamma_rows_local_count,
+                "dtype": "int64",
+                "sha256": "1" * 64,
+            },
+            "interior_rows_local": {
+                "count": active_local_size - gamma_rows_local_count,
+                "dtype": "int64",
+                "sha256": "2" * 64,
+            },
+            "group_interior_solve_count": 3,
+            "interior_rhs_norms": [1.0, 2.0, 3.0],
+            "interior_rhs_nonzero": True,
+        },
+    }
+
+
+def _executed_128_observation(relative: float) -> dict[str, Any]:
+    direct_gate = bool(relative <= 0.8)
+    resource = {
+        "pass": True,
+        "hard_limit_bytes": 45 * 2**30,
+        "rss_bytes": 1024,
+        "swap_bytes": 0.0,
+        "all_status_readable": True,
+        "wall_observation": {
+            "elapsed_seconds": 1.0,
+            "budget_seconds": 21600.0,
+        },
+    }
+    return {
+        "target_checkpoint": 256,
+        "residual_gate": direct_gate,
+        "authorized": direct_gate,
+        "authorization_consensus": True,
+        "authorized_by_rank": [direct_gate] * checker.EXPECTED_MPI_SIZE,
+        "resource_snapshot": resource,
+        "resource_observation": {
+            "current_sample_only": True,
+            "current_rss_bytes": 1024,
+            "current_swap_bytes": 0.0,
+            "all_status_readable": True,
+            "pass": True,
+        },
+        "resource_gate": True,
+        "wall_observation": {
+            "elapsed_seconds": 1.0,
+            "budget_seconds": 21600.0,
+        },
+        "wall_gate": None,
+        "residual_observation": {
+            "checkpoint": 128,
+            "observed_checkpoint_sequence": [16, 32, 64, 128],
+            "required_checkpoint_iterations": [16, 32, 64, 128, 256],
+            "r64": relative,
+            "r128": relative,
+            "r256": None,
+            "drop_64_to_128_decade": 0.0,
+            "r128_threshold_gate": direct_gate,
+            "drop_64_to_128_gate": False,
+            "monotone_history": False,
+        },
+    }
+
+
+def _executed_fgmres(
+    label: str,
+    *,
+    packet_ready: bool,
+    packet_audit: Mapping[str, Any] | None = None,
+    gamma_rows_local_count: int = 0,
+    active_local_size: int = 1,
+) -> dict[str, Any]:
+    relative = 5.0e-10 if packet_ready else 0.9
+    rows = [
+        _executed_checkpoint(
+            label,
+            iteration,
+            relative,
+            accepted=packet_ready,
+            gamma_rows_local_count=gamma_rows_local_count,
+            active_local_size=active_local_size,
+        )
+        for iteration in (16, 32, 64, 128)
+    ]
+    result: dict[str, Any] = {
+        "schema": "task040.v6.exact_interface_fgmres.v1",
+        "label": label,
+        "restart": 32,
+        "mandatory_checkpoints": [16, 32, 64, 128],
+        "conditional_checkpoints": [256, 512],
+        "checkpoints": {str(row["iteration"]): row for row in rows},
+        "final_iteration": 128,
+        "final_record": rows[-1],
+        "early_final_record": None,
+        "checkpoint_history": rows,
+        "stopped_at_happy_breakdown": False,
+        "conditional_authorized": {
+            "256": packet_ready,
+            "512": False,
+        },
+        "conditional_completed": {"256": False, "512": False},
+        "conditional_gate_observations": {
+            "128": _executed_128_observation(relative),
+        },
+        "full_residual_tolerance": 1.0e-9,
+        "accepted_solution_present": packet_ready,
+        "accepted_solution_consumed": packet_ready,
+        "accepted_solution_released_by_driver": packet_ready,
+        "accepted_solution_iteration": 128 if packet_ready else None,
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+        "identity_preconditioner": True,
+        "active_rhs_unchanged": True,
+        "condensed_rhs_unchanged": True,
+        "full_rhs_norm": 1.0,
+        "interface_rhs_norm": 1.0,
+        "active_rhs_initial_sha256": HEX,
+        "active_rhs_final_sha256": HEX,
+        "condensed_rhs_initial_sha256": HEX,
+        "condensed_rhs_final_sha256": HEX,
+    }
+    if packet_ready:
+        result["accepted_solution_packet_audit"] = packet_audit
+    return result
+
+
+def _executed_packet_identities(
+    *,
+    rank: int,
+    label: str,
+    arrays: Mapping[str, np.ndarray],
+    frozen_provenance: Mapping[str, Any],
+) -> dict[str, dict[str, Any]]:
+    source_definition = f"{0x500 + list(checker._EXACT_SOURCE_ORDER).index(label):064x}"
+    common = {
+        "label": label,
+        "dtype": "complex128",
+        "rank": rank,
+        "mpi_size": checker.EXPECTED_MPI_SIZE,
+        "source_definition_sha256": source_definition,
+        "bare_f_operator_hash": HEX,
+        "canonical_key_set_sha256": "c" * 64,
+        "source_provenance": deepcopy(dict(frozen_provenance)),
+    }
+    identities: dict[str, dict[str, Any]] = {}
+    identities["exact_output_canonical"] = {
+        **common,
+        "role": "exact_output_canonical",
+        "value_sha256": hash_array_bytes_sha256(arrays["exact_output_canonical"]),
+        "canonical_layout_sha256": "d" * 64,
+        "canonical_key_count_local": 1,
+        "global_active_size": checker.EXPECTED_MPI_SIZE,
+        "canonical_key_order_sha256": f"{1000 + rank:064x}",
+        "canonical_key_set_local_sha256": f"{2000 + rank:064x}",
+        "canonical_roundtrip_relative": 0.0,
+    }
+    identities["exact_output_owner_rows"] = {
+        **common,
+        "role": "exact_output_owner_rows",
+        "value_sha256": hash_array_bytes_sha256(arrays["exact_output_owner_rows"]),
+        "canonical_layout_sha256": "d" * 64,
+        "local_size": 1,
+        "global_size": checker.EXPECTED_MPI_SIZE,
+        "ownership_range": [rank, rank + 1],
+        "owner_row_order": "petsc_current_ownership_range",
+    }
+    for role, layout_digest, transform_digest in (
+        ("gamma_l_canonical", "e" * 64, "1" * 64),
+        ("gamma_u_canonical", "f" * 64, "2" * 64),
+    ):
+        identities[role] = {
+            **common,
+            "role": role,
+            "value_sha256": hash_array_bytes_sha256(arrays[role]),
+            "canonical_layout_sha256": layout_digest,
+            "canonical_key_count_local": 945,
+            "canonical_global_size": 7560,
+            "canonical_key_order_sha256": f"{3000 + rank:064x}",
+            "canonical_key_set_local_sha256": f"{4000 + rank:064x}",
+            "gamma_transform_sha256": transform_digest,
+        }
+    return identities
+
+
+def _executed_adapter_audit(
+    *,
+    rank: int,
+    label: str,
+    frozen_provenance: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build the compact post-release adapter proof used by executed fixtures."""
+
+    source_definition = f"{0x500 + list(checker._EXACT_SOURCE_ORDER).index(label):064x}"
+    canonical_layout = "d" * 64
+    canonical_key_set = "c" * 64
+    active_global_size = checker.EXPECTED_JOINT_COUNT
+    active_local_size = active_global_size // checker.EXPECTED_MPI_SIZE
+    rank_records: list[dict[str, Any]] = []
+    for rank_index in range(checker.EXPECTED_MPI_SIZE):
+        array_sha = f"{0x9000 + rank_index:064x}"
+        owner_sha = f"{0xA000 + rank_index:064x}"
+        rank_records.append(
+            {
+                "rank": rank_index,
+                "mpi_size": checker.EXPECTED_MPI_SIZE,
+                "label": label,
+                "role": "rhs",
+                "global_size": active_global_size,
+                "local_size": active_local_size,
+                "ownership_range": [
+                    rank_index * active_local_size,
+                    (rank_index + 1) * active_local_size,
+                ],
+                "array_sha256": array_sha,
+                "owner_row_array_sha256": owner_sha,
+                "canonical_layout_sha256": canonical_layout,
+                "canonical_key_set_sha256": canonical_key_set,
+                "global_sha256": None,
+                "canonical_layout_rank": rank_index,
+                "canonical_layout_mpi_size": checker.EXPECTED_MPI_SIZE,
+                "source_definition_sha256": source_definition,
+                "rank_local_shard_binding_sha256": f"{0xB000 + rank_index:064x}",
+                "bare_f_operator_hash": HEX,
+                "source_sha": frozen_provenance["source_sha"],
+                "source_provenance": deepcopy(dict(frozen_provenance)),
+            }
+        )
+    global_sha = hashlib.sha256(
+        "\n".join(record["array_sha256"] for record in rank_records).encode("ascii")
+    ).hexdigest()
+    for record in rank_records:
+        record["global_sha256"] = global_sha
+    local_array_sha = f"{0x9000 + rank:064x}"
+    local_owner_sha = f"{0xA000 + rank:064x}"
+    load = {
+        "label": label,
+        "role": "rhs",
+        "schema": "task040.v5.current_bare_f_authority_vector.v1",
+        "side": "bottom",
+        "dtype": "complex128",
+        "owner_row_values_not_row_ids": True,
+        "raw_global_row_remap": False,
+        "source_sha": frozen_provenance["source_sha"],
+        "source_provenance": deepcopy(dict(frozen_provenance)),
+        "source_definition_sha256": source_definition,
+        "bare_f_operator_hash": HEX,
+        "array_sha256": local_array_sha,
+        "array_sha256_observed": local_array_sha,
+        "owner_row_array_sha256": local_owner_sha,
+        "owner_row_array_sha256_observed": local_owner_sha,
+        "canonical_layout_sha256": canonical_layout,
+        "canonical_layout_sha256_observed": canonical_layout,
+        "canonical_key_set_sha256": canonical_key_set,
+        "canonical_key_order_sha256": f"{0xC000 + rank:064x}",
+        "canonical_key_set_local_sha256": f"{0xD000 + rank:064x}",
+        "canonical_key_count_local": 1,
+        "global_sha256": global_sha,
+        "rank_local_shard_binding_sha256": f"{0xB000 + rank:064x}",
+        "local_size": active_local_size,
+        "global_size": active_global_size,
+        "ownership_range": [
+            rank * active_local_size,
+            (rank + 1) * active_local_size,
+        ],
+        "canonical_layout_rank": rank,
+        "canonical_layout_mpi_size": checker.EXPECTED_MPI_SIZE,
+        "canonical_roundtrip_relative": 0.0,
+        "canonical_to_current_roundtrip_relative": 0.0,
+        "rhs_repeat": {"pass": True, "relative_difference": 0.0},
+        "canonical_values_loaded": True,
+        "owner_values_loaded": True,
+        "numeric_values_loaded": True,
+        "owner_row_array_loaded": True,
+        "canonical_values_retained": False,
+        "owner_values_retained": False,
+        "distributed": {
+            "label": label,
+            "role": "rhs",
+            "global_size": active_global_size,
+            "rank_records": rank_records,
+            "owner_local": True,
+            "numeric_allgather": False,
+            "full_numeric_replica": False,
+            "ownership_coverage_exact": True,
+            "global_sha256": global_sha,
+        },
+    }
+    return {
+        "load": load,
+        "condensed_rhs_built": True,
+        "interior_rhs_group_count": 3,
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+        "retained_during_callbacks": True,
+        "released_by_driver": True,
+        "destroyed_after_source": True,
+    }
+
+
+def _make_executed_checker_fixture(
+    tmp_path: Path,
+    *,
+    packet_ready: bool,
+) -> tuple[Path, Path]:
+    """Create an executed eight-rank checker root through the real file chain."""
+
+    root, manifest_path = _make_checker_fixture(tmp_path)
+    manifest = json.loads(manifest_path.read_text())
+    executed_plan = _qualification_plan()
+    executed_plan.update(
+        {
+            "status": "configured_same_process_exact",
+            "execution_mode": "same_process_exact",
+            "identity_only": False,
+            "frozen_owner_row_arrays": (
+                "loaded per source only after fixed metadata/shard/canonical/live-roundtrip validation; "
+                "never interpreted as row ids"
+            ),
+        }
+    )
+    manifest["exact_qualification_plan"] = executed_plan
+    frozen_provenance = _executed_provenance(checker.EXPECTED_FROZEN_RHS_SOURCE_SHA)
+    qualification_provenance = _executed_provenance(FORMAL_SOURCE_SHA)
+    descriptor_hashes_by_rank = [
+        {
+            label: f"{0x700 + rank * 10 + index:064x}"
+            for index, label in enumerate(checker._EXACT_SOURCE_ORDER)
+        }
+        for rank in range(checker.EXPECTED_MPI_SIZE)
+    ]
+    aggregate_refs: dict[str, dict[str, Any]] = {}
+    expected_packets_by_rank: dict[int, dict[str, dict[str, Any]]] = {}
+    packet_root = root / "packets"
+    aggregate_root = root / "aggregates"
+    labels = (
+        checker._EXACT_SOURCE_ORDER
+        if packet_ready
+        else checker._EXACT_SOURCE_ORDER[:2]
+    )
+    packet_labels = checker._EXACT_SOURCE_ORDER if packet_ready else ()
+    if packet_ready:
+        aggregate_root.mkdir(parents=True, exist_ok=True)
+    for label in packet_labels:
+        rank_manifests: list[dict[str, Any]] = []
+        for rank in range(checker.EXPECTED_MPI_SIZE):
+            gamma_l = np.arange(945, dtype=np.float64).astype(np.complex128)
+            gamma_l += rank + 1j
+            gamma_u = np.arange(945, dtype=np.float64).astype(np.complex128)
+            gamma_u += 2 * rank + 1j
+            arrays = {
+                "exact_output_canonical": np.asarray(
+                    [rank + 1.0 + 0.1j], dtype=np.complex128
+                ),
+                "exact_output_owner_rows": np.asarray(
+                    [rank + 1.0 + 0.2j], dtype=np.complex128
+                ),
+                "gamma_l_canonical": gamma_l,
+                "gamma_u_canonical": gamma_u,
+            }
+            identities = _executed_packet_identities(
+                rank=rank,
+                label=label,
+                arrays=arrays,
+                frozen_provenance=frozen_provenance,
+            )
+            packets = write_current_exact_solution_packet(
+                root=packet_root,
+                rank=rank,
+                label=label,
+                packet_values=arrays,
+                packet_identities=identities,
+                source_provenance=frozen_provenance,
+            )
+            expected_packets_by_rank.setdefault(rank, {})[label] = {
+                **identities,
+            }
+            expected_packets_by_rank[rank][label]["packet_write"] = packets
+            rank_manifests.append({"rank": rank, "roles": packets})
+        payload = {
+            "schema": "task040.v6.current_exact_packet_rank_manifest.v1",
+            "label": label,
+            "mpi_size": checker.EXPECTED_MPI_SIZE,
+            "rank_count": checker.EXPECTED_MPI_SIZE,
+            "role_count": 4,
+            "role_count_per_rank": 4,
+            "source_provenance": frozen_provenance,
+            "bare_f_operator_hash": HEX,
+            "qualification_source_provenance": qualification_provenance,
+            "frozen_rhs_descriptor_metadata_sha256_by_rank": descriptor_hashes_by_rank,
+            "frozen_rhs_descriptor_metadata_binding_sha256": hashlib.sha256(
+                json.dumps(
+                    descriptor_hashes_by_rank,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest(),
+            "rank_manifests": rank_manifests,
+            "numeric_allgather": False,
+            "full_numeric_replica": False,
+        }
+        aggregate_path = aggregate_root / f"{label}.json"
+        aggregate_sha = _write_json(aggregate_path, payload)
+        aggregate_refs[label] = {
+            "schema": payload["schema"],
+            "path": str(aggregate_path.relative_to(root)),
+            "sha256": aggregate_sha,
+            "label": label,
+            "mpi_size": checker.EXPECTED_MPI_SIZE,
+            "rank_count": checker.EXPECTED_MPI_SIZE,
+            "role_count": 4,
+            "role_count_per_rank": 4,
+            "source_provenance": frozen_provenance,
+            "bare_f_operator_hash": HEX,
+            "qualification_source_provenance": qualification_provenance,
+            "frozen_rhs_descriptor_metadata_sha256_by_rank": descriptor_hashes_by_rank,
+            "frozen_rhs_descriptor_metadata_binding_sha256": payload[
+                "frozen_rhs_descriptor_metadata_binding_sha256"
+            ],
+            "numeric_allgather": False,
+            "full_numeric_replica": False,
+        }
+
+    exact_references: list[dict[str, Any]] = []
+    compact_by_rank: dict[int, dict[str, Any]] = {}
+    for rank in range(checker.EXPECTED_MPI_SIZE):
+        records: list[dict[str, Any]] = []
+        for label in labels:
+            packet_audit = None
+            if packet_ready:
+                packet_audit = {
+                    "packet_write": expected_packets_by_rank[rank][label][
+                        "packet_write"
+                    ],
+                    "expected_packet_identities": {
+                        role: expected_packets_by_rank[rank][label][role]
+                        for role in (
+                            "exact_output_canonical",
+                            "exact_output_owner_rows",
+                            "gamma_l_canonical",
+                            "gamma_u_canonical",
+                        )
+                    },
+                }
+            fgmres = _executed_fgmres(
+                label,
+                packet_ready=packet_ready,
+                packet_audit=packet_audit,
+                gamma_rows_local_count=1890,
+                active_local_size=1890,
+            )
+            records.append(
+                {
+                    "label": label,
+                    "best_full_true_residual_relative": (
+                        5.0e-10 if packet_ready else 0.9
+                    ),
+                    "full_residual_gate_pass": packet_ready,
+                    "packetization_gate_pass": packet_ready,
+                    "adapter": _executed_adapter_audit(
+                        rank=rank,
+                        label=label,
+                        frozen_provenance=frozen_provenance,
+                    ),
+                    "fgmres": fgmres,
+                }
+            )
+        family = {
+            "schema": "task040.v6.exact_qualification_family.v1",
+            "ordered_labels": list(checker._EXACT_SOURCE_ORDER),
+            "initial_labels": list(checker._EXACT_SOURCE_ORDER[:2]),
+            "source_records": records,
+            "skipped_labels": (
+                [] if packet_ready else list(checker._EXACT_SOURCE_ORDER[2:])
+            ),
+            "initial_pair_gate_pass": packet_ready,
+            "all_sources_gate_pass": packet_ready,
+            "full_residual_tolerance": 1.0e-9,
+            "packetization_required": True,
+            "status": (
+                "completed_initial_pair_and_remaining_sources"
+                if packet_ready
+                else "completed_exact_numerical_gate_negative_continuation_allowed"
+            ),
+            "classification": (
+                "V6_EXACT_QUALIFICATION_READY"
+                if packet_ready
+                else "V6_EXACT_QUALIFICATION_GATE_FAIL"
+            ),
+            "normal_numerical_negative": not packet_ready,
+            "numeric_allgather": False,
+            "full_numeric_replica": False,
+        }
+        exact_result = {
+            "schema": "task040.v6_2.exact_qualification_packets.v1",
+            "status": (
+                "completed_all_sources_and_packet_aggregate"
+                if packet_ready
+                else "completed_exact_numerical_gate_negative_continuation_allowed"
+            ),
+            "classification": (
+                "V6_EXACT_QUALIFICATION_READY_WITH_PACKETS"
+                if packet_ready
+                else "V6_EXACT_QUALIFICATION_GATE_FAIL"
+            ),
+            "source_order": list(checker._EXACT_SOURCE_ORDER),
+            "family": family,
+            "packet_root": str(packet_root),
+            "initial_pair_publication": {
+                "initial_pair_gate_pass": packet_ready,
+                "status": (
+                    "passed_then_published"
+                    if packet_ready
+                    else "failed_then_discarded"
+                ),
+                "packet_root_exists_after_gate": packet_root.exists(),
+            },
+            "packet_aggregate": aggregate_refs if packet_ready else {},
+            "packet_aggregate_gate_pass": packet_ready,
+            "frozen_rhs_source_provenance": frozen_provenance,
+            "qualification_source_provenance": qualification_provenance,
+            "frozen_rhs_descriptor_metadata_sha256": descriptor_hashes_by_rank[rank],
+            "authority_identity_chain": {
+                "frozen_rhs_source_provenance": frozen_provenance,
+                "qualification_source_provenance": qualification_provenance,
+                "frozen_rhs_descriptor_metadata_sha256": descriptor_hashes_by_rank[rank],
+            },
+            "numeric_allgather": False,
+            "full_numeric_replica": False,
+        }
+        exact_output_vectors_loaded = checker._exact_output_vectors_loaded_count(
+            exact_result
+        )
+        compact, _identities = checker._exact_detail_semantic_signature(exact_result)
+        compact = checker._recomputed_exact_compact_summary(exact_result, compact)
+        compact_by_rank[rank] = compact
+        detail_path = root / f"rank{rank:04d}" / "v6_2_exact_qualification.json"
+        detail_path.parent.mkdir(parents=True, exist_ok=True)
+        detail_payload = {
+            "schema": "task040.v6_2.exact_qualification_rank_artifact.v1",
+            "rank": rank,
+            "mpi_size": checker.EXPECTED_MPI_SIZE,
+            "qualification_source_sha": FORMAL_SOURCE_SHA,
+            "frozen_rhs_source_sha": checker.EXPECTED_FROZEN_RHS_SOURCE_SHA,
+            "bare_f_operator_hash": HEX,
+            "frozen_rhs_source_provenance": frozen_provenance,
+            "qualification_source_provenance": qualification_provenance,
+            "formal_sequence_start_scope": (
+                "run_v6_2_interface_schur_entry_before_preflight_and_artifact_setup"
+            ),
+            "frozen_rhs_descriptor_metadata_sha256": descriptor_hashes_by_rank[rank],
+            "exact_result": exact_result,
+        }
+        detail_sha = _write_json(detail_path, detail_payload)
+        reference = {
+            "path": str(detail_path.relative_to(root)),
+            "sha256": detail_sha,
+            "rank": rank,
+            "mpi_size": checker.EXPECTED_MPI_SIZE,
+            "qualification_source_sha": FORMAL_SOURCE_SHA,
+            "frozen_rhs_source_sha": checker.EXPECTED_FROZEN_RHS_SOURCE_SHA,
+            "formal_sequence_start_scope": detail_payload[
+                "formal_sequence_start_scope"
+            ],
+            "frozen_rhs_descriptor_metadata_sha256": descriptor_hashes_by_rank[rank],
+        }
+        exact_references.append(reference)
+        rank_path = root / f"rank{rank:04d}.json"
+        rank_artifact = json.loads(rank_path.read_text())
+        rank_artifact.update(
+            {
+                "exact_qualification_artifact": reference,
+                "exact_qualification": compact,
+                "formal_sequence_start_scope": detail_payload[
+                    "formal_sequence_start_scope"
+                ],
+                "pde_solve": "exact_interface_fgmres_with_full_bare_f_residual_run",
+                "exact_output_vectors_loaded": exact_output_vectors_loaded,
+            }
+        )
+        _write_json(rank_path, rank_artifact)
+        manifest["rank_artifacts"][rank]["sha256"] = hashlib.sha256(
+            rank_path.read_bytes()
+        ).hexdigest()
+        manifest["rank_artifacts"][rank]["exact_qualification"] = compact
+        manifest["rank_artifacts"][rank]["formal_sequence_start_scope"] = detail_payload[
+            "formal_sequence_start_scope"
+        ]
+        manifest["rank_artifacts"][rank]["exact_qualification_artifact"] = reference
+        manifest["rank_artifacts"][rank][
+            "exact_output_vectors_loaded"
+        ] = exact_output_vectors_loaded
+        manifest["rank_artifacts"][rank]["pde_solve"] = rank_artifact["pde_solve"]
+
+    manifest["status"] = "completed_v6_2_exact_qualification"
+    manifest["source_sha"] = FORMAL_SOURCE_SHA
+    manifest["exact_output_vectors_loaded"] = manifest["rank_artifacts"][0][
+        "exact_output_vectors_loaded"
+    ]
+    manifest["pde_solve"] = "exact_interface_fgmres_with_full_bare_f_residual_run"
+    manifest["formal_sequence_start_scope"] = (
+        "run_v6_2_interface_schur_entry_before_preflight_and_artifact_setup"
+    )
+    manifest["exact_qualification_artifacts"] = exact_references
+    manifest["exact_qualification_artifact_chain_sha256"] = hashlib.sha256(
+        json.dumps(exact_references, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    manifest["exact_qualification"] = {
+        "executed": True,
+        "rank_consensus": True,
+        "summary": compact_by_rank[0],
+        "by_rank": None,
+    }
+    manifest["downstream"] = {
+        "status": "not_run_by_v6_3_not_connected",
+        "executed": False,
+    }
+    _write_json(manifest_path, manifest)
+    return root, manifest_path
+
+
+def _rewrite_executed_detail_reference(
+    root: Path,
+    manifest_path: Path,
+    *,
+    rank: int,
+    mutate: Callable[[dict[str, Any]], None],
+) -> None:
+    """Mutate one detail and refresh its outer rank/root hash chain."""
+
+    manifest = json.loads(manifest_path.read_text())
+    reference = deepcopy(manifest["exact_qualification_artifacts"][rank])
+    detail_path = root / str(reference["path"])
+    detail = json.loads(detail_path.read_text())
+    mutate(detail)
+    reference["sha256"] = _write_json(detail_path, detail)
+    manifest["exact_qualification_artifacts"][rank] = reference
+
+    rank_descriptor = manifest["rank_artifacts"][rank]
+    rank_path = root / str(rank_descriptor["path"])
+    rank_artifact = json.loads(rank_path.read_text())
+    rank_artifact["exact_qualification_artifact"] = reference
+    rank_descriptor["exact_qualification_artifact"] = reference
+    rank_descriptor["sha256"] = _write_json(rank_path, rank_artifact)
+    manifest["rank_artifacts"][rank] = rank_descriptor
+    manifest["exact_qualification_artifact_chain_sha256"] = hashlib.sha256(
+        json.dumps(
+            manifest["exact_qualification_artifacts"],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    _write_json(manifest_path, manifest)
+
+
+def _rehash_packet_value_and_outer_chain(
+    root: Path,
+    manifest_path: Path,
+    *,
+    label: str,
+    role: str,
+) -> None:
+    """Change one NPY and refresh packet/aggregate/detail wrappers only.
+
+    The live expected identity retained in each exact detail is deliberately
+    left unchanged.  A checker must therefore reject this fully rehashed
+    writer-side mutation instead of trusting the outer descriptor chain.
+    """
+
+    manifest = json.loads(manifest_path.read_text())
+    root_summary = manifest["exact_qualification"]["summary"]
+    aggregate_reference = deepcopy(root_summary["packet_aggregate_refs"][label])
+    aggregate_path = root / str(aggregate_reference["path"])
+    aggregate = json.loads(aggregate_path.read_text())
+    packet = deepcopy(aggregate["rank_manifests"][0]["roles"][role])
+    array_path = Path(str(packet["array_path"]))
+    values = np.load(array_path, allow_pickle=False)
+    values = np.asarray(values).copy()
+    values[0] += np.complex128(0.375 + 0.125j)
+    np.save(array_path, values, allow_pickle=False)
+    value_sha = hash_array_bytes_sha256(values)
+    packet.update(
+        {
+            "value_sha256": value_sha,
+            "array_sha256": value_sha,
+            "shard_sha256": hashlib.sha256(array_path.read_bytes()).hexdigest(),
+        }
+    )
+    metadata_path = Path(str(packet["path"]))
+    metadata = json.loads(metadata_path.read_text())
+    metadata.update(
+        {
+            "value_sha256": value_sha,
+            "array_sha256": value_sha,
+            "shard_sha256": packet["shard_sha256"],
+        }
+    )
+    packet["metadata_sha256"] = _write_json(metadata_path, metadata)
+    packet_manifest_path = Path(str(packet["manifest_path"]))
+    packet_manifest = json.loads(packet_manifest_path.read_text())
+    packet_manifest.update(
+        {
+            "value_sha256": value_sha,
+            "array_sha256": value_sha,
+            "shard_sha256": packet["shard_sha256"],
+            "metadata_sha256": packet["metadata_sha256"],
+        }
+    )
+    packet["manifest_sha256"] = _write_json(packet_manifest_path, packet_manifest)
+    aggregate["rank_manifests"][0]["roles"][role] = packet
+    aggregate_sha = _write_json(aggregate_path, aggregate)
+    aggregate_reference["sha256"] = aggregate_sha
+
+    for rank in range(checker.EXPECTED_MPI_SIZE):
+        detail_reference = manifest["exact_qualification_artifacts"][rank]
+        detail_path = root / str(detail_reference["path"])
+        detail = json.loads(detail_path.read_text())
+        exact_result = detail["exact_result"]
+        exact_result["packet_aggregate"][label]["sha256"] = aggregate_sha
+        compact, _identities = checker._exact_detail_semantic_signature(exact_result)
+        compact = checker._recomputed_exact_compact_summary(exact_result, compact)
+        detail_reference = deepcopy(detail_reference)
+        detail_reference["sha256"] = _write_json(detail_path, detail)
+        manifest["exact_qualification_artifacts"][rank] = detail_reference
+
+        rank_descriptor = manifest["rank_artifacts"][rank]
+        rank_path = root / str(rank_descriptor["path"])
+        rank_artifact = json.loads(rank_path.read_text())
+        rank_artifact["exact_qualification_artifact"] = detail_reference
+        rank_artifact["exact_qualification"] = compact
+        rank_descriptor["exact_qualification_artifact"] = detail_reference
+        rank_descriptor["exact_qualification"] = compact
+        rank_descriptor["sha256"] = _write_json(rank_path, rank_artifact)
+        manifest["rank_artifacts"][rank] = rank_descriptor
+
+    manifest["exact_qualification"]["summary"] = compact
+    manifest["exact_qualification_artifact_chain_sha256"] = hashlib.sha256(
+        json.dumps(
+            manifest["exact_qualification_artifacts"],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    _write_json(manifest_path, manifest)
+
+
+def _run_checker_cli(root: Path, output: Path) -> tuple[int, dict[str, Any]]:
+    exit_code = checker.main(
+        [
+            "--formal-root",
+            str(root),
+            "--formal-source-sha",
+            FORMAL_SOURCE_SHA,
+            "--checker-source-sha",
+            CHECKER_SOURCE_SHA,
+            "--output",
+            str(output),
+        ]
+    )
+    return exit_code, json.loads(output.read_text())
+
+
+def test_v6_2_runner_exact_artifact_reference_binds_formal_scope(
+    tmp_path: Path,
+) -> None:
+    exact_result = {
+        "frozen_rhs_source_provenance": _executed_provenance(
+            checker.EXPECTED_FROZEN_RHS_SOURCE_SHA
+        ),
+        "frozen_rhs_descriptor_metadata_sha256": {
+            label: f"{index + 1:064x}"
+            for index, label in enumerate(checker._EXACT_SOURCE_ORDER)
+        },
+    }
+    exact_path = tmp_path / "rank0000" / "v6_2_exact_qualification.json"
+    reference = runner._build_exact_qualification_artifact_reference(
+        rank=0,
+        mpi_size=checker.EXPECTED_MPI_SIZE,
+        exact_rank_path=exact_path,
+        output_root=tmp_path,
+        source_sha=FORMAL_SOURCE_SHA,
+        exact_result=exact_result,
+        formal_sequence_start_scope=runner.V6_2_FORMAL_SEQUENCE_START_SCOPE,
+    )
+    assert reference["path"] == "rank0000/v6_2_exact_qualification.json"
+    assert (
+        reference["formal_sequence_start_scope"]
+        == "run_v6_2_interface_schur_entry_before_preflight_and_artifact_setup"
+    )
+    assert reference["qualification_source_sha"] == FORMAL_SOURCE_SHA
+
+
+@pytest.mark.parametrize("packet_ready", [False, True])
+def test_v6_2_checker_cli_reopens_executed_exact_chain(
+    tmp_path: Path,
+    packet_ready: bool,
+) -> None:
+    root, _manifest_path = _make_executed_checker_fixture(
+        tmp_path,
+        packet_ready=packet_ready,
+    )
+    output = tmp_path / ("packet-ready.json" if packet_ready else "negative.json")
+    exit_code, observed = _run_checker_cli(root, output)
+    assert exit_code == 0
+    assert observed["evidence_valid"] is True
+    assert observed["checker_pass"] is True
+    assert observed["executed_exact"] is True
+    assert observed["npy_read"] is packet_ready
+    assert observed["evidence_checks"]["npy_read_contract"] is True
+    if packet_ready:
+        assert observed["gate_pass"] is True
+        assert observed["classification"] == "V6_2_FULL_INTERFACE_SCHUR_PASS"
+        assert observed["gate_checks"]["exact_packet_aggregate_gate"] is True
+        assert any(item.get("kind") == "npy" for item in observed["read_files"])
+    else:
+        assert observed["gate_pass"] is False
+        assert (
+            observed["classification"]
+            == "V6_2_FULL_INTERFACE_SCHUR_NUMERICAL_NEGATIVE"
+        )
+        assert observed["gate_checks"]["exact_detail_numerical_gate"] is False
+        assert all(item.get("kind") != "npy" for item in observed["read_files"])
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        "live_roundtrip",
+        "producer_roundtrip",
+        "producer_roundtrip_missing",
+        "loaded_flag",
+        "retained_flag",
+        "global_hash",
+        "owner_coverage",
+        "recovery",
+        "recovery_paired_counts",
+    ],
+)
+def test_v6_2_checker_rejects_rehashed_adapter_audit_tamper(
+    tmp_path: Path,
+    tamper: str,
+) -> None:
+    root, manifest_path = _make_executed_checker_fixture(
+        tmp_path,
+        packet_ready=False,
+    )
+
+    def mutate(detail: dict[str, Any]) -> None:
+        record = detail["exact_result"]["family"]["source_records"][0]
+        adapter = record["adapter"]
+        load = adapter["load"]
+        if tamper == "live_roundtrip":
+            load["canonical_roundtrip_relative"] = 1.0e-6
+        elif tamper == "producer_roundtrip":
+            load["canonical_to_current_roundtrip_relative"] = 1.0e-6
+        elif tamper == "producer_roundtrip_missing":
+            load.pop("canonical_to_current_roundtrip_relative")
+        elif tamper == "loaded_flag":
+            load["canonical_values_loaded"] = False
+        elif tamper == "retained_flag":
+            load["canonical_values_retained"] = True
+        elif tamper == "global_hash":
+            wrong = "e" * 64
+            load["global_sha256"] = wrong
+            load["distributed"]["global_sha256"] = wrong
+            for rank_record in load["distributed"]["rank_records"]:
+                rank_record["global_sha256"] = wrong
+        elif tamper == "owner_coverage":
+            load["distributed"]["rank_records"][1]["ownership_range"] = [2, 3]
+        elif tamper == "recovery":
+            record["fgmres"]["checkpoint_history"][0]["recovery"][
+                "gamma_rows_local"
+            ]["count"] = 1
+        elif tamper == "recovery_paired_counts":
+            recovery = record["fgmres"]["checkpoint_history"][0]["recovery"]
+            recovery["gamma_rows_local"]["count"] = 1889
+            recovery["interior_rows_local"]["count"] = 1
+        else:
+            raise AssertionError(f"unexpected adapter tamper: {tamper}")
+
+    _rewrite_executed_detail_reference(
+        root,
+        manifest_path,
+        rank=0,
+        mutate=mutate,
+    )
+    output = tmp_path / f"adapter-{tamper}.json"
+    exit_code, observed = _run_checker_cli(root, output)
+    assert exit_code == 2
+    assert observed["checker_pass"] is False
+    assert observed["evidence_valid"] is False
+    assert observed["classification"] == "IMPLEMENTATION_FAILURE"
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        "exact_residual",
+        "exact_classification",
+        "conditional_authorization",
+        "conditional_prefix_history",
+        "formal_scope",
+        "root_compact_summary",
+    ],
+)
+def test_v6_2_checker_rejects_rehashed_executed_detail_tamper(
+    tmp_path: Path,
+    tamper: str,
+) -> None:
+    root, manifest_path = _make_executed_checker_fixture(
+        tmp_path,
+        packet_ready=False,
+    )
+
+    def mutate(detail: dict[str, Any]) -> None:
+        exact_result = detail["exact_result"]
+        record = exact_result["family"]["source_records"][0]
+        fgmres = record["fgmres"]
+        if tamper == "exact_residual":
+            fgmres["checkpoint_history"][0]["full_true_residual_norm"] = 0.8
+        elif tamper == "exact_classification":
+            exact_result["classification"] = "V6_EXACT_QUALIFICATION_READY_WITH_PACKETS"
+        elif tamper == "conditional_authorization":
+            fgmres["conditional_authorized"]["256"] = True
+        elif tamper == "conditional_prefix_history":
+            fgmres["conditional_gate_observations"]["128"][
+                "residual_observation"
+            ]["observed_checkpoint_sequence"] = [16, 32, 128]
+        elif tamper == "formal_scope":
+            detail["formal_sequence_start_scope"] = "tampered_scope"
+        else:
+            raise AssertionError(f"unexpected detail tamper: {tamper}")
+
+    if tamper == "root_compact_summary":
+        manifest = json.loads(manifest_path.read_text())
+        manifest["exact_qualification"]["summary"]["classification"] = "tampered"
+        _write_json(manifest_path, manifest)
+    else:
+        _rewrite_executed_detail_reference(
+            root,
+            manifest_path,
+            rank=0,
+            mutate=mutate,
+        )
+
+    output = tmp_path / f"{tamper}.json"
+    exit_code, observed = _run_checker_cli(root, output)
+    assert exit_code == 2
+    assert observed["checker_pass"] is False
+    assert observed["evidence_valid"] is False
+    assert observed["classification"] == "IMPLEMENTATION_FAILURE"
+
+
+def test_v6_2_checker_rejects_npy_value_after_rehashing_outer_chain(
+    tmp_path: Path,
+) -> None:
+    root, manifest_path = _make_executed_checker_fixture(
+        tmp_path,
+        packet_ready=True,
+    )
+    _rehash_packet_value_and_outer_chain(
+        root,
+        manifest_path,
+        label=checker._EXACT_SOURCE_ORDER[0],
+        role="exact_output_canonical",
+    )
+    output = tmp_path / "npy-value-tamper.json"
+    exit_code, observed = _run_checker_cli(root, output)
+    assert exit_code == 2
+    assert observed["checker_pass"] is False
+    assert observed["evidence_valid"] is False
+    assert observed["classification"] == "IMPLEMENTATION_FAILURE"
+
+
+def test_v6_2_checker_recomputes_packet_aggregate_distributed_contract(
+    tmp_path: Path,
+) -> None:
+    (
+        root,
+        aggregate,
+        expected_by_rank,
+        frozen_provenance,
+        qualification_provenance,
+    ) = _make_packet_aggregate_checker_fixture(tmp_path)
+    valid, error = checker._check_packet_aggregate_chain(
+        root,
+        "aggregate_checker",
+        aggregate,
+        [],
+        expected_identities_by_rank=expected_by_rank,
+        expected_qualification_provenance=qualification_provenance,
+        expected_frozen_source_provenance=frozen_provenance,
+        expected_bare_f_operator_hash=HEX,
+    )
+    assert valid, error
+
+
+def test_v6_2_checker_rejects_rehashed_aggregate_count_tamper(
+    tmp_path: Path,
+) -> None:
+    (
+        root,
+        aggregate,
+        expected_by_rank,
+        frozen_provenance,
+        qualification_provenance,
+    ) = _make_packet_aggregate_checker_fixture(tmp_path)
+    aggregate_path = root / str(aggregate["path"])
+    payload = json.loads(aggregate_path.read_text())
+    payload["role_count"] = 3
+    aggregate["role_count"] = 3
+    aggregate["sha256"] = _write_json(aggregate_path, payload)
+    valid, error = checker._check_packet_aggregate_chain(
+        root,
+        "aggregate_checker",
+        aggregate,
+        [],
+        expected_identities_by_rank=expected_by_rank,
+        expected_qualification_provenance=qualification_provenance,
+        expected_frozen_source_provenance=frozen_provenance,
+        expected_bare_f_operator_hash=HEX,
+    )
+    assert not valid, error
+
+
+@pytest.mark.parametrize("tamper", ["ownership_gap", "canonical_count"])
+def test_v6_2_checker_rejects_rehashed_packet_aggregate_layout_tamper(
+    tmp_path: Path,
+    tamper: str,
+) -> None:
+    (
+        root,
+        aggregate,
+        expected_by_rank,
+        frozen_provenance,
+        qualification_provenance,
+    ) = _make_packet_aggregate_checker_fixture(tmp_path)
+    rank = 1 if tamper == "ownership_gap" else 0
+    role = (
+        "exact_output_owner_rows"
+        if tamper == "ownership_gap"
+        else "exact_output_canonical"
+    )
+    updates: dict[str, Any]
+    values = None
+    if tamper == "ownership_gap":
+        updates = {"ownership_range": [2, 3]}
+    else:
+        updates = {"canonical_key_count_local": 2}
+        values = np.asarray([1.0 + 0.5j, 2.0 + 0.5j], dtype=np.complex128)
+    packet = _rewrite_packet_for_checker_tamper(
+        expected_by_rank[rank][role], updates=updates, values=values
+    )
+    expected_by_rank[rank][role] = packet
+    tampered_aggregate = _rewrite_checker_aggregate(
+        root,
+        aggregate,
+        rank=rank,
+        role=role,
+        packet=packet,
+    )
+    valid, error = checker._check_packet_aggregate_chain(
+        root,
+        "aggregate_checker",
+        tampered_aggregate,
+        [],
+        expected_identities_by_rank=expected_by_rank,
+        expected_qualification_provenance=qualification_provenance,
+        expected_frozen_source_provenance=frozen_provenance,
+        expected_bare_f_operator_hash=HEX,
+    )
+    assert not valid, error
+
+
+@pytest.mark.parametrize("tamper", ["descriptor_only", "descriptor_and_payload"])
+def test_v6_2_checker_rejects_rehashed_packet_aggregate_bare_hash_tamper(
+    tmp_path: Path,
+    tamper: str,
+) -> None:
+    (
+        root,
+        aggregate,
+        expected_by_rank,
+        frozen_provenance,
+        qualification_provenance,
+    ) = _make_packet_aggregate_checker_fixture(tmp_path)
+    wrong_hash = "e" * 64
+    tampered_aggregate = dict(aggregate)
+    tampered_aggregate["bare_f_operator_hash"] = wrong_hash
+    aggregate_path = root / str(aggregate["path"])
+    if tamper == "descriptor_and_payload":
+        payload = json.loads(aggregate_path.read_text())
+        payload["bare_f_operator_hash"] = wrong_hash
+        tampered_sha = _write_json(aggregate_path, payload)
+        tampered_aggregate["sha256"] = tampered_sha
+    valid, error = checker._check_packet_aggregate_chain(
+        root,
+        "aggregate_checker",
+        tampered_aggregate,
+        [],
+        expected_identities_by_rank=expected_by_rank,
+        expected_qualification_provenance=qualification_provenance,
+        expected_frozen_source_provenance=frozen_provenance,
+        expected_bare_f_operator_hash=HEX,
+    )
+    assert not valid, error
+
+
+def test_v6_2_checker_rejects_rehashed_cross_role_source_definition_tamper(
+    tmp_path: Path,
+) -> None:
+    (
+        root,
+        aggregate,
+        expected_by_rank,
+        frozen_provenance,
+        qualification_provenance,
+    ) = _make_packet_aggregate_checker_fixture(tmp_path)
+    role = "gamma_l_canonical"
+    packet = _rewrite_packet_for_checker_tamper(
+        expected_by_rank[0][role],
+        updates={"source_definition_sha256": "d" * 64},
+    )
+    expected_by_rank[0][role] = packet
+    aggregate = _rewrite_checker_aggregate(
+        root,
+        aggregate,
+        rank=0,
+        role=role,
+        packet=packet,
+    )
+    valid, error = checker._check_packet_aggregate_chain(
+        root,
+        "aggregate_checker",
+        aggregate,
+        [],
+        expected_identities_by_rank=expected_by_rank,
+        expected_qualification_provenance=qualification_provenance,
+        expected_frozen_source_provenance=frozen_provenance,
+        expected_bare_f_operator_hash=HEX,
+    )
+    assert not valid, error
+
+
+def test_v6_2_checker_rejects_self_consistent_wrong_packet_writer_identity(
+    tmp_path: Path,
+) -> None:
+    root, _aggregate, expected_by_rank, _frozen, _qualification = (
+        _make_packet_aggregate_checker_fixture(tmp_path)
+    )
+    packet = dict(expected_by_rank[0]["exact_output_canonical"])
+    wrong_identity = "test.writer"
+    packet["writer_identity"] = wrong_identity
+    metadata_path = Path(str(packet["path"]))
+    manifest_path = Path(str(packet["manifest_path"]))
+    metadata = json.loads(metadata_path.read_text())
+    metadata["writer_identity"] = wrong_identity
+    metadata_sha = _write_json(metadata_path, metadata)
+    manifest = json.loads(manifest_path.read_text())
+    manifest["writer_identity"] = wrong_identity
+    manifest["metadata_sha256"] = metadata_sha
+    manifest_sha = _write_json(manifest_path, manifest)
+    packet["metadata_sha256"] = metadata_sha
+    packet["manifest_sha256"] = manifest_sha
+    valid, error = checker._check_packet_file_chain(
+        root,
+        "aggregate_checker",
+        "exact_output_canonical",
+        packet,
+        [],
+    )
+    assert not valid
+    assert error is not None and "writer identity" in error
 
 
 def test_v6_2_linearity_probe_copies_source_into_combined() -> None:
@@ -947,11 +2505,11 @@ def test_v6_2_plan_binds_resource_and_post_identity_qualification(
     assert plan["threads"] == 1
     assert plan["absolute_terminate_memory_bytes"] == 45 * 2**30
     assert plan["minimum_mem_available_bytes"] == 49 * 2**30
-    assert plan["exact_qualification_plan"]["status"] == "designed_not_run"
+    assert plan["exact_qualification_plan"]["status"] == "configured_same_process_exact"
     assert plan["exact_qualification_plan"]["checkpoints"] == [16, 32, 64, 128]
     assert (
         plan["exact_qualification_plan"]["frozen_owner_row_arrays"]
-        == "not_loaded; complex PETSc owner-order values, never row ids"
+        .startswith("loaded per source only after")
     )
     assert "raw_global_row_remap" in plan["forbidden"]
     assert "full_side_factor" in plan["forbidden"]
@@ -966,10 +2524,18 @@ def test_v6_2_plan_binds_resource_and_post_identity_qualification(
     assert watched["watchdog"]["hard_stop_bytes"] == 45 * 2**30
     assert watched["watchdog"]["minimum_mem_available_bytes"] == 49 * 2**30
     assert watched["watchdog"]["process_tree_watchdog_enabled"] is True
-    assert watched["watchdog"]["v6_2_identity_only"] is True
+    assert watched["watchdog"]["v6_2_identity_only"] is False
     assert "v6_2_preflight_only" not in watched["watchdog"]
     assert "--watchdog-hard-stop-bytes" in watched["worker_argv"]
     assert watched["worker_argv"].count("--v6-2-interface-schur") == 1
+
+
+@pytest.mark.parametrize("restart", [True, False, 0, -1, 3.5, "32"])
+def test_v6_2_formal_numeric_options_reject_invalid_restart(
+    restart: Any,
+) -> None:
+    with pytest.raises(ValueError, match="restart must be a positive integer"):
+        runner._v6_2_formal_numeric_options({"restart": restart})
 
 
 def test_v6_2_resource_preflight_uses_observed_environment_gate(
@@ -1037,10 +2603,112 @@ def test_v6_2_checker_validates_rank_artifacts_and_gate(tmp_path: Path) -> None:
     assert result["checker_pass"] is True
     assert result["gate_pass"] is True
     assert result["classification"] == "V6_2_FULL_INTERFACE_SCHUR_PASS"
+    assert result["evidence_checks"]["watchdog_audit"] is True
+    assert result["watchdog_audit"]["valid"] is True
     assert result["evidence_checks"]["evidence_rank_mapping_count_observed"] is True
     assert result["gate_checks"]["rank_deterministic_scalars"] is True
     assert result["gate_checks"]["rank_mapping_count_sum"] is True
     assert all(not item["path"].endswith(".npy") for item in result["read_files"])
+    watchdog_path = root.parent / "watchdog_summary.json"
+    watchdog_summary = json.loads(watchdog_path.read_text(encoding="utf-8"))
+    watchdog_summary["peak_rss_bytes"] = checker.EXPECTED_HARD_STOP_BYTES
+    _write_json(watchdog_path, watchdog_summary)
+    failed = checker.check_v6_2_interface_schur(
+        formal_root=root,
+        formal_source_sha=FORMAL_SOURCE_SHA,
+        checker_source_sha=CHECKER_SOURCE_SHA,
+        output=output,
+    )
+    assert failed["evidence_checks"]["watchdog_audit"] is False
+    assert failed["evidence_valid"] is False
+    assert failed["checker_pass"] is False
+
+
+def test_v6_2_checker_accepts_requested_checkpoint_happy_breakdown() -> None:
+    def source_record(label: str) -> dict[str, Any]:
+        row = {
+            "label": label,
+            "iteration": 16,
+            "restart": 16,
+            "checkpoint_kind": "mandatory",
+            "interface_true_residual_norm": 1.0,
+            "interface_true_residual_relative": 1.0,
+            "full_true_residual_norm": 0.5,
+            "full_true_residual_relative": 0.5,
+            "rhs_norm_denominator": 1.0,
+            "interface_rhs_norm_denominator": 1.0,
+            "full_residual_tolerance": 1.0e-9,
+            "finite": True,
+            "accepted_full_solution": False,
+        }
+        fgmres = {
+            "schema": "task040.v6.exact_interface_fgmres.v1",
+            "label": label,
+            "restart": 16,
+            "mandatory_checkpoints": [16, 32, 64, 128],
+            "conditional_checkpoints": [256, 512],
+            "checkpoints": {"16": row},
+            "final_iteration": 16,
+            "final_record": row,
+            "early_final_record": None,
+            "checkpoint_history": [row],
+            "stopped_at_happy_breakdown": True,
+            "conditional_authorized": {"256": False, "512": False},
+            "conditional_completed": {"256": False, "512": False},
+            "conditional_gate_observations": {},
+            "full_residual_tolerance": 1.0e-9,
+            "accepted_solution_present": False,
+            "accepted_solution_consumed": False,
+            "accepted_solution_released_by_driver": False,
+            "numeric_allgather": False,
+            "full_numeric_replica": False,
+            "identity_preconditioner": True,
+            "active_rhs_unchanged": True,
+            "condensed_rhs_unchanged": True,
+            "full_rhs_norm": 1.0,
+            "interface_rhs_norm": 1.0,
+            "active_rhs_initial_sha256": HEX,
+            "active_rhs_final_sha256": HEX,
+            "condensed_rhs_initial_sha256": HEX,
+            "condensed_rhs_final_sha256": HEX,
+        }
+        return {
+            "label": label,
+            "best_full_true_residual_relative": 0.5,
+            "full_residual_gate_pass": False,
+            "packetization_gate_pass": False,
+            "fgmres": fgmres,
+        }
+
+    records = [source_record(label) for label in checker._EXACT_SOURCE_ORDER[:2]]
+    family = {
+        "schema": "task040.v6.exact_qualification_family.v1",
+        "ordered_labels": list(checker._EXACT_SOURCE_ORDER),
+        "initial_labels": list(checker._EXACT_SOURCE_ORDER[:2]),
+        "source_records": records,
+        "skipped_labels": list(checker._EXACT_SOURCE_ORDER[2:]),
+        "initial_pair_gate_pass": False,
+        "all_sources_gate_pass": False,
+        "full_residual_tolerance": 1.0e-9,
+        "packetization_required": True,
+        "status": "completed_exact_numerical_gate_negative_continuation_allowed",
+        "classification": "V6_EXACT_QUALIFICATION_GATE_FAIL",
+        "normal_numerical_negative": True,
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+    }
+    exact_result = {
+        "schema": "task040.v6_2.exact_qualification_packets.v1",
+        "status": "completed_exact_numerical_gate_negative_continuation_allowed",
+        "classification": "V6_EXACT_QUALIFICATION_GATE_FAIL",
+        "source_order": list(checker._EXACT_SOURCE_ORDER),
+        "family": family,
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+    }
+    summary, _identities = checker._exact_detail_semantic_signature(exact_result)
+    assert summary["numerical_negative"] is True
+    assert summary["source_records"][0]["checkpoint_history"][0]["iteration"] == 16
 
 
 def test_v6_2_checker_rejects_rank_scalar_tamper_after_descriptor_update(
@@ -1076,7 +2744,383 @@ def test_v6_2_checker_rejects_rank_scalar_tamper_after_descriptor_update(
     observed = json.loads(output.read_text())
     assert observed["checker_pass"] is False
     assert observed["classification"] == "IMPLEMENTATION_FAILURE"
-    assert observed["evidence_checks"]["evidence_rank_zero_linearity_consistent"] is False
+    assert observed["evidence_checks"][
+        "evidence_rank_zero_linearity_consistent"
+    ] is False
+
+
+def _make_conditional_positive_checker_fixture(
+    tmp_path: Path,
+) -> tuple[Path, Path]:
+    """Build a no-packet exact negative that legitimately reaches 512."""
+
+    root, manifest_path = _make_executed_checker_fixture(
+        tmp_path,
+        packet_ready=False,
+    )
+    manifest = json.loads(manifest_path.read_text())
+    compact_by_rank: dict[int, dict[str, Any]] = {}
+    residuals = {
+        16: 0.9,
+        32: 0.8,
+        64: 0.7,
+        128: 0.6,
+        256: 0.005,
+        512: 0.004,
+    }
+    for rank in range(checker.EXPECTED_MPI_SIZE):
+        reference = manifest["exact_qualification_artifacts"][rank]
+        detail_path = root / str(reference["path"])
+        detail = json.loads(detail_path.read_text())
+        exact_result = detail["exact_result"]
+        expected_gamma_local_count = manifest["rank_artifacts"][rank][
+            "canonical_mapping_count"
+        ]
+        for record in exact_result["family"]["source_records"]:
+            label = str(record["label"])
+            active_local_size = record["adapter"]["load"]["local_size"]
+            rows = []
+            for iteration, value in residuals.items():
+                row = _executed_checkpoint(
+                    label,
+                    iteration,
+                    value,
+                    accepted=False,
+                    gamma_rows_local_count=expected_gamma_local_count,
+                    active_local_size=active_local_size,
+                )
+                if iteration in {256, 512}:
+                    row["checkpoint_kind"] = "conditional"
+                rows.append(row)
+            fgmres = record["fgmres"]
+            fgmres.update(
+                {
+                    "checkpoints": {
+                        str(row["iteration"]): row for row in rows
+                    },
+                    "final_iteration": 512,
+                    "final_record": rows[-1],
+                    "checkpoint_history": rows,
+                    "conditional_authorized": {"256": True, "512": True},
+                    "conditional_completed": {"256": True, "512": True},
+                    "conditional_gate_observations": {
+                        "128": _conditional_positive_128_observation(
+                            residuals
+                        ),
+                        "256": _conditional_positive_256_observation(
+                            residuals
+                        ),
+                    },
+                    "accepted_solution_present": False,
+                    "accepted_solution_consumed": False,
+                    "accepted_solution_released_by_driver": False,
+                    "accepted_solution_iteration": None,
+                }
+            )
+            record["best_full_true_residual_relative"] = residuals[512]
+            record["full_residual_gate_pass"] = False
+            record["packetization_gate_pass"] = False
+        compact, _identities = checker._exact_detail_semantic_signature(
+            exact_result
+        )
+        compact = checker._recomputed_exact_compact_summary(
+            exact_result,
+            compact,
+        )
+        detail_sha = _write_json(detail_path, detail)
+        reference = deepcopy(reference)
+        reference["sha256"] = detail_sha
+        manifest["exact_qualification_artifacts"][rank] = reference
+        rank_descriptor = manifest["rank_artifacts"][rank]
+        rank_path = root / str(rank_descriptor["path"])
+        rank_artifact = json.loads(rank_path.read_text())
+        rank_artifact["exact_qualification_artifact"] = reference
+        rank_artifact["exact_qualification"] = compact
+        rank_descriptor["exact_qualification_artifact"] = reference
+        rank_descriptor["exact_qualification"] = compact
+        rank_descriptor["sha256"] = _write_json(rank_path, rank_artifact)
+        manifest["rank_artifacts"][rank] = rank_descriptor
+        compact_by_rank[rank] = compact
+    assert len({json.dumps(value, sort_keys=True) for value in compact_by_rank.values()}) == 1
+    manifest["exact_qualification"]["summary"] = compact_by_rank[0]
+    manifest["exact_qualification_artifact_chain_sha256"] = hashlib.sha256(
+        json.dumps(
+            manifest["exact_qualification_artifacts"],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    _write_json(manifest_path, manifest)
+    return root, manifest_path
+
+
+def _conditional_positive_resource() -> dict[str, Any]:
+    return {
+        "pass": True,
+        "hard_limit_bytes": 45 * 2**30,
+        "rss_bytes": 1024,
+        "swap_bytes": 0.0,
+        "all_status_readable": True,
+        "wall_observation": {
+            "elapsed_seconds": 2.0,
+            "budget_seconds": 21600.0,
+        },
+    }
+
+
+def _conditional_positive_128_observation(
+    residuals: Mapping[int, float],
+) -> dict[str, Any]:
+    observation = _executed_128_observation(residuals[128])
+    drop = float(np.log10(residuals[64] / residuals[128]))
+    observation["residual_observation"].update(
+        {
+            "r64": residuals[64],
+            "r128": residuals[128],
+            "drop_64_to_128_decade": drop,
+        }
+    )
+    return observation
+
+
+def _conditional_positive_256_observation(
+    residuals: Mapping[int, float],
+) -> dict[str, Any]:
+    resource = _conditional_positive_resource()
+    wall = dict(resource["wall_observation"])
+    return {
+        "target_checkpoint": 512,
+        "residual_gate": True,
+        "authorized": True,
+        "authorization_consensus": True,
+        "authorized_by_rank": [True] * checker.EXPECTED_MPI_SIZE,
+        "resource_snapshot": resource,
+        "resource_observation": {
+            "current_sample_only": True,
+            "current_rss_bytes": resource["rss_bytes"],
+            "current_swap_bytes": resource["swap_bytes"],
+            "all_status_readable": True,
+            "pass": True,
+        },
+        "resource_gate": True,
+        "wall_observation": wall,
+        "wall_gate": True,
+        "residual_observation": {
+            "checkpoint": 256,
+            "observed_checkpoint_sequence": [16, 32, 64, 128, 256],
+            "required_checkpoint_iterations": [16, 32, 64, 128, 256],
+            "r64": residuals[64],
+            "r128": residuals[128],
+            "r256": residuals[256],
+            "drop_64_to_128_decade": None,
+            "required_checkpoint_set_complete": True,
+            "monotone_history": True,
+        },
+    }
+
+
+def _rewrite_executed_detail_chain(
+    root: Path,
+    manifest_path: Path,
+    *,
+    mutate: Callable[[dict[str, Any]], None],
+    preserve_compact: bool = False,
+) -> None:
+    """Rehash exact details and their outer references.
+
+    Invalid semantic tamper fixtures must be written without asking the
+    checker to recompute their compact summary.  In that mode the original
+    compact summary remains the recorded claim while every changed detail
+    and outer reference is still hash-bound.
+    """
+
+    manifest = json.loads(manifest_path.read_text())
+    compact_by_rank: dict[int, dict[str, Any]] = {}
+    for rank in range(checker.EXPECTED_MPI_SIZE):
+        reference = deepcopy(manifest["exact_qualification_artifacts"][rank])
+        detail_path = root / str(reference["path"])
+        detail = json.loads(detail_path.read_text())
+        rank_descriptor = manifest["rank_artifacts"][rank]
+        rank_path = root / str(rank_descriptor["path"])
+        rank_artifact = json.loads(rank_path.read_text())
+        original_compact = deepcopy(rank_artifact["exact_qualification"])
+        mutate(detail)
+        if preserve_compact:
+            compact = original_compact
+        else:
+            exact_result = detail["exact_result"]
+            compact, _identities = checker._exact_detail_semantic_signature(
+                exact_result
+            )
+            compact = checker._recomputed_exact_compact_summary(
+                exact_result,
+                compact,
+            )
+        reference["sha256"] = _write_json(detail_path, detail)
+        manifest["exact_qualification_artifacts"][rank] = reference
+        rank_artifact["exact_qualification_artifact"] = reference
+        rank_artifact["exact_qualification"] = compact
+        rank_descriptor["exact_qualification_artifact"] = reference
+        rank_descriptor["exact_qualification"] = compact
+        rank_descriptor["sha256"] = _write_json(rank_path, rank_artifact)
+        manifest["rank_artifacts"][rank] = rank_descriptor
+        compact_by_rank[rank] = compact
+    manifest["exact_qualification"]["summary"] = compact_by_rank[0]
+    manifest["exact_qualification_artifact_chain_sha256"] = hashlib.sha256(
+        json.dumps(
+            manifest["exact_qualification_artifacts"],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    _write_json(manifest_path, manifest)
+
+
+def _rewrite_full_formal_scope_chain(
+    root: Path,
+    manifest_path: Path,
+    *,
+    scope: str,
+) -> None:
+    """Change every formal-scope copy while preserving the outer hashes."""
+
+    manifest = json.loads(manifest_path.read_text())
+    references: list[dict[str, Any]] = []
+    for rank in range(checker.EXPECTED_MPI_SIZE):
+        reference = deepcopy(manifest["exact_qualification_artifacts"][rank])
+        detail_path = root / str(reference["path"])
+        detail = json.loads(detail_path.read_text())
+        detail["formal_sequence_start_scope"] = scope
+        reference["formal_sequence_start_scope"] = scope
+        reference["sha256"] = _write_json(detail_path, detail)
+        references.append(reference)
+        rank_descriptor = manifest["rank_artifacts"][rank]
+        rank_path = root / str(rank_descriptor["path"])
+        rank_artifact = json.loads(rank_path.read_text())
+        rank_artifact["formal_sequence_start_scope"] = scope
+        rank_artifact["exact_qualification_artifact"] = reference
+        rank_descriptor["formal_sequence_start_scope"] = scope
+        rank_descriptor["exact_qualification_artifact"] = reference
+        rank_descriptor["sha256"] = _write_json(rank_path, rank_artifact)
+        manifest["rank_artifacts"][rank] = rank_descriptor
+    manifest["exact_qualification_artifacts"] = references
+    manifest["formal_sequence_start_scope"] = scope
+    manifest["exact_qualification_artifact_chain_sha256"] = hashlib.sha256(
+        json.dumps(references, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    _write_json(manifest_path, manifest)
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [None, "authorization", "resource", "wall", "monotone"],
+)
+def test_v6_2_checker_recomputes_conditional_256_512_gate(
+    tmp_path: Path,
+    tamper: str | None,
+) -> None:
+    root, manifest_path = _make_conditional_positive_checker_fixture(tmp_path)
+    if tamper is not None:
+
+        def mutate(detail: dict[str, Any]) -> None:
+            fgmres = detail["exact_result"]["family"]["source_records"][0][
+                "fgmres"
+            ]
+            observation = fgmres["conditional_gate_observations"]["256"]
+            if tamper == "authorization":
+                fgmres["conditional_authorized"]["512"] = False
+            elif tamper == "resource":
+                hard_limit = checker.EXPECTED_HARD_STOP_BYTES
+                resource = observation["resource_snapshot"]
+                resource["rss_bytes"] = hard_limit
+                observation["resource_observation"]["current_rss_bytes"] = (
+                    hard_limit
+                )
+                resource["pass"] = False
+                observation["resource_observation"]["pass"] = False
+                observation["resource_gate"] = False
+                fgmres["conditional_authorized"]["512"] = False
+            elif tamper == "wall":
+                resource_wall = observation["resource_snapshot"][
+                    "wall_observation"
+                ]
+                resource_wall["elapsed_seconds"] = 21600.0
+                observation["wall_observation"]["elapsed_seconds"] = 21600.0
+                observation["wall_gate"] = False
+                fgmres["conditional_authorized"]["512"] = False
+            elif tamper == "monotone":
+                observation["residual_observation"]["monotone_history"] = False
+                fgmres["conditional_authorized"]["512"] = False
+            else:
+                raise AssertionError(f"unexpected conditional tamper: {tamper}")
+
+        _rewrite_executed_detail_chain(
+            root,
+            manifest_path,
+            mutate=mutate,
+            preserve_compact=True,
+        )
+    output = tmp_path / (
+        "conditional-positive.json"
+        if tamper is None
+        else f"conditional-{tamper}.json"
+    )
+    exit_code, observed = _run_checker_cli(root, output)
+    if tamper is None:
+        assert exit_code == 0
+        assert observed["checker_pass"] is True
+        assert observed["evidence_valid"] is True
+        assert observed["gate_pass"] is False
+        assert (
+            observed["classification"]
+            == "V6_2_FULL_INTERFACE_SCHUR_NUMERICAL_NEGATIVE"
+        )
+        for rank in range(checker.EXPECTED_MPI_SIZE):
+            detail = json.loads(
+                (
+                    root
+                    / f"rank{rank:04d}"
+                    / "v6_2_exact_qualification.json"
+                ).read_text()
+            )
+            for record in detail["exact_result"]["family"]["source_records"]:
+                fgmres = record["fgmres"]
+                assert fgmres["final_iteration"] == 512
+                assert fgmres["conditional_authorized"] == {
+                    "256": True,
+                    "512": True,
+                }
+                assert fgmres["conditional_completed"] == {
+                    "256": True,
+                    "512": True,
+                }
+    else:
+        assert exit_code == 2
+        assert observed["checker_pass"] is False
+        assert observed["evidence_valid"] is False
+        assert observed["classification"] == "IMPLEMENTATION_FAILURE"
+
+
+def test_v6_2_checker_rejects_rehashed_wrong_formal_scope_across_full_chain(
+    tmp_path: Path,
+) -> None:
+    root, manifest_path = _make_executed_checker_fixture(
+        tmp_path,
+        packet_ready=False,
+    )
+    _rewrite_full_formal_scope_chain(
+        root,
+        manifest_path,
+        scope="tampered_formal_entry_scope",
+    )
+    output = tmp_path / "wrong-formal-scope.json"
+    exit_code, observed = _run_checker_cli(root, output)
+    assert exit_code == 2
+    assert observed["checker_pass"] is False
+    assert observed["evidence_valid"] is False
+    assert observed["classification"] == "IMPLEMENTATION_FAILURE"
 
 
 def test_v6_2_checker_accepts_complete_evidence_with_identity_gate_negative(
@@ -1084,12 +3128,34 @@ def test_v6_2_checker_accepts_complete_evidence_with_identity_gate_negative(
 ) -> None:
     root, manifest_path = _make_checker_fixture(tmp_path)
     manifest = json.loads(manifest_path.read_text())
+    configured_scope = (
+        "run_v6_2_interface_schur_entry_before_preflight_and_artifact_setup"
+    )
     for descriptor in manifest["rank_artifacts"]:
         rank_path = root / descriptor["path"]
         artifact = json.loads(rank_path.read_text())
+        artifact["identity_gate"]["zero_map"] = False
         artifact["zero_error"] = 1.0e-4
+        artifact["gate_pass"] = False
+        artifact["classification"] = "V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL"
+        artifact["formal_sequence_start_scope"] = configured_scope
         descriptor["sha256"] = _write_json(rank_path, artifact)
+        descriptor["formal_sequence_start_scope"] = configured_scope
+    manifest["identity_gate"]["zero_map"] = False
     manifest["zero_error"] = 1.0e-4
+    manifest["gate_pass"] = False
+    manifest["classification"] = "V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL"
+    manifest["formal_sequence_start_scope"] = configured_scope
+    manifest["exact_qualification_artifacts"] = [None] * checker.EXPECTED_MPI_SIZE
+    manifest["exact_qualification_plan"] = _qualification_plan()
+    manifest["pde_solve"] = "not_run_by_v6_2_identity_gate"
+    manifest["exact_qualification_artifact_chain_sha256"] = hashlib.sha256(
+        json.dumps(
+            manifest["exact_qualification_artifacts"],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
     _write_json(manifest_path, manifest)
     output = tmp_path / "checker-negative.json"
     exit_code = checker.main(
@@ -1111,6 +3177,8 @@ def test_v6_2_checker_accepts_complete_evidence_with_identity_gate_negative(
     assert observed["gate_pass"] is False
     assert observed["classification"] == "V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL"
     assert observed["evidence_checks"]["rank_integrity"] is True
+    assert observed["evidence_checks"]["pde_execution_contract"] is True
+    assert observed["executed_exact"] is False
     assert observed["gate_checks"]["zero_map_le_1e-13"] is False
 
 
@@ -1213,3 +3281,79 @@ def test_v6_2_checker_rejects_output_inside_formal_root(tmp_path: Path) -> None:
     )
     assert exit_code == 2
     assert not output.exists()
+
+
+def test_v6_2_checker_rejects_false_operator_audit_pass(tmp_path: Path) -> None:
+    root, manifest_path = _make_checker_fixture(tmp_path)
+    manifest = json.loads(manifest_path.read_text())
+    audit_path = root / manifest["operator_semantics_audit"]["path"]
+    audit = json.loads(audit_path.read_text())
+    audit["pass"] = False
+    manifest["operator_semantics_audit"]["sha256"] = _write_json(audit_path, audit)
+    _write_json(manifest_path, manifest)
+    result = checker.check_v6_2_interface_schur(
+        formal_root=root,
+        formal_source_sha=FORMAL_SOURCE_SHA,
+        checker_source_sha=CHECKER_SOURCE_SHA,
+    )
+    assert result["checker_pass"] is False
+    assert result["classification"] == "IMPLEMENTATION_FAILURE"
+    assert result["evidence_checks"]["operator_semantics_audit"] is False
+
+
+def test_v6_2_checker_rejects_rehashed_woodbury_operator_audit(
+    tmp_path: Path,
+) -> None:
+    root, manifest_path = _make_checker_fixture(tmp_path)
+    manifest = json.loads(manifest_path.read_text())
+    audit_path = root / manifest["operator_semantics_audit"]["path"]
+    audit = json.loads(audit_path.read_text())
+    audit["current_authority"]["woodbury_inverse"] = True
+    content = dict(audit)
+    content.pop("record_sha256", None)
+    audit["record_sha256"] = hashlib.sha256(
+        json.dumps(content, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    audit_file_sha = _write_json(audit_path, audit)
+    manifest["operator_semantics_audit"]["sha256"] = audit_file_sha
+    manifest["operator_semantics_audit"]["content_sha256"] = audit["record_sha256"]
+    _write_json(manifest_path, manifest)
+    result = checker.check_v6_2_interface_schur(
+        formal_root=root,
+        formal_source_sha=FORMAL_SOURCE_SHA,
+        checker_source_sha=CHECKER_SOURCE_SHA,
+    )
+    assert result["checker_pass"] is False
+    assert result["classification"] == "IMPLEMENTATION_FAILURE"
+    assert result["evidence_checks"]["operator_semantics_audit"] is False
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_gate"),
+    (
+        ("vector_index", 0, "vector_indexes_0_1_2"),
+        ("solve_count", "3", "solve_count_values_valid"),
+    ),
+)
+def test_v6_2_vector_gate_rejects_duplicate_or_string_observation(
+    tmp_path: Path,
+    field: str,
+    value: Any,
+    expected_gate: str,
+) -> None:
+    root, manifest_path = _make_checker_fixture(tmp_path)
+    manifest = json.loads(manifest_path.read_text())
+    for descriptor in manifest["rank_artifacts"]:
+        rank_path = root / descriptor["path"]
+        artifact = json.loads(rank_path.read_text())
+        artifact["deterministic_vectors"][1][field] = value
+        descriptor["sha256"] = _write_json(rank_path, artifact)
+    manifest["deterministic_vectors"][1][field] = value
+    _write_json(manifest_path, manifest)
+    result = checker.check_v6_2_interface_schur(
+        formal_root=root,
+        formal_source_sha=FORMAL_SOURCE_SHA,
+        checker_source_sha=CHECKER_SOURCE_SHA,
+    )
+    assert result["gate_pass"] is False
+    assert result["gate_checks"][expected_gate] is False

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import subprocess
 import sys
 import time
@@ -316,6 +317,8 @@ def test_task040_watchdog_excludes_process_exit_during_sample(
     assert summary["terminal_teardown_excluded_count"] == 1
     assert summary["all_status_readable"] is True
     assert summary["swap_authority_readable"] is True
+    assert math.isfinite(summary["elapsed_seconds"])
+    assert summary["elapsed_seconds"] < watchdog.TASK040_LEVEL_A_TIMEOUT_SECONDS
     rows = [
         json.loads(line)
         for line in (tmp_path / "run" / "process_tree_samples.jsonl")

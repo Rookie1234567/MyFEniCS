@@ -2906,6 +2906,7 @@ _PACKET_WRITE_ROLES = (
     "gamma_l_canonical",
     "gamma_u_canonical",
 )
+_PACKET_WRITER_IDENTITY = "task040.v6.current_exact_packet_writer.v1"
 
 
 def _packet_identity_fields(role: str) -> tuple[str, ...]:
@@ -3118,8 +3119,13 @@ def _normalize_packet_identity(
                 )
     path = packet.get("path")
     writer_identity = packet.get("writer_identity")
-    if require_writer_identity and not isinstance(path, str):
-        raise ValueError(f"packet writer {role} lacks a metadata path")
+    if require_writer_identity:
+        if not isinstance(path, str):
+            raise ValueError(f"packet writer {role} lacks a metadata path")
+        if writer_identity != _PACKET_WRITER_IDENTITY:
+            raise ValueError(
+                f"packet writer {role} has invalid writer identity"
+            )
     if require_artifacts:
         for field in (
             "path",
@@ -3196,6 +3202,8 @@ def _validate_written_packet_artifacts(
     for artifact, name in ((metadata, "metadata"), (manifest, "manifest")):
         if artifact.get("label") != label or artifact.get("role") != role:
             raise ValueError(f"packet writer {role} {name} identity is wrong")
+        if artifact.get("writer_identity") != _PACKET_WRITER_IDENTITY:
+            raise ValueError(f"packet writer {role} {name} writer identity is wrong")
     for field in _packet_identity_fields(role):
         if metadata.get(field) != packet.get(field):
             raise ValueError(f"packet writer {role} metadata differs for {field}")
@@ -3489,7 +3497,7 @@ def write_current_exact_solution_packet(
             "manifest_path": str(manifest_path),
             "array_sha256": array_sha256,
             "shard_sha256": shard_sha256,
-            "writer_identity": "task040.v6.current_exact_packet_writer.v1",
+            "writer_identity": _PACKET_WRITER_IDENTITY,
         }
         metadata_sha256 = _write_json_atomic(metadata_path, record_base)
         manifest_sha256 = _write_json_atomic(
@@ -3938,9 +3946,15 @@ def aggregate_exact_packet_manifests(
                 "schema": "task040.v6.current_exact_packet_rank_manifest.v1",
                 "label": str(label),
                 "mpi_size": int(comm.size),
+                "rank_count": len(rank_manifests),
+                "role_count": 4,
+                "role_count_per_rank": 4,
                 "source_provenance": rank_manifests[0]["roles"][
                     _PACKET_WRITE_ROLES[0]
                 ]["source_provenance"],
+                "bare_f_operator_hash": rank_manifests[0]["roles"][
+                    _PACKET_WRITE_ROLES[0]
+                ]["bare_f_operator_hash"],
                 "qualification_source_provenance": qualification_provenance,
                 "frozen_rhs_descriptor_metadata_sha256_by_rank": (
                     descriptor_hashes_by_rank
@@ -3964,8 +3978,23 @@ def aggregate_exact_packet_manifests(
                 ) from exc
             if (
                 not isinstance(persisted_manifest, Mapping)
+                or persisted_manifest.get("schema")
+                != "task040.v6.current_exact_packet_rank_manifest.v1"
                 or persisted_manifest.get("label") != str(label)
                 or persisted_manifest.get("mpi_size") != int(comm.size)
+                or persisted_manifest.get("rank_count") != len(rank_manifests)
+                or persisted_manifest.get("role_count") != 4
+                or persisted_manifest.get("role_count_per_rank") != 4
+                or persisted_manifest.get("source_provenance")
+                != rank_manifests[0]["roles"][_PACKET_WRITE_ROLES[0]][
+                    "source_provenance"
+                ]
+                or persisted_manifest.get("bare_f_operator_hash")
+                != rank_manifests[0]["roles"][_PACKET_WRITE_ROLES[0]][
+                    "bare_f_operator_hash"
+                ]
+                or persisted_manifest.get("numeric_allgather") is not False
+                or persisted_manifest.get("full_numeric_replica") is not False
                 or hash_file_sha256(manifest_path) != manifest_sha256
                 or persisted_manifest.get(
                     "frozen_rhs_descriptor_metadata_sha256_by_rank"
@@ -3988,17 +4017,26 @@ def aggregate_exact_packet_manifests(
                     "aggregate rank manifest reread validation failed"
                 )
             result = {
+                "schema": "task040.v6.current_exact_packet_rank_manifest.v1",
                 "path": str(manifest_path),
                 "sha256": manifest_sha256,
                 "mpi_size": int(comm.size),
                 "rank_count": len(rank_manifests),
+                "role_count": 4,
                 "role_count_per_rank": 4,
+                "source_provenance": rank_manifests[0]["roles"][
+                    _PACKET_WRITE_ROLES[0]
+                ]["source_provenance"],
+                "bare_f_operator_hash": rank_manifests[0]["roles"][
+                    _PACKET_WRITE_ROLES[0]
+                ]["bare_f_operator_hash"],
                 "qualification_source_provenance": qualification_provenance,
                 "frozen_rhs_descriptor_metadata_sha256_by_rank": (
                     descriptor_hashes_by_rank
                 ),
                 "frozen_rhs_descriptor_metadata_binding_sha256": descriptor_binding_sha256,
                 "numeric_allgather": False,
+                "full_numeric_replica": False,
             }
         except Exception as exc:
             root_error = f"rank manifest aggregation failed: {type(exc).__name__}: {exc}"
@@ -4468,6 +4506,12 @@ def run_exact_interface_fgmres(
                 authorized[next_checkpoint] = next_authorized
                 if not authorized[next_checkpoint]:
                     break
+                # Completing the mandatory boundary is sufficient once an
+                # explicit full-state residual has already been accepted.
+                # The decision is still recorded, but an accepted solution
+                # must not trigger an unnecessary 256 solve.
+                if accepted_solution is not None:
+                    break
             elif total_iterations in conditional:
                 next_index = conditional.index(total_iterations) + 1
                 if next_index < len(conditional):
@@ -4496,6 +4540,11 @@ def run_exact_interface_fgmres(
                     authorized[next_checkpoint] = next_authorized
                     if not authorized[next_checkpoint]:
                         break
+                    # A solution accepted at this conditional boundary is
+                    # returned to the caller; do not enter the next
+                    # conditional interval merely because it was authorized.
+                    if accepted_solution is not None:
+                        break
             if stopped_at_happy_breakdown:
                 break
         completed_normally = True
@@ -4510,8 +4559,12 @@ def run_exact_interface_fgmres(
 
     for checkpoint in conditional:
         completed[checkpoint] = str(checkpoint) in checkpoints_out
+    # ``checkpoints_out`` intentionally excludes an early-final observation
+    # at a non-requested iteration.  The public result must nevertheless
+    # report the actual iteration at which the solve stopped, so derive it
+    # from the complete history (including the optional early-final record).
     final_iteration = max(
-        (int(value["iteration"]) for value in checkpoints_out.values()),
+        (int(value["iteration"]) for value in checkpoint_history),
         default=total_iterations,
     )
     if final_record is None and total_iterations:
