@@ -339,12 +339,13 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
         "branch": worker.BRANCH,
         "clean_source_tree": True,
         "qualified_activation": "1",
-        "python_executable": str(Path(sys.executable).resolve()),
+        "python_executable": str(Path(sys.executable)),
+        "python_prefix": str(Path(sys.prefix)),
         "mpi_size": 1,
         "petsc_scalar_type": "complex128",
         "petsc_int_type": "int32",
         "threads": {name: "1" for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")},
-        "abi_modules": {name: str(Path(sys.executable).resolve()) for name in ("mpi4py", "petsc4py", "dolfinx", "basix")},
+        "abi_modules": {name: str(Path(sys.executable)) for name in ("mpi4py", "petsc4py", "dolfinx", "basix")},
         "stage": worker.STAGE,
         "case": worker.CASE,
         "source_name": worker.SOURCE,
@@ -540,6 +541,14 @@ def test_p0_checker_validates_raw_residual_release_and_direct_layer(tmp_path: Pa
     assert result["metrics"]["scalar_direct_authority"]["scalar_pass"] is True
     assert result["metrics"]["release_observation"]["rss_delta_bytes"] == -30
 
+    wrong_interpreter = copy.deepcopy(facts["record"])
+    wrong_interpreter["provenance"]["python_executable"] = "/usr/bin/python3.12"
+    wrong_interpreter["provenance"]["python_prefix"] = "/usr"
+    wrong_interpreter["command"][0] = "/usr/bin/python3.12"
+    wrong_interpreter["provenance"]["command"] = wrong_interpreter["command"]
+    _rewrite_record(record_path, wrong_interpreter, facts["marker_dir"])
+    failed = checker.check_record(record_path, compact_path, SOURCE_SHA)
+    assert any("lexical checkout .venv" in item for item in failed["contract_errors"])
     _restore_fixture(record_path, facts, facts["marker_dir"], compact_path)
     recovery_marker_path = facts["marker_dir"] / "recovery_started.json"
     recovery_marker = json.loads(recovery_marker_path.read_text())

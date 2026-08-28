@@ -40,7 +40,7 @@ def _stable(value: object) -> str:
 
 def _command(root: Path, raw: Path, jit: Path, checkpoints: Path, record: Path) -> list[str]:
     return [
-        str(Path(sys.executable).resolve()),
+        str(Path(sys.executable)),
         "-m",
         worker.MODULE,
         "--stage",
@@ -205,6 +205,7 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
             "clean_source_tree": True,
             "qualified_activation": "1",
             "python_executable": command[0],
+            "python_prefix": str(Path(sys.prefix)),
             "mpi_size": 1,
             "petsc_scalar_type": "complex128",
             "petsc_int_type": "int32",
@@ -335,11 +336,15 @@ def test_profile_paths_markers_and_import_boundaries(tmp_path: Path, monkeypatch
     with pytest.raises(FileExistsError):
         worker._prepare_paths(raw, jit, checkpoints, record)
     assert worker.SOURCES == ("random", "gradient", "curl", "checkerboard")
-    executable_target = tmp_path / "resolved-python"
+    qualified_root = tmp_path / "qualified-repo"
+    qualified_venv = qualified_root / ".venv"
+    (qualified_venv / "bin").mkdir(parents=True)
+    executable_target = tmp_path / "python-target"
     executable_target.write_bytes(b"python")
-    executable_link = tmp_path / "qualified-python-link"
+    executable_link = qualified_venv / "bin" / "python"
     executable_link.symlink_to(executable_target)
     monkeypatch.setattr(worker.sys, "executable", str(executable_link))
+    monkeypatch.setattr(worker.sys, "prefix", str(qualified_venv))
     monkeypatch.setenv("_MYFENICS_WSL_QUALIFIED_ACTIVATION", "1")
     monkeypatch.setattr(
         worker,
@@ -356,12 +361,36 @@ def test_profile_paths_markers_and_import_boundaries(tmp_path: Path, monkeypatch
         lambda name: SimpleNamespace(__file__=str(tmp_path / f"{name}.so")),
     )
     facts = worker._source_facts(
-        tmp_path,
+        qualified_root,
         SOURCE_SHA,
         SimpleNamespace(size=1),
         SimpleNamespace(ScalarType=np.complex128, IntType=np.int32),
     )
-    assert facts["python_executable"] == str(executable_target.resolve())
+    assert facts["python_executable"] == str(executable_link)
+    assert facts["python_prefix"] == str(qualified_venv)
+    command = worker._command(
+        SimpleNamespace(
+            stage=worker.STAGE,
+            case=worker.CASE,
+            source="random",
+            raw_dir=root / "worker_raw",
+            jit_cache_dir=root / "jit_cache",
+            checkpoint_root=root / "checkpoints",
+            record=root / "worker_record.json",
+            expected_source_sha=SOURCE_SHA,
+            input=INPUT,
+        )
+    )
+    assert command[0] == str(executable_link)
+    monkeypatch.setattr(worker.sys, "executable", "/usr/bin/python3.12")
+    monkeypatch.setattr(worker.sys, "prefix", "/usr")
+    with pytest.raises(RuntimeError, match="lexical .venv"):
+        worker._source_facts(
+            qualified_root,
+            SOURCE_SHA,
+            SimpleNamespace(size=1),
+            SimpleNamespace(ScalarType=np.complex128, IntType=np.int32),
+        )
     for path in (Path(worker.__file__), Path(checker.__file__)):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         imported = []
@@ -429,6 +458,16 @@ def _checker_mutation_case(tmp_path: Path, mutation: str) -> None:
         marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
         marker_value["facts"]["record_sha256"] = _sha(record_path)
         _write_json(record_marker, marker_value)
+    elif mutation == "interpreter":
+        record["provenance"]["python_executable"] = "/usr/bin/python3.12"
+        record["provenance"]["python_prefix"] = "/usr"
+        record["command"][0] = "/usr/bin/python3.12"
+        record["provenance"]["command"] = record["command"]
+        _write_json(record_path, record)
+        record_marker = record_path.parent / "worker_raw/markers/record_written.json"
+        marker_value = json.loads(record_marker.read_text(encoding="utf-8"))
+        marker_value["facts"]["record_sha256"] = _sha(record_path)
+        _write_json(record_marker, marker_value)
     else:
         raise AssertionError(mutation)
     result = checker.check_record(record_path, watchdog_path, SOURCE_SHA)
@@ -439,7 +478,7 @@ def _checker_mutation_case(tmp_path: Path, mutation: str) -> None:
     json.dumps(result, allow_nan=False)
 
 
-@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash", "action_ledger", "action_roles", "wrong_physical_model"))
+@pytest.mark.parametrize("mutation", ("final_residual", "raw_residual", "source", "marker", "checkpoint_hash", "action_ledger", "action_roles", "wrong_physical_model", "interpreter"))
 def test_checker_mutation_cases(tmp_path: Path, mutation: str) -> None:
     _checker_mutation_case(tmp_path, mutation)
 

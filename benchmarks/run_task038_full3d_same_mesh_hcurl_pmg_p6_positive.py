@@ -28,8 +28,8 @@ MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p6_positive"
 STAGE = "c1-p6-positive"
 CASE = "p6-h10-mpi1"
 SOURCES = ("random", "gradient", "curl", "checkerboard")
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v3"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v3"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v4"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v4"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 EXPECTED_PHYSICAL_FIELDS = {
@@ -213,8 +213,21 @@ def _source_facts(root: Path, expected_sha: str, comm: Any, petsc: Any) -> dict[
         )
     if os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
         raise RuntimeError("qualified activation is required")
-    if not Path(sys.executable).resolve().is_file():
-        raise RuntimeError("worker executable must resolve to a file")
+    executable = Path(sys.executable)
+    prefix = Path(sys.prefix)
+    expected_prefix = Path(root).absolute() / ".venv"
+    expected_executable = expected_prefix / "bin" / "python"
+    if (
+        not executable.is_absolute()
+        or not prefix.is_absolute()
+        or executable != expected_executable
+        or prefix != expected_prefix
+        or not executable.is_file()
+        or not prefix.is_dir()
+    ):
+        raise RuntimeError(
+            "worker interpreter must be the current checkout lexical .venv"
+        )
     if np.dtype(petsc.ScalarType) != np.dtype(np.complex128):
         raise RuntimeError("PETSc scalar type must be complex128")
     if np.dtype(petsc.IntType) != np.dtype(np.int32):
@@ -234,7 +247,8 @@ def _source_facts(root: Path, expected_sha: str, comm: Any, petsc: Any) -> dict[
         "branch": branch,
         "clean_source_tree": True,
         "qualified_activation": "1",
-        "python_executable": str(Path(sys.executable).resolve()),
+        "python_executable": str(executable),
+        "python_prefix": str(prefix),
         "mpi_size": int(comm.size),
         "petsc_scalar_type": "complex128",
         "petsc_int_type": "int32",
@@ -245,7 +259,7 @@ def _source_facts(root: Path, expected_sha: str, comm: Any, petsc: Any) -> dict[
 
 def _command(args: argparse.Namespace) -> list[str]:
     return [
-        str(Path(sys.executable).resolve()),
+        str(Path(sys.executable)),
         "-m",
         MODULE,
         "--stage",

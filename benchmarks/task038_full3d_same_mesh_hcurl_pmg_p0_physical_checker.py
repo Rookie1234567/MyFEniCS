@@ -21,9 +21,9 @@ MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p0_physical"
 STAGE = "p0-physical"
 CASE = "p6-h10-mpi1"
 SOURCE = "physical_rhs"
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-record.v1"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-marker.v1"
-CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-check.v1"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-record.v2"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-marker.v2"
+CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-check.v2"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
@@ -218,16 +218,21 @@ def _check_provenance(
     if not isinstance(threads, Mapping) or set(threads) != {"OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"} or any(value != "1" for value in threads.values()):
         _error(errors, "thread provenance is not fixed to one")
     executable = provenance.get("python_executable")
+    prefix = provenance.get("python_prefix")
     command = record.get("command")
+    expected_prefix = Path(__file__).absolute().parents[1] / ".venv"
+    expected_executable = expected_prefix / "bin" / "python"
     if (
-        not isinstance(executable, str)
-        or not Path(executable).is_absolute()
+        executable != str(expected_executable)
+        or prefix != str(expected_prefix)
+        or not expected_executable.is_file()
+        or not expected_prefix.is_dir()
         or not isinstance(command, list)
         or not command
         or not isinstance(command[0], str)
-        or executable != str(Path(command[0]).resolve())
+        or command[0] != executable
     ):
-        _error(errors, "worker executable provenance is not absolute/bound")
+        _error(errors, "worker executable/prefix is not bound to the lexical checkout .venv")
     abi = provenance.get("abi_modules")
     if not isinstance(abi, Mapping) or set(abi) != {"mpi4py", "petsc4py", "dolfinx", "basix"} or any(not isinstance(value, str) or not Path(value).is_absolute() for value in abi.values()):
         _error(errors, "qualified ABI module paths are incomplete")

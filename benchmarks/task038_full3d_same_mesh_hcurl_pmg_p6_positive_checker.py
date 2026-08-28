@@ -22,9 +22,9 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 STAGE = "c1-p6-positive"
 CASE = "p6-h10-mpi1"
 SOURCES = ("random", "gradient", "curl", "checkerboard")
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v3"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v3"
-CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-check.v3"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-record.v4"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-marker.v4"
+CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p6-positive-check.v4"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 EXPECTED_PHYSICAL_FIELDS = {
@@ -201,8 +201,17 @@ def _check_provenance(
     threads = provenance.get("threads")
     if not isinstance(threads, Mapping) or set(threads) != {"OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"} or any(value != "1" for value in threads.values()):
         _error(errors, "thread provenance is not fixed to one")
-    if not isinstance(provenance.get("python_executable"), str) or not Path(provenance["python_executable"]).is_absolute():
-        _error(errors, "qualified Python executable is not absolute")
+    expected_prefix = Path(__file__).absolute().parents[1] / ".venv"
+    expected_executable = expected_prefix / "bin" / "python"
+    python_executable = provenance.get("python_executable")
+    python_prefix = provenance.get("python_prefix")
+    if (
+        python_executable != str(expected_executable)
+        or python_prefix != str(expected_prefix)
+        or not expected_executable.is_file()
+        or not expected_prefix.is_dir()
+    ):
+        _error(errors, "qualified Python executable/prefix is not the lexical checkout .venv")
     abi = provenance.get("abi_modules")
     if not isinstance(abi, Mapping) or set(abi) != {"mpi4py", "petsc4py", "dolfinx", "basix"} or any(
         not isinstance(value, str) or not Path(value).is_absolute() for value in abi.values()
@@ -229,8 +238,13 @@ def _check_provenance(
     ):
         if provenance.get(key) != expected:
             _error(errors, f"provenance field mismatch: {key}")
-    if not command or not isinstance(command[0], str) or not Path(command[0]).is_absolute():
-        _error(errors, "worker command executable is not absolute")
+    if (
+        not command
+        or not isinstance(command[0], str)
+        or command[0] != python_executable
+        or command[0] != str(expected_executable)
+    ):
+        _error(errors, "worker command executable is not bound to the lexical checkout .venv")
     required = {
         "--stage": STAGE,
         "--case": CASE,

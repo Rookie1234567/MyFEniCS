@@ -36,8 +36,8 @@ MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p0_physical"
 STAGE = "p0-physical"
 CASE = "p6-h10-mpi1"
 SOURCE = "physical_rhs"
-RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-record.v1"
-MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-marker.v1"
+RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-record.v2"
+MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-marker.v2"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
@@ -157,7 +157,7 @@ def _frozen_input_identity(
 
 def _command(args: argparse.Namespace) -> list[str]:
     return [
-        str(Path(sys.executable).resolve()),
+        str(Path(sys.executable)),
         "-m",
         MODULE,
         "--stage",
