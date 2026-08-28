@@ -16,6 +16,7 @@ import shutil
 import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +39,7 @@ from src.solvers.hybrid_exact_qualification import (
     make_current_exact_packet_identity_provider,
     make_current_exact_packet_writer,
     make_current_exact_solution_packet_consumer,
+    rank_local_shard_binding_sha256,
     run_exact_qualification_family,
     validate_owner_vector_descriptor,
 )
@@ -74,6 +76,9 @@ V6_2_EXACT_QUALIFICATION_SOURCES = (
 V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA = (
     "fd7bea41d7d7b7869dd3ade4407129b00900ef7d"
 )
+V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH = (
+    "a672183780b34a0f39739458a68f952a631316248955926fed697fb8d619ac5e"
+)
 
 __all__ = (
     "V6_2_INTERFACE_SCHUR_FLAG",
@@ -88,6 +93,7 @@ __all__ = (
     "V6_2_MIN_DISK_FREE_BYTES",
     "V6_2_EXACT_QUALIFICATION_SOURCES",
     "V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA",
+    "V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH",
     "build_v6_2_exact_qualification_plan",
     "run_v6_2_exact_qualification_packets",
     "run_v6_2_interface_schur",
@@ -293,7 +299,11 @@ def _v6_2_load_frozen_rhs_descriptors(
     frozen_rhs_provenance: Mapping[str, Any],
     bare_operator_hash: str,
     expected_global_size: int,
-) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+) -> tuple[
+    dict[str, dict[str, Any]],
+    dict[str, str],
+    dict[str, dict[str, Any]],
+]:
     """Read the one fixed V5 descriptor per source for this MPI rank.
 
     Formal callers may carry a descriptor mapping for convenience, but the
@@ -304,6 +314,7 @@ def _v6_2_load_frozen_rhs_descriptors(
     """
 
     descriptors: dict[str, dict[str, Any]] = {}
+    raw_descriptors: dict[str, dict[str, Any]] = {}
     metadata_hashes: dict[str, str] = {}
     rank_dir = frozen_root / f"rank{int(comm.rank):04d}"
     try:
@@ -334,17 +345,17 @@ def _v6_2_load_frozen_rhs_descriptors(
             ) from exc
         if not isinstance(payload, Mapping):
             raise TypeError(f"V6-2 frozen descriptor {label} is not a mapping")
-        descriptor = dict(payload)
+        raw_descriptor = dict(payload)
         expected_metadata_path = relative_metadata.as_posix()
-        if descriptor.get("metadata_path") != expected_metadata_path:
+        if raw_descriptor.get("metadata_path") != expected_metadata_path:
             raise ValueError(
                 f"V6-2 frozen descriptor {label} metadata_path is not authority-bound"
             )
-        if descriptor.get("label") != label:
+        if raw_descriptor.get("label") != label:
             raise ValueError(
                 f"V6-2 frozen descriptor label mismatch for {label}"
             )
-        descriptor_provenance = descriptor.get("source_provenance")
+        descriptor_provenance = raw_descriptor.get("source_provenance")
         if not isinstance(descriptor_provenance, Mapping):
             raise ValueError(f"V6-2 frozen descriptor {label} lacks source_provenance")
         for field in _V6_2_EXACT_PROVENANCE_FIELDS:
@@ -352,7 +363,55 @@ def _v6_2_load_frozen_rhs_descriptors(
                 raise ValueError(
                     f"V6-2 frozen descriptor {label} provenance mismatch for {field}"
                 )
-        _v6_2_recompute_source_definition(descriptor)
+        _v6_2_recompute_source_definition(raw_descriptor)
+        validate_owner_vector_descriptor(
+            raw_descriptor,
+            expected_label=label,
+            expected_schema=V5_VECTOR_SCHEMA,
+            expected_side=V5_VECTOR_SIDE,
+            expected_source_sha256=frozen_rhs_provenance["source_sha"],
+            expected_input_sha256=frozen_rhs_provenance["input_sha256"],
+            expected_physical_model_sha256=frozen_rhs_provenance[
+                "physical_model_sha256"
+            ],
+            expected_selected_manifest_sha256=frozen_rhs_provenance[
+                "selected_manifest_sha256"
+            ],
+            expected_resolved_config_sha256=frozen_rhs_provenance[
+                "resolved_config_sha256"
+            ],
+            expected_operator_hash=V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH,
+            expected_global_size=expected_global_size,
+        )
+        for field in (
+            "array_path",
+            "owner_row_array_path",
+            "canonical_layout_path",
+        ):
+            _v6_2_resolve_under(frozen_root, raw_descriptor[field], field)
+        raw_descriptors[label] = deepcopy(raw_descriptor)
+        descriptor = deepcopy(raw_descriptor)
+        descriptor["bare_f_operator_hash"] = bare_operator_hash
+        runtime_source_definition = descriptor["source_definition"]
+        runtime_source_definition["bare_f_operator_hash"] = bare_operator_hash
+        descriptor["rank_local_shard_binding_sha256"] = (
+            rank_local_shard_binding_sha256(
+                rank=int(comm.rank),
+                label=str(descriptor["label"]),
+                role=str(descriptor["role"]),
+                source_definition_sha256=str(
+                    descriptor["source_definition_sha256"]
+                ),
+                key_set_sha256=str(descriptor["canonical_key_set_sha256"]),
+                canonical_layout_sha256=str(
+                    descriptor["canonical_layout_sha256"]
+                ),
+                identity=descriptor["vector_identity"],
+                source_provenance=descriptor["source_provenance"],
+                bare_f_operator_hash=bare_operator_hash,
+                rhs_repeat=runtime_source_definition["rhs_repeat"],
+            )
+        )
         validate_owner_vector_descriptor(
             descriptor,
             expected_label=label,
@@ -372,15 +431,9 @@ def _v6_2_load_frozen_rhs_descriptors(
             expected_operator_hash=bare_operator_hash,
             expected_global_size=expected_global_size,
         )
-        for field in (
-            "array_path",
-            "owner_row_array_path",
-            "canonical_layout_path",
-        ):
-            _v6_2_resolve_under(frozen_root, descriptor[field], field)
         descriptors[label] = descriptor
         metadata_hashes[label] = hashlib.sha256(raw).hexdigest()
-    return descriptors, metadata_hashes
+    return descriptors, metadata_hashes, raw_descriptors
 
 
 def _v6_2_formal_authority_provenance(
@@ -539,7 +592,11 @@ def _bind_v6_2_formal_exact_configuration(
         base_directory = frozen_root
 
     comm = bare_operator.getComm().tompi4py()
-    descriptors, descriptor_metadata_hashes = _v6_2_load_frozen_rhs_descriptors(
+    (
+        descriptors,
+        descriptor_metadata_hashes,
+        raw_descriptors,
+    ) = _v6_2_load_frozen_rhs_descriptors(
         frozen_root,
         comm=comm,
         frozen_rhs_provenance=frozen_rhs_provenance,
@@ -558,7 +615,7 @@ def _bind_v6_2_formal_exact_configuration(
                 allow_nan=False,
             )
             derived_encoded = json.dumps(
-                descriptors,
+                raw_descriptors,
                 sort_keys=True,
                 separators=(",", ":"),
                 ensure_ascii=False,
@@ -672,6 +729,16 @@ def _bind_v6_2_formal_exact_configuration(
     elif not callable(canonical_roundtrip):
         raise TypeError("V6-2 canonical_roundtrip must be callable or label-indexed")
 
+    operator_identity_bridge = {
+        "schema": "task040.v6_2.operator_identity_bridge.v1",
+        "status": "frozen_rhs_rebound_to_live_bare_f",
+        "frozen_bare_f_operator_hash": V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH,
+        "qualification_live_bare_f_operator_hash": bare_operator_hash,
+        "raw_descriptor_metadata_unchanged": True,
+        "numeric_rhs_arrays_unchanged": True,
+        "runtime_binding_recomputed": True,
+        "shared_input_model_authority": True,
+    }
     bound = dict(exact_configuration)
     bound["descriptors"] = descriptors
     bound["base_directory"] = str(base_directory)
@@ -683,6 +750,7 @@ def _bind_v6_2_formal_exact_configuration(
         descriptor_metadata_hashes
     )
     bound["validation"] = generated_validation
+    bound["operator_identity_bridge"] = operator_identity_bridge
     bound.pop("bare_f_operator_hash", None)
     bound.pop("operator_hash", None)
     # Keep current-source identity in the outer V6 manifest, never in the
@@ -906,6 +974,7 @@ def run_v6_2_exact_qualification_packets(
     checkpoint_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     full_residual_tolerance: float = 1.0e-9,
     validation: Mapping[str, Any] | None = None,
+    operator_identity_bridge: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the one-process V6-2 exact family and aggregate four packet roles.
 
@@ -944,6 +1013,10 @@ def run_v6_2_exact_qualification_packets(
             raise TypeError(
                 "V6-2 exact qualification source provenance must be a mapping"
             )
+        if operator_identity_bridge is not None and not isinstance(
+            operator_identity_bridge, Mapping
+        ):
+            raise TypeError("V6-2 operator identity bridge must be a mapping")
         frozen_provenance = _v6_2_validate_provenance(
             source_provenance,
             name="frozen RHS source provenance",
@@ -1205,12 +1278,14 @@ def run_v6_2_exact_qualification_packets(
         "frozen_rhs_descriptor_metadata_sha256": _json_safe(
             descriptor_metadata_hashes
         ),
+        "operator_identity_bridge": _json_safe(operator_identity_bridge),
         "authority_identity_chain": {
             "frozen_rhs_source_provenance": _json_safe(frozen_provenance),
             "qualification_source_provenance": _json_safe(current_provenance),
             "frozen_rhs_descriptor_metadata_sha256": _json_safe(
                 descriptor_metadata_hashes
             ),
+            "operator_identity_bridge": _json_safe(operator_identity_bridge),
         },
         "expected_gamma_global_sizes": expected_gamma_global_sizes,
         "packet_aggregate": aggregate_records,
@@ -1327,6 +1402,7 @@ def _compact_exact_stage_summary(value: Any) -> dict[str, Any]:
         for field in (
             "frozen_rhs_source_provenance",
             "qualification_source_provenance",
+            "operator_identity_bridge",
         ):
             if field in identity_chain:
                 public_identity_chain[field] = identity_chain[field]
@@ -1352,6 +1428,9 @@ def _compact_exact_stage_summary(value: Any) -> dict[str, Any]:
         ),
         "initial_pair_publication": _json_safe(
             value.get("initial_pair_publication")
+        ),
+        "operator_identity_bridge": _json_safe(
+            value.get("operator_identity_bridge")
         ),
         "packet_aggregate_gate_pass": bool(
             value.get("packet_aggregate_gate_pass", False)

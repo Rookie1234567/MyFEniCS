@@ -26,6 +26,7 @@ from src.solvers.hybrid_bare_f_authority import (
 from src.solvers.hybrid_exact_qualification import (
     ExactQualificationContractError,
     hash_array_bytes_sha256,
+    rank_local_shard_binding_sha256,
     write_current_exact_solution_packet,
 )
 from src.solvers.hybrid_interface_packet_dolfinx import (
@@ -155,7 +156,7 @@ def _formal_descriptor(
     )
     source_definition = {
         **source_metadata,
-        "bare_f_operator_hash": HEX,
+        "bare_f_operator_hash": runner.V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH,
         "canonical_key_set_sha256": HEX,
         "provenance": source_definition_provenance,
         "rhs_repeat": {
@@ -201,9 +202,20 @@ def _formal_descriptor(
         "canonical_key_count_local": 2,
         "global_sha256": HEX,
         "source_definition_sha256": source_definition_sha,
-        "bare_f_operator_hash": HEX,
+        "bare_f_operator_hash": runner.V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH,
         "canonical_to_current_roundtrip_relative": 0.0,
-        "rank_local_shard_binding_sha256": HEX,
+        "rank_local_shard_binding_sha256": rank_local_shard_binding_sha256(
+            rank=rank,
+            label=label,
+            role="rhs",
+            source_definition_sha256=source_definition_sha,
+            key_set_sha256=HEX,
+            canonical_layout_sha256=HEX,
+            identity=identity,
+            source_provenance=provenance,
+            bare_f_operator_hash=runner.V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH,
+            rhs_repeat=source_definition["rhs_repeat"],
+        ),
         "raw_global_row_remap": False,
         "source_provenance": provenance,
         "source_definition": source_definition,
@@ -308,6 +320,13 @@ def test_v6_2_formal_binding_separates_frozen_rhs_and_current_source(
     configuration, matrix = _formal_binding_fixture(tmp_path)
     frozen_root = tmp_path / "worker" / "bare_f_authority"
     run_root = tmp_path / "fresh-run"
+    raw_descriptors = deepcopy(configuration["descriptors"])
+    raw_metadata_hashes = {
+        label: hashlib.sha256(
+            (frozen_root / raw_descriptors[label]["metadata_path"]).read_bytes()
+        ).hexdigest()
+        for label in runner.V6_2_EXACT_QUALIFICATION_SOURCES
+    }
     try:
         bound = runner._bind_v6_2_formal_exact_configuration(
             configuration,
@@ -330,6 +349,58 @@ def test_v6_2_formal_binding_separates_frozen_rhs_and_current_source(
         assert bound["validation"]["expected_operator_hash"] == HEX
         assert bound["packet_root"] == str((run_root / "exact_packets").resolve())
         assert bound["base_directory"] == str(frozen_root.resolve())
+        bridge = {
+            "schema": "task040.v6_2.operator_identity_bridge.v1",
+            "status": "frozen_rhs_rebound_to_live_bare_f",
+            "frozen_bare_f_operator_hash": (
+                runner.V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH
+            ),
+            "qualification_live_bare_f_operator_hash": HEX,
+            "raw_descriptor_metadata_unchanged": True,
+            "numeric_rhs_arrays_unchanged": True,
+            "runtime_binding_recomputed": True,
+            "shared_input_model_authority": True,
+        }
+        assert bound["operator_identity_bridge"] == bridge
+        assert configuration["descriptors"] == raw_descriptors
+        for label in runner.V6_2_EXACT_QUALIFICATION_SOURCES:
+            raw = raw_descriptors[label]
+            runtime = bound["descriptors"][label]
+            expected_runtime = deepcopy(raw)
+            expected_runtime["bare_f_operator_hash"] = HEX
+            expected_runtime["source_definition"]["bare_f_operator_hash"] = HEX
+            expected_runtime["rank_local_shard_binding_sha256"] = (
+                rank_local_shard_binding_sha256(
+                    rank=0,
+                    label=label,
+                    role=runtime["role"],
+                    source_definition_sha256=runtime["source_definition_sha256"],
+                    key_set_sha256=runtime["canonical_key_set_sha256"],
+                    canonical_layout_sha256=runtime["canonical_layout_sha256"],
+                    identity=runtime["vector_identity"],
+                    source_provenance=runtime["source_provenance"],
+                    bare_f_operator_hash=HEX,
+                    rhs_repeat=runtime["source_definition"]["rhs_repeat"],
+                )
+            )
+            assert runtime == expected_runtime
+            assert runtime["rank_local_shard_binding_sha256"] != raw[
+                "rank_local_shard_binding_sha256"
+            ]
+            assert (
+                bound["frozen_rhs_descriptor_metadata_sha256"][label]
+                == raw_metadata_hashes[label]
+            )
+        compact = runner._compact_exact_stage_summary(
+            {
+                "operator_identity_bridge": bridge,
+                "authority_identity_chain": {
+                    "operator_identity_bridge": bridge,
+                },
+            }
+        )
+        assert compact["operator_identity_bridge"] == bridge
+        assert compact["authority_identity_chain"]["operator_identity_bridge"] == bridge
     finally:
         matrix.destroy()
 
