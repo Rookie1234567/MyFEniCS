@@ -35,6 +35,19 @@
 - 只有 ChatGPT 最终审阅明确给出 merge approval，并且用户授权后，ChatGPT 才提醒 Codex将已批准的执行分支合并到 `master`。
 - 最终合并由 Codex 执行；合并后必须报告精确 `master` SHA、合并方式、测试结果和工作树状态。除最终批准合并外，任何人不得直接在 `master` 开发。
 
+### 2.1 双窗口主控—执行协作规则
+
+- 仅当用户明确指定主任务与执行任务时启用本规则；否则不据此推断窗口角色。
+- 主任务（Sol Max）只负责与用户沟通、阅读分析、任务合理性判断、任务拆解、执行监督，以及代码、结果和文档审核并决定下一步；不直接做项目开发或测试。
+- 执行任务（Luna Max，标题“准备开发测试工作”）只接受主任务明确的小任务，按主任务书负责实现、测试、结果整理和必要文档。
+- Luna Max 只做获批范围内的最小改动，不得擅自扩展目标、顺手重构、引入额外框架或进行过度防御。
+- 执行任务开始前必须报告 branch、HEAD、upstream、dirty status、拟改文件、拟测项目和明确不做项，并等待主任务确认。
+- 实现完成后、测试完成后和文档完成后，执行任务均须分别暂停，提交对应 diff、结果、证据和未解决项供主任务审核。
+- 测试由执行任务负责；重型 PDE、长时 MPI 或资源密集运行必须有任务依据和主任务明确批准。
+- 存在任务歧义、范围越界、环境风险或证据不足时，执行任务必须先停止并报告，不得自行猜测或补齐。
+- 主任务审核通过后，执行任务才可按指令在同一工作分支 commit/push；随后报告完整 SHA、测试、证据和工作树状态，并等待用户与 ChatGPT 审核。
+- 若本规则与用户本轮指令或任务权威文件冲突，立即停止受影响工作并报告，以较高优先级要求为准。
+
 ## 3. Git 规则
 
 - 从最新、干净的 `origin/master` 创建用户或任务书指定的执行分支；不得直接在 `master` 开发。
@@ -158,58 +171,33 @@
 
 每项应说明数值行为是否改变、依赖文件、对应测试、fresh PDE evidence 和建议合入顺序。研究负结果可以保留为文档证据，但不得把未资格化研究路径提升为 production default。
 
-## 11. Windows Codex 客户端与 WSL 执行后端
+## 11. 原生 Linux 执行环境
 
-当当前任务指定 WSL/Linux 环境时：
+- 当前执行后端为原生 Ubuntu 24.04，项目执行目录为 `/home/fenics/Projects/MyFEniCS`；正式开发、测试、MPI/PDE 和重型 artifact 均必须在该原生 Linux 环境中执行。
+- 禁止调用 WSL、`wsl.exe`、Windows Python、Windows Git、Windows MPI 或 Docker 代替当前执行环境；不得使用这些环境的仓库副本或工具链。
+- `/media/fenics/Data` 只作备份来源，不得作为项目执行目录、正式测试目录或 MPI/PDE/artifact 目录。
 
-- 用户可以并将继续使用 **Windows Codex 客户端**作为唯一交互界面；不得要求用户改用 Linux Codex CLI、VS Code、浏览器或其他前端。
-- Windows Codex 客户端可以通过其 WSL 执行能力，或显式调用 `wsl.exe -d Ubuntu -- bash -lc '...'`，在 WSL 中运行项目命令。Windows 客户端本身是 `.exe` 不构成环境混用。
-- 仓库和重型 artifact 必须位于 WSL Linux 文件系统（优先 `/home/...`），不得在 `/mnt/c`、`/mnt/d` 或 Windows 网络映射目录执行正式测试和 MPI/PDE。
-- 实际执行项目命令的 `python`、`git`、`mpiexec`、PETSc/SLEPc、DOLFINx 必须是 WSL/Linux 版本；不得使用 Windows Python、Windows Git、Windows MPI 或 Windows 仓库副本。
-- Windows Codex 客户端每次启动 WSL 命令时，都应把 `cd`、activation、ABI preflight 和实际命令放在同一个 WSL shell 中；不得依赖上一次命令中的 `source`、`cd`、`ssh-agent` 或环境变量继续有效。
-- 不得从已经位于 WSL 内的 shell 再嵌套调用 `wsl.exe`。
-- 不得从 Windows 外层给正常需要数分钟的 pytest、MPI 或 PDE 设置未经论证的短 timeout。
-- 不得把“用户没有使用 Linux Codex CLI”或“Windows Codex 客户端本身是 Windows 程序”作为任务 blocker。
+## 12. 单一 Python 与原生 activation
 
-## 12. 单一 Python 与资格化 activation
-
-- WSL 任务的仓库级权威入口是 tracked 脚本 `scripts/activate_myfenics_wsl.sh`；本地别名可以调用它，但不得成为唯一、不可审查的入口。
-- 从 Windows Codex 客户端执行时，推荐把完整命令封装为：
-
-```powershell
-wsl.exe -d Ubuntu -- bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && python -m pytest -q ...'
-```
-
-- 若命令已经在 WSL shell 中，则使用：
-
-```bash
-bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && python -m pytest -q ...'
-```
-
-- 禁止直接使用 `.venv/bin/python -m pytest`、系统 `/usr/bin/python3`、Windows Python 或未 activation 的裸 `pytest` 来替代资格化 activation；直接调用虚拟环境解释器并不会自动设置 complex PETSc/SLEPc、`PYTHONPATH`、`LD_LIBRARY_PATH` 或项目 marker。
-- 在任何耗时测试前先运行轻量 ABI preflight，并确认：
-  - `_MYFENICS_WSL_QUALIFIED_ACTIVATION=1`；
+- 当前主机的仓库级权威入口是 `source .venv/bin/activate_myfenics_native.sh`；需要项目 Python、MPI、PETSc 或 SLEPc 的命令必须在同一已激活 shell 中执行。
+- activation 必须设置 marker `MYFENICS_NATIVE_COMPLEX_ENV=1`，并确保 Python、MPI、PETSc/petsc4py、SLEPc/slepc4py、DOLFINx 和 Basix 来自同一原生 Linux ABI 栈。
+- 禁止直接使用 `.venv/bin/python -m pytest`、系统 `/usr/bin/python3` 或未 activation 的裸 `pytest` 替代资格化 activation；直接调用解释器不会自动设置 complex PETSc/SLEPc、`PYTHONPATH`、`LD_LIBRARY_PATH` 或项目 marker。
+- 在任何耗时测试、MPI 或 PDE 前先运行轻量 ABI preflight，并确认：
+  - `MYFENICS_NATIVE_COMPLEX_ENV=1`；
   - `sys.executable` 位于当前仓库 `.venv`；
-  - `PETSc.ScalarType` 为 `numpy.complex128`；
-  - `petsc4py`、`slepc4py`、`dolfinx`、`mpi4py` 来自同一 Linux ABI 栈；
-  - 实际执行路径中不存在 Windows Python/MPI/Git 污染。
-- preflight 失败时，必须在启动 pytest、MPI 或 PDE 前立即停止；不得先运行整套测试，再用大量 real/complex 错误反推环境问题。
+  - `PETSc.ScalarType` 为 `numpy.complex128`，并记录 `PETSc.IntType`；
+  - `petsc4py`、`slepc4py`、`dolfinx`、`mpi4py` 和 Basix 来自同一原生 Linux ABI 栈；
+  - 实际执行路径中的 Python、MPI、Git 和数值库均为当前原生 Linux 版本。
+- preflight 失败时，必须在启动 pytest、MPI 或 PDE 前立即停止；不得先运行测试，再用错误结果反推环境问题。
 
 ## 13. 密钥、密码与交互提示
 
 - Codex 不得代替用户输入、记录、回显或推测任何 sudo 密码、SSH 私钥口令、GitHub 凭据、OpenAI/API 密钥或其他 secret。
-- Codex 不得执行一个可能等待密码的命令后静默卡住。执行 `sudo`、`ssh-add`、`git fetch/push`、包安装或其他可能交互的操作前，先使用非交互探针：
-
-```bash
-sudo -n true
-ssh-add -l
-env GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD
-```
-
-- 若探针失败，立即停止并向用户给出一段可直接复制的人工准备命令，说明将出现哪一种提示以及应输入哪一种凭据；用户准备完成后再继续。
-- `sudo` 提示只由用户在 WSL Ubuntu 终端输入 Ubuntu 账户密码；SSH 提示只由用户输入对应私钥的 passphrase；Codex/ChatGPT 对话中不得粘贴这些内容。
-- 优先使用 WSL 内的 `ssh-agent` 缓存 Git SSH key passphrase，避免每次 push 重复输入。不得混用 Windows ssh-agent 与 WSL ssh-agent。
-- 若任务不需要安装系统包，不得主动运行 `sudo`。若不需要网络或 push，不得主动触发认证。
+- 非交互探针必须按实际认证路径选择；不得执行可能等待密码或确认的命令后静默卡住。
+- Git 的权威探针是 `GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD`。该命令成功时，`ssh-add -l` 失败不是 blocker；当前仓库使用无口令的专用 `IdentityFile`，不应为此启动 `ssh-agent`。
+- 包管理的权威路径是 `sudo -n /usr/local/sbin/codex-apt ...`，包安装只允许通过该免密包装器；普通 `sudo -n true` 失败属于预期的安全设计，不阻塞该包装器。
+- 其他需要 root 权限的操作仍须遵守普通 sudo 边界：先使用非交互方式检查，若失败则停止并请用户在当前 Ubuntu 终端输入账户密码；Codex/ChatGPT 对话中不得粘贴任何口令。
+- 若任务不需要安装系统包，不得主动运行 sudo；若不需要网络或 push，不得主动触发认证。
 
 ## 14. 防卡死、超时与测试金字塔
 
