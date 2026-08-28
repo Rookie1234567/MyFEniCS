@@ -5,8 +5,13 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 在人工截面附近保留必要的信息，以减少内存；但它必须先证明传递方向正确，再谈完整 Hybrid。
 本页把已完成的 T40-3、V1-1 与 V1-2 Run B 分开登记，不能把组件峰值当作完整工作流节省。
 
-当前 V5 authority：`VALID_NEGATIVE_ROUTE_C_NO_SIGNAL_RESOURCE_AUTHORITY_GAP`；Route C
-no-signal stop 已触发，后续 V5 漏斗均为 `not_run_by_route_c_no_signal_and_resource_authority_gate`。
+当前 V6-2 authority：`valid_identity_negative`；formal 与独立 checker classification 均为
+`V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`，状态为 `completed_v6_2_identity_gate_negative`。
+checker `checker_pass=true`、`evidence_valid=true`、`gate_pass=false`、`executed_exact=false`。
+Review V6 §19.1 的“full-interface Schur action identity 无法建立”stop Gate 已触发；后续
+full-spectrum、moving-PML、adaptive Schwarz、factor-free local service、bottom/top/both/full
+Hybrid、h3、0.7 nm 与 Full3D 均为 `not_run_by_v6_2_identity_gate`。这是 valid identity
+negative，不是 exact numerical negative。V5 Route C 的历史 authority 仍保留在下文。
 
 ## Review V4 历史收口
 

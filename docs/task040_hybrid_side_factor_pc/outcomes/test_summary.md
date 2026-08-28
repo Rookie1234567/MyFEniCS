@@ -3,6 +3,20 @@
 本页区分已绑定的实现/focused Gate、V1-8 文档合同检查和正式 Run B。没有把缺少
 `worker/run_summary.json` 的资源停止伪装成 checker 数值通过。
 
+## V6-2 最小验证与一次性正式证据
+
+| SHA / 项目 | 命令或范围 | 结果与语义 |
+|---|---|---|
+| `72975fff` native marker 修复 | `test_v5_runtime_preflight_records_actual_environment`；`test_v6_2_resource_preflight_uses_observed_environment_gate` | focused 节点通过；绑定 native activation，不是 CI |
+| `8199929b` native resource gate 修复 | `test_native_session_scope_is_not_dedicated_job_cgroup`；`test_v6_2_resource_preflight_uses_observed_environment_gate` | focused 节点通过；只验证资源身份边界 |
+| `82bd1109` frozen-RHS bridge | `test_v6_2_formal_binding_separates_frozen_rhs_and_current_source` | focused 节点通过；raw frozen descriptor 不被改写 |
+| V6-2 formal once | watchdog formal root `.../task040_v6_2_full_interface_schur_mpi8_82bd1109_native` | worker `rc=0`、natural exit；`V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`；不是 pytest |
+| V6-2 checker once | `python -m benchmarks.check_task040_v6_2_interface_schur` | `rc=0`；`checker_pass=true`、`evidence_valid=true`、`gate_pass=false`、`executed_exact=false`；checker 不是 pytest |
+
+formal 与 checker 均绑定 source/checker SHA `82bd11099a843dc960629970b9074fb241fba0f4`。
+本轮文档只运行 `git diff --check`；不再运行 pytest、Ruff、full repository pytest 或 formal。
+没有 GitHub Actions 证据，不声称 CI 通过。
+
 | 检查 | 结果 |
 |---|---|
 | test297 serial/MPI2/MPI4 | 各 `8/8 passed`；由未变更的 solver/core commit 绑定 |

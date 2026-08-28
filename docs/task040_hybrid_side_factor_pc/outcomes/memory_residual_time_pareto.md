@@ -92,3 +92,13 @@ raw dedicated-swap 的 0 写成独立 authority。
 
 没有新的 bottom/top/both/full Hybrid、bounded rank、h3 或 0.7 nm Pareto 点；这些项目均为
 `not_run_by_route_c_no_signal_and_resource_authority_gate`。
+
+## V6-2 identity-gate component point
+
+| 路线 | residual / classification | peak process-tree RSS | wall | swap | 状态 |
+|---|---|---:|---:|---:|---|
+| V6-2 full-interface Schur identity | identity gate negative；exact 未运行 | `27,801,870,336 B`（约 `25.89 GiB`） | `339.7141449260016 s` | `0` | `V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL` |
+
+这是一次 identity-gate component measurement，不是完整 Hybrid workflow、production saving
+或 numerical Pareto 点；不得与完整 workflow 峰值相减宣称节省。其 watchdog 为 natural exit，
+`616` 个 authoritative samples，hard stop 为 `45 GiB`。

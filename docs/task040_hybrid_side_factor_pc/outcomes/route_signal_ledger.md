@@ -13,6 +13,20 @@ VALID_NEGATIVE_ROUTE_C_NO_SIGNAL_RESOURCE_AUTHORITY_GAP
 `checker_pass=true`、`evidence_valid=true` 表示 raw evidence 合同完整；`gate_pass=false`
 表示没有正信号且 resource authority 不完整。它不是允许继续的 candidate pass。
 
+## V6-2 full-interface Schur identity ledger
+
+| 阶段 | 状态 | 记录与后续边界 |
+|---|---|---|
+| V6-0 factor forensic | `FORENSIC_TRUE_FACTOR_STALL` | 确认 V5 factor stall；不再重试 factor-only rescue |
+| V6-1 factor-only rescue | `forbidden_no_retry_after_v6_0` | Review V6 已禁止再次启动该路线 |
+| V6-2 full-interface Schur | `valid_identity_negative` | formal 与独立 checker 均为 `V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`；完整接口 Schur action identity 未建立，触发 Review V6 §19.1 stop Gate |
+| V6-3 及其余后续路线 | `not_run_by_v6_2_identity_gate` | full-spectrum、moving-PML、adaptive Schwarz、factor-free local service、bottom/top/both/full Hybrid、h3 与 0.7 nm 均不运行 |
+
+V6-2 的 `checker_pass=true`、`evidence_valid=true` 只表示 raw evidence 合同和独立重算
+有效；`gate_pass=false` 且 `executed_exact=false`，因此这是 valid identity negative，不是
+exact numerical negative。后续路线统一保留为 `not_run_by_v6_2_identity_gate`，不为未运行路线
+创建空结果文档。
+
 ## Route A
 
 | 项目 | 记录 |
