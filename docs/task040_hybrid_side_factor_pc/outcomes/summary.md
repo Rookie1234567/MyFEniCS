@@ -1,4 +1,18 @@
-# 当前 V7 authority
+# 当前 V8 authority（继承 V7 identity）
+
+## V8-0 adjudication / V8-1 route
+
+| 项目 | 当前裁决 |
+|---|---|
+| V7 identity | `V7_SCALE_NORMALIZED_FULL_INTERFACE_IDENTITY_PASS_D0`；`review_adjudicated=true`；`selected=D0_lower_memory` |
+| raw formal field | `raw_formal_adjudication=false_preserved`；V6 absolute negative unchanged |
+| V8-1 dedicated route | `--v8-full-spectrum-only`；仅两源 full-spectrum screen，尚未正式运行 |
+| review binding | V8 review=`0ce67c0c68c36e9677f3293a87c1c124e82c6f70`；input/physical/resolved/selected/bare-F 与 V7 bundle 见 [V8 adjudication](v8_review_adjudication.md) |
+| prior implementation evidence | full-spectrum fix=`a2acb9344a9bd246a399c9110207926c7e03460e`；moving-PML owner-serial implementation retired，method family not numerically rejected |
+
+V8-1 专用路线必须复用已裁决的 D0、current bare `F` 与 V5 authority，但不调用旧三尺度
+identity、D0/D1 comparison、refinement/partition、exact packet 或 moving-PML。未形成 numerical
+结果前，不把它写成 positive 或 no-signal。
 
 Task040 研究的是：在不改变裸算子 `F` 和物理方程的前提下，能否用较小的侧向/局部逆作用
 代替完整 side factor。V7 的 moving-PML 先在人工边界加 PC-only 吸收层，目的是测试波能否

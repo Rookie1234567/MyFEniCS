@@ -4295,18 +4295,21 @@ def run_exact_interface_fgmres(
         candidate: PETSc.Vec,
         *,
         checkpoint_kind: str,
+        hessenberg_projected_residual_absolute: float | None = None,
     ) -> dict[str, Any]:
         nonlocal accepted_solution, accepted_solution_iteration
         interface_operator.mult(candidate, interface_residual)
         interface_residual.scale(PETSc.ScalarType(-1.0))
         interface_residual.axpy(PETSc.ScalarType(1.0), condensed_rhs)
         interface_norm = float(interface_residual.norm())
+        interface_solution_norm = float(candidate.norm())
         full_state: PETSc.Vec | None = None
         try:
             full_state, recovery_audit = schur_action.build_full_state_from_condensed_solution(
                 candidate,
                 interior_rhs_by_group,
             )
+            recovered_full_solution_norm = float(full_state.norm())
             bare_operator.mult(full_state, full_residual)
             full_residual.axpy(PETSc.ScalarType(-1.0), active_rhs)
             full_norm = float(full_residual.norm())
@@ -4315,6 +4318,16 @@ def run_exact_interface_fgmres(
                 full_state.destroy()
         full_relative = full_norm / max(full_rhs_norm, 1.0e-30)
         interface_relative = interface_norm / max(interface_rhs_norm, 1.0e-30)
+        hessenberg_absolute = (
+            None
+            if hessenberg_projected_residual_absolute is None
+            else float(hessenberg_projected_residual_absolute)
+        )
+        hessenberg_relative = (
+            None
+            if hessenberg_absolute is None
+            else hessenberg_absolute / interface_rhs_norm
+        )
         row = {
             "label": str(label),
             "iteration": int(iteration),
@@ -4324,6 +4337,25 @@ def run_exact_interface_fgmres(
             "interface_true_residual_relative": interface_relative,
             "full_true_residual_norm": full_norm,
             "full_true_residual_relative": full_relative,
+            "interface_solution_norm": interface_solution_norm,
+            "recovered_full_solution_norm": recovered_full_solution_norm,
+            "small_hessenberg_projected_residual_absolute": hessenberg_absolute,
+            "small_hessenberg_projected_residual_relative": hessenberg_relative,
+            "small_hessenberg_reported_residual_absolute": hessenberg_absolute,
+            "small_hessenberg_reported_residual_relative": hessenberg_relative,
+            "reported_residual_kind": (
+                "projected_least_squares_alias"
+                if hessenberg_absolute is not None
+                else None
+            ),
+            "small_hessenberg_relative_denominator": (
+                interface_rhs_norm if hessenberg_absolute is not None else None
+            ),
+            "small_hessenberg_relative_denominator_kind": (
+                "original_interface_rhs_norm"
+                if hessenberg_absolute is not None
+                else None
+            ),
             "full_residual_tolerance": float(full_residual_tolerance),
             "rhs_norm_denominator": full_rhs_norm,
             "interface_rhs_norm_denominator": interface_rhs_norm,
@@ -4333,8 +4365,26 @@ def run_exact_interface_fgmres(
                 and np.isfinite(full_norm)
                 and np.isfinite(full_relative)
                 and np.isfinite(interface_relative)
+                and np.isfinite(interface_solution_norm)
+                and np.isfinite(recovered_full_solution_norm)
+                and interface_solution_norm >= 0.0
+                and recovered_full_solution_norm >= 0.0
                 and full_relative >= 0.0
                 and interface_relative >= 0.0
+                and (
+                    hessenberg_absolute is None
+                    or (
+                        np.isfinite(hessenberg_absolute)
+                        and hessenberg_absolute >= 0.0
+                    )
+                )
+                and (
+                    hessenberg_relative is None
+                    or (
+                        np.isfinite(hessenberg_relative)
+                        and hessenberg_relative >= 0.0
+                    )
+                )
             ),
         }
         if full_relative <= full_residual_tolerance:
@@ -4438,6 +4488,11 @@ def run_exact_interface_fgmres(
                                 total_iterations,
                                 candidate,
                                 checkpoint_kind=checkpoint_kind,
+                                hessenberg_projected_residual_absolute=float(
+                                    np.linalg.norm(
+                                        hbar @ coefficients - rhs_small
+                                    )
+                                ),
                             )
                             checkpoints_out[str(total_iterations)] = record
                             if total_iterations in conditional:
@@ -4452,6 +4507,11 @@ def run_exact_interface_fgmres(
                                 total_iterations,
                                 candidate,
                                 checkpoint_kind="early_final",
+                                hessenberg_projected_residual_absolute=float(
+                                    np.linalg.norm(
+                                        hbar @ coefficients - rhs_small
+                                    )
+                                ),
                             )
                             final_record = early_final_record
                             checkpoint_history.append(dict(early_final_record))

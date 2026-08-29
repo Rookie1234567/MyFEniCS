@@ -17,24 +17,24 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
-from dolfinx import fem
 
+from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
 from benchmarks.task034_wsl_resources import (
     resource_authority_sample,
     wsl_memory_snapshot,
 )
-from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
 from benchmarks.task039_v3_7_orchestration import (
     _load_v5_blr_reference_spool_remapped,
     _load_v5_fixed_budget_spool_shards,
     _v9_frozen_holdout_identity,
 )
+from benchmarks.task039_v3_side_oracle import _build_research_explicit_side_components
 from benchmarks.task039_v4_selected_mode_packet import (
     stream_task039_v4_selected_mode_columns,
 )
-from benchmarks.task039_v3_side_oracle import _build_research_explicit_side_components
 from benchmarks.task040_v6_2_interface_schur import (
     V6_2_INTERFACE_JOINT_COUNT,
     V6_2_INTERFACE_LOWER_COUNT,
@@ -54,20 +54,53 @@ from benchmarks.task040_v6_2_interface_schur import (
     V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA,
     V7_SCALE_NORMALIZED_IDENTITY_METHOD,
     V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID,
+    V8_FULL_SPECTRUM_CHECKPOINTS,
+    V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES,
+    V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS,
+    V8_FULL_SPECTRUM_ONLY_FLAG,
+    V8_FULL_SPECTRUM_ONLY_METHOD,
+    V8_FULL_SPECTRUM_ONLY_PROFILE_ID,
+    V8_FULL_SPECTRUM_ONLY_SCHEMA,
+    V8_FULL_SPECTRUM_PREFERRED_MEMORY_BYTES,
+    V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS,
+    V8_FULL_SPECTRUM_SOURCES,
+    V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
+    V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
     build_v6_2_exact_qualification_plan,
-)
-from src.io.input_validation import (
-    load_and_resolve,
-    simulation_config_3d_from_normalized,
 )
 from src.common.modes_3d import outgoing_port_modes_3d
 from src.coupling.hybrid_internal_modes import (
     _ReusableInterfaceLifter,
     _trace_from_streamed_local_values,
 )
+from src.io.input_validation import (
+    load_and_resolve,
+    simulation_config_3d_from_normalized,
+)
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
+)
+from src.runners.task039_hybrid_iterative import make_task039_hybrid_iterative_profile
+from src.solvers.hybrid_bare_f_authority import (
+    V5_BARE_F_METHOD,
+    V5_BARE_F_SCHEMA,
+    V5_BARE_F_SOURCE_LABELS,
+    assemble_current_bare_f_authority_system,
+    build_current_bare_f_rhs,
+    build_current_gamma_layout,
+    build_v5_operator_semantics_audit,
+    canonical_layout_tokens,
+    compact_gamma_values_for_vector,
+    run_current_bare_f_authority,
+)
+from src.solvers.hybrid_exact_authority_compat import (
+    V4_CANONICAL_SOURCE_BINDING_REASON,
+    V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE,
+    V4_EXACT_AUTHORITY_FAILURE,
+    V4_EXACT_AUTHORITY_LABELS,
+    canonical_binding_failure_audit,
+    inspect_canonical_source_authority,
 )
 from src.solvers.hybrid_interface_basis import (
     build_artificial_gamma_column,
@@ -77,6 +110,10 @@ from src.solvers.hybrid_interface_basis import (
     canonical_external_mode_metadata_sha256,
     canonical_mode_keys_sha256,
     collect_streamed_trace_basis,
+)
+from src.solvers.hybrid_interface_fgmres import (
+    audit_v3_full_side_one_apply,
+    run_v3_full_span_right_fgmres_batch,
 )
 from src.solvers.hybrid_interface_packet import (
     PacketGroup,
@@ -91,56 +128,31 @@ from src.solvers.hybrid_interface_packet import (
 )
 from src.solvers.hybrid_interface_packet_dolfinx import (
     CanonicalOwnerLocalBasis,
+    audit_owner_local_basis_round_trip,
     build_dolfinx_plane_gamma_layout,
     build_gamma_canonical_layout,
-    audit_owner_local_basis_round_trip,
     canonicalize_owner_local_basis_in_place,
     reconstruct_owner_local_basis,
 )
-from src.solvers.hybrid_interface_schur import (
-    build_petsc_interface_schur_oracle,
-    build_distributed_petrov_action,
+from src.solvers.hybrid_interface_petsc_coupled import (
+    build_petsc_coupled_full_side_action,
 )
 from src.solvers.hybrid_interface_run_b import (
     build_v1_3_projected_transmission,
     build_v2_packet_projected_transmission,
 )
-from src.solvers.hybrid_interface_fgmres import (
-    audit_v3_full_side_one_apply,
-    run_v3_full_span_right_fgmres_batch,
+from src.solvers.hybrid_interface_schur import (
+    build_distributed_petrov_action,
+    build_petsc_interface_schur_oracle,
 )
-from src.solvers.hybrid_exact_authority_compat import (
-    V4_CANONICAL_SOURCE_BINDING_REASON,
-    V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE,
-    V4_EXACT_AUTHORITY_FAILURE,
-    V4_EXACT_AUTHORITY_LABELS,
-    canonical_binding_failure_audit,
-    inspect_canonical_source_authority,
+from src.solvers.hybrid_layer_block import (
+    run_v1_1_right_preconditioned_fgmres_batch,
 )
-from src.solvers.hybrid_interface_petsc_coupled import (
-    build_petsc_coupled_full_side_action,
-)
-from src.runners.task039_hybrid_iterative import make_task039_hybrid_iterative_profile
 from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
-from src.solvers.hybrid_bare_f_authority import (
-    V5_BARE_F_METHOD,
-    V5_BARE_F_SCHEMA,
-    V5_BARE_F_SOURCE_LABELS,
-    assemble_current_bare_f_authority_system,
-    canonical_layout_tokens,
-    build_current_gamma_layout,
-    build_current_bare_f_rhs,
-    build_v5_operator_semantics_audit,
-    compact_gamma_values_for_vector,
-    run_current_bare_f_authority,
-)
 from src.solvers.hybrid_route_c import (
     ROUTE_C_CHECKPOINTS,
     ROUTE_C_LABELS,
     run_route_c_online_fgmres,
-)
-from src.solvers.hybrid_layer_block import (
-    run_v1_1_right_preconditioned_fgmres_batch,
 )
 from src.solvers.hybrid_side_impedance import (
     TASK040_LEVEL_A_SOURCE_LABELS,
@@ -151,7 +163,6 @@ from src.solvers.hybrid_side_impedance import (
     build_level_a_cell_recovery_group_rows,
     build_level_a_oracle,
 )
-
 
 TASK040_LEVEL_A_METHOD = "task040_level_a_bare_f_transmission"
 TASK040_LEVEL_A_SCHEMA = "task040.level_a.bare_f_transmission.v1"
@@ -404,6 +415,7 @@ def build_task040_level_a_plan(
     v6_2_interface_schur: bool = False,
     v7_scale_normalized_identity: bool = False,
     v7_moving_pml_full_state: bool = False,
+    v8_full_spectrum_only: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -456,6 +468,7 @@ def build_task040_level_a_plan(
                 v6_2_interface_schur,
                 v7_scale_normalized_identity,
                 v7_moving_pml_full_state,
+                v8_full_spectrum_only,
             )
         )
         > 1
@@ -777,6 +790,63 @@ def build_task040_level_a_plan(
                     "qep",
                     "old_bool_recovery_mask",
                     "raw_global_row_remap",
+                ],
+            }
+        )
+    if v8_full_spectrum_only:
+        plan.update(
+            {
+                "schema": V8_FULL_SPECTRUM_ONLY_SCHEMA,
+                "method": V8_FULL_SPECTRUM_ONLY_METHOD,
+                "profile": V8_FULL_SPECTRUM_ONLY_PROFILE_ID,
+                "v8_full_spectrum_only": True,
+                "research_only": True,
+                "oracle_only": True,
+                "scalable_candidate": False,
+                "pde_solve": "full_spectrum_five_source_screen",
+                "exact_qualification": (
+                    "intentional_not_run_by_v8_direct_mainline"
+                ),
+                "full_spectrum_continuation": "required",
+                "source_order": list(V8_FULL_SPECTRUM_SOURCES),
+                "mandatory_checkpoints": list(V8_FULL_SPECTRUM_CHECKPOINTS),
+                "conditional_checkpoints": [128],
+                "fixed_configuration": {
+                    "restart": 32,
+                    "zero_initial_guess": True,
+                    "pml_profile": "not_used",
+                    "selected_operator": "D0_lower_memory",
+                },
+                "minimum_mem_available_bytes": V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES,
+                "preferred_memory_bytes": V8_FULL_SPECTRUM_PREFERRED_MEMORY_BYTES,
+                "absolute_terminate_memory_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
+                "setup_target_seconds": V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS,
+                "transform_target_seconds": V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
+                "one_apply_target_seconds": V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS,
+                "numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "root_metadata_gather": True,
+                "metadata_only_descriptor_gather": True,
+                "exact_output_packet_publication": False,
+                "three_scale_identity": False,
+                "d0_d1_comparison": False,
+                "conditional_authorized": {"conditional_128": "v8_r64_inconclusive_only"},
+                "forbidden": [
+                    "v7_scale_normalized_identity_metrics",
+                    "v7_identity_checker_bundle",
+                    "d0_d1_comparison",
+                    "refinement",
+                    "partition",
+                    "exact_output_packet_publication",
+                    "moving_pml",
+                    "threshold_relaxation",
+                    "parameter_scan",
+                    "qep",
+                    "physical_dtn",
+                    "full_side_factor",
                 ],
             }
         )
@@ -6153,6 +6223,7 @@ def run_task040_level_a(
     v6_2_interface_schur: bool = False,
     v7_scale_normalized_identity: bool = False,
     v7_moving_pml_full_state: bool = False,
+    v8_full_spectrum_only: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
@@ -6177,6 +6248,7 @@ def run_task040_level_a(
                 v6_2_interface_schur,
                 v7_scale_normalized_identity,
                 v7_moving_pml_full_state,
+                v8_full_spectrum_only,
             )
         )
         > 1
@@ -6229,6 +6301,13 @@ def run_task040_level_a(
             raise ValueError(
                 "V7 moving-PML full-state screen requires the official input_path"
             )
+    if v8_full_spectrum_only:
+        if run_directory is None:
+            raise ValueError("V8 full-spectrum route requires a separate run_directory")
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError("V8 run_directory must not be the frozen exact spool root")
+        if input_path is None:
+            raise ValueError("V8 full-spectrum route requires the official input_path")
     if (
         interface_schur
         or packet_producer
@@ -6240,6 +6319,7 @@ def run_task040_level_a(
         or v6_2_interface_schur
         or v7_scale_normalized_identity
         or v7_moving_pml_full_state
+        or v8_full_spectrum_only
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6282,6 +6362,8 @@ def run_task040_level_a(
             if v7_scale_normalized_identity
             else V7_MOVING_PML_FULL_STATE_METHOD
             if v7_moving_pml_full_state
+            else V8_FULL_SPECTRUM_ONLY_METHOD
+            if v8_full_spectrum_only
             else TASK040_V6_2_INTERFACE_SCHUR_METHOD
             if v6_2_interface_schur
             else TASK040_V1_2_METHOD
@@ -6467,6 +6549,27 @@ def run_task040_level_a(
             resource_callback=resource_callback,
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
+        )
+    if v8_full_spectrum_only:
+        from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
+
+        return run_v6_2_interface_schur(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            exact_spool_root=exact_spool_root,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            hard_stop_bytes=TASK040_LEVEL_A_HARD_STOP_BYTES,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+            resource_callback=resource_callback,
+            v8_full_spectrum_only=True,
         )
     if v7_moving_pml_full_state:
         from benchmarks.task040_v6_2_interface_schur import (
@@ -6922,6 +7025,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V6_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument(V7_SCALE_NORMALIZED_IDENTITY_FLAG, action="store_true")
     parser.add_argument(V7_MOVING_PML_FULL_STATE_FLAG, action="store_true")
+    parser.add_argument(V8_FULL_SPECTRUM_ONLY_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -6945,6 +7049,7 @@ def main(argv: list[str] | None = None) -> int:
         v6_2_interface_schur=args.v6_2_interface_schur,
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         v7_moving_pml_full_state=args.v7_moving_pml_full_state,
+        v8_full_spectrum_only=args.v8_full_spectrum_only,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -6985,6 +7090,7 @@ def main(argv: list[str] | None = None) -> int:
         v6_2_interface_schur=args.v6_2_interface_schur,
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         v7_moving_pml_full_state=args.v7_moving_pml_full_state,
+        v8_full_spectrum_only=args.v8_full_spectrum_only,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -7011,6 +7117,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v6_2_interface_schur
                     or args.v7_scale_normalized_identity
                     or args.v7_moving_pml_full_state
+                    or args.v8_full_spectrum_only
                 )
                 else None
             )
@@ -7029,6 +7136,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.v6_2_interface_schur
             or args.v7_scale_normalized_identity
             or args.v7_moving_pml_full_state
+            or args.v8_full_spectrum_only
             else None
         ),
         v7_continuation=v7_continuation,

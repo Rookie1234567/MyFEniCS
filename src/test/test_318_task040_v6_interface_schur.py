@@ -549,6 +549,73 @@ def test_v7_scaled_tiny_d0_d1_and_layer_a_contract():
         bare.destroy()
 
 
+def test_v8_factor_ready_callback_zero_based_and_none_path():
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2):
+        pytest.skip("run this callback contract with serial or MPI2")
+    bare = _distributed_bare(_dense_bare())
+    callback_oracle = callback_matrix = callback_action = None
+    default_oracle = default_matrix = default_action = None
+    callback_groups: list[int] = []
+
+    def on_factor_ready(group: int, _diagnostics) -> None:
+        callback_groups.append(int(group))
+
+    try:
+        canonical_layout = _canonical_layout(bare)
+        first, last = map(int, bare.getOwnershipRange())
+        lower_local = np.asarray(
+            [row for row in LOWER_ROWS if first <= row < last],
+            dtype=PETSc.IntType,
+        )
+        upper_local = np.asarray(
+            [row for row in UPPER_ROWS if first <= row < last],
+            dtype=PETSc.IntType,
+        )
+        callback_oracle = build_petsc_interface_schur_oracle(
+            bare,
+            _local_group_rows(bare),
+            (lower_local, upper_local),
+            factor_ready_callback=on_factor_ready,
+        )
+        callback_matrix, callback_action = build_petsc_full_interface_schur_action(
+            callback_oracle,
+            canonical_layout=canonical_layout,
+        )
+        callback_oracle = None
+        assert callback_groups == [0, 1, 2]
+        assert callback_action.diagnostics["factor_lifecycle"]["ready"] == 3
+        callback_matrix.destroy()
+        callback_matrix = None
+        callback_action.destroy()
+        assert callback_action.diagnostics["factor_lifecycle"]["after_cleanup"] == 0
+        callback_action = None
+
+        default_oracle = build_petsc_interface_schur_oracle(
+            bare, _local_group_rows(bare), (lower_local, upper_local)
+        )
+        default_matrix, default_action = build_petsc_full_interface_schur_action(
+            default_oracle,
+            canonical_layout=canonical_layout,
+        )
+        default_oracle = None
+        assert default_action.diagnostics["factor_lifecycle"]["ready"] == 3
+    finally:
+        if default_matrix is not None:
+            default_matrix.destroy()
+        if default_action is not None:
+            default_action.destroy()
+        elif default_oracle is not None:
+            default_oracle.destroy()
+        if callback_matrix is not None:
+            callback_matrix.destroy()
+        if callback_action is not None:
+            callback_action.destroy()
+        elif callback_oracle is not None:
+            callback_oracle.destroy()
+        bare.destroy()
+
+
 def test_v6_2_canonical_joint_action_matches_independent_full_elimination():
     dense = _dense_bare()
     bare = _distributed_bare(dense)

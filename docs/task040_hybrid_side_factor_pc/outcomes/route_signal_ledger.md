@@ -13,6 +13,8 @@
 | moving-PML first | 5e6 root | provider wiring implementation failure | 已由 7b 修复 |
 | moving-PML corrected | 7b root | `INCONCLUSIVE_RESOURCE_GATE / SIGNAL_UNAVAILABLE` | 不得分类 PML no-signal |
 | adaptive Schwarz | corrected moving 无五源证据 | `NOT_RUN_DUE_TO_TRUE_RESOURCE_GATE` | 等 stop-Gate 审核 |
+| V8-0 review adjudication | V8 review=`0ce67c0c` + V7 raw/checker | `V7_SCALE_NORMALIZED_FULL_INTERFACE_IDENTITY_PASS_D0`；`review_adjudicated=true`；selected=`D0_lower_memory` | V6 absolute negative unchanged |
+| V8-1 dedicated full-spectrum | `--v8-full-spectrum-only` | `not_run` | 两源 formal；不调用旧 identity、packet 或 moving-PML |
 
 V7 后续的 exact qualification、full-spectrum numerical screen、PML five-source residual、
 factor-free local service、h3、0.7 nm 与 Full3D 均为 `not_run_by_true_resource_gate` 或

@@ -2353,6 +2353,69 @@ def test_fgmres_reports_nonrequested_early_final_iteration() -> None:
         matrix.destroy()
 
 
+def test_fgmres_checkpoint_records_solution_and_hessenberg_diagnostics() -> None:
+    matrix = _diagonal_matrix(
+        2,
+        MPI.COMM_SELF,
+        diagonal_values=np.asarray([1.0, 1.0]),
+    )
+    active_rhs = matrix.createVecRight()
+    condensed_rhs = matrix.createVecRight()
+    residual = matrix.createVecLeft()
+    _fill_vector(active_rhs, np.asarray([1.0 + 0.0j, 2.0 + 0.0j]))
+    _fill_vector(condensed_rhs, np.asarray([1.0 + 0.0j, 2.0 + 0.0j]))
+    accepted = None
+    try:
+        result = run_exact_interface_fgmres(
+            interface_operator=matrix,
+            schur_action=_CopyRecovery(),
+            bare_operator=matrix,
+            condensed_rhs=condensed_rhs,
+            active_rhs=active_rhs,
+            interior_rhs_by_group={},
+            right_preconditioner=None,
+            label="checkpoint-diagnostics",
+            mandatory_checkpoints=(1,),
+            conditional_checkpoints=(),
+            max_iterations=1,
+        )
+        record = result["checkpoints"]["1"]
+        for name in (
+            "interface_solution_norm",
+            "recovered_full_solution_norm",
+            "small_hessenberg_projected_residual_absolute",
+            "small_hessenberg_projected_residual_relative",
+            "small_hessenberg_reported_residual_absolute",
+            "small_hessenberg_reported_residual_relative",
+        ):
+            assert np.isfinite(record[name])
+        assert record["small_hessenberg_projected_residual_absolute"] == pytest.approx(
+            record["small_hessenberg_reported_residual_absolute"]
+        )
+        assert record["reported_residual_kind"] == "projected_least_squares_alias"
+        assert record["small_hessenberg_relative_denominator_kind"] == (
+            "original_interface_rhs_norm"
+        )
+        assert record["small_hessenberg_relative_denominator"] == pytest.approx(
+            float(condensed_rhs.norm())
+        )
+        assert record["small_hessenberg_projected_residual_absolute"] >= 0.0
+        assert record["small_hessenberg_projected_residual_relative"] >= 0.0
+        accepted = result.pop("accepted_solution")
+        matrix.mult(accepted, residual)
+        residual.axpy(PETSc.ScalarType(-1.0), active_rhs)
+        assert record["full_true_residual_norm"] == pytest.approx(
+            float(residual.norm())
+        )
+    finally:
+        if accepted is not None:
+            accepted.destroy()
+        residual.destroy()
+        active_rhs.destroy()
+        condensed_rhs.destroy()
+        matrix.destroy()
+
+
 def test_fgmres_returns_live_caller_owned_accepted_solution() -> None:
     matrix = _diagonal_matrix(
         2,

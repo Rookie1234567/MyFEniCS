@@ -108,43 +108,73 @@ V7_MOVING_PML_FULL_STATE_FLAG = "--v7-moving-pml-full-state"
 V7_MOVING_PML_FULL_STATE_METHOD = "task040_v6_5_moving_pml_full_state"
 V7_MOVING_PML_FULL_STATE_SCHEMA = "task040.v6_5.moving_pml_full_state.v1"
 V7_MOVING_PML_FULL_STATE_PROFILE_ID = "task040.v6_5.moving_pml.full_state.v1"
+V8_FULL_SPECTRUM_ONLY_FLAG = "--v8-full-spectrum-only"
+V8_FULL_SPECTRUM_ONLY_METHOD = "task040_v8_full_spectrum_two_source"
+V8_FULL_SPECTRUM_ONLY_SCHEMA = "task040.v8.full_spectrum_two_source.v1"
+V8_FULL_SPECTRUM_ONLY_PROFILE_ID = "task040.v8.full_spectrum.two_source.v1"
+V8_FULL_SPECTRUM_TIMEOUT_SECONDS = 10800
+V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES = 96 * 2**30
+V8_FULL_SPECTRUM_PREFERRED_MEMORY_BYTES = 40 * 2**30
+V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS = 1800
+V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS = 900
+V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS = 1200
+V8_FULL_SPECTRUM_SOURCES = (
+    "external_dtn_coupling",
+    "fixed_random_repeat_0",
+    "modal_traction_positive",
+    "modal_traction_negative",
+    "fixed_random_repeat_1",
+)
+V8_FULL_SPECTRUM_CHECKPOINTS = (8, 16, 32, 64)
 
 __all__ = (
+    "V6_2_EXACT_QUALIFICATION_SOURCES",
+    "V6_2_FORMAL_SEQUENCE_START_SCOPE",
+    "V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH",
+    "V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA",
+    "V6_2_INTERFACE_JOINT_COUNT",
+    "V6_2_INTERFACE_LOWER_COUNT",
     "V6_2_INTERFACE_SCHUR_FLAG",
     "V6_2_INTERFACE_SCHUR_METHOD",
-    "V6_2_INTERFACE_SCHUR_SCHEMA",
     "V6_2_INTERFACE_SCHUR_PROFILE_ID",
-    "V6_2_FORMAL_SEQUENCE_START_SCOPE",
-    "V6_2_INTERFACE_LOWER_COUNT",
+    "V6_2_INTERFACE_SCHUR_SCHEMA",
     "V6_2_INTERFACE_UPPER_COUNT",
-    "V6_2_INTERFACE_JOINT_COUNT",
-    "V6_2_RESOURCE_HEADROOM_BYTES",
     "V6_2_MIN_DISK_FREE_BYTES",
-    "V6_2_EXACT_QUALIFICATION_SOURCES",
-    "V6_2_FROZEN_V5_RHS_PRODUCER_SOURCE_SHA",
-    "V6_2_FROZEN_V5_BARE_F_OPERATOR_HASH",
-    "V7_SCALE_NORMALIZED_IDENTITY_SCHEMA",
+    "V6_2_RESOURCE_HEADROOM_BYTES",
+    "V7_D1_CONTRIBUTION_ORDER",
+    "V7_IDENTITY_HARD_SECONDS",
+    "V7_IDENTITY_TARGET_SECONDS",
+    "V7_IDENTITY_VECTOR_INDICES",
+    "V7_LINEARITY_ALPHA",
+    "V7_LINEARITY_VECTOR_INDICES",
+    "V7_MOVING_PML_FULL_STATE_FLAG",
+    "V7_MOVING_PML_FULL_STATE_METHOD",
+    "V7_MOVING_PML_FULL_STATE_PROFILE_ID",
+    "V7_MOVING_PML_FULL_STATE_SCHEMA",
+    "V7_PREFERRED_MEMORY_BYTES",
+    "V7_SAFE_DENOMINATOR",
+    "V7_SCALE_EXPONENTS",
     "V7_SCALE_NORMALIZED_IDENTITY_FLAG",
     "V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA",
     "V7_SCALE_NORMALIZED_IDENTITY_METHOD",
     "V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID",
-    "V7_IDENTITY_TARGET_SECONDS",
-    "V7_IDENTITY_HARD_SECONDS",
-    "V7_PREFERRED_MEMORY_BYTES",
-    "V7_SAFE_DENOMINATOR",
-    "V7_IDENTITY_VECTOR_INDICES",
-    "V7_LINEARITY_VECTOR_INDICES",
-    "V7_SCALE_EXPONENTS",
-    "V7_LINEARITY_ALPHA",
-    "V7_D1_CONTRIBUTION_ORDER",
-    "V7_MOVING_PML_FULL_STATE_FLAG",
-    "V7_MOVING_PML_FULL_STATE_METHOD",
-    "V7_MOVING_PML_FULL_STATE_SCHEMA",
-    "V7_MOVING_PML_FULL_STATE_PROFILE_ID",
+    "V7_SCALE_NORMALIZED_IDENTITY_SCHEMA",
+    "V8_FULL_SPECTRUM_CHECKPOINTS",
+    "V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES",
+    "V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS",
+    "V8_FULL_SPECTRUM_ONLY_FLAG",
+    "V8_FULL_SPECTRUM_ONLY_METHOD",
+    "V8_FULL_SPECTRUM_ONLY_PROFILE_ID",
+    "V8_FULL_SPECTRUM_ONLY_SCHEMA",
+    "V8_FULL_SPECTRUM_PREFERRED_MEMORY_BYTES",
+    "V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS",
+    "V8_FULL_SPECTRUM_SOURCES",
+    "V8_FULL_SPECTRUM_TIMEOUT_SECONDS",
+    "V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS",
     "build_v6_2_exact_qualification_plan",
+    "collect_v7_scale_normalized_identity_metrics",
     "run_v6_2_exact_qualification_packets",
     "run_v6_2_interface_schur",
-    "collect_v7_scale_normalized_identity_metrics",
 )
 
 
@@ -2005,6 +2035,13 @@ def _emit(
         callback(stage, detail)
 
 
+def _v8_factor_ready_marker(group: int) -> str:
+    group = int(group)
+    if group not in (0, 1, 2):
+        raise ValueError("V8 factor marker requires group0, group1, or group2")
+    return f"v8_full_spectrum_group{group}_factor_ready"
+
+
 def _collective_error(
     comm: MPI.Intracomm,
     stage: str,
@@ -2061,6 +2098,7 @@ def _resource_preflight(
     *,
     hard_stop_bytes: int,
     watchdog_hard_stop_bytes: int | None = None,
+    minimum_mem_available_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Record actual V6-2 environment facts before any system construction."""
 
@@ -2077,6 +2115,8 @@ def _resource_preflight(
     scalar = np.dtype(PETSc.ScalarType)
     minimum_mem_available_bytes = (
         worker_hard_stop_bytes + V6_2_RESOURCE_HEADROOM_BYTES
+        if minimum_mem_available_bytes is None
+        else int(minimum_mem_available_bytes)
     )
     thread_environment = {
         name: os.environ.get(name)
@@ -2955,6 +2995,7 @@ def run_v6_2_interface_schur(
     exact_qualification: Mapping[str, Any] | None = None,
     v7_scale_normalized_identity: bool = False,
     v7_moving_pml_full_state: bool = False,
+    v8_full_spectrum_only: bool = False,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
     v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -3004,6 +3045,25 @@ def run_v6_2_interface_schur(
             continuation_callable=True,
             mpi_size_8=False,
         )
+    if v8_full_spectrum_only and int(comm.size) != 8:
+        return _stop_result(
+            status="not_run_by_v8_mpi_size_gate",
+            classification="V8_FULL_SPECTRUM_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            identity_preflight={
+                "status": "mpi_size_gate",
+                "pass": False,
+                "checks": {"mpi_size_8": False},
+            },
+            resource_preflight=None,
+        ) | {
+            "schema": V8_FULL_SPECTRUM_ONLY_SCHEMA,
+            "method": V8_FULL_SPECTRUM_ONLY_METHOD,
+            "profile": V8_FULL_SPECTRUM_ONLY_PROFILE_ID,
+            "formal_adjudication": False,
+        }
     if v7_moving_pml_full_state and int(comm.size) != 8:
         moving_stop = _stop_result(
             status="not_run_by_v7_moving_pml_mpi_size_gate",
@@ -3074,6 +3134,9 @@ def run_v6_2_interface_schur(
         output_root,
         hard_stop_bytes=int(hard_stop_bytes),
         watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+        minimum_mem_available_bytes=(
+            V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES if v8_full_spectrum_only else None
+        ),
     )
     _emit(
         marker_callback,
@@ -3092,6 +3155,27 @@ def run_v6_2_interface_schur(
             identity_preflight=identity_preflight,
             resource_preflight=resource_preflight,
             formal_sequence_start_scope=formal_sequence_start_scope,
+        )
+
+    v8_marker_payload: dict[str, Any] | None = None
+    v8_marker_resource_callback = (
+        resource_callback if callable(resource_callback) else dict
+    )
+    if v8_full_spectrum_only:
+        from src.solvers.hybrid_full_spectrum_screen import _v8_mark
+
+        v8_marker_payload = {"marker_callback": marker_callback}
+        _v8_mark(
+            v8_marker_payload,
+            "v8_full_spectrum_preflight",
+            formal_sequence_started,
+            v8_marker_resource_callback,
+            None,
+            resource_preflight=_json_safe(resource_preflight),
+            system_created=False,
+            factor_lifecycle={"ready": 0, "after_cleanup": None},
+            pc_apply_count=0,
+            action_apply_count=0,
         )
 
     if comm.rank == 0:
@@ -3115,6 +3199,12 @@ def run_v6_2_interface_schur(
     v7_continuation_result: Mapping[str, Any] | None = None
     v7_factor_lifecycle_after_continuation: Mapping[str, Any] | None = None
     shared_lifecycle: Mapping[str, Any] | None = None
+    result: dict[str, Any] | None = None
+    exact_budget_seconds = (
+        V8_FULL_SPECTRUM_TIMEOUT_SECONDS
+        if v8_full_spectrum_only
+        else TASK040_LEVEL_A_TIMEOUT_SECONDS
+    )
     try:
         system = assemble_current_bare_f_authority_system(
             cfg,
@@ -3124,7 +3214,7 @@ def run_v6_2_interface_schur(
             source_work_directory=output_root / "source",
             selected_mode_provider=(
                 _v5_selected_mode_provider(comm)
-                if v7_moving_pml_full_state
+                if v7_moving_pml_full_state or v8_full_spectrum_only
                 else None
             ),
             external_mode_authority=identity_preflight["external_mode_authority"],
@@ -3132,7 +3222,9 @@ def run_v6_2_interface_schur(
                 identity_preflight["observed"]["resolved_config_sha256"]
             ),
             source_factor_marker_callback=(
-                marker_callback if v7_moving_pml_full_state else None
+                marker_callback
+                if v7_moving_pml_full_state or v8_full_spectrum_only
+                else None
             ),
             comm=comm,
         )
@@ -3161,6 +3253,20 @@ def run_v6_2_interface_schur(
             qep_calls=0,
             full_side_exact_factor_count=0,
         )
+        if v8_full_spectrum_only:
+            _v8_mark(
+                v8_marker_payload,
+                "v8_full_spectrum_system_ready",
+                formal_sequence_started,
+                v8_marker_resource_callback,
+                action,
+                system_created=True,
+                matrix_objects=matrix_objects,
+                qep_calls=0,
+                factor_lifecycle={"ready": 0, "after_cleanup": None},
+                pc_apply_count=0,
+                action_apply_count=0,
+            )
 
         z_values = np.asarray(system.local_mesh.z_values, dtype=np.float64)
         gamma_layouts = {
@@ -3222,8 +3328,46 @@ def run_v6_2_interface_schur(
             action = None
             action_before = {}
         else:
+            live_resource_callback: Callable[[], Mapping[str, Any]] | None = None
+            factor_ready_callback = None
+            if v8_full_spectrum_only:
+                factor_setup_started = time.perf_counter()
+                live_resource_callback = _v6_2_live_resource_callback(
+                    resource_callback,
+                    comm=comm,
+                    formal_sequence_started=formal_sequence_started,
+                    hard_stop_bytes=int(hard_stop_bytes),
+                    budget_seconds=float(exact_budget_seconds),
+                )
+
+                def factor_ready_callback(
+                    group: int, factor: Mapping[str, Any]
+                ) -> None:
+                    nonlocal factor_setup_started
+                    _v8_mark(
+                        v8_marker_payload,
+                        _v8_factor_ready_marker(group),
+                        formal_sequence_started,
+                        live_resource_callback,
+                        action,
+                        stage_clock_start=factor_setup_started,
+                        factor_lifecycle={
+                            "ready": int(group) + 1,
+                            "after_cleanup": None,
+                        },
+                        pc_apply_count=0,
+                        action_apply_count=0,
+                        source=None,
+                        checkpoint=None,
+                        factor=_json_safe(factor),
+                    )
+                    factor_setup_started = time.perf_counter()
+
             oracle = build_petsc_interface_schur_oracle(
-                system.F, group_rows, supports
+                system.F,
+                group_rows,
+                supports,
+                factor_ready_callback=factor_ready_callback,
             )
             matrix, action = build_petsc_full_interface_schur_action(
                 oracle,
@@ -3241,7 +3385,7 @@ def run_v6_2_interface_schur(
                 comm=comm,
                 formal_sequence_started=formal_sequence_started,
                 hard_stop_bytes=int(hard_stop_bytes),
-                budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
+                budget_seconds=float(exact_budget_seconds),
             )
         else:
             try:
@@ -3263,13 +3407,14 @@ def run_v6_2_interface_schur(
                         ),
                     )
                 )
-                live_resource_callback = _v6_2_live_resource_callback(
-                    resource_callback,
-                    comm=comm,
-                    formal_sequence_started=formal_sequence_started,
-                    hard_stop_bytes=int(hard_stop_bytes),
-                    budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
-                )
+                if live_resource_callback is None:
+                    live_resource_callback = _v6_2_live_resource_callback(
+                        resource_callback,
+                        comm=comm,
+                        formal_sequence_started=formal_sequence_started,
+                        hard_stop_bytes=int(hard_stop_bytes),
+                        budget_seconds=float(exact_budget_seconds),
+                    )
                 numeric_options = _v6_2_formal_numeric_options(exact_qualification)
                 numeric_options.update(
                     {
@@ -3287,7 +3432,7 @@ def run_v6_2_interface_schur(
                             lambda gate_input: _v6_2_conditional_authorizer(
                                 gate_input,
                                 hard_stop_bytes=int(hard_stop_bytes),
-                                budget_seconds=float(TASK040_LEVEL_A_TIMEOUT_SECONDS),
+                                budget_seconds=float(exact_budget_seconds),
                             )
                         ),
                     }
@@ -3424,6 +3569,59 @@ def run_v6_2_interface_schur(
                     rhs.destroy()
                 if moving_action is not None:
                     moving_action.destroy()
+        if v8_full_spectrum_only:
+            from src.solvers.hybrid_full_spectrum_screen import (
+                run_v8_full_spectrum_two_source,
+            )
+
+            v8_marker_payload.update(
+                {
+                    "system": system,
+                    "bare_operator": system.F,
+                    "interface_operator": matrix,
+                    "schur_action": action,
+                    "factor_lifecycle": dict(action_before["factor_lifecycle"]),
+                    "lower_gamma_layout": gamma_layouts["lower"],
+                    "upper_gamma_layout": gamma_layouts["upper"],
+                    "canonical_layout": canonical_layout,
+                    "interface_supports": interface_supports,
+                    "formal_exact_configuration": bound_exact_configuration,
+                    "frozen_rhs_descriptors": bound_exact_configuration[
+                        "descriptors"
+                    ],
+                    "base_directory": bound_exact_configuration["base_directory"],
+                    "resource_callback": bound_exact_configuration[
+                        "resource_callback"
+                    ],
+                    "formal_sequence_started": formal_sequence_started,
+                    "selected_operator": {
+                        "candidate": "D0_lower_memory",
+                        "kind": "petsc_full_interface_schur",
+                    },
+                }
+            )
+            result = run_v8_full_spectrum_two_source(v8_marker_payload)
+            result.update(
+                {
+                    "source_sha": str(source_sha),
+                    "input_sha256": str(input_sha256),
+                    "physical_model_sha256": str(physical_model_sha256),
+                    "identity_preflight": _json_safe(identity_preflight),
+                    "resource_preflight": _json_safe(resource_preflight),
+                    "operator_semantics_audit": _json_safe(audit_file),
+                    "system_inventory": _json_safe(system.construction_inventory),
+                    "matrix_objects": _json_safe(system.dtn_objects_constructed),
+                    "support_audits": _json_safe(support_audits),
+                    "group_rows": _json_safe(group_audit),
+                    "bare_f_operator_hash": str(bare_operator_hash),
+                    "frozen_rhs_authority_root": str(frozen_root),
+                    "formal_exact_configuration_bound": True,
+                    "factor_lifecycle_before_cleanup": _json_safe(
+                        action_before["factor_lifecycle"]
+                    ),
+                }
+            )
+            return result
         deterministic = [
             _one_identity_probe(comm, system.F, matrix, action, index)
             for index in range(3)
@@ -4232,8 +4430,19 @@ def run_v6_2_interface_schur(
     finally:
         if v7_d1_matrix is not None:
             v7_d1_matrix.destroy()
+        v8_factor_lifecycle_after_cleanup: Mapping[str, Any] | None = None
+        v8_action_apply_count: int | None = None
         if action is not None:
             action.destroy()
+            if v8_full_spectrum_only and result is not None:
+                action_diagnostics = action.diagnostics
+                v8_factor_lifecycle_after_cleanup = action_diagnostics.get(
+                    "factor_lifecycle", {}
+                )
+                v8_action_apply_count = action_diagnostics.get("apply_count")
+                result["factor_lifecycle_after_cleanup"] = _json_safe(
+                    v8_factor_lifecycle_after_cleanup
+                )
         if matrix is not None:
             matrix.destroy()
         if system is not None:
@@ -4245,3 +4454,38 @@ def run_v6_2_interface_schur(
                     status="complete",
                     system_destroyed=True,
                 )
+            if v8_full_spectrum_only and result is not None:
+                communication = result.get("communication", {})
+                pc_apply_count = (
+                    communication.get("apply_count")
+                    if isinstance(communication, Mapping)
+                    else None
+                )
+                cleanup_marker = _v8_mark(
+                    v8_marker_payload,
+                    "v8_full_spectrum_cleanup_complete",
+                    formal_sequence_started,
+                    v8_marker_resource_callback,
+                    action,
+                    status="complete",
+                    factor_lifecycle=_json_safe(
+                        v8_factor_lifecycle_after_cleanup or {}
+                    ),
+                    pc_apply_count=pc_apply_count,
+                    action_apply_count=v8_action_apply_count,
+                    source=None,
+                    checkpoint=None,
+                    system_destroyed=True,
+                    action_destroyed=True,
+                    matrix_destroyed=True,
+                )
+                result["cleanup"] = {
+                    "status": "complete",
+                    "system_destroyed": True,
+                    "action_destroyed": True,
+                    "matrix_destroyed": True,
+                    "marker": cleanup_marker,
+                }
+                _write_json(rank_root / "v8_full_spectrum.json", result)
+                if comm.rank == 0:
+                    _write_json(output_root / "v8_manifest.json", result)

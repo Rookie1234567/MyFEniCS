@@ -16,6 +16,8 @@ from typing import Any
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.task040_level_a import (
     TASK040_LEVEL_A_HARD_STOP_BYTES as _TASK040_LEVEL_A_HARD_STOP_BYTES,
+)
+from benchmarks.task040_level_a import (
     TASK040_LEVEL_A_MPI_SIZE,
     TASK040_LEVEL_A_THREADS,
     TASK040_LEVEL_A_TIMEOUT_SECONDS,
@@ -30,6 +32,11 @@ from benchmarks.task040_level_a import (
     TASK040_V6_2_INTERFACE_SCHUR_FLAG,
     V7_MOVING_PML_FULL_STATE_FLAG,
     V7_SCALE_NORMALIZED_IDENTITY_FLAG,
+    V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS,
+    V8_FULL_SPECTRUM_ONLY_FLAG,
+    V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS,
+    V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
+    V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -37,12 +44,14 @@ from benchmarks.watchdog_process_control import (
     worker_process_group_popen_kwargs,
 )
 
-
 ROOT = Path(__file__).resolve().parents[1]
 TASK040_LEVEL_A_HARD_STOP_BYTES = _TASK040_LEVEL_A_HARD_STOP_BYTES
 SAMPLE_INTERVAL_SECONDS = 0.5
 HEARTBEAT_SECONDS = 60.0
 SWAP_LIMIT_BYTES = 0
+V8_RESOURCE_UNAVAILABLE_CLASSIFICATION = (
+    "FULL_SPECTRUM_CURRENT_IMPLEMENTATION_RESOURCE_UNAVAILABLE"
+)
 _TERMINAL_CLEANUP_STAGES = frozenset(
     {
         "cleanup",
@@ -50,6 +59,7 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "v5_route_c_cleanup",
         "v6_2_cleanup",
         "v7_moving_pml_cleanup",
+        "v8_full_spectrum_cleanup_complete",
     }
 )
 THREAD_ENV = {
@@ -108,13 +118,17 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if plan.get("v5_route_c") is True:
         command.append(TASK040_V5_ROUTE_C_FLAG)
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
-    if plan.get("v7_moving_pml_full_state") is True:
+    if plan.get("v8_full_spectrum_only") is True:
+        command.append(V8_FULL_SPECTRUM_ONLY_FLAG)
+    elif plan.get("v7_moving_pml_full_state") is True:
         command.append(V7_MOVING_PML_FULL_STATE_FLAG)
     elif plan.get("v7_scale_normalized_identity") is True:
         command.append(V7_SCALE_NORMALIZED_IDENTITY_FLAG)
     elif plan.get("v6_2_interface_schur") is True:
         command.append(TASK040_V6_2_INTERFACE_SCHUR_FLAG)
-    if plan.get("v7_moving_pml_full_state") is True or plan.get(
+    if plan.get("v8_full_spectrum_only") is True or plan.get(
+        "v7_moving_pml_full_state"
+    ) is True or plan.get(
         "v7_scale_normalized_identity"
     ) is True or plan.get(
         "v6_2_interface_schur"
@@ -163,6 +177,7 @@ def build_task040_level_a_watchdog_plan(
     v6_2_interface_schur: bool = False,
     v7_scale_normalized_identity: bool = False,
     v7_moving_pml_full_state: bool = False,
+    v8_full_spectrum_only: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -181,6 +196,7 @@ def build_task040_level_a_watchdog_plan(
         v6_2_interface_schur=v6_2_interface_schur,
         v7_scale_normalized_identity=v7_scale_normalized_identity,
         v7_moving_pml_full_state=v7_moving_pml_full_state,
+        v8_full_spectrum_only=v8_full_spectrum_only,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -218,7 +234,8 @@ def build_task040_level_a_watchdog_plan(
             }
         )
     elif (
-        v7_moving_pml_full_state
+        v8_full_spectrum_only
+        or v7_moving_pml_full_state
         or v7_scale_normalized_identity
         or v6_2_interface_schur
     ):
@@ -233,7 +250,28 @@ def build_task040_level_a_watchdog_plan(
                 "full_interface_replica_per_rank": False,
             }
         )
-        if v7_moving_pml_full_state:
+        if v8_full_spectrum_only:
+            plan["watchdog"].update(
+                {
+                    "v8_full_spectrum_only": True,
+                    "minimum_mem_available_bytes": int(
+                        plan["minimum_mem_available_bytes"]
+                    ),
+                    "preferred_memory_bytes": int(plan["preferred_memory_bytes"]),
+                    "setup_target_seconds": V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS,
+                    "transform_target_seconds": V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
+                    "one_apply_target_seconds": V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS,
+                    "timeout_seconds": V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
+                    "source_order": list(plan["source_order"]),
+                    "mandatory_checkpoints": list(plan["mandatory_checkpoints"]),
+                    "conditional_checkpoints": list(plan["conditional_checkpoints"]),
+                    "metadata_only_descriptor_gather": True,
+                    "root_metadata_gather": True,
+                    "numeric_allgather": False,
+                    "full_interface_replica_per_rank": False,
+                }
+            )
+        elif v7_moving_pml_full_state:
             plan["watchdog"].update(
                 {
                     "v7_moving_pml_full_state": True,
@@ -305,6 +343,58 @@ def _latest_stage(path: Path) -> tuple[str, str]:
             payload.get("status", "unknown")
         )
     return "process_start", "waiting_for_progress"
+
+
+def _v8_active_stage_timeout(
+    stage: str,
+    stage_elapsed_seconds: float,
+    total_elapsed_seconds: float,
+) -> dict[str, Any]:
+    """Apply only the V8 active-stage limits and the total wall limit."""
+
+    if float(total_elapsed_seconds) >= V8_FULL_SPECTRUM_TIMEOUT_SECONDS:
+        return {
+            "active": True,
+            "timed_out": True,
+            "kind": "total",
+            "limit_seconds": float(V8_FULL_SPECTRUM_TIMEOUT_SECONDS),
+            "classification": V8_RESOURCE_UNAVAILABLE_CLASSIFICATION,
+        }
+    if stage.endswith("_one_apply_begin"):
+        limit = float(V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS)
+        kind = "one_apply"
+    elif stage == "v8_full_spectrum_group2_factor_ready":
+        limit = 2.0 * V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS
+        kind = "transform_or_symbol"
+    elif (
+        stage == "process_start"
+        or stage == "v8_full_spectrum_preflight"
+        or stage == "v8_full_spectrum_system_ready"
+        or "_factor_ready" in stage
+    ):
+        limit = 2.0 * V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS
+        kind = "setup_or_factor"
+    elif "transform_ready" in stage or stage.endswith("_symbol_ready"):
+        limit = 2.0 * V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS
+        kind = "transform_or_symbol"
+    else:
+        return {
+            "active": False,
+            "timed_out": False,
+            "kind": None,
+            "limit_seconds": None,
+            "classification": None,
+        }
+    elapsed = float(stage_elapsed_seconds)
+    return {
+        "active": True,
+        "timed_out": elapsed > limit,
+        "kind": kind,
+        "limit_seconds": limit,
+        "classification": (
+            V8_RESOURCE_UNAVAILABLE_CLASSIFICATION if elapsed > limit else None
+        ),
+    }
 
 
 def _terminal_teardown_sample_excluded(
@@ -379,6 +469,11 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         )
     command = list(plan["worker_argv"])
     hard_stop_bytes = int(plan["absolute_terminate_memory_bytes"])
+    timeout_seconds = int(plan.get("timeout_seconds", TASK040_LEVEL_A_TIMEOUT_SECONDS))
+    v8_enabled = bool(plan.get("v8_full_spectrum_only"))
+    last_stage = "process_start"
+    last_stage_status = "waiting_for_progress"
+    stage_started = time.monotonic()
     started = time.monotonic()
     sample_count = 0
     terminal_teardown_excluded_count = 0
@@ -395,6 +490,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     route_c_enabled = bool(plan.get("v5_route_c"))
     threshold_observation_count = 0
     resource_thresholds: dict[str, Any] = {}
+    v8_timeout_decision: dict[str, Any] | None = None
+    v8_completed = False
     if v5_thresholds_enabled:
         resource_thresholds = {
             "preferred": {
@@ -469,6 +566,10 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                         peak_dedicated_cgroup_swap_bytes, int(dedicated_swap)
                     )
             stage, status = _latest_stage(stages_path)
+            last_stage_status = status
+            if stage != last_stage:
+                last_stage = stage
+                stage_started = time.monotonic()
             completed_cleanup_teardown = _terminal_teardown_sample_excluded(
                 post_sample_return_code=post_sample_return_code,
                 process_tree=process_tree,
@@ -524,14 +625,14 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 if process_exited_during_sample or termination_reason != "natural_exit":
                     process_control = terminate_process_tree(process)
                     break
-                if elapsed >= TASK040_LEVEL_A_TIMEOUT_SECONDS:
+                if elapsed >= timeout_seconds:
                     termination_reason = "wall_timeout"
                     process_control = terminate_process_tree(process)
                     break
                 time.sleep(SAMPLE_INTERVAL_SECONDS)
                 continue
             if not authoritative_sample:
-                if elapsed >= TASK040_LEVEL_A_TIMEOUT_SECONDS:
+                if elapsed >= timeout_seconds:
                     termination_reason = "wall_timeout"
                     process_control = terminate_process_tree(process)
                     break
@@ -546,8 +647,29 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 termination_reason = "swap_detected"
             elif return_code is not None:
                 termination_reason = "natural_exit"
-            elif elapsed >= TASK040_LEVEL_A_TIMEOUT_SECONDS:
+            elif elapsed >= timeout_seconds:
+                if v8_enabled:
+                    v8_timeout_decision = _v8_active_stage_timeout(
+                        stage,
+                        time.monotonic() - stage_started,
+                        elapsed,
+                    )
                 termination_reason = "wall_timeout"
+            elif v8_enabled:
+                v8_timeout_decision = _v8_active_stage_timeout(
+                    stage,
+                    time.monotonic() - stage_started,
+                    elapsed,
+                )
+                if v8_timeout_decision["timed_out"]:
+                    termination_reason = (
+                        "wall_timeout"
+                        if v8_timeout_decision["kind"] == "total"
+                        else "v8_marker_target_exceeded"
+                    )
+                else:
+                    time.sleep(SAMPLE_INTERVAL_SECONDS)
+                    continue
             else:
                 time.sleep(SAMPLE_INTERVAL_SECONDS)
                 continue
@@ -574,7 +696,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         "peak_swap_bytes": peak_swap_bytes,
         "peak_dedicated_cgroup_swap_bytes": peak_dedicated_cgroup_swap_bytes,
         "hard_stop_bytes": hard_stop_bytes,
-        "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
+        "timeout_seconds": timeout_seconds,
         "all_status_readable": all_status_readable,
         "dedicated_cgroup_present": dedicated_cgroup_present,
         "dedicated_cgroup_swap_readable": (
@@ -589,6 +711,50 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             if path.is_file()
         },
     }
+    if v8_enabled:
+        v8_completed = bool(
+            termination_reason == "natural_exit"
+            and process.returncode == 0
+            and last_stage == "v8_full_spectrum_cleanup_complete"
+            and last_stage_status == "complete"
+        )
+        resource_stop = termination_reason in {
+            "absolute_memory_limit",
+            "swap_detected",
+            "wall_timeout",
+            "v8_marker_target_exceeded",
+        }
+        v8_resource_classification = (
+            "v8_completed"
+            if v8_completed
+            else (
+                V8_RESOURCE_UNAVAILABLE_CLASSIFICATION
+                if resource_stop
+                else "requires_result_adjudication"
+            )
+        )
+        summary.update(
+            {
+                "v8_completed": v8_completed,
+                "latest_stage": last_stage,
+                "latest_stage_status": last_stage_status,
+                "resource_classification": v8_resource_classification,
+                "final_resource_classification": v8_resource_classification,
+                "v8_stage_timeout": v8_timeout_decision,
+                "v8_resource_limits": {
+                    "setup_or_factor_no_marker_seconds": (
+                        2 * V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS
+                    ),
+                    "transform_or_symbol_no_marker_seconds": (
+                        2 * V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS
+                    ),
+                    "one_apply_hard_seconds": (
+                        V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS
+                    ),
+                    "total_wall_seconds": V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
+                },
+            }
+        )
     if v5_thresholds_enabled:
         peak = int(peak_rss_bytes)
         if peak >= int(plan["absolute_terminate_memory_bytes"]):
@@ -635,11 +801,13 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     elif plan.get("packet_producer") is True:
         summary["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    completed_gate = v8_completed if v8_enabled else (
+        process.returncode == 0 and termination_reason == "natural_exit"
+    )
     return (
         0
         if (
-            process.returncode == 0
-            and termination_reason == "natural_exit"
+            completed_gate
             and run_summary.is_file()
             and swap_authority_readable
             and peak_swap_bytes == SWAP_LIMIT_BYTES
@@ -669,6 +837,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V6_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument(V7_SCALE_NORMALIZED_IDENTITY_FLAG, action="store_true")
     parser.add_argument(V7_MOVING_PML_FULL_STATE_FLAG, action="store_true")
+    parser.add_argument(V8_FULL_SPECTRUM_ONLY_FLAG, action="store_true")
     parser.add_argument("--watchdog-enabled", action="store_true")
     parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
@@ -701,6 +870,7 @@ def main(argv: list[str] | None = None) -> int:
         v6_2_interface_schur=args.v6_2_interface_schur,
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         v7_moving_pml_full_state=args.v7_moving_pml_full_state,
+        v8_full_spectrum_only=args.v8_full_spectrum_only,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:

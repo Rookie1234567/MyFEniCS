@@ -2,6 +2,22 @@
 
 ## 结果边界
 
+Review V8 commit=`0ce67c0c68c36e9677f3293a87c1c124e82c6f70` 对本页既有证据作项目级裁决：
+`V7_SCALE_NORMALIZED_FULL_INTERFACE_IDENTITY_PASS_D0`，`review_adjudicated=true`，
+`raw_formal_adjudication=false_preserved`，`selected=D0_lower_memory`。这只是对既有
+V7 identity raw/checker 的审核，不改写 V6 absolute negative（仍保持原限值与失败结论）。
+V8-1 的专用 full-spectrum two-source formal 尚未运行。
+
+证据绑定：input=`4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811`，
+physical-model=`8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c`，
+resolved-config=`f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883`，
+selected-mode packet=`2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067`。
+rank0000 V7 bundle 文件 SHA=`dfc137c13e5811aa9b84c107400f6406b8a945f47a2a9d3ddf7631ced637c40e`；
+raw/checker logical SHA=`a2aa1a72655bb695d663ec2c67b33115409715c75c0513e7b8fdf04d26bb59c6` /
+`768d094726ff6d458906885fe2ef602edbcdb13e9e20ceb2e008b8fc081193a4`。full-spectrum 最后
+修复为 `a2acb9344a9bd246a399c9110207926c7e03460e`；moving-PML method family 保持
+not_numerically_rejected，但 owner-serial implementation retired，raw root 不变。
+
 这个 identity 检查把同一接口线性作用放在小、中、大三种输入上，并把误差除以实际输出
 规模；它判断的是代数误差是否随输入正确缩放，不是完整 Hybrid 或物理结果资格。
 

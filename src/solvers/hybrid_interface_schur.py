@@ -513,6 +513,8 @@ class PetscInterfaceSchurOracle:
         bare: PETSc.Mat,
         group_rows: Sequence[np.ndarray],
         interface_supports: Sequence[Mapping[str, Any] | Sequence[int]],
+        *,
+        factor_ready_callback: Callable[[int, Mapping[str, Any]], None] | None = None,
     ) -> None:
         if len(group_rows) != 3 or len(interface_supports) != 2:
             raise ValueError("V1-2 PETSc Schur needs three groups and two interfaces")
@@ -545,14 +547,15 @@ class PetscInterfaceSchurOracle:
                     interface_union_set,
                     keep_members=True,
                 )
-                self._blocks.append(
-                    _PetscInterfaceSchurBlock(
-                        bare,
-                        group,
-                        gamma,
-                        name=f"group{index}",
-                    )
+                block = _PetscInterfaceSchurBlock(
+                    bare,
+                    group,
+                    gamma,
+                    name=f"group{index}",
                 )
+                self._blocks.append(block)
+                if factor_ready_callback is not None:
+                    factor_ready_callback(index, block.diagnostics)
         except Exception:
             self.destroy()
             raise
@@ -2577,8 +2580,15 @@ def build_petsc_interface_schur_oracle(
     bare: PETSc.Mat,
     group_rows: Sequence[np.ndarray],
     interface_supports: Sequence[Mapping[str, Any] | Sequence[int]],
+    *,
+    factor_ready_callback: Callable[[int, Mapping[str, Any]], None] | None = None,
 ) -> PetscInterfaceSchurOracle:
-    return PetscInterfaceSchurOracle(bare, group_rows, interface_supports)
+    return PetscInterfaceSchurOracle(
+        bare,
+        group_rows,
+        interface_supports,
+        factor_ready_callback=factor_ready_callback,
+    )
 
 
 class PetscDistributedPetrovAction:

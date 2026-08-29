@@ -11,16 +11,17 @@ from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
+import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
-import pytest
 
-import benchmarks.check_task040_v7_scale_normalized_identity as v7_checker
 import benchmarks.check_task040_v6_2_interface_schur as checker
 import benchmarks.check_task040_v7_moving_pml as moving_pml_checker
+import benchmarks.check_task040_v7_scale_normalized_identity as v7_checker
 import benchmarks.task040_level_a as level_a
 import benchmarks.task040_level_a_watchdog as watchdog
 import benchmarks.task040_v6_2_interface_schur as runner
+import src.solvers.hybrid_full_spectrum_screen as v8_screen
 from src.solvers.hybrid_bare_f_authority import (
     _source_definition_sha256,
     _source_semantic_descriptor,
@@ -35,7 +36,6 @@ from src.solvers.hybrid_interface_packet_dolfinx import (
     build_gamma_canonical_layout,
     make_gamma_entity_block,
 )
-
 
 FORMAL_SOURCE_SHA = "a" * 40
 CHECKER_SOURCE_SHA = "b" * 40
@@ -2786,6 +2786,233 @@ def test_v6_2_linearity_probe_distributed_owner_rows() -> None:
         matrix.destroy()
 
 
+def test_v8_factor_ready_markers_use_zero_based_groups() -> None:
+    assert [runner._v8_factor_ready_marker(group) for group in range(3)] == [
+        "v8_full_spectrum_group0_factor_ready",
+        "v8_full_spectrum_group1_factor_ready",
+        "v8_full_spectrum_group2_factor_ready",
+    ]
+    with pytest.raises(ValueError, match="group0.*group1.*group2"):
+        runner._v8_factor_ready_marker(3)
+
+
+def test_v8_marker_clock_and_active_stage_timeout_contract() -> None:
+    emitted: list[tuple[str, Mapping[str, Any]]] = []
+    action = SimpleNamespace(
+        diagnostics={"factor_lifecycle": {"ready": 0}, "apply_count": 0}
+    )
+    payload = {"marker_callback": lambda stage, detail: emitted.append((stage, detail))}
+    begin = v8_screen._v8_mark(
+        payload,
+        "v8_full_spectrum_external_one_apply_begin",
+        0.0,
+        lambda: {"rss_bytes": 1, "swap_bytes": 0},
+        action,
+        source="external_dtn_coupling",
+        pc_apply_count=0,
+        action_apply_count=0,
+    )
+    end = v8_screen._v8_mark(
+        payload,
+        "v8_full_spectrum_external_one_apply_end",
+        0.0,
+        lambda: {"rss_bytes": 1, "swap_bytes": 0},
+        action,
+        source="external_dtn_coupling",
+        pc_apply_count=1,
+        action_apply_count=1,
+    )
+    assert [stage for stage, _detail in emitted] == [
+        "v8_full_spectrum_external_one_apply_begin",
+        "v8_full_spectrum_external_one_apply_end",
+    ]
+    assert begin["source"] == end["source"] == "external_dtn_coupling"
+    assert begin["status"] == "begin"
+    assert end["status"] == "complete"
+    assert end["stage_wall_seconds"] >= 0.0
+    assert {"rss_bytes", "swap_bytes", "pc_apply_count", "action_apply_count"} <= set(
+        begin
+    )
+    assert v8_screen._v8_marker_alias("external_dtn_coupling") == "external"
+    assert v8_screen._v8_marker_alias("fixed_random_repeat_0") == "random0"
+    assert [
+        f"v8_full_spectrum_random0_r{iteration}" for iteration in (8, 16, 32, 64)
+    ] == [
+        "v8_full_spectrum_random0_r8",
+        "v8_full_spectrum_random0_r16",
+        "v8_full_spectrum_random0_r32",
+        "v8_full_spectrum_random0_r64",
+    ]
+    timeout_cases = (
+        (
+            "v8_full_spectrum_external_one_apply_begin",
+            1200.1,
+            0.0,
+            1200.0,
+        ),
+        ("v8_full_spectrum_group0_factor_ready", 3600.1, 0.0, 3600.0),
+        ("v8_full_spectrum_group1_factor_ready", 3600.1, 0.0, 3600.0),
+        ("v8_full_spectrum_group2_factor_ready", 1800.1, 0.0, 1800.0),
+        ("v8_full_spectrum_lower_transform_ready", 1800.1, 0.0, 1800.0),
+        ("v8_full_spectrum_external_one_apply_end", 9999.0, 0.0, None),
+        ("v8_full_spectrum_external_r64", 9999.0, 0.0, None),
+    )
+    for stage, elapsed, total, limit in timeout_cases:
+        decision = watchdog._v8_active_stage_timeout(stage, elapsed, total)
+        assert decision["limit_seconds"] == limit
+        assert decision["timed_out"] is (limit is not None)
+    total = watchdog._v8_active_stage_timeout("v8_full_spectrum_external_r64", 0.0, 10800.0)
+    assert total["kind"] == "total"
+    assert total["timed_out"] is True
+    assert total["classification"] == watchdog.V8_RESOURCE_UNAVAILABLE_CLASSIFICATION
+
+
+def test_v8_one_apply_uses_pair_pc_and_records_two_residual_layers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    template = PETSc.Vec().createSeq(2)
+    condensed_rhs = template.duplicate()
+    active_rhs = template.duplicate()
+    condensed_rhs.set(1.0)
+    active_rhs.set(2.0)
+
+    class FakeAction:
+        def __init__(self) -> None:
+            self.diagnostics = {"apply_count": 0}
+
+        @staticmethod
+        def create_interface_vector() -> PETSc.Vec:
+            return template.duplicate()
+
+        def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            source.copy(target)
+            self.diagnostics["apply_count"] += 1
+
+    class FakePC:
+        apply_count = 0
+
+        @classmethod
+        def apply(cls, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            source.copy(target)
+            cls.apply_count += 1
+
+    monkeypatch.setattr(
+        v8_screen,
+        "_v8_full_residual",
+        lambda *_args: (0.5, 0.25, 1.5),
+    )
+    try:
+        fake_action = FakeAction()
+        one = v8_screen._v8_one_apply(
+            {"schur_action": fake_action, "bare_operator": None},
+            SimpleNamespace(
+                condensed_rhs=condensed_rhs,
+                active_rhs=active_rhs,
+                interior_rhs_by_group={},
+            ),
+            FakePC(),
+            0.0,
+            None,
+        )
+        assert FakePC.apply_count == 1
+        assert fake_action.diagnostics["apply_count"] == 1
+        assert one["pc_apply_count_delta"] == 1
+        assert one["action_apply_count_delta"] == 1
+        assert one["interface_true_residual_norm"] >= 0.0
+        assert one["full_bare_f_true_residual_norm"] == 0.5
+        assert np.isfinite(one["full_rhs_norm"])
+        assert np.isfinite(one["one_apply_elapsed_seconds"])
+        assert one["finite"] is True
+    finally:
+        active_rhs.destroy()
+        condensed_rhs.destroy()
+        template.destroy()
+
+
+def test_v8_two_and_five_source_gate_and_conditional_limits() -> None:
+    def record(values: tuple[float, float, float, float]) -> dict[str, Any]:
+        return {
+            "finite": True,
+            "solver_reason": "MAX_IT",
+            "residuals": {
+                str(iteration): value
+                for iteration, value in zip((8, 16, 32, 64), values, strict=True)
+            },
+        }
+
+    good = {label: record((1.0, 0.8, 0.4, 0.2)) for label in v8_screen._SCREEN_LABELS}
+    classification, next_stage, _detail = v8_screen._v8_classify(good)
+    assert classification == "V8_FULL_SPECTRUM_TWO_SOURCE_POSITIVE"
+    assert next_stage == "v8_five_source_required"
+    no_signal = {
+        label: record((1.1, 1.0, 1.0, 0.9))
+        for label in v8_screen._SCREEN_LABELS
+    }
+    assert v8_screen._v8_classify(no_signal)[0] == "FULL_SPECTRUM_SWEEP_NO_SIGNAL"
+    unstable = {
+        label: record((1.0, 2.0, 11.0, 12.0))
+        for label in v8_screen._SCREEN_LABELS
+    }
+    assert v8_screen._v8_classify(unstable)[0] == "FULL_SPECTRUM_SWEEP_UNSTABLE"
+    strong = {label: record((1.0, 0.8, 0.4, 0.005)) for label in v8_screen._V8_ALL_LABELS}
+    assert v8_screen._v8_five_source_classify(strong)[0] == (
+        "FULL_SPECTRUM_WAVE_LAYER_STRONG_POSITIVE"
+    )
+    weak = {label: record((1.0, 0.8, 0.4, 0.2)) for label in v8_screen._V8_ALL_LABELS}
+    assert v8_screen._v8_five_source_classify(weak)[0] == (
+        "FULL_SPECTRUM_WAVE_LAYER_WEAK_POSITIVE"
+    )
+    strong_random0_not_primary = {
+        label: record((1.0, 0.8, 0.4, 0.005))
+        for label in v8_screen._V8_ALL_LABELS
+    }
+    strong_random0_not_primary["fixed_random_repeat_0"] = record(
+        (1.0, 0.8, 0.4, 0.2)
+    )
+    assert v8_screen._v8_five_source_classify(strong_random0_not_primary)[0] == (
+        "FULL_SPECTRUM_WAVE_LAYER_STRONG_POSITIVE"
+    )
+    implementation = dict(good)
+    implementation["external_dtn_coupling"] = dict(
+        good["external_dtn_coupling"],
+        implementation_failure=True,
+        error="synthetic metadata failure",
+    )
+    assert v8_screen._v8_classify(implementation) == (
+        "FULL_SPECTRUM_IMPLEMENTATION_FAILURE",
+        "v8_full_spectrum_implementation_fix_required",
+        {"implementation_failure": True},
+    )
+    replay = v8_screen._v8_replay_residuals(
+        {"residuals": {"64": 0.7, "128": 0.4}}
+    )
+    assert replay == {"64": 0.7, "128": 0.4}
+    nested_failure = {
+        label: {
+            "implementation_failure": False,
+            "conditional_replay_implementation_failure": label == "external_dtn_coupling",
+        }
+        for label in v8_screen._SCREEN_LABELS
+    }
+    assert v8_screen._v8_classify_conditional(nested_failure, {})[:2] == (
+        "FULL_SPECTRUM_IMPLEMENTATION_FAILURE",
+        "v8_full_spectrum_implementation_fix_required",
+    )
+    inconclusive = {
+        label: record((1.0, 0.9, 0.8, 0.7))
+        for label in v8_screen._SCREEN_LABELS
+    }
+    assert v8_screen._v8_classify(inconclusive)[2]["r64_inconclusive"] is True
+    assert v8_screen._v8_conditional_allowed(
+        inconclusive,
+        {"formal_sequence_elapsed_seconds": 8999.0, "rss_bytes": 1, "swap_bytes": 0},
+    ) is True
+    assert v8_screen._v8_conditional_allowed(
+        inconclusive,
+        {"formal_sequence_elapsed_seconds": 9000.0, "rss_bytes": 1, "swap_bytes": 0},
+    ) is False
+
+
 def test_v6_2_plan_binds_resource_and_post_identity_qualification(
     tmp_path: Path,
 ) -> None:
@@ -2891,6 +3118,51 @@ def test_v6_2_plan_binds_resource_and_post_identity_qualification(
     assert stopped["system_created"] is False
     assert stopped["v7_progress_gate"]["exact_not_run"] is True
     assert not v7_stop_root.exists()
+
+    v8_plan = level_a.build_task040_level_a_plan(
+        input_path=input_path,
+        exact_spool_root=spool_root,
+        run_directory=tmp_path / "v8-run",
+        source_sha=FORMAL_SOURCE_SHA,
+        v8_full_spectrum_only=True,
+    )
+    assert v8_plan["v8_full_spectrum_only"] is True
+    assert v8_plan["three_scale_identity"] is False
+    assert v8_plan["d0_d1_comparison"] is False
+    assert v8_plan["exact_qualification"] == (
+        "intentional_not_run_by_v8_direct_mainline"
+    )
+    assert v8_plan["full_spectrum_continuation"] == "required"
+    assert "exact_qualification" not in v8_plan["forbidden"]
+    assert "full_spectrum_continuation" not in v8_plan["forbidden"]
+    v8_watched = watchdog.build_task040_level_a_watchdog_plan(
+        input_path=input_path,
+        exact_spool_root=spool_root,
+        run_directory=tmp_path / "v8-watchdog",
+        source_sha=FORMAL_SOURCE_SHA,
+        v8_full_spectrum_only=True,
+    )
+    assert v8_watched["watchdog"]["metadata_only_descriptor_gather"] is True
+    assert v8_watched["worker_argv"].count(
+        runner.V8_FULL_SPECTRUM_ONLY_FLAG
+    ) == 1
+    assert all(
+        flag not in v8_watched["worker_argv"]
+        for flag in (
+            runner.V7_SCALE_NORMALIZED_IDENTITY_FLAG,
+            runner.V7_MOVING_PML_FULL_STATE_FLAG,
+            runner.V6_2_INTERFACE_SCHUR_FLAG,
+        )
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        level_a.build_task040_level_a_plan(
+            input_path=input_path,
+            exact_spool_root=spool_root,
+            run_directory=tmp_path / "v8-conflict",
+            source_sha=FORMAL_SOURCE_SHA,
+            v8_full_spectrum_only=True,
+            v7_scale_normalized_identity=True,
+        )
 
 
 @pytest.mark.parametrize("restart", [True, False, 0, -1, 3.5, "32"])
