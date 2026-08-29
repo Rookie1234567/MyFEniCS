@@ -1,0 +1,184 @@
+{
+  "schema": "task038.v14.direct-authority-packet-audit.v1",
+  "classification": "AUTHORITY_ARRAYS_MISSING",
+  "scope": "read_only_existing_compact_records_no_new_pde",
+  "profile": {
+    "wavelength_nm": 13.5,
+    "nedelec_degree": 6,
+    "h_nm": 10.0,
+    "polarization": "s",
+    "grazing_angle_deg": 1.0,
+    "incident_theta_deg": 89.0,
+    "phi_deg": 0.0,
+    "same_physical_mesh": true
+  },
+  "identity": {
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "frozen_task038": {
+    "c1": {
+      "selected_hierarchy": "same_mesh_hcurl_pmg_v1_requalified",
+      "source_status": "all_four_exact_input_sources_pass",
+      "records": [
+        {
+          "source": "random",
+          "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_positive_exact1_random_v4.json",
+          "sha256": "6cca933a74a3b0e5dc7338c9ee928d948ad493b6ce6a29e905cafdbd91344b0b"
+        },
+        {
+          "source": "gradient",
+          "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_positive_exact1_gradient_v4.json",
+          "sha256": "14f18817d31da1a9ce2103b14a6016a965f535a3245d5e3dbd14f298211dba88"
+        },
+        {
+          "source": "curl",
+          "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_positive_exact1_curl_v4.json",
+          "sha256": "86bee7fc0fab91a8eacc948577a2e252e02f49d03025caa54e7af0563933f1ad"
+        },
+        {
+          "source": "checkerboard",
+          "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p6_positive_exact1_checkerboard_v4.json",
+          "sha256": "d753ba339d8233c7ee9040154ea98d0fe93c5f9320c3accf346c5f603e9f9fd3"
+        }
+      ]
+    },
+    "p0": {
+      "classification": "FAILED_RESOURCE_HARD_STOP_CONTROLLED_TERMINATION",
+      "source_sha": "a05e93af6edb097c1f0ebf0f65e201698db27381",
+      "peak_process_tree_rss_bytes": 2024108032,
+      "rss_hard_limit_bytes": 2000000000,
+      "over_limit_bytes": 24108032,
+      "over_limit_fraction": 0.012054016,
+      "process_tree_swap_bytes": 0,
+      "returncode": -15,
+      "stop_reason": "process_tree_rss_limit",
+      "natural_exit": false,
+      "no_orphan": true,
+      "sample_count": 20518,
+      "warning_first_rss_bytes": 1813069824,
+      "warning_first_elapsed_seconds": 5165.438371994998,
+      "last_elapsed_seconds": 5167.201565908967,
+      "last_pid_set": [1628136, 1628137, 1639353, 1639354],
+      "completed_stage": "paths_ready",
+      "worker_record": "not_created",
+      "checkpoint": "not_created",
+      "residual": "not_run",
+      "recovery": "not_run",
+      "official_physics": "not_run"
+    },
+    "ordinary_default_unchanged": true,
+    "historical_facts_preserved": [
+      "V11 S5 6-to-3 energy negative remains frozen",
+      "V12 selected_hierarchy=NONE and identity/Route-A/C2 negatives remain frozen"
+    ]
+  },
+  "authority_packet": {
+    "status": "scalar_only",
+    "source_record": {
+      "path": "benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi8_three_way_qualification_v1.json",
+      "sha256": "eec638b833679937252982ae394012e88e679c058cccc0c4f6c091d33754fbd8",
+      "verified_clean": true,
+      "source_sha": "f2d7719b6253251a06e8cd8388fd443bbf47d443"
+    },
+    "profile_match": {
+      "degree": true,
+      "h_nm": true,
+      "wavelength_nm": true,
+      "polarization": true,
+      "grazing_angle_deg": true,
+      "phi_deg": true,
+      "same_task038_input_sha": "not_available_in_compact",
+      "same_task038_physical_model_sha": "not_available_in_compact",
+      "canonical_identity_match": "not_proven_from_compact"
+    },
+    "raw_evidence": {
+      "arrays_included": false,
+      "timelines_included": false,
+      "direct_raw_paths_present_in_current_checkout": false
+    },
+    "direct_M120": {
+      "raw_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_0_m120/watchdog.json",
+      "raw_sha256": "4fe81c2414a8eab57e7f33127ade3b52ed21bcad3caddd4884c2e7988bec1ca6",
+      "true_residual": 5.7654686832204546e-11,
+      "rta": {
+        "R": 0.3656257891787136,
+        "T": 0.01299063241062439,
+        "A": 0.621383578410662,
+        "A_volume": 0.6213835795387049
+      }
+    },
+    "direct_M160": {
+      "raw_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_0_m160/watchdog.json",
+      "raw_sha256": "c3722bf0e509ea5d60f5a04b14a36b7df0bd643beeaf3a2808615bc42e3aeac1",
+      "true_residual": 3.1031242703441994e-11,
+      "rta": {
+        "R": 0.365625789178451,
+        "T": 0.012990632410629291,
+        "A": 0.6213835784109197,
+        "A_volume": 0.6213835795287246
+      }
+    },
+    "scalar_total_tolerance": 1e-05,
+    "direct_M120_to_M160_absolute_differences": {
+      "R": 2.625677453238495e-13,
+      "T": 4.90059381963448e-15,
+      "A": 2.5768276401549883e-13,
+      "A_volume": 9.980349879867845e-12
+    },
+    "missing": [
+      "official_complex_E",
+      "official_complex_H",
+      "selected_near_field_samples",
+      "same_12_significant_diffraction_identity_power_values",
+      "same_12_significant_diffraction_identity_complex_boundary_amplitudes",
+      "hash-bound raw arrays for the exact Task038 physical model"
+    ]
+  },
+  "supporting_records": [
+    {
+      "path": "benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi1_identity_and_resource_v1.json",
+      "sha256": "a38d3c280cb655481f63e79baf658c5353a2e86823e46fcefb54a148b2baec5f",
+      "profile": "p6/h10/13.5nm/s/grazing1/phi0/MPI1",
+      "arrays_included": false,
+      "role": "supporting_identity_resource_cross_evidence"
+    },
+    {
+      "path": "docs/task038_input_driven_configuration/outcomes/records/t6_hybrid_iterative_mpi8_equivalence_v1.json",
+      "sha256": "a4938b921d88efa25f34e6fb2882395d34b71c36eaae5178d0babd5560af27f6",
+      "profile": "hybrid/p6/h10/13.5nm/s/grazing1/phi0/MPI8",
+      "role": "supporting_input_driven_cross_evidence_not_same_mesh_direct_authority"
+    },
+    {
+      "path": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_direct_authority_v2.json",
+      "sha256": "6b3f5dee6c0009e6e1a1847d7a2aa496b45cae808cee0d789925af4e53163fc4",
+      "profile": "p6/h10/13.5nm/S/grazing10/theta80/phi0",
+      "role": "historical_identity_mismatch_do_not_use_for_task038_1deg"
+    }
+  ],
+  "local_artifacts": {
+    "task039": {
+      "status": "missing",
+      "matched_paths": []
+    },
+    "task038_exact_p6_h10_positive": {
+      "status": "existing_historical_c1_artifact",
+      "observed_cache_module_identities": [
+        "libffcx_forms_04bca8cf60607d94e569e68721d47f5b5dc6c483",
+        "libffcx_forms_0bc2f70f06b844be02b2c00f3ba5983397cf1dfd",
+        "libffcx_forms_16f596650c682b87df270c99545eeecc13cfcc6a",
+        "libffcx_forms_c033ac4bfedcb7ccab09e47d0bdf7f38470265a9"
+      ],
+      "reuse_for_new_pde": false
+    },
+    "task038_p0_physical": {
+      "status": "paths_ready_only_resource_stop现场",
+      "tracked_watchdog_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p0_physical_v1_watchdog.json",
+      "tracked_watchdog_sha256": "0705e170a1835999aece82dfe43d3ff5ccd3cf98800b79a013341b54ed2955e5",
+      "tracked_paths_marker_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p0_physical_v1_paths_ready.json",
+      "tracked_paths_marker_sha256": "4f22fd62136515693ebebef4fbfe551e84e46223a0685054dcb9ad1a65108415"
+    }
+  },
+  "new_pde_generated": false
+}
