@@ -1,3 +1,9 @@
+# V7 后续路线更正
+
+下文的 V6-2 identity negative 原始表与结论保持不变。其后的 V7 scale-normalized identity
+已完成 candidate raw/checker，随后 full-spectrum 与 moving-PML 路线确实被尝试；因此下文若
+仍写“所有后续路线未运行”，应以本轮 [V8 response](../response_v8.md)、[V7 scale outcome](v7_scale_normalized_identity.md)、[full-spectrum outcome](full_spectrum_floquet_sweep.md) 和 [moving-PML outcome](moving_pml_sweep.md) 的更晚记录为准。full-spectrum 没有形成 numerical no-signal，moving-PML 的 corrected run 是真实 wall/resource Gate。
+
 # V6-2 完整接口 Schur identity 结果
 
 ## 结论

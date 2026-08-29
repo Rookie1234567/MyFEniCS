@@ -1,3 +1,17 @@
+# V7 当前 measured component 点
+
+本次 moving-PML 是完整 process-tree watchdog measurement，但不是完整 workflow，也不是
+production saving。moving PC 在第一个 source checkpoint 前达到 wall Gate：
+
+| component | elapsed | peak process-tree RSS | swap | 语义 |
+|---|---:|---:|---:|---|
+| corrected moving-PML MPI8 | `21601.760233s`（last authoritative `21600.410422s`） | `40560816128 B`（约 `37.78 GiB`） | `0 B` | setup + source start；无 residual/完整 workflow |
+| V7 scale identity component | `773.381408s` | `36689285120 B` | `0 B` | identity raw/checker 后 continuation failure |
+
+`40560816128 B` 只表示本次 process-tree peak；不能写成 0.7 nm、Full3D 或完整 workflow 的
+内存预测，更不能与旧 complete workflow peak 相减得到 saving。详细 resource/lifecycle 见
+[moving-PML outcome](moving_pml_sweep.md)。
+
 # T40/V1/V2/V3 memory–residual–time Pareto boundary
 
 这里的峰值都是 process-tree RSS；它们只在同一阶段、同一资源口径下比较。组件峰值不能

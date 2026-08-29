@@ -1,3 +1,23 @@
+# V7 当前 route ledger
+
+本表先记录当前 authority；下方原有 V1–V6 历史表完整保留。没有 checkpoint 的路线不得写成
+`no-signal`。
+
+| 路线 | 入口/证据 | 当前状态 | 下一步/边界 |
+|---|---|---|---|
+| V6-0 factor forensic | factor-stage raw | `FORENSIC_TRUE_FACTOR_STALL` | V6-1 不重试 |
+| V6-1 factor-only rescue | Review V6 | 禁止重试 | 进入 full-interface family |
+| V6-2 full interface identity | formal+checker | `V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`；valid negative | old absolute 表保留 |
+| V7 scale-normalized identity | 3 scales、D0/D1、A/B/C raw+checker | candidate pass；`formal_adjudication=false` | full-spectrum integration |
+| full-spectrum transform | e7/ab formal roots | 未闭合的 implementation failure | 不写 numerical no-signal；不第三跑 |
+| moving-PML first | 5e6 root | provider wiring implementation failure | 已由 7b 修复 |
+| moving-PML corrected | 7b root | `INCONCLUSIVE_RESOURCE_GATE / SIGNAL_UNAVAILABLE` | 不得分类 PML no-signal |
+| adaptive Schwarz | corrected moving 无五源证据 | `NOT_RUN_DUE_TO_TRUE_RESOURCE_GATE` | 等 stop-Gate 审核 |
+
+V7 后续的 exact qualification、full-spectrum numerical screen、PML five-source residual、
+factor-free local service、h3、0.7 nm 与 Full3D 均为 `not_run_by_true_resource_gate` 或
+`not_reached`，不拆成空的正/负结果文档。
+
 # V5 Route A/B/C signal ledger
 
 ## 结论

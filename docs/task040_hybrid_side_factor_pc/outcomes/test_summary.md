@@ -1,3 +1,23 @@
+# V7/V8 当前证据摘要
+
+| 阶段 | 证据 | 结果语义 |
+|---|---|---|
+| V7 scale identity | 3-scale raw bundle + independent checker | `checker_pass=true`、D0/D1 candidate true、`formal_adjudication=false` |
+| full-spectrum transform fixes | canonical tiny 与 empty-local targeted serial/MPI2 | regression 通过；没有第三次 MPI8 formal |
+| moving provider fix | 既有 provider/hash probe 与 focused validation | provider 接线修复；不等于五源数值通过 |
+| corrected moving formal | watchdog root `...7b237ea6_native_rerun1` | wall/resource stop；没有 source checkpoint；不是 checker numerical result |
+| V7/V8 closeout ABI | native activation preflight | marker=`1`；repo `.venv` Python；PETSc `complex128`/`int32`；mpi4py/petsc4py/slepc4py/dolfinx/basix 原生导入成功；以下为本地证据，不是 CI |
+| closeout serial consolidated | `python -m pytest -q src/test/test_318_task040_v6_interface_schur.py::test_v7_scaled_tiny_d0_d1_and_layer_a_contract src/test/test_319_task040_v6_interface_runner.py::test_v7_raw_checker_recomputes_metrics_and_rejects_tamper src/test/test_305_task040_interface_packet_dolfinx.py::test_canonical_full_spectrum_trace_transform_identity src/test/test_305_task040_interface_packet_dolfinx.py::test_canonical_probe_empty_local_ownership_is_collective_safe src/test/test_319_task040_v6_interface_runner.py::test_v6_5_moving_pml_screen_recomputes_reason_and_negative_route src/test/test_24_repository_work_principles.py src/test/test_25_benchmark_contract.py src/test/test_26_documentation_contract.py` | rc=`0`；31 passed，0 failed/skip；pytest `13.46s`，shell `14.535s`；本地非 CI |
+| closeout MPI2 consolidated | `mpiexec -n 2 python -m pytest -q src/test/test_318_task040_v6_interface_schur.py::test_v7_scaled_tiny_d0_d1_and_layer_a_contract src/test/test_305_task040_interface_packet_dolfinx.py::test_canonical_full_spectrum_trace_transform_identity src/test/test_305_task040_interface_packet_dolfinx.py::test_canonical_probe_empty_local_ownership_is_collective_safe` | rc=`0`；两 rank 各 3 passed，0 failed/skip；pytest `3.18/3.19s`，shell `3.866s`；本地非 CI |
+| 前次命令转录纠正 | selector 指向不存在文件 | rc=`4`；collection 前 `no tests ran`，不计为测试结果 |
+| 本次 docs closeout | 文档内容本身仅 Markdown；最终验证已由上方 serial/MPI2 closeout 行记录 | 未运行 Ruff、compileall、checker CLI、PDE/formal/full repo；不声称 CI |
+
+旧 V6-2 formal/checker 仍是：formal natural `rc=0`，独立 checker `rc=0`，
+`evidence_valid=true`、`checker_pass=true`、`gate_pass=false`、`executed_exact=false`；这
+不是本次 moving resource stop 的数值替代品。此前的 native focused tests、C3a/C3b/C5/C6a
+组件回归按各自 source SHA 保留，具体命令和边界见对应 response/outcome；本轮没有重复昂贵
+测试，也没有 GitHub Actions/CI 证据。
+
 # Task040 测试与证据检查
 
 本页区分已绑定的实现/focused Gate、V1-8 文档合同检查和正式 Run B。没有把缺少
@@ -14,7 +34,7 @@
 | V6-2 checker once | `python -m benchmarks.check_task040_v6_2_interface_schur` | `rc=0`；`checker_pass=true`、`evidence_valid=true`、`gate_pass=false`、`executed_exact=false`；checker 不是 pytest |
 
 formal 与 checker 均绑定 source/checker SHA `82bd11099a843dc960629970b9074fb241fba0f4`。
-本轮文档只运行 `git diff --check`；不再运行 pytest、Ruff、full repository pytest 或 formal。
+上述是 V6-2 当时的文档收口记录；其后的 V7/V8 serial 与 MPI2 closeout 验证见本页顶部。
 没有 GitHub Actions 证据，不声称 CI 通过。
 
 | 检查 | 结果 |

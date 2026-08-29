@@ -1,3 +1,32 @@
+# 当前 V7 authority
+
+Task040 研究的是：在不改变裸算子 `F` 和物理方程的前提下，能否用较小的侧向/局部逆作用
+代替完整 side factor。V7 的 moving-PML 先在人工边界加 PC-only 吸收层，目的是测试波能否
+在较低内存路径上传递；它改变的是预条件器（帮助外层求解），不是物理方程本身。
+
+当前唯一正式 moving 结论为：
+
+| 路线 | 状态 | 关键事实 |
+|---|---|---|
+| V7 scale identity | candidate pass，非 formal adjudication | 3 scales、D0/D1、三层 raw/checker 通过；full-spectrum 随后实现错误 |
+| full-spectrum Floquet/FFT | 未资格化 | canonical metadata/probe 两次具体实现失败；无 numerical no-signal |
+| moving-PML corrected MPI8 | `INCONCLUSIVE_RESOURCE_GATE / SIGNAL_UNAVAILABLE` | `21601.760233s` wall；RSS `40560816128 B`；swap `0`；未到第一个 source checkpoint |
+| adaptive Schwarz | `NOT_RUN_DUE_TO_TRUE_RESOURCE_GATE` | V7 §10.3 真实 wall/resource stop；adaptive 未启动且不是 adaptive negative |
+
+因此 Task040 **open / review required**，`merge approval=NO`。没有把资源停止写成算法 no-signal，
+也没有宣称 0.7 nm 无解。0.7 nm capacity derivation、Full3D architecture handoff、
+factor-free local service、h3 和完整 Hybrid 均未到达/未资格化。
+
+V6-2 absolute-threshold negative 仍保留：classification
+`V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`；Gamma/interior/linearity/repeat 观测分别为
+`3.783538480529195e-10 / 1.2298155651030158e-9 / 6.766170711131541e-9 /
+1.4161645932820494e-9`，对应旧阈值 `1e-10 / 1e-10 / 1e-11 / 1e-11`；zero 与 roundtrip
+为 `0`。这不是 exact numerical negative。
+
+master、Task39、physics、M480、physical DtN 和 ordinary defaults 未改；本轮 result roots
+均为 ignored artifact，仅在 [V8 response](../response_v8.md) 与相关 outcome 中按精确路径和
+hash 引用。
+
 # Task040 结果摘要
 
 Task040 研究的是：在冻结 Hybrid 方程、裸算子 `F`、物理输入和 M480 不变时，能否用较小的
@@ -5,12 +34,14 @@ side inverse（侧向逆作用）替代完整的 exact side factor。通俗地�
 在人工截面附近保留必要的信息，以减少内存；但它必须先证明传递方向正确，再谈完整 Hybrid。
 本页把已完成的 T40-3、V1-1 与 V1-2 Run B 分开登记，不能把组件峰值当作完整工作流节省。
 
-当前 V6-2 authority：`valid_identity_negative`；formal 与独立 checker classification 均为
-`V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`，状态为 `completed_v6_2_identity_gate_negative`。
+截至 Response V7 / V6-2 收口时的 authority：`valid_identity_negative`；formal 与独立 checker
+classification 均为 `V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`，状态为
+`completed_v6_2_identity_gate_negative`。
 checker `checker_pass=true`、`evidence_valid=true`、`gate_pass=false`、`executed_exact=false`。
 Review V6 §19.1 的“full-interface Schur action identity 无法建立”stop Gate 已触发；后续
 full-spectrum、moving-PML、adaptive Schwarz、factor-free local service、bottom/top/both/full
-Hybrid、h3、0.7 nm 与 Full3D 均为 `not_run_by_v6_2_identity_gate`。这是 valid identity
+Hybrid、h3、0.7 nm 与 Full3D 均为 `not_run_by_v6_2_identity_gate`（以上为当时快照，已由本页
+顶部 V7 后续执行记录 supersede）。这是 valid identity
 negative，不是 exact numerical negative。V5 Route C 的历史 authority 仍保留在下文。
 
 ## Review V4 历史收口
