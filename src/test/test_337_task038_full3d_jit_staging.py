@@ -95,6 +95,8 @@ def test_runner_checker_happy_path(tmp_path: Path) -> None:
     result = json.loads(output.read_text(encoding="utf-8"))
     assert result["passed"] is True
     assert result["classification"] == "J1_CONTRACT_PASS"
+    assert result["identity"]["source_sha"] == SOURCE_SHA
+    assert result["evidence"]["raw_record_sha256"] == _sha256(record)
     assert sorted(path.name for path in root.iterdir()) == sorted(
         ["markers", "jit_cache", "process_samples.jsonl", "cache_manifest.json", "marker_manifest.json", "j1_record.json"]
     )

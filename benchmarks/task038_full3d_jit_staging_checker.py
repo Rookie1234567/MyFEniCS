@@ -256,6 +256,20 @@ def check_record(record_path: Path | str, expected_source_sha: str) -> dict:
         "classification": "J1_CONTRACT_PASS",
         "contract_errors": [],
         "gate_failures": [],
+        "identity": {
+            "source_sha": record["source_sha"],
+            "branch": record["branch"],
+            "input_sha256": record["identity"]["input_sha256"],
+            "physical_model_sha256": record["identity"]["physical_model_sha256"],
+            "mode_manifest_sha256": record["identity"]["mode_manifest_sha256"],
+        },
+        "evidence": {
+            "raw_record_path": str(record_argument),
+            "raw_record_sha256": _sha256(record_argument),
+            "process_sample_sha256": record["process"]["sample_sha256"],
+            "cache_manifest_sha256": record["cache"]["manifest_sha256"],
+            "marker_manifest_sha256": record["markers"]["manifest_sha256"],
+        },
         "metrics": {
             "marker_count": 3,
             "process_sample_count": 1,
