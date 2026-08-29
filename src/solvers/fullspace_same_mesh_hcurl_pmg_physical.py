@@ -28,7 +28,14 @@ def _notify_stage(
         callback(name, dict(facts))
 
 
-def _surface_assemblers(function_space: Any, mesh_data: Any, cfg: Any, qdegree: int) -> dict[tuple[str, int], Any]:
+def _surface_assemblers(
+    function_space: Any,
+    mesh_data: Any,
+    cfg: Any,
+    qdegree: int,
+    *,
+    jit_options: Mapping[str, Any] | None = None,
+) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
 
     return {
@@ -38,6 +45,7 @@ def _surface_assemblers(function_space: Any, mesh_data: Any, cfg: Any, qdegree: 
             cfg.tags.z_max if side == "top" else cfg.tags.z_min,
             component,
             quadrature_degree=qdegree,
+            jit_options=jit_options,
         )
         for side in ("top", "bottom")
         for component in (0, 1)
@@ -60,6 +68,7 @@ def build_p6_same_mesh_physical_bundle(
     from .fullspace_mpc_action import build_fullspace_mpc_form_action
     from .fullspace_physical_action import FullspacePhysicalAction
     from .fullspace_same_mesh_hcurl_pmg_setup import (
+        SAME_MESH_JIT_OPTIONS,
         build_p6_same_mesh_setup,
     )
     from .common_3d_forms import _build_variational_forms
@@ -95,7 +104,11 @@ def build_p6_same_mesh_physical_bundle(
         p6_floquet = setup["floquets"][6]
         _notify_stage(stage_callback, "surface_assemblers_started", {"count": 4})
         assemblers = _surface_assemblers(
-            p6_space, setup["mesh_data"], cfg, qdegree
+            p6_space,
+            setup["mesh_data"],
+            cfg,
+            qdegree,
+            jit_options=SAME_MESH_JIT_OPTIONS,
         )
         _notify_stage(
             stage_callback,
@@ -136,7 +149,10 @@ def build_p6_same_mesh_physical_bundle(
             field_formulation="total_field",
         )
         volume_action = build_fullspace_mpc_form_action(
-            bilinear, p6_space, mpc=p6_floquet.mpc
+            bilinear,
+            p6_space,
+            mpc=p6_floquet.mpc,
+            jit_options=SAME_MESH_JIT_OPTIONS,
         )
         _notify_stage(
             stage_callback,
@@ -236,6 +252,7 @@ def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
     """Build the current dtn-port physical RHS, without applying the operator."""
 
     from .dtn_port_3d import _assemble_mpc_vector, _incident_top_traction_form
+    from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
     setup = bundle["setup"]
     cfg = bundle["cfg"]
@@ -245,6 +262,7 @@ def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
         _incident_top_traction_form(p6_space, setup["mesh_data"], cfg),
         floquet.mpc,
         quadrature_degree=int(bundle["dtn_quadrature_degree"]),
+        jit_options=SAME_MESH_JIT_OPTIONS,
     )
     rhs = base.duplicate()
     try:

@@ -116,6 +116,7 @@ def assemble_same_mesh_positive_matrix(
     *,
     curl_coefficient: Any,
     mass_coefficient: Any,
+    jit_options: Mapping[str, Any] | None = None,
 ) -> PETSc.Mat:
     """Assemble one same-mesh positive H(curl) matrix with an existing MPC.
 
@@ -135,9 +136,12 @@ def assemble_same_mesh_positive_matrix(
         curl_coefficient=curl_coefficient,
         mass_coefficient=mass_coefficient,
     )
-    matrix = dolfinx_mpc.assemble_matrix(
-        fem.form(form), floquet.mpc, bcs=[]
+    compiled_form = (
+        fem.form(form)
+        if jit_options is None
+        else fem.form(form, jit_options=dict(jit_options))
     )
+    matrix = dolfinx_mpc.assemble_matrix(compiled_form, floquet.mpc, bcs=[])
     matrix.assemble()
     return matrix
 
@@ -175,7 +179,11 @@ def _same_mesh_level_config(cfg: Any, degree: int) -> Any:
 
 
 def _build_same_mesh_levels(
-    cfg: Any, comm: Any, degrees: tuple[int, ...]
+    cfg: Any,
+    comm: Any,
+    degrees: tuple[int, ...],
+    *,
+    include_positive_coefficients: bool = True,
 ) -> dict[str, Any]:
     """Build one physical mesh and the requested same-mesh N1curl levels."""
 
@@ -215,18 +223,20 @@ def _build_same_mesh_levels(
         floquets[degree] = build_double_floquet_mpc(
             space, mesh_data, _same_mesh_level_config(cfg, degree)
         )
-    mu, mass, coefficient_audit = _piecewise_positive_coefficients(
-        mesh, cell_tags, cfg
-    )
-    return {
+    levels = {
         "mesh": mesh,
         "mesh_data": mesh_data,
         "spaces": spaces,
         "floquets": floquets,
-        "mu": mu,
-        "mass": mass,
-        "coefficient_audit": coefficient_audit,
     }
+    if include_positive_coefficients:
+        mu, mass, coefficient_audit = _piecewise_positive_coefficients(
+            mesh, cell_tags, cfg
+        )
+        levels.update(
+            {"mu": mu, "mass": mass, "coefficient_audit": coefficient_audit}
+        )
+    return levels
 
 
 def build_small_same_mesh_positive_case(

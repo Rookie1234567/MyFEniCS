@@ -815,6 +815,7 @@ def test_p0_stage_callback_order_and_optional_marker_command(
         events.append((name, dict(facts)))
 
     setup_module = ModuleType("src.solvers.fullspace_same_mesh_hcurl_pmg_setup")
+    setup_module.SAME_MESH_JIT_OPTIONS = {}
     setup_module.build_p6_same_mesh_setup = lambda cfg, comm: {
         "spaces": {6: "p6-space"},
         "floquets": {6: SimpleNamespace(mpc=object())},

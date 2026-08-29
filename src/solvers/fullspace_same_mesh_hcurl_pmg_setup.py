@@ -10,6 +10,7 @@ reserve.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -41,6 +42,7 @@ P6_SETUP_PAIRS = ((6, 3), (3, 1))
 P6_SETUP_WAVELENGTH_NM = 13.5
 P6_SETUP_MESH_TARGET_NM = 10.0
 P6_SETUP_SCALAR_ITEMSIZE = int(np.dtype(PETSc.ScalarType).itemsize)
+SAME_MESH_JIT_OPTIONS = MappingProxyType({})
 _SMOOTHER_VECTOR_NAMES = (
     "_inv_sqrt",
     "_scaled_input",
@@ -290,12 +292,16 @@ def build_p6_same_mesh_setup(
             spaces[6], curl_coefficient=mu, mass_coefficient=mass
         )
         p6_action = build_fullspace_mpc_form_action(
-            p6_form, spaces[6], mpc=floquets[6].mpc
+            p6_form,
+            spaces[6],
+            mpc=floquets[6].mpc,
+            jit_options=SAME_MESH_JIT_OPTIONS,
         )
         from dolfinx import fem
 
         p6_diagonal = build_constrained_jacobi_diagonal(
-            fem.form(p6_form), floquets[6].mpc
+            fem.form(p6_form, jit_options=dict(SAME_MESH_JIT_OPTIONS)),
+            floquets[6].mpc,
         )
         bundle["p6_shell"] = SameMeshP6MatrixFreeShell(
             p6_action, p6_diagonal
@@ -308,12 +314,14 @@ def build_p6_same_mesh_setup(
             floquets[3],
             curl_coefficient=mu,
             mass_coefficient=mass,
+            jit_options=SAME_MESH_JIT_OPTIONS,
         )
         bundle["p1_matrix"] = assemble_same_mesh_positive_matrix(
             spaces[1],
             floquets[1],
             curl_coefficient=mu,
             mass_coefficient=mass,
+            jit_options=SAME_MESH_JIT_OPTIONS,
         )
         bundle["p63_local_transfer"] = build_same_mesh_hcurl_transfer(6, 3)
         bundle["p31_local_transfer"] = build_same_mesh_hcurl_transfer(3, 1)
