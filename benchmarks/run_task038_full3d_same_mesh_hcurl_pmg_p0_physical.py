@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Mapping
 import gc
+import os
 from pathlib import Path
 import sys
 import time
@@ -156,7 +157,7 @@ def _frozen_input_identity(
 
 
 def _command(args: argparse.Namespace) -> list[str]:
-    return [
+    command = [
         str(Path(sys.executable)),
         "-m",
         MODULE,
@@ -181,6 +182,10 @@ def _command(args: argparse.Namespace) -> list[str]:
         "--input",
         str(Path(args.input).resolve()),
     ]
+    v14_marker_dir = getattr(args, "v14_marker_dir", None)
+    if v14_marker_dir is not None:
+        command.extend(["--v14-marker-dir", str(Path(v14_marker_dir).resolve())])
+    return command
 
 
 def _emit_marker(raw_dir: Path, name: str, source_sha: str, **facts: Any) -> None:
@@ -353,6 +358,17 @@ def run_worker(args: argparse.Namespace) -> None:
     input_path = Path(args.input).resolve()
     if not input_path.is_file():
         raise FileNotFoundError(f"input template does not exist: {input_path}")
+    v14_marker_dir_arg = getattr(args, "v14_marker_dir", None)
+    v14_marker_dir = None
+    write_v14_marker = None
+    if v14_marker_dir_arg is not None:
+        v14_marker_dir = Path(v14_marker_dir_arg).resolve()
+        if not v14_marker_dir.is_dir():
+            raise FileNotFoundError(
+                f"parent-created V14 marker directory does not exist: {v14_marker_dir}"
+            )
+        from benchmarks.task038_full3d_jit_staging import write_marker as write_v14_marker
+
     command = _command(args)
     _prepare_paths(raw_dir, jit_cache_dir, checkpoint_root, record_path)
     _emit_marker(
@@ -388,6 +404,18 @@ def run_worker(args: argparse.Namespace) -> None:
 
     comm = MPI.COMM_WORLD
     validate_profile(args.stage, args.case, args.source, comm.size)
+    v14_callback = None
+    if v14_marker_dir is not None:
+        def v14_callback(name: str, facts: Mapping[str, Any]) -> None:
+            merged = {
+                "source_sha": str(args.expected_source_sha),
+                "worker_pid": int(os.getpid()),
+                "mpi_size": int(comm.size),
+                "raw_dir": str(raw_dir),
+            }
+            merged.update(dict(facts))
+            write_v14_marker(v14_marker_dir, name, merged)
+
     source = _source_facts(root, args.expected_source_sha, comm, PETSc)
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
@@ -400,7 +428,9 @@ def run_worker(args: argparse.Namespace) -> None:
     recovery_solution: Any = None
     record: dict[str, Any] | None = None
     try:
-        bundle = build_p6_same_mesh_physical_bundle(cfg, comm)
+        bundle = build_p6_same_mesh_physical_bundle(
+            cfg, comm, stage_callback=v14_callback
+        )
         frozen_identity = _frozen_input_identity(
             specification, payload, cfg, bundle["mode_sha256"]
         )
@@ -428,6 +458,15 @@ def run_worker(args: argparse.Namespace) -> None:
             role=rhs_generation["role"],
             mode_manifest_sha256=rhs_generation["mode_manifest_sha256"],
         )
+        if v14_callback is not None:
+            v14_callback(
+                "source_built",
+                {
+                    "generation": rhs_generation["generation"],
+                    "role": rhs_generation["role"],
+                    "mode_manifest_sha256": rhs_generation["mode_manifest_sha256"],
+                },
+            )
         operator_authority = {
             "profile": PHYSICAL_PROFILE,
             "levels": list(LEVELS),
@@ -488,6 +527,18 @@ def run_worker(args: argparse.Namespace) -> None:
             zero_initial_guess=True,
             residual_limit=RESIDUAL_LIMIT,
         )
+        if v14_callback is not None:
+            v14_callback(
+                "solve_started",
+                {
+                    "ksp_type": "gmres",
+                    "restart": RESTART,
+                    "cycle_max_it": CYCLE_MAX_IT,
+                    "max_it": MAX_IT,
+                    "zero_initial_guess": True,
+                    "residual_limit": RESIDUAL_LIMIT,
+                },
+            )
         action_calls = 0
         pc_apply_facts: list[dict[str, Any]] = []
         physical_action = bundle["physical_action"]
@@ -577,6 +628,23 @@ def run_worker(args: argparse.Namespace) -> None:
         result_snapshot["final_residual_facts"] = _vector_facts(
             final_residual_values, slaves
         )
+        if v14_callback is not None:
+            final_explicit_true_residual = float(
+                np.linalg.norm(final_residual_values)
+                / np.linalg.norm(rhs_before)
+            )
+            v14_callback(
+                "solve_complete",
+                {
+                    "iterations": int(result_snapshot["iterations"]),
+                    "final_true_residual": final_explicit_true_residual,
+                    "driver_final_true_residual": float(
+                        result_snapshot["final_true_residual"]
+                    ),
+                    "checkpoint_count": len(result_snapshot["checkpoint_facts"]),
+                    "final_explicit_recheck": True,
+                },
+            )
         _emit_marker(
             raw_dir,
             "solve_complete",
@@ -635,6 +703,22 @@ def run_worker(args: argparse.Namespace) -> None:
                 "recovery_solution",
             ],
         )
+        if v14_callback is not None:
+            v14_callback(
+                "solver_stack_release_started",
+                {
+                    "preserved_objects": [
+                        "spaces",
+                        "floquets",
+                        "mesh_data",
+                        "cfg",
+                        "physical_action",
+                        "dtn_action",
+                        "volume_action",
+                        "recovery_solution",
+                    ]
+                },
+            )
         release_p6_same_mesh_solver_stack(bundle)
         _emit_marker(
             raw_dir,
@@ -650,6 +734,21 @@ def run_worker(args: argparse.Namespace) -> None:
                 "p1_matrix",
             ],
         )
+        if v14_callback is not None:
+            v14_callback(
+                "solver_stack_release_complete",
+                {
+                    "released_objects": [
+                        "upper_cycle",
+                        "lower_cycle",
+                        "p63_owner_transfer",
+                        "p31_owner_transfer",
+                        "p6_shell",
+                        "p3_matrix",
+                        "p1_matrix",
+                    ]
+                },
+            )
         from src.solvers.common_3d_utils import _trim_process_heap
 
         gc.collect()
@@ -669,6 +768,8 @@ def run_worker(args: argparse.Namespace) -> None:
             },
         )
         time.sleep(RELEASE_OBSERVATION_SECONDS)
+        if v14_callback is not None:
+            v14_callback("recovery_started", {})
         _emit_marker(raw_dir, "recovery_started", args.expected_source_sha)
 
         recovery: dict[str, Any]
@@ -726,6 +827,14 @@ def run_worker(args: argparse.Namespace) -> None:
                 status="not_run",
                 artifact_count=0,
             )
+        if v14_callback is not None:
+            v14_callback(
+                "recovery_complete",
+                {
+                    "status": str(recovery["status"]),
+                    "artifact_count": len(recovery.get("artifacts", [])),
+                },
+            )
         recovery_solution.destroy()
         recovery_solution = None
         destroy_p6_same_mesh_physical_bundle(bundle)
@@ -782,6 +891,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--expected-source-sha", required=True)
     parser.add_argument("--expected-mpi-size", type=int, required=True)
     parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--v14-marker-dir", type=Path, default=None)
     return parser
 
 

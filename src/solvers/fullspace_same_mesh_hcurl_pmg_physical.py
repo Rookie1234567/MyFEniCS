@@ -8,7 +8,7 @@ physical KSP.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +17,15 @@ import numpy as np
 
 PHYSICAL_BUNDLE_SCHEMA = "task038.same_mesh_hcurl_pmg.physical.v1"
 PHYSICAL_PROFILE = "same_mesh_hcurl_pmg_v1_requalified"
+
+
+def _notify_stage(
+    callback: Callable[[str, Mapping[str, Any]], None] | None,
+    name: str,
+    facts: Mapping[str, Any],
+) -> None:
+    if callback is not None:
+        callback(name, dict(facts))
 
 
 def _surface_assemblers(function_space: Any, mesh_data: Any, cfg: Any, qdegree: int) -> dict[tuple[str, int], Any]:
@@ -36,7 +45,10 @@ def _surface_assemblers(function_space: Any, mesh_data: Any, cfg: Any, qdegree: 
 
 
 def build_p6_same_mesh_physical_bundle(
-    cfg: Any, comm: Any
+    cfg: Any,
+    comm: Any,
+    *,
+    stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Attach the exact p6 volume+DtN operator to the selected positive setup."""
 
@@ -56,24 +68,66 @@ def build_p6_same_mesh_physical_bundle(
 
     if int(comm.size) != 1:
         raise ValueError("the P0 physical lane is fixed to MPI1")
+    _notify_stage(stage_callback, "positive_setup_started", {"levels": [6, 3, 1]})
     setup = build_p6_same_mesh_setup(cfg, comm)
     dtn_action = None
     volume_action = None
     physical_action = None
     try:
+        _notify_stage(
+            stage_callback,
+            "positive_setup_complete",
+            {"levels": [6, 3, 1], "profile": PHYSICAL_PROFILE},
+        )
+        _notify_stage(stage_callback, "mode_inventory_started", {})
         modes, mode_rows, mode_sha = build_dynamic_mode_inventory(cfg)
         qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
+        _notify_stage(
+            stage_callback,
+            "mode_inventory_complete",
+            {
+                "mode_count": int(len(modes)),
+                "mode_manifest_sha256": str(mode_sha),
+                "dtn_quadrature_degree": int(qdegree),
+            },
+        )
         p6_space = setup["spaces"][6]
         p6_floquet = setup["floquets"][6]
+        _notify_stage(stage_callback, "surface_assemblers_started", {"count": 4})
         assemblers = _surface_assemblers(
             p6_space, setup["mesh_data"], cfg, qdegree
+        )
+        _notify_stage(
+            stage_callback,
+            "surface_assemblers_complete",
+            {"count": int(len(assemblers))},
+        )
+        _notify_stage(
+            stage_callback,
+            "dtn_carrier_started",
+            {"mode_count": int(len(modes))},
         )
         carrier = build_fullspace_dtn_carrier_from_surface(
             modes, assemblers, p6_floquet.mpc, cfg
         )
+        _notify_stage(
+            stage_callback,
+            "dtn_carrier_complete",
+            {"mode_count": int(len(modes)), "surface_assembler_count": int(len(assemblers))},
+        )
         dtn_action = build_fullspace_dtn_action(carrier, comm=comm)
+        _notify_stage(
+            stage_callback,
+            "dtn_action_complete",
+            {"mode_count": int(len(modes))},
+        )
         del carrier, assemblers
 
+        _notify_stage(
+            stage_callback,
+            "physical_volume_action_started",
+            {"form": "exact_maxwell_volume"},
+        )
         bilinear, _rhs_form = _build_variational_forms(
             setup["mesh_data"].mesh,
             setup["mesh_data"],
@@ -84,6 +138,11 @@ def build_p6_same_mesh_physical_bundle(
         volume_action = build_fullspace_mpc_form_action(
             bilinear, p6_space, mpc=p6_floquet.mpc
         )
+        _notify_stage(
+            stage_callback,
+            "physical_volume_action_complete",
+            {"form": "exact_maxwell_volume", "volume_action": True},
+        )
         physical_action = FullspacePhysicalAction(volume_action, dtn_action)
         owned_volume_action = volume_action
         owned_dtn_action = dtn_action
@@ -92,7 +151,7 @@ def build_p6_same_mesh_physical_bundle(
         incident_projections = tuple(
             _incident_projection_onto_top_mode(mode, cfg) for mode in modes
         )
-        return {
+        bundle = {
             "schema": PHYSICAL_BUNDLE_SCHEMA,
             "profile": PHYSICAL_PROFILE,
             "setup": setup,
@@ -106,6 +165,16 @@ def build_p6_same_mesh_physical_bundle(
             "incident_projections": incident_projections,
             "dtn_quadrature_degree": int(qdegree),
         }
+        _notify_stage(
+            stage_callback,
+            "bundle_built",
+            {
+                "levels": [6, 3, 1],
+                "mode_count": int(len(modes)),
+                "physical_action": True,
+            },
+        )
+        return bundle
     except Exception:
         if physical_action is not None:
             physical_action.destroy()

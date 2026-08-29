@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import copy
+from collections.abc import Mapping
 import hashlib
 import json
 from pathlib import Path
@@ -803,6 +804,97 @@ def test_p0_recovery_calls_official_export_once_and_releases_stack_once(
     core.release_p6_same_mesh_solver_stack(held)
     assert (upper.count, p3.count, p1.count) == (1, 1, 1)
     assert held["physical_action"] is kept and held["setup"]["spaces"] is kept
+
+
+def test_p0_stage_callback_order_and_optional_marker_command(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def callback(name: str, facts: Mapping[str, object]) -> None:
+        events.append((name, dict(facts)))
+
+    setup_module = ModuleType("src.solvers.fullspace_same_mesh_hcurl_pmg_setup")
+    setup_module.build_p6_same_mesh_setup = lambda cfg, comm: {
+        "spaces": {6: "p6-space"},
+        "floquets": {6: SimpleNamespace(mpc=object())},
+        "mesh_data": SimpleNamespace(mesh="mesh"),
+    }
+    dtn_action_module = ModuleType("src.solvers.fullspace_dtn_action")
+    dtn_action_module.build_dynamic_mode_inventory = lambda cfg: (["m0", "m1"], [0, 1], "mode-sha")
+    dtn_action_module.build_fullspace_dtn_carrier_from_surface = lambda *args, **kwargs: "carrier"
+    dtn_action_module.build_fullspace_dtn_action = lambda *args, **kwargs: "dtn-action"
+    mpc_module = ModuleType("src.solvers.fullspace_mpc_action")
+    mpc_module.build_fullspace_mpc_form_action = lambda *args, **kwargs: "volume-action"
+    physical_module = ModuleType("src.solvers.fullspace_physical_action")
+    physical_module.FullspacePhysicalAction = lambda *args, **kwargs: "physical-action"
+    forms_module = ModuleType("src.solvers.common_3d_forms")
+    forms_module._build_variational_forms = lambda *args, **kwargs: ("bilinear", "rhs")
+    dtn_port_module = ModuleType("src.solvers.dtn_port_3d")
+
+    class FakeAssembler:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+    dtn_port_module._ReusableSurfaceComponentAssembler = FakeAssembler
+    dtn_port_module._dtn_surface_quadrature_degree = lambda cfg, modes: 7
+    dtn_port_module._incident_projection_onto_top_mode = lambda mode, cfg: f"projection-{mode}"
+    for name, module in {
+        "src.solvers.fullspace_same_mesh_hcurl_pmg_setup": setup_module,
+        "src.solvers.fullspace_dtn_action": dtn_action_module,
+        "src.solvers.fullspace_mpc_action": mpc_module,
+        "src.solvers.fullspace_physical_action": physical_module,
+        "src.solvers.common_3d_forms": forms_module,
+        "src.solvers.dtn_port_3d": dtn_port_module,
+    }.items():
+        monkeypatch.setitem(sys.modules, name, module)
+
+    cfg = SimpleNamespace(tags=SimpleNamespace(z_max=1.0, z_min=0.0))
+    bundle = core.build_p6_same_mesh_physical_bundle(
+        cfg, SimpleNamespace(size=1), stage_callback=callback
+    )
+    assert [name for name, _facts in events] == [
+        "positive_setup_started",
+        "positive_setup_complete",
+        "mode_inventory_started",
+        "mode_inventory_complete",
+        "surface_assemblers_started",
+        "surface_assemblers_complete",
+        "dtn_carrier_started",
+        "dtn_carrier_complete",
+        "dtn_action_complete",
+        "physical_volume_action_started",
+        "physical_volume_action_complete",
+        "bundle_built",
+    ]
+    facts = dict(events)
+    assert facts["mode_inventory_complete"] == {
+        "mode_count": 2,
+        "mode_manifest_sha256": "mode-sha",
+        "dtn_quadrature_degree": 7,
+    }
+    assert facts["physical_volume_action_complete"]["volume_action"] is True
+    assert bundle["physical_action"] == "physical-action"
+
+    common = [
+        "--stage", worker.STAGE,
+        "--case", worker.CASE,
+        "--source", worker.SOURCE,
+        "--raw-dir", str(tmp_path / "raw"),
+        "--jit-cache-dir", str(tmp_path / "jit"),
+        "--checkpoint-root", str(tmp_path / "checkpoints"),
+        "--record", str(tmp_path / "record.json"),
+        "--expected-source-sha", SOURCE_SHA,
+        "--expected-mpi-size", "1",
+        "--input", str(tmp_path / "input.dat"),
+    ]
+    default_args = worker.build_parser().parse_args(common)
+    v14_dir = tmp_path / "v14-markers"
+    v14_args = worker.build_parser().parse_args(
+        [*common, "--v14-marker-dir", str(v14_dir)]
+    )
+    assert "--v14-marker-dir" not in worker._command(default_args)
+    assert worker._command(v14_args)[-2:] == ["--v14-marker-dir", str(v14_dir.resolve())]
 
 
 def test_p0_input_angle_identity_and_lazy_import_boundary(tmp_path: Path) -> None:
