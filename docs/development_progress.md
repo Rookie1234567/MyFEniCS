@@ -2404,3 +2404,27 @@ Review V12 在同一 extra 分支完成了 Route A、Route B、C1 和 C2 的阶�
 | downstream | p6 positive/physical、R/T/A、h5、2 TiB 与 0.7 nm 均 `not_run_by_gate` |
 
 C2 第一对 transfer 与三个 level bridge 通过，第二对失败无法由现有事实唯一归因到某一条 production 公式，因此没有猜修。C2 local oracle/infrastructure 归为 research-only，owner runtime/test 归为 do-not-merge candidate evidence；ordinary default 未改变。阶段详情、下一架构比较和十问回答分别见 [`V12 route outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/interlevel_route_selection_v1.md)、[`next PC architecture`](task038_extra_full3d_iterative_0p7nm/outcomes/next_pc_architecture_after_v12.md) 和 [`response_v12`](task038_extra_full3d_iterative_0p7nm/response_v12.md)。
+
+## 51. Task038-extra Review V13：C1 selected hierarchy 与 P0 resource stop
+
+V13 的 C1 exact-input p6/h10 same-mesh positive lane 已由 random、gradient、curl、checkerboard 四源全部通过，selected_hierarchy 从 V12 历史的 NONE 更新为 same_mesh_hcurl_pmg_v1_requalified。这个更新只属于 V13 新 source SHA、exact input 和独立 artifact root；V12 的 C1 identity negative、Route A/B/C2 负结果仍原样保留。
+
+| 阶段 | 当前事实 |
+|---|---|
+| A0 | 已实际运行 6 probes；CLOSED_BY_VECTOR_OR_STABLE_ADJOINT_GATE；gradient pairwise-vs-compensated=2.7478465599487806e-12 > 1e-13；MPI2/A1 not_run_by_A0_gate |
+| C0 | MPI1/MPI2 canonical source PASS，source 4dc9b55cd3519a03b23c9d27779c0379cef84f66 |
+| C1 | 四源 exact-input v4 PASS；p6/h10；final explicit true residual 2.7889793119815017e-9 至 7.760965317017376e-9；process-tree peak 1,516,544,000 至 1,536,192,512 B；swap=0 |
+| P0 | MPI1 physical_rhs，source a05e93af6edb097c1f0ebf0f65e201698db27381；仅 paths_ready；peak 2,024,108,032 B；超过 2,000,000,000 B hard line 24,108,032 B；controlled termination |
+| P1/P2/G/D | P1/P2 为 not_run_by_resource_gate；G/D 为 not_run_by_selected_C1 |
+| 0.7 nm / ordinary | 完整 0.7 nm PDE not_run；ordinary default、master 未改变 |
+
+P0 watchdog 共 20,518 个 raw samples，最后 elapsed=5167.201565908967 s，warning first=1,813,069,824 B at 5165.438371994998 s，process-tree swap=0、no_orphan=true、returncode=-15、natural_exit=false。没有 worker record、checkpoint、residual、recovery 或 official physics，不能将 P0 写成 numerical/physics failure，也不能把 C1 positive 写成 physical qualification。当前 tracked direct authority 只有 scalar R/T/A/A_volume，缺少 E/H 与 12+12 raw arrays；该 downstream comparison blocker 因 P0 先在 setup 停止而未触达，不是本次停止原因。
+
+本轮保留 P0 ignored root，并将 watchdog compact 与 paths_ready marker 原字节复制到：
+
+- [P0 watchdog compact](task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p0_physical_v1_watchdog.json)
+- [P0 paths_ready marker](task038_extra_full3d_iterative_0p7nm/outcomes/records/same_mesh_hcurl_pmg_p0_physical_v1_paths_ready.json)
+
+原始 raw SHA 为 51e8e531500e733c21f558d44be0a4d8d7a76fe9454800ebc9cb8ad06ab19566，compact SHA 为 0705e170a1835999aece82dfe43d3ff5ccd3cf98800b79a013341b54ed2955e5，paths SHA 为 4f22fd62136515693ebebef4fbfe551e84e46223a0685054dcb9ad1a65108415。P0 的详细说明见 [p6 physical V13](task038_extra_full3d_iterative_0p7nm/outcomes/p6_physical_v13.md)，C1 见 [p6 positive V13](task038_extra_full3d_iterative_0p7nm/outcomes/p6_positive_v13.md)，逐项回答见 [response V13](task038_extra_full3d_iterative_0p7nm/response_v13.md)。
+
+严格资源语义是：2 GB 是 hard stop，1.8 GB 只是 warning。P0 超出 24,108,032 B（约 1.2054%）仍须记录为 FAIL；不能按“只超一点”舍入通过。没有从 13.5 nm cold-JIT peak 外推 0.7 nm/2 TiB 能力，也没有创建 next_pc_architecture_after_v13、feasibility_v5 或未触达阶段 outcome。

@@ -1,123 +1,89 @@
-# Task038-extra Review V11 S6 closeout summary
+# Task038-extra Review V13 current authority summary
 
 ## 一句话结论
 
-S1 的全局结构审计、S2 的 p6/h10 foundation live-set 资格和 S4 的 p2/p3 LOR-edge 小 oracle 均在各自范围内通过；S5 的资源 Gate 通过，但唯一的 6→3 interlevel energy Gate 失败。因此 `lor_edge_geometric_mg_v1` 在 S5 关闭，不能写成 p6 solver pass，S6 之后及 p6 physical/PDE 均 `not_run_by_gate`。
+V13 的 C1 exact-input p6/h10 positive hierarchy 已由 random、gradient、curl、checkerboard 四源全部通过，当前 selected_hierarchy 是 same_mesh_hcurl_pmg_v1_requalified。随后唯一的 P0 p6/h10 physical Maxwell MPI1 workflow 在 cold setup 阶段达到 2,024,108,032 B，超过 2,000,000,000 B hard line 24,108,032 B（约 1.2054%），被 watchdog 受控终止。因此 P0 是 FAILED_RESOURCE_HARD_STOP；没有 Krylov、PDE residual 或 official physics failure，也没有 physical PASS。
 
-这里的 **foundation live set** 是“完整计算所需的基础对象能否同时留在内存中”，不是 PDE 收敛或物理结果。S4 的 **oracle** 是小网格上的固定验证工具，也不是 ordinary default。
+positive source 资格的含义是：预条件器在正定辅助算子上能压低固定诊断误差。P0 physical 才是含波动、双 Floquet 和 streaming Fourier-DtN 的真实散射 workflow。两者分开记录。
 
-## 阶段总表
+## V13 当前阶段表
 
-| 阶段 | 状态 | 事实 | 下一步边界 |
-|---|---|---|---|
-| V10 Q0 Reference E | `controlled_negative` | 500 步 true residual `4.2034233790900783e-4 > 1e-8` | 永久保留，不覆盖/重分类 |
-| foundation-E | `pass` | p3/h50/MPI1/random，3020 步 `9.260562270838936e-9` | 只证明 exact LOR foundation 可收敛 |
-| old global spectral audit | `controlled_negative` | GHEP smallest 固定 500 次 `reason=-1`, `converged=0` | spectrum 未建立 |
-| HX/PCGAMG | `closed` | 旧 inverse 质量不足，V11 不再扫描 | production family 不重启 |
-| S1 | `pass` | p2/p3 rank、SPD、Hermitian、endpoint residual 通过 | 授权 S2 |
-| S2 | `pass` | p6/h10 foundation cold/retained/swap 通过 | 授权 S4 |
-| S4 | `pass_at_small_oracle_scope` | 16/16 cases、8/8 MPI pairs 通过 | 授权 S5；不等于 p6 solver |
-| S5 | `failed_algebra_gate` | 6→3 energy `0.04115402900674629 > 1e-9`；资源仍通过 | 关闭 LOR geometric MG，停止 |
-| S6 | `docs_only_closeout` | outcome、compact、summary、response/progress 更新 | 不再运行 S4/S5/PDE |
+| 阶段 | 当前权威状态 | 关键事实 |
+|---|---|---|
+| A0 Route A | CLOSED_BY_VECTOR_OR_STABLE_ADJOINT_GATE | 已实际运行 6 probes；gradient pairwise-vs-compensated=2.7478465599487806e-12 > 1e-13；MPI2/A1 not_run_by_A0_gate，随后进入 C0 |
+| C0 canonical source | C0_CANONICAL_SOURCE_PASS_MPI1_MPI2 | source SHA 4dc9b55cd3519a03b23c9d27779c0379cef84f66；p3→p1；owner/phase/input Gate 通过 |
+| C1 positive | C1_P6_POSITIVE_PASS_MPI1 | 四源 exact-input v4 全部通过；selected_hierarchy=same_mesh_hcurl_pmg_v1_requalified |
+| P0 physical | FAILED_RESOURCE_HARD_STOP / controlled termination | source SHA a05e93af6edb097c1f0ebf0f65e201698db27381；peak 2,024,108,032 B；swap=0；仅 paths_ready |
+| P1 | locked/not_run_by_resource_gate | P0 未进入 solve，未满足 long-tail 条件 |
+| P2 | locked/not_run_by_resource_gate | P0 未完成 MPI1 physical residual 与 official physics |
+| G/D | not_run_by_selected_C1 | C1 positive 已选层级，未进入其它候选路线 |
+| 0.7 nm PDE / ordinary default | not_run / unchanged | 没有完整 0.7 nm PDE；ordinary default、master 未改变 |
 
-## S1：全局 transfer/rank/spectral audit
+## C1 四源 positive 结果
 
-| case | full/slave/independent | rank | singular min…max | lambda min…max | condition |
-|---|---:|---:|---:|---:|---:|
-| p2/h50/MPI1 | 988/220/768 | 768 | 0.25262199571308525…1.1728839979271446 | 0.07953013700040465…4.2447253801431595 | 53.37253952072989 |
-| p3/h50/MPI1 | 3018/480/2538 | 2538 | 0.35955933841154997…3.7874131839018776 | 0.019970670477800642…283.0573385017638 | 14173.652247500142 |
+| source | source SHA | iterations | final true residual | peak / retained | swap | status |
+|---|---|---:|---:|---:|---:|---|
+| random | 0da00e98c0423ade6cea38cabc3c8415ea32510e | 200 | 5.550975220267439e-9 | 1,517,903,872 / 772,497,408 B | 0 | PASS |
+| gradient | 82c56d92ac80ddf84071a6e1eff6d28e3513af7e | 220 | 2.7889793119815017e-9 | 1,516,544,000 / 770,650,112 B | 0 | PASS |
+| curl | 48866f2990a12113a28e556e6956104625b3da34 | 180 | 5.6105046279899595e-9 | 1,536,192,512 / 790,028,288 B | 0 | PASS |
+| checkerboard | 80b0d8d36364007f4dda941d7770a307eee15dd4 | 200 | 7.760965317017376e-9 | 1,533,190,144 / 786,751,488 B | 0 | PASS |
 
-Endpoint residuals were `1.1083766402470227e-13 / 2.7133854271858805e-15` for p2 and `2.0408235169191283e-11 / 6.039533107090146e-15` for p3; work, rank, Hermitian and SPD Gates passed. The S1 process-tree peak was `788,987,904 B`, swap `0 B`. As required, assembled high-order AIJ and temporary dense rank copies were audit-only; production high-order AIJ, global dense transfer and numeric allgather remain false.
+所有四案都绑定 exact input SHA 819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41、physical model SHA 9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f、grazing=1°、theta=89°、phi=0°、13.5 nm、p6/h10。每案的 source SHA、worker record、watchdog compact、checker compact 和 ignored root 均独立绑定。
 
-Source/record identity: formal source `d19848e6f5484835a84186d13e349ae30fc8d56d`; compact record `outcomes/records/lor_global_spectral_audit_v2.json` SHA `8ffa8f1e74392bbd062314e0656d56c3bc464520c541d3a4668a52fad0a2ab09`; checker SHA `acec3b84f2e8001335bf362aa509e5a809657d5af11b33a847e51fd63cf1a5e3`.
+四案的 matvec/PC/KSP destroy/action total 分别为 random 209/210/10/223、gradient 230/231/11/245、curl 188/189/9/201、checkerboard 209/210/10/223；natural exit、no orphan、readability、swap=0 和 checker Gates 全部通过。完整结果见 p6_positive_v13.md。
 
-## S2：p6/h10 foundation resource qualification
+## P0 resource hard stop
 
-| item | measured |
-|---|---:|
-| source / physical | `12adebdf0e5e78de33818e97fd35cd870fef3a4e`; p6/h10/MPI1/13.5 nm |
-| high/low rows | 173,802 / 173,802 |
-| `B_L` NNZ | 5,825,468 |
-| index / numeric | 23,997,084 / 93,207,488 B |
-| known retained | 249,126,201 B |
-| cold and external retained peak | 983,363,584 B |
-| headroom to 2 GB / 1.55 GB | 1,016,636,416 / 566,636,416 B |
-| repeated growth / swap | 0 B / 0 B |
+P0 使用 selected_hierarchy、exact matrix-free Maxwell volume、streaming Fourier-DtN、physical RHS、right GMRES restart20/max_it20000、replacement20、checkpoint500。外部 watchdog 覆盖 cold setup，poll=0.25 s，hard RSS=2,000,000,000 B，process-tree swap=0。
 
-Foundation objects were matrix-free high action, streaming DtN, fine LOR matrix/transfer metadata and restart20 reserve (21 basis + 4 auxiliary = 25 vectors). HX/PCGAMG, scalar node matrix, p6 factor, global high AIJ, global dense transfer, direct coarse and recovery arrays were not constructed. `/init.scope` shared swap was diagnostic only; formal process-tree/rank swap was zero. S2 record/checker remain immutable.
+最后 elapsed=5167.201565908967 s，20,518 个 raw samples，首次 warning 是 1,813,069,824 B at 5165.438371994998 s。peak=2,024,108,032 B。差值 24,108,032 B 仍是严格 FAIL，不能按四舍五入或“只超一点”放行。returncode=-15、stop_reason=process_tree_rss_limit、natural_exit=false、no_orphan=true；只有 paths_ready marker，没有 worker record、checkpoint、residual、recovery 或 physics output。完整证据见 p6_physical_v13.md。
 
-## S4：16-case oracle
+P0 tracked evidence 只包括原字节复制的 watchdog compact 与 paths_ready marker：
 
-The accepted aggregate is bound by [S4 outcome](lor_edge_geometric_mg_oracle_v1.md) and the two compact summaries. Aggregate checker SHA is `56b7eec1435abc69a38c38af056d8803e8f62a3ff6768b87faa594670c916c4e`. All 16 individual final true residuals were below `1e-8`, all process-tree peaks were below 500 MB, and all swaps were zero. The first four p2-MPI1 cases use `ca5171ac3bd6dd6ab333619cd76fd771524520e6`; the other 12 use `2b2df645418ee28c68681832661e58993897166d`.
+- records/same_mesh_hcurl_pmg_p0_physical_v1_watchdog.json，SHA 0705e170a1835999aece82dfe43d3ff5ccd3cf98800b79a013341b54ed2955e5；
+- records/same_mesh_hcurl_pmg_p0_physical_v1_paths_ready.json，SHA 4f22fd62136515693ebebef4fbfe551e84e46223a0685054dcb9ad1a65108415。
 
-## S5：p6/h10 capacity and algebra boundary
+没有创建假的 worker/checker record。raw SHA 为 51e8e531500e733c21f558d44be0a4d8d7a76fe9454800ebc9cb8ad06ab19566；原始 ignored root 永久保留。
 
-The fixed S5 record and independent checker are [record](records/lor_edge_geometric_mg_p6_capacity_v1.json) and [checker](records/lor_edge_geometric_mg_p6_capacity_v1_checker.json). The formal source was `2507a16d8f19df9b432319ae1625ea9b817d78f8`.
+## 历史事实与状态边界
 
-| level | rows | NNZ | index / numeric bytes |
-|---:|---:|---:|---:|
-| 1 | 1,067 | 37,253 | 153,284 / 596,048 |
-| 3 | 23,073 | 783,083 | 3,224,628 / 12,529,328 |
-| 6 | 173,802 | 5,825,468 | 23,997,084 / 93,207,488 |
+V11 S5 的 6→3 energy=0.04115402900674629 > 1e-9 是冻结的 algebra Gate negative；V12 的 selected_hierarchy=NONE、C1 identity negative、Route A global adjoint failure、Route B/C2 negative 及相关资源边界也均为历史冻结事实，不被 V13 重分类。V13 A0 是新增的真实负结果：六 probe 已运行，gradient pairwise-vs-compensated Gate 失败；其 MPI2/A1 后续按固定分支 not_run_by_A0_gate。C0 v4 的 MPI1/MPI2 canonical source PASS 见 same_mesh_canonical_source_v1.md；V13 C1 结果见 p6_positive_v13.md；V13 P0 controlled stop 见 p6_physical_v13.md。
 
-| transfer | edge map | edge bytes | node map | node bytes |
-|---|---:|---:|---:|---:|
-| 6→3 | 882×144, 26,136 NNZ | 2,032,128 | 343×64, 21,952 NNZ | 351,232 |
-| 3→1 | 144×12, 324 NNZ | 27,648 | 64×8, 512 NNZ | 8,192 |
+因为 C1 已经提供 qualified positive hierarchy，V13 的 Z0 条件“所有 A/C/G/D 都没有 positive hierarchy”不成立，所以不创建 next_pc_architecture_after_v13.md。G/D 不是被证明失败，而是 not_run_by_selected_C1。
 
-The 3→1 energy relative was `2.7851655955739857e-15`, but 6→3 was `0.04115402900674629`. The external cold/retained peak was `1,207,476,224 B` and swap `0 B`; known combined ledger was `296,345,065 B`. The record's own retained ledger sample was `1,201,344,512 B` with `904,999,447 B` unattributed; these are different measurement fields and are not conflated. Fixed smoother facts were degree 3, power 10, one pre/one post; reserve was 25 vectors / `69,520,800 B`; p1 budget was derived `885,908 B` with no solver/factor.
+official E/H、R/T/A、A_volume 和 12 个显著通道的 12 个 power Gate 加 12 个 complex boundary-amplitude Gate 均为 not_run_by_resource_gate。没有 direct observable-vector qualification；不能以 C1 auxiliary evidence 代替。
 
-The primary blocker is 6→3 interlevel energy consistency, not p1 distributed coarse size. Local diagnosis found non-nested p3/p6 GLL nodes; naive tiled composition defect was `0.23558864802518256`. No tiled repair, parameter scan or alternate operator was implemented.
+当前 tracked direct authority 只有 scalar R/T/A/A_volume；缺少 E/H 与 12+12 raw arrays。该 downstream comparison blocker 因 P0 先在 cold setup 停止而未触达，不是本次停止原因。
 
-## Historical negatives and evidence boundary
+## 0.7 nm / 2 TiB 边界
 
-The old Q0 500-step negative, foundation-E pass, old spectral nonconvergence, HX/PCGAMG closure, S1/S2/S4 evidence, and the ba40358 probe-domain-invalid attempt are all retained. The ba40358 archived compact hashes are `ad8bbc3dfd81ba489efd6a4b2c24530c43f68484facc43020f9c5044f3be2a3f` (record) and `93423f917256edd40ac13727af2feac58e4dcc63dde29a229742e6b960f5aaa8` (checker); neither is reclassified.
-
-No S4 repair, S5+ stage, p6 physical Maxwell, p6/h5, 0.7 nm PDE, official physics, or production coarse solver was run. The next blocker therefore has **not** converged to “p1 distributed coarse solver”; it is first the failed 6→3 transfer algebra Gate.
-
-## Verification and integration boundary
-
-| check | result |
+| 口径 | 当前事实 |
 |---|---|
-| test312 | 20 passed / 350.31 s |
-| test313 | 22 passed |
-| related test294 | 3 passed / 91.97 s |
-| compileall / AST / diff-check | passed |
-| Ruff | unavailable in qualified environment; not installed |
-| CI | not claimed |
+| measured | C1 p6/h10 四源 process-tree peak 为 1.5165–1.5362 GB；P0 13.5 nm cold setup peak 为 2.024108032 GB，并在 2 GB hard line 失败 |
+| derived | P0 超出 hard line 24,108,032 B，约 1.2054%；这是当前 P0 resource Gate 结论，不是物理数值结论 |
+| predicted | 完整 0.7 nm PDE 的 live-set、DoF、JIT、MPI/physical observable 仍未知，不能从上述 13.5 nm peak 外推通过或容量 |
 
-The current work only updates docs and compact S6 summaries. Ordinary default, `master`, production numerical core and full 0.7 nm PDE remain unchanged.
+因此 0.7 nm/2 TiB 仍是未闭合的 capacity boundary；没有创建 feasibility_v5，也没有运行完整 0.7 nm PDE。
 
-## 冻结的 V9/V10 prior-phase authority（不覆盖 V11）
+## selective merge boundary
 
-本附录恢复此前 summary 中仍具边界意义的阶段性事实。它们是 phase-local frozen facts：V11 的 S1/S2/S4/S5 结果不会删除、覆盖或重新裁决它们；foundation-E 的 3020 步 PASS 也不重分类旧的 500-step negative。
-
-| prior 阶段/事实 | 冻结状态与数值 | 证据入口 |
+| 分类 | 当前内容 | 合入边界 |
 |---|---|---|
-| P0 checkpoint/restart | `PASS`，只归属于 `ba9016310d09c388a953fce93d9e71761343311f` fresh v2；roundtrip、restart-boundary residual、PC legality、provenance 通过 | [`memory_first_authority_contract.md`](memory_first_authority_contract.md)、`records/memory_first_authority_v1.json`、`records/memory_first_authority_checker_v1.json` |
-| P1 v2 | 实际完成 9/16：8 个 p2 individual PASS；p3/h50 MPI1/random 在固定 `max_it=2000` 后 final explicit true residual `0.01027838962263555 > 1e-8`，分类 `FAILED_AT_FIXED_MEMORY_ITERATION_CAP` | [`memory_first_small_v2.md`](memory_first_small_v2.md)、`records/memory_first_small_v2.json`、`records/memory_first_small_v2_checker.json` |
-| P1 资源口径 | cycle RSS 是 rank-root process-tree ledger；MPI2 不含 launcher；GNU time 不是完整 process-tree/cgroup authority；共享 `/init.scope` 的 `13,799,424 B` 仅 diagnostic，worker process-tree/rank swap 为 `0` | [`response_v9.md`](../response_v9.md)、上述 P1 compact records |
-| P2–P7 | `not_run_by_gate`；没有 p6/h10 setup、physical Maxwell、MPI2 physical、h5 scaling、2 TiB workflow 或完整 0.7 nm PDE 结果 | [`lor_hx_p6h10_setup_v2.md`](lor_hx_p6h10_setup_v2.md)、[`lor_hx_p6h10_positive_longrun_v2.md`](lor_hx_p6h10_positive_longrun_v2.md)、[`lor_hx_p6h10_physical_longrun_v2.md`](lor_hx_p6h10_physical_longrun_v2.md)、[`lor_hx_p6h10_mpi2_v2.md`](lor_hx_p6h10_mpi2_v2.md)、[`lor_hx_h5_scaling_v2.md`](lor_hx_h5_scaling_v2.md)、[`feasibility_0p7nm_2tib_v3.md`](feasibility_0p7nm_2tib_v3.md) |
-| old L2 one-apply | 永久 `FAIL`：`rho=1.7348663090876784 > 0.45`；不是 physical Maxwell 或 exact-A 结论 | [`lor_native_complex_hx_oracle.md`](lor_native_complex_hx_oracle.md)、[`lor_exact_contraction.md`](lor_exact_contraction.md)、old record SHA `0a6ccfdb6a28b003167046e3ca3fc5e4de0d40825784786319661901a65389f3` |
-| old v1 80-step performance | `FAIL`，保留为短迭代性能负结果；不能与后续长迭代正确性或 V11 S4 small oracle 混称 | [`response_v7_addendum.md`](../response_v7_addendum.md)、`records/memory_first_authority_v1.json` (`old_k1_v1_80_step`) |
-| additive-v2 | formally `CLOSED`；不恢复、不扫描参数、不提升 ordinary default | [`response_v8.md`](../response_v8.md)、[`response_v9.md`](../response_v9.md)、`records/lor_native_complex_hx_krylov_pc_additive_v2_campaign_v1.json` |
-| V10 Q0 Reference N | `diagnostic-only`；`rho=2.1958595524302254e-3`；`2.8019257502717445` 是 stored owner packet 与 trace-dual inferred re-encoded evidence 的坐标混用边界，不能证明 replay algebra PASS | [`p3_exact_reference_triage.md`](p3_exact_reference_triage.md)、[`response_v10.md`](../response_v10.md)、`records/p3_exact_reference_triage_v1_checker.json` |
-| V10 Q1–Q5 | `not_run_by_Q0_hard_stop`；Q0 Reference E 的 500-step explicit rho=`4.2034233790900783e-4 > 1e-8`，foundation-E 后续 PASS 不覆盖该旧 negative | [`response_v10.md`](../response_v10.md)、[`lor_global_spectral_audit_v2.md`](lor_global_spectral_audit_v2.md) |
+| reusable audit/canonical/resource helper candidates | src/solvers/fullspace_lor_stable_adjoint.py；src/solvers/hcurl_canonical_vector.py；src/solvers/hcurl_canonical_vector_dolfinx.py；benchmarks/task034_wsl_resources.py | 仍需最终 selective review；不等于 ordinary default |
+| research-only pending physical qualification | src/solvers/fullspace_same_mesh_hcurl_pmg.py、fullspace_same_mesh_hcurl_pmg_global.py、fullspace_same_mesh_hcurl_pmg_p6.py、fullspace_same_mesh_hcurl_pmg_runtime.py、fullspace_same_mesh_hcurl_pmg_setup.py、fullspace_same_mesh_hcurl_pmg_physical.py，以及对应 Task038 same-mesh C0/setup/positive/P0 runners/checkers | C1 positive 已通过，但 P0 resource hard stop；不得提升为 production |
+| do-not-promote/do-not-merge as production numerical candidate | Route-A 6→3 candidate integration：src/solvers/fullspace_lor_interlevel_spectral_dolfinx.py 及对应 interlevel runner/checker；旧 Route-B/C2/HX 等已冻结失败路线 | 不提升为 production numerical candidate；stable-adjoint audit helper 不属于此类 |
+| evidence/docs | 本轮 A0/P0 negative compact、outcomes 文档与 response_v13.md | 永久保留，可作为文档/证据选择性合入；提交负证据不代表把失败 solver 合入 production |
 
-这些 prior 事实与 V11 的 S4 16/16 小 oracle、S5 6→3 algebra failure 是不同阶段、不同对象和不同 Gate；任何一个不能被另一个替代。
+## 证据与文档入口
 
-## Task038-extra Review V12 R12 终局索引
+| 内容 | 入口 |
+|---|---|
+| C0 canonical source | same_mesh_canonical_source_v1.md |
+| C1 positive | p6_positive_v13.md |
+| P0 physical resource stop | p6_physical_v13.md |
+| Route A boundary | route_a_stable_adjoint_v1.md |
+| 逐项 response | ../response_v13.md |
+| V11 historical closeout | ../response_v11.md、V11 outcome files |
+| V12 historical closeout | ../response_v12.md、V12 outcome files |
 
-V12 的最终选择为 `selected_hierarchy=NONE`。Route A 已因 gradient global adjoint `2.8964367576123248e-11 > 1e-12` 关闭；Route B v2 的 `6→2→1` structural/setup 资格仍保留，但 random 只运行至 7000 步并由用户受控停止；C1 的 MPI physical-canonical identity 与 C2 的 nested owner work 均未通过。因此没有 qualified multilevel PC、p6 positive 四源、p6 physical、official physics 或 0.7 nm / 2 TiB capacity 结果。
-
-| V12 终局项 | 状态 | 关键事实 |
-|---|---|---|
-| C1 same-mesh H(curl) | `CLOSED_BY_MPI_CANONICAL_IDENTITY_GATE` | primal/dual cross-MPI coefficient relative `0.10049859821442367 / 0.004662851981572301`，均大于 `1e-11` |
-| C2 nested LOR-edge HMG | `CLOSED` | `h3star→h1star` owned-packet work `0.018392534459166617 > 1e-11`；MPI1 `p6/h50`，未运行 MPI2 |
-| C2 compact diagnostic | tracked record | `records/nested_lor_edge_hmg_c2_mpi1_diagnostic_v1.json`，SHA `62a7bbce12dceb77254bae2ead9c8b3ddf8f9dc0d48b5349b5147f7434ecdf79` |
-| C2 resources | diagnostic scope | rank-worker max RSS `486,473,728 B`、rank swap `0 B`；不是完整 process-tree qualification |
-| downstream | `not_run_by_gate` | p6 positive/physical、official E/H/R/T/A、h5、2 TiB 与 0.7 nm PDE |
-
-C2 的第一对 `h6→h3star` owned-packet work 为 `2.176782822433302e-15`，三个 level bridge 均通过；失败只出现在第二对，现有事实不能唯一归因于 incidence、orientation、phase、ordering 或 dual route，因此没有猜修或放宽阈值。C2 local transfer core只保留为 research-only local oracle/infrastructure，owner runtime/test 与诊断为 do-not-merge candidate evidence；ordinary default 未改变。
-
-V12 的下一步比较见 [`next_pc_architecture_after_v12.md`](next_pc_architecture_after_v12.md)，只讨论 BDDC/FETI-DP、GenEO/adaptive domain decomposition 和 matrix-free p-h 加分布式 algebraic coarse correction，不选择或实现新的 PC。完整十问回答见 [`response_v12.md`](../response_v12.md)。
+ordinary default、master、full0.7nm PDE 和 P1/P2/G/D formal 均未被本次 docs closeout 改变或启动。

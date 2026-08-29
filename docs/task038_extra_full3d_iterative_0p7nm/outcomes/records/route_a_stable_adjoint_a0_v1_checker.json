@@ -1,0 +1,622 @@
+{
+  "classification": "CLOSED_BY_VECTOR_OR_STABLE_ADJOINT_GATE",
+  "contract_errors": [],
+  "execution_lifecycle_failures": [],
+  "expected_source_sha": "a05a5e33a524bb89ba7c22de3efef0882bbc7464",
+  "gate_failures": [
+    "A0 probe random energy_imag failed",
+    "A0 probe gradient pairwise_vs_compensated failed",
+    "A0 probe checkerboard energy_imag failed"
+  ],
+  "metrics": {
+    "classes": [
+      {
+        "class_digest": "2307efcf1d76acdd71b848cce85b2e05c9d23e1e08b3fd55ab2fcfbf0494b0a9",
+        "endpoint_residual_max": 5.185271924840494e-15,
+        "endpoint_residual_min": 4.241915137488146e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.734092780434856,
+        "lambda_min": 0.4966032124443659,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.5055881877549355
+      },
+      {
+        "class_digest": "252de3492a11092a2fd961614e4b6562ca2f500260ee3b11c6f5b6248d5d2b4f",
+        "endpoint_residual_max": 4.927349923073569e-15,
+        "endpoint_residual_min": 3.0697604933073053e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.734093577663523,
+        "lambda_min": 0.49658579468299535,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505782901842534
+      },
+      {
+        "class_digest": "2e4ca5dfea367414da9657587840916808dd90bf45d9565da0e60ea5ead40320",
+        "endpoint_residual_max": 4.865436580318652e-15,
+        "endpoint_residual_min": 2.687761039192933e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.7340927804348563,
+        "lambda_min": 0.4966032124443668,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505588187754927
+      },
+      {
+        "class_digest": "39ce19a3720d5764a93a8d867f710c76425a0f01841b15f83115890a08588861",
+        "endpoint_residual_max": 4.334855790285446e-15,
+        "endpoint_residual_min": 3.121208521427684e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.73409357766352,
+        "lambda_min": 0.4965857946829977,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505782901842502
+      },
+      {
+        "class_digest": "652795fe37f1be253905dbf469fd67951dc4a0f7f889fa266680804971d0c4c0",
+        "endpoint_residual_max": 4.1809970839377195e-15,
+        "endpoint_residual_min": 3.0406511047085426e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.7340937353036567,
+        "lambda_min": 0.496582162486177,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505823490749658
+      },
+      {
+        "class_digest": "7543fac9074998d7a6bdff17eeb06285cca440fd653673ca08ecf4b3766eb3cc",
+        "endpoint_residual_max": 4.334855790285446e-15,
+        "endpoint_residual_min": 3.121208521427684e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.73409357766352,
+        "lambda_min": 0.4965857946829977,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505782901842502
+      },
+      {
+        "class_digest": "7fedc6f377107965886ccda29b3350f642899fae08d9f25f74d863be2a1eaa3c",
+        "endpoint_residual_max": 3.729079192246815e-15,
+        "endpoint_residual_min": 2.7657554686036844e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.7340926254004687,
+        "lambda_min": 0.4966067778985919,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505548347466928
+      },
+      {
+        "class_digest": "9ffe997ef47c3504c8cdb961d41aee956abda50f4277fa830a549dec6b915d49",
+        "endpoint_residual_max": 5.354022018229063e-15,
+        "endpoint_residual_min": 3.2973507594084575e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.7340937353036554,
+        "lambda_min": 0.49658216248617776,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505823490749647
+      },
+      {
+        "class_digest": "a3ba80a678f00786e5165f8afb44cdabc248cfcd8280431bec3896dfdd7039e6",
+        "endpoint_residual_max": 3.281040855628648e-15,
+        "endpoint_residual_min": 2.5163277144565372e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.734092625400468,
+        "lambda_min": 0.4966067778985908,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505548347466939
+      },
+      {
+        "class_digest": "a9e1a4133aafaad28309a132d0003f84bfa7d0996cf4b0487960a1db4241b6d0",
+        "endpoint_residual_max": 4.927349923073569e-15,
+        "endpoint_residual_min": 3.0697604933073053e-14,
+        "finite": true,
+        "gate_passed": true,
+        "lambda_max": 2.734093577663523,
+        "lambda_min": 0.49658579468299535,
+        "rank": 144,
+        "sigma_max": 1.4509370556158538,
+        "sigma_min": 0.7014250464239077,
+        "spectral_condition": 5.505782901842534
+      }
+    ],
+    "cross_mpi_identity": {
+      "status": "mpi1_only_pending_mpi2"
+    },
+    "p63": {
+      "shape": [
+        882,
+        144
+      ]
+    },
+    "probes": [
+      {
+        "canonical_compensated_lhs": [
+          -41475541.96190646,
+          -11190359.119805813
+        ],
+        "canonical_compensated_rhs": [
+          -41475541.96190645,
+          -11190359.119805813
+        ],
+        "canonical_duplicate_facts": {
+          "explicit_adjoint": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          },
+          "fine_primal": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 164592
+          },
+          "implemented_owner": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          }
+        },
+        "canonical_key_count": 20736,
+        "canonical_owner_count": 20736,
+        "canonical_pairwise_lhs": [
+          -41475541.961906485,
+          -11190359.119805811
+        ],
+        "canonical_pairwise_rhs": [
+          -41475541.961906455,
+          -11190359.119805811
+        ],
+        "compensated_work_relative": 3.4687227818657926e-16,
+        "energy_coarse": [
+          15218.742265858215,
+          -1.5221157667610896e-13
+        ],
+        "energy_fine": [
+          16648.805474959197,
+          2.079766914242498e-12
+        ],
+        "energy_imag_defect": 2.079766914242498e-12,
+        "finite": true,
+        "forward_error_bound_abs": 0.21471124180753007,
+        "lhs_gamma_n": 3.859179642666962e-11,
+        "lhs_term_count": 173802,
+        "linearity_relative": 3.1116810860372944e-16,
+        "name": "random",
+        "ordinary_abs_work_defect": 5.693268669984462e-07,
+        "ordinary_adjoint_work_relative": 1.325290726135586e-14,
+        "ordinary_lhs": [
+          -41475541.96190628,
+          -11190359.119805982
+        ],
+        "ordinary_rhs": [
+          -41475541.96190671,
+          -11190359.119805612
+        ],
+        "pairwise_vs_compensated_relative": 5.221119180681054e-16,
+        "q": 1.0939672401384437,
+        "q_imag_defect": 1.4759967370860194e-16,
+        "repeat_relative": 0.0,
+        "rhs_gamma_n": 5.123235169461495e-12,
+        "rhs_term_count": 23073,
+        "vector_adjoint_relative": 0.0
+      },
+      {
+        "canonical_compensated_lhs": [
+          2150.1467492488464,
+          537.536687312297
+        ],
+        "canonical_compensated_rhs": [
+          2150.146749248526,
+          537.5366873111145
+        ],
+        "canonical_duplicate_facts": {
+          "explicit_adjoint": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          },
+          "fine_primal": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 164592
+          },
+          "implemented_owner": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          }
+        },
+        "canonical_key_count": 20736,
+        "canonical_owner_count": 20736,
+        "canonical_pairwise_lhs": [
+          2150.1467492494266,
+          537.5366873114544
+        ],
+        "canonical_pairwise_rhs": [
+          2150.1467492424417,
+          537.5366873108433
+        ],
+        "compensated_work_relative": 5.527844447606805e-13,
+        "energy_coarse": [
+          367.03191813242347,
+          -4.013350323085524e-33
+        ],
+        "energy_fine": [
+          389.40895070069956,
+          9.793754400218689e-32
+        ],
+        "energy_imag_defect": 9.793754400218689e-32,
+        "finite": true,
+        "forward_error_bound_abs": 0.03265692601604265,
+        "lhs_gamma_n": 3.859179642666962e-11,
+        "lhs_term_count": 173802,
+        "linearity_relative": 3.0968515903005513e-16,
+        "name": "gradient",
+        "ordinary_abs_work_defect": 6.419432276774822e-08,
+        "ordinary_adjoint_work_relative": 2.8964367576123248e-11,
+        "ordinary_lhs": [
+          2150.1467491312224,
+          537.5366873703266
+        ],
+        "ordinary_rhs": [
+          2150.146749109097,
+          537.5366873100656
+        ],
+        "pairwise_vs_compensated_relative": 2.7478465599487806e-12,
+        "q": 1.0609675384150175,
+        "q_imag_defect": 2.7843785067868768e-34,
+        "repeat_relative": 0.0,
+        "rhs_gamma_n": 5.123235169461495e-12,
+        "rhs_term_count": 23073,
+        "vector_adjoint_relative": 0.0
+      },
+      {
+        "canonical_compensated_lhs": [
+          341739.8286967368,
+          184991.8041325016
+        ],
+        "canonical_compensated_rhs": [
+          341739.82869674,
+          184991.80413250212
+        ],
+        "canonical_duplicate_facts": {
+          "explicit_adjoint": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          },
+          "fine_primal": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 164592
+          },
+          "implemented_owner": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          }
+        },
+        "canonical_key_count": 20736,
+        "canonical_owner_count": 20736,
+        "canonical_pairwise_lhs": [
+          341739.82869673654,
+          184991.8041325016
+        ],
+        "canonical_pairwise_rhs": [
+          341739.8286967424,
+          184991.8041325034
+        ],
+        "compensated_work_relative": 8.347968140964517e-15,
+        "energy_coarse": [
+          486.53132301890116,
+          1.9255174917630515e-15
+        ],
+        "energy_fine": [
+          523.6178256734256,
+          2.3462799885281502e-14
+        ],
+        "energy_imag_defect": 2.3462799885281502e-14,
+        "finite": true,
+        "forward_error_bound_abs": 0.02832165192397101,
+        "lhs_gamma_n": 3.859179642666962e-11,
+        "lhs_term_count": 173802,
+        "linearity_relative": 3.0933013695246497e-16,
+        "name": "curl",
+        "ordinary_abs_work_defect": 4.6421549285134685e-08,
+        "ordinary_adjoint_work_relative": 1.1945918306872908e-13,
+        "ordinary_lhs": [
+          341739.8286967311,
+          184991.80413249804
+        ],
+        "ordinary_rhs": [
+          341739.8286967763,
+          184991.80413250875
+        ],
+        "pairwise_vs_compensated_relative": 7.101959816797345e-15,
+        "q": 1.0762263412443924,
+        "q_imag_defect": 4.396532397419411e-17,
+        "repeat_relative": 0.0,
+        "rhs_gamma_n": 5.123235169461495e-12,
+        "rhs_term_count": 23073,
+        "vector_adjoint_relative": 0.0
+      },
+      {
+        "canonical_compensated_lhs": [
+          355229.1540012895,
+          1249.9965344981892
+        ],
+        "canonical_compensated_rhs": [
+          355229.15400131774,
+          1249.9965345014539
+        ],
+        "canonical_duplicate_facts": {
+          "explicit_adjoint": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          },
+          "fine_primal": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 164592
+          },
+          "implemented_owner": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          }
+        },
+        "canonical_key_count": 20736,
+        "canonical_owner_count": 20736,
+        "canonical_pairwise_lhs": [
+          355229.1540012937,
+          1249.9965344970115
+        ],
+        "canonical_pairwise_rhs": [
+          355229.1540013086,
+          1249.9965345012024
+        ],
+        "compensated_work_relative": 8.000096607002947e-14,
+        "energy_coarse": [
+          45374.60028392776,
+          1.4073186757538532e-13
+        ],
+        "energy_fine": [
+          65601.71960993165,
+          -2.7180172835542776e-12
+        ],
+        "energy_imag_defect": 2.7180172835542776e-12,
+        "finite": true,
+        "forward_error_bound_abs": 0.28444156832375467,
+        "lhs_gamma_n": 3.859179642666962e-11,
+        "lhs_term_count": 173802,
+        "linearity_relative": 3.108398350502667e-16,
+        "name": "checkerboard",
+        "ordinary_abs_work_defect": 1.3692487050577552e-07,
+        "ordinary_adjoint_work_relative": 3.854526613333027e-13,
+        "ordinary_lhs": [
+          355229.15400137234,
+          1249.9965344487084
+        ],
+        "ordinary_rhs": [
+          355229.1540012788,
+          1249.9965345487021
+        ],
+        "pairwise_vs_compensated_relative": 2.5735515917179632e-14,
+        "q": 1.445780661414853,
+        "q_imag_defect": 6.438590484232632e-17,
+        "repeat_relative": 0.0,
+        "rhs_gamma_n": 5.123235169461495e-12,
+        "rhs_term_count": 23073,
+        "vector_adjoint_relative": 0.0
+      },
+      {
+        "canonical_compensated_lhs": [
+          147800.2546842268,
+          119859.83413533981
+        ],
+        "canonical_compensated_rhs": [
+          147800.25468422673,
+          119859.83413533964
+        ],
+        "canonical_duplicate_facts": {
+          "explicit_adjoint": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          },
+          "fine_primal": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 164592
+          },
+          "implemented_owner": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          }
+        },
+        "canonical_key_count": 20736,
+        "canonical_owner_count": 20736,
+        "canonical_pairwise_lhs": [
+          147800.25468422685,
+          119859.83413533978
+        ],
+        "canonical_pairwise_rhs": [
+          147800.25468422682,
+          119859.83413533967
+        ],
+        "compensated_work_relative": 9.67293163740424e-16,
+        "energy_coarse": [
+          0.26758898331095127,
+          4.845028458294598e-19
+        ],
+        "energy_fine": [
+          0.39260449376324785,
+          -5.563312397566245e-18
+        ],
+        "energy_imag_defect": 5.563312397566245e-18,
+        "finite": true,
+        "forward_error_bound_abs": 0.00018036841970458148,
+        "lhs_gamma_n": 3.859179642666962e-11,
+        "lhs_term_count": 173802,
+        "linearity_relative": 3.0578259914008426e-16,
+        "name": "physical_component_derived",
+        "ordinary_abs_work_defect": 2.399963341663627e-10,
+        "ordinary_adjoint_work_relative": 1.2611959839185316e-15,
+        "ordinary_lhs": [
+          147800.25468422682,
+          119859.83413533929
+        ],
+        "ordinary_rhs": [
+          147800.25468422676,
+          119859.83413533952
+        ],
+        "pairwise_vs_compensated_relative": 4.836465818702122e-16,
+        "q": 1.467192292094561,
+        "q_imag_defect": 2.3447046140812976e-17,
+        "repeat_relative": 0.0,
+        "rhs_gamma_n": 5.123235169461495e-12,
+        "rhs_term_count": 23073,
+        "vector_adjoint_relative": 0.0
+      },
+      {
+        "canonical_compensated_lhs": [
+          -16911390.311612207,
+          -10763211.955826283
+        ],
+        "canonical_compensated_rhs": [
+          -16911390.31161222,
+          -10763211.955826284
+        ],
+        "canonical_duplicate_facts": {
+          "explicit_adjoint": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          },
+          "fine_primal": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 164592
+          },
+          "implemented_owner": {
+            "duplicate_count": 0,
+            "max_abs_defect": 0.0,
+            "max_relative_defect": 0.0,
+            "unique_count": 20736
+          }
+        },
+        "canonical_key_count": 20736,
+        "canonical_owner_count": 20736,
+        "canonical_pairwise_lhs": [
+          -16911390.311612207,
+          -10763211.955826284
+        ],
+        "canonical_pairwise_rhs": [
+          -16911390.31161223,
+          -10763211.955826284
+        ],
+        "compensated_work_relative": 5.652016270719098e-16,
+        "energy_coarse": [
+          8864.647163255979,
+          -1.6842083283563625e-13
+        ],
+        "energy_fine": [
+          17019.46490407354,
+          6.705747068735946e-14
+        ],
+        "energy_imag_defect": 1.6842083283563625e-13,
+        "finite": true,
+        "forward_error_bound_abs": 0.05012076254499549,
+        "lhs_gamma_n": 3.859179642666962e-11,
+        "lhs_term_count": 173802,
+        "linearity_relative": 3.1129124477482636e-16,
+        "name": "r3_long_tail_derived",
+        "ordinary_abs_work_defect": 7.508562643358995e-08,
+        "ordinary_adjoint_work_relative": 3.7456675108670225e-15,
+        "ordinary_lhs": [
+          -16911390.31161207,
+          -10763211.955826283
+        ],
+        "ordinary_rhs": [
+          -16911390.311612144,
+          -10763211.955826292
+        ],
+        "pairwise_vs_compensated_relative": 5.575114506837729e-16,
+        "q": 1.9199258121202312,
+        "q_imag_defect": 4.4041569591799257e-17,
+        "repeat_relative": 0.0,
+        "rhs_gamma_n": 5.123235169461495e-12,
+        "rhs_term_count": 23073,
+        "vector_adjoint_relative": 0.0
+      }
+    ],
+    "raw_shards": {
+      "canonical_merge": "physical key sort; consistent duplicates never averaged; explicit local contributions summed",
+      "mpi_size": 1,
+      "rank_count": 1
+    },
+    "resource": {
+      "all_status_readable": true,
+      "execution_lifecycle_failed": false,
+      "max_process_tree_swap_bytes": 0,
+      "natural_exit": true,
+      "no_orphan": true,
+      "peak_process_tree_rss_bytes": 1420718080,
+      "resource_gate_failed": false,
+      "sample_count": 1464,
+      "stop_reason": "natural_exit",
+      "watchdog_compact": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_stable_adjoint_a0_v1/a05a5e33a524bb89ba7c22de3efef0882bbc7464/p6-h10-mpi1/watchdog_compact.json",
+      "watchdog_compact_sha256": "263a5b931f8ac109b30d15cbe66b4dccad7fd6be9ea3d39e4a623181087a690e",
+      "watchdog_raw": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_stable_adjoint_a0_v1/a05a5e33a524bb89ba7c22de3efef0882bbc7464/p6-h10-mpi1/watchdog_raw.jsonl",
+      "watchdog_raw_sha256": "611ba9986e3176a8d34885ac0365cd5bd56b9c58615820b592842c8e9587bfee",
+      "worker_command_launcher": "direct",
+      "worker_command_valid": true
+    }
+  },
+  "passed": false,
+  "record": {
+    "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_stable_adjoint_a0_v1/a05a5e33a524bb89ba7c22de3efef0882bbc7464/p6-h10-mpi1/worker_record.json",
+    "sha256": "fbbe1b29ee7a046248cc45f93e6d46490a2c4423cfb246da8aa752ac577706d5"
+  },
+  "schema": "task038.full3d.interlevel-stable-adjoint.a0-check.v1"
+}
