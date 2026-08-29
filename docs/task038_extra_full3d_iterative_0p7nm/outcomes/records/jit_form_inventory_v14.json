@@ -1,0 +1,365 @@
+{
+  "schema": "task038.v14.jit-form-inventory.v1",
+  "inventory_type": "static_exact_profile_j1a",
+  "classification": "STATIC_INVENTORY_ONLY",
+  "run_state": "static_inventory_plus_read_only_profile_probe",
+  "source": {
+    "source_sha": "efc93df248e1566768dd6a8e487b61ec24b5d16c",
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "profile": "p6/h10/13.5nm/s/grazing1/phi0",
+    "selected_hierarchy": "same_mesh_hcurl_pmg_v1_requalified"
+  },
+  "execution_scope": {
+    "mesh_built": false,
+    "jit_executed": false,
+    "pde_run": false,
+    "quadrature_probe_run": true,
+    "cache_module_identity_default": "not_measured_j1",
+    "source_files_read": [
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "src/solvers/fullspace_mpc_action.py",
+      "src/solvers/common_3d_forms.py",
+      "src/solvers/dtn_port_3d.py",
+      "src/postprocessing/postprocess_3d.py",
+      "src/postprocessing/rta_3d.py",
+      "src/postprocessing/diffraction_3d.py",
+      "benchmarks/run_task038_full3d_same_mesh_hcurl_pmg_p0_physical.py"
+    ]
+  },
+  "authority_boundary": {
+    "classification": "AUTHORITY_ARRAYS_MISSING",
+    "record_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/direct_authority_packet_audit_v1.json",
+    "sha256": "53b4bfc97676a41395431954b1c56013d1bf301b191cd46834e74caeffaa08b8"
+  },
+  "read_only_profile_probe": {
+    "host_qualified": true,
+    "command_semantics": [
+      "load_and_resolve(resolved input/templates/full3d_iterative_example.dat)",
+      "simulation_config_3d_from_normalized(spec.as_jsonable())",
+      "build_dynamic_mode_inventory(cfg)",
+      "_dtn_surface_quadrature_degree(cfg, list(modes))"
+    ],
+    "mesh_built": false,
+    "fem_form_called": false,
+    "jit_executed": false,
+    "pde_run": false,
+    "mode_count": 80,
+    "max_mode_order": 7,
+    "ordered_mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "resolved_surface_qdegree": 25,
+    "cfg": {
+      "use_pml": false,
+      "pml_top_thickness": 0.0,
+      "pml_bottom_thickness": 0.0,
+      "pml_alpha": 5.0,
+      "divergence_penalty": 0.0,
+      "full3d_reference_export": true,
+      "diffraction_compute_modal_diagnostic": false,
+      "visualization_degree": 6
+    }
+  },
+  "pre_solve": [
+    {
+      "id": "p6_positive_action",
+      "form_role": "ufl.action(same_mesh_positive_form)",
+      "rank": "linear rank 1 from rank 2 bilinear",
+      "object_type": "dolfinx.fem.Form retained by FullspaceMpcFormAction",
+      "degree": "N1curl p6",
+      "quadrature": "compiler_default; no form_compiler_options; effective_degree=not_measured_j1",
+      "coefficient_identity": "mu and mass from the same tagged positive coefficient construction; reusable action state Function is filled from each input vector",
+      "source": "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py:289-298; src/solvers/fullspace_mpc_action.py:23-33,73-88",
+      "runtime_consumer": "build_p6_same_mesh_setup -> build_fullspace_mpc_form_action -> FullspaceMpcFormAction.apply",
+      "precompile_group": "positive_p6_action",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "p6_positive_bilinear_diagonal",
+      "form_role": "same_mesh_positive_form used as exact constrained diagonal input",
+      "rank": "bilinear rank 2",
+      "object_type": "UFL form compiled by fem.form for build_constrained_jacobi_diagonal",
+      "degree": "N1curl p6",
+      "quadrature": "compiler_default; effective_degree=not_measured_j1",
+      "coefficient_identity": "same mu/mass tagged positive coefficients as p6 action; no unconstrained element-diagonal substitute",
+      "source": "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py:145-159; src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py:289-300",
+      "runtime_consumer": "build_constrained_jacobi_diagonal(fem.form(p6_form), finalized p6 MPC)",
+      "precompile_group": "positive_p6_diagonal",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "p3_positive_bilinear",
+      "form_role": "same_mesh_positive_form",
+      "rank": "bilinear rank 2",
+      "object_type": "dolfinx.fem.Form passed to dolfinx_mpc.assemble_matrix",
+      "degree": "N1curl p3",
+      "quadrature": "compiler_default; effective_degree=not_measured_j1",
+      "coefficient_identity": "same physical mesh and tagged mu/mass coefficient audit as p6",
+      "source": "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py:113-141; setup.py:306-310",
+      "runtime_consumer": "assemble_same_mesh_positive_matrix -> p3 sparse PETSc matrix",
+      "precompile_group": "positive_sparse_levels",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "p1_positive_bilinear",
+      "form_role": "same_mesh_positive_form",
+      "rank": "bilinear rank 2",
+      "object_type": "dolfinx.fem.Form passed to dolfinx_mpc.assemble_matrix",
+      "degree": "N1curl p1",
+      "quadrature": "compiler_default; effective_degree=not_measured_j1",
+      "coefficient_identity": "same physical mesh and tagged mu/mass coefficient audit as p6/p3",
+      "source": "src/solvers/fullspace_same_mesh_hcurl_pmg_global.py:113-141; setup.py:312-316",
+      "runtime_consumer": "assemble_same_mesh_positive_matrix -> p1 sparse development oracle",
+      "precompile_group": "positive_sparse_levels",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "dtn_top_x",
+      "form_role": "inner((phase,0,0),v)*ds(z_max)",
+      "rank": "linear rank 1",
+      "object_type": "dolfinx.fem.Form in _ReusableSurfaceComponentAssembler",
+      "degree": "N1curl p6 test space",
+      "quadrature": "cfg.stage4_dtn_quadrature_degree if configured; resolved read-only probe qdegree=25 (fallback max(10, 2*nedelec_degree + max_mode_order + 6), with max_mode_order=7)",
+      "coefficient_identity": "alpha/gamma/kz Constants updated per mode; x tangential component; facet tag z_max",
+      "source": "src/solvers/dtn_port_3d.py:1081-1125; physical.py:22-35",
+      "runtime_consumer": "build_fullspace_dtn_carrier_from_surface -> top mode coupling/projection entries",
+      "precompile_group": "dtn_surface_component",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "dtn_top_y",
+      "form_role": "inner((0,phase,0),v)*ds(z_max)",
+      "rank": "linear rank 1",
+      "object_type": "dolfinx.fem.Form in _ReusableSurfaceComponentAssembler",
+      "degree": "N1curl p6 test space",
+      "quadrature": "same source formula as dtn_top_x; resolved read-only probe qdegree=25",
+      "coefficient_identity": "alpha/gamma/kz Constants updated per mode; y tangential component; facet tag z_max",
+      "source": "src/solvers/dtn_port_3d.py:1081-1125; physical.py:22-35",
+      "runtime_consumer": "build_fullspace_dtn_carrier_from_surface -> top mode coupling/projection entries",
+      "precompile_group": "dtn_surface_component",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "dtn_bottom_x",
+      "form_role": "inner((phase,0,0),v)*ds(z_min)",
+      "rank": "linear rank 1",
+      "object_type": "dolfinx.fem.Form in _ReusableSurfaceComponentAssembler",
+      "degree": "N1curl p6 test space",
+      "quadrature": "same source formula as dtn_top_x; resolved read-only probe qdegree=25",
+      "coefficient_identity": "alpha/gamma/kz Constants updated per mode; x tangential component; facet tag z_min",
+      "source": "src/solvers/dtn_port_3d.py:1081-1125; physical.py:22-35",
+      "runtime_consumer": "build_fullspace_dtn_carrier_from_surface -> bottom mode coupling/projection entries",
+      "precompile_group": "dtn_surface_component",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "dtn_bottom_y",
+      "form_role": "inner((0,phase,0),v)*ds(z_min)",
+      "rank": "linear rank 1",
+      "object_type": "dolfinx.fem.Form in _ReusableSurfaceComponentAssembler",
+      "degree": "N1curl p6 test space",
+      "quadrature": "same source formula as dtn_top_x; resolved read-only probe qdegree=25",
+      "coefficient_identity": "alpha/gamma/kz Constants updated per mode; y tangential component; facet tag z_min",
+      "source": "src/solvers/dtn_port_3d.py:1081-1125; physical.py:22-35",
+      "runtime_consumer": "build_fullspace_dtn_carrier_from_surface -> bottom mode coupling/projection entries",
+      "precompile_group": "dtn_surface_component",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "incident_top_traction_rhs",
+      "form_role": "inner(cross(i cross(k_inc,e_inc),n_z)*exp(i k_inc dot x),v)*ds(z_max)",
+      "rank": "linear rank 1",
+      "object_type": "raw UFL form compiled by _assemble_mpc_vector",
+      "degree": "N1curl p6 test space",
+      "quadrature": "same resolved DtN surface qdegree=25 from the read-only probe; effective degree is the compiled runtime setting",
+      "coefficient_identity": "wavevector, polarization_vector, incident_amplitude, z_max normal and phase; finalized MPC applied once",
+      "source": "src/solvers/dtn_port_3d.py:1526-1540; physical.py:166-195",
+      "runtime_consumer": "build_physical_rhs -> _assemble_mpc_vector -> compose_physical_rhs",
+      "precompile_group": "physical_incident_rhs",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    },
+    {
+      "id": "p6_physical_volume_action",
+      "form_role": "total-field Maxwell volume bilinear then ufl.action",
+      "rank": "action rank 1 from bilinear rank 2",
+      "object_type": "FullspaceMpcFormAction over compiled fem.Form; no p6 AIJ",
+      "degree": "N1curl p6",
+      "quadrature": "compiler_default in _build_variational_forms/action; effective_degree=not_measured_j1",
+      "coefficient_identity": "tagged air/substrate/grating curl and mass material terms; exact probe resolves use_pml=false and divergence_penalty=0.0, so no PML or divergence-penalty branch is active for this profile",
+      "source": "src/solvers/common_3d_forms.py:23-89; src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py:77-87",
+      "runtime_consumer": "FullspacePhysicalAction.apply = dtn action + volume action",
+      "precompile_group": "physical_volume_action",
+      "cache_module_identity": "not_measured_j1",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": true
+    }
+  ],
+  "conditional_j7_recovery": [
+    {
+      "id": "recovery_airbox_H_expression",
+      "role": "curl(E_numerical) converted to physical H",
+      "rank": "Expression evaluation",
+      "object_type": "dolfinx.fem.Expression",
+      "degree": "DG cfg.visualization_degree vector",
+      "quadrature": "interpolation_points(V_dg); no form quadrature",
+      "coefficient_identity": "recovered E_numerical, magnetic_field_scale_A_per_m, k0, mu_r",
+      "source": "src/postprocessing/postprocess_3d.py:167-225",
+      "runtime_consumer": "save_airbox_3d_fields -> H_dg and field export",
+      "precompile_group": "recovery_field_expression",
+      "cache_module_identity": "not_measured_j1; sharing_not_proven_until_J2",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": false
+    },
+    {
+      "id": "recovery_component_l2",
+      "role": "three scalar cell integrals of recovered E_numerical components",
+      "rank": "rank 0 forms; three component instances",
+      "object_type": "dolfinx.fem.Form",
+      "degree": "input field E_numerical in H(curl) N1curl p6; not DG H",
+      "quadrature": "compiler_default; effective_degree=not_measured_j1",
+      "coefficient_identity": "E_numerical components and physical cell tags air/substrate/grating",
+      "source": "src/postprocessing/postprocess_3d.py:134-148",
+      "runtime_consumer": "_field_component_l2_metrics called by save_airbox_3d_fields",
+      "precompile_group": "recovery_cell_integrals",
+      "cache_module_identity": "not_measured_j1; sharing_not_proven_until_J2",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": false
+    },
+    {
+      "id": "recovery_rta_region_volume",
+      "role": "unit cell volume per nonempty grating/substrate tag",
+      "rank": "rank 0 form; conditional one per nonempty region",
+      "object_type": "dolfinx.fem.Form",
+      "degree": "cell integral constant",
+      "quadrature": "compiler_default; effective_degree=not_measured_j1",
+      "coefficient_identity": "unit integrand and cell tag",
+      "source": "src/postprocessing/rta_3d.py:43-47,125-165",
+      "runtime_consumer": "compute_volume_absorption_3d -> region volume metadata",
+      "precompile_group": "recovery_rta",
+      "cache_module_identity": "not_measured_j1; sharing_not_proven_until_J2",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": false
+    },
+    {
+      "id": "recovery_rta_absorbed_power",
+      "role": "0.5*k0*Im(epsilon_r)*real(inner(E_total,E_total)) per nonempty region",
+      "rank": "rank 0 form; conditional one per nonempty grating/substrate region",
+      "object_type": "dolfinx.fem.Form",
+      "degree": "recovered E field degree",
+      "quadrature": "compiler_default; effective_degree=not_measured_j1",
+      "coefficient_identity": "recovered E, epsilon_r/material tag and k0",
+      "source": "src/postprocessing/rta_3d.py:50-56,125-199",
+      "runtime_consumer": "compute_volume_absorption_3d -> A_volume and energy closure",
+      "precompile_group": "recovery_rta",
+      "cache_module_identity": "not_measured_j1; sharing_not_proven_until_J2",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": false
+    },
+    {
+      "id": "recovery_diffraction_H_expression",
+      "role": "curl(E_total)/(i*k0*mu_r) on diffraction probe planes",
+      "rank": "Expression evaluation",
+      "object_type": "dolfinx.fem.Expression",
+      "degree": "DG max(cfg.visualization_degree,1) vector",
+      "quadrature": "interpolation_points(V_dg); no form quadrature",
+      "coefficient_identity": "E_total and k0/mu_r",
+      "source": "src/postprocessing/diffraction_3d.py:491-498,651-691",
+      "runtime_consumer": "compute_diffraction_orders_3d -> top/bottom E/H samples",
+      "precompile_group": "recovery_diffraction_expression",
+      "cache_module_identity": "not_measured_j1; sharing_not_proven_until_J2",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": false
+    }
+  ],
+  "not_active_exact_profile": [
+    {
+      "id": "recovery_diffraction_modal_calibration_H",
+      "role": "conditional H Expression for each modal calibration key and side",
+      "rank": "Expression evaluation; one per actual key/side when modal diagnostic is enabled",
+      "object_type": "dolfinx.fem.Expression",
+      "degree": "DG max(cfg.visualization_degree,1) vector",
+      "quadrature": "interpolation_points(V_dg); no form quadrature",
+      "coefficient_identity": "callable mode field plus curl expression; mode k/e vectors and cfg",
+      "source": "src/postprocessing/diffraction_3d.py:573-643",
+      "runtime_consumer": "_calibrated_amplitudes -> response matrix for optional modal diagnostic",
+      "precompile_group": "recovery_diffraction_expression",
+      "cache_module_identity": "not_active_exact_profile",
+      "expected_c_o_so_lifecycle": ".c/.so filesystem cache artifacts are expected to remain until the formal root ends; whether .o is only a compile temporary is measured in J2; destroying fem.Form/Function does not guarantee dlopen module mappings or allocator RSS are returned; no unload is claimed before process exit; stage RSS and compiler-child teardown must measure this",
+      "solve_critical": false,
+      "active": false,
+      "reason": "cfg.diffraction_compute_modal_diagnostic=false in the read-only profile probe"
+    }
+  ],
+  "non_jit_traces": [
+    {
+      "source": "src/postprocessing/postprocess_3d.py:187-221,236-239",
+      "action": "Function.interpolate(Function or Python lambda)",
+      "classification": "not_ufl_jit"
+    },
+    {
+      "source": "src/postprocessing/diffraction_3d.py:573-583",
+      "action": "mode Function callable interpolation",
+      "classification": "not_ufl_jit"
+    },
+    {
+      "source": "src/postprocessing/postprocess_3d.py:245-339; rta_3d.py:201-207; diffraction output writers",
+      "action": "VTX/PyVista/JSON/file I/O",
+      "classification": "not_ufl_jit"
+    },
+    {
+      "source": "src/solvers/fullspace_dtn_action.py:219-517",
+      "action": "owner-local carrier, modal allreduce and PETSc Python shell",
+      "classification": "no additional fem.form observed in this path"
+    }
+  ],
+  "quadrature_resolution": {
+    "surface_source": "src/solvers/dtn_port_3d.py:_dtn_surface_quadrature_degree",
+    "configured_field": "cfg.stage4_dtn_quadrature_degree",
+    "fallback_formula": "max(10, 2*cfg.nedelec_degree + max(max(abs(mode.m), abs(mode.n)) for mode in modes) + 6)",
+    "j1_value": 25,
+    "mode_count": 80,
+    "max_mode_order": 7,
+    "resolution_method": "host-qualified read-only load/config/mode/qdegree probe; no mesh, fem.form, JIT or PDE"
+  },
+  "j2_required_facts": {
+    "per_object": [
+      "actual form/expression signature",
+      "packed coefficient/constants identity",
+      "cache module identity",
+      "generated .c/.o/.so path, bytes and SHA",
+      "owner and release stage"
+    ],
+    "per_compiler_child": [
+      "PID",
+      "PPID",
+      "cmdline",
+      "stage",
+      "RSS",
+      "PSS when readable",
+      "swap",
+      "exit code",
+      "raw watchdog sample ordering"
+    ],
+    "recovery_order": "no recovery form/expression before solver-stack release observation"
+  }
+}
