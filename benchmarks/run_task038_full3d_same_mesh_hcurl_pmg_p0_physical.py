@@ -47,6 +47,7 @@ J4_MARKER_SCHEMA = "task038.v14.j4.p0r.worker-marker.v1"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+PHYSICAL_PROFILE = "p6/h10/13.5nm/s/grazing1/phi0"
 MARKERS = (
     "paths_ready",
     "bundle_built",
@@ -102,7 +103,7 @@ DIRECT_AUTHORITY = {
     "record_sha256": (
         "eec638b833679937252982ae394012e88e679c058cccc0c4f6c091d33754fbd8"
     ),
-    "profile": "p6/h10/13.5nm/s/grazing1/phi0",
+    "profile": PHYSICAL_PROFILE,
     "arrays_included": False,
     "selected_eh_nearfield_available": False,
     "significant_12_power_and_12_amplitude_available": False,

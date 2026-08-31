@@ -996,6 +996,8 @@ def test_p0_input_angle_identity_and_lazy_import_boundary(tmp_path: Path) -> Non
     altered_cfg = simulation_config_3d_from_normalized(altered_specification.as_jsonable())
     assert altered_specification.physical_model_sha256 != specification.physical_model_sha256
     assert altered_cfg.incident_theta_deg == pytest.approx(80.0)
+    assert worker.PHYSICAL_PROFILE == "p6/h10/13.5nm/s/grazing1/phi0"
+    assert worker.DIRECT_AUTHORITY["profile"] == worker.PHYSICAL_PROFILE
 
     source = Path(worker.__file__).read_text(encoding="utf-8")
     tree = ast.parse(source)
