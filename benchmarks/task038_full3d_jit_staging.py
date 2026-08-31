@@ -267,6 +267,7 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         fact = _process_fact(pid, stage)
         if fact is None:
             retry_count += 1
+            time.sleep(0.01)
             fact = _process_fact(pid, stage)
         if fact is None:
             if _pid_vanished(pid):

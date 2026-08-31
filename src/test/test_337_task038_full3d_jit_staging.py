@@ -85,6 +85,25 @@ def test_helper_root_markers_process_and_cache_contract(tmp_path: Path, monkeypa
     assert vanished["vanished_pids"] == [missing_pid]
     assert vanished["unreadable_pids"] == []
     assert vanished["all_status_readable"] is True
+
+    sleeps = []
+    calls = []
+    monkeypatch.setattr(staging, "_live_parent_map", lambda: {os.getpid(): []})
+
+    def transient_fact(pid, stage):
+        calls.append(pid)
+        return None if len(calls) == 1 else original_fact(pid, stage)
+
+    monkeypatch.setattr(staging, "_process_fact", transient_fact)
+    monkeypatch.setattr(staging.time, "sleep", lambda seconds: sleeps.append(seconds))
+    recovered = process_tree_snapshot(os.getpid(), "transient")
+    assert recovered["unreadable_pids"] == []
+    assert recovered["vanished_pids"] == []
+    assert recovered["all_status_readable"] is True
+    assert recovered["readability_retry_count"] == 1
+    assert calls == [os.getpid(), os.getpid()]
+    assert sleeps == [0.01]
+
     monkeypatch.setattr(staging, "_live_parent_map", lambda: {os.getpid(): []})
     monkeypatch.setattr(staging, "_process_fact", lambda _pid, _stage: None)
     unreadable = process_tree_snapshot(os.getpid(), "forced-unreadable")
@@ -92,6 +111,7 @@ def test_helper_root_markers_process_and_cache_contract(tmp_path: Path, monkeypa
     assert unreadable["vanished_pids"] == []
     assert unreadable["all_status_readable"] is False
     assert unreadable["rss_bytes"] is None
+    assert unreadable["readability_retry_count"] == 1
     sample_path = root / "samples.jsonl"
     append_jsonl(sample_path, snapshot)
     assert len(sample_path.read_text(encoding="utf-8").splitlines()) == 1
