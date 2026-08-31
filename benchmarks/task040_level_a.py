@@ -54,6 +54,15 @@ from benchmarks.task040_v6_2_interface_schur import (
     V7_SCALE_NORMALIZED_IDENTITY_FORMAL_SCHEMA,
     V7_SCALE_NORMALIZED_IDENTITY_METHOD,
     V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID,
+    V8_ADAPTIVE_HARD_STOP_BYTES,
+    V8_ADAPTIVE_ONE_APPLY_TARGET_SECONDS,
+    V8_ADAPTIVE_PREFERRED_MEMORY_BYTES,
+    V8_ADAPTIVE_SCHWARZ_ONLY_FLAG,
+    V8_ADAPTIVE_SCHWARZ_ONLY_METHOD,
+    V8_ADAPTIVE_SCHWARZ_ONLY_PROFILE_ID,
+    V8_ADAPTIVE_SCHWARZ_ONLY_SCHEMA,
+    V8_ADAPTIVE_SETUP_TARGET_SECONDS,
+    V8_ADAPTIVE_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_CHECKPOINTS,
     V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES,
     V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS,
@@ -416,6 +425,7 @@ def build_task040_level_a_plan(
     v7_scale_normalized_identity: bool = False,
     v7_moving_pml_full_state: bool = False,
     v8_full_spectrum_only: bool = False,
+    v8_adaptive_schwarz_only: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -424,7 +434,9 @@ def build_task040_level_a_plan(
     if len(source_sha) != 40 or any(
         character not in "0123456789abcdef" for character in source_sha
     ):
-        raise ValueError("Task040 source_sha must be a 40-character lowercase hex SHA")
+        raise ValueError(
+            "Task040 source_sha must be a 40-character lowercase hex SHA"
+        )
     run_directory = Path(run_directory).resolve()
     if run_directory.exists():
         raise ValueError(f"Task040 run directory already exists: {run_directory}")
@@ -469,6 +481,7 @@ def build_task040_level_a_plan(
                 v7_scale_normalized_identity,
                 v7_moving_pml_full_state,
                 v8_full_spectrum_only,
+                v8_adaptive_schwarz_only,
             )
         )
         > 1
@@ -847,6 +860,69 @@ def build_task040_level_a_plan(
                     "qep",
                     "physical_dtn",
                     "full_side_factor",
+                ],
+            }
+        )
+    if v8_adaptive_schwarz_only:
+        plan.update(
+            {
+                "schema": V8_ADAPTIVE_SCHWARZ_ONLY_SCHEMA,
+                "method": V8_ADAPTIVE_SCHWARZ_ONLY_METHOD,
+                "profile": V8_ADAPTIVE_SCHWARZ_ONLY_PROFILE_ID,
+                "v8_adaptive_schwarz_only": True,
+                "research_only": True,
+                "oracle_only": False,
+                "scalable_candidate": False,
+                "pde_solve": "adaptive_impedance_stage_a_one_apply",
+                "source_order": ["external_dtn_coupling"],
+                "mandatory_checkpoints": ["one_apply"],
+                "conditional_checkpoints": [],
+                "fixed_configuration": {
+                    "mass_source": "actual_hcurl_ufcx_exterior_facet_provider",
+                    "quadrature_degree": "2*cfg.nedelec_degree",
+                    "beta": "level_a_bottom_beta(cfg)",
+                    "one_apply": True,
+                    "fgmres": False,
+                    "gamma_canonical_interface": False,
+                },
+                "preferred_memory_bytes": V8_ADAPTIVE_PREFERRED_MEMORY_BYTES,
+                "absolute_terminate_memory_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
+                "setup_target_seconds": V8_ADAPTIVE_SETUP_TARGET_SECONDS,
+                "one_apply_target_seconds": V8_ADAPTIVE_ONE_APPLY_TARGET_SECONDS,
+                "numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "formal_adjudication": False,
+                "stage_a_gate": {
+                    "rows_max": "<=1024",
+                    "patch_ratio_median": "<=0.5",
+                    "patch_ratio_p90": "<=0.9",
+                    "pou_error": "<=1e-12",
+                    "setup_seconds": "<=3600",
+                    "one_apply_seconds": "<=1200",
+                    "resource": "watchdog_35GiB_preferred_45GiB_hard_swap0",
+                },
+                "marker_sequence": [
+                    "v8_adaptive_preflight",
+                    "v8_adaptive_system_ready",
+                    "v8_adaptive_factor_ready",
+                    "v8_adaptive_external_one_apply_begin",
+                    "v8_adaptive_external_one_apply_end",
+                    "v8_adaptive_checkpoint",
+                    "v8_adaptive_cleanup_complete",
+                ],
+                "forbidden": [
+                    "gamma",
+                    "canonical_interface",
+                    "full_interface",
+                    "group_factors",
+                    "fgmres",
+                    "stage_b_c",
+                    "moving_pml",
+                    "full_spectrum",
+                    "parameter_scan",
                 ],
             }
         )
@@ -6224,6 +6300,7 @@ def run_task040_level_a(
     v7_scale_normalized_identity: bool = False,
     v7_moving_pml_full_state: bool = False,
     v8_full_spectrum_only: bool = False,
+    v8_adaptive_schwarz_only: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
@@ -6249,6 +6326,7 @@ def run_task040_level_a(
                 v7_scale_normalized_identity,
                 v7_moving_pml_full_state,
                 v8_full_spectrum_only,
+                v8_adaptive_schwarz_only,
             )
         )
         > 1
@@ -6308,6 +6386,13 @@ def run_task040_level_a(
             raise ValueError("V8 run_directory must not be the frozen exact spool root")
         if input_path is None:
             raise ValueError("V8 full-spectrum route requires the official input_path")
+    if v8_adaptive_schwarz_only:
+        if run_directory is None:
+            raise ValueError("V8 adaptive route requires a separate run_directory")
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError("V8 adaptive run_directory must not be the frozen exact spool root")
+        if input_path is None:
+            raise ValueError("V8 adaptive route requires the official input_path")
     if (
         interface_schur
         or packet_producer
@@ -6320,6 +6405,7 @@ def run_task040_level_a(
         or v7_scale_normalized_identity
         or v7_moving_pml_full_state
         or v8_full_spectrum_only
+        or v8_adaptive_schwarz_only
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6549,6 +6635,27 @@ def run_task040_level_a(
             resource_callback=resource_callback,
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
+        )
+    if v8_adaptive_schwarz_only:
+        from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
+
+        return run_v6_2_interface_schur(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            exact_spool_root=exact_spool_root,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            hard_stop_bytes=TASK040_LEVEL_A_HARD_STOP_BYTES,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+            resource_callback=resource_callback,
+            v8_adaptive_schwarz_only=True,
         )
     if v8_full_spectrum_only:
         from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
@@ -7026,6 +7133,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V7_SCALE_NORMALIZED_IDENTITY_FLAG, action="store_true")
     parser.add_argument(V7_MOVING_PML_FULL_STATE_FLAG, action="store_true")
     parser.add_argument(V8_FULL_SPECTRUM_ONLY_FLAG, action="store_true")
+    parser.add_argument(V8_ADAPTIVE_SCHWARZ_ONLY_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -7050,6 +7158,7 @@ def main(argv: list[str] | None = None) -> int:
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         v7_moving_pml_full_state=args.v7_moving_pml_full_state,
         v8_full_spectrum_only=args.v8_full_spectrum_only,
+        v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -7091,6 +7200,7 @@ def main(argv: list[str] | None = None) -> int:
         v7_scale_normalized_identity=args.v7_scale_normalized_identity,
         v7_moving_pml_full_state=args.v7_moving_pml_full_state,
         v8_full_spectrum_only=args.v8_full_spectrum_only,
+        v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -7102,6 +7212,8 @@ def main(argv: list[str] | None = None) -> int:
                         if args.v5_fresh_bare_f_authority
                         else TASK040_V5_ROUTE_C_HARD_STOP_BYTES
                         if args.v5_route_c
+                        else V8_ADAPTIVE_HARD_STOP_BYTES
+                        if args.v8_adaptive_schwarz_only
                         else TASK040_LEVEL_A_HARD_STOP_BYTES
                     ),
                 )
@@ -7118,6 +7230,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v7_scale_normalized_identity
                     or args.v7_moving_pml_full_state
                     or args.v8_full_spectrum_only
+                    or args.v8_adaptive_schwarz_only
                 )
                 else None
             )
@@ -7137,6 +7250,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.v7_scale_normalized_identity
             or args.v7_moving_pml_full_state
             or args.v8_full_spectrum_only
+            or args.v8_adaptive_schwarz_only
             else None
         ),
         v7_continuation=v7_continuation,

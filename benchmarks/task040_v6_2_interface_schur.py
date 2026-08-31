@@ -126,6 +126,19 @@ V8_FULL_SPECTRUM_SOURCES = (
     "fixed_random_repeat_1",
 )
 V8_FULL_SPECTRUM_CHECKPOINTS = (8, 16, 32, 64)
+V8_ADAPTIVE_SCHWARZ_ONLY_FLAG = "--v8-adaptive-schwarz-only"
+V8_ADAPTIVE_SCHWARZ_ONLY_METHOD = "task040_v8_adaptive_impedance_schwarz_stage_a"
+V8_ADAPTIVE_SCHWARZ_ONLY_SCHEMA = (
+    "task040.v8.adaptive_impedance_schwarz.stage_a.v1"
+)
+V8_ADAPTIVE_SCHWARZ_ONLY_PROFILE_ID = (
+    "task040.v8.adaptive_impedance_schwarz.stage_a.v1"
+)
+V8_ADAPTIVE_PREFERRED_MEMORY_BYTES = 35 * 2**30
+V8_ADAPTIVE_HARD_STOP_BYTES = 45 * 2**30
+V8_ADAPTIVE_SETUP_TARGET_SECONDS = 3600
+V8_ADAPTIVE_ONE_APPLY_TARGET_SECONDS = 1200
+V8_ADAPTIVE_TIMEOUT_SECONDS = 10800
 
 __all__ = (
     "V6_2_EXACT_QUALIFICATION_SOURCES",
@@ -159,6 +172,15 @@ __all__ = (
     "V7_SCALE_NORMALIZED_IDENTITY_METHOD",
     "V7_SCALE_NORMALIZED_IDENTITY_PROFILE_ID",
     "V7_SCALE_NORMALIZED_IDENTITY_SCHEMA",
+    "V8_ADAPTIVE_HARD_STOP_BYTES",
+    "V8_ADAPTIVE_ONE_APPLY_TARGET_SECONDS",
+    "V8_ADAPTIVE_PREFERRED_MEMORY_BYTES",
+    "V8_ADAPTIVE_SCHWARZ_ONLY_FLAG",
+    "V8_ADAPTIVE_SCHWARZ_ONLY_METHOD",
+    "V8_ADAPTIVE_SCHWARZ_ONLY_PROFILE_ID",
+    "V8_ADAPTIVE_SCHWARZ_ONLY_SCHEMA",
+    "V8_ADAPTIVE_SETUP_TARGET_SECONDS",
+    "V8_ADAPTIVE_TIMEOUT_SECONDS",
     "V8_FULL_SPECTRUM_CHECKPOINTS",
     "V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES",
     "V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS",
@@ -2975,6 +2997,76 @@ def collect_v7_scale_normalized_identity_metrics(
     }
 
 
+def _run_v8_adaptive_stage_a_route(
+    *,
+    system: Any,
+    beta: complex,
+    quadrature_degree: int,
+    event_callback: Callable[[str, Mapping[str, Any]], None] | None,
+) -> dict[str, Any]:
+    """Run the one-source Stage-A pilot on one current bare-F system."""
+
+    from src.solvers.hybrid_adaptive_impedance_screen import (
+        run_adaptive_impedance_stage_a_one_apply,
+    )
+    from src.solvers.hybrid_bare_f_authority import build_current_bare_f_rhs
+
+    source = None
+    source_audit: Mapping[str, Any] | None = None
+    result: dict[str, Any] | None = None
+    source_destroyed = False
+    try:
+        source, source_audit = build_current_bare_f_rhs(
+            system, "external_dtn_coupling"
+        )
+        evidence = run_adaptive_impedance_stage_a_one_apply(
+            function_space=system.V,
+            condensed=system.static_condensation.condensed,
+            bare_f=system.F,
+            source=source,
+            source_label="external_dtn_coupling",
+            beta=beta,
+            quadrature_degree=quadrature_degree,
+            event_callback=event_callback,
+        )
+        checks = dict(evidence.get("gate_checks", {}))
+        result = {
+            "schema": V8_ADAPTIVE_SCHWARZ_ONLY_SCHEMA,
+            "method": V8_ADAPTIVE_SCHWARZ_ONLY_METHOD,
+            "profile": V8_ADAPTIVE_SCHWARZ_ONLY_PROFILE_ID,
+            "status": "completed_adaptive_stage_a",
+            "classification": (
+                "V8_ADAPTIVE_STAGE_A_LOCAL_GATE_PASS"
+                if all(bool(value) for value in checks.values())
+                else "V8_ADAPTIVE_STAGE_A_LOCAL_GATE_FAIL"
+            ),
+            "pass": None,
+            "local_gate_pass": all(bool(value) for value in checks.values()),
+            "resource_gate": "pending_watchdog",
+            "formal_adjudication": False,
+            "executed": True,
+            "source_order": ["external_dtn_coupling"],
+            "source_build_audit": _json_safe(source_audit),
+            "beta": [float(complex(beta).real), float(complex(beta).imag)],
+            "quadrature_degree": int(quadrature_degree),
+            "stage_a_gate": checks,
+            "evidence": _json_safe(evidence),
+            "system_created": True,
+            "gamma_canonical_interface_built": False,
+            "group_factors_built": False,
+            "fgmres": "not_run",
+        }
+    finally:
+        if source is not None:
+            source.destroy()
+            source_destroyed = True
+        if result is not None:
+            result["source_destroyed"] = source_destroyed
+    if result is None:
+        raise RuntimeError("adaptive Stage-A route produced no result")
+    return _json_safe(result)
+
+
 def run_v6_2_interface_schur(
     cfg: Any,
     profile: Any,
@@ -2996,6 +3088,7 @@ def run_v6_2_interface_schur(
     v7_scale_normalized_identity: bool = False,
     v7_moving_pml_full_state: bool = False,
     v8_full_spectrum_only: bool = False,
+    v8_adaptive_schwarz_only: bool = False,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
     v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -3009,14 +3102,15 @@ def run_v6_2_interface_schur(
     formal_sequence_start_scope = V6_2_FORMAL_SEQUENCE_START_SCOPE
 
     from benchmarks.task040_level_a import (
+        TASK040_LEVEL_A_TIMEOUT_SECONDS,
+        _petsc_matrix_hash,
         _v5_authority_identity_preflight,
         _v5_selected_mode_provider,
         _v5_write_operator_semantics_audit,
+        assemble_current_bare_f_authority_system,
         audit_artificial_z_interface_support,
         build_current_gamma_layout,
-        _petsc_matrix_hash,
-        assemble_current_bare_f_authority_system,
-        TASK040_LEVEL_A_TIMEOUT_SECONDS,
+        level_a_bottom_beta,
     )
 
     output_argument = Path(run_directory)
@@ -3062,6 +3156,25 @@ def run_v6_2_interface_schur(
             "schema": V8_FULL_SPECTRUM_ONLY_SCHEMA,
             "method": V8_FULL_SPECTRUM_ONLY_METHOD,
             "profile": V8_FULL_SPECTRUM_ONLY_PROFILE_ID,
+            "formal_adjudication": False,
+        }
+    if v8_adaptive_schwarz_only and int(comm.size) != 8:
+        return _stop_result(
+            status="not_run_by_v8_adaptive_mpi_size_gate",
+            classification="V8_ADAPTIVE_STAGE_A_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            identity_preflight={
+                "status": "mpi_size_gate",
+                "pass": False,
+                "checks": {"mpi_size_8": False},
+            },
+            resource_preflight=None,
+        ) | {
+            "schema": V8_ADAPTIVE_SCHWARZ_ONLY_SCHEMA,
+            "method": V8_ADAPTIVE_SCHWARZ_ONLY_METHOD,
+            "profile": V8_ADAPTIVE_SCHWARZ_ONLY_PROFILE_ID,
             "formal_adjudication": False,
         }
     if v7_moving_pml_full_state and int(comm.size) != 8:
@@ -3155,6 +3268,93 @@ def run_v6_2_interface_schur(
             identity_preflight=identity_preflight,
             resource_preflight=resource_preflight,
             formal_sequence_start_scope=formal_sequence_start_scope,
+        )
+
+    adaptive_marker_state: dict[str, Any] = {
+        "last_wall": formal_sequence_started,
+        "factor_lifecycle": {"ready": 0},
+        "screen_cleanup": {},
+    }
+    adaptive_event_callback = None
+    adaptive_marker_resource_callback = None
+    if v8_adaptive_schwarz_only:
+        adaptive_marker_resource_callback = _v6_2_live_resource_callback(
+            resource_callback,
+            comm=comm,
+            formal_sequence_started=formal_sequence_started,
+            hard_stop_bytes=int(hard_stop_bytes),
+            budget_seconds=float(V8_ADAPTIVE_TIMEOUT_SECONDS),
+        )
+
+        def adaptive_mark(stage: str, **detail: Any) -> None:
+            now = time.perf_counter()
+            stage_start = adaptive_marker_state["last_wall"]
+            if stage.endswith("_one_apply_begin"):
+                adaptive_marker_state["one_apply_wall"] = now
+            elif stage.endswith("_one_apply_end"):
+                stage_start = adaptive_marker_state.get("one_apply_wall", stage_start)
+            resource = adaptive_marker_resource_callback()
+            factor_lifecycle = detail.get(
+                "factor_lifecycle", adaptive_marker_state["factor_lifecycle"]
+            )
+            adaptive_marker_state["factor_lifecycle"] = dict(factor_lifecycle)
+            _emit(
+                marker_callback,
+                stage,
+                status="running" if stage.endswith("_begin") else "complete",
+                formal_wall_seconds=float(now - formal_sequence_started),
+                stage_wall_seconds=float(now - stage_start),
+                rss_bytes=resource.get("rss_bytes"),
+                swap_bytes=resource.get("swap_bytes"),
+                resource=_json_safe(resource),
+                pc_apply_count=detail.get("pc_apply_count"),
+                action_apply_count=detail.get("action_apply_count"),
+                factor_lifecycle=_json_safe(factor_lifecycle),
+                source=detail.get("source"),
+                checkpoint=detail.get("checkpoint"),
+                **{
+                    key: _json_safe(value)
+                    for key, value in detail.items()
+                    if key
+                    not in {
+                        "pc_apply_count",
+                        "action_apply_count",
+                        "factor_lifecycle",
+                        "source",
+                        "checkpoint",
+                    }
+                },
+            )
+            adaptive_marker_state["last_wall"] = now
+
+        def adaptive_event(event: str, detail: Mapping[str, Any]) -> None:
+            stages = {
+                "factor_ready": "v8_adaptive_factor_ready",
+                "one_apply_begin": "v8_adaptive_external_one_apply_begin",
+                "one_apply_end": "v8_adaptive_external_one_apply_end",
+                "checkpoint": "v8_adaptive_checkpoint",
+            }
+            if event == "cleanup":
+                adaptive_marker_state["screen_cleanup"] = dict(detail)
+                return
+            adaptive_mark(stages[event], **dict(detail))
+
+        adaptive_mark(
+            "v8_adaptive_preflight",
+            system_created=False,
+            factor_lifecycle={"ready": 0},
+            pc_apply_count=0,
+            action_apply_count=0,
+            source=None,
+            checkpoint=None,
+            resource_limits={
+                "preferred_memory_bytes": V8_ADAPTIVE_PREFERRED_MEMORY_BYTES,
+                "hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "setup_target_seconds": V8_ADAPTIVE_SETUP_TARGET_SECONDS,
+                "one_apply_target_seconds": V8_ADAPTIVE_ONE_APPLY_TARGET_SECONDS,
+                "total_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
+                "swap_limit_bytes": 0,
+            },
         )
 
     v8_marker_payload: dict[str, Any] | None = None
@@ -3267,6 +3467,72 @@ def run_v6_2_interface_schur(
                 pc_apply_count=0,
                 action_apply_count=0,
             )
+        if v8_adaptive_schwarz_only:
+            adaptive_mark(
+                "v8_adaptive_system_ready",
+                system_created=True,
+                factor_lifecycle={"ready": 0},
+                pc_apply_count=0,
+                action_apply_count=0,
+                source=None,
+                checkpoint=None,
+                bare_f_rows=int(system.active_rows),
+                matrix_objects=matrix_objects,
+                qep_calls=0,
+                gamma_canonical_interface_built=False,
+                group_factors_built=False,
+            )
+            result = _run_v8_adaptive_stage_a_route(
+                system=system,
+                beta=level_a_bottom_beta(cfg),
+                quadrature_degree=2 * int(cfg.nedelec_degree),
+                event_callback=adaptive_event_callback,
+            )
+            evidence = result.get("evidence", {})
+            result.update(
+                {
+                    "source_sha": str(source_sha),
+                    "input_sha256": str(input_sha256),
+                    "physical_model_sha256": str(physical_model_sha256),
+                    "identity_preflight": _json_safe(identity_preflight),
+                    "resource_preflight": _json_safe(resource_preflight),
+                    "system_inventory": {
+                        "rank": int(comm.rank),
+                        "mpi_size": int(comm.size),
+                        "active_rows": int(
+                            system.static_condensation.condensed.active_rows
+                        ),
+                        "full_rows": int(
+                            system.static_condensation.condensed.full_rows
+                        ),
+                        "bare_f_shape": [int(value) for value in system.F.getSize()],
+                    },
+                    "matrix_objects": {
+                        "bare_f": "borrowed",
+                        "source": "caller_owned_until_route_finally",
+                        "gamma_canonical_interface": 0,
+                        "group_factors": 0,
+                        "qep": 0,
+                        "full_side_factor": 0,
+                        "global_factor": 0,
+                    },
+                    "qep_calls": 0,
+                    "full_side_factor_count": 0,
+                    "global_factor_count": 0,
+                    "global_summary": {
+                        "mpi_size": int(comm.size),
+                        "source_order": list(result["source_order"]),
+                        "stage_a_gate": dict(result["stage_a_gate"]),
+                        "patch_residual_summary": _json_safe(
+                            evidence.get("patch_residual_summary", {})
+                        ),
+                        "true_residual_relative": evidence.get(
+                            "true_residual_relative"
+                        ),
+                    },
+                }
+            )
+            return result
 
         z_values = np.asarray(system.local_mesh.z_values, dtype=np.float64)
         gamma_layouts = {
@@ -4489,3 +4755,94 @@ def run_v6_2_interface_schur(
                 _write_json(rank_root / "v8_full_spectrum.json", result)
                 if comm.rank == 0:
                     _write_json(output_root / "v8_manifest.json", result)
+        if v8_adaptive_schwarz_only:
+            result_generated = result is not None
+            result_record: Mapping[str, Any] = result if result is not None else {}
+            evidence_record = result_record.get("evidence", {})
+            evidence_cleanup = (
+                evidence_record.get("cleanup", {})
+                if isinstance(evidence_record, Mapping)
+                else {}
+            )
+            screen_cleanup = adaptive_marker_state["screen_cleanup"]
+            adaptive_cleanup = {
+                **dict(result_record.get("cleanup", {})),
+                "status": "complete",
+                "result_generated": result_generated,
+                "system_destroyed": system is not None,
+                "action_destroyed": bool(
+                    evidence_cleanup.get("action_destroyed", False)
+                ),
+                "provider_destroyed": bool(
+                    evidence_cleanup.get("provider_destroyed", False)
+                ),
+                "target_destroyed": bool(
+                    evidence_cleanup.get("target_destroyed", False)
+                ),
+                "residual_destroyed": bool(
+                    evidence_cleanup.get("residual_destroyed", False)
+                ),
+                "source_destroyed": bool(
+                    result_record.get("source_destroyed", False)
+                ),
+                "bare_f_hash_before": evidence_cleanup.get(
+                    "bare_f_hash_before", screen_cleanup.get("bare_f_hash_before")
+                ),
+                "bare_f_hash_after": evidence_cleanup.get(
+                    "bare_f_hash_after", screen_cleanup.get("bare_f_hash_after")
+                ),
+                "factor_lifecycle_after_cleanup": (
+                    evidence_cleanup.get("factor_lifecycle_after_cleanup", {})
+                ),
+                "screen_cleanup": screen_cleanup,
+            }
+            adaptive_mark(
+                "v8_adaptive_cleanup_complete",
+                result_generated=adaptive_cleanup["result_generated"],
+                system_destroyed=adaptive_cleanup["system_destroyed"],
+                factor_lifecycle=adaptive_cleanup[
+                    "factor_lifecycle_after_cleanup"
+                ],
+                pc_apply_count=1 if evidence_record else 0,
+                action_apply_count=int(
+                    evidence_record.get("action_apply_count_after", 0)
+                    if isinstance(evidence_record, Mapping)
+                    else 0
+                ),
+                action_destroyed=adaptive_cleanup["action_destroyed"],
+                provider_destroyed=adaptive_cleanup["provider_destroyed"],
+                target_destroyed=adaptive_cleanup["target_destroyed"],
+                residual_destroyed=adaptive_cleanup["residual_destroyed"],
+                source_destroyed=adaptive_cleanup["source_destroyed"],
+                bare_f_hash_before=adaptive_cleanup["bare_f_hash_before"],
+                bare_f_hash_after=adaptive_cleanup["bare_f_hash_after"],
+                source=None,
+                checkpoint=None,
+                cleanup=adaptive_cleanup,
+            )
+            if result is not None:
+                result["cleanup"] = adaptive_cleanup
+                _write_json(rank_root / "v8_adaptive_stage_a.json", result)
+                if comm.rank == 0:
+                    _write_json(output_root / "v8_adaptive_manifest.json", result)
+            else:
+                failure_record = {
+                    "schema": V8_ADAPTIVE_SCHWARZ_ONLY_SCHEMA,
+                    "method": V8_ADAPTIVE_SCHWARZ_ONLY_METHOD,
+                    "profile": V8_ADAPTIVE_SCHWARZ_ONLY_PROFILE_ID,
+                    "status": "adaptive_stage_a_exception",
+                    "classification": "V8_ADAPTIVE_STAGE_A_IMPLEMENTATION_FAILURE",
+                    "pass": None,
+                    "formal_adjudication": False,
+                    "executed": False,
+                    "cleanup": adaptive_cleanup,
+                    "error_propagated": True,
+                }
+                _write_json(
+                    rank_root / "v8_adaptive_stage_a_failure.json", failure_record
+                )
+                if comm.rank == 0:
+                    _write_json(
+                        output_root / "v8_adaptive_failure_manifest.json",
+                        failure_record,
+                    )
