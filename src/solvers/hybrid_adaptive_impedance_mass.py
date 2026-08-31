@@ -120,8 +120,12 @@ class ActualHcurlCellTangentialMassProvider:
         mesh.topology.create_connectivity(tdim, tdim - 1)
         mesh.topology.create_entity_permutations()
         connectivity = mesh.topology.connectivity(tdim, tdim - 1)
+        self._cell_facet_entities = tuple(
+            tuple(int(facet) for facet in connectivity.links(cell))
+            for cell in range(owned_cells)
+        )
         for cell in range(owned_cells):
-            if len(connectivity.links(cell)) != 6:
+            if len(self._cell_facet_entities[cell]) != 6:
                 raise ValueError(f"cell {cell} does not have exactly six facets")
         self._owned_cells = owned_cells
         self._cell_permutations = np.asarray(
@@ -309,6 +313,75 @@ class ActualHcurlCellTangentialMassProvider:
         trace = oriented[np.ix_(self._trace_positions, self._trace_positions)]
         self._served_cells.add(cell)
         return np.ascontiguousarray(trace.copy())
+
+    def stream_facet_trace_blocks(
+        self, cell: int
+    ) -> tuple[tuple[int, int, np.ndarray], ...]:
+        """Stream six oriented trace blocks without caching the six blocks.
+
+        Each item is ``(local_facet, mesh_facet, block)``.  ``block`` uses the
+        same raw trace ordering as ``__call__`` and is caller-owned.  The
+        summed oriented tensor is audited and cached exactly as in the original
+        one-block path while the provider is live.  After numeric-cache release
+        this method recomputes one cell at a time without retaining numeric
+        cache; ``__call__`` remains unavailable after release.
+        """
+
+        if self._destroyed:
+            raise RuntimeError("exact H(curl) mass provider is destroyed")
+        cell = int(cell)
+        if cell < 0 or cell >= self._owned_cells:
+            raise IndexError(f"cell {cell} is not locally owned")
+        coordinates, widths = _canonical_axis_aligned_coordinates(
+            self._mesh, cell, tolerance=1.0e-11
+        )
+        facet_slice = self._facet_permutations[6 * cell : 6 * cell + 6]
+        coordinate_hash = hashlib.sha256(
+            np.ascontiguousarray(coordinates, dtype="<f8").tobytes()
+        ).hexdigest()
+        raw_key = (
+            tuple(widths),
+            tuple(int(value) for value in facet_slice),
+            coordinate_hash,
+        )
+        facet_tensors = tuple(
+            self._kernel_facet(coordinates, facet, int(facet_slice[facet]))
+            for facet in range(6)
+        )
+        raw_sum = np.asarray(sum(facet_tensors), dtype=np.complex128)
+        facet_norms = tuple(float(np.linalg.norm(item)) for item in facet_tensors)
+        if not self._released and raw_key not in self._raw_cache:
+            self._raw_cache[raw_key] = (raw_sum, facet_norms)
+        cell_info = np.asarray(
+            self._cell_permutations[cell : cell + 1], dtype=np.uint32
+        )
+        oriented_facet_tensors = []
+        for tensor in facet_tensors:
+            oriented = np.asarray(tensor, dtype=np.complex128).copy()
+            _orient_cell_tensor(self._V.element, oriented, cell_info)
+            oriented_facet_tensors.append(oriented)
+        oriented_sum = np.asarray(
+            sum(oriented_facet_tensors), dtype=np.complex128
+        )
+        oriented_key = (raw_key, tuple(int(value) for value in cell_info))
+        if not self._released:
+            cached = self._oriented_cache.get(oriented_key)
+            if cached is None:
+                self._audit_oriented_class(oriented_key, oriented_sum, facet_norms)
+                self._oriented_cache[oriented_key] = oriented_sum
+            token = _key_sha256(oriented_key)
+            self._class_usage[token] = self._class_usage.get(token, 0) + 1
+            self._served_cells.add(cell)
+        return tuple(
+            (
+                facet,
+                self._cell_facet_entities[cell][facet],
+                np.ascontiguousarray(
+                    tensor[np.ix_(self._trace_positions, self._trace_positions)].copy()
+                ),
+            )
+            for facet, tensor in enumerate(oriented_facet_tensors)
+        )
 
     @property
     def audit(self) -> dict[str, Any]:

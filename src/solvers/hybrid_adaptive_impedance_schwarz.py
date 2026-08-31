@@ -34,6 +34,7 @@ __all__ = (
     "AdaptiveImpedanceSchwarzAction",
     "AdaptiveImpedanceSchwarzPlan",
     "build_adaptive_impedance_schwarz_action",
+    "build_cell_active_trace_expansion",
     "reduce_cell_tangential_face_mass",
 )
 
@@ -79,6 +80,41 @@ def _fixed_shift_values(diagonal: np.ndarray, global_max_diag: float) -> np.ndar
     )
 
 
+def build_cell_active_trace_expansion(
+    condensed: Any,
+    cell_index: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return raw trace rows, sorted active rows, and the exact MPC map."""
+
+    cell = condensed.cell_recovery_maps[int(cell_index)]
+    raw_rows = np.asarray(cell.trace_original_dofs, dtype=PETSc.IntType)
+    if raw_rows.ndim != 1 or not raw_rows.size:
+        raise ValueError("cell trace support must be a non-empty one-dimensional array")
+    if np.unique(raw_rows).size != raw_rows.size:
+        raise ValueError("cell trace support must be unique")
+    constraints = condensed.trace_constraints.expansion_by_original
+    if any(int(row) not in constraints for row in raw_rows):
+        raise ValueError("cell trace support contains an unknown constrained row")
+    active = sorted(
+        {
+            int(active_row)
+            for row in raw_rows
+            for active_row, coefficient in zip(
+                constraints[int(row)][0], constraints[int(row)][1], strict=True
+            )
+            if coefficient != 0
+        }
+    )
+    active_ids = np.asarray(active, dtype=PETSc.IntType)
+    positions = {int(row): index for index, row in enumerate(active_ids)}
+    expansion = np.zeros((len(raw_rows), len(active_ids)), dtype=np.complex128)
+    for raw_position, row in enumerate(raw_rows):
+        active_rows, coefficients = constraints[int(row)]
+        for active_row, coefficient in zip(active_rows, coefficients, strict=True):
+            expansion[raw_position, positions[int(active_row)]] = coefficient
+    return raw_rows, active_ids, expansion
+
+
 def reduce_cell_tangential_face_mass(
     condensed: Any,
     cell_index: int,
@@ -93,30 +129,9 @@ def reduce_cell_tangential_face_mass(
     It is intentionally a local block; no global or replicated mass is made.
     """
 
-    cell = condensed.cell_recovery_maps[int(cell_index)]
-    raw_rows = tuple(int(row) for row in cell.trace_original_dofs)
-    if not raw_rows or len(set(raw_rows)) != len(raw_rows):
-        raise ValueError("cell tangential face mass has invalid raw trace support")
-    constraints = condensed.trace_constraints.expansion_by_original
-    if any(row not in constraints for row in raw_rows):
-        raise ValueError("cell tangential face mass has an unknown trace row")
-    active = sorted(
-        {
-            int(active_row)
-            for row in raw_rows
-            for active_row, coefficient in zip(
-                constraints[row][0], constraints[row][1], strict=True
-            )
-            if coefficient != 0
-        }
+    raw_rows, active_ids, expansion = build_cell_active_trace_expansion(
+        condensed, cell_index
     )
-    active_ids = np.asarray(active, dtype=PETSc.IntType)
-    positions = {row: index for index, row in enumerate(active)}
-    expansion = np.zeros((len(raw_rows), len(active)), dtype=np.complex128)
-    for raw_position, row in enumerate(raw_rows):
-        active_rows, coefficients = constraints[row]
-        for active_row, coefficient in zip(active_rows, coefficients, strict=True):
-            expansion[raw_position, positions[int(active_row)]] = coefficient
     raw = _local_matrix_array(raw_face_mass, len(raw_rows))
     mass_key = _raw_mass_fingerprint(raw)
     cached_audit = None if audit_cache is None else audit_cache.get(mass_key)
@@ -440,6 +455,170 @@ class AdaptiveImpedanceSchwarzAction:
         self._max_single_patch_payload_bytes = 0
         self._max_owner_payload_bytes = 0
         self._destroyed = False
+        self._harmonic_multi_rhs_solve_count = 0
+        self._harmonic_numeric_object_alltoall_count = 0
+        self._harmonic_max_sender_payload_bytes = 0
+        self._harmonic_max_owner_payload_bytes = 0
+        self._harmonic_max_single_rhs_payload_bytes = 0
+
+    def patch_metadata(self) -> tuple[dict[str, Any], ...]:
+        """Return copied patch/PoU metadata without exposing class factors."""
+
+        return tuple(
+            {
+                "patch_id": tuple(int(value) for value in patch.patch_id),
+                "cell_index": int(patch.cell_index),
+                "rows": tuple(int(value) for value in patch.rows),
+                "weights": tuple(float(value) for value in patch.weights),
+                "class_key": str(patch.class_key),
+                "owner_rank": int(patch.owner_rank),
+            }
+            for patch in self.plan.patches
+        )
+
+    def solve_patch_multi_rhs(
+        self,
+        patch_id: tuple[int, int],
+        class_key: str,
+        owner_rank: int,
+        rhs_columns: np.ndarray | None,
+    ) -> tuple[np.ndarray | None, tuple[float, ...] | None]:
+        """Solve one globally ordered patch batch through its existing factor.
+
+        Every rank calls this method for the same patch in the same order.
+        Only the origin and deterministic class owner exchange numeric data;
+        all other communication is error or metadata synchronization.
+        """
+
+        patch_id = tuple(int(value) for value in patch_id)
+        origin = int(patch_id[0])
+        owner = int(owner_rank)
+        local_patch = next(
+            (patch for patch in self.plan.patches if patch.patch_id == patch_id),
+            None,
+        )
+        local_error: str | None = None
+        rhs = None
+        if origin < 0 or origin >= self._comm.size:
+            local_error = "harmonic patch origin is outside the communicator"
+        elif owner < 0 or owner >= self._comm.size:
+            local_error = "harmonic patch class owner is outside the communicator"
+        elif self._destroyed or self._diagnostic_matrices_released:
+            local_error = "harmonic multi-RHS solve requires live diagnostics"
+        elif self._comm.rank == origin:
+            if local_patch is None:
+                local_error = "harmonic patch origin does not own the patch"
+            elif local_patch.class_key != str(class_key):
+                local_error = "harmonic patch class metadata differs at its origin"
+            else:
+                rhs = np.asarray(rhs_columns, dtype=PETSc.ScalarType)
+                if rhs.ndim != 2 or rhs.shape[0] != len(local_patch.rows):
+                    local_error = "harmonic patch RHS columns have the wrong shape"
+                elif rhs.shape[1] > len(local_patch.rows):
+                    local_error = "harmonic patch RHS columns exceed patch rows"
+                elif rhs.shape[1] == 0 or not np.all(np.isfinite(rhs)):
+                    local_error = "harmonic patch RHS columns are empty or non-finite"
+                else:
+                    self._harmonic_max_sender_payload_bytes = max(
+                        self._harmonic_max_sender_payload_bytes, int(rhs.nbytes)
+                    )
+                    self._harmonic_max_single_rhs_payload_bytes = max(
+                        self._harmonic_max_single_rhs_payload_bytes, int(rhs.nbytes)
+                    )
+        elif rhs_columns is not None:
+            local_error = "only the patch origin may provide harmonic RHS columns"
+        _collective_error(self._comm, local_error, "harmonic patch RHS preflight")
+
+        outgoing: list[list[tuple[tuple[int, int], np.ndarray]]] = [
+            [] for _ in range(self._comm.size)
+        ]
+        if self._comm.rank == origin:
+            assert rhs is not None
+            outgoing[owner].append((patch_id, np.ascontiguousarray(rhs.copy())))
+        incoming = self._comm.alltoall(outgoing)
+
+        local_error = None
+        solution = None
+        ratios: tuple[float, ...] | None = None
+        try:
+            packets = [
+                item
+                for packet_list in incoming
+                for item in packet_list
+            ]
+            if self._comm.rank == owner:
+                if len(packets) != 1:
+                    raise RuntimeError("harmonic class owner received wrong patch count")
+                received_id, received_rhs = packets[0]
+                if tuple(received_id) != patch_id:
+                    raise RuntimeError("harmonic class owner received an unknown patch")
+                self._harmonic_max_owner_payload_bytes = max(
+                    self._harmonic_max_owner_payload_bytes,
+                    int(np.asarray(received_rhs).nbytes),
+                )
+                class_factor = self._class_factors.get(str(class_key))
+                if class_factor is None or class_factor.diagnostic_matrix is None:
+                    raise RuntimeError("harmonic patch class has no live factor diagnostics")
+                if received_rhs.shape[0] != class_factor.rhs.getSize():
+                    raise ValueError("harmonic patch RHS does not match its class factor")
+                solution = np.empty_like(received_rhs)
+                ratio_values: list[float] = []
+                for column in range(received_rhs.shape[1]):
+                    class_factor.rhs.array[:] = received_rhs[:, column]
+                    class_factor.factor.solve(class_factor.rhs, class_factor.solution)
+                    class_factor.diagnostic_matrix.mult(
+                        class_factor.solution, class_factor.diagnostic_residual
+                    )
+                    class_factor.diagnostic_residual.axpy(
+                        PETSc.ScalarType(-1.0), class_factor.rhs
+                    )
+                    denominator = max(float(class_factor.rhs.norm()), 1.0e-300)
+                    ratio = float(class_factor.diagnostic_residual.norm()) / denominator
+                    if not np.isfinite(ratio):
+                        raise RuntimeError("harmonic patch solve residual is non-finite")
+                    solution[:, column] = class_factor.solution.getArray(
+                        readonly=True
+                    )
+                    ratio_values.append(ratio)
+                ratios = tuple(ratio_values)
+            elif packets:
+                raise RuntimeError("non-owner rank received harmonic patch data")
+        except Exception as exc:
+            local_error = f"{type(exc).__name__}: {exc}"
+        _collective_error(self._comm, local_error, "harmonic patch owner solve")
+
+        responses: list[list[tuple[tuple[int, int], np.ndarray, tuple[float, ...]]]] = [
+            [] for _ in range(self._comm.size)
+        ]
+        if self._comm.rank == owner:
+            assert solution is not None and ratios is not None
+            responses[origin].append((patch_id, solution, ratios))
+        returned = self._comm.alltoall(responses)
+        local_error = None
+        result = None
+        result_ratios = None
+        try:
+            packets = [
+                item
+                for packet_list in returned
+                for item in packet_list
+            ]
+            if self._comm.rank == origin:
+                if len(packets) != 1:
+                    raise RuntimeError("harmonic patch origin received wrong solution count")
+                returned_id, result, result_ratios = packets[0]
+                if tuple(returned_id) != patch_id:
+                    raise RuntimeError("harmonic patch origin received an unknown solution")
+                if result.shape[0] != len(local_patch.rows):
+                    raise RuntimeError("harmonic patch solution has the wrong shape")
+            elif packets:
+                raise RuntimeError("non-origin rank received harmonic patch solution")
+        except Exception as exc:
+            local_error = f"{type(exc).__name__}: {exc}"
+        _collective_error(self._comm, local_error, "harmonic patch solution validation")
+        self._harmonic_multi_rhs_solve_count += 1
+        self._harmonic_numeric_object_alltoall_count += 2
+        return result, result_ratios
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         started = perf_counter()
@@ -688,6 +867,21 @@ class AdaptiveImpedanceSchwarzAction:
             self._comm.allreduce(self._max_owner_payload_bytes, op=MPI.MAX)
         )
         max_payload = max(max_sender, max_owner)
+        harmonic_sender = int(
+            self._comm.allreduce(
+                self._harmonic_max_sender_payload_bytes, op=MPI.MAX
+            )
+        )
+        harmonic_owner = int(
+            self._comm.allreduce(
+                self._harmonic_max_owner_payload_bytes, op=MPI.MAX
+            )
+        )
+        harmonic_single = int(
+            self._comm.allreduce(
+                self._harmonic_max_single_rhs_payload_bytes, op=MPI.MAX
+            )
+        )
         active_rows = int(self._bare_f.getSize()[0])
         full_numeric_replica = bool(
             self._comm.size > 1
@@ -697,6 +891,9 @@ class AdaptiveImpedanceSchwarzAction:
         return {
             **self.plan.diagnostics,
             "apply_count": int(self._apply_count),
+            "harmonic_multi_rhs_solve_count": int(
+                self._harmonic_multi_rhs_solve_count
+            ),
             "apply_wall_seconds": float(self._apply_wall_seconds),
             "last_real_apply_patch_residual_summary": _ratio_summary(
                 self._comm, self._last_real_apply_patch_residual_ratios
@@ -721,6 +918,16 @@ class AdaptiveImpedanceSchwarzAction:
             "global_auxiliary_matrix": False,
             "numeric_collective_type": "bounded_object_alltoall",
             "numeric_object_alltoall_count": int(5 * self._apply_count),
+            "harmonic_numeric_object_alltoall_count_per_solve": 2,
+            "harmonic_numeric_object_alltoall_count": int(
+                self._harmonic_numeric_object_alltoall_count
+            ),
+            "harmonic_max_sender_payload_bytes": harmonic_sender,
+            "harmonic_max_owner_payload_bytes": harmonic_owner,
+            "harmonic_max_single_rhs_payload_bytes": harmonic_single,
+            "harmonic_max_numeric_payload_bytes": max(
+                harmonic_sender, harmonic_owner
+            ),
             "max_sender_payload_bytes": max_sender,
             "max_owner_payload_bytes": max_owner,
             "max_single_patch_payload_bytes": int(
