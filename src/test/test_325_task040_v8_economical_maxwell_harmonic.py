@@ -26,7 +26,8 @@ from src.solvers.hybrid_maxwell_harmonic_economical import (
     _physical_vsh_values,
     _radial_pullback,
     _vsh_cartesian,
-    build_economical_maxwell_harmonic_space,
+    prepare_economical_gamma_rhs,
+    solve_prepared_economical_columns,
 )
 
 
@@ -100,6 +101,7 @@ def test_task040_economical_harmonic_columns_use_actual_oriented_trace() -> None
     facet_tags = _facet_tags(msh, 17)
     condensed = _condensed(V, tags)
     provider = None
+    preparation = None
     action = None
     space = None
     try:
@@ -108,19 +110,41 @@ def test_task040_economical_harmonic_columns_use_actual_oriented_trace() -> None
             condensed,
             quadrature_degree=4,
         )
+        preparation = prepare_economical_gamma_rhs(
+            V,
+            condensed,
+            provider,
+            facet_tags,
+            17,
+        )
+        assert action is None
+        assert preparation.diagnostics["harmonic_multi_rhs_solve_count"] == 0
+        assert preparation.diagnostics["prepared_rhs_live"] is True
+        assert preparation.diagnostics["provider_audit_preparation_state"] == (
+            "verified_but_not_released"
+        )
+        assert preparation.diagnostics["provider_audit_preparation"][
+            "numeric_cache_released"
+        ] is False
+        assert all(
+            record.rhs is not None
+            for record in preparation.local_patch_records
+        )
         action = build_adaptive_impedance_schwarz_action(
             condensed,
             condensed.matrix,
             raw_tangential_face_mass_by_cell=provider,
             beta=0.7 + 0.2j,
         )
-        space = build_economical_maxwell_harmonic_space(
-            V,
-            condensed,
+        provider_after_action = provider.collective_audit()
+        assert provider_after_action["status"] == "verified_exact_provider"
+        assert provider_after_action["numeric_cache_released"] is True
+        assert provider_after_action["raw_cache_size_local"] == 0
+        assert provider_after_action["oriented_numeric_cache_size_local"] == 0
+        space = solve_prepared_economical_columns(
+            preparation,
             action,
-            provider,
-            facet_tags,
-            17,
+            provider_after_action,
         )
         owned = int(msh.topology.index_map(msh.topology.dim).size_local)
         owned_counts = comm.allgather(owned)
@@ -134,6 +158,17 @@ def test_task040_economical_harmonic_columns_use_actual_oriented_trace() -> None
         assert diagnostics["global_prolongation_created"] is False
         assert diagnostics["coarse_matrix_created"] is False
         assert diagnostics["full_vector_numeric_allgather"] is False
+        assert diagnostics["harmonic_multi_rhs_solve_count"] == diagnostics[
+            "global_patch_count"
+        ] == 1
+        assert preparation.diagnostics["prepared_rhs_live"] is False
+        assert preparation._consumed is True
+        assert preparation.diagnostics["prepared_rhs_consumed"] is True
+        assert all(
+            record.rhs is None
+            for record in preparation.local_patch_records
+        )
+        assert diagnostics["prepared_rhs_released"] is True
         assert diagnostics["exact_provider_audit"]["status"] == (
             "verified_exact_provider"
         )
@@ -209,6 +244,8 @@ def test_task040_economical_harmonic_columns_use_actual_oriented_trace() -> None
     finally:
         if space is not None:
             space.destroy()
+        if preparation is not None:
+            preparation.destroy()
         if action is not None:
             action.destroy()
         if provider is not None:

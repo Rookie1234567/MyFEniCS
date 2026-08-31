@@ -8,6 +8,7 @@ No generalized eigenproblem or global prolongation is constructed here.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -51,7 +52,10 @@ __all__ = (
     "PAPER_MU_RAW",
     "PAPER_RHO",
     "PAPER_RHO2",
-    "build_economical_maxwell_harmonic_space",
+    "EconomicalGammaRhsPreparation",
+    "EconomicalPreparedPatch",
+    "prepare_economical_gamma_rhs",
+    "solve_prepared_economical_columns",
 )
 
 
@@ -65,6 +69,46 @@ class EconomicalPatchRecord:
     weights: np.ndarray
     columns: np.ndarray | None
     audit: dict[str, Any]
+
+
+@dataclass
+class EconomicalPreparedPatch:
+    """Origin-local Gamma right-hand side retained until action construction."""
+
+    patch_id: tuple[int, int]
+    cell_index: int
+    rows: tuple[int, ...]
+    rhs: np.ndarray | None
+    audit: dict[str, Any]
+
+
+@dataclass
+class EconomicalGammaRhsPreparation:
+    """Prepared Gamma columns without an action or harmonic solve."""
+
+    local_patch_records: tuple[EconomicalPreparedPatch, ...]
+    global_patch_metadata: tuple[tuple[Any, ...], ...]
+    comm: MPI.Intracomm
+    diagnostics: dict[str, Any]
+    _destroyed: bool = False
+    _consumed: bool = False
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._consumed = True
+        for record in self.local_patch_records:
+            record.rhs = None
+            record.audit["prepared_rhs_released"] = True
+        self.diagnostics.update(
+            {
+                "prepared_rhs_live": False,
+                "prepared_rhs_released": True,
+                "prepared_rhs_consumed": True,
+                "prepared_rhs_destroyed": True,
+            }
+        )
+        self._destroyed = True
 
 
 @dataclass
@@ -509,106 +553,244 @@ def _sync_error(comm: MPI.Intracomm, local_error: str | None, stage: str) -> Non
         raise RuntimeError(f"economical {stage} failed: {first}")
 
 
-def build_economical_maxwell_harmonic_space(
+def prepare_economical_gamma_rhs(
     function_space: Any,
     condensed: Any,
-    action: Any,
     mass_provider: Any,
     facet_tags: Any,
     external_facet_tag: int,
-) -> EconomicalMaxwellHarmonicSpace:
-    """Build fixed economical harmonic columns using the live Stage-A action."""
+) -> EconomicalGammaRhsPreparation:
+    """Prepare origin-local Gamma RHS columns before constructing the action."""
 
     comm = function_space.mesh.comm
-    if not isinstance(mass_provider, ActualHcurlCellTangentialMassProvider):
-        raise TypeError("economical route requires the exact actual H(curl) provider")
-    if not hasattr(action, "patch_metadata") or not hasattr(
-        action, "solve_patch_multi_rhs"
-    ):
-        raise TypeError("economical route requires the bounded patch solve API")
-    if not hasattr(facet_tags, "find"):
-        raise TypeError("economical route requires mesh facet tags")
-    topology = function_space.mesh.topology
-    topology.create_connectivity(topology.dim, topology.dim - 1)
-    excluded_facets = {
-        int(value) for value in facet_tags.find(int(external_facet_tag))
-    }
-    local_metadata: dict[tuple[int, int], dict[str, Any]] = {}
-    compact_local: list[tuple[Any, ...]] = []
-    for item in action.patch_metadata():
-        patch_id = tuple(int(value) for value in item["patch_id"])
-        rows = tuple(int(value) for value in item["rows"])
-        weights = np.asarray(item["weights"], dtype=np.float64)
-        if weights.shape != (len(rows),) or not np.all(np.isfinite(weights)):
-            raise ValueError("economical local PoU metadata is invalid")
-        local_metadata[patch_id] = {
-            "cell_index": int(item["cell_index"]),
-            "rows": rows,
-            "weights": weights.copy(),
-            "class_key": str(item["class_key"]),
-            "owner_rank": int(item["owner_rank"]),
+    local_records: list[EconomicalPreparedPatch] = []
+    try:
+        if not isinstance(mass_provider, ActualHcurlCellTangentialMassProvider):
+            raise TypeError("economical route requires the exact actual H(curl) provider")
+        if not hasattr(facet_tags, "find"):
+            raise TypeError("economical route requires mesh facet tags")
+        provider_before = mass_provider.collective_audit()
+        if (
+            provider_before.get("numeric_cache_released") is not False
+            or provider_before.get("destroyed") is True
+            or provider_before.get("served_cell_count_global") != 0
+        ):
+            raise RuntimeError("economical preparation requires a fresh live provider")
+        topology = function_space.mesh.topology
+        topology.create_connectivity(topology.dim, topology.dim - 1)
+        excluded_facets = {
+            int(value) for value in facet_tags.find(int(external_facet_tag))
         }
-        compact_local.append(
-            (patch_id, int(item["cell_index"]), rows, str(item["class_key"]), int(item["owner_rank"]))
-        )
-    packets = comm.allgather(tuple(compact_local))
-    patches = tuple(sorted((item for packet in packets for item in packet), key=lambda item: item[0]))
-    if len({item[0] for item in patches}) != len(patches):
-        raise RuntimeError("economical patch metadata contains duplicate IDs")
-
-    local_records: list[EconomicalPatchRecord] = []
-    for patch_id, cell, rows, class_key, owner_rank in patches:
-        origin = int(patch_id[0])
-        data: dict[str, Any] | None = None
-        rhs = None
+        owned_cells = int(topology.index_map(topology.dim).size_local)
         local_error: str | None = None
-        if comm.rank == origin:
+        for cell in range(owned_cells):
             try:
-                local_patch = local_metadata.get(tuple(patch_id))
-                if local_patch is None or int(local_patch["cell_index"]) != int(cell):
-                    raise ValueError("economical patch origin lacks local metadata")
-                rhs, active_rows, data = _patch_rhs(
+                rhs, active_rows, audit = _patch_rhs(
                     function_space,
                     condensed,
                     mass_provider,
                     int(cell),
                     excluded_facets,
                 )
-                if tuple(int(value) for value in active_rows) != tuple(rows):
-                    raise ValueError("economical active rows differ from patch metadata")
+                patch_id = (int(comm.rank), int(cell))
+                local_records.append(
+                    EconomicalPreparedPatch(
+                        patch_id=patch_id,
+                        cell_index=int(cell),
+                        rows=tuple(int(value) for value in active_rows),
+                        rhs=np.ascontiguousarray(rhs.copy()),
+                        audit={
+                            **audit,
+                            "patch_id": patch_id,
+                            "cell_index": int(cell),
+                            "prepared_rhs_released": False,
+                        },
+                    )
+                )
             except Exception as exc:
                 local_error = f"{type(exc).__name__}: {exc}"
-        _sync_error(comm, local_error, "patch boundary construction")
-        solution, ratios = action.solve_patch_multi_rhs(
-            tuple(patch_id),
-            str(class_key),
-            int(owner_rank),
-            rhs,
+                break
+        _sync_error(comm, local_error, "Gamma RHS preparation")
+        global_patch_count = int(comm.allreduce(owned_cells, MPI.SUM))
+        if global_patch_count <= 0:
+            raise RuntimeError("economical preparation found no owned cell patches")
+        compact_local = tuple(
+            (record.patch_id, record.cell_index, record.rows)
+            for record in local_records
         )
+        packets = comm.allgather(compact_local)
+        global_metadata = tuple(
+            sorted(
+                (item for packet in packets for item in packet),
+                key=lambda item: item[0],
+            )
+        )
+        if len({item[0] for item in global_metadata}) != len(global_metadata):
+            raise RuntimeError("economical preparation contains duplicate patch IDs")
+        provider_after = mass_provider.collective_audit()
+        if (
+            provider_after.get("status") != "verified_exact_provider"
+            or provider_after.get("numeric_cache_released") is not False
+        ):
+            raise RuntimeError(
+                "economical preparation provider audit is not verified and unreleased"
+            )
+        diagnostics = {
+            "schema": "task040.v8.economical_gamma_rhs_preparation.v1",
+            "method": "paper_economical_vector_spherical_harmonics",
+            "global_patch_count": len(global_metadata),
+            "local_patch_count": len(local_records),
+            "global_patch_metadata": global_metadata,
+            "provider_audit_preparation": provider_after,
+            "provider_audit_preparation_state": "verified_but_not_released",
+            "prepared_rhs_live": True,
+            "prepared_rhs_released": False,
+            "prepared_rhs_consumed": False,
+            "prepared_rhs_destroyed": False,
+            "harmonic_multi_rhs_solve_count": 0,
+        }
+        return EconomicalGammaRhsPreparation(
+            tuple(local_records),
+            global_metadata,
+            comm,
+            diagnostics,
+        )
+    except Exception:
+        for record in local_records:
+            record.rhs = None
+        raise
+
+
+def solve_prepared_economical_columns(
+    preparation: EconomicalGammaRhsPreparation,
+    action: Any,
+    provider_audit_after_action: Mapping[str, Any],
+) -> EconomicalMaxwellHarmonicSpace:
+    """Consume prepared RHS columns through the already-built live action."""
+
+    comm = preparation.comm
+    if preparation._destroyed:
+        raise RuntimeError("economical prepared RHS has been destroyed")
+    if preparation._consumed:
+        raise RuntimeError("economical prepared RHS has already been consumed")
+    preparation._consumed = True
+    preparation.diagnostics["prepared_rhs_consumed"] = True
+    local_records: list[EconomicalPatchRecord] = []
+    try:
+        local_error: str | None = None
+        try:
+            if not isinstance(provider_audit_after_action, Mapping):
+                raise TypeError("economical post-action provider audit must be a mapping")
+            if (
+                provider_audit_after_action.get("status") != "verified_exact_provider"
+                or provider_audit_after_action.get("numeric_cache_released") is not True
+                or provider_audit_after_action.get("raw_cache_size_local") != 0
+                or provider_audit_after_action.get("oriented_numeric_cache_size_local")
+                != 0
+            ):
+                raise RuntimeError("economical post-action provider audit is incomplete")
+            if not hasattr(action, "patch_metadata") or not hasattr(
+                action, "solve_patch_multi_rhs"
+            ):
+                raise TypeError("economical route requires the bounded patch solve API")
+        except Exception as exc:
+            local_error = f"{type(exc).__name__}: {exc}"
+        _sync_error(comm, local_error, "post-action preparation validation")
+
+        local_action: dict[tuple[int, int], dict[str, Any]] = {}
+        compact_local: list[tuple[Any, ...]] = []
         local_error = None
-        if comm.rank == origin:
-            try:
-                assert data is not None and solution is not None and ratios is not None
-                values = np.asarray(solution, dtype=PETSc.ScalarType)
-                if values.ndim != 2 or values.shape[0] != len(rows):
-                    raise ValueError("economical harmonic solution has the wrong shape")
-                if not np.all(np.isfinite(values)):
-                    raise ValueError("economical harmonic solution is non-finite")
-                ratios = tuple(float(value) for value in ratios)
-                if len(ratios) != values.shape[1] or not all(
-                    np.isfinite(value) and value >= 0.0 for value in ratios
-                ):
-                    raise ValueError("economical harmonic residual audit is invalid")
-                solve_residual = max(ratios, default=0.0)
-                if solve_residual > IDENTITY_GATE:
-                    raise ValueError("economical harmonic solve accuracy gate failed")
-                data.update(
-                    {
-                        "patch_id": tuple(patch_id),
-                        "cell_index": int(cell),
+        try:
+            for item in action.patch_metadata():
+                patch_id = tuple(int(value) for value in item["patch_id"])
+                rows = tuple(int(value) for value in item["rows"])
+                weights = np.asarray(item["weights"], dtype=np.float64)
+                if weights.shape != (len(rows),) or not np.all(np.isfinite(weights)):
+                    raise ValueError("economical local PoU metadata is invalid")
+                local_action[patch_id] = {
+                    "cell_index": int(item["cell_index"]),
+                    "rows": rows,
+                    "weights": weights.copy(),
+                    "class_key": str(item["class_key"]),
+                    "owner_rank": int(item["owner_rank"]),
+                }
+                compact_local.append(
+                    (
+                        patch_id,
+                        int(item["cell_index"]),
+                        rows,
+                        str(item["class_key"]),
+                        int(item["owner_rank"]),
+                    )
+                )
+        except Exception as exc:
+            local_error = f"{type(exc).__name__}: {exc}"
+        _sync_error(comm, local_error, "action metadata validation")
+        packets = comm.allgather(tuple(compact_local))
+        observed = tuple(
+            sorted(
+                (item for packet in packets for item in packet),
+                key=lambda item: item[0],
+            )
+        )
+        expected = tuple(preparation.global_patch_metadata)
+        observed_shape = tuple((item[0], item[1], item[2]) for item in observed)
+        if observed_shape != expected:
+            raise RuntimeError("action patch metadata differs from prepared cells/rows")
+        prepared_by_id = {
+            record.patch_id: record for record in preparation.local_patch_records
+        }
+        for patch_id, cell, rows, class_key, owner_rank in observed:
+            origin = int(patch_id[0])
+            rhs = None
+            local_error = None
+            if comm.rank == origin:
+                try:
+                    prepared = prepared_by_id.get(tuple(patch_id))
+                    metadata = local_action.get(tuple(patch_id))
+                    if prepared is None or metadata is None:
+                        raise RuntimeError("economical patch origin lacks prepared data")
+                    if (
+                        int(prepared.cell_index) != int(cell)
+                        or tuple(prepared.rows) != tuple(rows)
+                    ):
+                        raise RuntimeError("prepared patch rows differ from action metadata")
+                    if prepared.rhs is None:
+                        raise RuntimeError("economical prepared RHS is already released")
+                    rhs = prepared.rhs
+                except Exception as exc:
+                    local_error = f"{type(exc).__name__}: {exc}"
+            _sync_error(comm, local_error, "prepared patch RHS validation")
+            solution, ratios = action.solve_patch_multi_rhs(
+                tuple(patch_id),
+                str(class_key),
+                int(owner_rank),
+                rhs,
+            )
+            local_error = None
+            if comm.rank == origin:
+                try:
+                    prepared = prepared_by_id[tuple(patch_id)]
+                    metadata = local_action[tuple(patch_id)]
+                    values = np.asarray(solution, dtype=PETSc.ScalarType)
+                    if values.ndim != 2 or values.shape[0] != len(rows):
+                        raise ValueError("economical harmonic solution has the wrong shape")
+                    if not np.all(np.isfinite(values)):
+                        raise ValueError("economical harmonic solution is non-finite")
+                    ratio_values = tuple(float(value) for value in ratios or ())
+                    if len(ratio_values) != values.shape[1] or not all(
+                        np.isfinite(value) and value >= 0.0 for value in ratio_values
+                    ):
+                        raise ValueError("economical harmonic residual audit is invalid")
+                    solve_residual = max(ratio_values, default=0.0)
+                    if solve_residual > IDENTITY_GATE:
+                        raise ValueError("economical harmonic solve accuracy gate failed")
+                    audit = {
+                        **prepared.audit,
                         "harmonic_solve_residual_max": solve_residual,
-                        "harmonic_solve_residual_count": len(ratios),
+                        "harmonic_solve_residual_count": len(ratio_values),
                         "harmonic_solve_accuracy_gate": IDENTITY_GATE,
+                        "prepared_rhs_released": True,
                         "solve_call_count": 1,
                         "selected_definition": "machine_rank_range_of_C^H_M_Gamma_lambda_raw",
                         "generalized_eigenproblem": False,
@@ -616,51 +798,89 @@ def build_economical_maxwell_harmonic_space(
                         "coarse_matrix_created": False,
                         "class_key": str(class_key),
                     }
-                )
-                local_records.append(
-                    EconomicalPatchRecord(
-                        patch_id=tuple(patch_id),
-                        cell_index=int(cell),
-                        rows=tuple(rows),
-                        weights=np.asarray(local_metadata[tuple(patch_id)]["weights"]).copy(),
-                        columns=np.ascontiguousarray(values.copy()),
-                        audit=data,
+                    local_records.append(
+                        EconomicalPatchRecord(
+                            patch_id=tuple(patch_id),
+                            cell_index=int(cell),
+                            rows=tuple(rows),
+                            weights=np.asarray(metadata["weights"]).copy(),
+                            columns=np.ascontiguousarray(values.copy()),
+                            audit=audit,
+                        )
                     )
-                )
-            except Exception as exc:
-                local_error = f"{type(exc).__name__}: {exc}"
-        _sync_error(comm, local_error, "patch harmonic solve audit")
-
-    provider_audit = mass_provider.collective_audit()
-    if provider_audit.get("status") != "verified_exact_provider":
-        raise RuntimeError("economical provider audit is not verified")
-    local_patch_count = len(local_records)
-    local_rank_total = sum(
-        int(record.audit["retained_rank"]) for record in local_records
-    )
-    diagnostics = {
-        "schema": "task040.v8.economical_maxwell_harmonic.v1",
-        "method": "paper_economical_vector_spherical_harmonics",
-        "paper_dimensionless_kappa": PAPER_DIMENSIONLESS_KAPPA,
-        "paper_beta": PAPER_BETA,
-        "paper_linear_p": PAPER_LINEAR_P,
-        "paper_rho": PAPER_RHO,
-        "paper_rho2": PAPER_RHO2,
-        "mu_raw": PAPER_MU_RAW,
-        "mu": PAPER_MU,
-        "candidate_count_per_patch": PAPER_CANDIDATE_COUNT,
-        "discrete_k0_separate": DISCRETE_K0,
-        "global_patch_count": int(comm.allreduce(local_patch_count, MPI.SUM)),
-        "global_retained_rank": int(comm.allreduce(local_rank_total, MPI.SUM)),
-        "local_patch_count": local_patch_count,
-        "owner_local_numeric_columns": True,
-        "numeric_collective_type": "existing_bounded_patch_multi_rhs",
-        "full_vector_numeric_allgather": False,
-        "generalized_eigenproblem": False,
-        "global_prolongation_created": False,
-        "coarse_matrix_created": False,
-        "outer_fgmres_run": False,
-        "exact_provider_audit": provider_audit,
-        "patch_audits_local": [record.audit for record in local_records],
-    }
-    return EconomicalMaxwellHarmonicSpace(tuple(local_records), diagnostics)
+                    prepared.rhs = None
+                    prepared.audit["prepared_rhs_released"] = True
+                except Exception as exc:
+                    local_error = f"{type(exc).__name__}: {exc}"
+            _sync_error(comm, local_error, "prepared patch harmonic solve")
+        action_diagnostics = action.diagnostics
+        solve_count = int(action_diagnostics["harmonic_multi_rhs_solve_count"])
+        global_patch_count = len(expected)
+        local_error = (
+            None
+            if solve_count == global_patch_count
+            else f"harmonic solve count {solve_count} != patch count {global_patch_count}"
+        )
+        _sync_error(comm, local_error, "harmonic solve count")
+        preparation.diagnostics.update(
+            {
+                "prepared_rhs_live": False,
+                "prepared_rhs_released": True,
+                "prepared_rhs_consumed": True,
+                "harmonic_multi_rhs_solve_count": solve_count,
+                "provider_audit_after_action": dict(provider_audit_after_action),
+                "provider_audit_after_action_state": (
+                    "verified_released_cache_empty"
+                ),
+            }
+        )
+        local_rank_total = sum(
+            int(record.audit["retained_rank"]) for record in local_records
+        )
+        diagnostics = {
+            "schema": "task040.v8.economical_maxwell_harmonic.v1",
+            "method": "paper_economical_vector_spherical_harmonics",
+            "paper_dimensionless_kappa": PAPER_DIMENSIONLESS_KAPPA,
+            "paper_beta": PAPER_BETA,
+            "paper_linear_p": PAPER_LINEAR_P,
+            "paper_rho": PAPER_RHO,
+            "paper_rho2": PAPER_RHO2,
+            "mu_raw": PAPER_MU_RAW,
+            "mu": PAPER_MU,
+            "candidate_count_per_patch": PAPER_CANDIDATE_COUNT,
+            "discrete_k0_separate": DISCRETE_K0,
+            "global_patch_count": global_patch_count,
+            "global_retained_rank": int(comm.allreduce(local_rank_total, MPI.SUM)),
+            "local_patch_count": len(local_records),
+            "owner_local_numeric_columns": True,
+            "numeric_collective_type": "existing_bounded_patch_multi_rhs",
+            "full_vector_numeric_allgather": False,
+            "generalized_eigenproblem": False,
+            "global_prolongation_created": False,
+            "coarse_matrix_created": False,
+            "outer_fgmres_run": False,
+            "harmonic_multi_rhs_solve_count": solve_count,
+            "exact_provider_audit": dict(provider_audit_after_action),
+            "exact_provider_audit_preparation": preparation.diagnostics[
+                "provider_audit_preparation"
+            ],
+            "patch_audits_local": [record.audit for record in local_records],
+            "prepared_rhs_released": all(
+                record.rhs is None
+                for record in preparation.local_patch_records
+            ),
+        }
+        return EconomicalMaxwellHarmonicSpace(tuple(local_records), diagnostics)
+    except Exception:
+        preparation._consumed = True
+        for record in preparation.local_patch_records:
+            record.rhs = None
+            record.audit["prepared_rhs_released"] = True
+        preparation.diagnostics.update(
+            {
+                "prepared_rhs_live": False,
+                "prepared_rhs_released": True,
+                "prepared_rhs_consumed": True,
+            }
+        )
+        raise
