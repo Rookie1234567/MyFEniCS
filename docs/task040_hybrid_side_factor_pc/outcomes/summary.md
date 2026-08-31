@@ -1,4 +1,34 @@
-# 当前 V8 authority（继承 V7 identity）
+# Task040 summary — current V8 authority
+
+## 当前最终结果
+
+| 阶段/路线 | 当前状态 | 关键 measured / derived evidence |
+|---|---|---|
+| V7 scale-normalized identity | Review V8 `review_adjudicated=true`；selected=`D0_lower_memory`；`V7_SCALE_NORMALIZED_FULL_INTERFACE_IDENTITY_PASS_D0` | raw `formal_adjudication=false` preserved；V6 absolute negative unchanged |
+| dedicated full-spectrum | `FULL_SPECTRUM_IMPLEMENTATION_FAILURE` | transform PASS；lower/upper=`7560+7560`；`72 channels × 105 harmonics`；两个 source entries/orchestration 已形成但 owner-vector load failure；无 source begin/end raw marker、无 one-apply/FGMRES checkpoint，apply-count字段=`0` |
+| adaptive Stage A | `V8_ADAPTIVE_STAGE_A_LOCAL_GATE_PASS` | 630 patches；rows=`432/432/432`；POU=`0`；setup=`255.8505309909815s`；one-apply=`3.498585887020454s`；global true residual rel=`2.390497409724407` 不作 Gate failure |
+| exact generalized B1 | `not_completed_at_10800s` | root=`results/task040_v8_adaptive_stage_b1_mpi8_0e92079f_fix1`；wall timeout=`10800s`；无 run summary/数值结果；允许转 economical，不是 numerical no-signal |
+| adaptive Stage B/C | `ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE` | natural rc0；peak=`19786649600 B`=`18.427753448486328 GiB`；projected=`130502065136 B`=`121.539519295 GiB`；hard=`45 GiB`；P/PH/FP/Ac/KSP=`0` |
+
+## 资源与生命周期摘要
+
+| 项目 | 当前值 |
+|---|---:|
+| Stage B/C live baseline | `19658432512 B` |
+| Stage B/C projected peak / headroom | `130502065136 B` / `-82183683056 B` |
+| BC harmonic columns | 630 patches × 160 modes；total coarse DoF=`100800`；570 classes；reuse saved=`60`；multi-RHS=`630` |
+| BC projected object components | P `871970408`；P_H `871718408`；F*P `10653602408`；P_HFP `24945446408`；PETSc overhead `37342737632`；iterative `543312000`；MatProduct `35599048816`；workspace `15796544` B |
+| BC final cleanup | complete；bare-F before/after=`1cc07ab68ed747abfe7599ce1fdfeff95642653b29863d6f261e2fe9239d574f` |
+
+`130502065136 B` 是 conservative symbolic projection；实测 peak 只有 `19786649600 B`，两者不能混称。`factor_bytes_global=0` 仅为 diagnostic release 后字段，不表示 factor-free 完成。
+
+## 当前裁决与未运行项
+
+Task040=`open / review required`，`selective merge=NO`。没有 adaptive numerical no-signal，不创建 Full3D handoff；0.7 nm=`NOT_ESTABLISHED / resource-blocked`，不能解释为物理不可行。master、Task39、physics、M480、physical DtN 和 ordinary defaults 未改。Full repository pytest、MPI4、CI、Stage C numerical checkpoints 与 0.7 nm/2 TB PDE 均未运行。
+
+旧的 V7/V8 预运行快照如下保留，仅用于历史追踪，不覆盖当前 authority。
+
+## 历史 V8 authority（继承 V7 identity）
 
 ## V8-0 adjudication / V8-1 route
 

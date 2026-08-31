@@ -1,5 +1,39 @@
 # Full-spectrum Floquet sweep outcome
 
+## 当前正式结果（取代下面的预运行快照）
+
+本路线的作用是把有限元 trace 行转换到完整的 Floquet channel/harmonic 网格，再开始两源 screen。这个转换身份检查已通过；但两源在 owner-vector load 处遇到 live canonical tokens 与 persisted layout 不一致，故不能把实现层失败误写成数值 no-signal。
+
+| 项目 | 当前事实 |
+|---|---|
+| root / source | `results/task040_v8_full_spectrum_mpi8_089bf8a1_native_phase_repair1` / `089bf8a10441b83c5d293a02d649670675b631ca` |
+| classification | `FULL_SPECTRUM_IMPLEMENTATION_FAILURE` |
+| transform | identity `PASS`；actual lower/upper=`7560+7560`，`72 channels × 105 harmonics`；`numeric_allgather=false`；`full_plane_numeric_replica=false` |
+| watchdog | natural rc0；elapsed=`1533.1877332139993s`；peak=`38975795200 B`=`36.29903793334961 GiB`；swap=`0` |
+| source/checkpoint | 两个 source entries/orchestration 已形成，但 owner-vector load 失败；无 source begin/end raw marker、无 one-apply/FGMRES checkpoint、r8/r16/r32/r64 未形成；apply-count字段=`0` |
+
+正式用户入口（watchdog 内部 MPI8 命令由 summary 复核）：
+
+```text
+python -m benchmarks.task040_level_a_watchdog --input /home/fenics/Projects/MyFEniCS/input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat --exact-spool-root /home/fenics/Projects/MyFEniCS/results/task040_v5_2_fresh_bare_f_authority_mpi8_fd7bea41/worker/bare_f_authority --run-directory /home/fenics/Projects/MyFEniCS/results/task040_v8_full_spectrum_mpi8_089bf8a1_native_phase_repair1 --source-sha 089bf8a10441b83c5d293a02d649670675b631ca --v8-full-spectrum-only --watchdog-enabled --bottom-route-only
+```
+
+| raw marker | stage wall (s) | RSS (B) | swap | PC/action apply |
+|---|---:|---:|---:|---:|
+| `v8_full_spectrum_preflight` | `0.0` | `1641885696` | `0` | `0/0` |
+| `v8_full_spectrum_system_ready` | `370.97334908600897` | `12480098304` | `0` | `0/0` |
+| `v8_full_spectrum_group0_factor_ready` | `207.90935626099235` | `17674514432` | `0` | `0/0` |
+| `v8_full_spectrum_group1_factor_ready` | `182.9128659699927` | `21893591040` | `0` | `0/0` |
+| `v8_full_spectrum_group2_factor_ready` | `241.10231349102105` | `28171911168` | `0` | `0/0` |
+| `v8_full_spectrum_lower_transform_ready` | `348.30305793098523` | `38749306880` | `0` | `0/0` |
+| `v8_full_spectrum_upper_transform_ready` | `144.6964194290049` | `38749315072` | `0` | `0/0` |
+| `v8_full_spectrum_symbol_ready` | `0.13321249099681154` | `38749315072` | `0` | `0/0` |
+| `v8_full_spectrum_cleanup_complete` | `17.90213303899509` | `38874349568` | `0` | `0/0` |
+
+旧几何 extent、empty-local probe 与 token/layout 的历史失败记录仍按原样保留；本节的 transform PASS 与 screen implementation failure 是两个独立结论。V8 failure roots 见本节及 [route ledger](route_signal_ledger.md)。
+
+## 历史预运行快照
+
 ## 结论边界
 
 全频谱路线先把 H(curl) trace 的 canonical channel 映射到完整的 15×7 harmonic 网格，再做

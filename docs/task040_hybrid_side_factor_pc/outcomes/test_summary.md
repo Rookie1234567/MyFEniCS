@@ -1,4 +1,23 @@
-# V7/V8 当前证据摘要
+# V8 current test and evidence summary
+
+## 当前已完成的本地证据
+
+| 证据组 | 实际结果 | 语义边界 |
+|---|---|---|
+| implementation-stage focused selectors | 已按各阶段记录的 selectors 完成 | 只绑定对应 source SHA/环境的本地 focused evidence，不是 full suite/CI |
+| final marker-fix serial | `src/test/test_327_task040_v8_adaptive_stage_bc_screen.py` file-wide focused node；`5 passed`，rc0 | marker callback wiring regression |
+| final marker-fix MPI2 | `src/test/test_327_task040_v8_adaptive_stage_bc_screen.py` file-wide focused node；两 rank 各 `5 passed`，rc0 | focused regression；不是 MPI4 |
+| related `test323` serial | `src/test/test_323_task040_v8_adaptive_stage_a.py` file-wide focused node；`4 passed`，rc0 | Stage-A/B1/B1 worker contract 的本地证据 |
+| V8 §10.2 closeout contracts | qualified native activation；`python -m pytest -q src/test/test_24_repository_work_principles.py src/test/test_25_benchmark_contract.py src/test/test_26_documentation_contract.py`；rc=`0`；`26 passed`、`0 failed`、`0 skipped`；pytest `0.54s`、shell 约 `1.683s` | marker=`1`；repo `.venv` Python；PETSc `complex128`/`int32`；`mpi4py/petsc4py/slepc4py/dolfinx/basix` 原生栈；本地非 CI；X11 authorization warning 为非致命环境噪声 |
+| marker-fix 两文件 Ruff | `hybrid_adaptive_impedance_screen.py` + `test_327_task040_v8_adaptive_stage_bc_screen.py` | rc0，clean |
+| 五文件广泛 Ruff | rc1；共 `35` 条 HEAD 既有诊断：`task040_level_a.py` 13、`task040_v6_2_interface_schur.py` 22 | 不写成整体 Ruff 通过，不修旧债 |
+| 五文件 compileall | Stage6-C touched five files | rc0 |
+| git diff --check | 本地文档/实现收口检查 | rc0 |
+| repository/full-scale scope | full repository pytest、MPI4、CI | `not_run`；不作 CI 声明 |
+
+文档中保留的 formal 负结果均来自真实 raw/manifest：full-spectrum 是 implementation failure，adaptive Stage B/C 是 resource-unavailable；没有把 X11 launcher 噪声写成测试 negative。完整 source/checkpoint/cleanup 语义见 [response v9](../response_v9.md)。
+
+## 历史 V7/V6/V5 证据摘要
 
 | 阶段 | 证据 | 结果语义 |
 |---|---|---|

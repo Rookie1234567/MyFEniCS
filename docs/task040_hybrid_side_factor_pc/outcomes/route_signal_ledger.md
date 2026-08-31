@@ -1,4 +1,38 @@
-# V7 当前 route ledger
+# Task040 current route ledger
+
+## 当前 authority
+
+| 路线 | 证据 | 当前状态 | 边界 |
+|---|---|---|---|
+| V7 scale-normalized identity | 3 scales、D0/D1、raw/checker | Review V8 `review_adjudicated=true`；selected=`D0_lower_memory`；`V7_SCALE_NORMALIZED_FULL_INTERFACE_IDENTITY_PASS_D0` | raw `formal_adjudication=false` preserved；V6 absolute negative 不改 |
+| dedicated full-spectrum | `.../task040_v8_full_spectrum_mpi8_089bf8a1_native_phase_repair1` | `FULL_SPECTRUM_IMPLEMENTATION_FAILURE` | transform PASS；两个 source entries/orchestration 已形成但 owner-vector load implementation failure；无 source begin/end raw marker、无 one-apply/FGMRES checkpoint，apply-count字段=`0` |
+| adaptive Stage A | `.../task040_v8_adaptive_stage_a_mpi8_0b6c6a26_fix1` | `V8_ADAPTIVE_STAGE_A_LOCAL_GATE_PASS` | 630 patch local Gate；global true residual `2.390497409724407` 不等于 Stage-A failure |
+| exact generalized B1 | `results/task040_v8_adaptive_stage_b1_mpi8_0e92079f_fix1` | `not_completed_at_10800s`；wall timeout=`10800s`；无 run summary/数值结果 | 不是 numerical no-signal；转 economical |
+| adaptive Stage B/C | `.../task040_v8_adaptive_stage_bc_mpi8_0ed2ebef_native` | `ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE` | projected `130502065136 B`=`121.539519295 GiB`，hard `45 GiB`；未分配 coarse/outer；无 source begin/end raw marker、无 one-apply/FGMRES checkpoint，apply-count字段=`0` |
+| 0.7 nm / Full3D | 无 qualified candidate | `NOT_ESTABLISHED / resource-blocked` | 不写物理不可行；不创建 Full3D handoff |
+
+所有旧 full-spectrum phase/token、adaptive cache/marker 与 moving-PML 失败现场都保留。当前停止是 Review V8 §12.2 resource Gate；`Task040=open / review required`，`selective merge=NO`。
+
+## V8 failure-root ledger
+
+这些 root 是 provenance、环境或实现层失败/停止现场，不是 numerical negative；全部保留，不能互相覆盖。
+
+| root | 精确语义 |
+|---|---|
+| `task040_v8_full_spectrum_mpi8_5f66551c_native` | ahead/upstream provenance preflight failure |
+| `task040_v8_full_spectrum_mpi8_5f66551c_native_rerun1` | phase-once implementation failure |
+| `task040_v8_full_spectrum_mpi8_089bf8a1_native_phase_repair1` | transform PASS；source token/layout implementation failure |
+| `task040_v8_adaptive_stage_b1_mpi8_0e92079f` | sandbox JIT cache read-only implementation failure |
+| `task040_v8_adaptive_stage_b1_mpi8_0e92079f_fix1` | exact B1 wall/resource unavailable；无数值结果 |
+| `task040_v8_adaptive_stage_bc_mpi8_540a0d3b_native` | sandbox JIT cache read-only implementation failure |
+| `task040_v8_adaptive_stage_bc_mpi8_540a0d3b_native_rerun1` | duplicate status marker implementation failure |
+| `task040_v8_adaptive_stage_bc_mpi8_0ed2ebef_native` | final Review V8 §12.2 resource Gate |
+
+旧 root 的 cache/marker/token 细节仍以各自 raw evidence 为准。
+
+## 历史 V7 ledger
+
+本表下方原有 V1–V6/V7 记录完整保留；其中旧的“adaptive 未启动”只是当时快照，不覆盖上面的正式 Stage A/Stage B/C 结果。
 
 本表先记录当前 authority；下方原有 V1–V6 历史表完整保留。没有 checkpoint 的路线不得写成
 `no-signal`。

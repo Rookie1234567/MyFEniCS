@@ -1,5 +1,19 @@
 # 0.7 nm side-PC capacity boundary
 
+## 当前 V8 authority
+
+| 项目 | 当前结论 |
+|---|---|
+| 0.7 nm status | `NOT_ESTABLISHED / resource-blocked` |
+| 已有资格证据 | 没有 qualified factor-free h4 candidate；没有两源 checkpoint、h3 scaling 或 0.7 nm/2 TB PDE |
+| 可否解释为物理不可行 | 不可以；Stage B/C 只在 conservative symbolic memory Gate 停止 |
+| 资源语义 | 实测 BC peak=`19786649600 B`=`18.427753448486328 GiB`；projection=`130502065136 B`=`121.539519295 GiB`，不是实测 RSS |
+| 规划边界 | 2 TB 不能全部作为 RSS；Review planning ceiling 仍为 1.5 TiB |
+
+adaptive 没有 numerical no-signal 结果，因此不创建 Full3D handoff。moving-PML owner-serial implementation 仍 retired，method family 不是数值否定。完整路由边界见 [route ledger](route_signal_ledger.md)。
+
+## 历史 V5/V4/V3 记录
+
 ## Review V5 当前状态
 
 `not_run_by_route_c_no_signal_and_resource_authority_gate`。Route C 的 no-signal stop 与

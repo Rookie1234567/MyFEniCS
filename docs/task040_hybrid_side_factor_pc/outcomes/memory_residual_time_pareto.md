@@ -1,4 +1,19 @@
-# V7 当前 measured component 点
+# Memory–residual–time Pareto boundary
+
+## 当前 V8 measured components
+
+这些数值按 process-tree RSS、阶段 wall 和 swap=0 的同一口径记录。Stage A 是 local component；Stage B/C 的 121.540 GiB 是 symbolic conservative projection，不能当作实测峰值。
+
+| 路线/阶段 | wall (s) | peak RSS | swap | 结果语义 |
+|---|---:|---:|---:|---|
+| adaptive Stage A setup + one-apply | setup=`255.8505309909815`；apply=`3.498585887020454` | `19211452416 B`=`17.892059326171875 GiB` | `0` | `V8_ADAPTIVE_STAGE_A_LOCAL_GATE_PASS`；global true residual rel=`2.390497409724407` |
+| adaptive Stage B/C formal | elapsed=`2504.0971691419836`；setup=`2288.5565209899796` | `19786649600 B`=`18.427753448486328 GiB` | `0` | `ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE` |
+| adaptive Stage B/C symbolic projection | not a wall measurement | projected=`130502065136 B`=`121.539519295 GiB`（约121.540 GiB） | n/a | conservative; hard=`48318382080 B`=`45 GiB`，allocation=false |
+| dedicated full-spectrum | `1533.1877332139993` | `38975795200 B`=`36.29903793334961 GiB` | `0` | transform PASS；screen implementation failure |
+
+BC symbolic projection components were P=`871970408`、P_H=`871718408`、F*P=`10653602408`、P_HFP=`24945446408`、PETSc sparse overhead=`37342737632`、iterative vectors=`543312000`、MatProduct transient=`35599048816`、one-patch workspace=`15796544` bytes；Ac nnz upper=`1247232000`、FP nnz upper=`532627200`、interaction pairs=`48720`。因 memory Gate，P/PH/FP/Ac/KSP 实际分配均为 `0`；`factor_bytes_global=0` 仅为 release 后诊断字段。
+
+## 较早的 V7/V1/V2/V3 记录
 
 本次 moving-PML 是完整 process-tree watchdog measurement，但不是完整 workflow，也不是
 production saving。moving PC 在第一个 source checkpoint 前达到 wall Gate：
