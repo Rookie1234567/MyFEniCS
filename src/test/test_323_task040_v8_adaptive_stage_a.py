@@ -118,9 +118,11 @@ def test_v8_adaptive_stage_a_route_and_marker_contract(tmp_path):
 def test_v8_adaptive_callback_and_scoped_swap_authority():
     seen = []
     marker_state = {}
+    sentinel = {"rss_bytes": 7}
 
     def adaptive_mark(stage, **detail):
         seen.append((stage, detail))
+        return sentinel
 
     callback = interface_schur._v8_adaptive_event_callback_factory(
         adaptive_mark, marker_state
@@ -162,6 +164,48 @@ def test_v8_adaptive_callback_and_scoped_swap_authority():
         authority(0), terminal_excluded=True
     )
     assert terminal["counted"] is False
+
+    seen.clear()
+    marker_state.clear()
+    mapping = {
+        "factor_ready": "v8_adaptive_stage_b1_factor_ready",
+        "b1_begin": "v8_adaptive_stage_b1_begin",
+        "b1_end": "v8_adaptive_stage_b1_end",
+    }
+    b1_callback = interface_schur._v8_adaptive_event_callback_factory(
+        adaptive_mark, marker_state, mapping
+    )
+    assert b1_callback("factor_ready", {}) is sentinel
+    assert b1_callback("b1_begin", {}) is sentinel
+    assert b1_callback("b1_end", {}) is sentinel
+    assert [stage for stage, _ in seen] == list(mapping.values())
+    b1_callback("cleanup", {"released": True})
+    assert list(marker_state) == ["screen_cleanup"]
+    assert marker_state["screen_cleanup"] == {"released": True}
+
+
+def test_v8_adaptive_stage_b1_gate_is_early_and_fail_closed(tmp_path):
+    if MPI.COMM_WORLD.size not in (1, 2):
+        pytest.skip("contract is scoped to serial and MPI2")
+    common = {
+        "cfg": None, "profile": None, "comm": MPI.COMM_WORLD,
+        "exact_spool_root": tmp_path / "spool", "run_directory": tmp_path / "run",
+        "source_sha": "a" * 40, "input_path": tmp_path / "input.dat",
+        "input_sha256": "b" * 64, "physical_model_sha256": "c" * 64,
+    }
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        interface_schur.run_v6_2_interface_schur(
+            **common,
+            v8_adaptive_schwarz_only=True,
+            v8_adaptive_stage_b1_only=True,
+        )
+    result = interface_schur.run_v6_2_interface_schur(
+        **common, v8_adaptive_stage_b1_only=True
+    )
+    assert result["schema"] == interface_schur.V8_ADAPTIVE_STAGE_B1_ONLY_SCHEMA
+    assert result["classification"] == "V8_ADAPTIVE_STAGE_B1_NOT_RUN"
+    assert result["pass"] is None
+    assert result["source_order"] == []
 
 
 class _FakeB1Owner:
