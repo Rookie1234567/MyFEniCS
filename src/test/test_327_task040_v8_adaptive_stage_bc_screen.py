@@ -262,6 +262,10 @@ def test_stage_bc_positive_extends_same_setup(monkeypatch) -> None:
         return source, {"source": label}
     try:
         result = _run_screen(bare_f, source_builder, callback)
+        coarse_details = [detail for event, detail in events if event == "coarse_ready"]
+        assert len(coarse_details) == 1
+        assert "status" not in coarse_details[0]
+        assert coarse_details[0]["coarse_status"] == "ready"
         assert labels == list(INITIAL + HOLDOUT)
         assert result["initial_classification"] == POSITIVE
         assert result["classification"] == POSITIVE

@@ -1031,7 +1031,7 @@ def run_adaptive_impedance_stage_bc_screen(
         _emit(
             event_callback,
             "coarse_ready",
-            status=coarse_result.status,
+            coarse_status=coarse_result.status,
             memory_preflight=coarse_diagnostics.get("memory_preflight"),
             coarse_diagnostics=coarse_diagnostics,
             factor_lifecycle=factor_lifecycle(),
