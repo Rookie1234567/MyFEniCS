@@ -345,6 +345,13 @@ def _symbolic_memory_preflight(
     comm: MPI.Intracomm,
     current_process_tree_baseline_bytes: int | None,
     current_process_tree_baseline_source: str,
+    *,
+    economical_failure_route: str | None = None,
+    basis_in_live_baseline: bool = False,
+    fine_live_vector_bytes: int | None = None,
+    fine_live_vector_count: int | None = None,
+    coarse_live_vector_bytes: int | None = None,
+    coarse_live_vector_count: int | None = None,
 ) -> dict[str, Any]:
     support_by_id = {
         tuple(item["patch_id"]): tuple(int(row) for row in item["rows"])
@@ -423,7 +430,42 @@ def _symbolic_memory_preflight(
     fp_base = int(fp_values + fp_indices + fp_pointer)
     ac_base = int(ac_values + ac_indices + ac_pointer)
     sparse_base_bytes = int(p_base + ph_base + fp_base + ac_base)
-    iterative_vectors = selected_total * 5 * complex_bytes
+    extended_vector_budget = any(
+        value is not None
+        for value in (
+            fine_live_vector_bytes,
+            fine_live_vector_count,
+            coarse_live_vector_bytes,
+            coarse_live_vector_count,
+        )
+    )
+    if extended_vector_budget and any(
+        value is None
+        for value in (
+            fine_live_vector_bytes,
+            fine_live_vector_count,
+            coarse_live_vector_bytes,
+            coarse_live_vector_count,
+        )
+    ):
+        raise ValueError("all economical live-vector bytes/count values are required")
+    if extended_vector_budget and any(
+        not isinstance(value, int)
+        or isinstance(value, bool)
+        or value < 0
+        for value in (
+            fine_live_vector_bytes,
+            fine_live_vector_count,
+            coarse_live_vector_bytes,
+            coarse_live_vector_count,
+        )
+    ):
+        raise ValueError("economical live-vector values must be non-negative integers")
+    iterative_vectors = (
+        int(fine_live_vector_bytes or 0) + int(coarse_live_vector_bytes or 0)
+        if extended_vector_budget
+        else selected_total * 5 * complex_bytes
+    )
     action_diagnostics = action.diagnostics
     bare_f_memory_global = int(
         comm.allreduce(_petsc_local_memory(bare_f), op=MPI.SUM)
@@ -442,7 +484,11 @@ def _symbolic_memory_preflight(
     )
     baseline_component = max(declared_baseline, petsc_baseline)
     components = {
-        "regenerated_selected_basis_global": prolongation_nnz * complex_bytes,
+        "regenerated_selected_basis_global": (
+            0
+            if basis_in_live_baseline
+            else prolongation_nnz * complex_bytes
+        ),
         "P": p_base,
         "P_H": ph_base,
         "F_times_P": fp_base,
@@ -470,11 +516,17 @@ def _symbolic_memory_preflight(
         known,
         allowed,
         projected,
-        "none" if allowed else "paper_economical_variant_required",
+        "none"
+        if allowed
+        else (
+            economical_failure_route
+            if economical_failure_route is not None
+            else "paper_economical_variant_required"
+        ),
     )
     if any(item != decision for item in comm.allgather(decision)):
         raise RuntimeError("B1 memory allocation decision differs across ranks")
-    return {
+    result = {
         "allocation_allowed": allowed,
         "route": decision[3],
         "hard_memory_bytes": HARD_MEMORY_BYTES,
@@ -516,6 +568,18 @@ def _symbolic_memory_preflight(
         "distributed_prolongation_created": False,
         "coarse_matrix_created": False,
     }
+    if extended_vector_budget or basis_in_live_baseline:
+        result["fixed_live_vector_budget"] = {
+            "basis_in_live_baseline": bool(basis_in_live_baseline),
+            "fine_live_vector_bytes": int(fine_live_vector_bytes or 0),
+            "fine_live_vector_count": int(fine_live_vector_count or 0),
+            "coarse_live_vector_bytes": int(coarse_live_vector_bytes or 0),
+            "coarse_live_vector_count": int(coarse_live_vector_count or 0),
+            "vector_storage_model": (
+                "2*global_length*sizeof(PETSc.ScalarType) per reserved vector"
+            ),
+        }
+    return result
 
 
 def build_stage_b1_harmonic_identity(
