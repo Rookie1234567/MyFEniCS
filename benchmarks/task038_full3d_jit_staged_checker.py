@@ -12,8 +12,8 @@ import sys
 from typing import Any
 
 
-CHECKER_SCHEMA = "task038.v14.j2.cold-staged.checker.v1"
-RECORD_SCHEMA = "task038.v14.j2.cold-staged.parent-record.v1"
+CHECKER_SCHEMA = "task038.v14.j2.cold-staged.checker.v2"
+RECORD_SCHEMA = "task038.v14.j2.cold-staged.parent-record.v2"
 CHILD_RECORD_SCHEMA = "task038.full3d.jit-precompile.child-record.v1"
 SOLVER_RECORD_SCHEMA = "task038.v14.j2.cold-staged.solver-record.v1"
 MARKER_SCHEMA = "task038.v14.j1b.marker.v1"
@@ -212,6 +212,8 @@ def _check_sample(sample: dict[str, Any], parent_pid: int) -> int:
     _fail(sample.get("schema") == SAMPLE_SCHEMA and sample.get("root_pid") == parent_pid, "process sample identity mismatch", "process")
     _fail(isinstance(sample.get("stage"), str) and type(sample.get("timestamp_ns")) is int and sample["timestamp_ns"] > 0, "process sample timestamp/stage invalid", "process")
     _fail(sample.get("unreadable_pids") == [] and sample.get("all_status_readable") is True, "process sample is unreadable", "process")
+    vanished = sample.get("vanished_pids")
+    _fail(isinstance(vanished, list) and all(type(pid) is int and pid > 0 for pid in vanished) and len(vanished) == len(set(vanished)), "process vanished PID facts are invalid", "process")
     _fail(sample.get("exit_code") is None or type(sample.get("exit_code")) is int, "process sample exit code invalid", "process")
     members = sample.get("members")
     _fail(isinstance(members, list) and members, "process sample members missing", "process")
@@ -225,6 +227,7 @@ def _check_sample(sample: dict[str, Any], parent_pid: int) -> int:
         _fail(type(fact["timestamp_ns"]) is int and fact["timestamp_ns"] > 0 and fact["exit_code"] is None, "process member lifecycle facts invalid", "process")
         pids.append(fact["pid"])
     _fail(len(pids) == len(set(pids)) and parent_pid in pids, "process member PID set invalid", "process")
+    _fail(set(vanished).isdisjoint(pids) and set(vanished).isdisjoint(sample["unreadable_pids"]), "process vanished PID overlaps a live or unreadable PID", "process")
     pss_ready = all(fact["pss_bytes"] is not None for fact in members)
     _fail(sample.get("pss_all_readable") is pss_ready, "process PSS readability mismatch", "process")
     _fail(sample.get("rss_bytes") == sum(fact["rss_bytes"] for fact in members) and sample.get("swap_bytes") == sum(fact["swap_bytes"] for fact in members), "process RSS/swap aggregate mismatch", "process")

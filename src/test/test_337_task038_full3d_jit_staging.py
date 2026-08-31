@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from benchmarks import task038_full3d_jit_staging as staging
 from benchmarks.task038_full3d_jit_staging import (
     append_jsonl,
     cache_manifest,
@@ -60,7 +61,7 @@ def _run_checker(record: Path, output: Path) -> subprocess.CompletedProcess[str]
     )
 
 
-def test_helper_root_markers_process_and_cache_contract(tmp_path: Path) -> None:
+def test_helper_root_markers_process_and_cache_contract(tmp_path: Path, monkeypatch) -> None:
     root = tmp_path / "helper-root"
     layout = prepare_fresh_root(root, root / "jit_cache")
     write_marker(layout["marker_dir"], "parent_started", {"stage": "smoke"})
@@ -72,6 +73,25 @@ def test_helper_root_markers_process_and_cache_contract(tmp_path: Path) -> None:
     assert snapshot["exit_code"] == 7
     assert snapshot["all_status_readable"] is True
     assert snapshot["rss_bytes"] == sum(fact["rss_bytes"] for fact in snapshot["members"])
+    missing_pid = 2_000_000_000
+    original_fact = staging._process_fact
+    monkeypatch.setattr(staging, "_live_parent_map", lambda: {os.getpid(): [missing_pid]})
+    monkeypatch.setattr(
+        staging,
+        "_process_fact",
+        lambda pid, stage: None if pid == missing_pid else original_fact(pid, stage),
+    )
+    vanished = process_tree_snapshot(os.getpid(), "vanished")
+    assert vanished["vanished_pids"] == [missing_pid]
+    assert vanished["unreadable_pids"] == []
+    assert vanished["all_status_readable"] is True
+    monkeypatch.setattr(staging, "_live_parent_map", lambda: {os.getpid(): []})
+    monkeypatch.setattr(staging, "_process_fact", lambda _pid, _stage: None)
+    unreadable = process_tree_snapshot(os.getpid(), "forced-unreadable")
+    assert unreadable["unreadable_pids"] == [os.getpid()]
+    assert unreadable["vanished_pids"] == []
+    assert unreadable["all_status_readable"] is False
+    assert unreadable["rss_bytes"] is None
     sample_path = root / "samples.jsonl"
     append_jsonl(sample_path, snapshot)
     assert len(sample_path.read_text(encoding="utf-8").splitlines()) == 1

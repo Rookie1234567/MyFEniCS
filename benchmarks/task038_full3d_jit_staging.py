@@ -218,6 +218,16 @@ def _process_fact(pid: int, stage: str) -> dict | None:
         return None
 
 
+def _pid_vanished(pid: int) -> bool:
+    try:
+        Path(f"/proc/{pid}/stat").stat()
+    except (FileNotFoundError, ProcessLookupError):
+        return True
+    except OSError:
+        return False
+    return False
+
+
 def _live_parent_map() -> dict[int, list[int]]:
     parents: dict[int, list[int]] = {}
     for entry in os.listdir("/proc"):
@@ -248,6 +258,7 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         cursor += 1
     members: list[dict] = []
     unreadable: list[int] = []
+    vanished: list[int] = []
     retry_count = 0
     for pid in sorted(set(pids)):
         fact = _process_fact(pid, stage)
@@ -255,7 +266,10 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
             retry_count += 1
             fact = _process_fact(pid, stage)
         if fact is None:
-            unreadable.append(pid)
+            if _pid_vanished(pid):
+                vanished.append(pid)
+            else:
+                unreadable.append(pid)
         else:
             members.append(fact)
     readable = not unreadable
@@ -268,6 +282,7 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         "exit_code": exit_code,
         "members": members,
         "unreadable_pids": sorted(unreadable),
+        "vanished_pids": sorted(vanished),
         "all_status_readable": readable,
         "readability_retry_count": retry_count,
         "compiler_descendant_count": sum(

@@ -62,7 +62,7 @@ def _sample(stage: str, timestamp: int, descendant: int | None) -> dict[str, obj
     members = [_member(4242, 1, stage, 100, 50)]
     if descendant is not None:
         members.append(_member(descendant, 4242, stage, 50, 25))
-    return {"schema": checker.SAMPLE_SCHEMA, "root_pid": 4242, "stage": stage, "timestamp_ns": timestamp, "exit_code": None, "members": members, "unreadable_pids": [], "all_status_readable": True, "readability_retry_count": 0, "compiler_descendant_count": 0, "rss_bytes": sum(item["rss_bytes"] for item in members), "swap_bytes": 0, "pss_all_readable": True, "pss_bytes": sum(item["pss_bytes"] for item in members)}
+    return {"schema": checker.SAMPLE_SCHEMA, "root_pid": 4242, "stage": stage, "timestamp_ns": timestamp, "exit_code": None, "members": members, "unreadable_pids": [], "vanished_pids": [], "all_status_readable": True, "readability_retry_count": 0, "compiler_descendant_count": 0, "rss_bytes": sum(item["rss_bytes"] for item in members), "swap_bytes": 0, "pss_all_readable": True, "pss_bytes": sum(item["pss_bytes"] for item in members)}
 
 
 def _monitor(pid: int, started: int, ended: int, sample_count: int = 3) -> dict[str, object]:
