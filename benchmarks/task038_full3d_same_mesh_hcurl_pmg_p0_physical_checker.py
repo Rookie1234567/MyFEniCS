@@ -116,6 +116,40 @@ J4_WORKER_MARKERS = (
     "bundle_destroyed",
     "record_written",
 )
+J5_WORKFLOW = "j5-full"
+J5_PARENT_SCHEMA = "task038.v14.j5.full.parent-record.v1"
+J5_WORKER_SCHEMA = "task038.v14.j5.full.worker-record.v1"
+J5_CHECKER_SCHEMA = "task038.v14.j5.full.check.v1"
+J5_WORKER_MARKER_SCHEMA = "task038.v14.j5.full.worker-marker.v1"
+J5_WORKER_MARKERS = (
+    "paths_ready",
+    "bundle_built",
+    "source_built",
+    "one_action_complete",
+    "one_pc_complete",
+    "solve_started",
+    "solve_complete",
+    "retained_ready",
+    "retained_observed",
+    "krylov_destroyed",
+    "solver_stack_release_started",
+    "solver_stack_release_complete",
+    "release_observation",
+    "recovery_started",
+    "recovery_built",
+    "official_outputs_written",
+    "recovery_complete",
+    "bundle_destroyed",
+    "record_written",
+)
+J5_PARENT_STAGE = "j5-full-parent"
+J5_SOLVER_STAGE = "j5-full-solver"
+J5_MILESTONES = (20, 100, 200, 500, 1000, 2000, 5000, 10000, 15000, 20000)
+J5_NUMERICAL_FIXED_CAP = "J5_PHYSICAL_NUMERICAL_FAIL_AT_FIXED_CAP"
+J5_NUMERICAL_BEFORE_CAP = "J5_PHYSICAL_NUMERICAL_FAIL_BEFORE_FIXED_CAP"
+J5_NUMERICAL_GATE_FAIL = "J5_PHYSICAL_NUMERICAL_GATE_FAIL"
+J5_CHECKPOINT_GATE_FAIL = "J5_CHECKPOINT_GATE_FAIL"
+J5_AUTHORITY_ARRAYS_MISSING = "J5_NUMERICAL_RECOVERY_PASS_AUTHORITY_ARRAYS_MISSING"
 J4_GROUP_ROLES = {
     "positive-p6": ("positive_p6_action", "positive_p6_bilinear"),
     "positive-p3": ("positive_p3_bilinear",),
@@ -651,51 +685,77 @@ def _check_krylov(record: Mapping[str, Any], errors: list[str], gates: list[str]
     return dict(krylov)
 
 
-def _check_checkpoints(record: Mapping[str, Any], checkpoint_root: Path, expected_sha: str, errors: list[str], gates: list[str]) -> list[int]:
-    krylov = record.get("krylov", {})
-    iterations = krylov.get("iterations") if isinstance(krylov, Mapping) else None
-    expected = list(range(CHECKPOINT_INTERVAL, int(iterations) + 1, CHECKPOINT_INTERVAL)) if type(iterations) is int and iterations > 0 else []
-    facts = krylov.get("checkpoint_facts") if isinstance(krylov, Mapping) else None
+def _check_checkpoints(
+    record: Mapping[str, Any],
+    checkpoint_root: Path,
+    expected_sha: str,
+    errors: list[str],
+    gates: list[str],
+    checkpoint_failures: list[str] | None = None,
+    expected_iterations: int | None = None,
+) -> list[int]:
+    checkpoint_errors = checkpoint_failures if checkpoint_failures is not None else errors
+    checkpoint_gates = checkpoint_failures if checkpoint_failures is not None else gates
+
+    def report_error(message: str) -> None:
+        checkpoint_errors.append(message)
+
+    def report_gate(message: str) -> None:
+        checkpoint_gates.append(message)
+
+    krylov = record.get("krylov")
+    if not isinstance(krylov, Mapping):
+        report_error("checkpoint Krylov facts are missing")
+        return []
+    iterations = expected_iterations if expected_iterations is not None else krylov.get("iterations")
+    if type(iterations) is not int or iterations <= 0:
+        report_error("checkpoint iteration total is missing or invalid")
+        return []
+    expected = list(range(CHECKPOINT_INTERVAL, iterations + 1, CHECKPOINT_INTERVAL))
+    facts = krylov.get("checkpoint_facts")
     if not isinstance(facts, list) or [item.get("iteration") for item in facts if isinstance(item, Mapping)] != expected:
-        _error(errors, "checkpoint schedule is not the fixed solution-only 500-step schedule")
+        report_error("checkpoint schedule is not the fixed solution-only 500-step schedule")
         return expected
-    identities = record.get("identities", {})
+    identities = record.get("identities")
+    if expected and not isinstance(identities, Mapping):
+        report_error("checkpoint identity facts are missing")
+        return expected
     for item in facts:
         if not isinstance(item, Mapping):
-            _error(errors, "checkpoint fact is not an object")
+            report_error("checkpoint fact is not an object")
             continue
         manifest_path = Path(str(item.get("manifest_path", ""))).resolve()
         if not _inside(manifest_path, checkpoint_root) or not manifest_path.is_file():
-            _error(errors, "checkpoint manifest is missing or escapes checkpoint_root")
+            report_error("checkpoint manifest is missing or escapes checkpoint_root")
             continue
         if item.get("manifest_sha256") != _sha256_file(manifest_path):
-            _error(errors, "checkpoint manifest SHA mismatch")
+            report_error("checkpoint manifest SHA mismatch")
         try:
             manifest = _read_json(manifest_path)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
-            _error(errors, f"checkpoint manifest unreadable: {exc}")
+            report_error(f"checkpoint manifest unreadable: {exc}")
             continue
         if manifest.get("schema") != "fixed-memory-krylov.solution-checkpoint.v1" or manifest.get("iteration") != item.get("iteration") or manifest.get("source_sha") != expected_sha or manifest.get("mpi_size") != 1 or manifest.get("solution_only") is not True or manifest.get("numeric_allgather") is not False or manifest.get("vector_roles") != ["solution"]:
-            _error(errors, "checkpoint manifest contract is not closed")
+            report_error("checkpoint manifest contract is not closed")
         for name in ("input_identity_sha256", "operator_identity_sha256", "physical_model_sha256"):
             if manifest.get(name) != identities.get(name):
-                _error(errors, f"checkpoint identity mismatch: {name}")
+                report_error(f"checkpoint identity mismatch: {name}")
         ranks = manifest.get("ranks")
         if not isinstance(ranks, list) or len(ranks) != 1 or not isinstance(ranks[0], Mapping) or not isinstance(ranks[0].get("solution"), Mapping):
-            _error(errors, "MPI1 checkpoint shard metadata is incomplete")
+            report_error("MPI1 checkpoint shard metadata is incomplete")
             continue
         descriptor = ranks[0]["solution"]
         shard = (manifest_path.parent / str(descriptor.get("relative_path", ""))).resolve()
         if not _inside(shard, manifest_path.parent) or not shard.is_file() or descriptor.get("bytes") != shard.stat().st_size or descriptor.get("sha256") != _sha256_file(shard):
-            _error(errors, "checkpoint solution shard bytes/SHA is not closed")
+            report_error("checkpoint solution shard bytes/SHA is not closed")
             continue
         try:
             values = np.asarray(np.load(shard, allow_pickle=False))
         except (OSError, ValueError, TypeError) as exc:
-            _error(errors, f"checkpoint shard unreadable: {exc}")
+            report_error(f"checkpoint shard unreadable: {exc}")
             continue
         if values.ndim != 1 or str(values.dtype) != descriptor.get("dtype") or list(values.shape) != descriptor.get("shape") or not np.all(np.isfinite(values)):
-            _gate(gates, "checkpoint solution shard dtype/shape/finite Gate failed")
+            report_gate("checkpoint solution shard dtype/shape/finite Gate failed")
     return expected
 
 
@@ -1055,22 +1115,25 @@ def _check_significant_inventory(
         "order_count": len(orders),
         "identity_sha256": _stable_sha(keys),
         "first_keys": keys[:3],
-        "semantics": dict(semantics),
+        "semantics": dict(semantics) if isinstance(semantics, Mapping) else {},
     }
 
 
 def _check_scalar_direct_authority(
-    port: Mapping[str, Any],
-    volume: Mapping[str, Any],
+    port: Mapping[str, Any] | None,
+    volume: Mapping[str, Any] | None,
     errors: list[str],
     gates: list[str],
     physics_blockers: list[str],
+    authority_blockers: list[str] | None = None,
 ) -> dict[str, Any]:
     facts: dict[str, Any] = {
         "path": str(DIRECT_AUTHORITY_PATH),
         "sha256": DIRECT_AUTHORITY_SHA256,
         "absolute_total_tolerance": TOTAL_FULL3D_TOL,
     }
+    if not isinstance(port, Mapping) or not isinstance(volume, Mapping):
+        return facts
     try:
         authority = _read_json(DIRECT_AUTHORITY_PATH)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
@@ -1150,7 +1213,7 @@ def _check_scalar_direct_authority(
         "scalar_pass": scalar_pass,
     })
     if raw_evidence.get("arrays_included") is not True:
-        physics_blockers.append(
+        (authority_blockers if authority_blockers is not None else physics_blockers).append(
             "tracked 1-degree authority has scalar R/T/A/A_volume only; selected E/H, near-field, "
             "and same-identity 12 power plus 12 complex boundary-amplitude arrays are unavailable"
         )
@@ -1163,10 +1226,19 @@ def _check_recovery(
     gates: list[str],
     errors: list[str],
     physics_blockers: list[str],
+    physics_output_failures: list[str] | None = None,
+    final_override: float | None = None,
+    authority_blockers: list[str] | None = None,
 ) -> dict[str, Any]:
     physical = record.get("physical")
     recovery = physical.get("recovery") if isinstance(physical, Mapping) else None
-    final = record.get("krylov", {}).get("final_true_residual") if isinstance(record.get("krylov"), Mapping) else None
+    final = (
+        final_override
+        if final_override is not None
+        else record.get("krylov", {}).get("final_true_residual")
+        if isinstance(record.get("krylov"), Mapping)
+        else None
+    )
     if not isinstance(recovery, Mapping) or not _finite_number(final):
         _error(errors, "physical recovery facts are missing")
         return {}
@@ -1200,10 +1272,11 @@ def _check_recovery(
             for key in ("dtn_port_top_mode_count", "dtn_port_bottom_mode_count"):
                 if not isinstance(port.get(key), int) or port[key] <= 0:
                     _gate(gates, f"official DtN mode inventory is incomplete: {key}")
-        field_export = _check_reference_export(recovery, raw_dir, errors, gates)
-        inventory = _check_significant_inventory(recovery, raw_dir, errors, gates)
+        output_failures = physics_output_failures if physics_output_failures is not None else gates
+        field_export = _check_reference_export(recovery, raw_dir, errors, output_failures)
+        inventory = _check_significant_inventory(recovery, raw_dir, errors, output_failures)
         scalar_direct = _check_scalar_direct_authority(
-            port, volume, errors, gates, physics_blockers
+            port, volume, errors, gates, physics_blockers, authority_blockers
         )
         official_dir = raw_dir / "official"
         artifacts = recovery.get("artifacts")
@@ -2004,6 +2077,929 @@ def _j4_check_worker(
     return worker, metrics
 
 
+def _j5_parent_markers(record: Mapping[str, Any], errors: list[str]) -> dict[str, int]:
+    paths = record.get("paths")
+    if not isinstance(paths, Mapping):
+        _error(errors, "J5 parent paths are missing")
+        return {}
+    root = Path(str(paths.get("artifact_root", ""))).resolve()
+    marker_dir = Path(str(paths.get("marker_dir", ""))).resolve()
+    manifest_path = Path(str(paths.get("marker_manifest", ""))).resolve()
+    if marker_dir != root / "markers" or not marker_dir.is_dir():
+        _error(errors, "J5 marker directory is not parent-bound")
+        return {}
+    if record.get("marker_schema") != V14_MARKER_SCHEMA:
+        _error(errors, "J5 parent marker schema is not the shared V14 schema")
+    marker_facts = record.get("markers")
+    if not isinstance(marker_facts, Mapping) or marker_facts.get("names") != list(J4_MARKER_ORDER):
+        _error(errors, "J5 parent marker inventory is not the complete V14 order")
+        marker_facts = {}
+    try:
+        manifest = _read_json(manifest_path)
+        if not isinstance(manifest, list):
+            raise ValueError("marker manifest is not a list")
+        if marker_facts.get("manifest_sha256") != _sha256_file(manifest_path):
+            raise ValueError("marker manifest SHA mismatch")
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        _error(errors, f"J5 marker manifest is invalid: {exc}")
+        return {}
+    actual_paths = sorted(marker_dir.glob("*.json"), key=lambda path: path.name)
+    expected_paths = [
+        marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json"
+        for name in J4_MARKER_ORDER
+    ]
+    if [path.name for path in actual_paths] != [path.name for path in expected_paths]:
+        _error(errors, "J5 parent marker files are not the exact V14 inventory")
+    times: dict[str, int] = {}
+    solver_start = J4_PARENT_MARKER_INDEX["positive_setup_started"]
+    solver_end = J4_PARENT_MARKER_INDEX["recovery_complete"]
+    for name, marker_path in zip(J4_MARKER_ORDER, expected_paths):
+        try:
+            marker = _read_json(marker_path)
+            facts = marker.get("facts")
+            index = J4_PARENT_MARKER_INDEX[name]
+            expected_stage = J5_SOLVER_STAGE if solver_start <= index <= solver_end else J5_PARENT_STAGE
+            if (
+                marker.get("schema") != V14_MARKER_SCHEMA
+                or marker.get("name") != name
+                or marker.get("marker_index") != index
+                or not isinstance(facts, Mapping)
+                or facts.get("stage") != expected_stage
+                or facts.get("artifact_root") != str(root)
+                or facts.get("cache_dir") != str(root / "jit_cache")
+                or facts.get("source_sha") != record.get("source_sha")
+            ):
+                raise ValueError("marker identity/stage is not closed")
+            timestamp = marker.get("timestamp_ns")
+            if type(timestamp) is not int or timestamp <= 0:
+                raise ValueError("marker timestamp is invalid")
+            times[name] = timestamp
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+            _error(errors, f"J5 parent marker invalid {name}: {exc}")
+    values = [times[name] for name in J4_MARKER_ORDER if name in times]
+    if len(values) != len(J4_MARKER_ORDER) or values != sorted(values) or len(set(values)) != len(values):
+        _error(errors, "J5 parent marker timestamps are not strictly increasing")
+    expected_manifest = [
+        {
+            "name": name,
+            "path": str(marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json"),
+            "sha256": _sha256_file(marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json"),
+        }
+        for name in J4_MARKER_ORDER
+        if (marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json").is_file()
+    ]
+    if manifest != expected_manifest:
+        _error(errors, "J5 parent marker manifest does not close marker files")
+    return times
+
+
+def _j5_worker_markers(worker: Mapping[str, Any], root: Path, errors: list[str]) -> dict[str, int]:
+    raw_dir = Path(str(worker.get("raw_dir", ""))).resolve()
+    marker_dir = raw_dir / "markers"
+    if raw_dir != root / "worker_raw" or not marker_dir.is_dir():
+        _error(errors, "J5 worker marker directory is not parent-bound")
+    lifecycle = worker.get("lifecycle")
+    if (
+        not isinstance(lifecycle, Mapping)
+        or lifecycle.get("marker_relative_dir") != "markers"
+        or lifecycle.get("marker_schema") != J5_WORKER_MARKER_SCHEMA
+        or lifecycle.get("marker_names") != list(J5_WORKER_MARKERS)
+        or lifecycle.get("retained_dwell_seconds") != 2.0
+        or lifecycle.get("release_observation_seconds") != 1.0
+        or lifecycle.get("release_order")
+        != ["source_rhs", "retained_window", "krylov_result", "solver_stack", "recovery", "bundle"]
+    ):
+        _error(errors, "J5 worker marker lifecycle is not exact")
+    expected_paths = [marker_dir / f"{name}.json" for name in J5_WORKER_MARKERS]
+    actual_paths = sorted(marker_dir.glob("*.json"), key=lambda path: path.name) if marker_dir.is_dir() else []
+    if [path.name for path in actual_paths] != sorted(path.name for path in expected_paths):
+        _error(errors, "J5 worker marker files are not the exact inventory")
+    times: dict[str, int] = {}
+    for name, path in zip(J5_WORKER_MARKERS, expected_paths):
+        try:
+            marker = _read_json(path)
+            facts = marker.get("facts")
+            if (
+                marker.get("schema") != J5_WORKER_MARKER_SCHEMA
+                or marker.get("marker") != name
+                or marker.get("source_sha") != worker.get("source_sha")
+                or not isinstance(facts, Mapping)
+            ):
+                raise ValueError("worker marker identity is not closed")
+            timestamp = marker.get("wall_time_ns")
+            if type(timestamp) is not int or timestamp <= 0:
+                raise ValueError("worker marker timestamp is invalid")
+            if name == "solve_started" and facts.get("max_it") != MAX_IT:
+                raise ValueError("J5 solve cap is not 20000")
+            if name == "solve_complete" and facts.get("final_explicit_recheck") is not True:
+                raise ValueError("J5 final explicit recheck is not recorded")
+            if name == "record_written" and (
+                facts.get("record_path") != worker.get("record_path")
+                or facts.get("record_sha256") != _sha256_file(Path(str(worker.get("record_path"))))
+            ):
+                raise ValueError("J5 record_written marker does not close worker record")
+            times[name] = timestamp
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+            _error(errors, f"J5 worker marker invalid {name}: {exc}")
+    values = [times[name] for name in J5_WORKER_MARKERS if name in times]
+    if len(values) != len(J5_WORKER_MARKERS) or values != sorted(values) or len(set(values)) != len(values):
+        _error(errors, "J5 worker marker timestamps are not strictly increasing")
+    if times.get("retained_observed", -1) - times.get("retained_ready", -1) < RETAINED_DWELL_NS:
+        _error(errors, "J5 retained dwell is shorter than two seconds")
+    if times.get("release_observation", -1) - times.get("solver_stack_release_complete", -1) < RELEASE_OBSERVATION_NS:
+        _error(errors, "J5 release observation is shorter than one second")
+    if not times.get("solver_stack_release_complete", 0) < times.get("release_observation", -1) < times.get("recovery_started", -1):
+        _error(errors, "J5 recovery started before release observation closed")
+    return times
+
+
+def _j5_check_worker(
+    record: Mapping[str, Any],
+    root: Path,
+    cache_dir: Path,
+    precompiled_modules: list[str],
+    expected_source_sha: str,
+    errors: list[str],
+    gates: list[str],
+    numerical: list[str],
+    checkpoint_failures: list[str],
+    recovery_failures: list[str],
+    physics_blockers: list[str],
+    authority_blockers: list[str],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    solver = record.get("solver")
+    if not isinstance(solver, Mapping):
+        _error(errors, "J5 worker entry is missing")
+        return {}, {}
+    worker_path = _j4_path(solver.get("record_path"), root, errors, "J5 worker record")
+    if worker_path is None:
+        return {}, {}
+    paths = record.get("paths")
+    if not isinstance(paths, Mapping) or paths.get("worker_record") != str(worker_path):
+        _error(errors, "J5 worker record path is not parent-bound")
+    try:
+        worker = _read_json(worker_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        _error(errors, f"J5 worker record is unreadable: {exc}")
+        return {}, {}
+    if (
+        worker.get("schema") != J5_WORKER_SCHEMA
+        or worker.get("workflow") != J5_WORKFLOW
+        or worker.get("stage") != J5_SOLVER_STAGE
+        or worker.get("source_sha") != record.get("source_sha")
+        or worker.get("branch") != BRANCH
+        or "passed" in worker
+        or "classification" in worker
+    ):
+        _error(errors, "J5 worker identity/schema is not raw-facts-only")
+    raw_dir = Path(str(worker.get("raw_dir", ""))).resolve()
+    checkpoint_root = Path(str(worker.get("checkpoint_root", ""))).resolve()
+    expected_python = str(Path(__file__).resolve().parents[1] / ".venv/bin/python")
+    command = worker.get("command")
+    if (
+        worker.get("record_path") != str(worker_path)
+        or raw_dir != root / "worker_raw"
+        or checkpoint_root != root / "checkpoints"
+        or not isinstance(command, list)
+        or command[:3] != [expected_python, "-m", MODULE]
+        or _option(command, "--workflow") != J5_WORKFLOW
+        or _option(command, "--stage") != STAGE
+        or _option(command, "--case") != CASE
+        or _option(command, "--source") != SOURCE
+        or _option(command, "--raw-dir") != str(raw_dir)
+        or _option(command, "--jit-cache-dir") != str(cache_dir)
+        or _option(command, "--checkpoint-root") != str(checkpoint_root)
+        or _option(command, "--record") != str(worker_path)
+        or _option(command, "--expected-source-sha") != record.get("source_sha")
+        or _option(command, "--expected-mpi-size") != "1"
+        or _option(command, "--v14-marker-dir") != str(root / "markers")
+    ):
+        _error(errors, "J5 worker command/path contract is not exact")
+    worker_marker_times = _j5_worker_markers(worker, root, errors)
+    provenance = worker.get("provenance")
+    if (
+        not isinstance(provenance, Mapping)
+        or provenance.get("source_sha") != record.get("source_sha")
+        or provenance.get("branch") != BRANCH
+        or provenance.get("stage") != J5_SOLVER_STAGE
+        or provenance.get("python_executable") != expected_python
+        or provenance.get("python_prefix") != str(Path(expected_python).parent.parent)
+        or provenance.get("parent_owned_cache") is not True
+        or provenance.get("jit_cache_dir") != str(cache_dir)
+        or provenance.get("command") != worker.get("command")
+    ):
+        _error(errors, "J5 worker interpreter/cache provenance is not exact")
+    ffcx_calls = worker.get("ffcx_calls")
+    call_files: list[str] = []
+    if not isinstance(ffcx_calls, list) or len(ffcx_calls) != 11:
+        _error(errors, "J5 worker did not observe exactly 11 FFCx calls")
+    else:
+        for index, call in enumerate(ffcx_calls):
+            if not isinstance(call, Mapping):
+                _error(errors, f"J5 FFCx call is invalid: {index}")
+                continue
+            module_file = Path(str(call.get("module_file", ""))).resolve()
+            if (
+                call.get("index") != index
+                or not isinstance(call.get("module_name"), str)
+                or not call.get("module_name")
+                or call.get("code") != [None, None]
+                or call.get("cache_hit") is not True
+                or module_file.suffix != ".so"
+                or not _inside(module_file, cache_dir)
+                or not module_file.is_file()
+            ):
+                _error(errors, f"J5 FFCx cache-hit call is invalid: {index}")
+            call_files.append(module_file.name)
+    if len(call_files) != 11 or len(set(call_files)) != 11 or set(call_files) != set(precompiled_modules):
+        _error(errors, "J5 solver cache-hit modules do not equal the 11 precompiled modules")
+    settings = worker.get("settings")
+    expected_settings = {
+        "max_it": MAX_IT,
+        "restart": RESTART,
+        "cycle_max_it": CYCLE_MAX_IT,
+        "residual_replacement": True,
+        "zero_initial_guess": True,
+        "checkpoint_writer": True,
+        "checkpoint_interval": CHECKPOINT_INTERVAL,
+        "first_checkpoint_iteration": None,
+        "stop_on_true_residual": True,
+        "qualification_only": False,
+        "official_recovery": True,
+    }
+    if not isinstance(settings, Mapping) or any(settings.get(key) != value for key, value in expected_settings.items()):
+        _error(errors, "J5 full-workflow settings are not exact")
+    krylov = worker.get("krylov")
+    if not isinstance(krylov, Mapping):
+        _error(errors, "J5 Krylov facts are missing")
+        return worker, {"worker_marker_times": worker_marker_times}
+    cycles = krylov.get("cycles")
+    ledger_valid = isinstance(cycles, list) and bool(cycles)
+    cursor = 0
+    matvec_total = 0
+    pc_total = 0
+    cycle_boundaries: list[dict[str, Any]] = []
+    cycle_memory: list[int] = []
+    for index, cycle in enumerate(cycles if isinstance(cycles, list) else []):
+        if not isinstance(cycle, Mapping):
+            ledger_valid = False
+            _error(errors, f"J5 cycle is not an object: {index}")
+            continue
+        start = cycle.get("start_iteration")
+        end = cycle.get("end_iteration")
+        iterations = cycle.get("iterations")
+        if (
+            cycle.get("cycle_index") != index
+            or type(start) is not int
+            or type(end) is not int
+            or type(iterations) is not int
+            or start != cursor
+            or end - start != iterations
+            or iterations <= 0
+            or iterations > CYCLE_MAX_IT
+            or cycle.get("ksp_destroyed") is not True
+            or (index == 0 and cycle.get("initial_guess_nonzero") is not False)
+            or (index > 0 and cycle.get("initial_guess_nonzero") is not True)
+        ):
+            ledger_valid = False
+            _error(errors, f"J5 restart-20 cycle ledger is malformed: {index}")
+        if type(end) is int:
+            cursor = end
+        residual = cycle.get("explicit_true_residual")
+        if not _finite_number(residual) or float(residual) < 0.0:
+            numerical.append(f"J5 cycle explicit true residual is non-finite: {index}")
+        matvec_count = cycle.get("matvec_count")
+        if type(matvec_count) is not int or matvec_count < 0:
+            ledger_valid = False
+            _error(errors, f"J5 cycle matvec count is invalid: {index}")
+        else:
+            matvec_total += matvec_count
+        pc_apply_count = cycle.get("pc_apply_count")
+        if type(pc_apply_count) is not int or pc_apply_count < 0:
+            ledger_valid = False
+            _error(errors, f"J5 cycle PC count is invalid: {index}")
+        else:
+            pc_total += pc_apply_count
+        wall_seconds = cycle.get("wall_seconds")
+        if not _finite_number(wall_seconds) or float(wall_seconds) < 0.0:
+            ledger_valid = False
+            _error(errors, f"J5 cycle wall time is invalid: {index}")
+        resource = cycle.get("resource")
+        process_tree = resource.get("process_tree") if isinstance(resource, Mapping) else None
+        memory = resource.get("memory_authority_bytes") if isinstance(resource, Mapping) else None
+        no_swap = resource.get("job_no_swap") if isinstance(resource, Mapping) else None
+        if (
+            not isinstance(resource, Mapping)
+            or not isinstance(process_tree, Mapping)
+            or type(memory) is not int
+            or memory < 0
+            or type(no_swap) is not bool
+            or type(process_tree.get("rss_bytes")) is not int
+            or process_tree.get("rss_bytes") < 0
+            or type(process_tree.get("swap_bytes")) is not int
+            or process_tree.get("swap_bytes") < 0
+            or process_tree.get("all_status_readable") is not True
+        ):
+            _error(errors, f"J5 cycle resource authority is incomplete: {index}")
+        else:
+            if process_tree["swap_bytes"] > 0 or no_swap is False:
+                _gate(gates, f"J5 cycle process-tree swap Gate failed: {index}")
+            if process_tree["rss_bytes"] >= COLD_RSS_LIMIT:
+                _gate(gates, f"J5 cycle process-tree RSS Gate failed: {index}")
+            cycle_memory.append(memory)
+            cycle_boundaries.append(
+                {
+                    "cycle_index": index,
+                    "iteration": end,
+                    "explicit_true_residual": float(residual) if _finite_number(residual) else None,
+                    "wall_seconds": float(wall_seconds) if _finite_number(wall_seconds) else None,
+                    "memory_authority_bytes": memory,
+                }
+            )
+    if (
+        not ledger_valid
+        or type(krylov.get("iterations")) is not int
+        or krylov.get("iterations") != cursor
+        or cursor > MAX_IT
+    ):
+        _error(errors, "J5 did not close the restart-20 iteration ledger")
+    if krylov.get("matvec_count") != matvec_total or krylov.get("pc_apply_count") != pc_total:
+        _error(errors, "J5 matvec/PC totals do not equal cycle sums")
+    if not isinstance(cycles, list) or type(krylov.get("ksp_destroy_count")) is not int or krylov.get("ksp_destroy_count") != len(cycles):
+        _error(errors, "J5 KSP destroy total does not equal cycle count")
+    memory_accumulation = (
+        len(cycle_memory) >= 2
+        and all(left <= right for left, right in zip(cycle_memory, cycle_memory[1:]))
+        and cycle_memory[-1] > cycle_memory[0]
+    )
+    if memory_accumulation:
+        _gate(gates, "J5 cycle memory authority is monotonically accumulating")
+    count_names = (
+        "explicit_action_count",
+        "driver_explicit_action_count",
+        "rhs_action_count",
+        "final_action_recheck_count",
+        "extra_action_count",
+        "explicit_action_count_total",
+        "action_calls_total",
+    )
+    counts: dict[str, int] = {}
+    for name in count_names:
+        value = krylov.get(name)
+        if type(value) is not int or value < 0:
+            _error(errors, f"J5 action counter is invalid: {name}")
+        else:
+            counts[name] = value
+    if len(counts) == len(count_names):
+        if counts["explicit_action_count"] != counts["driver_explicit_action_count"]:
+            _error(errors, "J5 driver explicit action count is not closed")
+        if counts["extra_action_count"] != counts["rhs_action_count"] + counts["final_action_recheck_count"]:
+            _error(errors, "J5 extra action count is not closed")
+        if counts["explicit_action_count_total"] != counts["driver_explicit_action_count"] + counts["extra_action_count"]:
+            _error(errors, "J5 explicit action total is not closed")
+        if counts["action_calls_total"] != matvec_total + counts["explicit_action_count_total"]:
+            _error(errors, "J5 total action calls are not closed")
+    pc_facts = krylov.get("pc_apply_facts")
+    if not isinstance(pc_facts, list) or len(pc_facts) != pc_total:
+        _error(errors, "J5 PC apply facts do not match the cycle sum")
+    else:
+        for index, fact in enumerate(pc_facts):
+            if not isinstance(fact, Mapping) or fact.get("apply_index") != index:
+                _error(errors, f"J5 PC apply fact is malformed: {index}")
+            elif fact.get("output_finite") is not True or not _finite_number(fact.get("owned_slave_max")) or float(fact["owned_slave_max"]) > 1.0e-12:
+                numerical.append(f"J5 PC apply finite/owned-slave Gate failed: {index}")
+    npz_facts = worker.get("npz")
+    npz_path = raw_dir / "physical_probe.npz"
+    expected_roles = ["rhs_before", "rhs_after", "final_solution", "final_action", "final_residual", "one_action_output", "one_pc_output"]
+    if (
+        not npz_path.is_file()
+        or not isinstance(npz_facts, Mapping)
+        or npz_facts.get("relative_path") != "physical_probe.npz"
+        or npz_facts.get("bytes") != npz_path.stat().st_size
+        or npz_facts.get("sha256") != _sha256_file(npz_path)
+        or npz_facts.get("roles") != expected_roles
+    ):
+        _error(errors, "J5 physical probe archive is missing or SHA-invalid")
+        return worker, {"worker_marker_times": worker_marker_times}
+    try:
+        with np.load(npz_path, allow_pickle=False) as archive:
+            if set(archive.files) != set(expected_roles):
+                raise ValueError("physical probe keys are not exact")
+            arrays = {name: np.asarray(archive[name]) for name in archive.files}
+    except (OSError, ValueError, TypeError) as exc:
+        _error(errors, f"J5 physical probe archive is unreadable: {exc}")
+        return worker, {"worker_marker_times": worker_marker_times}
+    if any(array.dtype != np.dtype(np.complex128) or array.ndim != 1 or not np.all(np.isfinite(array)) for array in arrays.values()):
+        numerical.append("J5 physical probe arrays are not finite complex128 vectors")
+    rhs_before = arrays["rhs_before"]
+    rhs_after = arrays["rhs_after"]
+    final_action = arrays["final_action"]
+    final_residual = arrays["final_residual"]
+    if not np.array_equal(rhs_before, rhs_after):
+        numerical.append("J5 physical RHS changed during the full workflow")
+    if not np.allclose(final_residual, rhs_before - final_action, rtol=1.0e-12, atol=1.0e-14):
+        numerical.append("J5 final residual is not b-Ax")
+    rhs_norm = float(np.linalg.norm(rhs_before))
+    raw_relative = float(np.linalg.norm(final_residual) / max(rhs_norm, np.finfo(float).tiny))
+    if not _finite_number(krylov.get("initial_true_residual")) or not np.isclose(float(krylov["initial_true_residual"]), 1.0, rtol=1.0e-12, atol=1.0e-14):
+        _error(errors, "J5 zero-start initial residual is not one")
+    j5 = worker.get("j5")
+    if not isinstance(j5, Mapping) or j5.get("one_action_probe_count") != 1 or j5.get("one_pc_probe_count") != 1:
+        _error(errors, "J5 action/PC probe facts are not exactly one each")
+    elif any(
+        not isinstance(j5.get(name), Mapping)
+        or j5[name].get("array_sha256") != _array_sha(arrays[name])
+        or j5[name].get("finite") is not True
+        or not _finite_number(j5[name].get("owned_slave_max"))
+        or float(j5[name]["owned_slave_max"]) > 1.0e-12
+        for name in ("one_action_output", "one_pc_output")
+    ):
+        _error(errors, "J5 action/PC probe arrays are not closed")
+    if isinstance(j5, Mapping) and set(j5).intersection(
+        {
+            "final_explicit_true_residual",
+            "rho20",
+            "actual_iterations",
+            "cycle_count",
+            "checkpoint_count",
+            "milestone_iterations",
+        }
+    ):
+        _error(errors, "J5 record contains derived solver facts that must be recomputed")
+    if not _finite_number(raw_relative):
+        numerical.append("J5 final explicit residual is non-finite")
+    if isinstance(cycles, list) and cycles:
+        last_residual = cycles[-1].get("explicit_true_residual") if isinstance(cycles[-1], Mapping) else None
+        if _finite_number(last_residual) and not np.isclose(float(last_residual), raw_relative, rtol=1.0e-12, atol=1.0e-14):
+            numerical.append("J5 final cycle residual does not match the raw arrays")
+    if not _finite_number(krylov.get("final_true_residual")) or not np.isclose(float(krylov["final_true_residual"]), raw_relative, rtol=1.0e-12, atol=1.0e-14):
+        numerical.append("J5 Krylov final residual does not match the raw arrays")
+    if raw_relative > RESIDUAL_LIMIT:
+        numerical.append(f"J5 final explicit true residual exceeds 1e-6: {raw_relative}")
+    cycle_count = len(cycles) if isinstance(cycles, list) else -1
+    recovery = worker.get("physical", {}).get("recovery") if isinstance(worker.get("physical"), Mapping) else None
+    if raw_relative > RESIDUAL_LIMIT:
+        if not isinstance(recovery, Mapping) or recovery.get("status") != "not_run":
+            _error(errors, "J5 recovery was not marked not_run at the fixed cap")
+    physical = worker.get("physical", {}).get("audit") if isinstance(worker.get("physical"), Mapping) else None
+    if (
+        not isinstance(physical, Mapping)
+        or physical.get("physical_form") != "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn"
+        or physical.get("volume_component_count") != 2
+        or physical.get("volume_components") != ["curl_curl", "complex_material_mass"]
+    ):
+        _error(errors, "J5 physical split audit is not exact")
+    architecture = worker.get("architecture")
+    required_true = {
+        "p6_matrix_free", "p3_sparse_matrix_built", "p1_sparse_matrix_built", "p1_direct_factor_built",
+        "same_mesh_pmg_built", "streaming_dtn_action_built", "dtn_carrier_built", "physical_volume_action_built",
+        "rhs_built", "outer_ksp_built", "solve_run", "bundle_destroyed_before_record",
+    }
+    required_false = {"p6_global_aij", "high_order_global_aij", "global_dense_transfer", "numeric_allgather", "qualification_only"}
+    if not isinstance(architecture, Mapping) or any(architecture.get(key) is not True for key in required_true) or any(architecture.get(key) is not False for key in required_false) or architecture.get("official_recovery") is not True or architecture.get("workflow") != J5_WORKFLOW:
+        _error(errors, "J5 physical architecture facts are not closed")
+    source = worker.get("source")
+    source_facts = source.get("facts") if isinstance(source, Mapping) else None
+    if (
+        not isinstance(source_facts, Mapping)
+        or source_facts.get("source_sha") != expected_source_sha
+        or not isinstance(source, Mapping)
+        or source.get("generation") != "dtn_port_modal_physical_rhs"
+        or source.get("role") != "physical_maxwell_rhs"
+        or source.get("phase_application") != "finalized_floquet_mpc_once"
+    ):
+        _error(errors, "J5 physical RHS/source identity is not closed")
+    if not isinstance(source, Mapping):
+        _error(errors, "J5 physical RHS facts are missing")
+    else:
+        owned_slaves = source.get("owned_slave_indices")
+        before = source.get("before")
+        after = source.get("after")
+        if (
+            not isinstance(owned_slaves, list)
+            or any(type(index) is not int or index < 0 or index >= rhs_before.size for index in owned_slaves)
+            or not isinstance(before, Mapping)
+            or before.get("array_sha256") != _array_sha(rhs_before)
+            or not isinstance(after, Mapping)
+            or after.get("array_sha256") != _array_sha(rhs_after)
+        ):
+            _error(errors, "J5 RHS before/after or owned-slave facts are not closed")
+        elif owned_slaves:
+            for name, values in arrays.items():
+                if float(np.max(np.abs(values[owned_slaves]))) > 1.0e-12:
+                    numerical.append(f"J5 owned slave identity rows are nonzero: {name}")
+    checkpoints = _check_checkpoints(
+        worker,
+        checkpoint_root,
+        expected_source_sha,
+        errors,
+        gates,
+        checkpoint_failures,
+        expected_iterations=cursor,
+    )
+    if raw_relative <= RESIDUAL_LIMIT:
+        checked_recovery = _check_recovery(
+            worker,
+            raw_dir,
+            recovery_failures,
+            errors,
+            physics_blockers,
+            physics_output_failures=recovery_failures,
+            final_override=raw_relative,
+            authority_blockers=authority_blockers,
+        )
+    else:
+        checked_recovery = dict(recovery) if isinstance(recovery, Mapping) else {}
+        for name in ("recovery_built", "official_outputs_written"):
+            marker_path = raw_dir / "markers" / f"{name}.json"
+            try:
+                facts = _read_json(marker_path).get("facts")
+                if not isinstance(facts, Mapping) or facts.get("status") != "not_run":
+                    raise ValueError("not_run marker is not explicit")
+                if name == "official_outputs_written" and facts.get("artifact_count") != 0:
+                    raise ValueError("not_run artifact count is not zero")
+            except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+                _error(errors, f"J5 {name} not_run marker is invalid: {exc}")
+    iterations = cursor
+    milestone_residuals = {
+        str(milestone): next(
+            boundary["explicit_true_residual"]
+            for boundary in cycle_boundaries
+            if boundary["iteration"] == milestone
+        )
+        for milestone in J5_MILESTONES
+        if any(boundary["iteration"] == milestone for boundary in cycle_boundaries)
+    }
+    metrics = {
+        "raw_relative_residual": raw_relative,
+        "iterations": iterations,
+        "cycle_count": cycle_count,
+        "cycle_boundaries": cycle_boundaries,
+        "milestone_residuals": milestone_residuals,
+        "memory_authority_bytes": cycle_memory,
+        "memory_accumulation": memory_accumulation,
+        "checkpoint_iterations": checkpoints,
+        "ffcx_call_count": len(ffcx_calls) if isinstance(ffcx_calls, list) else 0,
+        "worker_marker_times": worker_marker_times,
+        "recovery_status": checked_recovery.get("status") if isinstance(checked_recovery, Mapping) else None,
+    }
+    return worker, metrics
+
+
+def _j5_partial_process_summary(path: Path) -> dict[str, Any]:
+    count = 0
+    peak_rss: int | None = None
+    max_swap: int | None = None
+    all_readable = True
+    try:
+        stream = path.open(encoding="utf-8")
+    except OSError as exc:
+        return {"error": str(exc)}
+    with stream:
+        for line_number, line in enumerate(stream, 1):
+            if not line.strip():
+                continue
+            try:
+                sample = json.loads(line, parse_constant=_reject_constant)
+                rss = sample["rss_bytes"]
+                swap = sample["swap_bytes"]
+                readable = sample["all_status_readable"]
+                if (
+                    not isinstance(sample, Mapping)
+                    or sample.get("schema") != SAMPLE_SCHEMA
+                    or type(rss) is not int
+                    or rss < 0
+                    or type(swap) is not int
+                    or swap < 0
+                    or not isinstance(readable, bool)
+                ):
+                    raise ValueError("partial process sample facts are incomplete")
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                return {"error": f"line {line_number}: {exc}"}
+            count += 1
+            peak_rss = rss if peak_rss is None else max(peak_rss, rss)
+            max_swap = swap if max_swap is None else max(max_swap, swap)
+            all_readable = all_readable and readable
+    if count == 0 or peak_rss is None or max_swap is None:
+        return {"error": "partial process JSONL is empty"}
+    return {
+        "sample_count": count,
+        "peak_rss_bytes": peak_rss,
+        "max_swap_bytes": max_swap,
+        "all_status_readable": all_readable,
+    }
+
+
+def _check_j5_partial(
+    record: Mapping[str, Any], record_path: Path, expected_source_sha: str
+) -> dict[str, Any]:
+    errors: list[str] = []
+    gates: list[str] = []
+    paths = record.get("paths")
+    root = Path(str(paths.get("artifact_root", ""))).resolve() if isinstance(paths, Mapping) else Path("/")
+    process = record.get("process")
+    process_valid = isinstance(process, Mapping)
+    if (
+        record.get("partial") is not True
+        or record.get("schema") != J5_PARENT_SCHEMA
+        or record.get("workflow") != J5_WORKFLOW
+        or record.get("stage") != J5_PARENT_STAGE
+        or record.get("source_sha") != expected_source_sha
+        or not _j4_hex_sha(expected_source_sha, 40)
+        or record.get("branch") != BRANCH
+        or not isinstance(paths, Mapping)
+        or Path(str(record_path)).resolve() != root / "parent_record.json"
+        or paths.get("record") != str(record_path.resolve())
+        or paths.get("artifact_root") != str(root)
+        or not root.is_dir()
+    ):
+        errors.append("J5 partial source/root contract is not closed")
+    sample_path = Path(str(process.get("sample_path", ""))).resolve() if process_valid else Path("")
+    raw_summary: dict[str, Any] | None = None
+    if (
+        not process_valid
+        or sample_path != root / "parent_process.jsonl"
+        or not isinstance(paths, Mapping)
+        or paths.get("process_samples") != str(sample_path)
+        or not sample_path.is_file()
+        or process.get("sample_sha256") != _sha256_file(sample_path)
+        or type(process.get("sample_count")) is not int
+        or process.get("sample_count") <= 0
+        or type(process.get("peak_rss_bytes")) is not int
+        or process.get("peak_rss_bytes") < 0
+        or type(process.get("max_swap_bytes")) is not int
+        or process.get("max_swap_bytes") < 0
+        or not isinstance(process.get("all_status_readable"), bool)
+    ):
+        errors.append("J5 partial process/raw sample facts are not closed")
+    if sample_path.is_file():
+        raw_summary = _j5_partial_process_summary(sample_path)
+        if "error" in raw_summary:
+            errors.append(f"J5 partial raw process summary is invalid: {raw_summary['error']}")
+        else:
+            for key in ("sample_count", "peak_rss_bytes", "max_swap_bytes", "all_status_readable"):
+                if process.get(key) != raw_summary.get(key):
+                    errors.append(f"J5 partial process summary does not match raw JSONL: {key}")
+    error_text = record.get("error")
+    if not isinstance(error_text, str) or not error_text:
+        errors.append("J5 partial stop reason is missing")
+    peak_rss = raw_summary.get("peak_rss_bytes") if raw_summary and "error" not in raw_summary else None
+    max_swap = raw_summary.get("max_swap_bytes") if raw_summary and "error" not in raw_summary else None
+    resource_stop = (
+        raw_summary is not None
+        and "error" not in raw_summary
+        and type(peak_rss) is int
+        and type(max_swap) is int
+        and (
+            peak_rss >= COLD_RSS_LIMIT
+            or max_swap > 0
+            or isinstance(error_text, str)
+            and any(
+                token in error_text
+                for token in ("process_tree_rss_limit", "process_tree_swap")
+            )
+        )
+    )
+    if resource_stop and not errors:
+        gates.append("J5 partial record contains an explicit resource hard-stop fact")
+    classification = "J5_RESOURCE_GATE_FAIL" if gates else "J5_CONTRACT_INVALID"
+    return {
+        "checker_schema": J5_CHECKER_SCHEMA,
+        "passed": False,
+        "classification": classification,
+        "contract_errors": errors,
+        "gate_failures": gates,
+        "numerical_failures": [],
+        "checkpoint_failures": [],
+        "recovery_failures": [],
+        "physics_blockers": [],
+        "authority_blockers": [],
+        "warnings": [],
+        "identity": {"source_sha": expected_source_sha, "branch": BRANCH, "workflow": J5_WORKFLOW},
+        "metrics": {"partial": True, "process_sample_sha256": process.get("sample_sha256") if process_valid else None, "raw_process": raw_summary},
+        "resource": {
+            "parent_peak_rss_bytes": peak_rss,
+            "parent_max_swap_bytes": max_swap,
+        },
+    }
+
+
+def check_j5_record(record_path: Path, expected_source_sha: str) -> dict[str, Any]:
+    errors: list[str] = []
+    gates: list[str] = []
+    numerical: list[str] = []
+    checkpoint_failures: list[str] = []
+    recovery_failures: list[str] = []
+    physics_blockers: list[str] = []
+    authority_blockers: list[str] = []
+    warnings: list[str] = []
+    try:
+        record = _read_json(record_path)
+        if not isinstance(record, Mapping):
+            raise ValueError("parent record is not an object")
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return {
+            "checker_schema": J5_CHECKER_SCHEMA,
+            "passed": False,
+            "classification": "J5_CONTRACT_INVALID",
+            "contract_errors": [f"J5 parent record unreadable: {exc}"],
+            "gate_failures": [],
+            "numerical_failures": [],
+            "checkpoint_failures": [],
+            "recovery_failures": [],
+            "physics_blockers": [],
+            "warnings": [],
+            "metrics": {},
+            "resource": {},
+        }
+    if record.get("partial") is True:
+        return _check_j5_partial(record, record_path, expected_source_sha)
+    paths = record.get("paths")
+    root = Path(str(paths.get("artifact_root", ""))).resolve() if isinstance(paths, Mapping) else Path("/")
+    cache_dir = root / "jit_cache"
+    if (
+        record.get("schema") != J5_PARENT_SCHEMA
+        or record.get("workflow") != J5_WORKFLOW
+        or record.get("stage") != J5_PARENT_STAGE
+        or record.get("source_sha") != expected_source_sha
+        or not _j4_hex_sha(expected_source_sha, 40)
+        or record.get("branch") != BRANCH
+        or not isinstance(paths, Mapping)
+        or Path(str(record_path)).resolve() != root / "parent_record.json"
+        or paths.get("record") != str(record_path.resolve())
+        or paths.get("artifact_root") != str(root)
+        or paths.get("cache_dir") != str(cache_dir)
+        or paths.get("worker_record") != str(root / "worker_record.json")
+        or record.get("marker_schema") != V14_MARKER_SCHEMA
+        or record.get("sample_schema") != SAMPLE_SCHEMA
+        or not root.is_dir()
+    ):
+        _error(errors, "J5 parent identity/root contract is not closed")
+    identity = record.get("identity")
+    if (
+        not isinstance(identity, Mapping)
+        or identity.get("input_sha256") != INPUT_SHA256
+        or identity.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256
+        or identity.get("mode_manifest_sha256") != MODE_MANIFEST_SHA256
+        or identity.get("profile") != J4_EXPECTED_PROFILE
+    ):
+        _error(errors, "J5 frozen identity is not exact")
+    input_path = Path(str(identity.get("input_path", ""))).resolve() if isinstance(identity, Mapping) else Path("")
+    if not input_path.is_file() or _sha256_file(input_path) != INPUT_SHA256:
+        _error(errors, "J5 frozen input path/SHA is not closed")
+    runtime = identity.get("runtime") if isinstance(identity, Mapping) else None
+    expected_prefix = Path(__file__).resolve().parents[1] / ".venv"
+    expected_python = expected_prefix / "bin/python"
+    if (
+        not isinstance(runtime, Mapping)
+        or runtime.get("source_sha") != expected_source_sha
+        or runtime.get("branch") != BRANCH
+        or runtime.get("qualified_activation") != "1"
+        or runtime.get("mpi_size") != 1
+        or runtime.get("petsc_scalar_type") != "complex128"
+        or runtime.get("petsc_int_type") != "int32"
+        or runtime.get("python_executable") != str(expected_python)
+        or runtime.get("python_prefix") != str(expected_prefix)
+        or runtime.get("threads") != {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
+    ):
+        _error(errors, "J5 parent runtime provenance is not exact")
+    command = record.get("command")
+    if (
+        not isinstance(command, list)
+        or command[:3] != [str(expected_python), "-m", "benchmarks.run_task038_full3d_jit_staged_parent"]
+        or _option(command, "--workflow") != J5_WORKFLOW
+        or _option(command, "--artifact-root") != str(root)
+        or _option(command, "--record") != str(record_path.resolve())
+        or _option(command, "--source-sha") != expected_source_sha
+        or _option(command, "--input") != str(input_path)
+        or _option(command, "--expected-mpi-size") != "1"
+    ):
+        _error(errors, "J5 parent command is not the exact full-workflow command")
+    marker_times = _j5_parent_markers(record, errors)
+    modules, child_metrics = _j4_check_children(record, root, cache_dir, errors, gates)
+    if isinstance(record.get("cache"), Mapping) and record["cache"].get("deferred_incident_module_basenames") != []:
+        _error(errors, "J5 incident RHS must be loaded by the worker, not deferred")
+    worker, worker_metrics = _j5_check_worker(record, root, cache_dir, modules, expected_source_sha, errors, gates, numerical, checkpoint_failures, recovery_failures, physics_blockers, authority_blockers)
+    solver = record.get("solver")
+    solver_process = solver.get("process") if isinstance(solver, Mapping) else None
+    solver_pid = int(solver_process.get("pid")) if isinstance(solver_process, Mapping) and type(solver_process.get("pid")) is int else -1
+    process_path = Path(str(paths.get("process_samples", ""))).resolve() if isinstance(paths, Mapping) else Path("")
+    worker_marker_times = worker_metrics.get("worker_marker_times", {})
+    actual_process, process_metrics = _j4_process_summary(process_path, marker_times, solver_pid, worker_marker_times, errors, gates)
+    if isinstance(record.get("process"), Mapping):
+        _j4_compare_summary(record["process"], actual_process, errors)
+    else:
+        _error(errors, "J5 parent process summary is missing")
+    actual_stages = actual_process.get("stage_summaries", {})
+    if isinstance(actual_stages, Mapping):
+        for stage_name, monitor in child_metrics.get("monitors", {}).items():
+            stage = actual_stages.get(stage_name)
+            if isinstance(monitor, Mapping) and isinstance(stage, Mapping):
+                _j4_compare_monitor(monitor, stage, stage_name, errors)
+            else:
+                _error(errors, f"J5 child stage summary is missing: {stage_name}")
+    if not isinstance(solver, Mapping) or not isinstance(solver_process, Mapping):
+        _error(errors, "J5 solver process facts are missing")
+    else:
+        if (
+            solver.get("workflow") != J5_WORKFLOW
+            or solver.get("record_path") != str(root / "worker_record.json")
+            or solver.get("record_sha256") != _sha256_file(root / "worker_record.json")
+            or solver.get("cache_unchanged") is not True
+            or solver_process.get("natural_exit") is not True
+            or solver_process.get("returncode") != 0
+            or solver_process.get("process_group_gone") is not True
+            or solver_process.get("required_sigkill") is not False
+            or solver_process.get("all_status_readable") is not True
+            or solver_process.get("max_swap_bytes") != 0
+            or solver_process.get("peak_rss_bytes") is None
+            or int(solver_process["peak_rss_bytes"]) >= COLD_RSS_LIMIT
+        ):
+            _gate(gates, "J5 solver process/resource lifecycle Gate failed")
+        stage = actual_stages.get("solver") if isinstance(actual_stages, Mapping) else None
+        if isinstance(stage, Mapping):
+            _j4_compare_monitor(solver_process, stage, "solver", errors)
+        else:
+            _error(errors, "J5 solver stage summary is missing")
+    cache = record.get("cache")
+    before = cache.get("before_solver") if isinstance(cache, Mapping) else None
+    after = cache.get("after_solver") if isinstance(cache, Mapping) else None
+    if not isinstance(cache, Mapping) or not isinstance(before, Mapping) or not isinstance(after, Mapping) or cache.get("solver_unchanged") is not True:
+        _error(errors, "J5 cache before/after facts are missing or not unchanged")
+    else:
+        before_path = _j4_path(before.get("path"), root, errors, "J5 before-solver manifest")
+        after_path = _j4_path(after.get("path"), root, errors, "J5 after-solver manifest")
+        if before_path is not None and after_path is not None and (
+            before.get("sha256") != _sha256_file(before_path)
+            or after.get("sha256") != _sha256_file(after_path)
+            or before_path.read_bytes() != after_path.read_bytes()
+        ):
+            _error(errors, "J5 solver changed the cache manifest")
+    if process_metrics.get("retained_window_sample_count", 0) == 0 or process_metrics.get("retained_window_solver_sample_count", 0) == 0:
+        _error(errors, "J5 parent JSONL has no retained-window worker sample")
+    if process_metrics.get("release_window_sample_count", 0) == 0 or process_metrics.get("release_window_solver_sample_count", 0) == 0:
+        _error(errors, "J5 parent JSONL has no release-observation worker sample")
+    solve_peak = process_metrics.get("solve_window_peak_rss_bytes")
+    if solve_peak is None or solve_peak > 1_700_000_000:
+        _gate(gates, "J5 solve-ready retained RSS exceeded 1.7GB")
+    elif solve_peak > 1_600_000_000:
+        warnings.append(f"J5 solve-ready retained RSS is in the 1.6-1.7GB warning interval: {solve_peak}")
+    teardown_last = process_metrics.get("teardown_last_rss_bytes")
+    if teardown_last is not None and solve_peak is not None and teardown_last > solve_peak:
+        _gate(gates, "J5 teardown RSS exceeds solve-window peak")
+    passed = not errors and not gates and not numerical and not checkpoint_failures and not recovery_failures and not physics_blockers and not authority_blockers
+    iterations = worker_metrics.get("iterations")
+    final_residual = worker_metrics.get("raw_relative_residual")
+    fixed_cap_failure = (
+        type(iterations) is int
+        and iterations == MAX_IT
+        and _finite_number(final_residual)
+        and float(final_residual) > RESIDUAL_LIMIT
+    )
+    classification = (
+        "J5_CONTRACT_INVALID"
+        if errors
+        else "J5_RESOURCE_GATE_FAIL"
+        if gates
+        else J5_NUMERICAL_FIXED_CAP
+        if numerical and fixed_cap_failure
+        else J5_NUMERICAL_BEFORE_CAP
+        if numerical and type(iterations) is int and iterations < MAX_IT
+        else J5_NUMERICAL_GATE_FAIL
+        if numerical
+        else J5_CHECKPOINT_GATE_FAIL
+        if checkpoint_failures
+        else "J5_RECOVERY_PHYSICS_FAIL"
+        if recovery_failures
+        else J5_AUTHORITY_ARRAYS_MISSING
+        if authority_blockers and not physics_blockers
+        else "J5_RECOVERY_PHYSICS_FAIL"
+        if physics_blockers
+        else "J5_PASS"
+    )
+    return {
+        "checker_schema": J5_CHECKER_SCHEMA,
+        "passed": passed,
+        "classification": classification,
+        "contract_errors": errors,
+        "gate_failures": gates,
+        "numerical_failures": numerical,
+        "checkpoint_failures": checkpoint_failures,
+        "recovery_failures": recovery_failures,
+        "physics_blockers": physics_blockers,
+        "authority_blockers": authority_blockers,
+        "warnings": warnings,
+        "identity": {"source_sha": expected_source_sha, "branch": BRANCH, "workflow": J5_WORKFLOW},
+        "metrics": {"precompiled_module_count": len(modules), **worker_metrics, **process_metrics},
+        "resource": {
+            "parent_peak_rss_bytes": actual_process.get("peak_rss_bytes"),
+            "parent_max_swap_bytes": actual_process.get("max_swap_bytes"),
+            "solve_window_peak_rss_bytes": solve_peak,
+            "child_metrics": child_metrics,
+        },
+    }
+
+
 def check_j4_record(record_path: Path, expected_source_sha: str) -> dict[str, Any]:
     errors: list[str] = []
     gates: list[str] = []
@@ -2222,7 +3218,7 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_source_sha:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--workflow", choices=("full", J4_WORKFLOW), default="full")
+    parser.add_argument("--workflow", choices=("full", J4_WORKFLOW, J5_WORKFLOW), default="full")
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--watchdog-compact", type=Path, default=None)
     parser.add_argument("--expected-source-sha", required=True)
@@ -2230,6 +3226,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.workflow == J4_WORKFLOW:
         result = check_j4_record(args.record.resolve(), args.expected_source_sha)
+    elif args.workflow == J5_WORKFLOW:
+        result = check_j5_record(args.record.resolve(), args.expected_source_sha)
     else:
         if args.watchdog_compact is None:
             raise ValueError("--watchdog-compact is required for the full P0 workflow")
@@ -2245,4 +3243,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["CHECKER_SCHEMA", "J4_CHECKER_SCHEMA", "check_j4_record", "check_record", "main"]
+__all__ = [
+    "CHECKER_SCHEMA",
+    "J4_CHECKER_SCHEMA",
+    "J5_CHECKER_SCHEMA",
+    "check_j4_record",
+    "check_j5_record",
+    "check_record",
+    "main",
+]

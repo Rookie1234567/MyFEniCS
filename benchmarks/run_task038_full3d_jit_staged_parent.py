@@ -40,10 +40,12 @@ SOLVER_MODULE = "benchmarks.run_task038_full3d_jit_solver_bundle"
 P0_MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p0_physical"
 WORKFLOW_J3 = "j3-split-cold-staged"
 WORKFLOW_J4 = "j4-p0r"
+WORKFLOW_J5 = "j5-full"
 RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.parent-record.v1"
 CHILD_RECORD_SCHEMA = "task038.full3d.jit-split.child-record.v1"
 SOLVER_RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.solver-record.v1"
 J4_RECORD_SCHEMA = "task038.v14.j4.p0r.parent-record.v1"
+J5_RECORD_SCHEMA = "task038.v14.j5.full.parent-record.v1"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
@@ -221,13 +223,15 @@ def _p0_command(
     input_path: Path,
     record_path: Path,
     source_sha: str,
+    *,
+    workflow: str = WORKFLOW_J4,
 ) -> list[str]:
     return [
         str(Path(sys.executable)),
         "-m",
         P0_MODULE,
         "--workflow",
-        WORKFLOW_J4,
+        workflow,
         "--stage",
         "p0-physical",
         "--case",
@@ -267,6 +271,8 @@ def _marker(
         "stage": (
             "j4-p0r-parent"
             if workflow == WORKFLOW_J4
+            else "j5-full-parent"
+            if workflow == WORKFLOW_J5
             else "j3-split-cold-staged-parent"
         ),
         "artifact_root": str(root),
@@ -640,9 +646,16 @@ def _partial_record(
     workflow: str = WORKFLOW_J3,
 ) -> dict[str, Any]:
     j4 = workflow == WORKFLOW_J4
+    j5 = workflow == WORKFLOW_J5
     partial: dict[str, Any] = {
-        "schema": J4_RECORD_SCHEMA if j4 else RECORD_SCHEMA,
-        "stage": "j4-p0r-parent" if j4 else "j3-split-cold-staged-parent",
+        "schema": J4_RECORD_SCHEMA if j4 else J5_RECORD_SCHEMA if j5 else RECORD_SCHEMA,
+        "stage": (
+            "j4-p0r-parent"
+            if j4
+            else "j5-full-parent"
+            if j5
+            else "j3-split-cold-staged-parent"
+        ),
         "workflow": workflow,
         "source_sha": source_sha,
         "branch": BRANCH,
@@ -866,7 +879,7 @@ def run_parent(args: argparse.Namespace) -> None:
             compiler_descendant_count=int(tail_sample["compiler_descendant_count"]),
         )
         before_solver = _save_manifest(cache_dir, manifests_dir / "before_solver.json")
-        if args.workflow == WORKFLOW_J4:
+        if args.workflow in {WORKFLOW_J4, WORKFLOW_J5}:
             worker_record = root / "worker_record.json"
             worker_command = _p0_command(
                 root,
@@ -875,6 +888,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 input_path,
                 worker_record,
                 args.source_sha,
+                workflow=args.workflow,
             )
             _marker(
                 paths["marker_dir"],
@@ -882,7 +896,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 cache_dir,
                 args.source_sha,
                 "solver_child_started",
-                workflow=WORKFLOW_J4,
+                workflow=args.workflow,
                 command=worker_command,
                 pid_expected="child_process",
             )
@@ -896,7 +910,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 "solver",
             )
             solver_info = {
-                "workflow": WORKFLOW_J4,
+                "workflow": args.workflow,
                 "command": worker_command,
                 "process": worker_process,
                 "record_path": str(worker_record),
@@ -927,9 +941,9 @@ def run_parent(args: argparse.Namespace) -> None:
                 or worker_process["peak_rss_bytes"] is None
                 or worker_process["peak_rss_bytes"] >= RSS_HARD_LIMIT
             ):
-                raise RuntimeError("J4 P0 worker failed")
+                raise RuntimeError(f"{args.workflow} physical worker failed")
             if not worker_record.is_file():
-                raise RuntimeError(f"J4 P0 worker record is missing: {worker_record}")
+                raise RuntimeError(f"{args.workflow} physical worker record is missing: {worker_record}")
             if not solver_info["cache_unchanged"]:
                 raise RuntimeError("J4 solver phase changed the formal cache")
             _marker(
@@ -938,7 +952,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 cache_dir,
                 args.source_sha,
                 "parent_complete",
-                workflow=WORKFLOW_J4,
+                workflow=args.workflow,
                 solver_returncode=worker_process["returncode"],
                 cache_unchanged=True,
                 before_solver_manifest_sha256=before_solver["sha256"],
@@ -957,9 +971,9 @@ def run_parent(args: argparse.Namespace) -> None:
                 }
             )
             record = {
-                "schema": J4_RECORD_SCHEMA,
-                "stage": "j4-p0r-parent",
-                "workflow": WORKFLOW_J4,
+                "schema": J4_RECORD_SCHEMA if args.workflow == WORKFLOW_J4 else J5_RECORD_SCHEMA,
+                "stage": "j4-p0r-parent" if args.workflow == WORKFLOW_J4 else "j5-full-parent",
+                "workflow": args.workflow,
                 "source_sha": args.source_sha,
                 "branch": BRANCH,
                 "command": parent_command,
@@ -1013,7 +1027,7 @@ def run_parent(args: argparse.Namespace) -> None:
                     "solver_unchanged": True,
                 },
                 "architecture": {
-                    "workflow": WORKFLOW_J4,
+                    "workflow": args.workflow,
                     "precompile_group_count": len(JIT_GROUPS),
                     "solver_worker": P0_MODULE,
                     "physical_workflow": True,
@@ -1021,7 +1035,10 @@ def run_parent(args: argparse.Namespace) -> None:
                     "volume_component_count": 2,
                     "volume_components": ["curl_curl", "complex_material_mass"],
                     "monolithic_physical_volume": False,
-                    "official_recovery": False,
+                    "official_recovery": args.workflow == WORKFLOW_J5,
+                    "qualification_only": args.workflow == WORKFLOW_J4,
+                    "max_it": 20 if args.workflow == WORKFLOW_J4 else 20_000,
+                    "checkpoint_interval": None if args.workflow == WORKFLOW_J4 else 500,
                 },
                 "raw_facts_only": True,
             }
@@ -1210,7 +1227,9 @@ def run_parent(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--workflow", choices=(WORKFLOW_J3, WORKFLOW_J4), default=WORKFLOW_J3)
+    parser.add_argument(
+        "--workflow", choices=(WORKFLOW_J3, WORKFLOW_J4, WORKFLOW_J5), default=WORKFLOW_J3
+    )
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
@@ -1222,7 +1241,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.expected_mpi_size != 1:
-        raise ValueError("J3/J4 parent is fixed to MPI1")
+        raise ValueError("J3/J4/J5 parent is fixed to MPI1")
     run_parent(args)
     return 0
 
@@ -1239,6 +1258,7 @@ __all__ = (
     "RECORD_SCHEMA",
     "RSS_HARD_LIMIT",
     "SOLVER_MODULE",
+    "WORKFLOW_J5",
     "build_parser",
     "main",
     "run_parent",
