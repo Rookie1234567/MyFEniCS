@@ -147,6 +147,12 @@ V8_ADAPTIVE_STAGE_B1_ONLY_SCHEMA = (
     "task040.v8.adaptive_impedance_schwarz.stage_b1.v1"
 )
 V8_ADAPTIVE_STAGE_B1_ONLY_PROFILE_ID = V8_ADAPTIVE_STAGE_B1_ONLY_SCHEMA
+V8_ADAPTIVE_STAGE_BC_ONLY_FLAG = "--v8-adaptive-stage-bc-only"
+V8_ADAPTIVE_STAGE_BC_ONLY_METHOD = "task040_v8_adaptive_impedance_stage_bc"
+V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA = (
+    "task040.v8.adaptive_impedance_schwarz.stage_bc.v1"
+)
+V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID = V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA
 
 __all__ = (
     "V6_2_EXACT_QUALIFICATION_SOURCES",
@@ -192,6 +198,10 @@ __all__ = (
     "V8_ADAPTIVE_STAGE_B1_ONLY_METHOD",
     "V8_ADAPTIVE_STAGE_B1_ONLY_PROFILE_ID",
     "V8_ADAPTIVE_STAGE_B1_ONLY_SCHEMA",
+    "V8_ADAPTIVE_STAGE_BC_ONLY_FLAG",
+    "V8_ADAPTIVE_STAGE_BC_ONLY_METHOD",
+    "V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID",
+    "V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA",
     "V8_ADAPTIVE_TIMEOUT_SECONDS",
     "V8_FULL_SPECTRUM_CHECKPOINTS",
     "V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES",
@@ -3128,6 +3138,7 @@ def run_v6_2_interface_schur(
     v8_full_spectrum_only: bool = False,
     v8_adaptive_schwarz_only: bool = False,
     v8_adaptive_stage_b1_only: bool = False,
+    v8_adaptive_stage_bc_only: bool = False,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
     v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -3139,9 +3150,20 @@ def run_v6_2_interface_schur(
             v7_moving_pml_full_state,
             v8_full_spectrum_only,
             v8_adaptive_schwarz_only,
+            v8_adaptive_stage_bc_only,
         )
     ):
         raise ValueError("V8 adaptive Stage-B1 route is mutually exclusive")
+    if v8_adaptive_stage_bc_only and any(
+        (
+            v7_scale_normalized_identity,
+            v7_moving_pml_full_state,
+            v8_full_spectrum_only,
+            v8_adaptive_schwarz_only,
+            v8_adaptive_stage_b1_only,
+        )
+    ):
+        raise ValueError("V8 adaptive Stage-B/C route is mutually exclusive")
 
     # This is the single clock origin for the whole worker sequence.  It must
     # include authority/root, ABI/resource preflight, directory setup, system
@@ -3247,6 +3269,27 @@ def run_v6_2_interface_schur(
             "formal_adjudication": False,
             "source_order": [],
         }
+    if v8_adaptive_stage_bc_only and int(comm.size) != 8:
+        return _stop_result(
+            status="not_run_by_v8_adaptive_stage_bc_mpi_size_gate",
+            classification="ADAPTIVE_SPECTRAL_SCHWARZ_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            identity_preflight={
+                "status": "mpi_size_gate",
+                "pass": False,
+                "checks": {"mpi_size_8": False},
+            },
+            resource_preflight=None,
+        ) | {
+            "schema": V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA,
+            "method": V8_ADAPTIVE_STAGE_BC_ONLY_METHOD,
+            "profile": V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID,
+            "pass": None,
+            "formal_adjudication": False,
+            "source_order": [],
+        }
     if v7_moving_pml_full_state and int(comm.size) != 8:
         moving_stop = _stop_result(
             status="not_run_by_v7_moving_pml_mpi_size_gate",
@@ -3348,7 +3391,9 @@ def run_v6_2_interface_schur(
         "last_resource": None,
     }
     adaptive_route_enabled = (
-        v8_adaptive_schwarz_only or v8_adaptive_stage_b1_only
+        v8_adaptive_schwarz_only
+        or v8_adaptive_stage_b1_only
+        or v8_adaptive_stage_bc_only
     )
     adaptive_event_callback: Callable[[str, Mapping[str, Any]], Any] | None = None
     adaptive_marker_resource_callback = None
@@ -3407,6 +3452,20 @@ def run_v6_2_interface_schur(
 
         adaptive_event_mapping = (
             {
+                "gamma_rhs_ready": "v8_adaptive_stage_bc_gamma_rhs_ready",
+                "factor_ready": "v8_adaptive_stage_bc_factor_ready",
+                "harmonic_columns_ready": (
+                    "v8_adaptive_stage_bc_harmonic_columns_ready"
+                ),
+                "memory_preflight": "v8_adaptive_stage_bc_memory_preflight",
+                "coarse_ready": "v8_adaptive_stage_bc_coarse_ready",
+                "solve_begin": "v8_adaptive_stage_bc_solve_begin",
+                "checkpoint": "v8_adaptive_stage_bc_checkpoint",
+                "solve_end": "v8_adaptive_stage_bc_solve_end",
+                "classification": "v8_adaptive_stage_bc_classification",
+            }
+            if v8_adaptive_stage_bc_only
+            else {
                 "factor_ready": "v8_adaptive_stage_b1_factor_ready",
                 "b1_begin": "v8_adaptive_stage_b1_begin",
                 "b1_end": "v8_adaptive_stage_b1_end",
@@ -3420,7 +3479,9 @@ def run_v6_2_interface_schur(
 
         adaptive_mark(
             (
-                "v8_adaptive_stage_b1_preflight"
+                "v8_adaptive_stage_bc_preflight"
+                if v8_adaptive_stage_bc_only
+                else "v8_adaptive_stage_b1_preflight"
                 if v8_adaptive_stage_b1_only
                 else "v8_adaptive_preflight"
             ),
@@ -3431,12 +3492,20 @@ def run_v6_2_interface_schur(
             source=None,
             checkpoint=None,
             resource_limits={
-                "preferred_memory_bytes": V8_ADAPTIVE_PREFERRED_MEMORY_BYTES,
+                "preferred_memory_bytes": (
+                    None
+                    if v8_adaptive_stage_bc_only
+                    else V8_ADAPTIVE_PREFERRED_MEMORY_BYTES
+                ),
                 "hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
-                "setup_target_seconds": V8_ADAPTIVE_SETUP_TARGET_SECONDS,
+                "setup_target_seconds": (
+                    None
+                    if v8_adaptive_stage_bc_only
+                    else V8_ADAPTIVE_SETUP_TARGET_SECONDS
+                ),
                 "one_apply_target_seconds": (
                     None
-                    if v8_adaptive_stage_b1_only
+                    if v8_adaptive_stage_b1_only or v8_adaptive_stage_bc_only
                     else V8_ADAPTIVE_ONE_APPLY_TARGET_SECONDS
                 ),
                 "total_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
@@ -3446,6 +3515,11 @@ def run_v6_2_interface_schur(
                         "operation": "symbolic_identity_and_memory_preflight_only"
                     }
                     if v8_adaptive_stage_b1_only
+                    else {}
+                ),
+                **(
+                    {"operation": "two_source_stage_bc_screen"}
+                    if v8_adaptive_stage_bc_only
                     else {}
                 ),
             },
@@ -3480,6 +3554,7 @@ def run_v6_2_interface_schur(
     comm.barrier()
 
     system = None
+    system_destroyed = False
     matrix = None
     action = None
     v7_d1_matrix: PETSc.Mat | None = None
@@ -3497,6 +3572,8 @@ def run_v6_2_interface_schur(
     exact_budget_seconds = (
         V8_FULL_SPECTRUM_TIMEOUT_SECONDS
         if v8_full_spectrum_only
+        else V8_ADAPTIVE_TIMEOUT_SECONDS
+        if v8_adaptive_stage_bc_only
         else TASK040_LEVEL_A_TIMEOUT_SECONDS
     )
     try:
@@ -3508,7 +3585,11 @@ def run_v6_2_interface_schur(
             source_work_directory=output_root / "source",
             selected_mode_provider=(
                 _v5_selected_mode_provider(comm)
-                if v7_moving_pml_full_state or v8_full_spectrum_only
+                if (
+                    v7_moving_pml_full_state
+                    or v8_full_spectrum_only
+                    or v8_adaptive_stage_bc_only
+                )
                 else None
             ),
             external_mode_authority=identity_preflight["external_mode_authority"],
@@ -3517,7 +3598,11 @@ def run_v6_2_interface_schur(
             ),
             source_factor_marker_callback=(
                 marker_callback
-                if v7_moving_pml_full_state or v8_full_spectrum_only
+                if (
+                    v7_moving_pml_full_state
+                    or v8_full_spectrum_only
+                    or v8_adaptive_stage_bc_only
+                )
                 else None
             ),
             comm=comm,
@@ -3547,6 +3632,77 @@ def run_v6_2_interface_schur(
             qep_calls=0,
             full_side_exact_factor_count=0,
         )
+        if v8_adaptive_stage_bc_only:
+            adaptive_mark(
+                "v8_adaptive_stage_bc_system_ready",
+                system_created=True,
+                factor_lifecycle={"ready": 0},
+                pc_apply_count=0,
+                action_apply_count=0,
+                source=None,
+                checkpoint=None,
+                bare_f_rows=int(system.active_rows),
+                matrix_objects=matrix_objects,
+                qep_calls=0,
+                gamma_canonical_interface_built=False,
+                group_factors_built=False,
+            )
+            from src.solvers.hybrid_adaptive_impedance_screen import (
+                run_adaptive_impedance_stage_bc_screen,
+            )
+            from src.solvers.hybrid_bare_f_authority import build_current_bare_f_rhs
+
+            stage_bc_result = run_adaptive_impedance_stage_bc_screen(
+                function_space=system.V,
+                condensed=system.static_condensation.condensed,
+                bare_f=system.F,
+                facet_tags=system.local_mesh.mesh_data.facet_tags,
+                external_facet_tag=int(system.local_mesh.external_facet_tag),
+                beta=level_a_bottom_beta(cfg),
+                quadrature_degree=2 * int(cfg.nedelec_degree),
+                source_builder=lambda label: build_current_bare_f_rhs(system, label),
+                event_callback=adaptive_event_callback,
+            )
+            result = _json_safe(dict(stage_bc_result))
+            result.update(
+                {
+                    "schema": V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA,
+                    "method": V8_ADAPTIVE_STAGE_BC_ONLY_METHOD,
+                    "profile": V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID,
+                    "source_sha": str(source_sha),
+                    "input_sha256": str(input_sha256),
+                    "physical_model_sha256": str(physical_model_sha256),
+                    "identity_preflight": _json_safe(identity_preflight),
+                    "resource_preflight": _json_safe(resource_preflight),
+                    "system_inventory": {
+                        "rank": int(comm.rank),
+                        "mpi_size": int(comm.size),
+                        "active_rows": int(system.active_rows),
+                        "full_rows": int(
+                            system.static_condensation.condensed.full_rows
+                        ),
+                        "bare_f_shape": [int(value) for value in system.F.getSize()],
+                        "selected_mode_provider": "v5_hash_bound_caller_owned",
+                        "source_build_audit": _json_safe(
+                            system.construction_inventory.get("source_build_counts", {})
+                        ),
+                    },
+                    "matrix_objects": {
+                        "bare_f": "borrowed",
+                        "selected_mode_provider": "caller_owned",
+                        "gamma_canonical_interface": 0,
+                        "group_factors": 0,
+                        "qep": 0,
+                        "full_side_factor": 0,
+                        "global_factor": 0,
+                    },
+                    "qep_calls": 0,
+                    "full_side_factor_count": 0,
+                    "global_factor_count": 0,
+                }
+            )
+            result["source_order"] = list(result.get("executed_source_order", []))
+            return result
         if v8_full_spectrum_only:
             _v8_mark(
                 v8_marker_payload,
@@ -4881,6 +5037,7 @@ def run_v6_2_interface_schur(
             matrix.destroy()
         if system is not None:
             system.destroy()
+            system_destroyed = True
             if v7_moving_pml_full_state:
                 _emit(
                     marker_callback,
@@ -4923,7 +5080,7 @@ def run_v6_2_interface_schur(
                 _write_json(rank_root / "v8_full_spectrum.json", result)
                 if comm.rank == 0:
                     _write_json(output_root / "v8_manifest.json", result)
-        if adaptive_route_enabled:
+        if adaptive_route_enabled and not v8_adaptive_stage_bc_only:
             b1_route = v8_adaptive_stage_b1_only
             result_generated = result is not None
             result_record: Mapping[str, Any] = result if result is not None else {}
@@ -5082,5 +5239,96 @@ def run_v6_2_interface_schur(
                             if b1_route
                             else "v8_adaptive_failure_manifest.json"
                         ),
+                        failure_record,
+                    )
+        if v8_adaptive_stage_bc_only:
+            primary_exc_type, primary_exc, _ = sys.exc_info()
+            result_generated = result is not None
+            screen_cleanup = dict(adaptive_marker_state["screen_cleanup"])
+            failed_stage = adaptive_marker_state["last_stage"]
+            failed_resource = adaptive_marker_state["last_resource"]
+            cleanup = {
+                **screen_cleanup,
+                "status": (
+                    "complete"
+                    if screen_cleanup.get("status") == "complete"
+                    and system_destroyed
+                    else "incomplete"
+                ),
+                "result_generated": result_generated,
+                "system_destroyed": system_destroyed,
+                "action_destroyed": bool(
+                    screen_cleanup.get("local_action_destroyed", False)
+                ),
+                "provider_destroyed": bool(
+                    screen_cleanup.get("provider_destroyed", False)
+                ),
+                "factor_lifecycle_after_cleanup": screen_cleanup.get(
+                    "local_factor_lifecycle_after_cleanup", {}
+                ),
+                "screen_cleanup": screen_cleanup,
+            }
+            try:
+                adaptive_mark(
+                    "v8_adaptive_stage_bc_cleanup_complete",
+                    result_generated=result_generated,
+                    system_destroyed=system_destroyed,
+                    action_destroyed=cleanup["action_destroyed"],
+                    provider_destroyed=cleanup["provider_destroyed"],
+                    cleanup_status=cleanup["status"],
+                    factor_lifecycle=screen_cleanup.get(
+                        "local_factor_lifecycle_after_cleanup", {}
+                    ),
+                    pc_apply_count=int(screen_cleanup.get("pc_apply_count", 0)),
+                    action_apply_count=int(
+                        screen_cleanup.get("action_apply_count", 0)
+                    ),
+                    local_action_apply_count=int(
+                        screen_cleanup.get("local_action_apply_count", 0)
+                    ),
+                    source=None,
+                    checkpoint=None,
+                    cleanup=cleanup,
+                )
+            except Exception:
+                if primary_exc is None:
+                    raise
+            if result is not None:
+                result["cleanup"] = cleanup
+                _write_json(rank_root / "v8_adaptive_stage_bc.json", result)
+                if comm.rank == 0:
+                    _write_json(
+                        output_root / "v8_adaptive_stage_bc_manifest.json", result
+                    )
+            else:
+                failure_record = {
+                    "schema": V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA,
+                    "method": V8_ADAPTIVE_STAGE_BC_ONLY_METHOD,
+                    "profile": V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID,
+                    "status": "adaptive_stage_bc_exception",
+                    "classification": "V8_ADAPTIVE_STAGE_BC_IMPLEMENTATION_FAILURE",
+                    "pass": None,
+                    "formal_adjudication": False,
+                    "executed": False,
+                    "cleanup": cleanup,
+                    "error_propagated": True,
+                    "exception": {
+                        "type": (
+                            None
+                            if primary_exc_type is None
+                            else primary_exc_type.__name__
+                        ),
+                        "message": None if primary_exc is None else str(primary_exc),
+                    },
+                    "last_stage": failed_stage,
+                    "last_resource": _json_safe(failed_resource),
+                    "screen_cleanup": _json_safe(screen_cleanup),
+                }
+                _write_json(
+                    rank_root / "v8_adaptive_stage_bc_failure.json", failure_record
+                )
+                if comm.rank == 0:
+                    _write_json(
+                        output_root / "v8_adaptive_stage_bc_failure_manifest.json",
                         failure_record,
                     )

@@ -66,6 +66,10 @@ from benchmarks.task040_v6_2_interface_schur import (
     V8_ADAPTIVE_STAGE_B1_ONLY_METHOD,
     V8_ADAPTIVE_STAGE_B1_ONLY_PROFILE_ID,
     V8_ADAPTIVE_STAGE_B1_ONLY_SCHEMA,
+    V8_ADAPTIVE_STAGE_BC_ONLY_FLAG,
+    V8_ADAPTIVE_STAGE_BC_ONLY_METHOD,
+    V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID,
+    V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA,
     V8_ADAPTIVE_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_CHECKPOINTS,
     V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES,
@@ -431,6 +435,7 @@ def build_task040_level_a_plan(
     v8_full_spectrum_only: bool = False,
     v8_adaptive_schwarz_only: bool = False,
     v8_adaptive_stage_b1_only: bool = False,
+    v8_adaptive_stage_bc_only: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -488,6 +493,7 @@ def build_task040_level_a_plan(
                 v8_full_spectrum_only,
                 v8_adaptive_schwarz_only,
                 v8_adaptive_stage_b1_only,
+                v8_adaptive_stage_bc_only,
             )
         )
         > 1
@@ -974,6 +980,76 @@ def build_task040_level_a_plan(
                     "fgmres",
                     "gamma",
                     "group_factors",
+                ],
+            }
+        )
+    if v8_adaptive_stage_bc_only:
+        plan.update(
+            {
+                "schema": V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA,
+                "method": V8_ADAPTIVE_STAGE_BC_ONLY_METHOD,
+                "profile": V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID,
+                "v8_adaptive_stage_bc_only": True,
+                "research_only": True,
+                "oracle_only": False,
+                "scalable_candidate": False,
+                "pde_solve": "adaptive_impedance_stage_bc_two_source_screen",
+                "source_order": [
+                    "external_dtn_coupling",
+                    "fixed_random_repeat_0",
+                ],
+                "planned_source_order": [
+                    "external_dtn_coupling",
+                    "fixed_random_repeat_0",
+                    "modal_traction_positive",
+                    "modal_traction_negative",
+                    "fixed_random_repeat_1",
+                ],
+                "mandatory_checkpoints": [16, 32, 64],
+                "conditional_checkpoints": [],
+                "fixed_configuration": {
+                    "mass_source": "actual_hcurl_ufcx_exterior_facet_provider",
+                    "quadrature_degree": "2*cfg.nedelec_degree",
+                    "beta": "level_a_bottom_beta(cfg)",
+                    "outer": "right_FGMRES_restart32_zero_guess_max64",
+                    "sources_extend_after_positive": True,
+                },
+                "absolute_terminate_memory_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
+                "setup_target_seconds": None,
+                "one_apply_target_seconds": None,
+                "numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "formal_adjudication": False,
+                "marker_sequence": [
+                    "v8_adaptive_stage_bc_preflight",
+                    "v8_adaptive_stage_bc_system_ready",
+                    "v8_adaptive_stage_bc_gamma_rhs_ready",
+                    "v8_adaptive_stage_bc_factor_ready",
+                    "v8_adaptive_stage_bc_harmonic_columns_ready",
+                    "v8_adaptive_stage_bc_memory_preflight",
+                    "v8_adaptive_stage_bc_coarse_ready",
+                    "v8_adaptive_stage_bc_solve_begin",
+                    "v8_adaptive_stage_bc_checkpoint",
+                    "v8_adaptive_stage_bc_solve_end",
+                    "v8_adaptive_stage_bc_classification",
+                    "v8_adaptive_stage_bc_cleanup_complete",
+                ],
+                "forbidden": [
+                    "three_scale_identity",
+                    "d0_d1_comparison",
+                    "refinement",
+                    "partition",
+                    "moving_pml",
+                    "qep",
+                    "physical_dtn",
+                    "full_side_factor",
+                    "source_before_memory_gate",
+                    "full_basis_replica_per_rank",
+                    "dense_global_coarse_factor",
+                    "direct_global_coarse_factor",
                 ],
             }
         )
@@ -6353,6 +6429,7 @@ def run_task040_level_a(
     v8_full_spectrum_only: bool = False,
     v8_adaptive_schwarz_only: bool = False,
     v8_adaptive_stage_b1_only: bool = False,
+    v8_adaptive_stage_bc_only: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
@@ -6380,6 +6457,7 @@ def run_task040_level_a(
                 v8_full_spectrum_only,
                 v8_adaptive_schwarz_only,
                 v8_adaptive_stage_b1_only,
+                v8_adaptive_stage_bc_only,
             )
         )
         > 1
@@ -6439,7 +6517,11 @@ def run_task040_level_a(
             raise ValueError("V8 run_directory must not be the frozen exact spool root")
         if input_path is None:
             raise ValueError("V8 full-spectrum route requires the official input_path")
-    if v8_adaptive_schwarz_only or v8_adaptive_stage_b1_only:
+    if (
+        v8_adaptive_schwarz_only
+        or v8_adaptive_stage_b1_only
+        or v8_adaptive_stage_bc_only
+    ):
         if run_directory is None:
             raise ValueError("V8 adaptive route requires a separate run_directory")
         if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
@@ -6460,6 +6542,7 @@ def run_task040_level_a(
         or v8_full_spectrum_only
         or v8_adaptive_schwarz_only
         or v8_adaptive_stage_b1_only
+        or v8_adaptive_stage_bc_only
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6690,7 +6773,11 @@ def run_task040_level_a(
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
         )
-    if v8_adaptive_schwarz_only or v8_adaptive_stage_b1_only:
+    if (
+        v8_adaptive_schwarz_only
+        or v8_adaptive_stage_b1_only
+        or v8_adaptive_stage_bc_only
+    ):
         from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
 
         return run_v6_2_interface_schur(
@@ -6711,6 +6798,7 @@ def run_task040_level_a(
             resource_callback=resource_callback,
             v8_adaptive_schwarz_only=v8_adaptive_schwarz_only,
             v8_adaptive_stage_b1_only=v8_adaptive_stage_b1_only,
+            v8_adaptive_stage_bc_only=v8_adaptive_stage_bc_only,
         )
     if v8_full_spectrum_only:
         from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
@@ -7190,6 +7278,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_FULL_SPECTRUM_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_SCHWARZ_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
+    parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -7216,6 +7305,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_full_spectrum_only=args.v8_full_spectrum_only,
         v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
+        v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -7259,6 +7349,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_full_spectrum_only=args.v8_full_spectrum_only,
         v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
+        v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -7273,6 +7364,7 @@ def main(argv: list[str] | None = None) -> int:
                         else V8_ADAPTIVE_HARD_STOP_BYTES
                         if args.v8_adaptive_schwarz_only
                         or args.v8_adaptive_stage_b1_only
+                        or args.v8_adaptive_stage_bc_only
                         else TASK040_LEVEL_A_HARD_STOP_BYTES
                     ),
                 )
@@ -7291,6 +7383,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v8_full_spectrum_only
                     or args.v8_adaptive_schwarz_only
                     or args.v8_adaptive_stage_b1_only
+                    or args.v8_adaptive_stage_bc_only
                 )
                 else None
             )
@@ -7312,6 +7405,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.v8_full_spectrum_only
             or args.v8_adaptive_schwarz_only
             or args.v8_adaptive_stage_b1_only
+            or args.v8_adaptive_stage_bc_only
             else None
         ),
         v7_continuation=v7_continuation,
