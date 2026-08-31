@@ -478,6 +478,61 @@ def _v8_adaptive_active_stage_timeout(
     }
 
 
+def _v8_adaptive_swap_authority_sample(
+    authority: dict[str, Any], *, terminal_excluded: bool
+) -> dict[str, Any]:
+    """Evaluate one adaptive swap sample, including the scoped zero fallback."""
+
+    if terminal_excluded:
+        return {
+            "counted": False,
+            "authority_readable": True,
+            "swap_zero": True,
+            "fallback_used": False,
+            "semantics": "terminal_teardown_excluded",
+        }
+    process_tree = authority.get("process_tree", {})
+    cgroup = authority.get("job_cgroup", {})
+    process_complete = bool(process_tree.get("all_status_readable"))
+    process_swap = process_tree.get("swap_bytes")
+    dedicated = bool(cgroup.get("dedicated_job_cgroup"))
+    cgroup_readable = bool(cgroup.get("readable"))
+    cgroup_swap = cgroup.get("swap_current_bytes")
+    if process_complete:
+        cgroup_ok = (
+            not dedicated
+            or (cgroup_readable and cgroup_swap == SWAP_LIMIT_BYTES)
+        )
+        readable = process_swap == SWAP_LIMIT_BYTES and cgroup_ok
+        return {
+            "counted": True,
+            "authority_readable": readable,
+            "swap_zero": readable,
+            "fallback_used": False,
+            "semantics": (
+                "complete_process_tree_vm_swap"
+                if readable
+                else "complete_process_tree_or_dedicated_cgroup_invalid"
+            ),
+        }
+    fallback = (
+        not dedicated
+        and cgroup_readable
+        and cgroup_swap == SWAP_LIMIT_BYTES
+    )
+    return {
+        "counted": True,
+        "authority_readable": fallback,
+        "swap_zero": fallback,
+        "fallback_used": fallback,
+        "semantics": (
+            "nonterminal_incomplete_process_tree_non_dedicated_cgroup_zero_upper_bound"
+            if fallback
+            else "incomplete_process_tree_swap_authority_unavailable"
+        ),
+    }
+
+
 def _terminal_teardown_sample_excluded(
     *,
     post_sample_return_code: int | None,
@@ -565,6 +620,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     dedicated_cgroup_present = False
     dedicated_cgroup_swap_readable = True
     peak_dedicated_cgroup_swap_bytes = 0
+    adaptive_swap_authority_readable = True
+    adaptive_swap_sample_count = 0
+    adaptive_swap_fallback_count = 0
     previous_heartbeat = -HEARTBEAT_SECONDS
     termination_reason = "natural_exit"
     process_control: dict[str, Any] = {}
@@ -662,6 +720,18 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             terminal_teardown_excluded = (
                 process_exited_during_sample or completed_cleanup_teardown
             )
+            if adaptive_enabled:
+                swap_sample = _v8_adaptive_swap_authority_sample(
+                    authority, terminal_excluded=terminal_teardown_excluded
+                )
+                if swap_sample["counted"]:
+                    adaptive_swap_sample_count += 1
+                    adaptive_swap_authority_readable = (
+                        adaptive_swap_authority_readable
+                        and bool(swap_sample["authority_readable"])
+                    )
+                    if swap_sample["fallback_used"]:
+                        adaptive_swap_fallback_count += 1
             authoritative_sample = live_sample and not terminal_teardown_excluded
             if authoritative_sample:
                 sample_count += 1
@@ -830,7 +900,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         }
         preferred_peak_pass = peak_rss_bytes <= V8_ADAPTIVE_PREFERRED_MEMORY_BYTES
         swap_gate = bool(
-            swap_authority_readable
+            adaptive_swap_authority_readable
             and peak_swap_bytes == SWAP_LIMIT_BYTES
             and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
         )
@@ -865,6 +935,16 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 "v8_adaptive_resource_gate": resource_gate,
                 "preferred_peak_pass": preferred_peak_pass,
                 "swap_gate": swap_gate,
+                "adaptive_swap_authority_readable": (
+                    adaptive_swap_authority_readable
+                ),
+                "adaptive_swap_sample_count": adaptive_swap_sample_count,
+                "adaptive_swap_fallback_count": adaptive_swap_fallback_count,
+                "adaptive_swap_authority_semantics": (
+                    "complete process-tree VmSwap; nonterminal incomplete tree "
+                    "may use readable non-dedicated cgroup memory.swap.current==0 "
+                    "as a superset zero upper bound; terminal teardown excluded"
+                ),
                 "latest_stage": last_stage,
                 "latest_stage_status": last_stage_status,
                 "resource_classification": adaptive_classification,
@@ -969,6 +1049,11 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         )
     elif plan.get("packet_producer") is True:
         summary["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
+    final_swap_authority_readable = (
+        adaptive_swap_authority_readable
+        if adaptive_enabled
+        else swap_authority_readable
+    )
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     completed_gate = (
         adaptive_workflow_completed
@@ -982,7 +1067,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         if (
             completed_gate
             and run_summary.is_file()
-            and swap_authority_readable
+            and final_swap_authority_readable
             and peak_swap_bytes == SWAP_LIMIT_BYTES
             and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
         )

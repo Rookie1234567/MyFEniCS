@@ -2064,6 +2064,27 @@ def _v8_factor_ready_marker(group: int) -> str:
     return f"v8_full_spectrum_group{group}_factor_ready"
 
 
+def _v8_adaptive_event_callback_factory(
+    adaptive_mark: Callable[..., None], marker_state: dict[str, Any]
+) -> Callable[[str, Mapping[str, Any]], None]:
+    """Translate generic Stage-A events into benchmark marker names."""
+
+    stages = {
+        "factor_ready": "v8_adaptive_factor_ready",
+        "one_apply_begin": "v8_adaptive_external_one_apply_begin",
+        "one_apply_end": "v8_adaptive_external_one_apply_end",
+        "checkpoint": "v8_adaptive_checkpoint",
+    }
+
+    def callback(event: str, detail: Mapping[str, Any]) -> None:
+        if event == "cleanup":
+            marker_state["screen_cleanup"] = dict(detail)
+            return
+        adaptive_mark(stages[event], **dict(detail))
+
+    return callback
+
+
 def _collective_error(
     comm: MPI.Intracomm,
     stage: str,
@@ -3275,7 +3296,7 @@ def run_v6_2_interface_schur(
         "factor_lifecycle": {"ready": 0},
         "screen_cleanup": {},
     }
-    adaptive_event_callback = None
+    adaptive_event_callback: Callable[[str, Mapping[str, Any]], None] | None = None
     adaptive_marker_resource_callback = None
     if v8_adaptive_schwarz_only:
         adaptive_marker_resource_callback = _v6_2_live_resource_callback(
@@ -3327,17 +3348,9 @@ def run_v6_2_interface_schur(
             )
             adaptive_marker_state["last_wall"] = now
 
-        def adaptive_event(event: str, detail: Mapping[str, Any]) -> None:
-            stages = {
-                "factor_ready": "v8_adaptive_factor_ready",
-                "one_apply_begin": "v8_adaptive_external_one_apply_begin",
-                "one_apply_end": "v8_adaptive_external_one_apply_end",
-                "checkpoint": "v8_adaptive_checkpoint",
-            }
-            if event == "cleanup":
-                adaptive_marker_state["screen_cleanup"] = dict(detail)
-                return
-            adaptive_mark(stages[event], **dict(detail))
+        adaptive_event_callback = _v8_adaptive_event_callback_factory(
+            adaptive_mark, adaptive_marker_state
+        )
 
         adaptive_mark(
             "v8_adaptive_preflight",

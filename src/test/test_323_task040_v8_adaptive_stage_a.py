@@ -9,6 +9,7 @@ import pytest
 
 from benchmarks import task040_level_a as level_a
 from benchmarks import task040_level_a_watchdog as watchdog
+from benchmarks import task040_v6_2_interface_schur as interface_schur
 
 
 def _route_values(tmp_path: Path) -> dict[str, object]:
@@ -108,3 +109,52 @@ def test_v8_adaptive_stage_a_route_and_marker_contract(tmp_path):
     )
     assert one_apply["timed_out"] is True
     assert one_apply["kind"] == "one_apply"
+
+
+def test_v8_adaptive_callback_and_scoped_swap_authority():
+    seen = []
+    marker_state = {}
+
+    def adaptive_mark(stage, **detail):
+        seen.append((stage, detail))
+
+    callback = interface_schur._v8_adaptive_event_callback_factory(
+        adaptive_mark, marker_state
+    )
+    for event in ("factor_ready", "one_apply_begin", "one_apply_end", "checkpoint"):
+        callback(event, {"event": event})
+    assert [stage for stage, _ in seen] == [
+        "v8_adaptive_factor_ready",
+        "v8_adaptive_external_one_apply_begin",
+        "v8_adaptive_external_one_apply_end",
+        "v8_adaptive_checkpoint",
+    ]
+    callback("cleanup", {"released": True})
+    assert marker_state["screen_cleanup"] == {"released": True}
+
+    def authority(cgroup_swap):
+        return {
+            "process_tree": {"all_status_readable": False, "swap_bytes": 0},
+            "job_cgroup": {
+                "readable": True,
+                "dedicated_job_cgroup": False,
+                "swap_current_bytes": cgroup_swap,
+            },
+        }
+
+    fallback = watchdog._v8_adaptive_swap_authority_sample(
+        authority(0), terminal_excluded=False
+    )
+    assert fallback["authority_readable"] is True
+    assert fallback["fallback_used"] is True
+    assert fallback["counted"] is True
+    for bad in (None, 1):
+        sample = watchdog._v8_adaptive_swap_authority_sample(
+            authority(bad), terminal_excluded=False
+        )
+        assert sample["authority_readable"] is False
+        assert sample["fallback_used"] is False
+    terminal = watchdog._v8_adaptive_swap_authority_sample(
+        authority(0), terminal_excluded=True
+    )
+    assert terminal["counted"] is False
