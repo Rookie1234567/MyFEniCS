@@ -229,7 +229,13 @@ def _pid_vanished(pid: int) -> bool:
         return True
     except OSError:
         return False
-    return False
+    try:
+        state = _status_text(pid).get("State", "").split(maxsplit=1)[0]
+    except (FileNotFoundError, ProcessLookupError):
+        return True
+    except OSError:
+        return False
+    return state in {"Z", "X", "x"}
 
 
 def _live_parent_map() -> dict[int, list[int]]:

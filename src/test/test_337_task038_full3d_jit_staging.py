@@ -86,6 +86,41 @@ def test_helper_root_markers_process_and_cache_contract(tmp_path: Path, monkeypa
     assert vanished["unreadable_pids"] == []
     assert vanished["all_status_readable"] is True
 
+    zombie_pid = 2_000_000_001
+    dead_pid = 2_000_000_002
+    real_stat = staging.Path.stat
+    real_status = staging._status_text
+
+    def fake_stat(path):
+        if str(path) in {f"/proc/{zombie_pid}/stat", f"/proc/{dead_pid}/stat"}:
+            return None
+        return real_stat(path)
+
+    def fake_status(pid):
+        if pid == zombie_pid:
+            return {"State": "Z (zombie)"}
+        if pid == dead_pid:
+            return {"State": "X (dead)"}
+        return real_status(pid)
+
+    monkeypatch.setattr(staging.Path, "stat", fake_stat)
+    monkeypatch.setattr(staging, "_status_text", fake_status)
+    monkeypatch.setattr(
+        staging,
+        "_live_parent_map",
+        lambda: {os.getpid(): [zombie_pid, dead_pid]},
+    )
+    monkeypatch.setattr(
+        staging,
+        "_process_fact",
+        lambda pid, stage: None if pid in {zombie_pid, dead_pid} else original_fact(pid, stage),
+    )
+    monkeypatch.setattr(staging.time, "sleep", lambda _seconds: None)
+    terminal = process_tree_snapshot(os.getpid(), "terminal")
+    assert terminal["vanished_pids"] == [zombie_pid, dead_pid]
+    assert terminal["unreadable_pids"] == []
+    assert terminal["all_status_readable"] is True
+
     sleeps = []
     calls = []
     monkeypatch.setattr(staging, "_live_parent_map", lambda: {os.getpid(): []})
