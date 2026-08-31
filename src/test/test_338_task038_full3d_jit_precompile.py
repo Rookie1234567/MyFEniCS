@@ -1,4 +1,4 @@
-"""Focused contracts for the J2a minimal precompile child."""
+"""Focused contracts for the J3 split physical precompile child."""
 
 from __future__ import annotations
 
@@ -18,7 +18,8 @@ GROUP_ROLES = {
     "positive-p1": (1, ("positive_p1_bilinear",)),
     "dtn-surface": (4, ("dtn_surface_top_0", "dtn_surface_top_1", "dtn_surface_bottom_0", "dtn_surface_bottom_1")),
     "incident-rhs": (1, ("incident_top_traction",)),
-    "physical-volume": (1, ("physical_volume_action",)),
+    "physical-volume-curl": (1, ("physical_volume_curl_action",)),
+    "physical-volume-mass": (1, ("physical_volume_mass_action",)),
 }
 
 
@@ -33,34 +34,58 @@ def test_group_dispatch_returns_minimal_form_facts(monkeypatch, group):
         "positive-p1": "_build_positive_coarse",
         "dtn-surface": "_build_dtn_surface",
         "incident-rhs": "_build_incident_rhs",
-        "physical-volume": "_build_physical_volume",
+        "physical-volume-curl": "_build_physical_volume_component",
+        "physical-volume-mass": "_build_physical_volume_component",
     }
 
-    def fake_builder(_cfg, _comm, _jit_options, *, _group=group):
+    def fake_facts(_group, degree, _jit_options, **extra):
         forms = [
             {"role": role, "rank": 1 if "bilinear" not in role else 2, "kind": "fake"}
             for role in roles
         ]
-        return jit._facts(_group, 6 if _group != "positive-p3" and _group != "positive-p1" else int(_group[-1]), forms, _jit_options)
+        return jit._facts(_group, degree, forms, _jit_options, **extra)
 
-    monkeypatch.setattr(jit, builders[group], fake_builder)
-    if group == "positive-p3":
+    def fake_builder(_cfg, _comm, _jit_options):
+        degree = 6 if group not in {"positive-p3", "positive-p1"} else int(group[-1])
+        return fake_facts(group, degree, _jit_options)
+
+    if group in {"physical-volume-curl", "physical-volume-mass"}:
+        expected_component = "curl" if group.endswith("curl") else "mass"
+        seen_components = []
+
+        def fake_component(_cfg, _comm, _jit_options, component):
+            seen_components.append(component)
+            return fake_facts(
+                group,
+                6,
+                _jit_options,
+                component=component,
+                component_count=1,
+            )
+
+        monkeypatch.setattr(
+            jit,
+            "_build_physical_volume_component",
+            fake_component,
+        )
+    elif group in {"positive-p3", "positive-p1"}:
         monkeypatch.setattr(
             jit,
             "_build_positive_coarse",
-            lambda cfg, comm, degree, options: fake_builder(cfg, comm, options),
+            lambda _cfg, _comm, degree, options: fake_facts(
+                group, degree, options
+            ),
         )
-    elif group == "positive-p1":
-        monkeypatch.setattr(
-            jit,
-            "_build_positive_coarse",
-            lambda cfg, comm, degree, options: fake_builder(cfg, comm, options),
-        )
+    else:
+        monkeypatch.setattr(jit, builders[group], fake_builder)
     facts = jit.build_minimal_jit_group(cfg, comm, group)
     assert facts["compiled_form_count"] == count
     assert tuple(facts["form_roles"]) == roles
     assert facts["jit_options"] == {}
     assert all(value is False for value in facts["objects"].values())
+    if group in {"physical-volume-curl", "physical-volume-mass"}:
+        assert seen_components == [expected_component]
+        assert facts["component"] == expected_component
 
 
 def test_selected_call_sites_use_empty_mapping_and_generic_defaults_remain():
@@ -75,6 +100,10 @@ def test_selected_call_sites_use_empty_mapping_and_generic_defaults_remain():
     assert "jit_options=dict(SAME_MESH_JIT_OPTIONS)" in setup
     assert "include_positive_coefficients=True" in jit_source
     assert jit_source.count("include_positive_coefficients=False") == 3
+    assert tuple(jit.JIT_GROUPS) == tuple(GROUP_ROLES)
+    assert jit.JIT_GROUP_SCHEMA.endswith(".v2")
+    assert "_build_variational_forms" not in jit_source
+    assert "_build_physical_volume_terms" in jit_source
     assert physical.count("jit_options=SAME_MESH_JIT_OPTIONS") >= 3
     assert "jit_options: Mapping[str, Any] | None = None" in global_source
     assert "jit_options: Mapping[str, Any] | None = None" in dtn

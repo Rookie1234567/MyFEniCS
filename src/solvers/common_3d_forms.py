@@ -11,6 +11,19 @@ from ..common.config_3d import SimulationConfig3D
 from ..common.pml_3d import z_pml_tensors
 
 
+def _validate_physical_split_profile(cfg: SimulationConfig3D) -> None:
+    """Require the fixed no-PML, dtn-port split-volume profile."""
+
+    if bool(cfg.use_pml) or float(cfg.pml_top_thickness) != 0.0 or float(
+        cfg.pml_bottom_thickness
+    ) != 0.0:
+        raise ValueError("split physical volume requires the no-PML profile")
+    if float(cfg.divergence_penalty) != 0.0:
+        raise ValueError("split physical volume requires divergence_penalty=0")
+    if str(cfg.stage4_boundary_model).lower() != "dtn_port":
+        raise ValueError("split physical volume requires the dtn_port profile")
+
+
 def _build_physical_volume_terms(
     cfg: SimulationConfig3D,
     u,

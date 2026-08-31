@@ -825,12 +825,8 @@ def test_p0_stage_callback_order_and_optional_marker_command(
     dtn_action_module.build_dynamic_mode_inventory = lambda cfg: (["m0", "m1"], [0, 1], "mode-sha")
     dtn_action_module.build_fullspace_dtn_carrier_from_surface = lambda *args, **kwargs: "carrier"
     dtn_action_module.build_fullspace_dtn_action = lambda *args, **kwargs: "dtn-action"
-    mpc_module = ModuleType("src.solvers.fullspace_mpc_action")
-    mpc_module.build_fullspace_mpc_form_action = lambda *args, **kwargs: "volume-action"
     physical_module = ModuleType("src.solvers.fullspace_physical_action")
     physical_module.FullspacePhysicalAction = lambda *args, **kwargs: "physical-action"
-    forms_module = ModuleType("src.solvers.common_3d_forms")
-    forms_module._build_variational_forms = lambda *args, **kwargs: ("bilinear", "rhs")
     dtn_port_module = ModuleType("src.solvers.dtn_port_3d")
 
     class FakeAssembler:
@@ -843,14 +839,20 @@ def test_p0_stage_callback_order_and_optional_marker_command(
     for name, module in {
         "src.solvers.fullspace_same_mesh_hcurl_pmg_setup": setup_module,
         "src.solvers.fullspace_dtn_action": dtn_action_module,
-        "src.solvers.fullspace_mpc_action": mpc_module,
         "src.solvers.fullspace_physical_action": physical_module,
-        "src.solvers.common_3d_forms": forms_module,
         "src.solvers.dtn_port_3d": dtn_port_module,
     }.items():
         monkeypatch.setitem(sys.modules, name, module)
 
-    cfg = SimpleNamespace(tags=SimpleNamespace(z_max=1.0, z_min=0.0))
+    monkeypatch.setattr(core, "_build_split_volume_action", lambda *args, **kwargs: "volume-action")
+    cfg = SimpleNamespace(
+        tags=SimpleNamespace(z_max=1.0, z_min=0.0),
+        use_pml=False,
+        pml_top_thickness=0.0,
+        pml_bottom_thickness=0.0,
+        divergence_penalty=0.0,
+        stage4_boundary_model="dtn_port",
+    )
     bundle = core.build_p6_same_mesh_physical_bundle(
         cfg, SimpleNamespace(size=1), stage_callback=callback
     )
@@ -874,7 +876,17 @@ def test_p0_stage_callback_order_and_optional_marker_command(
         "mode_manifest_sha256": "mode-sha",
         "dtn_quadrature_degree": 7,
     }
-    assert facts["physical_volume_action_complete"]["volume_action"] is True
+    assert facts["physical_volume_action_started"] == {
+        "form": "exact_maxwell_volume_split",
+        "component_count": 2,
+        "components": ["curl_curl", "complex_material_mass"],
+    }
+    assert facts["physical_volume_action_complete"] == {
+        "form": "exact_maxwell_volume_split",
+        "component_count": 2,
+        "components": ["curl_curl", "complex_material_mass"],
+        "volume_action": True,
+    }
     assert bundle["physical_action"] == "physical-action"
 
     common = [

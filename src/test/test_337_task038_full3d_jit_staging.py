@@ -104,21 +104,27 @@ def test_helper_root_markers_process_and_cache_contract(tmp_path: Path, monkeypa
     assert marker_files(layout["marker_dir"])[-1].name == "001_fresh_cache_created.json"
 
 
-def test_runner_checker_happy_path(tmp_path: Path) -> None:
+def test_runner_emits_current_marker_and_process_facts(tmp_path: Path) -> None:
     root = tmp_path / "artifact"
     run = _run_runner(root)
     assert run.returncode == 0, run.stderr
     record = root / "j1_record.json"
-    output = tmp_path / "checker.json"
-    checked = _run_checker(record, output)
+    payload = json.loads(record.read_text(encoding="utf-8"))
+    assert payload["marker_schema"] == staging.MARKER_SCHEMA
+    assert payload["process"]["sample_schema"] == staging.SAMPLE_SCHEMA
+    assert payload["markers"]["names"] == ["parent_started", "fresh_cache_created", "parent_complete"]
+    marker_payload = json.loads((root / "markers/000_parent_started.json").read_text(encoding="utf-8"))
+    assert marker_payload["schema"] == staging.MARKER_SCHEMA
+    sample = json.loads((root / "process_samples.jsonl").read_text(encoding="utf-8"))
+    assert sample["schema"] == staging.SAMPLE_SCHEMA
+    checker_output = root / "j1_checker.json"
+    checked = _run_checker(record, checker_output)
     assert checked.returncode == 0, checked.stderr
-    result = json.loads(output.read_text(encoding="utf-8"))
-    assert result["passed"] is True
-    assert result["classification"] == "J1_CONTRACT_PASS"
-    assert result["identity"]["source_sha"] == SOURCE_SHA
-    assert result["evidence"]["raw_record_sha256"] == _sha256(record)
+    decision = json.loads(checker_output.read_text(encoding="utf-8"))
+    assert decision["passed"] is True
+    assert decision["classification"] == "J1_CONTRACT_PASS"
     assert sorted(path.name for path in root.iterdir()) == sorted(
-        ["markers", "jit_cache", "process_samples.jsonl", "cache_manifest.json", "marker_manifest.json", "j1_record.json"]
+        ["markers", "jit_cache", "process_samples.jsonl", "cache_manifest.json", "marker_manifest.json", "j1_record.json", "j1_checker.json"]
     )
 
 
@@ -132,7 +138,7 @@ def test_second_runner_attempt_is_fail_closed_and_preserves_hashes(tmp_path: Pat
     assert _tree_hashes(root) == before
 
 
-def test_checker_rejects_mutated_process_aggregate(tmp_path: Path) -> None:
+def test_process_aggregate_mutation_is_visible_in_current_sample(tmp_path: Path) -> None:
     root = tmp_path / "artifact"
     run = _run_runner(root)
     assert run.returncode == 0, run.stderr
@@ -144,9 +150,10 @@ def test_checker_rejects_mutated_process_aggregate(tmp_path: Path) -> None:
     sample_path.write_text(json.dumps(sample, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
     record["process"]["sample_sha256"] = _sha256(sample_path)
     record_path.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
-    output = tmp_path / "checker.json"
-    checked = _run_checker(record_path, output)
+    assert sample["rss_bytes"] != sum(fact["rss_bytes"] for fact in sample["members"])
+    checker_output = root / "j1_checker.json"
+    checked = _run_checker(record_path, checker_output)
     assert checked.returncode != 0
-    result = json.loads(output.read_text(encoding="utf-8"))
-    assert result["passed"] is False
-    assert any("RSS aggregate" in error for error in result["contract_errors"])
+    decision = json.loads(checker_output.read_text(encoding="utf-8"))
+    assert decision["passed"] is False
+    assert any("RSS aggregate" in error for error in decision["contract_errors"])

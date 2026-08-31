@@ -1,4 +1,4 @@
-"""Pure contract tests for the J2 cold-staged parent and checker."""
+"""Pure contract tests for the J3 split cold-staged parent and checker."""
 
 from __future__ import annotations
 
@@ -54,6 +54,40 @@ def _runtime() -> dict[str, object]:
     }
 
 
+def _physical_audit() -> dict[str, object]:
+    components = {
+        name: {
+            "schema": "task038.fullspace-mpc-form-action.v1",
+            "operator": "uncondensed_fullspace_curl_mass_form",
+            "slave_row_identity": slave_identity,
+            "global_matrix_materialized": False,
+            "global_constraint_matrix_materialized": False,
+            "global_condensed_schur_materialized": False,
+            "cell_schur_matrix_materialized": False,
+            "slab_matrix_materialized": False,
+        }
+        for name, slave_identity in (
+            ("curl_curl", True),
+            ("complex_material_mass", False),
+        )
+    }
+    return {
+        "schema": "task038.fullspace-physical-action.v1",
+        "operator": "A_volume_plus_dynamic_DtN",
+        "physical_form": "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn",
+        "volume_component_count": 2,
+        "volume_components": ["curl_curl", "complex_material_mass"],
+        "volume_action": {
+            "schema": "task038.fullspace-split-volume-action.v1",
+            "operator": "A_curl_curl_plus_A_complex_material_mass",
+            "component_count": 2,
+            "components": components,
+            "constraint_identity_rows_exactly_once": True,
+            "third_persistent_sum_vector": False,
+        },
+    }
+
+
 def _member(pid: int, ppid: int, stage: str, rss: int, pss: int) -> dict[str, object]:
     return {"pid": pid, "ppid": ppid, "comm": "worker" if pid != 4242 else "python", "state": "S", "cmdline": "python -m worker", "stage": stage, "rss_bytes": rss, "pss_bytes": pss, "swap_bytes": 0, "timestamp_ns": 10, "exit_code": None}
 
@@ -70,7 +104,7 @@ def _monitor(pid: int, started: int, ended: int, sample_count: int = 3) -> dict[
 
 
 def _valid_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
-    root = tmp_path / "j2-root"
+    root = tmp_path / "j3-root"
     cache = root / "jit_cache"
     marker_dir = root / "markers"
     children_dir = root / "children"
@@ -85,7 +119,10 @@ def _valid_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
     marker_entries = []
     for marker_name in checker.EXPECTED_MARKERS:
         index = checker.MARKER_ORDER.index(marker_name)
-        facts: dict[str, object] = {"stage": "j2-cold-staged", "artifact_root": str(root), "cache_dir": str(cache), "source_sha": SOURCE_SHA}
+        solver_start = checker.EXPECTED_MARKERS.index("positive_setup_started")
+        solver_end = checker.EXPECTED_MARKERS.index("bundle_built")
+        marker_stage = "j3-split-cold-staged-solver" if solver_start <= index <= solver_end else "j3-split-cold-staged-parent"
+        facts: dict[str, object] = {"stage": marker_stage, "artifact_root": str(root), "cache_dir": str(cache), "source_sha": SOURCE_SHA}
         if marker_name.startswith("precompile_") and marker_name.endswith("_started"):
             facts["command"] = [str(PYTHON), "-m", checker.CHILD_MODULE]
         if marker_name == "solver_child_started":
@@ -128,7 +165,10 @@ def _valid_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
         _write(manifest_path, manifest)
         child_record = children_dir / f"{group_index:02d}-{group.replace('-', '_')}.json"
         child_command = [str(PYTHON), "-m", checker.CHILD_MODULE, "--group", group, "--cache-dir", str(cache), "--record", str(child_record), "--expected-source-sha", SOURCE_SHA, "--input", str(INPUT)]
-        _write(child_record, {"schema": checker.CHILD_RECORD_SCHEMA, "stage": "j2a-precompile-child", "group": group, "source_sha": SOURCE_SHA, "branch": checker.BRANCH, "command": child_command, "input": {"path": str(INPUT), "input_sha256": checker.INPUT_SHA256, "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256, "profile": _profile()}, "cache": {"cache_dir": str(cache), "jit_options": {}}, "facts": {"group_facts": {"compiled_form_count": count, "form_roles": list(roles)}}, "architecture": {"matrix": False, "factor": False, "pc": False, "rhs_vector": False, "surface_carrier": False, "dtn_carrier": False, "solve": False, "recovery": False, "compile": True, "mesh": True, "jit": True, "pde": False}, "runtime": _runtime(), "raw_facts_only": True})
+        group_facts = {"compiled_form_count": count, "form_roles": list(roles)}
+        if group in {"physical-volume-curl", "physical-volume-mass"}:
+            group_facts.update({"component": "curl" if group.endswith("curl") else "mass", "component_count": 1})
+        _write(child_record, {"schema": checker.CHILD_RECORD_SCHEMA, "stage": "j3-split-precompile-child", "group": group, "source_sha": SOURCE_SHA, "branch": checker.BRANCH, "command": child_command, "input": {"path": str(INPUT), "input_sha256": checker.INPUT_SHA256, "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256, "profile": _profile()}, "cache": {"cache_dir": str(cache), "jit_options": {}}, "facts": {"group_facts": group_facts}, "architecture": {"matrix": False, "factor": False, "pc": False, "rhs_vector": False, "surface_carrier": False, "dtn_carrier": False, "solve": False, "recovery": False, "compile": True, "mesh": True, "jit": True, "pde": False}, "runtime": _runtime(), "raw_facts_only": True})
         stdout = children_dir / f"{group_index:02d}-{group.replace('-', '_')}.stdout"
         stderr = children_dir / f"{group_index:02d}-{group.replace('-', '_')}.stderr"
         stdout.write_bytes(b"")
@@ -142,22 +182,22 @@ def _valid_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
     _write(before_path, final_manifest)
     _write(after_path, final_manifest)
     solver_record = solver_dir / "solver_record.json"
-    module_names = [f"module_{index}.so" for index in range(10)]
-    calls = [{"index": index, "module_name": f"module_{module_index}", "module_file": str(cache / f"module_{module_index}.so"), "code": [None, None], "cache_hit": True} for index, module_index in enumerate(range(8))]
-    calls.append({"index": 8, "module_name": "module_9", "module_file": str(cache / "module_9.so"), "code": [None, None], "cache_hit": True})
+    module_names = sorted(f"module_{index}.so" for index in range(11))
+    solver_module_indices = (0, 1, 2, 3, 4, 5, 6, 7, 9, 10)
+    calls = [{"index": index, "module_name": f"module_{module_index}", "module_file": str(cache / f"module_{module_index}.so"), "code": [None, None], "cache_hit": True} for index, module_index in enumerate(solver_module_indices)]
     solver_command = [str(PYTHON), "-m", checker.SOLVER_MODULE, "--cache-dir", str(cache), "--record", str(solver_record), "--marker-dir", str(marker_dir), "--expected-source-sha", SOURCE_SHA, "--expected-mpi-size", "1", "--input", str(INPUT)]
-    solver_architecture = {"p6_matrix_free": True, "p6_global_aij": False, "high_order_global_aij": False, "global_dense_transfer": False, "numeric_allgather": False, "p3_sparse_matrix_built": True, "p1_sparse_matrix_built": True, "p1_direct_factor_built": True, "same_mesh_pmg_built": True, "streaming_dtn_action_built": True, "dtn_carrier_built": True, "dtn_carrier_lifetime": "transient_released", "physical_volume_action_built": True, "rhs_built": False, "outer_ksp_built": False, "solve_run": False, "recovery_run": False, "bundle_destroyed_before_record": True}
-    _write(solver_record, {"schema": checker.SOLVER_RECORD_SCHEMA, "stage": "j2-cold-staged-solver", "source_sha": SOURCE_SHA, "branch": checker.BRANCH, "command": solver_command, "identity": {"input_path": str(INPUT), "input_sha256": checker.INPUT_SHA256, "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256, "profile": _profile()}, "paths": {"artifact_root": str(root), "cache_dir": str(cache), "marker_dir": str(marker_dir), "record": str(solver_record)}, "runtime": _runtime(), "mode": {"count": 1, "manifest_sha256": checker.MODE_MANIFEST_SHA256, "dtn_quadrature_degree": 1}, "ffcx_calls": calls, "expected_ffcx_call_count": 9, "setup_audit": {}, "physical_audit": {}, "architecture": solver_architecture, "marker_names": list(checker.EXPECTED_MARKERS[:-1]), "raw_facts_only": True})
+    solver_architecture = {"p6_matrix_free": True, "p6_global_aij": False, "high_order_global_aij": False, "global_dense_transfer": False, "numeric_allgather": False, "p3_sparse_matrix_built": True, "p1_sparse_matrix_built": True, "p1_direct_factor_built": True, "same_mesh_pmg_built": True, "streaming_dtn_action_built": True, "dtn_carrier_built": True, "dtn_carrier_lifetime": "transient_released", "physical_volume_action_built": True, "volume_component_count": 2, "volume_components": ["curl_curl", "complex_material_mass"], "monolithic_physical_volume": False, "rhs_built": False, "outer_ksp_built": False, "solve_run": False, "recovery_run": False, "bundle_destroyed_before_record": True}
+    _write(solver_record, {"schema": checker.SOLVER_RECORD_SCHEMA, "stage": "j3-split-cold-staged-solver", "source_sha": SOURCE_SHA, "branch": checker.BRANCH, "command": solver_command, "identity": {"input_path": str(INPUT), "input_sha256": checker.INPUT_SHA256, "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256, "profile": _profile()}, "paths": {"artifact_root": str(root), "cache_dir": str(cache), "marker_dir": str(marker_dir), "record": str(solver_record)}, "runtime": _runtime(), "mode": {"count": 1, "manifest_sha256": checker.MODE_MANIFEST_SHA256, "dtn_quadrature_degree": 1}, "ffcx_calls": calls, "expected_ffcx_call_count": 10, "setup_audit": {}, "physical_audit": _physical_audit(), "architecture": solver_architecture, "marker_names": list(checker.EXPECTED_MARKERS[:-1]), "raw_facts_only": True})
     solver_stdout = solver_dir / "solver.stdout"
     solver_stderr = solver_dir / "solver.stderr"
     solver_stdout.write_bytes(b"")
     solver_stderr.write_bytes(b"")
-    solver_process = _monitor(6000, 170, 172)
+    solver_process = _monitor(6000, 180, 182)
     solver_process["last_sample"] = None
     solver_info = {"command": solver_command, "process": solver_process, "record_path": str(solver_record), "record_sha256": _sha(solver_record), "stdout_path": str(solver_stdout), "stdout_sha256": _sha(solver_stdout), "stderr_path": str(solver_stderr), "stderr_sha256": _sha(solver_stderr), "before_solver_manifest_sha256": _sha(before_path), "after_solver_manifest_sha256": _sha(after_path), "cache_unchanged": True}
 
     process_summary = parent._process_summary(sample_path)
-    record = {"schema": checker.RECORD_SCHEMA, "stage": "j2-cold-staged", "source_sha": SOURCE_SHA, "branch": checker.BRANCH, "command": [str(PYTHON), "-m", checker.PARENT_MODULE, "--artifact-root", str(root), "--record", str(record_path), "--source-sha", SOURCE_SHA, "--input", str(INPUT)], "identity": {"input_path": str(INPUT), "input_sha256": checker.INPUT_SHA256, "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256, "profile": _profile(), "runtime": _runtime()}, "paths": {"artifact_root": str(root), "cache_dir": str(cache), "marker_dir": str(marker_dir), "record": str(record_path), "process_samples": str(sample_path), "marker_manifest": str(marker_manifest_path), "children_dir": str(children_dir), "solver_dir": str(solver_dir), "cache_manifests_dir": str(manifests_dir)}, "marker_schema": checker.MARKER_SCHEMA, "sample_schema": checker.SAMPLE_SCHEMA, "markers": {"names": list(checker.EXPECTED_MARKERS), "manifest_path": str(marker_manifest_path), "manifest_sha256": _sha(marker_manifest_path)}, "process": process_summary, "children": child_entries, "solver": solver_info, "cache": {"initial_empty": True, "initial_manifest": {"path": str(initial_manifest_path), "sha256": _sha(initial_manifest_path), "artifact_count": 0, "manifest": initial_manifest}, "group_manifests": [{"group": group, "path": child["cache_manifest_path"], "sha256": child["cache_manifest_sha256"], "artifact_count": child["cache_artifact_count"], "new_module_basenames": child["new_module_basenames"]} for group, child in zip(checker.GROUPS, child_entries)], "before_solver": {"path": str(before_path), "sha256": _sha(before_path), "artifact_count": 10, "manifest": final_manifest}, "after_solver": {"path": str(after_path), "sha256": _sha(after_path), "artifact_count": 10, "manifest": final_manifest}, "precompiled_module_basenames": module_names, "deferred_incident_module_basenames": ["module_8.so"], "solver_unchanged": True}, "architecture": solver_architecture, "raw_facts_only": True}
+    record = {"schema": checker.RECORD_SCHEMA, "stage": "j3-split-cold-staged-parent", "source_sha": SOURCE_SHA, "branch": checker.BRANCH, "command": [str(PYTHON), "-m", checker.PARENT_MODULE, "--artifact-root", str(root), "--record", str(record_path), "--source-sha", SOURCE_SHA, "--input", str(INPUT)], "identity": {"input_path": str(INPUT), "input_sha256": checker.INPUT_SHA256, "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256, "profile": _profile(), "runtime": _runtime()}, "paths": {"artifact_root": str(root), "cache_dir": str(cache), "marker_dir": str(marker_dir), "record": str(record_path), "process_samples": str(sample_path), "marker_manifest": str(marker_manifest_path), "children_dir": str(children_dir), "solver_dir": str(solver_dir), "cache_manifests_dir": str(manifests_dir)}, "marker_schema": checker.MARKER_SCHEMA, "sample_schema": checker.SAMPLE_SCHEMA, "markers": {"names": list(checker.EXPECTED_MARKERS), "manifest_path": str(marker_manifest_path), "manifest_sha256": _sha(marker_manifest_path)}, "process": process_summary, "children": child_entries, "solver": solver_info, "cache": {"initial_empty": True, "initial_manifest": {"path": str(initial_manifest_path), "sha256": _sha(initial_manifest_path), "artifact_count": 0, "manifest": initial_manifest}, "group_manifests": [{"group": group, "path": child["cache_manifest_path"], "sha256": child["cache_manifest_sha256"], "artifact_count": child["cache_artifact_count"], "new_module_basenames": child["new_module_basenames"]} for group, child in zip(checker.GROUPS, child_entries)], "before_solver": {"path": str(before_path), "sha256": _sha(before_path), "artifact_count": 11, "manifest": final_manifest}, "after_solver": {"path": str(after_path), "sha256": _sha(after_path), "artifact_count": 11, "manifest": final_manifest}, "precompiled_module_basenames": module_names, "deferred_incident_module_basenames": ["module_8.so"], "solver_unchanged": True}, "architecture": solver_architecture, "raw_facts_only": True}
     _write(record_path, record)
     return record_path, root, record
 
@@ -208,10 +248,10 @@ def test_checker_accepts_fake_unchanged_solver_cache(tmp_path: Path) -> None:
     record_path, _root, record = _valid_fixture(tmp_path)
     result = checker.check_record(record_path, SOURCE_SHA)
     assert result["passed"] is True
-    assert result["classification"] == "J2_COLD_STAGED_PASS"
+    assert result["classification"] == "J3_SPLIT_COLD_STAGED_PASS"
     assert result["identity"]["source_sha"] == SOURCE_SHA
-    assert result["metrics"]["solver_ffcx_call_count"] == 9
-    assert result["metrics"]["precompiled_module_count"] == 10
+    assert result["metrics"]["solver_ffcx_call_count"] == 10
+    assert result["metrics"]["precompiled_module_count"] == 11
 
 
 def test_checker_rejects_cache_mutation(tmp_path: Path) -> None:
@@ -228,6 +268,19 @@ def test_checker_rejects_cache_mutation(tmp_path: Path) -> None:
     record_path, _root, record = _valid_fixture(child_root)
     mutated = json.loads(record_path.read_text(encoding="utf-8"))
     mutated["children"][0]["process"]["pid"] += 1
+    record_path.write_text(json.dumps(mutated), encoding="utf-8")
+    with pytest.raises(checker.CheckError):
+        checker.check_record(record_path, SOURCE_SHA)
+
+    audit_root = tmp_path / "audit-mutation"
+    audit_root.mkdir()
+    record_path, _root, record = _valid_fixture(audit_root)
+    solver_path = Path(record["solver"]["record_path"])
+    solver_payload = json.loads(solver_path.read_text())
+    solver_payload["physical_audit"]["volume_action"]["components"]["curl_curl"]["slave_row_identity"] = False
+    solver_path.write_text(json.dumps(solver_payload), encoding="utf-8")
+    mutated = json.loads(record_path.read_text())
+    mutated["solver"]["record_sha256"] = _sha(solver_path)
     record_path.write_text(json.dumps(mutated), encoding="utf-8")
     with pytest.raises(checker.CheckError):
         checker.check_record(record_path, SOURCE_SHA)

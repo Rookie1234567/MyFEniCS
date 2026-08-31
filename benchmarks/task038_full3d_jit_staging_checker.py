@@ -10,11 +10,15 @@ import re
 import sys
 from pathlib import Path
 
+from benchmarks.task038_full3d_jit_staging import (
+    MARKER_ORDER,
+    MARKER_SCHEMA,
+    SAMPLE_SCHEMA,
+)
+
 
 CHECKER_SCHEMA = "task038.v14.j1b.checker.v1"
 RECORD_SCHEMA = "task038.v14.j1b.record.v1"
-MARKER_SCHEMA = "task038.v14.j1b.marker.v1"
-SAMPLE_SCHEMA = "task038.v14.j1b.process-sample.v1"
 EXPECTED_BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 EXPECTED_INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 EXPECTED_PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
@@ -30,10 +34,9 @@ EXPECTED_PROFILE = {
     "mesh_cell_type": "hexahedron",
     "mesh_spacing_mode": "boundary_fitted",
 }
-EXPECTED_MARKERS = (
-    (0, "parent_started"),
-    (1, "fresh_cache_created"),
-    (37, "parent_complete"),
+EXPECTED_MARKERS = tuple(
+    (MARKER_ORDER.index(name), name)
+    for name in ("parent_started", "fresh_cache_created", "parent_complete")
 )
 COMPILER_NAMES = frozenset(
     {"gcc", "g++", "cc1", "cc1plus", "clang", "clang++", "ld", "collect2"}

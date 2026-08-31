@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 
 
-PHYSICAL_BUNDLE_SCHEMA = "task038.same_mesh_hcurl_pmg.physical.v1"
+PHYSICAL_BUNDLE_SCHEMA = "task038.same_mesh_hcurl_pmg.physical.v2"
 PHYSICAL_PROFILE = "same_mesh_hcurl_pmg_v1_requalified"
 
 
@@ -52,6 +52,34 @@ def _surface_assemblers(
     }
 
 
+def _build_split_volume_action(
+    mesh_data: Any,
+    cfg: Any,
+    function_space: Any,
+    floquet: Any,
+    *,
+    jit_options: Mapping[str, Any],
+) -> Any:
+    import ufl
+
+    from .common_3d_forms import _build_physical_volume_terms
+    from .fullspace_physical_action import FullspaceSplitVolumeAction
+
+    u = ufl.TrialFunction(function_space)
+    v = ufl.TestFunction(function_space)
+    dx = ufl.Measure(
+        "dx", domain=mesh_data.mesh, subdomain_data=mesh_data.cell_tags
+    )
+    curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+    return FullspaceSplitVolumeAction(
+        curl_curl,
+        material_mass,
+        function_space,
+        mpc=floquet.mpc,
+        jit_options=jit_options,
+    )
+
+
 def build_p6_same_mesh_physical_bundle(
     cfg: Any,
     comm: Any,
@@ -65,18 +93,18 @@ def build_p6_same_mesh_physical_bundle(
         build_fullspace_dtn_action,
         build_fullspace_dtn_carrier_from_surface,
     )
-    from .fullspace_mpc_action import build_fullspace_mpc_form_action
     from .fullspace_physical_action import FullspacePhysicalAction
     from .fullspace_same_mesh_hcurl_pmg_setup import (
         SAME_MESH_JIT_OPTIONS,
         build_p6_same_mesh_setup,
     )
-    from .common_3d_forms import _build_variational_forms
+    from .common_3d_forms import _validate_physical_split_profile
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .dtn_port_3d import _incident_projection_onto_top_mode
 
     if int(comm.size) != 1:
         raise ValueError("the P0 physical lane is fixed to MPI1")
+    _validate_physical_split_profile(cfg)
     _notify_stage(stage_callback, "positive_setup_started", {"levels": [6, 3, 1]})
     setup = build_p6_same_mesh_setup(cfg, comm)
     dtn_action = None
@@ -139,25 +167,28 @@ def build_p6_same_mesh_physical_bundle(
         _notify_stage(
             stage_callback,
             "physical_volume_action_started",
-            {"form": "exact_maxwell_volume"},
+            {
+                "form": "exact_maxwell_volume_split",
+                "component_count": 2,
+                "components": ["curl_curl", "complex_material_mass"],
+            },
         )
-        bilinear, _rhs_form = _build_variational_forms(
-            setup["mesh_data"].mesh,
+        volume_action = _build_split_volume_action(
             setup["mesh_data"],
             cfg,
             p6_space,
-            field_formulation="total_field",
-        )
-        volume_action = build_fullspace_mpc_form_action(
-            bilinear,
-            p6_space,
-            mpc=p6_floquet.mpc,
+            p6_floquet,
             jit_options=SAME_MESH_JIT_OPTIONS,
         )
         _notify_stage(
             stage_callback,
             "physical_volume_action_complete",
-            {"form": "exact_maxwell_volume", "volume_action": True},
+            {
+                "form": "exact_maxwell_volume_split",
+                "component_count": 2,
+                "components": ["curl_curl", "complex_material_mass"],
+                "volume_action": True,
+            },
         )
         physical_action = FullspacePhysicalAction(volume_action, dtn_action)
         owned_volume_action = volume_action
@@ -188,6 +219,8 @@ def build_p6_same_mesh_physical_bundle(
                 "levels": [6, 3, 1],
                 "mode_count": int(len(modes)),
                 "physical_action": True,
+                "volume_component_count": 2,
+                "volume_components": ["curl_curl", "complex_material_mass"],
             },
         )
         return bundle
@@ -219,7 +252,11 @@ def audit_p6_same_mesh_physical_bundle(bundle: Mapping[str, Any]) -> dict[str, A
             "mode_manifest_sha256": str(bundle["mode_sha256"]),
             "mode_count": int(len(bundle["modes"])),
             "dtn_quadrature_degree": int(bundle["dtn_quadrature_degree"]),
-            "physical_form": "exact_maxwell_volume_plus_streaming_fourier_dtn",
+            "physical_form": (
+                "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn"
+            ),
+            "volume_component_count": 2,
+            "volume_components": ["curl_curl", "complex_material_mass"],
         }
     )
     return {

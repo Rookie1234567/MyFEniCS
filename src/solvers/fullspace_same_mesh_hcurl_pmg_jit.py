@@ -18,9 +18,10 @@ JIT_GROUPS = (
     "positive-p1",
     "dtn-surface",
     "incident-rhs",
-    "physical-volume",
+    "physical-volume-curl",
+    "physical-volume-mass",
 )
-JIT_GROUP_SCHEMA = "task038.same-mesh-hcurl-pmg.jit-precompile.v1"
+JIT_GROUP_SCHEMA = "task038.same-mesh-hcurl-pmg.jit-precompile.v2"
 
 
 def _form_kwargs(
@@ -230,33 +231,51 @@ def _build_incident_rhs(
     )
 
 
-def _build_physical_volume(
-    cfg: Any, comm: Any, jit_options: Mapping[str, Any]
+def _build_physical_volume_component(
+    cfg: Any,
+    comm: Any,
+    jit_options: Mapping[str, Any],
+    component: str,
 ) -> dict[str, Any]:
     import ufl
     from dolfinx import fem
 
-    from .common_3d_forms import _build_variational_forms
+    from .common_3d_forms import (
+        _build_physical_volume_terms,
+        _validate_physical_split_profile,
+    )
 
+    _validate_physical_split_profile(cfg)
     levels, space = _levels(
         cfg, comm, 6, include_positive_coefficients=False
     )
-    bilinear, rhs_form = _build_variational_forms(
-        levels["mesh"],
-        levels["mesh_data"],
-        cfg,
-        space,
-        field_formulation="total_field",
+    u = ufl.TrialFunction(space)
+    v = ufl.TestFunction(space)
+    dx = ufl.Measure(
+        "dx", domain=levels["mesh"], subdomain_data=levels["mesh_data"].cell_tags
     )
+    curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+    if component == "curl":
+        group = "physical-volume-curl"
+        role = "physical_volume_curl_action"
+        selected_form = curl_curl
+    elif component == "mass":
+        group = "physical-volume-mass"
+        role = "physical_volume_mass_action"
+        selected_form = material_mass
+    else:
+        raise ValueError(f"unsupported physical volume component: {component!r}")
     coefficient = fem.Function(space)
-    action = ufl.action(bilinear, coefficient)
+    action = ufl.action(selected_form, coefficient)
     _compile_form(action, jit_options)
-    del action, coefficient, bilinear, rhs_form, levels
+    del action, coefficient, selected_form, curl_curl, material_mass, levels
     return _facts(
-        "physical-volume",
+        group,
         6,
-        [{"role": "physical_volume_action", "rank": 1, "kind": "action"}],
+        [{"role": role, "rank": 1, "kind": "action"}],
         jit_options,
+        component=component,
+        component_count=1,
     )
 
 
@@ -286,7 +305,11 @@ def build_minimal_jit_group(
         return _build_dtn_surface(cfg, comm, jit_options)
     if group == "incident-rhs":
         return _build_incident_rhs(cfg, comm, jit_options)
-    return _build_physical_volume(cfg, comm, jit_options)
+    if group == "physical-volume-curl":
+        return _build_physical_volume_component(cfg, comm, jit_options, "curl")
+    if group == "physical-volume-mass":
+        return _build_physical_volume_component(cfg, comm, jit_options, "mass")
+    raise AssertionError(f"unhandled JIT group: {group!r}")
 
 
 __all__ = ("JIT_GROUPS", "JIT_GROUP_SCHEMA", "build_minimal_jit_group")

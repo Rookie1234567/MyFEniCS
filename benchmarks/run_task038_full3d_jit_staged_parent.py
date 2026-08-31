@@ -1,7 +1,7 @@
-"""Run the fixed, serial cold-staged J2 parent workflow.
+"""Run the fixed, serial J3 split cold-staged parent workflow.
 
 The parent owns the fresh cache and is the process-tree authority.  It starts
-the six already existing form-precompile children in order, waits for each
+the seven form-precompile children in order, waits for each
 child and its descendants, then starts one cache-hit solver-bundle child.
 Only raw lifecycle facts are written; qualification remains checker-owned.
 """
@@ -37,9 +37,9 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_jit_staged_parent"
 CHILD_MODULE = "benchmarks.run_task038_full3d_jit_precompile"
 SOLVER_MODULE = "benchmarks.run_task038_full3d_jit_solver_bundle"
-RECORD_SCHEMA = "task038.v14.j2.cold-staged.parent-record.v2"
-CHILD_RECORD_SCHEMA = "task038.full3d.jit-precompile.child-record.v1"
-SOLVER_RECORD_SCHEMA = "task038.v14.j2.cold-staged.solver-record.v1"
+RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.parent-record.v1"
+CHILD_RECORD_SCHEMA = "task038.full3d.jit-split.child-record.v1"
+SOLVER_RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.solver-record.v1"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
@@ -66,7 +66,8 @@ JIT_GROUPS = (
     "positive-p1",
     "dtn-surface",
     "incident-rhs",
-    "physical-volume",
+    "physical-volume-curl",
+    "physical-volume-mass",
 )
 PRECOMPILE_MARKERS = {
     "positive-p6": ("precompile_positive_p6_started", "precompile_positive_p6_complete"),
@@ -74,9 +75,13 @@ PRECOMPILE_MARKERS = {
     "positive-p1": ("precompile_positive_p1_started", "precompile_positive_p1_complete"),
     "dtn-surface": ("precompile_dtn_surface_started", "precompile_dtn_surface_complete"),
     "incident-rhs": ("precompile_incident_rhs_started", "precompile_incident_rhs_complete"),
-    "physical-volume": (
-        "precompile_physical_volume_started",
-        "precompile_physical_volume_complete",
+    "physical-volume-curl": (
+        "precompile_physical_volume_curl_started",
+        "precompile_physical_volume_curl_complete",
+    ),
+    "physical-volume-mass": (
+        "precompile_physical_volume_mass_started",
+        "precompile_physical_volume_mass_complete",
     ),
 }
 POLL_SECONDS = 0.05
@@ -214,7 +219,7 @@ def _marker(
     **facts: Any,
 ) -> Path:
     common = {
-        "stage": "j2-cold-staged",
+        "stage": "j3-split-cold-staged-parent",
         "artifact_root": str(root),
         "cache_dir": str(cache_dir),
         "source_sha": source_sha,
@@ -441,7 +446,7 @@ def _manifest_delta(previous: dict[str, Any], current: dict[str, Any]) -> list[d
     old = {item["relative_path"]: item["sha256"] for item in previous["manifest"]["artifacts"]}
     new = {item["relative_path"]: item["sha256"] for item in current["manifest"]["artifacts"]}
     if any(path not in new or new[path] != digest for path, digest in old.items()):
-        raise RuntimeError("J2 cache artifacts are not monotonically preserved")
+        raise RuntimeError("J3 cache artifacts are not monotonically preserved")
     return [
         item
         for item in current["manifest"]["artifacts"]
@@ -586,7 +591,7 @@ def _partial_record(
 ) -> dict[str, Any]:
     partial: dict[str, Any] = {
         "schema": RECORD_SCHEMA,
-        "stage": "j2-cold-staged",
+        "stage": "j3-split-cold-staged-parent",
         "source_sha": source_sha,
         "branch": BRANCH,
         "command": command,
@@ -665,6 +670,16 @@ def run_parent(args: argparse.Namespace) -> None:
             stdout_path = children_dir / f"{index:02d}-{group.replace('-', '_')}.stdout"
             stderr_path = children_dir / f"{index:02d}-{group.replace('-', '_')}.stderr"
             command = _child_command(group, cache_dir, child_record, input_path, args.source_sha)
+            if group == "physical-volume-curl":
+                _marker(
+                    paths["marker_dir"],
+                    root,
+                    cache_dir,
+                    args.source_sha,
+                    "precompile_physical_volume_started",
+                    group="physical-volume",
+                    command=command,
+                )
             _marker(
                 paths["marker_dir"],
                 root,
@@ -746,6 +761,19 @@ def run_parent(args: argparse.Namespace) -> None:
                 cache_manifest_sha256=current_manifest["sha256"],
                 new_module_basenames=module_names,
             )
+            if group == "physical-volume-mass":
+                _marker(
+                    paths["marker_dir"],
+                    root,
+                    cache_dir,
+                    args.source_sha,
+                    "precompile_physical_volume_complete",
+                    group="physical-volume",
+                    returncode=monitor["returncode"],
+                    descendants_gone=monitor["descendants_gone"],
+                    cache_manifest_sha256=current_manifest["sha256"],
+                    new_module_basenames=module_names,
+                )
             previous_manifest = current_manifest
         tail_sample = _sample(sample_path, "precompile:parent-only")
         if (
@@ -845,7 +873,7 @@ def run_parent(args: argparse.Namespace) -> None:
         )
         record = {
             "schema": RECORD_SCHEMA,
-            "stage": "j2-cold-staged",
+            "stage": "j3-split-cold-staged-parent",
             "source_sha": args.source_sha,
             "branch": BRANCH,
             "command": parent_command,
@@ -912,6 +940,10 @@ def run_parent(args: argparse.Namespace) -> None:
                 "streaming_dtn_action_built": True,
                 "dtn_carrier_built": True,
                 "dtn_carrier_lifetime": "transient_released",
+                "volume_component_count": 2,
+                "volume_components": ["curl_curl", "complex_material_mass"],
+                "monolithic_physical_volume": False,
+                "physical_volume_action_built": True,
                 "rhs": False,
                 "ksp": False,
                 "solve": False,
@@ -954,7 +986,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.expected_mpi_size != 1:
-        raise ValueError("J2 parent is fixed to MPI1")
+        raise ValueError("J3 parent is fixed to MPI1")
     run_parent(args)
     return 0
 

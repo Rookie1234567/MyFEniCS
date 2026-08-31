@@ -1,4 +1,4 @@
-"""Small Linux-only lifecycle and cache facts used by the J1b contract lane."""
+"""Small Linux-only lifecycle and cache facts for the J3 split staging lane."""
 
 from __future__ import annotations
 
@@ -13,11 +13,10 @@ EXPECTED_BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 EXPECTED_INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 EXPECTED_PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 EXPECTED_MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
-MARKER_SCHEMA = "task038.v14.j1b.marker.v1"
-SAMPLE_SCHEMA = "task038.v14.j1b.process-sample.v1"
+MARKER_SCHEMA = "task038.v14.j3.marker.v1"
+SAMPLE_SCHEMA = "task038.v14.j3.process-sample.v1"
 
-# J1/J2/J4 may stop after any valid strict subsequence.  The contract lane
-# uses the parent/cache/complete subsequence; later stages retain one ordering.
+# A stopped workflow may expose only a valid strict subsequence.
 MARKER_ORDER = (
     "parent_started",
     "fresh_cache_created",
@@ -32,6 +31,10 @@ MARKER_ORDER = (
     "precompile_incident_rhs_started",
     "precompile_incident_rhs_complete",
     "precompile_physical_volume_started",
+    "precompile_physical_volume_curl_started",
+    "precompile_physical_volume_curl_complete",
+    "precompile_physical_volume_mass_started",
+    "precompile_physical_volume_mass_complete",
     "precompile_physical_volume_complete",
     "all_precompile_children_gone",
     "solver_child_started",

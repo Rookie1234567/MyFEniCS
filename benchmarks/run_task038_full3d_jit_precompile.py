@@ -1,4 +1,4 @@
-"""Run one minimal J2a form-precompile child.
+"""Run one minimal J3 split physical form-precompile child.
 
 The parent owns the artifact/cache directories.  This child only validates
 the frozen input, compiles one requested group, and writes raw facts.
@@ -22,7 +22,7 @@ MODULE = "benchmarks.run_task038_full3d_jit_precompile"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
-RECORD_SCHEMA = "task038.full3d.jit-precompile.child-record.v1"
+RECORD_SCHEMA = "task038.full3d.jit-split.child-record.v1"
 EXPECTED_PROFILE = {
     "model_id": "euv_grazing1_phi0",
     "run_id": "euv_grazing1_phi0_full3d_iterative_mpi1",
@@ -121,7 +121,7 @@ def _runtime_facts(root: Path, expected_sha: str, comm: Any, petsc: Any) -> dict
         module = importlib.import_module(name)
         abi[name] = str(Path(module.__file__).resolve())
     if int(comm.size) != 1:
-        raise RuntimeError("J2a child is MPI1-only")
+        raise RuntimeError("J3 split child is MPI1-only")
     return {
         "source_sha": actual_sha,
         "branch": branch,
@@ -193,7 +193,7 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     if args.group not in JIT_GROUPS:
-        raise ValueError(f"unsupported J2a group: {args.group!r}")
+        raise ValueError(f"unsupported J3 split group: {args.group!r}")
     root = Path(__file__).resolve().parents[1]
     comm = MPI.COMM_WORLD
     runtime = _runtime_facts(root, args.expected_source_sha, comm, PETSc)
@@ -206,10 +206,10 @@ def main(argv: list[str] | None = None) -> None:
         or specification.physical_model_sha256 != PHYSICAL_MODEL_SHA256
         or profile != EXPECTED_PROFILE
     ):
-        raise RuntimeError("J2a input is not the frozen exact p6/h10 profile")
+        raise RuntimeError("J3 split input is not the frozen exact p6/h10 profile")
     mode_count, mode_sha, qdegree = _mode_identity(cfg)
     if mode_sha != MODE_MANIFEST_SHA256:
-        raise RuntimeError("J2a mode inventory is not the frozen manifest")
+        raise RuntimeError("J3 split mode inventory is not the frozen manifest")
     facts = build_minimal_jit_group(cfg, comm, args.group)
     gc.collect()
     PETSc.garbage_cleanup(comm)
@@ -217,7 +217,7 @@ def main(argv: list[str] | None = None) -> None:
     command = [str(Path(sys.executable)), "-m", MODULE, *sys.argv[1:]]
     record = {
         "schema": RECORD_SCHEMA,
-        "stage": "j2a-precompile-child",
+        "stage": "j3-split-precompile-child",
         "group": args.group,
         "source_sha": args.expected_source_sha,
         "branch": runtime["branch"],

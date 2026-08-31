@@ -1,4 +1,4 @@
-"""Independent, streaming checker for the raw J2 cold-staged record."""
+"""Independent, streaming checker for the raw J3 split cold-staged record."""
 
 from __future__ import annotations
 
@@ -12,12 +12,12 @@ import sys
 from typing import Any
 
 
-CHECKER_SCHEMA = "task038.v14.j2.cold-staged.checker.v2"
-RECORD_SCHEMA = "task038.v14.j2.cold-staged.parent-record.v2"
-CHILD_RECORD_SCHEMA = "task038.full3d.jit-precompile.child-record.v1"
-SOLVER_RECORD_SCHEMA = "task038.v14.j2.cold-staged.solver-record.v1"
-MARKER_SCHEMA = "task038.v14.j1b.marker.v1"
-SAMPLE_SCHEMA = "task038.v14.j1b.process-sample.v1"
+CHECKER_SCHEMA = "task038.v14.j3.split-cold-staged.checker.v1"
+RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.parent-record.v1"
+CHILD_RECORD_SCHEMA = "task038.full3d.jit-split.child-record.v1"
+SOLVER_RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.solver-record.v1"
+MARKER_SCHEMA = "task038.v14.j3.marker.v1"
+SAMPLE_SCHEMA = "task038.v14.j3.process-sample.v1"
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 PARENT_MODULE = "benchmarks.run_task038_full3d_jit_staged_parent"
 CHILD_MODULE = "benchmarks.run_task038_full3d_jit_precompile"
@@ -49,7 +49,12 @@ MARKER_ORDER = (
     "precompile_positive_p1_started", "precompile_positive_p1_complete",
     "precompile_dtn_surface_started", "precompile_dtn_surface_complete",
     "precompile_incident_rhs_started", "precompile_incident_rhs_complete",
-    "precompile_physical_volume_started", "precompile_physical_volume_complete",
+    "precompile_physical_volume_started",
+    "precompile_physical_volume_curl_started",
+    "precompile_physical_volume_curl_complete",
+    "precompile_physical_volume_mass_started",
+    "precompile_physical_volume_mass_complete",
+    "precompile_physical_volume_complete",
     "all_precompile_children_gone", "solver_child_started",
     "positive_setup_started", "positive_setup_complete",
     "mode_inventory_started", "mode_inventory_complete",
@@ -62,14 +67,18 @@ MARKER_ORDER = (
     "parent_complete",
 )
 EXPECTED_MARKERS = MARKER_ORDER[: MARKER_ORDER.index("bundle_built") + 1] + ("parent_complete",)
-GROUPS = ("positive-p6", "positive-p3", "positive-p1", "dtn-surface", "incident-rhs", "physical-volume")
+GROUPS = (
+    "positive-p6", "positive-p3", "positive-p1", "dtn-surface", "incident-rhs",
+    "physical-volume-curl", "physical-volume-mass",
+)
 EXPECTED_GROUP_ROLES = {
     "positive-p6": (2, ("positive_p6_action", "positive_p6_bilinear")),
     "positive-p3": (1, ("positive_p3_bilinear",)),
     "positive-p1": (1, ("positive_p1_bilinear",)),
     "dtn-surface": (4, ("dtn_surface_top_0", "dtn_surface_top_1", "dtn_surface_bottom_0", "dtn_surface_bottom_1")),
     "incident-rhs": (1, ("incident_top_traction",)),
-    "physical-volume": (1, ("physical_volume_action",)),
+    "physical-volume-curl": (1, ("physical_volume_curl_action",)),
+    "physical-volume-mass": (1, ("physical_volume_mass_action",)),
 }
 EXPECTED_PROCESS_STAGES = tuple(f"precompile:{group}" for group in GROUPS) + ("precompile:parent-only", "solver")
 RSS_LIMIT = 2_000_000_000
@@ -142,7 +151,7 @@ def _check_runtime(runtime: Any, source_sha: str, label: str) -> None:
 def _check_identity(record: dict[str, Any], expected_source_sha: str) -> None:
     _fail(re.fullmatch(r"[0-9a-f]{40}", expected_source_sha) is not None, "invalid expected source SHA")
     _fail(record.get("schema") == RECORD_SCHEMA, "parent record schema mismatch")
-    _fail(record.get("stage") == "j2-cold-staged", "parent stage mismatch")
+    _fail(record.get("stage") == "j3-split-cold-staged-parent", "parent stage mismatch")
     _fail(record.get("source_sha") == expected_source_sha and record.get("branch") == BRANCH, "parent source identity mismatch")
     _fail(record.get("raw_facts_only") is True and record.get("partial") is not True, "parent record is not a complete raw record")
     _fail(not any(key in record for key in ("passed", "classification", "status")), "parent record contains checker decision")
@@ -152,6 +161,16 @@ def _check_identity(record: dict[str, Any], expected_source_sha: str) -> None:
     _fail(identity.get("physical_model_sha256") == PHYSICAL_MODEL_SHA256, "physical model SHA mismatch")
     _fail(identity.get("mode_manifest_sha256") == MODE_MANIFEST_SHA256, "mode manifest SHA mismatch")
     _fail(identity.get("profile") == EXPECTED_PROFILE, "exact profile mismatch")
+    architecture = record.get("architecture")
+    _fail(
+        isinstance(architecture, dict)
+        and architecture.get("volume_component_count") == 2
+        and architecture.get("volume_components") == ["curl_curl", "complex_material_mass"]
+        and architecture.get("monolithic_physical_volume") is False
+        and architecture.get("physical_volume_action_built") is True,
+        "parent split-volume architecture facts are missing",
+        "jit",
+    )
     _check_runtime(identity.get("runtime"), expected_source_sha, "parent")
     input_path = _absolute(identity.get("input_path"))
     _fail(input_path.is_file() and _sha256(input_path) == INPUT_SHA256, "frozen input file/hash mismatch")
@@ -185,7 +204,7 @@ def _check_markers(record: dict[str, Any], paths: dict[str, Path]) -> list[str]:
     marker_dir = paths["marker_dir"]
     files = sorted(marker_dir.glob("*.json"), key=lambda path: int(path.name.split("_", 1)[0]))
     names = [path.name.split("_", 1)[1].rsplit(".", 1)[0] for path in files]
-    _fail(tuple(names) == EXPECTED_MARKERS, "J2 marker sequence is not the required subsequence")
+    _fail(tuple(names) == EXPECTED_MARKERS, "J3 marker sequence is not the required subsequence")
     calculated = []
     for path, name in zip(files, names):
         index = int(path.name.split("_", 1)[0])
@@ -195,7 +214,14 @@ def _check_markers(record: dict[str, Any], paths: dict[str, Path]) -> list[str]:
         _fail(type(payload.get("timestamp_ns")) is int and payload["timestamp_ns"] > 0, f"marker timestamp invalid: {name}")
         facts = payload.get("facts")
         _fail(isinstance(facts, dict), f"marker facts missing: {name}")
-        _fail(facts.get("stage") == "j2-cold-staged" and facts.get("artifact_root") == str(paths["artifact_root"]) and facts.get("cache_dir") == str(paths["cache_dir"]) and facts.get("source_sha") == record["source_sha"], f"marker common facts mismatch: {name}")
+        solver_start = EXPECTED_MARKERS.index("positive_setup_started")
+        solver_end = EXPECTED_MARKERS.index("bundle_built")
+        expected_stage = (
+            "j3-split-cold-staged-solver"
+            if solver_start <= index <= solver_end
+            else "j3-split-cold-staged-parent"
+        )
+        _fail(facts.get("stage") == expected_stage and facts.get("artifact_root") == str(paths["artifact_root"]) and facts.get("cache_dir") == str(paths["cache_dir"]) and facts.get("source_sha") == record["source_sha"], f"marker common facts mismatch: {name}")
         if name.startswith("precompile_") and name.endswith("_started") or name == "solver_child_started":
             _fail(isinstance(facts.get("command"), list), f"marker command missing: {name}")
         if name == "parent_complete":
@@ -326,6 +352,7 @@ def _check_child_record(child: dict[str, Any], group: str, expected_source_sha: 
     _fail(record_path.is_file() and child.get("record_sha256") == _sha256(record_path), f"child record/hash missing: {group}", "jit")
     payload = _read_json(record_path)
     _fail(payload.get("schema") == CHILD_RECORD_SCHEMA and payload.get("group") == group and payload.get("source_sha") == expected_source_sha and payload.get("branch") == BRANCH, f"child identity mismatch: {group}")
+    _fail(payload.get("stage") == "j3-split-precompile-child", f"child stage mismatch: {group}")
     _fail(payload.get("raw_facts_only") is True and not any(key in payload for key in ("passed", "classification", "status")), f"child contains checker decision: {group}")
     command = payload.get("command")
     expected_executable = Path(__file__).resolve().parents[1] / ".venv" / "bin" / "python"
@@ -338,6 +365,9 @@ def _check_child_record(child: dict[str, Any], group: str, expected_source_sha: 
     count, roles = EXPECTED_GROUP_ROLES[group]
     group_facts = payload.get("facts", {}).get("group_facts")
     _fail(isinstance(group_facts, dict) and group_facts.get("compiled_form_count") == count and tuple(group_facts.get("form_roles", ())) == roles, f"child form inventory mismatch: {group}", "jit")
+    if group in {"physical-volume-curl", "physical-volume-mass"}:
+        component = "curl" if group.endswith("curl") else "mass"
+        _fail(group_facts.get("component") == component and group_facts.get("component_count") == 1, f"child physical component facts mismatch: {group}", "jit")
     architecture = payload.get("architecture")
     _fail(isinstance(architecture, dict), f"child architecture missing: {group}")
     for key in ("matrix", "factor", "pc", "rhs_vector", "surface_carrier", "dtn_carrier", "solve", "recovery", "pde"):
@@ -362,6 +392,59 @@ def _manifest(path: Path, cache_dir: Path) -> dict[str, Any]:
         target = cache_dir / relative
         _fail(target.is_file() and target.stat().st_size == item["bytes"] and _sha256(target) == item["sha256"], f"cache artifact hash mismatch: {relative}", "jit")
     return value
+
+
+def _check_physical_audit(value: Any) -> None:
+    _fail(isinstance(value, dict), "solver physical audit is missing", "jit")
+    _fail(
+        value.get("schema") == "task038.fullspace-physical-action.v1"
+        and value.get("operator") == "A_volume_plus_dynamic_DtN"
+        and value.get("physical_form")
+        == "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn"
+        and value.get("volume_component_count") == 2
+        and value.get("volume_components")
+        == ["curl_curl", "complex_material_mass"],
+        "solver physical audit top-level split facts mismatch",
+        "jit",
+    )
+    volume = value.get("volume_action")
+    _fail(
+        isinstance(volume, dict)
+        and volume.get("schema") == "task038.fullspace-split-volume-action.v1"
+        and volume.get("operator") == "A_curl_curl_plus_A_complex_material_mass"
+        and volume.get("component_count") == 2
+        and volume.get("constraint_identity_rows_exactly_once") is True
+        and volume.get("third_persistent_sum_vector") is False,
+        "solver volume action split facts mismatch",
+        "jit",
+    )
+    components = volume.get("components")
+    _fail(
+        isinstance(components, dict)
+        and set(components) == {"curl_curl", "complex_material_mass"},
+        "solver volume action component keys mismatch",
+        "jit",
+    )
+    for name, slave_identity in (("curl_curl", True), ("complex_material_mass", False)):
+        component = components[name]
+        _fail(
+            isinstance(component, dict)
+            and component.get("schema") == "task038.fullspace-mpc-form-action.v1"
+            and component.get("operator") == "uncondensed_fullspace_curl_mass_form"
+            and component.get("slave_row_identity") is slave_identity
+            and all(
+                component.get(key) is False
+                for key in (
+                    "global_matrix_materialized",
+                    "global_constraint_matrix_materialized",
+                    "global_condensed_schur_materialized",
+                    "cell_schur_matrix_materialized",
+                    "slab_matrix_materialized",
+                )
+            ),
+            f"solver physical component audit mismatch: {name}",
+            "jit",
+        )
 
 
 def _check_cache(record: dict[str, Any], paths: dict[str, Path]) -> tuple[set[str], set[str]]:
@@ -394,7 +477,7 @@ def _check_cache(record: dict[str, Any], paths: dict[str, Path]) -> tuple[set[st
         if group == "incident-rhs":
             incident_modules.update(modules)
         previous = current
-    _fail(len(all_modules) == 10 and len(incident_modules) == 1, "precompile module inventory is not 10 with one deferred incident module", "jit")
+    _fail(len(all_modules) == 11 and len(incident_modules) == 1, "precompile module inventory is not 11 with one deferred incident module", "jit")
     _fail(cache_facts.get("precompiled_module_basenames") == sorted(all_modules) and cache_facts.get("deferred_incident_module_basenames") == sorted(incident_modules), "precompiled/deferred module inventory mismatch", "jit")
     before = cache_facts.get("before_solver")
     after = cache_facts.get("after_solver")
@@ -415,7 +498,7 @@ def _check_solver(record: dict[str, Any], paths: dict[str, Path], expected_sourc
     solver_path = _absolute(info.get("record_path"))
     _fail(solver_path.is_file() and info.get("record_sha256") == _sha256(solver_path), "solver record/hash missing", "jit")
     payload = _read_json(solver_path)
-    _fail(payload.get("schema") == SOLVER_RECORD_SCHEMA and payload.get("stage") == "j2-cold-staged-solver" and payload.get("source_sha") == expected_source_sha and payload.get("branch") == BRANCH, "solver record identity mismatch", "jit")
+    _fail(payload.get("schema") == SOLVER_RECORD_SCHEMA and payload.get("stage") == "j3-split-cold-staged-solver" and payload.get("source_sha") == expected_source_sha and payload.get("branch") == BRANCH, "solver record identity mismatch", "jit")
     _fail(payload.get("raw_facts_only") is True and not any(key in payload for key in ("passed", "classification", "status")), "solver record contains checker decision", "jit")
     command = payload.get("command")
     expected_executable = Path(__file__).resolve().parents[1] / ".venv" / "bin" / "python"
@@ -424,6 +507,7 @@ def _check_solver(record: dict[str, Any], paths: dict[str, Path], expected_sourc
     identity = payload.get("identity")
     _fail(isinstance(identity, dict) and identity.get("input_path") == str(input_path) and identity.get("input_sha256") == INPUT_SHA256 and identity.get("physical_model_sha256") == PHYSICAL_MODEL_SHA256 and identity.get("mode_manifest_sha256") == MODE_MANIFEST_SHA256 and identity.get("profile") == EXPECTED_PROFILE, "solver profile mismatch", "jit")
     _check_runtime(payload.get("runtime"), expected_source_sha, "solver")
+    _check_physical_audit(payload.get("physical_audit"))
     architecture = payload.get("architecture")
     expected_architecture = {
         "p6_matrix_free": True, "p6_global_aij": False, "high_order_global_aij": False,
@@ -432,20 +516,23 @@ def _check_solver(record: dict[str, Any], paths: dict[str, Path], expected_sourc
         "p1_direct_factor_built": True, "same_mesh_pmg_built": True,
         "streaming_dtn_action_built": True, "dtn_carrier_built": True,
         "dtn_carrier_lifetime": "transient_released", "physical_volume_action_built": True,
+        "volume_component_count": 2,
+        "volume_components": ["curl_curl", "complex_material_mass"],
+        "monolithic_physical_volume": False,
         "rhs_built": False, "outer_ksp_built": False, "solve_run": False,
         "recovery_run": False, "bundle_destroyed_before_record": True,
     }
     _fail(architecture == expected_architecture, "solver architecture facts are not the measured bundle facts", "jit")
     _fail(tuple(payload.get("marker_names", ())) == EXPECTED_MARKERS[:-1], "solver marker prefix mismatch")
     calls = payload.get("ffcx_calls")
-    _fail(isinstance(calls, list) and len(calls) == payload.get("expected_ffcx_call_count") == 9, "solver FFCx call count is not nine", "jit")
+    _fail(isinstance(calls, list) and len(calls) == payload.get("expected_ffcx_call_count") == 10, "solver FFCx call count is not ten", "jit")
     module_names: set[str] = set()
     for call in calls:
         _fail(isinstance(call, dict) and call.get("code") == [None, None] and call.get("cache_hit") is True and isinstance(call.get("module_name"), str) and call["module_name"], "solver FFCx call was not an exact cache hit", "jit")
         module_file = _absolute(call.get("module_file"))
         _fail(module_file.is_file() and module_file.suffix == ".so" and module_file.is_relative_to(paths["cache_dir"]), "solver module file is outside formal cache", "jit")
         module_names.add(module_file.name)
-    _fail(len(module_names) == 9 and module_names == all_modules - incident_modules, "solver module set is not nine distinct precompiled modules", "jit")
+    _fail(len(module_names) == 10 and module_names == all_modules - incident_modules, "solver module set is not ten distinct precompiled modules", "jit")
     _fail(payload.get("mode", {}).get("manifest_sha256") == MODE_MANIFEST_SHA256, "solver mode identity mismatch", "jit")
     for path_key in ("stdout_path", "stderr_path"):
         path = _absolute(info.get(path_key))
@@ -479,12 +566,12 @@ def check_record(record_path: Path | str, expected_source_sha: str) -> dict[str,
     return {
         "schema": CHECKER_SCHEMA,
         "passed": True,
-        "classification": "J2_COLD_STAGED_PASS",
+        "classification": "J3_SPLIT_COLD_STAGED_PASS",
         "contract_errors": [],
         "gate_failures": [],
         "identity": {"source_sha": record["source_sha"], "branch": record["branch"], "input_sha256": record["identity"]["input_sha256"], "physical_model_sha256": record["identity"]["physical_model_sha256"], "mode_manifest_sha256": record["identity"]["mode_manifest_sha256"]},
         "evidence": {"raw_record_path": str(record_argument), "raw_record_sha256": _sha256(record_argument), "process_sample_sha256": record["process"]["sample_sha256"], "marker_manifest_sha256": record["markers"]["manifest_sha256"]},
-        "metrics": {"precompile_group_count": len(GROUPS), "solver_ffcx_call_count": 9, "precompiled_module_count": len(all_modules), "solver_module_count": len(all_modules - incident_modules), "process_sample_count": record["process"]["sample_count"], "peak_rss_bytes": record["process"]["peak_rss_bytes"], "max_swap_bytes": record["process"]["max_swap_bytes"]},
+        "metrics": {"precompile_group_count": len(GROUPS), "solver_ffcx_call_count": 10, "precompiled_module_count": len(all_modules), "solver_module_count": len(all_modules - incident_modules), "process_sample_count": record["process"]["sample_count"], "peak_rss_bytes": record["process"]["peak_rss_bytes"], "max_swap_bytes": record["process"]["max_swap_bytes"]},
     }
 
 
@@ -511,7 +598,7 @@ def main(argv: list[str] | None = None) -> int:
     except (CheckError, OSError, ValueError, KeyError, IndexError, TypeError) as error:
         if not isinstance(error, CheckError):
             error = CheckError(str(error))
-        result = {"schema": CHECKER_SCHEMA, "passed": False, "classification": {"resource": "J2_RESOURCE_GATE_FAIL", "process": "J2_PROCESS_AUTHORITY_FAIL", "jit": "JIT_STAGING_IDENTITY_FAIL"}.get(error.kind, "J2_CONTRACT_INVALID"), "contract_errors": [str(error)] if error.kind == "contract" else [], "gate_failures": [str(error)] if error.kind != "contract" else [], "metrics": {}}
+        result = {"schema": CHECKER_SCHEMA, "passed": False, "classification": {"resource": "J3_RESOURCE_GATE_FAIL", "process": "J3_PROCESS_AUTHORITY_FAIL", "jit": "J3_SPLIT_STAGING_IDENTITY_FAIL"}.get(error.kind, "J3_CONTRACT_INVALID"), "contract_errors": [str(error)] if error.kind == "contract" else [], "gate_failures": [str(error)] if error.kind != "contract" else [], "metrics": {}}
         _emit(result, args.output)
         return 1
     _emit(result, args.output)

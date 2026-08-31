@@ -16,8 +16,8 @@ from typing import Any
 
 
 MODULE = "benchmarks.run_task038_full3d_jit_solver_bundle"
-RECORD_SCHEMA = "task038.v14.j2.cold-staged.solver-record.v1"
-MARKER_SCHEMA = "task038.v14.j1b.marker.v1"
+RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.solver-record.v1"
+MARKER_SCHEMA = "task038.v14.j3.marker.v1"
 MARKER_ORDER = (
     "parent_started",
     "fresh_cache_created",
@@ -32,6 +32,10 @@ MARKER_ORDER = (
     "precompile_incident_rhs_started",
     "precompile_incident_rhs_complete",
     "precompile_physical_volume_started",
+    "precompile_physical_volume_curl_started",
+    "precompile_physical_volume_curl_complete",
+    "precompile_physical_volume_mass_started",
+    "precompile_physical_volume_mass_complete",
     "precompile_physical_volume_complete",
     "all_precompile_children_gone",
     "solver_child_started",
@@ -78,6 +82,48 @@ EXPECTED_PROFILE = {
     "dtn_order_policy": "auto_propagating",
     "dtn_assembly": "auxiliary",
 }
+
+
+def _split_physical_audit(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise RuntimeError("physical bundle audit is missing")
+    volume = value.get("volume_action")
+    if (
+        value.get("physical_form")
+        != "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn"
+        or value.get("volume_component_count") != 2
+        or value.get("volume_components") != ["curl_curl", "complex_material_mass"]
+        or not isinstance(volume, dict)
+        or volume.get("schema") != "task038.fullspace-split-volume-action.v1"
+        or volume.get("operator") != "A_curl_curl_plus_A_complex_material_mass"
+        or volume.get("component_count") != 2
+        or set(volume.get("components", {}))
+        != {"curl_curl", "complex_material_mass"}
+        or volume.get("constraint_identity_rows_exactly_once") is not True
+        or volume.get("third_persistent_sum_vector") is not False
+    ):
+        raise RuntimeError("physical bundle audit is not the exact split volume audit")
+    components = volume["components"]
+    for name, slave_identity in (("curl_curl", True), ("complex_material_mass", False)):
+        component = components.get(name)
+        if (
+            not isinstance(component, dict)
+            or component.get("schema") != "task038.fullspace-mpc-form-action.v1"
+            or component.get("operator") != "uncondensed_fullspace_curl_mass_form"
+            or component.get("slave_row_identity") is not slave_identity
+            or any(
+                component.get(key) is not False
+                for key in (
+                    "global_matrix_materialized",
+                    "global_constraint_matrix_materialized",
+                    "global_condensed_schur_materialized",
+                    "cell_schur_matrix_materialized",
+                    "slab_matrix_materialized",
+                )
+            )
+        ):
+            raise RuntimeError(f"physical bundle audit component is invalid: {name}")
+    return value
 
 
 def _absolute(value: Path | str) -> Path:
@@ -159,7 +205,7 @@ def _callback(marker_dir: Path, cache_dir: Path, raw_dir: Path, source_sha: str,
 
     def emit(name: str, facts: dict[str, Any]) -> None:
         merged = {
-            "stage": "j2-cold-staged",
+            "stage": "j3-split-cold-staged-solver",
             "artifact_root": str(cache_dir.parent),
             "cache_dir": str(cache_dir),
             "source_sha": source_sha,
@@ -215,7 +261,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.expected_mpi_size != 1 or MPI.COMM_WORLD.size != 1:
-        raise ValueError("J2 solver child is MPI1-only")
+        raise ValueError("J3 solver child is MPI1-only")
     root = Path(__file__).resolve().parents[1]
     runtime = _runtime_facts(root, args.expected_source_sha, MPI.COMM_WORLD, PETSc)
     input_path = _absolute(args.input)
@@ -246,6 +292,9 @@ def main(argv: list[str] | None = None) -> int:
             ),
         )
         audit = audit_p6_same_mesh_physical_bundle(bundle)
+        physical_audit = _split_physical_audit(
+            _jsonable(audit["physical_action"])
+        )
     finally:
         if bundle:
             destroy_p6_same_mesh_physical_bundle(bundle)
@@ -256,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
     markers = _read_markers(marker_dir)
     record = {
         "schema": RECORD_SCHEMA,
-        "stage": "j2-cold-staged-solver",
+        "stage": "j3-split-cold-staged-solver",
         "source_sha": args.expected_source_sha,
         "branch": BRANCH,
         "command": [str(Path(sys.executable)), "-m", MODULE, *sys.argv[1:]],
@@ -280,9 +329,9 @@ def main(argv: list[str] | None = None) -> int:
             "dtn_quadrature_degree": qdegree,
         },
         "ffcx_calls": calls,
-        "expected_ffcx_call_count": 9,
+        "expected_ffcx_call_count": 10,
         "setup_audit": _jsonable(audit["setup_audit"]),
-        "physical_audit": _jsonable(audit["physical_action"]),
+        "physical_audit": physical_audit,
         "architecture": {
             "p6_matrix_free": True,
             "p6_global_aij": False,
@@ -296,7 +345,17 @@ def main(argv: list[str] | None = None) -> int:
             "streaming_dtn_action_built": True,
             "dtn_carrier_built": True,
             "dtn_carrier_lifetime": "transient_released",
-            "physical_volume_action_built": True,
+            "physical_volume_action_built": bool(
+                physical_audit["volume_action"]["component_count"] == 2
+            ),
+            "volume_component_count": physical_audit["volume_component_count"],
+            "volume_components": list(physical_audit["volume_components"]),
+            "monolithic_physical_volume": not (
+                physical_audit["physical_form"]
+                == "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn"
+                and physical_audit["volume_action"]["schema"]
+                == "task038.fullspace-split-volume-action.v1"
+            ),
             "rhs_built": False,
             "outer_ksp_built": False,
             "solve_run": False,
@@ -308,7 +367,7 @@ def main(argv: list[str] | None = None) -> int:
         ],
         "raw_facts_only": True,
     }
-    if len(calls) != 9:
+    if len(calls) != 10:
         record["ffcx_call_count_mismatch"] = True
     _write_json(record_path, record)
     return 0
