@@ -7,6 +7,7 @@ import json
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 
 EXPECTED_BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
@@ -307,6 +308,37 @@ def append_jsonl(path: Path | str, value: dict) -> Path:
         stream.flush()
         os.fsync(stream.fileno())
     return path
+
+
+def _install_ffcx_observer(jit_module: Any) -> tuple[list[dict[str, Any]], Any]:
+    """Observe the exact FFCx return tuple without changing its behavior."""
+
+    original = jit_module.ffcx_jit
+    calls: list[dict[str, Any]] = []
+
+    def observed(*args: Any, **kwargs: Any) -> Any:
+        compiled_object, module, returned_code = original(*args, **kwargs)
+        if not isinstance(returned_code, tuple) or len(returned_code) != 2:
+            raise RuntimeError("dolfinx.jit.ffcx_jit returned an invalid code tuple")
+        code = [None if item is None else "<non_none>" for item in returned_code]
+        module_file = getattr(module, "__file__", None)
+        calls.append(
+            {
+                "index": len(calls),
+                "module_name": getattr(module, "__name__", None),
+                "module_file": None if module_file is None else str(Path(module_file).absolute()),
+                "code": code,
+                "cache_hit": code == [None, None],
+            }
+        )
+        return compiled_object, module, returned_code
+
+    jit_module.ffcx_jit = observed
+    return calls, original
+
+
+def _restore_ffcx_observer(jit_module: Any, original: Any) -> None:
+    jit_module.ffcx_jit = original
 
 
 def cache_manifest(cache_dir: Path | str) -> dict:

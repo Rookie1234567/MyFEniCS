@@ -37,9 +37,13 @@ BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 MODULE = "benchmarks.run_task038_full3d_jit_staged_parent"
 CHILD_MODULE = "benchmarks.run_task038_full3d_jit_precompile"
 SOLVER_MODULE = "benchmarks.run_task038_full3d_jit_solver_bundle"
+P0_MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p0_physical"
+WORKFLOW_J3 = "j3-split-cold-staged"
+WORKFLOW_J4 = "j4-p0r"
 RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.parent-record.v1"
 CHILD_RECORD_SCHEMA = "task038.full3d.jit-split.child-record.v1"
 SOLVER_RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.solver-record.v1"
+J4_RECORD_SCHEMA = "task038.v14.j4.p0r.parent-record.v1"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
@@ -210,16 +214,61 @@ def _solver_command(
     ]
 
 
+def _p0_command(
+    root: Path,
+    cache_dir: Path,
+    marker_dir: Path,
+    input_path: Path,
+    record_path: Path,
+    source_sha: str,
+) -> list[str]:
+    return [
+        str(Path(sys.executable)),
+        "-m",
+        P0_MODULE,
+        "--workflow",
+        WORKFLOW_J4,
+        "--stage",
+        "p0-physical",
+        "--case",
+        "p6-h10-mpi1",
+        "--source",
+        "physical_rhs",
+        "--raw-dir",
+        str(root / "worker_raw"),
+        "--jit-cache-dir",
+        str(cache_dir),
+        "--checkpoint-root",
+        str(root / "checkpoints"),
+        "--record",
+        str(record_path),
+        "--expected-source-sha",
+        source_sha,
+        "--expected-mpi-size",
+        "1",
+        "--input",
+        str(input_path),
+        "--v14-marker-dir",
+        str(marker_dir),
+    ]
+
+
 def _marker(
     marker_dir: Path,
     root: Path,
     cache_dir: Path,
     source_sha: str,
     name: str,
+    *,
+    workflow: str = WORKFLOW_J3,
     **facts: Any,
 ) -> Path:
     common = {
-        "stage": "j3-split-cold-staged-parent",
+        "stage": (
+            "j4-p0r-parent"
+            if workflow == WORKFLOW_J4
+            else "j3-split-cold-staged-parent"
+        ),
         "artifact_root": str(root),
         "cache_dir": str(cache_dir),
         "source_sha": source_sha,
@@ -588,10 +637,13 @@ def _partial_record(
     solver: dict[str, Any] | None,
     sample_path: Path,
     error: str,
+    workflow: str = WORKFLOW_J3,
 ) -> dict[str, Any]:
+    j4 = workflow == WORKFLOW_J4
     partial: dict[str, Any] = {
-        "schema": RECORD_SCHEMA,
-        "stage": "j3-split-cold-staged-parent",
+        "schema": J4_RECORD_SCHEMA if j4 else RECORD_SCHEMA,
+        "stage": "j4-p0r-parent" if j4 else "j3-split-cold-staged-parent",
+        "workflow": workflow,
         "source_sha": source_sha,
         "branch": BRANCH,
         "command": command,
@@ -652,11 +704,27 @@ def run_parent(args: argparse.Namespace) -> None:
     solver_info: dict[str, Any] | None = None
     observed_identity: dict[str, Any] | None = None
     try:
-        _marker(paths["marker_dir"], root, cache_dir, args.source_sha, "parent_started", pid=os.getpid())
+        _marker(
+            paths["marker_dir"],
+            root,
+            cache_dir,
+            args.source_sha,
+            "parent_started",
+            workflow=args.workflow,
+            pid=os.getpid(),
+        )
         create_fresh_cache(paths["cache_dir"])
         if cache_manifest(cache_dir)["artifact_count"] != 0:
             raise RuntimeError("fresh cache is not empty")
-        _marker(paths["marker_dir"], root, cache_dir, args.source_sha, "fresh_cache_created", artifact_count=0)
+        _marker(
+            paths["marker_dir"],
+            root,
+            cache_dir,
+            args.source_sha,
+            "fresh_cache_created",
+            workflow=args.workflow,
+            artifact_count=0,
+        )
         children_dir = root / "children"
         solver_dir = root / "solver"
         manifests_dir = root / "cache_manifests"
@@ -677,6 +745,7 @@ def run_parent(args: argparse.Namespace) -> None:
                     cache_dir,
                     args.source_sha,
                     "precompile_physical_volume_started",
+                    workflow=args.workflow,
                     group="physical-volume",
                     command=command,
                 )
@@ -686,6 +755,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 cache_dir,
                 args.source_sha,
                 started,
+                workflow=args.workflow,
                 group=group,
                 command=command,
             )
@@ -755,6 +825,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 cache_dir,
                 args.source_sha,
                 complete,
+                workflow=args.workflow,
                 group=group,
                 returncode=monitor["returncode"],
                 descendants_gone=monitor["descendants_gone"],
@@ -768,6 +839,7 @@ def run_parent(args: argparse.Namespace) -> None:
                     cache_dir,
                     args.source_sha,
                     "precompile_physical_volume_complete",
+                    workflow=args.workflow,
                     group="physical-volume",
                     returncode=monitor["returncode"],
                     descendants_gone=monitor["descendants_gone"],
@@ -789,10 +861,172 @@ def run_parent(args: argparse.Namespace) -> None:
             cache_dir,
             args.source_sha,
             "all_precompile_children_gone",
+            workflow=args.workflow,
             child_count=len(children),
             compiler_descendant_count=int(tail_sample["compiler_descendant_count"]),
         )
         before_solver = _save_manifest(cache_dir, manifests_dir / "before_solver.json")
+        if args.workflow == WORKFLOW_J4:
+            worker_record = root / "worker_record.json"
+            worker_command = _p0_command(
+                root,
+                cache_dir,
+                paths["marker_dir"],
+                input_path,
+                worker_record,
+                args.source_sha,
+            )
+            _marker(
+                paths["marker_dir"],
+                root,
+                cache_dir,
+                args.source_sha,
+                "solver_child_started",
+                workflow=WORKFLOW_J4,
+                command=worker_command,
+                pid_expected="child_process",
+            )
+            worker_stdout = solver_dir / "worker.stdout"
+            worker_stderr = solver_dir / "worker.stderr"
+            worker_process = _run_child(
+                worker_command,
+                worker_stdout,
+                worker_stderr,
+                sample_path,
+                "solver",
+            )
+            solver_info = {
+                "workflow": WORKFLOW_J4,
+                "command": worker_command,
+                "process": worker_process,
+                "record_path": str(worker_record),
+                "stdout_path": str(worker_stdout),
+                "stderr_path": str(worker_stderr),
+            }
+            solver_info["record_sha256"] = (
+                sha256_file(worker_record) if worker_record.is_file() else None
+            )
+            solver_info["stdout_sha256"] = sha256_file(worker_stdout)
+            solver_info["stderr_sha256"] = sha256_file(worker_stderr)
+            after_solver = _save_manifest(cache_dir, manifests_dir / "after_solver.json")
+            solver_info["before_solver_manifest_sha256"] = before_solver["sha256"]
+            solver_info["after_solver_manifest_sha256"] = after_solver["sha256"]
+            solver_info["cache_unchanged"] = (
+                Path(before_solver["path"]).read_bytes()
+                == Path(after_solver["path"]).read_bytes()
+            )
+            if worker_record.is_file():
+                worker_payload = _read_json(worker_record)
+                observed_identity = worker_payload.get("provenance", observed_identity)
+            if (
+                not worker_process["natural_exit"]
+                or not worker_process["all_status_readable"]
+                or not worker_process["process_group_gone"]
+                or worker_process["required_sigkill"]
+                or worker_process["max_swap_bytes"] != 0
+                or worker_process["peak_rss_bytes"] is None
+                or worker_process["peak_rss_bytes"] >= RSS_HARD_LIMIT
+            ):
+                raise RuntimeError("J4 P0 worker failed")
+            if not worker_record.is_file():
+                raise RuntimeError(f"J4 P0 worker record is missing: {worker_record}")
+            if not solver_info["cache_unchanged"]:
+                raise RuntimeError("J4 solver phase changed the formal cache")
+            _marker(
+                paths["marker_dir"],
+                root,
+                cache_dir,
+                args.source_sha,
+                "parent_complete",
+                workflow=WORKFLOW_J4,
+                solver_returncode=worker_process["returncode"],
+                cache_unchanged=True,
+                before_solver_manifest_sha256=before_solver["sha256"],
+                after_solver_manifest_sha256=after_solver["sha256"],
+                compiler_descendant_count=0,
+            )
+            marker_path = root / "marker_manifest.json"
+            marker_entries = _marker_manifest(paths["marker_dir"])
+            _write_json(marker_path, marker_entries)
+            samples = _process_summary(sample_path)
+            all_modules = sorted(
+                {
+                    module
+                    for child in children
+                    for module in child["new_module_basenames"]
+                }
+            )
+            record = {
+                "schema": J4_RECORD_SCHEMA,
+                "stage": "j4-p0r-parent",
+                "workflow": WORKFLOW_J4,
+                "source_sha": args.source_sha,
+                "branch": BRANCH,
+                "command": parent_command,
+                "identity": {
+                    "input_path": str(input_path),
+                    "input_sha256": INPUT_SHA256,
+                    "physical_model_sha256": PHYSICAL_MODEL_SHA256,
+                    "mode_manifest_sha256": MODE_MANIFEST_SHA256,
+                    "profile": EXPECTED_PROFILE,
+                    "runtime": observed_identity or identity,
+                },
+                "paths": {
+                    "artifact_root": str(root),
+                    "cache_dir": str(cache_dir),
+                    "marker_dir": str(paths["marker_dir"]),
+                    "record": str(record_path),
+                    "process_samples": str(sample_path),
+                    "marker_manifest": str(marker_path),
+                    "children_dir": str(children_dir),
+                    "solver_dir": str(solver_dir),
+                    "worker_record": str(worker_record),
+                    "cache_manifests_dir": str(manifests_dir),
+                },
+                "marker_schema": MARKER_SCHEMA,
+                "sample_schema": SAMPLE_SCHEMA,
+                "markers": {
+                    "names": [entry["name"] for entry in marker_entries],
+                    "manifest_path": str(marker_path),
+                    "manifest_sha256": sha256_file(marker_path),
+                },
+                "process": samples,
+                "children": children,
+                "solver": solver_info,
+                "cache": {
+                    "initial_empty": True,
+                    "initial_manifest": initial_manifest,
+                    "group_manifests": [
+                        {
+                            "group": child["group"],
+                            "path": child["cache_manifest_path"],
+                            "sha256": child["cache_manifest_sha256"],
+                            "artifact_count": child["cache_artifact_count"],
+                            "new_module_basenames": child["new_module_basenames"],
+                        }
+                        for child in children
+                    ],
+                    "before_solver": before_solver,
+                    "after_solver": after_solver,
+                    "precompiled_module_basenames": all_modules,
+                    "deferred_incident_module_basenames": [],
+                    "solver_unchanged": True,
+                },
+                "architecture": {
+                    "workflow": WORKFLOW_J4,
+                    "precompile_group_count": len(JIT_GROUPS),
+                    "solver_worker": P0_MODULE,
+                    "physical_workflow": True,
+                    "physical_volume_action_built": True,
+                    "volume_component_count": 2,
+                    "volume_components": ["curl_curl", "complex_material_mass"],
+                    "monolithic_physical_volume": False,
+                    "official_recovery": False,
+                },
+                "raw_facts_only": True,
+            }
+            _write_json(record_path, record)
+            return
         solver_record = solver_dir / "solver_record.json"
         solver_command = _solver_command(
             cache_dir, solver_record, paths["marker_dir"], input_path, args.source_sha
@@ -968,6 +1202,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 solver=solver_info,
                 sample_path=sample_path,
                 error=str(error),
+                workflow=args.workflow,
             )
             _write_json(record_path, partial)
         raise
@@ -975,6 +1210,7 @@ def run_parent(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--workflow", choices=(WORKFLOW_J3, WORKFLOW_J4), default=WORKFLOW_J3)
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
@@ -986,7 +1222,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.expected_mpi_size != 1:
-        raise ValueError("J3 parent is fixed to MPI1")
+        raise ValueError("J3/J4 parent is fixed to MPI1")
     run_parent(args)
     return 0
 

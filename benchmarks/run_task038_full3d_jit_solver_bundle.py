@@ -14,6 +14,11 @@ from pathlib import Path
 import sys
 from typing import Any
 
+from benchmarks.task038_full3d_jit_staging import (
+    _install_ffcx_observer,
+    _restore_ffcx_observer,
+)
+
 
 MODULE = "benchmarks.run_task038_full3d_jit_solver_bundle"
 RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.solver-record.v1"
@@ -169,35 +174,6 @@ def _read_markers(marker_dir: Path) -> list[Path]:
     ):
         raise ValueError("solver markers are not ordered")
     return paths
-
-
-def _install_ffcx_observer(jit_module: Any) -> tuple[list[dict[str, Any]], Any]:
-    original = jit_module.ffcx_jit
-    calls: list[dict[str, Any]] = []
-
-    def observed(*args: Any, **kwargs: Any) -> Any:
-        compiled_object, module, returned_code = original(*args, **kwargs)
-        if not isinstance(returned_code, tuple) or len(returned_code) != 2:
-            raise RuntimeError("dolfinx.jit.ffcx_jit returned an invalid code tuple")
-        code = [None if item is None else "<non_none>" for item in returned_code]
-        module_file = getattr(module, "__file__", None)
-        calls.append(
-            {
-                "index": len(calls),
-                "module_name": getattr(module, "__name__", None),
-                "module_file": None if module_file is None else str(Path(module_file).absolute()),
-                "code": code,
-                "cache_hit": code == [None, None],
-            }
-        )
-        return compiled_object, module, returned_code
-
-    jit_module.ffcx_jit = observed
-    return calls, original
-
-
-def _restore_ffcx_observer(jit_module: Any, original: Any) -> None:
-    jit_module.ffcx_jit = original
 
 
 def _callback(marker_dir: Path, cache_dir: Path, raw_dir: Path, source_sha: str, comm: Any):

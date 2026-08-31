@@ -139,19 +139,34 @@ def _prepare_paths(
     jit_cache_dir: Path,
     checkpoint_root: Path,
     record_path: Path,
+    *,
+    parent_owned_cache: bool = False,
 ) -> None:
     raw_dir = Path(raw_dir).resolve()
     jit_cache_dir = Path(jit_cache_dir).resolve()
     checkpoint_root = Path(checkpoint_root).resolve()
     record_path = Path(record_path).resolve()
     root = raw_dir.parent
-    if not raw_dir.is_absolute() or not checkpoint_root.is_absolute():
-        raise ValueError("positive worker paths must be absolute")
     if jit_cache_dir != (root / "jit_cache").resolve():
         raise ValueError("jit-cache-dir must equal raw_dir.parent/jit_cache")
     if root.exists() and not root.is_dir():
         raise NotADirectoryError(f"positive artifact root is not a directory: {root}")
-    worker_owned = (raw_dir, raw_dir / "markers", jit_cache_dir, checkpoint_root, record_path)
+    worker_owned = (raw_dir, raw_dir / "markers", checkpoint_root, record_path)
+    if parent_owned_cache:
+        if (
+            not root.is_dir()
+            or not jit_cache_dir.is_dir()
+            or not (root / "markers").is_dir()
+            or record_path.parent != root
+        ):
+            raise FileNotFoundError("parent-owned cache layout is not prepared")
+        if any(path.exists() for path in worker_owned):
+            raise FileExistsError("a positive worker-owned path already exists")
+        raw_dir.mkdir(exist_ok=False)
+        (raw_dir / "markers").mkdir()
+        os.environ["XDG_CACHE_HOME"] = str(jit_cache_dir)
+        return
+    worker_owned = (*worker_owned, jit_cache_dir)
     if any(path.exists() for path in worker_owned):
         raise FileExistsError("a positive worker-owned path already exists")
     if checkpoint_root == raw_dir or raw_dir in checkpoint_root.parents:

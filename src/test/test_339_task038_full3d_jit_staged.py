@@ -11,12 +11,14 @@ import subprocess
 import sys
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 from benchmarks import run_task038_full3d_jit_solver_bundle as solver
 from benchmarks import run_task038_full3d_jit_staged_parent as parent
 from benchmarks import task038_full3d_jit_staging as staging
 from benchmarks import task038_full3d_jit_staged_checker as checker
+from benchmarks import task038_full3d_same_mesh_hcurl_pmg_p0_physical_checker as p0_checker
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -202,6 +204,355 @@ def _valid_fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, object]]:
     return record_path, root, record
 
 
+def _j4_member(
+    pid: int,
+    ppid: int,
+    stage: str,
+    rss: int = 100,
+    pss: int = 50,
+    *,
+    swap: int = 0,
+    comm: str = "worker",
+    cmdline: str = "python -m worker",
+) -> dict[str, object]:
+    return {
+        "pid": pid,
+        "ppid": ppid,
+        "comm": comm,
+        "state": "S",
+        "cmdline": cmdline,
+        "stage": stage,
+        "rss_bytes": rss,
+        "pss_bytes": pss,
+        "swap_bytes": swap,
+        "timestamp_ns": 1,
+        "exit_code": None,
+    }
+
+
+def _j4_sample(
+    stage: str,
+    timestamp: int,
+    descendant: int | None,
+    *,
+    root_rss: int = 100,
+    child_rss: int = 50,
+    swap: int = 0,
+    compiler: bool = False,
+) -> dict[str, object]:
+    members = [_j4_member(4242, 1, stage, root_rss, 50, swap=swap, comm="python", cmdline="python -m parent")]
+    if descendant is not None:
+        members.append(
+            _j4_member(
+                descendant,
+                4242,
+                stage,
+                child_rss,
+                25,
+                comm="gcc" if compiler else "worker",
+                cmdline="gcc -c form.c" if compiler else "python -m child",
+            )
+        )
+    return {
+        "schema": p0_checker.SAMPLE_SCHEMA,
+        "root_pid": 4242,
+        "stage": stage,
+        "timestamp_ns": timestamp,
+        "exit_code": None,
+        "members": members,
+        "unreadable_pids": [],
+        "vanished_pids": [],
+        "all_status_readable": True,
+        "readability_retry_count": 0,
+        "compiler_descendant_count": int(compiler),
+        "rss_bytes": sum(int(item["rss_bytes"]) for item in members),
+        "swap_bytes": swap,
+        "pss_all_readable": True,
+        "pss_bytes": sum(int(item["pss_bytes"]) for item in members),
+    }
+
+
+def _j4_monitor(
+    pid: int,
+    started: int,
+    ended: int,
+    sample_count: int,
+    *,
+    peak: int = 150,
+    swap: int = 0,
+    compiler_peak: int = 0,
+) -> dict[str, object]:
+    return {
+        "pid": pid,
+        "process_group_id": pid,
+        "started_ns": started,
+        "ended_ns": ended,
+        "returncode": 0,
+        "natural_exit": True,
+        "stop_reason": "natural_exit",
+        "sample_count": sample_count,
+        "peak_rss_bytes": peak,
+        "max_swap_bytes": swap,
+        "all_status_readable": True,
+        "compiler_descendant_peak": compiler_peak,
+        "observed_descendant_pids": [pid],
+        "last_sample": None,
+        "signals": [],
+        "required_sigkill": False,
+        "process_group_gone": True,
+        "descendants_gone": True,
+    }
+
+
+def _j4_architecture() -> dict[str, object]:
+    return {
+        "p6_matrix_free": True,
+        "p6_global_aij": False,
+        "high_order_global_aij": False,
+        "global_dense_transfer": False,
+        "numeric_allgather": False,
+        "p3_sparse_matrix_built": True,
+        "p1_sparse_matrix_built": True,
+        "p1_direct_factor_built": True,
+        "same_mesh_pmg_built": True,
+        "streaming_dtn_action_built": True,
+        "dtn_carrier_built": True,
+        "dtn_carrier_lifetime": "transient_released",
+        "physical_volume_action_built": True,
+        "volume_component_count": 2,
+        "volume_components": ["curl_curl", "complex_material_mass"],
+        "monolithic_physical_volume": False,
+        "rhs_built": True,
+        "outer_ksp_built": True,
+        "solve_run": True,
+        "recovery_run": False,
+        "bundle_destroyed_before_record": True,
+    }
+
+
+def _j4_runtime() -> dict[str, object]:
+    return {
+        "source_sha": SOURCE_SHA,
+        "branch": p0_checker.BRANCH,
+        "clean_source_tree": True,
+        "qualified_activation": "1",
+        "python_executable": str(PYTHON),
+        "python_prefix": str(ROOT / ".venv"),
+        "mpi_size": 1,
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "threads": {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"},
+        "abi_modules": {name: str(ROOT / ".venv" / "lib" / f"{name}.so") for name in ("mpi4py", "petsc4py", "dolfinx", "basix")},
+    }
+
+
+def _j4_worker_command(root: Path, cache: Path, marker_dir: Path, worker_path: Path) -> list[str]:
+    return [
+        str(PYTHON),
+        "-m",
+        p0_checker.MODULE,
+        "--workflow",
+        p0_checker.J4_WORKFLOW,
+        "--stage",
+        "p0-physical",
+        "--case",
+        "p6-h10-mpi1",
+        "--source",
+        "physical_rhs",
+        "--raw-dir",
+        str(root / "worker_raw"),
+        "--jit-cache-dir",
+        str(cache),
+        "--checkpoint-root",
+        str(root / "checkpoints"),
+        "--record",
+        str(worker_path),
+        "--expected-source-sha",
+        SOURCE_SHA,
+        "--expected-mpi-size",
+        "1",
+        "--input",
+        str(INPUT),
+        "--v14-marker-dir",
+        str(marker_dir),
+    ]
+
+
+def _j4_write_worker_markers(raw_dir: Path) -> dict[str, int]:
+    marker_dir = raw_dir / "markers"
+    marker_dir.mkdir(parents=True)
+    times = {
+        name: timestamp
+        for name, timestamp in zip(
+            p0_checker.J4_WORKER_MARKERS,
+            (
+                28_000_000_000,
+                29_000_000_000,
+                30_000_000_000,
+                31_000_000_000,
+                32_000_000_000,
+                33_000_000_000,
+                38_000_000_000,
+                39_000_000_000,
+                41_000_000_000,
+                42_000_000_000,
+                43_000_000_000,
+                44_000_000_000,
+                45_000_000_000,
+                46_000_000_000,
+                47_000_000_000,
+            ),
+        )
+    }
+    for name, timestamp in times.items():
+        facts: dict[str, object] = {}
+        if name == "solve_started":
+            facts["max_it"] = 20
+        _write(marker_dir / f"{name}.json", {"schema": p0_checker.J4_WORKER_MARKER_SCHEMA, "marker": name, "source_sha": SOURCE_SHA, "wall_time_ns": timestamp, "facts": facts})
+    return times
+
+
+def _valid_j4_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    root = tmp_path / "j4-root"
+    cache = root / "jit_cache"
+    marker_dir = root / "markers"
+    children_dir = root / "children"
+    solver_dir = root / "solver"
+    manifests_dir = root / "cache_manifests"
+    worker_raw = root / "worker_raw"
+    checkpoints = root / "checkpoints"
+    for path in (root, cache, marker_dir, children_dir, solver_dir, manifests_dir, worker_raw, checkpoints):
+        path.mkdir()
+    record_path = root / "parent_record.json"
+    sample_path = root / "parent_process.jsonl"
+    marker_manifest_path = root / "marker_manifest.json"
+
+    marker_entries = []
+    for name in p0_checker.J4_MARKER_ORDER:
+        index = p0_checker.J4_PARENT_MARKER_INDEX[name]
+        timestamp = (index + 1) * 1_000_000_000
+        facts: dict[str, object] = {
+            "stage": "j4-p0r-solver" if 20 <= index <= 38 else "j4-p0r-parent",
+            "artifact_root": str(root),
+            "cache_dir": str(cache),
+            "source_sha": SOURCE_SHA,
+        }
+        if name.startswith("precompile_") and name.endswith("_started"):
+            facts["command"] = [str(PYTHON), "-m", parent.CHILD_MODULE]
+        if name == "solver_child_started":
+            facts["command"] = [str(PYTHON), "-m", parent.P0_MODULE, "--workflow", parent.WORKFLOW_J4]
+        if name == "parent_complete":
+            facts["compiler_descendant_count"] = 0
+        path = marker_dir / f"{index:03d}_{name}.json"
+        _write(path, {"schema": p0_checker.V14_MARKER_SCHEMA, "name": name, "marker_index": index, "timestamp_ns": timestamp, "facts": facts})
+        marker_entries.append({"name": name, "path": str(path), "sha256": _sha(path)})
+    _write(marker_manifest_path, marker_entries)
+
+    stages = [*(f"precompile:{group}" for group in p0_checker.J4_GROUP_COUNTS), "precompile:parent-only", "solver"]
+    samples: list[dict[str, object]] = []
+    for index, stage in enumerate(stages[:-2]):
+        base = 2_000_000_000 + index * 2_000_000_000
+        pid = 5000 + index
+        samples.extend((_j4_sample(stage, base + 100_000_000, pid), _j4_sample(stage, base + 200_000_000, pid), _j4_sample(stage, base + 300_000_000, pid)))
+    parent_only = stages[-2]
+    samples.extend((_j4_sample(parent_only, 16_100_000_000, None), _j4_sample(parent_only, 16_200_000_000, None), _j4_sample(parent_only, 16_300_000_000, None)))
+    solver_stage = stages[-1]
+    samples.extend((_j4_sample(solver_stage, 36_500_000_000, 6000), _j4_sample(solver_stage, 39_500_000_000, 6000), _j4_sample(solver_stage, 40_500_000_000, 6000), _j4_sample(solver_stage, 44_500_000_000, 6000), _j4_sample(solver_stage, 46_500_000_000, 6000)))
+    sample_path.write_text("".join(json.dumps(value, separators=(",", ":")) + "\n" for value in samples), encoding="utf-8")
+
+    initial_manifest_path = manifests_dir / "initial.json"
+    initial_manifest = {"cache_dir": str(cache), "artifacts": [], "artifact_count": 0}
+    _write(initial_manifest_path, initial_manifest)
+    initial_ref = {"path": str(initial_manifest_path), "sha256": _sha(initial_manifest_path), "artifact_count": 0, "manifest": initial_manifest}
+
+    children = []
+    artifacts: list[dict[str, object]] = []
+    module_index = 0
+    for group_index, group in enumerate(p0_checker.J4_GROUP_COUNTS):
+        roles = list(p0_checker.J4_GROUP_ROLES[group])
+        added: list[dict[str, object]] = []
+        for _ in roles:
+            for suffix in ("c", "o", "so"):
+                relative = f"module_{module_index}.{suffix}"
+                target = cache / relative
+                target.write_bytes(f"module-{module_index}-{suffix}".encode())
+                item = {"relative_path": relative, "bytes": target.stat().st_size, "sha256": _sha(target)}
+                artifacts.append(item)
+                added.append(item)
+            module_index += 1
+        manifest = {"cache_dir": str(cache), "artifacts": list(artifacts), "artifact_count": len(artifacts)}
+        manifest_path = manifests_dir / f"{group_index:02d}-{group.replace('-', '_')}.json"
+        _write(manifest_path, manifest)
+        child_record = children_dir / f"{group_index:02d}-{group.replace('-', '_')}.json"
+        child_command = [str(PYTHON), "-m", parent.CHILD_MODULE, "--group", group, "--cache-dir", str(cache), "--record", str(child_record), "--expected-source-sha", SOURCE_SHA, "--input", str(INPUT)]
+        child_facts = {"compiled_form_count": len(roles), "form_roles": roles}
+        if group.startswith("physical-volume-"):
+            child_facts.update({"component": "curl" if group.endswith("curl") else "mass", "component_count": 1})
+        _write(child_record, {"schema": parent.CHILD_RECORD_SCHEMA, "stage": "j3-split-precompile-child", "group": group, "source_sha": SOURCE_SHA, "branch": p0_checker.BRANCH, "command": child_command, "input": {"path": str(INPUT), "input_sha256": p0_checker.INPUT_SHA256, "physical_model_sha256": p0_checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": p0_checker.MODE_MANIFEST_SHA256, "profile": _profile()}, "cache": {"cache_dir": str(cache), "jit_options": {}}, "facts": {"group_facts": child_facts}, "architecture": {"matrix": False, "factor": False, "pc": False, "rhs_vector": False, "surface_carrier": False, "dtn_carrier": False, "solve": False, "recovery": False, "compile": True, "mesh": True, "jit": True, "pde": False}, "runtime": _runtime(), "raw_facts_only": True})
+        stdout = children_dir / f"{group_index:02d}-{group.replace('-', '_')}.stdout"
+        stderr = children_dir / f"{group_index:02d}-{group.replace('-', '_')}.stderr"
+        stdout.write_bytes(b"")
+        stderr.write_bytes(b"")
+        pid = 5000 + group_index
+        child_entries = {"group": group, "command": child_command, "pid": pid, "returncode": 0, "natural_exit": True, "stop_reason": "natural_exit", "descendants_gone": True, "record_path": str(child_record), "record_sha256": _sha(child_record), "stdout_path": str(stdout), "stdout_sha256": _sha(stdout), "stderr_path": str(stderr), "stderr_sha256": _sha(stderr), "cache_manifest_path": str(manifest_path), "cache_manifest_sha256": _sha(manifest_path), "cache_artifact_count": len(artifacts), "added_artifacts": added, "new_module_basenames": sorted(item["relative_path"] for item in added if str(item["relative_path"]).endswith(".so")), "process": _j4_monitor(pid, 2_000_000_000 + group_index * 2_000_000_000, 2_400_000_000 + group_index * 2_000_000_000, 3)}
+        children.append(child_entries)
+
+    before_path = manifests_dir / "before_solver.json"
+    after_path = manifests_dir / "after_solver.json"
+    final_manifest = {"cache_dir": str(cache), "artifacts": list(artifacts), "artifact_count": len(artifacts)}
+    _write(before_path, final_manifest)
+    _write(after_path, final_manifest)
+
+    worker_path = root / "worker_record.json"
+    raw_dir = worker_raw
+    worker_command = _j4_worker_command(root, cache, marker_dir, worker_path)
+    _j4_write_worker_markers(raw_dir)
+    arrays = {
+        "rhs_before": np.asarray([1.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+        "rhs_after": np.asarray([1.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+        "final_solution": np.asarray([0.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+        "final_action": np.asarray([0.5 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+        "final_residual": np.asarray([0.5 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+        "one_action_output": np.asarray([0.5 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+        "one_pc_output": np.asarray([1.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128),
+    }
+    npz_path = raw_dir / "physical_probe.npz"
+    np.savez_compressed(npz_path, **arrays)
+    npz = {"relative_path": "physical_probe.npz", "bytes": npz_path.stat().st_size, "sha256": _sha(npz_path), "roles": list(arrays), "solution_only": False}
+    audit = _physical_audit()
+    krylov = {"cycles": [{"start_iteration": 0, "end_iteration": 20, "iterations": 20, "ksp_destroyed": True, "matvec_count": 3, "pc_apply_count": 2}], "iterations": 20, "ksp_destroy_count": 1, "checkpoint_facts": [], "matvec_count": 3, "pc_apply_count": 2, "pc_apply_facts": [{"apply_index": 0}, {"apply_index": 1}], "explicit_action_count": 2, "driver_explicit_action_count": 2, "rhs_action_count": 0, "final_action_recheck_count": 1, "extra_action_count": 1, "explicit_action_count_total": 3, "action_calls_total": 6, "initial_true_residual": 1.0, "final_true_residual": 0.5}
+    worker = {"schema": p0_checker.J4_WORKER_SCHEMA, "workflow": p0_checker.J4_WORKFLOW, "stage": "j4-p0r-solver", "source_sha": SOURCE_SHA, "branch": p0_checker.BRANCH, "command": worker_command, "record_path": str(worker_path), "raw_dir": str(raw_dir), "checkpoint_root": str(checkpoints), "provenance": {**_j4_runtime(), "jit_cache_dir": str(cache), "parent_owned_cache": True, "command": worker_command}, "ffcx_calls": [{"index": index, "module_name": f"module_{index}", "module_file": str(cache / f"module_{index}.so"), "code": [None, None], "cache_hit": True} for index in range(11)], "settings": {"max_it": 20, "restart": 20, "cycle_max_it": 20, "residual_replacement": True, "zero_initial_guess": True, "checkpoint_writer": False, "checkpoint_interval": None, "first_checkpoint_iteration": None, "stop_on_true_residual": False, "official_recovery": False}, "krylov": krylov, "npz": npz, "source": {"facts": {"source_sha": SOURCE_SHA}, "generation": "dtn_port_modal_physical_rhs", "role": "physical_maxwell_rhs", "phase_application": "finalized_floquet_mpc_once", "owned_slave_indices": []}, "j4": {"one_action_probe_count": 1, "one_pc_probe_count": 1, "one_action_output": {"array_sha256": p0_checker._array_sha(arrays["one_action_output"]), "finite": True, "owned_slave_max": 0.0}, "one_pc_output": {"array_sha256": p0_checker._array_sha(arrays["one_pc_output"]), "finite": True, "owned_slave_max": 0.0}, "final_explicit_true_residual": 0.5, "rho20": 0.5, "actual_iterations": 20, "cycle_count": 1}, "physical": {"audit": audit, "recovery": {"status": "not_run", "official_outputs_written": False}}, "architecture": _j4_architecture(), "lifecycle": {"marker_relative_dir": "markers", "marker_schema": p0_checker.J4_WORKER_MARKER_SCHEMA, "marker_names": list(p0_checker.J4_WORKER_MARKERS), "retained_dwell_seconds": 2.0, "release_observation_seconds": 1.0, "release_order": ["source_rhs", "retained_window", "krylov_result", "solver_stack", "bundle"]}, "raw_facts_only": True}
+    _write(worker_path, worker)
+    for name in p0_checker.J4_WORKER_MARKERS:
+        if name == "record_written":
+            marker = json.loads((raw_dir / "markers" / f"{name}.json").read_text(encoding="utf-8"))
+            marker["facts"] = {"record_path": str(worker_path), "record_sha256": _sha(worker_path)}
+            _write(raw_dir / "markers" / f"{name}.json", marker)
+
+    solver_stdout = solver_dir / "worker.stdout"
+    solver_stderr = solver_dir / "worker.stderr"
+    solver_stdout.write_bytes(b"")
+    solver_stderr.write_bytes(b"")
+    solver_process = _j4_monitor(6000, 36_000_000_000, 47_000_000_000, 5)
+    solver_info = {"workflow": p0_checker.J4_WORKFLOW, "command": worker_command, "process": solver_process, "record_path": str(worker_path), "record_sha256": _sha(worker_path), "stdout_path": str(solver_stdout), "stdout_sha256": _sha(solver_stdout), "stderr_path": str(solver_stderr), "stderr_sha256": _sha(solver_stderr), "before_solver_manifest_sha256": _sha(before_path), "after_solver_manifest_sha256": _sha(after_path), "cache_unchanged": True}
+
+    process = parent._process_summary(sample_path)
+    parent_command = [str(PYTHON), "-m", parent.MODULE, "--workflow", parent.WORKFLOW_J4, "--artifact-root", str(root), "--record", str(record_path), "--source-sha", SOURCE_SHA, "--input", str(INPUT), "--expected-mpi-size", "1"]
+    record = {"schema": p0_checker.J4_PARENT_SCHEMA, "stage": "j4-p0r-parent", "workflow": p0_checker.J4_WORKFLOW, "source_sha": SOURCE_SHA, "branch": p0_checker.BRANCH, "command": parent_command, "identity": {"input_path": str(INPUT), "input_sha256": p0_checker.INPUT_SHA256, "physical_model_sha256": p0_checker.PHYSICAL_MODEL_SHA256, "mode_manifest_sha256": p0_checker.MODE_MANIFEST_SHA256, "profile": dict(p0_checker.J4_EXPECTED_PROFILE), "runtime": _j4_runtime()}, "paths": {"artifact_root": str(root), "cache_dir": str(cache), "marker_dir": str(marker_dir), "record": str(record_path), "process_samples": str(sample_path), "marker_manifest": str(marker_manifest_path), "children_dir": str(children_dir), "solver_dir": str(solver_dir), "worker_record": str(worker_path), "cache_manifests_dir": str(manifests_dir)}, "marker_schema": p0_checker.V14_MARKER_SCHEMA, "sample_schema": p0_checker.SAMPLE_SCHEMA, "markers": {"names": list(p0_checker.J4_MARKER_ORDER), "manifest_path": str(marker_manifest_path), "manifest_sha256": _sha(marker_manifest_path)}, "process": process, "children": children, "solver": solver_info, "cache": {"initial_empty": True, "initial_manifest": initial_ref, "group_manifests": [{"group": child["group"], "path": child["cache_manifest_path"], "sha256": child["cache_manifest_sha256"], "artifact_count": child["cache_artifact_count"], "new_module_basenames": child["new_module_basenames"]} for child in children], "before_solver": {"path": str(before_path), "sha256": _sha(before_path), "artifact_count": len(artifacts), "manifest": final_manifest}, "after_solver": {"path": str(after_path), "sha256": _sha(after_path), "artifact_count": len(artifacts), "manifest": final_manifest}, "precompiled_module_basenames": sorted(f"module_{index}.so" for index in range(11)), "deferred_incident_module_basenames": [], "solver_unchanged": True}, "architecture": {"workflow": p0_checker.J4_WORKFLOW, "precompile_group_count": 7, "solver_worker": p0_checker.MODULE, "physical_workflow": True, "physical_volume_action_built": True, "volume_component_count": 2, "volume_components": ["curl_curl", "complex_material_mass"], "monolithic_physical_volume": False, "official_recovery": False}, "raw_facts_only": True}
+    _write(record_path, record)
+    return record_path, root
+
+
+def _refresh_j4_process(record_path: Path, sample_path: Path) -> dict[str, object]:
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    record["process"] = parent._process_summary(sample_path)
+    stage = record["process"]["stage_summaries"]["solver"]
+    monitor = record["solver"]["process"]
+    monitor.update({"peak_rss_bytes": stage["peak_rss_bytes"], "max_swap_bytes": stage["max_swap_bytes"], "compiler_descendant_peak": stage["compiler_descendant_peak"], "observed_descendant_pids": stage["observed_descendant_pids"], "sample_count": stage["sample_count"]})
+    _write(record_path, record)
+    return record
+
+
 def test_fresh_root_and_marker_subsequence_are_fail_closed(tmp_path: Path) -> None:
     root = tmp_path / "root"
     cache = root / "jit_cache"
@@ -253,6 +604,47 @@ def test_checker_accepts_fake_unchanged_solver_cache(tmp_path: Path) -> None:
     assert result["metrics"]["solver_ffcx_call_count"] == 10
     assert result["metrics"]["precompiled_module_count"] == 11
 
+    j4_pass_root = tmp_path / "j4-pass"
+    j4_pass_root.mkdir()
+    j4_record_path, _j4_root = _valid_j4_fixture(j4_pass_root)
+    j4_result = p0_checker.check_j4_record(j4_record_path, SOURCE_SHA)
+    assert j4_result["passed"] is True
+    assert j4_result["classification"] == "J4_P0R_PASS"
+    assert j4_result["metrics"]["precompiled_module_count"] == 11
+    assert j4_result["metrics"]["ffcx_call_count"] == 11
+    with pytest.raises(checker.CheckError):
+        checker.check_record(j4_record_path, SOURCE_SHA)
+
+    from benchmarks import run_task038_full3d_same_mesh_hcurl_pmg_p0_physical as p0_worker
+
+    direct_record = p0_worker._record(
+        raw_dir=tmp_path / "direct-raw",
+        checkpoint_root=tmp_path / "direct-checkpoints",
+        record_path=tmp_path / "direct-record.json",
+        command=[],
+        source={"source_sha": SOURCE_SHA},
+        rhs_facts={},
+        rhs_after_facts={},
+        owned_slave_indices=np.asarray([], dtype=np.int32),
+        setup_audit={},
+        physical_audit={},
+        architecture={},
+        rhs_generation={"generation": "g", "role": "r", "phase_application": "p"},
+        provenance={"source_sha": SOURCE_SHA},
+        identities={},
+        result={"explicit_action_count": 0},
+        pc_apply_facts=[],
+        npz_facts={},
+        recovery={},
+        action_calls=0,
+        workflow=p0_worker.WORKFLOW_J4,
+    )
+    assert direct_record["stage"] == "j4-p0r-solver"
+    assert direct_record["source_sha"] == SOURCE_SHA
+    assert direct_record["lifecycle"]["marker_schema"] == p0_worker.J4_MARKER_SCHEMA
+    assert direct_record["settings"]["max_it"] == 20
+    assert direct_record["settings"]["qualification_only"] is True
+
 
 def test_checker_rejects_cache_mutation(tmp_path: Path) -> None:
     record_path, _root, record = _valid_fixture(tmp_path)
@@ -262,6 +654,96 @@ def test_checker_rejects_cache_mutation(tmp_path: Path) -> None:
     after_path.write_text(json.dumps(changed, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
     with pytest.raises(checker.CheckError):
         checker.check_record(record_path, SOURCE_SHA)
+
+    def j4_case(name: str) -> tuple[Path, Path]:
+        case_root = tmp_path / name
+        case_root.mkdir()
+        return _valid_j4_fixture(case_root)
+
+    marker_record, marker_root = j4_case("j4-marker-mutation")
+    marker_path = marker_root / "markers" / "000_parent_started.json"
+    marker = json.loads(marker_path.read_text(encoding="utf-8"))
+    marker["name"] = "parent_complete"
+    _write(marker_path, marker)
+    marker_result = p0_checker.check_j4_record(marker_record, SOURCE_SHA)
+    assert marker_result["passed"] is False
+    assert marker_result["classification"] == "J4_CONTRACT_INVALID"
+
+    delta_record, delta_root = j4_case("j4-delta-mutation")
+    delta_payload = json.loads(delta_record.read_text(encoding="utf-8"))
+    delta_payload["children"][0]["added_artifacts"][0]["sha256"] = "0" * 64
+    _write(delta_record, delta_payload)
+    delta_result = p0_checker.check_j4_record(delta_record, SOURCE_SHA)
+    assert delta_result["passed"] is False
+    assert delta_result["classification"] == "J4_CONTRACT_INVALID"
+
+    solver_cache_record, solver_cache_root = j4_case("j4-solver-cache-mutation")
+    solver_cache_payload = json.loads((solver_cache_root / "worker_record.json").read_text(encoding="utf-8"))
+    solver_cache_payload["ffcx_calls"][0]["module_file"] = str(solver_cache_root / "jit_cache/module_1.so")
+    worker_record_path = solver_cache_root / "worker_record.json"
+    _write(worker_record_path, solver_cache_payload)
+    solver_cache_parent = json.loads(solver_cache_record.read_text(encoding="utf-8"))
+    solver_cache_parent["solver"]["record_sha256"] = _sha(worker_record_path)
+    _write(solver_cache_record, solver_cache_parent)
+    solver_cache_result = p0_checker.check_j4_record(solver_cache_record, SOURCE_SHA)
+    assert solver_cache_result["passed"] is False
+    assert solver_cache_result["classification"] == "J4_CONTRACT_INVALID"
+
+    warning_record, warning_root = j4_case("j4-retained-warning")
+    warning_sample_path = warning_root / "parent_process.jsonl"
+    warning_rows = [json.loads(line) for line in warning_sample_path.read_text(encoding="utf-8").splitlines()]
+    warning_solver_row = next(row for row in warning_rows if row["stage"] == "solver")
+    warning_solver_row["members"][0]["rss_bytes"] = 1_650_000_000 - warning_solver_row["members"][1]["rss_bytes"]
+    warning_solver_row["rss_bytes"] = sum(int(item["rss_bytes"]) for item in warning_solver_row["members"])
+    warning_sample_path.write_text("".join(json.dumps(row, separators=(",", ":")) + "\n" for row in warning_rows), encoding="utf-8")
+    _refresh_j4_process(warning_record, warning_sample_path)
+    warning_result = p0_checker.check_j4_record(warning_record, SOURCE_SHA)
+    assert warning_result["passed"] is True
+    assert any("1.6-1.7GB warning interval" in item for item in warning_result["warnings"])
+
+    for name, mutate in (
+        (
+            "j4-rss-gate",
+            lambda row: row["members"][0].update({"rss_bytes": p0_checker.COLD_RSS_LIMIT - 50}),
+        ),
+        ("j4-compiler-gate", lambda row: row["members"][1].update({"comm": "gcc", "cmdline": "gcc -c form.c"})),
+    ):
+        resource_record, resource_root = j4_case(name)
+        sample_path = resource_root / "parent_process.jsonl"
+        rows = [json.loads(line) for line in sample_path.read_text(encoding="utf-8").splitlines()]
+        solver_row = next(row for row in rows if row["stage"] == "solver")
+        mutate(solver_row)
+        solver_row["rss_bytes"] = sum(int(item["rss_bytes"]) for item in solver_row["members"])
+        solver_row["swap_bytes"] = sum(int(item["swap_bytes"]) for item in solver_row["members"])
+        if name == "j4-compiler-gate":
+            solver_row["compiler_descendant_count"] = 1
+        sample_path.write_text("".join(json.dumps(row, separators=(",", ":")) + "\n" for row in rows), encoding="utf-8")
+        _refresh_j4_process(resource_record, sample_path)
+        resource_result = p0_checker.check_j4_record(resource_record, SOURCE_SHA)
+        assert resource_result["passed"] is False
+        assert resource_result["classification"] == "J4_RESOURCE_GATE_FAIL"
+
+    numerical_record, numerical_root = j4_case("j4-numerical-gate")
+    numerical_worker_path = numerical_root / "worker_record.json"
+    numerical_worker = json.loads(numerical_worker_path.read_text(encoding="utf-8"))
+    numerical_npz = numerical_root / "worker_raw/physical_probe.npz"
+    with np.load(numerical_npz, allow_pickle=False) as archive:
+        numerical_arrays = {name: np.asarray(archive[name]) for name in archive.files}
+    numerical_arrays["final_residual"] = np.asarray([2.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128)
+    numerical_arrays["final_action"] = numerical_arrays["rhs_before"] - numerical_arrays["final_residual"]
+    np.savez_compressed(numerical_npz, **numerical_arrays)
+    numerical_worker["npz"]["bytes"] = numerical_npz.stat().st_size
+    numerical_worker["npz"]["sha256"] = _sha(numerical_npz)
+    numerical_worker["j4"]["final_explicit_true_residual"] = 2.0
+    numerical_worker["j4"]["rho20"] = 2.0
+    numerical_worker["krylov"]["final_true_residual"] = 2.0
+    _write(numerical_worker_path, numerical_worker)
+    numerical_parent = json.loads(numerical_record.read_text(encoding="utf-8"))
+    numerical_parent["solver"]["record_sha256"] = _sha(numerical_worker_path)
+    _write(numerical_record, numerical_parent)
+    numerical_result = p0_checker.check_j4_record(numerical_record, SOURCE_SHA)
+    assert numerical_result["passed"] is False
+    assert numerical_result["classification"] == "J4_NUMERICAL_GATE_FAIL"
 
     child_root = tmp_path / "child-mutation"
     child_root.mkdir()
@@ -286,7 +768,7 @@ def test_checker_rejects_cache_mutation(tmp_path: Path) -> None:
         checker.check_record(record_path, SOURCE_SHA)
 
 
-def test_parent_and_solver_keep_heavy_imports_lazy() -> None:
+def test_parent_and_solver_keep_heavy_imports_lazy(tmp_path: Path) -> None:
     for path in (ROOT / "benchmarks/run_task038_full3d_jit_staged_parent.py", ROOT / "benchmarks/run_task038_full3d_jit_solver_bundle.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         names = set()
@@ -298,6 +780,17 @@ def test_parent_and_solver_keep_heavy_imports_lazy() -> None:
         assert not names.intersection({"dolfinx", "mpi4py", "petsc4py", "ufl", "src"})
     assert parent.JIT_GROUPS == checker.GROUPS
     assert parent._child_command("positive-p6", Path("/x/cache"), Path("/x/r"), INPUT, SOURCE_SHA)[2] == checker.CHILD_MODULE
+    j4_command = parent._p0_command(
+        tmp_path / "root",
+        tmp_path / "root/jit_cache",
+        tmp_path / "root/markers",
+        INPUT,
+        tmp_path / "root/parent_record.json",
+        SOURCE_SHA,
+    )
+    assert j4_command[:3] == [str(PYTHON), "-m", parent.P0_MODULE]
+    assert parent._solver_command(tmp_path / "root/jit_cache", tmp_path / "root/solver.json", tmp_path / "root/markers", INPUT, SOURCE_SHA)[2] != j4_command[2]
+    assert parent.WORKFLOW_J4 in j4_command
     module = SimpleNamespace(__name__="fake", __file__=str(ROOT / "fake.so"))
     results = [("compiled", module, (None, None)), ("compiled", module, ("header", "implementation"))]
 

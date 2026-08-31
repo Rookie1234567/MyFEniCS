@@ -910,6 +910,70 @@ def test_p0_stage_callback_order_and_optional_marker_command(
     assert worker._command(v14_args)[-2:] == ["--v14-marker-dir", str(v14_dir.resolve())]
 
 
+def test_j4_workflow_uses_parent_owned_cache_without_reset(tmp_path: Path) -> None:
+    root = tmp_path / "j4-root"
+    cache = root / "jit_cache"
+    marker_dir = root / "markers"
+    raw_dir = root / "worker_raw"
+    checkpoint_root = root / "checkpoints"
+    record_path = root / "worker_record.json"
+    root.mkdir()
+    cache.mkdir()
+    marker_dir.mkdir()
+    cache_sentinel = cache / "precompiled.so"
+    cache_sentinel.write_bytes(b"keep")
+
+    worker._prepare_paths(
+        raw_dir,
+        cache,
+        checkpoint_root,
+        record_path,
+        parent_owned_cache=True,
+    )
+    assert raw_dir.is_dir() and (raw_dir / "markers").is_dir()
+    assert cache_sentinel.read_bytes() == b"keep"
+    assert not checkpoint_root.exists() and not record_path.exists()
+    with pytest.raises(FileExistsError):
+        worker._prepare_paths(
+            raw_dir,
+            cache,
+            checkpoint_root,
+            record_path,
+            parent_owned_cache=True,
+        )
+
+    args = worker.build_parser().parse_args(
+        [
+            "--workflow",
+            worker.WORKFLOW_J4,
+            "--stage",
+            worker.STAGE,
+            "--case",
+            worker.CASE,
+            "--source",
+            worker.SOURCE,
+            "--raw-dir",
+            str(raw_dir),
+            "--jit-cache-dir",
+            str(cache),
+            "--checkpoint-root",
+            str(checkpoint_root),
+            "--record",
+            str(record_path),
+            "--expected-source-sha",
+            SOURCE_SHA,
+            "--expected-mpi-size",
+            "1",
+            "--input",
+            str(tmp_path / "input.dat"),
+            "--v14-marker-dir",
+            str(marker_dir),
+        ]
+    )
+    command = worker._command(args)
+    assert command[3:5] == ["--workflow", worker.WORKFLOW_J4]
+
+
 def test_p0_input_angle_identity_and_lazy_import_boundary(tmp_path: Path) -> None:
     from src.io import load_and_resolve
     from src.io.input_validation import simulation_config_3d_from_normalized

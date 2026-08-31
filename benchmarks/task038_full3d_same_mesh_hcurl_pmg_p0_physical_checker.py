@@ -23,6 +23,8 @@ CASE = "p6-h10-mpi1"
 SOURCE = "physical_rhs"
 RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-record.v2"
 MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-marker.v2"
+V14_MARKER_SCHEMA = "task038.v14.j3.marker.v1"
+SAMPLE_SCHEMA = "task038.v14.j3.process-sample.v1"
 CHECKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-check.v2"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
@@ -86,6 +88,147 @@ EXPECTED_PHYSICAL_FIELDS = {
     "dtn_order_policy": "auto_propagating",
     "dtn_assembly": "auxiliary",
 }
+J4_EXPECTED_PROFILE = {
+    **EXPECTED_PHYSICAL_FIELDS,
+    "mesh_cell_type": "hexahedron",
+    "mesh_spacing_mode": "boundary_fitted",
+}
+
+J4_PARENT_SCHEMA = "task038.v14.j4.p0r.parent-record.v1"
+J4_WORKER_SCHEMA = "task038.v14.j4.p0r.worker-record.v1"
+J4_CHECKER_SCHEMA = "task038.v14.j4.p0r.check.v1"
+J4_WORKFLOW = "j4-p0r"
+J4_WORKER_MARKER_SCHEMA = "task038.v14.j4.p0r.worker-marker.v1"
+J4_WORKER_MARKERS = (
+    "paths_ready",
+    "bundle_built",
+    "source_built",
+    "one_action_complete",
+    "one_pc_complete",
+    "solve_started",
+    "solve_complete",
+    "retained_ready",
+    "retained_observed",
+    "krylov_destroyed",
+    "solver_stack_release_started",
+    "solver_stack_release_complete",
+    "release_observation",
+    "bundle_destroyed",
+    "record_written",
+)
+J4_GROUP_ROLES = {
+    "positive-p6": ("positive_p6_action", "positive_p6_bilinear"),
+    "positive-p3": ("positive_p3_bilinear",),
+    "positive-p1": ("positive_p1_bilinear",),
+    "dtn-surface": (
+        "dtn_surface_top_0",
+        "dtn_surface_top_1",
+        "dtn_surface_bottom_0",
+        "dtn_surface_bottom_1",
+    ),
+    "incident-rhs": ("incident_top_traction",),
+    "physical-volume-curl": ("physical_volume_curl_action",),
+    "physical-volume-mass": ("physical_volume_mass_action",),
+}
+J4_GROUP_COUNTS = {group: len(roles) for group, roles in J4_GROUP_ROLES.items()}
+J4_MARKER_ORDER = (
+    "parent_started",
+    "fresh_cache_created",
+    "precompile_positive_p6_started",
+    "precompile_positive_p6_complete",
+    "precompile_positive_p3_started",
+    "precompile_positive_p3_complete",
+    "precompile_positive_p1_started",
+    "precompile_positive_p1_complete",
+    "precompile_dtn_surface_started",
+    "precompile_dtn_surface_complete",
+    "precompile_incident_rhs_started",
+    "precompile_incident_rhs_complete",
+    "precompile_physical_volume_started",
+    "precompile_physical_volume_curl_started",
+    "precompile_physical_volume_curl_complete",
+    "precompile_physical_volume_mass_started",
+    "precompile_physical_volume_mass_complete",
+    "precompile_physical_volume_complete",
+    "all_precompile_children_gone",
+    "solver_child_started",
+    "positive_setup_started",
+    "positive_setup_complete",
+    "mode_inventory_started",
+    "mode_inventory_complete",
+    "surface_assemblers_started",
+    "surface_assemblers_complete",
+    "dtn_carrier_started",
+    "dtn_carrier_complete",
+    "dtn_action_complete",
+    "physical_volume_action_started",
+    "physical_volume_action_complete",
+    "bundle_built",
+    "source_built",
+    "one_action_complete",
+    "one_pc_complete",
+    "solve_started",
+    "solve_complete",
+    "solver_stack_release_started",
+    "solver_stack_release_complete",
+    "parent_complete",
+)
+J4_PARENT_MARKER_INDEX = {
+    name: index
+    for index, name in enumerate(
+        (
+            "parent_started",
+            "fresh_cache_created",
+            "precompile_positive_p6_started",
+            "precompile_positive_p6_complete",
+            "precompile_positive_p3_started",
+            "precompile_positive_p3_complete",
+            "precompile_positive_p1_started",
+            "precompile_positive_p1_complete",
+            "precompile_dtn_surface_started",
+            "precompile_dtn_surface_complete",
+            "precompile_incident_rhs_started",
+            "precompile_incident_rhs_complete",
+            "precompile_physical_volume_started",
+            "precompile_physical_volume_curl_started",
+            "precompile_physical_volume_curl_complete",
+            "precompile_physical_volume_mass_started",
+            "precompile_physical_volume_mass_complete",
+            "precompile_physical_volume_complete",
+            "all_precompile_children_gone",
+            "solver_child_started",
+            "positive_setup_started",
+            "positive_setup_complete",
+            "mode_inventory_started",
+            "mode_inventory_complete",
+            "surface_assemblers_started",
+            "surface_assemblers_complete",
+            "dtn_carrier_started",
+            "dtn_carrier_complete",
+            "dtn_action_complete",
+            "physical_volume_action_started",
+            "physical_volume_action_complete",
+            "bundle_built",
+            "source_built",
+            "one_action_complete",
+            "one_pc_complete",
+            "solve_started",
+            "solve_complete",
+            "solver_stack_release_started",
+            "solver_stack_release_complete",
+            "recovery_started",
+            "recovery_complete",
+            "parent_complete",
+        )
+    )
+}
+J4_PROCESS_STAGES = tuple(f"precompile:{group}" for group in J4_GROUP_COUNTS) + (
+    "precompile:parent-only",
+    "solver",
+)
+J4_COMPILER_NAMES = frozenset(
+    {"gcc", "g++", "cc1", "cc1plus", "clang", "clang++", "ld", "collect2"}
+)
 
 
 def _reject_constant(value: str) -> None:
@@ -94,6 +237,14 @@ def _reject_constant(value: str) -> None:
 
 def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_constant)
+
+
+def _option(argv: list[str], name: str) -> str:
+    try:
+        index = argv.index(name)
+        return argv[index + 1]
+    except (ValueError, IndexError):
+        return ""
 
 
 def _sha256_file(path: Path) -> str:
@@ -1077,6 +1228,935 @@ def _check_recovery(
     return checked
 
 
+def _j4_hex_sha(value: Any, length: int) -> bool:
+    return isinstance(value, str) and len(value) == length and all(
+        char in "0123456789abcdef" for char in value
+    )
+
+
+def _j4_compiler(fact: Mapping[str, Any], root_pid: int) -> bool:
+    if int(fact.get("pid", -1)) == int(root_pid):
+        return False
+    names = {str(fact.get("comm", ""))}
+    names.update(Path(token).name for token in str(fact.get("cmdline", "")).split())
+    return bool(names & J4_COMPILER_NAMES)
+
+
+def _j4_markers(record: Mapping[str, Any], errors: list[str]) -> dict[str, int]:
+    paths = record.get("paths")
+    if not isinstance(paths, Mapping):
+        _error(errors, "J4 parent paths are missing")
+        return {}
+    root = Path(str(paths.get("artifact_root", ""))).resolve()
+    marker_dir = Path(str(paths.get("marker_dir", ""))).resolve()
+    if marker_dir != root / "markers" or not marker_dir.is_dir():
+        _error(errors, "J4 marker directory is not the parent-owned directory")
+        return {}
+    manifest_path = Path(str(paths.get("marker_manifest", ""))).resolve()
+    if not manifest_path.is_file():
+        _error(errors, "J4 marker manifest is missing")
+    elif not isinstance(record.get("markers"), Mapping) or record["markers"].get("manifest_sha256") != _sha256_file(manifest_path):
+        _error(errors, "J4 marker manifest SHA mismatch")
+    try:
+        manifest = _read_json(manifest_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        _error(errors, f"J4 marker manifest is unreadable: {exc}")
+        return {}
+    if not isinstance(manifest, list):
+        _error(errors, "J4 marker manifest is not a list")
+    times: dict[str, int] = {}
+    actual_paths = sorted(marker_dir.glob("*.json"), key=lambda path: path.name)
+    if len(actual_paths) != len(J4_MARKER_ORDER):
+        _error(errors, "J4 marker inventory is not exact")
+    for name in J4_MARKER_ORDER:
+        marker_path = marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json"
+        try:
+            marker = _read_json(marker_path)
+            facts = marker.get("facts")
+            expected_stage = (
+                "j4-p0r-solver"
+                if 20 <= J4_PARENT_MARKER_INDEX[name] <= 38
+                else "j4-p0r-parent"
+            )
+            if (
+                marker.get("schema") != V14_MARKER_SCHEMA
+                or marker.get("name") != name
+                or marker.get("marker_index") != J4_PARENT_MARKER_INDEX[name]
+                or not isinstance(facts, Mapping)
+                or facts.get("stage") != expected_stage
+                or facts.get("artifact_root") != str(root)
+                or facts.get("cache_dir") != str(root / "jit_cache")
+                or facts.get("source_sha") != record.get("source_sha")
+            ):
+                _error(errors, f"J4 marker identity mismatch: {name}")
+            times[name] = int(marker["timestamp_ns"])
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            _error(errors, f"J4 marker invalid {name}: {exc}")
+    values = [times[name] for name in J4_MARKER_ORDER if name in times]
+    if values != sorted(values) or len(set(values)) != len(values):
+        _error(errors, "J4 marker timestamps are not strictly increasing")
+    if isinstance(manifest, list):
+        expected_manifest = [
+            {"name": name, "path": str(marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json"), "sha256": _sha256_file(marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json")}
+            for name in J4_MARKER_ORDER
+            if (marker_dir / f"{J4_PARENT_MARKER_INDEX[name]:03d}_{name}.json").is_file()
+        ]
+        if manifest != expected_manifest:
+            _error(errors, "J4 marker manifest entries do not close marker files")
+    return times
+
+
+def _j4_worker_markers(worker: Mapping[str, Any], root: Path, errors: list[str]) -> dict[str, int]:
+    raw_dir = Path(str(worker.get("raw_dir", ""))).resolve()
+    marker_dir = raw_dir / "markers"
+    if raw_dir != root / "worker_raw":
+        _error(errors, "J4 worker raw marker directory is not parent-bound")
+    lifecycle = worker.get("lifecycle")
+    if (
+        not isinstance(lifecycle, Mapping)
+        or lifecycle.get("marker_relative_dir") != "markers"
+        or lifecycle.get("marker_schema") != J4_WORKER_MARKER_SCHEMA
+        or lifecycle.get("marker_names") != list(J4_WORKER_MARKERS)
+        or lifecycle.get("retained_dwell_seconds") != 2.0
+        or lifecycle.get("release_observation_seconds") != 1.0
+    ):
+        _error(errors, "J4 worker raw marker inventory is not exact")
+    expected_paths = [marker_dir / f"{name}.json" for name in J4_WORKER_MARKERS]
+    actual_paths = sorted(marker_dir.glob("*.json"), key=lambda path: path.name) if marker_dir.is_dir() else []
+    if [path.name for path in actual_paths] != sorted(path.name for path in expected_paths):
+        _error(errors, "J4 worker raw marker files are not the exact inventory")
+    times: dict[str, int] = {}
+    for name, marker_path in zip(J4_WORKER_MARKERS, expected_paths):
+        try:
+            marker = _read_json(marker_path)
+            if (
+                marker.get("schema") != J4_WORKER_MARKER_SCHEMA
+                or marker.get("marker") != name
+                or marker.get("source_sha") != worker.get("source_sha")
+                or not isinstance(marker.get("facts"), Mapping)
+            ):
+                raise ValueError("worker marker identity is not exact")
+            timestamp = marker.get("wall_time_ns")
+            if not isinstance(timestamp, int) or isinstance(timestamp, bool) or timestamp <= 0:
+                raise ValueError("worker marker timestamp is invalid")
+            if name == "solve_started" and marker["facts"].get("max_it") != 20:
+                raise ValueError("J4 solve_started marker max_it is not 20")
+            times[name] = timestamp
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+            _error(errors, f"J4 worker marker invalid {name}: {exc}")
+    values = [times[name] for name in J4_WORKER_MARKERS if name in times]
+    if values != sorted(values) or len(values) != len(set(values)):
+        _error(errors, "J4 worker raw marker timestamps are not strictly increasing")
+    if times.get("retained_observed", -1) - times.get("retained_ready", -1) < RETAINED_DWELL_NS:
+        _error(errors, "J4 worker retained dwell is shorter than two seconds")
+    if times.get("release_observation", -1) - times.get("solver_stack_release_complete", -1) < RELEASE_OBSERVATION_NS:
+        _error(errors, "J4 worker release observation is shorter than one second")
+    return times
+
+
+def _j4_process_summary(
+    path: Path,
+    marker_times: Mapping[str, int],
+    solver_pid: int,
+    worker_marker_times: Mapping[str, int],
+    errors: list[str],
+    gates: list[str],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    stages: dict[str, dict[str, Any]] = {}
+    sample_count = 0
+    first_timestamp_ns: int | None = None
+    last_timestamp_ns: int | None = None
+    parent_pid: int | None = None
+    all_readable = True
+    peak_rss: int | None = None
+    max_swap: int | None = None
+    compiler_peak = 0
+    observed: set[int] = set()
+    solve_count = 0
+    solve_peak: int | None = None
+    teardown_count = 0
+    teardown_last: int | None = None
+    retained_window_count = 0
+    retained_window_solver_count = 0
+    release_window_count = 0
+    release_window_solver_count = 0
+    stage_order: list[str] = []
+    try:
+        stream = path.open(encoding="utf-8")
+    except OSError as exc:
+        _error(errors, f"J4 process JSONL is unreadable: {exc}")
+        return {}, {}
+    with stream:
+        for line_number, line in enumerate(stream, 1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line, parse_constant=_reject_constant)
+                if not isinstance(row, Mapping):
+                    raise ValueError("sample is not an object")
+                stage = str(row["stage"])
+                timestamp = int(row["timestamp_ns"])
+                root_pid = int(row["root_pid"])
+                rss = row.get("rss_bytes")
+                swap = row.get("swap_bytes")
+                members = row.get("members")
+                if (
+                    row.get("schema") != SAMPLE_SCHEMA
+                    or stage not in J4_PROCESS_STAGES
+                    or not isinstance(row.get("all_status_readable"), bool)
+                    or not isinstance(rss, int)
+                    or isinstance(rss, bool)
+                    or rss < 0
+                    or not isinstance(swap, int)
+                    or isinstance(swap, bool)
+                    or swap < 0
+                    or not isinstance(members, list)
+                ):
+                    raise ValueError("sample facts are incomplete")
+                pids = {int(fact["pid"]) for fact in members}
+                compiler_count = sum(_j4_compiler(fact, root_pid) for fact in members)
+                if int(row.get("compiler_descendant_count", -1)) != compiler_count:
+                    raise ValueError("compiler descendant count does not match members")
+                if int(row.get("rss_bytes", -1)) != sum(int(fact["rss_bytes"]) for fact in members):
+                    raise ValueError("RSS aggregate does not match members")
+                if int(row.get("swap_bytes", -1)) != sum(int(fact["swap_bytes"]) for fact in members):
+                    raise ValueError("swap aggregate does not match members")
+                if stage == "precompile:parent-only" and pids != {root_pid}:
+                    raise ValueError("parent-only sample contains a descendant")
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                _error(errors, f"J4 process sample {line_number} invalid: {exc}")
+                continue
+            sample_count += 1
+            parent_pid = root_pid if parent_pid is None else parent_pid
+            if root_pid != parent_pid:
+                _error(errors, "J4 process sample root PID changed")
+            if first_timestamp_ns is None:
+                first_timestamp_ns = timestamp
+            last_timestamp_ns = timestamp
+            if row["all_status_readable"] is not True:
+                all_readable = False
+            peak_rss = rss if peak_rss is None else max(peak_rss, rss)
+            max_swap = swap if max_swap is None else max(max_swap, swap)
+            compiler_peak = max(compiler_peak, compiler_count)
+            if not stage_order or stage_order[-1] != stage:
+                stage_order.append(stage)
+            if stage in {"precompile:parent-only", "solver"} and compiler_count != 0:
+                _gate(gates, f"J4 {stage} sample observed a compiler descendant")
+            descendants = pids - {root_pid}
+            observed.update(descendants)
+            fact = stages.setdefault(
+                stage,
+                {
+                    "sample_count": 0,
+                    "first_timestamp_ns": None,
+                    "last_timestamp_ns": None,
+                    "peak_rss_bytes": None,
+                    "max_swap_bytes": None,
+                    "all_status_readable": True,
+                    "compiler_descendant_peak": 0,
+                    "observed_descendant_pids": set(),
+                    "last_sample": None,
+                },
+            )
+            fact["sample_count"] += 1
+            fact["first_timestamp_ns"] = timestamp if fact["first_timestamp_ns"] is None else fact["first_timestamp_ns"]
+            fact["last_timestamp_ns"] = timestamp
+            fact["peak_rss_bytes"] = rss if fact["peak_rss_bytes"] is None else max(fact["peak_rss_bytes"], rss)
+            fact["max_swap_bytes"] = swap if fact["max_swap_bytes"] is None else max(fact["max_swap_bytes"], swap)
+            fact["all_status_readable"] = fact["all_status_readable"] and row["all_status_readable"] is True
+            fact["compiler_descendant_peak"] = max(fact["compiler_descendant_peak"], compiler_count)
+            fact["observed_descendant_pids"].update(descendants)
+            fact["last_sample"] = row
+            if marker_times.get("solve_started", 0) <= timestamp <= marker_times.get("solve_complete", -1):
+                solve_count += 1
+                solve_peak = rss if solve_peak is None else max(solve_peak, rss)
+            if timestamp >= marker_times.get("solve_complete", 1 << 63):
+                teardown_count += 1
+                teardown_last = rss
+            retained_ready = worker_marker_times.get("retained_ready")
+            retained_observed = worker_marker_times.get("retained_observed")
+            if retained_ready is not None and retained_observed is not None and retained_ready <= timestamp <= retained_observed:
+                retained_window_count += 1
+                if solver_pid in pids:
+                    retained_window_solver_count += 1
+            release_complete = worker_marker_times.get("solver_stack_release_complete")
+            release_observation = worker_marker_times.get("release_observation")
+            if release_complete is not None and release_observation is not None and release_complete <= timestamp <= release_observation:
+                release_window_count += 1
+                if solver_pid in pids:
+                    release_window_solver_count += 1
+    if not all_readable:
+        _gate(gates, "J4 process-tree authority was unreadable")
+    if max_swap not in (None, 0):
+        _gate(gates, "J4 process-tree swap is nonzero")
+    if peak_rss is None or peak_rss >= COLD_RSS_LIMIT:
+        _gate(gates, "J4 process-tree RSS reached the 2GB hard line")
+    if stage_order != list(J4_PROCESS_STAGES):
+        _error(errors, "J4 process stages are not strictly serial")
+    for stage in J4_PROCESS_STAGES:
+        if stage not in stages:
+            _error(errors, f"J4 process stage is missing: {stage}")
+        else:
+            stages[stage]["observed_descendant_pids"] = sorted(stages[stage]["observed_descendant_pids"])
+    if "solver" in stages and solver_pid not in stages["solver"]["observed_descendant_pids"]:
+        _error(errors, "solver PID was not observed in the solver stage")
+    if "solver" in stages and stages["solver"]["compiler_descendant_peak"] != 0:
+        _gate(gates, "solver stage observed a compiler descendant")
+    if solve_count == 0:
+        _error(errors, "J4 process timeline has no solve window sample")
+    if teardown_count == 0 or teardown_last is None:
+        _error(errors, "J4 process timeline has no post-solve teardown sample")
+    summary = {
+        "sample_path": str(path),
+        "sample_sha256": _sha256_file(path),
+        "sample_count": sample_count,
+        "parent_pid": parent_pid,
+        "first_timestamp_ns": first_timestamp_ns,
+        "last_timestamp_ns": last_timestamp_ns,
+        "all_status_readable": all_readable,
+        "peak_rss_bytes": peak_rss,
+        "max_swap_bytes": max_swap,
+        "compiler_descendant_peak": compiler_peak,
+        "observed_descendant_pids": sorted(observed),
+        "last_sample": stages.get(J4_PROCESS_STAGES[-1], {}).get("last_sample"),
+        "stage_summaries": stages,
+    }
+    metrics = {
+        "solve_sample_count": solve_count,
+        "solve_window_peak_rss_bytes": solve_peak,
+        "teardown_sample_count": teardown_count,
+        "teardown_last_rss_bytes": teardown_last,
+        "retained_window_sample_count": retained_window_count,
+        "retained_window_solver_sample_count": retained_window_solver_count,
+        "release_window_sample_count": release_window_count,
+        "release_window_solver_sample_count": release_window_solver_count,
+    }
+    return summary, metrics
+
+
+def _j4_compare_summary(
+    recorded: Mapping[str, Any], actual: Mapping[str, Any], errors: list[str]
+) -> None:
+    for key in (
+        "sample_count",
+        "parent_pid",
+        "first_timestamp_ns",
+        "last_timestamp_ns",
+        "all_status_readable",
+        "peak_rss_bytes",
+        "max_swap_bytes",
+        "compiler_descendant_peak",
+        "observed_descendant_pids",
+    ):
+        if recorded.get(key) != actual.get(key):
+            _error(errors, f"J4 process summary mismatch: {key}")
+    recorded_stages = recorded.get("stage_summaries")
+    actual_stages = actual.get("stage_summaries")
+    if not isinstance(recorded_stages, Mapping) or not isinstance(actual_stages, Mapping):
+        _error(errors, "J4 stage summaries are missing")
+        return
+    for stage in J4_PROCESS_STAGES:
+        left = recorded_stages.get(stage)
+        right = actual_stages.get(stage)
+        if not isinstance(left, Mapping) or not isinstance(right, Mapping):
+            _error(errors, f"J4 stage summary is missing: {stage}")
+            continue
+        for key in (
+            "sample_count",
+            "first_timestamp_ns",
+            "last_timestamp_ns",
+            "peak_rss_bytes",
+            "max_swap_bytes",
+            "all_status_readable",
+            "compiler_descendant_peak",
+            "observed_descendant_pids",
+        ):
+            if left.get(key) != right.get(key):
+                _error(errors, f"J4 stage summary mismatch: {stage}/{key}")
+
+
+def _j4_compare_monitor(
+    monitor: Mapping[str, Any], stage: Mapping[str, Any], label: str, errors: list[str]
+) -> None:
+    for monitor_key, stage_key in (
+        ("sample_count", "sample_count"),
+        ("peak_rss_bytes", "peak_rss_bytes"),
+        ("max_swap_bytes", "max_swap_bytes"),
+        ("all_status_readable", "all_status_readable"),
+        ("compiler_descendant_peak", "compiler_descendant_peak"),
+        ("observed_descendant_pids", "observed_descendant_pids"),
+    ):
+        if monitor.get(monitor_key) != stage.get(stage_key):
+            _error(errors, f"J4 {label} monitor/stage mismatch: {monitor_key}")
+    if (
+        not isinstance(monitor.get("started_ns"), int)
+        or not isinstance(monitor.get("ended_ns"), int)
+        or not isinstance(stage.get("first_timestamp_ns"), int)
+        or not isinstance(stage.get("last_timestamp_ns"), int)
+        or not (
+            monitor["started_ns"]
+            <= stage["first_timestamp_ns"]
+            <= stage["last_timestamp_ns"]
+            <= monitor["ended_ns"]
+        )
+    ):
+        _error(errors, f"J4 {label} monitor bounds do not contain its samples")
+    pid = monitor.get("pid")
+    observed = stage.get("observed_descendant_pids")
+    if not isinstance(pid, int) or not isinstance(observed, list) or pid not in observed:
+        _error(errors, f"J4 {label} PID was not observed in its parent stage")
+
+
+def _j4_path(value: Any, root: Path, errors: list[str], label: str) -> Path | None:
+    if not isinstance(value, str):
+        _error(errors, f"J4 {label} path is missing")
+        return None
+    path = Path(value).resolve()
+    if not _inside(path, root) or not path.is_file():
+        _error(errors, f"J4 {label} path is missing or escapes artifact root")
+        return None
+    return path
+
+
+def _j4_check_children(
+    record: Mapping[str, Any], root: Path, cache_dir: Path, errors: list[str], gates: list[str]
+) -> tuple[list[str], dict[str, Any]]:
+    children = record.get("children")
+    if not isinstance(children, list) or [child.get("group") for child in children if isinstance(child, Mapping)] != list(J4_GROUP_COUNTS):
+        _error(errors, "J4 precompile children are not the fixed serial groups")
+        return [], {}
+    cache = record.get("cache")
+    initial = cache.get("initial_manifest") if isinstance(cache, Mapping) else None
+    initial_path = (
+        _j4_path(initial.get("path"), root, errors, "initial cache manifest")
+        if isinstance(initial, Mapping)
+        else None
+    )
+    try:
+        initial_manifest = initial.get("manifest") if isinstance(initial, Mapping) else None
+        actual_initial = _read_json(initial_path) if initial_path is not None else {}
+        if (
+            not isinstance(initial_manifest, Mapping)
+            or actual_initial != initial_manifest
+            or initial_manifest.get("cache_dir") != str(cache_dir)
+            or initial_manifest.get("artifacts") != []
+            or initial_manifest.get("artifact_count") != 0
+            or initial.get("sha256") != _sha256_file(initial_path)
+        ):
+            raise ValueError("initial cache manifest is not empty or closed")
+        previous = initial_manifest
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        _error(errors, f"J4 initial cache manifest invalid: {exc}")
+        previous = {"artifacts": []}
+    modules: list[str] = []
+    stage_monitor_data: dict[str, Any] = {}
+    for child in children:
+        if not isinstance(child, Mapping):
+            _error(errors, "J4 child entry is not an object")
+            continue
+        group = str(child.get("group"))
+        expected_count = J4_GROUP_COUNTS.get(group)
+        if expected_count is None:
+            _error(errors, f"J4 unknown child group: {group}")
+            continue
+        record_path = _j4_path(child.get("record_path"), root, errors, f"{group} record")
+        if record_path is None:
+            continue
+        if child.get("record_sha256") != _sha256_file(record_path):
+            _error(errors, f"J4 child record SHA mismatch: {group}")
+        try:
+            child_record = _read_json(record_path)
+            facts = child_record["facts"]["group_facts"]
+            if (
+                child_record.get("schema") != "task038.full3d.jit-split.child-record.v1"
+                or child_record.get("source_sha") != record.get("source_sha")
+                or facts.get("compiled_form_count") != expected_count
+                or facts.get("form_roles") != list(J4_GROUP_ROLES[group])
+            ):
+                raise ValueError("child group facts are not exact")
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            _error(errors, f"J4 child record invalid: {group}: {exc}")
+        manifest_path = _j4_path(child.get("cache_manifest_path"), root, errors, f"{group} cache manifest")
+        if manifest_path is None:
+            continue
+        if child.get("cache_manifest_sha256") != _sha256_file(manifest_path):
+            _error(errors, f"J4 child manifest SHA mismatch: {group}")
+        try:
+            current = _read_json(manifest_path)
+            artifacts = current["artifacts"]
+            if current.get("cache_dir") != str(cache_dir) or current.get("artifact_count") != len(artifacts):
+                raise ValueError("cache manifest count or identity is not closed")
+            if len({item["relative_path"] for item in artifacts}) != len(artifacts):
+                raise ValueError("cache manifest contains duplicate artifact paths")
+            for item in artifacts:
+                relative = Path(str(item["relative_path"]))
+                target = (cache_dir / relative).resolve()
+                if (
+                    not relative.parts
+                    or relative.is_absolute()
+                    or not _inside(target, cache_dir)
+                    or not target.is_file()
+                    or item.get("bytes") != target.stat().st_size
+                    or item.get("sha256") != _sha256_file(target)
+                ):
+                    raise ValueError("cache manifest artifact is not closed against the cache")
+            current_map = {item["relative_path"]: item for item in artifacts}
+            previous_map = {
+                item["relative_path"]: item for item in previous.get("artifacts", [])
+            }
+            added = [item for name, item in current_map.items() if name not in previous_map]
+            if any(previous_map[name] != current_map.get(name) for name in previous_map):
+                raise ValueError("cache is not monotonic")
+            expected_added = child.get("added_artifacts")
+            if expected_added != added:
+                raise ValueError("cache delta artifacts are not closed")
+            names = [str(item["relative_path"]) for item in added]
+            added_modules = sorted(Path(name).name for name in names if name.endswith(".so"))
+            if len(added_modules) != expected_count or len(set(added_modules)) != expected_count:
+                raise ValueError("cache delta has the wrong distinct module count")
+            if child.get("new_module_basenames") != added_modules:
+                raise ValueError("new module basename list is not closed")
+            modules.extend(added_modules)
+            previous = current
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            _error(errors, f"J4 cache manifest invalid: {group}: {exc}")
+        process = child.get("process")
+        if not isinstance(process, Mapping):
+            _error(errors, f"J4 child process monitor is missing: {group}")
+        else:
+            if (
+                process.get("natural_exit") is not True
+                or process.get("returncode") != 0
+                or process.get("process_group_gone") is not True
+                or process.get("required_sigkill") is not False
+                or process.get("max_swap_bytes") != 0
+                or process.get("peak_rss_bytes") is None
+                or int(process["peak_rss_bytes"]) >= COLD_RSS_LIMIT
+                or process.get("all_status_readable") is not True
+            ):
+                _gate(gates, f"J4 child process/resource Gate failed: {group}")
+            stage_monitor_data[f"precompile:{group}"] = process
+    if len(modules) != 11 or len(set(modules)) != 11:
+        _error(errors, "J4 precompile inventory is not exactly 11 distinct modules")
+    return sorted(modules), {"monitors": stage_monitor_data}
+
+
+def _j4_check_worker(
+    record: Mapping[str, Any],
+    root: Path,
+    cache_dir: Path,
+    precompiled_modules: list[str],
+    errors: list[str],
+    gates: list[str],
+    numerical: list[str],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    solver = record.get("solver")
+    if not isinstance(solver, Mapping):
+        _error(errors, "J4 worker entry is missing")
+        return {}, {}
+    worker_path = _j4_path(solver.get("record_path"), root, errors, "worker record")
+    if worker_path is None:
+        return {}, {}
+    parent_paths = record.get("paths")
+    if not isinstance(parent_paths, Mapping) or parent_paths.get("worker_record") != str(worker_path):
+        _error(errors, "J4 worker record path is not parent-bound")
+    try:
+        worker = _read_json(worker_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        _error(errors, f"J4 worker record is unreadable: {exc}")
+        return {}, {}
+    if (
+        worker.get("schema") != J4_WORKER_SCHEMA
+        or worker.get("workflow") != J4_WORKFLOW
+        or worker.get("source_sha") != record.get("source_sha")
+        or worker.get("branch") != BRANCH
+        or "passed" in worker
+        or "classification" in worker
+    ):
+        _error(errors, "J4 worker identity/schema is not raw-facts-only")
+    expected_python = str(Path(__file__).resolve().parents[1] / ".venv/bin/python")
+    provenance = worker.get("provenance")
+    command = worker.get("command")
+    raw_dir = Path(str(worker.get("raw_dir", ""))).resolve()
+    if (
+        worker.get("record_path") != str(worker_path)
+        or raw_dir != root / "worker_raw"
+        or worker.get("checkpoint_root") != str(root / "checkpoints")
+    ):
+        _error(errors, "J4 worker paths are not parent-bound")
+    if (
+        worker.get("stage") != "j4-p0r-solver"
+        or not isinstance(command, list)
+        or command[:3] != [expected_python, "-m", MODULE]
+        or _option(command, "--workflow") != J4_WORKFLOW
+        or _option(command, "--raw-dir") != str(raw_dir)
+        or _option(command, "--jit-cache-dir") != str(cache_dir)
+        or _option(command, "--v14-marker-dir") != str(root / "markers")
+    ):
+        _error(errors, "J4 worker command is not the physical P0 worker")
+    worker_marker_times = _j4_worker_markers(worker, root, errors)
+    if (
+        not isinstance(provenance, Mapping)
+        or provenance.get("python_executable") != expected_python
+        or provenance.get("python_prefix") != str(Path(expected_python).parent.parent)
+        or provenance.get("parent_owned_cache") is not True
+        or provenance.get("jit_cache_dir") != str(cache_dir)
+        or provenance.get("command") != worker.get("command")
+    ):
+        _error(errors, "J4 worker interpreter/cache ownership provenance is not exact")
+    ffcx_calls = worker.get("ffcx_calls")
+    call_files: list[str] = []
+    if not isinstance(ffcx_calls, list) or len(ffcx_calls) != 11:
+        _error(errors, "J4 worker did not observe exactly 11 FFCx calls")
+    else:
+        for index, call in enumerate(ffcx_calls):
+            if not isinstance(call, Mapping):
+                _error(errors, f"J4 FFCx cache-hit call is invalid: {index}")
+                continue
+            module_file = Path(str(call.get("module_file", ""))).resolve()
+            if (
+                not isinstance(call.get("module_name"), str)
+                or not call.get("module_name")
+                or call.get("index") != index
+                or call.get("code") != [None, None]
+                or call.get("cache_hit") is not True
+                or not _inside(module_file, cache_dir)
+                or module_file.suffix != ".so"
+                or not module_file.is_file()
+            ):
+                _error(errors, f"J4 FFCx cache-hit call is invalid: {index}")
+            call_files.append(module_file.name)
+    if len(set(call_files)) != 11 or set(call_files) != set(precompiled_modules):
+        _error(errors, "J4 solver cache-hit module set does not equal precompiled inventory")
+    settings = worker.get("settings")
+    krylov = worker.get("krylov")
+    if (
+        not isinstance(settings, Mapping)
+        or any(
+            settings.get(key) != value
+            for key, value in {
+                "max_it": 20,
+                "restart": 20,
+                "cycle_max_it": 20,
+                "residual_replacement": True,
+                "zero_initial_guess": True,
+                "checkpoint_writer": False,
+                "checkpoint_interval": None,
+                "first_checkpoint_iteration": None,
+                "stop_on_true_residual": False,
+                "official_recovery": False,
+            }.items()
+        )
+    ):
+        _error(errors, "J4 qualification settings are not exact")
+    if not isinstance(krylov, Mapping):
+        _error(errors, "J4 Krylov facts are missing")
+        return worker, {}
+    cycles = krylov.get("cycles")
+    if (
+        not isinstance(cycles, list)
+        or len(cycles) != 1
+        or not isinstance(cycles[0], Mapping)
+        or cycles[0].get("start_iteration") != 0
+        or cycles[0].get("end_iteration") != 20
+        or cycles[0].get("iterations") != 20
+        or cycles[0].get("ksp_destroyed") is not True
+        or krylov.get("iterations") != 20
+        or krylov.get("ksp_destroy_count") != 1
+        or krylov.get("checkpoint_facts") != []
+    ):
+        _gate(gates, "J4 did not complete exactly one 20-step restart-20 cycle")
+    else:
+        cycle = cycles[0]
+        count_names = (
+            "matvec_count",
+            "pc_apply_count",
+            "explicit_action_count",
+            "driver_explicit_action_count",
+            "rhs_action_count",
+            "final_action_recheck_count",
+            "extra_action_count",
+            "explicit_action_count_total",
+            "action_calls_total",
+        )
+        counts: dict[str, int] = {}
+        for name in count_names:
+            value = krylov.get(name) if name != "matvec_count" and name != "pc_apply_count" else cycle.get(name)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                _error(errors, f"J4 counter is not a non-negative integer: {name}")
+            else:
+                counts[name] = value
+        if len(counts) == len(count_names):
+            if counts["matvec_count"] != krylov.get("matvec_count"):
+                _error(errors, "J4 matvec total does not equal the cycle ledger")
+            if counts["pc_apply_count"] != krylov.get("pc_apply_count"):
+                _error(errors, "J4 PC total does not equal the cycle ledger")
+            pc_facts = krylov.get("pc_apply_facts")
+            if not isinstance(pc_facts, list) or counts["pc_apply_count"] != len(pc_facts):
+                _error(errors, "J4 PC total does not equal pc_apply_facts")
+            if counts["explicit_action_count"] != counts["driver_explicit_action_count"]:
+                _error(errors, "J4 driver explicit count is not internally closed")
+            if counts["extra_action_count"] != counts["rhs_action_count"] + counts["final_action_recheck_count"]:
+                _error(errors, "J4 extra action count is not internally closed")
+            if counts["explicit_action_count_total"] != counts["driver_explicit_action_count"] + counts["extra_action_count"]:
+                _error(errors, "J4 explicit action total is not internally closed")
+            if counts["action_calls_total"] != counts["matvec_count"] + counts["explicit_action_count_total"]:
+                _error(errors, "J4 action call total is not internally closed")
+    npz_facts = worker.get("npz")
+    npz_path = raw_dir / "physical_probe.npz"
+    expected_probe_roles = [
+        "rhs_before",
+        "rhs_after",
+        "final_solution",
+        "final_action",
+        "final_residual",
+        "one_action_output",
+        "one_pc_output",
+    ]
+    if (
+        not npz_path.is_file()
+        or not isinstance(npz_facts, Mapping)
+        or npz_facts.get("relative_path") != "physical_probe.npz"
+        or npz_facts.get("bytes") != npz_path.stat().st_size
+        or npz_facts.get("sha256") != _sha256_file(npz_path)
+        or npz_facts.get("roles") != expected_probe_roles
+    ):
+        _error(errors, "J4 worker probe archive is missing or SHA-invalid")
+        return worker, {}
+    try:
+        with np.load(npz_path, allow_pickle=False) as archive:
+            expected_keys = set(expected_probe_roles)
+            if set(archive.files) != expected_keys:
+                raise ValueError("J4 probe archive keys are not exact")
+            arrays = {name: np.asarray(archive[name]) for name in archive.files}
+            if any(array.dtype != np.dtype(np.complex128) for array in arrays.values()):
+                raise ValueError("J4 probe archive dtype is not complex128")
+    except (OSError, ValueError, TypeError) as exc:
+        _error(errors, f"J4 probe archive is invalid: {exc}")
+        return worker, {}
+    rhs_before = arrays["rhs_before"]
+    rhs_after = arrays["rhs_after"]
+    final_residual = arrays["final_residual"]
+    final_action = arrays["final_action"]
+    if not all(array.ndim == 1 and np.all(np.isfinite(array)) for array in arrays.values()):
+        numerical.append("J4 probe arrays are non-finite or not vectors")
+    if not np.array_equal(rhs_before, rhs_after):
+        numerical.append("J4 physical RHS changed during the cycle")
+    if not np.allclose(final_residual, rhs_before - final_action, rtol=1e-12, atol=1e-14):
+        numerical.append("J4 final residual is not b-Ax")
+    rhs_norm = float(np.linalg.norm(rhs_before))
+    raw_relative = float(np.linalg.norm(final_residual) / max(rhs_norm, np.finfo(float).tiny))
+    initial_relative = float(krylov.get("initial_true_residual", 0.0))
+    if not np.isclose(initial_relative, 1.0, rtol=1.0e-12, atol=1.0e-14):
+        _error(errors, "J4 zero-start initial residual is not the RHS norm")
+    rho20 = raw_relative
+    if not np.isfinite(rho20) or rho20 > 1.0 + 1.0e-12:
+        numerical.append(f"J4 rho20 exceeds 1+1e-12: {rho20}")
+    for name, values in arrays.items():
+        if name != "rhs_before" and values.size != rhs_before.size:
+            _error(errors, f"J4 probe vector size mismatch: {name}")
+    source = worker.get("source")
+    source_facts = source.get("facts") if isinstance(source, Mapping) else None
+    if (
+        not isinstance(source_facts, Mapping)
+        or source_facts.get("source_sha") != record.get("source_sha")
+        or source.get("generation") != "dtn_port_modal_physical_rhs"
+        or source.get("role") != "physical_maxwell_rhs"
+        or source.get("phase_application") != "finalized_floquet_mpc_once"
+    ):
+        _error(errors, "J4 physical RHS/source identity is not closed")
+    slaves = source.get("owned_slave_indices", []) if isinstance(source, Mapping) else []
+    if not isinstance(slaves, list) or any(not isinstance(item, int) or item < 0 or item >= rhs_before.size for item in slaves):
+        _error(errors, "J4 owned slave index facts are invalid")
+    else:
+        for name, values in arrays.items():
+            if slaves and float(np.max(np.abs(values[slaves]))) > 1.0e-12:
+                numerical.append(f"J4 owned slave identity rows are nonzero: {name}")
+    j4 = worker.get("j4")
+    if not isinstance(j4, Mapping) or j4.get("one_action_probe_count") != 1 or j4.get("one_pc_probe_count") != 1:
+        _error(errors, "J4 one-action/one-PC probe count is not exactly one")
+    else:
+        for name, array_name in (("one_action_output", "one_action_output"), ("one_pc_output", "one_pc_output")):
+            facts = j4.get(name)
+            if not isinstance(facts, Mapping) or facts.get("array_sha256") != _array_sha(arrays[array_name]):
+                _error(errors, f"J4 probe fact is not closed: {name}")
+        if not _finite_number(j4.get("final_explicit_true_residual")) or not np.isclose(float(j4["final_explicit_true_residual"]), raw_relative, rtol=1.0e-12, atol=1.0e-14):
+            _error(errors, "J4 final explicit residual fact does not match the raw arrays")
+        if not _finite_number(j4.get("rho20")) or not np.isclose(float(j4["rho20"]), rho20, rtol=1e-12, atol=1e-14):
+            _error(errors, "J4 rho20 fact does not match the raw arrays")
+    recovery = worker.get("physical", {}).get("recovery") if isinstance(worker.get("physical"), Mapping) else None
+    if not isinstance(recovery, Mapping) or recovery.get("status") != "not_run" or recovery.get("official_outputs_written") is not False:
+        _error(errors, "J4 official recovery was not explicitly skipped")
+    architecture = worker.get("architecture")
+    expected_true = {"p3_sparse_matrix_built", "p1_sparse_matrix_built", "p1_direct_factor_built", "same_mesh_pmg_built", "streaming_dtn_action_built", "dtn_carrier_built", "physical_volume_action_built", "p6_matrix_free", "rhs_built", "outer_ksp_built", "solve_run", "bundle_destroyed_before_record"}
+    expected_false = {"p6_global_aij", "high_order_global_aij", "global_dense_transfer", "numeric_allgather", "recovery_run"}
+    if not isinstance(architecture, Mapping) or any(architecture.get(key) is not True for key in expected_true) or any(architecture.get(key) is not False for key in expected_false):
+        _error(errors, "J4 physical architecture facts are not closed")
+    physical = worker.get("physical", {}).get("audit") if isinstance(worker.get("physical"), Mapping) else None
+    if not isinstance(physical, Mapping) or physical.get("volume_component_count") != 2 or physical.get("volume_components") != ["curl_curl", "complex_material_mass"] or physical.get("physical_form") != "exact_maxwell_split_volume_plus_unchanged_streaming_fourier_dtn":
+        _error(errors, "J4 physical split audit is not exact")
+    metrics = {
+        "raw_relative_residual": raw_relative,
+        "rho20": rho20,
+        "ffcx_call_count": len(ffcx_calls) if isinstance(ffcx_calls, list) else 0,
+        "worker_marker_times": worker_marker_times,
+    }
+    return worker, metrics
+
+
+def check_j4_record(record_path: Path, expected_source_sha: str) -> dict[str, Any]:
+    errors: list[str] = []
+    gates: list[str] = []
+    numerical: list[str] = []
+    warnings: list[str] = []
+    try:
+        record = _read_json(record_path)
+        if not isinstance(record, Mapping):
+            raise ValueError("parent record is not an object")
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return {"checker_schema": J4_CHECKER_SCHEMA, "passed": False, "classification": "J4_CONTRACT_INVALID", "contract_errors": [f"J4 parent record unreadable: {exc}"], "gate_failures": [], "warnings": [], "metrics": {}, "resource": {}}
+    paths = record.get("paths")
+    root = Path(str(paths.get("artifact_root", ""))).resolve() if isinstance(paths, Mapping) else Path("/")
+    cache_dir = root / "jit_cache"
+    if (
+        record.get("schema") != J4_PARENT_SCHEMA
+        or record.get("workflow") != J4_WORKFLOW
+        or record.get("stage") != "j4-p0r-parent"
+        or record.get("source_sha") != expected_source_sha
+        or not _j4_hex_sha(expected_source_sha, 40)
+        or record.get("branch") != BRANCH
+        or not isinstance(paths, Mapping)
+        or paths.get("record") != str(record_path.resolve())
+        or paths.get("artifact_root") != str(root)
+        or paths.get("cache_dir") != str(cache_dir)
+        or Path(str(record_path)).resolve() != root / "parent_record.json"
+        or record.get("marker_schema") != V14_MARKER_SCHEMA
+        or record.get("sample_schema") != "task038.v14.j3.process-sample.v1"
+        or not root.is_dir()
+    ):
+        _error(errors, "J4 parent identity/root contract is not closed")
+    identity = record.get("identity")
+    if not isinstance(identity, Mapping) or identity.get("input_sha256") != INPUT_SHA256 or identity.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256 or identity.get("mode_manifest_sha256") != MODE_MANIFEST_SHA256 or identity.get("profile") != J4_EXPECTED_PROFILE:
+        _error(errors, "J4 parent frozen identity is not exact")
+    runtime = identity.get("runtime") if isinstance(identity, Mapping) else None
+    expected_prefix = Path(__file__).resolve().parents[1] / ".venv"
+    expected_python = expected_prefix / "bin/python"
+    if (
+        not isinstance(runtime, Mapping)
+        or runtime.get("source_sha") != expected_source_sha
+        or runtime.get("branch") != BRANCH
+        or runtime.get("qualified_activation") != "1"
+        or runtime.get("mpi_size") != 1
+        or runtime.get("petsc_scalar_type") != "complex128"
+        or runtime.get("petsc_int_type") != "int32"
+        or runtime.get("python_executable") != str(expected_python)
+        or runtime.get("python_prefix") != str(expected_prefix)
+        or runtime.get("threads") != {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
+    ):
+        _error(errors, "J4 parent runtime provenance is not exact")
+    command = record.get("command")
+    expected_python_text = str(expected_python)
+    if (
+        not isinstance(command, list)
+        or command[:3] != [expected_python_text, "-m", "benchmarks.run_task038_full3d_jit_staged_parent"]
+        or "--workflow" not in command
+        or J4_WORKFLOW not in command
+        or _option(command, "--artifact-root") != str(root)
+        or _option(command, "--record") != str(record_path.resolve())
+        or _option(command, "--source-sha") != expected_source_sha
+        or _option(command, "--input") != str(Path(str(identity.get("input_path", ""))).resolve())
+        or _option(command, "--expected-mpi-size") != "1"
+    ):
+        _error(errors, "J4 parent command is not the lexical checkout interpreter/workflow")
+    marker_times = _j4_markers(record, errors)
+    if marker_times and [name for name in J4_MARKER_ORDER if name in marker_times] != list(J4_MARKER_ORDER):
+        _error(errors, "J4 marker sequence is not the fixed qualification sequence")
+    modules, child_metrics = _j4_check_children(record, root, cache_dir, errors, gates)
+    worker, worker_metrics = _j4_check_worker(record, root, cache_dir, modules, errors, gates, numerical)
+    solver = record.get("solver")
+    solver_process = solver.get("process") if isinstance(solver, Mapping) else None
+    solver_pid = int(solver_process.get("pid")) if isinstance(solver_process, Mapping) and isinstance(solver_process.get("pid"), int) else -1
+    process_path = Path(str(paths.get("process_samples", ""))).resolve() if isinstance(paths, Mapping) else Path("")
+    worker_marker_times = worker_metrics.get("worker_marker_times", {})
+    actual_process, process_metrics = _j4_process_summary(process_path, marker_times, solver_pid, worker_marker_times, errors, gates)
+    if isinstance(record.get("process"), Mapping):
+        _j4_compare_summary(record["process"], actual_process, errors)
+    else:
+        _error(errors, "J4 parent process summary is missing")
+    actual_stages = actual_process.get("stage_summaries", {})
+    if isinstance(actual_stages, Mapping):
+        for stage_name, monitor in child_metrics.get("monitors", {}).items():
+            stage = actual_stages.get(stage_name)
+            if isinstance(monitor, Mapping) and isinstance(stage, Mapping):
+                _j4_compare_monitor(monitor, stage, stage_name, errors)
+            else:
+                _error(errors, f"J4 child stage summary is missing: {stage_name}")
+    if isinstance(solver_process, Mapping):
+        if (
+            solver_process.get("natural_exit") is not True
+            or solver_process.get("returncode") != 0
+            or solver_process.get("process_group_gone") is not True
+            or solver_process.get("required_sigkill") is not False
+            or solver_process.get("all_status_readable") is not True
+            or solver_process.get("max_swap_bytes") != 0
+            or solver_process.get("peak_rss_bytes") is None
+            or int(solver_process["peak_rss_bytes"]) >= COLD_RSS_LIMIT
+        ):
+            _gate(gates, "J4 solver worker resource/lifecycle Gate failed")
+        stage = actual_stages.get("solver") if isinstance(actual_stages, Mapping) else None
+        if isinstance(stage, Mapping):
+            _j4_compare_monitor(solver_process, stage, "solver", errors)
+        else:
+            _error(errors, "J4 solver stage summary is missing")
+    before = record.get("cache", {}).get("before_solver") if isinstance(record.get("cache"), Mapping) else None
+    after = record.get("cache", {}).get("after_solver") if isinstance(record.get("cache"), Mapping) else None
+    if not isinstance(before, Mapping) or not isinstance(after, Mapping):
+        _error(errors, "J4 before/after cache manifests are missing")
+    else:
+        before_path = _j4_path(before.get("path"), root, errors, "before-solver manifest")
+        after_path = _j4_path(after.get("path"), root, errors, "after-solver manifest")
+        if before_path is not None and after_path is not None:
+            if before.get("sha256") != _sha256_file(before_path) or after.get("sha256") != _sha256_file(after_path) or before_path.read_bytes() != after_path.read_bytes():
+                _error(errors, "J4 solver changed the formal cache manifest")
+    if process_metrics.get("retained_window_sample_count", 0) == 0 or process_metrics.get("retained_window_solver_sample_count", 0) == 0:
+        _error(errors, "J4 parent JSONL has no complete retained-window sample")
+    if process_metrics.get("release_window_sample_count", 0) == 0 or process_metrics.get("release_window_solver_sample_count", 0) == 0:
+        _error(errors, "J4 parent JSONL has no complete release-observation sample")
+    solve_peak = process_metrics.get("solve_window_peak_rss_bytes")
+    if solve_peak is None or solve_peak > 1_700_000_000:
+        _gate(gates, "J4 solve-ready retained RSS exceeded 1.7GB")
+    elif 1_600_000_000 < solve_peak <= 1_700_000_000:
+        warnings.append(
+            f"J4 solve-ready retained RSS is in the 1.6-1.7GB warning interval: {solve_peak}"
+        )
+    teardown_last = process_metrics.get("teardown_last_rss_bytes")
+    if teardown_last is not None and solve_peak is not None and teardown_last > solve_peak:
+        _gate(gates, "J4 teardown RSS exceeds solve-window peak")
+    if numerical:
+        gates.extend(f"numerical: {item}" for item in numerical)
+    passed = not errors and not gates
+    classification = (
+        "J4_CONTRACT_INVALID"
+        if errors
+        else "J4_NUMERICAL_GATE_FAIL"
+        if numerical
+        else "J4_RESOURCE_GATE_FAIL"
+        if gates
+        else "J4_P0R_PASS"
+    )
+    return {
+        "checker_schema": J4_CHECKER_SCHEMA,
+        "passed": passed,
+        "classification": classification,
+        "contract_errors": errors,
+        "gate_failures": gates,
+        "warnings": warnings,
+        "identity": {"source_sha": expected_source_sha, "branch": BRANCH, "workflow": J4_WORKFLOW},
+        "metrics": {"precompiled_module_count": len(modules), **worker_metrics, **process_metrics},
+        "resource": {"parent_peak_rss_bytes": actual_process.get("peak_rss_bytes"), "parent_max_swap_bytes": actual_process.get("max_swap_bytes"), "child_metrics": child_metrics},
+    }
+
+
 def check_record(record_path: Path, watchdog_compact: Path, expected_source_sha: str) -> dict[str, Any]:
     errors: list[str] = []
     gates: list[str] = []
@@ -1142,12 +2222,18 @@ def check_record(record_path: Path, watchdog_compact: Path, expected_source_sha:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--workflow", choices=("full", J4_WORKFLOW), default="full")
     parser.add_argument("--record", type=Path, required=True)
-    parser.add_argument("--watchdog-compact", type=Path, required=True)
+    parser.add_argument("--watchdog-compact", type=Path, default=None)
     parser.add_argument("--expected-source-sha", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
-    result = check_record(args.record.resolve(), args.watchdog_compact.resolve(), args.expected_source_sha)
+    if args.workflow == J4_WORKFLOW:
+        result = check_j4_record(args.record.resolve(), args.expected_source_sha)
+    else:
+        if args.watchdog_compact is None:
+            raise ValueError("--watchdog-compact is required for the full P0 workflow")
+        result = check_record(args.record.resolve(), args.watchdog_compact.resolve(), args.expected_source_sha)
     if args.output.exists():
         raise FileExistsError(f"checker output already exists: {args.output}")
     args.output.write_text(json.dumps(result, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n", encoding="utf-8")
@@ -1159,4 +2245,4 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["CHECKER_SCHEMA", "check_record", "main"]
+__all__ = ["CHECKER_SCHEMA", "J4_CHECKER_SCHEMA", "check_j4_record", "check_record", "main"]

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Mapping
 import gc
+import json
 import os
 from pathlib import Path
 import sys
@@ -37,8 +38,12 @@ MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p0_physical"
 STAGE = "p0-physical"
 CASE = "p6-h10-mpi1"
 SOURCE = "physical_rhs"
+WORKFLOW_FULL = "full"
+WORKFLOW_J4 = "j4-p0r"
 RECORD_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-record.v2"
 MARKER_SCHEMA = "task038.full3d.same-mesh-hcurl-pmg.p0-physical-marker.v2"
+J4_RECORD_SCHEMA = "task038.v14.j4.p0r.worker-record.v1"
+J4_MARKER_SCHEMA = "task038.v14.j4.p0r.worker-marker.v1"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
@@ -57,6 +62,23 @@ MARKERS = (
     "recovery_started",
     "recovery_built",
     "official_outputs_written",
+    "bundle_destroyed",
+    "record_written",
+)
+J4_MARKERS = (
+    "paths_ready",
+    "bundle_built",
+    "source_built",
+    "one_action_complete",
+    "one_pc_complete",
+    "solve_started",
+    "solve_complete",
+    "retained_ready",
+    "retained_observed",
+    "krylov_destroyed",
+    "solver_stack_release_started",
+    "solver_stack_release_complete",
+    "release_observation",
     "bundle_destroyed",
     "record_written",
 )
@@ -161,6 +183,7 @@ def _command(args: argparse.Namespace) -> list[str]:
         str(Path(sys.executable)),
         "-m",
         MODULE,
+        *((["--workflow", str(args.workflow)] if getattr(args, "workflow", WORKFLOW_FULL) != WORKFLOW_FULL else [])),
         "--stage",
         str(args.stage),
         "--case",
@@ -188,13 +211,42 @@ def _command(args: argparse.Namespace) -> list[str]:
     return command
 
 
-def _emit_marker(raw_dir: Path, name: str, source_sha: str, **facts: Any) -> None:
-    if name not in MARKERS:
+def _validate_parent_owned_layout(
+    root: Path, cache_dir: Path, marker_dir: Path, source_sha: str
+) -> None:
+    if marker_dir != root / "markers" or not root.is_dir() or not cache_dir.is_dir():
+        raise FileNotFoundError("J4 parent-owned root/cache/marker layout is not prepared")
+    required = {"all_precompile_children_gone", "solver_child_started"}
+    found: set[str] = set()
+    for path in marker_dir.glob("*.json"):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"parent marker is unreadable: {path}") from exc
+        facts = payload.get("facts")
+        name = payload.get("name")
+        if isinstance(name, str) and isinstance(facts, Mapping):
+            if (
+                facts.get("artifact_root") != str(root)
+                or facts.get("cache_dir") != str(cache_dir)
+                or facts.get("source_sha") != source_sha
+            ):
+                raise RuntimeError(f"parent marker identity mismatch: {path.name}")
+            found.add(name)
+    if not required <= found:
+        raise RuntimeError("J4 parent markers do not prove precompile completion")
+
+
+def _emit_marker(
+    raw_dir: Path, name: str, source_sha: str, *, marker_schema: str = MARKER_SCHEMA, **facts: Any
+) -> None:
+    allowed = J4_MARKERS if marker_schema == J4_MARKER_SCHEMA else MARKERS
+    if name not in allowed:
         raise ValueError(f"unknown P0 marker: {name}")
     _write_json(
         Path(raw_dir) / "markers" / f"{name}.json",
         {
-            "schema": MARKER_SCHEMA,
+            "schema": marker_schema,
             "marker": name,
             "source_sha": source_sha,
             "wall_time_ns": time.time_ns(),
@@ -265,6 +317,9 @@ def _record(
     npz_facts: Mapping[str, Any],
     recovery: Mapping[str, Any],
     action_calls: int,
+    workflow: str = WORKFLOW_FULL,
+    ffcx_calls: list[Mapping[str, Any]] | None = None,
+    j4_probe_facts: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     krylov = {
         key: _jsonable(value)
@@ -287,7 +342,7 @@ def _record(
     )
     architecture = dict(architecture)
     architecture["setup_audit"] = _jsonable(setup_audit)
-    return {
+    record = {
         "schema": RECORD_SCHEMA,
         "stage": STAGE,
         "case": CASE,
@@ -323,7 +378,7 @@ def _record(
             "norm_type": "unpreconditioned",
             "restart": RESTART,
             "cycle_max_it": CYCLE_MAX_IT,
-            "max_it": MAX_IT,
+            "max_it": 20 if workflow == WORKFLOW_J4 else MAX_IT,
             "residual_replacement": True,
             "zero_initial_guess": True,
             "checkpoint_interval": CHECKPOINT_INTERVAL,
@@ -347,9 +402,47 @@ def _record(
         },
         "raw_facts_only": True,
     }
+    if workflow == WORKFLOW_J4:
+        record.update(
+            {
+                "schema": J4_RECORD_SCHEMA,
+                "stage": "j4-p0r-solver",
+                "source_sha": str(provenance["source_sha"]),
+                "workflow": WORKFLOW_J4,
+                "ffcx_calls": _jsonable(ffcx_calls or []),
+                "j4": _jsonable(dict(j4_probe_facts or {})),
+            }
+        )
+        record["lifecycle"].update(
+            {
+                "marker_schema": J4_MARKER_SCHEMA,
+                "marker_names": list(J4_MARKERS),
+                "release_order": [
+                    "source_rhs",
+                    "retained_window",
+                    "krylov_result",
+                    "solver_stack",
+                    "bundle",
+                ],
+                "release_observation_seconds": RELEASE_OBSERVATION_SECONDS,
+            }
+        )
+        record["settings"].update(
+            {
+                "qualification_only": True,
+                "official_recovery": False,
+                "checkpoint_writer": False,
+                "checkpoint_interval": None,
+                "stop_on_true_residual": False,
+            }
+        )
+    return record
 
 
 def run_worker(args: argparse.Namespace) -> None:
+    workflow = getattr(args, "workflow", WORKFLOW_FULL)
+    if workflow not in {WORKFLOW_FULL, WORKFLOW_J4}:
+        raise ValueError(f"unknown P0 workflow: {workflow}")
     root = Path(__file__).resolve().parents[1]
     raw_dir = Path(args.raw_dir).resolve()
     jit_cache_dir = Path(args.jit_cache_dir).resolve()
@@ -368,19 +461,40 @@ def run_worker(args: argparse.Namespace) -> None:
                 f"parent-created V14 marker directory does not exist: {v14_marker_dir}"
             )
         from benchmarks.task038_full3d_jit_staging import write_marker as write_v14_marker
+    parent_owned_cache = workflow == WORKFLOW_J4
+    worker_marker_schema = J4_MARKER_SCHEMA if parent_owned_cache else MARKER_SCHEMA
+
+    def emit_worker_marker(name: str, **facts: Any) -> None:
+        _emit_marker(
+            raw_dir,
+            name,
+            args.expected_source_sha,
+            marker_schema=worker_marker_schema,
+            **facts,
+        )
+
+    if parent_owned_cache:
+        if v14_marker_dir is None:
+            raise ValueError("J4 P0 worker requires the parent V14 marker directory")
+        _validate_parent_owned_layout(root=raw_dir.parent, cache_dir=jit_cache_dir, marker_dir=v14_marker_dir, source_sha=str(args.expected_source_sha))
 
     command = _command(args)
-    _prepare_paths(raw_dir, jit_cache_dir, checkpoint_root, record_path)
-    _emit_marker(
+    _prepare_paths(
         raw_dir,
+        jit_cache_dir,
+        checkpoint_root,
+        record_path,
+        parent_owned_cache=parent_owned_cache,
+    )
+    emit_worker_marker(
         "paths_ready",
-        args.expected_source_sha,
         worker_raw_dir=str(raw_dir),
         marker_dir=str(raw_dir / "markers"),
         jit_cache_dir=str(jit_cache_dir),
         checkpoint_root=str(checkpoint_root),
         record_path=str(record_path),
-        isolated_jit_cache=True,
+        isolated_jit_cache=not parent_owned_cache,
+        parent_owned_cache=parent_owned_cache,
     )
 
     from mpi4py import MPI
@@ -402,6 +516,16 @@ def run_worker(args: argparse.Namespace) -> None:
         recover_p0_outputs,
     )
 
+    ffcx_calls: list[dict[str, Any]] = []
+    ffcx_jit_module: Any = None
+    ffcx_original: Any = None
+    if parent_owned_cache:
+        from dolfinx import jit as ffcx_jit_module
+
+        from benchmarks.task038_full3d_jit_staging import _install_ffcx_observer
+
+        ffcx_calls, ffcx_original = _install_ffcx_observer(ffcx_jit_module)
+
     comm = MPI.COMM_WORLD
     validate_profile(args.stage, args.case, args.source, comm.size)
     v14_callback = None
@@ -412,6 +536,9 @@ def run_worker(args: argparse.Namespace) -> None:
                 "worker_pid": int(os.getpid()),
                 "mpi_size": int(comm.size),
                 "raw_dir": str(raw_dir),
+                "artifact_root": str(raw_dir.parent),
+                "cache_dir": str(jit_cache_dir),
+                "stage": "j4-p0r-solver" if parent_owned_cache else STAGE,
             }
             merged.update(dict(facts))
             write_v14_marker(v14_marker_dir, name, merged)
@@ -427,6 +554,10 @@ def run_worker(args: argparse.Namespace) -> None:
     final_residual: Any = None
     recovery_solution: Any = None
     record: dict[str, Any] | None = None
+    one_action_output_values: np.ndarray | None = None
+    one_pc_output_values: np.ndarray | None = None
+    one_pc_apply_facts: dict[str, Any] = {}
+    j4_probe_facts: dict[str, Any] = {}
     try:
         bundle = build_p6_same_mesh_physical_bundle(
             cfg, comm, stage_callback=v14_callback
@@ -438,22 +569,24 @@ def run_worker(args: argparse.Namespace) -> None:
         setup_audit = dict(bundle_audit["setup_audit"])
         physical_audit = dict(bundle_audit["physical_action"])
         architecture = dict(bundle_audit["architecture"])
-        _emit_marker(
-            raw_dir,
+        emit_worker_marker(
             "bundle_built",
-            args.expected_source_sha,
             levels=list(LEVELS),
             physical_action=True,
             positive_auxiliary_pc=True,
         )
         rhs, rhs_generation = build_physical_rhs(bundle)
+        if parent_owned_cache:
+            from benchmarks.task038_full3d_jit_staging import _restore_ffcx_observer
+
+            _restore_ffcx_observer(ffcx_jit_module, ffcx_original)
+            ffcx_jit_module = None
+            ffcx_original = None
         rhs_before = _vector_values(rhs)
         slaves = _owned_slaves(bundle["setup"])
         rhs_before_facts = _vector_facts(rhs_before, slaves)
-        _emit_marker(
-            raw_dir,
+        emit_worker_marker(
             "source_built",
-            args.expected_source_sha,
             generation=rhs_generation["generation"],
             role=rhs_generation["role"],
             mode_manifest_sha256=rhs_generation["mode_manifest_sha256"],
@@ -513,31 +646,15 @@ def run_worker(args: argparse.Namespace) -> None:
                 "physical_model_sha256": PHYSICAL_MODEL_SHA256,
                 "mode_manifest_sha256": MODE_MANIFEST_SHA256,
                 "command": list(command),
-                "isolated_jit_cache": True,
+                "isolated_jit_cache": not parent_owned_cache,
             }
         )
-        _emit_marker(
-            raw_dir,
-            "solve_started",
-            args.expected_source_sha,
-            ksp_type="gmres",
-            restart=RESTART,
-            cycle_max_it=CYCLE_MAX_IT,
-            max_it=MAX_IT,
-            zero_initial_guess=True,
-            residual_limit=RESIDUAL_LIMIT,
-        )
-        if v14_callback is not None:
-            v14_callback(
-                "solve_started",
+        if parent_owned_cache:
+            provenance.update(
                 {
-                    "ksp_type": "gmres",
-                    "restart": RESTART,
-                    "cycle_max_it": CYCLE_MAX_IT,
-                    "max_it": MAX_IT,
-                    "zero_initial_guess": True,
-                    "residual_limit": RESIDUAL_LIMIT,
-                },
+                    "workflow": WORKFLOW_J4,
+                    "parent_owned_cache": True,
+                }
             )
         action_calls = 0
         pc_apply_facts: list[dict[str, Any]] = []
@@ -570,6 +687,93 @@ def run_worker(args: argparse.Namespace) -> None:
             )
             return output
 
+        if parent_owned_cache:
+            action_probe_input = rhs.copy()
+            action_probe_output = rhs.duplicate()
+            try:
+                physical_action.apply(action_probe_input, action_probe_output)
+                one_action_output_values = _vector_values(action_probe_output)
+            finally:
+                action_probe_output.destroy()
+                action_probe_input.destroy()
+            one_action_facts = _vector_facts(one_action_output_values, slaves)
+            j4_probe_facts.update(
+                {
+                    "one_action_probe_count": 1,
+                    "one_action_output": one_action_facts,
+                }
+            )
+            emit_worker_marker(
+                "one_action_complete",
+                probe_count=1,
+                output_finite=one_action_facts["finite"],
+                owned_slave_max=one_action_facts["owned_slave_max"],
+            )
+            v14_callback(
+                "one_action_complete",
+                {
+                    "probe_count": 1,
+                    "output_finite": one_action_facts["finite"],
+                    "owned_slave_max": one_action_facts["owned_slave_max"],
+                },
+            )
+
+            pc_probe_input = rhs.copy()
+            pc_probe_output: Any = None
+            try:
+                pc_probe_output = upper_cycle.apply(pc_probe_input)
+                one_pc_output_values = _vector_values(pc_probe_output)
+                one_pc_apply_facts = dict(upper_cycle.last_apply_facts)
+            finally:
+                if pc_probe_output is not None:
+                    pc_probe_output.destroy()
+                pc_probe_input.destroy()
+            one_pc_facts = _vector_facts(one_pc_output_values, slaves)
+            j4_probe_facts.update(
+                {
+                    "one_pc_probe_count": 1,
+                    "one_pc_output": one_pc_facts,
+                    "one_pc_apply_facts": _jsonable(one_pc_apply_facts),
+                }
+            )
+            emit_worker_marker(
+                "one_pc_complete",
+                probe_count=1,
+                output_finite=one_pc_facts["finite"],
+                owned_slave_max=one_pc_facts["owned_slave_max"],
+            )
+            v14_callback(
+                "one_pc_complete",
+                {
+                    "probe_count": 1,
+                    "output_finite": one_pc_facts["finite"],
+                    "owned_slave_max": one_pc_facts["owned_slave_max"],
+                },
+            )
+
+        solve_max_it = 20 if parent_owned_cache else MAX_IT
+        emit_worker_marker(
+            "solve_started",
+            ksp_type="gmres",
+            restart=RESTART,
+            cycle_max_it=CYCLE_MAX_IT,
+            max_it=solve_max_it,
+            zero_initial_guess=True,
+            residual_limit=RESIDUAL_LIMIT,
+        )
+        if v14_callback is not None:
+            v14_callback(
+                "solve_started",
+                {
+                    "ksp_type": "gmres",
+                    "restart": RESTART,
+                    "cycle_max_it": CYCLE_MAX_IT,
+                    "max_it": solve_max_it,
+                    "zero_initial_guess": True,
+                    "residual_limit": RESIDUAL_LIMIT,
+                },
+            )
+
         def checkpoint_writer(iteration: int, solution: Any, residual: float) -> Mapping[str, Any]:
             return write_solution_checkpoint(
                 checkpoint_root / f"checkpoint-{int(iteration)}",
@@ -593,14 +797,14 @@ def run_worker(args: argparse.Namespace) -> None:
             rhs,
             apply_action,
             apply_preconditioner,
-            max_it=MAX_IT,
+            max_it=20 if parent_owned_cache else MAX_IT,
             residual_limit=RESIDUAL_LIMIT,
             resource_sample=_resource_sample,
             start_iteration=0,
-            checkpoint_writer=checkpoint_writer,
+            checkpoint_writer=None if parent_owned_cache else checkpoint_writer,
             first_checkpoint_iteration=None,
             checkpoint_interval=CHECKPOINT_INTERVAL,
-            stop_on_true_residual=True,
+            stop_on_true_residual=not parent_owned_cache,
         )
         final_action = apply_action(result["final_solution"])
         final_residual = rhs.copy()
@@ -609,16 +813,23 @@ def run_worker(args: argparse.Namespace) -> None:
         final_solution_values = _vector_values(result["final_solution"])
         final_action_values = _vector_values(final_action)
         final_residual_values = _vector_values(final_residual)
-        npz_facts = _write_probe_npz(
-            raw_dir,
-            {
-                "rhs_before": rhs_before,
-                "rhs_after": rhs_after,
-                "final_solution": final_solution_values,
-                "final_action": final_action_values,
-                "final_residual": final_residual_values,
-            },
-        )
+        probe_arrays: dict[str, np.ndarray] = {
+            "rhs_before": rhs_before,
+            "rhs_after": rhs_after,
+            "final_solution": final_solution_values,
+            "final_action": final_action_values,
+            "final_residual": final_residual_values,
+        }
+        if parent_owned_cache:
+            assert one_action_output_values is not None
+            assert one_pc_output_values is not None
+            probe_arrays.update(
+                {
+                    "one_action_output": one_action_output_values,
+                    "one_pc_output": one_pc_output_values,
+                }
+            )
+        npz_facts = _write_probe_npz(raw_dir, probe_arrays)
         rhs_after_facts = _vector_facts(rhs_after, slaves)
         result_snapshot = {
             key: value for key, value in result.items() if key != "final_solution"
@@ -628,11 +839,10 @@ def run_worker(args: argparse.Namespace) -> None:
         result_snapshot["final_residual_facts"] = _vector_facts(
             final_residual_values, slaves
         )
+        final_explicit_true_residual = float(
+            np.linalg.norm(final_residual_values) / np.linalg.norm(rhs_before)
+        )
         if v14_callback is not None:
-            final_explicit_true_residual = float(
-                np.linalg.norm(final_residual_values)
-                / np.linalg.norm(rhs_before)
-            )
             v14_callback(
                 "solve_complete",
                 {
@@ -645,14 +855,167 @@ def run_worker(args: argparse.Namespace) -> None:
                     "final_explicit_recheck": True,
                 },
             )
-        _emit_marker(
-            raw_dir,
+        emit_worker_marker(
             "solve_complete",
-            args.expected_source_sha,
             iterations=int(result["iterations"]),
-            final_true_residual=float(result["final_true_residual"]),
+            final_true_residual=(
+                final_explicit_true_residual
+                if parent_owned_cache
+                else float(result["final_true_residual"])
+            ),
             checkpoint_count=len(result["checkpoint_facts"]),
         )
+        if parent_owned_cache:
+            emit_worker_marker(
+                "retained_ready",
+                retained_authority="parent_process_tree_solve_window",
+                retained_peak_observed="parent_jsonl",
+            )
+            time.sleep(RETAINED_DWELL_SECONDS)
+            emit_worker_marker(
+                "retained_observed",
+                retained_authority="parent_process_tree_solve_window",
+            )
+            initial_residual = float(result_snapshot["initial_true_residual"])
+            rho20 = final_explicit_true_residual / max(
+                initial_residual, np.finfo(float).tiny
+            )
+            j4_probe_facts.update(
+                {
+                    "final_explicit_true_residual": final_explicit_true_residual,
+                    "rho20": float(rho20),
+                    "actual_iterations": int(result_snapshot["iterations"]),
+                    "cycle_count": len(result_snapshot["cycles"]),
+                }
+            )
+            final_action.destroy()
+            final_action = None
+            final_residual.destroy()
+            final_residual = None
+            rhs.destroy()
+            rhs = None
+            destroy_krylov_result(result)
+            result = None
+            emit_worker_marker("krylov_destroyed")
+            emit_worker_marker(
+                "solver_stack_release_started",
+                preserved_objects=["spaces", "floquets", "mesh_data", "cfg", "physical_action"],
+            )
+            v14_callback(
+                "solver_stack_release_started",
+                {"preserved_objects": ["spaces", "floquets", "mesh_data", "cfg", "physical_action"]},
+            )
+            release_p6_same_mesh_solver_stack(bundle)
+            emit_worker_marker(
+                "solver_stack_release_complete",
+                released_objects=[
+                    "upper_cycle",
+                    "lower_cycle",
+                    "p63_owner_transfer",
+                    "p31_owner_transfer",
+                    "p6_shell",
+                    "p3_matrix",
+                    "p1_matrix",
+                ],
+            )
+            v14_callback(
+                "solver_stack_release_complete",
+                {
+                    "released_objects": [
+                        "upper_cycle",
+                        "lower_cycle",
+                        "p63_owner_transfer",
+                        "p31_owner_transfer",
+                        "p6_shell",
+                        "p3_matrix",
+                        "p1_matrix",
+                    ]
+                },
+            )
+            from src.solvers.common_3d_utils import _trim_process_heap
+
+            gc.collect()
+            PETSc.garbage_cleanup(comm)
+            gc.collect()
+            heap_trim = _trim_process_heap()
+            time.sleep(RELEASE_OBSERVATION_SECONDS)
+            emit_worker_marker(
+                "release_observation",
+                observation_seconds=RELEASE_OBSERVATION_SECONDS,
+                authority="parent_process_tree_after_release",
+                cleanup={
+                    "gc_collect": True,
+                    "petsc_garbage_cleanup": True,
+                    "heap_trim": _jsonable(heap_trim),
+                },
+            )
+            destroy_p6_same_mesh_physical_bundle(bundle)
+            bundle = {}
+            emit_worker_marker("bundle_destroyed")
+            j4_recovery = {
+                "status": "not_run",
+                "reason": "j4_p0r_qualification_only_no_official_recovery",
+                "official_outputs_written": False,
+            }
+            architecture = dict(architecture)
+            architecture.update(
+                {
+                    "workflow": WORKFLOW_J4,
+                    "qualification_only": True,
+                    "rhs_built": True,
+                    "outer_ksp_built": True,
+                    "solve_run": True,
+                    "recovery_run": False,
+                    "bundle_destroyed_before_record": True,
+                    "p3_sparse_matrix_built": True,
+                    "p1_sparse_matrix_built": True,
+                    "p1_direct_factor_built": True,
+                    "same_mesh_pmg_built": True,
+                    "streaming_dtn_action_built": True,
+                    "dtn_carrier_built": True,
+                    "physical_volume_action_built": True,
+                    "volume_component_count": 2,
+                    "volume_components": ["curl_curl", "complex_material_mass"],
+                    "monolithic_physical_volume": False,
+                }
+            )
+            record = _record(
+                raw_dir=raw_dir,
+                checkpoint_root=checkpoint_root,
+                record_path=record_path,
+                command=command,
+                source=source,
+                rhs_facts=rhs_before_facts,
+                rhs_after_facts=rhs_after_facts,
+                owned_slave_indices=slaves,
+                setup_audit=setup_audit,
+                physical_audit=physical_audit,
+                architecture=architecture,
+                rhs_generation=rhs_generation,
+                provenance=provenance,
+                identities=identities,
+                result=result_snapshot,
+                pc_apply_facts=pc_apply_facts,
+                npz_facts=npz_facts,
+                recovery=j4_recovery,
+                action_calls=action_calls,
+                workflow=WORKFLOW_J4,
+                ffcx_calls=ffcx_calls,
+                j4_probe_facts=j4_probe_facts,
+            )
+            _write_json(record_path, record)
+            emit_worker_marker(
+                "record_written",
+                record_path=str(record_path),
+                record_sha256=_sha256_file(record_path),
+            )
+            if (
+                int(result_snapshot["iterations"]) != 20
+                or len(result_snapshot["cycles"]) != 1
+                or int(result_snapshot["ksp_destroy_count"]) != 1
+            ):
+                raise RuntimeError("J4 qualification did not complete exactly one 20-step cycle")
+            return
         recovery_solution = result["final_solution"].copy()
         result_arrays = (
             rhs_before,
@@ -870,6 +1233,10 @@ def run_worker(args: argparse.Namespace) -> None:
             record_sha256=_sha256_file(record_path),
         )
     finally:
+        if ffcx_jit_module is not None and ffcx_original is not None:
+            from benchmarks.task038_full3d_jit_staging import _restore_ffcx_observer
+
+            _restore_ffcx_observer(ffcx_jit_module, ffcx_original)
         if result is not None:
             destroy_krylov_result(result)
         for vector in (final_action, final_residual, rhs, recovery_solution):
@@ -881,6 +1248,7 @@ def run_worker(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--workflow", choices=(WORKFLOW_FULL, WORKFLOW_J4), default=WORKFLOW_FULL)
     parser.add_argument("--stage", choices=(STAGE,), required=True)
     parser.add_argument("--case", choices=(CASE,), required=True)
     parser.add_argument("--source", choices=(SOURCE,), required=True)
@@ -912,6 +1280,8 @@ __all__ = [
     "CASE",
     "CHECKPOINT_INTERVAL",
     "COLD_RSS_LIMIT",
+    "J4_MARKER_SCHEMA",
+    "J4_RECORD_SCHEMA",
     "MARKER_SCHEMA",
     "MARKERS",
     "MAX_IT",
@@ -920,6 +1290,8 @@ __all__ = [
     "RESIDUAL_LIMIT",
     "SOURCE",
     "STAGE",
+    "WORKFLOW_FULL",
+    "WORKFLOW_J4",
     "build_parser",
     "main",
     "run_worker",
