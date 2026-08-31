@@ -549,6 +549,7 @@ def run_worker(args: argparse.Namespace) -> None:
         checkpoint_root,
         record_path,
         parent_owned_cache=parent_owned_cache,
+        create_checkpoint_root=workflow in {WORKFLOW_FULL, WORKFLOW_J5},
     )
     emit_worker_marker(
         "paths_ready",

@@ -141,6 +141,7 @@ def _prepare_paths(
     record_path: Path,
     *,
     parent_owned_cache: bool = False,
+    create_checkpoint_root: bool = True,
 ) -> None:
     raw_dir = Path(raw_dir).resolve()
     jit_cache_dir = Path(jit_cache_dir).resolve()
@@ -164,6 +165,8 @@ def _prepare_paths(
             raise FileExistsError("a positive worker-owned path already exists")
         raw_dir.mkdir(exist_ok=False)
         (raw_dir / "markers").mkdir()
+        if create_checkpoint_root:
+            checkpoint_root.mkdir(parents=True, exist_ok=False)
         os.environ["XDG_CACHE_HOME"] = str(jit_cache_dir)
         return
     worker_owned = (*worker_owned, jit_cache_dir)

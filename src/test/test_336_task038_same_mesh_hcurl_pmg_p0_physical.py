@@ -929,6 +929,7 @@ def test_j4_workflow_uses_parent_owned_cache_without_reset(tmp_path: Path) -> No
         checkpoint_root,
         record_path,
         parent_owned_cache=True,
+        create_checkpoint_root=False,
     )
     assert raw_dir.is_dir() and (raw_dir / "markers").is_dir()
     assert cache_sentinel.read_bytes() == b"keep"
@@ -940,7 +941,61 @@ def test_j4_workflow_uses_parent_owned_cache_without_reset(tmp_path: Path) -> No
             checkpoint_root,
             record_path,
             parent_owned_cache=True,
+            create_checkpoint_root=False,
         )
+
+    j5_root = tmp_path / "j5-root"
+    j5_cache = j5_root / "jit_cache"
+    j5_marker_dir = j5_root / "markers"
+    j5_raw_dir = j5_root / "worker_raw"
+    j5_checkpoint_root = j5_root / "checkpoints"
+    j5_record_path = j5_root / "worker_record.json"
+    j5_root.mkdir()
+    j5_cache.mkdir()
+    j5_marker_dir.mkdir()
+    j5_cache_sentinel = j5_cache / "precompiled.so"
+    j5_cache_sentinel.write_bytes(b"keep-j5")
+    worker._prepare_paths(
+        j5_raw_dir,
+        j5_cache,
+        j5_checkpoint_root,
+        j5_record_path,
+        parent_owned_cache=True,
+        create_checkpoint_root=True,
+    )
+    assert j5_raw_dir.is_dir() and (j5_raw_dir / "markers").is_dir()
+    assert j5_cache_sentinel.read_bytes() == b"keep-j5"
+    assert j5_checkpoint_root.is_dir() and not j5_record_path.exists()
+    with pytest.raises(FileExistsError):
+        worker._prepare_paths(
+            j5_raw_dir,
+            j5_cache,
+            j5_checkpoint_root,
+            j5_record_path,
+            parent_owned_cache=True,
+            create_checkpoint_root=True,
+        )
+
+    existing_root = tmp_path / "j5-existing-checkpoint"
+    existing_cache = existing_root / "jit_cache"
+    existing_marker_dir = existing_root / "markers"
+    existing_raw_dir = existing_root / "worker_raw"
+    existing_checkpoint_root = existing_root / "checkpoints"
+    existing_record_path = existing_root / "worker_record.json"
+    existing_root.mkdir()
+    existing_cache.mkdir()
+    existing_marker_dir.mkdir()
+    existing_checkpoint_root.mkdir()
+    with pytest.raises(FileExistsError):
+        worker._prepare_paths(
+            existing_raw_dir,
+            existing_cache,
+            existing_checkpoint_root,
+            existing_record_path,
+            parent_owned_cache=True,
+            create_checkpoint_root=True,
+        )
+    assert not existing_raw_dir.exists() and existing_checkpoint_root.is_dir()
 
     args = worker.build_parser().parse_args(
         [
