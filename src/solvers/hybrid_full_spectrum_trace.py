@@ -362,14 +362,89 @@ class CanonicalFullSpectrumTraceTransform:
 
     def identity_diagnostics(self, raw_primal, raw_dual_covector):
         raw, dual = self._raw(raw_primal), self._raw(raw_dual_covector)
-        local_block, local_phase = 0.0, 0
+        local_block = 0.0
+        local_total_blocks = len(self._layout.blocks)
+        local_identity_blocks = 0
+        local_nontrivial_blocks = 0
+        local_metadata_mismatches = 0
+        local_master_nonnull = 0
+        local_mismatch_reasons: dict[str, int] = {}
         for placement in self._layout.blocks:
             block = placement.block
             canonical = block.raw_to_canonical @ raw[placement.positions]
             local_block = max(local_block, float(np.max(np.abs(block.canonical_to_raw @ canonical - raw[placement.positions]), initial=0.0)))
-            local_phase += abs(block.floquet_coefficient - 1.0) > 1.0e-12
+            declared_phase = complex(block.floquet_coefficient)
+            phase_finite = bool(np.isfinite([declared_phase.real, declared_phase.imag]).all())
+            if not phase_finite:
+                local_metadata_mismatches += 1
+                local_mismatch_reasons["block_phase_nonfinite"] = local_mismatch_reasons.get("block_phase_nonfinite", 0) + 1
+            elif abs(declared_phase - 1.0) <= 1.0e-12:
+                local_identity_blocks += 1
+            else:
+                local_nontrivial_blocks += 1
+            for key in block.canonical_keys:
+                try:
+                    record = json.loads(key)
+                    pair = record["floquet_coefficient"]
+                    if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+                        raise ValueError("floquet_coefficient is not a pair")
+                    key_phase = complex(float(pair[0]), float(pair[1]))
+                    if not np.isfinite([key_phase.real, key_phase.imag]).all():
+                        raise ValueError("floquet_coefficient is nonfinite")
+                    if abs(key_phase - declared_phase) > 1.0e-12:
+                        raise ValueError("key/block phase mismatch")
+                    if "floquet_master" not in record:
+                        raise ValueError("floquet_master is missing")
+                    if record["floquet_master"] is not None:
+                        local_master_nonnull += 1
+                except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                    local_metadata_mismatches += 1
+                    reason = str(exc)
+                    local_mismatch_reasons[reason] = local_mismatch_reasons.get(reason, 0) + 1
         block_error = float(self._comm.allreduce(local_block, op=MPI.MAX))
-        phase_blocks = int(self._comm.allreduce(local_phase, op=MPI.SUM))
+        total_block_count = int(self._comm.allreduce(local_total_blocks, op=MPI.SUM))
+        identity_block_count = int(self._comm.allreduce(local_identity_blocks, op=MPI.SUM))
+        nontrivial_block_count = int(self._comm.allreduce(local_nontrivial_blocks, op=MPI.SUM))
+        key_metadata_mismatches = int(self._comm.allreduce(local_metadata_mismatches, op=MPI.SUM))
+        master_nonnull_count = int(self._comm.allreduce(local_master_nonnull, op=MPI.SUM))
+        gathered_reasons = self._comm.allgather(local_mismatch_reasons)
+        mismatch_reasons: dict[str, int] = {}
+        for reasons in gathered_reasons:
+            for reason, count in reasons.items():
+                mismatch_reasons[reason] = mismatch_reasons.get(reason, 0) + int(count)
+        plane_identity = self._layout.plane_identity
+        phase_convention = (
+            plane_identity.get("phase_convention")
+            if isinstance(plane_identity, Mapping)
+            else None
+        )
+        phase_convention_ok = bool(
+            self._comm.allreduce(
+                phase_convention == "stored_raw=phase*E*canonical", op=MPI.LAND
+            )
+        )
+        if not phase_convention_ok:
+            mismatch_reasons["plane_identity.phase_convention"] = 1
+        metadata_mismatch_count = key_metadata_mismatches + int(not phase_convention_ok)
+        all_master_null = master_nonnull_count == 0
+        if total_block_count == 0:
+            phase_mode = "invalid_empty_block_inventory"
+        elif metadata_mismatch_count:
+            phase_mode = "invalid_phase_metadata"
+        elif (
+            identity_block_count == total_block_count
+            and nontrivial_block_count == 0
+            and all_master_null
+        ):
+            phase_mode = "all_active_master_identity_phase"
+        elif (
+            nontrivial_block_count > 0
+            and identity_block_count + nontrivial_block_count == total_block_count
+        ):
+            phase_mode = "nontrivial_block_phase"
+        else:
+            phase_mode = "invalid_phase_metadata"
+        phase_blocks = nontrivial_block_count
         primal = self.forward_primal(raw)
         dual_modal = self.forward_dual(dual)
         primal_back, dual_back = self.inverse_primal(primal), self.inverse_dual(dual_modal)
@@ -400,6 +475,14 @@ class CanonicalFullSpectrumTraceTransform:
             for item in observations.values()
         )
         fft_phase_applications = 0
+        phase_once = bool(
+            total_block_count > 0
+            and metadata_mismatch_count == 0
+            and phase_convention_ok
+            and fft_phase_applications == 0
+            and phase_mode
+            in {"all_active_master_identity_phase", "nontrivial_block_phase"}
+        )
         return {
             "schema": "task040.v7.full_spectrum_trace_transform.v1",
             "block_roundtrip_max": block_error,
@@ -411,9 +494,16 @@ class CanonicalFullSpectrumTraceTransform:
             "modal_pairing": [float(np.real(modal_pair)), float(np.imag(modal_pair))],
             "parseval_pairing_abs_error": float(pairing),
             "parseval_pairing_relative_error": float(pairing / max(abs(complex(raw_pair)), _SAFE)),
-            "phase_once": bool(phase_blocks > 0 and fft_phase_applications == 0),
+            "phase_once": phase_once,
             "phase_once_audit": {
+                "total_block_count": total_block_count,
                 "nontrivial_block_count": phase_blocks,
+                "identity_block_count": identity_block_count,
+                "metadata_mismatch_count": metadata_mismatch_count,
+                "metadata_mismatch_reasons": mismatch_reasons,
+                "phase_convention": phase_convention,
+                "all_key_floquet_master_null": all_master_null,
+                "mode": phase_mode,
                 "block_transform_applications": "GammaEntityBlock matrices",
                 "fft_phase_applications": fft_phase_applications,
             },

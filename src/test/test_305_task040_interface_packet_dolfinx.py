@@ -385,7 +385,7 @@ def test_petrov_detach_transfers_u_without_copy_and_releases_resident_state() ->
         layout.destroy()
 
 
-def _full_spectrum_fixture(comm):
+def _full_spectrum_fixture(comm, *, all_identity_phase=False):
     nx, ny, channels = 15, 7, 72
     total = nx * ny * channels
     x_levels = [1000]
@@ -418,7 +418,7 @@ def _full_spectrum_fixture(comm):
             transform = np.eye(count, dtype=np.complex128)
             phase = 1.0 + 0.0j
             orientation = "canonical"
-            if cell == first_cell == 0 and kind == "x_edge":
+            if cell == first_cell == 0 and kind == "x_edge" and not all_identity_phase:
                 transform += 0.07 * np.diag(np.ones(count - 1), 1)
                 phase = 0.73 + 0.29j
                 orientation = "reversed-test"
@@ -437,7 +437,11 @@ def _full_spectrum_fixture(comm):
     layout = build_gamma_canonical_layout(
         blocks,
         gamma_rows,
-        plane_identity={"mesh_cells": [nx, ny], "test": "full-spectrum"},
+        plane_identity={
+            "mesh_cells": [nx, ny],
+            "phase_convention": "stored_raw=phase*E*canonical",
+            "test": "full-spectrum",
+        },
         comm=comm,
     )
     raw = np.empty(len(gamma_rows), dtype=np.complex128)
@@ -553,6 +557,32 @@ def test_canonical_full_spectrum_trace_transform_identity() -> None:
         dual_modal = transform.forward_dual(dual)
         assert np.allclose(transform.inverse_primal(primal), raw, rtol=0.0, atol=1.0e-10)
         assert np.allclose(transform.inverse_dual(dual_modal), dual, rtol=0.0, atol=1.0e-10)
+    finally:
+        transform.close()
+        mass.destroy()
+
+
+def test_canonical_full_spectrum_trace_transform_all_active_master_identity_phase() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2):
+        pytest.skip("run the all-unity phase regression with serial or MPI2")
+    layout, system, raw, dual, mass, _mass_audit, nontrivial = _full_spectrum_fixture(
+        comm, all_identity_phase=True
+    )
+    transform = build_canonical_full_spectrum_trace_transform(system, layout, comm)
+    try:
+        assert not comm.allreduce(nontrivial, op=MPI.LOR)
+        diagnostics = transform.identity_diagnostics(raw, dual)
+        audit = diagnostics["phase_once_audit"]
+        assert diagnostics["phase_once"] is True
+        assert audit["mode"] == "all_active_master_identity_phase"
+        assert audit["total_block_count"] == 315
+        assert audit["identity_block_count"] == audit["total_block_count"]
+        assert audit["nontrivial_block_count"] == 0
+        assert audit["metadata_mismatch_count"] == 0
+        assert audit["all_key_floquet_master_null"] is True
+        assert audit["phase_convention"] == "stored_raw=phase*E*canonical"
+        assert audit["fft_phase_applications"] == 0
     finally:
         transform.close()
         mass.destroy()
