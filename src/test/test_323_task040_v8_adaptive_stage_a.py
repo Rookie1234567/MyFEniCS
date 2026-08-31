@@ -6,10 +6,14 @@ import inspect
 from pathlib import Path
 
 import pytest
+from mpi4py import MPI
+from petsc4py import PETSc
 
 from benchmarks import task040_level_a as level_a
 from benchmarks import task040_level_a_watchdog as watchdog
 from benchmarks import task040_v6_2_interface_schur as interface_schur
+from src.solvers import hybrid_adaptive_impedance_screen as screen
+from src.solvers import hybrid_maxwell_harmonic_coarse as harmonic_coarse
 
 
 def _route_values(tmp_path: Path) -> dict[str, object]:
@@ -158,3 +162,117 @@ def test_v8_adaptive_callback_and_scoped_swap_authority():
         authority(0), terminal_excluded=True
     )
     assert terminal["counted"] is False
+
+
+class _FakeB1Owner:
+    def __init__(self, action=False):
+        self.destroyed = False
+        self.diagnostics = {"factor_lifecycle": {"ready": int(action)}}
+
+    def destroy(self):
+        self.destroyed = True
+        self.diagnostics["factor_lifecycle"] = {"ready": 0}
+
+
+def _fake_b1_evidence(*_args, **_kwargs):
+    return {
+        "identity_pass": True,
+        "patch_count": 1,
+        "selected_modes_per_patch_histogram": {1: 1},
+        "selected_mode_count_total": 1,
+        "memory_preflight": {
+            "allocation_allowed": True,
+            "projected_peak_bytes_conservative": 1,
+            "route": "exact_preflight",
+        },
+    }
+
+
+def test_v8_adaptive_b1_screen_owns_resources_and_syncs_baseline(monkeypatch):
+    if MPI.COMM_WORLD.size not in (1, 2):
+        pytest.skip("run this fake distributed contract with serial or MPI2")
+    created = {"providers": [], "actions": [], "identity": 0}
+
+    def make_builder(kind):
+        def build(*_args, **_kwargs):
+            owner = _FakeB1Owner(kind == "actions")
+            created[kind].append(owner)
+            return owner
+
+        return build
+
+    def identity(*_args, **_kwargs):
+        created["identity"] += 1
+        return _fake_b1_evidence()
+
+    monkeypatch.setattr(
+        screen,
+        "build_actual_hcurl_cell_tangential_mass_provider",
+        make_builder("providers"),
+    )
+    monkeypatch.setattr(
+        screen, "build_adaptive_impedance_schwarz_action", make_builder("actions")
+    )
+    monkeypatch.setattr(harmonic_coarse, "build_stage_b1_harmonic_identity", identity)
+    matrix = PETSc.Mat().createAIJ(
+        size=((PETSc.DECIDE, 1), (PETSc.DECIDE, 1)),
+        nnz=1,
+        comm=MPI.COMM_WORLD,
+    )
+    matrix.setUp()
+    matrix.assemble()
+    try:
+        events = []
+
+        def callback(events, swap):
+            def emit(event, _detail):
+                events.append(event)
+                if event == "factor_ready":
+                    return {
+                        "all_status_readable": True,
+                        "pass": True,
+                        "rss_bytes": 1,
+                        "swap_bytes": swap,
+                        "source": "fake-process-tree",
+                    }
+                return None
+
+            return emit
+
+        base = {
+            "function_space": object(),
+            "condensed": object(),
+            "bare_f": matrix,
+            "cell_tags": None,
+            "facet_tags": None,
+            "external_facet_tag": 7,
+            "beta": 1.0,
+            "quadrature_degree": 2,
+        }
+        success = screen.run_adaptive_impedance_stage_b1_preflight(
+            **base, event_callback=callback(events, 0)
+        )
+        assert events == ["factor_ready", "b1_begin", "b1_end", "cleanup"]
+        assert success["evidence"]["identity_pass"] is True
+        assert success["setup_wall_seconds"] >= 0.0
+        assert success["b1_wall_seconds"] >= 0.0
+        assert success["bare_f_hash_before"] == success["bare_f_hash_after"]
+        assert success["cleanup"]["action_destroyed"] is True
+        assert success["cleanup"]["provider_destroyed"] is True
+        assert success["cleanup"]["factor_lifecycle_after"] == {"ready": 0}
+        assert created["actions"][0].destroyed is True
+        assert created["providers"][0].destroyed is True
+        assert matrix.getSize() == (1, 1)
+        assert created["identity"] == 1
+
+        failure_events = []
+        with pytest.raises(RuntimeError, match="resource snapshot"):
+            screen.run_adaptive_impedance_stage_b1_preflight(
+                **base, event_callback=callback(failure_events, 1)
+            )
+        assert failure_events == ["factor_ready", "cleanup"]
+        assert created["identity"] == 1
+        assert created["actions"][-1].destroyed is True
+        assert created["providers"][-1].destroyed is True
+    finally:
+        matrix.destroy()

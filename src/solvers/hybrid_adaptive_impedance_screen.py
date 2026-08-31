@@ -18,16 +18,20 @@ from .hybrid_adaptive_impedance_schwarz import (
 )
 from .hybrid_side_impedance import _petsc_matrix_hash
 
-__all__ = ("run_adaptive_impedance_stage_a_one_apply",)
+__all__ = (
+    "run_adaptive_impedance_stage_a_one_apply",
+    "run_adaptive_impedance_stage_b1_preflight",
+)
 
 
 def _emit(
-    callback: Callable[[str, Mapping[str, Any]], None] | None,
+    callback: Callable[[str, Mapping[str, Any]], Any] | None,
     event: str,
     **detail: Any,
-) -> None:
-    if callback is not None:
-        callback(event, detail)
+) -> Any:
+    if callback is None:
+        return None
+    return callback(event, detail)
 
 
 def _factor_inventory(diagnostics: Mapping[str, Any]) -> dict[str, Any]:
@@ -45,6 +49,171 @@ def _factor_inventory(diagnostics: Mapping[str, Any]) -> dict[str, Any]:
             "rows_max",
         )
     }
+
+
+def run_adaptive_impedance_stage_b1_preflight(
+    *,
+    function_space: Any,
+    condensed: Any,
+    bare_f: PETSc.Mat,
+    cell_tags: Any,
+    facet_tags: Any,
+    external_facet_tag: int,
+    beta: complex,
+    quadrature_degree: int,
+    event_callback: Callable[[str, Mapping[str, Any]], Any] | None = None,
+) -> dict[str, Any]:
+    if not isinstance(bare_f, PETSc.Mat):
+        raise TypeError("adaptive B1 needs a PETSc bare-F matrix")
+    from .hybrid_maxwell_harmonic_coarse import (
+        HARD_MEMORY_BYTES,
+        build_stage_b1_harmonic_identity,
+    )
+
+    comm = bare_f.getComm().tompi4py()
+    provider = action = None
+    result: dict[str, Any] | None = None
+    action_destroyed = provider_destroyed = False
+    bare_hash_before = _petsc_matrix_hash(bare_f)
+    setup_started = perf_counter()
+    try:
+        provider = build_actual_hcurl_cell_tangential_mass_provider(
+            function_space, condensed, quadrature_degree=int(quadrature_degree)
+        )
+        action = build_adaptive_impedance_schwarz_action(
+            condensed, bare_f, raw_tangential_face_mass_by_cell=provider, beta=beta
+        )
+        setup_wall = float(comm.allreduce(perf_counter() - setup_started, op=MPI.MAX))
+        diagnostics = dict(action.diagnostics)
+        factor_inventory = _factor_inventory(diagnostics)
+        factor_lifecycle = dict(diagnostics.get("factor_lifecycle", {}))
+        factor_resource = _emit(
+            event_callback,
+            "factor_ready",
+            factor_inventory=factor_inventory,
+            factor_lifecycle=factor_lifecycle,
+            setup_wall_seconds=setup_wall,
+            pc_apply_count=0,
+            action_apply_count=0,
+        )
+        resource_error = None
+        resource = dict(factor_resource) if isinstance(factor_resource, Mapping) else {}
+        if not isinstance(factor_resource, Mapping):
+            resource_error = "B1 factor_ready did not return live resource data"
+        rss, source = resource.get("rss_bytes"), resource.get("source")
+        resource_checks = {
+            "all_status_readable": resource.get("all_status_readable") is True,
+            "resource_pass": resource.get("pass") is True,
+            "rss_nonnegative_integer": (
+                isinstance(rss, int) and not isinstance(rss, bool) and rss >= 0
+            ),
+            "rss_below_hard_stop": (
+                isinstance(rss, int)
+                and not isinstance(rss, bool)
+                and 0 <= rss < int(HARD_MEMORY_BYTES)
+            ),
+            "swap_zero": resource.get("swap_bytes") == 0,
+            "source_nonempty": isinstance(source, str) and bool(source),
+        }
+        if resource_error is None and not all(resource_checks.values()):
+            resource_error = "B1 factor_ready resource snapshot failed strict baseline gate"
+        resource_errors = comm.allgather(resource_error)
+        first_resource_error = next(
+            (str(error) for error in resource_errors if error is not None), None
+        )
+        if first_resource_error is not None:
+            raise RuntimeError(first_resource_error)
+        baseline = {
+            "resource": resource,
+            "checks": resource_checks,
+            "baseline_known": True,
+            "current_process_tree_baseline_bytes": int(rss),
+            "current_process_tree_baseline_source": str(source),
+        }
+        _emit(
+            event_callback,
+            "b1_begin",
+            resource_baseline=baseline,
+            factor_lifecycle=factor_lifecycle,
+            pc_apply_count=0,
+            action_apply_count=0,
+        )
+        b1_started = perf_counter()
+        evidence = build_stage_b1_harmonic_identity(
+            function_space,
+            condensed,
+            bare_f,
+            action,
+            provider,
+            cell_tags,
+            facet_tags,
+            int(external_facet_tag),
+            current_process_tree_baseline_bytes=int(rss),
+            current_process_tree_baseline_source=str(source),
+        )
+        b1_wall = float(comm.allreduce(perf_counter() - b1_started, op=MPI.MAX))
+        identity_pass = evidence.get("identity_pass")
+        if identity_pass is not True:
+            raise RuntimeError("B1 harmonic identity gate did not pass")
+        memory = evidence.get("memory_preflight", {})
+        allocation_allowed = bool(memory.get("allocation_allowed"))
+        _emit(
+            event_callback,
+            "b1_end",
+            factor_lifecycle=factor_lifecycle,
+            pc_apply_count=0,
+            action_apply_count=0,
+            patch_count=evidence.get("patch_count"),
+            selected_modes_per_patch_histogram=evidence.get(
+                "selected_modes_per_patch_histogram"
+            ),
+            selected_mode_count_total=evidence.get("selected_mode_count_total"),
+            identity_pass=True,
+            allocation_allowed=allocation_allowed,
+            projected_peak_bytes_conservative=memory.get(
+                "projected_peak_bytes_conservative"
+            ),
+            memory_route=memory.get("route"),
+        )
+        result = {
+            "evidence": evidence,
+            "resource_baseline": baseline,
+            "factor_inventory": factor_inventory,
+            "setup_wall_seconds": setup_wall,
+            "b1_wall_seconds": b1_wall,
+            "bare_f_hash_before": bare_hash_before,
+        }
+    finally:
+        if action is not None and not action_destroyed:
+            action.destroy()
+            action_destroyed = True
+        factor_lifecycle_after = {}
+        if action is not None:
+            factor_lifecycle_after = dict(action.diagnostics.get("factor_lifecycle", {}))
+        if provider is not None and not provider_destroyed:
+            provider.destroy()
+            provider_destroyed = True
+        bare_hash_after = _petsc_matrix_hash(bare_f)
+        cleanup = {
+            "action_destroyed": action_destroyed,
+            "provider_destroyed": provider_destroyed,
+            "factor_lifecycle_after": factor_lifecycle_after,
+            "bare_f_hash_before": bare_hash_before,
+            "bare_f_hash_after": bare_hash_after,
+            "bare_f_unchanged": bare_hash_before == bare_hash_after,
+        }
+        try:
+            _emit(event_callback, "cleanup", **cleanup)
+        except Exception:
+            if result is not None:
+                raise
+        if result is not None:
+            result["bare_f_hash_after"] = bare_hash_after
+            result["cleanup"] = cleanup
+            if cleanup["bare_f_unchanged"] is not True:
+                raise RuntimeError("adaptive B1 borrowed bare-F changed during preflight")
+    assert result is not None
+    return result
 
 
 def run_adaptive_impedance_stage_a_one_apply(
