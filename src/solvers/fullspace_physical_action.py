@@ -15,6 +15,97 @@ from typing import Any
 from petsc4py import PETSc
 
 
+class FullspaceSplitVolumeAction:
+    """Sum exactly two owner-local physical volume form actions.
+
+    The curl-curl action owns the full-space constraint identity rows.  The
+    material-mass action leaves those rows zero, so the sum restores them once
+    without allocating a third persistent vector.
+    """
+
+    def __init__(
+        self,
+        curl_curl_form: Any,
+        material_mass_form: Any,
+        function_space: Any,
+        *,
+        mpc: Any | None = None,
+        jit_options: Mapping[str, Any] | None = None,
+    ) -> None:
+        from .fullspace_mpc_action import build_fullspace_mpc_form_action
+
+        self._curl_action = build_fullspace_mpc_form_action(
+            curl_curl_form,
+            function_space,
+            mpc=mpc,
+            slave_row_identity=True,
+            jit_options=jit_options,
+        )
+        try:
+            self._mass_action = build_fullspace_mpc_form_action(
+                material_mass_form,
+                function_space,
+                mpc=mpc,
+                slave_row_identity=False,
+                jit_options=jit_options,
+            )
+        except Exception:
+            self._curl_action.destroy()
+            self._curl_action = None
+            raise
+        self._apply_count = 0
+        self._destroyed = False
+
+    def apply(self, source: PETSc.Vec) -> PETSc.Vec:
+        if self._destroyed:
+            raise RuntimeError("split volume action has been destroyed")
+        curl_result = self._curl_action.apply(source)
+        mass_result = self._mass_action.apply(source)
+        curl_result.axpy(PETSc.ScalarType(1.0), mass_result)
+        self._apply_count += 1
+        return curl_result
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        if self._destroyed:
+            return MappingProxyType(
+                {
+                    "schema": "task038.fullspace-split-volume-action.v1",
+                    "destroyed": True,
+                    "apply_count": int(self._apply_count),
+                }
+            )
+        return MappingProxyType(
+            {
+                "schema": "task038.fullspace-split-volume-action.v1",
+                "operator": "A_curl_curl_plus_A_complex_material_mass",
+                "component_count": 2,
+                "components": {
+                    "curl_curl": dict(self._curl_action.audit),
+                    "complex_material_mass": dict(self._mass_action.audit),
+                },
+                "slave_row_identity_owner": "curl_curl",
+                "constraint_identity_rows_exactly_once": True,
+                "phase_application": (
+                    "each_component_finalized_floquet_mpc_once_no_wrapper_reapply"
+                ),
+                "sum_output_buffer": "curl_curl_action_output",
+                "third_persistent_sum_vector": False,
+                "apply_count": int(self._apply_count),
+                "destroyed": False,
+            }
+        )
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        self._mass_action.destroy()
+        self._curl_action.destroy()
+        self._mass_action = None
+        self._curl_action = None
+
+
 class FullspacePhysicalAction:
     """Compose ``A_volume`` and the current dynamic ``A_DtN`` action."""
 
@@ -90,4 +181,4 @@ class FullspacePhysicalAction:
         self._volume_action = None
 
 
-__all__ = ("FullspacePhysicalAction",)
+__all__ = ("FullspacePhysicalAction", "FullspaceSplitVolumeAction")

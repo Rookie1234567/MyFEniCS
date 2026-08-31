@@ -11,6 +11,40 @@ from ..common.config_3d import SimulationConfig3D
 from ..common.pml_3d import z_pml_tensors
 
 
+def _build_physical_volume_terms(
+    cfg: SimulationConfig3D,
+    u,
+    v,
+    dx,
+):
+    """Build the shared isotropic curl-curl and complex-mass forms.
+
+    Optional divergence, PML, Robin, and right-hand-side terms remain in
+    ``_build_variational_forms`` so its historical branches are unchanged.
+    """
+    curl_u = ufl.curl(u)
+    curl_v = ufl.curl(v)
+    curl_curl = PETSc.ScalarType(0.0) * ufl.inner(curl_u, curl_v) * dx
+    material_mass = PETSc.ScalarType(0.0) * ufl.inner(u, v) * dx
+    for tag, eps_r in (
+        (cfg.tags.air, cfg.eps_r),
+        (cfg.tags.substrate, cfg.substrate_index**2),
+        (cfg.tags.grating, cfg.grating_index**2),
+    ):
+        curl_curl += (
+            PETSc.ScalarType(1.0 / cfg.mu_r)
+            * ufl.inner(curl_u, curl_v)
+            * dx(tag)
+        )
+        material_mass += (
+            -cfg.k0**2
+            * PETSc.ScalarType(eps_r)
+            * ufl.inner(u, v)
+            * dx(tag)
+        )
+    return curl_curl, material_mass
+
+
 def _build_variational_forms(
     msh,
     mesh_data,
@@ -32,17 +66,8 @@ def _build_variational_forms(
     zero = fem.Constant(msh, np.zeros(3, dtype=default_scalar_type))
     curl_u = ufl.curl(u)
     curl_v = ufl.curl(v)
-    a = PETSc.ScalarType(0.0) * ufl.inner(u, v) * dx
-
-    def add_isotropic(tag: int, eps_r: complex):
-        return (
-            PETSc.ScalarType(1.0 / cfg.mu_r) * ufl.inner(curl_u, curl_v) * dx(tag)
-            - cfg.k0**2 * PETSc.ScalarType(eps_r) * ufl.inner(u, v) * dx(tag)
-        )
-
-    a += add_isotropic(cfg.tags.air, cfg.eps_r)
-    a += add_isotropic(cfg.tags.substrate, cfg.substrate_index**2)
-    a += add_isotropic(cfg.tags.grating, cfg.grating_index**2)
+    curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+    a = curl_curl + material_mass
     if float(cfg.divergence_penalty) > 0.0:
         d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
         a += PETSc.ScalarType(cfg.divergence_penalty) * ufl.inner(ufl.div(u), ufl.div(v)) * d_physical
