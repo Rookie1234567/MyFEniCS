@@ -99,13 +99,26 @@ def test_v8_adaptive_stage_a_route_and_marker_contract(tmp_path):
         "v8_adaptive_cleanup_complete",
     )
     assert plan["marker_sequence"] == list(marker_events)
+    b1_begin = watchdog._v8_adaptive_active_stage_timeout(
+        "v8_adaptive_stage_b1_begin",
+        stage_elapsed_seconds=3601.0,
+        total_elapsed_seconds=10799.0,
+    )
+    assert b1_begin["timed_out"] is False
+    assert b1_begin["kind"] is None
     total = watchdog._v8_adaptive_active_stage_timeout(
-        "v8_adaptive_checkpoint",
+        "v8_adaptive_stage_b1_begin",
         stage_elapsed_seconds=1.0,
         total_elapsed_seconds=10801.0,
     )
     assert total["timed_out"] is True
     assert total["kind"] == "total"
+    assert "v8_adaptive_stage_b1_cleanup_complete" in (
+        watchdog._TERMINAL_CLEANUP_STAGES
+    )
+    assert "v8_adaptive_stage_b1_failure" not in (
+        watchdog._TERMINAL_CLEANUP_STAGES
+    )
     one_apply = watchdog._v8_adaptive_active_stage_timeout(
         "v8_adaptive_external_one_apply_begin",
         stage_elapsed_seconds=1201.0,
@@ -113,6 +126,49 @@ def test_v8_adaptive_stage_a_route_and_marker_contract(tmp_path):
     )
     assert one_apply["timed_out"] is True
     assert one_apply["kind"] == "one_apply"
+
+    b1_values = {
+        **values,
+        "v8_adaptive_schwarz_only": False,
+        "v8_adaptive_stage_b1_only": True,
+    }
+    b1_plan = _call_builder(level_a.build_task040_level_a_plan, b1_values)
+    assert b1_plan["schema"] == interface_schur.V8_ADAPTIVE_STAGE_B1_ONLY_SCHEMA
+    assert b1_plan["method"] == interface_schur.V8_ADAPTIVE_STAGE_B1_ONLY_METHOD
+    assert b1_plan["profile"] == interface_schur.V8_ADAPTIVE_STAGE_B1_ONLY_PROFILE_ID
+    assert b1_plan["source_order"] == []
+    assert b1_plan["mandatory_checkpoints"] == []
+    assert b1_plan["one_apply_target_seconds"] is None
+    assert b1_plan["fixed_configuration"]["operation"] == (
+        "symbolic_identity_and_memory_preflight_only"
+    )
+    assert {"P", "P_H", "FP", "Ac", "fgmres"} <= set(
+        b1_plan["forbidden"]
+    )
+    assert b1_plan["marker_sequence"][-1] == (
+        "v8_adaptive_stage_b1_cleanup_complete"
+    )
+    b1_watchdog = _call_builder(
+        watchdog.build_task040_level_a_watchdog_plan,
+        b1_values,
+    )
+    b1_argv = watchdog._worker_command(b1_watchdog)
+    assert "--v8-adaptive-stage-b1-only" in b1_argv
+    assert "--v8-adaptive-schwarz-only" not in b1_argv
+    assert "--watchdog-enabled" in b1_argv
+    assert "--bottom-route-only" in b1_argv
+    assert b1_watchdog["watchdog"]["hard_stop_bytes"] == 45 * 2**30
+    assert b1_watchdog["watchdog"]["swap_limit_bytes"] == 0
+    assert b1_watchdog["watchdog"]["timeout_seconds"] == 10800
+    assert b1_watchdog["watchdog"]["one_apply_target_seconds"] is None
+    assert b1_watchdog["watchdog"]["cleanup_stage"] == (
+        "v8_adaptive_stage_b1_cleanup_complete"
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        _call_builder(
+            level_a.build_task040_level_a_plan,
+            {**b1_values, "v8_adaptive_schwarz_only": True},
+        )
 
 
 def test_v8_adaptive_callback_and_scoped_swap_authority():

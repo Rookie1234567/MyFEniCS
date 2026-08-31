@@ -37,6 +37,7 @@ from benchmarks.task040_level_a import (
     V8_ADAPTIVE_PREFERRED_MEMORY_BYTES,
     V8_ADAPTIVE_SCHWARZ_ONLY_FLAG,
     V8_ADAPTIVE_SETUP_TARGET_SECONDS,
+    V8_ADAPTIVE_STAGE_B1_ONLY_FLAG,
     V8_ADAPTIVE_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS,
     V8_FULL_SPECTRUM_ONLY_FLAG,
@@ -70,6 +71,7 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "v7_moving_pml_cleanup",
         "v8_full_spectrum_cleanup_complete",
         "v8_adaptive_cleanup_complete",
+        "v8_adaptive_stage_b1_cleanup_complete",
     }
 )
 THREAD_ENV = {
@@ -128,7 +130,9 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if plan.get("v5_route_c") is True:
         command.append(TASK040_V5_ROUTE_C_FLAG)
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
-    if plan.get("v8_adaptive_schwarz_only") is True:
+    if plan.get("v8_adaptive_stage_b1_only") is True:
+        command.append(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG)
+    elif plan.get("v8_adaptive_schwarz_only") is True:
         command.append(V8_ADAPTIVE_SCHWARZ_ONLY_FLAG)
     elif plan.get("v8_full_spectrum_only") is True:
         command.append(V8_FULL_SPECTRUM_ONLY_FLAG)
@@ -138,7 +142,9 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(V7_SCALE_NORMALIZED_IDENTITY_FLAG)
     elif plan.get("v6_2_interface_schur") is True:
         command.append(TASK040_V6_2_INTERFACE_SCHUR_FLAG)
-    if plan.get("v8_adaptive_schwarz_only") is True or plan.get(
+    if plan.get("v8_adaptive_stage_b1_only") is True or plan.get(
+        "v8_adaptive_schwarz_only"
+    ) is True or plan.get(
         "v8_full_spectrum_only"
     ) is True or plan.get(
         "v7_moving_pml_full_state"
@@ -193,6 +199,7 @@ def build_task040_level_a_watchdog_plan(
     v7_moving_pml_full_state: bool = False,
     v8_full_spectrum_only: bool = False,
     v8_adaptive_schwarz_only: bool = False,
+    v8_adaptive_stage_b1_only: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -213,6 +220,7 @@ def build_task040_level_a_watchdog_plan(
         v7_moving_pml_full_state=v7_moving_pml_full_state,
         v8_full_spectrum_only=v8_full_spectrum_only,
         v8_adaptive_schwarz_only=v8_adaptive_schwarz_only,
+        v8_adaptive_stage_b1_only=v8_adaptive_stage_b1_only,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -250,7 +258,8 @@ def build_task040_level_a_watchdog_plan(
             }
         )
     elif (
-        v8_adaptive_schwarz_only
+        v8_adaptive_stage_b1_only
+        or v8_adaptive_schwarz_only
         or v8_full_spectrum_only
         or v7_moving_pml_full_state
         or v7_scale_normalized_identity
@@ -267,7 +276,22 @@ def build_task040_level_a_watchdog_plan(
                 "full_interface_replica_per_rank": False,
             }
         )
-        if v8_adaptive_schwarz_only:
+        if v8_adaptive_stage_b1_only:
+            plan["watchdog"].update(
+                {
+                    "v8_adaptive_stage_b1_only": True,
+                    "setup_target_seconds": V8_ADAPTIVE_SETUP_TARGET_SECONDS,
+                    "one_apply_target_seconds": None,
+                    "source_order": [],
+                    "mandatory_checkpoints": [],
+                    "conditional_checkpoints": [],
+                    "cleanup_stage": (
+                        "v8_adaptive_stage_b1_cleanup_complete"
+                    ),
+                    "symbolic_only": True,
+                }
+            )
+        elif v8_adaptive_schwarz_only:
             plan["watchdog"].update(
                 {
                     "v8_adaptive_schwarz_only": True,
@@ -451,6 +475,9 @@ def _v8_adaptive_active_stage_timeout(
         "v8_adaptive_preflight",
         "v8_adaptive_system_ready",
         "v8_adaptive_factor_ready",
+        "v8_adaptive_stage_b1_preflight",
+        "v8_adaptive_stage_b1_system_ready",
+        "v8_adaptive_stage_b1_factor_ready",
     }:
         limit = float(V8_ADAPTIVE_SETUP_TARGET_SECONDS)
         kind = "setup_or_factor"
@@ -606,7 +633,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     command = list(plan["worker_argv"])
     hard_stop_bytes = int(plan["absolute_terminate_memory_bytes"])
     timeout_seconds = int(plan.get("timeout_seconds", TASK040_LEVEL_A_TIMEOUT_SECONDS))
-    adaptive_enabled = bool(plan.get("v8_adaptive_schwarz_only"))
+    stage_a_enabled = bool(plan.get("v8_adaptive_schwarz_only"))
+    b1_enabled = bool(plan.get("v8_adaptive_stage_b1_only"))
+    adaptive_enabled = stage_a_enabled or b1_enabled
     v8_enabled = bool(plan.get("v8_full_spectrum_only")) or adaptive_enabled
     last_stage = "process_start"
     last_stage_status = "waiting_for_progress"
@@ -871,7 +900,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             if path.is_file()
         },
     }
-    if adaptive_enabled:
+    if stage_a_enabled:
         cleanup_complete = False
         local_gate_pass: bool | None = None
         if run_summary.is_file():
@@ -958,6 +987,57 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                     "hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
                     "swap_limit_bytes": SWAP_LIMIT_BYTES,
                 },
+            }
+        )
+    elif b1_enabled:
+        b1_manifest = worker_directory / "v8_adaptive_stage_b1_manifest.json"
+        try:
+            cleanup_complete = bool(
+                json.loads(run_summary.read_text(encoding="utf-8"))
+                .get("cleanup", {})
+                .get("status")
+                == "complete"
+            ) if run_summary.is_file() else False
+        except (OSError, json.JSONDecodeError):
+            cleanup_complete = False
+        b1_workflow_completed = bool(
+            termination_reason == "natural_exit"
+            and process.returncode == 0
+            and run_summary.is_file()
+            and cleanup_complete
+            and b1_manifest.is_file()
+            and last_stage == "v8_adaptive_stage_b1_cleanup_complete"
+            and last_stage_status == "complete"
+            and adaptive_swap_authority_readable
+            and peak_swap_bytes == SWAP_LIMIT_BYTES
+            and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
+        )
+        resource_stop = termination_reason in {
+            "absolute_memory_limit",
+            "swap_detected",
+            "wall_timeout",
+            "v8_marker_target_exceeded",
+        }
+        b1_classification = (
+            "ADAPTIVE_STAGE_B1_RESOURCE_UNAVAILABLE"
+            if resource_stop
+            else "ADAPTIVE_STAGE_B1_WORKFLOW_COMPLETED"
+            if b1_workflow_completed
+            else "requires_result_adjudication"
+        )
+        summary.update(
+            {
+                "v8_adaptive_stage_b1_workflow_completed": (
+                    b1_workflow_completed
+                ),
+                "v8_adaptive_stage_b1_manifest_present": b1_manifest.is_file(),
+                "v8_adaptive_stage_b1_manifest_sha256": (
+                    _sha256(b1_manifest) if b1_manifest.is_file() else None
+                ),
+                "latest_stage": last_stage,
+                "latest_stage_status": last_stage_status,
+                "resource_classification": b1_classification,
+                "final_resource_classification": b1_classification,
             }
         )
     elif v8_enabled:
@@ -1057,7 +1137,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     completed_gate = (
         adaptive_workflow_completed
-        if adaptive_enabled
+        if stage_a_enabled
+        else b1_workflow_completed
+        if b1_enabled
         else v8_completed
         if v8_enabled
         else (process.returncode == 0 and termination_reason == "natural_exit")
@@ -1097,6 +1179,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V7_MOVING_PML_FULL_STATE_FLAG, action="store_true")
     parser.add_argument(V8_FULL_SPECTRUM_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_SCHWARZ_ONLY_FLAG, action="store_true")
+    parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
     parser.add_argument("--watchdog-enabled", action="store_true")
     parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
@@ -1119,6 +1202,13 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(
             "V8 adaptive route requires --watchdog-enabled and --bottom-route-only"
         )
+    if args.v8_adaptive_stage_b1_only and not (
+        args.watchdog_enabled and args.bottom_route_only
+    ):
+        parser.error(
+            "V8 adaptive Stage-B1 route requires "
+            "--watchdog-enabled and --bottom-route-only"
+        )
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
         exact_spool_root=args.exact_spool_root,
@@ -1137,6 +1227,7 @@ def main(argv: list[str] | None = None) -> int:
         v7_moving_pml_full_state=args.v7_moving_pml_full_state,
         v8_full_spectrum_only=args.v8_full_spectrum_only,
         v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
+        v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
