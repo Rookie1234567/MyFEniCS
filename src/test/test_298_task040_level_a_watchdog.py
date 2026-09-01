@@ -233,6 +233,96 @@ def test_task040_watchdog_dry_run_is_frozen_and_unique(tmp_path, capsys) -> None
     assert not (tmp_path / "run").exists()
 
 
+def test_task040_v9_c0_prelaunch_gate_does_not_spawn_worker(tmp_path, monkeypatch) -> None:
+    plan = build_task040_level_a_watchdog_plan(
+        input_path=tmp_path / "input.dat",
+        exact_spool_root=tmp_path / "spool",
+        run_directory=tmp_path / "run",
+        source_sha="d" * 40,
+        v9_c0_explicit_coarse_only=True,
+    )
+    monkeypatch.setattr(
+        watchdog,
+        "_v9_c0_prelaunch_resource_preflight",
+        lambda: {"pass": False, "error": "test prelaunch denial"},
+    )
+
+    def fail_popen(*args, **kwargs):
+        raise AssertionError("C0 prelaunch denial must not start MPI")
+
+    monkeypatch.setattr(watchdog.subprocess, "Popen", fail_popen)
+    assert watchdog.run_task040_level_a_watchdog(plan) == 2
+    summary = json.loads(
+        (tmp_path / "run" / "watchdog_summary.json").read_text(encoding="utf-8")
+    )
+    assert summary["process_started"] is False
+    assert summary["classification"] == (
+        "ADAPTIVE_COARSE_EXPLICIT_RESOURCE_OR_TIME_UNAVAILABLE"
+    )
+    assert summary["next_required_stage"] == "V9_C1_MATRIX_FREE_GALERKIN_COARSE"
+    assert summary["numerical_negative"] is False
+    assert (tmp_path / "run" / "v9_c0_explicit_coarse_failure.json").is_file()
+
+
+def test_task040_v9_c0_timeout_uses_cumulative_setup_clock() -> None:
+    for stage in ("v6_2_system_ready", "unlisted_pre_c0_stage"):
+        early = watchdog._v9_c0_active_stage_timeout(stage, 0.0, 0.0)
+        assert early["kind"] == "setup"
+        assert early["timed_out"] is False
+    setup_expired = watchdog._v9_c0_active_stage_timeout(
+        "unlisted_pre_c0_stage", 0.0, watchdog.V9_C0_SETUP_TARGET_SECONDS + 1
+    )
+    assert setup_expired["timed_out"] is True
+    assert setup_expired["classification"] == (
+        "ADAPTIVE_COARSE_EXPLICIT_RESOURCE_OR_TIME_UNAVAILABLE"
+    )
+    assert watchdog._v9_c0_active_stage_timeout(
+        "v9_c0_external_one_apply_begin",
+        watchdog.V9_C0_ONE_APPLY_TARGET_SECONDS - 1,
+        100.0,
+    )["timed_out"] is False
+    assert watchdog._v9_c0_active_stage_timeout(
+        "v9_c0_external_one_apply_begin",
+        watchdog.V9_C0_ONE_APPLY_TARGET_SECONDS,
+        100.0,
+    )["kind"] == "one_apply"
+    assert watchdog._v9_c0_active_stage_timeout(
+        "v9_c0_external_one_apply_begin",
+        watchdog.V9_C0_ONE_APPLY_TARGET_SECONDS,
+        100.0,
+    )["timed_out"] is True
+    total_expired = watchdog._v9_c0_active_stage_timeout(
+        "v9_c0_coarse_ready", 0.0, watchdog.V9_C0_TIMEOUT_SECONDS
+    )
+    assert total_expired["kind"] == "total"
+    assert total_expired["timed_out"] is True
+
+
+def test_task040_v9_c0_prelaunch_uses_used_swap(monkeypatch) -> None:
+    monkeypatch.setattr(
+        watchdog,
+        "wsl_memory_snapshot",
+        lambda: {"mem_available_bytes": watchdog.V9_C0_MIN_AVAILABLE_BYTES},
+    )
+    meminfo = {"text": ""}
+    original_read_text = watchdog.Path.read_text
+
+    def fake_read_text(path, *args, **kwargs):
+        if path == Path("/proc/meminfo"):
+            return meminfo["text"]
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(watchdog.Path, "read_text", fake_read_text)
+    for swap_total, swap_free, expected_pass in ((8, 8, True), (8, 7, False)):
+        meminfo["text"] = (
+            f"SwapTotal: {swap_total * 2**20} kB\n"
+            f"SwapFree: {swap_free * 2**20} kB\n"
+        )
+        observed = watchdog._v9_c0_prelaunch_resource_preflight()
+        assert observed["swap_used_bytes"] == (swap_total - swap_free) * 2**30
+        assert observed["pass"] is expected_pass
+
+
 def test_task040_watchdog_terminates_one_process_group() -> None:
     child_code = "import time; time.sleep(60)"
     parent_code = (

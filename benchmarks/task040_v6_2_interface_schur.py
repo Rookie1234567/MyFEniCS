@@ -161,6 +161,45 @@ V9_SOURCE_BRIDGE_ONLY_SOURCES = (
     "external_dtn_coupling",
     "fixed_random_repeat_0",
 )
+V9_C0_EXPLICIT_COARSE_ONLY_FLAG = "--v9-c0-explicit-coarse-only"
+V9_C0_EXPLICIT_COARSE_ONLY_METHOD = "task040_v9_c0_explicit_coarse_oracle"
+V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA = (
+    "task040.v9.c0.explicit_coarse_oracle.v1"
+)
+V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID = (
+    "task040.v9.c0.explicit_coarse_only.v1"
+)
+V9_C0_MIN_AVAILABLE_BYTES = 320 * 2**30
+V9_C0_PREFERRED_MEMORY_BYTES = 160 * 2**30
+V9_C0_WARNING_MEMORY_BYTES = 176 * 2**30
+V9_C0_HARD_STOP_BYTES = 192 * 2**30
+V9_C0_SETUP_TARGET_SECONDS = 10800
+V9_C0_ONE_APPLY_TARGET_SECONDS = 1800
+V9_C0_TIMEOUT_SECONDS = 14400
+V9_C0_PATCH_COUNT = 630
+V9_C0_COLUMNS_PER_PATCH = 160
+V9_C0_TOTAL_COARSE_DOF = 100800
+V9_C0_SOURCES = ("external_dtn_coupling",)
+V9_C0_MARKER_SEQUENCE = (
+    "v9_c0_preflight",
+    "v9_c0_system_ready",
+    "v9_c0_gamma_rhs_ready",
+    "v9_c0_factor_ready",
+    "v9_c0_harmonic_columns_ready",
+    "v9_c0_memory_preflight",
+    "v9_c0_P_ready",
+    "v9_c0_P_H_ready",
+    "v9_c0_FP_ready",
+    "v9_c0_Ac_ready",
+    "v9_c0_coarse_ksp_ready",
+    "v9_c0_coarse_ready",
+    "v9_c0_pre_one_apply_resource",
+    "v9_c0_external_one_apply_begin",
+    "v9_c0_external_one_apply_end",
+    "v9_c0_outer_checkpoint",
+    "v9_c0_classification",
+    "v9_c0_cleanup_complete",
+)
 
 __all__ = (
     "V6_2_EXACT_QUALIFICATION_SOURCES",
@@ -223,6 +262,21 @@ __all__ = (
     "V8_FULL_SPECTRUM_SOURCES",
     "V8_FULL_SPECTRUM_TIMEOUT_SECONDS",
     "V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS",
+    "V9_C0_EXPLICIT_COARSE_ONLY_FLAG",
+    "V9_C0_EXPLICIT_COARSE_ONLY_METHOD",
+    "V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID",
+    "V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA",
+    "V9_C0_HARD_STOP_BYTES",
+    "V9_C0_MARKER_SEQUENCE",
+    "V9_C0_MIN_AVAILABLE_BYTES",
+    "V9_C0_ONE_APPLY_TARGET_SECONDS",
+    "V9_C0_PATCH_COUNT",
+    "V9_C0_PREFERRED_MEMORY_BYTES",
+    "V9_C0_SETUP_TARGET_SECONDS",
+    "V9_C0_SOURCES",
+    "V9_C0_TIMEOUT_SECONDS",
+    "V9_C0_TOTAL_COARSE_DOF",
+    "V9_C0_WARNING_MEMORY_BYTES",
     "V9_SOURCE_BRIDGE_ONLY_FLAG",
     "V9_SOURCE_BRIDGE_ONLY_METHOD",
     "V9_SOURCE_BRIDGE_ONLY_PROFILE_ID",
@@ -2125,6 +2179,49 @@ def _v8_adaptive_event_callback_factory(
     return callback
 
 
+def _validate_v9_c0_harmonic_audit(detail: Mapping[str, Any]) -> dict[str, Any]:
+    """Require the frozen 630-by-160 economical coarse basis before P setup."""
+
+    audit = detail.get("harmonic_diagnostics")
+    if not isinstance(audit, Mapping):
+        raise TypeError("C0 harmonic_columns_ready lacks harmonic diagnostics")
+    expected_counts = {
+        "global_patch_count": V9_C0_PATCH_COUNT,
+        "global_retained_rank": V9_C0_TOTAL_COARSE_DOF,
+        "selected_mode_count_total": V9_C0_TOTAL_COARSE_DOF,
+        "total_coarse_dof": V9_C0_TOTAL_COARSE_DOF,
+    }
+    for name, expected in expected_counts.items():
+        value = audit.get(name)
+        if (
+            not isinstance(value, (int, np.integer))
+            or isinstance(value, bool)
+            or int(value) != expected
+        ):
+            raise RuntimeError(
+                f"C0 harmonic audit {name} must be exactly {expected}"
+            )
+    histogram = audit.get("selected_modes_per_patch_histogram")
+    if not isinstance(histogram, Mapping):
+        raise TypeError("C0 harmonic audit histogram is missing")
+    normalized_histogram = {}
+    for key, value in histogram.items():
+        if (
+            not isinstance(value, (int, np.integer))
+            or isinstance(value, bool)
+        ):
+            raise TypeError("C0 harmonic audit histogram has non-integer count")
+        normalized_histogram[str(key)] = int(value)
+    if normalized_histogram != {str(V9_C0_COLUMNS_PER_PATCH): V9_C0_PATCH_COUNT}:
+        raise RuntimeError(
+            "C0 harmonic audit must be exactly 160 columns across 630 patches"
+        )
+    return {
+        **dict(audit),
+        "selected_modes_per_patch_histogram": normalized_histogram,
+    }
+
+
 def _collective_error(
     comm: MPI.Intracomm,
     stage: str,
@@ -3153,6 +3250,7 @@ def run_v6_2_interface_schur(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_c0_explicit_coarse_only: bool = False,
     v9_source_packet_root: str | Path | None = None,
     v9_source_packet_manifest_sha256: str | None = None,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
@@ -3201,9 +3299,27 @@ def run_v6_2_interface_schur(
             v8_adaptive_schwarz_only,
             v8_adaptive_stage_b1_only,
             v8_adaptive_stage_bc_only,
+            v9_c0_explicit_coarse_only,
         )
     ):
         raise ValueError("V9 source bridge route is mutually exclusive")
+    if v9_c0_explicit_coarse_only and any(
+        (
+            v7_scale_normalized_identity,
+            v7_moving_pml_full_state,
+            v8_full_spectrum_only,
+            v8_adaptive_schwarz_only,
+            v8_adaptive_stage_b1_only,
+            v8_adaptive_stage_bc_only,
+            v9_source_bridge_only,
+        )
+    ):
+        raise ValueError("V9-C0 explicit coarse route is mutually exclusive")
+    if v9_c0_explicit_coarse_only and (
+        int(hard_stop_bytes) != V9_C0_HARD_STOP_BYTES
+        or watchdog_hard_stop_bytes != V9_C0_HARD_STOP_BYTES
+    ):
+        raise ValueError("V9-C0 requires the 192 GiB worker hard line")
 
     # This is the single clock origin for the whole worker sequence.  It must
     # include authority/root, ABI/resource preflight, directory setup, system
@@ -3351,6 +3467,27 @@ def run_v6_2_interface_schur(
             "formal_adjudication": False,
             "source_order": [],
         }
+    if v9_c0_explicit_coarse_only and int(comm.size) != 8:
+        return _stop_result(
+            status="not_run_by_v9_c0_mpi_size_gate",
+            classification="V9_C0_EXPLICIT_COARSE_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            identity_preflight={
+                "status": "mpi_size_gate",
+                "pass": False,
+                "checks": {"mpi_size_8": False},
+            },
+            resource_preflight=None,
+        ) | {
+            "schema": V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+            "method": V9_C0_EXPLICIT_COARSE_ONLY_METHOD,
+            "profile": V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID,
+            "pass": None,
+            "formal_adjudication": False,
+            "source_order": [],
+        }
     if v7_moving_pml_full_state and int(comm.size) != 8:
         moving_stop = _stop_result(
             status="not_run_by_v7_moving_pml_mpi_size_gate",
@@ -3422,7 +3559,11 @@ def run_v6_2_interface_schur(
         hard_stop_bytes=int(hard_stop_bytes),
         watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
         minimum_mem_available_bytes=(
-            V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES if v8_full_spectrum_only else None
+            V9_C0_MIN_AVAILABLE_BYTES
+            if v9_c0_explicit_coarse_only
+            else V8_FULL_SPECTRUM_MIN_AVAILABLE_BYTES
+            if v8_full_spectrum_only
+            else None
         ),
     )
     _emit(
@@ -3433,7 +3574,7 @@ def run_v6_2_interface_schur(
         checks=resource_preflight["checks"],
     )
     if not resource_preflight["pass"]:
-        return _stop_result(
+        stopped = _stop_result(
             status="not_run_by_resource_preflight",
             classification="V6_2_INTERFACE_RESOURCE_BLOCKED",
             source_sha=str(source_sha),
@@ -3443,6 +3584,21 @@ def run_v6_2_interface_schur(
             resource_preflight=resource_preflight,
             formal_sequence_start_scope=formal_sequence_start_scope,
         )
+        if v9_c0_explicit_coarse_only:
+            stopped.update(
+                {
+                    "schema": V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+                    "method": V9_C0_EXPLICIT_COARSE_ONLY_METHOD,
+                    "profile": V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID,
+                    "classification": (
+                        "ADAPTIVE_COARSE_EXPLICIT_RESOURCE_OR_TIME_UNAVAILABLE"
+                    ),
+                    "next_required_stage": "V9_C1_MATRIX_FREE_GALERKIN_COARSE",
+                    "numerical_negative": False,
+                    "source_order": [],
+                }
+            )
+        return stopped
 
     adaptive_marker_state: dict[str, Any] = {
         "last_wall": formal_sequence_started,
@@ -3451,6 +3607,9 @@ def run_v6_2_interface_schur(
         "last_stage": None,
         "last_resource": None,
     }
+    c0_phase_payloads: dict[str, Mapping[str, Any]] = {}
+    c0_phase_callback: Callable[[str, Mapping[str, Any]], Any] | None = None
+    c0_route_enabled = bool(v9_c0_explicit_coarse_only)
     adaptive_route_enabled = (
         v8_adaptive_schwarz_only
         or v8_adaptive_stage_b1_only
@@ -3458,13 +3617,17 @@ def run_v6_2_interface_schur(
     )
     adaptive_event_callback: Callable[[str, Mapping[str, Any]], Any] | None = None
     adaptive_marker_resource_callback = None
-    if adaptive_route_enabled:
+    if adaptive_route_enabled or c0_route_enabled:
         adaptive_marker_resource_callback = _v6_2_live_resource_callback(
             resource_callback,
             comm=comm,
             formal_sequence_started=formal_sequence_started,
             hard_stop_bytes=int(hard_stop_bytes),
-            budget_seconds=float(V8_ADAPTIVE_TIMEOUT_SECONDS),
+            budget_seconds=float(
+                V9_C0_TIMEOUT_SECONDS
+                if c0_route_enabled
+                else V8_ADAPTIVE_TIMEOUT_SECONDS
+            ),
         )
 
         def adaptive_mark(stage: str, **detail: Any) -> Mapping[str, Any]:
@@ -3481,6 +3644,11 @@ def run_v6_2_interface_schur(
                 "factor_lifecycle", adaptive_marker_state["factor_lifecycle"]
             )
             adaptive_marker_state["factor_lifecycle"] = dict(factor_lifecycle)
+            phase_detail = {
+                f"phase_{key}": _json_safe(detail[key])
+                for key in ("resource", "resource_checks", "rss_bytes", "swap_bytes")
+                if key in detail
+            }
             _emit(
                 marker_callback,
                 stage,
@@ -3500,6 +3668,9 @@ def run_v6_2_interface_schur(
                     for key, value in detail.items()
                     if key
                     not in {
+                        "resource",
+                        "rss_bytes",
+                        "swap_bytes",
                         "pc_apply_count",
                         "action_apply_count",
                         "factor_lifecycle",
@@ -3507,12 +3678,34 @@ def run_v6_2_interface_schur(
                         "checkpoint",
                     }
                 },
+                **phase_detail,
             )
             adaptive_marker_state["last_wall"] = now
             return resource
 
-        adaptive_event_mapping = (
-            {
+        if c0_route_enabled:
+            adaptive_event_mapping = {
+                "gamma_rhs_ready": "v9_c0_gamma_rhs_ready",
+                "factor_ready": "v9_c0_factor_ready",
+                "harmonic_columns_ready": "v9_c0_harmonic_columns_ready",
+                "memory_preflight": "v9_c0_memory_preflight",
+                "P_ready": "v9_c0_P_ready",
+                "P_H_ready": "v9_c0_P_H_ready",
+                "FP_ready": "v9_c0_FP_ready",
+                "Ac_ready": "v9_c0_Ac_ready",
+                "coarse_ksp_ready": "v9_c0_coarse_ksp_ready",
+                "coarse_ready": "v9_c0_coarse_ready",
+                "pre_one_apply_resource": "v9_c0_pre_one_apply_resource",
+                "external_one_apply_begin": (
+                    "v9_c0_external_one_apply_begin"
+                ),
+                "external_one_apply_end": "v9_c0_external_one_apply_end",
+                "outer_checkpoint": "v9_c0_outer_checkpoint",
+                "classification": "v9_c0_classification",
+            }
+        else:
+            adaptive_event_mapping = (
+                {
                 "gamma_rhs_ready": "v8_adaptive_stage_bc_gamma_rhs_ready",
                 "factor_ready": "v8_adaptive_stage_bc_factor_ready",
                 "harmonic_columns_ready": (
@@ -3530,17 +3723,47 @@ def run_v6_2_interface_schur(
                 "factor_ready": "v8_adaptive_stage_b1_factor_ready",
                 "b1_begin": "v8_adaptive_stage_b1_begin",
                 "b1_end": "v8_adaptive_stage_b1_end",
-            }
-            if v8_adaptive_stage_b1_only
-            else None
-        )
+                }
+                if v8_adaptive_stage_b1_only
+                else None
+            )
         adaptive_event_callback = _v8_adaptive_event_callback_factory(
             adaptive_mark, adaptive_marker_state, adaptive_event_mapping
         )
 
+        if c0_route_enabled:
+            c0_phase_names = {
+                "P_ready",
+                "P_H_ready",
+                "FP_ready",
+                "Ac_ready",
+                "coarse_ksp_ready",
+            }
+
+            def c0_receive_phase(name: str, detail: Mapping[str, Any]) -> None:
+                if name not in c0_phase_names:
+                    raise ValueError(f"unknown C0 phase: {name}")
+                if name in c0_phase_payloads:
+                    raise RuntimeError(f"duplicate C0 phase: {name}")
+                c0_phase_payloads[name] = dict(detail)
+
+            c0_phase_callback = c0_receive_phase
+            c0_event_callback = adaptive_event_callback
+
+            def checked_c0_event_callback(
+                event: str, detail: Mapping[str, Any]
+            ) -> Any:
+                if event == "harmonic_columns_ready":
+                    _validate_v9_c0_harmonic_audit(detail)
+                return c0_event_callback(event, detail)
+
+            adaptive_event_callback = checked_c0_event_callback
+
         adaptive_mark(
             (
-                "v8_adaptive_stage_bc_preflight"
+                "v9_c0_preflight"
+                if c0_route_enabled
+                else "v8_adaptive_stage_bc_preflight"
                 if v8_adaptive_stage_bc_only
                 else "v8_adaptive_stage_b1_preflight"
                 if v8_adaptive_stage_b1_only
@@ -3554,22 +3777,39 @@ def run_v6_2_interface_schur(
             checkpoint=None,
             resource_limits={
                 "preferred_memory_bytes": (
-                    None
+                    V9_C0_PREFERRED_MEMORY_BYTES
+                    if c0_route_enabled
+                    else None
                     if v8_adaptive_stage_bc_only
                     else V8_ADAPTIVE_PREFERRED_MEMORY_BYTES
                 ),
-                "hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "warning_memory_bytes": (
+                    V9_C0_WARNING_MEMORY_BYTES if c0_route_enabled else None
+                ),
+                "hard_stop_bytes": (
+                    V9_C0_HARD_STOP_BYTES
+                    if c0_route_enabled
+                    else V8_ADAPTIVE_HARD_STOP_BYTES
+                ),
                 "setup_target_seconds": (
-                    None
+                    V9_C0_SETUP_TARGET_SECONDS
+                    if c0_route_enabled
+                    else None
                     if v8_adaptive_stage_bc_only
                     else V8_ADAPTIVE_SETUP_TARGET_SECONDS
                 ),
                 "one_apply_target_seconds": (
-                    None
+                    V9_C0_ONE_APPLY_TARGET_SECONDS
+                    if c0_route_enabled
+                    else None
                     if v8_adaptive_stage_b1_only or v8_adaptive_stage_bc_only
                     else V8_ADAPTIVE_ONE_APPLY_TARGET_SECONDS
                 ),
-                "total_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
+                "total_seconds": (
+                    V9_C0_TIMEOUT_SECONDS
+                    if c0_route_enabled
+                    else V8_ADAPTIVE_TIMEOUT_SECONDS
+                ),
                 "swap_limit_bytes": 0,
                 **(
                     {
@@ -3581,6 +3821,15 @@ def run_v6_2_interface_schur(
                 **(
                     {"operation": "two_source_stage_bc_screen"}
                     if v8_adaptive_stage_bc_only
+                    else {}
+                ),
+                **(
+                    {
+                        "operation": "explicit_coarse_one_rhs_oracle",
+                        "source_order": list(V9_C0_SOURCES),
+                        "total_coarse_dof": V9_C0_TOTAL_COARSE_DOF,
+                    }
+                    if c0_route_enabled
                     else {}
                 ),
             },
@@ -3693,8 +3942,12 @@ def run_v6_2_interface_schur(
     result: dict[str, Any] | None = None
     v9_bare_hash_before: str | None = None
     v9_bare_hash_after: str | None = None
+    c0_bare_hash_before: str | None = None
+    c0_bare_hash_after: str | None = None
     exact_budget_seconds = (
-        V8_FULL_SPECTRUM_TIMEOUT_SECONDS
+        V9_C0_TIMEOUT_SECONDS
+        if v9_c0_explicit_coarse_only
+        else V8_FULL_SPECTRUM_TIMEOUT_SECONDS
         if v8_full_spectrum_only
         else V8_ADAPTIVE_TIMEOUT_SECONDS
         if v8_adaptive_stage_bc_only or v9_source_bridge_only
@@ -3714,6 +3967,7 @@ def run_v6_2_interface_schur(
                     or v8_full_spectrum_only
                     or v8_adaptive_stage_bc_only
                     or v9_source_bridge_only
+                    or v9_c0_explicit_coarse_only
                 )
                 else None
             ),
@@ -3728,6 +3982,7 @@ def run_v6_2_interface_schur(
                     or v8_full_spectrum_only
                     or v8_adaptive_stage_bc_only
                     or v9_source_bridge_only
+                    or v9_c0_explicit_coarse_only
                 )
                 else None
             ),
@@ -3758,6 +4013,99 @@ def run_v6_2_interface_schur(
             qep_calls=0,
             full_side_exact_factor_count=0,
         )
+        if v9_c0_explicit_coarse_only:
+            c0_bare_hash_before = _petsc_matrix_hash(system.F)
+            adaptive_mark(
+                "v9_c0_system_ready",
+                system_created=True,
+                factor_lifecycle={"ready": 0},
+                pc_apply_count=0,
+                action_apply_count=0,
+                local_action_apply_count=0,
+                source=None,
+                checkpoint=None,
+                bare_f_rows=int(system.active_rows),
+                matrix_objects=matrix_objects,
+                qep_calls=0,
+                full_side_factor_count=0,
+                total_coarse_dof=V9_C0_TOTAL_COARSE_DOF,
+            )
+            from src.solvers.hybrid_adaptive_impedance_screen import (
+                run_v9_c0_explicit_coarse_oracle,
+            )
+            from src.solvers.hybrid_bare_f_authority import build_current_bare_f_rhs
+
+            def c0_source_builder(
+                label: str,
+            ) -> tuple[PETSc.Vec, Mapping[str, Any]]:
+                if label != V9_C0_SOURCES[0]:
+                    raise ValueError(f"C0 source is not allowed: {label}")
+                return build_current_bare_f_rhs(system, label)
+
+            c0_result = run_v9_c0_explicit_coarse_oracle(
+                function_space=system.V,
+                condensed=system.static_condensation.condensed,
+                bare_f=system.F,
+                facet_tags=system.local_mesh.mesh_data.facet_tags,
+                external_facet_tag=int(system.local_mesh.external_facet_tag),
+                beta=level_a_bottom_beta(cfg),
+                quadrature_degree=2 * int(cfg.nedelec_degree),
+                source_builder=c0_source_builder,
+                resource_callback=adaptive_marker_resource_callback,
+                phase_callback=c0_phase_callback,
+                hard_memory_bytes=V9_C0_HARD_STOP_BYTES,
+                event_callback=adaptive_event_callback,
+            )
+            result = _json_safe(dict(c0_result))
+            result.update(
+                {
+                    "schema": V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+                    "method": V9_C0_EXPLICIT_COARSE_ONLY_METHOD,
+                    "profile": V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID,
+                    "source_sha": str(source_sha),
+                    "input_sha256": str(input_sha256),
+                    "physical_model_sha256": str(physical_model_sha256),
+                    "identity_preflight": _json_safe(identity_preflight),
+                    "resource_preflight": _json_safe(resource_preflight),
+                    "system_inventory": {
+                        "rank": int(comm.rank),
+                        "mpi_size": int(comm.size),
+                        "active_rows": int(system.active_rows),
+                        "full_rows": int(
+                            system.static_condensation.condensed.full_rows
+                        ),
+                        "bare_f_shape": [int(value) for value in system.F.getSize()],
+                        "selected_mode_provider": "v5_hash_bound_caller_owned",
+                    },
+                    "matrix_objects": {
+                        "bare_f": "borrowed",
+                        "selected_mode_provider": "caller_owned",
+                        "P": "transient",
+                        "P_H": "transient_until_Ac_ready",
+                        "FP": "transient_until_Ac_ready",
+                        "Ac": "owned_by_coarse_action",
+                        "coarse_ksp": "owned_by_coarse_action",
+                        "full_side_factor": 0,
+                        "global_factor": 0,
+                        "qep": 0,
+                    },
+                    "full_side_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "coarse_direct_factor_count": 0,
+                    "qep_calls": 0,
+                    "fgmres_calls": 1 if c0_result.get("outer_record") is not None else 0,
+                    "coarse_contract": {
+                        "global_patch_count": V9_C0_PATCH_COUNT,
+                        "columns_per_patch": V9_C0_COLUMNS_PER_PATCH,
+                        "total_coarse_dof": V9_C0_TOTAL_COARSE_DOF,
+                        "source_order": list(V9_C0_SOURCES),
+                    },
+                    "marker_sequence": list(V9_C0_MARKER_SEQUENCE),
+                    "formal_adjudication": False,
+                    "bare_f_operator_hash_before": c0_bare_hash_before,
+                }
+            )
+            return result
         if v9_source_bridge_only:
             v9_bare_hash_before = _petsc_matrix_hash(system.F)
             v9_mark(
@@ -5275,8 +5623,10 @@ def run_v6_2_interface_schur(
                 )
         if matrix is not None:
             matrix.destroy()
-        if v9_source_bridge_only and system is not None:
+        if (v9_source_bridge_only or v9_c0_explicit_coarse_only) and system is not None:
             v9_bare_hash_after = _petsc_matrix_hash(system.F)
+            if v9_c0_explicit_coarse_only:
+                c0_bare_hash_after = v9_bare_hash_after
         if system is not None:
             system.destroy()
             system_destroyed = True
@@ -5402,6 +5752,121 @@ def run_v6_2_interface_schur(
                 if comm.rank == 0:
                     _write_json(
                         output_root / "v9_source_bridge_failure_manifest.json",
+                        failure_record,
+                    )
+        if v9_c0_explicit_coarse_only:
+            primary_exc_type, primary_exc, _ = sys.exc_info()
+            result_generated = result is not None
+            core_cleanup = (
+                result.get("cleanup", {})
+                if isinstance(result, Mapping)
+                else adaptive_marker_state.get("screen_cleanup", {})
+            )
+            if not isinstance(core_cleanup, Mapping):
+                core_cleanup = {}
+            bare_unchanged = bool(
+                c0_bare_hash_before is not None
+                and c0_bare_hash_after is not None
+                and c0_bare_hash_before == c0_bare_hash_after
+            )
+            c0_cleanup = {
+                "status": (
+                    "complete"
+                    if system_destroyed
+                    and bare_unchanged
+                    and core_cleanup.get("status") == "complete"
+                    else "incomplete"
+                ),
+                "result_generated": result_generated,
+                "system_destroyed": system_destroyed,
+                "core_cleanup": _json_safe(core_cleanup),
+                "bare_f_hash_before": c0_bare_hash_before,
+                "bare_f_hash_after": c0_bare_hash_after,
+                "bare_f_unchanged": bare_unchanged,
+                "source_order": list(V9_C0_SOURCES),
+                "source_vectors_destroyed": core_cleanup.get(
+                    "source_vectors_destroyed", 0
+                ),
+                "pc_apply_count": core_cleanup.get("pc_apply_count", 0),
+                "action_apply_count": core_cleanup.get("action_apply_count", 0),
+                "local_action_apply_count": core_cleanup.get(
+                    "local_action_apply_count", 0
+                ),
+                "outer_solver_created": core_cleanup.get(
+                    "outer_solver_created", False
+                ),
+                "outer_solver_destroyed": core_cleanup.get(
+                    "outer_solver_destroyed", False
+                ),
+            }
+            failed_stage = adaptive_marker_state["last_stage"]
+            failed_resource = adaptive_marker_state["last_resource"]
+            try:
+                adaptive_mark(
+                    "v9_c0_cleanup_complete",
+                    result_generated=result_generated,
+                    system_destroyed=system_destroyed,
+                    cleanup_status=c0_cleanup["status"],
+                    cleanup=c0_cleanup,
+                    factor_lifecycle=core_cleanup.get(
+                        "local_factor_lifecycle_after_cleanup", {}
+                    ),
+                    pc_apply_count=int(c0_cleanup["pc_apply_count"]),
+                    action_apply_count=int(c0_cleanup["action_apply_count"]),
+                    local_action_apply_count=int(
+                        c0_cleanup["local_action_apply_count"]
+                    ),
+                    source=None,
+                    checkpoint=None,
+                    bare_f_hash_before=c0_bare_hash_before,
+                    bare_f_hash_after=c0_bare_hash_after,
+                    bare_f_unchanged=bare_unchanged,
+                )
+            except Exception:
+                if primary_exc is None:
+                    raise
+            if result is not None:
+                result["runner_cleanup"] = c0_cleanup
+                result["bare_f_operator_hash_after"] = c0_bare_hash_after
+                _write_json(
+                    rank_root / "v9_c0_explicit_coarse.json", result
+                )
+                if comm.rank == 0:
+                    _write_json(
+                        output_root / "v9_c0_explicit_coarse_manifest.json",
+                        result,
+                    )
+            else:
+                failure_record = {
+                    "schema": V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+                    "method": V9_C0_EXPLICIT_COARSE_ONLY_METHOD,
+                    "profile": V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID,
+                    "status": "v9_c0_explicit_coarse_exception",
+                    "classification": (
+                        "V9_C0_EXPLICIT_COARSE_IMPLEMENTATION_FAILURE"
+                    ),
+                    "pass": None,
+                    "formal_adjudication": False,
+                    "source_order": [],
+                    "runner_cleanup": c0_cleanup,
+                    "exception": {
+                        "type": (
+                            None
+                            if primary_exc_type is None
+                            else primary_exc_type.__name__
+                        ),
+                        "message": None if primary_exc is None else str(primary_exc),
+                    },
+                    "last_stage": failed_stage,
+                    "last_resource": _json_safe(failed_resource),
+                }
+                _write_json(
+                    rank_root / "v9_c0_explicit_coarse_failure.json",
+                    failure_record,
+                )
+                if comm.rank == 0:
+                    _write_json(
+                        output_root / "v9_c0_explicit_coarse_failure_manifest.json",
                         failure_record,
                     )
         if adaptive_route_enabled and not v8_adaptive_stage_bc_only:

@@ -83,6 +83,22 @@ from benchmarks.task040_v6_2_interface_schur import (
     V8_FULL_SPECTRUM_SOURCES,
     V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
+    V9_C0_COLUMNS_PER_PATCH,
+    V9_C0_EXPLICIT_COARSE_ONLY_FLAG,
+    V9_C0_EXPLICIT_COARSE_ONLY_METHOD,
+    V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID,
+    V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+    V9_C0_HARD_STOP_BYTES,
+    V9_C0_MARKER_SEQUENCE,
+    V9_C0_MIN_AVAILABLE_BYTES,
+    V9_C0_ONE_APPLY_TARGET_SECONDS,
+    V9_C0_PATCH_COUNT,
+    V9_C0_PREFERRED_MEMORY_BYTES,
+    V9_C0_SETUP_TARGET_SECONDS,
+    V9_C0_SOURCES,
+    V9_C0_TIMEOUT_SECONDS,
+    V9_C0_TOTAL_COARSE_DOF,
+    V9_C0_WARNING_MEMORY_BYTES,
     V9_SOURCE_BRIDGE_ONLY_FLAG,
     V9_SOURCE_BRIDGE_ONLY_METHOD,
     V9_SOURCE_BRIDGE_ONLY_PROFILE_ID,
@@ -363,6 +379,22 @@ __all__ = (
     "TASK040_V6_2_INTERFACE_UPPER_COUNT",
     "TASK040_V6_2_INTERFACE_JOINT_COUNT",
     "TASK040_V5_REQUIRED_THREAD_ENV",
+    "V9_C0_COLUMNS_PER_PATCH",
+    "V9_C0_EXPLICIT_COARSE_ONLY_FLAG",
+    "V9_C0_EXPLICIT_COARSE_ONLY_METHOD",
+    "V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID",
+    "V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA",
+    "V9_C0_HARD_STOP_BYTES",
+    "V9_C0_MARKER_SEQUENCE",
+    "V9_C0_MIN_AVAILABLE_BYTES",
+    "V9_C0_ONE_APPLY_TARGET_SECONDS",
+    "V9_C0_PATCH_COUNT",
+    "V9_C0_PREFERRED_MEMORY_BYTES",
+    "V9_C0_SETUP_TARGET_SECONDS",
+    "V9_C0_SOURCES",
+    "V9_C0_TIMEOUT_SECONDS",
+    "V9_C0_TOTAL_COARSE_DOF",
+    "V9_C0_WARNING_MEMORY_BYTES",
     "V9_SOURCE_BRIDGE_ONLY_FLAG",
     "V9_SOURCE_BRIDGE_ONLY_METHOD",
     "V9_SOURCE_BRIDGE_ONLY_PROFILE_ID",
@@ -451,6 +483,7 @@ def build_task040_level_a_plan(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_c0_explicit_coarse_only: bool = False,
     v9_source_packet_root: str | Path | None = None,
     v9_source_packet_manifest_sha256: str | None = None,
     interface_packet_root: str | Path | None = None,
@@ -530,6 +563,7 @@ def build_task040_level_a_plan(
                 v8_adaptive_stage_b1_only,
                 v8_adaptive_stage_bc_only,
                 v9_source_bridge_only,
+                v9_c0_explicit_coarse_only,
             )
         )
         > 1
@@ -1153,6 +1187,67 @@ def build_task040_level_a_plan(
                     "physical_dtn",
                     "outer_fgmres",
                     "source_before_current_key_validation",
+                ],
+            }
+        )
+    if v9_c0_explicit_coarse_only:
+        plan.update(
+            {
+                "schema": V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+                "method": V9_C0_EXPLICIT_COARSE_ONLY_METHOD,
+                "profile": V9_C0_EXPLICIT_COARSE_ONLY_PROFILE_ID,
+                "v9_c0_explicit_coarse_only": True,
+                "research_only": True,
+                "oracle_only": True,
+                "scalable_candidate": False,
+                "pde_solve": "explicit_coarse_one_rhs_oracle",
+                "source_order": list(V9_C0_SOURCES),
+                "planned_source_order": list(V9_C0_SOURCES),
+                "mandatory_checkpoints": [],
+                "conditional_checkpoints": [8],
+                "fixed_configuration": {
+                    "source_builder": "build_current_bare_f_rhs",
+                    "source_only": "external_dtn_coupling",
+                    "patch_count": V9_C0_PATCH_COUNT,
+                    "columns_per_patch": V9_C0_COLUMNS_PER_PATCH,
+                    "total_coarse_dof": V9_C0_TOTAL_COARSE_DOF,
+                    "composite_apply": "local_to_coarse_to_local_exactly_once",
+                    "outer": (
+                        "intermediate_only_right_FGMRES_restart32_"
+                        "zero_guess_max8_checkpoint8"
+                    ),
+                },
+                "minimum_mem_available_bytes": V9_C0_MIN_AVAILABLE_BYTES,
+                "preferred_memory_bytes": V9_C0_PREFERRED_MEMORY_BYTES,
+                "warning_memory_bytes": V9_C0_WARNING_MEMORY_BYTES,
+                "absolute_terminate_memory_bytes": V9_C0_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": V9_C0_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": V9_C0_TIMEOUT_SECONDS,
+                "setup_target_seconds": V9_C0_SETUP_TARGET_SECONDS,
+                "one_apply_target_seconds": V9_C0_ONE_APPLY_TARGET_SECONDS,
+                "numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "formal_adjudication": False,
+                "marker_sequence": list(V9_C0_MARKER_SEQUENCE),
+                "next_required_stage": {
+                    "positive": "V9_C1_MATRIX_FREE_GALERKIN_COARSE",
+                    "resource_unavailable": (
+                        "V9_C1_MATRIX_FREE_GALERKIN_COARSE"
+                    ),
+                    "no_signal": "V9_E_STRUCTURED_BACKGROUND_FIXED_LOR",
+                },
+                "forbidden": [
+                    "second_source",
+                    "five_source_screen",
+                    "top_side",
+                    "full_hybrid",
+                    "parameter_scan",
+                    "retry",
+                    "global_direct_factor",
+                    "coarse_direct_factor",
+                    "qep",
+                    "official_rt_a",
                 ],
             }
         )
@@ -6534,6 +6629,7 @@ def run_task040_level_a(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_c0_explicit_coarse_only: bool = False,
     v9_source_packet_root: str | Path | None = None,
     v9_source_packet_manifest_sha256: str | None = None,
     packet_root: str | Path | None = None,
@@ -6565,6 +6661,7 @@ def run_task040_level_a(
                 v8_adaptive_stage_b1_only,
                 v8_adaptive_stage_bc_only,
                 v9_source_bridge_only,
+                v9_c0_explicit_coarse_only,
             )
         )
         > 1
@@ -6629,6 +6726,7 @@ def run_task040_level_a(
         or v8_adaptive_stage_b1_only
         or v8_adaptive_stage_bc_only
         or v9_source_bridge_only
+        or v9_c0_explicit_coarse_only
     ):
         if run_directory is None:
             raise ValueError("V8 adaptive route requires a separate run_directory")
@@ -6652,6 +6750,7 @@ def run_task040_level_a(
         or v8_adaptive_stage_b1_only
         or v8_adaptive_stage_bc_only
         or v9_source_bridge_only
+        or v9_c0_explicit_coarse_only
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6694,6 +6793,8 @@ def run_task040_level_a(
             if v7_scale_normalized_identity
             else V7_MOVING_PML_FULL_STATE_METHOD
             if v7_moving_pml_full_state
+            else V9_C0_EXPLICIT_COARSE_ONLY_METHOD
+            if v9_c0_explicit_coarse_only
             else V8_FULL_SPECTRUM_ONLY_METHOD
             if v8_full_spectrum_only
             else TASK040_V6_2_INTERFACE_SCHUR_METHOD
@@ -6881,6 +6982,27 @@ def run_task040_level_a(
             resource_callback=resource_callback,
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
+        )
+    if v9_c0_explicit_coarse_only:
+        from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
+
+        return run_v6_2_interface_schur(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            exact_spool_root=exact_spool_root,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            hard_stop_bytes=V9_C0_HARD_STOP_BYTES,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+            resource_callback=resource_callback,
+            v9_c0_explicit_coarse_only=True,
         )
     if v9_source_bridge_only:
         from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
@@ -7413,6 +7535,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_C0_EXPLICIT_COARSE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_PACKET_ROOT_OPTION)
     parser.add_argument(V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION)
     parser.add_argument("--interface-packet-root")
@@ -7443,6 +7566,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
+        v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
         v9_source_packet_root=args.v9_source_packet_root,
         v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         interface_packet_root=args.interface_packet_root,
@@ -7490,6 +7614,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
+        v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
         v9_source_packet_root=args.v9_source_packet_root,
         v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         resource_callback=(
@@ -7503,6 +7628,8 @@ def main(argv: list[str] | None = None) -> int:
                         if args.v5_fresh_bare_f_authority
                         else TASK040_V5_ROUTE_C_HARD_STOP_BYTES
                         if args.v5_route_c
+                        else V9_C0_HARD_STOP_BYTES
+                        if args.v9_c0_explicit_coarse_only
                         else V8_ADAPTIVE_HARD_STOP_BYTES
                         if args.v8_adaptive_schwarz_only
                         or args.v8_adaptive_stage_b1_only
@@ -7528,6 +7655,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v8_adaptive_stage_b1_only
                     or args.v8_adaptive_stage_bc_only
                     or args.v9_source_bridge_only
+                    or args.v9_c0_explicit_coarse_only
                 )
                 else None
             )
@@ -7551,6 +7679,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.v8_adaptive_stage_b1_only
             or args.v8_adaptive_stage_bc_only
             or args.v9_source_bridge_only
+            or args.v9_c0_explicit_coarse_only
             else None
         ),
         v7_continuation=v7_continuation,

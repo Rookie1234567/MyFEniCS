@@ -3164,6 +3164,58 @@ def test_v6_2_plan_binds_resource_and_post_identity_qualification(
             v7_scale_normalized_identity=True,
         )
 
+    c0_plan = level_a.build_task040_level_a_plan(
+        input_path=input_path,
+        exact_spool_root=spool_root,
+        run_directory=tmp_path / "c0-run",
+        source_sha=FORMAL_SOURCE_SHA,
+        v9_c0_explicit_coarse_only=True,
+    )
+    assert c0_plan["method"] == runner.V9_C0_EXPLICIT_COARSE_ONLY_METHOD
+    assert c0_plan["minimum_mem_available_bytes"] == runner.V9_C0_MIN_AVAILABLE_BYTES
+    assert c0_plan["absolute_terminate_memory_bytes"] == runner.V9_C0_HARD_STOP_BYTES
+    assert c0_plan["source_order"] == ["external_dtn_coupling"]
+    assert c0_plan["fixed_configuration"]["patch_count"] == 630
+    assert c0_plan["fixed_configuration"]["columns_per_patch"] == 160
+    assert c0_plan["conditional_checkpoints"] == [8]
+    assert c0_plan["marker_sequence"] == list(runner.V9_C0_MARKER_SEQUENCE)
+
+    c0_watched = watchdog.build_task040_level_a_watchdog_plan(
+        input_path=input_path,
+        exact_spool_root=spool_root,
+        run_directory=tmp_path / "c0-watchdog",
+        source_sha=FORMAL_SOURCE_SHA,
+        v9_c0_explicit_coarse_only=True,
+    )
+    assert c0_watched["worker_argv"].count(
+        runner.V9_C0_EXPLICIT_COARSE_ONLY_FLAG
+    ) == 1
+    assert c0_watched["watchdog"]["hard_stop_bytes"] == runner.V9_C0_HARD_STOP_BYTES
+    assert c0_watched["watchdog"]["setup_target_seconds"] == 10800
+    assert c0_watched["watchdog"]["one_apply_target_seconds"] == 1800
+    assert c0_watched["watchdog"]["marker_sequence"] == list(
+        runner.V9_C0_MARKER_SEQUENCE
+    )
+    assert c0_watched["watchdog"]["source_order"] == ["external_dtn_coupling"]
+
+
+def test_v9_c0_harmonic_audit_requires_exact_cardinality() -> None:
+    detail = {
+        "harmonic_diagnostics": {
+            "global_patch_count": 630,
+            "global_retained_rank": 100800,
+            "selected_mode_count_total": 100800,
+            "total_coarse_dof": 100800,
+            "selected_modes_per_patch_histogram": {"160": 630},
+        }
+    }
+    checked = runner._validate_v9_c0_harmonic_audit(detail)
+    assert checked["selected_modes_per_patch_histogram"] == {"160": 630}
+    tampered = deepcopy(detail)
+    tampered["harmonic_diagnostics"]["total_coarse_dof"] = 100799
+    with pytest.raises(RuntimeError, match="total_coarse_dof"):
+        runner._validate_v9_c0_harmonic_audit(tampered)
+
 
 @pytest.mark.parametrize("restart", [True, False, 0, -1, 3.5, "32"])
 def test_v6_2_formal_numeric_options_reject_invalid_restart(

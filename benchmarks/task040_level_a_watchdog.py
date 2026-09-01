@@ -13,7 +13,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from benchmarks.task034_wsl_resources import resource_authority_sample
+from benchmarks.task034_wsl_resources import (
+    resource_authority_sample,
+    wsl_memory_snapshot,
+)
 from benchmarks.task040_level_a import (
     TASK040_LEVEL_A_HARD_STOP_BYTES as _TASK040_LEVEL_A_HARD_STOP_BYTES,
 )
@@ -45,6 +48,16 @@ from benchmarks.task040_level_a import (
     V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS,
     V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
+    V9_C0_EXPLICIT_COARSE_ONLY_FLAG,
+    V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+    V9_C0_HARD_STOP_BYTES,
+    V9_C0_MARKER_SEQUENCE,
+    V9_C0_MIN_AVAILABLE_BYTES,
+    V9_C0_ONE_APPLY_TARGET_SECONDS,
+    V9_C0_PREFERRED_MEMORY_BYTES,
+    V9_C0_SETUP_TARGET_SECONDS,
+    V9_C0_TIMEOUT_SECONDS,
+    V9_C0_WARNING_MEMORY_BYTES,
     V9_SOURCE_BRIDGE_ONLY_FLAG,
     V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION,
     V9_SOURCE_PACKET_ROOT_OPTION,
@@ -66,6 +79,11 @@ V8_RESOURCE_UNAVAILABLE_CLASSIFICATION = (
 V8_ADAPTIVE_RESOURCE_UNAVAILABLE_CLASSIFICATION = (
     "ADAPTIVE_IMPEDANCE_STAGE_A_RESOURCE_UNAVAILABLE"
 )
+V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION = (
+    "ADAPTIVE_COARSE_EXPLICIT_RESOURCE_OR_TIME_UNAVAILABLE"
+)
+V9_C0_NEXT_C1 = "V9_C1_MATRIX_FREE_GALERKIN_COARSE"
+V9_C0_NEXT_E = "V9_E_STRUCTURED_BACKGROUND_FIXED_LOR"
 _TERMINAL_CLEANUP_STAGES = frozenset(
     {
         "cleanup",
@@ -136,7 +154,9 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if plan.get("v5_route_c") is True:
         command.append(TASK040_V5_ROUTE_C_FLAG)
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
-    if plan.get("v8_adaptive_stage_bc_only") is True:
+    if plan.get("v9_c0_explicit_coarse_only") is True:
+        command.append(V9_C0_EXPLICIT_COARSE_ONLY_FLAG)
+    elif plan.get("v8_adaptive_stage_bc_only") is True:
         command.append(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG)
     elif plan.get("v9_source_bridge_only") is True:
         command.append(V9_SOURCE_BRIDGE_ONLY_FLAG)
@@ -164,6 +184,7 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if (
         plan.get("v8_adaptive_stage_bc_only") is True
         or plan.get("v9_source_bridge_only") is True
+        or plan.get("v9_c0_explicit_coarse_only") is True
         or plan.get("v8_adaptive_stage_b1_only") is True
         or plan.get("v8_adaptive_schwarz_only") is True
         or plan.get("v8_full_spectrum_only") is True
@@ -220,6 +241,7 @@ def build_task040_level_a_watchdog_plan(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_c0_explicit_coarse_only: bool = False,
     v9_source_packet_root: str | Path | None = None,
     v9_source_packet_manifest_sha256: str | None = None,
     interface_packet_root: str | Path | None = None,
@@ -245,6 +267,7 @@ def build_task040_level_a_watchdog_plan(
         v8_adaptive_stage_b1_only=v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=v8_adaptive_stage_bc_only,
         v9_source_bridge_only=v9_source_bridge_only,
+        v9_c0_explicit_coarse_only=v9_c0_explicit_coarse_only,
         v9_source_packet_root=v9_source_packet_root,
         v9_source_packet_manifest_sha256=v9_source_packet_manifest_sha256,
         interface_packet_root=interface_packet_root,
@@ -285,6 +308,7 @@ def build_task040_level_a_watchdog_plan(
         )
     elif (
         v9_source_bridge_only
+        or v9_c0_explicit_coarse_only
         or v8_adaptive_stage_bc_only
         or v8_adaptive_stage_b1_only
         or v8_adaptive_schwarz_only
@@ -304,7 +328,31 @@ def build_task040_level_a_watchdog_plan(
                 "full_interface_replica_per_rank": False,
             }
         )
-        if v9_source_bridge_only:
+        if v9_c0_explicit_coarse_only:
+            plan["watchdog"].update(
+                {
+                    "v9_c0_explicit_coarse_only": True,
+                    "minimum_mem_available_bytes": V9_C0_MIN_AVAILABLE_BYTES,
+                    "preferred_memory_bytes": V9_C0_PREFERRED_MEMORY_BYTES,
+                    "warning_memory_bytes": V9_C0_WARNING_MEMORY_BYTES,
+                    "hard_stop_bytes": V9_C0_HARD_STOP_BYTES,
+                    "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                    "timeout_seconds": V9_C0_TIMEOUT_SECONDS,
+                    "setup_target_seconds": V9_C0_SETUP_TARGET_SECONDS,
+                    "one_apply_target_seconds": V9_C0_ONE_APPLY_TARGET_SECONDS,
+                    "source_order": list(plan["source_order"]),
+                    "planned_source_order": list(plan["planned_source_order"]),
+                    "mandatory_checkpoints": [],
+                    "conditional_checkpoints": [8],
+                    "cleanup_stage": "v9_c0_cleanup_complete",
+                    "marker_sequence": list(V9_C0_MARKER_SEQUENCE),
+                    "numeric_allgather": False,
+                    "full_interface_replica_per_rank": False,
+                    "source_only": True,
+                    "coarse_cardinality": "630_patches_x_160_columns",
+                }
+            )
+        elif v9_source_bridge_only:
             plan["watchdog"].update(
                 {
                     "v9_source_bridge_only": True,
@@ -489,6 +537,107 @@ def _latest_stage(path: Path) -> tuple[str, str]:
             payload.get("status", "unknown")
         )
     return "process_start", "waiting_for_progress"
+
+
+def _v9_c0_prelaunch_resource_preflight() -> dict[str, Any]:
+    memory = wsl_memory_snapshot()
+    values: dict[str, int | None] = {"SwapTotal": None, "SwapFree": None}
+    error = None
+    try:
+        lines = Path("/proc/meminfo").read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        lines = []
+        error = f"{type(exc).__name__}: {exc}"
+    for line in lines:
+        fields = line.split()
+        if len(fields) >= 2 and fields[0].rstrip(":") in values:
+            try:
+                values[fields[0].rstrip(":")] = int(fields[1]) * 1024
+            except ValueError:
+                error = f"invalid /proc/meminfo value for {fields[0]}"
+    swap_total = values["SwapTotal"]
+    swap_free = values["SwapFree"]
+    swap_used = (
+        None
+        if not isinstance(swap_total, int)
+        or not isinstance(swap_free, int)
+        or swap_free > swap_total
+        else swap_total - swap_free
+    )
+    checks = {
+        "mem_available_at_least_320_gib": (
+            isinstance(memory.get("mem_available_bytes"), int)
+            and int(memory["mem_available_bytes"]) >= V9_C0_MIN_AVAILABLE_BYTES
+        ),
+        "host_used_swap_zero": swap_used == 0,
+        "meminfo_readable": error is None,
+    }
+    return {
+        "authority": "host_proc_meminfo",
+        "mem_available_bytes": memory.get("mem_available_bytes"),
+        "mem_total_bytes": memory.get("mem_total_bytes"),
+        "swap_total_bytes": swap_total,
+        "swap_free_bytes": swap_free,
+        "swap_used_bytes": swap_used,
+        "minimum_mem_available_bytes": V9_C0_MIN_AVAILABLE_BYTES,
+        "swap_semantics": "SwapTotal-SwapFree",
+        "checks": checks,
+        "pass": bool(all(checks.values())),
+        "error": error,
+    }
+
+
+_V9_C0_POST_SETUP_STAGES = frozenset(
+    {
+        "v9_c0_coarse_ready",
+        "v9_c0_pre_one_apply_resource",
+        "v9_c0_external_one_apply_begin",
+        "v9_c0_external_one_apply_end",
+        "v9_c0_outer_checkpoint",
+        "v9_c0_classification",
+        "v9_c0_cleanup_complete",
+    }
+)
+
+
+def _v9_c0_active_stage_timeout(
+    stage: str,
+    stage_elapsed_seconds: float,
+    total_elapsed_seconds: float,
+) -> dict[str, Any]:
+    total = float(total_elapsed_seconds)
+    if total >= V9_C0_TIMEOUT_SECONDS:
+        limit = float(V9_C0_TIMEOUT_SECONDS)
+        elapsed = total
+        kind = "total"
+    elif stage == "v9_c0_external_one_apply_begin":
+        limit = float(V9_C0_ONE_APPLY_TARGET_SECONDS)
+        elapsed = float(stage_elapsed_seconds)
+        kind = "one_apply"
+    elif stage in _V9_C0_POST_SETUP_STAGES:
+        return {
+            "active": False,
+            "timed_out": False,
+            "kind": None,
+            "limit_seconds": None,
+            "elapsed_seconds": float(stage_elapsed_seconds),
+            "classification": None,
+        }
+    else:
+        limit = float(V9_C0_SETUP_TARGET_SECONDS)
+        elapsed = total
+        kind = "setup"
+    timed_out = elapsed >= limit
+    return {
+        "active": True,
+        "timed_out": timed_out,
+        "kind": kind,
+        "limit_seconds": limit,
+        "elapsed_seconds": elapsed,
+        "classification": (
+            V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION if timed_out else None
+        ),
+    }
 
 
 def _v8_active_stage_timeout(
@@ -792,6 +941,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         )
     command = list(plan["worker_argv"])
     hard_stop_bytes = int(plan["absolute_terminate_memory_bytes"])
+    c0_enabled = bool(plan.get("v9_c0_explicit_coarse_only"))
     stage_a_enabled = bool(plan.get("v8_adaptive_schwarz_only"))
     b1_enabled = bool(plan.get("v8_adaptive_stage_b1_only"))
     stage_bc_enabled = bool(plan.get("v8_adaptive_stage_bc_only"))
@@ -800,7 +950,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         plan.get("v9_corrected_source_packet")
     )
     timeout_seconds = int(
-        V8_ADAPTIVE_TIMEOUT_SECONDS
+        V9_C0_TIMEOUT_SECONDS
+        if c0_enabled
+        else V8_ADAPTIVE_TIMEOUT_SECONDS
         if stage_bc_enabled or v9_enabled
         else plan.get("timeout_seconds", TASK040_LEVEL_A_TIMEOUT_SECONDS)
     )
@@ -810,9 +962,12 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         or adaptive_enabled
         or stage_bc_enabled
         or v9_enabled
+        or c0_enabled
     )
     active_timeout = (
-        _v8_adaptive_stage_bc_total_timeout
+        _v9_c0_active_stage_timeout
+        if c0_enabled
+        else _v8_adaptive_stage_bc_total_timeout
         if stage_bc_enabled or v9_enabled
         else _v9_full_spectrum_active_stage_timeout
         if v9_corrected_full_enabled
@@ -839,13 +994,15 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     termination_reason = "natural_exit"
     process_control: dict[str, Any] = {}
     v5_thresholds_enabled = bool(plan.get("v5_fresh_bare_f_authority"))
+    c0_thresholds_enabled = c0_enabled
     route_c_enabled = bool(plan.get("v5_route_c"))
     threshold_observation_count = 0
     resource_thresholds: dict[str, Any] = {}
     v8_timeout_decision: dict[str, Any] | None = None
+    c0_timeout_decision: dict[str, Any] | None = None
     v8_completed = False
     v9_workflow_completed = False
-    if v5_thresholds_enabled:
+    if v5_thresholds_enabled or c0_thresholds_enabled:
         resource_thresholds = {
             "preferred": {
                 "bytes": int(plan["preferred_memory_bytes"]),
@@ -869,7 +1026,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
 
     def observe_v5_thresholds(rss_bytes: int, elapsed: float) -> None:
         nonlocal threshold_observation_count
-        if not v5_thresholds_enabled:
+        if not (v5_thresholds_enabled or c0_thresholds_enabled):
             return
         threshold_observation_count += 1
         for threshold in resource_thresholds.values():
@@ -877,6 +1034,59 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 threshold["crossed"] = True
                 threshold["first_sample"] = threshold_observation_count
                 threshold["first_elapsed_seconds"] = float(elapsed)
+
+    c0_prelaunch: dict[str, Any] | None = None
+    if c0_enabled:
+        c0_prelaunch = _v9_c0_prelaunch_resource_preflight()
+        if not c0_prelaunch["pass"]:
+            failure_path = run_directory / "v9_c0_explicit_coarse_failure.json"
+            failure_record = {
+                "schema": V9_C0_EXPLICIT_COARSE_ONLY_SCHEMA,
+                "method": plan["method"],
+                "status": "not_run_by_prelaunch_resource_gate",
+                "classification": V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION,
+                "next_required_stage": V9_C0_NEXT_C1,
+                "numerical_negative": False,
+                "process_started": False,
+                "resource_preflight": c0_prelaunch,
+            }
+            failure_path.write_text(
+                json.dumps(failure_record, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            summary = {
+                "schema": "task040.level_a.watchdog.v1",
+                "method": plan["method"],
+                "source_sha": plan["source_sha"],
+                "command": command,
+                "termination_reason": "prelaunch_resource_gate",
+                "return_code": None,
+                "process_started": False,
+                "process_control": {"worker_started": False},
+                "elapsed_seconds": 0.0,
+                "sample_count": 0,
+                "authoritative_sample_count": 0,
+                "peak_rss_bytes": 0,
+                "peak_swap_bytes": 0,
+                "peak_dedicated_cgroup_swap_bytes": 0,
+                "hard_stop_bytes": hard_stop_bytes,
+                "timeout_seconds": timeout_seconds,
+                "run_summary_present": False,
+                "classification": V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION,
+                "resource_classification": V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION,
+                "final_resource_classification": (
+                    V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION
+                ),
+                "next_required_stage": V9_C0_NEXT_C1,
+                "numerical_negative": False,
+                "v9_c0_prelaunch_resource_gate": c0_prelaunch,
+                "artifact_hashes": {failure_path.name: _sha256(failure_path)},
+            }
+            summary_path.write_text(
+                json.dumps(summary, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            return 2
 
     with (
         stdout_path.open("w", encoding="utf-8") as stdout,
@@ -933,7 +1143,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             terminal_teardown_excluded = (
                 process_exited_during_sample or completed_cleanup_teardown
             )
-            if adaptive_enabled or stage_bc_enabled or v9_enabled:
+            if adaptive_enabled or stage_bc_enabled or v9_enabled or c0_enabled:
                 swap_sample = _v8_adaptive_swap_authority_sample(
                     authority, terminal_excluded=terminal_teardown_excluded
                 )
@@ -1014,22 +1224,32 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 termination_reason = "natural_exit"
             elif elapsed >= timeout_seconds:
                 if v8_enabled:
-                    v8_timeout_decision = active_timeout(
+                    timeout_decision = active_timeout(
                         stage,
                         time.monotonic() - stage_started,
                         elapsed,
                     )
+                    if c0_enabled:
+                        c0_timeout_decision = timeout_decision
+                    else:
+                        v8_timeout_decision = timeout_decision
                 termination_reason = "wall_timeout"
             elif v8_enabled:
-                v8_timeout_decision = active_timeout(
+                timeout_decision = active_timeout(
                     stage,
                     time.monotonic() - stage_started,
                     elapsed,
                 )
-                if v8_timeout_decision["timed_out"]:
+                if c0_enabled:
+                    c0_timeout_decision = timeout_decision
+                else:
+                    v8_timeout_decision = timeout_decision
+                if timeout_decision["timed_out"]:
                     termination_reason = (
                         "wall_timeout"
-                        if v8_timeout_decision["kind"] == "total"
+                        if timeout_decision["kind"] == "total"
+                        else "v9_c0_marker_target_exceeded"
+                        if c0_enabled
                         else "v8_marker_target_exceeded"
                     )
                 else:
@@ -1076,7 +1296,139 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             if path.is_file()
         },
     }
-    if v9_enabled:
+    if c0_enabled:
+        c0_manifest = worker_directory / "v9_c0_explicit_coarse_manifest.json"
+        c0_failure_manifest = (
+            worker_directory / "v9_c0_explicit_coarse_failure_manifest.json"
+        )
+        worker_payload: dict[str, Any] = {}
+        cleanup_complete = False
+        core_cleanup_complete = False
+        if run_summary.is_file():
+            try:
+                worker_payload = json.loads(run_summary.read_text(encoding="utf-8"))
+                runner_cleanup = worker_payload.get("runner_cleanup", {})
+                core_cleanup = worker_payload.get("cleanup", {})
+                cleanup_complete = bool(
+                    isinstance(runner_cleanup, dict)
+                    and runner_cleanup.get("status") == "complete"
+                )
+                core_cleanup_complete = bool(
+                    isinstance(core_cleanup, dict)
+                    and core_cleanup.get("status") == "complete"
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_payload = {}
+        resource_stop = termination_reason in {
+            "absolute_memory_limit",
+            "swap_detected",
+            "wall_timeout",
+            "v9_c0_marker_target_exceeded",
+        }
+        c0_resource_gate = bool(
+            sample_count > 0
+            and adaptive_swap_authority_readable
+            and all_status_readable
+            and peak_rss_bytes < V9_C0_HARD_STOP_BYTES
+            and peak_swap_bytes == SWAP_LIMIT_BYTES
+            and (
+                not dedicated_cgroup_present
+                or (
+                    dedicated_cgroup_swap_readable
+                    and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
+                )
+            )
+        )
+        c0_workflow_completed = bool(
+            termination_reason == "natural_exit"
+            and process.returncode == 0
+            and run_summary.is_file()
+            and cleanup_complete
+            and core_cleanup_complete
+            and c0_manifest.is_file()
+            and last_stage == "v9_c0_cleanup_complete"
+            and last_stage_status == "complete"
+        )
+        worker_classification = worker_payload.get("classification")
+        valid_worker_classifications = {
+            "ADAPTIVE_COARSE_CONTENT_POSITIVE_EXPLICIT_ORACLE",
+            "CURRENT_160_PER_PATCH_HARMONIC_COARSE_NO_SIGNAL",
+            V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION,
+        }
+        if resource_stop or (c0_workflow_completed and not c0_resource_gate):
+            c0_classification = V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION
+        elif c0_failure_manifest.is_file():
+            c0_classification = "V9_C0_EXPLICIT_COARSE_IMPLEMENTATION_FAILURE"
+        elif (
+            (
+                termination_reason == "natural_exit"
+                and run_summary.is_file()
+                and worker_classification
+                == V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION
+            )
+            or (
+                c0_workflow_completed
+                and worker_classification in valid_worker_classifications
+            )
+        ):
+            c0_classification = worker_classification
+        else:
+            c0_classification = "requires_result_adjudication"
+        if c0_classification == "CURRENT_160_PER_PATCH_HARMONIC_COARSE_NO_SIGNAL":
+            c0_next_stage = V9_C0_NEXT_E
+            c0_numerical_negative = True
+        elif (
+            c0_classification
+            == "ADAPTIVE_COARSE_CONTENT_POSITIVE_EXPLICIT_ORACLE"
+            or c0_classification == V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION
+        ):
+            c0_next_stage = V9_C0_NEXT_C1
+            c0_numerical_negative = False
+        else:
+            c0_next_stage = None
+            c0_numerical_negative = None
+        c0_resource_thresholds = {
+            name: dict(value) for name, value in resource_thresholds.items()
+        }
+        summary.update(
+            {
+                "v9_c0_workflow_completed": c0_workflow_completed,
+                "v9_c0_manifest_present": c0_manifest.is_file(),
+                "v9_c0_manifest_sha256": (
+                    _sha256(c0_manifest) if c0_manifest.is_file() else None
+                ),
+                "v9_c0_resource_gate": c0_resource_gate,
+                "v9_c0_prelaunch_resource_gate": c0_prelaunch,
+                "v9_c0_resource_thresholds": c0_resource_thresholds,
+                "v9_c0_marker_sequence": list(V9_C0_MARKER_SEQUENCE),
+                "v9_c0_source_contract": {
+                    "source_order": ["external_dtn_coupling"],
+                    "global_patch_count": 630,
+                    "columns_per_patch": 160,
+                    "total_coarse_dof": 100800,
+                },
+                "v9_c0_cleanup_complete": cleanup_complete and core_cleanup_complete,
+                "latest_stage": last_stage,
+                "latest_stage_status": last_stage_status,
+                "classification": c0_classification,
+                "resource_classification": c0_classification,
+                "final_resource_classification": c0_classification,
+                "next_required_stage": c0_next_stage,
+                "numerical_negative": c0_numerical_negative,
+                "v9_c0_resource_limits": {
+                    "minimum_mem_available_bytes": V9_C0_MIN_AVAILABLE_BYTES,
+                    "preferred_memory_bytes": V9_C0_PREFERRED_MEMORY_BYTES,
+                    "warning_memory_bytes": V9_C0_WARNING_MEMORY_BYTES,
+                    "hard_stop_bytes": V9_C0_HARD_STOP_BYTES,
+                    "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                    "setup_seconds": V9_C0_SETUP_TARGET_SECONDS,
+                    "one_apply_seconds": V9_C0_ONE_APPLY_TARGET_SECONDS,
+                    "total_wall_seconds": V9_C0_TIMEOUT_SECONDS,
+                },
+                "v9_c0_timeout": c0_timeout_decision,
+            }
+        )
+    elif v9_enabled:
         v9_manifest = worker_directory / "v9_source_bridge_manifest.json"
         v9_failure_manifest = (
             worker_directory / "v9_source_bridge_failure_manifest.json"
@@ -1490,7 +1842,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         summary["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
     final_swap_authority_readable = (
         adaptive_swap_authority_readable
-        if adaptive_enabled or stage_bc_enabled or v9_enabled
+        if adaptive_enabled or stage_bc_enabled or v9_enabled or c0_enabled
         else swap_authority_readable
     )
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
@@ -1499,6 +1851,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         if stage_a_enabled
         else b1_workflow_completed
         if b1_enabled
+        else c0_workflow_completed
+        if c0_enabled
         else v9_workflow_completed
         if v9_enabled
         else stage_bc_workflow_completed
@@ -1545,6 +1899,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_C0_EXPLICIT_COARSE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_PACKET_ROOT_OPTION)
     parser.add_argument(V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION)
     parser.add_argument("--watchdog-enabled", action="store_true")
@@ -1589,6 +1944,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(
             "V9 source bridge route requires --watchdog-enabled and --bottom-route-only"
         )
+    if args.v9_c0_explicit_coarse_only and not (
+        args.watchdog_enabled and args.bottom_route_only
+    ):
+        parser.error(
+            "V9-C0 route requires --watchdog-enabled and --bottom-route-only"
+        )
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
         exact_spool_root=args.exact_spool_root,
@@ -1610,6 +1971,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
+        v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
         v9_source_packet_root=args.v9_source_packet_root,
         v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         interface_packet_root=args.interface_packet_root,
