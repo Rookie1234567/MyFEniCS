@@ -16,6 +16,7 @@ EXPECTED_PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626
 EXPECTED_MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
 MARKER_SCHEMA = "task038.v14.j3.marker.v1"
 SAMPLE_SCHEMA = "task038.v14.j3.process-sample.v1"
+F2_MARKER_SCHEMA = "task038.v15.f2-f3.floquet-wave.marker.v1"
 
 # A stopped workflow may expose only a valid strict subsequence.
 MARKER_ORDER = (
@@ -60,6 +61,41 @@ MARKER_ORDER = (
     "solver_stack_release_complete",
     "recovery_started",
     "recovery_complete",
+    "parent_complete",
+)
+F2_MARKER_ORDER = (
+    "parent_started",
+    "fresh_cache_created",
+    "precompile_positive_p6_started",
+    "precompile_positive_p6_complete",
+    "precompile_positive_p3_started",
+    "precompile_positive_p3_complete",
+    "precompile_positive_p1_started",
+    "precompile_positive_p1_complete",
+    "precompile_dtn_surface_started",
+    "precompile_dtn_surface_complete",
+    "precompile_incident_rhs_started",
+    "precompile_incident_rhs_complete",
+    "precompile_physical_volume_started",
+    "precompile_physical_volume_curl_started",
+    "precompile_physical_volume_curl_complete",
+    "precompile_physical_volume_mass_started",
+    "precompile_physical_volume_mass_complete",
+    "precompile_physical_volume_complete",
+    "all_precompile_children_gone",
+    "diagnostic_child_started",
+    "bundle_built",
+    "source_built",
+    "checkpoint_restore_started",
+    "checkpoint_restore_complete",
+    "residual_action_started",
+    "residual_action_complete",
+    "basis_started",
+    "basis_complete",
+    "projection_started",
+    "projection_complete",
+    "release_started",
+    "release_complete",
     "parent_complete",
 )
 _COMPILER_NAMES = frozenset(
@@ -109,16 +145,18 @@ def _marker_parts(path: Path) -> tuple[int, str]:
     return int(prefix), name
 
 
-def marker_files(marker_dir: Path | str) -> list[Path]:
+def marker_files(
+    marker_dir: Path | str, *, order: tuple[str, ...] = MARKER_ORDER
+) -> list[Path]:
     marker_dir = _absolute(marker_dir)
     paths = sorted(marker_dir.glob("*.json"), key=lambda p: _marker_parts(p)[0])
     last_position = -1
     seen: set[str] = set()
     for path in paths:
         index, name = _marker_parts(path)
-        if name in seen or name not in MARKER_ORDER:
+        if name in seen or name not in order:
             raise ValueError(f"invalid or duplicate marker: {path.name}")
-        expected_index = MARKER_ORDER.index(name)
+        expected_index = order.index(name)
         if index != expected_index or expected_index <= last_position:
             raise ValueError(f"marker order is not a strict subsequence: {path.name}")
         seen.add(name)
@@ -126,17 +164,24 @@ def marker_files(marker_dir: Path | str) -> list[Path]:
     return paths
 
 
-def write_marker(marker_dir: Path | str, name: str, facts: dict) -> Path:
+def write_marker(
+    marker_dir: Path | str,
+    name: str,
+    facts: dict,
+    *,
+    order: tuple[str, ...] = MARKER_ORDER,
+    schema: str = MARKER_SCHEMA,
+) -> Path:
     marker_dir = _absolute(marker_dir)
-    if name not in MARKER_ORDER:
+    if name not in order:
         raise ValueError(f"unknown marker: {name}")
-    existing = marker_files(marker_dir)
-    position = MARKER_ORDER.index(name)
-    if existing and position <= MARKER_ORDER.index(_marker_parts(existing[-1])[1]):
+    existing = marker_files(marker_dir, order=order)
+    position = order.index(name)
+    if existing and position <= order.index(_marker_parts(existing[-1])[1]):
         raise ValueError(f"marker is not later than the previous marker: {name}")
     path = marker_dir / f"{position:03d}_{name}.json"
     payload = {
-        "schema": MARKER_SCHEMA,
+        "schema": schema,
         "name": name,
         "marker_index": position,
         "timestamp_ns": time.time_ns(),
@@ -367,8 +412,10 @@ def cache_manifest(cache_dir: Path | str) -> dict:
     return {"cache_dir": str(cache_dir), "artifacts": artifacts, "artifact_count": len(artifacts)}
 
 
-def marker_manifest(marker_dir: Path | str) -> list[dict]:
+def marker_manifest(
+    marker_dir: Path | str, *, order: tuple[str, ...] = MARKER_ORDER
+) -> list[dict]:
     return [
         {"name": _marker_parts(path)[1], "path": str(path), "sha256": sha256_file(path)}
-        for path in marker_files(marker_dir)
+        for path in marker_files(marker_dir, order=order)
     ]

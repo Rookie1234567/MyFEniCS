@@ -257,8 +257,8 @@ def two_pass_mgs_append(
 ) -> tuple[np.ndarray, np.ndarray, float]:
     """Orthogonalize one column against existing Q with two MGS passes."""
 
-    q_array = np.ascontiguousarray(np.asarray(q, dtype=np.complex128))
-    vector = np.ascontiguousarray(np.asarray(column, dtype=np.complex128)).copy()
+    q_array = np.asarray(q, dtype=np.complex128)
+    vector = np.array(column, dtype=np.complex128, copy=True, order="C")
     if q_array.ndim != 2 or vector.ndim != 1 or q_array.shape[0] != vector.size:
         raise ValueError("MGS Q and column shapes are incompatible")
     if not np.all(np.isfinite(q_array)) or not np.all(np.isfinite(vector)):
@@ -272,7 +272,8 @@ def two_pass_mgs_append(
     norm = global_norm(vector, comm)
     if norm <= np.finfo(float).eps:
         raise ValueError("dependent MGS column")
-    return vector / norm, coefficients, norm
+    vector /= norm
+    return vector, coefficients, norm
 
 
 def two_pass_mgs(columns: Sequence[Any], comm: Any = None) -> tuple[np.ndarray, np.ndarray]:

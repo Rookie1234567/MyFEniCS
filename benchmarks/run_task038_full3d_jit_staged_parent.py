@@ -19,6 +19,8 @@ import time
 from typing import Any
 
 from benchmarks.task038_full3d_jit_staging import (
+    F2_MARKER_ORDER,
+    F2_MARKER_SCHEMA,
     MARKER_ORDER,
     MARKER_SCHEMA,
     SAMPLE_SCHEMA,
@@ -38,14 +40,23 @@ MODULE = "benchmarks.run_task038_full3d_jit_staged_parent"
 CHILD_MODULE = "benchmarks.run_task038_full3d_jit_precompile"
 SOLVER_MODULE = "benchmarks.run_task038_full3d_jit_solver_bundle"
 P0_MODULE = "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p0_physical"
+DIAGNOSTIC_MODULE = "benchmarks.run_task038_full3d_floquet_wave_checkpoint_diagnostic"
 WORKFLOW_J3 = "j3-split-cold-staged"
 WORKFLOW_J4 = "j4-p0r"
 WORKFLOW_J5 = "j5-full"
+WORKFLOW_F2_F3 = "f2-f3-floquet-wave"
 RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.parent-record.v1"
 CHILD_RECORD_SCHEMA = "task038.full3d.jit-split.child-record.v1"
 SOLVER_RECORD_SCHEMA = "task038.v14.j3.split-cold-staged.solver-record.v1"
 J4_RECORD_SCHEMA = "task038.v14.j4.p0r.parent-record.v1"
 J5_RECORD_SCHEMA = "task038.v14.j5.full.parent-record.v1"
+F2_PARENT_RECORD_SCHEMA = "task038.v15.f2-f3.floquet-wave.parent-record.v1"
+F2_PREDICTED_CENTRAL_RSS = 1_555_934_144
+F2_Q32_BYTES = 88_986_624
+F2_SIX_VECTOR_BYTES = 16_684_992
+F2_MAX_SIMULTANEOUS_HIGH_VECTOR_COUNT = 6
+F2_RSS_WARNING = 1_800_000_000
+F2_RSS_WATCHDOG = 1_950_000_000
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
 MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
@@ -257,6 +268,38 @@ def _p0_command(
     ]
 
 
+def _diagnostic_command(
+    root: Path,
+    cache_dir: Path,
+    marker_dir: Path,
+    checkpoint_dir: Path,
+    input_path: Path,
+    record_path: Path,
+    source_sha: str,
+) -> list[str]:
+    return [
+        str(Path(sys.executable)),
+        "-m",
+        DIAGNOSTIC_MODULE,
+        "--artifact-root",
+        str(root),
+        "--cache-dir",
+        str(cache_dir),
+        "--marker-dir",
+        str(marker_dir),
+        "--checkpoint-dir",
+        str(checkpoint_dir),
+        "--record",
+        str(record_path),
+        "--expected-source-sha",
+        source_sha,
+        "--expected-mpi-size",
+        "1",
+        "--input",
+        str(input_path),
+    ]
+
+
 def _marker(
     marker_dir: Path,
     root: Path,
@@ -273,13 +316,25 @@ def _marker(
             if workflow == WORKFLOW_J4
             else "j5-full-parent"
             if workflow == WORKFLOW_J5
+            else "f2-f3-floquet-wave-parent"
+            if workflow == WORKFLOW_F2_F3
             else "j3-split-cold-staged-parent"
         ),
         "artifact_root": str(root),
         "cache_dir": str(cache_dir),
         "source_sha": source_sha,
     }
+    if workflow == WORKFLOW_F2_F3:
+        common["watchdog_stop_bytes"] = F2_RSS_WATCHDOG
     common.update(facts)
+    if workflow == WORKFLOW_F2_F3:
+        return write_marker(
+            marker_dir,
+            name,
+            common,
+            order=F2_MARKER_ORDER,
+            schema=F2_MARKER_SCHEMA,
+        )
     return write_marker(marker_dir, name, common)
 
 
@@ -348,7 +403,11 @@ def _group_alive(process_group_id: int, observed_pids: set[int]) -> bool:
 
 
 def _monitor_child(
-    process: subprocess.Popen[Any], sample_path: Path, stage: str
+    process: subprocess.Popen[Any],
+    sample_path: Path,
+    stage: str,
+    *,
+    stop_limit_bytes: int = RSS_HARD_LIMIT,
 ) -> dict[str, Any]:
     process_group_id = int(process.pid)
     observed_pids: set[int] = set()
@@ -361,11 +420,15 @@ def _monitor_child(
     all_status_readable = True
     last_sample: dict[str, Any] | None = None
     stop_reason: str | None = None
+    warning_crossed = False
+    warning_sample_index: int | None = None
+    warning_timestamp_ns: int | None = None
 
     def observe(value: dict[str, Any]) -> None:
         nonlocal sample_count, first_timestamp_ns, last_timestamp_ns
         nonlocal peak_rss_bytes, max_swap_bytes, compiler_peak
         nonlocal all_status_readable, last_sample
+        nonlocal warning_crossed, warning_sample_index, warning_timestamp_ns
         sample_count += 1
         timestamp = int(value["timestamp_ns"])
         if first_timestamp_ns is None:
@@ -376,6 +439,19 @@ def _monitor_child(
         swap = value.get("swap_bytes")
         if rss is not None:
             peak_rss_bytes = int(rss) if peak_rss_bytes is None else max(peak_rss_bytes, int(rss))
+            if (
+                stop_limit_bytes == F2_RSS_WATCHDOG
+                and not warning_crossed
+                and int(rss) >= F2_RSS_WARNING
+            ):
+                warning_crossed = True
+                warning_sample_index = sample_count
+                warning_timestamp_ns = timestamp
+                print(
+                    f"F2/F3 resource warning: RSS crossed {F2_RSS_WARNING} bytes at sample {sample_count}",
+                    file=sys.stderr,
+                    flush=True,
+                )
         if swap is not None:
             max_swap_bytes = int(swap) if max_swap_bytes is None else max(max_swap_bytes, int(swap))
         root_pid = int(value["root_pid"])
@@ -395,7 +471,7 @@ def _monitor_child(
             return "authority_unreadable"
         if int(value.get("swap_bytes") or 0) > 0:
             return "process_tree_swap"
-        if value.get("rss_bytes") is not None and int(value["rss_bytes"]) >= RSS_HARD_LIMIT:
+        if value.get("rss_bytes") is not None and int(value["rss_bytes"]) >= stop_limit_bytes:
             return "process_tree_rss_limit"
         return None
 
@@ -459,9 +535,10 @@ def _monitor_child(
                 observe(value)
                 process_group_gone = not _group_alive(process_group_id, observed_pids)
 
-    return {
+    result = {
         "pid": int(process.pid),
         "process_group_id": process_group_id,
+        "stop_limit_bytes": int(stop_limit_bytes),
         "started_ns": first_timestamp_ns,
         "ended_ns": last_timestamp_ns,
         "returncode": None if returncode is None else int(returncode),
@@ -479,6 +556,13 @@ def _monitor_child(
         "process_group_gone": process_group_gone,
         "descendants_gone": process_group_gone,
     }
+    if stop_limit_bytes == F2_RSS_WATCHDOG:
+        result["warning_limit_bytes"] = F2_RSS_WARNING
+        result["warning_crossed"] = warning_crossed
+        result["warning_sample_index"] = warning_sample_index
+        result["warning_timestamp_ns"] = warning_timestamp_ns
+        result["resource_warning"] = warning_crossed
+    return result
 
 
 def _read_json(path: Path) -> Any:
@@ -517,7 +601,9 @@ def _module_basenames(artifacts: list[dict[str, Any]]) -> list[str]:
     )
 
 
-def _process_summary(path: Path) -> dict[str, Any]:
+def _process_summary(
+    path: Path, *, warning_limit_bytes: int | None = None
+) -> dict[str, Any]:
     sample_count = 0
     first_timestamp_ns: int | None = None
     last_timestamp_ns: int | None = None
@@ -529,6 +615,9 @@ def _process_summary(path: Path) -> dict[str, Any]:
     observed_pids: set[int] = set()
     last_sample: dict[str, Any] | None = None
     stages: dict[str, dict[str, Any]] = {}
+    warning_crossed = False
+    warning_sample_index: int | None = None
+    warning_timestamp_ns: int | None = None
     with path.open(encoding="utf-8") as stream:
         for line in stream:
             if not line.strip():
@@ -545,6 +634,14 @@ def _process_summary(path: Path) -> dict[str, Any]:
             swap = value.get("swap_bytes")
             if rss is not None:
                 peak_rss_bytes = int(rss) if peak_rss_bytes is None else max(peak_rss_bytes, int(rss))
+                if (
+                    warning_limit_bytes is not None
+                    and not warning_crossed
+                    and int(rss) >= warning_limit_bytes
+                ):
+                    warning_crossed = True
+                    warning_sample_index = sample_count
+                    warning_timestamp_ns = timestamp
             if swap is not None:
                 max_swap_bytes = int(swap) if max_swap_bytes is None else max(max_swap_bytes, int(swap))
             root_pid = int(value["root_pid"])
@@ -569,6 +666,9 @@ def _process_summary(path: Path) -> dict[str, Any]:
                     "compiler_descendant_peak": 0,
                     "observed_descendant_pids": set(),
                     "last_sample": None,
+                    "warning_crossed": False,
+                    "warning_sample_index": None,
+                    "warning_timestamp_ns": None,
                 },
             )
             stage_fact["sample_count"] += 1
@@ -595,10 +695,19 @@ def _process_summary(path: Path) -> dict[str, Any]:
             )
             stage_fact["observed_descendant_pids"].update(descendants)
             stage_fact["last_sample"] = value
+            if (
+                warning_limit_bytes is not None
+                and not stage_fact["warning_crossed"]
+                and rss is not None
+                and int(rss) >= warning_limit_bytes
+            ):
+                stage_fact["warning_crossed"] = True
+                stage_fact["warning_sample_index"] = stage_fact["sample_count"]
+                stage_fact["warning_timestamp_ns"] = timestamp
             last_sample = value
     for stage_fact in stages.values():
         stage_fact["observed_descendant_pids"] = sorted(stage_fact["observed_descendant_pids"])
-    return {
+    result = {
         "sample_path": str(path),
         "sample_sha256": sha256_file(path),
         "sample_count": sample_count,
@@ -613,10 +722,27 @@ def _process_summary(path: Path) -> dict[str, Any]:
         "last_sample": last_sample,
         "stage_summaries": stages,
     }
+    if warning_limit_bytes is not None:
+        result.update(
+            {
+                "warning_limit_bytes": warning_limit_bytes,
+                "warning_crossed": warning_crossed,
+                "warning_sample_index": warning_sample_index,
+                "warning_timestamp_ns": warning_timestamp_ns,
+                "resource_warning": warning_crossed,
+            }
+        )
+    return result
 
 
 def _run_child(
-    command: list[str], stdout_path: Path, stderr_path: Path, sample_path: Path, stage: str
+    command: list[str],
+    stdout_path: Path,
+    stderr_path: Path,
+    sample_path: Path,
+    stage: str,
+    *,
+    stop_limit_bytes: int = RSS_HARD_LIMIT,
 ) -> dict[str, Any]:
     with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
         process = subprocess.Popen(
@@ -626,7 +752,9 @@ def _run_child(
             cwd=Path(__file__).resolve().parents[1],
             start_new_session=True,
         )
-        return _monitor_child(process, sample_path, stage)
+        return _monitor_child(
+            process, sample_path, stage, stop_limit_bytes=stop_limit_bytes
+        )
 
 
 def _partial_record(
@@ -647,13 +775,24 @@ def _partial_record(
 ) -> dict[str, Any]:
     j4 = workflow == WORKFLOW_J4
     j5 = workflow == WORKFLOW_J5
+    f2 = workflow == WORKFLOW_F2_F3
     partial: dict[str, Any] = {
-        "schema": J4_RECORD_SCHEMA if j4 else J5_RECORD_SCHEMA if j5 else RECORD_SCHEMA,
+        "schema": (
+            J4_RECORD_SCHEMA
+            if j4
+            else J5_RECORD_SCHEMA
+            if j5
+            else F2_PARENT_RECORD_SCHEMA
+            if f2
+            else RECORD_SCHEMA
+        ),
         "stage": (
             "j4-p0r-parent"
             if j4
             else "j5-full-parent"
             if j5
+            else "f2-f3-floquet-wave-parent"
+            if f2
             else "j3-split-cold-staged-parent"
         ),
         "workflow": workflow,
@@ -677,18 +816,28 @@ def _partial_record(
         },
         "children": children,
         "solver": solver,
+        **({"diagnostic": solver} if f2 else {}),
         "error": error,
         "raw_facts_only": True,
         "partial": True,
     }
     if sample_path.is_file():
-        partial["process"] = _process_summary(sample_path)
+        partial["process"] = _process_summary(
+            sample_path, warning_limit_bytes=F2_RSS_WARNING if f2 else None
+        )
+        if f2:
+            partial["process"]["stop_limit_bytes"] = F2_RSS_WATCHDOG
     if (cache_dir / "").is_dir():
         partial["cache_observed"] = cache_manifest(cache_dir)
     marker_manifest_path = root / "marker_manifest.json"
     if marker_dir.is_dir() and not marker_manifest_path.exists():
         try:
-            _write_json(marker_manifest_path, _marker_manifest(marker_dir))
+            _write_json(
+                marker_manifest_path,
+                _marker_manifest(
+                    marker_dir, order=F2_MARKER_ORDER if f2 else MARKER_ORDER
+                ),
+            )
         except (OSError, ValueError):
             pass
     if marker_manifest_path.is_file():
@@ -697,6 +846,218 @@ def _partial_record(
             "manifest_sha256": sha256_file(marker_manifest_path),
         }
     return partial
+
+
+def _run_f2_f3_parent(
+    args: argparse.Namespace,
+    *,
+    root: Path,
+    cache_dir: Path,
+    input_path: Path,
+    record_path: Path,
+    marker_dir: Path,
+    sample_path: Path,
+    parent_command: list[str],
+    identity: dict[str, Any],
+    observed_identity: dict[str, Any] | None,
+    children: list[dict[str, Any]],
+    children_dir: Path,
+    solver_dir: Path,
+    manifests_dir: Path,
+    initial_manifest: dict[str, Any],
+    before_solver: dict[str, Any],
+    partial_state: dict[str, Any],
+) -> None:
+    checkpoint_dir = _absolute(args.checkpoint_dir)
+    if not checkpoint_dir.is_dir():
+        raise FileNotFoundError(f"checkpoint directory does not exist: {checkpoint_dir}")
+    diagnostic_record = solver_dir / "diagnostic_record.json"
+    diagnostic_command = _diagnostic_command(
+        root,
+        cache_dir,
+        marker_dir,
+        checkpoint_dir,
+        input_path,
+        diagnostic_record,
+        args.source_sha,
+    )
+    _marker(
+        marker_dir,
+        root,
+        cache_dir,
+        args.source_sha,
+        "diagnostic_child_started",
+        workflow=WORKFLOW_F2_F3,
+        command=diagnostic_command,
+        pid_expected="child_process",
+    )
+    stdout_path = solver_dir / "diagnostic.stdout"
+    stderr_path = solver_dir / "diagnostic.stderr"
+    process = _run_child(
+        diagnostic_command,
+        stdout_path,
+        stderr_path,
+        sample_path,
+        "diagnostic",
+        stop_limit_bytes=F2_RSS_WATCHDOG,
+    )
+    diagnostic: dict[str, Any] = {
+        "command": diagnostic_command,
+        "process": process,
+        "record_path": str(diagnostic_record),
+        "stdout_path": str(stdout_path),
+        "stdout_sha256": sha256_file(stdout_path),
+        "stderr_path": str(stderr_path),
+        "stderr_sha256": sha256_file(stderr_path),
+        "record_sha256": (
+            sha256_file(diagnostic_record) if diagnostic_record.is_file() else None
+        ),
+    }
+    partial_state["solver"] = diagnostic
+    after_diagnostic = _save_manifest(
+        cache_dir, manifests_dir / "after_diagnostic.json"
+    )
+    diagnostic.update(
+        {
+            "before_solver_manifest_sha256": before_solver["sha256"],
+            "after_diagnostic_manifest_sha256": after_diagnostic["sha256"],
+            "cache_unchanged": (
+                Path(before_solver["path"]).read_bytes()
+                == Path(after_diagnostic["path"]).read_bytes()
+            ),
+        }
+    )
+    if diagnostic_record.is_file():
+        worker_payload = _read_json(diagnostic_record)
+        observed_identity = worker_payload.get("provenance", observed_identity)
+        worker_f2 = worker_payload["f2"]
+        worker_architecture = worker_payload["architecture"]
+        worker_f3 = worker_payload["f3"]
+    if (
+        not process["natural_exit"]
+        or not process["all_status_readable"]
+        or not process["process_group_gone"]
+        or process["required_sigkill"]
+        or process["max_swap_bytes"] != 0
+        or process["peak_rss_bytes"] is None
+        or process["peak_rss_bytes"] >= F2_RSS_WATCHDOG
+    ):
+        raise RuntimeError("F2/F3 diagnostic worker failed")
+    if not diagnostic_record.is_file():
+        raise RuntimeError(f"diagnostic worker record is missing: {diagnostic_record}")
+    if not diagnostic["cache_unchanged"]:
+        raise RuntimeError("F2/F3 diagnostic phase changed the formal cache")
+    _marker(
+        marker_dir,
+        root,
+        cache_dir,
+        args.source_sha,
+        "parent_complete",
+        workflow=WORKFLOW_F2_F3,
+        diagnostic_returncode=process["returncode"],
+        cache_unchanged=True,
+        before_solver_manifest_sha256=before_solver["sha256"],
+        after_diagnostic_manifest_sha256=after_diagnostic["sha256"],
+        compiler_descendant_count=0,
+    )
+    marker_path = root / "marker_manifest.json"
+    marker_entries = _marker_manifest(marker_dir, order=F2_MARKER_ORDER)
+    _write_json(marker_path, marker_entries)
+    modules = sorted(
+        {
+            module
+            for child in children
+            for module in child["new_module_basenames"]
+        }
+    )
+    samples = _process_summary(sample_path, warning_limit_bytes=F2_RSS_WARNING)
+    samples["stop_limit_bytes"] = F2_RSS_WATCHDOG
+    record = {
+        "schema": F2_PARENT_RECORD_SCHEMA,
+        "stage": "f2-f3-floquet-wave-parent",
+        "workflow": WORKFLOW_F2_F3,
+        "source_sha": args.source_sha,
+        "branch": BRANCH,
+        "command": parent_command,
+        "identity": {
+            "input_path": str(input_path),
+            "input_sha256": INPUT_SHA256,
+            "physical_model_sha256": PHYSICAL_MODEL_SHA256,
+            "mode_manifest_sha256": MODE_MANIFEST_SHA256,
+            "profile": EXPECTED_PROFILE,
+            "runtime": observed_identity or identity,
+        },
+        "paths": {
+            "artifact_root": str(root),
+            "cache_dir": str(cache_dir),
+            "marker_dir": str(marker_dir),
+            "record": str(record_path),
+            "process_samples": str(sample_path),
+            "marker_manifest": str(marker_path),
+            "children_dir": str(children_dir),
+            "solver_dir": str(solver_dir),
+            "diagnostic_record": str(diagnostic_record),
+            "diagnostic_raw_dir": str(root / "diagnostic_raw"),
+            "cache_manifests_dir": str(manifests_dir),
+            "checkpoint_dir": str(checkpoint_dir),
+        },
+        "marker_schema": F2_MARKER_SCHEMA,
+        "sample_schema": SAMPLE_SCHEMA,
+        "markers": {
+            "names": [entry["name"] for entry in marker_entries],
+            "manifest_path": str(marker_path),
+            "manifest_sha256": sha256_file(marker_path),
+        },
+        "process": samples,
+        "children": children,
+        "diagnostic": diagnostic,
+        "cache": {
+            "initial_empty": True,
+            "initial_manifest": initial_manifest,
+            "group_manifests": [
+                {
+                    "group": child["group"],
+                    "path": child["cache_manifest_path"],
+                    "sha256": child["cache_manifest_sha256"],
+                    "artifact_count": child["cache_artifact_count"],
+                    "new_module_basenames": child["new_module_basenames"],
+                }
+                for child in children
+            ],
+            "before_solver": before_solver,
+            "after_diagnostic": after_diagnostic,
+            "precompiled_module_basenames": modules,
+            "deferred_incident_module_basenames": [],
+            "solver_unchanged": True,
+        },
+        "architecture": {
+            "workflow": WORKFLOW_F2_F3,
+            "precompile_group_count": len(JIT_GROUPS),
+            "diagnostic_worker": DIAGNOSTIC_MODULE,
+            "checkpoint_read": worker_architecture.get("checkpoint_read") is True,
+            "residual_action_count": int(worker_f2["residual_action_count"]),
+            "f3_status": worker_f3["status"],
+            "basis_pc_count": worker_architecture["basis_pc_count"],
+            "basis_action_count": worker_architecture["basis_action_count"],
+            "ksp": False,
+            "recovery": False,
+            "global_aij": False,
+            "numeric_allgather": False,
+            "retains_z": False,
+            "retains_az": False,
+            "retains_q": worker_architecture["retains_q"],
+            "retains_r": worker_architecture["retains_r"],
+            "predicted_central_rss": F2_PREDICTED_CENTRAL_RSS,
+            "q32_bytes": F2_Q32_BYTES,
+            "six_vector_bytes": F2_SIX_VECTOR_BYTES,
+            "max_simultaneous_high_vector_count": F2_MAX_SIMULTANEOUS_HIGH_VECTOR_COUNT,
+            "watchdog_stop_bytes": F2_RSS_WATCHDOG,
+            "hard_gate_bytes": RSS_HARD_LIMIT,
+            "raw_facts_only": True,
+        },
+        "raw_facts_only": True,
+    }
+    _write_json(record_path, record)
 
 
 def run_parent(args: argparse.Namespace) -> None:
@@ -716,6 +1077,7 @@ def run_parent(args: argparse.Namespace) -> None:
     children: list[dict[str, Any]] = []
     solver_info: dict[str, Any] | None = None
     observed_identity: dict[str, Any] | None = None
+    partial_state: dict[str, Any] = {"solver": None}
     try:
         _marker(
             paths["marker_dir"],
@@ -778,6 +1140,11 @@ def run_parent(args: argparse.Namespace) -> None:
                 stderr_path,
                 sample_path,
                 f"precompile:{group}",
+                stop_limit_bytes=(
+                    F2_RSS_WATCHDOG
+                    if args.workflow == WORKFLOW_F2_F3
+                    else RSS_HARD_LIMIT
+                ),
             )
             child_entry = {
                 "group": group,
@@ -825,7 +1192,8 @@ def run_parent(args: argparse.Namespace) -> None:
                 or monitor["required_sigkill"]
                 or monitor["max_swap_bytes"] != 0
                 or monitor["peak_rss_bytes"] is None
-                or monitor["peak_rss_bytes"] >= RSS_HARD_LIMIT
+                or monitor["peak_rss_bytes"]
+                >= (F2_RSS_WATCHDOG if args.workflow == WORKFLOW_F2_F3 else RSS_HARD_LIMIT)
             ):
                 raise RuntimeError(f"precompile child failed: {group}")
             if not child_record.is_file():
@@ -865,7 +1233,9 @@ def run_parent(args: argparse.Namespace) -> None:
             tail_sample.get("all_status_readable") is not True
             or int(tail_sample.get("swap_bytes") or 0) != 0
             or tail_sample.get("rss_bytes") is None
-            or int(tail_sample["rss_bytes"]) >= RSS_HARD_LIMIT
+            or int(tail_sample["rss_bytes"]) >= (
+                F2_RSS_WATCHDOG if args.workflow == WORKFLOW_F2_F3 else RSS_HARD_LIMIT
+            )
         ):
             raise RuntimeError("precompile parent-only authority sample failed")
         _marker(
@@ -879,6 +1249,27 @@ def run_parent(args: argparse.Namespace) -> None:
             compiler_descendant_count=int(tail_sample["compiler_descendant_count"]),
         )
         before_solver = _save_manifest(cache_dir, manifests_dir / "before_solver.json")
+        if args.workflow == WORKFLOW_F2_F3:
+            _run_f2_f3_parent(
+                args,
+                root=root,
+                cache_dir=cache_dir,
+                input_path=input_path,
+                record_path=record_path,
+                marker_dir=paths["marker_dir"],
+                sample_path=sample_path,
+                parent_command=parent_command,
+                identity=identity,
+                observed_identity=observed_identity,
+                children=children,
+                children_dir=children_dir,
+                solver_dir=solver_dir,
+                manifests_dir=manifests_dir,
+                initial_manifest=initial_manifest,
+                before_solver=before_solver,
+                partial_state=partial_state,
+            )
+            return
         if args.workflow in {WORKFLOW_J4, WORKFLOW_J5}:
             worker_record = root / "worker_record.json"
             worker_command = _p0_command(
@@ -908,6 +1299,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 worker_stderr,
                 sample_path,
                 "solver",
+                stop_limit_bytes=RSS_HARD_LIMIT,
             )
             solver_info = {
                 "workflow": args.workflow,
@@ -1216,7 +1608,7 @@ def run_parent(args: argparse.Namespace) -> None:
                 command=parent_command,
                 identity=observed_identity or identity,
                 children=children,
-                solver=solver_info,
+                solver=partial_state["solver"] if args.workflow == WORKFLOW_F2_F3 else solver_info,
                 sample_path=sample_path,
                 error=str(error),
                 workflow=args.workflow,
@@ -1228,12 +1620,15 @@ def run_parent(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--workflow", choices=(WORKFLOW_J3, WORKFLOW_J4, WORKFLOW_J5), default=WORKFLOW_J3
+        "--workflow",
+        choices=(WORKFLOW_J3, WORKFLOW_J4, WORKFLOW_J5, WORKFLOW_F2_F3),
+        default=WORKFLOW_J3,
     )
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
     parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--checkpoint-dir", type=Path)
     parser.add_argument("--expected-mpi-size", type=int, default=1)
     return parser
 
@@ -1241,7 +1636,9 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.expected_mpi_size != 1:
-        raise ValueError("J3/J4/J5 parent is fixed to MPI1")
+        raise ValueError("the staged parent is fixed to MPI1")
+    if args.workflow == WORKFLOW_F2_F3 and args.checkpoint_dir is None:
+        raise ValueError("F2/F3 workflow requires --checkpoint-dir")
     run_parent(args)
     return 0
 
@@ -1258,6 +1655,7 @@ __all__ = (
     "RECORD_SCHEMA",
     "RSS_HARD_LIMIT",
     "SOLVER_MODULE",
+    "WORKFLOW_F2_F3",
     "WORKFLOW_J5",
     "build_parser",
     "main",
