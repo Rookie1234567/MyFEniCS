@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from copy import deepcopy
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -13,6 +15,18 @@ from petsc4py import PETSc
 
 import src.solvers.floquet_background_hcurl_s3_formal as s3_formal
 import src.solvers.floquet_background_hcurl_s3_pilot as s3_pilot
+from benchmarks.task040_level_a import (
+    V9_E_S3_B1_SCHEMA,
+    V9_E_S3_INPUT_RELATIVE_PATH,
+    V9_E_S3_INPUT_SHA256,
+    V9_E_S3_J1_BASELINE_MANIFEST_OPTION,
+    V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION,
+    V9_E_S3_J1_BASELINE_ONLY_FLAG,
+    V9_E_S3_J1_BASELINE_SCHEMA,
+    V9_E_S3_STRUCTURED_B1_ONLY_FLAG,
+    _load_s3_j1_baseline_manifest,
+    build_task040_level_a_plan,
+)
 from src.common.config_3d import target_stage4_config
 from src.solvers.floquet_background_hcurl_s3_formal import (
     compare_s3_candidate_source_to_baseline,
@@ -69,6 +83,151 @@ _HASHES = {
     "source_definition_sha256": "3" * 64,
     "source_canonical_identity_sha256": "4" * 64,
 }
+
+
+def _s3_runner_paths(tmp_path: Path) -> dict[str, object]:
+    repository_root = Path(__file__).resolve().parents[2]
+    return {
+        "input_path": repository_root / V9_E_S3_INPUT_RELATIVE_PATH,
+        "exact_spool_root": tmp_path / "spool",
+        "run_directory": tmp_path / "run",
+        "source_sha": "a" * 40,
+    }
+
+
+def test_s3b_runner_plan_contracts(tmp_path: Path) -> None:
+    paths = _s3_runner_paths(tmp_path)
+    baseline = build_task040_level_a_plan(
+        **paths,
+        v9_e_s3_j1_baseline_only=True,
+    )
+    assert baseline["schema"] == V9_E_S3_J1_BASELINE_SCHEMA
+    assert baseline["route"] == "V9_E_S3B"
+    assert baseline["input"] == str(paths["input_path"].resolve())
+    assert baseline["input_expected"] == {
+        "relative_path": V9_E_S3_INPUT_RELATIVE_PATH,
+        "sha256": V9_E_S3_INPUT_SHA256,
+    }
+    assert baseline["mpi_size"] == 8
+    assert baseline["threads"] == 1
+    assert baseline["timeout_seconds"] == 10800
+    assert baseline["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert baseline["swap_limit_bytes"] == 0
+    assert baseline["watchdog_required"] is True
+    assert baseline["bottom_route_only_required"] is True
+    assert baseline["fixed_configuration"]["bottom_operator"] == "bare_F"
+    assert baseline["fixed_configuration"]["active_rows"] == (
+        S3B_EXPECTED_ACTIVE_ROWS
+    )
+    assert baseline["fixed_configuration"]["operator_identity"] == (
+        "system.fine_action"
+    )
+    assert baseline["factor_inventory"]["j1_layer_factor_count_ready"] == 6
+
+    manifest_path = tmp_path / "j1" / "run_summary.json"
+    candidate = build_task040_level_a_plan(
+        **paths,
+        v9_e_s3_structured_b1_only=True,
+        v9_e_s3_j1_baseline_manifest=manifest_path,
+        v9_e_s3_j1_baseline_manifest_sha256="d" * 64,
+    )
+    assert candidate["schema"] == V9_E_S3_B1_SCHEMA
+    assert candidate["route"] == "V9_E_S3B"
+    assert candidate["baseline_manifest"] == {
+        "path": str(manifest_path.resolve()),
+        "sha256": "d" * 64,
+    }
+    assert candidate["factor_inventory"]["owner_local_bounded_factor_count"] == 18
+    assert candidate["factor_inventory"]["max_local_rows"] == 468
+    assert candidate["factor_inventory"]["full_side_factor_count"] == 0
+    assert candidate["factor_inventory"]["full_cross_section_factor_count"] == 0
+    assert candidate["watchdog_required"] is True
+    assert candidate["bottom_route_only_required"] is True
+    assert candidate["fixed_configuration"]["bottom_operator"] == "bare_F"
+    assert candidate["fixed_configuration"]["active_rows"] == (
+        S3B_EXPECTED_ACTIVE_ROWS
+    )
+    assert candidate["fixed_configuration"]["fgmres_restart"] == 64
+    assert candidate["fixed_configuration"]["fgmres_initial_max_it"] == 64
+    assert candidate["fixed_configuration"]["fgmres_conditional_total_it"] == 256
+    assert candidate["fixed_configuration"]["exact_physical_fft"] is False
+    assert candidate["structure_gate"]["phase_model"] == (
+        "topological_orbit_dft_approximation"
+    )
+    assert candidate["structure_gate"][
+        "fe_sized_topology_coordinate_metadata_allgather"
+    ] is True
+    assert candidate["structure_gate"]["production"] is False
+
+
+def test_s3b_runner_manifest_pair_and_route_guards(tmp_path: Path) -> None:
+    paths = _s3_runner_paths(tmp_path)
+    manifest = tmp_path / "baseline.json"
+    with pytest.raises(ValueError, match="together"):
+        build_task040_level_a_plan(
+            **paths,
+            v9_e_s3_structured_b1_only=True,
+            v9_e_s3_j1_baseline_manifest=manifest,
+        )
+    with pytest.raises(ValueError, match="candidate-only"):
+        build_task040_level_a_plan(
+            **paths,
+            v9_e_s3_j1_baseline_only=True,
+            v9_e_s3_j1_baseline_manifest=manifest,
+            v9_e_s3_j1_baseline_manifest_sha256="d" * 64,
+        )
+    with pytest.raises(ValueError, match="requires the J1 baseline"):
+        build_task040_level_a_plan(
+            **paths,
+            v9_e_s3_structured_b1_only=True,
+        )
+    with pytest.raises(ValueError, match="lowercase SHA256"):
+        build_task040_level_a_plan(
+            **paths,
+            v9_e_s3_structured_b1_only=True,
+            v9_e_s3_j1_baseline_manifest=manifest,
+            v9_e_s3_j1_baseline_manifest_sha256="D" * 64,
+        )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        build_task040_level_a_plan(
+            **paths,
+            v9_e_s3_j1_baseline_only=True,
+            v9_source_bridge_only=True,
+        )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        build_task040_level_a_plan(
+            **paths,
+            v9_e_s3_j1_baseline_only=True,
+            v9_e_s3_structured_b1_only=True,
+            v9_e_s3_j1_baseline_manifest=manifest,
+            v9_e_s3_j1_baseline_manifest_sha256="d" * 64,
+        )
+
+
+def test_s3b_runner_flag_names_are_frozen() -> None:
+    assert V9_E_S3_J1_BASELINE_ONLY_FLAG == "--v9-e-s3-j1-baseline-only"
+    assert V9_E_S3_STRUCTURED_B1_ONLY_FLAG == "--v9-e-s3-structured-b1-only"
+    assert V9_E_S3_J1_BASELINE_MANIFEST_OPTION == (
+        "--v9-e-s3-j1-baseline-manifest"
+    )
+    assert V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION == (
+        "--v9-e-s3-j1-baseline-manifest-sha256"
+    )
+
+
+def test_s3b_runner_direct_json_loader_binds_raw_byte_sha(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "baseline.json"
+    raw = b'{"schema":"direct"}\n'
+    manifest_path.write_bytes(raw)
+
+    manifest, observed_sha256, resolved_path = _load_s3_j1_baseline_manifest(
+        MPI.COMM_WORLD,
+        manifest_path,
+    )
+
+    assert manifest == {"schema": "direct"}
+    assert observed_sha256 == hashlib.sha256(raw).hexdigest()
+    assert resolved_path == str(manifest_path.resolve())
 
 
 def _baseline_manifest() -> tuple[dict[str, object], dict[str, object]]:

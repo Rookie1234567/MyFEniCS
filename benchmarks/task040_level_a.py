@@ -120,6 +120,27 @@ from src.modes.cross_section_spaces import (
     build_matching_cross_section,
 )
 from src.runners.task039_hybrid_iterative import make_task039_hybrid_iterative_profile
+from src.solvers.floquet_background_hcurl_s3_pilot import (
+    S3B_CANDIDATE_R64_LIMIT,
+    S3B_CANDIDATE_R256_LIMIT,
+    S3B_EXPECTED_ACTIVE_ROWS,
+    S3B_EXPECTED_MODE_COUNT,
+    S3B_EXPECTED_ROWS_PER_MODE,
+    S3B_EXTERNAL_SOURCE_COLUMN,
+    S3B_EXTERNAL_SOURCE_LABEL,
+    S3B_EXTERNAL_SOURCE_SEED,
+    S3B_EXTERNAL_SOURCE_SIGN,
+    S3B_FGMRES_INITIAL_MAX_IT,
+    S3B_FGMRES_RESTART,
+    S3B_FIVE_SOURCE_MAX_IT,
+    S3B_FIVE_SOURCE_RESIDUAL_LIMIT,
+    S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT,
+    S3B_MAX_LOCAL_ROWS,
+    S3B_MPI_SIZE,
+    S3B_RSS_HARD_BYTES,
+    S3B_SWAP_LIMIT_BYTES,
+    S3B_WALL_CAP_SECONDS,
+)
 from src.solvers.hybrid_bare_f_authority import (
     V5_BARE_F_METHOD,
     V5_BARE_F_SCHEMA,
@@ -323,6 +344,59 @@ TASK040_V5_REQUIRED_THREAD_ENV = (
 )
 V9_SOURCE_PACKET_ROOT_OPTION = "--v9-source-packet-root"
 V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION = "--v9-source-packet-manifest-sha256"
+V9_E_S3_J1_BASELINE_ONLY_FLAG = "--v9-e-s3-j1-baseline-only"
+V9_E_S3_STRUCTURED_B1_ONLY_FLAG = "--v9-e-s3-structured-b1-only"
+V9_E_S3_J1_BASELINE_MANIFEST_OPTION = "--v9-e-s3-j1-baseline-manifest"
+V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION = (
+    "--v9-e-s3-j1-baseline-manifest-sha256"
+)
+V9_E_S3_J1_BASELINE_SCHEMA = "task040.v9_e.s3b_j1_baseline_formal.v1"
+V9_E_S3_J1_BASELINE_METHOD = "task040_v9_e_s3b_j1_baseline_formal"
+V9_E_S3_J1_BASELINE_PROFILE_ID = "task040.v9_e.s3b.j1_baseline.v1"
+V9_E_S3_B1_SCHEMA = "task040.v9_e.s3b_b1_external_core.v1"
+V9_E_S3_B1_METHOD = "task040_v9_e_s3b_b1_external_core"
+V9_E_S3_B1_PROFILE_ID = "task040.v9_e.s3b.b1_external_core.v1"
+V9_E_S3_INPUT_RELATIVE_PATH = (
+    "input/official/task039/5nm_p6h10_hybrid_iterative_m120_candidate_mpi8.dat"
+)
+V9_E_S3_INPUT_SHA256 = (
+    "3fa567d482ba45495fe9d097ba16946c330b0ba208fc8c4c5e47b7fcd6315161"
+)
+V9_E_S3_MARKER_SEQUENCE = (
+    "s3b_j1_system_begin",
+    "s3b_j1_system_ready",
+    "s3b_j1_source_ready",
+    "s3b_j1_f_materialize_begin",
+    "s3b_j1_f_materialize_ready",
+    "s3b_j1_f_destroyed",
+    "s3b_j1_action_ready",
+    "s3b_j1_one_apply_begin",
+    "s3b_j1_one_apply_end",
+    "s3b_j1_fgmres_setup",
+    "s3b_j1_r8",
+    "s3b_j1_r16",
+    "s3b_j1_r32",
+    "s3b_j1_r64",
+    "s3b_j1_solve_end",
+    "s3b_j1_cleanup_complete",
+)
+V9_E_S3_B1_MARKER_SEQUENCE = (
+    "s3b_b1_baseline_validated",
+    "s3b_b1_context_ready",
+    "s3b_b1_source_ready",
+    "s3b_b1_one_apply_begin",
+    "s3b_b1_one_apply_end",
+    "s3b_b1_fgmres_setup",
+    "s3b_b1_r8",
+    "s3b_b1_r16",
+    "s3b_b1_r32",
+    "s3b_b1_r64",
+    "s3b_b1_solve_end",
+    "s3b_b1_initial_gate",
+    "s3b_b1_source_factory_ready",
+    "s3b_b1_cleanup_begin",
+    "s3b_b1_cleanup_complete",
+)
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -402,6 +476,20 @@ __all__ = (
     "V9_SOURCE_BRIDGE_ONLY_SOURCES",
     "V9_SOURCE_PACKET_ROOT_OPTION",
     "V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION",
+    "V9_E_S3_J1_BASELINE_ONLY_FLAG",
+    "V9_E_S3_STRUCTURED_B1_ONLY_FLAG",
+    "V9_E_S3_J1_BASELINE_MANIFEST_OPTION",
+    "V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION",
+    "V9_E_S3_J1_BASELINE_SCHEMA",
+    "V9_E_S3_J1_BASELINE_METHOD",
+    "V9_E_S3_J1_BASELINE_PROFILE_ID",
+    "V9_E_S3_B1_SCHEMA",
+    "V9_E_S3_B1_METHOD",
+    "V9_E_S3_B1_PROFILE_ID",
+    "V9_E_S3_INPUT_RELATIVE_PATH",
+    "V9_E_S3_INPUT_SHA256",
+    "V9_E_S3_MARKER_SEQUENCE",
+    "V9_E_S3_B1_MARKER_SEQUENCE",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -484,6 +572,10 @@ def build_task040_level_a_plan(
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
+    v9_e_s3_j1_baseline_only: bool = False,
+    v9_e_s3_structured_b1_only: bool = False,
+    v9_e_s3_j1_baseline_manifest: str | Path | None = None,
+    v9_e_s3_j1_baseline_manifest_sha256: str | None = None,
     v9_source_packet_root: str | Path | None = None,
     v9_source_packet_manifest_sha256: str | None = None,
     interface_packet_root: str | Path | None = None,
@@ -518,6 +610,39 @@ def build_task040_level_a_plan(
         )
     ):
         raise ValueError("V9 source packet manifest SHA must be lowercase SHA256")
+    s3_route = bool(v9_e_s3_j1_baseline_only or v9_e_s3_structured_b1_only)
+    if (v9_e_s3_j1_baseline_manifest is None) != (
+        v9_e_s3_j1_baseline_manifest_sha256 is None
+    ):
+        raise ValueError(
+            "V9-E S3 J1 baseline manifest path and SHA must be supplied together"
+        )
+    if v9_e_s3_j1_baseline_manifest is not None and not v9_e_s3_structured_b1_only:
+        raise ValueError(
+            "V9-E S3 J1 baseline manifest parameters are candidate-only"
+        )
+    if v9_e_s3_structured_b1_only and v9_e_s3_j1_baseline_manifest is None:
+        raise ValueError(
+            "V9-E S3 structured B1 candidate requires the J1 baseline manifest"
+        )
+    if v9_e_s3_j1_baseline_manifest_sha256 is not None and (
+        len(str(v9_e_s3_j1_baseline_manifest_sha256)) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in str(v9_e_s3_j1_baseline_manifest_sha256)
+        )
+    ):
+        raise ValueError(
+            "V9-E S3 J1 baseline manifest SHA must be lowercase SHA256"
+        )
+    expected_s3_input = (
+        Path(__file__).resolve().parents[1] / V9_E_S3_INPUT_RELATIVE_PATH
+    ).resolve()
+    if s3_route and Path(input_path).resolve() != expected_s3_input:
+        raise ValueError(
+            "V9-E S3 routes require the frozen Task039 MPI8 input path: "
+            f"{expected_s3_input}"
+        )
     plan = {
         "schema": TASK040_LEVEL_A_SCHEMA,
         "method": TASK040_LEVEL_A_METHOD,
@@ -564,6 +689,8 @@ def build_task040_level_a_plan(
                 v8_adaptive_stage_bc_only,
                 v9_source_bridge_only,
                 v9_c0_explicit_coarse_only,
+                v9_e_s3_j1_baseline_only,
+                v9_e_s3_structured_b1_only,
             )
         )
         > 1
@@ -1248,6 +1375,159 @@ def build_task040_level_a_plan(
                     "coarse_direct_factor",
                     "qep",
                     "official_rt_a",
+                ],
+            }
+        )
+    if v9_e_s3_j1_baseline_only:
+        plan.update(
+            {
+                "route": "V9_E_S3B",
+                "schema": V9_E_S3_J1_BASELINE_SCHEMA,
+                "method": V9_E_S3_J1_BASELINE_METHOD,
+                "profile": V9_E_S3_J1_BASELINE_PROFILE_ID,
+                "v9_e_s3_j1_baseline_only": True,
+                "research_only": True,
+                "oracle_only": True,
+                "scalable_candidate": False,
+                "pde_solve": "bottom_j1_baseline_formal",
+                "source_order": [S3B_EXTERNAL_SOURCE_LABEL],
+                "planned_source_order": [S3B_EXTERNAL_SOURCE_LABEL],
+                "mandatory_checkpoints": [8, 16, 32, 64],
+                "conditional_checkpoints": [],
+                "fixed_configuration": {
+                    "side": "bottom",
+                    "bottom_operator": "bare_F",
+                    "active_rows": S3B_EXPECTED_ACTIVE_ROWS,
+                    "operator_identity": "system.fine_action",
+                    "source_label": S3B_EXTERNAL_SOURCE_LABEL,
+                    "source_seed": S3B_EXTERNAL_SOURCE_SEED,
+                    "source_column": S3B_EXTERNAL_SOURCE_COLUMN,
+                    "source_sign": S3B_EXTERNAL_SOURCE_SIGN,
+                    "fgmres_restart": S3B_FGMRES_RESTART,
+                    "fgmres_initial_max_it": S3B_FGMRES_INITIAL_MAX_IT,
+                    "external_one_apply_before_fgmres": True,
+                    "full_A_used": False,
+                    "qep_calls": 0,
+                },
+                "input_expected": {
+                    "relative_path": V9_E_S3_INPUT_RELATIVE_PATH,
+                    "sha256": V9_E_S3_INPUT_SHA256,
+                },
+                "factor_inventory": {
+                    "j1_layer_factor_count_ready": 6,
+                    "full_cross_section_factor_count_ready": 6,
+                    "factor_count_after_cleanup": 0,
+                    "full_side_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                },
+                "absolute_terminate_memory_bytes": S3B_RSS_HARD_BYTES,
+                "watchdog_hard_stop_bytes": S3B_RSS_HARD_BYTES,
+                "watchdog_required": True,
+                "bottom_route_only_required": True,
+                "swap_limit_bytes": S3B_SWAP_LIMIT_BYTES,
+                "timeout_seconds": S3B_WALL_CAP_SECONDS,
+                "formal_adjudication": True,
+                "marker_sequence": list(V9_E_S3_MARKER_SEQUENCE),
+                "forbidden": [
+                    "group_factors",
+                    "schur_transform",
+                    "full_side_factor",
+                    "full_hybrid",
+                    "full_hybrid_outer_fgmres",
+                    "qep",
+                    "physical_dtn",
+                    "candidate_sources",
+                    "global_direct_factor",
+                ],
+            }
+        )
+    if v9_e_s3_structured_b1_only:
+        baseline_manifest_path = Path(v9_e_s3_j1_baseline_manifest).resolve()
+        plan.update(
+            {
+                "route": "V9_E_S3B",
+                "schema": V9_E_S3_B1_SCHEMA,
+                "method": V9_E_S3_B1_METHOD,
+                "profile": V9_E_S3_B1_PROFILE_ID,
+                "v9_e_s3_structured_b1_only": True,
+                "research_only": True,
+                "oracle_only": False,
+                "scalable_candidate": False,
+                "pde_solve": "bottom_structured_background_b1_formal",
+                "source_order": list(V5_BARE_F_SOURCE_LABELS),
+                "planned_source_order": list(V5_BARE_F_SOURCE_LABELS),
+                "mandatory_checkpoints": [8, 16, 32, 64],
+                "conditional_checkpoints": [256],
+                "fixed_configuration": {
+                    "side": "bottom",
+                    "bottom_operator": "bare_F",
+                    "active_rows": S3B_EXPECTED_ACTIVE_ROWS,
+                    "operator_identity": "target_system.fine_action",
+                    "source_order": list(V5_BARE_F_SOURCE_LABELS),
+                    "fgmres_restart": S3B_FGMRES_RESTART,
+                    "fgmres_initial_max_it": S3B_FGMRES_INITIAL_MAX_IT,
+                    "fgmres_conditional_total_it": 256,
+                    "external_one_apply_before_fgmres": True,
+                    "five_source_one_apply": (
+                        "conditional_per_source_after_external_positive"
+                    ),
+                    "source_factory": "S3CurrentLayoutSourceFactory",
+                    "source_work_directory": "<run_directory>/s3_source_work",
+                    "selected_mode_provider": "_v5_selected_mode_provider",
+                    "background_material": "17/50 grating + 33/50 air principal sqrt",
+                    "additional_absorbing_shift": 0.0,
+                    "exact_physical_fft": False,
+                },
+                "input_expected": {
+                    "relative_path": V9_E_S3_INPUT_RELATIVE_PATH,
+                    "sha256": V9_E_S3_INPUT_SHA256,
+                },
+                "baseline_manifest": {
+                    "path": str(baseline_manifest_path),
+                    "sha256": str(v9_e_s3_j1_baseline_manifest_sha256),
+                },
+                "factor_inventory": {
+                    "owner_local_bounded_factor_count": S3B_EXPECTED_MODE_COUNT,
+                    "owner_local_bounded_factor_count_ready": S3B_EXPECTED_MODE_COUNT,
+                    "max_local_rows": S3B_EXPECTED_ROWS_PER_MODE,
+                    "max_local_rows_limit": S3B_MAX_LOCAL_ROWS,
+                    "full_side_factor_count": 0,
+                    "full_cross_section_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "global_coarse_factor_count": 0,
+                },
+                "absolute_terminate_memory_bytes": S3B_RSS_HARD_BYTES,
+                "watchdog_hard_stop_bytes": S3B_RSS_HARD_BYTES,
+                "watchdog_required": True,
+                "bottom_route_only_required": True,
+                "swap_limit_bytes": S3B_SWAP_LIMIT_BYTES,
+                "timeout_seconds": S3B_WALL_CAP_SECONDS,
+                "formal_adjudication": True,
+                "marker_sequence": list(V9_E_S3_B1_MARKER_SEQUENCE),
+                "structure_gate": {
+                    "phase_model": "topological_orbit_dft_approximation",
+                    "fe_sized_topology_coordinate_metadata_allgather": True,
+                    "production": False,
+                },
+                "gate": {
+                    "initial_r64_limit": S3B_CANDIDATE_R64_LIMIT,
+                    "required_j1_improvement": 4.0,
+                    "conditional_r256_limit": S3B_CANDIDATE_R256_LIMIT,
+                    "five_source_residual_limit": S3B_FIVE_SOURCE_RESIDUAL_LIMIT,
+                    "modal_external_residual_limit": S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT,
+                    "max_iterations": S3B_FIVE_SOURCE_MAX_IT,
+                },
+                "forbidden": [
+                    "group_factors",
+                    "schur_transform",
+                    "full_side_factor",
+                    "full_cross_section_factor",
+                    "global_direct_factor",
+                    "full_basis_replication",
+                    "raw_petsc_row_fft",
+                    "parameter_scan",
+                    "symbol_scan",
+                    "ordinary_defaults",
                 ],
             }
         )
@@ -2046,6 +2326,72 @@ def _file_marker_callback(
             stream.write(json.dumps(marker_record, sort_keys=True) + "\n")
 
     return record
+
+
+def _load_s3_j1_baseline_manifest(
+    comm: MPI.Intracomm,
+    manifest_path: str | Path,
+) -> tuple[Any, str, str]:
+    """Read the candidate's direct baseline JSON once and broadcast its hash."""
+
+    payload: dict[str, Any] | None = None
+    if int(comm.rank) == 0:
+        try:
+            path = Path(manifest_path).resolve()
+            raw = path.read_bytes()
+            observed_sha256 = hashlib.sha256(raw).hexdigest()
+            manifest = json.loads(raw.decode("utf-8"))
+            payload = {
+                "manifest": manifest,
+                "observed_sha256": observed_sha256,
+                "resolved_path": str(path),
+                "error": None,
+            }
+        except Exception as exc:  # noqa: BLE001 - broadcast the root read failure
+            payload = {
+                "manifest": None,
+                "observed_sha256": None,
+                "resolved_path": None,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+    payload = comm.bcast(payload, root=0)
+    if payload is None or payload.get("error") is not None:
+        detail = "missing root payload" if payload is None else payload.get("error")
+        raise ValueError(f"V9-E S3 J1 baseline manifest read failed: {detail}")
+    return (
+        payload["manifest"],
+        str(payload["observed_sha256"]),
+        str(payload["resolved_path"]),
+    )
+
+
+def _s3_fixed_input_identity(
+    comm: MPI.Intracomm,
+    input_path: str | Path,
+) -> tuple[str, str]:
+    """Resolve, read, and hash the frozen S3 input collectively."""
+
+    payload: dict[str, Any] | None = None
+    if int(comm.rank) == 0:
+        try:
+            resolved_path = Path(input_path).resolve()
+            raw = resolved_path.read_bytes()
+            payload = {
+                "resolved_path": str(resolved_path),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "error": None,
+            }
+        except Exception as exc:  # noqa: BLE001 - broadcast the root read failure
+            payload = {
+                "resolved_path": None,
+                "sha256": None,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+    payload = comm.bcast(payload, root=0)
+    if payload is None or payload.get("error") is not None:
+        detail = "missing root payload" if payload is None else payload.get("error")
+        raise ValueError(f"V9-E S3 fixed input identity failed: {detail}")
+    return str(payload["resolved_path"]), str(payload["sha256"])
 
 
 def _destroy_explicit_components(components: Any) -> bool:
@@ -6630,6 +6976,10 @@ def run_task040_level_a(
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
+    v9_e_s3_j1_baseline_only: bool = False,
+    v9_e_s3_structured_b1_only: bool = False,
+    v9_e_s3_j1_baseline_manifest: str | Path | None = None,
+    v9_e_s3_j1_baseline_manifest_sha256: str | None = None,
     v9_source_packet_root: str | Path | None = None,
     v9_source_packet_manifest_sha256: str | None = None,
     packet_root: str | Path | None = None,
@@ -6662,6 +7012,8 @@ def run_task040_level_a(
                 v8_adaptive_stage_bc_only,
                 v9_source_bridge_only,
                 v9_c0_explicit_coarse_only,
+                v9_e_s3_j1_baseline_only,
+                v9_e_s3_structured_b1_only,
             )
         )
         > 1
@@ -6734,6 +7086,79 @@ def run_task040_level_a(
             raise ValueError("V8 adaptive run_directory must not be the frozen exact spool root")
         if input_path is None:
             raise ValueError("V8 adaptive route requires the official input_path")
+    s3_route = bool(v9_e_s3_j1_baseline_only or v9_e_s3_structured_b1_only)
+    if (v9_e_s3_j1_baseline_manifest is None) != (
+        v9_e_s3_j1_baseline_manifest_sha256 is None
+    ):
+        raise ValueError(
+            "V9-E S3 J1 baseline manifest path and SHA must be supplied together"
+        )
+    if v9_e_s3_j1_baseline_manifest is not None and not v9_e_s3_structured_b1_only:
+        raise ValueError(
+            "V9-E S3 J1 baseline manifest parameters are candidate-only"
+        )
+    if v9_e_s3_structured_b1_only and v9_e_s3_j1_baseline_manifest is None:
+        raise ValueError(
+            "V9-E S3 structured B1 candidate requires the J1 baseline manifest"
+        )
+    if v9_e_s3_j1_baseline_manifest_sha256 is not None and (
+        len(str(v9_e_s3_j1_baseline_manifest_sha256)) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in str(v9_e_s3_j1_baseline_manifest_sha256)
+        )
+    ):
+        raise ValueError(
+            "V9-E S3 J1 baseline manifest SHA must be lowercase SHA256"
+        )
+    s3_resolved_input_path: str | None = None
+    if s3_route:
+        if run_directory is None:
+            raise ValueError("V9-E S3 route requires a separate run_directory")
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError("V9-E S3 run_directory must not be the exact spool root")
+        if input_path is None:
+            raise ValueError("V9-E S3 route requires the frozen official input_path")
+        if int(comm.size) != S3B_MPI_SIZE:
+            raise ValueError(
+                f"V9-E S3 route requires MPI size {S3B_MPI_SIZE}, got {comm.size}"
+            )
+        s3_resolved_input_path, actual_input_sha256 = _s3_fixed_input_identity(
+            comm,
+            input_path,
+        )
+        expected_input = (
+            Path(__file__).resolve().parents[1] / V9_E_S3_INPUT_RELATIVE_PATH
+        ).resolve()
+        if s3_resolved_input_path != str(expected_input):
+            raise ValueError(
+                "V9-E S3 route input path mismatch: "
+                f"expected {expected_input}, got {s3_resolved_input_path}"
+            )
+        if str(input_sha256) != V9_E_S3_INPUT_SHA256:
+            raise ValueError(
+                "V9-E S3 route input SHA256 mismatch: "
+                f"expected {V9_E_S3_INPUT_SHA256}, got {input_sha256}"
+            )
+        if actual_input_sha256 != V9_E_S3_INPUT_SHA256:
+            raise ValueError(
+                "V9-E S3 route raw input SHA256 mismatch: "
+                f"expected {V9_E_S3_INPUT_SHA256}, got {actual_input_sha256}"
+            )
+        if actual_input_sha256 != str(input_sha256):
+            raise ValueError(
+                "V9-E S3 route raw input SHA256 differs from supplied input_sha256"
+            )
+        if not watchdog_enabled:
+            raise ValueError("V9-E S3 route requires watchdog_enabled=true")
+        if not bottom_route_only:
+            raise ValueError("V9-E S3 route requires bottom_route_only=true")
+        if watchdog_hard_stop_bytes != S3B_RSS_HARD_BYTES:
+            raise ValueError(
+                "V9-E S3 route requires watchdog_hard_stop_bytes=45 GiB"
+            )
+        if not callable(resource_callback):
+            raise TypeError("V9-E S3 route requires a callable resource_callback")
     if (
         interface_schur
         or packet_producer
@@ -6751,6 +7176,8 @@ def run_task040_level_a(
         or v8_adaptive_stage_bc_only
         or v9_source_bridge_only
         or v9_c0_explicit_coarse_only
+        or v9_e_s3_j1_baseline_only
+        or v9_e_s3_structured_b1_only
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6795,6 +7222,10 @@ def run_task040_level_a(
             if v7_moving_pml_full_state
             else V9_C0_EXPLICIT_COARSE_ONLY_METHOD
             if v9_c0_explicit_coarse_only
+            else V9_E_S3_B1_METHOD
+            if v9_e_s3_structured_b1_only
+            else V9_E_S3_J1_BASELINE_METHOD
+            if v9_e_s3_j1_baseline_only
             else V8_FULL_SPECTRUM_ONLY_METHOD
             if v8_full_spectrum_only
             else TASK040_V6_2_INTERFACE_SCHUR_METHOD
@@ -6983,6 +7414,65 @@ def run_task040_level_a(
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
         )
+    if v9_e_s3_j1_baseline_only:
+        from src.solvers.floquet_background_hcurl_s3_formal import (
+            run_s3_j1_baseline_formal,
+        )
+
+        return run_s3_j1_baseline_formal(
+            cfg,
+            profile,
+            comm=comm,
+            source_sha=source_sha,
+            input_path=str(s3_resolved_input_path),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            resource_callback=resource_callback,
+        )
+    if v9_e_s3_structured_b1_only:
+        from src.solvers.floquet_background_hcurl_s3_formal import (
+            _run_s3_b1_candidate_external_core,
+            validate_s3_j1_baseline_manifest,
+        )
+
+        (
+            baseline_manifest,
+            observed_manifest_sha256,
+            baseline_path,
+        ) = _load_s3_j1_baseline_manifest(
+            comm,
+            v9_e_s3_j1_baseline_manifest,
+        )
+        validated_baseline = validate_s3_j1_baseline_manifest(
+            baseline_manifest,
+            str(v9_e_s3_j1_baseline_manifest_sha256),
+            observed_manifest_sha256,
+            source_sha=str(source_sha),
+            input_path=str(s3_resolved_input_path),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+        )
+        result = _run_s3_b1_candidate_external_core(
+            cfg,
+            profile,
+            comm=comm,
+            source_sha=source_sha,
+            input_path=str(s3_resolved_input_path),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            validated_baseline=validated_baseline,
+            marker_callback=marker_callback,
+            resource_callback=resource_callback,
+            source_work_directory=Path(run_directory) / "s3_source_work",
+            selected_mode_provider=_v5_selected_mode_provider(comm),
+        )
+        result["baseline_manifest_binding"] = {
+            "path": str(baseline_path),
+            "expected_sha256": str(v9_e_s3_j1_baseline_manifest_sha256),
+            "observed_sha256": observed_manifest_sha256,
+        }
+        return result
     if v9_c0_explicit_coarse_only:
         from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
 
@@ -7536,6 +8026,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_C0_EXPLICIT_COARSE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_S3_J1_BASELINE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_S3_STRUCTURED_B1_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_S3_J1_BASELINE_MANIFEST_OPTION)
+    parser.add_argument(V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION)
     parser.add_argument(V9_SOURCE_PACKET_ROOT_OPTION)
     parser.add_argument(V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION)
     parser.add_argument("--interface-packet-root")
@@ -7567,6 +8061,12 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
+        v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
+        v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
+        v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,
+        v9_e_s3_j1_baseline_manifest_sha256=(
+            args.v9_e_s3_j1_baseline_manifest_sha256
+        ),
         v9_source_packet_root=args.v9_source_packet_root,
         v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         interface_packet_root=args.interface_packet_root,
@@ -7615,6 +8115,12 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
+        v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
+        v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
+        v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,
+        v9_e_s3_j1_baseline_manifest_sha256=(
+            args.v9_e_s3_j1_baseline_manifest_sha256
+        ),
         v9_source_packet_root=args.v9_source_packet_root,
         v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         resource_callback=(
@@ -7630,6 +8136,9 @@ def main(argv: list[str] | None = None) -> int:
                         if args.v5_route_c
                         else V9_C0_HARD_STOP_BYTES
                         if args.v9_c0_explicit_coarse_only
+                        else S3B_RSS_HARD_BYTES
+                        if args.v9_e_s3_j1_baseline_only
+                        or args.v9_e_s3_structured_b1_only
                         else V8_ADAPTIVE_HARD_STOP_BYTES
                         if args.v8_adaptive_schwarz_only
                         or args.v8_adaptive_stage_b1_only
@@ -7656,6 +8165,8 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v8_adaptive_stage_bc_only
                     or args.v9_source_bridge_only
                     or args.v9_c0_explicit_coarse_only
+                    or args.v9_e_s3_j1_baseline_only
+                    or args.v9_e_s3_structured_b1_only
                 )
                 else None
             )
@@ -7680,6 +8191,8 @@ def main(argv: list[str] | None = None) -> int:
             or args.v8_adaptive_stage_bc_only
             or args.v9_source_bridge_only
             or args.v9_c0_explicit_coarse_only
+            or args.v9_e_s3_j1_baseline_only
+            or args.v9_e_s3_structured_b1_only
             else None
         ),
         v7_continuation=v7_continuation,
