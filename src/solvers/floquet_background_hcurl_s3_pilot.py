@@ -239,10 +239,16 @@ def _build_s3_external_dtn_source_vector(system: Any) -> tuple[Any, dict[str, An
     c_shape = tuple(int(value) for value in coupling.getSize())
     if fine_shape[0] != fine_shape[1]:
         raise ValueError(f"S3b target fine_action must be square, got {fine_shape}")
-    if c_shape != (fine_shape[0], 296):
+    if c_shape[0] != fine_shape[0]:
         raise ValueError(
-            "S3b target C shape must be (fine rows, 296), "
+            "S3b target C row count must equal fine rows, "
             f"got {c_shape} for fine shape {fine_shape}"
+        )
+    c_column_count = int(c_shape[1])
+    if c_column_count <= S3B_EXTERNAL_SOURCE_COLUMN:
+        raise ValueError(
+            "S3b target C column count must cover fixed source column 177, "
+            f"got {c_column_count}"
         )
     fine_ownership = tuple(int(value) for value in fine_action.getOwnershipRange())
     c_ownership = tuple(int(value) for value in coupling.getOwnershipRange())
@@ -260,10 +266,10 @@ def _build_s3_external_dtn_source_vector(system: Any) -> tuple[Any, dict[str, An
         coefficient_ownership = tuple(
             int(value) for value in coefficient.getOwnershipRange()
         )
-        if coefficient.getSize() != 296:
+        if coefficient.getSize() != c_column_count:
             raise ValueError(
-                "S3b C coefficient Vec must have global size 296, "
-                f"got {coefficient.getSize()}"
+                "S3b C coefficient Vec must match current C column count, "
+                f"expected {c_column_count}, got {coefficient.getSize()}"
             )
         coefficient.set(0.0)
         coefficient_start, coefficient_stop = coefficient_ownership
@@ -350,7 +356,9 @@ def _build_s3_external_dtn_source_vector(system: Any) -> tuple[Any, dict[str, An
             "raw_global_row_remap": False,
             "fine_shape": list(fine_shape),
             "C_shape": list(c_shape),
+            "C_column_count": c_column_count,
             "active_ownership_match": True,
+            "coefficient_global_size": c_column_count,
             "coefficient_global_unit_entry_count": global_unit_count,
             "coefficient_global_nonzero_entry_count": global_nonzero_count,
             "source_finite": source_finite,

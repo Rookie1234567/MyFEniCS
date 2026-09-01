@@ -1014,6 +1014,76 @@ def _diagonal_operator(size: int, comm: MPI.Comm) -> PETSc.Mat:
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="serial/MPI2 only")
+def test_s3_external_source_vector_uses_current_c_column_count() -> None:
+    """The frozen source column must work with the current 300-column C block."""
+
+    comm = MPI.COMM_WORLD
+    fine_action = None
+    coupling = None
+    source = None
+    try:
+        fine_action = PETSc.Mat().createAIJ(
+            size=((PETSc.DECIDE, 4), (PETSc.DECIDE, 4)),
+            nnz=1,
+            comm=comm,
+        )
+        fine_start, fine_stop = map(int, fine_action.getOwnershipRange())
+        for row in range(fine_start, fine_stop):
+            fine_action.setValue(row, row, PETSc.ScalarType(1.0 + 0.0j))
+        fine_action.assemble()
+
+        coupling = PETSc.Mat().createAIJ(
+            size=((PETSc.DECIDE, 4), (PETSc.DECIDE, 300)),
+            nnz=1,
+            comm=comm,
+        )
+        c_start, c_stop = map(int, coupling.getOwnershipRange())
+        assert (c_start, c_stop) == (fine_start, fine_stop)
+        if c_start <= 0 < c_stop:
+            coupling.setValue(
+                0,
+                S3B_EXTERNAL_SOURCE_COLUMN,
+                PETSc.ScalarType(2.0 + 3.0j),
+            )
+        coupling.assemble()
+
+        system = SimpleNamespace(
+            fine_action=fine_action,
+            blocks=SimpleNamespace(C=coupling),
+        )
+        source, audit = s3_pilot._build_s3_external_dtn_source_vector(system)
+        local_source = np.asarray(source.getArray(readonly=True), dtype=np.complex128)
+        global_nonzero = int(
+            comm.allreduce(int(np.count_nonzero(local_source != 0.0)), op=MPI.SUM)
+        )
+
+        assert source.getSize() == 4
+        assert global_nonzero > 0
+        assert audit["fine_shape"] == [4, 4]
+        assert audit["C_shape"] == [4, 300]
+        assert audit["C_column_count"] == 300
+        assert audit["coefficient_global_size"] == 300
+        assert audit["resolved_column"] == S3B_EXTERNAL_SOURCE_COLUMN
+        assert audit["coefficient_global_unit_entry_count"] == 1
+        assert audit["coefficient_global_nonzero_entry_count"] == 1
+        assert audit["active_ownership_match"] is True
+        assert audit["source_ownership_range"] == audit["fine_ownership_range"]
+        assert audit["C_ownership_range"] == audit["fine_ownership_range"]
+        assert audit["source_nonzero"] is True
+        assert audit["source_finite"] is True
+        assert audit["sign_application_count"] == 1
+        assert audit["extra_sign_applied"] is False
+        assert audit["numeric_allgather"] is False
+    finally:
+        if source is not None:
+            source.destroy()
+        if coupling is not None:
+            coupling.destroy()
+        if fine_action is not None:
+            fine_action.destroy()
+
+
+@pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="serial/MPI2 only")
 def test_s3b_four_source_fixed_continuation_orchestration(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
