@@ -31,16 +31,26 @@ from src.solvers.floquet_background_hcurl_s3_pilot import (
     S3B_EXTERNAL_SOURCE_SIGN,
     S3B_FGMRES_INITIAL_MAX_IT,
     S3B_FGMRES_RESTART,
+    S3B_FIVE_SOURCE_INCOMPLETE,
+    S3B_FIVE_SOURCE_MAX_IT,
+    S3B_FIVE_SOURCE_NO_SIGNAL,
+    S3B_FIVE_SOURCE_PASS,
+    S3B_FIVE_SOURCE_RESIDUAL_LIMIT,
+    S3B_FIVE_SOURCE_RESOURCE_STOP,
+    S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT,
+    S3B_FIVE_SOURCE_UNSTABLE,
     S3B_INITIAL_NO_SIGNAL,
     S3B_INITIAL_POSITIVE,
     S3B_INITIAL_UNSTABLE,
     S3B_MAX_LOCAL_ROWS,
     S3B_NEXT_CONDITIONAL_256,
+    S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION,
     S3B_NEXT_FIVE_SOURCE_BOTTOM,
     S3B_NEXT_FIXED_LOR,
     S3CurrentLayoutSourceFactory,
     S3FixedRightFgmres,
     adjudicate_s3_b1_conditional_gate,
+    adjudicate_s3_b1_final_five_source_bare_f_gate,
     adjudicate_s3_b1_initial_gate,
     build_s3_b1_background_config,
 )
@@ -231,6 +241,104 @@ def test_s3b_b1_fixed_background_copy_and_two_level_gates() -> None:
     )
     assert conditional_unstable["classification"] == S3B_CONDITIONAL_UNSTABLE
     assert conditional_unstable["next_stage"] == S3B_NEXT_FIXED_LOR
+
+    strict_labels = {
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+    }
+    five_source_outcomes = {
+        label: {
+            "postsolve": {
+                "true_residual_relative": (
+                    S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT
+                    if label in strict_labels
+                    else S3B_FIVE_SOURCE_RESIDUAL_LIMIT
+                ),
+                "iteration": S3B_FIVE_SOURCE_MAX_IT,
+                "finite": True,
+            },
+            "finite": True,
+            "checkpoint_complete": True,
+            "breakdown": False,
+            "happy_breakdown": False,
+        }
+        for label in V5_BARE_F_SOURCE_LABELS
+    }
+    five_pass = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        five_source_outcomes,
+        resource_ok=True,
+    )
+    assert five_pass["classification"] == S3B_FIVE_SOURCE_PASS
+    assert five_pass["next_stage"] == S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION
+    assert five_pass["labels_complete"] is True
+    assert five_pass["iteration_pass"] is True
+
+    five_no_signal_outcomes = deepcopy(five_source_outcomes)
+    five_no_signal_outcomes["fixed_random_repeat_0"]["postsolve"][
+        "true_residual_relative"
+    ] = S3B_FIVE_SOURCE_RESIDUAL_LIMIT + 1.0e-6
+    five_no_signal = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        five_no_signal_outcomes,
+        resource_ok=True,
+    )
+    assert five_no_signal["classification"] == S3B_FIVE_SOURCE_NO_SIGNAL
+    assert five_no_signal["next_stage"] == S3B_NEXT_FIXED_LOR
+
+    five_unstable_outcomes = deepcopy(five_source_outcomes)
+    five_unstable_outcomes["external_dtn_coupling"]["breakdown"] = True
+    five_unstable = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        five_unstable_outcomes,
+        resource_ok=True,
+    )
+    assert five_unstable["classification"] == S3B_FIVE_SOURCE_UNSTABLE
+    assert five_unstable["next_stage"] == S3B_NEXT_FIXED_LOR
+
+    five_incomplete_solve_outcomes = deepcopy(five_source_outcomes)
+    five_incomplete_solve_outcomes["external_dtn_coupling"]["checkpoint_complete"] = (
+        False
+    )
+    five_incomplete_solve = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        five_incomplete_solve_outcomes,
+        resource_ok=True,
+    )
+    assert five_incomplete_solve["classification"] == S3B_FIVE_SOURCE_UNSTABLE
+    assert five_incomplete_solve["next_stage"] == S3B_NEXT_FIXED_LOR
+
+    five_resource = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        five_source_outcomes,
+        resource_ok=False,
+    )
+    assert five_resource["classification"] == S3B_FIVE_SOURCE_RESOURCE_STOP
+    assert five_resource["next_stage"] == S3B_NEXT_FIXED_LOR
+
+    five_missing_outcomes = dict(five_source_outcomes)
+    five_missing_outcomes.pop("fixed_random_repeat_1")
+    five_missing = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        five_missing_outcomes,
+        resource_ok=True,
+    )
+    assert five_missing["classification"] == S3B_FIVE_SOURCE_INCOMPLETE
+    assert five_missing["next_stage"] == S3B_NEXT_FIXED_LOR
+
+    five_early_outcomes = deepcopy(five_source_outcomes)
+    five_early_outcomes["fixed_random_repeat_1"] = {
+        "postsolve": {
+            "true_residual_relative": S3B_FIVE_SOURCE_RESIDUAL_LIMIT,
+            "iteration": 7,
+            "finite": True,
+        },
+        "finite": False,
+        "checkpoint_complete": False,
+        "breakdown": False,
+        "happy_breakdown": True,
+    }
+    five_early = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        five_early_outcomes,
+        resource_ok=True,
+    )
+    assert five_early["classification"] == S3B_FIVE_SOURCE_PASS
+    assert five_early["checks"]["fixed_random_repeat_1"]["actual_final_iteration"] == 7
 
 
 def test_s3b_baseline_validator_and_candidate_comparator_real_schema() -> None:
@@ -434,6 +542,9 @@ def test_s3b_fixed_right_fgmres_tiny_diagonal_setup_reuse_and_lifecycle() -> Non
     operator = None
     rhs = None
     solver = None
+    fixed_solver = None
+    misuse_solver = None
+    none_gate_solver = None
     action = _BorrowedIdentityAction()
     try:
         operator = _diagonal_operator(512, comm)
@@ -483,6 +594,7 @@ def test_s3b_fixed_right_fgmres_tiny_diagonal_setup_reuse_and_lifecycle() -> Non
         assert conditional["finite"] is True
         assert conditional["setup_count"] == 1
         assert conditional["setup_reused"] is True
+        assert conditional["fixed_five_source_qualification"] is False
         assert conditional["continuation_strategy"] == (
             "same_ksp_pc_service_nonzero_initial_restart_continuation"
         )
@@ -492,7 +604,51 @@ def test_s3b_fixed_right_fgmres_tiny_diagonal_setup_reuse_and_lifecycle() -> Non
         assert action.apply_count > 0
         assert solver.diagnostics["initial_solve_count"] == 1
         assert solver.diagnostics["conditional_solve_count"] == 1
+
+        fixed_solver = S3FixedRightFgmres(operator, action)
+        fixed_initial = fixed_solver.solve_initial(rhs, "tiny_diagonal_fixed")
+        assert fixed_initial["iterations"] == S3B_FGMRES_INITIAL_MAX_IT
+        assert fixed_initial["checkpoint_complete"] is True
+        assert fixed_initial["finite"] is True
+        fixed_conditional = fixed_solver.solve_conditional_to_256(
+            rhs,
+            "tiny_diagonal_fixed",
+            initial_gate=None,
+            fixed_five_source_qualification=True,
+        )
+        assert fixed_conditional["total_iterations"] == 256
+        assert fixed_conditional["checkpoint_complete"] is True
+        assert fixed_conditional["finite"] is True
+        assert fixed_conditional["fixed_five_source_qualification"] is True
+        assert fixed_conditional["qualification_authorization"] == {
+            "kind": "fixed_five_source_qualification",
+            "basis": "initial_full64_finite_checkpoints",
+            "authorized": True,
+        }
+        assert "S3B_INITIAL_POSITIVE" not in str(fixed_conditional)
+
+        misuse_solver = S3FixedRightFgmres(operator, action)
+        misuse_solver.solve_initial(rhs, "tiny_diagonal_misuse")
+        with pytest.raises(RuntimeError, match="initial_gate=None"):
+            misuse_solver.solve_conditional_to_256(
+                rhs,
+                "tiny_diagonal_misuse",
+                initial_gate={},
+                fixed_five_source_qualification=True,
+            )
+
+        none_gate_solver = S3FixedRightFgmres(operator, action)
+        none_gate_solver.solve_initial(rhs, "tiny_diagonal_none_gate")
+        with pytest.raises(RuntimeError, match="initial_gate must be a mapping"):
+            none_gate_solver.solve_conditional_to_256(
+                rhs,
+                "tiny_diagonal_none_gate",
+                initial_gate=None,
+            )
     finally:
+        for extra_solver in (fixed_solver, misuse_solver, none_gate_solver):
+            if extra_solver is not None:
+                extra_solver.destroy()
         if solver is not None:
             solver.destroy()
             solver.destroy()

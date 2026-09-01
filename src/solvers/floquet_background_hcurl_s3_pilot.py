@@ -43,6 +43,9 @@ S3B_FGMRES_CONDITIONAL_TOTAL_IT = 256
 S3B_CANDIDATE_R64_LIMIT = 0.5
 S3B_REQUIRED_J1_IMPROVEMENT = 4.0
 S3B_CANDIDATE_R256_LIMIT = 1.0e-6
+S3B_FIVE_SOURCE_RESIDUAL_LIMIT = 1.0e-2
+S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT = 1.0e-3
+S3B_FIVE_SOURCE_MAX_IT = 256
 
 S3B_RSS_HARD_BYTES = 45 * 2**30
 S3B_SWAP_LIMIT_BYTES = 0
@@ -56,6 +59,7 @@ S3B_MAX_LOCAL_ROWS = 1024
 S3B_NEXT_CONDITIONAL_256 = "V9_E_S3B_CONDITIONAL_256"
 S3B_NEXT_FIVE_SOURCE_BOTTOM = "V9_E_S3B_FIVE_SOURCE_BOTTOM"
 S3B_NEXT_FIXED_LOR = "V9_E_STRUCTURED_BACKGROUND_FIXED_LOR"
+S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION = "V9_D_FACTOR_FREE_PRODUCTIONIZATION"
 
 S3B_INITIAL_POSITIVE = "S3B_INITIAL_POSITIVE"
 S3B_INITIAL_UNSTABLE = "S3B_INITIAL_UNSTABLE"
@@ -65,6 +69,11 @@ S3B_CONDITIONAL_PASS = "S3B_CONDITIONAL_256_PASS"
 S3B_CONDITIONAL_UNSTABLE = "S3B_CONDITIONAL_256_UNSTABLE"
 S3B_CONDITIONAL_RESOURCE_STOP = "S3B_CONDITIONAL_256_RESOURCE_STOP"
 S3B_CONDITIONAL_NOT_QUALIFIED = "S3B_CONDITIONAL_256_NOT_QUALIFIED"
+S3B_FIVE_SOURCE_PASS = "S3B_FIVE_SOURCE_BARE_F_PASS"
+S3B_FIVE_SOURCE_NO_SIGNAL = "S3B_FIVE_SOURCE_BARE_F_NO_SIGNAL"
+S3B_FIVE_SOURCE_UNSTABLE = "S3B_FIVE_SOURCE_BARE_F_UNSTABLE"
+S3B_FIVE_SOURCE_RESOURCE_STOP = "S3B_FIVE_SOURCE_BARE_F_RESOURCE_STOP"
+S3B_FIVE_SOURCE_INCOMPLETE = "S3B_FIVE_SOURCE_BARE_F_INCOMPLETE"
 
 
 __all__ = (
@@ -84,6 +93,14 @@ __all__ = (
     "S3B_FGMRES_CONDITIONAL_TOTAL_IT",
     "S3B_FGMRES_INITIAL_MAX_IT",
     "S3B_FGMRES_RESTART",
+    "S3B_FIVE_SOURCE_INCOMPLETE",
+    "S3B_FIVE_SOURCE_MAX_IT",
+    "S3B_FIVE_SOURCE_NO_SIGNAL",
+    "S3B_FIVE_SOURCE_PASS",
+    "S3B_FIVE_SOURCE_RESIDUAL_LIMIT",
+    "S3B_FIVE_SOURCE_RESOURCE_STOP",
+    "S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT",
+    "S3B_FIVE_SOURCE_UNSTABLE",
     "S3B_INITIAL_NO_SIGNAL",
     "S3B_INITIAL_POSITIVE",
     "S3B_INITIAL_RESOURCE_STOP",
@@ -92,6 +109,7 @@ __all__ = (
     "S3B_METHOD",
     "S3B_MPI_SIZE",
     "S3B_NEXT_CONDITIONAL_256",
+    "S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION",
     "S3B_NEXT_FIVE_SOURCE_BOTTOM",
     "S3B_NEXT_FIXED_LOR",
     "S3B_REQUIRED_J1_IMPROVEMENT",
@@ -103,6 +121,7 @@ __all__ = (
     "S3CurrentLayoutSourceFactory",
     "S3FixedRightFgmres",
     "adjudicate_s3_b1_conditional_gate",
+    "adjudicate_s3_b1_final_five_source_bare_f_gate",
     "adjudicate_s3_b1_initial_gate",
     "audit_s3_preconditioner_one_apply",
     "build_s3_b1_background_config",
@@ -1494,10 +1513,18 @@ class S3FixedRightFgmres:
         self,
         rhs: PETSc.Vec,
         label: str,
-        initial_gate: Mapping[str, Any],
+        initial_gate: Mapping[str, Any] | None,
         checkpoint_callback: Any | None = None,
+        *,
+        fixed_five_source_qualification: bool = False,
     ) -> dict[str, Any]:
-        """Continue the completed initial solve through total iteration 256."""
+        """Continue the completed initial solve through total iteration 256.
+
+        The normal path requires the reviewed initial-positive Gate.  The
+        fixed five-source path is separately authorized by a complete,
+        finite, exactly-64-step initial outcome and never manufactures that
+        Gate classification.
+        """
 
         if self._destroyed:
             raise RuntimeError("S3b FGMRES has been destroyed")
@@ -1512,6 +1539,7 @@ class S3FixedRightFgmres:
         )
         label = str(label)
         local_exception = None
+        qualification_authorization: dict[str, Any] | None = None
         try:
             if not self._initial_completed or self._initial_result is None:
                 raise RuntimeError(
@@ -1529,15 +1557,30 @@ class S3FixedRightFgmres:
                 raise RuntimeError(
                     "S3b conditional FGMRES requires finite initial checkpoints"
                 )
-            if not isinstance(initial_gate, Mapping):
-                raise TypeError("initial_gate must be a mapping")
-            if (
-                initial_gate.get("classification") != S3B_INITIAL_POSITIVE
-                or initial_gate.get("next_stage") != S3B_NEXT_CONDITIONAL_256
-            ):
-                raise ValueError(
-                    "S3b conditional FGMRES requires the explicit initial positive Gate"
-                )
+            if fixed_five_source_qualification:
+                if initial_gate is not None:
+                    raise ValueError(
+                        "fixed five-source qualification requires initial_gate=None"
+                    )
+                if self._initial_result.get("breakdown") is True:
+                    raise RuntimeError(
+                        "fixed five-source qualification requires no hard breakdown"
+                    )
+                qualification_authorization = {
+                    "kind": "fixed_five_source_qualification",
+                    "basis": "initial_full64_finite_checkpoints",
+                    "authorized": True,
+                }
+            else:
+                if not isinstance(initial_gate, Mapping):
+                    raise TypeError("initial_gate must be a mapping")
+                if (
+                    initial_gate.get("classification") != S3B_INITIAL_POSITIVE
+                    or initial_gate.get("next_stage") != S3B_NEXT_CONDITIONAL_256
+                ):
+                    raise ValueError(
+                        "S3b conditional FGMRES requires the explicit initial positive Gate"
+                    )
             if rhs is not self._initial_rhs:
                 raise ValueError(
                     "S3b conditional FGMRES requires the identical initial RHS object"
@@ -1774,6 +1817,7 @@ class S3FixedRightFgmres:
             "solve_elapsed_wall_seconds": solve_elapsed_wall,
             "setup_count": int(self._setup_count),
             "setup_reused": True,
+            "fixed_five_source_qualification": bool(fixed_five_source_qualification),
             "continuation_strategy": (
                 "same_ksp_pc_service_nonzero_initial_restart_continuation"
             ),
@@ -1783,6 +1827,15 @@ class S3FixedRightFgmres:
                 and postsolve["finite"]
             ),
         }
+        if fixed_five_source_qualification:
+            result.update(
+                {
+                    "fixed_five_source_qualification": True,
+                    "qualification_authorization": dict(
+                        qualification_authorization or {}
+                    ),
+                }
+            )
         self._conditional_completed = True
         self._conditional_result = result
         return result
@@ -1939,4 +1992,159 @@ def adjudicate_s3_b1_conditional_gate(
         "resource_ok": bool(resource_ok),
         "r256": residual if math.isfinite(residual) else None,
         "r256_limit": S3B_CANDIDATE_R256_LIMIT,
+    }
+
+
+def adjudicate_s3_b1_final_five_source_bare_f_gate(
+    source_outcomes: Mapping[str, Mapping[str, Any]],
+    *,
+    resource_ok: bool,
+) -> dict[str, Any]:
+    """Apply the fixed V5 five-source bare-F qualification Gate."""
+
+    if not isinstance(source_outcomes, Mapping):
+        raise TypeError("five-source outcomes must be a mapping")
+    if not isinstance(resource_ok, bool):
+        raise TypeError("resource_ok must be a bool")
+    from .hybrid_bare_f_authority import V5_BARE_F_SOURCE_LABELS
+
+    labels = tuple(str(label) for label in V5_BARE_F_SOURCE_LABELS)
+    labels_complete = set(source_outcomes) == set(labels)
+    strict_labels = (
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+    )
+    checks: dict[str, dict[str, Any]] = {}
+    for label in labels:
+        outcome = source_outcomes.get(label)
+        outcome_mapping = isinstance(outcome, Mapping)
+        postsolve = outcome.get("postsolve") if outcome_mapping else None
+        postsolve_mapping = isinstance(postsolve, Mapping)
+        residual_value = (
+            postsolve.get("true_residual_relative") if postsolve_mapping else None
+        )
+        iteration_value = postsolve.get("iteration") if postsolve_mapping else None
+        postsolve_finite_value = postsolve.get("finite") if postsolve_mapping else None
+        outcome_values = (
+            tuple(
+                outcome.get(key)
+                for key in (
+                    "finite",
+                    "checkpoint_complete",
+                    "breakdown",
+                    "happy_breakdown",
+                )
+            )
+            if outcome_mapping
+            else (None,) * 4
+        )
+        outcome_finite, checkpoint_complete, breakdown, happy_breakdown = (
+            value if isinstance(value, bool) else None for value in outcome_values
+        )
+        residual_numeric = isinstance(
+            residual_value, (int, float, np.integer, np.floating)
+        ) and not isinstance(residual_value, bool)
+        iteration_numeric = isinstance(
+            iteration_value, (int, np.integer)
+        ) and not isinstance(iteration_value, bool)
+        complete = bool(
+            outcome_mapping
+            and postsolve_mapping
+            and residual_numeric
+            and iteration_numeric
+            and all(
+                isinstance(value, bool)
+                for value in (*outcome_values, postsolve_finite_value)
+            )
+        )
+        residual = float(residual_value) if _finite_metric(residual_value) else None
+        iteration = int(iteration_value) if iteration_numeric else None
+        completion_authority = bool(
+            postsolve_finite_value is True
+            and (
+                (
+                    happy_breakdown is True
+                    and iteration is not None
+                    and iteration < S3B_FIVE_SOURCE_MAX_IT
+                )
+                or (outcome_finite is True and checkpoint_complete is True)
+            )
+        )
+        residual_domain_check = residual is not None and residual >= 0.0
+        iteration_check = (
+            iteration is not None and 0 <= iteration <= S3B_FIVE_SOURCE_MAX_IT
+        )
+        residual_check = (
+            residual_domain_check and residual <= S3B_FIVE_SOURCE_RESIDUAL_LIMIT
+        )
+        strict_check = (
+            residual_domain_check and residual <= S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT
+        )
+        checks[label] = {
+            "true_residual_relative": residual,
+            "actual_final_iteration": iteration,
+            "breakdown": breakdown,
+            "completion_authority": completion_authority,
+            "residual_finite_nonnegative": residual_domain_check,
+            "residual_limit_pass": residual_check,
+            "strict_residual_limit_pass": strict_check,
+            "iteration_limit_pass": iteration_check,
+            "complete": complete,
+        }
+
+    all_checks = tuple(checks.values())
+    complete = bool(labels_complete and all(item["complete"] for item in all_checks))
+    finite_pass = bool(
+        complete and all(item["completion_authority"] for item in all_checks)
+    )
+    residual_domain_pass = bool(
+        complete and all(item["residual_finite_nonnegative"] for item in all_checks)
+    )
+    breakdown_pass = bool(
+        complete and all(item["breakdown"] is False for item in all_checks)
+    )
+    iteration_pass = bool(
+        complete and all(item["iteration_limit_pass"] for item in all_checks)
+    )
+    residual_pass = bool(
+        complete and all(item["residual_limit_pass"] for item in all_checks)
+    )
+    strict_pass = bool(
+        complete
+        and all(checks[label]["strict_residual_limit_pass"] for label in strict_labels)
+    )
+    if not resource_ok:
+        classification = S3B_FIVE_SOURCE_RESOURCE_STOP
+    elif not complete:
+        classification = S3B_FIVE_SOURCE_INCOMPLETE
+    elif not (
+        finite_pass and residual_domain_pass and breakdown_pass and iteration_pass
+    ):
+        classification = S3B_FIVE_SOURCE_UNSTABLE
+    elif residual_pass and strict_pass:
+        classification = S3B_FIVE_SOURCE_PASS
+    else:
+        classification = S3B_FIVE_SOURCE_NO_SIGNAL
+    positive = classification == S3B_FIVE_SOURCE_PASS
+    return {
+        "classification": classification,
+        "next_stage": S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION
+        if positive
+        else S3B_NEXT_FIXED_LOR,
+        "positive": positive,
+        "gate_pass": positive,
+        "task40_open": True,
+        "resource_ok": resource_ok,
+        "source_labels": list(labels),
+        "source_count": len(source_outcomes),
+        "labels_complete": labels_complete,
+        "complete": complete,
+        "checks": checks,
+        "iteration_pass": iteration_pass,
+        "limits": {
+            "all_source_true_residual_relative": S3B_FIVE_SOURCE_RESIDUAL_LIMIT,
+            "modal_external_true_residual_relative": S3B_FIVE_SOURCE_STRICT_RESIDUAL_LIMIT,
+            "max_iterations": S3B_FIVE_SOURCE_MAX_IT,
+        },
     }
