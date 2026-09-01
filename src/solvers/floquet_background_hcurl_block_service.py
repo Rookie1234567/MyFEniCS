@@ -206,9 +206,12 @@ def build_bounded_harmonic_packet(
     transforms: ActiveTraceBlochTransforms,
     *,
     require_exact_block_diagonal: bool = True,
+    progress_callback: Any | None = None,
 ) -> BoundedHarmonicFactorPacket:
     """Extract owner-local bounded blocks without retaining PETSc objects."""
 
+    if progress_callback is not None and not callable(progress_callback):
+        raise TypeError("progress_callback must be callable when provided")
     layout = transforms.layout
     comm = layout.comm
     blocks = _block_indices(layout)
@@ -313,6 +316,58 @@ def build_bounded_harmonic_packet(
                     }
                 )
             local_factors.append(local_factor)
+            if progress_callback is not None:
+                owner_factor_audit = (
+                    _jsonable(factor_audit)
+                    if comm.rank == mode % comm.size
+                    else None
+                )
+                factor_audit_metadata = comm.bcast(
+                    owner_factor_audit,
+                    root=mode % comm.size,
+                )
+                callback_error = None
+                local_callback_exception = None
+                try:
+                    progress_callback(
+                        {
+                            "mode": int(mode),
+                            "owner": int(mode % comm.size),
+                            "rows": len(indices),
+                            "factor_count_completed": mode + 1,
+                            "factor_count_total": int(modes),
+                            "background_column_apply_count": int(column_apply_count),
+                            "off_block_absolute_max": float(off_absolute_max),
+                            "off_block_norm_ratio_max": float(off_block_max[-1]),
+                            "factor_solve_audit": factor_audit_metadata,
+                            "additional_absorbing_shift": 0.0,
+                        }
+                    )
+                except Exception as exc:  # noqa: BLE001 - callback errors synchronize across MPI ranks.
+                    local_callback_exception = exc
+                    callback_error = {
+                        "rank": int(comm.rank),
+                        "type": type(exc).__name__,
+                        "message": str(exc),
+                    }
+                callback_errors = comm.allgather(callback_error)
+                first_callback_error = next(
+                    (item for item in callback_errors if item is not None),
+                    None,
+                )
+                if first_callback_error is not None:
+                    callback_message = (
+                        f"rank {int(first_callback_error['rank'])} "
+                        f"{first_callback_error['type']}: "
+                        f"{first_callback_error['message']}"
+                    )
+                    error = RuntimeError(
+                        "bounded harmonic progress callback failed: "
+                        f"{callback_message}"
+                    )
+                    if local_callback_exception is not None:
+                        raise error from local_callback_exception
+                    raise error
         factor_errors = [
             item["factor_audit"]
             for item in local_factors
