@@ -272,6 +272,24 @@ def _global_norm(comm: MPI.Intracomm, values: np.ndarray) -> float:
     return float(comm.allreduce(local, op=MPI.SUM)) ** 0.5
 
 
+def _canonical_residual_gates(
+    residuals: Mapping[str, float],
+) -> dict[str, bool]:
+    names = (
+        "owner_to_canonical_to_owner_relative",
+        "canonical_value_relative",
+        "repeated_reconstruction_relative",
+        "static_condensed_active_rhs_repeat_relative",
+        "current_canonical_repeat_relative",
+        "source_norm_relative",
+        "roundtrip_canonical_value_relative",
+    )
+    return {
+        name: float(residuals[name]) <= SOURCE_BRIDGE_TOLERANCE
+        for name in names
+    }
+
+
 def _compact_identity(
     label: str,
     metadata: Mapping[str, Any],
@@ -772,15 +790,6 @@ def _source_bridge_one(
             reconstructed_active_rhs_norm,
         )
     )
-    gate_residuals = (
-        "owner_to_canonical_to_owner_relative",
-        "canonical_value_relative",
-        "repeated_reconstruction_relative",
-        "static_condensed_active_rhs_repeat_relative",
-        "current_canonical_repeat_relative",
-        "source_norm_relative",
-        "roundtrip_canonical_value_relative",
-    )
     orientation_histogram = key_class_histogram["orientation_state"]
     phase_histogram = key_class_histogram["phase_class"]
     orientation_applied_once = bool(
@@ -796,10 +805,7 @@ def _source_bridge_one(
         "phase_application_count": phase_application_count == 1,
         "orientation_applied_once": orientation_applied_once,
         "finite": finite,
-        **{
-            name: float(value) <= SOURCE_BRIDGE_TOLERANCE
-            for name in gate_residuals
-        },
+        **_canonical_residual_gates(residuals),
     }
     if not all(bool(value) for value in gates.values()):
         raise SourceCanonicalIdentityError(

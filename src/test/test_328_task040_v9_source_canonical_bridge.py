@@ -21,6 +21,7 @@ from benchmarks.task040_v6_2_interface_schur import (
 from src.solvers.hybrid_source_canonical_bridge import (
     SOURCE_BRIDGE_PACKET_SCHEMA,
     SOURCE_BRIDGE_TOLERANCE,
+    _canonical_residual_gates,
     _key_class_histogram,
     audit_packet_key_sets,
     packet_pair_digest,
@@ -29,6 +30,24 @@ from src.solvers.hybrid_source_canonical_bridge import (
 
 
 COMM = MPI.COMM_WORLD
+
+
+def test_v9_fixed_residual_gate_names_and_threshold() -> None:
+    names = (
+        "owner_to_canonical_to_owner_relative",
+        "canonical_value_relative",
+        "repeated_reconstruction_relative",
+        "static_condensed_active_rhs_repeat_relative",
+        "current_canonical_repeat_relative",
+        "source_norm_relative",
+        "roundtrip_canonical_value_relative",
+    )
+    residuals = {name: 0.0 for name in names}
+    assert all(_canonical_residual_gates(residuals).values())
+    residuals[names[-1]] = SOURCE_BRIDGE_TOLERANCE * 2.0
+    gates = _canonical_residual_gates(residuals)
+    assert not gates[names[-1]]
+    assert all(gates[name] for name in names[:-1])
 
 
 def _token(
