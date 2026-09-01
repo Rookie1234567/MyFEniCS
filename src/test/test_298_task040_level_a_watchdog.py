@@ -499,3 +499,23 @@ def test_task040_watchdog_waits_for_completed_cleanup_teardown_sample(
     row = rows[-1]
     assert row["authoritative_sample"] is False
     assert row["terminal_teardown_excluded"] is True
+
+
+def test_task040_v9_c0_cleanup_teardown_predicate(tmp_path) -> None:
+    summary_path = tmp_path / "run_summary.json"
+    summary_path.write_text("{}\n", encoding="utf-8")
+    values = {
+        "post_sample_return_code": None,
+        "process_tree": {"pids": [4321], "all_status_readable": False},
+        "run_summary_path": summary_path,
+        "latest_stage": "v9_c0_cleanup_complete",
+        "latest_stage_status": "complete",
+    }
+
+    assert watchdog._terminal_teardown_sample_excluded(**values) is True
+
+    missing_summary = dict(values, run_summary_path=tmp_path / "missing.json")
+    assert watchdog._terminal_teardown_sample_excluded(**missing_summary) is False
+
+    incomplete_stage = dict(values, latest_stage_status="waiting_for_progress")
+    assert watchdog._terminal_teardown_sample_excluded(**incomplete_stage) is False

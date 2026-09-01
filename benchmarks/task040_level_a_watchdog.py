@@ -96,6 +96,7 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "v8_adaptive_stage_b1_cleanup_complete",
         "v8_adaptive_stage_bc_cleanup_complete",
         "v9_source_bridge_cleanup_complete",
+        "v9_c0_cleanup_complete",
     }
 )
 THREAD_ENV = {
