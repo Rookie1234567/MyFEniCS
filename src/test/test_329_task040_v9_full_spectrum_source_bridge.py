@@ -197,12 +197,15 @@ def test_v9_shard_load_checks_contract_and_value_bytes(tmp_path: Path) -> None:
         "full_numeric_replica": False,
     }
     unsigned = dict(shard)
-    shard["shard_manifest_sha256"] = hashlib.sha256(
-        (json.dumps(unsigned, sort_keys=True, indent=2) + "\n").encode()
-    ).hexdigest()
     shard_path = rank_dir / f"v9_{label}_canonical_packet.json"
     shard_path.write_text(
-        json.dumps(shard, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+        json.dumps(unsigned, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+    )
+    shard["shard_manifest_sha256"] = hashlib.sha256(
+        shard_path.read_bytes()
+    ).hexdigest()
+    assert "shard_manifest_sha256" not in json.loads(
+        shard_path.read_text(encoding="utf-8")
     )
     packets, audit = _v9_read_shard(
         tmp_path, {"shards": [shard]}, label, rank

@@ -933,17 +933,6 @@ def _v9_packet_path(root: Path, relative: Any) -> Path:
     return candidate
 
 
-def _v9_manifest_without_self_hash(value: Mapping[str, Any]) -> bytes:
-    payload = {str(key): item for key, item in value.items()}
-    payload.pop("shard_manifest_sha256", None)
-    return (
-        json.dumps(payload, sort_keys=True, indent=2, allow_nan=False).encode(
-            "utf-8"
-        )
-        + b"\n"
-    )
-
-
 def _v9_expected_identity(
     identity: Mapping[str, Any], expected: Mapping[str, Any]
 ) -> None:
@@ -971,12 +960,25 @@ def _v9_read_shard(
             break
     if not isinstance(expected, Mapping):
         raise TypeError(f"packet has no shard for rank {rank}")
+    expected_unsigned = dict(expected)
+    declared_shard_hash = expected_unsigned.pop("shard_manifest_sha256", None)
+    if (
+        not isinstance(declared_shard_hash, str)
+        or len(declared_shard_hash) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in declared_shard_hash
+        )
+    ):
+        raise ValueError(f"packet shard manifest hash declaration invalid for rank {rank}")
     shard_path = packet_dir / f"rank{rank:04d}" / (
         f"v9_{label}_canonical_packet.json"
     )
     actual = json.loads(shard_path.read_text(encoding="utf-8"))
-    if not isinstance(actual, Mapping) or dict(actual) != dict(expected):
+    if not isinstance(actual, Mapping) or actual != expected_unsigned:
         raise ValueError(f"packet shard metadata differs for rank {rank}")
+    if _sha256(shard_path.read_bytes()) != declared_shard_hash:
+        raise ValueError(f"packet shard manifest hash mismatch for rank {rank}")
     if (
         actual.get("schema") != SOURCE_BRIDGE_PACKET_SCHEMA
         or actual.get("side") != "bottom"
@@ -987,9 +989,6 @@ def _v9_read_shard(
         or actual.get("full_numeric_replica") is not False
     ):
         raise ValueError(f"packet shard contract mismatch for rank {rank}")
-    declared_shard_hash = actual.get("shard_manifest_sha256")
-    if _sha256(_v9_manifest_without_self_hash(actual)) != declared_shard_hash:
-        raise ValueError(f"packet shard manifest hash mismatch for rank {rank}")
     keys_path = _v9_packet_path(packet_dir, actual.get("keys_path"))
     values_path = _v9_packet_path(packet_dir, actual.get("values_path"))
     keys_payload = json.loads(keys_path.read_text(encoding="utf-8"))
