@@ -117,3 +117,58 @@ J0 `AUTHORITY_ARRAYS_MISSING` 保持不变。当前 tracked direct authority 只
 | historical responses | [`response_v11.md`](../response_v11.md) / [`response_v12.md`](../response_v12.md) |
 
 完整 1.02 GB raw timeline、cache、markers 和 checkpoint 只留在 ignored artifact root，不加入 Git。V14 J9 在此停止，不创建新的 PC、J6、J7、J8 或 0.7 nm outcome。
+
+## Review V15 F0–F4 最新结论
+
+| 阶段 | 结果 | 证据边界 |
+|---|---|---|
+| F0 | 预测容量通过 | predicted central 1,555,934,144 B；不是 formal measured PASS |
+| F1 small p3/h50 | F1_REAL_SMALL_ORACLE_PASS | MPI1/MPI2/checker 均 rc=0，canonical identity 通过 |
+| F2 checkpoint-1000 | identity/algebra PASS | stored/recomputed residual relative 6.884466486395685e-16 |
+| F3 fixed rank32 | FLOQUET_WAVE_CORRECTION_CLOSED_BY_SPAN_GATE | captured 0.002179823642496248，rho 0.9989094935766222 |
+| J5 V14 | CONTROLLED_STOP_USER_NUMERICAL_STAGNATION / NOT_QUALIFIED | 用户受控停止；不是 fixed-cap failure 或完整 memory PASS |
+
+### F1 authority
+
+F1 source SHA 为 fb1b4be71d230b77eff431a7e3dd77eb3a69ba69，root 为 f1_floquet_wave_small_oracle_v5/fb1b4be71d230b77eff431a7e3dd77eb3a69ba69。profile 为 p3/h50/13.5nm/s/grazing1/phi0；real operator oracle 只使用首个固定模式 mode_index=38、mode_key=[38,"top",0,0,"s"]。80-mode manifest SHA256 为 dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2；fixed selector SHA256 为 7a6dea2534b200c6572b0200acd77087c71ccb0e52a0d1a16dae75e108cee2c3。selector identity 覆盖 exact 32 indices，但不表示 32 个模式都分别运行了 real MPI oracle。
+
+| F1 观测 | 数值 |
+|---|---:|
+| modal canonical MPI relative | 3.7455782853640207e-16 |
+| PC canonical MPI relative | 8.520822093979077e-16 |
+| modal repeat / linearity | 0 / 0 |
+| PC repeat / input unchanged | 0 / 0 |
+| PC linearity max | 3.614539850452157e-16 |
+| P/P^H adjoint，MPI1 / MPI2 | 1.9465463728177503e-15 / 7.26427252913998e-15 |
+| finite、slave-zero、owner-local、canonical keys | PASS |
+
+独立 checker SHA256 为 506cbfbcbf6f4bb9e715f066506ed9011e1b6939e97992492ae2922f481ad9bf。record、四数组 NPZ、路径和 SHA 见 [F1 compact record](records/floquet_wave_small_oracle_v15.json)。
+
+### V15 formal artifact v3：F2/F3 authority
+
+V15 formal artifact v3 source SHA 为 c85ec1aab8548e02e8b47cfdcfb03b5c4df377f6，root 为 f2_f3_floquet_wave_cold_staged_v3/c85ec1aab8548e02e8b47cfdcfb03b5c4df377f6。parent 和 diagnostic natural exit=0，33 markers 到 parent_complete，7 个 child、11 modules、solver cache unchanged、全部进程消失。process samples=100656，window=6245.343577229 s，RSS peak=1,447,358,464 B，swap=0，warning=false，compiler peak=2；PSS peak=1,417,525,248 B，但 7 个 transient precompile 退出样本的 PSS 不可读，PSS 只作诊断。
+
+| F2/F3 measured fact | 数值 |
+|---|---:|
+| checkpoint stored / recomputed residual | 0.4837947981092168 / 0.48379479810921644 |
+| residual relative difference | 6.884466486395685e-16 <= 1e-11 |
+| F2 identity、x/b unchanged、finite、slave-zero | PASS |
+| F2 exact residual action | 1 |
+| rank / condition ratio | 32 / 0.05087665596047715 |
+| Q orthogonality / QR reconstruction | 1.4263744029917661e-13 / 2.4622854394555095e-16 |
+| projection repeat | 2.7273607083155513e-16 |
+| PC / exact action / modal RHS | 32 / 32 / 32 |
+| captured energy / rho | 0.002179823642496248 / 0.9989094935766222 |
+| ideal projected true residual | 0.4832672167742815 |
+
+F3 algebra、QR、重复性、计数和资源通过；span 要求 captured 至少 0.90、rho 不大于 0.31622776601683794、ideal 不大于 0.153，故真实失败是 FLOQUET_WAVE_CORRECTION_CLOSED_BY_SPAN_GATE，而非 resource 或 contract failure。完整 F3 记录见 [checkpoint checker output](records/floquet_wave_checkpoint1000_v15.json)。
+
+F2 identity evidence 见 [F2 identity authority table](floquet_wave_residual_diagnostic_v15.md#f2-identity-authority)：normalized checkpoint input identity 为 754dbf810cc38b32804bced03b8d4b8f702d5943671724e7529f47cadefe8b1f，operator identity 为 bbe5737b41b56c9dddb0c0ae3e0dd0384197dc22dd2faf41a2c57cc781f0a6f3，physical model 为 9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f，mode manifest 为 dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2。template input file SHA 为 819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41，不能与 normalized identity 混称。
+
+### 历史边界与未运行项
+
+V15 formal artifact v1/v2 pre-F2 execution failures 原样保留：v1 是 /proc transient-exit authority_unreadable race，v2 是 ModuleNotFoundError；它们发生在真实 checkpoint/数值测量前，按用户明确授权不计正式数值次数，但不改写 raw status/classification。V15 formal artifact v3 已进入真实 F2/F3，span 失败后不得重跑或改 rank/mode/参数。
+
+J6 为 not_run_by_J5_eligibility；J7/J8 locked/not_run；fixed correction、KSP、corrected screen、recovery、official E/H/R/T/A、A_volume、12+12 channels、MPI2/h5/full 0.7 nm 均为 not_run_by_span_gate。V13 四类 same_mesh_hcurl_pmg_v1_requalified positive qualification 保留，但 standalone physical production claim 关闭。下一步仅提出 [wave-aware DD design](next_wave_aware_dd_after_v15.md)，不把它写成已授权实现或 J6 PASS。
+
+V15 的完整阶段说明见 [residual diagnostic](floquet_wave_residual_diagnostic_v15.md)；J5 大 raw JSONL 1,020,808,306 B 只绑定 hash，不追踪原始文件。

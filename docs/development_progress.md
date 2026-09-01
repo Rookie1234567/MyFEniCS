@@ -2469,6 +2469,26 @@ V13 C1 的四个 exact-input p6/h10 positive source 已通过，保留 `same_mes
 
 J6 为 `not_run_by_J5_eligibility`；J7/J8 locked/not_run。official E/H、near-field、R/T/A、`A_volume`、energy closure 和 12+12 raw arrays 均 `not_run`。direct authority 仍只有 scalar packet，缺 E/H 和 12+12 arrays；该 downstream blocker 未被冒充为通过。
 
-V14 不改变 ordinary default、master、Python 数值代码或历史 evidence。唯一下一步候选是新的 V15 独立诊断：从 checkpoint-1000 在相同 exact `A/b` 上重算 `r=b-Ax`，使用由 propagating+near-cutoff Floquet canonical inventory 预先确定、rank≤32 的 basis，先测 projection/deflatable fraction、`P/P^H`、MPI identity 和附加内存；禁止 residual fitting 和参数扫描。只有诊断支持该解释时才另立新 review 实现一次 bounded correction，否则关闭 Floquet correction，转向 wave-aware domain decomposition。
+V14 当时提出的 V15 独立诊断已在 V15 formal artifact v3 中完成；固定 rank32 global projection 的 span Gate 失败后，Floquet correction 已关闭。当前唯一未授权候选是独立的 wave-aware domain decomposition 预审，不重跑 V15 rank32 projection 或 bounded correction，也不重开普通正定 GenEO/BDDC/HX。
 
 证据入口：[`V14 J5 memory outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/jit_staging_physical_memory_v14.md)、[`V14 J5 physical outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/p6_physical_v14.md)、[`V14 response`](task038_extra_full3d_iterative_0p7nm/response_v14.md)、[`J5 compact`](task038_extra_full3d_iterative_0p7nm/outcomes/records/j5_full_cold_staged_v3_controlled_stop_v14.json)。
+
+## 53. Task038-extra Review V15 F0–F4 收口
+
+| 阶段 | 结果 | 证据边界 |
+|---|---|---|
+| F0 | predicted central 1,555,934,144 B | 容量预审，不是 formal measured PASS |
+| F1 real small p3/h50 | F1_REAL_SMALL_ORACLE_PASS | MPI1/MPI2/checker canonical identity 通过 |
+| F2 checkpoint-1000 | identity/algebra PASS | residual relative 6.884466486395685e-16 |
+| F3 rank32 | FLOQUET_WAVE_CORRECTION_CLOSED_BY_SPAN_GATE | captured 0.002179823642496248，rho 0.9989094935766222 |
+| V14 J5 | CONTROLLED_STOP_USER_NUMERICAL_STAGNATION / NOT_QUALIFIED | 用户控制停止；不是 fixed-cap 20000-step failure |
+
+F1 的 source SHA 为 fb1b4be71d230b77eff431a7e3dd77eb3a69ba69；80-mode manifest SHA256 为 dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2，fixed selector SHA256 为 7a6dea2534b200c6572b0200acd77087c71ccb0e52a0d1a16dae75e108cee2c3。modal/PC canonical MPI relative 分别为 3.7455782853640207e-16 和 8.520822093979077e-16；P/P^H adjoint MPI1/MPI2 为 1.9465463728177503e-15 / 7.26427252913998e-15。具体路径和 record/NPZ/checker SHA 见 [V15 F1 compact](task038_extra_full3d_iterative_0p7nm/outcomes/records/floquet_wave_small_oracle_v15.json)。
+
+V15 formal artifact v3 F2/F3 source SHA 为 c85ec1aab8548e02e8b47cfdcfb03b5c4df377f6。parent natural exit=0，33 markers、7 groups、11 modules、cache unchanged、全部进程消失；process samples=100656，RSS peak=1,447,358,464 B，swap=0，warning=false，compiler peak=2。PSS peak=1,417,525,248 B，但 7 个 transient precompile 退出样本 PSS 不可读；资源 Gate 使用完整 RSS。
+
+F2 stored/recomputed residual 为 0.4837947981092168 / 0.48379479810921644，identity、x/b unchanged、finite、slave-zero 通过，exact action count=1。F3 rank=32，condition ratio=0.05087665596047715，orthogonality=1.4263744029917661e-13，QR reconstruction=2.4622854394555095e-16，projection repeat=2.7273607083155513e-16，PC/action/modal RHS=32/32/32。span Gate 要求 captured 至少 0.90、rho 不大于 0.31622776601683794、ideal 不大于 0.153；实测 captured/rho/ideal 为 0.002179823642496248 / 0.9989094935766222 / 0.4832672167742815，故关闭 correction。
+
+J6 为 not_run_by_J5_eligibility；J7/J8 locked/not_run；KSP、recovery、official E/H/R/T/A、A_volume、12+12 channels、MPI2/h5/full 0.7 nm 均未运行。V13 positive qualification 保留，但 standalone physical production claim 关闭。下一候选只有 [wave-aware DD 设计](task038_extra_full3d_iterative_0p7nm/outcomes/next_wave_aware_dd_after_v15.md)，未授权实现。
+
+V15 formal artifact v1/v2 pre-F2 execution failures 在用户明确次数授权下不计正式数值次数，但 old raw status 不改写；V15 formal artifact v3 已进入真实 span Gate，不能再重跑、改 rank/mode/参数。J5 raw JSONL 1,020,808,306 B 仅以 hash-bound compact 记录，不追踪原始文件。详见 [V15 response](task038_extra_full3d_iterative_0p7nm/response_v15.md)。

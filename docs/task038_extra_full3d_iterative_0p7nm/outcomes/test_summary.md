@@ -331,3 +331,20 @@ N2 唯一一次正式 MPI1 setup 的 marker 为 preflight -> mesh_space_mpc -> J
 | `git diff --check` | docs-only diff |
 | raw artifact | 1,020,808,306 B JSONL 继续 ignored；只绑定 SHA，不加入 Git |
 | 结论 | J5 `CONTROLLED_STOP_USER_NUMERICAL_STAGNATION / NOT_QUALIFIED`；没有 CI/full pytest 声明 |
+
+## Review V15 F1/F2/F3 与 F4 文档收口
+
+| 检查/证据 | 真实结果 | 说明 |
+|---|---|---|
+| F1 v5 MPI1 runner | PASS | real small p3/h50；record 与四数组 NPZ 有 hash-bound evidence |
+| F1 v5 MPI2 runner | PASS | real small p3/h50；canonical key identity 与 PC/modal Gate 通过 |
+| F1 v5 independent checker | PASS | classification F1_REAL_SMALL_ORACLE_PASS |
+| focused implementation test339 + test342 | 9 passed | 已审阅的实现/diagnostic focused tests |
+| diagnostic source-import/CLI focused regression | 4 passed | diagnostic entry-point contract |
+| compileall / AST / import boundary / diff-check | PASS | 本地检查，无 full repository CI 声明 |
+| test_24 + test_26 | 22 passed | docs/repository principles 与 Markdown contract |
+| strict JSON / local links / whitespace | PASS | 2 JSON、7 Markdown、106 个本地链接 |
+| V15 formal artifact v3 F2/F3 | F2 PASS；F3 span Gate FAIL | captured 0.002179823642496248，rho 0.9989094935766222 |
+| V15 formal artifact v3 independent checker | exit=1（预期） | classification FLOQUET_WAVE_CORRECTION_CLOSED_BY_SPAN_GATE |
+
+F3 的 algebra、rank、QR、重复性、计数和资源事实通过，但固定 32 个波模未达到 span Gate；不能把该结果写成 solver/PDE PASS。J6/J7/J8、KSP、recovery 和 official physics 均未运行。没有 full repo CI 结果，以上均为本地或正式 artifact 事实。

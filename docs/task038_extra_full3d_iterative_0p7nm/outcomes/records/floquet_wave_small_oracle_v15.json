@@ -1,0 +1,81 @@
+{
+  "schema": "task038.v15.floquet-wave.small-oracle.compact.v1",
+  "json_policy": "allow_nan=false",
+  "source": {
+    "source_sha": "fb1b4be71d230b77eff431a7e3dd77eb3a69ba69",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "artifact_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/f1_floquet_wave_small_oracle_v5/fb1b4be71d230b77eff431a7e3dd77eb3a69ba69"
+  },
+  "classification": "F1_REAL_SMALL_ORACLE_PASS",
+  "passed": true,
+  "errors": [],
+  "checker": {
+    "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/f1_floquet_wave_small_oracle_v5/fb1b4be71d230b77eff431a7e3dd77eb3a69ba69/checker.json",
+    "sha256": "506cbfbcbf6f4bb9e715f066506ed9011e1b6939e97992492ae2922f481ad9bf"
+  },
+  "records": [
+    {
+      "mpi_size": 1,
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/f1_floquet_wave_small_oracle_v5/fb1b4be71d230b77eff431a7e3dd77eb3a69ba69/mpi1/record.json",
+      "sha256": "a84b723606a441a151c9c9a5ef86129679ccbe95a0556b98d4c2c5f76a3ca401",
+      "vectors_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/f1_floquet_wave_small_oracle_v5/fb1b4be71d230b77eff431a7e3dd77eb3a69ba69/mpi1/record_vectors.npz",
+      "vectors_sha256": "55f9efaccb37a8f87cb656b73dd23487879f0b272baa97d52812f3184e544b5f"
+    },
+    {
+      "mpi_size": 2,
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/f1_floquet_wave_small_oracle_v5/fb1b4be71d230b77eff431a7e3dd77eb3a69ba69/mpi2/record.json",
+      "sha256": "45164cdfe69a758bab25b833e1fcf2bdae488f56f5d1a24692afd54784ca7e36",
+      "vectors_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/f1_floquet_wave_small_oracle_v5/fb1b4be71d230b77eff431a7e3dd77eb3a69ba69/mpi2/record_vectors.npz",
+      "vectors_sha256": "66bf1e66334a3b4661cfebd03b50ae8f82233ad7bc649a4fd91aec5324489f89"
+    }
+  ],
+  "selector": {
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "schema": "task038.v15.floquet-selection.v1",
+    "rank": 32,
+    "selector_payload_sha256": "7a6dea2534b200c6572b0200acd77087c71ccb0e52a0d1a16dae75e108cee2c3",
+    "selected_mode_indices": [38, 39, 72, 73, 76, 77, 32, 33, 36, 37, 40, 41, 0, 1, 42, 43, 46, 47, 2, 3, 6, 7, 74, 75, 34, 35, 66, 67, 70, 71, 26, 27]
+  },
+  "profile": "p3/h50/13.5nm/s/grazing1/phi0",
+  "tested_mode": {
+    "mode_index": 38,
+    "mode_key": [38, "top", 0, 0, "s"]
+  },
+  "pmg": "same_mesh_hcurl_pmg_v1",
+  "levels": [3, 1],
+  "modal_rhs_apply_count": 4,
+  "pmg_apply_count": 4,
+  "measurements": {
+    "modal_mpi_relative": 3.7455782853640207e-16,
+    "modal_repeat_relative": 0.0,
+    "modal_linearity_relative": 0.0,
+    "pc_mpi_relative": 8.520822093979077e-16,
+    "pc_repeat_relative": 0.0,
+    "pc_linearity_max": 3.614539850452157e-16,
+    "pc_input_unchanged_relative": 0.0,
+    "pc_input_unchanged_pass": true,
+    "owner_adjoint_relative": {
+      "mpi1": 1.9465463728177503e-15,
+      "mpi2": 7.26427252913998e-15
+    },
+    "finite": true,
+    "slave_zero": true,
+    "owner_local": true,
+    "canonical_keys": true,
+    "returncodes": {
+      "mpi1": 0,
+      "mpi2": 0,
+      "checker": 0
+    },
+    "synthetic_qr": {
+      "status": "focused_oracle_pass",
+      "threshold": 1e-12
+    }
+  },
+  "provenance": {
+    "input_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat",
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+  },
+  "evidence_policy": "compact hash-bound transcription only; large raw arrays remain in ignored artifact roots"
+}
