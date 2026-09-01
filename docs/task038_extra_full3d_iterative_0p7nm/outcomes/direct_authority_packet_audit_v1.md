@@ -65,3 +65,7 @@ P0 hard stop 的差额为 `24,108,032 B`，约为 `1.2054%`；“只超一点”
 | Task038 P0 root | 只有 paths marker、watchdog/cache 现场；不创建假的 worker record/checker |
 
 因此后续 physical comparison 必须保持 fail-closed：现有 scalar direct packet 可用于有限的 `R/T/A/A_volume` 交叉检查，但完整 E/H、near-field 及同一 12 个 significant diffraction identities 的 12 power + 12 complex boundary-amplitude Gate 仍需独立 raw authority。
+
+## V14 J5 更新
+
+J0 的 `AUTHORITY_ARRAYS_MISSING` 结论没有改变。J5 v3 在用户控制停止前没有进入 recovery 或 official export，因此没有新增可冒充 direct authority 的 E/H、near-field 或 12+12 raw arrays。Task037c compact 仍只是物理参数对齐、canonical identity 未由 compact 证明的 scalar packet；旧 10° authority 仍不匹配，不能用于当前 1° Task038 physical comparison。

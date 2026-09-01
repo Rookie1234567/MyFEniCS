@@ -1,0 +1,115 @@
+{
+  "schema": "task038.v14.j9.j5-controlled-stop.compact.v1",
+  "source_sha": "ee5920b9fa977a39fea7bc09cfbe155303acdb2d",
+  "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+  "workflow": "j5-full",
+  "profile": "p6/h10/13.5nm/s/grazing1/phi0",
+  "identity": {
+    "input_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat",
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "mpi_size": 1
+  },
+  "artifact_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/j5_full_cold_staged_v3/ee5920b9fa977a39fea7bc09cfbe155303acdb2d",
+  "raw_process": {
+    "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/j5_full_cold_staged_v3/ee5920b9fa977a39fea7bc09cfbe155303acdb2d/parent_process.jsonl",
+    "bytes": 1020808306,
+    "sha256": "28c4044f3eebb72ca1991d1c71a67dd30637a7d550e798ffc7f536c28d969cf4",
+    "sample_count": 334915,
+    "peak_rss_bytes": 1450262528,
+    "max_swap_bytes": 0,
+    "max_compiler_descendant_count": 2,
+    "all_status_readable": true,
+    "solver_compiler_descendant_peak": 0,
+    "records": {
+      "parent_record": false,
+      "worker_record": false,
+      "partial_record": false,
+      "worker_stderr_bytes": 0
+    }
+  },
+  "timeline": {
+    "first_timestamp_ns": 1788206276386617381,
+    "last_timestamp_ns": 1788228581099334131,
+    "observed_parent_process_window_seconds": 22304.712716750,
+    "solve_started_timestamp_ns": 1788212103998569034,
+    "solve_started_to_last_sample_seconds": 16477.100765097,
+    "checkpoint_1000_manifest_follow_on_seconds_approx": 3896,
+    "last_authoritative_completed_checkpoint": 1000,
+    "checkpoint_1500_exists": false,
+    "exact_stop_iteration": "unavailable"
+  },
+  "readability": {
+    "rss_status_all_readable": true,
+    "unreadable_pids": [],
+    "pss_all_readable": false,
+    "pss_unreadable_sample_count": 6,
+    "pss_unreadable_reason": "transient precompile child exit/zombie samples; RSS and status remained readable",
+    "max_readable_pss_bytes": 1419618304
+  },
+  "checkpoint_authority": {
+    "input_identity_sha256": "754dbf810cc38b32804bced03b8d4b8f702d5943671724e7529f47cadefe8b1f",
+    "operator_identity_sha256": "bbe5737b41b56c9dddb0c0ae3e0dd0384197dc22dd2faf41a2c57cc781f0a6f3",
+    "global_size": 173802,
+    "local_size": 173802,
+    "dtype": "complex128",
+    "solution_bytes": 2780960,
+    "applies_to": ["checkpoint-500", "checkpoint-1000"]
+  },
+  "checkpoints": [
+    {
+      "name": "checkpoint-500",
+      "iteration": 500,
+      "explicit_true_residual": 0.48387099430079733,
+      "solution_only": true,
+      "authority": "checkpoint_authority",
+      "manifest_sha256": "cb38996f71c74929f164e43ea0919b54585b19c42a2b3cb5dc25d31db55fcbbf",
+      "solution_sha256": "bd9d0da6da45a90b60187cc24fc3c99ea888fbba44d8176a842b16f7ad598a2a"
+    },
+    {
+      "name": "checkpoint-1000",
+      "iteration": 1000,
+      "explicit_true_residual": 0.4837947981092168,
+      "solution_only": true,
+      "authority": "checkpoint_authority",
+      "manifest_sha256": "7f7d6fd29e6a3d6130de439fa510a19c6830061f59090cfd9f6ee4c51d8eb139",
+      "solution_sha256": "00f55e5256e673687942f79d98398d0fd2524d6d956c3b7ef5264615ab2c659b"
+    }
+  ],
+  "observed_drop": {
+    "from_iteration": 500,
+    "to_iteration": 1000,
+    "relative_drop": 0.000157472120623114,
+    "description": "observed plateau informed user stop; exact stop iteration unavailable; not fixed-cap numerical failure"
+  },
+  "markers": {
+    "count": 36,
+    "last": "035_solve_started",
+    "solve_complete": false,
+    "recovery": false,
+    "official_outputs": false
+  },
+  "stop": {
+    "authority": "user",
+    "classification": "CONTROLLED_STOP_USER_NUMERICAL_STAGNATION",
+    "qualification": "NOT_QUALIFIED",
+    "signals": [
+      {"target": "pgid:160439", "signal": "SIGTERM", "count": 1},
+      {"target": "pgid:161210", "signal": "SIGTERM", "count": 1},
+      {"target": "pid:161211", "signal": "none", "reason": "orted disappeared with worker"}
+    ],
+    "sigkill": false
+  },
+  "not_run": [
+    "solve_complete_and_fixed_cap_20000",
+    "J6_bounded_Floquet_near_cutoff_deflation",
+    "J7_release_before_recovery",
+    "J7_official_E_H_R_T_A_A_volume",
+    "J7_near_field_and_12_power_12_complex_amplitude_arrays",
+    "J8_MPI2_h5_0p7nm_capacity",
+    "checkpoint-1500",
+    "tracked_worker_record_and_checker"
+  ],
+  "raw_artifact_policy": "full raw timeline remains ignored and is not tracked"
+}

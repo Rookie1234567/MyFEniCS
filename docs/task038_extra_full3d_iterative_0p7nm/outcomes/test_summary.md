@@ -319,3 +319,15 @@ N2 唯一一次正式 MPI1 setup 的 marker 为 preflight -> mesh_space_mpc -> J
 | MPI2/N3/N4/T6-F/EH/RTA/T7–T9/full0.7nm | `not_run_by_gate` | 不写成数值或资源通过 |
 
 本节由最终 docs closure commit 携带；final docs SHA 无法自引用，见交付报告；旧 T1–N2 v1 记录不覆盖，未作 CI 声明。
+
+## Review V14 J9 docs-only closeout
+
+本轮只对已经完成的 J5 v3 controlled-stop 事实做文档和轻量 compact 收口，没有重跑 336–339，也没有运行 checker、J6/J7/J8 或任何 heavy。此前同一 source SHA 下的 336–339 `23 passed` 作为已审阅事实复用，不把它写成本文档测试的重新执行结果。
+
+| 检查 | 本轮边界 |
+|---|---|
+| JSON parse | J0 authority JSON 与新 J5 compact 必须严格解析 |
+| Markdown/link/whitespace | 相关 outcomes、response 和 progress 文档的本地链接、表格列和空白检查 |
+| `git diff --check` | docs-only diff |
+| raw artifact | 1,020,808,306 B JSONL 继续 ignored；只绑定 SHA，不加入 Git |
+| 结论 | J5 `CONTROLLED_STOP_USER_NUMERICAL_STAGNATION / NOT_QUALIFIED`；没有 CI/full pytest 声明 |

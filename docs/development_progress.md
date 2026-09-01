@@ -2428,3 +2428,47 @@ P0 watchdog 共 20,518 个 raw samples，最后 elapsed=5167.201565908967 s，wa
 原始 raw SHA 为 51e8e531500e733c21f558d44be0a4d8d7a76fe9454800ebc9cb8ad06ab19566，compact SHA 为 0705e170a1835999aece82dfe43d3ff5ccd3cf98800b79a013341b54ed2955e5，paths SHA 为 4f22fd62136515693ebebef4fbfe551e84e46223a0685054dcb9ad1a65108415。P0 的详细说明见 [p6 physical V13](task038_extra_full3d_iterative_0p7nm/outcomes/p6_physical_v13.md)，C1 见 [p6 positive V13](task038_extra_full3d_iterative_0p7nm/outcomes/p6_positive_v13.md)，逐项回答见 [response V13](task038_extra_full3d_iterative_0p7nm/response_v13.md)。
 
 严格资源语义是：2 GB 是 hard stop，1.8 GB 只是 warning。P0 超出 24,108,032 B（约 1.2054%）仍须记录为 FAIL；不能按“只超一点”舍入通过。没有从 13.5 nm cold-JIT peak 外推 0.7 nm/2 TiB 能力，也没有创建 next_pc_architecture_after_v13、feasibility_v5 或未触达阶段 outcome。
+
+## 52. Task038-extra Review V14 J5：cold-staged physical workflow controlled stop
+
+### 背景与基线
+
+V13 C1 的四个 exact-input p6/h10 positive source 已通过，保留 `same_mesh_hcurl_pmg_v1_requalified` 作为 selected hierarchy。V13 P0 的 cold setup 曾以 `2,024,108,032 B` 超过 2,000,000,000 B hard line；V14 J4 随后完成 one-cycle P0R qualification。J5 v3 是在新 source SHA 和全新 root 上测量完整 physical Maxwell workflow 的唯一 formal。
+
+### 身份与方法
+
+| 项目 | 值 |
+|---|---|
+| source SHA | `ee5920b9fa977a39fea7bc09cfbe155303acdb2d` |
+| profile | p6/h10/13.5 nm/s/grazing1/phi0，MPI1，physical RHS |
+| operator / PC | exact split matrix-free Maxwell volume、streaming Fourier-DtN、same-mesh pMG |
+| Krylov | right GMRES，restart20，max_it20000，true-residual replacement20 |
+| cold staging | 七个 precompile group 串行完成，11 个 `.so`；随后启动 solver |
+| evidence policy | parent JSONL、cache、markers、checkpoint 保留在 ignored root；不追踪 1.02 GB raw |
+
+### 结果与解释
+
+| 指标 | measured fact |
+|---|---:|
+| samples / raw | 334,915 / 1,020,808,306 B |
+| raw SHA256 | `28c4044f3eebb72ca1991d1c71a67dd30637a7d550e798ffc7f536c28d969cf4` |
+| raw first/last timestamp | `1788206276386617381` / `1788228581099334131`；window `22304.712716750 s` |
+| solve start → last sample | `16477.100765097 s`；solve_started=`1788212103998569034` |
+| full staged peak / swap | 1,450,262,528 B / 0 B |
+| readability | RSS/status 全部 334,915 samples readable；PSS 有 6 个 precompile 退出/zombie 瞬时样本不可读 |
+| checkpoint-500 residual | 0.48387099430079733 |
+| checkpoint-1000 residual | 0.4837947981092168 |
+| 500→1000 relative drop | 0.000157472120623114（约 0.01575%） |
+| marker boundary | `035_solve_started`；没有 solve_complete/recovery/official |
+| records / stderr | parent、worker、partial record absent；worker stderr 0 B |
+| classification | `CONTROLLED_STOP_USER_NUMERICAL_STAGNATION / NOT_QUALIFIED` |
+
+最后一个有完整权威文件的 checkpoint 是 1000；manifest mtime 后 raw 仍继续约 3896 s，checkpoint-1500 不存在，实际 stop iteration unavailable。worker/parent/partial record 缺失，所以 per-cycle residual history、matvec/PC/KSP destroy 计数和 driver elapsed_seconds unavailable，不能从步数或公式猜测。用户随后停止 parent 与其 orphan worker groups；进程全部消失，JSONL 停止增长，两个 solution-only checkpoint 完整保留。这是用户控制停止，不是 fixed-cap 20000-step numerical failure；也不是完整 workflow memory PASS。
+
+### 决策、局限与下一步
+
+J6 为 `not_run_by_J5_eligibility`；J7/J8 locked/not_run。official E/H、near-field、R/T/A、`A_volume`、energy closure 和 12+12 raw arrays 均 `not_run`。direct authority 仍只有 scalar packet，缺 E/H 和 12+12 arrays；该 downstream blocker 未被冒充为通过。
+
+V14 不改变 ordinary default、master、Python 数值代码或历史 evidence。唯一下一步候选是新的 V15 独立诊断：从 checkpoint-1000 在相同 exact `A/b` 上重算 `r=b-Ax`，使用由 propagating+near-cutoff Floquet canonical inventory 预先确定、rank≤32 的 basis，先测 projection/deflatable fraction、`P/P^H`、MPI identity 和附加内存；禁止 residual fitting 和参数扫描。只有诊断支持该解释时才另立新 review 实现一次 bounded correction，否则关闭 Floquet correction，转向 wave-aware domain decomposition。
+
+证据入口：[`V14 J5 memory outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/jit_staging_physical_memory_v14.md)、[`V14 J5 physical outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/p6_physical_v14.md)、[`V14 response`](task038_extra_full3d_iterative_0p7nm/response_v14.md)、[`J5 compact`](task038_extra_full3d_iterative_0p7nm/outcomes/records/j5_full_cold_staged_v3_controlled_stop_v14.json)。
