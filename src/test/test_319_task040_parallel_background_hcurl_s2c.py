@@ -276,8 +276,12 @@ def test_task040_s2c_bounded_harmonic_service(tmp_path):
             )
             b0 = baselines["b0"]
             improvement = best / max(b0["final_true_residual"], _TINY)
-            b0_positive = b0["final_true_residual"] <= 0.1 or improvement >= 8.0
-            official_ready = b0["reason"] > 0 and b0["final_true_residual"] <= _RESIDUAL_LIMIT
+            b0_positive = improvement >= 8.0
+            official_ready = (
+                b0_positive
+                and b0["reason"] > 0
+                and b0["final_true_residual"] <= _RESIDUAL_LIMIT
+            )
             local.update(
                 {
                     "layout_hash": canonical_layout_hash(layout),
