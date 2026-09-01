@@ -316,6 +316,7 @@ def build_small_same_mesh_positive_case(
         fine_matrix,
         coarse_matrix,
         owner_transfer,
+        smoother_power_seed=source,
         owns_owner_transfer=True,
     )
     return {
@@ -578,6 +579,7 @@ class SameMeshHcurlPmg:
         owner_transfer: Any,
         *,
         smoother: Any | None = None,
+        smoother_power_seed: PETSc.Vec | None = None,
         coarse_solver: Any | None = None,
         owns_owner_transfer: bool = False,
     ) -> None:
@@ -630,7 +632,9 @@ class SameMeshHcurlPmg:
         self.max_p1_relative_residual = 0.0
 
         self.smoother = (
-            FixedChebyshevJacobiPETSc(fine_matrix)
+            FixedChebyshevJacobiPETSc(
+                fine_matrix, power_seed=smoother_power_seed
+            )
             if smoother is None
             else smoother
         )

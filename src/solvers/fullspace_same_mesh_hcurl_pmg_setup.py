@@ -19,6 +19,7 @@ from petsc4py import PETSc
 
 from .fullspace_lor_hx_root_cause import M0_DIRECT_BACKEND
 from .fullspace_mpc_action import build_fullspace_mpc_form_action
+from .fullspace_lor_native_hx_fixture import build_frozen_fullspace_primal_source
 from .fullspace_same_mesh_hcurl_pmg import build_same_mesh_hcurl_transfer
 from .fullspace_same_mesh_hcurl_pmg_global import (
     SameMeshHcurlPmg,
@@ -339,12 +340,19 @@ def build_p6_same_mesh_setup(
             floquets[1],
             local_transfer=bundle["p31_local_transfer"],
         )
-        bundle["lower_cycle"] = SameMeshHcurlPmg(
-            bundle["p3_matrix"],
-            bundle["p1_matrix"],
-            bundle["p31_owner_transfer"],
-            owns_owner_transfer=True,
+        lower_power_seed, _ = build_frozen_fullspace_primal_source(
+            spaces[3], floquets[3], cfg, "random"
         )
+        try:
+            bundle["lower_cycle"] = SameMeshHcurlPmg(
+                bundle["p3_matrix"],
+                bundle["p1_matrix"],
+                bundle["p31_owner_transfer"],
+                smoother_power_seed=lower_power_seed,
+                owns_owner_transfer=True,
+            )
+        finally:
+            lower_power_seed.destroy()
         p6_map = floquets[6].mpc.function_space.dofmap.index_map
         p6_block_size = int(floquets[6].mpc.function_space.dofmap.index_map_bs)
         p6_owned_storage = int(p6_map.size_local) * p6_block_size
@@ -352,16 +360,23 @@ def build_p6_same_mesh_setup(
         owned_slaves = p6_slaves[
             (p6_slaves >= 0) & (p6_slaves < p6_owned_storage)
         ]
-        bundle["upper_cycle"] = SameMeshP6NestedVcycle(
-            bundle["p6_shell"],
-            bundle["lower_cycle"],
-            bundle["p63_owner_transfer"],
-            bundle["p3_matrix"],
-            owned_slave_indices=owned_slaves,
-            owns_lower_cycle=True,
-            owns_p63_transfer=True,
-            owns_p6_shell=True,
+        upper_power_seed, _ = build_frozen_fullspace_primal_source(
+            spaces[6], floquets[6], cfg, "random"
         )
+        try:
+            bundle["upper_cycle"] = SameMeshP6NestedVcycle(
+                bundle["p6_shell"],
+                bundle["lower_cycle"],
+                bundle["p63_owner_transfer"],
+                bundle["p3_matrix"],
+                smoother_power_seed=upper_power_seed,
+                owned_slave_indices=owned_slaves,
+                owns_lower_cycle=True,
+                owns_p63_transfer=True,
+                owns_p6_shell=True,
+            )
+        finally:
+            upper_power_seed.destroy()
         return bundle
     except Exception:
         if p6_diagonal is not None:

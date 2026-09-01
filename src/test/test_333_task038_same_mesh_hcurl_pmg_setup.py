@@ -8,7 +8,9 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 import pytest
+from dolfinx import fem
 
+import src.solvers.fullspace_same_mesh_hcurl_pmg_setup as setup_impl
 from src.common.config_3d import target_stage4_config
 from src.solvers.fullspace_same_mesh_hcurl_pmg_global import (
     _same_mesh_level_config,
@@ -163,3 +165,120 @@ def test_setup_bundle_destroy_delegates_nested_ownership_then_matrices():
     destroy_p6_same_mesh_setup_bundle(bundle)
     assert events == ["upper", "p3", "p1"]
     assert bundle == {}
+
+
+def test_setup_seeds_are_injected_once_and_destroyed_on_success_or_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    events: list[str] = []
+    captured: dict[str, object] = {}
+    seeds: list[object] = []
+    fail_lower = False
+
+    class _Owned:
+        def __init__(self, name: str) -> None:
+            self.name = name
+            self.destroyed = False
+
+        def destroy(self) -> None:
+            self.destroyed = True
+            events.append(self.name)
+
+    class _Seed(_Owned):
+        pass
+
+    class _Shell(_Owned):
+        def __init__(self, action: object, diagonal: object) -> None:
+            super().__init__("shell")
+            self.action = action
+            self.diagonal = diagonal
+
+        def destroy(self) -> None:
+            if not self.destroyed:
+                super().destroy()
+                self.action.destroy()
+                self.diagonal.destroy()
+
+    def _levels(_cfg: object, _comm: object, _degrees: tuple[int, ...]):
+        spaces = {}
+        floquets = {}
+        for degree in (6, 3, 1):
+            index_map = SimpleNamespace(size_local=4, num_ghosts=0)
+            space = SimpleNamespace(
+                dofmap=SimpleNamespace(index_map=index_map, index_map_bs=1)
+            )
+            spaces[degree] = space
+            floquets[degree] = SimpleNamespace(
+                mpc=SimpleNamespace(
+                    slaves=np.asarray([0], dtype=np.int32),
+                    function_space=space,
+                )
+            )
+        return {
+            "mesh": "mesh",
+            "mesh_data": SimpleNamespace(),
+            "spaces": spaces,
+            "floquets": floquets,
+            "mu": "mu",
+            "mass": "mass",
+            "coefficient_audit": {},
+        }
+
+    def _source(_space: object, _floquet: object, _cfg: object, name: str):
+        seed = _Seed(f"seed-{len(seeds)}-{name}")
+        seeds.append(seed)
+        return seed, {"name": name}
+
+    def _lower(*_args: object, smoother_power_seed: object, **_kwargs: object):
+        captured["lower"] = smoother_power_seed
+        if fail_lower:
+            raise RuntimeError("lower construction failed")
+        return _Owned("lower")
+
+    def _upper(*_args: object, smoother_power_seed: object, **_kwargs: object):
+        captured["upper"] = smoother_power_seed
+        return _Owned("upper")
+
+    monkeypatch.setattr(setup_impl, "_build_same_mesh_levels", _levels)
+    monkeypatch.setattr(
+        setup_impl, "build_frozen_fullspace_primal_source", _source
+    )
+    monkeypatch.setattr(setup_impl, "same_mesh_positive_form", lambda *_a, **_k: "form")
+    monkeypatch.setattr(
+        setup_impl, "build_fullspace_mpc_form_action", lambda *_a, **_k: _Owned("action")
+    )
+    monkeypatch.setattr(
+        setup_impl, "build_constrained_jacobi_diagonal", lambda *_a, **_k: _Owned("diagonal")
+    )
+    monkeypatch.setattr(setup_impl, "SameMeshP6MatrixFreeShell", _Shell)
+    monkeypatch.setattr(
+        setup_impl, "assemble_same_mesh_positive_matrix", lambda *_a, **_k: _Owned("matrix")
+    )
+    monkeypatch.setattr(
+        setup_impl, "build_same_mesh_hcurl_transfer", lambda *_a, **_k: _Owned("local")
+    )
+    monkeypatch.setattr(
+        setup_impl,
+        "build_same_mesh_hcurl_owner_transfer",
+        lambda *_a, **_k: _Owned("owner"),
+    )
+    monkeypatch.setattr(setup_impl, "SameMeshHcurlPmg", _lower)
+    monkeypatch.setattr(setup_impl, "SameMeshP6NestedVcycle", _upper)
+    monkeypatch.setattr(fem, "form", lambda *_a, **_k: "compiled")
+    cfg = SimpleNamespace(nedelec_degree=6, mesh_target_size=10.0, lambda0=13.5)
+
+    bundle = setup_impl.build_p6_same_mesh_setup(cfg, MPI.COMM_SELF)
+    assert captured["lower"] is seeds[0]
+    assert captured["upper"] is seeds[1]
+    assert all(seed.destroyed for seed in seeds)
+    assert all(not any(value is seed for value in bundle.values()) for seed in seeds)
+    setup_impl.destroy_p6_same_mesh_setup_bundle(bundle)
+
+    captured.clear()
+    seeds.clear()
+    fail_lower = True
+    with pytest.raises(RuntimeError, match="lower construction failed"):
+        setup_impl.build_p6_same_mesh_setup(cfg, MPI.COMM_SELF)
+    assert len(seeds) == 1
+    assert seeds[0].destroyed is True
+    assert "upper" not in captured

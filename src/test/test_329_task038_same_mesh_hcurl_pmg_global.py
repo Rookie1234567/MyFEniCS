@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 from petsc4py import PETSc
 
+import src.solvers.fullspace_same_mesh_hcurl_pmg_global as pmg_global
 from benchmarks import task038_full3d_same_mesh_hcurl_pmg_checker as checker
 from benchmarks.run_task038_full3d_same_mesh_hcurl_pmg import (
     _operator_identity_authority,
@@ -174,6 +175,59 @@ def test_small_pmg_qualification_reuses_work_and_has_independent_rhs(pmg_case):
     finally:
         if output is not None:
             output.destroy()
+
+
+def test_smoother_power_seed_forwards_only_to_owned_smoother(monkeypatch):
+    captured = []
+
+    class _CapturedSmoother:
+        def __init__(self, matrix, *, power_seed=None):
+            captured.append((matrix, power_seed))
+
+        def destroy(self):
+            pass
+
+    monkeypatch.setattr(pmg_global, "FixedChebyshevJacobiPETSc", _CapturedSmoother)
+    fine_matrix = _diagonal([2.0, 3.0, 4.0, 5.0])
+    coarse_matrix = _diagonal([2.0, 3.0, 4.0, 5.0])
+    owner = _OwnerTransfer(4)
+    seed = fine_matrix.createVecRight()
+    seed.array[:] = (1.0 + 0.25j, 2.0 - 0.5j, 0.5 + 1.0j, -1.0j)
+    seed_before = seed.array.copy()
+    owned_pmg = external_pmg = None
+    try:
+        owned_pmg = SameMeshHcurlPmg(
+            fine_matrix,
+            coarse_matrix,
+            owner,
+            smoother_power_seed=seed,
+            coarse_solver=_ExactDiagonalSolver([2.0, 3.0, 4.0, 5.0]),
+        )
+        assert captured == [(fine_matrix, seed)]
+        np.testing.assert_array_equal(seed.array, seed_before)
+        owned_pmg.destroy()
+        owned_pmg = None
+
+        external = _CountedSmoother()
+        external_pmg = SameMeshHcurlPmg(
+            fine_matrix,
+            coarse_matrix,
+            owner,
+            smoother=external,
+            smoother_power_seed=seed,
+            coarse_solver=_ExactDiagonalSolver([2.0, 3.0, 4.0, 5.0]),
+        )
+        assert len(captured) == 1
+        assert external_pmg.smoother is external
+        np.testing.assert_array_equal(seed.array, seed_before)
+    finally:
+        if owned_pmg is not None:
+            owned_pmg.destroy()
+        if external_pmg is not None:
+            external_pmg.destroy()
+        seed.destroy()
+        fine_matrix.destroy()
+        coarse_matrix.destroy()
 
 
 def test_function_and_vec_lifetimes_are_separated():

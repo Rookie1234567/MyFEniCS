@@ -523,6 +523,7 @@ class SameMeshP6NestedVcycle:
         p3_matrix: PETSc.Mat,
         *,
         smoother: Any | None = None,
+        smoother_power_seed: PETSc.Vec | None = None,
         owned_slave_indices: np.ndarray | None = None,
         owns_lower_cycle: bool = False,
         owns_p63_transfer: bool = False,
@@ -581,7 +582,9 @@ class SameMeshP6NestedVcycle:
                     FixedChebyshevJacobiPETSc,
                 )
 
-                self.smoother = FixedChebyshevJacobiPETSc(p6_matrix)
+                self.smoother = FixedChebyshevJacobiPETSc(
+                    p6_matrix, power_seed=smoother_power_seed
+                )
             else:
                 self.smoother = smoother
             self._allocate_work()

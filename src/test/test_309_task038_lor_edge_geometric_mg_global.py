@@ -396,6 +396,41 @@ def test_petsc_fixed_chebyshev_matches_dense_a1_and_independent_t3() -> None:
         matrix.destroy()
 
 
+def test_petsc_fixed_chebyshev_copies_explicit_power_seed() -> None:
+    matrix = PETSc.Mat().createAIJ([2, 2], nnz=2, comm=PETSc.COMM_SELF)
+    matrix.setUp()
+    matrix.setValues(
+        [0, 1],
+        [0, 1],
+        np.asarray([[2.0, 1.0], [1.0, 2.0]], dtype=np.complex128),
+    )
+    matrix.assemble()
+    positive_seed = matrix.createVecRight()
+    negative_seed = matrix.createVecRight()
+    positive = negative = None
+    try:
+        positive_seed.array[:] = (1.0 + 1.0j, 1.0 + 1.0j)
+        negative_seed.array[:] = (1.0 - 1.0j, -1.0 + 1.0j)
+        positive_before = positive_seed.array.copy()
+        negative_before = negative_seed.array.copy()
+        positive = FixedChebyshevJacobiPETSc(matrix, power_seed=positive_seed)
+        negative = FixedChebyshevJacobiPETSc(matrix, power_seed=negative_seed)
+        np.testing.assert_array_equal(positive_seed.array, positive_before)
+        np.testing.assert_array_equal(negative_seed.array, negative_before)
+        assert positive.power_matrix_mult_count == 2 * POWER_STEPS
+        assert negative.power_matrix_mult_count == 2 * POWER_STEPS
+        assert np.isclose(positive.lambda_power10, 1.5, atol=1.0e-12)
+        assert np.isclose(negative.lambda_power10, 0.5, atol=1.0e-12)
+    finally:
+        if positive is not None:
+            positive.destroy()
+        if negative is not None:
+            negative.destroy()
+        positive_seed.destroy()
+        negative_seed.destroy()
+        matrix.destroy()
+
+
 def test_fixed_one_vcycle_rejects_p6_coarse_direct_path() -> None:
     class P6Only:
         degree = 6

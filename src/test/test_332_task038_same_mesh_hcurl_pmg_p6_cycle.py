@@ -6,6 +6,7 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import src.solvers.fullspace_lor_edge_geometric_mg_global as chebyshev
 from src.solvers.fullspace_same_mesh_hcurl_pmg_p6 import (
     P6_NESTED_LEVELS,
     P6_NESTED_PAIRS,
@@ -206,6 +207,51 @@ def test_fixed_nested_p6_cycle_orders_reuses_and_zeroes_owned_slave() -> None:
             vector.destroy()
         cycle.destroy()
         cycle.destroy()
+        p3_matrix.destroy()
+        p6_matrix.destroy()
+    assert action.destroyed
+
+
+def test_fixed_nested_p6_forwards_power_seed_to_owned_smoother(monkeypatch) -> None:
+    captured = []
+
+    class _CapturedSmoother:
+        def __init__(self, matrix, *, power_seed=None):
+            captured.append((matrix, power_seed))
+
+        def destroy(self):
+            pass
+
+    monkeypatch.setattr(
+        chebyshev, "FixedChebyshevJacobiPETSc", _CapturedSmoother
+    )
+    p6_matrix = _diagonal_matrix((2.0 + 0.0j, 3.0 + 0.0j, 4.0 + 0.0j, 6.0 + 0.0j))
+    diagonal = p6_matrix.createVecRight()
+    p6_matrix.getDiagonal(diagonal)
+    action = _BorrowedAction(p6_matrix)
+    shell = SameMeshP6MatrixFreeShell(action, diagonal)
+    p3_matrix = _diagonal_matrix((2.0 + 0.0j, 4.0 + 0.0j, 8.0 + 0.0j))
+    lower = _CountingLowerCycle()
+    transfer = _CountingP63()
+    seed = p6_matrix.createVecRight()
+    seed.array[:] = (1.0 + 0.5j, -2.0j, 3.0 + 0.25j, 0.0j)
+    seed_before = seed.array.copy()
+    cycle = None
+    try:
+        cycle = SameMeshP6NestedVcycle(
+            shell,
+            lower,
+            transfer,
+            p3_matrix,
+            smoother_power_seed=seed,
+        )
+        assert captured[0][0].getSize() == p6_matrix.getSize()
+        assert captured[0][1] is seed
+        np.testing.assert_array_equal(seed.array, seed_before)
+    finally:
+        if cycle is not None:
+            cycle.destroy()
+        seed.destroy()
         p3_matrix.destroy()
         p6_matrix.destroy()
     assert action.destroyed

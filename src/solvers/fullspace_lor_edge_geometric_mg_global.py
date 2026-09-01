@@ -60,7 +60,9 @@ A2_CELL_BATCH = 32
 class FixedChebyshevJacobiPETSc:
     """Fixed Jacobi-scaled degree-three Chebyshev action on a PETSc matrix."""
 
-    def __init__(self, matrix: PETSc.Mat) -> None:
+    def __init__(
+        self, matrix: PETSc.Mat, *, power_seed: PETSc.Vec | None = None
+    ) -> None:
         rows, columns = matrix.getSize()
         if rows != columns or rows <= 0:
             raise ValueError("Chebyshev matrix must be nonempty and square")
@@ -87,13 +89,30 @@ class FixedChebyshevJacobiPETSc:
         self.matrix_mult_count = 0
         self.power_matrix_mult_count = 0
         try:
-            start, stop = power_vector.getOwnershipRange()
-            global_rows = int(rows)
-            indices = np.arange(start + 1, stop + 1, dtype=np.float64)
-            reverse = np.arange(
-                global_rows - start, global_rows - stop, -1.0, dtype=np.float64
-            )
-            power_vector.array[:] = indices + 1j * reverse
+            if power_seed is None:
+                start, stop = power_vector.getOwnershipRange()
+                global_rows = int(rows)
+                indices = np.arange(start + 1, stop + 1, dtype=np.float64)
+                reverse = np.arange(
+                    global_rows - start, global_rows - stop, -1.0, dtype=np.float64
+                )
+                power_vector.array[:] = indices + 1j * reverse
+            else:
+                seed_layout = (
+                    int(power_seed.getSize()),
+                    int(power_seed.getLocalSize()),
+                )
+                vector_layout = (
+                    int(power_vector.getSize()),
+                    int(power_vector.getLocalSize()),
+                )
+                if seed_layout != vector_layout:
+                    raise ValueError(
+                        "Chebyshev power seed layout does not match matrix"
+                    )
+                power_seed.copy(power_vector)
+                if not np.all(np.isfinite(np.asarray(power_vector.array))):
+                    raise FloatingPointError("Chebyshev power seed is non-finite")
             norm = float(power_vector.norm())
             if not np.isfinite(norm) or norm == 0.0:
                 raise FloatingPointError("Chebyshev power vector is invalid")
