@@ -711,6 +711,21 @@ def test_f2_f3_checker_mutations_fail_closed(tmp_path: Path, monkeypatch: pytest
 def test_f2_f3_lazy_import_boundary_and_independent_checker() -> None:
     worker_path = ROOT / "benchmarks/run_task038_full3d_floquet_wave_checkpoint_diagnostic.py"
     worker_source = worker_path.read_text(encoding="utf-8")
+    worker_tree = ast.parse(worker_source)
+    source_imports = [
+        node
+        for node in ast.walk(worker_tree)
+        if isinstance(node, ast.ImportFrom)
+        and node.module
+        == "benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p6_positive"
+    ]
+    assert any(
+        any(alias.name == "_source_facts" for alias in node.names)
+        for node in source_imports
+    )
+    assert (
+        ROOT / "benchmarks/run_task038_full3d_same_mesh_hcurl_pmg_p6_positive.py"
+    ).is_file()
     assert "np.column_stack" not in worker_source
     assert "np.savez_compressed" not in worker_source
     assert "PETSc.KSP" not in worker_source

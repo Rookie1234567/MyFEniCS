@@ -325,7 +325,7 @@ def run_worker(args: argparse.Namespace) -> None:
     if comm.size != 1:
         raise ValueError("F2/F3 diagnostic is MPI1-only")
 
-    from benchmarks.run_task038_full3d_jit_p6_positive import _source_facts
+    from benchmarks.run_task038_full3d_same_mesh_hcurl_pmg_p6_positive import _source_facts
     from src.io import load_and_resolve
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.solvers.fullspace_memory_first_krylov import read_solution_checkpoint
