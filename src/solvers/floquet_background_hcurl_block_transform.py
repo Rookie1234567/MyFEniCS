@@ -8,7 +8,11 @@ from typing import Any
 import numpy as np
 from petsc4py import PETSc
 
-from ..geometry.tetra_mesh_audit import canonical_entity_key, mesh_coordinate_tolerance
+from ..geometry.tetra_mesh_audit import (
+    canonical_entity_key,
+    canonical_point_key,
+    mesh_coordinate_tolerance,
+)
 from .hcurl_canonical_vector_dolfinx import (
     _entity_coordinates,
     _physical_entity_transform,
@@ -18,6 +22,7 @@ __all__ = (
     "ActiveTraceBlochLayout",
     "ActiveTraceBlochTransforms",
     "build_active_trace_bloch_layout",
+    "build_hybrid_local_action_bloch_layout",
     "create_active_trace_bloch_transforms",
 )
 
@@ -51,6 +56,8 @@ class ActiveTraceBlochLayout:
     block_by_orbit_base: dict[tuple[tuple[int, int], tuple[Any, ...]], _EntityBlock]
     slot_by_base: dict[tuple[Any, ...], int]
     orbit_rows: dict[tuple[int, int], int]
+    nedelec_degree: int
+    phase_model: str = "physical_uniform_fft"
 
 
 @dataclass
@@ -78,7 +85,11 @@ def _unique_axis(values: list[float]) -> np.ndarray:
     return np.asarray(result, dtype=np.float64)
 
 
-def _mesh_cells(function_space) -> tuple[dict[int, tuple[int, int, int]], tuple[np.ndarray, ...]]:
+def _mesh_cells(
+    function_space,
+    *,
+    require_uniform_transverse: bool = True,
+) -> tuple[dict[int, tuple[int, int, int]], tuple[np.ndarray, ...]]:
     mesh = function_space.mesh
     comm = mesh.comm
     tdim = mesh.topology.dim
@@ -103,7 +114,9 @@ def _mesh_cells(function_space) -> tuple[dict[int, tuple[int, int, int]], tuple[
         raise RuntimeError("S2b requires a three-axis hexahedral mesh")
     widths = tuple(np.diff(axis) for axis in axes)
     for width in widths[:2]:
-        if not np.allclose(width, width[0], rtol=0.0, atol=1.0e-10):
+        if require_uniform_transverse and not np.allclose(
+            width, width[0], rtol=0.0, atol=1.0e-10
+        ):
             raise RuntimeError("S2b requires equally spaced transverse axes")
     cell_indices: dict[int, tuple[int, int, int]] = {}
     for cell, (lower, _upper) in enumerate(local_cells):
@@ -117,17 +130,54 @@ def _mesh_cells(function_space) -> tuple[dict[int, tuple[int, int, int]], tuple[
     return cell_indices, axes
 
 
-def _candidate_blocks(function_space, condensed, axes):
+def _axis_index(axis: np.ndarray, value: float, tolerance: float) -> int:
+    matches = np.flatnonzero(
+        np.isclose(axis, value, rtol=0.0, atol=10.0 * tolerance)
+    )
+    if len(matches) != 1:
+        raise RuntimeError("entity coordinate has no unique tensor-axis index")
+    return int(matches[0])
+
+
+def _topological_entity_base(
+    coordinates: np.ndarray,
+    dimension: int,
+    axes: tuple[np.ndarray, ...],
+    orbit: tuple[int, int],
+    tolerance: float,
+) -> tuple[Any, ...]:
+    points = []
+    for point in coordinates:
+        ix = _axis_index(axes[0], float(point[0]), tolerance)
+        iy = _axis_index(axes[1], float(point[1]), tolerance)
+        z_key = canonical_point_key(point, tolerance)[2]
+        points.append((ix - orbit[0], iy - orbit[1], int(z_key)))
+    return (int(dimension), tuple(sorted(points)))
+
+
+def _candidate_blocks(
+    function_space,
+    condensed,
+    axes,
+    *,
+    topological_orbit: bool = False,
+):
     topology = function_space.mesh.topology
     tdim = topology.dim
     for dimension in (1, 2):
         topology.create_connectivity(tdim, dimension)
         topology.create_connectivity(dimension, tdim)
     topology.create_entity_permutations()
-    cell_indices, _axes = _mesh_cells(function_space)
+    cell_indices, _axes = _mesh_cells(
+        function_space,
+        require_uniform_transverse=not topological_orbit,
+    )
     tolerance = mesh_coordinate_tolerance(function_space.mesh)
-    dx, dy = (float(np.diff(axes[axis])[0]) for axis in (0, 1))
     nx, ny = len(axes[0]) - 1, len(axes[1]) - 1
+    if nx <= 0 or ny <= 0:
+        raise RuntimeError("transverse tensor axes must contain cells")
+    if not topological_orbit:
+        dx, dy = (float(np.diff(axes[axis])[0]) for axis in (0, 1))
     dofmap = function_space.dofmap
     index_map = dofmap.index_map
     original_to_active = condensed.trace_constraints.original_to_active
@@ -163,22 +213,32 @@ def _candidate_blocks(function_space, condensed, axes):
                     raise RuntimeError("entity block maps duplicate active trace rows")
                 coordinates = np.asarray(_entity_coordinates(function_space, dimension, entity_id))
                 minimum = coordinates.min(axis=0)
-                raw_ix = int(np.rint((minimum[0] - axes[0][0]) / dx))
-                raw_iy = int(np.rint((minimum[1] - axes[1][0]) / dy))
-                if not 0 <= raw_ix <= nx or not 0 <= raw_iy <= ny:
-                    raise RuntimeError("active entity lies outside transverse axes")
-                if not np.isclose(
-                    minimum[0], axes[0][0] + raw_ix * dx, rtol=0.0, atol=10.0 * tolerance
-                ) or not np.isclose(
-                    minimum[1], axes[1][0] + raw_iy * dy, rtol=0.0, atol=10.0 * tolerance
-                ):
-                    raise RuntimeError("active entity minimum is off the transverse axis")
-                orbit = (raw_ix % nx, raw_iy % ny)
-                shifted = coordinates - np.asarray((orbit[0] * dx, orbit[1] * dy, 0.0))
+                if topological_orbit:
+                    raw_ix = _axis_index(axes[0], float(minimum[0]), tolerance)
+                    raw_iy = _axis_index(axes[1], float(minimum[1]), tolerance)
+                    if raw_ix > nx or raw_iy > ny:
+                        raise RuntimeError("active entity lies outside transverse axes")
+                    orbit = (raw_ix % nx, raw_iy % ny)
+                    base = _topological_entity_base(
+                        coordinates, dimension, axes, orbit, tolerance
+                    )
+                else:
+                    raw_ix = int(np.rint((minimum[0] - axes[0][0]) / dx))
+                    raw_iy = int(np.rint((minimum[1] - axes[1][0]) / dy))
+                    if not 0 <= raw_ix <= nx or not 0 <= raw_iy <= ny:
+                        raise RuntimeError("active entity lies outside transverse axes")
+                    if not np.isclose(
+                        minimum[0], axes[0][0] + raw_ix * dx, rtol=0.0, atol=10.0 * tolerance
+                    ) or not np.isclose(
+                        minimum[1], axes[1][0] + raw_iy * dy, rtol=0.0, atol=10.0 * tolerance
+                    ):
+                        raise RuntimeError("active entity minimum is off the transverse axis")
+                    orbit = (raw_ix % nx, raw_iy % ny)
+                    shifted = coordinates - np.asarray((orbit[0] * dx, orbit[1] * dy, 0.0))
+                    base = (int(dimension), canonical_entity_key(shifted, tolerance))
                 physical_key = canonical_entity_key(
                     coordinates, tolerance
                 )
-                base = (int(dimension), canonical_entity_key(shifted, tolerance))
                 candidates.append(
                     (
                         (int(dimension), physical_key),
@@ -191,45 +251,72 @@ def _candidate_blocks(function_space, condensed, axes):
     return candidates
 
 
-def build_active_trace_bloch_layout(request) -> ActiveTraceBlochLayout:
-    """Build canonical active-trace metadata without collecting vector values."""
+def _build_layout_parts(
+    *,
+    function_space,
+    condensed,
+    matrix,
+    floquet_data,
+    config,
+    auxiliary_rows: int,
+    phase_model: str,
+    strict_s2: bool,
+) -> ActiveTraceBlochLayout:
+    """Share explicit layout construction between the strict and action paths."""
 
-    function_space = request.function_space
-    condensed = request.static_condensed_system
     comm = function_space.mesh.comm
-    if condensed is None or request.floquet_data is None:
-        raise RuntimeError("S2b requires static condensation and Floquet metadata")
+    scope = "S2b" if strict_s2 else "S3a"
+    if condensed is None or floquet_data is None:
+        raise RuntimeError(f"{scope} requires static condensation and Floquet metadata")
+    configured_degree = config.nedelec_degree
+    if (
+        isinstance(configured_degree, (bool, np.bool_))
+        or not isinstance(configured_degree, (int, np.integer))
+        or int(configured_degree) <= 0
+    ):
+        raise RuntimeError(f"{scope} requires a positive integer Nedelec degree")
+    nedelec_degree = int(configured_degree)
     active_rows = int(condensed.active_rows)
-    auxiliary_rows = int(request.n_aux)
+    auxiliary_rows = int(auxiliary_rows)
+    if auxiliary_rows < 0:
+        raise RuntimeError(f"{scope} auxiliary row count must be non-negative")
     augmented_rows = active_rows + auxiliary_rows
-    if int(request.A.getSize()[0]) != augmented_rows:
-        raise RuntimeError("S2b request matrix size disagrees with condensed metadata")
-    _cell_indices, axes = _mesh_cells(function_space)
+    if int(matrix.getSize()[0]) != augmented_rows:
+        raise RuntimeError(f"{scope} matrix size disagrees with condensed metadata")
+    _cell_indices, axes = _mesh_cells(
+        function_space,
+        require_uniform_transverse=strict_s2,
+    )
     nx, ny, nz = (len(axis) - 1 for axis in axes)
-    if (nx, ny, nz) != (3, 2, 4):
+    if strict_s2 and (nx, ny, nz) != (3, 2, 4):
         raise RuntimeError(f"S2b actual mesh counts are {(nx, ny, nz)}, not (3, 2, 4)")
-    phase_x = complex(request.floquet_data.phase_x)
-    phase_y = complex(request.floquet_data.phase_y)
+    phase_x = complex(floquet_data.phase_x)
+    phase_y = complex(floquet_data.phase_y)
     if not np.isclose(abs(phase_x), 1.0, rtol=0.0, atol=1.0e-12):
-        raise RuntimeError("S2b x Floquet phase is not unit modulus")
+        raise RuntimeError(f"{scope} x Floquet phase is not unit modulus")
     if not np.isclose(abs(phase_y), 1.0, rtol=0.0, atol=1.0e-12):
-        raise RuntimeError("S2b y Floquet phase is not unit modulus")
+        raise RuntimeError(f"{scope} y Floquet phase is not unit modulus")
     lengths = (float(axes[0][-1] - axes[0][0]), float(axes[1][-1] - axes[1][0]))
-    configured_k = (complex(request.config.kx), complex(request.config.ky))
+    configured_k = (complex(config.kx), complex(config.ky))
     if any(abs(value.imag) > 1.0e-12 for value in configured_k):
-        raise RuntimeError("S2b requires real configured transverse wave numbers")
+        raise RuntimeError(f"{scope} requires real configured transverse wave numbers")
     k_b = (float(configured_k[0].real), float(configured_k[1].real))
     if not np.isclose(
         np.exp(1j * k_b[0] * lengths[0]), phase_x, rtol=0.0, atol=1.0e-12
     ):
-        raise RuntimeError("x Bloch phase authority does not close")
+        raise RuntimeError(f"{scope} x Bloch phase authority does not close")
     if not np.isclose(
         np.exp(1j * k_b[1] * lengths[1]), phase_y, rtol=0.0, atol=1.0e-12
     ):
-        raise RuntimeError("y Bloch phase authority does not close")
-    if request.floquet_data.phase_independent_topology is None:
-        raise RuntimeError("S2b requires phase-independent Floquet topology authority")
-    local_candidates = _candidate_blocks(function_space, condensed, axes)
+        raise RuntimeError(f"{scope} y Bloch phase authority does not close")
+    if floquet_data.phase_independent_topology is None:
+        raise RuntimeError(f"{scope} requires phase-independent Floquet topology authority")
+    local_candidates = _candidate_blocks(
+        function_space,
+        condensed,
+        axes,
+        topological_orbit=not strict_s2,
+    )
     packets = comm.allgather(tuple(local_candidates))
     by_key: dict[tuple[int, tuple[tuple[int, int, int], ...]], list[tuple[Any, ...]]] = {}
     for packet in packets:
@@ -302,15 +389,15 @@ def build_active_trace_bloch_layout(request) -> ActiveTraceBlochLayout:
     }
     if any(count != offset for count in orbit_rows.values()):
         raise RuntimeError("physical orbit coverage has unequal active-row counts")
-    if active_rows != 480 or auxiliary_rows != 4 or offset != 80:
+    if strict_s2 and (active_rows != 480 or auxiliary_rows != 4 or offset != 80):
         raise RuntimeError(
             "S2b active metadata is not 480 FE rows = 6 * 80 with four auxiliary rows"
         )
     probe = condensed.create_augmented_vector()
-    ownership = tuple(map(int, request.A.getOwnershipRange()))
-    if request.A.getOwnershipRange() != probe.getOwnershipRange():
+    ownership = tuple(map(int, matrix.getOwnershipRange()))
+    if matrix.getOwnershipRange() != probe.getOwnershipRange():
         probe.destroy()
-        raise RuntimeError("S2b A and augmented-vector ownership differ")
+        raise RuntimeError(f"{scope} matrix and augmented-vector ownership differ")
     probe.destroy()
     return ActiveTraceBlochLayout(
         comm=comm,
@@ -331,14 +418,48 @@ def build_active_trace_bloch_layout(request) -> ActiveTraceBlochLayout:
         block_by_orbit_base=block_by_orbit_base,
         slot_by_base=slot_by_base,
         orbit_rows=orbit_rows,
+        nedelec_degree=nedelec_degree,
+        phase_model=phase_model,
     )
 
 
-def _orientation(block: _EntityBlock) -> np.ndarray:
+def build_active_trace_bloch_layout(request) -> ActiveTraceBlochLayout:
+    """Build the strict S2 active-trace layout without collecting vector values."""
+
+    return _build_layout_parts(
+        function_space=request.function_space,
+        condensed=request.static_condensed_system,
+        matrix=request.A,
+        floquet_data=request.floquet_data,
+        config=request.config,
+        auxiliary_rows=int(request.n_aux),
+        phase_model="physical_uniform_fft",
+        strict_s2=True,
+    )
+
+
+def build_hybrid_local_action_bloch_layout(system) -> ActiveTraceBlochLayout:
+    """Build a dynamic topological-orbit layout for an action-only local system."""
+
+    if int(system.n_external_aux) != 0:
+        raise RuntimeError("S3a action layout requires zero external auxiliary rows")
+    return _build_layout_parts(
+        function_space=system.V,
+        condensed=system.static_condensation.condensed,
+        matrix=system.A,
+        floquet_data=system.floquet_data,
+        config=system.cfg,
+        auxiliary_rows=0,
+        phase_model="topological_orbit_dft_approximation",
+        strict_s2=False,
+    )
+
+
+def _orientation(block: _EntityBlock, *, nedelec_degree: int = 2) -> np.ndarray:
     transform, _state = _physical_entity_transform(
         np.asarray(block.coordinates, dtype=np.float64),
         block.key[0],
-        2,
+        nedelec_degree,
         1.0e-10 * max(np.ptp(np.asarray(block.coordinates), axis=0).max(), 1.0),
     )
     return np.asarray(transform, dtype=np.complex128)
@@ -346,11 +467,24 @@ def _orientation(block: _EntityBlock) -> np.ndarray:
 
 def _phase(layout: ActiveTraceBlochLayout, orbit: tuple[int, int], mode: tuple[int, int], sign: int) -> complex:
     mx, my = mode
-    rx = layout.lengths[0] * orbit[0] / layout.nx
-    ry = layout.lengths[1] * orbit[1] / layout.ny
-    gx = 2.0 * np.pi * mx / layout.lengths[0]
-    gy = 2.0 * np.pi * my / layout.lengths[1]
-    return complex(np.exp(1j * sign * ((layout.k_b[0] + gx) * rx + (layout.k_b[1] + gy) * ry)))
+    if layout.phase_model == "physical_uniform_fft":
+        rx = layout.lengths[0] * orbit[0] / layout.nx
+        ry = layout.lengths[1] * orbit[1] / layout.ny
+        gx = 2.0 * np.pi * mx / layout.lengths[0]
+        gy = 2.0 * np.pi * my / layout.lengths[1]
+        argument = (layout.k_b[0] + gx) * rx + (layout.k_b[1] + gy) * ry
+    elif layout.phase_model == "topological_orbit_dft_approximation":
+        argument = (
+            (layout.k_b[0] * layout.lengths[0] + 2.0 * np.pi * mx)
+            * orbit[0]
+            / layout.nx
+            + (layout.k_b[1] * layout.lengths[1] + 2.0 * np.pi * my)
+            * orbit[1]
+            / layout.ny
+        )
+    else:
+        raise RuntimeError(f"unknown Bloch phase model {layout.phase_model!r}")
+    return complex(np.exp(1j * sign * argument))
 
 
 def _matrix_from_rows(layout: ActiveTraceBlochLayout, rows: dict[int, dict[int, complex]]) -> PETSc.Mat:
@@ -400,15 +534,15 @@ def _owned_entity_blocks(layout: ActiveTraceBlochLayout) -> tuple[_EntityBlock, 
 def create_active_trace_bloch_transforms(layout: ActiveTraceBlochLayout) -> ActiveTraceBlochTransforms:
     """Create sparse ``Q`` and ``T`` with physical=Q modal and modal=T physical."""
 
-    if layout.auxiliary_rows != 4:
-        raise RuntimeError("S2b requires four auxiliary envelope rows")
+    if layout.auxiliary_rows not in (0, 4):
+        raise RuntimeError("Bloch transforms support zero or four auxiliary rows")
     local_blocks = _owned_entity_blocks(layout)
     q_rows: dict[int, dict[int, complex]] = {}
     t_h_rows: dict[int, dict[int, complex]] = {}
     normalization = np.sqrt(layout.nx * layout.ny)
     modes = tuple((mx, my) for my in range(layout.ny) for mx in range(layout.nx))
     for block in local_blocks:
-        transform = _orientation(block)
+        transform = _orientation(block, nedelec_degree=layout.nedelec_degree)
         inverse = np.linalg.solve(transform, np.eye(len(block.active_ids)))
         for alpha, active_id in enumerate(block.active_ids):
             q_entries = q_rows.setdefault(active_id, {})
@@ -433,11 +567,12 @@ def create_active_trace_bloch_transforms(layout: ActiveTraceBlochLayout) -> Acti
                             + beta
                         )
                         s_entries[column] = complex(np.conj(t_factor * value))
-    envelope_aux_start = layout.active_rows
-    for row in range(layout.ownership[0], layout.ownership[1]):
-        if envelope_aux_start <= row < layout.augmented_rows:
-            q_rows.setdefault(row, {})[row] = 1.0
-            t_h_rows.setdefault(row, {})[row] = 1.0
+    if layout.auxiliary_rows:
+        envelope_aux_start = layout.active_rows
+        for row in range(layout.ownership[0], layout.ownership[1]):
+            if envelope_aux_start <= row < layout.augmented_rows:
+                q_rows.setdefault(row, {})[row] = 1.0
+                t_h_rows.setdefault(row, {})[row] = 1.0
     q = _matrix_from_rows(layout, q_rows)
     t_h = _matrix_from_rows(layout, t_h_rows)
     t = PETSc.Mat()

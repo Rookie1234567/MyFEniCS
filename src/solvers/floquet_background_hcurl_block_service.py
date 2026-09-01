@@ -28,6 +28,7 @@ __all__ = (
 
 _TINY = np.finfo(float).tiny
 _BLOCK_TOL = 1.0e-10
+_MAX_LOCAL_BLOCK_ROWS = 1024
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,7 @@ def _jsonable(value: Any) -> Any:
 
 
 def _layout_metadata(layout: ActiveTraceBlochLayout) -> dict[str, Any]:
+    axis_values = layout.axis_values
     return {
         "active_rows": layout.active_rows,
         "auxiliary_rows": layout.auxiliary_rows,
@@ -106,6 +108,12 @@ def _layout_metadata(layout: ActiveTraceBlochLayout) -> dict[str, Any]:
         "phase_y": layout.phase_y,
         "k_b": layout.k_b,
         "lengths": layout.lengths,
+        "nedelec_degree": layout.nedelec_degree,
+        "phase_model": layout.phase_model,
+        "axis_widths": [np.diff(np.asarray(axis)).tolist() for axis in axis_values],
+        "axis_nonuniformity": [
+            float(np.ptp(np.diff(np.asarray(axis)))) for axis in axis_values
+        ],
         "blocks": [
             {
                 "key": block.key,
@@ -128,20 +136,18 @@ def canonical_layout_hash(layout: ActiveTraceBlochLayout) -> str:
 
 
 def _block_indices(layout: ActiveTraceBlochLayout) -> tuple[tuple[int, ...], ...]:
-    if layout.auxiliary_rows != 4:
-        raise RuntimeError("S2c requires four auxiliary rows")
+    if layout.auxiliary_rows not in (0, 4):
+        raise RuntimeError("bounded harmonic blocks support zero or four auxiliary rows")
     blocks = []
     for mode in range(layout.nx * layout.ny):
         first = mode * layout.rows_per_harmonic
         indices = list(range(first, first + layout.rows_per_harmonic))
-        if mode == 0:
+        if mode == 0 and layout.auxiliary_rows:
             indices.extend(range(layout.active_rows, layout.augmented_rows))
         blocks.append(tuple(indices))
     flat = [index for block in blocks for index in block]
     if sorted(flat) != list(range(layout.augmented_rows)):
-        raise RuntimeError("S2c modal blocks do not cover each augmented row once")
-    if tuple(map(len, blocks)) != (84, 80, 80, 80, 80, 80):
-        raise RuntimeError("S2c modal block cardinality is not (84,80,80,80,80,80)")
+        raise RuntimeError("modal blocks do not cover each augmented row once")
     return tuple(blocks)
 
 
@@ -198,15 +204,20 @@ def _new_routes(parent: PETSc.Vec, blocks: tuple[tuple[int, ...], ...]) -> tuple
 def build_bounded_harmonic_packet(
     request,
     transforms: ActiveTraceBlochTransforms,
+    *,
+    require_exact_block_diagonal: bool = True,
 ) -> BoundedHarmonicFactorPacket:
-    """Extract and factor six background blocks without retaining PETSc objects."""
+    """Extract owner-local bounded blocks without retaining PETSc objects."""
 
     layout = transforms.layout
     comm = layout.comm
     blocks = _block_indices(layout)
     modes = len(blocks)
+    if any(len(indices) > _MAX_LOCAL_BLOCK_ROWS for indices in blocks):
+        raise RuntimeError("bounded harmonic block exceeds the 1024-row local limit")
     local_factors: list[dict[str, Any]] = []
     off_block_max: list[float] = []
+    off_block_audit: list[dict[str, Any]] = []
     column_apply_count = 0
     started = time.perf_counter()
     modal = transforms.q.createVecRight()
@@ -225,6 +236,7 @@ def build_bounded_harmonic_packet(
             matrix = np.empty((len(indices), len(indices)), dtype=np.complex128) if comm.rank == mode % comm.size else None
             route = routes[mode]
             off_max = 0.0
+            off_absolute_max = 0.0
             selected = set(indices)
             for column_position, column in enumerate(indices):
                 modal.set(0.0)
@@ -239,6 +251,13 @@ def build_bounded_harmonic_packet(
                 if not _finite(values):
                     raise RuntimeError("S2c background column action is nonfinite")
                 off_values = values[[index not in selected for index in local_ids]]
+                local_absolute_max = (
+                    float(np.max(np.abs(off_values))) if len(off_values) else 0.0
+                )
+                off_absolute_max = max(
+                    off_absolute_max,
+                    float(comm.allreduce(local_absolute_max, op=MPI.MAX)),
+                )
                 off_sq = float(np.vdot(off_values, off_values).real)
                 off_norm = float(np.sqrt(comm.allreduce(off_sq, op=MPI.SUM)))
                 route.gather(transformed)
@@ -249,13 +268,28 @@ def build_bounded_harmonic_packet(
                     raise RuntimeError("S2c background block column is nonfinite")
                 block_sq = float(np.vdot(local_block_values, local_block_values).real)
                 block_norm = float(np.sqrt(comm.allreduce(block_sq, op=MPI.SUM)))
-                off_max = max(off_max, off_norm / max(block_norm, _TINY))
+                ratio = off_norm / max(block_norm, _TINY)
+                if not np.all(
+                    np.isfinite((local_absolute_max, off_norm, block_norm, ratio))
+                ):
+                    raise RuntimeError("background off-block audit is nonfinite")
+                off_max = max(off_max, ratio)
                 if matrix is not None:
                     matrix[:, column_position] = local_block_values
             off_block_max.append(float(comm.allreduce(off_max, op=MPI.MAX)))
-            if off_block_max[-1] > _BLOCK_TOL:
+            off_block_audit.append(
+                {
+                    "mode": mode,
+                    "rows": len(indices),
+                    "off_block_absolute_max": off_absolute_max,
+                    "off_block_norm_ratio_max": off_block_max[-1],
+                    "finite": True,
+                    "dropped_coupling": not require_exact_block_diagonal,
+                }
+            )
+            if require_exact_block_diagonal and off_block_max[-1] > _BLOCK_TOL:
                 raise RuntimeError(
-                    f"S2c background mode {mode} has off-block leakage {off_block_max[-1]}"
+                    f"background mode {mode} has off-block leakage {off_block_max[-1]}"
                 )
             local_factor = {"mode": mode, "indices": indices, "owner": mode % comm.size}
             if matrix is not None:
@@ -290,6 +324,10 @@ def build_bounded_harmonic_packet(
             "block_rows": list(map(len, blocks)),
             "block_owners": [mode % comm.size for mode in range(modes)],
             "off_block_max": off_block_max,
+            "block_off_block_audit": off_block_audit,
+            "max_local_rows": max(map(len, blocks), default=0),
+            "require_exact_block_diagonal": bool(require_exact_block_diagonal),
+            "dropped_coupling": not require_exact_block_diagonal,
             "factor_solve_audit": factor_errors,
             "factor_count_local": len(factor_errors),
             "factor_count_global": int(comm.allreduce(len(factor_errors), op=MPI.SUM)),
@@ -298,10 +336,11 @@ def build_bounded_harmonic_packet(
             "setup_wall_seconds": time.perf_counter() - started,
             "additional_absorbing_shift": 0.0,
         }
-        if audit["background_column_apply_count"] != 484:
-            raise RuntimeError("S2c background did not perform exactly 484 column actions")
+        expected_columns = sum(map(len, blocks))
+        if audit["background_column_apply_count"] != expected_columns:
+            raise RuntimeError("background column action count does not match block rows")
         if audit["factor_count_global"] != modes:
-            raise RuntimeError("S2c did not create exactly six owner-local factors")
+            raise RuntimeError("background did not create one owner-local factor per mode")
         return BoundedHarmonicFactorPacket(
             layout_hash=canonical_layout_hash(layout),
             blocks=tuple(local_factors),
