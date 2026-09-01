@@ -322,11 +322,18 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
             time.sleep(0.01)
             fact = _process_fact(pid, stage)
         if fact is None:
-            if _pid_vanished(pid):
-                vanished.append(pid)
-            else:
-                unreadable.append(pid)
-        else:
+            vanished_now = _pid_vanished(pid)
+            if not vanished_now:
+                time.sleep(0.01)
+                fact = _process_fact(pid, stage)
+                if fact is None:
+                    vanished_now = _pid_vanished(pid)
+            if fact is None:
+                if vanished_now:
+                    vanished.append(pid)
+                else:
+                    unreadable.append(pid)
+        if fact is not None:
             members.append(fact)
     readable = not unreadable
     pss_all_readable = readable and all(fact["pss_bytes"] is not None for fact in members)

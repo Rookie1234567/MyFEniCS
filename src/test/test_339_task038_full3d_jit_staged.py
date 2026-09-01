@@ -827,6 +827,53 @@ def test_process_jsonl_and_manifest_delta_are_flushable(tmp_path: Path) -> None:
     assert parent._manifest_delta(previous, current) == current["manifest"]["artifacts"]
 
 
+@pytest.mark.parametrize(
+    ("vanished_results", "expected_vanished", "expected_unreadable"),
+    [((False, True), [200], []), ((False, False), [], [200])],
+)
+def test_snapshot_has_bounded_terminal_retry(
+    monkeypatch: pytest.MonkeyPatch,
+    vanished_results: tuple[bool, bool],
+    expected_vanished: list[int],
+    expected_unreadable: list[int],
+) -> None:
+    calls: dict[int, int] = {}
+    sleeps: list[float] = []
+    vanished_calls = iter(vanished_results)
+
+    def fake_process_fact(pid: int, stage: str) -> dict[str, object] | None:
+        calls[pid] = calls.get(pid, 0) + 1
+        if pid == 100:
+            return {
+                "pid": 100,
+                "ppid": 1,
+                "comm": "python",
+                "state": "S",
+                "cmdline": "python -m parent",
+                "stage": stage,
+                "rss_bytes": 100,
+                "pss_bytes": 50,
+                "swap_bytes": 0,
+                "timestamp_ns": 1,
+                "exit_code": None,
+            }
+        return None
+
+    monkeypatch.setattr(staging, "_live_parent_map", lambda: {100: [200]})
+    monkeypatch.setattr(staging, "_process_fact", fake_process_fact)
+    monkeypatch.setattr(staging, "_pid_vanished", lambda pid: next(vanished_calls))
+    monkeypatch.setattr(staging.time, "sleep", sleeps.append)
+
+    result = staging.process_tree_snapshot(100, "test")
+
+    assert calls == {100: 1, 200: 3}
+    assert sleeps == [0.01, 0.01]
+    assert result["vanished_pids"] == expected_vanished
+    assert result["unreadable_pids"] == expected_unreadable
+    assert result["all_status_readable"] is (not expected_unreadable)
+    assert result["readability_retry_count"] == 1
+
+
 def test_checker_accepts_fake_unchanged_solver_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     record_path, _root, record = _valid_fixture(tmp_path)
     result = checker.check_record(record_path, SOURCE_SHA)
