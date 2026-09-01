@@ -1,11 +1,15 @@
-"""Owner-local one-phase canonical relations for the B0-S1a fixture."""
+"""Single-harmonic Bloch phase and rank-three B0 MatPython helpers."""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
 from mpi4py import MPI
+from petsc4py import PETSc
+
+from .floquet_background_hcurl import maxwell_symbol_inverse
 
 
 @dataclass(frozen=True)
@@ -117,3 +121,113 @@ def remove_phase_once(values: np.ndarray, layout: SingleXPhaseLayout) -> PhaseAp
     result = _copy_values(values, layout)
     result[layout.slave_local] /= layout.coefficients
     return PhaseApplication(result, 1)
+
+
+def _vector_layout(vector: PETSc.Vec):
+    petsc_comm = vector.getComm()
+    comm = petsc_comm.tompi4py()
+    first, last = (int(value) for value in vector.getOwnershipRange())
+    local = int(vector.getLocalSize())
+    if local != last - first:
+        raise RuntimeError("single-harmonic Q must have owned PETSc storage")
+    return petsc_comm, comm, int(vector.getSize()), local, (first, last)
+
+
+class SingleHarmonicMatPythonContext:
+    def __init__(
+        self,
+        columns: Sequence[PETSc.Vec],
+        wavevector: Sequence[float],
+        *,
+        mu_inv: complex,
+        epsilon: complex,
+        k0: float,
+        shift: complex = 0.0j,
+    ) -> None:
+        if len(columns) != 3:
+            raise ValueError("single-harmonic context requires exactly three Q columns")
+        reference = columns[0]
+        _, reference_comm, global_size, local_size, ownership = _vector_layout(reference)
+        for column in columns:
+            _, comm, candidate_global, candidate_local, candidate_ownership = _vector_layout(column)
+            if MPI.Comm.Compare(reference_comm, comm) not in (MPI.IDENT, MPI.CONGRUENT):
+                raise ValueError("Q columns use different communicators")
+            if (candidate_global, candidate_local, candidate_ownership) != (
+                global_size,
+                local_size,
+                ownership,
+            ):
+                raise ValueError("Q columns use different ownership layouts")
+            if not np.all(np.isfinite(column.getArray(readonly=True))):
+                raise ValueError("Q columns must be finite")
+        self.columns = tuple(columns)
+        self.global_size = global_size
+        self.local_size = local_size
+        self.ownership = ownership
+        # PETSc Vec.dot(self, other) computes other^H self.
+        self.gram = np.asarray(
+            [
+                [self.columns[j].dot(self.columns[i]) for j in range(3)]
+                for i in range(3)
+            ],
+            dtype=np.complex128,
+        )
+        if not np.all(np.isfinite(self.gram)) or np.linalg.matrix_rank(self.gram) != 3:
+            raise np.linalg.LinAlgError("single-harmonic Q Gram is singular")
+        self.symbol_inverse = maxwell_symbol_inverse(
+            wavevector,
+            mu_inv=mu_inv,
+            epsilon=epsilon,
+            k0=k0,
+            shift=shift,
+        )
+        self.apply_count = 0
+        self.destroyed = False
+
+    def mult(self, _matrix: PETSc.Mat, x: PETSc.Vec, y: PETSc.Vec) -> None:
+        if self.destroyed:
+            raise RuntimeError("single-harmonic context has been destroyed")
+        d = np.asarray([x.dot(column) for column in self.columns], dtype=np.complex128)
+        coefficients = np.linalg.solve(self.gram, d)
+        transformed = self.symbol_inverse @ coefficients
+        y.set(0.0)
+        for value, column in zip(transformed, self.columns, strict=True):
+            y.axpy(PETSc.ScalarType(value), column)
+        self.apply_count += 1
+
+    def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
+        self.destroyed = True
+
+
+def create_single_harmonic_operator(
+    columns: Sequence[PETSc.Vec],
+    wavevector: Sequence[float],
+    *,
+    mu_inv: complex,
+    epsilon: complex,
+    k0: float,
+    shift: complex = 0.0j,
+) -> tuple[PETSc.Mat, SingleHarmonicMatPythonContext]:
+    context = SingleHarmonicMatPythonContext(
+        columns,
+        wavevector,
+        mu_inv=mu_inv,
+        epsilon=epsilon,
+        k0=k0,
+        shift=shift,
+    )
+    petsc_comm = columns[0].getComm()
+    size = ((context.local_size, context.global_size),) * 2
+    matrix = PETSc.Mat().createPython(size, context=context, comm=petsc_comm)
+    matrix.setUp()
+    if tuple(matrix.getSize()) != (context.global_size,) * 2:
+        matrix.destroy()
+        raise RuntimeError("single-harmonic Mat has the wrong global size")
+    if tuple(matrix.getLocalSize()) != (context.local_size,) * 2:
+        matrix.destroy()
+        raise RuntimeError("single-harmonic Mat has the wrong local size")
+    ownership = tuple(int(value) for value in matrix.getOwnershipRange())
+    if ownership != context.ownership:
+        matrix.destroy()
+        raise RuntimeError("single-harmonic Mat ownership differs from Q")
+    return matrix, context
