@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from copy import deepcopy
+from pathlib import Path
 from time import perf_counter
 from types import SimpleNamespace
 from typing import Any
@@ -1513,8 +1514,10 @@ def _run_s3_b1_candidate_external_core(
     validated_baseline: Mapping[str, Any],
     marker_callback: Any,
     resource_callback: Any,
+    source_work_directory: str | Path | None = None,
+    selected_mode_provider: Any | None = None,
 ) -> dict[str, Any]:
-    """Run the internal B1 external core before five-source integration."""
+    """Run the internal B1 external core with conditional five-source continuation."""
 
     if int(comm.size) != S3B_MPI_SIZE:
         raise ValueError(
@@ -1590,6 +1593,10 @@ def _run_s3_b1_candidate_external_core(
     service = None
     source = None
     solver = None
+    source_factory = None
+    source_factory_snapshot = source_factory_release = None
+    five_source_attempted = five_source_completed = False
+    five_source_result: dict[str, Any] = {}
     candidate_source_audit: dict[str, Any] = {}
     candidate_comparison: dict[str, Any] = {}
     one_apply: dict[str, Any] = {}
@@ -1811,6 +1818,46 @@ def _run_s3_b1_candidate_external_core(
             if packet is not None
         )
 
+    def snapshot_and_release_source_factory_collective() -> None:
+        nonlocal source_factory_snapshot, source_factory_release
+        snapshot_exception = release_exception = None
+        if source_factory is not None:
+            try:
+                source_inventory = source_factory.source_inventory
+                source_counts = source_inventory["source_build_counts"]
+                external_build_count = source_counts.get(S3B_EXTERNAL_SOURCE_LABEL)
+                source_factory_snapshot = _jsonable(
+                    {
+                        "construction_inventory": deepcopy(
+                            source_factory.construction_inventory
+                        ),
+                        "source_inventory": deepcopy(source_inventory),
+                        "external_source_reused": external_build_count == 0,
+                        "external_source_build_count": external_build_count,
+                    }
+                )
+            except Exception as exc:
+                snapshot_exception = exc
+            try:
+                source_factory_release = source_factory.release()
+            except Exception as exc:
+                release_exception = exc
+        packets = comm.allgather(
+            {
+                "snapshot": _error_packet(comm, snapshot_exception),
+                "release": _error_packet(comm, release_exception),
+            }
+        )
+        cleanup_errors.extend(
+            {"object": name, **packet[key]}
+            for packet in packets
+            for key, name in (
+                ("snapshot", "source_factory_snapshot"),
+                ("release", "source_factory"),
+            )
+            if packet[key] is not None
+        )
+
     try:
         mark(
             "s3b_b1_baseline_validated",
@@ -1989,6 +2036,38 @@ def _run_s3_b1_candidate_external_core(
                 raise RuntimeError(
                     "S3b B1 conditional pass has an unexpected next stage"
                 )
+            if conditional_positive:
+                five_source_attempted = True
+                source_factory = S3CurrentLayoutSourceFactory(
+                    context.target_system,
+                    source_work_directory=source_work_directory,
+                    selected_mode_provider=selected_mode_provider,
+                )
+                source_counts = source_factory.source_inventory["source_build_counts"]
+                if source_counts.get(S3B_EXTERNAL_SOURCE_LABEL) != 0:
+                    raise RuntimeError(
+                        "S3b source factory unexpectedly rebuilt the external source"
+                    )
+                mark(
+                    "s3b_b1_source_factory_ready",
+                    {
+                        "source_factory": {
+                            "external_source_reused": True,
+                            "external_source_build_count": 0,
+                        }
+                    },
+                )
+                five_source_result = _qualify_s3_b1_remaining_sources(
+                    operator, service, source_factory, conditional, conditional_gate,
+                    marker_callback=mark,
+                )
+                if (
+                    not isinstance(five_source_result, Mapping)
+                    or not isinstance(five_source_result.get("final_gate"), Mapping)
+                    or source_counts.get(S3B_EXTERNAL_SOURCE_LABEL) != 0
+                ):
+                    raise RuntimeError("S3b five-source helper/count contract failed")
+                five_source_completed = True
     except Exception as exc:
         formal_exception = exc
     finally:
@@ -2010,6 +2089,7 @@ def _run_s3_b1_candidate_external_core(
         service_apply_count_before_cleanup = _action_count(service)
         destroy_collective("solver", solver)
         destroy_collective("source", source)
+        snapshot_and_release_source_factory_collective()
         destroy_collective("context", context)
         solver_after_destroy = (
             _jsonable(solver.diagnostics) if solver is not None else None
@@ -2042,6 +2122,10 @@ def _run_s3_b1_candidate_external_core(
                     {
                         "solver_before_destroy": solver_before_destroy,
                         "solver_after_destroy": solver_after_destroy,
+                        "source_factory_created": source_factory is not None,
+                        "source_factory_release": source_factory_release,
+                        "five_source_attempted": five_source_attempted,
+                        "five_source_completed": five_source_completed,
                         "context_after_cleanup": context_after_cleanup,
                         "cleanup_errors": cleanup_errors,
                         "source_destroyed": source_destroyed,
@@ -2084,16 +2168,26 @@ def _run_s3_b1_candidate_external_core(
             raise formal_exception
         raise RuntimeError("S3b B1 external core stopped by resource Gate")
 
-    final_gate = conditional_gate if conditional_attempted else initial_gate
+    final_gate = (
+        five_source_result.get("final_gate")
+        if five_source_completed
+        else conditional_gate
+        if conditional_attempted
+        else initial_gate
+    )
+    positive = False
     if formal_exception is not None:
         classification = "S3B_B1_EXTERNAL_CORE_IMPLEMENTATION_FAILURE"
+        next_stage = None
     else:
         try:
             classification = str(final_gate["classification"])
             next_stage = final_gate["next_stage"]
+            positive = final_gate["positive"] is True
         except (KeyError, TypeError) as exc:
             classification = "S3B_B1_EXTERNAL_CORE_IMPLEMENTATION_FAILURE"
             next_stage = None
+            positive = False
             formal_exception_identity = {
                 "rank": int(comm.rank),
                 "type": type(exc).__name__,
@@ -2116,11 +2210,24 @@ def _run_s3_b1_candidate_external_core(
             "method": "task040_v9_e_s3b_b1_external_core",
             "route": "V9_E_S3B",
             "classification": classification,
-            "positive": bool(conditional_positive),
+            "positive": bool(positive) if formal_exception is None else False,
             "external_core_not_standalone_formal": True,
             "next_stage": next_stage,
             "five_source_continuation_required": bool(conditional_positive),
             "conditional_attempted": bool(conditional_attempted),
+            "five_source_attempted": bool(five_source_attempted),
+            "five_source_completed": bool(five_source_completed),
+            "five_source_result": five_source_result,
+            "source_factory": {
+                "created": source_factory is not None,
+                "construction_snapshot": source_factory_snapshot,
+                "release": source_factory_release,
+                "external_source_reused": (
+                    source_factory_snapshot.get("external_source_reused")
+                    if isinstance(source_factory_snapshot, Mapping)
+                    else None
+                ),
+            },
             "provenance": {
                 "source_sha": str(source_sha),
                 "input_path": str(input_path),
