@@ -214,12 +214,12 @@ def explicit_owner_adjoint_audit_only(owner: Any, fine_source: Any) -> Any:
     finalized coarse MPC metadata once as a dual reducer.
     """
 
-    fine_field = fem.Function(owner.fine_space)
+    fine_field = fem.Function(owner.fine_floquet.mpc.function_space)
     fine_source.copy(fine_field.x.petsc_vec)
     fine_field.x.scatter_forward()
     owner.fine_floquet.mpc.homogenize(fine_field)
     fine_field.x.scatter_forward()
-    coarse_field = fem.Function(owner.coarse_space)
+    coarse_field = fem.Function(owner.coarse_floquet.mpc.function_space)
     coarse_field.x.array[:] = 0.0
     for record in owner._records:
         values = np.asarray(
@@ -454,8 +454,8 @@ class SameMeshHcurlOwnerTransfer:
         self._records = tuple(records)
         self._map_cache = tuple(cache.items())
         self._authority = authority
-        self._coarse_work = fem.Function(coarse_space)
-        self._fine_work = fem.Function(fine_space)
+        self._coarse_work = fem.Function(coarse_floquet.mpc.function_space)
+        self._fine_work = fem.Function(fine_floquet.mpc.function_space)
         (
             self._coarse_slaves,
             self._dual_flat_slaves,
