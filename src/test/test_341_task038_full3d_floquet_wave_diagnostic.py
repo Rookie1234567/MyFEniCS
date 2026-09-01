@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import os
 import subprocess
@@ -219,6 +220,152 @@ def test_two_pass_mgs_and_projection_synthetic() -> None:
     metrics = project_onto_q(q, original[:, 0], comm)
     assert metrics["rho"] <= 1e-12
     assert metrics["captured_energy"] >= 1.0 - 1e-12
+
+
+def test_canonical_packet_order_and_checker_fail_closed(tmp_path: Path) -> None:
+    from benchmarks.run_task038_full3d_floquet_wave_small_oracle import (
+        CANONICAL_PACKET_KEY_ENCODING,
+        CANONICAL_PACKET_KEY_ORDERING,
+        CANONICAL_PACKET_KEY_SCHEMA,
+        _gather_canonical_packets,
+    )
+    import benchmarks.task038_full3d_floquet_wave_small_oracle_checker as checker
+
+    packets = [
+        (
+            (
+                "full_fe",
+                1,
+                ((1, 0, 0), (2, 0, 0)),
+                0,
+                ("canonical_edge",),
+                None,
+                (1.0, 0.0),
+            ),
+            1.0 + 2.0j,
+        ),
+        (
+            (
+                "full_fe",
+                3,
+                ((0, 0, 0), (1, 1, 1)),
+                2,
+                ("canonical_cell", "Tt_apply"),
+                None,
+                (1.0, 0.0),
+            ),
+            3.0 - 1.0j,
+        ),
+    ]
+    packet_audit = {"global_packet_count": 2}
+    forward = _gather_canonical_packets(packets, packet_audit, MPI.COMM_SELF)
+    reverse = _gather_canonical_packets(
+        tuple(reversed(packets)), packet_audit, MPI.COMM_SELF
+    )
+    assert np.array_equal(forward["keys"], reverse["keys"])
+    assert np.array_equal(forward["values"], reverse["values"])
+    with pytest.raises(RuntimeError):
+        _gather_canonical_packets(
+            packets + [packets[0]],
+            {"global_packet_count": 3},
+            MPI.COMM_SELF,
+        )
+
+    vector_path = tmp_path / "record_vectors.npz"
+    keys = forward["keys"]
+    values = forward["values"]
+    np.savez(
+        vector_path,
+        modal_dual_keys=keys,
+        modal_dual=values,
+        pc_output_keys=keys,
+        pc_output=values,
+    )
+
+    def descriptor(role: str) -> dict:
+        return {
+            "role": role,
+            "canonical_role": {
+                "modal_dual": "full_fe_dual",
+                "pc_output": "full_fe",
+            }[role],
+            "key_schema": CANONICAL_PACKET_KEY_SCHEMA,
+            "key_count": 2,
+            "value_count": 2,
+            "key_array_sha256": hashlib.sha256(keys.tobytes()).hexdigest(),
+            "value_array_sha256": hashlib.sha256(values.tobytes()).hexdigest(),
+            "canonical_array_l2": float(np.linalg.norm(values)),
+            "packet_audit": {
+                "owner_local": True,
+                "numeric_allgather": False,
+                "local_packet_counts": [2],
+                "local_duplicate_counts": [0],
+                "global_packet_count": 2,
+                "global_duplicate_count": 0,
+                "extractor_global_packet_count": 2,
+            },
+        }
+
+    record_path = tmp_path / "record.json"
+    vectors = {
+        "artifact_path": str(vector_path),
+        "artifact_sha256": hashlib.sha256(vector_path.read_bytes()).hexdigest(),
+        "canonical_identity": {
+            "key_schema": CANONICAL_PACKET_KEY_SCHEMA,
+            "key_encoding": CANONICAL_PACKET_KEY_ENCODING,
+            "ordering": CANONICAL_PACKET_KEY_ORDERING,
+            "owner_local_packets": True,
+            "numeric_allgather": False,
+        },
+        "modal_dual": descriptor("modal_dual"),
+        "pc_output": descriptor("pc_output"),
+        "modal_repeat_relative": 0.0,
+        "modal_linearity_relative": 0.0,
+        "pc_repeat_relative": 0.0,
+        "pc_linearity_relative": 0.0,
+        "pc_input_unchanged_relative": 0.0,
+        "modal_finite": True,
+        "pc_finite": True,
+        "modal_owned_slave_max": 0.0,
+        "pc_owned_slave_max": 0.0,
+    }
+    record = {
+        "provenance": {"command": {"record": str(record_path)}},
+        "vectors": vectors,
+    }
+    errors: list[str] = []
+    assert checker._check_vector_artifact(record, 1, errors) is not None
+    assert errors == []
+
+    duplicate = keys.copy()
+    duplicate[1] = duplicate[0]
+    np.savez(
+        vector_path,
+        modal_dual_keys=duplicate,
+        modal_dual=values,
+        pc_output_keys=duplicate,
+        pc_output=values,
+    )
+    errors = []
+    checker._check_vector_artifact(record, 1, errors)
+    assert any("key type/identity" in error for error in errors)
+
+    missing = {**vectors, "modal_dual": None}
+    errors = []
+    checker._check_vector_artifact(
+        {**record, "vectors": missing}, 1, errors
+    )
+    assert any("modal_dual descriptor" in error for error in errors)
+
+    record_path.write_text(
+        json.dumps({"schema": "task038.v15.floquet-f1-real-small.record.v1"}),
+        encoding="utf-8",
+    )
+    passed, errors, _metrics = checker._check_real(
+        record_path, "a" * 40, None, 1
+    )
+    assert passed is False
+    assert "real record schema" in errors
 
 
 def test_selector_runner_checker_and_mutation(tmp_path: Path) -> None:

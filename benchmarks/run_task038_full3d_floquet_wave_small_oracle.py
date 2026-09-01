@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -18,7 +19,7 @@ from pathlib import Path
 
 
 SELECTOR_RECORD_SCHEMA = "task038.v15.floquet-f1-selector.record.v1"
-REAL_RECORD_SCHEMA = "task038.v15.floquet-f1-real-small.record.v1"
+REAL_RECORD_SCHEMA = "task038.v15.floquet-f1-real-small.record.v2"
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 PHYSICAL_MODEL_SHA256 = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
@@ -28,6 +29,12 @@ SELECTOR_POLICY = "eligible_class_filter__normalized_abs_beta_ascending__mode_in
 SELECTOR_PAYLOAD_SHA256 = "7a6dea2534b200c6572b0200acd77087c71ccb0e52a0d1a16dae75e108cee2c3"
 PROFILE = "p6/h10/13.5nm/s/grazing1/phi0"
 REAL_PROFILE = "p3/h50/13.5nm/s/grazing1/phi0/small-oracle"
+CANONICAL_PACKET_KEY_SCHEMA = "task038.v15.canonical-packet-key-sha256.v1"
+CANONICAL_PACKET_KEY_ENCODING = (
+    "recursive tuple/list JSON with float.hex, sort_keys, separators, "
+    "ensure_ascii, allow_nan=false"
+)
+CANONICAL_PACKET_KEY_ORDERING = "sha256(key_json_bytes) ascending"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GIT_DIR = REPO_ROOT / ".git-codex"
 
@@ -47,6 +54,97 @@ def _sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _canonical_jsonable(value):
+    if isinstance(value, tuple):
+        return {"tuple": [_canonical_jsonable(item) for item in value]}
+    if isinstance(value, list):
+        return [_canonical_jsonable(item) for item in value]
+    if isinstance(value, bool) or value is None or isinstance(value, (int, str)):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError("canonical packet key contains a non-finite float")
+        return {"float_hex": value.hex()}
+    raise TypeError(
+        "unsupported canonical packet key value: " f"{type(value).__name__}"
+    )
+
+
+def _canonical_key_bytes(key) -> bytes:
+    return json.dumps(
+        _canonical_jsonable(key),
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("ascii")
+
+
+def _gather_canonical_packets(packets, packet_audit, comm):
+    import numpy as np
+
+    rows = []
+    for key, value in packets:
+        key_bytes = _canonical_key_bytes(key)
+        rows.append((hashlib.sha256(key_bytes).hexdigest(), complex(value)))
+    gathered = comm.gather(rows, root=0)
+    result = None
+    error = None
+    if comm.rank == 0:
+        try:
+            flattened = [row for rank_rows in gathered for row in rank_rows]
+            key_digests = [row[0] for row in flattened]
+            if len(key_digests) != len(set(key_digests)):
+                raise RuntimeError("duplicate canonical packet key digest")
+            ordered = sorted(flattened, key=lambda row: row[0])
+            result = {
+                "keys": np.asarray([row[0] for row in ordered], dtype="<U64"),
+                "values": np.asarray(
+                    [row[1] for row in ordered], dtype=np.complex128
+                ),
+                "packet_audit": {
+                    "owner_local": True,
+                    "numeric_allgather": False,
+                    "local_packet_counts": [len(rank_rows) for rank_rows in gathered],
+                    "local_duplicate_counts": [
+                        len(rank_rows) - len({row[0] for row in rank_rows})
+                        for rank_rows in gathered
+                    ],
+                    "global_packet_count": len(flattened),
+                    "global_duplicate_count": 0,
+                    "extractor_global_packet_count": int(
+                        packet_audit["global_packet_count"]
+                    ),
+                },
+            }
+        except (KeyError, TypeError, ValueError, RuntimeError) as exc:
+            error = str(exc)
+    error = comm.bcast(error, root=0)
+    if error is not None:
+        raise RuntimeError(error)
+    return result
+
+
+def _packet_descriptor(role, canonical_role, packet_result):
+    import numpy as np
+
+    keys = packet_result["keys"]
+    values = packet_result["values"]
+    return {
+        "role": role,
+        "canonical_role": canonical_role,
+        "key_schema": CANONICAL_PACKET_KEY_SCHEMA,
+        "key_count": int(keys.size),
+        "value_count": int(values.size),
+        "key_array_sha256": hashlib.sha256(keys.tobytes(order="C")).hexdigest(),
+        "value_array_sha256": hashlib.sha256(
+            values.tobytes(order="C")
+        ).hexdigest(),
+        "canonical_array_l2": float(np.linalg.norm(values)),
+        "packet_audit": packet_result["packet_audit"],
+    }
 
 
 def _validate_source(source_sha: str) -> None:
@@ -195,32 +293,6 @@ def _run_selector(args: argparse.Namespace) -> int:
     return 0
 
 
-def _partitioned_global_vector(vector, comm):
-    import numpy as np
-
-    start, stop = map(int, vector.getOwnershipRange())
-    local = np.asarray(vector.getArray(readonly=True), dtype=np.complex128).copy()
-    parts = comm.gather((start, stop, local), root=0)
-    if comm.rank == 0:
-        ordered = sorted(parts, key=lambda item: item[0])
-        if not ordered or ordered[0][0] != 0:
-            raise RuntimeError("small oracle vector ownership has a gap")
-        values = []
-        cursor = 0
-        for part_start, part_stop, part_values in ordered:
-            if part_start != cursor or part_values.size != part_stop - part_start:
-                raise RuntimeError("small oracle vector ownership is not contiguous")
-            values.append(part_values)
-            cursor = part_stop
-        global_values = np.concatenate(values)
-        digest = hashlib.sha256(global_values.tobytes(order="C")).hexdigest()
-    else:
-        global_values = None
-        digest = None
-    digest = comm.bcast(digest, root=0)
-    return digest, global_values
-
-
 def _vector_finite_and_slave_max(vector, slave_rows, comm):
     import numpy as np
     from mpi4py import MPI
@@ -338,9 +410,15 @@ def _run_real_small(args: argparse.Namespace) -> int:
         V15_SELECTED_MODE_INDICES,
         select_v15_modes,
     )
+    from src.solvers.hcurl_canonical_vector_dolfinx import (
+        extract_canonical_full_fe_dual_packets,
+        extract_canonical_full_fe_packets,
+    )
+    from dolfinx import fem
 
     case = None
     dtn = None
+    pc_observation = None
     vectors = []
     try:
         cfg = _small_config(input_path)
@@ -431,6 +509,35 @@ def _run_real_small(args: argparse.Namespace) -> int:
         pc_input_unchanged_rel = _vector_relative(
             modal.getArray(readonly=True), modal_before, comm
         )
+        pc_observation = fem.Function(case["fine_floquet"].mpc.function_space)
+        pc.copy(pc_observation.x.petsc_vec)
+        pc_observation.x.scatter_forward()
+        case["fine_floquet"].mpc.homogenize(pc_observation)
+        pc_observation.x.scatter_forward()
+        case["fine_floquet"].mpc.backsubstitution(pc_observation)
+        pc_observation.x.scatter_forward()
+        modal_packets, modal_packet_audit = extract_canonical_full_fe_dual_packets(
+            case["fine_space"], case["fine_floquet"].mpc, modal
+        )
+        pc_packets, pc_packet_audit = extract_canonical_full_fe_packets(
+            case["fine_space"], pc_observation.x.petsc_vec, case["fine_floquet"]
+        )
+        modal_packet_result = _gather_canonical_packets(
+            modal_packets, modal_packet_audit, comm
+        )
+        pc_packet_result = _gather_canonical_packets(
+            pc_packets, pc_packet_audit, comm
+        )
+        if comm.rank == 0:
+            modal_descriptor = _packet_descriptor(
+                "modal_dual", "full_fe_dual", modal_packet_result
+            )
+            pc_descriptor = _packet_descriptor(
+                "pc_output", "full_fe", pc_packet_result
+            )
+        else:
+            modal_descriptor = None
+            pc_descriptor = None
         coarse = case["coarse_matrix"].createVecRight()
         coarse_before = case["coarse_matrix"].createVecRight()
         coarse_start, coarse_stop = map(int, coarse.getOwnershipRange())
@@ -480,13 +587,13 @@ def _run_real_small(args: argparse.Namespace) -> int:
         adjoint_rel = abs(lhs - rhs) / max(abs(lhs), abs(rhs), np.finfo(float).tiny)
         primal_constraint_residual = float(primal_facts["fine_mpc_constraint_residual"])
         adjoint_slave_max = float(adjoint_facts["coarse_slave_storage_max"])
-        modal_digest, modal_global = _partitioned_global_vector(modal, comm)
-        pc_digest, pc_global = _partitioned_global_vector(pc, comm)
         if comm.rank == 0:
             np.savez(
                 vector_path,
-                modal_dual=modal_global,
-                pc_output=pc_global,
+                modal_dual_keys=modal_packet_result["keys"],
+                modal_dual=modal_packet_result["values"],
+                pc_output_keys=pc_packet_result["keys"],
+                pc_output=pc_packet_result["values"],
             )
             vector_sha = _sha256_file(vector_path)
         else:
@@ -553,10 +660,15 @@ def _run_real_small(args: argparse.Namespace) -> int:
                 "vectors": {
                     "artifact_path": str(vector_path),
                     "artifact_sha256": vector_sha,
-                    "modal_dual_sha256": modal_digest,
-                    "pc_output_sha256": pc_digest,
-                    "modal_dual_global_l2": float(modal.norm()),
-                    "pc_output_global_l2": float(pc.norm()),
+                    "canonical_identity": {
+                        "key_schema": CANONICAL_PACKET_KEY_SCHEMA,
+                        "key_encoding": CANONICAL_PACKET_KEY_ENCODING,
+                        "ordering": CANONICAL_PACKET_KEY_ORDERING,
+                        "owner_local_packets": True,
+                        "numeric_allgather": False,
+                    },
+                    "modal_dual": modal_descriptor,
+                    "pc_output": pc_descriptor,
                     "modal_repeat_relative": modal_repeat_rel,
                     "modal_linearity_relative": modal_linear_rel,
                     "pc_repeat_relative": pc_repeat_rel,
@@ -607,6 +719,8 @@ def _run_real_small(args: argparse.Namespace) -> int:
             dtn.destroy()
         for vector in reversed(vectors):
             vector.destroy()
+        if pc_observation is not None:
+            del pc_observation
         if case is not None:
             destroy_small_same_mesh_positive_case(case)
 

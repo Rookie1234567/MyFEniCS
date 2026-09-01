@@ -15,7 +15,7 @@ import numpy as np
 
 
 SCHEMA = "task038.v15.floquet-f1-selector.record.v1"
-REAL_SCHEMA = "task038.v15.floquet-f1-real-small.record.v1"
+REAL_SCHEMA = "task038.v15.floquet-f1-real-small.record.v2"
 CHECKER_SCHEMA = "task038.v15.floquet-f1.checker.v1"
 BRANCH = "codex/20260820-task38-extra-full3d-iterative-0p7nm"
 INPUT_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
@@ -30,6 +30,12 @@ PMG_LEVELS = [3, 1]
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LEXICAL_PYTHON = str(REPO_ROOT / ".venv/bin/python")
 LEXICAL_PREFIX = str(REPO_ROOT / ".venv")
+CANONICAL_PACKET_KEY_SCHEMA = "task038.v15.canonical-packet-key-sha256.v1"
+CANONICAL_PACKET_KEY_ENCODING = (
+    "recursive tuple/list JSON with float.hex, sort_keys, separators, "
+    "ensure_ascii, allow_nan=false"
+)
+CANONICAL_PACKET_KEY_ORDERING = "sha256(key_json_bytes) ascending"
 SELECTED = (
     38,
     39,
@@ -274,55 +280,198 @@ def _relative_arrays(left: np.ndarray, right: np.ndarray) -> float:
     return float(np.linalg.norm(left - right) / max(denominator, np.finfo(float).tiny))
 
 
-def _check_vector_artifact(record: dict, errors: list[str]) -> dict[str, np.ndarray] | None:
+def _check_packet_descriptor(
+    role: str,
+    descriptor: object,
+    keys: np.ndarray,
+    values: np.ndarray,
+    expected_mpi_size: int,
+    errors: list[str],
+) -> dict[str, np.ndarray] | None:
+    if not isinstance(descriptor, dict):
+        errors.append(f"real {role} descriptor")
+        return None
+    required = {
+        "role",
+        "canonical_role",
+        "key_schema",
+        "key_count",
+        "value_count",
+        "key_array_sha256",
+        "value_array_sha256",
+        "canonical_array_l2",
+        "packet_audit",
+    }
+    if not required.issubset(descriptor):
+        errors.append(f"real {role} descriptor fields")
+        return None
+    expected_canonical_role = {
+        "modal_dual": "full_fe_dual",
+        "pc_output": "full_fe",
+    }[role]
+    if (
+        descriptor["role"] != role
+        or descriptor["canonical_role"] != expected_canonical_role
+        or descriptor["key_schema"] != CANONICAL_PACKET_KEY_SCHEMA
+    ):
+        errors.append(f"real {role} descriptor identity")
+    if (
+        isinstance(descriptor["key_count"], bool)
+        or not isinstance(descriptor["key_count"], int)
+        or isinstance(descriptor["value_count"], bool)
+        or not isinstance(descriptor["value_count"], int)
+        or descriptor["key_count"] != int(keys.size)
+        or descriptor["value_count"] != int(values.size)
+        or descriptor["key_count"] != descriptor["value_count"]
+    ):
+        errors.append(f"real {role} descriptor counts")
+    for field in ("key_array_sha256", "value_array_sha256"):
+        if not isinstance(descriptor[field], str) or not re.fullmatch(
+            r"[0-9a-f]{64}", descriptor[field]
+        ):
+            errors.append(f"real {role} {field}")
+    if hashlib.sha256(keys.tobytes(order="C")).hexdigest() != descriptor[
+        "key_array_sha256"
+    ]:
+        errors.append(f"real {role} key SHA")
+    if hashlib.sha256(values.tobytes(order="C")).hexdigest() != descriptor[
+        "value_array_sha256"
+    ]:
+        errors.append(f"real {role} value SHA")
+    if (
+        keys.dtype != np.dtype("<U64")
+        or keys.ndim != 1
+        or any(
+            not isinstance(key, str) or not re.fullmatch(r"[0-9a-f]{64}", key)
+            for key in keys.tolist()
+        )
+        or len(set(keys.tolist())) != int(keys.size)
+        or keys.tolist() != sorted(keys.tolist())
+    ):
+        errors.append(f"real {role} key type/identity")
+    if (
+        values.dtype != np.dtype(np.complex128)
+        or values.ndim != 1
+        or not np.all(np.isfinite(values))
+    ):
+        errors.append(f"real {role} value type/finite")
+    try:
+        norm = float(descriptor["canonical_array_l2"])
+        if not math.isfinite(norm) or not math.isclose(
+            float(np.linalg.norm(values)), norm, rel_tol=1e-12, abs_tol=1e-12
+        ):
+            errors.append(f"real {role} canonical L2")
+    except (TypeError, ValueError):
+        errors.append(f"real {role} canonical L2")
+    audit = descriptor["packet_audit"]
+    audit_fields = {
+        "owner_local",
+        "numeric_allgather",
+        "local_packet_counts",
+        "local_duplicate_counts",
+        "global_packet_count",
+        "global_duplicate_count",
+        "extractor_global_packet_count",
+    }
+    if not isinstance(audit, dict) or not audit_fields.issubset(audit):
+        errors.append(f"real {role} packet audit")
+        return {"keys": keys, "values": values}
+    counts = audit["local_packet_counts"]
+    duplicates = audit["local_duplicate_counts"]
+    if (
+        audit["owner_local"] is not True
+        or audit["numeric_allgather"] is not False
+        or not isinstance(counts, list)
+        or not isinstance(duplicates, list)
+        or len(counts) != expected_mpi_size
+        or len(duplicates) != expected_mpi_size
+        or any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in counts)
+        or any(isinstance(value, bool) or not isinstance(value, int) or value != 0 for value in duplicates)
+        or sum(counts) != int(keys.size)
+        or audit["global_packet_count"] != int(keys.size)
+        or audit["extractor_global_packet_count"] != int(keys.size)
+        or audit["global_duplicate_count"] != 0
+    ):
+        errors.append(f"real {role} packet audit")
+    return {"keys": keys, "values": values}
+
+
+def _check_vector_artifact(
+    record: dict, expected_mpi_size: int, errors: list[str]
+) -> dict[str, dict[str, np.ndarray]] | None:
     vectors = record.get("vectors")
     if not isinstance(vectors, dict):
         errors.append("real vector facts")
         return None
-    for key in (
+    required = {
+        "artifact_path",
         "artifact_sha256",
-        "modal_dual_sha256",
-        "pc_output_sha256",
-    ):
-        if not isinstance(vectors.get(key), str) or not re.fullmatch(r"[0-9a-f]{64}", vectors[key]):
-            errors.append(f"real vector {key}")
-    artifact_path = Path(vectors.get("artifact_path", ""))
-    if not artifact_path.is_file():
-        errors.append("real vector artifact missing")
+        "canonical_identity",
+        "modal_dual",
+        "pc_output",
+        "modal_repeat_relative",
+        "modal_linearity_relative",
+        "pc_repeat_relative",
+        "pc_linearity_relative",
+        "pc_input_unchanged_relative",
+        "modal_finite",
+        "pc_finite",
+        "modal_owned_slave_max",
+        "pc_owned_slave_max",
+    }
+    if not required.issubset(vectors):
+        errors.append("real vector fields")
         return None
-    if _sha256_file(artifact_path) != vectors.get("artifact_sha256"):
+    identity = vectors["canonical_identity"]
+    if identity != {
+        "key_schema": CANONICAL_PACKET_KEY_SCHEMA,
+        "key_encoding": CANONICAL_PACKET_KEY_ENCODING,
+        "ordering": CANONICAL_PACKET_KEY_ORDERING,
+        "owner_local_packets": True,
+        "numeric_allgather": False,
+    }:
+        errors.append("real canonical identity")
+    if not isinstance(vectors["artifact_path"], str) or not isinstance(
+        vectors["artifact_sha256"], str
+    ):
+        errors.append("real vector artifact facts")
+        return None
+    if not re.fullmatch(r"[0-9a-f]{64}", vectors["artifact_sha256"]):
+        errors.append("real vector artifact SHA")
+    artifact_path = Path(vectors["artifact_path"])
+    expected_path = Path(record.get("provenance", {}).get("command", {}).get("record", "")).with_name(
+        "record_vectors.npz"
+    )
+    if artifact_path != expected_path or not artifact_path.is_file():
+        errors.append("real vector artifact path")
+        return None
+    if _sha256_file(artifact_path) != vectors["artifact_sha256"]:
         errors.append("real vector artifact SHA")
     try:
         with np.load(artifact_path, allow_pickle=False) as archive:
-            if set(archive.files) != {"modal_dual", "pc_output"}:
+            if set(archive.files) != {
+                "modal_dual_keys",
+                "modal_dual",
+                "pc_output_keys",
+                "pc_output",
+            }:
                 errors.append("real vector artifact keys")
                 return None
-            arrays = {key: np.asarray(archive[key]) for key in archive.files}
+            arrays = {key: np.asarray(archive[key]).copy() for key in archive.files}
     except (OSError, ValueError) as exc:
         errors.append(f"real vector artifact unreadable: {exc}")
         return None
-    for key, sha_key in (
-        ("modal_dual", "modal_dual_sha256"),
-        ("pc_output", "pc_output_sha256"),
-    ):
-        array = arrays[key]
-        if (
-            array.dtype != np.dtype(np.complex128)
-            or array.ndim != 1
-            or not np.all(np.isfinite(array))
-        ):
-            errors.append(f"real vector {key} type/finite")
-        if hashlib.sha256(array.tobytes(order="C")).hexdigest() != vectors.get(sha_key):
-            errors.append(f"real vector {key} SHA")
-        norm_key = "modal_dual_global_l2" if key == "modal_dual" else "pc_output_global_l2"
-        try:
-            if not math.isfinite(float(vectors[norm_key])) or not math.isclose(
-                float(np.linalg.norm(array)), float(vectors[norm_key]), rel_tol=1e-12, abs_tol=1e-12
-            ):
-                errors.append(f"real vector {norm_key}")
-        except (KeyError, TypeError, ValueError):
-            errors.append(f"real vector {norm_key}")
-    return arrays
+    result = {}
+    for role in ("modal_dual", "pc_output"):
+        result[role] = _check_packet_descriptor(
+            role,
+            vectors[role],
+            arrays[f"{role}_keys"],
+            arrays[role],
+            expected_mpi_size,
+            errors,
+        )
+    return result if all(value is not None for value in result.values()) else None
 
 
 def _argv_value(argv: object, name: str) -> str | None:
@@ -493,7 +642,7 @@ def _check_real(
         "physical_recovery": False,
     }:
         errors.append("real execution scope")
-    arrays = _check_vector_artifact(record, errors)
+    arrays = _check_vector_artifact(record, expected_mpi_size, errors)
     vectors = record.get("vectors")
     if not isinstance(vectors, dict):
         errors.append("real vectors object")
@@ -561,7 +710,7 @@ def _check_real(
             errors.append("MPI mode key differs")
         if arrays is None:
             return False, errors, metrics
-        other_arrays = _check_vector_artifact(other_record, errors)
+        other_arrays = _check_vector_artifact(other_record, 3 - expected_mpi_size, errors)
         if other_arrays is None:
             return False, errors, metrics
         for key, limit in (
@@ -569,7 +718,14 @@ def _check_real(
             ("pc_output", 1e-10),
         ):
             try:
-                identity_error = _relative_arrays(arrays[key], other_arrays[key])
+                if not np.array_equal(
+                    arrays[key]["keys"], other_arrays[key]["keys"]
+                ):
+                    errors.append(f"MPI {key} canonical keys")
+                    continue
+                identity_error = _relative_arrays(
+                    arrays[key]["values"], other_arrays[key]["values"]
+                )
                 metrics[f"{key}_mpi_identity_relative"] = identity_error
                 if identity_error > limit:
                     errors.append(f"MPI {key} identity")
