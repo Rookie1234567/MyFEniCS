@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,14 @@ from benchmarks.task040_level_a import (
     V9_C0_SETUP_TARGET_SECONDS,
     V9_C0_TIMEOUT_SECONDS,
     V9_C0_WARNING_MEMORY_BYTES,
+    V9_E_S3_B1_MARKER_SEQUENCE,
+    V9_E_S3_B1_SCHEMA,
+    V9_E_S3_J1_BASELINE_MANIFEST_OPTION,
+    V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION,
+    V9_E_S3_J1_BASELINE_ONLY_FLAG,
+    V9_E_S3_J1_BASELINE_SCHEMA,
+    V9_E_S3_MARKER_SEQUENCE,
+    V9_E_S3_STRUCTURED_B1_ONLY_FLAG,
     V9_SOURCE_BRIDGE_ONLY_FLAG,
     V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION,
     V9_SOURCE_PACKET_ROOT_OPTION,
@@ -66,6 +75,17 @@ from benchmarks.task040_level_a import (
 from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
+)
+from src.solvers.floquet_background_hcurl_s3_pilot import (
+    S3B_CONDITIONAL_NOT_QUALIFIED,
+    S3B_CONDITIONAL_UNSTABLE,
+    S3B_FIVE_SOURCE_NO_SIGNAL,
+    S3B_FIVE_SOURCE_PASS,
+    S3B_FIVE_SOURCE_UNSTABLE,
+    S3B_INITIAL_NO_SIGNAL,
+    S3B_INITIAL_UNSTABLE,
+    S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION,
+    S3B_NEXT_FIXED_LOR,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,8 +117,19 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "v8_adaptive_stage_bc_cleanup_complete",
         "v9_source_bridge_cleanup_complete",
         "v9_c0_cleanup_complete",
+        "s3b_j1_cleanup_complete",
+        "s3b_b1_cleanup_complete",
     }
 )
+_S3_CANDIDATE_TERMINAL_NEXT_STAGES = {
+    S3B_INITIAL_NO_SIGNAL: S3B_NEXT_FIXED_LOR,
+    S3B_INITIAL_UNSTABLE: S3B_NEXT_FIXED_LOR,
+    S3B_CONDITIONAL_UNSTABLE: S3B_NEXT_FIXED_LOR,
+    S3B_CONDITIONAL_NOT_QUALIFIED: S3B_NEXT_FIXED_LOR,
+    S3B_FIVE_SOURCE_PASS: S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION,
+    S3B_FIVE_SOURCE_NO_SIGNAL: S3B_NEXT_FIXED_LOR,
+    S3B_FIVE_SOURCE_UNSTABLE: S3B_NEXT_FIXED_LOR,
+}
 THREAD_ENV = {
     "OMP_NUM_THREADS": str(TASK040_LEVEL_A_THREADS),
     "OPENBLAS_NUM_THREADS": "1",
@@ -161,6 +192,19 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG)
     elif plan.get("v9_source_bridge_only") is True:
         command.append(V9_SOURCE_BRIDGE_ONLY_FLAG)
+    elif plan.get("v9_e_s3_j1_baseline_only") is True:
+        command.append(V9_E_S3_J1_BASELINE_ONLY_FLAG)
+    elif plan.get("v9_e_s3_structured_b1_only") is True:
+        command.append(V9_E_S3_STRUCTURED_B1_ONLY_FLAG)
+        baseline_manifest = plan["baseline_manifest"]
+        command.extend(
+            (
+                V9_E_S3_J1_BASELINE_MANIFEST_OPTION,
+                str(baseline_manifest["path"]),
+                V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION,
+                str(baseline_manifest["sha256"]),
+            )
+        )
     elif plan.get("v8_adaptive_stage_b1_only") is True:
         command.append(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG)
     elif plan.get("v8_adaptive_schwarz_only") is True:
@@ -192,6 +236,8 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         or plan.get("v7_moving_pml_full_state") is True
         or plan.get("v7_scale_normalized_identity") is True
         or plan.get("v6_2_interface_schur") is True
+        or plan.get("v9_e_s3_j1_baseline_only") is True
+        or plan.get("v9_e_s3_structured_b1_only") is True
     ):
         command.extend(
             (
@@ -243,10 +289,23 @@ def build_task040_level_a_watchdog_plan(
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
+    v9_e_s3_j1_baseline_only: bool = False,
+    v9_e_s3_structured_b1_only: bool = False,
+    v9_e_s3_j1_baseline_manifest: str | Path | None = None,
+    v9_e_s3_j1_baseline_manifest_sha256: str | None = None,
     v9_source_packet_root: str | Path | None = None,
     v9_source_packet_manifest_sha256: str | None = None,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
+    s3_route_requested = bool(
+        v9_e_s3_j1_baseline_only or v9_e_s3_structured_b1_only
+    )
+    if s3_route_requested and Path(run_directory).resolve() == Path(
+        exact_spool_root
+    ).resolve():
+        raise ValueError(
+            "S3b requires an outer run_directory distinct from exact_spool_root"
+        )
     plan = build_task040_level_a_plan(
         input_path=input_path,
         exact_spool_root=exact_spool_root,
@@ -269,6 +328,12 @@ def build_task040_level_a_watchdog_plan(
         v8_adaptive_stage_bc_only=v8_adaptive_stage_bc_only,
         v9_source_bridge_only=v9_source_bridge_only,
         v9_c0_explicit_coarse_only=v9_c0_explicit_coarse_only,
+        v9_e_s3_j1_baseline_only=v9_e_s3_j1_baseline_only,
+        v9_e_s3_structured_b1_only=v9_e_s3_structured_b1_only,
+        v9_e_s3_j1_baseline_manifest=v9_e_s3_j1_baseline_manifest,
+        v9_e_s3_j1_baseline_manifest_sha256=(
+            v9_e_s3_j1_baseline_manifest_sha256
+        ),
         v9_source_packet_root=v9_source_packet_root,
         v9_source_packet_manifest_sha256=v9_source_packet_manifest_sha256,
         interface_packet_root=interface_packet_root,
@@ -307,6 +372,40 @@ def build_task040_level_a_watchdog_plan(
                 "process_tree_watchdog_enabled": True,
             }
         )
+    elif v9_e_s3_j1_baseline_only or v9_e_s3_structured_b1_only:
+        baseline = bool(v9_e_s3_j1_baseline_only)
+        plan["watchdog"].update(
+            {
+                "v9_e_s3_j1_baseline_only": baseline,
+                "v9_e_s3_structured_b1_only": not baseline,
+                "hard_stop_bytes": int(plan["absolute_terminate_memory_bytes"]),
+                "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                "timeout_seconds": int(plan["timeout_seconds"]),
+                "process_tree_watchdog_enabled": True,
+                "bottom_route_only": True,
+                "source_order": list(plan["source_order"]),
+                "planned_source_order": list(plan["planned_source_order"]),
+                "mandatory_checkpoints": list(plan["mandatory_checkpoints"]),
+                "conditional_checkpoints": list(plan["conditional_checkpoints"]),
+                "cleanup_stage": (
+                    "s3b_j1_cleanup_complete"
+                    if baseline
+                    else "s3b_b1_cleanup_complete"
+                ),
+                "marker_sequence": list(
+                    V9_E_S3_MARKER_SEQUENCE
+                    if baseline
+                    else V9_E_S3_B1_MARKER_SEQUENCE
+                ),
+                "numeric_allgather": False,
+                "full_interface_replica_per_rank": False,
+                "stage_timeout_seconds": None,
+            }
+        )
+        if not baseline:
+            plan["watchdog"]["baseline_manifest"] = dict(
+                plan["baseline_manifest"]
+            )
     elif (
         v9_source_bridge_only
         or v9_c0_explicit_coarse_only
@@ -913,6 +1012,186 @@ def _terminal_teardown_termination_reason(
     return "natural_exit"
 
 
+def _s3_completion_gate(
+    *,
+    route_kind: str,
+    termination_reason: str,
+    return_code: int | None,
+    elapsed_seconds: float,
+    summary_present: bool,
+    latest_stage: str,
+    latest_stage_status: str,
+    resource_gate: bool,
+    worker_payload: Mapping[str, Any] | None,
+    resource_limits: Mapping[str, Any],
+    expected_manifest_path: str | Path | None = None,
+    expected_manifest_sha256: str | None = None,
+    expected_input_path: str | Path | None = None,
+    expected_input_sha256: str | None = None,
+    expected_source_sha: str | None = None,
+) -> dict[str, Any]:
+    """Adjudicate only the process/manifest completion contract for S3b."""
+
+    if route_kind == "baseline":
+        expected_schema = V9_E_S3_J1_BASELINE_SCHEMA
+        expected_cleanup_stage = "s3b_j1_cleanup_complete"
+    elif route_kind == "candidate":
+        expected_schema = V9_E_S3_B1_SCHEMA
+        expected_cleanup_stage = "s3b_b1_cleanup_complete"
+    else:
+        raise ValueError(f"unknown S3 route kind: {route_kind}")
+
+    payload = worker_payload if isinstance(worker_payload, Mapping) else {}
+    try:
+        elapsed = float(elapsed_seconds)
+        wall_limit = float(resource_limits["total_wall_seconds"])
+    except (KeyError, TypeError, ValueError, OverflowError):
+        elapsed = float("nan")
+        wall_limit = float("nan")
+    wall_time_gate = (
+        elapsed >= 0.0 and wall_limit >= 0.0 and elapsed < wall_limit
+    )
+    classification = payload.get("classification")
+    next_stage = payload.get("next_stage")
+    payload_error = payload.get("error")
+    provenance = payload.get("provenance")
+    common_checks = {
+        "natural_exit": termination_reason == "natural_exit",
+        "return_code_zero": return_code == 0,
+        "total_wall_gate": wall_time_gate,
+        "summary_present": bool(summary_present),
+        "expected_cleanup_stage": (
+            latest_stage == expected_cleanup_stage
+            and latest_stage_status == "complete"
+        ),
+        "schema": payload.get("schema") == expected_schema,
+        "route": payload.get("route") == "V9_E_S3B",
+        "resource_gate": bool(resource_gate),
+        "payload_error_none": "error" in payload and payload_error is None,
+        "input_path_binding": (
+            isinstance(provenance, Mapping)
+            and expected_input_path is not None
+            and provenance.get("input_path") == str(expected_input_path)
+        ),
+        "input_sha256_binding": (
+            isinstance(provenance, Mapping)
+            and isinstance(expected_input_sha256, str)
+            and provenance.get("input_sha256") == expected_input_sha256
+        ),
+        "source_sha_binding": (
+            isinstance(provenance, Mapping)
+            and isinstance(expected_source_sha, str)
+            and provenance.get("source_sha") == expected_source_sha
+        ),
+    }
+    common_complete = bool(all(common_checks.values()))
+
+    if route_kind == "baseline":
+        route_checks = {
+            "baseline_only": payload.get("baseline_only") is True,
+            "measured_classification": (
+                classification == "S3B_J1_BASELINE_MEASURED"
+            ),
+        }
+        baseline_manifest_usable = bool(
+            common_complete and all(route_checks.values())
+        )
+        candidate_outcome_ready = False
+    else:
+        binding = payload.get("baseline_manifest_binding")
+        binding_path = (
+            binding.get("path") if isinstance(binding, Mapping) else None
+        )
+        expected_sha = (
+            binding.get("expected_sha256")
+            if isinstance(binding, Mapping)
+            else None
+        )
+        observed_sha = (
+            binding.get("observed_sha256")
+            if isinstance(binding, Mapping)
+            else None
+        )
+        expected_sha_valid = (
+            isinstance(expected_sha, str)
+            and len(expected_sha) == 64
+            and all(
+                character in "0123456789abcdef" for character in expected_sha
+            )
+        )
+        observed_sha_valid = (
+            isinstance(observed_sha, str)
+            and len(observed_sha) == 64
+            and all(
+                character in "0123456789abcdef" for character in observed_sha
+            )
+        )
+        expected_plan_sha_valid = (
+            isinstance(expected_manifest_sha256, str)
+            and len(expected_manifest_sha256) == 64
+            and all(
+                character in "0123456789abcdef"
+                for character in expected_manifest_sha256
+            )
+        )
+        route_checks = {
+            "validated_baseline": (
+                isinstance(payload.get("validated_baseline"), Mapping)
+                and payload["validated_baseline"].get("validated") is True
+            ),
+            "baseline_manifest_sha_binding": (
+                isinstance(payload.get("validated_baseline"), Mapping)
+                and payload["validated_baseline"].get("manifest_sha256")
+                == expected_manifest_sha256
+            ),
+            "baseline_binding_sha": (
+                expected_plan_sha_valid
+                and expected_sha_valid
+                and observed_sha_valid
+                and expected_sha == expected_manifest_sha256
+                and observed_sha == expected_manifest_sha256
+            ),
+            "baseline_binding_path": (
+                isinstance(binding_path, str)
+                and expected_manifest_path is not None
+                and binding_path == str(expected_manifest_path)
+            ),
+            "classification": (
+                classification in _S3_CANDIDATE_TERMINAL_NEXT_STAGES
+            ),
+            "next_stage": (
+                classification in _S3_CANDIDATE_TERMINAL_NEXT_STAGES
+                and next_stage
+                == _S3_CANDIDATE_TERMINAL_NEXT_STAGES.get(classification)
+            ),
+        }
+        baseline_manifest_usable = False
+        candidate_outcome_ready = bool(
+            common_complete and all(route_checks.values())
+        )
+
+    return {
+        "route_kind": route_kind,
+        "workflow_completed": bool(
+            baseline_manifest_usable or candidate_outcome_ready
+        ),
+        "baseline_manifest_usable": baseline_manifest_usable,
+        "candidate_outcome_ready": candidate_outcome_ready,
+        "worker_schema": payload.get("schema"),
+        "worker_classification": classification,
+        "worker_next_stage": next_stage,
+        "worker_error": payload_error,
+        "latest_stage": latest_stage,
+        "latest_stage_status": latest_stage_status,
+        "elapsed_seconds": elapsed,
+        "wall_time_gate": wall_time_gate,
+        "resource_gate": bool(resource_gate),
+        "resource_limits": dict(resource_limits),
+        "common_checks": common_checks,
+        "route_checks": route_checks,
+    }
+
+
 def _write_jsonl(stream: Any, payload: dict[str, Any]) -> None:
     stream.write(json.dumps(payload, sort_keys=True) + "\n")
     stream.flush()
@@ -943,6 +1222,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     command = list(plan["worker_argv"])
     hard_stop_bytes = int(plan["absolute_terminate_memory_bytes"])
     c0_enabled = bool(plan.get("v9_c0_explicit_coarse_only"))
+    s3_j1_enabled = bool(plan.get("v9_e_s3_j1_baseline_only"))
+    s3_b1_enabled = bool(plan.get("v9_e_s3_structured_b1_only"))
+    s3_enabled = s3_j1_enabled or s3_b1_enabled
     stage_a_enabled = bool(plan.get("v8_adaptive_schwarz_only"))
     b1_enabled = bool(plan.get("v8_adaptive_stage_b1_only"))
     stage_bc_enabled = bool(plan.get("v8_adaptive_stage_bc_only"))
@@ -1003,6 +1285,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     c0_timeout_decision: dict[str, Any] | None = None
     v8_completed = False
     v9_workflow_completed = False
+    s3_workflow_completed = False
+    s3_completion: dict[str, Any] | None = None
     if v5_thresholds_enabled or c0_thresholds_enabled:
         resource_thresholds = {
             "preferred": {
@@ -1297,6 +1581,120 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             if path.is_file()
         },
     }
+    if s3_enabled:
+        route_kind = "baseline" if s3_j1_enabled else "candidate"
+        worker_payload: Mapping[str, Any] | None = None
+        if run_summary.is_file():
+            try:
+                loaded_payload = json.loads(
+                    run_summary.read_text(encoding="utf-8")
+                )
+                if isinstance(loaded_payload, Mapping):
+                    worker_payload = loaded_payload
+            except (OSError, json.JSONDecodeError):
+                worker_payload = None
+        s3_resource_gate = bool(
+            sample_count > 0
+            and all_status_readable
+            and peak_rss_bytes < hard_stop_bytes
+            and peak_swap_bytes == SWAP_LIMIT_BYTES
+            and (
+                not dedicated_cgroup_present
+                or (
+                    dedicated_cgroup_swap_readable
+                    and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
+                )
+            )
+        )
+        s3_completion = _s3_completion_gate(
+            route_kind=route_kind,
+            termination_reason=termination_reason,
+            return_code=process.returncode,
+            elapsed_seconds=elapsed_seconds,
+            summary_present=worker_payload is not None,
+            latest_stage=last_stage,
+            latest_stage_status=last_stage_status,
+            resource_gate=s3_resource_gate,
+            worker_payload=worker_payload,
+            resource_limits={
+                "hard_stop_bytes": hard_stop_bytes,
+                "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                "total_wall_seconds": timeout_seconds,
+            },
+            expected_manifest_path=(
+                plan.get("baseline_manifest", {}).get("path")
+                if route_kind == "candidate"
+                and isinstance(plan.get("baseline_manifest"), Mapping)
+                else None
+            ),
+            expected_manifest_sha256=(
+                plan.get("baseline_manifest", {}).get("sha256")
+                if route_kind == "candidate"
+                and isinstance(plan.get("baseline_manifest"), Mapping)
+                else None
+            ),
+            expected_input_path=plan.get("input"),
+            expected_input_sha256=(
+                plan.get("input_expected", {}).get("sha256")
+                if isinstance(plan.get("input_expected"), Mapping)
+                else None
+            ),
+            expected_source_sha=plan.get("source_sha"),
+        )
+        s3_workflow_completed = bool(s3_completion["workflow_completed"])
+        worker_classification = s3_completion["worker_classification"]
+        if termination_reason in {
+            "absolute_memory_limit",
+            "swap_detected",
+            "wall_timeout",
+        }:
+            s3_classification = "S3B_RESOURCE_UNAVAILABLE"
+        elif worker_payload is None or process.returncode != 0:
+            if isinstance(worker_classification, str) and worker_classification:
+                s3_classification = worker_classification
+            else:
+                s3_classification = "requires_result_adjudication"
+        elif not s3_completion["resource_gate"] or not s3_completion[
+            "wall_time_gate"
+        ]:
+            s3_classification = "S3B_RESOURCE_UNAVAILABLE"
+        elif isinstance(worker_classification, str) and worker_classification:
+            s3_classification = worker_classification
+        else:
+            s3_classification = "requires_result_adjudication"
+        summary.update(
+            {
+                "s3_route_kind": route_kind,
+                "s3_workflow_completed": s3_workflow_completed,
+                "s3_baseline_manifest_usable": s3_completion[
+                    "baseline_manifest_usable"
+                ],
+                "s3_candidate_outcome_ready": s3_completion[
+                    "candidate_outcome_ready"
+                ],
+                "s3_worker_schema": s3_completion["worker_schema"],
+                "s3_worker_classification": worker_classification,
+                "s3_worker_next_stage": s3_completion["worker_next_stage"],
+                "s3_worker_error": s3_completion["worker_error"],
+                "latest_stage": last_stage,
+                "latest_stage_status": last_stage_status,
+                "s3_resource_gate": s3_resource_gate,
+                "s3_wall_time_gate": s3_completion["wall_time_gate"],
+                "s3_wall_time_check": {
+                    "elapsed_seconds": elapsed_seconds,
+                    "limit_seconds": timeout_seconds,
+                    "within_limit": s3_completion["wall_time_gate"],
+                },
+                "s3_resource_limits": s3_completion["resource_limits"],
+                "s3_completion_checks": {
+                    "common": s3_completion["common_checks"],
+                    "route": s3_completion["route_checks"],
+                },
+                "classification": s3_classification,
+                "resource_classification": s3_classification,
+                "final_resource_classification": s3_classification,
+            }
+        )
     if c0_enabled:
         c0_manifest = worker_directory / "v9_c0_explicit_coarse_manifest.json"
         c0_failure_manifest = (
@@ -1848,7 +2246,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     )
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     completed_gate = (
-        adaptive_workflow_completed
+        s3_workflow_completed
+        if s3_enabled
+        else adaptive_workflow_completed
         if stage_a_enabled
         else b1_workflow_completed
         if b1_enabled
@@ -1901,6 +2301,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_C0_EXPLICIT_COARSE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_S3_J1_BASELINE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_S3_STRUCTURED_B1_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_S3_J1_BASELINE_MANIFEST_OPTION)
+    parser.add_argument(V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION)
     parser.add_argument(V9_SOURCE_PACKET_ROOT_OPTION)
     parser.add_argument(V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION)
     parser.add_argument("--watchdog-enabled", action="store_true")
@@ -1951,6 +2355,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(
             "V9-C0 route requires --watchdog-enabled and --bottom-route-only"
         )
+    if (
+        args.v9_e_s3_j1_baseline_only or args.v9_e_s3_structured_b1_only
+    ) and not (args.watchdog_enabled and args.bottom_route_only):
+        parser.error(
+            "V9-E S3 route requires --watchdog-enabled and --bottom-route-only"
+        )
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
         exact_spool_root=args.exact_spool_root,
@@ -1973,6 +2383,12 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
+        v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
+        v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
+        v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,
+        v9_e_s3_j1_baseline_manifest_sha256=(
+            args.v9_e_s3_j1_baseline_manifest_sha256
+        ),
         v9_source_packet_root=args.v9_source_packet_root,
         v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         interface_packet_root=args.interface_packet_root,

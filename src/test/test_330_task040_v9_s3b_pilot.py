@@ -15,6 +15,7 @@ from petsc4py import PETSc
 
 import src.solvers.floquet_background_hcurl_s3_formal as s3_formal
 import src.solvers.floquet_background_hcurl_s3_pilot as s3_pilot
+from benchmarks import task040_level_a_watchdog as watchdog
 from benchmarks.task040_level_a import (
     V9_E_S3_B1_SCHEMA,
     V9_E_S3_INPUT_RELATIVE_PATH,
@@ -77,6 +78,7 @@ _INPUT_PATH = "/tmp/task040_s3b_input.dat"
 _INPUT_SHA256 = "b" * 64
 _PHYSICAL_MODEL_SHA256 = "c" * 64
 _MANIFEST_SHA256 = "d" * 64
+_MANIFEST_PATH = "/tmp/task040_s3b_baseline.json"
 _HASHES = {
     "canonical_key_set_sha256": "1" * 64,
     "canonical_value_sha256": "2" * 64,
@@ -228,6 +230,320 @@ def test_s3b_runner_direct_json_loader_binds_raw_byte_sha(tmp_path: Path) -> Non
     assert manifest == {"schema": "direct"}
     assert observed_sha256 == hashlib.sha256(raw).hexdigest()
     assert resolved_path == str(manifest_path.resolve())
+
+
+def test_s3b_watchdog_plans_keep_routes_and_workers_independent(
+    tmp_path: Path,
+) -> None:
+    paths = _s3_runner_paths(tmp_path)
+    baseline = watchdog.build_task040_level_a_watchdog_plan(
+        **paths,
+        v9_e_s3_j1_baseline_only=True,
+    )
+    candidate_paths = dict(paths, run_directory=tmp_path / "candidate_run")
+    candidate_manifest = (
+        Path(baseline["worker_run_directory"]) / "run_summary.json"
+    )
+    candidate = watchdog.build_task040_level_a_watchdog_plan(
+        **candidate_paths,
+        v9_e_s3_structured_b1_only=True,
+        v9_e_s3_j1_baseline_manifest=candidate_manifest,
+        v9_e_s3_j1_baseline_manifest_sha256="d" * 64,
+    )
+
+    for plan, cleanup_stage, marker_sequence in (
+        (baseline, "s3b_j1_cleanup_complete", "s3b_j1_cleanup_complete"),
+        (candidate, "s3b_b1_cleanup_complete", "s3b_b1_cleanup_complete"),
+    ):
+        assert plan["mpi_size"] == 8
+        assert plan["threads"] == 1
+        assert plan["timeout_seconds"] == 10800
+        assert plan["watchdog"]["hard_stop_bytes"] == 45 * 2**30
+        assert plan["watchdog"]["swap_limit_bytes"] == 0
+        assert plan["watchdog"]["timeout_seconds"] == 10800
+        assert plan["watchdog"]["process_tree_watchdog_enabled"] is True
+        assert plan["watchdog"]["bottom_route_only"] is True
+        assert plan["watchdog"]["cleanup_stage"] == cleanup_stage
+        assert plan["watchdog"]["marker_sequence"][-1] == marker_sequence
+        assert plan["worker_argv"][:3] == ["mpiexec", "-n", "8"]
+        assert "--watchdog-enabled" in plan["worker_argv"]
+        assert "--bottom-route-only" in plan["worker_argv"]
+        assert "--watchdog-hard-stop-bytes" in plan["worker_argv"]
+        assert "--v8-full-spectrum-only" not in plan["worker_argv"]
+
+    baseline_argv = baseline["worker_argv"]
+    candidate_argv = candidate["worker_argv"]
+    assert baseline_argv.count(V9_E_S3_J1_BASELINE_ONLY_FLAG) == 1
+    assert V9_E_S3_STRUCTURED_B1_ONLY_FLAG not in baseline_argv
+    assert candidate_argv.count(V9_E_S3_STRUCTURED_B1_ONLY_FLAG) == 1
+    assert V9_E_S3_J1_BASELINE_ONLY_FLAG not in candidate_argv
+    manifest_index = candidate_argv.index(V9_E_S3_J1_BASELINE_MANIFEST_OPTION)
+    assert candidate_argv[manifest_index + 1] == candidate["baseline_manifest"]["path"]
+    manifest_sha_index = candidate_argv.index(
+        V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION
+    )
+    assert candidate_argv[manifest_sha_index + 1] == "d" * 64
+    assert baseline["worker_run_directory"] != candidate["worker_run_directory"]
+    assert not Path(baseline["run_directory"]).exists()
+    assert not Path(candidate["run_directory"]).exists()
+
+
+def test_s3b_watchdog_completion_gate_keeps_only_valid_outcomes() -> None:
+    limits = {
+        "hard_stop_bytes": 45 * 2**30,
+        "swap_limit_bytes": 0,
+        "total_wall_seconds": 10800,
+    }
+    baseline_payload = {
+        "schema": V9_E_S3_J1_BASELINE_SCHEMA,
+        "route": "V9_E_S3B",
+        "error": None,
+        "baseline_only": True,
+        "classification": "S3B_J1_BASELINE_MEASURED",
+        "provenance": {
+            "source_sha": _SOURCE_SHA,
+            "input_path": _INPUT_PATH,
+            "input_sha256": _INPUT_SHA256,
+        },
+    }
+    baseline_result = watchdog._s3_completion_gate(
+        route_kind="baseline",
+        termination_reason="natural_exit",
+        return_code=0,
+        elapsed_seconds=10.0,
+        summary_present=True,
+        latest_stage="s3b_j1_cleanup_complete",
+        latest_stage_status="complete",
+        resource_gate=True,
+        worker_payload=baseline_payload,
+        resource_limits=limits,
+        expected_input_path=_INPUT_PATH,
+        expected_input_sha256=_INPUT_SHA256,
+        expected_source_sha=_SOURCE_SHA,
+    )
+    assert baseline_result["workflow_completed"] is True
+    assert baseline_result["baseline_manifest_usable"] is True
+
+    for classification in (
+        "S3B_J1_BASELINE_UNSTABLE",
+        "S3B_J1_BASELINE_IMPLEMENTATION_FAILURE",
+    ):
+        failed = watchdog._s3_completion_gate(
+            route_kind="baseline",
+            termination_reason="natural_exit",
+            return_code=0,
+            elapsed_seconds=10.0,
+            summary_present=True,
+            latest_stage="s3b_j1_cleanup_complete",
+            latest_stage_status="complete",
+            resource_gate=True,
+            worker_payload=dict(baseline_payload, classification=classification),
+            resource_limits=limits,
+            expected_input_path=_INPUT_PATH,
+            expected_input_sha256=_INPUT_SHA256,
+            expected_source_sha=_SOURCE_SHA,
+        )
+        assert failed["workflow_completed"] is False
+        assert failed["baseline_manifest_usable"] is False
+
+    candidate_payload = {
+        "schema": V9_E_S3_B1_SCHEMA,
+        "route": "V9_E_S3B",
+        "error": None,
+        "validated_baseline": {
+            "validated": True,
+            "manifest_sha256": _MANIFEST_SHA256,
+        },
+        "baseline_manifest_binding": {
+            "path": _MANIFEST_PATH,
+            "expected_sha256": _MANIFEST_SHA256,
+            "observed_sha256": _MANIFEST_SHA256,
+        },
+        "classification": "S3B_FIVE_SOURCE_BARE_F_PASS",
+        "next_stage": "V9_D_FACTOR_FREE_PRODUCTIONIZATION",
+        "provenance": {
+            "source_sha": _SOURCE_SHA,
+            "input_path": _INPUT_PATH,
+            "input_sha256": _INPUT_SHA256,
+        },
+    }
+    candidate_gate_base = {
+        "route_kind": "candidate",
+        "termination_reason": "natural_exit",
+        "return_code": 0,
+        "elapsed_seconds": 10.0,
+        "summary_present": True,
+        "latest_stage": "s3b_b1_cleanup_complete",
+        "latest_stage_status": "complete",
+        "resource_limits": limits,
+        "expected_manifest_path": _MANIFEST_PATH,
+        "expected_manifest_sha256": _MANIFEST_SHA256,
+        "expected_input_path": _INPUT_PATH,
+        "expected_input_sha256": _INPUT_SHA256,
+        "expected_source_sha": _SOURCE_SHA,
+    }
+    for classification, next_stage in (
+        (
+            "S3B_FIVE_SOURCE_BARE_F_PASS",
+            "V9_D_FACTOR_FREE_PRODUCTIONIZATION",
+        ),
+        ("S3B_INITIAL_NO_SIGNAL", "V9_E_STRUCTURED_BACKGROUND_FIXED_LOR"),
+        ("S3B_INITIAL_UNSTABLE", "V9_E_STRUCTURED_BACKGROUND_FIXED_LOR"),
+    ):
+        ready = watchdog._s3_completion_gate(
+            **candidate_gate_base,
+            resource_gate=True,
+            worker_payload=dict(
+                candidate_payload,
+                classification=classification,
+                next_stage=next_stage,
+            ),
+        )
+        assert ready["workflow_completed"] is True
+        assert ready["candidate_outcome_ready"] is True
+
+    for payload, resource_gate in (
+        (
+            dict(
+                candidate_payload,
+                baseline_manifest_binding={
+                    "path": _MANIFEST_PATH,
+                    "expected_sha256": _MANIFEST_SHA256,
+                    "observed_sha256": "e" * 64,
+                },
+            ),
+            True,
+        ),
+        (
+            dict(
+                candidate_payload,
+                classification="S3B_B1_EXTERNAL_CORE_IMPLEMENTATION_FAILURE",
+            ),
+            True,
+        ),
+        (
+            dict(
+                candidate_payload,
+                classification="S3B_INITIAL_RESOURCE_STOP",
+            ),
+            False,
+        ),
+    ):
+        failed = watchdog._s3_completion_gate(
+            **candidate_gate_base,
+            resource_gate=resource_gate,
+            worker_payload=payload,
+        )
+        assert failed["workflow_completed"] is False
+        assert failed["candidate_outcome_ready"] is False
+
+    resource_failed = watchdog._s3_completion_gate(
+        **candidate_gate_base,
+        resource_gate=False,
+        worker_payload=candidate_payload,
+    )
+    assert resource_failed["workflow_completed"] is False
+    assert resource_failed["candidate_outcome_ready"] is False
+
+    wall_failed = watchdog._s3_completion_gate(
+        **dict(candidate_gate_base, elapsed_seconds=10801.0),
+        resource_gate=True,
+        worker_payload=candidate_payload,
+    )
+    assert wall_failed["workflow_completed"] is False
+    assert wall_failed["wall_time_gate"] is False
+
+    binding_failed = watchdog._s3_completion_gate(
+        **dict(candidate_gate_base, expected_manifest_sha256="e" * 64),
+        resource_gate=True,
+        worker_payload=candidate_payload,
+    )
+    assert binding_failed["workflow_completed"] is False
+
+    for invalid_classification in (
+        "S3B_UNKNOWN_TERMINAL",
+        "S3B_FIVE_SOURCE_BARE_F_INCOMPLETE",
+    ):
+        unknown_failed = watchdog._s3_completion_gate(
+            **candidate_gate_base,
+            resource_gate=True,
+            worker_payload=dict(
+                candidate_payload,
+                classification=invalid_classification,
+                next_stage="V9_E_STRUCTURED_BACKGROUND_FIXED_LOR",
+            ),
+        )
+        assert unknown_failed["workflow_completed"] is False
+
+
+def test_s3b_watchdog_plan_rejects_spool_as_outer_run_directory(
+    tmp_path: Path,
+) -> None:
+    paths = _s3_runner_paths(tmp_path)
+    with pytest.raises(ValueError, match="outer run_directory"):
+        watchdog.build_task040_level_a_watchdog_plan(
+            **dict(paths, run_directory=paths["exact_spool_root"]),
+            v9_e_s3_j1_baseline_only=True,
+        )
+
+
+def test_s3b_watchdog_cli_dry_run_wires_both_routes(tmp_path: Path, capsys) -> None:
+    paths = _s3_runner_paths(tmp_path)
+    baseline_args = [
+        "--dry-run",
+        "--input",
+        str(paths["input_path"]),
+        "--exact-spool-root",
+        str(paths["exact_spool_root"]),
+        "--run-directory",
+        str(paths["run_directory"]),
+        "--source-sha",
+        str(paths["source_sha"]),
+        V9_E_S3_J1_BASELINE_ONLY_FLAG,
+        "--watchdog-enabled",
+        "--bottom-route-only",
+    ]
+    assert watchdog.main(baseline_args) == 0
+    baseline_output = json.loads(capsys.readouterr().out)
+    assert baseline_output["worker_argv"].count(
+        V9_E_S3_J1_BASELINE_ONLY_FLAG
+    ) == 1
+    assert baseline_output["watchdog"]["hard_stop_bytes"] == 45 * 2**30
+    assert baseline_output["watchdog"]["timeout_seconds"] == 10800
+
+    candidate_run = tmp_path / "candidate_cli_run"
+    manifest = Path(baseline_output["worker_run_directory"]) / "run_summary.json"
+    candidate_args = [
+        "--dry-run",
+        "--input",
+        str(paths["input_path"]),
+        "--exact-spool-root",
+        str(paths["exact_spool_root"]),
+        "--run-directory",
+        str(candidate_run),
+        "--source-sha",
+        str(paths["source_sha"]),
+        V9_E_S3_STRUCTURED_B1_ONLY_FLAG,
+        V9_E_S3_J1_BASELINE_MANIFEST_OPTION,
+        str(manifest),
+        V9_E_S3_J1_BASELINE_MANIFEST_SHA256_OPTION,
+        "d" * 64,
+        "--watchdog-enabled",
+        "--bottom-route-only",
+    ]
+    assert watchdog.main(candidate_args) == 0
+    candidate_output = json.loads(capsys.readouterr().out)
+    assert candidate_output["worker_argv"].count(
+        V9_E_S3_STRUCTURED_B1_ONLY_FLAG
+    ) == 1
+    manifest_index = candidate_output["worker_argv"].index(
+        V9_E_S3_J1_BASELINE_MANIFEST_OPTION
+    )
+    assert candidate_output["worker_argv"][manifest_index + 1] == str(manifest)
+    assert candidate_output["watchdog"]["hard_stop_bytes"] == 45 * 2**30
+    assert candidate_output["watchdog"]["timeout_seconds"] == 10800
+    assert not Path(paths["run_directory"]).exists()
+    assert not candidate_run.exists()
 
 
 def _baseline_manifest() -> tuple[dict[str, object], dict[str, object]]:
