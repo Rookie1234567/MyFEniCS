@@ -45,6 +45,7 @@ from benchmarks.task040_level_a import (
     V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS,
     V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
+    V9_SOURCE_BRIDGE_ONLY_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -74,6 +75,7 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "v8_adaptive_cleanup_complete",
         "v8_adaptive_stage_b1_cleanup_complete",
         "v8_adaptive_stage_bc_cleanup_complete",
+        "v9_source_bridge_cleanup_complete",
     }
 )
 THREAD_ENV = {
@@ -134,6 +136,8 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
     if plan.get("v8_adaptive_stage_bc_only") is True:
         command.append(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG)
+    elif plan.get("v9_source_bridge_only") is True:
+        command.append(V9_SOURCE_BRIDGE_ONLY_FLAG)
     elif plan.get("v8_adaptive_stage_b1_only") is True:
         command.append(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG)
     elif plan.get("v8_adaptive_schwarz_only") is True:
@@ -148,6 +152,7 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(TASK040_V6_2_INTERFACE_SCHUR_FLAG)
     if (
         plan.get("v8_adaptive_stage_bc_only") is True
+        or plan.get("v9_source_bridge_only") is True
         or plan.get("v8_adaptive_stage_b1_only") is True
         or plan.get("v8_adaptive_schwarz_only") is True
         or plan.get("v8_full_spectrum_only") is True
@@ -203,6 +208,7 @@ def build_task040_level_a_watchdog_plan(
     v8_adaptive_schwarz_only: bool = False,
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
+    v9_source_bridge_only: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -225,6 +231,7 @@ def build_task040_level_a_watchdog_plan(
         v8_adaptive_schwarz_only=v8_adaptive_schwarz_only,
         v8_adaptive_stage_b1_only=v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=v8_adaptive_stage_bc_only,
+        v9_source_bridge_only=v9_source_bridge_only,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -262,7 +269,8 @@ def build_task040_level_a_watchdog_plan(
             }
         )
     elif (
-        v8_adaptive_stage_bc_only
+        v9_source_bridge_only
+        or v8_adaptive_stage_bc_only
         or v8_adaptive_stage_b1_only
         or v8_adaptive_schwarz_only
         or v8_full_spectrum_only
@@ -281,7 +289,26 @@ def build_task040_level_a_watchdog_plan(
                 "full_interface_replica_per_rank": False,
             }
         )
-        if v8_adaptive_stage_bc_only:
+        if v9_source_bridge_only:
+            plan["watchdog"].update(
+                {
+                    "v9_source_bridge_only": True,
+                    "hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                    "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                    "timeout_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
+                    "source_order": list(plan["source_order"]),
+                    "planned_source_order": list(plan["planned_source_order"]),
+                    "mandatory_checkpoints": [],
+                    "conditional_checkpoints": [],
+                    "cleanup_stage": "v9_source_bridge_cleanup_complete",
+                    "source_only": True,
+                    "setup_target_seconds": None,
+                    "one_apply_target_seconds": None,
+                    "numeric_allgather": False,
+                    "full_numeric_replica": False,
+                }
+            )
+        elif v8_adaptive_stage_bc_only:
             plan["watchdog"].update(
                 {
                     "v8_adaptive_stage_bc_only": True,
@@ -680,9 +707,10 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     stage_a_enabled = bool(plan.get("v8_adaptive_schwarz_only"))
     b1_enabled = bool(plan.get("v8_adaptive_stage_b1_only"))
     stage_bc_enabled = bool(plan.get("v8_adaptive_stage_bc_only"))
+    v9_enabled = bool(plan.get("v9_source_bridge_only"))
     timeout_seconds = int(
         V8_ADAPTIVE_TIMEOUT_SECONDS
-        if stage_bc_enabled
+        if stage_bc_enabled or v9_enabled
         else plan.get("timeout_seconds", TASK040_LEVEL_A_TIMEOUT_SECONDS)
     )
     adaptive_enabled = stage_a_enabled or b1_enabled
@@ -690,10 +718,11 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         bool(plan.get("v8_full_spectrum_only"))
         or adaptive_enabled
         or stage_bc_enabled
+        or v9_enabled
     )
     active_timeout = (
         _v8_adaptive_stage_bc_total_timeout
-        if stage_bc_enabled
+        if stage_bc_enabled or v9_enabled
         else _v8_adaptive_active_stage_timeout
         if adaptive_enabled
         else _v8_active_stage_timeout
@@ -722,6 +751,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     resource_thresholds: dict[str, Any] = {}
     v8_timeout_decision: dict[str, Any] | None = None
     v8_completed = False
+    v9_workflow_completed = False
     if v5_thresholds_enabled:
         resource_thresholds = {
             "preferred": {
@@ -810,7 +840,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             terminal_teardown_excluded = (
                 process_exited_during_sample or completed_cleanup_teardown
             )
-            if adaptive_enabled or stage_bc_enabled:
+            if adaptive_enabled or stage_bc_enabled or v9_enabled:
                 swap_sample = _v8_adaptive_swap_authority_sample(
                     authority, terminal_excluded=terminal_teardown_excluded
                 )
@@ -953,7 +983,90 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             if path.is_file()
         },
     }
-    if stage_bc_enabled:
+    if v9_enabled:
+        v9_manifest = worker_directory / "v9_source_bridge_manifest.json"
+        v9_failure_manifest = (
+            worker_directory / "v9_source_bridge_failure_manifest.json"
+        )
+        worker_payload: dict[str, Any] = {}
+        cleanup_complete = False
+        if run_summary.is_file():
+            try:
+                worker_payload = json.loads(run_summary.read_text(encoding="utf-8"))
+                cleanup_complete = bool(
+                    worker_payload.get("cleanup", {}).get("status") == "complete"
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_payload = {}
+        resource_stop = termination_reason in {
+            "absolute_memory_limit",
+            "swap_detected",
+            "wall_timeout",
+            "v8_marker_target_exceeded",
+        }
+        resource_gate = bool(
+            sample_count > 0
+            and adaptive_swap_authority_readable
+            and peak_rss_bytes < V8_ADAPTIVE_HARD_STOP_BYTES
+            and peak_swap_bytes == SWAP_LIMIT_BYTES
+            and (
+                not dedicated_cgroup_present
+                or (
+                    dedicated_cgroup_swap_readable
+                    and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
+                )
+            )
+        )
+        v9_workflow_completed = bool(
+            termination_reason == "natural_exit"
+            and process.returncode == 0
+            and run_summary.is_file()
+            and cleanup_complete
+            and v9_manifest.is_file()
+            and last_stage == "v9_source_bridge_cleanup_complete"
+            and last_stage_status == "complete"
+        )
+        worker_classification = worker_payload.get("classification")
+        if worker_classification is None and worker_payload.get("status") == (
+            "verified_source_canonical_bridge"
+        ):
+            worker_classification = "V9_SOURCE_CANONICAL_BRIDGE_PASS"
+        valid_worker_classifications = {
+            "V9_SOURCE_CANONICAL_BRIDGE_PASS",
+            "V9_SOURCE_CANONICAL_BRIDGE_IDENTITY_UNAVAILABLE",
+            "V9_SOURCE_CANONICAL_BRIDGE_IMPLEMENTATION_FAILURE",
+        }
+        if resource_stop:
+            v9_classification = "V9_SOURCE_CANONICAL_BRIDGE_RESOURCE_UNAVAILABLE"
+        elif v9_failure_manifest.is_file():
+            v9_classification = "V9_SOURCE_CANONICAL_BRIDGE_IMPLEMENTATION_FAILURE"
+        elif v9_workflow_completed and not resource_gate:
+            v9_classification = "V9_SOURCE_CANONICAL_BRIDGE_RESOURCE_UNAVAILABLE"
+        elif v9_workflow_completed and worker_classification in valid_worker_classifications:
+            v9_classification = worker_classification
+        else:
+            v9_classification = "requires_result_adjudication"
+        summary.update(
+            {
+                "v9_source_bridge_workflow_completed": v9_workflow_completed,
+                "v9_source_bridge_manifest_present": v9_manifest.is_file(),
+                "v9_source_bridge_manifest_sha256": (
+                    _sha256(v9_manifest) if v9_manifest.is_file() else None
+                ),
+                "v9_source_bridge_resource_gate": resource_gate,
+                "v9_source_bridge_signal_positive": False,
+                "latest_stage": last_stage,
+                "latest_stage_status": last_stage_status,
+                "resource_classification": v9_classification,
+                "final_resource_classification": v9_classification,
+                "v9_source_bridge_resource_limits": {
+                    "hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                    "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                    "total_wall_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
+                },
+            }
+        )
+    elif stage_bc_enabled:
         stage_bc_manifest = worker_directory / "v8_adaptive_stage_bc_manifest.json"
         stage_bc_failure_manifest = (
             worker_directory / "v8_adaptive_stage_bc_failure_manifest.json"
@@ -1276,7 +1389,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         summary["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
     final_swap_authority_readable = (
         adaptive_swap_authority_readable
-        if adaptive_enabled or stage_bc_enabled
+        if adaptive_enabled or stage_bc_enabled or v9_enabled
         else swap_authority_readable
     )
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
@@ -1285,6 +1398,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         if stage_a_enabled
         else b1_workflow_completed
         if b1_enabled
+        else v9_workflow_completed
+        if v9_enabled
         else stage_bc_workflow_completed
         if stage_bc_enabled
         else v8_completed
@@ -1328,6 +1443,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_SCHWARZ_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
     parser.add_argument("--watchdog-enabled", action="store_true")
     parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
@@ -1364,6 +1480,12 @@ def main(argv: list[str] | None = None) -> int:
             "V8 adaptive Stage-B/C route requires "
             "--watchdog-enabled and --bottom-route-only"
         )
+    if args.v9_source_bridge_only and not (
+        args.watchdog_enabled and args.bottom_route_only
+    ):
+        parser.error(
+            "V9 source bridge route requires --watchdog-enabled and --bottom-route-only"
+        )
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
         exact_spool_root=args.exact_spool_root,
@@ -1384,6 +1506,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
+        v9_source_bridge_only=args.v9_source_bridge_only,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:

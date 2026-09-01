@@ -153,6 +153,14 @@ V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA = (
     "task040.v8.adaptive_impedance_schwarz.stage_bc.v1"
 )
 V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID = V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA
+V9_SOURCE_BRIDGE_ONLY_FLAG = "--v9-source-bridge-only"
+V9_SOURCE_BRIDGE_ONLY_METHOD = "task040_v9_source_canonical_bridge"
+V9_SOURCE_BRIDGE_ONLY_SCHEMA = "task040.v9.source_canonical_bridge.v1"
+V9_SOURCE_BRIDGE_ONLY_PROFILE_ID = V9_SOURCE_BRIDGE_ONLY_SCHEMA
+V9_SOURCE_BRIDGE_ONLY_SOURCES = (
+    "external_dtn_coupling",
+    "fixed_random_repeat_0",
+)
 
 __all__ = (
     "V6_2_EXACT_QUALIFICATION_SOURCES",
@@ -215,6 +223,11 @@ __all__ = (
     "V8_FULL_SPECTRUM_SOURCES",
     "V8_FULL_SPECTRUM_TIMEOUT_SECONDS",
     "V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS",
+    "V9_SOURCE_BRIDGE_ONLY_FLAG",
+    "V9_SOURCE_BRIDGE_ONLY_METHOD",
+    "V9_SOURCE_BRIDGE_ONLY_PROFILE_ID",
+    "V9_SOURCE_BRIDGE_ONLY_SCHEMA",
+    "V9_SOURCE_BRIDGE_ONLY_SOURCES",
     "build_v6_2_exact_qualification_plan",
     "collect_v7_scale_normalized_identity_metrics",
     "run_v6_2_exact_qualification_packets",
@@ -3139,6 +3152,7 @@ def run_v6_2_interface_schur(
     v8_adaptive_schwarz_only: bool = False,
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
+    v9_source_bridge_only: bool = False,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
     v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -3151,6 +3165,7 @@ def run_v6_2_interface_schur(
             v8_full_spectrum_only,
             v8_adaptive_schwarz_only,
             v8_adaptive_stage_bc_only,
+            v9_source_bridge_only,
         )
     ):
         raise ValueError("V8 adaptive Stage-B1 route is mutually exclusive")
@@ -3161,9 +3176,21 @@ def run_v6_2_interface_schur(
             v8_full_spectrum_only,
             v8_adaptive_schwarz_only,
             v8_adaptive_stage_b1_only,
+            v9_source_bridge_only,
         )
     ):
         raise ValueError("V8 adaptive Stage-B/C route is mutually exclusive")
+    if v9_source_bridge_only and any(
+        (
+            v7_scale_normalized_identity,
+            v7_moving_pml_full_state,
+            v8_full_spectrum_only,
+            v8_adaptive_schwarz_only,
+            v8_adaptive_stage_b1_only,
+            v8_adaptive_stage_bc_only,
+        )
+    ):
+        raise ValueError("V9 source bridge route is mutually exclusive")
 
     # This is the single clock origin for the whole worker sequence.  It must
     # include authority/root, ABI/resource preflight, directory setup, system
@@ -3286,6 +3313,27 @@ def run_v6_2_interface_schur(
             "schema": V8_ADAPTIVE_STAGE_BC_ONLY_SCHEMA,
             "method": V8_ADAPTIVE_STAGE_BC_ONLY_METHOD,
             "profile": V8_ADAPTIVE_STAGE_BC_ONLY_PROFILE_ID,
+            "pass": None,
+            "formal_adjudication": False,
+            "source_order": [],
+        }
+    if v9_source_bridge_only and int(comm.size) != 8:
+        return _stop_result(
+            status="not_run_by_v9_source_bridge_mpi_size_gate",
+            classification="V9_SOURCE_CANONICAL_BRIDGE_NOT_RUN",
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            identity_preflight={
+                "status": "mpi_size_gate",
+                "pass": False,
+                "checks": {"mpi_size_8": False},
+            },
+            resource_preflight=None,
+        ) | {
+            "schema": V9_SOURCE_BRIDGE_ONLY_SCHEMA,
+            "method": V9_SOURCE_BRIDGE_ONLY_METHOD,
+            "profile": V9_SOURCE_BRIDGE_ONLY_PROFILE_ID,
             "pass": None,
             "formal_adjudication": False,
             "source_order": [],
@@ -3525,6 +3573,67 @@ def run_v6_2_interface_schur(
             },
         )
 
+    v9_marker_state: dict[str, Any] = {
+        "last_wall": formal_sequence_started,
+        "last_stage": None,
+        "last_resource": None,
+    }
+    v9_marker_resource_callback = None
+    v9_event_callback: Callable[[str, Mapping[str, Any]], Any] | None = None
+    if v9_source_bridge_only:
+        v9_marker_resource_callback = _v6_2_live_resource_callback(
+            resource_callback,
+            comm=comm,
+            formal_sequence_started=formal_sequence_started,
+            hard_stop_bytes=int(hard_stop_bytes),
+            budget_seconds=float(V8_ADAPTIVE_TIMEOUT_SECONDS),
+        )
+
+        def v9_mark(stage: str, **detail: Any) -> Mapping[str, Any]:
+            now = time.perf_counter()
+            resource = v9_marker_resource_callback()
+            stage_start = v9_marker_state["last_wall"]
+            v9_marker_state.update(
+                {
+                    "last_wall": now,
+                    "last_stage": stage,
+                    "last_resource": resource,
+                }
+            )
+            _emit(
+                marker_callback,
+                stage,
+                status="complete",
+                formal_wall_seconds=float(now - formal_sequence_started),
+                stage_wall_seconds=float(now - stage_start),
+                rss_bytes=resource.get("rss_bytes"),
+                swap_bytes=resource.get("swap_bytes"),
+                resource=_json_safe(resource),
+                pc_apply_count=0,
+                action_apply_count=0,
+                factor_lifecycle={"ready": 0, "after_cleanup": 0},
+                **{
+                    key: _json_safe(value)
+                    for key, value in detail.items()
+                    if key not in {"status", "resource"}
+                },
+            )
+            return resource
+
+        v9_event_names = {
+            "preflight": "v9_source_bridge_preflight",
+            "source_ready": "v9_source_bridge_source_ready",
+            "packet_written": "v9_source_bridge_packet_written",
+        }
+
+        def v9_event_callback(
+            event: str, detail: Mapping[str, Any]
+        ) -> Mapping[str, Any] | None:
+            stage = v9_event_names.get(event)
+            if stage is None:
+                raise ValueError(f"unknown V9 source-bridge event: {event}")
+            return v9_mark(stage, **dict(detail))
+
     v8_marker_payload: dict[str, Any] | None = None
     v8_marker_resource_callback = (
         resource_callback if callable(resource_callback) else dict
@@ -3569,11 +3678,13 @@ def run_v6_2_interface_schur(
     v7_factor_lifecycle_after_continuation: Mapping[str, Any] | None = None
     shared_lifecycle: Mapping[str, Any] | None = None
     result: dict[str, Any] | None = None
+    v9_bare_hash_before: str | None = None
+    v9_bare_hash_after: str | None = None
     exact_budget_seconds = (
         V8_FULL_SPECTRUM_TIMEOUT_SECONDS
         if v8_full_spectrum_only
         else V8_ADAPTIVE_TIMEOUT_SECONDS
-        if v8_adaptive_stage_bc_only
+        if v8_adaptive_stage_bc_only or v9_source_bridge_only
         else TASK040_LEVEL_A_TIMEOUT_SECONDS
     )
     try:
@@ -3589,6 +3700,7 @@ def run_v6_2_interface_schur(
                     v7_moving_pml_full_state
                     or v8_full_spectrum_only
                     or v8_adaptive_stage_bc_only
+                    or v9_source_bridge_only
                 )
                 else None
             ),
@@ -3602,6 +3714,7 @@ def run_v6_2_interface_schur(
                     v7_moving_pml_full_state
                     or v8_full_spectrum_only
                     or v8_adaptive_stage_bc_only
+                    or v9_source_bridge_only
                 )
                 else None
             ),
@@ -3632,6 +3745,83 @@ def run_v6_2_interface_schur(
             qep_calls=0,
             full_side_exact_factor_count=0,
         )
+        if v9_source_bridge_only:
+            v9_bare_hash_before = _petsc_matrix_hash(system.F)
+            v9_mark(
+                "v9_source_bridge_system_ready",
+                bare_f_rows=int(system.active_rows),
+                matrix_objects=matrix_objects,
+                qep_calls=0,
+                full_side_exact_factor_count=0,
+                source=None,
+            )
+            from src.solvers.hybrid_bare_f_authority import build_current_bare_f_rhs
+            from src.solvers.hybrid_source_canonical_bridge import (
+                run_source_canonical_bridge,
+            )
+
+            observed = identity_preflight.get("observed", {})
+            source_provenance = {
+                key: observed.get(key)
+                for key in (
+                    "input_sha256",
+                    "physical_model_sha256",
+                    "selected_manifest_sha256",
+                    "selected_identity_sha256",
+                    "resolved_config_sha256",
+                )
+            }
+            bridge_result = run_source_canonical_bridge(
+                system,
+                persisted_root=frozen_root,
+                output_root=output_root / "source_bridge",
+                source_builder=lambda label: build_current_bare_f_rhs(system, label),
+                source_sha=str(source_sha),
+                input_sha256=str(input_sha256),
+                physical_model_sha256=str(physical_model_sha256),
+                source_provenance=source_provenance,
+                event_callback=v9_event_callback,
+            )
+            result = {
+                **_json_safe(bridge_result),
+                "schema": V9_SOURCE_BRIDGE_ONLY_SCHEMA,
+                "method": V9_SOURCE_BRIDGE_ONLY_METHOD,
+                "profile": V9_SOURCE_BRIDGE_ONLY_PROFILE_ID,
+                "status": "verified_source_canonical_bridge",
+                "source_sha": str(source_sha),
+                "input_sha256": str(input_sha256),
+                "physical_model_sha256": str(physical_model_sha256),
+                "identity_preflight": _json_safe(identity_preflight),
+                "resource_preflight": _json_safe(resource_preflight),
+                "system_inventory": {
+                    "rank": int(comm.rank),
+                    "mpi_size": int(comm.size),
+                    "active_rows": int(system.active_rows),
+                    "full_rows": int(
+                        system.static_condensation.condensed.full_rows
+                    ),
+                    "bare_f_shape": [int(value) for value in system.F.getSize()],
+                    "selected_mode_provider": "v5_hash_bound_caller_owned",
+                },
+                "matrix_objects": {
+                    "bare_f": "borrowed",
+                    "selected_mode_provider": "caller_owned",
+                    "gamma_canonical_interface": 0,
+                    "group_factors": 0,
+                    "full_side_factor": 0,
+                    "global_factor": 0,
+                    "qep": 0,
+                    "fgmres": 0,
+                },
+                "full_side_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "qep_calls": 0,
+                "fgmres_calls": 0,
+                "source_order": list(bridge_result["source_order"]),
+                "formal_adjudication": False,
+                "bare_f_operator_hash_before": v9_bare_hash_before,
+            }
+            return result
         if v8_adaptive_stage_bc_only:
             adaptive_mark(
                 "v8_adaptive_stage_bc_system_ready",
@@ -5035,6 +5225,8 @@ def run_v6_2_interface_schur(
                 )
         if matrix is not None:
             matrix.destroy()
+        if v9_source_bridge_only and system is not None:
+            v9_bare_hash_after = _petsc_matrix_hash(system.F)
         if system is not None:
             system.destroy()
             system_destroyed = True
@@ -5080,6 +5272,88 @@ def run_v6_2_interface_schur(
                 _write_json(rank_root / "v8_full_spectrum.json", result)
                 if comm.rank == 0:
                     _write_json(output_root / "v8_manifest.json", result)
+        if v9_source_bridge_only:
+            primary_exc_type, primary_exc, _ = sys.exc_info()
+            result_generated = result is not None
+            bare_unchanged = bool(
+                v9_bare_hash_before is not None
+                and v9_bare_hash_after is not None
+                and v9_bare_hash_before == v9_bare_hash_after
+            )
+            v9_cleanup = {
+                "status": (
+                    "complete"
+                    if system_destroyed and bare_unchanged
+                    else "incomplete"
+                ),
+                "result_generated": result_generated,
+                "system_destroyed": system_destroyed,
+                "bare_f_hash_before": v9_bare_hash_before,
+                "bare_f_hash_after": v9_bare_hash_after,
+                "bare_f_unchanged": bare_unchanged,
+                "source_vectors_destroyed": True,
+                "full_side_factor_count": 0,
+                "group_factor_count": 0,
+                "qep_calls": 0,
+                "fgmres_calls": 0,
+            }
+            failed_stage = v9_marker_state["last_stage"]
+            failed_resource = v9_marker_state["last_resource"]
+            try:
+                v9_mark(
+                    "v9_source_bridge_cleanup_complete",
+                    cleanup=v9_cleanup,
+                    result_generated=result_generated,
+                    system_destroyed=system_destroyed,
+                    bare_f_hash_before=v9_bare_hash_before,
+                    bare_f_hash_after=v9_bare_hash_after,
+                    bare_f_unchanged=bare_unchanged,
+                    source=None,
+                )
+            except Exception:
+                if primary_exc is None:
+                    raise
+            if result is not None:
+                result["cleanup"] = v9_cleanup
+                result["bare_f_operator_hash_after"] = v9_bare_hash_after
+                _write_json(rank_root / "v9_source_bridge.json", result)
+                if comm.rank == 0:
+                    _write_json(
+                        output_root / "v9_source_bridge_manifest.json", result
+                    )
+            else:
+                failure_record = {
+                    "schema": V9_SOURCE_BRIDGE_ONLY_SCHEMA,
+                    "method": V9_SOURCE_BRIDGE_ONLY_METHOD,
+                    "profile": V9_SOURCE_BRIDGE_ONLY_PROFILE_ID,
+                    "status": "source_bridge_exception",
+                    "classification": "V9_SOURCE_CANONICAL_BRIDGE_IMPLEMENTATION_FAILURE",
+                    "pass": None,
+                    "formal_adjudication": False,
+                    "source_order": [],
+                    "cleanup": v9_cleanup,
+                    "exception": {
+                        "type": (
+                            None
+                            if primary_exc_type is None
+                            else primary_exc_type.__name__
+                        ),
+                        "message": None if primary_exc is None else str(primary_exc),
+                        "audit": _json_safe(
+                            getattr(primary_exc, "audit", {})
+                        ),
+                    },
+                    "last_stage": failed_stage,
+                    "last_resource": _json_safe(failed_resource),
+                }
+                _write_json(
+                    rank_root / "v9_source_bridge_failure.json", failure_record
+                )
+                if comm.rank == 0:
+                    _write_json(
+                        output_root / "v9_source_bridge_failure_manifest.json",
+                        failure_record,
+                    )
         if adaptive_route_enabled and not v8_adaptive_stage_bc_only:
             b1_route = v8_adaptive_stage_b1_only
             result_generated = result is not None

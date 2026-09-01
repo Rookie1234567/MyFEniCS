@@ -83,6 +83,11 @@ from benchmarks.task040_v6_2_interface_schur import (
     V8_FULL_SPECTRUM_SOURCES,
     V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
+    V9_SOURCE_BRIDGE_ONLY_FLAG,
+    V9_SOURCE_BRIDGE_ONLY_METHOD,
+    V9_SOURCE_BRIDGE_ONLY_PROFILE_ID,
+    V9_SOURCE_BRIDGE_ONLY_SCHEMA,
+    V9_SOURCE_BRIDGE_ONLY_SOURCES,
     build_v6_2_exact_qualification_plan,
 )
 from src.common.modes_3d import outgoing_port_modes_3d
@@ -356,6 +361,11 @@ __all__ = (
     "TASK040_V6_2_INTERFACE_UPPER_COUNT",
     "TASK040_V6_2_INTERFACE_JOINT_COUNT",
     "TASK040_V5_REQUIRED_THREAD_ENV",
+    "V9_SOURCE_BRIDGE_ONLY_FLAG",
+    "V9_SOURCE_BRIDGE_ONLY_METHOD",
+    "V9_SOURCE_BRIDGE_ONLY_PROFILE_ID",
+    "V9_SOURCE_BRIDGE_ONLY_SCHEMA",
+    "V9_SOURCE_BRIDGE_ONLY_SOURCES",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -436,6 +446,7 @@ def build_task040_level_a_plan(
     v8_adaptive_schwarz_only: bool = False,
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
+    v9_source_bridge_only: bool = False,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -494,6 +505,7 @@ def build_task040_level_a_plan(
                 v8_adaptive_schwarz_only,
                 v8_adaptive_stage_b1_only,
                 v8_adaptive_stage_bc_only,
+                v9_source_bridge_only,
             )
         )
         > 1
@@ -1050,6 +1062,55 @@ def build_task040_level_a_plan(
                     "full_basis_replica_per_rank",
                     "dense_global_coarse_factor",
                     "direct_global_coarse_factor",
+                ],
+            }
+        )
+    if v9_source_bridge_only:
+        plan.update(
+            {
+                "schema": V9_SOURCE_BRIDGE_ONLY_SCHEMA,
+                "method": V9_SOURCE_BRIDGE_ONLY_METHOD,
+                "profile": V9_SOURCE_BRIDGE_ONLY_PROFILE_ID,
+                "v9_source_bridge_only": True,
+                "research_only": True,
+                "oracle_only": False,
+                "scalable_candidate": False,
+                "pde_solve": "source_canonical_bridge_identity_preflight_only",
+                "source_order": list(V9_SOURCE_BRIDGE_ONLY_SOURCES),
+                "planned_source_order": list(V9_SOURCE_BRIDGE_ONLY_SOURCES),
+                "mandatory_checkpoints": [],
+                "conditional_checkpoints": [],
+                "fixed_configuration": {
+                    "source_builder": "build_current_bare_f_rhs",
+                    "current_physical_canonical_keys": True,
+                    "numeric_allgather": False,
+                    "full_numeric_replica": False,
+                },
+                "absolute_terminate_memory_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": V8_ADAPTIVE_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": V8_ADAPTIVE_TIMEOUT_SECONDS,
+                "setup_target_seconds": None,
+                "one_apply_target_seconds": None,
+                "formal_adjudication": False,
+                "marker_sequence": [
+                    "v9_source_bridge_preflight",
+                    "v9_source_bridge_system_ready",
+                    "v9_source_bridge_source_ready",
+                    "v9_source_bridge_packet_written",
+                    "v9_source_bridge_cleanup_complete",
+                ],
+                "forbidden": [
+                    "v7_research_route",
+                    "v8_research_route",
+                    "full_side_factor",
+                    "group_factors",
+                    "interface_schur",
+                    "schur_transform",
+                    "qep",
+                    "physical_dtn",
+                    "outer_fgmres",
+                    "source_before_current_key_validation",
                 ],
             }
         )
@@ -6430,6 +6491,7 @@ def run_task040_level_a(
     v8_adaptive_schwarz_only: bool = False,
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
+    v9_source_bridge_only: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
@@ -6458,6 +6520,7 @@ def run_task040_level_a(
                 v8_adaptive_schwarz_only,
                 v8_adaptive_stage_b1_only,
                 v8_adaptive_stage_bc_only,
+                v9_source_bridge_only,
             )
         )
         > 1
@@ -6521,6 +6584,7 @@ def run_task040_level_a(
         v8_adaptive_schwarz_only
         or v8_adaptive_stage_b1_only
         or v8_adaptive_stage_bc_only
+        or v9_source_bridge_only
     ):
         if run_directory is None:
             raise ValueError("V8 adaptive route requires a separate run_directory")
@@ -6543,6 +6607,7 @@ def run_task040_level_a(
         or v8_adaptive_schwarz_only
         or v8_adaptive_stage_b1_only
         or v8_adaptive_stage_bc_only
+        or v9_source_bridge_only
     ):
         if (packet_consumer or coupled_interface) and packet_root is None:
             raise ValueError("Task040 packet consumer requires packet_root")
@@ -6773,6 +6838,27 @@ def run_task040_level_a(
             watchdog_enabled=watchdog_enabled,
             bottom_route_only=bottom_route_only,
         )
+    if v9_source_bridge_only:
+        from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
+
+        return run_v6_2_interface_schur(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            exact_spool_root=exact_spool_root,
+            run_directory=run_directory,
+            source_sha=source_sha,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            hard_stop_bytes=TASK040_LEVEL_A_HARD_STOP_BYTES,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+            resource_callback=resource_callback,
+            v9_source_bridge_only=True,
+        )
     if (
         v8_adaptive_schwarz_only
         or v8_adaptive_stage_b1_only
@@ -6799,6 +6885,7 @@ def run_task040_level_a(
             v8_adaptive_schwarz_only=v8_adaptive_schwarz_only,
             v8_adaptive_stage_b1_only=v8_adaptive_stage_b1_only,
             v8_adaptive_stage_bc_only=v8_adaptive_stage_bc_only,
+            v9_source_bridge_only=v9_source_bridge_only,
         )
     if v8_full_spectrum_only:
         from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
@@ -7279,6 +7366,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_SCHWARZ_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -7306,6 +7394,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
+        v9_source_bridge_only=args.v9_source_bridge_only,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -7350,6 +7439,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_schwarz_only=args.v8_adaptive_schwarz_only,
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
+        v9_source_bridge_only=args.v9_source_bridge_only,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -7365,6 +7455,7 @@ def main(argv: list[str] | None = None) -> int:
                         if args.v8_adaptive_schwarz_only
                         or args.v8_adaptive_stage_b1_only
                         or args.v8_adaptive_stage_bc_only
+                        or args.v9_source_bridge_only
                         else TASK040_LEVEL_A_HARD_STOP_BYTES
                     ),
                 )
@@ -7384,6 +7475,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v8_adaptive_schwarz_only
                     or args.v8_adaptive_stage_b1_only
                     or args.v8_adaptive_stage_bc_only
+                    or args.v9_source_bridge_only
                 )
                 else None
             )
@@ -7406,6 +7498,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.v8_adaptive_schwarz_only
             or args.v8_adaptive_stage_b1_only
             or args.v8_adaptive_stage_bc_only
+            or args.v9_source_bridge_only
             else None
         ),
         v7_continuation=v7_continuation,
