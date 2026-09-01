@@ -35,6 +35,8 @@ from .floquet_background_hcurl_block_transform import (
 from .floquet_background_hcurl_s3_pilot import (
     S3B_CONDITIONAL_PASS,
     S3B_EXPECTED_ACTIVE_ROWS,
+    S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+    S3B_EXPECTED_FLOQUET_SLAVE_ROWS,
     S3B_EXPECTED_MODE_COUNT,
     S3B_EXPECTED_ROWS_PER_MODE,
     S3B_EXTERNAL_SOURCE_COLUMN,
@@ -1001,8 +1003,30 @@ def validate_s3_j1_baseline_manifest(
     )
     require(source.get("sign") == S3B_EXTERNAL_SOURCE_SIGN, "source sign mismatch")
     require(
-        source.get("canonical_key_count") == S3B_EXPECTED_ACTIVE_ROWS,
+        source.get("canonical_key_count") == S3B_EXPECTED_CANONICAL_TRACE_ROWS,
         "source canonical key count mismatch",
+    )
+    source_row_counts = {
+        "active_row_count": S3B_EXPECTED_ACTIVE_ROWS,
+        "canonical_trace_row_count": S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+        "floquet_slave_row_count": S3B_EXPECTED_FLOQUET_SLAVE_ROWS,
+    }
+    for key, expected in source_row_counts.items():
+        require(source.get(key) == expected, f"source {key} mismatch")
+    require(
+        source["canonical_trace_row_count"]
+        == source["active_row_count"] + source["floquet_slave_row_count"],
+        "source row counts do not close",
+    )
+    extractor_audit = source.get("canonical_extractor_audit")
+    require(
+        isinstance(extractor_audit, Mapping),
+        "source canonical extractor audit must be a mapping",
+    )
+    require(
+        extractor_audit.get("global_packet_count")
+        == S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+        "source canonical extractor packet count mismatch",
     )
     source_hash_keys = (
         "canonical_key_set_sha256",
@@ -1163,6 +1187,13 @@ def validate_s3_j1_baseline_manifest(
             "route": manifest["route"],
             "j1_r64": r64,
             "source_norm": source_norm,
+            "active_row_count": source_row_counts["active_row_count"],
+            "canonical_trace_row_count": source_row_counts[
+                "canonical_trace_row_count"
+            ],
+            "floquet_slave_row_count": source_row_counts[
+                "floquet_slave_row_count"
+            ],
             "source_canonical_key_set_sha256": source_hashes[
                 "canonical_key_set_sha256"
             ],
@@ -1245,8 +1276,16 @@ def compare_s3_candidate_source_to_baseline(
     checks["canonical_key_count_matches_baseline_and_fixed"] = bool(
         candidate_source_audit.get("canonical_key_count")
         == baseline_source.get("canonical_key_count")
-        == S3B_EXPECTED_ACTIVE_ROWS
+        == S3B_EXPECTED_CANONICAL_TRACE_ROWS
     )
+    for key, expected in (
+        ("active_row_count", S3B_EXPECTED_ACTIVE_ROWS),
+        ("canonical_trace_row_count", S3B_EXPECTED_CANONICAL_TRACE_ROWS),
+        ("floquet_slave_row_count", S3B_EXPECTED_FLOQUET_SLAVE_ROWS),
+    ):
+        checks[f"{key}_matches_baseline_and_fixed"] = bool(
+            candidate_source_audit.get(key) == baseline_source.get(key) == expected
+        )
     checks["numeric_vector_value_allgather_false"] = (
         candidate_source_audit.get("numeric_allgather") is False
     )

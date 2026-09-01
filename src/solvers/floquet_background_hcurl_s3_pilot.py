@@ -52,6 +52,8 @@ S3B_SWAP_LIMIT_BYTES = 0
 S3B_WALL_CAP_SECONDS = 10800
 
 S3B_EXPECTED_ACTIVE_ROWS = 8424
+S3B_EXPECTED_CANONICAL_TRACE_ROWS = 9786
+S3B_EXPECTED_FLOQUET_SLAVE_ROWS = 1362
 S3B_EXPECTED_MODE_COUNT = 18
 S3B_EXPECTED_ROWS_PER_MODE = 468
 S3B_MAX_LOCAL_ROWS = 1024
@@ -84,6 +86,8 @@ __all__ = (
     "S3B_CONDITIONAL_RESOURCE_STOP",
     "S3B_CONDITIONAL_UNSTABLE",
     "S3B_EXPECTED_ACTIVE_ROWS",
+    "S3B_EXPECTED_CANONICAL_TRACE_ROWS",
+    "S3B_EXPECTED_FLOQUET_SLAVE_ROWS",
     "S3B_EXPECTED_MODE_COUNT",
     "S3B_EXPECTED_ROWS_PER_MODE",
     "S3B_EXTERNAL_SOURCE_COLUMN",
@@ -403,9 +407,61 @@ def _s3b_canonical_source_identity(
     local_tokens: list[str] = []
     local_pair_digests: list[str] = []
     extractor_audit: dict[str, Any] = {}
+    active_row_count: int | None = None
+    canonical_trace_row_count: int | None = None
+    floquet_slave_row_count: int | None = None
     try:
+        condensed = getattr(
+            getattr(system, "static_condensation", None), "condensed", None
+        )
+        constraints = getattr(condensed, "trace_constraints", None)
+        if condensed is None or constraints is None:
+            raise TypeError(
+                "S3b canonical source identity requires condensed trace metadata"
+            )
+        active_row_count = int(condensed.active_rows)
+        canonical_trace_row_count = int(condensed.trace_rows)
+        floquet_slave_row_count = int(constraints.slave_rows)
+        fine_shape = tuple(int(value) for value in system.fine_action.getSize())
+        source_size = int(source.getSize())
+        if fine_shape != (
+            S3B_EXPECTED_ACTIVE_ROWS,
+            S3B_EXPECTED_ACTIVE_ROWS,
+        ):
+            raise ValueError(
+                "S3b canonical source fine_action must remain 8424x8424, "
+                f"got {fine_shape}"
+            )
+        if source_size != S3B_EXPECTED_ACTIVE_ROWS:
+            raise ValueError(
+                "S3b canonical source Vec must remain active size 8424, "
+                f"got {source_size}"
+            )
+        if active_row_count != S3B_EXPECTED_ACTIVE_ROWS:
+            raise ValueError(
+                "S3b active row count differs from fixed active rows: "
+                f"{active_row_count} != {S3B_EXPECTED_ACTIVE_ROWS}"
+            )
+        if canonical_trace_row_count != S3B_EXPECTED_CANONICAL_TRACE_ROWS:
+            raise ValueError(
+                "S3b canonical trace row count differs from fixed trace rows: "
+                f"{canonical_trace_row_count} != "
+                f"{S3B_EXPECTED_CANONICAL_TRACE_ROWS}"
+            )
+        if floquet_slave_row_count != S3B_EXPECTED_FLOQUET_SLAVE_ROWS:
+            raise ValueError(
+                "S3b Floquet slave row count differs from fixed slave rows: "
+                f"{floquet_slave_row_count} != "
+                f"{S3B_EXPECTED_FLOQUET_SLAVE_ROWS}"
+            )
+        if canonical_trace_row_count != active_row_count + floquet_slave_row_count:
+            raise ValueError(
+                "S3b canonical trace rows must equal active plus Floquet slave rows: "
+                f"{canonical_trace_row_count} != "
+                f"{active_row_count} + {floquet_slave_row_count}"
+            )
         packets, extractor_audit = extract_canonical_active_trace_packets(
-            system.static_condensation.condensed,
+            condensed,
             system.V,
             system.floquet_data,
             source,
@@ -446,9 +502,24 @@ def _s3b_canonical_source_identity(
             raise error from local_exception
         raise error
 
+    layout_records = comm.allgather(
+        (
+            active_row_count,
+            canonical_trace_row_count,
+            floquet_slave_row_count,
+        )
+    )
+    if any(record != layout_records[0] for record in layout_records[1:]):
+        raise RuntimeError(
+            "S3b canonical source layout metadata differs across MPI ranks"
+        )
+
     gathered_tokens = comm.gather(tuple(sorted(local_tokens)), root=0)
     gathered_pair_digests = comm.gather(tuple(sorted(local_pair_digests)), root=0)
-    expected_count = int(system.fine_action.getSize()[0])
+    gathered_packet_counts = comm.gather(
+        extractor_audit.get("global_packet_count"), root=0
+    )
+    expected_count = int(canonical_trace_row_count)
     root_result: dict[str, Any] | None
     if comm.rank == 0:
         try:
@@ -463,17 +534,38 @@ def _s3b_canonical_source_identity(
                 for digest in shard
             ]
             duplicate_count = len(all_tokens) - len(set(all_tokens))
-            if duplicate_count:
+            if any(
+                packet_count != expected_count
+                for packet_count in gathered_packet_counts
+            ):
+                root_result = {
+                    "error": (
+                        "canonical extractor global packet count does not equal "
+                        f"current trace rows: {gathered_packet_counts} != "
+                        f"{expected_count}"
+                    )
+                }
+            elif duplicate_count:
                 root_result = {
                     "error": (
                         "duplicate canonical source tokens across MPI owners "
                         f"(count={duplicate_count})"
                     )
                 }
+            elif not all_tokens or not all_pair_digests:
+                root_result = {
+                    "error": "canonical source token and pair digest sets are empty"
+                }
+            elif any(not token for token in all_tokens) or any(
+                not digest for digest in all_pair_digests
+            ):
+                root_result = {
+                    "error": "canonical source token or pair digest is empty"
+                }
             elif len(all_tokens) != expected_count:
                 root_result = {
                     "error": (
-                        "canonical source token count does not equal target active rows: "
+                        "canonical source token count does not equal canonical trace rows: "
                         f"{len(all_tokens)} != {expected_count}"
                     )
                 }
@@ -519,6 +611,9 @@ def _s3b_canonical_source_identity(
                 root_result = {
                     "error": None,
                     "canonical_key_count": len(all_tokens),
+                    "active_row_count": active_row_count,
+                    "canonical_trace_row_count": canonical_trace_row_count,
+                    "floquet_slave_row_count": floquet_slave_row_count,
                     "canonical_key_set_sha256": canonical_key_sha256,
                     "canonical_value_sha256": canonical_value_sha256,
                     "source_definition_sha256": source_definition_sha256,
@@ -543,6 +638,9 @@ def _s3b_canonical_source_identity(
         "canonical_value_pair_digest_sha256": root_result[
             "canonical_value_sha256"
         ],
+        "active_row_count": active_row_count,
+        "canonical_trace_row_count": canonical_trace_row_count,
+        "floquet_slave_row_count": floquet_slave_row_count,
         "canonical_extractor_audit": dict(extractor_audit),
         "numeric_allgather": False,
         "full_vector_replication": False,

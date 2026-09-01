@@ -39,6 +39,8 @@ from src.solvers.floquet_background_hcurl_s3_pilot import (
     S3B_CONDITIONAL_PASS,
     S3B_CONDITIONAL_UNSTABLE,
     S3B_EXPECTED_ACTIVE_ROWS,
+    S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+    S3B_EXPECTED_FLOQUET_SLAVE_ROWS,
     S3B_EXPECTED_MODE_COUNT,
     S3B_EXPECTED_ROWS_PER_MODE,
     S3B_EXTERNAL_SOURCE_COLUMN,
@@ -566,7 +568,13 @@ def _baseline_manifest() -> tuple[dict[str, object], dict[str, object]]:
         "column": S3B_EXTERNAL_SOURCE_COLUMN,
         "resolved_column": S3B_EXTERNAL_SOURCE_COLUMN,
         "sign": S3B_EXTERNAL_SOURCE_SIGN,
-        "canonical_key_count": S3B_EXPECTED_ACTIVE_ROWS,
+        "canonical_key_count": S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+        "active_row_count": S3B_EXPECTED_ACTIVE_ROWS,
+        "canonical_trace_row_count": S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+        "floquet_slave_row_count": S3B_EXPECTED_FLOQUET_SLAVE_ROWS,
+        "canonical_extractor_audit": {
+            "global_packet_count": S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+        },
         **_HASHES,
         "source_norm": 2.0,
         "source_finite": True,
@@ -1081,6 +1089,79 @@ def test_s3_external_source_vector_uses_current_c_column_count() -> None:
             coupling.destroy()
         if fine_action is not None:
             fine_action.destroy()
+
+
+@pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="serial/MPI2 only")
+def test_s3b_canonical_identity_uses_trace_rows_not_active_rows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Canonical packets include the physical Floquet slave expansion."""
+
+    comm = MPI.COMM_WORLD
+    local_size, remainder = divmod(S3B_EXPECTED_ACTIVE_ROWS, comm.size)
+    local_size += int(comm.rank < remainder)
+    source = PETSc.Vec().createMPI(
+        (local_size, S3B_EXPECTED_ACTIVE_ROWS),
+        comm=comm,
+    )
+    system = SimpleNamespace(
+        fine_action=SimpleNamespace(
+            getSize=lambda: (S3B_EXPECTED_ACTIVE_ROWS, S3B_EXPECTED_ACTIVE_ROWS)
+        ),
+        static_condensation=SimpleNamespace(
+            condensed=SimpleNamespace(
+                active_rows=S3B_EXPECTED_ACTIVE_ROWS,
+                trace_rows=S3B_EXPECTED_CANONICAL_TRACE_ROWS,
+                trace_constraints=SimpleNamespace(
+                    slave_rows=S3B_EXPECTED_FLOQUET_SLAVE_ROWS
+                ),
+            )
+        ),
+        V=object(),
+        floquet_data=None,
+    )
+    mode = {"count": S3B_EXPECTED_CANONICAL_TRACE_ROWS, "duplicate": False}
+
+    def fake_extractor(*_args: object) -> tuple[tuple[tuple[object, complex], ...], dict[str, int]]:
+        indices = range(comm.rank, mode["count"], comm.size)
+        packets = [
+            ({"physical_key": f"row-{index}"}, complex(index + 1.0, -index))
+            for index in indices
+        ]
+        if mode["duplicate"] and comm.rank == 0:
+            packets.append(packets[0])
+        return tuple(packets), {"global_packet_count": mode["count"]}
+
+    monkeypatch.setattr(
+        "src.solvers.hcurl_canonical_vector_dolfinx.extract_canonical_active_trace_packets",
+        fake_extractor,
+    )
+    try:
+        identity = s3_pilot._s3b_canonical_source_identity(
+            system, source, comm
+        )
+        assert identity["canonical_key_count"] == S3B_EXPECTED_CANONICAL_TRACE_ROWS
+        assert identity["active_row_count"] == S3B_EXPECTED_ACTIVE_ROWS
+        assert identity["canonical_trace_row_count"] == (
+            S3B_EXPECTED_CANONICAL_TRACE_ROWS
+        )
+        assert identity["floquet_slave_row_count"] == (
+            S3B_EXPECTED_FLOQUET_SLAVE_ROWS
+        )
+        assert identity["canonical_extractor_audit"]["global_packet_count"] == (
+            S3B_EXPECTED_CANONICAL_TRACE_ROWS
+        )
+        assert identity["numeric_allgather"] is False
+
+        mode["count"] = S3B_EXPECTED_ACTIVE_ROWS
+        with pytest.raises(RuntimeError, match="canonical"):
+            s3_pilot._s3b_canonical_source_identity(system, source, comm)
+
+        mode.update(count=S3B_EXPECTED_CANONICAL_TRACE_ROWS, duplicate=True)
+        with pytest.raises(RuntimeError, match="duplicate"):
+            s3_pilot._s3b_canonical_source_identity(system, source, comm)
+    finally:
+        source.destroy()
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="serial/MPI2 only")
