@@ -16,6 +16,7 @@ import math
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import fields, replace
+from pathlib import Path
 from time import perf_counter
 from typing import Any
 
@@ -99,6 +100,7 @@ __all__ = (
     "S3B_SCHEMA",
     "S3B_SWAP_LIMIT_BYTES",
     "S3B_WALL_CAP_SECONDS",
+    "S3CurrentLayoutSourceFactory",
     "S3FixedRightFgmres",
     "adjudicate_s3_b1_conditional_gate",
     "adjudicate_s3_b1_initial_gate",
@@ -539,6 +541,180 @@ def build_s3_external_dtn_source(system: Any) -> tuple[Any, dict[str, Any]]:
             source.destroy()
             source = None
         raise
+
+
+def _s3_json_safe(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {str(key): _s3_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_s3_json_safe(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return [_s3_json_safe(item) for item in value.tolist()]
+    if isinstance(value, np.generic):
+        return _s3_json_safe(value.item())
+    if isinstance(value, complex):
+        return [float(value.real), float(value.imag)]
+    if isinstance(value, Path):
+        return str(value)
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    raise TypeError(f"S3 audit contains unsupported value type: {type(value).__name__}")
+
+
+class S3CurrentLayoutSourceFactory:
+    """Borrow one target layout while dispatching the frozen five sources."""
+
+    def __init__(
+        self,
+        target: Any,
+        *,
+        source_work_directory: str | Path | None = None,
+        selected_mode_provider: Any | None = None,
+        external_mode_authority: Mapping[str, Any] | None = None,
+        external_mode_current_resolved_config_sha256: str | None = None,
+        source_factor_marker_callback: Any | None = None,
+    ) -> None:
+        required = (
+            "cfg", "side", "local_mesh",
+            "V", "floquet_data", "static_condensation",
+            "fine_action", "full_fe_rhs", "external_modes")
+        missing = [name for name in required if not hasattr(target, name)]
+        if missing:
+            raise TypeError(f"S3 source target is missing fields: {missing}")
+        if target.side != "bottom":
+            raise ValueError("S3 source factory requires the bottom target")
+        condensed = getattr(target.static_condensation, "condensed", None)
+        if condensed is None:
+            raise TypeError("S3 source target has no condensed active layout")
+
+        from .hybrid_bare_f_authority import (
+            V5_BARE_F_SOURCE_LABELS,
+            V5_BARE_F_SOURCE_SPECS,
+        )
+
+        self._target = target
+        self.cfg = target.cfg
+        self.side = target.side
+        self.local_mesh = target.local_mesh
+        self.V = target.V
+        self.floquet_data = target.floquet_data
+        self.static_condensation = target.static_condensation
+        self.condensed = condensed
+        self.F = self.fine_action = target.fine_action
+        self.full_fe_rhs, self.external_modes = target.full_fe_rhs, target.external_modes
+        self.source_work_directory = (
+            Path(source_work_directory) if source_work_directory is not None else None
+        )
+        self.selected_mode_provider = selected_mode_provider
+        self.external_mode_authority = external_mode_authority
+        self.external_mode_current_resolved_config_sha256 = (
+            external_mode_current_resolved_config_sha256
+        )
+        self.source_factor_marker_callback = source_factor_marker_callback
+        self._selected_mode_context = self._selected_exact_source_cache = None
+        self._released = False
+        self._source_labels, self._source_specs = (
+            tuple(V5_BARE_F_SOURCE_LABELS), V5_BARE_F_SOURCE_SPECS)
+        self.source_inventory: dict[str, Any] = {
+            "source_order": list(self._source_labels),
+            "source_build_counts": {label: 0 for label in self._source_labels},
+            "source_audits": {},
+            "source_builder_matrix_objects_constructed": dict.fromkeys(
+                ("C", "D", "H"), 0),
+            "target_action_blocks_borrowed": {
+                name: getattr(getattr(target, "blocks", None), name, None) is not None
+                for name in ("C", "D", "H")
+            },
+            "metadata_collective_present": True,
+            "metadata_collective_scope": "ownership/hash/error metadata",
+            "numeric_allgather": False, "full_vector_replication": False,
+            "released": False,
+        }
+        self.construction_inventory = {
+            "objects": dict(self.source_inventory["source_builder_matrix_objects_constructed"]),
+            "source_build_counts": {label: 0 for label in self._source_labels},
+        }
+        zero_fields = ["one_cell_source_factor_active", "one_cell_source_factor_ready", "one_cell_source_factor_peak", "one_cell_source_factor_construction_count", "one_cell_source_factor_apply_count", "one_cell_source_factor_mat_solve_call_count", "one_cell_source_factor_rhs_columns_solved", "minimal_external_coupling_objects_constructed", "minimal_external_surface_component_count", "minimal_external_coupling_construction_call_count", "minimal_external_component_instances_total", "minimal_external_peak_live_components", "minimal_external_coupling_kind_count"]
+        self.construction_inventory.update(dict.fromkeys(zero_fields, 0))
+        self.construction_inventory.update(
+            {
+                "one_cell_source_factor_events": [], "one_cell_source_factor_destroyed": False,
+                "one_cell_source_factor_factor_count_after": None,
+            }
+        )
+    @property
+    def comm(self) -> Any:
+        return self.F.getComm().tompi4py()
+    @property
+    def dtn_objects_constructed(self) -> dict[str, int]:
+        return dict(self.source_inventory["source_builder_matrix_objects_constructed"])
+    @property
+    def source_order(self) -> tuple[str, ...]:
+        return self._source_labels
+    def build(self, label: str) -> tuple[Any, dict[str, Any]]:
+        if self._released:
+            raise RuntimeError("S3 source factory has been released")
+        label = str(label)
+        if label not in self._source_specs:
+            raise ValueError(f"unknown S3 source label: {label!r}")
+        if label == S3B_EXTERNAL_SOURCE_LABEL:
+            source, audit = build_s3_external_dtn_source(self._target)
+        else:
+            from .hybrid_bare_f_authority import build_current_bare_f_rhs
+
+            source, audit = build_current_bare_f_rhs(self, label)
+        try:
+            safe_audit = _s3_json_safe(dict(audit))
+            safe_audit.update(
+                source_factory="S3CurrentLayoutSourceFactory",
+                source_builder_matrix_objects_constructed=dict(
+                    self.source_inventory["source_builder_matrix_objects_constructed"]
+                ),
+                target_action_blocks_borrowed=dict(
+                    self.source_inventory["target_action_blocks_borrowed"]
+                ),
+                metadata_collective_present=True,
+                metadata_collective_scope="ownership/hash/error metadata",
+                numeric_allgather=False,
+                full_vector_replication=False,
+            )
+        except Exception as exc:
+            destroy = getattr(source, "destroy", None)
+            if callable(destroy):
+                try:
+                    destroy()
+                except Exception as cleanup_exc:
+                    exc.add_note(f"S3 source cleanup failed: {cleanup_exc!r}")
+            raise
+        self.source_inventory["source_build_counts"][label] += 1
+        self.source_inventory["source_audits"][label] = safe_audit
+        return source, safe_audit
+
+    def release(self) -> dict[str, Any]:
+        if not self._released:
+            self._selected_mode_context = self._selected_exact_source_cache = None
+            for name in (
+                "cfg", "side", "local_mesh", "V", "floquet_data",
+                "static_condensation", "condensed", "F", "fine_action",
+                "full_fe_rhs", "external_modes", "selected_mode_provider",
+                "source_work_directory", "external_mode_authority",
+                "external_mode_current_resolved_config_sha256", "source_factor_marker_callback",
+            ):
+                setattr(self, name, None)
+            self._target, self._released = None, True
+            self.source_inventory["released"] = True
+        return _s3_json_safe(
+            {
+                "released": True,
+                "non_owning": True,
+                "target_destroy_called_by_factory": False,
+                "petsc_objects_destroyed_by_factory": False,
+                "source_order": list(self._source_labels),
+                "source_build_counts": dict(self.source_inventory["source_build_counts"]),
+                "built_labels": sorted(self.source_inventory["source_audits"]),
+                "source_inventory": self.source_inventory,
+            }
+        )
 
 
 def build_s3_j1_baseline_action(

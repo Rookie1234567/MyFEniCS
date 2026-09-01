@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import src.solvers.floquet_background_hcurl_s3_pilot as s3_pilot
 from src.common.config_3d import target_stage4_config
 from src.solvers.floquet_background_hcurl_s3_formal import (
     compare_s3_candidate_source_to_baseline,
@@ -35,11 +38,13 @@ from src.solvers.floquet_background_hcurl_s3_pilot import (
     S3B_NEXT_CONDITIONAL_256,
     S3B_NEXT_FIVE_SOURCE_BOTTOM,
     S3B_NEXT_FIXED_LOR,
+    S3CurrentLayoutSourceFactory,
     S3FixedRightFgmres,
     adjudicate_s3_b1_conditional_gate,
     adjudicate_s3_b1_initial_gate,
     build_s3_b1_background_config,
 )
+from src.solvers.hybrid_bare_f_authority import V5_BARE_F_SOURCE_LABELS
 
 _SOURCE_SHA = "a" * 40
 _INPUT_PATH = "/tmp/task040_s3b_input.dat"
@@ -285,6 +290,111 @@ def test_s3b_candidate_comparator_reports_representative_mismatches(
     comparison = compare_s3_candidate_source_to_baseline(candidate, validated)
     assert comparison["pass"] is False
     assert comparison["checks"][check] is False
+
+
+class _FactoryTarget:
+    def __init__(self) -> None:
+        self.cfg = object()
+        self.side = "bottom"
+        self.local_mesh = object()
+        self.V = object()
+        self.floquet_data = object()
+        self.static_condensation = SimpleNamespace(condensed=object())
+        self.fine_action = object()
+        self.full_fe_rhs = object()
+        self.external_modes = []
+        self.blocks = SimpleNamespace(C=object(), D=object(), H=object())
+        self.destroy_calls = 0
+
+    def destroy(self) -> None:
+        self.destroy_calls += 1
+
+
+def test_s3_current_layout_source_factory_dispatch_and_nonowning_release(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = _FactoryTarget()
+    calls: list[tuple[str, object, str | None]] = []
+
+    def fake_external(system: object) -> tuple[object, dict[str, object]]:
+        calls.append(("external", system, None))
+        return object(), {"label": S3B_EXTERNAL_SOURCE_LABEL}
+
+    def fake_v5(system: object, label: str) -> tuple[object, dict[str, object]]:
+        calls.append(("v5", system, label))
+        return object(), {"label": label}
+
+    monkeypatch.setattr(s3_pilot, "build_s3_external_dtn_source", fake_external)
+    monkeypatch.setattr(
+        "src.solvers.hybrid_bare_f_authority.build_current_bare_f_rhs",
+        fake_v5,
+    )
+    factory = S3CurrentLayoutSourceFactory(target)
+    assert not hasattr(factory, "destroy")
+    assert factory.source_order == tuple(V5_BARE_F_SOURCE_LABELS)
+    for name in ("fine_action", "V", "floquet_data", "local_mesh", "full_fe_rhs"):
+        assert getattr(factory, name) is getattr(target, name)
+    for label in factory.source_order:
+        _source, audit = factory.build(label)
+        assert audit["source_factory"] == "S3CurrentLayoutSourceFactory"
+        assert audit["metadata_collective_present"] is True
+        assert audit["numeric_allgather"] is False
+        json.dumps(audit)
+    assert calls == [
+        ("v5", factory, V5_BARE_F_SOURCE_LABELS[0]),
+        ("v5", factory, V5_BARE_F_SOURCE_LABELS[1]),
+        ("external", target, None),
+        ("v5", factory, V5_BARE_F_SOURCE_LABELS[3]),
+        ("v5", factory, V5_BARE_F_SOURCE_LABELS[4]),
+    ]
+    assert factory.source_inventory["source_build_counts"] == {
+        label: 1 for label in V5_BARE_F_SOURCE_LABELS
+    }
+    assert factory.dtn_objects_constructed == {"C": 0, "D": 0, "H": 0}
+    assert factory.source_inventory["target_action_blocks_borrowed"] == {
+        "C": True,
+        "D": True,
+        "H": True,
+    }
+    summary = factory.release()
+    assert summary["non_owning"] is True
+    assert summary["target_destroy_called_by_factory"] is False
+    assert summary["petsc_objects_destroyed_by_factory"] is False
+    assert target.destroy_calls == 0
+    assert factory._target is None
+    assert factory.F is None
+    assert factory.release() == summary
+    with pytest.raises(RuntimeError, match="released"):
+        factory.build(S3B_EXTERNAL_SOURCE_LABEL)
+    with pytest.raises(ValueError, match="unknown"):
+        S3CurrentLayoutSourceFactory(target).build("unknown")
+
+
+def test_s3_source_factory_audit_failure_destroys_source_and_preserves_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = _FactoryTarget()
+
+    class _Source:
+        def __init__(self) -> None:
+            self.destroy_calls = 0
+
+        def destroy(self) -> None:
+            self.destroy_calls += 1
+            raise RuntimeError("cleanup failure")
+
+    source = _Source()
+    monkeypatch.setattr(
+        s3_pilot,
+        "build_s3_external_dtn_source",
+        lambda _target: (source, {"unsupported": object()}),
+    )
+    factory = S3CurrentLayoutSourceFactory(target)
+    with pytest.raises(TypeError, match="unsupported") as caught:
+        factory.build(S3B_EXTERNAL_SOURCE_LABEL)
+    assert source.destroy_calls == 1
+    assert "cleanup failure" in "\n".join(caught.value.__notes__)
+    assert factory.source_inventory["source_build_counts"][S3B_EXTERNAL_SOURCE_LABEL] == 0
 
 
 class _BorrowedIdentityAction:
