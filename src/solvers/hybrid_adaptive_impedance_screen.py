@@ -22,6 +22,7 @@ __all__ = (
     "run_adaptive_impedance_stage_a_one_apply",
     "run_adaptive_impedance_stage_b1_preflight",
     "run_adaptive_impedance_stage_bc_screen",
+    "run_v9_c0_explicit_coarse_oracle",
 )
 
 
@@ -428,6 +429,12 @@ _STAGE_BC_INCONCLUSIVE = "ADAPTIVE_SPECTRAL_SCHWARZ_INCONCLUSIVE_AT_H4"
 _STAGE_BC_RESOURCE = "ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE"
 _STAGE_BC_IMPLEMENTATION_FAILURE = "V8_ADAPTIVE_STAGE_BC_IMPLEMENTATION_FAILURE"
 _STAGE_BC_CHECKPOINTS = (16, 32, 64)
+_V9_C0_LOCAL_BASELINE = 2.390497409724407
+_V9_C0_POSITIVE = "ADAPTIVE_COARSE_CONTENT_POSITIVE_EXPLICIT_ORACLE"
+_V9_C0_NO_SIGNAL = "CURRENT_160_PER_PATCH_HARMONIC_COARSE_NO_SIGNAL"
+_V9_C0_RESOURCE = "ADAPTIVE_COARSE_EXPLICIT_RESOURCE_OR_TIME_UNAVAILABLE"
+_V9_C0_NEXT_C1 = "V9_C1_MATRIX_FREE_GALERKIN_COARSE"
+_V9_C0_NEXT_E = "V9_E_STRUCTURED_BACKGROUND_FIXED_LOR"
 
 
 def _stage_bc_slope(r32: float, r64: float) -> float | None:
@@ -592,12 +599,40 @@ class _StageBCRightFGMRES:
         def destroy(self, _pc: PETSc.PC | None = None) -> None:
             return None
 
-    def __init__(self, operator: PETSc.Mat, right_action: Any) -> None:
+    def __init__(
+        self,
+        operator: PETSc.Mat,
+        right_action: Any,
+        *,
+        max_it: int = 64,
+        checkpoints: tuple[int, ...] = _STAGE_BC_CHECKPOINTS,
+    ) -> None:
         if not isinstance(operator, PETSc.Mat) or not callable(
             getattr(right_action, "apply", None)
         ):
             raise TypeError("Stage-B/C FGMRES needs an operator and right action")
+        if (
+            not isinstance(max_it, int)
+            or isinstance(max_it, bool)
+            or max_it <= 0
+        ):
+            raise ValueError("FGMRES max_it must be a positive integer")
+        if (
+            not isinstance(checkpoints, tuple)
+            or not checkpoints
+            or any(
+                not isinstance(value, int)
+                or isinstance(value, bool)
+                or value <= 0
+                or value > max_it
+                for value in checkpoints
+            )
+            or tuple(sorted(set(checkpoints))) != checkpoints
+        ):
+            raise ValueError("FGMRES checkpoints must be sorted positive integers")
         self.operator, self.right_action = operator, right_action
+        self.max_it = int(max_it)
+        self.checkpoints = tuple(int(value) for value in checkpoints)
         self.solution = operator.createVecRight()
         self.monitor = operator.createVecRight()
         self.residual = operator.createVecLeft()
@@ -609,7 +644,7 @@ class _StageBCRightFGMRES:
         self.ksp.setGMRESRestart(32)
         self.ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
         self.ksp.setInitialGuessNonzero(False)
-        self.ksp.setTolerances(rtol=0.0, atol=0.0, max_it=64)
+        self.ksp.setTolerances(rtol=0.0, atol=0.0, max_it=self.max_it)
         pc = self.ksp.getPC()
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(self.context)
@@ -671,7 +706,7 @@ class _StageBCRightFGMRES:
         def convergence(
             current: PETSc.KSP, iteration: int, residual_norm: float
         ) -> int:
-            if int(iteration) in _STAGE_BC_CHECKPOINTS:
+            if int(iteration) in self.checkpoints:
                 returned = current.buildSolution(self.monitor)
                 solution = self.monitor if returned is None else returned
                 check(
@@ -684,8 +719,12 @@ class _StageBCRightFGMRES:
         self.ksp.setConvergenceTest(convergence)
         self.ksp.solve(rhs, self.solution)
         iterations = int(self.ksp.getIterationNumber())
-        if iterations >= 64 and "64" not in checkpoints:
-            check(64, float(self.ksp.getResidualNorm()) / denominator, self.solution)
+        if iterations >= self.max_it and str(self.max_it) not in checkpoints:
+            check(
+                self.max_it,
+                float(self.ksp.getResidualNorm()) / denominator,
+                self.solution,
+            )
         self.residual.set(0.0)
         self.operator.mult(self.solution, self.residual)
         self.residual.axpy(PETSc.ScalarType(-1.0), rhs)
@@ -735,7 +774,7 @@ class _StageBCRightFGMRES:
             "right_pc_apply_count": self.context.count - apply_before,
             "outer_ksp_setup_reused": True,
             "restart": 32,
-            "max_it": 64,
+            "max_it": self.max_it,
             "rtol": 0.0,
             "atol": 0.0,
             "zero_initial_guess": True,
@@ -764,6 +803,177 @@ def _stage_bc_safe_destroy(obj: Any | None) -> bool:
     return True
 
 
+def _classify_v9_c0_one_apply(
+    rho_coarse: float,
+    *,
+    rho_local: float = _V9_C0_LOCAL_BASELINE,
+) -> dict[str, Any]:
+    rho = float(rho_coarse)
+    baseline = float(rho_local)
+    finite = bool(
+        np.isfinite(rho)
+        and np.isfinite(baseline)
+        and rho >= 0.0
+        and baseline > 0.0
+    )
+    improvement = float(baseline / rho) if finite and rho > 0.0 else float("inf")
+    if not finite:
+        band = "nonfinite_or_unstable"
+    elif rho <= 0.5:
+        band = "strong_positive"
+    elif rho <= 1.0 or improvement >= 2.0:
+        band = "weak_positive"
+    elif rho >= 1.5:
+        band = "no_signal"
+    else:
+        band = "intermediate"
+    classification = (
+        None
+        if band == "intermediate"
+        else _V9_C0_NO_SIGNAL
+        if band in {"nonfinite_or_unstable", "no_signal"}
+        else _V9_C0_POSITIVE
+    )
+    return {
+        "classification": classification,
+        "band": band,
+        "rho_local": baseline,
+        "rho_coarse": rho,
+        "improvement_factor": improvement,
+        "needs_outer_fgmres": classification is None,
+        "numerical_negative": classification == _V9_C0_NO_SIGNAL,
+        "next_required_stage": (
+            _V9_C0_NEXT_E
+            if classification == _V9_C0_NO_SIGNAL
+            else _V9_C0_NEXT_C1
+            if classification == _V9_C0_POSITIVE
+            else None
+        ),
+    }
+
+
+def _classify_v9_c0_outer_result(
+    initial: Mapping[str, Any],
+    outer_record: Mapping[str, Any],
+) -> dict[str, Any]:
+    checkpoints = outer_record.get("checkpoints", {})
+    row = checkpoints.get("8") if isinstance(checkpoints, Mapping) else None
+    value = row.get("true_residual_relative") if isinstance(row, Mapping) else None
+    r8 = float(value) if isinstance(value, (int, float, np.number)) and not isinstance(value, bool) else float("nan")
+    decline = (
+        float(np.log10(1.0 / r8))
+        if np.isfinite(r8) and r8 > 0.0
+        else float("inf")
+        if r8 == 0.0
+        else float("nan")
+    )
+    weak_positive = bool(
+        outer_record.get("finite") is True
+        and np.isfinite(r8)
+        and r8 >= 0.0
+        and (r8 <= 0.8 or decline >= 0.20)
+    )
+    classification = _V9_C0_POSITIVE if weak_positive else _V9_C0_NO_SIGNAL
+    return {
+        **dict(initial),
+        "classification": classification,
+        "band": "weak_positive_after_outer_8" if weak_positive else "no_signal_after_outer_8",
+        "r8": r8,
+        "zero_solution_relative_decline_decades": decline,
+        "outer_gate": {
+            "finite": outer_record.get("finite") is True,
+            "r8_le_0_8": bool(np.isfinite(r8) and r8 <= 0.8),
+            "zero_solution_decline_ge_0_20_decade": bool(
+                np.isfinite(decline) and decline >= 0.20
+            ),
+        },
+        "numerical_negative": classification == _V9_C0_NO_SIGNAL,
+        "next_required_stage": (
+            _V9_C0_NEXT_C1 if weak_positive else _V9_C0_NEXT_E
+        ),
+    }
+
+
+class _V9C0ResourceStop(RuntimeError):
+    """Internal signal for a failed live C0 resource gate."""
+
+    def __init__(
+        self,
+        resource: Mapping[str, Any],
+        checks: Mapping[str, Any],
+        error: str,
+    ) -> None:
+        self.resource = dict(resource)
+        self.checks = dict(checks)
+        self.error = str(error)
+        super().__init__(self.error)
+
+
+def _v9_c0_resource_audit(
+    resource_callback: Callable[[], Mapping[str, Any]] | None,
+    hard_memory_bytes: int,
+) -> tuple[dict[str, Any], dict[str, bool], str | None]:
+    if not callable(resource_callback):
+        return {}, {"callback": False}, "C0 requires a resource callback"
+    raw = resource_callback()
+    if not isinstance(raw, Mapping):
+        return {}, {"mapping": False}, "resource callback did not return a mapping"
+    resource = dict(raw)
+    rss = resource.get("rss_bytes")
+    wall_observation = resource.get("wall_observation")
+    checks = {
+        "all_status_readable": resource.get("all_status_readable") is True,
+        "resource_pass": resource.get("pass") is True,
+        "rss_integer_below_hard": (
+            isinstance(rss, (int, np.integer))
+            and not isinstance(rss, bool)
+            and 0 <= int(rss) < int(hard_memory_bytes)
+        ),
+        "swap_zero": resource.get("swap_bytes") == 0,
+        "source_nonempty": isinstance(resource.get("source"), str)
+        and bool(resource.get("source")),
+        "wall_pass": (
+            isinstance(wall_observation, Mapping)
+            and wall_observation.get("pass") is True
+        ),
+    }
+    return resource, checks, None if all(checks.values()) else "live C0 resource gate failed"
+
+
+def run_v9_c0_explicit_coarse_oracle(
+    *,
+    function_space: Any,
+    condensed: Any,
+    bare_f: PETSc.Mat,
+    facet_tags: Any,
+    external_facet_tag: int,
+    beta: complex,
+    quadrature_degree: int,
+    source_builder: Callable[[str], tuple[PETSc.Vec, Mapping[str, Any]]],
+    resource_callback: Callable[[], Mapping[str, Any]] | None,
+    phase_callback: Callable[[str, Mapping[str, Any]], Any] | None,
+    hard_memory_bytes: int,
+    event_callback: Callable[[str, Mapping[str, Any]], Any] | None = None,
+) -> dict[str, Any]:
+    """Thin public entry point for the V9-C0 explicit coarse oracle."""
+
+    return run_adaptive_impedance_stage_bc_screen(
+        function_space=function_space,
+        condensed=condensed,
+        bare_f=bare_f,
+        facet_tags=facet_tags,
+        external_facet_tag=external_facet_tag,
+        beta=beta,
+        quadrature_degree=quadrature_degree,
+        source_builder=source_builder,
+        event_callback=event_callback,
+        _profile="v9_c0",
+        _hard_memory_bytes=hard_memory_bytes,
+        _resource_callback=resource_callback,
+        _phase_callback=phase_callback,
+    )
+
+
 def run_adaptive_impedance_stage_bc_screen(
     *,
     function_space: Any,
@@ -775,6 +985,10 @@ def run_adaptive_impedance_stage_bc_screen(
     quadrature_degree: int,
     source_builder: Callable[[str], tuple[PETSc.Vec, Mapping[str, Any]]],
     event_callback: Callable[[str, Mapping[str, Any]], Any] | None = None,
+    _profile: str = "ordinary",
+    _hard_memory_bytes: int | None = None,
+    _resource_callback: Callable[[], Mapping[str, Any]] | None = None,
+    _phase_callback: Callable[[str, Mapping[str, Any]], Any] | None = None,
 ) -> dict[str, Any]:
     """Run Stage-B/C on one borrowed current bottom bare-F system."""
 
@@ -789,6 +1003,18 @@ def run_adaptive_impedance_stage_bc_screen(
 
     if not isinstance(bare_f, PETSc.Mat) or not callable(source_builder):
         raise TypeError("Stage-B/C needs a PETSc bare-F and source builder")
+    if _profile not in {"ordinary", "v9_c0"}:
+        raise ValueError(f"unknown Stage-B/C profile: {_profile}")
+    c0 = _profile == "v9_c0"
+    if c0 and (
+        not isinstance(_hard_memory_bytes, (int, np.integer))
+        or isinstance(_hard_memory_bytes, bool)
+        or int(_hard_memory_bytes) <= 0
+    ):
+        raise ValueError("C0 hard_memory_bytes must be a positive integer")
+    c0_hard_memory_bytes = (
+        int(_hard_memory_bytes) if c0 else int(HARD_MEMORY_BYTES)
+    )
     comm = bare_f.getComm().tompi4py()
     provider = preparation = local_action = harmonic_space = coarse_action = None
     outer_solver = None
@@ -801,6 +1027,8 @@ def run_adaptive_impedance_stage_bc_screen(
     provider_created = preparation_created = local_action_created = False
     harmonic_space_created = coarse_action_created = outer_solver_created = False
     source_destroyed_count = 0
+    direct_target = direct_residual = None
+    c0_phase_diagnostics: dict[str, Mapping[str, Any]] = {}
     local_factor_lifecycle: dict[str, Any] = {}
     harmonic_audit: dict[str, Any] = {}
     bare_before = _petsc_matrix_hash(bare_f)
@@ -844,6 +1072,44 @@ def run_adaptive_impedance_stage_bc_screen(
             "total_coarse_dof": int(diagnostics["global_retained_rank"]),
             "eigenvalue_gaps": "not_applicable_economical_variant",
         }
+
+    def emit_c0_phase(name: str, detail: Mapping[str, Any]) -> None:
+        if not c0:
+            return
+        payload = dict(detail)
+        resource, checks, resource_error = _v9_c0_resource_audit(
+            _resource_callback, c0_hard_memory_bytes
+        )
+        payload.update(
+            {
+                "resource": resource,
+                "resource_checks": checks,
+                "rss_bytes": resource.get("rss_bytes"),
+                "swap_bytes": resource.get("swap_bytes"),
+            }
+        )
+        if resource_error is not None:
+            payload["resource_error"] = resource_error
+        c0_phase_diagnostics[name] = payload
+        if _phase_callback is not None:
+            _phase_callback(name, payload)
+        _emit(event_callback, name, **payload)
+        if resource_error is not None:
+            raise _V9C0ResourceStop(resource, checks, resource_error)
+
+    def emit_c0_event(event: str, **detail: Any) -> None:
+        if c0:
+            payload = {
+                "factor_lifecycle": factor_lifecycle(),
+                "action_apply_count": coarse_action_apply_count(),
+                "local_action_apply_count": local_action_apply_count(),
+                **detail,
+            }
+            _emit(
+                event_callback,
+                event,
+                **payload,
+            )
 
     try:
         provider = build_actual_hcurl_cell_tangential_mass_provider(
@@ -915,58 +1181,132 @@ def run_adaptive_impedance_stage_bc_screen(
         preparation_consumed = preparation_consumed or preparation_destroyed
         prepared_rhs_released = prepared_rhs_released or preparation_destroyed
         setup_wall = float(comm.allreduce(perf_counter() - setup_started, op=MPI.MAX))
-        resource_snapshot = _emit(
-            event_callback,
-            "memory_preflight",
-            setup_wall_seconds=setup_wall,
-            factor_inventory=factor_inventory,
-            factor_lifecycle=factor_lifecycle(),
-            pc_apply_count=0,
-            action_apply_count=coarse_action_apply_count(),
-            local_action_apply_count=local_action_apply_count(),
-            source=None,
-            checkpoint=None,
-        )
-        resource = (
-            dict(resource_snapshot)
-            if isinstance(resource_snapshot, Mapping)
-            else {}
-        )
-        rss = resource.get("rss_bytes")
-        checks = {
-            "all_status_readable": resource.get("all_status_readable") is True,
-            "resource_pass": resource.get("pass") is True,
-            "rss_integer_below_hard": (
-                isinstance(rss, int)
-                and not isinstance(rss, bool)
-                and 0 <= rss < int(HARD_MEMORY_BYTES)
-            ),
-            "swap_zero": resource.get("swap_bytes") == 0,
-            "source_nonempty": isinstance(resource.get("source"), str)
-            and bool(resource.get("source")),
-            "wall_pass": (
-                isinstance(resource.get("wall_observation"), Mapping)
-                and resource["wall_observation"].get("pass") is True
-            ),
-        }
-        errors = comm.allgather(
-            None if all(checks.values()) else "live baseline failed"
-        )
+        if c0:
+            resource, checks, local_resource_error = _v9_c0_resource_audit(
+                _resource_callback, c0_hard_memory_bytes
+            )
+            _emit(
+                event_callback,
+                "memory_preflight",
+                setup_wall_seconds=setup_wall,
+                resource=resource,
+                resource_checks=checks,
+                factor_inventory=factor_inventory,
+                factor_lifecycle=factor_lifecycle(),
+                pc_apply_count=0,
+                action_apply_count=coarse_action_apply_count(),
+                local_action_apply_count=local_action_apply_count(),
+                source=None,
+                checkpoint=None,
+            )
+            errors = comm.allgather(local_resource_error)
+        else:
+            resource_snapshot = _emit(
+                event_callback,
+                "memory_preflight",
+                setup_wall_seconds=setup_wall,
+                factor_inventory=factor_inventory,
+                factor_lifecycle=factor_lifecycle(),
+                pc_apply_count=0,
+                action_apply_count=coarse_action_apply_count(),
+                local_action_apply_count=local_action_apply_count(),
+                source=None,
+                checkpoint=None,
+            )
+            resource = (
+                dict(resource_snapshot)
+                if isinstance(resource_snapshot, Mapping)
+                else {}
+            )
+            rss = resource.get("rss_bytes")
+            checks = {
+                "all_status_readable": resource.get("all_status_readable") is True,
+                "resource_pass": resource.get("pass") is True,
+                "rss_integer_below_hard": (
+                    isinstance(rss, int)
+                    and not isinstance(rss, bool)
+                    and 0 <= rss < int(HARD_MEMORY_BYTES)
+                ),
+                "swap_zero": resource.get("swap_bytes") == 0,
+                "source_nonempty": isinstance(resource.get("source"), str)
+                and bool(resource.get("source")),
+                "wall_pass": (
+                    isinstance(resource.get("wall_observation"), Mapping)
+                    and resource["wall_observation"].get("pass") is True
+                ),
+            }
+            errors = comm.allgather(
+                None if all(checks.values()) else "live baseline failed"
+            )
         resource_error = next((value for value in errors if value), None)
-        base = {
-            "schema": "task040.v8.adaptive_impedance_schwarz.stage_bc.v1",
-            "method": "adaptive_impedance_stage_bc_two_source_screen",
-            "profile": "task040.v8.adaptive_impedance_schwarz.stage_bc.v1",
-            "pass": None,
-            "formal_adjudication": False,
-            "executed": True,
-            "planned_source_order": list(_STAGE_BC_PLANNED_SOURCES),
-            "factor_inventory": factor_inventory,
-            "harmonic_audit": harmonic_audit,
-            "setup_wall_seconds": setup_wall,
-            "bare_f_hash_before": bare_before,
-        }
+        rss = resource.get("rss_bytes")
+        if c0:
+            base = {
+                "schema": "task040.v9.c0.explicit_coarse_oracle.v1",
+                "method": "v9_c0_explicit_coarse_oracle",
+                "profile": "task040.v9.c0.explicit_coarse_only.v1",
+                "formal_adjudication": False,
+                "executed": True,
+                "source_order": ["external_dtn_coupling"],
+                "rho_local": _V9_C0_LOCAL_BASELINE,
+                "hard_memory_bytes": c0_hard_memory_bytes,
+                "phase_diagnostics": c0_phase_diagnostics,
+                "outer_fgmres_initially": False,
+                "full_side_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "coarse_direct_factor_count": 0,
+                "factor_inventory": factor_inventory,
+                "harmonic_audit": harmonic_audit,
+                "setup_wall_seconds": setup_wall,
+                "bare_f_hash_before": bare_before,
+            }
+        else:
+            base = {
+                "schema": "task040.v8.adaptive_impedance_schwarz.stage_bc.v1",
+                "method": "adaptive_impedance_stage_bc_two_source_screen",
+                "profile": "task040.v8.adaptive_impedance_schwarz.stage_bc.v1",
+                "pass": None,
+                "formal_adjudication": False,
+                "executed": True,
+                "planned_source_order": list(_STAGE_BC_PLANNED_SOURCES),
+                "factor_inventory": factor_inventory,
+                "harmonic_audit": harmonic_audit,
+                "setup_wall_seconds": setup_wall,
+                "bare_f_hash_before": bare_before,
+            }
+        def c0_resource_result(
+            resource_data: Mapping[str, Any],
+            resource_checks: Mapping[str, Any],
+            error: Any,
+        ) -> dict[str, Any]:
+            emit_c0_event(
+                "classification",
+                classification=_V9_C0_RESOURCE,
+                next_required_stage=_V9_C0_NEXT_C1,
+                numerical_negative=False,
+                source=None,
+                checkpoint=None,
+            )
+            return {
+                **base,
+                "status": _V9_C0_RESOURCE,
+                "classification": _V9_C0_RESOURCE,
+                "next_required_stage": _V9_C0_NEXT_C1,
+                "numerical_negative": False,
+                "resource_unavailable": True,
+                "resource_error": None if error is None else str(error),
+                "resource": dict(resource_data),
+                "resource_checks": dict(resource_checks),
+                "source_order": [],
+                "executed_source_order": [],
+                "one_apply": None,
+                "outer_record": None,
+            }
+
         if resource_error is not None:
+            if c0:
+                result = c0_resource_result(resource, checks, resource_error)
+                return result
             _emit(
                 event_callback,
                 "classification",
@@ -1011,13 +1351,23 @@ def run_adaptive_impedance_stage_bc_screen(
             "current_process_tree_baseline_source": str(resource["source"]),
         }
         coarse_started = perf_counter()
-        coarse_result = build_adaptive_impedance_stage_bc_action(
-            harmonic_space=harmonic_space,
-            action=local_action,
-            fine_operator=bare_f,
-            current_process_tree_baseline_bytes=int(rss),
-            current_process_tree_baseline_source=str(resource["source"]),
-        )
+        coarse_kwargs = {
+            "harmonic_space": harmonic_space,
+            "action": local_action,
+            "fine_operator": bare_f,
+            "current_process_tree_baseline_bytes": int(rss),
+            "current_process_tree_baseline_source": str(resource["source"]),
+        }
+        if c0:
+            coarse_kwargs.update(
+                hard_memory_bytes=c0_hard_memory_bytes,
+                phase_callback=emit_c0_phase,
+            )
+        try:
+            coarse_result = build_adaptive_impedance_stage_bc_action(**coarse_kwargs)
+        except _V9C0ResourceStop as stop:
+            result = c0_resource_result(stop.resource, stop.checks, stop.error)
+            return result
         if coarse_result.action is not None:
             coarse_action_created = True
         coarse_wall = float(comm.allreduce(perf_counter() - coarse_started, op=MPI.MAX))
@@ -1048,6 +1398,9 @@ def run_adaptive_impedance_stage_bc_screen(
             }
         )
         if coarse_action is None:
+            if c0:
+                result = c0_resource_result({}, {}, coarse_result.status)
+                return result
             _emit(
                 event_callback,
                 "classification",
@@ -1072,6 +1425,137 @@ def run_adaptive_impedance_stage_bc_screen(
                     {"P": 0, "P_H": 0, "FP": 0, "Ac": 0, "KSP": 0},
                 ),
             }
+            return result
+
+        if c0:
+            one_resource, one_checks, one_resource_error = _v9_c0_resource_audit(
+                _resource_callback, c0_hard_memory_bytes
+            )
+            one_errors = comm.allgather(one_resource_error)
+            one_error = next((value for value in one_errors if value), None)
+            emit_c0_event(
+                "pre_one_apply_resource",
+                resource=one_resource,
+                resource_checks=one_checks,
+                source=None,
+                checkpoint=None,
+            )
+            if one_error is not None:
+                result = c0_resource_result(one_resource, one_checks, one_error)
+                return result
+
+            source_audit: Mapping[str, Any] = {}
+            c0_source = None
+            try:
+                c0_source, source_audit = source_builder("external_dtn_coupling")
+                if not isinstance(c0_source, PETSc.Vec):
+                    raise TypeError("C0 source builder must return a PETSc.Vec")
+                source_norm = float(c0_source.norm())
+                if not np.isfinite(source_norm) or source_norm <= 1.0e-300:
+                    raise ValueError("C0 source norm must be finite and nonzero")
+                direct_target = bare_f.createVecLeft()
+                direct_residual = bare_f.createVecLeft()
+                emit_c0_event(
+                    "external_one_apply_begin",
+                    source="external_dtn_coupling",
+                    checkpoint=None,
+                    source_norm=source_norm,
+                )
+                apply_started = perf_counter()
+                coarse_action.apply(c0_source, direct_target)
+                apply_wall = float(
+                    comm.allreduce(perf_counter() - apply_started, op=MPI.MAX)
+                )
+                bare_f.mult(direct_target, direct_residual)
+                direct_residual.axpy(PETSc.ScalarType(-1.0), c0_source)
+                residual_norm = float(direct_residual.norm())
+                target_norm = float(direct_target.norm())
+                rho_coarse = residual_norm / max(source_norm, 1.0e-300)
+                if not all(
+                    np.isfinite(value)
+                    for value in (residual_norm, target_norm, rho_coarse)
+                ):
+                    rho_coarse = float("nan")
+                one_apply = {
+                    "source": "external_dtn_coupling",
+                    "source_audit": dict(source_audit),
+                    "source_norm": source_norm,
+                    "target_norm": target_norm,
+                    "true_residual_absolute": residual_norm,
+                    "true_residual_relative": rho_coarse,
+                    "apply_wall_seconds": apply_wall,
+                    "coarse_action_apply_count": coarse_action_apply_count(),
+                    "local_action_apply_count": local_action_apply_count(),
+                    "finite": bool(np.isfinite(rho_coarse)),
+                }
+                emit_c0_event(
+                    "external_one_apply_end",
+                    checkpoint="one_apply",
+                    **one_apply,
+                )
+                initial = _classify_v9_c0_one_apply(rho_coarse)
+                outer_record: dict[str, Any] | None = None
+                if _stage_bc_safe_destroy(direct_target):
+                    direct_target = None
+                if _stage_bc_safe_destroy(direct_residual):
+                    direct_residual = None
+                final_signal = initial
+                if initial["needs_outer_fgmres"]:
+                    outer_solver = _StageBCRightFGMRES(
+                        bare_f,
+                        coarse_action,
+                        max_it=8,
+                        checkpoints=(8,),
+                    )
+                    outer_solver_created = True
+
+                    def outer_checkpoint(row: Mapping[str, Any]) -> None:
+                        emit_c0_event(
+                            "outer_checkpoint",
+                            source="external_dtn_coupling",
+                            checkpoint=row.get("iteration"),
+                            **dict(row),
+                        )
+
+                    outer_record = outer_solver.solve(
+                        c0_source,
+                        "external_dtn_coupling",
+                        outer_checkpoint,
+                    )
+                    final_signal = _classify_v9_c0_outer_result(
+                        initial, outer_record
+                    )
+                emit_c0_event(
+                    "classification",
+                    classification=final_signal["classification"],
+                    next_required_stage=final_signal["next_required_stage"],
+                    numerical_negative=final_signal["numerical_negative"],
+                    rho_local=final_signal["rho_local"],
+                    rho_coarse=final_signal["rho_coarse"],
+                    improvement_factor=final_signal["improvement_factor"],
+                    r8=final_signal.get("r8"),
+                    zero_solution_relative_decline_decades=final_signal.get(
+                        "zero_solution_relative_decline_decades"
+                    ),
+                )
+                result = {
+                    **base,
+                    "status": "completed",
+                    **final_signal,
+                    "source_order": ["external_dtn_coupling"],
+                    "executed_source_order": ["external_dtn_coupling"],
+                    "classification_diagnostics": final_signal,
+                    "one_apply": one_apply,
+                    "outer_record": outer_record,
+                    "factor_inventory": factor_inventory,
+                    "harmonic_audit": harmonic_audit,
+                    "source_audit": dict(source_audit),
+                    "phase_diagnostics": c0_phase_diagnostics,
+                }
+            finally:
+                if c0_source is not None:
+                    c0_source.destroy()
+                    source_destroyed_count += 1
             return result
 
         outer_solver = _StageBCRightFGMRES(bare_f, coarse_action)
@@ -1186,6 +1670,10 @@ def run_adaptive_impedance_stage_bc_screen(
         )
         prepared_rhs_released = prepared_rhs_released or preparation_destroyed
         provider_destroyed = provider_destroyed or _stage_bc_safe_destroy(provider)
+        if direct_target is not None and _stage_bc_safe_destroy(direct_target):
+            direct_target = None
+        if direct_residual is not None and _stage_bc_safe_destroy(direct_residual):
+            direct_residual = None
         bare_after = _petsc_matrix_hash(bare_f)
         cleanup_complete = bool(
             (not provider_created or provider_destroyed)
@@ -1194,6 +1682,7 @@ def run_adaptive_impedance_stage_bc_screen(
             and (not harmonic_space_created or harmonic_released)
             and (not coarse_action_created or coarse_action_destroyed)
             and (not outer_solver_created or outer_solver_destroyed)
+            and (not c0 or (direct_target is None and direct_residual is None))
             and bare_before == bare_after
         )
         cleanup = {
@@ -1223,6 +1712,14 @@ def run_adaptive_impedance_stage_bc_screen(
             "bare_f_hash_after": bare_after,
             "bare_f_unchanged": bare_before == bare_after,
         }
+        if c0:
+            cleanup.update(
+                {
+                    "direct_work_released": (
+                        direct_target is None and direct_residual is None
+                    ),
+                }
+            )
         try:
             _emit(event_callback, "cleanup", **cleanup)
         except Exception:

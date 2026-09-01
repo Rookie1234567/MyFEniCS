@@ -12,6 +12,7 @@ origin to the PETSc fine-row owner one patch at a time.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from time import perf_counter
 from typing import Any
@@ -399,6 +400,8 @@ def build_adaptive_impedance_stage_bc_action(
     fine_operator: PETSc.Mat,
     current_process_tree_baseline_bytes: int | None = None,
     current_process_tree_baseline_source: str = "unavailable",
+    hard_memory_bytes: int | None = None,
+    phase_callback: Callable[[str, Mapping[str, Any]], Any] | None = None,
 ) -> AdaptiveImpedanceStageBCBuildResult:
     """Build sparse economical coarse correction after a collective memory gate."""
 
@@ -434,6 +437,7 @@ def build_adaptive_impedance_stage_bc_action(
         comm,
         current_process_tree_baseline_bytes,
         current_process_tree_baseline_source,
+        hard_memory_bytes=hard_memory_bytes,
         economical_failure_route=ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE,
         basis_in_live_baseline=True,
         fine_live_vector_bytes=fine_bytes,
@@ -463,6 +467,34 @@ def build_adaptive_impedance_stage_bc_action(
         "harmonic_columns_consumed": False,
         "allocated_object_count": {"P": 0, "P_H": 0, "FP": 0, "Ac": 0, "KSP": 0},
     }
+
+    def emit_phase(
+        name: str,
+        matrix: PETSc.Mat,
+        phase_wall_seconds: float,
+        **detail: Any,
+    ) -> None:
+        if phase_callback is None:
+            return
+        global_rows, global_columns = map(int, matrix.getSize())
+        local_rows, local_columns = map(int, matrix.getLocalSize())
+        actual_nnz, actual_memory = _matrix_info(matrix)
+        payload = {
+            "name": name,
+            "global_size": (global_rows, global_columns),
+            "local_size": (local_rows, local_columns),
+            "global_rows": global_rows,
+            "global_columns": global_columns,
+            "local_rows": local_rows,
+            "local_columns": local_columns,
+            "actual_global_nnz": actual_nnz,
+            "actual_global_memory_bytes": actual_memory,
+            "phase_wall_seconds": float(phase_wall_seconds),
+            **detail,
+        }
+        base_diagnostics.setdefault("phase_diagnostics", {})[name] = payload
+        phase_callback(name, payload)
+
     if not memory["allocation_allowed"]:
         base_diagnostics["status"] = ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE
         base_diagnostics["caller_must_destroy_harmonic_space"] = True
@@ -507,6 +539,7 @@ def build_adaptive_impedance_stage_bc_action(
     coarse_residual = None
     columns_released = False
     try:
+        p_started = perf_counter()
         prolongation = PETSc.Mat().createAIJ(
             size=((local_rows, fine_size[0]), (local_stop - local_start, selected_total)),
             nnz=preallocation,
@@ -600,19 +633,45 @@ def build_adaptive_impedance_stage_bc_action(
             _collective_error(comm, local_error, "Stage-B/C P local insertion")
         prolongation.assemblyBegin()
         prolongation.assemblyEnd()
+        if phase_callback is not None:
+            p_wall = float(
+                comm.allreduce(perf_counter() - p_started, op=MPI.MAX)
+            )
+            emit_phase("P_ready", prolongation, p_wall)
         harmonic_space.destroy()
         columns_released = True
 
+        ph_started = perf_counter()
         ph = PETSc.Mat()
         prolongation.hermitianTranspose(ph)
+        if phase_callback is not None:
+            ph_wall = float(
+                comm.allreduce(perf_counter() - ph_started, op=MPI.MAX)
+            )
+            emit_phase("P_H_ready", ph, ph_wall)
+
+        fp_started = perf_counter()
         fine_times_p = fine_operator.matMult(prolongation)
+        if phase_callback is not None:
+            fp_wall = float(
+                comm.allreduce(perf_counter() - fp_started, op=MPI.MAX)
+            )
+            emit_phase("FP_ready", fine_times_p, fp_wall)
+
+        ac_started = perf_counter()
         coarse_matrix = ph.matMult(fine_times_p)
         coarse_matrix.assemble()
+        if phase_callback is not None:
+            ac_wall = float(
+                comm.allreduce(perf_counter() - ac_started, op=MPI.MAX)
+            )
+            emit_phase("Ac_ready", coarse_matrix, ac_wall)
         ph.destroy()
         ph = None
         fine_times_p.destroy()
         fine_times_p = None
 
+        ksp_started = perf_counter()
         coarse_ksp = PETSc.KSP().create(comm=comm)
         coarse_ksp.setOperators(coarse_matrix)
         coarse_ksp.setType(PETSc.KSP.Type.GMRES)
@@ -625,6 +684,25 @@ def build_adaptive_impedance_stage_bc_action(
         coarse_rhs = prolongation.createVecRight()
         coarse_solution = prolongation.createVecRight()
         coarse_residual = prolongation.createVecRight()
+        if phase_callback is not None:
+            ksp_wall = float(
+                comm.allreduce(perf_counter() - ksp_started, op=MPI.MAX)
+            )
+            emit_phase(
+                "coarse_ksp_ready",
+                coarse_matrix,
+                ksp_wall,
+                ksp={
+                    "type": "gmres",
+                    "restart": 32,
+                    "rtol": 1.0e-6,
+                    "atol": 0.0,
+                    "max_it": 32,
+                    "zero_initial_guess": True,
+                    "pc": "jacobi",
+                    "set_from_options": False,
+                },
+            )
         p_nnz, p_bytes = _matrix_info(prolongation)
         ac_nnz, ac_bytes = _matrix_info(coarse_matrix)
         base_diagnostics.update(

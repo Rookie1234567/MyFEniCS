@@ -346,6 +346,7 @@ def _symbolic_memory_preflight(
     current_process_tree_baseline_bytes: int | None,
     current_process_tree_baseline_source: str,
     *,
+    hard_memory_bytes: int | None = None,
     economical_failure_route: str | None = None,
     basis_in_live_baseline: bool = False,
     fine_live_vector_bytes: int | None = None,
@@ -353,6 +354,16 @@ def _symbolic_memory_preflight(
     coarse_live_vector_bytes: int | None = None,
     coarse_live_vector_count: int | None = None,
 ) -> dict[str, Any]:
+    effective_hard_memory_bytes = HARD_MEMORY_BYTES
+    if hard_memory_bytes is not None:
+        if (
+            not isinstance(hard_memory_bytes, (int, np.integer))
+            or isinstance(hard_memory_bytes, bool)
+            or int(hard_memory_bytes) <= 0
+        ):
+            raise ValueError("hard_memory_bytes must be a positive integer")
+        effective_hard_memory_bytes = int(hard_memory_bytes)
+
     support_by_id = {
         tuple(item["patch_id"]): tuple(int(row) for row in item["rows"])
         for item in patches
@@ -510,7 +521,7 @@ def _symbolic_memory_preflight(
         known
         and selected_total > 0
         and projected is not None
-        and projected < HARD_MEMORY_BYTES
+        and projected < effective_hard_memory_bytes
     )
     decision = (
         known,
@@ -523,13 +534,14 @@ def _symbolic_memory_preflight(
             if economical_failure_route is not None
             else "paper_economical_variant_required"
         ),
+        effective_hard_memory_bytes,
     )
     if any(item != decision for item in comm.allgather(decision)):
         raise RuntimeError("B1 memory allocation decision differs across ranks")
     result = {
         "allocation_allowed": allowed,
         "route": decision[3],
-        "hard_memory_bytes": HARD_MEMORY_BYTES,
+        "hard_memory_bytes": effective_hard_memory_bytes,
         "projected_peak_bytes_conservative": projected,
         "FP_nnz_upper": fp_nnz_upper,
         "Ac_nnz_upper": ac_nnz_upper,

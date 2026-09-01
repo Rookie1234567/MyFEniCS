@@ -24,6 +24,11 @@ NO_SIGNAL = "ADAPTIVE_SPECTRAL_SCHWARZ_NO_SIGNAL_AT_H4"
 UNSTABLE = "ADAPTIVE_SPECTRAL_SCHWARZ_UNSTABLE_AT_H4"
 INCONCLUSIVE = "ADAPTIVE_SPECTRAL_SCHWARZ_INCONCLUSIVE_AT_H4"
 RESOURCE = "ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE"
+C0_POSITIVE = "ADAPTIVE_COARSE_CONTENT_POSITIVE_EXPLICIT_ORACLE"
+C0_NO_SIGNAL = "CURRENT_160_PER_PATCH_HARMONIC_COARSE_NO_SIGNAL"
+C0_RESOURCE = "ADAPTIVE_COARSE_EXPLICIT_RESOURCE_OR_TIME_UNAVAILABLE"
+C0_NEXT_C1 = "V9_C1_MATRIX_FREE_GALERKIN_COARSE"
+C0_NEXT_E = "V9_E_STRUCTURED_BACKGROUND_FIXED_LOR"
 pytestmark = pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="serial/MPI2")
 
 
@@ -69,6 +74,19 @@ def test_stage_bc_classifier_and_zero_slope_boundaries() -> None:
     assert _classify((0.8, 0.4, 0.2), implementation=True) == (
         screen._STAGE_BC_IMPLEMENTATION_FAILURE
     )
+
+
+@pytest.mark.parametrize(
+    ("rho", "classification", "needs_outer"),
+    ((0.5, C0_POSITIVE, False), (1.0, C0_POSITIVE, False),
+     (1.1952487048622035, C0_POSITIVE, False), (1.2, None, True),
+     (1.5, C0_NO_SIGNAL, False),
+     (float("nan"), C0_NO_SIGNAL, False)),
+)
+def test_v9_c0_classifier_boundaries(rho, classification, needs_outer) -> None:
+    result = screen._classify_v9_c0_one_apply(rho)
+    assert result["classification"] == classification
+    assert result["needs_outer_fgmres"] is needs_outer
 
 
 def _diagonal_matrix(comm: MPI.Intracomm, size: int = 65) -> PETSc.Mat:
@@ -174,14 +192,6 @@ def _resource(*, passed: bool) -> dict[str, object]:
                 swap_bytes=0, source="fixture", wall_observation={"pass": True})
 
 
-def _run_screen(bare_f: PETSc.Mat, source_builder, event_callback) -> dict[str, object]:
-    return screen.run_adaptive_impedance_stage_bc_screen(
-        function_space=None, condensed=None, bare_f=bare_f, facet_tags=None,
-        external_facet_tag=5, beta=0.1, quadrature_degree=2,
-        source_builder=source_builder, event_callback=event_callback,
-    )
-
-
 def test_stage_bc_resource_denial_has_no_source_or_coarse(monkeypatch) -> None:
     comm = MPI.COMM_WORLD
     bare_f = _diagonal_matrix(comm, size=2)
@@ -278,6 +288,176 @@ def test_stage_bc_positive_extends_same_setup(monkeypatch) -> None:
         assert all(source.destroyed for source in sources)
         assert coarse_action.destroyed is True
         assert events[-1][0] == "cleanup"
+    finally:
+        bare_f.destroy()
+
+
+def _c0_action(factor: float) -> _Tracked:
+    action = _Tracked({"apply_count": 0})
+
+    def apply(source: PETSc.Vec, target: PETSc.Vec) -> None:
+        source.copy(target)
+        target.scale(factor)
+        action.diagnostics["apply_count"] += 1
+
+    action.apply = apply
+    return action
+
+
+def _c0_builder(action: _Tracked):
+    def build(*_args, **kwargs):
+        assert kwargs["hard_memory_bytes"] == 64 * 2**30
+        assert callable(kwargs["phase_callback"])
+        kwargs["harmonic_space"].destroy()
+        return SimpleNamespace(
+            action=action,
+            status="ready",
+            diagnostics={
+                "memory_preflight": {"allocation_allowed": True},
+                "allocated_object_count": {"P": 1, "P_H": 0, "FP": 0, "Ac": 1, "KSP": 1},
+            },
+        )
+
+    return build
+
+
+def _c0_source_builder(bare_f: PETSc.Mat, labels: list[str]):
+    def build(label: str):
+        labels.append(label)
+        source = bare_f.createVecRight()
+        source.set(1.0)
+        return source, {"source_label": label}
+
+    return build
+
+
+def _run_screen(
+    bare_f: PETSc.Mat,
+    source_builder,
+    event_callback,
+    *,
+    c0: bool = False,
+    **kwargs,
+) -> dict[str, object]:
+    runner = (
+        screen.run_v9_c0_explicit_coarse_oracle
+        if c0
+        else screen.run_adaptive_impedance_stage_bc_screen
+    )
+    return runner(
+        function_space=None,
+        condensed=None,
+        bare_f=bare_f,
+        facet_tags=None,
+        external_facet_tag=5,
+        beta=0.1,
+        quadrature_degree=2,
+        source_builder=source_builder,
+        event_callback=event_callback,
+        **kwargs,
+    )
+
+
+@pytest.mark.parametrize(
+    ("factor", "expected"), ((0.5, C0_POSITIVE), (1.5, C0_NO_SIGNAL))
+)
+def test_v9_c0_external_one_apply_and_cleanup(monkeypatch, factor, expected) -> None:
+    comm = MPI.COMM_WORLD
+    bare_f = _diagonal_matrix(comm, size=2)
+    action = _c0_action(factor)
+    components = _install_screen_fakes(monkeypatch, comm, _c0_builder(action))
+    events, labels = [], []
+    try:
+        result = _run_screen(
+            bare_f,
+            _c0_source_builder(bare_f, labels),
+            lambda event, detail: events.append((event, detail)),
+            c0=True,
+            resource_callback=lambda: _resource(passed=True),
+            phase_callback=None,
+            hard_memory_bytes=64 * 2**30,
+        )
+        assert result["classification"] == expected
+        assert result["next_required_stage"] == (
+            C0_NEXT_C1 if expected == C0_POSITIVE else C0_NEXT_E
+        )
+        assert labels == ["external_dtn_coupling"]
+        assert result["outer_record"] is None
+        assert result["cleanup"]["status"] == "complete"
+        assert result["cleanup"]["source_vectors_destroyed"] == 1
+        assert result["cleanup"]["action_apply_count"] == 1
+        assert result["cleanup"]["bare_f_unchanged"] is True
+        assert [
+            event
+            for event, _detail in events
+            if event.endswith(("apply_begin", "apply_end"))
+        ] == [
+            "external_one_apply_begin", "external_one_apply_end"
+        ]
+        assert all(component.destroyed for component in components)
+    finally:
+        bare_f.destroy()
+
+
+@pytest.mark.parametrize("scenario", ("intermediate", "pre_apply_resource"))
+def test_v9_c0_intermediate_or_resource_gate(monkeypatch, scenario) -> None:
+    comm = MPI.COMM_WORLD
+    bare_f = _diagonal_matrix(comm, size=2)
+    action = _c0_action(1.1)
+    _install_screen_fakes(monkeypatch, comm, _c0_builder(action))
+    events, labels = [], []
+    resource_values = iter((True, True) if scenario == "intermediate" else (True, False))
+
+    def resource_callback():
+        return _resource(passed=next(resource_values))
+
+    if scenario == "intermediate":
+        class FakeOuter:
+            def __init__(self, _operator, action, *, max_it, checkpoints):
+                assert (max_it, checkpoints) == (8, (8,))
+                self.action = action
+                self.context = SimpleNamespace(count=0)
+
+            def solve(self, _rhs, _label, checkpoint_callback=None):
+                self.context.count = 8
+                self.action.diagnostics["apply_count"] += 8
+                row = {"iteration": 8, "true_residual_relative": 0.7, "finite": True}
+                if checkpoint_callback is not None:
+                    checkpoint_callback(row)
+                return {"checkpoints": {"8": row}, "finite": True, "iterations": 8, "max_it": 8}
+
+            def destroy(self):
+                self.destroyed = True
+
+        monkeypatch.setattr(screen, "_StageBCRightFGMRES", FakeOuter)
+        source_builder = _c0_source_builder(bare_f, labels)
+    else:
+        def source_builder(_label):
+            raise AssertionError("resource denial reached source construction")
+
+    try:
+        result = _run_screen(
+            bare_f,
+            source_builder,
+            lambda event, detail: events.append((event, detail)),
+            c0=True,
+            resource_callback=resource_callback,
+            phase_callback=None,
+            hard_memory_bytes=64 * 2**30,
+        )
+        if scenario == "intermediate":
+            assert result["classification"] == C0_POSITIVE
+            assert result["outer_record"]["max_it"] == 8
+            assert set(result["outer_record"]["checkpoints"]) == {"8"}
+            assert result["cleanup"]["action_apply_count"] == 9
+            assert labels == ["external_dtn_coupling"]
+        else:
+            assert result["classification"] == C0_RESOURCE
+            assert result["next_required_stage"] == C0_NEXT_C1
+            assert result["numerical_negative"] is False
+            assert result["cleanup"]["action_apply_count"] == 0
+            assert labels == []
+            assert not any(event == "external_one_apply_begin" for event, _ in events)
     finally:
         bare_f.destroy()
 

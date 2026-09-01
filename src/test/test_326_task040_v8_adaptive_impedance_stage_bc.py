@@ -123,6 +123,9 @@ def test_task040_stage_bc_distributed_prefix_and_composite_lifecycle() -> None:
             "KSP": 0,
         }
         assert denied.diagnostics["memory_preflight"]["baseline_known"] is False
+        assert denied.diagnostics["memory_preflight"]["hard_memory_bytes"] == (
+            45 * 2**30
+        )
         if comm.rank == 0:
             assert len(denied_space.local_patch_records) == 1
             assert denied_space.local_patch_records[0].columns is not None
@@ -131,18 +134,57 @@ def test_task040_stage_bc_distributed_prefix_and_composite_lifecycle() -> None:
         denied_space.destroy()
 
         space, local_action = _fresh_space_and_action(comm)
+        phase_events: list[tuple[str, dict[str, object]]] = []
+
+        def phase_callback(name: str, detail: dict[str, object]) -> None:
+            phase_events.append((name, detail))
+
+        override_hard_memory_bytes = 64 * 2**30
         result = build_adaptive_impedance_stage_bc_action(
             harmonic_space=space,
             action=local_action,
             fine_operator=fine,
             current_process_tree_baseline_bytes=0,
             current_process_tree_baseline_source="fixture",
+            hard_memory_bytes=override_hard_memory_bytes,
+            phase_callback=phase_callback,
         )
         assert result.status == "ready"
         assert result.action is not None
         coarse = result.action
         diagnostics = coarse.diagnostics
         assert diagnostics["memory_preflight"]["allocation_allowed"] is True
+        assert diagnostics["memory_preflight"]["hard_memory_bytes"] == (
+            override_hard_memory_bytes
+        )
+        assert [name for name, _detail in phase_events] == [
+            "P_ready",
+            "P_H_ready",
+            "FP_ready",
+            "Ac_ready",
+            "coarse_ksp_ready",
+        ]
+        for name, detail in phase_events:
+            assert detail["name"] == name
+            assert len(detail["global_size"]) == 2
+            assert len(detail["local_size"]) == 2
+            for key in (
+                "actual_global_nnz",
+                "actual_global_memory_bytes",
+            ):
+                assert isinstance(detail[key], int)
+                assert detail[key] >= 0
+            assert detail["phase_wall_seconds"] >= 0.0
+        assert phase_events[-1][1]["ksp"] == {
+            "type": "gmres",
+            "restart": 32,
+            "rtol": 1.0e-6,
+            "atol": 0.0,
+            "max_it": 32,
+            "zero_initial_guess": True,
+            "pc": "jacobi",
+            "set_from_options": False,
+        }
         assert diagnostics["full_vector_numeric_allgather"] is False
         assert diagnostics["numeric_object_alltoall_count"] == 1
         assert diagnostics["transient_matrices_released"] == {
