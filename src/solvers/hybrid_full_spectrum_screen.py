@@ -711,6 +711,12 @@ def _v8_load_bundle(
     label: str,
     payload: Mapping[str, Any],
 ) -> Any:
+    packet_loader = payload.get("v9_source_loader")
+    if callable(packet_loader):
+        return packet_loader(label)
+    current_loader = payload.get("current_source_loader")
+    if label in _V8_HOLDOUT_LABELS and callable(current_loader):
+        return current_loader(label)
     descriptors = configuration["descriptors"]
     roundtrip = configuration.get("canonical_roundtrip")
     if isinstance(roundtrip, Mapping):
@@ -751,16 +757,22 @@ def _v8_run_source(
     max_iterations: int = 64,
     one_apply: bool = True,
     run_kind: str = "mandatory_fgmres",
+    preloaded_bundle: Any | None = None,
 ) -> dict[str, Any]:
     configuration = payload["formal_exact_configuration"]
     action = payload["schur_action"]
     pc_before = int(pc.apply_count)
     bundle = None
+    owns_bundle = preloaded_bundle is None
     one = None
     fgmres_pc_before: int | None = None
     solve_started = time.perf_counter()
     try:
-        bundle = _v8_load_bundle(configuration, label, payload)
+        bundle = (
+            _v8_load_bundle(configuration, label, payload)
+            if preloaded_bundle is None
+            else preloaded_bundle
+        )
         if one_apply:
             marker = _v8_marker_alias(label)
             _v8_mark(
@@ -889,7 +901,7 @@ def _v8_run_source(
             "finite": False,
         }
     finally:
-        if bundle is not None:
+        if owns_bundle and bundle is not None:
             bundle.destroy()
 
 
@@ -1195,6 +1207,8 @@ def run_v8_full_spectrum_two_source(payload: Mapping[str, Any]) -> dict[str, Any
     masses: list[Any] = []
     transforms: list[Any] = []
     pc: _PairSpectralPC | None = None
+    preloaded_bundles: dict[str, Any] = {}
+    packet_audit: dict[str, Any] | None = None
     records: dict[str, dict[str, Any]] = {}
     material_audits: dict[str, Any] = {}
     conditional_used = False
@@ -1253,9 +1267,88 @@ def run_v8_full_spectrum_two_source(payload: Mapping[str, Any]) -> dict[str, Any
             system,
             comm,
         )
+        packet_root = payload.get("v9_source_packet_root")
+        if packet_root is not None:
+            from src.solvers.hybrid_source_canonical_bridge import (
+                load_v9_source_packet_bundles,
+            )
+
+            current_builder = payload.get("v9_current_source_builder")
+            if not callable(current_builder):
+                raise TypeError("V9 corrected screen lacks current source builder")
+            packet_started = time.perf_counter()
+            preloaded_bundles, packet_audit = load_v9_source_packet_bundles(
+                system,
+                action,
+                packet_root=packet_root,
+                expected_manifest_sha256=str(
+                    payload["v9_source_packet_manifest_sha256"]
+                ),
+                current_source_builder=current_builder,
+                current_source_sha=str(payload["v9_current_source_sha"]),
+                expected_provenance=dict(
+                    payload.get("v9_source_provenance", {})
+                ),
+                producer_source_sha=payload.get("v9_producer_source_sha"),
+            )
+            _v8_mark(
+                payload,
+                "v9_full_spectrum_source_packet_validated",
+                started,
+                callback,
+                action,
+                stage_clock_start=packet_started,
+                pc_apply_count=pc.apply_count,
+                action_apply_count=action.diagnostics.get("apply_count"),
+                source_order=list(_SCREEN_LABELS),
+                producer_manifest_sha256=packet_audit["combined_manifest_sha256"],
+                producer_source_sha=packet_audit["producer_source_sha"],
+                child_manifest_sha256={
+                    label: packet_audit["sources"][label]["manifest_sha256"]
+                    for label in _SCREEN_LABELS
+                },
+                numeric_allgather=False,
+                full_numeric_replica=False,
+            )
+            for label in _SCREEN_LABELS:
+                source_audit = packet_audit["sources"][label]
+                _v8_mark(
+                    payload,
+                    f"v9_full_spectrum_{_v8_marker_alias(label)}_owner_vector_ready",
+                    started,
+                    callback,
+                    action,
+                    source=label,
+                    stage_clock_start=packet_started,
+                    pc_apply_count=pc.apply_count,
+                    action_apply_count=action.diagnostics.get("apply_count"),
+                    producer_manifest_sha256=source_audit["manifest_sha256"],
+                    producer_source_sha=source_audit["producer_source_sha"],
+                    global_key_set_sha256=source_audit.get(
+                        "key_audit", {}
+                    ).get("current_actual_key_set_sha256"),
+                    source_identity={
+                        key: source_audit.get("source_identity", {}).get(key)
+                        for key in (
+                            "label",
+                            "source_definition_sha256",
+                            "execution_source_sha",
+                        )
+                    },
+                    residual_max=max(
+                        source_audit.get("residuals", {}).values(), default=0.0
+                    ),
+                    numeric_allgather=False,
+                    full_numeric_replica=False,
+                )
         for label in _SCREEN_LABELS:
             records[label] = _v8_run_source(
-                payload, label, pc, started, callback
+                payload,
+                label,
+                pc,
+                started,
+                callback,
+                preloaded_bundle=preloaded_bundles.get(label),
             )
         classification, next_stage, screen = _v8_classify(records)
         screen_detail: dict[str, Any] = {"two_source": screen}
@@ -1276,6 +1369,7 @@ def run_v8_full_spectrum_two_source(payload: Mapping[str, Any]) -> dict[str, Any
                     max_iterations=_V8_CONDITIONAL,
                     one_apply=False,
                     run_kind="conditional_replay",
+                    preloaded_bundle=preloaded_bundles.get(label),
                 )
                 conditional_values = _v8_replay_residuals(conditional)
                 records[label]["conditional_replay_implementation_failure"] = bool(
@@ -1388,6 +1482,19 @@ def run_v8_full_spectrum_two_source(payload: Mapping[str, Any]) -> dict[str, Any
                 "root_metadata_gather": True,
                 "metadata_only_descriptor_gather": True,
                 "rhs_vectors_loaded": len(records),
+                **(
+                    {
+                        "v9_source_packet": packet_audit,
+                        "v9_source_packet_root": str(
+                            payload["v9_source_packet_root"]
+                        ),
+                        "v9_source_packet_manifest_sha256": payload[
+                            "v9_source_packet_manifest_sha256"
+                        ],
+                    }
+                    if packet_audit is not None
+                    else {}
+                ),
                 "exact_output_vectors_loaded": 0,
                 "qep_calls": 0,
                 "full_side_exact_factor_count": 0,
@@ -1395,6 +1502,8 @@ def run_v8_full_spectrum_two_source(payload: Mapping[str, Any]) -> dict[str, Any
             }
         )
     finally:
+        for bundle in preloaded_bundles.values():
+            bundle.destroy()
         if pc is not None:
             pc.close()
         for transform in reversed(transforms):

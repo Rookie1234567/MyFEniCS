@@ -25,6 +25,8 @@ __all__ = (
     "SOURCE_BRIDGE_TOLERANCE",
     "SourceCanonicalIdentityError",
     "audit_packet_key_sets",
+    "build_current_source_bundle",
+    "load_v9_source_packet_bundles",
     "packet_pair_digest",
     "redistribute_owner_packets",
     "run_source_canonical_bridge",
@@ -144,7 +146,7 @@ def redistribute_owner_packets(
                 raise ValueError(f"nonfinite packet value for {key!r}")
             outgoing[destination].append((key, number))
             sender_bytes += len(key.encode("utf-8")) + np.dtype(np.complex128).itemsize
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - synchronize rank-local shard errors
         local_error = f"{type(exc).__name__}: {exc}"
     _collective_error(comm, "owner packet routing preparation", local_error)
     received = comm.alltoall(outgoing)
@@ -161,7 +163,7 @@ def redistribute_owner_packets(
                 receiver_bytes += len(key.encode("utf-8")) + np.dtype(
                     np.complex128
                 ).itemsize
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - synchronize source-builder errors
         local_error = f"{type(exc).__name__}: {exc}"
     _collective_error(comm, "owner packet routing reception", local_error)
     return merged, {
@@ -923,6 +925,588 @@ def _source_bridge_one(
             "fgmres": 0,
         },
     }
+
+
+def _v9_packet_path(root: Path, relative: Any) -> Path:
+    candidate = (root / str(relative)).resolve()
+    candidate.relative_to(root.resolve())
+    return candidate
+
+
+def _v9_manifest_without_self_hash(value: Mapping[str, Any]) -> bytes:
+    payload = {str(key): item for key, item in value.items()}
+    payload.pop("shard_manifest_sha256", None)
+    return (
+        json.dumps(payload, sort_keys=True, indent=2, allow_nan=False).encode(
+            "utf-8"
+        )
+        + b"\n"
+    )
+
+
+def _v9_expected_identity(
+    identity: Mapping[str, Any], expected: Mapping[str, Any]
+) -> None:
+    semantic = identity.get("semantic_descriptor", identity)
+    if not isinstance(semantic, Mapping):
+        raise TypeError("packet source semantic descriptor is missing")
+    for name, expected_value in expected.items():
+        if expected_value is None:
+            continue
+        if semantic.get(name) != expected_value:
+            raise ValueError(f"packet source identity mismatch for {name}")
+
+
+def _v9_read_shard(
+    packet_root: Path,
+    child: Mapping[str, Any],
+    label: str,
+    rank: int,
+) -> tuple[list[tuple[str, complex]], dict[str, Any]]:
+    packet_dir = _v9_packet_path(packet_root, "source_bridge")
+    expected = None
+    for item in child.get("shards", ()):
+        if isinstance(item, Mapping) and int(item.get("rank", -1)) == rank:
+            expected = item
+            break
+    if not isinstance(expected, Mapping):
+        raise TypeError(f"packet has no shard for rank {rank}")
+    shard_path = packet_dir / f"rank{rank:04d}" / (
+        f"v9_{label}_canonical_packet.json"
+    )
+    actual = json.loads(shard_path.read_text(encoding="utf-8"))
+    if not isinstance(actual, Mapping) or dict(actual) != dict(expected):
+        raise ValueError(f"packet shard metadata differs for rank {rank}")
+    if (
+        actual.get("schema") != SOURCE_BRIDGE_PACKET_SCHEMA
+        or actual.get("side") != "bottom"
+        or actual.get("label") != label
+        or actual.get("rank") != rank
+        or actual.get("owner_local") is not True
+        or actual.get("numeric_allgather") is not False
+        or actual.get("full_numeric_replica") is not False
+    ):
+        raise ValueError(f"packet shard contract mismatch for rank {rank}")
+    declared_shard_hash = actual.get("shard_manifest_sha256")
+    if _sha256(_v9_manifest_without_self_hash(actual)) != declared_shard_hash:
+        raise ValueError(f"packet shard manifest hash mismatch for rank {rank}")
+    keys_path = _v9_packet_path(packet_dir, actual.get("keys_path"))
+    values_path = _v9_packet_path(packet_dir, actual.get("values_path"))
+    keys_payload = json.loads(keys_path.read_text(encoding="utf-8"))
+    if not isinstance(keys_payload, Mapping):
+        raise TypeError("packet canonical key file is not a mapping")
+    if not isinstance(keys_payload.get("keys"), list):
+        raise TypeError("packet canonical key list is invalid")
+    keys = tuple(str(key) for key in keys_payload["keys"])
+    if tuple(sorted(keys)) != keys or len(set(keys)) != len(keys):
+        raise ValueError("packet canonical keys are not sorted and unique")
+    if _sha256(keys_path.read_bytes()) != actual.get("key_sha256"):
+        raise ValueError("packet canonical key bytes/hash mismatch")
+    values = np.load(values_path, allow_pickle=False, mmap_mode="r")
+    if (
+        values.ndim != 1
+        or values.dtype != np.dtype(np.complex128)
+        or values.size != len(keys)
+        or actual.get("key_count_local") != len(keys)
+        or not np.isfinite(np.asarray(values)).all()
+    ):
+        raise ValueError("packet canonical values shape/dtype/finite mismatch")
+    if _sha256(values_path.read_bytes()) != actual.get("values_sha256"):
+        raise ValueError("packet canonical value bytes/hash mismatch")
+    return [(key, complex(value)) for key, value in zip(keys, values, strict=True)], {
+        "schema": actual.get("schema"),
+        "side": actual.get("side"),
+        "label": actual.get("label"),
+        "rank": actual.get("rank"),
+        "owner_local": actual.get("owner_local"),
+        "shard_manifest_sha256": str(declared_shard_hash),
+        "key_count_local": len(keys),
+        "source_identity": dict(actual.get("source_identity", {})),
+        "global_key_set_sha256": actual.get("global_key_set_sha256"),
+        "persisted_value_pair_digest_sha256": actual.get(
+            "persisted_value_pair_digest_sha256"
+        ),
+        "current_value_pair_digest_sha256": actual.get(
+            "current_value_pair_digest_sha256"
+        ),
+        "numeric_allgather": actual.get("numeric_allgather"),
+        "full_numeric_replica": actual.get("full_numeric_replica"),
+    }
+
+
+def build_current_source_bundle(
+    system: Any,
+    action: Any,
+    label: str,
+    source_builder: Callable[[str], tuple[Any, Mapping[str, Any]]] | None = None,
+) -> Any:
+    """Build a current-layout source bundle without using a persisted loader."""
+
+    from .hybrid_bare_f_authority import build_current_bare_f_rhs
+    from .hybrid_exact_qualification import (
+        LoadedExactQualificationRHS,
+        _collect_petsc_vectors,
+        _destroy_petsc_vectors,
+    )
+
+    builder = source_builder or (
+        lambda source_label: build_current_bare_f_rhs(system, source_label)
+    )
+    active = None
+    result: Any = None
+    try:
+        active, source_audit = builder(label)
+        result = action.build_condensed_rhs_from_active_vector(active)
+        if not isinstance(result, tuple) or len(result) != 3:
+            raise TypeError("current source condensation returned an invalid tuple")
+        gamma, interior, condensed = result
+        if isinstance(interior, Mapping):
+            by_group = {int(group): value for group, value in interior.items()}
+        else:
+            by_group = {group: value for group, value in enumerate(tuple(interior))}
+        if set(by_group) != {0, 1, 2}:
+            raise ValueError("current source condensation lacks groups 0,1,2")
+        return LoadedExactQualificationRHS(
+            active_rhs=active,
+            gamma_rhs=gamma,
+            interior_rhs_by_group=by_group,
+            condensed_rhs=condensed,
+            audit={
+                "label": label,
+                "source_identity": dict(source_audit),
+                "static_condensed_active_rhs": True,
+            },
+        )
+    except Exception:
+        _destroy_petsc_vectors(
+            [active, *_collect_petsc_vectors(result)]
+        )
+        raise
+
+
+def _v9_source_bundle(
+    system: Any,
+    action: Any,
+    *,
+    packet_root: Path,
+    child: Mapping[str, Any],
+    label: str,
+    current_source_builder: Callable[[str], tuple[Any, Mapping[str, Any]]],
+    current_source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    expected_provenance: Mapping[str, Any],
+) -> tuple[Any, dict[str, Any]]:
+    comm = system.comm
+    local_pairs: list[tuple[str, complex]] = []
+    shard_audit: dict[str, Any] = {}
+    local_error: str | None = None
+    try:
+        local_pairs, shard_audit = _v9_read_shard(
+            packet_root, child, label, int(comm.rank)
+        )
+        if shard_audit["numeric_allgather"] is not False or shard_audit[
+            "full_numeric_replica"
+        ] is not False:
+            raise ValueError("packet numeric replication flags are not false")
+    except Exception as exc:
+        local_error = f"{type(exc).__name__}: {exc}"
+    _collective_error(comm, f"V9 packet {label} shard validation", local_error)
+
+    first = second = None
+    first_array = second_array = None
+    first_raw: dict[str, Any] = {}
+    first_values: dict[str, complex] = {}
+    second_values: dict[str, complex] = {}
+    first_identity: dict[str, Any] = {}
+    second_identity: dict[str, Any] = {}
+    local_error = None
+    try:
+        first = current_source_builder(label)
+        first_vec, first_metadata = first
+        first_array = np.asarray(
+            first_vec.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        first_raw, first_values, _ = _current_packets(system, first_vec)
+        second = current_source_builder(label)
+        second_vec, second_metadata = second
+        second_array = np.asarray(
+            second_vec.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        _second_raw, second_values, _ = _current_packets(system, second_vec)
+        first_identity = _compact_identity(
+            label,
+            first_metadata,
+            source_sha=current_source_sha,
+            input_sha256=input_sha256,
+            physical_model_sha256=physical_model_sha256,
+            expected_provenance=expected_provenance,
+        )
+        second_identity = _compact_identity(
+            label,
+            second_metadata,
+            source_sha=current_source_sha,
+            input_sha256=input_sha256,
+            physical_model_sha256=physical_model_sha256,
+            expected_provenance=expected_provenance,
+        )
+        if _semantic_without_execution_sha(
+            first_identity["semantic_descriptor"]
+        ) != _semantic_without_execution_sha(second_identity["semantic_descriptor"]):
+            raise ValueError("current source semantic identity changed on repeat")
+    except Exception as exc:
+        local_error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if first is not None:
+            first[0].destroy()
+        if second is not None:
+            second[0].destroy()
+    _collective_error(comm, f"V9 current {label} source validation", local_error)
+    if first_array is None or second_array is None:
+        raise SourceCanonicalIdentityError(f"current {label} source vector is missing")
+
+    current_parts = comm.allgather(tuple(sorted(first_values)))
+    persisted_parts = comm.allgather(tuple(sorted(key for key, _ in local_pairs)))
+    key_audit = audit_packet_key_sets(
+        tuple(key for part in persisted_parts for key in part),
+        tuple(key for part in current_parts for key in part),
+    )
+    persisted_key_digest = _global_key_digest(comm, tuple(key for key, _ in local_pairs))
+    current_key_digest = _global_key_digest(comm, tuple(first_values))
+    declared_hashes = tuple(
+        str(item.get("global_key_set_sha256"))
+        for item in child.get("shards", ())
+        if isinstance(item, Mapping)
+    )
+    key_hash_gate = bool(
+        declared_hashes
+        and all(value == persisted_key_digest for value in declared_hashes)
+        and persisted_key_digest == current_key_digest
+        and child.get("global_key_set_sha256") == current_key_digest
+    )
+    key_audit.update(
+        {
+            "persisted_actual_key_set_sha256": persisted_key_digest,
+            "current_actual_key_set_sha256": current_key_digest,
+            "declared_canonical_key_set_sha256": sorted(set(declared_hashes)),
+            "canonical_key_set_hash_consistent": key_hash_gate,
+        }
+    )
+    if not key_audit["pass"] or not key_hash_gate:
+        raise SourceCanonicalIdentityError(
+            f"V9 packet {label} key inventory is not bijective", {"key_audit": key_audit}
+        )
+    owner_by_key: dict[str, int] = {}
+    owner_error: str | None = None
+    for owner, keys in enumerate(current_parts):
+        for key in keys:
+            if key in owner_by_key:
+                owner_error = f"V9 current key has multiple owners: {key}"
+                break
+            owner_by_key[key] = owner
+        if owner_error is not None:
+            break
+    _collective_error(comm, "V9 current physical-key owner inventory", owner_error)
+    routed, routing = redistribute_owner_packets(local_pairs, owner_by_key, comm=comm)
+    local_keys = tuple(sorted(first_values))
+    local_route_audit = audit_packet_key_sets(tuple(routed), local_keys)
+    if not local_route_audit["pass"]:
+        raise SourceCanonicalIdentityError(
+            f"V9 packet {label} routing is not bijective",
+            {"key_audit": local_route_audit},
+        )
+
+    persisted_pairs = [(key, routed[key]) for key in local_keys]
+    current_pairs = [(key, first_values[key]) for key in local_keys]
+    persisted_pair_digest = _global_pair_digest(comm, persisted_pairs, label=label)
+    current_pair_digest = _global_pair_digest(comm, current_pairs, label=label)
+    expected_persisted_digest = child.get("persisted_value_pair_digest_sha256")
+    expected_current_digest = child.get("current_value_pair_digest_sha256")
+    persisted_digest_integrity = persisted_pair_digest == expected_persisted_digest
+    current_digest_matches_producer = current_pair_digest == expected_current_digest
+    if not persisted_digest_integrity:
+        raise SourceCanonicalIdentityError(
+            f"V9 packet {label} value pair digest mismatch",
+            {
+                "observed_persisted_pair_digest": persisted_pair_digest,
+                "observed_current_pair_digest": current_pair_digest,
+                "producer_expected_current_pair_digest": expected_current_digest,
+                "current_digest_matches_producer": current_digest_matches_producer,
+                "persisted_digest_integrity": persisted_digest_integrity,
+            },
+        )
+    semantic_match = _semantic_without_execution_sha(
+        first_identity["semantic_descriptor"]
+    ) == _semantic_without_execution_sha(
+        child.get("source_identity", {}).get("semantic_descriptor", {})
+    )
+    _v9_expected_identity(child.get("persisted_identity", {}), expected_provenance)
+    if not semantic_match:
+        raise SourceCanonicalIdentityError(
+            f"V9 packet {label} source semantic identity mismatch",
+            {"persisted_current_semantic_identity": False},
+        )
+
+    raw_values = {first_raw[key]: routed[key] for key in local_keys}
+    reconstructed = None
+    reconstruction_calls = 0
+    try:
+        from .hcurl_canonical_vector_dolfinx import (
+            extract_canonical_active_trace_packets,
+            reconstruct_canonical_active_trace_vec,
+        )
+
+        reconstruction_calls += 1
+        reconstructed = reconstruct_canonical_active_trace_vec(
+            system.condensed, system.V, system.floquet_data, raw_values
+        )
+        reconstructed_array = np.asarray(
+            reconstructed.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        roundtrip_packets, _ = extract_canonical_active_trace_packets(
+            system.condensed, system.V, system.floquet_data, reconstructed
+        )
+        raw_to_token = {raw: token for token, raw in first_raw.items()}
+        roundtrip_values = {
+            raw_to_token[raw]: complex(value) for raw, value in roundtrip_packets
+        }
+        if set(roundtrip_values) != set(local_keys):
+            raise ValueError("V9 reconstructed physical key set changed")
+        roundtrip_relative = _global_relative(
+            comm,
+            np.asarray([roundtrip_values[key] for key in local_keys]),
+            np.asarray([routed[key] for key in local_keys]),
+        )
+        owner_relative = _global_relative(comm, reconstructed_array, first_array)
+        reconstructed_norm = _global_norm(comm, reconstructed_array)
+    except Exception:
+        if reconstructed is not None:
+            reconstructed.destroy()
+        raise
+    current_norm = _global_norm(comm, first_array)
+    residuals = {
+        "owner_to_canonical_to_owner_relative": owner_relative,
+        "canonical_value_relative": _global_relative(
+            comm,
+            np.asarray([routed[key] for key in local_keys]),
+            np.asarray([first_values[key] for key in local_keys]),
+        ),
+        "repeated_reconstruction_relative": _global_relative(
+            comm, reconstructed_array, second_array
+        ),
+        "static_condensed_active_rhs_repeat_relative": _global_relative(
+            comm, first_array, second_array
+        ),
+        "current_canonical_repeat_relative": _global_relative(
+            comm,
+            np.asarray([first_values[key] for key in local_keys]),
+            np.asarray([second_values[key] for key in local_keys]),
+        ),
+        "source_norm_relative": abs(reconstructed_norm - current_norm)
+        / max(current_norm, 1.0e-300),
+        "roundtrip_canonical_value_relative": roundtrip_relative,
+    }
+    orientation_applied_once = bool(
+        reconstruction_calls == 1
+        and set(roundtrip_values) == set(local_keys)
+        and np.isfinite(roundtrip_relative)
+    )
+    finite = all(np.isfinite(float(value)) for value in residuals.values())
+    gates = {
+        "key_bijection": True,
+        "canonical_key_set_hash_consistency": key_hash_gate,
+        "persisted_current_semantic_identity": semantic_match,
+        "orientation_applied_once": orientation_applied_once,
+        "phase_application_count": reconstruction_calls == 1,
+        "finite": finite,
+        **_canonical_residual_gates(residuals),
+    }
+    if not all(gates.values()):
+        if reconstructed is not None:
+            reconstructed.destroy()
+        raise SourceCanonicalIdentityError(
+            f"V9 packet {label} reconstruction gate failed",
+            {"gates": gates, "residuals": residuals},
+        )
+    from .hybrid_exact_qualification import LoadedExactQualificationRHS
+
+    current_active = reconstructed
+    reconstructed = None
+    condensed_result: Any = None
+    try:
+        condensed_result = action.build_condensed_rhs_from_active_vector(current_active)
+        if not isinstance(condensed_result, tuple) or len(condensed_result) != 3:
+            raise TypeError("packet source condensation returned an invalid tuple")
+        gamma, interior, condensed = condensed_result
+        by_group = (
+            {int(group): value for group, value in interior.items()}
+            if isinstance(interior, Mapping)
+            else {group: value for group, value in enumerate(tuple(interior))}
+        )
+        if set(by_group) != {0, 1, 2}:
+            raise ValueError("packet source condensation lacks groups 0,1,2")
+        bundle = LoadedExactQualificationRHS(
+            active_rhs=current_active,
+            gamma_rhs=gamma,
+            interior_rhs_by_group=by_group,
+            condensed_rhs=condensed,
+            audit={
+                "label": label,
+                "source_identity": first_identity,
+                "persisted_identity": child.get("persisted_identity", {}),
+                "packet_manifest_sha256": child.get("manifest_sha256"),
+                "producer_source_sha": child.get("source_identity", {}).get(
+                    "execution_source_sha"
+                ),
+                "residuals": residuals,
+                "gates": gates,
+                "key_audit": key_audit,
+                "routing": routing,
+                "observed_persisted_pair_digest": persisted_pair_digest,
+                "observed_current_pair_digest": current_pair_digest,
+                "producer_expected_current_pair_digest": expected_current_digest,
+                "current_digest_matches_producer": current_digest_matches_producer,
+                "persisted_digest_integrity": persisted_digest_integrity,
+                "numeric_allgather": False,
+                "full_numeric_replica": False,
+                "current_active_rhs_norm": current_norm,
+                "reconstructed_active_rhs_norm": reconstructed_norm,
+                "persisted_canonical_coefficient_norm": _global_norm(
+                    comm, np.asarray([routed[key] for key in local_keys])
+                ),
+                "orientation_phase_audit": {
+                    "phase_application_count": reconstruction_calls,
+                    "orientation_applied_once": orientation_applied_once,
+                    "reconstruction_calls": reconstruction_calls,
+                    "key_class_histogram": _merge_histograms(
+                        comm.allgather(_key_class_histogram(local_keys))
+                    ),
+                },
+            },
+        )
+        return bundle, bundle.audit
+    except Exception:
+        from .hybrid_exact_qualification import (
+            _collect_petsc_vectors,
+            _destroy_petsc_vectors,
+        )
+
+        _destroy_petsc_vectors([current_active, *_collect_petsc_vectors(condensed_result)])
+        raise
+
+
+def load_v9_source_packet_bundles(
+    system: Any,
+    action: Any,
+    *,
+    packet_root: str | Path,
+    expected_manifest_sha256: str,
+    current_source_builder: Callable[[str], tuple[Any, Mapping[str, Any]]],
+    current_source_sha: str,
+    expected_provenance: Mapping[str, Any] | None = None,
+    producer_source_sha: str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Validate the V9 packet and load current-layout bundles for V8."""
+
+    comm = system.comm
+    packet_root = Path(packet_root).resolve()
+    manifest_path = packet_root / "v9_source_bridge_manifest.json"
+    local_error: str | None = None
+    root: Mapping[str, Any] = {}
+    try:
+        if _sha256(manifest_path.read_bytes()) != str(expected_manifest_sha256):
+            raise ValueError("V9 combined packet manifest bytes/hash mismatch")
+        root_value = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if not isinstance(root_value, Mapping):
+            raise TypeError("V9 combined packet manifest is not a mapping")
+        root = root_value
+        if (
+            root.get("schema") != "task040.v9.source_canonical_bridge.v1"
+            or root.get("status") != "verified_source_canonical_bridge"
+            or root.get("classification") != "V9_SOURCE_CANONICAL_BRIDGE_PASS"
+            or root.get("pass") is not True
+            or tuple(root.get("source_order", ())) != SOURCE_BRIDGE_SOURCES
+            or root.get("numeric_allgather") is not False
+            or root.get("full_numeric_replica") is not False
+        ):
+            raise ValueError("V9 combined packet manifest status/schema is invalid")
+        if producer_source_sha is not None and root.get("source_sha") != producer_source_sha:
+            raise ValueError("V9 producer source SHA differs from expected provenance")
+    except Exception as exc:  # noqa: BLE001 - synchronize combined manifest errors
+        local_error = f"{type(exc).__name__}: {exc}"
+    _collective_error(comm, "V9 combined packet validation", local_error)
+    expected = dict(expected_provenance or {})
+    for name in ("input_sha256", "physical_model_sha256"):
+        expected_value = expected.get(name)
+        if expected_value is not None and root.get(name) != expected_value:
+            raise SourceCanonicalIdentityError(
+                f"V9 combined packet {name} identity mismatch"
+            )
+    packet_sources = root.get("sources")
+    if not isinstance(packet_sources, Mapping):
+        raise SourceCanonicalIdentityError("V9 packet source records are missing")
+    bundles: dict[str, Any] = {}
+    audits: dict[str, Any] = {
+        "schema": "task040.v9.source_canonical_bridge.v1",
+        "combined_manifest_sha256": str(expected_manifest_sha256),
+        "producer_source_sha": root.get("source_sha"),
+        "source_order": list(SOURCE_BRIDGE_SOURCES),
+        "numeric_allgather": False,
+        "full_numeric_replica": False,
+        "sources": {},
+    }
+    try:
+        for label in SOURCE_BRIDGE_SOURCES:
+            record = packet_sources.get(label)
+            if not isinstance(record, Mapping):
+                raise TypeError(f"V9 source record is missing: {label}")
+            child_path = packet_root / "source_bridge" / (
+                f"v9_{label}_source_bridge_manifest.json"
+            )
+            child_hash = str(record.get("manifest_sha256"))
+            if _sha256(child_path.read_bytes()) != child_hash:
+                raise ValueError(f"V9 child manifest hash mismatch: {label}")
+            child = json.loads(child_path.read_text(encoding="utf-8"))
+            if not isinstance(child, Mapping):
+                raise TypeError(f"V9 child manifest is invalid: {label}")
+            if (
+                child.get("schema") != SOURCE_BRIDGE_PACKET_SCHEMA
+                or child.get("label") != label
+                or child.get("side") != "bottom"
+                or child.get("numeric_allgather") is not False
+                or child.get("full_numeric_replica") is not False
+                or len(child.get("shards", ())) != comm.size
+            ):
+                raise ValueError(f"V9 child manifest contract is invalid: {label}")
+            _v9_expected_identity(child.get("persisted_identity", {}), expected)
+            shards = child.get("shards", ())
+            if {int(item.get("rank", -1)) for item in shards} != set(range(comm.size)):
+                raise ValueError(f"V9 child shard rank inventory is invalid: {label}")
+            bundle, audit = _v9_source_bundle(
+                system,
+                action,
+                packet_root=packet_root,
+                child=child,
+                label=label,
+                current_source_builder=current_source_builder,
+                current_source_sha=current_source_sha,
+                input_sha256=str(expected.get("input_sha256", root.get("input_sha256"))),
+                physical_model_sha256=str(
+                    expected.get("physical_model_sha256", root.get("physical_model_sha256"))
+                ),
+                expected_provenance=expected,
+            )
+            bundles[label] = bundle
+            audits["sources"][label] = {
+                **dict(audit),
+                "manifest_sha256": child_hash,
+                "producer_source_sha": root.get("source_sha"),
+            }
+    except Exception:
+        for bundle in bundles.values():
+            bundle.destroy()
+        raise
+    return bundles, audits
 
 
 def run_source_canonical_bridge(

@@ -46,6 +46,8 @@ from benchmarks.task040_level_a import (
     V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
     V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS,
     V9_SOURCE_BRIDGE_ONLY_FLAG,
+    V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION,
+    V9_SOURCE_PACKET_ROOT_OPTION,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -144,6 +146,15 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(V8_ADAPTIVE_SCHWARZ_ONLY_FLAG)
     elif plan.get("v8_full_spectrum_only") is True:
         command.append(V8_FULL_SPECTRUM_ONLY_FLAG)
+        if plan.get("v9_source_packet_root") is not None:
+            command.extend(
+                (
+                    V9_SOURCE_PACKET_ROOT_OPTION,
+                    str(plan["v9_source_packet_root"]),
+                    V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION,
+                    str(plan["v9_source_packet_manifest_sha256"]),
+                )
+            )
     elif plan.get("v7_moving_pml_full_state") is True:
         command.append(V7_MOVING_PML_FULL_STATE_FLAG)
     elif plan.get("v7_scale_normalized_identity") is True:
@@ -209,6 +220,8 @@ def build_task040_level_a_watchdog_plan(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_source_packet_root: str | Path | None = None,
+    v9_source_packet_manifest_sha256: str | None = None,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
@@ -232,6 +245,8 @@ def build_task040_level_a_watchdog_plan(
         v8_adaptive_stage_b1_only=v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=v8_adaptive_stage_bc_only,
         v9_source_bridge_only=v9_source_bridge_only,
+        v9_source_packet_root=v9_source_packet_root,
+        v9_source_packet_manifest_sha256=v9_source_packet_manifest_sha256,
         interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
@@ -379,6 +394,29 @@ def build_task040_level_a_watchdog_plan(
                     "full_interface_replica_per_rank": False,
                 }
             )
+            if plan.get("v9_source_packet_root") is not None:
+                plan["watchdog"].update(
+                    {
+                        "v9_corrected_source_packet": True,
+                        "v9_source_packet_root": plan[
+                            "v9_source_packet_root"
+                        ],
+                        "v9_source_packet_manifest_sha256": plan[
+                            "v9_source_packet_manifest_sha256"
+                        ],
+                        "v9_marker_stages": [
+                            "v9_full_spectrum_source_packet_validated",
+                            "v9_full_spectrum_external_owner_vector_ready",
+                            "v9_full_spectrum_random0_owner_vector_ready",
+                        ],
+                        "setup_target_seconds": 1800,
+                        "transform_target_seconds": 900,
+                        "one_apply_target_seconds": 1200,
+                        "timeout_seconds": V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
+                        "minimum_mem_available_bytes": 96 * 2**30,
+                        "corrected_packet_source": True,
+                    }
+                )
         elif v7_moving_pml_full_state:
             plan["watchdog"].update(
                 {
@@ -501,6 +539,56 @@ def _v8_active_stage_timeout(
         "limit_seconds": limit,
         "classification": (
             V8_RESOURCE_UNAVAILABLE_CLASSIFICATION if elapsed > limit else None
+        ),
+    }
+
+
+def _v9_full_spectrum_active_stage_timeout(
+    stage: str,
+    stage_elapsed_seconds: float,
+    total_elapsed_seconds: float,
+) -> dict[str, Any]:
+    """Apply the corrected packet route's unscaled stage limits."""
+
+    if float(total_elapsed_seconds) >= V8_FULL_SPECTRUM_TIMEOUT_SECONDS:
+        limit, kind = V8_FULL_SPECTRUM_TIMEOUT_SECONDS, "total"
+        elapsed = float(total_elapsed_seconds)
+    elif stage.endswith("_one_apply_begin"):
+        limit, kind = V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS, "one_apply"
+        elapsed = float(stage_elapsed_seconds)
+    elif stage == "v8_full_spectrum_group2_factor_ready" or stage.endswith(
+        "_transform_ready"
+    ):
+        limit, kind = V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS, "transform_or_symbol"
+        elapsed = float(stage_elapsed_seconds)
+    elif stage.endswith("_symbol_ready") or stage in {
+        "process_start",
+        "v8_full_spectrum_preflight",
+        "v8_full_spectrum_system_ready",
+        "v8_full_spectrum_group0_factor_ready",
+        "v8_full_spectrum_group1_factor_ready",
+        "v9_full_spectrum_source_packet_validated",
+        "v9_full_spectrum_external_owner_vector_ready",
+        "v9_full_spectrum_random0_owner_vector_ready",
+    }:
+        limit, kind = V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS, "setup_or_factor"
+        elapsed = float(stage_elapsed_seconds)
+    else:
+        return {
+            "active": False,
+            "timed_out": False,
+            "kind": None,
+            "limit_seconds": None,
+            "classification": None,
+        }
+    timed_out = elapsed > float(limit)
+    return {
+        "active": True,
+        "timed_out": timed_out,
+        "kind": kind,
+        "limit_seconds": float(limit),
+        "classification": (
+            V8_RESOURCE_UNAVAILABLE_CLASSIFICATION if timed_out else None
         ),
     }
 
@@ -708,6 +796,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     b1_enabled = bool(plan.get("v8_adaptive_stage_b1_only"))
     stage_bc_enabled = bool(plan.get("v8_adaptive_stage_bc_only"))
     v9_enabled = bool(plan.get("v9_source_bridge_only"))
+    v9_corrected_full_enabled = bool(
+        plan.get("v9_corrected_source_packet")
+    )
     timeout_seconds = int(
         V8_ADAPTIVE_TIMEOUT_SECONDS
         if stage_bc_enabled or v9_enabled
@@ -723,6 +814,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     active_timeout = (
         _v8_adaptive_stage_bc_total_timeout
         if stage_bc_enabled or v9_enabled
+        else _v9_full_spectrum_active_stage_timeout
+        if v9_corrected_full_enabled
         else _v8_adaptive_active_stage_timeout
         if adaptive_enabled
         else _v8_active_stage_timeout
@@ -1330,15 +1423,23 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                 "v8_stage_timeout": v8_timeout_decision,
                 "v8_resource_limits": {
                     "setup_or_factor_no_marker_seconds": (
-                        2 * V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS
+                        V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS
+                        if v9_corrected_full_enabled
+                        else 2 * V8_FULL_SPECTRUM_SETUP_TARGET_SECONDS
                     ),
                     "transform_or_symbol_no_marker_seconds": (
-                        2 * V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS
+                        V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS
+                        if v9_corrected_full_enabled
+                        else 2 * V8_FULL_SPECTRUM_TRANSFORM_TARGET_SECONDS
                     ),
                     "one_apply_hard_seconds": (
                         V8_FULL_SPECTRUM_ONE_APPLY_TARGET_SECONDS
                     ),
                     "total_wall_seconds": V8_FULL_SPECTRUM_TIMEOUT_SECONDS,
+                    "minimum_mem_available_bytes": (
+                        96 * 2**30 if v9_corrected_full_enabled else None
+                    ),
+                    "corrected_source_packet": v9_corrected_full_enabled,
                 },
             }
         )
@@ -1444,6 +1545,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_SOURCE_PACKET_ROOT_OPTION)
+    parser.add_argument(V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION)
     parser.add_argument("--watchdog-enabled", action="store_true")
     parser.add_argument("--bottom-route-only", action="store_true")
     parser.add_argument("--interface-packet-root")
@@ -1507,6 +1610,8 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
+        v9_source_packet_root=args.v9_source_packet_root,
+        v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:

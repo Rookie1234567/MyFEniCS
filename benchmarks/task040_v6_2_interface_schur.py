@@ -3153,10 +3153,23 @@ def run_v6_2_interface_schur(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_source_packet_root: str | Path | None = None,
+    v9_source_packet_manifest_sha256: str | None = None,
     v6_3_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
     v7_continuation: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run identity and exact qualification on one live current system."""
+
+    if (v9_source_packet_root is None) != (
+        v9_source_packet_manifest_sha256 is None
+    ):
+        raise ValueError(
+            "V9 corrected full-spectrum packet root and manifest SHA are a pair"
+        )
+    if v9_source_packet_root is not None and not v8_full_spectrum_only:
+        raise ValueError(
+            "V9 corrected source packet requires --v8-full-spectrum-only"
+        )
 
     if v8_adaptive_stage_b1_only and any(
         (
@@ -4354,6 +4367,42 @@ def run_v6_2_interface_schur(
                 run_v8_full_spectrum_two_source,
             )
 
+            v9_packet_fields: dict[str, Any] = {}
+            if v9_source_packet_root is not None:
+                from src.solvers.hybrid_bare_f_authority import build_current_bare_f_rhs
+                from src.solvers.hybrid_source_canonical_bridge import (
+                    build_current_source_bundle,
+                )
+
+                identity_observed = identity_preflight.get("observed", {})
+                if not isinstance(identity_observed, Mapping):
+                    identity_observed = {}
+                v9_provenance = {
+                    "input_sha256": str(input_sha256),
+                    "physical_model_sha256": str(physical_model_sha256),
+                }
+                for name in (
+                    "resolved_config_sha256",
+                    "selected_identity_sha256",
+                    "selected_manifest_sha256",
+                ):
+                    if identity_observed.get(name) is not None:
+                        v9_provenance[name] = identity_observed[name]
+                v9_packet_fields = {
+                    "v9_source_packet_root": str(v9_source_packet_root),
+                    "v9_source_packet_manifest_sha256": str(
+                        v9_source_packet_manifest_sha256
+                    ),
+                    "v9_current_source_sha": str(source_sha),
+                    "v9_current_source_builder": (
+                        lambda label: build_current_bare_f_rhs(system, label)
+                    ),
+                    "current_source_loader": (
+                        lambda label: build_current_source_bundle(system, action, label)
+                    ),
+                    "v9_source_provenance": v9_provenance,
+                }
+
             v8_marker_payload.update(
                 {
                     "system": system,
@@ -4378,6 +4427,7 @@ def run_v6_2_interface_schur(
                         "candidate": "D0_lower_memory",
                         "kind": "petsc_full_interface_schur",
                     },
+                    **v9_packet_fields,
                 }
             )
             result = run_v8_full_spectrum_two_source(v8_marker_payload)

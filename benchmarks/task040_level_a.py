@@ -305,6 +305,8 @@ TASK040_V5_REQUIRED_THREAD_ENV = (
     "VECLIB_MAXIMUM_THREADS",
     "BLIS_NUM_THREADS",
 )
+V9_SOURCE_PACKET_ROOT_OPTION = "--v9-source-packet-root"
+V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION = "--v9-source-packet-manifest-sha256"
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -366,6 +368,8 @@ __all__ = (
     "V9_SOURCE_BRIDGE_ONLY_PROFILE_ID",
     "V9_SOURCE_BRIDGE_ONLY_SCHEMA",
     "V9_SOURCE_BRIDGE_ONLY_SOURCES",
+    "V9_SOURCE_PACKET_ROOT_OPTION",
+    "V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -447,6 +451,8 @@ def build_task040_level_a_plan(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_source_packet_root: str | Path | None = None,
+    v9_source_packet_manifest_sha256: str | None = None,
     interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
@@ -461,6 +467,24 @@ def build_task040_level_a_plan(
     run_directory = Path(run_directory).resolve()
     if run_directory.exists():
         raise ValueError(f"Task040 run directory already exists: {run_directory}")
+    if (v9_source_packet_root is None) != (
+        v9_source_packet_manifest_sha256 is None
+    ):
+        raise ValueError(
+            "V9 corrected packet root and manifest SHA must be supplied together"
+        )
+    if v9_source_packet_root is not None and not v8_full_spectrum_only:
+        raise ValueError(
+            "V9 corrected packet parameters require --v8-full-spectrum-only"
+        )
+    if v9_source_packet_manifest_sha256 is not None and (
+        len(str(v9_source_packet_manifest_sha256)) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in str(v9_source_packet_manifest_sha256)
+        )
+    ):
+        raise ValueError("V9 source packet manifest SHA must be lowercase SHA256")
     plan = {
         "schema": TASK040_LEVEL_A_SCHEMA,
         "method": TASK040_LEVEL_A_METHOD,
@@ -887,6 +911,24 @@ def build_task040_level_a_plan(
                 ],
             }
         )
+        if v9_source_packet_root is not None:
+            plan.update(
+                {
+                    "v9_corrected_source_packet": True,
+                    "v9_source_packet_root": str(
+                        Path(v9_source_packet_root).resolve()
+                    ),
+                    "v9_source_packet_manifest_sha256": str(
+                        v9_source_packet_manifest_sha256
+                    ),
+                    "source_adapter": "v9_hash_bound_canonical_packet",
+                    "v9_source_markers": [
+                        "v9_full_spectrum_source_packet_validated",
+                        "v9_full_spectrum_external_owner_vector_ready",
+                        "v9_full_spectrum_random0_owner_vector_ready",
+                    ],
+                }
+            )
     if v8_adaptive_schwarz_only:
         plan.update(
             {
@@ -6492,6 +6534,8 @@ def run_task040_level_a(
     v8_adaptive_stage_b1_only: bool = False,
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
+    v9_source_packet_root: str | Path | None = None,
+    v9_source_packet_manifest_sha256: str | None = None,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
     watchdog_enabled: bool = False,
@@ -6907,6 +6951,8 @@ def run_task040_level_a(
             watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
             resource_callback=resource_callback,
             v8_full_spectrum_only=True,
+            v9_source_packet_root=v9_source_packet_root,
+            v9_source_packet_manifest_sha256=v9_source_packet_manifest_sha256,
         )
     if v7_moving_pml_full_state:
         from benchmarks.task040_v6_2_interface_schur import (
@@ -7367,6 +7413,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_SOURCE_PACKET_ROOT_OPTION)
+    parser.add_argument(V9_SOURCE_PACKET_MANIFEST_SHA256_OPTION)
     parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
@@ -7395,6 +7443,8 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
+        v9_source_packet_root=args.v9_source_packet_root,
+        v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
@@ -7440,6 +7490,8 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_b1_only=args.v8_adaptive_stage_b1_only,
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
+        v9_source_packet_root=args.v9_source_packet_root,
+        v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
