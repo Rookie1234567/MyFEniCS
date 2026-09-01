@@ -68,6 +68,9 @@ rayleigh tolerance         = 1e-6
 \eta_i = \frac{|\beta_i|}{|n_i|k_0}.
 ```
 
+这里的 `n_i` 明确指该物理 mode 在 ordered manifest 中的复数
+`refractive_index`，不是整数衍射级字段 `n`；`k_0=2\pi/13.5\ \mathrm{nm}`。
+
 完全相同的 `eta` 只按原 ordered manifest 的 `mode_index` 破同值。固定选择前 32 个；不得扫描 rank、window、side、polarization、weight 或 source。
 
 该规则在当前 authority 上必须得到：
@@ -87,6 +90,15 @@ selector identity 使用 canonical JSON schema `task038.v15.floquet-selection.v1
 ```text
 7a6dea2534b200c6572b0200acd77087c71ccb0e52a0d1a16dae75e108cee2c3
 ```
+
+上述 SHA 对应的唯一 payload 为：
+
+```json
+{"eligible_classifications":["near-cutoff","propagating"],"policy":"eligible_class_filter__normalized_abs_beta_ascending__mode_index_tiebreak","rank":32,"schema":"task038.v15.floquet-selection.v1","selected_mode_indices":[38,39,72,73,76,77,32,33,36,37,40,41,0,1,42,43,46,47,2,3,6,7,74,75,34,35,66,67,70,71,26,27],"source_mode_manifest_sha256":"dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"}
+```
+
+序列化规则固定为 `sort_keys=True`、`separators=(",", ":")`、
+`ensure_ascii=True`，随后以 ASCII bytes 计算 SHA256。
 
 若当前 manifest 不能精确产生上述结果，F0 失败并停止。不得用 hard-coded mode rows 绕过动态 inventory；测试和 checker 可以把上述值作为 formal authority。
 
