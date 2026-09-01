@@ -11,6 +11,7 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import src.solvers.floquet_background_hcurl_s3_formal as s3_formal
 import src.solvers.floquet_background_hcurl_s3_pilot as s3_pilot
 from src.common.config_3d import target_stage4_config
 from src.solvers.floquet_background_hcurl_s3_formal import (
@@ -29,6 +30,7 @@ from src.solvers.floquet_background_hcurl_s3_pilot import (
     S3B_EXTERNAL_SOURCE_LABEL,
     S3B_EXTERNAL_SOURCE_SEED,
     S3B_EXTERNAL_SOURCE_SIGN,
+    S3B_FGMRES_CONDITIONAL_TOTAL_IT,
     S3B_FGMRES_INITIAL_MAX_IT,
     S3B_FGMRES_RESTART,
     S3B_FIVE_SOURCE_INCOMPLETE,
@@ -534,6 +536,174 @@ def _diagonal_operator(size: int, comm: MPI.Comm) -> PETSc.Mat:
         matrix.setValue(row, row, value)
     matrix.assemble()
     return matrix
+
+
+@pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="serial/MPI2 only")
+def test_s3b_four_source_fixed_continuation_orchestration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    comm = MPI.COMM_WORLD
+    operator = _diagonal_operator(512, comm)
+    service = _BorrowedIdentityAction()
+    markers: list[str] = []
+    captured_gates: list[dict[str, object]] = []
+
+    class _FourSourceFactory:
+        def __init__(self) -> None:
+            self.build_order, self.source_refs = [], []
+            self.destroy_calls = self.release_calls = 0
+
+        def build(self, label: str) -> tuple[PETSc.Vec, dict[str, object]]:
+            self.build_order.append(label)
+            source = operator.createVecRight()
+            source.set(PETSc.ScalarType(1.0 + 0.1j))
+            source.assemble()
+            self.source_refs.append(source)
+            return source, {"label": label, "source_kind": "focused_test"}
+
+        def destroy(self) -> None:
+            self.destroy_calls += 1
+
+        def release(self) -> None:
+            self.release_calls += 1
+
+    factory = _FourSourceFactory()
+
+    def marker(stage: str, _payload: dict[str, object]) -> None:
+        markers.append(stage)
+
+    def capture_gate(
+        source_outcomes: dict[str, object], *, resource_ok: bool
+    ) -> dict[str, object]:
+        assert resource_ok is True
+        captured_gates.append(source_outcomes)
+        return {
+            "classification": S3B_FIVE_SOURCE_PASS,
+            "positive": True,
+            "gate_pass": True,
+            "next_stage": S3B_NEXT_FACTOR_FREE_PRODUCTIONIZATION,
+            "task40_open": True,
+        }
+
+    monkeypatch.setattr(
+        s3_formal,
+        "adjudicate_s3_b1_final_five_source_bare_f_gate",
+        capture_gate,
+    )
+    external_outcome = {
+        "postsolve": {
+            "true_residual_relative": 1.0e-6,
+            "finite": True,
+            "iteration": S3B_FGMRES_CONDITIONAL_TOTAL_IT,
+        },
+        "finite": True,
+        "checkpoint_complete": True,
+        "breakdown": False,
+        "happy_breakdown": False,
+    }
+    external_gate = {
+        "classification": S3B_CONDITIONAL_PASS,
+        "positive": True,
+        "next_stage": S3B_NEXT_FIVE_SOURCE_BOTTOM,
+    }
+    try:
+        result = s3_formal._qualify_s3_b1_remaining_sources(
+            operator,
+            service,
+            factory,
+            external_outcome,
+            external_gate,
+            marker_callback=marker,
+        )
+        remaining = [
+            label
+            for label in V5_BARE_F_SOURCE_LABELS
+            if label != S3B_EXTERNAL_SOURCE_LABEL
+        ]
+        assert factory.build_order == remaining
+        assert len(factory.source_refs) == 4
+        assert tuple(captured_gates[0]) == tuple(V5_BARE_F_SOURCE_LABELS)
+        assert all(value is not None for value in captured_gates[0].values())
+        assert result["source_order"] == list(V5_BARE_F_SOURCE_LABELS)
+        for label in remaining:
+            per_source = result["per_source"][label]
+            assert per_source["continuation_attempted"] is True
+            assert (
+                per_source["initial"]["iterations"],
+                per_source["conditional"]["total_iterations"],
+                per_source["setup_count"],
+            ) == (64, 256, 1)
+            assert (
+                per_source["conditional"]["fixed_five_source_qualification"] is True
+            )
+            assert (
+                per_source["conditional"]["qualification_authorization"]["authorized"]
+                is True
+            )
+            assert (
+                per_source["setup_reused"],
+                per_source["service_setup_reused"],
+                per_source["ksp_reused"],
+                per_source["solver_destroyed"],
+                per_source["source_destroyed"],
+            ) == (True, True, False, True, True)
+        assert result["service_apply_count_delta"] > 0
+        assert result["operator_borrowed"] is True
+        assert result["service_borrowed"] is True
+        assert result["factory_released"] is False
+        assert operator.getSize() == (512, 512)
+        assert service.destroyed is False
+        assert factory.destroy_calls == factory.release_calls == 0
+        assert markers[0] == "s3b_b1_four_source_begin"
+        cursor = 1
+        for label in remaining:
+            suffixes = (
+                "begin",
+                "ready",
+                "fgmres_setup",
+                "r0",
+                "r8",
+                "r16",
+                "r32",
+                "r64",
+                "r128",
+                "r192",
+                "r256",
+                "solve_end",
+                "cleanup",
+            )
+            for suffix in suffixes:
+                cursor = (
+                    markers.index(f"s3b_b1_four_source_{label}_{suffix}", cursor) + 1
+                )
+        assert markers[-1] == "s3b_b1_four_source_final_gate"
+
+        negative_factory = _FourSourceFactory()
+        negative_markers: list[str] = []
+        with pytest.raises(RuntimeError, match="passed five-source Gate"):
+            s3_formal._qualify_s3_b1_remaining_sources(
+                operator,
+                service,
+                negative_factory,
+                external_outcome,
+                {
+                    "classification": s3_pilot.S3B_CONDITIONAL_UNSTABLE,
+                    "positive": False,
+                    "next_stage": S3B_NEXT_FIXED_LOR,
+                },
+                marker_callback=lambda stage, _payload: negative_markers.append(
+                    stage
+                ),
+            )
+        assert (
+            negative_factory.build_order,
+            negative_factory.source_refs,
+            negative_markers,
+            len(captured_gates),
+        ) == ([], [], [], 1)
+    finally:
+        service.destroy()
+        operator.destroy()
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="serial/MPI2 only")

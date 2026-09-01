@@ -32,6 +32,7 @@ from .floquet_background_hcurl_block_transform import (
     create_active_trace_bloch_transforms,
 )
 from .floquet_background_hcurl_s3_pilot import (
+    S3B_CONDITIONAL_PASS,
     S3B_EXPECTED_ACTIVE_ROWS,
     S3B_EXPECTED_MODE_COUNT,
     S3B_EXPECTED_ROWS_PER_MODE,
@@ -47,8 +48,10 @@ from .floquet_background_hcurl_s3_pilot import (
     S3B_RSS_HARD_BYTES,
     S3B_SWAP_LIMIT_BYTES,
     S3B_WALL_CAP_SECONDS,
+    S3CurrentLayoutSourceFactory,
     S3FixedRightFgmres,
     adjudicate_s3_b1_conditional_gate,
+    adjudicate_s3_b1_final_five_source_bare_f_gate,
     adjudicate_s3_b1_initial_gate,
     audit_s3_preconditioner_one_apply,
     build_s3_b1_background_config,
@@ -1281,6 +1284,219 @@ def compare_s3_candidate_source_to_baseline(
             "relative_norm_error": relative_error,
             "candidate_source_norm": candidate_norm,
             "baseline_source_norm": baseline_norm,
+        }
+    )
+
+
+def _qualify_s3_b1_remaining_sources(
+    operator: PETSc.Mat,
+    service: Any,
+    source_factory: S3CurrentLayoutSourceFactory,
+    external_conditional_outcome: Mapping[str, Any],
+    external_conditional_gate: Mapping[str, Any],
+    *,
+    marker_callback: Any,
+) -> dict[str, Any]:
+    """Qualify the four non-external V5 sources on one borrowed service."""
+
+    comm = operator.getComm().tompi4py()
+    local_exception = None
+    try:
+        if not callable(marker_callback):
+            raise TypeError("four-source marker_callback must be callable on every rank")
+        if not isinstance(external_conditional_outcome, Mapping) or not isinstance(
+            external_conditional_gate, Mapping
+        ):
+            raise TypeError("four-source Gate inputs must be mappings")
+        if (
+            external_conditional_gate.get("classification") != S3B_CONDITIONAL_PASS
+            or external_conditional_gate.get("positive") is not True
+            or external_conditional_gate.get("next_stage") != S3B_NEXT_FIVE_SOURCE_BOTTOM
+        ):
+            raise ValueError("four-source qualification requires the passed five-source Gate")
+    except Exception as exc:
+        local_exception = exc
+    _raise_collective_error(
+        comm, "four-source qualification precondition", local_exception
+    )
+
+    from .hybrid_bare_f_authority import V5_BARE_F_SOURCE_LABELS
+
+    source_labels = tuple(str(label) for label in V5_BARE_F_SOURCE_LABELS)
+    remaining_labels = tuple(label for label in source_labels if label != S3B_EXTERNAL_SOURCE_LABEL)
+
+    def gate_outcome(result: Mapping[str, Any]) -> dict[str, Any]:
+        return {
+            key: result.get(key)
+            for key in (
+                "postsolve",
+                "finite",
+                "checkpoint_complete",
+                "breakdown",
+                "happy_breakdown",
+            )
+        }
+
+    def emit(stage: str, payload: Mapping[str, Any] | None = None) -> None:
+        marker_callback(stage, _jsonable(dict(payload or {})))
+
+    service_apply_before = _action_count(service)
+    source_audits: dict[str, Any] = {}
+    source_outcomes: dict[str, Any] = dict.fromkeys(source_labels)
+    source_outcomes[S3B_EXTERNAL_SOURCE_LABEL] = gate_outcome(external_conditional_outcome)
+    per_source: dict[str, dict[str, Any]] = {}
+    emit("s3b_b1_four_source_begin", {"source_order": list(source_labels)})
+
+    for label in remaining_labels:
+        source = solver = None
+        source_audit = initial = conditional = None
+        setup_count = None
+        full_initial = source_destroyed = solver_destroyed = False
+        try:
+            emit(f"s3b_b1_four_source_{label}_begin", {"label": label})
+            source, source_audit = source_factory.build(label)
+            source_audits[label] = _jsonable(source_audit)
+            emit(
+                f"s3b_b1_four_source_{label}_ready",
+                {"label": label, "source_audit": source_audit},
+            )
+
+            solver = S3FixedRightFgmres(operator, service)
+            setup_count = int(solver.diagnostics["setup_count"])
+            if setup_count != 1:
+                raise RuntimeError(f"four-source solver setup count is not one for {label}")
+            emit(
+                f"s3b_b1_four_source_{label}_fgmres_setup",
+                {
+                    "label": label,
+                    "setup_count": setup_count,
+                    "service_setup_reused": True,
+                    "ksp_reused": False,
+                },
+            )
+
+            def checkpoint_callback(
+                row: Mapping[str, Any], _label: str = label
+            ) -> None:
+                emit(
+                    f"s3b_b1_four_source_{_label}_r{int(row['iteration'])}",
+                    {"label": _label, "checkpoint": row},
+                )
+
+            initial = solver.solve_initial(
+                source, label, checkpoint_callback=checkpoint_callback
+            )
+            full_initial = bool(
+                initial.get("iterations") == S3B_FGMRES_INITIAL_MAX_IT
+                and initial.get("checkpoint_complete") is True
+                and initial.get("finite") is True
+                and initial.get("breakdown") is False
+            )
+            if full_initial:
+                conditional = solver.solve_conditional_to_256(
+                    source,
+                    label,
+                    initial_gate=None,
+                    checkpoint_callback=checkpoint_callback,
+                    fixed_five_source_qualification=True,
+                )
+                if (
+                    conditional.get("fixed_five_source_qualification") is not True
+                    or conditional.get("setup_count") != 1
+                    or conditional.get("setup_reused") is not True
+                ):
+                    raise RuntimeError(
+                        f"four-source fixed continuation contract failed for {label}"
+                    )
+            final_result = conditional if conditional is not None else initial
+            if not isinstance(final_result, Mapping):
+                raise TypeError(f"four-source solve returned no result for {label}")
+            source_outcomes[label] = gate_outcome(final_result)
+            emit(
+                f"s3b_b1_four_source_{label}_solve_end",
+                {
+                    "label": label,
+                    "leg": "conditional" if conditional is not None else "initial",
+                    "full_initial": full_initial,
+                    "early_happy": bool(
+                        initial.get("happy_breakdown") is True
+                        and int(
+                            initial.get("iterations", S3B_FGMRES_INITIAL_MAX_IT)
+                        )
+                        < S3B_FGMRES_INITIAL_MAX_IT
+                    ),
+                },
+            )
+        finally:
+            cleanup_messages: list[str] = []
+            for name, obj in (("solver", solver), ("source", source)):
+                if obj is None:
+                    continue
+                try:
+                    obj.destroy()
+                    if name == "solver":
+                        solver_destroyed = True
+                    else:
+                        source_destroyed = True
+                except Exception as exc:
+                    cleanup_messages.append(f"{name}: {type(exc).__name__}: {exc}")
+            _raise_collective_error(
+                comm,
+                f"four-source {label} cleanup",
+                RuntimeError("; ".join(cleanup_messages)) if cleanup_messages else None,
+            )
+            per_source[label] = {
+                "initial": _jsonable(initial),
+                "conditional": _jsonable(conditional),
+                "continuation_attempted": conditional is not None,
+                "setup_count": setup_count,
+                "setup_reused": conditional is not None and conditional.get("setup_reused") is True,
+                "service_setup_reused": True,
+                "ksp_reused": False,
+                "solver_destroyed": solver_destroyed,
+                "source_destroyed": source_destroyed,
+            }
+            emit(
+                f"s3b_b1_four_source_{label}_cleanup",
+                {
+                    "label": label,
+                    "solver_destroyed": solver_destroyed,
+                    "source_destroyed": source_destroyed,
+                },
+            )
+
+    if any(value is None for value in source_outcomes.values()):
+        raise RuntimeError("four-source qualification left a V5 source outcome unset")
+    final_gate = adjudicate_s3_b1_final_five_source_bare_f_gate(
+        source_outcomes, resource_ok=True
+    )
+    emit(
+        "s3b_b1_four_source_final_gate",
+        {"final_gate": final_gate},
+    )
+    service_apply_after = _action_count(service)
+    service_apply_delta = (
+        service_apply_after - service_apply_before
+        if service_apply_before is not None and service_apply_after is not None
+        else None
+    )
+    return _jsonable(
+        {
+            "external_conditional_gate": external_conditional_gate,
+            "source_order": list(source_labels),
+            "source_audits": source_audits,
+            "source_outcomes": source_outcomes,
+            "per_source": per_source,
+            "final_gate": final_gate,
+            "classification": final_gate["classification"],
+            "positive": final_gate["positive"],
+            "next_stage": final_gate["next_stage"],
+            "service_apply_count_before": service_apply_before,
+            "service_apply_count_after": service_apply_after,
+            "service_apply_count_delta": service_apply_delta,
+            "operator_borrowed": True,
+            "service_borrowed": True,
+            "factory_released": False,
         }
     )
 
