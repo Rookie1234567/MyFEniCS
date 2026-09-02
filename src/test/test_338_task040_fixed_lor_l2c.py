@@ -14,6 +14,7 @@ from benchmarks.task040_level_a import (
     V9_E_LOR_L2_ONLY_FLAG,
     V9_E_LOR_L2_ONLY_HARD_STOP_BYTES,
     V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS,
+    _synchronize_after_plan,
     build_task040_level_a_plan,
 )
 from benchmarks.task040_level_a_watchdog import (
@@ -84,6 +85,30 @@ def test_l2c_plan_binds_only_official_inputs_and_watchdog(tmp_path: Path) -> Non
             **values,
             v8_full_spectrum_only=True,
         )
+
+
+def test_l2c_plan_barrier_orders_shared_run_directory(tmp_path: Path) -> None:
+    official, _ = _paths(tmp_path)
+    shared_path = MPI.COMM_WORLD.bcast(
+        str(tmp_path / "l2c-plan-barrier"), root=0
+    )
+    run_directory = Path(shared_path)
+    assert not run_directory.exists()
+    if MPI.COMM_WORLD.rank == 1:
+        time.sleep(0.05)
+    plan = build_task040_level_a_plan(
+        input_path=official,
+        exact_spool_root=run_directory.parent / "unused_exact_spool",
+        run_directory=run_directory,
+        source_sha="b" * 40,
+        v9_e_lor_l2_only=True,
+    )
+    assert plan["run_directory"] == str(run_directory.resolve())
+    _synchronize_after_plan(MPI.COMM_WORLD)
+    if MPI.COMM_WORLD.rank == 0:
+        run_directory.mkdir()
+    MPI.COMM_WORLD.Barrier()
+    assert run_directory.is_dir()
 
 
 def test_l2c_marker_collective_keeps_nonroot_in_collective() -> None:

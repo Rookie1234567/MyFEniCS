@@ -8231,6 +8231,7 @@ def main(argv: list[str] | None = None) -> int:
         v9_source_packet_manifest_sha256=args.v9_source_packet_manifest_sha256,
         interface_packet_root=args.interface_packet_root,
     )
+    _synchronize_after_plan(MPI.COMM_WORLD)
     if args.dry_run:
         if MPI.COMM_WORLD.rank == 0:
             print(json.dumps(plan, sort_keys=True))
@@ -8373,6 +8374,10 @@ def main(argv: list[str] | None = None) -> int:
             encoding="utf-8",
         )
     return 0
+
+
+def _synchronize_after_plan(comm: MPI.Intracomm) -> None:
+    comm.Barrier()
 
 
 if __name__ == "__main__":
