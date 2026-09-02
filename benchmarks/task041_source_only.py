@@ -36,11 +36,11 @@ TASK041_INPUT = "input/official/task041/5nm_p6h4_m480_mpi1.dat"
 TASK041_SURFACE_QUADRATURE_DEGREE = 37
 TASK041_MIN_MEMAVAILABLE_BYTES = 384 * 2**30
 TASK041_TOLERANCE = 1.0e-12
-TASK041_AUTHORITY_PARENT_SHA = (
-    "98610d2826342b963e0243ff57dd53753a82d0379021c89130069a9a0900ebd0"
-)
 TASK041_AUTHORITY_CHILD_SHA = (
     "f60389e2e4dd1541046812588a9a7e09251e2b46a14face00eb57c953be3b98b"
+)
+TASK041_AUTHORITY_PARENT_SHA = (
+    "98610d2826342b963e0243ff57dd53753a82d0379021c89130069a9a0900ebd0"
 )
 TASK041_AUTHORITY_SOURCE_SHA = "17cf5ae28ccdcf7b0a28548ec1296b9956390509"
 TASK041_AUTHORITY_INPUT_SHA = (
@@ -299,7 +299,7 @@ def load_verified_shards(
     }
 
 
-def load_source_authority(
+def _load_source_authority_raw(
     authority_root: str | Path,
     authority_manifest_sha256: str,
 ) -> dict[str, Any]:
@@ -588,6 +588,286 @@ def _validate_repository_identity(repo_root: Path, source_sha: str) -> dict[str,
     if failures:
         raise SourceOnlyIdentityError(tuple(failures))
     return identity
+
+
+def _canonical_descriptor_hashes(keys, beta_metadata):
+    from src.solvers.hybrid_interface_basis import (
+        canonical_external_mode_metadata_sha256,
+        canonical_mode_keys_sha256,
+    )
+
+    return {
+        "canonical_key_list_sha256": canonical_mode_keys_sha256(keys),
+        "resolved_mode_metadata_sha256": canonical_external_mode_metadata_sha256(
+            beta_metadata
+        ),
+    }
+
+
+def _extract_current_bottom_inventory(external_mode_inventory):
+    from collections.abc import Mapping
+
+    if not isinstance(external_mode_inventory, Mapping):
+        raise SourceOnlyIdentityError(("current external inventory is not a mapping",))
+    keys = external_mode_inventory.get("keys")
+    modes = external_mode_inventory.get("modes")
+    count = external_mode_inventory.get("count")
+    if not isinstance(keys, list) or not isinstance(modes, list):
+        raise SourceOnlyIdentityError(("current inventory keys/modes are not lists",))
+    if not isinstance(count, int) or len(keys) != count or len(modes) != count:
+        raise SourceOnlyIdentityError(("current inventory count/list lengths differ",))
+    bottom_keys = []
+    bottom_modes = []
+    try:
+        for key, mode in zip(keys, modes, strict=True):
+            if not isinstance(key, Mapping):
+                raise SourceOnlyIdentityError(("inventory key is not a mapping",))
+            if not isinstance(mode, Mapping):
+                raise TypeError("current inventory mode is not a mapping")
+            mode_key = {
+                "side": mode["side"],
+                "m": mode["m"],
+                "n": mode["n"],
+                "polarization": mode["polarization"],
+            }
+            if dict(key) != mode_key:
+                raise ValueError("current inventory mode key differs")
+            if mode["side"] == "bottom":
+                bottom_keys.append(dict(key))
+                bottom_modes.append(dict(mode))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SourceOnlyIdentityError(
+            (f"current inventory key binding failed: {exc}",)
+        ) from exc
+    return bottom_keys, bottom_modes
+
+
+def bind_current_external_mode_authority(
+    authority, external_mode_inventory, resolved_sha
+):
+    """Bind current bottom modes to the verified persisted descriptor."""
+    if not isinstance(authority, Mapping):
+        raise SourceOnlyIdentityError(("loader authority is not a mapping",))
+    if "frozen_descriptor" not in authority:
+        raise SourceOnlyIdentityError(("loader authority lacks frozen_descriptor",))
+    frozen = authority["frozen_descriptor"]
+    if not isinstance(frozen, Mapping):
+        raise SourceOnlyIdentityError(("frozen descriptor is not a mapping",))
+
+    required = (
+        "count",
+        "canonical_keys",
+        "beta_metadata",
+        "canonical_key_list_sha256",
+        "resolved_mode_metadata_sha256",
+        "legacy_beta_metadata_sha256",
+        "legacy_beta_metadata_sha256_expected",
+        "index177_key",
+        "resolved_config_sha256",
+    )
+    failures = [
+        f"frozen external authority missing {field}"
+        for field in required
+        if field not in frozen
+    ]
+    if failures:
+        raise SourceOnlyIdentityError(tuple(failures))
+
+    sha_fields = (
+        "canonical_key_list_sha256",
+        "resolved_mode_metadata_sha256",
+        "legacy_beta_metadata_sha256",
+        "legacy_beta_metadata_sha256_expected",
+        "resolved_config_sha256",
+    )
+    for field in sha_fields:
+        value = frozen[field]
+        if not isinstance(value, str) or len(value) != 64:
+            failures.append(f"frozen {field} is not a 64-character hex string")
+            continue
+        try:
+            int(value, 16)
+        except ValueError:
+            failures.append(f"frozen {field} is not hexadecimal")
+
+    canonical_keys = frozen["canonical_keys"]
+    beta_metadata = frozen["beta_metadata"]
+    if not isinstance(canonical_keys, list):
+        failures.append("frozen canonical_keys is not a list")
+    if not isinstance(beta_metadata, list):
+        failures.append("frozen beta_metadata is not a list")
+    if frozen["count"] != 296:
+        failures.append("frozen external authority count is not 296")
+    if isinstance(canonical_keys, list) and len(canonical_keys) != frozen["count"]:
+        failures.append("frozen canonical key count differs")
+    if isinstance(beta_metadata, list) and len(beta_metadata) != frozen["count"]:
+        failures.append("frozen beta metadata count differs")
+    if (
+        frozen["legacy_beta_metadata_sha256"]
+        != frozen["legacy_beta_metadata_sha256_expected"]
+    ):
+        failures.append("frozen legacy beta hashes differ")
+    if (
+        not isinstance(canonical_keys, list)
+        or len(canonical_keys) <= 177
+        or frozen["index177_key"] != canonical_keys[177]
+    ):
+        failures.append("frozen index177_key is not bound to frozen canonical keys")
+    if failures:
+        raise SourceOnlyIdentityError(tuple(failures))
+
+    try:
+        current_keys, current_beta = _extract_current_bottom_inventory(
+            external_mode_inventory
+        )
+    except SourceOnlyIdentityError:
+        raise
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SourceOnlyIdentityError(
+            (f"current inventory is invalid: {exc}",)
+        ) from exc
+
+    failures = []
+    if len(current_keys) != frozen["count"]:
+        failures.append("current/frozen bottom count differs")
+    if current_keys != canonical_keys:
+        failures.append("current/frozen bottom canonical keys differ")
+    if current_beta != beta_metadata:
+        failures.append("current/frozen bottom beta metadata differs")
+    if not isinstance(resolved_sha, str) or len(resolved_sha) != 64:
+        failures.append("current resolved config SHA is not a 64-character hex string")
+    else:
+        try:
+            int(resolved_sha, 16)
+        except ValueError:
+            failures.append("current resolved config SHA is not hexadecimal")
+    if len(current_keys) <= 177:
+        failures.append("current canonical keys do not contain index177")
+    if failures:
+        raise SourceOnlyIdentityError(tuple(failures))
+
+    try:
+        current_hashes = _canonical_descriptor_hashes(current_keys, current_beta)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SourceOnlyIdentityError(
+            (f"current canonical authority hashing failed: {exc}",)
+        ) from exc
+    failures = []
+    for field in ("canonical_key_list_sha256", "resolved_mode_metadata_sha256"):
+        if current_hashes[field] != frozen[field]:
+            failures.append(f"current/frozen {field} differs")
+    if current_keys[177] != frozen["index177_key"]:
+        failures.append("current index177_key differs from frozen authority")
+    if failures:
+        raise SourceOnlyIdentityError(tuple(failures))
+
+    current = dict(frozen)
+    current.update(
+        {
+            "canonical_keys": list(current_keys),
+            "beta_metadata": list(current_beta),
+            **current_hashes,
+            "index177_key": current_keys[177],
+            "resolved_config_sha256": resolved_sha,
+        }
+    )
+    audit = {
+        "frozen_count": frozen["count"],
+        "current_count": len(current_keys),
+        "frozen_index177_key": frozen["index177_key"],
+        "frozen_canonical_key_list_sha256": frozen["canonical_key_list_sha256"],
+        "current_canonical_key_list_sha256": current_hashes[
+            "canonical_key_list_sha256"
+        ],
+        "frozen_resolved_mode_metadata_sha256": frozen["resolved_mode_metadata_sha256"],
+        "current_resolved_mode_metadata_sha256": current_hashes[
+            "resolved_mode_metadata_sha256"
+        ],
+        "frozen_legacy_beta_metadata_sha256": frozen["legacy_beta_metadata_sha256"],
+        "frozen_legacy_beta_metadata_sha256_expected": frozen[
+            "legacy_beta_metadata_sha256_expected"
+        ],
+        "frozen_resolved_config_sha256": frozen["resolved_config_sha256"],
+        "current_resolved_config_sha256": resolved_sha,
+        "nonphysical_config_identity_changed": (
+            resolved_sha != frozen["resolved_config_sha256"]
+        ),
+        "physical_external_inventory_exact": True,
+        "legacy_beta_metadata_policy": "frozen_opaque_not_recomputed",
+        "frozen_manifest_beta_metadata_reproducible": False,
+    }
+    return current, audit
+
+
+def _extract_frozen_external_mode_descriptor(parent):
+    from collections.abc import Mapping
+
+    try:
+        identity_preflight = parent["identity_preflight"]
+        if not isinstance(identity_preflight, Mapping):
+            raise TypeError("identity_preflight is not a mapping")
+        if identity_preflight.get("pass") is not True:
+            raise ValueError("identity_preflight.pass is not true")
+        descriptor = identity_preflight["external_mode_authority"]
+        if not isinstance(descriptor, Mapping):
+            raise TypeError("external_mode_authority is not a mapping")
+        required = (
+            "count",
+            "canonical_keys",
+            "beta_metadata",
+            "canonical_key_list_sha256",
+            "resolved_mode_metadata_sha256",
+            "legacy_beta_metadata_sha256",
+            "legacy_beta_metadata_sha256_expected",
+            "index177_key",
+            "resolved_config_sha256",
+        )
+        missing = tuple(field for field in required if field not in descriptor)
+        if missing:
+            raise KeyError(f"missing descriptor fields: {', '.join(missing)}")
+        if descriptor["count"] != 296:
+            raise ValueError("frozen external authority count is not 296")
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SourceOnlyIdentityError((f"invalid external authority: {exc}",)) from exc
+    try:
+        return json.loads(json.dumps(descriptor, sort_keys=True))
+    except (TypeError, ValueError) as exc:
+        raise SourceOnlyIdentityError(
+            (f"frozen descriptor is not JSONable: {exc}",)
+        ) from exc
+
+
+def load_source_authority(authority_root, authority_manifest_sha256):
+    authority = _load_source_authority_raw(authority_root, authority_manifest_sha256)
+    root = Path(authority_root).resolve()
+    parent_path = root / "v9_source_bridge_manifest.json"
+    try:
+        parent_bytes = parent_path.read_bytes()
+        if authority_manifest_sha256 != TASK041_AUTHORITY_PARENT_SHA:
+            raise ValueError("unexpected Task41 authority parent SHA")
+        if hashlib.sha256(parent_bytes).hexdigest() != TASK041_AUTHORITY_PARENT_SHA:
+            raise ValueError("parent manifest SHA changed after shard validation")
+        parent = json.loads(parent_bytes)
+        descriptor = _extract_frozen_external_mode_descriptor(parent)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise SourceOnlyIdentityError(
+            (f"cannot load frozen descriptor: {exc}",)
+        ) from exc
+    result = dict(authority)
+    result["frozen_descriptor"] = descriptor
+    result["frozen_descriptor_record"] = {
+        field: descriptor[field]
+        for field in (
+            "count",
+            "canonical_key_list_sha256",
+            "resolved_mode_metadata_sha256",
+            "legacy_beta_metadata_sha256",
+            "legacy_beta_metadata_sha256_expected",
+            "index177_key",
+            "resolved_config_sha256",
+        )
+    }
+    return result
 
 
 def _environment_snapshot() -> dict[str, Any]:
@@ -896,6 +1176,15 @@ def run_source_only(
             canonical_to_current_roundtrip_relative,
         )
 
+        current_resolved_sha = result["identity"]["current"]["resolved_config_sha256"]
+        current_external_mode_authority, authority_binding_audit = (
+            bind_current_external_mode_authority(
+                authority,
+                spec.as_jsonable()["derived"]["external_mode_inventory"],
+                current_resolved_sha,
+            )
+        )
+        result["authority"]["external_mode_binding"] = authority_binding_audit
         system = assemble_current_bare_f_authority_system(
             cfg,
             side="bottom",
@@ -903,6 +1192,8 @@ def run_source_only(
             top_interface_z_nm=110.0,
             source_work_directory=root / "source_work",
             selected_mode_provider=None,
+            external_mode_authority=current_external_mode_authority,
+            external_mode_current_resolved_config_sha256=current_resolved_sha,
             action_only=True,
             comm=comm,
         )

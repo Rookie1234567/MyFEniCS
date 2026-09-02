@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import benchmarks.task041_source_only as source_only
+from benchmarks import task041_source_only as source_only
 from benchmarks.task041_source_only import (
     IMPLEMENTATION_FAILURE,
     REFERENCE_SOURCE_SEMANTICS_CHANGED,
@@ -37,8 +37,81 @@ from src.io.input_validation import (
     task041_material_provenance,
     task041_profile_errors,
 )
+from src.solvers import hybrid_interface_basis
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_loader_shape_binds_current_external_descriptor(monkeypatch):
+    """The verified loader shape is consumable without changing frozen data."""
+    monkeypatch.setattr(
+        hybrid_interface_basis,
+        "canonical_mode_keys_sha256",
+        lambda value: (
+            "1" * 64
+            if value == keys
+            else pytest.fail("key hash did not receive canonical keys")
+        ),
+    )
+    monkeypatch.setattr(
+        hybrid_interface_basis,
+        "canonical_external_mode_metadata_sha256",
+        lambda value: (
+            "2" * 64
+            if value == beta
+            else pytest.fail("metadata hash did not receive full records")
+        ),
+    )
+    keys = [
+        {"side": "bottom", "m": index, "n": 0, "polarization": "s"}
+        for index in range(296)
+    ]
+    beta = [
+        {
+            "side": "bottom",
+            "m": index,
+            "n": 0,
+            "polarization": "s",
+            "beta": [1.0, 0.0],
+            "propagating": True,
+            "rayleigh_warning": False,
+        }
+        for index in range(296)
+    ]
+    frozen = {
+        "count": 296,
+        "canonical_keys": keys,
+        "beta_metadata": beta,
+        "canonical_key_list_sha256": "1" * 64,
+        "resolved_mode_metadata_sha256": "2" * 64,
+        "legacy_beta_metadata_sha256": "3" * 64,
+        "legacy_beta_metadata_sha256_expected": "3" * 64,
+        "index177_key": keys[177],
+        "resolved_config_sha256": "f" * 64,
+    }
+    verified_parent = {
+        "identity_preflight": {
+            "pass": True,
+            "external_mode_authority": frozen,
+        }
+    }
+    loaded = {
+        "frozen_descriptor": source_only._extract_frozen_external_mode_descriptor(
+            verified_parent
+        )
+    }
+    current, audit = source_only.bind_current_external_mode_authority(
+        loaded,
+        {"count": 296, "keys": keys, "modes": beta},
+        "a" * 64,
+    )
+    assert current["resolved_config_sha256"] == "a" * 64
+    assert current["legacy_beta_metadata_sha256"] == "3" * 64
+    assert current["legacy_beta_metadata_sha256_expected"] == "3" * 64
+    assert audit["physical_external_inventory_exact"] is True
+    assert current["index177_key"] == keys[177]
+
+
 INPUT = ROOT / TASK041_INPUT
 
 
