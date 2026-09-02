@@ -71,3 +71,14 @@ swap、nonfinite Gate 不得重跑。本次是缺少 h50 source 定义的数学�
 下一步需主线程明确二选一：提供绑定 p6/h50 mesh、mode、source identity 的合法
 R3 source 定义/映射后继续 Q1；或明确授权将 source-authority blocker 视为 Q 关闭
 并进入 W0。本 response 不替 Review 做选择。
+
+## 用户最新明确的 MPI 资源口径覆盖
+
+| 项目 | 冻结口径 |
+|---|---|
+| MPI1 | 完整 process-tree RSS `< 2,000,000,000 B` 是严格硬资源 Gate。 |
+| MPI2 | 即使 RSS 超过 2 GB，也只记录精确峰值；不得仅因 RSS 关闭 Q 或判定资源 Gate 失败。 |
+| MPI2 其他条件 | 数值、finite、linear/repeatable、input unchanged、合法 high-space primal、provenance、swap=0 与对象生命周期仍必须通过。 |
+| 工程 bug | path/cache/import/runner/JIT/provenance 等非真实数值或资源 Gate 问题，保留旧证据后唯一归因、窄修并重试；不得借此放宽数值阈值、修改物理或扫描参数。 |
+
+Q1.1 v2 的既有 negative artifact 仍永久保留、不覆盖、不重分类；本口径覆盖只适用于后续 MPI2 资源判定。
