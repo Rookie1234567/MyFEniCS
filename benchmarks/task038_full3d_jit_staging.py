@@ -275,12 +275,17 @@ def _pid_vanished(pid: int) -> bool:
     except OSError:
         return False
     try:
-        state = _status_text(pid).get("State", "").split(maxsplit=1)[0]
+        values = _status_text(pid)
+        state = values.get("State", "").split(maxsplit=1)[0]
     except (FileNotFoundError, ProcessLookupError):
         return True
     except OSError:
         return False
-    return state in {"Z", "X", "x"}
+    if not state:
+        return False
+    if state in {"Z", "X", "x"}:
+        return True
+    return all(name not in values for name in ("VmSize", "VmRSS", "VmSwap"))
 
 
 def _live_parent_map() -> dict[int, list[int]]:

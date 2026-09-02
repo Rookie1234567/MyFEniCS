@@ -91,10 +91,10 @@ def test_helper_root_markers_process_and_cache_contract(tmp_path: Path, monkeypa
     real_stat = staging.Path.stat
     real_status = staging._status_text
 
-    def fake_stat(path):
+    def fake_stat(path, **kwargs):
         if str(path) in {f"/proc/{zombie_pid}/stat", f"/proc/{dead_pid}/stat"}:
             return None
-        return real_stat(path)
+        return real_stat(path, **kwargs)
 
     def fake_status(pid):
         if pid == zombie_pid:
@@ -157,6 +157,13 @@ def test_helper_root_markers_process_and_cache_contract(tmp_path: Path, monkeypa
     assert manifest["artifacts"][0]["relative_path"] == "one.c"
     assert manifest["artifacts"][0]["sha256"] == hashlib.sha256(b"abc").hexdigest()
     assert marker_files(layout["marker_dir"])[-1].name == "001_fresh_cache_created.json"
+
+
+def test_pid_without_userspace_status_is_terminal(monkeypatch) -> None:
+    pid = 2_000_000_003
+    monkeypatch.setattr(staging.Path, "stat", lambda _path, **_kwargs: object())
+    monkeypatch.setattr(staging, "_status_text", lambda _pid: {"State": "R (running)"})
+    assert staging._pid_vanished(pid) is True
 
 
 def test_runner_emits_current_marker_and_process_facts(tmp_path: Path) -> None:
