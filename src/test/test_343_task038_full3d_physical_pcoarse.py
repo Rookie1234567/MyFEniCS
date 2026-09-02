@@ -471,6 +471,88 @@ def test_r3_long_tail_composes_current_rhs_action_and_p63(monkeypatch) -> None:
         p3_matrix.destroy()
 
 
+def test_action_identity_homogenizes_transferred_full_primal(monkeypatch) -> None:
+    p6_matrix = _diagonal((2.0, 3.0, 4.0, 5.0))
+    p3_matrix = _diagonal((2.0, 3.0, 4.0, 5.0))
+    seen = []
+    algebraic_vectors = []
+
+    class _CapturingAction(_Action):
+        def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            seen.append(source.array.copy())
+            super().apply(source, target)
+
+    class _TransferWithSlave(_Transfer):
+        def apply_primal_into(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            super().apply_primal_into(source, target)
+            target.array[0] = 7.0
+
+    class _FakeFunction:
+        def __init__(self, _space: object) -> None:
+            vector = p6_matrix.createVecRight()
+            algebraic_vectors.append(vector)
+            self.x = SimpleNamespace(
+                petsc_vec=vector,
+                array=vector.array,
+                scatter_forward=lambda: None,
+            )
+
+    floquet = SimpleNamespace(
+        mpc=SimpleNamespace(
+            slaves=np.asarray((0,), dtype=np.int32),
+            function_space=object(),
+            homogenize=lambda field: field.x.petsc_vec.__setitem__(0, 0.0),
+        )
+    )
+    transfer = _TransferWithSlave()
+    action = _CapturingAction(p6_matrix)
+    source = p3_matrix.createVecRight()
+    source.array[:] = (1.0, -2.0j, 0.5 + 1.0j, 3.0)
+    setup = {
+        "p6_shell": SimpleNamespace(matrix=p6_matrix),
+        "p3_matrix": p3_matrix,
+        "p63_owner_transfer": transfer,
+        "floquets": {6: floquet},
+    }
+    case = {
+        "setup": setup,
+        "p3_action": {"action": _Action(p3_matrix)},
+        "p6_action": {"action": action},
+    }
+    import src.solvers.fullspace_same_mesh_hcurl_pmg_runtime as runtime_module
+
+    monkeypatch.setattr(fem, "Function", _FakeFunction)
+    monkeypatch.setattr(
+        runtime_module,
+        "_mpc_constraint_residual",
+        lambda field, _floquet: float(abs(field.x.array[0])),
+    )
+    monkeypatch.setattr(
+        runtime_module,
+        "_slave_storage_max",
+        lambda field, _floquet: float(abs(field.x.array[0])),
+    )
+    direct = composed = None
+    try:
+        direct, composed, facts = pcoarse.measure_small_same_mesh_physical_action_identity(
+            case, source
+        )
+        assert seen[0][0] == 0.0
+        assert facts["projected_full_constraint_residual"] == 7.0
+        assert facts["algebraic_owned_slave_max"] == 0.0
+        assert facts["phase_application"] == "finalized_floquet_mpc_once"
+    finally:
+        if direct is not None:
+            direct.destroy()
+        if composed is not None:
+            composed.destroy()
+        source.destroy()
+        for vector in algebraic_vectors:
+            vector.destroy()
+        p6_matrix.destroy()
+        p3_matrix.destroy()
+
+
 def test_nonmatching_hcurl_primal_bridge_roundtrip() -> None:
     source_cfg, source_mesh_data, source_space = _fixed_target_fixture(
         3, h_nm=25.0

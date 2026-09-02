@@ -590,6 +590,126 @@ def build_small_same_mesh_probe_source(
     )
 
 
+def build_small_same_mesh_action_probe_source(
+    case: Mapping[str, Any],
+    name: str,
+    *,
+    r3_packets: Any | None = None,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Build one fixed Q1.1 probe, including an authority-bound R3 probe.
+
+    The first five probes use the existing source builders.  The sixth probe
+    is reconstructed only from the supplied ``full_fe_dual`` physical-key
+    packets; the caller is responsible for reading and hashing that authority.
+    """
+
+    if name != "r3_long_tail_derived":
+        return build_small_same_mesh_probe_source(case, name)
+    if r3_packets is None:
+        raise ValueError("R3 canonical full-FE dual packets are required")
+    setup = case["setup"]
+    from .hcurl_canonical_vector_dolfinx import reconstruct_canonical_full_fe_dual_vector
+
+    probe = reconstruct_canonical_full_fe_dual_vector(
+        setup["spaces"][3], setup["floquets"][3].mpc, r3_packets
+    )
+    return probe, {
+        "name": name,
+        "role": "full_fe_dual",
+        "source": "q1_source_authority_v7/r3.manifest.json",
+        "reconstruction": "reconstruct_canonical_full_fe_dual_vector",
+        "phase_application": "dual_source_slave_zero_no_phase_reapplication",
+    }
+
+
+def measure_small_same_mesh_physical_action_identity(
+    case: Mapping[str, Any], source: PETSc.Vec
+) -> tuple[PETSc.Vec, PETSc.Vec, dict[str, Any]]:
+    """Apply ``A3`` and ``P63^H A6 P63`` once to one caller-owned probe.
+
+    The returned vectors are caller-owned dual outputs.  The temporary p6
+    vectors are released here, so canonical extraction can happen after the
+    numerical composition without retaining a second fine-level work set.
+    """
+
+    from dolfinx import fem
+
+    from .fullspace_same_mesh_hcurl_pmg_global import _vector_relative
+    from .fullspace_same_mesh_hcurl_pmg_runtime import (
+        _mpc_constraint_residual,
+        _slave_storage_max,
+    )
+
+    setup = case["setup"]
+    p6_matrix = setup["p6_shell"].matrix
+    p3_matrix = setup["p3_matrix"]
+    p3_layout = _matrix_layout(p3_matrix, "p3")
+    if (int(source.getSize()), int(source.getLocalSize())) != (
+        p3_layout[0],
+        p3_layout[1],
+    ):
+        raise ValueError("Q1.1 probe has an incompatible p3 layout")
+    direct = p3_matrix.createVecLeft()
+    composed = p3_matrix.createVecLeft()
+    fine_probe = p6_matrix.createVecRight()
+    fine_action = p6_matrix.createVecLeft()
+    source_before = source.copy()
+    fine_algebraic = None
+    try:
+        case["p3_action"]["action"].apply(source, direct)
+        setup["p63_owner_transfer"].apply_primal_into(source, fine_probe)
+        fine_algebraic = fem.Function(
+            setup["floquets"][6].mpc.function_space
+        )
+        fine_probe.copy(fine_algebraic.x.petsc_vec)
+        fine_algebraic.x.scatter_forward()
+        projected_full_constraint = _mpc_constraint_residual(
+            fine_algebraic, setup["floquets"][6]
+        )
+        setup["floquets"][6].mpc.homogenize(fine_algebraic)
+        fine_algebraic.x.scatter_forward()
+        algebraic_owned_slave_max = _slave_storage_max(
+            fine_algebraic, setup["floquets"][6]
+        )
+        case["p6_action"]["action"].apply(
+            fine_algebraic.x.petsc_vec, fine_action
+        )
+        setup["p63_owner_transfer"].apply_adjoint_into(fine_action, composed)
+        lhs = complex(fine_algebraic.x.petsc_vec.dot(fine_action))
+        rhs = complex(source.dot(composed))
+        work_relative = abs(lhs - rhs) / max(
+            abs(lhs), abs(rhs), np.finfo(np.float64).tiny
+        )
+        input_relative = _vector_relative(source, source_before)
+        return direct, composed, {
+            "schema": "task038.same_mesh_physical_action_identity.v1",
+            "formula": "A3*v versus P63^H*A6*P63*v",
+            "direct_action_count": 1,
+            "composed_p63_primal_count": 1,
+            "composed_p6_action_count": 1,
+            "composed_p63_adjoint_count": 1,
+            "p_p_h_work_identity_relative": float(work_relative),
+            "work_lhs": [float(lhs.real), float(lhs.imag)],
+            "work_rhs": [float(rhs.real), float(rhs.imag)],
+            "input_unchanged_relative": float(input_relative),
+            "projected_full_constraint_residual": float(
+                projected_full_constraint
+            ),
+            "algebraic_owned_slave_max": float(algebraic_owned_slave_max),
+            "phase_application": "finalized_floquet_mpc_once",
+        }
+    except Exception:
+        direct.destroy()
+        composed.destroy()
+        raise
+    finally:
+        source_before.destroy()
+        if fine_algebraic is not None:
+            del fine_algebraic
+        fine_probe.destroy()
+        fine_action.destroy()
+
+
 def build_r3_long_tail_derived_probe(
     case: Mapping[str, Any], mapped_primal: PETSc.Vec
 ) -> tuple[PETSc.Vec, dict[str, Any]]:
@@ -674,9 +794,11 @@ __all__ = (
     "PHYSICAL_PCOARSE_SCHEMA",
     "SMALL_PHYSICAL_PROBE_NAMES",
     "SameMeshPhysicalPcoarseV1",
+    "build_small_same_mesh_action_probe_source",
     "build_small_same_mesh_physical_pcoarse_case",
     "build_small_same_mesh_probe_source",
     "build_r3_long_tail_derived_probe",
+    "measure_small_same_mesh_physical_action_identity",
     "destroy_same_mesh_physical_pcoarse",
     "destroy_small_same_mesh_physical_pcoarse_case",
 )

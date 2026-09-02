@@ -319,6 +319,8 @@ def _run_parent_child(
     stage: str,
     stdout_path: Path,
     stderr_path: Path,
+    *,
+    rss_watchdog_bytes: int | None = RSS_WATCHDOG,
 ) -> dict[str, Any]:
     peak = 0
     max_swap = 0
@@ -367,7 +369,10 @@ def _run_parent_child(
                 stop_reason = "authority_unreadable"
             elif max_swap:
                 stop_reason = "process_tree_swap"
-            elif peak >= RSS_WATCHDOG:
+            elif (
+                rss_watchdog_bytes is not None
+                and peak >= int(rss_watchdog_bytes)
+            ):
                 stop_reason = "process_tree_rss_watchdog"
             if stop_reason is not None and process.poll() is None and not term_sent:
                 os.killpg(process.pid, signal.SIGTERM)
@@ -423,6 +428,7 @@ def _run_parent_child(
         "process_group_gone": process_group_gone,
         "lifecycle_failure": not process_group_gone,
         "warning_crossed": warning_crossed,
+        "rss_watchdog_bytes": rss_watchdog_bytes,
     }
 
 

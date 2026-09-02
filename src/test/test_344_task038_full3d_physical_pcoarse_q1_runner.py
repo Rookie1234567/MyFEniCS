@@ -11,6 +11,7 @@ import sys
 import pytest
 
 from benchmarks import (
+    run_task038_full3d_physical_pcoarse_q1_action as action_runner,
     task038_full3d_physical_pcoarse_q1_checker as checker,
     run_task038_full3d_physical_pcoarse_q1 as runner,
 )
@@ -608,6 +609,12 @@ def test_runner_checker_import_and_ast_contract() -> None:
     parent = next(node for node in runner_tree.body if isinstance(node, ast.FunctionDef) and node.name == "run_parent")
     assert "**worker_result" in ast.get_source_segment(runner_source, parent)
     assert "def check_pair" in checker_source
+
+
+def test_action_rss_policy_preserves_default_and_disables_mpi2_kill() -> None:
+    assert runner._run_parent_child.__kwdefaults__["rss_watchdog_bytes"] == runner.RSS_WATCHDOG
+    assert action_runner._rss_watchdog_bytes(1) == runner.RSS_WATCHDOG
+    assert action_runner._rss_watchdog_bytes(2) is None
 
 
 def test_marker_rank0_and_fresh_root_contract(tmp_path: Path) -> None:
