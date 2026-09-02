@@ -233,6 +233,44 @@ def test_physical_volume_builder_compiles_p6_then_p3_action(
     assert all(value is False for value in facts["objects"].values())
 
 
+def test_incident_rhs_binds_quadrature_before_compile(monkeypatch):
+    from src.solvers import dtn_port_3d as dtn
+
+    cfg = SimpleNamespace()
+    comm = SimpleNamespace(size=1)
+    levels = {"mesh_data": object()}
+    space = object()
+    rewritten = object()
+    seen = []
+    compile_calls = []
+
+    monkeypatch.setattr(jit, "_levels", lambda *args, **kwargs: (levels, space))
+    monkeypatch.setattr(jit, "_mode_facts", lambda _cfg: (80, "mode-sha", 25))
+    monkeypatch.setattr(
+        dtn,
+        "_incident_top_traction_form",
+        lambda _space, _mesh_data, _cfg: "incident-form",
+    )
+
+    def fake_with_quadrature_degree(form, degree):
+        seen.append((form, degree))
+        return rewritten
+
+    monkeypatch.setattr(dtn, "_with_quadrature_degree", fake_with_quadrature_degree)
+    monkeypatch.setattr(
+        jit,
+        "_compile_form",
+        lambda form, options: compile_calls.append((form, options)),
+    )
+
+    facts = jit._build_incident_rhs(cfg, comm, {"cache": "test"})
+
+    assert seen == [("incident-form", 25)]
+    assert compile_calls == [(rewritten, {"cache": "test"})]
+    assert facts["dtn_quadrature_degree"] == 25
+    assert "form_compiler_options" not in Path(jit.__file__).read_text()
+
+
 def test_selected_call_sites_use_empty_mapping_and_generic_defaults_remain():
     root = Path(__file__).resolve().parents[2]
     setup = (root / "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py").read_text()

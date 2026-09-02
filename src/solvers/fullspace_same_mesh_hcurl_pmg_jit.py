@@ -24,26 +24,13 @@ JIT_GROUPS = (
 JIT_GROUP_SCHEMA = "task038.same-mesh-hcurl-pmg.jit-precompile.v3"
 
 
-def _form_kwargs(
-    jit_options: Mapping[str, Any],
-    quadrature_degree: int | None = None,
-) -> dict[str, Any]:
-    kwargs: dict[str, Any] = {"jit_options": dict(jit_options)}
-    if quadrature_degree is not None:
-        kwargs["form_compiler_options"] = {
-            "quadrature_degree": int(quadrature_degree)
-        }
-    return kwargs
-
-
 def _compile_form(
     form: Any,
     jit_options: Mapping[str, Any],
-    quadrature_degree: int | None = None,
 ) -> Any:
     from dolfinx import fem
 
-    return fem.form(form, **_form_kwargs(jit_options, quadrature_degree))
+    return fem.form(form, jit_options=dict(jit_options))
 
 
 def _facts(
@@ -233,14 +220,18 @@ def _build_dtn_surface(
 def _build_incident_rhs(
     cfg: Any, comm: Any, jit_options: Mapping[str, Any]
 ) -> dict[str, Any]:
-    from .dtn_port_3d import _incident_top_traction_form
+    from .dtn_port_3d import (
+        _incident_top_traction_form,
+        _with_quadrature_degree,
+    )
 
     levels, space = _levels(
         cfg, comm, 6, include_positive_coefficients=False
     )
     mode_count, mode_sha, qdegree = _mode_facts(cfg)
     form = _incident_top_traction_form(space, levels["mesh_data"], cfg)
-    _compile_form(form, jit_options, qdegree)
+    form = _with_quadrature_degree(form, qdegree)
+    _compile_form(form, jit_options)
     del form, levels
     return _facts(
         "incident-rhs",
