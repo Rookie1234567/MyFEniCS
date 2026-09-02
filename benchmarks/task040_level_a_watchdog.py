@@ -59,6 +59,10 @@ from benchmarks.task040_level_a import (
     V9_C0_SETUP_TARGET_SECONDS,
     V9_C0_TIMEOUT_SECONDS,
     V9_C0_WARNING_MEMORY_BYTES,
+    V9_E_LOR_L2_MARKER_SEQUENCE,
+    V9_E_LOR_L2_ONLY_FLAG,
+    V9_E_LOR_L2_ONLY_HARD_STOP_BYTES,
+    V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS,
     V9_E_S3_B1_MARKER_SEQUENCE,
     V9_E_S3_B1_SCHEMA,
     V9_E_S3_J1_BASELINE_MANIFEST_OPTION,
@@ -117,6 +121,7 @@ _TERMINAL_CLEANUP_STAGES = frozenset(
         "v8_adaptive_stage_bc_cleanup_complete",
         "v9_source_bridge_cleanup_complete",
         "v9_c0_cleanup_complete",
+        "v9_e_lor_l2_cleanup_complete",
         "s3b_j1_cleanup_complete",
         "s3b_b1_cleanup_complete",
     }
@@ -186,7 +191,9 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
     if plan.get("v5_route_c") is True:
         command.append(TASK040_V5_ROUTE_C_FLAG)
         command.extend(("--watchdog-enabled", "--bottom-route-only"))
-    if plan.get("v9_c0_explicit_coarse_only") is True:
+    if plan.get("v9_e_lor_l2_only") is True:
+        command.append(V9_E_LOR_L2_ONLY_FLAG)
+    elif plan.get("v9_c0_explicit_coarse_only") is True:
         command.append(V9_C0_EXPLICIT_COARSE_ONLY_FLAG)
     elif plan.get("v8_adaptive_stage_bc_only") is True:
         command.append(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG)
@@ -230,6 +237,7 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         plan.get("v8_adaptive_stage_bc_only") is True
         or plan.get("v9_source_bridge_only") is True
         or plan.get("v9_c0_explicit_coarse_only") is True
+        or plan.get("v9_e_lor_l2_only") is True
         or plan.get("v8_adaptive_stage_b1_only") is True
         or plan.get("v8_adaptive_schwarz_only") is True
         or plan.get("v8_full_spectrum_only") is True
@@ -289,6 +297,7 @@ def build_task040_level_a_watchdog_plan(
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
+    v9_e_lor_l2_only: bool = False,
     v9_e_s3_j1_baseline_only: bool = False,
     v9_e_s3_structured_b1_only: bool = False,
     v9_e_s3_j1_baseline_manifest: str | Path | None = None,
@@ -328,6 +337,7 @@ def build_task040_level_a_watchdog_plan(
         v8_adaptive_stage_bc_only=v8_adaptive_stage_bc_only,
         v9_source_bridge_only=v9_source_bridge_only,
         v9_c0_explicit_coarse_only=v9_c0_explicit_coarse_only,
+        v9_e_lor_l2_only=v9_e_lor_l2_only,
         v9_e_s3_j1_baseline_only=v9_e_s3_j1_baseline_only,
         v9_e_s3_structured_b1_only=v9_e_s3_structured_b1_only,
         v9_e_s3_j1_baseline_manifest=v9_e_s3_j1_baseline_manifest,
@@ -409,6 +419,7 @@ def build_task040_level_a_watchdog_plan(
     elif (
         v9_source_bridge_only
         or v9_c0_explicit_coarse_only
+        or v9_e_lor_l2_only
         or v8_adaptive_stage_bc_only
         or v8_adaptive_stage_b1_only
         or v8_adaptive_schwarz_only
@@ -428,7 +439,24 @@ def build_task040_level_a_watchdog_plan(
                 "full_interface_replica_per_rank": False,
             }
         )
-        if v9_c0_explicit_coarse_only:
+        if v9_e_lor_l2_only:
+            plan["watchdog"].update(
+                {
+                    "v9_e_lor_l2_only": True,
+                    "hard_stop_bytes": V9_E_LOR_L2_ONLY_HARD_STOP_BYTES,
+                    "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                    "timeout_seconds": V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS,
+                    "process_tree_watchdog_enabled": True,
+                    "bottom_route_only": True,
+                    "cleanup_stage": "v9_e_lor_l2_cleanup_complete",
+                    "marker_sequence": list(V9_E_LOR_L2_MARKER_SEQUENCE),
+                    "numeric_allgather": False,
+                    "full_interface_replica_per_rank": False,
+                    "stage_timeout_seconds": None,
+                    "global_lor_matrix": "not_materialized",
+                }
+            )
+        elif v9_c0_explicit_coarse_only:
             plan["watchdog"].update(
                 {
                     "v9_c0_explicit_coarse_only": True,
@@ -737,6 +765,25 @@ def _v9_c0_active_stage_timeout(
         "classification": (
             V9_C0_RESOURCE_UNAVAILABLE_CLASSIFICATION if timed_out else None
         ),
+    }
+
+
+def _v9_e_lor_l2_active_stage_timeout(
+    stage: str,
+    stage_elapsed: float,
+    total_elapsed: float,
+) -> dict[str, Any]:
+    """Apply only the fixed total wall cap to the L2 action-only route."""
+
+    del stage, stage_elapsed
+    elapsed = float(total_elapsed)
+    return {
+        "kind": "total",
+        "stage_target_seconds": None,
+        "total_target_seconds": V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS,
+        "stage_elapsed_seconds": None,
+        "total_elapsed_seconds": elapsed,
+        "timed_out": elapsed >= V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS,
     }
 
 
@@ -1225,6 +1272,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     s3_j1_enabled = bool(plan.get("v9_e_s3_j1_baseline_only"))
     s3_b1_enabled = bool(plan.get("v9_e_s3_structured_b1_only"))
     s3_enabled = s3_j1_enabled or s3_b1_enabled
+    l2_enabled = bool(plan.get("v9_e_lor_l2_only"))
     stage_a_enabled = bool(plan.get("v8_adaptive_schwarz_only"))
     b1_enabled = bool(plan.get("v8_adaptive_stage_b1_only"))
     stage_bc_enabled = bool(plan.get("v8_adaptive_stage_bc_only"))
@@ -1233,7 +1281,9 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         plan.get("v9_corrected_source_packet")
     )
     timeout_seconds = int(
-        V9_C0_TIMEOUT_SECONDS
+        V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS
+        if l2_enabled
+        else V9_C0_TIMEOUT_SECONDS
         if c0_enabled
         else V8_ADAPTIVE_TIMEOUT_SECONDS
         if stage_bc_enabled or v9_enabled
@@ -1246,9 +1296,12 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         or stage_bc_enabled
         or v9_enabled
         or c0_enabled
+        or l2_enabled
     )
     active_timeout = (
-        _v9_c0_active_stage_timeout
+        _v9_e_lor_l2_active_stage_timeout
+        if l2_enabled
+        else _v9_c0_active_stage_timeout
         if c0_enabled
         else _v8_adaptive_stage_bc_total_timeout
         if stage_bc_enabled or v9_enabled
@@ -1278,6 +1331,7 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
     process_control: dict[str, Any] = {}
     v5_thresholds_enabled = bool(plan.get("v5_fresh_bare_f_authority"))
     c0_thresholds_enabled = c0_enabled
+    l2_timeout_decision: dict[str, Any] | None = None
     route_c_enabled = bool(plan.get("v5_route_c"))
     threshold_observation_count = 0
     resource_thresholds: dict[str, Any] = {}
@@ -1428,7 +1482,13 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
             terminal_teardown_excluded = (
                 process_exited_during_sample or completed_cleanup_teardown
             )
-            if adaptive_enabled or stage_bc_enabled or v9_enabled or c0_enabled:
+            if (
+                adaptive_enabled
+                or stage_bc_enabled
+                or v9_enabled
+                or c0_enabled
+                or l2_enabled
+            ):
                 swap_sample = _v8_adaptive_swap_authority_sample(
                     authority, terminal_excluded=terminal_teardown_excluded
                 )
@@ -1514,18 +1574,34 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                         time.monotonic() - stage_started,
                         elapsed,
                     )
-                    if c0_enabled:
+                    if l2_enabled:
+                        l2_timeout_decision = timeout_decision
+                    elif c0_enabled:
                         c0_timeout_decision = timeout_decision
                     else:
                         v8_timeout_decision = timeout_decision
-                termination_reason = "wall_timeout"
+                    if timeout_decision["timed_out"]:
+                        termination_reason = (
+                            "wall_timeout"
+                            if timeout_decision["kind"] == "total"
+                            else "v9_c0_marker_target_exceeded"
+                            if c0_enabled
+                            else "v8_marker_target_exceeded"
+                        )
+                    else:
+                        time.sleep(SAMPLE_INTERVAL_SECONDS)
+                        continue
+                else:
+                    termination_reason = "wall_timeout"
             elif v8_enabled:
                 timeout_decision = active_timeout(
                     stage,
                     time.monotonic() - stage_started,
                     elapsed,
                 )
-                if c0_enabled:
+                if l2_enabled:
+                    l2_timeout_decision = timeout_decision
+                elif c0_enabled:
                     c0_timeout_decision = timeout_decision
                 else:
                     v8_timeout_decision = timeout_decision
@@ -1825,6 +1901,105 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
                     "total_wall_seconds": V9_C0_TIMEOUT_SECONDS,
                 },
                 "v9_c0_timeout": c0_timeout_decision,
+            }
+        )
+    elif l2_enabled:
+        worker_payload: Mapping[str, Any] | None = None
+        if run_summary.is_file():
+            try:
+                loaded_payload = json.loads(
+                    run_summary.read_text(encoding="utf-8")
+                )
+                if isinstance(loaded_payload, Mapping):
+                    worker_payload = loaded_payload
+            except (OSError, json.JSONDecodeError):
+                worker_payload = None
+        l2_resource_gate = bool(
+            adaptive_swap_sample_count > 0
+            and adaptive_swap_authority_readable
+            and peak_rss_bytes < hard_stop_bytes
+            and peak_swap_bytes == SWAP_LIMIT_BYTES
+            and (
+                not dedicated_cgroup_present
+                or (
+                    dedicated_cgroup_swap_readable
+                    and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
+                )
+            )
+        )
+        l2_worker_status = (
+            worker_payload.get("status")
+            if isinstance(worker_payload, Mapping)
+            else None
+        )
+        l2_worker_classification = (
+            worker_payload.get("classification")
+            if isinstance(worker_payload, Mapping)
+            else None
+        )
+        l2_valid_status = l2_worker_status in {
+            "V9_E_LOR_L2_ONLY_ACTION_PASS",
+            "V9_E_LOR_L2_ONLY_ACTION_FAIL",
+        }
+        if l2_worker_classification is None and l2_valid_status:
+            l2_worker_classification = l2_worker_status
+        l2_valid_classification = l2_worker_classification in {
+            "V9_E_LOR_L2_ONLY_ACTION_PASS",
+            "V9_E_LOR_L2_ONLY_ACTION_FAIL",
+        }
+        l2_workflow_completed = bool(
+            termination_reason == "natural_exit"
+            and process.returncode == 0
+            and worker_payload is not None
+            and l2_valid_status
+            and last_stage == "v9_e_lor_l2_cleanup_complete"
+            and last_stage_status == "complete"
+        )
+        l2_resource_stop = termination_reason in {
+            "absolute_memory_limit",
+            "swap_detected",
+            "wall_timeout",
+        }
+        if l2_resource_stop or not l2_resource_gate:
+            l2_numerical_classification = "V9_E_LOR_L2_RESOURCE_UNAVAILABLE"
+            l2_resource_classification = "V9_E_LOR_L2_RESOURCE_UNAVAILABLE"
+            l2_numerical_negative = False
+        elif l2_workflow_completed and l2_valid_classification:
+            l2_numerical_classification = str(l2_worker_classification)
+            l2_resource_classification = "resource_gate_pass"
+            l2_numerical_negative = l2_numerical_classification.endswith("_FAIL")
+        else:
+            l2_numerical_classification = "requires_result_adjudication"
+            l2_resource_classification = "requires_resource_adjudication"
+            l2_numerical_negative = None
+        summary.update(
+            {
+                "v9_e_lor_l2_workflow_completed": l2_workflow_completed,
+                "v9_e_lor_l2_worker_status": l2_worker_status,
+                "v9_e_lor_l2_worker_classification": (
+                    l2_worker_classification
+                ),
+                "v9_e_lor_l2_resource_gate": l2_resource_gate,
+                "adaptive_swap_sample_count": adaptive_swap_sample_count,
+                "adaptive_swap_fallback_count": adaptive_swap_fallback_count,
+                "v9_e_lor_l2_cleanup_complete": (
+                    last_stage == "v9_e_lor_l2_cleanup_complete"
+                    and last_stage_status == "complete"
+                ),
+                "v9_e_lor_l2_marker_sequence": list(
+                    V9_E_LOR_L2_MARKER_SEQUENCE
+                ),
+                "v9_e_lor_l2_timeout": l2_timeout_decision,
+                "v9_e_lor_l2_resource_limits": {
+                    "hard_stop_bytes": V9_E_LOR_L2_ONLY_HARD_STOP_BYTES,
+                    "swap_limit_bytes": SWAP_LIMIT_BYTES,
+                    "total_wall_seconds": V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS,
+                },
+                "classification": l2_numerical_classification,
+                "resource_classification": l2_resource_classification,
+                "final_resource_classification": l2_resource_classification,
+                "next_required_stage": "V9_E_LOR_L2_TWO_CASE_REVIEW",
+                "numerical_negative": l2_numerical_negative,
             }
         )
     elif v9_enabled:
@@ -2241,7 +2416,13 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         summary["preferred_memory_bytes"] = int(plan["preferred_memory_bytes"])
     final_swap_authority_readable = (
         adaptive_swap_authority_readable
-        if adaptive_enabled or stage_bc_enabled or v9_enabled or c0_enabled
+        if (
+            adaptive_enabled
+            or stage_bc_enabled
+            or v9_enabled
+            or c0_enabled
+            or l2_enabled
+        )
         else swap_authority_readable
     )
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
@@ -2252,6 +2433,8 @@ def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
         if stage_a_enabled
         else b1_workflow_completed
         if b1_enabled
+        else l2_workflow_completed
+        if l2_enabled
         else c0_workflow_completed
         if c0_enabled
         else v9_workflow_completed
@@ -2301,6 +2484,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_C0_EXPLICIT_COARSE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_LOR_L2_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_J1_BASELINE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_STRUCTURED_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_J1_BASELINE_MANIFEST_OPTION)
@@ -2355,6 +2539,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(
             "V9-C0 route requires --watchdog-enabled and --bottom-route-only"
         )
+    if args.v9_e_lor_l2_only and not (
+        args.watchdog_enabled and args.bottom_route_only
+    ):
+        parser.error(
+            "V9-E L2 route requires --watchdog-enabled and --bottom-route-only"
+        )
     if (
         args.v9_e_s3_j1_baseline_only or args.v9_e_s3_structured_b1_only
     ) and not (args.watchdog_enabled and args.bottom_route_only):
@@ -2383,6 +2573,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
+        v9_e_lor_l2_only=args.v9_e_lor_l2_only,
         v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
         v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
         v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,

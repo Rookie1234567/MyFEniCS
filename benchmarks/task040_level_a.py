@@ -397,6 +397,35 @@ V9_E_S3_B1_MARKER_SEQUENCE = (
     "s3b_b1_cleanup_begin",
     "s3b_b1_cleanup_complete",
 )
+V9_E_LOR_L2_ONLY_FLAG = "--v9-e-lor-l2-only"
+
+V9_E_LOR_L2_ONLY_METHOD = "task040_v9_e_lor_l2_only"
+V9_E_LOR_L2_ONLY_SCHEMA = "task040.v9_e.lor_l2_only.v1"
+V9_E_LOR_L2_ONLY_PROFILE_ID = "task040.v9_e.lor.l2_only.v1"
+V9_E_LOR_L2_ONLY_HARD_STOP_BYTES = 45 * 2**30
+V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS = 21600
+V9_E_LOR_L2_MARKER_SEQUENCE = (
+    "v9_e_lor_l2_preflight",
+    "v9_e_lor_l2_mesh_ready",
+    "v9_e_lor_l2_space_ready",
+    "v9_e_lor_l2_floquet_ready",
+    "v9_e_lor_l2_positive_form_ready",
+    "v9_e_lor_l2_condensed_ready",
+    "v9_e_lor_l2_action_ready",
+    "v9_e_lor_l2_bridge_begin",
+    "v9_e_lor_l2_bridge_ready",
+    "v9_e_lor_l2_service_ready",
+    "v9_e_lor_l2_rhs_ready",
+    "v9_e_lor_l2_solve_begin",
+    "v9_e_lor_l2_checkpoint",
+    "v9_e_lor_l2_solve_end",
+    "v9_e_lor_l2_explicit_residual",
+    "v9_e_lor_l2_cleanup_complete",
+)
+V9_E_LOR_L2_ALLOWED_INPUTS = (
+    "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat",
+    "input/official/task039/5nm_p6h5_full3d_direct_mpi8.dat",
+)
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -490,6 +519,14 @@ __all__ = (
     "V9_E_S3_INPUT_SHA256",
     "V9_E_S3_MARKER_SEQUENCE",
     "V9_E_S3_B1_MARKER_SEQUENCE",
+    "V9_E_LOR_L2_ONLY_FLAG",
+    "V9_E_LOR_L2_ONLY_METHOD",
+    "V9_E_LOR_L2_ONLY_SCHEMA",
+    "V9_E_LOR_L2_ONLY_PROFILE_ID",
+    "V9_E_LOR_L2_ONLY_HARD_STOP_BYTES",
+    "V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS",
+    "V9_E_LOR_L2_MARKER_SEQUENCE",
+    "V9_E_LOR_L2_ALLOWED_INPUTS",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -572,6 +609,7 @@ def build_task040_level_a_plan(
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
+    v9_e_lor_l2_only: bool = False,
     v9_e_s3_j1_baseline_only: bool = False,
     v9_e_s3_structured_b1_only: bool = False,
     v9_e_s3_j1_baseline_manifest: str | Path | None = None,
@@ -643,6 +681,14 @@ def build_task040_level_a_plan(
             "V9-E S3 routes require the frozen Task039 MPI8 input path: "
             f"{expected_s3_input}"
         )
+    expected_l2_inputs = {
+        (Path(__file__).resolve().parents[1] / relative).resolve()
+        for relative in V9_E_LOR_L2_ALLOWED_INPUTS
+    }
+    if v9_e_lor_l2_only and Path(input_path).resolve() not in expected_l2_inputs:
+        raise ValueError(
+            "V9-E L2 requires one of the frozen Task039 h10/h5 inputs"
+        )
     plan = {
         "schema": TASK040_LEVEL_A_SCHEMA,
         "method": TASK040_LEVEL_A_METHOD,
@@ -689,6 +735,7 @@ def build_task040_level_a_plan(
                 v8_adaptive_stage_bc_only,
                 v9_source_bridge_only,
                 v9_c0_explicit_coarse_only,
+                v9_e_lor_l2_only,
                 v9_e_s3_j1_baseline_only,
                 v9_e_s3_structured_b1_only,
             )
@@ -1375,6 +1422,68 @@ def build_task040_level_a_plan(
                     "coarse_direct_factor",
                     "qep",
                     "official_rt_a",
+                ],
+            }
+        )
+    if v9_e_lor_l2_only:
+        plan.update(
+            {
+                "route": "V9_E_LOR_L2",
+                "schema": V9_E_LOR_L2_ONLY_SCHEMA,
+                "method": V9_E_LOR_L2_ONLY_METHOD,
+                "profile": V9_E_LOR_L2_ONLY_PROFILE_ID,
+                "v9_e_lor_l2_only": True,
+                "research_only": True,
+                "oracle_only": False,
+                "scalable_candidate": False,
+                "pde_solve": "action_only_fixed_lor_screen",
+                "source_order": [],
+                "planned_source_order": [],
+                "fixed_configuration": {
+                    "research_form": "curlcurl_plus_mass",
+                    "mass_coefficient": 1.0,
+                    "additional_absorbing_shift": 0.0,
+                    "physical_dtn_used": False,
+                    "operator": "action_only_static_condensed",
+                    "fgmres": {
+                        "type": "right_fgmres",
+                        "restart": 64,
+                        "max_it": 256,
+                        "rtol": 1.0e-8,
+                        "atol": 0.0,
+                        "norm": "unpreconditioned",
+                    },
+                },
+                "input_expected": {
+                    "relative_paths": list(V9_E_LOR_L2_ALLOWED_INPUTS),
+                    "binding": "exact_path_only",
+                },
+                "factor_inventory": {
+                    "owner_local_bounded": True,
+                    "max_local_rows": 432,
+                    "max_local_rows_limit": 1024,
+                    "global_direct_factor_count": 0,
+                    "global_coarse_factor_count": 0,
+                },
+                "absolute_terminate_memory_bytes": V9_E_LOR_L2_ONLY_HARD_STOP_BYTES,
+                "watchdog_hard_stop_bytes": V9_E_LOR_L2_ONLY_HARD_STOP_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS,
+                "watchdog_required": True,
+                "bottom_route_only_required": True,
+                "formal_adjudication": False,
+                "marker_sequence": list(V9_E_LOR_L2_MARKER_SEQUENCE),
+                "numeric_allgather": False,
+                "full_basis_replication": False,
+                "forbidden": [
+                    "physical_dtn",
+                    "physical_variational_solve",
+                    "global_high_order_aij",
+                    "global_lor_matrix",
+                    "global_factor",
+                    "parameter_scan",
+                    "retry",
+                    "official_rta",
                 ],
             }
         )
@@ -6976,6 +7085,7 @@ def run_task040_level_a(
     v8_adaptive_stage_bc_only: bool = False,
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
+    v9_e_lor_l2_only: bool = False,
     v9_e_s3_j1_baseline_only: bool = False,
     v9_e_s3_structured_b1_only: bool = False,
     v9_e_s3_j1_baseline_manifest: str | Path | None = None,
@@ -7012,6 +7122,7 @@ def run_task040_level_a(
                 v8_adaptive_stage_bc_only,
                 v9_source_bridge_only,
                 v9_c0_explicit_coarse_only,
+                v9_e_lor_l2_only,
                 v9_e_s3_j1_baseline_only,
                 v9_e_s3_structured_b1_only,
             )
@@ -7086,6 +7197,31 @@ def run_task040_level_a(
             raise ValueError("V8 adaptive run_directory must not be the frozen exact spool root")
         if input_path is None:
             raise ValueError("V8 adaptive route requires the official input_path")
+    if v9_e_lor_l2_only:
+        if run_directory is None:
+            raise ValueError("V9-E L2 route requires a separate run_directory")
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError("V9-E L2 run_directory must not be the exact spool root")
+        if input_path is None:
+            raise ValueError("V9-E L2 route requires the official input_path")
+        expected_l2_inputs = {
+            (Path(__file__).resolve().parents[1] / relative).resolve()
+            for relative in V9_E_LOR_L2_ALLOWED_INPUTS
+        }
+        if Path(input_path).resolve() not in expected_l2_inputs:
+            raise ValueError("V9-E L2 route requires the frozen h10 or h5 input")
+        if int(comm.size) != TASK040_LEVEL_A_MPI_SIZE:
+            raise ValueError(
+                f"V9-E L2 route requires MPI size {TASK040_LEVEL_A_MPI_SIZE}"
+            )
+        if not watchdog_enabled:
+            raise ValueError("V9-E L2 route requires watchdog_enabled=true")
+        if not bottom_route_only:
+            raise ValueError("V9-E L2 route requires bottom_route_only=true")
+        if watchdog_hard_stop_bytes != V9_E_LOR_L2_ONLY_HARD_STOP_BYTES:
+            raise ValueError("V9-E L2 route requires watchdog hard stop 45 GiB")
+        if not callable(resource_callback):
+            raise TypeError("V9-E L2 route requires a callable resource_callback")
     s3_route = bool(v9_e_s3_j1_baseline_only or v9_e_s3_structured_b1_only)
     if (v9_e_s3_j1_baseline_manifest is None) != (
         v9_e_s3_j1_baseline_manifest_sha256 is None
@@ -7176,6 +7312,7 @@ def run_task040_level_a(
         or v8_adaptive_stage_bc_only
         or v9_source_bridge_only
         or v9_c0_explicit_coarse_only
+        or v9_e_lor_l2_only
         or v9_e_s3_j1_baseline_only
         or v9_e_s3_structured_b1_only
     ):
@@ -7222,6 +7359,8 @@ def run_task040_level_a(
             if v7_moving_pml_full_state
             else V9_C0_EXPLICIT_COARSE_ONLY_METHOD
             if v9_c0_explicit_coarse_only
+            else V9_E_LOR_L2_ONLY_METHOD
+            if v9_e_lor_l2_only
             else V9_E_S3_B1_METHOD
             if v9_e_s3_structured_b1_only
             else V9_E_S3_J1_BASELINE_METHOD
@@ -7473,6 +7612,25 @@ def run_task040_level_a(
             "observed_sha256": observed_manifest_sha256,
         }
         return result
+    if v9_e_lor_l2_only:
+        from src.solvers.hcurl_fixed_lor_positive_screen import (
+            run_v9_e_lor_l2_only,
+        )
+
+        return run_v9_e_lor_l2_only(
+            cfg=cfg,
+            comm=comm,
+            input_path=input_path,
+            run_directory=run_directory,
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            resource_callback=resource_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+        )
     if v9_c0_explicit_coarse_only:
         from benchmarks.task040_v6_2_interface_schur import run_v6_2_interface_schur
 
@@ -8026,6 +8184,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V8_ADAPTIVE_STAGE_BC_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_C0_EXPLICIT_COARSE_ONLY_FLAG, action="store_true")
+    parser.add_argument(V9_E_LOR_L2_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_J1_BASELINE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_STRUCTURED_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_J1_BASELINE_MANIFEST_OPTION)
@@ -8061,6 +8220,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
+        v9_e_lor_l2_only=args.v9_e_lor_l2_only,
         v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
         v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
         v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,
@@ -8115,6 +8275,7 @@ def main(argv: list[str] | None = None) -> int:
         v8_adaptive_stage_bc_only=args.v8_adaptive_stage_bc_only,
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
+        v9_e_lor_l2_only=args.v9_e_lor_l2_only,
         v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
         v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
         v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,
@@ -8136,6 +8297,8 @@ def main(argv: list[str] | None = None) -> int:
                         if args.v5_route_c
                         else V9_C0_HARD_STOP_BYTES
                         if args.v9_c0_explicit_coarse_only
+                        else V9_E_LOR_L2_ONLY_HARD_STOP_BYTES
+                        if args.v9_e_lor_l2_only
                         else S3B_RSS_HARD_BYTES
                         if args.v9_e_s3_j1_baseline_only
                         or args.v9_e_s3_structured_b1_only
@@ -8165,6 +8328,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v8_adaptive_stage_bc_only
                     or args.v9_source_bridge_only
                     or args.v9_c0_explicit_coarse_only
+                    or args.v9_e_lor_l2_only
                     or args.v9_e_s3_j1_baseline_only
                     or args.v9_e_s3_structured_b1_only
                 )
@@ -8191,6 +8355,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.v8_adaptive_stage_bc_only
             or args.v9_source_bridge_only
             or args.v9_c0_explicit_coarse_only
+            or args.v9_e_lor_l2_only
             or args.v9_e_s3_j1_baseline_only
             or args.v9_e_s3_structured_b1_only
             else None
