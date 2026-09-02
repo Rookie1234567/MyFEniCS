@@ -1,3 +1,20 @@
+# 2026-09-02：Task038 Review V16 Q1 source-authority controlled stop
+
+Q0 physical p-coarse preflight 已通过；Q1 窄核心在 clean core commit 6edf5f5c1255185052a2a5d5fb8dd422f3238f04
+实现并完成 focused regression，但固定六 probe formal 未启动。V16 要求 p6/h50
+r3_long_tail_derived，而仓库唯一旧 R3 authority 是 p6/h10；当前 F1 p3/h50 和
+旧 T2 p3/h50 不是可替代映射，p6/h50 inventory 也未建立。没有资格化的 h10→h50
+full-FE dual restriction/projection，因此分类为
+CONTROLLED_STOP_PREMEASUREMENT_PROVENANCE / NOT_QUALIFIED，不是 action、数值或资源
+失败。Q2–Q6、W0–W4、checkpoint 数值、physical recovery 和 official physics 均
+not_run；ordinary default 和 production qualification 未提升。
+
+证据入口：
+[physical p-coarse oracle](task038_extra_full3d_iterative_0p7nm/outcomes/physical_pcoarse_oracle_v16.md)、
+[Q1 authority compact](task038_extra_full3d_iterative_0p7nm/outcomes/records/physical_pcoarse_q1_authority_v16.json)。
+
+---
+
 # 项目开发进度：Task000–Task037b
 
 ## 2026-08-10：Task037b frozen M10 结项与 Review V7 selective-merge capability

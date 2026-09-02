@@ -1,3 +1,28 @@
+# Review V16 Q1 implementation test record
+
+| item | 已有结果 / 边界 |
+|---|---|
+| test343 | 4 passed |
+| test301 | 15 passed, 1 skipped |
+| compileall / AST / trailing / diff-check | PASS |
+| Ruff | command unavailable；未声称 PASS |
+| Q1 real h50 smoke/formal | not_run |
+| checkpoint/JIT/MPI/PDE | not_run |
+
+本轮纯文档检查实测：
+
+| check | result |
+|---|---|
+| JSON strict duplicate-key/NaN rejection | 2 passed |
+| Markdown fence/table/link/whitespace | 5 Markdown files, 107 local links passed |
+| git diff --check | PASS |
+
+这些是 Q1 core 的实现回归，不构成 p6/h50 R3 source authority 或 Q1 numerical
+qualification。source-authority 预检见 [oracle closeout](physical_pcoarse_oracle_v16.md)
+和 [authority compact](records/physical_pcoarse_q1_authority_v16.json)。
+
+---
+
 # Task038-extra T2 test and evidence summary
 
 ## 1. Source and environment identity

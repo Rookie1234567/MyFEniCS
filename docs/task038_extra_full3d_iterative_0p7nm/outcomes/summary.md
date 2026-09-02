@@ -1,3 +1,26 @@
+# Review V16 Q1 source-authority closeout
+
+| 阶段 | 结果 | 边界 |
+|---|---|---|
+| Q0 | PASS | 既有 preflight；reference commit 12252290c3d9ec51713094f08c335f24ce172a5b |
+| Q1 | CONTROLLED_STOP_PREMEASUREMENT_PROVENANCE / NOT_QUALIFIED | V16 要求 p6/h50 R3，唯一旧 authority 是 p6/h10 |
+| Q2–Q6 | not_run | 未读取 checkpoint 数值、未运行 action/solve |
+| W0–W4 | not_run_by_trigger_not_met | 未发生真实数学、数值或资源 Gate |
+| official physics | not_run | 不生成 E/H、R/T/A 或 channels |
+
+Q1 core 已提交为 clean core 6edf5f5c1255185052a2a5d5fb8dd422f3238f04，仅为实现支持，不是 physical qualification。
+固定六 probe 中的 R3 不能从 p6/h10、旧 p3/h50 或未建立的 p6/h50 inventory
+推导。旧 R3 compact SHA=4c3f9f23f22bc9e20cef8992d99db86f8eda159951b78b016685214bbc274b68，
+manifest SHA=62c7824e1032b1a14078d158b0e403b9087dc862bf00386fdce08535e4d76dce；
+当前 F1 p3/h50 为 mesh=[4,4,3]、rows=4641、active dual packets=4176、slaves=465，
+旧 T2 p3/h50 为另一几何 rows=3018，p6/h50 inventory 未建立。
+
+详情见 [Q1 oracle closeout](physical_pcoarse_oracle_v16.md) 与
+[Q1 authority compact](records/physical_pcoarse_q1_authority_v16.json)。V13 positive、
+V14 J5、V15 F1/F2/F3 和全部历史 negative 保持原样。
+
+---
+
 # Task038-extra Review V14 当前权威 summary
 
 ## 一句话结论
