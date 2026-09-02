@@ -754,6 +754,22 @@ def _surface_vector_form(V, mesh_data, tag: int, vector: np.ndarray, phase):
     return ufl.inner(_as_ufl_vector(vector, phase), v) * ds(tag)
 
 
+def _with_quadrature_degree(form, quadrature_degree):
+    if quadrature_degree is None:
+        return form
+    degree = int(quadrature_degree)
+    integrals = tuple(
+        integral.reconstruct(
+            metadata={
+                **integral.metadata(),
+                "quadrature_degree": degree,
+            }
+        )
+        for integral in form.integrals()
+    )
+    return ufl.Form(integrals)
+
+
 def _assemble_mpc_form_vector(linear_form, mpc) -> PETSc.Vec:
     vec = dolfinx_mpc.assemble_vector(linear_form, mpc)
     vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
@@ -777,11 +793,8 @@ def _assemble_unconstrained_form_vector(linear_form) -> PETSc.Vec:
 def _assemble_mpc_vector(
     linear_form, mpc, *, quadrature_degree: int | None = None
 ) -> PETSc.Vec:
-    form_options: dict[str, int] = {}
-    if quadrature_degree is not None:
-        form_options["quadrature_degree"] = int(quadrature_degree)
     return _assemble_mpc_form_vector(
-        fem.form(linear_form, form_compiler_options=form_options), mpc
+        fem.form(_with_quadrature_degree(linear_form, quadrature_degree)), mpc
     )
 
 
@@ -790,14 +803,8 @@ def _assemble_unconstrained_vector(
     *,
     quadrature_degree: int | None = None,
 ) -> PETSc.Vec:
-    form_options: dict[str, int] = {}
-    if quadrature_degree is not None:
-        form_options["quadrature_degree"] = int(quadrature_degree)
     return _assemble_unconstrained_form_vector(
-        fem.form(
-            linear_form,
-            form_compiler_options=form_options,
-        )
+        fem.form(_with_quadrature_degree(linear_form, quadrature_degree))
     )
 
 
@@ -1112,12 +1119,11 @@ class _ReusableSurfaceComponentAssembler:
         ds = ufl.Measure(
             "ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags
         )
-        form_options: dict[str, int] = {}
-        if quadrature_degree is not None:
-            form_options["quadrature_degree"] = int(quadrature_degree)
         self.form = fem.form(
-            ufl.inner(ufl.as_vector(tuple(vector)), v) * ds(tag),
-            form_compiler_options=form_options,
+            _with_quadrature_degree(
+                ufl.inner(ufl.as_vector(tuple(vector)), v) * ds(tag),
+                quadrature_degree,
+            )
         )
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
@@ -1597,13 +1603,12 @@ def _mode_projection_from_solution(
     )
     reference = _as_ufl_vector(tangential_mode, phase)
     ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
-    form_options: dict[str, int] = {}
-    if quadrature_degree is not None:
-        form_options["quadrature_degree"] = int(quadrature_degree)
     local = fem.assemble_scalar(
         fem.form(
-            ufl.inner(tangential_field, reference) * ds(tag),
-            form_compiler_options=form_options,
+            _with_quadrature_degree(
+                ufl.inner(tangential_field, reference) * ds(tag),
+                quadrature_degree,
+            )
         )
     )
     total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
@@ -1769,11 +1774,8 @@ def _surface_scalar(
     quadrature_degree: int | None,
 ) -> complex:
     ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
-    form_options: dict[str, int] = {}
-    if quadrature_degree is not None:
-        form_options["quadrature_degree"] = int(quadrature_degree)
     local = fem.assemble_scalar(
-        fem.form(expression * ds(tag), form_compiler_options=form_options)
+        fem.form(_with_quadrature_degree(expression * ds(tag), quadrature_degree))
     )
     return complex(mesh_data.mesh.comm.allreduce(local, op=MPI.SUM))
 
