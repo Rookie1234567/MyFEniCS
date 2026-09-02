@@ -400,6 +400,10 @@ def test_synthetic_artifact_and_pair_pass(tmp_path: Path) -> None:
         "shard_duplicate",
         "shard_hash",
         "mpi_mismatch",
+        "exit_race_accept",
+        "exit_race_nonzero",
+        "exit_race_fake",
+        "exit_race_bool_code",
     ),
 )
 def test_checker_mutations_fail_closed(tmp_path: Path, mutation: str) -> None:
@@ -480,6 +484,56 @@ def test_checker_mutations_fail_closed(tmp_path: Path, mutation: str) -> None:
         manifest = json.loads(manifest_path.read_text())
         manifest["per_rank_shards"][0] = ["not-a-metadata-object"]
         _write_json(manifest_path, manifest)
+    elif mutation in {
+        "exit_race_accept",
+        "exit_race_nonzero",
+        "exit_race_fake",
+        "exit_race_bool_code",
+    }:
+        process_path = root / "parent_process.jsonl"
+        lines = process_path.read_text().splitlines()
+        sample = json.loads(lines[0])
+        sample.update(
+            {
+                "all_status_readable": False,
+                "rss_bytes": None,
+                "swap_bytes": None,
+            }
+        )
+        if mutation == "exit_race_accept":
+            sample.update(
+                {
+                    "process_tree_exit_race_observed": True,
+                    "worker_exit_code_observed_after_sample": 0,
+                }
+            )
+        elif mutation == "exit_race_nonzero":
+            sample.update(
+                {
+                    "process_tree_exit_race_observed": True,
+                    "worker_exit_code_observed_after_sample": -15,
+                }
+            )
+        elif mutation == "exit_race_bool_code":
+            sample.update(
+                {
+                    "process_tree_exit_race_observed": True,
+                    "worker_exit_code_observed_after_sample": False,
+                }
+            )
+        else:
+            sample.update(
+                {
+                    "all_status_readable": True,
+                    "process_tree_exit_race_observed": True,
+                    "worker_exit_code_observed_after_sample": 0,
+                }
+            )
+        lines[0] = json.dumps(sample, sort_keys=True, separators=(",", ":"))
+        process_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        parent = json.loads(parent_path.read_text())
+        parent["children"][0]["peak_rss_bytes"] = 0
+        _write_json(parent_path, parent)
     elif mutation == "marker_hash":
         marker = root / "markers" / "000_paths_ready.json"
         marker.write_bytes(marker.read_bytes() + b" ")
@@ -488,7 +542,12 @@ def test_checker_mutations_fail_closed(tmp_path: Path, mutation: str) -> None:
         payload = shard.read_bytes()
         shard.write_bytes(payload + payload.splitlines(keepends=True)[0] if mutation == "shard_duplicate" else payload[:-1] + b"x\n")
     result = checker.check_artifact(parent_path, SOURCE_SHA, 1)
+    if mutation == "exit_race_accept":
+        assert result["passed"], result
+        return
     assert not result["passed"], (mutation, result)
+    if mutation in {"exit_race_nonzero", "exit_race_fake", "exit_race_bool_code"}:
+        assert result["classification"] == "INFRASTRUCTURE_FAILURE_RETRYABLE"
     if mutation == "malformed_shard_metadata_single":
         assert result["classification"] == "INFRASTRUCTURE_FAILURE_RETRYABLE"
 
@@ -622,7 +681,8 @@ def test_sample_parent_uses_vanished_safe_snapshot(tmp_path: Path, monkeypatch) 
         lambda: {"pswpin_pages": 0, "pswpout_pages": 0},
     )
     sample_path = tmp_path / "samples.jsonl"
-    sample = runner._sample_parent(sample_path, "vanished")
+    sample = runner._sample_parent("vanished")
+    runner.append_jsonl(sample_path, sample)
     written = json.loads(sample_path.read_text(encoding="utf-8"))
     assert sample["rss_bytes"] == 321
     assert sample["swap_bytes"] == 0
@@ -656,7 +716,8 @@ def test_sample_parent_unreadable_snapshot_fails_closed(tmp_path: Path, monkeypa
         lambda: {"pswpin_pages": 0, "pswpout_pages": 0},
     )
     sample_path = tmp_path / "samples.jsonl"
-    sample = runner._sample_parent(sample_path, "unreadable")
+    sample = runner._sample_parent("unreadable")
+    runner.append_jsonl(sample_path, sample)
     assert sample["rss_bytes"] is None
     assert sample["swap_bytes"] is None
     assert sample["all_status_readable"] is False
@@ -669,3 +730,107 @@ def test_sample_parent_unreadable_snapshot_fails_closed(tmp_path: Path, monkeypa
         "max_swap_bytes": 0,
         "all_status_readable": False,
     }
+
+
+def test_run_parent_child_confirms_only_rc0_exit_race(tmp_path: Path, monkeypatch) -> None:
+    class Process:
+        pid = 12345
+        returncode = 0
+
+        def poll(self):
+            return self.returncode
+
+        def wait(self, timeout=None):
+            return self.returncode
+
+    def sample(stage: str, exit_code=None) -> dict[str, object]:
+        return {
+            "schema": runner.PROCESS_SCHEMA,
+            "root_pid": 1,
+            "stage": stage,
+            "timestamp_ns": 1,
+            "exit_code": exit_code,
+            "rss_bytes": None if exit_code is None else 17,
+            "swap_bytes": None if exit_code is None else 0,
+            "all_status_readable": exit_code is not None,
+            "job_no_swap": exit_code is not None,
+            "compiler_descendant_count": 0,
+            "members": [],
+            "authority": {},
+        }
+
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: Process())
+    monkeypatch.setattr(runner, "_sample_parent", sample)
+    monkeypatch.setattr(runner, "_process_group_gone", lambda _pid: True)
+    monkeypatch.setattr(
+        runner.os,
+        "killpg",
+        lambda *args: (_ for _ in ()).throw(AssertionError("unexpected signal")),
+    )
+    sample_path = tmp_path / "samples.jsonl"
+    result = runner._run_parent_child(
+        ["tiny"], sample_path, "exit-race", tmp_path / "stdout", tmp_path / "stderr"
+    )
+    rows = [json.loads(line) for line in sample_path.read_text().splitlines()]
+    assert result["returncode"] == 0
+    assert result["stop_reason"] is None
+    assert result["signals"] == []
+    assert result["all_status_readable"] is True
+    assert result["process_group_gone"] is True
+    assert rows[0]["all_status_readable"] is False
+    assert rows[0]["rss_bytes"] is None and rows[0]["swap_bytes"] is None
+    assert rows[0]["process_tree_exit_race_observed"] is True
+    assert rows[0]["worker_exit_code_observed_after_sample"] == 0
+
+
+def test_run_parent_child_does_not_exempt_live_unreadable(tmp_path: Path, monkeypatch) -> None:
+    class Process:
+        pid = 54321
+        returncode = None
+
+        def poll(self):
+            return self.returncode
+
+        def wait(self, timeout=None):
+            if self.returncode is None:
+                self.returncode = -15
+            return self.returncode
+
+    process = Process()
+    sent: list[int] = []
+
+    def sample(stage: str, exit_code=None) -> dict[str, object]:
+        return {
+            "schema": runner.PROCESS_SCHEMA,
+            "root_pid": 1,
+            "stage": stage,
+            "timestamp_ns": 1,
+            "exit_code": exit_code,
+            "rss_bytes": None if exit_code is None else 17,
+            "swap_bytes": None if exit_code is None else 0,
+            "all_status_readable": exit_code is not None,
+            "job_no_swap": exit_code is not None,
+            "compiler_descendant_count": 0,
+            "members": [],
+            "authority": {},
+        }
+
+    def killpg(_pid: int, sig: int) -> None:
+        sent.append(sig)
+        if sig == runner.signal.SIGTERM:
+            process.returncode = -15
+
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(runner, "_sample_parent", sample)
+    monkeypatch.setattr(runner, "_process_group_gone", lambda _pid: True)
+    monkeypatch.setattr(runner.os, "killpg", killpg)
+    sample_path = tmp_path / "samples.jsonl"
+    result = runner._run_parent_child(
+        ["tiny"], sample_path, "live-unreadable", tmp_path / "stdout", tmp_path / "stderr"
+    )
+    rows = [json.loads(line) for line in sample_path.read_text().splitlines()]
+    assert result["returncode"] == -15
+    assert result["stop_reason"] == "authority_unreadable"
+    assert result["signals"] == ["SIGTERM"]
+    assert result["all_status_readable"] is False
+    assert "process_tree_exit_race_observed" not in rows[0]

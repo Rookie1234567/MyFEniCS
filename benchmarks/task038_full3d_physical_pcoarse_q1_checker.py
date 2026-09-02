@@ -115,6 +115,16 @@ def _field(value: Any, key: str, label: str, errors: list[str]) -> Any:
     return value[key]
 
 
+def _sample_effectively_readable(sample: dict[str, Any]) -> bool:
+    observed_code = sample.get("worker_exit_code_observed_after_sample")
+    return sample.get("all_status_readable") is True or (
+        sample.get("all_status_readable") is False
+        and sample.get("process_tree_exit_race_observed") is True
+        and _is_int(observed_code)
+        and observed_code == 0
+    )
+
+
 def _expect(value: Any, key: str, expected: Any, label: str, errors: list[str]) -> Any:
     actual = _field(value, key, label, errors)
     if actual is not _MISSING and (type(actual) is not type(expected) or actual != expected):
@@ -213,10 +223,10 @@ def _check_process_result(
         item = _field(value, key, label, errors)
         if item is not _MISSING and (not _is_int(item) or item < 0):
             errors.append(f"lifecycle:{label}.{key}: expected nonnegative integer")
-    for key in ("argv", "signals"):
-        item = _field(value, key, label, errors)
-        if item is not _MISSING and not isinstance(item, list):
-            errors.append(f"lifecycle:{label}.{key}: expected list")
+    argv = _field(value, "argv", label, errors)
+    if argv is not _MISSING and not isinstance(argv, list):
+        errors.append(f"lifecycle:{label}.argv: expected list")
+    _expect(value, "signals", [], label, errors)
 
 
 def _load_process_samples(path: Path, errors: list[str]) -> list[dict[str, Any]]:
@@ -261,16 +271,37 @@ def _check_process(
         sample_swap = _field(sample, "swap_bytes", f"process[{index}]", errors)
         status = _field(sample, "all_status_readable", f"process[{index}]", errors)
         compiler = _field(sample, "compiler_descendant_count", f"process[{index}]", errors)
-        if _is_int(rss) and rss >= 0:
+        race = sample.get("process_tree_exit_race_observed", False)
+        observed_code = sample.get("worker_exit_code_observed_after_sample", _MISSING)
+        valid_race = (
+            race is True
+            and status is False
+            and _is_int(observed_code)
+            and observed_code == 0
+            and rss is None
+            and sample_swap is None
+        )
+        if race is not False and not isinstance(race, bool):
+            errors.append(f"lifecycle:process[{index}].process_tree_exit_race_observed: invalid")
+        if race is True:
+            if not valid_race:
+                errors.append(f"lifecycle:process[{index}]: invalid exit-race annotation")
+        elif observed_code is not _MISSING:
+            errors.append(f"lifecycle:process[{index}]: exit-race code without annotation")
+        if valid_race:
+            pass
+        elif _is_int(rss) and rss >= 0:
             peak = max(peak, rss)
         else:
             errors.append(f"process[{index}].rss_bytes: invalid")
-        if _is_int(sample_swap) and sample_swap >= 0:
+        if valid_race:
+            pass
+        elif _is_int(sample_swap) and sample_swap >= 0:
             swap = max(swap, sample_swap)
         else:
             errors.append(f"process[{index}].swap_bytes: invalid")
         if isinstance(status, bool):
-            readable = readable and status
+            readable = readable and _sample_effectively_readable(sample)
         else:
             errors.append(f"process[{index}].all_status_readable: invalid")
         if not _is_int(compiler) or compiler < 0:
@@ -317,13 +348,21 @@ def _check_stage(
     if not non_exit:
         errors.append(f"lifecycle:{label}: no non-exit process samples")
     else:
-        rss_values = [sample.get("rss_bytes") for sample in non_exit]
-        swap_values = [sample.get("swap_bytes") for sample in non_exit]
-        if result.get("peak_rss_bytes") != max(rss_values):
+        rss_values = [
+            sample["rss_bytes"]
+            for sample in non_exit
+            if _is_int(sample.get("rss_bytes")) and sample["rss_bytes"] >= 0
+        ]
+        swap_values = [
+            sample["swap_bytes"]
+            for sample in non_exit
+            if _is_int(sample.get("swap_bytes")) and sample["swap_bytes"] >= 0
+        ]
+        if result.get("peak_rss_bytes") != max(rss_values, default=0):
             errors.append(f"lifecycle:{label}: reported peak does not match samples")
-        if result.get("max_swap_bytes") != max(swap_values):
+        if result.get("max_swap_bytes") != max(swap_values, default=0):
             errors.append(f"lifecycle:{label}: reported swap does not match samples")
-        readable = all(sample.get("all_status_readable") is True for sample in non_exit)
+        readable = all(_sample_effectively_readable(sample) for sample in non_exit)
         if result.get("all_status_readable") != readable:
             errors.append(f"lifecycle:{label}: reported readability does not match samples")
 

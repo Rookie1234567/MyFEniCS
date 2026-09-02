@@ -232,7 +232,7 @@ def _cache_snapshot(cache: Path) -> dict[str, Any]:
     }
 
 
-def _sample_parent(sample_path: Path, stage: str, exit_code: int | None = None) -> dict[str, Any]:
+def _sample_parent(stage: str, exit_code: int | None = None) -> dict[str, Any]:
     from benchmarks.task034_wsl_resources import cgroup_snapshot, vmstat_swap_pages
 
     snapshot = process_tree_snapshot(os.getpid(), stage, exit_code=exit_code)
@@ -290,8 +290,17 @@ def _sample_parent(sample_path: Path, stage: str, exit_code: int | None = None) 
         "members": snapshot["members"],
         "authority": authority,
     }
-    append_jsonl(sample_path, sample)
     return sample
+
+
+def _sample_effectively_readable(sample: dict[str, Any]) -> bool:
+    observed_code = sample.get("worker_exit_code_observed_after_sample")
+    return sample.get("all_status_readable") is True or (
+        sample.get("all_status_readable") is False
+        and sample.get("process_tree_exit_race_observed") is True
+        and type(observed_code) is int
+        and observed_code == 0
+    )
 
 
 def _process_group_gone(pid: int) -> bool:
@@ -330,13 +339,22 @@ def _run_parent_child(
             start_new_session=True,
         )
         while True:
-            sample = _sample_parent(sample_path, stage)
+            sample = _sample_parent(stage)
             sample_count += 1
+            observed_exit_code = process.poll()
+            if (
+                sample["all_status_readable"] is False
+                and type(observed_exit_code) is int
+                and observed_exit_code == 0
+            ):
+                sample["process_tree_exit_race_observed"] = True
+                sample["worker_exit_code_observed_after_sample"] = 0
+            append_jsonl(sample_path, sample)
             if sample["rss_bytes"] is not None:
                 peak = max(peak, int(sample["rss_bytes"]))
             if sample["swap_bytes"] is not None:
                 max_swap = max(max_swap, int(sample["swap_bytes"]))
-            all_readable = all_readable and sample["all_status_readable"] is True
+            all_readable = all_readable and _sample_effectively_readable(sample)
             warning_crossed = warning_crossed or peak >= RSS_WARNING
             if not all_readable:
                 stop_reason = "authority_unreadable"
@@ -361,7 +379,10 @@ def _run_parent_child(
                 break
             time.sleep(POLL_SECONDS)
         returncode = int(process.wait()) if process.poll() is None else int(process.returncode)
-        _sample_parent(sample_path, stage, exit_code=int(returncode))
+        append_jsonl(
+            sample_path,
+            _sample_parent(stage, exit_code=int(returncode)),
+        )
         deadline = time.monotonic() + TERMINATION_GRACE_SECONDS
         while not process_group_gone and time.monotonic() < deadline:
             process_group_gone = _process_group_gone(process.pid)
@@ -966,7 +987,7 @@ def _process_summary(path: Path) -> dict[str, Any]:
                 peak = max(peak, int(sample["rss_bytes"]))
             if sample["swap_bytes"] is not None:
                 swap = max(swap, int(sample["swap_bytes"]))
-            readable = readable and sample["all_status_readable"] is True
+            readable = readable and _sample_effectively_readable(sample)
     return {
         "sample_count": count,
         "peak_rss_bytes": peak,
