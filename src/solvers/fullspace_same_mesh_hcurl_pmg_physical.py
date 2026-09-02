@@ -80,6 +80,130 @@ def _build_split_volume_action(
     )
 
 
+def build_same_mesh_physical_action(
+    setup: Mapping[str, Any],
+    cfg: Any,
+    degree: int,
+    *,
+    mode_inventory: tuple[Any, Any, Any] | None = None,
+    jit_options: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build one physical action from an existing same-mesh level.
+
+    ``setup`` owns the mesh, tags, spaces, and finalized Floquet MPCs.  This
+    helper only creates the requested degree's split volume action and
+    streaming DtN carrier; the temporary surface assemblers are released as
+    soon as the carrier has copied their owner-local functionals.  The
+    returned action bundle owns the composite action and must be released with
+    :func:`destroy_same_mesh_physical_action`.
+    """
+
+    from .common_3d_forms import _validate_physical_split_profile
+    from .dtn_port_3d import _dtn_surface_quadrature_degree
+    from .dtn_port_3d import _incident_projection_onto_top_mode
+    from .fullspace_dtn_action import (
+        build_dynamic_mode_inventory,
+        build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_surface,
+    )
+    from .fullspace_physical_action import FullspacePhysicalAction
+    from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+
+    degree = int(degree)
+    _validate_physical_split_profile(cfg)
+    try:
+        function_space = setup["spaces"][degree]
+        floquet = setup["floquets"][degree]
+    except KeyError as exc:
+        raise ValueError(f"same-mesh setup has no requested degree {degree}") from exc
+    if getattr(floquet, "mpc", None) is None:
+        raise ValueError("same-mesh physical action requires a finalized Floquet MPC")
+
+    if mode_inventory is None:
+        modes, mode_rows, mode_sha = build_dynamic_mode_inventory(cfg)
+    else:
+        if len(mode_inventory) != 3:
+            raise ValueError("mode_inventory must contain modes, rows, and SHA")
+        modes, mode_rows, mode_sha = mode_inventory
+        modes = tuple(modes)
+        mode_rows = tuple(mode_rows)
+        mode_sha = str(mode_sha)
+    modes = tuple(modes)
+    if not modes or len(mode_rows) != len(modes):
+        raise ValueError("same-mesh physical mode inventory is incomplete")
+    options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
+    qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
+    assemblers = _surface_assemblers(
+        function_space,
+        setup["mesh_data"],
+        cfg,
+        qdegree,
+        jit_options=options,
+    )
+    carrier = None
+    dtn_action = None
+    volume_action = None
+    physical_action = None
+    try:
+        carrier = build_fullspace_dtn_carrier_from_surface(
+            modes, assemblers, floquet.mpc, cfg
+        )
+    finally:
+        # The carrier owns copied sparse functionals; assemblers own only the
+        # temporary compiled surface forms and their phase constants.
+        del assemblers
+    try:
+        dtn_action = build_fullspace_dtn_action(
+            carrier, comm=setup["mesh"].comm
+        )
+        volume_action = _build_split_volume_action(
+            setup["mesh_data"],
+            cfg,
+            function_space,
+            floquet,
+            jit_options=options,
+        )
+        physical_action = FullspacePhysicalAction(volume_action, dtn_action)
+        dtn_action = None
+        volume_action = None
+        incident_projections = tuple(
+            _incident_projection_onto_top_mode(mode, cfg) for mode in modes
+        )
+        return {
+            "schema": "task038.same_mesh_hcurl_pmg.physical-action.v1",
+            "setup": setup,
+            "cfg": cfg,
+            "degree": degree,
+            "action": physical_action,
+            "physical_action": physical_action,
+            "modes": modes,
+            "mode_rows": mode_rows,
+            "mode_sha256": mode_sha,
+            "dtn_quadrature_degree": int(qdegree),
+            "incident_projections": incident_projections,
+        }
+    except Exception:
+        if physical_action is not None:
+            physical_action.destroy()
+        else:
+            if dtn_action is not None:
+                dtn_action.destroy()
+            if volume_action is not None:
+                volume_action.destroy()
+        raise
+
+
+def destroy_same_mesh_physical_action(bundle: dict[str, Any]) -> None:
+    """Destroy one action bundle without touching its borrowed setup."""
+
+    if not bundle:
+        return
+    action = bundle.pop("action", None)
+    if action is not None:
+        action.destroy()
+    bundle.clear()
+
+
 def build_p6_same_mesh_physical_bundle(
     cfg: Any,
     comm: Any,
@@ -427,9 +551,11 @@ __all__ = (
     "PHYSICAL_BUNDLE_SCHEMA",
     "PHYSICAL_PROFILE",
     "audit_p6_same_mesh_physical_bundle",
+    "build_same_mesh_physical_action",
     "build_p6_same_mesh_physical_bundle",
     "build_physical_rhs",
     "destroy_p6_same_mesh_physical_bundle",
+    "destroy_same_mesh_physical_action",
     "release_p6_same_mesh_solver_stack",
     "recover_p0_outputs",
 )

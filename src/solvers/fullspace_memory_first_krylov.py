@@ -389,8 +389,9 @@ def run_restart20_cycles(
     checkpoint_interval: int = CHECKPOINT_INTERVAL,
     cycle_observer: Callable[[int, PETSc.Vec, Mapping[str, Any]], None] | None = None,
     stop_on_true_residual: bool = True,
+    ksp_type: str = "gmres",
 ) -> dict[str, Any]:
-    """Run fixed restart-20 right-GMRES cycles with explicit replacement.
+    """Run fixed restart-20 right-GMRES/FGMRES cycles with explicit replacement.
 
     ``max_it`` is a caller-authorized fixed cap and must be a positive
     multiple of 20.  The only convergence decision is the explicit residual
@@ -425,6 +426,9 @@ def run_restart20_cycles(
             )
     if not np.isfinite(residual_limit) or residual_limit < 0.0:
         raise ValueError("residual limit must be finite and non-negative")
+    ksp_type = str(ksp_type).lower()
+    if ksp_type not in {"gmres", "fgmres"}:
+        raise ValueError("ksp_type must be 'gmres' or 'fgmres'")
 
     comm = _mpi_comm(rhs.getComm())
     sizes = (rhs.getLocalSize(), rhs.getSize())
@@ -479,7 +483,7 @@ def run_restart20_cycles(
             pc_start = pc_context.apply_count
             active_ksp = PETSc.KSP().create(comm)
             active_ksp.setOperators(operator)
-            active_ksp.setType("gmres")
+            active_ksp.setType(ksp_type)
             active_ksp.setGMRESRestart(GMRES_RESTART)
             active_ksp.setPCSide(PETSc.PC.Side.RIGHT)
             active_ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
@@ -556,7 +560,7 @@ def run_restart20_cycles(
         final_solution = solution.copy()
         return {
             "settings": {
-                "ksp_type": "gmres",
+                "ksp_type": ksp_type,
                 "pc_side": "right",
                 "norm_type": "unpreconditioned",
                 "restart": GMRES_RESTART,
