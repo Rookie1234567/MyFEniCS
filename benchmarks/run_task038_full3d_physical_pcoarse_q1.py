@@ -267,7 +267,6 @@ def _process_group_gone(pid: int) -> bool:
 
 def _run_parent_child(
     command: list[str],
-    root: Path,
     sample_path: Path,
     stage: str,
     stdout_path: Path,
@@ -286,7 +285,7 @@ def _run_parent_child(
     with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
         process = subprocess.Popen(
             command,
-            cwd=root,
+            cwd=REPO_ROOT,
             stdout=stdout,
             stderr=stderr,
             start_new_session=True,
@@ -955,7 +954,6 @@ def run_parent(
             child_record = children_dir / f"{index:02d}_{group.replace('-', '_')}.json"
             result = _run_parent_child(
                 _child_command(group, cache, child_record, source_sha, _absolute(input_path)),
-                root,
                 sample_path,
                 f"precompile:{group}",
                 children_dir / f"{index:02d}_{group.replace('-', '_')}.stdout.log",
@@ -977,7 +975,6 @@ def run_parent(
         worker_record = root / "raw" / "worker_record.json"
         worker_result = _run_parent_child(
             _worker_command(root, worker_record, source_sha, _absolute(input_path), expected_size),
-            root,
             sample_path,
             "worker",
             root / "worker.stdout.log",

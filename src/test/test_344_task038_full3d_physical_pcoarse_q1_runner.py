@@ -576,3 +576,24 @@ def test_marker_rank0_and_fresh_root_contract(tmp_path: Path) -> None:
         runner.write_marker = original
     assert writes == ["first", "second"]
     assert barriers == [1, 0, 0]
+
+
+def test_parent_child_uses_repository_cwd_for_module_import(tmp_path: Path) -> None:
+    sample_path = tmp_path / "parent_process.jsonl"
+    stdout_path = tmp_path / "child.stdout.log"
+    stderr_path = tmp_path / "child.stderr.log"
+    result = runner._run_parent_child(
+        [
+            sys.executable,
+            "-c",
+            "import benchmarks, os; print(os.getcwd())",
+        ],
+        sample_path,
+        "tiny-import-cwd",
+        stdout_path,
+        stderr_path,
+    )
+    assert result["returncode"] == 0, result
+    assert result["stop_reason"] is None, result
+    assert result["process_group_gone"] is True, result
+    assert stdout_path.read_text(encoding="utf-8").strip() == str(runner.REPO_ROOT)
