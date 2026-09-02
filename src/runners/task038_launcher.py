@@ -33,6 +33,7 @@ from benchmarks.task039_memory_telemetry import (
 
 from src.io.execution_plan import (
     CONTRACT_PROBE_ADAPTER,
+    TASK041_PUBLIC_SUPERVISOR_ADAPTER,
     ExecutionPlan,
     build_execution_plan,
     method_adapter_identity,
@@ -3641,6 +3642,14 @@ def launch_specification(
             resource_authority_sample,
             include_smaps=True,
         )
+    task041_public_route = (
+        not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
+    )
+    if task041_public_route and sample_factory is resource_authority_sample:
+        effective_sample_factory = partial(
+            resource_authority_sample,
+            include_smaps=True,
+        )
     run_directory = _timestamp_directory(specification, timestamp)
     start_time = _now()
     manifest, _resolved_sha = _write_bootstrap(
@@ -3650,28 +3659,18 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
-    plan = build_execution_plan(
-        specification,
-        run_directory,
-        source_sha=source,
-        python_executable=python_executable,
-        mpiexec_command=mpiexec_command,
-        adapter_identity=adapter,
-        contract_probe=contract_probe,
-        task039_trace_audit=task039_trace_audit,
-    )
-    if not plan.adapter_available:
-        result = {
-            "exit_status": None,
-            "result_classification": "adapter_unavailable",
-            "resource_authority": {"status": "not_sampled"},
-        }
-    else:
+    if task041_public_route:
         try:
-            result = _run_worker(
-                plan,
+            from src.runners.task041_supervisor import (
+                run_task041_public_supervisor,
+            )
+
+            result = run_task041_public_supervisor(
                 specification,
-                run_directory,
+                source_sha=source,
+                run_directory=run_directory,
+                python_executable=python_executable,
+                mpiexec_command=mpiexec_command,
                 popen_factory=popen_factory,
                 sample_factory=effective_sample_factory,
                 terminate_factory=terminate_factory,
@@ -3682,18 +3681,63 @@ def launch_specification(
         except OSError as exc:
             result = {
                 "exit_status": None,
-                "result_classification": "worker_launch_error",
+                "result_classification": "task041_supervisor_launch_error",
                 "error": str(exc),
                 "resource_authority": {"status": "not_sampled"},
             }
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - preserve supervisor failure evidence
             result = {
                 "exit_status": None,
-                "result_classification": "launcher_failure",
+                "result_classification": "task041_supervisor_failure",
                 "error": str(exc),
                 "error_type": type(exc).__name__,
                 "resource_authority": {"status": "not_sampled"},
             }
+    else:
+        plan = build_execution_plan(
+            specification,
+            run_directory,
+            source_sha=source,
+            python_executable=python_executable,
+            mpiexec_command=mpiexec_command,
+            adapter_identity=adapter,
+            contract_probe=contract_probe,
+            task039_trace_audit=task039_trace_audit,
+        )
+        if not plan.adapter_available:
+            result = {
+                "exit_status": None,
+                "result_classification": "adapter_unavailable",
+                "resource_authority": {"status": "not_sampled"},
+            }
+        else:
+            try:
+                result = _run_worker(
+                    plan,
+                    specification,
+                    run_directory,
+                    popen_factory=popen_factory,
+                    sample_factory=effective_sample_factory,
+                    terminate_factory=terminate_factory,
+                    monotonic=monotonic,
+                    sleep=sleep,
+                    poll_interval=poll_interval,
+                )
+            except OSError as exc:
+                result = {
+                    "exit_status": None,
+                    "result_classification": "worker_launch_error",
+                    "error": str(exc),
+                    "resource_authority": {"status": "not_sampled"},
+                }
+            except Exception as exc:
+                result = {
+                    "exit_status": None,
+                    "result_classification": "launcher_failure",
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "resource_authority": {"status": "not_sampled"},
+                }
     end_time = _now()
     manifest.update(
         {
