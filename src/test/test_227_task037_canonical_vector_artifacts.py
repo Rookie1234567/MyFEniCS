@@ -13,8 +13,10 @@ from benchmarks.canonical_vector_artifacts import (
     compare_canonical_manifests,
     compare_canonical_shard_sets,
     read_canonical_manifest,
+    read_canonical_manifest_metadata,
     read_canonical_packet_shard,
     read_canonical_packet_shards,
+    read_selected_canonical_packet_shard,
     write_canonical_manifest,
     write_canonical_packet_shard,
 )
@@ -189,6 +191,61 @@ def test_deterministic_manifest_and_controlled_comparison_failures(tmp_path: Pat
     )
     assert not duplicate_failed["pass"]
     assert duplicate_failed["duplicate_left_count"]
+
+
+def test_metadata_only_and_selected_shard_reader_are_fail_closed(tmp_path: Path):
+    packets = _packets()
+    shard_path = tmp_path / "rank0.jsonl"
+    shard = write_canonical_packet_shard(shard_path, packets)
+    manifest = canonical_shard_manifest(
+        role="full_fe",
+        mpi_size=1,
+        shard_metadata=[{**shard, "rank": 0}],
+        extractor_audit={},
+    )
+    metadata_only = {
+        **manifest,
+        "per_rank_shards": [
+            {**manifest["per_rank_shards"][0], "filename": "missing.jsonl"}
+        ],
+    }
+    manifest_path = tmp_path / "metadata_only.json"
+    manifest_sha = write_canonical_manifest(manifest_path, metadata_only)
+    assert (
+        read_canonical_manifest_metadata(manifest_path, manifest_sha) == metadata_only
+    )
+    with pytest.raises(FileNotFoundError):
+        read_canonical_manifest(manifest_path, manifest_sha)
+
+    selected, facts = read_selected_canonical_packet_shard(
+        shard_path,
+        (packets[1][0],),
+        shard["file_sha256"],
+    )
+    assert selected == (packets[1],)
+    assert facts == {
+        "streamed_packet_count": 2,
+        "selected_packet_count": 1,
+        "file_sha256": shard["file_sha256"],
+        "finite": True,
+    }
+    with pytest.raises(ValueError, match="missing selected"):
+        read_selected_canonical_packet_shard(
+            shard_path,
+            (packets[0][0], packets[0][0] + ("missing",)),
+            shard["file_sha256"],
+        )
+
+    duplicate_path = tmp_path / "selected_duplicate.jsonl"
+    duplicate = write_canonical_packet_shard(duplicate_path, packets + packets[:1])
+    with pytest.raises(ValueError, match="selected canonical key"):
+        read_selected_canonical_packet_shard(
+            duplicate_path, (packets[0][0],), duplicate["file_sha256"]
+        )
+    with pytest.raises(ValueError, match="file digest"):
+        read_selected_canonical_packet_shard(
+            shard_path, (packets[0][0],), "0" * 64
+        )
 
 
 def test_streamed_packet_audit_preserves_default_bytes_and_metadata(tmp_path: Path):

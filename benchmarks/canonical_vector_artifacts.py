@@ -69,6 +69,22 @@ def _packet_line(
     )
 
 
+def _decode_canonical_packet_line(
+    raw_line: bytes,
+) -> tuple[CanonicalPacket, bytes]:
+    record = json.loads(raw_line)
+    if record["schema_version"] != SHARD_SCHEMA:
+        raise ValueError("canonical shard schema is unsupported")
+    key = _key_from_jsonable(record["key"])
+    key_bytes = canonical_key_json_bytes(key)
+    if record["key_sha256"] != hashlib.sha256(key_bytes).hexdigest():
+        raise ValueError("canonical key digest does not match key payload")
+    value = record["value"]
+    if not isinstance(value, list) or len(value) != 2:
+        raise ValueError("canonical coefficient encoding is invalid")
+    return (key, complex(float(value[0]), float(value[1]))), key_bytes
+
+
 def write_canonical_packet_shard(
     path: Path,
     packets: Iterable[CanonicalPacket],
@@ -124,21 +140,59 @@ def read_canonical_packet_shard(
     with path.open("rb") as stream:
         for raw_line in stream:
             digest.update(raw_line)
-            record = json.loads(raw_line)
-            if record["schema_version"] != SHARD_SCHEMA:
-                raise ValueError("canonical shard schema is unsupported")
-            key = _key_from_jsonable(record["key"])
-            key_bytes = canonical_key_json_bytes(key)
-            if record["key_sha256"] != hashlib.sha256(key_bytes).hexdigest():
-                raise ValueError("canonical key digest does not match key payload")
-            value = record["value"]
-            if not isinstance(value, list) or len(value) != 2:
-                raise ValueError("canonical coefficient encoding is invalid")
-            packets.append((key, complex(float(value[0]), float(value[1]))))
+            packet, _key_bytes = _decode_canonical_packet_line(raw_line)
+            packets.append(packet)
     actual_sha256 = digest.hexdigest()
     if expected_sha256 is not None and actual_sha256 != expected_sha256:
         raise ValueError("canonical shard file digest does not match manifest")
     return tuple(packets)
+
+
+def read_selected_canonical_packet_shard(
+    path: Path,
+    wanted_keys: Iterable[tuple[Any, ...]],
+    expected_sha256: str,
+) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
+    wanted_by_bytes: dict[bytes, tuple[Any, ...]] = {}
+    for key in wanted_keys:
+        key_bytes = canonical_key_json_bytes(key)
+        if key_bytes in wanted_by_bytes:
+            raise ValueError("wanted canonical keys contain a duplicate")
+        wanted_by_bytes[key_bytes] = key
+
+    digest = hashlib.sha256()
+    selected: list[CanonicalPacket] = []
+    selected_key_bytes: set[bytes] = set()
+    streamed_packet_count = 0
+    all_finite = True
+    with path.open("rb") as stream:
+        for raw_line in stream:
+            digest.update(raw_line)
+            packet, key_bytes = _decode_canonical_packet_line(raw_line)
+            streamed_packet_count += 1
+            value = packet[1]
+            all_finite = all_finite and math.isfinite(value.real) and math.isfinite(
+                value.imag
+            )
+            if key_bytes not in wanted_by_bytes:
+                continue
+            if key_bytes in selected_key_bytes:
+                raise ValueError("selected canonical key appears more than once")
+            selected_key_bytes.add(key_bytes)
+            selected.append(packet)
+
+    actual_sha256 = digest.hexdigest()
+    if actual_sha256 != expected_sha256:
+        raise ValueError("canonical shard file digest does not match manifest")
+    missing = set(wanted_by_bytes) - selected_key_bytes
+    if missing:
+        raise ValueError(f"missing selected canonical keys: {len(missing)}")
+    return tuple(selected), {
+        "streamed_packet_count": int(streamed_packet_count),
+        "selected_packet_count": len(selected),
+        "file_sha256": actual_sha256,
+        "finite": bool(all_finite),
+    }
 
 
 def read_canonical_packet_shards(
@@ -217,6 +271,17 @@ def write_canonical_manifest(path: Path, manifest: dict[str, Any]) -> str:
 def read_canonical_manifest(
     path: Path, expected_sha256: str | None = None
 ) -> dict[str, Any]:
+    manifest = read_canonical_manifest_metadata(path, expected_sha256)
+    for shard in manifest["per_rank_shards"]:
+        read_canonical_packet_shard(
+            path.parent / shard["filename"], shard["file_sha256"]
+        )
+    return manifest
+
+
+def read_canonical_manifest_metadata(
+    path: Path, expected_sha256: str | None = None
+) -> dict[str, Any]:
     payload = path.read_bytes()
     actual_sha256 = hashlib.sha256(payload).hexdigest()
     if expected_sha256 is not None and actual_sha256 != expected_sha256:
@@ -224,10 +289,6 @@ def read_canonical_manifest(
     manifest = json.loads(payload)
     if manifest["schema_version"] != MANIFEST_SCHEMA:
         raise ValueError("canonical manifest schema is unsupported")
-    for shard in manifest["per_rank_shards"]:
-        read_canonical_packet_shard(
-            path.parent / shard["filename"], shard["file_sha256"]
-        )
     return manifest
 
 
@@ -272,6 +333,8 @@ __all__ = [
     "read_canonical_packet_shard",
     "read_canonical_packet_shards",
     "read_canonical_manifest",
+    "read_canonical_manifest_metadata",
+    "read_selected_canonical_packet_shard",
     "write_canonical_manifest",
     "write_canonical_packet_shard",
 ]
