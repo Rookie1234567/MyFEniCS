@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
-from difflib import get_close_matches
+import re
+from collections.abc import Mapping
 from copy import deepcopy
+from difflib import get_close_matches
 from hashlib import sha256
 from math import isclose, isfinite
 from pathlib import Path
-import re
-from typing import Any, Mapping
-import tomllib
+from typing import Any
 
 import numpy as np
+import tomllib
 
 from .input_loader import InputError, LoadedInput
-from .resolved_config import canonical_json_bytes
-from .run_specification import RunSpecification
 from .input_schema import (
     FIELD_SPECS_BY_KEY,
     IDENTITY_KEYS,
@@ -23,7 +22,8 @@ from .input_schema import (
     PUBLIC_FIELD_SPECS,
     SECTION_NAMES,
 )
-
+from .resolved_config import canonical_json_bytes
+from .run_specification import RunSpecification
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 _IDENTITY_SET = set(IDENTITY_KEYS)
@@ -267,6 +267,16 @@ _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID = (
 _TASK039_V3_2D_MESH_TARGETS = (5.0, 4.0, 3.0, 2.0, 1.5)
 _TASK039_V3_2D_DEGREES = (6, 8)
 
+TASK041_MODEL_ID = "task041_5nm_exact_side_hybrid_iterative_p6h4_m480"
+TASK041_RUN_ID = "task041_5nm_p6h4_m480_mpi1"
+TASK041_COMPARISON_GROUP = "task041_5nm_exact_side_hybrid_iterative"
+TASK041_MATERIAL_LABEL = "W / tungsten, 5 nm Task039 authority"
+TASK041_N = (0.99396854453, 0.00435380777)
+TASK041_WARNING_MEMORY_GIB = 192.0
+TASK041_HARD_MEMORY_GIB = 256.0
+TASK041_HARD_MEMORY_BYTES = 256 * 2**30
+TASK041_TIMEOUT_SECONDS = 172800
+
 
 def task039_model_id_matches(
     method: str,
@@ -308,7 +318,7 @@ def task039_incidence_identity(config: Mapping[str, Any]) -> dict[str, Any]:
 
     incidence = config.get("incidence")
     if not isinstance(incidence, Mapping):
-        raise ValueError("incidence identity requires an incidence mapping")
+        raise ValueError("incidence identity requires an incidence mapping")  # noqa: TRY004 - preserve Task039 contract
     if "grazing_angle_deg" in incidence:
         grazing = float(incidence["grazing_angle_deg"])
     elif "tilt_from_downward_y_deg" in incidence:
@@ -371,6 +381,10 @@ def _is_task039_candidate(config: Mapping[str, Any]) -> bool:
     return str(config.get("model_id", "")).startswith("task039_5nm")
 
 
+def _is_task041_profile(config: Mapping[str, Any]) -> bool:
+    return str(config.get("model_id", "")) == TASK041_MODEL_ID
+
+
 def task039_material_provenance(
     config: Mapping[str, Any],
 ) -> dict[str, Any] | None:
@@ -425,6 +439,148 @@ def task039_material_provenance(
         "grating_label": materials.get("grating_name"),
         "imaginary_sign_preserved": True,
     }
+
+
+def task041_material_provenance(
+    config: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Return the finite Task41 W/tungsten material identity."""
+
+    if not _is_task041_profile(config):
+        return None
+    materials = config.get("materials")
+    incidence = config.get("incidence")
+    if not isinstance(materials, Mapping) or not isinstance(incidence, Mapping):
+        return None
+    n_substrate = materials.get("n_substrate")
+    n_grating = materials.get("n_grating")
+    if (
+        incidence.get("wavelength_nm") != 5.0
+        or not _same_profile_value(n_substrate, TASK041_N)
+        or not _same_profile_value(n_grating, TASK041_N)
+        or materials.get("substrate_name") != TASK041_MATERIAL_LABEL
+        or materials.get("grating_name") != TASK041_MATERIAL_LABEL
+    ):
+        return None
+    n = complex(float(TASK041_N[0]), float(TASK041_N[1]))
+    epsilon = n**2
+    return {
+        "source": "Task039_5nm_authority_material_n",
+        "authority": "Task039 5nm authority",
+        "model_id": TASK041_MODEL_ID,
+        "material_label": TASK041_MATERIAL_LABEL,
+        "material_role": "physical W/tungsten material identity",
+        "delta": 0.00603145547,
+        "beta": 0.00435380777,
+        "n": [float(n.real), float(n.imag)],
+        "epsilon_r": [float(epsilon.real), float(epsilon.imag)],
+        "wavelength_nm": 5.0,
+        "substrate_label": materials.get("substrate_name"),
+        "grating_label": materials.get("grating_name"),
+        "finite": bool(np.isfinite(epsilon.real) and np.isfinite(epsilon.imag)),
+        "imaginary_sign_preserved": True,
+    }
+
+
+def task041_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Return errors for the finite Task41 5 nm p6/h4/M480/MPI1 profile."""
+
+    expected: tuple[tuple[str | None, str, Any], ...] = (
+        (None, "model_id", TASK041_MODEL_ID),
+        (None, "run_id", TASK041_RUN_ID),
+        (None, "comparison_group", TASK041_COMPARISON_GROUP),
+        ("geometry", "geometry_kind", "rectangular_block_grating"),
+        ("geometry", "period_x_nm", 50.0),
+        ("geometry", "period_y_nm", 25.0),
+        ("geometry", "z_min_nm", -10.0),
+        ("geometry", "z_max_nm", 130.0),
+        ("geometry", "interface_z_nm", 0.0),
+        ("geometry", "air_height_nm", 130.0),
+        ("geometry", "substrate_thickness_nm", 10.0),
+        ("geometry", "grating_width_x_nm", 17.0),
+        ("geometry", "grating_width_y_nm", 25.0),
+        ("geometry", "grating_height_nm", 120.0),
+        ("materials", "n_air", (1.0, 0.0)),
+        ("materials", "mu_r", (1.0, 0.0)),
+        ("materials", "n_substrate", TASK041_N),
+        ("materials", "n_grating", TASK041_N),
+        ("materials", "substrate_name", TASK041_MATERIAL_LABEL),
+        ("materials", "grating_name", TASK041_MATERIAL_LABEL),
+        ("incidence", "wavelength_nm", 5.0),
+        ("incidence", "grazing_angle_deg", 1.0),
+        ("incidence", "azimuth_deg", 0.0),
+        ("incidence", "polarization", "s"),
+        ("incidence", "electric_amplitude", 1.0),
+        ("discretization", "nedelec_degree", 6),
+        ("discretization", "visualization_degree", 6),
+        ("discretization", "mesh_target_nm", 4.0),
+        ("discretization", "mesh_cell_type", "hexahedron"),
+        ("discretization", "mesh_spacing_mode", "boundary_fitted"),
+        ("discretization", "assembly_backend", "assembly_time_static_condensed"),
+        ("discretization", "floquet_constraint_mode", "auto"),
+        ("boundary", "use_floquet_x", True),
+        ("boundary", "use_floquet_y", True),
+        ("boundary", "vertical_boundary", "dtn_port"),
+        ("boundary", "scattering_background", "layered"),
+        ("boundary", "dtn_order_policy", "auto_propagating"),
+        ("boundary", "dtn_assembly", "auxiliary"),
+        ("boundary", "use_pml", False),
+        ("method", "kind", "hybrid_iterative"),
+        ("method", "bottom_interface_nm", 10.0),
+        ("method", "top_interface_nm", 110.0),
+        ("method", "requested_modes_per_direction", 480),
+        ("method", "propagation_model", "full3d_uniform_cg"),
+        ("method", "traction_model", "full3d_one_cell_exact_schur"),
+        ("solver", "linear_solver", "fgmres"),
+        (
+            "solver",
+            "preconditioner",
+            "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+        ),
+        ("solver", "restart", 90),
+        ("solver", "max_iterations", 4000),
+        ("solver", "relative_tolerance", 5.0e-9),
+        ("solver", "absolute_tolerance", 0.0),
+        ("solver", "initial_guess", "zero"),
+        ("solver", "ilu_level", 0),
+        ("solver", "ilu_shift", 0.1),
+        ("solver", "subdomain_count_per_endcap", 1),
+        ("solver", "overlap_fraction", 0.0),
+        ("solver", "side_residual_correction_steps", 1),
+        ("execution", "mpi_size", 1),
+        ("execution", "warning_memory_gib", TASK041_WARNING_MEMORY_GIB),
+        ("execution", "terminate_memory_gib", TASK041_HARD_MEMORY_GIB),
+        (
+            "execution",
+            "absolute_terminate_memory_bytes",
+            TASK041_HARD_MEMORY_BYTES,
+        ),
+        ("execution", "timeout_seconds", TASK041_TIMEOUT_SECONDS),
+        ("execution", "require_zero_swap", True),
+        ("output", "results_root", "results"),
+        ("output", "unique_output", True),
+        ("output", "export_fields", True),
+        ("output", "export_diffraction_orders", True),
+        ("output", "export_canonical_vectors", True),
+        ("output", "export_modal_amplitudes", True),
+        ("output", "export_reference_planes", True),
+        ("output", "reference_plane_z_nm", (10.0, 30.0, 60.0, 90.0, 110.0)),
+        ("output", "sample_count_x", 40),
+        ("output", "sample_count_y", 20),
+        ("output", "diffraction_sample_count_x", 32),
+        ("output", "diffraction_sample_count_y", 32),
+        ("output", "probe_fraction", 0.75),
+        ("output", "diffraction_order_max_m", 25),
+        ("output", "diffraction_order_max_n", 25),
+    )
+    errors: list[tuple[str, str]] = []
+    for section, key, expected_value in expected:
+        values = config if section is None else config[section]
+        actual = values.get(key)
+        if not _same_profile_value(actual, expected_value):
+            path = key if section is None else f"{section}.{key}"
+            errors.append((path, f"Task41 finite profile requires {expected_value!r}"))
+    return errors
 
 
 def _task039_inventory_from_modes(
@@ -1266,6 +1422,19 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     solver = config["solver"]
     execution = config["execution"]
     output = config["output"]
+    model_id = str(config.get("model_id", ""))
+    if model_id.startswith("task041_") and model_id != TASK041_MODEL_ID:
+        raise _error(
+            "model_id",
+            "unknown Task41 profile; only the finite Task41 model is supported",
+        )
+    if model_id == TASK041_MODEL_ID and (
+        dimension != 3 or method.get("kind") != "hybrid_iterative"
+    ):
+        raise _error(
+            "model_id",
+            "Task41 requires dimension=3 and method.kind=hybrid_iterative",
+        )
     absolute_terminate_memory_bytes = execution.get("absolute_terminate_memory_bytes")
     if absolute_terminate_memory_bytes is not None and (
         isinstance(absolute_terminate_memory_bytes, bool)
@@ -1605,9 +1774,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         if kind == "hybrid_iterative":
             if solver["linear_solver"] != "fgmres":
                 raise _error("solver.linear_solver", "hybrid_iterative requires fgmres")
-            exact_side_h4 = (
-                config.get("model_id") == _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID
-            )
+            exact_side_h4 = config.get("model_id") in {
+                _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID,
+                TASK041_MODEL_ID,
+            }
             allowed_preconditioners = {
                 "hybrid_block_ldu_ilu0_dtn_woodbury",
                 "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
@@ -1754,6 +1924,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             profile_errors = (
                 task039_profile_errors(config)
                 if _is_task039_candidate(config)
+                else task041_profile_errors(config)
+                if _is_task041_profile(config)
                 else task038_hybrid_iterative_profile_errors(config)
             )
             if profile_errors:
@@ -1787,7 +1959,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             else incidence["tilt_from_downward_z_deg"]
         )
         try:
-            SimulationConfig3D(
+            _ = SimulationConfig3D(
                 lambda0=incidence["wavelength_nm"],
                 n_air=_complex(materials["n_air"]),
                 incident_theta_deg=theta,
@@ -1965,15 +2137,22 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         raise _error(
             "boundary.dtn_assembly", "3D public DtN assembly must be auxiliary"
         )
-    if dimension == 2 and boundary.get("dtn_assembly") == "explicit":
-        if kind != "2d_port" or boundary.get("dtn_order_policy") not in {
-            "zero_order",
-            "auto_propagating",
-        }:
-            raise _error(
-                "boundary.dtn_assembly",
-                "2D explicit DtN is public only for zero_order or auto_propagating 2d_port",
-            )
+    if (
+        dimension == 2
+        and boundary.get("dtn_assembly") == "explicit"
+        and (
+            kind != "2d_port"
+            or boundary.get("dtn_order_policy")
+            not in {
+                "zero_order",
+                "auto_propagating",
+            }
+        )
+    ):
+        raise _error(
+            "boundary.dtn_assembly",
+            "2D explicit DtN is public only for zero_order or auto_propagating 2d_port",
+        )
     if vertical == "pml":
         if boundary.get("use_pml") is not True:
             raise _error("boundary.use_pml", "must be true for a PML boundary")
@@ -2396,9 +2575,17 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
-    if _task039_v3_identity_enabled(config):
+    if _task039_v3_identity_enabled(config) or _is_task041_profile(config):
         derived["angle_identity"] = task039_incidence_identity(config)
-    material_provenance = task039_material_provenance(config)
+    if _is_task041_profile(config):
+        derived["task041_solver_contract"] = {
+            "public_side_apply_passes": 1,
+            "extra_residual_correction_steps": 0,
+            "old_fixed_smoother_refinement": False,
+        }
+    material_provenance = task041_material_provenance(config)
+    if material_provenance is None:
+        material_provenance = task039_material_provenance(config)
     if material_provenance is not None:
         derived["material_provenance"] = material_provenance
         derived["external_mode_inventory"] = (
@@ -2464,6 +2651,15 @@ def load_and_resolve(path: str | Path) -> RunSpecification:
 
 
 __all__ = [
+    "TASK041_COMPARISON_GROUP",
+    "TASK041_HARD_MEMORY_BYTES",
+    "TASK041_HARD_MEMORY_GIB",
+    "TASK041_MATERIAL_LABEL",
+    "TASK041_MODEL_ID",
+    "TASK041_N",
+    "TASK041_RUN_ID",
+    "TASK041_TIMEOUT_SECONDS",
+    "TASK041_WARNING_MEMORY_GIB",
     "InputError",
     "load_and_resolve",
     "resolve_loaded_input",
@@ -2472,11 +2668,13 @@ __all__ = [
     "task039_07nm_launch_error",
     "task039_air_side_external_mode_inventory",
     "task039_dynamic_external_mode_inventory",
-    "task039_material_provenance",
     "task039_incidence_identity",
+    "task039_material_provenance",
     "task039_model_id_matches",
     "task039_profile_errors",
     "task039_v3_2d_auto_dtn_order_count",
     "task039_v3_2d_profile_errors",
     "task039_v3_3d_profile_errors",
+    "task041_material_provenance",
+    "task041_profile_errors",
 ]
