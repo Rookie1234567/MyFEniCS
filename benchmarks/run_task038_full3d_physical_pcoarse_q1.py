@@ -233,19 +233,58 @@ def _cache_snapshot(cache: Path) -> dict[str, Any]:
 
 
 def _sample_parent(sample_path: Path, stage: str, exit_code: int | None = None) -> dict[str, Any]:
-    from benchmarks.task034_wsl_resources import resource_authority_sample
-    authority = resource_authority_sample(os.getpid())
+    from benchmarks.task034_wsl_resources import cgroup_snapshot, vmstat_swap_pages
+
     snapshot = process_tree_snapshot(os.getpid(), stage, exit_code=exit_code)
-    tree = authority["process_tree"]
+    cgroup = cgroup_snapshot(os.getpid())
+    snapshot_rss = snapshot["rss_bytes"]
+    dedicated_current = (
+        cgroup["memory_current_bytes"]
+        if cgroup["dedicated_job_cgroup"]
+        else None
+    )
+    if snapshot_rss is None and dedicated_current is None:
+        memory_authority = None
+    elif snapshot_rss is None:
+        memory_authority = int(dedicated_current)
+    elif dedicated_current is None:
+        memory_authority = int(snapshot_rss)
+    else:
+        memory_authority = max(int(snapshot_rss), int(dedicated_current))
+    dedicated_swap = (
+        cgroup["swap_current_bytes"]
+        if cgroup["dedicated_job_cgroup"]
+        else None
+    )
+    job_no_swap = bool(
+        snapshot["all_status_readable"]
+        and snapshot["swap_bytes"] == 0
+        and (dedicated_swap is None or dedicated_swap == 0)
+    )
+    authority = {
+        "process_tree": snapshot,
+        "job_cgroup": cgroup,
+        "wsl_vm_global_swap_diagnostic": vmstat_swap_pages(),
+        "memory_authority_bytes": memory_authority,
+        "memory_authority_semantics": (
+            "max(process-tree RSS, dedicated job cgroup memory.current when present)"
+        ),
+        "job_no_swap": job_no_swap,
+        "formal_swap_semantics": (
+            "process-tree VmSwap plus dedicated job cgroup swap; WSL-global pswp is diagnostic only"
+        ),
+        "mumps_ooc_is_swap": False,
+        "windows_pagefile_is_linux_swap": False,
+    }
     sample = {
         "schema": PROCESS_SCHEMA,
         "root_pid": os.getpid(),
         "stage": stage,
         "timestamp_ns": time.time_ns(),
         "exit_code": exit_code,
-        "rss_bytes": int(authority["memory_authority_bytes"]),
-        "swap_bytes": int(tree["swap_bytes"]),
-        "all_status_readable": bool(tree["all_status_readable"]),
+        "rss_bytes": authority["memory_authority_bytes"],
+        "swap_bytes": snapshot["swap_bytes"],
+        "all_status_readable": bool(snapshot["all_status_readable"]),
         "job_no_swap": bool(authority["job_no_swap"]),
         "compiler_descendant_count": int(snapshot["compiler_descendant_count"]),
         "members": snapshot["members"],
@@ -293,8 +332,10 @@ def _run_parent_child(
         while True:
             sample = _sample_parent(sample_path, stage)
             sample_count += 1
-            peak = max(peak, int(sample["rss_bytes"]))
-            max_swap = max(max_swap, int(sample["swap_bytes"]))
+            if sample["rss_bytes"] is not None:
+                peak = max(peak, int(sample["rss_bytes"]))
+            if sample["swap_bytes"] is not None:
+                max_swap = max(max_swap, int(sample["swap_bytes"]))
             all_readable = all_readable and sample["all_status_readable"] is True
             warning_crossed = warning_crossed or peak >= RSS_WARNING
             if not all_readable:
@@ -921,8 +962,10 @@ def _process_summary(path: Path) -> dict[str, Any]:
                 continue
             sample = json.loads(line)
             count += 1
-            peak = max(peak, int(sample["rss_bytes"]))
-            swap = max(swap, int(sample["swap_bytes"]))
+            if sample["rss_bytes"] is not None:
+                peak = max(peak, int(sample["rss_bytes"]))
+            if sample["swap_bytes"] is not None:
+                swap = max(swap, int(sample["swap_bytes"]))
             readable = readable and sample["all_status_readable"] is True
     return {
         "sample_count": count,

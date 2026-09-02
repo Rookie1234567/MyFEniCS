@@ -597,3 +597,75 @@ def test_parent_child_uses_repository_cwd_for_module_import(tmp_path: Path) -> N
     assert result["stop_reason"] is None, result
     assert result["process_group_gone"] is True, result
     assert stdout_path.read_text(encoding="utf-8").strip() == str(runner.REPO_ROOT)
+
+
+def test_sample_parent_uses_vanished_safe_snapshot(tmp_path: Path, monkeypatch) -> None:
+    snapshot = {
+        "rss_bytes": 321,
+        "swap_bytes": 0,
+        "all_status_readable": True,
+        "compiler_descendant_count": 0,
+        "members": [],
+        "vanished_pids": [1234],
+    }
+    monkeypatch.setattr(runner, "process_tree_snapshot", lambda *args, **kwargs: snapshot)
+    monkeypatch.setattr(
+        "benchmarks.task034_wsl_resources.cgroup_snapshot",
+        lambda _pid: {
+            "dedicated_job_cgroup": False,
+            "memory_current_bytes": None,
+            "swap_current_bytes": None,
+        },
+    )
+    monkeypatch.setattr(
+        "benchmarks.task034_wsl_resources.vmstat_swap_pages",
+        lambda: {"pswpin_pages": 0, "pswpout_pages": 0},
+    )
+    sample_path = tmp_path / "samples.jsonl"
+    sample = runner._sample_parent(sample_path, "vanished")
+    written = json.loads(sample_path.read_text(encoding="utf-8"))
+    assert sample["rss_bytes"] == 321
+    assert sample["swap_bytes"] == 0
+    assert sample["all_status_readable"] is True
+    assert sample["job_no_swap"] is True
+    assert sample["authority"]["process_tree"] is snapshot
+    assert written["authority"]["process_tree"]["vanished_pids"] == [1234]
+
+
+def test_sample_parent_unreadable_snapshot_fails_closed(tmp_path: Path, monkeypatch) -> None:
+    snapshot = {
+        "rss_bytes": None,
+        "swap_bytes": None,
+        "all_status_readable": False,
+        "compiler_descendant_count": 0,
+        "members": [],
+        "unreadable_pids": [4321],
+        "vanished_pids": [],
+    }
+    monkeypatch.setattr(runner, "process_tree_snapshot", lambda *args, **kwargs: snapshot)
+    monkeypatch.setattr(
+        "benchmarks.task034_wsl_resources.cgroup_snapshot",
+        lambda _pid: {
+            "dedicated_job_cgroup": False,
+            "memory_current_bytes": None,
+            "swap_current_bytes": None,
+        },
+    )
+    monkeypatch.setattr(
+        "benchmarks.task034_wsl_resources.vmstat_swap_pages",
+        lambda: {"pswpin_pages": 0, "pswpout_pages": 0},
+    )
+    sample_path = tmp_path / "samples.jsonl"
+    sample = runner._sample_parent(sample_path, "unreadable")
+    assert sample["rss_bytes"] is None
+    assert sample["swap_bytes"] is None
+    assert sample["all_status_readable"] is False
+    assert sample["job_no_swap"] is False
+    assert sample["authority"]["process_tree"]["unreadable_pids"] == [4321]
+    summary = runner._process_summary(sample_path)
+    assert summary == {
+        "sample_count": 1,
+        "peak_rss_bytes": 0,
+        "max_swap_bytes": 0,
+        "all_status_readable": False,
+    }
