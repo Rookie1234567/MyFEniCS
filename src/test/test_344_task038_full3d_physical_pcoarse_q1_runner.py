@@ -732,15 +732,20 @@ def test_sample_parent_unreadable_snapshot_fails_closed(tmp_path: Path, monkeypa
     }
 
 
-def test_run_parent_child_confirms_only_rc0_exit_race(tmp_path: Path, monkeypatch) -> None:
+def test_run_parent_child_confirms_rc0_after_bounded_exit_wait(
+    tmp_path: Path, monkeypatch
+) -> None:
     class Process:
         pid = 12345
-        returncode = 0
+        returncode = None
+        wait_timeout = None
 
         def poll(self):
             return self.returncode
 
         def wait(self, timeout=None):
+            self.wait_timeout = timeout
+            self.returncode = 0
             return self.returncode
 
     def sample(stage: str, exit_code=None) -> dict[str, object]:
@@ -759,7 +764,8 @@ def test_run_parent_child_confirms_only_rc0_exit_race(tmp_path: Path, monkeypatc
             "authority": {},
         }
 
-    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: Process())
+    process = Process()
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: process)
     monkeypatch.setattr(runner, "_sample_parent", sample)
     monkeypatch.setattr(runner, "_process_group_gone", lambda _pid: True)
     monkeypatch.setattr(
@@ -777,6 +783,7 @@ def test_run_parent_child_confirms_only_rc0_exit_race(tmp_path: Path, monkeypatc
     assert result["signals"] == []
     assert result["all_status_readable"] is True
     assert result["process_group_gone"] is True
+    assert process.wait_timeout == runner.TERMINATION_GRACE_SECONDS
     assert rows[0]["all_status_readable"] is False
     assert rows[0]["rss_bytes"] is None and rows[0]["swap_bytes"] is None
     assert rows[0]["process_tree_exit_race_observed"] is True
@@ -793,7 +800,7 @@ def test_run_parent_child_does_not_exempt_live_unreadable(tmp_path: Path, monkey
 
         def wait(self, timeout=None):
             if self.returncode is None:
-                self.returncode = -15
+                raise runner.subprocess.TimeoutExpired(["tiny"], timeout)
             return self.returncode
 
     process = Process()

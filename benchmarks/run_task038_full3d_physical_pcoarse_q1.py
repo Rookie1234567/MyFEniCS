@@ -342,6 +342,13 @@ def _run_parent_child(
             sample = _sample_parent(stage)
             sample_count += 1
             observed_exit_code = process.poll()
+            if sample["all_status_readable"] is False and observed_exit_code is None:
+                try:
+                    observed_exit_code = process.wait(
+                        timeout=TERMINATION_GRACE_SECONDS
+                    )
+                except subprocess.TimeoutExpired:
+                    observed_exit_code = None
             if (
                 sample["all_status_readable"] is False
                 and type(observed_exit_code) is int
