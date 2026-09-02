@@ -59,6 +59,7 @@ from src.coupling.hybrid_one_cell_exact_traction_builder import (
 )
 from src.solvers.common_3d_solve import _create_nedelec_space
 from src.solvers.static_local_schur_action import (
+    create_static_local_schur_action,
     materialize_research_explicit_fine_matrix,
 )
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
@@ -1128,6 +1129,7 @@ class CurrentBareFAuthoritySystem:
     full_fe_rhs: PETSc.Vec
     external_modes: tuple[Any, ...]
     construction_inventory: dict[str, Any]
+    static_context: Any | None = None
     source_work_directory: Path | None = None
     selected_mode_provider: Any | None = None
     external_mode_authority: Mapping[str, Any] | None = None
@@ -1158,6 +1160,8 @@ class CurrentBareFAuthoritySystem:
         if self._destroyed:
             return
         self.F.destroy()
+        if self.static_context is not None:
+            self.static_context.destroy()
         self.full_fe_rhs.destroy()
         self.condensed.destroy()
         mpc = getattr(self.floquet_data, "mpc", None)
@@ -1178,6 +1182,7 @@ def assemble_current_bare_f_authority_system(
     external_mode_authority: Mapping[str, Any] | None = None,
     external_mode_current_resolved_config_sha256: str | None = None,
     source_factor_marker_callback: Any | None = None,
+    action_only: bool = False,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
 ) -> CurrentBareFAuthoritySystem:
     """Assemble current ``F_b`` without creating any physical DtN blocks."""
@@ -1207,6 +1212,7 @@ def assemble_current_bare_f_authority_system(
     )
     condensed = None
     F = None
+    static_context = None
     full_fe_rhs = None
     try:
         condensed = build_unconstrained_assembly_time_condensation(
@@ -1221,7 +1227,10 @@ def assemble_current_bare_f_authority_system(
         if condensed.matrix is not None or condensed.appended_rows != 0:
             raise RuntimeError("bare-F assembly allocated forbidden appended rows")
         full_fe_rhs = _assemble_unconstrained_vector(linear_form)
-        F = materialize_research_explicit_fine_matrix(condensed)
+        if action_only:
+            F, static_context = create_static_local_schur_action(condensed)
+        else:
+            F = materialize_research_explicit_fine_matrix(condensed)
         if F.getSize() != (condensed.active_rows, condensed.active_rows):
             raise RuntimeError("current bare-F size differs from active trace rows")
         modes = tuple(
@@ -1256,6 +1265,7 @@ def assemble_current_bare_f_authority_system(
             F=F,
             full_fe_rhs=full_fe_rhs,
             external_modes=modes,
+            static_context=static_context,
             selected_mode_provider=selected_mode_provider,
             external_mode_authority=external_mode_authority,
             external_mode_current_resolved_config_sha256=(
@@ -1268,6 +1278,13 @@ def assemble_current_bare_f_authority_system(
                 else None
             ),
             construction_inventory={
+                "action_only": bool(action_only),
+                "global_F_materialized": bool(not action_only),
+                "operator_identity": (
+                    "current_bare_f_static_local_schur_action"
+                    if action_only
+                    else "current_bare_f_explicit_fine_matrix"
+                ),
                 "created_object_names": list(created_object_names),
                 "forbidden_object_names": list(forbidden_object_names),
                 "objects": {
@@ -1303,6 +1320,8 @@ def assemble_current_bare_f_authority_system(
     except Exception:
         if F is not None:
             F.destroy()
+        if static_context is not None:
+            static_context.destroy()
         if full_fe_rhs is not None:
             full_fe_rhs.destroy()
         if condensed is not None:
@@ -1997,6 +2016,7 @@ def _external_minimal_c_vector(
             "full_C_oracle": "test_only_direct_component_column_regression",
             "matrix_objects": dict(system.dtn_objects_constructed),
             "physical_dtn_operator_constructed": False,
+            "raw_global_row_remap": False,
         }
     except Exception:
         if active is not None:

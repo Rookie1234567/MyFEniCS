@@ -153,6 +153,21 @@ from src.solvers.hybrid_bare_f_authority import (
     compact_gamma_values_for_vector,
     run_current_bare_f_authority,
 )
+from src.solvers.hybrid_bare_f_external_lor_pilot import (
+    V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE,
+    V9_E_LOR_BARE_F_EXTERNAL_MARKER_SEQUENCE,
+    V9_E_LOR_BARE_F_EXTERNAL_NUMERICAL_NO_SIGNAL,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_FLAG,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_METHOD,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_MPI_SIZE,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_PROFILE_ID,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_SCHEMA,
+    V9_E_LOR_BARE_F_EXTERNAL_ONLY_TIMEOUT_SECONDS,
+    V9_E_LOR_BARE_F_EXTERNAL_POSITIVE,
+    V9_E_LOR_BARE_F_EXTERNAL_RESOURCE_UNAVAILABLE,
+)
 from src.solvers.hybrid_exact_authority_compat import (
     V4_CANONICAL_SOURCE_BINDING_REASON,
     V4_CANONICAL_SOURCE_BINDING_UNAVAILABLE,
@@ -527,6 +542,19 @@ __all__ = (
     "V9_E_LOR_L2_ONLY_TIMEOUT_SECONDS",
     "V9_E_LOR_L2_MARKER_SEQUENCE",
     "V9_E_LOR_L2_ALLOWED_INPUTS",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_FLAG",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_METHOD",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_SCHEMA",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_PROFILE_ID",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_TIMEOUT_SECONDS",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT",
+    "V9_E_LOR_BARE_F_EXTERNAL_ONLY_MPI_SIZE",
+    "V9_E_LOR_BARE_F_EXTERNAL_MARKER_SEQUENCE",
+    "V9_E_LOR_BARE_F_EXTERNAL_POSITIVE",
+    "V9_E_LOR_BARE_F_EXTERNAL_NUMERICAL_NO_SIGNAL",
+    "V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE",
+    "V9_E_LOR_BARE_F_EXTERNAL_RESOURCE_UNAVAILABLE",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -610,6 +638,7 @@ def build_task040_level_a_plan(
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
     v9_e_lor_l2_only: bool = False,
+    v9_e_lor_bare_f_external_only: bool = False,
     v9_e_s3_j1_baseline_only: bool = False,
     v9_e_s3_structured_b1_only: bool = False,
     v9_e_s3_j1_baseline_manifest: str | Path | None = None,
@@ -689,6 +718,16 @@ def build_task040_level_a_plan(
         raise ValueError(
             "V9-E L2 requires one of the frozen Task039 h10/h5 inputs"
         )
+    expected_bare_f_external_input = (
+        Path(__file__).resolve().parents[1] / V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT
+    ).resolve()
+    if (
+        v9_e_lor_bare_f_external_only
+        and Path(input_path).resolve() != expected_bare_f_external_input
+    ):
+        raise ValueError(
+            "V9-E bare-F external pilot requires the frozen h10 input"
+        )
     plan = {
         "schema": TASK040_LEVEL_A_SCHEMA,
         "method": TASK040_LEVEL_A_METHOD,
@@ -736,6 +775,7 @@ def build_task040_level_a_plan(
                 v9_source_bridge_only,
                 v9_c0_explicit_coarse_only,
                 v9_e_lor_l2_only,
+                v9_e_lor_bare_f_external_only,
                 v9_e_s3_j1_baseline_only,
                 v9_e_s3_structured_b1_only,
             )
@@ -1483,6 +1523,85 @@ def build_task040_level_a_plan(
                     "global_factor",
                     "parameter_scan",
                     "retry",
+                    "official_rta",
+                ],
+            }
+        )
+    if v9_e_lor_bare_f_external_only:
+        plan.update(
+            {
+                "route": "V9_E_LOR_BARE_F_EXTERNAL",
+                "schema": V9_E_LOR_BARE_F_EXTERNAL_ONLY_SCHEMA,
+                "method": V9_E_LOR_BARE_F_EXTERNAL_ONLY_METHOD,
+                "profile": V9_E_LOR_BARE_F_EXTERNAL_ONLY_PROFILE_ID,
+                "v9_e_lor_bare_f_external_only": True,
+                "research_only": True,
+                "oracle_only": False,
+                "scalable_candidate": False,
+                "pde_solve": "physical_current_bottom_bare_f_external_one_source",
+                "source_order": ["external_dtn_coupling"],
+                "planned_source_order": ["external_dtn_coupling"],
+                "fixed_configuration": {
+                    "bottom_operator": "physical_current_bare_f_matshell",
+                    "pc_operator": "fixed_positive_lor_trace_preconditioner",
+                    "pc_binding": "preconditioner_only",
+                    "pc_curl_coefficient": [1.0, 0.0],
+                    "pc_mass_coefficient": [1.0, 0.0],
+                    "physical_dtn_used": False,
+                    "additional_absorbing_shift": 0.0,
+                    "source_only": "external_dtn_coupling",
+                    "fgmres": {
+                        "type": "right_fgmres",
+                        "restart": 64,
+                        "max_it": 256,
+                        "rtol": 1.0e-8,
+                        "atol": 0.0,
+                        "explicit_residual_gate": 1.0e-3,
+                        "general_record_gate": 1.0e-2,
+                    },
+                },
+                "input_expected": {
+                    "relative_path": V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT,
+                    "binding": "exact_path_only",
+                },
+                "factor_inventory": {
+                    "owner_local_bounded": True,
+                    "max_local_rows": 432,
+                    "max_local_rows_limit": 1024,
+                    "global_direct_factor_count": 0,
+                    "global_coarse_factor_count": 0,
+                    "global_full_side_factor_count": 0,
+                    "global_full_cross_factor_count": 0,
+                },
+                "absolute_terminate_memory_bytes": (
+                    V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES
+                ),
+                "watchdog_hard_stop_bytes": (
+                    V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES
+                ),
+                "swap_limit_bytes": 0,
+                "timeout_seconds": V9_E_LOR_BARE_F_EXTERNAL_ONLY_TIMEOUT_SECONDS,
+                "watchdog_required": True,
+                "bottom_route_only_required": True,
+                "formal_adjudication": False,
+                "marker_sequence": list(V9_E_LOR_BARE_F_EXTERNAL_MARKER_SEQUENCE),
+                "numeric_allgather": False,
+                "full_basis_replication": False,
+                "global_F": False,
+                "global_AIJ": False,
+                "global_factor": False,
+                "official_rta": {"status": "not_run"},
+                "forbidden": [
+                    "physical_dtn_matrix",
+                    "global_high_order_aij",
+                    "global_factor",
+                    "global_coarse_factor",
+                    "full_cross_section_factor",
+                    "parameter_scan",
+                    "retry",
+                    "five_source",
+                    "top",
+                    "hybrid",
                     "official_rta",
                 ],
             }
@@ -7086,6 +7205,7 @@ def run_task040_level_a(
     v9_source_bridge_only: bool = False,
     v9_c0_explicit_coarse_only: bool = False,
     v9_e_lor_l2_only: bool = False,
+    v9_e_lor_bare_f_external_only: bool = False,
     v9_e_s3_j1_baseline_only: bool = False,
     v9_e_s3_structured_b1_only: bool = False,
     v9_e_s3_j1_baseline_manifest: str | Path | None = None,
@@ -7123,6 +7243,7 @@ def run_task040_level_a(
                 v9_source_bridge_only,
                 v9_c0_explicit_coarse_only,
                 v9_e_lor_l2_only,
+                v9_e_lor_bare_f_external_only,
                 v9_e_s3_j1_baseline_only,
                 v9_e_s3_structured_b1_only,
             )
@@ -7222,6 +7343,50 @@ def run_task040_level_a(
             raise ValueError("V9-E L2 route requires watchdog hard stop 45 GiB")
         if not callable(resource_callback):
             raise TypeError("V9-E L2 route requires a callable resource_callback")
+    if v9_e_lor_bare_f_external_only:
+        if run_directory is None:
+            raise ValueError(
+                "V9-E bare-F external route requires a separate run_directory"
+            )
+        if Path(run_directory).resolve() == Path(exact_spool_root).resolve():
+            raise ValueError(
+                "V9-E bare-F external run_directory must not be the exact spool root"
+            )
+        if input_path is None:
+            raise ValueError(
+                "V9-E bare-F external route requires the official input_path"
+            )
+        expected_bare_f_input = (
+            Path(__file__).resolve().parents[1]
+            / V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT
+        ).resolve()
+        if Path(input_path).resolve() != expected_bare_f_input:
+            raise ValueError(
+                "V9-E bare-F external route requires the frozen h10 input"
+            )
+        if int(comm.size) != V9_E_LOR_BARE_F_EXTERNAL_ONLY_MPI_SIZE:
+            raise ValueError(
+                "V9-E bare-F external route requires MPI8"
+            )
+        if not watchdog_enabled:
+            raise ValueError(
+                "V9-E bare-F external route requires watchdog_enabled=true"
+            )
+        if not bottom_route_only:
+            raise ValueError(
+                "V9-E bare-F external route requires bottom_route_only=true"
+            )
+        if (
+            watchdog_hard_stop_bytes
+            != V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES
+        ):
+            raise ValueError(
+                "V9-E bare-F external route requires watchdog hard stop 45 GiB"
+            )
+        if not callable(resource_callback):
+            raise TypeError(
+                "V9-E bare-F external route requires a callable resource_callback"
+            )
     s3_route = bool(v9_e_s3_j1_baseline_only or v9_e_s3_structured_b1_only)
     if (v9_e_s3_j1_baseline_manifest is None) != (
         v9_e_s3_j1_baseline_manifest_sha256 is None
@@ -7313,6 +7478,7 @@ def run_task040_level_a(
         or v9_source_bridge_only
         or v9_c0_explicit_coarse_only
         or v9_e_lor_l2_only
+        or v9_e_lor_bare_f_external_only
         or v9_e_s3_j1_baseline_only
         or v9_e_s3_structured_b1_only
     ):
@@ -7359,6 +7525,8 @@ def run_task040_level_a(
             if v7_moving_pml_full_state
             else V9_C0_EXPLICIT_COARSE_ONLY_METHOD
             if v9_c0_explicit_coarse_only
+            else V9_E_LOR_BARE_F_EXTERNAL_ONLY_METHOD
+            if v9_e_lor_bare_f_external_only
             else V9_E_LOR_L2_ONLY_METHOD
             if v9_e_lor_l2_only
             else V9_E_S3_B1_METHOD
@@ -7612,6 +7780,26 @@ def run_task040_level_a(
             "observed_sha256": observed_manifest_sha256,
         }
         return result
+    if v9_e_lor_bare_f_external_only:
+        from src.solvers.hybrid_bare_f_external_lor_pilot import (
+            run_v9_e_lor_bare_f_external_only,
+        )
+
+        return run_v9_e_lor_bare_f_external_only(
+            cfg=cfg,
+            profile=profile,
+            comm=comm,
+            input_path=input_path,
+            run_directory=run_directory,
+            source_sha=str(source_sha),
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            marker_callback=marker_callback,
+            resource_callback=resource_callback,
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+            watchdog_hard_stop_bytes=watchdog_hard_stop_bytes,
+        )
     if v9_e_lor_l2_only:
         from src.solvers.hcurl_fixed_lor_positive_screen import (
             run_v9_e_lor_l2_only,
@@ -8185,6 +8373,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V9_SOURCE_BRIDGE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_C0_EXPLICIT_COARSE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_LOR_L2_ONLY_FLAG, action="store_true")
+    parser.add_argument(
+        V9_E_LOR_BARE_F_EXTERNAL_ONLY_FLAG, action="store_true"
+    )
     parser.add_argument(V9_E_S3_J1_BASELINE_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_STRUCTURED_B1_ONLY_FLAG, action="store_true")
     parser.add_argument(V9_E_S3_J1_BASELINE_MANIFEST_OPTION)
@@ -8221,6 +8412,7 @@ def main(argv: list[str] | None = None) -> int:
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
         v9_e_lor_l2_only=args.v9_e_lor_l2_only,
+        v9_e_lor_bare_f_external_only=args.v9_e_lor_bare_f_external_only,
         v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
         v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
         v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,
@@ -8277,6 +8469,7 @@ def main(argv: list[str] | None = None) -> int:
         v9_source_bridge_only=args.v9_source_bridge_only,
         v9_c0_explicit_coarse_only=args.v9_c0_explicit_coarse_only,
         v9_e_lor_l2_only=args.v9_e_lor_l2_only,
+        v9_e_lor_bare_f_external_only=args.v9_e_lor_bare_f_external_only,
         v9_e_s3_j1_baseline_only=args.v9_e_s3_j1_baseline_only,
         v9_e_s3_structured_b1_only=args.v9_e_s3_structured_b1_only,
         v9_e_s3_j1_baseline_manifest=args.v9_e_s3_j1_baseline_manifest,
@@ -8300,6 +8493,8 @@ def main(argv: list[str] | None = None) -> int:
                         if args.v9_c0_explicit_coarse_only
                         else V9_E_LOR_L2_ONLY_HARD_STOP_BYTES
                         if args.v9_e_lor_l2_only
+                        else V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES
+                        if args.v9_e_lor_bare_f_external_only
                         else S3B_RSS_HARD_BYTES
                         if args.v9_e_s3_j1_baseline_only
                         or args.v9_e_s3_structured_b1_only
@@ -8330,6 +8525,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v9_source_bridge_only
                     or args.v9_c0_explicit_coarse_only
                     or args.v9_e_lor_l2_only
+                    or args.v9_e_lor_bare_f_external_only
                     or args.v9_e_s3_j1_baseline_only
                     or args.v9_e_s3_structured_b1_only
                 )
@@ -8357,6 +8553,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.v9_source_bridge_only
             or args.v9_c0_explicit_coarse_only
             or args.v9_e_lor_l2_only
+            or args.v9_e_lor_bare_f_external_only
             or args.v9_e_s3_j1_baseline_only
             or args.v9_e_s3_structured_b1_only
             else None

@@ -208,10 +208,15 @@ class FixedP6LORTraceService:
 def build_fixed_lor_trace_service(
     condensed: AssemblyTimeCondensedSystem,
     bridge_by_class: Mapping[tuple[Any, ...], FixedP6LORCellBridge],
+    *,
+    operator_binding: str = "strict",
 ) -> FixedP6LORTraceService:
     """Build an active-trace P+ service without a global fine matrix."""
 
     started = perf_counter()
+    if operator_binding not in {"strict", "preconditioner_only"}:
+        raise ValueError("operator_binding must be strict or preconditioner_only")
+    identity_required = operator_binding == "strict"
     build_audit = condensed.build_audit
     if int(condensed.appended_rows) != 0:
         raise ValueError("the trace service requires appended_rows=0")
@@ -264,7 +269,7 @@ def build_fixed_lor_trace_service(
             if production.shape != fine.shape:
                 raise RuntimeError("production and bridge trace shapes differ")
             prod_bridge_max = max(prod_bridge_max, _relative(fine, production))
-            if prod_bridge_max > _TOL:
+            if identity_required and prod_bridge_max > _TOL:
                 raise RuntimeError("production retained Schur is not bridge-bound")
             checked_classes.add(class_key)
         active_ids, sparse_expansion, _ = _cell_trace_expansion(
@@ -406,6 +411,14 @@ def build_fixed_lor_trace_service(
         "factor_rows_local": tuple(factor_rows),
         "max_local_factor_rows": max(factor_rows, default=0),
         "prod_vs_bridge_max_relative": prod_bridge_global,
+        "operator_binding": operator_binding,
+        "production_bridge_identity_required": identity_required,
+        "production_bridge_identity_applied": identity_required,
+        "production_bridge_comparison_computed": True,
+        "production_bridge_identity_passed": (
+            bool(prod_bridge_global <= _TOL) if identity_required else None
+        ),
+        "production_bridge_mismatch_accepted": not identity_required,
         "hermitian_max_relative": hermitian_global,
         "factor_solve_relative_max": factor_solve_global,
         "coverage_global_min": (
