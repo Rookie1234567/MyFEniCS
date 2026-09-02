@@ -1,4 +1,4 @@
-"""Minimal same-cache form precompile groups for the selected p6 profile.
+"""Minimal same-cache form precompile groups for the selected p6/p3 profile.
 
 Each call builds the real same-mesh ingredients needed by one group, compiles
 only the requested UFL forms, and returns facts rather than FE or PETSc
@@ -21,7 +21,7 @@ JIT_GROUPS = (
     "physical-volume-curl",
     "physical-volume-mass",
 )
-JIT_GROUP_SCHEMA = "task038.same-mesh-hcurl-pmg.jit-precompile.v2"
+JIT_GROUP_SCHEMA = "task038.same-mesh-hcurl-pmg.jit-precompile.v3"
 
 
 def _form_kwargs(
@@ -101,6 +101,23 @@ def _levels(
     return levels, levels["spaces"][int(degree)]
 
 
+def _levels_for_degrees(
+    cfg: Any,
+    comm: Any,
+    degrees: tuple[int, ...],
+    *,
+    include_positive_coefficients: bool,
+) -> dict[str, Any]:
+    from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+
+    return _build_same_mesh_levels(
+        cfg,
+        comm,
+        tuple(int(degree) for degree in degrees),
+        include_positive_coefficients=include_positive_coefficients,
+    )
+
+
 def _mode_facts(cfg: Any) -> tuple[int, str, int]:
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .fullspace_dtn_action import build_dynamic_mode_inventory
@@ -176,32 +193,37 @@ def _build_dtn_surface(
 ) -> dict[str, Any]:
     from .fullspace_same_mesh_hcurl_pmg_physical import _surface_assemblers
 
-    levels, space = _levels(
-        cfg, comm, 6, include_positive_coefficients=False
+    levels = _levels_for_degrees(
+        cfg, comm, (6, 3), include_positive_coefficients=False
     )
     mode_count, mode_sha, qdegree = _mode_facts(cfg)
-    assemblers = _surface_assemblers(
-        space,
-        levels["mesh_data"],
-        cfg,
-        qdegree,
-        jit_options=jit_options,
-    )
-    roles = [
-        {
-            "role": f"dtn_surface_{side}_{component}",
-            "rank": 1,
-            "kind": "surface_linear",
-        }
-        for side in ("top", "bottom")
-        for component in (0, 1)
-    ]
-    del assemblers, levels
+    roles = []
+    for degree in (6, 3):
+        assemblers = _surface_assemblers(
+            levels["spaces"][degree],
+            levels["mesh_data"],
+            cfg,
+            qdegree,
+            jit_options=jit_options,
+        )
+        roles.extend(
+            {
+                "role": f"dtn_surface_{side}_{component}",
+                "rank": 1,
+                "kind": "surface_linear",
+                "degree": degree,
+            }
+            for side in ("top", "bottom")
+            for component in (0, 1)
+        )
+        del assemblers
+    del levels
     return _facts(
         "dtn-surface",
         6,
         roles,
         jit_options,
+        degrees=[6, 3],
         mode_count=mode_count,
         mode_manifest_sha256=mode_sha,
         dtn_quadrature_degree=qdegree,
@@ -246,34 +268,42 @@ def _build_physical_volume_component(
     )
 
     _validate_physical_split_profile(cfg)
-    levels, space = _levels(
-        cfg, comm, 6, include_positive_coefficients=False
+    levels = _levels_for_degrees(
+        cfg, comm, (6, 3), include_positive_coefficients=False
     )
-    u = ufl.TrialFunction(space)
-    v = ufl.TestFunction(space)
-    dx = ufl.Measure(
-        "dx", domain=levels["mesh"], subdomain_data=levels["mesh_data"].cell_tags
-    )
-    curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
     if component == "curl":
         group = "physical-volume-curl"
         role = "physical_volume_curl_action"
-        selected_form = curl_curl
     elif component == "mass":
         group = "physical-volume-mass"
         role = "physical_volume_mass_action"
-        selected_form = material_mass
     else:
         raise ValueError(f"unsupported physical volume component: {component!r}")
-    coefficient = fem.Function(space)
-    action = ufl.action(selected_form, coefficient)
-    _compile_form(action, jit_options)
-    del action, coefficient, selected_form, curl_curl, material_mass, levels
+    forms = []
+    for degree in (6, 3):
+        space = levels["spaces"][degree]
+        u = ufl.TrialFunction(space)
+        v = ufl.TestFunction(space)
+        dx = ufl.Measure(
+            "dx",
+            domain=levels["mesh"],
+            subdomain_data=levels["mesh_data"].cell_tags,
+        )
+        curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+        selected_form = curl_curl if component == "curl" else material_mass
+        coefficient = fem.Function(space)
+        action = ufl.action(selected_form, coefficient)
+        _compile_form(action, jit_options)
+        forms.append({"role": role, "degree": degree, "rank": 1, "kind": "action"})
+        del action, coefficient, selected_form, curl_curl, material_mass
+    del levels
     return _facts(
         group,
         6,
-        [{"role": role, "rank": 1, "kind": "action"}],
+        forms,
         jit_options,
+        degrees=[6, 3],
+        action_degrees=[6, 3],
         component=component,
         component_count=1,
     )

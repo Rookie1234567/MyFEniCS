@@ -16,10 +16,19 @@ GROUP_ROLES = {
     "positive-p6": (2, ("positive_p6_action", "positive_p6_bilinear")),
     "positive-p3": (1, ("positive_p3_bilinear",)),
     "positive-p1": (1, ("positive_p1_bilinear",)),
-    "dtn-surface": (4, ("dtn_surface_top_0", "dtn_surface_top_1", "dtn_surface_bottom_0", "dtn_surface_bottom_1")),
+    "dtn-surface": (
+        8,
+        (
+            "dtn_surface_top_0",
+            "dtn_surface_top_1",
+            "dtn_surface_bottom_0",
+            "dtn_surface_bottom_1",
+        )
+        * 2,
+    ),
     "incident-rhs": (1, ("incident_top_traction",)),
-    "physical-volume-curl": (1, ("physical_volume_curl_action",)),
-    "physical-volume-mass": (1, ("physical_volume_mass_action",)),
+    "physical-volume-curl": (2, ("physical_volume_curl_action",) * 2),
+    "physical-volume-mass": (2, ("physical_volume_mass_action",) * 2),
 }
 
 
@@ -39,10 +48,28 @@ def test_group_dispatch_returns_minimal_form_facts(monkeypatch, group):
     }
 
     def fake_facts(_group, degree, _jit_options, **extra):
-        forms = [
-            {"role": role, "rank": 1 if "bilinear" not in role else 2, "kind": "fake"}
-            for role in roles
-        ]
+        multi_degree = group in {
+            "dtn-surface",
+            "physical-volume-curl",
+            "physical-volume-mass",
+        }
+        form_degrees = (6, 3) if multi_degree else (degree,)
+        form_roles = roles[: len(roles) // len(form_degrees)]
+        forms = []
+        for form_degree in form_degrees:
+            for role in form_roles:
+                form = {
+                    "role": role,
+                    "rank": 1 if "bilinear" not in role else 2,
+                    "kind": "fake",
+                }
+                if multi_degree:
+                    form["degree"] = form_degree
+                forms.append(form)
+        if multi_degree:
+            extra["degrees"] = [6, 3]
+            if group != "dtn-surface":
+                extra["action_degrees"] = [6, 3]
         return jit._facts(_group, degree, forms, _jit_options, **extra)
 
     def fake_builder(_cfg, _comm, _jit_options):
@@ -83,9 +110,127 @@ def test_group_dispatch_returns_minimal_form_facts(monkeypatch, group):
     assert tuple(facts["form_roles"]) == roles
     assert facts["jit_options"] == {}
     assert all(value is False for value in facts["objects"].values())
+    if group in {"dtn-surface", "physical-volume-curl", "physical-volume-mass"}:
+        assert facts["degrees"] == [6, 3]
+        assert tuple(form["degree"] for form in facts["forms"]) == (
+            (6,) * (count // 2) + (3,) * (count // 2)
+        )
+        if group != "dtn-surface":
+            assert facts["action_degrees"] == [6, 3]
     if group in {"physical-volume-curl", "physical-volume-mass"}:
         assert seen_components == [expected_component]
         assert facts["component"] == expected_component
+
+
+def test_dtn_surface_builder_uses_p6_then_p3_on_one_mesh(monkeypatch):
+    from src.solvers import fullspace_same_mesh_hcurl_pmg_physical as physical
+
+    cfg = SimpleNamespace()
+    comm = SimpleNamespace(size=1)
+    spaces = {6: object(), 3: object()}
+    mesh_data = object()
+    levels = {"spaces": spaces, "mesh_data": mesh_data}
+    level_calls = []
+    assembler_calls = []
+
+    def fake_levels(_cfg, _comm, degrees, *, include_positive_coefficients):
+        level_calls.append((degrees, include_positive_coefficients))
+        return levels
+
+    def fake_assemblers(space, mesh_data_arg, cfg_arg, qdegree, *, jit_options):
+        assembler_calls.append((space, mesh_data_arg, cfg_arg, qdegree, jit_options))
+        return {"temporary": object()}
+
+    monkeypatch.setattr(jit, "_levels_for_degrees", fake_levels)
+    monkeypatch.setattr(jit, "_mode_facts", lambda _cfg: (80, "mode-sha", 17))
+    monkeypatch.setattr(physical, "_surface_assemblers", fake_assemblers)
+
+    facts = jit._build_dtn_surface(cfg, comm, {})
+
+    assert level_calls == [((6, 3), False)]
+    assert [call[0] for call in assembler_calls] == [spaces[6], spaces[3]]
+    assert all(call[1] is mesh_data for call in assembler_calls)
+    assert [call[3] for call in assembler_calls] == [17, 17]
+    assert facts["compiled_form_count"] == 8
+    assert tuple(form["degree"] for form in facts["forms"]) == (6,) * 4 + (3,) * 4
+    assert facts["degrees"] == [6, 3]
+    assert "action_degrees" not in facts
+    assert facts["mode_count"] == 80
+    assert facts["dtn_quadrature_degree"] == 17
+    assert all(value is False for value in facts["objects"].values())
+
+
+@pytest.mark.parametrize("component", ("curl", "mass"))
+def test_physical_volume_builder_compiles_p6_then_p3_action(
+    monkeypatch, component
+):
+    import sys
+    import types
+
+    cfg = SimpleNamespace()
+    comm = SimpleNamespace(size=1)
+    spaces = {6: object(), 3: object()}
+    mesh_data = SimpleNamespace(mesh=object(), cell_tags=object())
+    levels = {"spaces": spaces, "mesh": mesh_data.mesh, "mesh_data": mesh_data}
+    level_calls = []
+    terms = []
+    compile_calls = []
+
+    ufl = types.ModuleType("ufl")
+    ufl.TrialFunction = lambda space: ("trial", space)
+    ufl.TestFunction = lambda space: ("test", space)
+    ufl.Measure = lambda *args, **kwargs: (args, kwargs)
+    ufl.action = lambda form, coefficient: {
+        "form": form,
+        "space": coefficient.space,
+    }
+
+    dolfinx = types.ModuleType("dolfinx")
+    fem = types.ModuleType("dolfinx.fem")
+
+    class FakeFunction:
+        def __init__(self, space):
+            self.space = space
+
+    fem.Function = FakeFunction
+    dolfinx.fem = fem
+
+    common = types.ModuleType("src.solvers.common_3d_forms")
+    common._validate_physical_split_profile = lambda _cfg: None
+
+    def fake_terms(_cfg, trial, test, dx):
+        terms.append((trial, test, dx))
+        return ({"name": "curl"}, {"name": "mass"})
+
+    common._build_physical_volume_terms = fake_terms
+    monkeypatch.setitem(sys.modules, "ufl", ufl)
+    monkeypatch.setitem(sys.modules, "dolfinx", dolfinx)
+    monkeypatch.setitem(sys.modules, "dolfinx.fem", fem)
+    monkeypatch.setitem(sys.modules, "src.solvers.common_3d_forms", common)
+
+    def fake_levels(_cfg, _comm, degrees, *, include_positive_coefficients):
+        level_calls.append((degrees, include_positive_coefficients))
+        return levels
+
+    monkeypatch.setattr(jit, "_levels_for_degrees", fake_levels)
+    monkeypatch.setattr(
+        jit,
+        "_compile_form",
+        lambda form, _options: compile_calls.append(form),
+    )
+
+    facts = jit._build_physical_volume_component(cfg, comm, {}, component)
+
+    assert level_calls == [((6, 3), False)]
+    assert len(terms) == 2
+    assert [call["space"] for call in compile_calls] == [spaces[6], spaces[3]]
+    assert [call["form"]["name"] for call in compile_calls] == [component] * 2
+    assert facts["compiled_form_count"] == 2
+    assert tuple(form["degree"] for form in facts["forms"]) == (6, 3)
+    assert facts["degrees"] == [6, 3]
+    assert facts["action_degrees"] == [6, 3]
+    assert facts["component"] == component
+    assert all(value is False for value in facts["objects"].values())
 
 
 def test_selected_call_sites_use_empty_mapping_and_generic_defaults_remain():
@@ -101,7 +246,7 @@ def test_selected_call_sites_use_empty_mapping_and_generic_defaults_remain():
     assert "include_positive_coefficients=True" in jit_source
     assert jit_source.count("include_positive_coefficients=False") == 3
     assert tuple(jit.JIT_GROUPS) == tuple(GROUP_ROLES)
-    assert jit.JIT_GROUP_SCHEMA.endswith(".v2")
+    assert jit.JIT_GROUP_SCHEMA.endswith(".v3")
     assert "_build_variational_forms" not in jit_source
     assert "_build_physical_volume_terms" in jit_source
     assert physical.count("jit_options=SAME_MESH_JIT_OPTIONS") >= 3
