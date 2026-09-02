@@ -1,6 +1,19 @@
 # Memory–residual–time Pareto boundary
 
-## 当前 V8 measured components
+## V9 current authority（Response v10）
+
+| 路线 | wall / peak RSS / swap | residual与状态 |
+|---|---:|---:|---|
+| C0 explicit coarse | raw observed `2541.745083810005 s`；`86960574464 B`；`0` | worker `rho_coarse=6.778773552009804` no-signal；watchdog resource authority未闭合，非 qualified resource pass |
+| corrected bare-F external | watchdog `181.50410642300267 s`；`5728456704 B`；`0` | worker explicit residual=`0.7349227023138162`；worker no-signal，watchdog resource authority unresolved |
+| corrected full-spectrum | `1013.0478316960507 s`；`37884526592 B`；`0` | 两源 `r64` 与 32→64 drop 均未过 strict Gate；`FULL_SPECTRUM_SWEEP_NO_SIGNAL` |
+| C1 matrix-free Galerkin | `not_run_by_numerical_gate` | 无可加入 Pareto 点；不从 C0 显式对象峰值推算 C1 |
+
+这些是 measured/raw observations；worker 标签、watchdog resource classification 和数值
+classification 不合并。C0 的 peak/swap 是 raw observed，不因 terminal gap 变成 authority-qualified
+resource pass。下方 V1–V8 历史保留。
+
+## V8 historical measured components
 
 这些数值按 process-tree RSS、阶段 wall 和 swap=0 的同一口径记录。Stage A 是 local component；Stage B/C 的 121.540 GiB 是 symbolic conservative projection，不能当作实测峰值。
 

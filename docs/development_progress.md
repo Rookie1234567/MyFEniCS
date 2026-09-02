@@ -1,4 +1,56 @@
-# 项目开发进度：Task000–Task037b
+# 项目开发进度：Task000–Task040
+
+## 2026-09-02：Task040 Review V9 / Response V10 阶段回顾
+
+这次工作从 side-factor 内存与接口风险开始：目标是在不改变裸物理算子、ordinary default、
+physical DtN、M480 或 Task39 的前提下，验证较小的接口/局部预条件器是否能安全支持
+Full3D。这里的“预条件器”只帮助迭代求解器更快找到解，不改变要求求解的物理方程；代价
+是必须分别证明 source identity、局部算子、全局 residual 和资源生命周期，不能用局部
+component 数值替代完整物理 Gate。
+
+| 维度 | 当前 authority |
+|---|---|
+| 身份/状态 | branch=`codex/20260822-task40-hybrid-side-factor-pc`；pre-docs HEAD=`3bf9441425ca2dd4967551d5a43b2c7031049c0f`；Response status=`OPEN_AWAITING_REVIEW`；selective merge=`NO` |
+| 为什么启动 | Review V9 要求在既有 source/full-spectrum 与 coarse 证据后审查低内存 side-factor 路线；不是放宽物理 residual 或资源 Gate |
+| 冻结边界 | source bridge/full-spectrum/C0 为 p6h4；S3/LOR/external 为相应 h10/h5 fallback；MPI8、threads1、native complex128/int32；full-spectrum/LOR hard=45 GiB，C0 explicit oracle hard=192 GiB；未启动 0.7 nm PDE |
+| 方法 | canonical source bridge；full-spectrum 两源 transform/screen；adaptive Stage A/B/C；C0 one-apply；fixed-LOR action-screen；physical bare-F external pilot |
+
+### 实际运行矩阵
+
+| 路线 | 结果分类 | 关键事实 |
+|---|---|---|
+| source canonical bridge | measured component pass | `V9_SOURCE_CANONICAL_BRIDGE_PASS`；MPI8 resource pass；source identity/roundtrip 通过 |
+| corrected full-spectrum | measured numerical no-signal | 两源均有 one/r8/r16/r32/r64；`FULL_SPECTRUM_SWEEP_NO_SIGNAL`；RSS=`37884526592 B`、swap=`0` |
+| C0 explicit coarse | measured numerical no-signal；watchdog metadata gap | one-apply `rho_coarse=6.778773552009804`；worker raw resource rows readable/pass；watchdog terminal sample gap不等于资源 pass |
+| S3 J1 ×3 | failed implementation | 形状、canonical token、六层配置三次先后失败；没有 one-apply/FGMRES numerical Gate |
+| fixed LOR L2 h10 / h5 | component action-screen pass / h5 refinement-action-screen negative | residual=`9.49183402945266e-9` / `3.743078556589845e-7`；211 / 256 steps；不是 physical V9-E positive |
+| physical bare-F external h10 | worker numerical no-signal | corrected worker residual=`0.7349227023138162`；watchdog result/resource wrapper因旧 cleanup terminal bookkeeping待裁决 |
+| C1、five-source、top/Hybrid、0.7 nm | not_run | C1由 C0 numerical Gate 阻止；fallback没有 qualified physical positive |
+
+这些状态分别是 measured、failed 或 not_run，而不是把所有路线折叠成一个“成功/失败”数字。
+full-spectrum 与 C0 的真实 numerical no-signal 使 V9-E 双入口成立；fallback 仍未得到
+qualified physical positive，因此 qualified Full3D architecture candidate 和 0.7 nm capacity
+仍为 `NOT_ESTABLISHED`。C1 是 `not_run_by_numerical_gate`；旧 watchdog 的 `next=C1` 仅是
+non-governing raw metadata。
+
+### 合并边界、局限与下一步
+
+canonical/source、runner/watchdog、checker/benchmark、compact evidence/docs 需要按依赖组
+分别审核；full-spectrum、C0、LOR、structured 和 external pilot 保持 research-only，三次
+S3 failure 及其他未闭合实现路径是 do-not-merge。原始失败现场保留在 ignored results，不能
+作为 Git merge 项。当前局限是没有 qualified physical positive，且 C0 watchdog 资源尾样本
+仍是 authority metadata gap；因此不能外推 h-independent convergence、0.7 nm 可行性或
+production default。
+
+下一步不是自动运行 C1、five-source 或 0.7 nm，而是等待主控对 raw/resource 边界和 selective
+merge 分组作最终裁决。证据入口：
+[`Task040 task.md`](task040_hybrid_side_factor_pc/task.md)、
+[`Review V9`](task040_hybrid_side_factor_pc/review_report_v9.md)、
+[`Response V10`](task040_hybrid_side_factor_pc/response_v10.md)、
+[`outcomes summary`](task040_hybrid_side_factor_pc/outcomes/summary.md)、
+[`full-spectrum`](task040_hybrid_side_factor_pc/outcomes/full_spectrum_floquet_sweep.md)、
+[`matrix-free coarse`](task040_hybrid_side_factor_pc/outcomes/matrix_free_galerkin_coarse.md)、
+[`architecture handoff`](task040_hybrid_side_factor_pc/outcomes/full3d_0p7nm_architecture_handoff.md)。
 
 ## 2026-08-23：Task040 V1 Run B resource-stop closeout
 

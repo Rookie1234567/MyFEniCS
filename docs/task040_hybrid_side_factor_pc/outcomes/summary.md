@@ -1,11 +1,60 @@
-# Task040 summary — current V8 authority
+# Task040 summary — current V9 authority
+
+## V9 current authority（Response v10）
+
+| 范围 | 当前结论 | 证据边界 |
+|---|---|---|
+| Full-spectrum/source bridge | transform/source measured pass；screen `FULL_SPECTRUM_SWEEP_NO_SIGNAL` | 两源 one-apply 与 r8/r16/r32/r64齐全，strict no-signal |
+| C0 | worker one-apply numerical no-signal；watchdog terminal resource metadata gap | `rho_coarse=6.778773552009804`；watchdog gap不推翻 numerical Gate |
+| C1 | `not_run_by_numerical_gate` | Review §5.5禁止在 C0 no-signal 后运行同 basis matrix-free |
+| V9-E fallback | entry成立但无 qualified physical positive | full-spectrum 与 C0 双真实 no-signal；fallback未产生 qualified physical positive |
+| B0/B1/S3/LOR L2/bare-F external | tiny B0/B1 improvement `>=8` Gate 已通过；其余为 exploratory component/formal evidence | B0 serial/MPI2 improvement=`4385921181522.289`/`4178485941698.5303`；B1 serial/MPI2 improvement=`1821946650161.7349`/`2137800826967.3997`；tiny 仅支持 reduced 5 nm pilot 流程进入，不替代 physical formal positive；详值见 [route ledger](route_signal_ledger.md) |
+| boundary handoff | 已建立 | 文档记录候选边界；qualified architecture candidate / 0.7 nm capacity 仍未建立 |
+| Task040 | `OPEN_AWAITING_REVIEW` | `selective merge=NO`，`master merge approval=NO` |
+
+## 统一 V9 run matrix 与当前实现分组
+
+下表以 raw observed 为主；`measured` 是确实运行并有对应 evidence 的结果，`failed` 是
+实现或数值 Gate 未通过，`not_run` 是按 stop rule 没有启动。RSS 用 process-tree peak 的
+字节口径，projection 不当作实测峰值；组件结果不当作 V9-E physical positive。
+
+| route/case | 状态 | 最小关键事实 | evidence / baseline |
+|---|---|---|---|
+| source canonical bridge | measured component pass | MPI8；resource pass；phase-once roundtrip relative `<1e-12` | [source canonical bridge](v9_source_canonical_bridge.md)；source-only component |
+| corrected full-spectrum | measured strict no-signal | two sources；r64/drop Gate 未过；wall=`1013.0478316960507s`；RSS=`37884526592 B`；swap=`0` | [full-spectrum](full_spectrum_floquet_sweep.md)；p6h4 raw |
+| C0 explicit coarse | measured numerical no-signal；resource metadata gap | one-apply `rho_coarse=6.778773552009804`；raw peak=`86960574464 B`；swap=`0` | [adaptive Stage A/B/C](adaptive_spectral_schwarz.md) + [response C0](../response_v10.md)；C0 raw；无 resource pass 改写 |
+| S3 J1 baseline ×3 | failed implementation | shape `8424×300` vs `8424×296`；token `9786` vs `8424`；layers `2` vs `6` | [response V10 ledger](../response_v10.md)；MPI8/threads1；无 numerical Gate |
+| LOR L2 h10 / h5 | measured component pass / fail | residual `9.49183402945266e-9` / `3.743078556589845e-7`；211 / 256 steps | [response V10 ledger](../response_v10.md)；max local rows=`432` |
+| physical bare-F external h10 | measured worker no-signal；wrapper unresolved | explicit residual=`0.7349227023138162`；corrected root；watchdog resource/result adjudication gap | [response V10 ledger](../response_v10.md)；P+ is right PC only |
+| C1, five-source, top/Hybrid, 0.7 nm | not_run | C1 stopped by C0 numerical Gate；其余无 qualified positive入口 | Review V9 §5.5/§9；[boundary handoff](full3d_0p7nm_architecture_handoff.md) |
+
+当前 changed-file/implementation groups 是：source/canonical 与 marker plumbing、full-spectrum
+与 C0 route、structured/LOR/external research helpers，以及本组 compact outcomes/response。
+它们的依赖、fresh evidence 和合并边界见下方六组表；没有把任何 route 的 raw artifact 当 Git
+merge 项。
+
+## Selective-merge dependency groups
+
+| 依赖组 | 文件/依赖 | 数值行为 | 测试/fresh evidence | 建议顺序/边界 |
+|---|---|---|---|---|
+| production numerical/core | 本轮没有 qualified production core；新增 `src/solvers` research helpers 不属于此组 | ordinary default 未改变 | 无 qualified production fresh evidence | 暂不合入 |
+| reusable runner/watchdog | `benchmarks/task040_level_a.py`（混合路线 wiring，仅 file/hunk-level 审阅，排除 S3/未闭合路径）、`benchmarks/task040_level_a_watchdog.py`、`benchmarks/task040_v6_2_interface_schur.py`；依赖 research helpers | 仅 opt-in plumbing；ordinary route 不变 | 对应 raw routes；final closeout contracts 34 passed（本地轻量合同） | 按依赖审阅，仍未自动提升 production |
+| checker/benchmark | 本轮未新增独立 checker 或 case record；focused tests 是验证资产，不是 checker | 不改变 solver promotion | test339 stage-time serial/MPI2；其余 raw evidence | 不称为 checker |
+| compact evidence/docs | `response_v10.md`、`development_progress.md`、`outcomes/{v9_source_canonical_bridge,matrix_free_galerkin_coarse,full3d_0p7nm_architecture_handoff,full_spectrum_floquet_sweep,adaptive_spectral_schwarz,route_signal_ledger,memory_residual_time_pareto,0p7nm_side_pc_capacity,summary}.md` | 不改变数值 | raw hash、命令和已有 targeted evidence | 作为 compact evidence 归档，不把 raw 当 Git merge 项 |
+| research-only | `src/solvers/floquet_background_hcurl*.py`（不含 `floquet_background_hcurl_s3_formal.py`、`floquet_background_hcurl_s3_pilot.py`）、`src/solvers/hcurl_fixed_lor*.py`、canonical/full-spectrum/C0 helpers、`src/solvers/hybrid_bare_f_external_lor_pilot.py`；对应 `src/test/test_298*`、`test_319*`、`test_326*`–`test_329*`、`test_331*`–`test_339*` | 不具 production 资格；ordinary physics/default 不变 | 各 component/focused evidence 与 MPI8 roots | 保留研究/复核，不作 production promotion |
+| do-not-merge | `src/solvers/floquet_background_hcurl_s3_formal.py`、`src/solvers/floquet_background_hcurl_s3_pilot.py`、`src/test/test_330_task040_v9_s3b_pilot.py`、`benchmarks/task040_level_a.py` 中的 S3 wiring，以及其他未闭合/旧 raw-row paths | 不提升失败路径为 numerical behavior | failed roots retained/archived；raw artifacts 不是 Git 项 | 明确禁止合入 |
+
+以下既有 V1–V8 内容保留，包含历史状态、失败原因、资源口径和证据入口。
 
 ## 当前最终结果
 
 | 阶段/路线 | 当前状态 | 关键 measured / derived evidence |
 |---|---|---|
 | V7 scale-normalized identity | Review V8 `review_adjudicated=true`；selected=`D0_lower_memory`；`V7_SCALE_NORMALIZED_FULL_INTERFACE_IDENTITY_PASS_D0` | raw `formal_adjudication=false` preserved；V6 absolute negative unchanged |
-| dedicated full-spectrum | `FULL_SPECTRUM_IMPLEMENTATION_FAILURE` | transform PASS；lower/upper=`7560+7560`；`72 channels × 105 harmonics`；两个 source entries/orchestration 已形成但 owner-vector load failure；无 source begin/end raw marker、无 one-apply/FGMRES checkpoint，apply-count字段=`0` |
+| dedicated full-spectrum | `FULL_SPECTRUM_SWEEP_NO_SIGNAL` | corrected root；两源 one-apply/r8/r16/r32/r64齐全；r64 与 32→64 drop 均未过 strict Gate，不是 implementation failure |
+| C0 explicit coarse | worker numerical no-signal；watchdog terminal resource metadata gap | `rho_coarse=6.778773552009804`；worker evidence 与 watchdog raw gap 并列 |
+| V9-E fallback | entry established；无 qualified physical positive | corrected external bare-F worker residual=`0.7349227023138162`；watchdog raw `requires_result_adjudication` |
+| LOR L2 h10 / h5 | component action-screen pass / h5 refinement/action-screen negative | h10=`9.49183402945266e-9`，211；h5=`3.743078556589845e-7`，256、reason `-3`；不外推为 h-independent conclusion |
 | adaptive Stage A | `V8_ADAPTIVE_STAGE_A_LOCAL_GATE_PASS` | 630 patches；rows=`432/432/432`；POU=`0`；setup=`255.8505309909815s`；one-apply=`3.498585887020454s`；global true residual rel=`2.390497409724407` 不作 Gate failure |
 | exact generalized B1 | `not_completed_at_10800s` | root=`results/task040_v8_adaptive_stage_b1_mpi8_0e92079f_fix1`；wall timeout=`10800s`；无 run summary/数值结果；允许转 economical，不是 numerical no-signal |
 | adaptive Stage B/C | `ADAPTIVE_ECONOMICAL_COARSE_RESOURCE_UNAVAILABLE` | natural rc0；peak=`19786649600 B`=`18.427753448486328 GiB`；projected=`130502065136 B`=`121.539519295 GiB`；hard=`45 GiB`；P/PH/FP/Ac/KSP=`0` |
@@ -24,9 +73,14 @@
 
 ## 当前裁决与未运行项
 
-Task040=`open / review required`，`selective merge=NO`。没有 adaptive numerical no-signal，不创建 Full3D handoff；0.7 nm=`NOT_ESTABLISHED / resource-blocked`，不能解释为物理不可行。master、Task39、physics、M480、physical DtN 和 ordinary defaults 未改。Full repository pytest、MPI4、CI、Stage C numerical checkpoints 与 0.7 nm/2 TB PDE 均未运行。
+Task040=`OPEN_AWAITING_REVIEW`，`selective merge=NO`。V9-E 入口已成立，但 fallback 没有 qualified
+physical positive；boundary handoff 文档已经建立，而 qualified Full3D architecture candidate 与
+0.7 nm capacity 仍为 `NOT_ESTABLISHED / resource-blocked`，不能解释为物理不可行。master、Task39、
+physics、M480、physical DtN 和 ordinary defaults 未改。Full repository pytest、
+MPI4、CI、C1、Stage C numerical checkpoints 与 0.7 nm/2 TB PDE 均未运行。
 
-旧的 V7/V8 预运行快照如下保留，仅用于历史追踪，不覆盖当前 authority。
+旧的 V7/V8 预运行快照如下保留，仅用于历史追踪，不覆盖当前 authority；其中“未运行”或“未建
+handoff”均明确指 V8 当时，不描述 V9 current。
 
 ## 历史 V8 authority（继承 V7 identity）
 
@@ -36,7 +90,7 @@ Task040=`open / review required`，`selective merge=NO`。没有 adaptive numeri
 |---|---|
 | V7 identity | `V7_SCALE_NORMALIZED_FULL_INTERFACE_IDENTITY_PASS_D0`；`review_adjudicated=true`；`selected=D0_lower_memory` |
 | raw formal field | `raw_formal_adjudication=false_preserved`；V6 absolute negative unchanged |
-| V8-1 dedicated route | `--v8-full-spectrum-only`；仅两源 full-spectrum screen，尚未正式运行 |
+| V8 当时 V8-1 dedicated route | `--v8-full-spectrum-only`；已启动但在 source/integration failure 前未形成 numerical screen；raw root=`089bf8a1` |
 | review binding | V8 review=`0ce67c0c68c36e9677f3293a87c1c124e82c6f70`；input/physical/resolved/selected/bare-F 与 V7 bundle 见 [V8 adjudication](v8_review_adjudication.md) |
 | prior implementation evidence | full-spectrum fix=`a2acb9344a9bd246a399c9110207926c7e03460e`；moving-PML owner-serial implementation retired，method family not numerically rejected |
 
@@ -58,8 +112,9 @@ Task040 研究的是：在不改变裸算子 `F` 和物理方程的前提下，�
 | adaptive Schwarz | `NOT_RUN_DUE_TO_TRUE_RESOURCE_GATE` | V7 §10.3 真实 wall/resource stop；adaptive 未启动且不是 adaptive negative |
 
 因此 Task040 **open / review required**，`merge approval=NO`。没有把资源停止写成算法 no-signal，
-也没有宣称 0.7 nm 无解。0.7 nm capacity derivation、Full3D architecture handoff、
-factor-free local service、h3 和完整 Hybrid 均未到达/未资格化。
+也没有宣称 0.7 nm 无解。V8 当时的 0.7 nm capacity derivation、Full3D architecture handoff、
+factor-free local service、h3 和完整 Hybrid 均未到达/未资格化；这不覆盖当前已经建立的
+boundary handoff 文档。
 
 V6-2 absolute-threshold negative 仍保留：classification
 `V6_2_FULL_INTERFACE_SCHUR_IDENTITY_FAIL`；Gamma/interior/linearity/repeat 观测分别为

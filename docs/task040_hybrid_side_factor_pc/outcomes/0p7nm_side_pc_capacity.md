@@ -1,6 +1,18 @@
 # 0.7 nm side-PC capacity boundary
 
-## 当前 V8 authority
+## V9 current authority（Response v10）
+
+| 项目 | 当前状态 | 说明 |
+|---|---|---|
+| C0/C1 route | C0 numerical no-signal measured；watchdog resource metadata gap；C1 `not_run_by_numerical_gate` | V9-E 双入口成立，但 fallback 未取得 qualified physical positive |
+| boundary handoff document | 已建立 | 它记录边界，不等于 qualified architecture candidate |
+| qualified Full3D architecture candidate / 0.7 nm capacity | `NOT_ESTABLISHED` | 没有 h3、0.7 nm PDE、factor-free candidate 或完整 Hybrid residual |
+| 资源解释 | not a physical impossibility result | C0 的显式 coarse 资源/authority 问题不能外推为所有 matrix-free 方案失败 |
+| merge boundary | 按依赖分组审阅 | canonical/source 与通用 marker 修复可审阅但未批准；full-spectrum/C0/LOR/structured 保持 research-only |
+
+本节只更新当前 authority；V1–V8 的容量边界和历史负结果不删除。
+
+## V8 historical authority
 
 | 项目 | 当前结论 |
 |---|---|
@@ -10,7 +22,9 @@
 | 资源语义 | 实测 BC peak=`19786649600 B`=`18.427753448486328 GiB`；projection=`130502065136 B`=`121.539519295 GiB`，不是实测 RSS |
 | 规划边界 | 2 TB 不能全部作为 RSS；Review planning ceiling 仍为 1.5 TiB |
 
-adaptive 没有 numerical no-signal 结果，因此不创建 Full3D handoff。moving-PML owner-serial implementation 仍 retired，method family 不是数值否定。完整路由边界见 [route ledger](route_signal_ledger.md)。
+V8 当时 adaptive 没有 numerical no-signal 结果，因此当时不创建 Full3D handoff；当前
+boundary handoff 已建立。moving-PML owner-serial implementation 仍 retired，method family
+不是数值否定。完整路由边界见 [route ledger](route_signal_ledger.md)。
 
 ## 历史 V5/V4/V3 记录
 
