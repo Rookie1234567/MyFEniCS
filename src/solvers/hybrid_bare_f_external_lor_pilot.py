@@ -167,6 +167,8 @@ def run_v9_e_lor_bare_f_external_only(
     source_sha: str,
     input_sha256: str,
     physical_model_sha256: str,
+    external_mode_authority: Mapping[str, Any],
+    external_mode_current_resolved_config_sha256: str,
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None,
     resource_callback: Callable[[], Mapping[str, Any]],
     watchdog_enabled: bool,
@@ -219,6 +221,38 @@ def run_v9_e_lor_bare_f_external_only(
         "role": "right_preconditioner_not_physical_operator",
         "scan": False,
         "official_rta": {"status": "not_run"},
+        "external_mode_authority_binding": {
+            "authority_bound": True,
+            "authority_file_path": str(
+                external_mode_authority["authority_file_path"]
+            ),
+            "authority_file_sha256": str(
+                external_mode_authority["authority_file_sha256"]
+            ),
+            "inventory_canonical_sha256": str(
+                external_mode_authority["inventory_canonical_sha256"]
+            ),
+            "source_path": str(external_mode_authority["source_path"]),
+            "full_count": int(external_mode_authority["full_count"]),
+            "bottom_count": int(external_mode_authority["bottom_count"]),
+            "canonical_key_list_sha256": str(
+                external_mode_authority["canonical_key_list_sha256"]
+            ),
+            "resolved_mode_metadata_sha256": str(
+                external_mode_authority["resolved_mode_metadata_sha256"]
+            ),
+            "legacy_beta_metadata_sha256": str(
+                external_mode_authority["legacy_beta_metadata_sha256"]
+            ),
+            "legacy_beta_metadata_schema": str(
+                external_mode_authority["legacy_beta_metadata_schema"]
+            ),
+            "input_sha256": str(input_sha256),
+            "physical_model_sha256": str(physical_model_sha256),
+            "resolved_config_sha256": str(
+                external_mode_current_resolved_config_sha256
+            ),
+        },
         "lifecycle": lifecycle,
     }
     system = None
@@ -243,6 +277,10 @@ def run_v9_e_lor_bare_f_external_only(
             source_work_directory=run_path / "source_work",
             comm=comm,
             action_only=True,
+            external_mode_authority=external_mode_authority,
+            external_mode_current_resolved_config_sha256=(
+                external_mode_current_resolved_config_sha256
+            ),
         )
         inventory = system.construction_inventory
         build_audit = system.condensed.build_audit

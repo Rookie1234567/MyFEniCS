@@ -1,6 +1,7 @@
 """Focused route and one-cell preconditioner-only pilot contract."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -19,6 +20,7 @@ from benchmarks.task040_level_a import (
     V9_E_LOR_BARE_F_EXTERNAL_ONLY_TIMEOUT_SECONDS,
     V9_E_LOR_L2_ONLY_FLAG,
     build_task040_level_a_plan,
+    run_task040_level_a,
 )
 from benchmarks.task040_level_a_watchdog import build_task040_level_a_watchdog_plan
 from src.solvers.hcurl_assembly_time_condensation import (
@@ -131,6 +133,108 @@ def test_task040_external_plan_and_watchdog_contract(tmp_path):
         build_task040_level_a_plan(**(kwargs | {"input_path": h5}))
     with pytest.raises(ValueError):
         build_task040_level_a_plan(**(kwargs | {"v9_e_lor_l2_only": True}))
+
+
+def test_task040_external_authority_preflight_contract():
+    import benchmarks.task040_level_a as level_a
+
+    kwargs = {
+        "comm": SimpleNamespace(size=8, rank=0),
+        "input_path": OFFICIAL_INPUT,
+        "input_sha256": (
+            "e8b60ba70daa2074c21603d463790a28c881d35d7bd17b2b8315fef0318007b6"
+        ),
+        "physical_model_sha256": (
+            "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a"
+        ),
+        "source_sha": "c" * 40,
+        "watchdog_enabled": True,
+        "bottom_route_only": True,
+    }
+    result = level_a._v9_e_lor_bare_f_external_authority_preflight(**kwargs)
+    assert result["pass"] is True
+    assert result["observed"]["resolved_config_sha256"] == (
+        "a35bb4e35088a33ecd59161bf41307c092cae4a11dba30e8336026833bc40c3e"
+    )
+    assert result["external_mode_authority"]["full_count"] == 604
+    assert result["external_mode_authority"]["bottom_count"] == 300
+    mismatch = level_a._v9_e_lor_bare_f_external_authority_preflight(
+        **(kwargs | {"input_sha256": "0" * 64})
+    )
+    assert mismatch["pass"] is False
+    assert "input_sha256" in mismatch["failures"]
+    assert mismatch["external_mode_authority"] is None
+
+
+def test_task040_external_identity_preflight_binding(monkeypatch, tmp_path):
+    import benchmarks.task040_level_a as level_a
+    import src.solvers.hybrid_bare_f_external_lor_pilot as pilot
+
+    comm = SimpleNamespace(size=8, rank=0)
+    authority = {"sentinel": "external-mode-authority"}
+    resolved_sha = "d" * 64
+    preflight_calls = []
+    pilot_calls = []
+
+    def fake_preflight(**kwargs):
+        preflight_calls.append(kwargs)
+        return {
+            "pass": len(preflight_calls) == 1,
+            "failures": [] if len(preflight_calls) == 1 else ["identity"],
+            "external_mode_authority": authority,
+            "observed": {"resolved_config_sha256": resolved_sha},
+        }
+
+    def fake_pilot(**kwargs):
+        pilot_calls.append(kwargs)
+        return {"status": "sentinel"}
+
+    monkeypatch.setattr(
+        level_a,
+        "_v9_e_lor_bare_f_external_authority_preflight",
+        fake_preflight,
+    )
+    monkeypatch.setattr(
+        pilot, "run_v9_e_lor_bare_f_external_only", fake_pilot
+    )
+    common = {
+        "cfg": object(),
+        "profile": object(),
+        "comm": comm,
+        "exact_spool_root": tmp_path / "spool",
+        "source_sha": "c" * 40,
+        "input_path": OFFICIAL_INPUT,
+        "input_sha256": "a" * 64,
+        "physical_model_sha256": "b" * 64,
+        "marker_callback": None,
+        "resource_callback": dict,
+        "watchdog_enabled": True,
+        "bottom_route_only": True,
+        "watchdog_hard_stop_bytes": V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES,
+        "v9_e_lor_bare_f_external_only": True,
+    }
+    result = run_task040_level_a(
+        run_directory=tmp_path / "first", **common
+    )
+    assert result == {"status": "sentinel"}
+    assert preflight_calls[0]["comm"] is comm
+    assert preflight_calls[0]["input_path"] == OFFICIAL_INPUT
+    assert preflight_calls[0]["input_sha256"] == "a" * 64
+    assert preflight_calls[0]["physical_model_sha256"] == "b" * 64
+    assert preflight_calls[0]["source_sha"] == "c" * 40
+    assert preflight_calls[0]["watchdog_enabled"] is True
+    assert preflight_calls[0]["bottom_route_only"] is True
+    assert pilot_calls[0]["external_mode_authority"] is authority
+    assert pilot_calls[0]["external_mode_current_resolved_config_sha256"] == (
+        resolved_sha
+    )
+
+    result = run_task040_level_a(
+        run_directory=tmp_path / "failed", **common
+    )
+    assert result["status"] == "V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE"
+    assert result["preflight_failures"] == ["identity"]
+    assert len(pilot_calls) == 1
 
 
 @pytest.fixture(scope="module")

@@ -115,6 +115,7 @@ from src.io.input_validation import (
     load_and_resolve,
     simulation_config_3d_from_normalized,
 )
+from src.io.resolved_config import resolved_config_sha256
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
@@ -183,6 +184,7 @@ from src.solvers.hybrid_interface_basis import (
     build_mass_dual_from_active_vec,
     canonical_external_mode_metadata_sha256,
     canonical_mode_keys_sha256,
+    canonical_selected_packet_beta_sha256,
     collect_streamed_trace_basis,
 )
 from src.solvers.hybrid_interface_fgmres import (
@@ -2040,6 +2042,196 @@ def _route_c_wall_observation(
             "(3 if first_128_observation else 1)"
         ),
         "pass": passed,
+    }
+
+
+def _v9_e_lor_bare_f_external_authority_preflight(
+    *,
+    comm: MPI.Intracomm,
+    input_path: str | Path,
+    input_sha256: str,
+    physical_model_sha256: str,
+    source_sha: str,
+    watchdog_enabled: bool,
+    bottom_route_only: bool,
+) -> dict[str, Any]:
+    """Bind the h10 external modes to the tracked current-input authority."""
+
+    root = Path(__file__).resolve().parents[1]
+    authority_path = root / (
+        "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/"
+        "task039_t2_a0_preflight_v1.json"
+    )
+    expected_input = (
+        root / V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT
+    ).resolve()
+    expected_input_sha256 = (
+        "e8b60ba70daa2074c21603d463790a28c881d35d7bd17b2b8315fef0318007b6"
+    )
+    expected_physical_sha256 = (
+        "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a"
+    )
+    expected_authority_file_sha256 = (
+        "f006fb572cda96a2a25011c80b80d9c9d1efca4d6ed7e48b9b8cb05e72b53862"
+    )
+    expected_inventory_sha256 = (
+        "296c9e74d0a15c0dd2671e54fa7de2709c5f19f0c9f8665ffc4d35d740d4faea"
+    )
+    expected_bottom_key_sha256 = (
+        "73de8b84329b526b5b4237cdfb5885c5281a23c9374737d6a40b74b7c7611f35"
+    )
+    expected_bottom_metadata_sha256 = (
+        "7b9850e6e3ec168f6f7d3d84423d2d82689d076af56b555d36272ab82a89601a"
+    )
+    expected_bottom_beta_sha256 = (
+        "e9948555ffb6a36104aee664ee34768c1a9458cc748e60b8b4eb4b6cb3e45118"
+    )
+    expected_resolved_sha256 = (
+        "a35bb4e35088a33ecd59161bf41307c092cae4a11dba30e8336026833bc40c3e"
+    )
+    checks: dict[str, bool] = {}
+    failures: list[str] = []
+
+    def check(name: str, value: bool) -> None:
+        checks[name] = bool(value)
+        if not value:
+            failures.append(name)
+
+    observed: dict[str, Any] = {
+        "input_path": str(Path(input_path).resolve()),
+        "input_sha256": str(input_sha256),
+        "physical_model_sha256": str(physical_model_sha256),
+        "source_sha": str(source_sha),
+    }
+    external_mode_authority: dict[str, Any] | None = None
+    try:
+        authority_bytes = authority_path.read_bytes()
+        authority_file_sha256 = hashlib.sha256(authority_bytes).hexdigest()
+        authority_payload = json.loads(authority_bytes)
+        frozen = authority_payload["inventory_authority"]
+        frozen_inventory = frozen["external_mode_inventory"]
+        check(
+            "authority_file_sha256",
+            authority_file_sha256 == expected_authority_file_sha256,
+        )
+        check(
+            "inventory_canonical_sha256",
+            str(frozen["canonical_sha256"]) == expected_inventory_sha256,
+        )
+        spec = load_and_resolve(input_path)
+        current_inventory = spec.as_jsonable()["derived"][
+            "external_mode_inventory"
+        ]
+        actual_input_sha256 = hashlib.sha256(
+            Path(input_path).resolve().read_bytes()
+        ).hexdigest()
+        resolved_sha256 = resolved_config_sha256(spec)
+        observed.update(
+            {
+                "authority_file_sha256": authority_file_sha256,
+                "current_input_sha256": actual_input_sha256,
+                "current_physical_model_sha256": str(spec.physical_model_sha256),
+                "resolved_config_sha256": resolved_sha256,
+                "authority_path": str(authority_path),
+            }
+        )
+        check("input_path", Path(input_path).resolve() == expected_input)
+        check(
+            "input_sha256",
+            actual_input_sha256 == str(input_sha256) == expected_input_sha256,
+        )
+        check(
+            "physical_model_sha256",
+            str(spec.physical_model_sha256)
+            == str(physical_model_sha256)
+            == expected_physical_sha256,
+        )
+        check("external_mode_inventory_exact", current_inventory == frozen_inventory)
+        check(
+            "inventory_source_path",
+            str(frozen["source_path"])
+            == V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT,
+        )
+        check("resolved_config_sha256", resolved_sha256 == expected_resolved_sha256)
+        keys = tuple(frozen_inventory["keys"])
+        modes = tuple(frozen_inventory["modes"])
+        bottom_keys = tuple(key for key in keys if str(key["side"]) == "bottom")
+        bottom_modes = tuple(mode for mode in modes if str(mode["side"]) == "bottom")
+        key_tokens = tuple(
+            (
+                int(key["m"]),
+                int(key["n"]),
+                str(key["polarization"]),
+                str(key["side"]),
+            )
+            for key in keys
+        )
+        bottom_key_sha256 = canonical_mode_keys_sha256(bottom_keys)
+        bottom_metadata_sha256 = canonical_external_mode_metadata_sha256(
+            bottom_modes
+        )
+        bottom_beta_sha256 = canonical_selected_packet_beta_sha256(
+            [mode["beta"] for mode in bottom_modes]
+        )
+        check(
+            "full_count",
+            len(keys) == len(modes) == int(frozen_inventory["count"]) == 604,
+        )
+        check("bottom_count", len(bottom_keys) == len(bottom_modes) == 300)
+        check("unique_physical_keys", len(set(key_tokens)) == len(key_tokens))
+        check("bottom_key_sha256", bottom_key_sha256 == expected_bottom_key_sha256)
+        check(
+            "bottom_metadata_sha256",
+            bottom_metadata_sha256 == expected_bottom_metadata_sha256,
+        )
+        check("bottom_beta_sha256", bottom_beta_sha256 == expected_bottom_beta_sha256)
+        check("mpi_size", int(comm.size) == V9_E_LOR_BARE_F_EXTERNAL_ONLY_MPI_SIZE)
+        check("watchdog_enabled", bool(watchdog_enabled))
+        check("bottom_route_only", bool(bottom_route_only))
+        external_mode_authority = {
+            "count": len(bottom_keys),
+            "canonical_keys": list(bottom_keys),
+            "beta_metadata": list(bottom_modes),
+            "canonical_key_list_sha256": bottom_key_sha256,
+            "resolved_mode_metadata_sha256": bottom_metadata_sha256,
+            "legacy_beta_metadata_sha256": expected_bottom_beta_sha256,
+            "legacy_beta_metadata_sha256_expected": expected_bottom_beta_sha256,
+            "legacy_beta_metadata_schema": "canonical_json_bottom_beta_pairs",
+            "resolved_config_sha256": resolved_sha256,
+            "index177_key": bottom_keys[177],
+            "authority_file_path": str(authority_path),
+            "authority_file_sha256": authority_file_sha256,
+            "inventory_canonical_sha256": expected_inventory_sha256,
+            "source_path": str(frozen["source_path"]),
+            "full_count": len(keys),
+            "bottom_count": len(bottom_keys),
+        }
+    except (KeyError, OSError, TypeError, ValueError) as exc:
+        failures.append(f"metadata_exception:{type(exc).__name__}")
+        observed["exception"] = f"{type(exc).__name__}: {exc}"
+    passed = not failures
+    return {
+        "status": "pass" if passed else "identity_fail",
+        "pass": passed,
+        "checks": checks,
+        "failures": failures,
+        "observed": observed,
+        "expected": {
+            "authority_file_sha256": expected_authority_file_sha256,
+            "inventory_canonical_sha256": expected_inventory_sha256,
+            "input_sha256": expected_input_sha256,
+            "physical_model_sha256": expected_physical_sha256,
+            "resolved_config_sha256": expected_resolved_sha256,
+            "bottom_key_sha256": expected_bottom_key_sha256,
+            "bottom_metadata_sha256": expected_bottom_metadata_sha256,
+            "bottom_beta_sha256": expected_bottom_beta_sha256,
+            "full_count": 604,
+            "bottom_count": 300,
+            "legacy_beta_metadata_schema": "canonical_json_bottom_beta_pairs",
+        },
+        "external_mode_authority": (
+            external_mode_authority if passed else None
+        ),
     }
 
 
@@ -7785,6 +7977,42 @@ def run_task040_level_a(
             run_v9_e_lor_bare_f_external_only,
         )
 
+        identity_preflight = _v9_e_lor_bare_f_external_authority_preflight(
+            comm=comm,
+            input_path=input_path,
+            input_sha256=str(input_sha256),
+            physical_model_sha256=str(physical_model_sha256),
+            source_sha=str(source_sha),
+            watchdog_enabled=watchdog_enabled,
+            bottom_route_only=bottom_route_only,
+        )
+        if identity_preflight.get("pass") is not True:
+            return {
+                "schema": V9_E_LOR_BARE_F_EXTERNAL_ONLY_SCHEMA,
+                "method": V9_E_LOR_BARE_F_EXTERNAL_ONLY_METHOD,
+                "profile_id": V9_E_LOR_BARE_F_EXTERNAL_ONLY_PROFILE_ID,
+                "status": V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE,
+                "classification": V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE,
+                "identity_preflight": identity_preflight,
+                "preflight_failures": list(identity_preflight.get("failures", [])),
+                "system_created": False,
+                "official_rta": {"status": "not_run"},
+            }
+        external_mode_authority = identity_preflight.get("external_mode_authority")
+        observed = identity_preflight.get("observed", {})
+        current_resolved_config_sha256 = observed.get("resolved_config_sha256")
+        if current_resolved_config_sha256 is None:
+            if not isinstance(external_mode_authority, Mapping):
+                raise RuntimeError(
+                    "bare-F identity preflight returned no authority mapping"
+                )
+            current_resolved_config_sha256 = external_mode_authority.get(
+                "resolved_config_sha256"
+            )
+        if external_mode_authority is None or current_resolved_config_sha256 is None:
+            raise RuntimeError(
+                "bare-F identity preflight returned incomplete external authority"
+            )
         return run_v9_e_lor_bare_f_external_only(
             cfg=cfg,
             profile=profile,
@@ -7794,6 +8022,10 @@ def run_task040_level_a(
             source_sha=str(source_sha),
             input_sha256=str(input_sha256),
             physical_model_sha256=str(physical_model_sha256),
+            external_mode_authority=external_mode_authority,
+            external_mode_current_resolved_config_sha256=str(
+                current_resolved_config_sha256
+            ),
             marker_callback=marker_callback,
             resource_callback=resource_callback,
             watchdog_enabled=watchdog_enabled,
