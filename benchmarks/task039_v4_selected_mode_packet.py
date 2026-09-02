@@ -27,6 +27,7 @@ from src.modes.selected_mode_packet import (
 TASK039_V4_SELECTED_MODE_SCOPE = "task039_v4_h4_m480"
 TASK039_V5_H5_SELECTED_MODE_SCOPE = "task039_v5_h5_m480"
 TASK039_V4_SELECTED_MODE_COUNT = 480
+TASK041_SELECTED_MODE_IDENTITY_SCHEMA = "task041.selected_mode_packet.identity.v1"
 _BRANCHES = ("positive", "negative")
 _BRANCH_AUTHORITY = ("gram_authority", "qep_diagnostics", "selection_diagnostics")
 
@@ -305,9 +306,117 @@ def _require_task039_identity(identity: Mapping[str, Any]) -> None:
         raise ValueError("Task039 selected-mode packet scope is not approved")
 
 
+def _valid_hex_digest(value: Any, length: int) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == length
+        and value == value.lower()
+        and all(char in "0123456789abcdef" for char in value)
+    )
+
+
+def task041_selected_mode_scope(mode_count: int, mpi_size: int = 1) -> str:
+    if type(mode_count) is not int or mode_count < 2:
+        raise ValueError("Task41 selected-mode mode count must be an int >= 2")
+    if type(mpi_size) is not int or mpi_size <= 0:
+        raise ValueError("Task41 selected-mode MPI size must be a positive int")
+    return f"task041_5nm_p6h4_m{mode_count}_mpi{mpi_size}"
+
+
+def _require_task041_identity(identity: Mapping[str, Any]) -> None:
+    required = (
+        "schema",
+        "scope",
+        "source_sha",
+        "input_sha256",
+        "resolved_sha256",
+        "physical_sha256",
+        "wavelength_nm",
+        "model_id",
+        "run_id",
+        "mesh",
+        "mode_count",
+        "mpi_size",
+        "external_keys",
+    )
+    missing = [key for key in required if key not in identity]
+    if missing:
+        raise ValueError(f"Task41 selected-mode identity missing: {missing}")
+    if identity["schema"] != TASK041_SELECTED_MODE_IDENTITY_SCHEMA:
+        raise ValueError("Task41 selected-mode identity schema mismatch")
+    wavelength = identity["wavelength_nm"]
+    if (
+        isinstance(wavelength, bool)
+        or not isinstance(wavelength, (int, float))
+        or float(wavelength) != 5.0
+    ):
+        raise ValueError("Task41 selected-mode wavelength identity mismatch")
+    if not _valid_hex_digest(identity["source_sha"], 40):
+        raise ValueError("Task41 selected-mode source SHA is invalid")
+    for field in ("input_sha256", "resolved_sha256", "physical_sha256"):
+        if not _valid_hex_digest(identity[field], 64):
+            raise ValueError(f"Task41 selected-mode {field} is invalid")
+    mesh = identity["mesh"]
+    if not isinstance(mesh, Mapping) or mesh != {
+        "cell_type": "hexahedron",
+        "kind": "full3d_uniform_cg",
+        "mesh_target_nm": 4.0,
+        "nedelec_degree": 6,
+        "spacing_mode": "boundary_fitted",
+    }:
+        raise ValueError("Task41 selected-mode mesh identity mismatch")
+    mode_count = identity["mode_count"]
+    if type(mode_count) is not int or mode_count < 2:
+        raise ValueError("Task41 selected-mode mode count must be >= 2")
+    mpi_size = identity["mpi_size"]
+    if type(mpi_size) is not int or mpi_size != 1:
+        raise ValueError("Task41 selected-mode packet requires MPI1")
+    expected_scope = task041_selected_mode_scope(mode_count, mpi_size)
+    expected_model = (
+        f"task041_5nm_exact_side_hybrid_iterative_p6h4_m{mode_count}"
+    )
+    expected_run = f"task041_5nm_p6h4_m{mode_count}_mpi{mpi_size}"
+    if identity["scope"] != expected_scope:
+        raise ValueError("Task41 selected-mode identity scope mismatch")
+    if identity["model_id"] != expected_model:
+        raise ValueError("Task41 selected-mode identity model mismatch")
+    if identity["run_id"] != expected_run:
+        raise ValueError("Task41 selected-mode identity run mismatch")
+    external_keys = identity["external_keys"]
+    if not isinstance(external_keys, Mapping) or set(external_keys) != {
+        "count",
+        "sha256",
+    }:
+        raise ValueError("Task41 selected-mode external key identity is invalid")
+    if type(external_keys["count"]) is not int or external_keys["count"] <= 0:
+        raise ValueError("Task41 selected-mode external key count is invalid")
+    if not _valid_hex_digest(external_keys["sha256"], 64):
+        raise ValueError("Task41 selected-mode external key SHA is invalid")
+
+
+def _is_task041_identity(identity: Mapping[str, Any] | None) -> bool:
+    return bool(
+        isinstance(identity, Mapping)
+        and identity.get("schema") == TASK041_SELECTED_MODE_IDENTITY_SCHEMA
+    )
+
+
+def _identity_mode_count(identity: Mapping[str, Any] | None) -> int:
+    if _is_task041_identity(identity):
+        _require_task041_identity(identity)
+        return int(identity["mode_count"])
+    if identity is None:
+        return TASK039_V4_SELECTED_MODE_COUNT
+    _require_task039_identity(identity)
+    return TASK039_V4_SELECTED_MODE_COUNT
+
+
 def _identity_scope(identity: Mapping[str, Any] | None) -> str:
     if identity is None:
         return TASK039_V4_SELECTED_MODE_SCOPE
+    if _is_task041_identity(identity):
+        _require_task041_identity(identity)
+        return str(identity["scope"])
     _require_task039_identity(identity)
     return str(identity.get("scope", TASK039_V4_SELECTED_MODE_SCOPE))
 
@@ -352,6 +461,7 @@ def load_task039_v4_selected_mode_packet(
     """Load the V4 packet as read-only mode-major mmap arrays."""
 
     scope = _identity_scope(identity)
+    expected_mode_count = _identity_mode_count(identity)
     packet = load_selected_mode_packet(
         manifest_path,
         identity=identity,
@@ -359,18 +469,23 @@ def load_task039_v4_selected_mode_packet(
         scope=scope,
         comm=comm,
     )
-    if packet["mode_count"] != TASK039_V4_SELECTED_MODE_COUNT:
-        raise ValueError("Task039 selected-mode packet mode count mismatch")
+    packet_identity = packet["identity"]
+    if _is_task041_identity(packet_identity):
+        _require_task041_identity(packet_identity)
+    else:
+        _require_task039_identity(packet_identity)
+    if packet["mode_count"] != expected_mode_count:
+        raise ValueError("selected-mode packet mode count mismatch")
     if packet["scope"] != scope:
-        raise ValueError("Task039 selected-mode packet identity scope mismatch")
+        raise ValueError("selected-mode packet identity scope mismatch")
     local_size = packet["ownership_range"][1] - packet["ownership_range"][0]
     for branch in _BRANCHES:
         for side in ("right_full", "left_full"):
             if packet[branch][side].shape != (
-                TASK039_V4_SELECTED_MODE_COUNT,
+                expected_mode_count,
                 local_size,
             ):
-                raise ValueError("Task039 selected-mode packet layout mismatch")
+                raise ValueError("selected-mode packet layout mismatch")
     _require_branch_authority(packet["metadata"])
     return packet
 
@@ -441,13 +556,27 @@ def hydrate_task039_v4_selected_mode_packet(
 ) -> SimpleNamespace:
     """Hydrate the ordinary selected-mode bases with both adjoint sides."""
 
-    if packet["scope"] not in {
-        TASK039_V4_SELECTED_MODE_SCOPE,
-        TASK039_V5_H5_SELECTED_MODE_SCOPE,
-    }:
-        raise ValueError("Task039 selected-mode scope mismatch")
-    if int(packet["mode_count"]) != TASK039_V4_SELECTED_MODE_COUNT:
-        raise ValueError("Task039 selected-mode packet mode count mismatch")
+    packet_identity = packet.get("identity")
+    if _is_task041_identity(packet_identity):
+        _require_task041_identity(packet_identity)
+        expected_mode_count = int(packet_identity["mode_count"])
+        expected_scope = task041_selected_mode_scope(
+            expected_mode_count, int(packet_identity["mpi_size"])
+        )
+    else:
+        if packet["scope"] not in {
+            TASK039_V4_SELECTED_MODE_SCOPE,
+            TASK039_V5_H5_SELECTED_MODE_SCOPE,
+        }:
+            raise ValueError("Task039 selected-mode scope mismatch")
+        _require_task039_identity(packet_identity)
+        expected_scope = str(packet["scope"])
+        expected_mode_count = TASK039_V4_SELECTED_MODE_COUNT
+    if (
+        packet["scope"] != expected_scope
+        or int(packet["mode_count"]) != expected_mode_count
+    ):
+        raise ValueError("selected-mode packet identity/mode count mismatch")
     _require_branch_authority(packet["metadata"])
     start, end = (int(value) for value in packet["ownership_range"])
     local_size = end - start
@@ -494,7 +623,7 @@ def hydrate_task039_v4_selected_mode_packet(
 
     shared_diagnostics = {
         "scope": packet["scope"],
-        "mode_count": TASK039_V4_SELECTED_MODE_COUNT,
+        "mode_count": expected_mode_count,
         "ownership_range": (start, end),
         "global_size": global_size,
         "qep_calls": 0,

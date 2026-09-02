@@ -1061,6 +1061,7 @@ def _parse_args(
     argv: list[str] | None = None,
     *,
     allow_task039: bool = False,
+    allow_task041: bool = False,
 ) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Task32 Phase6 real-QEP hybrid augmented direct diagnostic"
@@ -1103,7 +1104,7 @@ def _parse_args(
         "continuous_qep_beta",
         "scalar_cg_discrete_derivative",
     )
-    if allow_task039:
+    if allow_task039 or allow_task041:
         traction_choices += ("full3d_one_cell_exact_schur",)
     parser.add_argument(
         "--internal-traction-model",
@@ -1267,7 +1268,7 @@ def _parse_args(
                 "--selected-mode-packet-producer-dir requires "
                 "--selected-mode-packet-identity-json"
             )
-        if args.requested_modes != 480:
+        if args.requested_modes != 480 and not allow_task041:
             parser.error(
                 "The V4 selected-mode producer requires --requested-modes 480."
             )
@@ -1290,16 +1291,58 @@ def _parse_args(
             )
     if (
         args.internal_traction_model == "full3d_one_cell_exact_schur"
-        and not allow_task039
+        and not (allow_task039 or allow_task041)
     ):
         parser.error(
             "full3d_one_cell_exact_schur is restricted to the Task39 Python opt-in."
         )
-    if args.degree == 6 and not args.task035c_p6_h10_gate and not allow_task039:
+    if (
+        args.degree == 6
+        and not args.task035c_p6_h10_gate
+        and not (allow_task039 or allow_task041)
+    ):
         parser.error(
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
             "Task035c p6/h10 Hybrid authority only."
         )
+    if allow_task041:
+        scoped = bool(
+            not args.task035c_p6_h10_gate
+            and not args.allow_dirty_research
+            and args.degree == 6
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and np.isclose(args.h_nm, 4.0)
+            and np.isclose(args.modal_h_nm, 4.0)
+            and args.requested_modes >= 2
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "augmented"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and args.graded_reference_h is None
+            and np.isclose(args.bottom_interface_nm, 10.0)
+            and np.isclose(args.top_interface_nm, 110.0)
+            and np.isclose(args.incident_grazing_deg, 1.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "full3d_one_cell_exact_schur"
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.task035c_p6_preflight_authority is None
+            and args.task035c_p6_preflight_sha256 is None
+            and args.full3d_reference is None
+            and args.full3d_reference_sha256 is None
+            and args.selected_mode_packet_producer_dir is not None
+            and args.selected_mode_packet_identity_json is not None
+            and args.selected_mode_packet_consumer_manifest is None
+        )
+        if not scoped:
+            parser.error(
+                "Task41 mode-prep requires clean MPI1-compatible p6/h4, dynamic "
+                "positive M, static-condensed full3d_uniform_cg, exact one-cell "
+                "traction, and the selected-mode packet producer opt-in."
+            )
+        return args
     if allow_task039:
         scoped = bool(
             not args.task035c_p6_h10_gate
@@ -1540,13 +1583,20 @@ def main(
     canonical_trace_gate_policy: str | None = None,
     canonical_trace_family_sha256: str | None = None,
     task039_stage_marker_path: str | Path | None = None,
+    task041_mode_prep: bool = False,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
         config_override is not None
         and str(getattr(config_override, "case_name", "")).startswith("task039_5nm")
     )
-    args = _parse_args(argv, allow_task039=allow_task039)
+    args = _parse_args(
+        argv,
+        allow_task039=allow_task039,
+        allow_task041=bool(task041_mode_prep),
+    )
+    if task041_mode_prep and config_override is None:
+        raise SystemExit("Task41 mode-prep requires a resolved config override.")
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
     modal_h_nm = float(args.h_nm) if args.modal_h_nm is None else float(args.modal_h_nm)
@@ -1619,6 +1669,8 @@ def main(
         or args.internal_traction_model != "continuous_qep_beta"
     )
     comm = MPI.COMM_WORLD
+    if task041_mode_prep and comm.size != 1:
+        raise SystemExit("Task41 mode-prep requires MPI1.")
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
     )
@@ -1690,6 +1742,7 @@ def main(
                 "task039_direct",
                 "task039_v4_mode_prep",
                 "task039_v5_h5_mode_prep",
+                "task041_mode_prep",
             }
             or comm.rank != 0
         ):
@@ -2283,24 +2336,35 @@ def main(
                 metadata=packet_metadata,
                 comm=comm,
             )
-            raise _Task039TraceAuditStop(
-                {
-                    "schema": "task039.v4-selected-mode-packet-producer.v1",
-                    "status": "controlled_stop_packet_written",
-                    "source": provenance,
-                    "packet": packet,
-                    "producer_qep": packet_metadata["qep_diagnostics"],
-                    "packet_write": {
-                        "manifest": packet["manifest"],
-                        "manifest_sha256": packet["manifest_sha256"],
-                        "write_seconds_max_rank": packet["write_seconds_max_rank"],
-                        "consumer_qep_required": False,
-                    },
-                    "selection": packet_metadata["selection_diagnostics"],
-                    "local_systems_and_coupling": "not_run",
+            producer_record = {
+                "schema": "task039.v4-selected-mode-packet-producer.v1",
+                "status": "controlled_stop_packet_written",
+                "source": provenance,
+                "packet": packet,
+                "producer_qep": packet_metadata["qep_diagnostics"],
+                "packet_write": {
+                    "manifest": packet["manifest"],
+                    "manifest_sha256": packet["manifest_sha256"],
+                    "write_seconds_max_rank": packet["write_seconds_max_rank"],
                     "consumer_qep_required": False,
-                }
-            )
+                },
+                "selection": packet_metadata["selection_diagnostics"],
+                "local_systems_and_coupling": "not_run",
+                "consumer_qep_required": False,
+            }
+            if task041_mode_prep:
+                producer_record.update(
+                    {
+                        "schema": "task041.mode-prep.selected-mode-packet-producer.v1",
+                        "task041_mode_prep": True,
+                        "local_systems": "not_run",
+                        "coupling": "not_run",
+                        "factor": "not_run",
+                        "solve": "not_run",
+                        "recovery": "not_run",
+                    }
+                )
+            raise _Task039TraceAuditStop(producer_record)
 
         mark_stage("local_fem_dtn_assembly")
         started = time.perf_counter()
