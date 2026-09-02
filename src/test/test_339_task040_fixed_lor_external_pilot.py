@@ -371,3 +371,59 @@ def test_task040_external_preconditioner_fixture_contract(external_lor_fixture):
     assert service.destroyed is True
     with pytest.raises(RuntimeError):
         service.apply(None, source, target)
+
+
+def test_task040_external_cleanup_marker_on_assembly_failure(monkeypatch, tmp_path):
+    import src.solvers.hybrid_bare_f_external_lor_pilot as pilot
+
+    markers = []
+    authority = {
+        "authority_file_path": "authority.json",
+        "authority_file_sha256": "a" * 64,
+        "inventory_canonical_sha256": "b" * 64,
+        "source_path": V9_E_LOR_BARE_F_EXTERNAL_ONLY_INPUT,
+        "full_count": 604,
+        "bottom_count": 300,
+        "canonical_key_list_sha256": "c" * 64,
+        "resolved_mode_metadata_sha256": "d" * 64,
+        "legacy_beta_metadata_sha256": "e" * 64,
+        "legacy_beta_metadata_schema": "canonical_json_bottom_beta_pairs",
+        "resolved_config_sha256": "f" * 64,
+    }
+
+    def capture(stage, _callback, _comm, _started, _resource, **detail):
+        markers.append((stage, detail))
+
+    def fail_at_assembly(*_args, **_kwargs):
+        raise RuntimeError("sentinel assembly failure")
+
+    monkeypatch.setattr(pilot, "_marker", capture)
+    monkeypatch.setattr(
+        pilot, "assemble_current_bare_f_authority_system", fail_at_assembly
+    )
+    with pytest.raises(RuntimeError, match="sentinel assembly failure"):
+        pilot.run_v9_e_lor_bare_f_external_only(
+            cfg=object(),
+            profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+            comm=SimpleNamespace(size=8, rank=0),
+            input_path=OFFICIAL_INPUT,
+            run_directory=tmp_path / "cleanup-marker",
+            source_sha="a" * 40,
+            input_sha256=(
+                "e8b60ba70daa2074c21603d463790a28c881d35d7bd17b2b8315fef0318007b6"
+            ),
+            physical_model_sha256="b" * 64,
+            external_mode_authority=authority,
+            external_mode_current_resolved_config_sha256="f" * 64,
+            marker_callback=None,
+            resource_callback=dict,
+            watchdog_enabled=True,
+            bottom_route_only=True,
+            watchdog_hard_stop_bytes=V9_E_LOR_BARE_F_EXTERNAL_ONLY_HARD_STOP_BYTES,
+        )
+    cleanup_stage, detail = markers[-1]
+    assert cleanup_stage == pilot.V9_E_LOR_BARE_F_EXTERNAL_MARKER_SEQUENCE[-1]
+    assert detail["status"] == "complete"
+    assert detail["classification"] == (
+        pilot.V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE
+    )

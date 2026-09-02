@@ -748,9 +748,7 @@ def run_v9_e_lor_bare_f_external_only(
                 comm,
                 started,
                 resource_callback,
-                status=result.get(
-                    "status", V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE
-                ),
+                status="complete",
                 classification=result.get(
                     "classification",
                     V9_E_LOR_BARE_F_EXTERNAL_IMPLEMENTATION_FAILURE,
