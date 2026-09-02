@@ -9285,6 +9285,7 @@ def run_v3_7_recovery_runner(
             "producer_source_sha": producer.get("producer_source_sha"),
             "recovery_pass": bool(recovery.recovery_pass),
             "physics_pass": bool(physics.physics_pass),
+            "reports": recovery.reports,
             "integrated_checker": integrated_checker,
         }
     finally:
@@ -9321,8 +9322,8 @@ def _write_v3_7_candidate_authority(
         ),
         "source_sha": producer.get("consumer_source_sha"),
         "physical_model_sha256": producer["physical_model_sha256"],
-        "mpi_size": 8,
-        "requested_modes": 480,
+        "mpi_size": int(producer.get("mpi_size", 8)),
+        "requested_modes": int(producer.get("requested_modes", 480)),
         "inventory_count": len(keys),
         "external_mode_inventory": {"keys": keys},
         "external_orders": orders,
@@ -9341,7 +9342,10 @@ def _write_v3_7_candidate_authority(
         "grid_payload": dict(physics.own_grid),
     }
     qualification_scope = producer.get("qualification_scope")
-    if qualification_scope == TASK039_V4_H4_CASE_QUALIFICATION_SCOPE:
+    if (
+        qualification_scope == TASK039_V4_H4_CASE_QUALIFICATION_SCOPE
+        or producer.get("canonical_authority") is True
+    ):
         authority["qualification_scope"] = qualification_scope
         authority["qualification_method"] = producer.get("qualification_method")
         authority["canonical"] = dict(physics.canonical)
@@ -11114,9 +11118,27 @@ def _run_v7_h4_exact_side_full_formal(
     producer: Mapping[str, Any],
     run_directory: str | Path,
     release_before_recovery: Callable[[], Mapping[str, Any]],
+    iterative_config: HybridBlockLduIterativeConfig | None = None,
 ) -> dict[str, Any]:
     """Run the explicit V7 outer solve, then the existing recovery authority."""
 
+    effective_config = (
+        HybridBlockLduIterativeConfig(
+            restart=10,
+            max_it=V3_7_MAX_IT,
+            threshold=V3_7_RESIDUAL_TOLERANCE,
+            ksp_type="gmres",
+            fixed_preconditioner=True,
+        )
+        if iterative_config is None
+        else iterative_config
+    )
+    config_ksp_type = str(effective_config.ksp_type).lower()
+    if config_ksp_type not in {"gmres", "fgmres"}:
+        raise ValueError(f"Unsupported iterative KSP type: {config_ksp_type}")
+    config_restart = int(effective_config.restart)
+    config_max_it = int(effective_config.max_it)
+    config_threshold = float(effective_config.threshold)
     rhs = _default_rhs(setup, layout)
     iterative = None
     retained_solution = None
@@ -11125,24 +11147,18 @@ def _run_v7_h4_exact_side_full_formal(
             marker_callback,
             "outer_solve_begin",
             source="solve_hybrid_block_ldu_iterative",
-            ksp_type="gmres",
-            restart=10,
-            max_it=V3_7_MAX_IT,
-            threshold=V3_7_RESIDUAL_TOLERANCE,
-            fixed_preconditioner=True,
+            ksp_type=config_ksp_type,
+            restart=config_restart,
+            max_it=config_max_it,
+            threshold=config_threshold,
+            fixed_preconditioner=bool(effective_config.fixed_preconditioner),
             nested_ksp=False,
         )
         iterative = solve_hybrid_block_ldu_iterative(
             operator,
             rhs,
             context,
-            config=HybridBlockLduIterativeConfig(
-                restart=10,
-                max_it=V3_7_MAX_IT,
-                threshold=V3_7_RESIDUAL_TOLERANCE,
-                ksp_type="gmres",
-                fixed_preconditioner=True,
-            ),
+            config=effective_config,
             progress_callback=lambda row: _emit_marker(
                 marker_callback,
                 "outer_solve_progress",
@@ -11161,10 +11177,24 @@ def _run_v7_h4_exact_side_full_formal(
         solve_report = {
             "status": "completed" if postsolve.get("pass") is True else "failed",
             "pass": bool(postsolve.get("pass") is True),
-            "ksp_type": postsolve.get("ksp_type", "gmres"),
-            "restart": int(postsolve.get("restart", 10)),
-            "max_it": V3_7_MAX_IT,
-            "threshold": V3_7_RESIDUAL_TOLERANCE,
+            "ksp_type": (
+                config_ksp_type
+                if iterative_config is not None
+                else postsolve.get("ksp_type", "gmres")
+            ),
+            "restart": (
+                config_restart
+                if iterative_config is not None
+                else int(postsolve.get("restart", 10))
+            ),
+            "max_it": (
+                config_max_it if iterative_config is not None else V3_7_MAX_IT
+            ),
+            "threshold": (
+                config_threshold
+                if iterative_config is not None
+                else V3_7_RESIDUAL_TOLERANCE
+            ),
             "converged_reason": int(iterative.converged_reason),
             "iterations": int(iterative.iterations),
             "postsolve": postsolve,
@@ -11172,6 +11202,15 @@ def _run_v7_h4_exact_side_full_formal(
             "timing": dict(iterative.timing),
             "inventory": dict(iterative.inventory),
         }
+        if iterative_config is not None:
+            solve_report.update(
+                {
+                    "initial_guess": effective_config.initial_guess,
+                    "fixed_preconditioner": bool(
+                        effective_config.fixed_preconditioner
+                    ),
+                }
+            )
         _emit_marker(
             marker_callback,
             "outer_solve_ready",
@@ -11192,6 +11231,7 @@ def _run_v7_h4_exact_side_full_formal(
                 int(value) == 0
                 for value in release.get("factor_count_after_cleanup", {}).values()
             )
+            and release.get("rss_drop", {"pass": True}).get("pass") is True
         )
         release["pass"] = release_pass
         _emit_marker(
@@ -11277,6 +11317,7 @@ def run_v5_h4_exact_side_setup_only(
     packet_identity: Mapping[str, Any] | None = None,
     packet_manifest_sha256: str | None = None,
     full_formal_runner: Callable[..., Mapping[str, Any]] | None = None,
+    outer_probe_config: HybridBlockLduIterativeConfig | None = None,
 ) -> dict[str, Any]:
     """Build the reviewed h4 exact-side stack, then stop before any solve."""
 
@@ -11471,9 +11512,39 @@ def run_v5_h4_exact_side_setup_only(
         )
         ksp = PETSc.KSP().create(comm)
         ksp.setOperators(operator)
-        ksp.setType(PETSc.KSP.Type.GMRES)
-        ksp.setGMRESRestart(10)
-        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        if outer_probe_config is None:
+            probe_ksp_type = "gmres"
+            probe_restart = 10
+            probe_max_it = V3_7_MAX_IT
+            probe_threshold = V3_7_RESIDUAL_TOLERANCE
+            probe_profile = "v5_exact_side_fixed_pc_gmres10"
+            ksp.setType(PETSc.KSP.Type.GMRES)
+            ksp.setGMRESRestart(10)
+            ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        else:
+            probe_config = outer_probe_config
+            probe_ksp_type = str(probe_config.ksp_type).lower()
+            if probe_ksp_type not in {"gmres", "fgmres"}:
+                raise ValueError(f"Unsupported outer probe KSP type: {probe_ksp_type}")
+            probe_restart = int(probe_config.restart)
+            probe_max_it = int(probe_config.max_it)
+            probe_threshold = float(probe_config.threshold)
+            probe_profile = (
+                f"task041_exact_side_{probe_ksp_type}_restart{probe_restart}"
+            )
+            ksp.setType(
+                PETSc.KSP.Type.FGMRES
+                if probe_ksp_type == "fgmres"
+                else PETSc.KSP.Type.GMRES
+            )
+            ksp.setGMRESRestart(probe_restart)
+            ksp.setPCSide(PETSc.PC.Side.RIGHT)
+            ksp.setInitialGuessNonzero(probe_config.initial_guess != "zero")
+            ksp.setTolerances(
+                rtol=probe_threshold,
+                atol=0.0,
+                max_it=probe_max_it,
+            )
         pc = ksp.getPC()
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(context)
@@ -11484,26 +11555,45 @@ def run_v5_h4_exact_side_setup_only(
         }
         outer_ksp_report = {
             "type": str(ksp.getType()),
-            "restart": 10,
-            "ksp_profile": "v5_exact_side_fixed_pc_gmres10",
+            "restart": probe_restart,
+            "ksp_profile": probe_profile,
             "set_up": True,
             "solve_called": False,
             "krylov_vectors": "not_allocated_before_solve",
             "factor_count_at_outer_ready": dict(outer_ready_factor_counts),
         }
+        if outer_probe_config is not None:
+            outer_ksp_report.update(
+                {
+                    "max_it": probe_max_it,
+                    "threshold": probe_threshold,
+                    "initial_guess": probe_config.initial_guess,
+                    "fixed_preconditioner": bool(probe_config.fixed_preconditioner),
+                    "pc_side": "right",
+                }
+            )
         outer_context_inventory = deepcopy(context.inventory)
-        _emit_marker(
-            marker_callback,
-            "outer_ksp_setup_ready",
-            source="PETSc.KSP.setUp",
-            ksp_type=str(ksp.getType()),
-            restart=10,
-            ksp_profile="v5_exact_side_fixed_pc_gmres10",
-            solve_called=False,
-            krylov_vectors={"status": "not_allocated_before_solve"},
-            preconditioner_inventory=context.inventory,
-            factor_count_at_outer_ready=outer_ready_factor_counts,
-        )
+        probe_marker = {
+            "source": "PETSc.KSP.setUp",
+            "ksp_type": str(ksp.getType()),
+            "restart": probe_restart,
+            "ksp_profile": probe_profile,
+            "solve_called": False,
+            "krylov_vectors": {"status": "not_allocated_before_solve"},
+            "preconditioner_inventory": context.inventory,
+            "factor_count_at_outer_ready": outer_ready_factor_counts,
+        }
+        if outer_probe_config is not None:
+            probe_marker.update(
+                {
+                    "max_it": probe_max_it,
+                    "threshold": probe_threshold,
+                    "initial_guess": probe_config.initial_guess,
+                    "fixed_preconditioner": bool(probe_config.fixed_preconditioner),
+                    "pc_side": "right",
+                }
+            )
+        _emit_marker(marker_callback, "outer_ksp_setup_ready", **probe_marker)
         if full_formal_runner is not None:
             ksp.destroy()
             ksp = None
@@ -11512,7 +11602,11 @@ def run_v5_h4_exact_side_setup_only(
                 "outer_setup_probe_ksp_released",
                 source="v7_full_formal_setup_probe",
                 ksp_destroyed=True,
-                formal_ksp_profile="gmres_restart10",
+                formal_ksp_profile=(
+                    probe_profile
+                    if outer_probe_config is not None
+                    else "gmres_restart10"
+                ),
             )
 
             def release_before_recovery() -> Mapping[str, Any]:
