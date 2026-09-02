@@ -178,6 +178,60 @@ mpiexec -n 1 python scripts/run_case.py input/official/task041/<case>.dat
 不能用普通 `python` 代替 MPI1，因为 Task041 要审计完整 MPI 初始化、owner layout和
 process-tree资源。
 
+## 3.1 Formal 前的 surface quadrature 语义修复
+
+Task041 分支继承的 `src/solvers/dtn_port_3d.py` 仍可能使用
+`form_compiler_options={"quadrature_degree": ...}` 传递 surface quadrature。Task038-extra
+最新只读证据已经发现，更可靠的 DOLFINx/UFL 语义是把 `quadrature_degree` 写入每一个
+surface integral 的 metadata。
+
+在创建第一个正式 Task041 packet或external source前，Codex必须选择性重写通用 helper：
+
+```text
+surface vector assembly
+reusable surface component assembly
+mode projection
+surface scalar integration
+```
+
+要求：
+
+```text
+preserve all existing integral metadata
+preserve integrand / facet tag / sign / phase
+no Task038-extra runner import
+no whole-branch cherry-pick
+focused serial regression
+focused MPI1 source-only comparison
+```
+
+对 5 nm、p6/h4、M480 的 `external_dtn_coupling`，先比较修复前后：
+
+```text
+canonical physical key set
+canonical value digest
+source norm
+relative vector difference
+orientation/sign
+Floquet phase exactly once
+surface quadrature degree
+```
+
+决策：
+
+```text
+relative difference <= 1e-12
+    -> Task039 MPI8 numerical reference保持严格可比
+
+relative difference > 1e-12
+    -> 保留旧MPI8 reference，但标记REFERENCE_SOURCE_SEMANTICS_CHANGED
+    -> Task041仍可继续测量corrected MPI1 current-technology capacity
+    -> 不得声称完整MPI1-vs-MPI8 equivalence
+    -> 不重跑MPI8 heavy，不重跑positive operator campaign
+```
+
+该修复属于通用数值语义修复，不是新的 PC，不允许改变材料、M、mesh或物理边界。
+
 ---
 
 # 4. 材料合同
