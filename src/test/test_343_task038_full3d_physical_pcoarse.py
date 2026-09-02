@@ -7,6 +7,8 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from dolfinx import fem
+from mpi4py import MPI
 from petsc4py import PETSc
 
 import src.solvers.common_3d_forms as common_forms_module
@@ -15,11 +17,20 @@ import src.solvers.fullspace_dtn_action as dtn_module
 import src.solvers.fullspace_physical_action as physical_action_module
 import src.solvers.fullspace_same_mesh_hcurl_pmg_physical as physical_module
 import src.solvers.fullspace_same_mesh_physical_pcoarse as pcoarse
+from src.constraints.floquet_3d import build_double_floquet_mpc
+from src.solvers.hcurl_canonical_vector import compare_canonical_packets
+from src.solvers.hcurl_canonical_vector_dolfinx import (
+    build_nonmatching_hcurl_primal_bridge,
+    destroy_nonmatching_hcurl_primal_bridge,
+    extract_canonical_full_fe_packets,
+    reconstruct_canonical_full_fe_function,
+)
 from src.solvers.fullspace_memory_first_krylov import destroy_krylov_result
 from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
     build_same_mesh_physical_action,
     destroy_same_mesh_physical_action,
 )
+from src.test.test_46_task033_high_order_floquet_topology import _fixed_target_fixture
 
 
 def _diagonal(values: tuple[complex, ...]) -> PETSc.Mat:
@@ -60,8 +71,10 @@ class _Transfer:
     def __init__(self) -> None:
         self.adjoint_calls = 0
         self.primal_calls = 0
+        self.adjoint_inputs = []
 
     def apply_adjoint_into(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.adjoint_inputs.append(source.array.copy())
         source.copy(target)
         self.adjoint_calls += 1
 
@@ -394,3 +407,188 @@ def test_small_probe_contract_reuses_physical_rhs_and_rejects_missing_r3(
 
     with pytest.raises(NotImplementedError, match="R3 requires canonical full-FE dual packets"):
         pcoarse.build_small_same_mesh_probe_source({}, "r3_long_tail_derived")
+
+
+def test_r3_long_tail_composes_current_rhs_action_and_p63(monkeypatch) -> None:
+    p6_matrix = _diagonal((2.0, 3.0, 4.0, 5.0))
+    p3_matrix = _diagonal((2.0, 3.0, 4.0, 5.0))
+    action = _Action(p6_matrix)
+    transfer = _Transfer()
+    setup = {
+        "p6_shell": SimpleNamespace(matrix=p6_matrix),
+        "p3_matrix": p3_matrix,
+        "p63_owner_transfer": transfer,
+    }
+    case = {"setup": setup, "p6_action": {"action": action}}
+    mapped = p6_matrix.createVecRight()
+    mapped.array[:] = (1.0 + 0.5j, -2.0j, 0.25 + 1.0j, 3.0 - 0.5j)
+    mapped_before = mapped.array.copy()
+    rhs_values = np.asarray(
+        (2.0 - 0.5j, 1.0 + 0.25j, -1.0j, 4.0 + 0.5j), dtype=np.complex128
+    )
+    rhs_vectors = []
+
+    def fake_physical_rhs(_bundle):
+        rhs = p6_matrix.createVecLeft()
+        rhs.array[:] = rhs_values
+        rhs_vectors.append(rhs)
+        return rhs, {"generation": "dtn_port_modal_physical_rhs"}
+
+    monkeypatch.setattr(physical_module, "build_physical_rhs", fake_physical_rhs)
+    first = second = None
+    try:
+        first, first_facts = pcoarse.build_r3_long_tail_derived_probe(
+            case, mapped
+        )
+        second, second_facts = pcoarse.build_r3_long_tail_derived_probe(
+            case, mapped
+        )
+        expected = rhs_values - np.asarray((2.0, 3.0, 4.0, 5.0)) * mapped_before
+        np.testing.assert_allclose(first.array, expected, atol=1.0e-12, rtol=0.0)
+        np.testing.assert_allclose(second.array, expected, atol=1.0e-12, rtol=0.0)
+        assert np.array_equal(mapped.array, mapped_before)
+        assert all(
+            np.array_equal(values, expected) for values in transfer.adjoint_inputs
+        )
+        assert first_facts["formula"] == "r50=b50-A6*x50; r3=P63^H*r50"
+        assert first_facts["mapped_primal_authority_role"] == "full_fe"
+        assert first_facts["mapped_primal_action_storage"] == "fullspace_slave_zero"
+        assert first_facts["residual_role"] == "full_fe_dual"
+        assert first_facts["probe_role"] == "full_fe_dual"
+        assert second_facts["physical_rhs_facts"] == {
+            "generation": "dtn_port_modal_physical_rhs"
+        }
+        assert action.calls == 2
+        assert transfer.adjoint_calls == 2
+        assert len(rhs_vectors) == 2
+    finally:
+        if first is not None:
+            first.destroy()
+        if second is not None:
+            second.destroy()
+        mapped.destroy()
+        p6_matrix.destroy()
+        p3_matrix.destroy()
+
+
+def test_nonmatching_hcurl_primal_bridge_roundtrip() -> None:
+    source_cfg, source_mesh_data, source_space = _fixed_target_fixture(
+        3, h_nm=25.0
+    )
+    target_cfg, target_mesh_data, target_space = _fixed_target_fixture(
+        3, h_nm=50.0
+    )
+    source_floquet = build_double_floquet_mpc(
+        source_space, source_mesh_data, source_cfg
+    )
+    target_floquet = build_double_floquet_mpc(
+        target_space, target_mesh_data, target_cfg
+    )
+    source_cells = source_mesh_data.mesh.topology.index_map(
+        source_mesh_data.mesh.topology.dim
+    ).size_global
+    target_cells = target_mesh_data.mesh.topology.index_map(
+        target_mesh_data.mesh.topology.dim
+    ).size_global
+    assert int(source_cells) != int(target_cells)
+    source_field = fem.Function(source_floquet.mpc.function_space)
+    source_field.interpolate(
+        lambda x: np.vstack(
+            (
+                x[0] + 0.25j * x[1],
+                x[1] - 0.5j * x[2],
+                x[2] + 0.75j * x[0],
+            )
+        )
+    )
+    source_field.x.scatter_forward()
+    source_floquet.mpc.homogenize(source_field)
+    source_field.x.scatter_forward()
+    source_floquet.mpc.backsubstitution(source_field)
+    source_field.x.scatter_forward()
+    source_before = source_field.x.array.copy()
+    bridge = None
+    bridge_repeat = None
+    restored = None
+    try:
+        bridge = build_nonmatching_hcurl_primal_bridge(
+            source_field, target_space, target_floquet
+        )
+        assert bridge["audit"] == {
+            "schema": "task038.nonmatching_hcurl_primal_bridge.v1",
+            "method": "dolfinx.create_interpolation_data+interpolate_nonmatching",
+            "padding": 1.0e-10,
+            "target_mpc_homogenize_count": 1,
+            "target_mpc_backsubstitution_count": 1,
+            "global_matrix": False,
+            "numeric_allgather": False,
+        }
+        assert np.array_equal(source_field.x.array, source_before)
+        target_function_space = target_floquet.mpc.function_space
+        local_size = int(target_function_space.dofmap.index_map.size_local)
+        owned_slaves = np.asarray(target_floquet.mpc.slaves, dtype=np.int64)
+        owned_slaves = owned_slaves[
+            (owned_slaves >= 0) & (owned_slaves < local_size)
+        ]
+        assert bridge["action_vector"].norm() > 0.0
+        assert bridge["canonical_field"].x.petsc_vec.norm() > 0.0
+        comm = target_function_space.mesh.comm
+        owned_slave_count = comm.allreduce(len(owned_slaves), op=MPI.SUM)
+        local_action_slave_max = float(
+            np.max(
+                np.abs(bridge["action_vector"].array[owned_slaves]),
+                initial=0.0,
+            )
+        )
+        local_canonical_slave_max = float(
+            np.max(
+                np.abs(bridge["canonical_field"].x.array[owned_slaves]),
+                initial=0.0,
+            )
+        )
+        action_slave_max = comm.allreduce(
+            local_action_slave_max,
+            op=MPI.MAX,
+        )
+        canonical_slave_max = comm.allreduce(
+            local_canonical_slave_max,
+            op=MPI.MAX,
+        )
+        assert owned_slave_count > 0
+        assert action_slave_max == 0.0
+        assert canonical_slave_max > 0.0
+        bridge_repeat = build_nonmatching_hcurl_primal_bridge(
+            source_field, target_space, target_floquet
+        )
+        np.testing.assert_array_equal(
+            bridge["action_vector"].array, bridge_repeat["action_vector"].array
+        )
+        packets, _audit = extract_canonical_full_fe_packets(
+            target_function_space,
+            bridge["canonical_field"].x.petsc_vec,
+            target_floquet,
+        )
+        repeat_packets, _repeat_audit = extract_canonical_full_fe_packets(
+            target_function_space,
+            bridge_repeat["canonical_field"].x.petsc_vec,
+            target_floquet,
+        )
+        repeat_comparison = compare_canonical_packets(
+            packets, repeat_packets, relative_tolerance=1.0e-12
+        )
+        assert repeat_comparison["pass"], repeat_comparison
+        restored = reconstruct_canonical_full_fe_function(
+            target_function_space, packets, target_floquet
+        )
+        restored_packets, _restored_audit = extract_canonical_full_fe_packets(
+            target_function_space, restored.x.petsc_vec, target_floquet
+        )
+        comparison = compare_canonical_packets(
+            packets, restored_packets, relative_tolerance=1.0e-12
+        )
+        assert comparison["pass"], comparison
+        assert np.all(np.isfinite(bridge["action_vector"].array))
+        assert np.all(np.isfinite(bridge["canonical_field"].x.array))
+    finally:
+        destroy_nonmatching_hcurl_primal_bridge(bridge_repeat)
+        destroy_nonmatching_hcurl_primal_bridge(bridge)

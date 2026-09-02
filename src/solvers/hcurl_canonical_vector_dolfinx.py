@@ -45,6 +45,8 @@ __all__ = (
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
     "extract_canonical_full_fe_dual_packets",
+    "build_nonmatching_hcurl_primal_bridge",
+    "destroy_nonmatching_hcurl_primal_bridge",
     "build_physical_canonical_primal_source",
     "build_physical_canonical_dual_source",
     "reconstruct_canonical_full_fe_function",
@@ -693,6 +695,92 @@ def extract_canonical_full_fe_packets(
         iter_canonical_full_fe_packets(function_space, recovered_vec, floquet_data)
     )
     return packets, _packet_audit(packets, function_space.mesh.comm, role="full_fe")
+
+
+def build_nonmatching_hcurl_primal_bridge(
+    source_field: Any,
+    target_space: Any,
+    target_floquet: Any,
+    *,
+    padding: float = 1.0e-10,
+) -> dict[str, Any]:
+    """Interpolate one finalized primal field onto a finalized target MPC."""
+
+    from dolfinx import fem
+
+    target_mpc = getattr(target_floquet, "mpc", None)
+    if target_mpc is None:
+        raise ValueError("nonmatching primal bridge requires a finalized target MPC")
+    target_function_space = target_mpc.function_space
+    if target_space.mesh is not target_function_space.mesh:
+        raise ValueError("target space and target MPC must share one mesh")
+    if MPI.Comm.Compare(
+        source_field.function_space.mesh.comm, target_function_space.mesh.comm
+    ) not in (MPI.IDENT, MPI.CONGRUENT):
+        raise ValueError("source and target spaces require congruent communicators")
+
+    target_topology = target_function_space.mesh.topology
+    cell_map = target_topology.index_map(target_topology.dim)
+    cells = np.arange(
+        int(cell_map.size_local + cell_map.num_ghosts), dtype=np.int32
+    )
+    interpolation_data = fem.create_interpolation_data(
+        target_function_space,
+        source_field.function_space,
+        cells,
+        padding=float(padding),
+    )
+    target_function = fem.Function(target_function_space)
+    action_vector = None
+    try:
+        target_function.interpolate_nonmatching(
+            source_field, cells, interpolation_data
+        )
+        target_function.x.scatter_forward()
+        target_mpc.homogenize(target_function)
+        target_function.x.scatter_forward()
+        action_vector = target_function.x.petsc_vec.copy()
+        del target_function
+        del interpolation_data
+
+        canonical_field = fem.Function(target_function_space)
+        action_vector.copy(canonical_field.x.petsc_vec)
+        canonical_field.x.scatter_forward()
+        target_mpc.backsubstitution(canonical_field)
+        canonical_field.x.scatter_forward()
+
+        audit = {
+            "schema": "task038.nonmatching_hcurl_primal_bridge.v1",
+            "method": "dolfinx.create_interpolation_data+interpolate_nonmatching",
+            "padding": float(padding),
+            "target_mpc_homogenize_count": 1,
+            "target_mpc_backsubstitution_count": 1,
+            "global_matrix": False,
+            "numeric_allgather": False,
+        }
+        return {
+            "action_vector": action_vector,
+            "canonical_field": canonical_field,
+            "audit": audit,
+        }
+    except Exception:
+        if action_vector is not None:
+            action_vector.destroy()
+        raise
+
+
+def destroy_nonmatching_hcurl_primal_bridge(
+    bridge: dict[str, Any] | None,
+) -> None:
+    """Release one nonmatching primal bridge's returned target objects."""
+
+    if not bridge:
+        return
+    action_vector = bridge.pop("action_vector", None)
+    if action_vector is not None:
+        action_vector.destroy()
+    bridge.pop("canonical_field", None)
+    bridge.clear()
 
 
 def _canonical_packet_map(

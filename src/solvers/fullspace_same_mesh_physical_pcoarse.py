@@ -590,6 +590,56 @@ def build_small_same_mesh_probe_source(
     )
 
 
+def build_r3_long_tail_derived_probe(
+    case: Mapping[str, Any], mapped_primal: PETSc.Vec
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Recompute the current h50 residual at one mapped primal state."""
+
+    setup = case["setup"]
+    p6_bundle = case["p6_action"]
+    p6_matrix = setup["p6_shell"].matrix
+    p3_matrix = setup["p3_matrix"]
+    p6_layout = _matrix_layout(p6_matrix, "p6")
+    if (int(mapped_primal.getSize()), int(mapped_primal.getLocalSize())) != (
+        p6_layout[0],
+        p6_layout[1],
+    ):
+        raise ValueError("mapped primal has an incompatible p6 layout")
+
+    from .fullspace_same_mesh_hcurl_pmg_physical import build_physical_rhs
+
+    physical_rhs = None
+    action_output = None
+    residual = None
+    probe = None
+    success = False
+    try:
+        physical_rhs, rhs_facts = build_physical_rhs(p6_bundle)
+        action_output = p6_matrix.createVecLeft()
+        p6_bundle["action"].apply(mapped_primal, action_output)
+        residual = physical_rhs.copy()
+        residual.axpy(PETSc.ScalarType(-1.0), action_output)
+        probe = p3_matrix.createVecLeft()
+        setup["p63_owner_transfer"].apply_adjoint_into(residual, probe)
+        success = True
+        return probe, {
+            "schema": "task038.r3-long-tail-derived.current-h50.v1",
+            "name": "r3_long_tail_derived",
+            "formula": "r50=b50-A6*x50; r3=P63^H*r50",
+            "mapped_primal_authority_role": "full_fe",
+            "mapped_primal_action_storage": "fullspace_slave_zero",
+            "residual_role": "full_fe_dual",
+            "probe_role": "full_fe_dual",
+            "physical_rhs_facts": dict(rhs_facts),
+        }
+    finally:
+        for vector in (physical_rhs, action_output, residual):
+            if vector is not None:
+                vector.destroy()
+        if not success and probe is not None:
+            probe.destroy()
+
+
 def destroy_small_same_mesh_physical_pcoarse_case(case: dict[str, Any]) -> None:
     """Release p-cycle, physical actions, then the borrowed setup owner."""
 
@@ -626,6 +676,7 @@ __all__ = (
     "SameMeshPhysicalPcoarseV1",
     "build_small_same_mesh_physical_pcoarse_case",
     "build_small_same_mesh_probe_source",
+    "build_r3_long_tail_derived_probe",
     "destroy_same_mesh_physical_pcoarse",
     "destroy_small_same_mesh_physical_pcoarse_case",
 )
