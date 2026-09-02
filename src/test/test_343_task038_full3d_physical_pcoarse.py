@@ -7,6 +7,8 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+import ufl
+from basix.ufl import element
 from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -365,6 +367,48 @@ def test_physical_action_builder_selects_requested_level_and_keeps_p6_entrypoint
     assert destroy_same_mesh_physical_action.__name__.startswith("destroy_")
     old_signature = inspect.signature(physical_module.build_p6_same_mesh_physical_bundle)
     assert tuple(old_signature.parameters) == ("cfg", "comm", "stage_callback")
+
+
+def test_surface_quadrature_degree_is_integral_metadata() -> None:
+    coordinate_element = element(
+        "Lagrange", "triangle", 1, shape=(2,), dtype=np.float64
+    )
+    domain = ufl.Mesh(coordinate_element)
+    measure = ufl.Measure(
+        "ds",
+        domain=domain,
+        metadata={"custom": "keep", "quadrature_rule": "vertex"},
+    )
+    form = 2.0 * measure(7) + 3.0 * measure(8)
+    original = form.integrals()
+    original_metadata = [dict(integral.metadata()) for integral in original]
+    original_integrands = [str(integral.integrand()) for integral in original]
+
+    assert dtn_port_module._with_quadrature_degree(form, None) is form
+    rewritten = dtn_port_module._with_quadrature_degree(form, 25)
+    assert rewritten is not form
+    assert [dict(integral.metadata()) for integral in form.integrals()] == (
+        original_metadata
+    )
+    assert [str(integral.integrand()) for integral in rewritten.integrals()] == (
+        original_integrands
+    )
+    for integral in rewritten.integrals():
+        assert integral.metadata()["quadrature_degree"] == 25
+        assert integral.metadata()["custom"] == "keep"
+        assert integral.metadata()["quadrature_rule"] == "vertex"
+
+    entrances = (
+        dtn_port_module._assemble_mpc_vector,
+        dtn_port_module._assemble_unconstrained_vector,
+        dtn_port_module._ReusableSurfaceComponentAssembler.__init__,
+        dtn_port_module._mode_projection_from_solution,
+        dtn_port_module._surface_scalar,
+    )
+    for entrance in entrances:
+        source = inspect.getsource(entrance)
+        assert "_with_quadrature_degree" in source
+        assert "form_compiler_options" not in source
 
 
 def test_small_probe_contract_reuses_physical_rhs_and_rejects_missing_r3(
