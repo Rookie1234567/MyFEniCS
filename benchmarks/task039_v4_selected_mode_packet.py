@@ -7,6 +7,8 @@ it never creates a QEP object or persists QEP workspace.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import resource
 import time
 from dataclasses import asdict, is_dataclass
@@ -28,6 +30,8 @@ TASK039_V4_SELECTED_MODE_SCOPE = "task039_v4_h4_m480"
 TASK039_V5_H5_SELECTED_MODE_SCOPE = "task039_v5_h5_m480"
 TASK039_V4_SELECTED_MODE_COUNT = 480
 TASK041_SELECTED_MODE_IDENTITY_SCHEMA = "task041.selected_mode_packet.identity.v1"
+TASK041_CROSS_SECTION_PARTITION_FIELD = "cross_section_partition"
+TASK041_CROSS_SECTION_PARTITION_POLICY = "input_contiguous_v1"
 _BRANCHES = ("positive", "negative")
 _BRANCH_AUTHORITY = ("gram_authority", "qep_diagnostics", "selection_diagnostics")
 
@@ -197,6 +201,7 @@ def build_task039_v4_packet_metadata(
     target_beta_per_nm: complex | None = None,
     operator_authority: Mapping[str, Any] | None = None,
     external_mode_counts: Mapping[str, Any] | None = None,
+    cross_section_layout_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compact the real QEP authority needed by packet consumers."""
 
@@ -292,6 +297,15 @@ def build_task039_v4_packet_metadata(
             if external_mode_counts is not None
             else {}
         ),
+        **(
+            {
+                "cross_section_layout_identity": _authority_json(
+                    cross_section_layout_identity
+                )
+            }
+            if cross_section_layout_identity is not None
+            else {}
+        ),
     }
 
 
@@ -304,6 +318,7 @@ def _require_task039_identity(identity: Mapping[str, Any]) -> None:
         TASK039_V5_H5_SELECTED_MODE_SCOPE,
     }:
         raise ValueError("Task039 selected-mode packet scope is not approved")
+    task041_cross_section_partition_enabled(identity)
 
 
 def _valid_hex_digest(value: Any, length: int) -> bool:
@@ -313,6 +328,77 @@ def _valid_hex_digest(value: Any, length: int) -> bool:
         and value == value.lower()
         and all(char in "0123456789abcdef" for char in value)
     )
+
+
+def task041_cross_section_partition_enabled(
+    identity: Mapping[str, Any] | None,
+) -> bool:
+    """Validate and report the sole explicit input-partition opt-in."""
+    if identity is None:
+        return False
+    if not isinstance(identity, Mapping):
+        raise TypeError("selected-mode identity must be a mapping")
+    if TASK041_CROSS_SECTION_PARTITION_FIELD not in identity:
+        return False
+    if identity[TASK041_CROSS_SECTION_PARTITION_FIELD] != (
+        TASK041_CROSS_SECTION_PARTITION_POLICY
+    ):
+        raise ValueError("selected-mode cross-section partition policy is invalid")
+    return True
+
+
+def _layout_identity_sha256(layout: Mapping[str, Any]) -> str:
+    payload = {
+        str(key): _authority_json(value)
+        for key, value in layout.items()
+        if key != "canonical_json_sha256"
+    }
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_task041_cross_section_layout_identity(
+    identity: Mapping[str, Any] | None,
+    metadata: Mapping[str, Any],
+    current_layout: Mapping[str, Any] | None = None,
+) -> Mapping[str, Any] | None:
+    """Validate an opt-in packet layout and optionally match a fresh layout."""
+    if not task041_cross_section_partition_enabled(identity):
+        return None
+    if not isinstance(metadata, Mapping):
+        raise TypeError("Task41 packet metadata must be a mapping")
+    layout = metadata.get("cross_section_layout_identity")
+    if not isinstance(layout, Mapping):
+        raise TypeError("Task41 packet lacks cross-section layout identity")
+    required = {
+        "schema",
+        "partition_policy",
+        "mpi_size",
+        "global_mixed_size",
+        "rank_layout",
+        "canonical_json_sha256",
+    }
+    missing = sorted(required.difference(layout))
+    if missing:
+        raise ValueError(f"Task41 layout identity missing: {missing}")
+    if layout["schema"] != "task041.cross_section_layout_identity.v1":
+        raise ValueError("Task41 cross-section layout schema mismatch")
+    if layout["partition_policy"] != TASK041_CROSS_SECTION_PARTITION_POLICY:
+        raise ValueError("Task41 cross-section layout policy mismatch")
+    if not _valid_hex_digest(layout["canonical_json_sha256"], 64):
+        raise ValueError("Task41 cross-section layout SHA is invalid")
+    if _layout_identity_sha256(layout) != layout["canonical_json_sha256"]:
+        raise ValueError("Task41 cross-section layout SHA mismatch")
+    if current_layout is not None and _authority_json(layout) != _authority_json(
+        current_layout
+    ):
+        raise ValueError("Task41 cross-section layout identity mismatch")
+    return layout
 
 
 def task041_selected_mode_scope(mode_count: int, mpi_size: int = 1) -> str:
@@ -392,6 +478,7 @@ def _require_task041_identity(identity: Mapping[str, Any]) -> None:
         raise ValueError("Task41 selected-mode external key count is invalid")
     if not _valid_hex_digest(external_keys["sha256"], 64):
         raise ValueError("Task41 selected-mode external key SHA is invalid")
+    task041_cross_section_partition_enabled(identity)
 
 
 def _is_task041_identity(identity: Mapping[str, Any] | None) -> bool:
@@ -441,6 +528,7 @@ def write_task039_v4_selected_mode_packet(
 
     scope = _identity_scope(identity)
     _require_branch_authority(metadata)
+    validate_task041_cross_section_layout_identity(identity, metadata)
     return write_selected_mode_packet(
         directory,
         {"positive": positive_basis, "negative": negative_basis},
@@ -487,6 +575,9 @@ def load_task039_v4_selected_mode_packet(
             ):
                 raise ValueError("selected-mode packet layout mismatch")
     _require_branch_authority(packet["metadata"])
+    validate_task041_cross_section_layout_identity(
+        packet_identity, packet["metadata"]
+    )
     return packet
 
 
@@ -578,6 +669,9 @@ def hydrate_task039_v4_selected_mode_packet(
     ):
         raise ValueError("selected-mode packet identity/mode count mismatch")
     _require_branch_authority(packet["metadata"])
+    validate_task041_cross_section_layout_identity(
+        packet_identity, packet["metadata"]
+    )
     start, end = (int(value) for value in packet["ownership_range"])
     local_size = end - start
     global_size = int(packet["global_size"])
@@ -734,6 +828,10 @@ def consume_task039_v4_selected_mode_packet(
     diagnostics["manifest_path"] = str(Path(manifest_path))
     diagnostics["manifest_sha256"] = packet["manifest_sha256"]
     diagnostics["identity_sha256"] = packet["identity_sha256"]
+    if "cross_section_layout_identity" in packet["metadata"]:
+        diagnostics["cross_section_layout_identity"] = _authority_json(
+            packet["metadata"]["cross_section_layout_identity"]
+        )
     diagnostics["read_seconds_max_rank"] = read_seconds
     del packet["positive"]
     del packet["negative"]

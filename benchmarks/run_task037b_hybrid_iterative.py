@@ -39,6 +39,7 @@ from src.coupling.hybrid_internal_modes import build_hybrid_internal_mode_coupli
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
+    cross_section_layout_identity,
 )
 from src.modes.mode_classification import (
     PoyntingFluxEvaluator,
@@ -1700,7 +1701,10 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
     """Build the ordinary tail from a solver-free selected-mode packet."""
 
     from benchmarks.task039_v4_selected_mode_packet import (
+        TASK041_CROSS_SECTION_PARTITION_POLICY,
         consume_task039_v4_selected_mode_packet,
+        task041_cross_section_partition_enabled,
+        validate_task041_cross_section_layout_identity,
     )
 
     packet_bundle = consume_task039_v4_selected_mode_packet(
@@ -1713,11 +1717,44 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
     consumer_diagnostics = packet_bundle.packet_consumer_diagnostics
     read_seconds = consumer_diagnostics["read_seconds_max_rank"]
 
-    cross_section = build_matching_cross_section(modal_cfg, "stage4_xy")
-    spaces = build_cross_section_spaces(
-        cross_section,
-        transverse_degree=profile.modal_degree,
-    )
+    try:
+        partition_opt_in = task041_cross_section_partition_enabled(identity)
+        cross_section = build_matching_cross_section(
+            modal_cfg,
+            "stage4_xy",
+            preserve_input_partition=partition_opt_in,
+        )
+        spaces = build_cross_section_spaces(
+            cross_section,
+            transverse_degree=profile.modal_degree,
+        )
+        packet_layout_identity = None
+        if partition_opt_in:
+            packet_layout_identity = cross_section_layout_identity(
+                cross_section,
+                spaces,
+                comm=comm,
+                preserve_input_partition=True,
+            )
+            validate_task041_cross_section_layout_identity(
+                identity,
+                {
+                    "cross_section_layout_identity": consumer_diagnostics.get(
+                        "cross_section_layout_identity"
+                    )
+                },
+                packet_layout_identity,
+            )
+        if partition_opt_in:
+            qep_release_partition = {
+                "cross_section_partition": TASK041_CROSS_SECTION_PARTITION_POLICY,
+                "cross_section_layout_identity": packet_layout_identity,
+            }
+        else:
+            qep_release_partition = {}
+    except Exception:
+        packet_bundle.destroy()
+        raise
     qep_release = {
         "status": "selected_mode_packet_consumer",
         "qep_calls": consumer_diagnostics["qep_calls"],
@@ -1734,6 +1771,7 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
         "packet_references_released": consumer_diagnostics[
             "packet_references_released"
         ],
+        **qep_release_partition,
     }
     qep_audit = {
         "forward": packet_bundle.positive_basis.packet_authority["basis_audit"],

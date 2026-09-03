@@ -58,6 +58,7 @@ from src.coupling.hybrid_internal_modes import (
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
+    cross_section_layout_identity,
 )
 from src.modes.mode_classification import (
     PoyntingFluxEvaluator,
@@ -1829,6 +1830,22 @@ def main(
                 "Task38 config override does not match the explicit runner argv."
             )
         modal_cfg = deepcopy(cfg)
+    packet_identity_for_layout = None
+    packet_preserve_input_partition = False
+    packet_layout_identity = None
+    if args.selected_mode_packet_producer_dir is not None:
+        from benchmarks.task039_v4_selected_mode_packet import (
+            task041_cross_section_partition_enabled,
+        )
+
+        packet_identity_for_layout = json.loads(
+            args.selected_mode_packet_identity_json.read_text(encoding="utf-8")
+        )
+        if not isinstance(packet_identity_for_layout, Mapping):
+            raise ValueError("selected-mode packet identity must be a JSON object")
+        packet_preserve_input_partition = task041_cross_section_partition_enabled(
+            packet_identity_for_layout
+        )
     operators = None
     positive = None
     negative = None
@@ -2045,15 +2062,24 @@ def main(
                 "stage4_xy",
                 x_values=graded_plan.x_values,
                 y_values=graded_plan.y_values,
+                preserve_input_partition=packet_preserve_input_partition,
             )
         else:
             cross_section = build_matching_cross_section(
                 modal_cfg,
                 "stage4_xy",
+                preserve_input_partition=packet_preserve_input_partition,
             )
         spaces = build_cross_section_spaces(
             cross_section, transverse_degree=modal_degree
         )
+        if packet_preserve_input_partition:
+            packet_layout_identity = cross_section_layout_identity(
+                cross_section,
+                spaces,
+                comm=comm,
+                preserve_input_partition=True,
+            )
         if args.selected_mode_packet_consumer_manifest is not None:
             from benchmarks.task039_v4_selected_mode_packet import (
                 consume_task039_v4_selected_mode_packet,
@@ -2295,9 +2321,7 @@ def main(
                 write_task039_v4_selected_mode_packet,
             )
 
-            packet_identity = json.loads(
-                args.selected_mode_packet_identity_json.read_text(encoding="utf-8")
-            )
+            packet_identity = packet_identity_for_layout
             if not isinstance(packet_identity, Mapping):
                 raise ValueError("selected-mode packet identity must be a JSON object")
             external_mode_counts = None
@@ -2327,6 +2351,7 @@ def main(
                     "quadrature_policy": operators.quadrature_policy,
                 },
                 external_mode_counts=external_mode_counts,
+                cross_section_layout_identity=packet_layout_identity,
             )
             packet = write_task039_v4_selected_mode_packet(
                 args.selected_mode_packet_producer_dir,

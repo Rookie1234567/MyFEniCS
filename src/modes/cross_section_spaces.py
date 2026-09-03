@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import ufl
 from basix.ufl import element, mixed_element
-from dolfinx import default_real_type, fem, mesh
+from dolfinx import default_real_type, fem, graph, mesh
 from mpi4py import MPI
 
 from ..common.config_3d import SimulationConfig3D
@@ -50,10 +52,134 @@ class CrossSectionSpaces:
     longitudinal_degree: int
 
 
+def _required_array_sha256(value: Any, label: str) -> str:
+    try:
+        array = np.ascontiguousarray(np.asarray(value))
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise RuntimeError(f"cross-section {label} hash is unavailable") from exc
+    if array.dtype.kind == "O":
+        raise RuntimeError(f"cross-section {label} hash is non-numeric")
+    return hashlib.sha256(array.tobytes()).hexdigest()
+
+
+def _index_map_layout(index_map: Any) -> dict[str, Any]:
+    local_range = getattr(index_map, "local_range", (0, 0))
+    if callable(local_range):
+        local_range = local_range()
+    layout: dict[str, Any] = {
+        "size_local": int(index_map.size_local),
+        "num_ghosts": int(index_map.num_ghosts),
+        "size_global": int(index_map.size_global),
+        "local_range": [int(local_range[0]), int(local_range[1])],
+    }
+    local_ids = np.arange(
+        int(index_map.size_local) + int(index_map.num_ghosts), dtype=np.int32
+    )
+    local_to_global = getattr(index_map, "local_to_global", None)
+    if not callable(local_to_global):
+        raise TypeError("cross-section IndexMap lacks local_to_global")
+    try:
+        global_ids = np.asarray(local_to_global(local_ids))
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise RuntimeError("cross-section IndexMap local_to_global failed") from exc
+    if global_ids.shape != local_ids.shape:
+        raise RuntimeError("cross-section IndexMap local_to_global shape mismatch")
+    layout["local_to_global_sha256"] = _required_array_sha256(
+        global_ids, "local-to-global"
+    )
+    layout["local_to_global_count"] = int(global_ids.size)
+    layout["local_to_global_dtype"] = str(global_ids.dtype)
+    owners = getattr(index_map, "owners", None)
+    if callable(owners):
+        owners = owners()
+    if owners is None:
+        raise RuntimeError("cross-section IndexMap lacks ghost owners")
+    layout["ghost_owners_sha256"] = _required_array_sha256(owners, "ghost-owner")
+    owners_array = np.asarray(owners)
+    layout["ghost_owners_count"] = int(owners_array.size)
+    layout["ghost_owners_dtype"] = str(owners_array.dtype)
+    return layout
+
+
+def cross_section_layout_identity(
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    *,
+    comm: MPI.Intracomm | None = None,
+    preserve_input_partition: bool = False,
+) -> dict[str, Any]:
+    """Return a compact owner-aware identity for a cross-section layout."""
+    mesh_comm = cross_section.mesh.comm if comm is None else comm
+    topology = cross_section.mesh.topology
+    tdim = topology.dim
+    cell_index_map = topology.index_map(tdim)
+    mixed_index_map = spaces.mixed.dofmap.index_map
+    geometry_dofmap = cross_section.mesh.geometry.dofmap
+    geometry_hash = _required_array_sha256(geometry_dofmap, "geometry connectivity")
+    topology.create_entity_permutations()
+    permutation_info = topology.get_cell_permutation_info()
+    permutation_hash = _required_array_sha256(
+        permutation_info, "cell permutation info"
+    )
+    permutation = {
+        "source": "topology.get_cell_permutation_info",
+        "sha256": permutation_hash,
+    }
+    orientation = {
+        "source": "topology.get_cell_permutation_info",
+        "sha256": permutation_hash,
+    }
+    total_cells = (len(cross_section.x_values) - 1) * (
+        len(cross_section.y_values) - 1
+    )
+    input_cell_ids = np.fromiter(
+        _rank_cell_ids(total_cells, mesh_comm.rank, mesh_comm.size), dtype=np.int64
+    )
+    local_record = {
+        "rank": int(mesh_comm.rank),
+        "input_cell_ids_sha256": _required_array_sha256(
+            input_cell_ids, "input cell ids"
+        ),
+        "input_cell_count": int(input_cell_ids.size),
+        "cells": {
+            "index_map": _index_map_layout(cell_index_map),
+            "permutation": permutation,
+            "orientation": orientation,
+            "connectivity": {"source": "geometry_dofmap", "sha256": geometry_hash},
+        },
+        "mixed_dofs": _index_map_layout(mixed_index_map),
+        "transverse_to_mixed_sha256": _required_array_sha256(
+            spaces.transverse_to_mixed, "transverse collapse map"
+        ),
+        "longitudinal_to_mixed_sha256": _required_array_sha256(
+            spaces.longitudinal_to_mixed, "longitudinal collapse map"
+        ),
+    }
+    payload: dict[str, Any] = {
+        "schema": "task041.cross_section_layout_identity.v1",
+        "partition_policy": (
+            "input_contiguous_v1" if preserve_input_partition else "dolfinx_graph_default"
+        ),
+        "mpi_size": int(mesh_comm.size),
+        "global_mixed_size": int(mixed_index_map.size_global),
+        "rank_layout": mesh_comm.allgather(local_record),
+    }
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode()
+    payload["canonical_json_sha256"] = hashlib.sha256(encoded).hexdigest()
+    return payload
+
+
 def _structured_quad_mesh(
     comm: MPI.Intracomm,
     x_values: np.ndarray,
     y_values: np.ndarray,
+    *,
+    preserve_input_partition: bool = False,
 ) -> mesh.Mesh:
     nx = len(x_values) - 1
     ny = len(y_values) - 1
@@ -79,7 +205,32 @@ def _structured_quad_mesh(
         "Lagrange", "quadrilateral", 1, shape=(2,), dtype=default_real_type
     )
     domain = ufl.Mesh(coordinate_element)
-    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    if preserve_input_partition:
+
+        def keep_input_cell_owners(
+            _comm,
+            num_partitions: int,
+            adjacency,
+            _ghost_mode: bool,
+        ):
+            if int(num_partitions) != int(comm.size):
+                raise RuntimeError(
+                    "input-preserving partitioner received an unexpected "
+                    "partition count"
+                )
+            destinations = np.full(
+                (int(adjacency.num_nodes), 1),
+                int(comm.rank),
+                dtype=np.int32,
+            )
+            return graph.adjacencylist(destinations)._cpp_object
+
+        partitioner = mesh.create_cell_partitioner(
+            keep_input_cell_owners,
+            mesh.GhostMode.shared_facet,
+        )
+    else:
+        partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
     return mesh.create_mesh(
         comm,
         np.asarray(cells, dtype=np.int64),
@@ -133,6 +284,7 @@ def build_matching_cross_section(
     x_values: np.ndarray | None = None,
     y_values: np.ndarray | None = None,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
+    preserve_input_partition: bool = False,
 ) -> CrossSectionMesh:
     """Build one x-y slice from the exact Stage-4 hexahedral axis plan."""
 
@@ -178,7 +330,12 @@ def build_matching_cross_section(
             },
             local_refinement_regions=plan.local_refinement_regions,
         )
-    msh = _structured_quad_mesh(comm, resolved_x, resolved_y)
+    msh = _structured_quad_mesh(
+        comm,
+        resolved_x,
+        resolved_y,
+        preserve_input_partition=preserve_input_partition,
+    )
     msh.name = f"{cfg.case_name}_{material_kind}_cross_section"
     msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
     epsilon_r = _cross_section_epsilon(msh, cfg, material_kind)
