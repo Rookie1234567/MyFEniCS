@@ -32,16 +32,23 @@ class _Clock:
 class _FakeProcess:
     _next_pid = 41000
 
-    def __init__(self, returncode: int = 0, on_wait=None):
+    def __init__(self, returncode: int = 0, on_wait=None, poll_results=None):
         self.pid = _FakeProcess._next_pid
         _FakeProcess._next_pid += 1
         self.returncode = returncode
         self.on_wait = on_wait
+        self.poll_results = (
+            list(poll_results) if poll_results is not None else None
+        )
         self.poll_count = 0
         self.terminated = False
 
     def poll(self):
         self.poll_count += 1
+        if self.poll_results is not None:
+            if self.poll_results:
+                return self.poll_results.pop(0)
+            return self.returncode
         if self.poll_count == 1 and not self.terminated:
             return None
         return self.returncode
@@ -54,9 +61,10 @@ class _FakeProcess:
 
 
 class _FakePopen:
-    def __init__(self, *, returncodes=None, on_wait=None):
+    def __init__(self, *, returncodes=None, on_wait=None, poll_results=None):
         self.returncodes = iter(returncodes or [0])
         self.on_wait = on_wait
+        self.poll_results = poll_results
         self.calls = []
         self.processes = []
 
@@ -65,7 +73,9 @@ class _FakePopen:
         callback = None
         if self.on_wait is not None:
             callback = self.on_wait(list(argv))
-        process = _FakeProcess(next(self.returncodes), callback)
+        process = _FakeProcess(
+            next(self.returncodes), callback, poll_results=self.poll_results
+        )
         self.processes.append(process)
         return process
 
@@ -100,7 +110,9 @@ class _Samples:
         }
 
 
-def _run_phase(tmp_path: Path, *, sample, clock=None, terminate=None):
+def _run_phase(
+    tmp_path: Path, *, sample, clock=None, terminate=None, popen_factory=None
+):
     (tmp_path / "numerical_output" / "log").mkdir(parents=True)
     return supervisor._run_phase(
         "producer",
@@ -110,7 +122,7 @@ def _run_phase(tmp_path: Path, *, sample, clock=None, terminate=None):
         environment={"OMP_NUM_THREADS": "1"},
         repository_root=tmp_path,
         workflow_started=0.0,
-        popen_factory=_FakePopen(),
+        popen_factory=popen_factory or _FakePopen(),
         sample_factory=sample,
         terminate_factory=terminate or (lambda process: {"requested": True}),
         monotonic=clock or _Clock(0.0),
@@ -209,6 +221,61 @@ def test_phase_handoff_records_rss_drop_and_pss_uss_without_summing(tmp_path):
     assert phase["rss_drop"]["before_process_tree_rss_bytes"] == 100
     assert phase["rss_drop"]["after_process_tree_rss_bytes"] == 0
     assert phase["sample_count"] == 1
+
+
+class _TerminalUnreadableSample:
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, _pid):
+        self.calls += 1
+        readable = self.calls == 1
+        rss = 100 if readable else 0
+        return {
+            "memory_authority_bytes": rss,
+            "job_no_swap": True,
+            "process_tree": {
+                "rss_bytes": rss,
+                "swap_bytes": 0,
+                "all_status_readable": readable,
+                "smaps": {"pss_bytes": rss, "uss_bytes": rss // 2},
+            },
+            "job_cgroup": {
+                "dedicated_job_cgroup": False,
+                "swap_current_bytes": 0,
+            },
+        }
+
+
+def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
+    samples = _TerminalUnreadableSample()
+    popen = _FakePopen(poll_results=[None, None, 0])
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        return {"requested": True}
+
+    phase = _run_phase(
+        tmp_path,
+        sample=samples,
+        terminate=terminate,
+        popen_factory=popen,
+    )
+
+    assert phase["returncode"] == 0
+    assert phase["sample_count"] == 1
+    assert samples.calls == 2
+    assert phase["peak_memory_authority_bytes"] == 100
+    assert phase["rss_drop"] == {
+        "before_process_tree_rss_bytes": 100,
+        "after_process_tree_rss_bytes": 0,
+        "process_group_gone": True,
+        "pass": True,
+    }
+    assert phase["process_group_gone"] is True
+    assert phase["termination"] is None
+    assert terminated == []
 
 
 @pytest.mark.parametrize(

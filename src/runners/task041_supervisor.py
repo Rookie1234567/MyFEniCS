@@ -239,6 +239,9 @@ def _run_phase(
                     authority, phase, now - workflow_started
                 )
                 if record["all_status_readable"] is not True:
+                    returncode = process.poll()
+                    if returncode is not None:
+                        break
                     raise Task041SupervisorError(
                         f"{phase} process-tree sample is not fully readable",
                         classification="task041_resource_sample_failure",
