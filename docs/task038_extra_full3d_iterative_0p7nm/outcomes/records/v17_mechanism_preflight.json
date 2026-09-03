@@ -1,0 +1,65 @@
+{
+  "schema": "task038.v17.mechanism-preflight.v1",
+  "status": "M0_IMPLEMENTATION_READY",
+  "formal_status": "not_run",
+  "source": {
+    "commit_sha": "be67787d1237e8676b33f91f28c7b0ffcb3fe06a",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "v16_frozen": {
+    "q1_1": "PASS",
+    "q1_2": "PASS",
+    "q2": "Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL",
+    "w0": "W0_INTERFACE_RANK_CAPACITY_FAIL",
+    "official_physics": "not_run",
+    "q3_q6": "not_run",
+    "w1_w4": "locked_not_run"
+  },
+  "history_reference": {
+    "commit": "ab34d3b1b327fece576448984320e185af32b7eb",
+    "path": "src/solvers/disk_backed_flexible_gmres.py",
+    "not_migrated_reason": "max_steps<=200 and audit claimed 12 full-vector buffers"
+  },
+  "oracle_a": {
+    "stages": ["A1", "A2", "A3"],
+    "formula": "r3=P63^H*r6; A3*e3=r3; e6=P63*e3; r6_new=r6-A6*e6; r3_new=P63^H*r6_new",
+    "residual_limit": 1e-10,
+    "rho3_limit": 1e-6,
+    "rho_ref_limit": 0.7,
+    "warning_bytes": 10000000000,
+    "hard_bytes": 12000000000,
+    "swap_bytes": 0,
+    "static_condensation": "not_enabled_by_default",
+    "mumps_numeric": "only_if_predicted_peak_lt_hard",
+    "status": "not_run"
+  },
+  "oracle_b": {
+    "steps": 500,
+    "restart_reference": 20,
+    "checkpoint_interval": 20,
+    "algorithms": ["right_gmres_restart20", "right_fgmres_unrestarted_disk_backed"],
+    "full_vector_buffer_limit": 8,
+    "mmap": false,
+    "basis_in_memory": false,
+    "orthogonality_limit": 1e-8,
+    "explicit_arnoldi_limit": 1e-8,
+    "disk_free_min_bytes": 10000000000,
+    "rss_hard_bytes": 2000000000,
+    "swap_bytes": 0,
+    "classification_thresholds": {"strong": 0.1, "weak": 0.5},
+    "status": "not_run"
+  },
+  "implementation_scope": {
+    "new_solver_modules": [
+      "src/solvers/disk_backed_flexible_gmres.py",
+      "src/solvers/fullspace_v17_p3_oracle.py"
+    ],
+    "runner": "benchmarks/run_task038_v17_oracles.py",
+    "checker": "benchmarks/task038_v17_oracle_checker.py",
+    "focused_test": "src/test/test_348_task038_full3d_v17_oracles.py",
+    "pde_or_formal_started": false
+  }
+}

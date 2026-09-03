@@ -321,6 +321,7 @@ def _run_parent_child(
     stderr_path: Path,
     *,
     rss_watchdog_bytes: int | None = RSS_WATCHDOG,
+    rss_warning_bytes: int = RSS_WARNING,
 ) -> dict[str, Any]:
     peak = 0
     max_swap = 0
@@ -364,7 +365,7 @@ def _run_parent_child(
             if sample["swap_bytes"] is not None:
                 max_swap = max(max_swap, int(sample["swap_bytes"]))
             all_readable = all_readable and _sample_effectively_readable(sample)
-            warning_crossed = warning_crossed or peak >= RSS_WARNING
+            warning_crossed = warning_crossed or peak >= int(rss_warning_bytes)
             if not all_readable:
                 stop_reason = "authority_unreadable"
             elif max_swap:
