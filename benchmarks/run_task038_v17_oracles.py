@@ -9,6 +9,7 @@ only by the worker entry points.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Mapping
 import hashlib
 import json
 import os
@@ -73,7 +74,7 @@ def _absolute(value: Path | str) -> Path:
 
 
 def _jsonable(value: Any) -> Any:
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
         return {str(key): _jsonable(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
         return [_jsonable(item) for item in value]

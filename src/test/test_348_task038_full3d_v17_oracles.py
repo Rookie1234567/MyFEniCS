@@ -9,6 +9,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from types import MappingProxyType
 
 import numpy as np
 import pytest
@@ -44,6 +45,23 @@ def _source() -> dict[str, object]:
         "tracked_worktree_clean": True,
         "qualified_activation": "1",
         "input_sha256": checker.INPUT_SHA256,
+    }
+
+
+def test_v17_jsonable_serializes_nested_mappingproxy(tmp_path: Path) -> None:
+    value = MappingProxyType(
+        {
+            "audit": MappingProxyType(
+                {"pair": "owner", "flags": {"numeric_allgather": False}}
+            )
+        }
+    )
+    output = tmp_path / "mappingproxy.json"
+
+    runner._write_json(output, value)
+
+    assert json.loads(output.read_text(encoding="utf-8")) == {
+        "audit": {"pair": "owner", "flags": {"numeric_allgather": False}}
     }
 
 
