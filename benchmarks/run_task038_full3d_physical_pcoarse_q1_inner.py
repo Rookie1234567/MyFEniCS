@@ -17,6 +17,7 @@ import sys
 from typing import Any
 
 from benchmarks import run_task038_full3d_physical_pcoarse_q1 as authority_runner
+from src.solvers.fullspace_same_mesh_hcurl_pmg_jit import Q1_INNER_JIT_GROUP
 
 
 BRANCH = authority_runner.BRANCH
@@ -36,7 +37,7 @@ MARKER_ORDER = (
     "release_complete",
     "record_written",
 )
-JIT_GROUPS = authority_runner.JIT_GROUPS
+JIT_GROUPS = authority_runner.JIT_GROUPS + (Q1_INNER_JIT_GROUP,)
 EXPECTED_MPI_SIZES = (1, 2)
 INPUT_SHA256 = authority_runner.INPUT_SHA256
 MODE_MANIFEST_SHA256 = authority_runner.MODE_MANIFEST_SHA256

@@ -30,6 +30,7 @@ JIT_GROUPS = (
     "incident-rhs",
     "physical-volume-curl",
     "physical-volume-mass",
+    "q1-inner-p3-h50",
 )
 STAGE_ORDER = tuple(f"precompile:{group}" for group in JIT_GROUPS) + ("worker",)
 MARKER_ORDER = (
@@ -297,7 +298,7 @@ def _check_process(parent: dict[str, Any], root: Path, expected_size: int) -> di
 
     children = _field(parent, "children", "parent")
     if not isinstance(children, list) or len(children) != len(JIT_GROUPS):
-        raise ValueError("schema:parent.children:expected seven groups")
+        raise ValueError("schema:parent.children:expected eight groups")
     stage_facts = []
     for group, result in zip(JIT_GROUPS, children, strict=True):
         if not isinstance(result, dict):

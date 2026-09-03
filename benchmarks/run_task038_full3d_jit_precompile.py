@@ -7,6 +7,7 @@ the frozen input, compiles one requested group, and writes raw facts.
 from __future__ import annotations
 
 import argparse
+import copy
 import gc
 import importlib
 import json
@@ -189,10 +190,11 @@ def main(argv: list[str] | None = None) -> None:
     from src.io.input_validation import simulation_config_3d_from_normalized
     from src.solvers.fullspace_same_mesh_hcurl_pmg_jit import (
         JIT_GROUPS,
+        Q1_INNER_JIT_GROUP,
         build_minimal_jit_group,
     )
 
-    if args.group not in JIT_GROUPS:
+    if args.group not in JIT_GROUPS and args.group != Q1_INNER_JIT_GROUP:
         raise ValueError(f"unsupported J3 split group: {args.group!r}")
     root = Path(__file__).resolve().parents[1]
     comm = MPI.COMM_WORLD
@@ -200,14 +202,26 @@ def main(argv: list[str] | None = None) -> None:
     input_path = Path(args.input).resolve()
     specification = load_and_resolve(input_path)
     cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
-    profile = _profile(specification, cfg)
+    profile_cfg = cfg
+    if args.group == Q1_INNER_JIT_GROUP:
+        profile_cfg = copy.deepcopy(cfg)
+        profile_cfg.nedelec_degree = 3
+        profile_cfg.mesh_target_size = 50.0
+    profile = _profile(specification, profile_cfg)
+    expected_profile = EXPECTED_PROFILE
+    if args.group == Q1_INNER_JIT_GROUP:
+        expected_profile = {
+            **EXPECTED_PROFILE,
+            "nedelec_degree": 3,
+            "mesh_target_size_nm": 50.0,
+        }
     if (
         specification.input_sha256 != INPUT_SHA256
         or specification.physical_model_sha256 != PHYSICAL_MODEL_SHA256
-        or profile != EXPECTED_PROFILE
+        or profile != expected_profile
     ):
-        raise RuntimeError("J3 split input is not the frozen exact p6/h10 profile")
-    mode_count, mode_sha, qdegree = _mode_identity(cfg)
+        raise RuntimeError("J3 split input is not the frozen exact profile")
+    mode_count, mode_sha, qdegree = _mode_identity(profile_cfg)
     if mode_sha != MODE_MANIFEST_SHA256:
         raise RuntimeError("J3 split mode inventory is not the frozen manifest")
     facts = build_minimal_jit_group(cfg, comm, args.group)

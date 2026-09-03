@@ -8,6 +8,7 @@ constructed here.
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Mapping
 from typing import Any
 
@@ -22,6 +23,16 @@ JIT_GROUPS = (
     "physical-volume-mass",
 )
 JIT_GROUP_SCHEMA = "task038.same-mesh-hcurl-pmg.jit-precompile.v3"
+Q1_INNER_JIT_GROUP = "q1-inner-p3-h50"
+Q1_INNER_JIT_SCHEMA = "task038.same-mesh-hcurl-pmg.jit-precompile.v4"
+Q1_INNER_FORM_ROLES = (
+    "positive_p3_action",
+    "dtn_surface_top_0",
+    "dtn_surface_top_1",
+    "dtn_surface_bottom_0",
+    "dtn_surface_bottom_1",
+    "incident_top_traction_p3",
+)
 
 
 def _compile_form(
@@ -38,10 +49,12 @@ def _facts(
     degree: int,
     forms: list[dict[str, Any]],
     jit_options: Mapping[str, Any],
+    *,
+    schema: str = JIT_GROUP_SCHEMA,
     **extra: Any,
 ) -> dict[str, Any]:
     return {
-        "schema": JIT_GROUP_SCHEMA,
+        "schema": schema,
         "group": group,
         "degree": int(degree),
         "compiled_form_count": len(forms),
@@ -314,6 +327,88 @@ def _build_physical_volume_component(
     )
 
 
+def _build_q1_inner_p3_h50(
+    cfg: Any, comm: Any, jit_options: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Stage only the six p3/h50 forms used by the Q1.2 inner worker."""
+
+    import ufl
+    from dolfinx import fem
+
+    from .dtn_port_3d import (
+        _incident_top_traction_form,
+        _with_quadrature_degree,
+    )
+    from .fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_form
+    from .fullspace_same_mesh_hcurl_pmg_physical import _surface_assemblers
+
+    derived_cfg = copy.deepcopy(cfg)
+    derived_cfg.nedelec_degree = 3
+    derived_cfg.mesh_target_size = 50.0
+    levels, space = _levels(
+        derived_cfg, comm, 3, include_positive_coefficients=True
+    )
+    mode_count, mode_sha, qdegree = _mode_facts(derived_cfg)
+
+    positive_form = same_mesh_positive_form(
+        space,
+        curl_coefficient=levels["mu"],
+        mass_coefficient=levels["mass"],
+    )
+    coefficient = fem.Function(space)
+    positive_action = ufl.action(positive_form, coefficient)
+    _compile_form(positive_action, jit_options)
+    del positive_action, coefficient, positive_form
+
+    assemblers = _surface_assemblers(
+        space,
+        levels["mesh_data"],
+        derived_cfg,
+        qdegree,
+        jit_options=jit_options,
+    )
+    del assemblers
+
+    incident_form = _incident_top_traction_form(
+        space, levels["mesh_data"], derived_cfg
+    )
+    incident_form = _with_quadrature_degree(incident_form, qdegree)
+    _compile_form(incident_form, jit_options)
+    del incident_form, levels
+
+    forms = [
+        {"role": "positive_p3_action", "degree": 3, "rank": 1, "kind": "action"},
+        *[
+            {
+                "role": role,
+                "degree": 3,
+                "rank": 1,
+                "kind": "surface_linear",
+            }
+            for role in Q1_INNER_FORM_ROLES[1:5]
+        ],
+        {
+            "role": "incident_top_traction_p3",
+            "degree": 3,
+            "rank": 1,
+            "kind": "linear",
+        },
+    ]
+    return _facts(
+        Q1_INNER_JIT_GROUP,
+        3,
+        forms,
+        jit_options,
+        schema=Q1_INNER_JIT_SCHEMA,
+        degrees=[3],
+        profile={"nedelec_degree": 3, "mesh_target_size_nm": 50.0},
+        mode_count=mode_count,
+        mode_manifest_sha256=mode_sha,
+        dtn_quadrature_degree=qdegree,
+        compile_order=list(Q1_INNER_FORM_ROLES),
+    )
+
+
 def build_minimal_jit_group(
     cfg: Any, comm: Any, group: str
 ) -> dict[str, Any]:
@@ -324,12 +419,14 @@ def build_minimal_jit_group(
         validate_p6_setup_config,
     )
 
-    if group not in JIT_GROUPS:
+    if group not in JIT_GROUPS and group != Q1_INNER_JIT_GROUP:
         raise ValueError(f"unsupported JIT precompile group: {group!r}")
     validate_p6_setup_config(cfg)
     if int(comm.size) != 1:
         raise ValueError("JIT precompile is fixed to MPI1")
     jit_options = SAME_MESH_JIT_OPTIONS
+    if group == Q1_INNER_JIT_GROUP:
+        return _build_q1_inner_p3_h50(cfg, comm, jit_options)
     if group == "positive-p6":
         return _build_positive_p6(cfg, comm, jit_options)
     if group == "positive-p3":
@@ -347,4 +444,11 @@ def build_minimal_jit_group(
     raise AssertionError(f"unhandled JIT group: {group!r}")
 
 
-__all__ = ("JIT_GROUPS", "JIT_GROUP_SCHEMA", "build_minimal_jit_group")
+__all__ = (
+    "JIT_GROUPS",
+    "JIT_GROUP_SCHEMA",
+    "Q1_INNER_FORM_ROLES",
+    "Q1_INNER_JIT_GROUP",
+    "Q1_INNER_JIT_SCHEMA",
+    "build_minimal_jit_group",
+)

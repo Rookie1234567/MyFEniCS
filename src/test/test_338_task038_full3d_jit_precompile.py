@@ -285,6 +285,125 @@ def test_incident_rhs_binds_quadrature_before_compile(monkeypatch):
     assert "form_compiler_options" not in Path(jit.__file__).read_text()
 
 
+def test_q1_inner_group_stages_only_p3_h50_forms(monkeypatch):
+    import sys
+    import types
+
+    from src.solvers import fullspace_same_mesh_hcurl_pmg_global as global_forms
+    from src.solvers import fullspace_same_mesh_hcurl_pmg_physical as physical
+    from src.solvers import dtn_port_3d as dtn
+
+    cfg = SimpleNamespace(
+        nedelec_degree=6,
+        mesh_target_size=10.0,
+        lambda0=13.5,
+        unchanged="input",
+    )
+    comm = SimpleNamespace(size=1)
+    levels = {
+        "spaces": {3: "p3-space"},
+        "mesh_data": "mesh-data",
+        "mu": "mu",
+        "mass": "mass",
+    }
+    calls = {"levels": [], "surface": [], "compile": [], "phase": []}
+
+    ufl = types.ModuleType("ufl")
+    ufl.action = lambda form, coefficient: (
+        "action",
+        form,
+        coefficient.space,
+    )
+    dolfinx = types.ModuleType("dolfinx")
+    fem = types.ModuleType("dolfinx.fem")
+
+    fem.Function = lambda space: SimpleNamespace(space=space)
+    dolfinx.fem = fem
+    monkeypatch.setitem(sys.modules, "ufl", ufl)
+    monkeypatch.setitem(sys.modules, "dolfinx", dolfinx)
+    monkeypatch.setitem(sys.modules, "dolfinx.fem", fem)
+    monkeypatch.setattr(
+        global_forms,
+        "same_mesh_positive_form",
+        lambda space, **_coefficients: ("positive", space),
+    )
+
+    def fake_levels(derived_cfg, _comm, degree, *, include_positive_coefficients):
+        calls["levels"].append(
+            (
+                degree,
+                include_positive_coefficients,
+                derived_cfg.nedelec_degree,
+                derived_cfg.mesh_target_size,
+            )
+        )
+        return levels, levels["spaces"][3]
+
+    monkeypatch.setattr(jit, "_levels", fake_levels)
+    monkeypatch.setattr(jit, "_mode_facts", lambda _cfg: (80, "mode-sha", 25))
+
+    def fake_surface_assemblers(
+        space, mesh_data, derived_cfg, qdegree, *, jit_options
+    ):
+        calls["surface"].append((space, mesh_data, derived_cfg, qdegree))
+        for role in jit.Q1_INNER_FORM_ROLES[1:5]:
+            jit._compile_form(role, jit_options)
+        return {}
+
+    monkeypatch.setattr(physical, "_surface_assemblers", fake_surface_assemblers)
+    monkeypatch.setattr(
+        dtn,
+        "_incident_top_traction_form",
+        lambda _space, _mesh_data, _cfg: "incident-form",
+    )
+
+    def fake_phase(form, degree):
+        calls["phase"].append((form, degree))
+        return "incident-rewritten"
+
+    monkeypatch.setattr(dtn, "_with_quadrature_degree", fake_phase)
+    monkeypatch.setattr(
+        jit,
+        "_compile_form",
+        lambda form, options: calls["compile"].append((form, options)),
+    )
+
+    facts = jit.build_minimal_jit_group(cfg, comm, jit.Q1_INNER_JIT_GROUP)
+
+    assert calls["levels"] == [(3, True, 3, 50.0)]
+    assert (cfg.nedelec_degree, cfg.mesh_target_size, cfg.unchanged) == (
+        6,
+        10.0,
+        "input",
+    )
+    assert len(calls["surface"]) == 1
+    assert calls["surface"][0][:2] == ("p3-space", "mesh-data")
+    assert calls["surface"][0][2].nedelec_degree == 3
+    assert calls["surface"][0][2].mesh_target_size == 50.0
+    assert calls["surface"][0][3] == 25
+    assert [item[0] for item in calls["compile"]] == [
+        ("action", ("positive", "p3-space"), "p3-space"),
+        *jit.Q1_INNER_FORM_ROLES[1:5],
+        "incident-rewritten",
+    ]
+    assert calls["phase"] == [("incident-form", 25)]
+    assert facts["schema"] == jit.Q1_INNER_JIT_SCHEMA
+    assert facts["compiled_form_count"] == 6
+    assert tuple(facts["form_roles"]) == jit.Q1_INNER_FORM_ROLES
+    assert facts["degrees"] == [3]
+    assert facts["profile"] == {
+        "nedelec_degree": 3,
+        "mesh_target_size_nm": 50.0,
+    }
+    assert facts["mode_count"] == 80
+    assert facts["mode_manifest_sha256"] == "mode-sha"
+    assert facts["dtn_quadrature_degree"] == 25
+    assert facts["compile_order"] == list(jit.Q1_INNER_FORM_ROLES)
+    assert all(value is False for value in facts["objects"].values())
+    assert not any("bilinear" in str(item[0]) for item in calls["compile"])
+    assert not any("physical_volume" in str(item[0]) for item in calls["compile"])
+
+
 def test_selected_call_sites_use_empty_mapping_and_generic_defaults_remain():
     root = Path(__file__).resolve().parents[2]
     setup = (root / "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py").read_text()

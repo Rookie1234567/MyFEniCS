@@ -192,7 +192,7 @@ def _make_artifact(base: Path, mpi_size: int = 1) -> Path:
         "stop_reason": None,
         "signals": [],
         "sample_count": 1,
-        "peak_rss_bytes": 1007,
+        "peak_rss_bytes": 1000 + len(checker.JIT_GROUPS),
         "max_swap_bytes": 0,
         "all_status_readable": True,
         "process_group_gone": True,
@@ -568,3 +568,5 @@ def test_parent_cli_keeps_fixed_inner_contract() -> None:
     assert args.mpi_size == 1
     assert runner.INNER_MAX_IT == 5000
     assert runner.INNER_RESTART == 20
+    assert tuple(runner.JIT_GROUPS) == tuple(checker.JIT_GROUPS)
+    assert runner.JIT_GROUPS[-1] == "q1-inner-p3-h50"
