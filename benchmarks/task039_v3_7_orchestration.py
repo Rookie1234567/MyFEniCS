@@ -8460,7 +8460,18 @@ def _load_v5_fixed_budget_spool_shards(
                         raise ValueError(
                             f"Fixed-budget spool descriptor shape mismatch: {metadata_path}"
                         )
-                    array_path = Path(str(record["array_path"])).resolve()
+                    recorded_array_path = record.get("array_path")
+                    expected_array_name = metadata_path.with_suffix(".npy").name
+                    if (
+                        not isinstance(recorded_array_path, str)
+                        or not recorded_array_path
+                        or Path(recorded_array_path).name != expected_array_name
+                    ):
+                        raise ValueError(
+                            "Fixed-budget spool array path basename mismatch: "
+                            f"{metadata_path}"
+                        )
+                    array_path = metadata_path.with_suffix(".npy").resolve()
                     record = {
                         **record,
                         "array_path": str(array_path),

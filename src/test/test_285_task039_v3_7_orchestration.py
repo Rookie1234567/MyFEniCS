@@ -3117,6 +3117,78 @@ def _write_tiny_v5_spool_catalog(
     return tmp_path / "v5_blr_reference_spool"
 
 
+def test_v5_fixed_budget_spool_uses_current_companion_after_relocation(tmp_path):
+    packet = {"model_id": "tiny-h4", "mode_count": 480}
+
+    relocated_root = _write_tiny_v5_spool_catalog(
+        tmp_path / "relocated", packet=packet
+    )
+    stale_parent = tmp_path / "stale" / "old-spool"
+    for metadata_path in sorted(relocated_root.glob("rank0000/*.json")):
+        record = json.loads(metadata_path.read_text(encoding="utf-8"))
+        record["array_path"] = str(stale_parent / Path(record["array_path"]).name)
+        metadata = dict(record)
+        metadata.pop("metadata_payload_sha256_excluding_self", None)
+        record["metadata_payload_sha256_excluding_self"] = hashlib.sha256(
+            json.dumps(
+                metadata,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode()
+        ).hexdigest()
+        metadata_path.write_text(
+            json.dumps(record, sort_keys=True, separators=(",", ":")),
+            encoding="utf-8",
+        )
+
+    records = orchestration._load_v5_fixed_budget_spool_shards(
+        relocated_root.parent,
+        MPI.COMM_SELF,
+        packet_identity=packet,
+        manifest_sha256="m" * 64,
+    )
+    for label, _kind, _seed in orchestration.V5_H4_BLR_RHS_SPECS:
+        for role in ("rhs", "exact_output"):
+            descriptor = records[label][role]["shards"][0]
+            current_metadata = Path(descriptor["metadata_path"])
+            assert Path(descriptor["array_path"]) == current_metadata.with_suffix(
+                ".npy"
+            ).resolve()
+
+    mismatch_root = _write_tiny_v5_spool_catalog(
+        tmp_path / "basename-mismatch", packet=packet
+    )
+    metadata_path = (
+        mismatch_root
+        / "rank0000"
+        / "bottom_external_dtn_coupling_rhs.json"
+    )
+    record = json.loads(metadata_path.read_text(encoding="utf-8"))
+    record["array_path"] = str(tmp_path / "stale" / "wrong.npy")
+    metadata = dict(record)
+    metadata.pop("metadata_payload_sha256_excluding_self", None)
+    record["metadata_payload_sha256_excluding_self"] = hashlib.sha256(
+        json.dumps(
+            metadata,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode()
+    ).hexdigest()
+    metadata_path.write_text(
+        json.dumps(record, sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="array path basename mismatch"):
+        orchestration._load_v5_fixed_budget_spool_shards(
+            mismatch_root.parent,
+            MPI.COMM_SELF,
+            packet_identity=packet,
+            manifest_sha256="m" * 64,
+        )
+
+
 def test_v5_fixed_budget_spool_catalog_rejects_gap_dtype_and_identity(tmp_path):
     packet = {"model_id": "tiny-h4", "mode_count": 480}
     gap_root = _write_tiny_v5_spool_catalog(
