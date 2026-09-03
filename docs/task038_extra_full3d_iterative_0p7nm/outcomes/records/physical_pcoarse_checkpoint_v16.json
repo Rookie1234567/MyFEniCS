@@ -1,0 +1,96 @@
+{
+  "schema": "task038.v16.physical-pcoarse.q2-checkpoint.v1",
+  "classification": "Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL",
+  "passed": false,
+  "errors": ["numerical:inner final true residual failed"],
+  "source": {
+    "sha": "9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b",
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "old_checkpoint_source_sha": "ee5920b9fa977a39fea7bc09cfbe155303acdb2d",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "mpi_size": 1,
+    "degree": 6,
+    "mesh_target_size_nm": 10.0
+  },
+  "artifact_root": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/q2_checkpoint_reference_v1/9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b/mpi1",
+  "checkpoint": {
+    "directory": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/j5_full_cold_staged_v3/ee5920b9fa977a39fea7bc09cfbe155303acdb2d/checkpoints/checkpoint-1000",
+    "manifest_sha256": "7f7d6fd29e6a3d6130de439fa510a19c6830061f59090cfd9f6ee4c51d8eb139",
+    "solution_sha256": "00f55e5256e673687942f79d98398d0fd2524d6d956c3b7ef5264615ab2c659b",
+    "stored_residual": 0.4837947981092168,
+    "recomputed_residual": 0.48379479479924,
+    "reproduction_relative": 6.8416957056789795e-09
+  },
+  "inner": {
+    "settings": {
+      "ksp_type": "fgmres",
+      "side": "right",
+      "restart": 20,
+      "start": "zero",
+      "max_it": 10000,
+      "residual_limit": 1e-06,
+      "residual_replacement": true,
+      "norm_type": "unpreconditioned",
+      "cycle_max_it": 20,
+      "checkpoint_interval": 20
+    },
+    "initial_true_residual": 1.0,
+    "history": {
+      "0": 1.0,
+      "20": 0.8309410237461273,
+      "1000": 0.7830431676258411,
+      "2000": 0.78048347154443,
+      "4000": 0.7781984682037493,
+      "6000": 0.7766983492676462,
+      "8000": 0.7756091855405819,
+      "10000": 0.7749555148382701
+    },
+    "iterations": 10000,
+    "final_true_residual": 0.7749555148382701,
+    "matvec_count": 10999,
+    "pc_apply_count": 10000,
+    "explicit_action_count": 501,
+    "ksp_destroy_count": 500,
+    "elapsed_seconds": 2460.657032735995
+  },
+  "residual_vectors": {
+    "r6_before": {"norm": 0.6412077991519661, "sha256": "ba1d73f70e18487308f8e04f3493d35c8f9d1d0ce51aad83c8eef47f1f5b20d9", "after_sha256": "ba1d73f70e18487308f8e04f3493d35c8f9d1d0ce51aad83c8eef47f1f5b20d9", "input_unchanged": true},
+    "r6_new": {"norm": 1.7313562126657716, "sha256": "b236a7bb1d2d3cad812dbc18dd33484cbe9166730170f2dbb515cee4cc117a6d"},
+    "r3_before": {"norm": 0.39933395062332383, "sha256": "b53013a1e645c194581da785567faf3eccfc4b5fa31a9c336c0cb8576652b0e3", "after_sha256": "b53013a1e645c194581da785567faf3eccfc4b5fa31a9c336c0cb8576652b0e3", "input_unchanged": true},
+    "r3_new": {"norm": 0.309466047297697, "sha256": "fc1f31370a6484885111b1735b1de633c939143628bdef76d8987e0a4da22564"},
+    "rhs": {"norm": 1.3253714302942174, "sha256": "e8ece14d273d8bcdec672f2e29ac8c62971bb0d0fe4af7cc63e741df21934686", "after_sha256": "e8ece14d273d8bcdec672f2e29ac8c62971bb0d0fe4af7cc63e741df21934686", "input_unchanged": true},
+    "checkpoint_solution": {"norm": 15.783838146838521, "array_sha256": "7567b3d23892a82dfddb548a9727a936f2c90eb79effbe01c3a7e282c0527a6f", "owned_slave_max": 0.0},
+    "correction": {"norm": 5.211573692364056, "sha256": "f2ecf4c637e72d320a2e38f4e68cce24ba7e8913303ec10dacc21c74c68d92d3", "owned_slave_max": 0.0}
+  },
+  "rho": {"rho_ref": 2.7001483995603124, "rho3": 0.774955514838267},
+  "operation_counts": {
+    "p6_action_delta": 2,
+    "p3_action_delta": 11500,
+    "lower_cycle_delta": 10000,
+    "upper_cycle_before": 0,
+    "upper_cycle_after": 0,
+    "upper_cycle_delta": 0,
+    "p63_primal": 1,
+    "p63_adjoint": 2
+  },
+  "facts": {"finite": true, "input_unchanged": true, "owned_slave_max": 0.0, "official_physics": "not_run"},
+  "cache": {
+    "initial": {"artifact_count": 0, "manifest_sha256": "8dba629fd88892f7c695c7babff7cb569c83385533b7290c4bda362b982d3099"},
+    "before_worker": {"artifact_count": 54, "manifest_sha256": "e87d8de150d74e16086d2fae37babda3cca3c71ebf47349abef07269314a6b18"},
+    "after_worker": {"artifact_count": 54, "manifest_sha256": "e87d8de150d74e16086d2fae37babda3cca3c71ebf47349abef07269314a6b18"}
+  },
+  "process": {
+    "parent": {"peak_rss_bytes": 1560625152, "peak_pss_bytes": 1531692032, "swap_bytes": 0, "sample_count": 135535, "all_status_readable": true},
+    "worker": {"peak_rss_bytes": 873783296, "peak_pss_bytes": 848829440, "swap_bytes": 0, "sample_count": 132865, "all_status_readable": true, "process_group_gone": true}
+  },
+  "markers": ["paths_ready", "abi_ready", "case_built", "checkpoint_restored", "residual_reproduced", "inner_complete", "correction_measured", "release_complete", "record_written"],
+  "evidence": [
+    {"path": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/q2_checkpoint_reference_v1/9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b/mpi1/parent_record.json", "sha256": "7957ceeb43b449aa5adf0281d77c69a43fde51ec17fb8d0adc8dee2f94b14cd6"},
+    {"path": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/q2_checkpoint_reference_v1/9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b/mpi1/raw/worker_record.json", "sha256": "df541289efe0de98887f342a45125dc77b46cd3127a4a77835cd07767cca0f92"},
+    {"path": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/q2_checkpoint_reference_v1/9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b/mpi1/parent_process.jsonl", "sha256": "a31cdf1b673777ec0f5eb3513ce311994959a15c07908a2914882f9eb1dc46c4"},
+    {"path": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/q2_checkpoint_reference_v1/9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b/mpi1/marker_manifest.json", "sha256": "451c336a031597735a40ab5d7035210eda517be409b10e5c99c769fbd8b4087a"},
+    {"path": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/q2_checkpoint_reference_v1/9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b/mpi1/checker.json", "sha256": "12e4fbe4d41a96afbc2bd4d644ae4e2b97756a3d6d2a5eccb0f7743dff48bde4"}
+  ],
+  "stage_status": {"q3": "locked/not_run", "q4": "locked/not_run", "q5": "locked/not_run", "q6": "locked/not_run", "w0": "accepted W0_INTERFACE_RANK_CAPACITY_FAIL"}
+}

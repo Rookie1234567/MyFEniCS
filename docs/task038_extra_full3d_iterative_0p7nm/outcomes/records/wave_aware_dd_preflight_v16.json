@@ -1,0 +1,124 @@
+{
+  "schema": "task038.v16.wave_aware_dd_preflight.v1",
+  "review": "V16",
+  "stage": "W0",
+  "candidate": "wave_aware_interface_schur_dd_v1",
+  "local_inverse": {
+    "kind": "same_mesh_positive_pMG_fallback",
+    "reason": "Q2 physical p-coarse correction Gate failed",
+    "restart": 20,
+    "max_it": 100,
+    "physical_pcoarse": false
+  },
+  "source": {
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "commit_sha": "9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b",
+    "input_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "normalized_checkpoint_input_identity": "754dbf810cc38b32804bced03b8d4b8f702d5943671724e7529f47cadefe8b1f",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "trigger": {
+    "q2_classification": "Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL",
+    "checkpoint_reproduction_relative": 6.8416957056789795e-09,
+    "inner_final_true_residual": 0.7749555148382701,
+    "rho_ref": 2.7001483995603124,
+    "rho3": 0.774955514838267,
+    "parent_peak_rss_bytes": 1560625152,
+    "worker_peak_rss_bytes": 873783296,
+    "swap_bytes": 0
+  },
+  "q2_evidence_packet": {
+    "root": "benchmarks/artifacts/task038_extra_full3d_iterative_0p7nm/q2_checkpoint_reference_v1/9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b/mpi1",
+    "files": [
+      {"path": "parent_record.json", "sha256": "7957ceeb43b449aa5adf0281d77c69a43fde51ec17fb8d0adc8dee2f94b14cd6"},
+      {"path": "raw/worker_record.json", "sha256": "df541289efe0de98887f342a45125dc77b46cd3127a4a77835cd07767cca0f92"},
+      {"path": "parent_process.jsonl", "sha256": "a31cdf1b673777ec0f5eb3513ce311994959a15c07908a2914882f9eb1dc46c4"},
+      {"path": "marker_manifest.json", "sha256": "451c336a031597735a40ab5d7035210eda517be409b10e5c99c769fbd8b4087a"},
+      {"path": "checker.json", "role": "checker_record", "sha256": "12e4fbe4d41a96afbc2bd4d644ae4e2b97756a3d6d2a5eccb0f7743dff48bde4"}
+    ],
+    "checkpoint_manifest_sha256": "7f7d6fd29e6a3d6130de439fa510a19c6830061f59090cfd9f6ee4c51d8eb139",
+    "checkpoint_solution_sha256": "00f55e5256e673687942f79d98398d0fd2524d6d956c3b7ef5264615ab2c659b",
+    "old_checkpoint_source_sha": "ee5920b9fa977a39fea7bc09cfbe155303acdb2d"
+  },
+  "formula": {
+    "subdomains": "four geometry-only z quartiles with one h10-cell overlap",
+    "interfaces": 3,
+    "local_action": "A_i = R_i A_phys R_i^H + B_i^T4; B_i^T4 is artificial-boundary closure only",
+    "partition_of_unity": "sum_i R_i^H D_i R_i = I",
+    "trace": "T_j = tangential p1 H(curl) trace plus exact gradient-trace",
+    "harmonic_extension": "H_i maps two-sided interface traces to local physical harmonic fields",
+    "interface_schur": "S_Gamma = sum_i H_i^H A_i H_i",
+    "coarse_apply": "C_Gamma = P_Gamma S_Gamma^-1 P_Gamma^H, P_Gamma = sum_i R_i^H D_i H_i",
+    "production_storage": "owner-distributed iterative apply; no global physical AIJ, dense DtN, factor, or persistent FE-sized Z/AZ"
+  },
+  "rank_accounting": {
+    "internal_interfaces": 3,
+    "accepted_total_independent_trace_rank_max": 512,
+    "actual_independent_trace_rank": null,
+    "actual_rank_source": null,
+    "major_unknown": "current p1 tangential-plus-gradient canonical key inventory and dependency-reduced rank are absent",
+    "v15_rank32_is_interface_basis": false
+  },
+  "capacity": {
+    "phase_model": "overall_peak = max(cold_staging_envelope, solver_live_set, recovery_phase)",
+    "anchors": {
+      "central_cold_staging_measured_bytes": 1450262528,
+      "hard_cold_staging_calibration_bytes": 1560625152,
+      "v14_j4_cold_measured_bytes": 1557270528,
+      "q2_parent_cold_measured_bytes": 1560625152,
+      "q2_worker_solver_anchor_measured_bytes": 873783296
+    },
+    "known_items": {
+      "diagnostic_oracle_matrix_factor_predicted_bytes": 8388608,
+      "solver_known_increment_bytes": 8388608,
+      "solver_known_subtotal_bytes": 882171904,
+      "recovery_reserve_predicted_bytes": 5561664,
+      "outer_restart20_incremental_bytes": null,
+      "outer_restart20_accounting": "U_restart; not separately charged against the worker anchor",
+      "cold_allocator_jit_incremental_bytes": 0,
+      "solver_allocator_jit_increment": "U_allocator",
+      "q0_prior_predicted_reserves_incremental_bytes": 0,
+      "persistent_fe_sized_z_az_bytes": 0
+    },
+    "unknown_items": [
+      "four R_i/R_i^H map simultaneous bytes",
+      "one local physical workset simultaneous bytes",
+      "trace metadata bytes",
+      "streamed harmonic-extension work bytes",
+      "owner-distributed interface routing bytes",
+      "overlap attribution for outer restart20 and solver allocator/JIT relative to the Q2 worker anchor"
+    ],
+    "unknown_addend": "U_active = 4*U_RP + U_local + U_trace + U_harmonic + U_owner + U_overlap + U_restart + U_allocator",
+    "recovery_unknown_addend": "U_recovery = U_recovery_work + U_recovery_overlap",
+    "solver_live_set_formula": "873783296 + 8388608 + U_active = 882171904 + U_active",
+    "recovery_phase_formula": "5561664 + U_recovery",
+    "central_formula": "max(1450262528, 882171904 + U_active, 5561664 + U_recovery)",
+    "hard_formula": "max(1560625152, 882171904 + U_active, 5561664 + U_recovery)",
+    "central_pre_unknown_bytes": 1450262528,
+    "hard_pre_unknown_bytes": 1560625152,
+    "central_limit_bytes": 1750000000,
+    "hard_limit_bytes": 1900000000,
+    "metadata_limit_bytes": 100000000,
+    "local_limit_bytes": 250000000,
+    "oracle_limit_bytes": 32000000,
+    "pre_unknown_central_margin_bytes": 299737472,
+    "pre_unknown_hard_margin_bytes": 339374848
+  },
+  "evidence_kind": {
+    "q2_and_v14_rss": "measured",
+    "matrix_and_rank_cap_formula": "derived",
+    "oracle_numeric_upper_bound": "predicted",
+    "interface_rank_and_new_live_set": "unknown",
+    "w1_to_w4": "not_run"
+  },
+  "major_unknown": [
+    "actual independent p1 tangential-plus-gradient trace rank/count for the three fixed interfaces",
+    "simultaneous bytes for four restriction/prolongation maps and owner routing",
+    "simultaneous bytes for one local physical workset and streamed harmonic extension"
+  ],
+  "classification": "W0_INTERFACE_RANK_CAPACITY_FAIL",
+  "eligible_for_W1": false,
+  "next_action": "Z0",
+  "not_run": ["W1", "W2", "W3", "W4", "wave_aware_solver", "official_physics"]
+}

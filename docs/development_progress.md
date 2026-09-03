@@ -1,4 +1,40 @@
-# 2026-09-02：Task038 Review V16 Q1 source-authority controlled stop
+# 2026-09-03：Task038 Review V16 最终 Q/W 收口
+
+## 当前 authority
+
+| 阶段 | 精确对象 | 当前结果 |
+|---|---|---|
+| Q1.1 | 同一 h50 mesh 的 p6/p3 physical action identity | MPI1、MPI2、pair PASS；MPI1/MPI2 worst Galerkin `4.3068152418800024e-14` / `3.631160363261226e-13`，均为 curl |
+| Q1.2 | p3/h50 physical inner | MPI1、MPI2、pair PASS；physical/random final true residual 均低于 `1e-6` |
+| Q2 | p6/h10 checkpoint correction | `Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL`；reproduction、inner residual、`rho_ref`、`rho3` 均未过 Gate |
+| W0 | wave-aware interface Schur candidate | `W0_INTERFACE_RANK_CAPACITY_FAIL`；rank/byte authority 与同时容量未闭合 |
+| Q3–Q6 | 后续数值阶段 | locked/not_run |
+| W1–W4 | W0 后续实现阶段 | locked/not_run |
+| official physics | full E/H、near-field、R/T/A、recovery | not_run |
+
+这里的区别很重要：Q1.1 只证明同一 h50 离散上两种 physical action 路径一致；
+Q1.2 只证明 p3/h50 inner 能把指定 RHS 的显式真残差降到限值；Q2 则在 p6/h10
+checkpoint 上测量实际 correction，结果是 numerical Gate 失败。Q2 parent peak
+`1,560,625,152 B` 虽低于 MPI1 的 `2,000,000,000 B` 硬资源线，却不能冒充
+已经得到正确的 p6/h10 full solve 或 official physics。0.7nm/2TiB scalable solve
+也没有证明。
+
+W0 关闭后只完成 Z0 文档，登记四个未实现方向：PML/complex-shifted sweeping
+与 compressed interface responses、energy-minimizing H(curl) FETI-DP/BDDC、
+matrix-free p-h MG 加 distributed wave coarse solve、以及 intermediate-wavelength/
+reduced-geometry pilot hierarchy。它们都是 future research candidates，不是
+已实现或已通过的 PC。MPI1 RSS `<2 GB` 是硬线；用户明确 MPI2 超过 2 GB 只记录，
+但 MPI2 仍须满足 numerical、finite、repeat、input、provenance、swap 和 lifecycle。
+
+最终文档证据见
+[`V16 response`](task038_extra_full3d_iterative_0p7nm/response_v16.md)、
+[`Q1 qualification`](task038_extra_full3d_iterative_0p7nm/outcomes/records/physical_pcoarse_q1_qualification_v16.json)、
+[`Q2 checkpoint`](task038_extra_full3d_iterative_0p7nm/outcomes/physical_pcoarse_checkpoint_v16.md)、
+[`W0 preflight`](task038_extra_full3d_iterative_0p7nm/outcomes/wave_aware_dd_preflight_v16.md)。
+
+---
+
+# 历史首次：Task038 Review V16 Q1 source-authority controlled stop（永久保留）
 
 Q0 physical p-coarse preflight 已通过；Q1 窄核心在 clean core commit 6edf5f5c1255185052a2a5d5fb8dd422f3238f04
 实现并完成 focused regression，但固定六 probe formal 未启动。V16 要求 p6/h50

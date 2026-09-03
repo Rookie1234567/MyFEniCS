@@ -1,3 +1,41 @@
+# Review V16 最终 focused test record（2026-09-03）
+
+本轮只做最终文档收口所需的 focused regression 与静态证据检查；没有重跑 Q1/Q2 formal、PDE、MPI case，也没有把测试通过解释成 numerical Gate。
+
+| 项目 | 实际结果 | wall |
+|---|---|---:|
+| 八个指定测试文件的合并 suite（最终 lexical checkout `.venv` Python） | `91 passed`, `0 skipped` | `3.760 s`（pytest 内部 `3.41 s`） |
+| 首次 activation 后裸 `python` 合并 suite | `90 passed`, `1 failed`；仅为 test339 的 symlink lexical-path 断言，非数值失败 | `5.813 s` |
+| 相关 runner/checker/solver 依赖 compileall | PASS；限定 18 个 Python 文件 | — |
+| checker 顶层 import boundary AST | PASS；4 个 checker 均无 runner/solver/PETSc/MPI/DOLFINx 等重型导入 | — |
+| strict JSON duplicate-key/NaN | 5 passed | — |
+| Q1/Q2 compact path+SHA 与 raw value 核对 | 25/25 PASS；W0 Q2 evidence/anchor 绑定一致 | — |
+| Markdown links/fence/trailing whitespace | 8 files、140 local links passed | — |
+| Ruff | unavailable；未安装、未声称 PASS | — |
+| `git diff --check` | PASS | — |
+
+最终测试使用同一 qualified WSL shell（`cd`、`source scripts/activate_myfenics_wsl.sh` 与命令在同一 shell）：
+
+```bash
+/home/shenjh/Projects/MyFEniCSx_task37_extra/.venv/bin/python -m pytest -q \
+  src/test/test_24_repository_work_principles.py \
+  src/test/test_338_task038_full3d_jit_precompile.py \
+  src/test/test_339_task038_full3d_jit_staged.py \
+  src/test/test_343_task038_full3d_physical_pcoarse.py \
+  src/test/test_344_task038_full3d_physical_pcoarse_q1_runner.py \
+  src/test/test_345_task038_full3d_physical_pcoarse_q1_action.py \
+  src/test/test_346_task038_full3d_physical_pcoarse_q1_inner.py \
+  src/test/test_347_task038_full3d_physical_pcoarse_q2.py
+```
+
+ABI 实测为 `_MYFENICS_WSL_QUALIFIED_ACTIVATION=1`、Open MPI 4.1.6、PETSc `complex128/int32`、OMP/OpenBLAS/MKL 线程均为 1。qualified activation 的 `.venv` 是指向 `/home/shenjh/Projects/MyFEniCS-Surrogate/.venv` 的 symlink；最终测试显式使用当前 checkout 的字面路径 `/home/shenjh/Projects/MyFEniCSx_task37_extra/.venv/bin/python`，因此首轮裸 `python` 的路径断言差异不构成代码回归。
+
+compileall 的边界为 Q1/Q2 runner、checker、JIT staging parent/solver bundle，以及 `fullspace_same_mesh_physical_pcoarse.py`、其直接 pMG/Krylov/canonical/DtN 依赖，共 18 个明确路径；没有全仓库 compileall。Q1/Q2 formal 本回合均未重跑。Q2 的真实 numerical negative 仍绑定 source `9f18a6ccdf979f13fcb8eaab2bd57defb55f3c7b` 与既有 raw/checker，测试通过不改变其 `Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL` 结论。
+
+---
+
+# 历史测试记录（永久保留）
+
 # Review V16 Q1 implementation test record
 
 | item | 已有结果 / 边界 |

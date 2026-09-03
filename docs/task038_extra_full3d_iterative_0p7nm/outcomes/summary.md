@@ -1,4 +1,45 @@
-# Review V16 Q1 source-authority closeout
+# Review V16 当前收口摘要
+
+## 当前 authority 总览
+
+| 阶段 | 当前结果 | 通俗含义 |
+|---|---|---|
+| Q0 | PASS | 完成了 physical p-coarse 的公式、ownership 和容量预审 |
+| Q1.1 | PASS | 同一 h50 网格上，直接 p3 action 与 p6 action 经 P63/P63^H 的结果一致 |
+| Q1.2 | PASS | p3/h50 的 physical RHS 与 random inner solve 达到 true-residual Gate |
+| Q2 | `Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL` | p6/h10 checkpoint correction 没有产生所需 contraction |
+| W0 | `W0_INTERFACE_RANK_CAPACITY_FAIL` | 未来接口 Schur 候选的 rank/同时内存无法由 authority 闭合 |
+| Q3–Q6 | locked/not_run | Q2 真实 numerical Gate 失败后未进入 |
+| W1–W4 | locked/not_run | W0 capacity FAIL 后未进入 |
+| official physics | not_run | 没有 official E/H、near-field、R/T/A 或 recovery 结果 |
+
+当前 V16 总体为 `V16_Q_AND_W_CLOSED_BY_REAL_GATES / NOT_QUALIFIED`。Q1.1 的
+worst physical Galerkin relative 是 MPI1 `4.3068152418800024e-14`、MPI2
+`3.631160363261226e-13`（均为 `curl`），pair direct/composed worst 是
+`1.3304006108072395e-14`（`physical_component_derived`）/
+`3.620657472911387e-13`（`curl`）。Q1.2 的四个 source/MPI residual 均通过
+`1e-6`。这些是窄 operator/inner 合同，不等于完成 full physical PDE。
+
+Q2 的 checkpoint residual 从 stored/recomputed
+`0.4837947981092168`/`0.48379479479924` 形成 reproduction relative
+`6.8416957056789795e-9`，inner 在 10000 步仍为
+`0.7749555148382701`；`rho_ref=2.7001483995603124`、
+`rho3=0.774955514838267` 也未过 Gate。Q2 parent peak `1,560,625,152 B`
+小于 MPI1 的 2 GB 资源线，但该过程是 reference correction 且数值失败，不能
+称为正确的 p6/h10 full solve。
+
+MPI1 的完整 process-tree RSS `<2,000,000,000 B` 仍是硬资源线；用户明确 MPI2
+超过 2 GB 只记录，不单独关闭路线，但 MPI2 仍需通过数值、finite、repeat、input、
+provenance、swap 和 lifecycle。0.7nm/2TiB scalable solve 尚未证明。
+
+证据索引：[`Q1 qualification compact`](records/physical_pcoarse_q1_qualification_v16.json)、
+[`Q2 checkpoint outcome`](physical_pcoarse_checkpoint_v16.md)、
+[`W0 preflight`](wave_aware_dd_preflight_v16.md) 和
+[`direct authority audit`](direct_authority_packet_audit_v1.md)。
+
+---
+
+# 历史首次 Q1 source-authority controlled stop（永久保留）
 
 | 阶段 | 结果 | 边界 |
 |---|---|---|
