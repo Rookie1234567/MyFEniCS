@@ -10,6 +10,8 @@ the setup, transfers, smoothers, and physical actions remain caller-owned.
 from __future__ import annotations
 
 from collections.abc import Mapping
+import hashlib
+from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
@@ -39,6 +41,8 @@ SMALL_PHYSICAL_PROBE_NAMES = (
     "physical_component_derived",
     "r3_long_tail_derived",
 )
+REFERENCE_INNER_MAX_IT = 10000
+REFERENCE_INNER_RESIDUAL_LIMIT = 1.0e-6
 
 
 def _matrix_layout(matrix: Any, name: str) -> tuple[int, int, int, int]:
@@ -995,6 +999,320 @@ def solve_small_same_mesh_physical_inner(
     )
 
 
+def _reference_vector_facts(vector: Any, mpc: Any, comm: Any) -> dict[str, Any]:
+    values = np.asarray(vector.getArray(readonly=True), dtype=np.complex128)
+    index_map = mpc.function_space.dofmap.index_map
+    block_size = int(mpc.function_space.dofmap.index_map_bs)
+    owned_storage = int(index_map.size_local) * block_size
+    slaves = np.asarray(mpc.slaves, dtype=np.int64).reshape(-1)
+    owned = slaves[(slaves >= 0) & (slaves < owned_storage)]
+    local_slave_max = float(np.max(np.abs(values[owned]))) if owned.size else 0.0
+    finite = bool(comm.allreduce(bool(np.all(np.isfinite(values))), op=MPI.LAND))
+    digest = hashlib.sha256(memoryview(np.ascontiguousarray(values)).cast("B"))
+    return {
+        "norm": float(vector.norm()),
+        "finite": finite,
+        "owned_slave_max": float(comm.allreduce(local_slave_max, op=MPI.MAX)),
+        "array_sha256": digest.hexdigest(),
+    }
+
+
+def _reference_vector_relative(left: Any, right: Any) -> float:
+    difference = left.copy()
+    try:
+        difference.axpy(PETSc.ScalarType(-1.0), right)
+        denominator = max(float(right.norm()), np.finfo(np.float64).tiny)
+        return float(difference.norm()) / denominator
+    finally:
+        difference.destroy()
+
+
+def solve_reference_checkpoint_correction(
+    p6_bundle: Mapping[str, Any],
+    p3_bundle: Mapping[str, Any],
+    checkpoint_dir: Path,
+    checkpoint_expected: Mapping[str, Any],
+    *,
+    resource_sample: Any,
+    stage_callback: Any = None,
+) -> dict[str, Any]:
+    """Measure the Q2 reference correction without applying the p6 smoother.
+
+    The p6 and p3 physical actions are borrowed from their bundles.  This
+    routine owns only temporary residual, transfer, and checkpoint vectors;
+    the restart-20 driver owns and destroys its own KSP/basis workspace.
+    """
+
+    if int(p6_bundle.get("degree", 6)) != 6:
+        raise ValueError("Q2 reference correction requires a degree-6 bundle")
+    if int(p3_bundle.get("degree", 3)) != 3:
+        raise ValueError("Q2 reference correction requires a degree-3 bundle")
+    setup = p6_bundle["setup"]
+    p6_matrix = setup["p6_shell"].matrix
+    p3_matrix = setup["p3_matrix"]
+    p6_floquet = setup["floquets"][6]
+    p3_action = p3_bundle["action"]
+    p6_action = p6_bundle["physical_action"]
+    transfer = setup["p63_owner_transfer"]
+    comm = p6_matrix.getComm().tompi4py()
+    upper_cycle = setup["upper_cycle"]
+    upper_apply_before = int(upper_cycle.apply_count)
+    lower_cycle = setup["lower_cycle"]
+    lower_apply_before = int(lower_cycle.apply_count)
+    x1000 = p6_matrix.createVecRight()
+    rhs = None
+    x_before = None
+    rhs_before = None
+    ax = None
+    r6 = None
+    r6_before = None
+    r3 = None
+    r3_before = None
+    inner = None
+    e6_full = None
+    e6_algebraic = None
+    a6_e6 = None
+    r6_new = None
+    r3_new = None
+    try:
+        from .fullspace_memory_first_krylov import read_solution_checkpoint
+        from .fullspace_same_mesh_hcurl_pmg_runtime import (
+            _mpc_constraint_residual,
+            _slave_storage_max,
+        )
+        from .fullspace_same_mesh_hcurl_pmg_physical import build_physical_rhs
+        from dolfinx import fem
+
+        ownership = {
+            "rank": int(comm.rank),
+            "ownership_range": list(x1000.getOwnershipRange()),
+            "local_size": int(x1000.getLocalSize()),
+            "global_size": int(x1000.getSize()),
+        }
+        checkpoint = read_solution_checkpoint(
+            Path(checkpoint_dir),
+            x1000,
+            expected=checkpoint_expected,
+            ownership=ownership,
+            comm=comm,
+        )
+        if stage_callback is not None:
+            stage_callback("checkpoint_restored", checkpoint)
+        x_before = x1000.copy()
+        rhs, rhs_facts = build_physical_rhs(p6_bundle)
+        rhs_before = rhs.copy()
+        ax = p6_matrix.createVecLeft()
+        p6_apply_before = int(p6_action.audit["apply_count"])
+        p3_apply_before = int(p3_action.audit["apply_count"])
+        transfer_counts = {"primal": 0, "adjoint": 0}
+        p6_action.apply(x1000, ax)
+        r6 = rhs.copy()
+        r6.axpy(PETSc.ScalarType(-1.0), ax)
+        r6_before = r6.copy()
+        r3 = p3_matrix.createVecLeft()
+        transfer.apply_adjoint_into(r6, r3)
+        transfer_counts["adjoint"] += 1
+        r3_before = r3.copy()
+
+        rhs_norm = max(float(rhs.norm()), np.finfo(np.float64).tiny)
+        stored_residual = float(checkpoint_expected["explicit_true_residual"])
+        recomputed_residual = float(r6.norm()) / rhs_norm
+        reproduction_relative = abs(recomputed_residual - stored_residual) / max(
+            abs(stored_residual), np.finfo(np.float64).tiny
+        )
+        if stage_callback is not None:
+            stage_callback(
+                "residual_reproduced",
+                {
+                    "stored_residual": stored_residual,
+                    "recomputed_residual": recomputed_residual,
+                    "reproduction_relative": reproduction_relative,
+                },
+            )
+        inner = run_restart20_cycles(
+            r3,
+            lambda source: _apply_physical_action(p3_action, p3_matrix, source),
+            setup["lower_cycle"].apply,
+            max_it=REFERENCE_INNER_MAX_IT,
+            residual_limit=REFERENCE_INNER_RESIDUAL_LIMIT,
+            resource_sample=resource_sample,
+            start_iteration=0,
+            checkpoint_writer=None,
+            first_checkpoint_iteration=None,
+            checkpoint_interval=PHYSICAL_PCOARSE_RESTART,
+            stop_on_true_residual=True,
+            ksp_type="fgmres",
+        )
+        inner_facts = {
+            key: value for key, value in inner.items() if key != "final_solution"
+        }
+        lower_apply_after = int(lower_cycle.apply_count)
+        lower_apply_delta = lower_apply_after - lower_apply_before
+        if lower_apply_delta != int(inner_facts["pc_apply_count"]):
+            raise RuntimeError("Q2 lower-cycle apply ledger is inconsistent")
+        if stage_callback is not None:
+            stage_callback("inner_complete", inner_facts)
+        e6_full = p6_matrix.createVecRight()
+        transfer.apply_primal_into(inner["final_solution"], e6_full)
+        transfer_counts["primal"] += 1
+        e6_algebraic = fem.Function(p6_floquet.mpc.function_space)
+        e6_full.copy(e6_algebraic.x.petsc_vec)
+        e6_algebraic.x.scatter_forward()
+        projected_constraint = _mpc_constraint_residual(e6_algebraic, p6_floquet)
+        p6_floquet.mpc.homogenize(e6_algebraic)
+        e6_algebraic.x.scatter_forward()
+        algebraic_slave_max = _slave_storage_max(e6_algebraic, p6_floquet)
+        a6_e6 = p6_matrix.createVecLeft()
+        p6_action.apply(e6_algebraic.x.petsc_vec, a6_e6)
+        r6_new = r6.copy()
+        r6_new.axpy(PETSc.ScalarType(-1.0), a6_e6)
+        r3_new = p3_matrix.createVecLeft()
+        transfer.apply_adjoint_into(r6_new, r3_new)
+        transfer_counts["adjoint"] += 1
+        rho_ref = float(r6_new.norm()) / max(
+            float(r6.norm()), np.finfo(np.float64).tiny
+        )
+        rho3 = float(r3_new.norm()) / max(
+            float(r3.norm()), np.finfo(np.float64).tiny
+        )
+        upper_apply_after = int(upper_cycle.apply_count)
+        upper_apply_delta = upper_apply_after - upper_apply_before
+        if upper_apply_delta != 0:
+            raise RuntimeError("Q2 reference path called the p6 upper cycle")
+        p6_apply_after = int(p6_action.audit["apply_count"])
+        p3_apply_after = int(p3_action.audit["apply_count"])
+        p6_apply_delta = p6_apply_after - p6_apply_before
+        p3_apply_delta = p3_apply_after - p3_apply_before
+        expected_p3_apply_delta = int(
+            inner_facts["matvec_count"] + inner_facts["explicit_action_count"]
+        )
+        if p6_apply_delta != 2 or p3_apply_delta != expected_p3_apply_delta:
+            raise RuntimeError("Q2 physical action apply ledger is inconsistent")
+        if stage_callback is not None:
+            stage_callback(
+                "correction_measured",
+                {"rho_ref": rho_ref, "rho3": rho3},
+            )
+        vector_facts = {
+            "checkpoint_solution": _reference_vector_facts(
+                x1000, p6_floquet.mpc, comm
+            ),
+            "rhs_before": _reference_vector_facts(rhs_before, p6_floquet.mpc, comm),
+            "rhs_after": _reference_vector_facts(rhs, p6_floquet.mpc, comm),
+            "r6_before": _reference_vector_facts(r6_before, p6_floquet.mpc, comm),
+            "r6_after": _reference_vector_facts(r6, p6_floquet.mpc, comm),
+            "r6_new": _reference_vector_facts(r6_new, p6_floquet.mpc, comm),
+            "r3_before": _reference_vector_facts(r3_before, setup["floquets"][3].mpc, comm),
+            "r3_after": _reference_vector_facts(r3, setup["floquets"][3].mpc, comm),
+            "r3_new": _reference_vector_facts(r3_new, setup["floquets"][3].mpc, comm),
+            "correction": _reference_vector_facts(
+                e6_algebraic.x.petsc_vec, p6_floquet.mpc, comm
+            ),
+        }
+        return {
+            "checkpoint": {
+                **checkpoint,
+                "stored_residual": stored_residual,
+                "recomputed_residual": recomputed_residual,
+                "reproduction_relative": float(reproduction_relative),
+            },
+            "rhs": {**dict(rhs_facts), "facts": vector_facts["rhs_after"]},
+            "vectors": vector_facts,
+            "inner": inner_facts,
+            "correction": {
+                "formula": "r6_new=r6-A6*P63*e3; r3_new=P63^H*r6_new",
+                "rho_ref": float(rho_ref),
+                "rho3": float(rho3),
+                "projected_full_constraint_residual": float(projected_constraint),
+                "algebraic_owned_slave_max": float(algebraic_slave_max),
+                "upper_cycle_apply_count_before": upper_apply_before,
+                "upper_cycle_apply_count_after": upper_apply_after,
+                "upper_cycle_apply_count_delta": upper_apply_delta,
+                "p6_smoother_apply_count": upper_apply_delta,
+                "physical_pcycle_applied": False,
+                "operation_counts": {
+                    "p6_action": {
+                        "before": p6_apply_before,
+                        "after": p6_apply_after,
+                        "delta": p6_apply_delta,
+                    },
+                    "p3_action": {
+                        "before": p3_apply_before,
+                        "after": p3_apply_after,
+                        "delta": p3_apply_delta,
+                        "expected_from_inner": expected_p3_apply_delta,
+                    },
+                    "lower_cycle": {
+                        "before": lower_apply_before,
+                        "after": lower_apply_after,
+                        "delta": lower_apply_delta,
+                        "expected_from_inner": int(inner_facts["pc_apply_count"]),
+                    },
+                    "p63": {
+                        "primal": int(transfer_counts["primal"]),
+                        "adjoint": int(transfer_counts["adjoint"]),
+                    },
+                },
+                "finite": bool(
+                    np.isfinite(rho_ref)
+                    and np.isfinite(rho3)
+                    and np.isfinite(projected_constraint)
+                    and np.isfinite(algebraic_slave_max)
+                ),
+            },
+            "input_unchanged": {
+                "checkpoint_solution_relative": _reference_vector_relative(
+                    x1000, x_before
+                ),
+                "rhs_relative": _reference_vector_relative(rhs, rhs_before),
+                "r6_relative": _reference_vector_relative(r6, r6_before),
+                "r3_relative": _reference_vector_relative(r3, r3_before),
+            },
+            "architecture": {
+                "p6_action": "matrix_free_exact_physical_split_volume_plus_streaming_dtn",
+                "p3_action": "matrix_free_exact_physical_split_volume_plus_streaming_dtn",
+                "p3_positive_pc": "setup_owned_lower_cycle",
+                "p6_pre_post_smoother": False,
+                "global_physical_aij": False,
+                "dense_dtn": False,
+                "physical_factor": False,
+                "numeric_allgather": False,
+                "phase_application": "finalized_floquet_mpc_once",
+            },
+        }
+    finally:
+        if inner is not None:
+            destroy_krylov_result(inner)
+        for vector in (
+            r3_new,
+            r6_new,
+            a6_e6,
+            e6_full,
+            r3_before,
+            r3,
+            r6_before,
+            r6,
+            ax,
+            rhs_before,
+            rhs,
+            x_before,
+            x1000,
+        ):
+            if vector is not None:
+                vector.destroy()
+        del e6_algebraic
+
+
+def _apply_physical_action(action: Any, matrix: Any, source: Any) -> Any:
+    target = matrix.createVecLeft()
+    try:
+        action.apply(source, target)
+    except Exception:
+        target.destroy()
+        raise
+    return target
+
+
 __all__ = (
     "PHYSICAL_PCOARSE_DEDICATED_P3_VECTORS",
     "PHYSICAL_PCOARSE_DEDICATED_P6_VECTORS",
@@ -1008,6 +1326,9 @@ __all__ = (
     "destroy_small_same_mesh_physical_inner_case",
     "measure_small_same_mesh_physical_inner_pc",
     "solve_small_same_mesh_physical_inner",
+    "REFERENCE_INNER_MAX_IT",
+    "REFERENCE_INNER_RESIDUAL_LIMIT",
+    "solve_reference_checkpoint_correction",
     "SMALL_PHYSICAL_PROBE_NAMES",
     "SameMeshPhysicalPcoarseV1",
     "build_small_same_mesh_action_probe_source",
