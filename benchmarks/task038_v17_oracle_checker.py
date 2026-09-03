@@ -48,6 +48,8 @@ B_DISK_FREE_BYTES = 10_000_000_000
 B_HARD_BYTES = 2_000_000_000
 B_START_ITERATION = 1_000
 A_HARD_BYTES = 12_000_000_000
+A3_SCHEMA = "task038.v17.oracle-a3.v2"
+A_TRANSFER_CONSTRAINT_LIMIT = 1.0e-11
 B_ORTHOGONALITY_LIMIT = 1.0e-8
 B_EXPLICIT_ARNOLDI_LIMIT = 1.0e-8
 A_MARKER_ORDER = (
@@ -172,8 +174,8 @@ def _check_source_bundle(worker: dict[str, Any], expected_source_sha: str, error
     _source(worker.get("source"), expected_source_sha, errors, "worker.source")
     input_facts = worker.get("input")
     if isinstance(input_facts, dict):
-        if input_facts.get("input_sha256") != INPUT_SHA256:
-            _error(errors, "input:worker input SHA mismatch")
+        if input_facts.get("template_sha256") != INPUT_SHA256:
+            _error(errors, "input:worker template SHA mismatch")
         if input_facts.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256:
             _error(errors, "provenance:worker physical model identity mismatch")
         if input_facts.get("mode_manifest_sha256") != MODE_MANIFEST_SHA256:
@@ -870,7 +872,7 @@ def _check_a(context: dict[str, Any], expected_source_sha: str, errors: list[str
         if not isinstance(input_facts, dict):
             _error(errors, f"input:{label} input facts missing")
         else:
-            if input_facts.get("input_sha256") != INPUT_SHA256:
+            if input_facts.get("template_sha256") != INPUT_SHA256:
                 _error(errors, f"input:{label} input identity mismatch")
             if input_facts.get("physical_model_sha256") != PHYSICAL_MODEL_SHA256:
                 _error(errors, f"provenance:{label} physical model identity mismatch")
@@ -1105,12 +1107,66 @@ def _check_a(context: dict[str, Any], expected_source_sha: str, errors: list[str
     if not isinstance(a3_vectors, dict):
         _error(errors, "schema:A3 vector facts missing")
         return {"resource_blocked": False, "gate_failures": gate_failures}
-    for label, descriptor in (("A3.e3_loaded", a3_vectors.get("e3_loaded")), ("A3.e6", a3_vectors.get("e6")), ("A3.action", a3_vectors.get("action")), ("A3.r6_new", a3_vectors.get("r6_new")), ("A3.r3_new", a3_vectors.get("r3_new"))):
-        _check_owned_facts(descriptor, errors, label)
-        vector_values[label] = _check_vector(context["raw_dir"], descriptor, errors, label)
-        canonical[label] = _check_canonical_vector(
-            context["root"], descriptor.get("canonical") if isinstance(descriptor, dict) else None, errors, f"{label}.canonical"
+    if a3.get("schema") != A3_SCHEMA:
+        _error(errors, "schema:A3 schema version mismatch")
+    for label, descriptor in (
+        ("A3.e3_loaded", a3_vectors.get("e3_loaded")),
+        ("A3.e6_full", a3_vectors.get("e6_full")),
+        ("A3.e6_algebraic", a3_vectors.get("e6_algebraic")),
+        ("A3.action", a3_vectors.get("action")),
+        ("A3.r6_new", a3_vectors.get("r6_new")),
+        ("A3.r3_new", a3_vectors.get("r3_new")),
+    ):
+        _check_owned_facts(
+            descriptor,
+            errors,
+            label,
+            allow_nonzero=label == "A3.e6_full",
         )
+        vector_values[label] = _check_vector(context["raw_dir"], descriptor, errors, label)
+        if label != "A3.e6_algebraic":
+            canonical[label] = _check_canonical_vector(
+                context["root"],
+                descriptor.get("canonical") if isinstance(descriptor, dict) else None,
+                errors,
+                f"{label}.canonical",
+            )
+    e6_full = a3_vectors.get("e6_full")
+    if isinstance(e6_full, dict):
+        transfer_facts = e6_full.get("transfer_last_apply_facts")
+        transfer_residual = e6_full.get("fine_mpc_constraint_residual")
+        if (
+            not isinstance(transfer_facts, dict)
+            or transfer_facts.get("operation") != "primal"
+            or transfer_facts.get("finite") is not True
+            or transfer_facts.get("input_unchanged") is not True
+            or not _finite(transfer_residual)
+            or float(transfer_residual) < 0.0
+            or float(transfer_residual) > A_TRANSFER_CONSTRAINT_LIMIT
+            or transfer_facts.get("fine_mpc_constraint_residual") != transfer_residual
+        ):
+            _error(errors, "numerical:A3 e6_full constraint/transfer facts do not close")
+    e6_algebraic = a3_vectors.get("e6_algebraic")
+    action_descriptor = a3_vectors.get("action")
+    if (
+        not isinstance(action_descriptor, dict)
+        or not isinstance(e6_algebraic, dict)
+        or action_descriptor.get("input_array_sha256")
+        != e6_algebraic.get("array_sha256")
+    ):
+        _error(errors, "provenance:A3 action input is not e6_algebraic")
+    e3_loaded = a3_vectors.get("e3_loaded")
+    e3_source = a2_vectors.get("e3")
+    if isinstance(e3_loaded, dict) and isinstance(e3_source, dict):
+        for key in ("relative_path", "sha256", "bytes", "dtype", "shape"):
+            if e3_loaded.get(key) != e3_source.get(key):
+                _error(errors, f"provenance:A3 e3_loaded {key} is not A2.e3")
+        if (
+            e3_loaded.get("source_array_sha256") != e3_source.get("array_sha256")
+            or e3_loaded.get("loaded_array_sha256") != e3_source.get("array_sha256")
+            or e3_loaded.get("loaded_unchanged") is not True
+        ):
+            _error(errors, "provenance:A3 e3_loaded array SHA does not close")
     loaded_inputs = a3.get("loaded_inputs")
     if not isinstance(loaded_inputs, dict):
         _error(errors, "input:A3 loaded input facts missing")

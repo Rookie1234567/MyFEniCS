@@ -428,10 +428,11 @@ def _run_a1(
         solution = _space_vector(levels, 6)
         p6_mpc = levels["floquets"][6].mpc
         p3_mpc = levels["floquets"][3].mpc
+        checkpoint_expected = _checkpoint_expected()
         checkpoint = read_solution_checkpoint(
             CHECKPOINT_DIR,
             solution,
-            expected=_checkpoint_expected(),
+            expected=checkpoint_expected,
             ownership=_ownership(solution, comm),
             comm=comm,
         )
@@ -491,9 +492,8 @@ def _run_a1(
             "input": input_facts,
             "checkpoint": {
                 **checkpoint,
-                "manifest_sha256": CHECKPOINT_MANIFEST_SHA256,
+                **checkpoint_expected,
                 "solution_sha256": CHECKPOINT_SOLUTION_SHA256,
-                "source_sha": CHECKPOINT_SOURCE_SHA,
             },
             "rhs": rhs_facts,
             "checkpoint_reproduction": {
@@ -786,8 +786,10 @@ def _run_a3(root: Path, raw_dir: Path, marker_dir: Path, source_sha: str, input_
         destroy_same_mesh_physical_action,
     )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
+        _mpc_constraint_residual,
         build_same_mesh_hcurl_owner_transfer,
     )
+    from dolfinx import fem
 
     _spec, cfg, _resolved, input_facts = _current_input(REPO_ROOT, input_path)
     input_facts = {**input_facts, "mode_manifest_sha256": MODE_MANIFEST_SHA256}
@@ -803,7 +805,7 @@ def _run_a3(root: Path, raw_dir: Path, marker_dir: Path, source_sha: str, input_
     )
     levels["p63_owner_transfer"] = owner_transfer
     bundle = None
-    e3 = e6 = action = r6 = r6_new = r3_new = None
+    e3 = e6_full = e6_algebraic = action = r6 = r6_new = r3_new = None
     try:
         bundle = build_same_mesh_physical_action(levels, cfg, 6)
         a1 = json.loads((raw_dir / "A1_record.json").read_text())
@@ -818,10 +820,19 @@ def _run_a3(root: Path, raw_dir: Path, marker_dir: Path, source_sha: str, input_
         e3 = _space_vector(levels, 3)
         e3.array[:] = e3_values
         e3_input_before = _owned_vector_facts(e3, p3_mpc, comm)
-        e6 = _space_vector(levels, 6)
-        owner_transfer.apply_primal_into(e3, e6)
+        e6_full = _space_vector(levels, 6)
+        owner_transfer.apply_primal_into(e3, e6_full)
+        transfer_last_apply_facts = dict(owner_transfer.last_apply_facts)
+        e6_algebraic = fem.Function(p6_mpc.function_space)
+        e6_full.copy(e6_algebraic.x.petsc_vec)
+        e6_algebraic.x.scatter_forward()
+        fine_mpc_constraint_residual = _mpc_constraint_residual(
+            e6_algebraic, levels["floquets"][6]
+        )
+        levels["floquets"][6].mpc.homogenize(e6_algebraic)
+        e6_algebraic.x.scatter_forward()
         action = _space_vector(levels, 6)
-        bundle["physical_action"].apply(e6, action)
+        bundle["physical_action"].apply(e6_algebraic.x.petsc_vec, action)
         r6_new = r6.copy()
         r6_new.axpy(-1.0, action)
         r3_new = _space_vector(levels, 3)
@@ -837,19 +848,53 @@ def _run_a3(root: Path, raw_dir: Path, marker_dir: Path, source_sha: str, input_
             e3,
             comm,
         )
-        e6_facts = _owned_vector_facts(e6, p6_mpc, comm)
-        e6_facts.update(_write_array(raw_dir, "A3/e6.npy", e6.array))
-        e6_facts["canonical"] = _write_canonical_vector_manifest(
+        e3_loaded_facts = dict(a2["vectors"]["e3"])
+        e3_loaded_facts.update(
+            {
+                "source_array_sha256": a2["vectors"]["e3"]["array_sha256"],
+                "loaded_array_sha256": e3_input_after["array_sha256"],
+                "loaded_unchanged": (
+                    e3_input_before["array_sha256"]
+                    == e3_input_after["array_sha256"]
+                ),
+            }
+        )
+        e6_full_facts = _owned_vector_facts(e6_full, p6_mpc, comm)
+        e6_full_facts.update(
+            _write_array(raw_dir, "A3/e6_full.npy", e6_full.array)
+        )
+        e6_full_facts.update(
+            {
+                "fine_mpc_constraint_residual": float(
+                    fine_mpc_constraint_residual
+                ),
+                "transfer_last_apply_facts": transfer_last_apply_facts,
+            }
+        )
+        e6_full_facts["canonical"] = _write_canonical_vector_manifest(
             raw_dir,
-            "A3_e6",
+            "A3_e6_full",
             "full_fe",
             levels["spaces"][6],
             levels["floquets"][6],
-            e6,
+            e6_full,
             comm,
+        )
+        e6_algebraic_facts = _owned_vector_facts(
+            e6_algebraic.x.petsc_vec, p6_mpc, comm
+        )
+        e6_algebraic_facts.update(
+            _write_array(
+                raw_dir,
+                "A3/e6_algebraic.npy",
+                e6_algebraic.x.petsc_vec.array,
+            )
         )
         action_facts = _owned_vector_facts(action, p6_mpc, comm)
         action_facts.update(_write_array(raw_dir, "A3/action.npy", action.array))
+        action_facts["input_array_sha256"] = e6_algebraic_facts[
+            "array_sha256"
+        ]
         action_facts["canonical"] = _write_canonical_vector_manifest(
             raw_dir,
             "A3_action",
@@ -888,7 +933,7 @@ def _run_a3(root: Path, raw_dir: Path, marker_dir: Path, source_sha: str, input_
         rho_ref = float(r6_new.norm()) / max(float(r6.norm()), np.finfo(float).tiny)
         rho3 = float(r3_new.norm()) / max(float(a1["vectors"]["r3"]["norm"]), np.finfo(float).tiny)
         record = {
-            "schema": "task038.v17.oracle-a3.v1",
+            "schema": "task038.v17.oracle-a3.v2",
             "stage": "A3",
             "source": _stage_source(root, source_sha, input_path),
             "input": input_facts,
@@ -896,10 +941,11 @@ def _run_a3(root: Path, raw_dir: Path, marker_dir: Path, source_sha: str, input_
                 "r6": a1["vectors"]["r6"],
                 "r3": a1["vectors"]["r3"],
                 "e3_loaded": {
-                    **e3_input_after,
+                    **e3_loaded_facts,
                     "canonical": e3_loaded_canonical,
                 },
-                "e6": e6_facts,
+                "e6_full": e6_full_facts,
+                "e6_algebraic": e6_algebraic_facts,
                 "action": action_facts,
                 "r6_new": r6_new_facts,
                 "r3_new": r3_new_facts,
@@ -943,9 +989,11 @@ def _run_a3(root: Path, raw_dir: Path, marker_dir: Path, source_sha: str, input_
         _write_stage_record(raw_dir, "A3", record)
         _worker_marker(comm, marker_dir, "oracle-a", "A3_complete", source_sha, rho_ref=rho_ref, rho3=rho3)
     finally:
-        for vector in (r3_new, r6_new, action, e6, e3, r6):
+        for vector in (r3_new, r6_new, action, e6_full, e3, r6):
             if vector is not None:
                 vector.destroy()
+        if e6_algebraic is not None:
+            del e6_algebraic
         if bundle is not None:
             destroy_same_mesh_physical_action(bundle)
         owner_transfer.destroy()

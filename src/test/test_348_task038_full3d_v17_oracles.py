@@ -529,8 +529,8 @@ def _make_oracle_a_artifact(tmp_path: Path) -> Path:
     action2 = _vector_descriptor(raw, "A2/action.npy", values)
     residual2 = _vector_descriptor(raw, "A2/residual.npy", zero)
     e3 = _vector_descriptor(raw, "A2/e3.npy", values)
-    e3_loaded = _vector_descriptor(raw, "A3/e3_loaded.npy", values)
-    e6 = _vector_descriptor(raw, "A3/e6.npy", values)
+    e6_full = _vector_descriptor(raw, "A3/e6_full.npy", values)
+    e6_algebraic = _vector_descriptor(raw, "A3/e6_algebraic.npy", zero)
     action = _vector_descriptor(raw, "A3/action.npy", values)
     r6_new = _vector_descriptor(raw, "A3/r6_new.npy", zero)
     r3_new = _vector_descriptor(raw, "A3/r3_new.npy", zero)
@@ -550,8 +550,8 @@ def _make_oracle_a_artifact(tmp_path: Path) -> Path:
         values,
         identity_name="p3_primal",
     )
-    e6_canonical = _canonical_fixture_descriptor(
-        raw, "A3_e6", "full_fe", values, identity_name="p6_primal"
+    e6_full_canonical = _canonical_fixture_descriptor(
+        raw, "A3_e6_full", "full_fe", values, identity_name="p6_primal"
     )
     action_canonical = _canonical_fixture_descriptor(
         raw,
@@ -580,8 +580,27 @@ def _make_oracle_a_artifact(tmp_path: Path) -> Path:
     action2_facts = _owned_descriptor(action2)
     residual2_facts = _owned_descriptor(residual2)
     e3_facts = _owned_descriptor(e3)
-    e3_loaded_facts = _owned_descriptor(e3_loaded)
-    e6_facts = _owned_descriptor(e6)
+    e3_loaded_facts = {
+        **e3_facts,
+        "source_array_sha256": e3_facts["array_sha256"],
+        "loaded_array_sha256": e3_facts["array_sha256"],
+        "loaded_unchanged": True,
+    }
+    e6_full_facts = _owned_descriptor(e6_full)
+    e6_full_facts.update(
+        {
+            "owned_slave_max": float(np.max(np.abs(values))),
+            "owned_slave_count": 1,
+            "fine_mpc_constraint_residual": 1.0e-12,
+            "transfer_last_apply_facts": {
+                "operation": "primal",
+                "finite": True,
+                "input_unchanged": True,
+                "fine_mpc_constraint_residual": 1.0e-12,
+            },
+        }
+    )
+    e6_algebraic_facts = _owned_descriptor(e6_algebraic)
     action_facts = _owned_descriptor(action)
     r6_new_facts = _owned_descriptor(r6_new)
     r3_new_facts = _owned_descriptor(r3_new)
@@ -596,11 +615,15 @@ def _make_oracle_a_artifact(tmp_path: Path) -> Path:
 
     def record(stage: str) -> dict[str, object]:
         base = {
-            "schema": f"task038.v17.oracle-{stage.lower()}.v1",
+            "schema": (
+                "task038.v17.oracle-a3.v2"
+                if stage == "A3"
+                else f"task038.v17.oracle-{stage.lower()}.v1"
+            ),
             "stage": stage,
             "source": _source(),
             "input": {
-                "input_sha256": checker.INPUT_SHA256,
+                "template_sha256": checker.INPUT_SHA256,
                 "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256,
                 "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256,
             },
@@ -697,9 +720,18 @@ def _make_oracle_a_artifact(tmp_path: Path) -> Path:
                             **e3_loaded_facts,
                             "canonical": e3_loaded_canonical,
                         },
-                        "e6": {**e6_facts, "canonical": e6_canonical},
+                        "e6_full": {
+                            **e6_full_facts,
+                            "canonical": e6_full_canonical,
+                        },
+                        "e6_algebraic": {
+                            **e6_algebraic_facts,
+                        },
                         "action": {
                             **action_facts,
+                            "input_array_sha256": e6_algebraic_facts[
+                                "array_sha256"
+                            ],
                             "canonical": action_canonical,
                         },
                         "r6_new": {
@@ -860,6 +892,15 @@ def test_a2_a3_fixture_canonical_and_raw_vector_closures(
     assert a2_e3["role"] == a3_e3["role"] == "full_fe"
     assert a2_e3["key_inventory_sha256"] == a3_e3["key_inventory_sha256"]
     assert dict(packets(a2_e3)) == dict(packets(a3_e3))
+
+    assert a3["vectors"]["e6_full"]["owned_slave_count"] == 1
+    assert a3["vectors"]["e6_full"]["owned_slave_max"] > 0.0
+    assert a3["vectors"]["e6_algebraic"]["owned_slave_count"] == 0
+    assert a3["vectors"]["e6_algebraic"]["owned_slave_max"] == 0.0
+    assert (
+        a3["vectors"]["action"]["input_array_sha256"]
+        == a3["vectors"]["e6_algebraic"]["array_sha256"]
+    )
 
     dual_descriptors = (
         a1["vectors"]["r6"]["canonical"],
@@ -1345,7 +1386,13 @@ def test_parent_preserves_explicit_numeric_stop_and_skips_later_a_stage(
 
 
 @pytest.mark.parametrize(
-    "mutation", ("checkpoint_reproduction", "checkpoint_contract", "rho_ref")
+    "mutation",
+    (
+        "checkpoint_reproduction",
+        "checkpoint_contract",
+        "checkpoint_provenance",
+        "rho_ref",
+    ),
 )
 def test_checker_recomputes_oracle_a_and_rejects_stored_gate_mutation(
     tmp_path: Path, mutation: str
@@ -1354,6 +1401,7 @@ def test_checker_recomputes_oracle_a_and_rejects_stored_gate_mutation(
     result = checker.check_artifact(parent_path)
     assert result["status"] == "PASS", result
     assert result["classification"] == "EXACT_P3_COARSE_SPAN_PASS"
+    expected_classification = "ORACLE_A_NUMERICAL_GATE_FAIL"
 
     if mutation == "checkpoint_reproduction":
         record_path = parent_path.parent / "raw/A1_record.json"
@@ -1368,6 +1416,13 @@ def test_checker_recomputes_oracle_a_and_rejects_stored_gate_mutation(
         record["checkpoint_reproduction"]["relative_limit"] = 1.0e-7
         stage_index = 0
         expected_error = "checkpoint expected is not frozen"
+    elif mutation == "checkpoint_provenance":
+        record_path = parent_path.parent / "raw/A1_record.json"
+        record = json.loads(record_path.read_text())
+        record["checkpoint"].pop("input_identity_sha256")
+        stage_index = 0
+        expected_error = "checkpoint input_identity_sha256 mismatch"
+        expected_classification = "INFRASTRUCTURE_FAILURE_RETRYABLE"
     else:
         record_path = parent_path.parent / "raw/A3_record.json"
         record = json.loads(record_path.read_text())
@@ -1380,7 +1435,7 @@ def test_checker_recomputes_oracle_a_and_rejects_stored_gate_mutation(
     _write_json(parent_path, parent)
     result = checker.check_artifact(parent_path)
     assert result["status"] == "FAIL"
-    assert result["classification"] == "ORACLE_A_NUMERICAL_GATE_FAIL", result
+    assert result["classification"] == expected_classification, result
     assert any(expected_error in error for error in result["errors"])
 
 
@@ -1517,7 +1572,8 @@ def test_checker_accepts_explicit_oracle_a_numeric_stop_without_a3(
 
 
 @pytest.mark.parametrize(
-    "tamper", ("canonical_shard", "a2_residual", "owned_slave")
+    "tamper",
+    ("canonical_shard", "a2_residual", "owned_slave", "e3_loaded_path", "action_input"),
 )
 def test_checker_rejects_tampered_oracle_a_raw_evidence(
     tmp_path: Path, tamper: str
@@ -1540,10 +1596,24 @@ def test_checker_rejects_tampered_oracle_a_raw_evidence(
     elif tamper == "owned_slave":
         a3_path = root / "raw/A3_record.json"
         a3 = json.loads(a3_path.read_text())
-        a3["vectors"]["e6"]["owned_slave_max"] = 1.0
+        a3["vectors"]["e6_algebraic"]["owned_slave_max"] = 1.0
         _write_json(a3_path, a3)
         parent["stages"][2]["sha256"] = _sha256(a3_path)
         expected_error = "owned slave maximum is not zero"
+    elif tamper == "e3_loaded_path":
+        a3_path = root / "raw/A3_record.json"
+        a3 = json.loads(a3_path.read_text())
+        a3["vectors"]["e3_loaded"]["relative_path"] = "raw/A3/missing.npy"
+        _write_json(a3_path, a3)
+        parent["stages"][2]["sha256"] = _sha256(a3_path)
+        expected_error = "A3.e3_loaded file missing"
+    elif tamper == "action_input":
+        a3_path = root / "raw/A3_record.json"
+        a3 = json.loads(a3_path.read_text())
+        a3["vectors"]["action"]["input_array_sha256"] = "0" * 64
+        _write_json(a3_path, a3)
+        parent["stages"][2]["sha256"] = _sha256(a3_path)
+        expected_error = "action input is not e6_algebraic"
     else:
         a2_path = root / "raw/A2_record.json"
         a2 = json.loads(a2_path.read_text())
@@ -1733,7 +1803,7 @@ def test_checker_oracle_b_thresholds_use_raw_history(
     worker = {
         "source": _source(),
         "input": {
-            "input_sha256": checker.INPUT_SHA256,
+            "template_sha256": checker.INPUT_SHA256,
             "physical_model_sha256": checker.PHYSICAL_MODEL_SHA256,
             "mode_manifest_sha256": checker.MODE_MANIFEST_SHA256,
         },
