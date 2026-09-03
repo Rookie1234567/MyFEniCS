@@ -28,6 +28,9 @@ PHYSICAL_PCOARSE_LEVELS = (6, 3, 1)
 PHYSICAL_PCOARSE_RESTART = 20
 PHYSICAL_PCOARSE_DEDICATED_P6_VECTORS = 8
 PHYSICAL_PCOARSE_DEDICATED_P3_VECTORS = 2
+SMALL_PHYSICAL_INNER_MAX_IT = 5000
+SMALL_PHYSICAL_INNER_RESIDUAL_LIMIT = 1.0e-6
+SMALL_PHYSICAL_INNER_ALPHA = 0.37 + 0.19j
 SMALL_PHYSICAL_PROBE_NAMES = (
     "random",
     "gradient",
@@ -786,12 +789,225 @@ def destroy_small_same_mesh_physical_pcoarse_case(case: dict[str, Any]) -> None:
     case.clear()
 
 
+def build_small_same_mesh_physical_inner_case(
+    cfg: Any,
+    comm: Any,
+    *,
+    mode_inventory: tuple[Any, Any, Any] | None = None,
+) -> dict[str, Any]:
+    """Build only the p3/h50 physical action and existing p3-to-p1 cycle."""
+
+    if int(cfg.nedelec_degree) != 3 or float(cfg.mesh_target_size) != 50.0:
+        raise ValueError("small physical inner case is fixed at p3/h50")
+    from .fullspace_same_mesh_hcurl_pmg_global import (
+        build_small_same_mesh_positive_case,
+        destroy_small_same_mesh_positive_case,
+    )
+    from .fullspace_same_mesh_hcurl_pmg_physical import (
+        build_same_mesh_physical_action,
+        destroy_same_mesh_physical_action,
+    )
+
+    case = build_small_same_mesh_positive_case(cfg, comm, source_name="random")
+    case["cfg"] = cfg
+    setup = {
+        "mesh": case["mesh"],
+        "mesh_data": case["mesh_data"],
+        "spaces": {3: case["fine_space"], 1: case["coarse_space"]},
+        "floquets": {
+            3: case["fine_floquet"],
+            1: case["coarse_floquet"],
+        },
+    }
+    physical = None
+    try:
+        physical = build_same_mesh_physical_action(
+            setup, cfg, 3, mode_inventory=mode_inventory
+        )
+        case["physical_action"] = physical
+        case["physical_setup"] = setup
+        case["physical_inner_schema"] = (
+            "task038.same_mesh_physical_inner.small.v1"
+        )
+        return case
+    except Exception:
+        if physical is not None:
+            destroy_same_mesh_physical_action(physical)
+        destroy_small_same_mesh_positive_case(case)
+        raise
+
+
+def destroy_small_same_mesh_physical_inner_case(case: dict[str, Any]) -> None:
+    """Destroy the physical action, then the borrowed p3/p1 positive case."""
+
+    if not case:
+        return
+    from .fullspace_same_mesh_hcurl_pmg_global import (
+        destroy_small_same_mesh_positive_case,
+    )
+    from .fullspace_same_mesh_hcurl_pmg_physical import (
+        destroy_same_mesh_physical_action,
+    )
+
+    physical = case.pop("physical_action", None)
+    if physical is not None:
+        destroy_same_mesh_physical_action(physical)
+    case.pop("physical_setup", None)
+    case.pop("physical_inner_schema", None)
+    destroy_small_same_mesh_positive_case(case)
+    case.clear()
+
+
+def build_small_same_mesh_physical_inner_rhs(
+    case: Mapping[str, Any], source_name: str
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Build one fixed p3 physical RHS without using a p6 projection."""
+
+    if source_name not in {"physical_rhs", "random"}:
+        raise ValueError("small physical inner source is physical_rhs or random")
+    from .fullspace_same_mesh_hcurl_pmg_global import (
+        _algebraic_fine_function,
+        _vector_relative,
+    )
+    from .fullspace_same_mesh_hcurl_pmg_physical import build_physical_rhs
+
+    bundle = case["physical_action"]
+    if source_name == "physical_rhs":
+        rhs, rhs_facts = build_physical_rhs(bundle)
+        return rhs, {
+            "name": source_name,
+            "role": "physical_dual_rhs",
+            "formula": "build_physical_rhs at degree-3 physical action",
+            "rhs_facts": dict(rhs_facts),
+        }
+
+    from .fullspace_lor_native_hx_fixture import build_frozen_fullspace_primal_source
+
+    source = None
+    source_before = None
+    algebraic = None
+    rhs = None
+    try:
+        source, source_facts = build_frozen_fullspace_primal_source(
+            case["fine_space"], case["fine_floquet"], case["cfg"], "random"
+        )
+        source_before = source.copy()
+        algebraic = _algebraic_fine_function(
+            source,
+            case["fine_floquet"].mpc.function_space,
+            case["fine_floquet"],
+        )
+        rhs = case["fine_matrix"].createVecLeft()
+        bundle["action"].apply(algebraic.x.petsc_vec, rhs)
+        source_relative = _vector_relative(source, source_before)
+        return rhs, {
+            "name": source_name,
+            "role": "random_primal_to_physical_dual_rhs",
+            "formula": "A3 * finalized algebraic random primal",
+            "source": dict(source_facts),
+            "source_input_unchanged_relative": float(source_relative),
+            "source_norm": float(source.norm()),
+        }
+    except Exception:
+        if rhs is not None:
+            rhs.destroy()
+        raise
+    finally:
+        if source_before is not None:
+            source_before.destroy()
+        if source is not None:
+            source.destroy()
+        del algebraic
+
+
+def measure_small_same_mesh_physical_inner_pc(
+    case: Mapping[str, Any], residual: PETSc.Vec
+) -> dict[str, Any]:
+    """Measure repeat and linearity of the borrowed p3-to-p1 positive PC."""
+
+    from .fullspace_same_mesh_hcurl_pmg_global import _vector_relative
+
+    pc = case["pmg"]
+    before = residual.copy()
+    first = second = scaled_input = scaled = expected = None
+    try:
+        first = pc.apply(residual)
+        second = pc.apply(residual)
+        scaled_input = residual.copy()
+        scaled_input.scale(PETSc.ScalarType(SMALL_PHYSICAL_INNER_ALPHA))
+        scaled = pc.apply(scaled_input)
+        expected = first.copy()
+        expected.scale(PETSc.ScalarType(SMALL_PHYSICAL_INNER_ALPHA))
+        facts = dict(pc.last_apply_facts)
+        return {
+            "repeat_relative": float(_vector_relative(second, first)),
+            "linearity_relative": float(_vector_relative(scaled, expected)),
+            "input_unchanged_relative": float(_vector_relative(residual, before)),
+            "finite": bool(
+                np.isfinite(first.norm())
+                and np.isfinite(second.norm())
+                and np.isfinite(scaled.norm())
+            ),
+            "primal_finite": bool(facts["output_finite"]),
+            "owned_slave_max": float(facts["owned_slave_max"]),
+            "apply_count": int(facts["apply_count"]),
+            "cycle_facts": facts,
+        }
+    finally:
+        for vector in (expected, scaled, scaled_input, second, first, before):
+            if vector is not None:
+                vector.destroy()
+
+
+def solve_small_same_mesh_physical_inner(
+    case: Mapping[str, Any],
+    rhs: PETSc.Vec,
+    *,
+    resource_sample: Any,
+) -> dict[str, Any]:
+    """Run the fixed p3 physical inner oracle through the shared driver."""
+
+    action = case["physical_action"]["action"]
+    matrix = case["fine_matrix"]
+
+    def apply_action(source: PETSc.Vec) -> PETSc.Vec:
+        target = matrix.createVecLeft()
+        try:
+            action.apply(source, target)
+        except Exception:
+            target.destroy()
+            raise
+        return target
+
+    return run_restart20_cycles(
+        rhs,
+        apply_action,
+        case["pmg"].apply,
+        max_it=SMALL_PHYSICAL_INNER_MAX_IT,
+        residual_limit=SMALL_PHYSICAL_INNER_RESIDUAL_LIMIT,
+        resource_sample=resource_sample,
+        start_iteration=0,
+        checkpoint_writer=None,
+        first_checkpoint_iteration=None,
+        checkpoint_interval=PHYSICAL_PCOARSE_RESTART,
+        stop_on_true_residual=True,
+        ksp_type="fgmres",
+    )
+
+
 __all__ = (
     "PHYSICAL_PCOARSE_DEDICATED_P3_VECTORS",
     "PHYSICAL_PCOARSE_DEDICATED_P6_VECTORS",
     "PHYSICAL_PCOARSE_LEVELS",
     "PHYSICAL_PCOARSE_RESTART",
     "PHYSICAL_PCOARSE_SCHEMA",
+    "SMALL_PHYSICAL_INNER_MAX_IT",
+    "SMALL_PHYSICAL_INNER_RESIDUAL_LIMIT",
+    "build_small_same_mesh_physical_inner_case",
+    "build_small_same_mesh_physical_inner_rhs",
+    "destroy_small_same_mesh_physical_inner_case",
+    "measure_small_same_mesh_physical_inner_pc",
+    "solve_small_same_mesh_physical_inner",
     "SMALL_PHYSICAL_PROBE_NAMES",
     "SameMeshPhysicalPcoarseV1",
     "build_small_same_mesh_action_probe_source",

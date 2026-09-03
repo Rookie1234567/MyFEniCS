@@ -369,6 +369,186 @@ def test_physical_action_builder_selects_requested_level_and_keeps_p6_entrypoint
     assert tuple(old_signature.parameters) == ("cfg", "comm", "stage_callback")
 
 
+@pytest.mark.parametrize("degree", (3, 6))
+def test_physical_rhs_uses_bundle_degree_for_form_and_mpc(
+    monkeypatch, degree: int
+) -> None:
+    spaces = {3: object(), 6: object()}
+    mpcs = {3: object(), 6: object()}
+    forms = []
+    assembled = []
+
+    class _Vector:
+        def __init__(self) -> None:
+            self.destroyed = False
+
+        def duplicate(self):
+            return _Vector()
+
+        def destroy(self) -> None:
+            self.destroyed = True
+
+    class _Action:
+        def __init__(self) -> None:
+            self.calls = []
+
+        def compose_physical_rhs(self, base, projections, target) -> None:
+            self.calls.append((base, projections, target))
+
+    action = _Action()
+
+    def fake_form(space, mesh_data, cfg):
+        form = (space, mesh_data, cfg)
+        forms.append(form)
+        return form
+
+    def fake_assemble(form, mpc, *, quadrature_degree, jit_options):
+        base = _Vector()
+        assembled.append((form, mpc, quadrature_degree, jit_options, base))
+        return base
+
+    monkeypatch.setattr(dtn_port_module, "_incident_top_traction_form", fake_form)
+    monkeypatch.setattr(dtn_port_module, "_assemble_mpc_vector", fake_assemble)
+    bundle = {
+        "setup": {
+            "spaces": spaces,
+            "floquets": {
+                item: SimpleNamespace(mpc=mpcs[item]) for item in (3, 6)
+            },
+            "mesh_data": "mesh-data",
+        },
+        "cfg": "cfg",
+        "degree": degree,
+        "dtn_quadrature_degree": 25,
+        "physical_action": action,
+        "incident_projections": ("projection",),
+        "modes": ("mode",),
+        "mode_sha256": "mode-sha",
+    }
+
+    rhs, facts = physical_module.build_physical_rhs(bundle)
+    try:
+        assert forms == [(spaces[degree], "mesh-data", "cfg")]
+        assert assembled[0][:3] == (forms[0], mpcs[degree], 25)
+        assert action.calls == [(assembled[0][4], ("projection",), rhs)]
+        assert facts["degree"] == degree
+    finally:
+        rhs.destroy()
+
+
+def test_small_inner_case_builds_only_p3_p1_and_destroys_borrowed_setup(
+    monkeypatch,
+) -> None:
+    from src.solvers import fullspace_same_mesh_hcurl_pmg_global as positive_module
+
+    cfg = SimpleNamespace(nedelec_degree=3, mesh_target_size=50.0)
+    positive = {
+        "mesh": "mesh",
+        "mesh_data": "mesh-data",
+        "fine_space": "p3-space",
+        "coarse_space": "p1-space",
+        "fine_floquet": SimpleNamespace(mpc="p3-mpc"),
+        "coarse_floquet": SimpleNamespace(mpc="p1-mpc"),
+    }
+    calls = {
+        "positive": 0,
+        "physical": [],
+        "destroy_positive": 0,
+        "destroy_physical": 0,
+    }
+
+    def fake_positive(_cfg, _comm, *, source_name):
+        assert source_name == "random"
+        calls["positive"] += 1
+        return dict(positive)
+
+    def fake_physical(setup, _cfg, degree, *, mode_inventory):
+        calls["physical"].append((setup, degree, mode_inventory))
+        return {"action": "p3-action"}
+
+    monkeypatch.setattr(positive_module, "build_small_same_mesh_positive_case", fake_positive)
+    monkeypatch.setattr(
+        positive_module,
+        "destroy_small_same_mesh_positive_case",
+        lambda _case: calls.__setitem__(
+            "destroy_positive", calls["destroy_positive"] + 1
+        ),
+    )
+    monkeypatch.setattr(
+        physical_module, "build_same_mesh_physical_action", fake_physical
+    )
+    monkeypatch.setattr(
+        physical_module,
+        "destroy_same_mesh_physical_action",
+        lambda _physical: calls.__setitem__(
+            "destroy_physical", calls["destroy_physical"] + 1
+        ),
+    )
+
+    case = pcoarse.build_small_same_mesh_physical_inner_case(
+        cfg, "comm", mode_inventory=("modes", "rows", "sha")
+    )
+    setup, degree, _inventory = calls["physical"][0]
+    assert calls["positive"] == 1
+    assert degree == 3
+    assert set(setup["spaces"]) == {3, 1}
+    assert set(setup["floquets"]) == {3, 1}
+    assert 6 not in setup["spaces"] and 6 not in setup["floquets"]
+    pcoarse.destroy_small_same_mesh_physical_inner_case(case)
+    assert calls["destroy_physical"] == calls["destroy_positive"] == 1
+
+
+def test_small_inner_solver_uses_fixed_5000_step_fgmres_driver(monkeypatch) -> None:
+    calls = {}
+    rhs = object()
+    target = object()
+    resource_sample = lambda: {"sampled": True}
+
+    class _Matrix:
+        def createVecLeft(self):
+            calls["created_target"] = True
+            return target
+
+    class _Action:
+        def apply(self, source, output) -> None:
+            calls["action"] = (source, output)
+
+    def fake_pc(_source):
+        return "pc-result"
+
+    def fake_driver(rhs_arg, action, pc, **kwargs):
+        calls["rhs"] = rhs_arg
+        calls["pc"] = pc
+        calls["kwargs"] = kwargs
+        action(rhs_arg)
+        return {"final_solution": target}
+
+    monkeypatch.setattr(pcoarse, "run_restart20_cycles", fake_driver)
+    case = {
+        "physical_action": {"action": _Action()},
+        "fine_matrix": _Matrix(),
+        "pmg": SimpleNamespace(apply=fake_pc),
+    }
+    result = pcoarse.solve_small_same_mesh_physical_inner(
+        case, rhs, resource_sample=resource_sample
+    )
+    kwargs = calls["kwargs"]
+    assert result["final_solution"] is target
+    assert calls["rhs"] is rhs
+    assert calls["action"] == (rhs, target)
+    assert calls["pc"] is fake_pc
+    assert kwargs["max_it"] == 5000
+    assert kwargs["residual_limit"] == 1.0e-6
+    assert kwargs["resource_sample"] is resource_sample
+    assert kwargs["start_iteration"] == 0
+    assert kwargs["checkpoint_writer"] is None
+    assert kwargs["first_checkpoint_iteration"] is None
+    assert kwargs["checkpoint_interval"] == 20
+    assert kwargs["stop_on_true_residual"] is True
+    assert kwargs["ksp_type"] == "fgmres"
+    assert "initial_solution" not in kwargs
+
+
 def test_surface_quadrature_degree_is_integral_metadata() -> None:
     coordinate_element = element(
         "Lagrange", "triangle", 1, shape=(2,), dtype=np.float64

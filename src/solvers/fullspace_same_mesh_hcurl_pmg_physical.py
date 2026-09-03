@@ -325,6 +325,7 @@ def build_p6_same_mesh_physical_bundle(
         bundle = {
             "schema": PHYSICAL_BUNDLE_SCHEMA,
             "profile": PHYSICAL_PROFILE,
+            "degree": 6,
             "setup": setup,
             "cfg": cfg,
             "physical_action": physical_action,
@@ -417,10 +418,11 @@ def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
 
     setup = bundle["setup"]
     cfg = bundle["cfg"]
-    p6_space = setup["spaces"][6]
-    floquet = setup["floquets"][6]
+    degree = int(bundle["degree"])
+    space = setup["spaces"][degree]
+    floquet = setup["floquets"][degree]
     base = _assemble_mpc_vector(
-        _incident_top_traction_form(p6_space, setup["mesh_data"], cfg),
+        _incident_top_traction_form(space, setup["mesh_data"], cfg),
         floquet.mpc,
         quadrature_degree=int(bundle["dtn_quadrature_degree"]),
         jit_options=SAME_MESH_JIT_OPTIONS,
@@ -437,6 +439,7 @@ def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
     return rhs, {
         "generation": "dtn_port_modal_physical_rhs",
         "role": "physical_maxwell_rhs",
+        "degree": degree,
         "phase_application": "finalized_floquet_mpc_once",
         "mode_count": int(len(bundle["modes"])),
         "mode_manifest_sha256": str(bundle["mode_sha256"]),

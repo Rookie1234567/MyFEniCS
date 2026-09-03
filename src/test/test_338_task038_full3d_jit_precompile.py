@@ -26,7 +26,10 @@ GROUP_ROLES = {
         )
         * 2,
     ),
-    "incident-rhs": (1, ("incident_top_traction",)),
+    "incident-rhs": (
+        2,
+        ("incident_top_traction_p6", "incident_top_traction_p3"),
+    ),
     "physical-volume-curl": (2, ("physical_volume_curl_action",) * 2),
     "physical-volume-mass": (2, ("physical_volume_mass_action",) * 2),
 }
@@ -238,13 +241,19 @@ def test_incident_rhs_binds_quadrature_before_compile(monkeypatch):
 
     cfg = SimpleNamespace()
     comm = SimpleNamespace(size=1)
-    levels = {"mesh_data": object()}
-    space = object()
+    levels = {
+        "mesh_data": object(),
+        "spaces": {6: object(), 3: object()},
+    }
     rewritten = object()
     seen = []
     compile_calls = []
 
-    monkeypatch.setattr(jit, "_levels", lambda *args, **kwargs: (levels, space))
+    monkeypatch.setattr(
+        jit,
+        "_levels_for_degrees",
+        lambda *args, **kwargs: levels,
+    )
     monkeypatch.setattr(jit, "_mode_facts", lambda _cfg: (80, "mode-sha", 25))
     monkeypatch.setattr(
         dtn,
@@ -265,9 +274,14 @@ def test_incident_rhs_binds_quadrature_before_compile(monkeypatch):
 
     facts = jit._build_incident_rhs(cfg, comm, {"cache": "test"})
 
-    assert seen == [("incident-form", 25)]
-    assert compile_calls == [(rewritten, {"cache": "test"})]
+    assert seen == [("incident-form", 25), ("incident-form", 25)]
+    assert compile_calls == [
+        (rewritten, {"cache": "test"}),
+        (rewritten, {"cache": "test"}),
+    ]
     assert facts["dtn_quadrature_degree"] == 25
+    assert facts["degrees"] == [6, 3]
+    assert facts["compiled_form_count"] == 2
     assert "form_compiler_options" not in Path(jit.__file__).read_text()
 
 

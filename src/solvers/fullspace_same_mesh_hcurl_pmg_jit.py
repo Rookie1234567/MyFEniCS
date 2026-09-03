@@ -225,19 +225,33 @@ def _build_incident_rhs(
         _with_quadrature_degree,
     )
 
-    levels, space = _levels(
-        cfg, comm, 6, include_positive_coefficients=False
+    levels = _levels_for_degrees(
+        cfg, comm, (6, 3), include_positive_coefficients=False
     )
     mode_count, mode_sha, qdegree = _mode_facts(cfg)
-    form = _incident_top_traction_form(space, levels["mesh_data"], cfg)
-    form = _with_quadrature_degree(form, qdegree)
-    _compile_form(form, jit_options)
-    del form, levels
+    forms = []
+    for degree in (6, 3):
+        form = _incident_top_traction_form(
+            levels["spaces"][degree], levels["mesh_data"], cfg
+        )
+        form = _with_quadrature_degree(form, qdegree)
+        _compile_form(form, jit_options)
+        forms.append(
+            {
+                "role": f"incident_top_traction_p{degree}",
+                "degree": degree,
+                "rank": 1,
+                "kind": "linear",
+            }
+        )
+        del form
+    del levels
     return _facts(
         "incident-rhs",
         6,
-        [{"role": "incident_top_traction", "rank": 1, "kind": "linear"}],
+        forms,
         jit_options,
+        degrees=[6, 3],
         mode_count=mode_count,
         mode_manifest_sha256=mode_sha,
         dtn_quadrature_degree=qdegree,
