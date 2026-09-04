@@ -1440,6 +1440,20 @@ def _worker_command(root: Path, record: Path, source_sha: str, input_path: Path,
     ]
 
 
+def _jit_child_command(
+    group: str,
+    cache: Path,
+    record: Path,
+    source_sha: str,
+    input_path: Path,
+) -> list[str]:
+    command = authority_runner._child_command(
+        group, cache, record, source_sha, input_path
+    )
+    command[0] = str(REPO_ROOT / ".venv" / "bin" / "python")
+    return command
+
+
 def _resource_contract(phase: str) -> tuple[int, int, int]:
     if phase == "oracle-a":
         return ORACLE_A_WARNING_BYTES, ORACLE_A_HARD_BYTES, ORACLE_A_HARD_BYTES
@@ -1573,7 +1587,7 @@ def run_parent(root: Path, record_path: Path, source_sha: str, input_path: Path,
                 stem = f"{index:02d}_{group.replace('-', '_')}"
                 child_record = children_dir / f"{stem}.json"
                 result = authority_runner._run_parent_child(
-                    authority_runner._child_command(
+                    _jit_child_command(
                         group, cache, child_record, source_sha, _absolute(input_path)
                     ),
                     process_path,

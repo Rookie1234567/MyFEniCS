@@ -1091,6 +1091,7 @@ def test_parent_oracle_a_blocks_without_jit_children_and_keeps_b_schedule(
 ) -> None:
     current: dict[str, object] = {"root": None, "phase": None}
     calls: list[str] = []
+    jit_commands: list[list[str]] = []
 
     def prepare(root: Path) -> tuple[Path, Path]:
         root = Path(root)
@@ -1111,6 +1112,8 @@ def test_parent_oracle_a_blocks_without_jit_children_and_keeps_b_schedule(
         root = current["root"]
         assert isinstance(root, Path)
         calls.append(stage)
+        if stage.startswith("precompile:"):
+            jit_commands.append(_command)
         stdout.touch()
         stderr.touch()
         if current["phase"] == "oracle-a":
@@ -1218,6 +1221,10 @@ def test_parent_oracle_a_blocks_without_jit_children_and_keeps_b_schedule(
     )
     parent_b = json.loads((root_b / "parent_record.json").read_text())
     assert calls == [f"precompile:{group}" for group in runner.JIT_GROUPS] + ["B"]
+    lexical_python = str(runner.REPO_ROOT / ".venv" / "bin" / "python")
+    assert [command[0] for command in jit_commands] == [
+        lexical_python
+    ] * len(runner.JIT_GROUPS)
     assert (root_b / "children").is_dir()
     assert len(parent_b["children"]) == len(runner.JIT_GROUPS)
 
