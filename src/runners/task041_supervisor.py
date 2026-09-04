@@ -37,6 +37,7 @@ TASK041_MPI_SIZE = 1
 TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
+TASK041_TERMINAL_SAMPLE_GRACE_SECONDS = 0.25
 TASK041_REQUIRED_THREADS = (
     "OMP_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
@@ -240,13 +241,17 @@ def _run_phase(
                 )
                 if record["all_status_readable"] is not True:
                     returncode = process.poll()
+                    if returncode is None:
+                        sleep(TASK041_TERMINAL_SAMPLE_GRACE_SECONDS)
+                        returncode = process.poll()
+                        if returncode is None:
+                            raise Task041SupervisorError(
+                                f"{phase} process-tree sample is not fully readable",
+                                classification="task041_resource_sample_failure",
+                                stage=f"{phase}_resource_sample",
+                            )
                     if returncode is not None:
                         break
-                    raise Task041SupervisorError(
-                        f"{phase} process-tree sample is not fully readable",
-                        classification="task041_resource_sample_failure",
-                        stage=f"{phase}_resource_sample",
-                    )
                 samples.append(record)
                 _append_jsonl(memory_stages_path, record)
                 memory = record["memory_authority_bytes"]

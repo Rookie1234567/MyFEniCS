@@ -111,7 +111,14 @@ class _Samples:
 
 
 def _run_phase(
-    tmp_path: Path, *, sample, clock=None, terminate=None, popen_factory=None
+    tmp_path: Path,
+    *,
+    sample,
+    clock=None,
+    terminate=None,
+    popen_factory=None,
+    sleep=None,
+    process_group_gone=None,
 ):
     (tmp_path / "numerical_output" / "log").mkdir(parents=True)
     return supervisor._run_phase(
@@ -126,7 +133,7 @@ def _run_phase(
         sample_factory=sample,
         terminate_factory=terminate or (lambda process: {"requested": True}),
         monotonic=clock or _Clock(0.0),
-        sleep=lambda _seconds: None,
+        sleep=sleep or (lambda _seconds: None),
         poll_interval=0.01,
         memory_stages_path=tmp_path
         / "numerical_output"
@@ -136,7 +143,7 @@ def _run_phase(
         / "numerical_output"
         / "log"
         / "memory_stage_markers.jsonl",
-        process_group_gone=lambda _pid: True,
+        process_group_gone=process_group_gone or (lambda _pid: True),
     )
 
 
@@ -249,8 +256,9 @@ class _TerminalUnreadableSample:
 
 def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     samples = _TerminalUnreadableSample()
-    popen = _FakePopen(poll_results=[None, None, 0])
+    popen = _FakePopen(poll_results=[None, None, None, 0])
     terminated = []
+    grace_delays = []
 
     def terminate(process):
         terminated.append(process.pid)
@@ -261,6 +269,7 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
         sample=samples,
         terminate=terminate,
         popen_factory=popen,
+        sleep=grace_delays.append,
     )
 
     assert phase["returncode"] == 0
@@ -276,6 +285,35 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     assert phase["process_group_gone"] is True
     assert phase["termination"] is None
     assert terminated == []
+    assert grace_delays[-1] == supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
+
+
+def test_phase_fails_if_unreadable_child_survives_terminal_grace(tmp_path):
+    samples = _TerminalUnreadableSample()
+    popen = _FakePopen(poll_results=[None, None, None, None])
+    terminated = []
+    grace_delays = []
+    gone_states = iter((False, True))
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    with pytest.raises(supervisor.Task041SupervisorError) as error:
+        _run_phase(
+            tmp_path,
+            sample=samples,
+            terminate=terminate,
+            popen_factory=popen,
+            sleep=grace_delays.append,
+            process_group_gone=lambda _pid: next(gone_states),
+        )
+
+    assert error.value.classification == "task041_resource_sample_failure"
+    assert error.value.stage == "producer_resource_sample"
+    assert grace_delays[-1] == supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
+    assert terminated == [popen.processes[0].pid]
 
 
 @pytest.mark.parametrize(
