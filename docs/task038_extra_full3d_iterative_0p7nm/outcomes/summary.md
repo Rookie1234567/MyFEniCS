@@ -1,5 +1,26 @@
 # Task038-extra Review V17 当前收口摘要
 
+## V18 fixed restart64 当前 authority
+
+V18 在同一 p6/h10 checkpoint-1000 上运行唯一一次固定 restart=64 physical Krylov
+qualification。它回答“较长但有界的重启周期能否通过短 screen”，不是 fresh PDE、
+official recovery 或新的 PC。
+
+| 范围 | 当前结果 | 直观含义 |
+|---|---|---|
+| 64-step qualifier | PASS | 资源、输入、生命周期和证据合同通过 |
+| 1024-step screen | V18_RESTART64_NUMERICAL_GATE_FAIL | step512、step1024、r1024/r768 三项 numerical Gate 失败 |
+| long continuation | not_run | screen 失败后按控制流未启动 additional 10240 |
+| resource | PASS | parent peak 1,583,013,888 B < 2,000,000,000 B，swap 0 |
+| larger-restart/Krylov-memory lane | CLOSED | 没有因本次失败自动开启其他 restart 或 Krylov 路线 |
+
+screen 的 measured values 是 step512=0.35604872662297266 > 0.25、step1024=
+0.27299642739429014 > 0.10，以及 r1024/r768=0.8588033360973709 > 0.85。
+这是 evidence-valid 的真实 numerical negative，不是 infrastructure 或 resource
+failure。完整 residual history、counts、cache、lifecycle 和 SHA 见
+[V18 restart64 outcome](restart64_physical_checkpoint_v18.md) 与
+[V18 compact record](records/restart64_physical_checkpoint_v18.json)。
+
 ## V17 M6 当前 authority
 
 | 范围 | 当前结果 | 直观含义 |

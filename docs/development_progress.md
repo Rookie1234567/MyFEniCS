@@ -1,3 +1,34 @@
+# 2026-09-04：Task038 Review V18 fixed restart64 收口
+
+## 当前 V18 authority
+
+V18 对固定 checkpoint-1000 做了唯一一次 restart=64 physical Krylov screen。通俗地说，
+它把每次保留的 Krylov 搜索空间从 V17 GMRES(20) 的 20 个方向扩大到 64 个方向，
+但仍使用同一 physical operator、positive pMG、RHS 和 checkpoint；因此能直接回答
+较长但有界的 restart 是否足以通过短 screen，不能代表新的 PC 或 official PDE。
+
+| 阶段 | 精确对象 | 当前结果 |
+|---|---|---|
+| qualifier | restart64，additional 64 | PASS；parent process-tree peak 1,583,013,888 B，swap 0 |
+| screen | restart64，additional 1024 | V18_RESTART64_NUMERICAL_GATE_FAIL |
+| continuation | screen 后至 additional 10240 | not_run；screen Gate 未通过 |
+| larger-restart/Krylov-memory lane | 其他 restart 或新的 Krylov 方法 | CLOSED |
+| official physics/recovery | E/H、near-field、R/T/A、recovery | not_run |
+
+screen 失败的具体原因是：step512=0.35604872662297266 > 0.25、
+step1024=0.27299642739429014 > 0.10，以及 r1024/r768=0.8588033360973709 >
+0.85。这是有效 raw/checker 支持的 numerical negative，不是 path/cache 或资源
+Gate 失败。parent 的严格 2 GB RSS 线和 swap=0 均满足，但资源通过不等于数学收敛。
+
+完整 residual history、counts、cache、marker、lifecycle 和证据 SHA 见
+[V18 outcome](task038_extra_full3d_iterative_0p7nm/outcomes/restart64_physical_checkpoint_v18.md)
+与
+[V18 compact record](task038_extra_full3d_iterative_0p7nm/outcomes/records/restart64_physical_checkpoint_v18.json)。
+V17 Oracle A/B、Q2 negative 与全部旧证据保持不变；0.7 nm/2 TiB scalable solve、
+official physics 和 recovery 仍未达成。
+
+---
+
 # 2026-09-04：Task038 Review V17 M6 结项
 
 ## 当前 V17 authority

@@ -1,5 +1,29 @@
 # Review V17 M6 文档/证据收口记录（2026-09-04）
 
+## V18 checker/document closeout record
+
+本轮没有重跑 formal、heavy、solver、PDE 或 official recovery。独立 V18 checker 只读
+immutable parent/worker raw，结果为 status=PASS、evidence_valid=true、errors=[]、
+classification=V18_RESTART64_NUMERICAL_GATE_FAIL；resource 与 qualifier 通过，
+screen 的三项 numerical Gate 失败。V18 compact record 与 outcome 绑定 source
+a20008734c8bf0df03890bf35576c697eb0967f0 及 artifact 文件 SHA。
+
+| 检查 | 结果 |
+|---|---|
+| 独立 V18 checker | PASS；输出 checker.json，evidence valid；screen numerical FAIL |
+| V18 raw/compact path + SHA | PASS；parent、worker、checker、marker manifest、timeline 已绑定 |
+| V18 residual/count/cache/lifecycle 对齐 | PASS；compact record 与 worker/checker raw 一致 |
+| qualified V18 focused regression | test_349_task038_full3d_restart64.py：8 passed in 0.57 s；sandbox 首次运行仅触发已知 PMIx socket 隔离，未进入测试 |
+| strict JSON/NaN、raw SHA、核心值 | PASS；重复键/非有限值拒绝，evidence SHA 与 compact 一致 |
+| Markdown links/fence/trailing whitespace | PASS；119 个本地链接，fence/trailing-whitespace 通过 |
+| compileall/Ruff | 本轮无 Python 改动；不运行 |
+| git diff --check | PASS |
+
+targeted checker/docs 检查通过不改变 V18 numerical Gate。V17 的 Oracle A FAIL、
+Oracle B WEAK、Q2 negative 与全部历史 evidence 保持不变。
+
+---
+
 本轮只完成 M6 文档与证据索引，没有重跑 formal、heavy、solver、PDE 或 official
 recovery，也没有修改数值 Python。V17 的数值事实来自既有、不可变的 Oracle A v3
 与 Oracle B v2 raw；B 的旧 `checker.json` 仍保留，`checker_recheck_v2.json` 只是
