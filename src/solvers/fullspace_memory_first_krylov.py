@@ -1,10 +1,12 @@
 """Reusable fixed-memory residual-authority and checkpoint primitives.
 
 The memory-first lane keeps the frozen multiplicative-v1 HX operator outside this
-module.  It supplies only the fixed restart-20 right-GMRES lifecycle, a small
-cycle ledger, a residual-based pair bound, and solution-only checkpoints.  No
-Krylov basis, action vector, or residual vector is retained by a completed
-cycle.
+module.  It supplies fixed-restart right-GMRES/FGMRES cycles, a small cycle
+ledger, a residual-based pair bound, and solution-only checkpoints.  No Krylov
+basis, action vector, or residual vector is retained by a completed cycle.
+The historical ``run_restart20_cycles`` entry point remains fixed at restart
+20; the opt-in ``run_fixed_restart_cycles`` path also supports the reviewed
+restart-64 diagnostic.
 """
 
 from __future__ import annotations
@@ -24,6 +26,7 @@ from petsc4py import PETSc
 CHECKPOINT_SCHEMA = "fixed-memory-krylov.solution-checkpoint.v1"
 GMRES_RESTART = 20
 CYCLE_MAX_IT = 20
+RESTART64 = 64
 CHECKPOINT_INTERVAL = 200
 MANDATORY_FIRST_CHECKPOINT = 20
 SMALL_PAIR_MARGIN = 1.0e-11
@@ -374,7 +377,7 @@ class _PCContext:
         self.apply_count += 1
 
 
-def run_restart20_cycles(
+def run_fixed_restart_cycles(
     rhs: PETSc.Vec,
     apply_action: Callable[[PETSc.Vec], PETSc.Vec],
     apply_preconditioner: Callable[[PETSc.Vec], PETSc.Vec],
@@ -390,35 +393,50 @@ def run_restart20_cycles(
     cycle_observer: Callable[[int, PETSc.Vec, Mapping[str, Any]], None] | None = None,
     stop_on_true_residual: bool = True,
     ksp_type: str = "gmres",
+    restart: int = GMRES_RESTART,
+    cycle_max_it: int | None = None,
 ) -> dict[str, Any]:
-    """Run fixed restart-20 right-GMRES/FGMRES cycles with explicit replacement.
+    """Run a reviewed fixed-restart right-GMRES/FGMRES cycle sequence.
 
-    ``max_it`` is a caller-authorized fixed cap and must be a positive
-    multiple of 20.  The only convergence decision is the explicit residual
-    computed after a cycle; PETSc's reported norm is retained as a fact.
+    ``restart`` is deliberately limited to the historical 20 and the V18
+    diagnostic 64.  ``max_it`` is a caller-authorized absolute cap and must be
+    a positive multiple of that restart.  The only convergence decision is the
+    explicit residual computed after a cycle; PETSc's reported norm is retained
+    as a fact.  Checkpoint cadence uses the solver's absolute iteration counter,
+    preserving the historical restart-20 behavior.
     """
 
     max_it = int(max_it)
+    restart = int(restart)
+    if restart not in (GMRES_RESTART, RESTART64):
+        raise ValueError("restart is fixed to 20 or 64")
+    if cycle_max_it is None:
+        cycle_max_it = restart
+    cycle_max_it = int(cycle_max_it)
+    if cycle_max_it != restart:
+        raise ValueError("cycle_max_it must equal restart")
     if start_iteration is None:
         raise ValueError("start_iteration must be explicit, including for zero initial guess")
     start_iteration = int(start_iteration)
     residual_limit = float(residual_limit)
     if (
         max_it <= 0
-        or max_it % GMRES_RESTART != 0
+        or max_it % restart != 0
         or start_iteration < 0
-        or start_iteration % GMRES_RESTART != 0
+        or start_iteration % restart != 0
         or start_iteration > max_it
     ):
-        raise ValueError("max_it must be a positive multiple of restart=20")
+        raise ValueError(f"max_it must be a positive multiple of restart={restart}")
     checkpoint_interval = int(checkpoint_interval)
-    if checkpoint_interval <= 0 or checkpoint_interval % GMRES_RESTART != 0:
-        raise ValueError("checkpoint_interval must be a positive multiple of restart=20")
+    if checkpoint_interval <= 0 or checkpoint_interval % restart != 0:
+        raise ValueError(
+            f"checkpoint_interval must be a positive multiple of restart={restart}"
+        )
     if first_checkpoint_iteration is not None:
         first_checkpoint_iteration = int(first_checkpoint_iteration)
         if (
             first_checkpoint_iteration <= 0
-            or first_checkpoint_iteration % GMRES_RESTART != 0
+            or first_checkpoint_iteration % restart != 0
             or first_checkpoint_iteration > max_it
         ):
             raise ValueError(
@@ -477,19 +495,19 @@ def run_restart20_cycles(
 
     try:
         while cumulative_iteration < max_it:
-            cycle_index = cumulative_iteration // GMRES_RESTART
+            cycle_index = cumulative_iteration // restart
             cycle_start = cumulative_iteration
             matvec_start = action_context.matvec_count
             pc_start = pc_context.apply_count
             active_ksp = PETSc.KSP().create(comm)
             active_ksp.setOperators(operator)
             active_ksp.setType(ksp_type)
-            active_ksp.setGMRESRestart(GMRES_RESTART)
+            active_ksp.setGMRESRestart(restart)
             active_ksp.setPCSide(PETSc.PC.Side.RIGHT)
             active_ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
             active_ksp.setInitialGuessNonzero(resumed or cycle_index > 0)
             active_ksp.setTolerances(
-                rtol=0.0, atol=0.0, max_it=CYCLE_MAX_IT
+                rtol=0.0, atol=0.0, max_it=cycle_max_it
             )
             pc = active_ksp.getPC()
             pc.setType(PETSc.PC.Type.PYTHON)
@@ -563,8 +581,8 @@ def run_restart20_cycles(
                 "ksp_type": ksp_type,
                 "pc_side": "right",
                 "norm_type": "unpreconditioned",
-                "restart": GMRES_RESTART,
-                "cycle_max_it": CYCLE_MAX_IT,
+                "restart": restart,
+                "cycle_max_it": cycle_max_it,
                 "max_it": max_it,
                 "start_iteration": start_iteration,
                 "residual_limit": residual_limit,
@@ -595,6 +613,45 @@ def run_restart20_cycles(
         operator.destroy()
 
 
+def run_restart20_cycles(
+    rhs: PETSc.Vec,
+    apply_action: Callable[[PETSc.Vec], PETSc.Vec],
+    apply_preconditioner: Callable[[PETSc.Vec], PETSc.Vec],
+    *,
+    max_it: int,
+    residual_limit: float,
+    resource_sample: Callable[[], Mapping[str, Any]],
+    initial_solution: PETSc.Vec | None = None,
+    start_iteration: int | None = None,
+    checkpoint_writer: Callable[[int, PETSc.Vec, float], Mapping[str, Any]] | None = None,
+    first_checkpoint_iteration: int | None = MANDATORY_FIRST_CHECKPOINT,
+    checkpoint_interval: int = CHECKPOINT_INTERVAL,
+    cycle_observer: Callable[[int, PETSc.Vec, Mapping[str, Any]], None] | None = None,
+    stop_on_true_residual: bool = True,
+    ksp_type: str = "gmres",
+) -> dict[str, Any]:
+    """Preserve the historical fixed restart-20 entry point exactly."""
+
+    return run_fixed_restart_cycles(
+        rhs,
+        apply_action,
+        apply_preconditioner,
+        max_it=max_it,
+        residual_limit=residual_limit,
+        resource_sample=resource_sample,
+        initial_solution=initial_solution,
+        start_iteration=start_iteration,
+        checkpoint_writer=checkpoint_writer,
+        first_checkpoint_iteration=first_checkpoint_iteration,
+        checkpoint_interval=checkpoint_interval,
+        cycle_observer=cycle_observer,
+        stop_on_true_residual=stop_on_true_residual,
+        ksp_type=ksp_type,
+        restart=GMRES_RESTART,
+        cycle_max_it=CYCLE_MAX_IT,
+    )
+
+
 def destroy_krylov_result(result: dict[str, Any]) -> None:
     """Destroy only the final solution owned by a Krylov result."""
 
@@ -610,10 +667,12 @@ __all__ = [
     "GMRES_RESTART",
     "PHYSICAL_PAIR_MARGIN",
     "MANDATORY_FIRST_CHECKPOINT",
+    "RESTART64",
     "SMALL_PAIR_MARGIN",
     "destroy_krylov_result",
     "read_solution_checkpoint",
     "residual_pair_bound",
+    "run_fixed_restart_cycles",
     "run_restart20_cycles",
     "write_solution_checkpoint",
 ]
