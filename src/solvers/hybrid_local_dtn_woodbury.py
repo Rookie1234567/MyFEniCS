@@ -668,6 +668,7 @@ class ResearchExactFactorInverse:
             raise ValueError("Exact research factor source has the wrong size")
         if target.getSize() != operator.getSize()[0]:
             raise ValueError("Exact research factor target has the wrong size")
+        target.set(0.0)
         if self._factor_only_storage:
             self.factor_matrix.solve(source, target)
         else:

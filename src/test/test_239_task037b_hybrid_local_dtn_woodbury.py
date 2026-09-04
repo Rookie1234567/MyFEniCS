@@ -746,6 +746,7 @@ def test_research_exact_side_action_matches_explicit_schur_and_releases_factor(
 def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
     compressed_factor_profile,
 ):
+    comm = MPI.COMM_WORLD
     if MPI.COMM_WORLD.size not in (1, 2, 4):
         return
     rows = 4
@@ -772,6 +773,7 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
     action = None
     components_released = False
     source = target = repeat = scaled = scaled_target = reference = None
+    factor_reference = history_source = history_target = None
     try:
         action = ResearchExactSideLuAction(
             F,
@@ -828,6 +830,34 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
         ).copy()
         for begin, end, values in MPI.COMM_WORLD.allgather((first, last, local_rhs)):
             rhs[begin:end] = values
+        factor_reference = action.operator.createVecLeft()
+        factor_reference_values = np.linalg.solve(F_dense, rhs)
+        factor_reference.getArray()[:] = factor_reference_values[first:last]
+
+        target.set(PETSc.ScalarType(13.0 - 7.0j))
+        action.factor.solve(source, target)
+        first_factor_digest = _global_vec_digest(target)
+        assert _relative_error(target, factor_reference) <= 1.0e-13
+
+        history_source = action.operator.createVecRight()
+        history_target = action.operator.createVecLeft()
+        history_source.set(PETSc.ScalarType(-0.35 + 0.45j))
+        history_target.set(PETSc.ScalarType(19.0 + 23.0j))
+        action.apply(history_source, history_target)
+
+        repeat.set(PETSc.ScalarType(-17.0 + 5.0j))
+        action.factor.solve(source, repeat)
+        assert _relative_error(repeat, target) <= 1.0e-13
+        assert _global_vec_digest(repeat) == first_factor_digest
+        repeat_local = np.asarray(
+            repeat.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        repeat_values = np.empty(rows, dtype=np.complex128)
+        for begin, end, values in comm.allgather((first, last, repeat_local)):
+            repeat_values[begin:end] = values
+        factor_residual = F_dense @ repeat_values - rhs
+        assert np.linalg.norm(factor_residual) / np.linalg.norm(rhs) <= 1.0e-13
+
         reference_values = np.linalg.solve(effective_dense, rhs)
         reference.getArray()[:] = reference_values[first:last]
         action.apply(source, target)
@@ -855,7 +885,17 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
         residual = effective_dense @ target_values - rhs
         assert np.linalg.norm(residual) / np.linalg.norm(rhs) <= 1.0e-12
     finally:
-        for vector in (reference, scaled_target, scaled, repeat, target, source):
+        for vector in (
+            reference,
+            factor_reference,
+            history_target,
+            history_source,
+            scaled_target,
+            scaled,
+            repeat,
+            target,
+            source,
+        ):
             if vector is not None:
                 vector.destroy()
         if action is not None:
