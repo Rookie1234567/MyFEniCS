@@ -11,7 +11,7 @@ restart-64 diagnostic.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 import hashlib
 import json
 from pathlib import Path
@@ -59,6 +59,66 @@ def residual_pair_bound(
         raise ValueError("pair-bound measurements must be finite and non-negative")
     margin = PHYSICAL_PAIR_MARGIN if physical else SMALL_PAIR_MARGIN
     return float(sum(values) + margin)
+
+
+def restart_stagnation_facts(
+    initial_true_residual: float,
+    cycles: Sequence[Mapping[str, Any]],
+    *,
+    block_size: int = 4096,
+    ratio_limit: float = 0.95,
+) -> dict[str, Any]:
+    """Measure only complete fixed-size residual blocks.
+
+    The first block starts at the supplied residual and every later block starts
+    at the preceding complete boundary.  Partial blocks never contribute to a
+    stop decision.  This is intentionally a pure ledger helper so a caller can
+    use the same rule as its cycle-stop callback and its raw-record summary.
+    """
+
+    initial = float(initial_true_residual)
+    block_size = int(block_size)
+    ratio_limit = float(ratio_limit)
+    if block_size <= 0 or not np.isfinite(ratio_limit):
+        raise ValueError("stagnation block size and ratio limit must be valid")
+    previous_residual = initial
+    next_boundary = block_size
+    blocks: list[dict[str, Any]] = []
+    for cycle in cycles:
+        end_iteration = cycle.get("end_iteration")
+        residual = cycle.get("explicit_true_residual")
+        if end_iteration != next_boundary:
+            continue
+        residual_value = float(residual) if isinstance(residual, (int, float)) else float("nan")
+        denominator = max(abs(previous_residual), np.finfo(float).tiny)
+        ratio = residual_value / denominator
+        blocks.append(
+            {
+                "start_iteration": int(next_boundary - block_size),
+                "end_iteration": int(next_boundary),
+                "start_residual": float(previous_residual),
+                "end_residual": residual_value,
+                "q": float(ratio),
+                "complete": True,
+                "finite": bool(
+                    np.isfinite(previous_residual)
+                    and np.isfinite(residual_value)
+                    and np.isfinite(ratio)
+                ),
+            }
+        )
+        previous_residual = residual_value
+        next_boundary += block_size
+    triggered = len(blocks) >= 2 and all(
+        block["finite"] and block["q"] >= ratio_limit for block in blocks[-2:]
+    )
+    return {
+        "block_size": block_size,
+        "ratio_limit": ratio_limit,
+        "blocks": blocks,
+        "complete_block_count": len(blocks),
+        "triggered": bool(triggered),
+    }
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -395,6 +455,9 @@ def run_fixed_restart_cycles(
     ksp_type: str = "gmres",
     restart: int = GMRES_RESTART,
     cycle_max_it: int | None = None,
+    stop_after_cycle: Callable[
+        [Mapping[str, Any], Sequence[Mapping[str, Any]]], bool
+    ] | None = None,
 ) -> dict[str, Any]:
     """Run a reviewed fixed-restart right-GMRES/FGMRES cycle sequence.
 
@@ -565,6 +628,9 @@ def run_fixed_restart_cycles(
             if cycle_observer is not None:
                 cycle_observer(cumulative_iteration, solution, cycle)
 
+            if stop_after_cycle is not None and stop_after_cycle(cycle, cycles):
+                break
+
             if stop_on_true_residual and explicit_relative <= residual_limit:
                 break
             if cumulative_iteration >= max_it:
@@ -672,6 +738,7 @@ __all__ = [
     "destroy_krylov_result",
     "read_solution_checkpoint",
     "residual_pair_bound",
+    "restart_stagnation_facts",
     "run_fixed_restart_cycles",
     "run_restart20_cycles",
     "write_solution_checkpoint",
