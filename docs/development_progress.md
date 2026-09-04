@@ -1,4 +1,32 @@
-# 2026-09-03：Task038 Review V16 最终 Q/W 收口
+# 2026-09-04：Task038 Review V17 M6 结项
+
+## 当前 V17 authority
+
+| 阶段 | 精确对象 | 当前结果 |
+|---|---|---|
+| Q1.1 | 同一 h50 mesh 的 p6/p3 physical action identity | PASS；MPI1/MPI2 worst Galerkin `4.3068152418800024e-14`/`3.631160363261226e-13`，均为 curl |
+| Q1.2 | p3/h50 physical inner | PASS；MPI1、MPI2 的 physical/random true residual 均低于 `1e-6` |
+| Q2 | p6/h10 checkpoint correction | `Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL` |
+| Oracle A | exact p3 coarse span | `EXACT_P3_COARSE_SPAN_FAIL`；`rho_ref=20.97573925716883` |
+| Oracle B | disk-backed unrestarted right FGMRES | `UNRESTARTED_KRYLOV_WEAK_SIGNAL`；ratio `0.4006010510326989` |
+| W0 | wave-aware interface rank/capacity preflight | `W0_INTERFACE_RANK_CAPACITY_FAIL` |
+| Q3–Q6/W1–W4 | 后续路线 | locked/not_run |
+| official physics/recovery | E/H、near-field、R/T/A、recovery | not_run |
+
+这里的三个尺度不能混淆：Q1.1 是 h50 action identity，Q1.2 是 p3/h50 inner，Q2
+与 V17 Oracle A/B 则分别是 p6/h10 checkpoint 或机制诊断。Oracle A 的 coarse
+correction 通过 p3 residual 却放大 fine residual；Oracle B 有真实改善但没有 strong
+signal。联合结论为 `NOT_QUALIFIED`，没有授权 fresh 20,000-step PDE、official
+recovery 或新的 PC 实现。Q2 的 `1,560,625,152 B` 与 B 的
+`1,451,954,176 B` 都是窄 workflow 的 measured process-tree facts，不能写成
+full physical solve 或 0.7 nm/2 TiB scalability。
+
+V17 M6 只完成 outcome 文档和 evidence index。后续方向仍是未实现的 Z0 研究边界：
+PML/complex-shifted sweeping + compressed interface responses、energy-minimizing
+H(curl) FETI-DP/BDDC、matrix-free p-h MG + distributed wave coarse solve，以及
+intermediate-wavelength/reduced-geometry pilot hierarchy。它们不是已通过的 PC。
+
+## V16 历史最终 Q/W 收口
 
 ## 当前 authority
 

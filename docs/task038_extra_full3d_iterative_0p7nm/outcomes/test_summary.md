@@ -1,4 +1,23 @@
-# Review V16 最终 focused test record（2026-09-03）
+# Review V17 M6 文档/证据收口记录（2026-09-04）
+
+本轮只完成 M6 文档与证据索引，没有重跑 formal、heavy、solver、PDE 或 official
+recovery，也没有修改数值 Python。V17 的数值事实来自既有、不可变的 Oracle A v3
+与 Oracle B v2 raw；B 的旧 `checker.json` 仍保留，`checker_recheck_v2.json` 只是
+对同一 raw 的 checker-only recheck。
+
+| 检查 | 结果 |
+|---|---|
+| M6 Markdown 文档与路径/链接检查 | PASS；7 个修改文档、127 个本地链接，fence/trailing-whitespace 通过 |
+| JSON strict parse/duplicate-key/NaN | PASS；5 个 authority/checker JSON，重复键和非有限常量均拒绝 |
+| A/B raw evidence `sha256sum` | PASS；11 个已绑定 parent/record/checker/marker/basis 文件与文档 SHA 一致 |
+| `git diff --check` | PASS |
+| compileall/pytest/heavy | 未运行；本轮没有 Python 数值改动，且用户明确禁止 heavy |
+| Ruff | 未运行；本轮没有 Python 改动，未安装工具 |
+
+V17 的 lane 结论是 A=`EXACT_P3_COARSE_SPAN_FAIL`、B=`UNRESTARTED_KRYLOV_WEAK_SIGNAL`，
+不是测试通过后的 numerical Gate 通过。Q1/Q2 formal 也没有在本轮重跑。
+
+## V16 历史最终 focused test record（2026-09-03）
 
 本轮只做最终文档收口所需的 focused regression 与静态证据检查；没有重跑 Q1/Q2 formal、PDE、MPI case，也没有把测试通过解释成 numerical Gate。
 

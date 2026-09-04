@@ -1,6 +1,37 @@
-# Review V16 当前收口摘要
+# Task038-extra Review V17 当前收口摘要
 
-## 当前 authority 总览
+## V17 M6 当前 authority
+
+| 范围 | 当前结果 | 直观含义 |
+|---|---|---|
+| Q1.1 | PASS | 同一 h50 网格上的 p6/p3 physical action identity 通过；不是 full PDE |
+| Q1.2 | PASS | p3/h50 inner 的指定 source 通过 true-residual Gate；不是 official physics |
+| Q2 | `Q2_PHYSICAL_PCOARSE_REFERENCE_NUMERICAL_GATE_FAIL` | p6/h10 checkpoint correction 没有收敛，也没有把 fine residual 压低 |
+| Oracle A | `EXACT_P3_COARSE_SPAN_FAIL` | p3 coarse span 的 p3 residual 通过，但 fine `rho_ref=20.97573925716883` 失败 |
+| Oracle B | `UNRESTARTED_KRYLOV_WEAK_SIGNAL` | unrestarted 500 步优于 GMRES(20)，但 ratio `0.4006010510326989` 不是 strong |
+| W0 | `W0_INTERFACE_RANK_CAPACITY_FAIL` | interface rank/同时容量 authority 未闭合 |
+| Q3–Q6/W1–W4 | locked/not_run | 没有继续实现或运行 |
+| official physics/recovery | not_run | 没有 official E/H、near-field、R/T/A 或 recovery |
+
+Oracle A 与 Oracle B 都是 evidence-valid，但没有 strong signal；联合决策为
+`V17_Q_AND_ORACLE_LANES_CLOSED_BY_REAL_GATES / NOT_QUALIFIED`。因此本轮不做
+20,000-step fresh physical PDE、不做 official recovery、不选择新的 PC family。
+Oracle A 的完整结果见 [exact p3 coarse span](exact_p3_coarse_span_v17.md)，Oracle B 的
+完整曲线与 disk basis 见 [unrestarted Krylov](unrestarted_krylov_v17.md)。
+
+V17 B 的 measured resource anchor 是 parent process-tree RSS
+`1,451,954,176 B`、worker-stage RSS `880,951,296 B`、swap `0`；B raw 未记录 PSS。
+V17 A 的 parent peak 是 `1,487,446,016 B`。这些是各自 workflow 的实测值，不是
+0.7 nm/2 TiB scalable-solve 证明。MPI1 的 `<2,000,000,000 B` 是硬线；用户明确
+MPI2 超过 2 GB 只记录、不因 RSS 单独关闭路线，但 MPI2 仍必须通过数值、finite、
+repeat、input、provenance、swap 和 lifecycle。
+
+V17 M6 只固化文档与 hash-bound evidence 索引；solver、runner、参数和历史 raw
+均未改动。
+
+## Review V16 历史收口摘要（保留）
+
+### V16 历史 authority 总览
 
 | 阶段 | 当前结果 | 通俗含义 |
 |---|---|---|
