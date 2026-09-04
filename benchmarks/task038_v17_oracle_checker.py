@@ -1570,8 +1570,6 @@ def _check_b(context: dict[str, Any], expected_source_sha: str, errors: list[str
         _error(errors, "lifecycle:reference observer action count does not close")
     if reference.get("ksp_destroy_count") != 25:
         _error(errors, "lifecycle:reference KSP destroy count does not close")
-    if reference.get("pc_apply_count") != B_STEPS:
-        _error(errors, "lifecycle:reference PC count does not close")
     if unrestarted.get("residual_packet_action_count") != 25:
         _error(errors, "lifecycle:unrestarted raw action count does not close")
     disk_audit = unrestarted.get("audit")
@@ -1596,8 +1594,15 @@ def _check_b(context: dict[str, Any], expected_source_sha: str, errors: list[str
         _error(errors, "lifecycle:unrestarted explicit action facts do not close")
     if not _is_int(reference.get("matvec_count")) or reference.get("matvec_count") < 0:
         _error(errors, "lifecycle:reference matvec count is invalid")
+    reference_cycle_count = B_STEPS // B_INTERVAL
+    expected_reference_matvec = B_STEPS + reference_cycle_count
+    expected_reference_pc = B_STEPS + reference_cycle_count
+    if reference.get("matvec_count") != expected_reference_matvec:
+        _error(errors, "lifecycle:reference matvec count does not close")
+    if reference.get("pc_apply_count") != expected_reference_pc:
+        _error(errors, "lifecycle:reference PC count does not close")
     cycles = reference.get("cycles")
-    if not isinstance(cycles, list) or len(cycles) != 25:
+    if not isinstance(cycles, list) or len(cycles) != reference_cycle_count:
         _error(errors, "lifecycle:reference must have exactly 25 cycles")
         cycles = []
     cycle_matvec = 0
@@ -1611,15 +1616,15 @@ def _check_b(context: dict[str, Any], expected_source_sha: str, errors: list[str
             or cycle.get("end_iteration") != start + B_INTERVAL
             or cycle.get("iterations") != B_INTERVAL
             or not _is_int(cycle.get("matvec_count"))
-            or cycle.get("matvec_count") < B_INTERVAL
-            or cycle.get("pc_apply_count") != B_INTERVAL
+            or cycle.get("matvec_count") != cycle.get("iterations") + 1
+            or cycle.get("pc_apply_count") != cycle.get("iterations") + 1
             or cycle.get("ksp_destroyed") is not True
         ):
             _error(errors, f"lifecycle:reference cycle {index} boundary/count mismatch")
             continue
         cycle_matvec += cycle["matvec_count"]
         cycle_pc += cycle["pc_apply_count"]
-    if cycle_matvec < B_STEPS or cycle_pc != B_STEPS:
+    if cycle_matvec != expected_reference_matvec or cycle_pc != expected_reference_pc:
         _error(errors, "lifecycle:reference cycle count ledger does not close")
     if reference.get("matvec_count") != cycle_matvec or reference.get("pc_apply_count") != cycle_pc:
         _error(errors, "lifecycle:reference total count ledger does not close")

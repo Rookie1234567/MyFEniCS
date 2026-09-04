@@ -1802,7 +1802,7 @@ def test_checker_oracle_b_thresholds_use_raw_history(
             "end_iteration": 1020 + index * 20,
             "iterations": 20,
             "matvec_count": 21,
-            "pc_apply_count": 20,
+            "pc_apply_count": 21,
             "ksp_destroyed": True,
         }
         for index in range(25)
@@ -1866,7 +1866,7 @@ def test_checker_oracle_b_thresholds_use_raw_history(
             "final_true_residual": 1.0,
             "iterations": 500,
             "matvec_count": 525,
-            "pc_apply_count": 500,
+            "pc_apply_count": 525,
             "explicit_action_count": 26,
             "ksp_destroy_count": 25,
             "residual_packet_action_count": 25,
@@ -1953,6 +1953,26 @@ def test_checker_oracle_b_thresholds_use_raw_history(
                 for error in tamper_errors
             ), tamper_errors
             worker["same_start"][label]["sha256"] = original
+        for bad_count in (20, 22, None):
+            cycle = worker["reference"]["cycles"][0]
+            original = cycle.pop("pc_apply_count")
+            if bad_count is not None:
+                cycle["pc_apply_count"] = bad_count
+            count_errors: list[str] = []
+            checker._check_b(context, checker.SOURCE_SHA, count_errors)
+            assert any(
+                "reference cycle 0 boundary/count mismatch" in error
+                for error in count_errors
+            ), count_errors
+            cycle["pc_apply_count"] = original
+        original = worker["reference"]["pc_apply_count"]
+        worker["reference"]["pc_apply_count"] = 500
+        total_errors: list[str] = []
+        checker._check_b(context, checker.SOURCE_SHA, total_errors)
+        assert any(
+            "reference PC count does not close" in error for error in total_errors
+        ), total_errors
+        worker["reference"]["pc_apply_count"] = original
 
 
 def test_m0_json_and_runner_checker_import_boundaries() -> None:
