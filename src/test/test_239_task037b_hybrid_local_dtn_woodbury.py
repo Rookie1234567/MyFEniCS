@@ -796,6 +796,18 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
             assert diagnostics["direct_factor_count"] == 1
             assert action.factor.diagnostics["exact_factor_count"] == 1
             assert action.factor.diagnostics["compressed_factor_count"] == 0
+            factor_diagnostics = action.factor.diagnostics
+            assert factor_diagnostics["mumps_icntl_14_requested_percent"] == 100
+            assert factor_diagnostics["mumps_icntl_14_observed_percent"] == 100
+            assert factor_diagnostics["mumps_workspace_relaxation_verified"] is True
+            factor_inventory = factor_diagnostics["factor_inventory"]
+            assert factor_inventory["mumps_api_available"] is True
+            assert factor_diagnostics["mumps_infog_1"] >= 0
+            assert isinstance(factor_diagnostics["mumps_infog_2"], int)
+            assert factor_inventory["mumps_raw_infog"]["1"] >= 0
+            assert factor_inventory["mumps_raw_infog"]["2"] == (
+                factor_diagnostics["mumps_infog_2"]
+            )
         else:
             assert diagnostics["operator_identity"] == (
                 "research_mumps_blr_compressed_side_lu_woodbury"

@@ -17,6 +17,7 @@ from .common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
 HYBRID_DTN_WOODBURY_MODE_COUNT = 40
 MUMPS_BLR_V5_H4_PROFILE = "mumps_blr_v5_h4"
 MUMPS_BLR_V5_H4_1E3_PROFILE = "mumps_blr_v5_h4_1e3"
+MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT = 100
 
 __all__ = (
     "HYBRID_DTN_WOODBURY_MODE_COUNT",
@@ -580,11 +581,15 @@ class ResearchExactFactorInverse:
         self._factor_matrix_owned = False
         self._ksp_destroyed = False
         self._lifecycle_callback = lifecycle_callback
+        self._factor_inventory: dict[str, Any] | None = None
+        self._mumps_controls_requested: dict[str, Any] | None = None
         self._mumps_controls_observed: dict[str, Any] | None = None
         self._mumps_controls_verified: bool | None = None
+        self._mumps_infog: dict[str, int | None] = {"1": None, "2": None}
         self.ksp = PETSc.KSP().create(matrix.getComm())
         self.ksp.setOperators(matrix)
         self.ksp.setType("preonly")
+        self.ksp.setErrorIfNotConverged(True)
         pc = self.ksp.getPC()
         pc.setType("lu")
         if factor_solver_type is not None:
@@ -597,21 +602,54 @@ class ResearchExactFactorInverse:
                     "matrix_stats": _petsc_matrix_stats(matrix, assemble=False),
                 },
             )
+        factor_inventory: dict[str, Any] | None = None
         try:
             configured_factor = _configure_v5_blr_factor(pc, compressed_factor_profile)
+            if configured_factor is None and factor_solver_type == "mumps":
+                pc.setFactorSetUpSolverType()
+                configured_factor = pc.getFactorMatrix()
+                configured_factor.setMumpsIcntl(
+                    14, MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
+                )
+                self._mumps_controls_requested = {
+                    "icntl_14": MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
+                }
+            elif configured_factor is not None:
+                self._mumps_controls_requested = expected_mumps_controls
             self.ksp.setUp()
             if configured_factor is not None:
-                self._mumps_controls_observed = {
-                    "icntl_35": configured_factor.getMumpsIcntl(35),
-                    "cntl_7": configured_factor.getMumpsCntl(7),
-                    "icntl_14": configured_factor.getMumpsIcntl(14),
-                }
+                if compressed_factor_profile is None:
+                    self._mumps_controls_observed = {
+                        "icntl_14": configured_factor.getMumpsIcntl(14)
+                    }
+                else:
+                    self._mumps_controls_observed = {
+                        "icntl_35": configured_factor.getMumpsIcntl(35),
+                        "cntl_7": configured_factor.getMumpsCntl(7),
+                        "icntl_14": configured_factor.getMumpsIcntl(14),
+                    }
                 self._mumps_controls_verified = bool(
-                    self._mumps_controls_observed == expected_mumps_controls
+                    self._mumps_controls_observed == self._mumps_controls_requested
                 )
                 if not self._mumps_controls_verified:
                     raise RuntimeError(
-                        "V5 h4 BLR MUMPS controls were not read back exactly"
+                        "MUMPS workspace controls were not read back exactly"
+                    )
+            factor_inventory = _petsc_factor_inventory(self.ksp)
+            self._factor_inventory = factor_inventory
+            if factor_solver_type == "mumps" and factor_inventory.get(
+                "mumps_api_available"
+            ):
+                raw_infog = factor_inventory["mumps_raw_infog"]
+                self._mumps_infog = {
+                    "1": raw_infog.get("1"),
+                    "2": raw_infog.get("2"),
+                }
+                if self._mumps_infog["1"] is not None and self._mumps_infog["1"] < 0:
+                    raise RuntimeError(
+                        "MUMPS exact factorization failed: "
+                        f"INFOG(1)={self._mumps_infog['1']}, "
+                        f"INFOG(2)={self._mumps_infog['2']}"
                     )
         except Exception:
             self.ksp.destroy()
@@ -619,7 +657,6 @@ class ResearchExactFactorInverse:
             raise
         self._destroyed = False
         self._solve_count = 0
-        factor_inventory = _petsc_factor_inventory(self.ksp)
         if self._factor_only_storage:
             self.factor_matrix = pc.getFactorMatrix()
             self.factor_matrix.incRef()
@@ -712,6 +749,26 @@ class ResearchExactFactorInverse:
             "solve_count": int(self._solve_count),
             "factor_destroyed": bool(self._destroyed),
         }
+
+        if not compressed and self.factor_solver_type == "mumps":
+            diagnostics.update(
+                {
+                    "factor_inventory": self._factor_inventory,
+                    "mumps_icntl_14_requested_percent": (
+                        MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT
+                    ),
+                    "mumps_icntl_14_observed_percent": (
+                        None
+                        if self._mumps_controls_observed is None
+                        else self._mumps_controls_observed.get("icntl_14")
+                    ),
+                    "mumps_workspace_relaxation_verified": bool(
+                        self._mumps_controls_verified
+                    ),
+                    "mumps_infog_1": self._mumps_infog["1"],
+                    "mumps_infog_2": self._mumps_infog["2"],
+                }
+            )
 
         if compressed:
             return {
