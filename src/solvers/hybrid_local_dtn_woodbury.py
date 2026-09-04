@@ -17,7 +17,7 @@ from .common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
 HYBRID_DTN_WOODBURY_MODE_COUNT = 40
 MUMPS_BLR_V5_H4_PROFILE = "mumps_blr_v5_h4"
 MUMPS_BLR_V5_H4_1E3_PROFILE = "mumps_blr_v5_h4_1e3"
-MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT = 100
+MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT = 40
 
 __all__ = (
     "HYBRID_DTN_WOODBURY_MODE_COUNT",
@@ -675,6 +675,7 @@ class ResearchExactFactorInverse:
                     "factor_inventory": factor_inventory,
                     "factor_only_storage": self._factor_only_storage,
                     "compressed_factor_profile": compressed_factor_profile,
+                    "mumps_controls_requested": self._mumps_controls_requested,
                     "mumps_controls_observed": self._mumps_controls_observed,
                     "mumps_controls_verified": self._mumps_controls_verified,
                     "ksp_destroyed": self._ksp_destroyed,
