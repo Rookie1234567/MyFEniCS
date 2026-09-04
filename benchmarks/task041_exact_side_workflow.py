@@ -477,6 +477,7 @@ def _producer_argv(
         str(2 * mode_count),
         "--solver-path",
         "augmented",
+        "--retained-subspace-dual-rotation",
         "--selected-mode-packet-producer-dir",
         str(packet_directory),
         "--selected-mode-packet-identity-json",

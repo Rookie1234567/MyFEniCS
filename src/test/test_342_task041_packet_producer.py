@@ -120,6 +120,31 @@ def test_mode_prep_command_is_fresh_inner_mpi1() -> None:
     assert "python" not in command[:3]
 
 
+def test_task041_producer_argv_enables_retained_subspace_dual_rotation() -> None:
+    command = workflow._producer_argv(
+        ROOT / "packet",
+        ROOT / "identity.json",
+        ROOT / "producer.json",
+        "b" * 40,
+        480,
+    )
+    assert command.count("--retained-subspace-dual-rotation") == 1
+    assert command[command.index("--h-nm") + 1] == "4"
+    assert command[command.index("--degree") + 1] == "6"
+    assert command[command.index("--modal-h-nm") + 1] == "4"
+    assert command[command.index("--modal-degree") + 1] == "6"
+    assert command[command.index("--incident-grazing-deg") + 1] == "1"
+    assert command[command.index("--polarization-kind") + 1] == "s"
+    assert command[command.index("--requested-modes") + 1] == "480"
+    assert command[command.index("--candidate-modes") + 1] == "960"
+    assert command[command.index("--internal-propagation-model") + 1] == (
+        "full3d_uniform_cg"
+    )
+    assert command[command.index("--internal-traction-model") + 1] == (
+        "full3d_one_cell_exact_schur"
+    )
+
+
 def test_task039_default_scope_remains_fixed() -> None:
     assert TASK039_V4_SELECTED_MODE_COUNT == 480
     assert task041_selected_mode_scope(480, 1) == "task041_5nm_p6h4_m480_mpi1"
