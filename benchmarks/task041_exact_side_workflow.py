@@ -27,12 +27,17 @@ from petsc4py import PETSc
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.task039_v4_selected_mode_packet import (
     TASK041_SELECTED_MODE_IDENTITY_SCHEMA,
+    TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
     task041_selected_mode_scope,
+    task041_shortwave_selected_mode_scope,
 )
 from src.io.input_validation import (
+    TASK041_SHORTWAVE_MPI_SIZE,
     load_and_resolve,
     simulation_config_3d_from_normalized,
     task041_profile_errors,
+    task041_shortwave_case,
+    task041_shortwave_profile_errors,
 )
 from src.io.resolved_config import resolved_config_sha256
 from src.solvers.hybrid_interface_basis import canonical_mode_keys_sha256
@@ -327,6 +332,61 @@ def _task041_mesh_identity() -> dict[str, Any]:
     }
 
 
+def build_task041_shortwave_packet_identity(
+    specification: Any,
+    normalized: Mapping[str, Any],
+    source_sha: str,
+    resolved_sha: str,
+) -> dict[str, Any]:
+    """Recompute the v2 packet identity for the two approved 3 nm cases."""
+
+    case = task041_shortwave_case(normalized.get("model_id", ""))
+    if case is None:
+        raise Task041ModePrepError(
+            "Task41 shortwave identity requires a validated M800 or M1200 model_id"
+        )
+    profile_failures = tuple(task041_shortwave_profile_errors(normalized))
+    if profile_failures:
+        detail = "; ".join(f"{field}: {message}" for field, message in profile_failures)
+        raise Task041ModePrepError("Task41 shortwave profile rejected: " + detail)
+    if not _valid_sha(source_sha, 40):
+        raise Task041ModePrepError("source_sha must be a lowercase 40-character SHA")
+    if not _valid_sha(resolved_sha, 64):
+        raise Task041ModePrepError("resolved_sha must be a lowercase 64-character SHA")
+    keys, count = _inventory_from_payload(normalized)
+    mode_count = _requested_mode_count(normalized)
+    input_sha = str(specification.input_sha256)
+    physical_sha = str(specification.physical_model_sha256)
+    if not _valid_sha(input_sha, 64) or not _valid_sha(physical_sha, 64):
+        raise Task041ModePrepError("input and physical identities must be lowercase SHA256")
+    mpi_size = int(normalized["execution"]["mpi_size"])
+    identity = {
+        "schema": TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
+        "scope": task041_shortwave_selected_mode_scope(mode_count, mpi_size),
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "resolved_sha256": resolved_sha,
+        "physical_sha256": physical_sha,
+        "wavelength_nm": normalized["incidence"]["wavelength_nm"],
+        "model_id": normalized["model_id"],
+        "run_id": normalized["run_id"],
+        "mesh": {
+            "cell_type": normalized["discretization"]["mesh_cell_type"],
+            "kind": normalized["method"]["propagation_model"],
+            "mesh_target_nm": normalized["discretization"]["mesh_target_nm"],
+            "nedelec_degree": normalized["discretization"]["nedelec_degree"],
+            "spacing_mode": normalized["discretization"]["mesh_spacing_mode"],
+        },
+        "mode_count": mode_count,
+        "mpi_size": mpi_size,
+        "requested_modes_per_direction": mode_count,
+        "dtn_order_policy": normalized["boundary"]["dtn_order_policy"],
+        "external_keys": {"count": count, "sha256": _task041_canonical_mode_keys_sha256(keys)},
+        "cross_section_partition": "input_contiguous_v1",
+    }
+    return identity
+
+
 def build_task041_packet_identity(
     specification: Any,
     normalized: Mapping[str, Any],
@@ -389,6 +449,46 @@ def build_task041_mode_prep_command(
         "mpiexec",
         "-n",
         "1",
+        str(python_executable),
+        "-m",
+        "benchmarks.task041_exact_side_workflow",
+        "--worker",
+        "--phase",
+        TASK041_MODE_PREP_PHASE,
+        "--input",
+        str(input_path),
+        "--run-directory",
+        str(run_directory),
+        "--source-sha",
+        source_sha,
+    ]
+
+
+def build_task041_shortwave_mode_prep_command(
+    python_executable: str | Path,
+    specification: Any,
+    run_directory: str | Path,
+    source_sha: str,
+) -> list[str]:
+    """Build the opt-in MPI8 producer command from one resolved specification."""
+
+    normalized = specification.as_jsonable()
+    profile_failures = tuple(task041_shortwave_profile_errors(normalized))
+    if profile_failures:
+        detail = "; ".join(f"{field}: {message}" for field, message in profile_failures)
+        raise Task041ModePrepError(
+            "Task41 shortwave profile rejected: " + detail
+        )
+    input_path = Path(specification.source_path)
+    mpi_size = normalized["execution"]["mpi_size"]
+    if type(mpi_size) is not int or mpi_size != TASK041_SHORTWAVE_MPI_SIZE:
+        raise Task041ModePrepError(
+            "Task41 shortwave command requires validated MPI8 execution"
+        )
+    return [
+        "mpiexec",
+        "-n",
+        str(mpi_size),
         str(python_executable),
         "-m",
         "benchmarks.task041_exact_side_workflow",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +37,8 @@ from src.io.input_validation import (
     simulation_config_3d_from_normalized,
     task041_material_provenance,
     task041_profile_errors,
+    task041_shortwave_material_provenance,
+    task041_shortwave_profile_errors,
 )
 from src.solvers import hybrid_interface_basis
 
@@ -207,6 +210,59 @@ def test_task041_profile_mutations_fail_closed(
     invalid.write_text(source.replace(needle, replacement), encoding="utf-8")
     with pytest.raises(InputError):
         load_and_resolve(invalid)
+
+
+@pytest.mark.parametrize(
+    ("filename", "model_id", "mode_count"),
+    (
+        (
+            "3nm_p6h3_m800_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h3_m800",
+            800,
+        ),
+        (
+            "3nm_p6h3_m1200_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200",
+            1200,
+        ),
+    ),
+)
+def test_task041_shortwave_official_dat_profiles_validate(
+    filename: str, model_id: str, mode_count: int
+) -> None:
+    spec = load_and_resolve(ROOT / "input/official/task041" / filename)
+    normalized = spec.as_jsonable()
+    assert task041_shortwave_profile_errors(normalized) == []
+    assert spec.identity["model_id"] == model_id
+    assert spec.method["requested_modes_per_direction"] == mode_count
+    assert spec.execution["mpi_size"] == 8
+    assert spec.execution["warning_memory_gib"] == 1433.6
+    assert spec.execution["terminate_memory_gib"] == 1638.4
+    assert spec.execution["timeout_seconds"] == 259200
+    assert spec.boundary["dtn_order_policy"] == "auto_propagating"
+    provenance = task041_shortwave_material_provenance(normalized)
+    assert provenance is not None
+    assert tuple(provenance["n"]) == (0.99735217495, 0.000883207249)
+
+
+@pytest.mark.parametrize(
+    ("section", "key", "value"),
+    (
+        ("method", "requested_modes_per_direction", 799),
+        ("execution", "mpi_size", 1),
+        ("materials", "n_substrate", [0.99735217495, 0.0]),
+    ),
+)
+def test_task041_shortwave_invalid_contract_fields_fail_closed(
+    section: str, key: str, value: object
+) -> None:
+    spec = load_and_resolve(
+        ROOT / "input/official/task041/3nm_p6h3_m800_mpi8.dat"
+    )
+    normalized = deepcopy(spec.as_jsonable())
+    normalized[section][key] = value
+    errors = task041_shortwave_profile_errors(normalized)
+    assert any(path == f"{section}.{key}" for path, _ in errors)
 
 
 def test_task041_synthetic_eight_shard_hash_loader_and_tamper(tmp_path: Path) -> None:

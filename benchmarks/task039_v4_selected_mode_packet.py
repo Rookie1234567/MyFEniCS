@@ -30,6 +30,9 @@ TASK039_V4_SELECTED_MODE_SCOPE = "task039_v4_h4_m480"
 TASK039_V5_H5_SELECTED_MODE_SCOPE = "task039_v5_h5_m480"
 TASK039_V4_SELECTED_MODE_COUNT = 480
 TASK041_SELECTED_MODE_IDENTITY_SCHEMA = "task041.selected_mode_packet.identity.v1"
+TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA = (
+    "task041.selected_mode_packet.identity.v2"
+)
 TASK041_CROSS_SECTION_PARTITION_FIELD = "cross_section_partition"
 TASK041_CROSS_SECTION_PARTITION_POLICY = "input_contiguous_v1"
 _BRANCHES = ("positive", "negative")
@@ -409,7 +412,95 @@ def task041_selected_mode_scope(mode_count: int, mpi_size: int = 1) -> str:
     return f"task041_5nm_p6h4_m{mode_count}_mpi{mpi_size}"
 
 
+def task041_shortwave_selected_mode_scope(mode_count: int, mpi_size: int = 8) -> str:
+    if type(mode_count) is not int or mode_count not in {800, 1200}:
+        raise ValueError("Task41 shortwave selected-mode M must be 800 or 1200")
+    if type(mpi_size) is not int or mpi_size != 8:
+        raise ValueError("Task41 shortwave selected-mode packet requires MPI8")
+    return f"task041_3nm_p6h3_m{mode_count}_mpi{mpi_size}"
+
+
+def _require_task041_shortwave_identity(identity: Mapping[str, Any]) -> None:
+    required = (
+        "schema",
+        "scope",
+        "source_sha",
+        "input_sha256",
+        "resolved_sha256",
+        "physical_sha256",
+        "wavelength_nm",
+        "model_id",
+        "run_id",
+        "mesh",
+        "mode_count",
+        "mpi_size",
+        "requested_modes_per_direction",
+        "dtn_order_policy",
+        "external_keys",
+        TASK041_CROSS_SECTION_PARTITION_FIELD,
+    )
+    missing = [key for key in required if key not in identity]
+    if missing:
+        raise ValueError(f"Task41 shortwave identity missing: {missing}")
+    if identity["schema"] != TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
+        raise ValueError("Task41 shortwave selected-mode identity schema mismatch")
+    if identity["wavelength_nm"] != 3.0:
+        raise ValueError("Task41 shortwave selected-mode wavelength identity mismatch")
+    if identity["dtn_order_policy"] != "auto_propagating":
+        raise ValueError("Task41 shortwave selected-mode DtN policy mismatch")
+    for field, length in (
+        ("source_sha", 40),
+        ("input_sha256", 64),
+        ("resolved_sha256", 64),
+        ("physical_sha256", 64),
+    ):
+        if not _valid_hex_digest(identity[field], length):
+            raise ValueError(f"Task41 shortwave {field} is invalid")
+    if identity["mesh"] != {
+        "cell_type": "hexahedron",
+        "kind": "full3d_uniform_cg",
+        "mesh_target_nm": 3.0,
+        "nedelec_degree": 6,
+        "spacing_mode": "boundary_fitted",
+    }:
+        raise ValueError("Task41 shortwave selected-mode mesh identity mismatch")
+    mode_count = identity["mode_count"]
+    if type(mode_count) is not int or mode_count not in {800, 1200}:
+        raise ValueError("Task41 shortwave selected-mode M must be 800 or 1200")
+    if identity["requested_modes_per_direction"] != mode_count:
+        raise ValueError("Task41 shortwave requested-mode identity mismatch")
+    mpi_size = identity["mpi_size"]
+    if type(mpi_size) is not int or mpi_size != 8:
+        raise ValueError("Task41 shortwave selected-mode packet requires MPI8")
+    expected_scope = task041_shortwave_selected_mode_scope(mode_count, mpi_size)
+    expected_model = f"task041_3nm_exact_side_hybrid_iterative_p6h3_m{mode_count}"
+    expected_run = f"task041_3nm_p6h3_m{mode_count}_mpi{mpi_size}"
+    if identity["scope"] != expected_scope:
+        raise ValueError("Task41 shortwave selected-mode identity scope mismatch")
+    if identity["model_id"] != expected_model:
+        raise ValueError("Task41 shortwave selected-mode identity model mismatch")
+    if identity["run_id"] != expected_run:
+        raise ValueError("Task41 shortwave selected-mode identity run mismatch")
+    external_keys = identity["external_keys"]
+    if not isinstance(external_keys, Mapping) or set(external_keys) != {
+        "count",
+        "sha256",
+    }:
+        raise ValueError("Task41 shortwave external key identity is invalid")
+    if type(external_keys["count"]) is not int or external_keys["count"] <= 0:
+        raise ValueError("Task41 shortwave external key count is invalid")
+    if not _valid_hex_digest(external_keys["sha256"], 64):
+        raise ValueError("Task41 shortwave external key SHA is invalid")
+    if task041_cross_section_partition_enabled(identity) is not True:
+        raise ValueError(
+            "Task41 shortwave cross-section partition must be enabled"
+        )
+
+
 def _require_task041_identity(identity: Mapping[str, Any]) -> None:
+    if identity.get("schema") == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
+        _require_task041_shortwave_identity(identity)
+        return
     required = (
         "schema",
         "scope",
@@ -484,7 +575,11 @@ def _require_task041_identity(identity: Mapping[str, Any]) -> None:
 def _is_task041_identity(identity: Mapping[str, Any] | None) -> bool:
     return bool(
         isinstance(identity, Mapping)
-        and identity.get("schema") == TASK041_SELECTED_MODE_IDENTITY_SCHEMA
+        and identity.get("schema")
+        in {
+            TASK041_SELECTED_MODE_IDENTITY_SCHEMA,
+            TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
+        }
     )
 
 
@@ -651,9 +746,14 @@ def hydrate_task039_v4_selected_mode_packet(
     if _is_task041_identity(packet_identity):
         _require_task041_identity(packet_identity)
         expected_mode_count = int(packet_identity["mode_count"])
-        expected_scope = task041_selected_mode_scope(
-            expected_mode_count, int(packet_identity["mpi_size"])
-        )
+        if packet_identity.get("schema") == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
+            expected_scope = task041_shortwave_selected_mode_scope(
+                expected_mode_count, int(packet_identity["mpi_size"])
+            )
+        else:
+            expected_scope = task041_selected_mode_scope(
+                expected_mode_count, int(packet_identity["mpi_size"])
+            )
     else:
         if packet["scope"] not in {
             TASK039_V4_SELECTED_MODE_SCOPE,

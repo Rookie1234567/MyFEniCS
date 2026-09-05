@@ -277,6 +277,31 @@ TASK041_HARD_MEMORY_GIB = 256.0
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
 
+TASK041_SHORTWAVE_COMPARISON_GROUP = (
+    "task041_3nm_exact_side_hybrid_iterative_p6h3"
+)
+TASK041_SHORTWAVE_N = (0.99735217495, 0.000883207249)
+TASK041_SHORTWAVE_MESH_TARGET_NM = 3.0
+TASK041_SHORTWAVE_MPI_SIZE = 8
+TASK041_SHORTWAVE_WARNING_MEMORY_GIB = 1433.6
+TASK041_SHORTWAVE_HARD_MEMORY_GIB = 1638.4
+TASK041_SHORTWAVE_HARD_MEMORY_BYTES = 1759218604442
+TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES = 1869169767220
+TASK041_SHORTWAVE_TIMEOUT_SECONDS = 259200
+TASK041_SHORTWAVE_CASES = {
+    "task041_3nm_exact_side_hybrid_iterative_p6h3_m800": {
+        "run_id": "task041_3nm_p6h3_m800_mpi8",
+        "mode_count": 800,
+        "input": "input/official/task041/3nm_p6h3_m800_mpi8.dat",
+    },
+    "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200": {
+        "run_id": "task041_3nm_p6h3_m1200_mpi8",
+        "mode_count": 1200,
+        "input": "input/official/task041/3nm_p6h3_m1200_mpi8.dat",
+    },
+}
+TASK041_SHORTWAVE_MODEL_IDS = frozenset(TASK041_SHORTWAVE_CASES)
+
 
 def task039_model_id_matches(
     method: str,
@@ -385,6 +410,17 @@ def _is_task041_profile(config: Mapping[str, Any]) -> bool:
     return str(config.get("model_id", "")) == TASK041_MODEL_ID
 
 
+def _is_task041_shortwave_profile(config: Mapping[str, Any]) -> bool:
+    return str(config.get("model_id", "")) in TASK041_SHORTWAVE_MODEL_IDS
+
+
+def task041_shortwave_case(model_id: str) -> Mapping[str, Any] | None:
+    """Return the one of the two explicitly approved 3 nm case contracts."""
+
+    case = TASK041_SHORTWAVE_CASES.get(str(model_id))
+    return None if case is None else dict(case)
+
+
 def task039_material_provenance(
     config: Mapping[str, Any],
 ) -> dict[str, Any] | None:
@@ -475,6 +511,46 @@ def task041_material_provenance(
         "n": [float(n.real), float(n.imag)],
         "epsilon_r": [float(epsilon.real), float(epsilon.imag)],
         "wavelength_nm": 5.0,
+        "substrate_label": materials.get("substrate_name"),
+        "grating_label": materials.get("grating_name"),
+        "finite": bool(np.isfinite(epsilon.real) and np.isfinite(epsilon.imag)),
+        "imaginary_sign_preserved": True,
+    }
+
+
+def task041_shortwave_material_provenance(
+    config: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Return the explicit 3 nm W material identity for the v2 cases."""
+
+    case = task041_shortwave_case(str(config.get("model_id", "")))
+    materials = config.get("materials")
+    incidence = config.get("incidence")
+    if case is None or not isinstance(materials, Mapping) or not isinstance(
+        incidence, Mapping
+    ):
+        return None
+    if (
+        incidence.get("wavelength_nm") != 3.0
+        or not _same_profile_value(materials.get("n_substrate"), TASK041_SHORTWAVE_N)
+        or not _same_profile_value(materials.get("n_grating"), TASK041_SHORTWAVE_N)
+        or materials.get("substrate_name") != "W / tungsten, 3 nm"
+        or materials.get("grating_name") != "W / tungsten, 3 nm"
+    ):
+        return None
+    n = complex(*TASK041_SHORTWAVE_N)
+    epsilon = n**2
+    return {
+        "source": "Task041 3 nm explicit material input",
+        "authority": "Task041 shortwave v2 contract",
+        "model_id": str(config.get("model_id")),
+        "material_label": "W / tungsten, 3 nm",
+        "material_role": "physical W/tungsten material identity",
+        "delta": 0.00264782505,
+        "beta": 0.000883207249,
+        "n": [float(n.real), float(n.imag)],
+        "epsilon_r": [float(epsilon.real), float(epsilon.imag)],
+        "wavelength_nm": 3.0,
         "substrate_label": materials.get("substrate_name"),
         "grating_label": materials.get("grating_name"),
         "finite": bool(np.isfinite(epsilon.real) and np.isfinite(epsilon.imag)),
@@ -580,6 +656,132 @@ def task041_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         if not _same_profile_value(actual, expected_value):
             path = key if section is None else f"{section}.{key}"
             errors.append((path, f"Task41 finite profile requires {expected_value!r}"))
+    return errors
+
+
+def task041_shortwave_profile_errors(
+    config: Mapping[str, Any],
+) -> list[tuple[str, str]]:
+    """Return errors for only the approved 3 nm p6/h3 M800/M1200 MPI8 cases."""
+
+    model_id = str(config.get("model_id", ""))
+    case = task041_shortwave_case(model_id)
+    if case is None:
+        return [
+            (
+                "model_id",
+                "Task41 shortwave v2 accepts only the explicit 3 nm p6/h3 M800 or M1200 model",
+            )
+        ]
+    expected: dict[str | None, dict[str, Any]] = {
+        None: {
+            "model_id": model_id,
+            "run_id": case["run_id"],
+            "comparison_group": TASK041_SHORTWAVE_COMPARISON_GROUP,
+        },
+        "geometry": {
+            "geometry_kind": "rectangular_block_grating",
+            "period_x_nm": 50.0,
+            "period_y_nm": 25.0,
+            "z_min_nm": -10.0,
+            "z_max_nm": 130.0,
+            "interface_z_nm": 0.0,
+            "air_height_nm": 130.0,
+            "substrate_thickness_nm": 10.0,
+            "grating_width_x_nm": 17.0,
+            "grating_width_y_nm": 25.0,
+            "grating_height_nm": 120.0,
+        },
+        "materials": {
+            "n_air": (1.0, 0.0),
+            "mu_r": (1.0, 0.0),
+            "n_substrate": TASK041_SHORTWAVE_N,
+            "n_grating": TASK041_SHORTWAVE_N,
+            "substrate_name": "W / tungsten, 3 nm",
+            "grating_name": "W / tungsten, 3 nm",
+        },
+        "incidence": {
+            "wavelength_nm": 3.0,
+            "grazing_angle_deg": 1.0,
+            "azimuth_deg": 0.0,
+            "polarization": "s",
+            "electric_amplitude": 1.0,
+        },
+        "discretization": {
+            "nedelec_degree": 6,
+            "visualization_degree": 6,
+            "mesh_target_nm": TASK041_SHORTWAVE_MESH_TARGET_NM,
+            "mesh_cell_type": "hexahedron",
+            "mesh_spacing_mode": "boundary_fitted",
+            "assembly_backend": "assembly_time_static_condensed",
+            "floquet_constraint_mode": "auto",
+        },
+        "boundary": {
+            "use_floquet_x": True,
+            "use_floquet_y": True,
+            "vertical_boundary": "dtn_port",
+            "scattering_background": "layered",
+            "dtn_order_policy": "auto_propagating",
+            "dtn_assembly": "auxiliary",
+            "use_pml": False,
+            "pml_alpha": 5.0,
+        },
+        "method": {
+            "kind": "hybrid_iterative",
+            "bottom_interface_nm": 10.0,
+            "top_interface_nm": 110.0,
+            "requested_modes_per_direction": case["mode_count"],
+            "propagation_model": "full3d_uniform_cg",
+            "traction_model": "full3d_one_cell_exact_schur",
+        },
+        "solver": {
+            "linear_solver": "fgmres",
+            "preconditioner": "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+            "restart": 90,
+            "max_iterations": 4000,
+            "relative_tolerance": 5.0e-9,
+            "absolute_tolerance": 0.0,
+            "initial_guess": "zero",
+            "ilu_level": 0,
+            "ilu_shift": 0.1,
+            "subdomain_count_per_endcap": 1,
+            "overlap_fraction": 0.0,
+            "side_residual_correction_steps": 1,
+        },
+        "execution": {
+            "mpi_size": TASK041_SHORTWAVE_MPI_SIZE,
+            "warning_memory_gib": TASK041_SHORTWAVE_WARNING_MEMORY_GIB,
+            "terminate_memory_gib": TASK041_SHORTWAVE_HARD_MEMORY_GIB,
+            "absolute_terminate_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+            "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+            "require_zero_swap": True,
+        },
+        "output": {
+            "results_root": "results",
+            "unique_output": True,
+            "export_fields": True,
+            "export_diffraction_orders": True,
+            "export_canonical_vectors": True,
+            "export_modal_amplitudes": True,
+            "export_reference_planes": True,
+            "reference_plane_z_nm": (10.0, 30.0, 60.0, 90.0, 110.0),
+            "sample_count_x": 40,
+            "sample_count_y": 20,
+            "diffraction_sample_count_x": 32,
+            "diffraction_sample_count_y": 32,
+            "probe_fraction": 0.75,
+            "diffraction_order_max_m": 40,
+            "diffraction_order_max_n": 40,
+        },
+    }
+    errors: list[tuple[str, str]] = []
+    for section, expected_values in expected.items():
+        values = config if section is None else config.get(section, {})
+        for key, expected_value in expected_values.items():
+            actual = values.get(key) if isinstance(values, Mapping) else None
+            if not _same_profile_value(actual, expected_value):
+                path = key if section is None else f"{section}.{key}"
+                errors.append((path, f"Task41 shortwave v2 requires {expected_value!r}"))
     return errors
 
 
@@ -1423,12 +1625,15 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     execution = config["execution"]
     output = config["output"]
     model_id = str(config.get("model_id", ""))
-    if model_id.startswith("task041_") and model_id != TASK041_MODEL_ID:
+    if model_id.startswith("task041_") and model_id not in {
+        TASK041_MODEL_ID,
+        *TASK041_SHORTWAVE_MODEL_IDS,
+    }:
         raise _error(
             "model_id",
-            "unknown Task41 profile; only the finite Task41 model is supported",
+            "unknown Task41 profile; only the approved finite Task41 models are supported",
         )
-    if model_id == TASK041_MODEL_ID and (
+    if model_id in {TASK041_MODEL_ID, *TASK041_SHORTWAVE_MODEL_IDS} and (
         dimension != 3 or method.get("kind") != "hybrid_iterative"
     ):
         raise _error(
@@ -1777,6 +1982,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             exact_side_h4 = config.get("model_id") in {
                 _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID,
                 TASK041_MODEL_ID,
+                *TASK041_SHORTWAVE_MODEL_IDS,
             }
             allowed_preconditioners = {
                 "hybrid_block_ldu_ilu0_dtn_woodbury",
@@ -1926,6 +2132,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 if _is_task039_candidate(config)
                 else task041_profile_errors(config)
                 if _is_task041_profile(config)
+                else task041_shortwave_profile_errors(config)
+                if _is_task041_shortwave_profile(config)
                 else task038_hybrid_iterative_profile_errors(config)
             )
             if profile_errors:
@@ -2575,7 +2783,11 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
-    if _task039_v3_identity_enabled(config) or _is_task041_profile(config):
+    if (
+        _task039_v3_identity_enabled(config)
+        or _is_task041_profile(config)
+        or _is_task041_shortwave_profile(config)
+    ):
         derived["angle_identity"] = task039_incidence_identity(config)
     if _is_task041_profile(config):
         derived["task041_solver_contract"] = {
@@ -2583,7 +2795,16 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
             "extra_residual_correction_steps": 0,
             "old_fixed_smoother_refinement": False,
         }
+    if _is_task041_shortwave_profile(config):
+        derived["task041_solver_contract"] = {
+            "public_side_apply_passes": 1,
+            "extra_residual_correction_steps": 0,
+            "old_fixed_smoother_refinement": False,
+            "contract": "task041_3nm_p6h3_mpi8_v2",
+        }
     material_provenance = task041_material_provenance(config)
+    if material_provenance is None:
+        material_provenance = task041_shortwave_material_provenance(config)
     if material_provenance is None:
         material_provenance = task039_material_provenance(config)
     if material_provenance is not None:
@@ -2658,6 +2879,17 @@ __all__ = [
     "TASK041_MODEL_ID",
     "TASK041_N",
     "TASK041_RUN_ID",
+    "TASK041_SHORTWAVE_CASES",
+    "TASK041_SHORTWAVE_COMPARISON_GROUP",
+    "TASK041_SHORTWAVE_HARD_MEMORY_BYTES",
+    "TASK041_SHORTWAVE_HARD_MEMORY_GIB",
+    "TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES",
+    "TASK041_SHORTWAVE_MESH_TARGET_NM",
+    "TASK041_SHORTWAVE_MODEL_IDS",
+    "TASK041_SHORTWAVE_MPI_SIZE",
+    "TASK041_SHORTWAVE_N",
+    "TASK041_SHORTWAVE_TIMEOUT_SECONDS",
+    "TASK041_SHORTWAVE_WARNING_MEMORY_GIB",
     "TASK041_TIMEOUT_SECONDS",
     "TASK041_WARNING_MEMORY_GIB",
     "InputError",
@@ -2677,4 +2909,7 @@ __all__ = [
     "task039_v3_3d_profile_errors",
     "task041_material_provenance",
     "task041_profile_errors",
+    "task041_shortwave_case",
+    "task041_shortwave_material_provenance",
+    "task041_shortwave_profile_errors",
 ]

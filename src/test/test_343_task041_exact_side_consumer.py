@@ -12,6 +12,7 @@ import pytest
 
 from benchmarks import run_task037b_hybrid_iterative as iterative_runner
 from benchmarks import task039_v3_7_orchestration as orchestration
+from benchmarks import task039_v4_selected_mode_packet as packet
 from benchmarks import task041_exact_side_workflow as task041
 from src.io.input_validation import load_and_resolve
 from src.io.resolved_config import resolved_config_sha256
@@ -387,6 +388,67 @@ def test_task041_consumer_configuration_and_fresh_command():
     assert "--phase" in command and task041.TASK041_CONSUMER_PHASE in command
     assert "--packet-manifest" in command
     assert "--exact-spool-root" not in command
+    producer_command = task041.build_task041_mode_prep_command(
+        "/repo/.venv/bin/python",
+        task041.TASK041_INPUT,
+        "producer-root",
+        "b" * 40,
+    )
+    assert producer_command[:4] == [
+        "mpiexec",
+        "-n",
+        "1",
+        "/repo/.venv/bin/python",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("filename", "model_id", "mode_count"),
+    (
+        (
+            "3nm_p6h3_m800_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h3_m800",
+            800,
+        ),
+        (
+            "3nm_p6h3_m1200_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200",
+            1200,
+        ),
+    ),
+)
+def test_task041_shortwave_identity_and_mpi8_child_argv(
+    filename: str, model_id: str, mode_count: int
+):
+    input_path = ROOT / "input/official/task041" / filename
+    specification = load_and_resolve(input_path)
+    identity = task041.build_task041_shortwave_packet_identity(
+        specification,
+        specification.as_jsonable(),
+        "a" * 40,
+        resolved_config_sha256(specification),
+    )
+    assert identity["schema"] == "task041.selected_mode_packet.identity.v2"
+    assert identity["model_id"] == model_id
+    assert identity["mode_count"] == mode_count
+    assert identity["requested_modes_per_direction"] == mode_count
+    assert identity["mpi_size"] == 8
+    packet._require_task041_identity(identity)
+    missing_partition = {
+        key: value
+        for key, value in identity.items()
+        if key != "cross_section_partition"
+    }
+    with pytest.raises(ValueError, match="cross_section_partition"):
+        packet._require_task041_identity(missing_partition)
+    command = task041.build_task041_shortwave_mode_prep_command(
+        "/repo/.venv/bin/python",
+        specification,
+        "producer-root",
+        "a" * 40,
+    )
+    assert command[:4] == ["mpiexec", "-n", "8", "/repo/.venv/bin/python"]
+    assert command[command.index("--input") + 1] == str(specification.source_path)
 
 
 def test_fresh_sampled_contract_is_bound_to_current_manifest(tmp_path):
