@@ -120,6 +120,74 @@ def test_mode_prep_command_is_fresh_inner_mpi1() -> None:
     assert "python" not in command[:3]
 
 
+def test_task041_shortwave_mode_prep_uses_mpi8_contract(monkeypatch, tmp_path):
+    input_path = ROOT / "input/official/task041/3nm_p6h3_m800_mpi8.dat"
+    captured = {}
+
+    class Comm:
+        rank = 0
+        size = 8
+
+        @staticmethod
+        def bcast(value, root=0):
+            del root
+            return value
+
+        @staticmethod
+        def Barrier():
+            return None
+
+    def fake_producer(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        packet_directory = Path(
+            argv[argv.index("--selected-mode-packet-producer-dir") + 1]
+        )
+        packet_directory.mkdir(parents=True)
+        (packet_directory / "manifest.json").write_text("{}", encoding="utf-8")
+        return {
+            "task041_mode_prep": True,
+            "local_systems": "not_run",
+            "coupling": "not_run",
+            "factor": "not_run",
+            "solve": "not_run",
+            "recovery": "not_run",
+        }
+
+    monkeypatch.setattr(run_task032_phase6_augmented, "main", fake_producer)
+    monkeypatch.setattr(workflow, "_environment_snapshot", lambda: {"marker": "1"})
+    monkeypatch.setattr(workflow, "_memavailable_bytes", lambda: 2**50)
+    monkeypatch.setattr(
+        workflow,
+        "_resource_snapshot",
+        lambda: {
+            "memory_authority_bytes": 1,
+            "job_no_swap": True,
+            "process_tree": {"rss_bytes": 1, "swap_bytes": 0},
+        },
+    )
+    monkeypatch.setattr(
+        workflow, "simulation_config_3d_from_normalized", lambda payload: SimpleNamespace()
+    )
+    result = workflow.run_task041_mode_prep(
+        input_path=input_path,
+        run_directory=tmp_path / "mode-prep",
+        source_sha="a" * 40,
+        comm=Comm(),
+    )
+
+    identity = result["identity"]
+    assert identity["schema"] == "task041.selected_mode_packet.identity.v2"
+    assert identity["mode_count"] == 800
+    assert identity["mpi_size"] == 8
+    assert identity["mesh"]["mesh_target_nm"] == 3.0
+    assert identity["mesh"]["nedelec_degree"] == 6
+    assert result["profile"] == workflow.TASK041_SHORTWAVE_MODE_PREP_PROFILE
+    assert captured["argv"][captured["argv"].index("--h-nm") + 1] == "3"
+    assert captured["argv"][captured["argv"].index("--requested-modes") + 1] == "800"
+    assert (tmp_path / "mode-prep" / "mode_prep_summary.json").is_file()
+
+
 def test_task041_producer_argv_enables_retained_subspace_dual_rotation() -> None:
     command = workflow._producer_argv(
         ROOT / "packet",

@@ -32,7 +32,12 @@ from benchmarks.task039_v4_selected_mode_packet import (
     task041_shortwave_selected_mode_scope,
 )
 from src.io.input_validation import (
+    TASK041_MODEL_ID,
+    TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+    TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES,
     TASK041_SHORTWAVE_MPI_SIZE,
+    TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+    TASK041_SHORTWAVE_WARNING_MEMORY_GIB,
     load_and_resolve,
     simulation_config_3d_from_normalized,
     task041_profile_errors,
@@ -47,6 +52,7 @@ TASK041_MODE_PREP_PROFILE = "task041_5nm_exact_side_hybrid_iterative"
 TASK041_MODE_PREP_PHASE = "mode-prep"
 TASK041_CONSUMER_SCHEMA = "task041.exact_side.consumer.v1"
 TASK041_CONSUMER_PROFILE = "task041_5nm_exact_side_hybrid_iterative_consumer"
+TASK041_SHORTWAVE_MODE_PREP_PROFILE = "task041_3nm_exact_side_hybrid_iterative"
 TASK041_SHORTWAVE_CONSUMER_SCHEMA = "task041.exact_side.consumer.v2"
 TASK041_SHORTWAVE_CONSUMER_PROFILE = (
     "task041_3nm_exact_side_hybrid_iterative_consumer"
@@ -326,6 +332,70 @@ def _requested_mode_count(normalized: Mapping[str, Any]) -> int:
     return value
 
 
+def _task041_legacy_limits() -> dict[str, int]:
+    return {
+        "warning_memory_bytes": TASK041_WARNING_MEMORY_BYTES,
+        "hard_memory_bytes": TASK041_HARD_MEMORY_BYTES,
+        "min_memavailable_bytes": TASK041_MIN_MEMAVAILABLE_BYTES,
+        "timeout_seconds": TASK041_TIMEOUT_SECONDS,
+    }
+
+
+def _task041_case_contract(
+    normalized: Mapping[str, Any], comm_size: int
+) -> dict[str, Any]:
+    """Validate and return the small control-plane contract for one case."""
+
+    model_id = str(normalized.get("model_id", ""))
+    if model_id == TASK041_MODEL_ID:
+        failures = tuple(task041_profile_errors(normalized))
+        if failures:
+            detail = "; ".join(f"{field}: {message}" for field, message in failures)
+            raise Task041ModePrepError("Task041 profile rejected: " + detail)
+        if comm_size != 1:
+            raise Task041ModePrepError("Task041 legacy case requires MPI1")
+        return {
+            "shortwave": False,
+            "mpi_size": 1,
+            "mode_count": 480,
+            "mesh_target_nm": 4.0,
+            "degree": 6,
+            "mode_prep_profile": TASK041_MODE_PREP_PROFILE,
+            "consumer_schema": TASK041_CONSUMER_SCHEMA,
+            "consumer_profile": TASK041_CONSUMER_PROFILE,
+            "limits": _task041_legacy_limits(),
+        }
+
+    failures = tuple(task041_shortwave_profile_errors(normalized))
+    if failures:
+        detail = "; ".join(f"{field}: {message}" for field, message in failures)
+        raise Task041ModePrepError("Task41 shortwave profile rejected: " + detail)
+    case = task041_shortwave_case(model_id)
+    if case is None:
+        raise Task041ModePrepError("Task041 case contract rejects this model_id")
+    if comm_size != TASK041_SHORTWAVE_MPI_SIZE:
+        raise Task041ModePrepError("Task41 shortwave case requires MPI8")
+    discretization = normalized["discretization"]
+    return {
+        "shortwave": True,
+        "mpi_size": TASK041_SHORTWAVE_MPI_SIZE,
+        "mode_count": int(case["mode_count"]),
+        "mesh_target_nm": discretization["mesh_target_nm"],
+        "degree": discretization["nedelec_degree"],
+        "mode_prep_profile": TASK041_SHORTWAVE_MODE_PREP_PROFILE,
+        "consumer_schema": TASK041_SHORTWAVE_CONSUMER_SCHEMA,
+        "consumer_profile": TASK041_SHORTWAVE_CONSUMER_PROFILE,
+        "limits": {
+            "warning_memory_bytes": int(
+                TASK041_SHORTWAVE_WARNING_MEMORY_GIB * 2**30
+            ),
+            "hard_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+            "min_memavailable_bytes": TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES,
+            "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+        },
+    }
+
+
 def _task041_mesh_identity() -> dict[str, Any]:
     return {
         "cell_type": "hexahedron",
@@ -524,15 +594,20 @@ def _memavailable_bytes() -> int:
     raise Task041ModePrepError("/proc/meminfo has no MemAvailable")
 
 
-def _check_resource(sample: Mapping[str, Any], started: float) -> None:
+def _check_resource(
+    sample: Mapping[str, Any],
+    started: float,
+    limits: Mapping[str, Any] | None = None,
+) -> None:
+    active_limits = _task041_legacy_limits() if limits is None else limits
     memory_authority = sample.get("memory_authority_bytes")
     if not isinstance(memory_authority, (int, float, np.integer, np.floating)):
         raise Task041ModePrepError("resource sample lacks memory_authority_bytes")
-    if float(memory_authority) >= TASK041_HARD_MEMORY_BYTES:
+    if float(memory_authority) >= active_limits["hard_memory_bytes"]:
         raise Task041ModePrepError("Task041 hard RSS limit reached")
     if sample.get("job_no_swap") is not True:
         raise Task041ModePrepError("Task041 swap limit reached")
-    if time.monotonic() - started >= TASK041_TIMEOUT_SECONDS:
+    if time.monotonic() - started >= active_limits["timeout_seconds"]:
         raise Task041ModePrepError("Task041 mode-prep timeout reached")
 
 
@@ -564,6 +639,41 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     )
 
 
+def _collective_fresh_root(run_directory: str | Path, comm: Any) -> Path:
+    root = Path(run_directory).resolve()
+    outcome: dict[str, Any] | None = None
+    if comm.rank == 0:
+        try:
+            if root.exists():
+                raise FileExistsError(f"Task041 run directory already exists: {root}")
+            root.mkdir(parents=True)
+            outcome = {"ok": True}
+        except FileExistsError as exc:
+            outcome = {
+                "ok": False,
+                "type": "FileExistsError",
+                "message": str(exc),
+            }
+        except Exception as exc:  # noqa: BLE001 - broadcast root creation failure
+            outcome = {"ok": False, "type": type(exc).__name__, "message": str(exc)}
+    outcome = comm.bcast(outcome, root=0)
+    comm.Barrier()
+    if outcome.get("ok") is True:
+        return root
+    if outcome.get("type") == "FileExistsError":
+        raise FileExistsError(str(outcome.get("message", root)))
+    raise Task041ModePrepError(
+        "Task041 run directory creation failed: "
+        + str(outcome.get("message", "unknown error"))
+    )
+
+
+def _write_rank0_json(path: Path, payload: Mapping[str, Any], comm: Any) -> None:
+    if comm.rank == 0:
+        _write_json(path, payload)
+    comm.Barrier()
+
+
 def _write_marker(
     root: Path,
     started: float,
@@ -574,21 +684,18 @@ def _write_marker(
     comm: Any,
     schema: str = TASK041_MODE_PREP_SCHEMA,
     marker_sequence: Sequence[str] = TASK041_MARKER_SEQUENCE,
+    limits: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
+    active_limits = _task041_legacy_limits() if limits is None else limits
     resource = _resource_snapshot()
-    _check_resource(resource, started)
+    _check_resource(resource, started, active_limits)
     marker = {
         "schema": schema,
         "stage": stage,
         "sequence_index": marker_sequence.index(stage),
         "wall_seconds": time.monotonic() - started,
         "environment": _jsonable(environment),
-        "limits": {
-            "warning_memory_bytes": TASK041_WARNING_MEMORY_BYTES,
-            "hard_memory_bytes": TASK041_HARD_MEMORY_BYTES,
-            "min_memavailable_bytes": TASK041_MIN_MEMAVAILABLE_BYTES,
-            "timeout_seconds": TASK041_TIMEOUT_SECONDS,
-        },
+        "limits": _jsonable(active_limits),
         "resource": resource,
         "detail": _jsonable(detail),
     }
@@ -657,18 +764,16 @@ def run_task041_mode_prep(
 ) -> dict[str, Any]:
     """Run only the Task041 selected-mode producer and controlled stop."""
 
-    if comm.size != 1:
-        raise Task041ModePrepError("Task041 mode-prep requires MPI.COMM_WORLD size 1")
     if not _valid_sha(source_sha, 40):
         raise Task041ModePrepError("source_sha must be a lowercase 40-character SHA")
-    root = Path(run_directory).resolve()
-    if root.exists():
-        raise FileExistsError(f"Task041 run directory already exists: {root}")
-    root.mkdir(parents=True)
+    specification = load_and_resolve(input_path)
+    normalized = specification.as_jsonable()
+    contract = _task041_case_contract(normalized, comm.size)
+    root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
     result: dict[str, Any] = {
         "schema": TASK041_MODE_PREP_SCHEMA,
-        "profile": TASK041_MODE_PREP_PROFILE,
+        "profile": contract["mode_prep_profile"],
         "phase": TASK041_MODE_PREP_PHASE,
         "input": str(Path(input_path).resolve()),
         "run_directory": str(root),
@@ -676,12 +781,7 @@ def run_task041_mode_prep(
         "status": "IMPLEMENTATION_FAILURE",
         "classification": "IMPLEMENTATION_FAILURE",
         "official_rta": {"status": "not_run"},
-        "limits": {
-            "warning_memory_bytes": TASK041_WARNING_MEMORY_BYTES,
-            "hard_memory_bytes": TASK041_HARD_MEMORY_BYTES,
-            "min_memavailable_bytes": TASK041_MIN_MEMAVAILABLE_BYTES,
-            "timeout_seconds": TASK041_TIMEOUT_SECONDS,
-        },
+        "limits": contract["limits"],
         "producer_scope": {
             "local_systems": "not_run",
             "coupling": "not_run",
@@ -716,26 +816,28 @@ def run_task041_mode_prep(
             environment=environment,
             detail={"mpi_size": comm.size, "input": str(input_path)},
             comm=comm,
+            limits=contract["limits"],
         )
         available = _memavailable_bytes()
-        if available < TASK041_MIN_MEMAVAILABLE_BYTES:
+        if available < contract["limits"]["min_memavailable_bytes"]:
             raise Task041ModePrepError("MemAvailable is below the Task041 preflight floor")
         result["memavailable_bytes"] = available
-        specification = load_and_resolve(input_path)
-        normalized = specification.as_jsonable()
         resolved_sha = resolved_config_sha256(specification)
         cfg = simulation_config_3d_from_normalized(normalized)
-        identity = build_task041_packet_identity(
-            specification, normalized, source_sha, resolved_sha
+        identity_builder = (
+            build_task041_shortwave_packet_identity
+            if contract["shortwave"]
+            else build_task041_packet_identity
         )
-        recomputed_identity = build_task041_packet_identity(
+        identity = identity_builder(specification, normalized, source_sha, resolved_sha)
+        recomputed_identity = identity_builder(
             specification, normalized, source_sha, resolved_sha
         )
         if identity != recomputed_identity:
             raise Task041ModePrepError("Task041 identity recomputation mismatch")
         result["identity"] = identity
         identity_path = root / "packet_identity.json"
-        _write_json(identity_path, identity)
+        _write_rank0_json(identity_path, identity, comm)
         mode_count = identity["mode_count"]
         packet_directory = root / "selected_mode_packet"
         producer_output = root / "producer_summary.json"
@@ -746,17 +848,27 @@ def run_task041_mode_prep(
             environment=environment,
             detail={"qep": "selection_only", "mode_count": mode_count},
             comm=comm,
+            limits=contract["limits"],
         )
         from benchmarks.run_task032_phase6_augmented import main as producer_main
 
-        producer_record = producer_main(
-            _producer_argv(
-                packet_directory,
-                identity_path,
-                producer_output,
-                source_sha,
-                mode_count,
+        producer_args = _producer_argv(
+            packet_directory,
+            identity_path,
+            producer_output,
+            source_sha,
+            mode_count,
+            **(
+                {
+                    "mesh_target_nm": contract["mesh_target_nm"],
+                    "degree": contract["degree"],
+                }
+                if contract["shortwave"]
+                else {}
             ),
+        )
+        producer_record = producer_main(
+            producer_args,
             config_override=cfg,
             canonical_export_prefix="task041_mode_prep",
             task039_stage_marker_path=root / "producer_markers.jsonl",
@@ -787,6 +899,7 @@ def run_task041_mode_prep(
             environment=environment,
             detail={"producer_status": producer_record.get("status")},
             comm=comm,
+            limits=contract["limits"],
         )
         _write_marker(
             root,
@@ -795,6 +908,7 @@ def run_task041_mode_prep(
             environment=environment,
             detail=result["packet"],
             comm=comm,
+            limits=contract["limits"],
         )
         result["status"] = "controlled_stop_packet_written"
         result["classification"] = "TASK041_MODE_PREP_PACKET_READY"
@@ -822,6 +936,7 @@ def run_task041_mode_prep(
                     "recovery": "not_created",
                 },
                 comm=comm,
+                limits=contract["limits"],
             )
             result["cleanup"] = {"producer_scope_released": True}
         except Exception as cleanup_error:  # noqa: BLE001 - preserve cleanup evidence
@@ -840,7 +955,7 @@ def run_task041_mode_prep(
                     "type": type(cleanup_error).__name__,
                     "message": str(cleanup_error),
                 }
-        _write_json(root / "mode_prep_summary.json", result)
+        _write_rank0_json(root / "mode_prep_summary.json", result, comm)
     if error is not None:
         raise error
     return result
@@ -971,6 +1086,21 @@ def task041_consumer_iterative_config() -> Any:
     )
 
 
+def task041_shortwave_consumer_iterative_config() -> Any:
+    """Return the effective native MPI8 shortwave GMRES configuration."""
+
+    from src.solvers.hybrid_fem_modal_block_ldu import HybridBlockLduIterativeConfig
+
+    return HybridBlockLduIterativeConfig(
+        ksp_type="gmres",
+        restart=10,
+        max_it=4000,
+        threshold=5.0e-9,
+        initial_guess="zero",
+        fixed_preconditioner=True,
+    )
+
+
 def _task041_consumer_profile() -> Any:
     from src.runners.task039_hybrid_iterative import (
         make_task039_hybrid_iterative_profile,
@@ -1011,6 +1141,7 @@ def _task041_shortwave_consumer_profile(specification: Any) -> Any:
         mpi_size=execution["mpi_size"],
         h_nm=discretization["mesh_target_nm"],
         modal_h_nm=discretization["mesh_target_nm"],
+        restart=10,
     )
 
 
@@ -1195,11 +1326,10 @@ def _task041_consumer_authority_gate(
         == recomputed_identity.get("physical_sha256"),
         "model_id": authority.get("model_id") == recomputed_identity.get("model_id"),
         "mpi_size": type(authority.get("mpi_size")) is int
-        and authority.get("mpi_size") == 1
-        and recomputed_identity.get("mpi_size") == 1,
+        and authority.get("mpi_size") == recomputed_identity.get("mpi_size"),
         "requested_modes": type(authority.get("requested_modes")) is int
-        and authority.get("requested_modes") == 480
-        and recomputed_identity.get("mode_count") == 480,
+        and authority.get("requested_modes")
+        == recomputed_identity.get("mode_count"),
     }
     authority_identity["pass"] = all(authority_identity.values())
     solve = formal_result.get("solve")
@@ -1432,20 +1562,18 @@ def run_task041_consumer(
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through the reviewed exact-side path."""
 
-    if comm.size != 1:
-        raise Task041ModePrepError("Task041 consumer requires MPI.COMM_WORLD size 1")
     if not _valid_sha(source_sha, 40):
         raise Task041ModePrepError("source_sha must be a lowercase 40-character SHA")
     if not _valid_sha(packet_manifest_sha256, 64):
         raise Task041ModePrepError("packet manifest SHA must be a lowercase SHA256")
-    root = Path(run_directory).resolve()
-    if root.exists():
-        raise FileExistsError(f"Task041 run directory already exists: {root}")
-    root.mkdir(parents=True)
+    specification = load_and_resolve(input_path)
+    normalized = specification.as_jsonable()
+    contract = _task041_case_contract(normalized, comm.size)
+    root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
     result: dict[str, Any] = {
-        "schema": TASK041_CONSUMER_SCHEMA,
-        "profile": TASK041_CONSUMER_PROFILE,
+        "schema": contract["consumer_schema"],
+        "profile": contract["consumer_profile"],
         "phase": TASK041_CONSUMER_PHASE,
         "input": str(Path(input_path).resolve()),
         "run_directory": str(root),
@@ -1453,12 +1581,7 @@ def run_task041_consumer(
         "status": "IMPLEMENTATION_FAILURE",
         "classification": "IMPLEMENTATION_FAILURE",
         "official_rta": {"status": "not_run"},
-        "limits": {
-            "warning_memory_bytes": TASK041_WARNING_MEMORY_BYTES,
-            "hard_memory_bytes": TASK041_HARD_MEMORY_BYTES,
-            "min_memavailable_bytes": TASK041_MIN_MEMAVAILABLE_BYTES,
-            "timeout_seconds": TASK041_TIMEOUT_SECONDS,
-        },
+        "limits": contract["limits"],
         "consumer_scope": {
             "local_systems": "not_run",
             "coupling": "not_run",
@@ -1500,8 +1623,9 @@ def run_task041_consumer(
             environment=environment,
             detail={} if detail is None else detail,
             comm=comm,
-            schema=TASK041_CONSUMER_SCHEMA,
+            schema=contract["consumer_schema"],
             marker_sequence=TASK041_CONSUMER_MARKER_SEQUENCE,
+            limits=contract["limits"],
         )
         marker_records.append(marker)
 
@@ -1528,7 +1652,7 @@ def run_task041_consumer(
             emit("solve_complete", {"solve": solve_report})
             emit("true_residual_complete", {"solve": solve_report})
             snapshot_path = root / "minimal_recovery_packet.json"
-            _write_json(
+            _write_rank0_json(
                 snapshot_path,
                 {
                     "schema": "task041.exact_side.minimal_recovery_packet.v1",
@@ -1540,6 +1664,7 @@ def run_task041_consumer(
                     "json_contains_solution": False,
                     "solve_report_status": solve_report.get("status"),
                 },
+                comm,
             )
             emit(
                 "minimal_recovery_packet_saved",
@@ -1566,30 +1691,30 @@ def run_task041_consumer(
         result["environment"] = environment
         emit("preflight_begin", {"mpi_size": comm.size})
         available = _memavailable_bytes()
-        if available < TASK041_MIN_MEMAVAILABLE_BYTES:
+        if available < contract["limits"]["min_memavailable_bytes"]:
             raise Task041ModePrepError("MemAvailable is below the Task041 preflight floor")
         result["memavailable_bytes"] = available
-        specification = load_and_resolve(input_path)
-        normalized = specification.as_jsonable()
-        profile_failures = tuple(task041_profile_errors(normalized))
-        if profile_failures:
-            raise Task041ModePrepError(
-                "Task041 profile rejected: "
-                + "; ".join(f"{field}: {message}" for field, message in profile_failures)
-            )
         resolved_sha = resolved_config_sha256(specification)
         identity_path = Path(packet_identity).resolve()
         manifest_path = Path(packet_manifest).resolve()
         disk_identity = json.loads(identity_path.read_text(encoding="utf-8"))
         if not isinstance(disk_identity, Mapping):
             raise Task041ModePrepError("Task041 packet identity is not a mapping")
-        recomputed_identity = build_task041_packet_identity(
+        identity_builder = (
+            build_task041_shortwave_packet_identity
+            if contract["shortwave"]
+            else build_task041_packet_identity
+        )
+        recomputed_identity = identity_builder(
             specification, normalized, source_sha, resolved_sha
         )
         if dict(disk_identity) != recomputed_identity:
             raise Task041ModePrepError("Task041 consumer packet identity recomputation mismatch")
-        if recomputed_identity["mode_count"] != 480 or recomputed_identity["mpi_size"] != 1:
-            raise Task041ModePrepError("Task041 consumer accepts only M480/MPI1")
+        if (
+            recomputed_identity["mode_count"] != contract["mode_count"]
+            or recomputed_identity["mpi_size"] != contract["mpi_size"]
+        ):
+            raise Task041ModePrepError("Task041 consumer identity does not match case contract")
         emit("input_validated", {"identity": recomputed_identity})
         emit("packet_identity_validated", {"path": str(identity_path)})
         sampled_contract = _task041_consumer_sampled_column_contract(
@@ -1605,23 +1730,43 @@ def run_task041_consumer(
         )
         cfg = simulation_config_3d_from_normalized(normalized)
         modal_cfg = deepcopy(cfg)
-        profile = _task041_consumer_profile()
-        iterative_config = task041_consumer_iterative_config()
+        profile = (
+            _task041_shortwave_consumer_profile(specification)
+            if contract["shortwave"]
+            else _task041_consumer_profile()
+        )
+        iterative_config = (
+            task041_shortwave_consumer_iterative_config()
+            if contract["shortwave"]
+            else task041_consumer_iterative_config()
+        )
         producer = {
             "producer_source_sha": source_sha,
             "consumer_source_sha": source_sha,
             "physical_model_sha256": str(specification.physical_model_sha256),
             "consumer_model_id": recomputed_identity["model_id"],
-            "requested_modes": 480,
-            "mpi_size": 1,
+            "requested_modes": recomputed_identity["mode_count"],
+            "mpi_size": recomputed_identity["mpi_size"],
             "task041_scope": recomputed_identity["scope"],
-            "qualification_scope": "task041_5nm_p6h4_m480_mpi1",
+            "qualification_scope": recomputed_identity["scope"],
             "qualification_method": "task041_exact_side_full_formal",
             "canonical_authority": True,
         }
         result["identity"] = recomputed_identity
         result["profile_config"] = _jsonable(asdict(profile))
         result["outer_config"] = _jsonable(asdict(iterative_config))
+        if contract["shortwave"]:
+            result["solver_provenance"] = {
+                "input_declared": {
+                    "ksp_type": normalized["solver"]["linear_solver"],
+                    "restart": normalized["solver"]["restart"],
+                },
+                "effective": {
+                    "ksp_type": iterative_config.ksp_type,
+                    "restart": iterative_config.restart,
+                },
+                "source": "reused passed 5nm native MPI8 V7 actual solver",
+            }
         result["packet"] = {
             "manifest": str(manifest_path),
             "manifest_sha256": packet_manifest_sha256,
@@ -1709,7 +1854,7 @@ def run_task041_consumer(
                     if _memory_authority(marker.get("resource", {})) is not None
                 ]
                 after_sample = _resource_snapshot()
-                _check_resource(after_sample, started)
+                _check_resource(after_sample, started, contract["limits"])
                 after_rss = _process_tree_rss(after_sample)
                 after_memory_authority = _memory_authority(after_sample)
                 before_rss = max(before_rss_values, default=None)
@@ -1761,7 +1906,11 @@ def run_task041_consumer(
             layout,
             comm=comm,
             marker_callback=callback,
-            qualification_scope="task039_v4_p6h4_m480_1deg_s",
+            qualification_scope=(
+                recomputed_identity["scope"]
+                if contract["shortwave"]
+                else "task039_v4_p6h4_m480_1deg_s"
+            ),
             sampled_column_contract=sampled_contract,
             v6_profile=False,
             exact_spool_root=None,
@@ -1819,7 +1968,7 @@ def run_task041_consumer(
             "local_systems": "created_and_released",
             "coupling": "created_and_released",
             "factor": "local_exact_side_only",
-            "solve": "right_fgmres",
+            "solve": "right_gmres" if contract["shortwave"] else "right_fgmres",
             "recovery": "run_v3_7_recovery_runner",
         }
         result["matrix_inventory"] = {
@@ -1963,8 +2112,8 @@ def run_task041_consumer(
             "observed": [marker["stage"] for marker in marker_records],
             "count": len(marker_records),
         }
-        _write_json(root / "factor_inventory.json", result["factor_inventory"])
-        _write_json(root / "consumer_summary.json", result)
+        _write_rank0_json(root / "factor_inventory.json", result["factor_inventory"], comm)
+        _write_rank0_json(root / "consumer_summary.json", result, comm)
     if error is not None:
         raise error
     return result

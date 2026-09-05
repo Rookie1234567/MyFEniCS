@@ -519,10 +519,21 @@ def test_task041_shortwave_consumer_profile_and_dynamic_sampled_contract(
         "max_it",
         "internal_propagation_model",
         "internal_traction_model",
-        "restart",
         "rtol",
     ):
         assert getattr(profile, field) == getattr(base_profile, field)
+    assert profile.restart == 10
+    assert normalized["solver"]["linear_solver"] == "fgmres"
+    assert normalized["solver"]["restart"] == 90
+    effective = task041.task041_shortwave_consumer_iterative_config()
+    assert (
+        effective.ksp_type,
+        effective.restart,
+        effective.max_it,
+        effective.threshold,
+        effective.initial_guess,
+        effective.fixed_preconditioner,
+    ) == ("gmres", 10, 4000, 5.0e-9, "zero", True)
 
     argv = task041._producer_argv(
         tmp_path / "packet",
@@ -605,9 +616,18 @@ def test_fresh_sampled_contract_is_bound_to_current_manifest(tmp_path):
     assert contract["sha256"] == task041.TASK041_CONSUMER_SAMPLE_CONTRACT_SHA256
 
 
-@pytest.mark.parametrize("order_case", ("valid", "missing", "extra", "duplicate"))
+@pytest.mark.parametrize(
+    ("order_case", "mpi_size", "mode_count"),
+    (
+        ("valid", 1, 480),
+        ("missing", 1, 480),
+        ("extra", 1, 480),
+        ("duplicate", 1, 480),
+        ("valid", 8, 800),
+    ),
+)
 def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
-    tmp_path, order_case
+    tmp_path, order_case, mpi_size, mode_count
 ):
     authority_path = tmp_path / "v3_7_hybrid_authority.json"
     source_sha = "b" * 40
@@ -642,8 +662,8 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
         "source_sha": source_sha,
         "physical_sha256": physical_sha,
         "model_id": "task041_test_model",
-        "mpi_size": 1,
-        "mode_count": 480,
+        "mpi_size": mpi_size,
+        "mode_count": mode_count,
         "external_keys": {
             "count": len(external_keys),
             "sha256": task041._task041_canonical_mode_keys_sha256(external_keys),
@@ -655,8 +675,8 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
                 "source_sha": source_sha,
                 "physical_model_sha256": physical_sha,
                 "model_id": identity["model_id"],
-                "mpi_size": 1,
-                "requested_modes": 480,
+                "mpi_size": mpi_size,
+                "requested_modes": mode_count,
                 "external_mode_inventory": {
                     "keys": list(reversed(external_keys))
                 },
@@ -746,11 +766,11 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
 
 
 @pytest.mark.parametrize(
-    ("after_rss", "should_recover"),
-    [(50, True), (100, False)],
+    ("after_rss", "should_recover", "shortwave"),
+    [(50, True, False), (100, False, False), (50, True, True)],
 )
 def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
-    monkeypatch, tmp_path, after_rss, should_recover
+    monkeypatch, tmp_path, after_rss, should_recover, shortwave
 ):
     @dataclass
     class FakeProfile:
@@ -758,7 +778,12 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
 
     class Comm:
         rank = 0
-        size = 1
+        size = 8 if shortwave else 1
+
+        @staticmethod
+        def bcast(value, root=0):
+            del root
+            return value
 
         @staticmethod
         def Barrier():
@@ -803,6 +828,14 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         physical_model_sha256=identity["physical_sha256"],
         as_jsonable=lambda: normalized,
     )
+    if shortwave:
+        specification = load_and_resolve(
+            ROOT / "input/official/task041/3nm_p6h3_m800_mpi8.dat"
+        )
+        normalized = specification.as_jsonable()
+        identity = task041.build_task041_shortwave_packet_identity(
+            specification, normalized, source_sha, "d" * 64
+        )
     packet_manifest = tmp_path / "fresh" / "manifest.json"
     packet_manifest.parent.mkdir()
     packet_manifest.write_text("fresh packet", encoding="utf-8")
@@ -834,14 +867,20 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         )
         return setup
 
+    authority_keys = (
+        normalized["derived"]["external_mode_inventory"]["keys"]
+        if shortwave
+        else [external_key]
+    )
+
     def fake_authority():
         return {
             "source_sha": identity["source_sha"],
             "physical_model_sha256": identity["physical_sha256"],
             "model_id": identity["model_id"],
-            "mpi_size": 1,
-            "requested_modes": 480,
-            "external_mode_inventory": {"keys": [external_key]},
+            "mpi_size": identity["mpi_size"],
+            "requested_modes": identity["mode_count"],
+            "external_mode_inventory": {"keys": authority_keys},
             "canonical": {
                 side: {
                     "roles": {
@@ -851,9 +890,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
                 }
                 for side in ("bottom", "top")
             },
-            "external_orders": [
-                external_key
-            ],
+            "external_orders": authority_keys,
             "grid_payload": {
                 "arrays": {
                     name: {"shape": [1], "bytes": 1, "sha256": "f" * 64}
@@ -996,6 +1033,9 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     )
     monkeypatch.setattr(task041, "_task041_consumer_profile", lambda: FakeProfile())
     monkeypatch.setattr(
+        task041, "_task041_shortwave_consumer_profile", lambda spec: FakeProfile()
+    )
+    monkeypatch.setattr(
         iterative_runner, "build_frozen_m10_setup", fake_build_setup
     )
     monkeypatch.setattr(
@@ -1012,7 +1052,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         lambda *args, **kwargs: (captured.__setitem__("recovery_called", True) or recovery),
     )
     result = task041.run_task041_consumer(
-        input_path="input.dat",
+        input_path=specification.source_path if shortwave else "input.dat",
         packet_manifest=packet_manifest,
         packet_identity=packet_identity,
         packet_manifest_sha256=manifest_sha,
@@ -1023,20 +1063,34 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     assert captured["setup"]["exact_one_cell_work_dir"].name == "exact_one_cell"
     assert captured["setup"]["cfg_override"] is fake_cfg
     assert captured["setup"]["modal_cfg_override"] is fake_modal_cfg
-    assert captured["setup"]["selected_mode_packet_identity"] is identity
+    assert captured["setup"]["selected_mode_packet_identity"] == identity
     assert captured["run_v5"]["v6_profile"] is False
     assert captured["run_v5"]["exact_spool_root"] is None
-    assert captured["run_v5"]["packet_identity"] is identity
+    assert captured["run_v5"]["packet_identity"] == identity
     assert captured["run_v5"]["sampled_column_contract"]["source"] == (
         "fresh_packet_contract"
     )
-    config = captured["run_v5"]["outer_probe_config"]
-    assert (config.ksp_type, config.restart, config.max_it, config.threshold) == (
-        "fgmres",
-        90,
-        4000,
-        5.0e-9,
+    assert captured["run_v5"]["qualification_scope"] == (
+        identity["scope"] if shortwave else "task039_v4_p6h4_m480_1deg_s"
     )
+    config = captured["run_v5"]["outer_probe_config"]
+    expected_config = (
+        ("gmres", 10, 4000, 5.0e-9)
+        if shortwave
+        else ("fgmres", 90, 4000, 5.0e-9)
+    )
+    assert (config.ksp_type, config.restart, config.max_it, config.threshold) == (
+        *expected_config,
+    )
+    if shortwave:
+        assert result["solver_provenance"]["input_declared"] == {
+            "ksp_type": "fgmres",
+            "restart": 90,
+        }
+        assert result["solver_provenance"]["effective"] == {
+            "ksp_type": "gmres",
+            "restart": 10,
+        }
     observed = result["markers"]["observed"]
     marker_records = [
         json.loads(line)
