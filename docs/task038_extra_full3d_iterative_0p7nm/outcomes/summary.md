@@ -1,3 +1,29 @@
+# Task038-extra Review V18 当前收口摘要（2026-09-05）
+
+## E1 eventual continuation：用户授权性能受控停止
+
+V18 E1 从同一 p6/h10 physical checkpoint-2024 继续使用固定 restart=64 和既有
+positive pMG。它确实继续降低了显式 physical residual，但在 worker closeout 前，用户
+根据完成 `1e-6` 预计需要数日而授权停止。该结果是
+`USER_AUTHORIZED_PERFORMANCE_CONTROLLED_STOP`，不是 numerical/resource Gate fail。
+
+| 项目 | 当前 authority | 通俗含义 |
+|---|---|---|
+| E0 / restore | raw preflight 与 checkpoint marker 已保存 | 起点身份和 solution-only checkpoint 可追溯 |
+| E1 progress | absolute `3048`、累计 total-additional `2048`（E1-local 至少 `1024`）、residual `0.15346927855972448` | residual 在下降，但还远未到 `1e-6` |
+| E1 resource | timeline peak RSS `1,466,142,720 B`、swap `0` | 低于 MPI1 严格 `2,000,000,000 B` 线 |
+| E1 closeout | 用户性能受控停止；parent/worker record 未在 TERM 前写出 | 不能伪造完整 cycle/count/checker PASS |
+| E2 fresh / E3 recovery | locked / not_run | 没有继续启动 fresh solve 或 official recovery |
+| official physics / 0.7nm scalable solve | not_run / not proven | 没有 official E/H、near-field、R/T/A 或可扩展性结论 |
+
+E1 的完整 partial raw 索引和 SHA 见
+[eventual outcome](restart64_physical_eventual_v18.md) 与
+[compact record](records/restart64_physical_eventual_v18.json)。用户授权的终止与两次
+空进程组采样见 ignored root 中的 `user_controlled_stop.json`。原 V18 short-screen
+negative、V17 A/B 结果和全部旧 evidence 均保持不变。
+
+---
+
 # Task038-extra Review V17 当前收口摘要
 
 ## V18 fixed restart64 当前 authority

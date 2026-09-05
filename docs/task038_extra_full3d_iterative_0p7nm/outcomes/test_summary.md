@@ -1,3 +1,28 @@
+# Review V18 E1 eventual / Review V17 M6 测试与证据收口记录（2026-09-05）
+
+## V18 E1 eventual post-stop record
+
+本轮只完成一次已授权的 E1 formal，随后按用户性能授权对同一 process group 做受控
+停止；没有重跑 formal/heavy/PDE，也没有启动 E2/E3。受控停止发生在 parent/worker
+closeout 前，因此没有合法的独立 checker 输入；不存在 `checker.json`，不把缺失
+closeout 写成 numerical 或 resource Gate。
+
+| 项目 | 实际结果 |
+|---|---|
+| E1 classification | `USER_AUTHORIZED_PERFORMANCE_CONTROLLED_STOP` |
+| preserved latest checkpoint | absolute `3048`，explicit true residual `0.15346927855972448` |
+| process evidence | 350,329 timeline samples；peak RSS `1,466,142,720 B`；swap `0`；两次间隔3秒 PGID采样为空 |
+| checker / completion | not run / not written；`parent_record.json` 在 TERM 前不存在 |
+| E2 / E3 / other heavy | locked/not_run |
+| compact/outcome | `restart64_physical_eventual_v18.json` / `restart64_physical_eventual_v18.md`，均绑定 raw SHA |
+| docs-only checks | PASS；新 compact/stop 严格 JSON（duplicate-key/NaN）、source/root/stop SHA binding、Markdown links/fences/trailing whitespace、`git diff --check` 均通过 |
+
+该 partial raw 不能支持完整 cycle matvec/PC/KSP ledger 或 `<=1e-6` success claim；它只
+支持保存 checkpoint、残差下降、RSS/swap 和生命周期终止事实。V17/V18 旧 negative 与
+checker evidence 未覆盖、未重分类。
+
+---
+
 # Review V17 M6 文档/证据收口记录（2026-09-04）
 
 ## V18 checker/document closeout record

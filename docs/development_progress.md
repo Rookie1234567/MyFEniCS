@@ -110,6 +110,25 @@ not_run；ordinary default 和 production qualification 未提升。
 
 ---
 
+# 2026-09-05：Review V18 E1 eventual continuation 用户性能受控停止
+
+V18 E1 在同一 p6/h10 physical checkpoint-2024 上运行固定 restart=64 continuation。
+它不是新 PC，也不是 fresh PDE。raw checkpoint 到 absolute `3048`（累计 total-additional
+`2048`，由 restore absolute `2024` 可证明 E1-local 至少 `1024` steps）时显式 true residual 为 `0.15346927855972448`；用户判断继续到 `1e-6`
+预计需要数日，授权 `USER_AUTHORIZED_PERFORMANCE_CONTROLLED_STOP`。这不是 numerical
+或 resource Gate fail：timeline peak RSS `1,466,142,720 B`、swap `0`，低于 MPI1
+严格 `2,000,000,000 B` 线。
+
+受控终止发生在 worker/parent closeout 前，完整 cycle/count history 和独立 checker
+没有合法输入；这部分只作为 partial raw/lifecycle evidence，不宣称 E1 success。E2
+fresh、E3 release/recovery、official complex E/H、near-field、R/T/A、0.7nm/2TiB
+scalable solve 均 locked/not_run。compact 与 outcome 见
+[`V18 E1 eventual outcome`](task038_extra_full3d_iterative_0p7nm/outcomes/restart64_physical_eventual_v18.md)
+和
+[`V18 E1 compact`](task038_extra_full3d_iterative_0p7nm/outcomes/records/restart64_physical_eventual_v18.json)。
+
+---
+
 # 项目开发进度：Task000–Task037b
 
 ## 2026-08-10：Task037b frozen M10 结项与 Review V7 selective-merge capability
