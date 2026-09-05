@@ -1,3 +1,28 @@
+# Review V19 R4 / V18 E1 eventual / Review V17 M6 测试与证据收口记录（2026-09-05）
+
+## V19 R0/R4 测试与证据
+
+R4 收口阶段没有重跑 R0 p6 heavy；只整理已完成的 host-qualified R0 evidence。真实
+p2/MUMPS test351 fixture 先前通过，p6 symbolic v4 的独立 checker-only
+authority 保留为 checker_timeline_checked.json。它报告 cache-tail 未闭合，
+不能把该证据问题改写成 numerical failure。
+
+| 项目 | 实际结果 |
+|---|---|
+| V19 pure test351 | 8 passed，1 deselected；0.12 s |
+| V19 input/schema test260 | 3 passed；0.06 s |
+| p2/MPI1 real focused fixture | measured；local action/map/PoU/MUMPS facts 见 V19 compact |
+| p6 symbolic v4 | resource controlled stop；sampled RSS 8609562624 B，sampled PSS 8580238336 B，timeline 内 swap 0 |
+| retained checker-only output | FAIL/evidence_valid=false；cache tail 未闭合 |
+| R1/R2/R3/official PDE | not_run |
+| R4 文档/compact | hash-bound，未运行新的 solver/PDE/heavy |
+
+详细 outcome 与 compact record：
+[V19 R0 outcome](pml_double_sweep_real_structure_v19.md)、
+[V19 compact](records/pml_double_sweep_real_structure_v19.json)。
+
+---
+
 # Review V18 E1 eventual / Review V17 M6 测试与证据收口记录（2026-09-05）
 
 ## V18 E1 eventual post-stop record

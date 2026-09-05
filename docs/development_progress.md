@@ -1,3 +1,36 @@
+# 2026-09-05：Task038 Review V19 R4 PML 结构收口
+
+## 当前 V19 authority
+
+R0 的目标是回答一个有限的问题：在原始 p6/h10 物理结构上，局部 PML 双向 sweep
+的网格、映射和资源边界是否真实可构造。PML 用人工吸收层近似开放边界，但它会
+增加局部网格、系数和编译工作集；local inverse 的代价可能在全局求解前成为
+内存 blocker。小型 p2/MPI1 fixture 的 action、owner map、PoU 和 MUMPS 同一
+factor 生命周期均为 measured PASS；p6/h10 的真实 symbolic 尝试则在 local
+mesh 完成后的 FFCx C 编译阶段触发本机 RSS cap，当前结论为
+REAL_ANCHOR_REFERENCE_RESOURCE_BLOCKED。
+
+| 阶段 | 对象 | 结果 |
+|---|---|---|
+| R0 p2 fixture | 真实小型 PML/local Maxwell + map + MUMPS | measured PASS |
+| R0 p6 inventory | p6/h10、173802 rows、4 core、3 interfaces | measured structural anchor |
+| R0 p6 symbolic v4 | local mesh 后的 FFCx C 编译 | resource controlled stop；sampled RSS 8609562624 B，sampled PSS 8580238336 B |
+| R1 | 原始 p6/h10 zero-start PML double sweep | not_run |
+| R2/R3 | low-memory replacement / notch recipe | not_run |
+| official physics | E/H、near-field、R/T/A、recovery | not_run |
+
+watchdog cap 为 8585588736 B；Review hard 12 GB 在已观察样本中未触及，warning
+10 GB 在已观察样本中未触及，二者尾段状态未知；
+timeline 内 swap 为 0。一个 .o 在最后 timeline 之后才落盘，因此完整同期 peak、
+尾段 cache 和尾段 swap 必须保持 unknown/partial；不能把事后清场提升为完整
+qualification。V19 outcome 和 compact record 见
+[PML R0 outcome](task038_extra_full3d_iterative_0p7nm/outcomes/pml_double_sweep_real_structure_v19.md)
+与
+[PML R0 compact](task038_extra_full3d_iterative_0p7nm/outcomes/records/pml_double_sweep_real_structure_v19.json)。
+R0 不是 PML numerical failure，且不证明 0.7 nm/2 TiB scalable solve。
+
+---
+
 # 2026-09-04：Task038 Review V18 fixed restart64 收口
 
 ## 当前 V18 authority

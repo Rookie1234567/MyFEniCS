@@ -1,3 +1,30 @@
+# Task038-extra Review V19 R4 当前收口摘要（2026-09-05）
+
+## V19 R0：PML 双向扫描真实结构
+
+通俗地说，PML 是局部边界外的人工吸收层，帮助局部逆模拟开放边界；代价是
+额外的网格、系数和编译工作集，可能在全局求解开始前触发内存上限。R0 的真实
+p2/MPI1 小型 fixture 通过了映射、PoU 和 MUMPS 小矩阵生命周期；p6/h10 worker
+在 local mesh 完成后进入 FFCx C 编译时触发本机 RSS cap，最终分类为
+REAL_ANCHOR_REFERENCE_RESOURCE_BLOCKED。
+
+| 范围 | 当前 authority | 直观含义 |
+|---|---|---|
+| p2/MPI1 structure fixture | measured PASS | stretch-one、owner map、PoU 和小型 MUMPS symbolic→numeric→solve 可复核 |
+| p6/h10 trace inventory | measured PASS | 173802 rows、14 layers、252 cells、3 interfaces 和结构 pair 已登记 |
+| p6 symbolic v4 | measured resource controlled stop；partial checker evidence | sampled RSS 8609562624 B，sampled PSS 8580238336 B，watchdog cap 8585588736 B，timeline 内 swap 0；hard 12 GB/尾段状态未知 |
+| p6 AIJ/MUMPS/R1 outer solve | not_run | C 编译未完成，未进入已装配矩阵或 factor |
+| R2/R3/official E/H、near-field、R/T/A、recovery | not_run | R0 未完成，不能推导 full physics |
+
+独立 checker 的保留副本 status=FAIL、evidence_valid=false，只因晚写入的 .o
+使 cache tail 与完整同期峰值不能闭合；原始 parent 的 resource controlled stop
+仍有效。详见 [V19 R0 outcome](pml_double_sweep_real_structure_v19.md) 和
+[V19 compact record](records/pml_double_sweep_real_structure_v19.json)。这不是
+PML numerical failure，也不是 full PDE qualification；0.7 nm/2 TiB 可扩展性仍
+未证明。
+
+---
+
 # Task038-extra Review V18 当前收口摘要（2026-09-05）
 
 ## E1 eventual continuation：用户授权性能受控停止

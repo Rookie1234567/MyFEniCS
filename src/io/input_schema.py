@@ -894,7 +894,11 @@ FIELD_SPECS: Final = (
         "preconditioner",
         '"hybrid_block_ldu_ilu0_dtn_woodbury"',
         required=True,
-        allowed=("full3d_scalable_v1", "hybrid_block_ldu_ilu0_dtn_woodbury"),
+        allowed=(
+            "full3d_scalable_v1",
+            "fullspace_pml_double_sweep_v19",
+            "hybrid_block_ldu_ilu0_dtn_woodbury",
+        ),
         constraints=("only reviewed iterative identities are public",),
     ),
     _f(

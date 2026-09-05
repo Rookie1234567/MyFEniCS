@@ -1467,4 +1467,18 @@ P1 剩余 7 个 frozen cases 与 P2–P7 均为 `not_run_by_gate`。本登记不
 |---|---|---|---|---|
 | `task038_v10_Q0_exact_reference_p3_mpi1_random` | source `47c3e5b1ab7205ac5cd8f37b63f33e0a6f46355f`；p3/h50；MPI1；random；Reference E/N | E exact edge residual `9.13154427545479e-16`，但 500 步后 explicit rho `4.203423379090078e-4 > 1e-8`；N 四项 direct nodal residual `5.134041203635995e-16–5.241317476841507e-16`，final rho `2.1958595524302254e-3` 仅 diagnostic；N pre evidence composition `2.8019257502717445` | `LOR_AUXILIARY_FOUNDATION_FAIL`；cycle process-tree RSS `185102336 B`，swap `0`；GNU time Maximum RSS `293908 KiB`、Swaps `0`（单 worker 口径） | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/p3_exact_reference_triage.md`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/p3_exact_reference_triage_v1_checker.json`; raw root remains ignored at actual command path `benchmarks/artifacts/task038_extra3d_q0_v10/47c3e5b1ab7205ac5cd8f37b63f33e0a6f46355f/p3-mpi1/random` |
 
-现有代码路径显示 Q0 的 N composition 混用了原 owner packet 与 raw-low dual re-encoding；raw 没有单独保存重编码后的初始 `n_low_input`。因此 trace 的 `remaining + edge_action` 是 inferred/derived re-encoded initial，与自身相对差 `0.0` 只是定义性比较；它与直接保存的 `n_low_input` 差为 `2.8019257502717445`。这支持把 checker failure 定位为 evidence-coordinate defect，但不独立证明整个 N replay PASS；N checker FAIL 原样保留，也不影响 E hard stop。Q1–Q5 均 `not_run_by_Q0_hard_stop`；没有 p6、0.7 nm PDE、2 TiB complete-workflow 或 official physics authority。
+
+## Task038-extra Review V19：PML 双向扫描 R0 真实结构
+
+PML 是局部边界外的人工吸收层，local inverse 用局部物理算子近似开放边界；它的代价是额外局部网格、系数和编译工作集。本条只登记 R0 结构/资源证据，不把小型 fixture 或结构算术提升为 full PDE authority。
+
+| Model ID | source / scope | physical and algorithm | measured result | status | evidence |
+|---|---|---|---|---|---|
+| task038_v19_R0_p2_structure | measurement baseline HEAD afa0aa066de67557cddaa80901c3cf7710833abe；MPI1、p2 focused fixture；measurement worktree dirty | local PML Maxwell action、stretch-one map、owner dual/primal map、PoU；同一 MUMPS factor symbolic→numeric→solve | local action 1.440782276734707e-15；MUMPS residual 1.7250761895437276e-13；INFOG16=50；predicted peak 230830208 B | measured PASS；不是 p6/PDE qualification | [V19 R0 outcome](task038_extra_full3d_iterative_0p7nm/outcomes/pml_double_sweep_real_structure_v19.md) |
+| task038_v19_R0_p6_inventory | same measurement baseline；p6/h10、degree6、4 core、3 interfaces | exact split volume action + streaming DtN；PML 只在 local subdomain；global transfer matrix/numeric allgather=false | 173802 rows、252 cells、14 layers；trace rows 1350/1350/1350；support-union count 190855440；matrix_assembled=false | measured structural anchor | [V19 compact](task038_extra_full3d_iterative_0p7nm/outcomes/records/pml_double_sweep_real_structure_v19.json) |
+| task038_v19_R0_p6_symbolic | same baseline；真实 p6/h10 local PML resource preflight | local mesh 后进入 FFCx C 编译；尚未完成 local form、AIJ、MUMPS 或 outer Krylov | sampled RSS 8609562624 B ≥ watchdog cap 8585588736 B；sampled PSS 8580238336 B；timeline swap 0；已观察样本内 hard 12 GB 未触及，尾段未知 | REAL_ANCHOR_REFERENCE_RESOURCE_BLOCKED；partial evidence，R1 not_run | [V19 compact](task038_extra_full3d_iterative_0p7nm/outcomes/records/pml_double_sweep_real_structure_v19.json) |
+
+R0 不改变旧 V16–V18 结果；R1/R2/R3、official E/H、near-field、R/T/A、recovery 和
+0.7 nm/2 TiB scalable solve 均 not_run。p6 local object file 在最后 timeline 后才落盘，
+因此完整同期 process peak 与 cache closeout 仍是 unknown；不得把该条目登记为已通过的
+production model。

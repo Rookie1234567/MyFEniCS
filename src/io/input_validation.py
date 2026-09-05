@@ -535,20 +535,51 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(
                     "solver.ksp_type", "full3d_iterative requires ksp_type=fgmres"
                 )
-            if solver["preconditioner"] != "full3d_scalable_v1":
+            preconditioner = solver["preconditioner"]
+            if preconditioner not in {
+                "full3d_scalable_v1",
+                "fullspace_pml_double_sweep_v19",
+            }:
                 raise _error(
                     "solver.preconditioner",
-                    "full3d_iterative requires full3d_scalable_v1",
+                    "full3d_iterative requires a reviewed physical preconditioner",
                 )
-            if solver["restart"] != 20:
-                raise _error(
-                    "solver.restart", "full3d_iterative fixes restart=20"
-                )
-            if solver["max_iterations"] < 200:
-                raise _error(
-                    "solver.max_iterations",
-                    "full3d_iterative requires max_iterations>=200",
-                )
+            if preconditioner == "full3d_scalable_v1":
+                if solver["restart"] != 20:
+                    raise _error(
+                        "solver.restart", "full3d_iterative fixes restart=20"
+                    )
+                if solver["max_iterations"] < 200:
+                    raise _error(
+                        "solver.max_iterations",
+                        "full3d_iterative requires max_iterations>=200",
+                    )
+            else:
+                if solver["restart"] != 64:
+                    raise _error(
+                        "solver.restart",
+                        "fullspace_pml_double_sweep_v19 fixes restart=64",
+                    )
+                if solver["max_iterations"] != 512:
+                    raise _error(
+                        "solver.max_iterations",
+                        "fullspace_pml_double_sweep_v19 fixes max_iterations=512",
+                    )
+                if execution["mpi_size"] != 1:
+                    raise _error(
+                        "execution.mpi_size",
+                        "fullspace_pml_double_sweep_v19 is fixed to MPI1",
+                    )
+                if discretization["nedelec_degree"] != 6:
+                    raise _error(
+                        "discretization.nedelec_degree",
+                        "fullspace_pml_double_sweep_v19 fixes nedelec_degree=6",
+                    )
+                if discretization["mesh_target_nm"] != 10.0:
+                    raise _error(
+                        "discretization.mesh_target_nm",
+                        "fullspace_pml_double_sweep_v19 fixes mesh_target_nm=10",
+                    )
             if incidence["wavelength_nm"] != 13.5:
                 raise _error(
                     "incidence.wavelength_nm",

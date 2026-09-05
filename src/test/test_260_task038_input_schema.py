@@ -128,6 +128,7 @@ def test_schema_identity_sections_and_unique_whitelist():
     )
     assert FIELD_SPECS_BY_KEY["solver.preconditioner"].allowed == (
         "full3d_scalable_v1",
+        "fullspace_pml_double_sweep_v19",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
@@ -196,6 +197,7 @@ def test_templates_parse_and_use_only_public_keys():
         "ordinary_2d_example.dat": "2d_scattered",
         "full3d_direct_example.dat": "full3d_direct",
         "full3d_iterative_example.dat": "full3d_iterative",
+        "full3d_pml_double_sweep_v19.dat": "full3d_iterative",
         "hybrid_direct_example.dat": "hybrid_direct",
         "hybrid_iterative_example.dat": "hybrid_iterative",
     }
@@ -251,8 +253,17 @@ def test_templates_parse_and_use_only_public_keys():
         if method == "full3d_iterative":
             assert document["solver"]["linear_solver"] == "iterative"
             assert document["solver"]["ksp_type"] == "fgmres"
-            assert document["solver"]["preconditioner"] == "full3d_scalable_v1"
-            assert document["solver"]["restart"] == 20
-            assert document["solver"]["max_iterations"] >= 200
+            if document["solver"]["preconditioner"] == "full3d_scalable_v1":
+                assert document["solver"]["restart"] == 20
+                assert document["solver"]["max_iterations"] >= 200
+            else:
+                assert document["solver"]["preconditioner"] == (
+                    "fullspace_pml_double_sweep_v19"
+                )
+                assert document["solver"]["restart"] == 64
+                assert document["solver"]["max_iterations"] == 512
+                assert document["execution"]["mpi_size"] == 1
+                assert document["discretization"]["nedelec_degree"] == 6
+                assert document["discretization"]["mesh_target_nm"] == 10.0
             assert document["execution"]["memory_limit_gb"] == 2.0
     assert found_methods == set(expected.values())

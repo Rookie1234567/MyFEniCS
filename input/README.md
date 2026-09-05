@@ -2,6 +2,8 @@
 
 本目录定义 Task38 的第一版公开输入合同。当前已提供纯 Python 的 `.dat` load/validate/resolve API、手写白名单、参数说明、四个 TOML 模板和 T3 薄 launcher。Full3D direct、Hybrid direct、Hybrid iterative 以及普通 2D 的 adapter 只在各自已审能力范围内接线；本轮 T7 迁移 preset 并不等于任何数值或 production qualification。
 
+`full3d_pml_double_sweep_v19.dat` 是 Review V19 的 research-only R0 prototype profile：它仅描述已实现的 PML 双向扫描诊断入口，R1 adapter、合格的 production local inverse 和完整 physical solve 尚未实现，也不应被视为可直接正式求解的 preset。
+
 ## 1. 使用边界
 
 每个 `.dat` 文件只描述一次运行，格式是 Python 标准库 `tomllib` 可读的 TOML。文件不能包含 `runs`、`batch`、内部 PETSc 选项、authority 路径/hash、QEP/lifecycle 参数或任意 Python 表达式。复数使用 `[real, imag]` 两元素数组，例如 `n_air = [1.0, 0.0]`。
@@ -132,7 +134,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `solver.direct_solver_profile` | `enum` | `none` | yes | `—` | default, mumps_ooc, mumps_blr | full3d_direct/hybrid_direct | 有限 direct solver profile | `petsc_direct_solver_profile` | — | `"default"` |
 | `solver.linear_solver` | `enum` | `none` | yes | `—` | direct, fgmres, iterative | 2d_scattered/2d_port/full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative | 线性求解器类型 | `linear_solver` | direct methods require direct; hybrid_iterative requires fgmres; full3d_iterative requires iterative | `"fgmres"` |
 | `solver.ksp_type` | `enum` | `none` | yes | `—` | fgmres | full3d_iterative | Full3D 迭代求解器类型 | `ksp_type` | full3d_iterative fixed profile only | `"fgmres"` |
-| `solver.preconditioner` | `enum` | `none` | yes | `—` | full3d_scalable_v1, hybrid_block_ldu_ilu0_dtn_woodbury | full3d_iterative/hybrid_iterative | 公开 preconditioner identity | `preconditioner` | only reviewed iterative identities are public | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
+| `solver.preconditioner` | `enum` | `none` | yes | `—` | full3d_scalable_v1, fullspace_pml_double_sweep_v19, hybrid_block_ldu_ilu0_dtn_woodbury | full3d_iterative/hybrid_iterative | 公开 preconditioner identity | `preconditioner` | only reviewed iterative identities are public | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
 | `solver.restart` | `integer` | `iterations` | yes | `—` | — | full3d_iterative/hybrid_iterative | GMRES/FGMRES restart 长度 | `restart` | only iterative methods; > 0 | `90` |
 | `solver.max_iterations` | `integer` | `iterations` | yes | `—` | — | full3d_iterative/hybrid_iterative | 最大迭代步数 | `max_it` | only iterative methods; > 0 | `4500` |
 | `solver.relative_tolerance` | `float` | `relative residual` | yes | `—` | — | hybrid_iterative | 相对残差容差 | `rtol` | only hybrid_iterative; > 0 and finite | `5.0e-9` |
