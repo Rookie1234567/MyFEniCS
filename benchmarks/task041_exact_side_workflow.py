@@ -493,6 +493,11 @@ def build_task041_shortwave_mode_prep_command(
         "mpiexec",
         "-n",
         str(mpi_size),
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "0-7",
+        "--report-bindings",
         str(python_executable),
         "-m",
         "benchmarks.task041_exact_side_workflow",
@@ -856,6 +861,58 @@ def build_task041_consumer_command(
         "mpiexec",
         "-n",
         "1",
+        str(python_executable),
+        "-m",
+        "benchmarks.task041_exact_side_workflow",
+        "--worker",
+        "--phase",
+        TASK041_CONSUMER_PHASE,
+        "--input",
+        str(input_path),
+        "--packet-manifest",
+        str(packet_manifest),
+        "--packet-identity",
+        str(packet_identity),
+        "--packet-manifest-sha256",
+        packet_manifest_sha256,
+        "--run-directory",
+        str(run_directory),
+        "--source-sha",
+        source_sha,
+    ]
+
+
+def build_task041_shortwave_consumer_command(
+    python_executable: str | Path,
+    specification: Any,
+    packet_manifest: str | Path,
+    packet_identity: str | Path,
+    packet_manifest_sha256: str,
+    run_directory: str | Path,
+    source_sha: str,
+) -> list[str]:
+    """Return the fresh MPI8 shortwave consumer command for a packet."""
+
+    normalized = specification.as_jsonable()
+    profile_failures = tuple(task041_shortwave_profile_errors(normalized))
+    if profile_failures:
+        detail = "; ".join(f"{field}: {message}" for field, message in profile_failures)
+        raise Task041ModePrepError("Task41 shortwave profile rejected: " + detail)
+    mpi_size = normalized["execution"]["mpi_size"]
+    if type(mpi_size) is not int or mpi_size != TASK041_SHORTWAVE_MPI_SIZE:
+        raise Task041ModePrepError(
+            "Task41 shortwave consumer command requires validated MPI8 execution"
+        )
+    input_path = Path(specification.source_path)
+    return [
+        "mpiexec",
+        "-n",
+        str(mpi_size),
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "0-7",
+        "--report-bindings",
         str(python_executable),
         "-m",
         "benchmarks.task041_exact_side_workflow",

@@ -11,10 +11,13 @@ from pathlib import Path
 from typing import Any
 
 from .input_loader import InputError
-from .input_validation import TASK041_MODEL_ID, task039_model_id_matches
+from .input_validation import (
+    TASK041_MODEL_ID,
+    TASK041_SHORTWAVE_MODEL_IDS,
+    task039_model_id_matches,
+)
 from .resolved_config import resolved_config_bytes
 from .run_specification import RunSpecification
-
 
 WORKER_MODULE = "src.runners.task038_input_worker"
 CONTRACT_PROBE_ADAPTER = "task038.contract_probe"
@@ -66,7 +69,10 @@ class ExecutionPlan:
 
 def method_adapter_identity(method: str, model_id: str | None = None) -> str:
     model_text = str(model_id or "")
-    if method == "hybrid_iterative" and model_text == TASK041_MODEL_ID:
+    if method == "hybrid_iterative" and model_text in {
+        TASK041_MODEL_ID,
+        *TASK041_SHORTWAVE_MODEL_IDS,
+    }:
         return TASK041_PUBLIC_SUPERVISOR_ADAPTER
     if model_text.startswith("task039_0p7nm"):
         raise InputError("0P7NM_MATERIAL_INPUT_INCOMPLETE")
@@ -90,7 +96,10 @@ def method_adapter_available(method: str, model_id: str | None = None) -> bool:
     """Report availability of the adapters actually connected in Task38."""
 
     model_text = str(model_id or "")
-    if method == "hybrid_iterative" and model_text == TASK041_MODEL_ID:
+    if method == "hybrid_iterative" and model_text in {
+        TASK041_MODEL_ID,
+        *TASK041_SHORTWAVE_MODEL_IDS,
+    }:
         return True
     if model_text.startswith("task039_0p7nm"):
         raise InputError("0P7NM_MATERIAL_INPUT_INCOMPLETE")
@@ -257,12 +266,12 @@ def dry_run_payload(specification: RunSpecification) -> dict[str, Any]:
 
 
 __all__ = [
-    "CONTRACT_PROBE_ADAPTER",
     "CONNECTED_METHODS",
-    "ExecutionPlan",
+    "CONTRACT_PROBE_ADAPTER",
     "METHOD_ADAPTERS",
     "TASK041_PUBLIC_SUPERVISOR_ADAPTER",
     "WORKER_MODULE",
+    "ExecutionPlan",
     "build_execution_plan",
     "dry_run_payload",
     "method_adapter_available",

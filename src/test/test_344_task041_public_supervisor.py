@@ -12,11 +12,19 @@ import pytest
 from benchmarks.task041_exact_side_workflow import task041_inner_mpi_environment
 from src.io.execution_plan import (
     TASK041_PUBLIC_SUPERVISOR_ADAPTER,
+    method_adapter_available,
     method_adapter_identity,
 )
-from src.io.input_validation import TASK041_MODEL_ID, TASK041_RUN_ID
+from src.io.input_validation import (
+    TASK041_MODEL_ID,
+    TASK041_RUN_ID,
+    TASK041_SHORTWAVE_MODEL_IDS,
+    load_and_resolve,
+)
 from src.runners import task038_launcher as launcher
 from src.runners import task041_supervisor as supervisor
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class _Clock:
@@ -119,8 +127,20 @@ def _run_phase(
     popen_factory=None,
     sleep=None,
     process_group_gone=None,
+    warning_memory_bytes=None,
+    hard_memory_bytes=None,
+    timeout_seconds=None,
 ):
     (tmp_path / "numerical_output" / "log").mkdir(parents=True)
+    limits = {
+        name: value
+        for name, value in (
+            ("warning_memory_bytes", warning_memory_bytes),
+            ("hard_memory_bytes", hard_memory_bytes),
+            ("timeout_seconds", timeout_seconds),
+        )
+        if value is not None
+    }
     return supervisor._run_phase(
         "producer",
         ["mpiexec", "-n", "1", "fake"],
@@ -144,6 +164,7 @@ def _run_phase(
         / "log"
         / "memory_stage_markers.jsonl",
         process_group_gone=process_group_gone or (lambda _pid: True),
+        **limits,
     )
 
 
@@ -155,6 +176,44 @@ def test_task041_adapter_is_exact_and_task039_remains_separate():
     assert method_adapter_identity(
         "hybrid_iterative", "task039_5nm_hybrid_iterative_m480_candidate"
     ) == "task039.hybrid_iterative"
+    for model_id in TASK041_SHORTWAVE_MODEL_IDS:
+        assert (
+            method_adapter_identity("hybrid_iterative", model_id)
+            == TASK041_PUBLIC_SUPERVISOR_ADAPTER
+        )
+        assert method_adapter_available("hybrid_iterative", model_id) is True
+
+
+@pytest.mark.parametrize(
+    ("filename", "model_id", "run_id", "mode_count"),
+    [
+        (
+            "3nm_p6h3_m800_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h3_m800",
+            "task041_3nm_p6h3_m800_mpi8",
+            800,
+        ),
+        (
+            "3nm_p6h3_m1200_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200",
+            "task041_3nm_p6h3_m1200_mpi8",
+            1200,
+        ),
+    ],
+)
+def test_shortwave_supervisor_identity_comes_from_validated_official_dat(
+    filename, model_id, run_id, mode_count
+):
+    specification = load_and_resolve(ROOT / "input/official/task041" / filename)
+    identity = supervisor._validate_specification(specification, ROOT)
+    assert identity["model_id"] == model_id
+    assert identity["run_id"] == run_id
+    assert identity["requested_modes"] == mode_count
+    assert identity["mpi_size"] == 8
+    assert identity["input_sha256"] == specification.input_sha256
+    assert identity["physical_model_sha256"] == specification.physical_model_sha256
+    assert identity["resolved_config_sha256"]
+
 
 
 def test_inner_mpi_environment_is_copied_and_sanitized():
@@ -228,6 +287,28 @@ def test_phase_handoff_records_rss_drop_and_pss_uss_without_summing(tmp_path):
     assert phase["rss_drop"]["before_process_tree_rss_bytes"] == 100
     assert phase["rss_drop"]["after_process_tree_rss_bytes"] == 0
     assert phase["sample_count"] == 1
+
+
+@pytest.mark.parametrize(
+    ("warning_memory_bytes", "hard_memory_bytes", "timeout_seconds", "reason"),
+    [
+        (50, 50, 999, "absolute_memory_limit"),
+        (1000, 10**9, 0, "wall_timeout"),
+    ],
+)
+def test_phase_accepts_injected_shortwave_runtime_limits(
+    tmp_path, warning_memory_bytes, hard_memory_bytes, timeout_seconds, reason
+):
+    phase = _run_phase(
+        tmp_path,
+        sample=_Samples(),
+        clock=_Clock(0.0),
+        warning_memory_bytes=warning_memory_bytes,
+        hard_memory_bytes=hard_memory_bytes,
+        timeout_seconds=timeout_seconds,
+    )
+    assert phase["termination_reason"] == reason
+    assert phase["warning_reached"] is (warning_memory_bytes <= 100)
 
 
 class _TerminalUnreadableSample:
@@ -564,6 +645,146 @@ def _install_public_fakes(monkeypatch, spec, identity):
             ],
         },
     )
+
+
+def test_shortwave_supervisor_control_plane_dispatches_mpi8_children_sequentially(
+    tmp_path, monkeypatch
+):
+    specification = load_and_resolve(
+        ROOT / "input/official/task041/3nm_p6h3_m800_mpi8.dat"
+    )
+    source_sha = "a" * 40
+    (tmp_path / "workflow").mkdir()
+    phase_calls = []
+    packet_calls = []
+
+    def fake_run_phase(phase, argv, phase_root, **kwargs):
+        phase_calls.append({"phase": phase, "argv": list(argv), "limits": kwargs})
+        return {
+            "phase": phase,
+            "argv": list(argv),
+            "returncode": 0,
+            "termination_reason": None,
+            "rss_drop": {"pass": True},
+            "process_group_gone": True,
+            "peak_memory_authority_bytes": 100,
+            "peak_process_tree_rss_bytes": 100,
+            "peak_pss_bytes": 100,
+            "peak_uss_bytes": 50,
+            "peak_process_tree_swap_bytes": 0,
+            "peak_dedicated_cgroup_swap_bytes": 0,
+            "peak_swap_bytes": 0,
+        }
+
+    def fake_validate_packet(producer_root, specification_arg, source, identity):
+        packet_calls.append((producer_root, specification_arg, source, identity))
+        manifest = producer_root / "selected_mode_packet" / "manifest.json"
+        return {
+            "summary": {"environment": {}},
+            "identity": dict(identity),
+            "manifest": str(manifest),
+            "manifest_sha256": "b" * 64,
+            "manifest_bytes": 0,
+            "packet_directory": {"file_count": 0, "bytes": 0},
+            "packet_directory_bytes": 0,
+            "packet_directory_file_count": 0,
+            "compact_manifest": {
+                "path": str(manifest),
+                "sha256": "b" * 64,
+            },
+        }
+
+    monkeypatch.setattr(
+        supervisor,
+        "_outer_mpi_launch_identity",
+        lambda: {
+            "launcher": "OpenMPI",
+            "markers": {
+                "OMPI_COMM_WORLD_SIZE": "1",
+                "OMPI_COMM_WORLD_RANK": "0",
+            },
+            "mpi_size": 1,
+            "mpi_rank": 0,
+            "launched_via_mpiexec": True,
+        },
+    )
+    monkeypatch.setattr(
+        supervisor,
+        "_git_identity",
+        lambda *_args: {
+            "head": source_sha,
+            "branch": supervisor.TASK041_BRANCH,
+            "source_sha": source_sha,
+            "worktree_clean": True,
+            "status_scope": "nonignored+untracked",
+        },
+    )
+    monkeypatch.setattr(
+        supervisor,
+        "_environment_snapshot",
+        lambda *_args: {"native_marker": "1", "threads": {"OMP_NUM_THREADS": "1"}},
+    )
+    monkeypatch.setattr(
+        supervisor,
+        "_child_environment",
+        lambda: {name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
+    )
+    monkeypatch.setattr(supervisor, "_run_phase", fake_run_phase)
+    monkeypatch.setattr(supervisor, "_validate_producer_packet", fake_validate_packet)
+    monkeypatch.setattr(
+        supervisor,
+        "_consumer_result",
+        lambda _root, process_group_gone=None: {
+            "complete": True,
+            "classification": "worker_exit0",
+            "factor_inventory": {"bottom": [], "top": []},
+        },
+    )
+
+    result = supervisor.run_task041_public_supervisor(
+        specification,
+        source_sha=source_sha,
+        run_directory=tmp_path / "workflow",
+        python_executable="/repo/.venv/bin/python",
+        monotonic=_Clock(0.0),
+    )
+
+    expected_prefix = [
+        "mpiexec",
+        "-n",
+        "8",
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "0-7",
+        "--report-bindings",
+        "/repo/.venv/bin/python",
+    ]
+    assert [call["phase"] for call in phase_calls] == ["producer", "consumer"]
+    assert len(packet_calls) == 1
+    for call in phase_calls:
+        assert call["argv"][:9] == expected_prefix
+        assert call["argv"][call["argv"].index("--input") + 1] == str(
+            specification.source_path
+        )
+        assert call["limits"]["warning_memory_bytes"] == (
+            supervisor.TASK041_SHORTWAVE_WARNING_MEMORY_BYTES
+        )
+        assert call["limits"]["hard_memory_bytes"] == (
+            supervisor.TASK041_SHORTWAVE_HARD_MEMORY_BYTES
+        )
+        assert call["limits"]["timeout_seconds"] == (
+            supervisor.TASK041_SHORTWAVE_TIMEOUT_SECONDS
+        )
+    assert result["identity"]["requested_modes"] == 800
+    assert result["identity"]["mpi_size"] == 8
+    assert result["outer_mpi_identity"]["mpi_size"] == 1
+    assert result["limits"] == {
+        "warning_memory_bytes": supervisor.TASK041_SHORTWAVE_WARNING_MEMORY_BYTES,
+        "hard_memory_bytes": supervisor.TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+        "swap_limit_bytes": 0,
+        "timeout_seconds": supervisor.TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+    }
 
 
 @pytest.mark.parametrize(

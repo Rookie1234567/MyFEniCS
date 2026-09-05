@@ -1,7 +1,8 @@
-"""Inline MPI1 supervisor for the Task041 producer/consumer workflow.
+"""Public MPI1 supervisor for the Task041 producer/consumer workflow.
 
-The public process only validates the resolved input and supervises two fresh
-MPI1 children.  Numerical assembly remains in the existing Task041 workers.
+The public process remains outer MPI1.  Legacy inputs use MPI1 children and
+shortwave inputs use MPI8 children.  Numerical assembly remains in the
+existing Task041 workers.
 """
 
 from __future__ import annotations
@@ -26,7 +27,11 @@ from src.io.execution_plan import TASK041_PUBLIC_SUPERVISOR_ADAPTER
 from src.io.input_validation import (
     TASK041_MODEL_ID,
     TASK041_RUN_ID,
+    TASK041_SHORTWAVE_MODEL_IDS,
+    TASK041_SHORTWAVE_MPI_SIZE,
     task041_profile_errors,
+    task041_shortwave_case,
+    task041_shortwave_profile_errors,
 )
 from src.io.resolved_config import resolved_config_sha256
 
@@ -37,6 +42,9 @@ TASK041_MPI_SIZE = 1
 TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
+TASK041_SHORTWAVE_WARNING_MEMORY_BYTES = 1539316278886
+TASK041_SHORTWAVE_HARD_MEMORY_BYTES = 1759218604442
+TASK041_SHORTWAVE_TIMEOUT_SECONDS = 259200
 TASK041_TERMINAL_SAMPLE_GRACE_SECONDS = 0.25
 TASK041_REQUIRED_THREADS = (
     "OMP_NUM_THREADS",
@@ -67,6 +75,48 @@ def _valid_sha(value: Any, length: int) -> bool:
         and len(value) == length
         and value == value.lower()
         and all(char in "0123456789abcdef" for char in value)
+    )
+
+
+def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, int]:
+    model_id = identity.get("model_id")
+    if model_id == TASK041_MODEL_ID:
+        if identity.get("requested_modes") != TASK041_MODE_COUNT or identity.get(
+            "mpi_size"
+        ) != TASK041_MPI_SIZE:
+            raise Task041SupervisorError(
+                "validated Task041 v1 identity has unexpected M/MPI",
+                classification="task041_identity_failure",
+                stage="runtime_limits",
+            )
+        return {
+            "warning_memory_bytes": TASK041_WARNING_MEMORY_BYTES,
+            "hard_memory_bytes": TASK041_HARD_MEMORY_BYTES,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": TASK041_TIMEOUT_SECONDS,
+        }
+    if model_id in TASK041_SHORTWAVE_MODEL_IDS:
+        case = task041_shortwave_case(str(model_id))
+        if (
+            case is None
+            or identity.get("requested_modes") != case["mode_count"]
+            or identity.get("mpi_size") != TASK041_SHORTWAVE_MPI_SIZE
+        ):
+            raise Task041SupervisorError(
+                "validated Task041 shortwave identity has unexpected M/MPI",
+                classification="task041_identity_failure",
+                stage="runtime_limits",
+            )
+        return {
+            "warning_memory_bytes": TASK041_SHORTWAVE_WARNING_MEMORY_BYTES,
+            "hard_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+        }
+    raise Task041SupervisorError(
+        f"runtime limits require a validated Task041 identity, got {model_id!r}",
+        classification="task041_identity_failure",
+        stage="runtime_limits",
     )
 
 
@@ -198,6 +248,9 @@ def _run_phase(
     memory_stages_path: Path,
     marker_path: Path,
     process_group_gone: Callable[[int], bool] = _process_group_gone,
+    warning_memory_bytes: int = TASK041_WARNING_MEMORY_BYTES,
+    hard_memory_bytes: int = TASK041_HARD_MEMORY_BYTES,
+    timeout_seconds: int = TASK041_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     if phase_root.exists():
         raise Task041SupervisorError(
@@ -275,12 +328,12 @@ def _run_phase(
                 samples.append(record)
                 _append_jsonl(memory_stages_path, record)
                 memory = record["memory_authority_bytes"]
-                warning_reached = warning_reached or memory >= TASK041_WARNING_MEMORY_BYTES
-                if memory >= TASK041_HARD_MEMORY_BYTES:
+                warning_reached = warning_reached or memory >= warning_memory_bytes
+                if memory >= hard_memory_bytes:
                     termination_reason = "absolute_memory_limit"
                 elif record["swap_bytes"] > 0 or record["job_no_swap"] is not True:
                     termination_reason = "swap_detected"
-                elif now - workflow_started >= TASK041_TIMEOUT_SECONDS:
+                elif now - workflow_started >= timeout_seconds:
                     termination_reason = "wall_timeout"
                 if termination_reason is not None:
                     cleanup_attempted = True
@@ -492,15 +545,41 @@ def _outer_mpi_launch_identity() -> dict[str, Any]:
 
 def _validate_specification(specification: Any, repository_root: Path) -> dict[str, Any]:
     snapshot = specification.as_jsonable()
+    model_id = str(snapshot.get("model_id", ""))
+    if model_id == TASK041_MODEL_ID:
+        profile_validator = task041_profile_errors
+        case = None
+        expected_input = (repository_root / TASK041_INPUT).resolve()
+        expected_run_id = TASK041_RUN_ID
+        expected_modes = TASK041_MODE_COUNT
+        expected_mpi_size = TASK041_MPI_SIZE
+    elif model_id in TASK041_SHORTWAVE_MODEL_IDS:
+        case = task041_shortwave_case(model_id)
+        if case is None:
+            raise Task041SupervisorError(
+                "Task41 shortwave case contract is unavailable",
+                classification="task041_identity_failure",
+                stage="input_identity",
+            )
+        profile_validator = task041_shortwave_profile_errors
+        expected_input = (repository_root / str(case["input"])).resolve()
+        expected_run_id = str(case["run_id"])
+        expected_modes = int(case["mode_count"])
+        expected_mpi_size = TASK041_SHORTWAVE_MPI_SIZE
+    else:
+        raise Task041SupervisorError(
+            f"unsupported Task041 supervisor model_id {model_id!r}",
+            classification="task041_identity_failure",
+            stage="input_identity",
+        )
     failures: list[str] = []
     try:
         failures.extend(
             f"{field}: {message}"
-            for field, message in task041_profile_errors(snapshot)
+            for field, message in profile_validator(snapshot)
         )
     except Exception as exc:  # noqa: BLE001 - malformed input is fail-closed
         failures.append(f"Task041 profile validation failed: {exc}")
-    expected_input = (repository_root / TASK041_INPUT).resolve()
     actual_input = Path(specification.source_path).resolve()
     if actual_input != expected_input:
         failures.append(
@@ -524,13 +603,13 @@ def _validate_specification(specification: Any, repository_root: Path) -> dict[s
             stage="input_identity",
         )
     return {
-        "model_id": TASK041_MODEL_ID,
-        "run_id": TASK041_RUN_ID,
+        "model_id": model_id,
+        "run_id": expected_run_id,
         "input_sha256": specification.input_sha256,
         "physical_model_sha256": specification.physical_model_sha256,
         "resolved_config_sha256": resolved_sha,
-        "requested_modes": TASK041_MODE_COUNT,
-        "mpi_size": TASK041_MPI_SIZE,
+        "requested_modes": expected_modes,
+        "mpi_size": expected_mpi_size,
     }
 
 
@@ -612,10 +691,10 @@ def _validate_producer_packet(
         "input_sha256": specification.input_sha256,
         "physical_sha256": specification.physical_model_sha256,
         "resolved_sha256": identity["resolved_config_sha256"],
-        "model_id": TASK041_MODEL_ID,
-        "run_id": TASK041_RUN_ID,
-        "mode_count": TASK041_MODE_COUNT,
-        "mpi_size": TASK041_MPI_SIZE,
+        "model_id": identity["model_id"],
+        "run_id": identity["run_id"],
+        "mode_count": identity["requested_modes"],
+        "mpi_size": identity["mpi_size"],
     }
     identity_checks = {
         "source_sha": packet_identity.get("source_sha"),
@@ -774,7 +853,7 @@ def run_task041_public_supervisor(
     poll_interval: float = 0.25,
     process_group_gone: Callable[[int], bool] = _process_group_gone,
 ) -> dict[str, Any]:
-    """Run the two fresh Task041 MPI1 children from the public MPI1 process."""
+    """Run legacy MPI1 or shortwave MPI8 children from an outer MPI1 process."""
 
     root = Path(run_directory).resolve()
     repository_root = Path(__file__).resolve().parents[2]
@@ -800,6 +879,12 @@ def run_task041_public_supervisor(
     git_identity: dict[str, Any] | None = None
     environment_snapshot: dict[str, Any] | None = None
     packet: dict[str, Any] | None = None
+    runtime_limits = {
+        "warning_memory_bytes": TASK041_WARNING_MEMORY_BYTES,
+        "hard_memory_bytes": TASK041_HARD_MEMORY_BYTES,
+        "swap_limit_bytes": 0,
+        "timeout_seconds": TASK041_TIMEOUT_SECONDS,
+    }
     try:
         if not root.is_dir():
             raise Task041SupervisorError(
@@ -817,6 +902,8 @@ def run_task041_public_supervisor(
         outer_mpi_identity = _outer_mpi_launch_identity()
         outer_mpi_size = outer_mpi_identity["mpi_size"]
         identity = _validate_specification(specification, repository_root)
+        runtime_limits = _runtime_limits_for_identity(identity)
+        result["limits"] = dict(runtime_limits)
         git_identity = _git_identity(repository_root, source_sha)
         environment_snapshot = _environment_snapshot(repository_root)
         result["identity"] = identity
@@ -845,13 +932,22 @@ def run_task041_public_supervisor(
         python_entry = Path(os.path.abspath(python_executable or sys.executable))
         producer_root = root / "producer"
         producer_command_module = _task041_builders()
-        producer_argv = _mpiexec_argv(
-            producer_command_module["mode_prep"](
+        if identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS:
+            producer_command = producer_command_module["shortwave_mode_prep"](
+                python_entry,
+                specification,
+                producer_root,
+                source_sha,
+            )
+        else:
+            producer_command = producer_command_module["mode_prep"](
                 python_entry,
                 repository_root / TASK041_INPUT,
                 producer_root,
                 source_sha,
-            ),
+            )
+        producer_argv = _mpiexec_argv(
+            producer_command,
             mpiexec_command,
         )
         result["workflow_status"] = "producer_running"
@@ -878,6 +974,9 @@ def run_task041_public_supervisor(
             / "log"
             / "memory_stage_markers.jsonl",
             process_group_gone=process_group_gone,
+            warning_memory_bytes=runtime_limits["warning_memory_bytes"],
+            hard_memory_bytes=runtime_limits["hard_memory_bytes"],
+            timeout_seconds=runtime_limits["timeout_seconds"],
         )
         result["phase_results"]["producer"] = producer_result
         if _phase_resource_failure(producer_result):
@@ -939,8 +1038,18 @@ def run_task041_public_supervisor(
                 stage="producer_handoff",
             )
         consumer_root = root / "consumer"
-        consumer_argv = _mpiexec_argv(
-            producer_command_module["consumer"](
+        if identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS:
+            consumer_command = producer_command_module["shortwave_consumer"](
+                python_entry,
+                specification,
+                Path(packet["manifest"]),
+                producer_root / "packet_identity.json",
+                packet["manifest_sha256"],
+                consumer_root,
+                source_sha,
+            )
+        else:
+            consumer_command = producer_command_module["consumer"](
                 python_entry,
                 repository_root / TASK041_INPUT,
                 Path(packet["manifest"]),
@@ -948,7 +1057,9 @@ def run_task041_public_supervisor(
                 packet["manifest_sha256"],
                 consumer_root,
                 source_sha,
-            ),
+            )
+        consumer_argv = _mpiexec_argv(
+            consumer_command,
             mpiexec_command,
         )
         result["workflow_status"] = "consumer_running"
@@ -975,6 +1086,9 @@ def run_task041_public_supervisor(
             / "log"
             / "memory_stage_markers.jsonl",
             process_group_gone=process_group_gone,
+            warning_memory_bytes=runtime_limits["warning_memory_bytes"],
+            hard_memory_bytes=runtime_limits["hard_memory_bytes"],
+            timeout_seconds=runtime_limits["timeout_seconds"],
         )
         result["phase_results"]["consumer"] = consumer_result
         consumer_exit = consumer_result.get("returncode")
@@ -1129,9 +1243,9 @@ def run_task041_public_supervisor(
         }
         result["resource_authority"] = {
             "status": "measured" if phases else "not_sampled",
-            "warning_memory_bytes": TASK041_WARNING_MEMORY_BYTES,
-            "hard_memory_bytes": TASK041_HARD_MEMORY_BYTES,
-            "swap_limit_bytes": 0,
+            "warning_memory_bytes": runtime_limits["warning_memory_bytes"],
+            "hard_memory_bytes": runtime_limits["hard_memory_bytes"],
+            "swap_limit_bytes": runtime_limits["swap_limit_bytes"],
             "swap_semantics": "max(process-tree VmSwap, dedicated job cgroup swap.current)",
             "workflow_peak": result["workflow_peak"],
             "total_wall_seconds": total_wall_seconds,
@@ -1184,11 +1298,15 @@ def _task041_builders() -> dict[str, Callable[..., list[str]]]:
     from benchmarks.task041_exact_side_workflow import (
         build_task041_consumer_command,
         build_task041_mode_prep_command,
+        build_task041_shortwave_consumer_command,
+        build_task041_shortwave_mode_prep_command,
     )
 
     return {
         "mode_prep": build_task041_mode_prep_command,
         "consumer": build_task041_consumer_command,
+        "shortwave_mode_prep": build_task041_shortwave_mode_prep_command,
+        "shortwave_consumer": build_task041_shortwave_consumer_command,
     }
 
 

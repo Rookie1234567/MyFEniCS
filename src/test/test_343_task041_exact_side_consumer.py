@@ -447,8 +447,47 @@ def test_task041_shortwave_identity_and_mpi8_child_argv(
         "producer-root",
         "a" * 40,
     )
-    assert command[:4] == ["mpiexec", "-n", "8", "/repo/.venv/bin/python"]
+    assert command[:9] == [
+        "mpiexec",
+        "-n",
+        "8",
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "0-7",
+        "--report-bindings",
+        "/repo/.venv/bin/python",
+    ]
     assert command[command.index("--input") + 1] == str(specification.source_path)
+    consumer_command = task041.build_task041_shortwave_consumer_command(
+        "/repo/.venv/bin/python",
+        specification,
+        "producer/manifest.json",
+        "producer/packet_identity.json",
+        "b" * 64,
+        "consumer-root",
+        "a" * 40,
+    )
+    assert consumer_command[:9] == [
+        "mpiexec",
+        "-n",
+        "8",
+        "--bind-to",
+        "cpu-list:ordered",
+        "--cpu-list",
+        "0-7",
+        "--report-bindings",
+        "/repo/.venv/bin/python",
+    ]
+    assert consumer_command[consumer_command.index("--input") + 1] == str(
+        specification.source_path
+    )
+    assert consumer_command[consumer_command.index("--packet-manifest") + 1] == (
+        "producer/manifest.json"
+    )
+    assert consumer_command[consumer_command.index("--packet-identity") + 1] == (
+        "producer/packet_identity.json"
+    )
 
 
 @pytest.mark.parametrize(
