@@ -13,8 +13,13 @@ import pytest
 from benchmarks import run_task037b_hybrid_iterative as iterative_runner
 from benchmarks import task039_v3_7_orchestration as orchestration
 from benchmarks import task041_exact_side_workflow as task041
+from src.io.input_validation import load_and_resolve
+from src.io.resolved_config import resolved_config_sha256
 from src.solvers.hybrid_fem_modal_augmented_direct import HybridAugmentedLayout
 from src.solvers.hybrid_fem_modal_block_ldu import HybridBlockLduIterativeConfig
+
+ROOT = Path(__file__).resolve().parents[2]
+TASK041_INPUT = ROOT / task041.TASK041_INPUT
 
 
 class _FakeVec:
@@ -47,6 +52,72 @@ class _FakeIterative:
 
     def destroy(self):
         return None
+
+
+def test_task041_packet_identity_reorders_inventory_without_hash_change():
+    specification = load_and_resolve(TASK041_INPUT)
+    normalized = specification.as_jsonable()
+    resolved_sha = resolved_config_sha256(specification)
+    identity = task041.build_task041_packet_identity(
+        specification,
+        normalized,
+        "a" * 40,
+        resolved_sha,
+    )
+    assert identity["external_keys"]["sha256"] == (
+        "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a"
+    )
+    reordered = {
+        **normalized,
+        "derived": {
+            **normalized["derived"],
+            "external_mode_inventory": {
+                **normalized["derived"]["external_mode_inventory"],
+                "keys": list(
+                    reversed(normalized["derived"]["external_mode_inventory"]["keys"])
+                ),
+            },
+        },
+    }
+    reordered_identity = task041.build_task041_packet_identity(
+        specification,
+        reordered,
+        "a" * 40,
+        resolved_sha,
+    )
+
+    assert reordered_identity["external_keys"] == identity["external_keys"]
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "missing"),
+    [
+        ("side", "middle", False),
+        ("m", "0", False),
+        ("n", 0.5, False),
+        ("polarization", "q", False),
+        ("side", None, True),
+        ("m", None, True),
+        ("n", None, True),
+        ("polarization", None, True),
+    ],
+)
+def test_task041_external_key_hash_rejects_invalid_or_missing_physical_fields(
+    field, value, missing
+):
+    key = {
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+    }
+    if missing:
+        del key[field]
+    else:
+        key[field] = value
+
+    with pytest.raises(task041.Task041ModePrepError, match=field):
+        task041._task041_canonical_mode_keys_sha256([key])
 
 
 @pytest.mark.parametrize(
@@ -349,15 +420,38 @@ def test_fresh_sampled_contract_is_bound_to_current_manifest(tmp_path):
     assert contract["sha256"] == task041.TASK041_CONSUMER_SAMPLE_CONTRACT_SHA256
 
 
-def test_consumer_authority_gate_is_recomputed_from_fresh_authority(tmp_path):
+@pytest.mark.parametrize("order_case", ("valid", "missing", "extra", "duplicate"))
+def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
+    tmp_path, order_case
+):
     authority_path = tmp_path / "v3_7_hybrid_authority.json"
     source_sha = "b" * 40
     physical_sha = "c" * 64
-    external_key = {
-        "side": "bottom",
+    external_keys = [
+        {
+            "side": "bottom",
+            "m": 0,
+            "n": 0,
+            "polarization": "s",
+        },
+        {
+            "side": "bottom",
+            "m": 1,
+            "n": 0,
+            "polarization": "p",
+        },
+    ]
+    extra_key = {
+        "side": "top",
         "m": 0,
         "n": 0,
-        "polarization": "s",
+        "polarization": "p",
+    }
+    external_orders_cases = {
+        "valid": external_keys,
+        "missing": external_keys[:1],
+        "extra": [*external_keys, extra_key],
+        "duplicate": [*external_keys, external_keys[0]],
     }
     identity = {
         "source_sha": source_sha,
@@ -366,8 +460,8 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(tmp_path):
         "mpi_size": 1,
         "mode_count": 480,
         "external_keys": {
-            "count": 1,
-            "sha256": task041.canonical_mode_keys_sha256([external_key]),
+            "count": len(external_keys),
+            "sha256": task041._task041_canonical_mode_keys_sha256(external_keys),
         },
     }
     authority_path.write_text(
@@ -378,7 +472,9 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(tmp_path):
                 "model_id": identity["model_id"],
                 "mpi_size": 1,
                 "requested_modes": 480,
-                "external_mode_inventory": {"keys": [external_key]},
+                "external_mode_inventory": {
+                    "keys": list(reversed(external_keys))
+                },
                 "canonical": {
                     side: {
                         "roles": {
@@ -388,9 +484,7 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(tmp_path):
                     }
                     for side in ("bottom", "top")
                 },
-                "external_orders": [
-                    external_key
-                ],
+                "external_orders": external_orders_cases[order_case],
                 "grid_payload": {
                     "arrays": {
                         name: {
@@ -453,11 +547,12 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(tmp_path):
     gates = task041._task041_consumer_authority_gate(
         authority_path, formal, identity
     )
-    assert gates["pass"] is True
+    expected_pass = order_case == "valid"
+    assert gates["pass"] is expected_pass
     assert gates["ksp_reason_pass"] is True
     assert gates["authority_identity"]["pass"] is True
     assert gates["external_key_binding_pass"] is True
-    assert gates["external_orders_key_binding_pass"] is True
+    assert gates["external_orders_key_binding_pass"] is expected_pass
     assert gates["external_q_residuals"] == {
         "bottom": 1.0e-12,
         "top": 1.0e-12,

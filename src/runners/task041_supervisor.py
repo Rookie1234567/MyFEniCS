@@ -236,15 +236,32 @@ def _run_phase(
                 if returncode is not None:
                     break
                 authority = sample_factory(process.pid)
-                record = _sample_record(
-                    authority, phase, now - workflow_started
+                process_tree = (
+                    authority.get("process_tree")
+                    if isinstance(authority, Mapping)
+                    else None
                 )
-                if record["all_status_readable"] is not True:
+                if not (
+                    isinstance(process_tree, Mapping)
+                    and process_tree.get("all_status_readable") is True
+                ):
                     returncode = process.poll()
                     if returncode is None:
                         sleep(TASK041_TERMINAL_SAMPLE_GRACE_SECONDS)
+                        authority = sample_factory(process.pid)
+                        process_tree = (
+                            authority.get("process_tree")
+                            if isinstance(authority, Mapping)
+                            else None
+                        )
                         returncode = process.poll()
-                        if returncode is None:
+                        if (
+                            returncode is None
+                            and not (
+                                isinstance(process_tree, Mapping)
+                                and process_tree.get("all_status_readable") is True
+                            )
+                        ):
                             raise Task041SupervisorError(
                                 f"{phase} process-tree sample is not fully readable",
                                 classification="task041_resource_sample_failure",
@@ -252,6 +269,9 @@ def _run_phase(
                             )
                     if returncode is not None:
                         break
+                record = _sample_record(
+                    authority, phase, now - workflow_started
+                )
                 samples.append(record)
                 _append_jsonl(memory_stages_path, record)
                 memory = record["memory_authority_bytes"]

@@ -254,6 +254,49 @@ class _TerminalUnreadableSample:
         }
 
 
+class _UnreadableThenReadableSample:
+    def __init__(self):
+        self.calls = 0
+        self.readable = _Samples()
+
+    def __call__(self, pid):
+        self.calls += 1
+        if self.calls == 1:
+            return {"process_tree": {"all_status_readable": False}}
+        return self.readable(pid)
+
+
+class _PersistentUnreadableSample:
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, _pid):
+        self.calls += 1
+        return {"process_tree": {"all_status_readable": False}}
+
+
+def test_phase_records_one_readable_resample_and_continues(tmp_path):
+    samples = _UnreadableThenReadableSample()
+    popen = _FakePopen(poll_results=[None, None, None, 0])
+    grace_delays = []
+
+    phase = _run_phase(
+        tmp_path,
+        sample=samples,
+        popen_factory=popen,
+        sleep=grace_delays.append,
+    )
+
+    assert phase["returncode"] == 0
+    assert phase["sample_count"] == 1
+    assert samples.calls == 2
+    assert popen.processes[0].poll_count == 4
+    assert phase["peak_memory_authority_bytes"] == 100
+    assert phase["rss_drop"]["pass"] is True
+    assert phase["termination"] is None
+    assert grace_delays.count(supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS) == 1
+
+
 def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     samples = _TerminalUnreadableSample()
     popen = _FakePopen(poll_results=[None, None, None, 0])
@@ -274,7 +317,7 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
 
     assert phase["returncode"] == 0
     assert phase["sample_count"] == 1
-    assert samples.calls == 2
+    assert samples.calls == 3
     assert phase["peak_memory_authority_bytes"] == 100
     assert phase["rss_drop"] == {
         "before_process_tree_rss_bytes": 100,
@@ -285,11 +328,11 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     assert phase["process_group_gone"] is True
     assert phase["termination"] is None
     assert terminated == []
-    assert grace_delays[-1] == supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
+    assert grace_delays.count(supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS) == 1
 
 
 def test_phase_fails_if_unreadable_child_survives_terminal_grace(tmp_path):
-    samples = _TerminalUnreadableSample()
+    samples = _PersistentUnreadableSample()
     popen = _FakePopen(poll_results=[None, None, None, None])
     terminated = []
     grace_delays = []
@@ -312,7 +355,8 @@ def test_phase_fails_if_unreadable_child_survives_terminal_grace(tmp_path):
 
     assert error.value.classification == "task041_resource_sample_failure"
     assert error.value.stage == "producer_resource_sample"
-    assert grace_delays[-1] == supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
+    assert samples.calls == 2
+    assert grace_delays.count(supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS) == 1
     assert terminated == [popen.processes[0].pid]
 
 

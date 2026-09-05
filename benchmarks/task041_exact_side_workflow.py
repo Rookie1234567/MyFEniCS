@@ -263,6 +263,53 @@ def _inventory_from_payload(normalized: Mapping[str, Any]) -> tuple[list[Any], i
     return [_jsonable(key) for key in keys], count
 
 
+def _task041_canonical_mode_keys_sha256(keys: Sequence[Any]) -> str:
+    """Hash Task041 external keys in explicit physical canonical order."""
+
+    physical_keys: list[tuple[tuple[int, int, int, int], Any]] = []
+    side_order = {"bottom": 0, "top": 1}
+    polarization_order = {"p": 0, "s": 1}
+    for index, raw_key in enumerate(keys):
+        key = _jsonable(raw_key)
+        if not isinstance(key, Mapping):
+            raise Task041ModePrepError(
+                f"external key {index} must be a mapping"
+            )
+        side = key.get("side")
+        if not isinstance(side, str) or side not in side_order:
+            raise Task041ModePrepError(
+                f"external key {index} side must be 'bottom' or 'top'"
+            )
+        m = key.get("m")
+        if type(m) is not int:
+            raise Task041ModePrepError(
+                f"external key {index} m must be an integer"
+            )
+        n = key.get("n")
+        if type(n) is not int:
+            raise Task041ModePrepError(
+                f"external key {index} n must be an integer"
+            )
+        polarization = key.get("polarization")
+        if not isinstance(polarization, str) or polarization not in polarization_order:
+            raise Task041ModePrepError(
+                f"external key {index} polarization must be 'p' or 's'"
+            )
+        physical_keys.append(
+            (
+                (
+                    side_order[side],
+                    m,
+                    n,
+                    polarization_order[polarization],
+                ),
+                key,
+            )
+        )
+    ordered = [key for _, key in sorted(physical_keys, key=lambda item: item[0])]
+    return canonical_mode_keys_sha256(ordered)
+
+
 def _requested_mode_count(normalized: Mapping[str, Any]) -> int:
     value = normalized["method"]["requested_modes_per_direction"]
     if type(value) is not int or value < 2:
@@ -302,7 +349,7 @@ def build_task041_packet_identity(
     physical_sha = str(specification.physical_model_sha256)
     if not _valid_sha(input_sha, 64) or not _valid_sha(physical_sha, 64):
         raise Task041ModePrepError("input and physical identities must be lowercase SHA256")
-    external_key_sha = canonical_mode_keys_sha256(keys)
+    external_key_sha = _task041_canonical_mode_keys_sha256(keys)
     expected_model = (
         "task041_5nm_exact_side_hybrid_iterative_p6h4_"
         f"m{mode_count}"
@@ -859,7 +906,7 @@ def _task041_consumer_authority_gate(
     if isinstance(authority_keys, list):
         authority_external_keys = {
             "count": len(authority_keys),
-            "sha256": canonical_mode_keys_sha256(authority_keys),
+            "sha256": _task041_canonical_mode_keys_sha256(authority_keys),
         }
     identity_external_keys = recomputed_identity.get("external_keys")
     external_key_binding_pass = bool(
