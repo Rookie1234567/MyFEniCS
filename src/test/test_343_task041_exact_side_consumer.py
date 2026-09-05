@@ -859,6 +859,12 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         coupling = SimpleNamespace(internal_unknown_count=0)
 
     setup = FakeSetup()
+    setup.coupling = SimpleNamespace(
+        internal_unknown_count=0,
+        propagation_axial_target_h_nm=3.0 if shortwave else None,
+        propagation_axial_h_nm=100.0 / 34 if shortwave else None,
+        propagation_axial_cell_count=34 if shortwave else None,
+    )
 
     def fake_build_setup(**kwargs):
         captured["setup"].update(kwargs)
@@ -1102,6 +1108,16 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         marker for marker in marker_records if marker["stage"] == "system_setup_stage"
     )
     assert setup_marker["detail"]["name"] == "selected_mode_packet_consumed"
+    if shortwave:
+        ready_marker = next(
+            marker for marker in marker_records if marker["stage"] == "system_ready"
+        )
+        assert ready_marker["detail"]["internal_propagation"] == {
+            "model": normalized["method"]["propagation_model"],
+            "target_h_nm": 3.0,
+            "actual_h_nm": 100.0 / 34,
+            "cell_count": 34,
+        }
     assert observed.index("system_setup_stage") < observed.index("system_ready")
     assert [
         task041.TASK041_CONSUMER_MARKER_SEQUENCE.index(stage)

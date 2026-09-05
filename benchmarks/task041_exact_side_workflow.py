@@ -1809,6 +1809,12 @@ def run_task041_consumer(
                     root / "numerical_output" / "exact_one_cell"
                 ),
                 "task040_pc": False,
+                "internal_propagation": {
+                    "model": normalized.get("method", {}).get("propagation_model"),
+                    "target_h_nm": setup.coupling.propagation_axial_target_h_nm,
+                    "actual_h_nm": setup.coupling.propagation_axial_h_nm,
+                    "cell_count": setup.coupling.propagation_axial_cell_count,
+                },
             },
         )
         layout = __import__(

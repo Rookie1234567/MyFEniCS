@@ -265,6 +265,9 @@ class HybridInternalModeCoupling:
     interface_quadrature_coefficient_degree: int = 0
     exact_one_cell_audit: dict[str, object] | None = None
     traction_beta_source: str = "coupling_selected_traction_beta_per_nm"
+    propagation_axial_target_h_nm: float | None = None
+    propagation_axial_h_nm: float | None = None
+    propagation_axial_cell_count: int | None = None
 
     @property
     def internal_unknown_count(self) -> int:
@@ -2028,6 +2031,32 @@ def build_single_hybrid_interface_mode_owner(
         canonical_negative_traces.clear()
 
 
+def _resolve_uniform_middle_propagation(
+    length_nm: float, target_h_nm: float
+) -> tuple[float, int]:
+    """Resolve target h as an upper bound into uniform middle cells."""
+    length = float(length_nm)
+    target = float(target_h_nm)
+    if (
+        not np.isfinite(length)
+        or not np.isfinite(target)
+        or length <= 0.0
+        or target <= 0.0
+    ):
+        raise ValueError(
+            "Uniform middle propagation length and target h must be finite and positive."
+        )
+    ratio = length / target
+    if not np.isfinite(ratio) or ratio <= 0.0:
+        raise ValueError("Uniform middle propagation length/target h is invalid.")
+    nearest = round(ratio)
+    if np.isclose(ratio, nearest, rtol=0.0, atol=1.0e-12):
+        cell_count = max(1, int(nearest))
+    else:
+        cell_count = max(1, int(np.ceil(ratio)))
+    return length / cell_count, cell_count
+
+
 def build_hybrid_internal_mode_coupling(
     cfg: SimulationConfig3D,
     spaces: CrossSectionSpaces,
@@ -2094,12 +2123,24 @@ def build_hybrid_internal_mode_coupling(
         if not np.all(np.isfinite(canonical_negative_mapping)):
             raise RuntimeError("Negative-to-positive interface map is non-finite.")
 
+        propagation_axial_target_h_nm = None
+        propagation_axial_h_nm = None
+        propagation_axial_cell_count = None
+        axial_h_nm = float(cfg.mesh_target_size)
+        if propagation_model == "full3d_uniform_cg":
+            propagation_axial_target_h_nm = float(cfg.mesh_target_size)
+            propagation_axial_h_nm, propagation_axial_cell_count = (
+                _resolve_uniform_middle_propagation(
+                    length_nm, propagation_axial_target_h_nm
+                )
+            )
+            axial_h_nm = propagation_axial_h_nm
         propagation = build_two_sided_propagation(
             [*positive_basis.modes, *negative_basis.modes],
             length_nm,
             propagation_model=propagation_model,
             axial_fem_degree=int(cfg.nedelec_degree),
-            axial_h_nm=float(cfg.mesh_target_size),
+            axial_h_nm=axial_h_nm,
         )
         if modal_traction_model == "continuous_qep_beta":
             positive_traction_beta = tuple(
@@ -2118,7 +2159,7 @@ def build_hybrid_internal_mode_coupling(
                 scalar_cg_discrete_traction_beta(
                     mode.beta,
                     degree=int(cfg.nedelec_degree),
-                    h_nm=float(cfg.mesh_target_size),
+                    h_nm=axial_h_nm,
                     direction="forward",
                 )
                 for mode in positive_basis.modes
@@ -2127,7 +2168,7 @@ def build_hybrid_internal_mode_coupling(
                 scalar_cg_discrete_traction_beta(
                     mode.beta,
                     degree=int(cfg.nedelec_degree),
-                    h_nm=float(cfg.mesh_target_size),
+                    h_nm=axial_h_nm,
                     direction="backward",
                 )
                 for mode in negative_basis.modes
@@ -2177,7 +2218,7 @@ def build_hybrid_internal_mode_coupling(
                 scalar_cg_discrete_traction_beta(
                     mode.beta,
                     degree=int(cfg.nedelec_degree),
-                    h_nm=float(cfg.mesh_target_size),
+                    h_nm=axial_h_nm,
                     direction="forward",
                 )
                 for mode in positive_basis.modes
@@ -2186,7 +2227,7 @@ def build_hybrid_internal_mode_coupling(
                 scalar_cg_discrete_traction_beta(
                     mode.beta,
                     degree=int(cfg.nedelec_degree),
-                    h_nm=float(cfg.mesh_target_size),
+                    h_nm=axial_h_nm,
                     direction="backward",
                 )
                 for mode in negative_basis.modes
@@ -2372,6 +2413,9 @@ def build_hybrid_internal_mode_coupling(
                 if exact_traction_overrides is not None
                 else "coupling_selected_traction_beta_per_nm"
             ),
+            propagation_axial_target_h_nm=propagation_axial_target_h_nm,
+            propagation_axial_h_nm=propagation_axial_h_nm,
+            propagation_axial_cell_count=propagation_axial_cell_count,
         )
     except Exception:
         _destroy_pending_exact_overrides(pending_exact_overrides)

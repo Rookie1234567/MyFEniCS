@@ -13,6 +13,7 @@ from petsc4py import PETSc
 from src.common.config_3d import target_stage4_config
 from src.coupling.hybrid_internal_modes import (
     _build_projection_matrix,
+    _resolve_uniform_middle_propagation,
     _ReusableInterfaceLifter,
     _ReusableModeTractionEvaluator,
     _trace_from_streamed_local_values,
@@ -63,7 +64,7 @@ def _augmented_local_field_vector(system, field) -> PETSc.Vec:
 
 class Task032HybridInternalModeFailureCleanupTests(unittest.TestCase):
     @staticmethod
-    def _inputs():
+    def _inputs(target_h_nm=5.0):
         positive_mode = SimpleNamespace(
             beta=0.2 + 0.01j,
             direction="forward",
@@ -75,7 +76,9 @@ class Task032HybridInternalModeFailureCleanupTests(unittest.TestCase):
             right=SimpleNamespace(right_full=object()),
         )
         return {
-            "cfg": SimpleNamespace(nedelec_degree=2, mesh_target_size=5.0),
+            "cfg": SimpleNamespace(
+                nedelec_degree=2, mesh_target_size=target_h_nm
+            ),
             "spaces": object(),
             "positive_basis": SimpleNamespace(modes=[positive_mode]),
             "negative_basis": SimpleNamespace(modes=[negative_mode]),
@@ -137,6 +140,64 @@ class Task032HybridInternalModeFailureCleanupTests(unittest.TestCase):
                     modal_traction_model="scalar_cg_discrete_derivative",
                 )
         projection.destroy.assert_called_once_with()
+
+    def test_full3d_resolves_actual_uniform_middle_spacing(self):
+        self.assertEqual(
+            _resolve_uniform_middle_propagation(100.0, 3.0),
+            (100.0 / 34, 34),
+        )
+        for target_h_nm, expected_count in ((4.0, 25), (2.5, 40), (2.0, 50)):
+            actual_h_nm, cell_count = _resolve_uniform_middle_propagation(
+                100.0, target_h_nm
+            )
+            self.assertEqual(cell_count, expected_count)
+            self.assertEqual(actual_h_nm, 100.0 / expected_count)
+
+        projection = SimpleNamespace(
+            right_traces=(object(),),
+            project=mock.Mock(return_value=np.ones(1, dtype=np.complex128)),
+            destroy=mock.Mock(),
+        )
+        seen = {"propagation": [], "traction": []}
+
+        def fake_propagation(*args, **kwargs):
+            del args
+            seen["propagation"].append(kwargs["axial_h_nm"])
+            return object()
+
+        def fake_traction(beta, *, h_nm, **kwargs):
+            del beta, kwargs
+            seen["traction"].append(h_nm)
+            raise RuntimeError("stop after actual h")
+
+        with (
+            mock.patch(
+                "src.coupling.hybrid_internal_modes.ModalTraceProjection",
+                return_value=projection,
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes._trace_from_full_mode_vector",
+                return_value=object(),
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes.build_two_sided_propagation",
+                side_effect=fake_propagation,
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes.scalar_cg_discrete_traction_beta",
+                side_effect=fake_traction,
+            ),
+            self.assertRaisesRegex(RuntimeError, "stop after actual h"),
+        ):
+            build_hybrid_internal_mode_coupling(
+                **self._inputs(target_h_nm=3.0),
+                length_nm=100.0,
+                propagation_model="full3d_uniform_cg",
+                modal_traction_model="scalar_cg_discrete_derivative",
+            )
+
+        self.assertEqual(seen["propagation"], [100.0 / 34])
+        self.assertEqual(seen["traction"], [100.0 / 34])
 
 
 class Task032HybridInternalModeTests(unittest.TestCase):
@@ -238,6 +299,9 @@ class Task032HybridInternalModeTests(unittest.TestCase):
         self.assertLess(coupling.positive_projection_identity_error, 1.0e-10)
         self.assertFalse(coupling.dense_interface_square_formed)
         self.assertFalse(coupling.full_field_or_mode_gathered)
+        self.assertIsNone(coupling.propagation_axial_target_h_nm)
+        self.assertIsNone(coupling.propagation_axial_h_nm)
+        self.assertIsNone(coupling.propagation_axial_cell_count)
 
     def test_stable_propagation_uses_no_growing_inverse(self):
         propagation = self.coupling.propagation
