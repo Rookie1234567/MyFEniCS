@@ -451,6 +451,90 @@ def test_task041_shortwave_identity_and_mpi8_child_argv(
     assert command[command.index("--input") + 1] == str(specification.source_path)
 
 
+@pytest.mark.parametrize(
+    ("filename", "mode_count"),
+    (
+        ("3nm_p6h3_m800_mpi8.dat", 800),
+        ("3nm_p6h3_m1200_mpi8.dat", 1200),
+    ),
+)
+def test_task041_shortwave_consumer_profile_and_dynamic_sampled_contract(
+    tmp_path, filename, mode_count
+):
+    specification = load_and_resolve(ROOT / "input/official/task041" / filename)
+    normalized = specification.as_jsonable()
+    profile = task041._task041_shortwave_consumer_profile(specification)
+    base_profile = task041._task041_consumer_profile()
+    assert profile.profile_id == task041.TASK041_SHORTWAVE_CONSUMER_PROFILE
+    assert profile.record_schema == task041.TASK041_SHORTWAVE_CONSUMER_SCHEMA
+    assert profile.qualification_schema == task041.TASK041_SHORTWAVE_CONSUMER_SCHEMA
+    assert profile.wavelength_nm == normalized["incidence"]["wavelength_nm"] == 3.0
+    assert profile.requested_modes == mode_count
+    assert profile.candidate_modes == 2 * mode_count
+    assert profile.mpi_size == 8
+    assert profile.h_nm == normalized["discretization"]["mesh_target_nm"] == 3.0
+    assert profile.modal_h_nm == 3.0
+    for field in (
+        "preconditioner_identity",
+        "side_residual_correction_steps",
+        "max_it",
+        "internal_propagation_model",
+        "internal_traction_model",
+        "restart",
+        "rtol",
+    ):
+        assert getattr(profile, field) == getattr(base_profile, field)
+
+    argv = task041._producer_argv(
+        tmp_path / "packet",
+        tmp_path / "identity.json",
+        tmp_path / "producer.json",
+        "a" * 40,
+        mode_count,
+        mesh_target_nm=3.0,
+        degree=6,
+    )
+    assert argv[argv.index("--h-nm") + 1] == "3"
+    assert argv[argv.index("--modal-h-nm") + 1] == "3"
+    assert argv[argv.index("--degree") + 1] == "6"
+    assert argv[argv.index("--modal-degree") + 1] == "6"
+    assert argv[argv.index("--requested-modes") + 1] == str(mode_count)
+    assert argv[argv.index("--candidate-modes") + 1] == str(2 * mode_count)
+
+    identity = task041.build_task041_shortwave_packet_identity(
+        specification,
+        normalized,
+        "a" * 40,
+        resolved_config_sha256(specification),
+    )
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text("fresh shortwave packet", encoding="utf-8")
+    manifest_sha = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    first = task041._task041_consumer_sampled_column_contract(
+        identity, manifest, manifest_sha
+    )
+    second = task041._task041_consumer_sampled_column_contract(
+        identity, manifest, manifest_sha
+    )
+    assert first["columns"] == [
+        0,
+        1,
+        mode_count // 2,
+        mode_count - 1,
+        mode_count,
+        mode_count + 1,
+        mode_count + mode_count // 2,
+        2 * mode_count - 1,
+    ]
+    assert first["sha256"] == second["sha256"]
+    assert first["fresh_packet_binding"] == second["fresh_packet_binding"]
+    invalid_identity = {**identity, "cross_section_partition": "wrong"}
+    with pytest.raises(task041.Task041ModePrepError, match="input_contiguous_v1"):
+        task041._task041_consumer_sampled_column_contract(
+            invalid_identity, manifest, manifest_sha
+        )
+
+
 def test_fresh_sampled_contract_is_bound_to_current_manifest(tmp_path):
     identity = {
         "mode_count": 480,

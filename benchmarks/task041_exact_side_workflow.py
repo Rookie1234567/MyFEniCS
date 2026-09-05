@@ -47,6 +47,10 @@ TASK041_MODE_PREP_PROFILE = "task041_5nm_exact_side_hybrid_iterative"
 TASK041_MODE_PREP_PHASE = "mode-prep"
 TASK041_CONSUMER_SCHEMA = "task041.exact_side.consumer.v1"
 TASK041_CONSUMER_PROFILE = "task041_5nm_exact_side_hybrid_iterative_consumer"
+TASK041_SHORTWAVE_CONSUMER_SCHEMA = "task041.exact_side.consumer.v2"
+TASK041_SHORTWAVE_CONSUMER_PROFILE = (
+    "task041_3nm_exact_side_hybrid_iterative_consumer"
+)
 TASK041_CONSUMER_PHASE = "consumer"
 TASK041_INPUT = "input/official/task041/5nm_p6h4_m480_mpi1.dat"
 TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
@@ -596,18 +600,23 @@ def _producer_argv(
     output_path: Path,
     source_sha: str,
     mode_count: int,
+    *,
+    mesh_target_nm: float = 4.0,
+    degree: int = 6,
 ) -> list[str]:
+    mesh_token = f"{float(mesh_target_nm):g}"
+    degree_token = str(degree)
     return [
         "--output",
         str(output_path),
         "--h-nm",
-        "4",
+        mesh_token,
         "--degree",
-        "6",
+        degree_token,
         "--modal-h-nm",
-        "4",
+        mesh_token,
         "--modal-degree",
-        "6",
+        degree_token,
         "--internal-propagation-model",
         "full3d_uniform_cg",
         "--internal-traction-model",
@@ -919,33 +928,141 @@ def _task041_consumer_profile() -> Any:
     )
 
 
+def _task041_shortwave_consumer_profile(specification: Any) -> Any:
+    normalized = specification.as_jsonable()
+    case = task041_shortwave_case(str(normalized.get("model_id", "")))
+    if case is None:
+        raise Task041ModePrepError(
+            "Task41 shortwave consumer requires an approved M800 or M1200 case"
+        )
+    profile_failures = tuple(task041_shortwave_profile_errors(normalized))
+    if profile_failures:
+        detail = "; ".join(f"{field}: {message}" for field, message in profile_failures)
+        raise Task041ModePrepError("Task41 shortwave profile rejected: " + detail)
+    incidence = normalized["incidence"]
+    discretization = normalized["discretization"]
+    method = normalized["method"]
+    execution = normalized["execution"]
+    return replace(
+        _task041_consumer_profile(),
+        profile_id=TASK041_SHORTWAVE_CONSUMER_PROFILE,
+        record_schema=TASK041_SHORTWAVE_CONSUMER_SCHEMA,
+        qualification_schema=TASK041_SHORTWAVE_CONSUMER_SCHEMA,
+        wavelength_nm=incidence["wavelength_nm"],
+        requested_modes=method["requested_modes_per_direction"],
+        candidate_modes=2 * method["requested_modes_per_direction"],
+        mpi_size=execution["mpi_size"],
+        h_nm=discretization["mesh_target_nm"],
+        modal_h_nm=discretization["mesh_target_nm"],
+    )
+
+
 def _task041_consumer_sampled_column_contract(
     identity: Mapping[str, Any],
     manifest_path: Path,
     manifest_sha256: str,
 ) -> dict[str, Any]:
-    """Bind the frozen M480 sampled roles to this fresh packet manifest."""
+    """Bind the fixed v1 or shortwave v2 sampled roles to a fresh manifest."""
 
-    if int(identity.get("mode_count", -1)) != 480 or int(
-        identity.get("mpi_size", -1)
-    ) != 1:
-        raise Task041ModePrepError("Task041 consumer sampled contract requires M480/MPI1")
+    identity_schema = identity.get("schema")
+    if identity_schema == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
+        mode_count = identity.get("mode_count")
+        if type(mode_count) is not int or mode_count not in (800, 1200):
+            raise Task041ModePrepError(
+                "Task041 shortwave sampled contract requires M800 or M1200"
+            )
+        if (
+            type(identity.get("mpi_size")) is not int
+            or identity.get("mpi_size") != TASK041_SHORTWAVE_MPI_SIZE
+        ):
+            raise Task041ModePrepError(
+                "Task041 shortwave sampled contract requires MPI8"
+            )
+        if identity.get("scope") != task041_shortwave_selected_mode_scope(
+            mode_count, TASK041_SHORTWAVE_MPI_SIZE
+        ):
+            raise Task041ModePrepError(
+                "Task041 shortwave sampled contract scope does not match M/MPI"
+            )
+        if identity.get("cross_section_partition") != "input_contiguous_v1":
+            raise Task041ModePrepError(
+                "Task041 shortwave sampled contract requires input_contiguous_v1"
+            )
+        offsets = (0, 1, mode_count // 2, mode_count - 1)
+        columns = [*offsets, *(mode_count + offset for offset in offsets)]
+        roles = {
+            str(offsets[0]): [
+                "head",
+                "high_priority",
+                "bottom_positive_unattenuated",
+            ],
+            str(offsets[1]): [
+                "first_group_neighbor",
+                "bottom_positive_unattenuated",
+            ],
+            str(offsets[2]): [
+                "interior_midpoint",
+                "bottom_positive_unattenuated",
+            ],
+            str(offsets[3]): [
+                "tail",
+                "high_abs_beta",
+                "bottom_positive_unattenuated",
+            ],
+            str(mode_count + offsets[0]): [
+                "head",
+                "high_priority",
+                "top_negative_unattenuated",
+            ],
+            str(mode_count + offsets[1]): [
+                "first_group_neighbor",
+                "top_negative_unattenuated",
+            ],
+            str(mode_count + offsets[2]): [
+                "interior_midpoint",
+                "top_negative_unattenuated",
+            ],
+            str(mode_count + offsets[3]): [
+                "tail",
+                "high_abs_beta",
+                "top_negative_unattenuated",
+            ],
+        }
+        contract = {
+            "columns": columns,
+            "mode_count_per_direction": mode_count,
+            "roles": roles,
+        }
+        expected_contract_sha256 = None
+    else:
+        if identity_schema not in (None, TASK041_SELECTED_MODE_IDENTITY_SCHEMA):
+            raise Task041ModePrepError(
+                "Task041 consumer sampled contract has an unsupported identity schema"
+            )
+        if int(identity.get("mode_count", -1)) != 480 or int(
+            identity.get("mpi_size", -1)
+        ) != 1:
+            raise Task041ModePrepError("Task041 consumer sampled contract requires M480/MPI1")
+        contract = {
+            "columns": list(TASK041_CONSUMER_SAMPLE_COLUMNS),
+            "mode_count_per_direction": 480,
+            "roles": {
+                key: list(value) for key, value in TASK041_CONSUMER_SAMPLE_ROLES.items()
+            },
+        }
+        expected_contract_sha256 = TASK041_CONSUMER_SAMPLE_CONTRACT_SHA256
     if not manifest_path.is_file() or not _valid_sha(manifest_sha256, 64):
         raise Task041ModePrepError("Task041 consumer packet manifest is not available")
     actual_manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
     if actual_manifest_sha != manifest_sha256:
         raise Task041ModePrepError("Task041 consumer packet manifest hash mismatch")
-    contract = {
-        "columns": list(TASK041_CONSUMER_SAMPLE_COLUMNS),
-        "mode_count_per_direction": 480,
-        "roles": {
-            key: list(value) for key, value in TASK041_CONSUMER_SAMPLE_ROLES.items()
-        },
-    }
     actual_contract_sha = hashlib.sha256(
         json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
-    if actual_contract_sha != TASK041_CONSUMER_SAMPLE_CONTRACT_SHA256:
+    if (
+        expected_contract_sha256 is not None
+        and actual_contract_sha != expected_contract_sha256
+    ):
         raise Task041ModePrepError("Task041 sampled column contract drifted")
     binding = _task041_consumer_packet_binding(
         actual_contract_sha, identity, manifest_sha256
