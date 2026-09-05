@@ -185,7 +185,34 @@ def test_task041_shortwave_mode_prep_uses_mpi8_contract(monkeypatch, tmp_path):
     assert result["profile"] == workflow.TASK041_SHORTWAVE_MODE_PREP_PROFILE
     assert captured["argv"][captured["argv"].index("--h-nm") + 1] == "3"
     assert captured["argv"][captured["argv"].index("--requested-modes") + 1] == "800"
+    assert captured["kwargs"]["task041_expected_mesh_nm"] == 3.0
+    assert captured["kwargs"]["task041_expected_mpi_size"] == 8
     assert (tmp_path / "mode-prep" / "mode_prep_summary.json").is_file()
+
+
+def test_task041_shortwave_parser_binds_expected_mesh(tmp_path):
+    command = workflow._producer_argv(
+        tmp_path / "packet",
+        tmp_path / "identity.json",
+        tmp_path / "producer.json",
+        "b" * 40,
+        800,
+        mesh_target_nm=3.0,
+        degree=6,
+    )
+    parsed = run_task032_phase6_augmented._parse_args(
+        command,
+        allow_task041=True,
+        task041_expected_mesh_nm=3.0,
+    )
+    assert parsed.h_nm == 3.0
+    assert parsed.modal_h_nm == 3.0
+    with pytest.raises(SystemExit):
+        run_task032_phase6_augmented._parse_args(
+            command,
+            allow_task041=True,
+            task041_expected_mesh_nm=4.0,
+        )
 
 
 def test_task041_producer_argv_enables_retained_subspace_dual_rotation() -> None:

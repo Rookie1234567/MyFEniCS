@@ -873,6 +873,8 @@ def run_task041_mode_prep(
             canonical_export_prefix="task041_mode_prep",
             task039_stage_marker_path=root / "producer_markers.jsonl",
             task041_mode_prep=True,
+            task041_expected_mesh_nm=contract["mesh_target_nm"],
+            task041_expected_mpi_size=contract["mpi_size"],
         )
         if not isinstance(producer_record, Mapping):
             raise Task041ModePrepError("producer did not return a mapping record")

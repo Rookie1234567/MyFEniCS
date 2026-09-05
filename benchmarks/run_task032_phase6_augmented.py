@@ -1063,6 +1063,7 @@ def _parse_args(
     *,
     allow_task039: bool = False,
     allow_task041: bool = False,
+    task041_expected_mesh_nm: float = 4.0,
 ) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Task32 Phase6 real-QEP hybrid augmented direct diagnostic"
@@ -1251,6 +1252,13 @@ def _parse_args(
     )
     parser.add_argument("--selected-mode-packet-consumer-manifest-sha256")
     args = parser.parse_args(argv)
+    if allow_task041:
+        try:
+            expected_mesh_nm = float(task041_expected_mesh_nm)
+        except (TypeError, ValueError):
+            parser.error("task041_expected_mesh_nm must be a positive finite number.")
+        if not np.isfinite(expected_mesh_nm) or expected_mesh_nm <= 0.0:
+            parser.error("task041_expected_mesh_nm must be a positive finite number.")
     consumer_values = (
         args.selected_mode_packet_consumer_manifest,
         args.selected_mode_packet_consumer_identity_json,
@@ -1313,8 +1321,8 @@ def _parse_args(
             and args.degree == 6
             and args.modal_degree == 6
             and args.modal_h_nm is not None
-            and np.isclose(args.h_nm, 4.0)
-            and np.isclose(args.modal_h_nm, 4.0)
+            and np.isclose(args.h_nm, expected_mesh_nm)
+            and np.isclose(args.modal_h_nm, expected_mesh_nm)
             and args.requested_modes >= 2
             and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "augmented"
@@ -1339,9 +1347,9 @@ def _parse_args(
         )
         if not scoped:
             parser.error(
-                "Task41 mode-prep requires clean MPI1-compatible p6/h4, dynamic "
-                "positive M, static-condensed full3d_uniform_cg, exact one-cell "
-                "traction, and the selected-mode packet producer opt-in."
+                "Task41 mode-prep requires the explicit Task41 mesh contract, p6, "
+                "dynamic positive M, static-condensed full3d_uniform_cg, exact "
+                "one-cell traction, and the selected-mode packet producer opt-in."
             )
         return args
     if allow_task039:
@@ -1585,6 +1593,8 @@ def main(
     canonical_trace_family_sha256: str | None = None,
     task039_stage_marker_path: str | Path | None = None,
     task041_mode_prep: bool = False,
+    task041_expected_mesh_nm: float = 4.0,
+    task041_expected_mpi_size: int = 1,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
@@ -1595,7 +1605,14 @@ def main(
         argv,
         allow_task039=allow_task039,
         allow_task041=bool(task041_mode_prep),
+        task041_expected_mesh_nm=task041_expected_mesh_nm,
     )
+    if task041_mode_prep and (
+        isinstance(task041_expected_mpi_size, bool)
+        or not isinstance(task041_expected_mpi_size, int)
+        or task041_expected_mpi_size <= 0
+    ):
+        raise SystemExit("task041_expected_mpi_size must be a positive integer.")
     if task041_mode_prep and config_override is None:
         raise SystemExit("Task41 mode-prep requires a resolved config override.")
     if args.h_nm <= 0.0:
@@ -1670,8 +1687,11 @@ def main(
         or args.internal_traction_model != "continuous_qep_beta"
     )
     comm = MPI.COMM_WORLD
-    if task041_mode_prep and comm.size != 1:
-        raise SystemExit("Task41 mode-prep requires MPI1.")
+    if task041_mode_prep and comm.size != task041_expected_mpi_size:
+        raise SystemExit(
+            "Task41 mode-prep requires MPI size "
+            f"{task041_expected_mpi_size}; observed {comm.size}."
+        )
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
     )
