@@ -1778,6 +1778,7 @@ def run_task041_consumer(
 
         from benchmarks.run_task037b_hybrid_iterative import build_frozen_m10_setup
         from benchmarks.task039_v3_7_orchestration import (
+            V3_7_MATRIX_REPEAT_TOLERANCE,
             _run_v7_h4_exact_side_full_formal,
             run_v3_7_recovery_runner,
             run_v5_h4_exact_side_setup_only,
@@ -1921,6 +1922,9 @@ def run_task041_consumer(
             ),
             sampled_column_contract=sampled_contract,
             v6_profile=False,
+            matrix_repeat_tolerance=(
+                V3_7_MATRIX_REPEAT_TOLERANCE if contract["shortwave"] else None
+            ),
             exact_spool_root=None,
             packet_identity=recomputed_identity,
             packet_manifest_sha256=packet_manifest_sha256,

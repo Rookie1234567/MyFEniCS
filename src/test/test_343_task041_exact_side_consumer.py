@@ -1,6 +1,7 @@
 """Pure contracts for the Task041 fresh-packet exact-side consumer."""
 
 import hashlib
+import inspect
 import json
 import time
 from dataclasses import dataclass
@@ -1079,6 +1080,12 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     assert captured["run_v5"]["qualification_scope"] == (
         identity["scope"] if shortwave else "task039_v4_p6h4_m480_1deg_s"
     )
+    assert captured["run_v5"]["matrix_repeat_tolerance"] == (
+        orchestration.V3_7_MATRIX_REPEAT_TOLERANCE if shortwave else None
+    )
+    assert inspect.signature(
+        orchestration.create_research_exact_side_lu_block_ldu_preconditioner
+    ).parameters["matrix_repeat_tolerance"].default == 1.0e-13
     config = captured["run_v5"]["outer_probe_config"]
     expected_config = (
         ("gmres", 10, 4000, 5.0e-9)

@@ -11323,6 +11323,7 @@ def run_v5_h4_exact_side_setup_only(
     qualification_scope: str = TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
     sampled_column_contract: Mapping[str, Any] | None = None,
     streaming_w_batch_size: int | None = None,
+    matrix_repeat_tolerance: float | None = None,
     v6_profile: bool = False,
     exact_spool_root: str | Path | None = None,
     packet_identity: Mapping[str, Any] | None = None,
@@ -11499,6 +11500,15 @@ def run_v5_h4_exact_side_setup_only(
                 for side in ("bottom", "top")
             },
         )
+        modal_schur_kwargs: dict[str, Any] = {
+            "qualification_scope": qualification_scope,
+            "explicit_opt_in": True,
+            "sampled_columns": sampled_column_contract["columns"],
+            "sampled_column_roles": sampled_column_contract["roles"],
+            "sampled_column_contract_sha256": sampled_column_contract["sha256"],
+        }
+        if matrix_repeat_tolerance is not None:
+            modal_schur_kwargs["matrix_repeat_tolerance"] = matrix_repeat_tolerance
         context = create_research_exact_side_lu_block_ldu_preconditioner(
             layout,
             setup.bottom,
@@ -11506,11 +11516,7 @@ def run_v5_h4_exact_side_setup_only(
             setup.coupling,
             actions["bottom"],
             actions["top"],
-            qualification_scope=qualification_scope,
-            explicit_opt_in=True,
-            sampled_columns=sampled_column_contract["columns"],
-            sampled_column_roles=sampled_column_contract["roles"],
-            sampled_column_contract_sha256=sampled_column_contract["sha256"],
+            **modal_schur_kwargs,
         )
         _emit_marker(
             marker_callback,
