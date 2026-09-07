@@ -58,6 +58,18 @@ def _source_sha(cwd: Path) -> str:
     return value
 
 
+def _physical_source_gate(cwd: Path, expected_sha: str) -> dict:
+    actual = _source_sha(cwd)
+    status = subprocess.run(['git', 'status', '--porcelain'], cwd=cwd,
+                            check=True, capture_output=True, text=True).stdout
+    if actual != expected_sha or status.strip():
+        raise InputError('physical-intermediate formal launch requires exact clean source SHA')
+    gitdir = subprocess.run(['git', 'rev-parse', '--absolute-git-dir'], cwd=cwd,
+                            check=True, capture_output=True, text=True).stdout.strip()
+    return {'source_sha': actual, 'tracked_and_nonignored_untracked_clean': True,
+            'actual_git_directory': gitdir}
+
+
 def _validate_source_sha(value: str) -> str:
     if (
         len(value) != 40
@@ -305,11 +317,17 @@ def launch_specification(
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
+    workflow_started = monotonic()
     source = _validate_source_sha(
         source_sha
         if source_sha is not None
         else _source_sha(Path(__file__).resolve().parents[2])
     )
+    from src.io.physical_intermediate_profile import PROFILE
+
+    physical_candidate = specification.solver.get('preconditioner') == PROFILE and not contract_probe
+    physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
+                       if physical_candidate else None)
     adapter = (
         CONTRACT_PROBE_ADAPTER
         if contract_probe
@@ -341,17 +359,40 @@ def launch_specification(
         }
     else:
         try:
-            result = _run_worker(
-                plan,
-                specification,
-                run_directory,
-                popen_factory=popen_factory,
-                sample_factory=sample_factory,
-                terminate_factory=terminate_factory,
-                monotonic=monotonic,
-                sleep=sleep,
-                poll_interval=poll_interval,
-            )
+            if physical_candidate:
+                from benchmarks.subreaper_watchdog import supervise
+
+                authority = supervise(list(plan.argv), run_directory / 'watchdog',
+                    wall_seconds=max(1e-9, 7200-(monotonic()-workflow_started)), solve_seconds=3600,
+                    phase_path=run_directory / 'workflow_phase.json',
+                    cache_path=Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
+                    source_state=physical_source)
+                result = {'exit_status': authority['leader_exit_code'],
+                    'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
+                    'resource_authority': authority}
+                try:
+                    source_after = _physical_source_gate(Path(__file__).resolve().parents[2], source)
+                except (InputError, OSError, subprocess.CalledProcessError) as exc:
+                    source_after = {'provenance_passed': False, 'error': str(exc)}
+                    result['result_classification'] = 'EVIDENCE_INCOMPLETE'
+                zero_swap = authority['job_swap_activity'] == 'zero_supported_by_zero_global_activity'
+                result['job_swap_qualification'] = 'qualified_zero' if zero_swap else 'UNRESOLVED'
+                if not zero_swap and result['result_classification'] == 'worker_exit0':
+                    result['result_classification'] = 'EVIDENCE_INCOMPLETE'
+                manifest['requested_legacy_resource_fields'] = {
+                    key: specification.execution[key] for key in
+                    ('warning_memory_gib', 'terminate_memory_gib', 'memory_limit_gb')}
+                manifest['source_after'] = source_after
+                manifest['effective_watchdog_authority'] = {
+                    'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
+                    'workflow_seconds': 7200, 'solve_seconds': 3600,
+                    'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False}
+            else:
+                result = _run_worker(
+                    plan, specification, run_directory, popen_factory=popen_factory,
+                    sample_factory=sample_factory, terminate_factory=terminate_factory,
+                    monotonic=monotonic, sleep=sleep, poll_interval=poll_interval,
+                )
         except OSError as exc:
             result = {
                 "exit_status": None,
@@ -360,6 +401,10 @@ def launch_specification(
                 "resource_authority": {"status": "not_sampled"},
             }
     end_time = _now()
+    if physical_candidate:
+        result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
+        if result['full_workflow_monotonic_seconds'] > 7200:
+            result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
     manifest.update(
         {
             "end_time": end_time,

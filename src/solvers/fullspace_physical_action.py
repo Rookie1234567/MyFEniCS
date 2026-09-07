@@ -66,6 +66,16 @@ class FullspaceSplitVolumeAction:
         return curl_result
 
     @property
+    def component_actions(self) -> Mapping[str, Any]:
+        """Borrow the split actions for independent component audits."""
+        if self._destroyed:
+            raise RuntimeError("split volume action has been destroyed")
+        return MappingProxyType({
+            "curl": self._curl_action,
+            "material_mass": self._mass_action,
+        })
+
+    @property
     def audit(self) -> Mapping[str, Any]:
         if self._destroyed:
             return MappingProxyType(

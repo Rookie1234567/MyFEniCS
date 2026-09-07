@@ -6,7 +6,7 @@ ledger, a residual-based pair bound, and solution-only checkpoints.  No Krylov
 basis, action vector, or residual vector is retained by a completed cycle.
 The historical ``run_restart20_cycles`` entry point remains fixed at restart
 20; the opt-in ``run_fixed_restart_cycles`` path also supports the reviewed
-restart-64 diagnostic.
+restart-12/32 intermediate lane and restart-64 diagnostic.
 """
 
 from __future__ import annotations
@@ -26,6 +26,8 @@ from petsc4py import PETSc
 CHECKPOINT_SCHEMA = "fixed-memory-krylov.solution-checkpoint.v1"
 GMRES_RESTART = 20
 CYCLE_MAX_IT = 20
+RESTART12 = 12
+RESTART32 = 32
 RESTART64 = 64
 CHECKPOINT_INTERVAL = 200
 MANDATORY_FIRST_CHECKPOINT = 20
@@ -461,18 +463,19 @@ def run_fixed_restart_cycles(
 ) -> dict[str, Any]:
     """Run a reviewed fixed-restart right-GMRES/FGMRES cycle sequence.
 
-    ``restart`` is deliberately limited to the historical 20 and the V18
-    diagnostic 64.  ``max_it`` is a caller-authorized absolute cap and must be
-    a positive multiple of that restart.  The only convergence decision is the
-    explicit residual computed after a cycle; PETSc's reported norm is retained
-    as a fact.  Checkpoint cadence uses the solver's absolute iteration counter,
-    preserving the historical restart-20 behavior.
+    ``restart`` is deliberately limited to the reviewed 12, historical 20,
+    reviewed 32, and V18 diagnostic 64. ``max_it`` is a caller-authorized
+    absolute cap and must be a positive multiple of that restart. The only
+    convergence decision is the explicit residual computed after a cycle;
+    PETSc's reported norm is retained as a fact. Checkpoint cadence uses the
+    solver's absolute iteration counter, preserving the historical
+    restart-20 behavior.
     """
 
     max_it = int(max_it)
     restart = int(restart)
-    if restart not in (GMRES_RESTART, RESTART64):
-        raise ValueError("restart is fixed to 20 or 64")
+    if restart not in (RESTART12, GMRES_RESTART, RESTART32, RESTART64):
+        raise ValueError("restart is fixed to 12, 20, 32, or 64")
     if cycle_max_it is None:
         cycle_max_it = restart
     cycle_max_it = int(cycle_max_it)
@@ -517,46 +520,48 @@ def run_fixed_restart_cycles(
     operator = PETSc.Mat().createPython(
         (sizes, sizes), context=action_context, comm=comm
     )
-    operator.setUp()
-    pc_context = _PCContext(apply_preconditioner)
-    solution = operator.createVecRight()
-    if initial_solution is None:
-        if start_iteration != 0:
-            operator.destroy()
-            raise ValueError("zero initial guess must start at iteration zero")
-        solution.set(0.0 + 0.0j)
-        resumed = False
-    else:
-        if (
-            initial_solution.getSize() != solution.getSize()
-            or initial_solution.getLocalSize() != solution.getLocalSize()
-            or initial_solution.getOwnershipRange() != solution.getOwnershipRange()
-            or MPI.Comm.Compare(
-                _mpi_comm(initial_solution.getComm()), _mpi_comm(solution.getComm())
-            )
-            not in (MPI.IDENT, MPI.CONGRUENT)
-        ):
-            operator.destroy()
-            raise ValueError("initial solution has incompatible local ownership or communicator")
-        initial_solution.copy(solution)
-        resumed = True
-
-    rhs_norm = max(float(rhs.norm()), np.finfo(float).tiny)
-    exact_action_count = 1
-    initial_action = apply_action(solution)
-    initial_true = rhs.copy()
-    initial_true.axpy(PETSc.ScalarType(-1.0), initial_action)
-    initial_true_relative = float(initial_true.norm()) / rhs_norm
-    initial_action.destroy()
-    initial_true.destroy()
-    cycles: list[dict[str, Any]] = []
-    checkpoint_facts: list[dict[str, Any]] = []
-    ksp_destroy_count = 0
-    cumulative_iteration = start_iteration
-    started = time.perf_counter()
+    solution: PETSc.Vec | None = None
     active_ksp: PETSc.KSP | None = None
-
     try:
+        operator.setUp()
+        pc_context = _PCContext(apply_preconditioner)
+        solution = operator.createVecRight()
+        if initial_solution is None:
+            if start_iteration != 0:
+                raise ValueError("zero initial guess must start at iteration zero")
+            solution.set(0.0 + 0.0j)
+            resumed = False
+        else:
+            if (
+                initial_solution.getSize() != solution.getSize()
+                or initial_solution.getLocalSize() != solution.getLocalSize()
+                or initial_solution.getOwnershipRange() != solution.getOwnershipRange()
+                or MPI.Comm.Compare(
+                    _mpi_comm(initial_solution.getComm()), _mpi_comm(solution.getComm())
+                )
+                not in (MPI.IDENT, MPI.CONGRUENT)
+            ):
+                raise ValueError("initial solution has incompatible local ownership or communicator")
+            initial_solution.copy(solution)
+            resumed = True
+
+        rhs_norm = max(float(rhs.norm()), np.finfo(float).tiny)
+        exact_action_count = 1
+        initial_action = apply_action(solution)
+        try:
+            initial_true = rhs.copy()
+            try:
+                initial_true.axpy(PETSc.ScalarType(-1.0), initial_action)
+                initial_true_relative = float(initial_true.norm()) / rhs_norm
+            finally:
+                initial_true.destroy()
+        finally:
+            initial_action.destroy()
+        cycles: list[dict[str, Any]] = []
+        checkpoint_facts: list[dict[str, Any]] = []
+        ksp_destroy_count = 0
+        cumulative_iteration = start_iteration
+        started = time.perf_counter()
         while cumulative_iteration < max_it:
             cycle_index = cumulative_iteration // restart
             cycle_start = cumulative_iteration
@@ -587,11 +592,15 @@ def run_fixed_restart_cycles(
 
             action = apply_action(solution)
             exact_action_count += 1
-            true_residual = rhs.copy()
-            true_residual.axpy(PETSc.ScalarType(-1.0), action)
-            explicit_relative = float(true_residual.norm()) / rhs_norm
-            action.destroy()
-            true_residual.destroy()
+            try:
+                true_residual = rhs.copy()
+                try:
+                    true_residual.axpy(PETSc.ScalarType(-1.0), action)
+                    explicit_relative = float(true_residual.norm()) / rhs_norm
+                finally:
+                    true_residual.destroy()
+            finally:
+                action.destroy()
             cumulative_iteration = cycle_start + local_iterations
 
             checkpoint_info = None
@@ -675,7 +684,8 @@ def run_fixed_restart_cycles(
     finally:
         if active_ksp is not None:
             active_ksp.destroy()
-        solution.destroy()
+        if solution is not None:
+            solution.destroy()
         operator.destroy()
 
 
@@ -733,6 +743,8 @@ __all__ = [
     "GMRES_RESTART",
     "PHYSICAL_PAIR_MARGIN",
     "MANDATORY_FIRST_CHECKPOINT",
+    "RESTART12",
+    "RESTART32",
     "RESTART64",
     "SMALL_PAIR_MARGIN",
     "destroy_krylov_result",

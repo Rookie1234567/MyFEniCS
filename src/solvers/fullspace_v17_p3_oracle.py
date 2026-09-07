@@ -137,6 +137,8 @@ def _load_petsc_api() -> ctypes.CDLL:
         library.MatMumpsGetInfog.restype = ctypes.c_int
         library.MatMumpsGetRinfog.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
         library.MatMumpsGetRinfog.restype = ctypes.c_int
+        library.MatMumpsSetIcntl.argtypes = [void, ctypes.c_int, ctypes.c_int]
+        library.MatMumpsSetIcntl.restype = ctypes.c_int
         return library
     raise RuntimeError("qualified PETSc complex library was not found")
 
@@ -216,21 +218,33 @@ class _MumpsFactor:
         )
         self.numeric_calls = 1
 
+    def set_memory_limit_mb(self, megabytes: int) -> None:
+        """Set MUMPS ICNTL(23) before numeric factorization (explicit opt-in)."""
+        if self.destroyed or self.numeric_calls or int(megabytes) <= 0:
+            raise ValueError("MUMPS memory limit must be positive and precede numeric factorization")
+        _petsc_error(self._api.MatMumpsSetIcntl(self._handle, 23, int(megabytes)), "MatMumpsSetIcntl(23)")
+
     def solve(self, rhs: Any, solution: Any) -> None:
         if self.destroyed or self.numeric_calls != 1 or self.solve_calls:
             raise RuntimeError("MUMPS solve has an invalid lifecycle")
+        self.solve_repeated(rhs, solution)
+
+    def solve_repeated(self, rhs: Any, solution: Any) -> None:
+        """Apply an already qualified factor; preserve the one-shot solve API."""
+        if self.destroyed or self.numeric_calls != 1:
+            raise RuntimeError("MUMPS repeated solve requires a live numeric factor")
         _petsc_error(
             self._api.MatSolve(
                 self._handle, _petsc_handle(rhs), _petsc_handle(solution)
             ),
             "MatSolve",
         )
-        self.solve_calls = 1
+        self.solve_calls += 1
 
-    def info(self) -> dict[str, Any]:
+    def info(self, extra_indices: tuple[int, ...] = ()) -> dict[str, Any]:
         infog: dict[str, int] = {}
         rinfog: dict[str, float] = {}
-        for index in range(1, 21):
+        for index in (*range(1, 21), *extra_indices):
             value = ctypes.c_int()
             code = self._api.MatMumpsGetInfog(self._handle, index, ctypes.byref(value))
             if int(code) != 0:
@@ -348,6 +362,9 @@ def build_p3_physical_diagnostic_matrix(
     comm: Any,
     *,
     mode_inventory: tuple[Any, Any, Any] | None = None,
+    degree: int = 3,
+    shift_weight: Any | None = None,
+    volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     """Assemble the one-shot p3 physical matrix used only by Oracle A.
 
@@ -374,8 +391,12 @@ def build_p3_physical_diagnostic_matrix(
 
     if int(comm.size) != 1:
         raise ValueError("the exact p3 diagnostic matrix is fixed to MPI1")
-    space = setup["spaces"][3]
-    floquet = setup["floquets"][3]
+    if degree not in (1, 3) or (shift_weight is not None and degree != 1):
+        raise ValueError("only the old p3 oracle or bounded shifted p1 matrix is supported")
+    space = setup["spaces"][degree]
+    floquet = setup["floquets"][degree]
+    if degree == 1 and int(space.dofmap.index_map.size_global) > 4096:
+        raise ValueError("shifted p1 matrix exceeds 4096 total storage rows before assembly")
     if getattr(floquet, "mpc", None) is None:
         raise ValueError("p3 diagnostic matrix requires finalized MPC")
     if mode_inventory is None:
@@ -405,6 +426,18 @@ def build_p3_physical_diagnostic_matrix(
             subdomain_data=setup["mesh_data"].cell_tags,
         )
         curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+        if volume_quadrature_metadata is not None:
+            curl_curl, material_mass = tuple(
+                ufl.Form(tuple(integral.reconstruct(metadata={
+                    **integral.metadata(), **metadata,
+                }) for integral in form.integrals()))
+                for form, metadata in zip((curl_curl, material_mass), volume_quadrature_metadata, strict=True)
+            )
+        if shift_weight is not None:
+            if volume_quadrature_metadata is None:
+                raise ValueError("shifted p1 assembly requires the fine integration metadata")
+            material_mass += (-.5j * cfg.k0**2 * shift_weight * ufl.inner(u, v)
+                              * ufl.dx(metadata=volume_quadrature_metadata[1]))
         compiled = fem.form(
             curl_curl + material_mass,
             jit_options=dict(SAME_MESH_JIT_OPTIONS),
@@ -430,10 +463,10 @@ def build_p3_physical_diagnostic_matrix(
         dtn_matrix.assemble()
         matrix.axpy(PETSc.ScalarType(1.0), dtn_matrix)
         info = matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
-        return matrix, {
+        facts = {
             "schema": "task038.v17.p3-physical-diagnostic-matrix.v1",
             "operator": "same_split_volume_plus_streaming_dtn",
-            "degree": 3,
+            "degree": degree,
             "mode_count": int(len(modes)),
             "mode_manifest_sha256": str(mode_sha),
             "dtn_quadrature_degree": int(qdegree),
@@ -444,6 +477,17 @@ def build_p3_physical_diagnostic_matrix(
             "rows": rows,
             "global_nnz": int(info.get("nz_used", 0)),
         }
+        if degree == 1:
+            facts.update(
+                schema="physical-intermediate.bounded-p1-matrix.v1",
+                shifted_auxiliary=shift_weight is not None,
+                shift_sigma=0.5 if shift_weight is not None else None,
+                purpose="bounded_shifted_auxiliary_bottom_factor",
+                diagnostic_global_aij=False,
+                production_global_aij=False,
+                development_auxiliary_global_aij=True,
+            )
+        return matrix, facts
     except Exception:
         if matrix is not None:
             matrix.destroy()

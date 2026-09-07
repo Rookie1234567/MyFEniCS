@@ -61,12 +61,14 @@ def method_adapter_identity(method: str) -> str:
         ) from exc
 
 
-def method_adapter_available(method: str) -> bool:
+def method_adapter_available(method: str, *, preconditioner: str | None = None) -> bool:
     """Report availability of the adapters actually connected in Task38."""
 
     if method not in METHOD_ADAPTERS:
         raise InputError(f"method.kind: unsupported Task38 method {method!r}")
-    return method in CONNECTED_METHODS
+    from .physical_intermediate_profile import PROFILE
+
+    return method in CONNECTED_METHODS or (method == "full3d_iterative" and preconditioner == PROFILE)
 
 
 def build_execution_plan(
@@ -95,7 +97,7 @@ def build_execution_plan(
         adapter = adapter_identity or method_adapter_identity(method)
         if adapter != method_adapter_identity(method):
             raise InputError("public method adapter identity cannot be overridden")
-        available = method_adapter_available(method)
+        available = method_adapter_available(method, preconditioner=specification.solver.get("preconditioner"))
 
     mpi_size = int(specification.execution["mpi_size"])
     requested_modes = specification.method.get("requested_modes_per_direction")
@@ -188,7 +190,7 @@ def dry_run_payload(specification: RunSpecification) -> dict[str, Any]:
             "identity": method_adapter_identity(specification.method["kind"]),
             "status": (
                 "connected"
-                if method_adapter_available(specification.method["kind"])
+                if method_adapter_available(specification.method["kind"], preconditioner=specification.solver.get("preconditioner"))
                 else "unavailable"
             ),
         },

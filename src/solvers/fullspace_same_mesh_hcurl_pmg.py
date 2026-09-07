@@ -30,6 +30,13 @@ SAME_MESH_METHOD = "same_mesh_hcurl_pmg_v1"
 # Public pair convention is (fine_degree, coarse_degree); prolongation runs
 # from the second entry to the first.
 SAME_MESH_TRANSFER_PAIRS = ((3, 1), (6, 3))
+SAME_MESH_EXTENDED_TRANSFER_PAIRS = (
+    (2, 1),
+    (3, 1),
+    (4, 2),
+    (6, 3),
+    (6, 4),
+)
 EDGE_LIMIT = 1.0e-11
 GRADIENT_LIMIT = 1.0e-11
 CURL_LIMIT = 1.0e-11
@@ -326,10 +333,10 @@ def build_same_mesh_hcurl_transfer(
     """Build and independently audit one fixed same-mesh N1E transfer."""
 
     pair = (int(fine_degree), int(coarse_degree))
-    if pair not in SAME_MESH_TRANSFER_PAIRS:
+    if pair not in SAME_MESH_EXTENDED_TRANSFER_PAIRS:
         raise ValueError(
             "same-mesh transfer supports only fine/coarse pairs "
-            f"{SAME_MESH_TRANSFER_PAIRS}"
+            f"{SAME_MESH_EXTENDED_TRANSFER_PAIRS}"
         )
     coarse_element = _n1e(coarse_degree)
     fine_element = _n1e(fine_degree)
@@ -648,6 +655,7 @@ __all__ = [
     "REPEAT_LIMIT",
     "SAME_MESH_METHOD",
     "SAME_MESH_TRANSFER_PAIRS",
+    "SAME_MESH_EXTENDED_TRANSFER_PAIRS",
     "SameMeshHcurlTransfer",
     "SameMeshMaterialResult",
     "build_same_mesh_hcurl_transfer",

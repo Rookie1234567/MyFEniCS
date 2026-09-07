@@ -28,6 +28,13 @@ from .fullspace_same_mesh_hcurl_pmg import (
 ROW_CONSISTENCY_LIMIT = 1.0e-11
 OWNER_RUNTIME_SCHEMA = "task038.same_mesh_hcurl_owner_transfer.v1"
 SAME_MESH_OWNER_TRANSFER_PAIRS = ((3, 1), (6, 3))
+SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS = (
+    (2, 1),
+    (3, 1),
+    (4, 2),
+    (6, 3),
+    (6, 4),
+)
 
 
 def _owner_ranges(index_map: Any, comm: Any) -> tuple[tuple[int, int], ...]:
@@ -329,7 +336,7 @@ class SameMeshHcurlOwnerTransfer:
         local_transfer: SameMeshHcurlTransfer,
     ) -> None:
         pair = (_space_degree(fine_space), _space_degree(coarse_space))
-        if pair not in SAME_MESH_OWNER_TRANSFER_PAIRS:
+        if pair not in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS:
             raise ValueError("unsupported same-mesh owner transfer pair")
         if _space_mesh(fine_space) is not _space_mesh(coarse_space):
             raise ValueError("owner transfer requires one shared mesh object")
@@ -760,7 +767,7 @@ def build_same_mesh_hcurl_owner_transfer(
     """Build one owner-local same-mesh adapter without a global transfer."""
 
     pair = (_space_degree(fine_space), _space_degree(coarse_space))
-    if pair not in SAME_MESH_OWNER_TRANSFER_PAIRS:
+    if pair not in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS:
         raise ValueError("unsupported same-mesh owner transfer pair")
     if local_transfer is None:
         local_transfer = build_same_mesh_hcurl_transfer(*pair)
@@ -777,6 +784,7 @@ __all__ = [
     "OWNER_RUNTIME_SCHEMA",
     "ROW_CONSISTENCY_LIMIT",
     "SAME_MESH_OWNER_TRANSFER_PAIRS",
+    "SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS",
     "SameMeshHcurlOwnerTransfer",
     "build_same_mesh_hcurl_owner_transfer",
     "explicit_owner_adjoint_audit_only",

@@ -59,6 +59,7 @@ def _build_split_volume_action(
     floquet: Any,
     *,
     jit_options: Mapping[str, Any],
+    volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
 ) -> Any:
     import ufl
 
@@ -71,6 +72,13 @@ def _build_split_volume_action(
         "dx", domain=mesh_data.mesh, subdomain_data=mesh_data.cell_tags
     )
     curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+    if volume_quadrature_metadata is not None:
+        curl_curl, material_mass = tuple(
+            ufl.Form(tuple(integral.reconstruct(metadata={
+                **integral.metadata(), **metadata,
+            }) for integral in form.integrals()))
+            for form, metadata in zip((curl_curl, material_mass), volume_quadrature_metadata, strict=True)
+        )
     return FullspaceSplitVolumeAction(
         curl_curl,
         material_mass,
@@ -87,6 +95,7 @@ def build_same_mesh_physical_action(
     *,
     mode_inventory: tuple[Any, Any, Any] | None = None,
     jit_options: Mapping[str, Any] | None = None,
+    volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -162,8 +171,11 @@ def build_same_mesh_physical_action(
             function_space,
             floquet,
             jit_options=options,
+            volume_quadrature_metadata=volume_quadrature_metadata,
         )
         physical_action = FullspacePhysicalAction(volume_action, dtn_action)
+        owned_volume_action = volume_action
+        owned_dtn_action = dtn_action
         dtn_action = None
         volume_action = None
         incident_projections = tuple(
@@ -176,10 +188,13 @@ def build_same_mesh_physical_action(
             "degree": degree,
             "action": physical_action,
             "physical_action": physical_action,
+            "volume_action": owned_volume_action,
+            "dtn_action": owned_dtn_action,
             "modes": modes,
             "mode_rows": mode_rows,
             "mode_sha256": mode_sha,
             "dtn_quadrature_degree": int(qdegree),
+            "volume_quadrature_metadata": volume_quadrature_metadata,
             "incident_projections": incident_projections,
         }
     except Exception:
@@ -447,7 +462,9 @@ def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
 
 
 def recover_p0_outputs(
-    bundle: Mapping[str, Any], solution: Any, output_dir: Path
+    bundle: Mapping[str, Any], solution: Any, output_dir: Path, *,
+    canonical_export: Any | None = None,
+    export_all_port_modes: bool = False,
 ) -> dict[str, Any]:
     """Recover E/H and compute the existing modal and diagnostic outputs."""
 
@@ -479,6 +496,12 @@ def recover_p0_outputs(
         )
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
+        canonical_facts = None if canonical_export is None else canonical_export(field, output_dir)
+        if export_all_port_modes:
+            from .dtn_port_3d import _write_port_outputs
+
+            _write_port_outputs(output_dir, bundle['cfg'], list(bundle['modes']), aux,
+                list(bundle['incident_projections']), port_metrics, setup['mesh_data'].mesh.comm)
         field_export = save_airbox_3d_fields(
             setup["mesh_data"], bundle["cfg"], field, output_dir
         )
@@ -493,7 +516,7 @@ def recover_p0_outputs(
         diffraction_metrics = compute_diffraction_orders_3d(
             setup["mesh_data"], bundle["cfg"], field, output_dir
         )
-        return {
+        facts = {
             "field_model": "total_field",
             "electric_finite": bool(np.all(np.isfinite(field.x.array))),
             "auxiliary_finite": bool(np.all(np.isfinite(aux))),
@@ -506,6 +529,9 @@ def recover_p0_outputs(
             ),
             "field_export": field_export,
         }
+        if canonical_export is not None:
+            facts['canonical_vector'] = canonical_facts
+        return facts
     finally:
         del field
 
@@ -526,6 +552,9 @@ def release_p6_same_mesh_solver_stack(bundle: dict[str, Any]) -> None:
         "p31_local_transfer",
     ):
         setup.pop(name, None)
+    coarse_solver = setup.pop("owned_coarse_solver", None)
+    if coarse_solver is not None:
+        coarse_solver.destroy()
     for name in ("p3_matrix", "p1_matrix"):
         matrix = setup.pop(name, None)
         if matrix is not None:

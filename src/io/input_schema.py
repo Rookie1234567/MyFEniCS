@@ -897,6 +897,7 @@ FIELD_SPECS: Final = (
         allowed=(
             "full3d_scalable_v1",
             "fullspace_pml_double_sweep_v19",
+            "physical_intermediate_p4_shifted_aux_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),

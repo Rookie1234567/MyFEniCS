@@ -9,7 +9,7 @@ reserve.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Any
 
@@ -270,14 +270,17 @@ def _retained_ledger(
 
 
 def build_p6_same_mesh_setup(
-    cfg: Any, comm: Any = MPI.COMM_WORLD
+    cfg: Any, comm: Any = MPI.COMM_WORLD, *,
+    levels: Mapping[str, Any] | None = None,
+    coarse_solver_factory: Callable[[Any], Any] | None = None,
 ) -> dict[str, Any]:
     """Build the fixed p6/p3/p1 setup bundle without a source or outer KSP."""
 
     validate_p6_setup_config(cfg)
     if int(comm.size) != 1:
         raise ValueError("p6 setup bundle is prospective MPI1 only")
-    levels = _build_same_mesh_levels(cfg, comm, P6_SETUP_LEVELS)
+    if levels is None:
+        levels = _build_same_mesh_levels(cfg, comm, P6_SETUP_LEVELS)
     bundle: dict[str, Any] = {
         "schema": P6_SETUP_SCHEMA,
         **levels,
@@ -324,6 +327,8 @@ def build_p6_same_mesh_setup(
             mass_coefficient=mass,
             jit_options=SAME_MESH_JIT_OPTIONS,
         )
+        if coarse_solver_factory is not None:
+            bundle["owned_coarse_solver"] = coarse_solver_factory(bundle["p1_matrix"])
         bundle["p63_local_transfer"] = build_same_mesh_hcurl_transfer(6, 3)
         bundle["p31_local_transfer"] = build_same_mesh_hcurl_transfer(3, 1)
         bundle["p63_owner_transfer"] = build_same_mesh_hcurl_owner_transfer(
@@ -350,6 +355,7 @@ def build_p6_same_mesh_setup(
                 bundle["p31_owner_transfer"],
                 smoother_power_seed=lower_power_seed,
                 owns_owner_transfer=True,
+                coarse_solver=bundle.get("owned_coarse_solver"),
             )
         finally:
             lower_power_seed.destroy()
@@ -390,6 +396,21 @@ def build_p6_same_mesh_setup(
 def audit_p6_same_mesh_setup(bundle: Mapping[str, Any]) -> dict[str, Any]:
     """Return actual retained/setup facts without applying the cycles."""
 
+    if "owned_coarse_solver" in bundle:
+        # Explicit candidate ledger: a bounded raw factor has no KSP. Do not
+        # manufacture the old KSP allocator fields or mix derived budgets into
+        # the legacy measured-component ledger.
+        return {
+            "schema": "physical-intermediate.positive-s6-setup.v1",
+            "levels": [6, 3, 1],
+            "shared_mesh_levels": sorted(bundle["spaces"], reverse=True),
+            "layouts": {str(p): _space_layout(bundle["spaces"][p]) for p in P6_SETUP_LEVELS},
+            "matrices": {f"p{p}": _matrix_facts(bundle[f"p{p}_matrix"]) for p in (3, 1)},
+            "p1_factor": dict(bundle["owned_coarse_solver"].audit),
+            "p6_global_aij": False,
+            "inherited_positive_p3_global_aij": True,
+            "factor_owned_by_setup": True,
+        }
     spaces = bundle["spaces"]
     floquets = bundle["floquets"]
     matrices = {
@@ -487,6 +508,9 @@ def destroy_p6_same_mesh_setup_bundle(bundle: dict[str, Any]) -> None:
             shell.destroy()
         if p31_owner is not None and lower is None:
             p31_owner.destroy()
+    coarse_solver = bundle.pop("owned_coarse_solver", None)
+    if coarse_solver is not None:
+        coarse_solver.destroy()
     for name in ("p3_matrix", "p1_matrix"):
         matrix = bundle.pop(name, None)
         if matrix is not None:
