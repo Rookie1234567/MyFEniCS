@@ -10,6 +10,48 @@ import time
 
 import numpy as np
 
+_POSITIVE_APPLY_KEYS = ('s6_apply_count', 's3_apply_count')
+
+
+def recompute_positive_apply_counts(pc_records: list[dict], cycles: list[dict]) -> dict:
+    """Count recorded calls, not the sum of lifetime apply ordinals.
+
+    Only completed PC records are covered; an interrupted PC has no inferred cost.
+    This read-only audit does not change the historical ledger or solver verdict.
+    """
+    previous = {'s6': 0, 's3': 0}
+    per_pc = []
+    for index, pc in enumerate(pc_records, 1):
+        if pc['apply_count'] != index:
+            raise ValueError('noncontiguous completed PC records')
+        counts = {'s6_apply_count': 0, 's3_apply_count': 0}
+        for direction in pc['direction_facts']:
+            positive = direction.get('positive_cycle_facts')
+            if positive is None:
+                continue
+            for prefix, facts in (('s6', positive), ('s3', positive['lower_cycle_facts'])):
+                ordinal = facts['apply_count']
+                if ordinal != previous[prefix] + 1:
+                    raise ValueError(f'noncontiguous {prefix} lifetime ordinal')
+                previous[prefix] = ordinal
+                counts[prefix + '_apply_count'] += 1
+        per_pc.append(counts)
+    offset, corrected = 0, []
+    for cycle in cycles:
+        count = cycle['pc_apply_count']
+        if count < 0 or offset + count > len(per_pc):
+            raise ValueError('cycle exceeds completed PC records')
+        selected = per_pc[offset:offset + count]
+        values = {key: sum(row[key] for row in selected) for key in _POSITIVE_APPLY_KEYS}
+        corrected.append(dict(cycle_index=cycle['cycle_index'], end_iteration=cycle['end_iteration'],
+            completed_pcs=count, recomputed=values,
+            raw_reported={key: cycle['pc_costs'][key] for key in values}))
+        offset += count
+    return dict(scope='completed PC records only; partial PC costs unavailable', cycles=corrected,
+        total={key: sum(row[key] for row in per_pc) for key in _POSITIVE_APPLY_KEYS},
+        completed_pc_count=len(per_pc), completed_pcs_after_last_cycle=len(per_pc)-offset,
+        tail={key: sum(row[key] for row in per_pc[offset:]) for key in _POSITIVE_APPLY_KEYS})
+
 
 def check(directory: Path) -> dict:
     started = time.monotonic()

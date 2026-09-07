@@ -88,7 +88,8 @@ class WorkflowLedger:
             for prefix, entries in (('s6_', positive), ('s3_', positive.get('lower_cycle_facts', {}))):
                 for key, value in entries.items():
                     if key.endswith('_count') and isinstance(value, int):
-                        self.pc_counts[prefix + key] += value
+                        # apply_count is a lifetime ordinal; other counts are per call.
+                        self.pc_counts[prefix + key] += 1 if key == 'apply_count' else value
             bottom = positive.get('lower_cycle_facts', {}).get('p1_solver_facts', {})
             self.pc_counts['positive_p1_wall_seconds'] += bottom.get('wall_seconds_exclusive', 0)
         for key, value in inner.get('shifted_cost_totals', {}).items():
