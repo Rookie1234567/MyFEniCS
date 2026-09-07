@@ -1083,6 +1083,11 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     assert captured["run_v5"]["matrix_repeat_tolerance"] == (
         orchestration.V3_7_MATRIX_REPEAT_TOLERANCE if shortwave else None
     )
+    assert captured["run_v5"].get("streaming_w_batch_size") == (
+        32 if shortwave else None
+    )
+    assert captured["run_v5"].get("modal_batch_size") == (32 if shortwave else None)
+    assert captured["run_v5"].get("early_sample_first", False) is shortwave
     assert inspect.signature(
         orchestration.create_research_exact_side_lu_block_ldu_preconditioner
     ).parameters["matrix_repeat_tolerance"].default == 1.0e-13

@@ -1108,6 +1108,167 @@ def test_research_exact_side_streaming_w_matches_retained_factor_only(batch_size
         streaming_components.F = None
 
 
+def test_research_exact_factor_and_woodbury_solve_many_batch32():
+    if MPI.COMM_WORLD.size not in (1, 2):
+        pytest.skip("The focused capability regression is serial/MPI2 only")
+    comm = MPI.COMM_WORLD
+    rows = 4
+    modes = 2
+    F_dense = np.diag(
+        np.asarray(
+            [2.0 + 0.1j, 2.4 - 0.2j, 2.8 + 0.15j, 3.1 - 0.05j],
+            dtype=np.complex128,
+        )
+    )
+    C_dense = np.asarray(
+        [
+            [0.04 + 0.01j, -0.02 + 0.03j],
+            [0.01 - 0.02j, 0.03 + 0.01j],
+            [-0.02 + 0.01j, 0.02 - 0.01j],
+            [0.03 - 0.01j, 0.01 + 0.02j],
+        ],
+        dtype=np.complex128,
+    )
+    D_dense = np.asarray(
+        [
+            [0.02 - 0.01j, 0.01 + 0.02j, -0.01 + 0.01j, 0.03 - 0.02j],
+            [0.01 + 0.01j, -0.02 + 0.01j, 0.02 - 0.02j, 0.01 + 0.03j],
+        ],
+        dtype=np.complex128,
+    )
+    H_dense = np.asarray(
+        [[2.2 + 0.1j, 0.04 - 0.02j], [0.03 + 0.01j, 2.7 - 0.05j]],
+        dtype=np.complex128,
+    )
+    effective_dense = F_dense - C_dense @ np.linalg.solve(H_dense, D_dense)
+    F = _matrix_from_dense(F_dense)
+    C = _matrix_from_dense(C_dense)
+    D = _matrix_from_dense(D_dense)
+    H = _matrix_from_dense(H_dense)
+    components = SimpleNamespace(F=F, C=C, D=D, H=H)
+    action = None
+    dense_rhs = factor_output = factor_repeat = None
+    action_output = action_repeat = None
+
+    def dense_batch(values: np.ndarray) -> PETSc.Mat:
+        first, last = (int(value) for value in action.operator.getOwnershipRange())
+        matrix = PETSc.Mat().createDense(
+            size=((last - first, rows), values.shape[1]),
+            comm=comm,
+        )
+        matrix.setUp()
+        matrix.getDenseArray()[:, :] = values[first:last, :]
+        matrix.assemble()
+        return matrix
+
+    def dense_values(matrix: PETSc.Mat) -> np.ndarray:
+        first, last = (int(value) for value in matrix.getOwnershipRange())
+        local = np.asarray(matrix.getDenseArray(), dtype=np.complex128).copy()
+        values = np.empty((rows, int(matrix.getSize()[1])), dtype=np.complex128)
+        for begin, end, packet in comm.allgather((first, last, local)):
+            values[begin:end, :] = packet
+        return values
+
+    def relative_error(actual: np.ndarray, expected: np.ndarray) -> float:
+        return float(
+            np.linalg.norm(actual - expected)
+            / max(float(np.linalg.norm(expected)), 1.0e-30)
+        )
+
+    try:
+        action = ResearchExactSideLuAction(
+            F,
+            components,
+            factor_solver_type="mumps",
+            qualification_scope="task039_p1c_solve_many_test",
+            explicit_opt_in=True,
+            factor_only_storage=True,
+            streaming_w_batch_size=32,
+        )
+        factor = action.factor
+        factor_matrix = action.operator
+        assert factor_matrix is not None
+        factor_ownership = tuple(map(int, factor_matrix.getOwnershipRange()))
+        setup_factor = factor.diagnostics
+        setup_woodbury = action.diagnostics["woodbury"]
+        assert setup_factor["factor_only_storage"] is True
+        assert setup_factor["logical_rhs_count"] == modes
+        assert setup_factor["mat_solve_call_count"] == 1
+        assert setup_factor["solve_count"] == 0
+        assert setup_woodbury["setup_factor_solve_count"] == modes
+        assert setup_woodbury["setup_factor_mat_solve_call_count"] == 1
+        assert setup_woodbury["setup_batch_count"] == 1
+        assert setup_woodbury["W_resident"] is False
+
+        rhs_values = np.asarray(
+            [
+                [0.7 + 0.2j, -0.3 + 0.1j, 0.0j],
+                [-0.2 + 0.4j, 0.5 - 0.2j, 0.0j],
+                [0.1 - 0.3j, 0.2 + 0.6j, 0.0j],
+                [-0.4 + 0.1j, 0.6 + 0.3j, 0.0j],
+            ],
+            dtype=np.complex128,
+        )
+        rhs_values[:, 2] = 2.0 * rhs_values[:, 0]
+        assert rhs_values.shape[1] == 3
+        assert rhs_values.shape[1] <= 32
+        dense_rhs = dense_batch(rhs_values)
+        factor_output = dense_rhs.duplicate(copy=False)
+        factor_repeat = dense_rhs.duplicate(copy=False)
+        action_output = dense_rhs.duplicate(copy=False)
+        action_repeat = dense_rhs.duplicate(copy=False)
+        expected_factor = np.linalg.solve(F_dense, rhs_values)
+        expected_action = np.linalg.solve(effective_dense, rhs_values)
+        dense_matrices = (dense_rhs, factor_output, factor_repeat, action_output, action_repeat)
+        expected_types = {"seqdense", "dense"} if comm.size == 1 else {"mpidense", "dense"}
+        for matrix in dense_matrices:
+            assert str(matrix.getType()).lower() in expected_types
+            assert tuple(map(int, matrix.getOwnershipRange())) == factor_ownership
+
+        factor.solve_many(dense_rhs, factor_output)
+        factor.solve_many(dense_rhs, factor_repeat)
+        factor_values = dense_values(factor_output)
+        factor_repeat_values = dense_values(factor_repeat)
+        for column in range(3):
+            assert relative_error(factor_values[:, column], expected_factor[:, column]) <= 1.0e-12
+        assert relative_error(factor_repeat_values, factor_values) <= 1.0e-13
+        assert relative_error(factor_values[:, 2], 2.0 * factor_values[:, 0]) <= 1.0e-12
+
+        action.apply_many(dense_rhs, action_output)
+        action.apply_many(dense_rhs, action_repeat)
+        action_values = dense_values(action_output)
+        action_repeat_values = dense_values(action_repeat)
+        for column in range(3):
+            assert relative_error(action_values[:, column], expected_action[:, column]) <= 1.0e-12
+        assert relative_error(action_repeat_values, action_values) <= 1.0e-13
+        assert relative_error(action_values[:, 2], 2.0 * action_values[:, 0]) <= 1.0e-12
+
+        factor_diagnostics = factor.diagnostics
+        woodbury_diagnostics = action.diagnostics["woodbury"]
+        assert factor_diagnostics["logical_rhs_count"] == modes + 6 + 12
+        assert factor_diagnostics["mat_solve_call_count"] == 1 + 2 + 4
+        assert factor_diagnostics["solve_count"] == 0
+        assert woodbury_diagnostics["apply_count"] == 6
+        assert woodbury_diagnostics["apply_base_solve_count"] == 12
+        assert woodbury_diagnostics["apply_base_mat_solve_call_count"] == 4
+        assert woodbury_diagnostics["apply_batch_count"] == 2
+
+        action.destroy()
+        assert factor.diagnostics["direct_factor_count"] == 0
+        assert factor.diagnostics["factor_matrix_alive"] is False
+    finally:
+        for matrix in (dense_rhs, factor_output, factor_repeat, action_output, action_repeat):
+            if matrix is not None:
+                matrix.destroy()
+        if action is not None:
+            action.destroy()
+        else:
+            C.destroy()
+        F.destroy()
+        D.destroy()
+        H.destroy()
+
+
 def _vector_from_values(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
     vector = matrix.createVecLeft()
     first, last = (int(value) for value in vector.getOwnershipRange())

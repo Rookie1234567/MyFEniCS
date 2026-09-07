@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
+from mpi4py import MPI
 from petsc4py import PETSc
 from scipy.linalg import lu_factor, lu_solve
 
@@ -100,6 +101,7 @@ class HybridActionModalSchurSystem:
     build_apply_count: dict[str, int]
     repeat_diagnostics: dict[str, Any] = field(default_factory=dict)
     sampled_column_diagnostics: dict[str, Any] = field(default_factory=dict)
+    batch_diagnostics: dict[str, Any] = field(default_factory=dict)
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -149,6 +151,7 @@ class HybridActionModalSchurSystem:
             "lu_repeat_solve_error": float(self.lu_repeat_solve_error),
             "repeat_diagnostics": dict(self.repeat_diagnostics),
             "sampled_column_diagnostics": dict(self.sampled_column_diagnostics),
+            "batch_diagnostics": dict(self.batch_diagnostics),
             "build_apply_count": dict(self.build_apply_count),
             **self._array_bytes,
             "destroyed": bool(self._destroyed),
@@ -170,6 +173,9 @@ def _build_action_modal_contribution(
     action: Any,
     modal_count: int,
     columns: Sequence[int] | None = None,
+    *,
+    batch_size: int | None = None,
+    progress_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> np.ndarray:
     operator = _action_operator(action)
     projection = (
@@ -193,6 +199,129 @@ def _build_action_modal_contribution(
         if side == "bottom"
         else slice(0, modal_count)
     )
+    if batch_size is not None:
+        batch_size = int(batch_size)
+        if batch_size != 32:
+            raise ValueError("Modal batch size is fixed to 32")
+        if not hasattr(action, "apply_many"):
+            raise TypeError("Modal batching requires an action apply_many API")
+        comm = operator.getComm().tompi4py()
+        row_first, row_last = map(int, operator.getOwnershipRange())
+        global_rows = int(operator.getSize()[0])
+        batch_total = (len(selected_columns) + batch_size - 1) // batch_size
+        started = time.perf_counter()
+        batch_durations: list[tuple[float, int]] = []
+        for batch_number, batch_start in enumerate(
+            range(0, len(selected_columns), batch_size), start=1
+        ):
+            batch_columns = selected_columns[batch_start : batch_start + batch_size]
+            batch_width = len(batch_columns)
+            batch_started = time.perf_counter()
+            before_diagnostics = _action_diagnostics(action)
+            before_mat_solve_calls = int(
+                before_diagnostics.get("mat_solve_call_count", 0)
+            )
+            if progress_callback is not None:
+                progress_callback(
+                    "modal_batch_begin",
+                    {
+                        "side": side,
+                        "stage": "modal_action",
+                        "index": batch_start,
+                        "total": len(selected_columns),
+                        "batch_total": batch_total,
+                        "batch_index": batch_number,
+                        "width": batch_width,
+                        "logical_completed": batch_start,
+                        "mat_solve_calls": before_mat_solve_calls,
+                        "stage_wall_seconds": batch_started - started,
+                    },
+                )
+            right_hand_sides = solved = None
+            try:
+                right_hand_sides = PETSc.Mat().createDense(
+                    size=((row_last - row_first, global_rows), batch_width),
+                    comm=comm,
+                )
+                right_hand_sides.setUp()
+                local_rhs = right_hand_sides.getDenseArray()
+                for offset, column in enumerate(batch_columns):
+                    modal = np.zeros(2 * modal_count, dtype=np.complex128)
+                    modal[column] = 1.0
+                    traction = modal_coupling_action(side, coupling, modal)
+                    try:
+                        if tuple(map(int, traction.getOwnershipRange())) != (
+                            row_first,
+                            row_last,
+                        ):
+                            raise ValueError(
+                                "Modal batch traction ownership does not match factor"
+                            )
+                        local_rhs[:, offset] = traction.getArray(readonly=True)
+                    finally:
+                        traction.destroy()
+                right_hand_sides.assemble()
+                solved = right_hand_sides.duplicate(copy=False)
+                action.apply_many(right_hand_sides, solved)
+                for offset in range(batch_width):
+                    response = solved.getColumnVector(offset)
+                    projected = projection.createVecLeft()
+                    try:
+                        projection.mult(response, projected)
+                        values = _replicated_modal_values(projected)
+                        contribution[row_slice, batch_start + offset] = values
+                        contribution[other_slice, batch_start + offset] = 0.0
+                    finally:
+                        projected.destroy()
+                        response.destroy()
+            finally:
+                if solved is not None:
+                    solved.destroy()
+                if right_hand_sides is not None:
+                    right_hand_sides.destroy()
+            batch_elapsed = float(
+                comm.allreduce(time.perf_counter() - batch_started, op=MPI.MAX)
+            )
+            batch_durations.append((batch_elapsed, batch_width))
+            after_diagnostics = _action_diagnostics(action)
+            after_mat_solve_calls = int(
+                after_diagnostics.get("mat_solve_call_count", 0)
+            )
+            detail: dict[str, Any] = {
+                "side": side,
+                "stage": "modal_action",
+                "index": batch_start,
+                "total": len(selected_columns),
+                "batch_total": batch_total,
+                "batch_index": batch_number,
+                "width": batch_width,
+                "logical_completed": batch_start + batch_width,
+                "mat_solve_calls": after_mat_solve_calls,
+                "mat_solve_calls_delta": after_mat_solve_calls
+                - before_mat_solve_calls,
+                "stage_wall_seconds": time.perf_counter() - started,
+            }
+            if len(batch_durations) == 2:
+                observed = batch_durations[:2]
+                completed = sum(width for _, width in observed)
+                elapsed = sum(duration for duration, _ in observed)
+                throughput = completed / max(elapsed, _TINY)
+                remaining = len(selected_columns) - (batch_start + batch_width)
+                upper_per_column = max(
+                    duration / width for duration, width in observed
+                )
+                detail.update(
+                    {
+                        "throughput_logical_per_second": throughput,
+                        "eta_seconds_central": remaining / max(throughput, _TINY),
+                        "eta_seconds_upper": remaining * upper_per_column,
+                        "eta_basis": "first_two_completed_batches",
+                    }
+                )
+            if progress_callback is not None:
+                progress_callback("modal_batch_end", detail)
+        return contribution
+
     for local_column, column in enumerate(selected_columns):
         modal = np.zeros(2 * modal_count, dtype=np.complex128)
         modal[column] = 1.0
@@ -263,6 +392,9 @@ def build_hybrid_action_modal_schur(
     sampled_columns: Sequence[int] | None = None,
     sampled_column_roles: Mapping[str, Sequence[str]] | None = None,
     sampled_column_contract_sha256: str | None = None,
+    modal_batch_size: int | None = None,
+    early_sample_first: bool = False,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> HybridActionModalSchurSystem:
     """Build the modal Schur, optionally with one frozen sampled reconstruction."""
 
@@ -271,6 +403,17 @@ def build_hybrid_action_modal_schur(
         or float(matrix_repeat_tolerance) <= 0.0
     ):
         raise ValueError("Modal-Schur repeat tolerance must be finite and positive.")
+    if modal_batch_size is not None:
+        modal_batch_size = int(modal_batch_size)
+        if modal_batch_size != 32:
+            raise ValueError("Modal batch size is fixed to 32")
+    if early_sample_first:
+        if sampled_columns is None or modal_batch_size != 32:
+            raise ValueError(
+                "Early modal sampling requires frozen columns and batch size 32"
+            )
+        if float(matrix_repeat_tolerance) != 1.0e-10:
+            raise ValueError("Early modal sampling requires the fixed 1e-10 Gate")
     modal_count = int(coupling.mode_count_per_direction)
     internal_count = 2 * modal_count
     sampled_contract = _sampled_modal_column_contract(
@@ -287,28 +430,232 @@ def build_hybrid_action_modal_schur(
         "bottom": int(_action_diagnostics(bottom_action).get("apply_count", 0)),
         "top": int(_action_diagnostics(top_action).get("apply_count", 0)),
     }
-    first = constraint.copy()
-    first -= _build_action_modal_contribution(
-        "bottom", coupling, bottom_action, modal_count
-    )
-    first -= _build_action_modal_contribution("top", coupling, top_action, modal_count)
+
+    def total_mat_solve_calls() -> int:
+        return sum(
+            int(_action_diagnostics(action).get("mat_solve_call_count", 0))
+            for action in (bottom_action, top_action)
+        )
+
+    def build_contribution(
+        side: str,
+        action: Any,
+        columns: Sequence[int] | None = None,
+    ) -> np.ndarray:
+        if modal_batch_size is None:
+            if columns is None:
+                return _build_action_modal_contribution(
+                    side, coupling, action, modal_count
+                )
+            return _build_action_modal_contribution(
+                side, coupling, action, modal_count, columns=columns
+            )
+        return _build_action_modal_contribution(
+            side,
+            coupling,
+            action,
+            modal_count,
+            columns=columns,
+            batch_size=modal_batch_size,
+            progress_callback=marker_callback,
+        )
+
+    sampled_column_errors: list[float] = []
+    early_sample_diagnostics: dict[str, Any] | None = None
+    full_sample_diagnostics: dict[str, Any] | None = None
+    sampled_reconstruction = None
     if sampled_contract is None:
+        first = constraint.copy()
+        first -= build_contribution("bottom", bottom_action)
+        first -= build_contribution("top", top_action)
         second = constraint.copy()
-        second -= _build_action_modal_contribution(
-            "bottom", coupling, bottom_action, modal_count
+        second -= build_contribution("bottom", bottom_action)
+        second -= build_contribution("top", top_action)
+    elif early_sample_first:
+        sampled = np.asarray(sampled_contract["columns"], dtype=np.int64)
+        sample_started = time.perf_counter()
+        if marker_callback is not None:
+            marker_callback(
+                "modal_sample_begin",
+                {
+                    "side": "both",
+                    "stage": "modal_sample_repeat",
+                    "index": 0,
+                    "total": len(sampled),
+                    "width": len(sampled),
+                    "logical_completed": 0,
+                    "mat_solve_calls": total_mat_solve_calls(),
+                    "stage_wall_seconds": 0.0,
+                },
+            )
+        sampled_first = constraint[:, sampled].copy()
+        sampled_first -= build_contribution(
+            "bottom", bottom_action, columns=sampled
         )
-        second -= _build_action_modal_contribution(
-            "top", coupling, top_action, modal_count
+        sampled_first -= build_contribution("top", top_action, columns=sampled)
+        sampled_second = constraint[:, sampled].copy()
+        sampled_second -= build_contribution(
+            "bottom", bottom_action, columns=sampled
         )
+        sampled_second -= build_contribution("top", top_action, columns=sampled)
+        early_difference = sampled_first - sampled_second
+        early_reference_norm = float(np.linalg.norm(sampled_first))
+        early_difference_norm = float(np.linalg.norm(early_difference))
+        early_column_absolute = [
+            float(np.linalg.norm(early_difference[:, index]))
+            for index in range(len(sampled))
+        ]
+        early_column_relative = [
+            float(
+                early_column_absolute[index]
+                / max(float(np.linalg.norm(sampled_first[:, index])), _TINY)
+            )
+            for index in range(len(sampled))
+        ]
+        early_finite = bool(
+            np.all(np.isfinite(sampled_first))
+            and np.all(np.isfinite(sampled_second))
+            and np.all(np.isfinite(early_difference))
+        )
+        early_sample_diagnostics = {
+            "absolute_difference": early_difference_norm,
+            "reference_norm": early_reference_norm,
+            "difference_norm": early_difference_norm,
+            "relative_error": early_difference_norm
+            / max(early_reference_norm, _TINY),
+            "max_abs": float(np.max(np.abs(early_difference))),
+            "max_column_absolute_difference": max(early_column_absolute),
+            "max_column_relative_error": max(early_column_relative),
+            "finite": early_finite,
+            "limit": 1.0e-10,
+            "pass": bool(
+                early_finite
+                and early_difference_norm / max(early_reference_norm, _TINY)
+                <= 1.0e-10
+                and max(early_column_relative) <= 1.0e-10
+            ),
+            "mode": "two_batched_sample_builds_before_full_build",
+        }
+        if not early_sample_diagnostics["pass"]:
+            raise ValueError(
+                "Early sampled modal repeat Gate failed: "
+                f"absolute={early_difference_norm:.6e}, "
+                f"reference_norm={early_reference_norm:.6e}, "
+                f"relative={early_sample_diagnostics['relative_error']:.6e}, "
+                f"max_column={early_sample_diagnostics['max_column_relative_error']:.6e}, "
+                f"finite={early_finite}, limit=1.000000e-10"
+            )
+        if marker_callback is not None:
+            marker_callback(
+                "modal_sample_ready",
+                {
+                    "side": "both",
+                    "stage": "modal_sample_repeat",
+                    "index": len(sampled),
+                    "total": len(sampled),
+                    "width": len(sampled),
+                    "logical_completed": len(sampled),
+                    "mat_solve_calls": total_mat_solve_calls(),
+                    "stage_wall_seconds": time.perf_counter() - sample_started,
+                    **early_sample_diagnostics,
+                },
+            )
+        if marker_callback is not None:
+            full_started = time.perf_counter()
+            marker_callback(
+                "modal_full_build_begin",
+                {
+                    "side": "both",
+                    "stage": "modal_full_build",
+                    "index": 0,
+                    "total": internal_count,
+                    "width": modal_batch_size,
+                    "logical_completed": 0,
+                    "mat_solve_calls": total_mat_solve_calls(),
+                    "stage_wall_seconds": 0.0,
+                },
+            )
+        first = constraint.copy()
+        first -= build_contribution("bottom", bottom_action)
+        first -= build_contribution("top", top_action)
+        second = None
+        sampled_reconstruction = sampled_first
+        full_difference = first[:, sampled] - sampled_first
+        full_reference_norm = float(np.linalg.norm(sampled_first))
+        full_difference_norm = float(np.linalg.norm(full_difference))
+        full_column_absolute = [
+            float(np.linalg.norm(full_difference[:, index]))
+            for index in range(len(sampled))
+        ]
+        sampled_column_errors = [
+            float(
+                full_column_absolute[index]
+                / max(float(np.linalg.norm(sampled_first[:, index])), _TINY)
+            )
+            for index in range(len(sampled))
+        ]
+        full_sample_finite = bool(
+            np.all(np.isfinite(first[:, sampled]))
+            and np.all(np.isfinite(sampled_first))
+            and np.all(np.isfinite(full_difference))
+        )
+        full_sample_diagnostics = {
+            "absolute_difference": full_difference_norm,
+            "reference_norm": full_reference_norm,
+            "difference_norm": full_difference_norm,
+            "relative_error": full_difference_norm
+            / max(full_reference_norm, _TINY),
+            "max_abs": float(np.max(np.abs(full_difference))),
+            "max_column_absolute_difference": max(full_column_absolute),
+            "max_column_relative_error": max(sampled_column_errors),
+            "finite": full_sample_finite,
+            "limit": 1.0e-10,
+            "pass": bool(
+                full_sample_finite
+                and full_difference_norm / max(full_reference_norm, _TINY)
+                <= 1.0e-10
+                and max(sampled_column_errors) <= 1.0e-10
+            ),
+            "mode": "full_build_against_first_sample_without_third_action",
+        }
+        if not full_sample_diagnostics["pass"]:
+            raise ValueError(
+                "Full modal build differs from early sample: "
+                f"absolute={full_difference_norm:.6e}, "
+                f"reference_norm={full_reference_norm:.6e}, "
+                f"relative={full_sample_diagnostics['relative_error']:.6e}, "
+                f"max_column={full_sample_diagnostics['max_column_relative_error']:.6e}, "
+                f"finite={full_sample_finite}, limit=1.000000e-10"
+            )
+        if marker_callback is not None:
+            marker_callback(
+                "modal_full_build_ready",
+                {
+                    "side": "both",
+                    "stage": "modal_full_build",
+                    "index": internal_count,
+                    "total": internal_count,
+                    "width": modal_batch_size,
+                    "logical_completed": internal_count,
+                    "mat_solve_calls": total_mat_solve_calls(),
+                    "stage_wall_seconds": time.perf_counter() - full_started,
+                },
+            )
+        matrix_difference = early_difference
+        matrix_reference_norm = early_reference_norm
+        matrix_difference_norm = early_difference_norm
     else:
+        first = constraint.copy()
+        first -= build_contribution("bottom", bottom_action)
+        first -= build_contribution("top", top_action)
         second = None
         sampled = np.asarray(sampled_contract["columns"], dtype=np.int64)
         sampled_reconstruction = constraint[:, sampled].copy()
-        sampled_reconstruction -= _build_action_modal_contribution(
-            "bottom", coupling, bottom_action, modal_count, columns=sampled
+        sampled_reconstruction -= build_contribution(
+            "bottom", bottom_action, columns=sampled
         )
-        sampled_reconstruction -= _build_action_modal_contribution(
-            "top", coupling, top_action, modal_count, columns=sampled
+        sampled_reconstruction -= build_contribution(
+            "top", top_action, columns=sampled
         )
     after = {
         "bottom": int(_action_diagnostics(bottom_action).get("apply_count", 0)),
@@ -316,9 +663,13 @@ def build_hybrid_action_modal_schur(
     }
     build_apply_count = {side: after[side] - before[side] for side in ("bottom", "top")}
     expected = (
-        internal_count + len(sampled_contract["columns"])
-        if sampled_contract is not None
-        else 2 * internal_count
+        internal_count + 2 * len(sampled_contract["columns"])
+        if early_sample_first
+        else (
+            internal_count + len(sampled_contract["columns"])
+            if sampled_contract is not None
+            else 2 * internal_count
+        )
     )
     if any(value != expected for value in build_apply_count.values()):
         raise RuntimeError(
@@ -336,8 +687,8 @@ def build_hybrid_action_modal_schur(
         matrix_difference = first - second
         matrix_reference_norm = float(np.linalg.norm(first))
         matrix_difference_norm = float(np.linalg.norm(matrix_difference))
-        sampled_column_errors: list[float] = []
-    else:
+        sampled_column_errors = []
+    elif not early_sample_first:
         reference = first[:, np.asarray(sampled_contract["columns"], dtype=np.int64)]
         matrix_difference = reference - sampled_reconstruction
         matrix_reference_norm = float(np.linalg.norm(reference))
@@ -349,26 +700,43 @@ def build_hybrid_action_modal_schur(
             )
             for index in range(len(sampled_contract["columns"]))
         ]
-    max_column_relative_error = max(sampled_column_errors, default=0.0)
+    max_column_relative_error = (
+        float(early_sample_diagnostics["max_column_relative_error"])
+        if early_sample_first
+        else max(sampled_column_errors, default=0.0)
+    )
     matrix_repeat_error = matrix_difference_norm / max(matrix_reference_norm, _TINY)
+    matrix_repeat_finite = bool(np.all(np.isfinite(matrix_difference)))
     matrix_repeat_diagnostics = {
         "relative_error": float(matrix_repeat_error),
         "limit": float(matrix_repeat_tolerance),
         "reference_norm": matrix_reference_norm,
         "difference_norm": matrix_difference_norm,
+        "absolute_difference": matrix_difference_norm,
         "max_abs": float(np.max(np.abs(matrix_difference))),
         "max_column_relative_error": float(max_column_relative_error),
+        "finite": matrix_repeat_finite,
         "mode": (
             "double_full_build"
             if sampled_contract is None
-            else "single_full_build_sampled_reconstruction"
+            else (
+                "early_sample_before_full_build"
+                if early_sample_first
+                else "single_full_build_sampled_reconstruction"
+            )
         ),
         "pass": bool(
-            np.isfinite(matrix_repeat_error)
+            matrix_repeat_finite
+            and np.isfinite(matrix_repeat_error)
             and matrix_repeat_error <= float(matrix_repeat_tolerance)
             and max_column_relative_error <= float(matrix_repeat_tolerance)
         ),
     }
+    if early_sample_first:
+        matrix_repeat_diagnostics["early_sample"] = dict(early_sample_diagnostics)
+        matrix_repeat_diagnostics["full_vs_first_sample"] = dict(
+            full_sample_diagnostics
+        )
     if not matrix_repeat_diagnostics["pass"]:
         raise ValueError(
             "Action modal Schur repeat error exceeds tolerance: "
@@ -443,6 +811,8 @@ def build_hybrid_action_modal_schur(
             "contract_sha256": None
             if sampled_contract is None
             else sampled_contract["sha256"],
+            "early_sample_first": bool(early_sample_first),
+            "modal_batch_size": modal_batch_size,
             "full_build_apply_count": {
                 "bottom": internal_count,
                 "top": internal_count,
@@ -450,12 +820,35 @@ def build_hybrid_action_modal_schur(
             "sample_build_apply_count": {
                 "bottom": 0
                 if sampled_contract is None
-                else len(sampled_contract["columns"]),
+                else (
+                    2 * len(sampled_contract["columns"])
+                    if early_sample_first
+                    else len(sampled_contract["columns"])
+                ),
                 "top": 0
                 if sampled_contract is None
-                else len(sampled_contract["columns"]),
+                else (
+                    2 * len(sampled_contract["columns"])
+                    if early_sample_first
+                    else len(sampled_contract["columns"])
+                ),
             },
             "column_relative_errors": sampled_column_errors,
+        },
+        batch_diagnostics={
+            "enabled": modal_batch_size is not None,
+            "batch_size": modal_batch_size,
+            "early_sample_first": bool(early_sample_first),
+            "early_sample": (
+                None
+                if early_sample_diagnostics is None
+                else dict(early_sample_diagnostics)
+            ),
+            "full_vs_first_sample": (
+                None
+                if full_sample_diagnostics is None
+                else dict(full_sample_diagnostics)
+            ),
         },
     )
 
@@ -742,6 +1135,9 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
     sampled_columns: Sequence[int] | None = None,
     sampled_column_roles: Mapping[str, Sequence[str]] | None = None,
     sampled_column_contract_sha256: str | None = None,
+    modal_batch_size: int | None = None,
+    early_sample_first: bool = False,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> HybridBlockLduPreconditioner:
     """Build historical research LDU or an explicit case-qualified context.
 
@@ -773,6 +1169,11 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
             or diagnostics.get("local_direct_preonly_ksp_count") != 1
         ):
             raise ValueError("Case-qualified exact-side action diagnostics are invalid")
+    if (
+        (modal_batch_size is not None or early_sample_first)
+        and not explicit_opt_in
+    ):
+        raise ValueError("Modal batching requires explicit case opt-in")
     modal_schur = build_hybrid_action_modal_schur(
         coupling,
         bottom_action,
@@ -781,6 +1182,9 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
         sampled_columns=sampled_columns,
         sampled_column_roles=sampled_column_roles,
         sampled_column_contract_sha256=sampled_column_contract_sha256,
+        modal_batch_size=modal_batch_size,
+        early_sample_first=early_sample_first,
+        marker_callback=marker_callback,
     )
     research_inventory = {
         "global_hybrid_direct_factor_count": 0,

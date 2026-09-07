@@ -11324,6 +11324,8 @@ def run_v5_h4_exact_side_setup_only(
     sampled_column_contract: Mapping[str, Any] | None = None,
     streaming_w_batch_size: int | None = None,
     matrix_repeat_tolerance: float | None = None,
+    modal_batch_size: int | None = None,
+    early_sample_first: bool = False,
     v6_profile: bool = False,
     exact_spool_root: str | Path | None = None,
     packet_identity: Mapping[str, Any] | None = None,
@@ -11397,11 +11399,13 @@ def run_v5_h4_exact_side_setup_only(
             )
 
             def lifecycle(event: str, detail: Mapping[str, Any], *, _side=side):
+                lifecycle_detail = dict(detail)
+                lifecycle_detail.setdefault("side", _side)
                 _emit_marker(
                     marker_callback,
                     f"{_side}_{event}",
                     source="ResearchExactFactorInverse",
-                    **dict(detail),
+                    **lifecycle_detail,
                 )
 
             actions[side] = create_research_exact_side_lu_action(
@@ -11509,6 +11513,12 @@ def run_v5_h4_exact_side_setup_only(
         }
         if matrix_repeat_tolerance is not None:
             modal_schur_kwargs["matrix_repeat_tolerance"] = matrix_repeat_tolerance
+        if modal_batch_size is not None:
+            modal_schur_kwargs["modal_batch_size"] = modal_batch_size
+        if early_sample_first:
+            modal_schur_kwargs["early_sample_first"] = True
+        if modal_batch_size is not None or early_sample_first:
+            modal_schur_kwargs["marker_callback"] = marker_callback
         context = create_research_exact_side_lu_block_ldu_preconditioner(
             layout,
             setup.bottom,

@@ -29,6 +29,7 @@ class _FixedAction:
         self.operator = operator
         self.inverse_diagonal = np.asarray(inverse_diagonal, dtype=np.complex128)
         self.apply_count = 0
+        self.mat_solve_call_count = 0
         self.destroyed = False
 
     @property
@@ -39,6 +40,7 @@ class _FixedAction:
             "ilu_factor_count": 1 if not self.destroyed else 0,
             "factor_count": 1 if not self.destroyed else 0,
             "apply_count": self.apply_count,
+            "mat_solve_call_count": self.mat_solve_call_count,
             "destroyed": self.destroyed,
         }
 
@@ -49,6 +51,25 @@ class _FixedAction:
         first, last = (int(value) for value in source.getOwnershipRange())
         target.getArray()[:] *= self.inverse_diagonal[first:last]
         self.apply_count += 1
+
+    def apply_many(self, sources: PETSc.Mat, targets: PETSc.Mat) -> None:
+        if self.destroyed:
+            raise RuntimeError("The fixed action is destroyed.")
+        width = int(sources.getSize()[1])
+        if width <= 0 or width != int(targets.getSize()[1]):
+            raise ValueError("The fixed action batch has incompatible columns.")
+        source_ownership = tuple(int(value) for value in sources.getOwnershipRange())
+        target_ownership = tuple(int(value) for value in targets.getOwnershipRange())
+        if source_ownership != target_ownership:
+            raise ValueError("The fixed action batch has incompatible ownership.")
+        first, last = source_ownership
+        local_inverse = self.inverse_diagonal[first:last]
+        targets.getDenseArray()[:, :] = (
+            sources.getDenseArray()[:, :] * local_inverse[:, None]
+        )
+        targets.assemble()
+        self.apply_count += width
+        self.mat_solve_call_count += 1
 
     def destroy(self) -> None:
         self.destroyed = True
@@ -368,6 +389,127 @@ def test_action_modal_schur_single_build_freezes_sampled_columns_and_hash():
             baseline.destroy()
         if modal is not None:
             modal.destroy()
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_batch32_early_sample_first():
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    contract = {
+        "columns": [0, 1, 2, 3],
+        "mode_count_per_direction": 2,
+        "roles": {
+            "0": ["head", "bottom_positive_unattenuated"],
+            "1": ["interior", "bottom_positive_unattenuated"],
+            "2": ["head", "top_negative_unattenuated"],
+            "3": ["tail", "top_negative_unattenuated"],
+        },
+    }
+    contract_sha = hashlib.sha256(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    markers = []
+    modal = None
+    try:
+        modal = build_hybrid_action_modal_schur(
+            fixture["coupling"],
+            bottom,
+            top,
+            matrix_repeat_tolerance=1.0e-10,
+            sampled_columns=contract["columns"],
+            sampled_column_roles=contract["roles"],
+            sampled_column_contract_sha256=contract_sha,
+            modal_batch_size=32,
+            early_sample_first=True,
+            marker_callback=lambda stage, detail: markers.append(
+                (stage, dict(detail))
+            ),
+        )
+        expected = _expected_modal_matrix(fixture)
+        assert _relative_array_error(modal.modal_schur, expected) <= 1.0e-13
+        assert _relative_array_error(modal.modal_schur[0:2, :], expected[0:2, :]) <= 1.0e-13
+        assert _relative_array_error(modal.modal_schur[2:, :], expected[2:, :]) <= 1.0e-13
+        constraint = internal_modal_constraint_matrix(fixture["coupling"])
+        assert np.linalg.norm(constraint[0:2, :] - modal.modal_schur[0:2, :]) > 0.0
+        assert np.linalg.norm(constraint[2:, :] - modal.modal_schur[2:, :]) > 0.0
+
+        assert bottom.diagnostics["apply_count"] == 12
+        assert top.diagnostics["apply_count"] == 12
+        assert bottom.diagnostics["mat_solve_call_count"] == 3
+        assert top.diagnostics["mat_solve_call_count"] == 3
+        diagnostics = modal.diagnostics
+        assert diagnostics["build_apply_count"] == {"bottom": 12, "top": 12}
+        assert diagnostics["batch_diagnostics"]["early_sample"]["pass"] is True
+        assert diagnostics["batch_diagnostics"]["full_vs_first_sample"]["pass"] is True
+        assert diagnostics["repeat_diagnostics"]["matrix"]["pass"] is True
+
+        stages = [stage for stage, _detail in markers]
+        assert stages.index("modal_sample_ready") < stages.index(
+            "modal_full_build_begin"
+        )
+        batch_details = [
+            detail
+            for stage, detail in markers
+            if stage in ("modal_batch_begin", "modal_batch_end")
+        ]
+        assert batch_details
+        assert all(detail["batch_index"] == 1 for detail in batch_details)
+        assert all(detail["batch_total"] == 1 for detail in batch_details)
+    finally:
+        if modal is not None:
+            modal.destroy()
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_early_sample_failure_skips_full_build(monkeypatch):
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    contract = {
+        "columns": [0, 1, 2, 3],
+        "mode_count_per_direction": 2,
+        "roles": {str(column): ["sample"] for column in range(4)},
+    }
+    contract_sha = hashlib.sha256(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    original_apply_many = bottom.apply_many
+    calls = {"count": 0}
+    markers = []
+
+    def perturbed_apply_many(sources, targets):
+        original_apply_many(sources, targets)
+        calls["count"] += 1
+        if calls["count"] == 2:
+            first, last = (int(value) for value in targets.getOwnershipRange())
+            if first == 0 and last > first:
+                targets.getDenseArray()[0, 0] += 1.0e-6
+            targets.assemble()
+
+    monkeypatch.setattr(bottom, "apply_many", perturbed_apply_many)
+    try:
+        with pytest.raises(ValueError, match="Early sampled modal repeat Gate failed"):
+            build_hybrid_action_modal_schur(
+                fixture["coupling"],
+                bottom,
+                top,
+                matrix_repeat_tolerance=1.0e-10,
+                sampled_columns=contract["columns"],
+                sampled_column_roles=contract["roles"],
+                sampled_column_contract_sha256=contract_sha,
+                modal_batch_size=32,
+                early_sample_first=True,
+                marker_callback=lambda stage, detail: markers.append(
+                    (stage, dict(detail))
+                ),
+            )
+        assert calls["count"] == 2
+        assert "modal_full_build_begin" not in [stage for stage, _detail in markers]
+        assert "modal_full_build_ready" not in [stage for stage, _detail in markers]
+    finally:
         bottom.destroy()
         top.destroy()
         _destroy_fixture(fixture)

@@ -18,6 +18,8 @@ HYBRID_DTN_WOODBURY_MODE_COUNT = 40
 MUMPS_BLR_V5_H4_PROFILE = "mumps_blr_v5_h4"
 MUMPS_BLR_V5_H4_1E3_PROFILE = "mumps_blr_v5_h4_1e3"
 MUMPS_EXACT_WORKSPACE_RELAXATION_PERCENT = 40
+_TINY = np.finfo(np.float64).tiny
+_MAX_DENSE_MULTI_RHS_COLUMNS = 32
 
 __all__ = (
     "HYBRID_DTN_WOODBURY_MODE_COUNT",
@@ -91,6 +93,7 @@ class HybridLocalDtnWoodburyOracle:
         base_identity: str = "exact_F_direct",
         compact_storage: bool = False,
         streaming_w_batch_size: int | None = None,
+        progress_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
         self.base_inverse = base_inverse
         self.components = components
@@ -112,6 +115,13 @@ class HybridLocalDtnWoodburyOracle:
         self._factor_only_storage = bool(
             getattr(base_inverse, "factor_only_storage", False)
         )
+        if streaming_w_batch_size is not None and not self._factor_only_storage:
+            raise ValueError("Streaming-W requires factor-only storage")
+        if streaming_w_batch_size is not None and not hasattr(
+            base_inverse, "solve_many"
+        ):
+            raise TypeError("Streaming-W requires a bounded solve_many factor API")
+        self._progress_callback = progress_callback
         self.comm = self.F.getComm().tompi4py()
         self._source_size = int(self.F.getSize()[1])
         self._target_size = int(self.F.getSize()[0])
@@ -160,21 +170,42 @@ class HybridLocalDtnWoodburyOracle:
         self._last_failure_audit: dict[str, Any] | None = None
         self._setup_seconds = 0.0
         self._setup_factor_solve_count = 0
+        self._setup_factor_mat_solve_call_count = 0
         self._setup_d_apply_count = 0
+        self._setup_batch_count = 0
         self._streaming_w_batch_peak_bytes = 0
         self._streaming_w_batch_local_peak_bytes = 0
+        self._streaming_w_batch_transient_peak_bytes = 0
+        self._streaming_w_batch_transient_local_peak_bytes = 0
         self._apply_base_solve_count = 0
+        self._apply_base_mat_solve_call_count = 0
         self._apply_d_count = 0
         self._apply_c_count = 0
+        self._apply_batch_count = 0
         self._apply_seconds = 0.0
         self.apply_count = 0
         self._build()
 
+    def _emit_progress(self, stage: str, detail: Mapping[str, Any]) -> None:
+        if self._progress_callback is not None:
+            self._progress_callback(stage, dict(detail))
+
     def _build(self) -> None:
         started = perf_counter()
         H_dense = np.asarray(gather_small_petsc_matrix(self.H), dtype=np.complex128)
-        local_rows = int(self.F.getLocalSize()[0])
         streaming = self._streaming_w_batch_size is not None
+        if streaming:
+            factor_operator = getattr(self.base_inverse, "operator", None)
+            if factor_operator is None:
+                raise RuntimeError("Streaming-W requires a retained factor operator")
+            factor_first, factor_last = map(
+                int, factor_operator.getOwnershipRange()
+            )
+            local_rows = factor_last - factor_first
+            global_rows = int(factor_operator.getSize()[0])
+        else:
+            local_rows = int(self.F.getLocalSize()[0])
+            global_rows = int(self.F.getSize()[0])
         W_local = (
             None
             if streaming
@@ -186,17 +217,144 @@ class HybridLocalDtnWoodburyOracle:
         w_column = self.F.createVecLeft()
         d_column = self.D.createVecLeft()
         try:
+            if streaming:
+                d_input = self.D.createVecRight()
+                try:
+                    ownerships = (
+                        tuple(map(int, self.F.getOwnershipRange())),
+                        tuple(map(int, c_column.getOwnershipRange())),
+                        tuple(map(int, d_input.getOwnershipRange())),
+                        (factor_first, factor_last),
+                    )
+                finally:
+                    d_input.destroy()
+                if any(ownership != ownerships[0] for ownership in ownerships[1:]):
+                    raise ValueError(
+                        "Streaming-W F/C/D/factor row ownerships must match"
+                    )
             first, last = (int(value) for value in modal_basis.getOwnershipRange())
-            batch_size = self._streaming_w_batch_size or self.n_aux
-            for batch_start in range(0, self.n_aux, batch_size):
-                batch_width = min(batch_size, self.n_aux - batch_start)
-                response_batch = (
-                    np.empty((local_rows, batch_width), dtype=np.complex128)
-                    if streaming
-                    else None
+            if streaming:
+                batch_size = int(self._streaming_w_batch_size)
+                batch_total = (self.n_aux + batch_size - 1) // batch_size
+                batch_durations: list[tuple[float, int]] = []
+                for batch_number, batch_start in enumerate(
+                    range(0, self.n_aux, batch_size), start=1
+                ):
+                    batch_width = min(batch_size, self.n_aux - batch_start)
+                    batch_started = perf_counter()
+                    self._emit_progress(
+                        "streaming_w_batch_begin",
+                        {
+                            "stage": "streaming_w_setup",
+                            "index": batch_start,
+                            "total": self.n_aux,
+                            "batch_index": batch_number,
+                            "batch_total": batch_total,
+                            "width": batch_width,
+                            "logical_completed": batch_start,
+                            "mat_solve_calls": self._setup_factor_mat_solve_call_count,
+                            "stage_wall_seconds": batch_started - started,
+                        },
+                    )
+                    rhs_batch = solved_batch = None
+                    try:
+                        rhs_batch = PETSc.Mat().createDense(
+                            size=((local_rows, global_rows), batch_width),
+                            comm=self.comm,
+                        )
+                        rhs_batch.setUp()
+                        rhs_local = rhs_batch.getDenseArray()
+                        for offset in range(batch_width):
+                            column = batch_start + offset
+                            modal_basis.set(0.0)
+                            if first <= column < last:
+                                modal_basis.getArray()[column - first] = (
+                                    PETSc.ScalarType(1.0)
+                                )
+                            modal_basis.assemble()
+                            self.C.mult(modal_basis, c_column)
+                            rhs_local[:, offset] = c_column.getArray(readonly=True)
+                        rhs_batch.assemble()
+                        solved_batch = rhs_batch.duplicate(copy=False)
+                        self.base_inverse.solve_many(rhs_batch, solved_batch)
+                        self._setup_factor_solve_count += batch_width
+                        self._setup_factor_mat_solve_call_count += 1
+                        rhs_bytes = int(rhs_local.nbytes)
+                        response_bytes = int(solved_batch.getDenseArray().nbytes)
+                        self._streaming_w_batch_peak_bytes = max(
+                            self._streaming_w_batch_peak_bytes, response_bytes
+                        )
+                        self._streaming_w_batch_transient_peak_bytes = max(
+                            self._streaming_w_batch_transient_peak_bytes,
+                            rhs_bytes + response_bytes,
+                        )
+                        for offset in range(batch_width):
+                            solved_column = solved_batch.getColumnVector(offset)
+                            try:
+                                self.D.mult(solved_column, d_column)
+                                self._setup_d_apply_count += 1
+                                D_times_W[:, batch_start + offset] = (
+                                    _gather_owned_small_vector(d_column)
+                                )
+                            finally:
+                                solved_column.destroy()
+                    finally:
+                        if solved_batch is not None:
+                            solved_batch.destroy()
+                        if rhs_batch is not None:
+                            rhs_batch.destroy()
+                    batch_elapsed = _max_over_comm(
+                        self.comm, perf_counter() - batch_started
+                    )
+                    batch_durations.append((batch_elapsed, batch_width))
+                    self._setup_batch_count += 1
+                    detail: dict[str, Any] = {
+                        "stage": "streaming_w_setup",
+                        "index": batch_start,
+                        "total": self.n_aux,
+                        "batch_index": batch_number,
+                        "batch_total": batch_total,
+                        "width": batch_width,
+                        "logical_completed": batch_start + batch_width,
+                        "mat_solve_calls": self._setup_factor_mat_solve_call_count,
+                        "stage_wall_seconds": perf_counter() - started,
+                    }
+                    if len(batch_durations) == 2:
+                        observed = batch_durations[:2]
+                        completed = sum(width for _, width in observed)
+                        elapsed = sum(duration for duration, _ in observed)
+                        throughput = completed / max(elapsed, _TINY)
+                        remaining = self.n_aux - (batch_start + batch_width)
+                        upper_per_column = max(
+                            duration / width for duration, width in observed
+                        )
+                        detail.update(
+                            {
+                                "throughput_logical_per_second": throughput,
+                                "eta_seconds_central": remaining / max(
+                                    throughput, _TINY
+                                ),
+                                "eta_seconds_upper": remaining * upper_per_column,
+                                "eta_basis": "first_two_completed_batches",
+                            }
+                        )
+                    self._emit_progress("streaming_w_batch_end", detail)
+                self._streaming_w_batch_local_peak_bytes = int(
+                    self._streaming_w_batch_peak_bytes
                 )
-                for offset in range(batch_width):
-                    column = batch_start + offset
+                self._streaming_w_batch_peak_bytes = int(
+                    _max_over_comm(self.comm, self._streaming_w_batch_peak_bytes)
+                )
+                self._streaming_w_batch_transient_local_peak_bytes = int(
+                    self._streaming_w_batch_transient_peak_bytes
+                )
+                self._streaming_w_batch_transient_peak_bytes = int(
+                    _max_over_comm(
+                        self.comm, self._streaming_w_batch_transient_peak_bytes
+                    )
+                )
+            else:
+                for column in range(self.n_aux):
                     modal_basis.set(0.0)
                     if first <= column < last:
                         modal_basis.getArray()[column - first] = PETSc.ScalarType(1.0)
@@ -204,38 +362,13 @@ class HybridLocalDtnWoodburyOracle:
                     self.C.mult(modal_basis, c_column)
                     self.base_inverse.solve(c_column, w_column)
                     self._setup_factor_solve_count += 1
-                    response = np.asarray(
+                    W_local[:, column] = np.asarray(
                         w_column.getArray(readonly=True), dtype=np.complex128
                     )
-                    if response_batch is None:
-                        W_local[:, column] = response
-                    else:
-                        response_batch[:, offset] = response
-                    if response_batch is None:
-                        self.D.mult(w_column, d_column)
-                        self._setup_d_apply_count += 1
-                        D_times_W[:, column] = _gather_owned_small_vector(d_column)
-                if response_batch is not None:
-                    for offset in range(batch_width):
-                        w_column.getArray()[:] = response_batch[:, offset]
-                        self.D.mult(w_column, d_column)
-                        self._setup_d_apply_count += 1
-                        D_times_W[:, batch_start + offset] = _gather_owned_small_vector(
-                            d_column
-                        )
-                if response_batch is not None:
-                    self._streaming_w_batch_peak_bytes = max(
-                        self._streaming_w_batch_peak_bytes,
-                        int(response_batch.nbytes),
-                    )
-                    del response_batch
-            if streaming:
-                self._streaming_w_batch_local_peak_bytes = int(
-                    self._streaming_w_batch_peak_bytes
-                )
-                self._streaming_w_batch_peak_bytes = int(
-                    _max_over_comm(self.comm, self._streaming_w_batch_peak_bytes)
-                )
+                    self.D.mult(w_column, d_column)
+                    self._setup_d_apply_count += 1
+                    D_times_W[:, column] = _gather_owned_small_vector(d_column)
+                self._setup_batch_count += 1
         finally:
             d_column.destroy()
             w_column.destroy()
@@ -397,6 +530,107 @@ class HybridLocalDtnWoodburyOracle:
             perf_counter() - started,
         )
 
+    def apply_many(self, sources: PETSc.Mat, targets: PETSc.Mat) -> None:
+        """Apply the streaming Woodbury action to one bounded RHS batch."""
+
+        if self._destroyed:
+            raise RuntimeError("Woodbury oracle has been destroyed")
+        if self._streaming_w_batch_size is None:
+            raise RuntimeError("Woodbury apply_many requires streaming-W storage")
+        if not isinstance(sources, PETSc.Mat) or not isinstance(targets, PETSc.Mat):
+            raise TypeError("Woodbury apply_many requires PETSc dense matrices")
+        dense_types = {"seqdense", "dense", "mpidense"}
+        if str(sources.getType()).lower() not in dense_types:
+            raise TypeError("Woodbury apply_many source must be a PETSc dense Mat")
+        if str(targets.getType()).lower() not in dense_types:
+            raise TypeError("Woodbury apply_many target must be a PETSc dense Mat")
+        source_size = tuple(map(int, sources.getSize()))
+        target_size = tuple(map(int, targets.getSize()))
+        if source_size[0] != self._source_size or target_size[0] != self._target_size:
+            raise ValueError("Woodbury apply_many matrix rows do not match F")
+        if source_size[1] <= 0 or source_size[1] != target_size[1]:
+            raise ValueError("Woodbury apply_many requires matching RHS columns")
+        if source_size[1] > int(self._streaming_w_batch_size):
+            raise ValueError("Woodbury apply_many exceeds the fixed streaming batch")
+        operator = self._operator
+        if operator is None:
+            raise RuntimeError("Woodbury apply_many has no retained factor operator")
+        ownership = tuple(map(int, operator.getOwnershipRange()))
+        if tuple(map(int, sources.getOwnershipRange())) != ownership:
+            raise ValueError("Woodbury apply_many source ownership does not match F")
+        if tuple(map(int, targets.getOwnershipRange())) != ownership:
+            raise ValueError("Woodbury apply_many target ownership does not match F")
+        if self._C_action is None or self._C_input is None or self._C_response is None:
+            raise RuntimeError("Streaming-W C action is not available")
+
+        started = perf_counter()
+        width = source_size[1]
+        solved_sources = None
+        c_rhs = None
+        solved_c_rhs = None
+        d_values = np.empty((self.n_aux, width), dtype=np.complex128)
+        try:
+            solved_sources = sources.duplicate(copy=False)
+            self.base_inverse.solve_many(sources, solved_sources)
+            for column in range(width):
+                solved_column = solved_sources.getColumnVector(column)
+                try:
+                    self.D.mult(solved_column, self._d_work)
+                    d_values[:, column] = _gather_owned_small_vector(self._d_work)
+                finally:
+                    solved_column.destroy()
+            if not np.all(np.isfinite(d_values)):
+                raise ValueError("Woodbury apply_many modal RHS is non-finite")
+            q_values = np.asarray(
+                lu_solve((self._lu, self._piv), d_values, check_finite=True),
+                dtype=np.complex128,
+            )
+            if not np.all(np.isfinite(q_values)):
+                raise ValueError("Woodbury apply_many modal solution is non-finite")
+
+            first, last = ownership
+            c_rhs = PETSc.Mat().createDense(
+                size=((last - first, int(operator.getSize()[0])), width),
+                comm=self.comm,
+            )
+            c_rhs.setUp()
+            c_rhs_local = c_rhs.getDenseArray()
+            for column in range(width):
+                _set_owned_small_vector(self._C_input, q_values[:, column])
+                self._C_action.mult(self._C_input, self._C_response)
+                c_rhs_local[:, column] = self._C_response.getArray(readonly=True)
+            c_rhs.assemble()
+            solved_c_rhs = c_rhs.duplicate(copy=False)
+            self.base_inverse.solve_many(c_rhs, solved_c_rhs)
+            targets.getDenseArray()[:, :] = (
+                solved_sources.getDenseArray() + solved_c_rhs.getDenseArray()
+            )
+            targets.assemble()
+            local_finite = bool(
+                np.all(np.isfinite(solved_sources.getDenseArray()))
+                and np.all(np.isfinite(solved_c_rhs.getDenseArray()))
+                and np.all(np.isfinite(targets.getDenseArray()))
+            )
+            self._arrays_finite = bool(
+                self._arrays_finite and self.comm.allreduce(local_finite, op=MPI.LAND)
+            )
+            self._apply_base_solve_count += 2 * width
+            self._apply_base_mat_solve_call_count += 2
+            self._apply_d_count += width
+            self._apply_c_count += width
+            self._apply_batch_count += 1
+            self.apply_count += width
+            self._apply_seconds += _max_over_comm(
+                self.comm, perf_counter() - started
+            )
+        finally:
+            if solved_c_rhs is not None:
+                solved_c_rhs.destroy()
+            if c_rhs is not None:
+                c_rhs.destroy()
+            if solved_sources is not None:
+                solved_sources.destroy()
+
     @property
     def diagnostics(self) -> dict[str, Any]:
         W_local = self._W_local
@@ -452,6 +686,17 @@ class HybridLocalDtnWoodburyOracle:
             "streaming_w_batch_local_peak_bytes": int(
                 self._streaming_w_batch_local_peak_bytes
             ),
+            "streaming_w_batch_transient_peak_bytes": int(
+                self._streaming_w_batch_transient_peak_bytes
+            ),
+            "streaming_w_batch_transient_local_peak_bytes": int(
+                self._streaming_w_batch_transient_local_peak_bytes
+            ),
+            "streaming_w_batch_transient_scope": (
+                "max_rank_local_dense_rhs_plus_solution"
+                if streaming
+                else "not_applicable"
+            ),
             "streaming_w_batch_peak_scope": (
                 "max_rank_local_dense_response_buffer"
                 if streaming
@@ -485,24 +730,19 @@ class HybridLocalDtnWoodburyOracle:
             ),
             "D_retained": bool(self._D_retained),
             "setup_factor_solve_count": int(self._setup_factor_solve_count),
-            "setup_d_apply_count": int(self._setup_d_apply_count),
-            "setup_batch_count": (
-                0
-                if self._streaming_w_batch_size is None
-                and self._setup_factor_solve_count == 0
-                else (
-                    1
-                    if self._streaming_w_batch_size is None
-                    else int(
-                        (self.n_aux + self._streaming_w_batch_size - 1)
-                        // self._streaming_w_batch_size
-                    )
-                )
+            "setup_factor_mat_solve_call_count": int(
+                self._setup_factor_mat_solve_call_count
             ),
+            "setup_d_apply_count": int(self._setup_d_apply_count),
+            "setup_batch_count": int(self._setup_batch_count),
             "apply_base_solve_count": int(self._apply_base_solve_count),
+            "apply_base_mat_solve_call_count": int(
+                self._apply_base_mat_solve_call_count
+            ),
             "apply_base_solve_count_per_apply": (2 if streaming else 1),
             "apply_D_count": int(self._apply_d_count),
             "apply_C_count": int(self._apply_c_count),
+            "apply_batch_count": int(self._apply_batch_count),
             "C_action_owned": bool(self._C_action_owned),
             "C_action_resident": self._C_action is not None,
             "C_action_released": bool(self._C_action_owned and self._C_action is None),
@@ -657,6 +897,8 @@ class ResearchExactFactorInverse:
             raise
         self._destroyed = False
         self._solve_count = 0
+        self._logical_rhs_count = 0
+        self._mat_solve_call_count = 0
         if self._factor_only_storage:
             self.factor_matrix = pc.getFactorMatrix()
             self.factor_matrix.incRef()
@@ -717,6 +959,59 @@ class ResearchExactFactorInverse:
                     f"Exact research LU solve failed with reason {reason}"
                 )
         self._solve_count += 1
+        self._logical_rhs_count += 1
+
+    def solve_many(self, sources: PETSc.Mat, targets: PETSc.Mat) -> None:
+        """Solve bounded distributed dense RHS columns with the retained factor."""
+
+        if self._destroyed:
+            raise RuntimeError("Exact research factor has been destroyed")
+        if not self._factor_only_storage or self.factor_matrix is None:
+            raise RuntimeError(
+                "Exact research solve_many requires a retained factor-only matrix"
+            )
+        if not isinstance(sources, PETSc.Mat) or not isinstance(targets, PETSc.Mat):
+            raise TypeError("Exact research solve_many requires PETSc dense matrices")
+        dense_types = {"seqdense", "dense", "mpidense"}
+        if str(sources.getType()).lower() not in dense_types:
+            raise TypeError("Exact research solve_many source must be a PETSc dense Mat")
+        if str(targets.getType()).lower() not in dense_types:
+            raise TypeError("Exact research solve_many target must be a PETSc dense Mat")
+
+        factor_matrix = self.factor_matrix
+        factor_size = tuple(map(int, factor_matrix.getSize()))
+        source_size = tuple(map(int, sources.getSize()))
+        target_size = tuple(map(int, targets.getSize()))
+        if source_size[0] != factor_size[1] or target_size[0] != factor_size[0]:
+            raise ValueError("Exact research solve_many matrix rows do not match factor")
+        if source_size[1] <= 0 or source_size[1] != target_size[1]:
+            raise ValueError("Exact research solve_many requires matching RHS columns")
+        if source_size[1] > _MAX_DENSE_MULTI_RHS_COLUMNS:
+            raise ValueError(
+                "Exact research solve_many exceeds the fixed 32-column bound"
+            )
+        factor_ownership = tuple(map(int, factor_matrix.getOwnershipRange()))
+        source_ownership = tuple(map(int, sources.getOwnershipRange()))
+        target_ownership = tuple(map(int, targets.getOwnershipRange()))
+        if source_ownership != factor_ownership or target_ownership != factor_ownership:
+            raise ValueError(
+                "Exact research solve_many dense ownership does not match factor"
+            )
+        if (
+            int(sources.getLocalSize()[0]) != factor_ownership[1] - factor_ownership[0]
+            or int(targets.getLocalSize()[0]) != factor_ownership[1] - factor_ownership[0]
+        ):
+            raise ValueError("Exact research solve_many local rows do not match factor")
+        factor_comm = factor_matrix.getComm().tompi4py()
+        if (
+            sources.getComm().tompi4py().Get_size() != factor_comm.Get_size()
+            or targets.getComm().tompi4py().Get_size() != factor_comm.Get_size()
+        ):
+            raise ValueError("Exact research solve_many communicator size mismatch")
+
+        factor_matrix.matSolve(sources, targets)
+        self._logical_rhs_count += source_size[1]
+        self._mat_solve_call_count += 1
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         self.solve(source, target)
@@ -748,6 +1043,8 @@ class ResearchExactFactorInverse:
             "compressed_factor_count": compressed_factor_count,
             "global_hybrid_direct_factor_count": 0,
             "solve_count": int(self._solve_count),
+            "logical_rhs_count": int(self._logical_rhs_count),
+            "mat_solve_call_count": int(self._mat_solve_call_count),
             "factor_destroyed": bool(self._destroyed),
         }
 
@@ -838,6 +1135,7 @@ class ResearchExactSideLuAction:
                 ),
                 compact_storage=factor_only_storage,
                 streaming_w_batch_size=streaming_w_batch_size,
+                progress_callback=lifecycle_callback,
             )
         except Exception:
             self.factor.destroy()
@@ -857,6 +1155,11 @@ class ResearchExactSideLuAction:
         if self._destroyed:
             raise RuntimeError("Research exact-side action has been destroyed")
         self.woodbury.apply(source, target)
+
+    def apply_many(self, sources: PETSc.Mat, targets: PETSc.Mat) -> None:
+        if self._destroyed:
+            raise RuntimeError("Research exact-side action has been destroyed")
+        self.woodbury.apply_many(sources, targets)
 
     def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         self.apply(source, target)
@@ -883,6 +1186,8 @@ class ResearchExactSideLuAction:
             "global_hybrid_direct_factor_count": 0,
             "woodbury": woodbury,
             "apply_count": int(woodbury["apply_count"]),
+            "logical_rhs_count": int(factor["logical_rhs_count"]),
+            "mat_solve_call_count": int(factor["mat_solve_call_count"]),
             "destroyed": bool(self._destroyed),
         }
         if self.factor.compressed_factor_profile is not None:

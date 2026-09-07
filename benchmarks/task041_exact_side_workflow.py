@@ -1910,6 +1910,15 @@ def run_task041_consumer(
             )
 
         current_stage = "factor_setup"
+        shortwave_batch_kwargs = (
+            {
+                "streaming_w_batch_size": 32,
+                "modal_batch_size": 32,
+                "early_sample_first": True,
+            }
+            if contract["shortwave"]
+            else {}
+        )
         setup_result = run_v5_h4_exact_side_setup_only(
             setup,
             layout,
@@ -1925,6 +1934,7 @@ def run_task041_consumer(
             matrix_repeat_tolerance=(
                 V3_7_MATRIX_REPEAT_TOLERANCE if contract["shortwave"] else None
             ),
+            **shortwave_batch_kwargs,
             exact_spool_root=None,
             packet_identity=recomputed_identity,
             packet_manifest_sha256=packet_manifest_sha256,
