@@ -203,7 +203,8 @@ def test_checkpoint_hash_rejects_mutation_before_vector_load(tmp_path):
         profile.verified_checkpoint(tmp_path, profile.PHYSICAL_SHA)
 
 
-def test_instrumented_reference_composition_preserves_values_and_call_counts():
+@pytest.mark.parametrize('fast_backend', [False, True])
+def test_instrumented_reference_composition_preserves_values_and_call_counts(fast_backend):
     from src.solvers.physical_pc_timing import instrument_reference_pc
     from src.solvers.fullspace_physical_intermediate import PhysicalIntermediatePreconditioner
 
@@ -276,10 +277,24 @@ def test_instrumented_reference_composition_preserves_values_and_call_counts():
         fine=dict(physical_action=fine, volume_action=volume, dtn_action=dtn))
     source = np.array([1+1j, 2-1j, 3+.5j])
     expected = pc.apply(source)
+    if fast_backend:
+        b6._local_kernel = SimpleNamespace(apply=lambda x: x.copy())
+        b6.apply = lambda x: b6._local_kernel.apply(x)
+        parts = {name: SimpleNamespace(_local_kernel=SimpleNamespace(
+            apply=lambda x: .5*np.array([2., 3., 5.])*x)) for name in ('curl', 'material_mass')}
+        fast_volume = SimpleNamespace(component_actions=parts,
+            apply=lambda x: sum(part._local_kernel.apply(x) for part in parts.values()))
+        def fast_action(x, y):
+            dtn.apply(x, y)
+            y += fast_volume.apply(x)
+        fast_physical = SimpleNamespace(apply=fast_action)
+        bundle['equivalent_fast'] = dict(physical_action=fast_physical, volume_action=fast_volume)
+        pc.fine_action = fast_physical
     timing, captured = PCTiming(), []
     try:
         instrument_reference_pc(bundle, timing, lambda role, vector: captured.append((role, vector.copy())))
-        actual = pc.apply(source)
+        with timing.scope('PC'):
+            actual = pc.apply(source)
         np.testing.assert_array_equal(actual, expected)
         counts = {}
         for path, row in timing.snapshot().items():
@@ -287,10 +302,19 @@ def test_instrumented_reference_composition_preserves_values_and_call_counts():
             counts[label] = counts.get(label, 0)+row['calls']
         for label, count in dict(S6=2, S3=2, B6=12, B3=12, P63=2, PH63=2,
                                   P31=2, PH31=2, P64=1, PH64=1, MR=3, A6=3,
-                                  factor_backsolve=1, **{'MPC.homogenize': 12,
-                                                        'MPC.backsubstitution': 12}).items():
+                                  factor_backsolve=1, **({} if fast_backend else {'MPC.homogenize': 12,
+                                                        'MPC.backsubstitution': 12})).items():
             assert counts[label] == count
         assert [role for role, _ in captured].count('S6') == 2
+        if fast_backend:
+            with timing.scope('PC_output_check'):
+                fine.apply(actual, np.empty_like(actual))
+            rows = timing.snapshot()
+            assert rows['PC/S6/B6/assemble']['calls'] == 12
+            assert rows['PC/MR/A6/volume/curl_assemble']['calls'] == 3
+            assert rows['PC/MR/A6/volume/material_mass_assemble']['calls'] == 3
+            assert rows['PC_output_check/A6']['calls'] == 1
+            assert [role for role, _ in captured].count('A6') == 4
     finally:
         timing.close()
     assert lower.fine_matrix is matrix

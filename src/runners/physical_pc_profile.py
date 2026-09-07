@@ -115,6 +115,40 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
                     raise ValueError('profile input must be finite nonzero slave-zero')
                 vector.scale(1/norm)
                 state['inputs'][name] = dict(save(name, vector), original_norm=norm)
+            if 'equivalent_fast' in bundle:
+                from .physical_pc_comparison import verify_r0_profile
+                fast = bundle['equivalent_fast']
+                binding = verify_r0_profile(config['r0_reference']['root'])
+                state['equivalent_fast'] = fast['facts']
+                state['same_input_checks'] = []
+                old_components = bundle['fine']['volume_action'].component_actions
+                new_components = fast['volume_action'].component_actions
+                pairs = [('B6', fast['original_b6'], fast['b6'])] + [
+                    (name, old_components[name], new_components[name]) for name in ('curl', 'material_mass')]
+                pairs.append(('A6', bundle['fine']['physical_action'], fast['physical_action']))
+                for input_name, vector in inputs.items():
+                    old_input = np.load(Path(binding['root'])/'pc_profile'/f'{input_name}.npy', allow_pickle=False)
+                    if not np.array_equal(old_input, vector.array):
+                        raise ValueError('R1 normalized input differs from saved R0 input')
+                    for role, old_action, new_action in pairs:
+                        safe()
+                        row = dict(name=input_name+'_'+role)
+                        for label, action in (('original', old_action), ('fast', new_action)):
+                            value = apply_owned(action, vector) if role == 'A6' else action.apply(vector)
+                            try:
+                                row[label] = save('same_input_'+row['name']+'_'+label, value)
+                            finally:
+                                if role == 'A6':
+                                    value.destroy()
+                        state['same_input_checks'].append(row)
+                        _atomic_json(directory/'state.json', state)
+                        from .physical_pc_comparison import array_difference
+                        old_value, new_value = (np.load(directory/row[label]['path'], allow_pickle=False)
+                                                for label in ('original', 'fast'))
+                        if (not array_difference(old_value, new_value, 1e-11)['passed']
+                                or np.any(old_value[slaves] != 0) or np.any(new_value[slaves] != 0)
+                                or not np.array_equal(vector.array, old_input)):
+                            raise ValueError('same-input component equivalence or input/slave gate failed')
             instrument_reference_pc(bundle, timing, capture)
             timing.wrap(ledger, 'marker', 'log_marker')
             timing.wrap(ledger, 'append', 'log_append')
@@ -194,6 +228,13 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
                         solution.destroy()
             safe()
             state['status'] = 'PROFILE_COMPLETED'
+            if 'equivalent_fast' in bundle:
+                from .physical_pc_comparison import compare_profiles
+                _atomic_json(directory/'state.json', state)
+                comparison = compare_profiles(config['r0_reference']['root'], directory.parent)
+                _atomic_json(directory.parent/'pc_comparison.json', comparison)
+                if not comparison['passed']:
+                    raise ValueError('R1 numerical equivalence gate failed')
             return dict(passed=True, errors=[], summary=str(directory/'state.json'),
                         numerical_output_directory=None, diagnostic_only=True)
     except BaseException as exc:

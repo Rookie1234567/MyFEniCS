@@ -541,6 +541,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "fullspace_pml_double_sweep_v19",
                 "physical_intermediate_p4_shifted_aux_v1",
                 "physical_intermediate_p4_reference_v1",
+                "a2r_equivalent_fast_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -556,12 +557,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
-            elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1"):
+            elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1"):
                 for section, key, actual, expected in (
                     ("solver", "restart", solver["restart"], 32),
-                    ("solver", "max_iterations", solver["max_iterations"], 512),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048 if preconditioner == "a2r_equivalent_fast_v1" else 512),
                     ("execution", "mpi_size", execution["mpi_size"], 1),
-                    ("execution", "timeout_seconds", execution["timeout_seconds"], 7200),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], 10800 if preconditioner == "a2r_equivalent_fast_v1" else 7200),
                     ("execution", "require_zero_swap", execution["require_zero_swap"], True),
                     ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
                     ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 10.0),

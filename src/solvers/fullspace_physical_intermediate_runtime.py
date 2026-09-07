@@ -106,7 +106,9 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
 def release_physical_intermediate_solver_stack(bundle: dict) -> None:
     """Release both factors and auxiliary operators before physical recovery."""
     from .fullspace_same_mesh_hcurl_pmg_physical import release_p6_same_mesh_solver_stack
+    from .physical_equivalent_fast import release_equivalent_fast
 
+    release_equivalent_fast(bundle)
     bundle.pop("pc", None)
     bundle.pop("middle", None)
     factor = bundle.pop('reference_factor', None)

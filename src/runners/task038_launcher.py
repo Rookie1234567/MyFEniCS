@@ -327,6 +327,9 @@ def launch_specification(
         else _source_sha(Path(__file__).resolve().parents[2])
     )
     from src.io.physical_intermediate_profile import PROFILES
+    from src.io.physical_intermediate_profile import FAST_PROFILE
+    if specification.solver.get('preconditioner') == FAST_PROFILE and pc_profile is None:
+        raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
 
     physical_candidate = specification.solver.get('preconditioner') in PROFILES and not contract_probe
     if pc_profile is not None and not physical_candidate:
@@ -352,6 +355,8 @@ def launch_specification(
         from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
 
         recovery = pc_profile.get('recovery_from', pc_profile.get('cache_recovery_from'))
+        if pc_profile.get('r0_reference', {}).get('source_sha') == source:
+            raise InputError('R1 requires a new clean source SHA')
         if recovery is not None and source == recovery['source_sha']:
             raise InputError('profile recovery requires a new clean source SHA')
         cache_home = run_directory/'jit_cache'

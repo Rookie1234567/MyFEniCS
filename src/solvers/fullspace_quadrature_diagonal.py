@@ -44,13 +44,13 @@ def accumulate_basis_energy(values, curls, weights, targets, coefficients, outpu
             + curl_coefficient * np.sum(np.abs(curl)**2, axis=1))
 
 
-class PositiveCellBasis:
+class ReferenceCellBasis:
     """Reference quadrature/bases only; cell workspaces are not retained."""
 
-    def __init__(self, space, mu, mass):
+    def __init__(self, space, form, *, allow_subdomains=False):
         from ffcx.analysis import analyze_ufl_objects
         from ffcx.element_interface import create_quadrature
-        self.space, self.mu, self.mass = space, mu, mass
+        self.space = space
         mesh = space.mesh
         element = space.element.basix_element
         if (mesh.basix_cell() != basix.CellType.hexahedron or
@@ -59,21 +59,16 @@ class PositiveCellBasis:
                 mesh.geometry.cmap.degree != 1 or mesh.geometry.dim != 3 or
                 space.dofmap.index_map_bs != 1):
             raise NotImplementedError('requires scalar-blocked N1curl on Q1 3D hexes')
-        for coefficient in (mu, mass):
-            e = coefficient.function_space.element.basix_element
-            if (coefficient.function_space.mesh is not mesh or e.degree != 0 or
-                    not e.discontinuous or e.dim != 1):
-                raise NotImplementedError('requires same-mesh scalar DG0 coefficients')
-            a = coefficient.x.array
-            if not np.all(np.isfinite(a)) or np.any(a.imag != 0) or np.any(a.real <= 0):
-                raise ValueError('positive real finite DG0 coefficients required')
-        form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
         analysis = analyze_ufl_objects([form], np.dtype(np.complex128))
         data = analysis.form_data[0]
         integrals = [i for group in data.integral_data for i in group.integrals]
-        if len(integrals) != 1 or integrals[0].integral_type() != 'cell':
-            raise NotImplementedError('requires one positive cell integral')
+        if (not integrals or any(i.integral_type() != 'cell' for i in integrals)
+                or (not allow_subdomains and len(integrals) != 1)):
+            raise NotImplementedError('requires one cell integral')
         md = integrals[0].metadata()
+        if any((i.metadata()['quadrature_degree'], i.metadata()['quadrature_rule']) !=
+               (md['quadrature_degree'], md['quadrature_rule']) for i in integrals):
+            raise NotImplementedError('component subdomains require one common quadrature rule')
         if md['quadrature_rule'] in ('custom', 'vertex'):
             raise NotImplementedError('custom/vertex quadrature unsupported')
         points, self.weights = create_quadrature(
@@ -91,7 +86,29 @@ class PositiveCellBasis:
             quadrature_rule=md['quadrature_rule'], points=len(points),
             points_sha256=hashlib.sha256(points.tobytes()).hexdigest(),
             weights_sha256=hashlib.sha256(self.weights.tobytes()).hexdigest(),
+            reference_initialization_array_upper_bound_bytes=int(4*table.nbytes
+                + self.geometry_derivatives.nbytes + points.nbytes + self.weights.nbytes),
             authority='same-ABI FFCx analysis and create_quadrature', dense_cell_tensor=False)
+
+
+class PositiveCellBasis(ReferenceCellBasis):
+    """Original positive diagonal basis and unchanged coefficient validation."""
+
+    def __init__(self, space, mu, mass, *, action_rule=False):
+        for coefficient in (mu, mass):
+            e = coefficient.function_space.element.basix_element
+            if (coefficient.function_space.mesh is not space.mesh or e.degree != 0 or
+                    not e.discontinuous or e.dim != 1):
+                raise NotImplementedError('requires same-mesh scalar DG0 coefficients')
+            a = coefficient.x.array
+            if not np.all(np.isfinite(a)) or np.any(a.imag != 0) or np.any(a.real <= 0):
+                raise ValueError('positive real finite DG0 coefficients required')
+        self.mu, self.mass = mu, mass
+        form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
+        if action_rule:
+            import ufl
+            form = ufl.action(form, fem.Function(space))
+        super().__init__(space, form)
 
     def cell(self, cell, permutation):
         """Return oriented physical basis values/curls, weights and DG0 data."""

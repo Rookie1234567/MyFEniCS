@@ -124,11 +124,16 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import audit_p6_same_mesh_setup
 
     identity = payload['solver']['preconditioner']
-    reference = identity == REFERENCE_PROFILE
+    from src.io.physical_intermediate_profile import FAST_PROFILE
+    reference = identity in (REFERENCE_PROFILE, FAST_PROFILE)
     pc_profile = json.loads(os.environ['PHYSICAL_PC_PROFILE']) if 'PHYSICAL_PC_PROFILE' in os.environ else None
+    if identity == FAST_PROFILE and (pc_profile is None or pc_profile['variant'] != FAST_PROFILE):
+        raise ValueError('fast profile currently requires the explicit seven-PC diagnostic mode')
+    if pc_profile is not None and pc_profile['variant'] == FAST_PROFILE and identity != FAST_PROFILE:
+        raise ValueError('fast diagnostic requires its own dat/resolved identity')
     if pc_profile is not None and not reference:
         raise ValueError('PC timing mode requires the unchanged reference profile')
-    if pc_profile is not None and (pc_profile['variant'] != 'R0' or
+    if pc_profile is not None and (pc_profile['variant'] not in ('R0', 'a2r_equivalent_fast_v1') or
             pc_profile['complete_pc_limit'] != 7 or pc_profile['batch_limit_seconds'] != 1800):
         raise ValueError('PC timing mode differs from the frozen R0 contract')
     if identity not in PROFILES or payload['derived'].get('physical_intermediate_profile') != profile_facts(identity):
@@ -198,6 +203,11 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         rhs, summary['rhs'] = build_physical_rhs(fine)
         if pc_profile is not None:
             from .physical_pc_profile import run_pc_profile
+            if pc_profile['variant'] == 'a2r_equivalent_fast_v1':
+                from src.solvers.physical_equivalent_fast import install_equivalent_fast
+                ledger.marker('equivalent_fast_install_started', {})
+                summary['equivalent_fast'] = install_equivalent_fast(bundle, cfg)
+                ledger.marker('equivalent_fast_install_complete', summary['equivalent_fast'])
 
             _atomic_json(directory / 'setup.json', summary)
             ledger.set_phase('profile')

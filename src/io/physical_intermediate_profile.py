@@ -2,10 +2,21 @@
 
 PROFILE = "physical_intermediate_p4_shifted_aux_v1"
 REFERENCE_PROFILE = "physical_intermediate_p4_reference_v1"
-PROFILES = (PROFILE, REFERENCE_PROFILE)
+FAST_PROFILE = "a2r_equivalent_fast_v1"
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE)
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == FAST_PROFILE:
+        facts = profile_facts(REFERENCE_PROFILE)
+        facts.update(identity=identity, backend=dict(B6='exact_partial_assembly_batch8',
+            pc_A6_volume='exact_partial_assembly_batch8', outer_A6='original_split_form',
+            installation='after_original_setup_and_window', shared_dtn='borrowed'))
+        facts['outer'].update(max_iterations=2048)
+        facts['resources'].update(workflow_seconds=10800, solve_seconds=7200)
+        facts['diagnostic_profile'] = dict(complete_pc_limit=7, setup_inclusive_seconds=1800,
+            outer_execution_enabled=False)
+        return facts
     if identity == REFERENCE_PROFILE:
         facts = profile_facts()
         facts.update(identity=identity, reference_only=True,

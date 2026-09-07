@@ -31,6 +31,7 @@ class FullspaceSplitVolumeAction:
         *,
         mpc: Any | None = None,
         jit_options: Mapping[str, Any] | None = None,
+        local_kernels: tuple[Any, Any] | None = None,
     ) -> None:
         from .fullspace_mpc_action import build_fullspace_mpc_form_action
 
@@ -40,6 +41,7 @@ class FullspaceSplitVolumeAction:
             mpc=mpc,
             slave_row_identity=True,
             jit_options=jit_options,
+            **({"local_kernel": local_kernels[0]} if local_kernels is not None else {}),
         )
         try:
             self._mass_action = build_fullspace_mpc_form_action(
@@ -48,6 +50,7 @@ class FullspaceSplitVolumeAction:
                 mpc=mpc,
                 slave_row_identity=False,
                 jit_options=jit_options,
+                **({"local_kernel": local_kernels[1]} if local_kernels is not None else {}),
             )
         except Exception:
             self._curl_action.destroy()
@@ -119,11 +122,12 @@ class FullspaceSplitVolumeAction:
 class FullspacePhysicalAction:
     """Compose ``A_volume`` and the current dynamic ``A_DtN`` action."""
 
-    def __init__(self, volume_action: Any, dtn_action: Any) -> None:
+    def __init__(self, volume_action: Any, dtn_action: Any, *, owns_dtn: bool = True) -> None:
         if volume_action is None or dtn_action is None:
             raise ValueError("physical action requires volume and dynamic DtN actions")
         self._volume_action = volume_action
         self._dtn_action = dtn_action
+        self._owns_dtn = owns_dtn
         self._apply_count = 0
         self._destroyed = False
 
@@ -170,6 +174,7 @@ class FullspacePhysicalAction:
             {
                 "schema": "task038.fullspace-physical-action.v1",
                 "operator": "A_volume_plus_dynamic_DtN",
+                "owns_dtn": self._owns_dtn,
                 "volume_action": dict(volume_audit),
                 "dtn_action": dict(dtn_audit),
                 "t4_transmission_included": False,
@@ -185,7 +190,8 @@ class FullspacePhysicalAction:
         if self._destroyed:
             return
         self._destroyed = True
-        self._dtn_action.destroy()
+        if self._owns_dtn:
+            self._dtn_action.destroy()
         self._volume_action.destroy()
         self._dtn_action = None
         self._volume_action = None

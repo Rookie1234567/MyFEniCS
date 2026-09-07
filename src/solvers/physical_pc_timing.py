@@ -109,8 +109,11 @@ def instrument_reference_pc(bundle, timing, capture):
     upper, lower = positive['upper_cycle'], positive['lower_cycle']
     b6 = positive['p6_shell'].action
     timing.wrap(b6, 'apply', 'B6')
-    timing.wrap(b6, '_pack_coefficients', 'pack')
-    timing.wrap(b6, '_assemble_vector', 'assemble')
+    if getattr(b6, '_local_kernel', None) is None:
+        timing.wrap(b6, '_pack_coefficients', 'pack')
+        timing.wrap(b6, '_assemble_vector', 'assemble')
+    else:
+        timing.wrap(b6._local_kernel, 'apply', 'assemble')
     # Only B6's borrowed reference changes. A6 and the slotted MPC stay intact.
     timing.replace(b6, '_mpc', _TimedMPC(b6._mpc, timing))
     b3 = _TimedMatrix(lower.fine_matrix, timing, 'B3')
@@ -137,6 +140,13 @@ def instrument_reference_pc(bundle, timing, capture):
                 after=lambda args, result: capture('A6', args[1]))
     timing.wrap(fine['volume_action'], 'apply', 'volume')
     timing.wrap(fine['dtn_action'], 'apply', 'DtN')
+    if 'equivalent_fast' in bundle:
+        fast = bundle['equivalent_fast']
+        timing.wrap(fast['physical_action'], 'apply', 'A6',
+                    after=lambda args, result: capture('A6', args[1]))
+        timing.wrap(fast['volume_action'], 'apply', 'volume')
+        for name, action in fast['volume_action'].component_actions.items():
+            timing.wrap(action._local_kernel, 'apply', name+'_assemble')
     timing.wrap(core, 'modified_residual_accept', 'MR')
     timing.wrap(bundle['pc'], 'stage_callback', 'log_marker')
     for method in ('_norm', '_dot', '_axpy', '_scale', '_copy', '_new_like', '_destroy'):

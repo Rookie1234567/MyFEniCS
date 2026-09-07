@@ -51,6 +51,7 @@ class FullspaceMpcFormAction:
         mpc: Any | None = None,
         slave_row_identity: bool = True,
         jit_options: Mapping[str, Any] | None = None,
+        local_kernel: Any | None = None,
     ) -> None:
         if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
             raise TypeError("full-space form action requires complex128 PETSc")
@@ -73,13 +74,19 @@ class FullspaceMpcFormAction:
         self._mpc = mpc
         self._slave_row_identity = bool(slave_row_identity)
         self._coefficient = fem.Function(function_space)
+        self._bilinear_form = bilinear_form
         self._action_ufl = ufl.action(bilinear_form, self._coefficient)
         self._jit_options = None if jit_options is None else dict(jit_options)
-        self._action_form = _compile_action_form(self._action_ufl, self._jit_options)
+        self._local_kernel = local_kernel
+        if local_kernel is not None and local_kernel.space is not function_space:
+            raise ValueError("local kernel must use the finalized action space")
+        self._action_form = (_compile_action_form(self._action_ufl, self._jit_options)
+                             if local_kernel is None else None)
         self._assemble_vector = fem.assemble_vector
         self._pack_coefficients = fem.pack_coefficients
         self._constants = np.ascontiguousarray(
             np.asarray(fem.pack_constants(self._action_form))
+            if self._action_form is not None else np.empty(0, dtype=np.complex128)
         ).copy()
 
         index_map = function_space.dofmap.index_map
@@ -150,6 +157,11 @@ class FullspaceMpcFormAction:
             ),
             "packed_constants_bytes": int(self._constants.nbytes),
         }
+        if local_kernel is not None:
+            components["borrowed_local_kernel_reference_table_bytes"] = int(
+                local_kernel.audit["reference_table_bytes"])
+            components["borrowed_local_kernel_cell_metadata_bytes"] = int(
+                local_kernel.audit["cell_metadata_bytes"])
         local_payload = int(sum(components.values()))
         if local_payload != int(sum(int(value) for value in components.values())):
             raise RuntimeError("full-space retained payload does not close")
@@ -177,7 +189,12 @@ class FullspaceMpcFormAction:
                 == self._constraint_work.size
             ),
             "form_rank": int(len(self._action_ufl.arguments())),
-            "coefficient_count": int(self._action_form.ufcx_form.num_coefficients),
+            "coefficient_count": (int(self._action_form.ufcx_form.num_coefficients)
+                                  if self._action_form is not None
+                                  else len(self._action_ufl.coefficients())),
+            "ufl_coefficient_count": len(self._action_ufl.coefficients()),
+            "compiled_coefficient_count": (int(self._action_form.ufcx_form.num_coefficients)
+                                           if self._action_form is not None else None),
             "phase_application": (
                 "finalized_floquet_mpc_once" if mpc is not None else "none"
             ),
@@ -213,6 +230,10 @@ class FullspaceMpcFormAction:
             "last_packed_coefficient_bytes": 0,
             "per_apply_bounded_temporary_bytes": 0,
         }
+        if local_kernel is not None:
+            self._audit["backend"] = "exact reference quadrature + owner-local MPC R^H"
+            self._audit["local_kernel"] = local_kernel.audit
+            self._audit["orientation"] = "coefficient T^T; residual T"
 
     def _prepare_mpc_metadata(self, mpc: Any, local_storage: int) -> None:
         slaves = np.asarray(mpc.slaves, dtype=np.int32)
@@ -309,19 +330,19 @@ class FullspaceMpcFormAction:
         with self._output_vector.localForm() as output_local:
             output_local.set(0.0)
             raw = output_local.array_w
-            packed_coefficients = self._pack_coefficients(self._action_form)
+            packed_coefficients = (self._pack_coefficients(self._action_form)
+                                   if self._local_kernel is None else {})
             packed_arrays = [
                 np.asarray(array) for array in packed_coefficients.values()
             ]
             packed_shapes = [list(array.shape) for array in packed_arrays]
             packed_entries = int(sum(array.size for array in packed_arrays))
             packed_bytes = int(sum(array.nbytes for array in packed_arrays))
-            self._assemble_vector(
-                raw,
-                self._action_form,
-                self._constants,
-                packed_coefficients,
-            )
+            if self._local_kernel is None:
+                self._assemble_vector(raw, self._action_form, self._constants,
+                                      packed_coefficients)
+            else:
+                self._local_kernel.apply(coefficient.x.array, raw)
             del packed_arrays
             del packed_coefficients
             if self._mpc is not None:
@@ -356,7 +377,8 @@ class FullspaceMpcFormAction:
         self._audit["last_packed_coefficient_shapes"] = packed_shapes
         self._audit["last_packed_coefficient_entry_count"] = packed_entries
         self._audit["last_packed_coefficient_bytes"] = packed_bytes
-        self._audit["per_apply_bounded_temporary_bytes"] = packed_bytes
+        self._audit["per_apply_bounded_temporary_bytes"] = (packed_bytes
+            if self._local_kernel is None else self._local_kernel.audit["temporary_budget_bytes"])
         return self._output_vector
 
     def mult(
@@ -380,10 +402,12 @@ class FullspaceMpcFormAction:
         self._output_vector = None
         self._action_form = None
         self._action_ufl = None
+        self._bilinear_form = None
         self._coefficient = None
         self._constants = None
         self._mpc = None
         self._function_space = None
+        self._local_kernel = None
 
 
 def build_fullspace_mpc_form_action(
@@ -393,6 +417,7 @@ def build_fullspace_mpc_form_action(
     mpc: Any | None = None,
     slave_row_identity: bool = True,
     jit_options: Mapping[str, Any] | None = None,
+    local_kernel: Any | None = None,
 ) -> FullspaceMpcFormAction:
     """Build from a raw UFL form without retaining an assembled matrix.
 
@@ -408,4 +433,5 @@ def build_fullspace_mpc_form_action(
         mpc=mpc,
         slave_row_identity=slave_row_identity,
         jit_options=jit_options,
+        local_kernel=local_kernel,
     )

@@ -25,6 +25,8 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT160_DIRECTORY')
     parser.add_argument('--profile-budget-ledger', type=Path)
+    parser.add_argument('--profile-variant', choices=('R0', 'a2r_equivalent_fast_v1'), default='R0')
+    parser.add_argument('--profile-r0-reference', type=Path)
     parser.add_argument('--profile-recovery-from', '--profile-cache-recovery-from',
                         dest='profile_recovery_from', type=Path, metavar='FAILED_R0_DIRECTORY')
     return parser
@@ -35,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.profile_recovery_from is not None and args.physical_pc_profile is None:
             raise InputError('--profile-recovery-from requires --physical-pc-profile')
+        if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
+            raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
         if args.validate_only:
             payload = {
@@ -62,7 +66,9 @@ def main(argv: list[str] | None = None) -> int:
                 raise InputError('--physical-pc-profile requires --profile-budget-ledger')
             from src.runners.physical_profile_budget import launch_profile
             result = launch_profile(specification, args.physical_pc_profile, args.profile_budget_ledger,
-                                    recovery_from=args.profile_recovery_from)
+                                    recovery_from=args.profile_recovery_from,
+                                    **(dict(variant=args.profile_variant, r0_reference=args.profile_r0_reference)
+                                       if args.profile_variant != 'R0' or args.profile_r0_reference is not None else {}))
         else:
             if args.profile_budget_ledger is not None:
                 raise InputError('--profile-budget-ledger requires --physical-pc-profile')

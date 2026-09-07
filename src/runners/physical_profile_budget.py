@@ -11,6 +11,8 @@ from src.io.physical_intermediate_profile import REFERENCE_PROFILE
 from .physical_intermediate import _atomic_json
 from .physical_pc_profile import INPUT_SHA, verified_checkpoint
 
+FAST_INPUT_SHA = '52004b3d9fa3de5d39297074efd0ba6bb3312037209162599317f8dfb3c42593'
+
 RECOVERY_SOURCE = '3ce11b9ae7e1aa590f3084c49f7b3e412650f5a2'
 RECOVERY_HASHES = {
     'run_manifest.json': '76c1cf5c62bea1bd1acb30ea421933ce031acb9ddf406cb086bf28d9a8282508',
@@ -74,12 +76,26 @@ def verify_profile_recovery(directory, attempts):
                 failed_attempt_kind=old[0]['kind'])
 
 
-def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None):
+def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None,
+                   variant='R0', r0_reference=None):
     from .task038_launcher import launch_specification
+    from .physical_pc_comparison import FAST_VARIANT, verify_r0_profile
 
-    if (specification.solver.get('preconditioner') != REFERENCE_PROFILE or
-            specification.input_sha256 != INPUT_SHA):
-        raise InputError('PC profile requires the unchanged A2R reference profile')
+    if variant not in ('R0', FAST_VARIANT):
+        raise InputError('unknown PC profile variant')
+    fast = variant == FAST_VARIANT
+    if fast and (recovery_from is not None or r0_reference is None):
+        raise InputError('R1 requires the successful R0 reference and no recovery')
+    if not fast and r0_reference is not None:
+        raise InputError('R0 does not accept an R1 comparison reference')
+    try:
+        binding = verify_r0_profile(r0_reference) if fast else None
+    except (OSError, ValueError) as exc:
+        raise InputError(str(exc)) from exc
+
+    if (specification.solver.get('preconditioner') != (FAST_VARIANT if fast else REFERENCE_PROFILE) or
+            specification.input_sha256 != (FAST_INPUT_SHA if fast else INPUT_SHA)):
+        raise InputError('PC profile dat identity does not match the selected variant')
     try:
         verified_checkpoint(checkpoint, specification.physical_model_sha256)
     except (OSError, ValueError) as exc:
@@ -95,12 +111,14 @@ def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None
         recovery = (verify_profile_recovery(recovery_from, budget['attempts'])
                     if recovery_from is not None else None)
         permission = REVIEWED_FAILURES[recovery['failed_attempt_kind']] if recovery is not None else None
-        if recovery is None and any(a.get('kind') == 'R0_profile' for a in budget['attempts']):
+        if fast and any(a.get('kind') == 'R1_profile' for a in budget['attempts']):
+            raise InputError('R1 profile already reserved; no rebuild/retry')
+        if not fast and recovery is None and any(a.get('kind') == 'R0_profile' for a in budget['attempts']):
             raise InputError('R0 profile attempt already reserved; no automatic rebuild/retry')
         if sum(a['elapsed_seconds'] for a in budget['attempts'])+1830 > 36000:
             raise InputError('insufficient batch budget for setup-inclusive profile and cleanup')
         started = time.monotonic()
-        attempt = dict(kind=permission['reservation_kind'] if recovery else 'R0_profile',
+        attempt = dict(kind='R1_profile' if fast else (permission['reservation_kind'] if recovery else 'R0_profile'),
                        status='RESERVED', elapsed_seconds=1830,
                        reserved_seconds=1830, full_pc_limit=7, started_timestamp_ns=time.time_ns())
         if recovery is not None:
@@ -109,8 +127,10 @@ def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None
         _atomic_json(budget_path, budget)
         try:
             config = dict(checkpoint=str(Path(checkpoint).resolve()), budget_ledger=str(budget_path),
-                          variant='R0', complete_pc_limit=7, batch_limit_seconds=1800,
+                          variant=variant, complete_pc_limit=7, batch_limit_seconds=1800,
                           deadline_monotonic=started+1800)
+            if binding is not None:
+                config['r0_reference'] = binding
             if recovery is not None:
                 config[permission['recovery_field']] = recovery
             result = launch_specification(specification, pc_profile=config)
