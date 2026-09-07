@@ -83,6 +83,24 @@ class _TimedMatrix:
         return getattr(self.matrix, name)
 
 
+class _TimedMPC:
+    """Borrow the slotted MPC; intercept B6 calls without modifying shared state."""
+
+    def __init__(self, mpc, timing):
+        self.mpc, self.timing = mpc, timing
+
+    def homogenize(self, *args, **kwargs):
+        with self.timing.scope('MPC.homogenize'):
+            return self.mpc.homogenize(*args, **kwargs)
+
+    def backsubstitution(self, *args, **kwargs):
+        with self.timing.scope('MPC.backsubstitution'):
+            return self.mpc.backsubstitution(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.mpc, name)
+
+
 def instrument_reference_pc(bundle, timing, capture):
     """Install after setup; restore before any solver destruction. No new inverse."""
     from . import fullspace_physical_intermediate as core
@@ -93,9 +111,8 @@ def instrument_reference_pc(bundle, timing, capture):
     timing.wrap(b6, 'apply', 'B6')
     timing.wrap(b6, '_pack_coefficients', 'pack')
     timing.wrap(b6, '_assemble_vector', 'assemble')
-    # This MPC is shared with A6. Call-tree parents identify the caller.
-    for method in ('homogenize', 'backsubstitution'):
-        timing.wrap(b6._mpc, method, 'MPC.'+method)
+    # Only B6's borrowed reference changes. A6 and the slotted MPC stay intact.
+    timing.replace(b6, '_mpc', _TimedMPC(b6._mpc, timing))
     b3 = _TimedMatrix(lower.fine_matrix, timing, 'B3')
     timing.replace(lower, 'fine_matrix', b3)
     timing.replace(lower.smoother, 'matrix', b3)

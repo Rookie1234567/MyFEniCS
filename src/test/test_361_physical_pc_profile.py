@@ -210,12 +210,21 @@ def test_instrumented_reference_composition_preserves_values_and_call_counts():
     noop = lambda *args: None
     transfer = lambda: SimpleNamespace(apply_primal_into=lambda x, y: np.copyto(y, x),
         apply_adjoint_into=lambda x, y: np.copyto(y, x))
-    mpc = SimpleNamespace(homogenize=noop, backsubstitution=noop)
+    class SlottedMPC:
+        __slots__ = ()
+
+        def homogenize(self, value):
+            return None
+
+        def backsubstitution(self, value):
+            return None
+
+    mpc = SlottedMPC()
     b6 = SimpleNamespace(_mpc=mpc, _pack_coefficients=lambda x: x,
                          _assemble_vector=lambda x: x.copy())
     def b6_apply(x):
-        mpc.homogenize(x)
-        mpc.backsubstitution(x)
+        b6._mpc.homogenize(x)
+        b6._mpc.backsubstitution(x)
         return b6._assemble_vector(b6._pack_coefficients(x))
     b6.apply = b6_apply
     matrix = SimpleNamespace(mult=lambda x, y: np.copyto(y, x))
@@ -278,14 +287,79 @@ def test_instrumented_reference_composition_preserves_values_and_call_counts():
             counts[label] = counts.get(label, 0)+row['calls']
         for label, count in dict(S6=2, S3=2, B6=12, B3=12, P63=2, PH63=2,
                                   P31=2, PH31=2, P64=1, PH64=1, MR=3, A6=3,
-                                  factor_backsolve=1).items():
+                                  factor_backsolve=1, **{'MPC.homogenize': 12,
+                                                        'MPC.backsubstitution': 12}).items():
             assert counts[label] == count
         assert [role for role, _ in captured].count('S6') == 2
     finally:
         timing.close()
     assert lower.fine_matrix is matrix
+    assert b6._mpc is mpc
     np.testing.assert_array_equal(pc.apply(source), expected)
     assert releases == ['reference_solution']*3
+
+
+def test_mpc_proxy_preserves_real_slotted_abi_and_complex_constraint():
+    from mpi4py import MPI
+    from dolfinx import fem, mesh
+    import dolfinx_mpc
+    from src.solvers.physical_pc_timing import _TimedMPC
+
+    # Two interval cells exercise the actual MPC ABI; no form assembly or PDE.
+    domain = mesh.create_unit_interval(MPI.COMM_SELF, 2)
+    space = fem.functionspace(domain, ('Lagrange', 1))
+    mpc = dolfinx_mpc.MultiPointConstraint(space)
+    mpc.add_constraint(space, np.array([0], np.int32), np.array([1, 2], np.int64),
+        np.array([.25+.5j, -.1+.2j], np.complex128), np.array([0, 0], np.int32),
+        np.array([0, 2], np.int32))
+    mpc.finalize()
+    with pytest.raises(TypeError):
+        vars(mpc)
+    owner, shared = SimpleNamespace(_mpc=mpc), SimpleNamespace(_mpc=mpc)
+    timing = PCTiming()
+    original_methods = (type(mpc).homogenize, type(mpc).backsubstitution)
+    direct, measured = fem.Function(mpc.function_space), fem.Function(mpc.function_space)
+    original = np.array([1+2j, 3-.5j, -.25+1j])
+    direct.x.array[:] = original
+    measured.x.array[:] = original
+    try:
+        timing.replace(owner, '_mpc', _TimedMPC(mpc, timing))
+        assert shared._mpc is mpc and owner._mpc.mpc is mpc
+        assert owner._mpc.function_space is mpc.function_space
+        mpc.homogenize(direct)
+        owner._mpc.homogenize(measured)
+        np.testing.assert_array_equal(measured.x.array, direct.x.array)
+        mpc.backsubstitution(direct)
+        owner._mpc.backsubstitution(measured)
+        np.testing.assert_array_equal(measured.x.array, direct.x.array)
+        assert timing.snapshot()['MPC.homogenize']['calls'] == 1
+        assert timing.snapshot()['MPC.backsubstitution']['calls'] == 1
+        assert (type(mpc).homogenize, type(mpc).backsubstitution) == original_methods
+    finally:
+        timing.close()
+    assert owner._mpc is shared._mpc is mpc
+
+
+def test_remaining_instrumentation_owner_classes_have_instance_dictionaries():
+    from src.solvers.fullspace_mpc_action import FullspaceMpcFormAction
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_p6 import SameMeshP6NestedVcycle
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import SameMeshHcurlPmg
+    from src.solvers.fullspace_lor_edge_geometric_mg_global import FixedChebyshevJacobiPETSc
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import SameMeshHcurlOwnerTransfer
+    from src.solvers.fullspace_physical_intermediate_runtime import AlgebraicOwnerTransfer
+    from src.solvers.fullspace_physical_intermediate import PhysicalIntermediatePreconditioner
+    from src.solvers.fullspace_bounded_mumps import BoundedP1Factor
+    from src.solvers.fullspace_p4_reference import PhysicalP4Reference
+    from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
+    from src.solvers.fullspace_physical_action import FullspacePhysicalAction, FullspaceSplitVolumeAction
+    from src.solvers.fullspace_dtn_action import FullspaceDtnAction
+
+    for cls in (FullspaceMpcFormAction, SameMeshP6NestedVcycle, SameMeshHcurlPmg,
+                FixedChebyshevJacobiPETSc, SameMeshHcurlOwnerTransfer, AlgebraicOwnerTransfer,
+                PhysicalIntermediatePreconditioner, BoundedP1Factor, PhysicalP4Reference,
+                _MumpsFactor, FullspacePhysicalAction, FullspaceSplitVolumeAction,
+                FullspaceDtnAction, WorkflowLedger):
+        assert cls.__dictoffset__ != 0, cls.__name__
 
 
 def test_profile_grace_is_bounded_and_resource_stop_immediate():
@@ -322,7 +396,8 @@ def test_profile_cleanup_failure_persists_primary_and_secondary(tmp_path, primar
         assert saved['exception_message'] == 'setup primary'
 
 
-def test_profile_manifest_is_hash_bound_before_worker_launch(tmp_path, monkeypatch):
+@pytest.mark.parametrize('recovery_field', ['cache_recovery_from', 'recovery_from'])
+def test_profile_manifest_is_hash_bound_before_worker_launch(tmp_path, monkeypatch, recovery_field):
     import time
     from pathlib import Path
     from src.io import load_and_resolve
@@ -350,7 +425,7 @@ def test_profile_manifest_is_hash_bound_before_worker_launch(tmp_path, monkeypat
         assert config['schedule'] == [list(row) for row in profile.SCHEDULE]
         assert config['checkpoint_solution_sha256'] == profile.CHECKPOINT_SOLUTION_SHA
         assert config['batch_limit_seconds'] == 1800
-        assert config['cache_recovery_from']['raw_hashes'] == RECOVERY_HASHES
+        assert config[recovery_field]['raw_hashes'] == RECOVERY_HASHES
         assert json.loads(kwargs['worker_environment']['PHYSICAL_PC_PROFILE']) == config
         assert config['cache_empty_before_launch']
         cache = Path(config['cache_home'])
@@ -363,36 +438,42 @@ def test_profile_manifest_is_hash_bound_before_worker_launch(tmp_path, monkeypat
     monkeypatch.setattr(subreaper_watchdog, 'supervise', supervise)
     launcher.launch_specification(spec, source_sha='a'*40, pc_profile=dict(
         checkpoint=str(tmp_path), complete_pc_limit=7, variant='R0', batch_limit_seconds=1800,
-        deadline_monotonic=time.monotonic()+1800, cache_recovery_from=dict(
-            source_sha=RECOVERY_SOURCE, raw_hashes=RECOVERY_HASHES)))
+        deadline_monotonic=time.monotonic()+1800, **{recovery_field: dict(
+            source_sha=RECOVERY_SOURCE, raw_hashes=RECOVERY_HASHES)}))
     assert sentinel.read_bytes() == b'untouched shared cache'
     assert sorted(p.name for p in shared.iterdir()) == ['unfinished.c']
 
 
-def _reviewed_cache_failure(tmp_path, monkeypatch):
+def _reviewed_failure(tmp_path, monkeypatch, kind='R0_profile'):
     from src.runners import physical_profile_budget as budget
+    permission = budget.REVIEWED_FAILURES[kind]
     directory = tmp_path/'failed'
     (directory/'watchdog').mkdir(parents=True)
-    records = {'run_manifest.json': {'source_sha': budget.RECOVERY_SOURCE},
-        'physical_intermediate_summary.json': dict(source_sha=budget.RECOVERY_SOURCE, status='FAILED',
-            exception_type='TimeoutError', failed_phase='setup', failed_stage='fine_physical_started'),
+    records = {'run_manifest.json': {'source_sha': permission['source_sha']},
+        'physical_intermediate_summary.json': dict(source_sha=permission['source_sha'], status='FAILED',
+            exception_type=permission['exception_type'], failed_phase=permission['phase'], failed_stage=permission['stage']),
         'watchdog/summary.json': dict(classification='WORKER_FAILED', descendants_cleared=True)}
+    if kind == 'R0_profile_cache_recovery_once':
+        (directory/'pc_profile').mkdir()
+        records['pc_profile/state.json'] = dict(completed=0, active_apply=None)
     hashes = {}
     for name, data in records.items():
         content = json.dumps(data).encode()
         (directory/name).write_bytes(content)
         hashes[name] = hashlib.sha256(content).hexdigest()
-    monkeypatch.setattr(budget, 'RECOVERY_HASHES', hashes)
-    old = dict(kind='R0_profile', status='WORKER_FAILED', run_directory=str(directory),
+    monkeypatch.setitem(budget.REVIEWED_FAILURES, kind, dict(permission, hashes=hashes))
+    old = dict(kind=kind, status='WORKER_FAILED', run_directory=str(directory),
                elapsed_seconds=105.19980926497374)
     return directory, old
 
 
-@pytest.mark.parametrize('mutation', ['hash', 'source', 'stage', 'pc', 'entry', 'again'])
-def test_cache_recovery_rejects_wrong_evidence_or_second_reservation(tmp_path, monkeypatch, mutation):
+@pytest.mark.parametrize('kind', ['R0_profile', 'R0_profile_cache_recovery_once'])
+@pytest.mark.parametrize('mutation', ['hash', 'source', 'stage', 'pc', 'entry', 'again', 'state', 'missing_state_count'])
+def test_recovery_rejects_wrong_evidence_or_second_reservation(tmp_path, monkeypatch, mutation, kind):
     from src.runners import physical_profile_budget as budget
     from src.io.input_loader import InputError
-    directory, old = _reviewed_cache_failure(tmp_path, monkeypatch)
+    directory, old = _reviewed_failure(tmp_path, monkeypatch, kind)
+    permission = budget.REVIEWED_FAILURES[kind]
     attempts = [old]
     if mutation in ('hash', 'source', 'stage'):
         path = directory/'physical_intermediate_summary.json'
@@ -400,45 +481,65 @@ def test_cache_recovery_rejects_wrong_evidence_or_second_reservation(tmp_path, m
         record['source_sha' if mutation == 'source' else 'failed_stage'] = 'incorrect'
         path.write_text(json.dumps(record))
         if mutation != 'hash':
-            budget.RECOVERY_HASHES[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+            permission['hashes'][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
     elif mutation == 'pc':
         (directory/'pc_applies.jsonl').write_text('{}\n')
     elif mutation == 'entry':
         old['status'] = 'COMPLETED'
+    elif mutation in ('state', 'missing_state_count'):
+        path = directory/'pc_profile/state.json'
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(json.dumps(dict(completed=1, active_apply=None) if mutation == 'state'
+                                   else dict(active_apply=None)))
+        if kind == 'R0_profile_cache_recovery_once':
+            permission['hashes']['pc_profile/state.json'] = hashlib.sha256(path.read_bytes()).hexdigest()
     else:
-        attempts.append(dict(kind='R0_profile_cache_recovery_once'))
+        attempts.append(dict(kind=permission['reservation_kind']))
     with pytest.raises(InputError):
-        budget.verify_cache_recovery(directory, attempts)
+        budget.verify_profile_recovery(directory, attempts)
 
 
-def test_cache_recovery_appends_once_and_preserves_old_cost(tmp_path, monkeypatch):
+@pytest.mark.parametrize('kind', ['R0_profile', 'R0_profile_cache_recovery_once'])
+def test_recovery_appends_once_and_preserves_old_cost(tmp_path, monkeypatch, kind):
     from src.runners import physical_profile_budget as budget, task038_launcher
     from src.io.input_loader import InputError
     from src.io.physical_intermediate_profile import REFERENCE_PROFILE
-    directory, old = _reviewed_cache_failure(tmp_path, monkeypatch)
+    directory, old = _reviewed_failure(tmp_path, monkeypatch, kind)
+    permission = budget.REVIEWED_FAILURES[kind]
     # Timing is accounting data, not a recovery qualification password.
     old['elapsed_seconds'] = 105.2
     path = tmp_path/'budget.json'
-    path.write_text(json.dumps(dict(limit_seconds=36000, attempts=[old])))
+    earlier = dict(kind='R0_profile', status='WORKER_FAILED', elapsed_seconds=105.19980926497374,
+                   run_directory=str(tmp_path/'earlier'))
+    original = [earlier, old] if kind != 'R0_profile' else [old]
+    path.write_text(json.dumps(dict(limit_seconds=36000, attempts=original)))
     monkeypatch.setattr(budget, 'verified_checkpoint', lambda *args: None)
     def launch(*args, **kwargs):
-        recovery = kwargs['pc_profile']['cache_recovery_from']
-        assert recovery['raw_hashes'] == budget.RECOVERY_HASHES
+        recovery = kwargs['pc_profile'][permission['recovery_field']]
+        assert recovery['raw_hashes'] == permission['hashes']
         assert recovery['completed_pc'] == 0
         assert kwargs['pc_profile']['complete_pc_limit'] == 7
         return dict(result_classification='worker_exit0', run_directory=str(tmp_path/'new'))
     monkeypatch.setattr(task038_launcher, 'launch_specification', launch)
     spec = SimpleNamespace(solver={'preconditioner': REFERENCE_PROFILE},
         physical_model_sha256=profile.PHYSICAL_SHA, input_sha256=profile.INPUT_SHA)
-    budget.launch_profile(spec, tmp_path, path, cache_recovery_from=directory)
+    budget.launch_profile(spec, tmp_path, path, recovery_from=directory)
     attempts = json.loads(path.read_text())['attempts']
-    assert attempts[0] == old
-    assert attempts[1]['kind'] == 'R0_profile_cache_recovery_once'
-    assert attempts[1]['elapsed_seconds'] >= 0
+    assert attempts[:-1] == original
+    assert attempts[-1]['kind'] == permission['reservation_kind']
+    assert attempts[-1]['elapsed_seconds'] >= 0
     with pytest.raises(InputError, match='already reserved'):
-        budget.launch_profile(spec, tmp_path, path, cache_recovery_from=directory)
+        budget.launch_profile(spec, tmp_path, path, recovery_from=directory)
     with pytest.raises(InputError, match='already reserved'):
         budget.launch_profile(spec, tmp_path, path)
+
+
+def test_single_recovery_cli_keeps_old_flag_as_alias():
+    from scripts.run_case import _parser
+
+    for option in ('--profile-recovery-from', '--profile-cache-recovery-from'):
+        args = _parser().parse_args(['input.dat', '--physical-pc-profile', 'checkpoint', option, 'failed'])
+        assert str(args.profile_recovery_from) == 'failed'
 
 
 def test_cache_environment_applies_before_real_abi_import_without_fe(tmp_path):

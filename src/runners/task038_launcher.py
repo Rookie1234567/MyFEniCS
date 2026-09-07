@@ -351,8 +351,9 @@ def launch_specification(
     if pc_profile is not None:
         from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
 
-        if source == pc_profile.get('cache_recovery_from', {}).get('source_sha'):
-            raise InputError('cache recovery requires a new clean source SHA')
+        recovery = pc_profile.get('recovery_from', pc_profile.get('cache_recovery_from'))
+        if recovery is not None and source == recovery['source_sha']:
+            raise InputError('profile recovery requires a new clean source SHA')
         cache_home = run_directory/'jit_cache'
         cache_home.mkdir(exist_ok=False)
         cache_empty = not any(cache_home.iterdir())

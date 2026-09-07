@@ -17,42 +17,64 @@ RECOVERY_HASHES = {
     'physical_intermediate_summary.json': '50b071602abf07af9a73d4b7694574f26344de2fde9754e35f6072a5f7122260',
     'watchdog/summary.json': '3aba08f7b04925324f9c4b446bd276585741fcb9810741c44f2f3a4ff1e5ff64',
 }
+REVIEWED_FAILURES = {
+    'R0_profile': dict(source_sha=RECOVERY_SOURCE, hashes=RECOVERY_HASHES,
+        exception_type='TimeoutError', phase='setup', stage='fine_physical_started',
+        reservation_kind='R0_profile_cache_recovery_once', recovery_field='cache_recovery_from'),
+    'R0_profile_cache_recovery_once': dict(
+        source_sha='a9dec104b450f7ac4f5adc38ed2b4b05c9592a3e',
+        hashes={
+            'run_manifest.json': 'edc59580e800ca1a038a7beea26da51428d9a626a566081d4c5e876857fec370',
+            'physical_intermediate_summary.json': '7ada061f71357c0e847aff398ca6188014eaa9a08b1bbb2ce4f158d2feaa925e',
+            'watchdog/summary.json': '2237c60e86947f495a458d878e25623b41a674e976090fa36b9adad800254eab',
+            'pc_profile/state.json': '3a40541a6cb1c1a6f2c2f22c4ff2bf31e8205571cfe12a1a0f9fe05019ea9ef5',
+        }, exception_type='TypeError', phase='profile', stage='profile_started',
+        reservation_kind='R0_profile_instrumentation_requalification_once', recovery_field='recovery_from'),
+}
 
 
-def verify_cache_recovery(directory, attempts):
-    """One specifically reviewed pre-measurement failure, never a retry policy."""
+def verify_profile_recovery(directory, attempts):
+    """Resolve only the explicitly reviewed failures; never an automatic retry."""
     directory = Path(directory).resolve()
-    old = [a for a in attempts if a.get('kind') == 'R0_profile']
+    old = [a for a in attempts if 'run_directory' in a and Path(a['run_directory']).resolve() == directory]
     if (len(old) != 1 or old[0]['status'] != 'WORKER_FAILED' or
-            Path(old[0].get('run_directory', '')).resolve() != directory):
-        raise InputError('cache recovery does not match the preserved R0 budget entry')
-    if any(a.get('kind') == 'R0_profile_cache_recovery_once' for a in attempts):
-        raise InputError('one cache recovery already reserved; no further recovery')
+            old[0]['kind'] not in REVIEWED_FAILURES):
+        raise InputError('recovery does not match a reviewed failed budget entry')
+    permission = REVIEWED_FAILURES[old[0]['kind']]
+    if any(a['kind'] == permission['reservation_kind'] for a in attempts):
+        raise InputError('this recovery already reserved; no further recovery')
     try:
         records = {}
-        for name, expected in RECOVERY_HASHES.items():
+        for name, expected in permission['hashes'].items():
             content = (directory/name).read_bytes()
             if hashlib.sha256(content).hexdigest() != expected:
                 raise ValueError('reviewed failure hash mismatch: '+name)
             records[name] = json.loads(content)
         worker = records['physical_intermediate_summary.json']
         watchdog = records['watchdog/summary.json']
-        if (worker['source_sha'] != RECOVERY_SOURCE or worker['status'] != 'FAILED' or
-                worker['exception_type'] != 'TimeoutError' or worker['failed_phase'] != 'setup' or
-                worker['failed_stage'] != 'fine_physical_started' or
+        if (worker['source_sha'] != permission['source_sha'] or worker['status'] != 'FAILED' or
+                worker['exception_type'] != permission['exception_type'] or worker['failed_phase'] != permission['phase'] or
+                worker['failed_stage'] != permission['stage'] or
                 watchdog['classification'] != 'WORKER_FAILED' or not watchdog['descendants_cleared']):
-            raise ValueError('reviewed failure is not the authorized cache failure')
-        if (directory/'pc_profile').exists() or any(
+            raise ValueError('reviewed failure does not match the explicit permission')
+        if 'pc_profile/state.json' in records:
+            state = records['pc_profile/state.json']
+            if state['completed'] != 0 or state['active_apply'] is not None:
+                raise ValueError('recovery requires zero started or completed PC applications')
+        elif (directory/'pc_profile').exists():
+            raise ValueError('unexpected profile state for the reviewed cache failure')
+        if any(
                 p.exists() and p.stat().st_size for p in
                 (directory/'pc_applies.jsonl', directory/'profile_applies.jsonl')):
-            raise ValueError('cache recovery requires zero measured PC applications')
+            raise ValueError('recovery requires zero measured PC applications')
     except (OSError, ValueError, KeyError) as exc:
         raise InputError(str(exc)) from exc
-    return dict(run_directory=str(directory), source_sha=RECOVERY_SOURCE,
-                raw_hashes=dict(RECOVERY_HASHES), completed_pc=0)
+    return dict(run_directory=str(directory), source_sha=permission['source_sha'],
+                raw_hashes=dict(permission['hashes']), completed_pc=0,
+                failed_attempt_kind=old[0]['kind'])
 
 
-def launch_profile(specification, checkpoint, budget_path, *, cache_recovery_from=None):
+def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None):
     from .task038_launcher import launch_specification
 
     if (specification.solver.get('preconditioner') != REFERENCE_PROFILE or
@@ -70,18 +92,19 @@ def launch_profile(specification, checkpoint, budget_path, *, cache_recovery_fro
             schema='task39extra.review-v1-compute-budget.v1', limit_seconds=36000, attempts=[])
         if budget['limit_seconds'] != 36000:
             raise InputError('batch limit must be 36000 seconds')
-        recovery = (verify_cache_recovery(cache_recovery_from, budget['attempts'])
-                    if cache_recovery_from is not None else None)
+        recovery = (verify_profile_recovery(recovery_from, budget['attempts'])
+                    if recovery_from is not None else None)
+        permission = REVIEWED_FAILURES[recovery['failed_attempt_kind']] if recovery is not None else None
         if recovery is None and any(a.get('kind') == 'R0_profile' for a in budget['attempts']):
             raise InputError('R0 profile attempt already reserved; no automatic rebuild/retry')
         if sum(a['elapsed_seconds'] for a in budget['attempts'])+1830 > 36000:
             raise InputError('insufficient batch budget for setup-inclusive profile and cleanup')
         started = time.monotonic()
-        attempt = dict(kind='R0_profile_cache_recovery_once' if recovery else 'R0_profile',
+        attempt = dict(kind=permission['reservation_kind'] if recovery else 'R0_profile',
                        status='RESERVED', elapsed_seconds=1830,
                        reserved_seconds=1830, full_pc_limit=7, started_timestamp_ns=time.time_ns())
         if recovery is not None:
-            attempt['cache_recovery_from'] = recovery
+            attempt[permission['recovery_field']] = recovery
         budget['attempts'].append(attempt)
         _atomic_json(budget_path, budget)
         try:
@@ -89,7 +112,7 @@ def launch_profile(specification, checkpoint, budget_path, *, cache_recovery_fro
                           variant='R0', complete_pc_limit=7, batch_limit_seconds=1800,
                           deadline_monotonic=started+1800)
             if recovery is not None:
-                config['cache_recovery_from'] = recovery
+                config[permission['recovery_field']] = recovery
             result = launch_specification(specification, pc_profile=config)
             attempt.update(status=result['result_classification'], run_directory=result['run_directory'])
             return result
