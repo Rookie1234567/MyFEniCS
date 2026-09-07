@@ -1,38 +1,61 @@
-# Task39extra 阶段总账
+# Task39extra 本机终止结果与 A5 证据
 
-| 范围 | 当前状态 |
+| 项目 | 结论 |
 |---|---|
-| 研究对象 | 原始 13.5 nm、Full3D p6/h10、MPI1、80 个 DtN 模式；不是 0.7 nm 已通过模型 |
-| 主候选 A2 | 用较低阶 p4 解辅助 p6 迭代；两次实际运行均由用户受控停止，未取得最终场 |
-| 诊断参考 A2R | 用原 p4 物理矩阵的一次直接分解替换中间迭代逆，检查中间逆的影响；增加矩阵和分解内存，生产默认不变；实现/小型测试通过，原尺寸 `not_run` |
-| 证据边界 | 当前为阶段同步，非 A5 结项；后续阶段尚未完成 |
+| 研究对象 | 13.5 nm、掠入射 1°、Full3D p6/h10、MPI1、80 DtN 模式；不是 0.7 nm 已通过模型 |
+| 最终状态 | A2R 在原 3600 s solve Gate 触发 `PERFORMANCE_CONTROLLED_STOP`；外层未达到 1e-6 |
+| 已证明的边界 | p4 参考矩阵容量可容纳；163 次中间逆均通过原 A4 真残差 1e-10 Gate；最后有效第 160 步外层残差为 0.18250767622880507 |
+| 移交资格 | 可移交机制与负结果证据，未满足 `LOCAL_13P5NM_3D_READY_FOR_WORKSTATION` 或 `REFERENCE_ONLY_HANDOFF` |
+| 未运行 | A3 非可分、A4 h5/独立 direct、official recovery/输出、5 nm、0.7 nm；不补跑 |
 
-下表时间单位为秒，内存为 B；峰值指 watchdog 同期进程树 RSS 采样峰值，不是各进程历史峰值之和。
+主候选用较低阶 p4 的迭代解辅助 p6 外层修正。A2R 把中间迭代逆换成原 p4 物理矩阵的一次直接分解，取得准确且可复用的中间修正，代价是装配时间和分解内存。A6、传递、80 modes、S6 pre/post、MR、FGMRES32/max512 和零初值不变，生产默认不变；中间逆通过不能替代外层通过。
 
-| 正式模型 / 方法 | 状态与原因 | 完整 workflow | S6 / 至 solve 开始 | RSS peak / swap | 最终物理结果 |
-|---|---|---:|---|---|---|
-| 原 p6/h10，旧 S6，A2 主候选 | `USER_AUTHORIZED_CONTROLLED_STOP_DURING_SETUP`；setup 成本过高，尚未开始 outer | 5946.465141321009 | 5916.818793114 / 未开始 solve | 1582481408 / 0 | outer final `not_available` |
-| 原 p6/h10，精确对角优化 S6，A2 主候选 | `USER_AUTHORIZED_COST_CONTROLLED_STOP`；完成 7 次 PC，第 8 次 partial | 3015.3758775380556 | 143.69 / 553.52 | 1849683968 / 0 | outer final `not_available` |
-| 原 p6/h10，A2R 诊断参考 | `not_run`；等待实际容量 Gate | — | — | — | `not_run` |
+时间为 s，内存为 B；RSS 为 watchdog 同期进程树采样峰值，含 parent、MPI worker、编译后代。
 
-S6 是给迭代提供较便宜修正的辅助计算。精确对角优化省掉计算对角项时不需要的单元耦合，保持原积分及约束；原模型完整 S6 从约 98.6 分钟降至 143.69 秒。后一次至 solve 开始约 553.52 秒还包括其他 setup，不能与 S6 单段混用。早期组件文档中的“优化后尚未运行”描述的是当时状态，后续实测以本表为准，旧证据不改写。
+| 运行 / source SHA | 分类与阶段 | workflow / RSS peak / swap | 数值边界 |
+|---|---|---|---|
+| A2 旧 setup；`39448e6a0e5705ad2c40b4bf7733ce2249e35a84` | 用户 setup 受控停止 | 5946.465141321009 / 1582481408 / 0 | outer 未开始 |
+| A2 优化后；`2bed3d4248a465a9cf2224c575fc8b64357fd020` | `USER_AUTHORIZED_COST_CONTROLLED_STOP` | 3015.3758775380556 / 1849683968 / 0 | 7 完整 PC，第 8 partial；outer final 不可用 |
+| A2R 入口；`f93edc8ae9e90c4ed07e375d964312eb68999ee9` | `adapter_unavailable`，测量前登记遗漏 | 0.014696567959617823 / 未采样 / 未采样 | watchdog/MPI/symbolic/PDE 均未开始，不计 reference 正式次数 |
+| A2R 唯一正式；`54ab46cf4c8378a9b27650ca6963cadb34013a2f` | `PERFORMANCE_CONTROLLED_STOP`，solve 3600 s Gate | 4451.728501909005 / 3588677632 / 0 | 163 完整 PC，第 164 仅 pre 开始；最后 checkpoint=160 |
 
-PC 是每次外层迭代调用的辅助修正。后一次 7 个完整 PC 各运行 36 个中间迭代步，其各自 RHS 对应的 A4 真残差依次为 0.846787、0.815692、0.720637、0.794347、0.817342、0.635752、0.803464；中间逆目标 1e-2 未达到，记录为 `INEXACT_INTERMEDIATE`。这些是不同 RHS 的结果，不能串成收敛曲线。第 8 个 PC 未完成；checkpoint 0 的残差 1 只代表初始零解，不能代替最终残差。此次停止说明已观察到较高成本，不能推出方法必然不收敛。
+PC 是一次辅助修正。优化后 A2 的 7 个 PC 各运行 36 个中间步，A4 残差依次为 0.846787、0.815692、0.720637、0.794347、0.817342、0.635752、0.803464，均未达到中间目标 1e-2。这些 RHS 不同，不能串成收敛曲线；其 checkpoint 0=1 只代表初始零解。
 
-| 数据 / 比较维度 | 已知值与未运行项 |
+| A2R 周期末迭代 | 原 A6 显式相对真残差 | 成功门槛 |
+|---:|---:|---|
+| 32 | 0.46338436888430473 | 1e-6，未通过 |
+| 64 | 0.41005441732961595 | 1e-6，未通过 |
+| 96 | 0.3139861672303239 | 1e-6，未通过 |
+| 128 | 0.2753887167051727 | 1e-6，未通过 |
+| 160 | 0.18250767622880507 | 1e-6，未通过；最后有效 checkpoint |
+
+每周期 reported 与显式残差差值通过既定核验，精确对照见索引。163/164 步最终残差不可用，不把第 160 步结果当作停止瞬间最终场。残差降低但预算内未达标，不证明整个 p4 空间或 Full3D 迭代数学不可能。
+
+| 对象 / 阶段 | 实际或推导值 | 口径 |
+|---|---:|---|
+| p6 / p4 rows（独立 rows） | 173802（164592）/ 53084（48960） | 原模型 |
+| p4 slaves / modes | 4124 / 80 | actual MPC/carrier |
+| volume / augmented NNZ | 24666128 / 24730144 | 实际；augmented rows=53164 |
+| S6 / 至 solve 开始 | 117.70526724500814 / 847.9243652080186 | 本次 marker 跨度；后者包含全部 worker setup |
+| reference volume compile / values | 13.712174824962858 / 588.368423515989 | marker 跨度 |
+| augmentation / symbolic / numeric | 0.5967822759994306 / 0.3211546370293945 / 18.394115508999676 | 各一次；numeric 含 preflight 设置 |
+| post-symbolic RSS / 预测峰值 / cap | 2292035584 / 6988289408 / 8736759808 | 预测为 2×带 padding 的 MUMPS 估计加 workspace 和 1 GiB，非严格上界 |
+| reference solve / 原 A4 action | 163 / 163 | 最大相对残差 5.7889315844880267e-11 |
+| 完整 PC 最小 / 中位 / 最大耗时 | 20.112385745043866 / 20.611484433989972 / 21.111527371045668 | 原 A2 约 290–446 s；成本下降不等于 outer PASS |
+| RSS / 可读 PSS 采样峰值 | 3588677632 / 3554077696 | RSS 的 16993 样本均可读；1 个 PSS 不可读样本，PSS 非完整 Gate 权威 |
+
+S6 精确对角优化省掉取得对角项时不需要的单元耦合，保持原积分和约束；旧 S6 5916.818793114 s（约 98.6 min）降至优化后 A2 的 143.69 s。本次 S6 为 117.71 s。S6 单段不等于完整 setup 或 workflow。
+
+| 计数 / 尾段证据 | 审计结果 |
 |---|---|
-| rows / independent rows，p6、p4 | 173802 / 164592；53084 / 48960 |
-| NNZ、A2R 分解内存 | A2R 原尺寸尚未装配/分解，`not_run` |
-| official R/T/A、A_volume、R00_s / R00_p / R00_total、重要衍射级 | 未产生通过最终 residual Gate 的场，全部 `not_run` |
-| p/h、Hybrid、M、MPI 扫描 | 原尺寸当前仅 p6/h10、Full3D、80 modes、MPI1；其他比较 `not_run`，不宣称连续极限收敛 |
-| 身份 / 资源 | 两次停止的源码、物理/模式 hash、原始路径、内存口径和清场状态见结构化索引 |
+| S6/S3 次数更正 | 原 cycles 将生命周期序号相加，五周期误报 2080/6176/10272/14368/18464；逐次重算每周期均为 64。163 完整 PC 合计 S6 326 次、S3 326 次；最后完整周期后的 3 个完整 PC 合计增加 S6 6 次、S3 6 次；partial 第 164 不推算 |
+| 修复边界 | cycles 原文不改；checker 只读重算；未来 ledger 只修序号误加，不改数值路径 |
+| 终止时间 | solve Gate 的 monotonic 阈值为 503631.500417347；最后 marker 为 solve 3596.8651744240196 s；单独发信号时间戳未记录，不伪造精确触发时刻 |
+| 清场 | parent 及 61 后代共 62 PID 均消失；cache metadata 稳定；swap 与全局换页增量均 0 |
+| worker 尾段缺口 | physical_intermediate_summary.json 未生成；正常 release/recovery/checker completion 未完成，不补造原 worker 终态 |
 
-证据：[运行索引](records/run_index.json)、[测试摘要](test_summary.md)、[S6 组件证据](setup_diagonal_optimization.md)、[新 A2 停止核验](../../../benchmarks/artifacts/task39extra/original_2bed3d4_v1/stop_verification.json)、[A2R 实现 manifest](../../../benchmarks/artifacts/task39extra/a2r_implementation_2bed3d4/implementation_manifest.json)。大型 raw 保持 ignored，索引以 hash 绑定。
+official R/T/A、A_volume、R00_s/R00_p/R00_total、重要衍射级、E/H 与参考平面均 `not_run`。p/h、Hybrid、M、MPI 扫描没有新增正式对照，不宣称连续极限收敛。
 
-| 后续依赖组 | 当前建议与边界 |
-|---|---|
-| numerical/core → runner → checker/tests | A2R 作为显式诊断 profile；正式容量及残差证据未取得，不提升为生产默认 |
-| compact evidence/docs | 本次独立同步提交；不是最终 selective merge manifest |
-| research-only / do-not-merge | A2R 诊断结论保留研究属性；大型 raw/cache 不入 Git |
+证据：[运行索引](records/run_index.json)、[测试摘要](test_summary.md)、[移交包](workstation_handoff.md)、[response_v1](../response_v1.md)。索引绑定本次 28 份 raw（含每周期 manifest/solution）及早先停止、入口失败、实现/修复记录；大型 raw/cache 保持 ignored。
 
-下一步是在获批的同一父工作流内完成实际装配、一次 symbolic 和资源预测 Gate；只有容量允许才继续 numeric 和唯一 A2R 外层求解。2×符号估计加 1 GiB 缓冲是工程预测，不是实测峰值或严格上界。
+下一步只提交集中审阅，决定如何解释中间逆已准确但外层仍昂贵的机制，以及是否开展新的算法比较。不自行延长预算、重跑 A2R、换 PC 或进入 A3/A4；当前未获最终 merge approval。

@@ -1,4 +1,14 @@
-# Task39extra：13.5 nm 原 p6/h10 阶段同步
+# Task39extra：A5 本机性能停止
+
+| 正式结果 | 边界 |
+|---|---|
+| A2R source `54ab46cf4c8378a9b27650ca6963cadb34013a2f` | 原 13.5 nm/1°/p6h10，唯一 reference；solve 3600 s Gate 触发 `PERFORMANCE_CONTROLLED_STOP` |
+| 原 A6 真残差，32/64/96/128/160 步 | 0.46338436888430473 / 0.41005441732961595 / 0.3139861672303239 / 0.2753887167051727 / 0.18250767622880507，均未达 1e-6 |
+| 中间逆与资源 | 163 次原 A4 reference 全通过 1e-10；workflow 4451.728501909005 s；RSS peak 3588677632 B，swap 0；62 PID 清场 |
+
+163 完整 PC，第 164 只有 pre 开始；最后有效近似解向量记录为 checkpoint160（未收敛）。正常 worker summary/release/recovery/checker completion 缺失，不补造。S6/S3 成本序号误加独立重算为各 326 次，旧 raw 不改；事后窄修 `adc448814c3022fdf6d1a688da69a28238e7db9c` 的最后轻量回归 19 passed，未重跑 PDE。中间逆通过不构成 outer/reference-only PASS；A3/A4/official/5nm/0.7nm 未运行。见 [A5 总结](task039_extra_physical_multilevel/outcomes/summary.md)、[索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)、[移交包](task039_extra_physical_multilevel/outcomes/workstation_handoff.md)。
+
+# Task39extra：13.5 nm 原 p6/h10 阶段同步（此前快照）
 
 | 阶段 | 实际进展 | 边界 |
 |---|---|---|

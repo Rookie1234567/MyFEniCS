@@ -1394,7 +1394,9 @@ outcomes。完整证据固定在
 |---|---|---|
 | task39extra_A2_old_setup；Full3D/MPI1/80 modes | outer 未开始，未产生 official 场或 R/T/A | workflow 5946.465141321009 s；RSS peak 1582481408 B，swap 0；用户 setup 受控停止 |
 | task39extra_A2_optimized；相同物理，S6 精确对角优化 | S6 143.69 s；7 次完整 PC 各 36 步，A4 残差 0.636–0.847；第 8 次 partial；outer final `not_available` | workflow 3015.3758775380556 s；RSS peak 1849683968 B，swap 0；`USER_AUTHORIZED_COST_CONTROLLED_STOP` |
-| task39extra_A2R_reference；原 p4 直接逆辅助原 p6 外层 | 实现/小型测试通过；原尺寸 `not_run` | 容量未实测，非生产默认、非主候选资格通过 |
+| task39extra_A2R_reference；原 p4 直接逆辅助原 p6 外层；source `54ab46cf4c8378a9b27650ca6963cadb34013a2f` | 163 次原 A4 检查 ≤1e-10；原 A6 第32/64/96/128/160步残差 0.46338436888430473 / 0.41005441732961595 / 0.3139861672303239 / 0.2753887167051727 / 0.18250767622880507，均未达1e-6 | `PERFORMANCE_CONTROLLED_STOP`，solve3600 s；workflow4451.728501909005 s；RSSpeak3588677632 B，swap0；非生产默认、非outer PASS |
+
+A2R 测量前另有一次 `adapter_unavailable`（source f93edc8ae9e90c4ed07e375d964312eb68999ee9，0.014696567959617823 s），未启动 watchdog/MPI/symbolic，修复后才完成上表唯一 reference。163 完整 PC、第164 pre partial；最后有效 checkpoint160，不冒称停止瞬间残差。正常 worker summary/release/recovery/checker completion 缺失，62 PID 已清场。RSS16993样本均可读，PSS有1个不可读样本。旧 S6/S3 生命周期序号误加字段原样保留，独立重算每完整周期64、全体完整PC各326次；未来计数窄修不改变数值证据。A3/A4/official输出/5nm/0.7nm未运行，未取得成功移交资格。
 
 S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及分解内存换取准确中间修正。RSS 为同期进程树采样峰值。两次 A2 均没有最终物理结果；初始 checkpoint 不能代替最终残差，成本受控停止不能推出不收敛定理。这是 13.5 nm 阶段记录，不代表 0.7 nm 已通过。来源、完整 SHA 和 hash 见 [Task39extra 运行索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)，解释见 [阶段总结](task039_extra_physical_multilevel/outcomes/summary.md)。
 
