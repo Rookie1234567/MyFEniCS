@@ -351,7 +351,15 @@ def launch_specification(
     if pc_profile is not None:
         from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
 
+        if source == pc_profile.get('cache_recovery_from', {}).get('source_sha'):
+            raise InputError('cache recovery requires a new clean source SHA')
+        cache_home = run_directory/'jit_cache'
+        cache_home.mkdir(exist_ok=False)
+        cache_empty = not any(cache_home.iterdir())
+        if not cache_empty:
+            raise InputError('profile JIT cache must be independently empty before launch')
         pc_profile = dict(pc_profile, diagnostic_only=True, schedule=SCHEDULE,
+            cache_home=str(cache_home.resolve()), cache_empty_before_launch=cache_empty,
             checkpoint_manifest_sha256=CHECKPOINT_MANIFEST_SHA,
             checkpoint_solution_sha256=CHECKPOINT_SOLUTION_SHA, source_sha=source,
             input_sha256=specification.input_sha256, resolved_config_sha256=_resolved_sha)
@@ -386,10 +394,12 @@ def launch_specification(
                         else workflow_limit-(monotonic()-workflow_started)),
                     solve_seconds=None if pc_profile is not None else 3600,
                     phase_path=run_directory / 'workflow_phase.json',
-                    cache_path=Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
+                    cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else
+                        Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
                     source_state=physical_source,
                     **(dict(grace_seconds=30, hard_stop_immediate=True,
-                            worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile)})
+                            worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),
+                                                'XDG_CACHE_HOME': pc_profile['cache_home']})
                        if pc_profile is not None else {}))
                 result = {'exit_status': authority['leader_exit_code'],
                     'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],

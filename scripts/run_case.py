@@ -25,12 +25,15 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT160_DIRECTORY')
     parser.add_argument('--profile-budget-ledger', type=Path)
+    parser.add_argument('--profile-cache-recovery-from', type=Path, metavar='FAILED_R0_DIRECTORY')
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.profile_cache_recovery_from is not None and args.physical_pc_profile is None:
+            raise InputError('--profile-cache-recovery-from requires --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
         if args.validate_only:
             payload = {
@@ -57,7 +60,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.profile_budget_ledger is None:
                 raise InputError('--physical-pc-profile requires --profile-budget-ledger')
             from src.runners.physical_profile_budget import launch_profile
-            result = launch_profile(specification, args.physical_pc_profile, args.profile_budget_ledger)
+            result = launch_profile(specification, args.physical_pc_profile, args.profile_budget_ledger,
+                                    cache_recovery_from=args.profile_cache_recovery_from)
         else:
             if args.profile_budget_ledger is not None:
                 raise InputError('--profile-budget-ledger requires --physical-pc-profile')

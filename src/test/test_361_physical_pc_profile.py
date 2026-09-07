@@ -327,12 +327,18 @@ def test_profile_manifest_is_hash_bound_before_worker_launch(tmp_path, monkeypat
     from pathlib import Path
     from src.io import load_and_resolve
     from src.runners import task038_launcher as launcher
+    from src.runners.physical_profile_budget import RECOVERY_HASHES, RECOVERY_SOURCE
     from benchmarks import subreaper_watchdog
 
     root = Path(__file__).resolve().parents[2]
     spec = load_and_resolve(root/'input/task39extra/original_13p5nm_p6h10_p4_reference.dat')
     run = tmp_path/'run'
     run.mkdir()
+    shared = tmp_path/'shared_cache'
+    shared.mkdir()
+    sentinel = shared/'unfinished.c'
+    sentinel.write_bytes(b'untouched shared cache')
+    monkeypatch.setenv('XDG_CACHE_HOME', str(shared))
     monkeypatch.setattr(launcher, '_timestamp_directory', lambda *args: run)
     monkeypatch.setattr(launcher, '_physical_source_gate', lambda *args: {'source_sha': 'a'*40})
     def supervise(*args, **kwargs):
@@ -344,11 +350,117 @@ def test_profile_manifest_is_hash_bound_before_worker_launch(tmp_path, monkeypat
         assert config['schedule'] == [list(row) for row in profile.SCHEDULE]
         assert config['checkpoint_solution_sha256'] == profile.CHECKPOINT_SOLUTION_SHA
         assert config['batch_limit_seconds'] == 1800
+        assert config['cache_recovery_from']['raw_hashes'] == RECOVERY_HASHES
         assert json.loads(kwargs['worker_environment']['PHYSICAL_PC_PROFILE']) == config
+        assert config['cache_empty_before_launch']
+        cache = Path(config['cache_home'])
+        assert cache == run/'jit_cache' and not list(cache.iterdir())
+        assert kwargs['worker_environment']['XDG_CACHE_HOME'] == str(cache)
+        assert kwargs['cache_path'] == cache
         assert kwargs['grace_seconds'] == 30 and kwargs['hard_stop_immediate']
         return dict(leader_exit_code=0, classification='COMPLETED', launch_envelope={},
                     memory_scope='test', job_swap_activity='zero_supported_by_zero_global_activity')
     monkeypatch.setattr(subreaper_watchdog, 'supervise', supervise)
     launcher.launch_specification(spec, source_sha='a'*40, pc_profile=dict(
         checkpoint=str(tmp_path), complete_pc_limit=7, variant='R0', batch_limit_seconds=1800,
-        deadline_monotonic=time.monotonic()+1800))
+        deadline_monotonic=time.monotonic()+1800, cache_recovery_from=dict(
+            source_sha=RECOVERY_SOURCE, raw_hashes=RECOVERY_HASHES)))
+    assert sentinel.read_bytes() == b'untouched shared cache'
+    assert sorted(p.name for p in shared.iterdir()) == ['unfinished.c']
+
+
+def _reviewed_cache_failure(tmp_path, monkeypatch):
+    from src.runners import physical_profile_budget as budget
+    directory = tmp_path/'failed'
+    (directory/'watchdog').mkdir(parents=True)
+    records = {'run_manifest.json': {'source_sha': budget.RECOVERY_SOURCE},
+        'physical_intermediate_summary.json': dict(source_sha=budget.RECOVERY_SOURCE, status='FAILED',
+            exception_type='TimeoutError', failed_phase='setup', failed_stage='fine_physical_started'),
+        'watchdog/summary.json': dict(classification='WORKER_FAILED', descendants_cleared=True)}
+    hashes = {}
+    for name, data in records.items():
+        content = json.dumps(data).encode()
+        (directory/name).write_bytes(content)
+        hashes[name] = hashlib.sha256(content).hexdigest()
+    monkeypatch.setattr(budget, 'RECOVERY_HASHES', hashes)
+    old = dict(kind='R0_profile', status='WORKER_FAILED', run_directory=str(directory),
+               elapsed_seconds=105.19980926497374)
+    return directory, old
+
+
+@pytest.mark.parametrize('mutation', ['hash', 'source', 'stage', 'pc', 'entry', 'again'])
+def test_cache_recovery_rejects_wrong_evidence_or_second_reservation(tmp_path, monkeypatch, mutation):
+    from src.runners import physical_profile_budget as budget
+    from src.io.input_loader import InputError
+    directory, old = _reviewed_cache_failure(tmp_path, monkeypatch)
+    attempts = [old]
+    if mutation in ('hash', 'source', 'stage'):
+        path = directory/'physical_intermediate_summary.json'
+        record = json.loads(path.read_text())
+        record['source_sha' if mutation == 'source' else 'failed_stage'] = 'incorrect'
+        path.write_text(json.dumps(record))
+        if mutation != 'hash':
+            budget.RECOVERY_HASHES[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    elif mutation == 'pc':
+        (directory/'pc_applies.jsonl').write_text('{}\n')
+    elif mutation == 'entry':
+        old['status'] = 'COMPLETED'
+    else:
+        attempts.append(dict(kind='R0_profile_cache_recovery_once'))
+    with pytest.raises(InputError):
+        budget.verify_cache_recovery(directory, attempts)
+
+
+def test_cache_recovery_appends_once_and_preserves_old_cost(tmp_path, monkeypatch):
+    from src.runners import physical_profile_budget as budget, task038_launcher
+    from src.io.input_loader import InputError
+    from src.io.physical_intermediate_profile import REFERENCE_PROFILE
+    directory, old = _reviewed_cache_failure(tmp_path, monkeypatch)
+    # Timing is accounting data, not a recovery qualification password.
+    old['elapsed_seconds'] = 105.2
+    path = tmp_path/'budget.json'
+    path.write_text(json.dumps(dict(limit_seconds=36000, attempts=[old])))
+    monkeypatch.setattr(budget, 'verified_checkpoint', lambda *args: None)
+    def launch(*args, **kwargs):
+        recovery = kwargs['pc_profile']['cache_recovery_from']
+        assert recovery['raw_hashes'] == budget.RECOVERY_HASHES
+        assert recovery['completed_pc'] == 0
+        assert kwargs['pc_profile']['complete_pc_limit'] == 7
+        return dict(result_classification='worker_exit0', run_directory=str(tmp_path/'new'))
+    monkeypatch.setattr(task038_launcher, 'launch_specification', launch)
+    spec = SimpleNamespace(solver={'preconditioner': REFERENCE_PROFILE},
+        physical_model_sha256=profile.PHYSICAL_SHA, input_sha256=profile.INPUT_SHA)
+    budget.launch_profile(spec, tmp_path, path, cache_recovery_from=directory)
+    attempts = json.loads(path.read_text())['attempts']
+    assert attempts[0] == old
+    assert attempts[1]['kind'] == 'R0_profile_cache_recovery_once'
+    assert attempts[1]['elapsed_seconds'] >= 0
+    with pytest.raises(InputError, match='already reserved'):
+        budget.launch_profile(spec, tmp_path, path, cache_recovery_from=directory)
+    with pytest.raises(InputError, match='already reserved'):
+        budget.launch_profile(spec, tmp_path, path)
+
+
+def test_cache_environment_applies_before_real_abi_import_without_fe(tmp_path):
+    import os
+    import subprocess
+    import sys
+
+    cache = tmp_path/'isolated'
+    cache.mkdir()
+    environment = dict(os.environ, XDG_CACHE_HOME=str(cache))
+    code = '''
+import os,json
+from pathlib import Path
+import numpy as np
+from petsc4py import PETSc
+import slepc4py, mpi4py
+from dolfinx import jit
+assert PETSc.ScalarType is np.complex128
+assert Path(jit.get_options()['cache_dir']) == Path(os.environ['XDG_CACHE_HOME'])/'fenics'
+print(json.dumps({'cache_dir':str(jit.get_options()['cache_dir']), 'scalar':'complex128'}))
+'''
+    result = subprocess.run([sys.executable, '-c', code], env=environment, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)['cache_dir'] == str(cache/'fenics')
+    assert not list(cache.rglob('*.c')) and not list(cache.rglob('*.so'))
