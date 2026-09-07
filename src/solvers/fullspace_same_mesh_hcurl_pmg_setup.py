@@ -273,6 +273,8 @@ def build_p6_same_mesh_setup(
     cfg: Any, comm: Any = MPI.COMM_WORLD, *,
     levels: Mapping[str, Any] | None = None,
     coarse_solver_factory: Callable[[Any], Any] | None = None,
+    quadrature_diagonal: bool = False,
+    stage_callback: Callable[[str, dict], None] | None = None,
 ) -> dict[str, Any]:
     """Build the fixed p6/p3/p1 setup bundle without a source or outer KSP."""
 
@@ -287,6 +289,10 @@ def build_p6_same_mesh_setup(
     }
     p6_action = None
     p6_diagonal = None
+    def stage(name: str) -> None:
+        if stage_callback is not None:
+            stage_callback(name, {})
+
     try:
         spaces = bundle["spaces"]
         floquets = bundle["floquets"]
@@ -295,6 +301,7 @@ def build_p6_same_mesh_setup(
         p6_form = same_mesh_positive_form(
             spaces[6], curl_coefficient=mu, mass_coefficient=mass
         )
+        stage("s6_p6_action_started")
         p6_action = build_fullspace_mpc_form_action(
             p6_form,
             spaces[6],
@@ -303,16 +310,26 @@ def build_p6_same_mesh_setup(
         )
         from dolfinx import fem
 
-        p6_diagonal = build_constrained_jacobi_diagonal(
-            fem.form(p6_form, jit_options=dict(SAME_MESH_JIT_OPTIONS)),
-            floquets[6].mpc,
-        )
+        stage("s6_p6_action_complete")
+        stage("s6_diagonal_started")
+        if quadrature_diagonal:
+            from .fullspace_quadrature_diagonal import build_quadrature_positive_diagonal
+
+            p6_diagonal = build_quadrature_positive_diagonal(
+                spaces[6], mu, mass, floquets[6].mpc)
+        else:
+            p6_diagonal = build_constrained_jacobi_diagonal(
+                fem.form(p6_form, jit_options=dict(SAME_MESH_JIT_OPTIONS)),
+                floquets[6].mpc,
+            )
+        stage("s6_diagonal_complete")
         bundle["p6_shell"] = SameMeshP6MatrixFreeShell(
             p6_action, p6_diagonal
         )
         p6_action = None
         p6_diagonal = None
 
+        stage("s6_p3_assembly_started")
         bundle["p3_matrix"] = assemble_same_mesh_positive_matrix(
             spaces[3],
             floquets[3],
@@ -320,6 +337,8 @@ def build_p6_same_mesh_setup(
             mass_coefficient=mass,
             jit_options=SAME_MESH_JIT_OPTIONS,
         )
+        stage("s6_p3_assembly_complete")
+        stage("s6_p1_assembly_started")
         bundle["p1_matrix"] = assemble_same_mesh_positive_matrix(
             spaces[1],
             floquets[1],
@@ -327,8 +346,10 @@ def build_p6_same_mesh_setup(
             mass_coefficient=mass,
             jit_options=SAME_MESH_JIT_OPTIONS,
         )
+        stage("s6_p1_assembly_complete")
         if coarse_solver_factory is not None:
             bundle["owned_coarse_solver"] = coarse_solver_factory(bundle["p1_matrix"])
+        stage("s6_transfer_cycles_started")
         bundle["p63_local_transfer"] = build_same_mesh_hcurl_transfer(6, 3)
         bundle["p31_local_transfer"] = build_same_mesh_hcurl_transfer(3, 1)
         bundle["p63_owner_transfer"] = build_same_mesh_hcurl_owner_transfer(
@@ -383,6 +404,7 @@ def build_p6_same_mesh_setup(
             )
         finally:
             upper_power_seed.destroy()
+        stage("s6_transfer_cycles_complete")
         return bundle
     except Exception:
         if p6_diagonal is not None:

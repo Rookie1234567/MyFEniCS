@@ -167,8 +167,10 @@ def test_setup_bundle_destroy_delegates_nested_ownership_then_matrices():
     assert bundle == {}
 
 
+@pytest.mark.parametrize("quadrature_diagonal", [False, True])
 def test_setup_seeds_are_injected_once_and_destroyed_on_success_or_failure(
     monkeypatch: pytest.MonkeyPatch,
+    quadrature_diagonal: bool,
 ) -> None:
     events: list[str] = []
     captured: dict[str, object] = {}
@@ -247,9 +249,16 @@ def test_setup_seeds_are_injected_once_and_destroyed_on_success_or_failure(
     monkeypatch.setattr(
         setup_impl, "build_fullspace_mpc_form_action", lambda *_a, **_k: _Owned("action")
     )
-    monkeypatch.setattr(
-        setup_impl, "build_constrained_jacobi_diagonal", lambda *_a, **_k: _Owned("diagonal")
-    )
+    from src.solvers import fullspace_quadrature_diagonal as energy_impl
+
+    def _diagonal(selected):
+        assert selected == quadrature_diagonal
+        return _Owned("diagonal")
+
+    monkeypatch.setattr(setup_impl, "build_constrained_jacobi_diagonal",
+                        lambda *_a, **_k: _diagonal(False))
+    monkeypatch.setattr(energy_impl, "build_quadrature_positive_diagonal",
+                        lambda *_a, **_k: _diagonal(True))
     monkeypatch.setattr(setup_impl, "SameMeshP6MatrixFreeShell", _Shell)
     monkeypatch.setattr(
         setup_impl, "assemble_same_mesh_positive_matrix", lambda *_a, **_k: _Owned("matrix")
@@ -267,7 +276,15 @@ def test_setup_seeds_are_injected_once_and_destroyed_on_success_or_failure(
     monkeypatch.setattr(fem, "form", lambda *_a, **_k: "compiled")
     cfg = SimpleNamespace(nedelec_degree=6, mesh_target_size=10.0, lambda0=13.5)
 
-    bundle = setup_impl.build_p6_same_mesh_setup(cfg, MPI.COMM_SELF)
+    stages = []
+    callback_options = ({"stage_callback": lambda name, facts: stages.append((name, facts))}
+                        if quadrature_diagonal else {})
+    expected_stages = [(f"s6_{name}_{suffix}", {}) for name in
+                       ("p6_action", "diagonal", "p3_assembly", "p1_assembly", "transfer_cycles")
+                       for suffix in ("started", "complete")]
+    bundle = setup_impl.build_p6_same_mesh_setup(cfg, MPI.COMM_SELF,
+        quadrature_diagonal=quadrature_diagonal, **callback_options)
+    assert stages == (expected_stages if quadrature_diagonal else [])
     assert captured["lower"] is seeds[0]
     assert captured["upper"] is seeds[1]
     assert all(seed.destroyed for seed in seeds)
@@ -277,8 +294,11 @@ def test_setup_seeds_are_injected_once_and_destroyed_on_success_or_failure(
     captured.clear()
     seeds.clear()
     fail_lower = True
+    stages.clear()
     with pytest.raises(RuntimeError, match="lower construction failed"):
-        setup_impl.build_p6_same_mesh_setup(cfg, MPI.COMM_SELF)
+        setup_impl.build_p6_same_mesh_setup(cfg, MPI.COMM_SELF,
+            quadrature_diagonal=quadrature_diagonal, **callback_options)
+    assert stages == (expected_stages[:-1] if quadrature_diagonal else [])
     assert len(seeds) == 1
     assert seeds[0].destroyed is True
     assert "upper" not in captured

@@ -1,0 +1,509 @@
+{
+  "schema": "task39extra.setup-diagonal-optimization.v1",
+  "source_base_head": "39448e6a0e5705ad2c40b4bf7733ce2249e35a84",
+  "evidence_scope": "development dirty-source component evidence; source-file hashes bind actual implementation; not formal PDE PASS",
+  "old_formal": {
+    "category": "measured",
+    "raw_classification": "USER_CONTROLLED_STOP",
+    "semantic_classification": "USER_AUTHORIZED_CONTROLLED_STOP_DURING_SETUP",
+    "wall_seconds": 5946.249557011994,
+    "full_workflow_seconds": 5946.465141321009,
+    "rss_peak_bytes": 1582481408,
+    "swap_peak_bytes": 0,
+    "last_stage": "fine_physical_started",
+    "outer": "not_run",
+    "s6_seconds_derived": 5916.818793113984
+  },
+  "hotspot_measured": [
+    {
+      "event": "end",
+      "elapsed": 0.9647461629938334,
+      "name": "imports_and_input",
+      "seconds": 0.9618364329799078
+    },
+    {
+      "event": "end",
+      "elapsed": 4.01521971198963,
+      "name": "shared_mesh_spaces_mpc",
+      "seconds": 3.0487966630025767
+    },
+    {
+      "event": "end",
+      "elapsed": 28.289008471998386,
+      "name": "action_compile",
+      "seconds": 24.263054087990895
+    },
+    {
+      "event": "end",
+      "elapsed": 28.414507756999228,
+      "name": "action_constructor_total",
+      "seconds": 24.395247865992133
+    },
+    {
+      "event": "end",
+      "elapsed": 57.57378012500703,
+      "name": "bilinear_compile",
+      "seconds": 29.156197817006614
+    },
+    {
+      "event": "end",
+      "elapsed": 57.590354025014676,
+      "name": "diagonal_common_preparation",
+      "seconds": 0.009568628971464932
+    },
+    {
+      "event": "end",
+      "elapsed": 57.59488883998711,
+      "name": "select_cells_metadata",
+      "seconds": 0.002025968045927584
+    },
+    {
+      "event": "end",
+      "elapsed": 57.59902810998028,
+      "name": "cell_data",
+      "seconds": 9.821500862017274e-05,
+      "cell": 0,
+      "kind": "ordinary"
+    },
+    {
+      "event": "end",
+      "elapsed": 80.33200246898923,
+      "name": "cell_tensor",
+      "seconds": 22.72875320300227,
+      "cell": 0,
+      "kind": "ordinary"
+    },
+    {
+      "event": "end",
+      "elapsed": 80.34655280603329,
+      "name": "orientation_row",
+      "seconds": 0.009527798043563962,
+      "cell": 0,
+      "kind": "ordinary"
+    },
+    {
+      "event": "end",
+      "elapsed": 80.35765709902626,
+      "name": "orientation_right",
+      "seconds": 0.006293205020483583,
+      "cell": 0,
+      "kind": "ordinary"
+    },
+    {
+      "event": "end",
+      "elapsed": 80.36145467602182,
+      "name": "mpc_expansion",
+      "seconds": 0.0010848050005733967,
+      "cell": 0,
+      "kind": "ordinary"
+    },
+    {
+      "event": "end",
+      "elapsed": 80.36989053798607,
+      "name": "diagonal_accumulation",
+      "seconds": 0.005483429995365441,
+      "cell": 0,
+      "kind": "ordinary"
+    },
+    {
+      "event": "end",
+      "elapsed": 80.39109107700642,
+      "name": "cell_data",
+      "seconds": 0.00024282396771013737,
+      "cell": 7,
+      "kind": "periodic_slave"
+    },
+    {
+      "event": "end",
+      "elapsed": 103.05472573899897,
+      "name": "cell_tensor",
+      "seconds": 22.66034399298951,
+      "cell": 7,
+      "kind": "periodic_slave"
+    },
+    {
+      "event": "end",
+      "elapsed": 103.07222846598597,
+      "name": "orientation_row",
+      "seconds": 0.012546038022264838,
+      "cell": 7,
+      "kind": "periodic_slave"
+    },
+    {
+      "event": "end",
+      "elapsed": 103.09339185798308,
+      "name": "orientation_right",
+      "seconds": 0.017910947964992374,
+      "cell": 7,
+      "kind": "periodic_slave"
+    },
+    {
+      "event": "end",
+      "elapsed": 103.09965976403328,
+      "name": "mpc_expansion",
+      "seconds": 0.0014354459708556533,
+      "cell": 7,
+      "kind": "periodic_slave"
+    },
+    {
+      "event": "end",
+      "elapsed": 103.10874700598652,
+      "name": "diagonal_accumulation",
+      "seconds": 0.0059286499745212495,
+      "cell": 7,
+      "kind": "periodic_slave"
+    }
+  ],
+  "hotspot_252_cells_predicted_kernel_seconds": 5719.026246694964,
+  "prediction_limitation": "two same-material cells, not all exact classes; not measured full setup",
+  "p6_component_measured": [
+    {
+      "event": "identity",
+      "head": "39448e6a0e5705ad2c40b4bf7733ce2249e35a84",
+      "dirty": "?? benchmarks/diagnose_same_mesh_p6_setup.py\n?? benchmarks/verify_quadrature_diagonal_cells.py\n?? src/solvers/fullspace_quadrature_diagonal.py\n?? src/test/test_357_quadrature_positive_diagonal.py\n",
+      "files": {
+        "src/solvers/fullspace_quadrature_diagonal.py": "f5910992bfb06abb7c9d248b560cdb1ca7435c613fd8b0ea0a6d864c0c484360",
+        "benchmarks/verify_quadrature_diagonal_cells.py": "12983fee27d0845d1b8422d12901576b67777f67cc1644f576a880ff4bf635bf"
+      },
+      "cache": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p6_cache",
+      "cache_initially_empty": true
+    },
+    {
+      "event": "input",
+      "input_sha": "e9173e23b06a812a578ef799370a60dd67a01e411c26cc0beb2f809c2cad0785",
+      "physical_sha": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+    },
+    {
+      "event": "start",
+      "name": "mesh_space_mpc"
+    },
+    {
+      "event": "end",
+      "name": "mesh_space_mpc",
+      "seconds": 2.292027543007862
+    },
+    {
+      "event": "start",
+      "name": "new_basis_preparation"
+    },
+    {
+      "event": "end",
+      "name": "new_basis_preparation",
+      "seconds": 0.7220389840076678
+    },
+    {
+      "event": "quadrature",
+      "quadrature_degree": 15,
+      "quadrature_rule": "default",
+      "points": 512,
+      "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+      "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+      "authority": "same-ABI FFCx analysis and create_quadrature",
+      "dense_cell_tensor": false
+    },
+    {
+      "event": "start",
+      "name": "old_bilinear_compile"
+    },
+    {
+      "event": "end",
+      "name": "old_bilinear_compile",
+      "seconds": 27.966033892997075
+    },
+    {
+      "event": "cell_identity",
+      "cell": 0,
+      "kind": "ordinary",
+      "permutation": 0,
+      "slaves": 0,
+      "dimension": 882,
+      "coefficients": [
+        [
+          1.0,
+          0.0
+        ],
+        [
+          0.2161855349974538,
+          0.0
+        ]
+      ],
+      "geometry_sha": "ce29d6fd6e8bf360ea6b6162c78b87e7fcd9b289a66210ef6fd8ae8ffdcc2a35"
+    },
+    {
+      "event": "start",
+      "name": "old_cell_total",
+      "cell": 0
+    },
+    {
+      "event": "end",
+      "name": "old_cell_total",
+      "seconds": 24.38857445801841,
+      "cell": 0
+    },
+    {
+      "event": "start",
+      "name": "new_cell_total",
+      "cell": 0
+    },
+    {
+      "event": "end",
+      "name": "new_cell_total",
+      "seconds": 0.06717295799171552,
+      "cell": 0
+    },
+    {
+      "event": "comparison",
+      "cell": 0,
+      "relative_error": 2.293545059517116e-15,
+      "finite": true,
+      "reference_sha": "1798e77ccaa907fb8fdee2c7955f64bc8df8d3cee827fcc6536bec3e29113632",
+      "result_sha": "b48bb1f3decc917db04748c1bc85e92e24fa0ddfb9f6e8245ed769635bdd31fe"
+    },
+    {
+      "event": "cell_identity",
+      "cell": 7,
+      "kind": "periodic",
+      "permutation": 576,
+      "slaves": 84,
+      "dimension": 882,
+      "coefficients": [
+        [
+          1.0,
+          0.0
+        ],
+        [
+          0.2161855349974538,
+          0.0
+        ]
+      ],
+      "geometry_sha": "d28c50e51e0b7e947a611fcdb25cbdc5c9a68a336dd790d66bef4cbf0dec6d31"
+    },
+    {
+      "event": "start",
+      "name": "old_cell_total",
+      "cell": 7
+    },
+    {
+      "event": "end",
+      "name": "old_cell_total",
+      "seconds": 27.71290574799059,
+      "cell": 7
+    },
+    {
+      "event": "start",
+      "name": "new_cell_total",
+      "cell": 7
+    },
+    {
+      "event": "end",
+      "name": "new_cell_total",
+      "seconds": 0.09466180100571364,
+      "cell": 7
+    },
+    {
+      "event": "comparison",
+      "cell": 7,
+      "relative_error": 2.557511827607852e-15,
+      "finite": true,
+      "reference_sha": "a21adad707ce0b87ca644948727681bd3d68c9a56b9f01b96a580e52969a4dbc",
+      "result_sha": "e0b4cbc9adec1b8d12f3dcd649c5a0dd89028d2a5064bf6d1a3ed4105f488d1a"
+    },
+    {
+      "event": "cell_identity",
+      "cell": 3,
+      "kind": "other_material",
+      "permutation": 0,
+      "slaves": 0,
+      "dimension": 882,
+      "coefficients": [
+        [
+          1.0,
+          0.0
+        ],
+        [
+          0.2166168318483261,
+          0.0
+        ]
+      ],
+      "geometry_sha": "b3609afd0ea791e5661c0d1f0097fcbad44ab1b770dda349736766337b5439fe"
+    },
+    {
+      "event": "start",
+      "name": "old_cell_total",
+      "cell": 3
+    },
+    {
+      "event": "end",
+      "name": "old_cell_total",
+      "seconds": 29.06594367296202,
+      "cell": 3
+    },
+    {
+      "event": "start",
+      "name": "new_cell_total",
+      "cell": 3
+    },
+    {
+      "event": "end",
+      "name": "new_cell_total",
+      "seconds": 0.06019016297068447,
+      "cell": 3
+    },
+    {
+      "event": "comparison",
+      "cell": 3,
+      "relative_error": 2.2357916499580055e-15,
+      "finite": true,
+      "reference_sha": "bd0ae3410f9de28f336b958c8c12e60e7e9d866514ecf135e37aec6b1030de1c",
+      "result_sha": "240018da5dfa7262a39c05137eee011afcc67fe560cf453b7b1b12330d4ee7bb"
+    },
+    {
+      "event": "completed",
+      "status": "COMPONENT_ONLY",
+      "formal_pde": false
+    }
+  ],
+  "focused_runs": {
+    "p3_serial": {
+      "category": "measured",
+      "classification": "COMPLETED",
+      "wall_seconds": 5.908076766005252,
+      "rss_peak_bytes": 190865408,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "pytest_summary": [
+        ".p3 assembled MPC relative error 2.2884685520680795e-15 rank 0",
+        "2 passed in 4.43s"
+      ]
+    },
+    "p3_mpi2": {
+      "category": "measured",
+      "classification": "WORKER_FAILED",
+      "wall_seconds": 6.4676377510186285,
+      "rss_peak_bytes": 325033984,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "pytest_summary": [
+        "1 failed, 1 passed in 7.34s",
+        "1 failed, 1 passed in 7.35s"
+      ]
+    },
+    "p3_mpi2_fixed": {
+      "category": "measured",
+      "classification": "COMPLETED",
+      "wall_seconds": 4.909403305966407,
+      "rss_peak_bytes": 323006464,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "pytest_summary": [
+        "..p3 assembled MPC relative error 2.2873996838990915e-15 rank 1",
+        "p3 assembled MPC relative error 2.2873996838990915e-15 rank 0",
+        "2 passed in 3.53s",
+        "2 passed in 3.53s"
+      ]
+    },
+    "p6_watchdog": {
+      "category": "measured",
+      "classification": "COMPLETED",
+      "wall_seconds": 114.87803226104006,
+      "rss_peak_bytes": 1479536640,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "pytest_summary": []
+    },
+    "final_serial": {
+      "category": "measured",
+      "classification": "COMPLETED",
+      "wall_seconds": 7.622911582002416,
+      "rss_peak_bytes": 192425984,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "pytest_summary": [
+        ".p3 assembled MPC relative error 2.2884685520680795e-15 rank 0",
+        "17 passed in 5.93s"
+      ]
+    },
+    "marker_final": {
+      "category": "measured",
+      "classification": "COMPLETED",
+      "wall_seconds": 6.172199827968143,
+      "rss_peak_bytes": 192581632,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "pytest_summary": [
+        ".p3 assembled MPC relative error 2.2884685520680795e-15 rank 0",
+        "17 passed in 4.65s"
+      ]
+    }
+  },
+  "optimized_full_setup": "not_run",
+  "optimized_formal_PDE": "not_run",
+  "source_files": {
+    "benchmarks/diagnose_same_mesh_p6_setup.py": "c8c5331adc5da353b15f921988cf8f92702e2bf9d1376f44f600b70ef69f6031",
+    "benchmarks/verify_quadrature_diagonal_cells.py": "12983fee27d0845d1b8422d12901576b67777f67cc1644f576a880ff4bf635bf",
+    "src/solvers/fullspace_quadrature_diagonal.py": "f5910992bfb06abb7c9d248b560cdb1ca7435c613fd8b0ea0a6d864c0c484360",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+    "src/solvers/fullspace_physical_intermediate_runtime.py": "c559dca6373d8ef6b4f55f54df943e2253b95c67ad45dff0727c425ba12e590a",
+    "src/test/test_333_task038_same_mesh_hcurl_pmg_setup.py": "dbd8102d415eb9054667a6cead0f855df0c7c0226706efc841b317ecaa4a7567",
+    "src/test/test_357_quadrature_positive_diagonal.py": "58b16356786f47661ea6d8ca9551e9b377be5e64447dafa22cd878eeee140908"
+  },
+  "evidence_files": {
+    "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z/watchdog/summary.json": "df9f999fbf58dc9344955cd27f19baf292eed6a2dcfe2e6bff39cee2d6705091",
+    "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z/watchdog/resources.jsonl": "3172e434db6be9f67f96709b3175276383d00c371e20d7ebe4e96141f0db3ea7",
+    "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z/watchdog/worker.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z/stages.jsonl": "71582e20ca58ae2a49b424f6b1366ff3a80d812da02951b637157f5e11248f91",
+    "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z/run_summary.json": "9cb35c6b477c0c69aa3c83fb885db742b8c6932158c9e715fb637693fffde482",
+    "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z/run_manifest.json": "374207a25b0003eac868c9d7e24b6b03ae910ce7f71e4c9461dccc05ef74d1aa",
+    "benchmarks/artifacts/task39extra/setup_diagnostic_39448e6_20260907/raw/stages.jsonl": "e3ddb554b2daf71391003b781c2f64aca3bf03bb0dc3e3c1fdb22eed93b5dbb8",
+    "benchmarks/artifacts/task39extra/setup_diagnostic_39448e6_20260907/raw/resolved_config.json": "900d5977f274cb4b889395ba9e971867521639d385c967872b334e7a8ef06071",
+    "benchmarks/artifacts/task39extra/setup_diagnostic_39448e6_20260907/watchdog/summary.json": "2280404e34e556f77952bae41b8a1b1cfef8dbec2046313348eca95f253947d8",
+    "benchmarks/artifacts/task39extra/setup_diagnostic_39448e6_20260907/watchdog/resources.jsonl": "9ee8cb66d0ea00feaffb10aae639b12d9ebdab2a09711887dd2fb4e3cc6b358f",
+    "benchmarks/artifacts/task39extra/setup_diagnostic_39448e6_20260907/watchdog/worker.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmarks/artifacts/task39extra/setup_diagnostic_39448e6_20260907/verification.json": "c8ffac96a77ecedbdb03bb7f30e3a5f4baee927ea8ebbe414416731dc7911dc7",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/manifest.json": "d710028846da0876a7c5c80111e1ec313a02c0f3c93f909bf38e42f1ad9f3080",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_mpi2_fixed/resources.jsonl": "906f034b62b028774151036c300b9cd12b5ba9a564c3dc2ccb8bd7dc2a048b91",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_mpi2_fixed/summary.json": "4cc84ff3a5b2c60938ab736fbd1017129035d719a94d9a7a79ae58cdfefdb1a6",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_mpi2_fixed/worker.log": "ac624730491807ca3ded464c459ad252b2022b95a5cce4dad5d33e4fa9857e94",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/final_serial/resources.jsonl": "a41577387d5f145f3c4f5d9406bca74b637e6b63f6aac05a0d06f8f4f48bda5f",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/final_serial/summary.json": "e42ff07eb2e6539a5d8ff0ab184f0cbfb66a86d802cf069b00a99ac81beb2f71",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/final_serial/worker.log": "e758c79377022c625d7f0023473046cb89c0935b078a601ce4259eb49ade0ffe",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p6_raw/cells.jsonl": "85b697f7adc2998bf7213a4aa8ea7117527e0693f5b197d560be42178f3d1304",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/marker_final/resources.jsonl": "15f5cfa5ad64646b3bd4e7c73f3a20eb12677a078098c2212c4de282d3101249",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/marker_final/summary.json": "9f7d451a97a26542073d217cb5e48bb8b75a9becc8557cb84f9ed1256e5876b1",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/marker_final/worker.log": "f4b2a8982887b63f508ed3fa0fee3fd7aead46691709a447bdab100dedcdf003",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_serial/resources.jsonl": "91c658ec683e2238bdbfdbf2ca7b7b9f8ff3cd61b07b8a5c95dc470f3b3cb1fb",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_serial/summary.json": "fd2085a42f60d0f0b331e2e23743a8304e83017b61f83c7a86c29478c78fcfcf",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_serial/worker.log": "0cd0702094b84b0d47f85259cdb4ae7260e989e21572fd4f24e46003e67605e9",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p6_watchdog/resources.jsonl": "48b66ed97ffbb2a7debd5b27bab28886af9811e2920e09b38d5d316c3ed42713",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p6_watchdog/summary.json": "eda595e14f380595cdbf30ebbcb7a09364ab9bdfda51c5ee67d3086177ee0cc4",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p6_watchdog/worker.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_mpi2/resources.jsonl": "f38cd2991b60f0971bed816d7c195ca10c0c11333b82c61011e1656366e1a0e5",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_mpi2/summary.json": "0283d1b3744ba1744be968d16546064508178af38502069daec3dea1cbe48e40",
+    "benchmarks/artifacts/task39extra/quadrature_diagonal_39448e6/p3_mpi2/worker.log": "638066d557fa9175b406d5aa48762d660bf01f37eaa5adce3e4a44fb1f945213"
+  },
+  "mpi2_initial_failure": "test reference AIJ vector was not ghosted (PETSc error 62); fixed test reference layout only; raw preserved"
+}

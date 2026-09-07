@@ -44,6 +44,8 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
             raise ValueError("p1 storage rows exceed 4096 before matrix assembly")
         marker("positive_s6_started", {})
         positive = build_p6_same_mesh_setup(cfg, comm, levels=levels,
+            quadrature_diagonal=True,
+            stage_callback=marker,
             coarse_solver_factory=lambda matrix: BoundedP1Factor(matrix, label="positive_p1",
                 resource_sample=resource_sample, marker=marker))
         result["positive"] = positive
