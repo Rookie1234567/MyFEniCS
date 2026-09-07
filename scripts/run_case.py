@@ -23,6 +23,8 @@ def _parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--validate-only", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
+    mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT160_DIRECTORY')
+    parser.add_argument('--profile-budget-ledger', type=Path)
     return parser
 
 
@@ -51,7 +53,15 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         from src.runners.task038_launcher import launch_specification
 
-        result = launch_specification(specification)
+        if args.physical_pc_profile:
+            if args.profile_budget_ledger is None:
+                raise InputError('--physical-pc-profile requires --profile-budget-ledger')
+            from src.runners.physical_profile_budget import launch_profile
+            result = launch_profile(specification, args.physical_pc_profile, args.profile_budget_ledger)
+        else:
+            if args.profile_budget_ledger is not None:
+                raise InputError('--profile-budget-ledger requires --physical-pc-profile')
+            result = launch_specification(specification)
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3
     except InputError as exc:

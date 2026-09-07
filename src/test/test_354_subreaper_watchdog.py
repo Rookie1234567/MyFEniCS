@@ -92,3 +92,47 @@ print(json.dumps(summary))
     assert result['elapsed_seconds'] < 10 and result['descendants_cleared']
     rows = [json.loads(line) for line in (directory / 'resources.jsonl').read_text().splitlines()]
     assert any(row['worker_phase'].get('stage') == 'inner_pc_blocked' for row in rows)
+
+
+@pytest.mark.parametrize('resource_stop', [False, True])
+def test_profile_opt_in_grace_preserves_safe_record_but_resource_kills_immediately(tmp_path, resource_stop):
+    directory, ready, safe = tmp_path/'run', tmp_path/'ready', tmp_path/'safe'
+    worker = f'''
+import os,signal,time,pathlib,sys
+def stop(*args):
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    time.sleep(2.1)
+    pathlib.Path({str(safe)!r}).write_text('last safe')
+    sys.exit(0)
+signal.signal(signal.SIGTERM,stop)
+pathlib.Path({str(ready)!r}).write_text(str(os.getpid()))
+time.sleep(60)
+'''
+    monitor = f'''
+import sys,json
+from pathlib import Path
+import benchmarks.subreaper_watchdog as watchdog
+original = watchdog.process_tree_snapshot
+def sample(*args):
+    result = original(*args)
+    if {resource_stop!r} and Path({str(ready)!r}).exists():
+        result['rss_bytes'] = 10**15  # Inject the Gate, do not allocate this memory.
+    return result
+watchdog.process_tree_snapshot = sample
+result = watchdog.supervise([sys.executable,'-c',{worker!r}],Path({str(directory)!r}),
+    wall_seconds={10 if resource_stop else .5}, interval=.05, grace_seconds=3,
+    hard_stop_immediate=True)
+print(json.dumps(result))
+'''
+    result = subprocess.run([sys.executable, '-c', monitor], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((directory/'summary.json').read_text())
+    assert summary['descendants_cleared'] and not Path('/proc/'+ready.read_text()).exists()
+    if resource_stop:
+        assert summary['classification'] == 'RESOURCE_CONTROLLED_STOP'
+        assert 'first_SIGKILL' in summary and 'first_SIGTERM' not in summary
+        assert not safe.exists()
+    else:
+        assert summary['classification'] == 'PERFORMANCE_CONTROLLED_STOP'
+        assert safe.read_text() == 'last safe'
+        assert 'first_SIGTERM' in summary and 'first_SIGKILL' not in summary

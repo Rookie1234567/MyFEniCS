@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import json
+import hashlib
 import platform
 import subprocess
 import sys
@@ -314,6 +316,7 @@ def launch_specification(
     monotonic: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
     poll_interval: float = 0.25,
+    pc_profile: dict | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -326,6 +329,9 @@ def launch_specification(
     from src.io.physical_intermediate_profile import PROFILES
 
     physical_candidate = specification.solver.get('preconditioner') in PROFILES and not contract_probe
+    if pc_profile is not None and not physical_candidate:
+        raise InputError('PC timing mode requires a physical reference run')
+    workflow_limit = 1800 if pc_profile is not None else 7200
     physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                        if physical_candidate else None)
     adapter = (
@@ -342,6 +348,18 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if pc_profile is not None:
+        from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
+
+        pc_profile = dict(pc_profile, diagnostic_only=True, schedule=SCHEDULE,
+            checkpoint_manifest_sha256=CHECKPOINT_MANIFEST_SHA,
+            checkpoint_solution_sha256=CHECKPOINT_SOLUTION_SHA, source_sha=source,
+            input_sha256=specification.input_sha256, resolved_config_sha256=_resolved_sha)
+        diagnostic_path = run_directory/'pc_profile_config.json'
+        _write_json(diagnostic_path, pc_profile)
+        manifest['pc_profile'] = dict(config=diagnostic_path.name,
+            sha256=hashlib.sha256(diagnostic_path.read_bytes()).hexdigest(), **pc_profile)
+        _write_json(run_directory/'run_manifest.json', manifest)
     plan = build_execution_plan(
         specification,
         run_directory,
@@ -363,10 +381,16 @@ def launch_specification(
                 from benchmarks.subreaper_watchdog import supervise
 
                 authority = supervise(list(plan.argv), run_directory / 'watchdog',
-                    wall_seconds=max(1e-9, 7200-(monotonic()-workflow_started)), solve_seconds=3600,
+                    wall_seconds=max(1e-9, min(workflow_limit-(monotonic()-workflow_started),
+                        pc_profile['deadline_monotonic']-monotonic()) if pc_profile is not None
+                        else workflow_limit-(monotonic()-workflow_started)),
+                    solve_seconds=None if pc_profile is not None else 3600,
                     phase_path=run_directory / 'workflow_phase.json',
                     cache_path=Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
-                    source_state=physical_source)
+                    source_state=physical_source,
+                    **(dict(grace_seconds=30, hard_stop_immediate=True,
+                            worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile)})
+                       if pc_profile is not None else {}))
                 result = {'exit_status': authority['leader_exit_code'],
                     'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                     'resource_authority': authority}
@@ -385,7 +409,7 @@ def launch_specification(
                 manifest['source_after'] = source_after
                 manifest['effective_watchdog_authority'] = {
                     'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
-                    'workflow_seconds': 7200, 'solve_seconds': 3600,
+                    'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else 3600,
                     'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False}
             else:
                 result = _run_worker(
@@ -403,7 +427,7 @@ def launch_specification(
     end_time = _now()
     if physical_candidate:
         result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
-        if result['full_workflow_monotonic_seconds'] > 7200:
+        if result['full_workflow_monotonic_seconds'] > workflow_limit:
             result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
     manifest.update(
         {

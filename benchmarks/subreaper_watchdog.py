@@ -105,10 +105,16 @@ def _cache_stamp(path: Path | None) -> str:
     return digest.hexdigest()
 
 
+def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
+    hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED')
+    return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
+
+
 def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               interval: float = .25, grace_seconds: float = 2.0,
               cache_path: Path | None = None, phase_path: Path | None = None,
-              solve_seconds: float | None = None, source_state: dict | None = None) -> dict:
+              solve_seconds: float | None = None, source_state: dict | None = None,
+              worker_environment: dict | None = None, hard_stop_immediate: bool = False) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     if not command or min(wall_seconds, interval, grace_seconds) <= 0:
         raise ValueError('command and positive monitoring budgets are required')
@@ -141,6 +147,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     try:
         with (directory / 'worker.log').open('w') as output, (directory / 'resources.jsonl').open('w') as timeline:
             environment = os.environ.copy()
+            environment.update(worker_environment or {})
             if phase_path is not None:
                 environment.update(PHYSICAL_WATCHDOG_PARENT_PID=str(os.getpid()),
                                    PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES=str(cap),
@@ -180,8 +187,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 samples += 1
                 if reason and classification is None:
                     classification, stop_started = reason, time.monotonic()
+                    summary['stop_event'] = dict(reason=reason, monotonic=stop_started,
+                        timestamp_ns=time.time_ns(), grace_seconds=grace_seconds)
                 if classification is not None and children:
-                    signum = signal.SIGTERM if time.monotonic() - stop_started < grace_seconds else signal.SIGKILL
+                    signum = stop_signal(reason, hard_stop_immediate=hard_stop_immediate,
+                        elapsed=time.monotonic()-stop_started, grace_seconds=grace_seconds)
+                    summary.setdefault('first_'+signal.Signals(signum).name, dict(
+                        monotonic=time.monotonic(), timestamp_ns=time.time_ns()))
                     _signal_children(signum)
                 if exit_code is not None and not children:
                     stage = 'cache_stability'

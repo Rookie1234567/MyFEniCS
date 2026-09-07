@@ -55,8 +55,8 @@ class WorkflowLedger:
         self.phase, self.phase_started = phase, time.monotonic()
         self.marker(phase + '_started', {})
 
-    def marker(self, stage: str, facts: dict) -> None:
-        if self.stop_signal is not None:
+    def marker(self, stage: str, facts: dict, *, allow_stop: bool = False) -> None:
+        if self.stop_signal is not None and not allow_stop:
             raise InterruptedError(f'parent stop signal {self.stop_signal}')
         self.last_stage = stage
         record = dict(phase=self.phase,
@@ -125,6 +125,12 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
 
     identity = payload['solver']['preconditioner']
     reference = identity == REFERENCE_PROFILE
+    pc_profile = json.loads(os.environ['PHYSICAL_PC_PROFILE']) if 'PHYSICAL_PC_PROFILE' in os.environ else None
+    if pc_profile is not None and not reference:
+        raise ValueError('PC timing mode requires the unchanged reference profile')
+    if pc_profile is not None and (pc_profile['variant'] != 'R0' or
+            pc_profile['complete_pc_limit'] != 7 or pc_profile['batch_limit_seconds'] != 1800):
+        raise ValueError('PC timing mode differs from the frozen R0 contract')
     if identity not in PROFILES or payload['derived'].get('physical_intermediate_profile') != profile_facts(identity):
         raise ValueError('resolved physical-intermediate profile differs from the frozen contract')
     parent = int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID'])
@@ -190,6 +196,15 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['setup_qualification'] = qualify_physical_intermediate_setup(
             bundle, marker=ledger.marker, resource_sample=sample)
         rhs, summary['rhs'] = build_physical_rhs(fine)
+        if pc_profile is not None:
+            from .physical_pc_profile import run_pc_profile
+
+            _atomic_json(directory / 'setup.json', summary)
+            ledger.set_phase('profile')
+            outcome = run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, pc_profile)
+            summary.update(status='PROFILE_COMPLETED', diagnostic_only=True,
+                           profile_evidence=outcome['summary'])
+            return outcome
         provenance = payload['provenance']
         operator_identity = hashlib.sha256(json.dumps(dict(source_sha=source_sha,
             physical=provenance['physical_model_sha256'], modes=fine['mode_sha256'],
@@ -308,12 +323,23 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             summary['status'] = 'REFERENCE_RESOURCE_BLOCKED'
         raise
     finally:
+        primary_error = sys.exc_info()[1]
+        cleanup_error = None
         summary['last_safe_checkpoint'] = ledger.last_safe
-        if result is not None:
-            destroy_krylov_result(result)
-        if rhs is not None:
-            rhs.destroy()
-        destroy_physical_intermediate_solver(bundle)
+        if pc_profile is not None:
+            from .physical_pc_profile import cleanup_profile
+
+            callbacks = []
+            if rhs is not None:
+                callbacks.append(('rhs', rhs.destroy))
+            callbacks.append(('solver_stack', lambda: destroy_physical_intermediate_solver(bundle)))
+            cleanup_error = cleanup_profile(summary, directory, callbacks)
+        else:
+            if result is not None:
+                destroy_krylov_result(result)
+            if rhs is not None:
+                rhs.destroy()
+            destroy_physical_intermediate_solver(bundle)
         summary['elapsed_monotonic_seconds'] = time.monotonic()-ledger.started
         if summary['elapsed_monotonic_seconds'] > 7200 or ledger.stop_signal is not None:
             summary['status'] = 'PERFORMANCE_CONTROLLED_STOP' if ledger.stop_signal is None else 'CONTROLLED_STOP'
@@ -325,3 +351,5 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             ledger.set_phase('complete')
         for signum, handler in previous_handlers.items():
             signal.signal(signum, handler)
+        if cleanup_error is not None and primary_error is None:
+            raise cleanup_error
