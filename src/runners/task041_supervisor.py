@@ -160,8 +160,32 @@ def _numeric(value: Any) -> int | None:
     return int(value)
 
 
+def _resource_authority_kind(authority: Mapping[str, Any]) -> str | None:
+    process_tree = authority.get("process_tree")
+    if (
+        isinstance(process_tree, Mapping)
+        and process_tree.get("all_status_readable") is True
+    ):
+        return "process_tree"
+    job_cgroup = authority.get("job_cgroup")
+    if not isinstance(job_cgroup, Mapping):
+        return None
+    if (
+        job_cgroup.get("dedicated_job_cgroup") is True
+        and job_cgroup.get("readable") is True
+        and _numeric(job_cgroup.get("memory_current_bytes")) is not None
+        and _numeric(job_cgroup.get("swap_current_bytes")) is not None
+    ):
+        return "dedicated_cgroup_fallback"
+    return None
+
+
 def _sample_record(
-    authority: Mapping[str, Any], phase: str, elapsed: float
+    authority: Mapping[str, Any],
+    phase: str,
+    elapsed: float,
+    *,
+    authority_kind: str | None = None,
 ) -> dict[str, Any]:
     process_tree = authority.get("process_tree")
     if not isinstance(process_tree, Mapping):
@@ -172,12 +196,47 @@ def _sample_record(
     job_cgroup = authority.get("job_cgroup")
     if not isinstance(job_cgroup, Mapping):
         job_cgroup = {}
+    authority_kind = authority_kind or _resource_authority_kind(authority)
     memory = _numeric(authority.get("memory_authority_bytes"))
+    cgroup_memory = _numeric(job_cgroup.get("memory_current_bytes"))
     rss = _numeric(process_tree.get("rss_bytes"))
     process_swap = _numeric(process_tree.get("swap_bytes"))
-    dedicated_swap = 0
-    if job_cgroup.get("dedicated_job_cgroup") is True:
-        dedicated_swap = _numeric(job_cgroup.get("swap_current_bytes")) or 0
+    dedicated_swap = _numeric(job_cgroup.get("swap_current_bytes"))
+    if authority_kind == "dedicated_cgroup_fallback":
+        if cgroup_memory is None or dedicated_swap is None:
+            raise Task041SupervisorError(
+                f"{phase} dedicated cgroup fallback is incomplete",
+                classification="task041_implementation_failure",
+                stage=f"{phase}_resource_sample",
+            )
+        memory = max(memory or 0, cgroup_memory)
+        return {
+            "phase": phase,
+            "elapsed_seconds": float(elapsed),
+            "authority_kind": authority_kind,
+            "memory_authority_bytes": memory,
+            "memory_authority_source": (
+                "max(existing memory_authority_bytes, dedicated cgroup memory.current)"
+            ),
+            "job_no_swap": dedicated_swap == 0,
+            "process_tree_rss_bytes": None,
+            "process_tree_swap_bytes": None,
+            "dedicated_cgroup_memory_bytes": cgroup_memory,
+            "dedicated_cgroup_swap_bytes": dedicated_swap,
+            "swap_bytes": dedicated_swap,
+            "swap_authority_source": "dedicated cgroup swap.current",
+            "pss_bytes": None,
+            "uss_bytes": None,
+            "all_status_readable": False,
+        }
+    if authority_kind != "process_tree":
+        raise Task041SupervisorError(
+            f"{phase} resource sample has no complete authority",
+            classification="task041_implementation_failure",
+            stage=f"{phase}_resource_sample",
+        )
+    if job_cgroup.get("dedicated_job_cgroup") is not True or dedicated_swap is None:
+        dedicated_swap = 0
     pss = _numeric(smaps.get("pss_bytes"))
     uss = _numeric(smaps.get("uss_bytes"))
     if memory is None or rss is None or process_swap is None:
@@ -190,12 +249,16 @@ def _sample_record(
     return {
         "phase": phase,
         "elapsed_seconds": float(elapsed),
+        "authority_kind": authority_kind,
         "memory_authority_bytes": memory,
+        "memory_authority_source": "existing memory_authority_bytes",
         "job_no_swap": authority.get("job_no_swap"),
         "process_tree_rss_bytes": rss,
         "process_tree_swap_bytes": process_swap,
+        "dedicated_cgroup_memory_bytes": cgroup_memory,
         "dedicated_cgroup_swap_bytes": dedicated_swap,
         "swap_bytes": swap,
+        "swap_authority_source": "max(process-tree VmSwap, dedicated cgroup swap.current)",
         "pss_bytes": pss,
         "uss_bytes": uss,
         "all_status_readable": process_tree.get("all_status_readable"),
@@ -289,41 +352,44 @@ def _run_phase(
                 if returncode is not None:
                     break
                 authority = sample_factory(process.pid)
-                process_tree = (
-                    authority.get("process_tree")
+                authority_kind = (
+                    _resource_authority_kind(authority)
                     if isinstance(authority, Mapping)
                     else None
                 )
-                if not (
-                    isinstance(process_tree, Mapping)
-                    and process_tree.get("all_status_readable") is True
-                ):
+                if authority_kind is None:
                     returncode = process.poll()
                     if returncode is None:
                         sleep(TASK041_TERMINAL_SAMPLE_GRACE_SECONDS)
                         authority = sample_factory(process.pid)
-                        process_tree = (
-                            authority.get("process_tree")
+                        authority_kind = (
+                            _resource_authority_kind(authority)
                             if isinstance(authority, Mapping)
                             else None
                         )
                         returncode = process.poll()
-                        if (
-                            returncode is None
-                            and not (
-                                isinstance(process_tree, Mapping)
-                                and process_tree.get("all_status_readable") is True
-                            )
-                        ):
+                        if returncode is None and authority_kind is None:
                             raise Task041SupervisorError(
-                                f"{phase} process-tree sample is not fully readable",
+                                f"{phase} resource authorities are incomplete",
                                 classification="task041_resource_sample_failure",
                                 stage=f"{phase}_resource_sample",
                             )
                     if returncode is not None:
+                        if authority_kind is not None:
+                            record = _sample_record(
+                                authority,
+                                phase,
+                                now - workflow_started,
+                                authority_kind=authority_kind,
+                            )
+                            samples.append(record)
+                            _append_jsonl(memory_stages_path, record)
                         break
                 record = _sample_record(
-                    authority, phase, now - workflow_started
+                    authority,
+                    phase,
+                    now - workflow_started,
+                    authority_kind=authority_kind,
                 )
                 samples.append(record)
                 _append_jsonl(memory_stages_path, record)
@@ -357,7 +423,16 @@ def _run_phase(
                 stage=f"{phase}_process_group_linger",
             )
 
-        before_rss = samples[-1]["process_tree_rss_bytes"] if samples else None
+        before_rss = next(
+            (
+                sample["process_tree_rss_bytes"]
+                for sample in reversed(samples)
+                if sample.get("authority_kind") == "process_tree"
+                and isinstance(sample.get("process_tree_rss_bytes"), int)
+                and sample["process_tree_rss_bytes"] > 0
+            ),
+            None,
+        )
         after_rss = 0
         rss_drop = {
             "before_process_tree_rss_bytes": before_rss,

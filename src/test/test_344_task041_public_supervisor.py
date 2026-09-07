@@ -335,6 +335,29 @@ class _TerminalUnreadableSample:
         }
 
 
+class _TerminalReadableZeroSample:
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, _pid):
+        self.calls += 1
+        rss = 100 if self.calls == 1 else 0
+        return {
+            "memory_authority_bytes": rss,
+            "job_no_swap": True,
+            "process_tree": {
+                "rss_bytes": rss,
+                "swap_bytes": 0,
+                "all_status_readable": True,
+                "smaps": {"pss_bytes": rss, "uss_bytes": rss // 2},
+            },
+            "job_cgroup": {
+                "dedicated_job_cgroup": False,
+                "swap_current_bytes": 0,
+            },
+        }
+
+
 class _UnreadableThenReadableSample:
     def __init__(self):
         self.calls = 0
@@ -354,6 +377,60 @@ class _PersistentUnreadableSample:
     def __call__(self, _pid):
         self.calls += 1
         return {"process_tree": {"all_status_readable": False}}
+
+
+class _CgroupFallbackSample:
+    def __init__(
+        self,
+        *,
+        cgroup_memory: int = 500,
+        cgroup_swap: int = 0,
+        readable_first: bool = True,
+        first_rss: int = 100,
+    ):
+        self.cgroup_memory = cgroup_memory
+        self.cgroup_swap = cgroup_swap
+        self.readable_first = readable_first
+        self.first_rss = first_rss
+        self.calls = 0
+
+    def __call__(self, _pid):
+        self.calls += 1
+        if self.readable_first and self.calls == 1:
+            return {
+                "memory_authority_bytes": self.first_rss,
+                "job_no_swap": True,
+                "process_tree": {
+                    "rss_bytes": self.first_rss,
+                    "swap_bytes": 0,
+                    "all_status_readable": True,
+                    "smaps": {
+                        "pss_bytes": self.first_rss,
+                        "uss_bytes": self.first_rss // 2,
+                    },
+                },
+                "job_cgroup": {
+                    "dedicated_job_cgroup": True,
+                    "readable": True,
+                    "memory_current_bytes": self.cgroup_memory,
+                    "swap_current_bytes": self.cgroup_swap,
+                },
+            }
+        return {
+            "memory_authority_bytes": 1,
+            "job_no_swap": False,
+            "process_tree": {
+                "rss_bytes": 0,
+                "swap_bytes": 0,
+                "all_status_readable": False,
+            },
+            "job_cgroup": {
+                "dedicated_job_cgroup": True,
+                "readable": True,
+                "memory_current_bytes": self.cgroup_memory,
+                "swap_current_bytes": self.cgroup_swap,
+            },
+        }
 
 
 def test_phase_records_one_readable_resample_and_continues(tmp_path):
@@ -410,6 +487,95 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     assert phase["termination"] is None
     assert terminated == []
     assert grace_delays.count(supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS) == 1
+
+
+def test_phase_ignores_terminal_readable_zero_for_rss_drop(tmp_path):
+    samples = _TerminalReadableZeroSample()
+    popen = _FakePopen(poll_results=[None, None, 0])
+
+    phase = _run_phase(
+        tmp_path,
+        sample=samples,
+        popen_factory=popen,
+    )
+
+    assert phase["returncode"] == 0
+    assert phase["sample_count"] == 2
+    assert phase["peak_process_tree_rss_bytes"] == 100
+    assert phase["rss_drop"] == {
+        "before_process_tree_rss_bytes": 100,
+        "after_process_tree_rss_bytes": 0,
+        "process_group_gone": True,
+        "pass": True,
+    }
+
+
+def test_phase_accepts_dedicated_cgroup_fallback_during_natural_exit(tmp_path):
+    samples = _CgroupFallbackSample(cgroup_memory=500)
+    popen = _FakePopen(poll_results=[None, None, 0])
+
+    phase = _run_phase(
+        tmp_path,
+        sample=samples,
+        popen_factory=popen,
+    )
+
+    assert phase["returncode"] == 0
+    assert phase["sample_count"] == 2
+    assert phase["peak_memory_authority_bytes"] == 500
+    assert phase["peak_process_tree_rss_bytes"] == 100
+    assert phase["rss_drop"] == {
+        "before_process_tree_rss_bytes": 100,
+        "after_process_tree_rss_bytes": 0,
+        "process_group_gone": True,
+        "pass": True,
+    }
+    records = [
+        json.loads(line)
+        for line in (
+            tmp_path / "numerical_output" / "log" / "memory_stages.jsonl"
+        ).read_text().splitlines()
+    ]
+    assert records[-1]["authority_kind"] == "dedicated_cgroup_fallback"
+    assert records[-1]["memory_authority_bytes"] == 500
+    assert records[-1]["job_no_swap"] is True
+    assert records[-1]["pss_bytes"] is None
+    assert records[-1]["uss_bytes"] is None
+
+
+@pytest.mark.parametrize(
+    ("cgroup_memory", "cgroup_swap", "reason"),
+    [
+        (supervisor.TASK041_HARD_MEMORY_BYTES, 0, "absolute_memory_limit"),
+        (1, 1, "swap_detected"),
+    ],
+)
+def test_phase_dedicated_cgroup_fallback_enforces_memory_and_swap(
+    tmp_path, cgroup_memory, cgroup_swap, reason
+):
+    samples = _CgroupFallbackSample(
+        cgroup_memory=cgroup_memory,
+        cgroup_swap=cgroup_swap,
+        readable_first=False,
+    )
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    phase = _run_phase(
+        tmp_path,
+        sample=samples,
+        popen_factory=_FakePopen(poll_results=[None]),
+        terminate=terminate,
+    )
+
+    assert phase["termination_reason"] == reason
+    assert len(terminated) == 1
+    assert phase["peak_memory_authority_bytes"] == cgroup_memory
+    assert phase["peak_swap_bytes"] == cgroup_swap
 
 
 def test_phase_fails_if_unreadable_child_survives_terminal_grace(tmp_path):
