@@ -1,0 +1,167 @@
+{
+  "schema": "task39extra.run-index.v1",
+  "scope": "阶段同步；不是 A5 结项",
+  "units": {
+    "time": "s",
+    "memory": "B"
+  },
+  "memory_scope": "sampled simultaneous watchdog process-tree RSS; swap sampled VmSwap",
+  "model": {
+    "wavelength_nm": 13.5,
+    "p": 6,
+    "h": 10,
+    "formulation": "Full3D",
+    "mpi": 1,
+    "dtn_modes": 80,
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "runs": [
+    {
+      "id": "A2_old_setup",
+      "source_sha": "39448e6a0e5705ad2c40b4bf7733ce2249e35a84",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z",
+      "category": "measured",
+      "raw_classification": "USER_CONTROLLED_STOP",
+      "semantic_classification": "USER_AUTHORIZED_CONTROLLED_STOP_DURING_SETUP",
+      "wall_seconds": 5946.249557011994,
+      "full_workflow_seconds": 5946.465141321009,
+      "rss_peak_bytes": 1582481408,
+      "swap_peak_bytes": 0,
+      "last_stage": "fine_physical_started",
+      "outer": "not_run",
+      "s6_seconds_derived": 5916.818793113984,
+      "evidence": {
+        "path": "docs/task039_extra_physical_multilevel/outcomes/records/setup_diagonal_optimization.json",
+        "sha256": "8a140ea30c9980a72edd44ed5e82b6c5c5cccd754b5239db7671a18c5f08e02c"
+      }
+    },
+    {
+      "id": "A2_optimized",
+      "source_sha": "2bed3d4248a465a9cf2224c575fc8b64357fd020",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T084057.057041Z",
+      "category": "measured",
+      "semantic_classification": "USER_AUTHORIZED_COST_CONTROLLED_STOP",
+      "raw_classification": "USER_CONTROLLED_STOP",
+      "workflow_seconds": 3015.3758775380556,
+      "parent_seconds": 3015.3056639810093,
+      "rss_peak_bytes": 1849683968,
+      "swap_peak_bytes": 0,
+      "s6_seconds_rounded": 143.69,
+      "setup_to_solve_seconds_rounded": 553.52,
+      "complete_pc_count": 7,
+      "inner_iterations_per_complete_pc": 36,
+      "inner_target": 0.01,
+      "partial_pc": {
+        "pc": 8,
+        "last_shifted_apply_started": 264,
+        "within_pc_shifted_cycle_started": 12,
+        "last_stage": "p4_post_started",
+        "complete_inner_iterations": "not_available",
+        "final_inner_residual": "not_available"
+      },
+      "outer_final_true_residual": "not_available",
+      "initial_checkpoint": {
+        "iteration": 0,
+        "residual": 1.0,
+        "not_final": true
+      },
+      "official_results": "not_run",
+      "live_pid_count": 0,
+      "evidence": {
+        "path": "benchmarks/artifacts/task39extra/original_2bed3d4_v1/stop_verification.json",
+        "sha256": "fd97c0a47ee9d838dd2b5a603d859bfa72b9e406bca2b2c7caab9b45dad28582"
+      },
+      "bound_raw_file_count": 17,
+      "complete_pcs": [
+        {
+          "pc": 1,
+          "pc_seconds": 382.9428853500285,
+          "inner_iterations": 36,
+          "inner_seconds": 354.7886640620418,
+          "a4_true_residual": 0.8467869401101957,
+          "status": "INEXACT_INTERMEDIATE",
+          "finite": true
+        },
+        {
+          "pc": 2,
+          "pc_seconds": 446.092062767013,
+          "inner_iterations": 36,
+          "inner_seconds": 415.79661076300545,
+          "a4_true_residual": 0.8156924480407749,
+          "status": "INEXACT_INTERMEDIATE",
+          "finite": true
+        },
+        {
+          "pc": 3,
+          "pc_seconds": 341.0241044019931,
+          "inner_iterations": 36,
+          "inner_seconds": 318.996050250018,
+          "a4_true_residual": 0.7206365752490468,
+          "status": "INEXACT_INTERMEDIATE",
+          "finite": true
+        },
+        {
+          "pc": 4,
+          "pc_seconds": 290.10850378201576,
+          "inner_iterations": 36,
+          "inner_seconds": 268.7447560399887,
+          "a4_true_residual": 0.7943470938110666,
+          "status": "INEXACT_INTERMEDIATE",
+          "finite": true
+        },
+        {
+          "pc": 5,
+          "pc_seconds": 288.60738220700296,
+          "inner_iterations": 36,
+          "inner_seconds": 267.52877149003325,
+          "a4_true_residual": 0.8173417479517144,
+          "status": "INEXACT_INTERMEDIATE",
+          "finite": true
+        },
+        {
+          "pc": 6,
+          "pc_seconds": 311.2336497710203,
+          "inner_iterations": 36,
+          "inner_seconds": 290.49450023198733,
+          "a4_true_residual": 0.6357516731435883,
+          "status": "INEXACT_INTERMEDIATE",
+          "finite": true
+        },
+        {
+          "pc": 7,
+          "pc_seconds": 290.019293408026,
+          "inner_iterations": 36,
+          "inner_seconds": 268.1284629020374,
+          "a4_true_residual": 0.8034635346197151,
+          "status": "INEXACT_INTERMEDIATE",
+          "finite": true
+        }
+      ]
+    },
+    {
+      "id": "A2R_reference",
+      "code_sha": "920cf08eedf99610e5eee90ec1fe8ce317e14591",
+      "original_model_status": "not_run",
+      "production_default": false,
+      "component_tests": "passed",
+      "changed_source_sha256": "2f61cf5c65a18dfcb71e700ac3a21ca1280e76d2516687627ccd7f05a44b5177",
+      "changed_file_count": 14,
+      "focused_v3_passed": 38,
+      "tiny_augmented_action_relative": 1.8225937969296386e-15,
+      "same_rhs_repeat_relative": 0.0,
+      "evidence": {
+        "path": "benchmarks/artifacts/task39extra/a2r_implementation_2bed3d4/implementation_manifest.json",
+        "sha256": "c35ffeafc2f9db0e221ca793b4c506ba11d70cf0c61efc96630ffb673a16520c"
+      },
+      "bound_raw_file_count": 9
+    }
+  ],
+  "limitations": [
+    "7 个 PC 的残差对应不同 RHS，不能串为收敛曲线",
+    "受控停止不是数值不收敛定理",
+    "A2R 原尺寸容量预测及 symbolic/numeric/outer 尚未运行",
+    "official R/T/A、A_volume、衍射级及最终场均不可用",
+    "p/h、Hybrid、模式数及 MPI 扫描尚未完成；不是 0.7 nm 已通过"
+  ]
+}

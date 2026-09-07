@@ -1,3 +1,13 @@
+# Task39extra：13.5 nm 原 p6/h10 阶段同步
+
+| 阶段 | 实际进展 | 边界 |
+|---|---|---|
+| 旧 A2 setup | 用户受控停止；workflow 5946.47 s，S6 约 98.6 min | outer 未开始 |
+| S6 优化后 A2 | S6 143.69 s，至 solve 开始约 553.52 s；workflow 3015.38 s，RSS peak 1849683968 B，swap 0 | 用户按成本停止；7 次完整 PC 各 36 步，第 8 次 partial；outer final 不可用 |
+| A2R 诊断参考 | 原 p4 直接逆的显式 profile 已实现，最终 focused tests 38 passed | 原尺寸 `not_run`；主候选未资格化；不是 0.7 nm 已通过 |
+
+S6 精确对角优化省掉不需要的单元耦合计算，保持原积分和约束；A2R 则以额外分解内存换取准确的中间修正，仅用于诊断。不同 PC 的 RHS 不同，A4 残差 0.636–0.847 不能串成收敛曲线；checkpoint 0=1 只是初始值。本次为阶段同步，非 A5 结项。详见 [Task39extra 总结](task039_extra_physical_multilevel/outcomes/summary.md)、[运行索引](task039_extra_physical_multilevel/outcomes/records/run_index.json) 和 [测试摘要](task039_extra_physical_multilevel/outcomes/test_summary.md)。
+
 # 2026-09-05：Task038 Review V19 R4 PML 结构收口
 
 ## 当前 V19 authority

@@ -1388,6 +1388,16 @@ outcomes。完整证据固定在
 
 ---
 
+## 3.41 Task39extra：原 13.5 nm p6/h10 主候选与诊断参考
+
+| Model ID / 方法 | 实际结果 | 资源和状态 |
+|---|---|---|
+| task39extra_A2_old_setup；Full3D/MPI1/80 modes | outer 未开始，未产生 official 场或 R/T/A | workflow 5946.465141321009 s；RSS peak 1582481408 B，swap 0；用户 setup 受控停止 |
+| task39extra_A2_optimized；相同物理，S6 精确对角优化 | S6 143.69 s；7 次完整 PC 各 36 步，A4 残差 0.636–0.847；第 8 次 partial；outer final `not_available` | workflow 3015.3758775380556 s；RSS peak 1849683968 B，swap 0；`USER_AUTHORIZED_COST_CONTROLLED_STOP` |
+| task39extra_A2R_reference；原 p4 直接逆辅助原 p6 外层 | 实现/小型测试通过；原尺寸 `not_run` | 容量未实测，非生产默认、非主候选资格通过 |
+
+S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及分解内存换取准确中间修正。RSS 为同期进程树采样峰值。两次 A2 均没有最终物理结果；初始 checkpoint 不能代替最终残差，成本受控停止不能推出不收敛定理。这是 13.5 nm 阶段记录，不代表 0.7 nm 已通过。来源、完整 SHA 和 hash 见 [Task39extra 运行索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)，解释见 [阶段总结](task039_extra_physical_multilevel/outcomes/summary.md)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。
