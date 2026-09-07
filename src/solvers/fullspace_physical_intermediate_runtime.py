@@ -25,7 +25,7 @@ PHYSICAL_PAIRS = ((6, 4), (4, 2), (2, 1))
 def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
                                        resource_sample: Callable[[], dict],
                                        marker: Callable[[str, dict], None],
-                                       reference: bool = False) -> dict:
+                                       reference: bool = False, light: bool = False) -> dict:
     """Own one shared mesh and two separately bounded p1 factors, opt-in only."""
     from .fullspace_bounded_mumps import BoundedP1Factor
     from .fullspace_physical_intermediate import (
@@ -38,17 +38,23 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
 
     result: dict = {"diagonals": {}, "jacobi_facts": {}}
     try:
-        marker("shared_mesh_spaces_started", {"degrees": [6, 4, 3, 2, 1]})
-        levels = _build_same_mesh_levels(cfg, comm, (6, 4, 3, 2, 1))
+        degrees = (6, 4) if light else (6, 4, 3, 2, 1)
+        if light and not reference:
+            raise ValueError('light PC requires the exact p4 reference')
+        marker("shared_mesh_spaces_started", {"degrees": list(degrees)})
+        levels = _build_same_mesh_levels(cfg, comm, degrees)
         result["levels"] = levels
-        if int(levels["spaces"][1].dofmap.index_map.size_global) > 4096:
+        if not light and int(levels["spaces"][1].dofmap.index_map.size_global) > 4096:
             raise ValueError("p1 storage rows exceed 4096 before matrix assembly")
-        marker("positive_s6_started", {})
-        positive = build_p6_same_mesh_setup(cfg, comm, levels=levels,
-            quadrature_diagonal=True,
-            stage_callback=marker,
-            coarse_solver_factory=lambda matrix: BoundedP1Factor(matrix, label="positive_p1",
-                resource_sample=resource_sample, marker=marker))
+        if light:
+            from .physical_light_setup import build_light_h6_setup
+            positive = build_light_h6_setup(levels, cfg, marker)
+        else:
+            marker("positive_s6_started", {})
+            positive = build_p6_same_mesh_setup(cfg, comm, levels=levels,
+                quadrature_diagonal=True, stage_callback=marker,
+                coarse_solver_factory=lambda matrix: BoundedP1Factor(matrix, label="positive_p1",
+                    resource_sample=resource_sample, marker=marker))
         result["positive"] = positive
         marker("fine_physical_started", {})
         fine = build_same_mesh_physical_action(levels, cfg, 6)
@@ -69,9 +75,10 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
             result['reference_factor'] = middle
             result['middle'] = middle
             result['pc'] = PhysicalIntermediatePreconditioner(fine['physical_action'],
-                positive['upper_cycle'], actions['transfers'][(6, 4)], middle, stage_callback=marker)
+                positive['h6'] if light else positive['upper_cycle'], actions['transfers'][(6, 4)], middle,
+                stage_callback=marker, **(dict(positive_identity='H6', outer_max_it=2048) if light else {}))
             marker('physical_intermediate_setup_complete', dict(reference_only=True,
-                independent_p1_factors=1, reference_p4_factors=1, shifted_inverse_constructed=False))
+                independent_p1_factors=0 if light else 1, reference_p4_factors=1, shifted_inverse_constructed=False))
             return result
         jacobi = {}
         for degree in (4, 2):
@@ -129,7 +136,10 @@ def release_physical_intermediate_solver_stack(bundle: dict) -> None:
     if actions is not None:
         destroy_physical_intermediate_actions(actions)
     positive = bundle.get("positive")
-    if positive is not None:
+    if positive is not None and 'h6' in positive:
+        positive.pop('h6').destroy()
+        positive.pop('p6_shell').destroy()
+    elif positive is not None and 'light_facts' not in positive:
         release_p6_same_mesh_solver_stack({"setup": positive})
     bundle["auxiliary_stack_released"] = True
 
@@ -143,7 +153,7 @@ def destroy_physical_intermediate_solver(bundle: dict) -> None:
     if fine is not None:
         destroy_same_mesh_physical_action(fine)
     positive = bundle.pop("positive", None)
-    if positive is not None:
+    if positive is not None and 'light_facts' not in positive:
         destroy_p6_same_mesh_setup_bundle(positive)
     bundle.clear()
 
@@ -157,9 +167,9 @@ def qualify_physical_intermediate_setup(bundle: dict, *, marker: Callable,
     levels, actions = bundle['levels'], bundle['actions']
     facts = {'classification': 'setup_identity_only', 'pairs': {},
              'rows': {str(p): int(levels['spaces'][p].dofmap.index_map.size_global)
-                      for p in (6, 4, 3, 2, 1)}}
+                      for p in levels['spaces']}}
     facts['owned_slaves'] = {str(p): len(owned_slave_indices(levels['spaces'][p], levels['floquets'][p]))
-                             for p in (6, 4, 3, 2, 1)}
+                             for p in levels['spaces']}
     facts['independent_rows'] = {p: rows-facts['owned_slaves'][p] for p, rows in facts['rows'].items()}
     facts['mode_sha256'] = actions['mode_sha256']
     if (facts['rows']['6'] != 173802 or facts['mode_sha256'] !=
@@ -332,7 +342,7 @@ def build_physical_intermediate_actions(
     from .fullspace_same_mesh_hcurl_pmg_runtime import build_same_mesh_hcurl_owner_transfer
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
-    if any(degree not in setup["spaces"] for degree in PHYSICAL_DEGREES):
+    if any(degree not in setup["spaces"] for degree in ((6, 4) if reference else PHYSICAL_DEGREES)):
         raise ValueError("physical middle setup requires same-mesh degrees 6, 4, 2, 1")
     if "mass" not in setup or "mu" not in setup:
         raise ValueError("setup must include positive coefficients from the physical tags")

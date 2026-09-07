@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.parametrize('name', ['original_13p5nm_p6h10.dat',
-                                 'original_13p5nm_p6h10_p4_reference.dat'])
+                                 'original_13p5nm_p6h10_p4_reference.dat',
+                                 'original_13p5nm_p6h10_p6smooth_p4ref_p6smooth.dat'])
 def test_real_dat_public_plan_dry_run_and_worker_route(name, tmp_path, monkeypatch, capsys):
     from src.runners import physical_intermediate
 

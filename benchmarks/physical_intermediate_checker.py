@@ -20,14 +20,30 @@ def recompute_positive_apply_counts(pc_records: list[dict], cycles: list[dict]) 
     This read-only audit does not change the historical ledger or solver verdict.
     """
     previous = {'s6': 0, 's3': 0}
+    light = bool(pc_records and pc_records[0].get('positive_identity') == 'H6')
+    keys = _POSITIVE_APPLY_KEYS + (('h6_apply_count', 'b6_action_count', 'positive_p1_apply_count') if light else ())
+    h6_ordinal = 0
     per_pc = []
     for index, pc in enumerate(pc_records, 1):
         if pc['apply_count'] != index:
             raise ValueError('noncontiguous completed PC records')
         counts = {'s6_apply_count': 0, 's3_apply_count': 0}
+        if light:
+            if pc.get('positive_identity') != 'H6':
+                raise ValueError('mixed positive identities in one run')
+            counts.update(h6_apply_count=0, b6_action_count=0, positive_p1_apply_count=0)
         for direction in pc['direction_facts']:
             positive = direction.get('positive_cycle_facts')
             if positive is None:
+                continue
+            if light:
+                if positive['apply_count'] != h6_ordinal+1 or positive['matrix_mult_count'] != 2:
+                    raise ValueError('H6 ordinal or actual B6 count mismatch')
+                h6_ordinal += 1
+                counts['h6_apply_count'] += 1
+                counts['b6_action_count'] += positive['matrix_mult_count']
+                if 'lower_cycle_facts' in positive:
+                    raise ValueError('H6 evidence unexpectedly contains a coarse cycle')
                 continue
             for prefix, facts in (('s6', positive), ('s3', positive['lower_cycle_facts'])):
                 ordinal = facts['apply_count']
@@ -35,6 +51,8 @@ def recompute_positive_apply_counts(pc_records: list[dict], cycles: list[dict]) 
                     raise ValueError(f'noncontiguous {prefix} lifetime ordinal')
                 previous[prefix] = ordinal
                 counts[prefix + '_apply_count'] += 1
+        if light and (counts['h6_apply_count'] != 2 or counts['b6_action_count'] != 4):
+            raise ValueError('light PC did not execute two H6/four B6 calls')
         per_pc.append(counts)
     offset, corrected = 0, []
     for cycle in cycles:
@@ -42,15 +60,15 @@ def recompute_positive_apply_counts(pc_records: list[dict], cycles: list[dict]) 
         if count < 0 or offset + count > len(per_pc):
             raise ValueError('cycle exceeds completed PC records')
         selected = per_pc[offset:offset + count]
-        values = {key: sum(row[key] for row in selected) for key in _POSITIVE_APPLY_KEYS}
+        values = {key: sum(row[key] for row in selected) for key in keys}
         corrected.append(dict(cycle_index=cycle['cycle_index'], end_iteration=cycle['end_iteration'],
             completed_pcs=count, recomputed=values,
             raw_reported={key: cycle['pc_costs'][key] for key in values}))
         offset += count
     return dict(scope='completed PC records only; partial PC costs unavailable', cycles=corrected,
-        total={key: sum(row[key] for row in per_pc) for key in _POSITIVE_APPLY_KEYS},
+        total={key: sum(row[key] for row in per_pc) for key in keys},
         completed_pc_count=len(per_pc), completed_pcs_after_last_cycle=len(per_pc)-offset,
-        tail={key: sum(row[key] for row in per_pc[offset:]) for key in _POSITIVE_APPLY_KEYS})
+        tail={key: sum(row[key] for row in per_pc[offset:]) for key in keys})
 
 
 def check(directory: Path) -> dict:
@@ -98,8 +116,37 @@ def check(directory: Path) -> dict:
             difference = abs(reported-cycle['explicit_true_residual'])
             require(np.isfinite(difference) and difference <= max(1e-10, .01*cycle['explicit_true_residual']),
                     f'reported/true norm mismatch at iteration {cycle["end_iteration"]}: {difference}')
-    require(summary['solve_monotonic_seconds'] <= 3600, 'solve budget exceeded')
-    require(summary['elapsed_monotonic_seconds'] <= 7200, 'workflow budget exceeded before checker')
+    from src.io.physical_intermediate_profile import profile_facts
+    resources = profile_facts(summary['profile']['identity'])['resources']
+    light = summary['profile']['identity'] == 'p6smooth_p4ref_p6smooth_v1'
+    stagnation = False
+    if light:
+        cycles = [json.loads(line) for line in (directory/'cycles.jsonl').read_text().splitlines()]
+        require(bool(pc_rows) and all(row.get('positive_identity') == 'H6' for row in pc_rows),
+                'LIGHT profile requires explicit H6 identity on every PC record')
+        facts['light_pc_counts'] = recompute_positive_apply_counts(pc_rows, cycles)
+        require(all(row['recomputed'] == row['raw_reported'] for row in facts['light_pc_counts']['cycles']),
+                'raw cycle PC counts disagree with independently recomputed calls')
+        require(all(row['direction_count'] == 3 and
+                    sum(d['fine_action_count'] for d in row['direction_facts']) == 3
+                    and row['intermediate']['factor_solve_calls'] == 1 for row in pc_rows),
+                'light PC must have three original A6 MR actions and one A4 backsolve')
+        require(summary['positive_setup']['positive_p3_p1_constructed'] is False,
+                'unused positive coarse objects were constructed')
+        if len(cycles) >= 5 and cycles[-1]['end_iteration'] >= 256:
+            tail = list(zip(cycles[-5:-1], cycles[-4:]))
+            stagnation = all(c['iterations'] == 32 and c['end_iteration']-c['start_iteration'] == 32
+                and p['end_iteration'] == c['start_iteration'] and p['explicit_true_residual'] > 0
+                and np.isfinite([p['explicit_true_residual'], c['explicit_true_residual']]).all()
+                and c['explicit_true_residual']/p['explicit_true_residual'] >= .99 for p, c in tail)
+        facts['stagnation_from_raw_cycles'] = bool(stagnation)
+        if summary['status'] == 'STAGNATION_CONTROLLED_STOP':
+            require(stagnation, 'claimed stagnation does not satisfy raw four-cycle rule')
+        with np.load(directory/raw['filename'], allow_pickle=False) as arrays:
+            require(hashlib.sha256(arrays['solution'].tobytes()).hexdigest() == summary['final_solution_sha256'],
+                    'final solution hash mismatch before recovery')
+    require(summary['solve_monotonic_seconds'] <= resources['solve_seconds'], 'solve budget exceeded')
+    require(summary['elapsed_monotonic_seconds'] <= resources['workflow_seconds'], 'workflow budget exceeded before checker')
     require(summary['auxiliary_stack_released_before_recovery'] is True, 'auxiliary stack not released')
     output = summary.get('official_result')
     if output is None:
@@ -148,7 +195,12 @@ def check(directory: Path) -> dict:
         packets = read_canonical_packet_shard(directory / 'numerical_output' / canonical['filename'])
         require(len(packets) == canonical['packet_count'] > 0, 'canonical packet count mismatch')
         require(all(np.isfinite(value) for _, value in packets), 'nonfinite canonical coefficients')
-    return dict(classification=('REFERENCE_ONLY_PASS' if reference_only else 'DISCRETE_SOLVER_OUTPUT_PASS') if not errors else 'NUMERICAL_OR_OUTPUT_FAIL',
+    classification = ('REFERENCE_ONLY_PASS' if reference_only else 'DISCRETE_SOLVER_OUTPUT_PASS') if not errors else 'NUMERICAL_OR_OUTPUT_FAIL'
+    if light and errors and summary['status'] == 'STAGNATION_CONTROLLED_STOP' and stagnation:
+        classification = 'STAGNATION_CONTROLLED_STOP'
+    elif light and errors and summary['status'] == 'ITERATION_BUDGET_EXHAUSTED' and summary['solve']['iterations'] == 2048:
+        classification = 'ITERATION_BUDGET_EXHAUSTED'
+    return dict(classification=classification,
                 reference_authority='PENDING_A4_not_compared',
                 gate_failures=errors, raw_facts=facts, checker_seconds=time.monotonic()-started,
                 resource_authority='separate enclosing parent verdict required')

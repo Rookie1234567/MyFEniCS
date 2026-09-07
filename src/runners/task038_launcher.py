@@ -327,14 +327,17 @@ def launch_specification(
         else _source_sha(Path(__file__).resolve().parents[2])
     )
     from src.io.physical_intermediate_profile import PROFILES
-    from src.io.physical_intermediate_profile import FAST_PROFILE
+    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, profile_facts
     if specification.solver.get('preconditioner') == FAST_PROFILE and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
 
     physical_candidate = specification.solver.get('preconditioner') in PROFILES and not contract_probe
+    light = physical_candidate and specification.solver.get('preconditioner') == LIGHT_PROFILE
+    physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
-    workflow_limit = 1800 if pc_profile is not None else 7200
+    workflow_limit = 1800 if pc_profile is not None else physical_resources.get('workflow_seconds', 7200)
+    solve_limit = physical_resources.get('solve_seconds', 3600)
     physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                        if physical_candidate else None)
     adapter = (
@@ -374,6 +377,11 @@ def launch_specification(
         manifest['pc_profile'] = dict(config=diagnostic_path.name,
             sha256=hashlib.sha256(diagnostic_path.read_bytes()).hexdigest(), **pc_profile)
         _write_json(run_directory/'run_manifest.json', manifest)
+    if light:
+        cache_home = run_directory/'jit_cache'
+        cache_home.mkdir(exist_ok=False)
+        manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
+        _write_json(run_directory/'run_manifest.json', manifest)
     plan = build_execution_plan(
         specification,
         run_directory,
@@ -398,15 +406,16 @@ def launch_specification(
                     wall_seconds=max(1e-9, min(workflow_limit-(monotonic()-workflow_started),
                         pc_profile['deadline_monotonic']-monotonic()) if pc_profile is not None
                         else workflow_limit-(monotonic()-workflow_started)),
-                    solve_seconds=None if pc_profile is not None else 3600,
+                    solve_seconds=None if pc_profile is not None else solve_limit,
                     phase_path=run_directory / 'workflow_phase.json',
-                    cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else
+                    cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light else
                         Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
                     source_state=physical_source,
                     **(dict(grace_seconds=30, hard_stop_immediate=True,
                             worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),
                                                 'XDG_CACHE_HOME': pc_profile['cache_home']})
-                       if pc_profile is not None else {}))
+                       if pc_profile is not None else dict(grace_seconds=60, hard_stop_immediate=True,
+                            worker_environment={'XDG_CACHE_HOME': str(cache_home.resolve())}) if light else {}))
                 result = {'exit_status': authority['leader_exit_code'],
                     'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                     'resource_authority': authority}
@@ -425,7 +434,7 @@ def launch_specification(
                 manifest['source_after'] = source_after
                 manifest['effective_watchdog_authority'] = {
                     'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
-                    'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else 3600,
+                    'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else solve_limit,
                     'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False}
             else:
                 result = _run_worker(

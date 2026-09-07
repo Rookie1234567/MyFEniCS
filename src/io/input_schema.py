@@ -900,6 +900,7 @@ FIELD_SPECS: Final = (
             "physical_intermediate_p4_shifted_aux_v1",
             "physical_intermediate_p4_reference_v1",
             "a2r_equivalent_fast_v1",
+            "p6smooth_p4ref_p6smooth_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),

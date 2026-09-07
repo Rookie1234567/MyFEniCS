@@ -21,8 +21,9 @@ class IsotropicPartialAssembly:
 
     batch_size = 8
 
-    def __init__(self, space, mu, mass, *, component_form=None, component=None):
+    def __init__(self, space, mu, mass, *, component_form=None, component=None, contiguous_work=False):
         self.space = space
+        self.contiguous_work = bool(contiguous_work)
         if component_form is None:
             if component is not None:
                 raise ValueError("split component requires original form")
@@ -73,7 +74,10 @@ class IsotropicPartialAssembly:
                 self.basis.curls, self.basis.weights, self.basis.geometry_derivatives)),
             cell_metadata_bytes=sum(a.nbytes for a in (self.dofs, self.material_indices,
                 self.metrics, self.permutations)),
-            temporary_budget_bytes=self.batch_size*(64*n+256*q+512),
+            contiguous_real_imag_work=self.contiguous_work,
+            packing_workspace_upper_bound_bytes=self.batch_size*(16*n+48*q) if self.contiguous_work else 0,
+            temporary_budget_bytes=self.batch_size*(64*n+256*q+512)
+                + (self.batch_size*(16*n+48*q) if self.contiguous_work else 0),
             dense_cell_tensor=False, physical_basis_materialized=False)
 
     def apply(self, coefficients, output):
@@ -92,18 +96,22 @@ class IsotropicPartialAssembly:
                     element.Tt_apply(local[row].view(np.float64),
                                      self.permutations[cell:cell+1], 2)
             result = np.zeros_like(local)
+            real = np.ascontiguousarray(local.real) if self.contiguous_work else local.real
+            imag = np.ascontiguousarray(local.imag) if self.contiguous_work else local.imag
             for k, (table, kind) in enumerate(((values, "mass"), (curls, "curl"))):
                 if self.component is not None and kind != self.component:
                     continue
-                # Real GEMM avoids an implicit complex copy of the large
-                # reference table in mixed real/complex NumPy matmul.
-                flux = (local.real @ table + 1j*(local.imag @ table)).reshape(len(dofs), -1, 3)
+                # NumPy 1.26 matrix-matrix BLAS requires a unit inner stride.
+                # Only small batch operands are packed, never reference tables.
+                flux = (real @ table + 1j*(imag @ table)).reshape(len(dofs), -1, 3)
                 for row, cell in enumerate(cells):
                     function = basis.mass if kind == "mass" else basis.mu
                     material = function.x.array[self.material_indices[cell, k]]
                     flux[row] = (flux[row] @ self.metrics[cell, k]) * (material*basis.weights[:, None])
                 flat = flux.reshape(len(dofs), -1)
-                result += flat.real @ table.T + 1j*(flat.imag @ table.T)
+                fr = np.ascontiguousarray(flat.real) if self.contiguous_work else flat.real
+                fi = np.ascontiguousarray(flat.imag) if self.contiguous_work else flat.imag
+                result += fr @ table.T + 1j*(fi @ table.T)
             for row, cell in enumerate(cells):
                 if element.needs_dof_transformations:
                     element.T_apply(result[row].view(np.float64),

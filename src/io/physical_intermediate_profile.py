@@ -3,10 +3,23 @@
 PROFILE = "physical_intermediate_p4_shifted_aux_v1"
 REFERENCE_PROFILE = "physical_intermediate_p4_reference_v1"
 FAST_PROFILE = "a2r_equivalent_fast_v1"
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE)
+LIGHT_PROFILE = "p6smooth_p4ref_p6smooth_v1"
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE)
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == LIGHT_PROFILE:
+        facts = profile_facts(REFERENCE_PROFILE)
+        facts.update(identity=identity, positive_identity='H6',
+            backend=dict(B6='exact_partial_assembly_batch8_contiguous', A6='original_split_form'),
+            fine_auxiliary=dict(identity='fixed_degree3_H6', pre_cycles=1, post_cycles=1,
+                direction_acceptance='fine_physical_modified_residual', physical_middle_directions=1,
+                calls_per_PC=dict(H6=2, S6=0, B6=4, positive_p3=0, positive_p1=0)))
+        facts['outer'].update(max_iterations=2048, safe_snapshot_interval=8, safe_snapshot_seconds=120,
+            reported_iteration_interval=1)
+        facts['resources'].update(workflow_seconds=10800, solve_seconds=7200, independent_p1_factors=0,
+                                  performance_grace_seconds=60, batch_limit_seconds=36000)
+        return facts
     if identity == FAST_PROFILE:
         facts = profile_facts(REFERENCE_PROFILE)
         facts.update(identity=identity, backend=dict(B6='exact_partial_assembly_batch8',

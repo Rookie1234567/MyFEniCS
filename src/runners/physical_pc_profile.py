@@ -261,7 +261,7 @@ def cleanup_profile(summary, directory, callbacks):
             first_error = first_error or exc
             summary.setdefault('cleanup_errors', []).append(dict(
                 stage=name, exception_type=type(exc).__name__, exception_message=str(exc)))
-            if summary['status'] == 'PROFILE_COMPLETED':
+            if summary['status'] not in ('FAILED', 'CONTROLLED_STOP', 'PERFORMANCE_CONTROLLED_STOP', 'REFERENCE_RESOURCE_BLOCKED'):
                 summary['status'] = 'FAILED'
             _atomic_json(path, summary)
     return first_error

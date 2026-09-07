@@ -460,6 +460,7 @@ def run_fixed_restart_cycles(
     stop_after_cycle: Callable[
         [Mapping[str, Any], Sequence[Mapping[str, Any]]], bool
     ] | None = None,
+    iteration_observer: Callable[[int, float, Any, Any, Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Run a reviewed fixed-restart right-GMRES/FGMRES cycle sequence.
 
@@ -581,6 +582,12 @@ def run_fixed_restart_cycles(
             pc.setType(PETSc.PC.Type.PYTHON)
             pc.setPythonContext(pc_context)
             active_ksp.setUp()
+            if iteration_observer is not None:
+                active_ksp.setMonitor(lambda current, iteration, norm:
+                    iteration_observer(cycle_start + int(iteration), float(norm), current, solution,
+                        dict(outer_matvec_count=action_context.matvec_count,
+                             outer_pc_count=pc_context.apply_count,
+                             solve_wall_seconds=time.perf_counter()-started)))
             cycle_started = time.perf_counter()
             active_ksp.solve(rhs, solution)
             local_iterations = int(active_ksp.getIterationNumber())

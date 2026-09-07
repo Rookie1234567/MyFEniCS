@@ -13,6 +13,42 @@ from .physical_pc_profile import INPUT_SHA, verified_checkpoint
 
 FAST_INPUT_SHA = '52004b3d9fa3de5d39297074efd0ba6bb3312037209162599317f8dfb3c42593'
 
+
+def launch_light_workflow(specification, budget_path):
+    """Reserve one explicit R3 input in the existing cumulative task ledger."""
+    from src.io.physical_intermediate_profile import LIGHT_PROFILE, profile_facts
+    from .task038_launcher import launch_specification
+    if specification.solver.get('preconditioner') != LIGHT_PROFILE or budget_path is None:
+        raise InputError('light workflow requires its explicit profile and batch budget ledger')
+    path = Path(budget_path).resolve()
+    with path.with_suffix('.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        budget = json.loads(path.read_text())
+        if budget['limit_seconds'] != 36000:
+            raise InputError('batch limit must remain 36000 seconds')
+        if any(a.get('kind') == 'R3_full_workflow' and a.get('input_sha256') == specification.input_sha256
+               for a in budget['attempts']):
+            raise InputError('this light input already reserved; no repeat formal')
+        resource = profile_facts(LIGHT_PROFILE)['resources']
+        reservation = resource['workflow_seconds'] + resource['performance_grace_seconds']
+        if sum(a['elapsed_seconds'] for a in budget['attempts'])+reservation > budget['limit_seconds']:
+            raise InputError('insufficient cumulative budget for complete light workflow')
+        attempt = dict(kind='R3_full_workflow', input_sha256=specification.input_sha256,
+            status='RESERVED', elapsed_seconds=reservation, reserved_seconds=reservation)
+        budget['attempts'].append(attempt)
+        _atomic_json(path, budget)
+        started = time.monotonic()
+        try:
+            result = launch_specification(specification)
+            attempt.update(status=result['result_classification'], run_directory=result['run_directory'])
+            return result
+        except BaseException as exc:
+            attempt.update(status='FAILED', exception_type=type(exc).__name__, exception_message=str(exc))
+            raise
+        finally:
+            attempt['elapsed_seconds'] = time.monotonic()-started
+            _atomic_json(path, budget)
+
 RECOVERY_SOURCE = '3ce11b9ae7e1aa590f3084c49f7b3e412650f5a2'
 RECOVERY_HASHES = {
     'run_manifest.json': '76c1cf5c62bea1bd1acb30ea421933ce031acb9ddf406cb086bf28d9a8282508',

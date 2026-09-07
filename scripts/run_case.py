@@ -24,7 +24,7 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument("--validate-only", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT160_DIRECTORY')
-    parser.add_argument('--profile-budget-ledger', type=Path)
+    parser.add_argument('--profile-budget-ledger', '--batch-budget-ledger', dest='profile_budget_ledger', type=Path)
     parser.add_argument('--profile-variant', choices=('R0', 'a2r_equivalent_fast_v1'), default='R0')
     parser.add_argument('--profile-r0-reference', type=Path)
     parser.add_argument('--profile-recovery-from', '--profile-cache-recovery-from',
@@ -70,6 +70,12 @@ def main(argv: list[str] | None = None) -> int:
                                     **(dict(variant=args.profile_variant, r0_reference=args.profile_r0_reference)
                                        if args.profile_variant != 'R0' or args.profile_r0_reference is not None else {}))
         else:
+            from src.io.physical_intermediate_profile import LIGHT_PROFILE
+            if specification.solver.get('preconditioner') == LIGHT_PROFILE:
+                from src.runners.physical_profile_budget import launch_light_workflow
+                result = launch_light_workflow(specification, args.profile_budget_ledger)
+                print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+                return 0 if result['result_classification'] == 'worker_exit0' else 3
             if args.profile_budget_ledger is not None:
                 raise InputError('--profile-budget-ledger requires --physical-pc-profile')
             result = launch_specification(specification)

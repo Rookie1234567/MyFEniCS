@@ -17,8 +17,8 @@ from src.solvers.fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_
 
 
 @pytest.mark.parametrize("degree", [2, 3, 6])
-@pytest.mark.parametrize("component", [None, "curl", "mass"])
-def test_original_form_complex_multimaster_affine_orientation(degree, component):
+@pytest.mark.parametrize("component,packed", [(None, False), ("curl", False), ("mass", False), (None, True)])
+def test_original_form_complex_multimaster_affine_orientation(degree, component, packed):
     cell_count = 9 if degree == 2 else 2  # exercise one full batch and its tail
     domain = mesh.create_box(MPI.COMM_SELF, [np.zeros(3), np.array([1., 2., 3.])],
                              [cell_count, 1, 1], cell_type=mesh.CellType.hexahedron)
@@ -52,7 +52,7 @@ def test_original_form_complex_multimaster_affine_orientation(degree, component)
     materials_before = (mu.x.array.copy(), mass.x.array.copy())
     tracemalloc.start()
     kernel = IsotropicPartialAssembly(space, mu, mass,
-        component_form=form if component else None, component=component)
+        component_form=form if component else None, component=component, contiguous_work=packed)
     _, initialization_peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
     assert np.count_nonzero(kernel.permutations) > 0

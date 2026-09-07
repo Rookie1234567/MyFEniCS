@@ -49,6 +49,7 @@ class WorkflowLedger:
         self.last_safe = None
         self.stop_signal = None
         self.last_stage = None
+        self.defer_performance_stop = False
         self.marker('workflow_started', {})
 
     def set_phase(self, phase: str) -> None:
@@ -56,7 +57,8 @@ class WorkflowLedger:
         self.marker(phase + '_started', {})
 
     def marker(self, stage: str, facts: dict, *, allow_stop: bool = False) -> None:
-        if self.stop_signal is not None and not allow_stop:
+        if (self.stop_signal is not None and not allow_stop
+                and not (self.defer_performance_stop and self.phase == 'solve')):
             raise InterruptedError(f'parent stop signal {self.stop_signal}')
         self.last_stage = stage
         record = dict(phase=self.phase,
@@ -85,6 +87,12 @@ class WorkflowLedger:
             name = direction['stage']
             self.pc_counts[name + '_wall_seconds'] += direction['wall_seconds']
             positive = direction.get('positive_cycle_facts', {})
+            if positive and facts.get('positive_identity') == 'H6':
+                self.pc_counts['h6_apply_count'] += 1
+                self.pc_counts['b6_action_count'] += positive['matrix_mult_count']
+                for key in ('s6_apply_count', 's3_apply_count', 'positive_p1_apply_count'):
+                    self.pc_counts[key] += 0
+                continue
             for prefix, entries in (('s6_', positive), ('s3_', positive.get('lower_cycle_facts', {}))):
                 for key, value in entries.items():
                     if key.endswith('_count') and isinstance(value, int):
@@ -124,8 +132,9 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import audit_p6_same_mesh_setup
 
     identity = payload['solver']['preconditioner']
-    from src.io.physical_intermediate_profile import FAST_PROFILE
-    reference = identity in (REFERENCE_PROFILE, FAST_PROFILE)
+    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE
+    light = identity == LIGHT_PROFILE
+    reference = identity in (REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE)
     pc_profile = json.loads(os.environ['PHYSICAL_PC_PROFILE']) if 'PHYSICAL_PC_PROFILE' in os.environ else None
     if identity == FAST_PROFILE and (pc_profile is None or pc_profile['variant'] != FAST_PROFILE):
         raise ValueError('fast profile currently requires the explicit seven-PC diagnostic mode')
@@ -149,8 +158,12 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         raise RuntimeError('qualified activation is required')
     directory = Path(directory)
     ledger = WorkflowLedger(directory, phase_path)
+    ledger.defer_performance_stop = light
     cfg = simulation_config_3d_from_normalized(payload)
     bundle, result, rhs, outcome = {}, None, None, None
+    monitor = None
+    contract = profile_facts(identity)
+    workflow_limit, solve_limit = contract['resources']['workflow_seconds'], contract['resources']['solve_seconds']
     summary = {'profile': profile_facts(identity), 'source_sha': source_sha,
                'official_result': None, 'status': 'STARTED'}
     import petsc4py
@@ -170,7 +183,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         ledger.stop_signal = signum
 
     def sample():
-        if ledger.stop_signal is not None:
+        if ledger.stop_signal is not None and not (light and ledger.phase == 'solve'):
             raise InterruptedError(f'parent stop signal {ledger.stop_signal}')
         facts = process_tree_snapshot(parent, ledger.phase, None)
         facts['launch_cap_bytes'] = cap
@@ -186,9 +199,10 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[signum] = signal.signal(signum, interrupted)
         bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
-            resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}))
+            resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}),
+            **({'light': True} if light else {}))
         fine = bundle['fine']
-        summary['positive_setup'] = audit_p6_same_mesh_setup(bundle['positive'])
+        summary['positive_setup'] = bundle['positive']['light_facts'] if light else audit_p6_same_mesh_setup(bundle['positive'])
         if reference:
             summary['reference_p4'] = dict(bundle['reference_factor'].audit)
             summary['reference_matrix'] = bundle['reference_matrix_facts']
@@ -223,6 +237,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         checkpoints.mkdir()
 
         def checkpoint(iteration, solution, residual):
+            if light and ledger.last_safe is not None and ledger.last_safe['iteration'] == iteration:
+                return
             # Completed-cycle snapshots also cover interruption before the next
             # 128 boundary; no live Arnoldi basis or residual is saved.
             facts = write_solution_checkpoint(checkpoints / f'iteration_{iteration:06d}', solution,
@@ -243,6 +259,13 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             initial.destroy()
         _atomic_json(directory / 'setup.json', summary)
         ledger.set_phase('solve')
+        if light:
+            from src.solvers.physical_safe_monitor import PhysicalSafeMonitor, conservative_stagnation as _light_stagnation
+            def append_monitor(name, row):
+                ledger.append(name, dict(row, completed_pc_count=bundle['pc'].apply_count,
+                                         h6_apply_count=bundle['positive']['h6'].apply_count))
+            monitor = PhysicalSafeMonitor(rhs, lambda source: apply_owned(fine['physical_action'], source),
+                checkpoint, append_monitor, lambda: ledger.stop_signal is not None)
 
         def apply_pc(source):
             solution = bundle['pc'].apply(source)
@@ -265,9 +288,10 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 raise RuntimeError('KSP reported/explicit residual mismatch at equal normalization')
 
         result = run_fixed_restart_cycles(rhs, lambda source: apply_owned(fine['physical_action'], source),
-            apply_pc, max_it=512, residual_limit=1e-6, resource_sample=sample, start_iteration=0,
+            apply_pc, max_it=contract['outer']['max_iterations'], residual_limit=1e-6, resource_sample=sample, start_iteration=0,
             first_checkpoint_iteration=None, checkpoint_interval=128, cycle_observer=observe,
-            ksp_type='fgmres', restart=32)
+            ksp_type='fgmres', restart=32, **(dict(iteration_observer=monitor,
+                stop_after_cycle=lambda cycle, cycles: _light_stagnation(cycles)) if light else {}))
         action = apply_owned(fine['physical_action'], result['final_solution'])
         try:
             raw_path = directory / 'final_residual_arrays.npz'
@@ -279,6 +303,10 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         finally:
             action.destroy()
         summary['solve'] = {k: v for k, v in result.items() if k != 'final_solution'}
+        summary['final_solution_sha256'] = hashlib.sha256(result['final_solution'].array.tobytes()).hexdigest()
+        if monitor is not None:
+            summary['monitor_original_A6_action_count'] = monitor.action_count
+            monitor.destroy()
         summary['solve_monotonic_seconds'] = time.monotonic()-ledger.phase_started
         summary['rss_before_release'] = sample()['rss_bytes']
         if reference:
@@ -292,7 +320,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['auxiliary_stack_released_before_recovery'] = bundle['auxiliary_stack_released']
         passed = (np.isfinite(result['final_true_residual']) and result['final_true_residual'] <= 1e-6
                   and (result['reason'] >= 0 or result['reason'] == -3)
-                  and summary['solve_monotonic_seconds'] <= 3600 and ledger.stop_signal is None)
+                  and summary['solve_monotonic_seconds'] <= solve_limit and ledger.stop_signal is None)
         if passed:
             ledger.set_phase('recovery')
             def canonical_export(field, out_dir):
@@ -308,7 +336,9 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             summary['official_result'] = outputs
             summary['status'] = 'RESIDUAL_PASS'
         else:
-            summary['status'] = 'RESIDUAL_FAILED'
+            summary['status'] = ('STAGNATION_CONTROLLED_STOP' if light and _light_stagnation(result['cycles'])
+                                 else 'ITERATION_BUDGET_EXHAUSTED' if light and result['iterations'] >= contract['outer']['max_iterations']
+                                 else 'RESIDUAL_FAILED')
         ledger.set_phase('checker')
         summary['elapsed_monotonic_seconds'] = time.monotonic()-ledger.started
         _atomic_json(directory / 'physical_intermediate_summary.json', summary)
@@ -319,7 +349,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['status'] = checker['classification']
         summary['reference_authority'] = checker['reference_authority']
         passed = (check.returncode == 0 and checker['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS')
-                  and time.monotonic()-ledger.started <= 7200 and ledger.stop_signal is None)
+                  and time.monotonic()-ledger.started <= workflow_limit and ledger.stop_signal is None)
         outcome = {'passed': bool(passed), 'errors': [] if passed else checker['gate_failures'] or [summary['status']],
                 'summary': str(directory / 'physical_intermediate_summary.json'),
                 'numerical_output_directory': str(directory / 'numerical_output')}
@@ -336,10 +366,15 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         primary_error = sys.exc_info()[1]
         cleanup_error = None
         summary['last_safe_checkpoint'] = ledger.last_safe
-        if pc_profile is not None:
+        if pc_profile is not None or light:
             from .physical_pc_profile import cleanup_profile
 
             callbacks = []
+            if monitor is not None:
+                summary['monitor_original_A6_action_count'] = monitor.action_count
+                callbacks.append(('monitor', monitor.destroy))
+            if result is not None:
+                callbacks.append(('krylov_result', lambda: destroy_krylov_result(result)))
             if rhs is not None:
                 callbacks.append(('rhs', rhs.destroy))
             callbacks.append(('solver_stack', lambda: destroy_physical_intermediate_solver(bundle)))
@@ -351,7 +386,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 rhs.destroy()
             destroy_physical_intermediate_solver(bundle)
         summary['elapsed_monotonic_seconds'] = time.monotonic()-ledger.started
-        if summary['elapsed_monotonic_seconds'] > 7200 or ledger.stop_signal is not None:
+        if summary['elapsed_monotonic_seconds'] > workflow_limit or ledger.stop_signal is not None:
             summary['status'] = 'PERFORMANCE_CONTROLLED_STOP' if ledger.stop_signal is None else 'CONTROLLED_STOP'
             summary.setdefault('failed_stage', ledger.last_stage)
             if outcome is not None:

@@ -565,8 +565,11 @@ class PhysicalIntermediatePreconditioner:
         p6_to_p4: Any,
         intermediate_cycle: ShiftedAuxiliaryCycle,
         *, stage_callback: Callable[[str, dict], None] | None = None,
+        positive_identity: str = 'S6', outer_max_it: int = OUTER_MAX_IT,
     ) -> None:
         self.fine_action = fine_action
+        self.positive_identity = positive_identity
+        self.outer_max_it = outer_max_it
         self.positive_cycle = positive_cycle
         self.p6_to_p4 = p6_to_p4
         self.intermediate_cycle = intermediate_cycle
@@ -629,7 +632,9 @@ class PhysicalIntermediatePreconditioner:
             self.apply_count += 1
             self.last_apply_facts = {
                 "schema": "task039.physical_intermediate_pc.v1",
-                "formula": ("S6-MR -> P64^H -> " + self.intermediate_identity + " -> P64-MR -> S6-MR"),
+                "formula": (self.positive_identity + "-MR -> P64^H -> " + self.intermediate_identity
+                            + " -> P64-MR -> " + self.positive_identity + "-MR"),
+                "positive_identity": self.positive_identity,
                 "direction_count": len(direction_facts),
                 "direction_facts": direction_facts, "intermediate": inner_facts,
                 "input_norm": _norm(rhs), "output_norm": _norm(correction),
@@ -646,13 +651,13 @@ class PhysicalIntermediatePreconditioner:
         if self.intermediate_identity == 'exact_augmented_A4_reference':
             return dict(schema='task039.physical_intermediate_pc.v1',
                 method=self.intermediate_identity, diagnostic_only=True,
-                outer_restart=OUTER_RESTART, outer_max_it=OUTER_MAX_IT,
+                outer_restart=OUTER_RESTART, outer_max_it=self.outer_max_it,
                 inner_residual_limit=1e-10, apply_count=self.apply_count)
         return {
             "schema": "task039.physical_intermediate_pc.v1",
             "method": INTERMEDIATE_METHOD,
             "outer_restart": OUTER_RESTART,
-            "outer_max_it": OUTER_MAX_IT,
+            "outer_max_it": self.outer_max_it,
             "inner_restart": INTERMEDIATE_RESTART,
             "inner_max_it": INTERMEDIATE_MAX_IT,
             "inner_residual_limit": INTERMEDIATE_RESIDUAL_LIMIT,
