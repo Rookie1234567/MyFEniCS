@@ -66,9 +66,9 @@ def method_adapter_available(method: str, *, preconditioner: str | None = None) 
 
     if method not in METHOD_ADAPTERS:
         raise InputError(f"method.kind: unsupported Task38 method {method!r}")
-    from .physical_intermediate_profile import PROFILE
+    from .physical_intermediate_profile import PROFILES
 
-    return method in CONNECTED_METHODS or (method == "full3d_iterative" and preconditioner == PROFILE)
+    return method in CONNECTED_METHODS or (method == "full3d_iterative" and preconditioner in PROFILES)
 
 
 def build_execution_plan(
