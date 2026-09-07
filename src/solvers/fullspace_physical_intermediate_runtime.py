@@ -24,7 +24,8 @@ PHYSICAL_PAIRS = ((6, 4), (4, 2), (2, 1))
 
 def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
                                        resource_sample: Callable[[], dict],
-                                       marker: Callable[[str, dict], None]) -> dict:
+                                       marker: Callable[[str, dict], None],
+                                       reference: bool = False) -> dict:
     """Own one shared mesh and two separately bounded p1 factors, opt-in only."""
     from .fullspace_bounded_mumps import BoundedP1Factor
     from .fullspace_physical_intermediate import (
@@ -53,8 +54,25 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
         fine = build_same_mesh_physical_action(levels, cfg, 6)
         result["fine"] = fine
         actions = build_physical_intermediate_actions(levels, cfg, fine_bundle=fine,
-                                                     stage_callback=marker)
+            stage_callback=marker, reference=reference)
         result["actions"] = actions
+        if reference:
+            from .fullspace_p4_reference import build_reference_matrix, PhysicalP4Reference
+            matrix, result['reference_matrix_facts'] = build_reference_matrix(
+                levels, cfg, actions['physical'][4], actions['volume_quadrature_metadata'],
+                marker=marker, sample=resource_sample)
+            result['reference_matrix'] = matrix
+            middle = PhysicalP4Reference(matrix, actions['physical'][4]['physical_action'],
+                owned_slave_indices(levels['spaces'][4], levels['floquets'][4]),
+                fine_rows=int(levels['spaces'][6].dofmap.index_map.size_global),
+                sample=resource_sample, marker=marker)
+            result['reference_factor'] = middle
+            result['middle'] = middle
+            result['pc'] = PhysicalIntermediatePreconditioner(fine['physical_action'],
+                positive['upper_cycle'], actions['transfers'][(6, 4)], middle, stage_callback=marker)
+            marker('physical_intermediate_setup_complete', dict(reference_only=True,
+                independent_p1_factors=1, reference_p4_factors=1, shifted_inverse_constructed=False))
+            return result
         jacobi = {}
         for degree in (4, 2):
             marker("positive_diagonal_started", {"degree": degree})
@@ -91,6 +109,12 @@ def release_physical_intermediate_solver_stack(bundle: dict) -> None:
 
     bundle.pop("pc", None)
     bundle.pop("middle", None)
+    factor = bundle.pop('reference_factor', None)
+    if factor is not None:
+        factor.destroy()
+    matrix = bundle.pop('reference_matrix', None)
+    if matrix is not None:
+        matrix.destroy()
     factor = bundle.pop("shifted_p1_factor", None)
     if factor is not None:
         factor.destroy()
@@ -140,7 +164,7 @@ def qualify_physical_intermediate_setup(bundle: dict, *, marker: Callable,
             'dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2'):
         raise RuntimeError(f'frozen original storage rows/mode identity mismatch: {facts}')
     rng = np.random.default_rng(3901)
-    for fine, coarse in PHYSICAL_PAIRS:
+    for fine, coarse in actions['transfers']:
         marker('setup_vector_identity_started', {'fine': fine, 'coarse': coarse})
         resource_sample()
         with ExitStack() as resources:
@@ -291,6 +315,7 @@ def build_physical_intermediate_actions(
     *,
     fine_bundle: Mapping[str, Any] | None = None,
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    reference: bool = False,
 ) -> dict[str, Any]:
     """Build native 4/2/1 physical and shifted actions with the fine inventory.
 
@@ -333,6 +358,17 @@ def build_physical_intermediate_actions(
         inventory = (fine_bundle["modes"], fine_bundle["mode_rows"], fine_bundle["mode_sha256"])
         result["mode_sha256"] = fine_bundle["mode_sha256"]
         result["dtn_quadrature_degree"] = fine_bundle["dtn_quadrature_degree"]
+        if reference:
+            marker('native_physical_started', 4)
+            result['physical'][4] = build_same_mesh_physical_action(setup, cfg, 4,
+                mode_inventory=inventory, volume_quadrature_metadata=quadratures)
+            result['owned_physical_degrees'].append(4)
+            marker('owner_transfer_started', 6)
+            owner = build_same_mesh_hcurl_owner_transfer(setup['spaces'][6], setup['floquets'][6],
+                setup['spaces'][4], setup['floquets'][4])
+            result['owners'][(6, 4)] = owner
+            result['transfers'][(6, 4)] = AlgebraicOwnerTransfer(owner)
+            return result
         # Existing positive mass coefficient = k0^2 |eps|. W omits k0^2.
         weight = fem.Function(setup["mass"].function_space)
         weight.x.array[:] = np.maximum(setup["mass"].x.array.real / cfg.k0**2, 1.0e-12)

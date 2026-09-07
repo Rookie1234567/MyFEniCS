@@ -1,9 +1,21 @@
 """Frozen, explicit input identity for the development physical middle solver."""
 
 PROFILE = "physical_intermediate_p4_shifted_aux_v1"
+REFERENCE_PROFILE = "physical_intermediate_p4_reference_v1"
+PROFILES = (PROFILE, REFERENCE_PROFILE)
 
 
-def profile_facts() -> dict:
+def profile_facts(identity=PROFILE) -> dict:
+    if identity == REFERENCE_PROFILE:
+        facts = profile_facts()
+        facts.update(identity=identity, reference_only=True,
+            intermediate=dict(degree=4, solver='exact_augmented_A4_reference', relative_tolerance=1e-10),
+            auxiliary=dict(constructed=False, reason='replaced by diagnostic A4 reference'))
+        facts['resources'].update(independent_p1_factors=1, reference_p4_factors=1,
+            reference_factor_budget='dynamic whole-workflow cap; not bounded p1 cap')
+        return facts
+    if identity != PROFILE:
+        raise ValueError('unknown physical middle profile')
     return {
         "identity": PROFILE,
         "outer": {"ksp_type": "right_fgmres", "restart": 32, "max_iterations": 512,

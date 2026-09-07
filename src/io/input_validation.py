@@ -540,6 +540,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "full3d_scalable_v1",
                 "fullspace_pml_double_sweep_v19",
                 "physical_intermediate_p4_shifted_aux_v1",
+                "physical_intermediate_p4_reference_v1",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -555,7 +556,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
-            elif preconditioner == "physical_intermediate_p4_shifted_aux_v1":
+            elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1"):
                 for section, key, actual, expected in (
                     ("solver", "restart", solver["restart"], 32),
                     ("solver", "max_iterations", solver["max_iterations"], 512),
@@ -1429,10 +1430,10 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "floquet_constraint_mode_requested": floquet_mode,
     }
     if config["method"]["kind"] == "full3d_iterative":
-        from .physical_intermediate_profile import PROFILE, profile_facts
+        from .physical_intermediate_profile import PROFILES, profile_facts
 
-        if config["solver"]["preconditioner"] == PROFILE:
-            result["physical_intermediate_profile"] = profile_facts()
+        if config["solver"]["preconditioner"] in PROFILES:
+            result["physical_intermediate_profile"] = profile_facts(config['solver']['preconditioner'])
         result["full3d_iterative_resource_profile"] = {
             "strategic_memory_limit_gb": config["execution"]["memory_limit_gb"],
             "watchdog_warning_memory_gib": config["execution"][

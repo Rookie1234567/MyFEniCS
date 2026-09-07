@@ -14,7 +14,7 @@ import time
 
 import numpy as np
 
-from src.io.physical_intermediate_profile import PROFILE, profile_facts
+from src.io.physical_intermediate_profile import PROFILE, PROFILES, REFERENCE_PROFILE, profile_facts
 
 
 def _jsonable(value):
@@ -76,6 +76,8 @@ class WorkflowLedger:
         self.pc_counts['inner_iterations'] += inner.get('iterations', 0)
         self.pc_counts['inner_matvecs'] += inner.get('matvec_count', 0)
         self.pc_counts['inner_explicit_actions'] += inner.get('explicit_action_count', 0)
+        if inner.get('diagnostic_only'):
+            self.pc_counts['reference_factor_solves'] += inner['factor_solve_calls']
         self.pc_counts['inner_shifted_applies'] += inner.get('pc_apply_count', 0)
         self.pc_counts['outer_pc_wall_seconds'] += facts['wall_seconds']
         self.pc_counts['inner_wall_seconds'] += inner.get('elapsed_seconds', 0)
@@ -120,7 +122,9 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import build_physical_rhs, recover_p0_outputs
     from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import audit_p6_same_mesh_setup
 
-    if payload['solver']['preconditioner'] != PROFILE or payload['derived'].get('physical_intermediate_profile') != profile_facts():
+    identity = payload['solver']['preconditioner']
+    reference = identity == REFERENCE_PROFILE
+    if identity not in PROFILES or payload['derived'].get('physical_intermediate_profile') != profile_facts(identity):
         raise ValueError('resolved physical-intermediate profile differs from the frozen contract')
     parent = int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID'])
     cap = int(os.environ['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'])
@@ -135,7 +139,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     ledger = WorkflowLedger(directory, phase_path)
     cfg = simulation_config_3d_from_normalized(payload)
     bundle, result, rhs, outcome = {}, None, None, None
-    summary = {'profile': profile_facts(), 'source_sha': source_sha,
+    summary = {'profile': profile_facts(identity), 'source_sha': source_sha,
                'official_result': None, 'status': 'STARTED'}
     import petsc4py
     import slepc4py
@@ -159,6 +163,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         facts = process_tree_snapshot(parent, ledger.phase, None)
         facts['launch_cap_bytes'] = cap
         envelope = memory_envelope()
+        facts['launch_cap_bytes'] = min(cap, facts['rss_bytes'] +
+            envelope['effective_available_bytes']-envelope['reserve_bytes'])
         if (not facts['all_status_readable'] or facts['rss_bytes'] >= cap
                 or facts['swap_bytes'] != 0 or envelope['effective_available_bytes'] < envelope['reserve_bytes']):
             raise RuntimeError('whole-workflow resource gate failed')
@@ -168,11 +174,16 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[signum] = signal.signal(signum, interrupted)
         bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
-            resource_sample=sample, marker=ledger.marker)
+            resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}))
         fine = bundle['fine']
         summary['positive_setup'] = audit_p6_same_mesh_setup(bundle['positive'])
-        summary['shifted_p1'] = dict(bundle['shifted_p1_factor'].audit)
-        summary['shifted_p1_matrix'] = bundle['shifted_p1_matrix_facts']
+        if reference:
+            summary['reference_p4'] = dict(bundle['reference_factor'].audit)
+            summary['reference_matrix'] = bundle['reference_matrix_facts']
+            summary['shifted_inverse'] = {'constructed': False}
+        else:
+            summary['shifted_p1'] = dict(bundle['shifted_p1_factor'].audit)
+            summary['shifted_p1_matrix'] = bundle['shifted_p1_matrix_facts']
         summary['positive_diagonals'] = bundle['jacobi_facts']
         summary['mode_sha256'] = fine['mode_sha256']
         summary['setup_qualification'] = qualify_physical_intermediate_setup(
@@ -244,6 +255,11 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['solve'] = {k: v for k, v in result.items() if k != 'final_solution'}
         summary['solve_monotonic_seconds'] = time.monotonic()-ledger.phase_started
         summary['rss_before_release'] = sample()['rss_bytes']
+        if reference:
+            summary['reference_p4'] = dict(bundle['reference_factor'].audit)
+            pc_path = directory / 'pc_applies.jsonl'
+            summary['reference_pc_ledger'] = dict(filename=pc_path.name,
+                sha256=hashlib.sha256(pc_path.read_bytes()).hexdigest())
         ledger.set_phase('release')
         release_physical_intermediate_solver_stack(bundle)
         summary['rss_after_release'] = sample()['rss_bytes']
@@ -276,16 +292,19 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['checker'] = checker
         summary['status'] = checker['classification']
         summary['reference_authority'] = checker['reference_authority']
-        passed = (check.returncode == 0 and checker['classification'] == 'DISCRETE_SOLVER_OUTPUT_PASS'
+        passed = (check.returncode == 0 and checker['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS')
                   and time.monotonic()-ledger.started <= 7200 and ledger.stop_signal is None)
         outcome = {'passed': bool(passed), 'errors': [] if passed else checker['gate_failures'] or [summary['status']],
                 'summary': str(directory / 'physical_intermediate_summary.json'),
                 'numerical_output_directory': str(directory / 'numerical_output')}
         return outcome
     except BaseException as exc:
+        from src.solvers.fullspace_p4_reference import ReferenceResourceBlocked
         summary.update(status='CONTROLLED_STOP' if isinstance(exc, InterruptedError) else 'FAILED',
                        exception_type=type(exc).__name__, exception_message=str(exc),
                        failed_stage=ledger.last_stage, failed_phase=ledger.phase)
+        if isinstance(exc, ReferenceResourceBlocked):
+            summary['status'] = 'REFERENCE_RESOURCE_BLOCKED'
         raise
     finally:
         summary['last_safe_checkpoint'] = ledger.last_safe
@@ -301,7 +320,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             if outcome is not None:
                 outcome.update(passed=False, errors=[summary['status']])
         _atomic_json(directory / 'physical_intermediate_summary.json', summary)
-        if summary['status'] not in ('FAILED', 'CONTROLLED_STOP', 'PERFORMANCE_CONTROLLED_STOP'):
+        if summary['status'] not in ('FAILED', 'CONTROLLED_STOP', 'PERFORMANCE_CONTROLLED_STOP', 'REFERENCE_RESOURCE_BLOCKED'):
             ledger.set_phase('complete')
         for signum, handler in previous_handlers.items():
             signal.signal(signum, handler)

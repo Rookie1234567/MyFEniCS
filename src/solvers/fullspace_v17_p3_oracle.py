@@ -356,6 +356,41 @@ def solve_mumps_p3(
         raise
 
 
+def compile_physical_diagnostic_volume(setup, cfg, degree, *, shift_weight=None,
+                                      volume_quadrature_metadata=None):
+    """Original split physical form, shared by sparse diagnostic assemblers."""
+    from dolfinx import fem
+    import ufl
+    from .common_3d_forms import _build_physical_volume_terms
+    from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+    space = setup['spaces'][degree]
+    u = ufl.TrialFunction(space)
+    v = ufl.TestFunction(space)
+    dx = ufl.Measure(
+        "dx",
+        domain=setup["mesh_data"].mesh,
+        subdomain_data=setup["mesh_data"].cell_tags,
+    )
+    curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+    if volume_quadrature_metadata is not None:
+        curl_curl, material_mass = tuple(
+            ufl.Form(tuple(integral.reconstruct(metadata={
+                **integral.metadata(), **metadata,
+            }) for integral in form.integrals()))
+            for form, metadata in zip((curl_curl, material_mass), volume_quadrature_metadata, strict=True)
+        )
+    if shift_weight is not None:
+        if volume_quadrature_metadata is None:
+            raise ValueError("shifted p1 assembly requires the fine integration metadata")
+        material_mass += (-.5j * cfg.k0**2 * shift_weight * ufl.inner(u, v)
+                          * ufl.dx(metadata=volume_quadrature_metadata[1]))
+    compiled = fem.form(
+        curl_curl + material_mass,
+        jit_options=dict(SAME_MESH_JIT_OPTIONS),
+    )
+    return compiled
+
+
 def build_p3_physical_diagnostic_matrix(
     setup: Mapping[str, Any],
     cfg: Any,
@@ -418,30 +453,8 @@ def build_p3_physical_diagnostic_matrix(
         carrier = build_fullspace_dtn_carrier_from_surface(
             modes, assemblers, floquet.mpc, cfg
         )
-        u = ufl.TrialFunction(space)
-        v = ufl.TestFunction(space)
-        dx = ufl.Measure(
-            "dx",
-            domain=setup["mesh_data"].mesh,
-            subdomain_data=setup["mesh_data"].cell_tags,
-        )
-        curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
-        if volume_quadrature_metadata is not None:
-            curl_curl, material_mass = tuple(
-                ufl.Form(tuple(integral.reconstruct(metadata={
-                    **integral.metadata(), **metadata,
-                }) for integral in form.integrals()))
-                for form, metadata in zip((curl_curl, material_mass), volume_quadrature_metadata, strict=True)
-            )
-        if shift_weight is not None:
-            if volume_quadrature_metadata is None:
-                raise ValueError("shifted p1 assembly requires the fine integration metadata")
-            material_mass += (-.5j * cfg.k0**2 * shift_weight * ufl.inner(u, v)
-                              * ufl.dx(metadata=volume_quadrature_metadata[1]))
-        compiled = fem.form(
-            curl_curl + material_mass,
-            jit_options=dict(SAME_MESH_JIT_OPTIONS),
-        )
+        compiled = compile_physical_diagnostic_volume(setup, cfg, degree,
+            shift_weight=shift_weight, volume_quadrature_metadata=volume_quadrature_metadata)
         matrix = dolfinx_mpc.assemble_matrix(compiled, floquet.mpc, bcs=[])
         matrix.assemble()
         rows = int(matrix.getSize()[0])

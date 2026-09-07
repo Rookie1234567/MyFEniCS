@@ -100,7 +100,8 @@ def _synthetic_outputs(directory):
 
 
 @pytest.mark.parametrize('ending', ['pass', 'breakdown', 'budget'])
-def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp_path, monkeypatch, ending):
+@pytest.mark.parametrize('reference', [False, True])
+def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp_path, monkeypatch, ending, reference):
     from petsc4py import PETSc
     from benchmarks import physical_intermediate_checker as checker
     from benchmarks import subreaper_watchdog, task038_full3d_jit_staging
@@ -110,7 +111,8 @@ def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp
     from src.solvers import fullspace_memory_first_krylov as krylov
 
     root = Path(__file__).resolve().parents[2]
-    payload = resolve_loaded_input(load_dat_input(root / 'input/task39extra/original_13p5nm_p6h10.dat')).as_jsonable()
+    name = 'original_13p5nm_p6h10_p4_reference.dat' if reference else 'original_13p5nm_p6h10.dat'
+    payload = resolve_loaded_input(load_dat_input(root / 'input/task39extra' / name)).as_jsonable()
     monkeypatch.setenv('PHYSICAL_WATCHDOG_PARENT_PID', str(os.getppid()))
     monkeypatch.setenv('PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES', '12000000000')
     monkeypatch.setenv('PHYSICAL_WATCHDOG_PHASE_PATH', str(tmp_path / 'phase.json'))
@@ -123,7 +125,17 @@ def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp
     fine = dict(physical_action=SimpleNamespace(apply_into=lambda source, target: source.copy(target)), mode_sha256='a'*64)
     bundle = dict(fine=fine, positive={}, shifted_p1_factor=SimpleNamespace(audit={}),
                   shifted_p1_matrix_facts={}, jacobi_facts={}, actions={'volume_quadrature_metadata': [{}, {}]})
-    monkeypatch.setattr(runtime, 'build_physical_intermediate_solver', lambda *args, **kwargs: bundle)
+    if reference:
+        bundle.pop('shifted_p1_factor'); bundle.pop('shifted_p1_matrix_facts')
+        bundle.update(reference_factor=SimpleNamespace(audit={'diagnostic_only':True}), reference_matrix_facts={})
+        bundle['pc'] = SimpleNamespace(apply=lambda rhs:rhs.copy(), last_apply_facts={
+            'intermediate':dict(diagnostic_only=True, iterations=0, factor_solve_calls=1,
+                explicit_action_count=1, true_residual_norm=0., rhs_norm=1., final_true_residual=0.),
+            'wall_seconds':.1, 'direction_facts':[]})
+    def build(*args, **kwargs):
+        assert kwargs.get('reference', False) == reference
+        return bundle
+    monkeypatch.setattr(runtime, 'build_physical_intermediate_solver', build)
     monkeypatch.setattr(runtime, 'qualify_physical_intermediate_setup', lambda *args, **kwargs: {})
     monkeypatch.setattr(setup, 'audit_p6_same_mesh_setup', lambda bundle: {})
     def make_rhs(fine):
@@ -132,6 +144,9 @@ def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp
         return rhs, {}
     monkeypatch.setattr(physical, 'build_physical_rhs', make_rhs)
     def solve(rhs, action, pc, **kwargs):
+        if reference:
+            returned = pc(rhs)
+            returned.destroy()
         assert kwargs['restart'] == 32 and kwargs['start_iteration'] == 0
         assert kwargs['max_it'] == 512 and kwargs['checkpoint_interval'] == 128
         solution = rhs.copy()
@@ -168,6 +183,10 @@ def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp
     summary = json.loads((tmp_path / 'physical_intermediate_summary.json').read_text())
     assert summary['reference_authority'] == 'PENDING_A4_not_compared'
     if ending == 'pass':
+        if reference:
+            assert summary['status'] == 'REFERENCE_ONLY_PASS'
+            counts = json.loads((tmp_path/'cycles.jsonl').read_text().splitlines()[0])['pc_costs']
+            assert counts['reference_factor_solves'] == counts['inner_explicit_actions'] == 1
         # A real raw-artifact mutation must override the previously passing status.
         with np.load(tmp_path / 'final_residual_arrays.npz') as data:
             arrays = dict(data)

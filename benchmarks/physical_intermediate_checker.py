@@ -27,6 +27,20 @@ def check(directory: Path) -> dict:
         return path
 
     raw = summary['residual_arrays']
+    reference_only = summary['profile'].get('reference_only', False)
+    if reference_only:
+        ledger = summary['reference_pc_ledger']
+        pc_rows = [json.loads(x) for x in hashed_file(ledger['filename'], ledger['sha256']).read_text().splitlines()]
+        require(bool(pc_rows), 'missing reference PC solves')
+        for row in pc_rows:
+            inner = row['intermediate']
+            numerator, denominator = inner['true_residual_norm'], inner['rhs_norm']
+            relative = numerator / max(denominator, np.finfo(float).tiny)
+            require(np.isfinite([numerator, denominator, relative]).all() and
+                    min(numerator, denominator) >= 0 and relative <= 1e-10,
+                    'original A4 reference residual gate failed')
+            require(abs(relative-inner['final_true_residual']) <= 1e-12,
+                    'reference norm/residual mismatch')
     with np.load(hashed_file(raw['filename'], raw['sha256']), allow_pickle=False) as arrays:
         rhs, action, solution = arrays['rhs'], arrays['action'], arrays['solution']
         require(rhs.shape == action.shape == solution.shape, 'incompatible raw vector shapes')
@@ -92,7 +106,7 @@ def check(directory: Path) -> dict:
         packets = read_canonical_packet_shard(directory / 'numerical_output' / canonical['filename'])
         require(len(packets) == canonical['packet_count'] > 0, 'canonical packet count mismatch')
         require(all(np.isfinite(value) for _, value in packets), 'nonfinite canonical coefficients')
-    return dict(classification='DISCRETE_SOLVER_OUTPUT_PASS' if not errors else 'NUMERICAL_OR_OUTPUT_FAIL',
+    return dict(classification=('REFERENCE_ONLY_PASS' if reference_only else 'DISCRETE_SOLVER_OUTPUT_PASS') if not errors else 'NUMERICAL_OR_OUTPUT_FAIL',
                 reference_authority='PENDING_A4_not_compared',
                 gate_failures=errors, raw_facts=facts, checker_seconds=time.monotonic()-started,
                 resource_authority='separate enclosing parent verdict required')
@@ -106,7 +120,7 @@ def main() -> int:
         result = dict(classification='EVIDENCE_INCOMPLETE', reference_authority='PENDING_A4_not_compared',
                       gate_failures=[f'{type(exc).__name__}: {exc}'])
     (directory / 'checker.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
-    return 0 if result['classification'] == 'DISCRETE_SOLVER_OUTPUT_PASS' else 2
+    return 0 if result['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS') else 2
 
 
 if __name__ == '__main__':

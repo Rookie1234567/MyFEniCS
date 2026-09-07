@@ -356,6 +356,7 @@ def _take_solution(result: Any) -> tuple[Any, Callable[[], None]]:
 
 class ShiftedAuxiliaryCycle:
     """One bounded p4->p2->p1 shifted auxiliary V-cycle."""
+    solver_identity = 'FGMRES12_A4_shifted'
 
     def __init__(
         self,
@@ -569,6 +570,7 @@ class PhysicalIntermediatePreconditioner:
         self.positive_cycle = positive_cycle
         self.p6_to_p4 = p6_to_p4
         self.intermediate_cycle = intermediate_cycle
+        self.intermediate_identity = getattr(intermediate_cycle, 'solver_identity', 'FGMRES12_A4_shifted')
         self.stage_callback = stage_callback
         self.apply_count = 0
         self.last_apply_facts: dict[str, Any] = {}
@@ -627,7 +629,7 @@ class PhysicalIntermediatePreconditioner:
             self.apply_count += 1
             self.last_apply_facts = {
                 "schema": "task039.physical_intermediate_pc.v1",
-                "formula": "S6-MR -> P64^H -> FGMRES12(A4, PC=shifted_cycle) -> P64-MR -> S6-MR",
+                "formula": ("S6-MR -> P64^H -> " + self.intermediate_identity + " -> P64-MR -> S6-MR"),
                 "direction_count": len(direction_facts),
                 "direction_facts": direction_facts, "intermediate": inner_facts,
                 "input_norm": _norm(rhs), "output_norm": _norm(correction),
@@ -641,6 +643,11 @@ class PhysicalIntermediatePreconditioner:
 
     @property
     def audit(self) -> Mapping[str, Any]:
+        if self.intermediate_identity == 'exact_augmented_A4_reference':
+            return dict(schema='task039.physical_intermediate_pc.v1',
+                method=self.intermediate_identity, diagnostic_only=True,
+                outer_restart=OUTER_RESTART, outer_max_it=OUTER_MAX_IT,
+                inner_residual_limit=1e-10, apply_count=self.apply_count)
         return {
             "schema": "task039.physical_intermediate_pc.v1",
             "method": INTERMEDIATE_METHOD,

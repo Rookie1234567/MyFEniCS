@@ -16,9 +16,9 @@ def run_full3d_iterative(
     method = resolved_payload.get("method", {})
     if not isinstance(method, Mapping) or method.get("kind") != "full3d_iterative":
         raise ValueError("full3d_iterative adapter received a mismatched method")
-    from src.io.physical_intermediate_profile import PROFILE
+    from src.io.physical_intermediate_profile import PROFILES
 
-    if resolved_payload.get("solver", {}).get("preconditioner") == PROFILE:
+    if resolved_payload.get("solver", {}).get("preconditioner") in PROFILES:
         from .physical_intermediate import run_physical_intermediate
 
         return run_physical_intermediate(resolved_payload, Path(run_directory), source_sha=_kwargs["source_sha"])

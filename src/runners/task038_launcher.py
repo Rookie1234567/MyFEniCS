@@ -323,9 +323,9 @@ def launch_specification(
         if source_sha is not None
         else _source_sha(Path(__file__).resolve().parents[2])
     )
-    from src.io.physical_intermediate_profile import PROFILE
+    from src.io.physical_intermediate_profile import PROFILES
 
-    physical_candidate = specification.solver.get('preconditioner') == PROFILE and not contract_probe
+    physical_candidate = specification.solver.get('preconditioner') in PROFILES and not contract_probe
     physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                        if physical_candidate else None)
     adapter = (
