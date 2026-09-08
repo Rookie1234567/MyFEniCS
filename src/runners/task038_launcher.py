@@ -47,6 +47,29 @@ from src.io.run_specification import RunSpecification
 PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
 TerminateFactory = Callable[[Any], dict[str, Any]]
+
+
+def _task041_sparse_smaps_sample_factory(
+    base_sampler: Callable[..., dict[str, Any]],
+    clock: Callable[[], float],
+    interval: float = 30.0,
+) -> SampleFactory:
+    """Keep authority sampling frequent while throttling process-tree smaps."""
+
+    last_smaps_at: float | None = None
+
+    def sample(root_pid: int) -> dict[str, Any]:
+        nonlocal last_smaps_at
+        now = clock()
+        include_smaps = last_smaps_at is None or now - last_smaps_at >= interval
+        authority = base_sampler(root_pid, include_smaps=include_smaps)
+        if include_smaps:
+            last_smaps_at = now
+        return authority
+
+    return sample
+
+
 V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB = 59.7638938904
 V6_H4_POST_COMPACTION_SETUP_PEAK_LIMIT_GIB = 42.019652939
 V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES = 45118258790
@@ -3646,9 +3669,9 @@ def launch_specification(
         not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
     )
     if task041_public_route and sample_factory is resource_authority_sample:
-        effective_sample_factory = partial(
-            resource_authority_sample,
-            include_smaps=True,
+        effective_sample_factory = _task041_sparse_smaps_sample_factory(
+            sample_factory,
+            monotonic,
         )
     run_directory = _timestamp_directory(specification, timestamp)
     start_time = _now()

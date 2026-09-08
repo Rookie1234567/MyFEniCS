@@ -171,6 +171,27 @@ def _run_phase(
     )
 
 
+def test_sparse_smaps_sampler_keeps_authority_polling_and_throttles_smaps():
+    calls = []
+    clock = iter((0.0, 1.0, 30.0, 30.1))
+
+    def base_sampler(pid, *, include_smaps):
+        calls.append((pid, include_smaps))
+        return {"pid": pid, "include_smaps": include_smaps}
+
+    sampler = launcher._task041_sparse_smaps_sample_factory(
+        base_sampler, lambda: next(clock)
+    )
+
+    assert [sampler(17) for _ in range(4)] == [
+        {"pid": 17, "include_smaps": True},
+        {"pid": 17, "include_smaps": False},
+        {"pid": 17, "include_smaps": True},
+        {"pid": 17, "include_smaps": False},
+    ]
+    assert calls == [(17, True), (17, False), (17, True), (17, False)]
+
+
 def test_task041_adapter_is_exact_and_task039_remains_separate():
     assert (
         method_adapter_identity("hybrid_iterative", TASK041_MODEL_ID)
@@ -290,6 +311,8 @@ def test_phase_handoff_records_rss_drop_and_pss_uss_without_summing(tmp_path):
     assert phase["rss_drop"]["before_process_tree_rss_bytes"] == 100
     assert phase["rss_drop"]["after_process_tree_rss_bytes"] == 0
     assert phase["sample_count"] == 1
+    assert phase["smaps_complete_sample_count"] == 1
+    assert phase["resource_sampling_semantics"].startswith("RSS/VmSwap")
 
 
 @pytest.mark.parametrize(
@@ -504,9 +527,17 @@ def test_phase_records_one_readable_resample_and_continues(tmp_path):
 
 def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     samples = _TerminalUnreadableSample()
-    popen = _FakePopen(poll_results=[None, None, None, 0])
+    popen = _FakePopen(poll_results=[None, None, None, None, None, 0])
     terminated = []
-    grace_delays = []
+    clock_value = [0.0]
+    transition_delays = []
+
+    def clock():
+        return clock_value[0]
+
+    def sleep(seconds):
+        transition_delays.append(seconds)
+        clock_value[0] += seconds
 
     def terminate(process):
         terminated.append(process.pid)
@@ -517,7 +548,8 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
         sample=samples,
         terminate=terminate,
         popen_factory=popen,
-        sleep=grace_delays.append,
+        clock=clock,
+        sleep=sleep,
     )
 
     assert phase["returncode"] == 0
@@ -533,7 +565,48 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     assert phase["process_group_gone"] is True
     assert phase["termination"] is None
     assert terminated == []
-    assert grace_delays.count(supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS) == 1
+    assert transition_delays.count(
+        supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
+    ) == 2
+
+
+def test_phase_fails_after_terminal_transition_budget(tmp_path):
+    samples = _TerminalUnreadableSample()
+    popen = _FakePopen(poll_results=[None] * 100)
+    terminated = []
+    clock_value = [0.0]
+    transition_delays = []
+
+    def clock():
+        return clock_value[0]
+
+    def sleep(seconds):
+        transition_delays.append(seconds)
+        clock_value[0] += seconds
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    gone_states = iter((False, True))
+    with pytest.raises(supervisor.Task041SupervisorError) as error:
+        _run_phase(
+            tmp_path,
+            sample=samples,
+            terminate=terminate,
+            popen_factory=popen,
+            clock=clock,
+            sleep=sleep,
+            process_group_gone=lambda _pid: next(gone_states),
+        )
+
+    assert error.value.classification == "task041_resource_sample_failure"
+    assert error.value.stage == "producer_resource_sample"
+    assert sum(delay for delay in transition_delays if delay >= 0.2) == pytest.approx(
+        3.0
+    )
+    assert terminated == [popen.processes[0].pid]
 
 
 def test_phase_ignores_terminal_readable_zero_for_rss_drop(tmp_path):
@@ -1263,3 +1336,14 @@ def test_launcher_lazy_dispatch_does_not_build_generic_plan(tmp_path, monkeypatc
     result = launcher.launch_specification(fake_spec, source_sha="s" * 40)
     assert called["specification"] is fake_spec
     assert result["result_classification"] == "worker_exit0"
+    assert called["kwargs"]["sample_factory"] is not launcher.resource_authority_sample
+
+    def custom_sampler(_pid):
+        return {}
+
+    launcher.launch_specification(
+        fake_spec,
+        source_sha="s" * 40,
+        sample_factory=custom_sampler,
+    )
+    assert called["kwargs"]["sample_factory"] is custom_sampler

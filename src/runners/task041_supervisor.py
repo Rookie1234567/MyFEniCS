@@ -54,6 +54,7 @@ TASK041_SHORTWAVE_TIMEOUT_SECONDS = TASK041_SHORTWAVE_WORKFLOW_LIMITS[
     "timeout_seconds"
 ]
 TASK041_TERMINAL_SAMPLE_GRACE_SECONDS = 0.25
+TASK041_TERMINAL_SAMPLE_TRANSITION_BUDGET_SECONDS = 3.0
 TASK041_REQUIRED_THREADS = (
     "OMP_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
@@ -362,33 +363,64 @@ def _run_phase(
                     else None
                 )
                 if authority_kind is None:
-                    returncode = process.poll()
-                    if returncode is None:
-                        sleep(TASK041_TERMINAL_SAMPLE_GRACE_SECONDS)
-                        authority = sample_factory(process.pid)
-                        authority_kind = (
-                            _resource_authority_kind(authority)
-                            if isinstance(authority, Mapping)
-                            else None
+                    if samples:
+                        transition_deadline = (
+                            now + TASK041_TERMINAL_SAMPLE_TRANSITION_BUDGET_SECONDS
                         )
+                        while authority_kind is None:
+                            returncode = process.poll()
+                            if returncode is not None:
+                                break
+                            now = monotonic()
+                            remaining = transition_deadline - now
+                            if remaining <= 0.0:
+                                raise Task041SupervisorError(
+                                    f"{phase} resource authorities are incomplete",
+                                    classification="task041_resource_sample_failure",
+                                    stage=f"{phase}_resource_sample",
+                                )
+                            sleep(min(TASK041_TERMINAL_SAMPLE_GRACE_SECONDS, remaining))
+                            returncode = process.poll()
+                            if returncode is not None:
+                                break
+                            now = monotonic()
+                            if now >= transition_deadline:
+                                raise Task041SupervisorError(
+                                    f"{phase} resource authorities are incomplete",
+                                    classification="task041_resource_sample_failure",
+                                    stage=f"{phase}_resource_sample",
+                                )
+                            authority = sample_factory(process.pid)
+                            authority_kind = (
+                                _resource_authority_kind(authority)
+                                if isinstance(authority, Mapping)
+                                else None
+                            )
+                        if returncode is not None:
+                            break
+                    else:
                         returncode = process.poll()
-                        if returncode is None and authority_kind is None:
+                        if returncode is None:
+                            sleep(TASK041_TERMINAL_SAMPLE_GRACE_SECONDS)
+                            returncode = process.poll()
+                            if returncode is None:
+                                now = monotonic()
+                                authority = sample_factory(process.pid)
+                                authority_kind = (
+                                    _resource_authority_kind(authority)
+                                    if isinstance(authority, Mapping)
+                                    else None
+                                )
+                                if authority_kind is None:
+                                    returncode = process.poll()
+                        if returncode is not None:
+                            break
+                        if authority_kind is None:
                             raise Task041SupervisorError(
                                 f"{phase} resource authorities are incomplete",
                                 classification="task041_resource_sample_failure",
                                 stage=f"{phase}_resource_sample",
                             )
-                    if returncode is not None:
-                        if authority_kind is not None:
-                            record = _sample_record(
-                                authority,
-                                phase,
-                                now - workflow_started,
-                                authority_kind=authority_kind,
-                            )
-                            samples.append(record)
-                            _append_jsonl(memory_stages_path, record)
-                        break
                 record = _sample_record(
                     authority,
                     phase,
@@ -496,6 +528,15 @@ def _run_phase(
         "timeout_scope": "phase" if phase_elapsed_timeout else "workflow",
         "limits": phase_record_limits,
         "sample_count": len(samples),
+        "smaps_complete_sample_count": sum(
+            isinstance(sample.get("pss_bytes"), int)
+            and isinstance(sample.get("uss_bytes"), int)
+            for sample in samples
+        ),
+        "resource_sampling_semantics": (
+            "RSS/VmSwap and dedicated cgroup memory/swap are sampled every poll; "
+            "PSS/USS are sparse diagnostics."
+        ),
         "warning_reached": warning_reached,
         "termination_reason": termination_reason,
         "termination": termination,
