@@ -49,6 +49,7 @@ def compare_balanced_output(fine, solution, outputs, directory, payload, *, mark
     cache = Path('benchmarks/artifacts/task39extra/v5_balanced/reference_output')
     manifest = cache/'binding.json'
     reference_hash = hashes[str(source)]
+    output_identity = hashlib.sha256(json.dumps(payload['output'],sort_keys=True).encode()).hexdigest()
     if not manifest.exists():
         cache.mkdir(parents=True, exist_ok=False)
         vector = solution.duplicate()
@@ -56,11 +57,11 @@ def compare_balanced_output(fine, solution, outputs, directory, payload, *, mark
             vector.array[:] = ref['x_ref']
             ref_output = recover_p0_outputs(fine, vector, cache, export_all_port_modes=True)
             files = {f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in cache.iterdir() if f.is_file()}
-            _atomic_json(manifest, dict(reference_sha256=reference_hash, outputs=ref_output, files=files))
+            _atomic_json(manifest, dict(reference_sha256=reference_hash, output_identity_sha256=output_identity, outputs=ref_output, files=files))
         finally:
             vector.destroy()
     saved = json.loads(manifest.read_text())
-    if saved['reference_sha256'] != reference_hash:
+    if saved['reference_sha256'] != reference_hash or saved.get('output_identity_sha256') != output_identity:
         raise ValueError('posterior reference output binding mismatch')
     for name,digest in saved['files'].items():
         if hashlib.sha256((cache/name).read_bytes()).hexdigest() != digest:

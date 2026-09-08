@@ -146,6 +146,27 @@ def check(directory: Path) -> dict:
         require(hashlib.sha256(path.read_bytes()).hexdigest() == digest, f'artifact hash mismatch: {filename}')
         return path
 
+    if 'recovery' in summary:
+        recovery = summary['recovery']
+        origin = Path(recovery['original_directory']).resolve()
+        audit_path = Path(recovery['original_audit_path'])
+        require(hashlib.sha256(audit_path.read_bytes()).hexdigest() == recovery['original_audit_sha256'],
+                'recovery original audit hash mismatch')
+        audit = json.loads(audit_path.read_text())
+        require(Path(audit['run_directory']).resolve() == origin, 'recovery original path mismatch')
+        old_path = origin/'physical_intermediate_summary.json'
+        require(hashlib.sha256(old_path.read_bytes()).hexdigest() ==
+                audit['artifact_sha256']['physical_intermediate_summary.json'], 'original summary hash mismatch')
+        old = json.loads(old_path.read_text())
+        require(summary['solve'] == old['solve'] and summary['source_sha'] == old['source_sha'] ==
+                recovery['original_source_sha'], 'recovery changed original solve evidence')
+        require(all(recovery[k] == 0 for k in ('new_factor_count','new_pc_count','new_ksp_count')),
+                'recovery unexpectedly performed a new solve')
+        for name in ('pc_applies.jsonl','p4_decisions.jsonl','monitor_residuals.jsonl'):
+            require(hashlib.sha256((directory/name).read_bytes()).hexdigest() == audit['artifact_sha256'][name],
+                    'recovery copied solve evidence differs: '+name)
+        require(summary['final_solution_sha256'] == old['final_solution_sha256'], 'recovery solution identity changed')
+
     raw = summary['residual_arrays']
     from src.io.physical_balanced_profile import BALANCED_PROFILES
     balanced = summary['profile']['identity'] in BALANCED_PROFILES
@@ -176,6 +197,25 @@ def check(directory: Path) -> dict:
         rhs, action, solution = arrays['rhs'], arrays['action'], arrays['solution']
         require(rhs.shape == action.shape == solution.shape, 'incompatible raw vector shapes')
         require(all(np.isfinite(v).all() for v in (rhs, action, solution)), 'nonfinite raw vectors')
+        if 'recovery' in summary:
+            require(hashlib.sha256(solution.tobytes()).hexdigest() == summary['final_solution_sha256'],
+                    'recovery actual solution bytes hash mismatch')
+            old_raw = old['residual_arrays']
+            old_raw_path = (origin/old_raw['filename']).resolve()
+            require(old_raw_path.is_relative_to(origin), 'recovery original raw path escapes origin')
+            old_digest = hashlib.sha256(old_raw_path.read_bytes()).hexdigest()
+            require(old_digest == old_raw['sha256'] == audit['artifact_sha256'][old_raw['filename']],
+                    'recovery original residual arrays hash mismatch')
+            with np.load(old_raw_path, allow_pickle=False) as old_arrays:
+                differences = {}
+                for name, value in (('rhs', rhs), ('action', action)):
+                    prior = old_arrays[name]
+                    difference = (float(np.linalg.norm(value-prior)/max(np.linalg.norm(prior),np.finfo(float).tiny))
+                                  if value.shape == prior.shape else float('inf'))
+                    differences[name] = difference
+                    require(np.isfinite(difference) and difference <= 1e-10,
+                            'recovery original '+name+' relative difference exceeds 1e-10')
+                facts['recovery_original_array_differences'] = differences
         residual = np.linalg.norm(rhs-action)/max(np.linalg.norm(rhs), np.finfo(float).tiny)
         facts['full_explicit_true_relative_residual'] = float(residual)
         require(np.isfinite(residual) and residual <= 1e-6, f'fine residual {residual} exceeds 1e-6',
