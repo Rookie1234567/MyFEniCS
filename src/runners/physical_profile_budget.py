@@ -116,9 +116,15 @@ def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None
                    variant='R0', r0_reference=None):
     from .task038_launcher import launch_specification
     from .physical_pc_comparison import FAST_VARIANT, verify_r0_profile
+    from src.io.physical_intermediate_profile import PACKED_PROFILE
 
-    if variant not in ('R0', FAST_VARIANT):
+    if variant not in ('R0', FAST_VARIANT, PACKED_PROFILE):
         raise InputError('unknown PC profile variant')
+    packed = variant == PACKED_PROFILE
+    if packed:
+        from .physical_pc_profile import PHYSICAL_SHA
+        if specification.physical_model_sha256 != PHYSICAL_SHA:
+            raise InputError('F1 requires the frozen original physical model')
     fast = variant == FAST_VARIANT
     if fast and (recovery_from is not None or r0_reference is None):
         raise InputError('R1 requires the successful R0 reference and no recovery')
@@ -129,11 +135,18 @@ def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None
     except (OSError, ValueError) as exc:
         raise InputError(str(exc)) from exc
 
-    if (specification.solver.get('preconditioner') != (FAST_VARIANT if fast else REFERENCE_PROFILE) or
-            specification.input_sha256 != (FAST_INPUT_SHA if fast else INPUT_SHA)):
+    if packed and recovery_from is not None:
+        raise InputError('packed recovery requires a separately reviewed narrow correction')
+    if (specification.solver.get('preconditioner') != (PACKED_PROFILE if packed else FAST_VARIANT if fast else REFERENCE_PROFILE) or
+            (not packed and specification.input_sha256 != (FAST_INPUT_SHA if fast else INPUT_SHA))):
         raise InputError('PC profile dat identity does not match the selected variant')
     try:
-        verified_checkpoint(checkpoint, specification.physical_model_sha256)
+        verified_checkpoint(checkpoint, specification.physical_model_sha256, **({'packed': True} if packed else {}))
+        checkpoint_available = True
+    except FileNotFoundError as exc:
+        if not packed:
+            raise InputError(str(exc)) from exc
+        checkpoint_available = False
     except (OSError, ValueError) as exc:
         raise InputError(str(exc)) from exc
     budget_path = Path(budget_path).resolve()
@@ -141,7 +154,10 @@ def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None
     with budget_path.with_suffix('.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         budget = json.loads(budget_path.read_text()) if budget_path.exists() else dict(
-            schema='task39extra.review-v1-compute-budget.v1', limit_seconds=36000, attempts=[])
+            schema='task39extra.review-v2-compute-budget.v1' if packed else 'task39extra.review-v1-compute-budget.v1',
+            limit_seconds=36000, attempts=[])
+        if packed and budget.get('schema') != 'task39extra.review-v2-compute-budget.v1':
+            raise InputError('packed F1 requires the separate V2 budget')
         if budget['limit_seconds'] != 36000:
             raise InputError('batch limit must be 36000 seconds')
         recovery = (verify_profile_recovery(recovery_from, budget['attempts'])
@@ -149,22 +165,28 @@ def launch_profile(specification, checkpoint, budget_path, *, recovery_from=None
         permission = REVIEWED_FAILURES[recovery['failed_attempt_kind']] if recovery is not None else None
         if fast and any(a.get('kind') == 'R1_profile' for a in budget['attempts']):
             raise InputError('R1 profile already reserved; no rebuild/retry')
-        if not fast and recovery is None and any(a.get('kind') == 'R0_profile' for a in budget['attempts']):
+        if packed and any(a.get('kind') == 'F1_paired_profile' for a in budget['attempts']):
+            raise InputError('F1 paired profile already reserved; no automatic retry')
+        if not packed and not fast and recovery is None and any(a.get('kind') == 'R0_profile' for a in budget['attempts']):
             raise InputError('R0 profile attempt already reserved; no automatic rebuild/retry')
-        if sum(a['elapsed_seconds'] for a in budget['attempts'])+1830 > 36000:
+        reservation = 2400 if packed else 1830
+        if sum(a['elapsed_seconds'] for a in budget['attempts'])+reservation > 36000:
             raise InputError('insufficient batch budget for setup-inclusive profile and cleanup')
         started = time.monotonic()
-        attempt = dict(kind='R1_profile' if fast else (permission['reservation_kind'] if recovery else 'R0_profile'),
-                       status='RESERVED', elapsed_seconds=1830,
-                       reserved_seconds=1830, full_pc_limit=7, started_timestamp_ns=time.time_ns())
+        attempt = dict(kind='F1_paired_profile' if packed else 'R1_profile' if fast else (permission['reservation_kind'] if recovery else 'R0_profile'),
+                       status='RESERVED', elapsed_seconds=reservation,
+                       reserved_seconds=reservation, full_pc_limit=14 if packed else 7, started_timestamp_ns=time.time_ns())
         if recovery is not None:
             attempt[permission['recovery_field']] = recovery
         budget['attempts'].append(attempt)
         _atomic_json(budget_path, budget)
         try:
             config = dict(checkpoint=str(Path(checkpoint).resolve()), budget_ledger=str(budget_path),
-                          variant=variant, complete_pc_limit=7, batch_limit_seconds=1800,
-                          deadline_monotonic=started+1800)
+                          variant=variant, complete_pc_limit=14 if packed else 7, batch_limit_seconds=2400 if packed else 1800,
+                          deadline_monotonic=started+(2340 if packed else 1800))
+            if packed:
+                config.update(checkpoint_available=checkpoint_available, performance_grace_included_seconds=60,
+                              random_seed=3902, paired_shared_setup=True)
             if binding is not None:
                 config['r0_reference'] = binding
             if recovery is not None:

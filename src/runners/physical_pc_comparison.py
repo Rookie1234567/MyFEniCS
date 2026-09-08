@@ -47,12 +47,13 @@ def primary_pc_seconds(delta):
     return value
 
 
-def validate_pc_records(rows, pcs):
+def validate_pc_records(rows, pcs, *, schedule=None):
     from .physical_pc_profile import SCHEDULE
-    if len(rows) != 7 or len(pcs) != 7:
+    schedule = SCHEDULE if schedule is None else schedule
+    if len(rows) != len(schedule) or len(pcs) != len(schedule):
         raise ValueError('seven timing and actual PC records required')
     residuals = []
-    for i, ((name, warmup), row, pc) in enumerate(zip(SCHEDULE, rows, pcs, strict=True), 1):
+    for i, ((name, warmup), row, pc) in enumerate(zip(schedule, rows, pcs, strict=True), 1):
         if (row['index'], row['input'], row['warmup']) != (i, name, warmup):
             raise ValueError('fixed seven-PC schedule/warmup mismatch')
         primary_pc_seconds(row['timing_delta'])
@@ -67,6 +68,87 @@ def validate_pc_records(rows, pcs):
             raise ValueError('original A4 true residual gate failed')
         residuals.append(relative)
     return residuals
+
+
+def compare_paired_profile(root):
+    """Read only one shared-setup run; historical R0/R1 are never denominators."""
+    from .physical_pc_profile import paired_schedule
+    from src.io.physical_intermediate_profile import PACKED_PROFILE
+    root = Path(root)
+    state = json.loads((root/'pc_profile/state.json').read_text())
+    schedule = paired_schedule(state['config'].get('checkpoint_available', True))
+    rows = [json.loads(line) for line in (root/'profile_applies.jsonl').read_text().splitlines()]
+    pcs = [json.loads(line) for line in (root/'pc_applies.jsonl').read_text().splitlines()]
+    if (state['config']['variant'] != PACKED_PROFILE or state['completed'] != len(schedule)
+            or state['active_apply'] is not None or len(rows) != len(schedule) or len(pcs) != len(schedule)):
+        raise ValueError('incomplete paired profile')
+    for i, (row, expected) in enumerate(zip(rows, schedule, strict=True), 1):
+        if (row['input'], row['warmup'], row['backend']) != expected or row['index'] != i:
+            raise ValueError('paired schedule mismatch')
+    arrays = {}
+    for item in state['captures']:
+        p = root/'pc_profile'/item['path']
+        if item['path'] in arrays or hashlib.sha256(p.read_bytes()).hexdigest() != item['sha256']:
+            raise ValueError('paired capture hash/duplicate mismatch')
+        array = np.load(p, mmap_mode='r', allow_pickle=False)
+        if (list(array.shape) != item['shape'] or array.dtype != np.complex128 or
+                item['ownership_range'] != [0, array.size]):
+            raise ValueError('paired capture layout mismatch')
+        arrays[item['path']] = array
+    errors = {}
+    names = {name for name, _, _ in schedule}
+    checks = state['same_input_checks']
+    expected = {name+'_'+role for name in names for role in ('B6', 'curl', 'material_mass', 'A6')}
+    if len(checks) != len(expected) or {c['name'] for c in checks} != expected:
+        raise ValueError('paired same-input inventory missing or duplicated')
+    for c in checks:
+        errors[c['name']] = array_difference(arrays[c['original']['path']], arrays[c['fast']['path']], 1e-11)
+    for i in range(0, len(rows), 2):
+        for role in ('S6_01.npy', 'S6_02.npy', 'PC_output.npy', 'PC_A6_output.npy'):
+            errors[f'pair_{i//2+1}/{role}'] = array_difference(
+                arrays[f'apply_{i+1:02d}/{role}'], arrays[f'apply_{i+2:02d}/{role}'],
+                None if role == 'PC_A6_output.npy' else 1e-8)
+    times, residuals, repeat_errors = {}, {}, {}
+    for offset, backend in enumerate(('original', 'packed')):
+        selected = rows[offset::2]
+        residuals[backend] = validate_pc_records(
+            [dict(r, index=i) for i, r in enumerate(selected, 1)], pcs[offset::2],
+            schedule=[(n,w) for n,w,_ in schedule[offset::2]])
+        if not all(r['input_unchanged'] and r['output_finite'] and r['output_slave_zero'] for r in selected):
+            raise ValueError('paired stability gate failed')
+        first, repeats = {}, {}
+        for row in selected:
+            if row['warmup']:
+                continue
+            prefix = f"apply_{row['index']:02d}/"
+            captures = {key.removeprefix(prefix):value for key,value in arrays.items() if key.startswith(prefix)}
+            required = {'S6_01.npy','S6_02.npy','PC_output.npy','PC_A6_output.npy',
+                        *(f'A6_{i:02d}.npy' for i in range(1,5))}
+            if not required.issubset(captures):
+                raise ValueError('paired repeat raw inventory incomplete')
+            name = row['input']
+            if name not in first:
+                first[name] = captures
+                continue
+            if name in repeats or first[name].keys() != captures.keys():
+                raise ValueError('paired repeat raw inventory mismatch')
+            repeats[name] = {key:array_difference(first[name][key],value,1e-11) for key,value in captures.items()}
+        if set(repeats) != names or not all(e['passed'] for c in repeats.values() for e in c.values()):
+            raise ValueError('paired repeat raw gate failed')
+        repeat_errors[backend] = repeats
+        times[backend] = [primary_pc_seconds(r['timing_delta']) for r in selected if not r['warmup']]
+    medians = {k:float(np.median(v)) for k,v in times.items()}
+    paired_ratios = [b/a for a,b in zip(times['original'],times['packed'],strict=True)]
+    ratio = float(np.median(paired_ratios))
+    passed = all(e['passed'] is not False for e in errors.values())
+    return dict(passed=passed, comparisons=errors, primary_samples_seconds=times,
+        primary_medians_seconds=medians, ratio=ratio, speed_gate_passed=passed and ratio<=.75,
+        classification='PACKED_EQUIVALENCE_SPEED_PASS' if passed and ratio<=.75 else 'INSUFFICIENT',
+        paired_sample_ratios=paired_ratios, gate_statistic='median(paired packed/original times)',
+        ratio_of_medians_diagnostic=medians['packed']/medians['original'],
+        p4_recomputed_relative_residuals=residuals, repeat_comparisons_recomputed=repeat_errors,
+        timing_scope='same-run paired medians; mandatory logs included; diagnostic capture excluded',
+        original_A6_on_PC_outputs='different PC outputs, diagnostic; same-input A6 gate separately enforced')
 
 
 def validate_same_input_inventory(items):

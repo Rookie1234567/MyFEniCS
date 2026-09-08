@@ -10,7 +10,7 @@ from .fullspace_partial_assembly import IsotropicPartialAssembly
 from .fullspace_physical_action import FullspacePhysicalAction, FullspaceSplitVolumeAction
 from .fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_form
 
-from src.io.physical_intermediate_profile import FAST_PROFILE
+from src.io.physical_intermediate_profile import FAST_PROFILE, PACKED_PROFILE
 
 
 def frozen_smoother_identity(positive):
@@ -27,12 +27,31 @@ def frozen_smoother_identity(positive):
     return facts
 
 
-def install_equivalent_fast(bundle, cfg):
+def shared_setup_identity(bundle):
+    """Process-local identities prove the paired paths borrow the same objects."""
+    p = bundle['positive']
+    return dict(reference_factor=id(bundle['reference_factor']),
+        fine_authority=id(bundle['fine']['physical_action']),
+        upper=id(p['upper_cycle']), lower=id(p['lower_cycle']),
+        upper_smoother=id(p['upper_cycle'].smoother), lower_smoother=id(p['lower_cycle'].smoother),
+        transfers={str(k):id(v) for k,v in bundle.get('actions', {}).get('transfers', {}).items()},
+        p63=id(getattr(p['upper_cycle'], 'p63_transfer', None)),
+        p31=id(getattr(p['lower_cycle'], 'owner_transfer', None)),
+        p3=id(getattr(p['lower_cycle'], 'fine_matrix', None)),
+        p1=id(getattr(p['lower_cycle'], 'coarse_matrix', None)),
+        p1_factor=id(getattr(p['lower_cycle'], 'coarse_solver', None)))
+
+
+def install_equivalent_fast(bundle, cfg, *, profile=FAST_PROFILE):
     """Called only after the original setup, windows and qualification finish."""
     if 'equivalent_fast' in bundle:
         raise ValueError('fast PC backend already installed')
+    if profile not in (FAST_PROFILE, PACKED_PROFILE):
+        raise ValueError('unknown equivalent backend')
+    packed = profile == PACKED_PROFILE
     positive, fine, levels = bundle['positive'], bundle['fine'], bundle['levels']
     before = frozen_smoother_identity(positive)
+    shared = shared_setup_identity(bundle)
     mpc = levels['floquets'][6].mpc
     space = mpc.function_space
     fast_b6 = fast_volume = fast_physical = None
@@ -40,7 +59,7 @@ def install_equivalent_fast(bundle, cfg):
         mu, mass = levels['mu'], levels['mass']
         form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
         fast_b6 = FullspaceMpcFormAction(form, space, mpc=mpc,
-            local_kernel=IsotropicPartialAssembly(space, mu, mass))
+            local_kernel=IsotropicPartialAssembly(space, mu, mass, contiguous_work=packed))
         # Borrow original split forms with their individual tags/rules.
         original_components = fine['volume_action'].component_actions
         forms = tuple(original_components[k]._bilinear_form for k in ('curl', 'material_mass'))
@@ -58,7 +77,7 @@ def install_equivalent_fast(bundle, cfg):
         physical_mu.x.scatter_forward()
         physical_mass.x.scatter_forward()
         kernels = tuple(IsotropicPartialAssembly(space, physical_mu, physical_mass,
-            component_form=form, component=component)
+            component_form=form, component=component, contiguous_work=packed)
             for form, component in zip(forms, ('curl', 'mass'), strict=True))
         fast_volume = FullspaceSplitVolumeAction(*forms, space, mpc=mpc, local_kernels=kernels)
         fast_physical = FullspacePhysicalAction(fast_volume, fine['dtn_action'], owns_dtn=False)
@@ -66,7 +85,8 @@ def install_equivalent_fast(bundle, cfg):
         positive['p6_shell'].action = fast_b6
         bundle['pc'].fine_action = fast_physical
         after = frozen_smoother_identity(positive)
-        facts = dict(profile=FAST_PROFILE, original_setup_before=before, installed_after=after,
+        facts = dict(profile=profile, original_setup_before=before, installed_after=after,
+            shared_setup_objects=shared,
             original_state_preserved=before == after, window_reference='same-run original setup before replacement',
             r0_window_array_hash_available=False, original_a6_authority=True, owns_dtn=False,
             physical_dg0_function_arrays_bytes=int(physical_mu.x.array.nbytes + physical_mass.x.array.nbytes),
@@ -88,6 +108,19 @@ def install_equivalent_fast(bundle, cfg):
             if fast_b6 is not None:
                 fast_b6.destroy()
         raise
+
+
+def select_equivalent_backend(bundle, *, packed):
+    """Switch only borrowed action references, with all timing wrappers closed."""
+    fast = bundle['equivalent_fast']
+    if fast['facts']['profile'] != PACKED_PROFILE:
+        raise ValueError('paired switching requires the explicit packed V2 profile')
+    if frozen_smoother_identity(bundle['positive']) != fast['facts']['original_setup_before']:
+        raise RuntimeError('paired switch changed original setup/window')
+    if shared_setup_identity(bundle) != fast['facts']['shared_setup_objects']:
+        raise RuntimeError('paired switch changed transfer/factor or has active timing wrappers')
+    bundle['positive']['p6_shell'].action = fast['b6'] if packed else fast['original_b6']
+    bundle['pc'].fine_action = fast['physical_action'] if packed else bundle['fine']['physical_action']
 
 
 def release_equivalent_fast(bundle):

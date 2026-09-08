@@ -23,9 +23,9 @@ def _parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--validate-only", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
-    mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT160_DIRECTORY')
+    mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT_DIRECTORY')
     parser.add_argument('--profile-budget-ledger', '--batch-budget-ledger', dest='profile_budget_ledger', type=Path)
-    parser.add_argument('--profile-variant', choices=('R0', 'a2r_equivalent_fast_v1'), default='R0')
+    parser.add_argument('--profile-variant', choices=('R0', 'a2r_equivalent_fast_v1', 'a2r_packed_equivalent_v2'), default='R0')
     parser.add_argument('--profile-r0-reference', type=Path)
     parser.add_argument('--profile-recovery-from', '--profile-cache-recovery-from',
                         dest='profile_recovery_from', type=Path, metavar='FAILED_R0_DIRECTORY')

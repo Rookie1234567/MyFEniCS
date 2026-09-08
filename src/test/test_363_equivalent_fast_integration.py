@@ -96,7 +96,8 @@ def test_fast_budget_once_and_preserves_prior_cost(tmp_path, monkeypatch):
         budget.launch_profile(spec, tmp_path, path, variant=checker.FAST_VARIANT, r0_reference=tmp_path)
 
 
-def test_post_setup_install_preserves_real_windows_and_borrowed_dtn():
+@pytest.mark.parametrize('packed', [False, True])
+def test_post_setup_install_preserves_real_windows_and_borrowed_dtn(packed):
     from dataclasses import replace
     from contextlib import ExitStack
     from mpi4py import MPI
@@ -139,7 +140,10 @@ def test_post_setup_install_preserves_real_windows_and_borrowed_dtn():
             fine=dict(physical_action=physical, volume_action=volume, dtn_action=dtn), reference_factor=factor)
         before = frozen_smoother_identity(positive)
         original_physical_audit = dict(physical.audit)
-        facts = install_equivalent_fast(bundle, cfg); owned.callback(release_equivalent_fast, bundle)
+        from src.io.physical_intermediate_profile import PACKED_PROFILE, FAST_PROFILE
+        facts = install_equivalent_fast(bundle, cfg, profile=PACKED_PROFILE if packed else FAST_PROFILE)
+        owned.callback(release_equivalent_fast, bundle)
+        assert all(k['contiguous_real_imag_work'] is packed for k in facts['kernels'])
         assert facts['physical_dg0_function_arrays_bytes'] == 18*2*np.dtype(np.complex128).itemsize
         assert facts['original_setup_before'] == facts['installed_after'] == before
         assert bundle['reference_factor'] is factor and bundle['fine']['physical_action'] is physical
@@ -155,6 +159,20 @@ def test_post_setup_install_preserves_real_windows_and_borrowed_dtn():
         assert np.linalg.norm(y.array-z.array)/np.linalg.norm(y.array) <= 1e-11
         old = b6.apply(x).array.copy()
         assert np.linalg.norm(shell.action.apply(x).array-old)/np.linalg.norm(old) <= 1e-11
+        if packed:
+            from src.solvers.physical_equivalent_fast import select_equivalent_backend
+            from src.solvers.physical_pc_timing import PCTiming
+            # Close the old instrumentation before every action reference switch.
+            for enabled in (False, True, False, True):
+                select_equivalent_backend(bundle, packed=enabled)
+                timer = PCTiming()
+                action = shell.action
+                timer.wrap(action, 'apply', 'B6')
+                np.testing.assert_allclose(action.apply(x).array, old, rtol=1e-11, atol=1e-11)
+                assert timer.snapshot()['B6']['calls'] == 1
+                timer.close()
+                assert 'apply' not in vars(action)
+                assert frozen_smoother_identity(positive) == before
         release_equivalent_fast(bundle)
         assert not destroyed and shell.action is b6 and bundle['pc'].fine_action is physical
         physical.apply(x, z)

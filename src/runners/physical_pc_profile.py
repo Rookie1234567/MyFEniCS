@@ -15,27 +15,36 @@ CHECKPOINT_SOLUTION_SHA = '4158d89c90bc949a23b9383f7531dd915fd705d6970367a837175
 PHYSICAL_SHA = '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
 MODE_SHA = 'dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2'
 INPUT_SHA = '7b0d90dc18e222d5d01e52deb06c12b41f37862fda5cf8e3a4e1565f3f7af999'
+PACKED_CHECKPOINT_MANIFEST_SHA = 'ecd87729bd7126f7fcaa3a7e99cfb336e2178649ccbda759369851f49e1bc2b2'
+PACKED_CHECKPOINT_SOLUTION_SHA = '3c6ecb49f2a397ddccd4c75305fe4d1870928de144bca76bd8d53e515e1d4b5b'
 SCHEDULE = [('physical_rhs', True)] + [(name, False) for name in
     ('physical_rhs', 'checkpoint160_residual', 'random_complex') for _ in range(2)]
 
 
-def verified_checkpoint(path, physical_sha):
+def verified_checkpoint(path, physical_sha, *, packed=False):
     path = Path(path)
     manifest_bytes = (path/'manifest.json').read_bytes()
     solution_path = path/'solution_rank0.npy'
-    if (hashlib.sha256(manifest_bytes).hexdigest() != CHECKPOINT_MANIFEST_SHA or
-            hashlib.sha256(solution_path.read_bytes()).hexdigest() != CHECKPOINT_SOLUTION_SHA):
-        raise ValueError('checkpoint160 hash mismatch')
+    if (hashlib.sha256(manifest_bytes).hexdigest() != (PACKED_CHECKPOINT_MANIFEST_SHA if packed else CHECKPOINT_MANIFEST_SHA) or
+            hashlib.sha256(solution_path.read_bytes()).hexdigest() != (PACKED_CHECKPOINT_SOLUTION_SHA if packed else CHECKPOINT_SOLUTION_SHA)):
+        raise ValueError('checkpoint hash mismatch')
     manifest = json.loads(manifest_bytes)
     if physical_sha != PHYSICAL_SHA or manifest['physical_model_sha256'] != physical_sha:
         raise ValueError('profile physical identity mismatch')
     return manifest, solution_path
 
 
+def paired_schedule(checkpoint_available=True):
+    names = ['physical_rhs'] + (['checkpoint576_residual'] if checkpoint_available else []) + ['random_complex']
+    calls = [('physical_rhs', True)] + [(name, False) for name in names for _ in range(2)]
+    return [(name, warm, backend) for name, warm in calls for backend in ('original', 'packed')]
+
+
 def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
     """No outer KSP or recovery. Every complete/partial call is durable evidence."""
     from src.solvers.fullspace_physical_intermediate import apply_owned
     from src.solvers.physical_pc_timing import PCTiming, instrument_reference_pc
+    from src.io.physical_intermediate_profile import PACKED_PROFILE
 
     directory = Path(directory)/'pc_profile'
     directory.mkdir()
@@ -46,6 +55,10 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
     current = [None]
     serials = {}
     first_repeat = {}
+    packed = config.get('variant', 'R0') == PACKED_PROFILE
+    checkpoint_name = 'checkpoint576_residual' if packed else 'checkpoint160_residual'
+    schedule = paired_schedule(config.get('checkpoint_available', True)) if packed else [(n, w, None) for n, w in SCHEDULE]
+    state['schedule'] = schedule if packed else SCHEDULE
 
     def save(name, vector):
         with timing.scope('artifact_io'):
@@ -75,9 +88,11 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
             raise InterruptedError('profile performance stop at safe point')
 
     try:
-        manifest, path = verified_checkpoint(config['checkpoint'], payload['provenance']['physical_model_sha256'])
+        manifest, path = (verified_checkpoint(config['checkpoint'], payload['provenance']['physical_model_sha256'], **({'packed': True} if packed else {}))
+                          if config.get('checkpoint_available', True) else (None, None))
         if (bundle['fine']['mode_sha256'] != MODE_SHA or rhs.getSize() != 173802 or
-                list(rhs.getOwnershipRange()) != manifest['ranks'][0]['ownership']['ownership_range']):
+                payload['provenance']['physical_model_sha256'] != PHYSICAL_SHA or
+                list(rhs.getOwnershipRange()) != (manifest['ranks'][0]['ownership']['ownership_range'] if manifest else [0, 173802])):
             raise ValueError('profile original size/mode/ownership mismatch')
         slaves = np.asarray(bundle['levels']['floquets'][6].mpc.slaves, dtype=np.int64)
         slaves = slaves[(slaves >= 0) & (slaves < rhs.getLocalSize())]
@@ -88,7 +103,7 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
 
             inputs = {'physical_rhs': own(rhs.copy())}
             x = own(rhs.duplicate())
-            values = np.load(path, allow_pickle=False)
+            values = np.load(path, allow_pickle=False) if path else np.zeros(rhs.getLocalSize(), dtype=np.complex128)
             if values.dtype != np.complex128 or values.shape != (rhs.getLocalSize(),):
                 raise ValueError('checkpoint vector layout mismatch')
             x.array[:] = values
@@ -100,12 +115,17 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
             residual = own(rhs.copy())
             residual.axpy(-1, applied)
             relative = float(residual.norm()/rhs.norm())
-            if abs(relative-manifest['explicit_true_residual']) > 1e-10:
-                raise ValueError('checkpoint160 reconstructed original A6 residual mismatch')
-            state['checkpoint160_recomputed_residual'] = relative
-            inputs['checkpoint160_residual'] = residual
+            if manifest is not None:
+                if abs(relative-manifest['explicit_true_residual']) > 1e-10:
+                    raise ValueError('checkpoint reconstructed original A6 residual mismatch')
+                state[checkpoint_name+'_recomputed'] = relative
+                if not packed:
+                    state['checkpoint160_recomputed_residual'] = relative
+                inputs[checkpoint_name] = residual
+            else:
+                state['checkpoint576'] = 'not_available; two other inputs only'
             random = own(rhs.duplicate())
-            rng = np.random.default_rng(20260907)
+            rng = np.random.default_rng(3902 if packed else 20260907)
             random.array[:] = rng.standard_normal(rhs.getLocalSize())+1j*rng.standard_normal(rhs.getLocalSize())
             random.array[slaves] = 0
             inputs['random_complex'] = random
@@ -118,7 +138,7 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
             if 'equivalent_fast' in bundle:
                 from .physical_pc_comparison import verify_r0_profile
                 fast = bundle['equivalent_fast']
-                binding = verify_r0_profile(config['r0_reference']['root'])
+                binding = None if packed else verify_r0_profile(config['r0_reference']['root'])
                 state['equivalent_fast'] = fast['facts']
                 state['same_input_checks'] = []
                 old_components = bundle['fine']['volume_action'].component_actions
@@ -127,7 +147,8 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
                     (name, old_components[name], new_components[name]) for name in ('curl', 'material_mass')]
                 pairs.append(('A6', bundle['fine']['physical_action'], fast['physical_action']))
                 for input_name, vector in inputs.items():
-                    old_input = np.load(Path(binding['root'])/'pc_profile'/f'{input_name}.npy', allow_pickle=False)
+                    old_input = (vector.array.copy() if packed else
+                        np.load(Path(binding['root'])/'pc_profile'/f'{input_name}.npy', allow_pickle=False))
                     if not np.array_equal(old_input, vector.array):
                         raise ValueError('R1 normalized input differs from saved R0 input')
                     for role, old_action, new_action in pairs:
@@ -149,15 +170,25 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
                                 or np.any(old_value[slaves] != 0) or np.any(new_value[slaves] != 0)
                                 or not np.array_equal(vector.array, old_input)):
                             raise ValueError('same-input component equivalence or input/slave gate failed')
-            instrument_reference_pc(bundle, timing, capture)
-            timing.wrap(ledger, 'marker', 'log_marker')
-            timing.wrap(ledger, 'append', 'log_append')
-            for index, (name, warmup) in enumerate(SCHEDULE, 1):
+            if not packed:
+                instrument_reference_pc(bundle, timing, capture)
+                timing.wrap(ledger, 'marker', 'log_marker')
+                timing.wrap(ledger, 'append', 'log_append')
+            for index, (name, warmup, backend) in enumerate(schedule, 1):
                 safe()
+                if packed:
+                    from src.solvers.physical_equivalent_fast import select_equivalent_backend
+                    timing.close()
+                    select_equivalent_backend(bundle, packed=backend == 'packed')
+                    instrument_reference_pc(bundle, timing, capture)
+                    timing.wrap(ledger, 'marker', 'log_marker')
+                    timing.wrap(ledger, 'append', 'log_append')
                 current[0] = directory/f'apply_{index:02d}'
                 current[0].mkdir()
                 serials.clear()
                 state['active_apply'] = dict(index=index, input=name, warmup=warmup)
+                if packed:
+                    state['active_apply'].update(backend=backend, resource_before=ledger.resource_sample())
                 _atomic_json(directory/'state.json', state)
                 ledger.marker('profile_pc_started', state['active_apply'])
                 before = timing.snapshot()
@@ -185,10 +216,11 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
                     state['last_safe'].update(input_unchanged=input_unchanged,
                         output_finite=output_finite, output_slave_zero=output_slave_zero)
                     if not warmup:
-                        if name in first_repeat:
+                        repeat_key = (backend, name) if packed else name
+                        if repeat_key in first_repeat:
                             errors = {}
                             for current_path in sorted(current[0].glob('*.npy')):
-                                old = np.load(first_repeat[name]/current_path.name, mmap_mode='r', allow_pickle=False)
+                                old = np.load(first_repeat[repeat_key]/current_path.name, mmap_mode='r', allow_pickle=False)
                                 new = np.load(current_path, mmap_mode='r', allow_pickle=False)
                                 absolute = float(np.linalg.norm(new-old))
                                 norm = float(np.linalg.norm(old))
@@ -200,7 +232,9 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
                             if not all(row['passed'] for row in errors.values()):
                                 raise ValueError('same-input repeated profile outputs differ')
                         else:
-                            first_repeat[name] = current[0]
+                            first_repeat[repeat_key] = current[0]
+                    if packed:
+                        state['last_safe']['resource_after'] = ledger.resource_sample()
                     state['active_apply'] = None
                     state['timings'] = timing.snapshot()
                     delta = {key: {field: value-before.get(key, {}).get(field, 0)
@@ -224,14 +258,17 @@ def run_pc_profile(bundle, rhs, payload, directory, ledger, source_sha, config):
                     ledger.append('profile_applies.jsonl', dict(state['last_safe'], timing_delta=delta))
                     ledger.marker('profile_pc_complete', state['last_safe'], allow_stop=True)
                 finally:
+                    if packed:
+                        timing.close()
                     if solution is not None:
                         solution.destroy()
             safe()
             state['status'] = 'PROFILE_COMPLETED'
             if 'equivalent_fast' in bundle:
-                from .physical_pc_comparison import compare_profiles
+                from .physical_pc_comparison import compare_profiles, compare_paired_profile
                 _atomic_json(directory/'state.json', state)
-                comparison = compare_profiles(config['r0_reference']['root'], directory.parent)
+                comparison = (compare_paired_profile(directory.parent) if packed else
+                    compare_profiles(config['r0_reference']['root'], directory.parent))
                 _atomic_json(directory.parent/'pc_comparison.json', comparison)
                 if not comparison['passed']:
                     raise ValueError('R1 numerical equivalence gate failed')

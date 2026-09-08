@@ -1,0 +1,79 @@
+{
+  "schema": "task39extra.packed-and-joint-mr.v2",
+  "stage": "F0/F1 implementation; formal not_run",
+  "head": "abe5fa2cb1240c397f514a815390a2d9fabd5d5f",
+  "source_state": "dirty development diff; not formal provenance",
+  "implementation_audit": {
+    "path": "benchmarks/artifacts/task39extra/v2_f1_checks/implementation_audit.json",
+    "sha256": "49e851d5a32a8fdfae40fe801777ee270b17c6419d3dd21192b265c154985654"
+  },
+  "budget": {
+    "path": "benchmarks/artifacts/task39extra/review_v2_batch_budget.json",
+    "sha256": "1c8300b4f0c7bbf55efae1e21068275971654f2de8d922bb39001b22257c3ce3",
+    "limit_seconds": 36000,
+    "attempt_count": 8,
+    "charged_seconds": 18.217964472947642
+  },
+  "input": {
+    "path": "input/task39extra/original_13p5nm_p6h10_a2r_packed_equivalent_v2.dat",
+    "sha256": "2a88399b0c3f5f5cd3d3b6b3b0619db8a051f5283c746c81642e1d98adb168bd"
+  },
+  "tests": [
+    {
+      "status": "FAILED",
+      "elapsed_seconds": 3.9879218480782583,
+      "path": "benchmarks/artifacts/task39extra/v2_f1_checks/checks_2.log",
+      "sha256": "c3894f8555e2522069f45ff3e0f9f9b1d7d31ee89635548f305a9fb65cfd4635"
+    },
+    {
+      "status": "PASSED",
+      "elapsed_seconds": 4.689019392011687,
+      "path": "benchmarks/artifacts/task39extra/v2_f1_checks/checks_3.log",
+      "sha256": "c29e536a7970d9a34c0ca6c77621e0b4e5eff34a9b3453197627f5519e45e0db"
+    },
+    {
+      "status": "PASSED",
+      "elapsed_seconds": 1.419340105028823,
+      "path": "benchmarks/artifacts/task39extra/v2_f1_checks/checks_4.log",
+      "sha256": "4c5184381ff30572b01b4abd9647f15d9d90db92adfd8fabaeb83efdf689cd4c"
+    },
+    {
+      "status": "PASSED",
+      "elapsed_seconds": 1.322435159003362,
+      "path": "benchmarks/artifacts/task39extra/v2_f1_checks/checks_5.log",
+      "sha256": "a71fb94d541d59392eb0e0f76bd1cd4754472e5a749645ed780336d5a865127f"
+    },
+    {
+      "status": "PASSED",
+      "elapsed_seconds": 4.123782100970857,
+      "path": "benchmarks/artifacts/task39extra/v2_f1_checks/checks_7.log",
+      "sha256": "0c50d5f28b2bb4af61c07fe69b7b9022433a96250737a9ebab367571c0094efc"
+    }
+  ],
+  "F1": {
+    "status": "not_run",
+    "shared_setup": true,
+    "maximum_complete_PC": 14,
+    "maximum_per_path": 7,
+    "random_seed": 3902,
+    "checkpoint": 576,
+    "setup_and_measurement_until_stop_request_seconds": 2340,
+    "cooperative_grace_seconds": 60,
+    "whole_budget_seconds": 2400,
+    "gate_statistic": "median(paired packed/original times)",
+    "speed_ratio_limit": 0.75,
+    "ratio_of_medians": "diagnostic only",
+    "repeat_authority": "hash-verified raw arrays recomputed"
+  },
+  "F2": "not_run",
+  "F3": "not_implemented",
+  "F4": "not_run",
+  "final_regression": {
+    "passed": 85,
+    "pytest_reported_seconds": 6.11,
+    "wrapper_monotonic_seconds": 4.123782100970857,
+    "compileall": "passed",
+    "diff_check": "passed",
+    "formal": "not_run"
+  }
+}

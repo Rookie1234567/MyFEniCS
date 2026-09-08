@@ -4,10 +4,20 @@ PROFILE = "physical_intermediate_p4_shifted_aux_v1"
 REFERENCE_PROFILE = "physical_intermediate_p4_reference_v1"
 FAST_PROFILE = "a2r_equivalent_fast_v1"
 LIGHT_PROFILE = "p6smooth_p4ref_p6smooth_v1"
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE)
+PACKED_PROFILE = "a2r_packed_equivalent_v2"
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE)
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == PACKED_PROFILE:
+        facts = profile_facts(FAST_PROFILE)
+        facts.update(identity=identity, backend=dict(B6='exact_partial_assembly_batch8_contiguous',
+            pc_A6_volume='exact_partial_assembly_batch8_contiguous', outer_A6='original_split_form',
+            installation='after_original_setup_and_window', shared_dtn='borrowed'))
+        facts['diagnostic_profile'] = dict(complete_pc_limit=14, per_path_limit=7,
+            setup_inclusive_seconds=2400, outer_execution_enabled=False, paired_shared_setup=True)
+        facts['resources'].update(performance_grace_seconds=60, batch_limit_seconds=36000)
+        return facts
     if identity == LIGHT_PROFILE:
         facts = profile_facts(REFERENCE_PROFILE)
         facts.update(identity=identity, positive_identity='H6',

@@ -140,7 +140,8 @@ def instrument_reference_pc(bundle, timing, capture):
                 after=lambda args, result: capture('A6', args[1]))
     timing.wrap(fine['volume_action'], 'apply', 'volume')
     timing.wrap(fine['dtn_action'], 'apply', 'DtN')
-    if 'equivalent_fast' in bundle:
+    if ('equivalent_fast' in bundle and
+            bundle['pc'].fine_action is bundle['equivalent_fast']['physical_action']):
         fast = bundle['equivalent_fast']
         timing.wrap(fast['physical_action'], 'apply', 'A6',
                     after=lambda args, result: capture('A6', args[1]))

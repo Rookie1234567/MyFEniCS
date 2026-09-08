@@ -327,8 +327,9 @@ def launch_specification(
         else _source_sha(Path(__file__).resolve().parents[2])
     )
     from src.io.physical_intermediate_profile import PROFILES
-    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, profile_facts
-    if specification.solver.get('preconditioner') == FAST_PROFILE and pc_profile is None:
+    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, profile_facts
+    packed = specification.solver.get('preconditioner') == PACKED_PROFILE
+    if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
 
     physical_candidate = specification.solver.get('preconditioner') in PROFILES and not contract_probe
@@ -336,7 +337,7 @@ def launch_specification(
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
-    workflow_limit = 1800 if pc_profile is not None else physical_resources.get('workflow_seconds', 7200)
+    workflow_limit = (2400 if packed else 1800) if pc_profile is not None else physical_resources.get('workflow_seconds', 7200)
     solve_limit = physical_resources.get('solve_seconds', 3600)
     physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                        if physical_candidate else None)
@@ -356,6 +357,7 @@ def launch_specification(
     )
     if pc_profile is not None:
         from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
+        from .physical_pc_profile import PACKED_CHECKPOINT_MANIFEST_SHA, PACKED_CHECKPOINT_SOLUTION_SHA, paired_schedule
 
         recovery = pc_profile.get('recovery_from', pc_profile.get('cache_recovery_from'))
         if pc_profile.get('r0_reference', {}).get('source_sha') == source:
@@ -367,10 +369,11 @@ def launch_specification(
         cache_empty = not any(cache_home.iterdir())
         if not cache_empty:
             raise InputError('profile JIT cache must be independently empty before launch')
-        pc_profile = dict(pc_profile, diagnostic_only=True, schedule=SCHEDULE,
+        pc_profile = dict(pc_profile, diagnostic_only=True,
+            schedule=paired_schedule(pc_profile.get('checkpoint_available', True)) if packed else SCHEDULE,
             cache_home=str(cache_home.resolve()), cache_empty_before_launch=cache_empty,
-            checkpoint_manifest_sha256=CHECKPOINT_MANIFEST_SHA,
-            checkpoint_solution_sha256=CHECKPOINT_SOLUTION_SHA, source_sha=source,
+            checkpoint_manifest_sha256=PACKED_CHECKPOINT_MANIFEST_SHA if packed else CHECKPOINT_MANIFEST_SHA,
+            checkpoint_solution_sha256=PACKED_CHECKPOINT_SOLUTION_SHA if packed else CHECKPOINT_SOLUTION_SHA, source_sha=source,
             input_sha256=specification.input_sha256, resolved_config_sha256=_resolved_sha)
         diagnostic_path = run_directory/'pc_profile_config.json'
         _write_json(diagnostic_path, pc_profile)
@@ -411,7 +414,8 @@ def launch_specification(
                     cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light else
                         Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
                     source_state=physical_source,
-                    **(dict(grace_seconds=30, hard_stop_immediate=True,
+                    **(dict(grace_seconds=60 if packed else 30, hard_stop_immediate=True,
+                            cooperative_performance_stop=packed,
                             worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),
                                                 'XDG_CACHE_HOME': pc_profile['cache_home']})
                        if pc_profile is not None else dict(grace_seconds=60, hard_stop_immediate=True,
