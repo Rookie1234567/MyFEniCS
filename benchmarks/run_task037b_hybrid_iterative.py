@@ -1697,6 +1697,7 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
     log: Callable[[str], None] | None,
     detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None,
     post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None,
+    sampled_column_contract: Mapping[str, Any] | None = None,
 ) -> FrozenM10Setup:
     """Build the ordinary tail from a solver-free selected-mode packet."""
 
@@ -1852,6 +1853,7 @@ def _build_frozen_m10_setup_from_selected_mode_packet(
         exact_one_cell_work_dir=exact_one_cell_work_dir,
         stage_callback=detail_stage_callback,
         post_destroy_cleanup=post_destroy_cleanup,
+        sampled_column_contract=sampled_column_contract,
         log=log,
     )
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -1888,6 +1890,7 @@ def build_frozen_m10_setup(
     selected_mode_packet_manifest: Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
+    sampled_column_contract: Mapping[str, Any] | None = None,
 ) -> FrozenM10Setup:
     """Build the frozen physical/QEP/endcap/coupling bundle only.
 
@@ -1901,6 +1904,10 @@ def build_frozen_m10_setup(
     block_rotation_tolerance=FROZEN_M10.block_rotation_tolerance.
     """
 
+    if sampled_column_contract is not None and selected_mode_packet_manifest is None:
+        raise ValueError(
+            "sampled_column_contract requires selected_mode_packet_manifest"
+        )
     cfg = (
         deepcopy(cfg_override)
         if cfg_override is not None
@@ -1951,6 +1958,7 @@ def build_frozen_m10_setup(
             log=log,
             detail_stage_callback=detail_stage_callback,
             post_destroy_cleanup=post_destroy_cleanup,
+            sampled_column_contract=sampled_column_contract,
         )
 
     timings: dict[str, float] = {}

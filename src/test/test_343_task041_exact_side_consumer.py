@@ -640,6 +640,13 @@ def test_task041_shortwave_worker_contract_uses_phase_limits(
     assert contract["limits"]["swap_limit_bytes"] == 0
 
 
+def test_sampled_contract_requires_selected_mode_packet_manifest():
+    with pytest.raises(ValueError, match="selected_mode_packet_manifest"):
+        iterative_runner.build_frozen_m10_setup(
+            sampled_column_contract={"columns": [0]}
+        )
+
+
 def test_fresh_sampled_contract_is_bound_to_current_manifest(tmp_path):
     identity = {
         "mode_count": 480,
@@ -905,6 +912,29 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     packet_manifest.write_text("fresh packet", encoding="utf-8")
     packet_identity = tmp_path / "fresh" / "identity.json"
     packet_identity.write_text(json.dumps(identity), encoding="utf-8")
+    fake_offsets = (0, 1, identity["mode_count"] // 2, identity["mode_count"] - 1)
+    fake_columns = [
+        *fake_offsets,
+        *(identity["mode_count"] + offset for offset in fake_offsets),
+    ]
+    fake_contract_payload = {
+        "columns": fake_columns,
+        "mode_count_per_direction": identity["mode_count"],
+        "roles": {str(column): ["fresh"] for column in fake_columns},
+    }
+    fake_contract_sha256 = hashlib.sha256(
+        json.dumps(
+            fake_contract_payload, sort_keys=True, separators=(",", ":")
+        ).encode()
+    ).hexdigest()
+    fake_sampled_contract = {
+        **fake_contract_payload,
+        "sha256": fake_contract_sha256,
+        "fresh_packet_binding": {
+            "binding_semantics": "path_neutral_identity_and_manifest",
+            "sampled_column_contract_sha256": fake_contract_sha256,
+        },
+    }
     captured = {"setup": {}, "run_v5": {}, "recovery_called": False}
     resource_state = {"after": False}
 
@@ -1099,15 +1129,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     monkeypatch.setattr(
         task041,
         "_task041_consumer_sampled_column_contract",
-        lambda *args: {
-            "columns": [0],
-            "roles": {"0": ["fresh"]},
-            "sha256": "f" * 64,
-            "source": "fresh_packet_contract",
-            "fresh_packet_binding": {
-                "binding_semantics": "path_neutral_identity_and_manifest"
-            },
-        },
+        lambda *args: {**fake_sampled_contract, "source": "fresh_packet_contract"},
     )
     monkeypatch.setattr(task041, "_task041_consumer_profile", lambda: FakeProfile())
     monkeypatch.setattr(
@@ -1145,6 +1167,9 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     assert captured["setup"]["cfg_override"] is fake_cfg
     assert captured["setup"]["modal_cfg_override"] is fake_modal_cfg
     assert captured["setup"]["selected_mode_packet_identity"] == identity
+    assert captured["setup"]["sampled_column_contract"] == captured["run_v5"][
+        "sampled_column_contract"
+    ]
     assert captured["run_v5"]["v6_profile"] is False
     assert captured["run_v5"]["exact_spool_root"] is None
     assert captured["run_v5"]["packet_identity"] == identity

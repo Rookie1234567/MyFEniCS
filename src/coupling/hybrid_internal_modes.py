@@ -2073,6 +2073,7 @@ def build_hybrid_internal_mode_coupling(
     canonical_trace_family_sha256: str | None = None,
     stage_callback: Callable[[str, Mapping[str, object]], None] | None = None,
     post_destroy_cleanup: Callable[[], Mapping[str, object]] | None = None,
+    sampled_column_contract: Mapping[str, object] | None = None,
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -2210,6 +2211,7 @@ def build_hybrid_internal_mode_coupling(
                 log=log,
                 stage_callback=stage_callback,
                 post_destroy_cleanup=post_destroy_cleanup,
+                sampled_column_contract=sampled_column_contract,
             )
             exact_traction_overrides = exact_build.matrices
             pending_exact_overrides = dict(exact_traction_overrides)

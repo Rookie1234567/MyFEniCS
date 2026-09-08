@@ -1843,6 +1843,7 @@ def run_task041_consumer(
             selected_mode_packet_manifest=manifest_path,
             selected_mode_packet_identity=recomputed_identity,
             selected_mode_packet_manifest_sha256=packet_manifest_sha256,
+            sampled_column_contract=sampled_contract,
         )
         qep_release = dict(setup.qep_release)
         if qep_release.get("qep_calls") != 0 or qep_release.get(

@@ -1,5 +1,7 @@
 """Focused contracts and a real three-box H(curl)/Floquet fixture."""
 
+import hashlib
+import json
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -23,7 +25,10 @@ from src.coupling.hybrid_one_cell_exact_traction import (
     transfer_congruent_endpoint_columns,
 )
 from src.coupling.hybrid_one_cell_exact_traction_builder import (
+    _identity_comparison_slices,
     _one_cell_config as build_one_cell_config,
+    _sampled_direct_relift_metadata,
+    _validate_sampled_direct_relift_contract,
 )
 from src.coupling.hybrid_internal_modes import _destroy_pending_exact_overrides
 from src.common.config_3d import target_stage4_config
@@ -290,6 +295,116 @@ def test_exact_carrier_reports_four_blocks_and_release() -> None:
     assert audit["interior_rows"] == 6
     assert audit["interior_matrix_nnz"] == 12
     assert audit["transient_released"] is True
+
+
+def test_sampled_direct_relift_contract_preserves_order_and_branch_slices() -> None:
+    mode_count = 6
+    columns = [5, 6, 0, 7, 4, 10, 1, 11]
+    roles = {str(column): ["sample"] for column in columns}
+    payload = {
+        "columns": columns,
+        "mode_count_per_direction": mode_count,
+        "roles": roles,
+    }
+    contract_sha256 = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    plan = _validate_sampled_direct_relift_contract(
+        {
+            **payload,
+            "sha256": contract_sha256,
+            "fresh_packet_binding": {
+                "sampled_column_contract_sha256": contract_sha256
+            },
+        },
+        mode_count,
+    )
+    assert plan["global_columns"] == (5, 6, 0, 7, 4, 10, 1, 11)
+    assert plan["positive_global_columns"] == (5, 0, 4, 1)
+    assert plan["negative_global_columns"] == (6, 7, 10, 11)
+    assert plan["positive_positions"] == (0, 2, 4, 6)
+    assert plan["negative_positions"] == (1, 3, 5, 7)
+    omitted = {2, 3, 8, 9}
+    assert omitted.isdisjoint(plan["global_columns"])
+    transferred = np.arange(24, dtype=np.float64).reshape(2, 12).astype(
+        np.complex128
+    )
+    sampled_primal_input = transferred[:, columns]
+    sampled_primal_output = sampled_primal_input.copy()
+    assert sampled_primal_input.shape[1] == 8
+    assert sampled_primal_output.shape[1] == 8
+    positive, positive_reference, negative, negative_reference = (
+        _identity_comparison_slices(
+            sampled_primal_output, sampled_primal_input, plan, mode_count
+        )
+    )
+    np.testing.assert_array_equal(positive, transferred[:, [5, 0, 4, 1]])
+    np.testing.assert_array_equal(
+        positive_reference, sampled_primal_input[:, [0, 2, 4, 6]]
+    )
+    np.testing.assert_array_equal(negative, transferred[:, [6, 7, 10, 11]])
+    np.testing.assert_array_equal(
+        negative_reference, sampled_primal_input[:, [1, 3, 5, 7]]
+    )
+    full = _identity_comparison_slices(
+        transferred, transferred, None, mode_count
+    )
+    np.testing.assert_array_equal(full[0], transferred[:, :mode_count])
+    np.testing.assert_array_equal(full[2], transferred[:, mode_count:])
+    assert _sampled_direct_relift_metadata(plan, mode_count) == {
+        "sampled_column_contract_sha256": plan["sha256"],
+        "sample_global_columns": columns,
+        "direct_relift_columns": 8,
+        "primal_validation_transfer_columns": 8,
+        "dual_operator_transfer_columns": 12,
+        "total_operator_source_columns": 12,
+        "validation_scope": "all-row canonical bijection plus hash-bound sampled values",
+    }
+
+
+def test_sampled_direct_relift_contract_rejects_changed_sha_or_binding() -> None:
+    columns = [0, 1, 2, 4, 5, 6, 7, 8]
+    payload = {
+        "columns": columns,
+        "mode_count_per_direction": 5,
+        "roles": {str(column): ["sample"] for column in columns},
+    }
+    contract_sha256 = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    contract = {
+        **payload,
+        "sha256": contract_sha256,
+        "fresh_packet_binding": {
+            "sampled_column_contract_sha256": contract_sha256
+        },
+    }
+    changed = {**contract, "columns": [0, 1, 2, 3, 5, 6, 7, 8]}
+    with pytest.raises(ValueError, match="SHA256 mismatch"):
+        _validate_sampled_direct_relift_contract(changed, 5)
+    mismatched_binding = {
+        **contract,
+        "fresh_packet_binding": {"sampled_column_contract_sha256": "0" * 64},
+    }
+    with pytest.raises(ValueError, match="binding SHA256 mismatch"):
+        _validate_sampled_direct_relift_contract(mismatched_binding, 5)
+
+
+@pytest.mark.parametrize("columns", ([0, 0, 4], [0, 8], [0, 1], [4, 5]))
+def test_sampled_direct_relift_contract_rejects_invalid_coverage(columns) -> None:
+    with pytest.raises(ValueError, match="Sampled direct re-lift contract"):
+        _validate_sampled_direct_relift_contract(
+            {
+                "columns": columns,
+                "mode_count_per_direction": 4,
+                "roles": {str(column): ["sample"] for column in columns},
+                "sha256": "a" * 64,
+                "fresh_packet_binding": {
+                    "sampled_column_contract_sha256": "a" * 64
+                },
+            },
+            4,
+        )
 
 
 def test_pending_exact_override_cleanup_only_releases_unclaimed_pairs() -> None:

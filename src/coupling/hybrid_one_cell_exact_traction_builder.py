@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -274,6 +276,117 @@ def _lift_port_columns(
         field.x.scatter_forward()
         columns.append(_active_values_for_port(field, condensed, rows))
     return np.column_stack(columns)
+
+
+def _validate_sampled_direct_relift_contract(
+    sampled_column_contract: Mapping[str, Any] | None, mode_count: int
+) -> dict[str, Any] | None:
+    """Validate columns used only for the local identity reference re-lift."""
+
+    if sampled_column_contract is None:
+        return None
+    columns = sampled_column_contract.get("columns")
+    if isinstance(columns, (str, bytes)) or not isinstance(columns, Sequence):
+        raise TypeError("Sampled direct re-lift contract columns must be a sequence.")
+    if not columns or any(type(value) is not int for value in columns):
+        raise ValueError("Sampled direct re-lift contract columns must be integers.")
+    global_columns = tuple(int(value) for value in columns)
+    if len(set(global_columns)) != len(global_columns):
+        raise ValueError("Sampled direct re-lift contract columns must be unique.")
+    total_columns = 2 * int(mode_count)
+    if any(value < 0 or value >= total_columns for value in global_columns):
+        raise ValueError("Sampled direct re-lift contract column is out of range.")
+    positive = tuple(value for value in global_columns if value < mode_count)
+    negative = tuple(value for value in global_columns if value >= mode_count)
+    if not positive or not negative:
+        raise ValueError(
+            "Sampled direct re-lift contract must cover positive and negative columns."
+        )
+    roles = sampled_column_contract.get("roles")
+    if not isinstance(roles, Mapping):
+        raise TypeError("Sampled direct re-lift contract roles must be a mapping.")
+    declared_mode_count = sampled_column_contract.get("mode_count_per_direction")
+    if type(declared_mode_count) is not int or declared_mode_count != int(mode_count):
+        raise ValueError("Sampled direct re-lift contract mode count differs.")
+    contract_payload = {
+        "columns": columns,
+        "mode_count_per_direction": declared_mode_count,
+        "roles": roles,
+    }
+    actual_contract_sha256 = hashlib.sha256(
+        json.dumps(contract_payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    contract_sha256 = sampled_column_contract.get("sha256")
+    if (
+        not isinstance(contract_sha256, str)
+        or len(contract_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in contract_sha256)
+    ):
+        raise ValueError("Sampled direct re-lift contract requires a SHA256.")
+    if contract_sha256 != actual_contract_sha256:
+        raise ValueError("Sampled direct re-lift contract SHA256 mismatch.")
+    binding = sampled_column_contract.get("fresh_packet_binding")
+    if not isinstance(binding, Mapping):
+        raise TypeError("Sampled direct re-lift contract binding must be a mapping.")
+    if binding.get("sampled_column_contract_sha256") != actual_contract_sha256:
+        raise ValueError("Sampled direct re-lift contract binding SHA256 mismatch.")
+    positive_positions = tuple(
+        index for index, value in enumerate(global_columns) if value < mode_count
+    )
+    negative_positions = tuple(
+        index for index, value in enumerate(global_columns) if value >= mode_count
+    )
+    return {
+        "global_columns": global_columns,
+        "positive_global_columns": positive,
+        "negative_global_columns": negative,
+        "positive_positions": positive_positions,
+        "negative_positions": negative_positions,
+        "sha256": contract_sha256,
+    }
+
+
+def _identity_comparison_slices(
+    transferred_columns: np.ndarray,
+    direct_reference: np.ndarray,
+    sampled_plan: Mapping[str, Any] | None,
+    mode_count: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Select positive/negative transferred and direct identity columns."""
+
+    if sampled_plan is None:
+        return (
+            transferred_columns[:, :mode_count],
+            direct_reference[:, :mode_count],
+            transferred_columns[:, mode_count:],
+            direct_reference[:, mode_count:],
+        )
+    positive_positions = list(sampled_plan["positive_positions"])
+    negative_positions = list(sampled_plan["negative_positions"])
+    return (
+        transferred_columns[:, positive_positions],
+        direct_reference[:, positive_positions],
+        transferred_columns[:, negative_positions],
+        direct_reference[:, negative_positions],
+    )
+
+
+def _sampled_direct_relift_metadata(
+    sampled_plan: Mapping[str, Any], mode_count: int
+) -> dict[str, Any]:
+    """Describe sampled validation columns without changing public records."""
+
+    sample_count = len(sampled_plan["global_columns"])
+    operator_count = 2 * int(mode_count)
+    return {
+        "sampled_column_contract_sha256": sampled_plan["sha256"],
+        "sample_global_columns": list(sampled_plan["global_columns"]),
+        "direct_relift_columns": sample_count,
+        "primal_validation_transfer_columns": sample_count,
+        "dual_operator_transfer_columns": operator_count,
+        "total_operator_source_columns": operator_count,
+        "validation_scope": "all-row canonical bijection plus hash-bound sampled values",
+    }
 
 
 def build_exact_one_cell_selected_traction_columns(
@@ -705,6 +818,7 @@ def build_exact_one_cell_traction_matrices(
     log=None,
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None = None,
+    sampled_column_contract: Mapping[str, Any] | None = None,
 ) -> ExactOneCellMatrixBuild:
     """Construct exact one-cell blocks from live modes and local systems."""
 
@@ -729,6 +843,9 @@ def build_exact_one_cell_traction_matrices(
         or len(projection.left_traces) != mode_count
     ):
         raise ValueError("Exact one-cell projection dimensions do not match modes.")
+    sampled_plan = _validate_sampled_direct_relift_contract(
+        sampled_column_contract, mode_count
+    )
 
     work_dir = Path(work_dir)
     comm = bottom_system.local_mesh.mesh.comm
@@ -784,6 +901,17 @@ def build_exact_one_cell_traction_matrices(
                 },
             )
         sources = (*projection.right_traces, *raw_negative_traces)
+        direct_sources = (
+            tuple(sources[index] for index in sampled_plan["global_columns"])
+            if sampled_plan is not None
+            else sources
+        )
+        direct_column_count = len(direct_sources)
+        sampled_metadata = (
+            _sampled_direct_relift_metadata(sampled_plan, mode_count)
+            if sampled_plan is not None
+            else None
+        )
         lift_detail = _replicated_array_marker_detail(
             action.port_rows,
             2 * mode_count,
@@ -870,10 +998,12 @@ def build_exact_one_cell_traction_matrices(
         top_rows = _local_interface_active_rows(top_system)
         bottom_projection_detail = _replicated_array_marker_detail(
             len(bottom_rows),
-            2 * mode_count,
+            direct_column_count,
             comm.size,
             array_scope="replicated_bottom_projection_array",
         )
+        if sampled_plan is not None:
+            bottom_projection_detail.update(sampled_metadata)
         if stage_callback is not None:
             stage_callback("bottom_projection_columns_begin", bottom_projection_detail)
         bottom_pos = _lift_port_columns(
@@ -881,17 +1011,19 @@ def build_exact_one_cell_traction_matrices(
             bottom_system.floquet_data.mpc,
             bottom_system.static_condensation.condensed,
             bottom_rows,
-            sources,
+            direct_sources,
             max(cfg.period_x, cfg.period_y),
         )
         if stage_callback is not None:
             stage_callback("bottom_projection_columns_end", bottom_projection_detail)
         top_projection_detail = _replicated_array_marker_detail(
             len(top_rows),
-            2 * mode_count,
+            direct_column_count,
             comm.size,
             array_scope="replicated_top_projection_array",
         )
+        if sampled_plan is not None:
+            top_projection_detail.update(sampled_metadata)
         if stage_callback is not None:
             stage_callback("top_projection_columns_begin", top_projection_detail)
         top_pos = _lift_port_columns(
@@ -899,14 +1031,18 @@ def build_exact_one_cell_traction_matrices(
             top_system.floquet_data.mpc,
             top_system.static_condensation.condensed,
             top_rows,
-            sources,
+            direct_sources,
             max(cfg.period_x, cfg.period_y),
         )
         if stage_callback is not None:
             stage_callback("top_projection_columns_end", top_projection_detail)
         bottom_pos_transferred_all, bottom_positive_transfer_audit = (
             transfer_congruent_endpoint_columns(
-                one_left,
+                (
+                    one_left[:, list(sampled_plan["global_columns"])]
+                    if sampled_plan is not None
+                    else one_left
+                ),
                 V,
                 condensed,
                 floquet,
@@ -921,7 +1057,11 @@ def build_exact_one_cell_traction_matrices(
         )
         top_pos_transferred_all, top_positive_transfer_audit = (
             transfer_congruent_endpoint_columns(
-                one_right,
+                (
+                    one_right[:, list(sampled_plan["global_columns"])]
+                    if sampled_plan is not None
+                    else one_right
+                ),
                 V,
                 condensed,
                 floquet,
@@ -934,31 +1074,43 @@ def build_exact_one_cell_traction_matrices(
                 target_endpoint="left",
             )
         )
-        bottom_pos_transferred = bottom_pos_transferred_all[:, :mode_count]
-        bottom_negative_transferred = bottom_pos_transferred_all[:, mode_count:]
-        top_pos_transferred = top_pos_transferred_all[:, :mode_count]
-        top_negative_transferred = top_pos_transferred_all[:, mode_count:]
+        (
+            bottom_pos_transferred,
+            bottom_positive_reference,
+            bottom_negative_transferred,
+            bottom_negative_reference,
+        ) = _identity_comparison_slices(
+            bottom_pos_transferred_all, bottom_pos, sampled_plan, mode_count
+        )
+        (
+            top_pos_transferred,
+            top_positive_reference,
+            top_negative_transferred,
+            top_negative_reference,
+        ) = _identity_comparison_slices(
+            top_pos_transferred_all, top_pos, sampled_plan, mode_count
+        )
         bottom_positive_identity = require_congruent_trace_identity(
             bottom_pos_transferred,
-            bottom_pos[:, :mode_count],
+            bottom_positive_reference,
             side="bottom",
         )
         bottom_positive_identity["entity_transfer"] = bottom_positive_transfer_audit
         top_positive_identity = require_congruent_trace_identity(
             top_pos_transferred,
-            top_pos[:, :mode_count],
+            top_positive_reference,
             side="top",
         )
         top_positive_identity["entity_transfer"] = top_positive_transfer_audit
         bottom_negative_identity = require_congruent_trace_identity(
             bottom_negative_transferred,
-            bottom_pos[:, mode_count:],
+            bottom_negative_reference,
             side="bottom",
         )
         bottom_negative_identity["entity_transfer"] = bottom_positive_transfer_audit
         top_negative_identity = require_congruent_trace_identity(
             top_negative_transferred,
-            top_pos[:, mode_count:],
+            top_negative_reference,
             side="top",
         )
         top_negative_identity["entity_transfer"] = top_positive_transfer_audit
@@ -1092,6 +1244,16 @@ def build_exact_one_cell_traction_matrices(
                 },
             }
         )
+        if sampled_plan is not None:
+            audit.update(sampled_metadata)
+            audit["all_active_rows_structurally_bijective"] = all(
+                item.get("bijection") is True
+                for item in (
+                    bottom_positive_transfer_audit,
+                    top_positive_transfer_audit,
+                    *dual_audits,
+                )
+            )
         return ExactOneCellMatrixBuild(matrices=matrices, audit=audit)
     except Exception:
         for pair in matrices.values():
