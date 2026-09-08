@@ -17,7 +17,13 @@ retry candidate R/T/A_balance/A_volume 为 `0.8048686830648746 / 0.0002839834330
 
 retry lifecycle：bottom/top factor count `1/1→0/0`，actions/components destroyed，`rss_drop=pass`；cgroup authority `229028663296→218838220800 B`，final marker=`211014574080 B`。
 
-producer telemetry：qep_begin=`0.192512509 s`、qep_ready=`17998.540383 s`、producer peak=`16.784275055 GiB`、packet bytes=`913401973`、packet write max-rank=`0.963676714 s`、consumer_qep_required=false。`qep_begin` 至 `qep_ready` 不被统称为 eigensolve。
+producer stage boundaries（20260907 marker wall）：positive_qep_solve=`1.167750278 s`；negative_qep_solve=`3273.625841 s`，前段=`3272.458090 s`（含 positive right+adjoint basis，不是单次 solve）；raw_candidate_modes_ready=`4964.725796 s`（区间=`1691.099955 s`）；selected_biorthogonal_bases_ready=`7082.702076 s`（区间=`2117.976280 s`）；modal_qep_temporaries_released=`17997.088030 s`（之后=`10914.385954 s`）。
+最后 10914 秒区间源码上主要只有 `pair_reciprocal_mode_bases` 与轻量收尾；旧 record 没有独立 pairing marker，故仅由源码成本支持其为主导，不能冒充独立计时。qep_begin=`0.192512509 s`、qep_ready=`17998.540383 s`、producer peak=`16.784275055 GiB`、packet bytes=`913401973`、packet write max-rank=`0.963676714 s`、consumer_qep_required=false；qep_begin 至 qep_ready 不被统称为 eigensolve。
+
+## QEP 优化收口
+
+旧 reciprocal mass overlap 为 `3PN` 次 MatMult：M800=`1,920,000`、M1200=`4,320,000`；新实现为 `P+N`：1600/2400，仍完整形成 P×N cost 与 dots 并执行 Hungarian assignment，不能宣称整体 1200/1800 倍提速。K0/K1/K2 Frobenius norms 已由逐 mode 重算改为每 operator tuple 一次，残差公式与 Gate 不变。phase6 新增并持久化 `timings[reciprocal_pairing]`；新归约顺序允许容差内浮点差异，下一次 packet 属于新的 source-bound hash，必须通过 canonical/selection Gate，不承诺与旧 packet byte-identical。
+当前没有 post-change formal performance 数据，M1200 未运行；Task041 physics stop 仍有效，任何小时数均不得写成 measured。
 
 ## 5 nm 证据边界
 

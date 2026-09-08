@@ -298,6 +298,8 @@ def _polynomial_relative_residual(
     operators: QuadraticBetaOperators,
     beta: complex,
     vector: PETSc.Vec,
+    *,
+    operator_frobenius_norms: tuple[float, float, float] | None = None,
 ) -> float:
     residual = operators.K0.createVecLeft()
     work = operators.K0.createVecLeft()
@@ -308,10 +310,15 @@ def _polynomial_relative_residual(
     residual.axpy(beta * beta, work)
     numerator = float(residual.norm(PETSc.NormType.NORM_2))
     vector_norm = float(vector.norm(PETSc.NormType.NORM_2))
+    if operator_frobenius_norms is None:
+        operator_frobenius_norms = tuple(
+            float(matrix.norm(PETSc.NormType.FROBENIUS))
+            for matrix in (operators.K0, operators.K1, operators.K2)
+        )
     denominator = vector_norm * (
-        float(operators.K0.norm(PETSc.NormType.FROBENIUS))
-        + abs(beta) * float(operators.K1.norm(PETSc.NormType.FROBENIUS))
-        + abs(beta) ** 2 * float(operators.K2.norm(PETSc.NormType.FROBENIUS))
+        operator_frobenius_norms[0]
+        + abs(beta) * operator_frobenius_norms[1]
+        + abs(beta) ** 2 * operator_frobenius_norms[2]
     )
     residual.destroy()
     work.destroy()
@@ -325,6 +332,7 @@ def solve_quadratic_beta_modes(
     requested_modes: int = 8,
     tolerance: float = 1.0e-10,
     max_iterations: int = 500,
+    operator_frobenius_norms: tuple[float, float, float] | None = None,
 ) -> tuple[list[QuadraticBetaMode], QuadraticBetaSolveReport]:
     """Solve a target slice with native distributed SLEPc PEP/TOAR."""
 
@@ -351,6 +359,11 @@ def solve_quadratic_beta_modes(
     pep.solve()
 
     converged = int(pep.getConverged())
+    if operator_frobenius_norms is None:
+        operator_frobenius_norms = tuple(
+            float(matrix.norm(PETSc.NormType.FROBENIUS))
+            for matrix in (operators.K0, operators.K1, operators.K2)
+        )
     modes: list[QuadraticBetaMode] = []
     for index in range(converged):
         reduced = operators.K0.createVecRight()
@@ -386,7 +399,10 @@ def solve_quadratic_beta_modes(
                 right_reduced=reduced,
                 right_full=full,
                 polynomial_relative_residual=_polynomial_relative_residual(
-                    operators, beta, reduced
+                    operators,
+                    beta,
+                    reduced,
+                    operator_frobenius_norms=operator_frobenius_norms,
                 ),
                 slepc_relative_error=float(
                     pep.computeError(index, SLEPc.PEP.ErrorType.RELATIVE)

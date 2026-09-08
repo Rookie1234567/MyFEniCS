@@ -332,10 +332,48 @@ def _normalized_mass_overlap(
     return float(cross / max(np.sqrt(norm_first * norm_second), 1.0e-30))
 
 
+def _batched_normalized_mass_overlap_matrix(
+    mass: PETSc.Mat,
+    positive_vectors: Sequence[PETSc.Vec],
+    negative_vectors: Sequence[PETSc.Vec],
+) -> np.ndarray:
+    """Build all normalized positive/negative mass overlaps with P+N actions."""
+
+    positive_norms = np.empty(len(positive_vectors), dtype=np.float64)
+    for index, vector in enumerate(positive_vectors):
+        action = mass.createVecLeft()
+        try:
+            mass.mult(vector, action)
+            positive_norms[index] = max(
+                float(_batched_left_dots(action, (vector,))[0].real), 0.0
+            )
+        finally:
+            action.destroy()
+
+    overlaps = np.empty(
+        (len(positive_vectors), len(negative_vectors)), dtype=np.float64
+    )
+    negative_norms = np.empty(len(negative_vectors), dtype=np.float64)
+    for column, vector in enumerate(negative_vectors):
+        action = mass.createVecLeft()
+        try:
+            mass.mult(vector, action)
+            dots = _batched_left_dots(action, (vector, *positive_vectors))
+            negative_norms[column] = max(float(dots[0].real), 0.0)
+            overlaps[:, column] = np.abs(dots[1:])
+        finally:
+            action.destroy()
+
+    denominator = np.sqrt(positive_norms[:, None] * negative_norms[None, :])
+    return overlaps / np.maximum(denominator, 1.0e-30)
+
+
 def _left_relative_residual(
     adjoints: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
     beta: complex,
     left: PETSc.Vec,
+    *,
+    operator_frobenius_norms: tuple[float, float, float] | None = None,
 ) -> float:
     residual = adjoints[0].createVecLeft()
     work = adjoints[0].createVecLeft()
@@ -345,10 +383,14 @@ def _left_relative_residual(
     adjoints[2].mult(left, work)
     residual.axpy(np.conj(beta) ** 2, work)
     numerator = float(residual.norm(PETSc.NormType.NORM_2))
+    if operator_frobenius_norms is None:
+        operator_frobenius_norms = tuple(
+            float(matrix.norm(PETSc.NormType.FROBENIUS)) for matrix in adjoints
+        )
     denominator = float(left.norm(PETSc.NormType.NORM_2)) * (
-        float(adjoints[0].norm(PETSc.NormType.FROBENIUS))
-        + abs(beta) * float(adjoints[1].norm(PETSc.NormType.FROBENIUS))
-        + abs(beta) ** 2 * float(adjoints[2].norm(PETSc.NormType.FROBENIUS))
+        operator_frobenius_norms[0]
+        + abs(beta) * operator_frobenius_norms[1]
+        + abs(beta) ** 2 * operator_frobenius_norms[2]
     )
     residual.destroy()
     work.destroy()
@@ -547,6 +589,7 @@ def _retained_subspace_dual_rotation(
     near_degenerate_tolerance: float,
     block_rotation_tolerance: float,
     maximum_overlap_condition: float,
+    operator_frobenius_norms: tuple[float, float, float] | None = None,
     directions: Sequence[str] | None = None,
     left_candidates: Sequence[QuadraticBetaMode] | None = None,
 ) -> tuple[
@@ -612,7 +655,12 @@ def _retained_subspace_dual_rotation(
             directions=directions,
         )
         post_left_residuals = tuple(
-            _left_relative_residual(adjoints, beta, vector)
+            _left_relative_residual(
+                adjoints,
+                beta,
+                vector,
+                operator_frobenius_norms=operator_frobenius_norms,
+            )
             for beta, vector in zip(right_betas, new_reduced)
         )
         post_left_residual_max = max(post_left_residuals, default=float("inf"))
@@ -991,11 +1039,15 @@ def build_biorthogonal_mode_basis(
     left_candidates: list[QuadraticBetaMode] = []
     retained_subspace_dual_rotation_audit: dict[str, object] | None = None
     try:
+        adjoint_frobenius_norms = tuple(
+            float(matrix.norm(PETSc.NormType.FROBENIUS)) for matrix in adjoints
+        )
         left_candidates, adjoint_report = solve_quadratic_beta_modes(
             adjoint_operators,
             target=complex(adjoint_target),
             requested_modes=requested,
             tolerance=qep_solver_tolerance,
+            operator_frobenius_norms=adjoint_frobenius_norms,
         )
         if log is not None:
             log("Task32 mode basis: adjoint QEP solve returned")
@@ -1255,6 +1307,7 @@ def build_biorthogonal_mode_basis(
                 near_degenerate_tolerance=near_degenerate_tolerance,
                 block_rotation_tolerance=block_rotation_tolerance,
                 maximum_overlap_condition=maximum_overlap_condition,
+                operator_frobenius_norms=adjoint_frobenius_norms,
                 directions=[
                     str(classification[1]) for classification in classifications
                 ],
@@ -1290,7 +1343,12 @@ def build_biorthogonal_mode_basis(
             left_residual = (
                 retained_left_polynomial_residuals[index]
                 if retained_left_polynomial_residuals is not None
-                else _left_relative_residual(adjoints, right.beta, left_reduced[index])
+                else _left_relative_residual(
+                    adjoints,
+                    right.beta,
+                    left_reduced[index],
+                    operator_frobenius_norms=adjoint_frobenius_norms,
+                )
             )
             classified.append(
                 ClassifiedBiorthogonalMode(
@@ -1352,21 +1410,21 @@ def pair_reciprocal_mode_bases(
 ) -> tuple[ReciprocalModePair, ...]:
     if not positive.modes or not negative.modes:
         return ()
+    overlaps = _batched_normalized_mass_overlap_matrix(
+        operators.electric_mass,
+        [mode.right.right_reduced for mode in positive.modes],
+        [mode.right.right_reduced for mode in negative.modes],
+    )
     cost = np.empty((len(positive.modes), len(negative.modes)), dtype=np.float64)
-    overlaps = np.empty_like(cost)
     for row, plus in enumerate(positive.modes):
         for column, minus in enumerate(negative.modes):
-            overlap = _normalized_mass_overlap(
-                operators.electric_mass,
-                plus.right.right_reduced,
-                minus.right.right_reduced,
-            )
-            overlaps[row, column] = overlap
             reciprocal_error = float(
                 abs(plus.beta + minus.beta)
                 / max(abs(plus.beta), abs(minus.beta), 1.0e-12)
             )
-            cost[row, column] = reciprocal_error + 1.0e-6 * (1.0 - overlap)
+            cost[row, column] = reciprocal_error + 1.0e-6 * (
+                1.0 - overlaps[row, column]
+            )
     rows, columns = linear_sum_assignment(cost)
     return tuple(
         ReciprocalModePair(

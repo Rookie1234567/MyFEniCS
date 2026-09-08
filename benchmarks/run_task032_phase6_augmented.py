@@ -2209,12 +2209,17 @@ def main(
                     )
                 },
             )
+            positive_right_started = time.perf_counter()
             positive_right, positive_report = solve_quadratic_beta_modes(
                 operators,
                 target=target,
                 requested_modes=candidate_modes,
                 tolerance=qep_solver_tolerance,
             )
+            timings["positive_right_qep_solve"] = _max_elapsed(
+                comm, positive_right_started
+            )
+            mark_stage("positive_right_qep_solve")
             progress("Task32 Phase6: positive right QEP modes complete")
             positive_right, positive_selection = select_passive_direction_modes(
                 positive_right,
@@ -2238,6 +2243,7 @@ def main(
                     f"forward modes: {positive_selection.direction_counts}."
                 )
             mark_stage("mode_classification")
+            positive_adjoint_started = time.perf_counter()
             positive = build_biorthogonal_mode_basis(
                 modal_cfg,
                 cross_section,
@@ -2255,6 +2261,10 @@ def main(
                 poynting_evaluator=poynting_evaluator,
                 log=progress,
             )
+            timings["positive_adjoint_basis"] = _max_elapsed(
+                comm, positive_adjoint_started
+            )
+            mark_stage("positive_adjoint_basis")
             progress("Task32 Phase6: positive adjoint basis complete")
             task039_mark_stage(
                 "negative_qep_solve_peak",
@@ -2265,12 +2275,17 @@ def main(
                     )
                 },
             )
+            negative_right_started = time.perf_counter()
             negative_right, negative_report = solve_quadratic_beta_modes(
                 operators,
                 target=-target,
                 requested_modes=candidate_modes,
                 tolerance=qep_solver_tolerance,
             )
+            timings["negative_right_qep_solve"] = _max_elapsed(
+                comm, negative_right_started
+            )
+            mark_stage("negative_right_qep_solve")
             progress("Task32 Phase6: negative right QEP modes complete")
             negative_right, negative_selection = select_passive_direction_modes(
                 negative_right,
@@ -2294,6 +2309,7 @@ def main(
                     f"backward modes: {negative_selection.direction_counts}."
                 )
             task039_mark_stage("raw_candidate_eigenvectors_ready")
+            negative_adjoint_started = time.perf_counter()
             negative = build_biorthogonal_mode_basis(
                 modal_cfg,
                 cross_section,
@@ -2311,6 +2327,10 @@ def main(
                 poynting_evaluator=poynting_evaluator,
                 log=progress,
             )
+            timings["negative_adjoint_basis"] = _max_elapsed(
+                comm, negative_adjoint_started
+            )
+            mark_stage("negative_adjoint_basis")
             task039_mark_stage("selected_biorthogonal_bases_ready")
             progress("Task32 Phase6: negative adjoint basis complete")
             progress(
@@ -2329,7 +2349,10 @@ def main(
                 f"{len(positive.groups)}; first groups="
                 f"{[group.indices for group in positive.groups[:8]]}"
             )
+            pairing_started = time.perf_counter()
             pairs = pair_reciprocal_mode_bases(operators, positive, negative)
+            timings["reciprocal_pairing"] = _max_elapsed(comm, pairing_started)
+            mark_stage("reciprocal_pairing")
             timings["positive_and_negative_biorthogonal_bases"] = _max_elapsed(
                 comm, started
             )
@@ -2396,6 +2419,10 @@ def main(
                 "selection": packet_metadata["selection_diagnostics"],
                 "local_systems_and_coupling": "not_run",
                 "consumer_qep_required": False,
+                "timing_seconds_max_rank": {
+                    **timings,
+                    "total": _max_elapsed(comm, total_started),
+                },
             }
             if task041_mode_prep:
                 producer_record.update(

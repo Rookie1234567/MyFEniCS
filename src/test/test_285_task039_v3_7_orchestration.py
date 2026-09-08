@@ -21,6 +21,7 @@ import benchmarks.task039_v3_7_watchdog as watchdog
 from benchmarks.canonical_vector_artifacts import write_canonical_packet_shard
 from src.runners import task038_launcher
 from benchmarks import run_task037b_hybrid_iterative as frozen_runner
+from benchmarks import run_task032_phase6_augmented as phase6
 from benchmarks.task037c_robustness import Task37cProfile
 from benchmarks.task039_v3_7_orchestration import (
     V3_7_ABSOLUTE_HARD_BYTES,
@@ -7453,3 +7454,131 @@ def test_v10_j1_inner_fgmres_worker_releases_components_and_records_zero_map(
     assert timeline.index("components_destroy") < timeline.index("fgmres_call")
     assert "collective_cleanup" in timeline
     assert markers[-1] == "v10_j1_inner_fgmres_bottom_retained_state_release"
+
+
+def test_phase6_packet_producer_record_persists_qep_and_pairing_timings_on_controlled_stop(
+    monkeypatch, tmp_path
+) -> None:
+    class Destroyable:
+        def __init__(self, **values):
+            self.__dict__.update(values)
+
+        def destroy(self):
+            pass
+
+    operators = Destroyable(
+        full_shape=(4, 4),
+        reduced_shape=(2, 2),
+        field_degree=6,
+        geometry_degree=1,
+        coefficient_degree=1,
+        quadrature_degree=4,
+        quadrature_policy="tiny-test",
+    )
+    report = SimpleNamespace(converged_modes=4)
+    selection = SimpleNamespace(numerically_infinite_candidate_count=0)
+
+    def fake_basis():
+        return Destroyable(
+            modes=[
+                SimpleNamespace(beta=1.0 + 0.0j),
+                SimpleNamespace(beta=2.0 + 0.0j),
+            ],
+            groups=[],
+        )
+
+    packet_module = __import__(
+        "benchmarks.task039_v4_selected_mode_packet", fromlist=["dummy"]
+    )
+    monkeypatch.setattr(
+        phase6,
+        "_source_provenance",
+        lambda *_args: {
+            "commit_sha": "a" * 40,
+            "branch": "fake-controlled-stop",
+            "git_dirty": False,
+            "tracked_source_dirty": False,
+            "verification": "test",
+            "verified_clean_sha": "a" * 40,
+        },
+    )
+    monkeypatch.setattr(phase6, "build_matching_cross_section", lambda *a, **k: object())
+    monkeypatch.setattr(phase6, "build_cross_section_spaces", lambda *a, **k: object())
+    monkeypatch.setattr(
+        phase6, "assemble_quadratic_beta_operators", lambda *a: operators
+    )
+    monkeypatch.setattr(phase6, "PoyntingFluxEvaluator", lambda *a: object())
+    monkeypatch.setattr(phase6, "analytic_homogeneous_beta", lambda *a: 1.0 + 0.0j)
+    monkeypatch.setattr(
+        phase6,
+        "solve_quadratic_beta_modes",
+        lambda *a, **k: ([object(), object()], report),
+    )
+    monkeypatch.setattr(
+        phase6,
+        "select_passive_direction_modes",
+        lambda modes, **k: (modes, selection),
+    )
+    monkeypatch.setattr(phase6, "build_biorthogonal_mode_basis", lambda *a, **k: fake_basis())
+    monkeypatch.setattr(phase6, "pair_reciprocal_mode_bases", lambda *a: ["pair"])
+    monkeypatch.setattr(
+        packet_module,
+        "build_task039_v4_packet_metadata",
+        lambda **k: {
+            "qep_diagnostics": {"fake": True},
+            "selection_diagnostics": {"fake": True},
+        },
+    )
+    monkeypatch.setattr(
+        packet_module,
+        "write_task039_v4_selected_mode_packet",
+        lambda *a, **k: {
+            "manifest": "manifest.json",
+            "manifest_sha256": "b" * 64,
+            "write_seconds_max_rank": 0.01,
+        },
+    )
+    config = SimpleNamespace(
+        case_name="task041_fake",
+        nedelec_degree=6,
+        mesh_target_size=3.0,
+        n_air=1.0,
+        incident_theta_deg=89.0,
+        polarization_kind="s",
+        stage4_full3d_assembly_backend=phase6.ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+    )
+    identity = tmp_path / "identity.json"
+    identity.write_text(json.dumps({"external_keys": {}}))
+    stages = tmp_path / "memory_stages.jsonl"
+    result = phase6.main(
+        [
+            "--h-nm", "3", "--modal-h-nm", "3", "--degree", "6",
+            "--modal-degree", "6", "--requested-modes", "2",
+            "--candidate-modes", "4", "--incident-grazing-deg", "1",
+            "--internal-propagation-model", "full3d_uniform_cg",
+            "--internal-traction-model", "full3d_one_cell_exact_schur",
+            "--stage4-full3d-assembly-backend",
+            phase6.ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+            "--verified-clean-sha", "a" * 40,
+            "--selected-mode-packet-producer-dir", str(tmp_path / "packet"),
+            "--selected-mode-packet-identity-json", str(identity),
+            "--memory-stages", str(stages), "--output", str(tmp_path / "record.json"),
+        ],
+        config_override=config,
+        task041_mode_prep=True,
+        task041_expected_mesh_nm=3.0,
+    )
+    timings = result["timing_seconds_max_rank"]
+    assert {
+        "positive_right_qep_solve", "positive_adjoint_basis",
+        "negative_right_qep_solve", "negative_adjoint_basis",
+        "reciprocal_pairing", "total",
+    } <= timings.keys()
+    assert all(np.isfinite(float(value)) and float(value) >= 0.0 for value in timings.values())
+    assert result["status"] == "controlled_stop_packet_written"
+    marker_stages = {json.loads(line)["stage"] for line in stages.read_text().splitlines()}
+    assert {
+        "positive_right_qep_solve", "positive_adjoint_basis",
+        "negative_right_qep_solve", "negative_adjoint_basis",
+        "reciprocal_pairing",
+    } <= marker_stages

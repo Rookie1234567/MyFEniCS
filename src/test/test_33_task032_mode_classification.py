@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
 
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
+from scipy.optimize import linear_sum_assignment
 
 from src.common.config_3d import target_stage4_config
 from src.modes.cross_section_spaces import (
@@ -14,10 +16,13 @@ from src.modes.cross_section_spaces import (
 from src.modes.mode_classification import (
     NoAdmissibleLeftPairError,
     _batched_left_dots,
+    _batched_normalized_mass_overlap_matrix,
     _identity_error_metrics,
     _qep_overlap,
     _qep_overlap_matrix,
     _require_admissible_left_pairs,
+    _left_relative_residual,
+    _normalized_mass_overlap,
     build_biorthogonal_mode_basis,
     classify_mode_branch,
     pair_reciprocal_mode_bases,
@@ -25,6 +30,7 @@ from src.modes.mode_classification import (
     track_mode_bases,
 )
 from src.modes.quadratic_beta_eigenproblem import (
+    _polynomial_relative_residual,
     analytic_homogeneous_beta,
     assemble_quadratic_beta_operators,
     solve_quadratic_beta_modes,
@@ -33,6 +39,56 @@ from src.modes.stable_propagation import (
     build_two_sided_propagation,
     diagnose_reciprocity_and_passivity,
 )
+
+
+_TINY_HERMITIAN_MASS = np.asarray(
+    [
+        [2.0, 0.2 - 0.1j, 0.0, 0.05],
+        [0.2 + 0.1j, 3.0, 0.15, 0.0],
+        [0.0, 0.15, 2.5, 0.1 + 0.04j],
+        [0.05, 0.0, 0.1 - 0.04j, 1.8],
+    ],
+    dtype=np.complex128,
+)
+
+
+class _CountingPETScMat:
+    def __init__(self, matrix: PETSc.Mat) -> None:
+        self.matrix = matrix
+        self.mult_calls = 0
+        self.norm_calls = 0
+
+    def createVecLeft(self) -> PETSc.Vec:
+        return self.matrix.createVecLeft()
+
+    def mult(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.mult_calls += 1
+        self.matrix.mult(source, target)
+
+    def norm(self, norm_type: PETSc.NormType) -> float:
+        self.norm_calls += 1
+        return self.matrix.norm(norm_type)
+
+
+def _tiny_distributed_matrix(values: np.ndarray) -> PETSc.Mat:
+    matrix = PETSc.Mat().createAIJ(values.shape, comm=MPI.COMM_WORLD)
+    matrix.setUp()
+    first, last = (int(value) for value in matrix.getOwnershipRange())
+    columns = np.arange(values.shape[1], dtype=PETSc.IntType)
+    for row in range(first, last):
+        matrix.setValues(row, columns, values[row])
+    matrix.assemble()
+    return matrix
+
+
+def _tiny_distributed_vector(
+    matrix: PETSc.Mat, values: np.ndarray
+) -> PETSc.Vec:
+    vector = matrix.createVecRight()
+    first, last = (int(value) for value in vector.getOwnershipRange())
+    vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
+    vector.assemble()
+    return vector
 
 
 class Task032ModeClassificationTests(unittest.TestCase):
@@ -172,6 +228,160 @@ class Task032ModeClassificationTests(unittest.TestCase):
             for mode in modes:
                 mode.destroy()
             operators.destroy()
+
+    def test_reciprocal_mass_overlap_batch_matches_scalar_and_preserves_assignment(
+        self,
+    ):
+        mass_matrix = _tiny_distributed_matrix(_TINY_HERMITIAN_MASS)
+        positive_values = np.asarray(
+            [[1.0, 0.2j, -0.5, 0.3 - 0.1j], [0.1, -0.4j, 0.7, 0.2]],
+            dtype=np.complex128,
+        )
+        negative_values = np.asarray(
+            [positive_values[1], positive_values[0]], dtype=np.complex128
+        )
+        positive_betas = (1.0 + 0.01j, 2.0 + 0.02j)
+        negative_betas = (-2.0 - 0.02j, -1.0 - 0.01j)
+        positive_vectors = [
+            _tiny_distributed_vector(mass_matrix, values)
+            for values in positive_values
+        ]
+        negative_vectors = [
+            _tiny_distributed_vector(mass_matrix, values)
+            for values in negative_values
+        ]
+        scalar_mass = _CountingPETScMat(mass_matrix)
+        batched_mass = _CountingPETScMat(mass_matrix)
+        positive_modes = [
+            SimpleNamespace(
+                beta=beta,
+                right=SimpleNamespace(right_reduced=vector),
+                direction="forward",
+                passive_branch_valid=True,
+            )
+            for beta, vector in zip(positive_betas, positive_vectors)
+        ]
+        negative_modes = [
+            SimpleNamespace(
+                beta=beta,
+                right=SimpleNamespace(right_reduced=vector),
+                direction="backward",
+                passive_branch_valid=True,
+            )
+            for beta, vector in zip(negative_betas, negative_vectors)
+        ]
+        try:
+            ownership = tuple(map(int, mass_matrix.getOwnershipRange()))
+            for vector in positive_vectors + negative_vectors:
+                self.assertEqual(tuple(map(int, vector.getOwnershipRange())), ownership)
+            scalar_overlaps = np.asarray(
+                [
+                    [
+                        _normalized_mass_overlap(scalar_mass, first, second)
+                        for second in negative_vectors
+                    ]
+                    for first in positive_vectors
+                ]
+            )
+            batched_overlaps = _batched_normalized_mass_overlap_matrix(
+                batched_mass, positive_vectors, negative_vectors
+            )
+            self.assertEqual(batched_mass.mult_calls, 4)
+            np.testing.assert_allclose(
+                batched_overlaps, scalar_overlaps, rtol=1.0e-12, atol=1.0e-12
+            )
+
+            expected_cost = np.asarray(
+                [
+                    [
+                        abs(plus_beta + minus_beta)
+                        / max(abs(plus_beta), abs(minus_beta), 1.0e-12)
+                        + 1.0e-6 * (1.0 - scalar_overlaps[row, column])
+                        for column, minus_beta in enumerate(negative_betas)
+                    ]
+                    for row, plus_beta in enumerate(positive_betas)
+                ]
+            )
+            batched_cost = np.asarray(
+                [
+                    [
+                        abs(plus_beta + minus_beta)
+                        / max(abs(plus_beta), abs(minus_beta), 1.0e-12)
+                        + 1.0e-6 * (1.0 - batched_overlaps[row, column])
+                        for column, minus_beta in enumerate(negative_betas)
+                    ]
+                    for row, plus_beta in enumerate(positive_betas)
+                ]
+            )
+            np.testing.assert_allclose(
+                batched_cost, expected_cost, rtol=1.0e-12, atol=1.0e-12
+            )
+            expected_assignment = tuple(zip(*linear_sum_assignment(expected_cost)))
+            batched_mass.mult_calls = 0
+            actual = pair_reciprocal_mode_bases(
+                SimpleNamespace(electric_mass=batched_mass),
+                SimpleNamespace(modes=positive_modes),
+                SimpleNamespace(modes=negative_modes),
+            )
+            self.assertEqual(batched_mass.mult_calls, 4)
+            self.assertEqual(
+                tuple((pair.positive_index, pair.negative_index) for pair in actual),
+                expected_assignment,
+            )
+        finally:
+            for vector in positive_vectors + negative_vectors:
+                vector.destroy()
+            mass_matrix.destroy()
+
+    def test_cached_polynomial_and_left_residuals_match_direct_and_cache_norms(self):
+        matrices = [
+            _CountingPETScMat(
+                _tiny_distributed_matrix(_TINY_HERMITIAN_MASS * scale)
+            )
+            for scale in (1.0, 0.2, 0.05)
+        ]
+        vector = _tiny_distributed_vector(
+            matrices[0].matrix,
+            np.asarray([1.0, -0.5 + 0.2j, 0.75, -1.25j]),
+        )
+        operators = SimpleNamespace(K0=matrices[0], K1=matrices[1], K2=matrices[2])
+        beta = 0.7 + 0.1j
+        try:
+            direct = _polynomial_relative_residual(operators, beta, vector)
+            self.assertEqual([matrix.norm_calls for matrix in matrices], [1, 1, 1])
+            for matrix in matrices:
+                matrix.norm_calls = 0
+            norms = tuple(
+                matrix.norm(PETSc.NormType.FROBENIUS) for matrix in matrices
+            )
+            cached = _polynomial_relative_residual(
+                operators, beta, vector, operator_frobenius_norms=norms
+            )
+            self.assertEqual([matrix.norm_calls for matrix in matrices], [1, 1, 1])
+            self.assertAlmostEqual(direct, cached, places=14)
+
+            adjoints = tuple(matrices)
+            for matrix in matrices:
+                matrix.norm_calls = 0
+            left_direct = _left_relative_residual(adjoints, beta, vector)
+            self.assertEqual([matrix.norm_calls for matrix in matrices], [1, 1, 1])
+            for matrix in matrices:
+                matrix.norm_calls = 0
+            adjoint_norms = tuple(
+                matrix.norm(PETSc.NormType.FROBENIUS) for matrix in matrices
+            )
+            left_cached = _left_relative_residual(
+                adjoints,
+                beta,
+                vector,
+                operator_frobenius_norms=adjoint_norms,
+            )
+            self.assertEqual([matrix.norm_calls for matrix in matrices], [1, 1, 1])
+            self.assertAlmostEqual(left_direct, left_cached, places=14)
+        finally:
+            vector.destroy()
+            for matrix in matrices:
+                matrix.matrix.destroy()
 
     def test_wide_candidate_pool_filters_reciprocal_and_growing_branches(self):
         class Candidate:
