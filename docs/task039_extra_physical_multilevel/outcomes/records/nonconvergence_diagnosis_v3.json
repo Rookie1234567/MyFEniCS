@@ -861,5 +861,857 @@
     "projection_total_seconds": 1800,
     "reference_solve": "not_run_capacity_unqualified",
     "full_size_execution": "not_run"
-  }
+  },
+  "d0_inventory_source_sha": "97e82eeb08b6c2faef6457356cdc643832a75eb8",
+  "closeout_stage": "D5_EVIDENCE_CLOSED_MATHEMATICAL_DIAGNOSIS_INCOMPLETE",
+  "formal_attempt": {
+    "classification": "TIMEBASE_INCONSISTENCY",
+    "source_sha": "24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650",
+    "source_clean": true,
+    "root": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1",
+    "parent_pid": 969901,
+    "parent_exit_code": 1,
+    "mpi_leader_exit_code": -9,
+    "worker_terminal_summary_present": false,
+    "parent_raw_classification": "TIMEBASE_INCONSISTENCY",
+    "stop_event": {
+      "reason": "TIMEBASE_INCONSISTENCY",
+      "monotonic": 569672.854667733,
+      "timestamp_ns": 1788854894845545752,
+      "grace_seconds": 2
+    },
+    "first_clock_discrepancy_window": [
+      {
+        "clock": {
+          "monotonic": 569672.339273548,
+          "boottime": 569672.33927445,
+          "utc_ns": 1788854891409989846
+        },
+        "elapsed": {
+          "monotonic": 60.895836787996814,
+          "boottime": 60.89583679696079,
+          "utc": 63.923886659
+        },
+        "clock_error": null
+      },
+      {
+        "clock": {
+          "monotonic": 569672.597419055,
+          "boottime": 569672.597420067,
+          "utc_ns": 1788854891668135488
+        },
+        "elapsed": {
+          "monotonic": 61.15398229495622,
+          "boottime": 61.15398241393268,
+          "utc": 64.182032301
+        },
+        "clock_error": null
+      },
+      {
+        "clock": {
+          "monotonic": 569672.854343001,
+          "boottime": 569672.854344312,
+          "utc_ns": 1788854894845219083
+        },
+        "elapsed": {
+          "monotonic": 61.41090624104254,
+          "boottime": 61.410906658973545,
+          "utc": 67.359115896
+        },
+        "clock_error": "unexplained clock disagreement: {'monotonic': 61.41090624104254, 'boottime': 61.410906658973545, 'utc': 67.359115896}; tolerance=5.0"
+      },
+      {
+        "clock": {
+          "monotonic": 569673.119482126,
+          "boottime": 569673.119484603,
+          "utc_ns": 1788854895110359670
+        },
+        "elapsed": {
+          "monotonic": 61.676045365980826,
+          "boottime": 61.67604695004411,
+          "utc": 67.624256483
+        },
+        "clock_error": "unexplained clock disagreement: {'monotonic': 61.676045365980826, 'boottime': 61.67604695004411, 'utc': 67.624256483}; tolerance=5.0"
+      }
+    ],
+    "final_watchdog_intervals": {
+      "monotonic": 62.73650943499524,
+      "boottime": 62.736509162932634,
+      "utc": 68.684718348
+    },
+    "last_stage": "s6_transfer_cycles_started",
+    "completed_stages": [
+      "s6_p6_action_complete",
+      "s6_diagonal_complete",
+      "s6_p3_assembly_complete",
+      "s6_p1_assembly_complete",
+      "p1_symbolic_complete",
+      "p1_numeric_complete"
+    ],
+    "original_A_identity": "not_run",
+    "actual_residuals": "not_run",
+    "complete_pc_probes": 0,
+    "known_error": "not_run",
+    "projection": "not_run",
+    "reference": "not_run_capacity_preflight_unqualified",
+    "resource": {
+      "samples": 245,
+      "rss_peak_bytes": 639950848,
+      "swap_peak_bytes": 0,
+      "launch_cap_bytes": 8417038336,
+      "reserve_bytes": 4294967296,
+      "minimum_effective_available_bytes": 12219453440,
+      "resource_violations": 0
+    },
+    "descendants_cleared": true,
+    "host_pid_check_alive": [],
+    "global_swap_delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "outer_manifest_finalization": "TIMEBASE_INCONSISTENCY raised after watchdog returned; initial launch.json preserved; no rewritten raw",
+    "cause": "UNRESOLVED; no causal claim about throttle/suspend/clock bug",
+    "retry": "not_started",
+    "budget": {
+      "conservative_start": "2026-09-08T14:44:51+08:00",
+      "charged_before_launch": 4936,
+      "external_elapsed_at_audit": 5190.29133
+    },
+    "evidence": [
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1/watchdog/summary.json",
+        "bytes": 2761,
+        "sha256": "8f7440a51a084f0fb8f4f2128d0a6961281690fb37bdfdcaf13e2fd6e8d588d9"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1/watchdog/resources.jsonl",
+        "bytes": 1061532,
+        "sha256": "f512a46611223a1d61173c731166df0e79612a6129e7faa51bbd1a6d9ecea485"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1/watchdog/worker.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1/stages.jsonl",
+        "bytes": 22659,
+        "sha256": "8641cf289f8880c8ffcfbecc32ee1bfd159d4e53c22cdd525397fe6f067d143c"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1/phase.json",
+        "bytes": 864,
+        "sha256": "c5a7e9ba9e0ec45fe16ce28527cb6c62fcf4f8c6e85a7586b5f7dd80ad9e6908"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1/launch.json",
+        "bytes": 22240,
+        "sha256": "6097abf898756e7dc5a986723ae3c675448a142ed1531999f303b79814ce51d9"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/launch_console.log",
+        "bytes": 960,
+        "sha256": "451bb06575c7040f134e86698afc08ffb45aa44a75082097467958bf70afd381"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/preflight.json",
+        "bytes": 2847,
+        "sha256": "c649ea9202974ff7dd17528cbc7ef2126e34ce697e171c9ac046326085086417"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/preflight_attempt1.json",
+        "bytes": 248,
+        "sha256": "6b2a060e4f6e0d84f1c44d9328b92de8a49a11499ac92b0fe4b5b152fcbb3794"
+      }
+    ]
+  },
+  "formal_source_sha": "24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650",
+  "cause_matrix": [
+    {
+      "hypothesis": "输入/作用/尺度或参考",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "五份文件身份核验通过，80-mode配置重读匹配；fresh canonical映射、原A作用和r=b-Ax重算未到达。primal场与dual残差角色已分开，不能据文件hash宣称算子资格。"
+    },
+    {
+      "hypothesis": "p4空间表示能力",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "没有合格参考误差或实际M0最佳投影；η_space未测，不能证明p4遗漏了多少误差。"
+    },
+    {
+      "hypothesis": "实际粗响应/投影",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "旧LIGHT中间MR系数模中位0.0552983、563/582个未缩放方向使残差增大；尚无η_G、coarse identity或误差分解，不能归因为色散/共振。"
+    },
+    {
+      "hypothesis": "fine互补处理",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "已知误差与e_perp未构建，独立H6/S6作用0次；没有互补能力结论。"
+    },
+    {
+      "hypothesis": "准确局部逆足以保证完整收敛",
+      "status": "NOT_SUPPORTED_ON_TESTED_SAMPLES",
+      "evidence_and_limit": "旧LIGHT/JOINT的p4最大backward residual分别7.05816e-11/7.87060e-11≤1e-10，fine残差仍0.0791360/0.1053582>1e-6；不等于证明forward correction精确，也未诊断未来DD。"
+    },
+    {
+      "hypothesis": "局部联合收益保证全局改善",
+      "status": "NOT_SUPPORTED_ON_TESTED_SAMPLES",
+      "evidence_and_limit": "旧joint/seq局部残差比中位0.9794794，14共同步中11步JOINT更差、3步更好；各自Krylov输入不同，不能推导同输入因果。"
+    },
+    {
+      "hypothesis": "restart/非正规影响",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "缺少足够Hessenberg/正交性数据；65个旧monitor的reported/explicit最大差6.58917e-14，不支持monitor漂移解释约0.1残差，但不能排除所有实现问题。"
+    },
+    {
+      "hypothesis": "实现成本/容量/时钟",
+      "status": "MIXED",
+      "evidence_and_limit": "旧完整PC成本是实际限制；本轮TIMEBASE_INCONSISTENCY实测成立，系统根因未定位。RSS639950848 B<cap8417038336 B、swap0，不支持本次因内存触顶停止；D2缺完整MPI1峰值上界。"
+    }
+  ],
+  "clock_analysis": {
+    "samples": 245,
+    "diagnostic_jump_threshold_seconds": 0.01,
+    "jumps": [
+      {
+        "sample_index": 113,
+        "mono_elapsed": 29.014890336082317,
+        "monotonic_step": 0.25631390209309757,
+        "boottime_step": 0.2563138890545815,
+        "utc_step": 3.284363831,
+        "utc_minus_monotonic_step": 3.0280499289069023,
+        "before": {
+          "monotonic": 569640.21428427,
+          "boottime": 569640.214285221,
+          "utc_ns": 1788854856256950680
+        },
+        "after": {
+          "monotonic": 569640.470598172,
+          "boottime": 569640.47059911,
+          "utc_ns": 1788854859541314511
+        },
+        "worker_stage": "s6_p3_assembly_started"
+      },
+      {
+        "sample_index": 239,
+        "mono_elapsed": 61.39863516506739,
+        "monotonic_step": 0.2569239460863173,
+        "boottime_step": 0.25692424504086375,
+        "utc_step": 3.177083595,
+        "utc_minus_monotonic_step": 2.9201596489136827,
+        "before": {
+          "monotonic": 569672.597419055,
+          "boottime": 569672.597420067,
+          "utc_ns": 1788854891668135488
+        },
+        "after": {
+          "monotonic": 569672.854343001,
+          "boottime": 569672.854344312,
+          "utc_ns": 1788854894845219083
+        },
+        "worker_stage": "s6_transfer_cycles_started"
+      }
+    ],
+    "ordinary_step_difference_abs_max": 2.3470159175587035e-06,
+    "ordinary_step_difference_median": 2.6992477863974074e-08,
+    "monotonic_boottime_interval_difference_abs_max": 2.58604995906353e-06,
+    "interpretation": "observed discrete UTC-relative jumps, not uniform continuous rate drift over these samples; system cause unresolved",
+    "worker_intervals": [
+      {
+        "stage": "workflow_started",
+        "monotonic": 2.0898994989693165e-05,
+        "boottime": 2.028199378401041e-05,
+        "utc": 1.993e-05
+      },
+      {
+        "stage": "shared_mesh_spaces_started",
+        "monotonic": 0.16795495699625462,
+        "boottime": 0.1679548859829083,
+        "utc": 0.167954654
+      },
+      {
+        "stage": "positive_s6_started",
+        "monotonic": 3.178870916017331,
+        "boottime": 3.1788711070548743,
+        "utc": 3.178871078
+      },
+      {
+        "stage": "s6_p6_action_started",
+        "monotonic": 3.180661068065092,
+        "boottime": 3.1806615859968588,
+        "utc": 3.18066151
+      },
+      {
+        "stage": "s6_p6_action_complete",
+        "monotonic": 3.3016559639945626,
+        "boottime": 3.3016560099786147,
+        "utc": 3.301655808
+      },
+      {
+        "stage": "s6_diagonal_started",
+        "monotonic": 3.3020731930155307,
+        "boottime": 3.3020730779971927,
+        "utc": 3.302072678
+      },
+      {
+        "stage": "s6_diagonal_complete",
+        "monotonic": 15.510455701034516,
+        "boottime": 15.5104560010368,
+        "utc": 15.510455769
+      },
+      {
+        "stage": "s6_p3_assembly_started",
+        "monotonic": 15.510919366031885,
+        "boottime": 15.51091890304815,
+        "utc": 15.51091852
+      },
+      {
+        "stage": "s6_p3_assembly_complete",
+        "monotonic": 44.924254053039476,
+        "boottime": 44.9242561920546,
+        "utc": 47.952306362
+      },
+      {
+        "stage": "s6_p1_assembly_started",
+        "monotonic": 44.924998545087874,
+        "boottime": 44.92499861004762,
+        "utc": 47.953048237
+      },
+      {
+        "stage": "s6_p1_assembly_complete",
+        "monotonic": 45.94365045207087,
+        "boottime": 45.943651195964776,
+        "utc": 48.971701046
+      },
+      {
+        "stage": "p1_symbolic_started",
+        "monotonic": 45.94449311099015,
+        "boottime": 45.94449285103474,
+        "utc": 48.972542462
+      },
+      {
+        "stage": "p1_symbolic_complete",
+        "monotonic": 45.961940639070235,
+        "boottime": 45.96194031601772,
+        "utc": 48.989989881
+      },
+      {
+        "stage": "p1_numeric_complete",
+        "monotonic": 45.97132378106471,
+        "boottime": 45.97132369899191,
+        "utc": 48.999373508
+      },
+      {
+        "stage": "s6_transfer_cycles_started",
+        "monotonic": 45.971845585037954,
+        "boottime": 45.97184516105335,
+        "utc": 48.999894722
+      }
+    ]
+  },
+  "clock_readonly_findings": {
+    "current_clocksource": "tsc",
+    "available_clocksources": [
+      "tsc",
+      "hyperv_clocksource_tsc_page",
+      "hyperv_clocksource_msr",
+      "acpi_pm"
+    ],
+    "current_process_time_functions": {
+      "monotonic": {
+        "module": "time",
+        "builtin": true
+      },
+      "clock_gettime": {
+        "module": "time",
+        "builtin": true
+      },
+      "time_ns": {
+        "module": "time",
+        "builtin": true
+      }
+    },
+    "LD_PRELOAD_present": false,
+    "activation_sha256": "9653cee806180aa62a0243c8cab8dc10a8f40ac2fea02d71b9a5c6cf604f1d6b",
+    "helper_sha256": "628b3f1ac2e92b9293138ef08b716133bf35cd0d8f2e32b88555289f7d9674f6",
+    "findings": [
+      "parent differences are within-parent start/end, worker differences within-worker start/end",
+      "monotonic and BOOTTIME returned seconds; UTC nanoseconds divided by 1e9",
+      "activation does not set clocksource/system time; no time-function reassignment found in src/runners or src/solvers",
+      "current built-in function observations are supplemental, not a trace of the terminated process"
+    ],
+    "cause": "UNRESOLVED",
+    "python_wiring_bug": "not_found",
+    "time_sync_journal": "no entries in bounded run interval",
+    "kernel_log_limit": "Sep4 TSC adjustment and boot implicit hypervisor sync are historical clues, not proof of the two Sep8 jumps"
+  },
+  "timesync_sample": {
+    "NTP": "yes",
+    "NTPSynchronized": "no",
+    "TimeUSec": "2026-09-08 16:17:08 CST",
+    "causal_attribution": "UNRESOLVED"
+  },
+  "historical_curve_readout": {
+    "scope": "read-only historical observations, not fresh D1/D3",
+    "curves": {
+      "LIGHT": [
+        {
+          "iteration": 32,
+          "true_residual": 0.44256942121245074,
+          "cycle_wall_monotonic": 461.3831332620466,
+          "cumulative_cycle_wall_monotonic": 461.3831332620466
+        },
+        {
+          "iteration": 64,
+          "true_residual": 0.4127349946863493,
+          "cycle_wall_monotonic": 391.74161140806973,
+          "cumulative_cycle_wall_monotonic": 853.1247446701163
+        },
+        {
+          "iteration": 96,
+          "true_residual": 0.3285679978005249,
+          "cycle_wall_monotonic": 448.3366309279809,
+          "cumulative_cycle_wall_monotonic": 1301.4613755980972
+        },
+        {
+          "iteration": 128,
+          "true_residual": 0.2801427648877682,
+          "cycle_wall_monotonic": 395.7794426520122,
+          "cumulative_cycle_wall_monotonic": 1697.2408182501094
+        },
+        {
+          "iteration": 160,
+          "true_residual": 0.24026347731188158,
+          "cycle_wall_monotonic": 382.22168645996135,
+          "cumulative_cycle_wall_monotonic": 2079.462504710071
+        },
+        {
+          "iteration": 192,
+          "true_residual": 0.22093647978682995,
+          "cycle_wall_monotonic": 396.9298334440682,
+          "cumulative_cycle_wall_monotonic": 2476.392338154139
+        },
+        {
+          "iteration": 224,
+          "true_residual": 0.18261021521683013,
+          "cycle_wall_monotonic": 385.2954467519885,
+          "cumulative_cycle_wall_monotonic": 2861.6877849061275
+        },
+        {
+          "iteration": 256,
+          "true_residual": 0.1575266239550876,
+          "cycle_wall_monotonic": 424.98581816093065,
+          "cumulative_cycle_wall_monotonic": 3286.673603067058
+        },
+        {
+          "iteration": 288,
+          "true_residual": 0.14194391851406207,
+          "cycle_wall_monotonic": 382.9550539449556,
+          "cumulative_cycle_wall_monotonic": 3669.6286570120137
+        },
+        {
+          "iteration": 320,
+          "true_residual": 0.12667363551164143,
+          "cycle_wall_monotonic": 382.58110537403263,
+          "cumulative_cycle_wall_monotonic": 4052.2097623860464
+        },
+        {
+          "iteration": 352,
+          "true_residual": 0.12058820160265601,
+          "cycle_wall_monotonic": 382.872857852024,
+          "cumulative_cycle_wall_monotonic": 4435.08262023807
+        },
+        {
+          "iteration": 384,
+          "true_residual": 0.11362685682004318,
+          "cycle_wall_monotonic": 383.80212166300043,
+          "cumulative_cycle_wall_monotonic": 4818.884741901071
+        },
+        {
+          "iteration": 416,
+          "true_residual": 0.10660020313350632,
+          "cycle_wall_monotonic": 397.3882460290333,
+          "cumulative_cycle_wall_monotonic": 5216.272987930104
+        },
+        {
+          "iteration": 448,
+          "true_residual": 0.09814591160304939,
+          "cycle_wall_monotonic": 381.89621136093047,
+          "cumulative_cycle_wall_monotonic": 5598.169199291035
+        },
+        {
+          "iteration": 480,
+          "true_residual": 0.09100934971190366,
+          "cycle_wall_monotonic": 381.36226077901665,
+          "cumulative_cycle_wall_monotonic": 5979.531460070051
+        },
+        {
+          "iteration": 512,
+          "true_residual": 0.08779226384138328,
+          "cycle_wall_monotonic": 381.8548615989275,
+          "cumulative_cycle_wall_monotonic": 6361.386321668979
+        },
+        {
+          "iteration": 544,
+          "true_residual": 0.08348979566876073,
+          "cycle_wall_monotonic": 381.4095795120811,
+          "cumulative_cycle_wall_monotonic": 6742.79590118106
+        },
+        {
+          "iteration": 576,
+          "true_residual": 0.0791360407785889,
+          "cycle_wall_monotonic": 379.785198206082,
+          "cumulative_cycle_wall_monotonic": 7122.581099387142
+        }
+      ],
+      "JOINT": [
+        {
+          "iteration": 32,
+          "true_residual": 0.5069582157782981,
+          "cycle_wall_monotonic": 404.2633863389492,
+          "cumulative_cycle_wall_monotonic": 404.2633863389492
+        },
+        {
+          "iteration": 64,
+          "true_residual": 0.4120325060333387,
+          "cycle_wall_monotonic": 406.0692086679628,
+          "cumulative_cycle_wall_monotonic": 810.332595006912
+        },
+        {
+          "iteration": 96,
+          "true_residual": 0.36741510375884007,
+          "cycle_wall_monotonic": 438.7779552829452,
+          "cumulative_cycle_wall_monotonic": 1249.1105502898572
+        },
+        {
+          "iteration": 128,
+          "true_residual": 0.32112589576731543,
+          "cycle_wall_monotonic": 495.4575951929437,
+          "cumulative_cycle_wall_monotonic": 1744.568145482801
+        },
+        {
+          "iteration": 160,
+          "true_residual": 0.2673436623463053,
+          "cycle_wall_monotonic": 445.2360620170366,
+          "cumulative_cycle_wall_monotonic": 2189.8042074998375
+        },
+        {
+          "iteration": 192,
+          "true_residual": 0.23994839612494392,
+          "cycle_wall_monotonic": 404.22188343899325,
+          "cumulative_cycle_wall_monotonic": 2594.0260909388307
+        },
+        {
+          "iteration": 224,
+          "true_residual": 0.19030446878750112,
+          "cycle_wall_monotonic": 405.2479525069939,
+          "cumulative_cycle_wall_monotonic": 2999.2740434458246
+        },
+        {
+          "iteration": 256,
+          "true_residual": 0.1523169137775647,
+          "cycle_wall_monotonic": 403.96211409394164,
+          "cumulative_cycle_wall_monotonic": 3403.2361575397663
+        },
+        {
+          "iteration": 288,
+          "true_residual": 0.13933890332555968,
+          "cycle_wall_monotonic": 462.5929169829469,
+          "cumulative_cycle_wall_monotonic": 3865.829074522713
+        },
+        {
+          "iteration": 320,
+          "true_residual": 0.13271630947339322,
+          "cycle_wall_monotonic": 433.8537261179881,
+          "cumulative_cycle_wall_monotonic": 4299.682800640701
+        },
+        {
+          "iteration": 352,
+          "true_residual": 0.12224535464788774,
+          "cycle_wall_monotonic": 458.57983615703415,
+          "cumulative_cycle_wall_monotonic": 4758.2626367977355
+        },
+        {
+          "iteration": 384,
+          "true_residual": 0.11670482210431997,
+          "cycle_wall_monotonic": 440.9462901810184,
+          "cumulative_cycle_wall_monotonic": 5199.208926978754
+        },
+        {
+          "iteration": 416,
+          "true_residual": 0.11169820694436801,
+          "cycle_wall_monotonic": 585.7579136759741,
+          "cumulative_cycle_wall_monotonic": 5784.966840654728
+        },
+        {
+          "iteration": 448,
+          "true_residual": 0.10713326900483655,
+          "cycle_wall_monotonic": 589.5250008800067,
+          "cumulative_cycle_wall_monotonic": 6374.491841534735
+        }
+      ]
+    },
+    "common_points": [
+      {
+        "iteration": 32,
+        "LIGHT": {
+          "iteration": 32,
+          "true_residual": 0.44256942121245074,
+          "cycle_wall_monotonic": 461.3831332620466,
+          "cumulative_cycle_wall_monotonic": 461.3831332620466
+        },
+        "JOINT": {
+          "iteration": 32,
+          "true_residual": 0.5069582157782981,
+          "cycle_wall_monotonic": 404.2633863389492,
+          "cumulative_cycle_wall_monotonic": 404.2633863389492
+        }
+      },
+      {
+        "iteration": 64,
+        "LIGHT": {
+          "iteration": 64,
+          "true_residual": 0.4127349946863493,
+          "cycle_wall_monotonic": 391.74161140806973,
+          "cumulative_cycle_wall_monotonic": 853.1247446701163
+        },
+        "JOINT": {
+          "iteration": 64,
+          "true_residual": 0.4120325060333387,
+          "cycle_wall_monotonic": 406.0692086679628,
+          "cumulative_cycle_wall_monotonic": 810.332595006912
+        }
+      },
+      {
+        "iteration": 96,
+        "LIGHT": {
+          "iteration": 96,
+          "true_residual": 0.3285679978005249,
+          "cycle_wall_monotonic": 448.3366309279809,
+          "cumulative_cycle_wall_monotonic": 1301.4613755980972
+        },
+        "JOINT": {
+          "iteration": 96,
+          "true_residual": 0.36741510375884007,
+          "cycle_wall_monotonic": 438.7779552829452,
+          "cumulative_cycle_wall_monotonic": 1249.1105502898572
+        }
+      },
+      {
+        "iteration": 128,
+        "LIGHT": {
+          "iteration": 128,
+          "true_residual": 0.2801427648877682,
+          "cycle_wall_monotonic": 395.7794426520122,
+          "cumulative_cycle_wall_monotonic": 1697.2408182501094
+        },
+        "JOINT": {
+          "iteration": 128,
+          "true_residual": 0.32112589576731543,
+          "cycle_wall_monotonic": 495.4575951929437,
+          "cumulative_cycle_wall_monotonic": 1744.568145482801
+        }
+      },
+      {
+        "iteration": 160,
+        "LIGHT": {
+          "iteration": 160,
+          "true_residual": 0.24026347731188158,
+          "cycle_wall_monotonic": 382.22168645996135,
+          "cumulative_cycle_wall_monotonic": 2079.462504710071
+        },
+        "JOINT": {
+          "iteration": 160,
+          "true_residual": 0.2673436623463053,
+          "cycle_wall_monotonic": 445.2360620170366,
+          "cumulative_cycle_wall_monotonic": 2189.8042074998375
+        }
+      },
+      {
+        "iteration": 192,
+        "LIGHT": {
+          "iteration": 192,
+          "true_residual": 0.22093647978682995,
+          "cycle_wall_monotonic": 396.9298334440682,
+          "cumulative_cycle_wall_monotonic": 2476.392338154139
+        },
+        "JOINT": {
+          "iteration": 192,
+          "true_residual": 0.23994839612494392,
+          "cycle_wall_monotonic": 404.22188343899325,
+          "cumulative_cycle_wall_monotonic": 2594.0260909388307
+        }
+      },
+      {
+        "iteration": 224,
+        "LIGHT": {
+          "iteration": 224,
+          "true_residual": 0.18261021521683013,
+          "cycle_wall_monotonic": 385.2954467519885,
+          "cumulative_cycle_wall_monotonic": 2861.6877849061275
+        },
+        "JOINT": {
+          "iteration": 224,
+          "true_residual": 0.19030446878750112,
+          "cycle_wall_monotonic": 405.2479525069939,
+          "cumulative_cycle_wall_monotonic": 2999.2740434458246
+        }
+      },
+      {
+        "iteration": 256,
+        "LIGHT": {
+          "iteration": 256,
+          "true_residual": 0.1575266239550876,
+          "cycle_wall_monotonic": 424.98581816093065,
+          "cumulative_cycle_wall_monotonic": 3286.673603067058
+        },
+        "JOINT": {
+          "iteration": 256,
+          "true_residual": 0.1523169137775647,
+          "cycle_wall_monotonic": 403.96211409394164,
+          "cumulative_cycle_wall_monotonic": 3403.2361575397663
+        }
+      },
+      {
+        "iteration": 288,
+        "LIGHT": {
+          "iteration": 288,
+          "true_residual": 0.14194391851406207,
+          "cycle_wall_monotonic": 382.9550539449556,
+          "cumulative_cycle_wall_monotonic": 3669.6286570120137
+        },
+        "JOINT": {
+          "iteration": 288,
+          "true_residual": 0.13933890332555968,
+          "cycle_wall_monotonic": 462.5929169829469,
+          "cumulative_cycle_wall_monotonic": 3865.829074522713
+        }
+      },
+      {
+        "iteration": 320,
+        "LIGHT": {
+          "iteration": 320,
+          "true_residual": 0.12667363551164143,
+          "cycle_wall_monotonic": 382.58110537403263,
+          "cumulative_cycle_wall_monotonic": 4052.2097623860464
+        },
+        "JOINT": {
+          "iteration": 320,
+          "true_residual": 0.13271630947339322,
+          "cycle_wall_monotonic": 433.8537261179881,
+          "cumulative_cycle_wall_monotonic": 4299.682800640701
+        }
+      },
+      {
+        "iteration": 352,
+        "LIGHT": {
+          "iteration": 352,
+          "true_residual": 0.12058820160265601,
+          "cycle_wall_monotonic": 382.872857852024,
+          "cumulative_cycle_wall_monotonic": 4435.08262023807
+        },
+        "JOINT": {
+          "iteration": 352,
+          "true_residual": 0.12224535464788774,
+          "cycle_wall_monotonic": 458.57983615703415,
+          "cumulative_cycle_wall_monotonic": 4758.2626367977355
+        }
+      },
+      {
+        "iteration": 384,
+        "LIGHT": {
+          "iteration": 384,
+          "true_residual": 0.11362685682004318,
+          "cycle_wall_monotonic": 383.80212166300043,
+          "cumulative_cycle_wall_monotonic": 4818.884741901071
+        },
+        "JOINT": {
+          "iteration": 384,
+          "true_residual": 0.11670482210431997,
+          "cycle_wall_monotonic": 440.9462901810184,
+          "cumulative_cycle_wall_monotonic": 5199.208926978754
+        }
+      },
+      {
+        "iteration": 416,
+        "LIGHT": {
+          "iteration": 416,
+          "true_residual": 0.10660020313350632,
+          "cycle_wall_monotonic": 397.3882460290333,
+          "cumulative_cycle_wall_monotonic": 5216.272987930104
+        },
+        "JOINT": {
+          "iteration": 416,
+          "true_residual": 0.11169820694436801,
+          "cycle_wall_monotonic": 585.7579136759741,
+          "cumulative_cycle_wall_monotonic": 5784.966840654728
+        }
+      },
+      {
+        "iteration": 448,
+        "LIGHT": {
+          "iteration": 448,
+          "true_residual": 0.09814591160304939,
+          "cycle_wall_monotonic": 381.89621136093047,
+          "cumulative_cycle_wall_monotonic": 5598.169199291035
+        },
+        "JOINT": {
+          "iteration": 448,
+          "true_residual": 0.10713326900483655,
+          "cycle_wall_monotonic": 589.5250008800067,
+          "cumulative_cycle_wall_monotonic": 6374.491841534735
+        }
+      }
+    ],
+    "joint_residual_larger_count": 11,
+    "common_count": 14,
+    "evidence": [
+      {
+        "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p6smooth_p4ref_p6smooth__full3d_iterative__mpi1__Mna/20260907T223143.281687Z/cycles.jsonl",
+        "sha256": "f76bfb040d8657d4562e8d4db94968fd6efe734eaa76d73806ae10357be09469"
+      },
+      {
+        "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_light_p4ref_jointmr3_v2__full3d_iterative__mpi1__Mna/20260908T034629.980337Z/cycles.jsonl",
+        "sha256": "dc2f8b48ab27abeb04604c0b00b57806769b552e5e0c091382c85a73c63413ac"
+      }
+    ],
+    "qualification": "same step is not same input/error; nominal monotonic costs have previously documented timebase limitations"
+  },
+  "next_priority": "clock qualification then frozen same-input minimum evidence; not executed, no new PC recommendation",
+  "closeout_evidence": [
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/termination_audit.json",
+      "bytes": 5794,
+      "sha256": "d4ae363508b6d2b67fdffe9dceea6882f6adcb1e74a4d32ec3dda53bbe879a8a"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/clock_sample_analysis.json",
+      "bytes": 3941,
+      "sha256": "3c8a24a40e9eca8f120211601d50aaaa65b47d77df2151219127b628e885ca52"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/clock_readonly_findings.json",
+      "bytes": 1305,
+      "sha256": "9bb7ba9f6ba03b50e76a76ea95cd51c906637f8ea18f5ba69dc1dc432f8c5257"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/historical_curve_readout.json",
+      "bytes": 13680,
+      "sha256": "151a2790cb83e722558acbd6b66c50dde0ce3546b2c11234596ca7bb47edc727"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/timesync_status.txt",
+      "bytes": 104,
+      "sha256": "73de7597c4dd16a2a5f8981d0d355993a00bc7f8b3d22391cda7c17bfb3a01ec"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/timesync_journal.txt",
+      "bytes": 17,
+      "sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/kernel_clock_journal.txt",
+      "bytes": 2657,
+      "sha256": "466724e3bd45f9c0100038ca37febd66a21907d7524a1c6a97863e3fafc7a9a0"
+    }
+  ]
 }

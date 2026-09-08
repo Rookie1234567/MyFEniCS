@@ -1,3 +1,17 @@
+# Task39extra：Review V3 / D5 验证边界
+
+| 验证 | 实际结果 |
+|---|---|
+| V3小批次 | tiny 6 passed；诊断7→8→8 passed；后续bridge/mode窄修1 passed、raw能量字段2 passed；各日志/命令/hash见中心JSON |
+| ABI/编译 | 资格化activation，仓库.venv，complex128/int32、Linux统一栈、MPI1/线程1；源码24b3dbb的compile/diff已通过 |
+| 唯一原尺寸诊断 | TIMEBASE_INCONSISTENCY受控停止；完整PC/互补/投影均0；不是数学测试通过 |
+| D5 | 仅JSON解析、相对链接、关键artifact/hash、文档与git diff检查；不新增pytest、PDE、环境调查或系统改动 |
+| 未声明 | 无full repository/MPI sweep、无新Ruff或CI通过；旧181批次只属V2，不冒作V3原尺寸资格 |
+
+短检查累计预算13.183744896 s，正式前准备/失败一并按保守外部4936 s扣账，不能只扣pytest。D5静态检查结果保存于`benchmarks/artifacts/task39extra/v3_d5_closeout/static_checks.json`。详见[中心JSON](records/nonconvergence_diagnosis_v3.json)。
+
+## 历史V2及此前验证
+
 # Task39extra：F5 最终验证
 
 F3正式只读审计通过：476PC/476原p4检查、14完整周期+28尾段、checkpoint/hash/零初值、reported/explicit差、资源/清场核对。属于证据一致性通过，原A6残差0.10535820013809101>1e-6，solver未通过。双时钟差异单列，不以测试通过掩盖UTC solve超7200。

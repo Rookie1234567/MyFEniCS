@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "F5 V2 closeout plus immutable V1/A5 history; original unqualified, user stopped F3",
+  "scope": "D5 V3 timebase controlled stop plus immutable V2/V1/A5 history; mathematical diagnosis incomplete",
   "units": {
     "time": "s",
     "memory": "B"
@@ -667,6 +667,41 @@
         "workflow_clock_difference_seconds": 775.4615408359277,
         "workflow_monotonic_seconds": 7588.369777164073
       }
+    },
+    {
+      "id": "V3_D1_D3_no_reference",
+      "source_sha": "24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650",
+      "raw_root": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1",
+      "category": "measured",
+      "raw_classification": "TIMEBASE_INCONSISTENCY",
+      "semantic_classification": "CONTROLLED_STOP_BEFORE_DIAGNOSTIC_PROBES",
+      "clock_intervals_seconds": {
+        "monotonic": 62.73650943499524,
+        "boottime": 62.736509162932634,
+        "utc": 68.684718348
+      },
+      "resource": {
+        "samples": 245,
+        "rss_peak_bytes": 639950848,
+        "swap_peak_bytes": 0,
+        "launch_cap_bytes": 8417038336,
+        "reserve_bytes": 4294967296,
+        "minimum_effective_available_bytes": 12219453440,
+        "resource_violations": 0
+      },
+      "complete_pc_probes": 0,
+      "independent_complement_probes": 0,
+      "projections": 0,
+      "fresh_true_residual": "not_run",
+      "official_results": "not_run",
+      "last_stage": "s6_transfer_cycles_started",
+      "descendants_cleared": true,
+      "authority": "watchdog/summary.json; initial launch.json only; worker terminal absent",
+      "audit": {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/termination_audit.json",
+        "sha256": "d4ae363508b6d2b67fdffe9dceea6882f6adcb1e74a4d32ec3dda53bbe879a8a"
+      },
+      "diagnosis_record": "docs/task039_extra_physical_multilevel/outcomes/records/nonconvergence_diagnosis_v3.json"
     }
   ],
   "limitations": [

@@ -1,3 +1,98 @@
+# 不收敛诊断 V3：D5 证据收口，数学定位未完成
+
+| 当前项目 | 实际结果与边界 |
+|---|---|
+| 正式源码 | `24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650`，task39extra，启动前clean；原Task base `2dc2e7305f10dc391a13970c6f0f0340cb87b6ee` |
+| 本轮模型/用途 | 原始13.5nm、1°、s、Full3D p6/h10、MPI1、线程1、80 DtN modes；唯一D1/D3无参考诊断启动，不是新的R3完整求解 |
+| 终止 | `TIMEBASE_INCONSISTENCY`；最后阶段`s6_transfer_cycles_started`；watchdog摘要为终止权威 |
+| 已完成 | D0文件/配置盘点、小接口测试；S6内p6作用与对角、p3/p1装配、p1 symbolic/numeric setup |
+| 未运行 | fine原A身份/残差复现、canonical资格、p4 factor、已知误差、M0投影、粗响应及互补诊断；完整PC探测0、独立互补0、投影0；D4 not_run |
+| 数值/物理资格 | 没有新solver PASS/FAIL；R/T/A、A_volume、R00_s/p/total、衍射级、复E/H均not_run；历史未收敛结论保持 |
+| 资源 | 245次同期进程树RSS采样峰639950848 B；动态启动cap8417038336 B、reserve4294967296 B；最低effective available12219453440 B；树swap最大0、资源违规0 |
+| 清场 | parent969901和六个已观测后代均不存在；leader exit−9、parent exit1；global pswpin/out增量均0 |
+| D5范围 | 只读证据与文档闭环；代码冻结、无重试、无系统/时钟改动、无新PC或heavy |
+
+此诊断原本要把“粗空间能表达的误差”和“修正实际消掉的误差”分开，避免因某种PC失败就猜下一种方法。PC是为外层求解提供近似修正的辅助步骤；M0投影通过真实有限元场能量寻找p4可表达的最佳部分，需要额外质量方程求解和精度检查。本次在这些测量前被时钟保护停止，因此不能给出数学根因或新算法选择。
+
+## 时间证据与终止一致性
+
+| 同一区间 | monotonic / BOOTTIME / UTC（s） | 解释 |
+|---|---|---|
+| 首次违反Gate | 61.410906241 / 61.410906659 / 67.359115896 | 差5.948209655>容差5；保持max(5s,1% interval)原规则 |
+| watchdog完整区间 | 62.736509435 / 62.736509163 / 68.684718348 | 原始时钟分别保留，不混成可信wall |
+| 外层CLI区间 | 64.532228366 / 64.532230605 / 70.480439729 | watchdog返回后cache收尾的interval检查再次报错 |
+| 相邻样本113 | 0.256313902 / 0.256313889 / 3.284363831 | UTC相对额外3.028049929 s；p3装配期间 |
+| 相邻样本239 | 0.256923946 / 0.256924245 / 3.177083595 | UTC相对额外2.920159649 s；transfer cycles阶段 |
+
+245个样本形成244个相邻区间：2次离散UTC相对跳变、242个普通区间；普通区间UTC与monotonic差绝对值最大2.34702e-6 s，monotonic与BOOTTIME差最大2.58605e-6 s。worker自身阶段区间也留下第一次约3.028 s偏移。这里观测到离散跳变，不是这批样本持续均匀速率漂移；系统原因仍`UNRESOLVED`。
+
+已保存只读检查未发现父/子时钟混减、秒与纳秒混算或Python时钟函数重赋值。当前clocksource为tsc，当前进程内time函数是内建函数；这只是补充采样，不能替代已终止进程的完整追踪。`timesync_status.txt`在2026-09-08 16:17:08 CST记录`NTP=yes、NTPSynchronized=no`，不能称已同步。限定运行时间的timesync journal无条目；启动参数隐式Hyper-V同步、9月4日TSC调整与早前journald倒退只是历史线索，不能归因9月8日这两次跳变。没有进一步调查或修改系统。
+
+watchdog在monotonic569672.854667733、UTC ns1788854894845545752记录停止并硬停完整后代树。worker被终止，`diagnostic_summary.json`缺失，worker.log为空；外层在返回后再次触发时间检查，故`launch.json`只保留初始manifest。三者不是三个相互替代的最终状态：以watchdog summary和原始采样确定终止，派生audit解释缺口，绝不补写/覆盖raw。
+
+批次上限14400 s；从Review V3提交时刻14:44:51+08保守扣账，启动前已计4936 s，包含准备、失败及测试，正式只给min(7200,剩余额度)。termination audit时外部时间累计5190.29133 s；这是有时间限制的历史采样，不能当最终精确wall。停止并非4小时预算耗尽，余额不授权重试。首次可选psutil导入失败发生在正式启动前，保留preflight_attempt1；改用已有stdlib /proc完成预检，没有安装依赖。
+
+## D2参考容量结论
+
+11份非测试run_manifest中无匹配已解full-p6场。旧Task37同p6/h10但10°/MPI8：同期树RSS15.059223175 GiB；209772680个factor非零元仅复数负载3356362880 B，allocated CSR推导852715492 B。这两项之和不是MPI1全生命周期峰值上界，尚缺fill/pivot、工作区和装配/恢复同时存活量。`REFERENCE_UNAVAILABLE_ON_16GB`只表示本轮安全合同下该路径未资格化；direct assembly/symbolic/numeric均not_run，不能证明16GB普遍无法求参考。
+
+## 原因矩阵
+
+| 待检验解释 | 状态 | 支持、反证与置信边界 |
+|---|---|---|
+| 输入/作用/尺度或参考 | UNRESOLVED | 五份文件身份核验通过，80-mode配置重读匹配；fresh canonical映射、原A作用和r=b-Ax重算未到达。primal场与dual残差角色已分开，不能据文件hash宣称算子资格。 |
+| p4空间表示能力 | UNRESOLVED | 没有合格参考误差或实际M0最佳投影；η_space未测，不能证明p4遗漏了多少误差。 |
+| 实际粗响应/投影 | UNRESOLVED | 旧LIGHT中间MR系数模中位0.0552983、563/582个未缩放方向使残差增大；尚无η_G、coarse identity或误差分解，不能归因为色散/共振。 |
+| fine互补处理 | UNRESOLVED | 已知误差与e_perp未构建，独立H6/S6作用0次；没有互补能力结论。 |
+| 准确局部逆足以保证完整收敛 | NOT_SUPPORTED_ON_TESTED_SAMPLES | 旧LIGHT/JOINT的p4最大backward residual分别7.05816e-11/7.87060e-11≤1e-10，fine残差仍0.0791360/0.1053582>1e-6；不等于证明forward correction精确，也未诊断未来DD。 |
+| 局部联合收益保证全局改善 | NOT_SUPPORTED_ON_TESTED_SAMPLES | 旧joint/seq局部残差比中位0.9794794，14共同步中11步JOINT更差、3步更好；各自Krylov输入不同，不能推导同输入因果。 |
+| restart/非正规影响 | UNRESOLVED | 缺少足够Hessenberg/正交性数据；65个旧monitor的reported/explicit最大差6.58917e-14，不支持monitor漂移解释约0.1残差，但不能排除所有实现问题。 |
+| 实现成本/容量/时钟 | MIXED | 旧完整PC成本是实际限制；本轮TIMEBASE_INCONSISTENCY实测成立，系统根因未定位。RSS639950848 B<cap8417038336 B、swap0，不支持本次因内存触顶停止；D2缺完整MPI1峰值上界。 |
+
+## 历史同一步曲线与成本（derived，不是fresh同输入实验）
+
+下表为原始cycles离线读出，相对真残差无量纲，正式阈值1e-6。共同step不意味着共同误差或PC输入；不能仅由这些曲线证明restart因果。
+
+| step | LIGHT | JOINT |
+|---:|---:|---:|
+| 32 | 0.442569421212451 | 0.506958215778298 |
+| 64 | 0.412734994686349 | 0.412032506033339 |
+| 96 | 0.328567997800525 | 0.36741510375884 |
+| 128 | 0.280142764887768 | 0.321125895767315 |
+| 160 | 0.240263477311882 | 0.267343662346305 |
+| 192 | 0.22093647978683 | 0.239948396124944 |
+| 224 | 0.18261021521683 | 0.190304468787501 |
+| 256 | 0.157526623955088 | 0.152316913777565 |
+| 288 | 0.141943918514062 | 0.13933890332556 |
+| 320 | 0.126673635511641 | 0.132716309473393 |
+| 352 | 0.120588201602656 | 0.122245354647888 |
+| 384 | 0.113626856820043 | 0.11670482210432 |
+| 416 | 0.106600203133506 | 0.111698206944368 |
+| 448 | 0.0981459116030494 | 0.107133269004837 |
+
+第448步累计cycle monotonic为5598.169199291/6374.491841535 s（LIGHT/JOINT），不是完整workflow，也未消除旧时钟限制。LIGHT最后安全576步残差0.0791360407785889；JOINT476步0.10535820013809101。旧LIGHT完整PC中位10.293892394 s；JOINT11.460344589 s，额外A作用累计694.874209920 s、QR5.928539213 s。旧packed S6配对中位比0.938459327>0.75速度Gate，作用等价不等于提速合格。以上保留原测量边界，不将本次离散跳变原因倒推到旧运行。
+
+唯一下一优先项是恢复可解释的时间资格，然后补齐冻结同输入诊断最小证据：原A/映射与三个旧残差复现，再做预定已知误差和三个旧PC的有限调用。收益是让原因可判，代价是既定setup和有界探测；仍需动态内存/4GiB余量/swap0。尚无依据提出新数学PC，更不能承诺随h或波长缩小的成本、非可分三维或0.7nm资格；本轮不执行该后续项。
+
+## 验证、证据与依赖分组
+
+V3已有tiny/代数/微型FE批次依次6、7、8、8 passed，后两次窄修分别1与2 passed，短检查累计预算13.183744896 s。它们验证接口，不代表原尺寸诊断完成。ABI为资格化activation、仓库.venv、PETSc3.19.6 complex128/int32、SLEPc3.19.2、DOLFINx0.10.0.post2、MPI1/线程1。编译与diff检查已通过；D5只作JSON、链接、hash和文档检查，不再pytest/PDE、无CI声明。
+
+| 依赖组 | 数值行为/依赖 | 测试、fresh证据与建议顺序 |
+|---|---|---|
+| production numerical/core | 不提升新默认；原A/旧PC定义保持 | 旧资格按来源保留；新接口没有fresh完整资格，不单独宣称production通过 |
+| reusable runner/watchdog | workflow_timebase与subreaper时钟保护，默认关闭 | tiny通过，fresh保护停止/清场；外层最终manifest缺失限制保留；先审通用依赖 |
+| checker/benchmark | probe packet依赖metric/runner，复用已有向量 | 微型packet读回通过，原尺寸packet未产生；随研究接口审阅 |
+| compact evidence/docs | 本次中心JSON、八份文档/索引与旧证据入口 | hash/JSON/链接检查；可独立保留负结果，随后审文档 |
+| research-only | physical_diagnosis/worker、physical_error_metric/diagnostics及相关接线 | tiny通过、fresh探测0；保持研究用途，依赖现有A/transfer/p4/PC |
+| do-not-merge | 大型raw、cache、矩阵/field和未资格化默认提升 | raw留ignored；无master merge授权 |
+
+完整命令、raw路径、环境、source与artifact hash见[中心JSON](records/nonconvergence_diagnosis_v3.json)，运行根为`benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/mpi1`。终止audit SHA256为`d4ae363508b6d2b67fdffe9dceea6882f6adcb1e74a4d32ec3dda53bbe879a8a`。
+
+## 历史：正式运行前的D0设计与验证快照
+
+以下“当前、待审、尚未执行”仅指提交24b3dbb之前；实际执行及D5结论以上文为准，保留历史计划而不重新授权运行。
+
 # 不收敛诊断 V3：D0 盘点与待审执行设计
 
 当前状态：D0 文件身份盘点、双时钟 tiny 验证、D1-D3 最小数值接口和参考容量预审完成；原始尺寸 canonical/Floquet 重建、原 A 作用、参考求解、投影和 PC 诊断均为 `not_run`。本页不代表 D0-D5 已完成。源码 HEAD 为 `97e82eeb08b6c2faef6457356cdc643832a75eb8`，当前改动未提交，正式诊断需使用随后审阅的 clean source。
