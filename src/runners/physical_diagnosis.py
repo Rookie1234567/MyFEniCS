@@ -14,9 +14,9 @@ def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
     """
     from benchmarks.subreaper_watchdog import supervise
     from .task038_launcher import _physical_source_gate
-    if kind not in ('diagnosis','reference','completion_v4'):
+    if kind not in ('diagnosis','reference','completion_v4','reference_symbolic'):
         raise ValueError('unknown diagnostic workflow kind')
-    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400}[kind])
+    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400,'reference_symbolic':1800}[kind])
     state = _physical_source_gate(Path.cwd(),expected_sha)
     result = supervise(command,Path(directory),wall_seconds=limit,phase_path=Path(phase_path),
                        source_state=state,interval=.25,grace_seconds=2,

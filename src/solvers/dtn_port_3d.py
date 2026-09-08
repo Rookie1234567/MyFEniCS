@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .condensed_reference_preflight import CondensedPreflightExit
+
 import copy
 import csv
 from dataclasses import dataclass
@@ -4290,6 +4292,11 @@ def _solve_stage4_dtn_port_total_field_impl(
                 ),
             }
         )
+        raise
+    except CondensedPreflightExit as stop:
+        # A symbolic-only observer deliberately does not return a solver snapshot.
+        # Release owner-held objects before the outer worker writes its terminal.
+        stop.release((solve_A, solve_b, assembly_time_full_rhs))
         raise
     setup_and_solve_seconds = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)

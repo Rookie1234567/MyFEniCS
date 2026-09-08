@@ -57,7 +57,7 @@ def test_borrowed_components_and_dual_input_have_no_invented_field_error():
         component_diagnostics({'bad':lambda x:np.full(3,np.nan)},x)
 
 
-@pytest.mark.parametrize('kind,limit',[('diagnosis',7200),('reference',3600)])
+@pytest.mark.parametrize('kind,limit',[('diagnosis',7200),('reference',3600),('reference_symbolic',1800)])
 def test_both_parents_enable_clock_guard(tmp_path,monkeypatch,kind,limit):
     from src.runners.physical_diagnosis import supervise_diagnosis
     from benchmarks import subreaper_watchdog

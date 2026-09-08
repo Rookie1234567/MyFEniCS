@@ -240,6 +240,18 @@ class _MumpsFactor:
             _petsc_error(function(self._handle, index, ctypes.byref(value)), name)
         return {'ICNTL(10)': integer.value, 'CNTL(2)': real.value, 'modified': False}
 
+    def symbolic_memory_settings(self) -> dict:
+        """Read controls relevant to interpreting symbolic memory, without setting them."""
+        function=self._api.MatMumpsGetIcntl
+        function.argtypes=[ctypes.c_void_p,ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
+        function.restype=ctypes.c_int
+        result={}
+        for index in (7,10,14,18,22,23):
+            value=ctypes.c_int()
+            _petsc_error(function(self._handle,index,ctypes.byref(value)), 'MatMumpsGetIcntl')
+            result[str(index)]=value.value
+        return dict(icntl=result,modified=False)
+
     def solve_repeated(self, rhs: Any, solution: Any) -> None:
         """Apply an already qualified factor; preserve the one-shot solve API."""
         if self.destroyed or self.numeric_calls != 1:
