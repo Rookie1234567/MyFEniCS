@@ -1,4 +1,4 @@
-"""1800s symbolic-only capacity observation; no numeric or reference solution."""
+"""1800s fine-reference workflow; default symbolic-only, explicit solve opt-in."""
 import argparse
 import hashlib
 import json
@@ -48,14 +48,31 @@ def qualified_abi():
                  for m in (petsc4py,slepc4py,dolfinx,mpi4py,basix)})
 
 
-def record_post_release(record, sample):
+def record_post_release(record, sample, *, failure_status='SYMBOLIC_PREFLIGHT_FAILED'):
     """A failed final resource sample must not leave a successful summary."""
     try:
         record['after_release_resource']=sample()
     except Exception as exc:
-        record.update(status='SYMBOLIC_PREFLIGHT_FAILED',primary_error=dict(
+        record.update(status=failure_status,primary_error=dict(
             type=type(exc).__name__,message=str(exc)))
         raise
+
+
+def load_reference_witness(audit_path,expected_hash):
+    """Bind the one frozen A2R160 action/RHS/native map through its old audit."""
+    from .physical_diagnostic_completion import load_packet
+    if hashlib.sha256(audit_path.read_bytes()).hexdigest()!=expected_hash:
+        raise ValueError('reference witness audit hash mismatch')
+    audit=json.loads(audit_path.read_text())
+    indexed={entry['path']:entry['sha256'] for entry in audit['evidence']}
+    root=Path(audit['root']);result={};evidence=[]
+    for key,name in (('map','native_constraint_map_p6'),('rhs','rhs'),('control','A2R160_identity')):
+        path=root/(name+'.json');digest=hashlib.sha256(path.read_bytes()).hexdigest()
+        if indexed.get(str(path))!=digest:raise ValueError('reference witness packet mismatch: '+name)
+        result[key]=load_packet(path)
+        evidence.append(dict(path=str(path),sha256=digest))
+    result['evidence']=dict(audit_path=str(audit_path),audit_sha256=expected_hash,packets=evidence)
+    return result
 
 
 def run_worker(args):
@@ -98,24 +115,36 @@ def run_worker(args):
     record=dict(status='PREFLIGHT_STARTED',identity=identity,numeric_called=False,solve_called=False)
     def save(name,value):_atomic_json(args.directory/(name+'.json'),value)
     try:
+        if args.solve_reference:
+            from .physical_diagnosis_worker import save_packet
+            from src.solvers.condensed_fine_reference import MatchedFineReference
+            witness=load_reference_witness(args.witness_audit,args.witness_audit_sha)
+            def canonical(field,floquet):
+                from benchmarks.canonical_vector_artifacts import write_canonical_packet_shard
+                from src.solvers.hcurl_canonical_vector_dolfinx import iter_canonical_full_fe_packets
+                return write_canonical_packet_shard(args.directory/'canonical_reference.rank0000.jsonl',
+                    iter_canonical_full_fe_packets(field.function_space,field,floquet),audit_packets=True)
+            observer=MatchedFineReference(sample=sample,marker=ledger.marker,identity=identity,witness=witness,
+                save=lambda name,value:save_packet(args.directory,name,value),canonical_export=canonical)
+        else:
+            observer=CondensedSymbolicPreflight(sample=sample,save=save,marker=ledger.marker,identity=identity)
         _atomic_json(args.directory/'input_resolved.json',payload)
         (args.directory/'mode_manifest.json').write_bytes(mode_bytes)
         sample();ledger.marker('fine_reference_assembly_started',identity)
         run_stage4b_block_grating_3d_case(cfg,args.directory/'assembly',
-            linear_solver_port=CondensedSymbolicPreflight(sample=sample,save=save,
-                marker=ledger.marker,identity=identity))
-        raise RuntimeError('symbolic observer unexpectedly returned a full solver result')
+            linear_solver_port=observer)
+        raise RuntimeError('reference observer unexpectedly returned a solver snapshot')
     except CondensedPreflightExit as stop:
         record=stop.record
         if stop.error is not None:raise stop.error
         if record.get('cleanup_errors'):raise RuntimeError('symbolic preflight cleanup failed')
-        record_post_release(record,sample)
+        record_post_release(record,sample,failure_status='REFERENCE_FAILED' if args.solve_reference else 'SYMBOLIC_PREFLIGHT_FAILED')
     except BaseException as exc:
-        record.update(status='SYMBOLIC_PREFLIGHT_FAILED',primary_error=dict(
+        record.update(status='REFERENCE_FAILED' if args.solve_reference else 'SYMBOLIC_PREFLIGHT_FAILED',primary_error=dict(
             type=type(exc).__name__,message=str(exc)))
         raise
     finally:
-        try:save('preflight_summary',record)
+        try:save('reference_summary' if args.solve_reference else 'preflight_summary',record)
         finally:
             for sig,handler in handlers.items():signal.signal(sig,handler)
 
@@ -131,13 +160,19 @@ def main():
     parser.add_argument('--expected-sha',required=True)
     parser.add_argument('--cache-path',type=Path)
     parser.add_argument('--worker',action='store_true')
+    parser.add_argument('--solve-reference',action='store_true')
+    parser.add_argument('--witness-audit',type=Path)
+    parser.add_argument('--witness-audit-sha')
     args=parser.parse_args()
+    if args.solve_reference and (args.witness_audit is None or args.witness_audit_sha is None):
+        parser.error('reference solve requires hash-bound frozen witness audit')
     _physical_source_gate(Path.cwd(),args.expected_sha)
     if args.worker:run_worker(args);return 0
     args.directory.mkdir(parents=True,exist_ok=False)
     start=clock_sample();before=ClockBudget(start,policy=CONSERVATIVE_REALTIME)
     manifest=dict(source_sha=args.expected_sha,clock_start=start,workflow_limit_seconds=1800,
-        numeric_called=False,solve_called=False,kind='fine_reference_symbolic_only')
+        numeric_called=None if args.solve_reference else False,solve_called=None if args.solve_reference else False,
+        kind='fine_reference_solve' if args.solve_reference else 'fine_reference_symbolic_only')
     result=None;after=None
     try:
         # MPI is imported only in this subprocess, which exits before watchdog starts.
@@ -152,10 +187,14 @@ def main():
         command=['mpiexec','-n','1',sys.executable,'-m','src.runners.fine_reference_preflight',
             '--worker','--input',str(args.input),'--directory',str(args.directory),
             '--expected-sha',args.expected_sha]
+        if args.solve_reference:
+            command.extend(['--solve-reference','--witness-audit',str(args.witness_audit),
+                            '--witness-audit-sha',args.witness_audit_sha])
         manifest['command']=command;_atomic_json(args.directory/'launch.json',manifest)
         result=supervise_diagnosis(command,args.directory/'watchdog',
             phase_path=args.directory/'phase.json',expected_sha=args.expected_sha,
-            kind='reference_symbolic',remaining_seconds=1800-before.update(clock_sample())['budget_seconds'],
+            kind='reference' if args.solve_reference else 'reference_symbolic',
+            remaining_seconds=1800-before.update(clock_sample())['budget_seconds'],
             cache_path=args.cache_path)
         manifest['supervision']=result;manifest['pre_interval']=before.update(result['clock_start'])
         after=ClockBudget(result['clock_end'],policy=CONSERVATIVE_REALTIME)
@@ -169,6 +208,15 @@ def main():
             manifest['charged_seconds']=before.seconds+result['workflow_clock_interval']['budget_seconds']+after.seconds
         else:manifest['charged_seconds']=before.update(end)['budget_seconds']
         manifest.setdefault('classification',result['classification'] if result else 'PREFLIGHT_LAUNCH_FAILED')
+        if args.solve_reference:
+            summary_path=args.directory/'reference_summary.json'
+            if summary_path.exists():
+                terminal=json.loads(summary_path.read_text())
+                manifest.update(worker_status=terminal['status'],numeric_called=terminal.get('numeric_called'),
+                                solve_called=terminal.get('solve_called'))
+                if manifest['classification']=='COMPLETED' and terminal['status']!='REFERENCE_PASS':
+                    manifest['classification']='REFERENCE_NOT_QUALIFIED'
+            elif manifest['classification']=='COMPLETED':manifest['classification']='REFERENCE_EVIDENCE_MISSING'
         if manifest['charged_seconds']>1800 and manifest['classification']=='COMPLETED':
             manifest['classification']='PERFORMANCE_CONTROLLED_STOP'
         _atomic_json(args.directory/'launch.json',manifest)

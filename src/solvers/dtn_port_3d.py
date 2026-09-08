@@ -123,6 +123,8 @@ class Stage4ExternalLinearSolverRequest:
     config: SimulationConfig3D
     floquet_data: DoubleFloquet3DData
     release_assembled_matrix: Callable[[], None] | None = None
+    mesh_data: Any = None
+    full_rhs: PETSc.Vec | None = None
 
 
 @dataclass(frozen=True)
@@ -209,6 +211,8 @@ def _dispatch_external_linear_solver(
     config: SimulationConfig3D,
     floquet_data: DoubleFloquet3DData,
     release_assembled_matrix: Callable[[], None] | None = None,
+    mesh_data: Any = None,
+    full_rhs: PETSc.Vec | None = None,
     port: Callable[
         [Stage4ExternalLinearSolverRequest], Stage4ExternalLinearSolverSnapshot
     ],
@@ -226,6 +230,8 @@ def _dispatch_external_linear_solver(
             config=config,
             floquet_data=floquet_data,
             release_assembled_matrix=release_assembled_matrix,
+            mesh_data=mesh_data,
+            full_rhs=full_rhs,
         )
     )
     if not isinstance(snapshot, Stage4ExternalLinearSolverSnapshot):
@@ -4253,6 +4259,8 @@ def _solve_stage4_dtn_port_total_field_impl(
                         else None
                     ),
                     port=linear_solver_port,
+                    mesh_data=mesh_data,
+                    full_rhs=assembly_time_full_rhs,
                 )
             solve_x = external_snapshot.x
             ksp = None
@@ -4294,7 +4302,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
         raise
     except CondensedPreflightExit as stop:
-        # A symbolic-only observer deliberately does not return a solver snapshot.
+        # A reference observer deliberately does not return a solver snapshot.
         # Release owner-held objects before the outer worker writes its terminal.
         stop.release((solve_A, solve_b, assembly_time_full_rhs))
         raise
