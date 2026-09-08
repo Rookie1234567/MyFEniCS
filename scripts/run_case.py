@@ -71,6 +71,12 @@ def main(argv: list[str] | None = None) -> int:
                                        if args.profile_variant != 'R0' or args.profile_r0_reference is not None else {}))
         else:
             from src.io.physical_intermediate_profile import LIGHT_PROFILE, JOINT_PROFILE
+            from src.io.physical_balanced_profile import BALANCED_PROFILES
+            if specification.solver.get('preconditioner') in BALANCED_PROFILES:
+                from src.runners.physical_balanced_budget import launch_balanced_workflow
+                result = launch_balanced_workflow(specification, args.profile_budget_ledger)
+                print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+                return 0 if result['result_classification'] == 'worker_exit0' else 3
             if specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE):
                 from src.runners.physical_profile_budget import launch_light_workflow
                 result = launch_light_workflow(specification, args.profile_budget_ledger)

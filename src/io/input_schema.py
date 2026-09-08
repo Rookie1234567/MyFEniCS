@@ -159,6 +159,9 @@ IDENTITY_FIELD_SPECS: Final = (
 
 FIELD_SPECS: Final = (
     # geometry
+    _f("geometry.cell_notch", "string", "none", _ANY_2D_3D,
+       "按原网格单元中心把局部光栅改为空气", "cell_notch",
+       '"positive_x_middle_y_z40_80"', allowed=("positive_x_middle_y_z40_80",)),
     _f(
         "geometry.geometry_kind",
         "string",
@@ -901,7 +904,7 @@ FIELD_SPECS: Final = (
             "physical_intermediate_p4_reference_v1",
             "a2r_equivalent_fast_v1",
             "a2r_packed_equivalent_v2",
-            "light_p4ref_jointmr3_v2",
+            "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5",
             "p6smooth_p4ref_p6smooth_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),

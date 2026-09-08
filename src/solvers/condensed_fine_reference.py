@@ -183,9 +183,10 @@ def residual_packet(x,b,ax,slaves):
 
 
 class MatchedFineReference:
-    def __init__(self,*,sample,save,marker,identity,witness,canonical_export):
+    def __init__(self,*,sample,save,marker,identity,witness,canonical_export, output_callback=None):
         self.sample,self.save,self.marker=sample,save,marker
         self.identity,self.witness,self.canonical_export=identity,witness,canonical_export
+        self.output_callback=output_callback
 
     def __call__(self,request):
         from .dtn_port_3d import _assign_fe_solution_from_assembly_time_condensation
@@ -278,6 +279,8 @@ class MatchedFineReference:
             self.sample()
             record['canonical']=self.canonical_export(field,floquet)
             record['canonical_qualified']=record['status']=='REFERENCE_PASS'
+            if record['status']=='REFERENCE_PASS' and self.output_callback is not None:
+                record['matched_output'] = self.output_callback(native,x)
             self.save('reference_result',record)
         except Exception as exc:
             error=exc

@@ -543,7 +543,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_intermediate_p4_reference_v1",
                 "a2r_equivalent_fast_v1",
                 "a2r_packed_equivalent_v2",
-                "light_p4ref_jointmr3_v2",
+                "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5",
                 "p6smooth_p4ref_p6smooth_v1",
             }:
                 raise _error(
@@ -560,8 +560,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
-            elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2"):
-                expanded = preconditioner in ("a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2")
+            elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5"):
+                expanded = preconditioner in ("a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5")
                 for section, key, actual, expected in (
                     ("solver", "restart", solver["restart"], 32),
                     ("solver", "max_iterations", solver["max_iterations"], 2048 if expanded else 512),
@@ -897,6 +897,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "geometry.substrate_thickness_nm",
                 "must equal interface_z_nm - z_min_nm",
             )
+    if geometry.get('cell_notch') is not None:
+        if dimension != 3 or geometry_kind != 'rectangular_block_grating':
+            raise _error('geometry.cell_notch', 'requires the 3D block grating')
+        if geometry['cell_notch'] != 'positive_x_middle_y_z40_80':
+            raise _error('geometry.cell_notch', 'unknown cell recipe')
     is_grating = geometry_kind in {"euv_grating_2d", "rectangular_block_grating"}
     if not is_grating:
         geometry.setdefault("grating_width_x_nm", 0.0)
@@ -1301,6 +1306,7 @@ def simulation_config_3d_from_normalized(
         grating_height=g.get("grating_height_nm", 0.0),
         grating_width_x=g.get("grating_width_x_nm", 0.0),
         grating_width_y=g.get("grating_width_y_nm", 0.0),
+        cell_notch=g.get("cell_notch"),
         n_substrate=(
             None if m.get("n_substrate") is None else _complex(m["n_substrate"])
         ),

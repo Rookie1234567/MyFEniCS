@@ -6,10 +6,15 @@ FAST_PROFILE = "a2r_equivalent_fast_v1"
 LIGHT_PROFILE = "p6smooth_p4ref_p6smooth_v1"
 PACKED_PROFILE = "a2r_packed_equivalent_v2"
 JOINT_PROFILE = "light_p4ref_jointmr3_v2"
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE)
+from .physical_balanced_profile import BALANCED_PROFILES
+
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE) + BALANCED_PROFILES
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity in BALANCED_PROFILES:
+        from .physical_balanced_profile import balanced_profile_facts
+        return balanced_profile_facts(identity)
     if identity == JOINT_PROFILE:
         facts = profile_facts(LIGHT_PROFILE)
         facts['identity'] = identity

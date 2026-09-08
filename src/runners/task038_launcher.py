@@ -320,6 +320,8 @@ def launch_specification(
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
+    from .workflow_timebase import ClockBudget, clock_sample, CONSERVATIVE_REALTIME
+    full_clock=ClockBudget(clock_sample(),policy=CONSERVATIVE_REALTIME)
     workflow_started = monotonic()
     source = _validate_source_sha(
         source_sha
@@ -328,6 +330,8 @@ def launch_specification(
     )
     from src.io.physical_intermediate_profile import PROFILES
     from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, profile_facts
+    from src.io.physical_balanced_profile import BALANCED_PROFILES
+    balanced = specification.solver.get('preconditioner') in BALANCED_PROFILES
     packed = specification.solver.get('preconditioner') == PACKED_PROFILE
     if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
@@ -381,7 +385,7 @@ def launch_specification(
         manifest['pc_profile'] = dict(config=diagnostic_path.name,
             sha256=hashlib.sha256(diagnostic_path.read_bytes()).hexdigest(), **pc_profile)
         _write_json(run_directory/'run_manifest.json', manifest)
-    if light:
+    if light or balanced:
         cache_home = run_directory/'jit_cache'
         cache_home.mkdir(exist_ok=False)
         manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
@@ -409,10 +413,11 @@ def launch_specification(
                 authority = supervise(list(plan.argv), run_directory / 'watchdog',
                     wall_seconds=max(1e-9, min(workflow_limit-(monotonic()-workflow_started),
                         pc_profile['deadline_monotonic']-monotonic()) if pc_profile is not None
-                        else workflow_limit-(60 if joint else 0)-(monotonic()-workflow_started)),
+                        else workflow_limit-(60 if joint else 0)-(full_clock.update(clock_sample())['budget_seconds']
+                            if balanced else monotonic()-workflow_started)),
                     solve_seconds=None if pc_profile is not None else solve_limit,
                     phase_path=run_directory / 'workflow_phase.json',
-                    cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light else
+                    cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light or balanced else
                         Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
                     source_state=physical_source,
                     **(dict(grace_seconds=60 if packed else 30, hard_stop_immediate=True,
@@ -421,7 +426,8 @@ def launch_specification(
                                                 'XDG_CACHE_HOME': pc_profile['cache_home']})
                        if pc_profile is not None else dict(grace_seconds=60, hard_stop_immediate=True,
                             cooperative_performance_stop=True,
-                            worker_environment={'XDG_CACHE_HOME': str(cache_home.resolve())}) if light else {}))
+                            worker_environment={'XDG_CACHE_HOME': str(cache_home.resolve())},
+                            **(dict(timebase_guard=True, timebase_policy='conservative_realtime') if balanced else {})) if light or balanced else {}))
                 result = {'exit_status': authority['leader_exit_code'],
                     'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                     'resource_authority': authority}
@@ -455,6 +461,10 @@ def launch_specification(
                 "error": str(exc),
                 "resource_authority": {"status": "not_sampled"},
             }
+    if balanced and physical_candidate:
+        result['workflow_clock_interval']=full_clock.update(clock_sample())
+        if result['workflow_clock_interval']['budget_seconds']>workflow_limit:
+            result['result_classification']='PERFORMANCE_CONTROLLED_STOP'
     end_time = _now()
     if physical_candidate:
         result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started

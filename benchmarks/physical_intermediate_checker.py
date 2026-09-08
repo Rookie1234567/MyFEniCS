@@ -71,14 +71,74 @@ def recompute_positive_apply_counts(pc_records: list[dict], cycles: list[dict]) 
         tail={key: sum(row[key] for row in per_pc[offset:]) for key in keys})
 
 
+def recompute_p4_decisions(decisions, pc_rows):
+    groups={};errors=[];external=0
+    for row in decisions:
+        logical=row['logical_rhs'];iteration=row['refinement_steps']
+        group=groups.setdefault(logical,[])
+        relative=row['true_residual_norm']/max(row['original_rhs_norm'],np.finfo(float).tiny)
+        if (iteration!=len(group) or iteration>2 or row['external_solves']-external not in (0,1) or
+                not np.isfinite(relative) or abs(relative-row['final_true_residual'])>1e-12):
+            errors.append('decision ordering/norm/count mismatch')
+        if group and (group[-1]['final_true_residual']<=1e-10 or
+                      group[0]['original_rhs_norm']!=row['original_rhs_norm']):
+            errors.append('refinement after pass or changed normalization')
+        external=row['external_solves']
+        group.append(row)
+    if list(groups)!=list(range(1,len(groups)+1)):
+        errors.append('noncontiguous logical RHS')
+    if any(g[-1]['true_residual_norm']/max(g[-1]['original_rhs_norm'],np.finfo(float).tiny)>1e-10 for g in groups.values()):
+        errors.append('final A4 residual missed')
+    if external!=sum(r['p4_counts']['MatSolve'] for r in pc_rows) or len(groups)!=sum(r['p4_counts']['C'] for r in pc_rows):
+        errors.append('PC/MatSolve totals differ')
+    return dict(passed=not errors,errors=errors,logical_rhs=len(groups),MatSolve=external,
+                refinements=len(decisions)-len(groups))
+
+
+def recompute_balanced_screen(solve, rows):
+    if not solve['screen_enabled']:
+        return dict(matches=solve.get('screen') is None, enabled=False)
+    history=[]; decision=None
+    for row in rows:
+        i=row['iteration']; r=row['explicit_true_residual']
+        if i and i%32==0 and (not history or history[-1][0]!=i):
+            history=(history+[(i,r)])[-3:]
+        if i>=128 or row['solve_seconds']>=1800:
+            if r<=1e-6 and solve.get('screen') is None:
+                return dict(matches=True,converged_before_screen=True)
+            trend=(len(history)==3 and history[1][0]-history[0][0]==32 and
+                history[2][0]-history[1][0]==32 and 0<history[2][1]<history[1][1]<history[0][1]
+                and np.sqrt(history[2][1]/history[0][1])<=.65)
+            decision=dict(iteration=i,passed=bool(r<=1e-2 or trend));break
+    saved=solve.get('screen')
+    matches=(saved is None) if decision is None else (saved is not None and
+        saved['iteration']==decision['iteration'] and saved['passed']==decision['passed'])
+    return dict(matches=matches,recomputed=decision)
+
+
+def balanced_output_classification(summary, errors, expected_errors=()):
+    if not errors:
+        return ('BALANCED_OUTPUT_AUTHORITY_LIMITED' if
+            summary.get('matched_reference',{}).get('status')=='REFERENCE_AUTHORITY_LIMITED'
+            else 'BALANCED_OUTPUT_PASS')
+    if summary['status'] in ('SCREEN_BUDGET_NO_QUALIFIED_PROGRESS',
+                            'PERFORMANCE_CONTROLLED_STOP','ITERATION_BUDGET_EXHAUSTED'):
+        return summary['status'] if all(e in expected_errors for e in errors) else 'CORRECTNESS_OR_EVIDENCE_BLOCKED'
+    return 'NUMERICAL_OR_OUTPUT_FAIL'
+
+
 def check(directory: Path) -> dict:
     started = time.monotonic()
     summary = json.loads((directory / 'physical_intermediate_summary.json').read_text())
-    errors, facts = [], {}
+    errors, facts, expected_errors = [], {}, []
+    controlled = summary['status'] in ('SCREEN_BUDGET_NO_QUALIFIED_PROGRESS',
+        'PERFORMANCE_CONTROLLED_STOP','ITERATION_BUDGET_EXHAUSTED')
 
-    def require(condition, message):
+    def require(condition, message, *, expected=False):
         if not condition:
             errors.append(message)
+            if expected:
+                expected_errors.append(message)
 
     def hashed_file(filename, digest):
         path = directory / filename
@@ -87,12 +147,23 @@ def check(directory: Path) -> dict:
         return path
 
     raw = summary['residual_arrays']
+    from src.io.physical_balanced_profile import BALANCED_PROFILES
+    balanced = summary['profile']['identity'] in BALANCED_PROFILES
     reference_only = summary['profile'].get('reference_only', False)
     if reference_only:
         ledger = summary['reference_pc_ledger']
         pc_rows = [json.loads(x) for x in hashed_file(ledger['filename'], ledger['sha256']).read_text().splitlines()]
         require(bool(pc_rows), 'missing reference PC solves')
-        for row in pc_rows:
+        if balanced:
+            decisions = [json.loads(x) for x in (directory/'p4_decisions.jsonl').read_text().splitlines()]
+            facts['p4_decisions'] = recompute_p4_decisions(decisions,pc_rows)
+            require(facts['p4_decisions']['passed'], 'native A4 final residual or accounting gate failed')
+            facts['balanced_screen'] = recompute_balanced_screen(summary['solve'],
+                [json.loads(x) for x in (directory/'monitor_residuals.jsonl').read_text().splitlines()])
+            require(facts['balanced_screen']['matches'], 'screen decision differs from raw checkpoints')
+            require(summary['solve']['ksp_create_count'] == summary['solve']['ksp_solve_count'] ==
+                    summary['solve']['ksp_destroy_count'] == 1, 'not one live KSP')
+        for row in ([] if balanced else pc_rows):
             inner = row['intermediate']
             numerator, denominator = inner['true_residual_norm'], inner['rhs_norm']
             relative = numerator / max(denominator, np.finfo(float).tiny)
@@ -107,11 +178,12 @@ def check(directory: Path) -> dict:
         require(all(np.isfinite(v).all() for v in (rhs, action, solution)), 'nonfinite raw vectors')
         residual = np.linalg.norm(rhs-action)/max(np.linalg.norm(rhs), np.finfo(float).tiny)
         facts['full_explicit_true_relative_residual'] = float(residual)
-        require(np.isfinite(residual) and residual <= 1e-6, f'fine residual {residual} exceeds 1e-6')
+        require(np.isfinite(residual) and residual <= 1e-6, f'fine residual {residual} exceeds 1e-6',
+                expected=controlled and bool(np.isfinite(residual)))
         solve = summary['solve']
         require(abs(residual-solve['final_true_residual']) <= max(1e-12, .001*residual), 'raw/reported true residual mismatch')
         require(solve['reason'] >= 0 or solve['reason'] == -3, f'KSP breakdown reason {solve["reason"]}')
-        for cycle in solve['cycles']:
+        for cycle in solve.get('cycles', []):
             reported = cycle['reported_final_residual']/max(np.linalg.norm(rhs), np.finfo(float).tiny)
             difference = abs(reported-cycle['explicit_true_residual'])
             require(np.isfinite(difference) and difference <= max(1e-10, .01*cycle['explicit_true_residual']),
@@ -145,12 +217,12 @@ def check(directory: Path) -> dict:
         with np.load(directory/raw['filename'], allow_pickle=False) as arrays:
             require(hashlib.sha256(arrays['solution'].tobytes()).hexdigest() == summary['final_solution_sha256'],
                     'final solution hash mismatch before recovery')
-    require(summary['solve_monotonic_seconds'] <= resources['solve_seconds'], 'solve budget exceeded')
-    require(summary['elapsed_monotonic_seconds'] <= resources['workflow_seconds'], 'workflow budget exceeded before checker')
+    require(summary.get('solve_conservative_seconds', summary['solve_monotonic_seconds']) <= resources['solve_seconds'], 'solve budget exceeded', expected=summary['status']=='PERFORMANCE_CONTROLLED_STOP')
+    require(summary.get('elapsed_conservative_seconds', summary['elapsed_monotonic_seconds']) <= resources['workflow_seconds'], 'workflow budget exceeded before checker', expected=summary['status']=='PERFORMANCE_CONTROLLED_STOP')
     require(summary['auxiliary_stack_released_before_recovery'] is True, 'auxiliary stack not released')
     output = summary.get('official_result')
     if output is None:
-        errors.append('official outputs unavailable')
+        require(False,'official outputs unavailable',expected=controlled)
     else:
         port, volume = output['port_metrics'], output['volume_metrics']
         r, t, a, av = port['R_total'], port['T_total'], port['A_balance'], volume['A_volume_total']
@@ -195,13 +267,21 @@ def check(directory: Path) -> dict:
         packets = read_canonical_packet_shard(directory / 'numerical_output' / canonical['filename'])
         require(len(packets) == canonical['packet_count'] > 0, 'canonical packet count mismatch')
         require(all(np.isfinite(value) for _, value in packets), 'nonfinite canonical coefficients')
+    if balanced and output is not None:
+        matched = summary.get('matched_reference', {})
+        require(matched.get('status') in ('MATCHED_REFERENCE_PASS','REFERENCE_AUTHORITY_LIMITED'), 'matched reference failed')
+        require(summary['rss_after_release'] < summary['rss_before_release'], 'RSS did not decrease before recovery')
+    independent_output_gates_passed = not errors
     classification = ('REFERENCE_ONLY_PASS' if reference_only else 'DISCRETE_SOLVER_OUTPUT_PASS') if not errors else 'NUMERICAL_OR_OUTPUT_FAIL'
     if light and errors and summary['status'] == 'STAGNATION_CONTROLLED_STOP' and stagnation:
         classification = 'STAGNATION_CONTROLLED_STOP'
     elif light and errors and summary['status'] == 'ITERATION_BUDGET_EXHAUSTED' and summary['solve']['iterations'] == 2048:
         classification = 'ITERATION_BUDGET_EXHAUSTED'
+    if balanced:
+        classification = balanced_output_classification(summary,errors,expected_errors)
     return dict(classification=classification,
-                reference_authority='PENDING_A4_not_compared',
+                reference_authority=summary.get('matched_reference',{}).get('status','PENDING_A4_not_compared'),
+                independent_output_gates_passed=independent_output_gates_passed,
                 gate_failures=errors, raw_facts=facts, checker_seconds=time.monotonic()-started,
                 resource_authority='separate enclosing parent verdict required')
 
@@ -214,7 +294,7 @@ def main() -> int:
         result = dict(classification='EVIDENCE_INCOMPLETE', reference_authority='PENDING_A4_not_compared',
                       gate_failures=[f'{type(exc).__name__}: {exc}'])
     (directory / 'checker.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
-    return 0 if result['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS') else 2
+    return 0 if result['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS', 'BALANCED_OUTPUT_PASS', 'BALANCED_OUTPUT_AUTHORITY_LIMITED') else 2
 
 
 if __name__ == '__main__':

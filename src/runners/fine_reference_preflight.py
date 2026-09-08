@@ -12,11 +12,11 @@ from .physical_intermediate import WorkflowLedger, _atomic_json
 from .workflow_timebase import ClockBudget, clock_sample, CONSERVATIVE_REALTIME
 
 
-def input_identity(payload):
+def input_identity(payload, *, matched_physical_sha=None):
     """Keep the real input hash; compare the sole reviewed backend difference."""
     from src.io import canonical_json_bytes
     physical=payload['provenance']['physical_model_sha256']
-    if physical!='2d9fed2466c96f0db124ceb229eb937df0e49654a3bae17772ab70d4441a061d':
+    if matched_physical_sha is None and physical!='2d9fed2466c96f0db124ceb229eb937df0e49654a3bae17772ab70d4441a061d':
         raise ValueError('fine reference input identity differs')
     sections={name:dict(payload[name]) for name in
               ('geometry','materials','incidence','discretization','boundary')}
@@ -24,7 +24,7 @@ def input_identity(payload):
         raise ValueError('assembly-time condensation required')
     sections['discretization']['assembly_backend']='standard_full'
     original=hashlib.sha256(canonical_json_bytes(sections)).hexdigest()
-    if original!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f':
+    if original!=(matched_physical_sha or '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'):
         raise ValueError('original physical fields differ beyond assembly backend')
     return dict(physical_sha256=physical,original_physical_sha256=original,
                 identity_difference={'discretization.assembly_backend':
@@ -64,6 +64,13 @@ def load_reference_witness(audit_path,expected_hash):
     if hashlib.sha256(audit_path.read_bytes()).hexdigest()!=expected_hash:
         raise ValueError('reference witness audit hash mismatch')
     audit=json.loads(audit_path.read_text())
+    if audit.get('schema') == 'balanced-notch-reference-witness.v1':
+        witness = Path(audit['packet'])
+        if hashlib.sha256(witness.read_bytes()).hexdigest() != audit['packet_sha256']:
+            raise ValueError('notch witness hash mismatch')
+        result = load_packet(witness)
+        result['evidence'] = dict(audit_path=str(audit_path),audit_sha256=expected_hash)
+        return result
     indexed={entry['path']:entry['sha256'] for entry in audit['evidence']}
     root=Path(audit['root']);result={};evidence=[]
     for key,name in (('map','native_constraint_map_p6'),('rhs','rhs'),('control','A2R160_identity')):
@@ -87,7 +94,9 @@ def run_worker(args):
     abi=qualified_abi()
     if os.environ.get('PHYSICAL_TIMEBASE_GUARD')!='1':raise RuntimeError('watchdog clock guard required')
     payload=load_and_resolve(args.input).as_jsonable()
-    physical_identity=input_identity(payload)
+    witness = load_reference_witness(args.witness_audit,args.witness_audit_sha) if args.solve_reference else None
+    matched = witness.get('physical_model_sha256') if witness else None
+    physical_identity=input_identity(payload,matched_physical_sha=matched)
     cfg=simulation_config_3d_from_normalized(payload)
     if cfg.stage4_full3d_assembly_backend!='assembly_time_static_condensed':
         raise ValueError('existing exact-class assembly-time condensation required')
@@ -124,8 +133,11 @@ def run_worker(args):
                 from src.solvers.hcurl_canonical_vector_dolfinx import iter_canonical_full_fe_packets
                 return write_canonical_packet_shard(args.directory/'canonical_reference.rank0000.jsonl',
                     iter_canonical_full_fe_packets(field.function_space,field,floquet),audit_packets=True)
+            from .physical_balanced_output import compare_notch_reference
             observer=MatchedFineReference(sample=sample,marker=ledger.marker,identity=identity,witness=witness,
-                save=lambda name,value:save_packet(args.directory,name,value),canonical_export=canonical)
+                save=lambda name,value:save_packet(args.directory,name,value),canonical_export=canonical,
+                output_callback=(lambda native,x: compare_notch_reference(native,x,witness,args.directory))
+                    if matched else None)
         else:
             observer=CondensedSymbolicPreflight(sample=sample,save=save,marker=ledger.marker,identity=identity)
         _atomic_json(args.directory/'input_resolved.json',payload)
@@ -164,14 +176,17 @@ def main():
     parser.add_argument('--solve-reference',action='store_true')
     parser.add_argument('--witness-audit',type=Path)
     parser.add_argument('--witness-audit-sha')
+    parser.add_argument('--workflow-seconds',type=float,default=1800)
     args=parser.parse_args()
+    if not 0<args.workflow_seconds<=3600:parser.error('reference budget must be positive and at most3600')
+    if args.workflow_seconds>1800 and not args.solve_reference:parser.error('extended budget only for conditional reference solve')
     if args.solve_reference and (args.witness_audit is None or args.witness_audit_sha is None):
         parser.error('reference solve requires hash-bound frozen witness audit')
     _physical_source_gate(Path.cwd(),args.expected_sha)
     if args.worker:run_worker(args);return 0
     args.directory.mkdir(parents=True,exist_ok=False)
     start=clock_sample();before=ClockBudget(start,policy=CONSERVATIVE_REALTIME)
-    manifest=dict(source_sha=args.expected_sha,clock_start=start,workflow_limit_seconds=1800,
+    manifest=dict(source_sha=args.expected_sha,clock_start=start,workflow_limit_seconds=args.workflow_seconds,
         numeric_called=None if args.solve_reference else False,solve_called=None if args.solve_reference else False,
         kind='fine_reference_solve' if args.solve_reference else 'fine_reference_symbolic_only')
     result=None;after=None
@@ -187,7 +202,7 @@ def main():
                     sha256=hashlib.sha256(path.read_bytes()).hexdigest(),bytes=path.stat().st_size))
         command=['mpiexec','-n','1',sys.executable,'-m','src.runners.fine_reference_preflight',
             '--worker','--input',str(args.input),'--directory',str(args.directory),
-            '--expected-sha',args.expected_sha]
+            '--expected-sha',args.expected_sha,'--workflow-seconds',str(args.workflow_seconds)]
         if args.solve_reference:
             command.extend(['--solve-reference','--witness-audit',str(args.witness_audit),
                             '--witness-audit-sha',args.witness_audit_sha])
@@ -195,7 +210,7 @@ def main():
         result=supervise_diagnosis(command,args.directory/'watchdog',
             phase_path=args.directory/'phase.json',expected_sha=args.expected_sha,
             kind='reference' if args.solve_reference else 'reference_symbolic',
-            remaining_seconds=1800-before.update(clock_sample())['budget_seconds'],
+            remaining_seconds=args.workflow_seconds-before.update(clock_sample())['budget_seconds'],
             cache_path=args.cache_path)
         manifest['supervision']=result;manifest['pre_interval']=before.update(result['clock_start'])
         after=ClockBudget(result['clock_end'],policy=CONSERVATIVE_REALTIME)
@@ -218,7 +233,7 @@ def main():
                 if manifest['classification']=='COMPLETED' and terminal['status']!='REFERENCE_PASS':
                     manifest['classification']='REFERENCE_NOT_QUALIFIED'
             elif manifest['classification']=='COMPLETED':manifest['classification']='REFERENCE_EVIDENCE_MISSING'
-        if manifest['charged_seconds']>1800 and manifest['classification']=='COMPLETED':
+        if manifest['charged_seconds']>args.workflow_seconds and manifest['classification']=='COMPLETED':
             manifest['classification']='PERFORMANCE_CONTROLLED_STOP'
         _atomic_json(args.directory/'launch.json',manifest)
     return 0 if manifest['classification']=='COMPLETED' else 2

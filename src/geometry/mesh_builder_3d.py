@@ -112,6 +112,9 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
         )
         values[in_block] = cfg.tags.grating
 
+    if cfg.cell_notch is not None:
+        from .cell_notch import apply_cell_notch
+        values = apply_cell_notch(midpoints, values, cfg)
     return mesh.meshtags(msh, tdim, cells, values)
 
 

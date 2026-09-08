@@ -178,11 +178,14 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
 
     identity = payload['solver']['preconditioner']
     from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE
+    from src.io.physical_balanced_profile import BALANCED_PROFILES, BALANCED_ROUTES
+    balanced = identity in BALANCED_PROFILES
+    build_light = identity in (LIGHT_PROFILE, JOINT_PROFILE) or (balanced and BALANCED_ROUTES[identity] != 'BAL_S')
     joint = identity == JOINT_PROFILE
     light = identity in (LIGHT_PROFILE, JOINT_PROFILE)
     packed = identity == PACKED_PROFILE
-    cooperative = light or packed
-    reference = identity in (REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE)
+    cooperative = light or packed or balanced
+    reference = balanced or identity in (REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE)
     pc_profile = json.loads(os.environ['PHYSICAL_PC_PROFILE']) if 'PHYSICAL_PC_PROFILE' in os.environ else None
     if identity == FAST_PROFILE and (pc_profile is None or pc_profile['variant'] != FAST_PROFILE):
         raise ValueError('fast profile currently requires the explicit seven-PC diagnostic mode')
@@ -254,9 +257,27 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             previous_handlers[signum] = signal.signal(signum, interrupted)
         bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
             resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}),
-            **({'light': True} if light else {}), **({'joint_mr': True} if joint else {}))
+            **({'light': True} if build_light else {}), **({'joint_mr': True} if joint else {}),
+            **({'defer_reference': True} if balanced else {}))
+        balanced_apply = policy = None
+        if balanced and cfg.cell_notch:
+            from src.geometry.cell_notch import audit_cell_notch
+            summary['cell_notch'] = audit_cell_notch(bundle['levels']['mesh_data'],cfg)
+            _atomic_json(directory/'cell_notch.json',summary['cell_notch'])
+        if balanced:
+            from src.solvers.physical_balanced_runtime import install_balanced_pc
+            from .physical_diagnosis_worker import save_packet
+            def save_balanced(name, facts):
+                if '_decision_' in name:
+                    ledger.append('p4_decisions.jsonl', facts)
+                else:
+                    save_packet(directory, name, facts)
+            balanced_apply, policy = install_balanced_pc(bundle, cfg, identity,
+                sample=sample, marker=ledger.marker, save=save_balanced, append=ledger.append)
+            policy.identity.update(source_sha=source_sha,physical_model_sha256=payload['provenance']['physical_model_sha256'],
+                matrix=bundle['reference_matrix_facts'])
         fine = bundle['fine']
-        summary['positive_setup'] = bundle['positive']['light_facts'] if light else audit_p6_same_mesh_setup(bundle['positive'])
+        summary['positive_setup'] = bundle['positive']['light_facts'] if build_light else audit_p6_same_mesh_setup(bundle['positive'])
         if reference:
             summary['reference_p4'] = dict(bundle['reference_factor'].audit)
             summary['reference_matrix'] = bundle['reference_matrix_facts']
@@ -293,7 +314,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         checkpoints.mkdir()
 
         def checkpoint(iteration, solution, residual):
-            if light and ledger.last_safe is not None and ledger.last_safe['iteration'] == iteration:
+            if (light or balanced) and ledger.last_safe is not None and ledger.last_safe['iteration'] == iteration:
                 return
             # Completed-cycle snapshots also cover interruption before the next
             # 128 boundary; no live Arnoldi basis or residual is saved.
@@ -304,7 +325,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 ownership=dict(rank=0, ownership_range=list(solution.getOwnershipRange()),
                     local_size=solution.getLocalSize(), global_size=solution.getSize()), comm=MPI.COMM_WORLD)
             ledger.last_safe = {'iteration': iteration, 'explicit_true_residual': residual,
-                                'checkpoint': facts, 'regular_128_boundary': iteration > 0 and iteration % 128 == 0}
+                                'checkpoint': facts, **({'regular_32_boundary': iteration > 0 and iteration % 32 == 0}
+                                if balanced else {'regular_128_boundary': iteration > 0 and iteration % 128 == 0})}
             _atomic_json(directory / 'last_safe_checkpoint.json', ledger.last_safe)
 
         initial = rhs.duplicate()
@@ -343,11 +365,21 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             if not np.isfinite(difference) or difference > limit:
                 raise RuntimeError('KSP reported/explicit residual mismatch at equal normalization')
 
-        result = run_fixed_restart_cycles(rhs, lambda source: apply_owned(fine['physical_action'], source),
-            apply_pc, max_it=contract['outer']['max_iterations'], residual_limit=1e-6, resource_sample=sample, start_iteration=0,
-            first_checkpoint_iteration=None, checkpoint_interval=128, cycle_observer=observe,
-            ksp_type='fgmres', restart=32, **(dict(iteration_observer=monitor,
-                stop_after_cycle=lambda cycle, cycles: _light_stagnation(cycles)) if light else {}))
+        if balanced:
+            from src.solvers.physical_balanced_fgmres import run_balanced_fgmres
+            result = run_balanced_fgmres(rhs, lambda source: apply_owned(fine['physical_action'], source),
+                balanced_apply, checkpoint=checkpoint, append=ledger.append,
+                seconds=lambda: ledger.phase_clock_budget.update(clock_sample())['budget_seconds'],
+                resource_sample=sample, stop_requested=lambda: ledger.stop_signal is not None,
+                screen_enabled=not bool(payload['geometry'].get('cell_notch')))
+            summary['p4_action_counts'] = dict(policy.action_counts, C=policy.logical_rhs,
+                MatSolve=policy.external_solves)
+        else:
+            result = run_fixed_restart_cycles(rhs, lambda source: apply_owned(fine['physical_action'], source),
+                apply_pc, max_it=contract['outer']['max_iterations'], residual_limit=1e-6, resource_sample=sample, start_iteration=0,
+                first_checkpoint_iteration=None, checkpoint_interval=128, cycle_observer=observe,
+                ksp_type='fgmres', restart=32, **(dict(iteration_observer=monitor,
+                    stop_after_cycle=lambda cycle, cycles: _light_stagnation(cycles)) if light else {}))
         action = apply_owned(fine['physical_action'], result['final_solution'])
         try:
             raw_path = directory / 'final_residual_arrays.npz'
@@ -358,6 +390,17 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 'operator_identity_sha256': operator_identity, **provenance}
         finally:
             action.destroy()
+        if balanced and payload['geometry'].get('cell_notch') and result['final_true_residual'] <= 1e-6:
+            from src.solvers.condensed_fine_reference import native_map_arrays
+            from .physical_diagnosis_worker import save_packet
+            mapping = native_map_arrays(bundle['levels']['spaces'][6], bundle['levels']['floquets'][6])
+            with np.load(raw_path, allow_pickle=False) as arrays:
+                indices = mapping['independent_indices']
+                save_packet(directory, 'notch_reference_witness', dict(map=mapping,
+                    rhs=dict(b=arrays['rhs'][indices]),
+                    control=dict(x=arrays['solution'][indices], ax=arrays['action'][indices]),
+                    physical_model_sha256=provenance['physical_model_sha256'],
+                    directory=str(directory.resolve())))
         summary['solve'] = {k: v for k, v in result.items() if k != 'final_solution'}
         summary['final_solution_sha256'] = hashlib.sha256(result['final_solution'].array.tobytes()).hexdigest()
         if monitor is not None:
@@ -370,13 +413,22 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             pc_path = directory / 'pc_applies.jsonl'
             summary['reference_pc_ledger'] = dict(filename=pc_path.name,
                 sha256=hashlib.sha256(pc_path.read_bytes()).hexdigest())
+        if balanced:
+            summary['solve_conservative_seconds'] = ledger.phase_clock_budget.update(clock_sample())['budget_seconds']
+            ledger.defer_performance_stop = True
+            # A performance request has been honored by the live solver; release and
+            # save its terminal solution without throwing at the release marker.
+            summary['performance_stop_signal'] = ledger.stop_signal
+            ledger.stop_signal = None
         ledger.set_phase('release')
         release_physical_intermediate_solver_stack(bundle)
+        balanced_apply = policy = None  # release closure references before output recovery
         summary['rss_after_release'] = sample()['rss_bytes']
         summary['auxiliary_stack_released_before_recovery'] = bundle['auxiliary_stack_released']
         passed = (np.isfinite(result['final_true_residual']) and result['final_true_residual'] <= 1e-6
                   and (result['reason'] >= 0 or result['reason'] == -3)
-                  and summary['solve_monotonic_seconds'] <= solve_limit and ledger.stop_signal is None)
+                  and summary.get('solve_conservative_seconds', summary['solve_monotonic_seconds']) <= solve_limit
+                  and ledger.stop_signal is None and not summary.get('performance_stop_signal'))
         if passed:
             ledger.set_phase('recovery')
             def canonical_export(field, out_dir):
@@ -390,13 +442,19 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             outputs = recover_p0_outputs(fine, result['final_solution'], directory / 'numerical_output',
                 canonical_export=canonical_export, export_all_port_modes=True)
             summary['official_result'] = outputs
+            if balanced:
+                from .physical_balanced_output import compare_balanced_output
+                summary['matched_reference'] = compare_balanced_output(fine, result['final_solution'],
+                    outputs, directory, payload, marker=ledger.marker, sample=sample)
             summary['status'] = 'RESIDUAL_PASS'
         else:
-            summary['status'] = ('STAGNATION_CONTROLLED_STOP' if light and _light_stagnation(result['cycles'])
+            summary['status'] = (result['status'] if balanced else 'STAGNATION_CONTROLLED_STOP' if light and _light_stagnation(result['cycles'])
                                  else 'ITERATION_BUDGET_EXHAUSTED' if light and result['iterations'] >= contract['outer']['max_iterations']
                                  else 'RESIDUAL_FAILED')
         ledger.set_phase('checker')
         summary['elapsed_monotonic_seconds'] = time.monotonic()-ledger.started
+        if balanced:
+            summary['elapsed_conservative_seconds'] = ledger.workflow_clock_budget.update(clock_sample())['budget_seconds']
         _atomic_json(directory / 'physical_intermediate_summary.json', summary)
         check = subprocess.run([sys.executable, '-m', 'benchmarks.physical_intermediate_checker',
                                 str(directory)], check=False)
@@ -404,7 +462,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['checker'] = checker
         summary['status'] = checker['classification']
         summary['reference_authority'] = checker['reference_authority']
-        passed = (check.returncode == 0 and checker['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS')
+        passed = (check.returncode == 0 and checker['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS', 'BALANCED_OUTPUT_PASS', 'BALANCED_OUTPUT_AUTHORITY_LIMITED')
                   and time.monotonic()-ledger.started <= workflow_limit and ledger.stop_signal is None)
         outcome = {'passed': bool(passed), 'errors': [] if passed else checker['gate_failures'] or [summary['status']],
                 'summary': str(directory / 'physical_intermediate_summary.json'),
@@ -417,6 +475,11 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                        failed_stage=ledger.last_stage, failed_phase=ledger.phase)
         if isinstance(exc, TimebaseInconsistency):
             summary['status'] = 'TIMEBASE_INCONSISTENCY'
+        if balanced:
+            from src.solvers.physical_balanced_coupling import BalancedNumericalRejected
+            from src.solvers.physical_reference_diagnostics import ReferenceAccuracyRejected
+            if isinstance(exc,(BalancedNumericalRejected,ReferenceAccuracyRejected)):
+                summary['status']='BALANCED_NUMERICAL_REJECTED'
         if isinstance(exc, ReferenceResourceBlocked):
             summary['status'] = 'REFERENCE_RESOURCE_BLOCKED'
         raise
@@ -424,7 +487,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         primary_error = sys.exc_info()[1]
         cleanup_error = None
         summary['last_safe_checkpoint'] = ledger.last_safe
-        if pc_profile is not None or light:
+        if pc_profile is not None or light or balanced:
             from .physical_pc_profile import cleanup_profile
 
             callbacks = []
@@ -444,8 +507,10 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 rhs.destroy()
             destroy_physical_intermediate_solver(bundle)
         summary['elapsed_monotonic_seconds'] = time.monotonic()-ledger.started
+        if balanced:
+            summary['elapsed_conservative_seconds'] = ledger.workflow_clock_budget.update(clock_sample())['budget_seconds']
         if summary['status'] != 'TIMEBASE_INCONSISTENCY' and (
-                summary['elapsed_monotonic_seconds'] > workflow_limit or ledger.stop_signal is not None):
+                summary.get('elapsed_conservative_seconds',summary['elapsed_monotonic_seconds']) > workflow_limit or ledger.stop_signal is not None):
             summary['status'] = 'PERFORMANCE_CONTROLLED_STOP' if ledger.stop_signal is None else 'CONTROLLED_STOP'
             summary.setdefault('failed_stage', ledger.last_stage)
             if outcome is not None:

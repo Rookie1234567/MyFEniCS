@@ -2,7 +2,6 @@
 
 Public schema/launcher registration is a separate reviewed wiring step.
 """
-from .physical_intermediate_profile import profile_facts, REFERENCE_PROFILE
 
 BALANCED_ROUTES = {
     'balanced_h6_p4_v5': 'BAL_H',
@@ -13,6 +12,7 @@ BALANCED_PROFILES = tuple(BALANCED_ROUTES)
 
 
 def balanced_profile_facts(identity):
+    from .physical_intermediate_profile import profile_facts, REFERENCE_PROFILE
     route = BALANCED_ROUTES[identity]
     facts = profile_facts(REFERENCE_PROFILE)
     facts.update(identity=identity, route=route, reference_only=True,
@@ -27,7 +27,7 @@ def balanced_profile_facts(identity):
                               A6_max=13 if route=='PROJ_K6' else 2,
                               extra_inner_true_A6_max=6 if route=='PROJ_K6' else 0))
     facts['outer'].update(max_iterations=2048, checkpoint_interval=32, safe_snapshot_interval=32,
-        safe_snapshot_seconds=120, live_KSP=True, KSP_create_count=1, KSP_solve_count=1,
+        safe_snapshot_seconds=120, safe_snapshot_purpose='every32 and120s safe snapshots; terminal vec_sol', live_KSP=True, KSP_create_count=1, KSP_solve_count=1,
         screen=dict(iterations=128, solve_seconds=1800, absolute_true_limit=1e-2,
                     three_checkpoint_geometric_ratio=.65, nonseparable_enabled=False))
     facts['intermediate'].update(max_refinements=2, success_formal_packets='scalar_only',

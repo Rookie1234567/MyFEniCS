@@ -212,7 +212,7 @@ class DiagnosticRefinementV4:
                 status = ('REFERENCE_PASS_INITIAL' if iteration == 0 else 'REFERENCE_PASS_AFTER_REFINEMENT') if passed else 'REFERENCE_ACCURACY_UNRESOLVED'
                 terminal = dict(status=status, final_true_residual=facts['final_true_residual'],
                     logical_rhs=logical, refinement_steps=iteration, residual_gate_passed=passed,
-                    residual_limit=1e-10, original_rhs_norm=original_norm,
+                    residual_limit=1e-10, original_rhs_norm=original_norm, true_residual_norm=facts['r4_norm'],
                     external_solves=self.external_solves, policy=self.name,
                     action_identity='REFINED_DIAGNOSTIC_ACTION' if iteration else 'INITIAL_DIAGNOSTIC_ACTION',
                     reconstructed_failure_status=('ORIGINAL_REJECTION_NOT_REPRODUCED' if passed else 'ORIGINAL_REJECTION_REPRODUCED') if self.replay_first_failure and logical == 1 and iteration == 0 else None)

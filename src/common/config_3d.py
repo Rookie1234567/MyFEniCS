@@ -74,6 +74,7 @@ class SimulationConfig3D:
     grating_height: float = 0.0
     grating_width_x: float = 0.0
     grating_width_y: float = 0.0
+    cell_notch: str | None = None
     n_substrate: complex | None = None
     n_grating: complex | None = None
     substrate_material_label: str | None = None
