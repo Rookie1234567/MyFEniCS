@@ -11,11 +11,17 @@ from .fullspace_lor_native_hx_fixture import build_frozen_fullspace_primal_sourc
 
 
 def build_light_h6_setup(levels, cfg, marker):
-    space, floquet = levels['spaces'][6], levels['floquets'][6]
+    return build_light_level_setup(levels, cfg, marker, degree=6)
+
+
+def build_light_level_setup(levels, cfg, marker, *, degree):
+    if degree not in (4, 6):
+        raise ValueError('physical pilot smoother supports p6/p4 only')
+    space, floquet = levels['spaces'][degree], levels['floquets'][degree]
     mu, mass = levels['mu'], levels['mass']
     action = diagonal = shell = smoother = None
     try:
-        marker('h6_original_setup_started', {})
+        marker('h6_original_setup_started' if degree == 6 else 'h4_setup_started', {})
         form = same_mesh_positive_form(space, curl_coefficient=mu, mass_coefficient=mass)
         action = FullspaceMpcFormAction(form, space, mpc=floquet.mpc)
         diagonal = build_quadrature_positive_diagonal(space, mu, mass, floquet.mpc)
@@ -43,8 +49,14 @@ def build_light_h6_setup(levels, cfg, marker):
             power_history=list(smoother.power_history), lambda_lo=smoother.lambda_lo, lambda_hi=smoother.lambda_hi,
             power_matrix_mult_count=smoother.power_matrix_mult_count,
             kernel=dict(fast._local_kernel.audit))
-        marker('h6_original_window_and_packed_action_complete', facts)
-        return dict(p6_shell=shell, h6=smoother, light_facts=facts)
+        if degree != 6:
+            facts.update(schema='physical-recursive.h4-setup.v1', level=degree, shared_mesh_levels=[6, 4, 2],
+                calls_per_PC=dict(H4=1, B4_positive=2), h4_degree=3)
+            facts.pop('h6_degree', None)
+        marker('h6_original_window_and_packed_action_complete' if degree == 6 else 'h4_window_complete', facts)
+        if degree == 6:
+            return dict(p6_shell=shell, h6=smoother, light_facts=facts)
+        return dict(shell=shell, smoother=smoother, light_facts=facts)
     except BaseException:
         if smoother is not None: smoother.destroy()
         if shell is not None: shell.destroy()

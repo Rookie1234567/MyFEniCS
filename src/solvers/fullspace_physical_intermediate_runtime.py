@@ -212,7 +212,7 @@ def qualify_physical_intermediate_setup(bundle: dict, *, marker: Callable,
             adjoint = abs(left-right)/max(abs(left), abs(right), np.finfo(float).tiny)
             errors = {}
             kinds = {'physical': {p: actions['physical'][p]['physical_action'] for p in (fine, coarse)}}
-            if fine != 6:
+            if fine != 6 and actions['shifted']:
                 kinds['shifted'] = {p: actions['shifted'][p] for p in (fine, coarse)}
             for name, operators in kinds.items():
                 direct = own(apply_owned(operators[coarse], x))
@@ -345,6 +345,7 @@ def build_physical_intermediate_actions(
     fine_bundle: Mapping[str, Any] | None = None,
     stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     reference: bool = False,
+    physical_only_degrees: tuple[int, ...] | None = None,
 ) -> dict[str, Any]:
     """Build native 4/2/1 physical and shifted actions with the fine inventory.
 
@@ -359,7 +360,10 @@ def build_physical_intermediate_actions(
     from .fullspace_same_mesh_hcurl_pmg_runtime import build_same_mesh_hcurl_owner_transfer
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
-    if any(degree not in setup["spaces"] for degree in ((6, 4) if reference else PHYSICAL_DEGREES)):
+    if physical_only_degrees is not None and physical_only_degrees != (6, 4, 2):
+        raise ValueError('recursive pilot requires exactly physical levels 6/4/2')
+    required = physical_only_degrees or ((6, 4) if reference else PHYSICAL_DEGREES)
+    if any(degree not in setup["spaces"] for degree in required):
         raise ValueError("physical middle setup requires same-mesh degrees 6, 4, 2, 1")
     if "mass" not in setup or "mu" not in setup:
         raise ValueError("setup must include positive coefficients from the physical tags")
@@ -387,6 +391,18 @@ def build_physical_intermediate_actions(
         inventory = (fine_bundle["modes"], fine_bundle["mode_rows"], fine_bundle["mode_sha256"])
         result["mode_sha256"] = fine_bundle["mode_sha256"]
         result["dtn_quadrature_degree"] = fine_bundle["dtn_quadrature_degree"]
+        if physical_only_degrees is not None:
+            for degree in physical_only_degrees[1:]:
+                marker('native_physical_started', degree)
+                result['physical'][degree] = build_same_mesh_physical_action(setup, cfg, degree,
+                    mode_inventory=inventory, volume_quadrature_metadata=quadratures)
+                result['owned_physical_degrees'].append(degree)
+            for upper, lower in zip(physical_only_degrees, physical_only_degrees[1:]):
+                owner = build_same_mesh_hcurl_owner_transfer(setup['spaces'][upper], setup['floquets'][upper],
+                    setup['spaces'][lower], setup['floquets'][lower])
+                result['owners'][(upper, lower)] = owner
+                result['transfers'][(upper, lower)] = AlgebraicOwnerTransfer(owner)
+            return result
         if reference:
             marker('native_physical_started', 4)
             result['physical'][4] = build_same_mesh_physical_action(setup, cfg, 4,

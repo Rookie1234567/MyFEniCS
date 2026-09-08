@@ -57,13 +57,16 @@ class PhysicalBalancedCoupling:
     the existing apply_owned/BorrowedActionAdapter before construction.
     Restriction is P^H on duals and returns an owned coarse vector.
     """
-    def __init__(self, action, coarse, smoother, restriction, *, route, checkpoint=lambda: None):
+    def __init__(self, action, coarse, smoother, restriction, *, route, checkpoint=lambda: None, inexact_ledger=None, level_identity=None):
         if route not in ROUTES:
             raise ValueError('unknown balanced route')
         self.A, self.C, self.S, self.PH = action, coarse, smoother, restriction
         self.route, self.checkpoint = route, checkpoint
         self.apply_count = self.attempted = 0
         self.last_apply_facts = {}
+        if inexact_ledger is not None and route != 'BAL_H':
+            raise ValueError('inexact ledger is qualified only for BAL_H')
+        self.inexact_ledger, self.level_identity = inexact_ledger, level_identity
 
     def apply(self, source):
         vectors = _OwnedVectors()
@@ -75,6 +78,11 @@ class PhysicalBalancedCoupling:
                      projection_space='ker(PH A), not M0-orthogonal complement',
                      vector_scope='new fine vectors only; coarse solver/smoother/outer storage separate')
         self.last_apply_facts = facts
+        if self.level_identity is not None:
+            facts['level_identity'] = self.level_identity
+        if self.inexact_ledger is not None:
+            self.inexact_ledger.begin()
+            facts['projection_space'] = 'inexact coarse balance, eps1-eps2; not exact projection'
 
         def call(name, function, x):
             self.checkpoint()
@@ -115,7 +123,8 @@ class PhysicalBalancedCoupling:
             u = call('A_structure', self.A, zc)
             rc = vectors.copy(source); _axpy(rc, -1, u)
             facts['initial'] = dict(q_norm=_norm(source), zc_norm=_norm(zc), Azc_norm=_norm(u),
-                                    rc_norm=_norm(rc), constraint=balance(rc, source))
+                                    rc_norm=_norm(rc), constraint=(balance(rc, source) if self.inexact_ledger is None else
+                                                {'policy': 'inexact_eps1_not_required_zero'}))
             vectors.drop(u)
             if self.route != 'PROJ_K6':
                 s = call('smoother', self.S, rc)
@@ -188,11 +197,15 @@ class PhysicalBalancedCoupling:
                             vectors.drop(w)
                 z = vectors.copy(zc); _axpy(z, 1, delta)
             _norm(z)
+            if self.inexact_ledger is not None:
+                facts['inexact_balance'] = self.inexact_ledger.finish(source, z, self.attempted)
             self.apply_count += 1
             facts['apply_count'] = self.apply_count
             return vectors.release(z)
         except BaseException as exc:
             facts.update(status='ACTION_FAILED', exception_type=type(exc).__name__, exception=str(exc))
+            if self.inexact_ledger is not None:
+                self.inexact_ledger.abort()
             raise
         finally:
             facts['peak_new_fine_vectors'] = vectors.peak

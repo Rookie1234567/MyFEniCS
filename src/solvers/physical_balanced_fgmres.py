@@ -28,13 +28,15 @@ class BalancedScreen:
 
 def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                        resource_sample=lambda: None, stop_requested=lambda: False,
-                       screen_enabled=True):
+                       screen_enabled=True, solve_limit_seconds=7200):
     """Callbacks own action/PC outputs; seconds is a conservative shared clock.
 
     Exactly one KSP creation and one solve, max2048/restart32/zero start.
     Convergence is decided by explicit true residuals from buildSolution while
     KSP is active. Once solve returns, use vec_sol directly, never build again.
     """
+    if not np.isfinite(solve_limit_seconds) or solve_limit_seconds <= 0:
+        raise ValueError('positive finite solve limit required')
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
     from .fullspace_physical_intermediate import _destroy
@@ -92,7 +94,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             iteration = int(iteration); now = seconds(); resource_sample()
             append('iterations.jsonl', dict(iteration=iteration, reported_relative=float(reported)/norm_rhs,
                 outer_matvec_count=ac.matvec_count, outer_pc_count=pc_context.apply_count))
-            stop = stop_requested() or now >= 7200
+            stop = stop_requested() or now >= solve_limit_seconds
             boundary = screen_enabled and screen.decision is None and (iteration >= 128 or now >= 1800)
             if iteration % 32 == 0 or now-last_save >= 120 or boundary or stop or reported/norm_rhs <= 1e-6:
                 relative, now = snapshot(iteration, current, reported)
@@ -105,7 +107,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                 elif decision is not None and not decision['passed']:
                     stop_status = decision['status']
                 if stop_status is not None:
-                    return int(PETSc.KSP.ConvergedReason.DIVERGED_ITS)
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
             return 0
 
         ksp.setConvergenceTest(convergence); ksp.setUp(); ksp.solve(rhs, solution)

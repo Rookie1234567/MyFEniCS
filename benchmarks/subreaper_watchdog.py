@@ -123,8 +123,19 @@ def _cache_stamp(path: Path | None) -> str:
     return digest.hexdigest()
 
 
+def global_swap_stop(baseline, current, *, enabled=False):
+    """V6 opt-in: global activity stops pressure without claiming attribution."""
+    if not enabled:
+        return None
+    if any(baseline.get(k) is None or current.get(k) is None for k in baseline):
+        return 'MONITORING_FAILED'
+    if any(current[k] > baseline[k] for k in baseline):
+        return 'GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED'
+    return None
+
+
 def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
-    hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'TIMEBASE_INCONSISTENCY')
+    hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'TIMEBASE_INCONSISTENCY', 'GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED')
     return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
 
 
@@ -134,7 +145,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               solve_seconds: float | None = None, source_state: dict | None = None,
               worker_environment: dict | None = None, hard_stop_immediate: bool = False,
               cooperative_performance_stop: bool = False,
-              timebase_guard: bool = False, timebase_policy: str = STRICT) -> dict:
+              timebase_guard: bool = False, timebase_policy: str = STRICT,
+              stop_on_global_swap: bool = False) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     if not command or min(wall_seconds, interval, grace_seconds) <= 0:
         raise ValueError('command and positive monitoring budgets are required')
@@ -233,6 +245,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         'TIMEBASE_INCONSISTENCY' if clock_issue else
                         'PERFORMANCE_CONTROLLED_STOP' if deadline_elapsed >= wall_seconds or solve_expired else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
+                if stop_on_global_swap:
+                    current_swap = vmstat_swap_pages()
+                    sample['global_swap_pages'] = current_swap
+                    swap_reason = global_swap_stop(swap_baseline, current_swap, enabled=True)
+                    sample['global_swap_stop_reason'] = swap_reason
+                    if swap_reason is not None and reason not in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED'):
+                        reason = swap_reason
                 sample.update({'elapsed_seconds': elapsed, 'memory_envelope': current,
                                'worker_phase': phase,
                                'launch_cap_bytes': cap, 'warning': peak_rss >= .85 * cap,

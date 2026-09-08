@@ -22,15 +22,18 @@ class BoundedP1Factor:
     """
 
     def __init__(self, matrix: Any, *, label: str, resource_sample: Callable[[], dict],
-                 marker: Callable[[str, dict], None]) -> None:
+                 marker: Callable[[str, dict], None], physical_p2_pilot: bool = False) -> None:
         self.matrix, self.label = matrix, label
         self.factor = None
         self.solve_count = 0
         self.last_apply_facts: dict = {}
         self.audit: dict = {'label': label, 'bounded_development_coarse_factor': True}
+        emit = lambda name, facts: marker(name.replace('p1_', 'p2_') if physical_p2_pilot else name, facts)
+        row_cap = 8192 if physical_p2_pilot else LOCAL_FACTOR_MAX_ROWS
         rows, columns = matrix.getSize()
-        if rows != columns or rows > LOCAL_FACTOR_MAX_ROWS or matrix.getComm().getSize() != 1:
-            raise ValueError('development p1 factor requires MPI1 and <=4096 total rows')
+        if rows != columns or rows > row_cap or matrix.getComm().getSize() != 1:
+            raise ValueError('BOTTOM_SCALE_LIMIT: MPI1 and <=8192 total rows required' if physical_p2_pilot
+                else 'development p1 factor requires MPI1 and <=4096 total rows')
         if matrix.getType() != 'seqaij':
             raise ValueError('p1 storage budget requires an actual SeqAIJ matrix')
         info = matrix.getInfo()
@@ -51,6 +54,16 @@ class BoundedP1Factor:
         # The independent parent RSS gate remains authoritative for actual memory.
         reserve = storage + 16 * 1024**2
         matrix_budget = max(storage, allocator_bytes or 0) + reserve
+        if physical_p2_pilot:
+            # MUMPS COO conversion (two indices + scalar), plus bounded solve/refinement vectors.
+            conversion = int(allocated * (2 * indices.dtype.itemsize + values.dtype.itemsize))
+            workspace = int(16 * rows * values.dtype.itemsize)
+            matrix_budget += conversion + workspace
+            self.audit.update(physical_p2_pilot=True, row_cap=row_cap,
+                conversion_reserve_bytes=conversion, solve_workspace_reserve_bytes=workspace,
+                bottom_budget_bytes=LOCAL_FACTOR_MAX_BYTES, classification='derived_policy_budget_not_RSS')
+            if matrix_budget > LOCAL_FACTOR_MAX_BYTES:
+                raise RuntimeError('p2 matrix/conversion/workspace exceeds 512MiB before symbolic')
         self.audit.update(rows=int(rows), nnz=int(used), allocated_nnz=int(allocated),
                           scalar_dtype=str(values.dtype), index_dtype=str(indices.dtype),
                           row_pointer_dtype=str(indptr.dtype), matrix_csr_payload_bytes=payload,
@@ -67,7 +80,7 @@ class BoundedP1Factor:
                           memory_documentation='https://mumps-solver.org/doc/userguide_5.9.1.pdf#page=112')
         try:
             start = time.perf_counter()
-            marker('p1_symbolic_started', {'label': label, **self.audit})
+            emit('p1_symbolic_started', {'label': label, **self.audit})
             self.factor = _MumpsFactor(matrix)
             self.factor.symbolic(matrix)
             raw = self.factor.info(extra_indices=(21, 22, 29))
@@ -78,7 +91,7 @@ class BoundedP1Factor:
                               factor_estimated_padded_bytes=estimated,
                               derived_matrix_plus_estimated_factor_budget_bytes=predicted,
                               symbolic_resource=memory)
-            marker('p1_symbolic_complete', dict(self.audit))
+            emit('p1_symbolic_complete', dict(self.audit))
             if predicted > LOCAL_FACTOR_MAX_BYTES:
                 raise RuntimeError(f'{label}: symbolic matrix+factor exceeds 512MiB')
             if memory['rss_bytes'] + estimated >= memory['launch_cap_bytes']:
@@ -94,7 +107,7 @@ class BoundedP1Factor:
                               factor_reported_allocated_padded_bytes=allocated_factor,
                               factor_reported_used_padded_bytes=used_factor,
                               derived_matrix_plus_reported_factor_budget_bytes=actual)
-            marker('p1_numeric_complete', dict(self.audit))
+            emit('p1_numeric_complete', dict(self.audit))
             if actual > LOCAL_FACTOR_MAX_BYTES:
                 raise RuntimeError(f'{label}: derived matrix+reported factor budget exceeds 512MiB')
         except BaseException:

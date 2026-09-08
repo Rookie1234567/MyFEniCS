@@ -30,7 +30,7 @@ def reference_budget(sample, raw_info, future_bytes, *, marker=lambda *_: None):
     return facts
 
 
-def augment_physical_volume(volume, carrier):
+def augment_physical_volume(volume, carrier, *, allocation_gate=None):
     """Exactly preallocate [V B; -D H], using sparse carrier data as stored."""
     n = volume.getSize()[0]
     if volume.getComm().getSize() != 1 or carrier.global_rows != n:
@@ -43,6 +43,8 @@ def augment_physical_volume(volume, carrier):
     for j, item in enumerate(entries):
         sizes[item.coupling_rows] += 1
         sizes[n+j] = len(item.projection_rows)+1
+    if allocation_gate is not None:
+        allocation_gate(int(sizes.sum()))
     matrix = PETSc.Mat().createAIJ([len(sizes), len(sizes)], nnz=sizes, comm=volume.getComm())
     try:
         matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
@@ -64,12 +66,14 @@ def augment_physical_volume(volume, carrier):
         raise
 
 
-def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample):
+def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample, degree=4, row_cap=None):
     """Use MPC's exact sparsity constructor before numerical volume assembly."""
     import dolfinx_mpc
-    space, mpc = setup['spaces'][4], setup['floquets'][4].mpc
+    space, mpc = setup['spaces'][degree], setup['floquets'][degree].mpc
+    if row_cap is not None and space.dofmap.index_map.size_global + len(native['dtn_action'].carrier.entries) > row_cap:
+        raise ReferenceResourceBlocked('BOTTOM_SCALE_LIMIT before assembly')
     marker('reference_volume_compile_started', {})
-    compiled = compile_physical_diagnostic_volume(setup, cfg, 4,
+    compiled = compile_physical_diagnostic_volume(setup, cfg, degree,
         volume_quadrature_metadata=quadrature)
     carrier = native['dtn_action'].carrier
     coefficients, offsets = mpc.coefficients()
@@ -79,14 +83,39 @@ def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample):
         port_count=len(carrier.entries),
         coupling_nnz=sum(len(e.coupling_rows)+len(e.projection_rows)+1 for e in carrier.entries)))
     sample()
+    pilot = degree == 2 and row_cap == 8192
+    rows = int(space.dofmap.index_map.size_global)
+    ports = len(carrier.entries)
+    port_nnz = sum(len(e.coupling_rows)+len(e.projection_rows)+1 for e in carrier.entries)
+    def gate(stage, volume_nnz, augmented_nnz):
+        # Simultaneously alive volume+augmentation, conversion and solve reserve.
+        index_bytes, scalar_bytes = np.dtype(PETSc.IntType).itemsize, np.dtype(PETSc.ScalarType).itemsize
+        payload = ((volume_nnz+augmented_nnz)*(index_bytes+scalar_bytes)
+            +(2*rows+ports+2)*index_bytes+augmented_nnz*(2*index_bytes+scalar_bytes)
+            +16*(rows+ports)*scalar_bytes+16*1024**2)
+        resources = sample()
+        facts = dict(stage=stage, degree=degree, volume_nnz=volume_nnz, augmented_nnz=augmented_nnz,
+            predicted_allocation_bytes=int(payload), cap_bytes=512*1024**2,
+            classification='derived_allocation_policy_not_RSS', resource=resources)
+        marker('p2_allocation_gate', facts)
+        if payload > 512*1024**2 or resources['rss_bytes']+payload >= resources['launch_cap_bytes']:
+            raise ReferenceResourceBlocked('p2 allocation budget exceeds bound: '+str(facts))
+    if pilot:
+        cells = int(space.mesh.topology.index_map(space.mesh.topology.dim).size_global)
+        links = max(1, int(max(counts, default=0)))
+        upper = cells * int(space.element.space_dimension)**2 * links**2 + rows
+        gate('before_pattern_upper_bound', upper, upper+port_nnz)
     volume = dolfinx_mpc.cpp.mpc.create_matrix(compiled._cpp_object, mpc._cpp_object, mpc._cpp_object)
     try:
-        marker('reference_volume_pattern', dict(allocated_nnz=int(volume.getInfo()['nz_allocated'])))
+        allocated = int(volume.getInfo()['nz_allocated'])
+        if pilot: gate('actual_pattern_before_assembly', allocated, allocated+port_nnz)
+        marker('reference_volume_pattern', dict(allocated_nnz=allocated))
         sample()
         dolfinx_mpc.assemble_matrix(compiled, mpc, bcs=[], A=volume)
         marker('reference_volume_complete', dict(nnz=int(volume.getInfo()['nz_used'])))
         sample()
-        matrix, facts = augment_physical_volume(volume, carrier)
+        matrix, facts = augment_physical_volume(volume, carrier,
+            allocation_gate=(lambda nnz: gate('before_augmentation', allocated, nnz)) if pilot else None)
         try:
             marker('reference_augmentation_complete', facts)
         except BaseException:
