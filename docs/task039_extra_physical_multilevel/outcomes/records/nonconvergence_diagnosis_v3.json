@@ -863,7 +863,7 @@
     "full_size_execution": "not_run"
   },
   "d0_inventory_source_sha": "97e82eeb08b6c2faef6457356cdc643832a75eb8",
-  "closeout_stage": "D5_EVIDENCE_CLOSED_MATHEMATICAL_DIAGNOSIS_INCOMPLETE",
+  "closeout_stage": "D5_PARTIAL_DIAGNOSIS_ORIGINAL_A4_NUMERICAL_GATE_REJECTION",
   "formal_attempt": {
     "classification": "TIMEBASE_INCONSISTENCY",
     "source_sha": "24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650",
@@ -1025,47 +1025,47 @@
       }
     ]
   },
-  "formal_source_sha": "24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650",
+  "formal_source_sha": "bf8e0c1d16c9c86677e866cdf29fd5491f076e32",
   "cause_matrix": [
     {
-      "hypothesis": "输入/作用/尺度或参考",
+      "hypothesis": "输入、作用、尺度与参考",
+      "status": "MIXED",
+      "evidence_and_limit": "三份x与历史独立系数逐位一致，r=b−Ax、原A分项和及历史残差均复现；失败p4向量未存，不能独立复算其A4作用，未发现所审接线错误。"
+    },
+    {
+      "hypothesis": "p4空间表示不足",
       "status": "UNRESOLVED",
-      "evidence_and_limit": "五份文件身份核验通过，80-mode配置重读匹配；fresh canonical映射、原A作用和r=b-Ax重算未到达。primal场与dual残差角色已分开，不能据文件hash宣称算子资格。"
+      "evidence_and_limit": "没有已知误差或合格M0最佳投影，η_space未测；不能由较弱残差收缩或p4 Gate miss推断空间不足。"
     },
     {
-      "hypothesis": "p4空间表示能力",
+      "hypothesis": "实际粗响应/投影失配",
       "status": "UNRESOLVED",
-      "evidence_and_limit": "没有合格参考误差或实际M0最佳投影；η_space未测，不能证明p4遗漏了多少误差。"
+      "evidence_and_limit": "η_G、coarse identity、表示/响应误差分解未运行；相消比298–379仅提示三个场上的大项抵消，不是条件数或色散/共振证据。"
     },
     {
-      "hypothesis": "实际粗响应/投影",
+      "hypothesis": "fine互补能力不足",
       "status": "UNRESOLVED",
-      "evidence_and_limit": "旧LIGHT中间MR系数模中位0.0552983、563/582个未缩放方向使残差增大；尚无η_G、coarse identity或误差分解，不能归因为色散/共振。"
+      "evidence_and_limit": "e_perp尚未取得，独立H6/S6互补0次；完整PC的单次残差比例不能替代该项。"
     },
     {
-      "hypothesis": "fine互补处理",
-      "status": "UNRESOLVED",
-      "evidence_and_limit": "已知误差与e_perp未构建，独立H6/S6作用0次；没有互补能力结论。"
+      "hypothesis": "局部逆精度与全局耦合",
+      "status": "MIXED",
+      "evidence_and_limit": "本次p4前7次≤1e-10，第8次1.0086968840613509e-10拒绝；精度前提在该输入未闭合。0.8696884%越限不是历史约0.1外层停滞的因果证明，也不证明所有p4作用失效。"
     },
     {
-      "hypothesis": "准确局部逆足以保证完整收敛",
-      "status": "NOT_SUPPORTED_ON_TESTED_SAMPLES",
-      "evidence_and_limit": "旧LIGHT/JOINT的p4最大backward residual分别7.05816e-11/7.87060e-11≤1e-10，fine残差仍0.0791360/0.1053582>1e-6；不等于证明forward correction精确，也未诊断未来DD。"
-    },
-    {
-      "hypothesis": "局部联合收益保证全局改善",
-      "status": "NOT_SUPPORTED_ON_TESTED_SAMPLES",
-      "evidence_and_limit": "旧joint/seq局部残差比中位0.9794794，14共同步中11步JOINT更差、3步更好；各自Krylov输入不同，不能推导同输入因果。"
+      "hypothesis": "已测样本单次PC改善较弱",
+      "status": "SUPPORTED",
+      "evidence_and_limit": "七份同输入q/Az已独立复算：LIGHT448三种rho为0.993947/0.999263/0.999012，JOINT448的S6为0.999225；仅限这些dual输入，不构成FGMRES或field-error定理。"
     },
     {
       "hypothesis": "restart/非正规影响",
       "status": "UNRESOLVED",
-      "evidence_and_limit": "缺少足够Hessenberg/正交性数据；65个旧monitor的reported/explicit最大差6.58917e-14，不支持monitor漂移解释约0.1残差，但不能排除所有实现问题。"
+      "evidence_and_limit": "仍缺足够Hessenberg/正交性数据；原有reported/explicit差很小只削弱monitor漂移解释，不确认restart或非正规唯一原因。"
     },
     {
-      "hypothesis": "实现成本/容量/时钟",
+      "hypothesis": "实现成本、容量、时钟",
       "status": "MIXED",
-      "evidence_and_limit": "旧完整PC成本是实际限制；本轮TIMEBASE_INCONSISTENCY实测成立，系统根因未定位。RSS639950848 B<cap8417038336 B、swap0，不支持本次因内存触顶停止；D2缺完整MPI1峰值上界。"
+      "evidence_and_limit": "新政策已运行并独立复算保守扣账，纯UTC偏移未再阻断；不是strict UTC一致性通过。3324样本RSS峰3.777GB<8.367GB cap、swap0；不代表2GB或短波容量资格，系统时钟原因仍未定。"
     }
   ],
   "clock_analysis": {
@@ -1676,7 +1676,7 @@
     ],
     "qualification": "same step is not same input/error; nominal monotonic costs have previously documented timebase limitations"
   },
-  "next_priority": "clock qualification then frozen same-input minimum evidence; not executed, no new PC recommendation",
+  "next_priority": "Freeze the failed JOINT448-LIGHT p4 RHS, compare augmented-system and original-A4 residual reliability, then complete missing representation/response evidence; no new PC or execution in this closeout.",
   "closeout_evidence": [
     {
       "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/termination_audit.json",
@@ -1712,6 +1712,553 @@
       "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference/24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650/kernel_clock_journal.txt",
       "bytes": 2657,
       "sha256": "466724e3bd45f9c0100038ca37febd66a21907d7524a1c6a97863e3fafc7a9a0"
+    }
+  ],
+  "historical_cause_matrix_first_stop": [
+    {
+      "hypothesis": "输入/作用/尺度或参考",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "五份文件身份核验通过，80-mode配置重读匹配；fresh canonical映射、原A作用和r=b-Ax重算未到达。primal场与dual残差角色已分开，不能据文件hash宣称算子资格。"
+    },
+    {
+      "hypothesis": "p4空间表示能力",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "没有合格参考误差或实际M0最佳投影；η_space未测，不能证明p4遗漏了多少误差。"
+    },
+    {
+      "hypothesis": "实际粗响应/投影",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "旧LIGHT中间MR系数模中位0.0552983、563/582个未缩放方向使残差增大；尚无η_G、coarse identity或误差分解，不能归因为色散/共振。"
+    },
+    {
+      "hypothesis": "fine互补处理",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "已知误差与e_perp未构建，独立H6/S6作用0次；没有互补能力结论。"
+    },
+    {
+      "hypothesis": "准确局部逆足以保证完整收敛",
+      "status": "NOT_SUPPORTED_ON_TESTED_SAMPLES",
+      "evidence_and_limit": "旧LIGHT/JOINT的p4最大backward residual分别7.05816e-11/7.87060e-11≤1e-10，fine残差仍0.0791360/0.1053582>1e-6；不等于证明forward correction精确，也未诊断未来DD。"
+    },
+    {
+      "hypothesis": "局部联合收益保证全局改善",
+      "status": "NOT_SUPPORTED_ON_TESTED_SAMPLES",
+      "evidence_and_limit": "旧joint/seq局部残差比中位0.9794794，14共同步中11步JOINT更差、3步更好；各自Krylov输入不同，不能推导同输入因果。"
+    },
+    {
+      "hypothesis": "restart/非正规影响",
+      "status": "UNRESOLVED",
+      "evidence_and_limit": "缺少足够Hessenberg/正交性数据；65个旧monitor的reported/explicit最大差6.58917e-14，不支持monitor漂移解释约0.1残差，但不能排除所有实现问题。"
+    },
+    {
+      "hypothesis": "实现成本/容量/时钟",
+      "status": "MIXED",
+      "evidence_and_limit": "旧完整PC成本是实际限制；本轮TIMEBASE_INCONSISTENCY实测成立，系统根因未定位。RSS639950848 B<cap8417038336 B、swap0，不支持本次因内存触顶停止；D2缺完整MPI1峰值上界。"
+    }
+  ],
+  "first_formal_source_sha": "24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650",
+  "latest_formal_attempt": {
+    "source_sha": "bf8e0c1d16c9c86677e866cdf29fd5491f076e32",
+    "root": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/attempt2/mpi1",
+    "classification": "NUMERICAL_GATE_REJECTION_ORIGINAL_A4_REFERENCE",
+    "raw_worker_status": "DIAGNOSTICS_FAILED",
+    "raw_watchdog_classification": "WORKER_FAILED",
+    "raw_launch_classification": "WORKER_FAILED",
+    "outer_exit_code": 2,
+    "failed_probe": "JOINT448_LIGHT",
+    "failed_reference_residual": {
+      "diagnostic_only": true,
+      "elapsed_seconds": 0.5855054500279948,
+      "explicit_action_count": 1,
+      "factor_solve_calls": 1,
+      "final_true_residual": 1.0086968840613509e-10,
+      "iterations": 0,
+      "residual_gate_passed": false,
+      "residual_limit": 1e-10,
+      "rhs_norm": 1.1561769354407092,
+      "solver_identity": "exact_augmented_A4_reference",
+      "status": "REFERENCE_RESIDUAL_REJECTED",
+      "true_residual_norm": 1.166232072202645e-10
+    },
+    "complete_pc_calls": 7,
+    "attempted_complete_pc_calls": 8,
+    "independent_smoother_calls": 0,
+    "known_error": "not_run",
+    "projection": "not_run",
+    "D4": "not_run",
+    "official_results": "not_run",
+    "identity": [
+      {
+        "label": "A2R160",
+        "recomputed_true_residual": 0.1825076762288048,
+        "stored_true_residual": 0.18250767622880507,
+        "difference": -2.7755575615628914e-16,
+        "component_identity_relative": 0.0,
+        "cancellation_ratio": 373.0340487366348
+      },
+      {
+        "label": "LIGHT448",
+        "recomputed_true_residual": 0.0981459116030495,
+        "stored_true_residual": 0.09814591160304939,
+        "difference": 1.1102230246251565e-16,
+        "component_identity_relative": 0.0,
+        "cancellation_ratio": 378.72237263254095
+      },
+      {
+        "label": "JOINT448",
+        "recomputed_true_residual": 0.10713326900483634,
+        "stored_true_residual": 0.10713326900483655,
+        "difference": -2.0816681711721685e-16,
+        "component_identity_relative": 0.0,
+        "cancellation_ratio": 298.0809627447231
+      }
+    ],
+    "probes": [
+      {
+        "label": "A2R160",
+        "profile": "S6",
+        "true_residual_ratio_recomputed": 0.9999498247589046,
+        "stored_ratio": 0.9999498247589046,
+        "complete_pc_calls": 1,
+        "cost_raw_interval": {
+          "budget_seconds": 25.25909805,
+          "discrepancy_seconds": 2.942740311079511,
+          "elapsed_seconds": {
+            "boottime": 22.316358388983645,
+            "monotonic": 22.316357738920487,
+            "utc": 25.25909805
+          },
+          "name": "S6",
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": 2.942740311079511
+        },
+        "input_role": "dual residual",
+        "remaining_field_error": "UNAVAILABLE_NO_REFERENCE"
+      },
+      {
+        "label": "A2R160",
+        "profile": "LIGHT",
+        "true_residual_ratio_recomputed": 0.9441323388632465,
+        "stored_ratio": 0.9441323388632465,
+        "complete_pc_calls": 2,
+        "cost_raw_interval": {
+          "budget_seconds": 10.029636242,
+          "discrepancy_seconds": 1.0640747714063536e-06,
+          "elapsed_seconds": {
+            "boottime": 10.029636032064445,
+            "monotonic": 10.029635177925229,
+            "utc": 10.029636242
+          },
+          "name": "LIGHT",
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": 1.0640747714063536e-06
+        },
+        "input_role": "dual residual",
+        "remaining_field_error": "UNAVAILABLE_NO_REFERENCE"
+      },
+      {
+        "label": "A2R160",
+        "profile": "JOINT",
+        "true_residual_ratio_recomputed": 0.9370654214222117,
+        "stored_ratio": 0.9370654214222117,
+        "complete_pc_calls": 3,
+        "cost_raw_interval": {
+          "budget_seconds": 15.097589135,
+          "discrepancy_seconds": 2.9210015650070105,
+          "elapsed_seconds": {
+            "boottime": 12.176588190020993,
+            "monotonic": 12.17658756999299,
+            "utc": 15.097589135
+          },
+          "name": "JOINT",
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": 2.9210015650070105
+        },
+        "input_role": "dual residual",
+        "remaining_field_error": "UNAVAILABLE_NO_REFERENCE"
+      },
+      {
+        "label": "LIGHT448",
+        "profile": "S6",
+        "true_residual_ratio_recomputed": 0.9939469416229352,
+        "stored_ratio": 0.9939469416229352,
+        "complete_pc_calls": 4,
+        "cost_raw_interval": {
+          "budget_seconds": 24.232399971,
+          "discrepancy_seconds": 2.962804491989395,
+          "elapsed_seconds": {
+            "boottime": 21.269596114987507,
+            "monotonic": 21.269595479010604,
+            "utc": 24.232399971
+          },
+          "name": "S6",
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": 2.962804491989395
+        },
+        "input_role": "dual residual",
+        "remaining_field_error": "UNAVAILABLE_NO_REFERENCE"
+      },
+      {
+        "label": "LIGHT448",
+        "profile": "LIGHT",
+        "true_residual_ratio_recomputed": 0.9992632627513558,
+        "stored_ratio": 0.9992632627513558,
+        "complete_pc_calls": 5,
+        "cost_raw_interval": {
+          "budget_seconds": 10.626362126,
+          "discrepancy_seconds": 1.6340341026932492e-06,
+          "elapsed_seconds": {
+            "boottime": 10.626362036913633,
+            "monotonic": 10.626360491965897,
+            "utc": 10.626362126
+          },
+          "name": "LIGHT",
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": 1.6340341026932492e-06
+        },
+        "input_role": "dual residual",
+        "remaining_field_error": "UNAVAILABLE_NO_REFERENCE"
+      },
+      {
+        "label": "LIGHT448",
+        "profile": "JOINT",
+        "true_residual_ratio_recomputed": 0.9990117830545988,
+        "stored_ratio": 0.9990117830545988,
+        "complete_pc_calls": 6,
+        "cost_raw_interval": {
+          "budget_seconds": 11.203418100019917,
+          "discrepancy_seconds": 3.4401991655386155e-07,
+          "elapsed_seconds": {
+            "boottime": 11.203417866956443,
+            "monotonic": 11.203418100019917,
+            "utc": 11.203417756
+          },
+          "name": "JOINT",
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": -3.4401991655386155e-07
+        },
+        "input_role": "dual residual",
+        "remaining_field_error": "UNAVAILABLE_NO_REFERENCE"
+      },
+      {
+        "label": "JOINT448",
+        "profile": "S6",
+        "true_residual_ratio_recomputed": 0.9992253180523503,
+        "stored_ratio": 0.9992253180523503,
+        "complete_pc_calls": 7,
+        "cost_raw_interval": {
+          "budget_seconds": 22.966342813,
+          "discrepancy_seconds": 9.499629136655585e-07,
+          "elapsed_seconds": {
+            "boottime": 22.966342631028965,
+            "monotonic": 22.966341863037087,
+            "utc": 22.966342813
+          },
+          "name": "S6",
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.0,
+          "utc_minus_monotonic_seconds": 9.499629136655585e-07
+        },
+        "input_role": "dual residual",
+        "remaining_field_error": "UNAVAILABLE_NO_REFERENCE"
+      }
+    ],
+    "reference_residuals": [
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.6708150219637901,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 4.6569897403439e-11,
+        "iterations": 0,
+        "residual_gate_passed": true,
+        "residual_limit": 1e-10,
+        "rhs_norm": 0.6260102702835232,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_SOLVE_PASS",
+        "true_residual_norm": 2.9153234060602796e-11
+      },
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.49634015397168696,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 3.1187018770366606e-11,
+        "iterations": 0,
+        "residual_gate_passed": true,
+        "residual_limit": 1e-10,
+        "rhs_norm": 0.604293512563401,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_SOLVE_PASS",
+        "true_residual_norm": 1.8846113119125556e-11
+      },
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.6671617889078334,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 3.1187018770366606e-11,
+        "iterations": 0,
+        "residual_gate_passed": true,
+        "residual_limit": 1e-10,
+        "rhs_norm": 0.604293512563401,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_SOLVE_PASS",
+        "true_residual_norm": 1.8846113119125556e-11
+      },
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.48738371790386736,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 5.1912859421481326e-11,
+        "iterations": 0,
+        "residual_gate_passed": true,
+        "residual_limit": 1e-10,
+        "rhs_norm": 1.055126850150665,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_SOLVE_PASS",
+        "true_residual_norm": 5.4774651843701863e-11
+      },
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.5384272249648347,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 6.0667549382889e-11,
+        "iterations": 0,
+        "residual_gate_passed": true,
+        "residual_limit": 1e-10,
+        "rhs_norm": 1.0498897290427485,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_SOLVE_PASS",
+        "true_residual_norm": 6.36942369832889e-11
+      },
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.5079074139939621,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 6.0667549382889e-11,
+        "iterations": 0,
+        "residual_gate_passed": true,
+        "residual_limit": 1e-10,
+        "rhs_norm": 1.0498897290427485,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_SOLVE_PASS",
+        "true_residual_norm": 6.36942369832889e-11
+      },
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.555916933924891,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 2.9994675333097195e-11,
+        "iterations": 0,
+        "residual_gate_passed": true,
+        "residual_limit": 1e-10,
+        "rhs_norm": 1.1603103758206001,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_SOLVE_PASS",
+        "true_residual_norm": 3.480313300836289e-11
+      },
+      {
+        "diagnostic_only": true,
+        "elapsed_seconds": 0.5855054500279948,
+        "explicit_action_count": 1,
+        "factor_solve_calls": 1,
+        "final_true_residual": 1.0086968840613509e-10,
+        "iterations": 0,
+        "residual_gate_passed": false,
+        "residual_limit": 1e-10,
+        "rhs_norm": 1.1561769354407092,
+        "solver_identity": "exact_augmented_A4_reference",
+        "status": "REFERENCE_RESIDUAL_REJECTED",
+        "true_residual_norm": 1.166232072202645e-10
+      }
+    ],
+    "resources_independently_recomputed": {
+      "samples": 3324,
+      "rss_peak": 3777171456,
+      "swap_peak": 0,
+      "minimum_available": 9252577280,
+      "violations": 0
+    },
+    "clock": {
+      "watchdog_charge_independently_recomputed": 945.5195465798834,
+      "monotone_step_violations": 0,
+      "utc_positive_excess": 79.446333729278,
+      "outer_charge": 952.4951148111498,
+      "raw_watchdog_intervals": {
+        "monotonic": 866.0723157839384,
+        "boottime": 866.0723152449355,
+        "utc": 945.518512242
+      },
+      "qualification": "conservative_realtime accounting; not strict UTC consistency pass"
+    },
+    "clearance": {
+      "checked_utc_ns": 1788859686931545739,
+      "pids": [
+        976860,
+        976930,
+        976933,
+        978272,
+        978273,
+        978274,
+        978296,
+        978297,
+        978314,
+        978315,
+        978316,
+        978317,
+        978318,
+        978319,
+        978320,
+        978324,
+        978325,
+        978326,
+        978327,
+        978328,
+        978329
+      ],
+      "alive": [],
+      "watchdog_descendants_cleared": true
+    },
+    "budget_at_audit": {
+      "sample": {
+        "monotonic": 574131.521737972,
+        "boottime": 574131.521740543,
+        "utc_ns": 1788859756439200351
+      },
+      "charged_seconds": 9865.34601776739,
+      "remaining_14400_seconds": 4534.65398223261,
+      "remaining_d1d3_seconds": 6176.029231518864,
+      "future_work_not_authorized_by_balance": true
+    },
+    "actual_launch_cap_bytes": 8367992832,
+    "reserve_bytes": 4294967296,
+    "memory_qualification": "passes this host 8.367GB safety envelope; not 2GB qualification",
+    "p4_storage_rows": 53084,
+    "p4_independent_rows": 48960,
+    "p4_augmented_rows": 53164,
+    "p4_allocated_nnz": 24730144,
+    "p4_factor_nnz": 53417584,
+    "failed_p4_vectors_persisted": false,
+    "readonly_review_scope": "The failed p4 RHS, solution and residual vectors were not persisted. Scalar norm/denominator and source path are verified; the failed A4 action cannot be independently replayed without new computation. No claim that every latent implementation or conditioning issue is ruled out.",
+    "six_core_files_same_as_F3": [
+      {
+        "path": "src/solvers/fullspace_p4_reference.py",
+        "sha256": "33091f6f72597ec4b8a87483c89923b2f65cf474377de0194fd11ccab40455ca",
+        "same_bytes_as_F3_source": true
+      },
+      {
+        "path": "src/solvers/fullspace_physical_intermediate.py",
+        "sha256": "bfc76aa9d46ab1190e24d18ce3705df089aa49baf5b7865e5cb4092bda7c5564",
+        "same_bytes_as_F3_source": true
+      },
+      {
+        "path": "src/solvers/fullspace_physical_intermediate_runtime.py",
+        "sha256": "a78c67df95a7abe69f0599f464b6645a3964a938ffc151c947e6911ac87586f8",
+        "same_bytes_as_F3_source": true
+      },
+      {
+        "path": "src/solvers/fullspace_v17_p3_oracle.py",
+        "sha256": "3ffbf910791bff19e9eae54b2de7e941c4abda9bd00b42b5e418e1416b8dcc61",
+        "same_bytes_as_F3_source": true
+      },
+      {
+        "path": "src/solvers/fullspace_physical_action.py",
+        "sha256": "7cfbbba6a4262254cc0559474256eaba9a4e02ec195512c9a4f0ea762bf719a1",
+        "same_bytes_as_F3_source": true
+      },
+      {
+        "path": "src/solvers/physical_light_setup.py",
+        "sha256": "55da56093de4253a16e6c46e98792ad111d4bbedec1f64aedca09eac6683dc36",
+        "same_bytes_as_F3_source": true
+      }
+    ]
+  },
+  "launch_false_start": {
+    "root": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/mpi1",
+    "source_sha": "bf8e0c1d16c9c86677e866cdf29fd5491f076e32",
+    "classification": "LAUNCH_OR_FINALIZATION_FAILED",
+    "exception": {
+      "message": "watchdog must be a dedicated parent with no existing children",
+      "type": "RuntimeError"
+    },
+    "worker_started": false,
+    "complete_pc_calls": 0,
+    "charged_seconds": 0.9952139409859825,
+    "resolution": "Independent ABI subprocess fully exited before a fresh dedicated watchdog parent; no solver code change."
+  },
+  "clock_policy_authorization": {
+    "policy": "conservative_realtime",
+    "version": 1,
+    "strict_default_preserved": true,
+    "authorization": "User explicitly authorized engineering repair and recovery; main task approved exact code and frozen D1/D3.",
+    "adjacent_charge": "max(delta_monotonic, delta_boottime, delta_utc, 0), accumulated without refunds",
+    "numerical_resource_gates_unchanged": true,
+    "budget_reset": false,
+    "independent_windows_control": "Interop socket failure; not_run; no installation/system change"
+  },
+  "latest_evidence": [
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/attempt2/diagnostic_audit.json",
+      "bytes": 24964,
+      "sha256": "1507943711d0fbb8da165d6750bd11e53ce3338a48e964592bbb68cb333967f1"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/attempt2/reference_gate_readonly_review.json",
+      "bytes": 9503,
+      "sha256": "6da8150857997d9948613a2c43bd444f5f5c80a440f5112a2fdb119cbe01b4b3"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/attempt2/preflight.json",
+      "bytes": 5701,
+      "sha256": "05ca81c8ad65a366b1c4a823417cbda2721a9e4428301f39ba9998df710a91ef"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/attempt2/host_pid_clearance.json",
+      "bytes": 367,
+      "sha256": "06dbf887b98a50f0e966c1a2f2d2aefc66f15aead59201d308b9632866e9ab68"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/mpi1/launch.json",
+      "bytes": 25823,
+      "sha256": "d735a4e332b39934edee014ea552f5b3a512d63109f9281b828ab1b14b6f1dbf"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/launch_console.log",
+      "bytes": 1211,
+      "sha256": "56d7be9b6e7dd549f1bbf39dddfecccab9118a4bae8692f0727844e8a0380a46"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_clock_policy/focused_tests.json",
+      "bytes": 1165,
+      "sha256": "2dccdb9f5d3c3b4aba307fcdcb1c7aaf4b049f31013459148331fbb9b827a12b"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_clock_policy/focused_tests.log",
+      "bytes": 99,
+      "sha256": "14e7553168ff8fdb3a0a171b2b947df16151f4c9f378c18ddf32bdc9f32d3c73"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v3_clock_policy/windows_linux_clock_control.json",
+      "bytes": 503,
+      "sha256": "cbb9be4530979e42eb7705e76c87b303cb62fcb089d21da0b3caab56867a7433"
     }
   ]
 }

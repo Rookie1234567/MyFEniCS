@@ -1390,6 +1390,24 @@ outcomes。完整证据固定在
 
 ## 3.41 Task39extra：原 13.5 nm p6/h10 主候选与诊断参考
 
+### D5最新数值诊断收口
+
+| 项目 | 最新结果与适用边界 |
+|---|---|
+| 来源与模型 | clean source `bf8e0c1d16c9c86677e866cdf29fd5491f076e32`；原始13.5nm、1°、s、Full3D p6/h10、MPI1/线程1、80 DtN modes；无参考D1/D3诊断 |
+| 数据/作用 | 3份历史快照原A6残差复现，最大绝对差2.77556e-16；native独立系数逐位匹配，分项和与A作用一致 |
+| 调用计数 | 8 started / 7 completed；第8次JOINT448→LIGHT未完成，不能记为完整PC；已知误差/投影/互补/D4均not_run |
+| 终止 | 原A4残差1.0086968840613509e-10>1e-10（超限0.8696884%）；worker DIAGNOSTICS_FAILED，watchdog/launch WORKER_FAILED，outer exit2 |
+| 资源/清场 | 同期树RSS峰3777171456 B<实际cap8367992832 B；reserve4294967296 B、最低available9252577280 B；3324样本无违规，swap0；父进程及19后代清场 |
+| 时间 | watchdog mono866.072315784 / BOOTTIME866.072315245 / UTC945.518512242 s；逐段保守收费945.519546580 s，outer含pre/post952.495114811 s |
+| 规模 | p6存储173802/独立164592行、252cells；p4存储53084/独立48960、增广53164行、allocated NNZ24730144、factor NNZ53417584 |
+| 物理输出与比较 | 无新R/T/A、A_volume、R00_s/p/total、衍射级、复E/H或full solve资格；无p/h/M/MPI/Hybrid扫描、非可分或短波资格 |
+| 后续范围 | 数学根因仍未完成；唯一优先是补存同一失败p4输入，核对增广系统与原A4残差差别/可靠性，再补缺失表示与响应诊断；本轮不重跑或精化 |
+
+七份同输入PC响应已从保存数组复算；PC是提供近似修正的辅助步骤，单次rho不能代替真实场误差。失败p4向量未存，0.87%越限不能解释历史外层停滞。数据/成本/原因矩阵及依赖组见[中心报告](task039_extra_physical_multilevel/outcomes/nonconvergence_diagnosis_v3.md)。
+
+### 历史阶段（以下当前/0次仅指原时刻）
+
 ### Review V3 / D5
 
 | 对象 | 当前结果 |

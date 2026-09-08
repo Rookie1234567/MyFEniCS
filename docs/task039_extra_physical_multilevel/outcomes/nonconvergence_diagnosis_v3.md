@@ -1,3 +1,102 @@
+# Task39extra：D5最新收口——原A4数值Gate拒绝，7次PC诊断完成
+
+| 项目 | 最新结果与适用边界 |
+|---|---|
+| 来源与模型 | clean source `bf8e0c1d16c9c86677e866cdf29fd5491f076e32`；原始13.5nm、1°、s、Full3D p6/h10、MPI1/线程1、80 DtN modes；无参考D1/D3诊断 |
+| 数据/作用 | 3份历史快照原A6残差复现，最大绝对差2.77556e-16；native独立系数逐位匹配，分项和与A作用一致 |
+| 调用计数 | 8 started / 7 completed；第8次JOINT448→LIGHT未完成，不能记为完整PC；已知误差/投影/互补/D4均not_run |
+| 终止 | 原A4残差1.0086968840613509e-10>1e-10（超限0.8696884%）；worker DIAGNOSTICS_FAILED，watchdog/launch WORKER_FAILED，outer exit2 |
+| 资源/清场 | 同期树RSS峰3777171456 B<实际cap8367992832 B；reserve4294967296 B、最低available9252577280 B；3324样本无违规，swap0；父进程及19后代清场 |
+| 时间 | watchdog mono866.072315784 / BOOTTIME866.072315245 / UTC945.518512242 s；逐段保守收费945.519546580 s，outer含pre/post952.495114811 s |
+| 规模 | p6存储173802/独立164592行、252cells；p4存储53084/独立48960、增广53164行、allocated NNZ24730144、factor NNZ53417584 |
+| 物理输出与比较 | 无新R/T/A、A_volume、R00_s/p/total、衍射级、复E/H或full solve资格；无p/h/M/MPI/Hybrid扫描、非可分或短波资格 |
+| 后续范围 | 数学根因仍未完成；唯一优先是补存同一失败p4输入，核对增广系统与原A4残差差别/可靠性，再补缺失表示与响应诊断；本轮不重跑或精化 |
+
+这是在同一真实方程上比较三个既有PC的有界诊断。PC为外层求解提供近似修正；本轮保存相同残差输入q及其修正z、原A作用Az，用`rho=norm(q−Az)/norm(q)`看一次修正消掉多少残差。rho越接近1，单次减少越少；这不是实际场误差，也不能直接预测完整FGMRES轨迹。M0最佳投影原本要把“p4表达不了的误差”和“虽能表达但修正不准”分开，需要真实有限元质量作用及合格求解；此次未到达该阶段。
+
+## 三次执行事件分别保留
+
+| 事件 | source / root | 结果 |
+|---|---|---|
+| 原strict诊断 | 24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650；v3_d1d3_no_reference下同SHA/mpi1 | TIMEBASE_INCONSISTENCY，0完整PC；旧raw、初始launch及缺失worker终态的结论保持 |
+| 工程修复后启动失败 | bf8e0c1d16c9c86677e866cdf29fd5491f076e32；v3_d1d3_no_reference_v2下同SHA/mpi1 | ABI预检导入MPI的orted子进程违反干净父进程前提；worker未启动，LAUNCH_OR_FINALIZATION_FAILED，0.995213941 s扣账 |
+| fresh attempt2 | 同bf8e0c1；同目录attempt2/mpi1 | ABI在独立子进程完成退出后启动；7完整PC与第8次数值拒绝，终态齐全，无重复heavy |
+
+用户明确授权继续修复非数值/非资源工程阻碍，因而在同分支恢复一次诊断；没有改写旧review或给旧strict运行补PASS。`conservative_realtime` version1仅由诊断显式启用，strict仍为默认。UTC可调整，所以新政策保留三时钟原值、记录UTC相对增量，逐相邻采样累计`max(Δmonotonic,ΔBOOTTIME,ΔUTC,0)`，向前跳计费、回拨不退款。单调缺失/非有限/倒退或彼此超过原max(5s,1%)仍保护，UTC不放大阈值。A6、物理、三个PC、数值门槛、动态内存/4GiB余量/swap0均未改。
+
+本次watchdog UTC正向额外增量79.446333729 s已扣账，独立从3324条raw复算费用945.519546580 s一致；不能称strict UTC一致性通过或精确系统时钟因果已查清。Windows Stopwatch独立对照因当前Interop socket失败未启动，没有安装或改系统。外层按不重叠pre/watchdog/post收费，未把PC时间再次加到父账本。原14:44:51+08四小时锚点继续扣账，attempt2启动前8759.911903548 s，正式额度5640.088096452 s；含旧诊断及false-start的诊断额度也先扣除。审计采样时总账9865.346017767 s、余4534.653982233 s；后续只读收口继续消耗时间，该历史余额不授权新求解，未重置四小时。
+
+## 身份复现与相消
+
+| 样本 | fresh相对真残差 | 与旧值绝对差 | 三个分项范数和/合成向量范数 |
+|---|---:|---:|---:|
+| A2R160 | 0.18250767622880479 | 2.7755576e-16 | 373.034048737 |
+| LIGHT448 | 0.098145911603049502 | 1.110223e-16 | 378.722372633 |
+| JOINT448 | 0.10713326900483634 | 2.0816682e-16 | 298.080962745 |
+
+从保存的b、x、Ax、r与分项向量独立复算：x与历史快照的native独立系数逐位一致，r=b−Ax逐位一致，分项相加与Ax一致，Gram复内积矩阵差为0。相消比约298–379意味着此三场上curl项与负质量项都较大而相互抵消；它依赖系数范数及这些样本，不是完整条件数、最小奇异值、近共振或粗离散色散测量。
+
+## 七次同输入PC响应与成本
+
+| 输入 | PC | rho（独立重算） | raw monotonic（s） | raw UTC（s） |
+|---|---|---:|---:|---:|
+| A2R160 | S6 | 0.999949824758905 | 22.316357739 | 25.259098050 |
+| A2R160 | LIGHT | 0.944132338863247 | 10.029635178 | 10.029636242 |
+| A2R160 | JOINT | 0.937065421422212 | 12.176587570 | 15.097589135 |
+| LIGHT448 | S6 | 0.993946941622935 | 21.269595479 | 24.232399971 |
+| LIGHT448 | LIGHT | 0.999263262751356 | 10.626360492 | 10.626362126 |
+| LIGHT448 | JOINT | 0.999011783054599 | 11.203418100 | 11.203417756 |
+| JOINT448 | S6 | 0.99922531805235 | 22.966341863 | 22.966342813 |
+
+每个q均与保存实际r除以其Euclidean范数逐位一致，rho从保存q/Az重算匹配，累计packet计数恰为1–7。各PC的时间是其起止raw区间，不是已消除UTC调整的精确成本；正式预算以父进程逐采样累计为准。A2R160上LIGHT/JOINT比S6单次效果较好；LIGHT448上三个方向都只带来很小改善。不能用7个样本推断固定线性PC谱，或宣布某方法在全部FGMRES输入上失效。保存的M0修正能量有hash绑定，但未保存M0z，本次只读未重新执行质量作用，不能称该能量已独立重算；真实remaining-field-error仍无参考。
+
+## 第8次原A4拒绝的准确含义
+
+| 核查项 | 证据与结论 |
+|---|---|
+| 精确失败位置 | JOINT448→LIGHT，positive_pre后physical_middle；LIGHT桥calls_started3/completed2，S6为3/3、JOINT为2/2 |
+| 标量残差 | 原A4作用后差向量范数1.166232072202645e-10；p4 RHS范数1.1561769354407092；相除1.0086968840613509e-10>1e-10 |
+| 前7次p4 | 最大6.0667549382889e-11≤1e-10；第8次不计为完成，不因仅超0.8696884%改PASS |
+| 输入/归一化 | fine dual r仅归一化一次；原H6/MR后残差经原P^H形成p4 RHS；分母为该p4 RHS范数，非fine归一化前/后范数，tiny floor未激活 |
+| 别名/约束路径 | PC residual/correction、限制输出、增广b/x、提取solution及A4 applied均有独立存储；原finite/slave-zero检查执行到残差阶段；首个成功bridge输入不变和输出slave-zero检查通过 |
+| 源码身份 | reference、PC组合、runtime/transfer、MUMPS包装、physical action、H6 setup六文件与旧F3 source60b8df2a24cbcd96e49e018be22fb64f06eeae3f逐字节相同 |
+| 证据限制 | 失败p4 RHS/solution/residual向量未持久化；代码路径和标量比值核对不等于独立A4重算，也不是失败调用的完整运行时alias追踪 |
+| 因果边界 | 所审路径未发现可唯一归因的工程错误；保留数值Gate miss，不宣称病态、舍入或增广映射是唯一根因；这个0.87% miss不是历史约0.1外层停滞的因果证明 |
+
+共享p4数值前提在该输入未闭合，按主任务裁决不追加refinement、不放宽Gate、不重跑，不启动条件D4。D2仍为缺可信完整MPI1峰值上界的安全预审未资格化；未构建fine参考，不能据此证明16GB普遍不可能。资源方面，本次实测峰值低于本机8.367GB安全cap且保留4GiB余量，但明显不能据此授予2GB资格，更不代表0.7nm容量结果。
+
+## 原因矩阵与唯一后续对象
+
+| 原因类别 | 状态 | 支持与限制 |
+|---|---|---|
+| 输入、作用、尺度与参考 | MIXED | 三份x与历史独立系数逐位一致，r=b−Ax、原A分项和及历史残差均复现；失败p4向量未存，不能独立复算其A4作用，未发现所审接线错误。 |
+| p4空间表示不足 | UNRESOLVED | 没有已知误差或合格M0最佳投影，η_space未测；不能由较弱残差收缩或p4 Gate miss推断空间不足。 |
+| 实际粗响应/投影失配 | UNRESOLVED | η_G、coarse identity、表示/响应误差分解未运行；相消比298–379仅提示三个场上的大项抵消，不是条件数或色散/共振证据。 |
+| fine互补能力不足 | UNRESOLVED | e_perp尚未取得，独立H6/S6互补0次；完整PC的单次残差比例不能替代该项。 |
+| 局部逆精度与全局耦合 | MIXED | 本次p4前7次≤1e-10，第8次1.0086968840613509e-10拒绝；精度前提在该输入未闭合。0.8696884%越限不是历史约0.1外层停滞的因果证明，也不证明所有p4作用失效。 |
+| 已测样本单次PC改善较弱 | SUPPORTED | 七份同输入q/Az已独立复算：LIGHT448三种rho为0.993947/0.999263/0.999012，JOINT448的S6为0.999225；仅限这些dual输入，不构成FGMRES或field-error定理。 |
+| restart/非正规影响 | UNRESOLVED | 仍缺足够Hessenberg/正交性数据；原有reported/explicit差很小只削弱monitor漂移解释，不确认restart或非正规唯一原因。 |
+| 实现成本、容量、时钟 | MIXED | 新政策已运行并独立复算保守扣账，纯UTC偏移未再阻断；不是strict UTC一致性通过。3324样本RSS峰3.777GB<8.367GB cap、swap0；不代表2GB或短波容量资格，系统时钟原因仍未定。 |
+
+唯一优先后续对象是**同一失败p4输入上的参考逆可靠性**：先有界重建并保存JOINT448→LIGHT的那个p4 RHS（当前没有该文件），在冻结输入上同时保存增强系统求解残差、原A4残差和映射/范数身份，查清二者差别能否解释该Gate miss；未解决前不把准确参考逆当无条件前提。此对象复用原空间、原A和既有factor，不引入增长型全局方向库；代价是一次有界setup与少量同输入作用，仍受原资源/时间Gate。该前提闭合后再补已知误差、M0投影及粗响应/互补的缺失证据；七份已资格数据继续复用。本轮不执行这些后续操作，不据现有证据跳到新PC、p5或PML，也没有h/波长缩小时的成本或任意三维生产保证。
+
+## 验证、交付与依赖组
+
+工程修复唯一合并focused批次19 passed（5.50 s），ABI及编译/diff通过；Windows对照失败单独保留。最终D5只作一批JSON/hash/链接/表格/历史保护检查，无新pytest、代码或PDE，无CI声明。指标独立复核入口为ignored `diagnostic_audit.json`与`reference_gate_readonly_review.json`，详细路径/hash见[中心JSON](records/nonconvergence_diagnosis_v3.json)。
+
+| selective merge依赖组 | 最终建议与证据 |
+|---|---|
+| production numerical/core | 旧A/PC定义未改，不提升研究默认；原物理验收仍未通过 |
+| reusable runner/watchdog | strict默认+诊断opt-in计费与terminal接线；19小测试和fresh费用/清场支持；先审通用依赖，不称strict UTC一致 |
+| checker/benchmark | 复用既有packet接口；3identity/7PC的数组和hash独立核对，失败p4 raw缺口保留；依赖对应研究接口 |
+| compact evidence/docs | 本次8文件及旧负记录可保留；证据区分TIMEBASE、启动失败和数值拒绝，随后审文档 |
+| research-only | 诊断runner/metric/projection/PC probe；真实7probe部分资格，known/projection/complement未运行，不提升production |
+| do-not-merge | 大型raw/cache/矩阵/场及未资格化默认提升均不入Git；无master merge授权 |
+
+## 历史：首次D5收口及此前D0设计
+
+以下保留原时刻的结论，“当前、0次、未启动、等待”等只指相应历史阶段；最新执行状态与后续优先项以上文为准。
+
 # 不收敛诊断 V3：D5 证据收口，数学定位未完成
 
 后续用户已明确授权修复工程阻碍并恢复诊断：新增仅诊断显式启用的`conservative_realtime`政策（version 1），原`strict`默认和本页旧TIMEBASE停止证据不变。UTC是可调整的日历时钟；为避免其单独跳变反复中止数学测量，新政策保存三时钟原值和UTC相对增量，逐相邻区间累计`max(Δmonotonic, ΔBOOTTIME, ΔUTC, 0)`，前跳扣账、回拨不退款，不宣称strict一致性通过。两种单调时钟缺失、非有限、倒退或彼此超原阈值仍保护；UTC不放大该阈值，A6、物理、三个PC、数值Gate、动态内存/4GiB余量/swap0均不变。父watchdog累计值是整体预算权威，外层另加不重叠pre/post；PC单次endpoint仍只是raw区间，不称精确UTC成本。原四小时账本继续扣除准备、失败和测试，不重置余额。终态落盘保留监督原分类，收尾异常不能冒称成功。Windows Stopwatch只读对照因当前Interop报`UtilBindVsockAnyPort: socket failed`未启动，不安装或扩展环境调查；合并focused tests为19 passed（5.50 s），日志`benchmarks/artifacts/task39extra/v3_clock_policy/focused_tests.log`，SHA256 `14e7553168ff8fdb3a0a171b2b947df16151f4c9f378c18ddf32bdc9f32d3c73`。本段是工程修复记录，尚未提交或恢复heavy；以下为a8ca702收口时的历史状态。

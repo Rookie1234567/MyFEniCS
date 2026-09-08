@@ -1,3 +1,19 @@
+# D5最终验证：工程政策通过，正式诊断发生数值拒绝
+
+| 对象 | 最终证据与边界 |
+|---|---|
+| conservative_realtime接线 | 19 passed / 5.50 s；ABI与编译通过；source bf8e0c1d16c9c86677e866cdf29fd5491f076e32 |
+| 日志 | benchmarks/artifacts/task39extra/v3_clock_policy/focused_tests.log；SHA256 14e7553168ff8fdb3a0a171b2b947df16151f4c9f378c18ddf32bdc9f32d3c73 |
+| Windows独立对照 | Interop socket失败，未启动35秒对照；没有安装/系统修改，不冒作计时资格PASS |
+| 正式数据复核 | 3 identities从b/x/Ax/r/分项/Gram复算，7 PC从q/Az复算；8 started/7 completed；失败p4向量未保存，只有代码/标量核对 |
+| 数值拒绝 | JOINT448→LIGHT原A4残差1.0086968840613509e-10>1e-10；不因19测试通过提升为formal PASS |
+| 资源/时间 | 3324样本RSS峰3777171456 B、swap0、资源违规0；watchdog保守945.519547 s、outer952.495115 s独立核对，清场完成 |
+| D5最后一批 | 仅JSON/证据hash/链接/表格/历史保护及diff检查；报告benchmarks/artifacts/task39extra/v3_d5_numerical_closeout/static_checks.json；无新pytest/代码/PDE/CI声明 |
+
+详见[最新中心记录](records/nonconvergence_diagnosis_v3.json)。原TIMEBASE停止和MPI预检导致的launch false-start均保留；旧V2的181测试不冒作本轮数学资格。
+
+## 历史验证（以下当前均指当时）
+
 # Task39extra：Review V3 / D5 验证边界
 
 | 验证 | 实际结果 |

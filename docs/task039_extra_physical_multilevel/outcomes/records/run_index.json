@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "D5 V3 timebase controlled stop plus immutable V2/V1/A5 history; mathematical diagnosis incomplete",
+  "scope": "Latest V3 numerical gate rejection: 3 identities, 7 completed/8 started PC; retain strict-timebase stop, launch false-start and V2/V1/A5 history",
   "units": {
     "time": "s",
     "memory": "B"
@@ -702,6 +702,54 @@
         "sha256": "d4ae363508b6d2b67fdffe9dceea6882f6adcb1e74a4d32ec3dda53bbe879a8a"
       },
       "diagnosis_record": "docs/task039_extra_physical_multilevel/outcomes/records/nonconvergence_diagnosis_v3.json"
+    },
+    {
+      "id": "V3_conservative_realtime_launch_false_start",
+      "category": "measured_launch_only",
+      "root": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/mpi1",
+      "source_sha": "bf8e0c1d16c9c86677e866cdf29fd5491f076e32",
+      "classification": "LAUNCH_OR_FINALIZATION_FAILED",
+      "exception": {
+        "message": "watchdog must be a dedicated parent with no existing children",
+        "type": "RuntimeError"
+      },
+      "worker_started": false,
+      "complete_pc_calls": 0,
+      "charged_seconds": 0.9952139409859825,
+      "resolution": "Independent ABI subprocess fully exited before a fresh dedicated watchdog parent; no solver code change."
+    },
+    {
+      "id": "V3_conservative_realtime_attempt2",
+      "source_sha": "bf8e0c1d16c9c86677e866cdf29fd5491f076e32",
+      "raw_root": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/attempt2/mpi1",
+      "category": "measured",
+      "raw_classification": "WORKER_FAILED",
+      "semantic_classification": "NUMERICAL_GATE_REJECTION_ORIGINAL_A4_REFERENCE",
+      "complete_pc_calls": 7,
+      "attempted_complete_pc_calls": 8,
+      "failed_probe": "JOINT448_LIGHT",
+      "failed_reference_residual": 1.0086968840613509e-10,
+      "residual_limit": 1e-10,
+      "rss_peak_bytes": 3777171456,
+      "swap_peak_bytes": 0,
+      "launch_cap_bytes": 8367992832,
+      "resource_violations": 0,
+      "clock_intervals_seconds": {
+        "monotonic": 866.0723157839384,
+        "boottime": 866.0723152449355,
+        "utc": 945.518512242
+      },
+      "outer_conservative_charge_seconds": 952.4951148111498,
+      "descendants_cleared": true,
+      "known_error": "not_run",
+      "projection": "not_run",
+      "D4": "not_run",
+      "official_results": "not_run",
+      "audit": {
+        "path": "benchmarks/artifacts/task39extra/v3_d1d3_no_reference_v2/bf8e0c1d16c9c86677e866cdf29fd5491f076e32/attempt2/diagnostic_audit.json",
+        "bytes": 24964,
+        "sha256": "1507943711d0fbb8da165d6750bd11e53ce3338a48e964592bbb68cb333967f1"
+      }
     }
   ],
   "limitations": [

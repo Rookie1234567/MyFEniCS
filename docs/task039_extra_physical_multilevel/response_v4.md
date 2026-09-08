@@ -1,3 +1,33 @@
+# Task39extra：D5最新收口——原A4数值Gate拒绝，7次PC诊断完成
+
+| 项目 | 最新结果与适用边界 |
+|---|---|
+| 来源与模型 | clean source `bf8e0c1d16c9c86677e866cdf29fd5491f076e32`；原始13.5nm、1°、s、Full3D p6/h10、MPI1/线程1、80 DtN modes；无参考D1/D3诊断 |
+| 数据/作用 | 3份历史快照原A6残差复现，最大绝对差2.77556e-16；native独立系数逐位匹配，分项和与A作用一致 |
+| 调用计数 | 8 started / 7 completed；第8次JOINT448→LIGHT未完成，不能记为完整PC；已知误差/投影/互补/D4均not_run |
+| 终止 | 原A4残差1.0086968840613509e-10>1e-10（超限0.8696884%）；worker DIAGNOSTICS_FAILED，watchdog/launch WORKER_FAILED，outer exit2 |
+| 资源/清场 | 同期树RSS峰3777171456 B<实际cap8367992832 B；reserve4294967296 B、最低available9252577280 B；3324样本无违规，swap0；父进程及19后代清场 |
+| 时间 | watchdog mono866.072315784 / BOOTTIME866.072315245 / UTC945.518512242 s；逐段保守收费945.519546580 s，outer含pre/post952.495114811 s |
+| 规模 | p6存储173802/独立164592行、252cells；p4存储53084/独立48960、增广53164行、allocated NNZ24730144、factor NNZ53417584 |
+| 物理输出与比较 | 无新R/T/A、A_volume、R00_s/p/total、衍射级、复E/H或full solve资格；无p/h/M/MPI/Hybrid扫描、非可分或短波资格 |
+| 后续范围 | 数学根因仍未完成；唯一优先是补存同一失败p4输入，核对增广系统与原A4残差差别/可靠性，再补缺失表示与响应诊断；本轮不重跑或精化 |
+
+本次完成的是部分数学诊断及数值拒绝的证据闭环，不是原始完整问题算通。三份原A6身份/残差复现及七份同输入PC响应已经测量；共享p4参考在第8次输入上的原1e-10门槛未闭合，主任务裁决不追加refinement、重跑或D4。
+
+复核六个数值核心文件与旧F3源码逐字节一致，归一化、原P^H限制、独立向量存储、zero-slave与分母路径未发现可唯一定位的工程错误。分母1.1561769354407092、差向量范数1.166232072202645e-10的比值确为失败残差；但失败p4 RHS/解/残差向量未保存，不能声称独立重算了该A4作用或排除全部潜在数值问题。0.8696884%越限既不能改PASS，也不是历史约0.1外层停滞的因果证明。
+
+用户明确授权工程修复后，bf8e0c1保留strict默认，仅诊断opt-in逐段保守收费，不因单独UTC偏移永久中止；数值/资源Gate未变。24b3dbb的TIMEBASE原记录、bf8e0c1的MPI预检子进程启动失败、fresh attempt2分别保留。当前完整terminal为worker DIAGNOSTICS_FAILED、watchdog/launch WORKER_FAILED、outer exit2，清场完成；本机8.367GB安全cap下通过资源检查不代表2GB资格。
+
+唯一优先后续是先补存同一失败p4输入，比较增强系统与原A4残差及映射/可靠性，再补已知误差、表示/粗响应与互补缺口；当前不提出新PC、不宣称病态或舍入唯一根因。D2安全预审的REFERENCE_UNAVAILABLE_ON_16GB不等于16GB普遍不可能。
+
+已有19 focused tests（5.50 s）、ABI、编译通过；最终只作一批文档/JSON/hash/链接/表格检查，未新增pytest或PDE。原四小时账本不重置，所有失败/测试/准备计费；审计时总账9865.346017767 s，历史余额4534.653982233 s不授权新运行，之后文档工作继续计时。最终静态报告位于`benchmarks/artifacts/task39extra/v3_d5_numerical_closeout/static_checks.json`。
+
+原Task base `2dc2e7305f10dc391a13970c6f0f0340cb87b6ee`；本次正式源码/文档提交parent `bf8e0c1d16c9c86677e866cdf29fd5491f076e32`。本轮只提交指定8个文档/索引；新完整文档HEAD与工作树状态在交付消息报告，主任务负责审阅推送，不merge master。
+
+证据：[中心报告](outcomes/nonconvergence_diagnosis_v3.md)、[中心JSON](outcomes/records/nonconvergence_diagnosis_v3.json)、[summary](outcomes/summary.md)、[run index](outcomes/records/run_index.json)、[test summary](outcomes/test_summary.md)、[development_progress](../development_progress.md)、[development_model_registry](../development_model_registry.md)。中心报告列出了7次rho与成本、3份identity/相消、原因矩阵和selective merge依赖组；所有raw及失败证据均保留。
+
+## 历史Response V4首次D5收口（只代表当时状态）
+
 # Response V4：D5证据闭环，数学诊断未完成
 
 | 交付身份 | 结果 |
