@@ -161,6 +161,7 @@ def modified_residual_accept(
     action: Any,
     *,
     correction: Any | None = None,
+    capture: Callable[[Any, Any], None] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     """Accept one direction with the complex one-dimensional MR formula.
 
@@ -189,6 +190,8 @@ def modified_residual_accept(
         "fine_action_count": 0,
     }
     if residual_norm_before == 0.0 or direction_norm == 0.0:
+        if capture is not None:
+            capture(direction, None)
         facts["reason"] = "zero_residual_or_direction"
         return correction, facts
 
@@ -198,6 +201,8 @@ def modified_residual_accept(
         applied = apply_owned(action, direction)
         facts["fine_action_count"] = 1
         applied_norm = _norm(applied)
+        if capture is not None:
+            capture(direction, applied)
         facts["applied_norm"] = applied_norm
         facts["raw_unit_rho"] = 1.0
         facts["rho"] = 1.0
@@ -566,6 +571,7 @@ class PhysicalIntermediatePreconditioner:
         intermediate_cycle: ShiftedAuxiliaryCycle,
         *, stage_callback: Callable[[str, dict], None] | None = None,
         positive_identity: str = 'S6', outer_max_it: int = OUTER_MAX_IT,
+        joint_mr: bool = False,
     ) -> None:
         self.fine_action = fine_action
         self.positive_identity = positive_identity
@@ -574,6 +580,9 @@ class PhysicalIntermediatePreconditioner:
         self.p6_to_p4 = p6_to_p4
         self.intermediate_cycle = intermediate_cycle
         self.intermediate_identity = getattr(intermediate_cycle, 'solver_identity', 'FGMRES12_A4_shifted')
+        if joint_mr and (positive_identity != 'H6' or self.intermediate_identity != 'exact_augmented_A4_reference'):
+            raise ValueError('joint MR3 requires the frozen LIGHT reference directions')
+        self.joint_mr = joint_mr
         self.stage_callback = stage_callback
         self.apply_count = 0
         self.last_apply_facts: dict[str, Any] = {}
@@ -585,12 +594,14 @@ class PhysicalIntermediatePreconditioner:
         direction: Any,
         label: str,
         facts: list[dict[str, Any]],
+        capture: Callable[[Any, Any], None] | None = None,
     ) -> None:
         correction, mr_facts = modified_residual_accept(
             residual,
             direction,
             self.fine_action,
             correction=correction,
+            **({'capture': capture} if capture is not None else {}),
         )
         facts.append({"stage": label, **mr_facts})
 
@@ -606,6 +617,12 @@ class PhysicalIntermediatePreconditioner:
             residual = own(_copy(rhs))
             direction_facts: list[dict[str, Any]] = []
             inner_facts: dict[str, Any] = {}
+            joint = None
+            joint_facts = None
+            if self.joint_mr:
+                from .physical_joint_mr import JointMR3
+                joint = JointMR3(rhs)
+                resources.callback(joint.close)
             if _norm(rhs) != 0.0:
                 for label in ("positive_pre", "physical_middle", "positive_post"):
                     if self.stage_callback is not None:
@@ -624,11 +641,47 @@ class PhysicalIntermediatePreconditioner:
                         else:
                             direction = apply_owned(self.positive_cycle, residual)
                         stage.callback(_destroy, direction)
-                        self._accept(residual, correction, direction, label, direction_facts)
+                        self._accept(residual, correction, direction, label, direction_facts,
+                            **({'capture': joint.capture} if joint is not None else {}))
                         direction_facts[-1]["wall_seconds"] = time.perf_counter() - stage_started
                         if label != "physical_middle":
                             direction_facts[-1]["positive_cycle_facts"] = deepcopy(
                                 getattr(self.positive_cycle, "last_apply_facts", {}))
+            selected_residual_norm = _norm(residual)
+            if joint is not None:
+                if self.stage_callback is not None:
+                    self.stage_callback('joint_mr3_started', {'outer_pc_apply':self.apply_count+1})
+                sequential_norm = selected_residual_norm
+                candidate, joint_facts = joint.candidate(rhs)
+                joint_facts.update(sequential_residual_norm=sequential_norm, rhs_norm=_norm(rhs),
+                    sequential_solution_norm=_norm(correction), joint_solution_norm=None,
+                    joint_residual_norm=None, selected_residual_norm=sequential_norm)
+                if self.apply_count < 3:
+                    import hashlib
+                    from .physical_joint_mr import array_view
+                    joint_facts['same_input_sha256'] = hashlib.sha256(array_view(rhs).tobytes()).hexdigest()
+                if candidate is not None and _norm(rhs) != 0:
+                    proposed = own(_new_like(rhs))
+                    target = proposed.array if hasattr(proposed,'array') else proposed
+                    np.copyto(target, candidate)
+                    joint_facts['joint_solution_norm'] = _norm(proposed)
+                    del candidate
+                    extra_started = time.perf_counter()
+                    value = own(apply_owned(self.fine_action, proposed))
+                    _norm(value)  # Physical nonfinite/action errors must propagate.
+                    joint_facts['extra_A6_seconds'] = time.perf_counter()-extra_started
+                    joint_facts['extra_A6_count'] = 1
+                    checked = own(_copy(rhs))
+                    _axpy(checked, -1., value)
+                    measured = _norm(checked)
+                    joint_facts['joint_residual_norm'] = measured
+                    if measured > sequential_norm+1e-10*_norm(rhs):
+                        joint_facts.update(fallback=True, fallback_reason='explicit_joint_residual_safeguard')
+                    else:
+                        _copy_into(correction, proposed)
+                        selected_residual_norm = measured
+                        joint_facts['selected_residual_norm'] = measured
+                joint_facts['selected_over_sequential'] = (selected_residual_norm/sequential_norm if sequential_norm else None)
             self.apply_count += 1
             self.last_apply_facts = {
                 "schema": "task039.physical_intermediate_pc.v1",
@@ -638,10 +691,13 @@ class PhysicalIntermediatePreconditioner:
                 "direction_count": len(direction_facts),
                 "direction_facts": direction_facts, "intermediate": inner_facts,
                 "input_norm": _norm(rhs), "output_norm": _norm(correction),
-                "remaining_residual_norm": _norm(residual), "finite": True,
+                "remaining_residual_norm": selected_residual_norm, "finite": True,
                 "apply_count": self.apply_count,
                 "wall_seconds": time.perf_counter() - started,
             }
+            if joint_facts is not None:
+                self.last_apply_facts['joint_mr3'] = joint_facts
+                self.last_apply_facts['formula'] += ' -> normalized QR/small SVD joint MR3 with explicit safeguard'
             return _copy(correction)
 
     __call__ = apply

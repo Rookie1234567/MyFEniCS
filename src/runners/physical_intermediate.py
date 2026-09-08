@@ -51,6 +51,7 @@ class WorkflowLedger:
         self.started = time.monotonic()
         self.phase_started = self.started
         self.pc_counts = Counter()
+        self.joint_cycle = []
         self.last_safe = None
         self.stop_signal = None
         self.last_stage = None
@@ -109,14 +110,28 @@ class WorkflowLedger:
             self.pc_counts['positive_p1_wall_seconds'] += bottom.get('wall_seconds_exclusive', 0)
         for key, value in inner.get('shifted_cost_totals', {}).items():
             self.pc_counts['shifted_' + key] += value
+        if 'joint_mr3' in facts:
+            joint = facts['joint_mr3']
+            self.pc_counts['fine_A6_direction_count'] += sum(d['fine_action_count'] for d in facts['direction_facts'])
+            self.pc_counts['joint_extra_A6_count'] += joint['extra_A6_count']
+            self.pc_counts['joint_extra_A6_seconds'] += joint['extra_A6_seconds']
+            self.pc_counts['joint_QR_seconds'] += joint['QR_seconds']
+            self.pc_counts['joint_fallback_count'] += int(joint['fallback'])
+            if len(self.joint_cycle) >= 32:
+                raise RuntimeError('joint PC summaries exceed one fixed restart32 cycle')
+            self.joint_cycle.append(dict(apply_count=facts['apply_count'], **joint))
+            if facts['apply_count'] <= 3:
+                self.append('joint_mr3_first_inputs.jsonl', self.joint_cycle[-1])
         # Write scalar inner detail immediately; retain no per-apply history in RAM.
         self.append('pc_applies.jsonl', facts)
 
     def cycle(self, facts: dict) -> None:
         self.append('cycles.jsonl', {**facts, 'pc_costs': dict(self.pc_counts),
+            **({'joint_mr3':list(self.joint_cycle)} if self.joint_cycle else {}),
             'global_elapsed_monotonic_seconds': time.monotonic()-self.started,
             'timing_semantics': 'cycle/inner/smoothing walls are nested; never sum as workflow time'})
         self.pc_counts.clear()
+        self.joint_cycle.clear()
 
 
 def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str) -> dict:
@@ -139,11 +154,12 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import audit_p6_same_mesh_setup
 
     identity = payload['solver']['preconditioner']
-    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE
-    light = identity == LIGHT_PROFILE
+    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE
+    joint = identity == JOINT_PROFILE
+    light = identity in (LIGHT_PROFILE, JOINT_PROFILE)
     packed = identity == PACKED_PROFILE
     cooperative = light or packed
-    reference = identity in (REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE)
+    reference = identity in (REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE)
     pc_profile = json.loads(os.environ['PHYSICAL_PC_PROFILE']) if 'PHYSICAL_PC_PROFILE' in os.environ else None
     if identity == FAST_PROFILE and (pc_profile is None or pc_profile['variant'] != FAST_PROFILE):
         raise ValueError('fast profile currently requires the explicit seven-PC diagnostic mode')
@@ -215,7 +231,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             previous_handlers[signum] = signal.signal(signum, interrupted)
         bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
             resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}),
-            **({'light': True} if light else {}))
+            **({'light': True} if light else {}), **({'joint_mr': True} if joint else {}))
         fine = bundle['fine']
         summary['positive_setup'] = bundle['positive']['light_facts'] if light else audit_p6_same_mesh_setup(bundle['positive'])
         if reference:

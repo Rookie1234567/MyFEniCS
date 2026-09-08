@@ -68,7 +68,8 @@ def test_actual_fgmres_buildsolution_mid_terminal_and_nonzero_second_cycle(nonze
                if name == 'monitor_residuals.jsonl'], flush=True)
 
 
-def test_actual_h6_pc_counts_and_independent_recount(tmp_path):
+@pytest.mark.parametrize('joint_mr', [False, True])
+def test_actual_h6_pc_counts_and_independent_recount(tmp_path, joint_mr):
     from src.solvers.fullspace_lor_edge_geometric_mg_global import FixedChebyshevJacobiPETSc
     from src.solvers.fullspace_physical_intermediate import PhysicalIntermediatePreconditioner
     from src.runners.physical_intermediate import WorkflowLedger
@@ -99,11 +100,11 @@ def test_actual_h6_pc_counts_and_independent_recount(tmp_path):
         pc = PhysicalIntermediatePreconditioner(SimpleNamespace(apply=physical), h6,
             SimpleNamespace(apply_adjoint=adjoint, apply_primal=primal),
             SimpleNamespace(solver_identity='exact_augmented_A4_reference', solve_intermediate=solve),
-            positive_identity='H6', outer_max_it=2048)
+            positive_identity='H6', outer_max_it=2048, joint_mr=joint_mr)
         before = h6.matrix_mult_count
         result = pc.apply(rhs); owned.callback(result.destroy)
         assert h6.apply_count == 2 and h6.matrix_mult_count-before == 4
-        assert calls == {'a6': 3, 'p4': 1}
+        assert calls == {'a6': 4 if joint_mr else 3, 'p4': 1}
         assert result.array[0] == 0 and np.all(np.isfinite(result.array))
         assert pc.last_apply_facts['formula'].startswith('H6-MR') and pc.audit['outer_max_it'] == 2048
         ledger = WorkflowLedger(tmp_path, tmp_path/'phase.json'); ledger.record_pc(pc.last_apply_facts)
@@ -111,6 +112,20 @@ def test_actual_h6_pc_counts_and_independent_recount(tmp_path):
         counts = recompute_positive_apply_counts([pc.last_apply_facts], [cycle])['total']
         assert counts == dict(s6_apply_count=0, s3_apply_count=0, h6_apply_count=2,
                               b6_action_count=4, positive_p1_apply_count=0)
+        if joint_mr:
+            assert ledger.pc_counts['joint_extra_A6_count']==1
+            assert ledger.pc_counts['fine_A6_direction_count']==3
+            ledger.cycle(cycle)
+            assert not ledger.joint_cycle
+            assert (tmp_path/'joint_mr3_first_inputs.jsonl').exists()
+            # Replay existing scalar facts, without another physical PC call.
+            for i in range(2,34):
+                ledger.record_pc(dict(pc.last_apply_facts,apply_count=i))
+            assert len(ledger.joint_cycle)==32
+            ledger.cycle(dict(cycle_index=1,end_iteration=33,pc_apply_count=32))
+            for i in range(34,41):
+                ledger.record_pc(dict(pc.last_apply_facts,apply_count=i))
+            assert len(ledger.joint_cycle)==7 and ledger.pc_counts['joint_extra_A6_count']==7
 
 
 @pytest.mark.parametrize('bad', ['none', 'early', 'partial', 'gap', 'improved'])

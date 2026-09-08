@@ -543,6 +543,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_intermediate_p4_reference_v1",
                 "a2r_equivalent_fast_v1",
                 "a2r_packed_equivalent_v2",
+                "light_p4ref_jointmr3_v2",
                 "p6smooth_p4ref_p6smooth_v1",
             }:
                 raise _error(
@@ -559,8 +560,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
-            elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2"):
-                expanded = preconditioner in ("a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2")
+            elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2"):
+                expanded = preconditioner in ("a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2")
                 for section, key, actual, expected in (
                     ("solver", "restart", solver["restart"], 32),
                     ("solver", "max_iterations", solver["max_iterations"], 2048 if expanded else 512),

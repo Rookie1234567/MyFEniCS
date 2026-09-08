@@ -327,13 +327,14 @@ def launch_specification(
         else _source_sha(Path(__file__).resolve().parents[2])
     )
     from src.io.physical_intermediate_profile import PROFILES
-    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, profile_facts
+    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, profile_facts
     packed = specification.solver.get('preconditioner') == PACKED_PROFILE
     if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
 
     physical_candidate = specification.solver.get('preconditioner') in PROFILES and not contract_probe
-    light = physical_candidate and specification.solver.get('preconditioner') == LIGHT_PROFILE
+    joint = physical_candidate and specification.solver.get('preconditioner') == JOINT_PROFILE
+    light = physical_candidate and specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE)
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
@@ -408,7 +409,7 @@ def launch_specification(
                 authority = supervise(list(plan.argv), run_directory / 'watchdog',
                     wall_seconds=max(1e-9, min(workflow_limit-(monotonic()-workflow_started),
                         pc_profile['deadline_monotonic']-monotonic()) if pc_profile is not None
-                        else workflow_limit-(monotonic()-workflow_started)),
+                        else workflow_limit-(60 if joint else 0)-(monotonic()-workflow_started)),
                     solve_seconds=None if pc_profile is not None else solve_limit,
                     phase_path=run_directory / 'workflow_phase.json',
                     cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light else

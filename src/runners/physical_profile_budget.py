@@ -16,9 +16,11 @@ FAST_INPUT_SHA = '52004b3d9fa3de5d39297074efd0ba6bb3312037209162599317f8dfb3c425
 
 def launch_light_workflow(specification, budget_path):
     """Reserve one explicit R3 input in the existing cumulative task ledger."""
-    from src.io.physical_intermediate_profile import LIGHT_PROFILE, profile_facts
+    from src.io.physical_intermediate_profile import LIGHT_PROFILE, JOINT_PROFILE, profile_facts
     from .task038_launcher import launch_specification
-    if specification.solver.get('preconditioner') != LIGHT_PROFILE or budget_path is None:
+    identity = specification.solver.get('preconditioner')
+    joint = identity == JOINT_PROFILE
+    if identity not in (LIGHT_PROFILE, JOINT_PROFILE) or budget_path is None:
         raise InputError('light workflow requires its explicit profile and batch budget ledger')
     path = Path(budget_path).resolve()
     with path.with_suffix('.lock').open('a') as lock:
@@ -26,14 +28,17 @@ def launch_light_workflow(specification, budget_path):
         budget = json.loads(path.read_text())
         if budget['limit_seconds'] != 36000:
             raise InputError('batch limit must remain 36000 seconds')
-        if any(a.get('kind') == 'R3_full_workflow' and a.get('input_sha256') == specification.input_sha256
+        if joint and budget.get('schema') != 'task39extra.review-v2-compute-budget.v1':
+            raise InputError('joint MR3 requires the separate V2 budget')
+        kind = 'F3_full_workflow' if joint else 'R3_full_workflow'
+        if any(a.get('kind') == kind and (joint or a.get('input_sha256') == specification.input_sha256)
                for a in budget['attempts']):
             raise InputError('this light input already reserved; no repeat formal')
-        resource = profile_facts(LIGHT_PROFILE)['resources']
-        reservation = resource['workflow_seconds'] + resource['performance_grace_seconds']
+        resource = profile_facts(identity)['resources']
+        reservation = resource['workflow_seconds'] + (0 if joint else resource['performance_grace_seconds'])
         if sum(a['elapsed_seconds'] for a in budget['attempts'])+reservation > budget['limit_seconds']:
             raise InputError('insufficient cumulative budget for complete light workflow')
-        attempt = dict(kind='R3_full_workflow', input_sha256=specification.input_sha256,
+        attempt = dict(kind=kind, input_sha256=specification.input_sha256,
             status='RESERVED', elapsed_seconds=reservation, reserved_seconds=reservation)
         budget['attempts'].append(attempt)
         _atomic_json(path, budget)

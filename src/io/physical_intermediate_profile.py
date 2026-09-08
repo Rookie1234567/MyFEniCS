@@ -5,10 +5,20 @@ REFERENCE_PROFILE = "physical_intermediate_p4_reference_v1"
 FAST_PROFILE = "a2r_equivalent_fast_v1"
 LIGHT_PROFILE = "p6smooth_p4ref_p6smooth_v1"
 PACKED_PROFILE = "a2r_packed_equivalent_v2"
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE)
+JOINT_PROFILE = "light_p4ref_jointmr3_v2"
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE)
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == JOINT_PROFILE:
+        facts = profile_facts(LIGHT_PROFILE)
+        facts['identity'] = identity
+        facts['fine_auxiliary']['direction_acceptance'] = 'old_sequential_MR_generation_then_joint_QR_small_SVD'
+        facts['joint_mr3'] = dict(relative_singular_cutoff=1e-12,
+            explicit_residual_safeguard=1e-10, maximum_extra_A6=1,
+            additional_fine_vector_limit=16, additional_workspace_bytes_limit=64*1024**2,
+            direction_generator=LIGHT_PROFILE, physical_A6='original_split_form')
+        return facts
     if identity == PACKED_PROFILE:
         facts = profile_facts(FAST_PROFILE)
         facts.update(identity=identity, backend=dict(B6='exact_partial_assembly_batch8_contiguous',

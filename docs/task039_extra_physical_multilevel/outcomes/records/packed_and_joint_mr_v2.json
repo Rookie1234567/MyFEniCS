@@ -1,18 +1,18 @@
 {
   "schema": "task39extra.packed-and-joint-mr.v2",
-  "stage": "F0/F1 implementation; formal not_run",
-  "head": "abe5fa2cb1240c397f514a815390a2d9fabd5d5f",
-  "source_state": "dirty development diff; not formal provenance",
+  "stage": "F1 completed INSUFFICIENT; F3 implementation only",
+  "head": "4d30514d52e27d3c854c8d1f4432d3ce977c078e",
+  "source_state": "F3 dirty implementation diff on F1 formal source; historical F1 implementation audit retained",
   "implementation_audit": {
     "path": "benchmarks/artifacts/task39extra/v2_f1_checks/implementation_audit.json",
     "sha256": "49e851d5a32a8fdfae40fe801777ee270b17c6419d3dd21192b265c154985654"
   },
   "budget": {
     "path": "benchmarks/artifacts/task39extra/review_v2_batch_budget.json",
-    "sha256": "1c8300b4f0c7bbf55efae1e21068275971654f2de8d922bb39001b22257c3ce3",
-    "limit_seconds": 36000,
-    "attempt_count": 8,
-    "charged_seconds": 18.217964472947642
+    "sha256": "fe5b2c0b97c97d6cc0093b546d351893ac419e3052cdcd7b56fc3244819961e0",
+    "attempt_count": 13,
+    "charged_seconds": 1120.774235408986,
+    "limit_seconds": 36000
   },
   "input": {
     "path": "input/task39extra/original_13p5nm_p6h10_a2r_packed_equivalent_v2.dat",
@@ -51,7 +51,7 @@
     }
   ],
   "F1": {
-    "status": "not_run",
+    "status": "INSUFFICIENT",
     "shared_setup": true,
     "maximum_complete_PC": 14,
     "maximum_per_path": 7,
@@ -63,10 +63,197 @@
     "gate_statistic": "median(paired packed/original times)",
     "speed_ratio_limit": 0.75,
     "ratio_of_medians": "diagnostic only",
-    "repeat_authority": "hash-verified raw arrays recomputed"
+    "repeat_authority": "hash-verified raw arrays recomputed",
+    "audit": {
+      "path": "benchmarks/artifacts/task39extra/v2_f1_4d30514_complete/audit.json",
+      "sha256": "73d74b5b34caf13efbf31c5a570c9e565ecc0ace26cfbe5f9d160d7e0c2ec426"
+    },
+    "source_sha": "4d30514d52e27d3c854c8d1f4432d3ce977c078e",
+    "root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_a2r_packed_equivalent_v2__full3d_iterative__mpi1__Mna/20260908T024811.160558Z",
+    "full_workflow_seconds": 1096.5564253670163,
+    "comparison": {
+      "passed": true,
+      "primary_samples_seconds": {
+        "original": [
+          21.61274844990112,
+          28.984691772260703,
+          22.454376297886483,
+          23.541024319943972,
+          22.768271913053468,
+          22.464502676972188
+        ],
+        "packed": [
+          28.367314468021505,
+          25.343357714940794,
+          21.04240967100486,
+          22.123860130785033,
+          25.972069847979583,
+          20.07694529776927
+        ]
+      },
+      "primary_medians_seconds": {
+        "original": 22.616387295012828,
+        "packed": 23.733608922862913
+      },
+      "ratio": 0.9384593270111676,
+      "speed_gate_passed": false,
+      "classification": "INSUFFICIENT",
+      "paired_sample_ratios": [
+        1.3125269344515638,
+        0.8743704405784026,
+        0.9371184214537938,
+        0.9398002325685414,
+        1.140713267443425,
+        0.8937186630153917
+      ],
+      "gate_statistic": "median(paired packed/original times)",
+      "ratio_of_medians_diagnostic": 1.0493987661812125,
+      "p4_recomputed_relative_residuals": {
+        "original": [
+          2.6991060375603087e-11,
+          2.6991060375603087e-11,
+          2.6991060375603087e-11,
+          4.800507517423007e-11,
+          4.800507517423007e-11,
+          5.375799533134126e-12,
+          5.375799533134126e-12
+        ],
+        "packed": [
+          2.313365845043292e-11,
+          2.313365845043292e-11,
+          2.313365845043292e-11,
+          6.353205758129626e-11,
+          6.353205758129626e-11,
+          3.464852116694105e-12,
+          3.464852116694105e-12
+        ]
+      },
+      "timing_scope": "same-run paired medians; mandatory logs included; diagnostic capture excluded",
+      "original_A6_on_PC_outputs": "different PC outputs, diagnostic; same-input A6 gate separately enforced"
+    },
+    "grouped_errors": {
+      "same_input_action": {
+        "count": 12,
+        "max_relative": 1.4723857041130954e-14,
+        "max_absolute": 1.3208298787948024e-11
+      },
+      "S6": {
+        "count": 14,
+        "max_relative": 3.385589945200919e-14,
+        "max_absolute": 5.1550251639831617e-14
+      },
+      "PC": {
+        "count": 7,
+        "max_relative": 3.3634736365759556e-13,
+        "max_absolute": 1.9650066071327375e-13
+      },
+      "original_A6_on_different_PC_outputs": {
+        "count": 7,
+        "max_relative": 5.217457710173754e-13,
+        "max_absolute": 8.379159738954321e-14
+      },
+      "repeat": {
+        "count": 48,
+        "max_absolute": 0.0,
+        "max_relative": 0
+      }
+    },
+    "resource": {
+      "samples": 4203,
+      "rss_peak_bytes": 3592585216,
+      "pss_peak_readable_bytes": 3558076416,
+      "unreadable_rss": 0,
+      "unreadable_pss": 0,
+      "cap_violations": 0,
+      "reserve_violations": 0,
+      "swap_peak_bytes": 0,
+      "minimum_available_bytes": 9602805760,
+      "postrun_live_pids": []
+    },
+    "postrun_pids_cleared": 60,
+    "cost_medians": {
+      "PC/S6/B6": {
+        "original": 14.235077654360794,
+        "packed": 15.399217725906055
+      },
+      "PC/MR/A6/volume": {
+        "original": 4.408280928560998,
+        "packed": 3.9336588784935884
+      },
+      "PC/S6": {
+        "original": 16.775018576532602,
+        "packed": 17.88990024913801
+      },
+      "PC/A4.solve_check": {
+        "original": 0.562832570518367,
+        "packed": 0.5991889264550991
+      },
+      "PC/A4.solve_check/factor_backsolve": {
+        "original": 0.0971992164850235,
+        "packed": 0.10331542801577598
+      }
+    }
   },
-  "F2": "not_run",
-  "F3": "not_implemented",
+  "F2": "not_run; F1 speed gate insufficient",
+  "F3": {
+    "status": "implementation only; formal not_run",
+    "implementation_audit": {
+      "path": "benchmarks/artifacts/task39extra/v2_f3_checks/implementation_audit.json",
+      "sha256": "5756938ff5facab72c57d8d743fded859a1b29d614568dd3b278fc9c2c33816d"
+    },
+    "profile": "light_p4ref_jointmr3_v2",
+    "input_sha256": "f6782632480f9e7852ad0d82e5c7f7ec8dd400256d1e9ce49a905a4131eafbd0",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "workspace": {
+      "fine_rows": 173802,
+      "fine_vector_bytes": 2780832,
+      "retained_DW_bytes": 16684992,
+      "worst_QR_candidate_columns": 13,
+      "bound_fine_columns": 16,
+      "small_workspace_allowance_bytes": 65536,
+      "bound_bytes": 44558848,
+      "cap_bytes": 67108864,
+      "actual_tiny_sharing_assertions": "passed",
+      "tiny_tracemalloc_bound": "passed"
+    },
+    "tests": [
+      {
+        "path": "benchmarks/artifacts/task39extra/v2_f3_checks/checks_10.log",
+        "sha256": "3d3ec95dc10577becd598d3a7b54116e79eea15b0dff7f4e80f755742e03403c",
+        "elapsed_seconds": 2.81598772702273,
+        "status": "FAILED"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/v2_f3_checks/checks_11.log",
+        "sha256": "30db826426e69afd0dc265950712413be40d45c28b14fed216ab221f5b9669ce",
+        "elapsed_seconds": 2.0882510830415413,
+        "status": "PASSED"
+      }
+    ],
+    "final_passed": 63,
+    "outer": {
+      "restart": 32,
+      "max_iterations": 2048,
+      "initial_guess": "zero"
+    },
+    "resources": {
+      "solve_seconds": 7200,
+      "workflow_seconds_including_grace": 10800,
+      "workflow_stop_request_seconds": 10740,
+      "grace_seconds": 60,
+      "maximum_ram_bytes": 12000000000,
+      "reserve_min_bytes": 4294967296,
+      "reserve_fraction": 0.15,
+      "swap_bytes": 0
+    },
+    "numerical_contract": {
+      "direction_generator": "unchanged LIGHT sequential H6/p4/H6 with old MR residuals",
+      "fine_A6": "original split form; F1 fast A6 excluded",
+      "svd_cutoff": 1e-12,
+      "safeguard_relative_to_input": 1e-10,
+      "maximum_extra_A6": 1
+    }
+  },
   "F4": "not_run",
   "final_regression": {
     "passed": 85,

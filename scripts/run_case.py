@@ -70,8 +70,8 @@ def main(argv: list[str] | None = None) -> int:
                                     **(dict(variant=args.profile_variant, r0_reference=args.profile_r0_reference)
                                        if args.profile_variant != 'R0' or args.profile_r0_reference is not None else {}))
         else:
-            from src.io.physical_intermediate_profile import LIGHT_PROFILE
-            if specification.solver.get('preconditioner') == LIGHT_PROFILE:
+            from src.io.physical_intermediate_profile import LIGHT_PROFILE, JOINT_PROFILE
+            if specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE):
                 from src.runners.physical_profile_budget import launch_light_workflow
                 result = launch_light_workflow(specification, args.profile_budget_ledger)
                 print(json.dumps(result, sort_keys=True, separators=(",", ":")))

@@ -25,7 +25,8 @@ PHYSICAL_PAIRS = ((6, 4), (4, 2), (2, 1))
 def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
                                        resource_sample: Callable[[], dict],
                                        marker: Callable[[str, dict], None],
-                                       reference: bool = False, light: bool = False) -> dict:
+                                       reference: bool = False, light: bool = False,
+                                       joint_mr: bool = False) -> dict:
     """Own one shared mesh and two separately bounded p1 factors, opt-in only."""
     from .fullspace_bounded_mumps import BoundedP1Factor
     from .fullspace_physical_intermediate import (
@@ -37,6 +38,8 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
     from .fullspace_v17_p3_oracle import build_p3_physical_diagnostic_matrix
 
     result: dict = {"diagonals": {}, "jacobi_facts": {}}
+    if joint_mr and not (reference and light):
+        raise ValueError('joint MR3 requires the unchanged LIGHT reference setup')
     try:
         degrees = (6, 4) if light else (6, 4, 3, 2, 1)
         if light and not reference:
@@ -76,7 +79,8 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
             result['middle'] = middle
             result['pc'] = PhysicalIntermediatePreconditioner(fine['physical_action'],
                 positive['h6'] if light else positive['upper_cycle'], actions['transfers'][(6, 4)], middle,
-                stage_callback=marker, **(dict(positive_identity='H6', outer_max_it=2048) if light else {}))
+                stage_callback=marker, **(dict(positive_identity='H6', outer_max_it=2048) if light else {}),
+                **({'joint_mr':True} if joint_mr else {}))
             marker('physical_intermediate_setup_complete', dict(reference_only=True,
                 independent_p1_factors=0 if light else 1, reference_p4_factors=1, shifted_inverse_constructed=False))
             return result
