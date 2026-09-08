@@ -20,7 +20,7 @@ import time
 from benchmarks.task034_wsl_resources import current_cgroup_path, vmstat_swap_pages, wsl_memory_snapshot
 from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
 from src.runners.workflow_timebase import (TimebaseInconsistency, budget_elapsed,
-    checked_interval, clock_info, clock_sample)
+    clock_info, clock_sample, ClockBudget, STRICT, POLICY_VERSION)
 
 
 def memory_envelope() -> dict:
@@ -134,7 +134,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               solve_seconds: float | None = None, source_state: dict | None = None,
               worker_environment: dict | None = None, hard_stop_immediate: bool = False,
               cooperative_performance_stop: bool = False,
-              timebase_guard: bool = False) -> dict:
+              timebase_guard: bool = False, timebase_policy: str = STRICT) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     if not command or min(wall_seconds, interval, grace_seconds) <= 0:
         raise ValueError('command and positive monitoring budgets are required')
@@ -165,10 +165,12 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     leader = None
     summary = {}
     clock_start = clock_sample() if timebase_guard else None
-    clock_previous = clock_start
+    clock_budget = ClockBudget(clock_start, policy=timebase_policy) if timebase_guard else None
+    solve_budget = None
     stop_clock = None
     if timebase_guard:
-        summary.update(clock_info=clock_info(), clock_start=clock_start)
+        summary.update(clock_info=clock_info(), clock_start=clock_start,
+                       timebase_policy=timebase_policy, timebase_policy_version=POLICY_VERSION)
     stage = 'launch'
     swap_baseline = vmstat_swap_pages()
     try:
@@ -176,8 +178,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             environment = os.environ.copy()
             environment.update(worker_environment or {})
             if timebase_guard:
-                checked_interval(clock_start, clock_start)
+                clock_budget.update(clock_start)
                 environment['PHYSICAL_TIMEBASE_GUARD'] = '1'
+                environment['PHYSICAL_TIMEBASE_POLICY'] = timebase_policy
             if phase_path is not None:
                 environment.update(PHYSICAL_WATCHDOG_PARENT_PID=str(os.getpid()),
                                    PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES=str(cap),
@@ -202,20 +205,21 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                     clock_now = clock_sample()
                     sample.update(parent_clock=clock_now, parent_clock_start=clock_start)
                     try:
-                        sample['workflow_clock_interval'] = checked_interval(clock_start, clock_now)
-                        checked_interval(clock_previous, clock_now)
+                        sample['workflow_clock_interval'] = clock_budget.update(clock_now)
                         deadline_elapsed = sample['workflow_clock_interval']['budget_seconds']
                         if phase.get('clock_error'):
                             raise TimebaseInconsistency(phase['clock_error'])
                         if phase.get('phase') == 'solve':
-                            sample['solve_clock_interval'] = checked_interval(phase.get('phase_started_clock', {}), clock_now)
+                            phase_start = phase.get('phase_started_clock', {})
+                            if solve_budget is None or solve_budget.start != phase_start:
+                                solve_budget = ClockBudget(phase_start, policy=timebase_policy)
+                            sample['solve_clock_interval'] = solve_budget.update(clock_now)
                             solve_expired = (solve_seconds is not None and
                                             sample['solve_clock_interval']['budget_seconds'] >= solve_seconds)
                     except TimebaseInconsistency as exc:
                         clock_issue = str(exc)
                         sample['clock_error'] = clock_issue
                         summary.setdefault('clock_error', clock_issue)
-                    clock_previous = clock_now
                 if not sample['all_status_readable']:
                     reason = 'MONITORING_FAILED'
                 else:
@@ -275,7 +279,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 time.sleep(interval)
         summary['cache_metadata_stable'] = True
     except BaseException as exc:
-        classification = 'TIMEBASE_INCONSISTENCY' if isinstance(exc, TimebaseInconsistency) else 'MONITORING_FAILED'
+        if classification is None:
+            classification = 'TIMEBASE_INCONSISTENCY' if isinstance(exc, TimebaseInconsistency) else 'MONITORING_FAILED'
         summary.update({'exception_stage': stage, 'exception_type': type(exc).__name__,
                         'exception_message': str(exc), 'cache_metadata_stable': False})
     finally:
@@ -315,6 +320,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         })
         if timebase_guard:
             summary['clock_end'] = clock_sample()
+            try:
+                summary['workflow_clock_interval'] = clock_budget.update(summary['clock_end'])
+                if (clock_budget.seconds >= wall_seconds and
+                        summary['classification'] == 'COMPLETED'):
+                    summary['classification'] = 'PERFORMANCE_CONTROLLED_STOP'
+            except TimebaseInconsistency as exc:
+                summary['final_clock_error'] = str(exc)
+                summary['workflow_clock_interval'] = dict(budget_seconds=clock_budget.seconds,
+                                                          budget_complete=False)
+                if summary['classification'] in (None, 'COMPLETED'):
+                    summary['classification'] = 'TIMEBASE_INCONSISTENCY'
         (directory / 'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False) + '\n')
     return summary
 

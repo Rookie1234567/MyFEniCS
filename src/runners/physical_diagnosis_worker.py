@@ -92,7 +92,7 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha):
         for key in ('canonical_connectivity_sha256','canonical_geometry_sha256','cells_global'):
             if mesh_identity[key]!=inventory['mesh_witness']['identity'][key]:
                 raise RuntimeError('rebuilt mesh differs from frozen same-model witness: '+key)
-        actions=DiagnosticActions(bundle,cfg,ledger.marker)
+        actions=DiagnosticActions(bundle,cfg,ledger.marker,timebase_policy=ledger.timebase_policy)
         ledger.set_phase('profile')
         rhs,rhs_facts=build_physical_rhs(bundle['fine'])
         b=np.array(rhs.array[actions.A.indices],copy=True)

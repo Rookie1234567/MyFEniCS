@@ -1,7 +1,8 @@
 """Thin supervision and borrowed-solver wiring for bounded error diagnostics."""
 from pathlib import Path
 
-from .workflow_timebase import checked_interval,clock_sample
+from .workflow_timebase import (checked_interval, clock_sample, ClockBudget, STRICT,
+                               CONSERVATIVE_REALTIME, POLICY_VERSION, TimebaseInconsistency)
 
 
 def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
@@ -20,6 +21,7 @@ def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
     result = supervise(command,Path(directory),wall_seconds=limit,phase_path=Path(phase_path),
                        source_state=state,interval=.25,grace_seconds=2,
                        hard_stop_immediate=True,timebase_guard=True,cache_path=cache_path,
+                       timebase_policy=CONSERVATIVE_REALTIME,
                        worker_environment={} if cache_path is None else {'XDG_CACHE_HOME':str(cache_path)})
     result['source_after'] = _physical_source_gate(Path.cwd(),expected_sha)
     return result
@@ -32,12 +34,13 @@ class DiagnosticActions:
     This object owns only its extra H6, metric actions and vector bridges.
     """
 
-    def __init__(self,bundle,cfg,marker):
+    def __init__(self,bundle,cfg,marker,*,timebase_policy=STRICT):
         from src.solvers.physical_error_metric import LosslessFEMetric,SerialAction
         from src.solvers.physical_light_setup import build_light_h6_setup
         from src.solvers.fullspace_physical_intermediate import PhysicalIntermediatePreconditioner
         self.bridges,self.metrics,self.light = [],{},None
         self.timings=[]
+        self.timebase_policy=timebase_policy
         self.projection_seconds=0.
         self.projection_diagonal=None
         levels,fine = bundle['levels'],bundle['fine']
@@ -53,7 +56,7 @@ class DiagnosticActions:
                 marker(name+'_started',{})
                 start=clock_sample()
                 result=action(x)
-                interval=checked_interval(start,clock_sample())
+                interval=checked_interval(start,clock_sample(),policy=self.timebase_policy)
                 self.timings.append(dict(name=name,**interval))
                 marker(name+'_complete',interval)
                 return result
@@ -93,8 +96,9 @@ class DiagnosticActions:
         class ProjectionLimit(RuntimeError):
             pass
         start=clock_sample()
+        projection_budget=ClockBudget(start,policy=self.timebase_policy)
         def check():
-            if self.projection_seconds+checked_interval(start,clock_sample())['budget_seconds']>=1800:
+            if self.projection_seconds+projection_budget.update(clock_sample())['budget_seconds']>=1800:
                 raise ProjectionLimit('cumulative projection budget exhausted')
         try:
             check()
@@ -104,7 +108,7 @@ class DiagnosticActions:
         except ProjectionLimit as exc:
             return dict(status='PROJECTION_UNRESOLVED',reason=str(exc),parallel=None,perpendicular=None)
         finally:
-            self.projection_seconds+=checked_interval(start,clock_sample())['budget_seconds']
+            self.projection_seconds+=projection_budget.update(clock_sample())['budget_seconds']
 
     def destroy(self):
         for bridge in self.bridges: bridge.destroy()
@@ -137,11 +141,18 @@ def main():
         return 0
     args.directory.mkdir(parents=True,exist_ok=False)
     start=clock_sample()
+    pre_budget=ClockBudget(start,policy=CONSERVATIVE_REALTIME)
+    post_budget=None
     def cache_inventory():
-        return [] if args.cache_path is None else [dict(path=str(p),bytes=p.stat().st_size,
-            sha256=hashlib.sha256(p.read_bytes()).hexdigest())
-            for p in sorted(args.cache_path.rglob('*')) if p.is_file()]
+        records=[]
+        for p in ([] if args.cache_path is None else sorted(args.cache_path.rglob('*'))):
+            if p.is_file():
+                records.append(dict(path=str(p),bytes=p.stat().st_size,
+                    sha256=hashlib.sha256(p.read_bytes()).hexdigest()))
+                (post_budget or pre_budget).update(clock_sample())
+        return records
     manifest=dict(source_sha=args.expected_sha,clock_start=start,
+        timebase_policy=CONSERVATIVE_REALTIME,timebase_policy_version=POLICY_VERSION,
         input_sha256=hashlib.sha256(args.input.read_bytes()).hexdigest(),
         inventory_sha256=hashlib.sha256(args.inventory.read_bytes()).hexdigest(),
         cache_before=cache_inventory(),kind='no-reference D1/D3',
@@ -152,18 +163,47 @@ def main():
         '--worker','--directory',str(args.directory),'--input',str(args.input),
         '--inventory',str(args.inventory),'--expected-sha',args.expected_sha,
         '--remaining-seconds',str(args.remaining_seconds)]
-    result=supervise_diagnosis(command,args.directory/'watchdog',phase_path=args.directory/'phase.json',
-        expected_sha=args.expected_sha,kind='diagnosis',
-        remaining_seconds=min(7200,args.remaining_seconds)-checked_interval(start,clock_sample())['budget_seconds'],
-        cache_path=args.cache_path)
-    manifest.update(supervision=result,cache_after=cache_inventory(),clock_end=clock_sample())
-    manifest['interval']=checked_interval(start,manifest['clock_end'])
-    if manifest['interval']['budget_seconds']>min(7200,args.remaining_seconds):
-        manifest['workflow_limit_exceeded']=True
-        result['classification']='PERFORMANCE_CONTROLLED_STOP'
-    _atomic_json(args.directory/'launch.json',manifest)
-    print(json.dumps(dict(classification=result['classification'],directory=str(args.directory))))
-    return 0 if result['classification']=='COMPLETED' else 2
+    result=None
+    try:
+        result=supervise_diagnosis(command,args.directory/'watchdog',phase_path=args.directory/'phase.json',
+            expected_sha=args.expected_sha,kind='diagnosis',
+            remaining_seconds=min(7200,args.remaining_seconds)-pre_budget.update(clock_sample())['budget_seconds'],
+            cache_path=args.cache_path)
+        manifest['supervision']=result
+        manifest['pre_supervision_interval']=pre_budget.update(result['clock_start'])
+        post_budget=ClockBudget(result['clock_end'],policy=CONSERVATIVE_REALTIME)
+        manifest['cache_after']=cache_inventory()
+    except BaseException as exc:
+        manifest['finalization_error']=dict(type=type(exc).__name__,message=str(exc))
+        if result is None or result['classification']=='COMPLETED':
+            manifest['classification']='LAUNCH_OR_FINALIZATION_FAILED'
+        raise
+    finally:
+        manifest['clock_end']=clock_sample()
+        try:
+            manifest['interval']=checked_interval(start,manifest['clock_end'],policy=CONSERVATIVE_REALTIME)
+            if result is not None and post_budget is not None:
+                manifest['post_supervision_interval']=post_budget.update(manifest['clock_end'])
+                charge=(pre_budget.seconds+result['workflow_clock_interval']['budget_seconds']+
+                        post_budget.seconds)
+                manifest['budget_complete']=result['workflow_clock_interval'].get('budget_complete',True)
+            else:
+                charge=pre_budget.update(manifest['clock_end'])['budget_seconds']
+            manifest['interval']['budget_seconds']=charge
+            if charge>min(7200,args.remaining_seconds):
+                manifest['workflow_limit_exceeded']=True
+                if (result is not None and result['classification']=='COMPLETED' and
+                        'classification' not in manifest):
+                    manifest['classification']='PERFORMANCE_CONTROLLED_STOP'
+        except TimebaseInconsistency as exc:
+            manifest['final_clock_error']=str(exc)
+            if result is None or result['classification']=='COMPLETED':
+                manifest['classification']='TIMEBASE_INCONSISTENCY'
+        manifest.setdefault('classification',result['classification'] if result is not None else 'LAUNCH_OR_FINALIZATION_FAILED')
+        _atomic_json(args.directory/'launch.json',manifest)
+    classification=manifest['classification']
+    print(json.dumps(dict(classification=classification,directory=str(args.directory))))
+    return 0 if classification=='COMPLETED' else 2
 
 
 if __name__=='__main__':

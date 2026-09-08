@@ -1,5 +1,7 @@
 # 不收敛诊断 V3：D5 证据收口，数学定位未完成
 
+后续用户已明确授权修复工程阻碍并恢复诊断：新增仅诊断显式启用的`conservative_realtime`政策（version 1），原`strict`默认和本页旧TIMEBASE停止证据不变。UTC是可调整的日历时钟；为避免其单独跳变反复中止数学测量，新政策保存三时钟原值和UTC相对增量，逐相邻区间累计`max(Δmonotonic, ΔBOOTTIME, ΔUTC, 0)`，前跳扣账、回拨不退款，不宣称strict一致性通过。两种单调时钟缺失、非有限、倒退或彼此超原阈值仍保护；UTC不放大该阈值，A6、物理、三个PC、数值Gate、动态内存/4GiB余量/swap0均不变。父watchdog累计值是整体预算权威，外层另加不重叠pre/post；PC单次endpoint仍只是raw区间，不称精确UTC成本。原四小时账本继续扣除准备、失败和测试，不重置余额。终态落盘保留监督原分类，收尾异常不能冒称成功。Windows Stopwatch只读对照因当前Interop报`UtilBindVsockAnyPort: socket failed`未启动，不安装或扩展环境调查；合并focused tests为19 passed（5.50 s），日志`benchmarks/artifacts/task39extra/v3_clock_policy/focused_tests.log`，SHA256 `14e7553168ff8fdb3a0a171b2b947df16151f4c9f378c18ddf32bdc9f32d3c73`。本段是工程修复记录，尚未提交或恢复heavy；以下为a8ca702收口时的历史状态。
+
 | 当前项目 | 实际结果与边界 |
 |---|---|
 | 正式源码 | `24b3dbb67540a4cc2ec3e70ba381ab8a3e41d650`，task39extra，启动前clean；原Task base `2dc2e7305f10dc391a13970c6f0f0340cb87b6ee` |

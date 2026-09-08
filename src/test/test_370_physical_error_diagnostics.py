@@ -108,6 +108,7 @@ def test_tiny_lossless_fe_mass_diagonal_and_cell_energy():
 def test_projection_budget_skips_actions_when_exhausted():
     from src.runners.physical_diagnosis import DiagnosticActions
     actions=DiagnosticActions.__new__(DiagnosticActions)
+    actions.timebase_policy='strict'
     actions.projection_seconds=1800.
     result=actions.project(np.ones(2))
     assert result['status']=='PROJECTION_UNRESOLVED' and result['parallel'] is None

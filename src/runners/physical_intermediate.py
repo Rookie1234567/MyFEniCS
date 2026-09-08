@@ -15,7 +15,7 @@ import time
 import numpy as np
 
 from src.io.physical_intermediate_profile import PROFILE, PROFILES, REFERENCE_PROFILE, profile_facts
-from .workflow_timebase import TimebaseInconsistency, checked_interval, clock_info, clock_sample
+from .workflow_timebase import TimebaseInconsistency, ClockBudget, STRICT, clock_info, clock_sample
 
 
 def _jsonable(value):
@@ -52,8 +52,11 @@ class WorkflowLedger:
         self.started = time.monotonic()
         self.phase_started = self.started
         self.timebase_guard = os.environ.get('PHYSICAL_TIMEBASE_GUARD') == '1'
+        self.timebase_policy = os.environ.get('PHYSICAL_TIMEBASE_POLICY', STRICT)
         self.started_clock = clock_sample() if self.timebase_guard else None
         self.phase_started_clock = self.started_clock
+        self.workflow_clock_budget = ClockBudget(self.started_clock, policy=self.timebase_policy)
+        self.phase_clock_budget = ClockBudget(self.started_clock, policy=self.timebase_policy)
         self.clock_information = clock_info() if self.timebase_guard else None
         self.pc_counts = Counter()
         self.joint_cycle = []
@@ -67,6 +70,7 @@ class WorkflowLedger:
         self.phase, self.phase_started = phase, time.monotonic()
         if self.timebase_guard:
             self.phase_started_clock = clock_sample()
+            self.phase_clock_budget = ClockBudget(self.phase_started_clock, policy=self.timebase_policy)
         self.marker(phase + '_started', {})
 
     def marker(self, stage: str, facts: dict, *, allow_stop: bool = False) -> None:
@@ -84,8 +88,8 @@ class WorkflowLedger:
             record.update(clock=clock_sample(), phase_started_clock=self.phase_started_clock,
                           workflow_started_clock=self.started_clock, clock_info=self.clock_information)
             try:
-                checked_interval(self.started_clock, record['clock'])
-                checked_interval(self.phase_started_clock, record['clock'])
+                record['workflow_clock_interval'] = self.workflow_clock_budget.update(record['clock'])
+                record['phase_clock_interval'] = self.phase_clock_budget.update(record['clock'])
             except TimebaseInconsistency as exc:
                 clock_error = exc
                 record['clock_error'] = str(exc)
