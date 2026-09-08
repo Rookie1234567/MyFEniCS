@@ -95,7 +95,7 @@ packet 写到 ignored artifact，Git 保留相对路径、hash、向量角色和
 \mathcal A_4
 =\begin{bmatrix}V&C\\-D&H\end{bmatrix},\qquad
 \mathcal A_4\begin{bmatrix}y\\a\end{bmatrix}
-=\begin{bmatrix}g\0\end{bmatrix},\qquad
+=\begin{bmatrix}g\\0\end{bmatrix},\qquad
 A_4=V+CH^{-1}D.
 ```
 
