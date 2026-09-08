@@ -1,5 +1,16 @@
 # Task39extra 工作站移交边界
 
+| Review v1 / R6 更新 | 当前边界 |
+|---|---|
+| R1 | 等价通过、性能不通过；74.87089344408014 s对22.021386729524238 s；不是S6数学或收敛失败 |
+| R3 formal source | `cbf56e87e515ab0c3fc5756cb6cf52feb047f610`；原始p6/h10 MPI1 H6–p4–H6零初值 |
+| 数值 / 资源 | solve7200.255611149943 s，last_safe576真残差0.0791360407785889；workflow7966.278611822054 s，RSS3352014848 B，swap0；动态cap与4GiB余量无违规 |
+| 停止修复 | `597546311feea60d61acb2a9999b706dd895dcf0`未来LIGHT opt-in；23局部测试通过；没有R3重跑，没有补齐原worker终态 |
+| 资格 | `LIGHT_PC_FASTER_BUT_NUMERICAL_UNQUALIFIED`作为解释，parent正式分类仍为`PERFORMANCE_CONTROLLED_STOP`；不满足reference-assisted PASS或生产资格 |
+| 下一步 | 集中review；不运行R4/R5/第三PC，不延长预算；完整S6+contiguous packing重新资格化为not_run |
+
+本轮减少了单次修正成本，但准确p4逆辅助下的外层收敛效率仍是主要blocker。p4全局诊断factor依赖未解除；非可分、独立同离散authority和0.7nm物理收敛未取得。下面历史A5表保留，其旧“下一review”由当前R6证据补充，不作为新运行授权。见 [成本与贡献](cost_and_contribution_v1.md) 和 [response_v2](../response_v2.md)。
+
 | 项目 | 当前可交付内容 |
 |---|---|
 | 状态 | 本机真实性能 Gate 已发生，可以移交可复现代码和机制证据；不是可用 solver 资格移交 |
@@ -33,3 +44,12 @@
 | do-not-merge | 大型 results、cache、矩阵/分解、checkpoint solution 和完整 timeline；保持 ignored，以 hash 定位 |
 
 此表为审阅建议，未获 merge approval。下一动作是集中 review，非工作站 heavy 启动授权。
+
+| R6 selective merge补充依赖组 | 行为 / 依赖 / 验证 / 顺序 |
+|---|---|
+| production numerical/core候选 | 可复用局部作用/packing与monitor组件；保持原A6，依赖FE/MPC；局部oracle与bitwise monitor测试支持；先审core，不把未资格化profile升为默认 |
+| reusable runner/watchdog | LIGHT应用PID/start-ticks登记、一次安全停止请求、超时/资源整树硬停；依赖launcher/worker marker；真实MPI1五路径小fixture；在core之后审阅，fresh大PDE未运行 |
+| checker/benchmark | PC成本与贡献审计、32步曲线、真实残差快照；依赖raw记录；不重算求解器，不伪造终态 |
+| compact evidence/docs | 本轮hash-bound小JSON、成本文档、summary/response及总账；最后合入，保留A5与R1/R3负结果 |
+| research-only | S6等价fast、H6–p4–H6及p4诊断factor；分别依赖原action、transfer、MR、MUMPS；fresh R1速度失败/R3性能停止，禁止生产默认 |
+| do-not-merge | 私有完整audit、raw向量、factor、cache、timeline与测试scratch；保持ignored |

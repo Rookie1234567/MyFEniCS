@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "A5 terminal performance stop; no outer qualification",
+  "scope": "R6 closeout: historical A5 preserved; R0 profile, R1 equivalent speed failure, R3 performance stop; no outer qualification",
   "units": {
     "time": "s",
     "memory": "B"
@@ -588,6 +588,42 @@
         "path": "benchmarks/artifacts/task39extra/a2r_f93edc8_v1/entry_failure.json",
         "sha256": "6436dfa5757635fc310181dcbf17dac81429e045e266c15828435870a523fc93"
       }
+    },
+    {
+      "id": "R0",
+      "category": "measured",
+      "source_sha": "1e10d80cdb446e23001d01d3886e20bc9a33a263",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p4_reference__full3d_iterative__mpi1__Mna/20260907T160802.006336Z",
+      "classification": "PROFILE_COMPLETED; not an outer PDE or official-result pass",
+      "audit": {
+        "path": "benchmarks/artifacts/task39extra/r0_1e10d80_complete/audit.json",
+        "sha256": "89cbd49e2ef00372ac31aa1c240b36d816b228bd59d4c7ecd438f0c6a9cf29ea"
+      },
+      "compact_detail": "docs/task039_extra_physical_multilevel/outcomes/records/cost_and_contribution_v1.json"
+    },
+    {
+      "id": "R1",
+      "category": "measured",
+      "source_sha": "116df6e759fef2876da39ef89f8e4db4edb33771",
+      "raw_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_a2r_equivalent_fast__full3d_iterative__mpi1__Mna/20260907T171904.194763Z",
+      "classification": "numerical_equivalence_pass_performance_gate_failed",
+      "audit": {
+        "path": "benchmarks/artifacts/task39extra/r1_116df6e_complete/audit.json",
+        "sha256": "19c6ad31712d73c26276417df23e0a094c97d33197608f226f119047f432dd42"
+      },
+      "compact_detail": "docs/task039_extra_physical_multilevel/outcomes/records/cost_and_contribution_v1.json"
+    },
+    {
+      "id": "R3",
+      "category": "measured",
+      "source_sha": "cbf56e87e515ab0c3fc5756cb6cf52feb047f610",
+      "raw_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_p6smooth_p4ref_p6smooth__full3d_iterative__mpi1__Mna/20260907T223143.281687Z",
+      "classification": "PERFORMANCE_CONTROLLED_STOP",
+      "audit": {
+        "path": "benchmarks/artifacts/task39extra/r3_cbf56e8_complete/audit.json",
+        "sha256": "a88a998e541bef7de69ff601dec7fe6b9736328837223a4a6b90c91107ee2cc5"
+      },
+      "compact_detail": "docs/task039_extra_physical_multilevel/outcomes/records/cost_and_contribution_v1.json"
     }
   ],
   "limitations": [
@@ -605,5 +641,34 @@
   "accounting_fix": {
     "path": "benchmarks/artifacts/task39extra/a2r_54ab46c_v1/cost_fix_final.json",
     "sha256": "5ab7951ea8adec2dc7f480a6321bae04aaa81b995605a099cce682a8c69a9b2b"
+  },
+  "review_v1_closeout": {
+    "compact_evidence": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/cost_and_contribution_v1.json",
+      "sha256": "cacdf75e92f340d77b7a7f8618451633d7f49b273d14f7aba868df2c7a980109"
+    },
+    "audit_bindings": {
+      "R0": {
+        "path": "benchmarks/artifacts/task39extra/r0_1e10d80_complete/audit.json",
+        "sha256": "89cbd49e2ef00372ac31aa1c240b36d816b228bd59d4c7ecd438f0c6a9cf29ea"
+      },
+      "R1": {
+        "path": "benchmarks/artifacts/task39extra/r1_116df6e_complete/audit.json",
+        "sha256": "19c6ad31712d73c26276417df23e0a094c97d33197608f226f119047f432dd42"
+      },
+      "R3": {
+        "path": "benchmarks/artifacts/task39extra/r3_cbf56e8_complete/audit.json",
+        "sha256": "a88a998e541bef7de69ff601dec7fe6b9736328837223a4a6b90c91107ee2cc5"
+      },
+      "lifecycle": {
+        "path": "benchmarks/artifacts/task39extra/r3_stop_lifecycle/audit.json",
+        "sha256": "4b13f3d4de6a603c30adedb6a075d35fb22efdef40f0144d3be378af2e3ea1bf"
+      }
+    },
+    "formal_R3_source_sha": "cbf56e87e515ab0c3fc5756cb6cf52feb047f610",
+    "lifecycle_fix_source_sha": "597546311feea60d61acb2a9999b706dd895dcf0",
+    "official_outputs": "not_run",
+    "normal_checker": "not_run",
+    "r3_rerun": "not_run"
   }
 }

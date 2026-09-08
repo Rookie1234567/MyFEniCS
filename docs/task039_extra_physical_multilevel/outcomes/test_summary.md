@@ -1,5 +1,24 @@
 # Task39extra 局部测试摘要
 
+## Review v1 / R6 验证（当前）
+
+| 对象 | 结果与源码边界 |
+|---|---|
+| R3接线、packed原作用、safe monitor | 104 passed、1 skipped；MPI2专用项未运行；日志 `benchmarks/artifacts/task39extra/r3_checks/checks_26.log`，正式source `cbf56e87e515ab0c3fc5756cb6cf52feb047f610` |
+| LIGHT停止路由修复 | 23 passed、0 deselected，26.60 s pytest；日志 `benchmarks/artifacts/task39extra/r3_stop_lifecycle/checks_39.log`，SHA256 `35abeaa4014e4a14bff12233963997fde030426ddbd6ca22ae36c621263ac7ee`；代码 `597546311feea60d61acb2a9999b706dd895dcf0` |
+| MPI1停止五路径 | 旧整树SIGTERM复现、只请求应用一次并安全退出、不合作到宽限整树硬停、资源立即硬停、陈旧start ticks拒绝；各fixture结束清场 |
+| 监控数值不变 | 真实PETSc3.19零初值None及非零初值FGMRES轨迹逐位一致、64次PC不增调用；安全点保留当前cycle初值，不重复加解 |
+| 停止fixture隔离 | `checks_32.log`的5 failed/15 passed/3 deselected保留；C层继承OMPI/PMIX环境导致子MPI过早失败，测试改为显式传递环境后通过；生产未清洗环境 |
+| R3正式结果 | 原A6 last_safe576残差0.0791360407785889>1e-6；p4最大7.058163970105702e-11≤1e-10；资源安全、数值未资格化；normal checker not_run |
+| 最终R6 task-focused | **153 passed、1 skipped**（MPI2专用）；源码HEAD `597546311feea60d61acb2a9999b706dd895dcf0`，仅文档dirty；pytest报告120.69 s，外层monotonic实测107.97184431797359 s，分别保留；ABI preflight与compileall通过 |
+| R6日志 | `benchmarks/artifacts/task39extra/r6_closeout/checks_41.log`；SHA256 `8d258ba4c8e5f487cf84e50a9078d6ca9ed47e9f0f5aef66340d4e36a93bd522`；完整命令及预算绑定见[紧凑JSON](records/cost_and_contribution_v1.json) |
+
+fixture宽限为3 s便于验证，生产LIGHT宽限仍为60 s。停止修复没有改变原A6/PC数学作用，没有重跑R3；小fixture通过不等于正式R3安全收口通过。此前局部失败、负运行与旧计数证据均保留。Ruff未安装，不安装或声称通过；不运行full repository，无CI通过声明。旧章节均作为历史快照解释。
+
+最终回归覆盖test352/354/355/356/358/359/360/361/362/363/365/366，在同一shell资格化activation并先执行ABI preflight；显式MPI1小fixture是测试的一部分，未运行新的MPI2或原尺寸PDE。JSON解析、相对链接、四份audit及20份关键raw的hash、完整PC计数、残差阈值、历史task/review/response_v1不变和diff-check均独立核验；静态报告在 `benchmarks/artifacts/task39extra/r6_closeout/static_checks.json`，不声称网页可视渲染或CI通过。
+
+## 历史 A5 与此前实现验证
+
 最终交付的计数窄修提交为 `adc448814c3022fdf6d1a688da69a28238e7db9c`，正式 A2R 运行源码仍为 `54ab46cf4c8378a9b27650ca6963cadb34013a2f`。窄修只把 S6/S3 生命周期序号按实际调用计一次，并提供旧 raw 的独立只读重算；未修改方程、PC 作用或求解过程。
 
 | 最终补充检查 | 结果 |

@@ -1,4 +1,16 @@
-# Task39extra：A5 本机性能停止
+# Task39extra：Review v1 / R6 收口
+
+| 分支阶段 | 当前结果 |
+|---|---|
+| R1等价S6原型 | 数学对照通过，PC中位74.87089344408014 s对旧22.021386729524238 s，速度Gate失败；R2跳过 |
+| R3唯一H6–p4–H6 | source `cbf56e87e515ab0c3fc5756cb6cf52feb047f610`；原13.5nm/1°/p6h10/MPI1/80modes，零初值；582完整PC中位10.293892393587157 s |
+| 最后safe /预算 | 576步原A6真残差0.0791360407785889>1e-6；solve7200.255611149943 s性能停止，workflow7966.278611822054 s |
+| 资源 /输出 | 同期进程树RSS3352014848 B，swap0，cap与4GiB余量无违规；清场完成；worker终态/normal checker/official物理输出缺失 |
+| 事后停止修复 | `597546311feea60d61acb2a9999b706dd895dcf0`仅未来LIGHT opt-in，23局部测试通过；R3未重跑 |
+
+R3用p6平滑替代S6内部p3/p1修正来减少成本，但准确p4逆辅助下外层仍未达到合格残差。两条路线按本轮合同结束，不等于算法已被彻底研究完或否定；S6配合后续contiguous packing重新资格化为not_run。R4非可分、R5/direct/h5 heavy、第三PC与短波均未运行；global p4诊断factor依赖和0.7nm物理收敛仍未解决。见 [R6成本与贡献](task039_extra_physical_multilevel/outcomes/cost_and_contribution_v1.md)、[response_v2](task039_extra_physical_multilevel/response_v2.md)。以下A5历史快照保持原证据边界。
+
+# Task39extra：A5 本机性能停止（历史）
 
 | 正式结果 | 边界 |
 |---|---|

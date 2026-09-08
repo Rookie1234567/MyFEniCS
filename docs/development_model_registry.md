@@ -1390,6 +1390,14 @@ outcomes。完整证据固定在
 
 ## 3.41 Task39extra：原 13.5 nm p6/h10 主候选与诊断参考
 
+| Review v1新增记录（同物理/离散/MPI1/80modes） | 实际结果 | 资格限制 |
+|---|---|---|
+| R0 / R1同机profile | 旧PC非warm中位22.021386729524238 s；等价原型74.87089344408014 s，ratio3.3999172878472805 | 等价通过、速度Gate失败；R2 not_run；不是S6数学失败 |
+| R3 H6–p4–H6；`cbf56e87e515ab0c3fc5756cb6cf52feb047f610` | 582完整PC，中位10.293892393587157 s；last_safe576真残差0.0791360407785889>1e-6；583次p4原残差≤7.058163970105702e-11 | solve7200.255611149943 s性能停止，workflow7966.278611822054 s，RSS3352014848 B，swap0；动态cap/4GiB余量无违规 |
+| R3退出与事后代码修复 | parent清场；worker终态、final arrays、normal checker/official输出缺失；代码HEAD `597546311feea60d61acb2a9999b706dd895dcf0`修未来LIGHT停止路由 | 小fixture通过不补齐R3，未重跑；R4/R5/第三PC not_run |
+
+H6在p6上做局部平滑以节省S6内p3/p1工作，B6是辅助算子；p4仍是全局分解诊断。两条路线本轮结束，但完整S6+contiguous packing未重新资格化，不能说算法已被穷尽。没有非可分、独立全场authority、0.7nm物理收敛或生产/容量资格。完整时间口径与hash见 [R6成本](task039_extra_physical_multilevel/outcomes/cost_and_contribution_v1.md)。以下旧A5记录保留。
+
 | Model ID / 方法 | 实际结果 | 资源和状态 |
 |---|---|---|
 | task39extra_A2_old_setup；Full3D/MPI1/80 modes | outer 未开始，未产生 official 场或 R/T/A | workflow 5946.465141321009 s；RSS peak 1582481408 B，swap 0；用户 setup 受控停止 |
