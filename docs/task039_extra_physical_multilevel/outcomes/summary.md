@@ -1,4 +1,19 @@
-# Task39extra：Review v1 / R6 收口
+# Task39extra：Review V2 / F5 用户收尾
+
+| Review V2 / F5 | 当前结论 |
+|---|---|
+| F1 / F2 | 完整packed S6数学等价通过；配对中位0.938459>0.75，速度不足，F2 not_run |
+| F3原始模型 | 13.5nm/1°/p6h10/MPI1/80modes；source `60b8df2a24cbcd96e49e018be22fb64f06eeae3f`；零初值476步真残差0.10535820013809101>1e-6 |
+| 方法与失败含义 | 保留H6–准确p4–H6三个顺序方向，仅末尾联合选权；局部残差比中位0.979479，rank3/无回退；不足以让完整p6收敛 |
+| 用户收尾 | USER_REQUESTED_CONTROLLED_STOP；raw worker CONTROLLED_STOP、wrapper WORKER_FAILED/exit4并列；未触发原自动budget/stagnation Gate |
+| 时间限制 | workflow monotonic7588.369777 / UTC8363.831318 s；solve至请求monotonic6791.466003 / UTC7478.995420 s；UTC solve超7200，原因未唯一确定，不能声称全部wall预算通过 |
+| 资源与清场 | RSS/PSS峰3351887872/3317217280 B，28753样本均可读；cap8525078528 B、至少4GiB余量无违规；swap0，56 PID清场 |
+| 后续 | F4/official锁定，无第三候选、续跑或0.7nm资格；仅F5文档/测试/审阅后提交推送，非master merge |
+
+联合选权是在一次辅助修正末尾重新组合已有方向，能减小本次输入的误差，却不能保证后续整个求解更快。准确p4是诊断factor，不能替代原p6残差/物理验收。完整周期、早晚成本、双时钟与哈希见[本轮中心报告](packed_and_joint_mr_v2.md)、[小JSON](records/packed_and_joint_mr_v2.json)和[response_v3](../response_v3.md)。R/T/A、A_volume、R00_s/p/total、衍射级及复E/H本轮均未生成；无新增p/h/M/MPI或Hybrid比较。
+
+## 历史 Review V1 / R6（以下当前/未运行指当时）
+
 
 | 项目 | 当前结果 |
 |---|---|

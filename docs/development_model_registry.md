@@ -1390,6 +1390,20 @@ outcomes。完整证据固定在
 
 ## 3.41 Task39extra：原 13.5 nm p6/h10 主候选与诊断参考
 
+| Review V2 / F5 | 当前结论 |
+|---|---|
+| F1 / F2 | 完整packed S6数学等价通过；配对中位0.938459>0.75，速度不足，F2 not_run |
+| F3原始模型 | 13.5nm/1°/p6h10/MPI1/80modes；source `60b8df2a24cbcd96e49e018be22fb64f06eeae3f`；零初值476步真残差0.10535820013809101>1e-6 |
+| 方法与失败含义 | 保留H6–准确p4–H6三个顺序方向，仅末尾联合选权；局部残差比中位0.979479，rank3/无回退；不足以让完整p6收敛 |
+| 用户收尾 | USER_REQUESTED_CONTROLLED_STOP；raw worker CONTROLLED_STOP、wrapper WORKER_FAILED/exit4并列；未触发原自动budget/stagnation Gate |
+| 时间限制 | workflow monotonic7588.369777 / UTC8363.831318 s；solve至请求monotonic6791.466003 / UTC7478.995420 s；UTC solve超7200，原因未唯一确定，不能声称全部wall预算通过 |
+| 资源与清场 | RSS/PSS峰3351887872/3317217280 B，28753样本均可读；cap8525078528 B、至少4GiB余量无违规；swap0，56 PID清场 |
+| 后续 | F4/official锁定，无第三候选、续跑或0.7nm资格；仅F5文档/测试/审阅后提交推送，非master merge |
+
+本轮在PC末尾联合组合原三个方向，减少同输入局部误差但未解决完整收敛。原p4最大残差7.870604378195616e-11，476PC中位11.460344589024317 s；14周期+28尾段。无R/T/A、A_volume、零级/衍射复幅值、E/H或非可分资格；无p/h/M/MPI/Hybrid扫描。raw、双时钟、对照和依赖组见[中心报告](task039_extra_physical_multilevel/outcomes/packed_and_joint_mr_v2.md)。
+
+### 历史V1/A5记录（下文未运行指当时）
+
 | Review v1新增记录（同物理/离散/MPI1/80modes） | 实际结果 | 资格限制 |
 |---|---|---|
 | R0 / R1同机profile | 旧PC非warm中位22.021386729524238 s；等价原型74.87089344408014 s，ratio3.3999172878472805 | 等价通过、速度Gate失败；R2 not_run；不是S6数学失败 |

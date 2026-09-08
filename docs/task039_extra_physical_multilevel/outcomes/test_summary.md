@@ -1,4 +1,21 @@
-# Task39extra 局部测试摘要
+# Task39extra：F5 最终验证
+
+F3正式只读审计通过：476PC/476原p4检查、14完整周期+28尾段、checkpoint/hash/零初值、reported/explicit差、资源/清场核对。属于证据一致性通过，原A6残差0.10535820013809101>1e-6，solver未通过。双时钟差异单列，不以测试通过掩盖UTC solve超7200。
+
+最终一次task-focused回归：**181 passed、1 skipped**（test362的MPI2专用fixture）；覆盖test352/354/355/356/358/359/360/361/362/363/365/366/367/368。ABI preflight和compileall通过，源码仍为60b8df2a24cbcd96e49e018be22fb64f06eeae3f，只改文档。不跑full repository/PDE，不安装Ruff，无CI通过声明。F1最终85 passed、F3实现63 passed及失败fixture均保留，见[中心记录](records/packed_and_joint_mr_v2.json)。
+
+| F5最终测试口径 | 记录 |
+|---|---|
+| pytest报告 | 117.19 s |
+| 外层monotonic / UTC-derived | 109.88929661700968 / 118.71753764152527 s；双时钟原值保留，不混为一个wall |
+| 日志 | `benchmarks/artifacts/task39extra/v2_f5_closeout/checks_15.log`；SHA256 `5ad4ca130192568295f721b1730212302f6fdcbbcfeac0964126d6418b9566d1` |
+| 完整命令及身份 | `benchmarks/artifacts/task39extra/v2_f5_closeout/test_record.json`；SHA256 `c0b7fbc682ccafb37801006c27411c40bf22d2673e7d57faaf1c03e2f0ae3243` |
+| 预算 | V2原monotonic账本16项，累计8820.53636143892 s，余27179.46363856108 s；余额不授权新PDE |
+
+最终静态核对JSON、相对链接、Markdown表格列数、关键artifact/hash及旧task/review/response不变；结果保存在`benchmarks/artifacts/task39extra/v2_f5_closeout/static_checks.json`。不宣称GitHub网页渲染通过。
+
+## 历史 Review V1 / R6及此前测试
+
 
 ## Review v1 / R6 验证（当前）
 

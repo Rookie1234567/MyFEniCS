@@ -1,4 +1,30 @@
-# Task39extra 工作站移交边界
+# Task39extra 工作站移交边界：V2关闭
+
+| Review V2 / F5 | 当前结论 |
+|---|---|
+| F1 / F2 | 完整packed S6数学等价通过；配对中位0.938459>0.75，速度不足，F2 not_run |
+| F3原始模型 | 13.5nm/1°/p6h10/MPI1/80modes；source `60b8df2a24cbcd96e49e018be22fb64f06eeae3f`；零初值476步真残差0.10535820013809101>1e-6 |
+| 方法与失败含义 | 保留H6–准确p4–H6三个顺序方向，仅末尾联合选权；局部残差比中位0.979479，rank3/无回退；不足以让完整p6收敛 |
+| 用户收尾 | USER_REQUESTED_CONTROLLED_STOP；raw worker CONTROLLED_STOP、wrapper WORKER_FAILED/exit4并列；未触发原自动budget/stagnation Gate |
+| 时间限制 | workflow monotonic7588.369777 / UTC8363.831318 s；solve至请求monotonic6791.466003 / UTC7478.995420 s；UTC solve超7200，原因未唯一确定，不能声称全部wall预算通过 |
+| 资源与清场 | RSS/PSS峰3351887872/3317217280 B，28753样本均可读；cap8525078528 B、至少4GiB余量无违规；swap0，56 PID清场 |
+| 后续 | F4/official锁定，无第三候选、续跑或0.7nm资格；仅F5文档/测试/审阅后提交推送，非master merge |
+
+本轮没有合格原始场，不具备工作站solver资格；global p4诊断factor和难误差消除效率仍是限制。0.7nm、2TB容量和任意非可分结构均未通过。停止的是这两个限定候选，不是数学不可能性结论；无后续已授权PDE。
+
+| V2 selective merge依赖组 | 数值行为 / 依赖 / 测试与fresh evidence / 建议顺序 |
+|---|---|
+| production numerical/core | 不提升本轮profile或joint算法；原A6/A4保持，既有组件候选仍需独立review；ordinary默认不变 |
+| reusable runner/watchdog | 新profile接线和应用PID停止复用597；依赖原launcher/worker；test365/366/368，fresh F3用户停止safe476与清场；双时钟及user-wrapper分类限制须保留，core后审 |
+| checker/benchmark | 已有计数checker与只读raw审计，依赖逐PC/周期/资源/哈希；不重新实现solver；接线后审 |
+| compact evidence/docs | F1速度不足、F3未收敛/用户停止、时钟差异、完整索引与Response V3；最后合入 |
+| research-only | packed S6及joint MR3、dat/profile、p4全局诊断factor；joint改变PC数值组合，依赖H6/原MR/A6/P64/A4/MUMPS；F1/实现tiny通过但fresh F3残差未过；禁止生产默认 |
+| do-not-merge | raw向量、checkpoint、matrix/factor、cache、timeline、私有audit与测试scratch，保持ignored |
+
+仅为依赖组建议，未获master merge approval。证据见[中心报告](packed_and_joint_mr_v2.md)与[response_v3](../response_v3.md)。
+
+## 历史V1/A5移交快照（不作为新增运行授权）
+
 
 | Review v1 / R6 更新 | 当前边界 |
 |---|---|

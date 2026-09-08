@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "R6 closeout: historical A5 preserved; R0 profile, R1 equivalent speed failure, R3 performance stop; no outer qualification",
+  "scope": "F5 V2 closeout plus immutable V1/A5 history; original unqualified, user stopped F3",
   "units": {
     "time": "s",
     "memory": "B"
@@ -624,6 +624,49 @@
         "sha256": "a88a998e541bef7de69ff601dec7fe6b9736328837223a4a6b90c91107ee2cc5"
       },
       "compact_detail": "docs/task039_extra_physical_multilevel/outcomes/records/cost_and_contribution_v1.json"
+    },
+    {
+      "id": "F1",
+      "source_sha": "4d30514d52e27d3c854c8d1f4432d3ce977c078e",
+      "category": "measured",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_a2r_packed_equivalent_v2__full3d_iterative__mpi1__Mna/20260908T024811.160558Z",
+      "classification": "PACKED_EQUIVALENCE_PASS_SPEED_INSUFFICIENT",
+      "audit": {
+        "path": "benchmarks/artifacts/task39extra/v2_f1_4d30514_complete/audit.json",
+        "sha256": "73d74b5b34caf13efbf31c5a570c9e565ecc0ace26cfbe5f9d160d7e0c2ec426"
+      }
+    },
+    {
+      "id": "F3",
+      "source_sha": "60b8df2a24cbcd96e49e018be22fb64f06eeae3f",
+      "category": "measured",
+      "raw_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_light_p4ref_jointmr3_v2__full3d_iterative__mpi1__Mna/20260908T034629.980337Z",
+      "raw_classification": "WORKER_FAILED",
+      "worker_status": "CONTROLLED_STOP",
+      "semantic_classification": "USER_REQUESTED_CONTROLLED_STOP",
+      "qualification": "JOINT_MR3_NOT_QUALIFIED",
+      "final_safe_iteration": 476,
+      "final_safe_true_residual": 0.10535820013809101,
+      "audit": {
+        "path": "benchmarks/artifacts/task39extra/v2_f3_60b8df2_complete/audit.json",
+        "sha256": "f4075f4bf8f545082a58f15ffdc35cc58fa3ba1e8af8ede82955efc50c196a69"
+      },
+      "clock_accounting": {
+        "UTC_solve_interval_exceeds_7200": true,
+        "caveat": "Two recorded clock domains disagree; cause not uniquely determined. UTC-derived solve exceeds7200 while original monotonic Gate did not trigger. Do not claim all wall-budget gates passed, retroactively relabel user stop as automatic timeout, or rerun.",
+        "first_solve_sample_timestamp_ns": 1788840066655165315,
+        "first_solve_sample_to_request_UTC_derived_seconds": 7478.995419763,
+        "manifest_end_UTC": "2026-09-08T06:05:53.812023+00:00",
+        "manifest_start_UTC": "2026-09-08T03:46:29.980705+00:00",
+        "monotonic_original_Gate_fired": false,
+        "sample_UTC_minus_elapsed_offset_range_seconds": 775.4768259525299,
+        "solve_clock_difference_seconds": 687.5294169039416,
+        "solve_to_request_monotonic_seconds": 6791.466002859059,
+        "user_request_timestamp_ns": 1788847545650585078,
+        "workflow_UTC_derived_seconds": 8363.831318,
+        "workflow_clock_difference_seconds": 775.4615408359277,
+        "workflow_monotonic_seconds": 7588.369777164073
+      }
     }
   ],
   "limitations": [
@@ -670,5 +713,16 @@
     "official_outputs": "not_run",
     "normal_checker": "not_run",
     "r3_rerun": "not_run"
+  },
+  "review_v2_closeout": {
+    "compact_detail": "docs/task039_extra_physical_multilevel/outcomes/records/packed_and_joint_mr_v2.json",
+    "F2": "not_run speed gate",
+    "F4": "not_run original residual gate",
+    "official": "not_run",
+    "next": "F5 complete; main reports doc-only commit/push identity; no additional PDE",
+    "compact_evidence": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/packed_and_joint_mr_v2.json",
+      "sha256": "7a41e73d0b34e20f448a42f74fd55ef3f70c859c75c87ecf2e06f3cd6abbb384"
+    }
   }
 }

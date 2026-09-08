@@ -1,36 +1,42 @@
-# Review V2：F1 结果与 F3 实现待测量
+# Review V2：F5 收口——局部改善未取得合格原始解
 
-## 当前条件判定
-
-| 阶段 | 实际结果 / 权限边界 |
+| 阶段 | 实际结果与条件决定 |
 |---|---|
-| F1唯一正式 | source `4d30514d52e27d3c854c8d1f4432d3ce977c078e`；14/14完整PC，同一setup；数学等价通过、速度`INSUFFICIENT` |
-| 固定速度Gate | median(逐对packed/original)=0.9384593270111676>0.75；两边中位数之比1.0493987661812125仅诊断 |
-| F1完整wall / 资源 | 1096.5564253670163 s；4203样本RSS峰3592585216 B、PSS峰3558076416 B，全部可读；swap0，cap/余量违规0；60个相关PID清场、cache稳定 |
-| 等价 / 重复 | same-input action最大1.4723857041130954e-14，S6最大3.385589945200919e-14，PC最大3.3634736365759556e-13；48项重复raw比较误差0 |
-| F2 | **not_run**：未满足F1速度Gate |
-| F3 | 已实现、最小测试63 passed，等待主任务审阅diff；未commit/push/formal，无旧checkpoint续跑 |
-| F4 / official | not_run；尚无原始或非可分合格场 |
+| F0 | 复核旧hash-bound证据、ABI和停止修复；旧R3负结果保留 |
+| F1唯一正式 | source `4d30514d52e27d3c854c8d1f4432d3ce977c078e`；14/14完整PC、共享setup；数学等价通过，速度`INSUFFICIENT` |
+| F1固定速度Gate | median(逐对packed/original)=0.9384593270111676>0.75；两边中位数之比1.0493987661812125仅诊断 |
+| F2 | not_run：F1未达25%提速线 |
+| F3唯一正式 | source `60b8df2a24cbcd96e49e018be22fb64f06eeae3f`；原13.5nm/1°/p6h10/MPI1/80modes，空缓存、零初值；476步真残差0.10535820013809101>1e-6 |
+| F3停止 | 用户明确要求收尾；`USER_REQUESTED_CONTROLLED_STOP`、`JOINT_MR3_NOT_QUALIFIED`；raw worker=`CONTROLLED_STOP`，wrapper=`WORKER_FAILED`/exit4原样保留 |
+| F4 / official | not_run：原始残差未通过；无合格E/H、R/T/A、A_volume、R00_s/p/total、衍射级或非可分场 |
+| F5 | 本轮证据、response_v3与最终回归完成；无后续PDE、第三候选或续跑；doc-only提交推送身份由主线程另报 |
 
-F1原/packed非warm完整PC中位为22.616387295012828 / 23.733608922862913 s。六个逐对比为1.3125269344515638、0.8743704405784026、0.9371184214537938、0.9398002325685414、1.140713267443425、0.8937186630153917，保留波动，不从中挑选最好样本。
+时间单位s，内存B。残差是原方程误差相对RHS的大小，越小越好；1e-6是本任务数值门槛，不代表连续极限精度。全部原始文件保持ignored，轻量来源与hash见[小JSON](records/packed_and_joint_mr_v2.json)。本轮没有改变材料、几何、原A6/A4、p/h、MPI、80个DtN模式或普通默认。
 
-| F1非warm每PC嵌套范围中位 / s | 原实现 | packed |
+PC（预条件器）为外层求解提供一次辅助修正；S6在p6上还利用p3/p1较小空间修正误差，H6只保留p6局部平滑，B6是平滑器使用的辅助算子。两条路线都用准确p4参考解修正较大尺度误差，其代价是一次全局矩阵分解。比较目标是以可接受资源得到原p6合格解，不能只凭一次PC便宜或局部误差下降判定成功。
+
+## F1：完整连续排布没有达到提速线
+
+连续排布将局部实部/虚部整理在连续内存中，目标是减少局部运算成本，代价是复制与工作缓冲。数学作用不能因此改变。本次完整S6的原/packed非warm PC中位为22.616387295012828 /23.733608922862913 s；六个配对比为1.3125269344515638、0.8743704405784026、0.9371184214537938、0.9398002325685414、1.140713267443425、0.8937186630153917。未从波动中挑选最快样本。
+
+| 非warm嵌套范围中位/s | 原实现 | packed |
 |---|---:|---:|
-| B6 | 14.235077654360794 | 15.399217725906055 |
+| B6辅助作用 | 14.235077654360794 | 15.399217725906055 |
 | PC内部原物理volume | 4.408280928560998 | 3.9336588784935884 |
-| S6 inclusive | 16.775018576532602 | 17.88990024913801 |
+| S6整体 | 16.775018576532602 | 17.88990024913801 |
 | p4 solve/check | 0.562832570518367 | 0.5991889264550991 |
-| p4 backsolve | 0.0971992164850235 | 0.10331542801577598 |
+| p4 factor backsolve | 0.0971992164850235 | 0.10331542801577598 |
 
-本次完整S6中的B6未胜过原FFCx，物理volume的小收益不足以形成25%的完整PC收益；p4回代不是主要成本。这些是不同嵌套范围的中位数，不能相加当成互斥分解，不继续packing优化。正式raw、comparison、全树资源和源码绑定见[小JSON](records/packed_and_joint_mr_v2.json)。
+B6未胜过原FFCx，volume的小收益不足以产生25%的完整收益；p4回代不是热点。以上父子范围不可相加。same-input action/S6/PC最大相对差分别为1.4723857041130954e-14、3.385589945200919e-14、3.3634736365759556e-13；48项重复raw比较误差0。F1 workflow monotonic1096.5564253670163 s；4203资源样本RSS/PSS峰3592585216/3558076416 B，全部可读、swap0、cap/余量无违规，60 PID清场。F1 audit SHA256=`73d74b5b34caf13efbf31c5a570c9e565ecc0ace26cfbe5f9d160d7e0c2ec426`。
 
-## F3 做什么
+## F3 方法与数组边界
+
 
 顺序MR每次只决定一个方向的步长，后续方向出现后不会重选前面系数。F3保留旧LIGHT的H6、准确p4和再次H6这三个方向及原顺序MR中间残差，只在末尾联合选三个复系数，检验方向互补是否有益。B6/H6窗口和原A6完全沿用R3；F1快速PC A6不进入F3。capture接口只保存旧MR已经计算的三个原A6作用，不增加p4 RHS或重生方向。
 
 先以每个原A6作用的范数缩放对应D/W列，再做稳定薄QR，对最多3列的R做小SVD，截断固定为1e-12，不形成正规方程。复内积使用共轭转置。新候选最多用一次原A6显式核验；若残差大于已保存顺序残差加1e-10倍输入范数，则返回原顺序解，不重新执行H6/p4。小SVD或有限候选系数问题可以回退；物理action、p4或输入nonfinite直接失败。截秩时不宣称完整三列空间的理论最优性，成功也不保证外层更快。
 
-非零通常调用计数为H6=2、B6=4、p4=1、原方向A6=3、joint核验A6≤1；旧零残差/零方向规则保持，实际跳过项按真实计数记录。每PC保存rank、最多三个归一化奇异值、复系数、方向范数、顺序/联合/选中残差和fallback原因，QR及extra A6成本进入完整PC wall。前三次仅增加同输入hash及紧凑seq/joint比较，属于将来正式fresh-zero的开头；每32步汇总scalar记录，完整周期清空，partial只保留当前≤32条，不积累旧方向或周期。
+非零通常调用计数为H6=2、B6=4、p4=1、原方向A6=3、joint核验A6≤1；旧零残差/零方向规则保持，实际跳过项按真实计数记录。每PC保存rank、最多三个归一化奇异值、复系数、方向范数、顺序/联合/选中残差和fallback原因，QR及extra A6成本进入完整PC wall。前三次仅增加同输入hash及紧凑seq/joint比较，属于本次正式fresh-zero的开头；每32步汇总scalar记录，完整周期清空，partial只保留当前≤32条，不积累旧方向或周期。
 
 ## 新增工作数组的生命周期
 
@@ -45,15 +51,97 @@ F1原/packed非warm完整PC中位为22.616387295012828 / 23.733608922862913 s。
 | 显式核验 | D/W6+proposed1+额外A6值1+checked residual1=9 | 物理A6仍借原算子buffer，不增全局矩阵 |
 | 返回与清理 | 上述9+返回copy1=10 | ExitStack随后释放proposed/value/checked与D/W；无跨PC累积 |
 
-13列最坏QR/candidate峰加mask、可能的单列范数工作及常数工作仍小于16列；采用保守分配界 `16*N*16+65536=44558848 B`，低于64MiB。65,536 B覆盖固定LAPACK工作、tau、R/SVD/系数等小对象，N相关mask由16列余量覆盖。原有顺序correction/residual不因F3增加；RSS还受allocator/cache影响，不能把数组上界当作实测进程树峰值。tiny tracemalloc检查新增峰值低于该界，原尺寸F3 RSS为not_run；旧R3同期进程树峰3352014848 B作为历史基线保留。
+13列最坏QR/candidate峰加mask、可能的单列范数工作及常数工作仍小于16列；采用保守分配界 `16*N*16+65536=44558848 B`，低于64MiB。65,536 B覆盖固定LAPACK工作、tau、R/SVD/系数等小对象，N相关mask由16列余量覆盖。原有顺序correction/residual不因F3增加；RSS还受allocator/cache影响，不能把数组上界当作实测进程树峰值。tiny tracemalloc检查新增峰值低于该界，原尺寸F3同期RSS峰值实测3351887872 B；旧R3同期进程树峰3352014848 B作为历史基线保留。
 
-## F3 最小验证与唯一待审核命令
 
-合并test352/356/365/368：63 passed。覆盖复系数、rank1/2、近相关/零列/零RHS、极端列尺度、短矩阵、QR共享、内存上界、严格旧方向输入一致、最多一次extra A6、显式safeguard回退、SVD失败回退、物理nonfinite拒绝、真实PETSc/H6调用计数，以及32条完整周期清空后7条partial不累积。首次3 failed/60 passed仅是新NumPy fixture缺少caller-owned solution的destroy协议；只修fixture，没有扩展生产销毁接口，失败日志/扣账保留。
+## F3 正式数值、规模与成本
 
-新profile为`light_p4ref_jointmr3_v2`，FGMRES32/max2048、原始零初值、solve7200 s、workflow10800 s；whole-workflow的最后60 s留给合作收口，parent最迟10740 s请求，solve Gate仍7200 s。沿用动态cap≤12,000,000,000 B、至少4GiB/15%有效RAM余量、进程树swap0，以及每8步/120 s安全点与32步账本。每次启动重算可用内存。新V2账本独立扣账，不借V1余额。
+| 指标 | 实际结果与解释 |
+|---|---|
+| 原始方程 | p6存储rows173802、独立rows164592；p4 FE rows53084、独立48960；参考增广rows53164、NNZ24730144；fine A6为原matrix-free action，不虚构全局fine NNZ |
+| 完整PC / 周期 | 476；14×32完整周期+28个尾段完整PC；没有第477个partial PC；尾段不是完整第15周期 |
+| 调用计数 | H6=952、B6=1904、原方向A6=1428、joint extra A6=476、p4=476；S6/p3/p1=0；65次原A6 monitor核验 |
+| p4精度 | 从true_residual_norm/rhs_norm重算476次，最大7.870604378195616e-11≤1e-10；准确p4没有保证外层通过 |
+| 最后安全解 | iteration476，原A6 residual=0.10535820013809101；reported=0.10535820013808381；全部monitor最大差6.589173651150304e-14 |
+| 联合局部结果 | 476次均rank3、fallback0；joint/seq残差比中位0.9794794387162146，最小0.6092942965749608、最大0.9999731964449761；局部中位改善约2.05% |
+| 新增成本 | extra A6中位1.3548955430160277 s、累计694.8742099204101 s；QR中位0.01146521046757698 s、累计5.928539212793112 s |
+| 完整PC成本 | min/median/max=10.735247689066455/11.460344589024317/22.662303637946025 s；累计5932.996657229727 s |
+| 尾段28PC | PC累计367.3329095620429 s、中位12.675290594459511 s；extra A6累计42.494998053996824 s；QR累计0.37969554029405117 s；p4累计16.27564849401824 s |
 
-以下命令**未执行**，需主任务批准实现并形成clean source后，才用于唯一原始F3；没有profile/checkpoint flags。
+前三次同输入联合/顺序残差比分别0.9249795539547021、0.9490819157271501、0.9924119130852596；复系数、方向范数、归一化奇异值与输入SHA在小JSON和原始joint/PC记录中。每次系数可能不同，不能用一个系数解释整个外层。rank3说明三列数值独立，不说明覆盖了难以消除的全局误差；小的局部提升不能替代完整p6收敛。
+
+| PC时段（中位s；父子范围嵌套） | 完整PC | H6 pre | p4方向整体 | H6 post | p4 solve/check | extra A6 | QR |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 全部476PC | 11.460345 | 3.557937 | 2.885941 | 3.562101 | 0.505944 | 1.354896 | 0.011465 |
+| 首周期1–32 | 11.013565 | 3.425079 | 2.804251 | 3.450897 | 0.499641 | 1.300086 | 0.010853 |
+| 末完整周期417–448 | 15.872061 | 5.233189 | 3.893276 | 4.805005 | 0.713369 | 1.876032 | 0.015936 |
+| 尾段449–476 | 12.675291 | 4.052919 | 3.005430 | 4.075908 | 0.560447 | 1.421101 | 0.012754 |
+
+前期、晚期和尾段的分项wall存在波动。它们只说明本次记录中的耗时变化，未唯一证明算法复杂度增长、CPU节流或宿主机原因；不能把嵌套列求和当workflow。成本原始时钟仍是monotonic，见下节限制。
+
+## 全部周期与旧R3对照
+
+下面同step比较同一物理/离散的真残差；两种PC会形成不同Krylov输入，不能把单次局部最小残差保证外推为外层优势。旧R3 source=`cbf56e87e515ab0c3fc5756cb6cf52feb047f610`，旧终点576步0.0791360407785889及缺失终态原样保留。
+
+| 步数 | F3真残差 | 旧R3真残差 | F3周期s | 旧R3周期s | F3累计周期s | 旧R3累计周期s |
+|---:|---:|---:|---:|---:|---:|---:|
+| 32 | 0.506958215778 | 0.442569421212 | 404.263 | 461.383 | 404.263 | 461.383 |
+| 64 | 0.412032506033 | 0.412734994686 | 406.069 | 391.742 | 810.333 | 853.125 |
+| 96 | 0.367415103759 | 0.328567997801 | 438.778 | 448.337 | 1249.111 | 1301.461 |
+| 128 | 0.321125895767 | 0.280142764888 | 495.458 | 395.779 | 1744.568 | 1697.241 |
+| 160 | 0.267343662346 | 0.240263477312 | 445.236 | 382.222 | 2189.804 | 2079.463 |
+| 192 | 0.239948396125 | 0.220936479787 | 404.222 | 396.930 | 2594.026 | 2476.392 |
+| 224 | 0.190304468788 | 0.182610215217 | 405.248 | 385.295 | 2999.274 | 2861.688 |
+| 256 | 0.152316913778 | 0.157526623955 | 403.962 | 424.986 | 3403.236 | 3286.674 |
+| 288 | 0.139338903326 | 0.141943918514 | 462.593 | 382.955 | 3865.829 | 3669.629 |
+| 320 | 0.132716309473 | 0.126673635512 | 433.854 | 382.581 | 4299.683 | 4052.210 |
+| 352 | 0.122245354648 | 0.120588201603 | 458.580 | 382.873 | 4758.263 | 4435.083 |
+| 384 | 0.116704822104 | 0.11362685682 | 440.946 | 383.802 | 5199.209 | 4818.885 |
+| 416 | 0.111698206944 | 0.106600203134 | 585.758 | 397.388 | 5784.967 | 5216.273 |
+| 448 | 0.107133269005 | 0.098145911603 | 589.525 | 381.896 | 6374.492 | 5598.169 |
+
+尾段476真残差0.10535820013809101不冒充480周期记录。以下为“同一名义monotonic周期时间上限内的最后已有记录”，每格为步数/真残差/实际累计周期s；不是相同物理wall的精确穿越时刻，不插值、不外推1e-6。双时钟差异和时段波动使这些表不能支持通用提速百分比。
+
+| 名义monotonic周期s | F3已有记录 | 旧R3已有记录 |
+|---:|---|---|
+| 1000 | 64 / 0.412032506 / 810.33 | 64 / 0.412734995 / 853.12 |
+| 2000 | 128 / 0.321125896 / 1744.57 | 128 / 0.280142765 / 1697.24 |
+| 3000 | 224 / 0.190304469 / 2999.27 | 224 / 0.182610215 / 2861.69 |
+| 4000 | 288 / 0.139338903 / 3865.83 | 288 / 0.141943919 / 3669.63 |
+| 5000 | 352 / 0.122245355 / 4758.26 | 384 / 0.113626857 / 4818.88 |
+| 6000 | 416 / 0.111698207 / 5784.97 | 480 / 0.0910093497 / 5979.53 |
+
+## 双时钟记录：不能宣称全部wall预算通过
+
+| 区间 | 原monotonic/s | UTC-derived/s | 差值/s |
+|---|---:|---:|---:|
+| 完整workflow | 7588.369777164073 | 8363.831318 | 775.4615408359277 |
+| solve起点至用户请求 | 6791.466002859059 | 7478.995419763 | 687.5294169039416 |
+
+manifest UTC为2026-09-08T03:46:29.980705+00:00至06:05:53.812023+00:00；solve UTC起点采用首个solve资源样本1788840066655165315 ns，请求为1788847545650585078 ns。末次reported solve monotonic6791.780280707986 s另保留；worker全流程monotonic7582.840139563079 s；setup marker至solve为787.7687308950117 s。
+
+UTC-derived solve区间已超过7200 s，而原monotonic Gate未触发；两种workflow均小于10800 s。时钟差异原因尚未唯一确定，不能直接宣称clock bug、CPU throttle或系统暂停。保留原预算账本与raw，不事后换时钟改判自动timeout；本次实际由用户指令停止。此前对话中“solve未耗尽所以wall预算通过”的笼统含义在此明确纠正。V2账本仍是原monotonic记账，不能当UTC总耗时。
+
+## 用户停止、资源与证据链
+
+| 项目 | 审计结果 |
+|---|---|
+| 唯一请求 | 核验parent940144/start55535649、mpiexec940204/start55535768、worker940207/start55535771；只向worker一次SIGTERM |
+| 请求到收口 | 到最后可见worker采样4.422788648 s；到最终资源样本8.122428637 s，均在60 s内；无整树硬杀 |
+| raw分类并列 | worker CONTROLLED_STOP/InterruptedError；wrapper WORKER_FAILED/exit4，CLI exit3；无watchdog自动stop_event；派生用户停止原因单列 |
+| 安全与释放 | worker最小摘要及safe476落盘；cleanup_errors为空；56个watchdog/样本PID联集宿主核对全部退出；缓存稳定；最后仅parent RSS36413440 B，随后parent退出 |
+| 内存口径 | 28753同期进程树样本；RSS峰3351887872 B、PSS峰3317217280 B；RSS/PSS均完整可读；采样峰不是连续严格上界 |
+| 资源Gate | cap8525078528 B；reserve4294967296 B；最小available9619988480 B；cap/余量违规0，进程树swap0，全球pswp增量0 |
+| 数据身份 | 66份checkpoint manifest与solution哈希核对；初始solution全零，末解finite；153份非cache raw哈希绑定；输入、物理、mode、源码及cache身份通过 |
+| audit | `benchmarks/artifacts/task39extra/v2_f3_60b8df2_complete/audit.json`，SHA256 `f4075f4bf8f545082a58f15ffdc35cc58fa3ba1e8af8ede82955efc50c196a69`；只读raw重算，无新PDE |
+
+normal checker、qualified field recovery、official输出均not_run；用户停止路径的资源下降不能冒充成功解的release-before-recovery证明。未产生新的R/T/A、A_volume、R00_s/p/total、复E/H或同离散独立authority。p/h、M、MPI、Full3D/Hybrid扫描本轮无新增，均不能从这些结果推断收敛或等价。
+
+## 测试、复现与收口边界
+
+F1实现最终85 passed，F3实现63 passed；失败fixture及扣账永久保留。最终F5一次task-focused回归181 passed、1 skipped（MPI2专用），ABI preflight/compileall通过；pytest117.19 s、外层monotonic109.88929661700968 s、UTC-derived118.71753764152527 s并列，见[测试摘要](test_summary.md)，不跑full repository、安装Ruff或重跑PDE，不声明CI/网页可视渲染通过。历史dirty实现审计仅证明当时文件内容，不代替正式clean SHA；引用保留在小JSON的historical字段。
+
+本次唯一正式命令如下，**已执行且用户收尾，不是再次运行授权**：
 
 ```bash
 cd /home/shenjh/Projects/MyFEniCSx_task37_extra
@@ -63,47 +151,4 @@ python scripts/run_case.py input/task39extra/original_13p5nm_p6h10_light_p4ref_j
   --batch-budget-ledger benchmarks/artifacts/task39extra/review_v2_batch_budget.json
 ```
 
-## 历史 F0/F1 实现快照（下文not_run指当时状态）
-
-| 阶段 | 当前状态与证据边界 |
-|---|---|
-| F0身份 | `task39extra`，起点 `abe5fa2cb1240c397f514a815390a2d9fabd5d5f`，原Task base `2dc2e7305f10dc391a13970c6f0f0340cb87b6ee`；启动时HEAD=origin、clean，使用canonical目录的.git-codex |
-| 旧证据 | 四份hash-bound审计及checkpoint576的manifest/solution哈希核对一致；旧R3源码cbf56e8、last_safe真残差0.0791360407785889，不改写为通过 |
-| ABI | 资格化仓库venv链接；PETSc/petsc4py3.19.6 complex128/int32、SLEPc接口3.19.2、DOLFINx实际0.10.0.post2、Basix0.10.0、Linux OpenMPI4.1.6；线程均1 |
-| 资源快照 | F0有效总RAM14654980096 B、available12872261632 B、reserve4294967296 B、cap8577294336 B；正式启动重新计算，不固定沿用该cap |
-| F1实现 | 新显式 `a2r_packed_equivalent_v2`，仅B6和PC内部split A6 volume开启contiguous_work；batch8；外层与真残差A6仍原实现 |
-| F1正式测量 | **not_run**；当前只有实现diff与最小测试，不提交、不推送，供主任务审核 |
-| F2/F3/F4 | not_run；未提前实现F3联合选权 |
-
-连续排布是把局部实部/虚部放到连续内存再做相同运算，以减少局部计算成本；收益是否覆盖复制成本要由完整PC测量决定。一次共享setup中复用原S6/p3/p1、p4分解、传递、对角和power10窗口。原/packed交替调用前先撤销计时装饰器，再只切换B6和PC内部A6引用；共享对象身份及窗口hash必须保持。旧FAST profile不启用连续排布，含义不变。
-
-输入为归一化物理RHS、checkpoint576合法primal在当前原A6上重算的残差、seed3902合法复向量。checkpoint存在但hash/物理/ownership不符即拒绝；文件不可用时仅用其余两输入。每路径首个warm，其余每输入两次，共14次（缺checkpoint时10次）完整PC；无外层求解。原始/packed同输入action限1e-11，S6/PC限1e-8；原A6作用于不同PC输出另列诊断。重复性从已校验hash的S6、PC及A6 raw数组独立重算，不相信worker的passed布尔值。
-
-**速度Gate在测量前固定为 median(t_packed_i/t_original_i)≤0.75。**两边所有非warm原始样本、各自中位数与两边中位数之比并列记录；后者仅诊断，不能事后替换Gate。计时保留必要日志，只剔除诊断数组保存范围。冷setup及安装前后资源单列，热调用两路径共存缓存的RSS前后采样单列；payload不是RSS，不能相加冒充进程树峰值。
-
-F1共2400 s包含setup、测量及停止宽限；2340 s请求合作停止，预留最多60 s整树收口。沿用5975463机制，parent/worker都对新显式profile登记PID/start ticks；只向应用请求一次SIGTERM，资源越线仍立即整树硬停。新V2账本独立上限36000 s，不复用V1余量；当前仅实现测试扣账，正式F1未预约。小fixture不是新的正式退出资格。
-
-| 最小验证 | 结果 |
-|---|---|
-| 合并361/363/365/367 | 82 passed / pytest3.07 s，外层monotonic4.689019392011687 s；含真实小FE原作用、窗口不变、交替引用/计时与旧profile回归 |
-| 新parent/worker接线补充 | 11 passed / pytest0.29 s，外层1.419340105028823 s |
-| 最终367 tiny | 12 passed / pytest0.34 s，外层1.322435159003362 s；含同步hash后伪造repeat=true仍拒绝，以及两种中位统计量分离测试 |
-| 最后合并回归（最终代码） | **85 passed**；pytest报告6.11 s，外层monotonic4.123782100970857 s，分别保留原始口径；增加ownership拒绝和PACKED专属parent/worker配置断言 |
-| 静态 | 改动Python compileall与git diff --check通过；未运行full repository；Ruff未安装，不声明CI/网页渲染通过 |
-| 保留失败 | 首次MPI探针被沙箱socket权限阻止，未跑PDE；真实Linux权限下ABI通过。首次最小批次8 failed/74 passed：构造器多传batch_size、旧fixture无variant、新profile枚举遗漏，均局部修复；失败成本保留 |
-
-输入SHA为`2a88399b0c3f5f5cd3d3b6b3b0619db8a051f5283c746c81642e1d98adb168bd`；physical SHA保持`9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f`。实际ABI、改动文件hash、日志和预算绑定见[小JSON](records/packed_and_joint_mr_v2.json)。代码尚未提交，因此不能把本次dirty测试身份用作formal来源。
-
-正式F1唯一待审核命令如下；需主任务批准本diff并形成clean commit后执行，现在未启动。dat中的10800 s是既有完整流程字段，诊断入口以此处冻结的2400 s覆盖；不启动完整求解。
-
-```bash
-cd /home/shenjh/Projects/MyFEniCSx_task37_extra
-source scripts/activate_myfenics_wsl.sh
-export GIT_DIR="$PWD/.git-codex" GIT_WORK_TREE="$PWD"
-python scripts/run_case.py input/task39extra/original_13p5nm_p6h10_a2r_packed_equivalent_v2.dat \
-  --physical-pc-profile results/euv_grazing1_phi0/original_13p5nm_p6h10_p6smooth_p4ref_p6smooth__full3d_iterative__mpi1__Mna/20260907T223143.281687Z/checkpoints/iteration_000576 \
-  --profile-variant a2r_packed_equivalent_v2 \
-  --batch-budget-ledger benchmarks/artifacts/task39extra/review_v2_batch_budget.json
-```
-
-一次共享setup最多14次完整PC，原模型/modes和准确p4逆未改变。未获得任何packed性能、原始场或非可分资格；后续条件由Review V2及真实Gate控制，剩余预算不授权另加候选。
+F1未达速度Gate，F3局部收益未变成合格原始场；F4条件锁定，用户要求停止本轮研究。下一步只有集中review/提交推送，无额外已授权计算。global p4 factor依赖、难误差修正效率、独立全场authority和0.7nm资格均未解决；不宣称全部Full3D或物理多层不可能。依赖组边界见[移交](workstation_handoff.md)，本轮不合并master。
