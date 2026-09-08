@@ -1,5 +1,19 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task39extra Review V4：新增诊断登记（不新增official资格）
+
+| 模型/方法 | measured结果与边界 |
+|---|---|
+| 13.5nm/1°/s/Full3D p6h10/MPI1/线程1/80modes | clean b127546f172e46d0b217680338b4e0ea7aa39f12；8PC、4互补、10逻辑p4、12MatSolve；诊断完成，full solve未运行 |
+| 表示/粗响应 | 无损L2投影找p4最佳表示，110步闭合；eta_space=0.084774901、实际粗修正eta_G=0.092065368、range identity3.92727e-13 |
+| 互补/真实残差 | H6/S6场误差保留0.941689514/0.934259170；真实JOINT448 LIGHT/JOINT残差比0.999706716/0.999674195 |
+| p4精化 | 重建首次1.0086968840613473e-10>1e-10；一次同LU修正后9.492574739321824e-13；旧默认精化0、旧失败不改 |
+| rows/NNZ/资源 | p6存储173802/独立164592；p4存储53084/独立48960/增广53164；allocated24730144/factor53417584；RSS峰3540959232 B、reserve4GiB、swap0、3936样本无违规 |
+| 时间/终态 | outer保守1130.973242739s<5400s；worker DIAGNOSTICS_COMPLETED_WITH_LIMITATIONS，watchdog/launch COMPLETED、exit0、父进程及2后代清场 |
+| 未运行与下一步 | official R/T/A/A_volume/R00_s/p/total/衍射级/EH、p/h/M/MPI/Hybrid扫描、新full solve均not_run；优先取得同A6/b/1°匹配fine参考/真实误差，复用packet，不造新PC |
+
+这个人工误差上p4表示与粗响应均较好，不能据此认定p4色散或真实误差已定位。H6/S6对互补场误差削减有限，即使残差明显下降；粗方向MR使场误差0.092→0.213而残差改善，是诊断目标差异，生产MR未改。C4既有2D QEP不支持规定3D Bloch控制，UNRESOLVED。新批计算账独立于V3，审计时1142.571742s，最终静态补费见[中心JSON](task039_extra_physical_multilevel/outcomes/records/diagnostic_completion_v4.json)。方法、原因矩阵与hash见[中心说明](task039_extra_physical_multilevel/outcomes/diagnostic_completion_v4.md)及[Response V5](task039_extra_physical_multilevel/response_v5.md)。下文保留既有总账历史。
+
 > **用途。** 本文是项目级“模型—方法—结果—资源—状态”总账。它不替代各 Task 的 `task.md`、`outcomes/summary.md`、`response_vN.md` 和正式 JSON record，而是把分散在不同任务中的重型计算统一登记，便于回答：已经算过什么、使用什么算法、得到什么物理结果、消耗多少资源、哪些结果可作为参考、哪些只是探索或负结果。
 >
 > **维护规则。** 从本文建立起，每次新增正式 PDE、QEP、Hybrid、迭代或自适应模型，都必须在对应 Task 收口时同步更新本文。历史记录没有保存的字段必须写“历史未记录”，当前未执行的字段写 `not_run`，不得猜测。

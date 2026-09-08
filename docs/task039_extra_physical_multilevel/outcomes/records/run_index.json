@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Latest V3 numerical gate rejection: 3 identities, 7 completed/8 started PC; retain strict-timebase stop, launch false-start and V2/V1/A5 history",
+  "scope": "Latest V4 diagnostic completion: 8 new PC, 4 complement, 10 logical p4 and 12 MatSolve; preserve all V3/V2/V1/A5 history; no new official/full solve",
   "units": {
     "time": "s",
     "memory": "B"
@@ -17,6 +17,27 @@
     "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
   },
   "runs": [
+    {
+      "id": "V4_diagnostic_completion",
+      "source_sha": "b127546f172e46d0b217680338b4e0ea7aa39f12",
+      "raw_root": "benchmarks/artifacts/task39extra/v4_completion/b127546f172e46d0b217680338b4e0ea7aa39f12/mpi1",
+      "category": "measured",
+      "raw_classification": "DIAGNOSTICS_COMPLETED_WITH_LIMITATIONS",
+      "semantic_classification": "DIAGNOSTIC_CONTROLS_COMPLETED_NO_OFFICIAL_SOLUTION",
+      "counts": {
+        "attempted_pc_calls": 8,
+        "complete_pc_calls": 8,
+        "independent_smoother_calls": 4,
+        "logical_p4_rhs": 10,
+        "external_MatSolve_calls": 12
+      },
+      "outer": "not_run",
+      "official": "not_run",
+      "wall_seconds": 1130.9732427390768,
+      "rss_peak_bytes": 3540959232,
+      "swap_peak_bytes": 0,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/diagnostic_completion_v4.json"
+    },
     {
       "id": "A2_old_setup",
       "source_sha": "39448e6a0e5705ad2c40b4bf7733ce2249e35a84",

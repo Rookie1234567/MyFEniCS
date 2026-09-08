@@ -1,3 +1,19 @@
+# Review V4 / C5验证：诊断完成，未新增完整PDE资格
+
+| 验证 | 结果与证据 |
+|---|---|
+| 一批C0 focused | 23通过、5失败、2 deselected；5失败同因decision packet重复policy字段，属于写包bug |
+| 定向修复复测 | 7通过、8 deselected；覆盖全部5失败及拆分的atomic/旧artifact审计，旧artifact缺失时该审计明确skip |
+| 其他静态/ABI | compileall、git diff --check通过；独立ABI子进程完全退出后启动child-free watchdog；complex128/int32/同Linux ABI/线程1 |
+| 正式C1–C3 | 8PC/4互补/10逻辑p4/12MatSolve；C2先于C3；投影110步残差9.27038e-11，原p4重建门槛未放宽，2个真实输入各精化一次 |
+| raw checker | 保存的g/A4y重算r4、增广残差差向量及范数；最后10个p4输入≤1e-10；2新真实PC的q/Az残差比重算；哈希绑定全部raw |
+| 资源/清场 | 3936样本无违规，RSS峰3540959232 B、swap0；parent987127/MPI987185/worker987188均清场 |
+| C5最终检查 | 只做JSON/hash/文档链接/历史保护/diff检查；不重复FE/PDE或pytest，不安装Ruff，不声称CI/full repository通过 |
+
+C0原始失败与修复日志位于`benchmarks/artifacts/task39extra/v4_c0/`；正式独立审计位于`benchmarks/artifacts/task39extra/v4_completion/b127546f172e46d0b217680338b4e0ea7aa39f12/completion_audit.json`。完整命令、哈希和新批时间账见[中心JSON](records/diagnostic_completion_v4.json)。诊断成功只证明这些控制与记录通过，不生成official R/T/A或真实散射参考。
+
+## 历史V3验证（原文当前仅指当时）
+
 # D5最终验证：工程政策通过，正式诊断发生数值拒绝
 
 | 对象 | 最终证据与边界 |
