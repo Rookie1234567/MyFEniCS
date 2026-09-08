@@ -2648,3 +2648,46 @@ both、full 和 0.7 nm PDE 均 `not_run`。证据入口为
 V11-1 formal action-only audit 在源码 SHA `677ab26dcfef79f0f754b88f2cfb8832edac4285` 上运行一次并按固定 Gate 结束。960 列 metadata identity/order/provenance/layout、physical zero equation、independent zero-map 和 V7 active-trace round trip 通过；十个 sampled AX residual、960-column Schur/modal action 和 V7 bottom trace Gate 失败，分类为 formal algebra negative / controlled stop。没有 sign flip、packet rerun、factor/KSP/QEP、PDE 或完整 Hybrid solve。
 
 component process-tree peak 为 `12.7808799744 GiB`，swap=0，wall 约 `655.209 s`；此前 `45.277 GiB` projection controlled stop 的 row-flush/streamed 修复使本次 projection 完成，但不能据此证明 packet algebra 或 solver correctness。V11-2 至 V11-7、top/full、consumer、0.7 nm 均 not_run。hash-bound compact record 和 response_v12 是本阶段证据入口；raw 仍 ignored。
+
+## 2026-09-08：Task041 3 nm M800 受控停止
+
+Task041 的 3 nm p6/h3/M800/MPI8 有两个必须分开的记录。20260907 fresh producer+consumer
+attempt 在 consumer_exit(solution_snapshot_destroyed) 失败，分类为 IMPLEMENTATION_FAILURE；
+不能写成 formal success，也不能把其 diagnostic marker residual 绑定到后续 retry。该 attempt
+的五残差是 independent diagnostic marker only：reported/global/bottom/modal/top=`7.246419845266236e-10 /
+6.711767430501667e-10 / 6.842952026951734e-12 / 7.252171978674087e-11 /
+6.339676899706935e-10`；formal_result/gates/physics=null。resource evidence 仍有效：
+producer RSS/PSS/USS=`16.784275055/15.785678864/15.674812317 GiB`，consumer/workflow
+RSS/PSS/USS=`255.465618134/253.694432259/253.435222626 GiB`，wall=`40216.175178 s`、
+swap=`0`。
+
+20260908 consumer-only implementation retry 的 solve/recovery mechanics 通过，own physics
+仅因 abs(A_balance-A_volume)=`1.9160032445286745e-5 > 1e-5`失败。其有效 residual 顺序为
+reported/global/bottom/modal/top=`1.0614289127347946e-9 / 1.3530838051427825e-9 /
+9.525482983090863e-12 / 5.059125745287973e-11 / 1.278144562727163e-9`；candidate
+R/T/A_balance/A_volume=`0.8048686830648746 / 0.0002839834330554354 /
+0.19484733350206998 / 0.19486649353451532`。retry peak=`229028663296 B =
+213.299564362 GiB`，wall=`17047.323762 s`，swap=`0`，official RTA unavailable。
+
+两次 run 均为 MUMPS factor-only、ICNTL14=`40`，无 global direct/coarse/OOC。corrected
+bottom/top factor NNZ 为 fresh=`3.259e9/3.716e9`、retry=`3.304e9/2.861e9`。峰值出现在
+两侧 factor 同时驻留后的 top-factor/top-Woodbury；modal rank=`1600`，单个 modal
+Schur/constraint/LU 各=`40960000 B`。因此当前最大对象族是两侧 MUMPS factors；约
+`42.166 GiB`峰值差不能先写成 lifecycle 优化，因为 factor NNZ 已变化。retry 的 factor
+count 为 `1/1→0/0`，actions/components destroyed，rss_drop=`pass`；cgroup authority
+为 `229028663296→218838220800 B`，final marker=`211014574080 B`。fresh failed-attempt
+lifecycle 记录 actions_destroyed=true、component_cleanup_pass=true、factor_cleanup_pass=true、
+factor_count_after_cleanup bottom/top=`0/0`、rss_drop=pass、memory authority=
+`274205020160→260347596800 B`；producer/consumer/workflow wall=
+`18000.658898/22215.056788/40216.175178 s`。
+
+producer telemetry：qep_begin=`0.192512509 s`、qep_ready=`17998.540383 s`、
+packet bytes=`913401973`、packet write max-rank=`0.963676714 s`、consumer_qep_required=false；
+qep_begin 到 qep_ready 不被统称为 eigensolve。
+
+5 nm 必须分开 inherited Task039 baseline 与 Task041 本机 MPI8 reproduction；source-only
+audit 触发 REFERENCE_SOURCE_SEMANTICS_CHANGED，旧 MPI8 authority 保留，MPI1 equivalence
+未建立。M1200、M1600、3 nm h2.5/h2、全部 2 nm 及 3 nm physics Gate 后的 MPI1 均为
+NOT_RUN_DUE_TO_3NM_M800_PHYSICS_GATE；不是技术无能力或资源失败。关于 0.7 nm 的
+factor-free architecture 判断属于基于当前 factor 主导峰值的推断，不是正式容量外推。
+Task041 merge approval=NO。详见 Task041 outcomes summary、response_v1 和 compact checkpoint。

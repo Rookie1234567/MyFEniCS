@@ -1565,3 +1565,24 @@ V8-3 的五方法和资源边界见 [bottom outcome](task039_5nm_hybrid_qualific
 V9-2 是 research-only component evidence。没有 stable preferred method，因此 retained、V9-3
 direct FGMRES、V9-4 rank audit、top/both/full 和 0.7 nm PDE 均 `not_run`；不改变
 ordinary/default solver，也不证明通用 factor API 有 bug。
+
+## Task041 3 nm M800 controlled stop（2026-09-08）
+
+| Model ID | 配置/目的 | 数值与资源 | status | classification | evidence |
+|---|---|---|---|---|---|
+| `task041_3nm_p6h3_m800_mpi8_fresh` | 3 nm、p6/h3、M800、MPI8 fresh producer+consumer | consumer_exit(solution_snapshot_destroyed)；producer RSS/PSS/USS=`16.784275055/15.785678864/15.674812317 GiB`；consumer/workflow=`255.465618134/253.694432259/253.435222626 GiB`；wall=`40216.175 s`；swap0；MUMPS factor-only corrected bottom/top NNZ=`3.259e9/3.716e9` | `failed` | IMPLEMENTATION_FAILURE | [Task041 summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md) |
+| `task041_3nm_p6h3_m800_mpi8_retry` | 同一 case 的 consumer-only implementation retry | reported/global/bottom/modal/top=`1.0614289127347946e-9 / 1.3530838051427825e-9 / 9.525482983090863e-12 / 5.059125745287973e-11 / 1.278144562727163e-9`；peak=`229028663296 B = 213.299564362 GiB`；wall=`17047.323762 s`；swap0；factor NNZ=`3.304e9/2.861e9`；factor count `1/1→0/0` | `candidate_controlled_negative` | own physics only fail: closure=`1.9160032445286745e-5 > 1e-5`；official RTA unavailable；TASK041_CONSUMER_NUMERICAL_FAILURE | [Task041 summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/summary.md)、[checkpoint](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_checkpoint_v1.json) |
+
+两次 run 均为 MUMPS factor-only、ICNTL14=40，无 global direct/coarse/OOC。modal rank=1600，
+单个 modal Schur/constraint/LU 各=40960000 B；峰值对象族为两侧 MUMPS factors。约 42.166 GiB
+峰值差不能先解释为 lifecycle 优化，因为 factor NNZ 发生变化。20260908 的 actions/components
+已销毁且 rss_drop=pass，cgroup authority=229028663296→218838220800 B，final marker=
+211014574080 B。
+
+M1200/M1600、3 nm h2.5/h2、全部 2 nm 和后续 MPI1 均为
+NOT_RUN_DUE_TO_3NM_M800_PHYSICS_GATE。该条目不构成 resource frontier，不改变 ordinary
+default，也不批准合入 master；raw failure root 与 negative authority 保留。
+
+补充诊断口径：20260907 fresh 的 reported/global/bottom/modal/top=`7.246419845266236e-10 / 6.711767430501667e-10 / 6.842952026951734e-12 / 7.252171978674087e-11 / 6.339676899706935e-10` 仅为 diagnostic marker only；formal_result/gates/physics=null，failure stage=consumer_exit(solution_snapshot_destroyed)。其 lifecycle actions_destroyed/component_cleanup/factor_cleanup/rss_drop均通过，factor count after cleanup bottom/top=0/0，memory authority=`274205020160→260347596800 B`。producer telemetry为 qep_begin=`0.192512509 s`、qep_ready=`17998.540383 s`、packet bytes=`913401973`、packet write max-rank=`0.963676714 s`、consumer_qep_required=false；qep区间不等于 eigensolve。
+
+两次峰值可作跨 run 比较，但不能相加为同一 workflow，也不能把约 `42.166 GiB`差额写成对象释放量；factor NNZ发生变化。retry release-before-recovery 的 cgroup authority=`229028663296→218838220800 B`，final marker=`211014574080 B`。
