@@ -618,6 +618,28 @@ def test_task041_shortwave_consumer_profile_and_dynamic_sampled_contract(
         )
 
 
+@pytest.mark.parametrize(
+    ("phase", "warning_memory_bytes", "hard_memory_bytes", "timeout_seconds"),
+    (
+        ("producer", 176 * 2**30, 192 * 2**30, 18000),
+        ("consumer", 224 * 2**30, 256 * 2**30, 21600),
+    ),
+)
+def test_task041_shortwave_worker_contract_uses_phase_limits(
+    phase, warning_memory_bytes, hard_memory_bytes, timeout_seconds
+):
+    specification = load_and_resolve(
+        ROOT / "input/official/task041/3nm_p6h3_m800_mpi8.dat"
+    )
+    contract = task041._task041_case_contract(
+        specification.as_jsonable(), 8, phase=phase
+    )
+    assert contract["limits"]["warning_memory_bytes"] == warning_memory_bytes
+    assert contract["limits"]["hard_memory_bytes"] == hard_memory_bytes
+    assert contract["limits"]["timeout_seconds"] == timeout_seconds
+    assert contract["limits"]["swap_limit_bytes"] == 0
+
+
 def test_fresh_sampled_contract_is_bound_to_current_manifest(tmp_path):
     identity = {
         "mode_count": 480,

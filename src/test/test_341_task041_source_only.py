@@ -36,6 +36,7 @@ from src.io.input_validation import (
     load_and_resolve,
     simulation_config_3d_from_normalized,
     task041_material_provenance,
+    task041_shortwave_phase_limits,
     task041_profile_errors,
     task041_shortwave_material_provenance,
     task041_shortwave_profile_errors,
@@ -236,13 +237,37 @@ def test_task041_shortwave_official_dat_profiles_validate(
     assert spec.identity["model_id"] == model_id
     assert spec.method["requested_modes_per_direction"] == mode_count
     assert spec.execution["mpi_size"] == 8
-    assert spec.execution["warning_memory_gib"] == 1433.6
-    assert spec.execution["terminate_memory_gib"] == 1638.4
-    assert spec.execution["timeout_seconds"] == 259200
+    assert spec.execution["warning_memory_gib"] == 224.0
+    assert spec.execution["terminate_memory_gib"] == 256.0
+    assert spec.execution["absolute_terminate_memory_bytes"] == 274877906944
+    assert spec.execution["timeout_seconds"] == 39600
     assert spec.boundary["dtn_order_policy"] == "auto_propagating"
     provenance = task041_shortwave_material_provenance(normalized)
     assert provenance is not None
     assert tuple(provenance["n"]) == (0.99735217495, 0.000883207249)
+
+
+def test_task041_shortwave_phase_limits_are_central_and_fail_closed() -> None:
+    expected = {
+        "producer": {
+            "warning_memory_bytes": 176 * 2**30,
+            "hard_memory_bytes": 192 * 2**30,
+            "min_memavailable_bytes": 1869169767220,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": 18000,
+        },
+        "consumer": {
+            "warning_memory_bytes": 224 * 2**30,
+            "hard_memory_bytes": 256 * 2**30,
+            "min_memavailable_bytes": 1869169767220,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": 21600,
+        },
+    }
+    for phase, limits in expected.items():
+        assert dict(task041_shortwave_phase_limits(phase)) == limits
+    with pytest.raises(ValueError, match="unknown Task041 shortwave phase"):
+        task041_shortwave_phase_limits("other")
 
 
 @pytest.mark.parametrize(

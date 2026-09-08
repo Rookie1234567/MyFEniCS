@@ -9,6 +9,7 @@ from difflib import get_close_matches
 from hashlib import sha256
 from math import isclose, isfinite
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -283,11 +284,52 @@ TASK041_SHORTWAVE_COMPARISON_GROUP = (
 TASK041_SHORTWAVE_N = (0.99735217495, 0.000883207249)
 TASK041_SHORTWAVE_MESH_TARGET_NM = 3.0
 TASK041_SHORTWAVE_MPI_SIZE = 8
-TASK041_SHORTWAVE_WARNING_MEMORY_GIB = 1433.6
-TASK041_SHORTWAVE_HARD_MEMORY_GIB = 1638.4
-TASK041_SHORTWAVE_HARD_MEMORY_BYTES = 1759218604442
+TASK041_SHORTWAVE_WARNING_MEMORY_GIB = 224.0
+TASK041_SHORTWAVE_HARD_MEMORY_GIB = 256.0
+TASK041_SHORTWAVE_HARD_MEMORY_BYTES = 274877906944
 TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES = 1869169767220
-TASK041_SHORTWAVE_TIMEOUT_SECONDS = 259200
+TASK041_SHORTWAVE_TIMEOUT_SECONDS = 39600
+TASK041_SHORTWAVE_WORKFLOW_LIMITS = MappingProxyType(
+    {
+        "warning_memory_bytes": int(TASK041_SHORTWAVE_WARNING_MEMORY_GIB * 2**30),
+        "hard_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+        "swap_limit_bytes": 0,
+        "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+    }
+)
+TASK041_SHORTWAVE_PHASE_LIMITS = MappingProxyType(
+    {
+        "producer": MappingProxyType(
+            {
+                "warning_memory_bytes": 176 * 2**30,
+                "hard_memory_bytes": 192 * 2**30,
+                "min_memavailable_bytes": TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": 18000,
+            }
+        ),
+        "consumer": MappingProxyType(
+            {
+                "warning_memory_bytes": int(TASK041_SHORTWAVE_WARNING_MEMORY_GIB * 2**30),
+                "hard_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+                "min_memavailable_bytes": TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": 21600,
+            }
+        ),
+    }
+)
+
+
+def task041_shortwave_phase_limits(phase: str) -> Mapping[str, int]:
+    """Return immutable limits for one approved shortwave workflow phase."""
+
+    try:
+        return TASK041_SHORTWAVE_PHASE_LIMITS[phase]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 shortwave phase: {phase!r}") from exc
+
+
 TASK041_SHORTWAVE_CASES = {
     "task041_3nm_exact_side_hybrid_iterative_p6h3_m800": {
         "run_id": "task041_3nm_p6h3_m800_mpi8",
@@ -2888,7 +2930,9 @@ __all__ = [
     "TASK041_SHORTWAVE_MODEL_IDS",
     "TASK041_SHORTWAVE_MPI_SIZE",
     "TASK041_SHORTWAVE_N",
+    "TASK041_SHORTWAVE_PHASE_LIMITS",
     "TASK041_SHORTWAVE_TIMEOUT_SECONDS",
+    "TASK041_SHORTWAVE_WORKFLOW_LIMITS",
     "TASK041_SHORTWAVE_WARNING_MEMORY_GIB",
     "TASK041_TIMEOUT_SECONDS",
     "TASK041_WARNING_MEMORY_GIB",
@@ -2911,5 +2955,6 @@ __all__ = [
     "task041_profile_errors",
     "task041_shortwave_case",
     "task041_shortwave_material_provenance",
+    "task041_shortwave_phase_limits",
     "task041_shortwave_profile_errors",
 ]

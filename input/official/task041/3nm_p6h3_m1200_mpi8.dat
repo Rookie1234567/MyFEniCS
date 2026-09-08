@@ -75,10 +75,10 @@ side_residual_correction_steps = 1
 
 [execution]
 mpi_size = 8
-warning_memory_gib = 1433.6
-terminate_memory_gib = 1638.4
-absolute_terminate_memory_bytes = 1759218604442
-timeout_seconds = 259200
+warning_memory_gib = 224.0
+terminate_memory_gib = 256.0
+absolute_terminate_memory_bytes = 274877906944
+timeout_seconds = 39600
 require_zero_swap = true
 
 [output]

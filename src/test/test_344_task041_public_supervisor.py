@@ -130,6 +130,8 @@ def _run_phase(
     warning_memory_bytes=None,
     hard_memory_bytes=None,
     timeout_seconds=None,
+    workflow_started=0.0,
+    phase_elapsed_timeout=False,
 ):
     (tmp_path / "numerical_output" / "log").mkdir(parents=True)
     limits = {
@@ -148,7 +150,7 @@ def _run_phase(
         log_root=tmp_path / "numerical_output" / "log",
         environment={"OMP_NUM_THREADS": "1"},
         repository_root=tmp_path,
-        workflow_started=0.0,
+        workflow_started=workflow_started,
         popen_factory=popen_factory or _FakePopen(),
         sample_factory=sample,
         terminate_factory=terminate or (lambda process: {"requested": True}),
@@ -164,6 +166,7 @@ def _run_phase(
         / "log"
         / "memory_stage_markers.jsonl",
         process_group_gone=process_group_gone or (lambda _pid: True),
+        phase_elapsed_timeout=phase_elapsed_timeout,
         **limits,
     )
 
@@ -309,6 +312,50 @@ def test_phase_accepts_injected_shortwave_runtime_limits(
     )
     assert phase["termination_reason"] == reason
     assert phase["warning_reached"] is (warning_memory_bytes <= 100)
+
+
+def test_phase_uses_phase_elapsed_for_shortwave_wall_timeout(tmp_path):
+    phase = _run_phase(
+        tmp_path,
+        sample=_Samples(),
+        clock=_Clock(100.0, 100.5, 100.5),
+        workflow_started=0.0,
+        warning_memory_bytes=100,
+        timeout_seconds=1,
+        hard_memory_bytes=10**9,
+        phase_elapsed_timeout=True,
+    )
+    assert phase["returncode"] == 0
+    assert phase["termination_reason"] is None
+    assert phase["timeout_scope"] == "phase"
+    assert phase["phase_wall_seconds"] == 0.5
+    assert phase["limits"] == {
+        "warning_memory_bytes": 100,
+        "hard_memory_bytes": 10**9,
+        "swap_limit_bytes": 0,
+        "timeout_seconds": 1,
+    }
+    finished = json.loads(
+        (tmp_path / "numerical_output" / "log" / "memory_stage_markers.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()[-1]
+    )
+    assert finished["phase_wall_seconds"] == phase["phase_wall_seconds"]
+    assert finished["timeout_scope"] == "phase"
+    assert finished["limits"] == phase["limits"]
+
+
+def test_legacy_phase_timeout_remains_workflow_elapsed(tmp_path):
+    phase = _run_phase(
+        tmp_path,
+        sample=_Samples(),
+        clock=_Clock(100.0, 100.5, 100.5),
+        workflow_started=0.0,
+        timeout_seconds=1,
+        hard_memory_bytes=10**9,
+    )
+    assert phase["termination_reason"] == "wall_timeout"
+    assert phase["timeout_scope"] == "workflow"
 
 
 class _TerminalUnreadableSample:
@@ -928,20 +975,20 @@ def test_shortwave_supervisor_control_plane_dispatches_mpi8_children_sequentiall
     ]
     assert [call["phase"] for call in phase_calls] == ["producer", "consumer"]
     assert len(packet_calls) == 1
+    expected_phase_limits = {
+        phase: dict(supervisor.task041_shortwave_phase_limits(phase))
+        for phase in ("producer", "consumer")
+    }
     for call in phase_calls:
         assert call["argv"][:9] == expected_prefix
         assert call["argv"][call["argv"].index("--input") + 1] == str(
             specification.source_path
         )
-        assert call["limits"]["warning_memory_bytes"] == (
-            supervisor.TASK041_SHORTWAVE_WARNING_MEMORY_BYTES
-        )
-        assert call["limits"]["hard_memory_bytes"] == (
-            supervisor.TASK041_SHORTWAVE_HARD_MEMORY_BYTES
-        )
-        assert call["limits"]["timeout_seconds"] == (
-            supervisor.TASK041_SHORTWAVE_TIMEOUT_SECONDS
-        )
+        limits = expected_phase_limits[call["phase"]]
+        assert call["limits"]["warning_memory_bytes"] == limits["warning_memory_bytes"]
+        assert call["limits"]["hard_memory_bytes"] == limits["hard_memory_bytes"]
+        assert call["limits"]["timeout_seconds"] == limits["timeout_seconds"]
+        assert call["limits"]["phase_elapsed_timeout"] is True
     assert result["identity"]["requested_modes"] == 800
     assert result["identity"]["mpi_size"] == 8
     assert result["outer_mpi_identity"]["mpi_size"] == 1
@@ -951,6 +998,17 @@ def test_shortwave_supervisor_control_plane_dispatches_mpi8_children_sequentiall
         "swap_limit_bytes": 0,
         "timeout_seconds": supervisor.TASK041_SHORTWAVE_TIMEOUT_SECONDS,
     }
+    assert result["phase_limits"] == expected_phase_limits
+    resource_authority = result["resource_authority"]
+    assert resource_authority["workflow_limits"] == result["limits"]
+    assert resource_authority["phase_limits"] == expected_phase_limits
+    resource_summary = json.loads(
+        (tmp_path / "workflow" / "resource_summary.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert resource_summary["workflow_limits"] == result["limits"]
+    assert resource_summary["phase_limits"] == expected_phase_limits
 
 
 @pytest.mark.parametrize(

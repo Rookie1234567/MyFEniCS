@@ -29,8 +29,10 @@ from src.io.input_validation import (
     TASK041_RUN_ID,
     TASK041_SHORTWAVE_MODEL_IDS,
     TASK041_SHORTWAVE_MPI_SIZE,
+    TASK041_SHORTWAVE_WORKFLOW_LIMITS,
     task041_profile_errors,
     task041_shortwave_case,
+    task041_shortwave_phase_limits,
     task041_shortwave_profile_errors,
 )
 from src.io.resolved_config import resolved_config_sha256
@@ -42,9 +44,15 @@ TASK041_MPI_SIZE = 1
 TASK041_WARNING_MEMORY_BYTES = 192 * 2**30
 TASK041_HARD_MEMORY_BYTES = 256 * 2**30
 TASK041_TIMEOUT_SECONDS = 172800
-TASK041_SHORTWAVE_WARNING_MEMORY_BYTES = 1539316278886
-TASK041_SHORTWAVE_HARD_MEMORY_BYTES = 1759218604442
-TASK041_SHORTWAVE_TIMEOUT_SECONDS = 259200
+TASK041_SHORTWAVE_WARNING_MEMORY_BYTES = TASK041_SHORTWAVE_WORKFLOW_LIMITS[
+    "warning_memory_bytes"
+]
+TASK041_SHORTWAVE_HARD_MEMORY_BYTES = TASK041_SHORTWAVE_WORKFLOW_LIMITS[
+    "hard_memory_bytes"
+]
+TASK041_SHORTWAVE_TIMEOUT_SECONDS = TASK041_SHORTWAVE_WORKFLOW_LIMITS[
+    "timeout_seconds"
+]
 TASK041_TERMINAL_SAMPLE_GRACE_SECONDS = 0.25
 TASK041_REQUIRED_THREADS = (
     "OMP_NUM_THREADS",
@@ -107,12 +115,7 @@ def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, int]:
                 classification="task041_identity_failure",
                 stage="runtime_limits",
             )
-        return {
-            "warning_memory_bytes": TASK041_SHORTWAVE_WARNING_MEMORY_BYTES,
-            "hard_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
-            "swap_limit_bytes": 0,
-            "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
-        }
+        return dict(TASK041_SHORTWAVE_WORKFLOW_LIMITS)
     raise Task041SupervisorError(
         f"runtime limits require a validated Task041 identity, got {model_id!r}",
         classification="task041_identity_failure",
@@ -314,6 +317,7 @@ def _run_phase(
     warning_memory_bytes: int = TASK041_WARNING_MEMORY_BYTES,
     hard_memory_bytes: int = TASK041_HARD_MEMORY_BYTES,
     timeout_seconds: int = TASK041_TIMEOUT_SECONDS,
+    phase_elapsed_timeout: bool = False,
 ) -> dict[str, Any]:
     if phase_root.exists():
         raise Task041SupervisorError(
@@ -399,7 +403,11 @@ def _run_phase(
                     termination_reason = "absolute_memory_limit"
                 elif record["swap_bytes"] > 0 or record["job_no_swap"] is not True:
                     termination_reason = "swap_detected"
-                elif now - workflow_started >= timeout_seconds:
+                elif (
+                    (now - phase_started)
+                    if phase_elapsed_timeout
+                    else (now - workflow_started)
+                ) >= timeout_seconds:
                     termination_reason = "wall_timeout"
                 if termination_reason is not None:
                     cleanup_attempted = True
@@ -440,11 +448,23 @@ def _run_phase(
             "process_group_gone": group_gone,
             "pass": bool(isinstance(before_rss, int) and after_rss < before_rss),
         }
+        finished_at = monotonic()
+        phase_wall_seconds = finished_at - phase_started
+        workflow_wall_seconds = finished_at - workflow_started
+        phase_record_limits = {
+            "warning_memory_bytes": warning_memory_bytes,
+            "hard_memory_bytes": hard_memory_bytes,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": timeout_seconds,
+        }
         _append_jsonl(
             marker_path,
             {
                 "stage": f"{phase}_finished",
-                "wall_seconds": monotonic() - workflow_started,
+                "wall_seconds": workflow_wall_seconds,
+                "phase_wall_seconds": phase_wall_seconds,
+                "timeout_scope": "phase" if phase_elapsed_timeout else "workflow",
+                "limits": phase_record_limits,
                 "returncode": returncode,
                 "termination_reason": termination_reason,
                 "rss_drop": rss_drop,
@@ -470,7 +490,11 @@ def _run_phase(
         "argv": list(argv),
         "stdout": str(stdout_path),
         "returncode": returncode,
-        "wall_seconds": monotonic() - phase_started,
+        "wall_seconds": phase_wall_seconds,
+        "phase_wall_seconds": phase_wall_seconds,
+        "workflow_wall_seconds": workflow_wall_seconds,
+        "timeout_scope": "phase" if phase_elapsed_timeout else "workflow",
+        "limits": phase_record_limits,
         "sample_count": len(samples),
         "warning_reached": warning_reached,
         "termination_reason": termination_reason,
@@ -960,6 +984,7 @@ def run_task041_public_supervisor(
         "swap_limit_bytes": 0,
         "timeout_seconds": TASK041_TIMEOUT_SECONDS,
     }
+    phase_limits: dict[str, dict[str, int]] = {}
     try:
         if not root.is_dir():
             raise Task041SupervisorError(
@@ -979,6 +1004,13 @@ def run_task041_public_supervisor(
         identity = _validate_specification(specification, repository_root)
         runtime_limits = _runtime_limits_for_identity(identity)
         result["limits"] = dict(runtime_limits)
+        shortwave = identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS
+        if shortwave:
+            phase_limits = {
+                phase: dict(task041_shortwave_phase_limits(phase))
+                for phase in ("producer", "consumer")
+            }
+            result["phase_limits"] = phase_limits
         git_identity = _git_identity(repository_root, source_sha)
         environment_snapshot = _environment_snapshot(repository_root)
         result["identity"] = identity
@@ -1049,9 +1081,16 @@ def run_task041_public_supervisor(
             / "log"
             / "memory_stage_markers.jsonl",
             process_group_gone=process_group_gone,
-            warning_memory_bytes=runtime_limits["warning_memory_bytes"],
-            hard_memory_bytes=runtime_limits["hard_memory_bytes"],
-            timeout_seconds=runtime_limits["timeout_seconds"],
+            warning_memory_bytes=(
+                phase_limits.get("producer", runtime_limits)["warning_memory_bytes"]
+            ),
+            hard_memory_bytes=(
+                phase_limits.get("producer", runtime_limits)["hard_memory_bytes"]
+            ),
+            timeout_seconds=(
+                phase_limits.get("producer", runtime_limits)["timeout_seconds"]
+            ),
+            phase_elapsed_timeout=shortwave,
         )
         result["phase_results"]["producer"] = producer_result
         if _phase_resource_failure(producer_result):
@@ -1161,9 +1200,16 @@ def run_task041_public_supervisor(
             / "log"
             / "memory_stage_markers.jsonl",
             process_group_gone=process_group_gone,
-            warning_memory_bytes=runtime_limits["warning_memory_bytes"],
-            hard_memory_bytes=runtime_limits["hard_memory_bytes"],
-            timeout_seconds=runtime_limits["timeout_seconds"],
+            warning_memory_bytes=(
+                phase_limits.get("consumer", runtime_limits)["warning_memory_bytes"]
+            ),
+            hard_memory_bytes=(
+                phase_limits.get("consumer", runtime_limits)["hard_memory_bytes"]
+            ),
+            timeout_seconds=(
+                phase_limits.get("consumer", runtime_limits)["timeout_seconds"]
+            ),
+            phase_elapsed_timeout=shortwave,
         )
         result["phase_results"]["consumer"] = consumer_result
         consumer_exit = consumer_result.get("returncode")
@@ -1316,11 +1362,13 @@ def run_task041_public_supervisor(
             ),
             "semantics": "max(producer, consumer), never sum",
         }
-        result["resource_authority"] = {
+        resource_authority = {
             "status": "measured" if phases else "not_sampled",
             "warning_memory_bytes": runtime_limits["warning_memory_bytes"],
             "hard_memory_bytes": runtime_limits["hard_memory_bytes"],
             "swap_limit_bytes": runtime_limits["swap_limit_bytes"],
+            "timeout_seconds": runtime_limits["timeout_seconds"],
+            "workflow_limits": dict(runtime_limits),
             "swap_semantics": "max(process-tree VmSwap, dedicated job cgroup swap.current)",
             "workflow_peak": result["workflow_peak"],
             "total_wall_seconds": total_wall_seconds,
@@ -1342,6 +1390,11 @@ def run_task041_public_supervisor(
                 for name, phase in result["phase_results"].items()
             },
         }
+        if phase_limits:
+            resource_authority["phase_limits"] = {
+                phase: dict(limits) for phase, limits in phase_limits.items()
+            }
+        result["resource_authority"] = resource_authority
         if environment_snapshot is not None:
             result.setdefault("environment", environment_snapshot)
             _write_json(root / "environment.json", environment_snapshot)

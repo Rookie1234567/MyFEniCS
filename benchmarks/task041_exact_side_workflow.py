@@ -33,15 +33,12 @@ from benchmarks.task039_v4_selected_mode_packet import (
 )
 from src.io.input_validation import (
     TASK041_MODEL_ID,
-    TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
-    TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES,
     TASK041_SHORTWAVE_MPI_SIZE,
-    TASK041_SHORTWAVE_TIMEOUT_SECONDS,
-    TASK041_SHORTWAVE_WARNING_MEMORY_GIB,
     load_and_resolve,
     simulation_config_3d_from_normalized,
     task041_profile_errors,
     task041_shortwave_case,
+    task041_shortwave_phase_limits,
     task041_shortwave_profile_errors,
 )
 from src.io.resolved_config import resolved_config_sha256
@@ -373,7 +370,7 @@ def _task041_legacy_limits() -> dict[str, int]:
 
 
 def _task041_case_contract(
-    normalized: Mapping[str, Any], comm_size: int
+    normalized: Mapping[str, Any], comm_size: int, *, phase: str
 ) -> dict[str, Any]:
     """Validate and return the small control-plane contract for one case."""
 
@@ -407,6 +404,7 @@ def _task041_case_contract(
     if comm_size != TASK041_SHORTWAVE_MPI_SIZE:
         raise Task041ModePrepError("Task41 shortwave case requires MPI8")
     discretization = normalized["discretization"]
+    phase_limits = dict(task041_shortwave_phase_limits(phase))
     return {
         "shortwave": True,
         "mpi_size": TASK041_SHORTWAVE_MPI_SIZE,
@@ -416,14 +414,7 @@ def _task041_case_contract(
         "mode_prep_profile": TASK041_SHORTWAVE_MODE_PREP_PROFILE,
         "consumer_schema": TASK041_SHORTWAVE_CONSUMER_SCHEMA,
         "consumer_profile": TASK041_SHORTWAVE_CONSUMER_PROFILE,
-        "limits": {
-            "warning_memory_bytes": int(
-                TASK041_SHORTWAVE_WARNING_MEMORY_GIB * 2**30
-            ),
-            "hard_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
-            "min_memavailable_bytes": TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES,
-            "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
-        },
+        "limits": phase_limits,
     }
 
 
@@ -799,7 +790,7 @@ def run_task041_mode_prep(
         raise Task041ModePrepError("source_sha must be a lowercase 40-character SHA")
     specification = load_and_resolve(input_path)
     normalized = specification.as_jsonable()
-    contract = _task041_case_contract(normalized, comm.size)
+    contract = _task041_case_contract(normalized, comm.size, phase="producer")
     root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
     result: dict[str, Any] = {
@@ -1619,7 +1610,7 @@ def run_task041_consumer(
         raise Task041ModePrepError("packet manifest SHA must be a lowercase SHA256")
     specification = load_and_resolve(input_path)
     normalized = specification.as_jsonable()
-    contract = _task041_case_contract(normalized, comm.size)
+    contract = _task041_case_contract(normalized, comm.size, phase="consumer")
     root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
     result: dict[str, Any] = {
