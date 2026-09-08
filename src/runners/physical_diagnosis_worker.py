@@ -35,7 +35,7 @@ def save_packet(directory,name,facts):
     _atomic_json(directory/(name+'.json'),record)
 
 
-def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4=False,actual_errors=None):
+def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4=False,actual_errors=None,balanced_v5=False):
     from mpi4py import MPI
     from petsc4py import PETSc
     import petsc4py,slepc4py,dolfinx,mpi4py,basix
@@ -71,6 +71,9 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4
     if actual_errors:
         from .actual_error_diagnosis import load_actual_evidence
         actual_inputs=load_actual_evidence(actual_errors,inventory_path,reused)
+        if balanced_v5:
+            from .physical_balanced_controls import load_balanced_inputs
+            actual_inputs['balanced_samples']=load_balanced_inputs(actual_inputs)
     selected=[s for s in inventory['samples'] if s['label'] in ('A2R160','LIGHT448','JOINT448')]
     if [s['label'] for s in selected]!=['A2R160','LIGHT448','JOINT448']:
         raise ValueError('frozen primary sample order changed')
@@ -141,6 +144,10 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4
         save_packet(directory,'modes',dict(mode_sha256=fine['mode_sha256'],mode_manifest_path=str(directory/'mode_manifest.json'),inventory=modes,
             selected=[incident]+near,selection='incident plus three closest abs(outgoing kz) distinct side/order branches'))
         if actual_errors:
+            if balanced_v5:
+                from .physical_balanced_controls import run_balanced_controls
+                run_balanced_controls(bundle,cfg,actions,b,directory,source_sha,ledger,sample,summary,actual_inputs)
+                return summary
             from .actual_error_diagnosis import run_actual_errors
             run_actual_errors(bundle,cfg,actions,b,directory,source_sha,ledger,sample,summary,actual_inputs)
             return summary
