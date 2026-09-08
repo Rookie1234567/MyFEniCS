@@ -1,0 +1,12 @@
+{
+  "schema": "task39extra.matched-actual-error-input.v1",
+  "inventory_sha256": "ba9fdf38471b90f5aac58d380ea4552cfb3e49bb0ed865e2db6af167c3a32d43",
+  "reference_source_sha": "f09476792d9928d6169cae8cc16b4c008f9bc694",
+  "reference_root": "benchmarks/artifacts/task39extra/fine_reference_followup/f09476792d9928d6169cae8cc16b4c008f9bc694/reference_v2",
+  "reference_audit": "benchmarks/artifacts/task39extra/fine_reference_followup/reference_v2_formal_audit.json",
+  "reference_audit_sha256": "006abd4b7f960391e8cee30d68c97106b2499d96bd26e6a1177e1b8745324ab6",
+  "completion_root": "benchmarks/artifacts/task39extra/v4_completion/b127546f172e46d0b217680338b4e0ea7aa39f12/mpi1",
+  "completion_audit": "benchmarks/artifacts/task39extra/v4_completion/b127546f172e46d0b217680338b4e0ea7aa39f12/completion_audit.json",
+  "completion_audit_sha256": "176c85cbd9b2bc66a8cc9c451a850fbc1ecd5c00dc47554516634750110154df",
+  "samples": ["A2R160", "LIGHT448", "JOINT448"]
+}

@@ -35,7 +35,7 @@ def save_packet(directory,name,facts):
     _atomic_json(directory/(name+'.json'),record)
 
 
-def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4=False):
+def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4=False,actual_errors=None):
     from mpi4py import MPI
     from petsc4py import PETSc
     import petsc4py,slepc4py,dolfinx,mpi4py,basix
@@ -64,9 +64,13 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4
     cfg=simulation_config_3d_from_normalized(payload)
     inventory=json.loads(inventory_path.read_text())
     reused=None
-    if completion_v4:
+    if completion_v4 or actual_errors:
         from .physical_diagnostic_completion import reuse_v3
         reused=reuse_v3(inventory)
+    actual_inputs=None
+    if actual_errors:
+        from .actual_error_diagnosis import load_actual_evidence
+        actual_inputs=load_actual_evidence(actual_errors,inventory_path,reused)
     selected=[s for s in inventory['samples'] if s['label'] in ('A2R160','LIGHT448','JOINT448')]
     if [s['label'] for s in selected]!=['A2R160','LIGHT448','JOINT448']:
         raise ValueError('frozen primary sample order changed')
@@ -93,12 +97,12 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4
     save_packet(directory,'environment',summary)
     try:
         bundle=build_physical_intermediate_solver(cfg,MPI.COMM_WORLD,resource_sample=sample,
-                    marker=ledger.marker,reference=True,defer_reference=completion_v4)
+                    marker=ledger.marker,reference=True,defer_reference=bool(completion_v4 or actual_errors))
         qualification=qualify_physical_intermediate_setup(bundle,marker=ledger.marker,resource_sample=sample)
         mesh_identity=_mesh_identity(bundle['levels']['mesh'])
         save_packet(directory,'setup_identity',dict(qualification=qualification,mesh=mesh_identity,
             quadrature=bundle['actions']['volume_quadrature_metadata'],
-            factor=None if completion_v4 else bundle['reference_factor'].audit))
+            factor=None if completion_v4 or actual_errors else bundle['reference_factor'].audit))
         for key in ('canonical_connectivity_sha256','canonical_geometry_sha256','cells_global'):
             if mesh_identity[key]!=inventory['mesh_witness']['identity'][key]:
                 raise RuntimeError('rebuilt mesh differs from frozen same-model witness: '+key)
@@ -136,6 +140,10 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4
                     key=lambda r:abs(complex(r['beta'])))[:3]
         save_packet(directory,'modes',dict(mode_sha256=fine['mode_sha256'],mode_manifest_path=str(directory/'mode_manifest.json'),inventory=modes,
             selected=[incident]+near,selection='incident plus three closest abs(outgoing kz) distinct side/order branches'))
+        if actual_errors:
+            from .actual_error_diagnosis import run_actual_errors
+            run_actual_errors(bundle,cfg,actions,b,directory,source_sha,ledger,sample,summary,actual_inputs)
+            return summary
         if completion_v4:
             from .physical_diagnostic_completion import run_completion_controls
             run_completion_controls(bundle,cfg,actions,b,inventory,directory,source_sha,ledger,sample,summary,reused)

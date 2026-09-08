@@ -111,9 +111,12 @@ def project_error(prolong, adjoint, mass, diagonal, e, *, rtol=1e-10, max_it=256
                 interpretation='measured projection' if closed else 'approximation upper bound only')
 
 
-def correction_diagnostics(action, mass, e, q, direction):
+def correction_diagnostics(action, mass, e, q, direction, *, saved_applied_direction=None):
     """Compare an existing direction with e; MR minimizes original q residual."""
-    applied = copied_apply(action,direction)
+    applied = (copied_apply(action,direction) if saved_applied_direction is None
+               else np.array(saved_applied_direction,dtype=np.complex128,copy=True))
+    if applied.shape!=np.shape(q) or not np.isfinite(applied).all():
+        raise ValueError('invalid saved applied direction')
     qnorm_raw = float(np.linalg.norm(q))
     qnorm = max(qnorm_raw,np.finfo(float).tiny)
     anorm = np.linalg.norm(applied)
@@ -129,14 +132,17 @@ def correction_diagnostics(action, mass, e, q, direction):
                 mr_true_residual_ratio=float(np.linalg.norm(q-alpha*applied)/qnorm))
 
 
-def coarse_diagnostics(action, mass, prolong, adjoint, solve, e, projection, *, identity_check=True):
+def coarse_diagnostics(action, mass, prolong, adjoint, solve, e, projection, *, identity_check=True, saved_q=None):
     """Reuse one dG for the error decomposition; one extra coarse identity solve."""
-    q = copied_apply(action,e)
-    coarse = copied_apply(solve,copied_apply(adjoint,q))
+    q = copied_apply(action,e) if saved_q is None else np.array(saved_q,copy=True)
+    if q.shape!=np.shape(e) or not np.isfinite(q).all():
+        raise ValueError('invalid saved error action')
+    g = copied_apply(adjoint,q)
+    coarse = copied_apply(solve,g)
     dg = copied_apply(prolong,coarse)
     result = correction_diagnostics(action,mass,e,q,dg)
     parallel,perp = projection['parallel'],projection['perpendicular']
-    result.update(dg_in_range_P=True, dg=dg, q=q)
+    result.update(dg_in_range_P=True, dg=dg, q=q,coarse=coarse,g=g)
     if parallel is not None:
         left = result['unit_remaining_energy']
         right = metric_square(mass,perp)+metric_square(mass,parallel-dg)

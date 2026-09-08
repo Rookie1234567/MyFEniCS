@@ -14,9 +14,9 @@ def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
     """
     from benchmarks.subreaper_watchdog import supervise
     from .task038_launcher import _physical_source_gate
-    if kind not in ('diagnosis','reference','completion_v4','reference_symbolic'):
+    if kind not in ('diagnosis','reference','completion_v4','reference_symbolic','actual_errors'):
         raise ValueError('unknown diagnostic workflow kind')
-    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400,'reference_symbolic':1800}[kind])
+    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400,'reference_symbolic':1800,'actual_errors':5400}[kind])
     state = _physical_source_gate(Path.cwd(),expected_sha)
     result = supervise(command,Path(directory),wall_seconds=limit,phase_path=Path(phase_path),
                        source_state=state,interval=.25,grace_seconds=2,
@@ -149,14 +149,18 @@ def main():
     parser.add_argument('--cache-path',type=Path)
     parser.add_argument('--worker',action='store_true')
     parser.add_argument('--completion-v4',action='store_true')
+    parser.add_argument('--actual-errors',type=Path)
     args=parser.parse_args()
+    if args.completion_v4 and args.actual_errors:
+        parser.error('completion-v4 and actual-errors are separate workflows')
     _physical_source_gate(Path.cwd(),args.expected_sha)
     if args.worker:
         from .physical_diagnosis_worker import run_diagnosis
-        run_diagnosis(args.input,args.inventory,args.directory,args.expected_sha,completion_v4=args.completion_v4)
+        run_diagnosis(args.input,args.inventory,args.directory,args.expected_sha,
+                      completion_v4=args.completion_v4,actual_errors=args.actual_errors)
         return 0
     args.directory.mkdir(parents=True,exist_ok=False)
-    workflow_limit=5400 if args.completion_v4 else 7200
+    workflow_limit=5400 if args.completion_v4 or args.actual_errors else 7200
     start=clock_sample()
     pre_budget=ClockBudget(start,policy=CONSERVATIVE_REALTIME)
     post_budget=None
@@ -178,6 +182,11 @@ def main():
     if args.completion_v4:
         manifest.update(kind='completion_v4',complete_pc_limit=8,logical_p4_rhs_limit=10,
                         external_MatSolve_limit=30,workflow_limit_seconds=5400)
+    if args.actual_errors:
+        manifest.update(kind='actual_errors',complete_pc_limit=0,independent_smoother_limit=6,
+                        logical_p4_rhs_limit=4,external_MatSolve_limit=12,workflow_limit_seconds=5400,
+                        reference='matched_discrete_reference_hash_gate',
+                        actual_evidence_manifest_sha256=hashlib.sha256(args.actual_errors.read_bytes()).hexdigest())
     _atomic_json(args.directory/'launch.json',manifest)
     command=['mpiexec','-n','1',sys.executable,'-m','src.runners.physical_diagnosis',
         '--worker','--directory',str(args.directory),'--input',str(args.input),
@@ -185,10 +194,12 @@ def main():
         '--remaining-seconds',str(args.remaining_seconds)]
     if args.completion_v4:
         command.append('--completion-v4')
+    if args.actual_errors:
+        command.extend(['--actual-errors',str(args.actual_errors)])
     result=None
     try:
         result=supervise_diagnosis(command,args.directory/'watchdog',phase_path=args.directory/'phase.json',
-            expected_sha=args.expected_sha,kind='completion_v4' if args.completion_v4 else 'diagnosis',
+            expected_sha=args.expected_sha,kind='actual_errors' if args.actual_errors else ('completion_v4' if args.completion_v4 else 'diagnosis'),
             remaining_seconds=min(workflow_limit,args.remaining_seconds)-pre_budget.update(clock_sample())['budget_seconds'],
             cache_path=args.cache_path)
         manifest['supervision']=result
