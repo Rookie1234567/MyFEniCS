@@ -44,6 +44,7 @@ def worker(args):
     from benchmarks.subreaper_watchdog import memory_envelope
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
     from .physical_recursive_controls import run_recursive_components
+    from .workflow_timebase import clock_sample
     if (os.environ.get('_MYFENICS_WSL_QUALIFIED_ACTIVATION')!='1' or
         os.environ.get('PHYSICAL_TIMEBASE_GUARD')!='1' or not os.path.samefile(sys.executable,'.venv/bin/python') or
         MPI.COMM_WORLD.size!=1 or PETSc.ScalarType is not np.complex128 or PETSc.IntType is not np.int32):
@@ -62,8 +63,16 @@ def worker(args):
     atomic(root/'resolved_config.json',dict(physical_input=payload,component_profile=contract,
         original_dat_solver_role='physical template only; old V5 PC is not invoked'))
     import petsc4py,slepc4py,dolfinx,basix,mpi4py
+    inventory=json.loads(Path(args.inventory).read_text())
+    evidence_root=Path(inventory['six_calibration_rhs'][0]['input_json']).parent
+    native_maps={str(level):dict(path=str(evidence_root/f'native_constraint_map_p{level}.json'),
+        sha256=hashlib.sha256((evidence_root/f'native_constraint_map_p{level}.json').read_bytes()).hexdigest()) for level in (6,4)}
     manifest=dict(source=source,input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest(),
         resolved_sha256=hashlib.sha256((root/'resolved_config.json').read_bytes()).hexdigest(),
+        command=[sys.executable,'-m','src.runners.physical_recursive_entry',*sys.argv[1:]],
+        cwd=str(Path.cwd()),physical_sha256=payload['provenance']['physical_model_sha256'],
+        mode_sha256=inventory['models'][0]['mode_sha'],native_maps=native_maps,
+        native_map_bridge='exact fieldwise comparison to saved maps before component calls',
         profile=contract,abi=dict(python=sys.executable,scalar='complex128',integer='int32',threads=threads,
             modules={m.__name__:m.__file__ for m in (petsc4py,slepc4py,dolfinx,basix,mpi4py)}),
         inventory_sha256=hashlib.sha256(Path(args.inventory).read_bytes()).hexdigest())
@@ -76,16 +85,24 @@ def worker(args):
             raise RuntimeError('whole-tree resource gate failed')
         return value
     def marker(name,facts):
-        atomic(root/'phase.json',dict(phase='components',stage=name))
-        with (root/'stages.jsonl').open('a') as stream:stream.write(json.dumps(dict(stage=name,facts=facts))+'\n')
-    run_recursive_components(cfg,MPI.COMM_WORLD,args.inventory,root/'records',
-        target=contract['I4']['target'],sample=sample,marker=marker)
+        stamp=clock_sample()
+        atomic(root/'phase.json',dict(phase='components',stage=name,clock=stamp))
+        with (root/'stages.jsonl').open('a') as stream:stream.write(json.dumps(dict(stage=name,clock=stamp,facts=facts))+'\n')
+    try:
+        run_recursive_components(cfg,MPI.COMM_WORLD,args.inventory,root/'records',
+            target=contract['I4']['target'],sample=sample,marker=marker)
+    finally:
+        identity=root/'records'/'fresh_identity.json'
+        manifest['native_map_bridge_status']='PASS' if identity.exists() else 'NOT_REACHED'
+        if identity.exists():
+            manifest['fresh_identity']=dict(path=str(identity),sha256=hashlib.sha256(identity.read_bytes()).hexdigest())
+        atomic(root/'run_manifest.json',manifest)
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('input','inventory','output','budget','source-sha'):parser.add_argument('--'+name,required=True)
-    parser.add_argument('--target',choices=('lo','hi'),default='lo')
+    parser.add_argument('--target',choices=('lo',),default='lo')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
     args=parser.parse_args()
     if args.worker:return worker(args)
