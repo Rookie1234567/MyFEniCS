@@ -15,6 +15,7 @@ import time
 import numpy as np
 
 from src.io.physical_intermediate_profile import PROFILE, PROFILES, REFERENCE_PROFILE, profile_facts
+from .workflow_timebase import TimebaseInconsistency, checked_interval, clock_info, clock_sample
 
 
 def _jsonable(value):
@@ -50,6 +51,10 @@ class WorkflowLedger:
         self.phase = 'setup'
         self.started = time.monotonic()
         self.phase_started = self.started
+        self.timebase_guard = os.environ.get('PHYSICAL_TIMEBASE_GUARD') == '1'
+        self.started_clock = clock_sample() if self.timebase_guard else None
+        self.phase_started_clock = self.started_clock
+        self.clock_information = clock_info() if self.timebase_guard else None
         self.pc_counts = Counter()
         self.joint_cycle = []
         self.last_safe = None
@@ -60,6 +65,8 @@ class WorkflowLedger:
 
     def set_phase(self, phase: str) -> None:
         self.phase, self.phase_started = phase, time.monotonic()
+        if self.timebase_guard:
+            self.phase_started_clock = clock_sample()
         self.marker(phase + '_started', {})
 
     def marker(self, stage: str, facts: dict, *, allow_stop: bool = False) -> None:
@@ -72,8 +79,20 @@ class WorkflowLedger:
             updated_monotonic=time.monotonic(), facts=facts)
         if self.application_worker is not None:
             record['application_worker'] = self.application_worker
+        clock_error = None
+        if self.timebase_guard:
+            record.update(clock=clock_sample(), phase_started_clock=self.phase_started_clock,
+                          workflow_started_clock=self.started_clock, clock_info=self.clock_information)
+            try:
+                checked_interval(self.started_clock, record['clock'])
+                checked_interval(self.phase_started_clock, record['clock'])
+            except TimebaseInconsistency as exc:
+                clock_error = exc
+                record['clock_error'] = str(exc)
         self.append('stages.jsonl', record)
         _atomic_json(self.phase_path, record)
+        if clock_error is not None:
+            raise clock_error
 
     def append(self, name: str, facts: dict) -> None:
         with (self.directory / name).open('a') as output:
@@ -392,6 +411,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary.update(status='CONTROLLED_STOP' if isinstance(exc, InterruptedError) else 'FAILED',
                        exception_type=type(exc).__name__, exception_message=str(exc),
                        failed_stage=ledger.last_stage, failed_phase=ledger.phase)
+        if isinstance(exc, TimebaseInconsistency):
+            summary['status'] = 'TIMEBASE_INCONSISTENCY'
         if isinstance(exc, ReferenceResourceBlocked):
             summary['status'] = 'REFERENCE_RESOURCE_BLOCKED'
         raise
@@ -419,13 +440,14 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 rhs.destroy()
             destroy_physical_intermediate_solver(bundle)
         summary['elapsed_monotonic_seconds'] = time.monotonic()-ledger.started
-        if summary['elapsed_monotonic_seconds'] > workflow_limit or ledger.stop_signal is not None:
+        if summary['status'] != 'TIMEBASE_INCONSISTENCY' and (
+                summary['elapsed_monotonic_seconds'] > workflow_limit or ledger.stop_signal is not None):
             summary['status'] = 'PERFORMANCE_CONTROLLED_STOP' if ledger.stop_signal is None else 'CONTROLLED_STOP'
             summary.setdefault('failed_stage', ledger.last_stage)
             if outcome is not None:
                 outcome.update(passed=False, errors=[summary['status']])
         _atomic_json(directory / 'physical_intermediate_summary.json', summary)
-        if summary['status'] not in ('FAILED', 'CONTROLLED_STOP', 'PERFORMANCE_CONTROLLED_STOP', 'REFERENCE_RESOURCE_BLOCKED'):
+        if summary['status'] not in ('FAILED', 'CONTROLLED_STOP', 'PERFORMANCE_CONTROLLED_STOP', 'REFERENCE_RESOURCE_BLOCKED', 'TIMEBASE_INCONSISTENCY'):
             ledger.set_phase('complete')
         for signum, handler in previous_handlers.items():
             signal.signal(signum, handler)

@@ -19,6 +19,8 @@ import time
 
 from benchmarks.task034_wsl_resources import current_cgroup_path, vmstat_swap_pages, wsl_memory_snapshot
 from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
+from src.runners.workflow_timebase import (TimebaseInconsistency, budget_elapsed,
+    checked_interval, clock_info, clock_sample)
 
 
 def memory_envelope() -> dict:
@@ -122,7 +124,7 @@ def _cache_stamp(path: Path | None) -> str:
 
 
 def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
-    hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED')
+    hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'TIMEBASE_INCONSISTENCY')
     return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
 
 
@@ -131,7 +133,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               cache_path: Path | None = None, phase_path: Path | None = None,
               solve_seconds: float | None = None, source_state: dict | None = None,
               worker_environment: dict | None = None, hard_stop_immediate: bool = False,
-              cooperative_performance_stop: bool = False) -> dict:
+              cooperative_performance_stop: bool = False,
+              timebase_guard: bool = False) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     if not command or min(wall_seconds, interval, grace_seconds) <= 0:
         raise ValueError('command and positive monitoring budgets are required')
@@ -161,12 +164,20 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     observed = set()
     leader = None
     summary = {}
+    clock_start = clock_sample() if timebase_guard else None
+    clock_previous = clock_start
+    stop_clock = None
+    if timebase_guard:
+        summary.update(clock_info=clock_info(), clock_start=clock_start)
     stage = 'launch'
     swap_baseline = vmstat_swap_pages()
     try:
         with (directory / 'worker.log').open('w') as output, (directory / 'resources.jsonl').open('w') as timeline:
             environment = os.environ.copy()
             environment.update(worker_environment or {})
+            if timebase_guard:
+                checked_interval(clock_start, clock_start)
+                environment['PHYSICAL_TIMEBASE_GUARD'] = '1'
             if phase_path is not None:
                 environment.update(PHYSICAL_WATCHDOG_PARENT_PID=str(os.getpid()),
                                    PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES=str(cap),
@@ -185,6 +196,26 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}
                 solve_expired = (solve_seconds is not None and phase.get('phase') == 'solve'
                                  and time.monotonic() - phase['phase_started_monotonic'] >= solve_seconds)
+                clock_issue = None
+                deadline_elapsed = elapsed
+                if timebase_guard:
+                    clock_now = clock_sample()
+                    sample.update(parent_clock=clock_now, parent_clock_start=clock_start)
+                    try:
+                        sample['workflow_clock_interval'] = checked_interval(clock_start, clock_now)
+                        checked_interval(clock_previous, clock_now)
+                        deadline_elapsed = sample['workflow_clock_interval']['budget_seconds']
+                        if phase.get('clock_error'):
+                            raise TimebaseInconsistency(phase['clock_error'])
+                        if phase.get('phase') == 'solve':
+                            sample['solve_clock_interval'] = checked_interval(phase.get('phase_started_clock', {}), clock_now)
+                            solve_expired = (solve_seconds is not None and
+                                            sample['solve_clock_interval']['budget_seconds'] >= solve_seconds)
+                    except TimebaseInconsistency as exc:
+                        clock_issue = str(exc)
+                        sample['clock_error'] = clock_issue
+                        summary.setdefault('clock_error', clock_issue)
+                    clock_previous = clock_now
                 if not sample['all_status_readable']:
                     reason = 'MONITORING_FAILED'
                 else:
@@ -194,7 +225,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         'RESOURCE_CONTROLLED_STOP' if sample['rss_bytes'] >= cap
                         or current['effective_available_bytes'] < current['reserve_bytes']
                         or sample['swap_bytes'] != 0 else
-                        'PERFORMANCE_CONTROLLED_STOP' if elapsed >= wall_seconds or solve_expired else
+                        'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
+                        'TIMEBASE_INCONSISTENCY' if clock_issue else
+                        'PERFORMANCE_CONTROLLED_STOP' if deadline_elapsed >= wall_seconds or solve_expired else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
                 sample.update({'elapsed_seconds': elapsed, 'memory_envelope': current,
                                'worker_phase': phase,
@@ -206,11 +239,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 samples += 1
                 if reason and classification is None:
                     classification, stop_started = reason, time.monotonic()
+                    stop_clock = clock_sample() if timebase_guard else None
                     summary['stop_event'] = dict(reason=reason, monotonic=stop_started,
                         timestamp_ns=time.time_ns(), grace_seconds=grace_seconds)
                 if classification is not None and children:
-                    signum = stop_signal(reason, hard_stop_immediate=hard_stop_immediate,
-                        elapsed=time.monotonic()-stop_started, grace_seconds=grace_seconds)
+                    signum = stop_signal(classification, hard_stop_immediate=hard_stop_immediate,
+                        elapsed=budget_elapsed(stop_clock, clock_sample()) if timebase_guard
+                        else time.monotonic()-stop_started, grace_seconds=grace_seconds)
                     if (cooperative_performance_stop and classification == 'PERFORMANCE_CONTROLLED_STOP'
                             and signum == signal.SIGTERM):
                         if 'cooperative_stop_request' not in summary:
@@ -234,18 +269,21 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 else:
                     stable_since = None
                     cache_stamp = None
-                if stop_started is not None and time.monotonic() - stop_started > grace_seconds + 10:
+                if stop_started is not None and (budget_elapsed(stop_clock, clock_sample())
+                        if timebase_guard else time.monotonic() - stop_started) > grace_seconds + 10:
                     raise RuntimeError('descendants did not clear after SIGKILL')
                 time.sleep(interval)
         summary['cache_metadata_stable'] = True
     except BaseException as exc:
-        classification = 'MONITORING_FAILED'
+        classification = 'TIMEBASE_INCONSISTENCY' if isinstance(exc, TimebaseInconsistency) else 'MONITORING_FAILED'
         summary.update({'exception_stage': stage, 'exception_type': type(exc).__name__,
                         'exception_message': str(exc), 'cache_metadata_stable': False})
     finally:
         # Also close the tree if sampling, JSON writing, or the parent fails.
         deadline = time.monotonic() + grace_seconds + 10
-        while leader is not None and _children() and time.monotonic() < deadline:
+        cleanup_clock = clock_sample() if timebase_guard else None
+        while leader is not None and _children() and (budget_elapsed(cleanup_clock, clock_sample())
+                < grace_seconds + 10 if timebase_guard else time.monotonic() < deadline):
             _signal_children(signal.SIGKILL)
             leader.poll()
             _reap_adopted(leader.pid)
@@ -275,6 +313,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             'cache_metadata_stamp': cache_stamp,
             'source_state': source_state if source_state is not None else 'development_worktree; not formal PDE provenance',
         })
+        if timebase_guard:
+            summary['clock_end'] = clock_sample()
         (directory / 'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False) + '\n')
     return summary
 
@@ -286,12 +326,13 @@ def main() -> int:
     parser.add_argument('--interval', type=float, default=.25)
     parser.add_argument('--grace-seconds', type=float, default=2)
     parser.add_argument('--cache-path', type=Path)
+    parser.add_argument('--timebase-guard', action='store_true')
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     summary = supervise(command, args.directory, wall_seconds=args.wall_seconds,
                         interval=args.interval, grace_seconds=args.grace_seconds,
-                        cache_path=args.cache_path)
+                        cache_path=args.cache_path, timebase_guard=args.timebase_guard)
     print(json.dumps(summary, allow_nan=False), flush=True)
     return 0 if summary['classification'] == 'COMPLETED' else 2
 

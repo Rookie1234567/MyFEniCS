@@ -1,0 +1,865 @@
+{
+  "schema": "task39extra.v3.d0-readonly.v1",
+  "source_sha": "97e82eeb08b6c2faef6457356cdc643832a75eb8",
+  "samples": [
+    {
+      "label": "A2R160",
+      "role": "primary_checkpoint",
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p4_reference__full3d_iterative__mpi1__Mna/20260907T103208.050570Z/checkpoints/iteration_000160",
+      "manifest_sha256": "2aea396923773a07f6b51e9cd044bbf511eb28627d7c87fb9cb72cc50e9aa6df",
+      "solution_sha256": "4158d89c90bc949a23b9383f7531dd915fd705d6970367a8371757d66a5caec5",
+      "checks": {
+        "solution_hash": true,
+        "solution_bytes": true,
+        "shape": true,
+        "dtype": true,
+        "finite": true,
+        "input_hash": true,
+        "resolved_hash": true,
+        "source": true,
+        "physical": true,
+        "mpi": true,
+        "role": true
+      },
+      "source_sha": "54ab46cf4c8378a9b27650ca6963cadb34013a2f",
+      "input_sha256": "7b0d90dc18e222d5d01e52deb06c12b41f37862fda5cf8e3a4e1565f3f7af999",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "operator_sha256": "53d6334a986f711c23685711451c956d269529f52bf583f4fc933f949756ca68",
+      "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "ownership": {
+        "global_size": 173802,
+        "local_size": 173802,
+        "ownership_range": [
+          0,
+          173802
+        ],
+        "rank": 0
+      },
+      "historical_true_residual": 0.18250767622880507,
+      "historical_setup": {
+        "classification": "setup_identity_only",
+        "independent_rows": {
+          "1": 792,
+          "2": 6192,
+          "3": 20736,
+          "4": 48960,
+          "6": 164592
+        },
+        "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "owned_slaves": {
+          "1": 275,
+          "2": 1054,
+          "3": 2337,
+          "4": 4124,
+          "6": 9210
+        },
+        "pairs": {
+          "6->4": {
+            "adjoint_relative_error": 1.8169380502899065e-14,
+            "limit": 1e-10,
+            "native_galerkin_relative_errors": {
+              "physical": 3.597817171089689e-15
+            }
+          }
+        },
+        "rows": {
+          "1": 1067,
+          "2": 7246,
+          "3": 23073,
+          "4": 53084,
+          "6": 173802
+        }
+      },
+      "canonical_status": "UNRESOLVED: native checkpoint has no canonical map; rebuild validation required",
+      "fresh_residual_status": "not_run"
+    },
+    {
+      "label": "LIGHT448",
+      "role": "primary_checkpoint",
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p6smooth_p4ref_p6smooth__full3d_iterative__mpi1__Mna/20260907T223143.281687Z/checkpoints/iteration_000448",
+      "manifest_sha256": "fdbcc368f8effbfeebb7ff74c84c1106a4b5b9edf72d63b73f866e3bbcb959ce",
+      "solution_sha256": "7ebe388ab13dacea58bc858c506b02d58135cec4465d0f2c98c1ac0f95d8b849",
+      "checks": {
+        "solution_hash": true,
+        "solution_bytes": true,
+        "shape": true,
+        "dtype": true,
+        "finite": true,
+        "input_hash": true,
+        "resolved_hash": true,
+        "source": true,
+        "physical": true,
+        "mpi": true,
+        "role": true
+      },
+      "source_sha": "cbf56e87e515ab0c3fc5756cb6cf52feb047f610",
+      "input_sha256": "6988c7fe637b14ded3e2567553bb914ac488771cf3a4e0a127fbfb83e77e7123",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "operator_sha256": "747d2a4946c95765856dc2cf05ac37426ac04654e4e5988c4791400ab0233a1e",
+      "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "ownership": {
+        "global_size": 173802,
+        "local_size": 173802,
+        "ownership_range": [
+          0,
+          173802
+        ],
+        "rank": 0
+      },
+      "historical_true_residual": 0.09814591160304939,
+      "historical_setup": {
+        "classification": "setup_identity_only",
+        "independent_rows": {
+          "4": 48960,
+          "6": 164592
+        },
+        "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "owned_slaves": {
+          "4": 4124,
+          "6": 9210
+        },
+        "pairs": {
+          "6->4": {
+            "adjoint_relative_error": 1.8169380502899065e-14,
+            "limit": 1e-10,
+            "native_galerkin_relative_errors": {
+              "physical": 3.597817171089689e-15
+            }
+          }
+        },
+        "rows": {
+          "4": 53084,
+          "6": 173802
+        }
+      },
+      "canonical_status": "UNRESOLVED: native checkpoint has no canonical map; rebuild validation required",
+      "fresh_residual_status": "not_run"
+    },
+    {
+      "label": "JOINT448",
+      "role": "primary_checkpoint",
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_light_p4ref_jointmr3_v2__full3d_iterative__mpi1__Mna/20260908T034629.980337Z/checkpoints/iteration_000448",
+      "manifest_sha256": "4b919142c3e80cbd2459691a7dddbcd3d5034e0fa8c6b699c4192501873ea9d1",
+      "solution_sha256": "68cd4df96c0360bb0e835035a3dd11f967518f792d772a924b5a231fb9b07fca",
+      "checks": {
+        "solution_hash": true,
+        "solution_bytes": true,
+        "shape": true,
+        "dtype": true,
+        "finite": true,
+        "input_hash": true,
+        "resolved_hash": true,
+        "source": true,
+        "physical": true,
+        "mpi": true,
+        "role": true
+      },
+      "source_sha": "60b8df2a24cbcd96e49e018be22fb64f06eeae3f",
+      "input_sha256": "f6782632480f9e7852ad0d82e5c7f7ec8dd400256d1e9ce49a905a4131eafbd0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "operator_sha256": "a15f76ed923369d17c3f9c7b7dcdb262c197d32027e6f22b2478a34184fc5942",
+      "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "ownership": {
+        "global_size": 173802,
+        "local_size": 173802,
+        "ownership_range": [
+          0,
+          173802
+        ],
+        "rank": 0
+      },
+      "historical_true_residual": 0.10713326900483655,
+      "historical_setup": {
+        "classification": "setup_identity_only",
+        "independent_rows": {
+          "4": 48960,
+          "6": 164592
+        },
+        "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "owned_slaves": {
+          "4": 4124,
+          "6": 9210
+        },
+        "pairs": {
+          "6->4": {
+            "adjoint_relative_error": 1.8169380502899065e-14,
+            "limit": 1e-10,
+            "native_galerkin_relative_errors": {
+              "physical": 3.597817171089689e-15
+            }
+          }
+        },
+        "rows": {
+          "4": 53084,
+          "6": 173802
+        }
+      },
+      "canonical_status": "UNRESOLVED: native checkpoint has no canonical map; rebuild validation required",
+      "fresh_residual_status": "not_run"
+    },
+    {
+      "label": "LIGHT576",
+      "role": "offline_terminal_only",
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p6smooth_p4ref_p6smooth__full3d_iterative__mpi1__Mna/20260907T223143.281687Z/checkpoints/iteration_000576",
+      "manifest_sha256": "ecd87729bd7126f7fcaa3a7e99cfb336e2178649ccbda759369851f49e1bc2b2",
+      "solution_sha256": "3c6ecb49f2a397ddccd4c75305fe4d1870928de144bca76bd8d53e515e1d4b5b",
+      "checks": {
+        "solution_hash": true,
+        "solution_bytes": true,
+        "shape": true,
+        "dtype": true,
+        "finite": true,
+        "input_hash": true,
+        "resolved_hash": true,
+        "source": true,
+        "physical": true,
+        "mpi": true,
+        "role": true
+      },
+      "source_sha": "cbf56e87e515ab0c3fc5756cb6cf52feb047f610",
+      "input_sha256": "6988c7fe637b14ded3e2567553bb914ac488771cf3a4e0a127fbfb83e77e7123",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "operator_sha256": "747d2a4946c95765856dc2cf05ac37426ac04654e4e5988c4791400ab0233a1e",
+      "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "ownership": {
+        "global_size": 173802,
+        "local_size": 173802,
+        "ownership_range": [
+          0,
+          173802
+        ],
+        "rank": 0
+      },
+      "historical_true_residual": 0.0791360407785889,
+      "historical_setup": {
+        "classification": "setup_identity_only",
+        "independent_rows": {
+          "4": 48960,
+          "6": 164592
+        },
+        "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "owned_slaves": {
+          "4": 4124,
+          "6": 9210
+        },
+        "pairs": {
+          "6->4": {
+            "adjoint_relative_error": 1.8169380502899065e-14,
+            "limit": 1e-10,
+            "native_galerkin_relative_errors": {
+              "physical": 3.597817171089689e-15
+            }
+          }
+        },
+        "rows": {
+          "4": 53084,
+          "6": 173802
+        }
+      },
+      "canonical_status": "UNRESOLVED: native checkpoint has no canonical map; rebuild validation required",
+      "fresh_residual_status": "not_run"
+    },
+    {
+      "label": "JOINT476",
+      "role": "offline_terminal_only",
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_light_p4ref_jointmr3_v2__full3d_iterative__mpi1__Mna/20260908T034629.980337Z/checkpoints/iteration_000476",
+      "manifest_sha256": "6abae5ff20f5a61cfe70916a1f2c261b832332d0aa598f6cfdf33eeb310bf9f9",
+      "solution_sha256": "81e9d92192dafcdc633712b77f55a011e13b015c3347466012bbba09bb4ff3d7",
+      "checks": {
+        "solution_hash": true,
+        "solution_bytes": true,
+        "shape": true,
+        "dtype": true,
+        "finite": true,
+        "input_hash": true,
+        "resolved_hash": true,
+        "source": true,
+        "physical": true,
+        "mpi": true,
+        "role": true
+      },
+      "source_sha": "60b8df2a24cbcd96e49e018be22fb64f06eeae3f",
+      "input_sha256": "f6782632480f9e7852ad0d82e5c7f7ec8dd400256d1e9ce49a905a4131eafbd0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "operator_sha256": "a15f76ed923369d17c3f9c7b7dcdb262c197d32027e6f22b2478a34184fc5942",
+      "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "ownership": {
+        "global_size": 173802,
+        "local_size": 173802,
+        "ownership_range": [
+          0,
+          173802
+        ],
+        "rank": 0
+      },
+      "historical_true_residual": 0.10535820013809101,
+      "historical_setup": {
+        "classification": "setup_identity_only",
+        "independent_rows": {
+          "4": 48960,
+          "6": 164592
+        },
+        "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+        "owned_slaves": {
+          "4": 4124,
+          "6": 9210
+        },
+        "pairs": {
+          "6->4": {
+            "adjoint_relative_error": 1.8169380502899065e-14,
+            "limit": 1e-10,
+            "native_galerkin_relative_errors": {
+              "physical": 3.597817171089689e-15
+            }
+          }
+        },
+        "rows": {
+          "4": 53084,
+          "6": 173802
+        }
+      },
+      "canonical_status": "UNRESOLVED: native checkpoint has no canonical map; rebuild validation required",
+      "fresh_residual_status": "not_run"
+    }
+  ],
+  "run_manifest_inventory": [
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p4_reference__full3d_iterative__mpi1__Mna/20260907T151503.518087Z/run_manifest.json",
+      "sha256": "76c1cf5c62bea1bd1acb30ea421933ce031acb9ddf406cb086bf28d9a8282508",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p4_reference__full3d_iterative__mpi1__Mna/20260907T102619.377183Z/run_manifest.json",
+      "sha256": "40253ee12f7f9f2fbadb5cd926db02231b531692d2165eb67c68ee9ff15512df",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "adapter_unavailable"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p4_reference__full3d_iterative__mpi1__Mna/20260907T103208.050570Z/run_manifest.json",
+      "sha256": "e581824932b8a571c64ea4c9dfbd5785f1ff9083215eb9dd27027c118cf7cc0e",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "PERFORMANCE_CONTROLLED_STOP"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p4_reference__full3d_iterative__mpi1__Mna/20260907T160802.006336Z/run_manifest.json",
+      "sha256": "bc931272e9be835e210b4565341387d85033998168b2a404b49fc427da0a0d53",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "worker_exit0"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p4_reference__full3d_iterative__mpi1__Mna/20260907T153500.381485Z/run_manifest.json",
+      "sha256": "edc59580e800ca1a038a7beea26da51428d9a626a566081d4c5e876857fec370",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_a2r_packed_equivalent_v2__full3d_iterative__mpi1__Mna/20260908T024811.160558Z/run_manifest.json",
+      "sha256": "5d8db8ee9434e0bd444b92a3471b76625452043c82225f392507d8bba180a625",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "worker_exit0"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_a2r_equivalent_fast__full3d_iterative__mpi1__Mna/20260907T171904.194763Z/run_manifest.json",
+      "sha256": "16870bbf230493b9f3f3a7c2160485bda7341103fd39448ec19d181b0eb9a025",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "worker_exit0"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_p6smooth_p4ref_p6smooth__full3d_iterative__mpi1__Mna/20260907T223143.281687Z/run_manifest.json",
+      "sha256": "6095f9422368e6d88500494541563f43e48ef2333c85e5660443d8fcfe65799d",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "PERFORMANCE_CONTROLLED_STOP"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T060236.585612Z/run_manifest.json",
+      "sha256": "374207a25b0003eac868c9d7e24b6b03ae910ce7f71e4c9461dccc05ef74d1aa",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "USER_CONTROLLED_STOP"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_physical_intermediate__full3d_iterative__mpi1__Mna/20260907T084057.057041Z/run_manifest.json",
+      "sha256": "02b4aa83221063c0bf021952a1e137f81cac9064be6368289645958f0d4708a4",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "USER_CONTROLLED_STOP"
+    },
+    {
+      "path": "results/euv_grazing1_phi0/original_13p5nm_p6h10_light_p4ref_jointmr3_v2__full3d_iterative__mpi1__Mna/20260908T034629.980337Z/run_manifest.json",
+      "sha256": "86de432aca7c3da364c337eec317555a4b65f5da2e166228120d5e7dd2630e04",
+      "model": "euv_grazing1_phi0",
+      "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "method": "full3d_iterative",
+      "classification": "WORKER_FAILED"
+    }
+  ],
+  "reference_candidates": [
+    {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_t3_formal_v2/p6-h10-mpi1/record.json",
+      "sha256": "63f9d46d35564acfe5494482d6ef4c8a84ca9840a79594e4f8a5013976c75f6c",
+      "physical": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "roles": [
+        "action",
+        "input_template",
+        "mode_manifest",
+        "recovery",
+        "reference_action",
+        "resolved_config",
+        "source"
+      ],
+      "verdict": "action equivalence source/action artifacts, not solved physical reference"
+    },
+    {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_t3_formal_v1/p6-h10-mpi1/record.json",
+      "sha256": "55089ba2c8a4f76f118f0a77c83709725e2ca47b2316927e6f2b89e05a12a229",
+      "physical": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "roles": [
+        "action",
+        "input_template",
+        "mode_manifest",
+        "recovery",
+        "reference_action",
+        "resolved_config",
+        "source"
+      ],
+      "verdict": "action equivalence source/action artifacts, not solved physical reference"
+    }
+  ],
+  "reference_status": "NO_MATCHED_SOLVED_FINE_REFERENCE_IN_INSPECTED_INDEXES",
+  "reference_limitation": "not a proof of inability on 16GB; no new reference preflight or solve yet",
+  "known_error": {
+    "recipe": "exp(i k_parallel dot x) * sin(pi t) * [a exp(2pi i (u+v)) + b sin(2pi t) exp(2pi i (2u-v))]",
+    "coordinates": "u=(x-xmin)/Lx, v=(y-ymin)/Ly, t=(z-zmin)/(zmax-zmin)",
+    "a": [
+      "1",
+      "i",
+      "1+i"
+    ],
+    "b": [
+      "1-i",
+      "2",
+      "-i"
+    ],
+    "interpolation": "same p6 Nedelec/Floquet primal interpolation; enforce independent coordinates",
+    "normalization": "normalize e and q=Ae together using original Euclidean norm(q)",
+    "frozen_before_new_actions": true,
+    "status": "not_run"
+  },
+  "interval": {
+    "elapsed_seconds": {
+      "monotonic": 0.1223301769932732,
+      "boottime": 0.12233034998644143,
+      "utc": 0.122330306
+    },
+    "budget_seconds": 0.12233034998644143,
+    "discrepancy_seconds": 1.7299316823482513e-07,
+    "tolerance_seconds": 5.0
+  },
+  "mode_file_witness": {
+    "path": "benchmarks/artifacts/task038_extra_full3d_iterative_t3_formal_v2/p6-h10-mpi1/raw/mode_manifest.json",
+    "sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "matched_all_setup_hashes": true
+  },
+  "source_comparison": {
+    "A2R160": {
+      "changed_paths": [
+        "src/io/input_schema.py",
+        "src/io/input_validation.py",
+        "src/io/physical_intermediate_profile.py",
+        "src/solvers/fullspace_memory_first_krylov.py",
+        "src/solvers/fullspace_mpc_action.py",
+        "src/solvers/fullspace_partial_assembly.py",
+        "src/solvers/fullspace_physical_action.py",
+        "src/solvers/fullspace_physical_intermediate.py",
+        "src/solvers/fullspace_physical_intermediate_runtime.py",
+        "src/solvers/fullspace_quadrature_diagonal.py",
+        "src/solvers/physical_equivalent_fast.py",
+        "src/solvers/physical_joint_mr.py",
+        "src/solvers/physical_light_setup.py",
+        "src/solvers/physical_pc_timing.py",
+        "src/solvers/physical_safe_monitor.py"
+      ],
+      "limitation": "file-level clues only; original A action and canonical validation not_run"
+    },
+    "LIGHT448": {
+      "changed_paths": [
+        "src/io/input_schema.py",
+        "src/io/input_validation.py",
+        "src/io/physical_intermediate_profile.py",
+        "src/solvers/fullspace_physical_intermediate.py",
+        "src/solvers/fullspace_physical_intermediate_runtime.py",
+        "src/solvers/physical_equivalent_fast.py",
+        "src/solvers/physical_joint_mr.py",
+        "src/solvers/physical_pc_timing.py"
+      ],
+      "limitation": "file-level clues only; original A action and canonical validation not_run"
+    },
+    "JOINT448": {
+      "changed_paths": [],
+      "limitation": "file-level clues only; original A action and canonical validation not_run"
+    }
+  },
+  "reference_capacity_preflight": {
+    "status": "REFERENCE_UNAVAILABLE_ON_16GB",
+    "scope": "examined existing direct route under current budget; no assembly/symbolic/numeric attempted",
+    "source_record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_direct_authority_v2.json",
+    "source_sha256": "6b3f5dee6c0009e6e1a1847d7a2aa496b45cae808cee0d789925af4e53163fc4",
+    "calibration_identity": {
+      "wavelength_nm": 13.5,
+      "incidence_theta_normal_deg": 80.0,
+      "grazing_angle_deg": 10.0,
+      "phi_deg": 0.0,
+      "polarization": "S",
+      "nedelec_degree": 6,
+      "h_nm": 10.0,
+      "global_mesh_cells": 252,
+      "mpi_size": 8,
+      "assembly_backend": "assembly_time_static_condensed",
+      "preflight_authority_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+    },
+    "calibration_mpi": 8,
+    "current_mpi": 1,
+    "calibration_resources": {
+      "memory_authority_gib": 15.059223175048828,
+      "process_tree_rss_mib": 15420.64453125,
+      "worker_rss_mib": 15406.0078125,
+      "worker_pss_mib": 13373.5185546875,
+      "worker_uss_mib": 13062.94140625,
+      "swap_mib": 0
+    },
+    "calibration_matrix_factor": {
+      "matrix_rows": 51272,
+      "matrix_nnz_used": 41989040,
+      "matrix_nnz_allocated": 42625520,
+      "factor_nnz": 209772680,
+      "factor_solver": "mumps",
+      "factor_nnz_source": "PETSc factor matrix stats / positive MUMPS INFOG(9)"
+    },
+    "current_envelope": {
+      "mem_total_bytes": 14654980096,
+      "mem_available_bytes": 12735438848,
+      "effective_total_bytes": 14654980096,
+      "effective_available_bytes": 12735438848,
+      "reserve_bytes": 4294967296,
+      "launch_cap_bytes": 8440471552,
+      "cgroup_limits": []
+    },
+    "derived_factor_scalar_payload_bytes": 3356362880,
+    "derived_matrix_allocated_csr_bytes": 852715492,
+    "prediction_classification": "partial_storage_estimate_not_peak_upper_bound",
+    "unknown": [
+      "MPI1 numeric fill/pivoting/work arrays",
+      "assembly and local recovery simultaneous lifetimes",
+      "allocator and duplicated data overhead",
+      "source/angle/ABI impact"
+    ],
+    "reason": "MPI8 15.059GiB measured peak exceeds current cap; partial matrix/factor storage below cap does not bound MPI1 total peak; no qualified safe upper estimate",
+    "decision": "do not numeric; continue three actual dual residual samples plus known-error field control"
+  },
+  "implementation_stage": "fixed no-reference D1/D3 worker and parent ready for clean-SHA approval; full-size not_run",
+  "focused_tests": [
+    {
+      "record": {
+        "start": {
+          "monotonic": 566585.091766964,
+          "boottime": 566585.09176797,
+          "utc_ns": 1788851524695043706
+        },
+        "end": {
+          "monotonic": 566589.636284459,
+          "boottime": 566589.636288138,
+          "utc_ns": 1788851529239564068
+        },
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "exit_code": 0,
+        "batch_budget_seconds": 14400,
+        "interval": {
+          "elapsed_seconds": {
+            "monotonic": 4.544517495087348,
+            "boottime": 4.544520167983137,
+            "utc": 4.544520362
+          },
+          "budget_seconds": 4.544520167983137,
+          "discrepancy_seconds": 2.86691265216632e-06,
+          "tolerance_seconds": 5.0
+        }
+      },
+      "log": "benchmarks/artifacts/task39extra/v3_d0_clock/tiny_tests.log",
+      "log_sha256": "1960810901bf45984bc7b5d10dcdd4d761f1224d64a91215ec988036f51d3638"
+    },
+    {
+      "record": {
+        "start": {
+          "monotonic": 567448.482334415,
+          "boottime": 567448.482338909,
+          "utc_ns": 1788852467598130264
+        },
+        "end": {
+          "monotonic": 567450.758765758,
+          "boottime": 567450.758770433,
+          "utc_ns": 1788852469874561378
+        },
+        "command": [
+          "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_370_physical_error_diagnostics.py",
+          "src/test/test_356_physical_intermediate_wiring.py::test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates[True-timebase]",
+          "src/test/test_356_physical_intermediate_wiring.py::test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates[False-timebase]"
+        ],
+        "exit_code": 0,
+        "clock_info": {
+          "monotonic": {
+            "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+            "monotonic": true,
+            "adjustable": false,
+            "resolution": 1e-09
+          },
+          "utc": {
+            "implementation": "clock_gettime(CLOCK_REALTIME)",
+            "monotonic": false,
+            "adjustable": true,
+            "resolution": 1e-09
+          },
+          "boottime": {
+            "available": true,
+            "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+            "resolution": 1e-09
+          }
+        },
+        "interval": {
+          "elapsed_seconds": {
+            "monotonic": 2.2764313430525362,
+            "boottime": 2.2764315240783617,
+            "utc": 2.276431114
+          },
+          "budget_seconds": 2.2764315240783617,
+          "discrepancy_seconds": 4.1007836149020704e-07,
+          "tolerance_seconds": 5.0
+        }
+      },
+      "log": "benchmarks/artifacts/task39extra/v3_d0_clock/diagnostic_tests_1.log",
+      "log_sha256": "249ca8fdf681c33584279a87fb3692a6b68c84a91b27ffd14f141a2f0a36836b"
+    },
+    {
+      "record": {
+        "start": {
+          "monotonic": 567668.976824785,
+          "boottime": 567668.976825936,
+          "utc_ns": 1788852708646205351
+        },
+        "end": {
+          "monotonic": 567670.696947509,
+          "boottime": 567670.696951246,
+          "utc_ns": 1788852710366330932
+        },
+        "command": [
+          "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_370_physical_error_diagnostics.py",
+          "src/test/test_356_physical_intermediate_wiring.py::test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates[True-timebase]",
+          "src/test/test_356_physical_intermediate_wiring.py::test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates[False-timebase]"
+        ],
+        "exit_code": 0,
+        "interval": {
+          "elapsed_seconds": {
+            "monotonic": 1.7201227239565924,
+            "boottime": 1.7201253100065514,
+            "utc": 1.720125581
+          },
+          "budget_seconds": 1.7201253100065514,
+          "discrepancy_seconds": 2.857043407633597e-06,
+          "tolerance_seconds": 5.0
+        }
+      },
+      "log": "benchmarks/artifacts/task39extra/v3_d0_clock/diagnostic_tests_2.log",
+      "log_sha256": "f48699aba7ea554509f17456af9d168e47185cd0ea331c29d43b522cd5863d0b"
+    },
+    {
+      "record": {
+        "start": {
+          "monotonic": 568384.512348051,
+          "boottime": 568384.512349503,
+          "utc_ns": 1788853488847820286
+        },
+        "end": {
+          "monotonic": 568386.550088221,
+          "boottime": 568386.550091121,
+          "utc_ns": 1788853490885562268
+        },
+        "command": [
+          "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_370_physical_error_diagnostics.py",
+          "src/test/test_356_physical_intermediate_wiring.py::test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates[True-timebase]",
+          "src/test/test_356_physical_intermediate_wiring.py::test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates[False-timebase]"
+        ],
+        "exit_code": 0,
+        "packet_roundtrip": "PASS",
+        "interval": {
+          "elapsed_seconds": {
+            "monotonic": 2.0377401700243354,
+            "boottime": 2.0377416179981083,
+            "utc": 2.037741982
+          },
+          "budget_seconds": 2.0377416179981083,
+          "discrepancy_seconds": 1.811975664622878e-06,
+          "tolerance_seconds": 5.0
+        }
+      },
+      "log": "benchmarks/artifacts/task39extra/v3_d0_clock/diagnostic_tests_3.log",
+      "log_sha256": "eb89e2b25528b4b0f8477dc39579f0a808fc3a7dd53920e9fb08eb142c46d8b9"
+    },
+    {
+      "record": {
+        "mode": {
+          "count": 80,
+          "sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+          "beta_type": "complex",
+          "selected": [
+            [
+              "bottom",
+              0,
+              0,
+              0.02952028343959373
+            ],
+            [
+              "bottom",
+              -1,
+              -1,
+              0.19401024926611476
+            ],
+            [
+              "bottom",
+              -1,
+              1,
+              0.19401024926611476
+            ]
+          ]
+        },
+        "exit_code": 0,
+        "interval": {
+          "elapsed_seconds": {
+            "monotonic": 2.207547564059496,
+            "boottime": 2.207551748957485,
+            "utc": 2.207551841
+          },
+          "budget_seconds": 2.207551748957485,
+          "discrepancy_seconds": 4.276940503977755e-06,
+          "tolerance_seconds": 5.0
+        }
+      },
+      "log": "benchmarks/artifacts/task39extra/v3_d0_clock/bridge_mode_check.log",
+      "log_sha256": "04eea31b885f0ba1ea9438e1cc9b33d143bc2182fc25efdf50a608c0f2011fbd"
+    },
+    {
+      "record": {
+        "command": [
+          "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_370_physical_error_diagnostics.py::test_complex_projection_coarse_response_and_unresolved_bound",
+          "src/test/test_370_physical_error_diagnostics.py::test_borrowed_components_and_dual_input_have_no_invented_field_error"
+        ],
+        "exit_code": 0,
+        "interval": {
+          "elapsed_seconds": {
+            "monotonic": 0.39737440494354814,
+            "boottime": 0.39737452706322074,
+            "utc": 0.397374499
+          },
+          "budget_seconds": 0.39737452706322074,
+          "discrepancy_seconds": 1.2211967259645462e-07,
+          "tolerance_seconds": 5.0
+        }
+      },
+      "log": "benchmarks/artifacts/task39extra/v3_d0_clock/raw_evidence_check.log",
+      "log_sha256": "570d6eca2cee31278223b2b6adcac2ab615ae9199c8a0c16418279c36414f36e"
+    }
+  ],
+  "implementation_file_sha256": {
+    "src/solvers/physical_error_diagnostics.py": "7db85d786912367efd5c9439048b839a1b0672517b92b3213feccb562eeecdc1",
+    "src/solvers/physical_error_metric.py": "d35371483dd1d4961ba182899eb324dc2d5bd5a8fba5ba16c1d6c9a461ea1858",
+    "src/runners/physical_diagnosis.py": "46009fb96ea12651ce1452844e8e4fdd2a6ff35e1e75962c0cc5a1c8195809f2",
+    "src/runners/physical_diagnosis_worker.py": "d9339ab1631e13e1369a8dd1c3d66c815fb63cef0e88c6770aa45e3303fb16f9",
+    "src/runners/physical_intermediate.py": "7d39de13d72e0778253d2d67cdc4583b296bec11fd9c493b099f918f97c11a33",
+    "src/runners/workflow_timebase.py": "628b3f1ac2e92b9293138ef08b716133bf35cd0d8f2e32b88555289f7d9674f6",
+    "benchmarks/subreaper_watchdog.py": "676d71c8bccfa6aab89151352276c4d49a93241e1df52b8795230df599ca0c4a"
+  },
+  "mesh_witness": {
+    "path": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v1/mpi1/record.json",
+    "sha256": "ec91c5652580bcd6f922c58ee1741ae7b7063dedf9e531d24f701c5bdfa28dd1",
+    "identity": {
+      "axis_counts": [
+        7,
+        4,
+        15
+      ],
+      "canonical_connectivity_sha256": "d9bc3d6c0ffba47b5a7e6a966f2294607fb91c342b62205f61ae3a558c7f8433",
+      "canonical_geometry_sha256": "e94ca5e02cf5f3919fde16493ca0ab51d6da97693496b5a9da33d6e433469f0a",
+      "cell_type": "CellType.hexahedron",
+      "cells_global": 252,
+      "digest_algorithm": "sorted-cell-coordinate-metadata-v1",
+      "geometry_shape": [
+        420,
+        3
+      ],
+      "vertices_global": 420
+    },
+    "limitation": "same-model mesh witness only; old dual extractor conclusions not reused"
+  },
+  "fixed_no_reference_plan": {
+    "actual_residual_pc_calls": 9,
+    "known_error_pc_calls": 3,
+    "known_homogeneity_pc_calls": 3,
+    "independent_smoother_calls": 4,
+    "projection_calls": 1,
+    "workflow_seconds": 7200,
+    "projection_total_seconds": 1800,
+    "reference_solve": "not_run_capacity_unqualified",
+    "full_size_execution": "not_run"
+  }
+}

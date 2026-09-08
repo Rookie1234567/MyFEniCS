@@ -99,7 +99,7 @@ def _synthetic_outputs(directory):
                                   full3d_reference_archive_sha256=hashlib.sha256(samples.read_bytes()).hexdigest()))
 
 
-@pytest.mark.parametrize('ending', ['pass', 'breakdown', 'budget'])
+@pytest.mark.parametrize('ending', ['pass', 'breakdown', 'budget', 'timebase'])
 @pytest.mark.parametrize('reference', [False, True])
 def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp_path, monkeypatch, ending, reference):
     from petsc4py import PETSc
@@ -152,8 +152,11 @@ def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp
         solution = rhs.copy()
         cycle = dict(end_iteration=32, explicit_true_residual=0., reported_final_residual=0.)
         kwargs['cycle_observer'](32, solution, cycle)
-        if ending == 'budget':
+        if ending in ('budget', 'timebase'):
             clock[0] += 3601
+        if ending == 'timebase':
+            from src.runners.workflow_timebase import TimebaseInconsistency
+            raise TimebaseInconsistency('injected failure with expired workflow')
         return dict(final_solution=solution, final_true_residual=0., cycles=[cycle],
                     reason=-5 if ending == 'breakdown' else 1, iterations=32)
     monkeypatch.setattr(krylov, 'run_fixed_restart_cycles', solve)
@@ -174,6 +177,13 @@ def test_mock_workflow_last_safe_release_recovery_checker_and_terminal_gates(tmp
         (tmp_path / 'checker.json').write_text(json.dumps(checked))
         return SimpleNamespace(returncode=0 if not checked['gate_failures'] else 2)
     monkeypatch.setattr(runner.subprocess, 'run', independent_check)
+    if ending == 'timebase':
+        from src.runners.workflow_timebase import TimebaseInconsistency
+        with pytest.raises(TimebaseInconsistency):
+            runner.run_physical_intermediate(payload, tmp_path, source_sha='a'*40)
+        summary = json.loads((tmp_path / 'physical_intermediate_summary.json').read_text())
+        assert summary['status'] == 'TIMEBASE_INCONSISTENCY'
+        return
     outcome = runner.run_physical_intermediate(payload, tmp_path, source_sha='a'*40)
     assert outcome['passed'] == (ending == 'pass')
     assert events == (['release', 'recovery', 'checker', 'cleanup'] if ending == 'pass'
