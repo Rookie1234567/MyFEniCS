@@ -754,7 +754,15 @@ def build_hybrid_action_modal_schur(
         else 0.0
     )
     rank = int(np.count_nonzero(singular_values > rank_scale))
-    condition = float(np.linalg.cond(first))
+    condition = (
+        float(singular_values[0] / singular_values[-1])
+        if (
+            singular_values.size
+            and np.all(np.isfinite(singular_values))
+            and singular_values[-1] > 0.0
+        )
+        else float("inf")
+    )
     if rank != internal_count or not np.isfinite(condition) or condition > 1.0e12:
         raise ValueError("Action modal Schur is not a finite full-rank system.")
     lu, pivots = lu_factor(first, check_finite=True)

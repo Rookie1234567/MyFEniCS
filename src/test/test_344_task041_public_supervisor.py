@@ -527,7 +527,7 @@ def test_phase_records_one_readable_resample_and_continues(tmp_path):
 
 def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     samples = _TerminalUnreadableSample()
-    popen = _FakePopen(poll_results=[None, None, None, None, None, 0])
+    popen = _FakePopen(poll_results=[None] * 49 + [0])
     terminated = []
     clock_value = [0.0]
     transition_delays = []
@@ -554,7 +554,7 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
 
     assert phase["returncode"] == 0
     assert phase["sample_count"] == 1
-    assert samples.calls == 3
+    assert samples.calls == 25
     assert phase["peak_memory_authority_bytes"] == 100
     assert phase["rss_drop"] == {
         "before_process_tree_rss_bytes": 100,
@@ -565,14 +565,16 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
     assert phase["process_group_gone"] is True
     assert phase["termination"] is None
     assert terminated == []
-    assert transition_delays.count(
-        supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
-    ) == 2
+    assert sum(
+        delay
+        for delay in transition_delays
+        if delay == supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
+    ) == pytest.approx(6.0)
 
 
 def test_phase_fails_after_terminal_transition_budget(tmp_path):
     samples = _TerminalUnreadableSample()
-    popen = _FakePopen(poll_results=[None] * 100)
+    popen = _FakePopen(poll_results=[None] * 260)
     terminated = []
     clock_value = [0.0]
     transition_delays = []
@@ -603,8 +605,12 @@ def test_phase_fails_after_terminal_transition_budget(tmp_path):
 
     assert error.value.classification == "task041_resource_sample_failure"
     assert error.value.stage == "producer_resource_sample"
-    assert sum(delay for delay in transition_delays if delay >= 0.2) == pytest.approx(
-        3.0
+    assert sum(
+        delay
+        for delay in transition_delays
+        if delay == supervisor.TASK041_TERMINAL_SAMPLE_GRACE_SECONDS
+    ) == pytest.approx(
+        30.0
     )
     assert terminated == [popen.processes[0].pid]
 

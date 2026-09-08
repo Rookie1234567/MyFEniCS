@@ -448,6 +448,19 @@ def test_build_frozen_setup_consumes_packet_without_qep(
         comm=comm,
     )
     calls: list[str] = []
+    markers: list[tuple[str, dict[str, object]]] = []
+
+    def fake_heap_cleanup(_comm):
+        calls.append("post_coupling_cleanup")
+        return {
+            "collective_call_completed": True,
+            "max_rss_before_mb": 12.0,
+            "max_rss_after_mb": 11.0,
+            "max_rss_released_mb": 1.0,
+            "elapsed_seconds_max_rank": 0.25,
+        }
+
+    monkeypatch.setattr(hybrid_runner, "collective_heap_cleanup", fake_heap_cleanup)
 
     monkeypatch.setattr(
         hybrid_runner,
@@ -485,7 +498,9 @@ def test_build_frozen_setup_consumes_packet_without_qep(
 
     coupling.destroy = destroy_coupling
     monkeypatch.setattr(
-        hybrid_runner, "build_hybrid_internal_mode_coupling", lambda *a, **k: coupling
+        hybrid_runner,
+        "build_hybrid_internal_mode_coupling",
+        lambda *a, **k: calls.append("coupling_build") or coupling,
     )
     profile = SimpleNamespace(
         degree=6,
@@ -509,6 +524,9 @@ def test_build_frozen_setup_consumes_packet_without_qep(
         selected_mode_packet_manifest=tmp_path / "manifest.json",
         selected_mode_packet_identity=_identity(comm),
         selected_mode_packet_manifest_sha256=packet["manifest_sha256"],
+        detail_stage_callback=lambda stage, detail: markers.append(
+            (stage, dict(detail))
+        ),
     )
     assert setup.qep_release["qep_calls"] == 0
     assert setup.qep_release["packet_mmap_released"] is True
@@ -518,13 +536,23 @@ def test_build_frozen_setup_consumes_packet_without_qep(
     assert setup.qep_release["packet_identity_sha256"] == packet["identity_sha256"]
     assert len(setup.positive.modes) == len(setup.negative.modes) == 480
     assert setup.mode_selection["external_modes"] == {"bottom": 0, "top": 0}
+    assert calls.index("coupling_build") < calls.index("post_coupling_cleanup")
+    assert calls.count("post_coupling_cleanup") == 1
+    assert setup.timings["post_coupling_heap_cleanup"] == 0.25
+    assert [stage for stage, _detail in markers] == [
+        "selected_mode_packet_consumed",
+        "post_coupling_heap_cleanup",
+    ]
+    cleanup_marker = markers[-1][1]
+    assert cleanup_marker["source"] == "collective_heap_cleanup"
+    assert cleanup_marker["collective_call_completed"] is True
     release = hybrid_runner.release_frozen_m10_objects(setup, None, comm)
     assert release["pass"] is True
     assert coupling._destroyed is True
     assert setup.bottom._destroyed is True
     assert setup.top._destroyed is True
     assert setup.packet_consumer_bundle.packet_consumer_diagnostics["destroyed"] is True
-    assert calls[-3:] == ["coupling_destroy", "bottom_destroy", "top_destroy"]
+    assert calls[-4:-1] == ["coupling_destroy", "bottom_destroy", "top_destroy"]
     second_release = hybrid_runner.release_frozen_m10_objects(setup, None, comm)
     assert second_release["pass"] is True
     assert calls.count("coupling_destroy") == 1

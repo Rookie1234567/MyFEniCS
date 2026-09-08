@@ -310,6 +310,52 @@ def test_action_modal_schur_is_repeated_and_borrowed():
         _destroy_fixture(fixture)
 
 
+def test_action_modal_schur_uses_one_svd_and_preserves_condition_gate(monkeypatch):
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    expected = _expected_modal_matrix(fixture)
+    singular_values = np.linalg.svd(expected, compute_uv=False)
+    expected_condition = float(singular_values[0] / singular_values[-1])
+    original_svd = block_ldu.np.linalg.svd
+    calls = []
+
+    def spy_svd(*args, **kwargs):
+        calls.append(True)
+        return original_svd(*args, **kwargs)
+
+    monkeypatch.setattr(block_ldu.np.linalg, "svd", spy_svd)
+    modal = None
+    try:
+        modal = build_hybrid_action_modal_schur(fixture["coupling"], bottom, top)
+        assert len(calls) == 1
+        assert modal.diagnostics["condition"] == pytest.approx(expected_condition)
+        modal.destroy()
+        modal = None
+
+        for supplied in (
+            np.asarray([1.0, 0.0, 0.0, 0.0]),
+            np.asarray([1.0, 1.0e-13, 1.0e-13, 1.0e-13]),
+        ):
+            calls.clear()
+
+            def fake_svd(*args, _supplied=supplied, **kwargs):
+                calls.append(True)
+                return _supplied
+
+            monkeypatch.setattr(block_ldu.np.linalg, "svd", fake_svd)
+            with pytest.raises(ValueError, match="finite full-rank"):
+                build_hybrid_action_modal_schur(
+                    fixture["coupling"], bottom, top
+                )
+            assert len(calls) == 1
+    finally:
+        if modal is not None:
+            modal.destroy()
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
 def test_action_modal_schur_single_build_freezes_sampled_columns_and_hash():
     fixture = _tiny_fixture()
     bottom, top = _actions(fixture)
