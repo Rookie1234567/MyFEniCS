@@ -36,6 +36,9 @@ def atomic(path,data):
 
 
 def worker(args):
+    cache_home=(Path(args.output)/'jit_cache').resolve()
+    if os.environ.get('XDG_CACHE_HOME')!=str(cache_home):
+        raise RuntimeError('isolated JIT cache must be inherited before worker imports')
     import numpy as np
     from petsc4py import PETSc
     from mpi4py import MPI
@@ -63,6 +66,11 @@ def worker(args):
     atomic(root/'resolved_config.json',dict(physical_input=payload,component_profile=contract,
         original_dat_solver_role='physical template only; old V5 PC is not invoked'))
     import petsc4py,slepc4py,dolfinx,basix,mpi4py
+    from dolfinx.jit import get_options
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+    cache_options=get_options(SAME_MESH_JIT_OPTIONS)
+    if Path(cache_options['cache_dir']).resolve()!=cache_home/'fenics':
+        raise RuntimeError('effective form JIT cache escaped isolated run root')
     inventory=json.loads(Path(args.inventory).read_text())
     evidence_root=Path(inventory['six_calibration_rhs'][0]['input_json']).parent
     native_maps={str(level):dict(path=str(evidence_root/f'native_constraint_map_p{level}.json'),
@@ -73,6 +81,8 @@ def worker(args):
         cwd=str(Path.cwd()),physical_sha256=payload['provenance']['physical_model_sha256'],
         mode_sha256=inventory['models'][0]['mode_sha'],native_maps=native_maps,
         native_map_bridge='exact fieldwise comparison to saved maps before component calls',
+        jit_cache=dict(xdg_cache_home=str(cache_home),effective_cache_dir=str(cache_options['cache_dir']),
+            timeout=cache_options['timeout'],cold=True),
         profile=contract,abi=dict(python=sys.executable,scalar='complex128',integer='int32',threads=threads,
             modules={m.__name__:m.__file__ for m in (petsc4py,slepc4py,dolfinx,basix,mpi4py)}),
         inventory_sha256=hashlib.sha256(Path(args.inventory).read_bytes()).hexdigest())
@@ -118,12 +128,16 @@ def main():
     result=None
     try:
         root.mkdir(parents=True,exist_ok=False)
+        cache_home=(root/'jit_cache').resolve()
+        cache_home.mkdir(exist_ok=False)
         atomic(root/'launch_plan.json',dict(source=source,contract=component_contract(args.target),
-            wall_seconds=remaining,budget_before=budget))
+            wall_seconds=remaining,budget_before=budget,jit_cache_home=str(cache_home),
+            jit_cache_initially_empty=not any(cache_home.iterdir())))
         command=[sys.executable,'-m','src.runners.physical_recursive_entry',*sys.argv[1:],'--worker']
         result=supervise(command,root/'watchdog',wall_seconds=remaining,phase_path=root/'phase.json',
             hard_stop_immediate=True,timebase_guard=True,timebase_policy=CONSERVATIVE_REALTIME,
-            stop_on_global_swap=True,source_state=source)
+            stop_on_global_swap=True,source_state=source,
+            worker_environment={'XDG_CACHE_HOME':str(cache_home)})
         charge=result['workflow_clock_interval']['budget_seconds']
         budget.setdefault('g1_component_attempts',[]).append(dict(root=str(root),target=args.target,
             source=args.source_sha,classification=result['classification'],conservative_seconds=charge))
