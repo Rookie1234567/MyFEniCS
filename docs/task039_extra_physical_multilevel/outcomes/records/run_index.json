@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Latest user-authorized V5 matched actual error mechanism localized; preserve all previous runs and negatives; no new production/official qualification",
+  "scope": "V5 BAL_H original and unique notch numerical/physics PASS; conditional reference global swap attribution UNRESOLVED; preserve all historical negatives",
   "units": {
     "time": "s",
     "memory": "B"
@@ -17,6 +17,59 @@
     "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
   },
   "runs": [
+    {
+      "id": "V5_balanced_原始",
+      "source_sha": "2bb6770ad00b35881558c576e7296e250656e571",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T170758.249958Z",
+      "status": "COMPOSITE_NUMERICAL_PHYSICS_PASS",
+      "iterations": 564,
+      "full_true_relative_residual": 9.932289219916376e-07,
+      "reference_resource_caveat": "original raw WORKER_FAILED preserved; output-only recovery qualified",
+      "solve_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T170758.249958Z",
+      "solve_source_sha": "2bb6770ad00b35881558c576e7296e250656e571",
+      "compact_model_pointer": "balanced_coupling_v5.json#/models/0",
+      "raw_worker_status": "WORKER_FAILED",
+      "recovery_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v5_balanced/recovery_v1/094204b7281fe867744fe334e8753d2faebaf89b/mpi1",
+      "recovery_source_sha": "094204b7281fe867744fe334e8753d2faebaf89b",
+      "recovery_evidence": {
+        "checker.json": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v5_balanced/recovery_v1/094204b7281fe867744fe334e8753d2faebaf89b/mpi1/checker.json",
+          "sha256": "1f77a315c494591ec30bb82615b1b82e85e88f4f74ffb6e87a4838f477de209e"
+        },
+        "physical_intermediate_summary.json": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v5_balanced/recovery_v1/094204b7281fe867744fe334e8753d2faebaf89b/mpi1/physical_intermediate_summary.json",
+          "sha256": "612cad969abbd65a6830f3e09b394b7a9c27782b41d47a7f47fb0e17130ad27f"
+        }
+      }
+    },
+    {
+      "id": "V5_balanced_非可分缺口",
+      "source_sha": "094204b7281fe867744fe334e8753d2faebaf89b",
+      "raw_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/nonseparable_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T193301.159992Z",
+      "status": "NUMERICAL_PHYSICS_PASS",
+      "iterations": 576,
+      "full_true_relative_residual": 9.351705516758199e-07,
+      "reference_resource_caveat": "conditional reference global pswpout448 pages attribution UNRESOLVED",
+      "solve_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/nonseparable_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T193301.159992Z",
+      "solve_source_sha": "094204b7281fe867744fe334e8753d2faebaf89b",
+      "compact_model_pointer": "balanced_coupling_v5.json#/models/1",
+      "conditional_reference_source_sha": "094204b7281fe867744fe334e8753d2faebaf89b",
+      "conditional_reference_evidence": {
+        "reference_summary.json": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/nonseparable_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T193301.159992Z/conditional_reference/reference_summary.json",
+          "sha256": "0b5dbe9b3c2a50be68b3fab10c20452d660b39dfc3ebdfc72755977fbd94d726"
+        },
+        "matched_reference.json": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/nonseparable_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T193301.159992Z/conditional_reference/matched_reference.json",
+          "sha256": "e7946bc1fec6a4d06af6b79546d56857411afc2cdbf632b367c50bdee516b199"
+        },
+        "reference_identity.json": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/nonseparable_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T193301.159992Z/conditional_reference/reference_identity.json",
+          "sha256": "03f2453af62ed7de9640cf231313799b42598cd0874f3c75f32b1f374927a312"
+        }
+      },
+      "reference_resource_status": "GLOBAL_SWAP_OUT_448_PAGES_ATTRIBUTION_UNRESOLVED"
+    },
     {
       "id": "V5_actual_error_diagnosis",
       "source_sha": "2251d7d0d3d3e8498ee34d38f8ec70f70d2f0d98",
@@ -861,5 +914,6 @@
       "path": "docs/task039_extra_physical_multilevel/outcomes/records/packed_and_joint_mr_v2.json",
       "sha256": "7a41e73d0b34e20f448a42f74fd55ef3f70c859c75c87ecf2e06f3cd6abbb384"
     }
-  }
+  },
+  "v5_balanced_compact": "docs/task039_extra_physical_multilevel/outcomes/records/balanced_coupling_v5.json"
 }

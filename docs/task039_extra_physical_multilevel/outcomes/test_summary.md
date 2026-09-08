@@ -1,3 +1,17 @@
+# V5完整链与E5文档检查
+
+| 验证 | 结果与口径 |
+|---|---|
+| 已提交恢复实现 | 本地47 passed /1.62s；source094204b7281fe867744fe334e8753d2faebaf89b；本E5未重跑数值测试 |
+| 完整求解 | 原始564/notch576步，完整残差≤1e-6，匹配参考及物理Gate通过 |
+| 资源 | sampled tree swap0；条件参考global out448页归因UNRESOLVED，不能视为全系统swap0 |
+| raw证据 | 主线程独立637文件hash通过；本E5不重复全面校验 |
+| E5最小检查 | 结果写入ignored e5_docs_check.json；仅JSON/绑定hash/链接/历史保留/diff，不运行PDE |
+
+详细结果见[balanced_coupling_v5.md](balanced_coupling_v5.md)。以下为保留的历史验证记录。
+
+---
+
 # 补充授权真实误差定位：分阶段验证与最终文档检查
 
 | 检查 | 结果 |

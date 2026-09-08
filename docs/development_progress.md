@@ -1,3 +1,13 @@
+# Task39extra V5最新状态（历史正文保留）
+
+原始13.5nm/p6h10/MPI1 BAL_H零初值564步、唯一notch576步，完整残差分别9.932289220e-7/9.351705517e-7，匹配离散参考和独立物理Gate通过。原始输出平面错误由同一checkpoint的output-only恢复处理，历史WORKER_FAILED不改写。
+
+两次迭代全系统swap增量均0；条件参考global pswpout增加448页，归因UNRESOLVED，尽管采样tree swap0，仍不能声称整个workflow全系统swap0。未取得2GB或0.7nm/生产默认资格。唯一下一对象为有界内存/分布式物理近似C替代全局p4 LU，同时保持粗细平衡；未实施新路线。
+
+统一结果与证据见[Task39extra V5](task039_extra_physical_multilevel/outcomes/balanced_coupling_v5.md)。以下旧阶段结论按当时范围保留。
+
+---
+
 # Task39extra补充授权：真实难误差已定位
 
 | 当前结果 | 实测与边界 |
