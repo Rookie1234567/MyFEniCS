@@ -1,0 +1,407 @@
+{
+  "schema": "task041.checkpoint.v2",
+  "task": "Task041",
+  "status": "3NM_COMPLETED_NOT_GRID_CONVERGED",
+  "merge_approval": "NO",
+  "docs_base_head": "746c0ffdc3a7a18eb80dde8d93bb3b7c660c65af",
+  "three_nm": {
+    "model": "p6/h3",
+    "mpi": 8,
+    "active_rows": 268272,
+    "external_keys": 1748,
+    "m800_fresh_diagnostic": {
+      "root": "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m800/task041_3nm_p6h3_m800_mpi8__hybrid_iterative__mpi8__M800/20260907T111441.388055Z",
+      "status": "failed",
+      "classification": "IMPLEMENTATION_FAILURE",
+      "failure_stage": "consumer_exit(solution_snapshot_destroyed)",
+      "iterations": "NA",
+      "restart": "NA",
+      "ksp": "NA",
+      "source_sha": "48f56ad46c49519de363b90695d1ed219236c662",
+      "input_sha256": "5f61d2b913a21a0761cc00e280ab5bb540ab30ac3917f662b9f3bfd1d78e1e9f",
+      "physical_model_sha256": "0bb67e4a1b811efa9ffa2238fb969b15a7eadbae3755814d6427342496da3a81",
+      "resolved_config_sha256": "726e1dc7551fccd697441c02400dddd89f60ee61a7ab934e4d494fb910edb782",
+      "residuals": [
+        7.246419845266236e-10,
+        6.711767430501667e-10,
+        6.842952026951734e-12,
+        7.252171978674087e-11,
+        6.339676899706935e-10
+      ],
+      "resource_gib": {
+        "producer": {
+          "rss": 16.784275055,
+          "pss": 15.785678864,
+          "uss": 15.674812317
+        },
+        "consumer_workflow": {
+          "rss": 255.465618134,
+          "pss": 253.694432259,
+          "uss": 253.435222626
+        }
+      },
+      "wall_seconds": {
+        "producer": 18000.658898,
+        "consumer": 22215.056788,
+        "workflow": 40216.175178
+      },
+      "swap_bytes": 0,
+      "factor_nnz": {
+        "bottom": 3259000000,
+        "top": 3716000000
+      },
+      "lifecycle": {
+        "factor_count_after_cleanup": {
+          "bottom": 0,
+          "top": 0
+        },
+        "actions_destroyed": true,
+        "component_cleanup_pass": true,
+        "factor_cleanup_pass": true,
+        "rss_drop_pass": true
+      },
+      "authority": "diagnostic_marker_only_not_formal"
+    },
+    "m800_retry": {
+      "root": "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m800/task041_3nm_p6h3_m800_mpi8__hybrid_iterative__mpi8__M800/20260908T001027.090767Z",
+      "status": "measured_candidate_physics_negative",
+      "classification": "TASK041_CONSUMER_NUMERICAL_FAILURE",
+      "authority": "measured_candidate_physics_negative",
+      "source_sha": "2dbe7ff76d734c7689740a656ba7c0fdb5ceadcb",
+      "producer_source_sha": "48f56ad46c49519de363b90695d1ed219236c662",
+      "input_sha256": "5f61d2b913a21a0761cc00e280ab5bb540ab30ac3917f662b9f3bfd1d78e1e9f",
+      "physical_model_sha256": "0bb67e4a1b811efa9ffa2238fb969b15a7eadbae3755814d6427342496da3a81",
+      "resolved_config_sha256": "726e1dc7551fccd697441c02400dddd89f60ee61a7ab934e4d494fb910edb782",
+      "residuals": [
+        1.0614289127347946e-09,
+        1.3530838051427825e-09,
+        9.525482983090863e-12,
+        5.059125745287973e-11,
+        1.278144562727163e-09
+      ],
+      "observables": {
+        "R": 0.8048686830648746,
+        "T": 0.0002839834330554354,
+        "A_balance": 0.19484733350206998,
+        "A_volume": 0.19486649353451532
+      },
+      "abs_A_balance_minus_A_volume": 1.9160032445286745e-05,
+      "physics_limit": 1e-05,
+      "iterations": 1,
+      "restart": 10,
+      "ksp": "right GMRES",
+      "recovery_mechanics_pass": true,
+      "formal_recovery_pass": false,
+      "own_physics_pass": false,
+      "official_rta": "withheld",
+      "canonical_grid": "withheld",
+      "peak_bytes": 229028663296,
+      "peak_gib": 213.299564362,
+      "peak_authority": "raw_cgroup_process_diagnostic; direct_memory_stages_unavailable",
+      "wall_seconds": 17047.323762,
+      "swap_bytes": 0,
+      "factor_nnz": {
+        "bottom": 3304000000,
+        "top": 2861000000
+      },
+      "factor_mode": "MUMPS_factor_only_ICNTL14_40",
+      "lifecycle": {
+        "factor_count_before_after": "1/1_to_0/0",
+        "actions_components_destroyed": true,
+        "cleanup_pass": true,
+        "rss_drop_pass": true
+      }
+    },
+    "m1200_producer": {
+      "root": "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m1200/task041_3nm_p6h3_m1200_mpi8__hybrid_iterative__mpi8__M1200/20260908T083844.269710Z/producer",
+      "status": "controlled_stop_packet_written",
+      "classification": "TASK041_MODE_PREP_PACKET_READY;outer_terminal_resource_race",
+      "source_sha": "c3a5bf4a424405c1f1de5cd6ac96be8db576f7b3",
+      "input_sha256": "dab4209d2094d8640deaa61d5b6948a37d50362dc6b304762f93feff515b45c0",
+      "physical_model_sha256": "0bb67e4a1b811efa9ffa2238fb969b15a7eadbae3755814d6427342496da3a81",
+      "resolved_config_sha256": "077624826a392f1ed83e11d3c55bd462ae631a6c2ddcb01e2e2d1daa080d62e0",
+      "manifest_sha256": "c7a36ab977e5fc11505ad27a6e8044fc9e909b42fd37a8ea1abeb72b6e49d71b",
+      "packet_identity_canonical_sha256": "cef2de437f0b0a247791acc8e4b865d1fd51082b181617ab6621cb9a95ba5d00",
+      "packet_bytes": 1370082162,
+      "shard_files": 32,
+      "shard_bytes": 1368656896,
+      "delivered_modes": {
+        "positive": 1200,
+        "negative": 1200
+      },
+      "packet_pass": true,
+      "consumer_qep_required": false,
+      "compute_wall_seconds": 15386.145391,
+      "timing_seconds": {
+        "assembly": 1.063395,
+        "positive_right_qep_solve": 3329.204712,
+        "positive_adjoint_basis": 4214.23445,
+        "negative_right_qep_solve": 3512.904907,
+        "negative_adjoint_basis": 4243.992494,
+        "reciprocal_pairing": 81.190811,
+        "total": 15386.145391
+      },
+      "resource_gib": {
+        "rss": 28.318450928,
+        "pss": 27.452210427,
+        "uss": 27.341518402
+      },
+      "swap_bytes": 0,
+      "authority": "diagnostic_measured_parent_telemetry",
+      "raw_detail_file": "referenced_but_not_present"
+    },
+    "m1200_consumer": {
+      "root": "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m1200/task041_3nm_p6h3_m1200_mpi8__hybrid_iterative__mpi8__M1200/20260909T170009.909055Z_p1_consumer_retry",
+      "control_root": "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m1200/task041_3nm_p6h3_m1200_mpi8__hybrid_iterative__mpi8__M1200/20260909T170009.909055Z_p1_consumer_retry.control",
+      "status": "full_formal_recovery_failure",
+      "classification": "TASK041_CONSUMER_NUMERICAL_FAILURE",
+      "authority": "measured_candidate_physics_negative",
+      "iterations": 1,
+      "restart": 10,
+      "ksp": "right GMRES",
+      "source_sha": "c72b3e0d1540a5a891f5906fb0d75dc9146fefd2",
+      "producer_source_sha": "c3a5bf4a424405c1f1de5cd6ac96be8db576f7b3",
+      "input_sha256": "dab4209d2094d8640deaa61d5b6948a37d50362dc6b304762f93feff515b45c0",
+      "physical_model_sha256": "0bb67e4a1b811efa9ffa2238fb969b15a7eadbae3755814d6427342496da3a81",
+      "resolved_config_sha256": "077624826a392f1ed83e11d3c55bd462ae631a6c2ddcb01e2e2d1daa080d62e0",
+      "residuals": [
+        5.733598076322987e-10,
+        5.650904282024035e-10,
+        2.5112691971837548e-11,
+        6.142421244928043e-11,
+        5.337481450973294e-10
+      ],
+      "observables": {
+        "R": 0.8048682104336213,
+        "T": 0.000285259036006279,
+        "A_balance": 0.19484653053037237,
+        "A_volume": 0.19486523527614544
+      },
+      "abs_A_balance_minus_A_volume": 1.8704745773062692e-05,
+      "physics_limit": 1e-05,
+      "recovery_mechanics_pass": true,
+      "formal_recovery_pass": false,
+      "own_physics_pass": false,
+      "official_rta": "withheld",
+      "canonical_grid": "withheld",
+      "process_tree_peak_bytes": 268726702080,
+      "process_tree_peak_gib": 250.271244049,
+      "pss_peak_gib": 248.480698,
+      "uss_peak_gib": 248.22123,
+      "cgroup_peak_bytes": 270113837056,
+      "cgroup_peak_gib": 251.563114,
+      "hard_bytes": 274877906944,
+      "wall_seconds": 15750.067281,
+      "markers": 485,
+      "swap_bytes": 0,
+      "factor_nnz": {
+        "bottom": 3646000000,
+        "top": 3135000000
+      },
+      "factor_mode": "MUMPS_factor_only_ICNTL14_40",
+      "modal_rank": 2400,
+      "batch_size": 32,
+      "batch_total_per_side": 75,
+      "stage_wall_seconds": {
+        "system_ready": 5487.2902,
+        "bottom_factor": 1156.0337,
+        "bottom_woodbury": 593.0278,
+        "top_factor": 824.6716,
+        "top_woodbury": 519.5425,
+        "modal_schur": 6706.2121,
+        "outer_solve": 271.4981,
+        "recovery": 148.1433,
+        "cleanup": 1.057
+      },
+      "lifecycle": {
+        "factor_count_before_after": "1/1_to_0/0",
+        "actions_components_destroyed": true,
+        "cleanup_pass": true,
+        "collective_cleanup_completed": true,
+        "rss_drop_pass": true,
+        "before_high_water_bytes": 50735435776,
+        "after_cleanup_bytes": 47047143424,
+        "before_high_water_gib": 47.2510566711,
+        "after_cleanup_gib": 43.8160667419
+      },
+      "outer_supervisor": {
+        "status": "exception",
+        "type": "Task041SupervisorError",
+        "message": "consumer resource authorities are incomplete",
+        "classification": "bookkeeping_failure"
+      }
+    }
+  },
+  "five_nm": {
+    "task039_inherited": {
+      "record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json",
+      "status": "completed_inherited_reference",
+      "source_sha": "9e31ecf189081afcb8ca27b0374ec89af0094e2d",
+      "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+      "physical_model_sha256": "NA",
+      "resolved_config_sha256": "NA",
+      "iterations": 1,
+      "restart": 10,
+      "ksp": "GMRES",
+      "peak_gib": 80.0258560180664,
+      "wall_seconds": 10126.231902,
+      "swap_bytes": 0,
+      "residuals": [
+        3.506501655137575e-10,
+        2.8691974587254726e-10,
+        1.7320410009968165e-11,
+        5.776295396906669e-11,
+        2.6600353255738315e-10
+      ],
+      "solve_pass": true,
+      "recovery_pass": true,
+      "physics_pass": true,
+      "evidence_boundary": "tracked_record_does_not_provide_physical_or_resolved_hash"
+    },
+    "task041_local_mpi8": {
+      "root": "results/task041_5nm_mpi8_v7_exact_side_reproduction_mumps40_targetzero_fast_socket_def547cf",
+      "source_sha": "def547cfd139b6377b0cae2ba1736ec3591814b0",
+      "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+      "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+      "resolved_config_sha256": "d6f9de274db352e7b11eafed6867e6535edb7872af3547fa7fd958d02997798",
+      "status": "completed_local_reproduction",
+      "active_rows": 132300,
+      "external_keys": 600,
+      "m_delivered": "480/480",
+      "iterations": 1,
+      "restart": 10,
+      "ksp": "GMRES",
+      "peak_gib": 80.2187461853,
+      "factor_mode": "MUMPS_factor_only",
+      "factor_nnz": "NA",
+      "wall_seconds": 8357.347033,
+      "swap_bytes": 0,
+      "residuals": [
+        2.754064024849399e-10,
+        2.333030625515312e-10,
+        3.75139448357935e-11,
+        1.7973588584102126e-11,
+        2.164825043210854e-10
+      ],
+      "observables": {
+        "R": 0.7331842733894981,
+        "T": 0.00022009869572663576,
+        "A_balance": 0.26659562791477526,
+        "A_volume": 0.2665962726231523
+      },
+      "solve_pass": true,
+      "recovery_pass": true,
+      "physics_pass": true
+    },
+    "mpi1_final": {
+      "root": "results/task041_5nm_exact_side_hybrid_iterative_p6h4_m480/task041_5nm_p6h4_m480_mpi1__hybrid_iterative__mpi1__M480/20260904T152109.607989Z",
+      "source_sha": "d6c71401a7105d2c67e22596e40461354cfda21f",
+      "input_sha256": "5a6a87882828ae768c92d4f14b45dbcb5f90c0bf141b982b106e52dba2b4c5c0",
+      "physical_model_sha256": "65bb1e2947604a7efe54b2d6450a63a583714341505c207241f4278bd25b22a4",
+      "resolved_config_sha256": "536d0ccb93f6c7bf00c42a12f60ea58bfe44436725da7070af2230fad305dc73",
+      "status": "inner_completed_outer_unqualified",
+      "iterations": 1,
+      "restart": 90,
+      "ksp": "FGMRES",
+      "packet_bytes": 357120347,
+      "manifest_sha256": "e5c754446e3fb9c8117608fbf610ec95749dc4b052bedae099ec268b57d8a85f",
+      "packet_identity_file_sha256": "24fff61befe8946db6ea76187bd59d38d5c476d58d81a0f03582e3b8aa5a5ea9",
+      "packet_identity_canonical_sha256": "7d496291c6ab2593673ff11ddaf456f208e78635c376afbc13e58dab645c0a85",
+      "consumer_samples": 61912,
+      "resource_gib": {
+        "producer_rss": 2.46059799194,
+        "producer_pss": 2.42841053,
+        "producer_uss": 2.4131546,
+        "consumer_rss": 43.2886276245,
+        "consumer_pss": 43.2520036697,
+        "consumer_uss": 43.2368469238,
+        "workflow_peak_max": 43.2886276245
+      },
+      "wall_seconds": {
+        "producer": 12285.1455821,
+        "consumer": 37058.1461057,
+        "workflow": 49346.574875
+      },
+      "swap_bytes": 0,
+      "solve_pass": true,
+      "recovery_pass": true,
+      "physics_pass": true,
+      "candidate_rta": true,
+      "external_key_binding_pass": false,
+      "external_key_count": 600,
+      "outer_classification": "task041_resource_sample_failure",
+      "equivalence": "not_established",
+      "evidence_boundary": "terminal_process_tree_unreadable;raw_peak_not_supervisor_qualified"
+    },
+    "source_only": {
+      "root": "results/task041_s1_source_only_p6h4_m480_mpi1_6ae90799",
+      "source_sha": "6ae907991ceb3323c06b351d13a9557685e4d713",
+      "current_vs_persisted": 3.826978841496932e-09,
+      "limit": 1e-12,
+      "classification": "REFERENCE_SOURCE_SEMANTICS_CHANGED",
+      "old_mpi8_authority_retained": true
+    }
+  },
+  "m800_to_m1200_scalar_abs_diff": {
+    "R": 4.726312532454813e-07,
+    "T": 1.275602950843622e-06,
+    "A": 8.029716976054591e-07,
+    "A_volume": 1.2582583698850236e-06
+  },
+  "not_run": [
+    {
+      "item": "M1600",
+      "reason": "NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE;no_valid_own_pass_M_pair;task.md_12.2_true_gate"
+    },
+    {
+      "item": "3NM_H2P5",
+      "reason": "NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE"
+    },
+    {
+      "item": "3NM_H2",
+      "reason": "NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE"
+    },
+    {
+      "item": "ALL_2NM",
+      "reason": "NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE"
+    },
+    {
+      "item": "POST_GATE_MPI1",
+      "reason": "NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE"
+    }
+  ],
+  "final_classification_contract": {
+    "task_md_enum": "3NM_COMPLETED_NOT_GRID_CONVERGED",
+    "evidence_boundary": "EQUIVALENCE_NOT_ESTABLISHED",
+    "controlled_stop_explanatory_state": "CONTROLLED_STOP_AT_3NM_PHYSICS_GATE",
+    "five_nm_enum_disposition": {
+      "5NM_MPI1_EQUIVALENCE_PASS": "not_honest_external_identity_and_outer_authority_incomplete",
+      "5NM_MPI1_OWN_PASS_REFERENCE_ARRAYS_PARTIAL": "not_honest_required_reference_identity_or_authority_incomplete",
+      "5NM_MPI1_NUMERICAL_OR_PHYSICS_FAIL": "not_honest_inner_physics_passed"
+    }
+  },
+  "evidence_paths": [
+    "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m800/task041_3nm_p6h3_m800_mpi8__hybrid_iterative__mpi8__M800/20260907T111441.388055Z",
+    "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m800/task041_3nm_p6h3_m800_mpi8__hybrid_iterative__mpi8__M800/20260908T001027.090767Z",
+    "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m1200/task041_3nm_p6h3_m1200_mpi8__hybrid_iterative__mpi8__M1200/20260908T083844.269710Z/producer",
+    "results/task041_3nm_exact_side_hybrid_iterative_p6h3_m1200/task041_3nm_p6h3_m1200_mpi8__hybrid_iterative__mpi8__M1200/20260909T170009.909055Z_p1_consumer_retry/consumer_summary.json",
+    "results/task041_5nm_exact_side_hybrid_iterative_p6h4_m480/task041_5nm_p6h4_m480_mpi1__hybrid_iterative__mpi1__M480/20260904T152109.607989Z",
+    "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json",
+    "results/task041_s1_source_only_p6h4_m480_mpi1_6ae90799"
+  ],
+  "optimization_evidence": {
+    "reciprocal_old_matmult": "3PN",
+    "reciprocal_old_counts": {
+      "M800": 1920000,
+      "M1200": 4320000
+    },
+    "reciprocal_new_counts": {
+      "M800": 1600,
+      "M1200": 2400
+    },
+    "full_cost_matrix_and_hungarian_preserved": true,
+    "frobenius_norms_per_operator_tuple": 1,
+    "pairing_timing_field": "timings.reciprocal_pairing",
+    "post_change_formal_isolation": "not_measured"
+  }
+}

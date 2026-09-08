@@ -1,48 +1,46 @@
-# Resource scaling and capacity frontier
+# 资源、阶段耗时与容量边界
 
-## 两次 3 nm 资源记录（口径分开）
+## 本次运行安全合同
 
-| 生命周期 | root | RSS / PSS / USS peak | wall | swap | status |
-|---|---|---|---:|---:|---|
-| 20260907 fresh producer+consumer attempt | 20260907T111441.388055Z | producer=16.784275055 / 15.785678864 / 15.674812317 GiB；consumer/workflow=255.465618134 / 253.694432259 / 253.435222626 GiB | 40216.175 s | 0 | IMPLEMENTATION_FAILURE at consumer_exit(solution_snapshot_destroyed) |
-| 20260908 consumer-only retry | 20260908T001027.090767Z | cgroup peak=229028663296 B = 213.299564362 GiB；PSS/USS=NA | 17047.323762 s | 0 | candidate physics negative |
+下面是用户后续为本次尝试指定的更严格合同，不删除或静默改写 task.md 原有 1.50 TiB planning history：
 
-20260907 的 resource measurement 仍有效，但不能被描述成 formal success。20260908 是旧 producer packet 的 consumer-only implementation retry。两次峰值可以作跨 run 的资源比较，但不能相加为同一 workflow，也不能把峰值差直接写成对象释放量；factor NNZ 已发生变化。
-
-20260907 producer stage boundaries：positive_qep_solve=`1.167750278 s`；negative_qep_solve=`3273.625841 s`，前段=`3272.458090 s`（含 positive right+adjoint basis，不能称单次 solve）；raw_candidate_modes_ready=`4964.725796 s`（`1691.099955 s`）；selected_biorthogonal_bases_ready=`7082.702076 s`（`2117.976280 s`）；modal_qep_temporaries_released=`17997.088030 s`（之后=`10914.385954 s`）。最后区间旧 record 无独立 pairing marker，源码成本支持 `pair_reciprocal_mode_bases` 为主导，但不是独立实测计时。
-qep_begin=`0.192512509 s`、qep_ready=`17998.540383 s`、producer peak=`16.784275055 GiB`、packet bytes=`913401973`、packet write max-rank=`0.963676714 s`、consumer_qep_required=false；qep_begin 到 qep_ready 不统称为 eigensolve，packet I/O 不是约 5 小时主因。
-
-## QEP 优化的资源/计时边界
-
-旧 reciprocal mass overlap 为 `3PN` MatMult（M800=`1,920,000`、M1200=`4,320,000`）；新实现为 `P+N`（1600/2400），但仍形成完整 P×N cost/dots 和 Hungarian assignment，不能写成整体 1200/1800 倍提速。K0/K1/K2 Frobenius norms 改为每 operator tuple 一次，公式/Gate不变；`timings[reciprocal_pairing]` 已写入 producer controlled-stop record。新归约顺序可能产生容差内浮点差异，下一次 packet 是新的 source-bound hash，必须通过 canonical/selection Gate，不承诺与旧 packet byte-identical。当前没有 post-change formal performance 数据，M1200 尚未启动；M800 own-physics negative 和原 task stop 结论永久保留，不改写为 pass；用户后续已明确授权在更严格的 phase 资源合同下继续一次 M1200 formal，属于受控 M-ladder 诊断/续跑；该授权不能追溯使 M800 通过，M qualification 仍要求各 run own Gate 及相邻 M Gate。
-
-### 本次 M1200 尝试的分阶段资源合同
-
-下表是用户后续为本次正式尝试指定的更严格运行安全合同；它不删除、替代或静默改写 `task.md` 原有的 1.50 TiB 规划文字及历史证据。
-
-| 范围 | warning | hard | wall cap | swap |
+| scope | warning | hard | phase/workflow cap | swap |
 |---|---:|---:|---:|---:|
-| official input/resolved workflow envelope | 224 GiB | 256 GiB = `274877906944 B` | `39600 s` | `0` |
-| producer phase | 176 GiB | 192 GiB | `18000 s` | `0` |
-| consumer phase | 224 GiB | 256 GiB | `21600 s` | `0` |
+| workflow envelope | 224 GiB | 256 GiB = 274877906944 B | 39600 s | 0 |
+| producer | 176 GiB | 192 GiB | 18000 s | 0 |
+| consumer | 224 GiB | 256 GiB | 21600 s | 0 |
 
-短波长 supervisor 按各 phase 自身 elapsed 判定 timeout；legacy 5 nm 继续按旧 workflow elapsed。producer 必须完全退出后才启动 consumer，workflow peak 取 `max(producer, consumer)`，不得相加；`MemAvailable` preflight 仍为 `1869169767220 B`。post-change formal performance 尚未测量，M1200 尚未启动。
+shortwave supervisor timeout 按各自 phase elapsed；legacy 5 nm 仍按旧 workflow elapsed。producer 必须完全退出并释放后才启动 consumer。workflow simultaneous peak 是不重叠的 max(producer peak, consumer peak)，绝不相加。启动资格 MemAvailable floor 仍是 1869169767220 B。post-change formal performance 尚未有独立隔离测量；M1200 的当前 candidate 证据不等于 physics/official pass。
 
-### 可复用的单热点性能 SOP
+## 运行实测与 authority
 
-冻结 source/input/physical/resolved hashes、M/mesh/MPI、线程、affinity、partition 与 factor fingerprints；每轮只改一个热点，先跑 focused correctness，再跑一次 candidate。仅在数值等价、阶段 wall、swap=0、producer 完全退出后才启动 consumer、无阶段重叠且 `workflow peak=max(producer,consumer)` 不增时验收；两阶段峰值不得相加。QEP 资源线为 preferred/warning/hard=`128/176/192 GiB`、swap=0，阶段内存可上升；同身份同 workload 的峰值须不高于实测 M800 retry=`213.299564362 GiB`，`256 GiB` 仅为跨 workload 安全硬线。M 变化是新 workload，须单列，不能冒充同 case 回归。
+| run | producer peak | consumer/workflow peak | wall | authority |
+|---|---:|---:|---:|---|
+| M800 fresh 20260907 | 16.784275055 GiB | 255.465618134 GiB | 40216.175178 s | diagnostic failed attempt |
+| M800 consumer-only retry | NA producer；复用旧 packet | 213.299564362 GiB | 17047.323762 s | raw cgroup/process diagnostic，不能冒充 fresh workflow |
+| M1200 producer | RSS/PSS/USS 28.318450928/27.452210427/27.341518402 GiB | consumer 250.271244049 GiB process-tree | producer/consumer compute sum 31136.212672 s | 两个独立阶段，外层 wrapper 有 terminal bookkeeping race |
+| 5 nm MPI1 | 2.46059799194 GiB RSS | 43.2886276245 GiB raw workflow max | 49346.574875 s | raw telemetry diagnostic，outer authority 缺失 |
 
-## Factor 主导与 frontier 解释
+不同 run 的峰值可以作跨 run 比较，但不得相加为同一 workflow，也不得把峰值差当作对象释放量。M800 retry 的 213.299564362 GiB 明确是 consumer-only retry process-tree/cgroup diagnostic peak；它复用了旧 packet，不是 fresh producer+consumer workflow。
 
-两次 run 均为 MUMPS factor-only、ICNTL14=40，无 global direct、coarse 或 OOC。bottom/top corrected factor NNZ：fresh=3.259e9/3.716e9，retry=3.304e9/2.861e9。峰值在两侧 factor 同时驻留后的 top-factor/top-Woodbury；modal rank=1600，单个 modal Schur/constraint/LU 各=40960000 B。因此当前最大对象族是两侧 MUMPS factors。约 42.166 GiB 是跨 run 峰值差，不等于 lifecycle 释放量，因为 factor NNZ 已变化。
+M1200 consumer 的 process-tree RSS/PSS/USS peak 为 250.271244049 / 248.480698 / 248.221230 GiB，cgroup peak 251.563114 GiB，hard 余量约 4.437 GiB，swap0；该 run 的阶段 wall 来自 marker 的相邻边界，不能相加为新的 workflow authority。M1200 producer parent telemetry 的 RSS/PSS/USS peak 为 28.318450928 / 27.452210426 / 27.341518402 GiB，raw diagnostic。
 
-这些峰值都不是资源越线证据；停止由 3 nm M800 own-physics closure Gate 触发。因此 Task041 没有形成 3NM_RESOURCE_FRONTIER，也没有 1.50 TiB 下的 accuracy-qualified 最细网格结论。
+## LU factor / OOC 判断
 
-关于 0.7 nm 的判断是推断而非正式容量外推：3 nm 尚未 accuracy-qualified，但 213–255 GiB 且 factor 主导，说明若以后进入 0.7 nm，仍需要 Task040 factor-free scalable architecture。
+M800 retry measured corrected factor NNZ bottom/top=3.304e9/2.861e9，总计 6.165e9。derived values-only complex128 lower bound 约 91.87 GiB；按 24 B/entry 的 factor+index proxy 约 137.80 GiB。Measured M800 retry system_ready=60.85385 GiB、bottom factor ready=134.0316 GiB、consumer-only retry process-tree peak=213.299564362 GiB。
 
-### LU factor 与 NVMe/OOC 判断（非 Task41 OOC 实测）
+每侧 mat_solve_call_count=132（setup 28、apply 104），apply_count=1622。若每次 solve 都完整流过 factor，derived nominal traffic 约 11.8 TiB values-only 或 17.8 TiB 24 B proxy；这是粗略上界式 I/O 压力估计，OS cache 和 MUMPS block reuse 会改变实际流量，cache 也会占用内存。Task29 historical case 的 worker RSS -13.744%、cgroup -18.737%、time 1.539x、scratch 559715776 B 不可直接外推 Task41。
 
-- **measured**：M800 retry corrected factor NNZ 为 bottom/top=`3.304e9/2.861e9`，合计=`6.165e9`；`system_ready=60.85385 GiB`，bottom factor ready=`134.0316 GiB`，consumer-only retry process-tree peak=`213.299564362 GiB`（该 root 复用旧 packet，不是 fresh producer+consumer workflow）。每侧 `mat_solve_call_count=132`，其中 setup=`28`、apply=`104`；`apply_count=1622`。
-- **derived**：仅 complex128 values 的下界约 `91.87 GiB`；按 `24 B/entry` 的 factor+index proxy 约 `137.80 GiB`。若每次 solve 都完整流过 factor，名义 traffic 粗略上界约 `11.8 TiB`（values-only）或 `17.8 TiB`（24 B proxy）。OS cache 与 MUMPS block reuse 会改变实际值，且 cache 也会占内存。
-- **historical measured（Task29，不可直接外推）**：另一 case 曾记录 worker RSS=`-13.744%`、cgroup=`-18.737%`、time=`1.539x`、scratch=`559715776 B`；这些不是 Task41 OOC 结果或速度承诺。
-- **inference**：LU 放 NVMe/OOC 技术上可行，但不能可靠把当前峰值压到“几十 GiB”，并会拖慢反复 side solves。因此 Task41 formal 继续禁止 OOC；未来只能做独立 supplemental A/B。更值得单独研究的是 one-side staged lifecycle 或 factor-free local service，本轮不实现、不切换当前 run，也不把 NVMe 速度写成实测。
+结论：LU factor 放 NVMe/OOC 技术上可研究，但不能可靠地把 Task41 峰值压到“几十 GiB”，并会拖慢反复 side solves。Task41 formal 继续禁止 OOC；未来可做独立 supplemental A/B。one-side staged lifecycle 或 factor-free local service 更值得单独研究，本轮不实现，也不把上述数字写成 Task41 OOC 实测。
+
+## 阶段和优化证据
+
+M1200 producer raw measured compute wall=15386.145391 s；四段 QEP/basis timing 为 positive right 3329.204712 s、positive adjoint 4214.234450 s、negative right 3512.904907 s、negative adjoint 4243.992494 s，reciprocal pairing 81.190811 s。producer+consumer 31136.212672 s 只是独立阶段之和。
+
+旧 producer 的 3PN reciprocal mass MatMult 为 M800 1920000、M1200 4320000；新实现为 P+N，即 1600/2400，但仍形成全部 P×N dots 和 Hungarian assignment，不能宣称整体 1200/1800 倍提速。K0/K1/K2 Frobenius norm 由逐 mode 重算改为每 operator tuple 一次，公式和 Gate 不变。timings[reciprocal_pairing] 已进入 producer record；下一 packet 有新的 source-bound hash，必须重新过 canonical/selection Gate，不承诺 byte-identical 旧 hash。
+
+P1 fixed sampled direct relift 使用8列；M1200 bottom/top projection 约 17.80/17.77 s，旧观察 bottom projection 5119.42975 s，只能作为工程性能对比。P2 只在 post-change code 中加入 sparse smaps 诊断；M1200 producer 发生在 P2 前，没有 post-P2 heavy speed measurement。P3 full-ready→Schur 138.2211 s 尚含旧双 SVD+LU，未测精确节省；packet coupling cleanup 未重跑 heavy，不能声称减少多少 GiB。
+
+## 容量结论
+
+M800/M1200 own physics 均 negative，故 accuracy-qualified frontier=NA。3 nm candidate 的 213–255 GiB 峰值且 factors 主导，只能支持一个工程推断：0.7 nm 仍需 Task40 factor-free/scalable architecture；不能作正式 0.7 nm capacity extrapolation。M1600、2 nm 及后续 MPI1 均为 NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE，绝非资源试验失败。

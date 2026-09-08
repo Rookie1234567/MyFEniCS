@@ -1,45 +1,94 @@
-# Task041 受控停止响应 v1
+# Task041 最终证据响应 v1
 
-本响应保留两个 3 nm run 的独立身份，并区分 diagnostic marker、formal authority、资源和生命周期证据；不把失败 attempt 升级为 formal/physics pass。
+本响应以文档收口基线 746c0ffdc3a7a18eb80dde8d93bb3b7c660c65af 记录可复核的轻量结果。原始 packet、marker、telemetry 和失败 root 均保留在 ignored results 目录；本文件不把 candidate 提升为 official。
 
-## 3 nm 两次独立记录
+## 最终结论
 
-| run | status / classification | 数值结论 | 资源与生命周期 |
-|---|---|---|---|
-| `20260907T111441.388055Z` fresh producer+consumer attempt | `failed` / `IMPLEMENTATION_FAILURE` | failure stage=`consumer_exit(solution_snapshot_destroyed)`；五残差仅为 independent diagnostic marker only：reported/global/bottom/modal/top=`7.246419845266236e-10 / 6.711767430501667e-10 / 6.842952026951734e-12 / 7.252171978674087e-11 / 6.339676899706935e-10`；formal_result/gates/physics=null，不是 formal authority | producer RSS/PSS/USS=`16.784275055/15.785678864/15.674812317 GiB`；consumer/workflow=`255.465618134/253.694432259/253.435222626 GiB`；producer/consumer/workflow wall=`18000.658898/22215.056788/40216.175178 s`；swap=`0`；failed-attempt lifecycle diagnostic通过 |
-| `20260908T001027.090767Z` consumer-only implementation retry | `measured_candidate_physics_negative` / `TASK041_CONSUMER_NUMERICAL_FAILURE` | solve/recovery mechanics PASS；own physics FAIL only because abs(A_balance-A_volume)=`1.9160032445286745e-5`>`1e-5`；reported/global/bottom/modal/top=`1.0614289127347946e-9 / 1.3530838051427825e-9 / 9.525482983090863e-12 / 5.059125745287973e-11 / 1.278144562727163e-9` | peak=`229028663296 B = 213.299564362 GiB`；wall=`17047.323762 s`；swap=`0`；release-before-recovery通过 |
+最终状态为 3NM_COMPLETED_NOT_GRID_CONVERGED。3 nm p6/h3 的 M800 与 M1200 都完成了求解和 recovery mechanics，但各自 own physics Gate 都失败：
 
-fresh failed-attempt lifecycle：supervisor_summary.consumer.lifecycle.outer_release 记录 actions_destroyed=true、component_cleanup_pass=true、factor_cleanup_pass=true、factor_count_after_cleanup bottom/top=0/0、rss_drop=pass；memory authority=`274205020160→260347596800 B`。这与 retry 的 release evidence 独立。
+| case | 结论 | 关键数值 |
+|---|---|---|
+| M800 consumer-only retry | candidate physics negative | abs(A_balance-A_volume)=1.9160032445286745e-5 > 1e-5 |
+| M1200 consumer-only retry | candidate physics negative | abs(A_balance-A_volume)=1.8704745773062692e-5 > 1e-5 |
 
-retry candidate R/T/A_balance/A_volume 为 `0.8048686830648746 / 0.0002839834330554354 / 0.19484733350206998 / 0.19486649353451532`；authority 的 `grid_payload=null`、`canonical=null`，official RTA unavailable。
+因此没有合法的 M-convergence pair，不能选择最小合格 M，也不能把相近的 R/T/A 标量解释为 physics pass。M1600、3 nm h2.5/h2、全部 2 nm 和后续 MPI1 均未运行；原任务 §12.2 的停止边界仍有效。M1200 是用户后来批准的受控续跑，不会追溯改变 M800 的 negative 结论。merge approval: NO。
 
-两次 run 均为 MUMPS factor-only、ICNTL14=`40`，无 global direct、coarse 或 OOC。bottom/top corrected factor NNZ 分别为 fresh=`3.259e9/3.716e9`、retry=`3.304e9/2.861e9`。峰值位于两侧 factor 同时驻留后的 top-factor/top-Woodbury；modal rank=`1600`，单个 modal Schur/constraint/LU 各=`40960000 B`。当前最大对象族是两侧 MUMPS factors；约 `42.166 GiB`跨 run 峰值差不能解释为生命周期释放量，因为 factor NNZ 已变化。
+## 3 nm 证据
 
-retry lifecycle：bottom/top factor count `1/1→0/0`，actions/components destroyed，`rss_drop=pass`；cgroup authority `229028663296→218838220800 B`，final marker=`211014574080 B`。
+### M800
 
-producer stage boundaries（20260907 marker wall）：positive_qep_solve=`1.167750278 s`；negative_qep_solve=`3273.625841 s`，前段=`3272.458090 s`（含 positive right+adjoint basis，不是单次 solve）；raw_candidate_modes_ready=`4964.725796 s`（区间=`1691.099955 s`）；selected_biorthogonal_bases_ready=`7082.702076 s`（区间=`2117.976280 s`）；modal_qep_temporaries_released=`17997.088030 s`（之后=`10914.385954 s`）。
-最后 10914 秒区间源码上主要只有 `pair_reciprocal_mode_bases` 与轻量收尾；旧 record 没有独立 pairing marker，故仅由源码成本支持其为主导，不能冒充独立计时。qep_begin=`0.192512509 s`、qep_ready=`17998.540383 s`、producer peak=`16.784275055 GiB`、packet bytes=`913401973`、packet write max-rank=`0.963676714 s`、consumer_qep_required=false；qep_begin 至 qep_ready 不被统称为 eigensolve。
+20260907T111441.388055Z 是 fresh producer+consumer attempt，最终在 consumer_exit(solution_snapshot_destroyed) 以 IMPLEMENTATION_FAILURE 结束。它不是 formal authority；但 marker 中有独立 diagnostic solve checkpoint：reported/global/bottom/modal/top residual =
+7.246419845266236e-10 / 6.711767430501667e-10 / 6.842952026951734e-12 / 7.252171978674087e-11 / 6.339676899706935e-10。consumer summary 的 formal_result/gates/physics 仍为 null，不能升级为 formal 或 physics pass。
 
-## QEP 优化收口
+producer/consumer/workflow wall 分别为 18000.658898 / 22215.056788 / 40216.175178 s；对应 producer RSS/PSS/USS 为 16.784275055 / 15.785678864 / 15.674812317 GiB，workflow RSS/PSS/USS 为 255.465618134 / 253.694432259 / 253.435222626 GiB，swap 为 0。bottom/top corrected factor NNZ 为 3.259e9 / 3.716e9，MUMPS factor-only、ICNTL14=40。
 
-旧 reciprocal mass overlap 为 `3PN` 次 MatMult：M800=`1,920,000`、M1200=`4,320,000`；新实现为 `P+N`：1600/2400，仍完整形成 P×N cost 与 dots 并执行 Hungarian assignment，不能宣称整体 1200/1800 倍提速。K0/K1/K2 Frobenius norms 已由逐 mode 重算改为每 operator tuple 一次，残差公式与 Gate 不变。phase6 新增并持久化 `timings[reciprocal_pairing]`；新归约顺序允许容差内浮点差异，下一次 packet 属于新的 source-bound hash，必须通过 canonical/selection Gate，不承诺与旧 packet byte-identical。
-当前没有 post-change formal performance 数据，M1200 未运行；Task041 physics stop 仍有效，任何小时数均不得写成 measured。
+20260908T001027.090767Z 是复用该 packet 的 consumer-only retry，不是新的 producer+consumer workflow。它的 solve/recovery mechanics 通过，但 authority 为 measured_candidate_physics_negative，official RTA 和 canonical/grid authority withheld。候选 R/T/A/A_volume =
+0.8048686830648746 / 0.0002839834330554354 / 0.19484733350206998 / 0.19486649353451532；residual reported/global/bottom/modal/top =
+1.0614289127347946e-09 / 1.3530838051427825e-09 / 9.525482983090863e-12 / 5.059125745287973e-11 / 1.278144562727163e-9，均低于 5e-9。其 cgroup/process diagnostic peak 为 229028663296 B = 213.299564362 GiB，wall 17047.323762 s，swap 0；direct memory_stages PSS/USS 不存在，故不猜。
 
-## 5 nm 证据边界
+### M1200
 
-Task039 继承基线与本机 MPI8 复现分开记录：
+producer root 为 results/task041_3nm_exact_side_hybrid_iterative_p6h3_m1200/task041_3nm_p6h3_m1200_mpi8__hybrid_iterative__mpi8__M1200/20260908T083844.269710Z/producer。它完成了 positive/negative 1200/1200 delivered packet，packet pass=true；manifest SHA 为 c7a36ab977e5fc11505ad27a6e8044fc9e909b42fd37a8ea1abeb72b6e49d71b，packet identity canonical SHA 为 cef2de437f0b0a247791acc8e4b865d1fd51082b181617ab6621cb9a95ba5d00，packet directory bytes 1370082162，write max-rank 1.167526111 s。source=c3a5bf4a424405c1f1de5cd6ac96be8db576f7b3。producer wrapper 仍有 terminal sample race，所以这是可复用 packet 证据，不是完整 supervisor PASS。
 
-- 原继承 record：`benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json`，source=`9e31ecf189081afcb8ca27b0374ec89af0094e2d`，peak=`80.0258560180664 GiB`，wall=`10126.231902 s`，五残差（reported/global/bottom/modal/top）=`3.506501655137575e-10 / 2.8691974587254726e-10 / 1.7320410009968165e-11 / 5.776295396906669e-11 / 2.6600353255738315e-10`，full numerical/recovery/physics PASS。
-- 本机 MPI8 复现 root：`results/task041_5nm_mpi8_v7_exact_side_reproduction_mumps40_targetzero_fast_socket_def547cf`，source=`def547cfd139b6377b0cae2ba1736ec3591814b0`，input=`4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811`，physical=`8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c`，resolved=`d6f9de274db352e7b11eafed6867e6535edb7872af3547fa7fd958d02997798f`；peak=`80.2187461853 GiB`，elapsed=`8357.347033 s`，swap=`0`，五残差=`2.754064024849399e-10 / 2.333030625515312e-10 / 3.75139448357935e-11 / 1.7973588584102126e-11 / 2.164825043210854e-10`，R/T/A_balance/A_volume=`0.7331842733894981 / 0.00022009869572663576 / 0.26659562791477526 / 0.2665962726231523`，solve/recovery/physics PASS。
+producer compute wall 15386.145391 s；assembly/positive-right/positive-adjoint/negative-right/negative-adjoint/reciprocal-pairing 分别为 1.063395 / 3329.204712 / 4214.234450 / 3512.904907 / 4243.992494 / 81.190811 s。这些是 raw diagnostic measured timing。parent telemetry 的 producer RSS/PSS/USS peak 为 28.318450928 / 27.452210427 / 27.341518402 GiB，swap 0。
 
-本机复现相对继承基线增加 `0.192890167 GiB`（`+0.2410%`），快 `1768.885 s`（`17.47%`）；这是用户授权的本机复现，不是原继承 run。
+consumer-only retry source 为 c72b3e0d1540a5a891f5906fb0d75dc9146fefd2，worker wall 15750.067281 s。solve 为 right GMRES/restart10、1 iteration、reason=2；五个 residual 为 5.733598076322987e-10 / 5.650904282024035e-10 / 2.5112691971837548e-11 / 6.142421244928043e-11 / 5.337481450973294e-10，均通过 5e-9。recovery mechanics 通过，但 own physics negative，candidate R/T/A/A_volume =
+0.8048682104336213 / 0.000285259036006279 / 0.19484653053037237 / 0.19486523527614544。official RTA、canonical/grid authority withheld；consumer_summary.json 的外层 bookkeeping failure 是 terminal resource-authority transition 不完整，不是 OOM、swap、solve crash。
 
-`task041_s1_source_only_p6h4_m480_mpi1_6ae90799`（source=`6ae907991ceb3323c06b351d13a9557685e4d713`）的 keys、roundtrip、repeat 通过，但 current_vs_persisted=`3.826978841496932e-9 > 1e-12`，分类为 `REFERENCE_SOURCE_SEMANTICS_CHANGED`；旧 MPI8 authority 保留，corrected MPI1 不得声明完整 MPI 等价。
+consumer stage duration（由 raw marker 相减，不能相加为另一个 workflow authority）为：system_ready 5487.2902 s；bottom factor 1156.0337 s，bottom Woodbury 593.0278 s；top factor 824.6716 s，top Woodbury 519.5425 s；modal Schur 6706.2121 s；outer solve 271.4981 s；recovery 148.1433 s；cleanup 1.057 s。process-tree RSS/PSS/USS peak 为 250.271244049 / 248.480698 / 248.221230 GiB，cgroup peak 251.563114 GiB，hard line 余量约 4.437 GiB，swap 0。bottom/top factor corrected NNZ 为 3.646e9 / 3.135e9；MUMPS factor-only、ICNTL14=40、modal rank=2400、batch=32、每侧75 batches。
 
-5 nm MPI1 最后 attempt 的 consumer solve/recovery/physics 和候选 RTA 通过，但 `external_key_binding_pass=false`（600 keys 数量相同而 hash 不符）；外层又因 terminal process-tree sample unreadable 分类为 `task041_resource_sample_failure`，因此没有合格 consumer/workflow 内存 authority 或完整 equivalence。四次 attempt 的阶段表见 `outcomes/mpi1_5nm_equivalence.md`。
+## 5 nm 与等价性边界
 
-## 严格停止边界
+Task039 inherited record benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json 的 source=9e31ecf189081afcb8ca27b0374ec89af0094e2d、input hash=4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811，peak 80.0258560180664 GiB、wall 10126.231902 s、swap 0，solve/recovery/physics/integrated checker 均通过。tracked record 中 physical/resolved hash 为 NA，不能猜。
 
-3 nm M800 未达到 accuracy-qualified physics result；因此 M1200、M1600、3 nm h2.5/h2、全部 2 nm 及后续 MPI1 均为 `NOT_RUN_DUE_TO_3NM_M800_PHYSICS_GATE`，不是技术无能力或资源失败。213–255 GiB 且 factor 主导这一事实只能支持如下推断：3 nm 尚未 accuracy-qualified，不能作正式 0.7 nm 容量外推；若以后进入 0.7 nm，仍需要 Task040 的 factor-free scalable architecture。
+Task041 本机 MPI8 reproduction 是独立 root task041_5nm_mpi8_v7_exact_side_reproduction_mumps40_targetzero_fast_socket_def547cf，source=def547cfd139b6377b0cae2ba1736ec3591814b0，input/physical/resolved 分别为 4e60924b...f1811 / 8391d461...d527c / d6f9de27...7798；peak 80.2187461853 GiB、elapsed 8357.347033 s、swap 0，solve/recovery/physics 通过。它相对 inherited baseline 为 +0.192890167 GiB (+0.2410%)、快 1768.885 s (17.47%)，不能混称为原 record。
 
-merge approval=`NO`。失败 root、diagnostic checkpoint、negative authority、source-semantics negative 和所有未运行边界均保留。
+5 nm MPI1 的完整资格等价性未建立。最后 attempt 的 consumer solve/recovery/physics 和候选 RTA 通过，但 external key binding false（600 keys 数量相同、hash 不同）；外层又因 terminal process-tree sample unreadable 分类为 task041_resource_sample_failure，所以没有 qualified consumer/workflow memory authority。该结果不是“数值不等价”。
+
+## 资源、优化和停止边界
+
+本次运行的用户后续安全合同为：workflow warning/hard 224/256 GiB、hard 274877906944 B、envelope 39600 s、swap 0；producer 176/192 GiB、phase cap 18000 s；consumer 224/256 GiB、phase cap 21600 s。shortwave timeout 按 phase elapsed，producer 完全退出后才启动 consumer，workflow peak 取不重叠两阶段的 max，不相加。MemAvailable floor 仍为 1869169767220 B。这是一份更严格的本次尝试合同，不删除或静默改写 task.md 原有 1.50 TiB 规划历史。
+
+P1 固定8列 sampled direct relift；它保持完整 2M operator sources 和全行 canonical transfer，只减少 row-identity reference。M1200 两侧 projection 约 17.80/17.77 s，旧观察值 5119.43 s；这是跨 source 工程对比，不是新的 formal authority。P2 将 smaps 变为 0.25 s RSS/swap authority 加 30 s sparse PSS/USS diagnostic，未取得 post-P2 heavy speed 隔离。P3 用已算 singular values 计算 condition，避免第二次 dense SVD；当前 full-ready 到 Schur 的 138.2211 s 尚含旧路径，未测精确节省。
+
+结论为 merge approval=NO；M800/M1200 own physics negative 永久保留，而非资源失败或 pass。M1600、h2.5/h2、2 nm 和 post-gate MPI1 均不运行，统一原因为 NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE；M1600 另有 no valid own-pass M pair / task.md §12.2 true Gate 说明，详见 outcomes/summary.md 与 compact v2。
+
+## 求解器身份
+
+Task039 inherited 5 nm 使用 GMRES/restart10；final 5 nm MPI1 inner 使用
+FGMRES/restart90/1 iteration；3 nm M800 与 M1200 consumer 使用
+right GMRES/restart10/1 iteration。exact block-LDU 在一迭代时没有触及
+restart 上限，但这些是不同 run 的身份字段，不能合并或互换。
+本机 Task041 local MPI8 reproduction 的有效求解器身份同样是
+GMRES/restart10/1 iteration；input 中的 restart90 不是该 formal path
+的有效 solver identity。
+
+## 十问直答
+
+| 问题 | 答案 |
+|---:|---|
+| 1. 5 nm equivalence | EQUIVALENCE_NOT_ESTABLISHED；不是 inequivalence。 |
+| 2. 5 nm MPI1 peak | raw diagnostic producer/consumer/workflow RSS peak=2.46059799194 / 43.2886276245 / 43.2886276245 GiB；workflow 为 phase-separated max，不相加；outer 未资格化。packet directory=357120347 B。 |
+| 3. 诊断节省 | 相对 80.025856018 GiB 减少 36.737228394 GiB = 45.9067%；不能写 qualified PASS。 |
+| 4. minimum qualified M | NA。 |
+| 5. 3 nm h3 | M800/M1200 candidate complete 但 not accuracy-qualified；h2.5/h2 not_run。 |
+| 6. 2 nm | M/grid 均 NA，全部 not_run。 |
+| 7. 未运行边界 | M1600、h2.5/h2、2 nm、post-gate MPI1：NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE。 |
+| 8. 最细完成对象 | 3 nm p6/h3 M1200 candidate；accuracy-qualified frontier=NA，不是 capacity preflight stop。 |
+| 9. 主导内存 | 两侧同时驻留的 exact-side MUMPS LU factors。 |
+| 10. 0.7 nm | 仍需 factor-free/scalable architecture；这是基于 213–255 GiB factor-dominated evidence 的工程推断，不是正式外推。 |
+
+## 最终分类合同
+
+task.md 最终枚举中唯一适用的是 3NM_COMPLETED_NOT_GRID_CONVERGED。
+5nm 三个枚举均不能诚实采用：不是 5NM_MPI1_EQUIVALENCE_PASS；因
+external identity/outer authority 缺口也不满足
+5NM_MPI1_OWN_PASS_REFERENCE_ARRAYS_PARTIAL；inner physics 未失败，故
+不能写 5NM_MPI1_NUMERICAL_OR_PHYSICS_FAIL。故以 evidence boundary
+记录 EQUIVALENCE_NOT_ESTABLISHED；CONTROLLED_STOP_AT_3NM_PHYSICS_GATE
+仅为说明性状态。
+
+5 nm MPI1 的 packet identity 也需保留边界：packet directory
+357120347 B，manifest SHA=e5c754446e3fb9c8117608fbf610ec95749dc4b052bedae099ec268b57d8a85，
+packet_identity file SHA=24fff61befe8946db6ea76187bd59d38d5c476d58d81a0f03582e3b8aa5a5ea9，
+canonical identity SHA=7d496291c6ab2593673ff11ddaf456f208e78635c376afbc13e58dab645c0a85。

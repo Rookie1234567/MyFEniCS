@@ -1,10 +1,11 @@
-# 3 nm mesh convergence
+# 3 nm 网格与 p/h 结论
 
-| mesh | M | status | reason/evidence |
-|---|---:|---|---|
-| p6/h3 fresh attempt | 800 | `IMPLEMENTATION_FAILURE` | diagnostic marker only；consumer exit=`solution_snapshot_destroyed`；formal_result/gates/physics=null |
-| p6/h3 consumer retry | 800 | `candidate_controlled_negative` | five residuals通过；closure=`1.9160032445286745e-5`>`1e-5` |
-| p6/h2.5 | NA | `not_run` | `NOT_RUN_DUE_TO_3NM_M800_PHYSICS_GATE` |
-| p6/h2 | NA | `not_run` | `NOT_RUN_DUE_TO_3NM_M800_PHYSICS_GATE` |
+本任务只完成 p6/h3 的 M800 与 M1200 candidate runs。两次 residual solve 均通过，但 own physics 均失败，故不能宣称 3 nm accuracy-qualified 或 grid convergence：
 
-没有 3 nm mesh convergence 结论，也没有将 retry candidate 的 R/T/A 写成 official result。后续网格停止是前置 physics Gate，而非资源或技术能力判定。
+| case | result | reason |
+|---|---|---|
+| p6/h3 M800 | candidate negative | abs(A_balance-A_volume)=1.9160032445286745e-5 > 1e-5 |
+| p6/h3 M1200 | candidate negative | abs(A_balance-A_volume)=1.8704745773062692e-5 > 1e-5 |
+| h2.5/h2 | NOT_RUN | NOT_RUN_DUE_TO_3NM_M800_AND_M1200_OWN_PHYSICS_GATE |
+
+因此最终状态为 3NM_COMPLETED_NOT_GRID_CONVERGED。h3 已完成是运行事实，不是合格性通过；不得用 M800→M1200 的接近 scalar 取代 own Gate。
