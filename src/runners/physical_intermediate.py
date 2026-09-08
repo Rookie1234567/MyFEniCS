@@ -40,8 +40,13 @@ def _atomic_json(path: Path, value: dict) -> None:
 class WorkflowLedger:
     """Incremental scalar records, with phase deadlines readable by the parent."""
 
-    def __init__(self, directory: Path, phase_path: Path):
+    def __init__(self, directory: Path, phase_path: Path, *, cooperative_performance_stop: bool = False):
         self.directory, self.phase_path = directory, phase_path
+        self.application_worker = None
+        if cooperative_performance_stop:
+            pid = os.getpid()
+            ticks = int(Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()[19])
+            self.application_worker = dict(pid=pid, start_ticks=ticks)
         self.phase = 'setup'
         self.started = time.monotonic()
         self.phase_started = self.started
@@ -64,6 +69,8 @@ class WorkflowLedger:
         record = dict(phase=self.phase,
             phase_started_monotonic=self.phase_started, stage=stage,
             updated_monotonic=time.monotonic(), facts=facts)
+        if self.application_worker is not None:
+            record['application_worker'] = self.application_worker
         self.append('stages.jsonl', record)
         _atomic_json(self.phase_path, record)
 
@@ -157,7 +164,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     if os.environ.get('_MYFENICS_WSL_QUALIFIED_ACTIVATION') != '1':
         raise RuntimeError('qualified activation is required')
     directory = Path(directory)
-    ledger = WorkflowLedger(directory, phase_path)
+    ledger = WorkflowLedger(directory, phase_path, cooperative_performance_stop=light)
     ledger.defer_performance_stop = light
     cfg = simulation_config_3d_from_normalized(payload)
     bundle, result, rhs, outcome = {}, None, None, None

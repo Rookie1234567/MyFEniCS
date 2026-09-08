@@ -91,6 +91,22 @@ def _reap_adopted(leader_pid: int) -> None:
                 pass
 
 
+def _request_cooperative_stop(phase: dict, leader_pid: int) -> dict:
+    """Signal the registered application once, never its MPI launcher."""
+    worker = phase.get('application_worker', {})
+    pid, ticks = worker.get('pid'), worker.get('start_ticks')
+    children = _children()
+    if (not isinstance(pid, int) or not isinstance(ticks, int) or pid == leader_pid
+            or pid not in children or children[pid][1] != ticks):
+        raise RuntimeError('cooperative application identity is not in the current child tree')
+    current = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+    if int(current[19]) != ticks:
+        raise RuntimeError('cooperative application identity changed before signal')
+    os.kill(pid, signal.SIGTERM)
+    return dict(worker_pid=pid, start_ticks=ticks, signal='SIGTERM', request_count=1,
+                monotonic=time.monotonic(), timestamp_ns=time.time_ns())
+
+
 def _cache_stamp(path: Path | None) -> str:
     """Metadata stability after all descendants are reaped, not a cache hash."""
     digest = hashlib.sha256()
@@ -114,10 +130,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               interval: float = .25, grace_seconds: float = 2.0,
               cache_path: Path | None = None, phase_path: Path | None = None,
               solve_seconds: float | None = None, source_state: dict | None = None,
-              worker_environment: dict | None = None, hard_stop_immediate: bool = False) -> dict:
+              worker_environment: dict | None = None, hard_stop_immediate: bool = False,
+              cooperative_performance_stop: bool = False) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     if not command or min(wall_seconds, interval, grace_seconds) <= 0:
         raise ValueError('command and positive monitoring budgets are required')
+    if cooperative_performance_stop and (phase_path is None or not hard_stop_immediate or grace_seconds > 60):
+        raise ValueError('cooperative stop requires phase registration, immediate hard gates and grace <=60s')
     libc = ctypes.CDLL(None, use_errno=True)
     # PR_SET_CHILD_SUBREAPER; Linux-only, intentionally no platform fallback.
     if libc.prctl(36, 1, 0, 0, 0) != 0:
@@ -192,9 +211,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 if classification is not None and children:
                     signum = stop_signal(reason, hard_stop_immediate=hard_stop_immediate,
                         elapsed=time.monotonic()-stop_started, grace_seconds=grace_seconds)
-                    summary.setdefault('first_'+signal.Signals(signum).name, dict(
-                        monotonic=time.monotonic(), timestamp_ns=time.time_ns()))
-                    _signal_children(signum)
+                    if (cooperative_performance_stop and classification == 'PERFORMANCE_CONTROLLED_STOP'
+                            and signum == signal.SIGTERM):
+                        if 'cooperative_stop_request' not in summary:
+                            stage = 'cooperative_stop_identity_and_signal'
+                            request = _request_cooperative_stop(phase, leader.pid)
+                            summary['cooperative_stop_request'] = request
+                            summary['first_SIGTERM'] = dict(monotonic=request['monotonic'],
+                                timestamp_ns=request['timestamp_ns'], scope='registered application only')
+                    else:
+                        summary.setdefault('first_'+signal.Signals(signum).name, dict(
+                            monotonic=time.monotonic(), timestamp_ns=time.time_ns(), scope='whole child tree'))
+                        _signal_children(signum)
                 if exit_code is not None and not children:
                     stage = 'cache_stability'
                     stamp = _cache_stamp(cache_path)

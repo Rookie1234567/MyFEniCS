@@ -134,11 +134,18 @@ def test_light_dat_and_stop_response_outside_solve(tmp_path):
     facts = profile_facts(LIGHT_PROFILE)
     assert facts['resources']['solve_seconds'] == 7200 and facts['resources']['workflow_seconds'] == 10800
     ledger = WorkflowLedger(tmp_path, tmp_path/'phase.json')
+    assert 'application_worker' not in json.loads((tmp_path/'phase.json').read_text())
     ledger.defer_performance_stop = True; ledger.stop_signal = 15
     with pytest.raises(InterruptedError): ledger.marker('setup_stop', {})
     ledger.phase = 'solve'; ledger.marker('inside_one_pc', {})
     ledger.phase = 'recovery'
     with pytest.raises(InterruptedError): ledger.marker('recovery_stop', {})
+    registered = WorkflowLedger(tmp_path, tmp_path/'registered.json', cooperative_performance_stop=True)
+    identity = json.loads((tmp_path/'registered.json').read_text())['application_worker']
+    import os
+    assert identity['pid'] == os.getpid() and identity['start_ticks'] > 0
+    registered.set_phase('solve')
+    assert json.loads((tmp_path/'registered.json').read_text())['application_worker'] == identity
 
 
 @pytest.mark.parametrize('stop', [False, True])
@@ -181,6 +188,7 @@ def test_light_launch_reservation_cache_and_watchdog(tmp_path, monkeypatch):
         assert reservation['status'] == 'RESERVED' and reservation['reserved_seconds'] == 10860
         assert 10790 <= kwargs['wall_seconds'] <= 10800 and kwargs['solve_seconds'] == 7200
         assert kwargs['grace_seconds'] == 60 and kwargs['hard_stop_immediate'] is True
+        assert kwargs['cooperative_performance_stop'] is True
         assert set(kwargs['worker_environment']) == {'XDG_CACHE_HOME'}
         cache = Path(kwargs['worker_environment']['XDG_CACHE_HOME'])
         assert cache == run/'jit_cache' and not list(cache.iterdir())

@@ -415,6 +415,7 @@ def launch_specification(
                             worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),
                                                 'XDG_CACHE_HOME': pc_profile['cache_home']})
                        if pc_profile is not None else dict(grace_seconds=60, hard_stop_immediate=True,
+                            cooperative_performance_stop=True,
                             worker_environment={'XDG_CACHE_HOME': str(cache_home.resolve())}) if light else {}))
                 result = {'exit_status': authority['leader_exit_code'],
                     'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
