@@ -125,6 +125,7 @@ class Stage4ExternalLinearSolverRequest:
     release_assembled_matrix: Callable[[], None] | None = None
     mesh_data: Any = None
     full_rhs: PETSc.Vec | None = None
+    incident_traction_quadrature_degree: int | None = None
 
 
 @dataclass(frozen=True)
@@ -213,6 +214,7 @@ def _dispatch_external_linear_solver(
     release_assembled_matrix: Callable[[], None] | None = None,
     mesh_data: Any = None,
     full_rhs: PETSc.Vec | None = None,
+    incident_traction_quadrature_degree: int | None = None,
     port: Callable[
         [Stage4ExternalLinearSolverRequest], Stage4ExternalLinearSolverSnapshot
     ],
@@ -232,6 +234,7 @@ def _dispatch_external_linear_solver(
             release_assembled_matrix=release_assembled_matrix,
             mesh_data=mesh_data,
             full_rhs=full_rhs,
+            incident_traction_quadrature_degree=incident_traction_quadrature_degree,
         )
     )
     if not isinstance(snapshot, Stage4ExternalLinearSolverSnapshot):
@@ -2738,6 +2741,15 @@ def _port_mode_count_metrics(modes: list[PortMode3D]) -> dict[str, int]:
     }
 
 
+def _assemble_assembly_time_incident_traction(V, mesh_data, cfg, *,
+        dtn_quadrature_degree, diagnostic_reference_incident_quadrature=False):
+    """Default keeps historical integration; diagnostic reference matches native RHS."""
+    form = _incident_top_traction_form(V, mesh_data, cfg)
+    options = ({'quadrature_degree': dtn_quadrature_degree}
+               if diagnostic_reference_incident_quadrature else {})
+    return _assemble_unconstrained_vector(form, **options)
+
+
 def _solve_stage4_dtn_port_total_field_impl(
     *,
     a,
@@ -2764,6 +2776,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
+    diagnostic_reference_incident_quadrature: bool = False,
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
 
@@ -2807,6 +2820,11 @@ def _solve_stage4_dtn_port_total_field_impl(
         linear_solver_port,
         Stage4NeverMaterializedLinearSolverPort,
     )
+    if diagnostic_reference_incident_quadrature and (
+        linear_solver_port is None or not assembly_time_cell_static_condensation
+        or variable_p_backend or never_materialized_port
+    ):
+        raise ValueError('diagnostic incident quadrature requires fixed-p assembled external reference')
     if matrix_free_dtn and not never_materialized_port:
         raise ValueError("matrix-free DtN requires the action-only solver port")
     if matrix_free_dtn_probe and (not matrix_free_dtn or not never_materialized_port):
@@ -3358,8 +3376,9 @@ def _solve_stage4_dtn_port_total_field_impl(
     if assembly_time_active:
         if assembly_time_full_rhs is None:
             raise RuntimeError("assembly-time full RHS was not initialized")
-        incident_traction_vec = _assemble_unconstrained_vector(
-            _incident_top_traction_form(V, mesh_data, cfg)
+        incident_traction_vec = _assemble_assembly_time_incident_traction(
+            V, mesh_data, cfg, dtn_quadrature_degree=dtn_quadrature_degree,
+            diagnostic_reference_incident_quadrature=diagnostic_reference_incident_quadrature,
         )
         if variable_p_reduction is not None:
             if variable_p_active_full_rhs is None:
@@ -4261,6 +4280,8 @@ def _solve_stage4_dtn_port_total_field_impl(
                     port=linear_solver_port,
                     mesh_data=mesh_data,
                     full_rhs=assembly_time_full_rhs,
+                    incident_traction_quadrature_degree=(dtn_quadrature_degree
+                        if diagnostic_reference_incident_quadrature else None),
                 )
             solve_x = external_snapshot.x
             ksp = None
@@ -5029,6 +5050,7 @@ def solve_stage4_dtn_port_total_field(
     log,
     started: float | None = None,
     linear_solver_port=None,
+    diagnostic_reference_incident_quadrature: bool = False,
     variable_p_live_observer: (Callable[[Stage4VariablePLiveView], None] | None) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
@@ -5053,6 +5075,7 @@ def solve_stage4_dtn_port_total_field(
             bool(matrix_free_dtn),
             bool(matrix_free_dtn_probe),
             bool(canonical_vector_export),
+            bool(diagnostic_reference_incident_quadrature),
         )
     )
     if len(set(observer_flags)) != 1:
@@ -5075,6 +5098,7 @@ def solve_stage4_dtn_port_total_field(
             log=log,
             started=started,
             linear_solver_port=linear_solver_port,
+            diagnostic_reference_incident_quadrature=diagnostic_reference_incident_quadrature,
             variable_p_live_observer=variable_p_live_observer,
             variable_p_retain_local_schur_for_research=(
                 variable_p_retain_local_schur_for_research

@@ -15,6 +15,7 @@ def run_stage4b_block_grating_3d_case(
     *,
     solution_observer=None,
     linear_solver_port=None,
+    diagnostic_reference_incident_quadrature: bool = False,
     variable_p_live_observer=None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
@@ -50,6 +51,7 @@ def run_stage4b_block_grating_3d_case(
         apply_strong_boundary_bc=False,
         solution_observer=solution_observer,
         linear_solver_port=linear_solver_port,
+        diagnostic_reference_incident_quadrature=diagnostic_reference_incident_quadrature,
         variable_p_live_observer=variable_p_live_observer,
         variable_p_retain_local_schur_for_research=(
             variable_p_retain_local_schur_for_research

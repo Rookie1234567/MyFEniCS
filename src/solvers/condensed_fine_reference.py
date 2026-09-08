@@ -16,6 +16,56 @@ class FineReferenceCapacityRejected(RuntimeError):
     pass
 
 
+def native_map_arrays(space,floquet):
+    """Read the borrowed finalized mesh/space/MPC; allocate no new FE objects."""
+    from .fullspace_physical_intermediate_runtime import owned_slave_indices
+    mesh=space.mesh;mesh.topology.create_entity_permutations()
+    coefficients,offsets=floquet.mpc.coefficients()
+    rows=space.dofmap.index_map.size_local*space.dofmap.index_map_bs
+    return dict(dofmap=np.array(space.dofmap.list),geometry=np.array(mesh.geometry.x),
+        geometry_dofmap=np.array(mesh.geometry.dofmap),permutations=np.array(mesh.topology.get_cell_permutation_info()),
+        slaves=np.array(floquet.mpc.slaves),masters=np.array(floquet.mpc.masters.array),
+        coefficients=np.array(coefficients),offsets=np.array(offsets),
+        independent_indices=np.setdiff1d(np.arange(rows),owned_slave_indices(space,floquet)))
+
+
+def project_unconstrained_mpc_dual(values,mapping):
+    """C^H of a full unconstrained MPI1 load, never a zero-slave residual inverse."""
+    values=np.asarray(values);n=len(values)
+    slaves,masters,offsets,coefficients=(mapping[k] for k in ('slaves','masters','offsets','coefficients'))
+    if (values.ndim!=1 or not np.isfinite(values).all() or len(offsets)!=n+1
+        or offsets[0]!=0 or offsets[-1]!=len(masters) or len(masters)!=len(coefficients)
+        or np.any(np.diff(offsets)<0) or not np.isfinite(coefficients).all()
+        or np.any(slaves<0) or np.any(slaves>=n) or np.any(masters<0) or np.any(masters>=n)
+        or len(np.unique(slaves))!=len(slaves) or len(np.intersect1d(slaves,masters))):
+        raise ValueError('invalid finalized MPI1 MPC load mapping')
+    result=values.copy()
+    for slave in slaves:
+        start,end=offsets[slave:slave+2]
+        np.add.at(result,masters[start:end],np.conj(coefficients[start:end])*values[slave])
+    result[slaves]=0
+    return result
+
+
+def pre_numeric_rhs_gate(full_rhs,mapping,witness,actual_degree,expected_degree,save):
+    """Save the exact load comparison, and reject before symbolic/numeric."""
+    mismatched=[key for key,value in mapping.items() if not np.array_equal(value,witness['map'][key])]
+    if mismatched:
+        save('reference_pre_numeric_rhs',dict(status='MAPPING_REJECTED',mismatched=mismatched))
+        raise ValueError('pre-numeric native map mismatch: '+','.join(mismatched))
+    projected=project_unconstrained_mpc_dual(full_rhs,mapping)
+    native=witness['rhs']['b'];indices=mapping['independent_indices']
+    relative=relative_difference(projected[indices],native)
+    facts=dict(status='RHS_PASS' if relative<=1e-10 and actual_degree==expected_degree else 'RHS_REJECTED',
+        relative_difference=relative,limit=1e-10,actual_incident_quadrature_degree=actual_degree,
+        expected_native_quadrature_degree=expected_degree,map_exact=True,
+        definition='C^H of borrowed unconstrained full RHS compared with frozen native independent b')
+    save('reference_pre_numeric_rhs',dict(**facts,projected_full_rhs=projected,
+        native_independent_rhs=native,difference=projected[indices]-native,witness=witness['evidence']))
+    if facts['status']!='RHS_PASS':raise ValueError('pre-numeric original RHS/quadrature mismatch')
+    return facts
+
+
 def numeric_allowance(resource, raw_info, future_bytes):
     """Single ICNTL23 allocation cap, with an explicit engineering reserve."""
     reserve=512*1024**2
@@ -156,6 +206,16 @@ class MatchedFineReference:
             record.update(retained_payload=retained_payload(system),matrix_info=request.A.getInfo(),
                           lifecycle='one augmented correction then LU release before recovery/native compile; no native refinement/rebuild')
             self.save('reference_assembled',record)
+            from .dtn_port_3d import _dtn_surface_quadrature_degree
+            from src.common.modes_3d import outgoing_port_modes_3d
+            self.marker('fine_reference_rhs_gate_started',{})
+            mapping=native_map_arrays(request.function_space,request.floquet_data)
+            record['pre_numeric_rhs']=pre_numeric_rhs_gate(request.full_rhs.array,mapping,self.witness,
+                request.incident_traction_quadrature_degree,
+                _dtn_surface_quadrature_degree(request.config,outgoing_port_modes_3d(request.config)),self.save)
+            self.save('reference_pre_numeric_map',dict(**mapping,identity=self.identity))
+            del mapping
+            self.marker('fine_reference_rhs_gate_completed',record['pre_numeric_rhs']);self.sample()
             x_aug_initial,x_aug=solve_and_release(request,record,sample=self.sample,marker=self.marker,save=self.save)
             self.sample();self.marker('fine_reference_recovery_started',{})
             initial_field,initial_x,initial_recovery=_assign_fe_solution_from_assembly_time_condensation(
@@ -186,12 +246,7 @@ class MatchedFineReference:
                           native_mode_sha256=native['mode_sha256'])
             if native['mode_sha256']!=self.identity['mode_sha256']:raise ValueError('native mode mismatch')
             self.marker('fine_reference_native_compile_completed',{});self.sample()
-            mesh.topology.create_entity_permutations()
-            coefficients,offsets=floquet.mpc.coefficients()
-            mapping=dict(dofmap=np.array(space.dofmap.list),geometry=np.array(mesh.geometry.x),
-                geometry_dofmap=np.array(mesh.geometry.dofmap),permutations=np.array(mesh.topology.get_cell_permutation_info()),
-                slaves=np.array(floquet.mpc.slaves),masters=np.array(floquet.mpc.masters.array),
-                coefficients=np.array(coefficients),offsets=np.array(offsets),independent_indices=bridge.indices)
+            mapping=native_map_arrays(space,floquet)
             self.save('reference_native_map',dict(**mapping,ownership=list(x.getOwnershipRange()),identity=self.identity))
             for key,value in mapping.items():
                 if not np.array_equal(value,self.witness['map'][key]):raise ValueError('native frozen map mismatch: '+key)

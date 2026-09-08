@@ -768,6 +768,7 @@ def run_prepared_3d_case_flow(
     run_diffraction_postprocess: bool = False,
     solution_observer: Callable[..., None] | None = None,
     linear_solver_port=None,
+    diagnostic_reference_incident_quadrature: bool = False,
     variable_p_live_observer: (Callable[[Stage4VariablePLiveView], None] | None) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
@@ -1289,6 +1290,7 @@ def run_prepared_3d_case_flow(
                 log=log,
                 started=started,
                 linear_solver_port=linear_solver_port,
+                diagnostic_reference_incident_quadrature=diagnostic_reference_incident_quadrature,
                 variable_p_live_observer=variable_p_live_observer,
                 variable_p_retain_local_schur_for_research=(
                     variable_p_retain_local_schur_for_research

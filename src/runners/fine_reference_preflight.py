@@ -132,7 +132,8 @@ def run_worker(args):
         (args.directory/'mode_manifest.json').write_bytes(mode_bytes)
         sample();ledger.marker('fine_reference_assembly_started',identity)
         run_stage4b_block_grating_3d_case(cfg,args.directory/'assembly',
-            linear_solver_port=observer)
+            linear_solver_port=observer,
+            diagnostic_reference_incident_quadrature=args.solve_reference)
         raise RuntimeError('reference observer unexpectedly returned a solver snapshot')
     except CondensedPreflightExit as stop:
         record=stop.record
