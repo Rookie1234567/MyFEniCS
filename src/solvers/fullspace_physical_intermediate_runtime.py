@@ -26,7 +26,7 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
                                        resource_sample: Callable[[], dict],
                                        marker: Callable[[str, dict], None],
                                        reference: bool = False, light: bool = False,
-                                       joint_mr: bool = False) -> dict:
+                                       joint_mr: bool = False, defer_reference: bool = False) -> dict:
     """Own one shared mesh and two separately bounded p1 factors, opt-in only."""
     from .fullspace_bounded_mumps import BoundedP1Factor
     from .fullspace_physical_intermediate import (
@@ -66,23 +66,9 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
             stage_callback=marker, reference=reference)
         result["actions"] = actions
         if reference:
-            from .fullspace_p4_reference import build_reference_matrix, PhysicalP4Reference
-            matrix, result['reference_matrix_facts'] = build_reference_matrix(
-                levels, cfg, actions['physical'][4], actions['volume_quadrature_metadata'],
-                marker=marker, sample=resource_sample)
-            result['reference_matrix'] = matrix
-            middle = PhysicalP4Reference(matrix, actions['physical'][4]['physical_action'],
-                owned_slave_indices(levels['spaces'][4], levels['floquets'][4]),
-                fine_rows=int(levels['spaces'][6].dofmap.index_map.size_global),
-                sample=resource_sample, marker=marker)
-            result['reference_factor'] = middle
-            result['middle'] = middle
-            result['pc'] = PhysicalIntermediatePreconditioner(fine['physical_action'],
-                positive['h6'] if light else positive['upper_cycle'], actions['transfers'][(6, 4)], middle,
-                stage_callback=marker, **(dict(positive_identity='H6', outer_max_it=2048) if light else {}),
-                **({'joint_mr':True} if joint_mr else {}))
-            marker('physical_intermediate_setup_complete', dict(reference_only=True,
-                independent_p1_factors=0 if light else 1, reference_p4_factors=1, shifted_inverse_constructed=False))
+            if not defer_reference:
+                attach_physical_reference(result, cfg, resource_sample=resource_sample,
+                    marker=marker, light=light, joint_mr=joint_mr)
             return result
         jacobi = {}
         for degree in (4, 2):
@@ -112,6 +98,33 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
     except BaseException:
         destroy_physical_intermediate_solver(result)
         raise
+
+
+def attach_physical_reference(bundle, cfg, *, resource_sample, marker,
+                              light=False, joint_mr=False, diagnostic_refinement_v4=None):
+    """Build the unchanged physical p4 factor once, optionally after independent diagnostics."""
+    from .fullspace_p4_reference import build_reference_matrix, PhysicalP4Reference
+    from .fullspace_physical_intermediate import PhysicalIntermediatePreconditioner
+    if 'reference_factor' in bundle or 'reference_matrix' in bundle:
+        raise ValueError('physical reference already attached')
+    levels, actions = bundle['levels'], bundle['actions']
+    matrix, bundle['reference_matrix_facts'] = build_reference_matrix(
+        levels, cfg, actions['physical'][4], actions['volume_quadrature_metadata'],
+        marker=marker, sample=resource_sample)
+    bundle['reference_matrix'] = matrix
+    middle = PhysicalP4Reference(matrix, actions['physical'][4]['physical_action'],
+        owned_slave_indices(levels['spaces'][4], levels['floquets'][4]),
+        fine_rows=int(levels['spaces'][6].dofmap.index_map.size_global),
+        sample=resource_sample, marker=marker, diagnostic_refinement_v4=diagnostic_refinement_v4)
+    bundle['reference_factor'] = bundle['middle'] = middle
+    bundle['pc'] = PhysicalIntermediatePreconditioner(bundle['fine']['physical_action'],
+        bundle['positive']['h6'] if light else bundle['positive']['upper_cycle'],
+        actions['transfers'][(6,4)], middle, stage_callback=marker,
+        diagnostic_before_middle=None if diagnostic_refinement_v4 is None else diagnostic_refinement_v4.before_middle,
+        **(dict(positive_identity='H6', outer_max_it=2048) if light else {}),
+        **({'joint_mr': True} if joint_mr else {}))
+    marker('physical_intermediate_setup_complete', dict(reference_only=True,
+        independent_p1_factors=0 if light else 1, reference_p4_factors=1, shifted_inverse_constructed=False))
 
 
 def release_physical_intermediate_solver_stack(bundle: dict) -> None:

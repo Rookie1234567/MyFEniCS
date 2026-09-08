@@ -14,9 +14,9 @@ def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
     """
     from benchmarks.subreaper_watchdog import supervise
     from .task038_launcher import _physical_source_gate
-    if kind not in ('diagnosis','reference'):
+    if kind not in ('diagnosis','reference','completion_v4'):
         raise ValueError('unknown diagnostic workflow kind')
-    limit = min(remaining_seconds,3600 if kind=='reference' else 7200)
+    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400}[kind])
     state = _physical_source_gate(Path.cwd(),expected_sha)
     result = supervise(command,Path(directory),wall_seconds=limit,phase_path=Path(phase_path),
                        source_state=state,interval=.25,grace_seconds=2,
@@ -37,14 +37,13 @@ class DiagnosticActions:
     def __init__(self,bundle,cfg,marker,*,timebase_policy=STRICT):
         from src.solvers.physical_error_metric import LosslessFEMetric,SerialAction
         from src.solvers.physical_light_setup import build_light_h6_setup
-        from src.solvers.fullspace_physical_intermediate import PhysicalIntermediatePreconditioner
         self.bridges,self.metrics,self.light = [],{},None
         self.timings=[]
         self.timebase_policy=timebase_policy
         self.projection_seconds=0.
         self.projection_diagonal=None
         levels,fine = bundle['levels'],bundle['fine']
-        transfer,reference = bundle['actions']['transfers'][(6,4)],bundle['reference_factor']
+        transfer = bundle['actions']['transfers'][(6,4)]
         def bridge(action,source=6,target=6,result='target'):
             value=SerialAction(levels['spaces'][source],levels['floquets'][source],action,
                 result=result,target_space=levels['spaces'][target],target_floquet=levels['floquets'][target])
@@ -61,6 +60,7 @@ class DiagnosticActions:
                 marker(name+'_complete',interval)
                 return result
             return apply
+        self.bridge, self.timed, self.marker = bridge, timed, marker
         try:
             self.A = bridge(fine['physical_action'].apply)
             self.components={k:bridge(v.apply,result='borrowed') for k,v in
@@ -68,9 +68,6 @@ class DiagnosticActions:
             self.components['dtn']=bridge(fine['dtn_action'].apply)
             self.P=bridge(transfer.apply_primal,4,6,'owned')
             self.PH=bridge(transfer.apply_adjoint,6,4,'owned')
-            def solve(rhs):
-                return reference.solve_intermediate(rhs)['final_solution']
-            self.solve=timed('diagnostic_p4',bridge(solve,4,4,'owned'))
             for degree in (6,4):
                 marker('lossless_metric_started',dict(degree=degree))
                 self.metrics[degree]=LosslessFEMetric(levels,degree,cfg.k0,bundle['actions']['volume_quadrature_metadata'])
@@ -78,26 +75,37 @@ class DiagnosticActions:
             self.M0=self.metrics[6].mass
             self.light=build_light_h6_setup(levels,cfg,marker)
             h6=self.light['h6']
-            light=PhysicalIntermediatePreconditioner(fine['physical_action'],h6,transfer,reference,
-                        positive_identity='H6',outer_max_it=2048,stage_callback=marker)
-            joint=PhysicalIntermediatePreconditioner(fine['physical_action'],h6,transfer,reference,
-                        positive_identity='H6',outer_max_it=2048,joint_mr=True,stage_callback=marker)
-            self.profiles={name:timed(name,bridge(pc.apply,result='owned')) for name,pc in
-                           [('S6',bundle['pc']),('LIGHT',light),('JOINT',joint)]}
+            self.profiles={}
+            if 'reference_factor' in bundle:
+                self.attach_reference(bundle)
             self.smoothers={name:timed(name,bridge(pc.apply,result='owned')) for name,pc in
                             [('H6',h6),('S6_complement',bundle['positive']['upper_cycle'])]}
         except BaseException:
             self.destroy()
             raise
 
-    def project(self,e):
+    def attach_reference(self,bundle):
+        from src.solvers.fullspace_physical_intermediate import PhysicalIntermediatePreconditioner
+        reference=bundle['reference_factor']
+        def solve(rhs):
+            return reference.solve_intermediate(rhs)['final_solution']
+        self.solve=self.timed('diagnostic_p4',self.bridge(solve,4,4,'owned'))
+        policy=getattr(reference,'diagnostic_refinement_v4',None)
+        pcs={'S6':bundle['pc']}
+        for name,joint in [('LIGHT',False),('JOINT',True)]:
+            pcs[name]=PhysicalIntermediatePreconditioner(bundle['fine']['physical_action'],
+                self.light['h6'],bundle['actions']['transfers'][(6,4)],reference,
+                positive_identity='H6',outer_max_it=2048,joint_mr=joint,stage_callback=self.marker,
+                diagnostic_before_middle=None if policy is None else policy.before_middle)
+        self.profiles={name:self.timed(name,self.bridge(pc.apply,result='owned')) for name,pc in pcs.items()}
+
+    def project(self,e,*,checkpoint=lambda: None,retain_approximation=False):
         """Share the 1800s projection allowance, including diagonal setup."""
-        from src.solvers.physical_error_diagnostics import project_error
-        class ProjectionLimit(RuntimeError):
-            pass
+        from src.solvers.physical_error_diagnostics import project_error, ProjectionLimit
         start=clock_sample()
         projection_budget=ClockBudget(start,policy=self.timebase_policy)
         def check():
+            checkpoint()
             if self.projection_seconds+projection_budget.update(clock_sample())['budget_seconds']>=1800:
                 raise ProjectionLimit('cumulative projection budget exhausted')
         try:
@@ -106,7 +114,14 @@ class DiagnosticActions:
                 self.projection_diagonal=self.metrics[4].diagonal(checkpoint=check)
             return project_error(self.P,self.PH,self.M0,self.projection_diagonal,e,checkpoint=check)
         except ProjectionLimit as exc:
-            return dict(status='PROJECTION_UNRESOLVED',reason=str(exc),parallel=None,perpendicular=None)
+            if not retain_approximation:
+                return dict(status='PROJECTION_UNRESOLVED',reason=str(exc),parallel=None,perpendicular=None)
+            # Diagonal setup expired before CG: zero is still a legal approximation.
+            import numpy as np
+            def exhausted():
+                raise ProjectionLimit(str(exc))
+            return project_error(self.P,self.PH,self.M0,
+                np.ones(self.P.indices.size),e,checkpoint=exhausted)
         finally:
             self.projection_seconds+=projection_budget.update(clock_sample())['budget_seconds']
 
@@ -133,13 +148,15 @@ def main():
     parser.add_argument('--remaining-seconds',type=float,required=True)
     parser.add_argument('--cache-path',type=Path)
     parser.add_argument('--worker',action='store_true')
+    parser.add_argument('--completion-v4',action='store_true')
     args=parser.parse_args()
     _physical_source_gate(Path.cwd(),args.expected_sha)
     if args.worker:
         from .physical_diagnosis_worker import run_diagnosis
-        run_diagnosis(args.input,args.inventory,args.directory,args.expected_sha)
+        run_diagnosis(args.input,args.inventory,args.directory,args.expected_sha,completion_v4=args.completion_v4)
         return 0
     args.directory.mkdir(parents=True,exist_ok=False)
+    workflow_limit=5400 if args.completion_v4 else 7200
     start=clock_sample()
     pre_budget=ClockBudget(start,policy=CONSERVATIVE_REALTIME)
     post_budget=None
@@ -158,16 +175,21 @@ def main():
         cache_before=cache_inventory(),kind='no-reference D1/D3',
         complete_pc_limit=15,independent_smoother_limit=4,projection_seconds=1800,
         reference='not_run_capacity_unqualified')
+    if args.completion_v4:
+        manifest.update(kind='completion_v4',complete_pc_limit=8,logical_p4_rhs_limit=10,
+                        external_MatSolve_limit=30,workflow_limit_seconds=5400)
     _atomic_json(args.directory/'launch.json',manifest)
     command=['mpiexec','-n','1',sys.executable,'-m','src.runners.physical_diagnosis',
         '--worker','--directory',str(args.directory),'--input',str(args.input),
         '--inventory',str(args.inventory),'--expected-sha',args.expected_sha,
         '--remaining-seconds',str(args.remaining_seconds)]
+    if args.completion_v4:
+        command.append('--completion-v4')
     result=None
     try:
         result=supervise_diagnosis(command,args.directory/'watchdog',phase_path=args.directory/'phase.json',
-            expected_sha=args.expected_sha,kind='diagnosis',
-            remaining_seconds=min(7200,args.remaining_seconds)-pre_budget.update(clock_sample())['budget_seconds'],
+            expected_sha=args.expected_sha,kind='completion_v4' if args.completion_v4 else 'diagnosis',
+            remaining_seconds=min(workflow_limit,args.remaining_seconds)-pre_budget.update(clock_sample())['budget_seconds'],
             cache_path=args.cache_path)
         manifest['supervision']=result
         manifest['pre_supervision_interval']=pre_budget.update(result['clock_start'])
@@ -190,7 +212,7 @@ def main():
             else:
                 charge=pre_budget.update(manifest['clock_end'])['budget_seconds']
             manifest['interval']['budget_seconds']=charge
-            if charge>min(7200,args.remaining_seconds):
+            if charge>min(workflow_limit,args.remaining_seconds):
                 manifest['workflow_limit_exceeded']=True
                 if (result is not None and result['classification']=='COMPLETED' and
                         'classification' not in manifest):

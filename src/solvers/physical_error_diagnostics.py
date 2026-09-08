@@ -7,6 +7,10 @@ action buffers. No matrix of a nonlinear PC is constructed.
 import numpy as np
 
 
+class ProjectionLimit(RuntimeError):
+    """Only the local projection allowance, never a shared workflow failure."""
+
+
 def copied_apply(action, x):
     y = np.array(action(x), dtype=np.complex128, copy=True)
     if y.ndim != 1 or not np.isfinite(y).all():
@@ -61,7 +65,12 @@ def project_error(prolong, adjoint, mass, diagonal, e, *, rtol=1e-10, max_it=256
     bnorm = float(np.linalg.norm(b))
     count, reason = 0, 'iteration_limit'
     for count in range(1, max_it+1):
-        checkpoint()
+        try:
+            checkpoint()
+        except ProjectionLimit:
+            count -= 1
+            reason = 'local_projection_time_limit'
+            break
         if np.linalg.norm(r) <= rtol*bnorm:
             count -= 1
             reason = 'recursive_tolerance'
@@ -91,7 +100,7 @@ def project_error(prolong, adjoint, mass, diagonal, e, *, rtol=1e-10, max_it=256
     cross = np.vdot(parallel,mperp)
     pythagorean = float(abs(e2-parallel2-perp2)/max(e2,np.finfo(float).tiny))
     # The equation residual checks all p4 directions, not just parallel itself.
-    closed = residual <= rtol and pythagorean <= 1e-9
+    closed = residual <= rtol and pythagorean <= 1e-9 and reason != 'local_projection_time_limit'
     return dict(status='PROJECTION_CLOSED' if closed else 'PROJECTION_UNRESOLVED',
                 coarse=c, parallel=parallel, perpendicular=perpendicular,
                 iterations=count, exit_reason=reason, equation_relative_residual=residual,
@@ -120,23 +129,34 @@ def correction_diagnostics(action, mass, e, q, direction):
                 mr_true_residual_ratio=float(np.linalg.norm(q-alpha*applied)/qnorm))
 
 
-def coarse_diagnostics(action, mass, prolong, adjoint, solve, e, projection):
+def coarse_diagnostics(action, mass, prolong, adjoint, solve, e, projection, *, identity_check=True):
     """Reuse one dG for the error decomposition; one extra coarse identity solve."""
     q = copied_apply(action,e)
     coarse = copied_apply(solve,copied_apply(adjoint,q))
     dg = copied_apply(prolong,coarse)
     result = correction_diagnostics(action,mass,e,q,dg)
     parallel,perp = projection['parallel'],projection['perpendicular']
-    left = result['unit_remaining_energy']
-    right = metric_square(mass,perp)+metric_square(mass,parallel-dg)
-    result.update(decomposition_left=left,decomposition_right=right,
+    result.update(dg_in_range_P=True, dg=dg, q=q)
+    if parallel is not None:
+        left = result['unit_remaining_energy']
+        right = metric_square(mass,perp)+metric_square(mass,parallel-dg)
+        result.update(decomposition_left=left,decomposition_right=right,
                   decomposition_relative_defect=float(abs(left-right)/max(projection['error_energy'],np.finfo(float).tiny)),
                   decomposition_qualified=projection['status']=='PROJECTION_CLOSED',
-                  dg_in_range_P=True, dg=dg, q=q)
-    identity = copied_apply(prolong,copied_apply(solve,copied_apply(adjoint,copied_apply(action,parallel))))
-    result['coarse_identity_relative_field_error'] = float(np.sqrt(metric_square(mass,identity-parallel)/
-        max(metric_square(mass,parallel),np.finfo(float).tiny)))
+                  )
+    if identity_check:
+        result.update(coarse_identity_diagnostics(action,mass,prolong,adjoint,solve,parallel))
     return result
+
+
+def coarse_identity_diagnostics(action, mass, prolong, adjoint, solve, parallel):
+    """One separately saveable range(P) check after the dG packet is durable."""
+    if parallel is None or np.linalg.norm(parallel) == 0:
+        raise ValueError('range(P) identity requires a nonzero primal vector')
+    identity = copied_apply(prolong,copied_apply(solve,copied_apply(adjoint,copied_apply(action,parallel))))
+    return dict(identity=identity, parallel=parallel,
+        coarse_identity_relative_field_error=float(np.sqrt(metric_square(mass,identity-parallel)/
+        max(metric_square(mass,parallel),np.finfo(float).tiny))))
 
 
 def evaluate_profiles(action, mass, e, profiles, *, checkpoint=lambda: None):

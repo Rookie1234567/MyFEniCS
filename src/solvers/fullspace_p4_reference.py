@@ -102,8 +102,9 @@ class PhysicalP4Reference:
     solver_identity = 'exact_augmented_A4_reference'
 
     def __init__(self, matrix, action, slave_indices, *, fine_rows, sample, marker,
-                 factor_factory=_MumpsFactor):
+                 factor_factory=_MumpsFactor, diagnostic_refinement_v4=None):
         self.matrix, self.action = matrix, action
+        self.diagnostic_refinement_v4 = diagnostic_refinement_v4
         self.slaves = np.asarray(slave_indices, dtype=np.int32)
         self.sample, self.marker = sample, marker
         self.factor = None
@@ -137,6 +138,8 @@ class PhysicalP4Reference:
             raise
 
     def solve_intermediate(self, rhs):
+        if getattr(self, 'diagnostic_refinement_v4', None) is not None:
+            return self.diagnostic_refinement_v4.solve(self, rhs)
         started = time.perf_counter()
         if not np.all(np.isfinite(rhs.array)) or np.any(rhs.array[self.slaves] != 0):
             raise ValueError('reference RHS must be finite legal slave-zero primal storage')

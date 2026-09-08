@@ -572,6 +572,7 @@ class PhysicalIntermediatePreconditioner:
         *, stage_callback: Callable[[str, dict], None] | None = None,
         positive_identity: str = 'S6', outer_max_it: int = OUTER_MAX_IT,
         joint_mr: bool = False,
+        diagnostic_before_middle=None,
     ) -> None:
         self.fine_action = fine_action
         self.positive_identity = positive_identity
@@ -583,6 +584,7 @@ class PhysicalIntermediatePreconditioner:
         if joint_mr and (positive_identity != 'H6' or self.intermediate_identity != 'exact_augmented_A4_reference'):
             raise ValueError('joint MR3 requires the frozen LIGHT reference directions')
         self.joint_mr = joint_mr
+        self.diagnostic_before_middle = diagnostic_before_middle
         self.stage_callback = stage_callback
         self.apply_count = 0
         self.last_apply_facts: dict[str, Any] = {}
@@ -632,6 +634,8 @@ class PhysicalIntermediatePreconditioner:
                         if label == "physical_middle":
                             p4_rhs = _transfer(self.p6_to_p4, "apply_adjoint", residual)
                             stage.callback(_destroy, p4_rhs)
+                            if self.diagnostic_before_middle is not None:
+                                self.diagnostic_before_middle(rhs, residual, p4_rhs)
                             inner = self.intermediate_cycle.solve_intermediate(p4_rhs)
                             inner_solution, release = _take_solution(inner)
                             stage.callback(release)

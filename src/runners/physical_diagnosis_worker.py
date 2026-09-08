@@ -25,12 +25,17 @@ def save_packet(directory,name,facts):
     record=compact(facts)
     if arrays:
         path=directory/(name+'.npz')
-        np.savez(path,**arrays)
+        temporary=path.with_suffix('.npz.tmp')
+        with temporary.open('wb') as stream:
+            np.savez(stream,**arrays)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
         record['arrays']=dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
     _atomic_json(directory/(name+'.json'),record)
 
 
-def run_diagnosis(input_path,inventory_path,directory,source_sha):
+def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4=False):
     from mpi4py import MPI
     from petsc4py import PETSc
     import petsc4py,slepc4py,dolfinx,mpi4py,basix
@@ -58,6 +63,10 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha):
     payload=load_and_resolve(input_path).as_jsonable()
     cfg=simulation_config_3d_from_normalized(payload)
     inventory=json.loads(inventory_path.read_text())
+    reused=None
+    if completion_v4:
+        from .physical_diagnostic_completion import reuse_v3
+        reused=reuse_v3(inventory)
     selected=[s for s in inventory['samples'] if s['label'] in ('A2R160','LIGHT448','JOINT448')]
     if [s['label'] for s in selected]!=['A2R160','LIGHT448','JOINT448']:
         raise ValueError('frozen primary sample order changed')
@@ -84,11 +93,12 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha):
     save_packet(directory,'environment',summary)
     try:
         bundle=build_physical_intermediate_solver(cfg,MPI.COMM_WORLD,resource_sample=sample,
-                    marker=ledger.marker,reference=True)
+                    marker=ledger.marker,reference=True,defer_reference=completion_v4)
         qualification=qualify_physical_intermediate_setup(bundle,marker=ledger.marker,resource_sample=sample)
         mesh_identity=_mesh_identity(bundle['levels']['mesh'])
         save_packet(directory,'setup_identity',dict(qualification=qualification,mesh=mesh_identity,
-            quadrature=bundle['actions']['volume_quadrature_metadata'],factor=bundle['reference_factor'].audit))
+            quadrature=bundle['actions']['volume_quadrature_metadata'],
+            factor=None if completion_v4 else bundle['reference_factor'].audit))
         for key in ('canonical_connectivity_sha256','canonical_geometry_sha256','cells_global'):
             if mesh_identity[key]!=inventory['mesh_witness']['identity'][key]:
                 raise RuntimeError('rebuilt mesh differs from frozen same-model witness: '+key)
@@ -126,6 +136,10 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha):
                     key=lambda r:abs(complex(r['beta'])))[:3]
         save_packet(directory,'modes',dict(mode_sha256=fine['mode_sha256'],mode_manifest_path=str(directory/'mode_manifest.json'),inventory=modes,
             selected=[incident]+near,selection='incident plus three closest abs(outgoing kz) distinct side/order branches'))
+        if completion_v4:
+            from .physical_diagnostic_completion import run_completion_controls
+            run_completion_controls(bundle,cfg,actions,b,inventory,directory,source_sha,ledger,sample,summary,reused)
+            return summary
         snapshots=[]
         for source in selected:
             ledger.marker(source['label']+'_identity_started',{})
@@ -206,8 +220,13 @@ def run_diagnosis(input_path,inventory_path,directory,source_sha):
             summary['bridge_checks']=[v.audit for v in actions.bridges]
             summary['metric_identity']={k:dict(**v.audit,bridge_checks={n:b.audit for n,b in v.bridges.items()})
                                         for k,v in actions.metrics.items()}
-            actions.destroy()
-        if rhs is not None:rhs.destroy()
-        destroy_physical_intermediate_solver(bundle)
-        _atomic_json(directory/'diagnostic_summary.json',summary)
-        for sig,handler in handlers.items():signal.signal(sig,handler)
+        from .physical_diagnostic_completion import finalize_diagnostics
+        finalizers=[]
+        if actions is not None:finalizers.append(actions.destroy)
+        if rhs is not None:finalizers.append(rhs.destroy)
+        finalizers.append(lambda:destroy_physical_intermediate_solver(bundle))
+        try:
+            finalize_diagnostics(summary,finalizers,
+                lambda:_atomic_json(directory/'diagnostic_summary.json',summary),sys.exc_info()[1])
+        finally:
+            for sig,handler in handlers.items():signal.signal(sig,handler)

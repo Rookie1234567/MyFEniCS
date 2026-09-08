@@ -229,6 +229,17 @@ class _MumpsFactor:
             raise RuntimeError("MUMPS solve has an invalid lifecycle")
         self.solve_repeated(rhs, solution)
 
+    def refinement_settings(self) -> dict:
+        """Read the existing MUMPS internal refinement controls without changing them."""
+        integer, real = ctypes.c_int(), ctypes.c_double()
+        for name, value, index in (('MatMumpsGetIcntl', integer, 10),
+                                   ('MatMumpsGetCntl', real, 2)):
+            function = getattr(self._api, name)
+            function.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(type(value))]
+            function.restype = ctypes.c_int
+            _petsc_error(function(self._handle, index, ctypes.byref(value)), name)
+        return {'ICNTL(10)': integer.value, 'CNTL(2)': real.value, 'modified': False}
+
     def solve_repeated(self, rhs: Any, solution: Any) -> None:
         """Apply an already qualified factor; preserve the one-shot solve API."""
         if self.destroyed or self.numeric_calls != 1:
