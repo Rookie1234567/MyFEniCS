@@ -92,6 +92,38 @@ def test_task041_packet_identity_reorders_inventory_without_hash_change():
 
 
 @pytest.mark.parametrize(
+    ("disk_source_sha", "packet_producer_source_sha", "cross_source", "reject"),
+    (
+        ("b" * 40, None, False, False),
+        ("b" * 40, "b" * 40, False, False),
+        ("a" * 40, "a" * 40, True, False),
+        ("a" * 40, None, False, True),
+        ("b" * 40, "not-a-sha", False, True),
+    ),
+)
+def test_task041_packet_source_identity_helper(
+    disk_source_sha, packet_producer_source_sha, cross_source, reject
+):
+    if reject:
+        with pytest.raises(task041.Task041ModePrepError, match="source"):
+            task041._task041_packet_source_identity(
+                "b" * 40, packet_producer_source_sha, disk_source_sha
+            )
+        return
+    identity = task041._task041_packet_source_identity(
+        "b" * 40, packet_producer_source_sha, disk_source_sha
+    )
+    assert identity["producer_source_sha"] == disk_source_sha
+    assert identity["consumer_source_sha"] == "b" * 40
+    assert identity["cross_source_packet_reuse"] is cross_source
+    assert identity["reuse_reason"] == (
+        "implementation_failure_recovery_persistence_retry"
+        if cross_source
+        else "same_source_packet"
+    )
+
+
+@pytest.mark.parametrize(
     ("field", "value", "missing"),
     [
         ("side", "middle", False),
@@ -751,7 +783,10 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
         },
     }
     gates = task041._task041_consumer_authority_gate(
-        authority_path, formal, identity
+        authority_path,
+        formal,
+        identity,
+        expected_consumer_source_sha=source_sha,
     )
     expected_pass = order_case == "valid"
     assert gates["pass"] is expected_pass
@@ -767,11 +802,16 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
 
 
 @pytest.mark.parametrize(
-    ("after_rss", "should_recover", "shortwave"),
-    [(50, True, False), (100, False, False), (50, True, True)],
+    ("after_rss", "should_recover", "shortwave", "overall_pass"),
+    [
+        (50, True, False, True),
+        (100, False, False, True),
+        (50, True, True, True),
+        (50, True, True, False),
+    ],
 )
 def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
-    monkeypatch, tmp_path, after_rss, should_recover, shortwave
+    monkeypatch, tmp_path, after_rss, should_recover, shortwave, overall_pass
 ):
     @dataclass
     class FakeProfile:
@@ -791,6 +831,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
             return None
 
     source_sha = "b" * 40
+    packet_source_sha = "a" * 40 if shortwave and overall_pass else source_sha
     manifest_sha = "a" * 64
     external_key = {
         "side": "bottom",
@@ -835,7 +876,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         )
         normalized = specification.as_jsonable()
         identity = task041.build_task041_shortwave_packet_identity(
-            specification, normalized, source_sha, "d" * 64
+            specification, normalized, packet_source_sha, "d" * 64
         )
     packet_manifest = tmp_path / "fresh" / "manifest.json"
     packet_manifest.parent.mkdir()
@@ -882,7 +923,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
 
     def fake_authority():
         return {
-            "source_sha": identity["source_sha"],
+            "source_sha": source_sha,
             "physical_model_sha256": identity["physical_sha256"],
             "model_id": identity["model_id"],
             "mpi_size": identity["mpi_size"],
@@ -934,8 +975,8 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         },
     }
     recovery = {
-        "pass": True,
-        "physics_pass": True,
+        "pass": overall_pass,
+        "physics_pass": overall_pass,
         "recovery_pass": True,
         "reports": {
             side: {
@@ -971,6 +1012,9 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
             kwargs["run_directory"],
             kwargs["producer"],
         )
+        formal_status = "full_formal_completed" if recovery_result["pass"] else (
+            "full_formal_recovery_failure"
+        )
         callback("recovery_detail", {"source": "fake recovery report"})
         callback("recovery_physics_end", {"recovery": recovery_result})
         callback("solution_snapshot_destroyed", {"source": "fake v7 finally"})
@@ -982,7 +1026,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         authority_path.parent.mkdir(parents=True, exist_ok=True)
         authority_path.write_text(json.dumps(fake_authority()), encoding="utf-8")
         return {
-            "status": "full_formal_completed",
+            "status": formal_status,
             "solve": solve_report,
             "recovery": recovery_result,
             "release_before_recovery": release,
@@ -1012,6 +1056,11 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
             ),
         )
         return {"full_formal": formal}
+
+    def fake_recovery_runner(*args, **kwargs):
+        captured["recovery_called"] = True
+        captured["recovery_producer"] = args[-1]
+        return recovery
 
     monkeypatch.setattr(task041, "_environment_snapshot", lambda: {"marker": "1"})
     monkeypatch.setattr(task041, "_memavailable_bytes", lambda: 10**15)
@@ -1056,7 +1105,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     monkeypatch.setattr(
         orchestration,
         "run_v3_7_recovery_runner",
-        lambda *args, **kwargs: (captured.__setitem__("recovery_called", True) or recovery),
+        fake_recovery_runner,
     )
     result = task041.run_task041_consumer(
         input_path=specification.source_path if shortwave else "input.dat",
@@ -1065,6 +1114,9 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         packet_manifest_sha256=manifest_sha,
         run_directory=tmp_path / "consumer",
         source_sha=source_sha,
+        packet_producer_source_sha=(
+            packet_source_sha if packet_source_sha != source_sha else None
+        ),
         comm=Comm(),
     )
     assert captured["setup"]["exact_one_cell_work_dir"].name == "exact_one_cell"
@@ -1158,7 +1210,7 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     assert rss_drop["rss_measurement"] == "process_tree.rss_bytes"
     assert rss_drop["before_high_water_memory_authority_bytes"] == 100
     assert rss_drop["after_cleanup_memory_authority_bytes"] == after_rss
-    if should_recover:
+    if should_recover and overall_pass:
         assert observed.index("rss_drop_confirmed") < observed.index("recovery_started")
         assert "recovery_stage" in observed
         assert result["status"] == "task041_consumer_completed"
@@ -1173,6 +1225,32 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
         assert packet["json_contains_solution"] is False
         assert packet["snapshot_location"] == "process_memory"
         assert "official_outputs_written" in observed
+        if shortwave:
+            assert result["source_identity"]["producer_source_sha"] == packet_source_sha
+            assert result["source_identity"]["consumer_source_sha"] == source_sha
+            assert result["source_identity"]["cross_source_packet_reuse"] is True
+            assert result["source_identity"]["reuse_reason"] == (
+                "implementation_failure_recovery_persistence_retry"
+            )
+            assert captured["recovery_producer"]["producer_source_sha"] == (
+                packet_source_sha
+            )
+            assert captured["recovery_producer"]["consumer_source_sha"] == source_sha
+            assert result["gates"]["authority_identity"]["source_sha"] is True
+    elif should_recover:
+        assert result["status"] == "full_formal_recovery_failure"
+        assert result["classification"] == "TASK041_CONSUMER_NUMERICAL_FAILURE"
+        assert result["formal"]["recovery"]["pass"] is False
+        assert result["authority_path"] == str(
+            Path(result["formal"]["authority_path"]).resolve()
+        )
+        assert result["gates"]["authority_available"] is True
+        assert result["gates"]["status"] == (
+            "not_run_due_to_formal_numerical_failure"
+        )
+        assert result["official_rta"]["status"] == (
+            "not_available_due_to_formal_failure"
+        )
     else:
         assert result["status"] == "full_formal_lifecycle_failure"
         assert result["classification"] == "TASK041_CONSUMER_LIFECYCLE_FAILURE"
@@ -1267,6 +1345,113 @@ def test_recovery_runner_returns_real_reports(monkeypatch, tmp_path):
         run_integrated_checker=False,
     )
     assert result["reports"] is reports
+
+
+def test_v3_7_negative_authority_persists_without_integrated_checker(
+    monkeypatch, tmp_path
+):
+    class Comm:
+        rank = 0
+        barrier = staticmethod(lambda: None)
+
+    comm = Comm()
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(
+            b=object(),
+            local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+        ),
+        top=SimpleNamespace(b=object()),
+    )
+
+    Layout = type(
+        "Layout",
+        (),
+        {"split": staticmethod(lambda *_args: (object(), object(), object()))},
+    )
+
+    energy = {
+        "R": 0.2,
+        "T": 0.7,
+        "A": 0.3,
+        "A_volume": 0.25,
+        "closure": -0.05,
+        "A_minus_A_volume": 0.05,
+    }
+    traction = {
+        "role": "exact_variational_conormal_dual",
+        "bottom": {"relative_dual": 2.0e-8},
+        "top": {"relative_dual": 3.0e-8},
+    }
+    interface_continuity = {"bottom": {"pass": True}, "top": {"pass": False}}
+    interface_e_projection = {"combined_relative_residual": 2.0e-8}
+    order_audit = {"pass": False, "all_finite": True}
+    external_order = {
+        "side": "bottom", "m": 0, "n": 0, "polarization": "s", "power_ratio": 0.2
+    }
+    physics = SimpleNamespace(
+        own_grid=None,
+        own_physics_pass=False,
+        canonical_pass=False,
+        physics_pass=False,
+        external_orders=[external_order],
+        energy=energy,
+        traction=traction,
+        interface_continuity=interface_continuity,
+        interface_e_projection=interface_e_projection,
+        order_audit=order_audit,
+    )
+    recovery = SimpleNamespace(recovery_pass=True, reports={}, destroy=lambda: None)
+    producer = {
+        "consumer_source_sha": "b" * 40,
+        "physical_model_sha256": "c" * 64,
+    }
+    checker_calls = []
+    monkeypatch.setattr(
+        orchestration, "recover_frozen_m10", lambda *_args, **_kwargs: recovery
+    )
+    monkeypatch.setattr(
+        orchestration, "run_frozen_m10_physics", lambda *_args, **_kwargs: physics
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "check_v3_7_integrated_physics",
+        lambda *_args, **_kwargs: checker_calls.append(True),
+    )
+
+    result = orchestration.run_v3_7_recovery_runner(
+        setup,
+        Layout(),
+        object(),
+        tmp_path,
+        producer,
+        run_integrated_checker=True,
+    )
+    authority_path = Path(result["authority_path"])
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+
+    assert checker_calls == []
+    assert result["pass"] is False
+    assert result["physics_pass"] is False
+    assert result["physics_metrics"]["energy"] == energy
+    assert authority_path.is_file()
+    assert result["authority_path"] == str(authority_path.resolve())
+    assert authority["schema"] == "task039.v3-7-hybrid-authority.v1"
+    assert authority["status"] == "measured_candidate_physics_negative"
+    assert authority["pass"] is False
+    assert authority["grid_payload"] is None
+    assert authority["canonical"] is None
+    assert authority["canonical_unavailable_reason"] == "own_physics_pass_false"
+    assert authority["own_physics_pass"] is False
+    assert authority["canonical_pass"] is False
+    assert authority["physics_pass"] is False
+    assert authority["energy"] == energy
+    assert authority["traction"] == traction
+    assert authority["interface_continuity"] == interface_continuity
+    assert authority["interface_e_projection"] == interface_e_projection
+    assert authority["order_audit"] == order_audit
+    assert authority["external_orders"] == [external_order]
+    assert authority["source_sha"] == producer["consumer_source_sha"]
+    assert authority["physical_model_sha256"] == producer["physical_model_sha256"]
 
 
 def test_task041_required_markers_and_resource_gate_are_explicit():

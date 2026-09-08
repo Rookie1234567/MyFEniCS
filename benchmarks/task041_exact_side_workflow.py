@@ -180,6 +180,37 @@ def _valid_sha(value: Any, length: int) -> bool:
     )
 
 
+def _task041_packet_source_identity(
+    consumer_source_sha: str,
+    packet_producer_source_sha: str | None,
+    packet_identity_source_sha: Any,
+) -> dict[str, Any]:
+    producer_source_sha = (
+        consumer_source_sha
+        if packet_producer_source_sha is None
+        else packet_producer_source_sha
+    )
+    if packet_producer_source_sha is not None and not _valid_sha(
+        packet_producer_source_sha, 40
+    ):
+        raise Task041ModePrepError(
+            "packet_producer_source_sha must be a lowercase 40-character SHA"
+        )
+    if packet_identity_source_sha != producer_source_sha:
+        raise Task041ModePrepError("Task041 packet identity source_sha mismatch")
+    cross_source = producer_source_sha != consumer_source_sha
+    return {
+        "producer_source_sha": producer_source_sha,
+        "consumer_source_sha": consumer_source_sha,
+        "cross_source_packet_reuse": cross_source,
+        "reuse_reason": (
+            "implementation_failure_recovery_persistence_retry"
+            if cross_source
+            else "same_source_packet"
+        ),
+    }
+
+
 def _module_path(name: str) -> str | None:
     spec = importlib.util.find_spec(name)
     if spec is None:
@@ -971,10 +1002,11 @@ def build_task041_consumer_command(
     packet_manifest_sha256: str,
     run_directory: str | Path,
     source_sha: str,
+    packet_producer_source_sha: str | None = None,
 ) -> list[str]:
     """Return the fresh MPI1 consumer command for a producer packet."""
 
-    return [
+    command = [
         "mpiexec",
         "-n",
         "1",
@@ -997,6 +1029,13 @@ def build_task041_consumer_command(
         "--source-sha",
         source_sha,
     ]
+    if packet_producer_source_sha is not None:
+        if not _valid_sha(packet_producer_source_sha, 40):
+            raise Task041ModePrepError(
+                "packet_producer_source_sha must be a lowercase 40-character SHA"
+            )
+        command.extend(["--packet-producer-source-sha", packet_producer_source_sha])
+    return command
 
 
 def build_task041_shortwave_consumer_command(
@@ -1007,6 +1046,7 @@ def build_task041_shortwave_consumer_command(
     packet_manifest_sha256: str,
     run_directory: str | Path,
     source_sha: str,
+    packet_producer_source_sha: str | None = None,
 ) -> list[str]:
     """Return the fresh MPI8 shortwave consumer command for a packet."""
 
@@ -1021,7 +1061,7 @@ def build_task041_shortwave_consumer_command(
             "Task41 shortwave consumer command requires validated MPI8 execution"
         )
     input_path = Path(specification.source_path)
-    return [
+    command = [
         "mpiexec",
         "-n",
         str(mpi_size),
@@ -1049,6 +1089,13 @@ def build_task041_shortwave_consumer_command(
         "--source-sha",
         source_sha,
     ]
+    if packet_producer_source_sha is not None:
+        if not _valid_sha(packet_producer_source_sha, 40):
+            raise Task041ModePrepError(
+                "packet_producer_source_sha must be a lowercase 40-character SHA"
+            )
+        command.extend(["--packet-producer-source-sha", packet_producer_source_sha])
+    return command
 
 
 def _task041_consumer_packet_binding(
@@ -1295,6 +1342,7 @@ def _task041_consumer_authority_gate(
     authority_path: Path,
     formal_result: Mapping[str, Any],
     recomputed_identity: Mapping[str, Any],
+    expected_consumer_source_sha: str,
 ) -> dict[str, Any]:
     """Recompute the Task041 observable gates from the fresh authority."""
 
@@ -1323,7 +1371,7 @@ def _task041_consumer_authority_gate(
     )
     authority_identity = {
         "source_sha": authority.get("source_sha")
-        == recomputed_identity.get("source_sha"),
+        == expected_consumer_source_sha,
         "physical_model_sha256": authority.get("physical_model_sha256")
         == recomputed_identity.get("physical_sha256"),
         "model_id": authority.get("model_id") == recomputed_identity.get("model_id"),
@@ -1560,6 +1608,7 @@ def run_task041_consumer(
     packet_manifest_sha256: str,
     run_directory: str | Path,
     source_sha: str,
+    packet_producer_source_sha: str | None = None,
     comm: Any = MPI.COMM_WORLD,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through the reviewed exact-side path."""
@@ -1702,13 +1751,19 @@ def run_task041_consumer(
         disk_identity = json.loads(identity_path.read_text(encoding="utf-8"))
         if not isinstance(disk_identity, Mapping):
             raise Task041ModePrepError("Task041 packet identity is not a mapping")
+        source_identity = _task041_packet_source_identity(
+            source_sha,
+            packet_producer_source_sha,
+            disk_identity.get("source_sha"),
+        )
+        packet_source_sha = source_identity["producer_source_sha"]
         identity_builder = (
             build_task041_shortwave_packet_identity
             if contract["shortwave"]
             else build_task041_packet_identity
         )
         recomputed_identity = identity_builder(
-            specification, normalized, source_sha, resolved_sha
+            specification, normalized, packet_source_sha, resolved_sha
         )
         if dict(disk_identity) != recomputed_identity:
             raise Task041ModePrepError("Task041 consumer packet identity recomputation mismatch")
@@ -1743,7 +1798,7 @@ def run_task041_consumer(
             else task041_consumer_iterative_config()
         )
         producer = {
-            "producer_source_sha": source_sha,
+            "producer_source_sha": packet_source_sha,
             "consumer_source_sha": source_sha,
             "physical_model_sha256": str(specification.physical_model_sha256),
             "consumer_model_id": recomputed_identity["model_id"],
@@ -1755,6 +1810,7 @@ def run_task041_consumer(
             "canonical_authority": True,
         }
         result["identity"] = recomputed_identity
+        result["source_identity"] = source_identity
         result["profile_config"] = _jsonable(asdict(profile))
         result["outer_config"] = _jsonable(asdict(iterative_config))
         if contract["shortwave"]:
@@ -1978,7 +2034,10 @@ def run_task041_consumer(
                 raise Task041ModePrepError("Task041 consumer authority path is missing")
             current_stage = "authority_validation"
             gates = _task041_consumer_authority_gate(
-                authority_path, formal_result, recomputed_identity
+                authority_path,
+                formal_result,
+                recomputed_identity,
+                expected_consumer_source_sha=source_sha,
             )
             emit("authority_validated", {"gates": gates, "path": str(authority_path)})
         result["setup"] = _jsonable(setup_result)
@@ -2155,6 +2214,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-manifest")
     parser.add_argument("--packet-identity")
     parser.add_argument("--packet-manifest-sha256")
+    parser.add_argument("--packet-producer-source-sha")
     return parser
 
 
@@ -2163,6 +2223,10 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
     if not args.worker:
         raise Task041ModePrepError("Task041 requires a private worker")
     if args.phase == TASK041_MODE_PREP_PHASE:
+        if args.packet_producer_source_sha is not None:
+            raise Task041ModePrepError(
+                "--packet-producer-source-sha is consumer-only"
+            )
         return run_task041_mode_prep(
             input_path=args.input,
             run_directory=args.run_directory,
@@ -2184,6 +2248,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         packet_manifest_sha256=args.packet_manifest_sha256,
         run_directory=args.run_directory,
         source_sha=args.source_sha,
+        packet_producer_source_sha=args.packet_producer_source_sha,
     )
 
 

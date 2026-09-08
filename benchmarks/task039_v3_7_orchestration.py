@@ -9257,13 +9257,14 @@ def run_v3_7_recovery_runner(
             setup.bottom.local_mesh.mesh.comm,
             stage_callback=recovery_stage_callback,
         )
-        _write_v3_7_candidate_authority(
+        authority_path = _write_v3_7_candidate_authority(
             run_directory,
             physics,
             producer,
             setup.bottom.local_mesh.mesh.comm,
         )
-        if run_integrated_checker:
+        physics_pass = bool(physics.physics_pass)
+        if run_integrated_checker and physics_pass:
             integrated_checker = (
                 check_v3_7_integrated_physics(
                     run_directory,
@@ -9280,6 +9281,12 @@ def run_v3_7_recovery_runner(
             integrated_checker = setup.bottom.local_mesh.mesh.comm.bcast(
                 integrated_checker, root=0
             )
+        elif run_integrated_checker:
+            integrated_checker = {
+                "status": "not_available",
+                "pass": False,
+                "reason": "candidate_physics_not_qualified",
+            }
         else:
             integrated_checker = {
                 "status": "not_available",
@@ -9289,14 +9296,39 @@ def run_v3_7_recovery_runner(
         integrated_pass = (
             not run_integrated_checker or integrated_checker.get("pass") is True
         )
+        recovery_pass = bool(recovery.recovery_pass)
+        own_physics_pass = bool(
+            getattr(physics, "own_physics_pass", physics_pass)
+        )
+        canonical_pass = bool(getattr(physics, "canonical_pass", physics_pass))
+        physics_metrics = {
+            "energy": dict(getattr(physics, "energy", {})),
+            "traction": dict(getattr(physics, "traction", {})),
+            "interface_continuity": dict(
+                getattr(physics, "interface_continuity", {})
+            ),
+            "interface_e_projection": dict(
+                getattr(physics, "interface_e_projection", {})
+            ),
+            "order_audit": dict(getattr(physics, "order_audit", {})),
+        }
+        authority_path_value = (
+            str(authority_path.resolve())
+            if isinstance(authority_path, Path)
+            else None
+        )
         return {
             "pass": bool(
-                physics.physics_pass and recovery.recovery_pass and integrated_pass
+                physics_pass and recovery_pass and integrated_pass
             ),
             "producer_source_sha": producer.get("producer_source_sha"),
-            "recovery_pass": bool(recovery.recovery_pass),
-            "physics_pass": bool(physics.physics_pass),
+            "recovery_pass": recovery_pass,
+            "own_physics_pass": own_physics_pass,
+            "canonical_pass": canonical_pass,
+            "physics_pass": physics_pass,
             "reports": recovery.reports,
+            "physics_metrics": physics_metrics,
+            "authority_path": authority_path_value,
             "integrated_checker": integrated_checker,
         }
     finally:
@@ -9311,8 +9343,8 @@ def _write_v3_7_candidate_authority(
 ) -> Path:
     """Persist the small raw projection consumed by the independent checker."""
 
-    if physics.own_grid is None:
-        raise RuntimeError("V3-7 candidate physics did not produce its grid payload")
+    physics_pass = getattr(physics, "physics_pass", True)
+    negative = physics_pass is not True or physics.own_grid is None
     orders = list(physics.external_orders)
     keys = [
         {
@@ -9327,7 +9359,11 @@ def _write_v3_7_candidate_authority(
     projection_value = float(projection["combined_relative_residual"])
     authority = {
         "schema": "task039.v3-7-hybrid-authority.v1",
-        "status": "measured_candidate_physics",
+        "status": (
+            "measured_candidate_physics_negative"
+            if negative
+            else "measured_candidate_physics"
+        ),
         "model_id": producer.get(
             "consumer_model_id", "task039_5nm_v3_1deg_s5_hybrid_iterative_m480"
         ),
@@ -9350,8 +9386,32 @@ def _write_v3_7_candidate_authority(
             for side in ("bottom", "top")
         },
         "interface_projection": projection_value,
-        "grid_payload": dict(physics.own_grid),
+        "grid_payload": None if negative else dict(physics.own_grid),
     }
+    if negative:
+        authority.update(
+            {
+                "pass": False,
+                "own_physics_pass": bool(physics.own_physics_pass),
+                "canonical_pass": bool(physics.canonical_pass),
+                "physics_pass": bool(physics_pass),
+                "energy": dict(physics.energy),
+                "traction": dict(physics.traction),
+                "interface_continuity": dict(physics.interface_continuity),
+                "interface_e_projection": dict(physics.interface_e_projection),
+                "order_audit": dict(physics.order_audit),
+                "canonical": None,
+                "canonical_unavailable_reason": (
+                    "own_physics_pass_false"
+                    if not bool(physics.own_physics_pass)
+                    else (
+                        "canonical_pass_false"
+                        if not bool(physics.canonical_pass)
+                        else "own_grid_unavailable"
+                    )
+                ),
+            }
+        )
     qualification_scope = producer.get("qualification_scope")
     if (
         qualification_scope == TASK039_V4_H4_CASE_QUALIFICATION_SCOPE
@@ -9359,7 +9419,8 @@ def _write_v3_7_candidate_authority(
     ):
         authority["qualification_scope"] = qualification_scope
         authority["qualification_method"] = producer.get("qualification_method")
-        authority["canonical"] = dict(physics.canonical)
+        if not negative:
+            authority["canonical"] = dict(physics.canonical)
     path = run_directory / "numerical_output" / "v3_7_hybrid_authority.json"
     if comm.rank == 0:
         path.parent.mkdir(parents=True, exist_ok=True)
