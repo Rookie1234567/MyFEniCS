@@ -37,9 +37,11 @@ from src.io.input_validation import (
     simulation_config_3d_from_normalized,
     task041_material_provenance,
     task041_shortwave_phase_limits,
+    task041_shortwave_phase_limits_for_model,
     task041_profile_errors,
     task041_shortwave_material_provenance,
     task041_shortwave_profile_errors,
+    task041_shortwave_workflow_limits,
 )
 from src.solvers import hybrid_interface_basis
 
@@ -226,6 +228,11 @@ def test_task041_profile_mutations_fail_closed(
             "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200",
             1200,
         ),
+        (
+            "3nm_p6h2_m1200_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200",
+            1200,
+        ),
     ),
 )
 def test_task041_shortwave_official_dat_profiles_validate(
@@ -237,10 +244,17 @@ def test_task041_shortwave_official_dat_profiles_validate(
     assert spec.identity["model_id"] == model_id
     assert spec.method["requested_modes_per_direction"] == mode_count
     assert spec.execution["mpi_size"] == 8
-    assert spec.execution["warning_memory_gib"] == 224.0
-    assert spec.execution["terminate_memory_gib"] == 256.0
-    assert spec.execution["absolute_terminate_memory_bytes"] == 274877906944
-    assert spec.execution["timeout_seconds"] == 39600
+    if "p6h2" in filename:
+        expected_execution = (1433.6, 1638.4, 1759218604442, 259200)
+    else:
+        expected_execution = (224.0, 256.0, 274877906944, 39600)
+    assert (
+        spec.execution["warning_memory_gib"],
+        spec.execution["terminate_memory_gib"],
+        spec.execution["absolute_terminate_memory_bytes"],
+        spec.execution["timeout_seconds"],
+    ) == expected_execution
+    assert spec.discretization["mesh_target_nm"] == (2.0 if "p6h2" in filename else 3.0)
     assert spec.boundary["dtn_order_policy"] == "auto_propagating"
     provenance = task041_shortwave_material_provenance(normalized)
     assert provenance is not None
@@ -266,8 +280,58 @@ def test_task041_shortwave_phase_limits_are_central_and_fail_closed() -> None:
     }
     for phase, limits in expected.items():
         assert dict(task041_shortwave_phase_limits(phase)) == limits
+        assert dict(
+            task041_shortwave_phase_limits_for_model(
+                "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200", phase
+            )
+        ) == limits
+    h2_model = "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200"
+    assert dict(task041_shortwave_workflow_limits(h2_model)) == {
+        "warning_memory_bytes": 1539316278886,
+        "hard_memory_bytes": 1759218604442,
+        "swap_limit_bytes": 0,
+        "timeout_seconds": 259200,
+    }
+    assert all(
+        dict(task041_shortwave_phase_limits_for_model(h2_model, phase))
+        == {
+            "warning_memory_bytes": 1539316278886,
+            "hard_memory_bytes": 1759218604442,
+            "min_memavailable_bytes": 1869169767220,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": 259200,
+        }
+        for phase in expected
+    )
     with pytest.raises(ValueError, match="unknown Task041 shortwave phase"):
         task041_shortwave_phase_limits("other")
+    with pytest.raises(ValueError, match="unknown Task041 shortwave model"):
+        task041_shortwave_workflow_limits("task041_3nm_exact_side_hybrid_iterative_p6h2_m800")
+
+
+def test_task041_shortwave_nearby_identity_and_mesh_fail_closed() -> None:
+    h3 = load_and_resolve(
+        ROOT / "input/official/task041/3nm_p6h3_m1200_mpi8.dat"
+    ).as_jsonable()
+    h3["model_id"] = "task041_3nm_exact_side_hybrid_iterative_p6h2_m800"
+    assert any(path == "model_id" for path, _ in task041_shortwave_profile_errors(h3))
+
+    h2 = load_and_resolve(
+        ROOT / "input/official/task041/3nm_p6h2_m1200_mpi8.dat"
+    ).as_jsonable()
+    h2["discretization"]["mesh_target_nm"] = 2.1
+    assert any(
+        path == "discretization.mesh_target_nm"
+        for path, _ in task041_shortwave_profile_errors(h2)
+    )
+    h2["discretization"]["mesh_target_nm"] = 2.0
+    h2["provenance"]["source_path"] = str(
+        ROOT / "input/official/task041/3nm_p6h3_m1200_mpi8.dat"
+    )
+    assert any(
+        path == "provenance.source_path"
+        for path, _ in task041_shortwave_profile_errors(h2)
+    )
 
 
 @pytest.mark.parametrize(

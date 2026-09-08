@@ -33,7 +33,10 @@ from src.io.input_validation import (
     task041_profile_errors,
     task041_shortwave_case,
     task041_shortwave_phase_limits,
+    task041_shortwave_phase_limits_for_model,
     task041_shortwave_profile_errors,
+    task041_shortwave_timeout_scope,
+    task041_shortwave_workflow_limits,
 )
 from src.io.resolved_config import resolved_config_sha256
 
@@ -116,7 +119,7 @@ def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, int]:
                 classification="task041_identity_failure",
                 stage="runtime_limits",
             )
-        return dict(TASK041_SHORTWAVE_WORKFLOW_LIMITS)
+        return dict(task041_shortwave_workflow_limits(str(model_id)))
     raise Task041SupervisorError(
         f"runtime limits require a validated Task041 identity, got {model_id!r}",
         classification="task041_identity_failure",
@@ -1046,12 +1049,18 @@ def run_task041_public_supervisor(
         runtime_limits = _runtime_limits_for_identity(identity)
         result["limits"] = dict(runtime_limits)
         shortwave = identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS
+        timeout_scope = "workflow"
         if shortwave:
             phase_limits = {
-                phase: dict(task041_shortwave_phase_limits(phase))
+                phase: dict(
+                    task041_shortwave_phase_limits_for_model(
+                        identity["model_id"], phase
+                    )
+                )
                 for phase in ("producer", "consumer")
             }
             result["phase_limits"] = phase_limits
+            timeout_scope = task041_shortwave_timeout_scope(identity["model_id"])
         git_identity = _git_identity(repository_root, source_sha)
         environment_snapshot = _environment_snapshot(repository_root)
         result["identity"] = identity
@@ -1131,7 +1140,7 @@ def run_task041_public_supervisor(
             timeout_seconds=(
                 phase_limits.get("producer", runtime_limits)["timeout_seconds"]
             ),
-            phase_elapsed_timeout=shortwave,
+            phase_elapsed_timeout=timeout_scope == "phase",
         )
         result["phase_results"]["producer"] = producer_result
         if _phase_resource_failure(producer_result):
@@ -1250,7 +1259,7 @@ def run_task041_public_supervisor(
             timeout_seconds=(
                 phase_limits.get("consumer", runtime_limits)["timeout_seconds"]
             ),
-            phase_elapsed_timeout=shortwave,
+            phase_elapsed_timeout=timeout_scope == "phase",
         )
         result["phase_results"]["consumer"] = consumer_result
         consumer_exit = consumer_result.get("returncode")

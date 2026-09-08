@@ -289,6 +289,15 @@ TASK041_SHORTWAVE_HARD_MEMORY_GIB = 256.0
 TASK041_SHORTWAVE_HARD_MEMORY_BYTES = 274877906944
 TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES = 1869169767220
 TASK041_SHORTWAVE_TIMEOUT_SECONDS = 39600
+TASK041_SHORTWAVE_H2_COMPARISON_GROUP = (
+    "task041_3nm_exact_side_hybrid_iterative_p6h2"
+)
+TASK041_SHORTWAVE_H2_MESH_TARGET_NM = 2.0
+TASK041_SHORTWAVE_H2_PLANNING_CEILING_BYTES = 1649267441664
+TASK041_SHORTWAVE_H2_WARNING_MEMORY_GIB = 1433.6
+TASK041_SHORTWAVE_H2_HARD_MEMORY_GIB = 1638.4
+TASK041_SHORTWAVE_H2_HARD_MEMORY_BYTES = 1759218604442
+TASK041_SHORTWAVE_H2_TIMEOUT_SECONDS = 259200
 TASK041_SHORTWAVE_WORKFLOW_LIMITS = MappingProxyType(
     {
         "warning_memory_bytes": int(TASK041_SHORTWAVE_WARNING_MEMORY_GIB * 2**30),
@@ -333,16 +342,122 @@ def task041_shortwave_phase_limits(phase: str) -> Mapping[str, int]:
 TASK041_SHORTWAVE_CASES = {
     "task041_3nm_exact_side_hybrid_iterative_p6h3_m800": {
         "run_id": "task041_3nm_p6h3_m800_mpi8",
+        "scope": "task041_3nm_p6h3_m800_mpi8",
         "mode_count": 800,
         "input": "input/official/task041/3nm_p6h3_m800_mpi8.dat",
+        "comparison_group": TASK041_SHORTWAVE_COMPARISON_GROUP,
+        "mesh_target_nm": TASK041_SHORTWAVE_MESH_TARGET_NM,
+        "warning_memory_gib": TASK041_SHORTWAVE_WARNING_MEMORY_GIB,
+        "terminate_memory_gib": TASK041_SHORTWAVE_HARD_MEMORY_GIB,
+        "absolute_terminate_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+        "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+        "solver_contract": "task041_3nm_p6h3_mpi8_v2",
     },
     "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200": {
         "run_id": "task041_3nm_p6h3_m1200_mpi8",
+        "scope": "task041_3nm_p6h3_m1200_mpi8",
         "mode_count": 1200,
         "input": "input/official/task041/3nm_p6h3_m1200_mpi8.dat",
+        "comparison_group": TASK041_SHORTWAVE_COMPARISON_GROUP,
+        "mesh_target_nm": TASK041_SHORTWAVE_MESH_TARGET_NM,
+        "warning_memory_gib": TASK041_SHORTWAVE_WARNING_MEMORY_GIB,
+        "terminate_memory_gib": TASK041_SHORTWAVE_HARD_MEMORY_GIB,
+        "absolute_terminate_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
+        "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+        "solver_contract": "task041_3nm_p6h3_mpi8_v2",
+    },
+    "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200": {
+        "run_id": "task041_3nm_p6h2_m1200_mpi8",
+        "scope": "task041_3nm_p6h2_m1200_mpi8",
+        "mode_count": 1200,
+        "input": "input/official/task041/3nm_p6h2_m1200_mpi8.dat",
+        "comparison_group": TASK041_SHORTWAVE_H2_COMPARISON_GROUP,
+        "mesh_target_nm": TASK041_SHORTWAVE_H2_MESH_TARGET_NM,
+        "planning_ceiling_bytes": TASK041_SHORTWAVE_H2_PLANNING_CEILING_BYTES,
+        "warning_memory_gib": TASK041_SHORTWAVE_H2_WARNING_MEMORY_GIB,
+        "terminate_memory_gib": TASK041_SHORTWAVE_H2_HARD_MEMORY_GIB,
+        "absolute_terminate_memory_bytes": TASK041_SHORTWAVE_H2_HARD_MEMORY_BYTES,
+        "timeout_seconds": TASK041_SHORTWAVE_H2_TIMEOUT_SECONDS,
+        "solver_contract": "task041_3nm_p6h2_mpi8_v2",
     },
 }
 TASK041_SHORTWAVE_MODEL_IDS = frozenset(TASK041_SHORTWAVE_CASES)
+TASK041_SHORTWAVE_H2_WORKFLOW_LIMITS = MappingProxyType(
+    {
+        "warning_memory_bytes": 1539316278886,
+        "hard_memory_bytes": TASK041_SHORTWAVE_H2_HARD_MEMORY_BYTES,
+        "swap_limit_bytes": 0,
+        "timeout_seconds": TASK041_SHORTWAVE_H2_TIMEOUT_SECONDS,
+    }
+)
+TASK041_SHORTWAVE_H2_PHASE_LIMITS = MappingProxyType(
+    {
+        phase: MappingProxyType(
+            {
+                "warning_memory_bytes": 1539316278886,
+                "hard_memory_bytes": TASK041_SHORTWAVE_H2_HARD_MEMORY_BYTES,
+                "min_memavailable_bytes": TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES,
+                "swap_limit_bytes": 0,
+                "timeout_seconds": TASK041_SHORTWAVE_H2_TIMEOUT_SECONDS,
+            }
+        )
+        for phase in ("producer", "consumer")
+    }
+)
+TASK041_SHORTWAVE_WORKFLOW_LIMITS_BY_MODEL_ID = MappingProxyType(
+    {
+        "task041_3nm_exact_side_hybrid_iterative_p6h3_m800": TASK041_SHORTWAVE_WORKFLOW_LIMITS,
+        "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200": TASK041_SHORTWAVE_WORKFLOW_LIMITS,
+        "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200": TASK041_SHORTWAVE_H2_WORKFLOW_LIMITS,
+    }
+)
+TASK041_SHORTWAVE_PHASE_LIMITS_BY_MODEL_ID = MappingProxyType(
+    {
+        "task041_3nm_exact_side_hybrid_iterative_p6h3_m800": TASK041_SHORTWAVE_PHASE_LIMITS,
+        "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200": TASK041_SHORTWAVE_PHASE_LIMITS,
+        "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200": TASK041_SHORTWAVE_H2_PHASE_LIMITS,
+    }
+)
+TASK041_SHORTWAVE_TIMEOUT_SCOPE_BY_MODEL_ID = MappingProxyType(
+    {
+        "task041_3nm_exact_side_hybrid_iterative_p6h3_m800": "phase",
+        "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200": "phase",
+        "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200": "workflow",
+    }
+)
+
+
+def task041_shortwave_workflow_limits(model_id: str) -> Mapping[str, int]:
+    """Return the immutable workflow envelope for one approved shortwave case."""
+
+    try:
+        return TASK041_SHORTWAVE_WORKFLOW_LIMITS_BY_MODEL_ID[str(model_id)]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 shortwave model: {model_id!r}") from exc
+
+
+def task041_shortwave_phase_limits_for_model(
+    model_id: str, phase: str
+) -> Mapping[str, int]:
+    """Return one phase policy without widening the approved model set."""
+
+    try:
+        model_limits = TASK041_SHORTWAVE_PHASE_LIMITS_BY_MODEL_ID[str(model_id)]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 shortwave model: {model_id!r}") from exc
+    try:
+        return model_limits[phase]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 shortwave phase: {phase!r}") from exc
+
+
+def task041_shortwave_timeout_scope(model_id: str) -> str:
+    """Return whether this model's phase timeout is phase- or workflow-scoped."""
+
+    try:
+        return TASK041_SHORTWAVE_TIMEOUT_SCOPE_BY_MODEL_ID[str(model_id)]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 shortwave model: {model_id!r}") from exc
 
 
 def task039_model_id_matches(
@@ -457,7 +572,7 @@ def _is_task041_shortwave_profile(config: Mapping[str, Any]) -> bool:
 
 
 def task041_shortwave_case(model_id: str) -> Mapping[str, Any] | None:
-    """Return the one of the two explicitly approved 3 nm case contracts."""
+    """Return one explicitly registered 3 nm shortwave case contract."""
 
     case = TASK041_SHORTWAVE_CASES.get(str(model_id))
     return None if case is None else dict(case)
@@ -704,7 +819,7 @@ def task041_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
 def task041_shortwave_profile_errors(
     config: Mapping[str, Any],
 ) -> list[tuple[str, str]]:
-    """Return errors for only the approved 3 nm p6/h3 M800/M1200 MPI8 cases."""
+    """Return errors for the explicitly registered 3 nm shortwave cases."""
 
     model_id = str(config.get("model_id", ""))
     case = task041_shortwave_case(model_id)
@@ -712,14 +827,14 @@ def task041_shortwave_profile_errors(
         return [
             (
                 "model_id",
-                "Task41 shortwave v2 accepts only the explicit 3 nm p6/h3 M800 or M1200 model",
+                "Task41 shortwave accepts only explicitly registered model identities",
             )
         ]
     expected: dict[str | None, dict[str, Any]] = {
         None: {
             "model_id": model_id,
             "run_id": case["run_id"],
-            "comparison_group": TASK041_SHORTWAVE_COMPARISON_GROUP,
+            "comparison_group": case["comparison_group"],
         },
         "geometry": {
             "geometry_kind": "rectangular_block_grating",
@@ -752,7 +867,7 @@ def task041_shortwave_profile_errors(
         "discretization": {
             "nedelec_degree": 6,
             "visualization_degree": 6,
-            "mesh_target_nm": TASK041_SHORTWAVE_MESH_TARGET_NM,
+            "mesh_target_nm": case["mesh_target_nm"],
             "mesh_cell_type": "hexahedron",
             "mesh_spacing_mode": "boundary_fitted",
             "assembly_backend": "assembly_time_static_condensed",
@@ -792,10 +907,12 @@ def task041_shortwave_profile_errors(
         },
         "execution": {
             "mpi_size": TASK041_SHORTWAVE_MPI_SIZE,
-            "warning_memory_gib": TASK041_SHORTWAVE_WARNING_MEMORY_GIB,
-            "terminate_memory_gib": TASK041_SHORTWAVE_HARD_MEMORY_GIB,
-            "absolute_terminate_memory_bytes": TASK041_SHORTWAVE_HARD_MEMORY_BYTES,
-            "timeout_seconds": TASK041_SHORTWAVE_TIMEOUT_SECONDS,
+            "warning_memory_gib": case["warning_memory_gib"],
+            "terminate_memory_gib": case["terminate_memory_gib"],
+            "absolute_terminate_memory_bytes": case[
+                "absolute_terminate_memory_bytes"
+            ],
+            "timeout_seconds": case["timeout_seconds"],
             "require_zero_swap": True,
         },
         "output": {
@@ -824,6 +941,24 @@ def task041_shortwave_profile_errors(
             if not _same_profile_value(actual, expected_value):
                 path = key if section is None else f"{section}.{key}"
                 errors.append((path, f"Task41 shortwave v2 requires {expected_value!r}"))
+    provenance = config.get("provenance")
+    if isinstance(provenance, Mapping):
+        source_path = provenance.get("source_path")
+        expected_path = Path(__file__).resolve().parents[2] / str(case["input"])
+        if not isinstance(source_path, str) or Path(source_path).resolve() != expected_path:
+            errors.append(
+                (
+                    "provenance.source_path",
+                    f"Task41 shortwave input identity requires {expected_path!s}",
+                )
+            )
+    elif "provenance" in config:
+        errors.append(
+            (
+                "provenance",
+                "Task41 shortwave input identity requires a provenance mapping",
+            )
+        )
     return errors
 
 
@@ -2838,11 +2973,12 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
             "old_fixed_smoother_refinement": False,
         }
     if _is_task041_shortwave_profile(config):
+        case = task041_shortwave_case(str(config.get("model_id", "")))
         derived["task041_solver_contract"] = {
             "public_side_apply_passes": 1,
             "extra_residual_correction_steps": 0,
             "old_fixed_smoother_refinement": False,
-            "contract": "task041_3nm_p6h3_mpi8_v2",
+            "contract": case["solver_contract"],
         }
     material_provenance = task041_material_provenance(config)
     if material_provenance is None:
@@ -2923,6 +3059,13 @@ __all__ = [
     "TASK041_RUN_ID",
     "TASK041_SHORTWAVE_CASES",
     "TASK041_SHORTWAVE_COMPARISON_GROUP",
+    "TASK041_SHORTWAVE_H2_COMPARISON_GROUP",
+    "TASK041_SHORTWAVE_H2_HARD_MEMORY_BYTES",
+    "TASK041_SHORTWAVE_H2_HARD_MEMORY_GIB",
+    "TASK041_SHORTWAVE_H2_MESH_TARGET_NM",
+    "TASK041_SHORTWAVE_H2_PLANNING_CEILING_BYTES",
+    "TASK041_SHORTWAVE_H2_TIMEOUT_SECONDS",
+    "TASK041_SHORTWAVE_H2_WARNING_MEMORY_GIB",
     "TASK041_SHORTWAVE_HARD_MEMORY_BYTES",
     "TASK041_SHORTWAVE_HARD_MEMORY_GIB",
     "TASK041_SHORTWAVE_MEMAVAILABLE_BASELINE_BYTES",
@@ -2931,8 +3074,11 @@ __all__ = [
     "TASK041_SHORTWAVE_MPI_SIZE",
     "TASK041_SHORTWAVE_N",
     "TASK041_SHORTWAVE_PHASE_LIMITS",
+    "TASK041_SHORTWAVE_PHASE_LIMITS_BY_MODEL_ID",
     "TASK041_SHORTWAVE_TIMEOUT_SECONDS",
+    "TASK041_SHORTWAVE_TIMEOUT_SCOPE_BY_MODEL_ID",
     "TASK041_SHORTWAVE_WORKFLOW_LIMITS",
+    "TASK041_SHORTWAVE_WORKFLOW_LIMITS_BY_MODEL_ID",
     "TASK041_SHORTWAVE_WARNING_MEMORY_GIB",
     "TASK041_TIMEOUT_SECONDS",
     "TASK041_WARNING_MEMORY_GIB",
@@ -2956,5 +3102,8 @@ __all__ = [
     "task041_shortwave_case",
     "task041_shortwave_material_provenance",
     "task041_shortwave_phase_limits",
+    "task041_shortwave_phase_limits_for_model",
     "task041_shortwave_profile_errors",
+    "task041_shortwave_timeout_scope",
+    "task041_shortwave_workflow_limits",
 ]

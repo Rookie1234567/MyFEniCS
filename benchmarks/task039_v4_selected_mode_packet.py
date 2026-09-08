@@ -20,6 +20,7 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.io.input_validation import task041_shortwave_case
 from src.modes.selected_mode_packet import (
     load_selected_mode_packet,
     write_selected_mode_packet,
@@ -412,11 +413,18 @@ def task041_selected_mode_scope(mode_count: int, mpi_size: int = 1) -> str:
     return f"task041_5nm_p6h4_m{mode_count}_mpi{mpi_size}"
 
 
-def task041_shortwave_selected_mode_scope(mode_count: int, mpi_size: int = 8) -> str:
+def task041_shortwave_selected_mode_scope(
+    mode_count: int, mpi_size: int = 8, *, model_id: str | None = None
+) -> str:
     if type(mode_count) is not int or mode_count not in {800, 1200}:
         raise ValueError("Task41 shortwave selected-mode M must be 800 or 1200")
     if type(mpi_size) is not int or mpi_size != 8:
         raise ValueError("Task41 shortwave selected-mode packet requires MPI8")
+    if model_id is not None:
+        case = task041_shortwave_case(model_id)
+        if case is None or int(case["mode_count"]) != mode_count:
+            raise ValueError("Task41 shortwave selected-mode model/M mismatch")
+        return str(case["scope"])
     return f"task041_3nm_p6h3_m{mode_count}_mpi{mpi_size}"
 
 
@@ -456,25 +464,31 @@ def _require_task041_shortwave_identity(identity: Mapping[str, Any]) -> None:
     ):
         if not _valid_hex_digest(identity[field], length):
             raise ValueError(f"Task41 shortwave {field} is invalid")
+    model_id = identity["model_id"]
+    case = task041_shortwave_case(model_id)
+    if case is None:
+        raise ValueError("Task41 shortwave selected-mode model is not registered")
     if identity["mesh"] != {
         "cell_type": "hexahedron",
         "kind": "full3d_uniform_cg",
-        "mesh_target_nm": 3.0,
+        "mesh_target_nm": case["mesh_target_nm"],
         "nedelec_degree": 6,
         "spacing_mode": "boundary_fitted",
     }:
         raise ValueError("Task41 shortwave selected-mode mesh identity mismatch")
     mode_count = identity["mode_count"]
-    if type(mode_count) is not int or mode_count not in {800, 1200}:
-        raise ValueError("Task41 shortwave selected-mode M must be 800 or 1200")
+    if type(mode_count) is not int or mode_count != case["mode_count"]:
+        raise ValueError("Task41 shortwave selected-mode model/M mismatch")
     if identity["requested_modes_per_direction"] != mode_count:
         raise ValueError("Task41 shortwave requested-mode identity mismatch")
     mpi_size = identity["mpi_size"]
     if type(mpi_size) is not int or mpi_size != 8:
         raise ValueError("Task41 shortwave selected-mode packet requires MPI8")
-    expected_scope = task041_shortwave_selected_mode_scope(mode_count, mpi_size)
-    expected_model = f"task041_3nm_exact_side_hybrid_iterative_p6h3_m{mode_count}"
-    expected_run = f"task041_3nm_p6h3_m{mode_count}_mpi{mpi_size}"
+    expected_scope = task041_shortwave_selected_mode_scope(
+        mode_count, mpi_size, model_id=model_id
+    )
+    expected_model = model_id
+    expected_run = case["run_id"]
     if identity["scope"] != expected_scope:
         raise ValueError("Task41 shortwave selected-mode identity scope mismatch")
     if identity["model_id"] != expected_model:
@@ -748,7 +762,9 @@ def hydrate_task039_v4_selected_mode_packet(
         expected_mode_count = int(packet_identity["mode_count"])
         if packet_identity.get("schema") == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
             expected_scope = task041_shortwave_selected_mode_scope(
-                expected_mode_count, int(packet_identity["mpi_size"])
+                expected_mode_count,
+                int(packet_identity["mpi_size"]),
+                model_id=str(packet_identity["model_id"]),
             )
         else:
             expected_scope = task041_selected_mode_scope(

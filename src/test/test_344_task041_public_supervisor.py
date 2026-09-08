@@ -223,6 +223,12 @@ def test_task041_adapter_is_exact_and_task039_remains_separate():
             "task041_3nm_p6h3_m1200_mpi8",
             1200,
         ),
+        (
+            "3nm_p6h2_m1200_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200",
+            "task041_3nm_p6h2_m1200_mpi8",
+            1200,
+        ),
     ],
 )
 def test_shortwave_supervisor_identity_comes_from_validated_official_dat(
@@ -237,6 +243,18 @@ def test_shortwave_supervisor_identity_comes_from_validated_official_dat(
     assert identity["input_sha256"] == specification.input_sha256
     assert identity["physical_model_sha256"] == specification.physical_model_sha256
     assert identity["resolved_config_sha256"]
+    limits = supervisor._runtime_limits_for_identity(identity)
+    if "p6h2" in filename:
+        assert limits == {
+            "warning_memory_bytes": 1539316278886,
+            "hard_memory_bytes": 1759218604442,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": 259200,
+        }
+        assert supervisor.task041_shortwave_timeout_scope(model_id) == "workflow"
+    else:
+        assert limits == dict(supervisor.TASK041_SHORTWAVE_WORKFLOW_LIMITS)
+        assert supervisor.task041_shortwave_timeout_scope(model_id) == "phase"
 
 
 

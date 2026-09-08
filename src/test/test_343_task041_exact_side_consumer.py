@@ -448,6 +448,11 @@ def test_task041_consumer_configuration_and_fresh_command():
             "task041_3nm_exact_side_hybrid_iterative_p6h3_m1200",
             1200,
         ),
+        (
+            "3nm_p6h2_m1200_mpi8.dat",
+            "task041_3nm_exact_side_hybrid_iterative_p6h2_m1200",
+            1200,
+        ),
     ),
 )
 def test_task041_shortwave_identity_and_mpi8_child_argv(
@@ -524,14 +529,15 @@ def test_task041_shortwave_identity_and_mpi8_child_argv(
 
 
 @pytest.mark.parametrize(
-    ("filename", "mode_count"),
+    ("filename", "mode_count", "mesh_target_nm"),
     (
-        ("3nm_p6h3_m800_mpi8.dat", 800),
-        ("3nm_p6h3_m1200_mpi8.dat", 1200),
+        ("3nm_p6h3_m800_mpi8.dat", 800, 3.0),
+        ("3nm_p6h3_m1200_mpi8.dat", 1200, 3.0),
+        ("3nm_p6h2_m1200_mpi8.dat", 1200, 2.0),
     ),
 )
 def test_task041_shortwave_consumer_profile_and_dynamic_sampled_contract(
-    tmp_path, filename, mode_count
+    tmp_path, filename, mode_count, mesh_target_nm
 ):
     specification = load_and_resolve(ROOT / "input/official/task041" / filename)
     normalized = specification.as_jsonable()
@@ -544,8 +550,8 @@ def test_task041_shortwave_consumer_profile_and_dynamic_sampled_contract(
     assert profile.requested_modes == mode_count
     assert profile.candidate_modes == 2 * mode_count
     assert profile.mpi_size == 8
-    assert profile.h_nm == normalized["discretization"]["mesh_target_nm"] == 3.0
-    assert profile.modal_h_nm == 3.0
+    assert profile.h_nm == normalized["discretization"]["mesh_target_nm"] == mesh_target_nm
+    assert profile.modal_h_nm == mesh_target_nm
     for field in (
         "preconditioner_identity",
         "side_residual_correction_steps",
@@ -619,18 +625,24 @@ def test_task041_shortwave_consumer_profile_and_dynamic_sampled_contract(
 
 
 @pytest.mark.parametrize(
-    ("phase", "warning_memory_bytes", "hard_memory_bytes", "timeout_seconds"),
     (
-        ("producer", 176 * 2**30, 192 * 2**30, 18000),
-        ("consumer", 224 * 2**30, 256 * 2**30, 21600),
+        "filename",
+        "phase",
+        "warning_memory_bytes",
+        "hard_memory_bytes",
+        "timeout_seconds",
+    ),
+    (
+        ("3nm_p6h3_m800_mpi8.dat", "producer", 176 * 2**30, 192 * 2**30, 18000),
+        ("3nm_p6h3_m800_mpi8.dat", "consumer", 224 * 2**30, 256 * 2**30, 21600),
+        ("3nm_p6h2_m1200_mpi8.dat", "producer", 1539316278886, 1759218604442, 259200),
+        ("3nm_p6h2_m1200_mpi8.dat", "consumer", 1539316278886, 1759218604442, 259200),
     ),
 )
 def test_task041_shortwave_worker_contract_uses_phase_limits(
-    phase, warning_memory_bytes, hard_memory_bytes, timeout_seconds
+    filename, phase, warning_memory_bytes, hard_memory_bytes, timeout_seconds
 ):
-    specification = load_and_resolve(
-        ROOT / "input/official/task041/3nm_p6h3_m800_mpi8.dat"
-    )
+    specification = load_and_resolve(ROOT / "input/official/task041" / filename)
     contract = task041._task041_case_contract(
         specification.as_jsonable(), 8, phase=phase
     )

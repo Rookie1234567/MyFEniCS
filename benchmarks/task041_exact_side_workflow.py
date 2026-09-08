@@ -38,8 +38,9 @@ from src.io.input_validation import (
     simulation_config_3d_from_normalized,
     task041_profile_errors,
     task041_shortwave_case,
-    task041_shortwave_phase_limits,
+    task041_shortwave_phase_limits_for_model,
     task041_shortwave_profile_errors,
+    task041_shortwave_workflow_limits,
 )
 from src.io.resolved_config import resolved_config_sha256
 from src.solvers.hybrid_interface_basis import canonical_mode_keys_sha256
@@ -404,7 +405,7 @@ def _task041_case_contract(
     if comm_size != TASK041_SHORTWAVE_MPI_SIZE:
         raise Task041ModePrepError("Task41 shortwave case requires MPI8")
     discretization = normalized["discretization"]
-    phase_limits = dict(task041_shortwave_phase_limits(phase))
+    phase_limits = dict(task041_shortwave_phase_limits_for_model(model_id, phase))
     return {
         "shortwave": True,
         "mpi_size": TASK041_SHORTWAVE_MPI_SIZE,
@@ -415,6 +416,7 @@ def _task041_case_contract(
         "consumer_schema": TASK041_SHORTWAVE_CONSUMER_SCHEMA,
         "consumer_profile": TASK041_SHORTWAVE_CONSUMER_PROFILE,
         "limits": phase_limits,
+        "workflow_limits": dict(task041_shortwave_workflow_limits(model_id)),
     }
 
 
@@ -458,7 +460,9 @@ def build_task041_shortwave_packet_identity(
     mpi_size = int(normalized["execution"]["mpi_size"])
     identity = {
         "schema": TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
-        "scope": task041_shortwave_selected_mode_scope(mode_count, mpi_size),
+        "scope": task041_shortwave_selected_mode_scope(
+            mode_count, mpi_size, model_id=normalized["model_id"]
+        ),
         "source_sha": source_sha,
         "input_sha256": input_sha,
         "resolved_sha256": resolved_sha,
@@ -1207,7 +1211,9 @@ def _task041_consumer_sampled_column_contract(
                 "Task041 shortwave sampled contract requires MPI8"
             )
         if identity.get("scope") != task041_shortwave_selected_mode_scope(
-            mode_count, TASK041_SHORTWAVE_MPI_SIZE
+            mode_count,
+            TASK041_SHORTWAVE_MPI_SIZE,
+            model_id=identity.get("model_id"),
         ):
             raise Task041ModePrepError(
                 "Task041 shortwave sampled contract scope does not match M/MPI"
