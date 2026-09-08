@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Latest V4 diagnostic completion: 8 new PC, 4 complement, 10 logical p4 and 12 MatSolve; preserve all V3/V2/V1/A5 history; no new official/full solve",
+  "scope": "Latest user-authorized V5 matched actual error mechanism localized; preserve all previous runs and negatives; no new production/official qualification",
   "units": {
     "time": "s",
     "memory": "B"
@@ -17,6 +17,39 @@
     "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
   },
   "runs": [
+    {
+      "id": "V5_actual_error_diagnosis",
+      "source_sha": "2251d7d0d3d3e8498ee34d38f8ec70f70d2f0d98",
+      "raw_root": "benchmarks/artifacts/task39extra/fine_reference_followup/2251d7d0d3d3e8498ee34d38f8ec70f70d2f0d98/actual_errors_v1",
+      "category": "measured",
+      "raw_classification": "ACTUAL_ERRORS_COMPLETED",
+      "semantic_classification": "REAL_ERROR_MAIN_MECHANISM_LOCALIZED_NOT_PRODUCTION_SOLVER_PASS",
+      "counts": {
+        "complete_pc_calls": 0,
+        "independent_smoother_attempted": 6,
+        "independent_smoother_calls": 6,
+        "logical_p4_rhs": 4,
+        "external_MatSolve_calls": 4
+      },
+      "wall_seconds": 1510.7221511656926,
+      "rss_peak_bytes": 3881811968,
+      "swap_peak_bytes": 0,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/actual_error_diagnosis_v5.json",
+      "official": "not_run"
+    },
+    {
+      "id": "V5_matched_fine_reference",
+      "source_sha": "f09476792d9928d6169cae8cc16b4c008f9bc694",
+      "raw_root": "benchmarks/artifacts/task39extra/fine_reference_followup/f09476792d9928d6169cae8cc16b4c008f9bc694/reference_v2",
+      "category": "measured",
+      "raw_classification": "REFERENCE_PASS",
+      "native_relative": 1.6160304782604192e-11,
+      "wall_seconds": 574.7957236074285,
+      "rss_peak_bytes": 7229845504,
+      "swap_peak_bytes": 0,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/actual_error_diagnosis_v5.json",
+      "official": "not_run"
+    },
     {
       "id": "V4_diagnostic_completion",
       "source_sha": "b127546f172e46d0b217680338b4e0ea7aa39f12",

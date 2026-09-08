@@ -1,3 +1,21 @@
+# 补充授权真实误差定位：分阶段验证与最终文档检查
+
+| 检查 | 结果 |
+|---|---|
+| 参考实现最小批 | 32 passed /1.47s；历史日志保留，未冒作本次重跑 |
+| incident quadrature窄修 | 9 passed /1.57s；普通默认不变，匹配native degree25 |
+| actual-error接线最小批 | 10 passed、1 FE项deselected /0.40s；含真实3snapshot/reference/9PC纯读load smoke，无FE |
+| 独立ABI/静态 | qualified Linux complex128/int32、MPI1/线程1；ABI子进程退出后启parent；compileall/diff通过 |
+| matched reference | 原A6≤1e-10、canonical/map/RHS/audit93hash资格；旧reference failure保留 |
+| actual-errors saved-only | 224 raw/cache哈希；3投影、6平滑、0new fullPC、4p4 RHS/4MatSolve/0refinement；原A4残差独立重算≤1e-10 |
+| 补充代数审计 | Gram相位无关相关、g两部分cross/相消、MR alpha、能量分解及owned-cell材料/高度归一化通过；M0仍是正式runtime实测，不称重装配FE验证 |
+| 资源/清场 | 全5302样本违规0、swap0、global delta0，所有观测PID清场；双时钟原值保留并保守计费 |
+| docs-only收口 | 仅JSON/hash/link/历史保护/diff检查；报告benchmarks/artifacts/task39extra/fine_reference_followup/docs_v5_static_checks.json |
+
+中心JSON索引日志、源码及两份可审阅saved-only脚本。最终文档没有重跑FE/PDE/factor/PC/pytest/full suite，没有Ruff安装或CI通过声明。
+
+## 历史V4及此前验证（原文当前仅指当时）
+
 # Review V4 / C5验证：诊断完成，未新增完整PDE资格
 
 | 验证 | 结果与证据 |
