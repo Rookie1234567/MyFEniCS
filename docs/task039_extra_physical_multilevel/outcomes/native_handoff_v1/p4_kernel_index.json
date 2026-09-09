@@ -1,0 +1,33 @@
+{
+  "source_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T170758.249958Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.c",
+  "bytes": 38004393,
+  "sha256": "ae1dce1ae608c0440bbd7d584a284a5e306931ea846234ba6d518b6f01df9331",
+  "original_source_not_copied": true,
+  "options_excerpt_lines": [
+    570,
+    581
+  ],
+  "functions": [
+    {
+      "line": 593,
+      "name": "tabulate_tensor_integral_d470ef320fb2eddcf8f846d663c468d701941d66_hexahedron"
+    },
+    {
+      "line": 12724,
+      "name": "tabulate_tensor_integral_3e66f9d7904562beb69d74a67b0019cea5c86d37_hexahedron"
+    }
+  ],
+  "historical_compiler_commands": [
+    {
+      "line": 630,
+      "timestamp_ns": 1788887454990794640,
+      "comm": "cc1",
+      "cmdline": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1 -quiet -I /usr/lib/python3/dist-packages/ffcx/codegeneration -I /home/shenjh/Projects/MyFEniCS-Surrogate/.venv/include -I /usr/include/python3.12 -imultiarch x86_64-linux-gnu -D NDEBUG libffcx_forms_79799d564a37286318398a320ab6392da8558533.c -D_FORTIFY_SOURCE=3 -quiet -dumpdir ./ -dumpbase libffcx_forms_79799d564a37286318398a320ab6392da8558533.c -dumpbase-ext .c -mtune=generic -march=x86-64 -g -g0 -O2 -O2 -Wsign-compare -Wall -std=c17 -fno-strict-overflow -fPIC -fasynchronous-unwind-tables -fstack-protector-strong -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/cc3WvJCj.s"
+    }
+  ],
+  "compiler_resource_sha256": "516e224fb9091450e6ceeda8cbf63d78464a76d120f1445590a836898af92778",
+  "historical_ffcx_version": "0.10.1.post0 (generated C comment)",
+  "historical_gcc_major": "13 (recorded cc1 path)",
+  "missing_actual_commands": false,
+  "binary_files_copied": false
+}

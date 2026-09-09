@@ -1,0 +1,197 @@
+{
+  "records": [
+    {
+      "line": 1,
+      "stage": "workflow_started",
+      "clock": {
+        "boottime": 599273.69546286,
+        "monotonic": 599273.695462303,
+        "utc_ns": 1788887279072710179
+      },
+      "original_line_sha256": "dbc0ff4fd0cf99d106a129b2cc830c0a02d92d27e5aaf68593bd277e1ab2c627"
+    },
+    {
+      "line": 2,
+      "stage": "shared_mesh_spaces_started",
+      "clock": {
+        "boottime": 599273.698015975,
+        "monotonic": 599273.698015285,
+        "utc_ns": 1788887279075263336
+      },
+      "original_line_sha256": "f7d4440b97fb23d97e2809c21f451f50e2b6fc9638c024c0657e8b0b137090c5"
+    },
+    {
+      "line": 3,
+      "stage": "h6_original_setup_started",
+      "clock": {
+        "boottime": 599276.146520948,
+        "monotonic": 599276.146520148,
+        "utc_ns": 1788887281523768382
+      },
+      "original_line_sha256": "e48fc00f73270dc9b665ef3c40795a6a9d02a8b3c65e86a295159789b5bfab3c"
+    },
+    {
+      "line": 8,
+      "stage": "reference_volume_compile_started",
+      "clock": {
+        "boottime": 599429.319858274,
+        "monotonic": 599429.319857346,
+        "utc_ns": 1788887449359853629
+      },
+      "original_line_sha256": "85b6aaaf8c04f6078ea6301584f375bb2e1c71328a14a641ae60e435c217d09c"
+    },
+    {
+      "line": 9,
+      "stage": "reference_metadata",
+      "clock": {
+        "boottime": 599442.983537097,
+        "monotonic": 599442.983535736,
+        "utc_ns": 1788887465961514036
+      },
+      "original_line_sha256": "edf8a8a04401f9bc7cea01b0416169a246eb1bc42f8d698d95de6d872cf78c4d"
+    },
+    {
+      "line": 10,
+      "stage": "reference_volume_pattern",
+      "clock": {
+        "boottime": 599443.47243448,
+        "monotonic": 599443.472431778,
+        "utc_ns": 1788887466450411528
+      },
+      "original_line_sha256": "18eefa461edcec28004ad068dcb6bf84646555233bea603211bbc917f4c907de"
+    },
+    {
+      "line": 11,
+      "stage": "reference_volume_complete",
+      "clock": {
+        "boottime": 599912.752974982,
+        "monotonic": 599912.752971288,
+        "utc_ns": 1788887976783715524
+      },
+      "original_line_sha256": "5075a2fa6b629a9838c15a8775c7414d259ba720260864ac8631a0f5c7feab7b"
+    },
+    {
+      "line": 12,
+      "stage": "reference_augmentation_complete",
+      "clock": {
+        "boottime": 599913.498800753,
+        "monotonic": 599913.498798893,
+        "utc_ns": 1788887977529541326
+      },
+      "original_line_sha256": "a69f4767ef63eca661934a8c8e89d196fd6655e4ce7a5ad984a29a916edcab37"
+    },
+    {
+      "line": 13,
+      "stage": "reference_symbolic_started",
+      "clock": {
+        "boottime": 599913.500343541,
+        "monotonic": 599913.500342007,
+        "utc_ns": 1788887977531083861
+      },
+      "original_line_sha256": "c71406c084782718de38daacd543595169c14a0aa66ed08428933032e34e63a4"
+    },
+    {
+      "line": 14,
+      "stage": "reference_symbolic_complete",
+      "clock": {
+        "boottime": 599913.822560002,
+        "monotonic": 599913.822558728,
+        "utc_ns": 1788887977853300290
+      },
+      "original_line_sha256": "79536cac71db477584cbed64fed5c1a8d82c6d78f593398ff72bec5413432168"
+    },
+    {
+      "line": 15,
+      "stage": "reference_symbolic_resource",
+      "clock": {
+        "boottime": 599913.830392299,
+        "monotonic": 599913.830391292,
+        "utc_ns": 1788887977861132550
+      },
+      "original_line_sha256": "38ad1abb2697b0cec8477fd54bc2b11e0edfeef8cfc744551615847f7f65798c"
+    },
+    {
+      "line": 16,
+      "stage": "reference_budget_evaluated",
+      "clock": {
+        "boottime": 599913.830870065,
+        "monotonic": 599913.830869285,
+        "utc_ns": 1788887977861610312
+      },
+      "original_line_sha256": "8a6ea78d12017bbabb9f5a6b3a06e538632214e12a7b9bbdb7709bda1993bbce"
+    },
+    {
+      "line": 17,
+      "stage": "reference_numeric_preflight",
+      "clock": {
+        "boottime": 599913.831256626,
+        "monotonic": 599913.831255905,
+        "utc_ns": 1788887977861996935
+      },
+      "original_line_sha256": "23908913aa8457855813580420db8780b981775f7cd6e371b008117997e5bfe0"
+    },
+    {
+      "line": 18,
+      "stage": "reference_numeric_complete",
+      "clock": {
+        "boottime": 599932.845341654,
+        "monotonic": 599932.845340235,
+        "utc_ns": 1788887999837206582
+      },
+      "original_line_sha256": "bc3ad3b113a5c2c5b4f61cfd933fbbe016ac4bc38b32b0e3e6c6cf6342c41e5f"
+    },
+    {
+      "line": 22,
+      "stage": "solve_started",
+      "clock": {
+        "boottime": 599941.421685749,
+        "monotonic": 599941.421685397,
+        "utc_ns": 1788888008413550713
+      },
+      "original_line_sha256": "076301e0d7923db6f34e3bd52c4a16422a36a6dc2e7d8824e2e05ea226fc619c"
+    }
+  ],
+  "intervals": [
+    {
+      "label": "p4 volume compilation plus metadata interval",
+      "start_line": 8,
+      "end_line": 9,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 13.663678389973938,
+      "UTC_seconds": 16.601660407,
+      "endpoint_max_seconds": 16.601660407,
+      "CPU_seconds": "NOT_RECORDED"
+    },
+    {
+      "label": "p4 volume assembly interval",
+      "start_line": 10,
+      "end_line": 11,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 469.28053951007314,
+      "UTC_seconds": 510.333303996,
+      "endpoint_max_seconds": 510.333303996,
+      "CPU_seconds": "NOT_RECORDED"
+    },
+    {
+      "label": "symbolic interval",
+      "start_line": 13,
+      "end_line": 14,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 0.3222167210187763,
+      "UTC_seconds": 0.322216429,
+      "endpoint_max_seconds": 0.3222167210187763,
+      "CPU_seconds": "NOT_RECORDED"
+    },
+    {
+      "label": "numeric interval",
+      "start_line": 17,
+      "end_line": 18,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 19.01408433006145,
+      "UTC_seconds": 21.975209647,
+      "endpoint_max_seconds": 21.975209647,
+      "CPU_seconds": "NOT_RECORDED"
+    }
+  ],
+  "definition": "Raw source lines preserved separately; elapsed interval is not CPU time or an isolated-kernel timing."
+}

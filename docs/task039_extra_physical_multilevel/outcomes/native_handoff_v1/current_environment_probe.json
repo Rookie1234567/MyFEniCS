@@ -1,0 +1,75 @@
+{
+  "classification": "CURRENT_READONLY_PROBE_NOT_HISTORICAL_ATTESTATION",
+  "source_sha": "4c5838d2d12e722641c3758f10874a499d12a0b9",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python_executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": {
+    "vendor_id": "GenuineIntel",
+    "cpu family": "6",
+    "model": "186",
+    "model name": "13th Gen Intel(R) Core(TM) i7-13620H",
+    "stepping": "2",
+    "siblings": "16",
+    "cpu cores": "8"
+  },
+  "modules": {
+    "numpy": {
+      "version": "1.26.4",
+      "path": "/usr/lib/python3/dist-packages/numpy/__init__.py"
+    },
+    "dolfinx": {
+      "version": "0.10.0.post2",
+      "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py"
+    },
+    "basix": {
+      "version": "0.10.0",
+      "path": "/usr/lib/python3/dist-packages/basix/__init__.py"
+    },
+    "ffcx": {
+      "version": "0.10.1.post0",
+      "path": "/usr/lib/python3/dist-packages/ffcx/__init__.py"
+    },
+    "ufl": {
+      "version": "2025.2.1",
+      "path": "/usr/lib/python3/dist-packages/ufl/__init__.py"
+    },
+    "dolfinx_mpc": {
+      "version": "0.10.1",
+      "version_source": "importlib.metadata.version('dolfinx_mpc'); installed distribution METADATA Name/Version",
+      "metadata_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/lib/python3.12/site-packages/dolfinx_mpc-0.10.1.dist-info/METADATA",
+      "path": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/lib/python3.12/site-packages/dolfinx_mpc/__init__.py"
+    },
+    "petsc4py": {
+      "version": "3.19.6",
+      "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py"
+    },
+    "slepc4py": {
+      "version": "3.19.2",
+      "path": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py"
+    },
+    "mpi4py": {
+      "version": "3.1.5",
+      "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
+    }
+  },
+  "PETSc_version": [
+    3,
+    19,
+    6
+  ],
+  "PETSc_scalar": "<class 'numpy.complex128'>",
+  "PETSc_integer": "<class 'numpy.int32'>",
+  "gcc_version": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "package_versions": "gcc-13\t13.3.0-6ubuntu2~24.04.1\nlibmumps-5.6\t\nlibmumps-5.6t64\t5.6.2-2.1build2\nlibmumps-dev\t5.6.2-2.1build2\nlibmumps-headers-dev\t5.6.2-2.1build2\nlibmumps-seq-dev\t\nlibpetsc-complex3.19\t\n",
+  "unavailable_package_queries": "",
+  "qualified_JIT_options": {
+    "cache_dir": "/tmp/myfenics-xdg-cache-1000/fenics",
+    "cffi_debug": "False",
+    "cffi_verbose": "False",
+    "cffi_libraries": "None",
+    "timeout": "10",
+    "cffi_extra_compile_args": "['-O2', '-g0']"
+  },
+  "scope": "Only named version/CPU/JIT configuration fields; no environment dump, credentials, mesh, assembly or PDE."
+}

@@ -1,0 +1,39 @@
+{
+  "recorded_abi": {
+    "integer": "int32",
+    "module_paths": {
+      "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+      "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+      "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+      "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py"
+    },
+    "mpi_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+    "petsc_version": [
+      3,
+      19,
+      6
+    ],
+    "python": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "scalar": "complex128",
+    "threads": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "generated_C_ffcx": "0.10.1.post0",
+  "compiler_major": "GCC 13",
+  "not_recorded_in_selected_historical_evidence": [
+    "CPU model",
+    "full Python version",
+    "NumPy version",
+    "DOLFINx version",
+    "Basix version",
+    "UFL version",
+    "dolfinx_mpc version",
+    "MUMPS exact package version",
+    "GCC minor version"
+  ],
+  "interpretation": "Historical module paths and PETSc/MPI versions are preserved. Current probes cannot retroactively establish the missing historical versions."
+}

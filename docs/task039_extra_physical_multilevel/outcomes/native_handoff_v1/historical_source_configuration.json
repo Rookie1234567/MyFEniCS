@@ -1,0 +1,459 @@
+[
+  {
+    "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_setup.py",
+    "source_sha": "2bb6770ad00b35881558c576e7296e250656e571",
+    "source_file_sha256": "0589ad239864c3ea834d07f17593000119f04562e683486cdf54b4170c7e5019",
+    "excerpt": [
+      {
+        "line": 44,
+        "text": "P6_SETUP_MESH_TARGET_NM = 10.0"
+      },
+      {
+        "line": 45,
+        "text": "P6_SETUP_SCALAR_ITEMSIZE = int(np.dtype(PETSc.ScalarType).itemsize)"
+      },
+      {
+        "line": 46,
+        "text": "SAME_MESH_JIT_OPTIONS = MappingProxyType({})"
+      },
+      {
+        "line": 47,
+        "text": "_SMOOTHER_VECTOR_NAMES = ("
+      },
+      {
+        "line": 48,
+        "text": "    \"_inv_sqrt\","
+      },
+      {
+        "line": 49,
+        "text": "    \"_scaled_input\","
+      },
+      {
+        "line": 50,
+        "text": "    \"_scaled_action\","
+      },
+      {
+        "line": 307,
+        "text": "            spaces[6],"
+      },
+      {
+        "line": 308,
+        "text": "            mpc=floquets[6].mpc,"
+      },
+      {
+        "line": 309,
+        "text": "            jit_options=SAME_MESH_JIT_OPTIONS,"
+      },
+      {
+        "line": 310,
+        "text": "        )"
+      },
+      {
+        "line": 311,
+        "text": "        from dolfinx import fem"
+      },
+      {
+        "line": 312,
+        "text": ""
+      },
+      {
+        "line": 313,
+        "text": "        stage(\"s6_p6_action_complete\")"
+      },
+      {
+        "line": 320,
+        "text": "        else:"
+      },
+      {
+        "line": 321,
+        "text": "            p6_diagonal = build_constrained_jacobi_diagonal("
+      },
+      {
+        "line": 322,
+        "text": "                fem.form(p6_form, jit_options=dict(SAME_MESH_JIT_OPTIONS)),"
+      },
+      {
+        "line": 323,
+        "text": "                floquets[6].mpc,"
+      },
+      {
+        "line": 324,
+        "text": "            )"
+      },
+      {
+        "line": 325,
+        "text": "        stage(\"s6_diagonal_complete\")"
+      },
+      {
+        "line": 326,
+        "text": "        bundle[\"p6_shell\"] = SameMeshP6MatrixFreeShell("
+      },
+      {
+        "line": 336,
+        "text": "            curl_coefficient=mu,"
+      },
+      {
+        "line": 337,
+        "text": "            mass_coefficient=mass,"
+      },
+      {
+        "line": 338,
+        "text": "            jit_options=SAME_MESH_JIT_OPTIONS,"
+      },
+      {
+        "line": 339,
+        "text": "        )"
+      },
+      {
+        "line": 340,
+        "text": "        stage(\"s6_p3_assembly_complete\")"
+      },
+      {
+        "line": 341,
+        "text": "        stage(\"s6_p1_assembly_started\")"
+      },
+      {
+        "line": 342,
+        "text": "        bundle[\"p1_matrix\"] = assemble_same_mesh_positive_matrix("
+      },
+      {
+        "line": 345,
+        "text": "            curl_coefficient=mu,"
+      },
+      {
+        "line": 346,
+        "text": "            mass_coefficient=mass,"
+      },
+      {
+        "line": 347,
+        "text": "            jit_options=SAME_MESH_JIT_OPTIONS,"
+      },
+      {
+        "line": 348,
+        "text": "        )"
+      },
+      {
+        "line": 349,
+        "text": "        stage(\"s6_p1_assembly_complete\")"
+      },
+      {
+        "line": 350,
+        "text": "        if coarse_solver_factory is not None:"
+      },
+      {
+        "line": 351,
+        "text": "            bundle[\"owned_coarse_solver\"] = coarse_solver_factory(bundle[\"p1_matrix\"])"
+      }
+    ]
+  },
+  {
+    "path": "src/solvers/fullspace_v17_p3_oracle.py",
+    "source_sha": "2bb6770ad00b35881558c576e7296e250656e571",
+    "source_file_sha256": "8438d01a4c3dcd4130bd446a92e1097927e423fa4797aa5bce46c0a82f3af8f7",
+    "excerpt": [
+      {
+        "line": 380,
+        "text": ""
+      },
+      {
+        "line": 381,
+        "text": ""
+      },
+      {
+        "line": 382,
+        "text": "def compile_physical_diagnostic_volume(setup, cfg, degree, *, shift_weight=None,"
+      },
+      {
+        "line": 383,
+        "text": "                                      volume_quadrature_metadata=None):"
+      },
+      {
+        "line": 384,
+        "text": "    \"\"\"Original split physical form, shared by sparse diagnostic assemblers.\"\"\""
+      },
+      {
+        "line": 385,
+        "text": "    from dolfinx import fem"
+      },
+      {
+        "line": 386,
+        "text": "    import ufl"
+      },
+      {
+        "line": 387,
+        "text": "    from .common_3d_forms import _build_physical_volume_terms"
+      },
+      {
+        "line": 388,
+        "text": "    from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS"
+      },
+      {
+        "line": 389,
+        "text": "    space = setup['spaces'][degree]"
+      },
+      {
+        "line": 390,
+        "text": "    u = ufl.TrialFunction(space)"
+      },
+      {
+        "line": 391,
+        "text": "    v = ufl.TestFunction(space)"
+      },
+      {
+        "line": 392,
+        "text": "    dx = ufl.Measure("
+      },
+      {
+        "line": 410,
+        "text": "    compiled = fem.form("
+      },
+      {
+        "line": 411,
+        "text": "        curl_curl + material_mass,"
+      },
+      {
+        "line": 412,
+        "text": "        jit_options=dict(SAME_MESH_JIT_OPTIONS),"
+      },
+      {
+        "line": 413,
+        "text": "    )"
+      },
+      {
+        "line": 414,
+        "text": "    return compiled"
+      },
+      {
+        "line": 415,
+        "text": ""
+      },
+      {
+        "line": 416,
+        "text": ""
+      },
+      {
+        "line": 440,
+        "text": ""
+      },
+      {
+        "line": 441,
+        "text": "    from .common_3d_forms import _build_physical_volume_terms"
+      },
+      {
+        "line": 442,
+        "text": "    from .dtn_port_3d import _dtn_surface_quadrature_degree"
+      },
+      {
+        "line": 443,
+        "text": "    from .fullspace_dtn_action import ("
+      },
+      {
+        "line": 444,
+        "text": "        build_dynamic_mode_inventory,"
+      },
+      {
+        "line": 445,
+        "text": "        build_fullspace_dtn_carrier_from_surface,"
+      },
+      {
+        "line": 446,
+        "text": "    )"
+      },
+      {
+        "line": 447,
+        "text": "    from .fullspace_same_mesh_hcurl_pmg_physical import _surface_assemblers"
+      },
+      {
+        "line": 448,
+        "text": "    from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS"
+      },
+      {
+        "line": 449,
+        "text": ""
+      },
+      {
+        "line": 450,
+        "text": "    if int(comm.size) != 1:"
+      },
+      {
+        "line": 451,
+        "text": "        raise ValueError(\"the exact p3 diagnostic matrix is fixed to MPI1\")"
+      },
+      {
+        "line": 452,
+        "text": "    if degree not in (1, 3) or (shift_weight is not None and degree != 1):"
+      },
+      {
+        "line": 462,
+        "text": "    modes, _mode_rows, mode_sha = mode_inventory"
+      },
+      {
+        "line": 463,
+        "text": "    modes = tuple(modes)"
+      },
+      {
+        "line": 464,
+        "text": "    qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))"
+      },
+      {
+        "line": 465,
+        "text": "    assemblers = _surface_assemblers("
+      },
+      {
+        "line": 466,
+        "text": "        space,"
+      },
+      {
+        "line": 467,
+        "text": "        setup[\"mesh_data\"],"
+      },
+      {
+        "line": 468,
+        "text": "        cfg,"
+      },
+      {
+        "line": 469,
+        "text": "        qdegree,"
+      },
+      {
+        "line": 470,
+        "text": "        jit_options=SAME_MESH_JIT_OPTIONS,"
+      },
+      {
+        "line": 471,
+        "text": "    )"
+      },
+      {
+        "line": 472,
+        "text": "    carrier = None"
+      },
+      {
+        "line": 473,
+        "text": "    matrix = None"
+      },
+      {
+        "line": 474,
+        "text": "    dtn_matrix = None"
+      },
+      {
+        "line": 477,
+        "text": "            modes, assemblers, floquet.mpc, cfg"
+      },
+      {
+        "line": 478,
+        "text": "        )"
+      },
+      {
+        "line": 479,
+        "text": "        compiled = compile_physical_diagnostic_volume(setup, cfg, degree,"
+      },
+      {
+        "line": 480,
+        "text": "            shift_weight=shift_weight, volume_quadrature_metadata=volume_quadrature_metadata)"
+      },
+      {
+        "line": 481,
+        "text": "        matrix = dolfinx_mpc.assemble_matrix(compiled, floquet.mpc, bcs=[])"
+      },
+      {
+        "line": 482,
+        "text": "        matrix.assemble()"
+      },
+      {
+        "line": 483,
+        "text": "        rows = int(matrix.getSize()[0])"
+      },
+      {
+        "line": 506,
+        "text": "            \"mode_count\": int(len(modes)),"
+      },
+      {
+        "line": 507,
+        "text": "            \"mode_manifest_sha256\": str(mode_sha),"
+      },
+      {
+        "line": 508,
+        "text": "            \"dtn_quadrature_degree\": int(qdegree),"
+      },
+      {
+        "line": 509,
+        "text": "            \"static_condensation_used\": False,"
+      },
+      {
+        "line": 510,
+        "text": "            \"diagnostic_global_aij\": True,"
+      },
+      {
+        "line": 511,
+        "text": "            \"production_global_aij\": False,"
+      },
+      {
+        "line": 512,
+        "text": "            \"numeric_allgather\": False,"
+      }
+    ]
+  },
+  {
+    "path": "src/solvers/fullspace_p4_reference.py",
+    "source_sha": "2bb6770ad00b35881558c576e7296e250656e571",
+    "source_file_sha256": "12b8ee5331ae42202d0aaa7a6c7b1e01726cd3466b2ec332c22942d606d06511",
+    "excerpt": [
+      {
+        "line": 4,
+        "text": "from petsc4py import PETSc"
+      },
+      {
+        "line": 5,
+        "text": ""
+      },
+      {
+        "line": 6,
+        "text": "from .fullspace_v17_p3_oracle import _MumpsFactor, compile_physical_diagnostic_volume"
+      },
+      {
+        "line": 7,
+        "text": "from .fullspace_physical_intermediate import apply_owned"
+      },
+      {
+        "line": 8,
+        "text": ""
+      },
+      {
+        "line": 9,
+        "text": ""
+      },
+      {
+        "line": 10,
+        "text": "class ReferenceResourceBlocked(RuntimeError):"
+      },
+      {
+        "line": 70,
+        "text": "    space, mpc = setup['spaces'][4], setup['floquets'][4].mpc"
+      },
+      {
+        "line": 71,
+        "text": "    marker('reference_volume_compile_started', {})"
+      },
+      {
+        "line": 72,
+        "text": "    compiled = compile_physical_diagnostic_volume(setup, cfg, 4,"
+      },
+      {
+        "line": 73,
+        "text": "        volume_quadrature_metadata=quadrature)"
+      },
+      {
+        "line": 74,
+        "text": "    carrier = native['dtn_action'].carrier"
+      },
+      {
+        "line": 75,
+        "text": "    coefficients, offsets = mpc.coefficients()"
+      },
+      {
+        "line": 76,
+        "text": "    counts = np.diff(offsets)[np.asarray(mpc.slaves, dtype=np.int32)]"
+      }
+    ]
+  }
+]
