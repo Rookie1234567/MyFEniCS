@@ -1,0 +1,19 @@
+{
+  "schema": "task39extra.bubble-local-binding.v1",
+  "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "quadrature_record": {
+    "path": "benchmarks/artifacts/task39extra/v6_p4_failure_diagnostic/33de3c343d84de8a56f40a425534013f485e48f9/a2r160_g1/records/terminal_costs.json",
+    "sha256": "f2bde5eca684cbea6a172e0a7895b2a7412dda270fdf967c9faf6022e64b7e08"
+  },
+  "quadrature": [
+    {
+      "quadrature_degree": 15,
+      "quadrature_rule": "default"
+    },
+    {
+      "quadrature_degree": 15,
+      "quadrature_rule": "default"
+    }
+  ],
+  "selection_rule": "Original mesh air only; prefer all widths10nm (absolute1e-12); otherwise largest actual volume; exact ties sorted by lowerXYZ+upperXYZ; freeze before tensor/rank; no fallback cell after failure"
+}
