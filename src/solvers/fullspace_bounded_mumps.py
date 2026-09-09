@@ -22,7 +22,7 @@ class BoundedP1Factor:
     """
 
     def __init__(self, matrix: Any, *, label: str, resource_sample: Callable[[], dict],
-                 marker: Callable[[str, dict], None], physical_p2_pilot: bool = False) -> None:
+                 marker: Callable[[str, dict], None], physical_p2_pilot: bool = False, extra_local_bytes: int = 0) -> None:
         self.matrix, self.label = matrix, label
         self.factor = None
         self.solve_count = 0
@@ -52,7 +52,9 @@ class BoundedP1Factor:
         # Policy reserve, NOT a proven bound on unobservable PETSc/allocator objects.
         # Cover a second allocated CSR-sized buffer plus 16 MiB of object overhead.
         # The independent parent RSS gate remains authoritative for actual memory.
-        reserve = storage + 16 * 1024**2
+        if int(extra_local_bytes) < 0:
+            raise ValueError("negative extra local storage budget")
+        reserve = storage + 16 * 1024**2 + int(extra_local_bytes)
         matrix_budget = max(storage, allocator_bytes or 0) + reserve
         if physical_p2_pilot:
             # MUMPS COO conversion (two indices + scalar), plus bounded solve/refinement vectors.
@@ -64,7 +66,7 @@ class BoundedP1Factor:
                 bottom_budget_bytes=LOCAL_FACTOR_MAX_BYTES, classification='derived_policy_budget_not_RSS')
             if matrix_budget > LOCAL_FACTOR_MAX_BYTES:
                 raise RuntimeError('p2 matrix/conversion/workspace exceeds 512MiB before symbolic')
-        self.audit.update(rows=int(rows), nnz=int(used), allocated_nnz=int(allocated),
+        self.audit.update(extra_local_bytes=int(extra_local_bytes), rows=int(rows), nnz=int(used), allocated_nnz=int(allocated),
                           scalar_dtype=str(values.dtype), index_dtype=str(indices.dtype),
                           row_pointer_dtype=str(indptr.dtype), matrix_csr_payload_bytes=payload,
                           matrix_allocated_csr_storage_bytes=storage,

@@ -334,6 +334,7 @@ class SameMeshHcurlOwnerTransfer:
         coarse_space: Any,
         coarse_floquet: Any,
         local_transfer: SameMeshHcurlTransfer,
+        *, cell_matrix_provider=None,
     ) -> None:
         pair = (_space_degree(fine_space), _space_degree(coarse_space))
         if pair not in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS:
@@ -410,6 +411,11 @@ class SameMeshHcurlOwnerTransfer:
                     coarse_cell_info=coarse_info,
                     fine_cell_info=fine_info,
                 )
+            matrix = cache[key].matrix
+            if cell_matrix_provider is not None:
+                matrix = np.asarray(cell_matrix_provider(cell, fine_info, matrix), dtype=np.complex128)
+                if matrix.shape != cache[key].matrix.shape or not np.isfinite(matrix).all():
+                    raise ValueError("invalid explicit owner cell matrix")
             fine_local, fine_global = _cell_global_dofs(fine_space, cell)
             coarse_local, coarse_global = _cell_global_dofs(coarse_space, cell)
             if cache[key].matrix.shape != (fine_global.size, coarse_global.size):
@@ -430,7 +436,7 @@ class SameMeshHcurlOwnerTransfer:
                     "fine_global": fine_global.astype(np.uint64, copy=False),
                     "coarse_local": coarse_local,
                     "coarse_global": coarse_global.astype(np.uint64, copy=False),
-                    "matrix": cache[key].matrix,
+                    "matrix": matrix,
                     "authority": np.asarray(
                         [
                             authority.get(int(global_id)) == (cell, position)
@@ -538,6 +544,9 @@ class SameMeshHcurlOwnerTransfer:
                 "cell_count_local": cell_count,
                 "cell_count_global": global_cells,
                 "cell_map_cache_count": len(cache),
+                "explicit_cell_matrix_provider": cell_matrix_provider is not None,
+                "local_cache_array_bytes_scope": "base polynomial cache only",
+                "base_polynomial_qualification_covers_provider": False if cell_matrix_provider is not None else True,
                 "local_cache_array_bytes": int(
                     sum(int(transfer.matrix.nbytes) for transfer in cache.values())
                 ),

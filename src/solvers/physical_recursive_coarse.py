@@ -116,11 +116,16 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
 
 
 class PhysicalP2Inverse:
-    """One bounded augmented factor; native A2 residual, at most two refinements."""
-    def __init__(self, matrix, action, slaves, *, sample, marker, save):
+    """One bounded factor; the explicitly supplied native action gates each solve."""
+    action_identity = "native_A2"
+
+    def __init__(self, matrix, action, slaves, *, sample, marker, save,
+                 action_identity="native_A2", extra_local_bytes=0):
         from .fullspace_bounded_mumps import BoundedP1Factor
         self.bottom = BoundedP1Factor(matrix, label='physical_p2', resource_sample=sample,
-            marker=marker, physical_p2_pilot=True)
+            marker=marker, physical_p2_pilot=True, extra_local_bytes=extra_local_bytes)
+        self.action_identity = action_identity
+        self.bottom.audit['residual_action_identity'] = action_identity
         self.matrix, self.action = matrix, action
         self.slaves, self.sample, self.save = np.asarray(slaves, dtype=int), sample, save
         self.counts = dict(logical=0, MatSolve_attempted=0, MatSolve=0, refinement=0, A2_true=0)
@@ -150,11 +155,11 @@ class PhysicalP2Inverse:
                 applied = apply_owned(self.action, x); self.counts['A2_true'] += 1
                 rhs.copy(residual); residual.axpy(-1, applied); applied.destroy(); applied = None
                 relative = float(residual.norm()/norm) if norm else float(residual.norm())
-                self.last_facts = dict(relative=relative, refinement=refinement,
+                self.last_facts = dict(action_identity=self.action_identity, relative=relative, refinement=refinement,
                     counts={k:v-start.get(k,0) for k,v in self.counts.items()})
                 if np.isfinite(relative) and relative <= 1e-10:
                     value=x; x=None; return value
-            raise RuntimeError('native A2 residual exceeds 1e-10 after two refinements')
+            raise RuntimeError(self.action_identity+' residual exceeds 1e-10 after two refinements')
         except BaseException as exc:
             self.save('bottom_failure', dict(rhs=rhs.array.copy(), solution=x.array.copy(), residual=residual.array.copy(),
                 facts=self.last_facts, counts_since_start={k:v-start.get(k,0) for k,v in self.counts.items()},
@@ -168,7 +173,7 @@ class PhysicalP2Inverse:
         self.bottom.destroy()
 
 
-def build_recursive_physical_solver(cfg, comm, *, target, sample, marker, save, audit_every=32, observe_inner=None, stop_requested=lambda: False):
+def build_recursive_physical_solver(cfg, comm, *, target, sample, marker, save, audit_every=32, observe_inner=None, stop_requested=lambda: False, bubble_enriched=False):
     """Explicit 6/4/2 pilot. No p4 reference=True path and no unused shifted levels."""
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from .fullspace_same_mesh_hcurl_pmg_physical import build_same_mesh_physical_action
@@ -189,13 +194,24 @@ def build_recursive_physical_solver(cfg, comm, *, target, sample, marker, save, 
             stage_callback=marker, physical_only_degrees=(6,4,2)); bundle['actions'] = actions
         bundle['h4_setup'] = build_light_level_setup(levels, cfg, marker, degree=4)
         sample()
-        matrix, facts = build_reference_matrix(levels, cfg, actions['physical'][2],
-            actions['volume_quadrature_metadata'], marker=marker, sample=sample, degree=2, row_cap=8192)
-        bundle['p2_matrix'], bundle['p2_matrix_facts'] = matrix, facts
-        bottom = PhysicalP2Inverse(matrix, actions['physical'][2]['physical_action'],
-            owned_slave_indices(levels['spaces'][2], levels['floquets'][2]), sample=sample, marker=marker, save=save)
-        bundle['p2_inverse'] = bottom
         p42, p64 = actions['transfers'][(4,2)], actions['transfers'][(6,4)]
+        correction = None; extra = 0; bottom_action = actions['physical'][2]['physical_action']
+        if bubble_enriched:
+            from .physical_bubble_global import BubbleEnrichedSpace
+            bubble = BubbleEnrichedSpace(levels, cfg, actions, sample=sample, marker=marker, save=save)
+            bundle['bubble'] = bubble
+            p42, correction, extra = bubble.transfer, bubble.insert_volume, bubble.retained_bytes
+            bottom_action = bubble.composed_action
+            bundle['numerical_storage']['bottom'] = 'bounded_bubble_enriched_S'
+        matrix, facts = build_reference_matrix(levels, cfg, actions['physical'][2],
+            actions['volume_quadrature_metadata'], marker=marker, sample=sample, degree=2, row_cap=8192,
+            cell_volume_correction=correction, extra_local_bytes=extra)
+        bundle['p2_matrix'], bundle['p2_matrix_facts'] = matrix, facts
+        if bubble_enriched: bubble.qualify_matrix(matrix)
+        bottom = PhysicalP2Inverse(matrix, bottom_action,
+            owned_slave_indices(levels['spaces'][2], levels['floquets'][2]), sample=sample, marker=marker, save=save,
+            action_identity='composed_WH_A4_W' if bubble_enriched else 'native_A2', extra_local_bytes=extra)
+        bundle['p2_inverse'] = bottom
         def a4(x): return apply_owned(actions['physical'][4]['physical_action'], x)
         def a6(x): return apply_owned(fine['physical_action'], x)
         def c42(x):
@@ -279,7 +295,7 @@ def release_recursive_physical_solver_stack(bundle):
     # Drop closures before releasing their borrowed coarse objects. Fine remains for recovery.
     for name in ('I4', 'B4', 'pc'):
         bundle.pop(name, None)
-    for name in ('inexact_ledger', 'p2_inverse', 'p2_matrix'):
+    for name in ('inexact_ledger', 'p2_inverse', 'p2_matrix', 'bubble'):
         value = bundle.pop(name, None)
         if value is not None: value.destroy()
     for name in ('h4_setup', 'positive'):

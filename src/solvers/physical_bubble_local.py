@@ -3,11 +3,10 @@ import numpy as np
 from scipy.linalg import lu_factor, lu_solve, svd, svdvals
 
 
-def harmonic_bubble_check(A,P,R,interior,*,retained_bubble_rank=6,save,sample=lambda:None):
-    """Fixed nullity: never delete extra modes to make the physical LU pass."""
-    A,P,R=(np.asarray(x,dtype=np.complex128) for x in (A,P,R))
-    interior=np.asarray(interior,dtype=int);n,k=P.shape
-    if A.shape!=(n,n) or R.shape!=(k,n):raise ValueError('local matrix shapes differ')
+def fixed_bubble_basis(P,R,interior,*,retained_bubble_rank=6):
+    """Element/orientation-only nullspace; independent of material and cell widths."""
+    n,k=P.shape
+    interior=np.asarray(interior,dtype=int)
     I=np.eye(k,dtype=complex);rb=R[:,interior]
     rank_u,sigma,vh=svd(rb,full_matrices=True)
     rank=int(retained_bubble_rank);scale=max(float(sigma[0]),np.finfo(float).tiny)
@@ -17,8 +16,19 @@ def harmonic_bubble_check(A,P,R,interior,*,retained_bubble_rank=6,save,sample=la
         RQ_norm=float(np.linalg.norm(R@Q)),Q_orthogonality=float(np.linalg.norm(Q.conj().T@Q-np.eye(Q.shape[1]))),
         fixed_rank=rank,nullity=Q.shape[1],rank_gap_pass=rank_gap,rank_singular_values=sigma,
         rank_threshold=1e-12*scale,interior_only=bool(np.all(Q[np.setdiff1d(np.arange(n),interior)]==0)))
+    return Q,basis
+
+
+def harmonic_bubble_check(A,P,R,interior,*,retained_bubble_rank=6,save,sample=lambda:None,basis_cache=None):
+    """Fixed nullity: never delete extra modes to make the physical LU pass."""
+    A,P,R=(np.asarray(x,dtype=np.complex128) for x in (A,P,R))
+    interior=np.asarray(interior,dtype=int);n,k=P.shape
+    if A.shape!=(n,n) or R.shape!=(k,n):raise ValueError('local matrix shapes differ')
+    Q,basis=(fixed_bubble_basis(P,R,interior,retained_bubble_rank=retained_bubble_rank)
+             if basis_cache is None else basis_cache)
+    I=np.eye(k,dtype=complex)
     save('bubble_basis',dict(P=P,R=R,Q=Q,facts=basis))
-    if not(rank_gap and basis['RP_relative']<=1e-12 and basis['RQ_norm']<=1e-12 and basis['Q_orthogonality']<=1e-12 and basis['interior_only']):
+    if not(basis['rank_gap_pass'] and basis['RP_relative']<=1e-12 and basis['RQ_norm']<=1e-12 and basis['Q_orthogonality']<=1e-12 and basis['interior_only']):
         raise ValueError('fixed bubble basis gate failed')
     sample();D=Q.conj().T@A@Q;B=Q.conj().T@A@P;left=P.conj().T@A@Q
     ds=svdvals(D)
@@ -41,7 +51,7 @@ def harmonic_bubble_check(A,P,R,interior,*,retained_bubble_rank=6,save,sample=la
         Schur_relative=float(np.linalg.norm(S-schur)/max(np.linalg.norm(S),np.linalg.norm(schur),tiny)),
         dual='W^H, not R; not exact (P,Q) block inverse',shift=0,refinements=0,factorization='complex pivoted LU')
     retained=dict(A=A,P=P,R=R,Q=Q,D=D,T=T,W=W,S=S)
-    scratch=dict(rb=rb,rank_u=rank_u,sigma=sigma,vh=vh,Z=Z,B=B,left=left,ds=ds,lu=lu,piv=piv,
+    scratch=dict(B=B,left=left,ds=ds,lu=lu,piv=piv,
         residual=residual,permuted=permuted,L=L,U=U,schur=schur,I=I)
     def backing(values):
         roots={}
@@ -61,3 +71,33 @@ def harmonic_bubble_check(A,P,R,interior,*,retained_bubble_rank=6,save,sample=la
     save('bubble_harmonic',dict(**retained,facts=facts));sample()
     if not passed:raise ValueError('local harmonic algebra gate failed')
     return dict(**retained,facts=facts)
+
+
+def trace_checks(element,delta,base,widths):
+    import basix
+    records={}
+    for dimension in (1,2):
+        celltype=basix.CellType.interval if dimension==1 else basix.CellType.quadrilateral
+        quadrature,_=basix.make_quadrature(celltype,10)
+        grids=[];components=[]
+        if dimension==2:
+            for normal in range(3):
+                tangent=[i for i in range(3) if i!=normal]
+                for side in (0.,1.):
+                    points=np.empty((len(quadrature),3));points[:,normal]=side;points[:,tangent]=quadrature
+                    grids.append(points);components.append(tangent)
+        else:
+            for tangent in range(3):
+                normals=[i for i in range(3) if i!=tangent]
+                for first in (0.,1.):
+                    for second in (0.,1.):
+                        points=np.empty((len(quadrature),3));points[:,tangent]=quadrature[:,0]
+                        points[:,normals]=[first,second];grids.append(points);components.append([tangent])
+        numerator=denominator=0.
+        for points,component in zip(grids,components):
+            values=element.tabulate(0,points)[0]/np.asarray(widths)[None,None,:]
+            dv=np.einsum('qic,ij->qjc',values,delta)[:,:,component]
+            pv=np.einsum('qic,ij->qjc',values,base)[:,:,component]
+            numerator+=float(np.vdot(dv,dv).real);denominator+=float(np.vdot(pv,pv).real)
+        records['edge' if dimension==1 else 'face']=float(np.sqrt(numerator/max(denominator,np.finfo(float).tiny)))
+    return records

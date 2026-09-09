@@ -66,7 +66,8 @@ def augment_physical_volume(volume, carrier, *, allocation_gate=None):
         raise
 
 
-def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample, degree=4, row_cap=None):
+def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample, degree=4, row_cap=None,
+                           cell_volume_correction=None, extra_local_bytes=0):
     """Use MPC's exact sparsity constructor before numerical volume assembly."""
     import dolfinx_mpc
     space, mpc = setup['spaces'][degree], setup['floquets'][degree].mpc
@@ -92,7 +93,7 @@ def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample, de
         index_bytes, scalar_bytes = np.dtype(PETSc.IntType).itemsize, np.dtype(PETSc.ScalarType).itemsize
         payload = ((volume_nnz+augmented_nnz)*(index_bytes+scalar_bytes)
             +(2*rows+ports+2)*index_bytes+augmented_nnz*(2*index_bytes+scalar_bytes)
-            +16*(rows+ports)*scalar_bytes+16*1024**2)
+            +16*(rows+ports)*scalar_bytes+16*1024**2+int(extra_local_bytes))
         resources = sample()
         facts = dict(stage=stage, degree=degree, volume_nnz=volume_nnz, augmented_nnz=augmented_nnz,
             predicted_allocation_bytes=int(payload), cap_bytes=512*1024**2,
@@ -112,6 +113,13 @@ def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample, de
         marker('reference_volume_pattern', dict(allocated_nnz=allocated))
         sample()
         dolfinx_mpc.assemble_matrix(compiled, mpc, bcs=[], A=volume)
+        if cell_volume_correction is not None:
+            volume.assemble()
+            volume.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+            cell_volume_correction(volume, space, mpc)
+            volume.assemble()
+            if int(volume.getInfo()['nz_allocated']) != allocated:
+                raise ReferenceResourceBlocked('cell correction enlarged original p2 sparsity')
         marker('reference_volume_complete', dict(nnz=int(volume.getInfo()['nz_used'])))
         sample()
         matrix, facts = augment_physical_volume(volume, carrier,

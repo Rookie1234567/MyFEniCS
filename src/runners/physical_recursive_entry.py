@@ -59,14 +59,30 @@ def bubble_local_contract():
         factorization='complex LU',shift=0,refinements=0,global_swap_stop=True)
 
 
+def bubble_component_contract():
+    return dict(identity='bubble_enriched_p2_component_v1',scope='one_saved_A2R160_g1',workflow_seconds=900,
+        physical_degrees=[6,4,2],retained_p2_bubble=6,local_Q_columns=102,
+        class_key='exact affine J/width/material/quadrature/orientation; no rounding',
+        adjoint_limit=1e-11,S_assembly_limit=1e-10,range_identity_limit=1e-10,trace_limit=1e-12,
+        bottom=dict(rows_cap=8192,unified_bytes_cap=512*1024**2,action='WH A4 W',true_limit=1e-10,max_refinements=2),
+        I4=dict(method='original_V6_right_FGMRES',restart=16,max_it=64,seconds=60,target=1e-4,zero_start=True),
+        I4_calls=1,Cg_calls=1,range_checks=1,B4_limit=64,H4_positive_limit=128,
+        p2_logical_limit=130,MatSolve_limit=390,composed_A4_limit=392,external_A4_limit=220,B4_structure_A4_limit=128,
+        old_p2_factor=0,p4_global_matrix=0,p4_global_factor=0,outer_calls=0,global_swap_stop=True)
+
+
 def selected_contract(args):
-    return (bubble_local_contract() if args.bubble_local_tensor else
+    return (bubble_component_contract() if getattr(args,'bubble_enriched_component',False) else
+            bubble_local_contract() if args.bubble_local_tensor else
             projected_component_contract() if args.projected_p4_component else
             p4_failure_contract() if args.p4_failure_diagnostic else component_contract(args.target))
 
 
 def dispatch_components(args,cfg,comm,directory,*,sample,marker):
     from . import physical_recursive_controls as controls
+    if getattr(args,'bubble_enriched_component',False):
+        from .physical_bubble_controls import run_bubble_component
+        return run_bubble_component(cfg,comm,args.inventory,directory,sample=sample,marker=marker)
     if args.bubble_local_tensor:
         from .physical_bubble_local_controls import run_bubble_local_tensor
         return run_bubble_local_tensor(cfg,comm,args.inventory,directory,sample=sample,marker=marker)
@@ -117,7 +133,7 @@ def worker(args):
     if (payload['provenance']['physical_model_sha256']!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
         or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
     cfg=simulation_config_3d_from_normalized(payload)
-    diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor
+    diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_enriched_component
     contract=selected_contract(args);root=Path(args.output)
     (root/'input_original.dat').write_bytes(Path(args.input).read_bytes())
     atomic(root/'resolved_config.json',dict(physical_input=payload,component_profile=contract,
@@ -131,7 +147,7 @@ def worker(args):
     inventory=json.loads(Path(args.inventory).read_text())
     if bubble:
         native_maps={};mode_sha=inventory['mode_sha256']
-    elif diagnostic or projected:
+    elif diagnostic or projected or enriched:
         native_maps={'4':inventory['packets']['map']}
         mode_sha=inventory['mode_sha256']
     else:
@@ -165,11 +181,11 @@ def worker(args):
     try:
         dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker)
     finally:
-        identity=root/'records'/('bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
+        identity=root/'records'/('bubble_source_bridge.json' if enriched else 'bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
         manifest['native_map_bridge_status']='PASS' if identity.exists() else 'NOT_REACHED'
         if diagnostic and identity.exists():
             manifest['native_map_bridge_status']=p4_bridge_status(identity)
-        if projected and identity.exists():
+        if (projected or enriched) and identity.exists():
             from math import isfinite
             error=json.loads(identity.read_text())['relative_error']
             manifest['native_map_bridge_status']='PASS' if isfinite(error) and error<=1e-10 else 'FAIL'
@@ -187,6 +203,7 @@ def build_parser():
     group.add_argument('--p4-failure-diagnostic',action='store_true')
     group.add_argument('--projected-p4-component',action='store_true')
     group.add_argument('--bubble-local-tensor',action='store_true')
+    group.add_argument('--bubble-enriched-component',action='store_true')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
     return parser
 
@@ -198,7 +215,7 @@ def main():
     from benchmarks.subreaper_watchdog import supervise
     from .workflow_timebase import CONSERVATIVE_REALTIME
     budget_path=Path(args.budget);budget=json.loads(budget_path.read_text())
-    diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor
+    diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_enriched_component
     if diagnostic and Path(args.output).parts[-3:]!=('v6_p4_failure_diagnostic',args.source_sha,'a2r160_g1'):
         raise ValueError('diagnostic requires fresh v6_p4_failure_diagnostic/source/a2r160_g1 root')
     if diagnostic and budget.get('p4_failure_diagnostic_attempts'):
@@ -211,9 +228,13 @@ def main():
         raise ValueError('bubble local tensor requires fresh source/air_fixed root')
     if bubble and budget.get('bubble_local_tensor_attempts'):
         raise ValueError('unique bubble local tensor already attempted')
-    remaining=min(selected_contract(args)['workflow_seconds'],budget['batch_remaining']) if diagnostic or projected or bubble else min(budget['G0_G1_remaining'],budget['batch_remaining'])
+    if enriched and Path(args.output).parts[-3:]!=('v6_bubble_enriched_component',args.source_sha,'a2r160_g1'):
+        raise ValueError('bubble enriched component requires fresh source/a2r160_g1 root')
+    if enriched and budget.get('bubble_enriched_component_attempts'):
+        raise ValueError('unique bubble enriched component already attempted')
+    remaining=min(selected_contract(args)['workflow_seconds'],budget['batch_remaining']) if diagnostic or projected or bubble or enriched else min(budget['G0_G1_remaining'],budget['batch_remaining'])
     if remaining<=0:raise RuntimeError('G1 compute budget exhausted')
-    lock=budget_path.parent/('bubble_local_active.lock' if bubble else 'projected_p4_active.lock' if projected else 'p4_failure_active.lock' if diagnostic else 'g1_active.lock')
+    lock=budget_path.parent/('bubble_enriched_active.lock' if enriched else 'bubble_local_active.lock' if bubble else 'projected_p4_active.lock' if projected else 'p4_failure_active.lock' if diagnostic else 'g1_active.lock')
     descriptor=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.close(descriptor)
     root=Path(args.output)
     result=None
@@ -230,13 +251,13 @@ def main():
             stop_on_global_swap=True,source_state=source,
             worker_environment={'XDG_CACHE_HOME':str(cache_home)})
         charge=result['workflow_clock_interval']['budget_seconds']
-        budget.setdefault('bubble_local_tensor_attempts' if bubble else 'projected_p4_component_attempts' if projected else 'p4_failure_diagnostic_attempts' if diagnostic else 'g1_component_attempts',[]).append(dict(root=str(root),target=args.target,
+        budget.setdefault('bubble_enriched_component_attempts' if enriched else 'bubble_local_tensor_attempts' if bubble else 'projected_p4_component_attempts' if projected else 'p4_failure_diagnostic_attempts' if diagnostic else 'g1_component_attempts',[]).append(dict(root=str(root),target=args.target,
             source=args.source_sha,classification=result['classification'],conservative_seconds=charge))
-        for key in (('batch_remaining',) if diagnostic or projected or bubble else ('G0_G1_remaining','batch_remaining')):budget[key]-=charge
+        for key in (('batch_remaining',) if diagnostic or projected or bubble or enriched else ('G0_G1_remaining','batch_remaining')):budget[key]-=charge
         budget['charged_including_reserve']+=charge
         atomic(budget_path,budget)
         atomic(root/'terminal.json',result)
-        if diagnostic or projected or bubble:
+        if diagnostic or projected or bubble or enriched:
             atomic(root/'source_after.json',git_state(args.source_sha))
         if result['classification']!='COMPLETED':raise SystemExit(1)
     finally:

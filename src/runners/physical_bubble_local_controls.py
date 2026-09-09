@@ -6,34 +6,7 @@ from types import SimpleNamespace
 import numpy as np
 
 
-def _trace_checks(element,delta,base,widths):
-    import basix
-    records={}
-    for dimension in (1,2):
-        celltype=basix.CellType.interval if dimension==1 else basix.CellType.quadrilateral
-        quadrature,_=basix.make_quadrature(celltype,10)
-        grids=[];components=[]
-        if dimension==2:
-            for normal in range(3):
-                tangent=[i for i in range(3) if i!=normal]
-                for side in (0.,1.):
-                    points=np.empty((len(quadrature),3));points[:,normal]=side;points[:,tangent]=quadrature
-                    grids.append(points);components.append(tangent)
-        else:
-            for tangent in range(3):
-                normals=[i for i in range(3) if i!=tangent]
-                for first in (0.,1.):
-                    for second in (0.,1.):
-                        points=np.empty((len(quadrature),3));points[:,tangent]=quadrature[:,0]
-                        points[:,normals]=[first,second];grids.append(points);components.append([tangent])
-        numerator=denominator=0.
-        for points,component in zip(grids,components):
-            values=element.tabulate(0,points)[0]/np.asarray(widths)[None,None,:]
-            dv=np.einsum('qic,ij->qjc',values,delta)[:,:,component]
-            pv=np.einsum('qic,ij->qjc',values,base)[:,:,component]
-            numerator+=float(np.vdot(dv,dv).real);denominator+=float(np.vdot(pv,pv).real)
-        records['edge' if dimension==1 else 'face']=float(np.sqrt(numerator/max(denominator,np.finfo(float).tiny)))
-    return records
+from src.solvers.physical_bubble_local import trace_checks as _trace_checks
 
 
 def run_bubble_local_tensor(cfg,comm,binding_path,directory,*,sample,marker):
