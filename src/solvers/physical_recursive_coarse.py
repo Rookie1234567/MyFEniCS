@@ -3,7 +3,7 @@ import numpy as np
 from .fullspace_physical_intermediate import apply_owned
 
 
-def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None):
+def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop_requested=lambda: False):
     """One zero-start FGMRES16/max64; owned solution, A4c and eps returned.
 
     Each monitor boundary checks the conservative 60-second clock. The terminal
@@ -61,7 +61,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None):
             sample(); now = seconds()
             if not np.isfinite(reported):
                 raise FloatingPointError('nonfinite inner reported residual')
-            cap = now >= 60 or it >= 64
+            cap = now >= 60 or it >= 64 or stop_requested()
             if it % 16 == 0 or cap or reported <= target*norm:
                 if it: solver.buildSolution(current)
                 else: current.set(0)
@@ -167,7 +167,7 @@ class PhysicalP2Inverse:
         self.bottom.destroy()
 
 
-def build_recursive_physical_solver(cfg, comm, *, target, sample, marker, save, audit_every=32):
+def build_recursive_physical_solver(cfg, comm, *, target, sample, marker, save, audit_every=32, observe_inner=None, stop_requested=lambda: False):
     """Explicit 6/4/2 pilot. No p4 reference=True path and no unused shifted levels."""
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from .fullspace_same_mesh_hcurl_pmg_physical import build_same_mesh_physical_action
@@ -232,10 +232,17 @@ def build_recursive_physical_solver(cfg, comm, *, target, sample, marker, save, 
                 row['incomplete_callbacks'] = {key:value-row[key] for key,value in row['attempted'].items()}
                 row['p2_counts'] = {k:v-before.get(k,0) for k,v in bottom.counts.items()}
                 save(name,row)
-            result = solve_physical_i4(rhs, a4, apply_b4, target=target, sample=sample, save=failed)
+            result = solve_physical_i4(rhs, a4, apply_b4, target=target, sample=sample, save=failed, stop_requested=stop_requested)
             for key in ('A4_matvec', 'explicit_A4'):
                 bundle['counts'][key] += result['facts'][key]
             result['facts']['p2_counts'] = {k:v-before[k] for k,v in bottom.counts.items()}
+            if observe_inner is not None:
+                try:
+                    observe_inner(rhs, result)
+                except BaseException:
+                    for key in ('solution', 'applied', 'residual'):
+                        result[key].destroy()
+                    raise
             # Last record only; callers persist ordinary scalar summaries as needed.
             bundle['inner_records'][:] = [result['facts']]
             marker('I4_complete', result['facts'])
@@ -266,9 +273,11 @@ def build_recursive_physical_solver(cfg, comm, *, target, sample, marker, save, 
         raise
 
 
-def destroy_recursive_physical_solver(bundle):
+def release_recursive_physical_solver_stack(bundle):
     from .fullspace_physical_intermediate_runtime import destroy_physical_intermediate_actions
-    from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+    # Drop closures before releasing their borrowed coarse objects. Fine remains for recovery.
+    for name in ('I4', 'B4', 'pc'):
+        bundle.pop(name, None)
     for name in ('inexact_ledger', 'p2_inverse', 'p2_matrix'):
         value = bundle.pop(name, None)
         if value is not None: value.destroy()
@@ -281,6 +290,12 @@ def destroy_recursive_physical_solver(bundle):
                 value['smoother'].destroy(); value['shell'].destroy()
     value = bundle.pop('actions', None)
     if value is not None: destroy_physical_intermediate_actions(value)
+    bundle['auxiliary_stack_released'] = True
+
+
+def destroy_recursive_physical_solver(bundle):
+    from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+    release_recursive_physical_solver_stack(bundle)
     value = bundle.pop('fine', None)
     if value is not None: destroy_same_mesh_physical_action(value)
     bundle.clear()

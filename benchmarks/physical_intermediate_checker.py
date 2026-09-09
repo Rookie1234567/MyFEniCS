@@ -169,7 +169,9 @@ def check(directory: Path) -> dict:
 
     raw = summary['residual_arrays']
     from src.io.physical_balanced_profile import BALANCED_PROFILES
-    balanced = summary['profile']['identity'] in BALANCED_PROFILES
+    from src.io.physical_recursive_profile import RECURSIVE_PROFILES
+    recursive = summary['profile']['identity'] in RECURSIVE_PROFILES
+    balanced = recursive or summary['profile']['identity'] in BALANCED_PROFILES
     reference_only = summary['profile'].get('reference_only', False)
     if reference_only:
         ledger = summary['reference_pc_ledger']
@@ -193,9 +195,26 @@ def check(directory: Path) -> dict:
                     'original A4 reference residual gate failed')
             require(abs(relative-inner['final_true_residual']) <= 1e-12,
                     'reference norm/residual mismatch')
+    if recursive:
+        from src.io.physical_intermediate_profile import profile_facts
+        require(summary['profile']==profile_facts(summary['profile']['identity']),'recursive resolved contract differs')
+        from benchmarks.physical_recursive_checker import recompute_recursive
+        rows={name:[json.loads(x) for x in hashed_file(name,digest).read_text().splitlines()]
+              for name,digest in summary['recursive_evidence'].items()}
+        facts['recursive']=recompute_recursive(rows['pc_applies.jsonl'],rows['recursive_inner.jsonl'],
+            rows['recursive_exit_audit.jsonl'],summary)
+        require(facts['recursive']['passed'],'recursive accounting/closure failed: '+str(facts['recursive']['errors']))
+        facts['balanced_screen']=recompute_balanced_screen(summary['solve'],
+            [json.loads(x) for x in (directory/'monitor_residuals.jsonl').read_text().splitlines()])
+        require(facts['balanced_screen']['matches'],'screen differs from raw checkpoints')
+        require(summary['solve']['ksp_create_count']==summary['solve']['ksp_solve_count']==
+                summary['solve']['ksp_destroy_count']==1,'not one live KSP')
     with np.load(hashed_file(raw['filename'], raw['sha256']), allow_pickle=False) as arrays:
         rhs, action, solution = arrays['rhs'], arrays['action'], arrays['solution']
         require(rhs.shape == action.shape == solution.shape, 'incompatible raw vector shapes')
+        if recursive:
+            require(hashlib.sha256(rhs.tobytes()).hexdigest()==summary['recursive_identity']['rhs_sha256'],
+                    'recursive raw RHS identity differs')
         require(all(np.isfinite(v).all() for v in (rhs, action, solution)), 'nonfinite raw vectors')
         if 'recovery' in summary:
             require(hashlib.sha256(solution.tobytes()).hexdigest() == summary['final_solution_sha256'],
@@ -309,7 +328,8 @@ def check(directory: Path) -> dict:
         require(all(np.isfinite(value) for _, value in packets), 'nonfinite canonical coefficients')
     if balanced and output is not None:
         matched = summary.get('matched_reference', {})
-        require(matched.get('status') in ('MATCHED_REFERENCE_PASS','REFERENCE_AUTHORITY_LIMITED'), 'matched reference failed')
+        require(matched.get('status') in (('MATCHED_REFERENCE_PASS',) if recursive else
+            ('MATCHED_REFERENCE_PASS','REFERENCE_AUTHORITY_LIMITED')), 'matched reference failed')
         require(summary['rss_after_release'] < summary['rss_before_release'], 'RSS did not decrease before recovery')
     independent_output_gates_passed = not errors
     classification = ('REFERENCE_ONLY_PASS' if reference_only else 'DISCRETE_SOLVER_OUTPUT_PASS') if not errors else 'NUMERICAL_OR_OUTPUT_FAIL'

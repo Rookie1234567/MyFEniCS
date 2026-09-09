@@ -179,13 +179,17 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     identity = payload['solver']['preconditioner']
     from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BALANCED_ROUTES
-    balanced = identity in BALANCED_PROFILES
-    build_light = identity in (LIGHT_PROFILE, JOINT_PROFILE) or (balanced and BALANCED_ROUTES[identity] != 'BAL_S')
+    from src.io.physical_recursive_profile import RECURSIVE_PROFILES
+    recursive = identity in RECURSIVE_PROFILES
+    if recursive and (identity.endswith('_hi_v6') or payload['geometry'].get('cell_notch')):
+        raise ValueError('only original LO G2 is enabled; other profiles await qualification')
+    balanced = recursive or identity in BALANCED_PROFILES
+    build_light = recursive or identity in (LIGHT_PROFILE, JOINT_PROFILE) or (balanced and BALANCED_ROUTES[identity] != 'BAL_S')
     joint = identity == JOINT_PROFILE
     light = identity in (LIGHT_PROFILE, JOINT_PROFILE)
     packed = identity == PACKED_PROFILE
     cooperative = light or packed or balanced
-    reference = balanced or identity in (REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE)
+    reference = (balanced and not recursive) or identity in (REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE)
     pc_profile = json.loads(os.environ['PHYSICAL_PC_PROFILE']) if 'PHYSICAL_PC_PROFILE' in os.environ else None
     if identity == FAST_PROFILE and (pc_profile is None or pc_profile['variant'] != FAST_PROFILE):
         raise ValueError('fast profile currently requires the explicit seven-PC diagnostic mode')
@@ -251,20 +255,35 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         return facts
 
     ledger.resource_sample = sample
+    release_stack = release_physical_intermediate_solver_stack
+    destroy_stack = destroy_physical_intermediate_solver
+    if recursive:
+        from src.solvers.physical_recursive_coarse import (
+            release_recursive_physical_solver_stack, destroy_recursive_physical_solver)
+        release_stack = release_recursive_physical_solver_stack
+        destroy_stack = destroy_recursive_physical_solver
 
     try:
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[signum] = signal.signal(signum, interrupted)
-        bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
-            resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}),
-            **({'light': True} if build_light else {}), **({'joint_mr': True} if joint else {}),
-            **({'defer_reference': True} if balanced else {}))
         balanced_apply = policy = None
+        if recursive:
+            from .physical_recursive_runtime import build_formal_recursive
+            recursive_identity=dict(source_sha=source_sha,
+                physical_model_sha256=payload['provenance']['physical_model_sha256'],
+                input_sha256=payload['provenance']['input_sha256'],profile=identity)
+            bundle, balanced_apply = build_formal_recursive(cfg, MPI.COMM_WORLD, contract,
+                sample=sample, ledger=ledger, directory=directory, identity=recursive_identity)
+        else:
+            bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
+                resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}),
+                **({'light': True} if build_light else {}), **({'joint_mr': True} if joint else {}),
+                **({'defer_reference': True} if balanced else {}))
         if balanced and cfg.cell_notch:
             from src.geometry.cell_notch import audit_cell_notch
             summary['cell_notch'] = audit_cell_notch(bundle['levels']['mesh_data'],cfg)
             _atomic_json(directory/'cell_notch.json',summary['cell_notch'])
-        if balanced:
+        if balanced and not recursive:
             from src.solvers.physical_balanced_runtime import install_balanced_pc
             from .physical_diagnosis_worker import save_packet
             def save_balanced(name, facts):
@@ -282,14 +301,25 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             summary['reference_p4'] = dict(bundle['reference_factor'].audit)
             summary['reference_matrix'] = bundle['reference_matrix_facts']
             summary['shifted_inverse'] = {'constructed': False}
-        else:
+        elif not recursive:
             summary['shifted_p1'] = dict(bundle['shifted_p1_factor'].audit)
             summary['shifted_p1_matrix'] = bundle['shifted_p1_matrix_facts']
-        summary['positive_diagonals'] = bundle['jacobi_facts']
+        if recursive:
+            from .physical_recursive_runtime import recursive_snapshot
+            summary['recursive_setup'] = recursive_snapshot(bundle)
+        else:
+            summary['positive_diagonals'] = bundle['jacobi_facts']
         summary['mode_sha256'] = fine['mode_sha256']
         summary['setup_qualification'] = qualify_physical_intermediate_setup(
             bundle, marker=ledger.marker, resource_sample=sample)
         rhs, summary['rhs'] = build_physical_rhs(fine)
+        if recursive:
+            recursive_identity['rhs_sha256'] = hashlib.sha256(rhs.array.tobytes()).hexdigest()
+            from .physical_recursive_runtime import verify_frozen_recursive_identity
+            summary['recursive_identity_bridge'] = verify_frozen_recursive_identity(bundle, rhs, payload)
+            summary['recursive_identity'] = dict(recursive_identity)
+            for name in ('pc_applies.jsonl','recursive_inner.jsonl'):
+                (directory/name).touch(exist_ok=False)
         if pc_profile is not None:
             from .physical_pc_profile import run_pc_profile
             if pc_profile['variant'] in (FAST_PROFILE, PACKED_PROFILE):
@@ -371,9 +401,16 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 balanced_apply, checkpoint=checkpoint, append=ledger.append,
                 seconds=lambda: ledger.phase_clock_budget.update(clock_sample())['budget_seconds'],
                 resource_sample=sample, stop_requested=lambda: ledger.stop_signal is not None,
-                screen_enabled=not bool(payload['geometry'].get('cell_notch')))
-            summary['p4_action_counts'] = dict(policy.action_counts, C=policy.logical_rhs,
-                MatSolve=policy.external_solves)
+                screen_enabled=not bool(payload['geometry'].get('cell_notch')),
+                **(dict(solve_limit_seconds=solve_limit) if recursive else {}))
+            if recursive:
+                from .physical_recursive_runtime import audit_recursive_exit
+                summary['recursive_solve'] = audit_recursive_exit(bundle, ledger)
+                summary['recursive_evidence'] = {name:hashlib.sha256((directory/name).read_bytes()).hexdigest()
+                    for name in ('pc_applies.jsonl','recursive_inner.jsonl','recursive_exit_audit.jsonl')}
+            else:
+                summary['p4_action_counts'] = dict(policy.action_counts, C=policy.logical_rhs,
+                    MatSolve=policy.external_solves)
         else:
             result = run_fixed_restart_cycles(rhs, lambda source: apply_owned(fine['physical_action'], source),
                 apply_pc, max_it=contract['outer']['max_iterations'], residual_limit=1e-6, resource_sample=sample, start_iteration=0,
@@ -421,7 +458,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             summary['performance_stop_signal'] = ledger.stop_signal
             ledger.stop_signal = None
         ledger.set_phase('release')
-        release_physical_intermediate_solver_stack(bundle)
+        release_stack(bundle)
         balanced_apply = policy = None  # release closure references before output recovery
         summary['rss_after_release'] = sample()['rss_bytes']
         summary['auxiliary_stack_released_before_recovery'] = bundle['auxiliary_stack_released']
@@ -470,6 +507,9 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         return outcome
     except BaseException as exc:
         from src.solvers.fullspace_p4_reference import ReferenceResourceBlocked
+        if recursive and 'p2_inverse' in bundle:
+            from .physical_recursive_runtime import recursive_snapshot
+            summary['recursive_failure_costs'] = recursive_snapshot(bundle)
         summary.update(status='CONTROLLED_STOP' if isinstance(exc, InterruptedError) else 'FAILED',
                        exception_type=type(exc).__name__, exception_message=str(exc),
                        failed_stage=ledger.last_stage, failed_phase=ledger.phase)
@@ -498,14 +538,14 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 callbacks.append(('krylov_result', lambda: destroy_krylov_result(result)))
             if rhs is not None:
                 callbacks.append(('rhs', rhs.destroy))
-            callbacks.append(('solver_stack', lambda: destroy_physical_intermediate_solver(bundle)))
+            callbacks.append(('solver_stack', lambda: destroy_stack(bundle)))
             cleanup_error = cleanup_profile(summary, directory, callbacks)
         else:
             if result is not None:
                 destroy_krylov_result(result)
             if rhs is not None:
                 rhs.destroy()
-            destroy_physical_intermediate_solver(bundle)
+            destroy_stack(bundle)
         summary['elapsed_monotonic_seconds'] = time.monotonic()-ledger.started
         if balanced:
             summary['elapsed_conservative_seconds'] = ledger.workflow_clock_budget.update(clock_sample())['budget_seconds']

@@ -7,11 +7,15 @@ LIGHT_PROFILE = "p6smooth_p4ref_p6smooth_v1"
 PACKED_PROFILE = "a2r_packed_equivalent_v2"
 JOINT_PROFILE = "light_p4ref_jointmr3_v2"
 from .physical_balanced_profile import BALANCED_PROFILES
+from .physical_recursive_profile import RECURSIVE_PROFILES
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE) + BALANCED_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity in RECURSIVE_PROFILES:
+        from .physical_recursive_profile import recursive_profile_facts
+        return recursive_profile_facts(identity)
     if identity in BALANCED_PROFILES:
         from .physical_balanced_profile import balanced_profile_facts
         return balanced_profile_facts(identity)

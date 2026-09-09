@@ -17,7 +17,7 @@ class InexactBalanceLedger:
         self.checkpoint, self.every = checkpoint, every
         self.calls, self.last = [], None
         self.audit_count = self.A_count = self.PH_count = 0
-        self.audit_seconds = 0.
+        self.audit_seconds = self.A_seconds = self.PH_seconds = 0.
 
     def begin(self):
         self.abort()
@@ -64,9 +64,15 @@ class InexactBalanceLedger:
         started = time.perf_counter()
         az = residual = defect = closure = None
         try:
-            self.A_count += 1; az = self.A(self.last['z'])
+            tick = time.perf_counter()
+            self.A_count += 1
+            try: az = self.A(self.last['z'])
+            finally: self.A_seconds += time.perf_counter()-tick
             residual = _copy(self.last['q']); _axpy(residual, -1, az)
-            self.PH_count += 1; defect = self.PH(residual)
+            tick = time.perf_counter()
+            self.PH_count += 1
+            try: defect = self.PH(residual)
+            finally: self.PH_seconds += time.perf_counter()-tick
             closure = _copy(defect); _axpy(closure, -1, self.last['difference'])
             numerator, defect_norm = _norm(closure), _norm(defect)
             scale = self.last['summary']['operation_scale']

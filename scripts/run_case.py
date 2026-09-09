@@ -72,6 +72,12 @@ def main(argv: list[str] | None = None) -> int:
         else:
             from src.io.physical_intermediate_profile import LIGHT_PROFILE, JOINT_PROFILE
             from src.io.physical_balanced_profile import BALANCED_PROFILES
+            from src.io.physical_recursive_profile import RECURSIVE_PROFILES
+            if specification.solver.get('preconditioner') in RECURSIVE_PROFILES:
+                from src.runners.physical_recursive_budget import launch_recursive_workflow
+                result = launch_recursive_workflow(specification, args.profile_budget_ledger)
+                print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+                return 0 if result['result_classification'] == 'worker_exit0' else 3
             if specification.solver.get('preconditioner') in BALANCED_PROFILES:
                 from src.runners.physical_balanced_budget import launch_balanced_workflow
                 result = launch_balanced_workflow(specification, args.profile_budget_ledger)
