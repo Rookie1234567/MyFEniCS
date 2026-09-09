@@ -166,3 +166,39 @@ def test_selected_eh_reference_denominator_and_fail_closed(tmp_path):
     failed = compare_selected_eh(reference, current)
     assert failed['status'] == 'SELECTED_EH_FAIL'
     assert failed['fields']['E_V_per_m']['relative_l2_difference'] == pytest.approx(1.0)
+
+
+def test_native_reference_identity_package_precedes_supervisor(tmp_path, monkeypatch):
+    import src.runners.fine_reference_preflight as preflight
+    from src.runners.workflow_timebase import clock_sample
+    from src.runners import physical_diagnosis, task038_launcher
+
+    monkeypatch.setattr(task038_launcher, '_physical_source_gate', lambda *_: {'source_sha': 'a' * 40})
+    monkeypatch.setattr(preflight.subprocess, 'check_output', lambda *_args, **_kwargs: b'{"qualified":true}')
+    seen = {}
+
+    def fake_supervise(command, directory, **kwargs):
+        run_directory = Path(directory).parent
+        seen['command'] = command
+        seen['manifest'] = json.loads((run_directory / 'run_manifest.json').read_text())
+        seen['files'] = {name: (run_directory / name).is_file() for name in (
+            'input_original.dat', 'resolved_config.json', 'source_sha.txt',
+            'input_sha256.txt', 'physical_model_sha256.txt', 'launch.json')}
+        start = clock_sample()
+        return {'classification': 'COMPLETED', 'clock_start': start, 'clock_end': clock_sample(),
+                'workflow_clock_interval': {'budget_seconds': 0.0}}
+
+    monkeypatch.setattr(physical_diagnosis, 'supervise_diagnosis', fake_supervise)
+    code = preflight.main([
+        '--input', str(REFERENCE_INPUT), '--directory', str(tmp_path / 'reference'),
+        '--expected-sha', 'a' * 40, '--cache-path', str(tmp_path / 'reference' / 'cache'),
+        '--solve-reference', '--witness-audit', str(Path('docs/task39extra_para_workstation_capacity/outcomes/records/r1_attempt3_reference_witness.json')),
+        '--witness-audit-sha', '1b49287c8536a0be32a8edec13ae5144a2fd43b3fbd91419aaccdba6ac5ca156',
+        '--workflow-seconds', '21600', '--native-matched-reference',
+    ])
+    assert code == 2
+    assert all(seen['files'].values())
+    assert seen['manifest']['workflow_limit_seconds'] == 21600.0
+    assert seen['manifest']['global_swap_supervision'] is True
+    assert seen['manifest']['supervisor_cpu'] == 9 and seen['manifest']['worker_cpu'] == 23
+    assert seen['command'][:3] == ['/usr/bin/taskset', '-c', '23']
