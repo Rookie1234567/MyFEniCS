@@ -20,6 +20,24 @@ def test_single_mb_allowance_and_512mib_reserve(extra,admitted):
     assert record['engineering_reserve_bytes']==512*1024**2
 
 
+def test_native_numeric_allowance_respects_planning_cap_and_legacy_fallback():
+    hard=32*1024**3
+    planning=24*1024**3
+    rss=1*1024**3
+    future=2*1024**3
+    info={'infog':{'16':1000,'17':1000}}
+    planned=numeric_allowance(dict(rss_bytes=rss,launch_cap_bytes=hard,
+        numeric_planning_cap_bytes=planning),info,future)
+    expected=(planning-rss-future-512*1024**2)//1_000_000
+    assert planned['status']=='ADMISSIBLE'
+    assert planned['hard_cap_bytes']==hard
+    assert planned['dynamic_cap_bytes']==planning
+    assert planned['icntl23_mb']==expected
+    legacy=numeric_allowance(dict(rss_bytes=rss,launch_cap_bytes=hard),info,future)
+    assert legacy['dynamic_cap_bytes']==hard
+    assert legacy['icntl23_mb']==(hard-rss-future-512*1024**2)//1_000_000
+
+
 def test_native_residual_rejects_small_augmented_residual_as_substitute():
     b=np.array([1+1j,2,0],complex);x=np.array([1,2j,0],complex)
     ax=b.copy();ax[1]+=1e-8

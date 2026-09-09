@@ -31,6 +31,15 @@
       "status": "FAILED_PROFILE_CONTRACT_BEFORE_PDE",
       "source_sha": "e55e5b2e5534e99c870995648458a331a10acfc4",
       "exit_status": 4
+    },
+    {
+      "stage": "R1_NATIVE_REFERENCE_PRE_NUMERIC",
+      "attempt": 1,
+      "run_id": "20260909T174245.158312Z",
+      "record": "native_reference_planning_stop.json",
+      "status": "USER_CONTROLLED_STOP_BEFORE_NUMERIC",
+      "source_sha": "477be30ad19a08a472ef6aad943d346e1ab3b5bc",
+      "numeric_planning_wiring": "NOT_CONNECTED_IN_SOURCE_SHA"
     }
   ],
   "R2_S5_S3_S2_G": "NOT_RUN_REFERENCE_QUALIFICATION_PENDING",

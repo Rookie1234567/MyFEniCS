@@ -70,10 +70,14 @@ def numeric_allowance(resource, raw_info, future_bytes):
     """Single ICNTL23 allocation cap, with an explicit engineering reserve."""
     reserve=512*1024**2
     estimate=max(int(raw_info['infog'][str(i)]) for i in (16,17))
-    available=int(resource['launch_cap_bytes'])-int(resource['rss_bytes'])-int(future_bytes)-reserve
+    hard_cap=int(resource['launch_cap_bytes'])
+    planning_cap=int(resource.get('numeric_planning_cap_bytes',hard_cap))
+    allocation_cap=min(hard_cap,planning_cap)
+    available=allocation_cap-int(resource['rss_bytes'])-int(future_bytes)-reserve
     limit_mb=available//1_000_000
     return dict(status='ADMISSIBLE' if estimate>0 and limit_mb>=estimate else 'CAPACITY_NOT_ADMITTED',
-        baseline_tree_rss_bytes=int(resource['rss_bytes']),dynamic_cap_bytes=int(resource['launch_cap_bytes']),
+        baseline_tree_rss_bytes=int(resource['rss_bytes']),dynamic_cap_bytes=allocation_cap,
+        hard_cap_bytes=hard_cap,numeric_planning_cap_bytes=planning_cap,
         future_bytes=int(future_bytes),engineering_reserve_bytes=reserve,
         icntl23_mb=int(limit_mb),symbolic_estimate_mb=estimate,
         units='decimal MB',classification='bounded_allocation_policy_not_peak_prediction',

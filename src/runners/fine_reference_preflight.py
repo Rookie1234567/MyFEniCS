@@ -118,6 +118,8 @@ def run_worker(args):
         profile_cap = launch_cap if args.native_matched_reference else min(launch_cap,12_000_000_000)
         value['launch_cap_bytes']=min(profile_cap, envelope.get('launch_cap_bytes',profile_cap),
             value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
+        if args.native_matched_reference:
+            value['numeric_planning_cap_bytes']=int(envelope['planning_cap_bytes'])
         value['memory_envelope']=envelope
         if (not value['all_status_readable'] or value['swap_bytes']!=0 or
                 value['rss_bytes']>=value['launch_cap_bytes'] or

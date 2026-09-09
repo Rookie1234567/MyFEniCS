@@ -1,0 +1,33 @@
+{
+  "schema": "native-reference-planning-stop.v1",
+  "stage": "R1_NATIVE_REFERENCE_PRE_NUMERIC",
+  "run_id": "20260909T174245.158312Z",
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_native_matched_reference__full3d_direct__mpi1__Mna/20260909T174245.158312Z",
+  "source_sha": "477be30ad19a08a472ef6aad943d346e1ab3b5bc",
+  "input_sha256": "12baf95e52c7809a61cbe98452d49f93c165c805d2846b1496c1d081649564d5",
+  "physical_model_sha256": "2d9fed2466c96f0db124ceb229eb937df0e49654a3bae17772ab70d4441a061d",
+  "status": "USER_CONTROLLED_STOP_BEFORE_NUMERIC",
+  "phase_at_stop": "setup",
+  "last_stage": "fine_reference_assembly_started",
+  "watchdog_classification": "USER_CONTROLLED_STOP",
+  "descendants_cleared": true,
+  "leader_exit_code": 1,
+  "numeric_called": false,
+  "numeric_planning_wiring": "NOT_CONNECTED_IN_SOURCE_SHA",
+  "old_admission_input": "launch_cap_bytes_only",
+  "old_native_hard_cap_bytes": 34359738368,
+  "native_planning_cap_bytes": 25769803776,
+  "planning_cap_passed_to_numeric_allowance": false,
+  "watchdog_peak_rss_bytes": 2651357184,
+  "watchdog_peak_swap_bytes": 0,
+  "retained_evidence": {
+    "input_original": "input_original.dat",
+    "resolved_config": "resolved_config.json",
+    "source_sha": "source_sha.txt",
+    "resource_timeline": "watchdog/resources.jsonl",
+    "watchdog_summary": "watchdog/summary.json",
+    "run_manifest": "run_manifest.json",
+    "launch_manifest": "launch.json"
+  },
+  "note": "Native reference was stopped through the existing watchdog parent SIGTERM path before symbolic/numeric, because the loaded source had not passed the 24 GiB numeric planning line. No PDE numeric work or retry was performed from this run."
+}
