@@ -1,0 +1,136 @@
+{
+  "schema": "native-capacity.r1-attempt3.v1",
+  "case": "13.5nm_Si_original_p6h10",
+  "run_id": "20260909T130326.291096Z",
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T130326.291096Z",
+  "entrypoint": "python scripts/run_case.py input/task39extra_para_workstation_capacity/original_13p5nm_p6h10.dat",
+  "source_sha": "9b1e8d4a1b2be9fca5b126a1ec3893e3af295e5e",
+  "input_sha256": "8960d5d51ac696b9b8a37ded41dc8732958db4e90f17d5e07a270e49b6297a3e",
+  "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+  "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+  "configuration": {
+    "mpi_size": 1,
+    "threads": 1,
+    "worker_cpu": 23,
+    "supervisor_cpu": 9,
+    "restart": 32,
+    "max_iterations": 2048,
+    "zero_start": true,
+    "material": "Si",
+    "refractive_index": "0.999002304859+0.00182649365i"
+  },
+  "status": "COMPLETED",
+  "qualification": "R1_OWN_NUMERICAL_PHYSICAL_PASS_REFERENCE_LIMITED",
+  "workflow": {
+    "exit_status": 0,
+    "watchdog_classification": "COMPLETED",
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "solve_seconds": 11589.4608165932,
+    "workflow_seconds": 12560.042750451947,
+    "final_iteration": 550,
+    "outer_matvec_count": 567,
+    "outer_pc_count": 550,
+    "final_true_residual": 9.998974191134654e-7,
+    "final_reported_relative": 9.998974290294975e-7,
+    "final_solution_source": "terminal_vec_sol"
+  },
+  "checkpoint_residuals": [
+    {
+      "iteration": 32,
+      "true_residual": 0.07312259253871085,
+      "solve_seconds": 835.1685159284282,
+      "solution_source": "live_buildSolution",
+      "old_wsl_full_true": 0.07312259253902377,
+      "absolute_difference": 3.1292e-13
+    },
+    {
+      "iteration": 64,
+      "true_residual": 0.019157476407540047,
+      "solve_seconds": 1505.0147479895174,
+      "solution_source": "live_buildSolution"
+    },
+    {
+      "iteration": 128,
+      "true_residual": 0.0024441945041292147,
+      "solve_seconds": 3102.5728430979243,
+      "solution_source": "live_buildSolution"
+    },
+    {
+      "iteration": 158,
+      "true_residual": 0.0010301564844687001,
+      "reported_relative": 0.001030156484466843,
+      "solve_seconds": 3791.1733741683192,
+      "solution_source": "live_buildSolution"
+    },
+    {
+      "iteration": 550,
+      "true_residual": 9.998974191134654e-7,
+      "reported_relative": 9.998974290294975e-7,
+      "solve_seconds": 11589.4608165932,
+      "solution_source": "terminal_vec_sol"
+    }
+  ],
+  "p4_assembly": {
+    "current_seconds": 491.016220843,
+    "old_seconds": 1818.61,
+    "speedup": 3.703767661438,
+    "reduction_percent": 73.000466,
+    "stage_pair": ["reference_volume_pattern", "reference_volume_complete"]
+  },
+  "resource_authority": {
+    "sampled_process_tree_rss_peak_bytes": 3631751168,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "samples": 36437,
+    "rss_before_release_bytes": 3078565888,
+    "rss_after_release_bytes": 3078565888,
+    "rss_release_delta_bytes": 0,
+    "phase_peaks": {
+      "unclassified": {"samples": 4, "rss_peak_bytes": 152797184, "swap_peak_bytes": 0},
+      "setup": {"samples": 2609, "rss_peak_bytes": 3404267520, "swap_peak_bytes": 0},
+      "solve": {"samples": 33582, "rss_peak_bytes": 3085901824, "swap_peak_bytes": 0},
+      "recovery": {"samples": 205, "rss_peak_bytes": 3631751168, "swap_peak_bytes": 0},
+      "checker": {"samples": 31, "rss_peak_bytes": 3558637568, "swap_peak_bytes": 0},
+      "complete": {"samples": 6, "rss_peak_bytes": 3202437120, "swap_peak_bytes": 0}
+    },
+    "interpretation": "The final enclosing-tree peak is 3631751168 B; setup is not the final peak. Equal before/after release RSS records no observed RSS reclamation. CPU affinity does not prove zero shared-bandwidth or power contention."
+  },
+  "checker": {
+    "independent_output_gates_passed": true,
+    "gate_failures": [],
+    "classification": "BALANCED_OUTPUT_AUTHORITY_LIMITED",
+    "reference_authority": "REFERENCE_AUTHORITY_LIMITED"
+  },
+  "own_outputs": {
+    "mode_count": 80,
+    "amplitude_relative_difference": 1.339354498931458e-9,
+    "port_metrics": {
+      "A_balance": 0.6213835763175851,
+      "R_total": 0.3656257913044787,
+      "T_total": 0.012990632377936202,
+      "R_plus_T": 0.3786164236824149,
+      "R00_s": 0.36558911325195725,
+      "R00_p": 7.023863781682457e-27,
+      "R00_total": 0.36558911325195725
+    },
+    "volume_metrics": {
+      "A_volume_total": 0.6213835772641035,
+      "A_volume_grating": 0.6130258882708142,
+      "A_volume_substrate": 0.008357688993289349,
+      "energy_closure_error_port_volume": 9.46518419198128e-10
+    },
+    "scope_note": "Own-output and partial modal checks do not satisfy the required complete full-field R1 comparison."
+  },
+  "matched_reference": {
+    "full_field_comparison": "WSL_FULL_FIELD_COMPARISON_PARTIAL",
+    "mode_count": 80,
+    "amplitude_relative_difference": 1.339354498931458e-9,
+    "power_max_absolute_difference": 3.499061596023978e-10,
+    "status": "REFERENCE_AUTHORITY_LIMITED",
+    "reason": "separate native matched reference required for full field qualification"
+  },
+  "history_boundary": "Distinct from native attempt2's 62-step negative result; old WSL V5 original-564/notch-576 success history remains separate. No old WSL 64/128 checkpoint search was performed here.",
+  "next_gate": "NATIVE_DIRECT_REFERENCE_REQUIRED",
+  "notch_started": false,
+  "original_550_restarted": false
+}

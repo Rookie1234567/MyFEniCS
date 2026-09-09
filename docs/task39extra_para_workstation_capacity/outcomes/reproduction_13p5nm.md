@@ -61,3 +61,26 @@ attempt1 workflow2731.775 s、p4装配2301.507 s、峰值2.787 GiB、6075资源�
 FFCx hook仅作用本进程、当前单线程native配置、明确的p4/p6张量形状；退出即恢复，不修改系统FFCx文件或隔壁环境。新cache key含专用macro，防止读取旧生成实现。原数学、积分metadata、复数精度、PC与所有Gate不变。源码已实现的优化尚无新的完整R1证据，不能声称已恢复笔记本整次速度。所有诊断、被拒绝方案和hash见[kernel evidence](records/kernel_performance.json)。旧笔记本当前CPU探测为i7-13620H，不补齐旧运行时频率证据；两端总性能差尚不能完全分摊给硬件代际、编译或共享带宽。
 
 任务书§11明确规定fine未在screen/solve预算内通过时停止主阶梯，不能当bug重新抽签。当前保持该负结果；性能修复可审阅，但额外正式R1重试需要用户对该停止约束的明确例外授权。未启动R2、条件reference或短波，未绕过Gate。
+
+## 用户授权后的 attempt3：own solve 完成，但完整场资格关闭
+
+本节追加记录，不改写上面的 attempt1/attempt2 失败证据。attempt3 使用 source `9b1e8d4a1b2be9fca5b126a1ec3893e3af295e5e`、zero start、restart32、MPI1/线程1，从唯一 `run_case.py` 入口独立启动；完整 compact 在 [`r1_attempt3.json`](records/r1_attempt3.json)。
+
+终态为 `iteration=550`、outer `matvec=567`、`PC=550`，terminal true residual `9.998974191134654e-7`，solve `11589.4608165932 s`，workflow `12560.042750451947 s`，`exit=0`、watchdog `COMPLETED`、`descendants_cleared=true`。32 步 true=`0.07312259253871085`，与旧 WSL 完整 true=`0.07312259253902377` 的绝对差为 `3.1292e-13`；128 步 true=`0.0024441945041292147`；158 步 true=`0.0010301564844687001`。本次 own/checker numerical Gate 通过，不能把它等同于完整 R1。
+
+checker 为 `independent_output_gates_passed=true`、`gate_failures=[]`，但 classification=`BALANCED_OUTPUT_AUTHORITY_LIMITED`，`matched_reference.full_field=` `WSL_FULL_FIELD_COMPARISON_PARTIAL`。80 通道 relative amplitude difference=`1.339354498931458e-9` 以及 own 端口/体积/能量数据均只作为部分 modal/own evidence；完整场和 selected E/H 仍需一次 native direct matched reference。
+
+### attempt3 生命周期资源（整树 sampled）
+
+| worker phase | samples | RSS peak / B | swap peak / B |
+|---|---:|---:|---:|
+| unclassified | 4 | 152797184 | 0 |
+| setup | 2609 | 3404267520 | 0 |
+| solve | 33582 | 3085901824 | 0 |
+| recovery | 205 | 3631751168 | 0 |
+| checker | 31 | 3558637568 | 0 |
+| complete | 6 | 3202437120 | 0 |
+
+watchdog 总样本 `36437`，最终整树峰值以 `3631751168 B` 为准；setup 的 `3404267520 B` 不是最终峰值。physical summary 的 release marker 记录 RSS before=`3078565888 B`、after=`3078565888 B`，delta=`0 B`，所以只能说未观测到 RSS 回落，不能虚构回收或定位 allocator 泄漏。p4 assembly 为 `491.016220843 s`，旧基线 `1818.610 s`，约 `3.703767661438x`、降低 `73.000466%`。
+
+旧 native attempt2 的 62 步负结果仍单独保留；旧 WSL V5 original 564 步/notch 576 步成功也不与它混淆。本次不重跑原始 550 步，不继续寻找旧 WSL 64/128 checkpoint，不启动 notch。

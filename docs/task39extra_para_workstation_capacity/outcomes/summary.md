@@ -9,6 +9,26 @@
 | S5 / S3 / S2 / G | NOT_RUN_BY_PREVIOUS_GATE | [容量边界](capacity_frontier.md) |
 | 性能修复 | 局部等价性通过，完整PDE尚未重新资格化 | `f124679e75915758076d9240bd4bef2f5c772752`；[测试](test_summary.md) |
 
+## 最新正式 original run（attempt3）
+
+本次是用户授权后的 clean-SHA、zero-start formal retry；旧 attempt1/attempt2 仍作为历史失败保留，未被覆盖。run compact：[records/r1_attempt3.json](records/r1_attempt3.json)。
+
+| 项目 | measured 结果 |
+|---|---|
+| source / run | `9b1e8d4a1b2be9fca5b126a1ec3893e3af295e5e` / `20260909T130326.291096Z` |
+| lifecycle | `exit=0`、`COMPLETED`、`descendants_cleared=true`、workflow `12560.042750451947 s` |
+| numerical Gate | iteration `550`，true `9.998974191134654e-7`，solve `11589.4608165932 s`，outer `567` matvec / `550` PC |
+| checker | `independent_output_gates_passed=true`，`gate_failures=[]` |
+| authority | `BALANCED_OUTPUT_AUTHORITY_LIMITED`; `WSL_FULL_FIELD_COMPARISON_PARTIAL`，不是完整 R1 |
+| field/modal evidence | 80 通道 relative amplitude difference `1.339354498931458e-9`；own R/T/A 与能量记录已保存 |
+| p4 assembly | `491.016220843 s` vs old `1818.610 s`，`3.703767661438x`，降低 `73.000466%` |
+| final enclosing-tree resources | RSS peak `3631751168 B`，swap peak `0`，watchdog samples `36437` |
+| release lifecycle | RSS before=`3078565888 B`，after=`3078565888 B`，delta `0 B`；不声称发生 OS/allocator 回收 |
+
+阶段资源峰值也已在 compact 中逐项保存：setup `3404267520 B`、solve `3085901824 B`、recovery/final peak `3631751168 B`、checker `3558637568 B`、complete `3202437120 B`，均 swap `0`。绑核证据只说明 CPU23/CPU9 affinity，不推出共享内存带宽或功耗无竞争。
+
+因此 R1 的 own 数值/物理输出通过，但完整场资格仍关闭；不重跑 550 步、不启动 notch。下一步是既有 native direct matched reference 的 symbolic preflight 与最小接线审计，之后再由主控审核是否需要源码改动。
+
 本轮仍使用原V5 BAL_H + accurate global p4 LU，没有新迭代算法、子域法或预条件器。worker独占逻辑CPU23、监督器CPU9，隔壁CPU0–7进程未修改；缓存、venv、Git、结果全部属于独立worktree。共享socket的缓存/带宽不可能仅凭绑核证明完全零影响，未作这类承诺。
 
 ## 正式结果（measured；GiB=2^30 B）
