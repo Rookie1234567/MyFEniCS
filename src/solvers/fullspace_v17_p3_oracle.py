@@ -407,10 +407,15 @@ def compile_physical_diagnostic_volume(setup, cfg, degree, *, shift_weight=None,
             raise ValueError("shifted p1 assembly requires the fine integration metadata")
         material_mass += (-.5j * cfg.k0**2 * shift_weight * ufl.inner(u, v)
                           * ufl.dx(metadata=volume_quadrature_metadata[1]))
-    compiled = fem.form(
-        curl_curl + material_mass,
-        jit_options=dict(SAME_MESH_JIT_OPTIONS),
-    )
+    if degree == 4 and setup.get('native_p4_row_loop'):
+        from .native_p4_jit import compile_rowwise_p4
+        compiled, setup['native_p4_jit_audit'] = compile_rowwise_p4(
+            curl_curl + material_mass, dict(SAME_MESH_JIT_OPTIONS))
+    else:
+        compiled = fem.form(
+            curl_curl + material_mass,
+            jit_options=dict(SAME_MESH_JIT_OPTIONS),
+        )
     return compiled
 
 

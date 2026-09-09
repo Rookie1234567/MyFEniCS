@@ -21,6 +21,9 @@ def native_profile_facts(identity):
     facts = balanced_profile_facts('balanced_h6_p4_v5')
     facts.update(identity=identity, native_capacity=True,
                  wavelength_nm=wavelength, allowed_mesh_targets_nm=list(meshes))
+    facts['p4_p6_curl_implementation'] = 'native_curl_fused_avx512_strict_v1'
+    facts['resources']['pss_interval_seconds'] = 5.0
+    facts['p4_assembly_implementation'] = 'native_p4_row_loop_avx512_v1'
     facts['outer']['screen']['solve_seconds'] = screen
     facts['resources'].update(
         solve_seconds=solve, workflow_seconds=workflow, batch_limit_seconds=864000,

@@ -245,7 +245,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     def sample():
         if ledger.stop_signal is not None and not (cooperative and ledger.phase in ('solve', 'profile')):
             raise InterruptedError(f'parent stop signal {ledger.stop_signal}')
-        facts = process_tree_snapshot(parent, ledger.phase, None)
+        facts = process_tree_snapshot(parent, ledger.phase, None,
+            **({'include_pss': False} if contract.get('native_capacity') else {}))
         facts['launch_cap_bytes'] = cap
         envelope = memory_envelope()
         if contract.get('native_capacity'):
@@ -288,7 +289,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
                 resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}),
                 **({'light': True} if build_light else {}), **({'joint_mr': True} if joint else {}),
-                **({'defer_reference': True} if balanced else {}))
+                **({'defer_reference': True} if balanced else {}),
+                **({'native_kernel_optimization': True} if contract.get('native_capacity') else {}))
         if balanced and cfg.cell_notch:
             from src.geometry.cell_notch import audit_cell_notch
             summary['cell_notch'] = audit_cell_notch(bundle['levels']['mesh_data'],cfg)
@@ -319,6 +321,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             summary['recursive_setup'] = recursive_snapshot(bundle)
         else:
             summary['positive_diagonals'] = bundle['jacobi_facts']
+        if contract.get('native_capacity'):
+            summary['p4_jit'] = bundle['levels']['native_p4_jit_audit']
         summary['mode_sha256'] = fine['mode_sha256']
         summary['setup_qualification'] = qualify_physical_intermediate_setup(
             bundle, marker=ledger.marker, resource_sample=sample,

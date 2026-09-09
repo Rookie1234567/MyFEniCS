@@ -193,6 +193,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         summary.update(clock_info=clock_info(), clock_start=clock_start,
                        timebase_policy=timebase_policy, timebase_policy_version=POLICY_VERSION)
     stage = 'launch'
+    next_pss_sample = 0.0
     swap_baseline = vmstat_swap_pages()
     try:
         with (directory / 'worker.log').open('w') as output, (directory / 'resources.jsonl').open('w') as timeline:
@@ -214,7 +215,12 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 children = _children()
                 observed.update(children)
                 stage = 'resource_sample'
-                sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code)
+                sample_options = {}
+                if os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
+                    sample_options['include_pss'] = time.monotonic() >= next_pss_sample
+                    if sample_options['include_pss']:
+                        next_pss_sample = time.monotonic() + 5.0
+                sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code, **sample_options)
                 if os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
                     for member in sample['members']:
                         try:
@@ -319,7 +325,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 time.sleep(interval)
         summary['cache_metadata_stable'] = True
     except BaseException as exc:
-        if classification is None:
+        if stage == 'cooperative_stop_identity_and_signal':
+            classification = 'MONITORING_FAILED'
+        elif classification is None:
             classification = 'TIMEBASE_INCONSISTENCY' if isinstance(exc, TimebaseInconsistency) else 'MONITORING_FAILED'
         summary.update({'exception_stage': stage, 'exception_type': type(exc).__name__,
                         'exception_message': str(exc), 'cache_metadata_stable': False})

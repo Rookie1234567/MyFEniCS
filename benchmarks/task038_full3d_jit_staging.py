@@ -232,7 +232,7 @@ def _status_text_from(path: Path) -> dict[str, str]:
     return values
 
 
-def _process_fact(pid: int, stage: str) -> dict | None:
+def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | None:
     try:
         values = _status_text(pid)
         ppid_text = values.get("PPid")
@@ -258,7 +258,7 @@ def _process_fact(pid: int, stage: str) -> dict | None:
             "cmdline": cmdline,
             "stage": stage,
             "rss_bytes": rss,
-            "pss_bytes": _pss_bytes(pid),
+            "pss_bytes": _pss_bytes(pid) if include_pss else None,
             "swap_bytes": swap,
             "timestamp_ns": time.time_ns(),
             "exit_code": None,
@@ -309,7 +309,10 @@ def _is_compiler(fact: dict) -> bool:
     return bool(names & _COMPILER_NAMES)
 
 
-def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = None) -> dict:
+def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = None,
+                          *, include_pss: bool = True) -> dict:
+    from functools import partial
+    process_fact = _process_fact if include_pss else partial(_process_fact, include_pss=False)
     parents = _live_parent_map()
     pids = [int(root_pid)]
     cursor = 0
@@ -321,16 +324,16 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
     vanished: list[int] = []
     retry_count = 0
     for pid in sorted(set(pids)):
-        fact = _process_fact(pid, stage)
+        fact = process_fact(pid, stage)
         if fact is None:
             retry_count += 1
             time.sleep(0.01)
-            fact = _process_fact(pid, stage)
+            fact = process_fact(pid, stage)
         if fact is None:
             vanished_now = _pid_vanished(pid)
             if not vanished_now:
                 time.sleep(0.01)
-                fact = _process_fact(pid, stage)
+                fact = process_fact(pid, stage)
                 if fact is None:
                     vanished_now = _pid_vanished(pid)
             if fact is None:
@@ -358,6 +361,7 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         ),
         "rss_bytes": sum(fact["rss_bytes"] for fact in members) if readable else None,
         "swap_bytes": sum(fact["swap_bytes"] for fact in members) if readable else None,
+        "pss_sampled": include_pss,
         "pss_all_readable": pss_all_readable,
         "pss_bytes": sum(fact["pss_bytes"] for fact in members) if pss_all_readable else None,
     }

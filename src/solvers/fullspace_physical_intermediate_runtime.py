@@ -26,7 +26,8 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
                                        resource_sample: Callable[[], dict],
                                        marker: Callable[[str, dict], None],
                                        reference: bool = False, light: bool = False,
-                                       joint_mr: bool = False, defer_reference: bool = False) -> dict:
+                                       joint_mr: bool = False, defer_reference: bool = False,
+                                       native_kernel_optimization: bool = False) -> dict:
     """Own one shared mesh and two separately bounded p1 factors, opt-in only."""
     from .fullspace_bounded_mumps import BoundedP1Factor
     from .fullspace_physical_intermediate import (
@@ -47,6 +48,9 @@ def build_physical_intermediate_solver(cfg: Any, comm: Any, *,
         marker("shared_mesh_spaces_started", {"degrees": list(degrees)})
         levels = _build_same_mesh_levels(cfg, comm, degrees)
         result["levels"] = levels
+        if native_kernel_optimization:
+            levels['native_p4_row_loop'] = True
+            levels['native_curl_jit'] = True
         if not light and int(levels["spaces"][1].dofmap.index_map.size_global) > 4096:
             raise ValueError("p1 storage rows exceed 4096 before matrix assembly")
         if light:

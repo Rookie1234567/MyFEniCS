@@ -9,6 +9,7 @@ interface-transmission object.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import nullcontext
 from types import MappingProxyType
 from typing import Any
 
@@ -32,17 +33,25 @@ class FullspaceSplitVolumeAction:
         mpc: Any | None = None,
         jit_options: Mapping[str, Any] | None = None,
         local_kernels: tuple[Any, Any] | None = None,
+        native_curl_codegen: bool = False,
     ) -> None:
         from .fullspace_mpc_action import build_fullspace_mpc_form_action
 
-        self._curl_action = build_fullspace_mpc_form_action(
-            curl_curl_form,
-            function_space,
-            mpc=mpc,
-            slave_row_identity=True,
-            jit_options=jit_options,
-            **({"local_kernel": local_kernels[0]} if local_kernels is not None else {}),
-        )
+        curl_options = jit_options
+        codegen = nullcontext()
+        if native_curl_codegen:
+            from .native_p4_jit import FINE_CURL_FLAGS, fused_curl_codegen
+            curl_options = dict(jit_options or {}, cffi_extra_compile_args=FINE_CURL_FLAGS)
+            codegen = fused_curl_codegen()
+        with codegen:
+            self._curl_action = build_fullspace_mpc_form_action(
+                curl_curl_form,
+                function_space,
+                mpc=mpc,
+                slave_row_identity=True,
+                jit_options=curl_options,
+                **({"local_kernel": local_kernels[0]} if local_kernels is not None else {}),
+            )
         try:
             self._mass_action = build_fullspace_mpc_form_action(
                 material_mass_form,

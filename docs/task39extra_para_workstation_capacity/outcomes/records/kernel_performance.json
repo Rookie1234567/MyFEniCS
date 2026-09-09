@@ -1,0 +1,769 @@
+{
+  "schema": "native-capacity.kernel-performance.v1",
+  "classification": "DIAGNOSTIC_NOT_FULL_SOLVER_PASS",
+  "baseline_source_sha": "b2e132a7b1f1078eb3359c87a336123b3c7dfbdd",
+  "scope": "isolated helpers on CPU22; formal worker CPU23, supervisor CPU9; no neighbor changes",
+  "preserved": "A/b/PC, quadrature, complex128, per-entry summation order; no fast-math, contraction disabled for optimized kernels",
+  "findings": [
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/integral_compile_comparison.json",
+      "sha256": "580a9b7f00938bbf943fdabcbc3dad14af024c47433dfdea2048a243170e3e53",
+      "bytes": 871,
+      "data": {
+        "diagnostic": "same generated C; one unit-cube cell; no fast-math",
+        "command": [
+          "/usr/bin/cc",
+          "-shared",
+          "-fPIC",
+          "-O3",
+          "-march=native",
+          "-g0",
+          "-I/usr/include/python3.12",
+          "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+          "results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T063946.772981Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.c",
+          "-o",
+          "benchmarks/artifacts/native_capacity/hardware_diagnostics/integral_o3_native.so"
+        ],
+        "compile_seconds": 20.168681998038664,
+        "original_seconds": 8.331346062012017,
+        "native_o3_seconds": 7.054664984811097,
+        "speed_ratio": 1.1809697668067374,
+        "relative_matrix_difference": 1.516839177885481e-16,
+        "maximum_absolute_difference": 9.094947017795457e-13,
+        "finite": true
+      }
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_interchange_v1/result.json",
+      "sha256": "535e3523307dff3526e967bcd122c995d0b1b5e09f71d3975124ff1c45c98c4d",
+      "bytes": 1643,
+      "data": {
+        "command": [
+          "/usr/bin/cc",
+          "-shared",
+          "-fPIC",
+          "-O3",
+          "-march=native",
+          "-ffp-contract=off",
+          "-floop-interchange",
+          "--param=loop-interchange-max-num-stmts=10000",
+          "-fdump-tree-linterchange-details",
+          "-g0",
+          "-I/usr/include/python3.12",
+          "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+          "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T063946.772981Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.c",
+          "-o",
+          "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_interchange_v1/integral.so"
+        ],
+        "compile_seconds": 27.34789676591754,
+        "scope": "diagnostic only; existing generated C unchanged; no fast-math or FMA contraction",
+        "cases": [
+          {
+            "library": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T063946.772981Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.cpython-312-x86_64-linux-gnu.so",
+            "seconds": 6.809040243038908
+          },
+          {
+            "library": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_interchange_v1/integral.so",
+            "seconds": 6.477060978999361
+          }
+        ],
+        "relative_difference": 0.0,
+        "bitwise_equal": true,
+        "finite": true
+      }
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_v1/result.json",
+      "sha256": "a7d35daf7d2d24478ceca540b9ba6047a5755f29d68c136fac3187e0179cbf1f",
+      "bytes": 1455,
+      "data": {
+        "command": [
+          "/usr/bin/cc",
+          "-shared",
+          "-fPIC",
+          "-O3",
+          "-march=native",
+          "-ffp-contract=off",
+          "-g0",
+          "-I/usr/include/python3.12",
+          "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+          "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_v1/loop_order.c",
+          "-o",
+          "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_v1/integral.so"
+        ],
+        "compile_seconds": 20.33461087802425,
+        "scope": "diagnostic only; only interchange two independent matrix-entry loops; per-entry summation order unchanged; no fast-math or FMA contraction",
+        "cases": [
+          {
+            "library": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T063946.772981Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.cpython-312-x86_64-linux-gnu.so",
+            "seconds": 6.910585721954703
+          },
+          {
+            "library": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_v1/integral.so",
+            "seconds": 3.4519312779884785
+          }
+        ],
+        "relative_difference": 0.0,
+        "bitwise_equal": true,
+        "finite": true
+      }
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_512_v1/result.json",
+      "sha256": "45139f41153d54382541ddfc8cde2c87dc9ee257f6a0c6f63d8422b10b769aa7",
+      "bytes": 1501,
+      "data": {
+        "command": [
+          "/usr/bin/cc",
+          "-shared",
+          "-fPIC",
+          "-O3",
+          "-march=native",
+          "-mprefer-vector-width=512",
+          "-ffp-contract=off",
+          "-g0",
+          "-I/usr/include/python3.12",
+          "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+          "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_512_v1/loop_order.c",
+          "-o",
+          "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_512_v1/integral.so"
+        ],
+        "compile_seconds": 22.475707370089367,
+        "scope": "diagnostic only; only interchange two independent matrix-entry loops; per-entry summation order unchanged; no fast-math or FMA contraction",
+        "cases": [
+          {
+            "library": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T063946.772981Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.cpython-312-x86_64-linux-gnu.so",
+            "seconds": 6.735206526005641
+          },
+          {
+            "library": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_512_v1/integral.so",
+            "seconds": 1.9809781510848552
+          }
+        ],
+        "relative_difference": 0.0,
+        "bitwise_equal": true,
+        "finite": true
+      }
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_512_v1/equivalence.json",
+      "sha256": "e5792a42a5c396eb5e9ed952c63c46c8b95d4ac6a17549c9478a0666898e51ec",
+      "bytes": 3167,
+      "data": {
+        "scope": "isolated unit integral equivalence; not a formal PDE",
+        "libraries": [
+          {
+            "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T063946.772981Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.cpython-312-x86_64-linux-gnu.so",
+            "sha256": "f2e5cb789e517faa5ebd82f168354931731290f7674c827c8f16eb58ce5d9470"
+          },
+          {
+            "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/loop_order_512_v1/integral.so",
+            "sha256": "bcb2a62c0116fb821d9a29147336bf6e1d30c021b813da84d3824a790db0bbd7"
+          }
+        ],
+        "rows": [
+          {
+            "integral": "d470ef320fb2eddcf8f846d663c468d701941d66",
+            "geometry": "unit",
+            "seconds": [
+              7.092208413872868,
+              1.9667742690071464
+            ],
+            "speedup": 3.6060103722289942,
+            "bitwise_equal": true,
+            "relative_difference": 0.0,
+            "matrix_sha256": "7a3171f8ea471d46fd3b8734b7f219f908e63a066590ec10814b64228ef54125",
+            "finite": true
+          },
+          {
+            "integral": "d470ef320fb2eddcf8f846d663c468d701941d66",
+            "geometry": "sized",
+            "seconds": [
+              6.956698513124138,
+              1.9581594918854535
+            ],
+            "speedup": 3.552672058610374,
+            "bitwise_equal": true,
+            "relative_difference": 0.0,
+            "matrix_sha256": "ac7788911755ce966407b8034f4b6c8fd50fa65dccafa613ba48097dbdaf1fb9",
+            "finite": true
+          },
+          {
+            "integral": "d470ef320fb2eddcf8f846d663c468d701941d66",
+            "geometry": "skew",
+            "seconds": [
+              6.982635738095269,
+              1.9608282230328768
+            ],
+            "speedup": 3.561064480852381,
+            "bitwise_equal": true,
+            "relative_difference": 0.0,
+            "matrix_sha256": "d4fe3dbe710f3a874d9e96700c555de926f3a605e0689d852ef5bc8154950490",
+            "finite": true
+          },
+          {
+            "integral": "3e66f9d7904562beb69d74a67b0019cea5c86d37",
+            "geometry": "unit",
+            "seconds": [
+              6.961211987072602,
+              1.9564033490605652
+            ],
+            "speedup": 3.5581680998528595,
+            "bitwise_equal": true,
+            "relative_difference": 0.0,
+            "matrix_sha256": "4af119572c93b1d693b94dd521339a0f1908ef9ac8bd85a5d8b8a9698ccc93dd",
+            "finite": true
+          },
+          {
+            "integral": "3e66f9d7904562beb69d74a67b0019cea5c86d37",
+            "geometry": "sized",
+            "seconds": [
+              6.951797742862254,
+              1.955819047987461
+            ],
+            "speedup": 3.554417649227651,
+            "bitwise_equal": true,
+            "relative_difference": 0.0,
+            "matrix_sha256": "2f767c3ac8ea43bd2d3db61c448f14021a42d0d1052adef64042c5628f0f2e7c",
+            "finite": true
+          },
+          {
+            "integral": "3e66f9d7904562beb69d74a67b0019cea5c86d37",
+            "geometry": "skew",
+            "seconds": [
+              7.038809182820842,
+              1.959258038783446
+            ],
+            "speedup": 3.5925891554291747,
+            "bitwise_equal": true,
+            "relative_difference": 0.0,
+            "matrix_sha256": "06668765f800bfd0ae4c9ffffc40436228948bf286692ac5777463ce6b888404",
+            "finite": true
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/jit_row_loop_v1/result.json",
+      "sha256": "77849c9cd7ecdcca19197a134917d37a2e3a1d04c9f528ac78cddbbf3f0f49b3",
+      "bytes": 814,
+      "data": {
+        "scope": "real one-cell DOLFINx p4 matrix; no outer solve",
+        "records": [
+          {
+            "variant": "original",
+            "jit_seconds": 13.793788988143206,
+            "assembly_seconds": 6.935053576948121,
+            "rows": 300,
+            "nnz": 90000,
+            "modified_integrals": [],
+            "value_sha256": "81e9b85d36a31b6f8b34f7e591ed249dceb68cfc9035f4518093ec7ab7c2235c"
+          },
+          {
+            "variant": "row_loop",
+            "jit_seconds": 15.371451440965757,
+            "assembly_seconds": 1.929328012978658,
+            "rows": 300,
+            "nnz": 90000,
+            "modified_integrals": [
+              "integral_d83ef12564063c8cb979c1683dbef10d801659ec"
+            ],
+            "value_sha256": "81e9b85d36a31b6f8b34f7e591ed249dceb68cfc9035f4518093ec7ab7c2235c"
+          }
+        ],
+        "indices_equal": true,
+        "values_bitwise_equal": true,
+        "relative_difference": 0.0
+      }
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/action_jit_v1/result.json",
+      "sha256": "1d26fc4d7488df751eb43802b7de92b7b84ef17076afc076e3227b65fcebc2fb",
+      "bytes": 3542,
+      "data": [
+        {
+          "symbol": "tabulate_tensor_integral_66cee5380c2dd73ec08703f391e5d9a867941ac6_hexahedron",
+          "source_sha256": "9df4734393c3b06e9ce3dd09ce263997ef94038889a81f03b0a4455e6d582858",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_34abb456477424cb70015163bbf915f32bbe1330.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/action_jit_v1/34abb.so"
+          ],
+          "compile_seconds": 18.106947601074353,
+          "seconds_per_cell": [
+            0.020962091360706835,
+            0.016426390002015977
+          ],
+          "speedup": 1.2761228339357704,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        },
+        {
+          "symbol": "tabulate_tensor_integral_c3ae65814cd610cac413e381b4816fd3b60e9b30_hexahedron",
+          "source_sha256": "d495681cdd13e749a416b7cc752b0b90e6cd3f054a4352bab6a181204b123516",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_493b5046ab803199e13b60313f3d9a76c162897b.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/action_jit_v1/493b.so"
+          ],
+          "compile_seconds": 7.159387171966955,
+          "seconds_per_cell": [
+            0.004926882800646126,
+            0.0032177614979445935
+          ],
+          "speedup": 1.531152263395925,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        },
+        {
+          "symbol": "tabulate_tensor_integral_b70729515b604c6b751798b5c6e38585464f8e2e_hexahedron",
+          "source_sha256": "d495681cdd13e749a416b7cc752b0b90e6cd3f054a4352bab6a181204b123516",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_493b5046ab803199e13b60313f3d9a76c162897b.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/action_jit_v1/493b.so"
+          ],
+          "compile_seconds": 7.159387171966955,
+          "seconds_per_cell": [
+            0.005205983202904463,
+            0.005260813550557941
+          ],
+          "speedup": 0.9895775915404448,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        }
+      ]
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/action_jit_256_v1/result.json",
+      "sha256": "2a841f10a57915013e0589e732d5f63be02a40bbd7e1d61636213279d06bb4ee",
+      "bytes": 2373,
+      "data": [
+        {
+          "symbol": "tabulate_tensor_integral_66cee5380c2dd73ec08703f391e5d9a867941ac6_hexahedron",
+          "source_sha256": "9df4734393c3b06e9ce3dd09ce263997ef94038889a81f03b0a4455e6d582858",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=256",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_34abb456477424cb70015163bbf915f32bbe1330.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/action_jit_256_v1/34abb.so"
+          ],
+          "compile_seconds": 18.339776596985757,
+          "seconds_per_cell": [
+            0.02254789249273017,
+            0.020635473204310983
+          ],
+          "speedup": 1.0926762991807555,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        },
+        {
+          "symbol": "tabulate_tensor_integral_7d867e0d918108e44f4a51350ed95bfacc291954_hexahedron",
+          "source_sha256": "b7b5b2e0a6280bd2dfe3f11b56762e3cf3a81bbeaf97f6bc89e42efca1ba24e5",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=256",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_bb1363e7d6fe8582a5ab50f5deeb81d1ba1c0eda.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/action_jit_256_v1/bb136.so"
+          ],
+          "compile_seconds": 6.1918823949526995,
+          "seconds_per_cell": [
+            0.0036677486496046185,
+            0.004768939851783216
+          ],
+          "speedup": 0.7690909853335984,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        }
+      ]
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/p4_action_jit_v1/result.json",
+      "sha256": "7edabe48374809106c3a37e2624de4234bd8f1a2d1a80f90b9c9f19601aaeb65",
+      "bytes": 3556,
+      "data": [
+        {
+          "symbol": "tabulate_tensor_integral_7d867e0d918108e44f4a51350ed95bfacc291954_hexahedron",
+          "source_sha256": "b7b5b2e0a6280bd2dfe3f11b56762e3cf3a81bbeaf97f6bc89e42efca1ba24e5",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_bb1363e7d6fe8582a5ab50f5deeb81d1ba1c0eda.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/p4_action_jit_v1/bb136.so"
+          ],
+          "compile_seconds": 6.337956502800807,
+          "seconds_per_cell": [
+            0.0038079229998402297,
+            0.006374245905317366
+          ],
+          "speedup": 0.597391919985967,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        },
+        {
+          "symbol": "tabulate_tensor_integral_8ec7c586932a39e95c45a4371c4f61bb33378b5a_hexahedron",
+          "source_sha256": "4a51ff67952271a4361769bccf8e10b16df7ca97143025f07febb1623b7bcd75",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_936ba0ee5b8c4ef7d4fce40c13fe9da020cea667.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/p4_action_jit_v1/936ba.so"
+          ],
+          "compile_seconds": 2.475330115063116,
+          "seconds_per_cell": [
+            0.0007686357013881207,
+            0.0007760524400509894
+          ],
+          "speedup": 0.9904429929214816,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        },
+        {
+          "symbol": "tabulate_tensor_integral_d299819e84082174b20c1dad52ba3bc9cdb7c086_hexahedron",
+          "source_sha256": "4a51ff67952271a4361769bccf8e10b16df7ca97143025f07febb1623b7bcd75",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T082228.610724Z/jit_cache/fenics/libffcx_forms_936ba0ee5b8c4ef7d4fce40c13fe9da020cea667.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/p4_action_jit_v1/936ba.so"
+          ],
+          "compile_seconds": 2.475330115063116,
+          "seconds_per_cell": [
+            0.0007706659496761858,
+            0.0007592835463583469
+          ],
+          "speedup": 1.0149909784986528,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        }
+      ]
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/fine_curl_fe_v1/result.json",
+      "sha256": "99e581aa42acbef99e1ce6a7a7ba23cb59e9be84c8528d814ac7f18d4424826d",
+      "bytes": 3160,
+      "data": {
+        "scope": "single-cell p6 curl vector action; not a full solve",
+        "compiler_flags": [
+          "-O3",
+          "-march=native",
+          "-mprefer-vector-width=512",
+          "-ffp-contract=off",
+          "-g0"
+        ],
+        "cases": [
+          {
+            "geometry": "unit",
+            "trial": 0,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.018691342091187835,
+              0.020695515209808946
+            ],
+            "value_sha256": "938c98f2460bf1e26990e9c1b7bbc039f06cdc2e653f3c94cc35eb646b111923"
+          },
+          {
+            "geometry": "unit",
+            "trial": 1,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.019835148006677628,
+              0.018981219036504626
+            ],
+            "value_sha256": "4b927c76eeef20065909ffeb5457fa130bac0e59d950a7c3baae86c11d656246"
+          },
+          {
+            "geometry": "unit",
+            "trial": 2,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.01905440795235336,
+              0.018592019099742174
+            ],
+            "value_sha256": "9c8d4bdfa0419b8cb117c0988dcdd295e5ec91566636bbc5447acaa596b57feb"
+          },
+          {
+            "geometry": "scaled",
+            "trial": 0,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.014303492149338126,
+              0.013571527088060975
+            ],
+            "value_sha256": "5b235a202e3708f52bbe9b583e39addfc449d2cb7699b1b582af8ca9546605f9"
+          },
+          {
+            "geometry": "scaled",
+            "trial": 1,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.02427537296898663,
+              0.018856513081118464
+            ],
+            "value_sha256": "9485573bd60b3845a05f452e82f06b834d75472197913b823a4d85bc1a39bf6d"
+          },
+          {
+            "geometry": "scaled",
+            "trial": 2,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.018018244998529553,
+              0.018881484866142273
+            ],
+            "value_sha256": "3d767e559c64a565c0d79bda3ed4a8f25fd1d32eb93c9aaf81407973c0eef29f"
+          },
+          {
+            "geometry": "skew",
+            "trial": 0,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.016992243006825447,
+              0.015048055909574032
+            ],
+            "value_sha256": "408267eea50f387aeb74b13c2a9ae7b558dd4d3a19724ed47ae217b04388b10f"
+          },
+          {
+            "geometry": "skew",
+            "trial": 1,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.014446028042584658,
+              0.012840733164921403
+            ],
+            "value_sha256": "5ac4eb5c22210e26e831352f4bffecb255a3b1694cb0137c28495ec7f3a7a5c4"
+          },
+          {
+            "geometry": "skew",
+            "trial": 2,
+            "bitwise_equal": true,
+            "finite": true,
+            "relative_difference": 0.0,
+            "assembly_seconds": [
+              0.024475721875205636,
+              0.056433144956827164
+            ],
+            "value_sha256": "4516bd7e3d59e9e8e13223c6316434c29c54ed39da71c7ba2849c98ba5d2556a"
+          }
+        ]
+      }
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/pss_sampling_v1.json",
+      "sha256": "a7279ee6488db0ffcda42aa1b12129d40012b676abfdf817efdfbb236bb8d829",
+      "bytes": 670,
+      "data": [
+        {
+          "include_pss": true,
+          "sample_seconds": [
+            0.11319246492348611,
+            0.10108239506371319,
+            0.08591079502366483,
+            0.08821406099013984,
+            0.07549206609837711
+          ],
+          "rss_bytes": 3078651904,
+          "swap_bytes": 0,
+          "pss_bytes": 2983073792,
+          "pss_sampled": true,
+          "all_status_readable": true
+        },
+        {
+          "include_pss": false,
+          "sample_seconds": [
+            0.035009260987862945,
+            0.03768240683712065,
+            0.03314949804916978,
+            0.03269535698927939,
+            0.03158823517151177
+          ],
+          "rss_bytes": 3078651904,
+          "swap_bytes": 0,
+          "pss_bytes": null,
+          "pss_sampled": false,
+          "all_status_readable": true
+        }
+      ]
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/fused_coefficients_v1/result.json",
+      "sha256": "a0f2759d726834e5cf9cf951a62a65909743caef92988c4a287c31c08d3a0102",
+      "bytes": 2335,
+      "data": [
+        {
+          "symbol": "tabulate_tensor_integral_66cee5380c2dd73ec08703f391e5d9a867941ac6_hexahedron",
+          "source_sha256": "9df4734393c3b06e9ce3dd09ce263997ef94038889a81f03b0a4455e6d582858",
+          "rewritten_sha256": "bdb42e6719416a55e81b53af879d9275dbfa49651c3274fcaabad1816c5ab00e",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/fused_coefficients_v1/34abb.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/fused_coefficients_v1/34abb.so"
+          ],
+          "compile_seconds": 18.007578005082905,
+          "seconds_per_cell": [
+            0.021066355356015264,
+            0.010571869544219226
+          ],
+          "speedup": 1.992680222537791,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        },
+        {
+          "symbol": "tabulate_tensor_integral_7d867e0d918108e44f4a51350ed95bfacc291954_hexahedron",
+          "source_sha256": "b7b5b2e0a6280bd2dfe3f11b56762e3cf3a81bbeaf97f6bc89e42efca1ba24e5",
+          "rewritten_sha256": "d5180ecf2f2c7b383a295b669141cafe86d8d59b5d340c006f4171af21a2c8d0",
+          "command": [
+            "/usr/bin/cc",
+            "-shared",
+            "-fPIC",
+            "-O3",
+            "-march=native",
+            "-mprefer-vector-width=512",
+            "-ffp-contract=off",
+            "-g0",
+            "-I/usr/include/python3.12",
+            "-I/usr/lib/python3/dist-packages/ffcx/codegeneration",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/fused_coefficients_v1/bb136.c",
+            "-o",
+            "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/native_capacity/hardware_diagnostics/fused_coefficients_v1/bb136.so"
+          ],
+          "compile_seconds": 6.273143190890551,
+          "seconds_per_cell": [
+            0.003979437740053981,
+            0.002832549542654306
+          ],
+          "speedup": 1.4048960768837806,
+          "relative_difference": 0.0,
+          "bitwise_equal": true,
+          "finite": true
+        }
+      ]
+    }
+  ],
+  "raw_profiles": [
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/r1_retry1_p4_counters_v1.csv",
+      "sha256": "f747bd6689ca7476f5427344bf93b510254b8d9abd980f041b550fa76796ac62",
+      "bytes": 292
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/assembly_annotation_v1.txt",
+      "sha256": "6a080cc5f13ec4ef379c0ce674bd61b58cf54822cdbae99bfa8514e535540b3b",
+      "bytes": 354101
+    },
+    {
+      "artifact": "benchmarks/artifacts/native_capacity/hardware_diagnostics/solve_profile_v1.txt",
+      "sha256": "2e10f3b6fa8ba02cdb0dfe11eabd89653bdd91947d369551b3985bbed61ff3ad",
+      "bytes": 1198
+    }
+  ]
+}

@@ -59,6 +59,7 @@ def _build_split_volume_action(
     floquet: Any,
     *,
     jit_options: Mapping[str, Any],
+    native_curl_codegen: bool = False,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
 ) -> Any:
     import ufl
@@ -85,6 +86,7 @@ def _build_split_volume_action(
         function_space,
         mpc=floquet.mpc,
         jit_options=jit_options,
+        **({'native_curl_codegen': True} if native_curl_codegen else {}),
     )
 
 
@@ -172,6 +174,7 @@ def build_same_mesh_physical_action(
             floquet,
             jit_options=options,
             volume_quadrature_metadata=volume_quadrature_metadata,
+            **({'native_curl_codegen': True} if degree in (4, 6) and setup.get('native_curl_jit') else {}),
         )
         physical_action = FullspacePhysicalAction(volume_action, dtn_action)
         owned_volume_action = volume_action
