@@ -1,0 +1,588 @@
+{
+  "schema": "native-capacity.github-render-check.v1",
+  "checked_commit": "6230b670dbb4dd0384acbad008297cdb1060f80a",
+  "method": "Read GitHub-generated richText from HTTP200 pages; validate rendered table column counts; no new math in changed docs",
+  "records": [
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/summary.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 4,
+      "column_counts": [
+        [
+          3
+        ],
+        [
+          8
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ]
+      ],
+      "rendered_sha256": "7c5212608feae9467a844ea7258c1704f212081f72b9768c920e9bb92cdb554f",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_summary.html"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/reproduction_13p5nm.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 3,
+      "column_counts": [
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          3
+        ]
+      ],
+      "rendered_sha256": "0a079ab6fdbb4672b004bb743ed8789b5398450307cded5cab15608204c63407",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_reproduction_13p5nm.html"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/capacity_frontier.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 1,
+      "column_counts": [
+        [
+          3
+        ]
+      ],
+      "rendered_sha256": "2cedb193576c073105e35bc8340b9894c1133ce1935b76974575a466e92a977d",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_capacity_frontier.html"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/test_summary.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 1,
+      "column_counts": [
+        [
+          3
+        ]
+      ],
+      "rendered_sha256": "308a672d673b183b988a4157321462e894c10af6cbbeb36120570ca5e5ef47e9",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_test_summary.html"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/environment_and_migration.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 1,
+      "column_counts": [
+        [
+          2
+        ]
+      ],
+      "rendered_sha256": "e7804b451f9c694587627ac31c986c2eaa235dc3869500a8666773642ba9ff8e",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_environment_and_migration.html"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/response_v1.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 1,
+      "column_counts": [
+        [
+          2
+        ]
+      ],
+      "rendered_sha256": "285139344ec34090748d5c16b6eeb8e3f088c66b9927c7f561afd543a06bf348",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_response_v1.html"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 114,
+      "column_counts": [
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          7
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          13
+        ],
+        [
+          13
+        ],
+        [
+          13
+        ],
+        [
+          13
+        ],
+        [
+          13
+        ],
+        [
+          13
+        ],
+        [
+          10
+        ],
+        [
+          15
+        ],
+        [
+          6
+        ],
+        [
+          13
+        ],
+        [
+          4
+        ],
+        [
+          10
+        ],
+        [
+          7
+        ],
+        [
+          12
+        ],
+        [
+          11
+        ],
+        [
+          11
+        ],
+        [
+          3
+        ],
+        [
+          13
+        ],
+        [
+          8
+        ],
+        [
+          9
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          2
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          5
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          3
+        ],
+        [
+          7
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          5
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          8
+        ],
+        [
+          6
+        ],
+        [
+          5
+        ],
+        [
+          3
+        ],
+        [
+          6
+        ],
+        [
+          3
+        ],
+        [
+          2
+        ],
+        [
+          7
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          28
+        ],
+        [
+          17
+        ],
+        [
+          13
+        ],
+        [
+          9
+        ],
+        [
+          6
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ]
+      ],
+      "rendered_sha256": "632c56983361cf4d62e9876e01d34b1757079c1d102bdeed886cc2b9ee0e18ff",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_development_model_registry.html"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "status": "GITHUB_RENDERED_TABLES_PASS",
+      "http": 200,
+      "table_count": 42,
+      "column_counts": [
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          7
+        ],
+        [
+          3
+        ],
+        [
+          7
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ]
+      ],
+      "rendered_sha256": "8b15f9f26fbc855ef15fc4da233ea47364ac478fb0fd13c6418f034cec8b8c10",
+      "rendered_artifact": "benchmarks/artifacts/native_capacity/github_render_development_progress.html"
+    }
+  ]
+}
