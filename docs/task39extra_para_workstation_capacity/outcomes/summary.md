@@ -5,9 +5,11 @@
 | R0 native环境与隔离 | NATIVE_ENVIRONMENT_PASS | [环境与硬件](environment_and_migration.md)、[ABI](records/native_abi.json) |
 | R1 attempt1，13.5 nm Si p6/h10，MPI1 | 身份检查失败，未outer | [原始负结果](records/r1_attempt1.json) |
 | R1 retry1，同一模型 | PERFORMANCE_CONTROLLED_STOP；筛选未通过 | [复现/阶段资源](reproduction_13p5nm.md)、[完整compact](records/r1_attempt2.json) |
-| R2 notch、条件native reference | NOT_RUN_BY_PREVIOUS_GATE | 无完整场/衍射/能量资格 |
+| R1 attempt3，13.5 nm Si p6/h10，550步 | own数值 Gate 通过；`BALANCED_OUTPUT_AUTHORITY_LIMITED` | [attempt3 compact](records/r1_attempt3.json) |
+| R1 native direct matched reference | NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL | [reference compact](records/r1_native_reference.json)、[80通道](records/r1_native_reference_80_channels.json) |
+| R2 notch、条件native reference | R2_PENDING；尚未运行 | 原 V5 notch 输入待本轮运行 |
 | S5 / S3 / S2 / G | NOT_RUN_BY_PREVIOUS_GATE | [容量边界](capacity_frontier.md) |
-| 性能修复 | 局部等价性通过，完整PDE尚未重新资格化 | `f124679e75915758076d9240bd4bef2f5c772752`；[测试](test_summary.md) |
+| 性能修复 | 局部等价性通过；修复后13.5 nm R1 own与native匹配 reference 通过，R2待运行 | `f124679e75915758076d9240bd4bef2f5c772752`；[R1 compact](records/r1_native_reference.json)；[测试](test_summary.md) |
 
 ## 最新正式 original run（attempt3）
 
@@ -27,7 +29,13 @@
 
 阶段资源峰值也已在 compact 中逐项保存：setup `3404267520 B`、solve `3085901824 B`、recovery/final peak `3631751168 B`、checker `3558637568 B`、complete `3202437120 B`，均 swap `0`。绑核证据只说明 CPU23/CPU9 affinity，不推出共享内存带宽或功耗无竞争。
 
-因此 R1 的 own 数值/物理输出通过，但完整场资格仍关闭；不重跑 550 步、不启动 notch。下一步是既有 native direct matched reference 的 symbolic preflight 与最小接线审计，之后再由主控审核是否需要源码改动。
+因此旧 own run 的 authority 仍单独标为 limited；native direct matched reference 已完成全部本机 R1 比较资格，但不改写“完整 WSL 全场未提供”的边界。R1 不重跑 550 步；下一步按授权启动原 V5 13.5 nm notch R2，5 nm 仍等待 R2。
+
+## R1 native direct matched reference（最新 Gate）
+
+run `20260909T175256.839514Z` 在 clean source `125c383f9ec7027bd9c6528b4cafc669dd16ea6f` 下经唯一 `run_case.py` 入口完成。hard32 GiB/planning24 GiB admission 实测使用 `dynamic_cap_bytes=25769803776`、ICNTL23=`22646 MB`、symbolic estimate=`4858 MB`；symbolic 1 次、numeric 1 次、solve 2 次、factor release 通过。阶段边界与逐阶段 RSS 峰见 [compact](records/r1_native_reference.json)，80 项复振幅/逐通道功率见 [80-channel carrier record](records/r1_native_reference_80_channels.json)。
+
+R1 资格结果：`REFERENCE_PASS` residual=`1.4427687662062765e-11`；`MATCHED_REFERENCE_PASS`，L2=`1.335826588236277e-8`、scaled-curl=`5.5945316967861595e-9`、selected E/H=`4.08219975785664e-8`/`8.908964399790286e-9`、80 模式=`5.171739887720538e-9`、功率 max absolute=`2.206432703211192e-9`，R/T/A/A_volume 差均在合同限值内，无相位拟合。watchdog `COMPLETED`、清场、swap=`0`、RSS peak=`7304724480 B`。标签保持 `NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL`，不宣称完整 WSL 场复现。
 
 本轮仍使用原V5 BAL_H + accurate global p4 LU，没有新迭代算法、子域法或预条件器。worker独占逻辑CPU23、监督器CPU9，隔壁CPU0–7进程未修改；缓存、venv、Git、结果全部属于独立worktree。共享socket的缓存/带宽不可能仅凭绑核证明完全零影响，未作这类承诺。
 

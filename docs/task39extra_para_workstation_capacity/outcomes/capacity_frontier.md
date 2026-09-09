@@ -3,6 +3,7 @@
 | 对象 | 状态 | 可以得出的结论 |
 |---|---|---|
 | native R1 13.5 nm Si / p6h10 | 性能screen停止 | 32GiB小案例cap内完成p4 LU与62步；不能称复现通过 |
+| native R1 matched reference | NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL | 24GiB planning admission、80通道/功率/场比较通过；不称完整WSL全场复现 |
 | R2 13.5 nm notch、匹配native reference | not_run | 未解锁；没有E/H、完整80复幅值或能量比较资格 |
 | S5 W / p6h4 | NOT_RUN_BY_PREVIOUS_GATE | 没有本次短波计数、symbolic或numeric上界；不推测可算 |
 | S3 W / p6h2.5、S2 W / p6h1.5、G | NOT_RUN_BY_PREVIOUS_GATE | 未运行，不把2TiB总容量当安全或精度证明 |
@@ -15,6 +16,6 @@
 
 13.5 nm Si original 的本次 own solve 与 independent output gates 已通过，但 `BALANCED_OUTPUT_AUTHORITY_LIMITED` 和 `WSL_FULL_FIELD_COMPARISON_PARTIAL` 仍使完整 R1 关闭。见 [attempt3 compact](records/r1_attempt3.json)。因此 R2 notch 尚未启动，5 nm 也尚未解锁。
 
-下一步只允许审计既有 native direct matched-reference 接口：symbolic preflight、独立 reference workflow（授权 21600 s）、整树资源监督，并完成完整场/selected E/H 比较。若需接线修复，先提交最小方案审核；不新增 direct 算法、PC 或防御性框架。
+上述 native direct matched-reference 审计已完成并记录；下一步是原 V5 13.5 nm notch R2，仍沿既有入口和资源监督，不新增 direct 算法、PC 或防御性框架。
 
 本轮 5 nm 的材料身份按用户最新权威输入为 Si（`density=2.33`，`n=0.99396854453+0.00435380777i`，运行时 `epsilon=n*n`），不能沿用旧 W 标签宣传；实际 5 nm 仍待 13.5 nm original 与 notch 的完整资格。

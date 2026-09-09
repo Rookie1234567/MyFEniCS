@@ -1,0 +1,137 @@
+{
+  "schema": "native-matched-reference.compact.v1",
+  "stage": "R1_NATIVE_DIRECT_MATCHED_REFERENCE",
+  "qualification": "NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL",
+  "run_id": "20260909T175256.839514Z",
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_native_matched_reference__full3d_direct__mpi1__Mna/20260909T175256.839514Z",
+  "input": "input/task39extra_para_workstation_capacity/original_13p5nm_native_matched_reference.dat",
+  "source_sha": "125c383f9ec7027bd9c6528b4cafc669dd16ea6f",
+  "input_sha256": "12baf95e52c7809a61cbe98452d49f93c165c805d2846b1496c1d081649564d5",
+  "physical_model_sha256": "2d9fed2466c96f0db124ceb229eb937df0e49654a3bae17772ab70d4441a061d",
+  "profile": "native_matched_reference",
+  "workflow_budget_seconds": 21600,
+  "workflow_elapsed_seconds": 3624.8300013281405,
+  "supervision": {
+    "classification": "COMPLETED",
+    "exit_code": 0,
+    "descendants_cleared": true,
+    "rss_peak_bytes": 7304724480,
+    "swap_peak_bytes": 0,
+    "watchdog_samples": 7656,
+    "worker_cpu": 23,
+    "supervisor_cpu": 9,
+    "global_swap_activity": "zero"
+  },
+  "numeric_admission": {
+    "status": "ADMISSIBLE",
+    "hard_cap_bytes": 34359738368,
+    "numeric_planning_cap_bytes": 25769803776,
+    "dynamic_cap_bytes": 25769803776,
+    "baseline_tree_rss_bytes": 2557132800,
+    "future_bytes": 28980608,
+    "engineering_reserve_bytes": 536870912,
+    "icntl23_mb": 22646,
+    "symbolic_estimate_mb": 4858,
+    "symbolic_calls": 1,
+    "numeric_calls": 1,
+    "factor_released": true
+  },
+  "gates": {
+    "reference_status": "REFERENCE_PASS",
+    "relative_residual": 1.4427687662062765e-11,
+    "residual_limit": 1e-10,
+    "pre_numeric_rhs_status": "RHS_PASS",
+    "pre_numeric_rhs_relative_difference": 3.260906215866404e-14,
+    "identity_checks": {
+      "frozen_A6_action": 0.0,
+      "frozen_rhs": 0.0,
+      "repeated_A6_action": 0.0
+    },
+    "matched_reference_status": "MATCHED_REFERENCE_PASS",
+    "mode_count": 80,
+    "amplitude_relative_difference": 5.171739887720538e-9,
+    "power_max_absolute_difference": 2.206432703211192e-9,
+    "total_absolute_differences": {
+      "R": 2.206238969293395e-9,
+      "T": 3.3627118450896276e-11,
+      "A": 2.1726118681897333e-9,
+      "A_volume": 1.224050638626295e-9
+    },
+    "field_relative": {
+      "L2": 1.335826588236277e-8,
+      "scaled_curl": 5.5945316967861595e-9
+    },
+    "selected_eh_relative": {
+      "E": 4.08219975785664e-8,
+      "H": 8.908964399790286e-9
+    },
+    "selected_eh_phase_fitting": false,
+    "selected_eh_near_zero_absolute_E": 7.82257458585984e-8,
+    "energy_closure_error_port_volume": -2.042810365310288e-12,
+    "reference_output_mode_count": 80,
+    "reference_output_propagating_mode_count": 78
+  },
+  "stage_wall_seconds_from_adjacent_monotonic_markers": {
+    "assembly_to_rhs_gate": 2115.0751704610884,
+    "rhs_gate": 0.26166062196716666,
+    "rhs_gate_to_symbolic_boundary": 0.1933138850145042,
+    "symbolic_to_numeric": 15.467185216024518,
+    "numeric": 143.33736971300095,
+    "numeric_to_solve_boundary": 8.390364727005363,
+    "solve": 33.864918584004045,
+    "solve_to_correction_boundary": 9.225322746904567,
+    "augmented_correction": 48.166841987054795,
+    "factor_release_boundary": 0.02480910113081336,
+    "factor_release_to_recovery": 0.7619078648276627,
+    "recovery": 48.74085095897317,
+    "recovery_to_native_compile_boundary": 0.5387477551121265,
+    "native_compile": 412.7411151549313,
+    "native_compile_to_identity_boundary": 0.8475813339464366,
+    "identity": 251.098538269056,
+    "identity_to_residual_boundary": 0.5324789539445192,
+    "residual": 125.63509733905084,
+    "residual_to_watchdog_terminal_postprocess": 400.904662193,
+    "residual_to_watchdog_terminal_postprocess_basis": {
+      "start_stage": "fine_reference_residual_completed",
+      "start_monotonic": 1089363.599500245,
+      "end_clock": "watchdog/summary.json.clock_end",
+      "end_monotonic": 1089764.504162438,
+      "watchdog_classification": "COMPLETED",
+      "descendants_cleared": true,
+      "note": "watchdog terminal boundary minus residual-completed marker; includes post-processing and orderly exit, not an additional FE stage"
+    }
+  },
+  "resource_stage_peaks": {
+    "rhs_gate": {"rss_peak_bytes": 2052202496, "swap_peak_bytes": 0},
+    "assembly": {"rss_peak_bytes": 2652176384, "swap_peak_bytes": 0},
+    "symbolic": {"rss_peak_bytes": 2615910400, "swap_peak_bytes": 0},
+    "numeric": {"rss_peak_bytes": 6604296192, "swap_peak_bytes": 0},
+    "solve": {"rss_peak_bytes": 6549901312, "swap_peak_bytes": 0},
+    "augmented_correction": {"rss_peak_bytes": 6549905408, "swap_peak_bytes": 0},
+    "recovery": {"rss_peak_bytes": 6549975040, "swap_peak_bytes": 0},
+    "native_compile": {"rss_peak_bytes": 7283154944, "swap_peak_bytes": 0},
+    "identity": {"rss_peak_bytes": 6605189120, "swap_peak_bytes": 0},
+    "residual_and_postprocess": {"rss_peak_bytes": 7304724480, "swap_peak_bytes": 0}
+  },
+  "artifact_hashes": {
+    "matched_reference_json": "7a765d22ff59dea73cc707f8c0197a64f47d09128f0ec70650dceffb48fa655e",
+    "reference_summary_json": "f72b210ec612a61b2aa3a7ccc7eb13c5a4ee304a4d0c0fec9a881cefed6fde6d",
+    "reference_numeric_admission_json": "948aec71bf9d0ddcb9de2e7d055f261603cfd3d0dec2c7593a6b397e2edc85f4",
+    "reference_full_residual_json": "16b23437994e8fdc27b905baa7cdde81d6718e4665d099b6671baf5328859656",
+    "reference_result_json": "4c23f10e500457f2705df946b3480fbb9cb6967b0f9f454357d074c726ca1a17",
+    "run_manifest_json": "9e7c225f7ee68ed3622332bd8c083fd4ed9decd0dd519e876043c7ed400ae361",
+    "watchdog_summary_json": "973247d92d3f1f71a25e0f753d65aacfe49d157fc03f8603c17883b9f55430f",
+    "full3d_reference_samples_npz": "a42b24da82582938fcc339107bd34ad2aaadb6a17c9150970d61cb6d2d4b8e4a",
+    "port_power_json": "fe3e1806d5f17e14e6f9561b26a6cfdd510f8e9f14bd9d5539460a2b8d5e8a15",
+    "dtn_auxiliary_amplitudes_json": "86e16232cba92fa843d51cbab60988eca7f6232117aeb81b2da2c7cc3c7a62de",
+    "dtn_port_power_metrics_json": "66950a39dd18988906af0c80b4f6d3f50c98df8f13525732c201df630e7561bc"
+  },
+  "complete_80_channel_carrier": {
+    "record": "records/r1_native_reference_80_channels.json",
+    "source": "numerical_output/port_power.json",
+    "source_sha256": "fe3e1806d5f17e14e6f9561b26a6cfdd510f8e9f14bd9d5539460a2b8d5e8a15",
+    "entries": 80,
+    "fields": ["mode identity", "outgoing boundary complex amplitude", "modal power", "power ratio", "R", "T"]
+  },
+  "boundary": "WSL full-field array was not supplied; this is the permitted native direct matched reference and does not claim complete WSL field reproduction. No phase fitting was used."
+}

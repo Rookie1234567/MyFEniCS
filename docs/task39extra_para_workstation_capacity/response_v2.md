@@ -26,4 +26,12 @@
 
 own 结果的 `A_balance/R/T/R00/A_volume` 和能量闭合均已保存，但 `matched_reference.full_field=WSL_FULL_FIELD_COMPARISON_PARTIAL`、`reference_authority=REFERENCE_AUTHORITY_LIMITED`。旧 native 62 步负结果与旧 WSL V5 original 564 步/notch 576 步成功历史保持分开；本次不重新运行原始 550 步，不继续寻找旧 WSL 64/128 checkpoint，也未启动 notch。
 
-当前唯一下一 Gate 是沿既有路径完成一次 native direct matched reference：先做 symbolic preflight，再在独立 run 目录、无迭代进程重叠、授权 `21600 s` reference workflow、CPU23 worker/CPU9 parent 与整树 watchdog 下执行。若发现现有 public adapter/dat/field comparison 接线确有源码缺口，先提交最小文件列表和接线方案审核；不开发新 direct 算法、PC 或防御框架。
+当时的下一 Gate 是沿既有路径完成一次 native direct matched reference；该 Gate 已在下节以 clean SHA、symbolic→numeric admission、整树 watchdog 和场比较完成。此前没有启动 notch，也没有开发新 direct 算法、PC 或防御框架。
+
+## Native direct matched reference：R1 资格完成
+
+容量接线修复提交为 `125c383f9ec7027bd9c6528b4cafc669dd16ea6f`：native 资源样本显式传入 `numeric_planning_cap_bytes=25769803776`（24 GiB），`numeric_allowance` 对 hard `34359738368`（32 GiB）与 planning 取最小后再扣 baseline/future/reserve；旧缺字段路径保持原行为。旧代码加载的 run `20260909T174245.158312Z` 通过 watchdog 受控停止并保留负记录，未进入 numeric；修复后只进行一次 retry。
+
+retry run：`20260909T175256.839514Z`，source/input/physical SHA 见 [`r1_native_reference.json`](outcomes/records/r1_native_reference.json)。`REFERENCE_PASS` residual=`1.4427687662062765e-11`，pre-numeric RHS=`3.260906215866404e-14`，A6/RHS/repeated-A6 identity checks 全为 `0`；`MATCHED_REFERENCE_PASS` 的 full-field L2=`1.335826588236277e-8`、scaled-curl=`5.5945316967861595e-9`，selected E/H=`4.08219975785664e-8`/`8.908964399790286e-9`，80 模式复振幅=`5.171739887720538e-9`，逐通道功率最大绝对差=`2.206432703211192e-9`，无相位拟合。完整 80 项必要小证据见 [`r1_native_reference_80_channels.json`](outcomes/records/r1_native_reference_80_channels.json)。
+
+阶段 wall 使用 `stages.jsonl` 相邻单调 marker 相减，不把累计 wall 当子阶段相加；workflow=`3624.8300013281405 s`，整树 RSS 峰=`7304724480 B`、swap=`0`、`COMPLETED`/`descendants_cleared=true`。资格标签是 `NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL`：这是允许的 native direct matched reference，不声称已经取得完整 WSL 全场复现。R1 现已关闭，下一 Gate 为原 V5 13.5 nm notch R2；5 nm 仍锁定。
