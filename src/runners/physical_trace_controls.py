@@ -18,9 +18,11 @@ OWNER_PROBE_HASH='8905c25c47dcedf336a01cb48536d85181fb329ffb9198eabb9da5f6bcaaf0
 CACHED_TRACE_ROOT=Path('benchmarks/artifacts/task39extra/v6_cached_trace_component/348373ae6440115355b85bad613b1acc53820d8b/a2r160_g1')
 CACHED_TRACE_READOUT=Path('benchmarks/artifacts/task39extra/v6_recursive/cached_trace_readout.json')
 CACHED_TRACE_HASH='7f8e789bba0caa18c54149ca73273d1c57b29b344a1f2116ae69a842688ad3e1'
+PATCH_AUTHORITY=Path('benchmarks/artifacts/task39extra/v6_recursive/cell_patch_exact_reuse_audit.json')
+PATCH_AUTHORITY_HASH='58b1a0a61038a0dc6f8cd286ae1ad1e3566a0ec406cfc960bd9e4990ea7c8477'
 
 
-def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_exact=False,fixed_serial_owner_route=False):
+def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_exact=False,fixed_serial_owner_route=False,cell_joint_trace=False):
     from petsc4py import PETSc
     from .physical_diagnosis_worker import save_packet
     from .physical_recursive_controls import load_p4_failure_input,verify_recursive_map
@@ -39,9 +41,9 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
     from src.solvers.physical_error_metric import LosslessFEMetric
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=False)
     save=lambda n,f:save_packet(directory,n,f)
-    native=dtn=space=matrix=bottom=metric=trace=result=cached=None;vectors=[]
+    native=dtn=space=matrix=bottom=metric=trace=result=cached=None;vectors=[];patch_authority=None
     counts=dict(A4=0,CU=0,B4=0,I4=0,H6=0,old_H4=0,outer=0,
-        native_A4_qualification=0,native_A4_explicit=0,native_A4_output=0,cached_qualification=0);elapsed={};operations={}
+        native_A4_qualification=0,native_A4_explicit=0,native_A4_output=0,native_A4_patch_qualification=0,cached_qualification=0);elapsed={};operations={}
     def timed(name,fn):
         start=time.perf_counter()
         try:return fn()
@@ -54,6 +56,11 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
     try:
         if comm.size!=1:raise ValueError('trace component requires MPI1')
         if fixed_serial_owner_route and not cached_exact:raise ValueError('owner route requires cached exact trace action')
+        if cell_joint_trace:
+            if not fixed_serial_owner_route:raise ValueError('cell joint trace requires qualified owner route')
+            if hashlib.sha256(PATCH_AUTHORITY.read_bytes()).hexdigest()!=PATCH_AUTHORITY_HASH:raise ValueError('patch authority changed')
+            patch_authority=json.loads(PATCH_AUTHORITY.read_text())
+            if patch_authority['patch_count']!=252 or patch_authority['exact_class_count']!=84:raise ValueError('patch authority inventory changed')
         if hashlib.sha256(TRACE_INVENTORY.read_bytes()).hexdigest()!=TRACE_INVENTORY_HASH:raise ValueError('entity inventory changed')
         inventory=json.loads(TRACE_INVENTORY.read_text())
         if len(inventory['entities'])!=1566 or inventory['high_trace_dimension']!=17064:raise ValueError('frozen entity counts differ')
@@ -135,7 +142,7 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
         cached=CachedPhysicalTraceAction(mapping,cells,classes,native['dtn_action']) if cached_exact else None
         def native_A4(x,role):
             sample();counts['native_A4_'+role]+=1
-            if sum(counts[k] for k in ('native_A4_qualification','native_A4_explicit','native_A4_output'))>75:
+            if sum(counts[k] for k in ('native_A4_qualification','native_A4_explicit','native_A4_output','native_A4_patch_qualification'))>75:
                 raise RuntimeError('fixed native authority/qualification cap')
             return timed('native_A4_'+role,lambda:apply_owned(native['physical_action'],x))
         def A(x):
@@ -174,6 +181,10 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
         extra+=sum(e.coupling_rows.nbytes+e.coupling_values.nbytes+e.projection_rows.nbytes+e.projection_values.nbytes for c in (carrier,p4carrier) for e in c.entries)
         if cached_exact:extra+=3*849344
         if fixed_serial_owner_route:extra+=4117888  # plan 1454144 + conservative temporary 2663744 B
+        if cell_joint_trace:
+            # Replace old entity D/LU; include coefficient maps, class membership,
+            # global weights/offsets and the separately reserved assembly scratch.
+            extra+=27869184+27917568+444056+16*1024**2-10076832
         marker('trace_fixed_storage_preflight',dict(extra_local_bytes=extra,policy_cap=512*1024**2,
             Krylov_V_Z_bound_bytes=33*849344,BAL_new_vector_bound_bytes=32*849344,
             scope='PC extra enters common bottom budget; KSP/BAL live vectors separately in whole-tree RSS'))
@@ -181,11 +192,48 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
             action_identity='saved_S_cell_plus_p2_DtN',extra_local_bytes=extra)
         # The factor gate precedes entity allocations; no call made to the factor yet.
         trace=timed('trace_setup',lambda:PhysicalTraceEntities(mapping,cells,classes,inventory['entities'],_n1e(4).entity_dofs,
-            p4carrier,sample=sample,save=save,marker=marker))
+            p4carrier,sample=sample,save=save,marker=marker,joint_authority=patch_authority))
         payload=trace.payload_bytes()
         if payload>extra:raise MemoryError('trace named allocations exceed reserved bottom local payload')
         save('trace_storage',dict(named_array_bytes=payload,reserved_extra_bytes=extra,bottom=bottom.bottom.audit,
             old_H4_positive=0,p6_objects=0,global_trace_matrix=0))
+        if cell_joint_trace:
+            before=dict(trace.counts);before_time=dict(trace.elapsed);before_joint=dict(trace.joint.counts)
+            qualification_start=time.perf_counter();qualified=False;ht_qualification_facts=[]
+            try:
+                for cell in (0,3):
+                    joint=trace.joint;ids=joint.indices[cell];witness=np.arange(1,145)+1j
+                    coefficients=np.zeros(int(joint.offsets[-1]),complex);coefficients[ids]=witness
+                    chunks=[coefficients[a:b] for a,b in zip(joint.offsets[:-1],joint.offsets[1:])]
+                    v=rhs.duplicate();applied=None
+                    try:
+                        v.array[:]=trace.F(chunks);applied=native_A4(v,'patch_qualification')
+                        actual=np.concatenate(trace.FH(applied.array))[ids]
+                        expected=joint.groups[joint.class_ids[cell]]['D']@witness
+                        check(f'trace_patch_physical_F_{cell}',actual,expected,1e-10)
+                    finally:
+                        v.destroy()
+                        if applied is not None:applied.destroy()
+                frozen=rhs.array.copy();alpha=.37+.2j
+                first_ht=trace.apply(rhs.array);ht_qualification_facts.append(dict(trace.joint.last_facts))
+                repeat_ht=trace.apply(rhs.array);ht_qualification_facts.append(dict(trace.joint.last_facts))
+                scaled_ht=trace.apply(alpha*rhs.array);ht_qualification_facts.append(dict(trace.joint.last_facts))
+                check('trace_patch_HT_repeat',repeat_ht,first_ht,1e-11)
+                check('trace_patch_HT_homogeneous',scaled_ht,alpha*first_ht,1e-11)
+                if not np.array_equal(frozen,rhs.array):raise ValueError('joint HT mutated input')
+                save('trace_patch_HT_input',dict(input_unchanged=True,rhs=frozen,finite=bool(np.isfinite(first_ht).all())))
+                del frozen,first_ht,repeat_ht,scaled_ht,coefficients,chunks,actual,expected
+                qualified=True
+            finally:
+                # These are setup qualifications, not extra I4/B4 calls. Preserve
+                # their real counts/time explicitly before restoring solve counters.
+                save('trace_patch_qualification_costs',dict(completed=qualified,
+                    HT_actual_local_facts=ht_qualification_facts,
+                    trace_counts={k:v-before.get(k,0) for k,v in trace.counts.items()},
+                    trace_seconds={k:v-before_time.get(k,0.) for k,v in trace.elapsed.items()},
+                    patch_counts={k:v-before_joint.get(k,0) for k,v in trace.joint.counts.items()},
+                    seconds=time.perf_counter()-qualification_start,authority_hash=PATCH_AUTHORITY_HASH))
+                trace.counts=before;trace.elapsed=before_time;trace.joint.counts=before_joint
         def Cw_array(value):
             v=rhs.duplicate();v.array[:]=value;q=z=w=None
             try:
@@ -228,6 +276,8 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
             finally:
                 for k,v in coupling.last_apply_facts['counts'].items():operations[k]=operations.get(k,0)+v
                 save(f"trace_B4_{counts['B4']:03d}",dict(facts=coupling.last_apply_facts,counts=counts,
+                    patch_last_facts=dict(trace.joint.last_facts) if trace.joint and hasattr(trace.joint,'last_facts') else {},
+                    patch_cumulative_counts=dict(trace.joint.counts) if trace.joint else {},
                     cumulative=operations,trace_counts=trace.counts,trace_seconds=trace.elapsed,bottom_counts=bottom.counts))
         metric=LosslessFEMetric(levels,4,cfg.k0,quadrature)
         def fields(solution,name):
@@ -239,8 +289,8 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
             save(name,values)
         first=B(rhs);applied=native_A4(first,'output') if cached_exact else A(first)
         try:
-            if cached_exact:check('trace_cached_B4_output_bridge',first.array,previous('trace_B4_g')['solution'])
-            if fixed_serial_owner_route:
+            if cached_exact and not cell_joint_trace:check('trace_cached_B4_output_bridge',first.array,previous('trace_B4_g')['solution'])
+            if fixed_serial_owner_route and not cell_joint_trace:
                 previous_cached=saved_packet_reader(CACHED_TRACE_ROOT,CACHED_TRACE_READOUT,CACHED_TRACE_HASH)
                 check('trace_owner_B4_output_bridge',first.array,previous_cached('trace_B4_g')['solution'],1e-10)
             residual=rhs.array-applied.array;coarse=restriction(rhs);defect=restriction(applied);remaining=coarse-defect
@@ -263,6 +313,8 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
             solver_target_reached=result['facts']['final_true_residual']<=1e-4,G5_closed=False,outer=0))
     finally:
         save('trace_component_costs',dict(counts=counts,elapsed_seconds=elapsed,operations=operations,
+            cell_joint_trace=cell_joint_trace,patch_counts=dict(trace.joint.counts) if trace and trace.joint else {},
+            trace_counter_scope='solve plus existing F witness; additional joint qualifications in trace_patch_qualification_costs' if cell_joint_trace else 'all calls',
             owner_routing=dict(space.owner.routing_costs) if space and space.owner else {},
             cached_exact=cached_exact,cached_counts=cached.counts if cached else {},cached_seconds=cached.seconds if cached else {},
             A4_counter_semantics='Krylov/BAL cached; native authority and qualifications separately counted' if cached_exact else 'original native action all calls',

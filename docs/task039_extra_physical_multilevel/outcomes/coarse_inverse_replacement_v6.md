@@ -210,6 +210,12 @@ G1恰为6个固定I4+3PC，总12I4/276B4/552p2 MatSolve，零精化。冻结源�
 
 ### 最新补记：缓存已测，固定MPI1路由实现待审
 
+联合HT最终证据补记：每B4与三次资格HT均落盘实际最坏局部残差及采样开销，setup witness先保存再判断。最终fixture v3为1 passed in 0.84s，父2.342816432s、RSS145166336B、tree/global swap增量0、清场；未正式运行。下文v2保留为前次验证。
+
+联合HT实现待代码审阅（未运行）：252个144维patch的84精确类已逐位核验；现新增紧凑系数逆，复用原E/EH/J/JH/F/FH，联合模式不构造旧1566实体LU。代表块核对已审D hash后分解；每class保存原D和LU，每apply按原D逐RHS核验1e-11，multiplicity平方根权重只在两侧。真实maps含每系数weights等443384B，预留444056B，保守同存预测463830752B<536870912B；不覆盖旧341808B预审估计。最小fixture最终1 passed in 0.87s，父2.344986568s、RSS146558976B、swap0、后代清场。新入口cell-joint仍600s cold/原60s零初值I4；新HT不要求等于旧B4，CU/owner/native桥仍保留，新增物理F桥与HT性质检查独立记账。未commit或formal，G5开放。
+
+**9dbf唯一owner-route组件已测（最新）**：source `9dbf12355e6e6c7eac23d055c12da4e7eda2a7d8`，三生产owner桥及对348373完整B4输出差均0；同60s完整回调语义下I4由42步推进到60步，native true=0.008002412387388793>1e-4，M0/curl场误差0.0023808883451354704/0.002379682686153387。16/32/48步true分别0.1688399730/0.0508208367/0.0173748220；末次显式61.094332230s，无重启或延长。父保守106.718187118s、同期RSS911257600B、最低可用11465682944B、tree/global swap增量0，35PID全部退出。11502项raw核验通过确认合法负结果；只读审计9.787023067s另计。B4=61、CU/S/MatSolve=123、refine0；CU总16.837931971s，HT20.210084441s；owner primal126/2.038960527s、adjoint247/1.943774275s，route0.064833963s。嵌套时间不重复相加。raw不可改，见compact绑定。G5继续开放，不据此宣称LO或production PASS；下面待审文字保留为阶段历史。
+
 接线后续（仍未运行）：新增互斥 `--owner-route-trace-component`，profile identity为 `physical_owner_route_trace_component_v1`，独立root `v6_owner_route_trace_component/<newSHA>/a2r160_g1`、attempt和lock，复用原预算/watchdog。分流只启用cached_exact与fixed_serial_owner_route；先用生产owner检查三旧q的输出、输入不变、finite/shared/slave，再将完整same-g B4对348373缓存结果作1e-10桥，保留原564桥。桥均未实跑。合并fixture最终1 passed in 0.85s，父2.358346453s、RSS144994304B、tree/global swap增量0、后代清场。尚未commit，待监督审阅；下文“无新CLI”是前次实现阶段状态。
 
 最终容量修正采用独立difference数组原位减法，临时峰载荷为canonical849344B + complex候选1209600B + abs实数组604800B =2663744B；不覆盖旧probe。修正后同一fixture重跑1 passed in 0.78s，父2.101793517s、全树RSS130990080B、tree/global swap增量0、后代清场；这是最终代码的验证，下文首次测试保留。

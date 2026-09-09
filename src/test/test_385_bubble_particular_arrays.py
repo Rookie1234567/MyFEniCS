@@ -32,6 +32,15 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path,monkeyp
         for flag in ('--owner-route-trace-component','--cached-trace-component','--high-trace-component'):
             dispatch_components(build_parser().parse_args(base_args+[flag]),None,None,tmp_path,sample=None,marker=None)
     assert [(c['cached_exact'],c['fixed_serial_owner_route']) for c in calls]==[(True,True),(True,False),(False,False)]
+    joint_args=build_parser().parse_args(base_args+['--cell-joint-trace-component'])
+    joint_contract=selected_contract(joint_args)
+    assert joint_contract['entity_LU']==0 and joint_contract['patch_LU']==84
+    assert joint_contract['I4']==owner_contract['I4'] and joint_contract['workflow_seconds']==600
+    assert joint_contract['old_HT_B4_equality_required'] is False
+    with monkeypatch.context() as patch:
+        patch.setattr(physical_trace_controls,'run_trace_component',lambda *a,**kw:calls.append(kw))
+        dispatch_components(joint_args,None,None,tmp_path,sample=None,marker=None)
+    assert calls[-1]['cell_joint_trace'] and calls[-1]['cached_exact'] and calls[-1]['fixed_serial_owner_route']
     ids=np.array([2,0,1,2,1],dtype=np.uint64);ranges=((0,3),)
     plan=_fixed_serial_owner_plan(ids,ranges,MPI.COMM_SELF)
     values=np.array([2+3j,4-1j,.5+.2j,2+3j+2e-12,.5+.2j-3e-12])
@@ -124,6 +133,43 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path,monkeyp
     np.testing.assert_allclose(entity.F(coeff),F@np.concatenate(coeff),atol=1e-12)
     np.testing.assert_allclose(np.concatenate(entity.FH(rhs)),F.conj().T@rhs,atol=1e-12)
     np.testing.assert_allclose(entity.apply(rhs),HT@rhs,atol=1e-12)
+    # Joint coefficient inverse: overlapping complex non-Hermitian row-complete
+    # blocks share an exact D, and both topology weights stay outside that D.
+    from src.solvers.physical_trace_cell_patch import row_complete_patch,symmetric_patch_solve,CellJointTraceInverse,signature_array
+    import hashlib
+    a0=np.array([[4,1j],[2,2]],complex);a1=np.array([[2,1j],[2,4]],complex)
+    g0=np.array([[1,0,0],[0,1,0]],complex);g1=np.array([[0,1,0],[0,0,1]],complex)
+    global_a=g0.conj().T@a0@g0+g1.conj().T@a1@g1+.1*np.ones((3,3))
+    patch_indices=np.array([[0,1],[1,2]])
+    dense=[]
+    for rows in patch_indices:
+        dense.append(row_complete_patch([(a0,g0[:,rows]),(a1,g1[:,rows])],
+            [(np.ones(2),np.ones(2),10.)],2))
+        np.testing.assert_array_equal(dense[-1],global_a[np.ix_(rows,rows)])
+    np.testing.assert_array_equal(dense[0],dense[1])
+    d0=hashlib.sha256();d1=hashlib.sha256();signature_array(d0,dense[0]);signature_array(d1,dense[1])
+    assert d0.digest()==d1.digest()
+    weights=1/np.sqrt(np.bincount(patch_indices.ravel()))
+    groups=[dict(D=dense[0],factor=checked_lu(dense[0])[0],members=np.array([0,1]))]
+    q=np.array([.2+1j,1-.3j,-.1+.7j]);saved=q.copy()
+    z,facts=symmetric_patch_solve(q,patch_indices,weights,groups,check=CellJointTraceInverse._check,sample=lambda:None)
+    direct=np.zeros((3,3),complex)
+    for rows,D in zip(patch_indices,dense):direct[np.ix_(rows,rows)]+=weights[rows,None]*np.linalg.inv(D)*weights[None,rows]
+    np.testing.assert_allclose(z,direct@q,atol=1e-12);np.testing.assert_array_equal(q,saved)
+    assert facts['logical_rhs']==2 and facts['class_batches']==1
+    assert facts['resource_samples']==2 and facts['resource_sample_seconds']>=0
+    # Exercise inherited physical F/FH around the new coefficient inverse.
+    joint=CellJointTraceInverse.__new__(CellJointTraceInverse)
+    joint.indices=np.array([[0,1],[0,1]]);joint.weights=np.ones(2)/np.sqrt(2);joint.offsets=np.arange(3)
+    joint.groups=[dict(D=schur,factor=checked_lu(schur)[0],members=np.array([0,1]))]
+    joint.counts=dict(applications=0,patch_apply_rhs=0,patch_class_batches=0)
+    entity.joint=joint
+    original_rhs=rhs.copy();actual_joint=entity.apply(rhs)
+    np.testing.assert_allclose(actual_joint,F@np.linalg.solve(schur,F.conj().T@rhs),atol=1e-12)
+    np.testing.assert_allclose(entity.apply(rhs),actual_joint,atol=1e-12)
+    other=.2*rhs+response;other_before=other.copy()
+    np.testing.assert_allclose(entity.apply(rhs+other),actual_joint+entity.apply(other),atol=1e-12)
+    np.testing.assert_array_equal(rhs,original_rhs);np.testing.assert_array_equal(other,other_before)
     CU=lambda r:complete_pq(r,lambda v:E@v,lambda v:full_action@v,lambda v:CW@v)
     coupling=PhysicalBalancedCoupling(lambda v:full_action@v,CU,lambda v:HT@v,
         lambda v:np.concatenate([W.conj().T@v,qglobal.conj().T@v]),route='BAL_H')

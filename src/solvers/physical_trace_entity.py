@@ -85,17 +85,29 @@ class CachedPhysicalTraceAction:
 
 class PhysicalTraceEntities:
     """Borrow frozen classes/map; own 18 internal and 1566 tiny entity factors."""
-    def __init__(self,mapping,cells,classes,entities,entity_dofs,carrier,*,sample,save,marker):
+    def __init__(self,mapping,cells,classes,entities,entity_dofs,carrier,*,sample,save,marker,joint_authority=None):
         self.mapping=mapping;self.cells=cells;self.classes=classes;self.sample=sample;self.save=save
         self.factors={};self.blocks=[];self.elapsed={}
         self.counts=dict(Q_LU=0,Q_setup_rhs=0,entity_LU=0,entity_setup_rhs=0,E=0,EH=0,Q_apply_rhs=0,
             volume=0,volume_adjoint=0,HT=0,entity_apply_rhs=0,F=0,FH=0)
         self.members={key:np.flatnonzero(np.asarray(cells)==key) for key in classes}
+        self.joint=None;full_schurs={}
         local_blocks={};trace=np.arange(192)
         for index,(key,item) in enumerate(classes.items()):
             sample();marker('trace_Q_factor_started',dict(index=index))
             factor,defect=checked_lu(item['D']);self.factors[key]=factor;self.counts['Q_LU']+=1
-            schur,facts=condensed_entity_block(item['A'],item['Q'],factor,trace);self.counts['Q_setup_rhs']+=192
+            if joint_authority is None:
+                schur,facts=condensed_entity_block(item['A'],item['Q'],factor,trace)
+            else:
+                A,Q=item['A'],item['Q'];rhs=Q.conj().T@A[:,:192];T=lu_solve(factor,rhs)
+                schur=A[:192,:192]-(A[:192]@Q)@T
+                local_F=np.eye(300,dtype=complex)[:,:192]-Q@T
+                facts=dict(local_solve=relative_defect(item['D']@T-rhs,rhs,item['D']@T),
+                    Schur=relative_defect(local_F.conj().T@A@local_F-schur,schur))
+                if not all(np.isfinite(v) and v<=1e-11 for v in facts.values()):raise ValueError('joint trace Schur bridge failed')
+                full_schurs[key]=schur
+                del local_F,T,rhs
+            self.counts['Q_setup_rhs']+=192
             local_blocks[key]={(d,e):schur[np.ix_(cols,cols)].copy() for d in (1,2) for e,cols in enumerate(entity_dofs[d])}
             save(f'trace_class_{index:02d}',dict(class_key=key,D=item['D'],LU=factor[0],pivots=factor[1],factor_relative=defect,
                 schur_facts=facts,blocks={str(d)+','+str(e):v for (d,e),v in local_blocks[key].items()}))
@@ -117,6 +129,10 @@ class PhysicalTraceEntities:
                 L=local_map(mapping['dofmap'][cell][cols],rows)
                 restrictions.append(classes[key]['R'][:,cols]@L);parts.append((key,eid,L))
             J,rj=entity_injection(restrictions,2 if dim==1 else 20)
+            if joint_authority is not None:
+                save(f'trace_entity_{index:04d}',dict(dim=dim,rows=rows,J=J,incidences=entity['incidences'],R_gate=rj))
+                self.blocks.append(dict(rows=rows,J=J))
+                continue
             D=np.zeros((J.shape[1],J.shape[1]),complex)
             for key,eid,L in parts:
                 local=L@J;D+=local.conj().T@local_blocks[key][dim,eid]@local
@@ -136,6 +152,10 @@ class PhysicalTraceEntities:
             if not np.isfinite(solve_defect) or solve_defect>1e-11:raise ValueError('entity physical solve gate failed')
             self.blocks.append(dict(rows=rows,J=J,D=D,factor=factor))
         del local_blocks
+        if joint_authority is not None:
+            from .physical_trace_cell_patch import CellJointTraceInverse
+            self.joint=CellJointTraceInverse(mapping,cells,entities,self.blocks,full_schurs,carrier,
+                joint_authority,sample=sample,save=save,marker=marker)
 
     def timed(self,name,callback):
         start=time.perf_counter()
@@ -184,6 +204,8 @@ class PhysicalTraceEntities:
         if self.counts['HT']>65:raise RuntimeError('fixed H_T call cap exceeded')
         def action():
             rhs=self.FH(value);coefficients=[]
+            if getattr(self,'joint',None) is not None:
+                return self.F(self.joint.apply(rhs,self.sample))
             for index,(block,r) in enumerate(zip(self.blocks,rhs,strict=True)):
                 if index%64==0:self.sample()
                 z=lu_solve(block['factor'],r);self.counts['entity_apply_rhs']+=1
@@ -203,4 +225,6 @@ class PhysicalTraceEntities:
                 for x in v.values():visit(x)
             elif isinstance(v,(tuple,list)):
                 for x in v:visit(x)
-        visit([self.classes,self.mapping,self.factors,self.blocks]);return sum(roots.values())
+        visit([self.classes,self.mapping,self.factors,self.blocks])
+        if getattr(self,'joint',None) is not None:visit(self.joint.storage())
+        return sum(roots.values())
