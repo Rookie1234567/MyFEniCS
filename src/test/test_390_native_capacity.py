@@ -32,6 +32,7 @@ def test_native_launcher_uses_actual_budget_and_isolated_cache(monkeypatch, tmp_
     seen = []
 
     def supervise(command, directory, **kwargs):
+        assert command[:3] == ['/usr/bin/taskset', '-c', '23']
         seen.append(kwargs)
         return {'leader_exit_code': 0, 'classification': 'COMPLETED',
                     'job_swap_activity': 'zero_supported_by_zero_global_activity',

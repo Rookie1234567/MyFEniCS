@@ -1497,6 +1497,16 @@ A2R 测量前另有一次 `adapter_unavailable`（source f93edc8ae9e90c4ed07e375
 
 S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及分解内存换取准确中间修正。RSS 为同期进程树采样峰值。两次 A2 均没有最终物理结果；初始 checkpoint 不能代替最终残差，成本受控停止不能推出不收敛定理。这是 13.5 nm 阶段记录，不代表 0.7 nm 已通过。来源、完整 SHA 和 hash 见 [Task39extra 运行索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)，解释见 [阶段总结](task039_extra_physical_multilevel/outcomes/summary.md)。
 
+## 3.42 Task39extra_para：原生工作站容量迁移（进行中）
+
+本项目复现既有 V5 BAL_H + 全局 p4 LU，尚未解锁短波。2026-09-09 首次原始 13.5 nm Si、p6/h10、MPI1 运行在 p4 LU 完成后被固定通道哈希检查拦住，没有 outer 和 official 光学结果。
+
+| Model ID | source / measured 数值规模 | measured 资源 | 状态及证据 |
+|---|---|---|---|
+| native_R1_attempt1 | `492cd519da07a8790980f9f2f21cbef24bed1643`；252 cells；p6 173802/164592；p4 53164 rows、24730144 NNZ、factor 53417584 NNZ | workflow 2731.774616 s；同期整树 RSS 2992881664 B；swap 0；后代清场 | FAILED_SETUP_MODE_IDENTITY；solve_calls=0，无 residual/R/T/A；[过程报告](task39extra_para_workstation_capacity/outcomes/reproduction_13p5nm.md)、[compact](task39extra_para_workstation_capacity/outcomes/records/r1_attempt1.json) |
+
+尚未 retry；旧完整通道 metadata 正在移交。R2/S5/S3/S2/G 未运行，不能从本次身份失败推出数值方法或内存容量失败。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

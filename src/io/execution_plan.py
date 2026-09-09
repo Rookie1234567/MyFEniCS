@@ -134,6 +134,9 @@ def build_execution_plan(
     ]
     if contract_probe:
         argv.append("--contract-probe")
+    from .native_capacity_profile import NATIVE_PROFILES
+    if specification.solver.get("preconditioner") in NATIVE_PROFILES:
+        argv = ["/usr/bin/taskset", "-c", "23", *argv]
     return ExecutionPlan(
         argv=tuple(argv),
         shell=False,

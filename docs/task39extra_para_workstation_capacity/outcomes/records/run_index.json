@@ -1,0 +1,13 @@
+{
+  "schema": "native-capacity.run-index.v1",
+  "runs": [
+    {
+      "stage": "R1",
+      "attempt": 1,
+      "record": "r1_attempt1.json",
+      "status": "FAILED_SETUP_MODE_IDENTITY",
+      "source_sha": "492cd519da07a8790980f9f2f21cbef24bed1643"
+    }
+  ],
+  "R2_S5_S3_S2_G": "NOT_RUN_BY_PREVIOUS_GATE"
+}
