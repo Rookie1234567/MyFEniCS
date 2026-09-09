@@ -51,7 +51,7 @@ def run_projected_store_component(context):
             scratch_required=transient+P_bytes+packet_peak+2*927488+18432+4*331776+4*144*16
             if scratch_required>16*1024**2:raise MemoryError('current patch exceeds unchanged16MiB scratch')
             reserves=32*1024**2+16*1024**2+8*849344+3*849344+4117888
-            fixed_extra=200221608
+            fixed_extra=202120960
             # Raw port packets duplicate carrier storage during setup, and P is transient.
             setup_extra=g['retained_bytes']([ports4,ports2,original_class_ids])
             value=named+reserves+setup_extra
@@ -68,7 +68,7 @@ def run_projected_store_component(context):
                 unbuilt_LU_pivot_bytes=unbuilt_factor_bytes,full_store_extra_prediction_bytes=full_prediction,
                 full_store_policy_deficit_bytes=max(0,full_prediction-fixed_extra),
                 raw_ports_and_class_ids_bytes=setup_extra,reserves_bytes=reserves,
-                extra_bound_bytes=value,extra_limit_bytes=fixed_extra,policy_bytes=531291296,
+                extra_bound_bytes=value,extra_limit_bytes=fixed_extra,policy_bytes=533190648,
                 conservative_factor_bytes=260000000,map_bytes=map_bytes,
                 completed_factors=len(store.factors),classification='named_array_accounting_with_policy_reserves_not_measured_RSS',runtime_original_D_residual='not_measured'))
             if full_prediction>fixed_extra:
@@ -112,7 +112,7 @@ def run_projected_store_component(context):
             raise RuntimeError('store counts differ')
         del ports4,ports2,original_class_ids
         save('projected_store_complete',dict(factors=len(store.factors),counts=dict(bottom.counts),
-            seconds=time.perf_counter()-started,policy_bytes=531291296,runtime_original_D_residual='not_measured'))
+            seconds=time.perf_counter()-started,policy_bytes=533190648,runtime_original_D_residual='not_measured'))
         save('projected_component_start_snapshot',dict(bottom_counts=dict(bottom.counts),trace_counts=dict(trace.counts),
             cached_counts=dict(g['cached'].counts),cached_seconds=dict(g['cached'].seconds),
             S_actions=space.action_count,S_seconds=space.action_seconds,routing=dict(space.owner.routing_costs)))
