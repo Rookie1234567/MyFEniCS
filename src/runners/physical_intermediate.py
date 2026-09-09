@@ -267,6 +267,13 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         destroy_stack = destroy_recursive_physical_solver
 
     try:
+        mode_bridge = None
+        if contract.get('native_capacity'):
+            from src.solvers.native_mode_identity import qualify_native_modes
+            mode_bridge, mode_bytes = qualify_native_modes(cfg)
+            summary['mode_identity_bridge'] = mode_bridge
+            (directory/'native_mode_manifest.json').write_bytes(mode_bytes)
+            _atomic_json(directory/'mode_identity_bridge.json', mode_bridge)
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[signum] = signal.signal(signum, interrupted)
         balanced_apply = policy = None
@@ -314,7 +321,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             summary['positive_diagonals'] = bundle['jacobi_facts']
         summary['mode_sha256'] = fine['mode_sha256']
         summary['setup_qualification'] = qualify_physical_intermediate_setup(
-            bundle, marker=ledger.marker, resource_sample=sample)
+            bundle, marker=ledger.marker, resource_sample=sample,
+            **({'mode_identity_bridge': mode_bridge} if mode_bridge is not None else {}))
         rhs, summary['rhs'] = build_physical_rhs(fine)
         if recursive:
             recursive_identity['rhs_sha256'] = hashlib.sha256(rhs.array.tobytes()).hexdigest()

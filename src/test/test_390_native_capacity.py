@@ -13,6 +13,32 @@ from src.solvers.physical_balanced_fgmres import BalancedScreen
 INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_p6h10.dat')
 
 
+def test_native_real_modes_preserve_historical_identity(tmp_path):
+    from src.io.input_validation import simulation_config_3d_from_normalized
+    from src.solvers.native_mode_identity import WSL_MODE_SHA, qualify_native_modes
+    cfg = simulation_config_3d_from_normalized(load_and_resolve(INPUT).as_jsonable())
+    bridge, encoded = qualify_native_modes(cfg)
+    assert bridge['reference_sha256'] == WSL_MODE_SHA
+    assert bridge['maximum_relative_difference'] <= 1e-10
+    assert len(json.loads(encoded)['modes']) == 80
+
+
+@pytest.mark.parametrize('change', ['order', 'polarization', 'power', 'nonfinite'])
+def test_native_mode_bridge_rejects_changed_physics(change):
+    from src.solvers.native_mode_identity import REFERENCE, compare_mode_manifest
+    data = json.loads(REFERENCE.read_bytes())
+    if change == 'order':
+        data['modes'][0], data['modes'][1] = data['modes'][1], data['modes'][0]
+    elif change == 'polarization':
+        data['modes'][0]['polarization'] = 'p'
+    elif change == 'power':
+        data['modes'][0]['power_per_unit_amplitude'] *= 1.001
+    else:
+        data['modes'][0]['alpha']['real'] = float('nan')
+    with pytest.raises(ValueError):
+        compare_mode_manifest(json.dumps(data).encode())
+
+
 def test_native_v5_math_and_physical_identity():
     original = load_and_resolve('input/task39extra/original_13p5nm_p6h10_balanced_h6_p4_v5.dat')
     native = load_and_resolve(INPUT)

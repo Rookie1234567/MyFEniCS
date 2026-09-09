@@ -1,0 +1,92 @@
+{
+  "source_commit": "72a0f58899dc5d98aa4c170edffb573ed50067c7",
+  "source_branch": "task39extra",
+  "source_directory": "docs/task039_extra_physical_multilevel/outcomes/native_handoff_v1",
+  "import_policy": "read-only git objects; no branch merge; historical mode bytes copied under this task only",
+  "all_package_file_hashes_verified": true,
+  "file_index_sha256": "81f559f15a75eb86839953902b8881017270d01c574a64d5177edea1f6c728a3",
+  "historical_p4_kernel": {
+    "source_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_v5__full3d_iterative__mpi1__Mna/20260908T170758.249958Z/jit_cache/fenics/libffcx_forms_79799d564a37286318398a320ab6392da8558533.c",
+    "bytes": 38004393,
+    "sha256": "ae1dce1ae608c0440bbd7d584a284a5e306931ea846234ba6d518b6f01df9331",
+    "original_source_not_copied": true,
+    "options_excerpt_lines": [
+      570,
+      581
+    ],
+    "functions": [
+      {
+        "line": 593,
+        "name": "tabulate_tensor_integral_d470ef320fb2eddcf8f846d663c468d701941d66_hexahedron"
+      },
+      {
+        "line": 12724,
+        "name": "tabulate_tensor_integral_3e66f9d7904562beb69d74a67b0019cea5c86d37_hexahedron"
+      }
+    ],
+    "historical_compiler_commands": [
+      {
+        "line": 630,
+        "timestamp_ns": 1788887454990794640,
+        "comm": "cc1",
+        "cmdline": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1 -quiet -I /usr/lib/python3/dist-packages/ffcx/codegeneration -I /home/shenjh/Projects/MyFEniCS-Surrogate/.venv/include -I /usr/include/python3.12 -imultiarch x86_64-linux-gnu -D NDEBUG libffcx_forms_79799d564a37286318398a320ab6392da8558533.c -D_FORTIFY_SOURCE=3 -quiet -dumpdir ./ -dumpbase libffcx_forms_79799d564a37286318398a320ab6392da8558533.c -dumpbase-ext .c -mtune=generic -march=x86-64 -g -g0 -O2 -O2 -Wsign-compare -Wall -std=c17 -fno-strict-overflow -fPIC -fasynchronous-unwind-tables -fstack-protector-strong -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/cc3WvJCj.s"
+      }
+    ],
+    "compiler_resource_sha256": "516e224fb9091450e6ceeda8cbf63d78464a76d120f1445590a836898af92778",
+    "historical_ffcx_version": "0.10.1.post0 (generated C comment)",
+    "historical_gcc_major": "13 (recorded cc1 path)",
+    "missing_actual_commands": false,
+    "binary_files_copied": false
+  },
+  "historical_stage_intervals": [
+    {
+      "label": "p4 volume compilation plus metadata interval",
+      "start_line": 8,
+      "end_line": 9,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 13.663678389973938,
+      "UTC_seconds": 16.601660407,
+      "endpoint_max_seconds": 16.601660407,
+      "CPU_seconds": "NOT_RECORDED"
+    },
+    {
+      "label": "p4 volume assembly interval",
+      "start_line": 10,
+      "end_line": 11,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 469.28053951007314,
+      "UTC_seconds": 510.333303996,
+      "endpoint_max_seconds": 510.333303996,
+      "CPU_seconds": "NOT_RECORDED"
+    },
+    {
+      "label": "symbolic interval",
+      "start_line": 13,
+      "end_line": 14,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 0.3222167210187763,
+      "UTC_seconds": 0.322216429,
+      "endpoint_max_seconds": 0.3222167210187763,
+      "CPU_seconds": "NOT_RECORDED"
+    },
+    {
+      "label": "numeric interval",
+      "start_line": 17,
+      "end_line": 18,
+      "classification": "DERIVED_FROM_RAW_CLOCKS",
+      "monotonic_seconds": 19.01408433006145,
+      "UTC_seconds": 21.975209647,
+      "endpoint_max_seconds": 21.975209647,
+      "CPU_seconds": "NOT_RECORDED"
+    }
+  ],
+  "migration_effect": "metadata validation only; A/b/PC/JIT numerical implementation unchanged",
+  "test_results": {
+    "focused": "56 passed, 1 deselected in 2.07s",
+    "excluded": "test_real_e1_inputs_load_without_fe: absent old ignored diagnostic_audit.json; initially attempted, failed FileNotFoundError",
+    "ruff_new_modules": "passed",
+    "compileall_affected": "passed",
+    "diff_check": "passed"
+  },
+  "retry_policy": "R1 first migration retry after source commit; same root cause at most one retry"
+}

@@ -176,7 +176,8 @@ def destroy_physical_intermediate_solver(bundle: dict) -> None:
 
 
 def qualify_physical_intermediate_setup(bundle: dict, *, marker: Callable,
-                                        resource_sample: Callable) -> dict:
+                                        resource_sample: Callable,
+                                        mode_identity_bridge: dict | None = None) -> dict:
     """One legal vector per pair on this actual mesh; no outer solve claim."""
     from contextlib import ExitStack
     from .fullspace_physical_intermediate import apply_owned
@@ -189,8 +190,14 @@ def qualify_physical_intermediate_setup(bundle: dict, *, marker: Callable,
                              for p in levels['spaces']}
     facts['independent_rows'] = {p: rows-facts['owned_slaves'][p] for p, rows in facts['rows'].items()}
     facts['mode_sha256'] = actions['mode_sha256']
-    if (facts['rows']['6'] != 173802 or facts['mode_sha256'] !=
-            'dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2'):
+    expected_mode = 'dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2'
+    if mode_identity_bridge is not None:
+        if (mode_identity_bridge['status'] != 'FIELDWISE_MODE_IDENTITY_PASS' or
+                mode_identity_bridge['reference_sha256'] != expected_mode):
+            raise RuntimeError('unqualified native mode identity bridge')
+        expected_mode = mode_identity_bridge['native_sha256']
+        facts['mode_identity_bridge'] = mode_identity_bridge
+    if facts['rows']['6'] != 173802 or facts['mode_sha256'] != expected_mode:
         raise RuntimeError(f'frozen original storage rows/mode identity mismatch: {facts}')
     rng = np.random.default_rng(3901)
     for fine, coarse in actions['transfers']:

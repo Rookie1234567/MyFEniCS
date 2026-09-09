@@ -20,3 +20,15 @@
 旧哈希为 `dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2`，原生实际为 `d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb`。在本机直接加载旧 V5 dat 也得到后者；physical hash 和 80 通道数一致。一次仅限诊断进程的 NumPy CPU 分派关闭实验又得到 `40b02a2cd1c0c83f8f5475d1ecb1fc231a473d336bf265e4d6511ada0d4ed151`，说明浮点序列化身份可能受硬件执行路径影响，但还未取得旧逐字段数值，不能宣称差异均已解释。未替换固定哈希、未降低数值 Gate，等待笔记本小型元数据移交。
 
 完整来源、逐阶段时间/峰值及原始 artifact hashes：[R1 compact](records/r1_attempt1.json)。R2、S5、S3、S2、G 均 `NOT_RUN_BY_PREVIOUS_GATE`。这是过程记录，任务尚未结项。
+
+## 已取得历史原件并修复身份检查
+
+用户提供 `task39extra` 提交 `72a0f58899dc5d98aa4c170edffb573ed50067c7` 的 native_handoff_v1。已逐个验证资料包文件大小和哈希，只读 Git 对象，不合并该分支代码。历史 80 通道原字节 SHA 与旧冻结值完全一致，副本保存在本任务 records，保留原件身份。
+
+正式 native 环境逐字段比较：12 个浮点字段存在末位差，最大相对差 `1.8786939359547627e-16`；类型、字段、通道数量、顺序和离散标签全部一致。修复使用原 `1e-10` 相对门槛比较每个数值字段，极近零值使用 `1e-30` 尺度下限；原哈希和 native 实际哈希分别保存，不改写历史身份。检查在装配前完成，实际 setup 与验证后的 native 哈希仍须一致。旧 V5 路径保持原校验。A/b/PC、积分和 JIT 参数均未改变。
+
+最终 focused 回归 56 passed、1 deselected（2.07 s）；排除项是确实缺失历史 ignored diagnostic_audit.json 的旧 E1 数据加载测试，曾实际尝试并报告 FileNotFoundError，未改成通过。新回归包含实际 80 通道、错序、错偏振、功率变化和非有限值拒绝。新模块 Ruff、受影响模块 compileall、diff check 通过。
+
+旧 p4 装配区间实测 monotonic 469.280540 s，UTC 510.333304 s；本次区间 2301.507451 s。两边实际 cc1 flags 均为 O2、march=x86-64、mtune=generic，FFCx 版本标记和积分函数名一致；生成 C 的字节哈希不同，不能说生成文件逐字节相同。笔记本当前探测为 i7-13620H，但该探测不补齐历史运行时 CPU/频率证据。变慢尚未完全归因，不以身份 bug 修复冒充性能修复，也未采用 O3 或更改任何浮点设置。
+
+下一步为同一 R1 第一次迁移 retry，worker CPU23、supervisor CPU9、MPI1/线程1、独立冷缓存，仍执行全部原数值/物理/资源 Gate。首次失败仍保留，不计为成功。详见 [identity bridge](records/native_mode_bridge.json) 与 [移交收据](records/handoff_receipt.json)。

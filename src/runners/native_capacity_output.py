@@ -13,9 +13,15 @@ def compare_wsl_observables(fine, outputs, directory, payload):
     compact = Path('docs/task039_extra_physical_multilevel/outcomes/records/balanced_coupling_v5.json')
     data = json.loads(compact.read_text())
     old = data['models'][int(bool(payload['geometry'].get('cell_notch')))]
-    if (old['physical_sha'] != payload['provenance']['physical_model_sha256'] or
-            old['mode_sha'] != fine['mode_sha256']):
+    if old['physical_sha'] != payload['provenance']['physical_model_sha256']:
         raise ValueError('WSL/native physical or ordered mode identity mismatch')
+    mode_bridge = None
+    if old['mode_sha'] != fine['mode_sha256']:
+        from src.solvers.native_mode_identity import qualify_native_modes
+        mode_bridge, _ = qualify_native_modes(fine['cfg'])
+        if (mode_bridge['native_sha256'] != fine['mode_sha256'] or
+                mode_bridge['reference_sha256'] != old['mode_sha']):
+            raise ValueError('WSL/native mode identity bridge mismatch')
     reference = Path(directory)/'tracked_wsl_observables'
     reference.mkdir()
     rows = old['all_mode_observables']
@@ -31,6 +37,7 @@ def compare_wsl_observables(fine, outputs, directory, payload):
               comparison['power_max_absolute_difference'] <= 1e-6 and
               max(differences.values()) <= 1e-5)
     return {'status': 'REFERENCE_AUTHORITY_LIMITED' if passed else 'MATCHED_REFERENCE_FAIL',
+            'mode_identity_bridge': mode_bridge,
             'wsl_modal_power_passed': passed, 'total_absolute_differences': differences,
             'full_field_comparison': 'WSL_FULL_FIELD_COMPARISON_PARTIAL',
             'reason': 'separate native matched reference required for full field qualification',

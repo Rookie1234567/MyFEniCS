@@ -1,0 +1,93 @@
+{
+  "status": "FIELDWISE_MODE_IDENTITY_PASS",
+  "reference_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "native_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+  "tolerance": 1e-10,
+  "changed_numeric_fields": [
+    {
+      "path": "/modes/21/electric_tangential_norm_sq",
+      "wsl": 0.6723578526438061,
+      "native": 0.6723578526438062,
+      "absolute_difference": 1.1102230246251565e-16,
+      "relative_difference": 1.6512382807155483e-16
+    },
+    {
+      "path": "/modes/21/projection_denominator",
+      "wsl": 840.4473158047576,
+      "native": 840.4473158047577,
+      "absolute_difference": 1.1368683772161603e-13,
+      "relative_difference": 1.3526943995621773e-16
+    },
+    {
+      "path": "/modes/25/electric_tangential_norm_sq",
+      "wsl": 0.6723578526438061,
+      "native": 0.6723578526438062,
+      "absolute_difference": 1.1102230246251565e-16,
+      "relative_difference": 1.6512382807155483e-16
+    },
+    {
+      "path": "/modes/25/projection_denominator",
+      "wsl": 840.4473158047576,
+      "native": 840.4473158047577,
+      "absolute_difference": 1.1368683772161603e-13,
+      "relative_difference": 1.3526943995621773e-16
+    },
+    {
+      "path": "/modes/55/electric_tangential_norm_sq",
+      "wsl": 0.7013818901016802,
+      "native": 0.7013818901016803,
+      "absolute_difference": 1.1102230246251565e-16,
+      "relative_difference": 1.5829080281274527e-16
+    },
+    {
+      "path": "/modes/55/projection_denominator",
+      "wsl": 859.1083796660413,
+      "native": 859.1083796660414,
+      "absolute_difference": 1.1368683772161603e-13,
+      "relative_difference": 1.3233119407566385e-16
+    },
+    {
+      "path": "/modes/59/electric_tangential_norm_sq",
+      "wsl": 0.7013818901016802,
+      "native": 0.7013818901016803,
+      "absolute_difference": 1.1102230246251565e-16,
+      "relative_difference": 1.5829080281274527e-16
+    },
+    {
+      "path": "/modes/59/projection_denominator",
+      "wsl": 859.1083796660413,
+      "native": 859.1083796660414,
+      "absolute_difference": 1.1368683772161603e-13,
+      "relative_difference": 1.3233119407566385e-16
+    },
+    {
+      "path": "/modes/67/electric_tangential_norm_sq",
+      "wsl": 0.4959399022206451,
+      "native": 0.49593990222064505,
+      "absolute_difference": 5.551115123125783e-17,
+      "relative_difference": 1.1193120574226502e-16
+    },
+    {
+      "path": "/modes/67/projection_denominator",
+      "wsl": 605.137620055391,
+      "native": 605.1376200553909,
+      "absolute_difference": 1.1368683772161603e-13,
+      "relative_difference": 1.8786939359547627e-16
+    },
+    {
+      "path": "/modes/71/electric_tangential_norm_sq",
+      "wsl": 0.4959399022206451,
+      "native": 0.49593990222064505,
+      "absolute_difference": 5.551115123125783e-17,
+      "relative_difference": 1.1193120574226502e-16
+    },
+    {
+      "path": "/modes/71/projection_denominator",
+      "wsl": 605.137620055391,
+      "native": 605.1376200553909,
+      "absolute_difference": 1.1368683772161603e-13,
+      "relative_difference": 1.8786939359547627e-16
+    }
+  ],
+  "maximum_relative_difference": 1.8786939359547627e-16
+}
