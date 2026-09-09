@@ -15,6 +15,7 @@ from src.io.input_loader import InputError
 from src.io.physical_balanced_profile import (
     BOUNDED_ENTITY_PROFILE,
     BOUNDED_PROFILES,
+    BOUNDED_PROJECTED_PROFILE,
     BOUNDED_ROUTES,
 )
 from .physical_intermediate import _atomic_json
@@ -78,15 +79,30 @@ def _validate_route_and_order(specification, budget: dict) -> str:
     if identity not in BOUNDED_PROFILES:
         raise InputError('bounded V7 ledger received a non-bounded profile')
     route = BOUNDED_ROUTES[identity]
-    if route != 'ENTITY16':
-        raise InputError(
-            'bounded_projected_seq2_16_v7 is registered but route B is not implemented')
-    if identity != BOUNDED_ENTITY_PROFILE:
-        raise InputError('V7 route-A control order requires bounded_entity16_v7')
-
     attempts = budget.get('attempts', [])
     original_attempts = [item for item in attempts if item.get('kind') == 'original']
     notch_attempts = [item for item in attempts if item.get('kind') == 'notch']
+    projected_attempts = [item for item in attempts if item.get('kind') == 'projected']
+
+    if route == 'PROJECTED_SEQ2_16':
+        if identity != BOUNDED_PROJECTED_PROFILE:
+            raise InputError('V7 route-B control order requires bounded_projected_seq2_16_v7')
+        if specification.geometry.get('cell_notch'):
+            raise InputError('V7 projected route is qualified only for the original physical model')
+        if specification.physical_model_sha256 != ORIGINAL_PHYSICAL_SHA:
+            raise InputError('route-B original physical identity differs')
+        if not original_attempts or original_attempts[-1].get('status') == 'RESERVED':
+            raise InputError('route B requires a completed route-A original first')
+        if original_attempts[-1].get('qualified'):
+            raise InputError('route B is conditional and is not opened after a qualified route-A original')
+        if projected_attempts or notch_attempts:
+            raise InputError('route-B projected attempt already reserved; no repeat formal')
+        return 'projected'
+
+    if route != 'ENTITY16':
+        raise InputError(f'unsupported bounded V7 route: {route}')
+    if identity != BOUNDED_ENTITY_PROFILE:
+        raise InputError('V7 route-A control order requires bounded_entity16_v7')
     if specification.geometry.get('cell_notch'):
         if not original_attempts or not original_attempts[-1].get('qualified'):
             raise InputError('V7 notch requires a qualified route-A original first')
@@ -101,7 +117,7 @@ def _validate_route_and_order(specification, budget: dict) -> str:
 
 
 def launch_bounded_workflow(specification, budget_path):
-    """Reserve and launch one original route-A V7 workflow.
+    """Reserve and launch one bounded V7 route-A or conditional route-B workflow.
 
     The reservation prevents two workers from consuming the same batch slot;
     the final ``elapsed_seconds`` is replaced by the qualified conservative

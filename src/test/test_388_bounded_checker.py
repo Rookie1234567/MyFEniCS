@@ -136,3 +136,62 @@ def test_fake_v7_screen_recomputes_true_8_step_nodes_and_mid_budget_gate():
     solve['ksp_create_count'] = 2
     rejected = recompute_bounded_screen(solve, rows)
     assert not rejected['passed']
+
+
+def test_projected_trace_checker_recomputes_one_full_t_and_252_backsolves():
+    from benchmarks.physical_intermediate_checker import recompute_projected_trace_costs
+
+    projected = dict(
+        source_sha='dcca0f5ea6b7ba9221b23dd210a3c06839cc47be',
+        factor_count=252, factor_dimension=144,
+        grouping='structured_cell_coordinate_parity_(i+j+k)%2',
+        group_counts=[126, 126], restored_factor_count=252,
+        setup_s_column_solves=0, no_saved_entity_lu_overlap=True,
+        formula='M0 + M1 - M1*T*M0')
+    trace = dict(
+        entities=dict(HT=2, F=4, FH=4, E=10, EH=4, volume=10, volume_adjoint=4),
+        joint=dict(applications=2, sequential_applications=2, T_started=2,
+                   T_completed=2, group0_patch_apply_rhs=252,
+                   group1_patch_apply_rhs=252, patch_apply_rhs=504,
+                   patch_MatSolve=504, patch_LU=0, restored_factors=252),
+        projected_T=dict(calls=2, F=2, FH=2, A4=4, CU=2, seconds=1.25),
+        B4=dict(applies=2), S_action=dict(calls=7),
+        cached=dict(started=10, completed=10),
+        bottom=dict(MatSolve=6, refinement=0))
+    setup_costs = dict(
+        B4=dict(applies=0), S_action=dict(calls=1),
+        cached=dict(counts=dict(started=0, completed=0)),
+        bottom=dict(counts=dict(MatSolve=0, refinement=0)),
+        trace=dict(
+            counts=dict(HT=0, F=0, FH=0, E=0, EH=0, volume=0, volume_adjoint=0),
+            joint=dict(applications=0, sequential_applications=0, T_started=0,
+                       T_completed=0, group0_patch_apply_rhs=0,
+                       group1_patch_apply_rhs=0, patch_apply_rhs=0,
+                       patch_MatSolve=0, patch_LU=0, restored_factors=252),
+            projected_T=dict(calls=0, F=0, FH=0, A4=0, CU=0, seconds=0.0)))
+    rows = [dict(trace_counts=trace)]
+    terminal = dict(trace_counts=trace)
+    exits = [dict(total=dict(trace=dict(
+        counts=terminal['trace_counts']['entities'],
+        joint=terminal['trace_counts']['joint'],
+        projected_T=terminal['trace_counts']['projected_T']),
+        B4=dict(applies=2), S_action=dict(calls=7),
+        cached=dict(counts=dict(started=10, completed=10)),
+        bottom=dict(counts=dict(MatSolve=6, refinement=0))))]
+    facts = recompute_projected_trace_costs(
+        rows, exits, {'projected': projected}, setup_costs)
+    assert facts['passed'], facts['errors']
+    assert facts['T_calls'] == 2
+    assert facts['patch_backsolves'] == 504
+
+    broken = copy.deepcopy(rows)
+    broken[0]['trace_counts']['joint']['patch_MatSolve'] -= 1
+    rejected = recompute_projected_trace_costs(
+        broken, exits, {'projected': projected}, setup_costs)
+    assert not rejected['passed']
+
+    missing = copy.deepcopy(rows)
+    missing[0]['trace_counts'].pop('projected_T')
+    rejected_missing = recompute_projected_trace_costs(
+        missing, exits, {'projected': projected}, setup_costs)
+    assert not rejected_missing['passed']

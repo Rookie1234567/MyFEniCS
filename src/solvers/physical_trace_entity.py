@@ -96,9 +96,17 @@ class CachedPhysicalTraceAction:
 
 
 class PhysicalTraceEntities:
-    """Borrow frozen classes/map; own 18 internal and 1566 tiny entity factors."""
+    """Borrow frozen classes/map and build entity factors or a J-only map.
+
+    The historical owner route builds the 1566 tiny entity factors and the
+    exact joint inverse.  The projected route passes ``build_joint=False``:
+    it still constructs and checks the current non-Hermitian entity maps
+    ``J``, but retains no entity ``D``/LU and leaves the joint action to the
+    separately restored full252 sequential factors.
+    """
     def __init__(self,mapping,cells,classes,entities,entity_dofs,carrier,*,sample,save,marker,joint_authority=None,
-                 lifecycle='pilot',pilot_eh_limit=263,pilot_ht_limit=65):
+                 lifecycle='pilot',pilot_eh_limit=263,pilot_ht_limit=65,
+                 build_joint=True):
         if lifecycle not in ('pilot','formal'):
             raise ValueError('unknown trace entity lifecycle')
         self.mapping=mapping;self.cells=cells;self.classes=classes;self.sample=sample;self.save=save
@@ -110,25 +118,39 @@ class PhysicalTraceEntities:
             volume=0,volume_adjoint=0,HT=0,entity_apply_rhs=0,F=0,FH=0)
         self.members={key:np.flatnonzero(np.asarray(cells)==key) for key in classes}
         self.joint=None;full_schurs={}
+        # The projected route only needs the Q factors for the current E/F
+        # maps and the entity J maps.  Do not materialize class Schur blocks
+        # when it will not construct the historical joint inverse.
+        need_local_blocks = joint_authority is None or build_joint
         local_blocks={};trace=np.arange(192)
         for index,(key,item) in enumerate(classes.items()):
             sample();marker('trace_Q_factor_started',dict(index=index))
             factor,defect=checked_lu(item['D']);self.factors[key]=factor;self.counts['Q_LU']+=1
             if joint_authority is None:
                 schur,facts=condensed_entity_block(item['A'],item['Q'],factor,trace)
-            else:
+            elif build_joint:
                 A,Q=item['A'],item['Q'];rhs=Q.conj().T@A[:,:192];T=lu_solve(factor,rhs)
                 schur=A[:192,:192]-(A[:192]@Q)@T
                 local_F=np.eye(300,dtype=complex)[:,:192]-Q@T
                 facts=dict(local_solve=relative_defect(item['D']@T-rhs,rhs,item['D']@T),
                     Schur=relative_defect(local_F.conj().T@A@local_F-schur,schur))
                 if not all(np.isfinite(v) and v<=1e-11 for v in facts.values()):raise ValueError('joint trace Schur bridge failed')
-                full_schurs[key]=schur
+                if build_joint:
+                    full_schurs[key]=schur
                 del local_F,T,rhs
-            self.counts['Q_setup_rhs']+=192
-            local_blocks[key]={(d,e):schur[np.ix_(cols,cols)].copy() for d in (1,2) for e,cols in enumerate(entity_dofs[d])}
+            else:
+                schur=None
+                facts=dict(projected_map_only=True, schur='not_built')
+            if need_local_blocks:
+                self.counts['Q_setup_rhs']+=192
+                local_blocks[key]={(d,e):schur[np.ix_(cols,cols)].copy()
+                    for d in (1,2) for e,cols in enumerate(entity_dofs[d])}
+                saved_blocks={str(d)+','+str(e):v
+                    for (d,e),v in local_blocks[key].items()}
+            else:
+                saved_blocks={}
             save(f'trace_class_{index:02d}',dict(class_key=key,D=item['D'],LU=factor[0],pivots=factor[1],factor_relative=defect,
-                schur_facts=facts,blocks={str(d)+','+str(e):v for (d,e),v in local_blocks[key].items()}))
+                schur_facts=facts,blocks=saved_blocks))
         slaves=set(mapping['slaves'].tolist())
         def local_map(rows,canonical):
             lookup={r:i for i,r in enumerate(canonical)};L=np.zeros((len(rows),len(canonical)),complex)
@@ -170,7 +192,7 @@ class PhysicalTraceEntities:
             if not np.isfinite(solve_defect) or solve_defect>1e-11:raise ValueError('entity physical solve gate failed')
             self.blocks.append(dict(rows=rows,J=J,D=D,factor=factor))
         del local_blocks
-        if joint_authority is not None:
+        if joint_authority is not None and build_joint:
             from .physical_trace_cell_patch import CellJointTraceInverse
             self.joint=CellJointTraceInverse(mapping,cells,entities,self.blocks,full_schurs,carrier,
                 joint_authority,sample=sample,save=save,marker=marker)

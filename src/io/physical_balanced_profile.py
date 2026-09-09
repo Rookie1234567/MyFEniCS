@@ -91,7 +91,14 @@ def bounded_profile_facts(identity):
                      cached_exact_volume_and_dtn=True,
                      formal_lifecycle_unbounded_entity_pilot_caps=dict(E_volume=263, HT=65),
                      mpi_owner_route='MPI1-only qualification; safe callback in formal'),
-        route_b=dict(status='registered_not_implemented' if route != 'ENTITY16' else 'conditional'))
+        route_b=dict(
+            status='conditional' if route != 'ENTITY16' else 'conditional',
+            implementation='projected_full252_seq2',
+            source_sha='dcca0f5ea6b7ba9221b23dd210a3c06839cc47be',
+            patch_count=252, patch_dimension=144,
+            grouping='structured_cell_coordinate_parity_(i+j+k)%2',
+            formula='M0 + M1 - M1*T*M0',
+            no_saved_entity_lu_overlap=True))
     facts['outer'].update(max_iterations=2048, restart=32,
         checkpoint_interval=32, safe_snapshot_interval=8,
         safe_snapshot_seconds=120, live_KSP=True, KSP_create_count=1,

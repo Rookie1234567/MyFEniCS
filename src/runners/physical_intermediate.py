@@ -364,7 +364,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 trace_storage=dict(named_payload_bytes=assets['payload_bytes'],
                     extra_local_bytes=assets['extra_local_bytes'],
                     owner_qualification=assets['owner_qualification'],
-                    operator_bridges=assets['operator_bridges']),
+                    operator_bridges=assets['operator_bridges'],
+                    projected=assets.get('projected')),
                 global_p4_matrix=0, global_p4_factor=0,
                 p2_matrix_size=list(assets['matrix'].getSize()),
                 p2_matrix_nnz=assets['matrix'].getInfo()['nz_used'],
@@ -381,7 +382,12 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 I4=dict(calls=setup_snapshot['I4']['calls']),
                 inexact_audit=dict(setup_snapshot['inexact_audit']),
                 S_action=dict(setup_snapshot['S_action']),
-                bottom=dict(counts=setup_snapshot['bottom']['counts']))
+                cached=dict(setup_snapshot['cached']),
+                bottom=dict(counts=setup_snapshot['bottom']['counts']),
+                trace=dict(
+                    counts=setup_snapshot['trace']['counts'],
+                    joint=setup_snapshot['trace']['joint'],
+                    projected_T=setup_snapshot['trace']['projected_T']))
             summary['bounded_setup']['actual_calls_per_PC'] = dict(
                 I4=2, H6=1,
                 positive_setup_metadata_calls_per_PC=(

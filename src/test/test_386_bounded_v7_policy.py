@@ -2,8 +2,6 @@
 
 import json
 from pathlib import Path
-from types import SimpleNamespace
-
 import numpy as np
 import pytest
 
@@ -30,7 +28,8 @@ def test_v7_dat_and_profile_contract_is_single_source_of_truth():
         assert facts['fine_auxiliary']['calls_per_PC'] == dict(I4=2, H6=1)
         assert facts['resources']['reference_p4_factors'] == 0
         assert facts['storage']['p4_global_aij'] == 0
-    assert profile_facts(BOUNDED_PROJECTED_PROFILE)['route_b']['status'] == 'registered_not_implemented'
+    assert profile_facts(BOUNDED_PROJECTED_PROFILE)['route_b']['status'] == 'conditional'
+    assert profile_facts(BOUNDED_PROJECTED_PROFILE)['route_b']['patch_count'] == 252
     assert profile_facts(BOUNDED_ENTITY_PROFILE)['route'] == 'ENTITY16'
 
 
@@ -83,15 +82,97 @@ def test_v7_admission_is_thin_and_zero_does_not_reset_timeout_streak(monkeypatch
     assert saved and saved[-1][0] == 'bounded_i4_cost_blocked'
 
 
-def test_bounded_projected_registration_fails_closed_before_formal_setup():
-    from src.solvers.physical_bounded_runtime import build_formal_bounded
+def test_bounded_projected_registration_binds_saved_full252_inventory():
+    from src.solvers.physical_bounded_runtime import _load_projected_blocks
 
-    ledger = SimpleNamespace(marker=lambda *_: None)
-    with pytest.raises(ValueError, match='route B is not implemented'):
-        build_formal_bounded(SimpleNamespace(), None,
-            profile_facts(BOUNDED_PROJECTED_PROFILE), sample=lambda: None,
-            ledger=ledger, directory=Path('.'), identity=BOUNDED_PROJECTED_PROFILE,
-            save=lambda *_: None, append=lambda *_: None, stop_requested=lambda: False)
+    assets = _load_projected_blocks()
+    assert assets['source_sha'] == 'dcca0f5ea6b7ba9221b23dd210a3c06839cc47be'
+    assert assets['indices'].shape == (252, 144)
+    assert len(assets['factor_descriptors']) == 252
+    assert 'factors' not in assets
+
+
+def test_bounded_j1_projected_route_uses_existing_dispatch_and_b_contract(monkeypatch, tmp_path):
+    from src.runners import physical_recursive_entry as entry
+
+    argv = [
+        '--input', 'original_13p5nm_p6h10_bounded_projected_seq2_16_v7.dat',
+        '--inventory', 'binding.json', '--output', str(tmp_path), '--budget', 'budget.json',
+        '--source-sha', 'a' * 40, '--bounded-j1-controls',
+        '--bounded-j1-route', 'PROJECTED_SEQ2_16',
+    ]
+    args = entry.build_parser().parse_args(argv)
+    contract = entry.selected_contract(args)
+    assert contract['profile'] == 'bounded_projected_seq2_16_v7'
+    assert contract['route'] == 'PROJECTED_SEQ2_16'
+    assert contract['finite_comparison']['outer_calls'] == 0
+    assert contract['finite_comparison']['I4_calls'] == 0
+    assert contract['controls_limit_seconds'] == 5400
+
+    calls = []
+
+    def fake(*call_args, **call_kwargs):
+        calls.append((call_args, call_kwargs))
+        return {'status': 'B_FINITE_COMPARISON_AND_CONTROLS_COMPLETED'}
+
+    monkeypatch.setattr('src.runners.physical_bounded_j1.run_j1_controls', fake)
+    result = entry.dispatch_components(
+        args, None, None, tmp_path, sample=lambda: None, marker=lambda *values: None,
+        source_sha={'head': 'a' * 40}, input_path=Path(argv[1]))
+    assert result['status'] == 'B_FINITE_COMPARISON_AND_CONTROLS_COMPLETED'
+    assert len(calls) == 1
+    assert calls[0][1]['contract']['route'] == 'PROJECTED_SEQ2_16'
+
+
+def test_projected_j1_comparison_helper_uses_current_store_once_for_T(tmp_path):
+    from src.runners.physical_bounded_j1 import _projected_seq2_finite_comparison
+    from src.solvers.physical_projected_trace import ProjectedSequentialTraceFactorStore
+
+    indices = np.array([[0, 1], [1, 2], [2, 3]], dtype=np.int64)
+    weights = 1.0 / np.sqrt([1, 2, 2, 1])
+    offsets = np.array([0, 1, 2, 4], dtype=np.int64)
+    coordinates = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.int64)
+    matrices = [
+        np.array([[2.0 + .2j, .4 - .1j], [.1 + .3j, 1.7 - .2j]]),
+        np.array([[1.4 - .3j, -.2 + .5j], [.6 + .1j, 2.2 + .4j]]),
+        np.array([[1.8 + .1j, .7 + .2j], [-.3 + .4j, 1.3 - .2j]]),
+    ]
+    complete = np.array([
+        [2.0 + .1j, .2 - .4j, -.1 + .2j, .0 + .3j],
+        [.5 + .2j, 1.1 - .2j, .3 + .1j, -.2j],
+        [.4 - .1j, .0 + .5j, 1.7 + .3j, .2 - .2j],
+        [-.3 + .2j, .6 + .1j, .1 - .3j, 1.2 + .4j],
+    ])
+    store = ProjectedSequentialTraceFactorStore(
+        indices, weights, offsets, coordinates, lambda value: complete @ value)
+    for matrix in matrices:
+        store.append(matrix, save=lambda *_: None)
+
+    class Trace:
+        def __init__(self):
+            self.joint = store
+            self.counts = {'FH': 0, 'F': 0}
+
+        def FH(self, value):
+            self.counts['FH'] += 1
+            return [np.asarray(value, dtype=np.complex128).copy()]
+
+        def F(self, coefficients):
+            self.counts['F'] += 1
+            return np.concatenate(coefficients)
+
+    trace = Trace()
+    rhs = np.array([1.0 + .2j, -.3 + .5j, 2.0 - 1.0j, .7 + .4j])
+    saved = []
+    summary = _projected_seq2_finite_comparison(
+        trace, rhs, sample=lambda: None,
+        save=lambda name, facts: saved.append((name, facts)))
+    assert summary['status'] == 'FINITE_COMPARISON_COMPLETED'
+    assert summary['sequential_T_calls'] == 1
+    assert summary['additive_T_calls'] == 0
+    assert summary['input_unchanged']
+    assert saved and saved[0][0] == 'projected_seq2_finite_comparison'
+    assert np.array_equal(rhs, np.array([1.0 + .2j, -.3 + .5j, 2.0 - 1.0j, .7 + .4j]))
 
 
 def test_v7_outer_screen_seeds_zero_and_checks_non8_mid_boundary():
@@ -150,7 +231,7 @@ def test_v7_batch_charges_one_outer_dual_clock_for_setup_and_failure(monkeypatch
     assert entry['nested_intervals_not_added']
 
 
-def test_v7_failed_launch_is_charged_and_route_b_is_rejected(monkeypatch, tmp_path):
+def test_v7_failed_launch_is_charged_and_route_b_opens_once(monkeypatch, tmp_path):
     from src.runners import physical_bounded_budget as budget_module
 
     specification = load_and_resolve(
@@ -178,8 +259,11 @@ def test_v7_failed_launch_is_charged_and_route_b_is_rejected(monkeypatch, tmp_pa
 
     projected = load_and_resolve(
         Path('input/task39extra/original_13p5nm_p6h10_bounded_projected_seq2_16_v7.dat'))
-    with pytest.raises(InputError, match='route B is not implemented'):
-        budget_module.launch_bounded_workflow(projected, path)
+    budget = json.loads(path.read_text())
+    assert budget_module._validate_route_and_order(projected, budget) == 'projected'
+    budget['attempts'].append(dict(kind='projected', status='FAILED', qualified=False))
+    with pytest.raises(InputError, match='already reserved'):
+        budget_module._validate_route_and_order(projected, budget)
 
     notch = load_and_resolve(
         Path('input/task39extra/nonseparable_13p5nm_p6h10_bounded_entity16_v7.dat'))

@@ -466,6 +466,277 @@ def recompute_bounded_costs(i4_rows, pc_rows, exit_rows=(), setup_costs=None,
                 setup=setup, setup_counts_separate=True)
 
 
+def recompute_projected_trace_costs(pc_rows, exit_rows=(), storage=None,
+                                    setup_costs=None) -> dict:
+    """Recompute full252 sequential-route work from raw lifetime counters.
+
+    Route B keeps the generic BAL_H accounting, but every trace application
+    additionally performs one complete current physical ``T`` action and one
+    backsolve in each of the 252 restored patch factors.  All comparisons are
+    deltas from the saved setup snapshot, so a finite prerequisite fixture is
+    not mistaken for solve work and its counters are never assumed to start at
+    zero.
+    """
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    def count(container, key, label):
+        value = container.get(key) if isinstance(container, dict) else None
+        valid = (isinstance(value, (int, np.integer)) and not isinstance(value, bool)
+                 and value >= 0)
+        require(valid, f'{label} {key} is missing or invalid')
+        return int(value) if valid else None
+
+    def scalar(container, key, label):
+        value = container.get(key) if isinstance(container, dict) else None
+        valid = (isinstance(value, (int, float, np.integer, np.floating))
+                 and not isinstance(value, bool) and np.isfinite(value) and value >= 0)
+        require(valid, f'{label} {key} is missing or invalid')
+        return float(value) if valid else None
+
+    projected = (storage or {}).get('projected') if isinstance(storage, dict) else None
+    require(isinstance(projected, dict), 'projected trace setup identity is missing')
+    if isinstance(projected, dict):
+        require(projected.get('source_sha') == 'dcca0f5ea6b7ba9221b23dd210a3c06839cc47be',
+                'projected trace source identity differs')
+        require(projected.get('factor_count') == 252,
+                'projected trace factor count is not 252')
+        require(projected.get('factor_dimension') == 144,
+                'projected trace factor dimension is not 144')
+        require(projected.get('grouping') == 'structured_cell_coordinate_parity_(i+j+k)%2',
+                'projected trace grouping identity differs')
+        require(projected.get('group_counts') and
+                sum(projected.get('group_counts', ())) == 252,
+                'projected trace group counts do not cover 252 factors')
+        require(projected.get('restored_factor_count') == 252,
+                'projected trace did not restore exactly 252 factors')
+        require(projected.get('setup_s_column_solves') == 0,
+                'projected trace performed forbidden setup S-column solves')
+        require(projected.get('no_saved_entity_lu_overlap') is True,
+                'projected trace retained the old entity LU path')
+        require(projected.get('formula') == 'M0 + M1 - M1*T*M0',
+                'projected trace formula identity differs')
+
+    setup = setup_costs if isinstance(setup_costs, dict) else {}
+    setup_trace = setup.get('trace', {})
+    setup_entities = setup_trace.get('counts', {}) if isinstance(setup_trace, dict) else {}
+    setup_joint = setup_trace.get('joint', {}) if isinstance(setup_trace, dict) else {}
+    setup_T = setup_trace.get('projected_T', {}) if isinstance(setup_trace, dict) else {}
+    setup_B4 = setup.get('B4', {})
+    setup_S = setup.get('S_action', {})
+    setup_cached = setup.get('cached', {})
+    setup_cached = (setup_cached.get('counts', {})
+                    if isinstance(setup_cached, dict) and 'counts' in setup_cached
+                    else setup_cached)
+    setup_bottom = setup.get('bottom', {})
+    setup_bottom = (setup_bottom.get('counts', {})
+                    if isinstance(setup_bottom, dict) and 'counts' in setup_bottom
+                    else setup_bottom)
+    for container, label in ((setup_trace, 'projected setup trace'),
+                             (setup_T, 'projected setup T'),
+                             (setup_joint, 'projected setup joint'),
+                             (setup_B4, 'projected setup B4'),
+                             (setup_S, 'projected setup S'),
+                             (setup_cached, 'projected setup cached A4'),
+                             (setup_bottom, 'projected setup bottom')):
+        require(isinstance(container, dict), f'{label} baseline is missing')
+    for key in ('calls', 'F', 'FH', 'A4', 'CU'):
+        count(setup_T, key, 'projected setup T')
+    scalar(setup_T, 'seconds', 'projected setup T')
+    # The setup trace is the only authoritative baseline for the inner
+    # counters; the generic setup costs provide the B4 and coarse-S baselines.
+    base_T = {key: count(setup_T, key, 'projected setup T')
+              for key in ('calls', 'F', 'FH', 'A4', 'CU')}
+    base_entities = {key: count(setup_entities, key, 'projected setup entity')
+                     for key in ('HT', 'F', 'FH', 'E', 'EH', 'volume', 'volume_adjoint')}
+    base_joint = {key: count(setup_joint, key, 'projected setup joint')
+                  for key in ('applications', 'sequential_applications', 'T_started',
+                              'T_completed', 'patch_apply_rhs', 'patch_MatSolve',
+                              'group0_patch_apply_rhs', 'group1_patch_apply_rhs',
+                              'patch_LU', 'restored_factors')}
+    base_b4 = count(setup_B4, 'applies', 'projected setup B4')
+    base_s = count(setup_S, 'calls', 'projected setup S')
+    base_cached = {key: count(setup_cached, key, 'projected setup cached A4')
+                   for key in ('started', 'completed')}
+    base_bottom = {key: count(setup_bottom, key, 'projected setup bottom')
+                   for key in ('MatSolve', 'refinement')}
+    if (any(value is None for value in base_T.values()) or
+            any(value is None for value in base_entities.values()) or
+            any(value is None for value in base_joint.values()) or
+            base_b4 is None or base_s is None or
+            any(value is None for value in base_cached.values()) or
+            any(value is None for value in base_bottom.values())):
+        return dict(passed=False, errors=errors,
+                    completed_pc_count=len(pc_rows), T_calls=0,
+                    patch_backsolves=0, bottom_mat_solves=0, setup=projected)
+
+    traces = [row.get('trace_counts', {}) for row in pc_rows]
+    require(bool(traces), 'projected trace has no completed PC snapshots')
+    previous = {}
+    last = None
+    for index, trace in enumerate(traces, 1):
+        entities = trace.get('entities') if isinstance(trace, dict) else None
+        joint = trace.get('joint') if isinstance(trace, dict) else None
+        current = trace.get('projected_T') if isinstance(trace, dict) else None
+        b4 = trace.get('B4') if isinstance(trace, dict) else None
+        coarse = trace.get('S_action') if isinstance(trace, dict) else None
+        cached = trace.get('cached') if isinstance(trace, dict) else None
+        bottom = trace.get('bottom') if isinstance(trace, dict) else None
+        if not isinstance(entities, dict):
+            require(False, f'projected PC {index} entity counters missing')
+        if not isinstance(joint, dict):
+            require(False, f'projected PC {index} joint counters missing')
+        if not isinstance(current, dict):
+            require(False, f'projected PC {index} T counters missing')
+            continue
+        if not isinstance(b4, dict):
+            require(False, f'projected PC {index} B4 counters missing')
+            continue
+        if not isinstance(coarse, dict):
+            require(False, f'projected PC {index} S counters missing')
+            continue
+        if not isinstance(cached, dict):
+            require(False, f'projected PC {index} cached A4 counters missing')
+            continue
+        if not isinstance(bottom, dict):
+            require(False, f'projected PC {index} bottom counters missing')
+            continue
+
+        t_keys = ('calls', 'F', 'FH', 'A4', 'CU')
+        t_values = {key: count(current, key, f'projected PC {index} T') for key in t_keys}
+        seconds = scalar(current, 'seconds', f'projected PC {index} T')
+        if any(value is None for value in t_values.values()) or seconds is None:
+            continue
+        if previous:
+            for key in (*t_keys, 'seconds'):
+                left = seconds if key == 'seconds' else t_values[key]
+                right = previous[key]
+                require(left >= right,
+                        f'projected T lifetime counter regressed: {key} at PC {index}')
+        previous = dict(t_values, seconds=seconds)
+
+        b4_value = count(b4, 'applies', f'projected PC {index} B4')
+        s_value = count(coarse, 'calls', f'projected PC {index} S')
+        cached_values = {key: count(cached, key, f'projected PC {index} cached A4')
+                         for key in ('started', 'completed')}
+        bottom_values = {key: count(bottom, key, f'projected PC {index} bottom')
+                         for key in ('MatSolve', 'refinement')}
+        entity_values = {key: count(entities, key, f'projected PC {index} entity')
+                         for key in ('HT', 'F', 'FH', 'E', 'EH', 'volume', 'volume_adjoint')}
+        joint_values = {key: count(joint, key, f'projected PC {index} joint')
+                        for key in ('applications', 'sequential_applications', 'T_started',
+                                    'T_completed', 'patch_apply_rhs', 'patch_MatSolve',
+                                    'group0_patch_apply_rhs', 'group1_patch_apply_rhs',
+                                    'patch_LU', 'restored_factors')}
+        if b4_value is None or s_value is None or any(value is None for value in cached_values.values()) or \
+                any(value is None for value in bottom_values.values()) or \
+                any(value is None for value in entity_values.values()) or \
+                any(value is None for value in joint_values.values()):
+            continue
+        if last is not None:
+            for key in joint_values:
+                require(joint_values[key] >= last['joint'][key],
+                        f'projected joint lifetime counter regressed: {key} at PC {index}')
+        delta_t = {key: t_values[key] - base_T[key] for key in t_keys}
+        delta_b4 = b4_value - base_b4
+        delta_s = s_value - base_s
+        delta_cached = {key: cached_values[key] - base_cached[key]
+                        for key in cached_values}
+        delta_bottom = {key: bottom_values[key] - base_bottom[key]
+                        for key in bottom_values}
+        delta_entities = {key: entity_values[key] - base_entities[key]
+                          for key in entity_values}
+        delta_joint = {key: joint_values[key] - base_joint[key]
+                       for key in joint_values}
+        require(all(value >= 0 for value in (*delta_t.values(), delta_b4, delta_s,
+                                               *delta_bottom.values(),
+                                               *delta_entities.values(), *delta_joint.values())),
+                f'projected lifetime counter regressed across setup at PC {index}')
+        calls = delta_t['calls']
+        require(delta_b4 == calls and delta_entities['HT'] == calls,
+                f'projected PC {index} B4/HT/T call deltas differ')
+        require(delta_t['F'] == calls and delta_t['FH'] == calls and
+                delta_t['A4'] == 2 * calls and delta_t['CU'] == calls,
+                f'projected PC {index} T physical/coarse costs differ')
+        require(delta_cached['started'] == delta_cached['completed'] ==
+                3 * delta_b4 + 2 * calls,
+                f'projected PC {index} cached A4 cost misses base or T actions')
+        require(delta_joint['applications'] == calls and
+                delta_joint['sequential_applications'] == calls and
+                delta_joint['T_started'] == calls and delta_joint['T_completed'] == calls,
+                f'projected PC {index} does not have one complete T per apply')
+        require(delta_joint['group0_patch_apply_rhs'] + delta_joint['group1_patch_apply_rhs'] == 252 * calls and
+                delta_joint['patch_apply_rhs'] == 252 * calls and
+                delta_joint['patch_MatSolve'] == 252 * calls,
+                f'projected PC {index} patch backsolve count differs from 252*T')
+        require(joint_values['patch_LU'] == base_joint['patch_LU'] and
+                joint_values['restored_factors'] == base_joint['restored_factors'] == 252,
+                f'projected PC {index} refactored or lost restored factors')
+        require(delta_entities['F'] == 2 * calls and delta_entities['FH'] == 2 * calls and
+                delta_entities['E'] == 5 * calls and delta_entities['volume'] == 5 * calls and
+                delta_entities['EH'] == 2 * calls and
+                delta_entities['volume_adjoint'] == 2 * calls,
+                f'projected PC {index} physical F/CU callback costs differ')
+        # The two ordinary BAL_H C calls cost 2 logical S applications per
+        # B4. T contributes one additional coarse/S feedback. A bottom
+        # refinement performs one extra physical S action and is reported
+        # separately; it is not a patch MatSolve.
+        logical_s = delta_s - delta_bottom['refinement']
+        require(logical_s == 2 * delta_b4 + delta_t['CU'] and
+                delta_bottom['MatSolve'] == delta_s,
+                f'projected PC {index} coarse S logical cost differs')
+        last = dict(projected=t_values, joint=joint_values, entities=entity_values,
+                    b4=b4_value, S=s_value, cached=cached_values,
+                    bottom=bottom_values)
+
+    terminal = list(exit_rows or [])[-1].get('total', {}) if exit_rows else {}
+    terminal_trace = terminal.get('trace', {}) if isinstance(terminal, dict) else {}
+    require(isinstance(terminal_trace, dict), 'projected terminal trace snapshot is missing')
+    if isinstance(terminal_trace, dict) and last is not None:
+        terminal_projected = terminal_trace.get('projected_T')
+        terminal_joint = terminal_trace.get('joint')
+        terminal_entities = terminal_trace.get('counts')
+        terminal_b4 = terminal.get('B4', {}) if isinstance(terminal, dict) else {}
+        terminal_s = terminal.get('S_action', {}) if isinstance(terminal, dict) else {}
+        terminal_cached = terminal.get('cached', {}).get('counts', {}) \
+            if isinstance(terminal, dict) else {}
+        terminal_bottom = terminal.get('bottom', {}).get('counts', {}) \
+            if isinstance(terminal, dict) else {}
+        for key, value in last['projected'].items():
+            actual = scalar(terminal_projected, key, 'projected terminal T')
+            require(actual is not None and np.isclose(actual, float(value), rtol=0, atol=1e-10),
+                    f'projected terminal T counter differs: {key}')
+        for key, value in last['joint'].items():
+            actual = count(terminal_joint, key, 'projected terminal joint')
+            require(actual == value, f'projected terminal joint counter differs: {key}')
+        for key, value in last['entities'].items():
+            actual = count(terminal_entities, key, 'projected terminal entity')
+            require(actual == value, f'projected terminal entity counter differs: {key}')
+        require(count(terminal_b4, 'applies', 'projected terminal B4') == last['b4'],
+                'projected terminal B4 counter differs')
+        require(count(terminal_s, 'calls', 'projected terminal S') == last['S'],
+                'projected terminal S counter differs')
+        for key, value in last['cached'].items():
+            actual = count(terminal_cached, key, 'projected terminal cached A4')
+            require(actual == value, f'projected terminal cached A4 counter differs: {key}')
+        for key, value in last['bottom'].items():
+            actual = count(terminal_bottom, key, 'projected terminal bottom')
+            require(actual == value, f'projected terminal bottom counter differs: {key}')
+
+    setup_calls = base_T['calls']
+    return dict(passed=not errors, errors=errors,
+                completed_pc_count=len(pc_rows),
+                T_calls=(last['projected']['calls'] - setup_calls) if last else 0,
+                patch_backsolves=(last['joint']['patch_MatSolve'] - base_joint['patch_MatSolve'])
+                if last else 0,
+                bottom_mat_solves=(last['bottom']['MatSolve'] - base_bottom['MatSolve'])
+                if last else 0,
+                setup=projected)
+
+
 def bounded_output_classification(summary, errors, expected_errors=()):
     """Classify bounded results without allowing schema errors to pass."""
     if not errors:
@@ -742,6 +1013,22 @@ def check(directory: Path) -> dict:
         require(facts['bounded_costs']['passed'],
                 'bounded cumulative cost accounting failed: '+
                 str(facts['bounded_costs']['errors']))
+        storage = summary.get('bounded_setup', {}).get('trace_storage')
+        from src.io.physical_balanced_profile import BOUNDED_PROJECTED_PROFILE
+        projected_route = summary['profile']['identity'] == BOUNDED_PROJECTED_PROFILE
+        route_fact = summary.get('bounded_setup', {}).get('route', {})
+        if projected_route:
+            require(isinstance(route_fact, dict) and
+                    route_fact.get('route') == 'PROJECTED_SEQ2_16',
+                    'projected profile does not bind PROJECTED_SEQ2_16 route')
+            facts['bounded_projected_trace'] = recompute_projected_trace_costs(
+                rows['pc_applies.jsonl'], rows['bounded_exit_audit.jsonl'], storage,
+                setup_costs)
+            require(facts['bounded_projected_trace']['passed'],
+                    'projected full252/T accounting failed: ' +
+                    str(facts['bounded_projected_trace']['errors']))
+        elif isinstance(storage, dict) and storage.get('projected') is not None:
+            require(False, 'non-projected bounded profile carries projected trace storage')
         iteration_rows = rows['iterations.jsonl']
         require(bool(iteration_rows), 'bounded iterations ledger is empty')
         if iteration_rows:
@@ -751,7 +1038,6 @@ def check(directory: Path) -> dict:
                     'bounded iterations ledger does not end at solve iteration')
 
         binding = summary.get('bounded_binding', {})
-        storage = summary.get('bounded_setup', {}).get('trace_storage')
         require(isinstance(binding, dict) and isinstance(storage, dict),
                 'bounded source/physical/mode/RHS/storage binding is missing')
         if isinstance(binding, dict) and isinstance(storage, dict):

@@ -161,6 +161,35 @@ class SetupCheckedTraceFactor:
         save('factor_only_same_action', dict(bitwise_equal=same, fixed_rhs=rhs))
         if not same: raise ValueError('factor-only action changed')
 
+    @classmethod
+    def from_saved(cls, lu, pivots, *, facts=None):
+        """Restore one hash-bound LU without retaining its original matrix.
+
+        The formal projected route reuses the already-qualified 144-by-144
+        factors.  Reconstructing them with ``checked_lu`` would silently turn
+        a restore into a new 252-block setup, so this constructor only checks
+        the saved factor layout and finite data.
+        """
+        lu = np.asarray(lu)
+        pivots = np.asarray(pivots)
+        if lu.ndim != 2 or lu.shape[0] != lu.shape[1] or lu.dtype != np.complex128:
+            raise ValueError('saved projected LU must be square complex128')
+        if pivots.shape != (lu.shape[0],) or not np.issubdtype(pivots.dtype, np.integer):
+            raise ValueError('saved projected pivots have the wrong shape')
+        if (not np.isfinite(lu).all() or np.any(pivots < 0) or
+                np.any(pivots >= lu.shape[0])):
+            raise ValueError('saved projected factor is nonfinite or has invalid pivots')
+        restored = object.__new__(cls)
+        restored.factor = (np.array(lu, copy=True), np.array(pivots, dtype=np.int32, copy=True))
+        restored.dimension = int(lu.shape[0])
+        restored.setup_facts = dict(facts or {})
+        restored.setup_facts.update(
+            restored_factor=True,
+            retained_original_D=False,
+            runtime_original_D_residual='not_measured',
+        )
+        return restored
+
     def apply(self, rhs):
         if rhs.shape != (self.dimension,) or not np.isfinite(rhs).all(): raise ValueError('invalid factor-only RHS')
         before = rhs.copy();value = lu_solve(self.factor, rhs)
@@ -241,6 +270,17 @@ class ProjectedTraceFactorStore:
         self.factors.append(factor);self.counts['patch_LU']+=1
         return factor.setup_facts
 
+    def append_saved_factor(self, lu, pivots, *, facts=None):
+        """Append one existing factor without refactoring or retaining ``D``."""
+        if len(self.factors) >= len(self.indices):
+            raise ValueError('projected factor store capacity')
+        factor = SetupCheckedTraceFactor.from_saved(lu, pivots, facts=facts)
+        if factor.dimension != self.indices.shape[1]:
+            raise ValueError('saved projected factor dimension differs')
+        self.factors.append(factor)
+        self.counts['restored_factors'] = self.counts.get('restored_factors', 0) + 1
+        return factor.setup_facts
+
     def apply(self, coefficients, sample):
         if len(self.factors)!=len(self.indices):raise ValueError('incomplete projected store')
         rhs=np.concatenate(coefficients)
@@ -259,3 +299,223 @@ class ProjectedTraceFactorStore:
 
     def storage(self):
         return [self.indices,self.weights,self.offsets,[f.factor for f in self.factors]]
+
+
+def structured_cell_parity_groups(cell_coordinates):
+    """Return the fixed structured ``(i+j+k) % 2`` factor groups.
+
+    Coordinates are supplied by the tensor-product mesh order, not inferred
+    from rows, materials, residuals, or a reference field.  The returned
+    arrays always enumerate group 0 completely before group 1; the groups are
+    an ordered additive split and are not asserted to be uncoupled.
+    """
+    coordinates = np.asarray(cell_coordinates)
+    if coordinates.ndim != 2 or coordinates.shape[1] != 3 or not coordinates.shape[0]:
+        raise ValueError('structured cell coordinates must have shape (n, 3)')
+    if np.issubdtype(coordinates.dtype, np.integer):
+        integer = coordinates.astype(np.int64, copy=False)
+    else:
+        if not np.isfinite(coordinates).all() or not np.allclose(
+                coordinates, np.rint(coordinates), rtol=0., atol=0.):
+            raise ValueError('structured cell coordinates must be exact integers')
+        integer = np.rint(coordinates).astype(np.int64)
+    parity = np.mod(integer.sum(axis=1), 2)
+    groups = (np.flatnonzero(parity == 0), np.flatnonzero(parity == 1))
+    if any(len(group) == 0 for group in groups):
+        raise ValueError('structured parity split must contain both groups')
+    return groups
+
+
+def structured_mesh_cell_coordinates(mesh, axis_values):
+    """Recover canonical cell coordinates from the actual mesh geometry.
+
+    The coordinate is assigned by the cell centroid and the explicit Stage-4
+    axis planes.  This keeps the factor-cell correspondence tied to the
+    current physical mesh rather than assuming a row or construction order.
+    """
+    axes = tuple(np.asarray(axis, dtype=float) for axis in axis_values)
+    if len(axes) != 3 or any(axis.ndim != 1 or len(axis) < 2 or
+                              not np.isfinite(axis).all() or
+                              np.any(np.diff(axis) <= 0) for axis in axes):
+        raise ValueError('structured mesh axes are invalid')
+    geometry = np.asarray(mesh.geometry.x, dtype=float)
+    dofmap = np.asarray(mesh.geometry.dofmap, dtype=np.int64)
+    if dofmap.ndim != 2 or dofmap.shape[0] != mesh.topology.index_map(mesh.topology.dim).size_local:
+        raise ValueError('structured mesh cell geometry map is incomplete')
+    centers = geometry[dofmap].mean(axis=1)
+    coordinates = np.empty((len(centers), 3), dtype=np.int64)
+    for cell, center in enumerate(centers):
+        for direction, axis in enumerate(axes):
+            index = int(np.searchsorted(axis, center[direction], side='right') - 1)
+            if index < 0 or index >= len(axis) - 1:
+                raise ValueError('cell centroid falls outside structured axes')
+            expected = .5 * (axis[index] + axis[index + 1])
+            if not np.isclose(center[direction], expected, rtol=0., atol=1e-11):
+                raise ValueError('cell centroid is not a canonical structured cell')
+            coordinates[cell, direction] = index
+    expected_count = int(np.prod([len(axis) - 1 for axis in axes]))
+    if len(coordinates) != expected_count or len(np.unique(coordinates, axis=0)) != expected_count:
+        raise ValueError('structured mesh cells do not form the complete canonical grid')
+    return coordinates
+
+
+class ProjectedSequentialTraceFactorStore(ProjectedTraceFactorStore):
+    """Two-group sequential projected inverse with one complete ``T`` call.
+
+    With ``M0`` and ``M1`` the two additive patch groups, the apply is
+    ``d0=M0*f``, ``f1=f-T*d0``, ``d1=M1*f1``, and ``z=d0+d1``.  Thus the
+    realized operator is ``M0 + M1 - M1*T*M0``; the groups are an ordered
+    sequential schedule, not an assertion that the physical blocks decouple.
+    """
+    def __init__(self, indices, weights, offsets, cell_coordinates, complete_T,
+                 *, sample=lambda: None):
+        super().__init__(indices, weights, offsets)
+        self.group_members = structured_cell_parity_groups(cell_coordinates)
+        if len(self.group_members[0]) + len(self.group_members[1]) != len(self.indices):
+            raise ValueError('cell coordinate/factor count differs')
+        self.set_complete_T(complete_T)
+        self.sample = sample
+        self.counts.update(
+            sequential_applications=0,
+            group0_patch_apply_rhs=0,
+            group1_patch_apply_rhs=0,
+            patch_MatSolve=0,
+            T_started=0,
+            T_completed=0,
+            additive_applications=0,
+        )
+
+    def set_complete_T(self, complete_T):
+        if not callable(complete_T):
+            raise TypeError('complete projected T must be callable')
+        self.complete_T = complete_T
+
+    def _apply_group(self, rhs, group, label):
+        result = np.zeros_like(rhs)
+        for ordinal, index in enumerate(group):
+            if ordinal % 8 == 0:
+                self.sample()
+            rows = self.indices[index]
+            value = self.factors[index].apply(self.weights[rows] * rhs[rows])
+            np.add.at(result, rows, self.weights[rows] * value)
+            self.counts[f'{label}_patch_apply_rhs'] += 1
+            self.counts['patch_apply_rhs'] += 1
+            self.counts['patch_MatSolve'] += 1
+        return result
+
+    def _flat_rhs(self, coefficients):
+        if len(self.factors) != len(self.indices):
+            raise ValueError('incomplete sequential projected store')
+        rhs = np.concatenate(coefficients) if not isinstance(coefficients, np.ndarray) else np.asarray(coefficients)
+        if rhs.shape != self.weights.shape or not np.isfinite(rhs).all():
+            raise ValueError('invalid sequential projected RHS')
+        return rhs
+
+    def apply_additive(self, coefficients):
+        """Apply the old all-block additive action for the finite comparison."""
+        rhs = self._flat_rhs(coefficients)
+        result = self._apply_group(rhs, self.group_members[0], 'group0')
+        result += self._apply_group(rhs, self.group_members[1], 'group1')
+        self.sample()
+        self.counts['additive_applications'] += 1
+        return [result[a:b] for a, b in zip(self.offsets[:-1], self.offsets[1:], strict=True)]
+
+    def apply_explicit_sequential(self, coefficients, sample=None):
+        """Return an independently staged ``d0/T/d1`` sequential apply.
+
+        This is the finite same-input witness for the compact ``apply`` path:
+        it exposes the two group solves and the complete current ``T`` as
+        separate stages, while using the same saved factors and callback.
+        The method is deliberately separate from ``apply`` so a comparison
+        cannot pass merely because both sides call the same formula wrapper.
+        """
+        if sample is not None:
+            previous = self.sample
+            self.sample = sample
+        else:
+            previous = None
+        try:
+            rhs = self._flat_rhs(coefficients)
+            d0 = self._apply_group(rhs, self.group_members[0], 'group0')
+            self.counts['T_started'] += 1
+            self.sample()
+            T_d0 = np.asarray(self.complete_T(d0.copy()))
+            self.counts['T_completed'] += 1
+            if T_d0.shape != rhs.shape or not np.isfinite(T_d0).all():
+                raise ValueError('explicit projected T returned an invalid vector')
+            f1 = rhs - T_d0
+            d1 = self._apply_group(f1, self.group_members[1], 'group1')
+            result = d0 + d1
+            if not np.isfinite(result).all():
+                raise ValueError('explicit sequential projected result is nonfinite')
+            self.counts['explicit_applications'] = self.counts.get(
+                'explicit_applications', 0) + 1
+            self.last_explicit_facts = dict(
+                group0_factors=int(len(self.group_members[0])),
+                group1_factors=int(len(self.group_members[1])),
+                local_backsolves=int(len(self.indices)),
+                T_calls=1,
+                formula='d0=M0*f; f1=f-T*d0; d1=M1*f1; z=d0+d1',
+                finite=True,
+            )
+            return dict(
+                coefficients=[result[a:b] for a, b in zip(
+                    self.offsets[:-1], self.offsets[1:], strict=True)],
+                d0=d0, T_d0=T_d0, f1=f1, d1=d1, result=result,
+                facts=dict(self.last_explicit_facts),
+            )
+        finally:
+            if previous is not None:
+                self.sample = previous
+
+    def apply(self, coefficients, sample=None):
+        if sample is not None:
+            previous = self.sample
+            self.sample = sample
+        else:
+            previous = None
+        try:
+            rhs = self._flat_rhs(coefficients)
+            d0 = self._apply_group(rhs, self.group_members[0], 'group0')
+            self.counts['T_started'] += 1
+            self.sample()
+            image = np.asarray(self.complete_T(d0.copy()))
+            self.counts['T_completed'] += 1
+            if image.shape != rhs.shape or not np.isfinite(image).all():
+                raise ValueError('complete projected T returned an invalid vector')
+            f1 = rhs - image
+            d1 = self._apply_group(f1, self.group_members[1], 'group1')
+            result = d0 + d1
+            self.sample()
+            if not np.isfinite(result).all():
+                raise ValueError('nonfinite sequential projected result')
+            self.counts['applications'] += 1
+            self.counts['sequential_applications'] += 1
+            self.last_facts = dict(
+                group0_factors=int(len(self.group_members[0])),
+                group1_factors=int(len(self.group_members[1])),
+                local_backsolves=int(len(self.indices)),
+                T_calls=1,
+                T_patch_matvec=int(getattr(self.complete_T, 'counts', {}).get('patch_matvec', 0)),
+                formula='M0 + M1 - M1*T*M0',
+                finite=True,
+            )
+            return [result[a:b] for a, b in zip(self.offsets[:-1], self.offsets[1:], strict=True)]
+        finally:
+            if previous is not None:
+                self.sample = previous
+
+    def storage(self):
+        callback_storage = []
+        if self.complete_T is not None and hasattr(self.complete_T, 'storage'):
+            callback_storage = self.complete_T.storage()
+        return super().storage() + [callback_storage]
+
+    def destroy(self):
+        self.factors.clear()
+        self.complete_T = None
+        self.group_members = (np.empty(0, dtype=np.int64), np.empty(0, dtype=np.int64))
+        self.indices = np.empty((0, 0), dtype=np.int64)
+        self.weights = np.empty(0, dtype=float)
+        self.offsets = np.empty(0, dtype=np.int64)
+        self.counts.clear()

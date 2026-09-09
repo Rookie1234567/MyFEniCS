@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import time
 from typing import Any, Callable
 
 import numpy as np
@@ -147,6 +148,143 @@ class _J1Ledger(_Appender):
         self.append("pc_applies.jsonl", facts)
 
 
+def _projected_seq2_finite_comparison(trace: Any, rhs: np.ndarray, *,
+                                      sample: Callable[[], Any],
+                                      save: Callable[[str, dict[str, Any]], None]) -> dict[str, Any]:
+    """Compare current seq2, additive, and explicit two-group applies.
+
+    The numerical formulas stay in ``ProjectedSequentialTraceFactorStore``;
+    this control supplies one original-mesh RHS and records the three paths.
+    The explicit path independently stages ``d0``, complete ``T``, and ``d1``
+    so the compact seq2 wrapper is checked rather than compared to itself.
+    This is a comparison witness, not a B qualification or an outer/I4 call.
+    """
+
+    store = getattr(trace, "joint", None)
+    if store is None or not hasattr(store, "apply_additive"):
+        raise ValueError("projected seq2 comparison requires the current projected store")
+    if not callable(getattr(store, "complete_T", None)):
+        raise ValueError("projected seq2 comparison requires the complete current T callback")
+    rhs = np.asarray(rhs)
+    if rhs.ndim != 1 or rhs.dtype != np.complex128 or not np.isfinite(rhs).all():
+        raise ValueError("projected seq2 comparison RHS must be finite complex128")
+    rhs_before = rhs.copy()
+    coefficients = trace.FH(rhs)
+    coefficient_before = [np.array(value, copy=True) for value in coefficients]
+    coefficient_sha256 = hashlib.sha256(
+        np.concatenate(coefficient_before).tobytes()).hexdigest()
+
+    def delta(after: dict[str, Any], before: dict[str, Any]) -> dict[str, Any]:
+        keys = set(after) | set(before)
+        return {key: after.get(key, 0) - before.get(key, 0)
+                for key in sorted(keys)}
+
+    started = time.perf_counter()
+    sequential_trace_before = dict(trace.counts)
+    sequential_store_before = dict(store.counts)
+    sequential_started = time.perf_counter()
+    sequential_coefficients = store.apply(coefficients, sample)
+    sequential = trace.F(sequential_coefficients)
+    sequential_elapsed = time.perf_counter() - sequential_started
+    sequential_store_delta = delta(store.counts, sequential_store_before)
+    sequential_trace_delta = delta(trace.counts, sequential_trace_before)
+    sequential_facts = dict(store.last_facts)
+
+    additive_trace_before = dict(trace.counts)
+    additive_store_before = dict(store.counts)
+    additive_started = time.perf_counter()
+    additive_coefficients = store.apply_additive(coefficients)
+    additive = trace.F(additive_coefficients)
+    additive_elapsed = time.perf_counter() - additive_started
+    additive_store_delta = delta(store.counts, additive_store_before)
+    additive_trace_delta = delta(trace.counts, additive_trace_before)
+
+    explicit_trace_before = dict(trace.counts)
+    explicit_store_before = dict(store.counts)
+    explicit_started = time.perf_counter()
+    explicit_path = store.apply_explicit_sequential(coefficients, sample)
+    explicit = trace.F(explicit_path['coefficients'])
+    explicit_elapsed = time.perf_counter() - explicit_started
+    explicit_store_delta = delta(store.counts, explicit_store_before)
+    explicit_trace_delta = delta(trace.counts, explicit_trace_before)
+    elapsed = time.perf_counter() - started
+
+    sequential = np.asarray(sequential)
+    additive = np.asarray(additive)
+    explicit = np.asarray(explicit)
+    if (sequential.shape != rhs.shape or additive.shape != rhs.shape or
+            explicit.shape != rhs.shape or
+            not np.isfinite(sequential).all() or
+            not np.isfinite(additive).all() or
+            not np.isfinite(explicit).all()):
+        raise ValueError("projected seq2 comparison returned a nonfinite or mismatched output")
+    input_unchanged = (
+        np.array_equal(rhs, rhs_before) and
+        all(np.array_equal(value, before)
+            for value, before in zip(coefficients, coefficient_before, strict=True)))
+    output_difference = float(np.linalg.norm(sequential - additive) /
+                              max(np.linalg.norm(sequential) + np.linalg.norm(additive),
+                                  np.finfo(float).tiny))
+    seq2_explicit_error = float(np.linalg.norm(sequential - explicit) /
+                                max(np.linalg.norm(sequential) + np.linalg.norm(explicit),
+                                    np.finfo(float).tiny))
+    mapping = getattr(trace, 'mapping', {})
+    slaves = np.asarray(mapping.get('slaves', np.empty(0, dtype=np.int64)), dtype=np.int64)
+    if slaves.size and (np.any(slaves < 0) or np.any(slaves >= rhs.size)):
+        raise ValueError('projected seq2 comparison slave map is outside the RHS')
+    slave_max = {
+        name: (float(np.max(np.abs(value[slaves]))) if slaves.size else 0.0)
+        for name, value in (('rhs', rhs), ('seq2', sequential),
+                            ('additive', additive), ('explicit', explicit))
+    }
+    slave_limit = 1e-12
+    slave_passed = all(value <= slave_limit for value in slave_max.values())
+    finite = bool(np.isfinite(sequential).all() and
+                  np.isfinite(additive).all() and np.isfinite(explicit).all())
+    gate_failures = []
+    if not finite:
+        gate_failures.append('nonfinite')
+    if not input_unchanged:
+        gate_failures.append('input_mutated')
+    if not np.isfinite(seq2_explicit_error) or seq2_explicit_error > 1e-10:
+        gate_failures.append('seq2_explicit_mismatch')
+    if not slave_passed:
+        gate_failures.append('slave_constraint')
+    summary = dict(
+        status=('FINITE_COMPARISON_COMPLETED' if not gate_failures
+                else 'FINITE_COMPARISON_REJECTED'),
+        scope='one current original-mesh p4 RHS; no outer solve and no I4',
+        formula='M0 + M1 - M1*T*M0',
+        T_expression='F^H A4 (I-CU A4) F',
+        input_unchanged=input_unchanged,
+        coefficient_sha256=coefficient_sha256,
+        finite=finite,
+        slave=dict(max_abs=slave_max, limit=slave_limit, passed=slave_passed),
+        sequential_facts=sequential_facts,
+        explicit_facts=dict(explicit_path['facts']),
+        sequential_store_counts=sequential_store_delta,
+        sequential_trace_counts=sequential_trace_delta,
+        additive_store_counts=additive_store_delta,
+        additive_trace_counts=additive_trace_delta,
+        explicit_store_counts=explicit_store_delta,
+        explicit_trace_counts=explicit_trace_delta,
+        sequential_T_calls=int(sequential_store_delta.get('T_completed', 0)),
+        additive_T_calls=int(additive_store_delta.get('T_completed', 0)),
+        explicit_T_calls=int(explicit_store_delta.get('T_completed', 0)),
+        output_difference_relative=output_difference,
+        seq2_explicit_relative=seq2_explicit_error,
+        timings_seconds=dict(seq2=sequential_elapsed, additive=additive_elapsed,
+                             explicit=explicit_elapsed, total=elapsed),
+        gate_failures=gate_failures,
+    )
+    save('projected_seq2_finite_comparison', dict(
+        **summary, rhs=rhs.copy(), sequential=sequential.copy(),
+        additive=additive.copy(), explicit=explicit.copy()))
+    if gate_failures:
+        raise ValueError('projected seq2 finite comparison gate failed: ' + ','.join(gate_failures))
+    return summary
+
+
 def run_j1_controls(
     cfg: Any,
     comm: Any,
@@ -179,7 +317,7 @@ def run_j1_controls(
     ledger = _J1Ledger(directory, marker)
     append = ledger.append
     save = lambda name, facts: save_packet(records, name, facts)
-    identity = "bounded_entity16_v7"
+    identity = contract['profile']
     summary: dict[str, Any] = dict(
         schema="task39extra.review-v7-j1-controls.v1",
         status="STARTED",
@@ -202,13 +340,34 @@ def run_j1_controls(
             identity=identity, save=save, append=append,
             stop_requested=lambda: False, capture_vectors=True,
             retain_inexact_vectors=True)
-        summary["setup_count"] = 1
-        summary["setup_conservative_seconds"] = setup_clock.update(clock_sample())["budget_seconds"]
-
-        current_p6_map = native_map_arrays(bundle["levels"]["spaces"][6], bundle["levels"]["floquets"][6])
+        current_p6_map = native_map_arrays(
+            bundle['levels']['spaces'][6], bundle['levels']['floquets'][6])
         if not _same_map(current_p6_map, controls["p6_map"]):
             raise ValueError("J1 rebuilt p6 native map differs from V5 E1 map")
         p6_indices = current_p6_map["independent_indices"]
+        if contract.get('route') == 'PROJECTED_SEQ2_16':
+            q_vec = level_vector(bundle['levels'], 6)
+            p4_rhs = None
+            try:
+                q_vec.set(0)
+                q_vec.array[current_p6_map['independent_indices']] = controls['q']['A2R160']
+                p4_rhs = bundle['actions']['transfers'][(6, 4)].apply_adjoint(q_vec)
+                comparison = _projected_seq2_finite_comparison(
+                    bundle['trace_assets']['trace'], p4_rhs.array,
+                    sample=sample, save=save)
+                summary['projected_seq2_finite_comparison'] = comparison
+            finally:
+                q_vec.destroy()
+                if p4_rhs is not None:
+                    p4_rhs.destroy()
+        summary["setup_count"] = 1
+        summary["setup_conservative_seconds"] = setup_clock.update(clock_sample())["budget_seconds"]
+
+        # Freeze the lifetime counters after setup and the one finite B
+        # comparison.  The two subsequent BAL_H calls are charged by delta
+        # from this snapshot; do not reset the live counters here.
+        summary["setup_costs"] = bounded_terminal_snapshot(bundle)
+        save("setup_costs", summary["setup_costs"])
         p4_map = bundle["trace_assets"]["mapping"]
         save("j1_input_binding", dict(
             source_sha=controls["source_sha"], inventory_sha256=controls["inventory_sha256"],
@@ -322,11 +481,18 @@ def run_j1_controls(
                     else "J2_REVIEW_REQUIRED"),
         )
         summary["bounded_terminal"] = audit_bounded_exit(bundle, _Appender(directory))
-        summary["status"] = "J1_CONTROLS_COMPLETED"
+        summary["status"] = (
+            "B_FINITE_COMPARISON_AND_CONTROLS_COMPLETED"
+            if contract.get('route') == 'PROJECTED_SEQ2_16'
+            else "J1_CONTROLS_COMPLETED")
         append("j1_controls_summary.json", summary)
         return summary
     except BaseException as exc:
-        summary.update(status="J1_CONTROLS_FAILED", exception_type=type(exc).__name__,
+        summary.update(
+            status=("B_FINITE_COMPARISON_AND_CONTROLS_FAILED"
+                    if contract.get('route') == 'PROJECTED_SEQ2_16'
+                    else "J1_CONTROLS_FAILED"),
+            exception_type=type(exc).__name__,
                        exception_message=str(exc))
         if bundle is not None:
             try:

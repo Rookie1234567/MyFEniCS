@@ -1,14 +1,10 @@
-"""V7 route-A assembly and formal BAL_H adapter.
-
-Only the already qualified owner-route entity component is wired here.  The
-projected two-colour route is registered in the input contract but deliberately
-fails closed until its conditional B implementation is authorized.
-"""
+"""V7 bounded BAL_H assembly for the owner and projected sequential routes."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import time
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable
@@ -25,6 +21,10 @@ from .physical_trace_entity import (
     PhysicalTraceEntities,
     complete_pq,
 )
+from .physical_projected_trace import (
+    ProjectedSequentialTraceFactorStore,
+    structured_mesh_cell_coordinates,
+)
 
 
 TRACE_INVENTORY = Path('benchmarks/artifacts/task39extra/v6_recursive/higher_trace_entity_inventory.json')
@@ -38,6 +38,12 @@ PARTICULAR_HASH = 'a64486272a45e6449e6da606115b8c2f2a2dcf64535de416d61975ee0ced7
 OWNER_PROBE = Path('benchmarks/artifacts/task39extra/v6_recursive/owner_route_probe.json')
 OWNER_PROBE_HASH = '8905c25c47dcedf336a01cb48536d85181fb329ffb9198eabb9da5f6bcaaf01e'
 DEFAULT_BINDING = Path('input/task39extra/p4_failure_diagnostic_v6.json')
+PROJECTED_REUSE_RECORD = Path(
+    'docs/task039_extra_physical_multilevel/outcomes/records/'
+    'recursive_p4_complement_diagnostic_v6.json')
+PROJECTED_SOURCE_SHA = 'dcca0f5ea6b7ba9221b23dd210a3c06839cc47be'
+PROJECTED_PATCH_COUNT = 252
+PROJECTED_PATCH_DIMENSION = 144
 
 
 class BoundedPolicy:
@@ -90,6 +96,62 @@ def _load_owner_classes() -> tuple[list[int], dict[str, dict[str, Any]], dict[st
             delta=retained['delta'], cell_info=identity['key']['orientation'],
         )
     return cells, classes, class_map
+
+
+def _load_projected_blocks() -> dict[str, Any]:
+    """Load only the saved full252 maps, D blocks, and LU/pivot packets.
+
+    The V6 record is the authority for the exact packet paths and hashes.  No
+    S-column construction is reachable from this loader; the returned local
+    factor packet paths are hash-checked here.  Each packet's ``D`` array is
+    checked and released during the one-at-a-time restore; only saved
+    LU/pivots are retained by the two-group inverse.  The complete
+    ``T`` action is built from the current physical callbacks, not from local
+    projected blocks.
+    """
+    from src.runners.physical_diagnostic_completion import load_packet
+
+    if not PROJECTED_REUSE_RECORD.is_file():
+        raise ValueError('projected full252 reuse record is missing')
+    authority = json.loads(PROJECTED_REUSE_RECORD.read_text())
+    if authority.get('sources', {}).get('original_full252') != PROJECTED_SOURCE_SHA:
+        raise ValueError('projected full252 source identity differs')
+
+    def checked_json(descriptor: dict[str, Any]) -> Path:
+        path = Path(descriptor['path'])
+        if (not path.is_file() or
+                hashlib.sha256(path.read_bytes()).hexdigest() != descriptor['sha256']):
+            raise ValueError(f'projected packet hash differs: {path}')
+        return path
+
+    map_descriptor = authority['identities']['maps']
+    map_path = checked_json(map_descriptor)
+    maps = load_packet(map_path)
+    indices = np.asarray(maps['indices'], dtype=np.int64)
+    weights = np.asarray(maps['weights'], dtype=float)
+    offsets = np.asarray(maps['offsets'], dtype=np.int64)
+    if indices.shape != (PROJECTED_PATCH_COUNT, PROJECTED_PATCH_DIMENSION):
+        raise ValueError('saved projected map dimensions differ')
+    if offsets.shape != (1567,) or offsets[-1] != len(weights):
+        raise ValueError('saved projected coefficient offsets differ')
+    del maps
+
+    entries = authority['identities']['factors']
+    expected_keys = [f'split/factor_{index:03d}' for index in range(PROJECTED_PATCH_COUNT)]
+    if sorted(entries) != expected_keys:
+        raise ValueError('saved projected factor inventory differs')
+    factor_descriptors = []
+    for key in expected_keys:
+        path = checked_json(entries[key])
+        factor_descriptors.append((key, path))
+    return dict(
+        source_sha=PROJECTED_SOURCE_SHA,
+        source_record_sha256=hashlib.sha256(PROJECTED_REUSE_RECORD.read_bytes()).hexdigest(),
+        map_path=str(map_path),
+        map_json_sha256=map_descriptor['sha256'],
+        indices=indices, weights=weights, offsets=offsets,
+        factor_descriptors=factor_descriptors,
+    )
 
 
 def _qualify_owner_route(levels: dict[str, Any], mapping: dict[str, Any], space: Any,
@@ -235,17 +297,21 @@ def build_owner_route_assets(
     levels: dict[str, Any],
     actions: dict[str, Any],
     *,
+    cfg: Any,
     sample: Callable[[], Any],
     marker: Callable[[str, dict[str, Any]], None],
     save: Callable[[str, dict[str, Any]], None],
     binding_path: Path = DEFAULT_BINDING,
+    projected: bool = False,
 ) -> dict[str, Any]:
-    """Build the reusable formal entity component on an existing 6/4/2 mesh.
+    """Build the reusable formal trace component on an existing 6/4/2 mesh.
 
     No reference field, p4 AIJ matrix, or p4 factor is retained.  The saved
     packets contribute only the already qualified class/map/S identities; all
     formal actions use the current same-mesh DtN and the caller's p6/p4/p2
-    setup.
+    setup.  ``projected=True`` replaces only the joint inverse apply with the
+    saved full252 two-group sequential action; it does not construct the old
+    1566 entity LUs or rerun the 36288 setup solves.
     """
 
     from petsc4py import PETSc
@@ -253,6 +319,9 @@ def build_owner_route_assets(
     from .physical_bubble_amplification import SavedBubbleSpace
     from .physical_bubble_particular import saved_packet_reader
     from .condensed_fine_reference import native_map_arrays
+    from src.runners.physical_trace_controls import PATCH_AUTHORITY, PATCH_AUTHORITY_HASH
+    from .physical_trace_cell_patch import build_cell_joint_patch_maps
+    from src.geometry.mesh_builder_3d import _stage4_axis_plan
 
     if levels['mesh'].comm.size != 1:
         raise ValueError('V7 owner route is qualified only for MPI1')
@@ -297,13 +366,71 @@ def build_owner_route_assets(
             levels, actions, mapping, space, matrix, cached, sample=sample, save=save)
         p4carrier = actions['physical'][4]['dtn_action'].carrier
         payload_limit = 256 * 1024**2
-        marker('bounded_trace_entity_setup_started', dict(entity_count=len(inventory['entities'])))
+        marker('bounded_trace_entity_setup_started', dict(
+            entity_count=len(inventory['entities']), projected=bool(projected)))
+        joint_authority = None
+        if projected:
+            if hashlib.sha256(PATCH_AUTHORITY.read_bytes()).hexdigest() != PATCH_AUTHORITY_HASH:
+                raise ValueError('V7 projected patch authority hash differs')
+            joint_authority = json.loads(PATCH_AUTHORITY.read_text())
+            if (joint_authority.get('patch_count') != PROJECTED_PATCH_COUNT or
+                    joint_authority.get('exact_class_count') != 84):
+                raise ValueError('V7 projected patch authority dimensions differ')
         trace = PhysicalTraceEntities(mapping, cells, classes, inventory['entities'], _n1e(4).entity_dofs,
-            p4carrier, sample=sample, save=save, marker=marker, joint_authority=None,
-            lifecycle='formal')
+            p4carrier, sample=sample, save=save, marker=marker, joint_authority=joint_authority,
+            lifecycle='formal', build_joint=not projected)
+        projected_facts = None
+        if projected:
+            frozen = _load_projected_blocks()
+            axis_plan = _stage4_axis_plan(cfg, levels['mesh'].comm.size)
+            coordinates = structured_mesh_cell_coordinates(
+                levels['mesh'], (axis_plan.x_values, axis_plan.y_values, axis_plan.z_values))
+            if len(cells) != PROJECTED_PATCH_COUNT or len(coordinates) != len(cells):
+                raise ValueError('V7 projected structured cell inventory differs')
+            current_offsets, _, current_indices, current_weights = build_cell_joint_patch_maps(
+                cells, inventory['entities'], trace.blocks)
+            if (not np.array_equal(current_indices, frozen['indices']) or
+                    not np.array_equal(current_weights, frozen['weights']) or
+                    not np.array_equal(current_offsets, frozen['offsets'])):
+                raise ValueError('V7 current projected patch maps differ from saved maps')
+            def unbound_complete_T(_value):
+                raise RuntimeError('projected complete T was not attached')
+
+            sequential = ProjectedSequentialTraceFactorStore(
+                frozen['indices'], frozen['weights'], frozen['offsets'], coordinates,
+                unbound_complete_T, sample=sample)
+            from src.runners.physical_diagnostic_completion import load_packet
+            restored = 0
+            for key, factor_path in frozen['factor_descriptors']:
+                packet = load_packet(factor_path)
+                packet_matrix = np.asarray(packet['D'])
+                facts = packet.get('facts', {})
+                if (packet_matrix.shape != (PROJECTED_PATCH_DIMENSION, PROJECTED_PATCH_DIMENSION) or
+                        packet_matrix.dtype != np.complex128 or not np.isfinite(packet_matrix).all() or
+                        facts.get('matrix_sha256') != hashlib.sha256(packet_matrix.tobytes()).hexdigest()):
+                    raise ValueError(f'saved projected block identity differs: {key}')
+                sequential.append_saved_factor(
+                    packet['LU'], packet['pivots'], facts=facts)
+                restored += 1
+                del packet_matrix, packet
+            trace.joint = sequential
+            del frozen
+            group_counts = [int(len(group)) for group in sequential.group_members]
+            projected_facts = dict(
+                source_sha=PROJECTED_SOURCE_SHA,
+                source_record_sha256=hashlib.sha256(PROJECTED_REUSE_RECORD.read_bytes()).hexdigest(),
+                factor_count=PROJECTED_PATCH_COUNT,
+                factor_dimension=PROJECTED_PATCH_DIMENSION,
+                group_counts=group_counts,
+                grouping='structured_cell_coordinate_parity_(i+j+k)%2',
+                formula='M0 + M1 - M1*T*M0',
+                setup_s_column_solves=0,
+                no_saved_entity_lu_overlap=True,
+                restored_factor_count=int(restored),
+            )
         payload = int(trace.payload_bytes())
         if payload > payload_limit:
-            raise MemoryError('formal owner-route payload exceeds the 256 MiB local policy')
+            raise MemoryError('formal bounded trace payload exceeds the 256 MiB local policy')
         extra_local_bytes = payload + 4117888
         bottom = PhysicalP2Inverse(matrix, space, space.transfer.coarse_slaves,
             sample=sample, marker=marker, save=save,
@@ -316,12 +443,14 @@ def build_owner_route_assets(
             operator_bridges=operator_bridges,
             p4_global_matrix=0, p4_global_factor=0,
             source_inventory_hash=TRACE_INVENTORY_HASH,
-            source_component_sha='9dbf12355e6e6c7eac23d055c12da4e7eda2a7d8'))
+            source_component_sha='9dbf12355e6e6c7eac23d055c12da4e7eda2a7d8',
+            projected=projected_facts))
         return dict(mapping=mapping, cells=cells, classes=classes, inventory=inventory,
                     class_map=class_map, p2_map=p2_map, space=space, trace=trace,
                     matrix=matrix, bottom=bottom, cached=cached,
                     owner_qualification=owner_qualification, payload_bytes=payload,
-                    extra_local_bytes=extra_local_bytes, operator_bridges=operator_bridges)
+                    extra_local_bytes=extra_local_bytes, operator_bridges=operator_bridges,
+                    projected=projected_facts)
     except BaseException:
         if cached is not None:
             cached = None
@@ -351,16 +480,17 @@ def build_formal_bounded(
     capture_vectors: bool = False,
     retain_inexact_vectors: bool = False,
 ) -> tuple[dict[str, Any], Callable[[Any], Any], BoundedPolicy]:
-    """Build route A and the V7 BAL_H callable; no PDE solve is started here."""
+    """Build one V7 BAL_H route and its callable; no PDE solve is started here."""
 
     route = contract.get('route')
-    if route != 'ENTITY16':
-        raise ValueError('bounded_projected_seq2_16_v7 is registered but route B is not implemented')
+    if route not in ('ENTITY16', 'PROJECTED_SEQ2_16'):
+        raise ValueError(f'unknown bounded V7 route: {route!r}')
     if getattr(cfg, 'cell_notch', None):
         raise ValueError('V7 route-A original owner packets cannot be reused for notch materials')
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from .fullspace_same_mesh_hcurl_pmg_physical import build_same_mesh_physical_action
-    from .fullspace_physical_intermediate_runtime import build_physical_intermediate_actions
+    from .fullspace_physical_intermediate_runtime import (
+        build_physical_intermediate_actions, level_vector)
     from .physical_light_setup import build_light_h6_setup
     bundle: dict[str, Any] = dict(profile=identity, route=route)
     try:
@@ -375,7 +505,8 @@ def build_formal_bounded(
             stage_callback=ledger.marker, physical_only_degrees=(6, 4, 2))
         bundle['actions'] = actions
         assets = build_owner_route_assets(levels, actions, sample=sample,
-            marker=ledger.marker, save=save)
+            cfg=cfg, marker=ledger.marker, save=save,
+            projected=(route == 'PROJECTED_SEQ2_16'))
         bundle['trace_assets'] = assets
         p64 = actions['transfers'][(6, 4)]
         p42 = assets['space'].transfer
@@ -397,6 +528,48 @@ def build_formal_bounded(
             except BaseException:
                 result.destroy()
                 raise
+
+        if route == 'PROJECTED_SEQ2_16':
+            projected_T = dict(calls=0, F=0, FH=0, A4=0, CU=0,
+                               seconds=0., complete=True,
+                               expression='F^H A4 (I-CU A4) F')
+
+            def complete_T(coefficients):
+                # This is the current full physical action, not a sum of the
+                # saved local D blocks. F/FH remain distinct non-Hermitian
+                # maps; CU is the complete p4/p2 coarse feedback including
+                # the original DtN through the current cached A4 action.
+                started = time.perf_counter()
+                source = corrected = first = second = coarse = None
+                try:
+                    projected_T['calls'] += 1
+                    chunks = [coefficients[a:b] for a, b in zip(
+                        assets['trace'].joint.offsets[:-1],
+                        assets['trace'].joint.offsets[1:], strict=True)]
+                    source = level_vector(bundle['levels'], 4)
+                    source.array[:] = assets['trace'].F(chunks)
+                    projected_T['F'] += 1
+                    first = a4(source)
+                    projected_T['A4'] += 1
+                    coarse = cu(first)
+                    projected_T['CU'] += 1
+                    corrected = source.duplicate()
+                    corrected.array[:] = source.array - coarse.array
+                    second = a4(corrected)
+                    projected_T['A4'] += 1
+                    result = np.concatenate(assets['trace'].FH(second.array))
+                    projected_T['FH'] += 1
+                    if result.shape != coefficients.shape or not np.isfinite(result).all():
+                        raise ValueError('projected complete T returned an invalid coefficient vector')
+                    return result
+                finally:
+                    projected_T['seconds'] += time.perf_counter() - started
+                    for value in (second, corrected, first, coarse, source):
+                        if value is not None:
+                            value.destroy()
+
+            assets['trace'].joint.set_complete_T(complete_T)
+            assets['projected_T'] = projected_T
 
         def ht(value):
             result = value.duplicate()
@@ -453,7 +626,7 @@ def build_formal_bounded(
         outer = PhysicalBalancedCoupling(
             lambda value: apply_owned(fine['physical_action'], value), c64, h6,
             p64.apply_adjoint, route='BAL_H', checkpoint=sample,
-            inexact_ledger=inexact, level_identity='p6/p4 bounded entity16 V7',
+            inexact_ledger=inexact, level_identity=f'p6/p4 bounded {route.lower()} V7',
             capture_vectors=capture_vectors)
         bundle['pc'] = outer
 
@@ -465,6 +638,9 @@ def build_formal_bounded(
                 outer.last_apply_facts['trace_counts'] = dict(
                     cached=assets['cached'].counts, cached_seconds=assets['cached'].seconds,
                     entities=assets['trace'].counts, entity_seconds=assets['trace'].elapsed,
+                    joint=dict(assets['trace'].joint.counts)
+                    if assets['trace'].joint is not None else None,
+                    projected_T=dict(assets.get('projected_T', {})),
                     bottom=dict(assets['bottom'].counts),
                     # These are lifetime counters at the end of this PC.  The
                     # independent checker subtracts the setup baseline once;
@@ -541,7 +717,10 @@ def bounded_terminal_snapshot(bundle: dict[str, Any]) -> dict[str, Any]:
             audit_seconds=float(inexact.audit_seconds),
         ),
         trace=dict(counts=dict(assets['trace'].counts), elapsed=dict(assets['trace'].elapsed),
-                   payload_bytes=int(assets['payload_bytes'])),
+                   payload_bytes=int(assets['payload_bytes']),
+                   joint=dict(assets['trace'].joint.counts)
+                   if assets['trace'].joint is not None else None,
+                   projected_T=dict(assets.get('projected_T', {}))),
         cached=dict(counts=dict(assets['cached'].counts), seconds=dict(assets['cached'].seconds)),
         S_action=dict(calls=int(assets['space'].action_count),
                       seconds=float(assets['space'].action_seconds)),
@@ -549,7 +728,8 @@ def bounded_terminal_snapshot(bundle: dict[str, Any]) -> dict[str, Any]:
         physical_p2_matrix=dict(size=list(matrix.getSize()), info=matrix.getInfo()),
         storage=dict(named_payload_bytes=int(assets['payload_bytes']),
                      extra_local_bytes=int(assets['extra_local_bytes']),
-                     operator_bridges=assets['operator_bridges']),
+                     operator_bridges=assets['operator_bridges'],
+                     projected=assets.get('projected')),
     )
 
 

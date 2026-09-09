@@ -82,6 +82,29 @@ def particular_contract():
 
 def selected_contract(args):
     if getattr(args, 'bounded_j1_controls', False):
+        route = getattr(args, 'bounded_j1_route', 'ENTITY16')
+        if route == 'PROJECTED_SEQ2_16':
+            from src.io.physical_balanced_profile import BOUNDED_PROJECTED_PROFILE
+            return dict(identity='bounded_projected_seq2_16_j1_controls',
+                profile=BOUNDED_PROJECTED_PROFILE, route='PROJECTED_SEQ2_16',
+                scope='B finite original-mesh seq2/additive comparison plus two-q controls',
+                control_mode='B_FINITE_COMPARISON_AND_CONTROLS',
+                source='V5_E1_hash_bound_q_only', labels=['A2R160', 'LIGHT448'],
+                setup_count=1, finite_comparison_count=1, complete_PC_calls=2, I4_calls=4,
+                input_fields=['q', 'native_constraint_map_p6'],
+                forbidden_inputs=['e', 'reference_y', 'old_PC_outputs'],
+                j2_gate=dict(one_complete_PC_seconds_le=90.0,
+                             both_over_90_exception_outer=8,
+                             both_over_90_exception_seconds=600.0),
+                finite_comparison=dict(
+                    formula='M0 + M1 - M1*T*M0',
+                    reference='same original-mesh p4 RHS for sequential and additive applies',
+                    T='current F^H A4 (I-CU A4) F',
+                    outer_calls=0, I4_calls=0,
+                    qualification='comparison_only_not_B_formal_qualification'),
+                one_apply_contraction_gate='not_applied',
+                old_recursive_campaign='not_called', batch_limit_seconds=43200,
+                controls_limit_seconds=5400)
         return dict(identity='bounded_entity16_v7_j1_controls', profile='bounded_entity16_v7',
             route='ENTITY16', scope='J1_two_real_q_controls',
             source='V5_E1_hash_bound_q_only', labels=['A2R160', 'LIGHT448'],
@@ -218,6 +241,9 @@ def worker(args):
     if Path(cache_options['cache_dir']).resolve()!=cache_home/'fenics':
         raise RuntimeError('effective form JIT cache escaped isolated run root')
     if getattr(args, 'bounded_j1_controls', False):
+        control_phase = ('B_projected_finite_compare_and_controls'
+                         if getattr(args, 'bounded_j1_route', 'ENTITY16') == 'PROJECTED_SEQ2_16'
+                         else 'J1_controls')
         manifest=dict(source=source,
             input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest(),
             cwd=str(Path.cwd()), physical_sha256=payload['provenance']['physical_model_sha256'],
@@ -230,7 +256,7 @@ def worker(args):
                 threads=threads))
         atomic(root/'run_manifest.json', manifest)
         def sample():
-            value=process_tree_snapshot(parent,'J1_controls',None);envelope=memory_envelope()
+            value=process_tree_snapshot(parent,control_phase,None);envelope=memory_envelope()
             value['launch_cap_bytes']=min(cap,value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
             if (not value['all_status_readable'] or value['swap_bytes'] or
                     value['rss_bytes']>=value['launch_cap_bytes'] or
@@ -239,7 +265,7 @@ def worker(args):
             return value
         def marker(name,facts):
             stamp=clock_sample()
-            atomic(root/'phase.json',dict(phase='J1_controls',stage=name,clock=stamp))
+            atomic(root/'phase.json',dict(phase=control_phase,stage=name,clock=stamp))
             with (root/'stages.jsonl').open('a') as stream:
                 stream.write(json.dumps(dict(stage=name,clock=stamp,facts=facts))+'\n')
         try:
@@ -321,6 +347,9 @@ def build_parser():
     group.add_argument('--owner-route-trace-component',action='store_true')
     group.add_argument('--cell-joint-trace-component',action='store_true')
     group.add_argument('--bounded-j1-controls',action='store_true')
+    parser.add_argument('--bounded-j1-route', choices=('ENTITY16', 'PROJECTED_SEQ2_16'),
+        default='ENTITY16',
+        help='select the existing bounded J1 control route; PROJECTED_SEQ2_16 adds one finite seq2/additive comparison')
     parser.add_argument('--amplification-recording-retry',action='store_true',
         help='one reviewed retry of the frozen pre-factor mappingproxy recording failure')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
@@ -364,6 +393,9 @@ def amplification_recording_retry(args,budget):
 from .physical_bounded_budget import LIMIT_SECONDS as J1_BATCH_LIMIT_SECONDS
 from .physical_bounded_budget import SCHEMA as J1_BUDGET_SCHEMA
 J1_CONTROLS_LIMIT_SECONDS = 3600.0
+B_PROJECTED_CONTROLS_LIMIT_SECONDS = 5400.0
+B_PROJECTED_CONTROLS_GROUP = 'B_projected_controls'
+B_PROJECTED_CONTROLS_KIND = 'bounded_projected_controls'
 
 
 def _j1_charge_seconds(budget):
@@ -371,10 +403,10 @@ def _j1_charge_seconds(budget):
     return _charged_seconds(budget)
 
 
-def _j1_controls_charge_seconds(budget):
+def _controls_charge_seconds(budget, group):
     total=0.0
     for item in budget.get('attempts', []):
-        if item.get('budget_group') != 'J0_J1_controls':
+        if item.get('budget_group') != group:
             continue
         value=(item.get('reserved_seconds') if item.get('status') == 'RESERVED'
                else item.get('elapsed_seconds', item.get('charge_seconds')))
@@ -383,11 +415,20 @@ def _j1_controls_charge_seconds(budget):
     return total
 
 
+def _j1_controls_charge_seconds(budget):
+    return _controls_charge_seconds(budget, 'J0_J1_controls')
+
+
 def _launch_j1_controls(args):
-    """Supervise one J1 two-control worker under the shared V6-style guard."""
+    """Supervise one A-J1 or B finite-control worker under the shared ledger."""
     from benchmarks.subreaper_watchdog import supervise
     from .workflow_timebase import ClockBudget, CONSERVATIVE_REALTIME, clock_sample
 
+    projected = getattr(args, 'bounded_j1_route', 'ENTITY16') == 'PROJECTED_SEQ2_16'
+    control_limit = (B_PROJECTED_CONTROLS_LIMIT_SECONDS if projected
+                     else J1_CONTROLS_LIMIT_SECONDS)
+    control_group = B_PROJECTED_CONTROLS_GROUP if projected else 'J0_J1_controls'
+    control_kind = B_PROJECTED_CONTROLS_KIND if projected else 'j1_controls'
     source=git_state(args.source_sha)
     budget_path=Path(args.budget).resolve()
     budget=json.loads(budget_path.read_text())
@@ -395,29 +436,31 @@ def _launch_j1_controls(args):
             budget.get('limit_seconds') != J1_BATCH_LIMIT_SECONDS or
             budget.get('j0_j1_controls_limit_seconds') != J1_CONTROLS_LIMIT_SECONDS):
         raise ValueError('J1 controls require the shared V7 bounded ledger')
-    if any(item.get('kind') == 'j1_controls' for item in budget.get('attempts', [])):
-        raise ValueError('J1 controls already attempted; no repeat measurement')
+    if any(item.get('kind') == control_kind for item in budget.get('attempts', [])):
+        raise ValueError('selected bounded controls already attempted; no repeat measurement')
     used=_j1_charge_seconds(budget)
-    controls_used=_j1_controls_charge_seconds(budget)
-    remaining=min(J1_CONTROLS_LIMIT_SECONDS-controls_used,
+    controls_used=_controls_charge_seconds(budget, control_group)
+    remaining=min(control_limit-controls_used,
                   J1_BATCH_LIMIT_SECONDS-used)
     if remaining <= 0:
-        raise RuntimeError('J0/J1 controls budget exhausted')
+        raise RuntimeError('selected bounded controls budget exhausted')
     lock=budget_path.with_suffix('.lock')
     with lock.open('a') as lock_stream:
         fcntl.flock(lock_stream,fcntl.LOCK_EX|fcntl.LOCK_NB)
         budget=json.loads(budget_path.read_text())
         used=_j1_charge_seconds(budget)
-        controls_used=_j1_controls_charge_seconds(budget)
-        remaining=min(J1_CONTROLS_LIMIT_SECONDS-controls_used,
+        controls_used=_controls_charge_seconds(budget, control_group)
+        remaining=min(control_limit-controls_used,
                       J1_BATCH_LIMIT_SECONDS-used)
         if remaining <= 0:
-            raise RuntimeError('J0/J1 controls budget exhausted')
+            raise RuntimeError('selected bounded controls budget exhausted')
         root=Path(args.output)
         result=None
-        entry=dict(kind='j1_controls',budget_group='J0_J1_controls',status='RESERVED',
+        entry=dict(kind=control_kind,budget_group=control_group,
+            route=getattr(args, 'bounded_j1_route', 'ENTITY16'), status='RESERVED',
             source=args.source_sha,root=str(root),reserved_seconds=remaining,
-            elapsed_seconds=remaining,nested_intervals_not_added=True)
+            elapsed_seconds=remaining,controls_limit_seconds=control_limit,
+            nested_intervals_not_added=True)
         budget.setdefault('attempts',[]).append(entry)
         budget['charged_seconds']=_j1_charge_seconds(budget)
         budget['remaining_seconds']=J1_BATCH_LIMIT_SECONDS-budget['charged_seconds']
@@ -429,6 +472,7 @@ def _launch_j1_controls(args):
             cache_home.mkdir(exist_ok=False)
             atomic(root/'launch_plan.json',dict(schema=J1_BUDGET_SCHEMA,source=source,
                 contract=selected_contract(args),wall_seconds=remaining,
+                control_group=control_group,controls_limit_seconds=control_limit,
                 budget_before=budget,jit_cache_home=str(cache_home),
                 jit_cache_initially_empty=not any(cache_home.iterdir()),
                 nested_v6_ledger='not used; shared V7 bounded ledger'))
@@ -463,6 +507,12 @@ def _launch_j1_controls(args):
                 budget['j0_j1_controls_charged_seconds']=_j1_controls_charge_seconds(budget)
                 budget['j0_j1_controls_remaining_seconds']=(
                     J1_CONTROLS_LIMIT_SECONDS-budget['j0_j1_controls_charged_seconds'])
+                if projected:
+                    budget['b_projected_controls_charged_seconds']=_controls_charge_seconds(
+                        budget, B_PROJECTED_CONTROLS_GROUP)
+                    budget['b_projected_controls_remaining_seconds']=(
+                        B_PROJECTED_CONTROLS_LIMIT_SECONDS-
+                        budget['b_projected_controls_charged_seconds'])
                 atomic(budget_path,budget)
         if result is not None and result.get('descendants_cleared'):
             # The lock is the shared ledger lock; fcntl releases it on exit.

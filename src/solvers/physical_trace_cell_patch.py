@@ -47,6 +47,25 @@ def symmetric_patch_solve(rhs, indices, weights, groups, *, check, sample):
         resource_samples=sample_count, resource_sample_seconds=sample_seconds)
 
 
+def build_cell_joint_patch_maps(cells, entities, blocks):
+    """Build only current cell/entity coefficient maps and PoU weights."""
+    offsets = np.cumsum([0] + [block['J'].shape[1] for block in blocks])
+    patches = [[] for _ in cells]
+    for index, entity in enumerate(entities):
+        for cell in entity['support_cells']:
+            patches[cell].append(index)
+    indices = np.asarray([
+        np.concatenate([np.arange(offsets[index], offsets[index + 1]) for index in patch])
+        for patch in patches
+    ], dtype=np.int64)
+    if indices.shape != (252, 144):
+        raise ValueError('frozen patch dimensions changed')
+    multiplicity = np.bincount(indices.ravel(), minlength=int(offsets[-1]))
+    if np.any(multiplicity == 0):
+        raise ValueError('patch coefficient coverage failed')
+    return offsets, patches, indices, 1. / np.sqrt(multiplicity)
+
+
 class CellJointTraceInverse:
     """84 D/LU pairs; patch maps and topology weights, no dense F or global D."""
     def __init__(self, mapping, cells, entities, blocks, schurs, carrier, authority,
@@ -54,16 +73,9 @@ class CellJointTraceInverse:
         from .physical_trace_entity import checked_lu
         self.groups = []; self.counts = dict(patch_LU=0, patch_setup_rhs=0,
             patch_apply_rhs=0, patch_class_batches=0, applications=0,resource_samples=0,resource_sample_seconds=0.)
-        self.offsets = np.cumsum([0]+[block['J'].shape[1] for block in blocks])
-        patches = [[] for _ in cells]
-        for index, entity in enumerate(entities):
-            for cell in entity['support_cells']: patches[cell].append(index)
-        self.indices = np.asarray([np.concatenate([np.arange(self.offsets[i], self.offsets[i+1])
-            for i in patch]) for patch in patches], dtype=np.int64)
-        if self.indices.shape != (252,144): raise ValueError('frozen patch dimensions changed')
-        multiplicity = np.bincount(self.indices.ravel(), minlength=int(self.offsets[-1]))
-        if np.any(multiplicity == 0): raise ValueError('patch coefficient coverage failed')
-        self.weights = 1./np.sqrt(multiplicity)
+        self.offsets, patches, self.indices, self.weights = build_cell_joint_patch_maps(
+            cells, entities, blocks)
+        multiplicity = np.rint(1. / self.weights**2).astype(np.int64)
         self.class_ids = np.empty(len(cells), dtype=np.int64)
         slaves = set(map(int, mapping['slaves'])); cache = {}
         def injection(cell, lookup):
@@ -158,3 +170,12 @@ class CellJointTraceInverse:
 
     def storage(self):
         return [self.indices,self.weights,self.offsets,self.class_ids,self.groups]
+
+    def destroy(self):
+        """Release the temporary exact-joint inverse after route replacement."""
+        self.groups.clear()
+        self.indices = np.empty((0, 0), dtype=np.int64)
+        self.weights = np.empty(0, dtype=float)
+        self.offsets = np.empty(0, dtype=np.int64)
+        self.class_ids = np.empty(0, dtype=np.int64)
+        self.counts.clear()

@@ -1,0 +1,50 @@
+{
+  "schema": "task39extra.review-v7.a-original-negative.v1",
+  "classification": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+  "wrapper_classification": "WORKER_FAILED",
+  "wrapper_exit_code": 4,
+  "run_directory": "results/euv_grazing1_phi0/original_13p5nm_p6h10_bounded_entity16_v7__full3d_iterative__mpi1__Mna/20260909T162804.338718Z",
+  "source_sha": "44c5498dd3e3decb8088b8646947a964ac248afe",
+  "input_sha256": "bcad5afe41adb16ee3753b3e7a2a2379d069bd2c8ddd25fb1311d77eae78307a",
+  "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+  "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "screen": {
+    "status": "SCREEN_CONTINUE_SAME_LIVE_KSP",
+    "passed": true
+  },
+  "mid_budget": {
+    "status": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+    "iteration": 121,
+    "solve_seconds": 5423.950016599915,
+    "true_residual": 0.042564512128266646,
+    "full_explicit_true_relative": 0.04256451212826674,
+    "limit": 0.001,
+    "official_outputs": "not_run"
+  },
+  "bounded_i4": {
+    "gate": "passed",
+    "calls": 242,
+    "complete_preconditioners": 121,
+    "h6_applies": 121
+  },
+  "cost_gate": {
+    "gate": "passed",
+    "B4_applies": 3872,
+    "A4_matvec": 3872,
+    "S_mat_solve": 7744,
+    "bottom_mat_solve": 7744
+  },
+  "resources": {
+    "workflow_monotonic_seconds": 5167.972956766025,
+    "simultaneous_process_tree_rss_peak_bytes": 1449623552,
+    "process_tree_swap_peak_bytes": 0,
+    "global_swap_delta": 0,
+    "remaining_child_pids": []
+  },
+  "batch_ledger": {
+    "attempt_charge_seconds": 5637.269656583,
+    "total_charged_seconds": 6244.324203458,
+    "remaining_seconds": 36955.675796542
+  },
+  "interpretation": "The route made measurable bounded progress and passed its I4/cost/resource gates, but the strict mid-budget residual and official-output gates were not met; this is not an I4 rejection or a resource classification."
+}
