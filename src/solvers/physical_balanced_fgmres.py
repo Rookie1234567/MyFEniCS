@@ -26,9 +26,62 @@ class BalancedScreen:
         return self.decision
 
 
+class BoundedScreen:
+    """The V7 three-node investment screen for the live outer KSP.
+
+    V7 observes every completed group of eight outer steps, but only saves a
+    solution-only checkpoint at a 32-step boundary (or at final exit).  The
+    screen is deliberately kept separate from the historical V5 policy so the
+    old ``.65``/7200-second behaviour cannot leak into a bounded profile.
+    """
+
+    def __init__(self):
+        self.checkpoints = []
+        self.decision = None
+        self.mid_budget_checked = False
+        self.mid_budget = None
+
+    def inspect(self, iteration, relative, seconds):
+        if iteration == 0 or iteration % 8 == 0:
+            if not self.checkpoints or self.checkpoints[-1][0] != iteration:
+                self.checkpoints.append((iteration, relative))
+                self.checkpoints = self.checkpoints[-3:]
+        if self.decision is not None:
+            return self.decision
+        if iteration < 128 and seconds < 1800:
+            return None
+        history = self.checkpoints
+        trend = (len(history) == 3 and
+                 history[1][0] - history[0][0] == 8 and
+                 history[2][0] - history[1][0] == 8 and
+                 0 < history[2][1] < history[1][1] < history[0][1] and
+                 np.sqrt(history[2][1] / history[0][1]) <= .80)
+        passed = relative <= 1e-2 or (
+            iteration >= 16 and relative <= .30 and trend)
+        self.decision = dict(
+            status='SCREEN_CONTINUE_SAME_LIVE_KSP' if passed else 'NORMAL_SCREEN_STOP',
+            passed=bool(passed), iteration=iteration, true_relative=relative,
+            solve_seconds=seconds, checkpoints=list(history), policy='v7',
+        )
+        return self.decision
+
+    def inspect_mid_budget(self, iteration, relative, seconds):
+        """Apply the one-time 5400-second continuation gate."""
+        if not self.mid_budget_checked and seconds >= 5400:
+            self.mid_budget_checked = True
+            self.mid_budget = dict(
+                status='MID_BUDGET_CONTINUE' if relative <= 1e-3
+                else 'PROGRESS_INSUFFICIENT_AT_MID_BUDGET',
+                passed=bool(relative <= 1e-3), iteration=iteration,
+                true_relative=relative, solve_seconds=seconds,
+            )
+        return self.mid_budget
+
+
 def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                        resource_sample=lambda: None, stop_requested=lambda: False,
-                       screen_enabled=True, solve_limit_seconds=7200):
+                       screen_enabled=True, solve_limit_seconds=7200,
+                       v7_policy=False):
     """Callbacks own action/PC outputs; seconds is a conservative shared clock.
 
     Exactly one KSP creation and one solve, max2048/restart32/zero start.
@@ -37,6 +90,8 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     """
     if not np.isfinite(solve_limit_seconds) or solve_limit_seconds <= 0:
         raise ValueError('positive finite solve limit required')
+    if v7_policy and float(solve_limit_seconds) != 10800.0:
+        raise ValueError('V7 bounded outer solve limit must be 10800 seconds')
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
     from .fullspace_physical_intermediate import _destroy
@@ -44,7 +99,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     sizes = (rhs.getLocalSize(), rhs.getSize())
     operator = PETSc.Mat().createPython((sizes, sizes), context=ac, comm=rhs.getComm())
     ksp = solution = target = None
-    screen = BalancedScreen()
+    screen = BoundedScreen() if v7_policy else BalancedScreen()
     snapshots = []
     explicit_count = 0
     last_save = -120.
@@ -52,8 +107,12 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     last_checkpoint_iteration = -1
     result = None
     norm_rhs = max(float(rhs.norm()), np.finfo(float).tiny)
+    if v7_policy and screen_enabled:
+        # Seed the two eight-step ratios with the true initial residual.  The
+        # value is normalized by the same RHS norm used by every later node.
+        screen.inspect(0, 1.0, seconds())
 
-    def snapshot(iteration, current, reported):
+    def snapshot(iteration, current, reported, *, terminal=False):
         nonlocal explicit_count, last_save, last_checkpoint_iteration
         if current is None:
             solution.copy(target)
@@ -68,7 +127,9 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             if not np.isfinite(relative):
                 raise FloatingPointError('nonfinite live FGMRES true residual')
             explicit_count += 1
-            if iteration != last_checkpoint_iteration:
+            checkpoint_due = (not v7_policy or terminal or iteration == 0 or
+                              iteration % 32 == 0)
+            if checkpoint_due and iteration != last_checkpoint_iteration:
                 checkpoint(iteration, target, relative)
                 last_checkpoint_iteration = iteration
             now = seconds(); last_save = now
@@ -95,31 +156,61 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             append('iterations.jsonl', dict(iteration=iteration, reported_relative=float(reported)/norm_rhs,
                 outer_matvec_count=ac.matvec_count, outer_pc_count=pc_context.apply_count))
             stop = stop_requested() or now >= solve_limit_seconds
-            boundary = screen_enabled and screen.decision is None and (iteration >= 128 or now >= 1800)
-            if iteration % 32 == 0 or now-last_save >= 120 or boundary or stop or reported/norm_rhs <= 1e-6:
-                relative, now = snapshot(iteration, current, reported)
+            boundary = screen_enabled and screen.decision is None and (
+                iteration >= 128 or now >= 1800)
+            mid_boundary = (v7_policy and not screen.mid_budget_checked and
+                            now >= 5400)
+            cadence = 8 if v7_policy else 32
+            if (iteration % cadence == 0 or now-last_save >= 120 or boundary or
+                    mid_boundary or stop or reported/norm_rhs <= 1e-6):
+                if v7_policy and iteration % 8 != 0 and not (
+                        boundary or mid_boundary or stop or reported/norm_rhs <= 1e-6):
+                    # The V7 screen is based on completed 8-step nodes.  A
+                    # time-based resource sample may still occur here, but it
+                    # must not invent an eighth-step node.
+                    return 0
+                relative, now = snapshot(iteration, current, reported,
+                                         terminal=stop)
                 if relative <= 1e-6:
                     stop_status = 'TRUE_RESIDUAL_PASS'
                     return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
+                if v7_policy and now >= solve_limit_seconds:
+                    # The explicit A6 action and residual assembly are part of
+                    # the solve budget, so a post-action overrun is not hidden
+                    # behind the callback's earlier timestamp.
+                    stop_status = 'PERFORMANCE_CONTROLLED_STOP'
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
                 decision = screen.inspect(iteration, relative, now) if screen_enabled else None
                 if stop:
                     stop_status = 'PERFORMANCE_CONTROLLED_STOP'
                 elif decision is not None and not decision['passed']:
                     stop_status = decision['status']
+                if v7_policy and stop_status is None:
+                    mid_budget = screen.inspect_mid_budget(iteration, relative, now)
+                    if mid_budget is not None and not mid_budget['passed']:
+                        stop_status = mid_budget['status']
                 if stop_status is not None:
                     return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
             return 0
 
         ksp.setConvergenceTest(convergence); ksp.setUp(); ksp.solve(rhs, solution)
         iteration = int(ksp.getIterationNumber())
-        relative, elapsed = snapshot(iteration, None, ksp.getResidualNorm())
+        relative, elapsed = snapshot(iteration, None, ksp.getResidualNorm(), terminal=True)
+        final_status = stop_status or 'ITERATION_BUDGET_EXHAUSTED'
+        if (v7_policy and relative > 1e-6 and elapsed >= solve_limit_seconds
+                and final_status == 'ITERATION_BUDGET_EXHAUSTED'):
+            final_status = 'PERFORMANCE_CONTROLLED_STOP'
         result = dict(final_solution=solution.copy(), final_true_residual=relative,
             iterations=iteration, reason=int(ksp.getConvergedReason()),
-            status=stop_status or 'ITERATION_BUDGET_EXHAUSTED', screen=screen.decision,
+            status=final_status, screen=screen.decision,
             snapshots=snapshots, matvec_count=ac.matvec_count, pc_apply_count=pc_context.apply_count,
             explicit_action_count=explicit_count, elapsed_seconds=elapsed,
             ksp_create_count=1, ksp_solve_count=1, ksp_destroy_count=0,
-            screen_enabled=screen_enabled,restart=32, max_it=2048, zero_start=True)
+            screen_enabled=screen_enabled,restart=32, max_it=2048, zero_start=True,
+            screen_policy='v7' if v7_policy else 'v5',
+            residual_interval=8 if v7_policy else 32,
+            checkpoint_interval=32,
+            mid_budget=screen.mid_budget if v7_policy else None)
         return result
     finally:
         for value in (ksp, target, solution, operator):

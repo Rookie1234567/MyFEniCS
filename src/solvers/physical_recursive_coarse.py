@@ -4,26 +4,61 @@ from .fullspace_physical_intermediate import apply_owned
 
 
 def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop_requested=lambda: False,
-                      residual_norm=None, residual_action=None):
-    """One zero-start FGMRES16/max64; owned solution, A4c and eps returned.
+                      residual_norm=None, residual_action=None, max_it=64, restart=16,
+                      soft_seconds=60, hard_seconds=None, v7_policy=False):
+    """One zero-start FGMRES16 with an opt-in finite V7 policy.
 
-    Each monitor boundary checks the conservative 60-second clock. The terminal
-    explicit residual is authoritative even after a finite iteration/time cap.
+    The historical default remains max64/60 seconds.  V7 passes
+    ``max_it=16, soft_seconds=25, hard_seconds=30, v7_policy=True``; that
+    policy changes only the cap/ledger semantics and reuses this KSP,
+    explicit-residual, and cleanup implementation.
     """
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
     from src.runners.workflow_timebase import ClockBudget, clock_sample, CONSERVATIVE_REALTIME
     if target not in (1e-4, 1e-6):
         raise ValueError('I4 target must be LO=1e-4 or HI=1e-6')
+    if int(restart) != 16 or int(max_it) <= 0:
+        raise ValueError('I4 restart must be 16 and max_it must be positive')
+    if not np.isfinite(soft_seconds) or soft_seconds <= 0:
+        raise ValueError('I4 soft time limit must be finite and positive')
+    if hard_seconds is not None and (not np.isfinite(hard_seconds) or hard_seconds < soft_seconds):
+        raise ValueError('I4 hard time limit must be finite and no shorter than soft limit')
+    if v7_policy and (target != 1e-4 or int(max_it) != 16 or float(soft_seconds) != 25.0 or
+                      hard_seconds is None or float(hard_seconds) != 30.0):
+        raise ValueError('V7 I4 fixes target=1e-4, max_it=16, soft=25, hard=30')
     budget = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
     seconds = clock or (lambda: budget.update(clock_sample())['budget_seconds'])
+    raw_rhs_norm = float(rhs.norm())
+    if v7_policy and raw_rhs_norm == 0.0:
+        solution = rhs.duplicate(); applied = rhs.duplicate(); eps = rhs.duplicate()
+        solution.set(0); applied.set(0); eps.set(0)
+        facts = dict(status='INNER_ZERO_RHS', quality_label='ZERO_RHS', target=target,
+            final_true_residual=0., residual_absolute=0., rhs_norm=0., iterations=0,
+            reason=0, restart=restart, max_it=max_it, zero_start=True,
+            seconds=seconds(), actual_elapsed_seconds=seconds(), requested_safe_return=False,
+            timeout_exceeded=False, stop_reason='ZERO_RHS', legal_direction_count=0,
+            A4_matvec=0, B4_calls=0, explicit_A4=0, attempted=dict(A4_matvec=0, B4_calls=0, explicit_A4=0),
+            ksp_create_count=0, ksp_solve_count=0, ksp_destroy_count=0,
+            explicit_uses_separate_action=residual_action is not None)
+        return dict(solution=solution, applied=applied, residual=eps, facts=facts)
     attempted = dict(A4_matvec=0, B4_calls=0, explicit_A4=0)
+    legal_direction_count = 0
     def counted_action(x):
         attempted['A4_matvec'] += 1
         return action(x)
     def counted_pc(x):
+        nonlocal legal_direction_count
         attempted['B4_calls'] += 1
-        return pc(x)
+        value = pc(x)
+        if v7_policy and value is not None:
+            try:
+                value_norm = float(value.norm())
+            except AttributeError:
+                value_norm = float(np.linalg.norm(value.array))
+            if np.isfinite(value_norm) and value_norm > 0.0:
+                legal_direction_count += 1
+        return value
     ac, context = _ActionContext(counted_action), _PCContext(counted_pc)
     sizes = (rhs.getLocalSize(), rhs.getSize())
     matrix = PETSc.Mat().createPython((sizes, sizes), context=ac, comm=rhs.getComm())
@@ -31,10 +66,12 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
     x, current = rhs.duplicate(), rhs.duplicate(); x.set(0); current.set(0)
     ksp = applied = eps = None
     history = []; explicit_count = 0; status = None
-    norm = float(rhs.norm()) if residual_norm is None else float(residual_norm)
+    requested_safe_return = False; timeout_exceeded = False; stop_reason = None
+    norm = raw_rhs_norm if residual_norm is None else float(residual_norm)
     def explicit(value, iteration, *, retain=False):
         nonlocal explicit_count
         attempted['explicit_A4'] += 1
+        a = r = None
         a = (action if residual_action is None else residual_action)(value); r = rhs.copy()
         try:
             r.axpy(-1, a); absolute = float(r.norm())
@@ -53,16 +90,27 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
         if not np.isfinite(norm) or norm<0:
             raise FloatingPointError('nonfinite p4 RHS')
         ksp = PETSc.KSP().create(rhs.getComm()); ksp.setOperators(matrix)
-        ksp.setType('fgmres'); ksp.setGMRESRestart(16); ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        ksp.setType('fgmres'); ksp.setGMRESRestart(restart); ksp.setPCSide(PETSc.PC.Side.RIGHT)
         ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED); ksp.setInitialGuessNonzero(False)
-        ksp.setTolerances(rtol=0., atol=0., max_it=64)
+        ksp.setTolerances(rtol=0., atol=0., max_it=max_it)
         ksp.getPC().setType('python'); ksp.getPC().setPythonContext(context)
         def convergence(solver, it, reported):
-            nonlocal status
+            nonlocal status, requested_safe_return, timeout_exceeded, stop_reason
             sample(); now = seconds()
             if not np.isfinite(reported):
                 raise FloatingPointError('nonfinite inner reported residual')
-            cap = now >= 60 or it >= 64 or stop_requested()
+            outer_stop = bool(stop_requested())
+            soft = now >= soft_seconds
+            hard = hard_seconds is not None and now >= hard_seconds
+            if outer_stop or soft:
+                requested_safe_return = True
+                stop_reason = 'OUTER_SAFE_DEADLINE' if outer_stop else 'I4_SAFE_RETURN_REQUESTED'
+            if hard:
+                timeout_exceeded = True
+                stop_reason = 'I4_HARD_TIME_EXCEEDED'
+            cap = hard or soft or it >= max_it or outer_stop
+            # A reported residual is only a trigger for an explicit native
+            # check.  A failed native check before the cap must continue.
             if it % 16 == 0 or cap or reported <= target*norm:
                 if it: solver.buildSolution(current)
                 else: current.set(0)
@@ -71,26 +119,55 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
                     status = 'INNER_TARGET_REACHED'
                     return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
                 if cap:
-                    status = 'INNER_INEXACT_AT_CAP'
+                    status = 'INNER_APPROXIMATE_RETURN' if v7_policy else 'INNER_INEXACT_AT_CAP'
+                    if stop_reason is None: stop_reason = 'MAX_IT' if it >= max_it else 'I4_SAFE_RETURN_REQUESTED'
                     return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
             return 0
         ksp.setConvergenceTest(convergence)
         ksp.solve(rhs, x)
         iterations, reason = int(ksp.getIterationNumber()), int(ksp.getConvergedReason())
         relative, applied, eps = explicit(x, iterations, retain=True)
+        # The terminal native action is part of the V7 30-second cost.  Do not
+        # decide timeout status solely from the convergence callback.
+        if v7_policy:
+            sample()
+        terminal_seconds = seconds()
+        if hard_seconds is not None and terminal_seconds >= hard_seconds:
+            timeout_exceeded = True
+            stop_reason = stop_reason or 'I4_HARD_TIME_EXCEEDED'
+        if terminal_seconds >= soft_seconds:
+            requested_safe_return = True
+            stop_reason = stop_reason or 'I4_SAFE_RETURN_REQUESTED'
         # FGMRES Arnoldi rank saturation can be finite without solving the RHS.
         # This is distinct from NaN/Inf, PC failure, or unrelated solver failures.
         finite_reasons = (int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT),
                           int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN))
         if reason < 0 and reason not in finite_reasons:
             raise RuntimeError(f'inner breakdown reason={reason}, true={relative}')
-        status = 'INNER_TARGET_REACHED' if relative <= target else 'INNER_INEXACT_AT_CAP'
+        finite_correction = False
+        if v7_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN):
+            try:
+                finite_correction = (iterations > 0 and legal_direction_count > 0
+                    and np.isfinite(x.norm()) and float(x.norm()) > 0.0)
+            except (AttributeError, FloatingPointError, ValueError):
+                finite_correction = False
+        if (v7_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN)
+                and not finite_correction):
+            error = RuntimeError('V7 inner breakdown has no finite legal Krylov direction')
+            error.bounded_i4_no_legal_direction = True
+            raise error
+        status = 'INNER_TARGET_REACHED' if relative <= target else ('INNER_APPROXIMATE_RETURN' if v7_policy else 'INNER_INEXACT_AT_CAP')
+        if v7_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN):
+            stop_reason = 'KRYLOV_BREAKDOWN_WITH_FINITE_RETURN'
         facts = dict(status=status, target=target, final_true_residual=relative,
             explicit_uses_separate_action=residual_action is not None,
             eps_norm=float(eps.norm()), rhs_norm=norm, iterations=iterations, reason=reason,
-            restart=16, max_it=64, zero_start=True, seconds=seconds(), history=history,
+            restart=restart, max_it=max_it, zero_start=True, seconds=terminal_seconds,
+            actual_elapsed_seconds=terminal_seconds, requested_safe_return=requested_safe_return,
+            timeout_exceeded=timeout_exceeded, stop_reason=stop_reason or ('TARGET_REACHED' if relative <= target else 'MAX_IT'),
+            legal_direction_count=legal_direction_count, history=history,
             A4_matvec=ac.matvec_count, B4_calls=context.apply_count,
-            explicit_A4=explicit_count, attempted=dict(attempted), inner_basis_payload_bound=33*rhs.getSize()*16,
+            explicit_A4=explicit_count, attempted=dict(attempted), inner_basis_payload_bound=(2*restart+1)*rhs.getSize()*16,
             basis_payload_classification='derived V/Z bound, excludes work vectors and allocator',
             ksp_create_count=1, ksp_solve_count=1, ksp_destroy_count=0,
             finite_arnoldi_saturation=reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN))

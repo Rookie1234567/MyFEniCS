@@ -10,11 +10,13 @@ def _array(value):
 
 
 class InexactBalanceLedger:
-    def __init__(self, action, restriction, *, save, checkpoint=lambda: None, every=32):
+    def __init__(self, action, restriction, *, save, checkpoint=lambda: None, every=32,
+                 retain_call_vectors=False):
         if every < 1:
             raise ValueError('audit period must be positive')
         self.A, self.PH, self.save = action, restriction, save
         self.checkpoint, self.every = checkpoint, every
+        self.retain_call_vectors = bool(retain_call_vectors)
         self.calls, self.last = [], None
         self.audit_count = self.A_count = self.PH_count = 0
         self.audit_seconds = self.A_seconds = self.PH_seconds = 0.
@@ -27,18 +29,28 @@ class InexactBalanceLedger:
         # A copy is mandatory: the next I4 call may overwrite its work buffer.
         if len(self.calls) >= 2:
             raise ValueError('only two coarse calls per balanced action')
-        self.calls.append(dict(eps=_copy(residual), rhs_norm=_norm(g),
-            applied_norm=_norm(applied), eps_norm=_norm(residual), inner=dict(facts)))
+        item = dict(eps=_copy(residual), rhs_norm=_norm(g),
+                    applied_norm=_norm(applied), eps_norm=_norm(residual),
+                    inner=dict(facts))
+        if self.retain_call_vectors:
+            item.update(g=_copy(g), applied=_copy(applied))
+        self.calls.append(item)
 
     def abort(self):
         for item in self.calls:
             _destroy(item['eps'])
+            if self.retain_call_vectors:
+                _destroy(item['g'])
+                _destroy(item['applied'])
         self.calls.clear()
 
     def _clear_last(self):
         if self.last is not None:
             for key in ('q', 'z', 'difference'):
                 _destroy(self.last[key])
+            for call in self.last.get('call_vectors', ()):
+                for key in ('g', 'applied', 'eps'):
+                    _destroy(call[key])
             self.last = None
 
     def finish(self, q, z, iteration):
@@ -47,11 +59,20 @@ class InexactBalanceLedger:
         first, second = self.calls
         difference = _copy(first['eps']); _axpy(difference, -1, second['eps'])
         summary = dict(policy='INEXACT_EPS_DIFFERENCE', iteration=iteration,
-            calls=[{k:v for k,v in x.items() if k != 'eps'} for x in self.calls],
+            calls=[{k:v for k,v in x.items() if k not in ('eps', 'g', 'applied')}
+                   for x in self.calls],
             difference_norm=_norm(difference),
             operation_scale=sum(x['rhs_norm']+x['applied_norm'] for x in self.calls),
             actual_audit='not_sampled')
-        self.last = dict(q=_copy(q), z=_copy(z), difference=difference, summary=summary)
+        call_vectors = ()
+        if self.retain_call_vectors:
+            call_vectors = tuple(
+                dict(g=_copy(item['g']),
+                     applied=_copy(item['applied']), eps=_copy(item['eps']))
+                for item in self.calls
+            )
+        self.last = dict(q=_copy(q), z=_copy(z), difference=difference,
+                        call_vectors=call_vectors, summary=summary)
         self.abort()
         if iteration == 1 or iteration % self.every == 0:
             self.audit_last()

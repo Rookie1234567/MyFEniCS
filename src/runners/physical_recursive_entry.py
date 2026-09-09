@@ -1,5 +1,6 @@
 """Single supervised G1 component invocation; no outer solve or campaign routing."""
 import argparse
+import fcntl
 import hashlib
 import json
 import os
@@ -80,6 +81,19 @@ def particular_contract():
 
 
 def selected_contract(args):
+    if getattr(args, 'bounded_j1_controls', False):
+        return dict(identity='bounded_entity16_v7_j1_controls', profile='bounded_entity16_v7',
+            route='ENTITY16', scope='J1_two_real_q_controls',
+            source='V5_E1_hash_bound_q_only', labels=['A2R160', 'LIGHT448'],
+            setup_count=1, complete_PC_calls=2, I4_calls=4,
+            input_fields=['q', 'native_constraint_map_p6'],
+            forbidden_inputs=['e', 'reference_y', 'old_PC_outputs'],
+            j2_gate=dict(one_complete_PC_seconds_le=90.0,
+                         both_over_90_exception_outer=8,
+                         both_over_90_exception_seconds=600.0),
+            one_apply_contraction_gate='not_applied',
+            old_recursive_campaign='not_called', batch_limit_seconds=43200,
+            j0_j1_controls_limit_seconds=3600)
     if getattr(args,'cell_joint_trace_component',False):
         owner_args=argparse.Namespace(**vars(args));owner_args.cell_joint_trace_component=False
         owner_args.owner_route_trace_component=True
@@ -120,8 +134,13 @@ def selected_contract(args):
             p4_failure_contract() if args.p4_failure_diagnostic else component_contract(args.target))
 
 
-def dispatch_components(args,cfg,comm,directory,*,sample,marker):
+def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,input_path=None):
     from . import physical_recursive_controls as controls
+    if getattr(args, 'bounded_j1_controls', False):
+        from .physical_bounded_j1 import run_j1_controls
+        return run_j1_controls(cfg, comm, args.inventory, directory,
+            sample=sample, marker=marker, source_sha=source_sha,
+            input_path=input_path, contract=selected_contract(args))
     if getattr(args,'high_trace_component',False) or getattr(args,'cached_trace_component',False) or getattr(args,'owner_route_trace_component',False) or getattr(args,'cell_joint_trace_component',False):
         from .physical_trace_controls import run_trace_component
         return run_trace_component(cfg,comm,args.inventory,directory,sample=sample,marker=marker,
@@ -198,6 +217,41 @@ def worker(args):
     cache_options=get_options(SAME_MESH_JIT_OPTIONS)
     if Path(cache_options['cache_dir']).resolve()!=cache_home/'fenics':
         raise RuntimeError('effective form JIT cache escaped isolated run root')
+    if getattr(args, 'bounded_j1_controls', False):
+        manifest=dict(source=source,
+            input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest(),
+            cwd=str(Path.cwd()), physical_sha256=payload['provenance']['physical_model_sha256'],
+            profile=selected_contract(args),
+            control_inventory=str(Path(args.inventory).resolve()),
+            jit_cache=dict(xdg_cache_home=str(cache_home),
+                effective_cache_dir=str(cache_options['cache_dir']),
+                timeout=cache_options['timeout'], cold=True),
+            abi=dict(python=sys.executable, scalar='complex128', integer='int32',
+                threads=threads))
+        atomic(root/'run_manifest.json', manifest)
+        def sample():
+            value=process_tree_snapshot(parent,'J1_controls',None);envelope=memory_envelope()
+            value['launch_cap_bytes']=min(cap,value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
+            if (not value['all_status_readable'] or value['swap_bytes'] or
+                    value['rss_bytes']>=value['launch_cap_bytes'] or
+                    envelope['effective_available_bytes']<envelope['reserve_bytes']):
+                raise RuntimeError('whole-workflow resource gate failed')
+            return value
+        def marker(name,facts):
+            stamp=clock_sample()
+            atomic(root/'phase.json',dict(phase='J1_controls',stage=name,clock=stamp))
+            with (root/'stages.jsonl').open('a') as stream:
+                stream.write(json.dumps(dict(stage=name,clock=stamp,facts=facts))+'\n')
+        try:
+            result=dispatch_components(args,cfg,MPI.COMM_WORLD,root,
+                sample=sample,marker=marker,source_sha=source,input_path=Path(args.input))
+            manifest.update(status='finished', result=result.get('status', 'J1_CONTROLS_COMPLETED'))
+            atomic(root/'run_manifest.json', manifest)
+            return result
+        finally:
+            if (root/'run_manifest.json').exists():
+                manifest['source_after']=git_state(args.source_sha)
+                atomic(root/'run_manifest.json', manifest)
     inventory=json.loads(Path(args.inventory).read_text())
     if bubble:
         native_maps={};mode_sha=inventory['mode_sha256']
@@ -234,7 +288,8 @@ def worker(args):
         atomic(root/'phase.json',dict(phase='components',stage=name,clock=stamp))
         with (root/'stages.jsonl').open('a') as stream:stream.write(json.dumps(dict(stage=name,clock=stamp,facts=facts))+'\n')
     try:
-        dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker)
+        dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker,
+            source_sha=source,input_path=Path(args.input))
     finally:
         identity=root/'records'/('trace_source_bridge.json' if args.high_trace_component or args.cached_trace_component or args.owner_route_trace_component or args.cell_joint_trace_component else 'amplification_map_bridge.json' if args.bubble_amplification_diagnostic else 'particular_map_bridge.json' if particular else 'bubble_source_bridge.json' if enriched else 'bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
         manifest['native_map_bridge_status']='PASS' if identity.exists() else 'NOT_REACHED'
@@ -265,6 +320,7 @@ def build_parser():
     group.add_argument('--cached-trace-component',action='store_true')
     group.add_argument('--owner-route-trace-component',action='store_true')
     group.add_argument('--cell-joint-trace-component',action='store_true')
+    group.add_argument('--bounded-j1-controls',action='store_true')
     parser.add_argument('--amplification-recording-retry',action='store_true',
         help='one reviewed retry of the frozen pre-factor mappingproxy recording failure')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
@@ -305,9 +361,119 @@ def amplification_recording_retry(args,budget):
         reason='mappingproxy recording failure before factor; old attempt and charge preserved')
 
 
+from .physical_bounded_budget import LIMIT_SECONDS as J1_BATCH_LIMIT_SECONDS
+from .physical_bounded_budget import SCHEMA as J1_BUDGET_SCHEMA
+J1_CONTROLS_LIMIT_SECONDS = 3600.0
+
+
+def _j1_charge_seconds(budget):
+    from .physical_bounded_budget import _charged_seconds
+    return _charged_seconds(budget)
+
+
+def _j1_controls_charge_seconds(budget):
+    total=0.0
+    for item in budget.get('attempts', []):
+        if item.get('budget_group') != 'J0_J1_controls':
+            continue
+        value=(item.get('reserved_seconds') if item.get('status') == 'RESERVED'
+               else item.get('elapsed_seconds', item.get('charge_seconds')))
+        if value is not None:
+            total += float(value)
+    return total
+
+
+def _launch_j1_controls(args):
+    """Supervise one J1 two-control worker under the shared V6-style guard."""
+    from benchmarks.subreaper_watchdog import supervise
+    from .workflow_timebase import ClockBudget, CONSERVATIVE_REALTIME, clock_sample
+
+    source=git_state(args.source_sha)
+    budget_path=Path(args.budget).resolve()
+    budget=json.loads(budget_path.read_text())
+    if (budget.get('schema') != J1_BUDGET_SCHEMA or
+            budget.get('limit_seconds') != J1_BATCH_LIMIT_SECONDS or
+            budget.get('j0_j1_controls_limit_seconds') != J1_CONTROLS_LIMIT_SECONDS):
+        raise ValueError('J1 controls require the shared V7 bounded ledger')
+    if any(item.get('kind') == 'j1_controls' for item in budget.get('attempts', [])):
+        raise ValueError('J1 controls already attempted; no repeat measurement')
+    used=_j1_charge_seconds(budget)
+    controls_used=_j1_controls_charge_seconds(budget)
+    remaining=min(J1_CONTROLS_LIMIT_SECONDS-controls_used,
+                  J1_BATCH_LIMIT_SECONDS-used)
+    if remaining <= 0:
+        raise RuntimeError('J0/J1 controls budget exhausted')
+    lock=budget_path.with_suffix('.lock')
+    with lock.open('a') as lock_stream:
+        fcntl.flock(lock_stream,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        budget=json.loads(budget_path.read_text())
+        used=_j1_charge_seconds(budget)
+        controls_used=_j1_controls_charge_seconds(budget)
+        remaining=min(J1_CONTROLS_LIMIT_SECONDS-controls_used,
+                      J1_BATCH_LIMIT_SECONDS-used)
+        if remaining <= 0:
+            raise RuntimeError('J0/J1 controls budget exhausted')
+        root=Path(args.output)
+        result=None
+        entry=dict(kind='j1_controls',budget_group='J0_J1_controls',status='RESERVED',
+            source=args.source_sha,root=str(root),reserved_seconds=remaining,
+            elapsed_seconds=remaining,nested_intervals_not_added=True)
+        budget.setdefault('attempts',[]).append(entry)
+        budget['charged_seconds']=_j1_charge_seconds(budget)
+        budget['remaining_seconds']=J1_BATCH_LIMIT_SECONDS-budget['charged_seconds']
+        atomic(budget_path,budget)
+        clock=ClockBudget(clock_sample(),policy=CONSERVATIVE_REALTIME)
+        try:
+            root.mkdir(parents=True,exist_ok=False)
+            cache_home=(root/'jit_cache').resolve()
+            cache_home.mkdir(exist_ok=False)
+            atomic(root/'launch_plan.json',dict(schema=J1_BUDGET_SCHEMA,source=source,
+                contract=selected_contract(args),wall_seconds=remaining,
+                budget_before=budget,jit_cache_home=str(cache_home),
+                jit_cache_initially_empty=not any(cache_home.iterdir()),
+                nested_v6_ledger='not used; shared V7 bounded ledger'))
+            command=[sys.executable,'-m','src.runners.physical_recursive_entry',*sys.argv[1:],'--worker']
+            result=supervise(command,root/'watchdog',wall_seconds=remaining,
+                phase_path=root/'phase.json',hard_stop_immediate=True,
+                timebase_guard=True,timebase_policy=CONSERVATIVE_REALTIME,
+                stop_on_global_swap=True,source_state=source,
+                worker_environment={'XDG_CACHE_HOME':str(cache_home)})
+            entry.update(status=result['classification'])
+            atomic(root/'terminal.json',result)
+            atomic(root/'source_after.json',git_state(args.source_sha))
+            if result['classification']!='COMPLETED':raise SystemExit(1)
+            return result
+        except BaseException as exc:
+            entry.update(status='FAILED',exception_type=type(exc).__name__,
+                         exception_message=str(exc))
+            raise
+        finally:
+            try:
+                interval=clock.update(clock_sample())
+                entry['clock_interval']=interval
+                entry['elapsed_seconds']=float(interval['budget_seconds'])
+            except BaseException as exc:
+                entry.update(status='TIMEBASE_INCONSISTENCY',
+                             clock_error=f'{type(exc).__name__}: {exc}')
+                if not entry.get('exception_type'):
+                    raise
+            finally:
+                budget['charged_seconds']=_j1_charge_seconds(budget)
+                budget['remaining_seconds']=J1_BATCH_LIMIT_SECONDS-budget['charged_seconds']
+                budget['j0_j1_controls_charged_seconds']=_j1_controls_charge_seconds(budget)
+                budget['j0_j1_controls_remaining_seconds']=(
+                    J1_CONTROLS_LIMIT_SECONDS-budget['j0_j1_controls_charged_seconds'])
+                atomic(budget_path,budget)
+        if result is not None and result.get('descendants_cleared'):
+            # The lock is the shared ledger lock; fcntl releases it on exit.
+            pass
+
+
 def main():
     args=build_parser().parse_args()
     if args.worker:return worker(args)
+    if args.bounded_j1_controls:
+        return _launch_j1_controls(args)
     source=git_state(args.source_sha)
     from benchmarks.subreaper_watchdog import supervise
     from .workflow_timebase import CONSERVATIVE_REALTIME

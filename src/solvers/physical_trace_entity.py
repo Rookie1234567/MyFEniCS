@@ -65,28 +65,46 @@ def complete_pq(value,internal,internal_volume,coarse):
 
 
 class CachedPhysicalTraceAction:
-    """Borrow qualified cell A and the original streaming DtN; own no factors."""
-    def __init__(self,mapping,cells,classes,dtn):
+    """Borrow qualified cell A and the streaming DtN; own no factors.
+
+    The cached volume/DtN action has no historical call ceiling; its lifecycle
+    flag only controls provenance and the optional safe callback.  Formal V7
+    keeps the same cumulative counters while the entity E/volume/HT pilot
+    ceilings remain owned by :class:`PhysicalTraceEntities`.
+    """
+    def __init__(self,mapping,cells,classes,dtn,*,lifecycle='pilot',safe_checkpoint=None):
+        if lifecycle not in ('pilot','formal'):
+            raise ValueError('unknown trace action lifecycle')
         self.mapping,self.cells,self.classes,self.dtn=mapping,cells,classes,dtn
+        self.lifecycle=lifecycle;self.safe_checkpoint=safe_checkpoint
         self.counts=dict(started=0,completed=0)
         self.seconds=dict(volume=0.,dtn=0.)
 
     def apply_into(self,source,target):
+        if self.safe_checkpoint is not None:self.safe_checkpoint()
         self.counts['started']+=1
         start=time.perf_counter()
         try:value=cell_volume(source.array,self.mapping,self.cells,self.classes)
         finally:self.seconds['volume']+=time.perf_counter()-start
+        if self.safe_checkpoint is not None:self.safe_checkpoint()
         start=time.perf_counter()
         try:self.dtn.apply(source,target)
         finally:self.seconds['dtn']+=time.perf_counter()-start
         target.array[:]+=value
         self.counts['completed']+=1
+        if self.safe_checkpoint is not None:self.safe_checkpoint()
 
 
 class PhysicalTraceEntities:
     """Borrow frozen classes/map; own 18 internal and 1566 tiny entity factors."""
-    def __init__(self,mapping,cells,classes,entities,entity_dofs,carrier,*,sample,save,marker,joint_authority=None):
+    def __init__(self,mapping,cells,classes,entities,entity_dofs,carrier,*,sample,save,marker,joint_authority=None,
+                 lifecycle='pilot',pilot_eh_limit=263,pilot_ht_limit=65):
+        if lifecycle not in ('pilot','formal'):
+            raise ValueError('unknown trace entity lifecycle')
         self.mapping=mapping;self.cells=cells;self.classes=classes;self.sample=sample;self.save=save
+        self.lifecycle=lifecycle;self.pilot_eh_limit=int(pilot_eh_limit);self.pilot_ht_limit=int(pilot_ht_limit)
+        if self.pilot_eh_limit<1 or self.pilot_ht_limit<1:
+            raise ValueError('pilot trace limits must be positive')
         self.factors={};self.blocks=[];self.elapsed={}
         self.counts=dict(Q_LU=0,Q_setup_rhs=0,entity_LU=0,entity_setup_rhs=0,E=0,EH=0,Q_apply_rhs=0,
             volume=0,volume_adjoint=0,HT=0,entity_apply_rhs=0,F=0,FH=0)
@@ -164,7 +182,9 @@ class PhysicalTraceEntities:
 
     def E(self,value,*,adjoint=False):
         self.sample();self.counts['EH' if adjoint else 'E']+=1
-        if self.counts['E']+self.counts['EH']>263:raise RuntimeError('fixed E/EH call cap')
+        if (getattr(self, 'lifecycle', 'pilot') == 'pilot' and
+                self.counts['E'] + self.counts['EH'] > getattr(self, 'pilot_eh_limit', 263)):
+            raise RuntimeError('fixed pilot E/EH call cap')
         def action():
             out=np.zeros_like(value)
             for key,members in self.members.items():
@@ -183,7 +203,10 @@ class PhysicalTraceEntities:
 
     def volume(self,value,*,adjoint=False):
         self.sample();name='volume_adjoint' if adjoint else 'volume';self.counts[name]+=1
-        if self.counts['volume']+self.counts['volume_adjoint']>263:raise RuntimeError('fixed cached volume cap')
+        if (getattr(self, 'lifecycle', 'pilot') == 'pilot' and
+                self.counts['volume'] + self.counts['volume_adjoint'] >
+                getattr(self, 'pilot_eh_limit', 263)):
+            raise RuntimeError('fixed pilot cached volume cap')
         return self.timed(name,lambda:cell_volume(value,self.mapping,self.cells,self.classes,adjoint=adjoint))
 
     def J(self,coefficients):
@@ -200,8 +223,11 @@ class PhysicalTraceEntities:
         self.counts['FH']+=1;return self.JH(value-self.volume(self.E(value,adjoint=True),adjoint=True))
 
     def apply(self,value):
+        self.sample()
         self.counts['HT']+=1
-        if self.counts['HT']>65:raise RuntimeError('fixed H_T call cap exceeded')
+        if (getattr(self, 'lifecycle', 'pilot') == 'pilot' and
+                self.counts['HT'] > getattr(self, 'pilot_ht_limit', 65)):
+            raise RuntimeError('fixed pilot H_T call cap exceeded')
         def action():
             rhs=self.FH(value);coefficients=[]
             if getattr(self,'joint',None) is not None:
@@ -228,3 +254,12 @@ class PhysicalTraceEntities:
         visit([self.classes,self.mapping,self.factors,self.blocks])
         if getattr(self,'joint',None) is not None:visit(self.joint.storage())
         return sum(roots.values())
+
+    def destroy(self):
+        """Release numeric entity factors without retaining a formal PC."""
+        joint = getattr(self, 'joint', None)
+        if joint is not None and hasattr(joint, 'destroy'):
+            joint.destroy()
+        self.factors.clear()
+        self.blocks.clear()
+        self.members.clear()
