@@ -168,6 +168,56 @@ class SetupCheckedTraceFactor:
         return value
 
 
+def projected_residual_split(xi, indices, weights, packets, action, *, sample=lambda: None):
+    """One fixed coefficient input; stream saved D/LU, without changing any PC.
+
+    q-p denotes outside-patch coupling only if D=R T R^T was qualified elsewhere.
+    Norms here are coefficient Euclidean norms, not physical field L2 norms.
+    """
+    xi = np.asarray(xi); indices = np.asarray(indices); weights = np.asarray(weights)
+    if xi.ndim != 1 or weights.shape != xi.shape or indices.ndim != 2:
+        raise ValueError('invalid coefficient/map shape')
+    if not np.issubdtype(indices.dtype, np.integer) or np.any(indices < 0) or np.any(indices >= len(xi)):
+        raise ValueError('invalid patch indices')
+    if any(len(np.unique(rows)) != len(rows) for rows in indices):
+        raise ValueError('duplicate row within patch')
+    pou = np.zeros(len(xi)); np.add.at(pou, indices.ravel(), weights[indices].ravel()**2)
+    if not np.isfinite(xi).all() or not np.isfinite(weights).all() or not np.allclose(pou, 1., rtol=0., atol=1e-14):
+        raise ValueError('nonfinite input or squared PoU does not sum to one')
+    z = np.zeros_like(xi); l = np.zeros_like(xi); p = np.zeros_like(xi)
+    local_scale = float(np.linalg.norm(xi)); local_max = 0.; solved = 0
+    for rows, packet in zip(indices, packets, strict=True):
+        sample(); D, factor = packet
+        if D.shape != (len(rows), len(rows)):
+            raise ValueError('local matrix shape differs')
+        w = weights[rows]; rhs = w*xi[rows]; value = lu_solve(factor, rhs)
+        image = D@value
+        error = relative_defect(image-rhs, image, rhs)
+        if not np.isfinite(error) or error > 1e-11:
+            raise ValueError('saved local solve operation-scale gate')
+        np.add.at(z, rows, w*value); np.add.at(l, rows, w*image)
+        np.add.at(p, rows, D@(w*value))
+        local_scale += float(np.linalg.norm(w*image)); local_max = max(local_max, error); solved += 1
+        del packet, D, factor, value, image
+    q = np.asarray(action(z))
+    if q.shape != xi.shape or not all(np.isfinite(v).all() for v in (z, l, p, q)):
+        raise ValueError('invalid exact coefficient action')
+    terms = np.stack((q-p, p-l, l-xi)); total = q-xi
+    scale = float(sum(np.linalg.norm(v) for v in (q, p, l, xi)))
+    closure = float(np.linalg.norm(terms.sum(axis=0)-total)/max(scale, np.finfo(float).tiny))
+    local = float(np.linalg.norm(l-xi)/max(local_scale, np.finfo(float).tiny))
+    if max(closure, local) > 1e-11:
+        raise ValueError('split or local PoU operation-scale gate')
+    norm = float(np.linalg.norm(xi)); gram = terms.conj()@terms.T
+    return dict(xi=xi.copy(), z=z, l=l, p=p, q=q, terms=terms, total=total, gram=gram,
+        gram_normalized=gram/norm**2 if norm else None,
+        relative_norms=np.linalg.norm(terms, axis=1)/norm if norm else None,
+        total_relative=float(np.linalg.norm(total)/norm) if norm else None,
+        xi_norm=norm, identity_relative=closure, local_relative=local,
+        identity_operation_scale=scale, local_operation_scale=local_scale,
+        local_solve_max_relative=local_max, local_solves=solved, pou_max_defect=float(np.max(np.abs(pou-1))))
+
+
 class ProjectedTraceFactorStore:
     """One independent factor per patch; fixed PoU weights on both sides."""
     def __init__(self, indices, weights, offsets):
