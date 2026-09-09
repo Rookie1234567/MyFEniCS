@@ -208,6 +208,18 @@ G1恰为6个固定I4+3PC，总12I4/276B4/552p2 MatSolve，零精化。冻结源�
 
 ## 完整高阶实体组件与同数学热点（中途，G5开放）
 
+### 最新补记：缓存已测，固定MPI1路由实现待审
+
+接线后续（仍未运行）：新增互斥 `--owner-route-trace-component`，profile identity为 `physical_owner_route_trace_component_v1`，独立root `v6_owner_route_trace_component/<newSHA>/a2r160_g1`、attempt和lock，复用原预算/watchdog。分流只启用cached_exact与fixed_serial_owner_route；先用生产owner检查三旧q的输出、输入不变、finite/shared/slave，再将完整same-g B4对348373缓存结果作1e-10桥，保留原564桥。桥均未实跑。合并fixture最终1 passed in 0.85s，父2.358346453s、RSS144994304B、tree/global swap增量0、后代清场。尚未commit，待监督审阅；下文“无新CLI”是前次实现阶段状态。
+
+最终容量修正采用独立difference数组原位减法，临时峰载荷为canonical849344B + complex候选1209600B + abs实数组604800B =2663744B；不覆盖旧probe。修正后同一fixture重跑1 passed in 0.78s，父2.101793517s、全树RSS130990080B、tree/global swap增量0、后代清场；这是最终代码的验证，下文首次测试保留。
+
+此前待审缓存组件已在348373ae6440115355b85bad613b1acc53820d8b完成唯一I4：42步native真残差0.029242939406004885，仍高于1e-4；M0/curl场误差0.008839885490235648/0.008835479611908266。末次检查61.964642099s，原60s完整回调限制未追加；父111.393506461s，全树RSS峰873865216B，tree/global swap增量0。11459项raw核验确认记录和负分类，不代表达到solver目标。
+
+同一网格的共享候选编号不变，原MPI1每次排序并循环53084组。固定首次位置与反向索引可省去重复整理，代价是保存索引；每次仍检查全部候选差，W/WH及MPC不变。三个保存向量的只读对照得到full primal、候选输出和共享缺陷逐位相同，伴随复内积差最大2.45031e-15。旧路由均值0.290604459s，新plan均值0.000799744s；占此前CU均值0.390714s约74.38%，这是独立样本估计。假设每步两个CU及其余成本不变，64步预测57.3273s；仅三次样本，不保证运行时间或收敛。
+
+现只实现MPI1显式opt-in及最小测试：保留默认alltoallv、原绝对1e-11与finite检查，MPI2启用拒绝。plan1454144B加临时保守2663744B，总4117888B进入原512MiB预算，不冒充RSS。相同fixture 1 passed in 0.83s；父2.350954583s、RSS144605184B、tree/global swap增量0、后代清场。此次无正式计算；只向SavedBubbleSpace和trace组件函数传递参数，尚无新正式CLI入口。正式生产路径三向量及same-g B4桥待监督审阅后另行授权。G5开放，原生显式残差与FGMRES16/max64/60s均不变。raw身份见compact。
+
 内部响应和粗空间之外，误差还会沿共享边/面传递。这里按有限元真实实体的相邻单元建立小修正：792条edge各2个高阶方向、774个face各20个方向，内部响应用原18类102×102物理LU处理。H_T不保存大块延拓F，而以缓存体积的正/伴随作用实现；端面小块仍含原80模式DtN。收益是覆盖之前遗漏的高阶切向空间，代价是1566个小LU及每次额外局部求解。完整B4_T借用原BAL_H，将通用CU与H_T组合；参考y及旧CUg只用于测量和独立桥，不进入PC。
 
 | 已测步骤与source | 原A4残差 / 场误差M0、scaled-curl | 分类与费用 |

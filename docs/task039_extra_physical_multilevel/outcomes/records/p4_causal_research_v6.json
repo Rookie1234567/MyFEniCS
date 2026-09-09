@@ -2,6 +2,23 @@
   "status": "INTERIM_MEASURED_CAUSAL_RESEARCH_G5_OPEN",
   "items": [
     {
+      "kind": "cached_trace_and_owner_route_interim",
+      "source": "348373ae6440115355b85bad613b1acc53820d8b",
+      "cached_readout": {"path": "benchmarks/artifacts/task39extra/v6_recursive/cached_trace_readout.json", "sha256": "7f8e789bba0caa18c54149ca73273d1c57b29b344a1f2116ae69a842688ad3e1"},
+      "cached_I4": {"iterations": 42, "true_residual": 0.029242939406004885, "target": 0.0001, "classification": "INNER_INEXACT_AT_CAP"},
+      "owner_probe": {"path": "benchmarks/artifacts/task39extra/v6_recursive/owner_route_probe.json", "sha256": "8905c25c47dcedf336a01cb48536d85181fb329ffb9198eabb9da5f6bcaaf01e"},
+      "owner_plan_bytes": 1454144,
+      "owner_temporary_budget_bytes": 2663744,
+      "implementation_status": "OPT_IN_MPI1_DIFF_AWAITING_REVIEW",
+      "wiring_status": "OWNER_ROUTE_TRACE_ENTRY_IMPLEMENTED_NOT_RUN",
+      "wiring_fixture": "benchmarks/artifacts/task39extra/v6_recursive/owner_route_wiring_focused_v1/worker.log",
+      "focused_test": "benchmarks/artifacts/task39extra/v6_recursive/owner_route_focused_v2/worker.log",
+      "temporary_implementation": "canonical[inverse] then subtract in-place; peak canonical + complex candidate + real abs",
+      "focused_passed": 1,
+      "new_formal_runs": 0,
+      "G5_closed": false
+    },
+    {
       "kind": "physical_high_trace_component",
       "source": "564e42b43391f1857934ef064778636aff06894b",
       "classification": "INNER_INEXACT_AT_CAP",

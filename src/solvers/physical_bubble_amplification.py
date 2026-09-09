@@ -30,7 +30,7 @@ def saved_cell_action(value,mapping,cells,classes):
 
 class SavedBubbleSpace(BubbleEnrichedSpace):
     """Borrow insertion/lifetime code, without running the class constructor."""
-    def __init__(self,levels,classes,cells,mapping,dtn,*,sample,save):
+    def __init__(self,levels,classes,cells,mapping,dtn,*,sample,save,fixed_serial_owner_route=False):
         from .fullspace_same_mesh_hcurl_pmg import build_same_mesh_hcurl_transfer
         from .fullspace_same_mesh_hcurl_pmg_runtime import SameMeshHcurlOwnerTransfer
         from .fullspace_physical_intermediate_runtime import AlgebraicOwnerTransfer
@@ -44,7 +44,8 @@ class SavedBubbleSpace(BubbleEnrichedSpace):
                 raise ValueError('saved W orientation/trace differs')
             return item['W']
         self.owner=SameMeshHcurlOwnerTransfer(levels['spaces'][4],levels['floquets'][4],
-            levels['spaces'][2],levels['floquets'][2],build_same_mesh_hcurl_transfer(4,2),cell_matrix_provider=provider)
+            levels['spaces'][2],levels['floquets'][2],build_same_mesh_hcurl_transfer(4,2),cell_matrix_provider=provider,
+            fixed_serial_owner_route=fixed_serial_owner_route)
         self.transfer=AlgebraicOwnerTransfer(self.owner)
 
     def apply_into(self,source,target):

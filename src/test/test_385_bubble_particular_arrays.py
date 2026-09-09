@@ -6,7 +6,48 @@ from src.runners.physical_recursive_entry import build_parser,selected_contract
 from src.solvers.physical_bubble_amplification import combine_full_pq,saved_cell_action
 
 
-def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path):
+def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path,monkeypatch):
+    from mpi4py import MPI
+    from types import SimpleNamespace
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
+        _fixed_serial_owner_plan, _resolve_fixed_serial_candidates,
+        _alltoallv_candidates, _resolve_owner_candidates, SameMeshHcurlOwnerTransfer,
+    )
+    import inspect
+    assert inspect.signature(SameMeshHcurlOwnerTransfer).parameters['fixed_serial_owner_route'].default is False
+    from src.runners.physical_recursive_entry import dispatch_components
+    from src.runners import physical_trace_controls
+    base_args=['--input','i','--inventory','j','--output','o','--budget','b','--source-sha','s']
+    owner_args=build_parser().parse_args(base_args+['--owner-route-trace-component'])
+    owner_contract=selected_contract(owner_args)
+    cached_contract=selected_contract(build_parser().parse_args(base_args+['--cached-trace-component']))
+    assert owner_contract['identity']=='physical_owner_route_trace_component_v1'
+    for key in cached_contract.keys()-{'identity'}:assert owner_contract[key]==cached_contract[key]
+    assert owner_contract['owner_extra_budget_bytes']==4117888 and owner_contract['owner_primal_qualification']==3
+    assert owner_contract['fixed_serial_owner_route'] is True
+    with pytest.raises(SystemExit):build_parser().parse_args(base_args+['--owner-route-trace-component','--cached-trace-component'])
+    calls=[]
+    with monkeypatch.context() as patch:
+        patch.setattr(physical_trace_controls,'run_trace_component',lambda *a,**kw:calls.append(kw))
+        for flag in ('--owner-route-trace-component','--cached-trace-component','--high-trace-component'):
+            dispatch_components(build_parser().parse_args(base_args+[flag]),None,None,tmp_path,sample=None,marker=None)
+    assert [(c['cached_exact'],c['fixed_serial_owner_route']) for c in calls]==[(True,True),(True,False),(False,False)]
+    ids=np.array([2,0,1,2,1],dtype=np.uint64);ranges=((0,3),)
+    plan=_fixed_serial_owner_plan(ids,ranges,MPI.COMM_SELF)
+    values=np.array([2+3j,4-1j,.5+.2j,2+3j+2e-12,.5+.2j-3e-12])
+    original=values.copy()
+    old=_resolve_owner_candidates(*_alltoallv_candidates(ids,values,ranges,MPI.COMM_SELF),0,MPI.COMM_SELF)
+    new=_resolve_fixed_serial_candidates(plan,values,MPI.COMM_SELF)
+    for left,right in zip(old,new):np.testing.assert_array_equal(left,right)
+    np.testing.assert_array_equal(values,original)
+    np.testing.assert_array_equal(plan[1],[1,2,0])  # canonical first, never averaging
+    assert all(not a.flags.writeable for a in plan)
+    for value in (1e-9,np.nan,np.inf):
+        bad=values.copy();bad[3]+=value
+        with pytest.raises(RuntimeError):_resolve_fixed_serial_candidates(plan,bad,MPI.COMM_SELF)
+    with pytest.raises(ValueError,match='shape'):_resolve_fixed_serial_candidates(plan,values[:-1],MPI.COMM_SELF)
+    with pytest.raises(ValueError,match='MPI1'):_fixed_serial_owner_plan(ids,ranges,SimpleNamespace(size=2))
+    with pytest.raises(ValueError,match='cover'):_fixed_serial_owner_plan(ids,((0,4),),MPI.COMM_SELF)
     rng=np.random.default_rng(385);phase=np.exp(.61j)
     mapping=dict(dofmap=np.array([[0,1,2,3],[1,4,5,6]]),slaves=np.array([4]),masters=np.array([0]),
         coefficients=np.array([phase]),offsets=np.array([0,0,0,0,0,1,1,1]))

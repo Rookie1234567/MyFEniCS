@@ -13,9 +13,14 @@ RECOVERY_ROOT=Path('benchmarks/artifacts/task39extra/v6_bubble_amplification_dia
 NATIVE_TRACE_ROOT=Path('benchmarks/artifacts/task39extra/v6_high_trace_component/564e42b43391f1857934ef064778636aff06894b/a2r160_g1')
 NATIVE_TRACE_READOUT=Path('benchmarks/artifacts/task39extra/v6_recursive/high_trace_readout.json')
 NATIVE_TRACE_HASH='8b43b5448b497a5d56e8f3372284f448c4d9460618f6048eab54b3b91cbe616f'
+OWNER_PROBE=Path('benchmarks/artifacts/task39extra/v6_recursive/owner_route_probe.json')
+OWNER_PROBE_HASH='8905c25c47dcedf336a01cb48536d85181fb329ffb9198eabb9da5f6bcaaf01e'
+CACHED_TRACE_ROOT=Path('benchmarks/artifacts/task39extra/v6_cached_trace_component/348373ae6440115355b85bad613b1acc53820d8b/a2r160_g1')
+CACHED_TRACE_READOUT=Path('benchmarks/artifacts/task39extra/v6_recursive/cached_trace_readout.json')
+CACHED_TRACE_HASH='7f8e789bba0caa18c54149ca73273d1c57b29b344a1f2116ae69a842688ad3e1'
 
 
-def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_exact=False):
+def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_exact=False,fixed_serial_owner_route=False):
     from petsc4py import PETSc
     from .physical_diagnosis_worker import save_packet
     from .physical_recursive_controls import load_p4_failure_input,verify_recursive_map
@@ -48,6 +53,7 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
         if not np.isfinite(error) or error>limit:raise ValueError(name+' identity failed')
     try:
         if comm.size!=1:raise ValueError('trace component requires MPI1')
+        if fixed_serial_owner_route and not cached_exact:raise ValueError('owner route requires cached exact trace action')
         if hashlib.sha256(TRACE_INVENTORY.read_bytes()).hexdigest()!=TRACE_INVENTORY_HASH:raise ValueError('entity inventory changed')
         inventory=json.loads(TRACE_INVENTORY.read_text())
         if len(inventory['entities'])!=1566 or inventory['high_trace_dimension']!=17064:raise ValueError('frozen entity counts differ')
@@ -77,7 +83,40 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
         entries=[FullspaceDtnModeFunctional(**{**e,'mode_key':tuple(e['mode_key'])}) for e in p['entries']]
         carrier=FullspaceDtnCarrier(entries,global_rows=p['global_rows'],ownership_range=(0,p['global_rows']),slave_rows=p2map['slaves'],comm=comm)
         dtn=build_fullspace_dtn_action(carrier,comm=comm)
-        space=SavedBubbleSpace(levels,classes,cells,p2map,dtn,sample=sample,save=save)
+        space=SavedBubbleSpace(levels,classes,cells,p2map,dtn,sample=sample,save=save,
+            fixed_serial_owner_route=fixed_serial_owner_route)
+        if fixed_serial_owner_route:
+            from .physical_diagnostic_completion import load_packet
+            if hashlib.sha256(OWNER_PROBE.read_bytes()).hexdigest()!=OWNER_PROBE_HASH:
+                raise ValueError('owner probe changed')
+            authority=json.loads(OWNER_PROBE.read_text())
+            hashes={e['path']:e['sha256'] for e in authority['evidence']}
+            for label in ('range_q','saved_delta_z','S_probe_q'):
+                sample();path=OWNER_PROBE.parent/'owner_route_probe_arrays'/(label+'.json')
+                if hashlib.sha256(path.read_bytes()).hexdigest()!=hashes[str(path)]:
+                    raise ValueError('owner probe packet changed')
+                packet=load_packet(path)
+                q=level_vector(levels,2);out=None
+                try:
+                    q.array[:]=packet['q']
+                    out=space.transfer.apply_primal(q)
+                    facts=space.owner.last_apply_facts
+                    unchanged=bool(np.array_equal(q.array,packet['q']))
+                    finite=bool(np.isfinite(out.array).all())
+                    slave_max=float(np.max(np.abs(out.array[mapping['slaves']]))) if mapping['slaves'].size else 0.
+                    save('trace_owner_'+label+'_facts',dict(owner=facts,input_unchanged=unchanged,
+                        finite=finite,slave_max=slave_max,source_probe_hash=OWNER_PROBE_HASH,
+                        source_packet_hash=hashes[str(path)],routing=dict(space.owner.routing_costs)))
+                    check('trace_owner_'+label+'_bridge',out.array,packet['old_primal'],1e-11)
+                    if (not unchanged or not finite or slave_max!=0. or not facts['finite']
+                        or not np.isfinite(facts['shared_row_max_defect']) or facts['shared_row_max_defect']>1e-11
+                        or not np.isfinite(facts['fine_mpc_constraint_residual']) or facts['fine_mpc_constraint_residual']>1e-11):
+                        raise ValueError('production owner qualification failed')
+                finally:
+                    q.destroy()
+                    if out is not None:out.destroy()
+                del packet
+            marker('trace_owner_qualification_complete',dict(space.owner.routing_costs))
         stored=recovered('amplification_S_CSR')
         matrix=PETSc.Mat().createAIJ(size=stored['shape'],csr=(stored['indptr'],stored['indices'],stored['values']),comm=comm)
         if matrix.getSize()!=(7326,7326):raise ValueError('restored S size differs')
@@ -134,6 +173,7 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
         extra=sum(array_roots.values())+maps_bytes+2448000+3003696+10076832+6045696+1050624+8*849344+32*1024**2
         extra+=sum(e.coupling_rows.nbytes+e.coupling_values.nbytes+e.projection_rows.nbytes+e.projection_values.nbytes for c in (carrier,p4carrier) for e in c.entries)
         if cached_exact:extra+=3*849344
+        if fixed_serial_owner_route:extra+=4117888  # plan 1454144 + conservative temporary 2663744 B
         marker('trace_fixed_storage_preflight',dict(extra_local_bytes=extra,policy_cap=512*1024**2,
             Krylov_V_Z_bound_bytes=33*849344,BAL_new_vector_bound_bytes=32*849344,
             scope='PC extra enters common bottom budget; KSP/BAL live vectors separately in whole-tree RSS'))
@@ -200,6 +240,9 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
         first=B(rhs);applied=native_A4(first,'output') if cached_exact else A(first)
         try:
             if cached_exact:check('trace_cached_B4_output_bridge',first.array,previous('trace_B4_g')['solution'])
+            if fixed_serial_owner_route:
+                previous_cached=saved_packet_reader(CACHED_TRACE_ROOT,CACHED_TRACE_READOUT,CACHED_TRACE_HASH)
+                check('trace_owner_B4_output_bridge',first.array,previous_cached('trace_B4_g')['solution'],1e-10)
             residual=rhs.array-applied.array;coarse=restriction(rhs);defect=restriction(applied);remaining=coarse-defect
             balance=relative_defect(remaining,coarse,defect)
             split=len(p2map['offsets'])-1
@@ -220,6 +263,7 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_e
             solver_target_reached=result['facts']['final_true_residual']<=1e-4,G5_closed=False,outer=0))
     finally:
         save('trace_component_costs',dict(counts=counts,elapsed_seconds=elapsed,operations=operations,
+            owner_routing=dict(space.owner.routing_costs) if space and space.owner else {},
             cached_exact=cached_exact,cached_counts=cached.counts if cached else {},cached_seconds=cached.seconds if cached else {},
             A4_counter_semantics='Krylov/BAL cached; native authority and qualifications separately counted' if cached_exact else 'original native action all calls',
             trace_counts=trace.counts if trace else {},trace_seconds=trace.elapsed if trace else {},

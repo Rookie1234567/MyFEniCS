@@ -10,6 +10,7 @@ MPC exactly once on each side of an action.
 from __future__ import annotations
 
 from hashlib import sha256
+from time import perf_counter
 from types import MappingProxyType
 from typing import Any
 
@@ -162,6 +163,41 @@ def _resolve_owner_candidates(
         global_defect,
         int(ids.size),
     )
+
+
+def _fixed_serial_owner_plan(ids, ranges, comm):
+    """Keep the first original packet position, as the stable MPI1 route does."""
+    if int(comm.size) != 1:
+        raise ValueError("fixed owner routing requires MPI1")
+    ids = np.asarray(ids, dtype=np.uint64)
+    if ids.ndim != 1 or not ids.size:
+        raise ValueError("invalid fixed owner packet")
+    _owner_ranks(ids, ranges)
+    unique, first, inverse = np.unique(ids, return_index=True, return_inverse=True)
+    if not np.array_equal(unique, np.arange(*ranges[0], dtype=np.uint64)):
+        raise ValueError("fixed owner packet does not cover owned rows")
+    for array in (unique, first, inverse):
+        array.flags.writeable = False
+    return unique, first, inverse
+
+
+def _resolve_fixed_serial_candidates(plan, values, comm):
+    if int(comm.size) != 1:
+        raise ValueError("fixed owner routing requires MPI1")
+    unique, first, inverse = plan
+    values = np.asarray(values, dtype=np.complex128)
+    if values.ndim != 1 or values.size != inverse.size:
+        raise ValueError("candidate packet shape is not closed")
+    if not np.isfinite(values).all():
+        raise RuntimeError("same-mesh primal candidates are non-finite")
+    canonical = values[first]
+    difference = canonical[inverse]
+    np.subtract(values, difference, out=difference)
+    # Peak temporary payload: canonical + one complex packet + its real abs.
+    defect = float(comm.allreduce(float(np.max(np.abs(difference))), op=MPI.MAX))
+    if not np.isfinite(defect) or defect > ROW_CONSISTENCY_LIMIT:
+        raise RuntimeError(f"same-mesh owner row candidates disagree: {defect} > {ROW_CONSISTENCY_LIMIT}")
+    return unique, canonical, defect, int(values.size)
 
 
 def _space_degree(space: Any) -> int:
@@ -334,7 +370,7 @@ class SameMeshHcurlOwnerTransfer:
         coarse_space: Any,
         coarse_floquet: Any,
         local_transfer: SameMeshHcurlTransfer,
-        *, cell_matrix_provider=None,
+        *, cell_matrix_provider=None, fixed_serial_owner_route=False,
     ) -> None:
         pair = (_space_degree(fine_space), _space_degree(coarse_space))
         if pair not in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS:
@@ -358,6 +394,8 @@ class SameMeshHcurlOwnerTransfer:
         self.coarse_floquet = coarse_floquet
         self.mesh = _space_mesh(fine_space)
         self.comm = self.mesh.comm
+        if fixed_serial_owner_route and int(self.comm.size) != 1:
+            raise ValueError("fixed owner routing requires MPI1")
         self.local_transfer = local_transfer
         self._destroyed = False
         self._last_apply_facts: dict[str, object] = {}
@@ -465,6 +503,18 @@ class SameMeshHcurlOwnerTransfer:
         if coarse_seen != coarse_expected:
             raise ValueError("coarse owner columns do not have local cell coverage")
         self._records = tuple(records)
+        plan_start = perf_counter()
+        self._serial_owner_plan = (
+            _fixed_serial_owner_plan(np.concatenate([r["fine_global"] for r in records]), self.fine_ranges, self.comm)
+            if fixed_serial_owner_route else None
+        )
+        self.routing_costs = dict(
+            route="fixed_serial" if fixed_serial_owner_route else "alltoallv",
+            qualification="MPI1 opt-in; MPI2 not qualified" if fixed_serial_owner_route else "existing owner route",
+            plan_bytes=sum(a.nbytes for a in self._serial_owner_plan) if self._serial_owner_plan else 0,
+            plan_setup_seconds=perf_counter()-plan_start,
+            primal_count=0, adjoint_count=0, primal_seconds=0., adjoint_seconds=0., route_seconds=0.,
+        )
         self._map_cache = tuple(cache.items())
         self._authority = authority
         self._coarse_work = fem.Function(coarse_floquet.mpc.function_space)
@@ -623,18 +673,26 @@ class SameMeshHcurlOwnerTransfer:
         return np.concatenate(ids), np.concatenate(values)
 
     def apply_primal_into(self, source: Any, target: Any) -> None:
+        started = perf_counter()
         self._require_live()
         self._require_vector(target, self.fine_space.dofmap.index_map)
         self._prepare_primal(source, self._coarse_work, self.coarse_floquet)
         candidate_ids, candidate_values = self._candidate_packet()
         if not np.all(np.isfinite(candidate_values)):
             raise RuntimeError("same-mesh primal candidates are non-finite")
-        received_ids, received_values, source_ranks = _alltoallv_candidates(
-            candidate_ids, candidate_values, self.fine_ranges, self.comm
-        )
-        owned_ids, owned_values, defect, packet_size = _resolve_owner_candidates(
-            received_ids, received_values, source_ranks, self.comm.rank, self.comm
-        )
+        route_start = perf_counter()
+        if self._serial_owner_plan is None:
+            received_ids, received_values, source_ranks = _alltoallv_candidates(
+                candidate_ids, candidate_values, self.fine_ranges, self.comm
+            )
+            owned_ids, owned_values, defect, packet_size = _resolve_owner_candidates(
+                received_ids, received_values, source_ranks, self.comm.rank, self.comm
+            )
+        else:
+            owned_ids, owned_values, defect, packet_size = _resolve_fixed_serial_candidates(
+                self._serial_owner_plan, candidate_values, self.comm
+            )
+        self.routing_costs["route_seconds"] += perf_counter()-route_start
         self._fine_work.x.array[:] = 0.0
         local_ids = owned_ids.astype(np.int64) - self._fine_owned_start
         if np.any(local_ids < 0) or np.any(local_ids >= self._fine_owned_size):
@@ -647,6 +705,8 @@ class SameMeshHcurlOwnerTransfer:
         if not finite or not np.isfinite(constraint):
             raise RuntimeError("same-mesh primal output is non-finite")
         self._fine_work.x.petsc_vec.copy(target)
+        self.routing_costs["primal_count"] += 1
+        self.routing_costs["primal_seconds"] += perf_counter()-started
         self._last_apply_facts = {
             "operation": "primal",
             "finite": finite,
@@ -671,6 +731,7 @@ class SameMeshHcurlOwnerTransfer:
         return target
 
     def apply_adjoint_into(self, source: Any, target: Any) -> None:
+        started = perf_counter()
         self._require_live()
         self._require_vector(source, self.fine_space.dofmap.index_map)
         self._require_vector(target, self.coarse_space.dofmap.index_map)
@@ -719,6 +780,8 @@ class SameMeshHcurlOwnerTransfer:
         if not finite or not np.isfinite(slave_max):
             raise RuntimeError("same-mesh adjoint output is non-finite")
         self._coarse_work.x.petsc_vec.copy(target)
+        self.routing_costs["adjoint_count"] += 1
+        self.routing_costs["adjoint_seconds"] += perf_counter()-started
         self._last_apply_facts = {
             "operation": "adjoint",
             "finite": finite,
@@ -750,6 +813,7 @@ class SameMeshHcurlOwnerTransfer:
         self._coarse_work = None
         self._fine_work = None
         self._records = ()
+        self._serial_owner_plan = None
         self._map_cache = ()
         self._authority = {}
         self._coarse_slaves = np.empty(0, dtype=np.int32)
