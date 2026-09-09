@@ -78,6 +78,98 @@
     "reduction_percent": 73.000466,
     "stage_pair": ["reference_volume_pattern", "reference_volume_complete"]
   },
+  "p4_diagnostics": {
+    "decision_records": 1100,
+    "actual_p4_mat_solve_calls": 1100,
+    "external_solves": 1100,
+    "action_counts": {
+      "C": 1100,
+      "MatSolve": 1100,
+      "augmented": 2200,
+      "coupling": 3300,
+      "native": 1100,
+      "recover_auxiliary": 0
+    },
+    "residual_gate": 1e-10,
+    "max_original_a4_true_residual": 5.544550902419917e-11,
+    "max_r4_true_residual_norm": 1.5845233136444592e-11,
+    "max_refinement_steps": 0,
+    "total_refinement_steps": 0,
+    "residual_gate_failures": 0,
+    "all_residual_gates_passed": true,
+    "source_file": "p4_decisions.jsonl"
+  },
+  "setup_substage_intervals": {
+    "interval_semantics": "Consecutive setup marker-to-marker intervals; mutually exclusive and not a sum of nested stage labels. Null RSS means no resource sample fell in that interval.",
+    "intervals": [
+      {"start":"workflow_started","end":"shared_mesh_spaces_started","wall_seconds":0.3021248991135508,"rss_peak_bytes":233971712,"swap_peak_bytes":0,"samples":1},
+      {"start":"shared_mesh_spaces_started","end":"h6_original_setup_started","wall_seconds":2.173811031971127,"rss_peak_bytes":407097344,"swap_peak_bytes":0,"samples":6},
+      {"start":"h6_original_setup_started","end":"h6_original_window_and_packed_action_complete","wall_seconds":190.21850331290625,"rss_peak_bytes":1322426368,"swap_peak_bytes":0,"samples":549},
+      {"start":"h6_original_window_and_packed_action_complete","end":"fine_physical_started","wall_seconds":0.0020663971081376076,"rss_peak_bytes":null,"swap_peak_bytes":null,"samples":0},
+      {"start":"fine_physical_started","end":"native_physical_started","wall_seconds":94.81151299388148,"rss_peak_bytes":1589280768,"swap_peak_bytes":0,"samples":277},
+      {"start":"native_physical_started","end":"owner_transfer_started","wall_seconds":29.04807250504382,"rss_peak_bytes":1187336192,"swap_peak_bytes":0,"samples":86},
+      {"start":"owner_transfer_started","end":"reference_volume_compile_started","wall_seconds":10.77080863690935,"rss_peak_bytes":916627456,"swap_peak_bytes":0,"samples":33},
+      {"start":"reference_volume_compile_started","end":"reference_metadata","wall_seconds":31.22002103808336,"rss_peak_bytes":1759256576,"swap_peak_bytes":0,"samples":92},
+      {"start":"reference_metadata","end":"reference_volume_pattern","wall_seconds":1.6786599699407816,"rss_peak_bytes":1233223680,"swap_peak_bytes":0,"samples":5},
+      {"start":"reference_volume_pattern","end":"reference_volume_complete","wall_seconds":491.0161967771128,"rss_peak_bytes":1497706496,"swap_peak_bytes":0,"samples":1459},
+      {"start":"reference_volume_complete","end":"reference_augmentation_complete","wall_seconds":2.091288496972993,"rss_peak_bytes":1919664128,"swap_peak_bytes":0,"samples":5},
+      {"start":"reference_augmentation_complete","end":"reference_symbolic_started","wall_seconds":0.0026680040173232555,"rss_peak_bytes":null,"swap_peak_bytes":null,"samples":0},
+      {"start":"reference_symbolic_started","end":"reference_symbolic_complete","wall_seconds":2.90218972787261,"rss_peak_bytes":1994129408,"swap_peak_bytes":0,"samples":9},
+      {"start":"reference_symbolic_complete","end":"reference_symbolic_resource","wall_seconds":0.03803767706267536,"rss_peak_bytes":null,"swap_peak_bytes":null,"samples":0},
+      {"start":"reference_symbolic_resource","end":"reference_budget_evaluated","wall_seconds":0.0015315469354391098,"rss_peak_bytes":null,"swap_peak_bytes":null,"samples":0},
+      {"start":"reference_budget_evaluated","end":"reference_numeric_preflight","wall_seconds":0.0006753969937562943,"rss_peak_bytes":null,"swap_peak_bytes":null,"samples":0},
+      {"start":"reference_numeric_preflight","end":"reference_numeric_complete","wall_seconds":11.427506155101582,"rss_peak_bytes":2992947200,"swap_peak_bytes":0,"samples":32},
+      {"start":"reference_numeric_complete","end":"physical_intermediate_setup_complete","wall_seconds":0.001578318066894635,"rss_peak_bytes":null,"swap_peak_bytes":null,"samples":0},
+      {"start":"physical_intermediate_setup_complete","end":"setup_vector_identity_started","wall_seconds":0.0023927939638495445,"rss_peak_bytes":null,"swap_peak_bytes":null,"samples":0},
+      {"start":"setup_vector_identity_started","end":"setup_vector_identity_complete","wall_seconds":9.299860129132867,"rss_peak_bytes":3066920960,"swap_peak_bytes":0,"samples":27}
+    ]
+  },
+  "complete_80_channel_carriers": {
+    "entry_count": 80,
+    "complex_amplitude_field": "outgoing_amplitude_at_boundary",
+    "power_fields": ["R", "T", "modal_power_code_units", "power_ratio"],
+    "own_output": [
+      {"path":"numerical_output/dtn_auxiliary_amplitudes_3d.json","entries":80,"sha256":"fb1ae99016afb24bd8390b42428a533a6ef37ef487b15605320609f9666c76f9"},
+      {"path":"numerical_output/dtn_port_diffraction_orders_3d.json","entries":80,"sha256":"a907dfc1e10609b1df5058813808da91275903b7ecdcddc40d51aa0abab26224"}
+    ],
+    "tracked_reference": [
+      {"path":"tracked_wsl_observables/dtn_auxiliary_amplitudes_3d.json","entries":80,"sha256":"04b3b1015e7ca25cad11314c4e9291b22e0a7349b552e18e352d235bedf85d00"},
+      {"path":"tracked_wsl_observables/dtn_port_diffraction_orders_3d.json","entries":80,"sha256":"1274bc78bffb6f60085b64b52be1d27d269be79608b445fc5eac31f6f84783a5"}
+    ],
+    "git_record": {"path":"records/r1_attempt3_own_80_channels.json","entries":80,"sha256":"6ce7922825e0e84f0183cd33c19f1fb4d791f95944dc7743181cfc9b2b12bfb9"},
+    "note": "The complete own 80-entry mode identity, complex amplitude, and per-channel power evidence is committed in git_record. The old WSL arrays are referenced through the existing tracked carrier and are not copied here."
+  },
+  "artifact_hashes": {
+    "run_manifest.json": "7564e6c87ff8af8664b24ed7ea79b095b8bbd3e7cfd3cbdb6bbe80e87f0ab3a2",
+    "resolved_config.json": "db417c3af49e3ae4332732af76eb8afe0e530c2d523dfe756e2b6b056247e86",
+    "final_residual_arrays.npz": "c092d1622a4276fa7c721e46a9784027288d6b36083408d7d0ef06dca8387336",
+    "mode_identity_bridge.json": "70edef41ad9fc8e2b9e0980c00ca93b121833e5c1567f33239c162d19cda7ad7",
+    "p4_decisions.jsonl": "0a179758216245020521f89d2f8550405ed41306eb77688c465cda19a04e3462",
+    "pc_applies.jsonl": "c397f77e8eee6693d47798199115fe77be0be7c774b6a59dfff97fdfe82d017e",
+    "physical_intermediate_summary.json": "c296ae7d12f802f31c1d562a2494adcad9413ab9648ccdc01e24ea409a0916b4",
+    "checker.json": "ad96432ee7ce58151c7f677544e62423a23cd76318aa70947d004ccf9dca79ea",
+    "watchdog/summary.json": "f4ab5496f0985fb82af1aebf133aafbfbff7f41151b625ea4db2f9006366872e",
+    "numerical_output/dtn_port_power_metrics_3d.json": "75b61ecea30e6c62a8471330bcb26255b330f0e186f33619a911220f2660fffa",
+    "records/r1_attempt3_own_80_channels.json": "6ce7922825e0e84f0183cd33c19f1fb4d791f95944dc7743181cfc9b2b12bfb9"
+  },
+  "pre_pde_profile_contract_failure": {
+    "run_id": "20260909T130043.448855Z",
+    "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T130043.448855Z",
+    "status": "FAILED_PROFILE_CONTRACT_BEFORE_PDE",
+    "source_sha": "e55e5b2e5534e99c870995648458a331a10acfc4",
+    "exit_status": 4,
+    "result_classification": "WORKER_FAILED",
+    "error": "Task38 full3d_iterative authority error: Task38 Full3D iterative adapter failed: resolved physical-intermediate profile differs from the frozen contract",
+    "workflow_seconds": 5.028277033008635,
+    "watchdog_rss_peak_bytes": 166072320,
+    "watchdog_swap_peak_bytes": 0,
+    "watchdog_samples": 15,
+    "resolved_config_sha256": "f7ae436890c70c6a613768ffe35703b25854f5adc5ccf5a0dba2cb47163c6ba8",
+    "run_manifest_sha256": "cad11bc9a80283624aca75be3d605933f24ee7fa20098acbdc6f696c2824008c",
+    "worker_log_sha256": "7dee30c9185e4810340dc953b146316d4ccf9a91a04ccd6399e9e3f821059515",
+    "pde_entered": false,
+    "not_part_of_attempt3_numerical_wall": true
+  },
   "resource_authority": {
     "sampled_process_tree_rss_peak_bytes": 3631751168,
     "sampled_process_tree_swap_peak_bytes": 0,

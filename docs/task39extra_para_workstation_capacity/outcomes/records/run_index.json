@@ -22,6 +22,15 @@
       "record": "r1_attempt3.json",
       "status": "COMPLETED_OWN_GATES_REFERENCE_LIMITED",
       "source_sha": "9b1e8d4a1b2be9fca5b126a1ec3893e3af295e5e"
+    },
+    {
+      "stage": "R1_PRE_PDE",
+      "attempt": "profile-contract-failure",
+      "run_id": "20260909T130043.448855Z",
+      "record": "r1_attempt3.json#pre_pde_profile_contract_failure",
+      "status": "FAILED_PROFILE_CONTRACT_BEFORE_PDE",
+      "source_sha": "e55e5b2e5534e99c870995648458a331a10acfc4",
+      "exit_status": 4
     }
   ],
   "R2_S5_S3_S2_G": "NOT_RUN_REFERENCE_QUALIFICATION_PENDING",

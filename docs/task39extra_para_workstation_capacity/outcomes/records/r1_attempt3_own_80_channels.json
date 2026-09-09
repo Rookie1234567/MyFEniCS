@@ -1,0 +1,2011 @@
+{
+  "schema": "native-capacity.r1-own-80-channel.v1",
+  "source_run": "20260909T130326.291096Z",
+  "source_sha": "9b1e8d4a1b2be9fca5b126a1ec3893e3af295e5e",
+  "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+  "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+  "entry_count": 80,
+  "amplitude_field": "outgoing_amplitude_at_boundary",
+  "channels": [
+    {
+      "mode": {
+        "auxiliary_index": 0,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -7,
+        "n": 0,
+        "order_m": -7,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 0.0002105178796454747,
+        "imag": -0.00019928814316817455
+      },
+      "power": {
+        "R": 0.0000021940232412296743,
+        "T": 0.0,
+        "modal_power_code_units": 0.00002393186583674132,
+        "power_ratio": 0.0000021940232412296743,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 1,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -7,
+        "n": 0,
+        "order_m": -7,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.774580309527022E-15,
+        "imag": 1.8858020247761682E-16
+      },
+      "power": {
+        "R": 2.0192252653192357E-28,
+        "T": 0.0,
+        "modal_power_code_units": 2.2025212511739167E-27,
+        "power_ratio": 2.0192252653192357E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 2,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -6,
+        "n": -1,
+        "order_m": -6,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 8.435104769574015E-16,
+        "imag": -3.489664843251265E-16
+      },
+      "power": {
+        "R": 2.7169737586843525E-29,
+        "T": 0.0,
+        "modal_power_code_units": 2.9636081447495507E-28,
+        "power_ratio": 2.7169737586843525E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 3,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -6,
+        "n": -1,
+        "order_m": -6,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 5.783591238081958E-16,
+        "imag": 3.4260872530714673E-16
+      },
+      "power": {
+        "R": 1.4733763498401245E-29,
+        "T": 0.0,
+        "modal_power_code_units": 1.6071226807806796E-28,
+        "power_ratio": 1.4733763498401245E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 4,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -6,
+        "n": 0,
+        "order_m": -6,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.000009944768616649197,
+        "imag": -0.000010782279831893784
+      },
+      "power": {
+        "R": 9.671209129615673E-9,
+        "T": 0.0,
+        "modal_power_code_units": 1.0549117029376146E-7,
+        "power_ratio": 9.671209129615673E-9,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 5,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -6,
+        "n": 0,
+        "order_m": -6,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -4.914543152086969E-16,
+        "imag": -1.6713311795420868E-16
+      },
+      "power": {
+        "R": 1.211219858875176E-29,
+        "T": 0.0,
+        "modal_power_code_units": 1.3211688288749115E-28,
+        "power_ratio": 1.211219858875176E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 6,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -6,
+        "n": 1,
+        "order_m": -6,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -5.481796197020491E-16,
+        "imag": -3.193465974052624E-16
+      },
+      "power": {
+        "R": 1.3123154981430833E-29,
+        "T": 0.0,
+        "modal_power_code_units": 1.431441465471193E-28,
+        "power_ratio": 1.3123154981430833E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 7,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -6,
+        "n": 1,
+        "order_m": -6,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.7571507962193843E-16,
+        "imag": -1.3091815433348348E-15
+      },
+      "power": {
+        "R": 5.836299283836734E-29,
+        "T": 0.0,
+        "modal_power_code_units": 6.366091699446536E-28,
+        "power_ratio": 5.836299283836734E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 8,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -5,
+        "n": -1,
+        "order_m": -5,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 2.9155280731764707E-16,
+        "imag": -8.361229756406741E-17
+      },
+      "power": {
+        "R": 4.0343787836732466E-30,
+        "T": 0.0,
+        "modal_power_code_units": 4.4006011409136534E-29,
+        "power_ratio": 4.0343787836732466E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 9,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -5,
+        "n": -1,
+        "order_m": -5,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 5.80145241478598E-16,
+        "imag": -1.8556468250675283E-15
+      },
+      "power": {
+        "R": 1.6577077747309427E-28,
+        "T": 0.0,
+        "modal_power_code_units": 1.808186864928063E-27,
+        "power_ratio": 1.6577077747309427E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 10,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -5,
+        "n": 0,
+        "order_m": -5,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 0.000006617655597539015,
+        "imag": -0.0000993078891283328
+      },
+      "power": {
+        "R": 5.316595393288294E-7,
+        "T": 0.0,
+        "modal_power_code_units": 0.000005799211479140986,
+        "power_ratio": 5.316595393288294E-7,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 11,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -5,
+        "n": 0,
+        "order_m": -5,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 8.563088612887762E-15,
+        "imag": 2.091618126663632E-15
+      },
+      "power": {
+        "R": 4.170330124125152E-27,
+        "T": 0.0,
+        "modal_power_code_units": 4.548893518992412E-26,
+        "power_ratio": 4.170330124125152E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 12,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -5,
+        "n": 1,
+        "order_m": -5,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.9064826761216864E-16,
+        "imag": -5.334576224141354E-16
+      },
+      "power": {
+        "R": 1.4074041485943343E-29,
+        "T": 0.0,
+        "modal_power_code_units": 1.5351618264241933E-28,
+        "power_ratio": 1.4074041485943343E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 13,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -5,
+        "n": 1,
+        "order_m": -5,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.7168608157101333E-15,
+        "imag": 4.640642823201351E-16
+      },
+      "power": {
+        "R": 1.3871119952180062E-28,
+        "T": 0.0,
+        "modal_power_code_units": 1.5130276446609827E-27,
+        "power_ratio": 1.3871119952180062E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 14,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -4,
+        "n": -1,
+        "order_m": -4,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 7.509325651035366E-18,
+        "imag": 8.792841592559591E-18
+      },
+      "power": {
+        "R": 6.418746236479507E-33,
+        "T": 0.0,
+        "modal_power_code_units": 7.001410508551462E-32,
+        "power_ratio": 6.418746236479507E-33,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 15,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -4,
+        "n": -1,
+        "order_m": -4,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -4.085722498224216E-15,
+        "imag": -5.114051865529741E-16
+      },
+      "power": {
+        "R": 8.139446438691532E-28,
+        "T": 0.0,
+        "modal_power_code_units": 8.87830796390896E-27,
+        "power_ratio": 8.139446438691532E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 16,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -4,
+        "n": 0,
+        "order_m": -4,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.000028904936871878165,
+        "imag": 0.00008940419463327795
+      },
+      "power": {
+        "R": 5.042399464991071E-7,
+        "T": 0.0,
+        "modal_power_code_units": 0.000005500125305135277,
+        "power_ratio": 5.042399464991071E-7,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 17,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -4,
+        "n": 0,
+        "order_m": -4,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -4.929874887254297E-15,
+        "imag": -1.4881063347020203E-15
+      },
+      "power": {
+        "R": 1.5145652429498598E-27,
+        "T": 0.0,
+        "modal_power_code_units": 1.6520505122339872E-26,
+        "power_ratio": 1.5145652429498598E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 18,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -4,
+        "n": 1,
+        "order_m": -4,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.0099160591662314E-16,
+        "imag": 1.1967616460008256E-18
+      },
+      "power": {
+        "R": 4.897080355574757E-31,
+        "T": 0.0,
+        "modal_power_code_units": 5.341614795095429E-30,
+        "power_ratio": 4.897080355574757E-31,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 19,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -4,
+        "n": 1,
+        "order_m": -4,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.2824744500299297E-15,
+        "imag": 2.9395099775175564E-15
+      },
+      "power": {
+        "R": 4.937753392591523E-28,
+        "T": 0.0,
+        "modal_power_code_units": 5.3859799434113835E-27,
+        "power_ratio": 4.937753392591523E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 20,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -3,
+        "n": -1,
+        "order_m": -3,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.5629277647490855E-16,
+        "imag": 6.899947596730749E-19
+      },
+      "power": {
+        "R": 3.0861767980757365E-30,
+        "T": 0.0,
+        "modal_power_code_units": 3.366325738583224E-29,
+        "power_ratio": 3.0861767980757365E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 21,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -3,
+        "n": -1,
+        "order_m": -3,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -3.0343289980311352E-15,
+        "imag": 3.0323835161472707E-15
+      },
+      "power": {
+        "R": 8.646130813370482E-28,
+        "T": 0.0,
+        "modal_power_code_units": 9.430986816553822E-27,
+        "power_ratio": 8.646130813370482E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 22,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -3,
+        "n": 0,
+        "order_m": -3,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.000004105005438322573,
+        "imag": 0.00000888180187282448
+      },
+      "power": {
+        "R": 5.38586755841449E-9,
+        "T": 0.0,
+        "modal_power_code_units": 5.874771852926797E-8,
+        "power_ratio": 5.38586755841449E-9,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 23,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -3,
+        "n": 0,
+        "order_m": -3,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 9.303482245077129E-15,
+        "imag": 1.913866786308492E-15
+      },
+      "power": {
+        "R": 5.075341869444036E-27,
+        "T": 0.0,
+        "modal_power_code_units": 5.536058069606184E-26,
+        "power_ratio": 5.075341869444036E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 24,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -3,
+        "n": 1,
+        "order_m": -3,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 9.885933783347928E-18,
+        "imag": 2.463978498706479E-16
+      },
+      "power": {
+        "R": 2.8570464307768142E-30,
+        "T": 0.0,
+        "modal_power_code_units": 3.116395970006673E-29,
+        "power_ratio": 2.8570464307768142E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 25,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -3,
+        "n": 1,
+        "order_m": -3,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.618120191252483E-16,
+        "imag": 1.3476111088280306E-15
+      },
+      "power": {
+        "R": 8.655473963497407E-29,
+        "T": 0.0,
+        "modal_power_code_units": 9.441178094892551E-28,
+        "power_ratio": 8.655473963497407E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 26,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -2,
+        "n": -1,
+        "order_m": -2,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.705968427087305E-17,
+        "imag": 2.340877325242032E-16
+      },
+      "power": {
+        "R": 2.2251253959001366E-30,
+        "T": 0.0,
+        "modal_power_code_units": 2.4271120489481417E-29,
+        "power_ratio": 2.2251253959001366E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 27,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -2,
+        "n": -1,
+        "order_m": -2,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 6.450755942231236E-16,
+        "imag": 1.1113211913535496E-17
+      },
+      "power": {
+        "R": 1.6813061510918256E-29,
+        "T": 0.0,
+        "modal_power_code_units": 1.8339273933974447E-28,
+        "power_ratio": 1.6813061510918256E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 28,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -2,
+        "n": 0,
+        "order_m": -2,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 0.00005102122247383415,
+        "imag": 0.00021746367487978388
+      },
+      "power": {
+        "R": 0.0000025386424886123943,
+        "T": 0.0,
+        "modal_power_code_units": 0.000027690887818887527,
+        "power_ratio": 0.0000025386424886123943,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 29,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -2,
+        "n": 0,
+        "order_m": -2,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -5.195224670806546E-15,
+        "imag": 3.5676070095345225E-15
+      },
+      "power": {
+        "R": 2.020905021647761E-27,
+        "T": 0.0,
+        "modal_power_code_units": 2.2043534880589804E-26,
+        "power_ratio": 2.020905021647761E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 30,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -2,
+        "n": 1,
+        "order_m": -2,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -3.622483582479733E-16,
+        "imag": 7.246603576141986E-16
+      },
+      "power": {
+        "R": 2.651163408660138E-29,
+        "T": 0.0,
+        "modal_power_code_units": 2.891823833724396E-28,
+        "power_ratio": 2.651163408660138E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 31,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -2,
+        "n": 1,
+        "order_m": -2,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 7.992266468393952E-16,
+        "imag": -9.06851210860657E-16
+      },
+      "power": {
+        "R": 5.9018644540505E-29,
+        "T": 0.0,
+        "modal_power_code_units": 6.4376085743653065E-28,
+        "power_ratio": 5.9018644540505E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 32,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -1,
+        "n": -1,
+        "order_m": -1,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.0485098852143824E-16,
+        "imag": 1.2331879458482193E-15
+      },
+      "power": {
+        "R": 3.6791288309766035E-29,
+        "T": 0.0,
+        "modal_power_code_units": 4.013103230833184E-28,
+        "power_ratio": 3.6791288309766035E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 33,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -1,
+        "n": -1,
+        "order_m": -1,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.9296653203886864E-16,
+        "imag": 2.2201286752553874E-16
+      },
+      "power": {
+        "R": 3.2454500088082724E-30,
+        "T": 0.0,
+        "modal_power_code_units": 3.5400570391004306E-29,
+        "power_ratio": 3.2454500088082724E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 34,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -1,
+        "n": 0,
+        "order_m": -1,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.0008437813090922171,
+        "imag": -0.00027705786757206664
+      },
+      "power": {
+        "R": 0.000030894430229089245,
+        "T": 0.0,
+        "modal_power_code_units": 0.00033698884562897454,
+        "power_ratio": 0.000030894430229089245,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 35,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -1,
+        "n": 0,
+        "order_m": -1,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -7.025916960329457E-16,
+        "imag": -2.2253275796843935E-16
+      },
+      "power": {
+        "R": 2.127538711094029E-29,
+        "T": 0.0,
+        "modal_power_code_units": 2.3206668935666883E-28,
+        "power_ratio": 2.127538711094029E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 36,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -1,
+        "n": 1,
+        "order_m": -1,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 7.527641686957039E-16,
+        "imag": 3.5026681844144376E-16
+      },
+      "power": {
+        "R": 1.6557399112040715E-29,
+        "T": 0.0,
+        "modal_power_code_units": 1.806040367797809E-28,
+        "power_ratio": 1.6557399112040715E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 37,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": -1,
+        "n": 1,
+        "order_m": -1,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.1088893771915262E-16,
+        "imag": 6.427749136897197E-16
+      },
+      "power": {
+        "R": 1.0219102860806184E-29,
+        "T": 0.0,
+        "modal_power_code_units": 1.1146746034449677E-28,
+        "power_ratio": 1.0219102860806184E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 38,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": 0,
+        "n": 0,
+        "order_m": 0,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.6026783393854873,
+        "imag": 0.04866140655155324
+      },
+      "power": {
+        "R": 0.36558911325195725,
+        "T": 0.0,
+        "modal_power_code_units": 3.987756120949488,
+        "power_ratio": 0.36558911325195725,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 39,
+        "side": "top",
+        "direction": "outgoing_up",
+        "medium": "air",
+        "m": 0,
+        "n": 0,
+        "order_m": 0,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 8.15943899547883E-14,
+        "imag": 1.9136857359286654E-14
+      },
+      "power": {
+        "R": 7.023863781682457E-27,
+        "T": 0.0,
+        "modal_power_code_units": 7.66145784237728E-26,
+        "power_ratio": 7.023863781682457E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 40,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -7,
+        "n": 0,
+        "order_m": -7,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.00025060131209230185,
+        "imag": 0.00010123448039324538
+      },
+      "power": {
+        "R": 0.0,
+        "T": 0.000001898117527477282,
+        "modal_power_code_units": 0.000020704199097040578,
+        "power_ratio": 0.000001898117527477282,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 41,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -7,
+        "n": 0,
+        "order_m": -7,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 4.779448653441266E-16,
+        "imag": 1.0356600073313943E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 3.380579694270727E-29,
+        "modal_power_code_units": 3.6874531761274945E-28,
+        "power_ratio": 3.380579694270727E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 42,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -6,
+        "n": -1,
+        "order_m": -6,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.7774594405401952E-16,
+        "imag": -6.737289323588488E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.578144594247271E-29,
+        "modal_power_code_units": 1.7214013047253148E-28,
+        "power_ratio": 1.578144594247271E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 43,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -6,
+        "n": -1,
+        "order_m": -6,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 8.551935966644645E-16,
+        "imag": -1.1202578617185163E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 6.456630611947348E-29,
+        "modal_power_code_units": 7.042733853444425E-28,
+        "power_ratio": 6.456630611947348E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 44,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -6,
+        "n": 0,
+        "order_m": -6,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 0.000011525509895589055,
+        "imag": 0.000009443816131336717
+      },
+      "power": {
+        "R": 0.0,
+        "T": 9.963714523740323E-9,
+        "modal_power_code_units": 1.0868174718336217E-7,
+        "power_ratio": 9.963714523740323E-9,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 45,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -6,
+        "n": 0,
+        "order_m": -6,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.462750867954452E-15,
+        "imag": 4.445698504034377E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.159143381273685E-27,
+        "modal_power_code_units": 1.2643650880672051E-26,
+        "power_ratio": 1.159143381273685E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 46,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -6,
+        "n": 1,
+        "order_m": -6,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 3.844145129349551E-16,
+        "imag": -9.920502263903211E-17
+      },
+      "power": {
+        "R": 0.0,
+        "T": 5.12335492044477E-30,
+        "modal_power_code_units": 5.588429524628611E-29,
+        "power_ratio": 5.12335492044477E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 47,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -6,
+        "n": 1,
+        "order_m": -6,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.2065661084285081E-15,
+        "imag": -9.94082239275636E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 7.944290991387295E-29,
+        "modal_power_code_units": 8.665437202358748E-28,
+        "power_ratio": 7.944290991387295E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 48,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -5,
+        "n": -1,
+        "order_m": -5,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 2.3887325280912075E-16,
+        "imag": -3.4609702368506774E-17
+      },
+      "power": {
+        "R": 0.0,
+        "T": 2.5505553400877703E-30,
+        "modal_power_code_units": 2.782083027249706E-29,
+        "power_ratio": 2.5505553400877703E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 49,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -5,
+        "n": -1,
+        "order_m": -5,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.0670604342128984E-15,
+        "imag": -1.7581186695150983E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.8517247936626376E-28,
+        "modal_power_code_units": 2.0198158568121908E-27,
+        "power_ratio": 1.8517247936626376E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 50,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -5,
+        "n": 0,
+        "order_m": -5,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.00006204821926000635,
+        "imag": -0.000050098566368281064
+      },
+      "power": {
+        "R": 0.0,
+        "T": 3.409530185537213E-7,
+        "modal_power_code_units": 0.000003719031659886353,
+        "power_ratio": 3.409530185537213E-7,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 51,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -5,
+        "n": 0,
+        "order_m": -5,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.2697628555078035E-15,
+        "imag": -5.333198564241981E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.8010271717930726E-27,
+        "modal_power_code_units": 1.964516137920231E-26,
+        "power_ratio": 1.8010271717930726E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 52,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -5,
+        "n": 1,
+        "order_m": -5,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -5.968983160675981E-17,
+        "imag": 2.7589880839217755E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 3.488534765456129E-30,
+        "modal_power_code_units": 3.8052079123333375E-29,
+        "power_ratio": 3.488534765456129E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 53,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -5,
+        "n": 1,
+        "order_m": -5,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.974312383789488E-15,
+        "imag": 7.80745901564616E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.9733785840151246E-28,
+        "modal_power_code_units": 2.15251281892892E-27,
+        "power_ratio": 1.9733785840151246E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 54,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -4,
+        "n": -1,
+        "order_m": -4,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -5.8227809444435105E-18,
+        "imag": -2.5272270696434397E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 3.0634255350272968E-30,
+        "modal_power_code_units": 3.341509220478042E-29,
+        "power_ratio": 3.0634255350272968E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 55,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -4,
+        "n": -1,
+        "order_m": -4,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.5921006984883263E-15,
+        "imag": 2.3402798189147087E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 5.846581587068641E-28,
+        "modal_power_code_units": 6.377307382891201E-27,
+        "power_ratio": 5.846581587068641E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 56,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -4,
+        "n": 0,
+        "order_m": -4,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.00006544578606248284,
+        "imag": -0.00009506225957762848
+      },
+      "power": {
+        "R": 0.0,
+        "T": 7.599981549968078E-7,
+        "modal_power_code_units": 0.000008289872932868612,
+        "power_ratio": 7.599981549968078E-7,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 57,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -4,
+        "n": 0,
+        "order_m": -4,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.429154501802996E-16,
+        "imag": -3.1459371080700567E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 5.6805526223674E-28,
+        "modal_power_code_units": 6.196207072120736E-27,
+        "power_ratio": 5.6805526223674E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 58,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -4,
+        "n": 1,
+        "order_m": -4,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.1989929622861845E-16,
+        "imag": -2.1446446539841407E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 4.5230717276200415E-30,
+        "modal_power_code_units": 4.933655383463154E-29,
+        "power_ratio": 4.5230717276200415E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 59,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -4,
+        "n": 1,
+        "order_m": -4,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 3.1700415714715347E-15,
+        "imag": 1.0775569394364364E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 4.823027569777316E-28,
+        "modal_power_code_units": 5.260839837873552E-27,
+        "power_ratio": 4.823027569777316E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 60,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -3,
+        "n": -1,
+        "order_m": -3,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -5.0601365294754863E-17,
+        "imag": -1.4435732959222506E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.097760591593036E-30,
+        "modal_power_code_units": 1.1974102509571444E-29,
+        "power_ratio": 1.097760591593036E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 61,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -3,
+        "n": -1,
+        "order_m": -3,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -3.5774741623614565E-16,
+        "imag": 2.5405100449873545E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 3.087946502871091E-28,
+        "modal_power_code_units": 3.368256089043382E-27,
+        "power_ratio": 3.087946502871091E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 62,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -3,
+        "n": 0,
+        "order_m": -3,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.000008510658074529006,
+        "imag": 0.0000028854219707815194
+      },
+      "power": {
+        "R": 0.0,
+        "T": 4.5384124674321504E-9,
+        "modal_power_code_units": 4.95038868510375E-8,
+        "power_ratio": 4.5384124674321504E-9,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 63,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -3,
+        "n": 0,
+        "order_m": -3,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 4.986858966613052E-15,
+        "imag": 2.5758185018891945E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.7704522877560195E-27,
+        "modal_power_code_units": 1.931165806483515E-26,
+        "power_ratio": 1.7704522877560195E-27,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 64,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -3,
+        "n": 1,
+        "order_m": -3,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.727361099859673E-16,
+        "imag": -1.4197016658047492E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 2.3453740220054968E-30,
+        "modal_power_code_units": 2.558276292467871E-29,
+        "power_ratio": 2.3453740220054968E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 65,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -3,
+        "n": 1,
+        "order_m": -3,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 2.1569070237585395E-15,
+        "imag": -2.798289760724288E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 5.856093293782725E-28,
+        "modal_power_code_units": 6.387682518609103E-27,
+        "power_ratio": 5.856093293782725E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 66,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -2,
+        "n": -1,
+        "order_m": -2,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 2.37077629106774E-16,
+        "imag": -9.712407597656567E-17
+      },
+      "power": {
+        "R": 0.0,
+        "T": 2.6459776126001106E-30,
+        "modal_power_code_units": 2.886167294940617E-29,
+        "power_ratio": 2.6459776126001106E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 67,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -2,
+        "n": -1,
+        "order_m": -2,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.6614314143776403E-16,
+        "imag": 4.99911746036213E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.2929549351737426E-29,
+        "modal_power_code_units": 1.410323439608971E-28,
+        "power_ratio": 1.2929549351737426E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 68,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -2,
+        "n": 0,
+        "order_m": -2,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -0.0002142602792385421,
+        "imag": -0.00016182687593680308
+      },
+      "power": {
+        "R": 0.0,
+        "T": 0.0000036636543782750833,
+        "modal_power_code_units": 0.000039962240784618435,
+        "power_ratio": 0.0000036636543782750833,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 69,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -2,
+        "n": 0,
+        "order_m": -2,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -2.9178940079022065E-15,
+        "imag": -7.700912677709631E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 4.62795587428501E-28,
+        "modal_power_code_units": 5.048060430739695E-27,
+        "power_ratio": 4.62795587428501E-28,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 70,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -2,
+        "n": 1,
+        "order_m": -2,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 4.743275252179707E-16,
+        "imag": 1.6438147344827895E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.0158721436146387E-29,
+        "modal_power_code_units": 1.1080883461673115E-28,
+        "power_ratio": 1.0158721436146387E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 71,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -2,
+        "n": 1,
+        "order_m": -2,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 6.387187309976567E-16,
+        "imag": 8.398417030118438E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 4.487820530246521E-29,
+        "modal_power_code_units": 4.895204244465431E-28,
+        "power_ratio": 4.487820530246521E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 72,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -1,
+        "n": -1,
+        "order_m": -1,
+        "order_n": -1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 3.364698580738171E-16,
+        "imag": -5.746661165923163E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.0591244957675332E-29,
+        "modal_power_code_units": 1.155266947988613E-28,
+        "power_ratio": 1.0591244957675332E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 73,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -1,
+        "n": -1,
+        "order_m": -1,
+        "order_n": -1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.9279357388340803E-16,
+        "imag": 1.5387286694921875E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.4532251973647925E-30,
+        "modal_power_code_units": 1.585142299331982E-29,
+        "power_ratio": 1.4532251973647925E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 74,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -1,
+        "n": 0,
+        "order_m": -1,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 0.0005126367750962745,
+        "imag": 0.0005971888093231246
+      },
+      "power": {
+        "R": 0.0,
+        "T": 0.000024211345436833183,
+        "modal_power_code_units": 0.00026409140059817436,
+        "power_ratio": 0.000024211345436833183,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 75,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -1,
+        "n": 0,
+        "order_m": -1,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": -6.078219372007285E-16,
+        "imag": -3.637877586054766E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.96131434044075E-29,
+        "modal_power_code_units": 2.1393534387902717E-28,
+        "power_ratio": 1.96131434044075E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 76,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -1,
+        "n": 1,
+        "order_m": -1,
+        "order_n": 1,
+        "polarization": "s"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 5.610491289072653E-16,
+        "imag": 1.115178355022848E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 3.7220134356669173E-29,
+        "modal_power_code_units": 4.059880702768033E-28,
+        "power_ratio": 3.7220134356669173E-29,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 77,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": -1,
+        "n": 1,
+        "order_m": -1,
+        "order_n": 1,
+        "polarization": "p"
+      },
+      "propagating": true,
+      "outgoing_amplitude_at_boundary": {
+        "real": 1.0552563534969697E-16,
+        "imag": -2.315985123157243E-16
+      },
+      "power": {
+        "R": 0.0,
+        "T": 1.5470233777990662E-30,
+        "modal_power_code_units": 1.6874550473330187E-29,
+        "power_ratio": 1.5470233777990662E-30,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 78,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": 0,
+        "n": 0,
+        "order_m": 0,
+        "order_n": 0,
+        "polarization": "s"
+      },
+      "propagating": false,
+      "outgoing_amplitude_at_boundary": {
+        "real": 0.0777741849604783,
+        "imag": -0.024040943431652837
+      },
+      "power": {
+        "R": 0.0,
+        "T": 0.012959743807293074,
+        "modal_power_code_units": 0.14136169765496565,
+        "power_ratio": 0.012959743807293074,
+        "power_carrying": true
+      }
+    },
+    {
+      "mode": {
+        "auxiliary_index": 79,
+        "side": "bottom",
+        "direction": "outgoing_down",
+        "medium": "substrate",
+        "m": 0,
+        "n": 0,
+        "order_m": 0,
+        "order_n": 0,
+        "polarization": "p"
+      },
+      "propagating": false,
+      "outgoing_amplitude_at_boundary": {
+        "real": -1.5793950075855902E-14,
+        "imag": -5.484744336637517E-15
+      },
+      "power": {
+        "R": 0.0,
+        "T": 5.466678929428107E-28,
+        "modal_power_code_units": 5.962918908657031E-27,
+        "power_ratio": 5.466678929428107E-28,
+        "power_carrying": true
+      }
+    }
+  ]
+}
