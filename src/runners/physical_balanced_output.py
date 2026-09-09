@@ -7,6 +7,9 @@ import numpy as np
 
 def compare_balanced_output(fine, solution, outputs, directory, payload, *, marker, sample):
     from .physical_intermediate import _atomic_json
+    if payload['derived']['physical_intermediate_profile'].get('native_capacity'):
+        from .native_capacity_output import compare_wsl_observables
+        return compare_wsl_observables(fine, outputs, directory, payload)
     if payload['geometry'].get('cell_notch'):
         return dict(status='REFERENCE_AUTHORITY_LIMITED',
                     reason='conditional notch direct reference requires separate capacity gate')

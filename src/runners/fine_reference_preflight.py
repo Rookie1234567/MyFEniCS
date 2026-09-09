@@ -36,7 +36,8 @@ def qualified_abi():
     from petsc4py import PETSc
     from mpi4py import MPI
     import petsc4py,slepc4py,dolfinx,mpi4py,basix
-    if (os.environ.get('_MYFENICS_WSL_QUALIFIED_ACTIVATION')!='1' or
+    if ((os.environ.get('_MYFENICS_WSL_QUALIFIED_ACTIVATION')!='1' and
+         os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION')!='1') or
             not os.path.samefile(sys.executable,'.venv/bin/python') or
             PETSc.ScalarType is not np.complex128 or PETSc.IntType is not np.int32 or
             MPI.COMM_WORLD.size!=1 or 'Open MPI' not in MPI.Get_library_version()):

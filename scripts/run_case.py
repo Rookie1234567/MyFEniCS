@@ -70,6 +70,12 @@ def main(argv: list[str] | None = None) -> int:
                                     **(dict(variant=args.profile_variant, r0_reference=args.profile_r0_reference)
                                        if args.profile_variant != 'R0' or args.profile_r0_reference is not None else {}))
         else:
+            from src.io.native_capacity_profile import NATIVE_PROFILES
+            if specification.solver.get("preconditioner") in NATIVE_PROFILES:
+                from src.runners.native_capacity import launch_native_capacity
+                result = launch_native_capacity(specification)
+                print(json.dumps(result, sort_keys=True))
+                return 0 if result["result_classification"] == "worker_exit0" else 3
             from src.io.physical_intermediate_profile import LIGHT_PROFILE, JOINT_PROFILE
             from src.io.physical_balanced_profile import BALANCED_PROFILES
             from src.io.physical_recursive_profile import RECURSIVE_PROFILES

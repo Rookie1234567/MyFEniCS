@@ -89,6 +89,7 @@ def _environment_identity() -> dict[str, Any]:
         "python_executable": os.path.abspath(sys.executable),
         "platform": platform.platform(),
         "qualified_activation": os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION"),
+        "native_qualified_activation": os.environ.get("_MYFENICS_NATIVE_QUALIFIED_ACTIVATION"),
     }
 
 
@@ -330,10 +331,10 @@ def launch_specification(
     )
     from src.io.physical_intermediate_profile import PROFILES
     from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, profile_facts
-    from src.io.physical_balanced_profile import BALANCED_PROFILES
+    from src.io.physical_balanced_profile import BALANCED_ROUTES
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = specification.solver.get('preconditioner') in RECURSIVE_PROFILES
-    balanced = recursive or specification.solver.get('preconditioner') in BALANCED_PROFILES
+    balanced = recursive or specification.solver.get('preconditioner') in BALANCED_ROUTES
     packed = specification.solver.get('preconditioner') == PACKED_PROFILE
     if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
@@ -422,7 +423,8 @@ def launch_specification(
                     cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light or balanced else
                         Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
                     source_state=physical_source,
-                    **(dict(stop_on_global_swap=True) if recursive else {}),
+                    **(dict(stop_on_global_swap=True) if recursive or
+                       physical_resources.get('concurrent_neighbor_authorized') else {}),
                     **(dict(grace_seconds=60 if packed else 30, hard_stop_immediate=True,
                             cooperative_performance_stop=packed,
                             worker_environment={'PHYSICAL_PC_PROFILE': json.dumps(pc_profile),

@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Final
 
+from .native_capacity_profile import NATIVE_PROFILES
+
 SCHEMA_VERSION: Final = 1
 IDENTITY_KEYS: Final = (
     "schema_version",
@@ -904,7 +906,7 @@ FIELD_SPECS: Final = (
             "physical_intermediate_p4_reference_v1",
             "a2r_equivalent_fast_v1",
             "a2r_packed_equivalent_v2",
-            "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6",
+            *NATIVE_PROFILES, "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6",
             "p6smooth_p4ref_p6smooth_v1",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
         ),

@@ -1,0 +1,26 @@
+[
+  {
+    "cpu": 9,
+    "seconds": 2.0016132509335876,
+    "iterations": 20240000,
+    "min_khz": 2399983,
+    "max_khz": 3600172,
+    "median_khz": 3600000
+  },
+  {
+    "cpu": 24,
+    "seconds": 2.000269379001111,
+    "iterations": 5620000,
+    "min_khz": 999979,
+    "max_khz": 1000020,
+    "median_khz": 1000000
+  },
+  {
+    "cpu": 25,
+    "seconds": 2.0032168499892578,
+    "iterations": 5640000,
+    "min_khz": 999980,
+    "max_khz": 1000019,
+    "median_khz": 1000000
+  }
+]

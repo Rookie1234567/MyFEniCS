@@ -21,11 +21,12 @@ def reference_budget(sample, raw_info, future_bytes, *, marker=lambda *_: None):
     facts = dict(post_symbolic_rss_bytes=int(sample['rss_bytes']),
         symbolic_factor_estimate_padded_bytes=estimate, factor_prediction_multiplier=2,
         future_workspace_bytes=int(future_bytes), engineering_buffer_bytes=1024**3,
-        predicted_peak_bytes=predicted, launch_cap_bytes=int(sample['launch_cap_bytes']),
+        predicted_peak_bytes=predicted, launch_cap_bytes=min(int(sample['launch_cap_bytes']),
+            int(sample.get('planning_cap_bytes', sample['launch_cap_bytes']))),
         classification='predicted_engineering_budget_not_upper_bound')
     marker('reference_budget_evaluated', dict(facts, numeric_called=False))
     if (not sample['all_status_readable'] or sample['swap_bytes'] != 0 or
-            predicted >= sample['launch_cap_bytes']):
+            predicted >= facts['launch_cap_bytes']):
         raise ReferenceResourceBlocked(str(facts))
     return facts
 

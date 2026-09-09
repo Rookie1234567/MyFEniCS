@@ -43,9 +43,18 @@ def memory_envelope() -> dict:
             break
         path = path.parent
     reserve = max(4 * 1024**3, int(.15 * total))
+    cap = min(12_000_000_000, available - reserve)
+    planning = cap
+    native = os.environ.get('PHYSICAL_NATIVE_CAPACITY')
+    if native:
+        from src.io.native_capacity_profile import native_profile_facts
+        policy = native_profile_facts(native)['resources']
+        reserve = max(policy['reserve_min_bytes'], int(.15 * total))
+        cap = min(policy['absolute_cap_bytes'], int(.80 * total), available-reserve)
+        planning = min(policy['planning_cap_bytes'], int(.75 * total), cap)
     return {**memory, 'effective_total_bytes': total,
             'effective_available_bytes': available, 'reserve_bytes': reserve,
-            'launch_cap_bytes': min(12_000_000_000, available - reserve),
+            'launch_cap_bytes': cap, 'planning_cap_bytes': planning,
             'cgroup_limits': ancestors}
 
 
@@ -206,6 +215,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 observed.update(children)
                 stage = 'resource_sample'
                 sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code)
+                if os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
+                    for member in sample['members']:
+                        try:
+                            proc = Path('/proc') / str(member['pid'])
+                            stat = (proc/'stat').read_text().rsplit(')', 1)[1].split()
+                            member['cpu_seconds'] = (int(stat[11])+int(stat[12])) / os.sysconf('SC_CLK_TCK')
+                            member['start_ticks'] = int(stat[19])
+                            member['affinity'] = sorted(os.sched_getaffinity(member['pid']))
+                            member['io'] = {k: int(v) for k, v in
+                                            (line.split(':') for line in (proc/'io').read_text().splitlines())}
+                        except (OSError, ValueError):
+                            member['cost_sample_unavailable'] = True
                 current = memory_envelope()
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}

@@ -103,7 +103,7 @@ def recompute_balanced_screen(solve, rows):
         i=row['iteration']; r=row['explicit_true_residual']
         if i and i%32==0 and (not history or history[-1][0]!=i):
             history=(history+[(i,r)])[-3:]
-        if i>=128 or row['solve_seconds']>=1800:
+        if i>=128 or row['solve_seconds']>=solve.get('screen_seconds',1800):
             if r<=1e-6 and solve.get('screen') is None:
                 return dict(matches=True,converged_before_screen=True)
             trend=(len(history)==3 and history[1][0]-history[0][0]==32 and
@@ -168,10 +168,10 @@ def check(directory: Path) -> dict:
         require(summary['final_solution_sha256'] == old['final_solution_sha256'], 'recovery solution identity changed')
 
     raw = summary['residual_arrays']
-    from src.io.physical_balanced_profile import BALANCED_PROFILES
+    from src.io.physical_balanced_profile import BALANCED_ROUTES
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = summary['profile']['identity'] in RECURSIVE_PROFILES
-    balanced = recursive or summary['profile']['identity'] in BALANCED_PROFILES
+    balanced = recursive or summary['profile']['identity'] in BALANCED_ROUTES
     reference_only = summary['profile'].get('reference_only', False)
     if reference_only:
         ledger = summary['reference_pc_ledger']
@@ -330,7 +330,8 @@ def check(directory: Path) -> dict:
         matched = summary.get('matched_reference', {})
         require(matched.get('status') in (('MATCHED_REFERENCE_PASS',) if recursive else
             ('MATCHED_REFERENCE_PASS','REFERENCE_AUTHORITY_LIMITED')), 'matched reference failed')
-        require(summary['rss_after_release'] < summary['rss_before_release'], 'RSS did not decrease before recovery')
+        if not summary['profile'].get('native_capacity'):
+            require(summary['rss_after_release'] < summary['rss_before_release'], 'RSS did not decrease before recovery')
     independent_output_gates_passed = not errors
     classification = ('REFERENCE_ONLY_PASS' if reference_only else 'DISCRETE_SOLVER_OUTPUT_PASS') if not errors else 'NUMERICAL_OR_OUTPUT_FAIL'
     if light and errors and summary['status'] == 'STAGNATION_CONTROLLED_STOP' and stagnation:

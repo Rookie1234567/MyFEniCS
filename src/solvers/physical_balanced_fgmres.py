@@ -3,16 +3,17 @@ import numpy as np
 
 
 class BalancedScreen:
-    def __init__(self):
+    def __init__(self, solve_seconds=1800):
         self.checkpoints = []
         self.decision = None
+        self.solve_seconds = solve_seconds
 
     def inspect(self, iteration, relative, seconds):
         if iteration > 0 and iteration % 32 == 0:
             if not self.checkpoints or self.checkpoints[-1][0] != iteration:
                 self.checkpoints.append((iteration, relative))
                 self.checkpoints = self.checkpoints[-3:]
-        if self.decision is not None or (iteration < 128 and seconds < 1800):
+        if self.decision is not None or (iteration < 128 and seconds < self.solve_seconds):
             return self.decision
         history = self.checkpoints
         trend = (len(history) == 3 and history[1][0]-history[0][0] == 32 and
@@ -28,7 +29,7 @@ class BalancedScreen:
 
 def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                        resource_sample=lambda: None, stop_requested=lambda: False,
-                       screen_enabled=True, solve_limit_seconds=7200):
+                       screen_enabled=True, solve_limit_seconds=7200, screen_seconds=1800):
     """Callbacks own action/PC outputs; seconds is a conservative shared clock.
 
     Exactly one KSP creation and one solve, max2048/restart32/zero start.
@@ -44,7 +45,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     sizes = (rhs.getLocalSize(), rhs.getSize())
     operator = PETSc.Mat().createPython((sizes, sizes), context=ac, comm=rhs.getComm())
     ksp = solution = target = None
-    screen = BalancedScreen()
+    screen = BalancedScreen(screen_seconds)
     snapshots = []
     explicit_count = 0
     last_save = -120.
@@ -95,7 +96,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             append('iterations.jsonl', dict(iteration=iteration, reported_relative=float(reported)/norm_rhs,
                 outer_matvec_count=ac.matvec_count, outer_pc_count=pc_context.apply_count))
             stop = stop_requested() or now >= solve_limit_seconds
-            boundary = screen_enabled and screen.decision is None and (iteration >= 128 or now >= 1800)
+            boundary = screen_enabled and screen.decision is None and (iteration >= 128 or now >= screen_seconds)
             if iteration % 32 == 0 or now-last_save >= 120 or boundary or stop or reported/norm_rhs <= 1e-6:
                 relative, now = snapshot(iteration, current, reported)
                 if relative <= 1e-6:
@@ -119,7 +120,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             snapshots=snapshots, matvec_count=ac.matvec_count, pc_apply_count=pc_context.apply_count,
             explicit_action_count=explicit_count, elapsed_seconds=elapsed,
             ksp_create_count=1, ksp_solve_count=1, ksp_destroy_count=0,
-            screen_enabled=screen_enabled,restart=32, max_it=2048, zero_start=True)
+            screen_enabled=screen_enabled,screen_seconds=screen_seconds,restart=32, max_it=2048, zero_start=True)
         return result
     finally:
         for value in (ksp, target, solution, operator):

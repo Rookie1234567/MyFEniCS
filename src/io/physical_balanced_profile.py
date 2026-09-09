@@ -9,6 +9,8 @@ BALANCED_ROUTES = {
     'projected_krylov6_h6_p4_v5': 'PROJ_K6',
 }
 BALANCED_PROFILES = tuple(BALANCED_ROUTES)
+from .native_capacity_profile import NATIVE_PROFILES
+BALANCED_ROUTES.update({name: 'BAL_H' for name in NATIVE_PROFILES})
 
 
 def balanced_profile_facts(identity):

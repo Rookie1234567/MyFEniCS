@@ -535,8 +535,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(
                     "solver.ksp_type", "full3d_iterative requires ksp_type=fgmres"
                 )
+            from .native_capacity_profile import NATIVE_PROFILES, validate_native_case
             preconditioner = solver["preconditioner"]
             if preconditioner not in {
+                *NATIVE_PROFILES,
                 "full3d_scalable_v1",
                 "fullspace_pml_double_sweep_v19",
                 "physical_intermediate_p4_shifted_aux_v1",
@@ -550,7 +552,9 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "solver.preconditioner",
                     "full3d_iterative requires a reviewed physical preconditioner",
                 )
-            if preconditioner == "full3d_scalable_v1":
+            if preconditioner in NATIVE_PROFILES:
+                validate_native_case(config)
+            elif preconditioner == "full3d_scalable_v1":
                 if solver["restart"] != 20:
                     raise _error(
                         "solver.restart", "full3d_iterative fixes restart=20"
@@ -599,7 +603,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "discretization.mesh_target_nm",
                         "fullspace_pml_double_sweep_v19 fixes mesh_target_nm=10",
                     )
-            if incidence["wavelength_nm"] != 13.5:
+            if incidence["wavelength_nm"] != 13.5 and preconditioner not in NATIVE_PROFILES:
                 raise _error(
                     "incidence.wavelength_nm",
                     "full3d_iterative profile is frozen to 13.5 nm; "

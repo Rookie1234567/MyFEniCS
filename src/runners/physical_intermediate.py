@@ -178,12 +178,12 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
 
     identity = payload['solver']['preconditioner']
     from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE
-    from src.io.physical_balanced_profile import BALANCED_PROFILES, BALANCED_ROUTES
+    from src.io.physical_balanced_profile import BALANCED_ROUTES
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = identity in RECURSIVE_PROFILES
     if recursive and (identity.endswith('_hi_v6') or payload['geometry'].get('cell_notch')):
         raise ValueError('only original LO G2 is enabled; other profiles await qualification')
-    balanced = recursive or identity in BALANCED_PROFILES
+    balanced = recursive or identity in BALANCED_ROUTES
     build_light = recursive or identity in (LIGHT_PROFILE, JOINT_PROFILE) or (balanced and BALANCED_ROUTES[identity] != 'BAL_S')
     joint = identity == JOINT_PROFILE
     light = identity in (LIGHT_PROFILE, JOINT_PROFILE)
@@ -213,7 +213,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         raise RuntimeError('dedicated parent watchdog is required')
     if MPI.COMM_WORLD.size != 1 or PETSc.ScalarType is not np.complex128:
         raise RuntimeError('physical intermediate requires complex128 MPI1')
-    if os.environ.get('_MYFENICS_WSL_QUALIFIED_ACTIVATION') != '1':
+    if (os.environ.get('_MYFENICS_WSL_QUALIFIED_ACTIVATION') != '1' and
+            os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION') != '1'):
         raise RuntimeError('qualified activation is required')
     directory = Path(directory)
     ledger = WorkflowLedger(directory, phase_path, cooperative_performance_stop=cooperative)
@@ -247,6 +248,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         facts = process_tree_snapshot(parent, ledger.phase, None)
         facts['launch_cap_bytes'] = cap
         envelope = memory_envelope()
+        if contract.get('native_capacity'):
+            facts['planning_cap_bytes'] = envelope['planning_cap_bytes']
         facts['launch_cap_bytes'] = min(cap, facts['rss_bytes'] +
             envelope['effective_available_bytes']-envelope['reserve_bytes'])
         if (not facts['all_status_readable'] or facts['rss_bytes'] >= cap
@@ -402,7 +405,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 seconds=lambda: ledger.phase_clock_budget.update(clock_sample())['budget_seconds'],
                 resource_sample=sample, stop_requested=lambda: ledger.stop_signal is not None,
                 screen_enabled=not bool(payload['geometry'].get('cell_notch')),
-                **(dict(solve_limit_seconds=solve_limit) if recursive else {}))
+                solve_limit_seconds=solve_limit,
+                screen_seconds=contract['outer']['screen']['solve_seconds'])
             if recursive:
                 from .physical_recursive_runtime import audit_recursive_exit
                 summary['recursive_solve'] = audit_recursive_exit(bundle, ledger)
@@ -427,7 +431,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 'operator_identity_sha256': operator_identity, **provenance}
         finally:
             action.destroy()
-        if balanced and payload['geometry'].get('cell_notch') and result['final_true_residual'] <= 1e-6:
+        if balanced and (payload['geometry'].get('cell_notch') or contract.get('native_capacity')) and result['final_true_residual'] <= 1e-6:
             from src.solvers.condensed_fine_reference import native_map_arrays
             from .physical_diagnosis_worker import save_packet
             mapping = native_map_arrays(bundle['levels']['spaces'][6], bundle['levels']['floquets'][6])
