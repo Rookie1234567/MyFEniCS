@@ -62,10 +62,10 @@ class ProjectedPatchCross:
         """At most eight columns of R, with full row/MPC and modal accumulation."""
         if not 0 <= first < stop <= self.dimension or stop-first > 8:
             raise ValueError('R column block must be between one and eight')
-        started = perf_counter();out = np.zeros((self.coarse_rows, stop-first), complex)
+        started = perf_counter();self.sample();out = np.zeros((self.coarse_rows, stop-first), complex)
         per_column = np.zeros(stop-first);worst_cell = np.full(stop-first, -1, dtype=int)
         for cell, key, injection in self.local:
-            self.sample();h = self.classes[key];A, Q = h['A'], h['Q']
+            h = self.classes[key];A, Q = h['A'], h['Q']
             local = injection[:, first:stop].toarray();aj = A@local;rhs = Q.conj().T@aj
             z = lu_solve(h['factor'], rhs);self.saved_Q_rhs += stop-first
             image = h['D']@z;denominator = np.linalg.norm(image, axis=0)+np.linalg.norm(rhs, axis=0)
@@ -81,7 +81,7 @@ class ProjectedPatchCross:
         for j in range(stop-first):out[:, j] = project_unconstrained_mpc_dual(out[:, j], self.coarse_mapping)
         for _, projection, coarse in self.ports:
             np.add.at(out, coarse['coupling_rows'], np.outer(coarse['coupling_values'], projection[first:stop])/coarse['normalization_h'])
-        self.seconds['R'] += perf_counter()-started
+        self.sample();self.seconds['R'] += perf_counter()-started
         worst = int(np.argmax(per_column))
         self.right_facts = dict(worst_relative=float(per_column[worst]), column=first+worst,
             cell=int(worst_cell[worst]), per_column_relative=per_column.copy(), limit=1e-11)
@@ -91,15 +91,15 @@ class ProjectedPatchCross:
         """L times <=8 coarse columns; W supplies the already condensed P."""
         if values.ndim != 2 or values.shape[0] != self.coarse_rows or not 1 <= values.shape[1] <= 8:
             raise ValueError('L input must contain one to eight coarse columns')
-        started = perf_counter();expanded = np.column_stack([expand_primal(v, self.coarse_mapping) for v in values.T])
+        started = perf_counter();self.sample();expanded = np.column_stack([expand_primal(v, self.coarse_mapping) for v in values.T])
         out = np.zeros((self.dimension, values.shape[1]), complex)
         for cell, key, injection in self.local:
-            self.sample();h = self.classes[key]
+            h = self.classes[key]
             out += injection.conj().T@(h['A']@(h['W']@expanded[self.coarse_mapping['dofmap'][cell]]))
         for coupling, _, coarse in self.ports:
             amplitude = coarse['projection_values']@values[coarse['projection_rows']]/coarse['normalization_h']
             out += np.outer(coupling, amplitude)
-        self.seconds['L'] += perf_counter()-started
+        self.sample();self.seconds['L'] += perf_counter()-started
         return out
 
     def retained_bytes(self):
@@ -107,7 +107,8 @@ class ProjectedPatchCross:
                    +sum(left.nbytes+right.nbytes for left, right, _ in self.ports))
 
 
-def projected_local_oracle(cross, original_D, solve_one, *, save, sample=lambda: None):
+def projected_local_oracle(cross, original_D, solve_one, *, save, sample=lambda: None,
+                           save_success_arrays=True):
     """Exactly dimension logical S solves; persist every block and any failed RHS."""
     dimension = cross.dimension
     if original_D.shape != (dimension, dimension): raise ValueError('patch D shape differs')
@@ -116,19 +117,24 @@ def projected_local_oracle(cross, original_D, solve_one, *, save, sample=lambda:
     for first in range(0, dimension, 8):
         stop = min(first+8, dimension);sample();R = cross.right(first, stop);X = np.empty_like(R);facts = []
         for j in range(stop-first):
+            value = None; row = None
             try:
                 value, row = solve_one(R[:, j].copy());logical += 1
                 if not np.isfinite(value).all() or not np.isfinite(row['relative']) or row['relative'] > 1e-10:
                     raise ValueError('S column did not pass native true residual')
                 X[:, j] = value;facts.append(row)
             except BaseException as exc:
-                save(f'column_{first+j:03d}_failure', dict(column=first+j, rhs=R[:, j].copy(), reason=str(exc)))
+                save(f'column_{first+j:03d}_failure', dict(column=first+j, rhs=R[:, j].copy(),
+                    solution=None if value is None else value.copy(), facts=row, reason=str(exc)))
                 raise
         correction = cross.left(X);effective[:, first:stop] -= correction;Rc += R@c[first:stop]
-        save(f'block_{first:03d}', dict(first=first, stop=stop, R=R, X=X, correction=correction,
+        record = dict(first=first, stop=stop,
             S_facts=facts, logical_completed=logical, elapsed_seconds=perf_counter()-started,
             cross_seconds=dict(cross.seconds),Q_column_gate=dict(cross.right_facts),cross_retained_bytes=cross.retained_bytes(),
-            live_block_array_bytes=R.nbytes+X.nbytes+correction.nbytes+effective.nbytes+original_D.nbytes))
+            live_block_array_bytes=R.nbytes+X.nbytes+correction.nbytes+effective.nbytes+original_D.nbytes,
+            successful_arrays_persisted=save_success_arrays)
+        if save_success_arrays:record.update(R=R, X=X, correction=correction)
+        save(f'block_{first:03d}', record)
     return effective, Rc, dict(logical=logical, blocks=(dimension+7)//8, seconds=perf_counter()-started,
                               cross_seconds=dict(cross.seconds),saved_Q_rhs=cross.saved_Q_rhs)
 
@@ -160,3 +166,46 @@ class SetupCheckedTraceFactor:
         before = rhs.copy();value = lu_solve(self.factor, rhs)
         if not np.array_equal(rhs, before) or not np.isfinite(value).all(): raise ValueError('factor-only finite/input gate')
         return value
+
+
+class ProjectedTraceFactorStore:
+    """One independent factor per patch; fixed PoU weights on both sides."""
+    def __init__(self, indices, weights, offsets):
+        self.indices=np.array(indices,dtype=np.int64,copy=True)
+        self.weights=np.array(weights,dtype=float,copy=True)
+        self.offsets=np.array(offsets,dtype=np.int64,copy=True)
+        if self.indices.ndim!=2 or self.offsets[0]!=0 or self.offsets[-1]!=len(self.weights):
+            raise ValueError('invalid projected patch maps')
+        if np.any(self.indices<0) or np.any(self.indices>=len(self.weights)):
+            raise ValueError('projected patch index outside coefficient space')
+        multiplicity=np.bincount(self.indices.ravel(),minlength=len(self.weights))
+        if np.any(multiplicity==0) or not np.array_equal(self.weights,1./np.sqrt(multiplicity)):
+            raise ValueError('fixed PoU weights differ')
+        if np.any(np.diff(self.offsets)<=0):raise ValueError('invalid coefficient offsets')
+        self.factors=[];self.counts=dict(applications=0,patch_apply_rhs=0,patch_LU=0)
+
+    def append(self, matrix, *, save):
+        if len(self.factors)>=len(self.indices) or matrix.shape!=(self.indices.shape[1],)*2:
+            raise ValueError('projected factor store capacity/shape')
+        factor=SetupCheckedTraceFactor(matrix,save=save)
+        self.factors.append(factor);self.counts['patch_LU']+=1
+        return factor.setup_facts
+
+    def apply(self, coefficients, sample):
+        if len(self.factors)!=len(self.indices):raise ValueError('incomplete projected store')
+        rhs=np.concatenate(coefficients)
+        if rhs.shape!=self.weights.shape or not np.isfinite(rhs).all():raise ValueError('invalid trace coefficients')
+        result=np.zeros_like(rhs)
+        for i,(rows,factor) in enumerate(zip(self.indices,self.factors,strict=True)):
+            if i%8==0:sample()
+            local=self.weights[rows]*rhs[rows];value=factor.apply(local)
+            np.add.at(result,rows,self.weights[rows]*value)
+        sample()
+        if not np.isfinite(result).all():raise ValueError('nonfinite projected trace result')
+        self.counts['applications']+=1;self.counts['patch_apply_rhs']+=len(self.factors)
+        self.last_facts=dict(logical_rhs=len(self.factors),runtime_original_D_residual='not_measured',
+            finite=True,setup_only_original_D_checks=True)
+        return [result[a:b] for a,b in zip(self.offsets[:-1],self.offsets[1:],strict=True)]
+
+    def storage(self):
+        return [self.indices,self.weights,self.offsets,[f.factor for f in self.factors]]

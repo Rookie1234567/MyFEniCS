@@ -155,8 +155,10 @@ class PhysicalP2Inverse:
                 x.array[self.slaves] = 0
                 applied = apply_owned(self.action, x); self.counts['A2_true'] += 1
                 rhs.copy(residual); residual.axpy(-1, applied); applied.destroy(); applied = None
-                relative = float(residual.norm()/norm) if norm else float(residual.norm())
+                absolute = float(residual.norm())
+                relative = absolute/norm if norm else absolute
                 self.last_facts = dict(action_identity=self.action_identity, relative=relative, refinement=refinement,
+                    residual_absolute=absolute, rhs_norm=norm,
                     counts={k:v-start.get(k,0) for k,v in self.counts.items()})
                 if np.isfinite(relative) and relative <= 1e-10:
                     value=x; x=None; return value
