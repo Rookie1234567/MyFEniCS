@@ -52,6 +52,47 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path):
     np.testing.assert_allclose(correct,Eg+W@np.linalg.solve(S,VH@rhs),atol=1e-12)
     assert np.linalg.norm(correct-(Eg+Cg))>1e-3
     assert np.linalg.norm(VH-W.conj().T)>1e-3
+    from src.solvers.physical_trace_entity import (checked_lu,condensed_entity_block,complete_pq,entity_injection,cell_volume,PhysicalTraceEntities)
+    from src.solvers.physical_balanced_coupling import PhysicalBalancedCoupling
+    lu,_=checked_lu(qglobal.conj().T@full_action@qglobal)
+    J=np.eye(7,dtype=complex)[:,[2,5]]
+    schur,facts=condensed_entity_block(full_action,qglobal,lu,[2,5])
+    F=(np.eye(7)-E@full_action)@J
+    np.testing.assert_allclose(schur,F.conj().T@full_action@F,atol=1e-12)
+    assert max(facts.values())<1e-11
+    dual=J.conj().T@(rhs-full_action.conj().T@E.conj().T@rhs)
+    np.testing.assert_allclose(dual,F.conj().T@rhs,atol=1e-12)
+    assert np.linalg.norm(dual-J.conj().T@(rhs-full_action.conj().T@E@rhs))>1e-3
+    np.testing.assert_allclose(cell_volume(rhs,mapping,[0,1],classes,adjoint=True),full_action.conj().T@rhs,atol=1e-12)
+    null,rank=entity_injection([np.diag([1.,2.,0.,0.])],2)
+    assert rank['rank']==2 and null.shape==(4,2)
+    D=np.diag(np.diag(schur));HT=F@np.linalg.solve(D,F.conj().T)
+    # Exercise the actual cached-volume/E/EH/J/F/FH/HT methods without a mesh
+    # or the fixed 1566-block constructor.
+    entity=PhysicalTraceEntities.__new__(PhysicalTraceEntities)
+    entity.mapping=mapping;entity.cells=[0,1];entity.sample=lambda:None;entity.elapsed={}
+    entity.counts=dict(E=0,EH=0,Q_apply_rhs=0,volume=0,volume_adjoint=0,HT=0,entity_apply_rhs=0,F=0,FH=0)
+    entity.classes={};entity.members={};entity.factors={};entity.blocks=[]
+    for i in range(2):
+        local_Q=np.eye(4,dtype=complex)[:,3:];local_A=classes[i]['A'];local_D=local_Q.conj().T@local_A@local_Q
+        entity.classes[i]=dict(A=local_A,Q=local_Q,D=local_D)
+        entity.members[i]=np.array([i]);entity.factors[i]=checked_lu(local_D)[0]
+        block_D=schur[i:i+1,i:i+1].copy()
+        entity.blocks.append(dict(rows=np.array([2 if i==0 else 5]),J=np.ones((1,1),complex),D=block_D,factor=checked_lu(block_D)[0]))
+    coeff=[np.array([.2+1j]),np.array([-.7+.3j])]
+    np.testing.assert_allclose(entity.F(coeff),F@np.concatenate(coeff),atol=1e-12)
+    np.testing.assert_allclose(np.concatenate(entity.FH(rhs)),F.conj().T@rhs,atol=1e-12)
+    np.testing.assert_allclose(entity.apply(rhs),HT@rhs,atol=1e-12)
+    CU=lambda r:complete_pq(r,lambda v:E@v,lambda v:full_action@v,lambda v:CW@v)
+    coupling=PhysicalBalancedCoupling(lambda v:full_action@v,CU,lambda v:HT@v,
+        lambda v:np.concatenate([W.conj().T@v,qglobal.conj().T@v]),route='BAL_H')
+    actual=coupling.apply(rhs)
+    expected=CU(rhs)+(np.eye(7)-np.column_stack([CU(full_action[:,i]) for i in range(7)]))@HT@(rhs-full_action@CU(rhs))
+    np.testing.assert_allclose(actual,expected,atol=1e-12)
+    residual=rhs-full_action@actual
+    np.testing.assert_allclose(W.conj().T@residual,0,atol=1e-11)
+    np.testing.assert_allclose(qglobal.conj().T@residual,0,atol=1e-11)
+    assert np.isfinite(np.linalg.norm(residual)/np.linalg.norm(rhs))
     doubled=result.copy();doubled[0]+=np.conj(phase)*(raw@C@response)[4]
     assert np.linalg.norm(doubled-result)>1e-3
     assert result[4]==0
@@ -78,3 +119,5 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path):
     args.amplification_recording_retry=True
     with pytest.raises(ValueError,match='unique frozen'):
         amplification_recording_retry(args,dict(bubble_amplification_diagnostic_attempts=[{},{}]))
+    args=build_parser().parse_args(['--input','i','--inventory','j','--output','o','--budget','b','--source-sha','s','--high-trace-component'])
+    c=selected_contract(args);assert c['workflow_seconds']==600 and c['B4_limit']==65 and c['I4']['seconds']==60
