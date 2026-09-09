@@ -125,7 +125,7 @@ def _base_manifest(
     resolved_sha: str,
 ) -> dict[str, Any]:
     snapshot = specification.as_jsonable()
-    return {
+    manifest = {
         "model_id": snapshot["model_id"],
         "run_id": snapshot["run_id"],
         "comparison_group": snapshot["comparison_group"],
@@ -148,6 +148,44 @@ def _base_manifest(
         "numerical_output_directory": str(run_directory / "numerical_output"),
         "resolved_method_adapter": adapter_identity,
     }
+    from src.io.native_capacity_profile import NATIVE_PROFILES, native_profile_facts
+    native_identity = specification.solver.get('preconditioner')
+    if native_identity in NATIVE_PROFILES:
+        profile = native_profile_facts(native_identity)
+        derived = snapshot.get('derived', {})
+        profile_snapshot = derived.get('physical_intermediate_profile', {})
+        material = snapshot['materials']
+        properties = derived.get('config_properties', {})
+        campaign = profile_snapshot.get('campaign_authorization', {})
+        manifest['native_capacity_contract'] = {
+            'profile': native_identity,
+            'wavelength_nm': snapshot['incidence']['wavelength_nm'],
+            'material': {
+                'substrate_name': material.get('substrate_name'),
+                'grating_name': material.get('grating_name'),
+                'n_substrate': material.get('n_substrate'),
+                'n_grating': material.get('n_grating'),
+                'epsilon_substrate': properties.get('eps_substrate'),
+                'epsilon_grating': properties.get('eps_grating'),
+            },
+            'screen': {
+                'enabled': not bool(snapshot['geometry'].get('cell_notch')),
+                'iterations': profile['outer']['screen']['iterations'],
+                'solve_seconds': profile['outer']['screen']['solve_seconds'],
+                'notch_policy': 'disabled_without_extra_screen' if snapshot['geometry'].get('cell_notch') else 'enabled',
+            },
+            'solve_seconds': profile['resources']['solve_seconds'],
+            'workflow_seconds': profile['resources']['workflow_seconds'],
+            'restart': profile['outer']['restart'],
+            'max_iterations': profile['outer']['max_iterations'],
+            'initial_guess': profile['outer']['initial_guess'],
+            'material_authority': (
+                campaign.get('five_nm_material', {}).get('authority')
+                if snapshot['incidence']['wavelength_nm'] == 5.0
+                else 'task-V5-input-identity'
+            ),
+        }
+    return manifest
 
 
 def _initial_summary(manifest: dict[str, Any]) -> dict[str, Any]:

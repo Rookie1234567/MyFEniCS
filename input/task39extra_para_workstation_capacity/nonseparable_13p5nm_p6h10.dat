@@ -66,7 +66,7 @@ max_iterations = 2048
 mpi_size = 1
 warning_memory_gib = 27.2
 terminate_memory_gib = 32.0
-timeout_seconds = 21600
+timeout_seconds = 64800
 memory_limit_gb = 34.359738368
 require_zero_swap = true
 

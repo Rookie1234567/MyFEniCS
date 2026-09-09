@@ -45,10 +45,16 @@ def test_native_v5_math_and_physical_identity():
     assert original.physical_model_sha256 == native.physical_model_sha256
     old = profile_facts('balanced_h6_p4_v5')
     new = profile_facts(native.solver['preconditioner'])
-    for key in ('balanced', 'fine_auxiliary', 'intermediate', 'structural_calls', 'outer'):
+    for key in ('balanced', 'fine_auxiliary', 'intermediate', 'structural_calls'):
         assert new[key] == old[key]
+    assert new['outer']['restart'] == old['outer']['restart'] == 32
+    assert new['outer']['max_iterations'] == old['outer']['max_iterations'] == 2048
+    assert new['outer']['initial_guess'] == old['outer']['initial_guess'] == 'zero'
+    assert new['outer']['screen']['iterations'] == old['outer']['screen']['iterations'] == 128
+    assert new['outer']['screen']['solve_seconds'] == 7200
     assert old['resources']['solve_seconds'] == 7200
-    assert new['resources']['solve_seconds'] == 14400
+    assert new['resources']['solve_seconds'] == 43200
+    assert new['resources']['workflow_seconds'] == 64800
 
 
 def test_native_launcher_uses_actual_budget_and_isolated_cache(monkeypatch, tmp_path):
@@ -67,10 +73,20 @@ def test_native_launcher_uses_actual_budget_and_isolated_cache(monkeypatch, tmp_
     monkeypatch.setattr('benchmarks.subreaper_watchdog.supervise', supervise)
     result = launch_specification(spec, source_sha='a'*40)
     assert result['result_classification'] == 'worker_exit0'
-    assert seen[0]['solve_seconds'] == 14400
-    assert 21500 < seen[0]['wall_seconds'] <= 21600
+    assert seen[0]['solve_seconds'] == 43200
+    assert 64700 < seen[0]['wall_seconds'] <= 64800
     assert seen[0]['stop_on_global_swap']
     assert Path(seen[0]['cache_path']).is_relative_to(tmp_path)
+    contract = json.loads(Path(result['manifest']).read_text())['native_capacity_contract']
+    assert contract['screen'] == {
+        'enabled': True,
+        'iterations': 128,
+        'solve_seconds': 7200,
+        'notch_policy': 'enabled',
+    }
+    assert contract['solve_seconds'] == 43200
+    assert contract['workflow_seconds'] == 64800
+    assert contract['restart'] == 32 and contract['max_iterations'] == 2048
 
 
 def test_native_rejects_changed_solver_and_material(tmp_path):
