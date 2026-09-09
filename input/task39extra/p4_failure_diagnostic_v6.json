@@ -1,0 +1,28 @@
+{
+  "schema": "task39extra.p4-failure-input.v1",
+  "sample": "A2R160_BAL_H_p4_01",
+  "candidate_source": "2edcf84888a7e989246b0fae28bc4555b61fc48d",
+  "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "packets": {
+    "input": {
+      "path": "benchmarks/artifacts/task39extra/v5_balanced/c4e86cfe1e6ba88ca5d26df82942e82f190e7eda/e1/A2R160_BAL_H_p4_01_input.json",
+      "sha256": "630d72b522ea2fe87d124833c031206708bbde1be1aca12e9bdf113af6c1c6a1"
+    },
+    "reference": {
+      "path": "benchmarks/artifacts/task39extra/v5_balanced/c4e86cfe1e6ba88ca5d26df82942e82f190e7eda/e1/A2R160_BAL_H_p4_01_residual_0.json",
+      "sha256": "100adfa1791943951d356ee3741f42ae8700df584491c9432bed5c5ba4c54b75"
+    },
+    "map": {
+      "path": "benchmarks/artifacts/task39extra/v5_balanced/c4e86cfe1e6ba88ca5d26df82942e82f190e7eda/e1/native_constraint_map_p4.json",
+      "sha256": "ac8643469e3d359acc381b77a8d1f93be16260de9e805c3cee1c3fdba9b40f9a"
+    },
+    "candidate": {
+      "path": "benchmarks/artifacts/task39extra/v6_recursive/2edcf84888a7e989246b0fae28bc4555b61fc48d/g1_lo/records/A2R160_BAL_H_p4_01_I4.json",
+      "sha256": "1958e51f5180e58824553fe4f4819a59547505eedb4b08180fdd6a25649736f1"
+    },
+    "candidate_manifest": {
+      "path": "benchmarks/artifacts/task39extra/v6_recursive/2edcf84888a7e989246b0fae28bc4555b61fc48d/g1_lo/run_manifest.json",
+      "sha256": "e84823bda77b6a02d26a02bc8b5d9f65b7b00090c4ccc90fabb6d4e6deea8a78"
+    }
+  }
+}
