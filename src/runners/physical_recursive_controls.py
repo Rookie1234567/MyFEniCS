@@ -210,7 +210,7 @@ def measure_p4_failure(data, *, A, P, PH, M, curl, diagonal, solve2, H4, B4,
         A4y_g=float(np.linalg.norm(ay-g)/np.linalg.norm(g)),
         A4c_saved=float(np.linalg.norm(ac-(g-eps))/max(np.linalg.norm(g-eps),np.finfo(float).tiny)))
     save('input_bridge',dict(binding=data['binding'],normalization=data['scale'],errors=errors,
-        coordinates='independent; common ||g|| scaling',arrays=a))
+        coordinates='independent; common ||g|| scaling',vectors=a))
     if max(errors.values())>1e-10:raise ValueError('frozen p4 physical bridge differs')
     def projection_checkpoint():
         sample()
@@ -378,3 +378,132 @@ def run_p4_failure_diagnostic(cfg, comm, binding_path, directory, *, sample, mar
                     last_B4_facts=bundle['B4'].last_apply_facts,
                     I4_calls=bundle['counts']['I4'],outer_calls=bundle['pc'].apply_count if 'pc' in bundle else 0))
             finally:destroy_recursive_physical_solver(bundle)
+
+
+def evaluate_projected_p4_component(bundle, cfg, binding_path, *, sample, save):
+    """One saved g1 I4 only; caller owns unchanged setup and parent watchdog.
+
+    No new projection or B4 baseline. The frozen reference y is used only after
+    the solve for field-error measurements, never passed to the new mechanism.
+    """
+    import time
+    from src.solvers.physical_projected_complement import solve_projected_p4_complement
+    from src.solvers.physical_error_metric import LosslessFEMetric
+    from src.solvers.fullspace_physical_intermediate_runtime import level_vector
+    from src.solvers.fullspace_physical_intermediate import apply_owned
+    from src.solvers.physical_error_diagnostics import metric_square
+    data=load_p4_failure_input(binding_path)
+    verify_recursive_map(bundle,4,data['map'])
+    if bundle['fine']['mode_sha256']!=data['binding']['mode_sha256']:
+        raise ValueError('projected component mode identity differs')
+    transfer=bundle['actions']['transfers'][(4,2)]
+    bottom=bundle['p2_inverse'];smoother=bundle['h4_setup']['smoother']
+    counts_before=dict(bottom.counts);positive_before=smoother.matrix_mult_count
+    rhs=level_vector(bundle['levels'],4);rhs.set(0)
+    indices=data['map']['independent_indices'];rhs.array[indices]=data['arrays']['g']
+    result=metric=None
+    calls=dict(A4_inner_started=0,A4_inner_completed=0,A4_identity_started=0,A4_identity_completed=0,
+        H4_started=0,H4_completed=0,I4_started=0,I4_completed=0,A4_identity_seconds=0.)
+    source_rhs=rhs.array.copy()
+    slaves=np.setdiff1d(np.arange(rhs.getLocalSize()),indices)
+    def native(x):return apply_owned(bundle['actions']['physical'][4]['physical_action'],x)
+    def A(x):
+        sample()
+        if calls['A4_inner_started']>=150:raise RuntimeError('projected inner A4 cap150')
+        calls['A4_inner_started']+=1;value=native(x);calls['A4_inner_completed']+=1;return value
+    def H(x):
+        sample()
+        if calls['H4_started']>=64 or smoother.matrix_mult_count-positive_before+2>128:
+            raise RuntimeError('projected H4/positive cap')
+        calls['H4_started']+=1;value=smoother.apply(x);calls['H4_completed']+=1;return value
+    def C(x):
+        sample()
+        if bottom.counts['logical']-counts_before['logical']>=65:raise RuntimeError('projected p2 cap65')
+        q=transfer.apply_adjoint(x);value=None
+        try:
+            value=bottom.apply(q);return transfer.apply_primal(value)
+        finally:
+            q.destroy()
+            if value is not None:value.destroy()
+    try:
+        reference=rhs.duplicate();reference.set(0);reference.array[indices]=data['arrays']['y'];ay=None
+        try:
+            sample();calls['A4_identity_started']+=1;start=time.perf_counter()
+            try:ay=native(reference);calls['A4_identity_completed']+=1
+            finally:calls['A4_identity_seconds']+=time.perf_counter()-start
+            error=float(np.linalg.norm(ay.array[indices]-data['arrays']['A4y'])/np.linalg.norm(data['arrays']['A4y']))
+            save('projected_source_bridge',dict(relative_error=error,limit=1e-10,
+                mode_sha256=bundle['fine']['mode_sha256'],native_map='exact',costs=dict(calls)))
+            if not np.isfinite(error) or error>1e-10:raise ValueError('projected source A4 bridge failed')
+        finally:
+            reference.destroy()
+            if ay is not None:ay.destroy()
+        calls['I4_started']+=1
+        result=solve_projected_p4_complement(rhs,A,C,H,sample=sample,save=save)
+        calls['I4_completed']+=1
+        vectors=[rhs]+[result[k] for k in ('solution','applied','residual')]
+        validation=dict(input_unchanged=np.array_equal(rhs.array,source_rhs),
+            finite=all(np.isfinite(v.array).all() for v in vectors),
+            slave_zero=all(np.all(v.array[slaves]==0) for v in vectors))
+        original_norm=float(np.linalg.norm(source_rhs))
+        raw_eps=source_rhs-result['applied'].array
+        recomputed=float(np.linalg.norm(raw_eps)/original_norm)
+        validation.update(original_rhs_norm=original_norm,recomputed_true=recomputed,
+            normalization_matches=bool(np.isclose(result['facts']['rhs_norm'],original_norm,rtol=1e-12,atol=0)),
+            residual_matches=bool(np.allclose(raw_eps,result['residual'].array,rtol=1e-12,atol=1e-14)),
+            reported_true_matches=bool(np.isclose(recomputed,result['facts']['final_true_residual'],rtol=1e-12,atol=1e-14)))
+        valid=all(validation[k] for k in ('input_unchanged','finite','slave_zero','normalization_matches','residual_matches','reported_true_matches'))
+        validation['status']='PASS' if valid else 'FAIL'
+        save('projected_result_validation',validation)
+        if not valid:
+            save('projected_result_rejected',dict(validation=validation,facts=result['facts'],
+                solution=result['solution'].array.copy(),applied=result['applied'].array.copy(),residual=result['residual'].array.copy()))
+            raise ValueError('projected result finite/slave/input/residual gate failed')
+        result['facts']['p2_counts']={k:v-counts_before[k] for k,v in bottom.counts.items()}
+        result['facts']['H4_positive_count']=smoother.matrix_mult_count-positive_before
+        # Persist terminal solve evidence before any separate metric setup.
+        save('projected_p4_result',dict(binding=data['binding'],normalization=data['scale'],facts=result['facts'],
+            solution=result['solution'].array.copy(),residual=result['residual'].array.copy(),
+            applied=result['applied'].array.copy(),input_unchanged=np.array_equal(rhs.array[indices],data['arrays']['g'])))
+        metric=LosslessFEMetric(bundle['levels'],4,cfg.k0,bundle['actions']['volume_quadrature_metadata'])
+        error=data['arrays']['y']-result['solution'].array[indices]
+        fields={}
+        for name,action in [('M0',metric.mass),('scaled_curl',metric.curl)]:
+            sample();remaining=metric_square(action,error);baseline=metric_square(action,data['arrays']['y'])
+            fields[name]=dict(remaining_energy=remaining,reference_energy=baseline,
+                field_ratio=float(np.sqrt(remaining/baseline)))
+        save('projected_p4_field_error',dict(fields=fields,reference_role='measurement only',
+            projection_calls=0,B4_baseline_calls=0,outer_calls=0))
+        return result['facts']
+    finally:
+        try:
+            save('projected_p4_component_costs',dict(p2_counts={k:v-counts_before[k] for k,v in bottom.counts.items()},
+                H4_positive_count=smoother.matrix_mult_count-positive_before,calls=dict(calls),
+                old_I4_calls=bundle['counts']['I4'],projection_calls=0,B4_baseline_calls=bundle['B4'].apply_count,
+                metric_calls={k:v.audit for k,v in metric.bridges.items()} if metric is not None else {},outer_calls=0))
+        finally:
+            if metric is not None:metric.destroy()
+            if result is not None:
+                for key in ('solution','applied','residual'):result[key].destroy()
+            rhs.destroy()
+
+
+
+def run_projected_p4_component(cfg,comm,binding_path,directory,*,sample,marker):
+    """Same cold setup, exactly one new I4, no old components or outer solve."""
+    from .physical_diagnosis_worker import save_packet
+    from src.solvers.physical_recursive_coarse import build_recursive_physical_solver,destroy_recursive_physical_solver
+    directory=Path(directory);directory.mkdir(parents=True,exist_ok=False)
+    save=lambda n,f:save_packet(directory,n,f)
+    bundle=None
+    try:
+        bundle=build_recursive_physical_solver(cfg,comm,target=1e-4,sample=sample,marker=marker,save=save)
+        marker('projected_p4_component_started',{})
+        facts=evaluate_projected_p4_component(bundle,cfg,binding_path,sample=sample,save=save)
+        save('projected_component_summary',dict(status='COMPONENT_COMPLETED',I4=facts,
+            solver_target_reached=facts['final_true_residual']<=1e-4,
+            bottom=bundle['p2_inverse'].bottom.audit,storage=bundle['numerical_storage'],
+            I4_calls=1,old_I4_calls=bundle['counts']['I4'],outer_calls=bundle['pc'].apply_count,
+            projection_calls=0,B4_baseline_calls=bundle['B4'].apply_count))
+    finally:
+        if bundle is not None:destroy_recursive_physical_solver(bundle)

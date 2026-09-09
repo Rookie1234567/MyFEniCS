@@ -3,7 +3,8 @@ import numpy as np
 from .fullspace_physical_intermediate import apply_owned
 
 
-def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop_requested=lambda: False):
+def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop_requested=lambda: False,
+                      residual_norm=None):
     """One zero-start FGMRES16/max64; owned solution, A4c and eps returned.
 
     Each monitor boundary checks the conservative 60-second clock. The terminal
@@ -30,7 +31,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
     x, current = rhs.duplicate(), rhs.duplicate(); x.set(0); current.set(0)
     ksp = applied = eps = None
     history = []; explicit_count = 0; status = None
-    norm = float(rhs.norm())
+    norm = float(rhs.norm()) if residual_norm is None else float(residual_norm)
     def explicit(value, iteration, *, retain=False):
         nonlocal explicit_count
         attempted['explicit_A4'] += 1
@@ -49,7 +50,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
             if a is not None: a.destroy()
             if r is not None: r.destroy()
     try:
-        if not np.isfinite(norm):
+        if not np.isfinite(norm) or norm<0:
             raise FloatingPointError('nonfinite p4 RHS')
         ksp = PETSc.KSP().create(rhs.getComm()); ksp.setOperators(matrix)
         ksp.setType('fgmres'); ksp.setGMRESRestart(16); ksp.setPCSide(PETSc.PC.Side.RIGHT)

@@ -6,6 +6,7 @@ from pathlib import Path
 from src.runners.physical_recursive_controls import measure_p4_failure, load_p4_failure_input
 from src.runners.physical_recursive_entry import p4_bridge_status
 from src.runners.physical_diagnosis_worker import save_packet
+from src.runners.physical_diagnostic_completion import load_packet
 
 
 def fixture_run(*, timeout=False, corrupt=False, save=None):
@@ -56,6 +57,10 @@ def test_failed_bridge_is_saved_but_never_pass(tmp_path):
     assert p4_bridge_status(path)=='FAIL'
     fixture_run(save=lambda n,v:save_packet(tmp_path,n,v))
     assert p4_bridge_status(path)=='PASS'
+    vectors=load_packet(path)['vectors']
+    assert set(vectors)=={'g','y','A4y','c','eps'}
+    np.testing.assert_array_equal(vectors['g'],vectors['A4y'])
+    np.testing.assert_array_equal(vectors['eps'],vectors['g']*.75)
 
 
 def test_frozen_binding_loads_exact_first_sample():

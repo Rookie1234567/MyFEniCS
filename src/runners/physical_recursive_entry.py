@@ -40,6 +40,32 @@ def p4_failure_contract():
         new_reference_factor=False,global_swap_stop=True)
 
 
+def projected_component_contract():
+    return dict(identity='projected_p4_complement_v1',scope='one_saved_A2R160_g1',
+        workflow_seconds=900,physical_degrees=[6,4,2],I4_calls=1,old_I4_calls=0,outer_calls=0,
+        projection_calls=0,B4_baseline_calls=0,A4_inner_limit=150,A4_identity_calls=1,
+        p2_logical_limit=65,H4_limit=64,H4_positive_limit=128,
+        I4=dict(method='right_FGMRES',restart=16,max_it=64,seconds=60,target=1e-4,
+            residual_normalization='original ||g||',delta_zero_start=True),
+        p2_rows_cap=8192,p2_budget_bytes=512*1024**2,p2_true_limit=1e-10,
+        new_reference_factor=False,global_swap_stop=True)
+
+
+def selected_contract(args):
+    return (projected_component_contract() if args.projected_p4_component else
+            p4_failure_contract() if args.p4_failure_diagnostic else component_contract(args.target))
+
+
+def dispatch_components(args,cfg,comm,directory,*,sample,marker):
+    from . import physical_recursive_controls as controls
+    if args.projected_p4_component:
+        return controls.run_projected_p4_component(cfg,comm,args.inventory,directory,sample=sample,marker=marker)
+    if args.p4_failure_diagnostic:
+        return controls.run_p4_failure_diagnostic(cfg,comm,args.inventory,directory,sample=sample,marker=marker)
+    return controls.run_recursive_components(cfg,comm,args.inventory,directory,
+        target=component_contract(args.target)['I4']['target'],sample=sample,marker=marker)
+
+
 def git_state(expected):
     def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
     head=git('rev-parse','HEAD')
@@ -65,7 +91,6 @@ def worker(args):
     from src.io.input_validation import simulation_config_3d_from_normalized
     from benchmarks.subreaper_watchdog import memory_envelope
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
-    from .physical_recursive_controls import run_recursive_components
     from .workflow_timebase import clock_sample
     if (os.environ.get('_MYFENICS_WSL_QUALIFIED_ACTIVATION')!='1' or
         os.environ.get('PHYSICAL_TIMEBASE_GUARD')!='1' or not os.path.samefile(sys.executable,'.venv/bin/python') or
@@ -80,8 +105,8 @@ def worker(args):
     if (payload['provenance']['physical_model_sha256']!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
         or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
     cfg=simulation_config_3d_from_normalized(payload)
-    diagnostic=args.p4_failure_diagnostic
-    contract=p4_failure_contract() if diagnostic else component_contract(args.target);root=Path(args.output)
+    diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component
+    contract=selected_contract(args);root=Path(args.output)
     (root/'input_original.dat').write_bytes(Path(args.input).read_bytes())
     atomic(root/'resolved_config.json',dict(physical_input=payload,component_profile=contract,
         original_dat_solver_role='physical template only; old V5 PC is not invoked'))
@@ -92,7 +117,7 @@ def worker(args):
     if Path(cache_options['cache_dir']).resolve()!=cache_home/'fenics':
         raise RuntimeError('effective form JIT cache escaped isolated run root')
     inventory=json.loads(Path(args.inventory).read_text())
-    if diagnostic:
+    if diagnostic or projected:
         native_maps={'4':inventory['packets']['map']}
         mode_sha=inventory['mode_sha256']
     else:
@@ -124,42 +149,51 @@ def worker(args):
         atomic(root/'phase.json',dict(phase='components',stage=name,clock=stamp))
         with (root/'stages.jsonl').open('a') as stream:stream.write(json.dumps(dict(stage=name,clock=stamp,facts=facts))+'\n')
     try:
-        if diagnostic:
-            from .physical_recursive_controls import run_p4_failure_diagnostic
-            run_p4_failure_diagnostic(cfg,MPI.COMM_WORLD,args.inventory,root/'records',sample=sample,marker=marker)
-        else:
-            run_recursive_components(cfg,MPI.COMM_WORLD,args.inventory,root/'records',
-                target=contract['I4']['target'],sample=sample,marker=marker)
+        dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker)
     finally:
-        identity=root/'records'/('input_bridge.json' if diagnostic else 'fresh_identity.json')
+        identity=root/'records'/('projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
         manifest['native_map_bridge_status']='PASS' if identity.exists() else 'NOT_REACHED'
         if diagnostic and identity.exists():
             manifest['native_map_bridge_status']=p4_bridge_status(identity)
+        if projected and identity.exists():
+            from math import isfinite
+            error=json.loads(identity.read_text())['relative_error']
+            manifest['native_map_bridge_status']='PASS' if isfinite(error) and error<=1e-10 else 'FAIL'
         if identity.exists():
             manifest['fresh_identity']=dict(path=str(identity),sha256=hashlib.sha256(identity.read_bytes()).hexdigest())
         atomic(root/'run_manifest.json',manifest)
 
 
-def main():
+def build_parser():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('input','inventory','output','budget','source-sha'):parser.add_argument('--'+name,required=True)
     parser.add_argument('--target',choices=('lo',),default='lo')
-    parser.add_argument('--p4-failure-diagnostic',action='store_true')
+    group=parser.add_mutually_exclusive_group()
+    group.add_argument('--p4-failure-diagnostic',action='store_true')
+    group.add_argument('--projected-p4-component',action='store_true')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
-    args=parser.parse_args()
+    return parser
+
+
+def main():
+    args=build_parser().parse_args()
     if args.worker:return worker(args)
     source=git_state(args.source_sha)
     from benchmarks.subreaper_watchdog import supervise
     from .workflow_timebase import CONSERVATIVE_REALTIME
     budget_path=Path(args.budget);budget=json.loads(budget_path.read_text())
-    diagnostic=args.p4_failure_diagnostic
+    diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component
     if diagnostic and Path(args.output).parts[-3:]!=('v6_p4_failure_diagnostic',args.source_sha,'a2r160_g1'):
         raise ValueError('diagnostic requires fresh v6_p4_failure_diagnostic/source/a2r160_g1 root')
     if diagnostic and budget.get('p4_failure_diagnostic_attempts'):
         raise ValueError('unique p4 failure diagnostic already attempted')
-    remaining=min(1800,budget['batch_remaining']) if diagnostic else min(budget['G0_G1_remaining'],budget['batch_remaining'])
+    if projected and Path(args.output).parts[-3:]!=('v6_projected_p4_component',args.source_sha,'a2r160_g1'):
+        raise ValueError('projected component requires fresh source/a2r160_g1 root')
+    if projected and budget.get('projected_p4_component_attempts'):
+        raise ValueError('unique projected p4 component already attempted')
+    remaining=min(selected_contract(args)['workflow_seconds'],budget['batch_remaining']) if diagnostic or projected else min(budget['G0_G1_remaining'],budget['batch_remaining'])
     if remaining<=0:raise RuntimeError('G1 compute budget exhausted')
-    lock=budget_path.parent/('p4_failure_active.lock' if diagnostic else 'g1_active.lock')
+    lock=budget_path.parent/('projected_p4_active.lock' if projected else 'p4_failure_active.lock' if diagnostic else 'g1_active.lock')
     descriptor=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.close(descriptor)
     root=Path(args.output)
     result=None
@@ -167,7 +201,7 @@ def main():
         root.mkdir(parents=True,exist_ok=False)
         cache_home=(root/'jit_cache').resolve()
         cache_home.mkdir(exist_ok=False)
-        atomic(root/'launch_plan.json',dict(source=source,contract=p4_failure_contract() if diagnostic else component_contract(args.target),
+        atomic(root/'launch_plan.json',dict(source=source,contract=selected_contract(args),
             wall_seconds=remaining,budget_before=budget,jit_cache_home=str(cache_home),
             jit_cache_initially_empty=not any(cache_home.iterdir())))
         command=[sys.executable,'-m','src.runners.physical_recursive_entry',*sys.argv[1:],'--worker']
@@ -176,13 +210,13 @@ def main():
             stop_on_global_swap=True,source_state=source,
             worker_environment={'XDG_CACHE_HOME':str(cache_home)})
         charge=result['workflow_clock_interval']['budget_seconds']
-        budget.setdefault('p4_failure_diagnostic_attempts' if diagnostic else 'g1_component_attempts',[]).append(dict(root=str(root),target=args.target,
+        budget.setdefault('projected_p4_component_attempts' if projected else 'p4_failure_diagnostic_attempts' if diagnostic else 'g1_component_attempts',[]).append(dict(root=str(root),target=args.target,
             source=args.source_sha,classification=result['classification'],conservative_seconds=charge))
-        for key in (('batch_remaining',) if diagnostic else ('G0_G1_remaining','batch_remaining')):budget[key]-=charge
+        for key in (('batch_remaining',) if diagnostic or projected else ('G0_G1_remaining','batch_remaining')):budget[key]-=charge
         budget['charged_including_reserve']+=charge
         atomic(budget_path,budget)
         atomic(root/'terminal.json',result)
-        if diagnostic:
+        if diagnostic or projected:
             atomic(root/'source_after.json',git_state(args.source_sha))
         if result['classification']!='COMPLETED':raise SystemExit(1)
     finally:
