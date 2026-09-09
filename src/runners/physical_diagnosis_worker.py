@@ -22,17 +22,21 @@ def save_packet(directory,name,facts):
         if isinstance(value,dict):return {k:compact(v) for k,v in value.items()}
         if isinstance(value,(list,tuple)):return [compact(v) for v in value]
         return value
-    record=compact(facts)
-    if arrays:
-        path=directory/(name+'.npz')
-        temporary=path.with_suffix('.npz.tmp')
-        with temporary.open('wb') as stream:
-            np.savez(stream,**arrays)
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(path)
-        record['arrays']=dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
-    _atomic_json(directory/(name+'.json'),record)
+    try:
+        record=compact(facts)
+        if arrays:
+            path=directory/(name+'.npz')
+            temporary=path.with_suffix('.npz.tmp')
+            with temporary.open('wb') as stream:
+                np.savez(stream,**arrays)
+                stream.flush()
+                os.fsync(stream.fileno())
+            temporary.replace(path)
+            record['arrays']=dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        _atomic_json(directory/(name+'.json'),record)
+    finally:
+        # The recursive compact closure forms a cycle; release its array payload now.
+        arrays.clear()
 
 
 def run_diagnosis(input_path,inventory_path,directory,source_sha,*,completion_v4=False,actual_errors=None,balanced_v5=False):

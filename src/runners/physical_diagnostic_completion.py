@@ -61,7 +61,11 @@ def load_packet(path):
             return {k:expand(v) for k,v in value.items()}
         if isinstance(value,list):return [expand(v) for v in value]
         return value
-    return expand(record)
+    try:
+        return expand(record)
+    finally:
+        # Returned arrays have their own owners; the recursive closure must not retain extras.
+        arrays.clear()
 
 
 def reuse_v3(inventory):
