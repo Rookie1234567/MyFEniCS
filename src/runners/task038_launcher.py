@@ -356,6 +356,7 @@ def launch_specification(
     sleep: Callable[[float], None] = time.sleep,
     poll_interval: float = 0.25,
     pc_profile: dict | None = None,
+    prelaunch_isolation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -401,6 +402,9 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if prelaunch_isolation is not None:
+        manifest['native_capacity_isolation'] = prelaunch_isolation
+        _write_json(run_directory / 'run_manifest.json', manifest)
     if pc_profile is not None:
         from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
         from .physical_pc_profile import PACKED_CHECKPOINT_MANIFEST_SHA, PACKED_CHECKPOINT_SOLUTION_SHA, paired_schedule
@@ -440,6 +444,9 @@ def launch_specification(
         adapter_identity=adapter,
         contract_probe=contract_probe,
     )
+    if prelaunch_isolation is not None:
+        manifest['worker_command'] = list(plan.argv)
+        _write_json(run_directory / 'run_manifest.json', manifest)
     if not plan.adapter_available:
         result = {
             "exit_status": None,

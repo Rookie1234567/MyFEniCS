@@ -1108,6 +1108,17 @@ FIELD_SPECS: Final = (
         "true",
         required=True,
     ),
+    _f(
+        "execution.native_memory_policy",
+        "enum",
+        "none",
+        _ANY_2D_3D,
+        "native worker 的显式 NUMA 内存策略；默认不改变旧入口",
+        "native worker memory policy",
+        '"none"',
+        default="none",
+        allowed=("none", "membind_node1"),
+    ),
     # output
     _f(
         "output.results_root",

@@ -13,6 +13,7 @@ from src.io.run_specification import thaw
 from src.solvers.physical_balanced_fgmres import BalancedScreen
 
 INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_p6h10.dat')
+NATIVE_INPUT = Path('input/task39extra_para_workstation_capacity/nonseparable_13p5nm_p6h10.dat')
 REFERENCE_INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_native_matched_reference.dat')
 
 
@@ -21,6 +22,7 @@ def test_native_matched_reference_is_explicit_and_hash_bound():
     ordinary = load_and_resolve('input/task39extra/original_13p5nm_p6h10_fine_reference.dat')
     assert reference.solver['direct_solver_profile'] == 'native_matched_reference'
     assert reference.execution['timeout_seconds'] == 21600
+    assert reference.execution['native_memory_policy'] == 'membind_node1'
     assert reference.output['top_probe_z_nm'] == 127.5
     assert reference.output['bottom_probe_z_nm'] == -7.5
     assert ordinary.solver['direct_solver_profile'] == 'default'
@@ -77,12 +79,13 @@ def test_native_v5_math_and_physical_identity():
 
 def test_native_launcher_uses_actual_budget_and_isolated_cache(monkeypatch, tmp_path):
     from src.runners.task038_launcher import launch_specification
-    spec = replace(load_and_resolve(INPUT), expected_output_parent=tmp_path/'run')
+    spec = replace(load_and_resolve(NATIVE_INPUT), expected_output_parent=tmp_path/'run')
     monkeypatch.setattr('src.runners.task038_launcher._physical_source_gate', lambda *_: {})
     seen = []
 
     def supervise(command, directory, **kwargs):
         assert command[:3] == ['/usr/bin/taskset', '-c', '23']
+        assert command[3:5] == ['/usr/bin/numactl', '--membind=1']
         seen.append(kwargs)
         return {'leader_exit_code': 0, 'classification': 'COMPLETED',
                     'job_swap_activity': 'zero_supported_by_zero_global_activity',
@@ -97,14 +100,63 @@ def test_native_launcher_uses_actual_budget_and_isolated_cache(monkeypatch, tmp_
     assert Path(seen[0]['cache_path']).is_relative_to(tmp_path)
     contract = json.loads(Path(result['manifest']).read_text())['native_capacity_contract']
     assert contract['screen'] == {
-        'enabled': True,
+        'enabled': False,
         'iterations': 128,
         'solve_seconds': 7200,
-        'notch_policy': 'enabled',
+        'notch_policy': 'disabled_without_extra_screen',
     }
     assert contract['solve_seconds'] == 43200
     assert contract['workflow_seconds'] == 64800
     assert contract['restart'] == 32 and contract['max_iterations'] == 2048
+
+
+def test_native_default_does_not_silently_bind_memory(tmp_path):
+    from src.io.execution_plan import build_execution_plan
+    plan = build_execution_plan(load_and_resolve(INPUT), tmp_path, source_sha='a' * 40)
+    assert plan.argv[:3] == ('/usr/bin/taskset', '-c', '23')
+    assert plan.argv[3] != '/usr/bin/numactl'
+
+
+def test_node1_meminfo_parser_uses_real_kernel_fixture():
+    from src.runners.native_capacity import _parse_node1_meminfo
+
+    path = Path('/sys/devices/system/node/node1/meminfo')
+    if not path.is_file():
+        pytest.skip('host has no node1 meminfo fixture')
+    values = _parse_node1_meminfo(path.read_text())
+    assert values['Node 1 MemTotal'] > 0
+    assert values['Node 1 MemFree'] >= 0
+
+
+def test_native_preexisting_external_swap_policy_keeps_new_global_gate_strict():
+    from src.runners.native_capacity import _validate_preexisting_swap
+
+    def snapshot(preexisting, *, cgroup_swap=0, second_cgroup_swap=None):
+        if second_cgroup_swap is None:
+            second_cgroup_swap = cgroup_swap
+        return {
+            'preexisting_global_swap_bytes': preexisting,
+            'current_cgroup_relative': 'user.slice/task.scope',
+            'current_cgroup_swap_bytes': cgroup_swap,
+            'current_pid_in_cgroup': True,
+            'cgroup_procs_readable': True,
+            'stable_two_read_baseline': True,
+            'global_pswp_delta': {'pswpin_pages': 0, 'pswpout_pages': 0},
+            'swap_free_delta_bytes': 0,
+            'second_read': {
+                'current_cgroup_swap_bytes': second_cgroup_swap,
+                'current_pid_in_cgroup': True,
+                'cgroup_procs_readable': True,
+            },
+        }
+
+    assert _validate_preexisting_swap(snapshot(0)) == 'zero_preexisting_global_swap'
+    assert _validate_preexisting_swap(snapshot(8192)) == 'preexisting_global_swap_reported_outside_current_cgroup'
+    with pytest.raises(InputError, match='current task cgroup attribution unavailable'):
+        _validate_preexisting_swap(snapshot(8192, cgroup_swap=None,
+                                            second_cgroup_swap=None))
+    with pytest.raises(InputError, match='current task cgroup'):
+        _validate_preexisting_swap(snapshot(8192, cgroup_swap=8192))
 
 
 def test_native_rejects_changed_solver_and_material(tmp_path):
@@ -202,3 +254,5 @@ def test_native_reference_identity_package_precedes_supervisor(tmp_path, monkeyp
     assert seen['manifest']['global_swap_supervision'] is True
     assert seen['manifest']['supervisor_cpu'] == 9 and seen['manifest']['worker_cpu'] == 23
     assert seen['command'][:3] == ['/usr/bin/taskset', '-c', '23']
+    assert seen['command'][3:5] == ['/usr/bin/numactl', '--membind=1']
+    assert seen['manifest']['native_memory_policy'] == 'membind_node1'

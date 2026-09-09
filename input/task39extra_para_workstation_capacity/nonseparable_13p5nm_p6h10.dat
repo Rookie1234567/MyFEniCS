@@ -69,6 +69,7 @@ terminate_memory_gib = 32.0
 timeout_seconds = 64800
 memory_limit_gb = 34.359738368
 require_zero_swap = true
+native_memory_policy = "membind_node1"
 
 [output]
 results_root = "results"

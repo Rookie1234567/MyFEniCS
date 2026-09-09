@@ -71,6 +71,17 @@ def method_adapter_available(method: str, *, preconditioner: str | None = None) 
     return method in CONNECTED_METHODS or (method == "full3d_iterative" and preconditioner in PROFILES)
 
 
+def native_memory_policy_prefix(policy: str | None) -> tuple[str, ...]:
+    """Return the explicit, task-local NUMA prefix for a native worker."""
+
+    policy = policy or "none"
+    if policy == "none":
+        return ()
+    if policy == "membind_node1":
+        return ("/usr/bin/numactl", "--membind=1")
+    raise InputError(f"unsupported native_memory_policy: {policy!r}")
+
+
 def build_execution_plan(
     specification: RunSpecification,
     run_directory: str | Path,
@@ -136,7 +147,10 @@ def build_execution_plan(
         argv.append("--contract-probe")
     from .native_capacity_profile import NATIVE_PROFILES
     if specification.solver.get("preconditioner") in NATIVE_PROFILES:
-        argv = ["/usr/bin/taskset", "-c", "23", *argv]
+        argv = ["/usr/bin/taskset", "-c", "23",
+                *native_memory_policy_prefix(
+                    specification.execution.get("native_memory_policy")),
+                *argv]
     return ExecutionPlan(
         argv=tuple(argv),
         shell=False,
@@ -210,4 +224,5 @@ __all__ = [
     "dry_run_payload",
     "method_adapter_available",
     "method_adapter_identity",
+    "native_memory_policy_prefix",
 ]

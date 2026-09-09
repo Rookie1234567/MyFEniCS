@@ -207,8 +207,10 @@ def launch_native_matched_reference(specification):
         '--workflow-seconds', str(specification.execution['timeout_seconds']),
         '--native-matched-reference',
     ]
-    with native_capacity_guard('balanced_h6_p4_native_13p5') as (_root, isolation):
-        exit_code = main(argv)
+    memory_policy = specification.execution.get('native_memory_policy', 'none')
+    with native_capacity_guard('balanced_h6_p4_native_13p5',
+                               memory_policy=memory_policy) as (_root, isolation):
+        exit_code = main(argv, native_capacity_isolation=isolation)
         isolation['reference_profile'] = specification.solver['direct_solver_profile']
         _atomic_json(directory / 'workstation_isolation.json', isolation)
     launch_path = directory / 'launch.json'
@@ -238,6 +240,9 @@ def launch_native_matched_reference(specification):
         'supervisor_cpu': 9,
         'worker_cpu': 23,
         'identity_package': 'input_original.dat, resolved_config.json, source_sha.txt, input_sha256.txt, physical_model_sha256.txt',
+        'native_memory_policy': memory_policy,
+        'worker_memory_policy': isolation['worker_memory_policy'],
+        'native_capacity_isolation': isolation,
         'resolved_config_sha256': hashlib.sha256((directory/'resolved_config.json').read_bytes()).hexdigest(),
         'global_swap_supervision': True,
         'witness_audit_path': str(witness),
@@ -249,7 +254,7 @@ def launch_native_matched_reference(specification):
     return result
 
 
-def main(argv=None):
+def main(argv=None, *, native_capacity_isolation=None):
     if sys.argv[1:]==['--abi']:
         print(json.dumps(qualified_abi()));return 0
     from .physical_diagnosis import supervise_diagnosis
@@ -281,10 +286,12 @@ def main(argv=None):
     if args.cache_path is not None:
         args.cache_path.mkdir(parents=True,exist_ok=True)
     native_identity = None
+    native_memory_policy = 'none'
     if args.native_matched_reference:
         from src.io import load_and_resolve
         from src.io.resolved_config import write_resolved_config
         native_identity = load_and_resolve(args.input)
+        native_memory_policy = native_identity.execution.get('native_memory_policy', 'none')
         resolved_sha = write_resolved_config(native_identity,args.directory/'resolved_config.json')
         (args.directory/'input_original.dat').write_bytes(native_identity.raw_input_bytes)
         (args.directory/'input_sha256.txt').write_text(native_identity.input_sha256+'\n',encoding='ascii')
@@ -313,7 +320,9 @@ def main(argv=None):
             '--worker','--input',str(args.input),'--directory',str(args.directory),
             '--expected-sha',args.expected_sha,'--workflow-seconds',str(args.workflow_seconds)]
         if args.native_matched_reference:
-            command=['/usr/bin/taskset','-c','23',*command]
+            from src.io.execution_plan import native_memory_policy_prefix
+            command=['/usr/bin/taskset','-c','23',
+                     *native_memory_policy_prefix(native_memory_policy), *command]
         if args.solve_reference:
             command.extend(['--solve-reference','--witness-audit',str(args.witness_audit),
                             '--witness-audit-sha',args.witness_audit_sha])
@@ -327,7 +336,13 @@ def main(argv=None):
                             identity_package='input_original.dat, resolved_config.json, source_sha.txt, input_sha256.txt, physical_model_sha256.txt',
                             native_capacity_profile='balanced_h6_p4_native_13p5',
                             supervisor_cpu=9,worker_cpu=23,
-                            global_swap_supervision=True)
+                            global_swap_supervision=True,
+                            native_memory_policy=native_memory_policy,
+                            worker_memory_policy=({'mode': 'strict_membind', 'node': 1}
+                                                  if native_memory_policy == 'membind_node1'
+                                                  else {'mode': 'default'}))
+            if native_capacity_isolation is not None:
+                manifest['native_capacity_isolation'] = native_capacity_isolation
             _atomic_json(args.directory/'run_manifest.json',dict(
                 schema='native-matched-reference.launch.v1',status='launching',**manifest))
         _atomic_json(args.directory/'launch.json',manifest)

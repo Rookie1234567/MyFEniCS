@@ -52,6 +52,10 @@ def memory_envelope() -> dict:
         reserve = max(policy['reserve_min_bytes'], int(.15 * total))
         cap = min(policy['absolute_cap_bytes'], int(.80 * total), available-reserve)
         planning = min(policy['planning_cap_bytes'], int(.75 * total), cap)
+        node_cap = os.environ.get('PHYSICAL_NATIVE_NODE_CAP_BYTES')
+        if node_cap is not None:
+            cap = min(cap, int(node_cap))
+            planning = min(planning, cap)
     return {**memory, 'effective_total_bytes': total,
             'effective_available_bytes': available, 'reserve_bytes': reserve,
             'launch_cap_bytes': cap, 'planning_cap_bytes': planning,
