@@ -8,6 +8,34 @@ from pathlib import Path
 from src.io.input_loader import InputError
 
 
+def _cpu_launch_snapshot(cpus):
+    """Record processes last scheduled on the reserved CPUs before launch."""
+    snapshot = {str(cpu): [] for cpu in sorted(cpus)}
+    own_pid = os.getpid()
+    for proc in Path('/proc').glob('[0-9]*'):
+        try:
+            pid = int(proc.name)
+            raw = (proc / 'stat').read_text()
+            close = raw.rfind(')')
+            fields = raw[close + 2:].split()
+            processor = int(fields[36])  # /proc/<pid>/stat field 39
+            if processor not in cpus:
+                continue
+            cmdline = (proc / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace').strip()
+            snapshot[str(processor)].append({
+                'pid': pid,
+                'self': pid == own_pid,
+                'comm': raw[raw.find('(') + 1:close],
+                'cmdline': cmdline,
+                'affinity': sorted(os.sched_getaffinity(pid)),
+            })
+        except (OSError, ValueError, IndexError):
+            continue
+    for rows in snapshot.values():
+        rows.sort(key=lambda row: row['pid'])
+    return {'captured_by_pid': own_pid, 'cpus': snapshot}
+
+
 def launch_native_capacity(specification):
     from .task038_launcher import launch_specification
     if os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION') != '1':
@@ -27,6 +55,7 @@ def launch_native_capacity(specification):
         isolation = {'canonical_repository': str(root.parent/'task-repository.git'),
                      'worktree': str(root), 'supervisor_affinity': sorted(os.sched_getaffinity(0)),
                      'worker_affinity': [23],
+                     'cpu_launch_snapshot': _cpu_launch_snapshot({9, 23}),
                      'neighbor_concurrent_heavy_authorized': True,
                      'neighbor_files_and_processes_modified': False,
                      'disk_free_bytes': shutil.disk_usage(root).free,
