@@ -34,4 +34,10 @@ own 结果的 `A_balance/R/T/R00/A_volume` 和能量闭合均已保存，但 `ma
 
 retry run：`20260909T175256.839514Z`，source/input/physical SHA 见 [`r1_native_reference.json`](outcomes/records/r1_native_reference.json)。`REFERENCE_PASS` residual=`1.4427687662062765e-11`，pre-numeric RHS=`3.260906215866404e-14`，A6/RHS/repeated-A6 identity checks 全为 `0`；`MATCHED_REFERENCE_PASS` 的 full-field L2=`1.335826588236277e-8`、scaled-curl=`5.5945316967861595e-9`，selected E/H=`4.08219975785664e-8`/`8.908964399790286e-9`，80 模式复振幅=`5.171739887720538e-9`，逐通道功率最大绝对差=`2.206432703211192e-9`，无相位拟合。完整 80 项必要小证据见 [`r1_native_reference_80_channels.json`](outcomes/records/r1_native_reference_80_channels.json)。
 
-阶段 wall 使用 `stages.jsonl` 相邻单调 marker 相减，不把累计 wall 当子阶段相加；workflow=`3624.8300013281405 s`，整树 RSS 峰=`7304724480 B`、swap=`0`、`COMPLETED`/`descendants_cleared=true`。资格标签是 `NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL`：这是允许的 native direct matched reference，不声称已经取得完整 WSL 全场复现。R1 现已关闭，下一 Gate 为原 V5 13.5 nm notch R2；5 nm 仍锁定。
+阶段 wall 使用 `stages.jsonl` 相邻单调 marker 相减，不把累计 wall 当子阶段相加；workflow=`3624.8300013281405 s`，整树 RSS 峰=`7304724480 B`、swap=`0`、`COMPLETED`/`descendants_cleared=true`。资格标签是 `NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL`：这是允许的 native direct matched reference，不声称已经取得完整 WSL 全场复现。R1 已关闭；R2 attempt1 的独立负结果见下节，5 nm 仍锁定。
+
+## R2 notch attempt1：全局 swap 归因未决，禁止过度归因
+
+原 V5 notch run `20260909T191201.621471Z` 使用 clean source `f21a33914765a10adfa43735fb2e1ac3013ff905`、input SHA=`b7ba606a5bf056d06e13065c6500c99301c7e6e4a0ec8eec1ad20797c28185c3`、physical SHA=`7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec`。它按 `cell_notch=positive_x_middle_y_z40_80` 的8-cell recipe启动，无 screen，solve/workflow=`43200/64800 s`，zero/restart32/max2048；在 iteration3、outer matvec/PC=3 时被既有 watchdog 分类 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED` 并清场。全局诊断仅见 `pswpout delta=2` 页，own sampled `VmSwap peak=0`；leader=`-9`、`descendants_cleared=true`、remaining children为空、RSS peak=`3406852096 B`。这不是 OOM、数值失败或邻居归因，且不自动重跑。
+
+早期同字段 `monitor_residuals.solve_seconds` 为 step0=`39.64952567401153 s`、step1=`186.31658401115436 s`、step3=`448.83664549236175 s`，step1→3平均=`131.2600307406037 s`；p4/refinement/native-kernel与R1差分见 [`r2_notch_attempt1.json`](outcomes/records/r2_notch_attempt1.json)。R2资格关闭，5 nm继续锁定，等待主控审核最小归因方案。

@@ -1,0 +1,99 @@
+{
+  "schema": "native-capacity.r2-notch-negative.v1",
+  "stage": "R2_NOTCH_13P5NM_OWN",
+  "status": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+  "qualification": "R2_CLOSED_PENDING_REVIEW;_5NM_LOCKED",
+  "run_id": "20260909T191201.621471Z",
+  "run_directory": "results/euv_grazing1_phi0/nonseparable_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T191201.621471Z",
+  "input": "input/task39extra_para_workstation_capacity/nonseparable_13p5nm_p6h10.dat",
+  "source_sha": "f21a33914765a10adfa43735fb2e1ac3013ff905",
+  "input_sha256": "b7ba606a5bf056d06e13065c6500c99301c7e6e4a0ec8eec1ad20797c28185c3",
+  "physical_model_sha256": "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec",
+  "contract": {
+    "profile": "balanced_h6_p4_native_13p5",
+    "material": "13.5 nm Si; n=0.999002304859+0.00182649365i",
+    "cell_notch": "positive_x_middle_y_z40_80",
+    "changed_cells": 8,
+    "canonical_material_sha256": "9580b4b6414a754ef638a233168db079cf3ce3176c4a342395b94d68799b4ab1",
+    "initial_guess": "zero",
+    "screen_enabled_for_notch": false,
+    "solve_seconds": 43200,
+    "workflow_seconds": 64800,
+    "mpi_size": 1,
+    "threads_per_process": 1,
+    "restart": 32,
+    "max_iterations": 2048
+  },
+  "timing": {
+    "workflow_elapsed_seconds": 1927.7806259298231,
+    "monitor_solve_checkpoints": [
+      {"iteration": 0, "true": 1.0, "solve_seconds": 39.64952567401153},
+      {"iteration": 1, "true": 0.9940248376704571, "solve_seconds": 186.31658401115436},
+      {"iteration": 3, "true": 0.9739013239164124, "solve_seconds": 448.83664549236175}
+    ],
+    "iteration_log_last": {"iteration": 3, "outer_matvec_count": 3, "outer_pc_count": 3, "reported_relative": 0.9739013239164134},
+    "step_1_to_3_average_seconds": 131.2600307406037,
+    "monitor_gap": "iterations.jsonl contains iteration 2; monitor_residuals.jsonl has no iteration-2 row before the stop"
+  },
+  "r1_same_field_comparison": {
+    "monitor_rows": [
+      {"iteration": 0, "solve_seconds": 3.3568387370221062},
+      {"iteration": 5, "solve_seconds": 128.64742753403192},
+      {"iteration": 12, "solve_seconds": 254.4374208660969},
+      {"iteration": 18, "solve_seconds": 405.7991598629963},
+      {"iteration": 23, "solve_seconds": 563.3957508186294},
+      {"iteration": 28, "solve_seconds": 711.3930064942844},
+      {"iteration": 32, "solve_seconds": 822.9174244453791}
+    ],
+    "first32_average_seconds_per_outer_iteration": 25.611268303823,
+    "checkpoint_interval_average_seconds_per_outer_iteration": {
+      "0_to_5": 25.058117759401964,
+      "5_to_12": 17.96999904743786,
+      "12_to_18": 25.226956499483106,
+      "18_to_23": 31.51931819112625,
+      "23_to_28": 29.5994511351311,
+      "28_to_32": 27.881104487773774
+    },
+    "source": "R1 attempt3 monitor_residuals.jsonl; duplicate iteration-32 post-checkpoint row excluded from the first32 average"
+  },
+  "p4_evidence": {
+    "p4_decision_records": 7,
+    "p4_refinement_steps": 0,
+    "p4_external_solves_range": [1, 7],
+    "p4_final_true_residual_range": [8.158844528906289e-13, 3.404203764595021e-11],
+    "p4_status": "REFERENCE_PASS_INITIAL",
+    "mode_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb",
+    "pc_apply_records": 3,
+    "pc_route": "BAL_H",
+    "pc_native_count": 6,
+    "pc_p4_counts_total": {"C": 6, "MatSolve": 6, "augmented": 12, "coupling": 18, "native": 6, "recover_auxiliary": 0},
+    "pc_operation_seconds": {
+      "A_structure_total": 201.90701714437455,
+      "A_structure_average": 67.30233904812485,
+      "C_total": 53.531856916612014,
+      "C_average": 17.84395230553734,
+      "smoother_total": 3.08435018802993,
+      "smoother_average": 1.02811672934331
+    },
+    "implementation": {
+      "p4_assembly": "native_p4_row_loop_avx512_v1",
+      "p4_p6_curl": "native_curl_fused_avx512_strict_v1"
+    }
+  },
+  "resources_and_stop": {
+    "sampled_process_tree_rss_peak_bytes": 3406852096,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "global_swap_delta": {"pswpin_pages": 0, "pswpout_pages": 2},
+    "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed",
+    "launch_cap_bytes": 34359738368,
+    "planning_cap_bytes": 25769803776,
+    "leader_exit_code": -9,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "stop_reason": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+    "stop_grace_seconds": 60,
+    "stop_requested_monotonic": 1092804.095042125,
+    "watchdog_end_monotonic": 1092806.482070344
+  },
+  "interpretation_boundary": "Two global pswpout pages were observed by the WSL-global diagnostic, while the sampled process tree VmSwap peak was zero. The watchdog therefore stopped and classified attribution as unresolved. This record does not call the run OOM, a numerical failure, or a neighbor-caused failure; no automatic retry is authorized."
+}

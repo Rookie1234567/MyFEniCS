@@ -7,9 +7,9 @@
 | R1 retry1，同一模型 | PERFORMANCE_CONTROLLED_STOP；筛选未通过 | [复现/阶段资源](reproduction_13p5nm.md)、[完整compact](records/r1_attempt2.json) |
 | R1 attempt3，13.5 nm Si p6/h10，550步 | own数值 Gate 通过；`BALANCED_OUTPUT_AUTHORITY_LIMITED` | [attempt3 compact](records/r1_attempt3.json) |
 | R1 native direct matched reference | NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL | [reference compact](records/r1_native_reference.json)、[80通道](records/r1_native_reference_80_channels.json) |
-| R2 notch、条件native reference | R2_PENDING；尚未运行 | 原 V5 notch 输入待本轮运行 |
-| S5 / S3 / S2 / G | NOT_RUN_BY_PREVIOUS_GATE | [容量边界](capacity_frontier.md) |
-| 性能修复 | 局部等价性通过；修复后13.5 nm R1 own与native匹配 reference 通过，R2待运行 | `f124679e75915758076d9240bd4bef2f5c772752`；[R1 compact](records/r1_native_reference.json)；[测试](test_summary.md) |
+| R2 notch、条件native reference | `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`；已清场，待审 | [R2负结果 compact](records/r2_notch_attempt1.json) |
+| S5 / S3 / S2 / G | R2 未完成；5 nm LOCKED | [容量边界](capacity_frontier.md) |
+| 性能修复 | 局部等价性通过；修复后13.5 nm R1 own与native匹配 reference 通过，R2 attempt1归因未决 | `f124679e75915758076d9240bd4bef2f5c772752`；[R1 compact](records/r1_native_reference.json)；[R2 compact](records/r2_notch_attempt1.json)；[测试](test_summary.md) |
 
 ## 最新正式 original run（attempt3）
 
@@ -29,7 +29,13 @@
 
 阶段资源峰值也已在 compact 中逐项保存：setup `3404267520 B`、solve `3085901824 B`、recovery/final peak `3631751168 B`、checker `3558637568 B`、complete `3202437120 B`，均 swap `0`。绑核证据只说明 CPU23/CPU9 affinity，不推出共享内存带宽或功耗无竞争。
 
-因此旧 own run 的 authority 仍单独标为 limited；native direct matched reference 已完成全部本机 R1 比较资格，但不改写“完整 WSL 全场未提供”的边界。R1 不重跑 550 步；下一步按授权启动原 V5 13.5 nm notch R2，5 nm 仍等待 R2。
+因此旧 own run 的 authority 仍单独标为 limited；native direct matched reference 已完成全部本机 R1 比较资格，但不改写“完整 WSL 全场未提供”的边界。R1 不重跑 550 步；R2 attempt1 已因全局 swap 归因未决清场，暂不重跑或进入5 nm。
+
+## R2 notch attempt1（独立负结果）
+
+原 V5 notch 输入以 clean source `f21a33914765a10adfa43735fb2e1ac3013ff905` 启动，input SHA=`b7ba606a5bf056d06e13065c6500c99301c7e6e4a0ec8eec1ad20797c28185c3`、notch physical SHA=`7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec`。run `20260909T191201.621471Z` 在 iteration3、outer matvec/PC=3 时由既有 watchdog 因 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED` 受控停止：全局诊断 `pswpout delta=2` 页，进程树采样 `VmSwap peak=0`；leader=`-9`、`descendants_cleared=true`、remaining children 为空，RSS peak=`3406852096 B`。该结果不称 OOM、数值失败或邻居归因，且没有自动 retry。
+
+早期 solve 计时与 p4/PC 证据见 [R2 compact](records/r2_notch_attempt1.json)；R2 未取得数值资格，5 nm 继续锁定。
 
 ## R1 native direct matched reference（最新 Gate）
 
