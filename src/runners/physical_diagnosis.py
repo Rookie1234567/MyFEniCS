@@ -14,13 +14,14 @@ def supervise_diagnosis(command, directory, *, phase_path, expected_sha, kind,
     """
     from benchmarks.subreaper_watchdog import supervise
     from .task038_launcher import _physical_source_gate
-    if kind not in ('diagnosis','reference','completion_v4','reference_symbolic','actual_errors','balanced_v5'):
+    if kind not in ('diagnosis','reference','native_matched_reference','completion_v4','reference_symbolic','actual_errors','balanced_v5'):
         raise ValueError('unknown diagnostic workflow kind')
-    limit = min(remaining_seconds,{'reference':3600,'diagnosis':7200,'completion_v4':5400,'reference_symbolic':1800,'actual_errors':5400,'balanced_v5':5400}[kind])
+    limit = min(remaining_seconds,{'reference':3600,'native_matched_reference':21600,'diagnosis':7200,'completion_v4':5400,'reference_symbolic':1800,'actual_errors':5400,'balanced_v5':5400}[kind])
     state = _physical_source_gate(Path.cwd(),expected_sha)
     result = supervise(command,Path(directory),wall_seconds=limit,phase_path=Path(phase_path),
                        source_state=state,interval=.25,grace_seconds=2,
                        hard_stop_immediate=True,timebase_guard=True,cache_path=cache_path,
+                       stop_on_global_swap=(kind == 'native_matched_reference'),
                        timebase_policy=CONSERVATIVE_REALTIME,
                        worker_environment={} if cache_path is None else {'XDG_CACHE_HOME':str(cache_path)})
     result['source_after'] = _physical_source_gate(Path.cwd(),expected_sha)

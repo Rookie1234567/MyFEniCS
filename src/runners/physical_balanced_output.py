@@ -110,7 +110,51 @@ def compare_modal_files(current, reference):
         power_limit=1e-6, amplitude_limit=1e-4)
 
 
-def compare_notch_reference(native, solution, witness, directory):
+def compare_selected_eh(reference_directory, current_directory):
+    """Compare the existing bounded complex E/H carrier without phase fitting."""
+    reference_directory = Path(reference_directory)
+    current_directory = Path(current_directory)
+    reference_archive = reference_directory / 'full3d_reference_samples.npz'
+    current_archive = current_directory / 'full3d_reference_samples.npz'
+    if not reference_archive.is_file() or not current_archive.is_file():
+        raise ValueError('selected E/H reference archive is missing')
+    with np.load(reference_archive) as reference, np.load(current_archive) as current:
+        for key in ('x_nm', 'y_nm', 'z_nm'):
+            if key not in reference or key not in current or not np.array_equal(reference[key], current[key]):
+                raise ValueError(f'selected E/H coordinate identity mismatch: {key}')
+        fields = {}
+        passed = True
+        for name in ('E_V_per_m', 'H_A_per_m'):
+            if name not in reference or name not in current or reference[name].shape != current[name].shape:
+                raise ValueError(f'selected E/H field identity mismatch: {name}')
+            ref = np.asarray(reference[name], dtype=np.complex128)
+            candidate = np.asarray(current[name], dtype=np.complex128)
+            difference = np.abs(candidate - ref)
+            ref_norm = float(np.linalg.norm(ref.ravel()))
+            relative = float(np.linalg.norm((candidate - ref).ravel()) / ref_norm) if ref_norm > 0.0 else None
+            scale = max(float(np.max(np.abs(ref))), 1.0e-30)
+            near_zero = np.abs(ref) <= 1.0e-12 * scale
+            near_zero_absolute = float(np.max(difference[near_zero])) if np.any(near_zero) else 0.0
+            fields[name] = {
+                'relative_l2_difference': relative,
+                'absolute_max_difference': float(np.max(difference)),
+                'near_zero_count': int(np.count_nonzero(near_zero)),
+                'near_zero_absolute_max_difference': near_zero_absolute,
+                'reference_l2_norm': ref_norm,
+            }
+            passed = passed and relative is not None and relative <= 1.0e-4
+    return {
+        'status': 'SELECTED_EH_PASS' if passed else 'SELECTED_EH_FAIL',
+        'phase_fitting': False,
+        'coordinate_identity': 'exact_array_match',
+        'field_limit': 1.0e-4,
+        'fields': fields,
+        'reference_archive': str(reference_archive),
+        'current_archive': str(current_archive),
+    }
+
+
+def compare_notch_reference(native, solution, witness, directory, *, native_opt_in=False):
     """After the conditional reference LU release, compare all saved outputs."""
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import recover_p0_outputs
     from src.solvers.fullspace_physical_intermediate_runtime import fine_volume_quadrature_metadata
@@ -132,11 +176,19 @@ def compare_notch_reference(native, solution, witness, directory):
     comparisons = compare_modal_files(Path(witness['directory'])/'numerical_output',Path(directory)/'numerical_output')
     candidate = json.loads((Path(witness['directory'])/'physical_intermediate_summary.json').read_text())['official_result']
     comparisons.update(compare_power_totals(candidate,output))
+    selected_eh = None
+    if native_opt_in:
+        selected_eh = compare_selected_eh(Path(directory)/'numerical_output',
+                                           Path(witness['directory'])/'numerical_output')
+    selected_eh_pass = selected_eh is None or selected_eh['status'] == 'SELECTED_EH_PASS'
     facts = dict(status='MATCHED_REFERENCE_PASS' if max(field.values()) <= 1e-4 and
         comparisons['power_max_absolute_difference'] <= 1e-6 and
         comparisons['amplitude_relative_difference'] <= 1e-4 and
-        max(comparisons['total_absolute_differences'].values()) <= 1e-5 else 'MATCHED_REFERENCE_FAIL',
+        max(comparisons['total_absolute_differences'].values()) <= 1e-5 and
+        selected_eh_pass else 'MATCHED_REFERENCE_FAIL',
         field_relative=field, field_norms=field_norms, reference_output=output, **comparisons)
+    if selected_eh is not None:
+        facts['selected_eh'] = selected_eh
     _atomic_json(Path(directory)/'matched_reference.json',facts)
     return facts
 

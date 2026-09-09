@@ -3,6 +3,7 @@ import json
 from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from src.io import load_and_resolve
@@ -12,6 +13,21 @@ from src.io.run_specification import thaw
 from src.solvers.physical_balanced_fgmres import BalancedScreen
 
 INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_p6h10.dat')
+REFERENCE_INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_native_matched_reference.dat')
+
+
+def test_native_matched_reference_is_explicit_and_hash_bound():
+    reference = load_and_resolve(REFERENCE_INPUT)
+    ordinary = load_and_resolve('input/task39extra/original_13p5nm_p6h10_fine_reference.dat')
+    assert reference.solver['direct_solver_profile'] == 'native_matched_reference'
+    assert reference.execution['timeout_seconds'] == 21600
+    assert reference.output['top_probe_z_nm'] == 127.5
+    assert reference.output['bottom_probe_z_nm'] == -7.5
+    assert ordinary.solver['direct_solver_profile'] == 'default'
+    assert ordinary.execution['timeout_seconds'] == 1800
+    from src.runners.fine_reference_preflight import load_reference_witness
+    with pytest.raises(ValueError, match='audit hash mismatch'):
+        load_reference_witness(Path(reference.solver['reference_witness_path']), '0' * 64)
 
 
 def test_native_real_modes_preserve_historical_identity(tmp_path):
@@ -129,3 +145,24 @@ def test_tracked_wsl_all_modal_channels_compare_without_field_arrays(tmp_path):
     assert result['wsl_modal_power_passed'] and result['mode_count'] == 80
     assert result['status'] == 'REFERENCE_AUTHORITY_LIMITED'
     assert result['full_field_comparison'] == 'WSL_FULL_FIELD_COMPARISON_PARTIAL'
+
+
+def test_selected_eh_reference_denominator_and_fail_closed(tmp_path):
+    from src.runners.physical_balanced_output import compare_selected_eh
+
+    reference = tmp_path/'reference'/'numerical_output'
+    current = tmp_path/'current'/'numerical_output'
+    reference.mkdir(parents=True)
+    current.mkdir(parents=True)
+    coordinates = {
+        'x_nm': np.array([0.0]), 'y_nm': np.array([0.0]), 'z_nm': np.array([10.0]),
+    }
+    np.savez(reference/'full3d_reference_samples.npz', **coordinates,
+             E_V_per_m=np.ones((1, 1, 1, 3), dtype=np.complex128),
+             H_A_per_m=np.ones((1, 1, 1, 3), dtype=np.complex128))
+    np.savez(current/'full3d_reference_samples.npz', **coordinates,
+             E_V_per_m=np.full((1, 1, 1, 3), 2.0, dtype=np.complex128),
+             H_A_per_m=np.full((1, 1, 1, 3), 2.0, dtype=np.complex128))
+    failed = compare_selected_eh(reference, current)
+    assert failed['status'] == 'SELECTED_EH_FAIL'
+    assert failed['fields']['E_V_per_m']['relative_l2_difference'] == pytest.approx(1.0)

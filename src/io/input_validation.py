@@ -522,6 +522,56 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             )
         if kind == "full3d_direct" and solver["linear_solver"] != "direct":
             raise _error("solver.linear_solver", "full3d_direct requires direct")
+        direct_profile = solver.get("direct_solver_profile", "default")
+        witness_fields = {"reference_witness_path", "reference_witness_sha256"}
+        supplied_witness_fields = witness_fields.intersection(solver)
+        if direct_profile == "native_matched_reference":
+            if kind != "full3d_direct":
+                raise _error(
+                    "solver.direct_solver_profile",
+                    "native_matched_reference is only connected to full3d_direct",
+                )
+            missing = witness_fields.difference(solver)
+            if missing:
+                raise _error(
+                    "solver",
+                    "native_matched_reference requires " + ", ".join(sorted(missing)),
+                )
+            if not re.fullmatch(r"[0-9a-f]{64}", solver["reference_witness_sha256"]):
+                raise _error(
+                    "solver.reference_witness_sha256",
+                    "must be 64 lowercase hexadecimal characters",
+                )
+            if discretization["assembly_backend"] != "assembly_time_static_condensed":
+                raise _error(
+                    "discretization.assembly_backend",
+                    "native_matched_reference requires assembly_time_static_condensed",
+                )
+            if execution["mpi_size"] != 1 or execution["timeout_seconds"] != 21600:
+                raise _error(
+                    "execution",
+                    "native_matched_reference fixes MPI1 and timeout_seconds=21600",
+                )
+            if tuple(output.get("reference_plane_z_nm", ())) != (10.0, 30.0, 60.0, 90.0, 110.0):
+                raise _error(
+                    "output.reference_plane_z_nm",
+                    "native_matched_reference fixes z=10/30/60/90/110 nm",
+                )
+            if (output.get("top_probe_z_nm"), output.get("bottom_probe_z_nm")) != (127.5, -7.5):
+                raise _error(
+                    "output",
+                    "native_matched_reference fixes top_probe_z_nm=127.5 and bottom_probe_z_nm=-7.5",
+                )
+            if output.get("diffraction_order_max_m") != 7:
+                raise _error(
+                    "output.diffraction_order_max_m",
+                    "native_matched_reference fixes reporting max_m=7",
+                )
+        elif supplied_witness_fields:
+            raise _error(
+                "solver",
+                "reference witness fields require direct_solver_profile=native_matched_reference",
+            )
         if kind == "full3d_iterative":
             if dimension != 3:
                 raise _error(
@@ -1361,7 +1411,11 @@ def simulation_config_3d_from_normalized(
         full3d_reference_plane_z=tuple(out.get("reference_plane_z_nm", ())),
         full3d_reference_sample_count_x=out["sample_count_x"],
         full3d_reference_sample_count_y=out["sample_count_y"],
-        petsc_direct_solver_profile=solver.get("direct_solver_profile", "default"),
+        petsc_direct_solver_profile=(
+            "default"
+            if solver.get("direct_solver_profile") == "native_matched_reference"
+            else solver.get("direct_solver_profile", "default")
+        ),
         stage4_full3d_assembly_backend=d.get("assembly_backend", "standard_full"),
         unique_output=out["unique_output"],
     )

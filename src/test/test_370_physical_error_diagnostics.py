@@ -72,6 +72,22 @@ def test_both_parents_enable_clock_guard(tmp_path,monkeypatch,kind,limit):
                         expected_sha='a'*40,kind=kind,remaining_seconds=10000)
 
 
+def test_native_matched_reference_uses_extended_budget_and_global_swap_stop(tmp_path,monkeypatch):
+    from src.runners.physical_diagnosis import supervise_diagnosis
+    from benchmarks import subreaper_watchdog
+    from src.runners import task038_launcher
+    monkeypatch.setattr(task038_launcher,'_physical_source_gate',lambda *args:{'source_sha':'a'*40})
+    seen={}
+    def supervise(command,directory,**kwargs):
+        seen.update(kwargs)
+        return {}
+    monkeypatch.setattr(subreaper_watchdog,'supervise',supervise)
+    supervise_diagnosis(['reviewed_command'],tmp_path,phase_path=tmp_path/'phase',
+                        expected_sha='a'*40,kind='native_matched_reference',remaining_seconds=30000)
+    assert seen['wall_seconds']==21600
+    assert seen['stop_on_global_swap'] is True
+
+
 def test_tiny_lossless_fe_mass_diagonal_and_cell_energy():
     from dataclasses import replace
     from mpi4py import MPI

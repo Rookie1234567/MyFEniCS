@@ -1,0 +1,14 @@
+{
+  "schema": "balanced-notch-reference-witness.v1",
+  "packet": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T130326.291096Z/notch_reference_witness.json",
+  "packet_sha256": "63feebed84a3d96878372195e0de727974dafcaf5aa079009fc63444c6fe575e",
+  "selected_eh_archive": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_p4_native_13p5__full3d_iterative__mpi1__Mna/20260909T130326.291096Z/numerical_output/full3d_reference_samples.npz",
+  "selected_eh_archive_sha256": "f91a1f0adfa807f0bd6ef664ab3ec71474278945b1d244ef45800875bda7904c",
+  "selected_eh_contract": {
+    "planes_z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+    "sample_count_y_x": [20, 40],
+    "fields": ["E_V_per_m", "H_A_per_m"],
+    "phase_fitting": false,
+    "near_zero_policy": "report_absolute_difference"
+  }
+}

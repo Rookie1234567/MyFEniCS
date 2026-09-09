@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 import signal
 import subprocess
@@ -102,7 +103,11 @@ def run_worker(args):
     if cfg.stage4_full3d_assembly_backend!='assembly_time_static_condensed':
         raise ValueError('existing exact-class assembly-time condensation required')
     _,mode_bytes,mode_sha=build_ordered_mode_manifest(outgoing_port_modes_3d(cfg),cfg)
-    if mode_sha!='dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2':
+    mode_bridge = None
+    if args.native_matched_reference:
+        from src.solvers.native_mode_identity import compare_mode_manifest
+        mode_bridge = compare_mode_manifest(mode_bytes)
+    elif mode_sha!='dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2':
         raise ValueError('fine reference mode inventory differs')
     ledger=WorkflowLedger(args.directory,Path(os.environ['PHYSICAL_WATCHDOG_PHASE_PATH']))
     parent=int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID'])
@@ -110,7 +115,8 @@ def run_worker(args):
     def sample():
         if ledger.stop_signal is not None:raise InterruptedError('watchdog stop requested')
         value=process_tree_snapshot(parent,ledger.phase,None);envelope=memory_envelope()
-        value['launch_cap_bytes']=min(launch_cap,12_000_000_000,
+        profile_cap = launch_cap if args.native_matched_reference else min(launch_cap,12_000_000_000)
+        value['launch_cap_bytes']=min(profile_cap, envelope.get('launch_cap_bytes',profile_cap),
             value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
         value['memory_envelope']=envelope
         if (not value['all_status_readable'] or value['swap_bytes']!=0 or
@@ -122,6 +128,8 @@ def run_worker(args):
               for sig in (signal.SIGTERM,signal.SIGINT)}
     identity=dict(source_sha=args.expected_sha,**physical_identity,mode_sha256=mode_sha,
                   input_sha256=hashlib.sha256(args.input.read_bytes()).hexdigest(),abi=abi)
+    if mode_bridge is not None:
+        identity['native_mode_bridge'] = mode_bridge
     record=dict(status='PREFLIGHT_STARTED',identity=identity,numeric_called=False,solve_called=False)
     def save(name,value):_atomic_json(args.directory/(name+'.json'),value)
     try:
@@ -137,7 +145,8 @@ def run_worker(args):
             from .physical_balanced_output import compare_notch_reference
             observer=MatchedFineReference(sample=sample,marker=ledger.marker,identity=identity,witness=witness,
                 save=lambda name,value:save_packet(args.directory,name,value),canonical_export=canonical,
-                output_callback=(lambda native,x: compare_notch_reference(native,x,witness,args.directory))
+                output_callback=(lambda native,x: compare_notch_reference(native,x,witness,args.directory,
+                    native_opt_in=args.native_matched_reference))
                     if matched else None)
         else:
             observer=CondensedSymbolicPreflight(sample=sample,save=save,marker=ledger.marker,identity=identity)
@@ -163,7 +172,82 @@ def run_worker(args):
             for sig,handler in handlers.items():signal.signal(sig,handler)
 
 
-def main():
+def launch_native_matched_reference(specification):
+    """Run the existing fine-reference workflow under the native guard."""
+    from .native_capacity import native_capacity_guard
+    from .task038_launcher import _physical_source_gate, _source_sha
+
+    root = Path(__file__).resolve().parents[2]
+    source = _source_sha(root)
+    _physical_source_gate(root, source)
+    witness = Path(specification.solver['reference_witness_path'])
+    if not witness.is_absolute():
+        witness = root / witness
+    if not witness.is_file():
+        raise ValueError(f'reference witness audit is missing: {witness}')
+    witness_sha = specification.solver['reference_witness_sha256']
+    if hashlib.sha256(witness.read_bytes()).hexdigest() != witness_sha:
+        raise ValueError('reference witness audit hash mismatch before launch')
+    parent = Path(specification.expected_output_parent).resolve()
+    parent.mkdir(parents=True, exist_ok=True)
+    directory = parent / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
+    if directory.exists():
+        raise ValueError(f'reference output collision: {directory}')
+    cache = directory / 'reference_cache'
+    argv = [
+        '--input', str(specification.source_path),
+        '--directory', str(directory),
+        '--expected-sha', source,
+        '--cache-path', str(cache),
+        '--solve-reference',
+        '--witness-audit', str(witness),
+        '--witness-audit-sha', witness_sha,
+        '--workflow-seconds', str(specification.execution['timeout_seconds']),
+        '--native-matched-reference',
+    ]
+    with native_capacity_guard('balanced_h6_p4_native_13p5') as (_root, isolation):
+        exit_code = main(argv)
+        isolation['reference_profile'] = specification.solver['direct_solver_profile']
+        _atomic_json(directory / 'workstation_isolation.json', isolation)
+    launch_path = directory / 'launch.json'
+    launch = json.loads(launch_path.read_text())
+    summary_path = directory / 'reference_summary.json'
+    terminal = json.loads(summary_path.read_text()) if summary_path.exists() else {}
+    qualified = launch.get('classification') == 'COMPLETED' and terminal.get('status') == 'REFERENCE_PASS'
+    result_classification = 'worker_exit0' if qualified and exit_code == 0 else launch.get('classification', 'reference_launch_failed')
+    result = {
+        'run_directory': str(directory),
+        'manifest': str(directory / 'run_manifest.json'),
+        'summary': str(directory / 'run_summary.json'),
+        'exit_status': 0 if result_classification == 'worker_exit0' else exit_code,
+        'result_classification': result_classification,
+        'resource_authority': launch.get('supervision', {}),
+        'reference_status': terminal.get('status'),
+    }
+    _atomic_json(directory / 'run_manifest.json', {
+        'schema': 'native-matched-reference.launch.v1',
+        'source_sha': source,
+        'input_path': str(specification.source_path),
+        'input_sha256': specification.input_sha256,
+        'resolved_physical_model_sha256': specification.physical_model_sha256,
+        'direct_solver_profile': specification.solver['direct_solver_profile'],
+        'workflow_seconds': specification.execution['timeout_seconds'],
+        'native_capacity_profile': 'balanced_h6_p4_native_13p5',
+        'supervisor_cpu': 9,
+        'worker_cpu': 23,
+        'identity_package': 'input_original.dat, resolved_config.json, source_sha.txt, input_sha256.txt, physical_model_sha256.txt',
+        'resolved_config_sha256': hashlib.sha256((directory/'resolved_config.json').read_bytes()).hexdigest(),
+        'global_swap_supervision': True,
+        'witness_audit_path': str(witness),
+        'witness_audit_sha256': witness_sha,
+        'launch_manifest_sha256': hashlib.sha256(launch_path.read_bytes()).hexdigest(),
+        'result_classification': result_classification,
+    })
+    _atomic_json(directory / 'run_summary.json', result)
+    return result
+
+
+def main(argv=None):
     if sys.argv[1:]==['--abi']:
         print(json.dumps(qualified_abi()));return 0
     from .physical_diagnosis import supervise_diagnosis
@@ -177,19 +261,41 @@ def main():
     parser.add_argument('--solve-reference',action='store_true')
     parser.add_argument('--witness-audit',type=Path)
     parser.add_argument('--witness-audit-sha')
+    parser.add_argument('--native-matched-reference',action='store_true')
     parser.add_argument('--workflow-seconds',type=float,default=1800)
-    args=parser.parse_args()
-    if not 0<args.workflow_seconds<=3600:parser.error('reference budget must be positive and at most3600')
-    if args.workflow_seconds>1800 and not args.solve_reference:parser.error('extended budget only for conditional reference solve')
+    args=parser.parse_args(argv)
+    maximum = 21600 if args.native_matched_reference else 3600
+    if not 0<args.workflow_seconds<=maximum:
+        parser.error(f'reference budget must be positive and at most{maximum}')
+    if args.workflow_seconds>1800 and not args.solve_reference:
+        parser.error('extended budget only for conditional reference solve')
+    if args.native_matched_reference and not args.solve_reference:
+        parser.error('native_matched_reference requires --solve-reference')
     if args.solve_reference and (args.witness_audit is None or args.witness_audit_sha is None):
         parser.error('reference solve requires hash-bound frozen witness audit')
     _physical_source_gate(Path.cwd(),args.expected_sha)
     if args.worker:run_worker(args);return 0
     args.directory.mkdir(parents=True,exist_ok=False)
+    if args.cache_path is not None:
+        args.cache_path.mkdir(parents=True,exist_ok=True)
+    native_identity = None
+    if args.native_matched_reference:
+        from src.io import load_and_resolve
+        from src.io.resolved_config import write_resolved_config
+        native_identity = load_and_resolve(args.input)
+        resolved_sha = write_resolved_config(native_identity,args.directory/'resolved_config.json')
+        (args.directory/'input_original.dat').write_bytes(native_identity.raw_input_bytes)
+        (args.directory/'input_sha256.txt').write_text(native_identity.input_sha256+'\n',encoding='ascii')
+        (args.directory/'source_sha.txt').write_text(args.expected_sha+'\n',encoding='ascii')
+        (args.directory/'physical_model_sha256.txt').write_text(native_identity.physical_model_sha256+'\n',encoding='ascii')
+    else:
+        resolved_sha = None
     start=clock_sample();before=ClockBudget(start,policy=CONSERVATIVE_REALTIME)
     manifest=dict(source_sha=args.expected_sha,clock_start=start,workflow_limit_seconds=args.workflow_seconds,
         numeric_called=None if args.solve_reference else False,solve_called=None if args.solve_reference else False,
-        kind='fine_reference_solve' if args.solve_reference else 'fine_reference_symbolic_only')
+        kind='native_matched_reference' if args.native_matched_reference else
+             ('fine_reference_solve' if args.solve_reference else 'fine_reference_symbolic_only'),
+        native_mode_opt_in=args.native_matched_reference)
     result=None;after=None
     try:
         # MPI is imported only in this subprocess, which exits before watchdog starts.
@@ -204,13 +310,29 @@ def main():
         command=['mpiexec','-n','1',sys.executable,'-m','src.runners.fine_reference_preflight',
             '--worker','--input',str(args.input),'--directory',str(args.directory),
             '--expected-sha',args.expected_sha,'--workflow-seconds',str(args.workflow_seconds)]
+        if args.native_matched_reference:
+            command=['/usr/bin/taskset','-c','23',*command]
         if args.solve_reference:
             command.extend(['--solve-reference','--witness-audit',str(args.witness_audit),
                             '--witness-audit-sha',args.witness_audit_sha])
-        manifest['command']=command;_atomic_json(args.directory/'launch.json',manifest)
+        if args.native_matched_reference:
+            command.append('--native-matched-reference')
+        manifest['command']=command
+        if native_identity is not None:
+            manifest.update(input_sha256=native_identity.input_sha256,
+                            physical_model_sha256=native_identity.physical_model_sha256,
+                            resolved_config_sha256=resolved_sha,
+                            identity_package='input_original.dat, resolved_config.json, source_sha.txt, input_sha256.txt, physical_model_sha256.txt',
+                            native_capacity_profile='balanced_h6_p4_native_13p5',
+                            supervisor_cpu=9,worker_cpu=23,
+                            global_swap_supervision=True)
+            _atomic_json(args.directory/'run_manifest.json',dict(
+                schema='native-matched-reference.launch.v1',status='launching',**manifest))
+        _atomic_json(args.directory/'launch.json',manifest)
         result=supervise_diagnosis(command,args.directory/'watchdog',
             phase_path=args.directory/'phase.json',expected_sha=args.expected_sha,
-            kind='reference' if args.solve_reference else 'reference_symbolic',
+            kind='native_matched_reference' if args.native_matched_reference else
+                 ('reference' if args.solve_reference else 'reference_symbolic'),
             remaining_seconds=args.workflow_seconds-before.update(clock_sample())['budget_seconds'],
             cache_path=args.cache_path)
         manifest['supervision']=result;manifest['pre_interval']=before.update(result['clock_start'])

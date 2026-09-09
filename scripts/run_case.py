@@ -46,6 +46,8 @@ def main(argv: list[str] | None = None) -> int:
                 "model_id": specification.identity["model_id"],
                 "run_id": specification.identity["run_id"],
                 "method": specification.method["kind"],
+                "direct_solver_profile": specification.solver.get("direct_solver_profile", "default"),
+                "timeout_seconds": specification.execution["timeout_seconds"],
             }
             print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
             return 0
@@ -70,6 +72,12 @@ def main(argv: list[str] | None = None) -> int:
                                     **(dict(variant=args.profile_variant, r0_reference=args.profile_r0_reference)
                                        if args.profile_variant != 'R0' or args.profile_r0_reference is not None else {}))
         else:
+            if (specification.method["kind"] == "full3d_direct" and
+                    specification.solver.get("direct_solver_profile") == "native_matched_reference"):
+                from src.runners.fine_reference_preflight import launch_native_matched_reference
+                result = launch_native_matched_reference(specification)
+                print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+                return 0 if result["result_classification"] == "worker_exit0" else 3
             from src.io.native_capacity_profile import NATIVE_PROFILES
             if specification.solver.get("preconditioner") in NATIVE_PROFILES:
                 from src.runners.native_capacity import launch_native_capacity

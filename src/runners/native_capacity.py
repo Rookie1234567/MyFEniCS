@@ -3,6 +3,7 @@ import fcntl
 import json
 import os
 import shutil
+from contextlib import contextmanager
 from pathlib import Path
 
 from src.io.input_loader import InputError
@@ -36,18 +37,21 @@ def _cpu_launch_snapshot(cpus):
     return {'captured_by_pid': own_pid, 'cpus': snapshot}
 
 
-def launch_native_capacity(specification):
-    from .task038_launcher import launch_specification
+@contextmanager
+def native_capacity_guard(profile):
+    """Reuse the reviewed native lock, parent CPU, and launch evidence."""
     if os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION') != '1':
         raise InputError('source scripts/activate_myfenics_linux.sh first')
     root = Path(__file__).resolve().parents[2]
-    # User-authorized concurrency: only this project's jobs share this lock.
     with (root.parent/'native-capacity-heavy.lock').open('a') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise InputError('native-capacity heavy lock is held; no retry started') from exc
         # Keep process-tree sampling off the worker's CPU23.
         os.sched_setaffinity(0, {9})
         os.environ['OMPI_MCA_hwloc_base_binding_policy'] = 'none'
-        os.environ['PHYSICAL_NATIVE_CAPACITY'] = specification.solver['preconditioner']
+        os.environ['PHYSICAL_NATIVE_CAPACITY'] = profile
         memory = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())
         if memory['SwapTotal'].strip() != memory['SwapFree'].strip():
             raise InputError('pre-existing global swap usage; no pressure run started')
@@ -55,11 +59,18 @@ def launch_native_capacity(specification):
         isolation = {'canonical_repository': str(root.parent/'task-repository.git'),
                      'worktree': str(root), 'supervisor_affinity': sorted(os.sched_getaffinity(0)),
                      'worker_affinity': [23],
+                     'native_capacity_profile': profile,
                      'cpu_launch_snapshot': _cpu_launch_snapshot({9, 23}),
                      'neighbor_concurrent_heavy_authorized': True,
                      'neighbor_files_and_processes_modified': False,
                      'disk_free_bytes': shutil.disk_usage(root).free,
                      'inodes_available': filesystem.f_favail}
+        yield root, isolation
+
+
+def launch_native_capacity(specification):
+    from .task038_launcher import launch_specification
+    with native_capacity_guard(specification.solver['preconditioner']) as (_root, isolation):
         result = launch_specification(specification)
         path = Path(result['run_directory'])/'workstation_isolation.json'
         path.write_text(json.dumps(isolation, indent=2)+'\n')
