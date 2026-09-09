@@ -23,7 +23,6 @@ USER_MATERIAL_METADATA = {
         'density_g_cm3': 2.33,
         'delta': 0.00603145547,
         'beta': 0.00435380777,
-        'n': (0.99396854453, 0.00435380777),
         'authority': 'user-provided for this execution; not independently database-verified',
         'interpretation': 'complex refractive index n=1-delta+i*beta; epsilon=n*n',
     },

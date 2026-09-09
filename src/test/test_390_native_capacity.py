@@ -8,6 +8,7 @@ import pytest
 from src.io import load_and_resolve
 from src.io.input_loader import InputError
 from src.io.physical_intermediate_profile import profile_facts
+from src.io.run_specification import thaw
 from src.solvers.physical_balanced_fgmres import BalancedScreen
 
 INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_p6h10.dat')
@@ -45,6 +46,7 @@ def test_native_v5_math_and_physical_identity():
     assert original.physical_model_sha256 == native.physical_model_sha256
     old = profile_facts('balanced_h6_p4_v5')
     new = profile_facts(native.solver['preconditioner'])
+    assert thaw(native.derived['physical_intermediate_profile']) == new
     for key in ('balanced', 'fine_auxiliary', 'intermediate', 'structural_calls'):
         assert new[key] == old[key]
     assert new['outer']['restart'] == old['outer']['restart'] == 32
