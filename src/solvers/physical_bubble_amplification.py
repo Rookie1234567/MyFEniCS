@@ -139,7 +139,7 @@ def run_amplification_diagnostic(cfg,comm,binding_path,directory,*,sample,marker
         unchanged=bool(np.array_equal(ae.array,eg['AEr']))
         left=w.dot(ae);right=q.dot(b)
         check('amplification_actual_adjoint',np.asarray([left]),np.asarray([right]))
-        save('amplification_coarse_rhs',dict(AEg=ae.array.copy(),rhs=b.array.copy(),owner=space.owner.audit,input_unchanged=unchanged))
+        save('amplification_coarse_rhs',dict(AEg=ae.array.copy(),rhs=b.array.copy(),owner=dict(space.owner.audit),input_unchanged=unchanged))
         if not unchanged:raise ValueError('WH modified saved AEg')
         counts['factor']+=1
         bottom=PhysicalP2Inverse(matrix,space,transfer.coarse_slaves,sample=sample,marker=marker,save=save,

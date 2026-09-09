@@ -226,8 +226,44 @@ def build_parser():
     group.add_argument('--bubble-enriched-component',action='store_true')
     group.add_argument('--bubble-particular-diagnostic',action='store_true')
     group.add_argument('--bubble-amplification-diagnostic',action='store_true')
+    parser.add_argument('--amplification-recording-retry',action='store_true',
+        help='one reviewed retry of the frozen pre-factor mappingproxy recording failure')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
     return parser
+
+
+def amplification_recording_retry(args,budget):
+    """Admit only the audited dd9b pre-factor recording failure, once."""
+    attempts=budget.get('bubble_amplification_diagnostic_attempts',[])
+    if not args.amplification_recording_retry:
+        if args.bubble_amplification_diagnostic and attempts:
+            raise ValueError('unique amplification diagnosis already attempted')
+        return None
+    failed_sha='dd9b6fae5cc5509459d837a99197f9be34007e18'
+    root=Path('benchmarks/artifacts/task39extra/v6_bubble_amplification_diagnostic')/failed_sha/'a2r160_g1'
+    if (not args.bubble_amplification_diagnostic or args.source_sha==failed_sha or len(attempts)!=1
+        or attempts[0]['source']!=failed_sha or attempts[0]['root']!=str(root)
+        or attempts[0]['classification']!='WORKER_FAILED'):
+        raise ValueError('recording retry requires the unique frozen failed attempt')
+    path=Path('benchmarks/artifacts/task39extra/v6_recursive/bubble_amplification_readout.json')
+    digest=hashlib.sha256(path.read_bytes()).hexdigest()
+    if digest!='11e04fd284f5aa75a6b35a251320730f065c6b43e7276ef6a193cc951299c9be':
+        raise ValueError('reviewed failure readout changed')
+    readout=json.loads(path.read_text());hashes={e['path']:e['sha256'] for e in readout['evidence']}
+    for p in (root/'terminal.json',root/'records/amplification_costs.json',root/'watchdog/worker.log'):
+        if hashlib.sha256(p.read_bytes()).hexdigest()!=hashes[str(p)]:
+            raise ValueError('frozen failure evidence changed')
+    terminal=json.loads((root/'terminal.json').read_text())
+    costs=json.loads((root/'records/amplification_costs.json').read_text())
+    log=(root/'watchdog/worker.log').read_text()
+    if (not terminal['descendants_cleared'] or terminal['remaining_child_pids']
+        or costs['counts']['factor']!=0 or costs['bottom']
+        or 'TypeError: Object of type mappingproxy is not JSON serializable' not in log
+        or "save('amplification_coarse_rhs'" not in log
+        or not readout['all_checks_passed'] or not readout['resources']['host_ps_confirmed_absent']):
+        raise ValueError('not the approved pre-factor serialization failure')
+    return dict(failed_root=str(root),readout_sha256=digest,allowed_retries=1,
+        reason='mappingproxy recording failure before factor; old attempt and charge preserved')
 
 
 def main():
@@ -261,8 +297,7 @@ def main():
     amplification=args.bubble_amplification_diagnostic
     if amplification and Path(args.output).parts[-3:]!=('v6_bubble_amplification_diagnostic',args.source_sha,'a2r160_g1'):
         raise ValueError('amplification requires fresh source/a2r160_g1 root')
-    if amplification and budget.get('bubble_amplification_diagnostic_attempts'):
-        raise ValueError('unique amplification diagnosis already attempted')
+    retry=amplification_recording_retry(args,budget)
     remaining=min(selected_contract(args)['workflow_seconds'],budget['batch_remaining']) if diagnostic or projected or bubble or enriched or particular or amplification else min(budget['G0_G1_remaining'],budget['batch_remaining'])
     if remaining<=0:raise RuntimeError('G1 compute budget exhausted')
     lock=budget_path.parent/('bubble_amplification_active.lock' if amplification else 'bubble_particular_active.lock' if particular else 'bubble_enriched_active.lock' if enriched else 'bubble_local_active.lock' if bubble else 'projected_p4_active.lock' if projected else 'p4_failure_active.lock' if diagnostic else 'g1_active.lock')
@@ -274,7 +309,7 @@ def main():
         cache_home=(root/'jit_cache').resolve()
         cache_home.mkdir(exist_ok=False)
         atomic(root/'launch_plan.json',dict(source=source,contract=selected_contract(args),
-            wall_seconds=remaining,budget_before=budget,jit_cache_home=str(cache_home),
+            wall_seconds=remaining,budget_before=budget,recording_retry=retry,jit_cache_home=str(cache_home),
             jit_cache_initially_empty=not any(cache_home.iterdir())))
         command=[sys.executable,'-m','src.runners.physical_recursive_entry',*sys.argv[1:],'--worker']
         result=supervise(command,root/'watchdog',wall_seconds=remaining,phase_path=root/'phase.json',

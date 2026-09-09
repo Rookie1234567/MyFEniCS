@@ -6,7 +6,7 @@ from src.runners.physical_recursive_entry import build_parser,selected_contract
 from src.solvers.physical_bubble_amplification import combine_full_pq,saved_cell_action
 
 
-def test_shared_complex_mpc_interior_action_and_cross_term_gram():
+def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path):
     rng=np.random.default_rng(385);phase=np.exp(.61j)
     mapping=dict(dofmap=np.array([[0,1,2,3],[1,4,5,6]]),slaves=np.array([4]),masters=np.array([0]),
         coefficients=np.array([phase]),offsets=np.array([0,0,0,0,0,1,1,1]))
@@ -63,3 +63,18 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram():
     c=selected_contract(args);assert c['cached_A4']==2 and c['local_rhs']==504 and c['functionspace']==c['I4']==0
     args=build_parser().parse_args(['--input','i','--inventory','j','--output','o','--budget','b','--source-sha','s','--bubble-amplification-diagnostic'])
     c=selected_contract(args);assert c['p2_logical']==1 and c['max_refinements']==2 and c['A4']==c['I4']==0
+    # The reviewed fix uses the existing packet writer, not a new serializer.
+    from types import MappingProxyType
+    from src.runners.physical_diagnosis_worker import save_packet
+    from src.runners.physical_diagnostic_completion import load_packet
+    audit=MappingProxyType(dict(primal_count=1,adjoint_count=1))
+    save_packet(tmp_path,'recording',dict(owner=dict(audit),AEg=Eg,rhs=rhs))
+    recorded=load_packet(tmp_path/'recording.json')
+    assert recorded['owner']==dict(audit)
+    np.testing.assert_array_equal(recorded['AEg'],Eg)
+    from src.runners.physical_recursive_entry import amplification_recording_retry
+    with pytest.raises(ValueError,match='already attempted'):
+        amplification_recording_retry(args,dict(bubble_amplification_diagnostic_attempts=[{}]))
+    args.amplification_recording_retry=True
+    with pytest.raises(ValueError,match='unique frozen'):
+        amplification_recording_retry(args,dict(bubble_amplification_diagnostic_attempts=[{},{}]))
