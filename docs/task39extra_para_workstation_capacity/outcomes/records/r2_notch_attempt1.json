@@ -163,8 +163,10 @@
       },
       "numa_swap_current": {
         "read_utc": "2026-09-09T20:05:00Z",
-        "node0_memfree_mb": 3695.82,
-        "node1_memfree_mb": 423487.26,
+        "node0_memfree_mib": 3695.82,
+        "node1_memfree_mib": 423487.26,
+        "memfree_metric": "MemFree (free pages; not MemAvailable or reclaimable headroom)",
+        "memfree_unit": "MiB, source kB / 1024",
         "swap_used_bytes": 8192,
         "swap_used_pages": 2,
         "pswpin_pages": 0,
