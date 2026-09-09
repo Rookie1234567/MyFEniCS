@@ -1,0 +1,95 @@
+{
+  "raw_path": "benchmarks/artifacts/native_capacity/hardware_diagnostics/report.json",
+  "sha256": "dd8a698276a340aa33e7610eb7b8f47b3a4a0740c3e0a46a9ba083fd1d9caed5",
+  "unix_time": 1788935103.0972848,
+  "board": "Supermicro X11DAi-N",
+  "bios": "3.3 02/26/2020",
+  "scope": "read-only MSRs; CPU24-only 5s ordinary-user scalar probe",
+  "busy_interval_sample_indices": [
+    1,
+    4
+  ],
+  "cpus": {
+    "0": {
+      "busy_MHz_derived_from_aperf_mperf_2400MHz": 3598.636719069374,
+      "package_W_derived_rapl": 117.80750527011939,
+      "registers_start": {
+        "IA32_PERF_STATUS": "0x207b00002400",
+        "IA32_PERF_CTL": "0x2700",
+        "IA32_CLOCK_MODULATION": "0x0",
+        "IA32_THERM_STATUS": "0x88240800",
+        "IA32_PACKAGE_THERM_STATUS": "0x88240800",
+        "IA32_ENERGY_PERF_BIAS": "0x6",
+        "IA32_MISC_ENABLE": "0x850089",
+        "MSR_POWER_CTL": "0x29040059",
+        "MSR_RAPL_POWER_UNIT": "0xa0e03",
+        "MSR_PKG_POWER_LIMIT": "0x3863000148528",
+        "MSR_PKG_ENERGY_STATUS": "0xcf76c029",
+        "MSR_PKG_PERF_STATUS": "0x9",
+        "MSR_CORE_PERF_LIMIT_REASONS_64F": "0xe184c000",
+        "IA32_MPERF": "0x458b6f6c3641e",
+        "IA32_APERF": "0x641b7d1abdfea"
+      },
+      "registers_end": {
+        "IA32_PERF_STATUS": "0x207a00002400",
+        "IA32_PERF_CTL": "0x2700",
+        "IA32_CLOCK_MODULATION": "0x0",
+        "IA32_THERM_STATUS": "0x88200800",
+        "IA32_PACKAGE_THERM_STATUS": "0x88200800",
+        "IA32_ENERGY_PERF_BIAS": "0x6",
+        "IA32_MISC_ENABLE": "0x850089",
+        "MSR_POWER_CTL": "0x29040059",
+        "MSR_RAPL_POWER_UNIT": "0xa0e03",
+        "MSR_PKG_POWER_LIMIT": "0x3863000148528",
+        "MSR_PKG_ENERGY_STATUS": "0xcfd02b02",
+        "MSR_PKG_PERF_STATUS": "0x9",
+        "MSR_CORE_PERF_LIMIT_REASONS_64F": "0xe184c000",
+        "IA32_MPERF": "0x458b8a8fc82e6",
+        "IA32_APERF": "0x641ba5cc26969"
+      },
+      "thermal_status_bit0": false,
+      "external_prochot_forcepr_bit2": false
+    },
+    "24": {
+      "busy_MHz_derived_from_aperf_mperf_2400MHz": 1000.0010256309156,
+      "package_W_derived_rapl": 34.3780467365239,
+      "registers_start": {
+        "IA32_PERF_STATUS": "0x155b00000a00",
+        "IA32_PERF_CTL": "0x2700",
+        "IA32_CLOCK_MODULATION": "0x0",
+        "IA32_THERM_STATUS": "0x8831080c",
+        "IA32_PACKAGE_THERM_STATUS": "0x8831080c",
+        "IA32_ENERGY_PERF_BIAS": "0x6",
+        "IA32_MISC_ENABLE": "0x850089",
+        "MSR_POWER_CTL": "0x29040059",
+        "MSR_RAPL_POWER_UNIT": "0xa0e03",
+        "MSR_PKG_POWER_LIMIT": "0x3863000148528",
+        "MSR_PKG_ENERGY_STATUS": "0x503fbfc",
+        "MSR_PKG_PERF_STATUS": "0x15a20d49",
+        "MSR_CORE_PERF_LIMIT_REASONS_64F": "0xe085e001",
+        "IA32_MPERF": "0x1750c8a13cd66",
+        "IA32_APERF": "0xab7391f4dc03"
+      },
+      "registers_end": {
+        "IA32_PERF_STATUS": "0x155b00000a00",
+        "IA32_PERF_CTL": "0x2700",
+        "IA32_CLOCK_MODULATION": "0x0",
+        "IA32_THERM_STATUS": "0x8831080c",
+        "IA32_PACKAGE_THERM_STATUS": "0x8830080c",
+        "IA32_ENERGY_PERF_BIAS": "0x6",
+        "IA32_MISC_ENABLE": "0x850089",
+        "MSR_POWER_CTL": "0x29040059",
+        "MSR_RAPL_POWER_UNIT": "0xa0e03",
+        "MSR_PKG_POWER_LIMIT": "0x3863000148528",
+        "MSR_PKG_ENERGY_STATUS": "0x51e13e3",
+        "MSR_PKG_PERF_STATUS": "0x15a2196e",
+        "MSR_CORE_PERF_LIMIT_REASONS_64F": "0xe085e001",
+        "IA32_MPERF": "0x1750e3c5f1b0d",
+        "IA32_APERF": "0xab7446e99ddd"
+      },
+      "thermal_status_bit0": false,
+      "external_prochot_forcepr_bit2": true
+    }
+  },
+  "status": "EXTERNAL_PLATFORM_THROTTLING_CONFIRMED_ORIGIN_UNRESOLVED"
+}

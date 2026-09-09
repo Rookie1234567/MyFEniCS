@@ -25,3 +25,9 @@ ABI路径、版本及实际已加载动态库见[环境记录](records/native_ab
 独立2秒Python标量循环（非有限元、未碰隔壁CPU0–7）：CPU9约2024万次，中位3.6GHz；CPU24约562万次、CPU25约564万次，中位均1GHz。该探测仅说明当前负载下CPU2确实慢，不是算法加速测量。只迁移本worktree的pytest进程到CPU8后，其核心立即升到3.6GHz。未改变全局governor、功率、BIOS或任何隔壁进程。MSR读取权限不足，非交互sudo不可用，未输入密码或修改权限。正式运行固定CPU8以绕开低频，不能称为已修复CPU2。
 
 R0真实18cell有限元作用测试通过（1 passed，387.14s，CPU24低频）；聚焦回归70 passed、1 deselected，774.76s，前段CPU24、后段CPU8，因此此回归耗时不作为性能基准。缺失的历史ignored误差数组测试明确跳过，未改写为通过。CPU短探测记录见[频率证据](records/cpu_frequency_probe.json)。
+
+### 用户执行只读root硬件探测后的更新
+
+[寄存器紧凑证据](records/cpu_hardware_limits.json)表明CPU24忙时IA32_PERF_CTL=0x2700（请求倍率39），IA32_PERF_STATUS低频倍率10；APERF/MPERF差分得到1000.001MHz，同期CPU0为3598.637MHz。CPU2的IA32_THERM_STATUS bit2连续置位（外部平台PROCHOT/FORCEPR事件），bit0为0（CPU内部热传感器未触发高温保护）。这比仅看thermal_throttle计数更直接：已确认平台外部限频，不能再归因为操作系统未请求升频。CPU2同期RAPL封装功率约34.38W，CPU1约117.81W；不代表整机或电源输出功率。
+
+[Intel寄存器定义](https://cdrdv2-public.intel.com/868136/252046-081-sdm-change-document.pdf)说明bit2由平台其他agent触发。具体信号来源仍待查。主板实测Supermicro X11DAi-N、BIOS3.3（2020-02-26）。[厂家同型号FAQ34600](https://www.supermicro.com/support/faqs/faq.cfm?faq=34600)曾报告低温限频由电源电压不稳定引起；这是优先调查供电的依据，不是本机电源损坏的证明。未关闭PROCHOT保护、未清日志、未改MSR、governor或BIOS，隔壁持续计算。下一步只读BMC电源库存、传感器和事件，必要的物理供电检查须等待停机窗口。
