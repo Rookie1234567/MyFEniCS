@@ -1,0 +1,133 @@
+{
+  "schema": "task039extra.review-v7-bounded-outer-j1-compact.v1",
+  "status": "J1_CONTROLS_COMPLETED",
+  "scope": "J1 bounded controls and J2 wiring preparation only; no formal J2 PDE run",
+  "source": {
+    "head": "874190e92e0f0639515715dd830cd275562c151f",
+    "branch": "task39extra",
+    "upstream": "origin/task39extra",
+    "ahead_behind": "0\t0",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "input": {
+    "path": "input/task39extra/original_13p5nm_p6h10_bounded_entity16_v7.dat",
+    "sha256": "bcad5afe41adb16ee3753b3e7a2a2379d069bd2c8ddd25fb1311d77eae78307a"
+  },
+  "profile": "bounded_entity16_v7",
+  "j1_contract": {
+    "schema": "task39extra.review-v7-j1-controls.v1",
+    "setup_count": 1,
+    "complete_pc_calls": 2,
+    "i4_calls": 4,
+    "labels": ["A2R160", "LIGHT448"],
+    "pc_seconds": {
+      "A2R160": 44.268986623,
+      "LIGHT448": 44.617366049
+    },
+    "gate": "J2_ADMISSION_OPEN",
+    "actual_calls_per_pc": {"I4": 2, "H6": 1},
+    "positive_setup_h6_metadata": 2
+  },
+  "inner_i4": {
+    "target": 0.0001,
+    "restart": 16,
+    "max_it": 16,
+    "soft_seconds": 25,
+    "hard_seconds": 30,
+    "zero_start": true,
+    "statuses": ["INNER_APPROXIMATE_RETURN"],
+    "final_true_residuals": [
+      0.1688399730328266,
+      0.008956127391392074,
+      0.30047937256888035,
+      0.010039186157406508
+    ],
+    "interpretation": "legal finite approximate returns; none is an I4 target pass"
+  },
+  "inexact_closure": {
+    "limit": 1e-08,
+    "A2R160": 7.436825933731343e-12,
+    "LIGHT448": 7.828053877249895e-12,
+    "exit_audit_present": true
+  },
+  "raw_evidence": {
+    "root": "benchmarks/artifacts/task39extra/v7_j1_controls/874190e92e0f0639515715dd830cd275562c151f/controls",
+    "j1_controls_summary.json": {
+      "sha256": "8106617b54b8ba49ce4a8f0b4a6326c6686704ceb0933387a1cd43ce93b58daa"
+    },
+    "bounded_i4.jsonl": {
+      "sha256": "518614319d01437b82704f2335bfc643c84337e8eae64f4c1559c39e8b4bf986"
+    },
+    "pc_applies.jsonl": {
+      "sha256": "41e10a418ea0d898611ef2e09b6b32e8c5ee9812e14eaaa2e8a851bd9ff9e72f"
+    },
+    "bounded_exit_audit.jsonl": {
+      "sha256": "68cbbe64229d9ae28ce816d733b8a05b61aa63481d5712ea915b26b1c27aa6ef"
+    },
+    "terminal.json": {
+      "sha256": "7defd4f38ada4d6e62888187199644056141af39cccd3f93060baf89b8e8c817"
+    },
+    "run_manifest.json": {
+      "sha256": "ff385975be611dbc97fa4384b18bbeee33ce83d64503b8a876a1420649154501"
+    },
+    "records/j1_input_binding.json": {
+      "sha256": "e0a3ea77ca6ff286c61275abdf09af366d618e08cb7b44ed1e704da6c497d318"
+    },
+    "arrays": {
+      "A2R160": "423125da26570636ea0c2f25641dd158ad5d74f6df537e5381a1e0b23cec8a1b",
+      "LIGHT448": "84cfc330379f5479d74799e33d4bb731afdd893fd1f3f9cc8dff90bf39c83981"
+    }
+  },
+  "resource": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "process_tree_rss_peak_bytes": 1507594240,
+    "process_tree_swap_peak_bytes": 0,
+    "global_swap_delta_pages": {"pswpin": 0, "pswpout": 0},
+    "watchdog_elapsed_seconds": 269.9168155579828,
+    "watchdog_conservative_elapsed_seconds": 293.380370661921,
+    "conservative_outer_elapsed_seconds": 293.408546875,
+    "memory_scope": "dedicated subreaper parent plus all descendants; simultaneous process-tree RSS"
+  },
+  "shared_budget": {
+    "path": "benchmarks/artifacts/task39extra/v7_j1_controls/j1_budget.json",
+    "schema": "task39extra.review-v7-bounded-budget.v1",
+    "charged_seconds_after_j1": 593.408546875,
+    "remaining_seconds_after_j1": 42606.591453125,
+    "j2_reservation_seconds": 14400,
+    "j2_status": "not_run_not_reserved",
+    "nested_intervals_not_added": true
+  },
+  "checker_wiring": {
+    "success_classification": "BALANCED_OUTPUT_PASS",
+    "old_v5_balanced_screen_unchanged": true,
+    "actual_h6_source": "pc_applies.counts.smoother",
+    "required_evidence": [
+      "bounded_i4.jsonl",
+      "pc_applies.jsonl",
+      "bounded_exit_audit.jsonl",
+      "monitor_residuals.jsonl",
+      "iterations.jsonl"
+    ],
+    "outer": {
+      "solve_seconds": 10800,
+      "restart": 32,
+      "max_it": 2048,
+      "zero_start": true,
+      "ksp_lifecycle": "one_create_one_solve_one_destroy"
+    }
+  },
+  "j2_command": "source scripts/activate_myfenics_wsl.sh && export GIT_DIR=\"$PWD/.git-codex\" GIT_WORK_TREE=\"$PWD\" && python scripts/run_case.py input/task39extra/original_13p5nm_p6h10_bounded_entity16_v7.dat --batch-budget-ledger benchmarks/artifacts/task39extra/v7_j1_controls/j1_budget.json",
+  "tests": {
+    "command": "python -m pytest -q src/test/test_388_bounded_checker.py src/test/test_376_balanced_public.py::test_screen_raw_recompute_and_no_invented_trend src/test/test_376_balanced_public.py::test_screen_negative_never_masks_correctness_errors src/test/test_386_bounded_v7_policy.py::test_v7_outer_screen_seeds_zero_and_checks_non8_mid_boundary",
+    "passed": 6,
+    "failed": 0,
+    "pytest_self_elapsed_seconds": 0.07,
+    "test_process_wall_elapsed_seconds": 0.19,
+    "max_rss_kb": 44320,
+    "formal_pde_started": false,
+    "source_context": "working tree after evidence source 874190e92e0f0639515715dd830cd275562c151f; uncommitted checker/evidence wiring, not a clean-874 execution"
+  }
+}

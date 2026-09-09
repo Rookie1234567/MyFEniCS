@@ -265,6 +265,24 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                  ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')})
     previous_handlers = {}
 
+    def bind_bounded_evidence() -> None:
+        """Bind every bounded JSONL stream after its last append."""
+        if not bounded:
+            return
+        names = ('bounded_i4.jsonl', 'pc_applies.jsonl', 'bounded_exit_audit.jsonl',
+                 'monitor_residuals.jsonl', 'iterations.jsonl')
+        files = {}
+        for name in names:
+            path = directory / name
+            if path.is_file():
+                files[name] = dict(filename=name,
+                                   sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                                   bytes=path.stat().st_size)
+        summary['bounded_evidence'] = dict(
+            schema='task39extra.review-v7-bounded-evidence.v1',
+            required=list(names), files=files,
+            semantics='hashes are taken after the final solve/exit append; no re-sum of nested clocks')
+
     def interrupted(signum, _frame):
         ledger.stop_signal = signum
 
@@ -351,6 +369,26 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 p2_matrix_size=list(assets['matrix'].getSize()),
                 p2_matrix_nnz=assets['matrix'].getInfo()['nz_used'],
             )
+            from src.solvers.physical_bounded_runtime import bounded_terminal_snapshot
+            setup_snapshot = bounded_terminal_snapshot(bundle)
+            summary['bounded_setup']['setup_costs'] = dict(
+                outer_PC_applies=setup_snapshot['outer_PC_applies'],
+                outer_PC_attempted=setup_snapshot['outer_PC_attempted'],
+                B4=dict(applies=setup_snapshot['B4']['applies'],
+                        attempted=setup_snapshot['B4']['attempted'],
+                        counts=setup_snapshot['B4']['counts'],
+                        operation_seconds=setup_snapshot['B4']['operation_seconds']),
+                I4=dict(calls=setup_snapshot['I4']['calls']),
+                inexact_audit=dict(setup_snapshot['inexact_audit']),
+                S_action=dict(setup_snapshot['S_action']),
+                bottom=dict(counts=setup_snapshot['bottom']['counts']))
+            summary['bounded_setup']['actual_calls_per_PC'] = dict(
+                I4=2, H6=1,
+                positive_setup_metadata_calls_per_PC=(
+                    summary['positive_setup'].get('calls_per_PC')
+                    if isinstance(summary['positive_setup'], dict) else None),
+                qualification='checker counts pc_applies.counts.smoother; inherited positive_setup H6 metadata is not authoritative')
+            summary['bounded_setup_costs'] = summary['bounded_setup']['setup_costs']
         elif not recursive:
             summary['shifted_p1'] = dict(bundle['shifted_p1_factor'].audit)
             summary['shifted_p1_matrix'] = bundle['shifted_p1_matrix_facts']
@@ -363,6 +401,7 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['setup_qualification'] = qualify_physical_intermediate_setup(
             bundle, marker=ledger.marker, resource_sample=sample)
         rhs, summary['rhs'] = build_physical_rhs(fine)
+        summary['rhs']['vector_sha256'] = hashlib.sha256(rhs.array.tobytes()).hexdigest()
         if recursive:
             recursive_identity['rhs_sha256'] = hashlib.sha256(rhs.array.tobytes()).hexdigest()
             from .physical_recursive_runtime import verify_frozen_recursive_identity
@@ -390,6 +429,20 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         operator_identity = hashlib.sha256(json.dumps(dict(source_sha=source_sha,
             physical=provenance['physical_model_sha256'], modes=fine['mode_sha256'],
             quadrature=bundle['actions']['volume_quadrature_metadata']), sort_keys=True).encode()).hexdigest()
+        if bounded:
+            storage = summary['bounded_setup']['trace_storage']
+            storage_sha = hashlib.sha256(json.dumps(_jsonable(storage), sort_keys=True,
+                separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+            summary['bounded_setup']['storage_sha256'] = storage_sha
+            summary['bounded_binding'] = dict(
+                source_sha=source_sha,
+                physical_model_sha256=provenance['physical_model_sha256'],
+                mode_sha256=fine['mode_sha256'],
+                input_sha256=provenance['input_sha256'],
+                rhs_sha256=summary['rhs']['vector_sha256'],
+                operator_identity_sha256=operator_identity,
+                storage_sha256=storage_sha,
+            )
         checkpoints = directory / 'checkpoints'
         checkpoints.mkdir()
 
@@ -462,7 +515,11 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             elif bounded:
                 from src.solvers.physical_bounded_runtime import audit_bounded_exit
                 summary['bounded_terminal'] = audit_bounded_exit(bundle, ledger)
-                summary['bounded_solve_policy'] = dict(policy.identity)
+                summary['bounded_solve_policy'] = dict(
+                    policy.identity, solve_limit_seconds=solve_limit,
+                    outer_restart=32, outer_max_it=2048, zero_start=True,
+                    ksp_lifecycle='one_create_one_solve_one_destroy')
+                bind_bounded_evidence()
             else:
                 summary['p4_action_counts'] = dict(policy.action_counts, C=policy.logical_rhs,
                     MatSolve=policy.external_solves)
@@ -565,6 +622,13 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         if recursive and 'p2_inverse' in bundle:
             from .physical_recursive_runtime import recursive_snapshot
             summary['recursive_failure_costs'] = recursive_snapshot(bundle)
+        if bounded and all(key in bundle for key in
+                           ('pc', 'i4_admission', 'b4', 'inexact_ledger', 'trace_assets')):
+            # Capture the already-existing lifetime counters before cleanup;
+            # this path must not run an additional audit or solver operation.
+            from src.solvers.physical_bounded_runtime import bounded_terminal_snapshot
+            summary['bounded_failure_costs'] = bounded_terminal_snapshot(bundle)
+        bind_bounded_evidence()
         summary.update(status='CONTROLLED_STOP' if isinstance(exc, InterruptedError) else 'FAILED',
                        exception_type=type(exc).__name__, exception_message=str(exc),
                        failed_stage=ledger.last_stage, failed_phase=ledger.phase)

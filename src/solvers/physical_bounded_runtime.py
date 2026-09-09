@@ -465,7 +465,22 @@ def build_formal_bounded(
                 outer.last_apply_facts['trace_counts'] = dict(
                     cached=assets['cached'].counts, cached_seconds=assets['cached'].seconds,
                     entities=assets['trace'].counts, entity_seconds=assets['trace'].elapsed,
-                    bottom=assets['bottom'].counts)
+                    bottom=dict(assets['bottom'].counts),
+                    # These are lifetime counters at the end of this PC.  The
+                    # independent checker subtracts the setup baseline once;
+                    # it must not reconstruct them by summing nested timings.
+                    B4=dict(applies=b4.apply_count, attempted=b4.attempted,
+                            counts=dict(b4.total_counts),
+                            operation_seconds=dict(b4.total_operation_seconds)),
+                    S_action=dict(calls=assets['space'].action_count,
+                                  seconds=assets['space'].action_seconds),
+                    inexact_audit=dict(
+                        audits=inexact.audit_count, extra_A6=inexact.A_count,
+                        extra_PH=inexact.PH_count,
+                        extra_A6_seconds=inexact.A_seconds,
+                        extra_PH_seconds=inexact.PH_seconds,
+                        audit_seconds=inexact.audit_seconds),
+                )
                 ledger.record_pc(outer.last_apply_facts)
                 return result
             except BaseException:

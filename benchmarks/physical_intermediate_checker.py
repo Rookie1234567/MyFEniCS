@@ -12,6 +12,478 @@ import numpy as np
 
 _POSITIVE_APPLY_KEYS = ('s6_apply_count', 's3_apply_count')
 
+_BOUNDED_I4_STATUSES = (
+    'INNER_ZERO_RHS', 'INNER_TARGET_REACHED', 'INNER_APPROXIMATE_RETURN',
+)
+_BOUNDED_NEGATIVE_STATUSES = (
+    'NORMAL_SCREEN_STOP', 'PROGRESS_INSUFFICIENT_AT_MID_BUDGET',
+    'PERFORMANCE_CONTROLLED_STOP', 'ITERATION_BUDGET_EXHAUSTED',
+    'CONTROLLED_STOP',
+)
+
+
+def _stable_sha256(value) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(',', ':'),
+                         allow_nan=False).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _finite_number(value, *, nonnegative=False) -> bool:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return False
+    return bool(np.isfinite(result) and (not nonnegative or result >= 0.0))
+
+
+def _bounded_i4_facts(row: dict) -> dict:
+    facts = row.get('facts', row)
+    return facts if isinstance(facts, dict) else {}
+
+
+def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
+    """Recompute V7 I4, PC, H6, and inexact-audit accounting from JSONL.
+
+    This deliberately does not use ``positive_setup`` or the solver's status.
+    In particular, H6 is counted from the actual per-PC smoother count, and
+    the two I4 calls are matched to their nested inexact-balance records.
+    """
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    normalized = []
+    timeout_streak = 0
+    no_direction_streak = 0
+    for index, row in enumerate(i4_rows, 1):
+        facts = _bounded_i4_facts(row)
+        require(row.get('call') == index, f'I4 call ordering mismatch at {index}')
+        status = facts.get('status')
+        require(status in _BOUNDED_I4_STATUSES, f'illegal I4 status at {index}: {status}')
+        for key in ('target', 'rhs_norm', 'final_true_residual', 'seconds',
+                    'actual_elapsed_seconds'):
+            require(_finite_number(facts.get(key), nonnegative=True),
+                    f'nonfinite/negative I4 {key} at {index}')
+        require(facts.get('target') == 1e-4, f'I4 target is not 1e-4 at {index}')
+        require(facts.get('restart') == 16 and facts.get('max_it') == 16,
+                f'I4 16-step contract mismatch at {index}')
+        require(facts.get('zero_start') is True, f'I4 is not zero-start at {index}')
+        iterations = facts.get('iterations')
+        legal = facts.get('legal_direction_count')
+        require(isinstance(iterations, int) and 0 <= iterations <= 16,
+                f'I4 iteration cap mismatch at {index}')
+        require(isinstance(legal, int) and legal >= 0,
+                f'I4 legal-direction count mismatch at {index}')
+        for key in ('A4_matvec', 'B4_calls', 'explicit_A4'):
+            require(isinstance(facts.get(key), int) and facts[key] >= 0,
+                    f'I4 {key} is not a nonnegative count at {index}')
+        attempted = facts.get('attempted', {})
+        for key in ('A4_matvec', 'B4_calls', 'explicit_A4'):
+            if attempted:
+                require(attempted.get(key) == facts.get(key),
+                        f'I4 attempted/completed {key} mismatch at {index}')
+        timeout = facts.get('timeout_exceeded')
+        require(isinstance(timeout, bool), f'I4 timeout flag is not boolean at {index}')
+        if timeout:
+            require(float(facts['seconds']) >= 30.0,
+                    f'I4 hard-30 timeout is early at {index}')
+        else:
+            require(float(facts['seconds']) <= 30.0 + 1e-7,
+                    f'I4 exceeded hard-30 without timeout at {index}')
+        safe_return = facts.get('requested_safe_return')
+        require(isinstance(safe_return, bool),
+                f'I4 safe-return flag is not boolean at {index}')
+        if status != 'INNER_ZERO_RHS':
+            if float(facts['seconds']) >= 25.0:
+                require(safe_return, f'I4 missed soft-25 safe-return flag at {index}')
+            if safe_return and float(facts['seconds']) < 25.0:
+                require(facts.get('stop_reason') == 'OUTER_SAFE_DEADLINE',
+                        f'I4 early safe-return has no outer deadline at {index}')
+            timeout_streak = timeout_streak + 1 if timeout else 0
+            no_direction_streak = (no_direction_streak + 1
+                                   if legal == 0 else 0)
+        # Zero-RHS is legal but does not reset either consecutive-cost streak.
+        admission = row.get('admission', {})
+        if admission:
+            require(admission.get('calls') == index,
+                    f'I4 admission call count mismatch at {index}')
+            require(admission.get('timeout_streak') == timeout_streak,
+                    f'I4 timeout streak mismatch at {index}')
+            require(admission.get('no_direction_streak') == no_direction_streak,
+                    f'I4 no-direction streak mismatch at {index}')
+        if status == 'INNER_ZERO_RHS':
+            require(facts['rhs_norm'] == 0.0 and facts['final_true_residual'] == 0.0,
+                    f'zero-RHS I4 has nonzero norm at {index}')
+            require(iterations == facts['A4_matvec'] == facts['B4_calls'] == 0,
+                    f'zero-RHS I4 invented work at {index}')
+            require(facts['explicit_A4'] == 0,
+                    f'zero-RHS I4 performed an explicit action at {index}')
+        else:
+            require(float(facts['rhs_norm']) > 0.0,
+                    f'nonzero I4 has zero RHS at {index}')
+            eps_norm = facts.get('eps_norm')
+            require(_finite_number(eps_norm, nonnegative=True),
+                    f'nonzero I4 has no finite eps_norm at {index}')
+            relative = float(eps_norm) / float(facts['rhs_norm'])
+            require(np.isclose(relative, float(facts['final_true_residual']),
+                               rtol=0, atol=1e-12),
+                    f'I4 eps_norm/rhs_norm relative mismatch at {index}')
+            if status == 'INNER_TARGET_REACHED':
+                require(relative <= 1e-4 + 1e-12,
+                        f'target I4 returned above target at {index}')
+            require(facts['A4_matvec'] <= iterations and facts['B4_calls'] <= iterations,
+                    f'I4 work exceeds iteration count at {index}')
+        normalized.append(facts)
+
+    # Match the nested I4 scalar packets to the independently written I4 JSONL.
+    nested = []
+    for pc_index, row in enumerate(pc_rows, 1):
+        calls = row.get('inexact_balance', {}).get('calls', [])
+        require(len(calls) == 2, f'PC {pc_index} does not contain exactly two I4 calls')
+        nested.extend(item.get('inner', {}) for item in calls)
+    require(len(nested) == len(normalized), 'nested I4 count differs from raw I4 count')
+    for index, (facts, inner) in enumerate(zip(normalized, nested), 1):
+        for key in ('status', 'iterations', 'rhs_norm', 'eps_norm', 'final_true_residual',
+                    'A4_matvec', 'B4_calls', 'explicit_A4', 'restart', 'max_it'):
+            if key in inner:
+                left, right = facts.get(key), inner.get(key)
+                if isinstance(left, float) or isinstance(right, float):
+                    require(np.isclose(float(left), float(right), rtol=0, atol=1e-12),
+                            f'nested/raw I4 {key} mismatch at {index}')
+                else:
+                    require(left == right, f'nested/raw I4 {key} mismatch at {index}')
+        if inner.get('status') != 'INNER_ZERO_RHS':
+            require(_finite_number(inner.get('eps_norm'), nonnegative=True),
+                    f'nested I4 eps_norm missing at {index}')
+            nested_relative = float(inner['eps_norm']) / float(inner['rhs_norm'])
+            require(np.isclose(nested_relative, float(inner['final_true_residual']),
+                               rtol=0, atol=1e-12),
+                    f'nested I4 eps_norm/rhs_norm mismatch at {index}')
+
+    pc_facts = []
+    h6_count = 0
+    for index, row in enumerate(pc_rows, 1):
+        require(row.get('apply_count') == index, f'PC apply ordering mismatch at {index}')
+        require(row.get('route') == 'BAL_H', f'bounded PC route mismatch at {index}')
+        require(row.get('status') == 'BALANCED_ACTION_COMPLETED',
+                f'bounded PC status mismatch at {index}')
+        counts = row.get('counts', {})
+        expected_counts = dict(C=2, smoother=1, A_structure=2, A_inner_true=0,
+                               PH_audit=0)
+        for key, expected in expected_counts.items():
+            require(counts.get(key) == expected,
+                    f'bounded PC {key} count mismatch at {index}')
+        h6_count += int(counts.get('smoother', 0))
+        audit = row.get('inexact_balance', {})
+        actual_audit = audit.get('actual_audit')
+        audit_due = index == 1 or index % 32 == 0
+        require(actual_audit == ('PASS' if audit_due else 'not_sampled'),
+                f'inexact audit cadence mismatch at PC {index}')
+        if actual_audit == 'PASS':
+            closure = audit.get('audit', {})
+            require(_finite_number(closure.get('closure_norm'), nonnegative=True) and
+                    _finite_number(closure.get('operation_scale'), nonnegative=True) and
+                    float(closure.get('operation_scale', 0.0)) > 0.0,
+                    f'inexact closure scalars are invalid at PC {index}')
+            if _finite_number(closure.get('closure_norm'), nonnegative=True) and \
+                    _finite_number(closure.get('operation_scale'), nonnegative=True) and \
+                    float(closure.get('operation_scale', 0.0)) > 0.0:
+                relative = (float(closure['closure_norm']) /
+                            float(closure['operation_scale']))
+                require(_finite_number(closure.get('closure_relative'), nonnegative=True),
+                        f'saved inexact closure ratio is invalid at PC {index}')
+                if _finite_number(closure.get('closure_relative'), nonnegative=True):
+                    require(np.isclose(relative, float(closure['closure_relative']),
+                                       rtol=0, atol=1e-15),
+                            f'saved inexact closure ratio differs at PC {index}')
+                require(relative <= 1e-8, f'inexact closure failed at PC {index}')
+        pc_facts.append(dict(apply_count=index, counts=dict(counts),
+                             actual_audit=actual_audit))
+
+    exit_rows = list(exit_rows or [])
+    if exit_rows:
+        require(len(exit_rows) == 1, 'bounded exit audit is not exactly one record')
+        exit_row = exit_rows[-1]
+        require(exit_row.get('last_PC') == len(pc_rows), 'exit audit last_PC mismatch')
+        costs = exit_row.get('audit_costs', {})
+        for key, value in costs.items():
+            require(_finite_number(value, nonnegative=True),
+                    f'negative/nonfinite exit audit cost {key}')
+        closure = exit_row.get('audit', {})
+        require(_finite_number(closure.get('closure_norm'), nonnegative=True) and
+                _finite_number(closure.get('operation_scale'), nonnegative=True) and
+                float(closure.get('operation_scale', 0.0)) > 0.0,
+                'exit inexact closure scalars are invalid')
+        if (_finite_number(closure.get('closure_norm'), nonnegative=True) and
+                _finite_number(closure.get('operation_scale'), nonnegative=True) and
+                float(closure.get('operation_scale', 0.0)) > 0.0):
+            relative = float(closure['closure_norm']) / float(closure['operation_scale'])
+            require(_finite_number(closure.get('closure_relative'), nonnegative=True),
+                    'saved exit closure ratio is invalid')
+            if _finite_number(closure.get('closure_relative'), nonnegative=True):
+                require(np.isclose(relative, float(closure['closure_relative']),
+                                   rtol=0, atol=1e-15),
+                        'saved exit closure ratio differs from closure_norm/operation_scale')
+            require(relative <= 1e-8, 'exit inexact closure failed')
+
+    i4_totals = {
+        key: sum(int(facts.get(key, 0)) for facts in normalized)
+        for key in ('A4_matvec', 'B4_calls', 'explicit_A4')
+    }
+    return dict(passed=not errors, errors=errors, i4_calls=len(normalized),
+                i4_totals=i4_totals, completed_pc_count=len(pc_rows),
+                actual_h6_applies=h6_count, pc=pc_facts,
+                semantics=dict(I4='two independent calls per PC; target=1e-4; '
+                               'restart=max_it=16; soft=25; hard=30; zero-start',
+                               H6='one actual smoother apply per PC; positive_setup is not used'))
+
+
+def recompute_bounded_screen(solve, rows):
+    """Recompute the V7 8-step screen and its 128/1800/5400 gates."""
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    require(solve.get('screen_enabled') is True, 'V7 bounded screen is disabled')
+    require(solve.get('screen_policy') == 'v7', 'bounded solve is not using V7 screen')
+    require(solve.get('restart') == 32 and solve.get('max_it') == 2048,
+            'bounded outer restart/max_it mismatch')
+    require(solve.get('zero_start') is True, 'bounded outer solve is not zero-start')
+    require(solve.get('ksp_create_count') == solve.get('ksp_solve_count') ==
+            solve.get('ksp_destroy_count') == 1, 'bounded outer does not have one KSP lifecycle')
+    require(solve.get('residual_interval') == 8 and solve.get('checkpoint_interval') == 32,
+            'bounded outer cadence mismatch')
+    history = [(0, 1.0)]
+    screen = None
+    mid = None
+    nodes = []
+    previous = (-1, -1.0)
+    for row in rows:
+        try:
+            iteration = int(row['iteration'])
+            relative = float(row['explicit_true_residual'])
+            seconds = float(row['solve_seconds'])
+        except (KeyError, TypeError, ValueError):
+            errors.append('malformed V7 monitor row')
+            continue
+        require(iteration >= previous[0], 'V7 monitor iterations are not monotone')
+        require(np.isfinite([relative, seconds]).all() and relative >= 0 and seconds >= 0,
+                f'invalid V7 monitor scalar at iteration {iteration}')
+        previous = (iteration, seconds)
+        if iteration == 0:
+            if not nodes:
+                nodes.append((iteration, relative))
+        elif iteration % 8 == 0 and (not nodes or nodes[-1][0] != iteration):
+            nodes.append((iteration, relative))
+            history = (history + [(iteration, relative)])[-3:]
+        # The live solver checks the true residual immediately after the
+        # snapshot, before either the investment screen or the 5400-second
+        # continuation gate.  A late true pass therefore leaves mid_budget
+        # unset even when the screen had already continued the KSP.
+        if relative <= 1e-6:
+            break
+        if screen is None and (iteration >= 128 or seconds >= 1800):
+            trend = (len(history) == 3 and history[1][0] - history[0][0] == 8 and
+                     history[2][0] - history[1][0] == 8 and
+                     0 < history[2][1] < history[1][1] < history[0][1] and
+                     np.sqrt(history[2][1] / history[0][1]) <= .80)
+            passed = relative <= 1e-2 or (iteration >= 16 and relative <= .30 and trend)
+            screen = dict(status='SCREEN_CONTINUE_SAME_LIVE_KSP' if passed else
+                          'NORMAL_SCREEN_STOP', passed=bool(passed), iteration=iteration,
+                          true_relative=relative, solve_seconds=seconds,
+                          checkpoints=list(history), policy='v7')
+            if not passed:
+                break
+        if mid is None and seconds >= 5400:
+            passed = relative <= 1e-3
+            mid = dict(status='MID_BUDGET_CONTINUE' if passed else
+                       'PROGRESS_INSUFFICIENT_AT_MID_BUDGET', passed=bool(passed),
+                       iteration=iteration, true_relative=relative,
+                       solve_seconds=seconds)
+            if not passed:
+                break
+
+    saved = solve.get('screen')
+    if screen is None:
+        require(saved is None, 'saved V7 screen decision differs from recomputation')
+    else:
+        require(saved is not None, 'missing saved V7 screen decision')
+        if saved is not None:
+            for key in ('status', 'passed', 'iteration', 'policy'):
+                require(saved.get(key) == screen.get(key),
+                        f'saved V7 screen {key} differs from raw nodes')
+            for key in ('true_relative', 'solve_seconds'):
+                require(np.isclose(float(saved.get(key)), float(screen.get(key)),
+                                   rtol=0, atol=1e-10),
+                        f'saved V7 screen {key} differs from raw nodes')
+            def normalized_checkpoints(value):
+                return [(int(item[0]), float(item[1])) for item in (value or [])]
+            saved_nodes = normalized_checkpoints(saved.get('checkpoints'))
+            raw_nodes = normalized_checkpoints(screen.get('checkpoints'))
+            require(len(saved_nodes) == len(raw_nodes) and all(
+                left[0] == right[0] and np.isclose(left[1], right[1], rtol=0, atol=1e-12)
+                for left, right in zip(saved_nodes, raw_nodes)),
+                'saved V7 checkpoint history differs from raw 8-step nodes')
+    require(solve.get('mid_budget') == mid,
+            'saved V7 mid-budget decision differs from raw monitor')
+    return dict(passed=not errors, errors=errors, nodes=nodes,
+                recomputed_screen=screen, recomputed_mid_budget=mid)
+
+
+def recompute_bounded_costs(i4_rows, pc_rows, exit_rows=(), setup_costs=None,
+                            *, require_lifetime=False) -> dict:
+    """Recompute cumulative V7 costs, subtracting setup exactly once."""
+    errors = []
+    missing = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    setup = setup_costs or {}
+    zero_b4 = dict(applies=0, attempted=0, counts={}, operation_seconds={})
+    setup_b4 = setup.get('B4', zero_b4)
+    setup_i4 = setup.get('I4', {})
+    setup_audit = setup.get('inexact_audit', {})
+    setup_s = setup.get('S_action', {})
+    setup_bottom = setup.get('bottom', {}).get('counts', setup.get('bottom', {}))
+
+    def delta(total, baseline, key):
+        if key not in total:
+            return None
+        value = float(total.get(key, 0)) - float(baseline.get(key, 0))
+        require(value >= -1e-12, f'cumulative {key} regressed across setup boundary')
+        return value
+
+    i4_totals = {
+        key: sum(int(_bounded_i4_facts(row).get(key, 0)) for row in i4_rows)
+        for key in ('A4_matvec', 'B4_calls', 'explicit_A4')
+    }
+    expected_b4 = dict(
+        applies=i4_totals['B4_calls'], attempted=i4_totals['B4_calls'],
+        counts=dict(A_inner_true=0, A_structure=2*i4_totals['B4_calls'],
+                    C=2*i4_totals['B4_calls'], PH_audit=2*i4_totals['B4_calls'],
+                    smoother=i4_totals['B4_calls']))
+    per_pc_trace = [row.get('trace_counts', {}) for row in pc_rows]
+    have_b4 = all('B4' in trace for trace in per_pc_trace)
+    have_s = all('S_action' in trace for trace in per_pc_trace)
+    have_audit = all('inexact_audit' in trace for trace in per_pc_trace)
+    if require_lifetime:
+        for present, name in ((have_b4, 'B4'), (have_s, 'S_action'),
+                              (have_audit, 'inexact_audit')):
+            if not present:
+                missing.append(name)
+        require(not missing, 'bounded per-PC lifetime counters are missing: '+','.join(missing))
+
+    for name, present in (('B4', have_b4), ('S_action', have_s),
+                          ('inexact_audit', have_audit)):
+        if present:
+            previous = None
+            for trace in per_pc_trace:
+                counter = trace[name]
+                current = float(counter.get('applies', counter.get('calls',
+                                  counter.get('audits', 0))))
+                if previous is not None:
+                    require(current >= previous, f'{name} lifetime counter regressed')
+                previous = current
+
+    exit_row = list(exit_rows or [])[-1] if exit_rows else None
+    total = exit_row.get('total', {}) if exit_row else {}
+    if total:
+        b4 = total.get('B4', {})
+        b4_applies = delta(b4, setup_b4, 'applies')
+        b4_attempted = delta(b4, setup_b4, 'attempted')
+        require(b4_applies == expected_b4['applies'], 'B4 apply total differs from I4 calls')
+        require(b4_attempted == expected_b4['attempted'], 'B4 attempted total differs from I4 calls')
+        for key, expected in expected_b4['counts'].items():
+            require(delta(b4.get('counts', {}), setup_b4.get('counts', {}), key) == expected,
+                    f'B4 {key} total differs from independent I4 accounting')
+        if have_b4 and per_pc_trace:
+            last_b4 = per_pc_trace[-1]['B4']
+            for key in ('applies', 'attempted'):
+                require(delta(b4, setup_b4, key) ==
+                        delta(last_b4, setup_b4, key),
+                        f'B4 terminal count differs from last PC lifetime snapshot: {key}')
+            for key, value in b4.get('operation_seconds', {}).items():
+                if key in last_b4.get('operation_seconds', {}):
+                    require(np.isclose(
+                        float(value) - float(setup_b4.get('operation_seconds', {}).get(key, 0.0)),
+                        float(last_b4['operation_seconds'][key]) -
+                        float(setup_b4.get('operation_seconds', {}).get(key, 0.0)),
+                        rtol=0, atol=1e-10),
+                        f'B4 terminal seconds differs from last PC snapshot: {key}')
+        i4_total = total.get('I4', {})
+        require(delta(i4_total, setup_i4, 'calls') == len(i4_rows),
+                'I4 cumulative calls re-add setup or disagree with raw records')
+        outer_total = delta(total, setup, 'outer_PC_applies')
+        require(outer_total == len(pc_rows), 'outer PC cumulative count mismatch')
+        bottom = total.get('bottom', {}).get('counts', {})
+        if bottom:
+            mat_solve = delta(bottom, setup_bottom, 'MatSolve')
+            per_pc_bottom = [trace.get('bottom', {}) for trace in per_pc_trace]
+            if all('MatSolve' in row for row in per_pc_bottom):
+                require(float(per_pc_bottom[-1]['MatSolve']) - float(setup_bottom.get('MatSolve', 0))
+                        == mat_solve, 'MatSolve setup-subtracted total disagrees with PC trace')
+        s_total = total.get('S_action', {})
+        if s_total:
+            s_calls = delta(s_total, setup_s, 'calls')
+            if have_s and per_pc_trace:
+                last_s = per_pc_trace[-1]['S_action']
+                require(s_calls == delta(last_s, setup_s, 'calls'),
+                        'S_action terminal count differs from last PC snapshot')
+                if 'seconds' in s_total and 'seconds' in last_s:
+                    require(np.isclose(
+                        float(s_total['seconds']) - float(setup_s.get('seconds', 0.0)),
+                        float(last_s['seconds']) - float(setup_s.get('seconds', 0.0)),
+                        rtol=0, atol=1e-10),
+                        'S_action terminal seconds differs from last PC snapshot')
+        audit_total = total.get('inexact_audit', {})
+        if audit_total and (have_audit or require_lifetime):
+            audits = delta(audit_total, setup_audit, 'audits')
+            expected_audits = sum(row.get('inexact_balance', {}).get('actual_audit') == 'PASS'
+                                  for row in pc_rows) + 1
+            require(audits == expected_audits,
+                    'inexact audit total does not equal PC audits plus one exit audit')
+            exit_costs = (exit_row or {}).get('audit_costs', {})
+            for key in ('audits', 'extra_A6', 'extra_PH'):
+                if key in exit_costs:
+                    total_delta = delta(audit_total, setup_audit, key)
+                    expected_total = (expected_audits if key != 'audits' else expected_audits)
+                    require(total_delta == expected_total,
+                            f'inexact {key} total differs from independently counted audits')
+                    require(float(exit_costs[key]) == 1.0,
+                            f'exit audit {key} cost is not exactly one audit')
+    else:
+        missing.append('bounded_exit_audit.total')
+        require(not require_lifetime, 'bounded exit cumulative counters are missing')
+
+    return dict(passed=not errors, errors=errors, missing=missing,
+                i4_totals=i4_totals, expected_b4=expected_b4,
+                setup=setup, setup_counts_separate=True)
+
+
+def bounded_output_classification(summary, errors, expected_errors=()):
+    """Classify bounded results without allowing schema errors to pass."""
+    if not errors:
+        if summary.get('status') == 'RESIDUAL_PASS':
+            # Bounded V7 is a separate accounting path, but its successful
+            # result remains consumed by the existing balanced output gate.
+            return 'BALANCED_OUTPUT_PASS'
+        if summary.get('status') in _BOUNDED_NEGATIVE_STATUSES:
+            return summary['status']
+        if summary.get('status') in ('BALANCED_OUTPUT_PASS',
+                                     'BALANCED_OUTPUT_AUTHORITY_LIMITED'):
+            return summary['status']
+        return 'CORRECTNESS_OR_EVIDENCE_BLOCKED'
+    if summary.get('status') in _BOUNDED_NEGATIVE_STATUSES:
+        return (summary['status'] if all(error in expected_errors for error in errors)
+                else 'CORRECTNESS_OR_EVIDENCE_BLOCKED')
+    return 'NUMERICAL_OR_OUTPUT_FAIL'
+
 
 def recompute_positive_apply_counts(pc_records: list[dict], cycles: list[dict]) -> dict:
     """Count recorded calls, not the sum of lifetime apply ordinals.
@@ -132,7 +604,8 @@ def check(directory: Path) -> dict:
     summary = json.loads((directory / 'physical_intermediate_summary.json').read_text())
     errors, facts, expected_errors = [], {}, []
     controlled = summary['status'] in ('SCREEN_BUDGET_NO_QUALIFIED_PROGRESS',
-        'PERFORMANCE_CONTROLLED_STOP','ITERATION_BUDGET_EXHAUSTED')
+        'PERFORMANCE_CONTROLLED_STOP', 'ITERATION_BUDGET_EXHAUSTED',
+        *_BOUNDED_NEGATIVE_STATUSES)
 
     def require(condition, message, *, expected=False):
         if not condition:
@@ -168,10 +641,11 @@ def check(directory: Path) -> dict:
         require(summary['final_solution_sha256'] == old['final_solution_sha256'], 'recovery solution identity changed')
 
     raw = summary['residual_arrays']
-    from src.io.physical_balanced_profile import BALANCED_PROFILES
+    from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = summary['profile']['identity'] in RECURSIVE_PROFILES
-    balanced = recursive or summary['profile']['identity'] in BALANCED_PROFILES
+    bounded = summary['profile']['identity'] in BOUNDED_PROFILES
+    balanced = recursive or summary['profile']['identity'] in BALANCED_PROFILES or bounded
     reference_only = summary['profile'].get('reference_only', False)
     if reference_only:
         ledger = summary['reference_pc_ledger']
@@ -209,9 +683,100 @@ def check(directory: Path) -> dict:
         require(facts['balanced_screen']['matches'],'screen differs from raw checkpoints')
         require(summary['solve']['ksp_create_count']==summary['solve']['ksp_solve_count']==
                 summary['solve']['ksp_destroy_count']==1,'not one live KSP')
+    if bounded:
+        from src.io.physical_intermediate_profile import profile_facts
+
+        require(summary['profile'] == profile_facts(summary['profile']['identity']),
+                'bounded resolved contract differs')
+        bounded_evidence = summary.get('bounded_evidence', {})
+        evidence_files = bounded_evidence.get('files', bounded_evidence)
+        required_names = tuple(bounded_evidence.get('required', (
+            'bounded_i4.jsonl', 'pc_applies.jsonl', 'bounded_exit_audit.jsonl',
+            'monitor_residuals.jsonl', 'iterations.jsonl')))
+
+        def read_bounded_jsonl(name):
+            entry = evidence_files.get(name, {})
+            digest = entry.get('sha256') if isinstance(entry, dict) else entry
+            require(bool(digest), f'bounded evidence binding missing: {name}')
+            path = hashed_file(name, digest) if digest else directory / name
+            if not path.is_file():
+                return []
+            return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+        rows = {name: read_bounded_jsonl(name) for name in required_names}
+        # A normal or controlled bounded solve must have the full five-file
+        # evidence set.  This is an evidence/schema gate, not a numerical gate.
+        require(set(required_names) == {
+            'bounded_i4.jsonl', 'pc_applies.jsonl', 'bounded_exit_audit.jsonl',
+            'monitor_residuals.jsonl', 'iterations.jsonl'},
+                'bounded evidence required-file set differs from V7 contract')
+        facts['bounded_i4'] = recompute_bounded_i4(
+            rows['bounded_i4.jsonl'], rows['pc_applies.jsonl'],
+            rows['bounded_exit_audit.jsonl'])
+        require(facts['bounded_i4']['passed'],
+                'bounded I4/PC/H6/closure accounting failed: '+
+                str(facts['bounded_i4']['errors']))
+        call_policy = summary.get('bounded_setup', {}).get('actual_calls_per_PC', {})
+        require(call_policy.get('I4') == 2 and call_policy.get('H6') == 1,
+                'bounded call-policy metadata does not state I4=2/H6=1 per PC')
+        require(facts['bounded_i4']['actual_h6_applies'] ==
+                facts['bounded_i4']['completed_pc_count'],
+                'actual H6 smoother count is not one per completed PC')
+        facts['bounded_screen'] = recompute_bounded_screen(
+            summary['solve'], rows['monitor_residuals.jsonl'])
+        require(facts['bounded_screen']['passed'],
+                'bounded V7 screen differs from raw nodes: '+
+                str(facts['bounded_screen']['errors']))
+        policy = summary.get('bounded_solve_policy', {})
+        require(policy.get('solve_limit_seconds') == 10800,
+                'bounded solve limit is not the required 10800 seconds')
+        require(policy.get('outer_restart') == 32 and policy.get('outer_max_it') == 2048,
+                'bounded solve policy does not bind restart32/max2048')
+        setup_costs = summary.get('bounded_setup', {}).get('setup_costs',
+                                                            summary.get('bounded_setup_costs'))
+        require(isinstance(setup_costs, dict), 'bounded setup cost baseline is missing')
+        facts['bounded_costs'] = recompute_bounded_costs(
+            rows['bounded_i4.jsonl'], rows['pc_applies.jsonl'],
+            rows['bounded_exit_audit.jsonl'], setup_costs,
+            require_lifetime=True)
+        require(facts['bounded_costs']['passed'],
+                'bounded cumulative cost accounting failed: '+
+                str(facts['bounded_costs']['errors']))
+        iteration_rows = rows['iterations.jsonl']
+        require(bool(iteration_rows), 'bounded iterations ledger is empty')
+        if iteration_rows:
+            values = [row.get('iteration') for row in iteration_rows]
+            require(values == sorted(values), 'bounded iterations ledger is not monotone')
+            require(values[-1] == summary['solve']['iterations'],
+                    'bounded iterations ledger does not end at solve iteration')
+
+        binding = summary.get('bounded_binding', {})
+        storage = summary.get('bounded_setup', {}).get('trace_storage')
+        require(isinstance(binding, dict) and isinstance(storage, dict),
+                'bounded source/physical/mode/RHS/storage binding is missing')
+        if isinstance(binding, dict) and isinstance(storage, dict):
+            require(binding.get('source_sha') == summary.get('source_sha'),
+                    'bounded source identity binding mismatch')
+            require(binding.get('physical_model_sha256') == raw.get('physical_model_sha256'),
+                    'bounded physical-model binding mismatch')
+            require(binding.get('mode_sha256') == summary.get('mode_sha256'),
+                    'bounded mode binding mismatch')
+            require(binding.get('input_sha256') == raw.get('input_sha256'),
+                    'bounded RHS input binding mismatch')
+            require(binding.get('operator_identity_sha256') == raw.get('operator_identity_sha256'),
+                    'bounded operator binding mismatch')
+            require(binding.get('storage_sha256') == _stable_sha256(storage),
+                    'bounded storage binding mismatch')
     with np.load(hashed_file(raw['filename'], raw['sha256']), allow_pickle=False) as arrays:
         rhs, action, solution = arrays['rhs'], arrays['action'], arrays['solution']
         require(rhs.shape == action.shape == solution.shape, 'incompatible raw vector shapes')
+        if bounded:
+            binding = summary.get('bounded_binding', {})
+            rhs_sha = hashlib.sha256(rhs.tobytes()).hexdigest()
+            require(binding.get('rhs_sha256') == rhs_sha,
+                    'bounded RHS bytes identity differs')
+            require(summary.get('rhs', {}).get('vector_sha256') == rhs_sha,
+                    'bounded RHS summary hash differs')
         if recursive:
             require(hashlib.sha256(rhs.tobytes()).hexdigest()==summary['recursive_identity']['rhs_sha256'],
                     'recursive raw RHS identity differs')
@@ -328,7 +893,7 @@ def check(directory: Path) -> dict:
         require(all(np.isfinite(value) for _, value in packets), 'nonfinite canonical coefficients')
     if balanced and output is not None:
         matched = summary.get('matched_reference', {})
-        require(matched.get('status') in (('MATCHED_REFERENCE_PASS',) if recursive else
+        require(matched.get('status') in (('MATCHED_REFERENCE_PASS',) if recursive or bounded else
             ('MATCHED_REFERENCE_PASS','REFERENCE_AUTHORITY_LIMITED')), 'matched reference failed')
         require(summary['rss_after_release'] < summary['rss_before_release'], 'RSS did not decrease before recovery')
     independent_output_gates_passed = not errors
@@ -337,7 +902,9 @@ def check(directory: Path) -> dict:
         classification = 'STAGNATION_CONTROLLED_STOP'
     elif light and errors and summary['status'] == 'ITERATION_BUDGET_EXHAUSTED' and summary['solve']['iterations'] == 2048:
         classification = 'ITERATION_BUDGET_EXHAUSTED'
-    if balanced:
+    if bounded:
+        classification = bounded_output_classification(summary, errors, expected_errors)
+    elif balanced:
         classification = balanced_output_classification(summary,errors,expected_errors)
     return dict(classification=classification,
                 reference_authority=summary.get('matched_reference',{}).get('status','PENDING_A4_not_compared'),
@@ -354,7 +921,8 @@ def main() -> int:
         result = dict(classification='EVIDENCE_INCOMPLETE', reference_authority='PENDING_A4_not_compared',
                       gate_failures=[f'{type(exc).__name__}: {exc}'])
     (directory / 'checker.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
-    return 0 if result['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS', 'BALANCED_OUTPUT_PASS', 'BALANCED_OUTPUT_AUTHORITY_LIMITED') else 2
+    return 0 if result['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS',
+        'BALANCED_OUTPUT_PASS', 'BALANCED_OUTPUT_AUTHORITY_LIMITED') else 2
 
 
 if __name__ == '__main__':
