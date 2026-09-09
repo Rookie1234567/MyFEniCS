@@ -10,7 +10,7 @@ G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依�
 | V5保留 | 原始564/notch576步，完整残差、匹配参考与物理Gate通过；参考448页global out归因UNRESOLVED保留 |
 | 分流 | HI未资格化、notch/recovery未运行；G1_G2_COMPLETED_DIAGNOSTIC_CONTINUATION_AUTHORIZED；无W0/5nm/0.7nm/生产默认资格 |
 
-中途诊断、投影互补负结果与单元bubble首检已补入[中心结果的因果诊断](coarse_inverse_replacement_v6.md)及[新compact](records/p4_causal_research_v6.json)。全网格bubble组件仅实现待审，尚未正式运行；G5保持开放。
+中途诊断、投影互补及全网格bubble实测见[中心结果](coarse_inverse_replacement_v6.md)与[compact](records/p4_causal_research_v6.json)。新W/S构造身份通过，但唯一I4在15步/约61.15s的真残差0.981425253未过1e-4；M0/curl误差剩余约0.9966。下一步仅提出内部particular/高阶trace定位方案，尚未运行；G5保持开放。
 
 详见[中心结果](coarse_inverse_replacement_v6.md)、[compact](records/coarse_inverse_replacement_v6.json)与[移交](workstation_handoff.md)。
 

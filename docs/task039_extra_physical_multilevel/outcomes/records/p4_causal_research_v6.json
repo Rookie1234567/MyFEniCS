@@ -610,9 +610,411 @@
         "outer_calls": 0,
         "scope": "one original air cell; not global qualification"
       }
+    },
+    {
+      "kind": "bubble_enriched_readout",
+      "source": "d9462e486360a86e9635b504f37a0b762c2bf896",
+      "root": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1",
+      "classification": "INNER_INEXACT_AT_CAP_COMPONENT_COMPLETED_NOT_GLOBAL_SOLVER_QUALIFICATION",
+      "readout": {
+        "path": "benchmarks/artifacts/task39extra/v6_recursive/bubble_enriched_readout.json",
+        "sha256": "ef9b7d06c3b44ef2da122946d75e7ff9d1c364dc1fa3ed2933defae4075e5fcb"
+      },
+      "evidence": [
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_Cg.json",
+          "sha256": "47b3afe71bc9a25087a32c2217fb3f0f411cb6478c90d7f7470dfda155073463"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_Cg.npz",
+          "sha256": "19b22084c4dfa5aaa1e0f3347ffdccc5ad152790b02b08e012184447c4c55353"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_Cg_fields.json",
+          "sha256": "a7c6a5e2ccbed8bcdd881741b9d47584c01a12eb488d3c2015d7aa5b890433d9"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_I4_fields.json",
+          "sha256": "6791359bcf72465d95a7a9034dee2e118be2a3d84d42f3df9d0e7d330bc35197"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_I4_result.json",
+          "sha256": "f8e6185ea362091030e4d4fc577a0f7dddde20dbaa1e0ff5799876cd83eb8913"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_I4_result.npz",
+          "sha256": "c3348874c7f357d01bc3e5a8dc01c78724fd60a9fb19322a4c92afa1fd8ab690"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_S_assembly_identity.json",
+          "sha256": "b33504bf83e11c81f6ff171b84fd53a66ead81cf6568c989acc774940ec10ec5"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_S_assembly_identity.npz",
+          "sha256": "d56e4780f50b1ea88f299181e632c3d13b2c1b3800339125cf370162251d3f33"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_cell_insertion.json",
+          "sha256": "06a51720213fbd6017d56e075a25667435fd978c6422268ddbbc0bf2f493d854"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_classes_complete.json",
+          "sha256": "708b64afcec6d0dc100852e71a1e1164d6327edd6a32be011e03186bf34e5d1f"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_component_costs.json",
+          "sha256": "45a046164e42ff99b87f0eea419a59953c3e9f8714c885300eb5da29b92fd248"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_component_summary.json",
+          "sha256": "32727982ff8f8cc472576d05889d21145802fad23b3b5639ee7aef8ddf1f3651"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_global_adjoint.json",
+          "sha256": "ae0898c035bb72eaa2218d08215e2bbe14921edce4e2a695e8bb463d41587606"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_owner_storage.json",
+          "sha256": "90f0ca271000eec5fb9eed0ac734da06e6f0a1d539e706658b904cc8a63a859a"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_range_identity.json",
+          "sha256": "159c1dbd3da38afb1de7f4e3bb6e7728ef069375e0b9950d15c01815ffec1455"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_range_identity.npz",
+          "sha256": "336978fa4e2b404eea43695c24f3bf415eaa69aa411f98784c9bf29f39b3fbfd"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/records/bubble_source_bridge.json",
+          "sha256": "02f279a09997818679377426190fb2e0081d7dcb8e98a98c19df5a9dff90ba89"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/resolved_config.json",
+          "sha256": "301fbd05a999dc0ecee9f2bc2ae86051725f7b35189ade34b464efdb29dafbf1"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/run_manifest.json",
+          "sha256": "ca99df1f013f05950f416032b8a4c23e5fb89cc50f796a35477e2d15dc2eee44"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/source_after.json",
+          "sha256": "dbc89fb7e934c02689c0f0db301dee5a25bba33ecb4f7e9aa8b5b3e5733e41aa"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/v6_bubble_enriched_component/d9462e486360a86e9635b504f37a0b762c2bf896/a2r160_g1/terminal.json",
+          "sha256": "3109b688140f9a68e005ed841a9917035e095de29099dd25a23cb0f58a4c481f"
+        }
+      ],
+      "measured": {
+        "global_qualification": {
+          "adjoint": 2.9462624630085477e-15,
+          "S": 1.9021429094018183e-14,
+          "ports": 2.978773192006078e-17,
+          "range": 4.191572120987352e-13
+        },
+        "classes": {
+          "cells": 252,
+          "classes": 18,
+          "full_A_retained": 0,
+          "local_LU_retained": 0,
+          "metadata_workspace_reserve_bytes": 4194304,
+          "orientation_count": 5,
+          "p4_global_matrix": 0,
+          "reserve_scope": "derived policy, not allocator bound; parent RSS authoritative",
+          "retained_budget_bytes": 9699712,
+          "retained_p2_bubble": 6
+        },
+        "original_residuals": {
+          "bubble_Cg": 4.0521244846815385,
+          "bubble_I4_result": 0.9814252527765402
+        },
+        "Cg_fields": {
+          "fields": {
+            "M0": {
+              "field_ratio": 0.9312835378822623,
+              "reference_energy": 32662.5290775109,
+              "remaining_energy": 28327.853093386217
+            },
+            "scaled_curl": {
+              "field_ratio": 0.9312717545483933,
+              "reference_energy": 32756.53359181837,
+              "remaining_energy": 28408.66326594689
+            }
+          },
+          "reference_role": "measurement only"
+        },
+        "I4_fields": {
+          "fields": {
+            "M0": {
+              "field_ratio": 0.9966154481901149,
+              "reference_energy": 32662.5290775109,
+              "remaining_energy": 32441.80718920909
+            },
+            "scaled_curl": {
+              "field_ratio": 0.996601698167315,
+              "reference_energy": 32756.53359181837,
+              "remaining_energy": 32534.27870290888
+            }
+          },
+          "reference_role": "measurement only"
+        },
+        "I4": {
+          "A4_matvec": 15,
+          "B4_calls": 15,
+          "attempted": {
+            "A4_matvec": 15,
+            "B4_calls": 15,
+            "explicit_A4": 3
+          },
+          "basis_payload_classification": "derived V/Z bound, excludes work vectors and allocator",
+          "eps_norm": 0.9814252527765402,
+          "explicit_A4": 3,
+          "final_true_residual": 0.981425252776542,
+          "finite_arnoldi_saturation": false,
+          "history": [
+            {
+              "absolute": 0.9999999999999982,
+              "iteration": 0,
+              "relative": 1.0,
+              "seconds": 0.42676005802858946
+            },
+            {
+              "absolute": 0.9814252527765402,
+              "iteration": 15,
+              "relative": 0.981425252776542,
+              "seconds": 60.72338334714855
+            },
+            {
+              "absolute": 0.9814252527765402,
+              "iteration": 15,
+              "relative": 0.981425252776542,
+              "seconds": 61.147043696249376
+            }
+          ],
+          "inner_basis_payload_bound": 28028352,
+          "iterations": 15,
+          "ksp_create_count": 1,
+          "ksp_destroy_count": 1,
+          "ksp_solve_count": 1,
+          "max_it": 64,
+          "reason": -3,
+          "restart": 16,
+          "rhs_norm": 0.9999999999999982,
+          "seconds": 61.14707674818906,
+          "status": "INNER_INEXACT_AT_CAP",
+          "target": 0.0001,
+          "zero_start": true
+        },
+        "costs": {
+          "B4": 15,
+          "B4_operations": {
+            "A_inner_true": 0,
+            "A_structure": 30,
+            "C": 30,
+            "PH_audit": 30,
+            "smoother": 15
+          },
+          "B4_seconds": {
+            "A_inner_true": 0.0,
+            "A_structure": 12.530170348705724,
+            "C": 29.61791333789006,
+            "smoother": 4.620262036914937
+          },
+          "H4_positive": 50,
+          "bottom": {
+            "A2_true": 32,
+            "MatSolve": 32,
+            "MatSolve_attempted": 32,
+            "logical": 32,
+            "refinement": 0
+          },
+          "bottom_A2_true_semantics": "legacy counter name: each check applies S=WH A4 W, not old native A2",
+          "composed": {
+            "composed_completed": 33,
+            "composed_seconds": 22.895830904948525,
+            "composed_started": 33
+          },
+          "counts": {
+            "A4_external": 21,
+            "B4": 15,
+            "Cg": 1,
+            "I4_completed": 1,
+            "I4_started": 1,
+            "range_checks": 1,
+            "source_A4": 1
+          },
+          "metric": {
+            "curl": {
+              "calls_completed": 3,
+              "calls_started": 3,
+              "first_input_unchanged": true,
+              "first_output_slave_zero": true,
+              "result_contract": "borrowed",
+              "source_independent_rows": 48960,
+              "target_independent_rows": 48960
+            },
+            "mass": {
+              "calls_completed": 3,
+              "calls_started": 3,
+              "first_input_unchanged": true,
+              "first_output_slave_zero": true,
+              "result_contract": "borrowed",
+              "source_independent_rows": 48960,
+              "target_independent_rows": 48960
+            }
+          },
+          "original_A4_count_semantics": "external + B4 A_structure + composed_started; attempted callbacks, completed flow gives actual count",
+          "original_A4_total_started": 84,
+          "outer": 0,
+          "setup_composed": {
+            "composed_completed": 1,
+            "composed_seconds": 0.699621026054956,
+            "composed_started": 1
+          },
+          "setup_composed_semantics": "one S assembly qualifier composed call; included in composed total and parent budget, never free"
+        },
+        "resources": {
+          "peak_bytes": 1702248448,
+          "peak_stage": "workflow",
+          "peak_compilers": 1,
+          "min_available_bytes": 10972098560,
+          "violations": 0,
+          "tree_swap": 0,
+          "global_swap": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 1286,
+              "pswpout_pages": 2335
+            },
+            "end": {
+              "pswpin_pages": 1286,
+              "pswpout_pages": 2335
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "cleared": true,
+          "host_ps_confirmed_absent": [
+            1108749,
+            1108799,
+            1108800,
+            1108926,
+            1108927,
+            1108960,
+            1109125,
+            1109126,
+            1109154,
+            1109171,
+            1109172,
+            1109173,
+            1109174,
+            1109175,
+            1109176,
+            1109180,
+            1109181,
+            1109201,
+            1109205,
+            1109206,
+            1109223,
+            1109289,
+            1109290,
+            1109307,
+            1109341,
+            1109342,
+            1109343,
+            1109347,
+            1109348,
+            1109350,
+            1109354,
+            1109355,
+            1109356,
+            1109360,
+            1109361,
+            1109362,
+            1109366,
+            1109367,
+            1109368,
+            1109402,
+            1109403,
+            1109404,
+            1109408,
+            1109409,
+            1109431,
+            1109432,
+            1109433,
+            1109437,
+            1109438,
+            1109443,
+            1109444,
+            1109449,
+            1109450,
+            1109455,
+            1109456,
+            1109461,
+            1109462,
+            1109513,
+            1109514,
+            1109515,
+            1109580,
+            1109581,
+            1109582,
+            1109583,
+            1109584,
+            1109585,
+            1109711,
+            1109712,
+            1109765,
+            1109766,
+            1109771,
+            1109772,
+            1109773
+          ],
+          "peak_stage_from_monotonic_history": "h4_window_complete"
+        },
+        "clock": {
+          "elapsed_seconds": {
+            "monotonic": 328.9963891879888,
+            "boottime": 328.9963894749526,
+            "utc": 361.394431144
+          },
+          "budget_seconds": 361.39464157929785,
+          "discrepancy_seconds": 32.398041956011184,
+          "tolerance_seconds": 5.0,
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 32.398041956011184,
+          "step": {
+            "elapsed_seconds": {
+              "monotonic": 0.0032920760568231344,
+              "boottime": 0.0032911909511312842,
+              "utc": 0.003291065
+            },
+            "budget_seconds": 0.0032920760568231344,
+            "discrepancy_seconds": 1.0110568231342862e-06,
+            "tolerance_seconds": 5.0,
+            "policy": "conservative_realtime",
+            "policy_version": 1,
+            "utc_minus_monotonic_seconds": -1.0110568231342862e-06
+          },
+          "utc_positive_excess_seconds": 32.39805868866996
+        },
+        "bottom": {
+          "rows": 7326,
+          "nnz": 818100,
+          "allocated_nnz": 818100,
+          "extra_local_bytes": 9699712,
+          "derived_matrix_plus_reported_factor_budget_bytes": 346769400,
+          "residual_action_identity": "composed_WH_A4_W"
+        },
+        "independent_raw_checks_passed": 260
+      },
+      "scope": "one fixed component; true negative; no second I4/outer"
     }
   ],
-  "new_global_bubble_component": "implemented_pending_main_review_not_run",
+  "new_global_bubble_component": "measured_true_negative_not_solver_qualified",
   "old_negatives_retained": true,
   "official_new_results": false,
   "units": {
@@ -621,5 +1023,6 @@
     "scaled_curl": "k0^-2 weighted curl squared integral",
     "memory": "bytes; sampled simultaneous whole process tree RSS including compiler",
     "time": "seconds; conservative parent workflow, includes setup and cleanup"
-  }
+  },
+  "next": "bubble particular versus higher trace localization: read-only plan pending review, not_run"
 }

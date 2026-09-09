@@ -174,3 +174,20 @@ G1恰为6个固定I4+3PC，总12I4/276B4/552p2 MatSolve，零精化。冻结源�
 下一组件只完成代码与一个复数MPC/局部插入fixture，等待主线程审阅。计划同一cold setup最多900 s，先检查全类、W/Wᴴ全局伴随、S装配对WᴴA4W和range(W)身份；使用新S的唯一有界p2因子，matrix/conversion/factor及额外缓存统一≤512 MiB。通过后只测一次C_W(g)与一次原V6 BAL_H内层FGMRES16/max64/60 s/1e-4，原参考仅用于M0/curl测量，不跑outer。准确class键用未舍入的J/width、复材料、k0、quadrature、element及orientation，P/R/Q按orientation缓存；每个物理类仍核对原FFCx并通过原LU/Schur Gate。全网格候选尚未正式运行，不能把单元通过解释为收敛成功。
 
 紧凑身份与raw索引见[因果研究记录](records/p4_causal_research_v6.json)。旧诊断input_bridge的字段名覆盖仅影响标签；原NPZ未改，`v6_recursive/bridge_labels_companion.json`以原输入hash独立恢复对应关系。G1/G2/projected负结果、V5成功边界和原swap归因限制全部保留，G5/response_v8未关闭。
+
+
+## 全网格bubble组件实测补记（仍为中途研究）
+
+| 项目 | d9462e486360a86e9635b504f37a0b762c2bf896 实测 |
+|---|---|
+| 类与正确性 | 252 cells/18精确物理类/5方向；Wᴴ伴随2.9463e-15，S装配对WᴴA4W为1.9021e-14，range身份4.1916e-13。仅构造身份通过 |
+| 一次C_W(g) | 原A4残差4.052124485；M0/curl场误差剩余0.931283538/0.931271755，较旧C的约0.98759改善，但本身不是残差收敛 |
+| 唯一原V6 I4 | 15步，原A4真残差0.981425253，未达到1e-4；M0/curl剩余0.996615448/0.996601698，仍几乎未消除真实场误差 |
+| 时间边界 | 60s边界完整回调显式60.723383347s，末次显式61.147076748s；没有延长或重启。父mono328.996389188s、UTC361.394431144s，保守计费361.394641579s |
+| 底层与缓存 | p2总行7326、NNZ818100，原体图801316未扩；matrix/conversion/workspace/cache+reported factor政策346769400 B≤512 MiB。额外局部缓存政策9699712 B（含4 MiB reserve）；这些不是RSS |
+| 调用 | I4/Cg/range各1，B4=15、p2 logical/MatSolve/S_true各32、refine0；原A4总84=external21+B4结构30+composed33，含setup composed1。H4 positive50含setup20；M0/curl metric各3次；outer0 |
+| 全树资源 | RSS采样峰1702248448 B，h4_window_complete阶段含compiler1；最低系统可用10972098560 B；tree/global swapΔ0。父清场，host独立确认全部73个已观察PID退出 |
+
+260项独立原数组/哈希/账本检查通过，确认的是计算记录和负分类，没有把0.9814变成solver pass。三项旧负结果与V5成功边界不受影响；本轮无新official R/T/A。原始证据入口已加入[中途compact](records/p4_causal_research_v6.json)。
+
+下一步只提出一次固定输入定位：当前C_W未包含单元内部的特解E r=Q D⁻¹Qᴴr；需区分遗漏内部响应和更高阶切向误差。正确非Hermitian(P,Q)块逆还需要不同于Wᴴ的左限制Vᴴ，不能直接把E+C_W当完整块逆。定位方案只读待审，尚未重建网格/FE、未运行新诊断，不执行第二I4/outer，不关闭G5。
