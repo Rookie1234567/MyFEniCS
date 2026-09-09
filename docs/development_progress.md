@@ -2801,3 +2801,42 @@ F2 stored/recomputed residual 为 0.4837947981092168 / 0.48379479810921644，ide
 J6 为 not_run_by_J5_eligibility；J7/J8 locked/not_run；KSP、recovery、official E/H/R/T/A、A_volume、12+12 channels、MPI2/h5/full 0.7 nm 均未运行。V13 positive qualification 保留，但 standalone physical production claim 关闭。下一候选只有 [wave-aware DD 设计](task038_extra_full3d_iterative_0p7nm/outcomes/next_wave_aware_dd_after_v15.md)，未授权实现。
 
 V15 formal artifact v1/v2 pre-F2 execution failures 在用户明确次数授权下不计正式数值次数，但 old raw status 不改写；V15 formal artifact v3 已进入真实 span Gate，不能再重跑、改 rank/mode/参数。J5 raw JSONL 1,020,808,306 B 仅以 hash-bound compact 记录，不追踪原始文件。详见 [V15 response](task038_extra_full3d_iterative_0p7nm/response_v15.md)。
+
+## 54. Task039extra Review V7 J0–J5 closeout
+
+### 范围与基线
+
+本节登记 Task39extra V7 的最终 J5 文档收口。V5 的两个 BAL_H 完整模型仍是本任务唯一双模型 complete success baseline；V6 的递归粗逆、互补诊断和 G1/G2 负结果保持不变。V7 只关闭两条冻结 bounded candidate，不扩展为所有无 global p4 LU 路线的普遍结论。
+
+| 对象 | source/input 身份 | 方法与终态 | 资源/物理边界 |
+|---|---|---|---|
+| V5 original | V5 compact；13.5 nm、p6/h10、MPI1 | 564 步，true residual `9.932289219916342e-7`；完整 R/T/A 与物理 Gate 通过 | solve `6102.6143 s`，whole `6997.531 s`，RSS `3466235904 B` |
+| V5 notch | V5 compact；同一物理族 | 576 步，true residual `9.35170551675826e-7`；完整 R/T/A 与物理 Gate 通过 | whole `7058.7424 s`，RSS `3600924672 B` |
+| V7 A entity16 | source `44c5498dd3e3decb8088b8646947a964ac248afe`；A compact | 高阶边/面实体局部修正，792 edge + 774 face = 1566 因子；121 步中点 `0.04256451212826674` | parent/whole conservative `5637.122687149011 s`；workflow monotonic `5167.972956766025 s`；RSS `1449623552 B`；fields/RTA not_run |
+| V7 B projected seq2 | source `355322e8be0716cdc3dd70df2665b8c74ff76583`；B compact | 252 因子，parity `126/126`，88 步中点 `0.06385558342151046` | parent/whole conservative `5622.279368720655 s`，RSS `1517813760 B`；fields/RTA not_run |
+
+V7 A 名称中的 `16` 是 I4 最大内层步数，不是实体因子数。V7 B 的 sequential seq2 将两组局部修正按顺序作用，并在两组之间做一次完整 `T`；这保持有限 block coupling，但不是 global p4 matrix/factor。两条 V7 失败 workflow 即使 RSS 小于 V5，也没有完成同一验收任务，不能据此宣称更快或更省。
+
+### V7 finite、outer 与成本
+
+B finite witness 的输入 unchanged、slave constraints 和 seq2 explicit relative `0.0` 通过；2 个 complete PC 的耗时为 A2R160 `61.498345635 s`、LIGHT448 `57.656247095 s`，J2 admission 打开。finite raw recheck 的 bounded I4/projected trace 通过；通用成本 checker 的旧 audit expectation 为 2，而实际合法 finite lifecycle 是自动 iteration-one、两个 control 和 exit 共 4 条，差异已由 `checker_recheck.json` hash-bound 记录，未改 checker/production。
+
+`1e-4` 是 I4 inner early-stop target，不是 outer hard Gate。B 的 176 次 I4 均为合法 approximate return，最多 16 步，最大观测耗时低于 30 秒；A 的 242 次 I4 同样只代表受限 inner progress。两条外层都在约 5400 秒中点未达到 `1e-3`，因此均为 `PROGRESS_INSUFFICIENT_AT_MID_BUDGET`，wrapper 的 `WORKER_FAILED` 不等于 engineering crash 或 physics mismatch。
+
+| 计数/账本 | A entity16 | B projected seq2 |
+|---|---:|---:|
+| outer / PC / I4 | 121 / 121 / 242 | 88 / 88 / 176 |
+| B4 / A4 matvec | 3872 / 3872 | 2812 / 2812 |
+| S/bottom MatSolve | 7744 / 7744 | 8436 / 8436 |
+| B patch backsolve / completed T | — / — | 708624 / 2812 |
+| refinement | 0 | 0 |
+| attempt charge | `5637.269656583 s` | `5622.384071101 s` |
+| shared ledger after both | — | charged `12327.598368146999 s`; remaining `30872.401631853 s` |
+
+当前仍有扩展债务：B 仍依赖全局 S/p2 bottom factor（`7326 rows`），252 patch 的历史构造约为 `1603.835 s` 和 `36288` 个 S columns；本次 `restored_factors=252` 是复用已保存结构，不表示 fresh 构造成本消失。p4 global matrix/factor 未使用，但 0.7 nm 的规模、构造和复用债务没有因此获得资格。
+
+### 结论、未运行项与证据
+
+V7 A/B 的 native A4、旧 S bridge、输入不变性和 slave closure 通过，但 outer longtail 未解决。A/B fields、near-field、R/T/A、`A_volume`、能量闭合、显著衍射级、official release 和 notch 均为 `not_run`。低于 2 GB 的 A/B RSS 只能归档为未完成失败 workflow 的资源观测，不能写成 2 GB 成功 PDE。
+
+中心结果为 [bounded_inexact_outer_v7.md](task039_extra_physical_multilevel/outcomes/bounded_inexact_outer_v7.md)；机器记录为 [A compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_a_original_v7.json)、[B finite compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_controls_v7.json) 和 [B original compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_original_v7.json)。V5/V6 记录、raw negative、source/input hash 和共享预算均按原入口保留。J5 只做文档、compact、链接/hash 与 diff 合同检查，不启动新 PDE、MPI、factor 或 workstation heavy case。

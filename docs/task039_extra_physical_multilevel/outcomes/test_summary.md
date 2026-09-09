@@ -1,4 +1,21 @@
-# V6本地测试与文档检查
+# V7 J5本地测试与文档检查
+
+本节是当前 J5 收口记录。以下 V6、V5 及更早验证均为历史批次，原测试结果和失败原因保留，不冒作本轮重跑。
+
+| 检查 | 结果与边界 |
+|---|---|
+| source targeted regression | `8 passed in 0.22 s`，覆盖 `test_390_projected_seq2.py` 与 `test_388_bounded_checker.py` 的相关排除项；source `355322e8be0716cdc3dd70df2665b8c74ff76583` |
+| B finite raw recheck | `recompute_bounded_i4` 通过；4 I4、2 complete PC、实际 H6 2；`recompute_projected_trace_costs` 通过 |
+| finite checker distinction | generic `bounded_costs` 对旧的 2-row audit expectation 返回 false；实际合法 audit lifecycle 为 4，原因和 `checker_recheck.json` 已 hash-bound 记录 |
+| B formal outer checker | 原始 checker 的 bounded I4、screen、cost、projected trace 通过；fine residual 和 official-output gates 未通过 |
+| compact/document contract | 本轮只做 JSON、raw hash、相对链接、历史保留和 diff 检查；不运行 PDE、MPI、factor、正式 checker 或 full pytest |
+| CI/full repository | 未运行；不声称 CI 或 full repository pytest 通过 |
+
+J5 追加命令费用按共享账本的实际记录计入，不把模型等待时间重复收费。A compact [bounded_inexact_outer_a_original_v7.json](records/bounded_inexact_outer_a_original_v7.json) 保持原字节不变；新增 [B finite compact](records/bounded_inexact_outer_b_controls_v7.json) 与 [B original compact](records/bounded_inexact_outer_b_original_v7.json) 分别绑定 source、input、raw root 和关键 artifact SHA。
+
+---
+
+# 历史：V6本地测试与文档检查
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。
 

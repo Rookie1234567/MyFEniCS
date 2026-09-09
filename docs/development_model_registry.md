@@ -1,4 +1,29 @@
-# Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
+# Task39extra V7 J5当前登记：两条 bounded 候选关闭，V5 baseline 保留
+
+本节是模型登记表当前入口；以下 V6、V5 和旧 Task39extra 条目均为历史。V7 的 finite/control 通过只表示局部实现和审计闭合，不能把未完成 outer 变成 production model。
+
+| model id | source/input | 方法与实际结果 | 状态/登记边界 |
+|---|---|---|---|
+| `task39_v5_bal_h_original` | V5 compact；13.5 nm、p6/h10、MPI1 | BAL_H，564 步，完整 true residual `9.932289219916376e-7`，R/T/A `0.365625791/0.0129906323/0.621383577` | `success_with_qualifications`；双模型 baseline，非 2 GB/0.7 nm 定理 |
+| `task39_v5_bal_h_notch` | V5 compact；同一物理族 | BAL_H，576 步，完整 true residual `9.351705516758199e-7`，R/T/A `0.337120585/0.0162886742/0.646590741` | `success_with_qualifications`；唯一历史 notch baseline |
+| `task39_v7_bounded_entity16_a` | source `44c5498dd3e3decb8088b8646947a964ac248afe`；A compact | 16 local entity factors；121 步，中点 explicit true residual `0.04256451212826674`；RSS `1449623552 B` | `controlled_negative`；I4/cost/resource pass，outer/official not qualified |
+| `task39_v7_bounded_projected_seq2_b` | source `355322e8be0716cdc3dd70df2665b8c74ff76583`；B compact | 252 local factors，两个 `126/126` parity groups，逐序一次 `T`；88 步，中点 explicit true residual `0.06385558342151046`；RSS `1517813760 B` | `controlled_negative`；finite/control/trace pass，outer/official not qualified |
+
+V7 B 的 `1e-4` 是 I4 inner early-stop target，不是 hard Gate；176 次 I4 为合法 approximate returns，`max_it=16`，max observed elapsed 小于 30 秒。B finite witness 的 input/slave/seq2 closure 通过，但没有关闭 outer longtail。B 的额外 `T`、252 个局部因子和 patch backsolve 在当前成本下没有优于 A。
+
+| V7 registration field | value |
+|---|---|
+| official fields / R/T/A / `A_volume` | `not_run` |
+| ordinary default | unchanged；V7 profiles explicit research-only candidates |
+| p4 global matrix/factor | `not_used` |
+| workstation 0.7 nm | `not_run` |
+| next action | J5 docs/compact closeout only；无新 heavy PDE |
+
+证据入口：[V7 中心结果](task039_extra_physical_multilevel/outcomes/bounded_inexact_outer_v7.md)、[A compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_a_original_v7.json)、[B finite compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_controls_v7.json)、[B original compact](task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_original_v7.json)。
+
+---
+
+# 历史：Task39extra V6递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。
 

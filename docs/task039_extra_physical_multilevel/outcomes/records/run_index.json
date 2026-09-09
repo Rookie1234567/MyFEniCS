@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V6 bounded recursive C unqualified; V5 two-case baseline PASS retained with historical reference swap limitation",
+  "scope": "V7 J5 closeout: V5 two-case success baseline retained; V6 diagnostics preserved; V7 A/B frozen bounded candidates closed as controlled progress negatives",
   "units": {
     "time": "s",
     "memory": "B"
@@ -857,6 +857,45 @@
         "bytes": 24964,
         "sha256": "1507943711d0fbb8da165d6750bd11e53ce3338a48e964592bbb68cb333967f1"
       }
+    },
+    {
+      "id": "V7_A_bounded_entity16_original",
+      "source_sha": "44c5498dd3e3decb8088b8646947a964ac248afe",
+      "category": "measured",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_bounded_entity16_v7__full3d_iterative__mpi1__Mna/20260909T162804.338718Z",
+      "classification": "WORKER_FAILED",
+      "semantic_classification": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+      "mid_budget_iteration": 121,
+      "mid_budget_true_relative_residual": 0.04256451212826674,
+      "mid_budget_solve_seconds": 5423.950016599915,
+      "official_results": "not_run",
+      "rss_peak_bytes": 1449623552,
+      "swap_peak_bytes": 0,
+      "global_swap_delta": [0, 0],
+      "workflow_monotonic_seconds": 5167.972956766025,
+      "parent_whole_conservative_seconds": 5637.122687149011,
+      "outer_charge_seconds": 5637.269656583,
+      "descendants_cleared": true,
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_a_original_v7.json"
+    },
+    {
+      "id": "V7_B_bounded_projected_seq2_original",
+      "source_sha": "355322e8be0716cdc3dd70df2665b8c74ff76583",
+      "category": "measured",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_bounded_projected_seq2_16_v7__full3d_iterative__mpi1__Mna/20260909T195639.949470Z",
+      "classification": "WORKER_FAILED",
+      "semantic_classification": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+      "mid_budget_iteration": 88,
+      "mid_budget_true_relative_residual": 0.06385558342151046,
+      "mid_budget_solve_seconds": 5407.717276082982,
+      "official_results": "not_run",
+      "rss_peak_bytes": 1517813760,
+      "swap_peak_bytes": 0,
+      "global_swap_delta": [0, 0],
+      "parent_whole_conservative_seconds": 5622.279368720655,
+      "outer_charge_seconds": 5622.384071101,
+      "descendants_cleared": true,
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_original_v7.json"
     }
   ],
   "limitations": [
@@ -865,7 +904,10 @@
     "normal worker summary/release/recovery/checker completion absent; parent/OS cleanup is documented",
     "raw lifetime-ordinal sums preserved; corrected counts cover completed PCs only",
     "one PSS-unreadable terminal sample; complete RSS is resource Gate authority",
-    "A3/A4/official outputs/5nm/0.7nm not_run; no mathematical impossibility claim"
+    "A3/A4/official outputs/5nm/0.7nm not_run; no mathematical impossibility claim",
+    "V7 A and B both stopped at the midpoint with residuals above 1e-3 and no official outputs or notch qualification",
+    "V7 RSS values are incomplete failed-workflow observations, not 2 GB successful PDE qualification",
+    "V7 closes only the two frozen bounded candidates; it does not establish a universal no-global-p4-LU impossibility theorem"
   ],
   "registration_fix": {
     "path": "benchmarks/artifacts/task39extra/a2r_f93edc8_v1/registration_fix.json",
@@ -925,5 +967,25 @@
     "G2_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_recursive_p4_lo_v6__full3d_iterative__mpi1__Mna/20260909T004017.830734Z",
     "HI": "not_qualified",
     "notch": "not_run_original_failed"
+  },
+  "v7": {
+    "status": "TWO_FROZEN_BOUNDED_CANDIDATES_CLOSED_CONTROLLED_NEGATIVE",
+    "source_sha": "mixed_per_run",
+    "A_source_sha": "44c5498dd3e3decb8088b8646947a964ac248afe",
+    "B_source_sha": "355322e8be0716cdc3dd70df2665b8c74ff76583",
+    "A_compact": "docs/task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_a_original_v7.json",
+    "B_finite_compact": "docs/task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_controls_v7.json",
+    "B_original_compact": "docs/task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_original_v7.json",
+    "A_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_bounded_entity16_v7__full3d_iterative__mpi1__Mna/20260909T162804.338718Z",
+    "B_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_bounded_projected_seq2_16_v7__full3d_iterative__mpi1__Mna/20260909T195639.949470Z",
+    "A_status": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+    "B_status": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+    "official_outputs": "not_run",
+    "notch": "not_run",
+    "shared_ledger": {
+      "total_charged_seconds": 12327.598368146999,
+      "remaining_seconds": 30872.401631853
+    },
+    "next": "J5 documentation and compact closeout only; no new heavy PDE or workstation authorization"
   }
 }

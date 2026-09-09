@@ -1,4 +1,46 @@
-# Task39extra 工作站移交边界：V2关闭
+# Task39extra 工作站移交边界：V7 J5关闭两条 bounded 候选
+
+本节是当前工作站边界；以下 V2 及更早内容是历史移交记录。V7 没有新的 workstation heavy 授权，也没有把未完成 PDE 的低 RSS 观测写成能力通过。
+
+| 项目 | 当前结论 |
+|---|---|
+| V5 可复现基线 | 原始 564 步和唯一 notch 576 步保留为完整双模型成功 baseline；参考 workflow 的 448 页 global `pswpout` 归因仍为 `UNRESOLVED` |
+| V6 | 递归 coarse route、G1/G2 保留未资格化负结果；真实难误差定位属于 `response_v6` 历史补充授权，不是本轮 V7 新结果；不重跑、不升 production default |
+| V7 A | entity16 在 121 步、true residual `0.04256451212826674` 处中点失败；RSS `1449623552 B`，fields/RTA 未运行 |
+| V7 B | projected seq2 在 88 步、true residual `0.06385558342151046` 处中点失败；RSS `1517813760 B`，fields/RTA 未运行 |
+| 资源含义 | 两次 tree swap/global swap delta 均为零；低于 2 GB 仅是未完成 outer 的受控观测，不是成功 PDE |
+| 资格边界 | A/B 两条冻结 bounded candidate 关闭；不作所有无 global p4 LU 方法的普遍不可能性结论 |
+| 下一步 | 无新 heavy case；如需重开，必须重新冻结 source/input/ABI、资源口径和独立 physical output Gate |
+
+方法解释、逐 8 步曲线、成本和 compact hash 见 [V7 中心结果](bounded_inexact_outer_v7.md)、[A compact](records/bounded_inexact_outer_a_original_v7.json)、[B finite compact](records/bounded_inexact_outer_b_controls_v7.json) 和 [B original compact](records/bounded_inexact_outer_b_original_v7.json)。
+
+| 当前 selective merge 依赖组 | 边界 |
+|---|---|
+| production numerical/core | V7 不改变 ordinary default；bounded profiles 不能因 finite/control pass 升级为默认 |
+| reusable runner/watchdog | 只审已有单 KSP、midpoint stop、资源采样和清场；本轮无新 runner code |
+| checker/benchmark | finite `checker_recheck.json` 作为独立审计入口；保留 outer checker 原规则，不因 audit 计数差异改 production |
+| compact evidence/docs | V7 center、response V8、summary/index/handoff 与两份 B compact 最后审阅 |
+| research-only | entity16、projected seq2、252 patch construction 及 V6 recursive/C；保留 controlled negatives |
+| do-not-merge | raw fields、matrix/factor、cache、timeline、checkpoint 大文件及 ignored scratch |
+
+本表不是 merge approval；没有执行 `master` 合并。工作站 0.7 nm、2 TB、非可分结构和新的 heavy PDE 均为 `not_run`。
+
+## 5 nm 短波预审清单（未授权）
+
+如未来重新提出 5 nm heavy case，必须先完成以下轻量资格化；本轮没有获得短波 heavy 授权，也不能直接复用旧 mode/hash 放行。
+
+| 预审项 | 必须重新确认的内容 |
+|---|---|
+| 材料 | 5 nm 对应频率下的材料色散、损耗和单位体系；不能把 13.5 nm 材料参数直接外推 |
+| mode/hash | 重新生成并核验 mode manifest、physical-model hash、input hash 与 source identity；旧 hash 只能作历史参考 |
+| 底层规模 | 重新估计/测量 S/p2、local inverse、DtN、矩阵/因子和同时存活对象的规模，不能只按当前 13.5 nm rows 外推 |
+| 完整资源 | 先做完整 process-tree RSS、swap、MPI/线程和 cleanup 预审，并记录所有 inner/outer 成本；单组件低 RSS 不等于 full PDE 通过 |
+
+在上述 material/mode/hash、底层规模、完整 RSS 和全部内层成本检查完成并获得新的明确授权前，5 nm 与 0.7 nm 仍保持 `not_run`。
+
+---
+
+# 历史：Task39extra 工作站移交边界：V2关闭
 
 | Review V2 / F5 | 当前结论 |
 |---|---|

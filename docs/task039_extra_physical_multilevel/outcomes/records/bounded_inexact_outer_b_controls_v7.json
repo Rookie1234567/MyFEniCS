@@ -1,0 +1,177 @@
+{
+  "schema": "task39extra.review-v7.b-finite-controls.v1",
+  "status": "B_FINITE_COMPARISON_AND_CONTROLS_COMPLETED",
+  "scope": "Finite original-mesh comparison and bounded-control admission only; no complete outer solve.",
+  "source": {
+    "head": "355322e8be0716cdc3dd70df2665b8c74ff76583",
+    "branch": "task39extra",
+    "upstream": "origin/task39extra",
+    "ahead_behind": [0, 0],
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "input": {
+    "path": "input/task39extra/original_13p5nm_p6h10_bounded_projected_seq2_16_v7.dat",
+    "sha256": "f0b470a098879c8c6cd85b532c156ab8cec2a9c479e64fd69d28fb265b813022",
+    "input_unchanged": true,
+    "slave_constraints_max_abs": 0.0
+  },
+  "profile": {
+    "name": "bounded_projected_seq2_16_v7",
+    "route": "PROJECTED_SEQ2_16",
+    "finite_scope": "one current original-mesh p4 RHS; additive and sequential comparison; no outer solve",
+    "forbidden_inputs": ["e", "reference_y", "old_PC_outputs"],
+    "one_apply_contraction_gate": "NOT_APPLIED_BY_CONTRACT",
+    "old_recursive_campaign": "not_called"
+  },
+  "finite_witness": {
+    "status": "FINITE_COMPARISON_COMPLETED",
+    "finite": true,
+    "formula": "M0 + M1 - M1*T*M0",
+    "T_expression": "F^H A4 (I-CU A4) F",
+    "additive_T_calls": 0,
+    "sequential_T_calls": 1,
+    "seq2_explicit_relative": 0.0,
+    "output_difference_relative_additive_vs_sequential": 0.10156795932683357,
+    "factor_count": 252,
+    "factor_dimension": 144,
+    "parity_group_counts": [126, 126],
+    "local_backsolves_per_apply": 252,
+    "explicit_trace_local_backsolves": 252,
+    "slave_gate": {
+      "passed": true,
+      "limit": 1e-12,
+      "max_abs": {
+        "rhs": 0.0,
+        "additive": 0.0,
+        "explicit": 0.0,
+        "seq2": 0.0
+      }
+    },
+    "timings_seconds": {
+      "additive": 0.30210641701705754,
+      "explicit": 0.7432944929460064,
+      "seq2": 0.7523249959340319,
+      "total": 1.7977960970019922
+    }
+  },
+  "admission": {
+    "setup_count": 1,
+    "complete_pc_count": 2,
+    "i4_calls": 4,
+    "labels": ["A2R160", "LIGHT448"],
+    "pc_seconds": {
+      "A2R160": 61.498345635,
+      "LIGHT448": 57.656247095
+    },
+    "one_complete_pc_seconds_le_90": true,
+    "actual_h6_applies": 2,
+    "actual_i4_per_complete_pc": 2,
+    "i4_target": 0.0001,
+    "i4_max_it": 16,
+    "i4_statuses": [
+      "INNER_APPROXIMATE_RETURN",
+      "INNER_APPROXIMATE_RETURN",
+      "INNER_APPROXIMATE_RETURN",
+      "INNER_APPROXIMATE_RETURN"
+    ],
+    "j2_gate": "J2_ADMISSION_OPEN"
+  },
+  "raw_recheck": {
+    "bounded_i4": {
+      "passed": true,
+      "i4_calls": 4,
+      "A4_matvec": 63,
+      "B4_calls": 63,
+      "explicit_A4": 12,
+      "complete_pc_count": 2,
+      "actual_h6_applies": 2
+    },
+    "projected_trace": {
+      "passed": true,
+      "T_calls": 63,
+      "patch_backsolves": 15876,
+      "bottom_mat_solves": 189
+    },
+    "bounded_costs": {
+      "passed": false,
+      "reason": "Generic checker expects two audit rows, while the legal finite audit lifecycle has four rows: automatic iteration-one, one per each of two controls, and exit."
+    },
+    "actual_finite_audit_count": 4,
+    "audit_lifecycle": [
+      "automatic_iteration_one",
+      "control_A2R160",
+      "control_LIGHT448",
+      "exit"
+    ],
+    "standard_checker": "EVIDENCE_INCOMPLETE",
+    "standard_checker_policy": "Finite-only output lacks physical_intermediate_summary.json; checker.json is preserved unchanged and is not used as an outer-solve result."
+  },
+  "resources": {
+    "simultaneous_process_tree_rss_peak_bytes": 1464356864,
+    "process_tree_swap_peak_bytes": 0,
+    "global_swap_delta": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "watchdog_budget_seconds": 328.7520532931463,
+    "descendants_cleared": true
+  },
+  "batch_ledger": {
+    "total_charged_seconds_after_finite": 6705.214297046,
+    "remaining_seconds_after_finite": 36494.785702954,
+    "b_projected_controls_charged_seconds": 460.890093588,
+    "b_projected_controls_remaining_seconds": 4939.109906412
+  },
+  "evidence": {
+    "raw_root": "benchmarks/artifacts/task39extra/v7_b_controls/355322e8be0716cdc3dd70df2665b8c74ff76583/controls",
+    "files": {
+      "checker.json": {
+        "sha256": "3dabf6a086c14fb466c4c383cbef94efcf4d6f5c28b9a821087d7a587a16fa8d"
+      },
+      "checker_recheck.json": {
+        "sha256": "e4cf089e2c14df73aff738bb04102d492488a8cc02bdb3a10aa3bc74705ddca1"
+      },
+      "j1_controls_summary.json": {
+        "sha256": "8900c08dbb80e7fe4935d999c06303a2fd3cc299ada878a051520582bb1fd1da"
+      },
+      "terminal.json": {
+        "sha256": "787c86ac8eb5dbfcdcefaaa55bca4db84c6dde8e9dddf9ef2866b7b72047c61b"
+      },
+      "run_manifest.json": {
+        "sha256": "bbaf9a42b479a5e667103fa13569c38ab58bf9f8d382d5ac545d376b00522d48"
+      },
+      "resolved_config.json": {
+        "sha256": "81589127e372baf26c2e6d3e3c329091d479748600ac94f45f8543ae657662ef"
+      },
+      "input_original.dat": {
+        "sha256": "f0b470a098879c8c6cd85b532c156ab8cec2a9c479e64fd69d28fb265b813022"
+      },
+      "source_after.json": {
+        "sha256": "3f2200687f097936b68b88fad556ee0249319e8751dd760a65560bf746e9b008"
+      },
+      "bounded_i4.jsonl": {
+        "sha256": "527459cd9ccd11fabd66adb9b7445b691ed6ef45b1c0facc5415990dd9b23daf"
+      },
+      "pc_applies.jsonl": {
+        "sha256": "a5ca25dba416d81d5a4ba41ca9a68ef39b6952fb1a8379f739377cf2f64d9964"
+      },
+      "bounded_exit_audit.jsonl": {
+        "sha256": "b6b01ca3c875d4f17a4f64c435eff4393184306e537e4781448787b2237e12d0"
+      },
+      "stages.jsonl": {
+        "sha256": "8190ea9673b189533e513522b84c65e7f4adcf98781fa949c97c9ef1c0bbfc5f"
+      },
+      "phase.json": {
+        "sha256": "fbff5c2121ec20159553dfbef14484f727b1a41c6ea9b4c600c469a5acedb207"
+      },
+      "j1_controls.jsonl": {
+        "sha256": "333c8d088db169c88d22fa38cb04d53f6b505615517bdcbdb69c83dcf290f4dc"
+      },
+      "launch_plan.json": {
+        "sha256": "1f5e7311118427f72af33b4b8ed55a21d50d8516adc00b2aaac0866fb98126b7"
+      }
+    }
+  },
+  "interpretation": "The projected sequential/additive finite witness is valid and the two complete PCs satisfy bounded admission controls. The finite audit-count mismatch is a checker-contract distinction, not a production application or numerical failure. This record does not qualify a complete outer solve, official fields, R/T/A, or a notch model."
+}

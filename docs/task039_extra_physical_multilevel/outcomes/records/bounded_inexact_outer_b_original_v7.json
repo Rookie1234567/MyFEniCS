@@ -1,0 +1,202 @@
+{
+  "schema": "task39extra.review-v7.b-original-negative.v1",
+  "classification": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+  "qualified": false,
+  "wrapper": {
+    "classification": "WORKER_FAILED",
+    "exit_code": 4,
+    "worker_status": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+    "engineering_crash": false
+  },
+  "run": {
+    "run_directory": "results/euv_grazing1_phi0/original_13p5nm_p6h10_bounded_projected_seq2_16_v7__full3d_iterative__mpi1__Mna/20260909T195639.949470Z",
+    "raw_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_bounded_projected_seq2_16_v7__full3d_iterative__mpi1__Mna/20260909T195639.949470Z",
+    "profile": "bounded_projected_seq2_16_v7",
+    "route": "PROJECTED_SEQ2_16",
+    "source_sha": "355322e8be0716cdc3dd70df2665b8c74ff76583",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "input_path": "input/task39extra/original_13p5nm_p6h10_bounded_projected_seq2_16_v7.dat",
+    "input_sha256": "f0b470a098879c8c6cd85b532c156ab8cec2a9c479e64fd69d28fb265b813022"
+  },
+  "solver_policy": {
+    "outer": "right FGMRES32, max_it=2048, zero start, one live KSP",
+    "inner": "right FGMRES16, max_it=16, zero start, target=1e-4",
+    "inner_safe_return_seconds": 25.0,
+    "inner_hard_seconds": 30.0,
+    "explicit_true_residual": true,
+    "p4_global_matrix_or_factor": "not_used"
+  },
+  "screen": {
+    "status": "SCREEN_CONTINUE_SAME_LIVE_KSP",
+    "passed": true,
+    "iteration": 30,
+    "true_relative": 0.20693967916705572,
+    "solve_seconds": 1832.1188723009734,
+    "checkpoints": [
+      [8, 0.8980825870473894],
+      [16, 0.5359412651884803],
+      [24, 0.30954757985833703]
+    ],
+    "restart_or_second_ksp": "none"
+  },
+  "residual_curve_every_8": [
+    [0, 1.0],
+    [8, 0.8980825870473894],
+    [16, 0.5359412651884803],
+    [24, 0.30954757985833703],
+    [32, 0.1731681894882569],
+    [40, 0.16592017585260752],
+    [48, 0.15581829208526618],
+    [56, 0.14737688669608293],
+    [64, 0.10766900770994711],
+    [72, 0.0947969453681564],
+    [80, 0.07926719824355831],
+    [88, 0.06385558342151046]
+  ],
+  "mid_budget": {
+    "status": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+    "passed": false,
+    "iteration": 88,
+    "solve_seconds": 5407.717276082982,
+    "true_relative": 0.06385558342151046,
+    "limit": 0.001,
+    "official_outputs": "not_run",
+    "fields": "not_run",
+    "R_T_A": "not_run",
+    "A_volume": "not_run",
+    "notch_qualification": "not_run"
+  },
+  "solve": {
+    "iterations": 88,
+    "matvec_count": 90,
+    "pc_apply_count": 88,
+    "explicit_action_count": 16,
+    "final_true_residual": 0.06385558342151046,
+    "finalization_seconds": 5409.078192365032,
+    "ksp_create_solve_destroy": [1, 1, 1],
+    "reason": "controlled progress stop at the prescribed midpoint gate"
+  },
+  "bounded_costs": {
+    "passed": true,
+    "B4_applies": 2812,
+    "B4_calls": 2812,
+    "A4_matvec": 2812,
+    "explicit_A4": 528,
+    "I4_calls": 176,
+    "actual_h6_applies": 88,
+    "inner_status_all": "INNER_APPROXIMATE_RETURN",
+    "inner_iterations_range": [15, 16],
+    "inner_target_hits": 0,
+    "inner_elapsed_range_seconds": [23.13060690807962, 27.28333785289997],
+    "inner_max_below_hard_seconds": true,
+    "inner_target_is": "early-stop target, not a hard Gate for the bounded outer route"
+  },
+  "projected_trace": {
+    "formula": "F^H A4 (I-CU A4) F",
+    "factor_count": 252,
+    "factor_dimension": 144,
+    "parity_group_counts": [126, 126],
+    "restored_factors": 252,
+    "no_saved_entity_lu_overlap": true,
+    "setup_S_column_solves": 0,
+    "T_applications": 2812,
+    "T_completed": 2812,
+    "S_action_setup_calls": 1,
+    "S_action_runtime_calls": 8436,
+    "S_action_total_calls": 8437,
+    "patch_backsolves": 708624,
+    "patch_backsolves_group0": 354312,
+    "patch_backsolves_group1": 354312,
+    "bottom_MatSolve": 8436,
+    "A2_true": 8436,
+    "refinement": 0,
+    "cached_native_volume_dtn_completed": 14061,
+    "cached_native_volume_dtn_started": 14061
+  },
+  "bounded_p2": {
+    "rows": 7326,
+    "nnz": 818100,
+    "row_cap": 8192,
+    "matrix_plus_estimated_factor_budget_bytes": 292367492,
+    "matrix_plus_reported_factor_budget_bytes": 415367492,
+    "bottom_factor_cap_bytes": 536870912,
+    "classification": "derived_policy_budget_not_RSS",
+    "p4_global_matrix": "not_used",
+    "p4_global_factor": "not_used"
+  },
+  "resources": {
+    "watchdog_monotonic_seconds": 5149.940192776034,
+    "solve_conservative_seconds": 5411.832214074118,
+    "worker_whole_conservative_seconds": 5613.755838708297,
+    "parent_whole_conservative_seconds": 5622.279368720655,
+    "process_tree_rss_peak_bytes": 1517813760,
+    "process_tree_swap_peak_bytes": 0,
+    "global_swap_delta": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "dynamic_launch_cap_bytes": 7432704000,
+    "resource_samples": 19860,
+    "descendants_cleared": true,
+    "remaining_child_pids": []
+  },
+  "checker": {
+    "classification": "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+    "reference_authority": "PENDING_A4_not_compared",
+    "independent_output_gates_passed": false,
+    "gate_failures": [
+      "fine residual 0.06385558342151033 exceeds 1e-6",
+      "official outputs unavailable"
+    ],
+    "bounded_i4": "passed",
+    "bounded_screen": "passed",
+    "bounded_costs": "passed",
+    "bounded_projected_trace": "passed",
+    "recheck": "raw closure and cost groups independently recomputed; no official-output gate passed"
+  },
+  "checkpoint": {
+    "iteration": 88,
+    "manifest_path": "checkpoints/iteration_000088/manifest.json",
+    "manifest_sha256": "7321a0568a84abba35da2838c81c0f833b326817a3237ef4ea1d50ecf57f1201",
+    "solution_path": "checkpoints/iteration_000088/solution_rank0.npy",
+    "solution_sha256": "d557f4cbcc2bc9026cde9867de1036dd7738904441bf031e64d6735bea2951aa",
+    "solution_shape": [173802],
+    "solution_dtype": "complex128",
+    "last_safe_checkpoint_sha256": "b100546fa25832e5a10349fa74534dd94427f87ee115a12fc9cb0388bc33567b"
+  },
+  "raw_evidence": {
+    "physical_intermediate_summary.json": "6a8ff347e29250a31f9cb3bbd8943677eac375444f721290880edef82b2a74cc",
+    "checker.json": "14270b02d996f029f49b7e06d6d23dbe219227cea764b4afee8c1eb8ff402b43",
+    "run_manifest.json": "03f746f730c7092155a35b9785d25a43215b671d2debc0cd1f3b270144bf5282",
+    "run_summary.json": "6cf7a71abd0fcf56b4d7dffc11aaefc23adb3b05cf43b6956742134b26e71c26",
+    "watchdog/summary.json": "06da4d4bbf9b3cb35c4c077b02252047b8193aa81b76a5d491fb6bcea5e23df9",
+    "monitor_residuals.jsonl": "686ae9a5ac2c7d218d32371e0677a1fb232f1affc3f92f3fb005285773b0f870",
+    "iterations.jsonl": "0351d6ae20d7242cd6125fcb1c9e1fafadf40fc086123c897fbc048d36c31225",
+    "bounded_i4.jsonl": "296db014e6469811103bed38d59de5007cc8fdcbb76b7d5a8b7959c525940262",
+    "pc_applies.jsonl": "9d61e467f2a09758360c33332f2d53f0dd0ea3a6fd78c0433bdb4688d0fa13a6",
+    "bounded_exit_audit.jsonl": "497fb89cd80f833ba06934ffa47080a1a45c6416327c97e36cf32c70f794c069",
+    "final_residual_arrays.npz": "db1f1be28d7bf746eed5b61f54486f29efa3f8ecc7f114b09df34951de12539e",
+    "bounded_trace_storage.json": "96088b2449d3caa33220cd482ec6427888ac6a1d7c2532de8e5d290089d8c9b4",
+    "setup.json": "75766af79e8f1b7fe35d266e65647f4d8e31882050581a0546aaebbdd0f8d06a",
+    "last_safe_checkpoint.json": "b100546fa25832e5a10349fa74534dd94427f87ee115a12fc9cb0388bc33567b",
+    "input_original.dat": "f0b470a098879c8c6cd85b532c156ab8cec2a9c479e64fd69d28fb265b813022",
+    "resolved_config.json": "1c098e04c7c1ac5995fc3d04fea8e8133ed071a1ef3473e4c3873eb97264445c",
+    "bounded_operator_bridges.json": "a90e92e441232eb902dc9727461b404099f6a70fec1056123e9d58790470afef",
+    "bounded_owner_S_probe_q.json": "96070e251a9048cb259e798b4c25f34f73de57324583efe8dbd23fd7abebd808",
+    "bounded_owner_range_q.json": "93aa9852c036e0a12b72efe6a9c3d20d0244d025dcdc01423e59457e14a8721f",
+    "bounded_owner_saved_delta_z.json": "066c0f9d7b8deb625e50050489240cd76bca4c3f974c210ac2385397f88ca4d6",
+    "physical_model_sha256.txt": "64821935e5eec1f1d80e5a427770823629c51ba7f882c7c331e96e766ecaddac",
+    "source_sha.txt": "640df4b19c7c03da74879640f16703b046d6c2c6eb12ac266c7fdf0d2904cea8"
+  },
+  "batch_ledger": {
+    "attempt_index": 6,
+    "preparation_charge_seconds_already_included": 132.113,
+    "outer_attempt_charge_seconds": 5622.384071101,
+    "total_charged_seconds": 12327.598368146999,
+    "remaining_seconds": 30872.401631853,
+    "attempt_status": "WORKER_FAILED",
+    "ledger_prose_status": "stale full-outer not_run text was not rewritten; this attempt record is authoritative"
+  },
+  "interpretation": "Both A and B frozen bounded candidates show genuine residual reduction but stop near the 5400-second midpoint with residuals far above the 1e-3 progress line. The 1e-4 value is an inner early-stop target, not a hard Gate; the 176 I4 returns are legal approximate returns, with max16 and max observed elapsed below 30 seconds. The result closes these two candidates as controlled negatives for this round, not all no-global-p4-LU methods."
+}

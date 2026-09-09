@@ -1,4 +1,35 @@
-# Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
+# Task39extra V7 J5当前结果：两条 bounded 候选均关闭为 controlled negative
+
+本节是当前权威摘要；本节以下的 V6、V5 及更早内容全部是历史记录，保留原始负结果和资源限制，不应按其中旧的“当前/下一步”文字重新授权运行。
+
+| 范围 | 当前结论 |
+|---|---|
+| 任务范围 | 完成 V7 J1 finite/control 与 A/B 两条冻结 bounded outer；J5 仅文档和紧凑证据收口 |
+| V7 A | `bounded_entity16_v7`：121 步，中点 full explicit true residual `0.04256451212826674`，`PROGRESS_INSUFFICIENT_AT_MID_BUDGET` |
+| V7 B | `bounded_projected_seq2_16_v7`：88 步，中点 full explicit true residual `0.06385558342151046`，`PROGRESS_INSUFFICIENT_AT_MID_BUDGET` |
+| B finite | 输入 unchanged、slave constraints 通过、seq2 explicit relative `0.0`；2 个 complete PC 和 4 个 I4 控制通过，`J2_ADMISSION_OPEN` |
+| V5 baseline | 原始 564 步、notch 576 步完整成功仍保留，是本任务唯一双模型 complete success baseline；R/T/A=`0.365625791/0.0129906323/0.621383577`、`0.337120585/0.0162886742/0.646590741`；whole `6997.531 s` / `7058.7424 s`，RSS `3466235904 B` / `3600924672 B` |
+| V6 | 递归粗逆仍为未资格化负结果；真实难误差定位属于 `response_v6` 历史补充授权，不是本轮 V7 新结果；不改写、不重跑、不升为 production default |
+| official output | A/B fields、R/T/A、`A_volume`、near-field、衍射级和 notch 均 `not_run`，不是 physics mismatch |
+| 当前决定 | 只关闭 entity16 与 projected seq2 两条冻结候选，不能推出所有无 global p4 LU 方法不可能 |
+
+逐 8 步 residual 曲线、实际调用成本、资源口径、finite audit 计数差异及 raw hash 见 [V7 中心结果](bounded_inexact_outer_v7.md)。机器可读记录见 [A compact](records/bounded_inexact_outer_a_original_v7.json)、[B finite compact](records/bounded_inexact_outer_b_controls_v7.json) 和 [B original compact](records/bounded_inexact_outer_b_original_v7.json)。
+
+| 资源/账本 | A entity16 | B projected seq2 |
+|---|---:|---:|
+| process-tree RSS peak | `1449623552 B` | `1517813760 B` |
+| process-tree swap peak | `0 B` | `0 B` |
+| global swap delta | `0/0` | `0/0` |
+| parent/whole conservative | `5637.122687149011 s` | `5622.279368720655 s` |
+| shared ledger after both | — | charged `12327.598368146999 s`; remaining `30872.401631853 s` |
+
+两次 RSS 均低于 2 GB，但对应的是未完成 outer 的受控进程树观测，不能写成 2 GB 成功 PDE。B 的 p2 `rows=7326`、`NNZ=818100` 和 factor budget 是 derived policy budget，不是 RSS 上界；全局 p4 matrix/factor 未使用。
+
+本轮没有新的 heavy case、checker/production 修改或 workstation 0.7 nm 授权。source HEAD 仍为 `355322e8be0716cdc3dd70df2665b8c74ff76583`，分支 `task39extra` 与 `origin/task39extra` ahead/behind `0/0`；文档和 compact 待审阅后再提交推送。
+
+---
+
+# 历史：Task39extra V6递归粗逆未资格化，V5双模型成功基线保留
 
 最新补空间诊断：单个p4内部RHS从64步残差0.03132214953分段接续至256步0.0003738177529，改善83.7899倍但未达1e-4。新增192 B4/384 S、0精化；两次parent实际计费240.039471秒，第二次为时间受控停止，不能写预算PASS。局部检查通过、固定方向块外耦合与权重项存在抵消，不据此改权重。G5仍开放，V5双模型成功不变；见[简明证据](recursive_p4_complement_diagnostic_v6.md)及[compact](records/recursive_p4_complement_diagnostic_v6.json)。以下旧阶段文字保留。
 
