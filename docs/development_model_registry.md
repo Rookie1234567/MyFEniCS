@@ -1497,15 +1497,16 @@ A2R 测量前另有一次 `adapter_unavailable`（source f93edc8ae9e90c4ed07e375
 
 S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及分解内存换取准确中间修正。RSS 为同期进程树采样峰值。两次 A2 均没有最终物理结果；初始 checkpoint 不能代替最终残差，成本受控停止不能推出不收敛定理。这是 13.5 nm 阶段记录，不代表 0.7 nm 已通过。来源、完整 SHA 和 hash 见 [Task39extra 运行索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)，解释见 [阶段总结](task039_extra_physical_multilevel/outcomes/summary.md)。
 
-## 3.42 Task39extra_para：原生工作站容量迁移（进行中）
+## 3.42 Task39extra_para：原生工作站迁移与性能停止
 
-本项目复现既有 V5 BAL_H + 全局 p4 LU，尚未解锁短波。2026-09-09 首次原始 13.5 nm Si、p6/h10、MPI1 运行在 p4 LU 完成后被固定通道哈希检查拦住，没有 outer 和 official 光学结果。
+本项目复现既有V5 BAL_H + 全局p4 LU，MPI1/线程1、13.5 nm Si、p6/h10。原native mode末位浮点差身份桥已修复，但首段时间Gate未通过；无official场或光学结果，尚未解锁短波。
 
-| Model ID | source / measured 数值规模 | measured 资源 | 状态及证据 |
+| Model ID | source / measured数值规模 | measured结果与资源 | 状态及证据 |
 |---|---|---|---|
-| native_R1_attempt1 | `492cd519da07a8790980f9f2f21cbef24bed1643`；252 cells；p6 173802/164592；p4 53164 rows、24730144 NNZ、factor 53417584 NNZ | workflow 2731.774616 s；同期整树 RSS 2992881664 B；swap 0；后代清场 | FAILED_SETUP_MODE_IDENTITY；solve_calls=0，无 residual/R/T/A；[过程报告](task39extra_para_workstation_capacity/outcomes/reproduction_13p5nm.md)、[compact](task39extra_para_workstation_capacity/outcomes/records/r1_attempt1.json) |
+| native_R1_attempt1 | `492cd519da07a8790980f9f2f21cbef24bed1643`；252 cells；p6 173802/164592；p4 53164 rows、24730144 NNZ、factor 53417584 NNZ | workflow2731.775 s；整树峰值2992881664 B；swap0；清场 | FAILED_SETUP_MODE_IDENTITY；outer未运行；[compact](task39extra_para_workstation_capacity/outcomes/records/r1_attempt1.json) |
+| native_R1_retry1 | `b2e132a7b1f1078eb3359c87a336123b3c7dfbdd`；规模同上 | 62步true0.019433158954790204；p4最差4.893382586118271e-11、124次无修正；workflow3997.651 s；峰值3395833856 B；swap0；清场 | SCREEN_BUDGET_NO_QUALIFIED_PROGRESS；无R/T/A/A_volume、R00_s/R00_p/R00_total或official E/H；[compact](task39extra_para_workstation_capacity/outcomes/records/r1_attempt2.json) |
 
-尚未 retry；旧完整通道 metadata 正在移交。R2/S5/S3/S2/G 未运行，不能从本次身份失败推出数值方法或内存容量失败。
+第32步native/WSL完整true绝对差3.13e-13，主要问题是单位迭代耗时。p4矩阵按行访问及独立curl系数循环合并，在严格浮点真实单元测试中逐位一致，诊断加速分别约3.6倍、p6约2倍/p4约1.4倍；尚无优化后full R1。RSS/PSS监督开销已最小修复，未换PC或放宽Gate。R2、条件reference、S5/S3/S2/G均NOT_RUN_BY_PREVIOUS_GATE；不能从当前性能停止推断内存容量或物理失败。见[本轮总结](task39extra_para_workstation_capacity/outcomes/summary.md)。
 
 # 4. 今后新增模型的登记模板
 

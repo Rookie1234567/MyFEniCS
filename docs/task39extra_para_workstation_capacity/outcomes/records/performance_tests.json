@@ -1,0 +1,72 @@
+{
+  "implementation_sha": "f124679e75915758076d9240bd4bef2f5c772752",
+  "classification": "LOCAL_TEST_EVIDENCE_NOT_FORMAL_PDE",
+  "logs": [
+    {
+      "path": "benchmarks/artifacts/native_capacity/performance_targeted_tests.log",
+      "bytes": 110,
+      "sha256": "1096c532f89a1d2531a1b1670dbd3147796561c06713b33d0023f0237696577f",
+      "tail": [
+        ".....                                                                    [100%]",
+        "5 passed in 125.44s (0:02:05)"
+      ]
+    },
+    {
+      "path": "benchmarks/artifacts/native_capacity/performance_regression_tests.log",
+      "bytes": 98,
+      "sha256": "69ea0e7c25c3192c8a128b9888b18946a49a3a48f2728b111310715c30b34055",
+      "tail": [
+        "",
+        "",
+        "no tests ran in 0.00s"
+      ]
+    },
+    {
+      "path": "benchmarks/artifacts/native_capacity/performance_regression_tests_v2.log",
+      "bytes": 4300,
+      "sha256": "335a21e4535da4c38abf8fcaa0c217a413e953ecff199a6bd69aa414fe9b6c2e",
+      "tail": [
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_366_mpi_cooperative_stop.py::test_opt_in_mpi_application_soft_stop_and_hard_gates[stale_identity]",
+        "1 failed, 86 passed, 1 deselected in 34.24s"
+      ]
+    },
+    {
+      "path": "benchmarks/artifacts/native_capacity/performance_watchdog_tests_v3.log",
+      "bytes": 100,
+      "sha256": "2562f356ab0321510b23abd3b4794997ac881aefbde743b559216b8b2e0caf38",
+      "tail": [
+        "...........                                                              [100%]",
+        "11 passed in 31.51s"
+      ]
+    },
+    {
+      "path": "benchmarks/artifacts/native_capacity/performance_sampling_tests.log",
+      "bytes": 112,
+      "sha256": "556aeebde1d31bce93a33a30016eb6442202274f731096e3cbcf547e63f850af",
+      "tail": [
+        "...                                                                      [100%]",
+        "3 passed, 3 deselected in 2.10s"
+      ]
+    },
+    {
+      "path": "benchmarks/artifacts/native_capacity/performance_ruff_delta.json",
+      "bytes": 1111,
+      "sha256": "d9d4d0805bf59a3637dbb03d1ac84285907cc459040dde100b7e0bab03f1c043",
+      "tail": [
+        "    \"introduced\": []",
+        "  }",
+        "]"
+      ]
+    },
+    {
+      "path": "benchmarks/artifacts/native_capacity/performance_doc_tests.log",
+      "bytes": 99,
+      "sha256": "88d00f8cc25efd895f76b07d9fb811f1782b4872206c18eea2a70638637b1c0a",
+      "tail": [
+        "....................                                                     [100%]",
+        "20 passed in 0.05s"
+      ]
+    }
+  ]
+}

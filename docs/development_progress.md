@@ -2801,3 +2801,14 @@ F2 stored/recomputed residual 为 0.4837947981092168 / 0.48379479810921644，ide
 J6 为 not_run_by_J5_eligibility；J7/J8 locked/not_run；KSP、recovery、official E/H/R/T/A、A_volume、12+12 channels、MPI2/h5/full 0.7 nm 均未运行。V13 positive qualification 保留，但 standalone physical production claim 关闭。下一候选只有 [wave-aware DD 设计](task038_extra_full3d_iterative_0p7nm/outcomes/next_wave_aware_dd_after_v15.md)，未授权实现。
 
 V15 formal artifact v1/v2 pre-F2 execution failures 在用户明确次数授权下不计正式数值次数，但 old raw status 不改写；V15 formal artifact v3 已进入真实 span Gate，不能再重跑、改 rank/mode/参数。J5 raw JSONL 1,020,808,306 B 仅以 hash-bound compact 记录，不追踪原始文件。详见 [V15 response](task038_extra_full3d_iterative_0p7nm/response_v15.md)。
+
+
+## Task39extra_para：原生工作站复现、单核性能诊断与受控停止
+
+本任务从冻结V5 BAL_H + accurate global p4 LU迁移到2TB原生Linux工作站，目标是先复现13.5 nm，再按Gate测试5/3/2 nm。独立worktree及CPU23/监督CPU9安排使本项目不互写隔壁文件、不修改其CPU0–7的8个MPI进程。CPU2外部限频和DIMM高温被记录为独立硬件问题，未关闭热保护。
+
+第一次R1在p4 LU后遇到mode字节身份差。用户移交完整历史manifest后证明仅12处浮点末位差，按原数值容差逐字段验证并保留两端hash。retry1与旧迭代轨迹高度一致，但单步约29.6秒，62步true0.0194332未满足首段1800秒筛选，故停止主阶梯；workflow3997.651秒、整树RSS峰值3.163GiB、swap0、全部清场。没有official场或R/T/A，也没有短波或G的容量/精度结果。
+
+性能诊断把主要装配开销定位到FFCx内核的跨行访问与寄存器spill。保持每个矩阵元素求和顺序、按行遍历后，真实单元CSR装配约3.6倍；合并12个独立系数循环使p6/p4 curl单元作用约2/1.4倍，真实FE逐位等价。PSS降频保留RSS/swap高频监督，并修复已有worker身份失败分类；这些是执行成本改进，不是新PC。释放后RSS只下降4MiB，表明仍需测量allocator/对象保留，不能伪造生命周期压缩成效。
+
+当前交付fail / PERFORMANCE_CONTROLLED_STOP。性能修复有小测试证据但没有优化后完整R1；任务书§11禁止把性能失败当bug再抽签，额外正式验证需明确授权，原screen/数值/物理Gate继续保持。所有正负结果及依赖分组见[summary](task39extra_para_workstation_capacity/outcomes/summary.md)，细节见[response_v1](task39extra_para_workstation_capacity/response_v1.md)；未merge master。
