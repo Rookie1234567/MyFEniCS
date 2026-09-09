@@ -4,7 +4,7 @@ from .fullspace_physical_intermediate import apply_owned
 
 
 def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop_requested=lambda: False,
-                      residual_norm=None):
+                      residual_norm=None, residual_action=None):
     """One zero-start FGMRES16/max64; owned solution, A4c and eps returned.
 
     Each monitor boundary checks the conservative 60-second clock. The terminal
@@ -35,7 +35,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
     def explicit(value, iteration, *, retain=False):
         nonlocal explicit_count
         attempted['explicit_A4'] += 1
-        a = action(value); r = rhs.copy()
+        a = (action if residual_action is None else residual_action)(value); r = rhs.copy()
         try:
             r.axpy(-1, a); absolute = float(r.norm())
             relative = absolute/norm if norm else (0. if absolute == 0 else float('inf'))
@@ -86,6 +86,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
             raise RuntimeError(f'inner breakdown reason={reason}, true={relative}')
         status = 'INNER_TARGET_REACHED' if relative <= target else 'INNER_INEXACT_AT_CAP'
         facts = dict(status=status, target=target, final_true_residual=relative,
+            explicit_uses_separate_action=residual_action is not None,
             eps_norm=float(eps.norm()), rhs_norm=norm, iterations=iterations, reason=reason,
             restart=16, max_it=64, zero_start=True, seconds=seconds(), history=history,
             A4_matvec=ac.matvec_count, B4_calls=context.apply_count,

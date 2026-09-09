@@ -121,3 +121,35 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram(tmp_path):
         amplification_recording_retry(args,dict(bubble_amplification_diagnostic_attempts=[{},{}]))
     args=build_parser().parse_args(['--input','i','--inventory','j','--output','o','--budget','b','--source-sha','s','--high-trace-component'])
     c=selected_contract(args);assert c['workflow_seconds']==600 and c['B4_limit']==65 and c['I4']['seconds']==60
+    # Real two-row KSP, no FE/factor: default authority and explicit override.
+    from petsc4py import PETSc
+    from src.solvers.physical_recursive_coarse import solve_physical_i4
+    from src.solvers.physical_trace_entity import CachedPhysicalTraceAction
+    class ArrayVector:
+        def __init__(self,value):self.array=np.array(value,copy=True)
+    class SparseBoundary:
+        def apply(self,source,target):target.array[:]=.07*source.array
+    cached=CachedPhysicalTraceAction(mapping,[0,1],classes,SparseBoundary())
+    source=ArrayVector(error);target=ArrayVector(np.zeros_like(error));cached.apply_into(source,target)
+    np.testing.assert_allclose(target.array,full_action@error+.07*error,atol=1e-12)
+    np.testing.assert_array_equal(source.array,error)
+    small=PETSc.Vec().createSeq(2);small.array[:]=[1+1j,2-.5j]
+    calls=dict(matvec=0,authority=0)
+    def small_action(v):
+        calls['matvec']+=1;out=v.duplicate();out.array[:]=np.array([2.,3.])*v.array;return out
+    def authority(v):
+        calls['authority']+=1;out=v.duplicate();out.array[:]=np.array([2.,3.])*v.array;return out
+    results=[]
+    try:
+        for override in (None,authority):
+            calls.update(matvec=0,authority=0)
+            answer=solve_physical_i4(small,small_action,lambda v:v.copy(),target=1e-4,sample=lambda:None,
+                save=lambda *_:None,clock=lambda:0.,residual_action=override)
+            results.append(answer['solution'].array.copy())
+            assert answer['facts']['explicit_uses_separate_action']==(override is not None)
+            assert calls['authority']==(answer['facts']['explicit_A4'] if override else 0)
+            assert calls['matvec']==answer['facts']['A4_matvec']+(0 if override else answer['facts']['explicit_A4'])
+            np.testing.assert_allclose(answer['applied'].array+answer['residual'].array,small.array,atol=1e-12)
+            for k in ('solution','applied','residual'):answer[k].destroy()
+        np.testing.assert_allclose(results[0],results[1],atol=1e-12)
+    finally:small.destroy()

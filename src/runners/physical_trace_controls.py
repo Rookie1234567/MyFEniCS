@@ -10,9 +10,12 @@ TRACE_INVENTORY_HASH='9dee01eadae5fe78d4855cff412f1c18bcee55563e3373609d44a06184
 RECOVERY_READOUT=Path('benchmarks/artifacts/task39extra/v6_recursive/bubble_amplification_retry_readout.json')
 RECOVERY_HASH='403eb348a62802f7f0018a149922541b49a6fd3049c262d71c6b9a8a3bf05a97'
 RECOVERY_ROOT=Path('benchmarks/artifacts/task39extra/v6_bubble_amplification_diagnostic/450255f4575792d052c1bac29837d39955ee1039/a2r160_g1')
+NATIVE_TRACE_ROOT=Path('benchmarks/artifacts/task39extra/v6_high_trace_component/564e42b43391f1857934ef064778636aff06894b/a2r160_g1')
+NATIVE_TRACE_READOUT=Path('benchmarks/artifacts/task39extra/v6_recursive/high_trace_readout.json')
+NATIVE_TRACE_HASH='8b43b5448b497a5d56e8f3372284f448c4d9460618f6048eab54b3b91cbe616f'
 
 
-def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker):
+def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker,cached_exact=False):
     from petsc4py import PETSc
     from .physical_diagnosis_worker import save_packet
     from .physical_recursive_controls import load_p4_failure_input,verify_recursive_map
@@ -26,13 +29,14 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker):
     from src.solvers.fullspace_physical_intermediate import apply_owned
     from src.solvers.condensed_fine_reference import native_map_arrays
     from src.solvers.physical_recursive_coarse import PhysicalP2Inverse,solve_physical_i4
-    from src.solvers.physical_trace_entity import PhysicalTraceEntities,complete_pq,relative_defect
+    from src.solvers.physical_trace_entity import PhysicalTraceEntities,complete_pq,relative_defect,CachedPhysicalTraceAction
     from src.solvers.physical_balanced_coupling import PhysicalBalancedCoupling
     from src.solvers.physical_error_metric import LosslessFEMetric
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=False)
     save=lambda n,f:save_packet(directory,n,f)
-    native=dtn=space=matrix=bottom=metric=trace=result=None;vectors=[]
-    counts=dict(A4=0,CU=0,B4=0,I4=0,H6=0,old_H4=0,outer=0);elapsed={};operations={}
+    native=dtn=space=matrix=bottom=metric=trace=result=cached=None;vectors=[]
+    counts=dict(A4=0,CU=0,B4=0,I4=0,H6=0,old_H4=0,outer=0,
+        native_A4_qualification=0,native_A4_explicit=0,native_A4_output=0,cached_qualification=0);elapsed={};operations={}
     def timed(name,fn):
         start=time.perf_counter()
         try:return fn()
@@ -89,13 +93,36 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker):
             projection_values=e.projection_values,normalization_h=e.normalization_h) for e in p4carrier.entries]))
         rhs=keep(level_vector(levels,4));rhs.set(0);rhs.array[mapping['independent_indices']]=data['arrays']['g']
         reference=keep(rhs.duplicate());reference.set(0);reference.array[mapping['independent_indices']]=data['arrays']['y']
+        cached=CachedPhysicalTraceAction(mapping,cells,classes,native['dtn_action']) if cached_exact else None
+        def native_A4(x,role):
+            sample();counts['native_A4_'+role]+=1
+            if sum(counts[k] for k in ('native_A4_qualification','native_A4_explicit','native_A4_output'))>75:
+                raise RuntimeError('fixed native authority/qualification cap')
+            return timed('native_A4_'+role,lambda:apply_owned(native['physical_action'],x))
         def A(x):
             sample();counts['A4']+=1
             if counts['A4']>350:raise RuntimeError('fixed trace A4 call cap')
-            return timed('A4',lambda:apply_owned(native['physical_action'],x))
-        ay=A(reference)
+            return timed('cached_A4' if cached_exact else 'A4',lambda:apply_owned(cached if cached_exact else native['physical_action'],x))
+        ay=native_A4(reference,'qualification') if cached_exact else A(reference)
         try:check('trace_source_bridge',ay.array[mapping['independent_indices']],data['arrays']['A4y'])
         finally:ay.destroy()
+        previous=None
+        if cached_exact:
+            previous=saved_packet_reader(NATIVE_TRACE_ROOT,NATIVE_TRACE_READOUT,NATIVE_TRACE_HASH)
+            first_saved=previous('trace_B4_g');last_saved=previous('trace_I4_result')
+            for label,value in (('reference',reference.array),('first_B4',first_saved['solution']),('I4',last_saved['solution'])):
+                q=rhs.duplicate();q.array[:]=value;direct=fast=None
+                try:
+                    direct=native_A4(q,'qualification');counts['cached_qualification']+=1
+                    fast=timed('cached_qualification',lambda:apply_owned(cached,q))
+                    check('trace_cached_'+label+'_bridge',fast.array,direct.array,1e-11)
+                    unchanged=bool(np.array_equal(q.array,value))
+                    save('trace_cached_'+label+'_input',dict(value=q.array.copy(),source_readout_hash=NATIVE_TRACE_HASH,input_unchanged=unchanged))
+                    if not unchanged:raise ValueError('cached/native qualification mutated input')
+                finally:
+                    for v in (q,direct,fast):
+                        if v is not None:v.destroy()
+            del first_saved,last_saved,value
         # Preallocation policy includes both original A and Q-D (not just retained W).
         # Count deduplicated arrays before factor construction and reserve the fixed
         # entity/J/factor/storage maxima; parent RSS remains the physical authority.
@@ -106,6 +133,7 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker):
         maps_bytes=sum(v.nbytes for m in (mapping,p2map) for v in m.values() if isinstance(v,np.ndarray))
         extra=sum(array_roots.values())+maps_bytes+2448000+3003696+10076832+6045696+1050624+8*849344+32*1024**2
         extra+=sum(e.coupling_rows.nbytes+e.coupling_values.nbytes+e.projection_rows.nbytes+e.projection_values.nbytes for c in (carrier,p4carrier) for e in c.entries)
+        if cached_exact:extra+=3*849344
         marker('trace_fixed_storage_preflight',dict(extra_local_bytes=extra,policy_cap=512*1024**2,
             Krylov_V_Z_bound_bytes=33*849344,BAL_new_vector_bound_bytes=32*849344,
             scope='PC extra enters common bottom budget; KSP/BAL live vectors separately in whole-tree RSS'))
@@ -169,8 +197,9 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker):
                 baseline=old('bubble_Cg_fields')['fields'][key]['reference_energy']
                 values[key]=dict(error=error,metric_image=image,energy=energy,baseline=baseline,ratio=float(np.sqrt(energy/baseline)))
             save(name,values)
-        first=B(rhs);applied=A(first)
+        first=B(rhs);applied=native_A4(first,'output') if cached_exact else A(first)
         try:
+            if cached_exact:check('trace_cached_B4_output_bridge',first.array,previous('trace_B4_g')['solution'])
             residual=rhs.array-applied.array;coarse=restriction(rhs);defect=restriction(applied);remaining=coarse-defect
             balance=relative_defect(remaining,coarse,defect)
             split=len(p2map['offsets'])-1
@@ -182,7 +211,8 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker):
             fields(first,'trace_B4_g_fields')
         finally:first.destroy();applied.destroy()
         counts['I4']+=1
-        result=solve_physical_i4(rhs,A,B,target=1e-4,sample=sample,save=save)
+        result=solve_physical_i4(rhs,A,B,target=1e-4,sample=sample,save=save,
+            residual_action=(lambda x:native_A4(x,'explicit')) if cached_exact else None)
         save('trace_I4_result',dict(facts=result['facts'],rhs=rhs.array.copy(),solution=result['solution'].array.copy(),
             applied=result['applied'].array.copy(),residual=result['residual'].array.copy()))
         fields(result['solution'],'trace_I4_fields')
@@ -190,6 +220,8 @@ def run_trace_component(cfg,comm,binding_path,directory,*,sample,marker):
             solver_target_reached=result['facts']['final_true_residual']<=1e-4,G5_closed=False,outer=0))
     finally:
         save('trace_component_costs',dict(counts=counts,elapsed_seconds=elapsed,operations=operations,
+            cached_exact=cached_exact,cached_counts=cached.counts if cached else {},cached_seconds=cached.seconds if cached else {},
+            A4_counter_semantics='Krylov/BAL cached; native authority and qualifications separately counted' if cached_exact else 'original native action all calls',
             trace_counts=trace.counts if trace else {},trace_seconds=trace.elapsed if trace else {},
             bottom_counts=bottom.counts if bottom else {},S_action_seconds=space.action_seconds if space else 0.,
             S_actions=space.action_count if space else 0,payload_bytes=trace.payload_bytes() if trace else None))

@@ -2,6 +2,49 @@
   "status": "INTERIM_MEASURED_CAUSAL_RESEARCH_G5_OPEN",
   "items": [
     {
+      "kind": "physical_high_trace_component",
+      "source": "564e42b43391f1857934ef064778636aff06894b",
+      "classification": "INNER_INEXACT_AT_CAP",
+      "scope": "One fixed g, complete B4_T and one I4; no outer. Field reduction is a positive signal, not method closure.",
+      "readout": {
+        "path": "benchmarks/artifacts/task39extra/v6_recursive/high_trace_readout.json",
+        "sha256": "8b43b5448b497a5d56e8f3372284f448c4d9460618f6048eab54b3b91cbe616f"
+      },
+      "independent_checks_passed": 11430,
+      "I4_iterations": 22,
+      "I4_true_residual": 0.13411111961956473,
+      "target": 0.0001,
+      "I4_field_ratios_M0_curl": [0.04071471814647805, 0.040705986926065606],
+      "first_B4_true_residual": 2.876315278531991,
+      "first_B4_field_ratios_M0_curl": [0.8621537592013183, 0.8619912836633121],
+      "parent_conservative_seconds": 115.00464947152926,
+      "process_tree_sampled_peak_rss_bytes": 883875840,
+      "tree_swap_bytes": 0,
+      "global_swap_delta_pages": [0, 0],
+      "hotspot": {
+        "path": "benchmarks/artifacts/task39extra/v6_recursive/high_trace_action_hotspot.json",
+        "sha256": "4e8ea228233b32c13e8f354f5b467cbf2497b3a510abf2561ce1a2e14ff03cfd",
+        "three_vector_cached_native_relative": [4.5244140778640786e-12, 3.4318170066416406e-13, 4.47244189570238e-12],
+        "native_A4_calls": 76,
+        "native_A4_seconds": 33.26412643736694,
+        "limitation": "Offline arrays only; new cached-streaming implementation and I4 performance not yet qualified."
+      }
+    },
+    {
+      "kind": "complete_PQ_fixed_direction",
+      "source": "450255f4575792d052c1bac29837d39955ee1039",
+      "readout": {
+        "path": "benchmarks/artifacts/task39extra/v6_recursive/bubble_amplification_retry_readout.json",
+        "sha256": "403eb348a62802f7f0018a149922541b49a6fd3049c262d71c6b9a8a3bf05a97"
+      },
+      "classification": "DIAGNOSTIC_COMPLETED_NOT_SOLVER_QUALIFICATION",
+      "CUg_field_ratios_M0_curl": [0.93067113375373, 0.9306585298034505],
+      "delta_over_y_M0_curl": [0.00023975824928161894, 0.00024196624239547536],
+      "S_true_relative": 2.58399499914925e-15,
+      "independent_checks_passed": 61,
+      "prior_recording_failure_preserved": "dd9b6fae5cc5509459d837a99197f9be34007e18"
+    },
+    {
       "kind": "bubble_particular_diagnostic",
       "source": "55a795e5b31b5c6b0323b92c517f6e989faf5803",
       "classification": "DIAGNOSTIC_COMPLETED_NOT_SOLVER_QUALIFICATION",

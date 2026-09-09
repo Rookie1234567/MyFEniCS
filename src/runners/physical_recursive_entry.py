@@ -80,13 +80,16 @@ def particular_contract():
 
 
 def selected_contract(args):
-    return (dict(identity='physical_high_trace_component_v1',workflow_seconds=600,
+    return (dict(identity='physical_cached_trace_component_v1' if getattr(args,'cached_trace_component',False) else 'physical_high_trace_component_v1',workflow_seconds=600,
             physical_degrees=[4,2],scope='one_CUg_bridge_one_B4T_one_I4',B4_limit=65,CU_limit=131,
             S_logical_limit=131,MatSolve_limit=393,A4_limit=350,HT_limit=65,E_EH_limit=263,
             Q_LU=18,Q_setup_rhs=3456,entity_LU=1566,entity_setup_rhs=1566,entity_apply_rhs_limit=101790,
             bottom_rows_cap=8192,bottom_local_bytes_cap=512*1024**2,S_true_limit=1e-10,max_refinements=2,
             I4=dict(count=1,restart=16,max_it=64,seconds=60,target=1e-4,zero_start=True),
-            H6=0,old_H4=0,outer=0,global_swap_stop=True) if getattr(args,'high_trace_component',False) else
+            H6=0,old_H4=0,outer=0,global_swap_stop=True,
+            cached_exact=getattr(args,'cached_trace_component',False),native_authority_cap=75,
+            cached_qualification=3 if getattr(args,'cached_trace_component',False) else 0,
+            explicit_authority='native_A4') if getattr(args,'high_trace_component',False) or getattr(args,'cached_trace_component',False) else
             dict(identity='bubble_amplification_diagnostic_v1',workflow_seconds=300,
             scope='one_saved_delta_CUg',metadata_degrees=[4,2],A4=0,H4=0,H6=0,I4=0,outer=0,local_LU=0,
             p2_factor=1,p2_logical=1,max_refinements=2,p2_rows_cap=8192,p2_budget_bytes=512*1024**2,
@@ -100,9 +103,10 @@ def selected_contract(args):
 
 def dispatch_components(args,cfg,comm,directory,*,sample,marker):
     from . import physical_recursive_controls as controls
-    if getattr(args,'high_trace_component',False):
+    if getattr(args,'high_trace_component',False) or getattr(args,'cached_trace_component',False):
         from .physical_trace_controls import run_trace_component
-        return run_trace_component(cfg,comm,args.inventory,directory,sample=sample,marker=marker)
+        return run_trace_component(cfg,comm,args.inventory,directory,sample=sample,marker=marker,
+            cached_exact=getattr(args,'cached_trace_component',False))
     if getattr(args,'bubble_amplification_diagnostic',False):
         from src.solvers.physical_bubble_amplification import run_amplification_diagnostic
         return run_amplification_diagnostic(cfg,comm,args.inventory,directory,sample=sample,marker=marker)
@@ -176,7 +180,7 @@ def worker(args):
     inventory=json.loads(Path(args.inventory).read_text())
     if bubble:
         native_maps={};mode_sha=inventory['mode_sha256']
-    elif diagnostic or projected or enriched or particular or args.bubble_amplification_diagnostic or args.high_trace_component:
+    elif diagnostic or projected or enriched or particular or args.bubble_amplification_diagnostic or args.high_trace_component or args.cached_trace_component:
         native_maps={'4':inventory['packets']['map']}
         mode_sha=inventory['mode_sha256']
     else:
@@ -211,11 +215,11 @@ def worker(args):
     try:
         dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker)
     finally:
-        identity=root/'records'/('trace_source_bridge.json' if args.high_trace_component else 'amplification_map_bridge.json' if args.bubble_amplification_diagnostic else 'particular_map_bridge.json' if particular else 'bubble_source_bridge.json' if enriched else 'bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
+        identity=root/'records'/('trace_source_bridge.json' if args.high_trace_component or args.cached_trace_component else 'amplification_map_bridge.json' if args.bubble_amplification_diagnostic else 'particular_map_bridge.json' if particular else 'bubble_source_bridge.json' if enriched else 'bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
         manifest['native_map_bridge_status']='PASS' if identity.exists() else 'NOT_REACHED'
         if diagnostic and identity.exists():
             manifest['native_map_bridge_status']=p4_bridge_status(identity)
-        if (projected or enriched or particular or args.bubble_amplification_diagnostic or args.high_trace_component) and identity.exists():
+        if (projected or enriched or particular or args.bubble_amplification_diagnostic or args.high_trace_component or args.cached_trace_component) and identity.exists():
             from math import isfinite
             error=json.loads(identity.read_text())['relative_error']
             manifest['native_map_bridge_status']='PASS' if isfinite(error) and error<=1e-10 else 'FAIL'
@@ -237,6 +241,7 @@ def build_parser():
     group.add_argument('--bubble-particular-diagnostic',action='store_true')
     group.add_argument('--bubble-amplification-diagnostic',action='store_true')
     group.add_argument('--high-trace-component',action='store_true')
+    group.add_argument('--cached-trace-component',action='store_true')
     parser.add_argument('--amplification-recording-retry',action='store_true',
         help='one reviewed retry of the frozen pre-factor mappingproxy recording failure')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
@@ -306,17 +311,17 @@ def main():
     if particular and budget.get('bubble_particular_diagnostic_attempts'):
         raise ValueError('unique particular diagnostic already attempted')
     amplification=args.bubble_amplification_diagnostic
-    trace=args.high_trace_component
-    if trace and Path(args.output).parts[-3:]!=('v6_high_trace_component',args.source_sha,'a2r160_g1'):
+    cached_trace=args.cached_trace_component;trace=args.high_trace_component or cached_trace
+    if trace and Path(args.output).parts[-3:]!=('v6_cached_trace_component' if cached_trace else 'v6_high_trace_component',args.source_sha,'a2r160_g1'):
         raise ValueError('trace component requires fresh source/a2r160_g1 root')
-    if trace and budget.get('high_trace_component_attempts'):
+    if trace and budget.get('cached_trace_component_attempts' if cached_trace else 'high_trace_component_attempts'):
         raise ValueError('unique high trace component already attempted')
     if amplification and Path(args.output).parts[-3:]!=('v6_bubble_amplification_diagnostic',args.source_sha,'a2r160_g1'):
         raise ValueError('amplification requires fresh source/a2r160_g1 root')
     retry=amplification_recording_retry(args,budget)
     remaining=min(selected_contract(args)['workflow_seconds'],budget['batch_remaining']) if diagnostic or projected or bubble or enriched or particular or amplification or trace else min(budget['G0_G1_remaining'],budget['batch_remaining'])
     if remaining<=0:raise RuntimeError('G1 compute budget exhausted')
-    lock=budget_path.parent/('high_trace_active.lock' if trace else 'bubble_amplification_active.lock' if amplification else 'bubble_particular_active.lock' if particular else 'bubble_enriched_active.lock' if enriched else 'bubble_local_active.lock' if bubble else 'projected_p4_active.lock' if projected else 'p4_failure_active.lock' if diagnostic else 'g1_active.lock')
+    lock=budget_path.parent/('cached_trace_active.lock' if cached_trace else 'high_trace_active.lock' if trace else 'bubble_amplification_active.lock' if amplification else 'bubble_particular_active.lock' if particular else 'bubble_enriched_active.lock' if enriched else 'bubble_local_active.lock' if bubble else 'projected_p4_active.lock' if projected else 'p4_failure_active.lock' if diagnostic else 'g1_active.lock')
     descriptor=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.close(descriptor)
     root=Path(args.output)
     result=None
@@ -333,7 +338,7 @@ def main():
             stop_on_global_swap=True,source_state=source,
             worker_environment={'XDG_CACHE_HOME':str(cache_home)})
         charge=result['workflow_clock_interval']['budget_seconds']
-        budget.setdefault('high_trace_component_attempts' if trace else 'bubble_amplification_diagnostic_attempts' if amplification else 'bubble_particular_diagnostic_attempts' if particular else 'bubble_enriched_component_attempts' if enriched else 'bubble_local_tensor_attempts' if bubble else 'projected_p4_component_attempts' if projected else 'p4_failure_diagnostic_attempts' if diagnostic else 'g1_component_attempts',[]).append(dict(root=str(root),target=args.target,
+        budget.setdefault('cached_trace_component_attempts' if cached_trace else 'high_trace_component_attempts' if trace else 'bubble_amplification_diagnostic_attempts' if amplification else 'bubble_particular_diagnostic_attempts' if particular else 'bubble_enriched_component_attempts' if enriched else 'bubble_local_tensor_attempts' if bubble else 'projected_p4_component_attempts' if projected else 'p4_failure_diagnostic_attempts' if diagnostic else 'g1_component_attempts',[]).append(dict(root=str(root),target=args.target,
             source=args.source_sha,classification=result['classification'],conservative_seconds=charge))
         for key in (('batch_remaining',) if diagnostic or projected or bubble or enriched or particular or amplification or trace else ('G0_G1_remaining','batch_remaining')):budget[key]-=charge
         budget['charged_including_reserve']+=charge

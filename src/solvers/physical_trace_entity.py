@@ -64,6 +64,25 @@ def complete_pq(value,internal,internal_volume,coarse):
     return e+coarse(value-internal_volume(e))
 
 
+class CachedPhysicalTraceAction:
+    """Borrow qualified cell A and the original streaming DtN; own no factors."""
+    def __init__(self,mapping,cells,classes,dtn):
+        self.mapping,self.cells,self.classes,self.dtn=mapping,cells,classes,dtn
+        self.counts=dict(started=0,completed=0)
+        self.seconds=dict(volume=0.,dtn=0.)
+
+    def apply_into(self,source,target):
+        self.counts['started']+=1
+        start=time.perf_counter()
+        try:value=cell_volume(source.array,self.mapping,self.cells,self.classes)
+        finally:self.seconds['volume']+=time.perf_counter()-start
+        start=time.perf_counter()
+        try:self.dtn.apply(source,target)
+        finally:self.seconds['dtn']+=time.perf_counter()-start
+        target.array[:]+=value
+        self.counts['completed']+=1
+
+
 class PhysicalTraceEntities:
     """Borrow frozen classes/map; own 18 internal and 1566 tiny entity factors."""
     def __init__(self,mapping,cells,classes,entities,entity_dofs,carrier,*,sample,save,marker):
