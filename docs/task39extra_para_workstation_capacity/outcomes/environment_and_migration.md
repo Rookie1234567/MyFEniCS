@@ -31,3 +31,11 @@ R0真实18cell有限元作用测试通过（1 passed，387.14s，CPU24低频）�
 [寄存器紧凑证据](records/cpu_hardware_limits.json)表明CPU24忙时IA32_PERF_CTL=0x2700（请求倍率39），IA32_PERF_STATUS低频倍率10；APERF/MPERF差分得到1000.001MHz，同期CPU0为3598.637MHz。CPU2的IA32_THERM_STATUS bit2连续置位（外部平台PROCHOT/FORCEPR事件），bit0为0（CPU内部热传感器未触发高温保护）。这比仅看thermal_throttle计数更直接：已确认平台外部限频，不能再归因为操作系统未请求升频。CPU2同期RAPL封装功率约34.38W，CPU1约117.81W；不代表整机或电源输出功率。
 
 [Intel寄存器定义](https://cdrdv2-public.intel.com/868136/252046-081-sdm-change-document.pdf)说明bit2由平台其他agent触发。具体信号来源仍待查。主板实测Supermicro X11DAi-N、BIOS3.3（2020-02-26）。[厂家同型号FAQ34600](https://www.supermicro.com/support/faqs/faq.cfm?faq=34600)曾报告低温限频由电源电压不稳定引起；这是优先调查供电的依据，不是本机电源损坏的证明。未关闭PROCHOT保护、未清日志、未改MSR、governor或BIOS，隔壁持续计算。下一步只读BMC电源库存、传感器和事件，必要的物理供电检查须等待停机窗口。
+
+### BMC读数：排查优先级改为CPU2内存散热
+
+[完整传感器紧凑记录](records/cpu2_bmc_thermal.json)显示P2-DIMMA1/B1均90°C，达到BMC upper non-recoverable阈值；P2-DIMMA2为85°C，D1为88°C、E1为89°C，处于critical。CPU2本身55°C、VRMCpu2约65°C。最近100条SEL中反复出现Processor #0x02节流事件，并有P2-DIMME1从90°C告警回落的事件。内存过温是直接实测异常，优先级高于此前由厂家相似案例推测的供电问题。内存散热导致外部CPU限频是强候选，仍需降温前后对照确认因果，尚未宣称修复。
+
+电压传感器当前均正常，不能用单次读数排除瞬态供电问题。FRU没有电源型号条目，SMBIOS type39为OEM占位字段，无法从已上报信息取得品牌或功率；其Not Present不能解释为物理电源缺失。DCMI读数deactivated，其0W不是测量结果。
+
+准备了明确标注整机影响的full-fan诊断脚本：记录原模式后提高BMC管理风扇转速，记录约3分钟以上温度/转速/只读MSR，无PDE负载、不改其他进程、不关闭热保护，不自动恢复可能散热不足的原模式。该干预尚未执行，需要终端root执行；会增加整机风扇噪音。若满速后内存仍过温，应安排停机检查风道、内存定向送风及风扇，不以禁用PROCHOT代替修复。
