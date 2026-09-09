@@ -13,6 +13,21 @@ READOUT=Path('benchmarks/artifacts/task39extra/v6_recursive/bubble_enriched_read
 READOUT_SHA='ef9b7d06c3b44ef2da122946d75e7ff9d1c364dc1fa3ed2933defae4075e5fcb'
 
 
+def saved_packet_reader(root,readout,expected_hash):
+    """Bind JSON and array payloads to an audited readout, without numerical work."""
+    from src.runners.physical_diagnostic_completion import load_packet
+    if hashlib.sha256(Path(readout).read_bytes()).hexdigest()!=expected_hash:
+        raise ValueError('saved readout identity differs')
+    authority=json.loads(Path(readout).read_text())
+    hashes={e['path']:e['sha256'] for e in authority['evidence']}
+    def read(name):
+        path=Path(root)/'records'/(name+'.json')
+        if hashlib.sha256(path.read_bytes()).hexdigest()!=hashes[str(path)]:
+            raise ValueError('saved packet identity differs: '+name)
+        return load_packet(path)
+    return read
+
+
 def expand_primal(value,mapping):
     """One finalized MPI1 primal backsubstitution; never apply C^H here."""
     result=np.array(value,copy=True)
@@ -73,7 +88,6 @@ def coefficient_defects(v,w,q,t,R,Q,boundary):
 
 def run_particular_diagnostic(cfg,comm,binding_path,directory,*,sample,marker):
     from src.runners.physical_diagnosis_worker import save_packet
-    from src.runners.physical_diagnostic_completion import load_packet
     from src.runners.physical_recursive_controls import load_p4_failure_input
     from src.geometry.mesh_builder_3d import _stage4_axis_plan,_structured_hexa_mesh,_mark_cells
     from .fullspace_same_mesh_hcurl_pmg import _n1e,_dof_transform
@@ -104,12 +118,7 @@ def run_particular_diagnostic(cfg,comm,binding_path,directory,*,sample,marker):
         sample()
     try:
         if comm.size!=1:raise ValueError('fixed MPI1 diagnostic')
-        if hashlib.sha256(READOUT.read_bytes()).hexdigest()!=READOUT_SHA:raise ValueError('saved component readout identity differs')
-        authority=json.loads(READOUT.read_text());hashes={e['path']:e['sha256'] for e in authority['evidence']}
-        def old(name):
-            path=ROOT/'records'/(name+'.json')
-            if hashlib.sha256(path.read_bytes()).hexdigest()!=hashes[str(path)]:raise ValueError('old packet identity differs: '+name)
-            return load_packet(path)
+        old=saved_packet_reader(ROOT,READOUT,READOUT_SHA)
         data=load_p4_failure_input(binding_path);mapping=data['map'];n=len(mapping['offsets'])-1
         if np.intersect1d(mapping['slaves'],mapping['masters']).size:raise ValueError('nested MPC not supported by saved map')
         cg=old('bubble_Cg');inner=old('bubble_I4_result');reference=np.zeros(n,complex)

@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from src.solvers.physical_bubble_particular import expand_primal,resolve_primal,cached_interior_action,gram_report,coefficient_defects
 from src.runners.physical_recursive_entry import build_parser,selected_contract
+from src.solvers.physical_bubble_amplification import combine_full_pq,saved_cell_action
 
 
 def test_shared_complex_mpc_interior_action_and_cross_term_gram():
@@ -36,6 +37,23 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram():
     response=np.zeros(7,complex);response[[3,6]]=[1+.2j,-.3+1j]
     result=cached_interior_action(response,mapping,[0,1],classes)
     np.testing.assert_allclose(result,C.conj().T@raw@C@response,atol=1e-12)
+    # Same shared/MPC fixture, now arbitrary trace input and non-Hermitian PQ.
+    full_action=C.conj().T@raw@C
+    saved={k:dict(S=v['A']) for k,v in classes.items()}
+    np.testing.assert_allclose(saved_cell_action(error,mapping,[0,1],saved),full_action@error,atol=1e-12)
+    p=np.eye(7,dtype=complex)[:,:2];qglobal=np.eye(7,dtype=complex)[:,[3,6]]
+    E=qglobal@np.linalg.solve(qglobal.conj().T@full_action@qglobal,qglobal.conj().T)
+    W=(np.eye(7)-E@full_action)@p
+    S=W.conj().T@full_action@W
+    CW=W@np.linalg.solve(S,W.conj().T)
+    rhs=error;Eg=E@rhs;Cg=CW@rhs;delta=CW@full_action@Eg
+    correct=combine_full_pq(Eg,Cg,delta)
+    VH=p.conj().T@(np.eye(7)-full_action@E)
+    np.testing.assert_allclose(correct,Eg+W@np.linalg.solve(S,VH@rhs),atol=1e-12)
+    assert np.linalg.norm(correct-(Eg+Cg))>1e-3
+    assert np.linalg.norm(VH-W.conj().T)>1e-3
+    doubled=result.copy();doubled[0]+=np.conj(phase)*(raw@C@response)[4]
+    assert np.linalg.norm(doubled-result)>1e-3
     assert result[4]==0
     bad=response.copy();bad[1]=1
     with pytest.raises(ValueError,match='zero trace'):cached_interior_action(bad,mapping,[0,1],classes)
@@ -43,3 +61,5 @@ def test_shared_complex_mpc_interior_action_and_cross_term_gram():
     _,facts=resolve_primal(changed,mapping['dofmap'],mapping);assert facts['shared_relative']>1e-3
     args=build_parser().parse_args(['--input','i','--inventory','j','--output','o','--budget','b','--source-sha','s','--bubble-particular-diagnostic'])
     c=selected_contract(args);assert c['cached_A4']==2 and c['local_rhs']==504 and c['functionspace']==c['I4']==0
+    args=build_parser().parse_args(['--input','i','--inventory','j','--output','o','--budget','b','--source-sha','s','--bubble-amplification-diagnostic'])
+    c=selected_contract(args);assert c['p2_logical']==1 and c['max_refinements']==2 and c['A4']==c['I4']==0

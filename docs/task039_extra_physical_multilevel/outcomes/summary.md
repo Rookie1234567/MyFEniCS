@@ -1,5 +1,7 @@
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
+最新内部响应定位（55a795e5b31b5c6b0323b92c517f6e989faf5803）：Eg仅占原误差M0/curl范数0.003091639/0.003815295；内部方程消去相对误差1.2834e-14，但全dual残差比1.637625109，不能称solver通过。129项raw检查通过；保守流程9.496253621 s、同时全树RSS峰251469824 B、swap增量0。小Eg不能界定完整左限制的放大。下一唯一delta/CUg诊断实现待审，未正式运行；详见[中心报告](coarse_inverse_replacement_v6.md)与[hash-bound compact](records/p4_causal_research_v6.json)。
+
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。
 
 | 项目 | 最新结论 |

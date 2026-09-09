@@ -190,4 +190,18 @@ G1恰为6个固定I4+3PC，总12I4/276B4/552p2 MatSolve，零精化。冻结源�
 
 260项独立原数组/哈希/账本检查通过，确认的是计算记录和负分类，没有把0.9814变成solver pass。三项旧负结果与V5成功边界不受影响；本轮无新official R/T/A。原始证据入口已加入[中途compact](records/p4_causal_research_v6.json)。
 
-下一步只提出一次固定输入定位：当前C_W未包含单元内部的特解E r=Q D⁻¹Qᴴr；需区分遗漏内部响应和更高阶切向误差。正确非Hermitian(P,Q)块逆还需要不同于Wᴴ的左限制Vᴴ，不能直接把E+C_W当完整块逆。定位方案只读待审，尚未重建网格/FE、未运行新诊断，不执行第二I4/outer，不关闭G5。
+## 内部特解定位已测，左限制诊断待审
+
+内部特解E r=Q D⁻¹Qᴴr，只在每个单元额外内部方向响应方程右端，用于分辨遗漏内部响应和更高阶切向误差。本次复用旧张量，18个小LU处理两个冻结右端；成本低，但不能代替完整非Hermitian块逆。
+
+| 55a795e5b31b5c6b0323b92c517f6e989faf5803 实测 | 结果与解释 |
+|---|---|
+| E(g)/y的M0、scaled-curl范数比 | 0.003091639/0.003815295；减去Eg后误差剩余0.999308817/0.999308421 |
+| 内部方程Qᴴ(g−A4Eg) | 参与项归一化1.2834e-14；全dual残差比1.637625109，不能称全方程收敛 |
+| y=w+q+t的curl范数比 | 0.953247125/0.352317605/0.394524433；q/t交叉项−7410.853673，显示抵消，不能将各部分能量直接相加 |
+| 时间与调用 | 保守父流程9.496253621 s，raw审计0.939217091 s另计；mesh1/space0、LU18、local RHS504、cached A4两次；无全局因子/I4/outer |
+| 资源 | 同时全树RSS采样峰251469824 B，最低系统可用12148039680 B；tree/global swap增量0，全部3个PID退出 |
+
+129项原数组独立检查通过，只确认诊断。Eg小不能排除C_W A4Eg很大：CUg=Eg+C_Wg−C_W A4Eg，Vᴴ=Pᴴ(I−AE)一般不等于Wᴴ。唯一固定delta/CUg诊断已实现，正式运行待diff审阅：复用旧Eg/A4Eg/Cg/y及18类W/S_cell，仅恢复(4,2) FE/MPC metadata和p2 S/80端口；一个因子/一个logical RHS，最多原两次同因子修正，独立S_cell+DtN残差≤1e-10。总cold流程300 s、8192行/统一512 MiB、原动态全树上限/4 GiB余量/zero swap。只测真实场范数和复交叉项，全A4CUg残差为not_run，不关闭G5，不新增I4/outer。
+
+原始入口 `benchmarks/artifacts/task39extra/v6_recursive/bubble_particular_readout.json` 的hash及分类见[中途compact](records/p4_causal_research_v6.json)。
