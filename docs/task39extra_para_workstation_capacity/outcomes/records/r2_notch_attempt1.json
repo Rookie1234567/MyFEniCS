@@ -91,9 +91,11 @@
     "descendants_cleared": true,
     "remaining_child_pids": [],
     "stop_reason": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
-    "stop_grace_seconds": 60,
+    "configured_stop_grace_seconds": 60,
     "stop_requested_monotonic": 1092804.095042125,
-    "watchdog_end_monotonic": 1092806.482070344
+    "watchdog_end_monotonic": 1092806.482070344,
+    "observed_stop_to_watchdog_end_seconds": 2.387028219,
+    "stop_grace_note": "60 seconds is the configured watchdog grace value; it is not the observed stop wait"
   },
   "interpretation_boundary": "Two global pswpout pages were observed by the WSL-global diagnostic, while the sampled process tree VmSwap peak was zero. The watchdog therefore stopped and classified attribution as unresolved. This record does not call the run OOM, a numerical failure, or a neighbor-caused failure; no automatic retry is authorized.",
   "speed_attribution_survey": {
@@ -135,9 +137,58 @@
       "thermal_zone1_mC_range": [67000, 68000],
       "thermal_zone2_mC_range": [53000, 54000],
       "cpu23_running_threads_over_all_threads": "0/19 at each observed sample",
-      "runtime_conclusion": "insufficient to prove or disprove thermal throttling during R2"
+      "runtime_conclusion": "insufficient to prove or disprove thermal throttling during R2",
+      "topology": {
+        "cpu23_physical_package_id": 0,
+        "cpu24_physical_package_id": 1,
+        "cpu23_numa_node": "node0",
+        "cpu24_numa_node": "node1",
+        "socket_boundary": "CPU0-23/socket0; CPU24-47/socket1",
+        "cpu24_prochot_boundary": "historical CPU24/socket1 PROCHOT evidence is excluded from CPU23/socket0 R2 timing attribution"
+      },
+      "cpu23_thermal_throttle_counters_current": {
+        "core_throttle_count": 0,
+        "core_throttle_max_time_ms": 0,
+        "core_throttle_total_time_ms": 0,
+        "package_throttle_count": 0,
+        "package_throttle_max_time_ms": 0,
+        "package_throttle_total_time_ms": 0,
+        "sticky_counter_note": "read-only current/sticky counters are not time-aligned to R2 and do not establish causality"
+      },
+      "msr_perf_access": {
+        "cpu23_runtime_msr_status": "UNAVAILABLE",
+        "turbostat": "read-only probe could not access /dev/cpu/23/msr; only TSC_MHz=2399 and CoreThr=0 were returned",
+        "perf": "APERF/MPERF and thermal-margin events unavailable; perf_event_paranoid=4",
+        "protection_or_permissions_changed": false
+      },
+      "numa_swap_current": {
+        "read_utc": "2026-09-09T20:05:00Z",
+        "node0_memfree_mb": 3695.82,
+        "node1_memfree_mb": 423487.26,
+        "swap_used_bytes": 8192,
+        "swap_used_pages": 2,
+        "pswpin_pages": 0,
+        "pswpout_pages": 2,
+        "own_sampled_vmswap_peak_bytes": 0,
+        "interpretation": "pre-existing nonzero host swap remains an environment block for another pressure run; ownership remains unresolved"
+      },
+      "runtime_watchdog_cpu_wall": {
+        "source": "watchdog/resources.jsonl",
+        "samples_with_cpu23_worker_and_cpu9_parent": 4230,
+        "wall_window_seconds": 1924.5723343130667,
+        "worker_cpu_delta_seconds": 1299.96,
+        "parent_cpu_delta_seconds": 866.17,
+        "worker_cpu_wall_ratio": 0.675453957652359,
+        "parent_cpu_wall_ratio": 0.45005842833605947,
+        "selection": "task038 worker on CPU23 and run_case parent on CPU9",
+        "interpretation": "CPU-time fractions quantify execution versus wall time but do not prove frequency, thermal, power, or cross-socket contention"
+      }
     },
     "root_cause_status": "unresolved; observed p4/PC cost is evidence for the next review, not a proven hardware, neighbor, memory, or algorithmic cause",
-    "minimal_review_plan": "Keep this run closed and do not retry automatically. If a retry is separately approved, first reuse these logs with one bounded in-run CPU23 frequency/temperature/competing-thread sample and the same p4/PC counters; do not change source, global swap policy, hardware protection, or neighbor processes."
+    "minimal_review_plan": [
+      "Keep R2 closed and do not retry while the host has the pre-existing 2-page swap allocation; first establish a clean, unchanged swap baseline in the qualified environment.",
+      "If hardware attribution is required, obtain privileged read-only CPU23/socket0 MSR APERF/MPERF, thermal/package and perf-limit current/sticky data; do not change permissions, MSR, power, or thermal protection.",
+      "Only after separate approval and a clean baseline, reuse the existing logs with one bounded CPU23 frequency/temperature/thread sample plus the same p4/PC counters; no source change or new load."
+    ]
   }
 }
