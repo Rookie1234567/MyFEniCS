@@ -1,0 +1,110 @@
+{
+  "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+  "sys_path": [
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+    "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages",
+    "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages",
+    "/usr/lib/python3/dist-packages",
+    "/usr/lib/python312.zip",
+    "/usr/lib/python3.12",
+    "/usr/lib/python3.12/lib-dynload",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/lib/python3.12/site-packages",
+    "/usr/local/lib/python3.12/dist-packages"
+  ],
+  "modules": {
+    "src": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/src/__init__.py",
+      "version": null
+    },
+    "dolfinx": {
+      "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+      "version": "0.10.0.post2"
+    },
+    "dolfinx_mpc": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/lib/python3.12/site-packages/dolfinx_mpc/__init__.py",
+      "version": null
+    },
+    "basix": {
+      "path": "/usr/lib/python3/dist-packages/basix/__init__.py",
+      "version": "0.10.0"
+    },
+    "ffcx": {
+      "path": "/usr/lib/python3/dist-packages/ffcx/__init__.py",
+      "version": "0.10.1.post0"
+    },
+    "ufl": {
+      "path": "/usr/lib/python3/dist-packages/ufl/__init__.py",
+      "version": "2025.2.1"
+    },
+    "petsc4py": {
+      "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+      "version": "3.19.6"
+    },
+    "slepc4py": {
+      "path": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+      "version": "3.19.2"
+    },
+    "mpi4py": {
+      "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+      "version": "3.1.5"
+    },
+    "numpy": {
+      "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+      "version": "1.26.4"
+    },
+    "scipy": {
+      "path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+      "version": "1.11.4"
+    },
+    "psutil": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/lib/python3.12/site-packages/psutil/__init__.py",
+      "version": "7.2.2"
+    },
+    "pytest": {
+      "path": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+      "version": "7.4.4"
+    }
+  },
+  "petsc_version": [
+    3,
+    19,
+    6
+  ],
+  "scalar": "complex128",
+  "integer": "int32",
+  "mpi": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+  "affinity": [
+    24
+  ],
+  "memory": {
+    "mem_total_bytes": 2163100413952,
+    "mem_available_bytes": 2094982422528,
+    "effective_total_bytes": 2163100413952,
+    "effective_available_bytes": 2094982422528,
+    "reserve_bytes": 324465062092,
+    "launch_cap_bytes": 12000000000,
+    "cgroup_limits": []
+  },
+  "libraries": [
+    "78e531054000-78e53107c000 r--p 00000000 103:01 143267196                 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/dolfinx_mpc-complex/lib/libdolfinx_mpc.so.0.10.1",
+    "78e53107c000-78e5310dc000 r-xp 00028000 103:01 143267196                 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/dolfinx_mpc-complex/lib/libdolfinx_mpc.so.0.10.1",
+    "78e5310dc000-78e5310ec000 r--p 00088000 103:01 143267196                 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/dolfinx_mpc-complex/lib/libdolfinx_mpc.so.0.10.1",
+    "78e5310ec000-78e5310ef000 r--p 00097000 103:01 143267196                 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/dolfinx_mpc-complex/lib/libdolfinx_mpc.so.0.10.1",
+    "78e5310ef000-78e5310f0000 rw-p 0009a000 103:01 143267196                 /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/dolfinx_mpc-complex/lib/libdolfinx_mpc.so.0.10.1",
+    "78e541600000-78e541619000 r--p 00000000 103:01 88894009                  /usr/lib/x86_64-linux-gnu/libzmumps-5.6.1.so",
+    "78e541619000-78e541806000 r-xp 00019000 103:01 88894009                  /usr/lib/x86_64-linux-gnu/libzmumps-5.6.1.so",
+    "78e541806000-78e541827000 r--p 00206000 103:01 88894009                  /usr/lib/x86_64-linux-gnu/libzmumps-5.6.1.so",
+    "78e541827000-78e54182b000 r--p 00226000 103:01 88894009                  /usr/lib/x86_64-linux-gnu/libzmumps-5.6.1.so",
+    "78e54182b000-78e54182c000 rw-p 0022a000 103:01 88894009                  /usr/lib/x86_64-linux-gnu/libzmumps-5.6.1.so",
+    "78e541a00000-78e541ac9000 r--p 00000000 103:01 88894149                  /usr/lib/x86_64-linux-gnu/libpetsc_complex.so.3.19.6",
+    "78e541ac9000-78e542e5f000 r-xp 000c9000 103:01 88894149                  /usr/lib/x86_64-linux-gnu/libpetsc_complex.so.3.19.6",
+    "78e542e5f000-78e54308c000 r--p 0145f000 103:01 88894149                  /usr/lib/x86_64-linux-gnu/libpetsc_complex.so.3.19.6",
+    "78e54308c000-78e543092000 r--p 0168c000 103:01 88894149                  /usr/lib/x86_64-linux-gnu/libpetsc_complex.so.3.19.6",
+    "78e543092000-78e5430ab000 rw-p 01692000 103:01 88894149                  /usr/lib/x86_64-linux-gnu/libpetsc_complex.so.3.19.6",
+    "78e5440ce000-78e5440f5000 r--p 00000000 103:01 88891994                  /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+    "78e5440f5000-78e5441bc000 r-xp 00027000 103:01 88891994                  /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+    "78e5441bc000-78e5441dc000 r--p 000ee000 103:01 88891994                  /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+    "78e5441dc000-78e5441de000 r--p 0010e000 103:01 88891994                  /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+    "78e5441de000-78e5441ef000 rw-p 00110000 103:01 88891994                  /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6"
+  ]
+}
