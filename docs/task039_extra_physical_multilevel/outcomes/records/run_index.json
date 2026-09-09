@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V5 BAL_H original and unique notch numerical/physics PASS; conditional reference global swap attribution UNRESOLVED; preserve all historical negatives",
+  "scope": "V6 bounded recursive C unqualified; V5 two-case baseline PASS retained with historical reference swap limitation",
   "units": {
     "time": "s",
     "memory": "B"
@@ -915,5 +915,15 @@
       "sha256": "7a41e73d0b34e20f448a42f74fd55ef3f70c859c75c87ecf2e06f3cd6abbb384"
     }
   },
-  "v5_balanced_compact": "docs/task039_extra_physical_multilevel/outcomes/records/balanced_coupling_v5.json"
+  "v5_balanced_compact": "docs/task039_extra_physical_multilevel/outcomes/records/balanced_coupling_v5.json",
+  "v6": {
+    "status": "G1_G2_COMPLETED_DIAGNOSTIC_CONTINUATION_AUTHORIZED",
+    "classification": "COARSE_APPROXIMATION_UNQUALIFIED",
+    "source_sha": "ddd090ebbae2a6fdcd5d2ef8d728c48b600d66e7",
+    "compact": "coarse_inverse_replacement_v6.json",
+    "G1_root": "benchmarks/artifacts/task39extra/v6_recursive/2edcf84888a7e989246b0fae28bc4555b61fc48d/g1_lo",
+    "G2_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_recursive_p4_lo_v6__full3d_iterative__mpi1__Mna/20260909T004017.830734Z",
+    "HI": "not_qualified",
+    "notch": "not_run_original_failed"
+  }
 }

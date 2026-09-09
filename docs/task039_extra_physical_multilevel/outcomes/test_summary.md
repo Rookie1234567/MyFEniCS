@@ -1,3 +1,29 @@
+# V6本地测试与文档检查
+
+G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。
+
+| 批次 | 结果 / 失败原因 |
+|---|---|
+| focused_v1 | 6failed/18passed/2deselected；PETSc3.19枚举DIVERGED_ITS不可用，改为DIVERGED_MAX_IT；原失败保留 |
+| focused_v2 | 8passed/4deselected；有界I4、finite cap/饱和、tiny6/4/2通过 |
+| focused_v3 | 2failed/5passed/8deselected；稀疏fixture向1NNZ矩阵插入密集行导致分配错误，非PDE方法失败 |
+| focused_v4 | 2failed/5passed/11deselected；替身接口缺apply_into，局部fixture修正 |
+| focused_v5 | 2passed/16deselected；精化fixture通过 |
+| focused_v6 | 9passed/9deselected；input unchanged/slave-zero和失败成本证据补齐 |
+| focused_v7 | 1passed/17deselected；非有限attempted/completed计数局部检查 |
+| g2_focused_v1 | 16passed/0.94s；无FE组装，含旧V5 launcher兼容 |
+| g2_focused_v2 | 最终17passed/3.79s；新增冻结RHS/映射桥fixture；parent收费5.265852279s |
+| G1正式 | 首次JIT遗留cache失败0I4/0PC，唯一冷cache重试完成六+三；0/6 LO target，非数值通过 |
+| G2正式 | screen数值负结果；独立checker通过账本/闭合验证，未通过fine残差与official输出 |
+| 当前阶段文档 | compact JSON、相对链接及diff局部检查；G5未最终收口，记录见ignored p4_stage_docs_check.json |
+
+初始新测试18种通过分布于各focused批次，不能写成一次30passed；未重跑昂贵G1/tiny/完整pytest，未声称CI。全部监督测试树swap0/globalΔ0且清场；所有失败计费和raw日志均由[compact](records/coarse_inverse_replacement_v6.json)绑定。没有新增测试框架。
+
+
+以下完整保留历史正文；“当前/下一步”仅指当时阶段，以本节为最新状态。
+
+---
+
 # V5完整链与E5文档检查
 
 | 验证 | 结果与口径 |

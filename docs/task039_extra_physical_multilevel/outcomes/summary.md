@@ -1,3 +1,21 @@
+# Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
+
+G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。
+
+| 项目 | 最新结论 |
+|---|---|
+| V6原始LO | 13步true0.667843080037，1800.799s筛选不合格；COARSE_APPROXIMATION_UNQUALIFIED |
+| G1/G2精度 | 固定6输入0/6达LO；正式26I4均未达；映射/残差闭合与成本账通过 |
+| 资源 | 新screen峰1491857408B、swap/globalΔ0；仅失败13步，不是2GB成功解/完整求解峰 |
+| V5保留 | 原始564/notch576步，完整残差、匹配参考与物理Gate通过；参考448页global out归因UNRESOLVED保留 |
+| 分流 | HI未资格化、notch/recovery未运行；G1_G2_COMPLETED_DIAGNOSTIC_CONTINUATION_AUTHORIZED；无W0/5nm/0.7nm/生产默认资格 |
+
+详见[中心结果](coarse_inverse_replacement_v6.md)、[compact](records/coarse_inverse_replacement_v6.json)与[移交](workstation_handoff.md)。
+
+以下完整保留历史正文；“当前/下一步”仅指当时阶段，以本节为最新状态。
+
+---
+
 # Task39extra V5当前结果：两个完整BAL_H通过，参考swap归因保留限制
 
 | 项目 | 当前结论 |
