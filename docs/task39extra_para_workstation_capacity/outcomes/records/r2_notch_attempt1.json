@@ -95,5 +95,49 @@
     "stop_requested_monotonic": 1092804.095042125,
     "watchdog_end_monotonic": 1092806.482070344
   },
-  "interpretation_boundary": "Two global pswpout pages were observed by the WSL-global diagnostic, while the sampled process tree VmSwap peak was zero. The watchdog therefore stopped and classified attribution as unresolved. This record does not call the run OOM, a numerical failure, or a neighbor-caused failure; no automatic retry is authorized."
+  "interpretation_boundary": "Two global pswpout pages were observed by the WSL-global diagnostic, while the sampled process tree VmSwap peak was zero. The watchdog therefore stopped and classified attribution as unresolved. This record does not call the run OOM, a numerical failure, or a neighbor-caused failure; no automatic retry is authorized.",
+  "speed_attribution_survey": {
+    "r2_step_1_to_3_average_seconds": 131.2600307406037,
+    "r1_first32_average_seconds_per_outer_iteration": 25.611268303823,
+    "r2_to_r1_solve_average_ratio": 5.12508905000267,
+    "r1_first32_pc_operation_seconds": {
+      "A_structure_average": 9.27664980726695,
+      "C_average": 8.666334542038385,
+      "smoother_average": 1.463909656922624,
+      "total_average": 19.406894006227958,
+      "native_count": 64
+    },
+    "r2_observed_pc_operation_seconds": {
+      "A_structure_average": 67.30233904812485,
+      "C_average": 17.84395230553734,
+      "smoother_average": 1.02811672934331,
+      "total_average": 86.1744080830055,
+      "native_count": 6
+    },
+    "r2_to_r1_pc_ratios": {
+      "A_structure": 7.255026377669549,
+      "C": 2.0589964787281696,
+      "total": 4.440401851803326
+    },
+    "native_kernel_evidence": {
+      "p4_implementation": "native_p4_row_loop_avx512_v1",
+      "p4_p6_curl_implementation": "native_curl_fused_avx512_strict_v1",
+      "p4_decision_profile": "balanced_h6_p4_native_13p5",
+      "p4_native_count": 6,
+      "mode_bridge_status": "FIELDWISE_MODE_IDENTITY_PASS",
+      "mode_bridge_native_sha256": "d4380495d912f97f6d303a85756bb9b252a1117bad229b559f0ac8140e745fbb"
+    },
+    "post_stop_hardware_baseline": {
+      "scope": "after watchdog stop; not runtime attribution",
+      "wall_window_seconds": 8,
+      "completed_samples": 6,
+      "cpu23_frequency_khz_range": [1000000, 1000000],
+      "thermal_zone1_mC_range": [67000, 68000],
+      "thermal_zone2_mC_range": [53000, 54000],
+      "cpu23_running_threads_over_all_threads": "0/19 at each observed sample",
+      "runtime_conclusion": "insufficient to prove or disprove thermal throttling during R2"
+    },
+    "root_cause_status": "unresolved; observed p4/PC cost is evidence for the next review, not a proven hardware, neighbor, memory, or algorithmic cause",
+    "minimal_review_plan": "Keep this run closed and do not retry automatically. If a retry is separately approved, first reuse these logs with one bounded in-run CPU23 frequency/temperature/competing-thread sample and the same p4/PC counters; do not change source, global swap policy, hardware protection, or neighbor processes."
+  }
 }
