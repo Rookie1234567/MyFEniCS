@@ -58,7 +58,7 @@ def test_macro_representative_selection_uses_nonzero_dtn_rows_and_no_dtn_interna
     local = MacroLocalVolume.__new__(MacroLocalVolume)
     local.cell_tags = np.array([1, 1, 2], dtype=np.int32)
     local.blocks = [
-        {"seed": (0, 0, 0), "indices": np.array([0]), "support_cells": np.array([0])},
+        {"seed": (0, 0, 0), "indices": np.array([0]), "support_cells": np.array([0, 2])},
         {"seed": (1, 0, 0), "indices": np.array([1]), "support_cells": np.array([1, 2])},
     ]
     entry = SimpleNamespace(
@@ -67,7 +67,7 @@ def test_macro_representative_selection_uses_nonzero_dtn_rows_and_no_dtn_interna
     )
     selected = local._select_representative_blocks(SimpleNamespace(entries=(entry,)))
     assert selected == {
-        "material_interface": 1,
+        "material_interface": 0,
         "port_DtN": 1,
         "interior_no_DtN": 0,
     }

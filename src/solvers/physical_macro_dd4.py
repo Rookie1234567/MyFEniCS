@@ -523,7 +523,8 @@ class MacroLocalVolume:
 
         The three witnesses are intentionally tied to the retained local
         metadata: a material-interface support, a block touched by at least
-        one current DtN functional, and an interior single-material support.
+        one current DtN functional, and an interior support without a
+        nonzero current DtN functional.
         Choosing the lexicographically smallest seed in each category makes
         the choice deterministic without probing a global operator or
         assuming that ordinal block 0/middle/last has a physical meaning.
