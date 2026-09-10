@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V8 K4 closeout: V5 success baseline and V7 negatives retained; K1 RESET/CARRY controls and one K2 recycled outer are hash-bound controlled evidence",
+  "scope": "V9 closeout: V5 success baseline and V6/V7/V8 negatives retained; L1 equal-new-work controls and one L2 original outer are hash-bound controlled evidence",
   "units": {
     "time": "s",
     "memory": "B"
@@ -927,6 +927,63 @@
       "compact": "docs/task039_extra_physical_multilevel/outcomes/records/recycled_p4_outer_v8.json",
       "ledger": "benchmarks/artifacts/task39extra/v8_k2_original/49ddad7f4b196e45e449c1044d90b17d6ee6300c/v8_batch_ledger.json",
       "next": "K4 documentation complete; no rerun, rank expansion, notch, recovery, or workstation heavy case"
+    },
+    {
+      "id": "V9_L1_equal_new_work_controls",
+      "source_sha": "55b7325cae8477ded7b04cfab42181f18e035a0f",
+      "category": "measured_controlled_finite_evidence",
+      "raw_root": "benchmarks/artifacts/task39extra/v9_l1_equal_new_work/55b7325cae8477ded7b04cfab42181f18e035a0f/controls",
+      "classification": "J1_CONTROLS_COMPLETED",
+      "semantic_classification": "L1_ADMISSION_OPEN",
+      "sequence_i4_calls": 12,
+      "control_i4_calls": 4,
+      "total_i4_calls": 16,
+      "total_B4_applies": 256,
+      "complete_pairs": 6,
+      "effective_pairs": 5,
+      "cumulative_reset_seconds": 96.98303711495828,
+      "cumulative_carry_seconds": 112.19278895820025,
+      "carry_over_reset_ratio": 1.1568289908802627,
+      "charged_seconds": 530.530732766,
+      "rss_peak_bytes": 1504464896,
+      "swap_peak_bytes": 0,
+      "global_swap_delta": [0, 0],
+      "descendants_cleared": true,
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json",
+      "budget": "benchmarks/artifacts/task39extra/v9_l1_equal_new_work/55b7325cae8477ded7b04cfab42181f18e035a0f/v9_l1_budget.json",
+      "next": "L1 finite evidence retained; no additional controls or heavy PDE without review"
+    },
+    {
+      "id": "V9_L2_equal_new_work_original",
+      "source_sha": "55b7325cae8477ded7b04cfab42181f18e035a0f",
+      "category": "measured_controlled_negative",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_entity_gcrot8_new16_v9__full3d_iterative__mpi1__Mna/20260910T061703.010098Z",
+      "classification": "WORKER_FAILED",
+      "semantic_classification": "TIME_PROGRESS_SCREEN_STOP",
+      "iterations": 38,
+      "full_true_relative_residual": 0.1292009191903606,
+      "checker_final_true_relative_residual": 0.12920091919036078,
+      "screen_solve_seconds": 1842.2495024400364,
+      "outer_matvec_count": 39,
+      "outer_pc_count": 38,
+      "B4_total": 1216,
+      "A4_matvec_total": 1292,
+      "explicit_A4_total": 168,
+      "i4_calls": 76,
+      "official_results": "not_run",
+      "notch": "not_run",
+      "recovery": "not_run",
+      "rss_peak_bytes": 1426276352,
+      "swap_peak_bytes": 0,
+      "global_swap_delta": [0, 0],
+      "workflow_monotonic_seconds": 1898.7580305780284,
+      "outer_charge_seconds": 2071.995232478,
+      "parent_exit_code": 3,
+      "worker_exit_code": 4,
+      "descendants_cleared": true,
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json",
+      "stop_record": "benchmarks/artifacts/task39extra/v9_l2_original_p6/55b7325cae8477ded7b04cfab42181f18e035a0f/v9_l2_screen_stop_record.json",
+      "next": "V9 documentation and compact evidence only; no rerun, rank expansion, notch, recovery, or workstation heavy case"
     }
   ],
   "limitations": [
@@ -939,6 +996,10 @@
     "V7 A and B both stopped at the midpoint with residuals above 1e-3 and no official outputs or notch qualification",
     "V7 RSS values are incomplete failed-workflow observations, not 2 GB successful PDE qualification",
     "V7 closes only the two frozen bounded candidates; it does not establish a universal no-global-p4-LU impossibility theorem"
+    ,
+    "V9 L0 preparation is partial: the complete implementation preparation time is unknown, so the full 3600 s preparation Gate cannot be retrospectively verified from the existing ledger",
+    "V9 L1 total_i4_calls is 16 = 12 sequence rows + 4 complete-control I4 calls; the compact names these fields separately",
+    "V9 L2 is an outer progress negative with no official fields; its low RSS and zero swap do not qualify a successful PDE"
   ],
   "registration_fix": {
     "path": "benchmarks/artifacts/task39extra/a2r_f93edc8_v1/registration_fix.json",
@@ -1068,5 +1129,52 @@
       "old_v7_costs": "not_used_or_merged"
     },
     "next": "K4 documentation and compact evidence only; stop for concentrated review"
+  },
+  "v9": {
+    "status": "EQUAL_WORK_RECYCLE_BOUNDED_NEGATIVE",
+    "source_sha": "55b7325cae8477ded7b04cfab42181f18e035a0f",
+    "L1_compact": "docs/task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json",
+    "L2_compact": "docs/task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json",
+    "L1": {
+      "sequence_i4_calls": 12,
+      "control_i4_calls": 4,
+      "total_i4_calls": 16,
+      "total_B4_applies": 256,
+      "effective_pairs": 5,
+      "admission": "L1_ADMISSION_OPEN",
+      "cumulative_reset_seconds": 96.98303711495828,
+      "cumulative_carry_seconds": 112.19278895820025
+    },
+    "L2": {
+      "profile": "balanced_h6_entity_gcrot8_new16_v9",
+      "route": "ENTITY_GCROT8_NEW16",
+      "iterations": 38,
+      "B4_total": 1216,
+      "i4_calls": 76,
+      "A4_matvec_total": 1292,
+      "explicit_A4_total": 168,
+      "full_true_relative_residual": 0.1292009191903606,
+      "checker_final_true_relative_residual": 0.12920091919036078,
+      "worker_status": "TIME_PROGRESS_SCREEN_STOP",
+      "parent_classification": "WORKER_FAILED",
+      "official_outputs": "not_run",
+      "rss_peak_bytes": 1426276352,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "ledger": {
+      "preparation_complete_seconds": "unknown",
+      "preparation_reservation_seconds": 3600.0,
+      "preparation_reservation_is_measured": false,
+      "L0_partial_seconds": 1.853111845,
+      "L1_actual_charge_seconds": 530.530732766,
+      "L2_actual_outer_charge_seconds": 2071.995232478,
+      "charged_seconds_recorded": 2604.379077089,
+      "remaining_seconds": 33395.620922911,
+      "recorded_charge_excludes_unknown_complete_preparation": true,
+      "workflow_reservation_seconds": 14400,
+      "workflow_reservation_distinct_from_elapsed": true
+    },
+    "next": "V9 documentation and compact evidence only; stop for concentrated review"
   }
 }

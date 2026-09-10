@@ -1,17 +1,17 @@
-# Task39extra V8 K4最新结果：recycled p4 受控负结果，compact 收口完成
+# Task39extra V9最新结果：等新工作量复用对照受控负结果，compact 收口完成
 
-本节是当前项目进度入口。K4 在 source `49ddad7f4b196e45e449c1044d90b17d6ee6300c` 上完成 K1 RESET/CARRY 控制记录、K2 original outer 的 compact evidence 和文档收口；没有启动新的 PDE、MPI、rank expansion、candidate rerun 或 workstation heavy case。
+本节是当前项目进度入口。V9 在 source `55b7325cae8477ded7b04cfab42181f18e035a0f` 上已完成 L0 prototype、L1 equal-new-work controls 和唯一授权的 L2 original formal PDE；本次 L4 只做 compact/docs 收口，不再改代码、不再运行新的 PDE、MPI、rank expansion、candidate rerun 或 workstation heavy case。
 
 | 项目 | 最新结论 |
 |---|---|
-| K1 finite controls | 六个固定 RHS 的 RESET/CARRY 为 `103.68024972011335 s` / `84.27563998301048 s`，CARRY 减少 `18.7158207946894%`；native residual、eps 和完整 control 闭合已逐项登记 |
-| K2 original outer | `59` PC、full explicit true residual `0.09114277170870674`，screen ratio 约 `0.837>0.80`，状态 `RECYCLE_BOUNDED_NEGATIVE` |
-| 内层证据 | `118` 次 I4 全部 approximate，B4=`980`，`A4_matvec=1098`，`explicit_A4=260`，最大 I4 elapsed=`16.918557867058553 s`；逐 I4 compact rows 已保存 |
-| 资源 | process-tree RSS 峰 `1530359808 B`，swap/global delta=`0`，后代清场；这是未完成 outer 的资源观察，不是成功 PDE 资格 |
-| 账本 | preparation `3600 s` 是 RESERVED 上界；K2 actual charge=`2060.801451572 s`；`5660.801451572001 s` 是 reserve+actual 的记账值，不是累计 CPU/wall |
+| L1 equal-new-work controls | 12 个 sequence I4 + 4 个 complete-control I4，共 16 次；六行累计 RESET/CARRY=`96.98303711495828 / 112.19278895820025 s`，CARRY 多 `15.68%`；5 个有效 pair 的 `G=0.4822327326491708`、q<1=`0.8`、qmax=`1.5802611912316964` |
+| L2 original outer | `38` PC、solve `1842.2495024400364 s`、full explicit true residual `0.1292009191903606`，高于 `0.10`；状态 `EQUAL_WORK_RECYCLE_BOUNDED_NEGATIVE` |
+| 内层证据 | `76` 次 I4 全部完成 16 新 B4，B4=`1216`，`A4_matvec=1292`，`explicit_A4=168`，最大 I4 elapsed=`21.477697932044975 s`；逐 I4 compact rows 已保存 |
+| 资源 | process-tree RSS 峰 `1426276352 B`，job swap peak=`0 B`，global pswpin/pswpout delta=`0/0`，后代清场；这是未完成 outer 的资源观察，不是成功 PDE 资格 |
+| 账本 | L0 只有 `1.853111845 s` clean-SHA partial probe；L1 charge=`530.530732766 s`，L2 actual charge=`2071.995232478 s`，总 charge=`2604.379077089 s`；完整准备时间未知，不能完整追认 `3600 s` preparation Gate |
 | 任务边界 | official E/H、R/T/A、`A_volume`、notch、recovery、5 nm/0.7 nm 和 workstation heavy case 均未运行；ordinary default 不变 |
 
-结果入口：[K4 中心结果](task039_extra_physical_multilevel/outcomes/recycled_p4_outer_v8.md)、[outer compact](task039_extra_physical_multilevel/outcomes/records/recycled_p4_outer_v8.json)、[逐 I4 compact](task039_extra_physical_multilevel/outcomes/records/recycled_p4_i4_rows_v8.json)、[summary](task039_extra_physical_multilevel/outcomes/summary.md)、[response V9](task039_extra_physical_multilevel/response_v9.md)。V5 双模型成功 baseline、V7 controlled negatives、旧失败 evidence 和 `checker_pre_fix` 保持不变。
+结果入口：[V9 中心结果](task039_extra_physical_multilevel/outcomes/equal_work_recycled_p4_v9.md)、[V9 compact](task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json)、[summary](task039_extra_physical_multilevel/outcomes/summary.md)、[response V10](task039_extra_physical_multilevel/response_v10.md)。V5 双模型成功 baseline、V6/V7/V8 controlled negatives、旧失败 evidence 和 checker 历史均保持不变；V5 条件参考 workflow 的 global `pswpout` 448 页归因仍为 `UNRESOLVED`，不被 V9 的 job/global 零增量覆盖。
 
 当前仅完成 docs/compact closeout；静态 JSON/hash/link/diff 检查不构成新的数值或 CI 通过，也不构成 `master` merge approval。以下 V6 及更早内容是历史正文。
 

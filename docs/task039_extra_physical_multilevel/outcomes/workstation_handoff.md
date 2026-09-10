@@ -1,16 +1,17 @@
-# Task39extra 工作站移交边界：V8 K4关闭 recycled p4 候选
+# Task39extra 工作站移交边界：V9关闭等新工作量复用候选
 
-本节是当前工作站边界。V8 K2 的较低 RSS 只属于第 59 个 PC 后 screen stop 的未完成 outer；它不是成功 PDE 的容量或 solver 资格证据。
+本节是当前工作站边界。V9 L2 的较低 RSS 只属于第 38 个 PC 后 time-progress screen stop 的未完成 outer；它不是成功 PDE 的容量或 solver 资格证据。L1 只是一组有限控制，不能作为完整 outer 资格。
 
 | 项目 | 当前结论 |
 |---|---|
-| V8 K2 | `NORMAL_SCREEN_STOP` / `RECYCLE_BOUNDED_NEGATIVE`；full explicit residual `0.09114277170870674`，process-tree RSS 峰 `1530359808 B`，swap/global delta=`0`，后代清场 |
-| 内层证据 | 118 次 I4 全部 approximate、B4=`980`、`A4_matvec=1098`、`explicit_A4=260`；逐 I4 compact rows 仅含标量审阅字段 |
+| V9 L2 | `TIME_PROGRESS_SCREEN_STOP` / `EQUAL_WORK_RECYCLE_BOUNDED_NEGATIVE`；PC38、full explicit residual `0.1292009191903606`，process-tree RSS 峰 `1426276352 B`，job swap peak=`0 B`、global pswpin/pswpout delta=`0/0`，后代清场 |
+| V9 L1 | 12 个 sequence I4 + 4 个 control I4；全六行累计 RESET/CARRY=`96.98303711495828 / 112.19278895820025 s`；5 个有效 pair admission open，不是 outer solver pass |
+| 内层证据 | 76 次 I4 全部完成 16 新 B4、B4=`1216`、`A4_matvec=1292`、`explicit_A4=168`；逐 I4 compact rows 仅含标量审阅字段 |
 | V5 baseline | 原始 564 步成功 baseline 保留，可用于复现比较；不外推为 2 GB/0.7 nm 能力 |
 | 未运行 | official E/H、R/T/A、`A_volume`、notch、recovery、5 nm、0.7 nm 和 workstation heavy case |
 | 当前动作 | 无新的 workstation qualification；不重跑、不扩 rank、不换候选；等待集中 review |
 
-证据入口：[V8 中心结果](recycled_p4_outer_v8.md)、[V8 outer compact](records/recycled_p4_outer_v8.json)、[逐 I4 compact](records/recycled_p4_i4_rows_v8.json)。本节不构成 `master` merge approval；普通默认保持不变。
+证据入口：[V9 中心结果](equal_work_recycled_p4_v9.md)、[V9 compact](records/equal_work_recycled_p4_v9.json)、[V9 L2 stop record](../../../benchmarks/artifacts/task39extra/v9_l2_original_p6/55b7325cae8477ded7b04cfab42181f18e035a0f/v9_l2_screen_stop_record.json)。本节不构成 `master` merge approval；普通默认保持不变。
 
 ---
 

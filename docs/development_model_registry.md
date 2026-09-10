@@ -1,15 +1,16 @@
-# Task39extra V8 K4当前登记：recycled p4 受控负结果
+# Task39extra V9当前登记：等新工作量复用对照受控负结果
 
-本节是当前模型登记入口。V8 K1 只是有限控制序列，V8 K2 是一次未通过完整 outer Gate 的原始模型运行；两者都不能提升 ordinary default，也不能生成 official physical outputs。
+本节是当前模型登记入口。V9 L1 是固定新搜索量的有限控制证据，V9 L2 是一次未通过完整 outer Gate 的原始模型运行；两者都不能提升 ordinary default，也不能生成 official physical outputs。
 
 | model id | source/input | 方法与实测结果 | 状态/登记边界 |
 |---|---|---|---|
-| `task39_v8_recycled_entity_gcrot8_k2_original` | source `49ddad7f4b196e45e449c1044d90b17d6ee6300c`；13.5 nm、p6/h10、Full3D、MPI1、80 modes | `ENTITY_GCROT8`，最多 8 对方向；59 PC，full explicit true residual `0.09114277170870674`；B4=`980`、I4=`118` | `controlled_negative` / `RECYCLE_BOUNDED_NEGATIVE`；screen stop，official/notch/recovery 未运行 |
-| `task39_v8_k1_reset_carry_controls` | run source `09c1b3a6f3c21d4d0e99feb36a97972819971fb3`；固定六个 p4 RHS | RESET/CARRY 为 `103.68024972011335 s` / `84.27563998301048 s`；per-input native residual、eps 和完整 control closure 已登记 | `finite_control_evidence`；不是 outer solver 或 physics pass |
+| `task39_v9_equal_new_work_entity_gcrot8_new16_l2_original` | source `55b7325cae8477ded7b04cfab42181f18e035a0f`；13.5 nm、p6/h10、Full3D、MPI1、80 modes | `ENTITY_GCROT8_NEW16`，最多 8 对方向、每次固定 16 个新 B4；38 PC，screen true residual `0.1292009191903606`；B4=`1216`、I4=`76` | `controlled_negative` / `EQUAL_WORK_RECYCLE_BOUNDED_NEGATIVE`；time-progress stop，official/notch/recovery 未运行 |
+| `task39_v9_l1_equal_new_work_controls` | 同 source；六个固定 p4 RHS 的 RESET/CARRY sequence，另有两个 complete controls | 12 个 sequence I4 + 4 个 control I4，共 16；全六行累计 RESET/CARRY=`96.98303711495828 / 112.19278895820025 s`；5 个有效 pair 的 q<1=`0.8` | `finite_control_evidence` / `L1_ADMISSION_OPEN`；不是 outer solver 或 physics pass |
+| `task39_v8_recycled_entity_gcrot8_k2_original` | source `49ddad7f4b196e45e449c1044d90b17d6ee6300c`；13.5 nm、p6/h10、Full3D、MPI1、80 modes | `ENTITY_GCROT8`，最多 8 对方向；59 PC，full explicit true residual `0.09114277170870674`；B4=`980`、I4=`118` | 历史 `controlled_negative`；V9 对照 predecessor，official/notch/recovery 未运行 |
 | `task39_v5_bal_h_original` | V5 compact；同一 13.5 nm 物理族 | 564 步，完整 true residual `9.932289219916376e-7` | `success_with_qualifications`；保留为历史成功 baseline |
-| `task39_v7_bounded_entity16_a` | V7 A compact | 121 步，true residual `0.04256451212826674` | `controlled_negative`；历史冻结候选，保持不变 |
+| `task39_v7_bounded_entity16_a` | V7 A compact | 121 步，true residual `0.04256451212826674` | 历史 `controlled_negative`；冻结候选，保持不变 |
 
-V8 K2 的 `A4_matvec=1098`、`explicit_A4=260`、最大 I4 elapsed `16.918557867058553 s` 以及 118 行逐 I4 compact 记录见 [K4 compact](task039_extra_physical_multilevel/outcomes/records/recycled_p4_outer_v8.json) 和 [per-I4 rows](task039_extra_physical_multilevel/outcomes/records/recycled_p4_i4_rows_v8.json)。V5/V7 的 official fields、R/T/A 和工作站能力边界不因 V8 改变；ordinary default 仍 unchanged。
+V9 的 `A4_matvec=1292`、`explicit_A4=168`、最大 I4 elapsed `21.477697932044975 s` 以及 76 行逐 I4 compact 记录见 [V9 compact](task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json)；V9 的 native exit spot check 是 `||A4U-Q||/||Q||` 相对误差，8 是退出抽查列数，不是所有 native 调用次数。V5/V7/V8 的 official fields、R/T/A 和工作站能力边界不因 V9 改变；ordinary default 仍 unchanged。
 
 ---
 
