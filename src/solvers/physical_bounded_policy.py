@@ -138,3 +138,245 @@ class BoundedI4Admission:
         return dict(calls=self.calls, no_direction_streak=self.no_direction_streak,
             timeout_streak=self.timeout_streak, recent=list(self.recent),
             last=dict(self.last_facts))
+
+
+class RecycledI4Admission:
+    """PETSc bridge for the opt-in V8 one-round recycled I4 kernel.
+
+    The bridge creates one private PETSc prototype and converts only the
+    callback vectors needed by the array kernel.  It deliberately keeps the
+    V7 :class:`BoundedI4Admission` untouched; old profiles therefore continue
+    to use the historical PETSc KSP path and its existing streak semantics.
+    """
+
+    def __init__(
+        self,
+        action: Any,
+        pc: Any,
+        *,
+        model_identity: Any,
+        sample: Callable[[], Any],
+        save: Callable[[str, dict[str, Any]], None],
+        stop_requested: Callable[[], bool],
+        residual_action: Any | None = None,
+        constraint_check: Callable[[np.ndarray], Any] | None = None,
+        q_constraint_check: Callable[[np.ndarray], Any] | None = None,
+        u_constraint_check: Callable[[np.ndarray], Any] | None = None,
+        independent_indices: np.ndarray | None = None,
+        pool: Any | None = None,
+    ) -> None:
+        from .physical_recycled_i4 import BoundedGCROTI4
+
+        self.action = action
+        self.pc = pc
+        self.residual_action = action if residual_action is None else residual_action
+        self.sample = sample
+        self.save = save
+        self.stop_requested = stop_requested
+        self.constraint_check = constraint_check
+        self.q_constraint_check = q_constraint_check
+        self.u_constraint_check = u_constraint_check
+        self._requested_independent_indices = (None if independent_indices is None else
+                                               np.asarray(independent_indices,
+                                                          dtype=np.int64).copy())
+        self._independent_indices: np.ndarray | None = None
+        self._excluded_indices: np.ndarray | None = None
+        self.calls = 0
+        self.no_direction_streak = 0
+        self.timeout_streak = 0
+        self.last_facts: dict[str, Any] = {}
+        self.recent: list[dict[str, Any]] = []
+        self._prototype: Any | None = None
+        self._local_size: int | None = None
+        self._global_size: int | None = None
+        self.destroyed = False
+        self.engine = BoundedGCROTI4(
+            self._array_action,
+            self._array_pc,
+            model_identity=model_identity,
+            validation_action=self._array_residual_action,
+            constraint_check=constraint_check,
+            q_constraint_check=q_constraint_check,
+            u_constraint_check=u_constraint_check,
+            sample=sample,
+            stop_requested=stop_requested,
+            pool=pool,
+        )
+
+    @staticmethod
+    def _scalar_facts(facts: dict[str, Any]) -> dict[str, Any]:
+        keys = (
+            'status', 'target', 'final_true_residual', 'rhs_norm', 'iterations',
+            'reason', 'seconds', 'actual_elapsed_seconds', 'requested_safe_return',
+            'timeout_exceeded', 'stop_reason', 'legal_direction_count',
+            'A4_matvec', 'B4_calls', 'explicit_A4', 'pool_before', 'pool_after',
+            'pool_update', 'completed_new_arnoldi_directions',
+            'attempted_new_arnoldi_directions',
+        )
+        return {key: facts[key] for key in keys if key in facts}
+
+    def _ensure_prototype(self, rhs: Any) -> None:
+        if rhs.getComm().getSize() != 1:
+            raise RuntimeError('V8 recycled I4 is qualified for MPI1 only')
+        array = np.asarray(rhs.array)
+        if array.ndim != 1 or array.dtype != np.dtype(np.complex128):
+            raise RuntimeError('V8 recycled I4 requires a complex128 PETSc Vec')
+        local_size = int(rhs.getLocalSize())
+        global_size = int(rhs.getSize())
+        if array.shape != (local_size,):
+            raise RuntimeError('V8 PETSc Vec storage does not match its local size')
+        if self._requested_independent_indices is None:
+            indices = np.arange(local_size, dtype=np.int64)
+        else:
+            indices = self._requested_independent_indices
+            if (indices.ndim != 1 or len(indices) == 0 or
+                    np.any(indices < 0) or np.any(indices >= local_size) or
+                    len(np.unique(indices)) != len(indices)):
+                raise RuntimeError('V8 independent p4 index map is invalid')
+        if self._prototype is None:
+            self._independent_indices = indices.copy()
+            self._excluded_indices = np.setdiff1d(
+                np.arange(local_size, dtype=np.int64), indices, assume_unique=True)
+            self._prototype = rhs.duplicate()
+            self._prototype.set(0)
+            self._local_size = local_size
+            self._global_size = global_size
+        elif (local_size != self._local_size or global_size != self._global_size or
+              not np.array_equal(indices, self._independent_indices)):
+            raise RuntimeError('V8 recycled I4 RHS size changed within one model')
+
+    def _validate_full_array(self, value: Any, *, name: str) -> np.ndarray:
+        """Validate a complete PETSc Vec before reducing to owned coordinates."""
+
+        array = np.asarray(value)
+        if self._local_size is None or self._excluded_indices is None:
+            raise RuntimeError('V8 PETSc prototype is not initialized')
+        if array.ndim != 1 or array.dtype != np.dtype(np.complex128):
+            raise RuntimeError(f'V8 {name} must be a complex128 PETSc Vec array')
+        if array.shape != (self._local_size,):
+            raise RuntimeError(f'V8 {name} returned the wrong full Vec size')
+        if not np.isfinite(array).all():
+            raise RuntimeError(f'V8 {name} returned non-finite values')
+        if (self._excluded_indices.size and
+                not np.all(array[self._excluded_indices] == 0.0)):
+            raise RuntimeError(f'V8 {name} has nonzero excluded slave entries')
+        return array
+
+    def _call_vec(self, function: Any, value: np.ndarray, *, name: str) -> np.ndarray:
+        if self._prototype is None:
+            raise RuntimeError('V8 PETSc prototype is not initialized')
+        if self._independent_indices is None or value.shape != (len(self._independent_indices),):
+            raise RuntimeError('V8 reduced p4 callback size is inconsistent')
+        argument = self._prototype.duplicate()
+        output = None
+        try:
+            argument.set(0)
+            argument.array[self._independent_indices] = value
+            output = function(argument)
+            result_full = self._validate_full_array(output.array, name=name)
+            result = result_full[self._independent_indices].copy()
+            if result.ndim != 1 or result.shape != value.shape:
+                raise RuntimeError(f'V8 {name} returned the wrong reduced Vec size')
+            return result
+        finally:
+            if output is not None and output is not argument:
+                output.destroy()
+            argument.destroy()
+
+    def _array_action(self, value: np.ndarray) -> np.ndarray:
+        return self._call_vec(self.action, value, name='A4 callback')
+
+    def _array_pc(self, value: np.ndarray) -> np.ndarray:
+        return self._call_vec(self.pc, value, name='B4 callback')
+
+    def _array_residual_action(self, value: np.ndarray) -> np.ndarray:
+        return self._call_vec(self.residual_action, value, name='native A4 callback')
+
+    def _as_petsc_result(self, result: dict[str, Any]) -> dict[str, Any]:
+        vectors = []
+        try:
+            for name in ('solution', 'applied', 'residual'):
+                vector = self._prototype.duplicate()
+                vector.set(0)
+                vector.array[self._independent_indices] = result[name]
+                vectors.append(vector)
+            return dict(solution=vectors[0], applied=vectors[1],
+                        residual=vectors[2], facts=result['facts'])
+        except BaseException:
+            for vector in vectors:
+                vector.destroy()
+            raise
+
+    def __call__(self, rhs: Any) -> dict[str, Any]:
+        if self.destroyed:
+            raise RuntimeError('V8 recycled I4 admission has been released')
+        self._ensure_prototype(rhs)
+        self.calls += 1
+        rhs_full = self._validate_full_array(rhs.array, name='rhs')
+        rhs_reduced = rhs_full[self._independent_indices].copy()
+        result = self.engine.solve(rhs_reduced)
+        facts = result['facts']
+        self.last_facts = self._scalar_facts(facts)
+        summary = {key: facts.get(key) for key in (
+            'status', 'iterations', 'seconds', 'actual_elapsed_seconds',
+            'final_true_residual', 'legal_direction_count', 'timeout_exceeded',
+            'stop_reason', 'pool_before', 'pool_after', 'pool_update')}
+        summary['call'] = self.calls
+        self.recent.append(summary)
+        del self.recent[:-3]
+
+        # Zero RHS is legal and must not erase either nonzero streak.
+        if facts.get('status') == 'INNER_ZERO_RHS':
+            return self._as_petsc_result(result)
+
+        if facts.get('legal_direction_count', 0) == 0:
+            self.no_direction_streak += 1
+        else:
+            self.no_direction_streak = 0
+        if bool(facts.get('timeout_exceeded')):
+            self.timeout_streak += 1
+        else:
+            self.timeout_streak = 0
+        if self.no_direction_streak >= 2 or self.timeout_streak >= 3:
+            reason = (
+                'two_consecutive_no_legal_directions'
+                if self.no_direction_streak >= 2 else 'three_consecutive_timeouts')
+            self.save('bounded_i4_cost_blocked', dict(
+                rhs=np.array(rhs.array, copy=True),
+                solution=np.array(result['solution'], copy=True),
+                applied=np.array(result['applied'], copy=True),
+                residual=np.array(result['residual'], copy=True),
+                facts=facts, recent=list(self.recent), reason=reason,
+            ))
+            raise BoundedI4CostBlocked(dict(
+                status='INNER_COST_BLOCKED', reason=reason, call=self.calls,
+                no_direction_streak=self.no_direction_streak,
+                timeout_streak=self.timeout_streak, recent=list(self.recent)))
+        return self._as_petsc_result(result)
+
+    def native_exit_spot_check(self) -> dict[str, Any]:
+        return self.engine.native_exit_spot_check()
+
+    def reset(self, model_identity: Any | None = None) -> None:
+        self.engine.reset(model_identity)
+        self.no_direction_streak = 0
+        self.timeout_streak = 0
+        self.recent.clear()
+        self.last_facts = {}
+
+    def snapshot(self) -> dict[str, Any]:
+        return dict(
+            calls=self.calls,
+            no_direction_streak=self.no_direction_streak,
+            timeout_streak=self.timeout_streak,
+            recent=list(self.recent), last=dict(self.last_facts),
+            engine=self.engine.snapshot(),
+        )
+
+    def destroy(self) -> None:
+        if not self.destroyed:
+            self.engine.destroy()
+            if self._prototype is not None:
+                self._prototype.destroy()
+                self._prototype = None
+            self.destroyed = True

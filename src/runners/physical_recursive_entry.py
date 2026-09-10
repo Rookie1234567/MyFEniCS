@@ -83,6 +83,25 @@ def particular_contract():
 def selected_contract(args):
     if getattr(args, 'bounded_j1_controls', False):
         route = getattr(args, 'bounded_j1_route', 'ENTITY16')
+        if route == 'ENTITY_GCROT8':
+            from src.io.physical_balanced_profile import (
+                BOUNDED_ENTITY_GCROT8_PROFILE, bounded_profile_facts)
+            return dict(identity='balanced_h6_entity_gcrot8_v8_j1_controls',
+                profile=BOUNDED_ENTITY_GCROT8_PROFILE, route='ENTITY_GCROT8',
+                scope='J1_two_real_q_controls_with_recycled_I4',
+                source='V8_K1_prototype', labels=['A2R160', 'LIGHT448'],
+                setup_count=1, complete_PC_calls=2, I4_calls=4,
+                input_fields=['q', 'native_constraint_map_p6'],
+                forbidden_inputs=['e', 'reference_y', 'old_PC_outputs'],
+                recycling=bounded_profile_facts(BOUNDED_ENTITY_GCROT8_PROFILE)['recycling'],
+                j2_gate=dict(one_complete_PC_seconds_le=90.0,
+                             both_over_90_exception_outer=8,
+                             both_over_90_exception_seconds=600.0),
+                one_apply_contraction_gate='not_applied',
+                old_recursive_campaign='not_called', batch_limit_seconds=36000,
+                k0_k1_limit_seconds=3600, finite_control_limit_seconds=900,
+                ledger_schema='task39extra.review-v8-k0-k1-budget.v1',
+                old_v7_ledger='not_used_or_merged')
         if route == 'PROJECTED_SEQ2_16':
             from src.io.physical_balanced_profile import BOUNDED_PROJECTED_PROFILE
             return dict(identity='bounded_projected_seq2_16_j1_controls',
@@ -157,13 +176,15 @@ def selected_contract(args):
             p4_failure_contract() if args.p4_failure_diagnostic else component_contract(args.target))
 
 
-def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,input_path=None):
+def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,input_path=None,
+                        model_identity=None):
     from . import physical_recursive_controls as controls
     if getattr(args, 'bounded_j1_controls', False):
         from .physical_bounded_j1 import run_j1_controls
         return run_j1_controls(cfg, comm, args.inventory, directory,
             sample=sample, marker=marker, source_sha=source_sha,
-            input_path=input_path, contract=selected_contract(args))
+            input_path=input_path, contract=selected_contract(args),
+            model_identity=model_identity)
     if getattr(args,'high_trace_component',False) or getattr(args,'cached_trace_component',False) or getattr(args,'owner_route_trace_component',False) or getattr(args,'cell_joint_trace_component',False):
         from .physical_trace_controls import run_trace_component
         return run_trace_component(cfg,comm,args.inventory,directory,sample=sample,marker=marker,
@@ -270,7 +291,13 @@ def worker(args):
                 stream.write(json.dumps(dict(stage=name,clock=stamp,facts=facts))+'\n')
         try:
             result=dispatch_components(args,cfg,MPI.COMM_WORLD,root,
-                sample=sample,marker=marker,source_sha=source,input_path=Path(args.input))
+                sample=sample,marker=marker,source_sha=source,input_path=Path(args.input),
+                model_identity=dict(
+                    source_sha=source,
+                    physical_model_sha256=payload['provenance']['physical_model_sha256'],
+                    input_sha256=payload['provenance']['input_sha256'],
+                    profile=contract['profile'], scalar_type='complex128',
+                    mpi_size=int(MPI.COMM_WORLD.Get_size())))
             manifest.update(status='finished', result=result.get('status', 'J1_CONTROLS_COMPLETED'))
             atomic(root/'run_manifest.json', manifest)
             return result
@@ -347,9 +374,9 @@ def build_parser():
     group.add_argument('--owner-route-trace-component',action='store_true')
     group.add_argument('--cell-joint-trace-component',action='store_true')
     group.add_argument('--bounded-j1-controls',action='store_true')
-    parser.add_argument('--bounded-j1-route', choices=('ENTITY16', 'PROJECTED_SEQ2_16'),
+    parser.add_argument('--bounded-j1-route', choices=('ENTITY16', 'PROJECTED_SEQ2_16', 'ENTITY_GCROT8'),
         default='ENTITY16',
-        help='select the existing bounded J1 control route; PROJECTED_SEQ2_16 adds one finite seq2/additive comparison')
+        help='select the bounded J1 route; PROJECTED_SEQ2_16 is the existing finite comparison and ENTITY_GCROT8 is the opt-in V8 prototype')
     parser.add_argument('--amplification-recording-retry',action='store_true',
         help='one reviewed retry of the frozen pre-factor mappingproxy recording failure')
     parser.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
@@ -393,6 +420,9 @@ def amplification_recording_retry(args,budget):
 from .physical_bounded_budget import LIMIT_SECONDS as J1_BATCH_LIMIT_SECONDS
 from .physical_bounded_budget import SCHEMA as J1_BUDGET_SCHEMA
 J1_CONTROLS_LIMIT_SECONDS = 3600.0
+V8_K0_K1_BUDGET_SCHEMA = 'task39extra.review-v8-k0-k1-budget.v1'
+V8_K0_K1_LIMIT_SECONDS = 3600.0
+V8_FINITE_CONTROLS_LIMIT_SECONDS = 900.0
 B_PROJECTED_CONTROLS_LIMIT_SECONDS = 5400.0
 B_PROJECTED_CONTROLS_GROUP = 'B_projected_controls'
 B_PROJECTED_CONTROLS_KIND = 'bounded_projected_controls'
@@ -424,24 +454,35 @@ def _launch_j1_controls(args):
     from benchmarks.subreaper_watchdog import supervise
     from .workflow_timebase import ClockBudget, CONSERVATIVE_REALTIME, clock_sample
 
-    projected = getattr(args, 'bounded_j1_route', 'ENTITY16') == 'PROJECTED_SEQ2_16'
+    route = getattr(args, 'bounded_j1_route', 'ENTITY16')
+    projected = route == 'PROJECTED_SEQ2_16'
+    recycled = route == 'ENTITY_GCROT8'
+    ledger_schema = V8_K0_K1_BUDGET_SCHEMA if recycled else J1_BUDGET_SCHEMA
+    batch_limit = V8_K0_K1_LIMIT_SECONDS if recycled else J1_BATCH_LIMIT_SECONDS
     control_limit = (B_PROJECTED_CONTROLS_LIMIT_SECONDS if projected
+                     else V8_FINITE_CONTROLS_LIMIT_SECONDS if recycled
                      else J1_CONTROLS_LIMIT_SECONDS)
-    control_group = B_PROJECTED_CONTROLS_GROUP if projected else 'J0_J1_controls'
-    control_kind = B_PROJECTED_CONTROLS_KIND if projected else 'j1_controls'
+    control_group = (B_PROJECTED_CONTROLS_GROUP if projected else
+                     'V8_finite_controls' if recycled else 'J0_J1_controls')
+    control_kind = (B_PROJECTED_CONTROLS_KIND if projected else
+                    'bounded_entity_gcrot8_controls' if recycled else 'j1_controls')
     source=git_state(args.source_sha)
     budget_path=Path(args.budget).resolve()
     budget=json.loads(budget_path.read_text())
-    if (budget.get('schema') != J1_BUDGET_SCHEMA or
-            budget.get('limit_seconds') != J1_BATCH_LIMIT_SECONDS or
-            budget.get('j0_j1_controls_limit_seconds') != J1_CONTROLS_LIMIT_SECONDS):
-        raise ValueError('J1 controls require the shared V7 bounded ledger')
+    if (budget.get('schema') != ledger_schema or
+            budget.get('limit_seconds') != batch_limit):
+        raise ValueError('selected controls require their exact bounded ledger')
+    if recycled:
+        if budget.get('finite_control_limit_seconds') != V8_FINITE_CONTROLS_LIMIT_SECONDS:
+            raise ValueError('V8 controls require the independent finite-control budget')
+    elif budget.get('j0_j1_controls_limit_seconds') != J1_CONTROLS_LIMIT_SECONDS:
+        raise ValueError('V7 controls require the shared V7 bounded ledger')
     if any(item.get('kind') == control_kind for item in budget.get('attempts', [])):
         raise ValueError('selected bounded controls already attempted; no repeat measurement')
     used=_j1_charge_seconds(budget)
     controls_used=_controls_charge_seconds(budget, control_group)
     remaining=min(control_limit-controls_used,
-                  J1_BATCH_LIMIT_SECONDS-used)
+                  batch_limit-used)
     if remaining <= 0:
         raise RuntimeError('selected bounded controls budget exhausted')
     lock=budget_path.with_suffix('.lock')
@@ -451,7 +492,7 @@ def _launch_j1_controls(args):
         used=_j1_charge_seconds(budget)
         controls_used=_controls_charge_seconds(budget, control_group)
         remaining=min(control_limit-controls_used,
-                      J1_BATCH_LIMIT_SECONDS-used)
+                      batch_limit-used)
         if remaining <= 0:
             raise RuntimeError('selected bounded controls budget exhausted')
         root=Path(args.output)
@@ -460,22 +501,23 @@ def _launch_j1_controls(args):
             route=getattr(args, 'bounded_j1_route', 'ENTITY16'), status='RESERVED',
             source=args.source_sha,root=str(root),reserved_seconds=remaining,
             elapsed_seconds=remaining,controls_limit_seconds=control_limit,
-            nested_intervals_not_added=True)
+            ledger_schema=ledger_schema, nested_intervals_not_added=True)
         budget.setdefault('attempts',[]).append(entry)
         budget['charged_seconds']=_j1_charge_seconds(budget)
-        budget['remaining_seconds']=J1_BATCH_LIMIT_SECONDS-budget['charged_seconds']
+        budget['remaining_seconds']=batch_limit-budget['charged_seconds']
         atomic(budget_path,budget)
         clock=ClockBudget(clock_sample(),policy=CONSERVATIVE_REALTIME)
         try:
             root.mkdir(parents=True,exist_ok=False)
             cache_home=(root/'jit_cache').resolve()
             cache_home.mkdir(exist_ok=False)
-            atomic(root/'launch_plan.json',dict(schema=J1_BUDGET_SCHEMA,source=source,
+            atomic(root/'launch_plan.json',dict(schema=ledger_schema,source=source,
                 contract=selected_contract(args),wall_seconds=remaining,
                 control_group=control_group,controls_limit_seconds=control_limit,
                 budget_before=budget,jit_cache_home=str(cache_home),
                 jit_cache_initially_empty=not any(cache_home.iterdir()),
-                nested_v6_ledger='not used; shared V7 bounded ledger'))
+                nested_v6_ledger=('not used; independent V8 K0/K1 ledger'
+                                  if recycled else 'not used; shared V7 bounded ledger')))
             command=[sys.executable,'-m','src.runners.physical_recursive_entry',*sys.argv[1:],'--worker']
             result=supervise(command,root/'watchdog',wall_seconds=remaining,
                 phase_path=root/'phase.json',hard_stop_immediate=True,
@@ -503,10 +545,19 @@ def _launch_j1_controls(args):
                     raise
             finally:
                 budget['charged_seconds']=_j1_charge_seconds(budget)
-                budget['remaining_seconds']=J1_BATCH_LIMIT_SECONDS-budget['charged_seconds']
-                budget['j0_j1_controls_charged_seconds']=_j1_controls_charge_seconds(budget)
-                budget['j0_j1_controls_remaining_seconds']=(
-                    J1_CONTROLS_LIMIT_SECONDS-budget['j0_j1_controls_charged_seconds'])
+                budget['remaining_seconds']=batch_limit-budget['charged_seconds']
+                if recycled:
+                    budget['v8_k0_k1_charged_seconds'] = budget['charged_seconds']
+                    budget['v8_k0_k1_remaining_seconds'] = (
+                        batch_limit-budget['charged_seconds'])
+                    budget['v8_finite_controls_charged_seconds'] = _controls_charge_seconds(
+                        budget, control_group)
+                    budget['v8_finite_controls_remaining_seconds'] = (
+                        control_limit-budget['v8_finite_controls_charged_seconds'])
+                else:
+                    budget['j0_j1_controls_charged_seconds']=_j1_controls_charge_seconds(budget)
+                    budget['j0_j1_controls_remaining_seconds']=(
+                        J1_CONTROLS_LIMIT_SECONDS-budget['j0_j1_controls_charged_seconds'])
                 if projected:
                     budget['b_projected_controls_charged_seconds']=_controls_charge_seconds(
                         budget, B_PROJECTED_CONTROLS_GROUP)

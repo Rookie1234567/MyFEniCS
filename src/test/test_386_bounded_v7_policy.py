@@ -9,6 +9,7 @@ from src.io import load_and_resolve
 from src.io.input_loader import InputError
 from src.io.physical_balanced_profile import (
     BOUNDED_ENTITY_PROFILE,
+    BOUNDED_ENTITY_GCROT8_PROFILE,
     BOUNDED_PROFILES,
     BOUNDED_PROJECTED_PROFILE,
 )
@@ -21,8 +22,14 @@ def test_v7_dat_and_profile_contract_is_single_source_of_truth():
             Path('input/task39extra') / f'original_13p5nm_p6h10_{identity}.dat')
         facts = profile_facts(identity)
         assert specification.solver['preconditioner'] == identity
-        assert facts['intermediate']['restart'] == 16
-        assert facts['intermediate']['max_iterations'] == 16
+        if identity == BOUNDED_ENTITY_GCROT8_PROFILE:
+            assert facts['route'] == 'ENTITY_GCROT8'
+            assert facts['recycling']['max_pool_pairs'] == 8
+            assert facts['recycling']['m'] == facts['recycling']['k'] == 8
+            assert facts['recycling']['maxiter'] == 1
+        else:
+            assert facts['intermediate']['restart'] == 16
+            assert facts['intermediate']['max_iterations'] == 16
         assert facts['intermediate']['seconds'] == 30
         assert facts['intermediate']['safe_return_seconds'] == 25
         assert facts['fine_auxiliary']['calls_per_PC'] == dict(I4=2, H6=1)

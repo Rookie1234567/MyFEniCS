@@ -15,7 +15,7 @@ from .fullspace_physical_intermediate import apply_owned
 from .physical_balanced_coupling import PhysicalBalancedCoupling
 from .physical_inexact_balance import InexactBalanceLedger
 from .physical_recursive_coarse import PhysicalP2Inverse
-from .physical_bounded_policy import BoundedI4Admission
+from .physical_bounded_policy import BoundedI4Admission, RecycledI4Admission
 from .physical_trace_entity import (
     CachedPhysicalTraceAction,
     PhysicalTraceEntities,
@@ -44,6 +44,89 @@ PROJECTED_REUSE_RECORD = Path(
 PROJECTED_SOURCE_SHA = 'dcca0f5ea6b7ba9221b23dd210a3c06839cc47be'
 PROJECTED_PATCH_COUNT = 252
 PROJECTED_PATCH_DIMENSION = 144
+
+
+def _json_sha256(value: Any) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(',', ':'),
+                         ensure_ascii=True, allow_nan=False).encode('utf-8')
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _array_fingerprint(value: Any, *, name: str) -> dict[str, Any]:
+    """Return a strict identity for one realized numeric map/coefficient."""
+
+    if hasattr(value, 'array'):
+        value = value.array
+    try:
+        array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f'{name} is not an array') from exc
+    if array.ndim == 0 or array.dtype == np.dtype('O'):
+        raise ValueError(f'{name} is not a non-scalar numeric array')
+    if not np.isfinite(array).all():
+        raise ValueError(f'{name} contains non-finite values')
+    contiguous = np.ascontiguousarray(array)
+    return dict(dtype=str(contiguous.dtype), shape=list(contiguous.shape),
+                sha256=hashlib.sha256(contiguous.tobytes()).hexdigest())
+
+
+def _realized_floquet_identity(cfg: Any, floquet: Any) -> dict[str, Any]:
+    """Bind phases and the actual finalized p4 MPC arrays to the pool."""
+
+    cfg_json = cfg.as_jsonable()
+    required = ('use_floquet_xy', 'floquet_constraint_mode_requested',
+                'floquet_phase_x', 'floquet_phase_y')
+    for key in required:
+        if key not in cfg_json:
+            raise ValueError(f'V8 Floquet identity is missing {key}')
+    mpc = floquet.mpc
+    coefficients, offsets = mpc.coefficients()
+    mpc_arrays = dict(
+        slaves=_array_fingerprint(mpc.slaves, name='p4 MPC slaves'),
+        masters=_array_fingerprint(mpc.masters, name='p4 MPC masters'),
+        coefficients=_array_fingerprint(coefficients, name='p4 MPC coefficients'),
+        offsets=_array_fingerprint(offsets, name='p4 MPC offsets'),
+    )
+    payload = dict(
+        use_floquet_xy=cfg_json['use_floquet_xy'],
+        floquet_constraint_mode=cfg_json['floquet_constraint_mode_requested'],
+        floquet_phase_x=cfg_json['floquet_phase_x'],
+        floquet_phase_y=cfg_json['floquet_phase_y'],
+        p4_mpc=mpc_arrays,
+    )
+    return dict(sha256=_json_sha256(payload), details=payload)
+
+
+def _realized_material_identity(cfg: Any, levels: dict[str, Any]) -> dict[str, Any]:
+    """Bind input material metadata and realized positive coefficient arrays."""
+
+    cfg_json = cfg.as_jsonable()
+    required = ('geometry_kind', 'n_air', 'mu_r', 'n_substrate', 'n_grating',
+                'eps_air', 'eps_substrate', 'eps_grating', 'k0', 'tags')
+    for key in required:
+        if key not in cfg_json:
+            raise ValueError(f'V8 material identity is missing {key}')
+    coefficient_audit = levels['coefficient_audit']
+    if not isinstance(coefficient_audit, dict):
+        raise ValueError('V8 material identity is missing coefficient audit')
+    payload = dict(
+        input_material=dict(
+            geometry_kind=cfg_json['geometry_kind'],
+            n_air=cfg_json['n_air'], mu_r=cfg_json['mu_r'],
+            n_substrate=cfg_json['n_substrate'], n_grating=cfg_json['n_grating'],
+            eps_air=cfg_json['eps_air'], eps_substrate=cfg_json['eps_substrate'],
+            eps_grating=cfg_json['eps_grating'], k0=cfg_json['k0'],
+            tags=cfg_json['tags']),
+        coefficient_audit=coefficient_audit,
+        coefficient_source='realized_positive_coefficients_not_raw_material_values',
+    )
+    for name in ('mu', 'mass'):
+        function = levels[name]
+        if not hasattr(function, 'x'):
+            raise ValueError(f'V8 realized coefficient {name} has no Function.x')
+        payload.setdefault('coefficient_arrays', {})[name] = _array_fingerprint(
+            function.x.array, name=f'realized positive coefficient {name}')
+    return dict(sha256=_json_sha256(payload), details=payload)
 
 
 class BoundedPolicy:
@@ -474,23 +557,24 @@ def build_formal_bounded(
     ledger: Any,
     directory: Path,
     identity: str,
+    model_identity: Any | None = None,
     save: Callable[[str, dict[str, Any]], None],
     append: Callable[[str, dict[str, Any]], None],
     stop_requested: Callable[[], bool],
     capture_vectors: bool = False,
     retain_inexact_vectors: bool = False,
 ) -> tuple[dict[str, Any], Callable[[Any], Any], BoundedPolicy]:
-    """Build one V7 BAL_H route and its callable; no PDE solve is started here."""
+    """Build one bounded BAL_H route and its callable; no PDE solve is started here."""
 
     route = contract.get('route')
-    if route not in ('ENTITY16', 'PROJECTED_SEQ2_16'):
-        raise ValueError(f'unknown bounded V7 route: {route!r}')
+    if route not in ('ENTITY16', 'PROJECTED_SEQ2_16', 'ENTITY_GCROT8'):
+        raise ValueError(f'unknown bounded route: {route!r}')
     if getattr(cfg, 'cell_notch', None):
         raise ValueError('V7 route-A original owner packets cannot be reused for notch materials')
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from .fullspace_same_mesh_hcurl_pmg_physical import build_same_mesh_physical_action
     from .fullspace_physical_intermediate_runtime import (
-        build_physical_intermediate_actions, level_vector)
+        build_physical_intermediate_actions, level_vector, owned_slave_indices)
     from .physical_light_setup import build_light_h6_setup
     bundle: dict[str, Any] = dict(profile=identity, route=route)
     try:
@@ -594,8 +678,82 @@ def build_formal_bounded(
         b4 = PhysicalBalancedCoupling(a4, cu, ht, restriction, route='BAL_H',
             checkpoint=sample, level_identity='formal owner-route cached A4 + p2 bottom')
         bundle['b4'] = b4
-        admission = BoundedI4Admission(a4, b4.apply, sample=sample, save=save,
-            stop_requested=stop_requested, residual_action=native_a4)
+        if route == 'ENTITY_GCROT8' or contract.get('recycling', {}).get('enabled'):
+            p4_slaves = owned_slave_indices(levels['spaces'][4], levels['floquets'][4])
+            p4_local_size = int(levels['spaces'][4].dofmap.index_map.size_local *
+                                levels['spaces'][4].dofmap.index_map_bs)
+            if (p4_slaves.ndim != 1 or len(np.unique(p4_slaves)) != len(p4_slaves) or
+                    np.any(p4_slaves < 0) or np.any(p4_slaves >= p4_local_size)):
+                raise ValueError('realized p4 owner slave map is invalid')
+            p4_independent = np.setdiff1d(
+                np.arange(p4_local_size, dtype=np.int64), p4_slaves,
+                assume_unique=False)
+            map_sha = hashlib.sha256(
+                np.ascontiguousarray(p4_independent, dtype=np.int64).tobytes()).hexdigest()
+            owner_map = dict(
+                full_local_size=p4_local_size,
+                slave_indices=np.asarray(p4_slaves, dtype=np.int64).copy(),
+                independent_indices=np.asarray(p4_independent, dtype=np.int64).copy(),
+                slave_count=int(p4_slaves.size),
+                independent_count=int(p4_independent.size),
+                independent_sha256=map_sha,
+                map_semantics='owned-independent-zero-slave-p4',
+            )
+            save('recycled_i4_owner_map', owner_map)
+            owner_map_record = dict(
+                full_local_size=owner_map['full_local_size'],
+                slave_count=owner_map['slave_count'],
+                independent_count=owner_map['independent_count'],
+                independent_sha256=owner_map['independent_sha256'],
+                map_semantics=owner_map['map_semantics'],
+                record='recycled_i4_owner_map.json',
+            )
+            if model_identity is None:
+                raise ValueError('V8 recycled I4 requires complete model identity')
+            elif isinstance(model_identity, dict):
+                bound_identity = deepcopy(model_identity)
+            else:
+                raise ValueError('V8 recycled I4 model identity must be a mapping')
+            required_identity = ('source_sha', 'physical_model_sha256',
+                                 'input_sha256', 'profile', 'scalar_type', 'mpi_size')
+            missing_identity = [key for key in required_identity
+                                if key not in bound_identity]
+            if missing_identity:
+                raise ValueError('V8 model identity is incomplete: ' +
+                                 ','.join(missing_identity))
+            floquet_identity = _realized_floquet_identity(
+                cfg, levels['floquets'][4])
+            material_identity = _realized_material_identity(cfg, levels)
+            bound_identity.update(
+                profile=identity, route=route,
+                p4_full_local_size=p4_local_size,
+                p4_independent_count=int(p4_independent.size),
+                p4_independent_sha256=map_sha,
+                p4_owner_map=dict(
+                    full_local_size=owner_map_record['full_local_size'],
+                    slave_count=owner_map_record['slave_count'],
+                    independent_count=owner_map_record['independent_count'],
+                    independent_sha256=owner_map_record['independent_sha256'],
+                    map_semantics=owner_map_record['map_semantics'],
+                    record=owner_map_record['record']),
+                mode_sha256=actions['mode_sha256'],
+                volume_quadrature_metadata=actions['volume_quadrature_metadata'],
+                floquet_sha256=floquet_identity['sha256'],
+                material_sha256=material_identity['sha256'],
+                constraint_coordinates='owned-independent-zero-slave-p4',
+            )
+            bundle['recycling_owner_map'] = owner_map_record
+            bundle['recycling_floquet_identity'] = floquet_identity
+            bundle['recycling_material_identity'] = material_identity
+            bundle['recycling_identity'] = bound_identity
+            admission = RecycledI4Admission(
+                a4, b4.apply, sample=sample, save=save,
+                stop_requested=stop_requested, residual_action=native_a4,
+                independent_indices=p4_independent,
+                model_identity=bound_identity)
+        else:
+            admission = BoundedI4Admission(a4, b4.apply, sample=sample, save=save,
+                stop_requested=stop_requested, residual_action=native_a4)
         bundle['i4_admission'] = admission
         inexact = InexactBalanceLedger(
             lambda value: apply_owned(fine['physical_action'], value),
@@ -626,7 +784,7 @@ def build_formal_bounded(
         outer = PhysicalBalancedCoupling(
             lambda value: apply_owned(fine['physical_action'], value), c64, h6,
             p64.apply_adjoint, route='BAL_H', checkpoint=sample,
-            inexact_ledger=inexact, level_identity=f'p6/p4 bounded {route.lower()} V7',
+            inexact_ledger=inexact, level_identity=f'p6/p4 bounded {route.lower()}',
             capture_vectors=capture_vectors)
         bundle['pc'] = outer
 
@@ -740,12 +898,42 @@ def audit_bounded_exit(bundle: dict[str, Any], ledger: Any) -> dict[str, Any]:
     before = dict(audits=inexact.audit_count, extra_A6=inexact.A_count,
                   extra_PH=inexact.PH_count, extra_A6_seconds=inexact.A_seconds,
                   extra_PH_seconds=inexact.PH_seconds, audit_seconds=inexact.audit_seconds)
+    if getattr(ledger, 'stop_signal', None) is not None:
+        # A resource/signal stop takes priority over optional exit auditing;
+        # do not force another A6/PH or native A4 action just to complete a
+        # diagnostic record.
+        snapshot = bounded_terminal_snapshot(bundle)
+        skipped = dict(status='skipped_resource_stop',
+                       stop_signal=getattr(ledger, 'stop_signal', None),
+                       attempted_native_A4=0, completed_native_A4=0,
+                       elapsed_seconds=0.0)
+        snapshot['I4']['exit_native_spot'] = skipped
+        snapshot['exit_audit'] = dict(status='skipped_resource_stop',
+                                      stop_signal=getattr(ledger, 'stop_signal', None))
+        ledger.append('bounded_exit_audit.jsonl', dict(
+            audit=None, last_PC=int(bundle['pc'].apply_count),
+            audit_costs=dict((key, 0.0) for key in before),
+            total=snapshot, action_counts='exit audit skipped for resource stop'))
+        return snapshot
     audit = inexact.audit_last()
     after = dict(audits=inexact.audit_count, extra_A6=inexact.A_count,
                  extra_PH=inexact.PH_count, extra_A6_seconds=inexact.A_seconds,
                  extra_PH_seconds=inexact.PH_seconds, audit_seconds=inexact.audit_seconds)
     costs = {key: after[key] - before[key] for key in before}
+    admission = bundle['i4_admission']
+    exit_spot = None
+    if getattr(ledger, 'stop_signal', None) is None and hasattr(admission, 'native_exit_spot_check'):
+        exit_spot = admission.native_exit_spot_check()
     snapshot = bounded_terminal_snapshot(bundle)
+    if exit_spot is not None:
+        snapshot['I4']['exit_native_spot'] = exit_spot
+        costs['native_exit_spot_A4'] = float(
+            exit_spot.get('completed_native_A4', exit_spot.get('checked', 0)))
+        costs['native_exit_spot_seconds'] = float(
+            exit_spot.get('elapsed_seconds', 0.0))
+        snapshot['exit_audit_costs'] = dict(
+            native_exit_spot_A4=costs['native_exit_spot_A4'],
+            native_exit_spot_seconds=costs['native_exit_spot_seconds'])
     ledger.append('bounded_exit_audit.jsonl', dict(
         audit=audit, last_PC=int(bundle['pc'].apply_count), audit_costs=costs,
         total=snapshot, action_counts='lifetime counters; no per-PC re-sum'))
@@ -756,7 +944,9 @@ def release_bounded_physical_solver_stack(bundle: dict[str, Any]) -> None:
     """Release V7 auxiliary objects while retaining the fine action."""
 
     bundle.pop('pc', None)
-    bundle.pop('i4_admission', None)
+    admission = bundle.pop('i4_admission', None)
+    if admission is not None and hasattr(admission, 'destroy'):
+        admission.destroy()
     bundle.pop('b4', None)
     inexact = bundle.pop('inexact_ledger', None)
     if inexact is not None:

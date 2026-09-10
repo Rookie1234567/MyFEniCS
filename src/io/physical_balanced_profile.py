@@ -15,9 +15,11 @@ BALANCED_PROFILES = tuple(BALANCED_ROUTES)
 # bounded inexact coarse inverse as one of its historical runs.
 BOUNDED_ENTITY_PROFILE = 'bounded_entity16_v7'
 BOUNDED_PROJECTED_PROFILE = 'bounded_projected_seq2_16_v7'
+BOUNDED_ENTITY_GCROT8_PROFILE = 'balanced_h6_entity_gcrot8_v8'
 BOUNDED_ROUTES = {
     BOUNDED_ENTITY_PROFILE: 'ENTITY16',
     BOUNDED_PROJECTED_PROFILE: 'PROJECTED_SEQ2_16',
+    BOUNDED_ENTITY_GCROT8_PROFILE: 'ENTITY_GCROT8',
 }
 BOUNDED_PROFILES = tuple(BOUNDED_ROUTES)
 
@@ -51,10 +53,11 @@ def balanced_profile_facts(identity):
 
 
 def bounded_profile_facts(identity):
-    """Return the V7 outer contract without importing the formal builder."""
+    """Return the bounded outer contract without importing the formal builder."""
     if identity not in BOUNDED_ROUTES:
-        raise ValueError('unknown bounded V7 profile')
+        raise ValueError('unknown bounded profile')
     route = BOUNDED_ROUTES[identity]
+    recycled = route == 'ENTITY_GCROT8'
     from .physical_intermediate_profile import profile_facts, REFERENCE_PROFILE
     facts = profile_facts(REFERENCE_PROFILE)
     facts.update(identity=identity, route=route, reference_only=False,
@@ -107,9 +110,51 @@ def bounded_profile_facts(identity):
         three_checkpoint_geometric_ratio=.80,
         mid_budget_seconds=5400, mid_budget_residual_limit=1e-3))
     facts['resources'].update(workflow_seconds=14400, solve_seconds=10800,
-        batch_limit_seconds=43200, performance_grace_seconds=60,
+        batch_limit_seconds=36000 if recycled else 43200,
+        performance_grace_seconds=60,
         independent_p1_factors=0, reference_p4_factors=0,
         local_trace_payload_cap_bytes=256*1024**2,
         physical_p2_max_rows=8192, physical_p2_budget_bytes=512*1024**2)
     facts['resources'].pop('reference_factor_budget', None)
+    if route == 'ENTITY_GCROT8':
+        facts['intermediate'].update(
+            ksp_type='gcrotmk', restart=8, max_iterations=1,
+            relative_tolerance=1e-4, initial_guess='zero',
+            scipy_backend='scipy.sparse.linalg.gcrotmk',
+            scipy_fixed=dict(m=8, k=8, maxiter=1, truncate='smallest',
+                             discard_C=False, tol=1e-4, atol=0.0))
+        facts['inner'].update(
+            method='gcrotmk', restart=8, max_iterations=1,
+            true_relative_target=1e-4, fixed_round=True,
+            max_new_B4=16, max_new_arnoldi_directions=16)
+        facts['recycling'] = dict(
+            enabled=True, pool_pair_order='(U,Q)', max_pool_pairs=8,
+            relation='A4 U = Q', orthogonality='Q^H Q = I',
+            backend='scipy.sparse.linalg.gcrotmk', m=8, k=8, maxiter=1,
+            truncate='smallest', discard_C=False, tol=1e-4, atol=0.0,
+            max_new_B4=16, max_new_arnoldi_directions=16,
+            orthogonality_limit=1e-10, closure_limit=1e-10,
+            rank_threshold=1e-12, safe_return_seconds=25,
+            hard_seconds=30,
+            native_spot='first_nonempty_then_absolute_calls_32_64_...',
+            extra_bytes_limit=64*1024**2,
+            p4_independent_rows=48960,
+            pool_numeric_bytes_p4_derived=12_533_760,
+            transaction='private_CU_copy_commit_after_final_native_checks',
+            initial_projection=dict(
+                formula='c0 = U (Q^H g)',
+                source='current_model_outer_rhs_and_current_initial_pool_only',
+                uses_reference_or_previous_solution=False,
+                zero_outer_initial_guess=True, zero_initial_pool=True),
+            native_spot_schedule='first_nonempty_then_absolute_calls_32_64_...',
+            native_spot_recommendation='first plus absolute calls 32/64/...')
+        facts['inexact_balance'].update(
+            recycling_identity='A4 U=Q; cached-transform closure plus native spot checks')
+        facts['route_b'] = dict(
+            status='not_applicable', candidate=False,
+            reason='V8 admits only the entity GCROT8 route; no projected B candidate')
+        facts['preparation_ledger'] = dict(
+            schema='task39extra.review-v8-k0-k1-budget.v1',
+            total_seconds=3600, finite_control_seconds=900,
+            old_v7_ledger='not_used_or_merged')
     return facts

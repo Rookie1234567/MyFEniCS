@@ -41,14 +41,16 @@ def _bounded_i4_facts(row: dict) -> dict:
     return facts if isinstance(facts, dict) else {}
 
 
-def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
-    """Recompute V7 I4, PC, H6, and inexact-audit accounting from JSONL.
+def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
+                         call_start=1, native_seen_before=False) -> dict:
+    """Recompute bounded I4, PC, H6, and inexact-audit accounting from JSONL.
 
     This deliberately does not use ``positive_setup`` or the solver's status.
     In particular, H6 is counted from the actual per-PC smoother count, and
     the two I4 calls are matched to their nested inexact-balance records.
     """
     errors = []
+    v8_recycled = profile == 'balanced_h6_entity_gcrot8_v8'
 
     def require(condition, message):
         if not condition:
@@ -57,9 +59,14 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
     normalized = []
     timeout_streak = 0
     no_direction_streak = 0
+    v8_identity = None
+    v8_previous_after = None
+    v8_native_seen = bool(native_seen_before)
     for index, row in enumerate(i4_rows, 1):
         facts = _bounded_i4_facts(row)
-        require(row.get('call') == index, f'I4 call ordering mismatch at {index}')
+        expected_call = int(call_start) + index - 1
+        require(row.get('call') == expected_call,
+                f'I4 call ordering mismatch at {expected_call}')
         status = facts.get('status')
         require(status in _BOUNDED_I4_STATUSES, f'illegal I4 status at {index}: {status}')
         for key in ('target', 'rhs_norm', 'final_true_residual', 'seconds',
@@ -67,8 +74,173 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
             require(_finite_number(facts.get(key), nonnegative=True),
                     f'nonfinite/negative I4 {key} at {index}')
         require(facts.get('target') == 1e-4, f'I4 target is not 1e-4 at {index}')
-        require(facts.get('restart') == 16 and facts.get('max_it') == 16,
-                f'I4 16-step contract mismatch at {index}')
+        if v8_recycled:
+            backend = facts.get('backend', {})
+            require(facts.get('restart') == 8 and facts.get('m') == 8 and
+                    facts.get('k') == 8 and facts.get('max_it') == 1,
+                    f'I4 GCROT8 fixed-round contract mismatch at {index}')
+            require(facts.get('truncate') == 'smallest' and
+                    facts.get('discard_C') is False and facts.get('atol') == 0.0,
+                    f'I4 GCROT truncation contract mismatch at {index}')
+            require(isinstance(backend, dict) and
+                    backend.get('backend') == 'scipy.sparse.linalg.gcrotmk',
+                    f'I4 GCROT backend identity missing at {index}')
+            for key in ('pool_before', 'pool_after', 'pool_identity_sha256',
+                        'pool_facts', 'recycling_memory', 'initial_guess',
+                        'pool_projection_source'):
+                require(key in facts, f'V8 I4 field is missing at {index}: {key}')
+            require(facts.get('initial_guess') ==
+                    'library_x0_zero_plus_current_pool_projection',
+                    f'V8 I4 initial-guess semantics mismatch at {index}')
+            require(facts.get('pool_projection_source') == 'current_pool_only',
+                    f'V8 I4 pool source mismatch at {index}')
+            pool_before = facts.get('pool_before')
+            pool_after = facts.get('pool_after')
+            inner_dimension = facts.get('gcrot_inner_dimension')
+            require(isinstance(pool_before, int) and not isinstance(pool_before, bool) and
+                    0 <= pool_before <= 8,
+                    f'I4 GCROT pool-before ledger invalid at {index}')
+            require(isinstance(pool_after, int) and not isinstance(pool_after, bool) and
+                    0 <= pool_after <= 8,
+                    f'I4 GCROT pool-after ledger invalid at {index}')
+            if v8_previous_after is not None:
+                require(pool_before == v8_previous_after,
+                        f'I4 GCROT pool continuity mismatch at {index}')
+            v8_previous_after = pool_after
+            identity = facts.get('pool_identity_sha256')
+            require(isinstance(identity, str) and identity,
+                    f'I4 GCROT pool identity is missing at {index}')
+            if v8_identity is None and isinstance(identity, str):
+                v8_identity = identity
+            elif v8_identity is not None:
+                require(identity == v8_identity,
+                        f'I4 GCROT pool identity changed at {index}')
+            if isinstance(pool_before, int) and isinstance(inner_dimension, int):
+                require(inner_dimension == 8 + max(8 - pool_before, 0),
+                        f'I4 GCROT dynamic inner dimension mismatch at {index}')
+            for key in ('attempted_B4', 'completed_B4',
+                        'attempted_new_arnoldi_directions',
+                        'completed_new_arnoldi_directions'):
+                require(key in facts and isinstance(facts[key], int) and
+                        not isinstance(facts[key], bool) and facts[key] >= 0,
+                        f'I4 GCROT work field is missing/invalid at {index}: {key}')
+            if all(key in facts for key in (
+                    'attempted_B4', 'completed_B4',
+                    'attempted_new_arnoldi_directions',
+                    'completed_new_arnoldi_directions')):
+                require(facts['attempted_B4'] <= 16 and
+                        facts['attempted_new_arnoldi_directions'] <= 16,
+                        f'I4 GCROT new-work cap mismatch at {index}')
+                require(facts['completed_B4'] <= facts['attempted_B4'] and
+                        facts['completed_new_arnoldi_directions'] <=
+                        facts['attempted_new_arnoldi_directions'],
+                        f'I4 GCROT completed work exceeds attempted work at {index}')
+                require(facts['completed_B4'] == facts['B4_calls'] and
+                        facts['completed_new_arnoldi_directions'] ==
+                        facts['iterations'],
+                        f'I4 GCROT completed-work relation mismatch at {index}')
+            pool_facts = facts['pool_facts']
+            memory = facts['recycling_memory']
+            require(isinstance(pool_facts, dict),
+                    f'I4 GCROT pool facts are not a mapping at {index}')
+            require(isinstance(memory, dict),
+                    f'I4 GCROT memory facts are not a mapping at {index}')
+            if isinstance(pool_facts, dict):
+                for key in ('candidate_pairs', 'pairs', 'rank', 'rank_pruned',
+                            'rank_singular_values', 'q_gram',
+                            'orthogonality_error', 'closure_errors',
+                            'closure_error', 'cached_closure_checks',
+                            'native_spot_checked', 'native_spot_due',
+                            'native_spot_call', 'native_spot_errors'):
+                    require(key in pool_facts,
+                            f'I4 GCROT pool fact is missing at {index}: {key}')
+                if all(key in pool_facts for key in (
+                        'candidate_pairs', 'pairs', 'rank', 'rank_pruned')):
+                    candidate_pairs = pool_facts['candidate_pairs']
+                    rank = pool_facts['rank']
+                    require(isinstance(candidate_pairs, int) and 0 <= candidate_pairs <= 8,
+                            f'I4 GCROT candidate-pair count invalid at {index}')
+                    require(isinstance(rank, int) and 0 <= rank <= candidate_pairs,
+                            f'I4 GCROT rank invalid at {index}')
+                    require(pool_facts['pairs'] == rank and
+                            pool_facts['rank_pruned'] == candidate_pairs - rank,
+                            f'I4 GCROT rank accounting mismatch at {index}')
+                for key in ('orthogonality_error', 'closure_error'):
+                    require(_finite_number(pool_facts.get(key), nonnegative=True) and
+                            float(pool_facts[key]) <= 1e-10,
+                            f'I4 GCROT {key} exceeds 1e-10 at {index}')
+                closure_errors = pool_facts.get('closure_errors')
+                require(isinstance(closure_errors, list) and
+                        all(_finite_number(value, nonnegative=True) and
+                            float(value) <= 1e-10 for value in closure_errors),
+                        f'I4 GCROT cached closure evidence invalid at {index}')
+                singular = np.asarray(pool_facts.get('rank_singular_values'), dtype=float)
+                require(singular.ndim == 1 and np.isfinite(singular).all(),
+                        f'I4 GCROT rank spectrum invalid at {index}')
+                if singular.size and isinstance(pool_facts.get('rank'), int):
+                    threshold = 1e-12 * max(float(singular[0]), np.finfo(float).tiny)
+                    require(int(np.count_nonzero(singular > threshold)) ==
+                            int(pool_facts['rank']),
+                            f'I4 GCROT rank spectrum disagrees at {index}')
+                gram = np.asarray(pool_facts.get('q_gram'))
+                if gram.ndim == 3 and gram.shape[-1] == 2:
+                    gram = gram[..., 0] + 1j * gram[..., 1]
+                require(gram.ndim == 2 and np.isfinite(gram).all(),
+                        f'I4 GCROT Q Gram evidence invalid at {index}')
+                if gram.ndim == 2 and gram.shape[0] == gram.shape[1]:
+                    require(float(np.linalg.norm(
+                        gram - np.eye(gram.shape[0], dtype=np.complex128), ord=2)) <= 1e-10,
+                        f'I4 GCROT Q orthogonality evidence failed at {index}')
+                native_errors = pool_facts.get('native_spot_errors')
+                require(isinstance(native_errors, list) and
+                        all(_finite_number(value, nonnegative=True) and
+                            float(value) <= 1e-10 for value in native_errors),
+                        f'I4 GCROT native closure evidence invalid at {index}')
+                native_checked = pool_facts.get('native_spot_checked')
+                require(isinstance(native_checked, int) and 0 <= native_checked <= 8 and
+                        native_checked == len(native_errors),
+                        f'I4 GCROT native spot count invalid at {index}')
+                native_due = pool_facts.get('native_spot_due')
+                require(isinstance(native_due, bool),
+                        f'I4 GCROT native due flag is invalid at {index}')
+                expected_native_due = (not v8_native_seen or expected_call % 32 == 0)
+                require(native_due is expected_native_due,
+                        f'I4 GCROT native cadence invalid at {index}')
+                if native_due:
+                    require(native_checked > 0 and
+                            pool_facts.get('native_spot_call') == expected_call,
+                            f'I4 GCROT native spot identity/cadence invalid at {index}')
+                    if native_checked > 0:
+                        v8_native_seen = True
+                else:
+                    require(native_checked == 0 and
+                            pool_facts.get('native_spot_call') is None,
+                            f'I4 GCROT unexpected native spot at {index}')
+            if isinstance(memory, dict):
+                required_memory = (
+                    'extra_recycling_peak_bytes', 'peak_live_bytes', 'cap_bytes',
+                    'phase_bounds', 'base_inner_vz_bytes',
+                    'inner_transient_vector_bytes',
+                    'scipy_smallest_cu_overlap_bytes',
+                    'scipy_qr_input_output_bytes',
+                    'scipy_gram_conjugate_temp_bytes')
+                for key in required_memory:
+                    require(key in memory,
+                            f'I4 GCROT memory field is missing at {index}: {key}')
+                if all(key in memory for key in required_memory):
+                    cap = memory['cap_bytes']
+                    extra = memory['extra_recycling_peak_bytes']
+                    require(cap == 64 * 1024**2 and isinstance(extra, int) and
+                            extra >= 0 and extra <= cap,
+                            f'I4 GCROT 64MiB memory gate failed at {index}')
+                    phase = memory['phase_bounds']
+                    require(isinstance(phase, dict) and all(key in phase for key in (
+                        'projection_phase', 'gcrot_phase',
+                        'candidate_validation_phase')),
+                        f'I4 GCROT phase table is incomplete at {index}')
+        else:
+            require(facts.get('restart') == 16 and facts.get('max_it') == 16,
+                    f'I4 16-step contract mismatch at {index}')
         require(facts.get('zero_start') is True, f'I4 is not zero-start at {index}')
         iterations = facts.get('iterations')
         legal = facts.get('legal_direction_count')
@@ -107,7 +279,7 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
         # Zero-RHS is legal but does not reset either consecutive-cost streak.
         admission = row.get('admission', {})
         if admission:
-            require(admission.get('calls') == index,
+            require(admission.get('calls') == expected_call,
                     f'I4 admission call count mismatch at {index}')
             require(admission.get('timeout_streak') == timeout_streak,
                     f'I4 timeout streak mismatch at {index}')
@@ -133,8 +305,12 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
             if status == 'INNER_TARGET_REACHED':
                 require(relative <= 1e-4 + 1e-12,
                         f'target I4 returned above target at {index}')
-            require(facts['A4_matvec'] <= iterations and facts['B4_calls'] <= iterations,
-                    f'I4 work exceeds iteration count at {index}')
+            if v8_recycled:
+                require(facts['A4_matvec'] >= facts['B4_calls'],
+                        f'I4 GCROT A4/B4 accounting is inconsistent at {index}')
+            else:
+                require(facts['A4_matvec'] <= iterations and facts['B4_calls'] <= iterations,
+                        f'I4 work exceeds iteration count at {index}')
         normalized.append(facts)
 
     # Match the nested I4 scalar packets to the independently written I4 JSONL.
@@ -227,6 +403,27 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
                                    rtol=0, atol=1e-15),
                         'saved exit closure ratio differs from closure_norm/operation_scale')
             require(relative <= 1e-8, 'exit inexact closure failed')
+        if v8_recycled:
+            spot = exit_row.get('total', {}).get('I4', {}).get('exit_native_spot', {})
+            require(isinstance(spot, dict), 'V8 exit native spot-check record is missing')
+            if isinstance(spot, dict):
+                require(spot.get('status') in ('completed', 'skipped_resource_stop'),
+                        'V8 exit native spot-check status is invalid')
+                require(isinstance(spot.get('checked'), int) and 0 <= spot['checked'] <= 8,
+                        'V8 exit native spot-check count is invalid')
+                require(_finite_number(spot.get('elapsed_seconds'), nonnegative=True),
+                        'V8 exit native spot-check time is invalid')
+                completed = spot.get('completed_native_A4', spot.get('checked', 0))
+                require(isinstance(completed, int) and completed >= 0,
+                        'V8 exit native spot A4 count is invalid')
+                costs = exit_row.get('audit_costs', {})
+                require(float(costs.get('native_exit_spot_A4', completed)) == float(completed),
+                        'V8 exit native spot A4 cost differs from snapshot')
+                require(np.isclose(float(costs.get('native_exit_spot_seconds',
+                                                   spot.get('elapsed_seconds', 0.0))),
+                                   float(spot.get('elapsed_seconds', 0.0)),
+                                   rtol=0, atol=1e-12),
+                        'V8 exit native spot time differs from snapshot')
 
     i4_totals = {
         key: sum(int(facts.get(key, 0)) for facts in normalized)
@@ -235,9 +432,399 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=()) -> dict:
     return dict(passed=not errors, errors=errors, i4_calls=len(normalized),
                 i4_totals=i4_totals, completed_pc_count=len(pc_rows),
                 actual_h6_applies=h6_count, pc=pc_facts,
-                semantics=dict(I4='two independent calls per PC; target=1e-4; '
-                               'restart=max_it=16; soft=25; hard=30; zero-start',
+                semantics=dict(I4=('two independent calls per PC; target=1e-4; '
+                                   'GCROT m=k=8, maxiter=1, dynamic ml; soft=25; hard=30; zero-start'
+                                   if v8_recycled else
+                                   'two independent calls per PC; target=1e-4; '
+                                   'restart=max_it=16; soft=25; hard=30; zero-start'),
                                H6='one actual smoother apply per PC; positive_setup is not used'))
+
+
+def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
+                                   exit_record=None, native_seen_before=False) -> dict:
+    """Independently check one finite V8 RESET/CARRY record sequence.
+
+    This checker consumes scalar/raw ledgers emitted by the finite runner.  It
+    requires every pool, work, rank, closure, memory, identity, and cadence
+    field explicitly; absent values are errors rather than zero-work claims.
+    """
+
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    expected_stems = [
+        'A2R160_BAL_H_p4_01', 'A2R160_BAL_H_p4_02',
+        'LIGHT448_BAL_H_p4_09', 'LIGHT448_BAL_H_p4_10',
+        'JOINT448_BAL_H_p4_17', 'JOINT448_BAL_H_p4_18',
+    ]
+    rows = list(records or [])
+    require(len(rows) == len(expected_stems),
+            'V8 finite sequence does not contain exactly six ordered records')
+    identity = None
+    previous_after = None
+    previous_call = None
+    native_seen = bool(native_seen_before)
+    complete_calls = []
+    for index, row in enumerate(rows[:len(expected_stems)], 1):
+        if sequence == 'RESET':
+            # The runner calls reset() before every RESET item.  The engine
+            # keeps its lifetime call number but clears native_spot.seen.
+            native_seen = False
+        required_row = ('schema', 'sequence', 'sequence_index', 'stem', 'role',
+                        'input_sha256', 'g_array_sha256', 'reference_status',
+                        'reset_before', 'pool_before', 'pool_after',
+                        'pool_identity_before', 'pool_identity_after',
+                        'pool_snapshot_before', 'pool_snapshot_after', 'facts')
+        for key in required_row:
+            require(key in row, f'V8 sequence field missing at {index}: {key}')
+        if any(key not in row for key in required_row):
+            continue
+        require(row.get('schema') == 'task39extra.review-v8-recycling-sequence.v1',
+                f'V8 sequence schema mismatch at {index}')
+        require(row.get('sequence_index') == index and
+                row.get('stem') == expected_stems[index - 1],
+                f'V8 six-RHS order mismatch at {index}')
+        if sequence is not None:
+            require(row.get('sequence') == sequence,
+                    f'V8 sequence name mismatch at {index}')
+            if sequence == 'RESET':
+                require(row.get('reset_before') is True,
+                        f'V8 RESET did not clear before record {index}')
+            elif sequence == 'CARRY':
+                require(row.get('reset_before') is (index == 1),
+                        f'V8 CARRY reset cadence mismatch at {index}')
+        before = row.get('pool_before')
+        after = row.get('pool_after')
+        require(isinstance(before, int) and not isinstance(before, bool) and
+                0 <= before <= 8 and isinstance(after, int) and
+                not isinstance(after, bool) and 0 <= after <= 8,
+                f'V8 sequence pool size invalid at {index}')
+        if previous_after is not None and sequence != 'RESET':
+            require(before == previous_after,
+                    f'V8 sequence pool continuity broke at {index}')
+        if sequence == 'RESET':
+            require(before == 0, f'V8 RESET pool was not empty at {index}')
+        elif sequence == 'CARRY' and index == 1:
+            require(before == 0, 'V8 CARRY did not start from an empty pool')
+        previous_after = after
+        before_snapshot = row.get('pool_snapshot_before')
+        after_snapshot = row.get('pool_snapshot_after')
+        for snapshot, name, expected_size, expected_identity in (
+                (before_snapshot, 'before', before, row.get('pool_identity_before')),
+                (after_snapshot, 'after', after, row.get('pool_identity_after'))):
+            require(isinstance(snapshot, dict),
+                    f'V8 {name} pool snapshot missing at {index}')
+            if isinstance(snapshot, dict):
+                for key in ('pairs', 'retained_bytes', 'model_identity_sha256'):
+                    require(key in snapshot,
+                            f'V8 {name} pool snapshot field missing at {index}: {key}')
+                if all(key in snapshot for key in ('pairs', 'retained_bytes',
+                                                   'model_identity_sha256')):
+                    require(snapshot['pairs'] == expected_size and
+                            snapshot['model_identity_sha256'] == expected_identity and
+                            isinstance(snapshot['retained_bytes'], int) and
+                            snapshot['retained_bytes'] >= 0,
+                            f'V8 {name} pool snapshot disagrees at {index}')
+        before_identity = row.get('pool_identity_before')
+        after_identity = row.get('pool_identity_after')
+        require(isinstance(before_identity, str) and before_identity and
+                before_identity == after_identity,
+                f'V8 pool identity changed within record {index}')
+        if identity is None and isinstance(before_identity, str):
+            identity = before_identity
+        elif identity is not None:
+            require(before_identity == identity,
+                    f'V8 pool identity changed across records at {index}')
+        status = row.get('status')
+        if status == 'not_found':
+            require(row.get('facts') is None,
+                    f'V8 not-found record carries numeric facts at {index}')
+            continue
+        require(status == 'complete' and isinstance(row.get('facts'), dict),
+                f'V8 sequence status/facts invalid at {index}')
+        if status != 'complete' or not isinstance(row.get('facts'), dict):
+            continue
+        facts = row['facts']
+        complete_calls.append(facts.get('call'))
+        for key in ('call', 'pool_before', 'pool_after', 'pool_identity_sha256',
+                    'initial_guess', 'pool_projection_source', 'zero_start',
+                    'attempted_B4', 'completed_B4',
+                    'attempted_new_arnoldi_directions',
+                    'completed_new_arnoldi_directions', 'A4_matvec', 'B4_calls',
+                    'pool_facts', 'recycling_memory'):
+            require(key in facts, f'V8 I4 fact missing at {index}: {key}')
+        if not all(key in facts for key in ('call', 'pool_before', 'pool_after',
+                                            'pool_identity_sha256')):
+            continue
+        require(isinstance(facts['call'], int) and facts['call'] >= 1 and
+                (previous_call is None or facts['call'] == previous_call + 1) and
+                facts['pool_before'] == before and facts['pool_after'] == after and
+                facts['pool_identity_sha256'] == identity,
+                f'V8 I4/sequence pool binding mismatch at {index}')
+        if isinstance(facts['call'], int):
+            previous_call = facts['call']
+        require(facts.get('initial_guess') ==
+                'library_x0_zero_plus_current_pool_projection' and
+                facts.get('pool_projection_source') == 'current_pool_only' and
+                facts.get('zero_start') is True,
+                f'V8 initial-guess semantics mismatch at {index}')
+        work_keys = ('attempted_B4', 'completed_B4',
+                     'attempted_new_arnoldi_directions',
+                     'completed_new_arnoldi_directions', 'A4_matvec', 'B4_calls')
+        if all(key in facts for key in work_keys):
+            require(all(isinstance(facts[key], int) and not isinstance(facts[key], bool)
+                        and facts[key] >= 0 for key in work_keys),
+                    f'V8 work counters invalid at {index}')
+            require(facts['attempted_B4'] <= 16 and
+                    facts['attempted_new_arnoldi_directions'] <= 16 and
+                    facts['completed_B4'] <= facts['attempted_B4'] and
+                    facts['completed_new_arnoldi_directions'] <=
+                    facts['attempted_new_arnoldi_directions'] and
+                    facts['completed_B4'] == facts['B4_calls'] and
+                    facts['A4_matvec'] >= facts['B4_calls'],
+                    f'V8 work relation/cap failed at {index}')
+        pool_facts = facts.get('pool_facts')
+        memory = facts.get('recycling_memory')
+        require(isinstance(pool_facts, dict) and isinstance(memory, dict),
+                f'V8 pool/memory facts are incomplete at {index}')
+        if not isinstance(pool_facts, dict) or not isinstance(memory, dict):
+            continue
+        required_pool = ('candidate_pairs', 'pairs', 'rank', 'rank_pruned',
+                         'rank_singular_values', 'q_gram', 'orthogonality_error',
+                         'closure_errors', 'closure_error', 'native_spot_checked',
+                         'native_spot_due', 'native_spot_call', 'native_spot_errors')
+        for key in required_pool:
+            require(key in pool_facts, f'V8 pool fact missing at {index}: {key}')
+        if all(key in pool_facts for key in required_pool):
+            candidate_pairs = pool_facts['candidate_pairs']
+            rank = pool_facts['rank']
+            require(isinstance(candidate_pairs, int) and 0 <= candidate_pairs <= 8 and
+                    isinstance(rank, int) and 0 <= rank <= candidate_pairs and
+                    pool_facts['pairs'] == rank and
+                    pool_facts['rank_pruned'] == candidate_pairs - rank,
+                    f'V8 rank ledger invalid at {index}')
+            for key in ('orthogonality_error', 'closure_error'):
+                require(_finite_number(pool_facts[key], nonnegative=True) and
+                        float(pool_facts[key]) <= 1e-10,
+                        f'V8 {key} exceeds 1e-10 at {index}')
+            singular = np.asarray(pool_facts['rank_singular_values'], dtype=float)
+            require(singular.ndim == 1 and np.isfinite(singular).all(),
+                    f'V8 rank spectrum invalid at {index}')
+            if singular.size:
+                threshold = 1e-12 * max(float(singular[0]), np.finfo(float).tiny)
+                require(int(np.count_nonzero(singular > threshold)) == rank,
+                        f'V8 rank spectrum disagrees at {index}')
+            gram = np.asarray(pool_facts['q_gram'])
+            if gram.ndim == 3 and gram.shape[-1] == 2:
+                gram = gram[..., 0] + 1j * gram[..., 1]
+            require(gram.ndim == 2 and np.isfinite(gram).all() and
+                    gram.shape == (rank, rank), f'V8 Q Gram invalid at {index}')
+            if gram.ndim == 2 and gram.shape == (rank, rank):
+                require(float(np.linalg.norm(
+                    gram - np.eye(rank, dtype=np.complex128), ord=2)) <= 1e-10,
+                        f'V8 Q orthogonality failed at {index}')
+            closures = pool_facts['closure_errors']
+            native_errors = pool_facts['native_spot_errors']
+            require(isinstance(closures, list) and
+                    all(_finite_number(value, nonnegative=True) and
+                        float(value) <= 1e-10 for value in closures) and
+                    _finite_number(pool_facts['closure_error'], nonnegative=True) and
+                    float(pool_facts['closure_error']) <= 1e-10,
+                    f'V8 cached A4U closure failed at {index}')
+            require(isinstance(native_errors, list) and
+                    all(_finite_number(value, nonnegative=True) and
+                        float(value) <= 1e-10 for value in native_errors) and
+                    isinstance(pool_facts['native_spot_checked'], int) and
+                    pool_facts['native_spot_checked'] == len(native_errors) and
+                    0 <= pool_facts['native_spot_checked'] <= 8,
+                    f'V8 native A4U closure/cost failed at {index}')
+            native_due = pool_facts['native_spot_due']
+            require(isinstance(native_due, bool),
+                    f'V8 native due flag is invalid at {index}')
+            expected_native_due = (not native_seen or facts['call'] % 32 == 0)
+            require(native_due is expected_native_due,
+                    f'V8 native periodic cadence mismatch at {index}')
+            if native_due:
+                require(pool_facts['native_spot_checked'] > 0 and
+                        pool_facts['native_spot_call'] == facts['call'],
+                        f'V8 native periodic spot identity/count failed at {index}')
+                if pool_facts['native_spot_checked'] > 0:
+                    native_seen = True
+            else:
+                require(pool_facts['native_spot_checked'] == 0 and
+                        pool_facts['native_spot_call'] is None,
+                        f'V8 native spot occurred off cadence at {index}')
+        required_memory = ('extra_recycling_peak_bytes', 'peak_live_bytes',
+                           'cap_bytes', 'phase_bounds', 'base_inner_vz_bytes',
+                           'inner_transient_vector_bytes',
+                           'scipy_smallest_cu_overlap_bytes',
+                           'scipy_qr_input_output_bytes',
+                           'scipy_gram_conjugate_temp_bytes')
+        for key in required_memory:
+            require(key in memory, f'V8 memory fact missing at {index}: {key}')
+        if all(key in memory for key in required_memory):
+            require(memory['cap_bytes'] == 64 * 1024**2 and
+                    isinstance(memory['extra_recycling_peak_bytes'], int) and
+                    memory['extra_recycling_peak_bytes'] <= memory['cap_bytes'] and
+                    isinstance(memory['peak_live_bytes'], int) and
+                    memory['peak_live_bytes'] >= memory['extra_recycling_peak_bytes'],
+                    f'V8 64MiB memory bound failed at {index}')
+            phase = memory['phase_bounds']
+            require(isinstance(phase, dict) and all(key in phase for key in (
+                'projection_phase', 'gcrot_phase', 'candidate_validation_phase')),
+                f'V8 phase memory table incomplete at {index}')
+
+    if budget is not None:
+        for key in ('schema', 'total_limit_seconds', 'finite_control_limit_seconds',
+                    'charged_seconds', 'finite_control_seconds', 'stage_seconds',
+                    'stages_nonoverlapping'):
+            require(key in budget, f'V8 preparation budget field missing: {key}')
+        if all(key in budget for key in ('schema', 'total_limit_seconds',
+                                         'finite_control_limit_seconds',
+                                         'charged_seconds', 'finite_control_seconds',
+                                         'stage_seconds',
+                                         'stages_nonoverlapping')):
+            require(budget['schema'] == 'task39extra.review-v8-k0-k1-budget.v1' and
+                    budget['total_limit_seconds'] == 3600 and
+                    budget['finite_control_limit_seconds'] == 900 and
+                    _finite_number(budget['charged_seconds'], nonnegative=True) and
+                    float(budget['charged_seconds']) <= 3600 and
+                    _finite_number(budget['finite_control_seconds'], nonnegative=True) and
+                    float(budget['finite_control_seconds']) <= 900 and
+                    budget['stages_nonoverlapping'] is True,
+                    'V8 preparation budget contract failed')
+            stages = budget['stage_seconds']
+            require(isinstance(stages, dict) and all(name in stages for name in (
+                'setup', 'reset_carry_sequences', 'two_pc_controls')),
+                'V8 preparation stage ledger is incomplete')
+
+    if exit_record is not None:
+        try:
+            total = exit_record['total']
+            spot = total['I4']['exit_native_spot']
+            costs = exit_record['audit_costs']
+        except (KeyError, TypeError) as exc:
+            errors.append(f'V8 exit native spot record is incomplete: {exc}')
+        else:
+            for key in ('status', 'checked', 'completed_native_A4',
+                        'elapsed_seconds', 'pool_identity_sha256'):
+                require(key in spot, f'V8 exit spot field missing: {key}')
+            if all(key in spot for key in ('status', 'checked',
+                                           'completed_native_A4',
+                                           'elapsed_seconds',
+                                           'pool_identity_sha256')):
+                require(spot['status'] in ('completed', 'skipped_resource_stop') and
+                        isinstance(spot['checked'], int) and 0 <= spot['checked'] <= 8 and
+                        isinstance(spot['completed_native_A4'], int) and
+                        spot['completed_native_A4'] >= 0 and
+                        _finite_number(spot['elapsed_seconds'], nonnegative=True) and
+                        spot['pool_identity_sha256'] == identity,
+                        'V8 exit native spot identity/count failed')
+            for key in ('native_exit_spot_A4', 'native_exit_spot_seconds'):
+                require(key in costs, f'V8 exit audit cost missing: {key}')
+            if all(key in costs for key in ('native_exit_spot_A4',
+                                            'native_exit_spot_seconds')):
+                require(float(costs['native_exit_spot_A4']) ==
+                        float(spot['completed_native_A4']) and
+                        np.isclose(float(costs['native_exit_spot_seconds']),
+                                   float(spot['elapsed_seconds']), rtol=0, atol=1e-12),
+                        'V8 exit native spot cost does not match snapshot')
+
+    return dict(passed=not errors, errors=errors,
+                complete_calls=complete_calls, identity=identity,
+                sequence_calls=len(complete_calls))
+
+
+def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
+                             exit_rows=(), *, control_metadata=None,
+                             budget=None) -> dict:
+    """Wire completed finite sequence calls to the final four controls.
+
+    The detailed field checks remain in the two existing checkers.  This
+    small adapter only verifies the global counter split and uses the live
+    control baseline for cumulative deltas; it never treats a missing field as
+    zero and never applies the K1 offset to the fresh K2 checker.
+    """
+
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    if not isinstance(sequence_summary, dict):
+        return dict(passed=False, errors=['V8 K1 sequence summary is not a mapping'])
+    if not isinstance(control_metadata, dict):
+        return dict(passed=False, errors=['V8 K1 control metadata/baseline is missing'])
+    reset_summary = sequence_summary.get('reset')
+    carry_summary = sequence_summary.get('carry')
+    require(sequence_summary.get('schema') ==
+            'task39extra.review-v8-recycling-sequence.v1',
+            'V8 K1 sequence summary schema is missing or incorrect')
+    require(isinstance(reset_summary, dict) and isinstance(carry_summary, dict),
+            'V8 K1 RESET/CARRY summaries are incomplete')
+    if not isinstance(reset_summary, dict) or not isinstance(carry_summary, dict):
+        return dict(passed=False, errors=errors)
+
+    reset = recompute_recycled_i4_sequence(
+        reset_summary.get('records'), sequence='RESET', budget=budget)
+    carry = recompute_recycled_i4_sequence(
+        carry_summary.get('records'), sequence='CARRY')
+    errors.extend(f'RESET: {error}' for error in reset['errors'])
+    errors.extend(f'CARRY: {error}' for error in carry['errors'])
+
+    raw_rows = list(i4_rows or [])
+    sequence_calls = reset['complete_calls'] + carry['complete_calls']
+    sequence_count = len(sequence_calls)
+    require(len(raw_rows) == sequence_count + 4,
+            'V8 K1 finite I4 ledger must contain completed sequence and four control rows')
+    sequence_raw = raw_rows[:sequence_count]
+    control_raw = raw_rows[sequence_count:]
+    raw_sequence_calls = [_bounded_i4_facts(row).get('call') for row in sequence_raw]
+    require(sequence_calls == raw_sequence_calls,
+            'V8 K1 raw sequence rows do not match RESET/CARRY records')
+    require(sequence_calls == list(range(1, sequence_count + 1)),
+            'V8 K1 RESET/CARRY calls are not a continuous global prefix')
+    require(sequence_summary.get('total_calls') == sequence_count,
+            'V8 K1 sequence total_calls differs from completed records')
+    control_start = sequence_count + 1
+    control_end = sequence_count + 4
+    require(control_metadata.get('control_i4_call_start') == control_start,
+            'V8 K1 controls do not follow the completed sequence calls')
+    require(control_metadata.get('control_i4_call_end') == control_end,
+            'V8 K1 control call end differs from the four control rows')
+
+    baseline = control_metadata.get('control_baseline')
+    require(isinstance(baseline, dict),
+            'V8 K1 control cumulative baseline is missing')
+    if isinstance(baseline, dict):
+        baseline_i4 = baseline.get('I4')
+        require(isinstance(baseline_i4, dict) and
+                baseline_i4.get('calls') == sequence_count,
+                'V8 K1 control baseline I4 calls differ from sequence count')
+        snapshot = baseline_i4.get('snapshot') if isinstance(baseline_i4, dict) else None
+        engine = snapshot.get('engine') if isinstance(snapshot, dict) else None
+        pool = engine.get('pool') if isinstance(engine, dict) else None
+        require(isinstance(engine, dict) and engine.get('calls') == sequence_count,
+                'V8 K1 baseline engine call counter differs from sequence count')
+        require(isinstance(pool, dict) and pool.get('pairs') == 0,
+                'V8 K1 baseline pool is not empty')
+
+    control = recompute_bounded_i4(
+        control_raw, list(pc_rows or []), list(exit_rows or []),
+        profile='balanced_h6_entity_gcrot8_v8', call_start=control_start,
+        native_seen_before=False)
+    errors.extend(f'CONTROLS: {error}' for error in control['errors'])
+    costs = recompute_bounded_costs(
+        control_raw, list(pc_rows or []), list(exit_rows or []),
+        baseline if isinstance(baseline, dict) else {}, require_lifetime=True)
+    errors.extend(f'COSTS: {error}' for error in costs['errors'])
+    return dict(passed=not errors, errors=errors, reset=reset, carry=carry,
+                bounded_i4=control, bounded_costs=costs,
+                control_i4_call_start=control_start, control_i4_call_end=control_end)
 
 
 def recompute_bounded_screen(solve, rows):
@@ -981,9 +1568,13 @@ def check(directory: Path) -> dict:
             'bounded_i4.jsonl', 'pc_applies.jsonl', 'bounded_exit_audit.jsonl',
             'monitor_residuals.jsonl', 'iterations.jsonl'},
                 'bounded evidence required-file set differs from V7 contract')
+        v8_k1 = summary.get('v8_k1', {})
+        control_call_start = int(v8_k1.get('control_i4_call_start', 1))
         facts['bounded_i4'] = recompute_bounded_i4(
             rows['bounded_i4.jsonl'], rows['pc_applies.jsonl'],
-            rows['bounded_exit_audit.jsonl'])
+            rows['bounded_exit_audit.jsonl'],
+            profile=summary['profile']['identity'], call_start=control_call_start,
+            native_seen_before=False)
         require(facts['bounded_i4']['passed'],
                 'bounded I4/PC/H6/closure accounting failed: '+
                 str(facts['bounded_i4']['errors']))
@@ -1003,8 +1594,9 @@ def check(directory: Path) -> dict:
                 'bounded solve limit is not the required 10800 seconds')
         require(policy.get('outer_restart') == 32 and policy.get('outer_max_it') == 2048,
                 'bounded solve policy does not bind restart32/max2048')
-        setup_costs = summary.get('bounded_setup', {}).get('setup_costs',
-                                                            summary.get('bounded_setup_costs'))
+        setup_costs = (v8_k1.get('control_baseline') if v8_k1 else
+                       summary.get('bounded_setup', {}).get('setup_costs',
+                                                            summary.get('bounded_setup_costs')))
         require(isinstance(setup_costs, dict), 'bounded setup cost baseline is missing')
         facts['bounded_costs'] = recompute_bounded_costs(
             rows['bounded_i4.jsonl'], rows['pc_applies.jsonl'],

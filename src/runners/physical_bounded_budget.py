@@ -14,6 +14,7 @@ from pathlib import Path
 from src.io.input_loader import InputError
 from src.io.physical_balanced_profile import (
     BOUNDED_ENTITY_PROFILE,
+    BOUNDED_ENTITY_GCROT8_PROFILE,
     BOUNDED_PROFILES,
     BOUNDED_PROJECTED_PROFILE,
     BOUNDED_ROUTES,
@@ -26,6 +27,9 @@ SCHEMA = 'task39extra.review-v7-bounded-budget.v1'
 LIMIT_SECONDS = 43200
 ORIGINAL_PHYSICAL_SHA = '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
 WORKFLOW_RESERVATION_SECONDS = 14400
+V8_SCHEMA = 'task39extra.review-v8-recycled-budget.v1'
+V8_LIMIT_SECONDS = 36000
+V8_WORKFLOW_RESERVATION_SECONDS = 14400
 
 
 def _charged_seconds(budget: dict) -> float:
@@ -99,10 +103,12 @@ def _validate_route_and_order(specification, budget: dict) -> str:
             raise InputError('route-B projected attempt already reserved; no repeat formal')
         return 'projected'
 
-    if route != 'ENTITY16':
-        raise InputError(f'unsupported bounded V7 route: {route}')
-    if identity != BOUNDED_ENTITY_PROFILE:
-        raise InputError('V7 route-A control order requires bounded_entity16_v7')
+    if route not in ('ENTITY16', 'ENTITY_GCROT8'):
+        raise InputError(f'unsupported bounded route: {route}')
+    expected_entity = (BOUNDED_ENTITY_GCROT8_PROFILE
+                       if route == 'ENTITY_GCROT8' else BOUNDED_ENTITY_PROFILE)
+    if identity != expected_entity:
+        raise InputError('route-A control order does not match the selected entity profile')
     if specification.geometry.get('cell_notch'):
         if not original_attempts or not original_attempts[-1].get('qualified'):
             raise InputError('V7 notch requires a qualified route-A original first')
@@ -132,25 +138,32 @@ def launch_bounded_workflow(specification, budget_path):
     with path.with_suffix('.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         budget = json.loads(path.read_text())
-        if budget.get('schema') != SCHEMA or budget.get('limit_seconds') != LIMIT_SECONDS:
-            raise InputError('bounded V7 profiles require the review-v7 ledger')
+        v8 = specification.solver.get('preconditioner') == BOUNDED_ENTITY_GCROT8_PROFILE
+        schema = V8_SCHEMA if v8 else SCHEMA
+        limit_seconds = V8_LIMIT_SECONDS if v8 else LIMIT_SECONDS
+        reservation_seconds = (V8_WORKFLOW_RESERVATION_SECONDS if v8
+                               else WORKFLOW_RESERVATION_SECONDS)
+        if (budget.get('schema') != schema or
+                budget.get('limit_seconds') != limit_seconds):
+            raise InputError('selected bounded profile requires its exact ledger')
         kind = _validate_route_and_order(specification, budget)
         used = _charged_seconds(budget)
-        if used + WORKFLOW_RESERVATION_SECONDS > LIMIT_SECONDS:
-            raise InputError('insufficient V7 batch budget for one complete workflow')
+        if used + reservation_seconds > limit_seconds:
+            raise InputError('insufficient selected bounded batch budget for one workflow')
         entry = dict(
             kind=kind,
             profile=specification.solver['preconditioner'],
             input_sha256=specification.input_sha256,
             status='RESERVED',
             elapsed_seconds=0.0,
-            reserved_seconds=WORKFLOW_RESERVATION_SECONDS,
+            reserved_seconds=reservation_seconds,
+            ledger_schema=schema,
             charge_policy='conservative_realtime_outer_interval',
             nested_intervals_not_added=True,
         )
         budget.setdefault('attempts', []).append(entry)
         budget['charged_seconds'] = _charged_seconds(budget)
-        budget['remaining_seconds'] = LIMIT_SECONDS - budget['charged_seconds']
+        budget['remaining_seconds'] = limit_seconds - budget['charged_seconds']
         _atomic_json(path, budget)
         clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
         try:
@@ -179,5 +192,5 @@ def launch_bounded_workflow(specification, budget_path):
                     raise
             finally:
                 budget['charged_seconds'] = _charged_seconds(budget)
-                budget['remaining_seconds'] = LIMIT_SECONDS - budget['charged_seconds']
+                budget['remaining_seconds'] = limit_seconds - budget['charged_seconds']
                 _atomic_json(path, budget)

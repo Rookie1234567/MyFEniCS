@@ -335,7 +335,13 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
             bundle, balanced_apply, policy = build_formal_bounded(
                 cfg, MPI.COMM_WORLD, contract, sample=sample, ledger=ledger,
                 directory=directory, identity=identity, save=save_balanced,
-                append=ledger.append, stop_requested=lambda: ledger.stop_signal is not None)
+                append=ledger.append, stop_requested=lambda: ledger.stop_signal is not None,
+                model_identity=dict(
+                    source_sha=source_sha,
+                    physical_model_sha256=payload['provenance']['physical_model_sha256'],
+                    input_sha256=payload['provenance']['input_sha256'],
+                    profile=identity, scalar_type='complex128',
+                    mpi_size=int(MPI.COMM_WORLD.Get_size())))
         else:
             bundle = build_physical_intermediate_solver(cfg, MPI.COMM_WORLD,
                 resource_sample=sample, marker=ledger.marker, **({'reference': True} if reference else {}),
@@ -448,6 +454,12 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 rhs_sha256=summary['rhs']['vector_sha256'],
                 operator_identity_sha256=operator_identity,
                 storage_sha256=storage_sha,
+                recycling_identity=bundle.get('recycling_identity'),
+                recycling_floquet_identity=bundle.get('recycling_floquet_identity'),
+                recycling_material_identity=bundle.get('recycling_material_identity'),
+                recycling_owner_map=(
+                    bundle.get('recycling_owner_map', {}).copy()
+                    if 'recycling_owner_map' in bundle else None),
             )
         checkpoints = directory / 'checkpoints'
         checkpoints.mkdir()
