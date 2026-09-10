@@ -567,7 +567,8 @@ def build_formal_bounded(
     """Build one bounded BAL_H route and its callable; no PDE solve is started here."""
 
     route = contract.get('route')
-    if route not in ('ENTITY16', 'PROJECTED_SEQ2_16', 'ENTITY_GCROT8'):
+    if route not in ('ENTITY16', 'PROJECTED_SEQ2_16', 'ENTITY_GCROT8',
+                     'ENTITY_GCROT8_NEW16'):
         raise ValueError(f'unknown bounded route: {route!r}')
     if getattr(cfg, 'cell_notch', None):
         raise ValueError('V7 route-A original owner packets cannot be reused for notch materials')
@@ -678,7 +679,7 @@ def build_formal_bounded(
         b4 = PhysicalBalancedCoupling(a4, cu, ht, restriction, route='BAL_H',
             checkpoint=sample, level_identity='formal owner-route cached A4 + p2 bottom')
         bundle['b4'] = b4
-        if route == 'ENTITY_GCROT8' or contract.get('recycling', {}).get('enabled'):
+        if route in ('ENTITY_GCROT8', 'ENTITY_GCROT8_NEW16') or contract.get('recycling', {}).get('enabled'):
             p4_slaves = owned_slave_indices(levels['spaces'][4], levels['floquets'][4])
             p4_local_size = int(levels['spaces'][4].dofmap.index_map.size_local *
                                 levels['spaces'][4].dofmap.index_map_bs)
@@ -750,7 +751,8 @@ def build_formal_bounded(
                 a4, b4.apply, sample=sample, save=save,
                 stop_requested=stop_requested, residual_action=native_a4,
                 independent_indices=p4_independent,
-                model_identity=bound_identity)
+                model_identity=bound_identity,
+                policy=contract.get('recycling', {}).get('policy'))
         else:
             admission = BoundedI4Admission(a4, b4.apply, sample=sample, save=save,
                 stop_requested=stop_requested, residual_action=native_a4)

@@ -1,9 +1,11 @@
-"""Small, bounded GCROT recycling kernel for the opt-in V8 I4 profile.
+"""Small, bounded GCROT recycling kernel for the opt-in V8/V9 I4 profiles.
 
 The kernel deliberately has one numerical entry point: one call to the local
-SciPy ``gcrotmk`` implementation with ``m=k=8`` and ``maxiter=1``. It keeps
+SciPy ``gcrotmk`` implementation with ``k=8`` and ``maxiter=1``. V8 keeps its
+historical ``m=8`` call; the opt-in V9 policy derives ``m`` from the effective
+pool rank so SciPy's actual new-search length remains 16. Both policies keep
 only a model-local list of verified ``(U, Q)`` pairs, where ``A4 U = Q`` and
-``Q.conj().T @ Q`` is the identity. PETSc ownership and the V7 admission
+``Q.conj().T @ Q`` is the identity. PETSc ownership and the bounded admission
 policy live in :mod:`physical_bounded_policy`.
 
 SciPy mutates the ``CU`` list that it receives. Every solve therefore works
@@ -32,11 +34,15 @@ GCROT_TOL = 1.0e-4
 GCROT_ATOL = 0.0
 MAX_NEW_B4 = 16
 MAX_NEW_DIRECTIONS = 16
+V8_FIXED_M8_RECYCLE8 = "V8_FIXED_M8_RECYCLE8"
+FIXED_NEW16_RECYCLE8 = "FIXED_NEW16_RECYCLE8"
+RECYCLING_POLICIES = frozenset((V8_FIXED_M8_RECYCLE8, FIXED_NEW16_RECYCLE8))
 ORTHOGONALITY_LIMIT = 1.0e-10
 CLOSURE_LIMIT = 1.0e-10
 RANK_THRESHOLD = 1.0e-12
 NATIVE_SPOT_INTERVAL = 32
 RECYCLING_EXTRA_BYTES_LIMIT = 64 * 1024**2
+FIXED_NEW16_PAYLOAD_BYTES = 128 * 1024**2
 # The transient count is listed separately from the V/Z basis in the phase
 # ledger below; the V/Z count itself depends on SciPy's current ``ml``.
 SCIPY_INNER_TRANSIENT_VECTOR_COUNT = 4
@@ -49,6 +55,12 @@ SCIPY_SMALL_MATRIX_BYTES = 4 * (GCROT_M + 2) * (GCROT_K + 2) * 16
 # numeric payload bound, not a claim about the live allocator peak or RSS.
 P4_INDEPENDENT_ROWS = 48960
 POOL_NUMERIC_BYTES_P4_DERIVED = 2 * P4_INDEPENDENT_ROWS * MAX_POOL_PAIRS * 16
+
+
+def _gcrot_small_matrix_bytes(m_call: int) -> int:
+    """Bound the small complex matrices for one installed GCROT call."""
+
+    return int(4 * (int(m_call) + 2) * (GCROT_K + 2) * 16)
 
 
 class RecycledI4Error(RuntimeError):
@@ -347,6 +359,7 @@ class BoundedGCROTI4:
         safe_seconds: float = 25.0,
         hard_seconds: float = 30.0,
         clock: Callable[[], float] | None = None,
+        policy: str = V8_FIXED_M8_RECYCLE8,
     ):
         if float(target) != GCROT_TOL:
             raise ValueError("recycled I4 fixes the 1e-4 inner target")
@@ -354,6 +367,8 @@ class BoundedGCROTI4:
             raise ValueError("safe_seconds must be finite and positive")
         if not np.isfinite(hard_seconds) or hard_seconds < safe_seconds:
             raise ValueError("hard_seconds must be no shorter than safe_seconds")
+        if policy not in RECYCLING_POLICIES:
+            raise ValueError(f"unknown recycled I4 policy: {policy!r}")
         self.action = action
         self.pc = pc
         self.validation_action = action if validation_action is None else validation_action
@@ -370,6 +385,10 @@ class BoundedGCROTI4:
         self.safe_seconds = float(safe_seconds)
         self.hard_seconds = float(hard_seconds)
         self.clock = time.monotonic if clock is None else clock
+        self.policy = str(policy)
+        self.memory_cap_bytes = (FIXED_NEW16_PAYLOAD_BYTES
+                                 if self.policy == FIXED_NEW16_RECYCLE8
+                                 else RECYCLING_EXTRA_BYTES_LIMIT)
         canonical = _canonical_identity(model_identity)
         if pool is None:
             pool = VerifiedRecyclingPool(canonical)
@@ -412,7 +431,12 @@ class BoundedGCROTI4:
                         tol=GCROT_TOL, atol=GCROT_ATOL,
                         max_new_B4=MAX_NEW_B4,
                         max_new_directions=MAX_NEW_DIRECTIONS,
-                        extra_bytes_limit=RECYCLING_EXTRA_BYTES_LIMIT),
+                        policy=self.policy,
+                        payload_cap_bytes=self.memory_cap_bytes,
+                        extra_bytes_limit=(
+                            RECYCLING_EXTRA_BYTES_LIMIT
+                            if self.policy == V8_FIXED_M8_RECYCLE8
+                            else FIXED_NEW16_PAYLOAD_BYTES)),
         )
 
     def destroy(self) -> None:
@@ -499,6 +523,7 @@ class BoundedGCROTI4:
     @staticmethod
     def _rank_revealing_subset(
         pairs: list[tuple[np.ndarray, np.ndarray]],
+        *, leading_rank: bool = False,
     ) -> tuple[list[tuple[np.ndarray, np.ndarray]], list[int], int, list[float]]:
         if not pairs:
             return [], [], 0, []
@@ -511,7 +536,18 @@ class BoundedGCROTI4:
         scale = max(float(diagonal[0]) if diagonal.size else 0.0,
                     np.finfo(float).tiny)
         threshold = RANK_THRESHOLD * scale
-        rank = int(np.count_nonzero(diagonal > threshold))
+        if leading_rank:
+            # SciPy 1.11.4 stops its CU legalization at the first failed
+            # diagonal, so this is the effective length that will enter
+            # ``len(CU)`` and therefore the V9 m_call conversion.
+            rank = 0
+            for value in diagonal:
+                if value <= threshold:
+                    break
+                rank += 1
+        else:
+            # Keep the historical V8 candidate checker semantics unchanged.
+            rank = int(np.count_nonzero(diagonal > threshold))
         # Preserve CU order after using pivoted QR only to choose independent
         # paired columns. No U column is re-associated with another Q column.
         selected = sorted(int(index) for index in pivots[:rank])
@@ -625,9 +661,16 @@ class BoundedGCROTI4:
     def _memory_facts(self, *, pool_before: int, pool_before_bytes: int,
                       working: list[tuple[Any, Any]], rhs: np.ndarray,
                       projection: np.ndarray, projection_matrix_bytes: int,
-                      inner_dimension: int, pool_after_bytes: int) -> dict[str, Any]:
+                      inner_dimension: int, pool_after_bytes: int,
+                      m_call: int = GCROT_M) -> dict[str, Any]:
         working_bytes = _pair_bytes(working, include_terminal=True)
         vector_bytes = int(rhs.nbytes)
+        small_matrix_bytes = (
+            SCIPY_SMALL_MATRIX_BYTES if self.policy == V8_FIXED_M8_RECYCLE8
+            # SciPy's actual _fgmres/truncation dimension is ``ml``.  For
+            # V9 it is fixed at 16 even when m_call is 8 in an empty pool, so
+            # the payload ledger must use that upper dimension.
+            else _gcrot_small_matrix_bytes(inner_dimension))
         inner_vz_vectors = 2 * int(inner_dimension) + 1
         inner_vz_bytes = inner_vz_vectors * vector_bytes
         inner_transient_bytes = SCIPY_INNER_TRANSIENT_VECTOR_COUNT * vector_bytes
@@ -653,19 +696,49 @@ class BoundedGCROTI4:
         # work are kept as separate conservative terms.
         inner_vectors = inner_vz_vectors + SCIPY_INNER_TRANSIENT_VECTOR_COUNT
         library_scratch = (smallest_cu_overlap_bytes + qr_input_output_bytes +
-                           gram_conjugate_temp_bytes + SCIPY_SMALL_MATRIX_BYTES)
+                           gram_conjugate_temp_bytes + small_matrix_bytes)
         projection_extra = (base_extra + int(projection_matrix_bytes) +
-                            SCIPY_SMALL_MATRIX_BYTES)
+                            small_matrix_bytes)
         gcrot_extra = base_extra + library_scratch
         candidate_q_matrix = MAX_POOL_PAIRS * vector_bytes
         candidate_extra = (base_extra + candidate_q_matrix +
                            qr_input_output_bytes + gram_conjugate_temp_bytes +
-                           SCIPY_SMALL_MATRIX_BYTES)
+                           small_matrix_bytes)
         extra_peak = max(projection_extra, gcrot_extra, candidate_extra)
+        # V9 charges the complete I4 numeric/index payload in one ledger.  The
+        # old V8 profile intentionally keeps its historical ``extra`` metric
+        # and 64 MiB decision unchanged.
+        index_payload_bytes = (
+            0 if self.policy == V8_FIXED_M8_RECYCLE8 else
+            int(4 * max(MAX_POOL_PAIRS, inner_dimension) * np.dtype(np.intp).itemsize))
         projection_phase = projection_extra + ordinary_vectors_bytes
         library_phase = gcrot_extra + ordinary_vectors_bytes + inner_krylov_bytes
         candidate_phase = candidate_extra + ordinary_vectors_bytes
+        if self.policy == FIXED_NEW16_RECYCLE8:
+            projection_phase += index_payload_bytes
+            library_phase += index_payload_bytes
+            candidate_phase += index_payload_bytes
         full_peak = max(projection_phase, library_phase, candidate_phase)
+        cap_peak = full_peak if self.policy == FIXED_NEW16_RECYCLE8 else extra_peak
+        cap_bytes = self.memory_cap_bytes
+        payload_ledger = dict(
+            scope=(
+                "full_I4_search_vectors_persistent_transaction_pool_"
+                "QR_SVD_truncation_temporaries_adapter_vectors_and_indices"
+                if self.policy == FIXED_NEW16_RECYCLE8 else
+                "V8_named_recycling_arrays_plus_pinned_SciPy_vector_scratch"),
+            search_vectors_bytes=int(inner_krylov_bytes),
+            persistent_pool_bytes=int(pool_before_bytes),
+            transaction_pool_bytes=int(working_bytes),
+            qr_svd_truncation_bytes=int(
+                smallest_cu_overlap_bytes + qr_input_output_bytes +
+                gram_conjugate_temp_bytes + small_matrix_bytes),
+            adapter_vector_bytes=int(ordinary_vectors_bytes),
+            index_payload_bytes=int(index_payload_bytes),
+            peak_bytes=int(cap_peak),
+            cap_bytes=int(cap_bytes),
+            cap_passed=bool(cap_peak <= cap_bytes),
+        )
         return dict(
             retained_bytes=int(pool_after_bytes),
             persistent_before_bytes=int(pool_before_bytes),
@@ -678,7 +751,11 @@ class BoundedGCROTI4:
             base_inner_krylov_bytes=int(inner_krylov_bytes),
             ordinary_live_vector_bytes=int(ordinary_vectors_bytes),
             extra_recycling_peak_bytes=int(extra_peak),
-            extra_recycling_cap_passed=bool(extra_peak <= RECYCLING_EXTRA_BYTES_LIMIT),
+            extra_recycling_cap_passed=bool(
+                (extra_peak <= RECYCLING_EXTRA_BYTES_LIMIT)
+                if self.policy == V8_FIXED_M8_RECYCLE8 else
+                (cap_peak <= cap_bytes)),
+            payload_ledger=payload_ledger,
             named_array_bytes=dict(
                 persistent_pool=int(pool_before_bytes),
                 cu_workspace_including_terminal=int(working_bytes),
@@ -695,7 +772,8 @@ class BoundedGCROTI4:
             scipy_gram_conjugate_temp_bytes=int(gram_conjugate_temp_bytes),
             scipy_scratch_vector_count=inner_vectors,
             scipy_scratch_bound=int(library_scratch),
-            scipy_small_matrix_bound=int(SCIPY_SMALL_MATRIX_BYTES),
+            scipy_small_matrix_bound=int(small_matrix_bytes),
+            index_payload_bytes=int(index_payload_bytes),
             phase_bounds=dict(projection_phase=int(projection_phase),
                               gcrot_phase=int(library_phase),
                               candidate_validation_phase=int(candidate_phase),
@@ -705,11 +783,16 @@ class BoundedGCROTI4:
                               qr_input_output_bytes=int(qr_input_output_bytes),
                               gram_conjugate_temp_bytes=int(gram_conjugate_temp_bytes)),
             peak_live_bytes=int(full_peak),
-            cap_bytes=RECYCLING_EXTRA_BYTES_LIMIT,
-            cap_passed=bool(extra_peak <= RECYCLING_EXTRA_BYTES_LIMIT),
+            cap_bytes=int(cap_bytes),
+            cap_peak_bytes=int(cap_peak),
+            cap_passed=bool(cap_peak <= cap_bytes),
             p4_reference_numeric_bytes=POOL_NUMERIC_BYTES_P4_DERIVED,
-            classification=("conservative_named_arrays_plus_pinned_SciPy_1.11.4_"
-                            "m8k8_vector_scratch; excludes physical action workspace"),
+            classification=(
+                "fixed_new16_full_I4_numeric_index_payload_"
+                "including_pinned_SciPy_1.11.4_scratch; excludes_physical_action_workspace"
+                if self.policy == FIXED_NEW16_RECYCLE8 else
+                "conservative_named_arrays_plus_pinned_SciPy_1.11.4_"
+                "m8k8_vector_scratch; excludes physical action workspace"),
         )
 
     def _facts(
@@ -738,7 +821,19 @@ class BoundedGCROTI4:
         memory: dict[str, Any],
         legal_direction_count: int,
         usable_new_directions: int,
+        m_call: int = GCROT_M,
+        effective_rank: int = 0,
+        discarded_pool_directions: int = 0,
+        requested_new_B4: int = 0,
+        requested_new_arnoldi_directions: int = 0,
+        work_policy_violation: bool = False,
     ) -> dict[str, Any]:
+        completed_b4 = int(counters["B4_calls"])
+        completed_arnoldi = int(counters["completed_new_arnoldi_directions"])
+        requested_callbacks = int(counters.get("requested_new_B4_callbacks", 0))
+        discarded_b4 = max(int(requested_new_B4) - completed_b4, 0)
+        discarded_arnoldi = max(
+            int(requested_new_arnoldi_directions) - completed_arnoldi, 0)
         return dict(
             status=status,
             quality_label=status,
@@ -752,9 +847,9 @@ class BoundedGCROTI4:
             gcrot_inner_dimension=int(memory["inner_dimension"]),
             reason=reason,
             library_info=library_info,
-            restart=GCROT_M,
+            restart=int(m_call),
             max_it=GCROT_MAXITER,
-            m=GCROT_M,
+            m=int(m_call),
             k=GCROT_K,
             truncate="smallest",
             discard_C=False,
@@ -778,13 +873,27 @@ class BoundedGCROTI4:
             cached_A4_checks=int(counters["cached_A4_checks"]),
             attempted=dict(counters),
             attempted_B4=int(counters["attempted_B4"]),
-            completed_B4=int(counters["B4_calls"]),
+            completed_B4=completed_b4,
             attempted_new_arnoldi_directions=int(counters["attempted_new_arnoldi_directions"]),
-            completed_new_arnoldi_directions=int(counters["completed_new_arnoldi_directions"]),
+            completed_new_arnoldi_directions=completed_arnoldi,
             completed_legal_new_arnoldi_directions=int(
                 counters["completed_legal_new_arnoldi_directions"]),
-            new_B4_calls=int(counters["B4_calls"]),
-            new_arnoldi_directions=int(counters["completed_new_arnoldi_directions"]),
+            new_B4_calls=completed_b4,
+            new_arnoldi_directions=completed_arnoldi,
+            policy=self.policy,
+            effective_pool_rank=int(effective_rank),
+            m_call=int(m_call),
+            requested_new_B4=int(requested_new_B4),
+            requested_new_B4_callbacks=requested_callbacks,
+            completed_new_B4=completed_b4,
+            discarded_new_B4=int(discarded_b4),
+            requested_new_arnoldi_directions=int(requested_new_arnoldi_directions),
+            actual_arnoldi_length=completed_arnoldi,
+            discarded_new_arnoldi_directions=int(discarded_arnoldi),
+            rejected_new_B4_callbacks=int(counters.get("rejected_new_B4_callbacks", 0)),
+            discarded_pool_directions=int(discarded_pool_directions),
+            work_policy_violation=bool(work_policy_violation),
+            implementation_blocked=bool(work_policy_violation),
             pool_before=pool_before,
             pool_after=pool_after,
             pool_size=pool_after,
@@ -802,7 +911,11 @@ class BoundedGCROTI4:
             backend=self.backend,
             recycling_memory=memory,
             fixed_work=dict(max_new_B4=MAX_NEW_B4,
-                            max_new_arnoldi_directions=MAX_NEW_DIRECTIONS),
+                            max_new_arnoldi_directions=MAX_NEW_DIRECTIONS,
+                            policy=self.policy,
+                            requested_new_B4=int(requested_new_B4),
+                            requested_new_arnoldi_directions=(
+                                int(requested_new_arnoldi_directions))),
             persistent_pool=dict(
                 pairs=pool_after,
                 retained_bytes=int(self.pool.retained_bytes),
@@ -829,27 +942,58 @@ class BoundedGCROTI4:
                               safe_seconds=self.safe_seconds,
                               hard_seconds=self.hard_seconds)
         rhs_norm = _norm(rhs_array)
-        pool_before_pairs = self.pool.pairs(copy=True)
-        pool_before = len(pool_before_pairs)
+        stored_pool_pairs = self.pool.pairs(copy=True)
+        stored_pool_before = len(stored_pool_pairs)
         pool_before_bytes = self.pool.retained_bytes
-        inner_dimension = GCROT_M + max(GCROT_K - pool_before, 0)
+        discarded_pool_directions = 0
+        rank_residuals: list[float] = []
+        if self.policy == FIXED_NEW16_RECYCLE8 and stored_pool_pairs:
+            # SciPy performs this same pivoted-QR legality step before it
+            # computes ``ml``.  Select the independent paired columns first so
+            # the policy's m_call is based on the rank that the call can
+            # actually retain, rather than on the raw list length.
+            selected_cu, _, effective_rank, rank_residuals = (
+                self._rank_revealing_subset(
+                    [(q, u) for u, q in stored_pool_pairs],
+                    leading_rank=True))
+            pool_before_pairs = [(u, q) for q, u in selected_cu]
+            discarded_pool_directions = stored_pool_before - effective_rank
+            del selected_cu
+        else:
+            pool_before_pairs = stored_pool_pairs
+            effective_rank = len(pool_before_pairs)
+        pool_before = stored_pool_before
+        effective_pool_before = len(pool_before_pairs)
+        if self.policy == FIXED_NEW16_RECYCLE8:
+            m_call = MAX_NEW_DIRECTIONS - max(GCROT_K - effective_rank, 0)
+            inner_dimension = MAX_NEW_DIRECTIONS
+        else:
+            m_call = GCROT_M
+            inner_dimension = GCROT_M + max(GCROT_K - pool_before, 0)
+        requested_new_B4 = int(inner_dimension)
+        requested_new_arnoldi_directions = int(inner_dimension)
         inherited_closure_error = max(self.pool.closure_errors, default=0.0)
         # The one copied pair list is both the projection input and SciPy's
         # private CU workspace. SciPy mutates it only after projection values
         # have been computed.
         working = [(q, u) for u, q in pool_before_pairs]
+        # ``working`` is the sole owner of the copied CU arrays during the
+        # library call. Do not keep the original stored-pool list alive while
+        # SciPy allocates its QR/truncation workspace.
+        del stored_pool_pairs
         counters = dict(
             A4_matvec=0, attempted_A4=0, completed_A4=0,
             explicit_A4=0, attempted_explicit_A4=0, native_A4_checks=0,
             pool_A4_checks=0, cached_A4_checks=0,
             B4_calls=0, attempted_B4=0,
+            requested_new_B4_callbacks=0, rejected_new_B4_callbacks=0,
             attempted_new_arnoldi_directions=0,
             completed_new_arnoldi_directions=0,
             completed_legal_new_arnoldi_directions=0,
             legal_direction_count=0,
         )
         projection = np.zeros_like(rhs_array)
-        projection_coefficients = np.zeros(pool_before, dtype=np.complex128)
+        projection_coefficients = np.zeros(effective_pool_before, dtype=np.complex128)
         projection_matrix_bytes = 0
         projection_action: np.ndarray | None = None
         projection_post: float | None = None
@@ -871,10 +1015,10 @@ class BoundedGCROTI4:
         pending_new: bool | None = None
 
         initial_memory = self._memory_facts(
-            pool_before=pool_before, pool_before_bytes=pool_before_bytes, working=working,
+            pool_before=effective_pool_before, pool_before_bytes=pool_before_bytes, working=working,
             rhs=rhs_array, projection=projection, projection_matrix_bytes=0,
             inner_dimension=inner_dimension,
-            pool_after_bytes=pool_before_bytes)
+            pool_after_bytes=pool_before_bytes, m_call=m_call)
         if not initial_memory["cap_passed"]:
             raise RecycledI4Error("recycling live memory cap was exceeded")
 
@@ -902,9 +1046,12 @@ class BoundedGCROTI4:
         def invoke_pc(value: np.ndarray) -> np.ndarray:
             nonlocal pending_new
             deadline.check("B4_before")
+            counters["requested_new_B4_callbacks"] += 1
             if counters["attempted_B4"] >= MAX_NEW_B4:
+                counters["rejected_new_B4_callbacks"] += 1
                 raise RecycledI4WorkLimit("new B4 application cap exceeded")
             if counters["attempted_new_arnoldi_directions"] >= MAX_NEW_DIRECTIONS:
+                counters["rejected_new_B4_callbacks"] += 1
                 raise RecycledI4WorkLimit("new Arnoldi direction cap exceeded")
             counters["attempted_B4"] += 1
             counters["attempted_new_arnoldi_directions"] += 1
@@ -957,10 +1104,10 @@ class BoundedGCROTI4:
             if rhs_norm == 0.0:
                 zero = np.zeros_like(rhs_array)
                 memory = self._memory_facts(
-                    pool_before=pool_before, pool_before_bytes=pool_before_bytes, working=working,
+                    pool_before=effective_pool_before, pool_before_bytes=pool_before_bytes, working=working,
                     rhs=rhs_array, projection=projection, projection_matrix_bytes=0,
                     inner_dimension=inner_dimension,
-                    pool_after_bytes=self.pool.retained_bytes)
+                    pool_after_bytes=self.pool.retained_bytes, m_call=m_call)
                 if not memory["cap_passed"]:
                     raise RecycledI4Error("recycling live memory cap was exceeded")
                 facts = self._facts(
@@ -974,23 +1121,31 @@ class BoundedGCROTI4:
                     projection_pre=0.0, projection_post=0.0,
                     projection_coefficients=projection_coefficients,
                     projection_norm=0.0, pool_update="unchanged_zero_rhs",
-                    pool_facts=dict(checked=False, pairs=pool_before, rank=pool_before),
+                    pool_facts=dict(checked=False, pairs=effective_pool_before,
+                                    rank=effective_pool_before,
+                                    rank_pruned=discarded_pool_directions),
                     memory=memory, legal_direction_count=0,
-                    usable_new_directions=0)
+                    usable_new_directions=0, m_call=m_call,
+                    effective_rank=effective_rank,
+                    discarded_pool_directions=discarded_pool_directions,
+                    requested_new_B4=requested_new_B4,
+                    requested_new_arnoldi_directions=(
+                        requested_new_arnoldi_directions))
                 facts["input_unchanged"] = True
                 return dict(solution=zero.copy(), applied=zero.copy(),
                             residual=zero.copy(), facts=facts)
 
-            if pool_before:
+            if effective_pool_before:
                 q_matrix = np.column_stack([q for _, q in pool_before_pairs])
                 u_matrix = np.column_stack([u for u, _ in pool_before_pairs])
                 projection_matrix_bytes = int(q_matrix.nbytes + u_matrix.nbytes)
                 projection_memory = self._memory_facts(
-                    pool_before=pool_before, pool_before_bytes=pool_before_bytes, working=working,
+                    pool_before=effective_pool_before,
+                    pool_before_bytes=pool_before_bytes, working=working,
                     rhs=rhs_array, projection=projection,
                     projection_matrix_bytes=projection_matrix_bytes,
                     inner_dimension=inner_dimension,
-                    pool_after_bytes=pool_before_bytes)
+                    pool_after_bytes=pool_before_bytes, m_call=m_call)
                 if not projection_memory["cap_passed"]:
                     raise RecycledI4Error("recycling live memory cap was exceeded")
                 projection_coefficients = q_matrix.conj().T @ rhs_array
@@ -1021,7 +1176,7 @@ class BoundedGCROTI4:
             library_solution, library_info = gcrotmk(
                 operator, rhs_array.copy(), x0=None, tol=GCROT_TOL,
                 maxiter=GCROT_MAXITER, M=preconditioner, callback=callback,
-                m=GCROT_M, k=GCROT_K, CU=working, discard_C=False,
+                m=m_call, k=GCROT_K, CU=working, discard_C=False,
                 truncate="smallest", atol=GCROT_ATOL)
             library_solution = _vector(library_solution, name="gcrot solution", copy=True)
             _constraint_passes(self.u_constraint_check, library_solution, name="gcrot solution")
@@ -1041,7 +1196,8 @@ class BoundedGCROTI4:
             candidate_source = "callback"
         else:
             candidate = projection.copy()
-            candidate_source = "pool_projection" if pool_before else "zero_fallback"
+            candidate_source = ("pool_projection" if effective_pool_before
+                                else "zero_fallback")
         _constraint_passes(self.u_constraint_check, candidate, name="returned solution")
 
         if library_solution is not None:
@@ -1053,8 +1209,8 @@ class BoundedGCROTI4:
             # imposed on the RHS.
             candidate_pairs = self._candidate_pairs(working)
             update_evidence = bool(update_norm > 0.0)
-            if pool_before < MAX_POOL_PAIRS:
-                update_evidence = len(candidate_pairs) > pool_before
+            if effective_pool_before < MAX_POOL_PAIRS:
+                update_evidence = len(candidate_pairs) > effective_pool_before
 
         if library_solution is not None:
             if (candidate_pairs and
@@ -1140,11 +1296,12 @@ class BoundedGCROTI4:
         if not input_unchanged:
             raise RecycledI4Error("rhs was changed by recycled I4")
         memory = self._memory_facts(
-            pool_before=pool_before, pool_before_bytes=pool_before_bytes, working=working,
+            pool_before=effective_pool_before,
+            pool_before_bytes=pool_before_bytes, working=working,
             rhs=rhs_array, projection=projection,
             projection_matrix_bytes=projection_matrix_bytes,
             inner_dimension=inner_dimension,
-            pool_after_bytes=self.pool.retained_bytes)
+            pool_after_bytes=self.pool.retained_bytes, m_call=m_call)
         if not memory["cap_passed"]:
             raise RecycledI4Error("recycling live memory cap was exceeded")
 
@@ -1174,7 +1331,14 @@ class BoundedGCROTI4:
         counters["legal_direction_count"] = legal_direction_count
         pool_facts = (dict(validated_facts, checked=True)
                       if validated_facts else
-                      dict(checked=False, pairs=pool_before, rank=pool_before))
+                      dict(checked=False, pairs=effective_pool_before,
+                           rank=effective_pool_before,
+                           rank_pruned=discarded_pool_directions,
+                           rank_residual_norms=rank_residuals))
+        work_policy_violation = bool(counters["rejected_new_B4_callbacks"])
+        if work_policy_violation and self.policy == FIXED_NEW16_RECYCLE8:
+            status = "INNER_WORK_POLICY_VIOLATION"
+            stop_reason = "FIXED_NEW16_OVERRUN_REJECTED"
         facts = self._facts(
             call_number=call_number, counters=counters,
             pool_before=pool_before, pool_after=self.pool.size,
@@ -1189,7 +1353,13 @@ class BoundedGCROTI4:
             projection_norm=_norm(projection), pool_update=pool_update,
             pool_facts=pool_facts, memory=memory,
             legal_direction_count=legal_direction_count,
-            usable_new_directions=usable_new)
+            usable_new_directions=usable_new, m_call=m_call,
+            effective_rank=effective_rank,
+            discarded_pool_directions=discarded_pool_directions,
+            requested_new_B4=requested_new_B4,
+            requested_new_arnoldi_directions=(
+                requested_new_arnoldi_directions),
+            work_policy_violation=work_policy_violation)
         facts["candidate_source"] = candidate_source
         facts["new_update_norm"] = float(update_norm)
         facts["new_update_evidence"] = update_evidence
@@ -1200,6 +1370,8 @@ class BoundedGCROTI4:
 __all__ = [
     "BoundedGCROTI4",
     "CLOSURE_LIMIT",
+    "FIXED_NEW16_PAYLOAD_BYTES",
+    "FIXED_NEW16_RECYCLE8",
     "GCROT_ATOL",
     "GCROT_K",
     "GCROT_M",
@@ -1213,9 +1385,11 @@ __all__ = [
     "POOL_NUMERIC_BYTES_P4_DERIVED",
     "RANK_THRESHOLD",
     "RECYCLING_EXTRA_BYTES_LIMIT",
+    "RECYCLING_POLICIES",
     "RecycledI4Error",
     "RecycledI4SafetyStop",
     "RecycledI4WorkLimit",
     "VerifiedRecyclingPool",
+    "V8_FIXED_M8_RECYCLE8",
     "gcrotmk_backend_facts",
 ]

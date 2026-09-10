@@ -141,7 +141,7 @@ class BoundedI4Admission:
 
 
 class RecycledI4Admission:
-    """PETSc bridge for the opt-in V8 one-round recycled I4 kernel.
+    """PETSc bridge for the opt-in V8/V9 one-round recycled I4 kernel.
 
     The bridge creates one private PETSc prototype and converts only the
     callback vectors needed by the array kernel.  It deliberately keeps the
@@ -164,8 +164,12 @@ class RecycledI4Admission:
         u_constraint_check: Callable[[np.ndarray], Any] | None = None,
         independent_indices: np.ndarray | None = None,
         pool: Any | None = None,
+        policy: str | None = None,
     ) -> None:
-        from .physical_recycled_i4 import BoundedGCROTI4
+        from .physical_recycled_i4 import (
+            BoundedGCROTI4,
+            V8_FIXED_M8_RECYCLE8,
+        )
 
         self.action = action
         self.pc = pc
@@ -173,6 +177,7 @@ class RecycledI4Admission:
         self.sample = sample
         self.save = save
         self.stop_requested = stop_requested
+        self.policy = V8_FIXED_M8_RECYCLE8 if policy is None else str(policy)
         self.constraint_check = constraint_check
         self.q_constraint_check = q_constraint_check
         self.u_constraint_check = u_constraint_check
@@ -201,6 +206,7 @@ class RecycledI4Admission:
             sample=sample,
             stop_requested=stop_requested,
             pool=pool,
+            policy=self.policy,
         )
 
     @staticmethod
@@ -212,6 +218,11 @@ class RecycledI4Admission:
             'A4_matvec', 'B4_calls', 'explicit_A4', 'pool_before', 'pool_after',
             'pool_update', 'completed_new_arnoldi_directions',
             'attempted_new_arnoldi_directions',
+            'policy', 'effective_pool_rank', 'm_call',
+            'requested_new_B4', 'completed_new_B4', 'discarded_new_B4',
+            'requested_new_arnoldi_directions', 'actual_arnoldi_length',
+            'discarded_new_arnoldi_directions', 'rejected_new_B4_callbacks',
+            'work_policy_violation', 'implementation_blocked',
         )
         return {key: facts[key] for key in keys if key in facts}
 
@@ -316,6 +327,19 @@ class RecycledI4Admission:
         rhs_reduced = rhs_full[self._independent_indices].copy()
         result = self.engine.solve(rhs_reduced)
         facts = result['facts']
+        if facts.get('implementation_blocked'):
+            self.save('recycled_i4_work_policy_violation', dict(
+                rhs=np.array(rhs.array, copy=True),
+                facts=facts,
+                policy=self.policy,
+                reason='B4 callback was rejected before exceeding the fixed new-work cap'))
+            for name in ('solution', 'applied', 'residual'):
+                value = result.get(name)
+                if value is not None and hasattr(value, 'destroy'):
+                    value.destroy()
+                result[name] = None
+            raise RuntimeError(
+                'recycled I4 implementation blocked: fixed new-work cap was exceeded')
         self.last_facts = self._scalar_facts(facts)
         summary = {key: facts.get(key) for key in (
             'status', 'iterations', 'seconds', 'actual_elapsed_seconds',

@@ -15,6 +15,7 @@ from src.io.input_loader import InputError
 from src.io.physical_balanced_profile import (
     BOUNDED_ENTITY_PROFILE,
     BOUNDED_ENTITY_GCROT8_PROFILE,
+    BOUNDED_ENTITY_GCROT8_NEW16_PROFILE,
     BOUNDED_PROFILES,
     BOUNDED_PROJECTED_PROFILE,
     BOUNDED_ROUTES,
@@ -30,6 +31,9 @@ WORKFLOW_RESERVATION_SECONDS = 14400
 V8_SCHEMA = 'task39extra.review-v8-recycled-budget.v1'
 V8_LIMIT_SECONDS = 36000
 V8_WORKFLOW_RESERVATION_SECONDS = 14400
+V9_SCHEMA = 'task39extra.review-v9-equal-new-work-budget.v1'
+V9_LIMIT_SECONDS = 36000
+V9_WORKFLOW_RESERVATION_SECONDS = 14400
 
 
 def _charged_seconds(budget: dict) -> float:
@@ -103,9 +107,11 @@ def _validate_route_and_order(specification, budget: dict) -> str:
             raise InputError('route-B projected attempt already reserved; no repeat formal')
         return 'projected'
 
-    if route not in ('ENTITY16', 'ENTITY_GCROT8'):
+    if route not in ('ENTITY16', 'ENTITY_GCROT8', 'ENTITY_GCROT8_NEW16'):
         raise InputError(f'unsupported bounded route: {route}')
-    expected_entity = (BOUNDED_ENTITY_GCROT8_PROFILE
+    expected_entity = (BOUNDED_ENTITY_GCROT8_NEW16_PROFILE
+                       if route == 'ENTITY_GCROT8_NEW16' else
+                       BOUNDED_ENTITY_GCROT8_PROFILE
                        if route == 'ENTITY_GCROT8' else BOUNDED_ENTITY_PROFILE)
     if identity != expected_entity:
         raise InputError('route-A control order does not match the selected entity profile')
@@ -138,11 +144,14 @@ def launch_bounded_workflow(specification, budget_path):
     with path.with_suffix('.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         budget = json.loads(path.read_text())
-        v8 = specification.solver.get('preconditioner') == BOUNDED_ENTITY_GCROT8_PROFILE
-        schema = V8_SCHEMA if v8 else SCHEMA
-        limit_seconds = V8_LIMIT_SECONDS if v8 else LIMIT_SECONDS
-        reservation_seconds = (V8_WORKFLOW_RESERVATION_SECONDS if v8
-                               else WORKFLOW_RESERVATION_SECONDS)
+        profile = specification.solver.get('preconditioner')
+        v8 = profile == BOUNDED_ENTITY_GCROT8_PROFILE
+        v9 = profile == BOUNDED_ENTITY_GCROT8_NEW16_PROFILE
+        schema = V9_SCHEMA if v9 else V8_SCHEMA if v8 else SCHEMA
+        limit_seconds = V9_LIMIT_SECONDS if v9 else V8_LIMIT_SECONDS if v8 else LIMIT_SECONDS
+        reservation_seconds = (V9_WORKFLOW_RESERVATION_SECONDS if v9 else
+                               V8_WORKFLOW_RESERVATION_SECONDS if v8 else
+                               WORKFLOW_RESERVATION_SECONDS)
         if (budget.get('schema') != schema or
                 budget.get('limit_seconds') != limit_seconds):
             raise InputError('selected bounded profile requires its exact ledger')

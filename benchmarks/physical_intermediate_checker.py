@@ -17,6 +17,7 @@ _BOUNDED_I4_STATUSES = (
 )
 _BOUNDED_NEGATIVE_STATUSES = (
     'NORMAL_SCREEN_STOP', 'PROGRESS_INSUFFICIENT_AT_MID_BUDGET',
+    'TIME_PROGRESS_SCREEN_STOP',
     'PERFORMANCE_CONTROLLED_STOP', 'ITERATION_BUDGET_EXHAUSTED',
     'CONTROLLED_STOP',
 )
@@ -53,6 +54,8 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
     """
     errors = []
     v8_recycled = profile == 'balanced_h6_entity_gcrot8_v8'
+    v9_recycled = profile == 'balanced_h6_entity_gcrot8_new16_v9'
+    recycled = v8_recycled or v9_recycled
 
     def require(condition, message):
         if not condition:
@@ -64,6 +67,9 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
     v8_identity = None
     v8_previous_after = None
     v8_native_seen = bool(native_seen_before)
+    v9_identity = None
+    v9_previous_after = None
+    v9_native_seen = bool(native_seen_before)
     for index, row in enumerate(i4_rows, 1):
         facts = _bounded_i4_facts(row)
         expected_call = int(call_start) + index - 1
@@ -240,6 +246,236 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
                         'projection_phase', 'gcrot_phase',
                         'candidate_validation_phase')),
                         f'I4 GCROT phase table is incomplete at {index}')
+        elif v9_recycled:
+            backend = facts.get('backend', {})
+            require(facts.get('k') == 8 and facts.get('max_it') == 1 and
+                    facts.get('gcrot_inner_dimension') == 16,
+                    f'I4 V9 fixed-new16 inner contract mismatch at {index}')
+            m_call = facts.get('m_call')
+            effective_rank = facts.get('effective_pool_rank')
+            require(isinstance(m_call, int) and 8 <= m_call <= 16 and
+                    isinstance(effective_rank, int) and 0 <= effective_rank <= 8 and
+                    m_call == 16 - max(8 - effective_rank, 0) and
+                    facts.get('restart') == m_call and facts.get('m') == m_call,
+                    f'I4 V9 effective-rank/m_call contract mismatch at {index}')
+            require(facts.get('truncate') == 'smallest' and
+                    facts.get('discard_C') is False and facts.get('atol') == 0.0,
+                    f'I4 V9 GCROT truncation contract mismatch at {index}')
+            require(isinstance(backend, dict) and
+                    backend.get('backend') == 'scipy.sparse.linalg.gcrotmk',
+                    f'I4 V9 GCROT backend identity missing at {index}')
+            for key in ('pool_before', 'pool_after', 'pool_identity_sha256',
+                        'pool_facts', 'recycling_memory', 'initial_guess',
+                        'pool_projection_source', 'requested_new_B4',
+                        'requested_new_arnoldi_directions',
+                        'requested_new_B4_callbacks', 'completed_new_B4',
+                        'completed_new_arnoldi_directions',
+                        'actual_arnoldi_length', 'discarded_new_B4',
+                        'discarded_new_arnoldi_directions',
+                        'rejected_new_B4_callbacks'):
+                require(key in facts, f'V9 I4 field is missing at {index}: {key}')
+            require(facts.get('policy') == 'FIXED_NEW16_RECYCLE8' and
+                    facts.get('initial_guess') ==
+                    'library_x0_zero_plus_current_pool_projection' and
+                    facts.get('pool_projection_source') == 'current_pool_only',
+                    f'V9 I4 policy/initial-guess semantics mismatch at {index}')
+            pool_before = facts.get('pool_before')
+            pool_after = facts.get('pool_after')
+            require(isinstance(pool_before, int) and not isinstance(pool_before, bool) and
+                    0 <= pool_before <= 8 and isinstance(pool_after, int) and
+                    not isinstance(pool_after, bool) and 0 <= pool_after <= 8,
+                    f'I4 V9 pool ledger invalid at {index}')
+            if v9_previous_after is not None:
+                require(pool_before == v9_previous_after,
+                        f'I4 V9 pool continuity mismatch at {index}')
+            v9_previous_after = pool_after
+            identity = facts.get('pool_identity_sha256')
+            require(isinstance(identity, str) and identity,
+                    f'I4 V9 pool identity is missing at {index}')
+            if v9_identity is None and isinstance(identity, str):
+                v9_identity = identity
+            elif v9_identity is not None:
+                require(identity == v9_identity,
+                        f'I4 V9 pool identity changed at {index}')
+            pool_facts = facts.get('pool_facts')
+            require(isinstance(pool_facts, dict),
+                    f'I4 V9 pool facts are not a mapping at {index}')
+            if isinstance(pool_facts, dict) and pool_facts.get('checked') is not True:
+                require(pool_facts.get('pairs') == effective_rank and
+                        pool_facts.get('rank') == effective_rank and
+                        pool_facts.get('rank_pruned') ==
+                        max(pool_before - effective_rank, 0),
+                        f'I4 V9 uncommitted pool ledger is inconsistent at {index}')
+                # Zero-RHS, no-direction, and safe/deadline returns expose no
+                # candidate Gram/native evidence because no new pool was
+                # validated.  Their existing pool ledger is sufficient.
+                pool_facts = None
+            if isinstance(pool_facts, dict):
+                for key in ('candidate_pairs', 'pairs', 'rank', 'rank_pruned',
+                            'rank_singular_values', 'q_gram',
+                            'orthogonality_error', 'closure_errors',
+                            'closure_error', 'native_spot_checked',
+                            'native_spot_due', 'native_spot_call',
+                            'native_spot_errors'):
+                    require(key in pool_facts,
+                            f'I4 V9 pool fact is missing at {index}: {key}')
+                candidate_pairs = pool_facts.get('candidate_pairs')
+                rank = pool_facts.get('rank')
+                require(isinstance(candidate_pairs, int) and
+                        0 <= candidate_pairs <= 8 and
+                        isinstance(rank, int) and 0 <= rank <= candidate_pairs and
+                        pool_facts.get('pairs') == rank and
+                        pool_facts.get('rank_pruned') == candidate_pairs - rank,
+                        f'I4 V9 rank ledger invalid at {index}')
+                for key in ('orthogonality_error', 'closure_error'):
+                    require(_finite_number(pool_facts.get(key), nonnegative=True) and
+                            float(pool_facts[key]) <= 1e-10,
+                            f'I4 V9 {key} exceeds 1e-10 at {index}')
+                singular = np.asarray(pool_facts.get('rank_singular_values'), dtype=float)
+                require(singular.ndim == 1 and np.isfinite(singular).all(),
+                        f'I4 V9 rank spectrum invalid at {index}')
+                if singular.size and isinstance(rank, int):
+                    threshold = 1e-12 * max(float(singular[0]), np.finfo(float).tiny)
+                    require(int(np.count_nonzero(singular > threshold)) == rank,
+                            f'I4 V9 rank spectrum disagrees at {index}')
+                gram = np.asarray(pool_facts.get('q_gram'))
+                if gram.ndim == 3 and gram.shape[-1] == 2:
+                    gram = gram[..., 0] + 1j * gram[..., 1]
+                require(gram.ndim == 2 and np.isfinite(gram).all() and
+                        isinstance(rank, int) and gram.shape == (rank, rank),
+                        f'I4 V9 Q Gram evidence invalid at {index}')
+                if gram.ndim == 2 and isinstance(rank, int) and gram.shape == (rank, rank):
+                    require(float(np.linalg.norm(
+                        gram - np.eye(rank, dtype=np.complex128), ord=2)) <= 1e-10,
+                            f'I4 V9 Q orthogonality evidence failed at {index}')
+                closures = pool_facts.get('closure_errors')
+                native_errors = pool_facts.get('native_spot_errors')
+                require(isinstance(closures, list) and
+                        all(_finite_number(value, nonnegative=True) and
+                            float(value) <= 1e-10 for value in closures) and
+                        _finite_number(pool_facts.get('closure_error'), nonnegative=True) and
+                        float(pool_facts.get('closure_error')) <= 1e-10,
+                        f'I4 V9 cached A4U closure failed at {index}')
+                require(isinstance(native_errors, list) and
+                        all(_finite_number(value, nonnegative=True) and
+                            float(value) <= 1e-10 for value in native_errors),
+                        f'I4 V9 native A4U closure evidence invalid at {index}')
+                native_checked = pool_facts.get('native_spot_checked')
+                require(isinstance(native_checked, int) and 0 <= native_checked <= 8 and
+                        native_checked == len(native_errors),
+                        f'I4 V9 native spot count invalid at {index}')
+                native_due = pool_facts.get('native_spot_due')
+                require(isinstance(native_due, bool),
+                        f'I4 V9 native due flag is invalid at {index}')
+                expected_native_due = (not v9_native_seen or expected_call % 32 == 0)
+                require(native_due is expected_native_due,
+                        f'I4 V9 native cadence invalid at {index}')
+                if native_due:
+                    require(native_checked > 0 and
+                            pool_facts.get('native_spot_call') == expected_call,
+                            f'I4 V9 native spot identity/cadence invalid at {index}')
+                    if native_checked > 0:
+                        v9_native_seen = True
+                else:
+                    require(native_checked == 0 and
+                            pool_facts.get('native_spot_call') is None,
+                            f'I4 V9 unexpected native spot at {index}')
+            for key in ('requested_new_B4', 'requested_new_arnoldi_directions',
+                        'requested_new_B4_callbacks', 'attempted_B4',
+                        'completed_B4', 'attempted_new_arnoldi_directions',
+                        'completed_new_B4', 'completed_new_arnoldi_directions',
+                        'actual_arnoldi_length',
+                        'discarded_new_B4', 'discarded_new_arnoldi_directions',
+                        'rejected_new_B4_callbacks'):
+                value = facts.get(key)
+                require(isinstance(value, int) and not isinstance(value, bool) and
+                        0 <= value <= 16,
+                        f'I4 V9 work field invalid at {index}: {key}')
+            if all(isinstance(facts.get(key), int) and
+                   not isinstance(facts.get(key), bool) for key in (
+                    'requested_new_B4', 'requested_new_arnoldi_directions',
+                    'requested_new_B4_callbacks', 'attempted_B4', 'completed_B4',
+                    'completed_new_B4', 'attempted_new_arnoldi_directions',
+                    'completed_new_arnoldi_directions', 'actual_arnoldi_length',
+                    'discarded_new_B4', 'discarded_new_arnoldi_directions',
+                    'rejected_new_B4_callbacks')):
+                require(facts['requested_new_B4'] ==
+                        facts['requested_new_arnoldi_directions'] == 16 and
+                        facts['requested_new_B4_callbacks'] == facts['attempted_B4'] and
+                        facts['completed_B4'] == facts['completed_new_B4'] and
+                        facts['completed_B4'] == facts.get('B4_calls') and
+                        facts['completed_new_arnoldi_directions'] ==
+                        facts['actual_arnoldi_length'] == facts.get('iterations') and
+                        facts['discarded_new_B4'] ==
+                        max(16 - facts['completed_new_B4'], 0) and
+                        facts['discarded_new_arnoldi_directions'] ==
+                        max(16 - facts['actual_arnoldi_length'], 0) and
+                        facts['rejected_new_B4_callbacks'] == 0,
+                        f'I4 V9 work accounting failed at {index}')
+                early_return = (facts.get('status') in ('INNER_ZERO_RHS',
+                                                         'INNER_TARGET_REACHED') or
+                                facts.get('requested_safe_return') is True or
+                                facts.get('timeout_exceeded') is True)
+                if not early_return:
+                    require(facts['completed_new_B4'] == 16 and
+                            facts['actual_arnoldi_length'] == 16,
+                            f'I4 V9 non-early return did not complete 16 new directions at {index}')
+            memory = facts.get('recycling_memory')
+            require(isinstance(memory, dict),
+                    f'I4 V9 memory facts are not a mapping at {index}')
+            if isinstance(memory, dict):
+                required_memory = ('payload_ledger', 'scipy_small_matrix_bound',
+                                   'cap_bytes', 'cap_peak_bytes', 'cap_passed',
+                                   'peak_live_bytes', 'phase_bounds')
+                for key in required_memory:
+                    require(key in memory, f'I4 V9 memory field is missing at {index}: {key}')
+                ledger = memory.get('payload_ledger')
+                phase = memory.get('phase_bounds')
+                named = memory.get('named_array_bytes')
+                base_extra = (memory.get('persistent_before_bytes', -1) +
+                              memory.get('working_cu_bytes_including_terminal', -1))
+                small = memory.get('scipy_small_matrix_bound')
+                overlap = memory.get('scipy_smallest_cu_overlap_bytes', -1)
+                qr = memory.get('scipy_qr_input_output_bytes', -1)
+                gram = memory.get('scipy_gram_conjugate_temp_bytes', -1)
+                projection = memory.get('projection_matrix_bytes', -1)
+                ordinary = memory.get('ordinary_live_vector_bytes', -1)
+                inner = (memory.get('base_inner_vz_bytes', -1) +
+                         memory.get('inner_transient_vector_bytes', -1))
+                candidate_q = (named.get('candidate_q_matrix_bound', -1)
+                              if isinstance(named, dict) else -1)
+                projection_phase = base_extra + projection + small + ordinary
+                library_phase = base_extra + overlap + qr + gram + small + ordinary + inner
+                candidate_phase = base_extra + candidate_q + qr + gram + small + ordinary
+                expected_peak = max(projection_phase, library_phase, candidate_phase) + (
+                    memory.get('index_payload_bytes', -1))
+                phase_ok = (isinstance(phase, dict) and
+                            phase.get('projection_phase') == projection_phase +
+                            memory.get('index_payload_bytes', -1) and
+                            phase.get('gcrot_phase') == library_phase +
+                            memory.get('index_payload_bytes', -1) and
+                            phase.get('candidate_validation_phase') == candidate_phase +
+                            memory.get('index_payload_bytes', -1))
+                require(memory.get('cap_bytes') == 128 * 1024**2 and
+                        memory.get('scipy_small_matrix_bound') ==
+                        4 * (16 + 2) * (8 + 2) * 16 and
+                        isinstance(ledger, dict) and
+                        ledger.get('search_vectors_bytes') == inner and
+                        ledger.get('persistent_pool_bytes') ==
+                        memory.get('persistent_before_bytes') and
+                        ledger.get('transaction_pool_bytes') ==
+                        memory.get('working_cu_bytes_including_terminal') and
+                        ledger.get('qr_svd_truncation_bytes') == overlap + qr + gram + small and
+                        ledger.get('adapter_vector_bytes') == ordinary and
+                        ledger.get('index_payload_bytes') == memory.get('index_payload_bytes') and
+                        ledger.get('peak_bytes') == expected_peak and
+                        memory.get('peak_live_bytes') == expected_peak and
+                        memory.get('cap_peak_bytes') == expected_peak and
+                        memory.get('cap_passed') is (expected_peak <= 128 * 1024**2) and
+                        ledger.get('cap_bytes') == 128 * 1024**2 and
+                        ledger.get('cap_passed') is (expected_peak <= 128 * 1024**2) and
+                        phase_ok,
+                        f'I4 V9 128MiB payload gate failed at {index}')
         else:
             require(facts.get('restart') == 16 and facts.get('max_it') == 16,
                     f'I4 16-step contract mismatch at {index}')
@@ -307,7 +543,7 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
             if status == 'INNER_TARGET_REACHED':
                 require(relative <= 1e-4 + 1e-12,
                         f'target I4 returned above target at {index}')
-            if v8_recycled:
+            if recycled:
                 require(facts['A4_matvec'] >= facts['B4_calls'],
                         f'I4 GCROT A4/B4 accounting is inconsistent at {index}')
             else:
@@ -405,27 +641,30 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
                                    rtol=0, atol=1e-15),
                         'saved exit closure ratio differs from closure_norm/operation_scale')
             require(relative <= 1e-8, 'exit inexact closure failed')
-        if v8_recycled:
+        if recycled:
+            recycled_identity = (v8_identity if v8_recycled else v9_identity)
             spot = exit_row.get('total', {}).get('I4', {}).get('exit_native_spot', {})
-            require(isinstance(spot, dict), 'V8 exit native spot-check record is missing')
+            require(isinstance(spot, dict), 'recycled exit native spot-check record is missing')
             if isinstance(spot, dict):
                 require(spot.get('status') in ('completed', 'skipped_resource_stop'),
-                        'V8 exit native spot-check status is invalid')
+                        'recycled exit native spot-check status is invalid')
                 require(isinstance(spot.get('checked'), int) and 0 <= spot['checked'] <= 8,
-                        'V8 exit native spot-check count is invalid')
+                        'recycled exit native spot-check count is invalid')
                 require(_finite_number(spot.get('elapsed_seconds'), nonnegative=True),
-                        'V8 exit native spot-check time is invalid')
+                        'recycled exit native spot-check time is invalid')
                 completed = spot.get('completed_native_A4', spot.get('checked', 0))
                 require(isinstance(completed, int) and completed >= 0,
-                        'V8 exit native spot A4 count is invalid')
+                        'recycled exit native spot A4 count is invalid')
+                require(spot.get('pool_identity_sha256') == recycled_identity,
+                        'recycled exit native spot identity differs from I4 pool')
                 costs = exit_row.get('audit_costs', {})
                 require(float(costs.get('native_exit_spot_A4', completed)) == float(completed),
-                        'V8 exit native spot A4 cost differs from snapshot')
+                        'recycled exit native spot A4 cost differs from snapshot')
                 require(np.isclose(float(costs.get('native_exit_spot_seconds',
                                                    spot.get('elapsed_seconds', 0.0))),
                                    float(spot.get('elapsed_seconds', 0.0)),
                                    rtol=0, atol=1e-12),
-                        'V8 exit native spot time differs from snapshot')
+                        'recycled exit native spot time differs from snapshot')
 
     i4_totals = {
         key: sum(int(facts.get(key, 0)) for facts in normalized)
@@ -435,6 +674,9 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
                 i4_totals=i4_totals, completed_pc_count=len(pc_rows),
                 actual_h6_applies=h6_count, pc=pc_facts,
                 semantics=dict(I4=('two independent calls per PC; target=1e-4; '
+                                   'GCROT fixed-new16, k=8, maxiter=1, ml=16; soft=25; hard=30; zero-start'
+                                   if v9_recycled else
+                                   'two independent calls per PC; target=1e-4; '
                                    'GCROT m=k=8, maxiter=1, dynamic ml; soft=25; hard=30; zero-start'
                                    if v8_recycled else
                                    'two independent calls per PC; target=1e-4; '
@@ -443,8 +685,9 @@ def recompute_bounded_i4(i4_rows, pc_rows, exit_rows=(), *, profile=None,
 
 
 def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
-                                   exit_record=None, native_seen_before=False) -> dict:
-    """Independently check one finite V8 RESET/CARRY record sequence.
+                                   exit_record=None, native_seen_before=False,
+                                   profile='balanced_h6_entity_gcrot8_v8') -> dict:
+    """Independently check one finite recycled-I4 RESET/CARRY sequence.
 
     This checker consumes scalar/raw ledgers emitted by the finite runner.  It
     requires every pool, work, rank, closure, memory, identity, and cadence
@@ -452,6 +695,9 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
     """
 
     errors = []
+    v9 = profile == 'balanced_h6_entity_gcrot8_new16_v9'
+    sequence_schema = ('task39extra.review-v9-equal-new-work-sequence.v1'
+                       if v9 else 'task39extra.review-v8-recycling-sequence.v1')
 
     def require(condition, message):
         if not condition:
@@ -484,7 +730,7 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
             require(key in row, f'V8 sequence field missing at {index}: {key}')
         if any(key not in row for key in required_row):
             continue
-        require(row.get('schema') == 'task39extra.review-v8-recycling-sequence.v1',
+        require(row.get('schema') == sequence_schema,
                 f'V8 sequence schema mismatch at {index}')
         require(row.get('sequence_index') == index and
                 row.get('stem') == expected_stems[index - 1],
@@ -573,6 +819,38 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
                 facts.get('pool_projection_source') == 'current_pool_only' and
                 facts.get('zero_start') is True,
                 f'V8 initial-guess semantics mismatch at {index}')
+        if v9:
+            require(facts.get('policy') == 'FIXED_NEW16_RECYCLE8' and
+                    facts.get('k') == 8 and facts.get('max_it') == 1 and
+                    facts.get('gcrot_inner_dimension') == 16 and
+                    isinstance(facts.get('effective_pool_rank'), int) and
+                    0 <= facts.get('effective_pool_rank') <= 8 and
+                    facts.get('m_call') ==
+                    16 - max(8 - facts.get('effective_pool_rank'), 0) and
+                    facts.get('restart') == facts.get('m_call') and
+                    facts.get('m') == facts.get('m_call'),
+                    f'V9 fixed-new16 inner contract mismatch at {index}')
+            for key in ('requested_new_B4', 'requested_new_arnoldi_directions',
+                        'requested_new_B4_callbacks', 'completed_new_B4',
+                        'actual_arnoldi_length', 'discarded_new_B4',
+                        'discarded_new_arnoldi_directions',
+                        'rejected_new_B4_callbacks'):
+                require(isinstance(facts.get(key), int) and
+                        not isinstance(facts.get(key), bool) and
+                        0 <= facts[key] <= 16,
+                        f'V9 fixed-new16 field invalid at {index}: {key}')
+            require(facts.get('requested_new_B4') ==
+                    facts.get('requested_new_arnoldi_directions') == 16 and
+                    facts.get('rejected_new_B4_callbacks') == 0,
+                    f'V9 fixed-new16 request contract failed at {index}')
+            early_return = (facts.get('status') in ('INNER_ZERO_RHS',
+                                                     'INNER_TARGET_REACHED') or
+                            facts.get('requested_safe_return') is True or
+                            facts.get('timeout_exceeded') is True)
+            if not early_return:
+                require(facts.get('completed_new_B4') == 16 and
+                        facts.get('actual_arnoldi_length') == 16,
+                        f'V9 non-early sequence call did not complete 16 work at {index}')
         work_keys = ('attempted_B4', 'completed_B4',
                      'attempted_new_arnoldi_directions',
                      'completed_new_arnoldi_directions', 'A4_matvec', 'B4_calls')
@@ -594,13 +872,20 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
                 f'V8 pool/memory facts are incomplete at {index}')
         if not isinstance(pool_facts, dict) or not isinstance(memory, dict):
             continue
+        if v9 and pool_facts.get('checked') is not True:
+            require(pool_facts.get('pairs') == facts.get('effective_pool_rank') and
+                    pool_facts.get('rank') == facts.get('effective_pool_rank') and
+                    pool_facts.get('rank_pruned') == facts.get('discarded_pool_directions'),
+                    f'V9 uncommitted pool ledger is inconsistent at {index}')
+            pool_facts = None
         required_pool = ('candidate_pairs', 'pairs', 'rank', 'rank_pruned',
                          'rank_singular_values', 'q_gram', 'orthogonality_error',
                          'closure_errors', 'closure_error', 'native_spot_checked',
                          'native_spot_due', 'native_spot_call', 'native_spot_errors')
         for key in required_pool:
-            require(key in pool_facts, f'V8 pool fact missing at {index}: {key}')
-        if all(key in pool_facts for key in required_pool):
+            require(pool_facts is None or key in pool_facts,
+                    f'V8 pool fact missing at {index}: {key}')
+        if pool_facts is not None and all(key in pool_facts for key in required_pool):
             candidate_pairs = pool_facts['candidate_pairs']
             rank = pool_facts['rank']
             require(isinstance(candidate_pairs, int) and 0 <= candidate_pairs <= 8 and
@@ -668,16 +953,51 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
         for key in required_memory:
             require(key in memory, f'V8 memory fact missing at {index}: {key}')
         if all(key in memory for key in required_memory):
-            require(memory['cap_bytes'] == 64 * 1024**2 and
+            if v9:
+                phase = memory.get('phase_bounds')
+                named = memory.get('named_array_bytes')
+                base_extra = (memory.get('persistent_before_bytes', -1) +
+                              memory.get('working_cu_bytes_including_terminal', -1))
+                small = memory.get('scipy_small_matrix_bound')
+                overlap = memory.get('scipy_smallest_cu_overlap_bytes', -1)
+                qr = memory.get('scipy_qr_input_output_bytes', -1)
+                gram = memory.get('scipy_gram_conjugate_temp_bytes', -1)
+                projection = memory.get('projection_matrix_bytes', -1)
+                ordinary = memory.get('ordinary_live_vector_bytes', -1)
+                inner = (memory.get('base_inner_vz_bytes', -1) +
+                         memory.get('inner_transient_vector_bytes', -1))
+                candidate_q = (named.get('candidate_q_matrix_bound', -1)
+                              if isinstance(named, dict) else -1)
+                index_bytes = memory.get('index_payload_bytes', -1)
+                expected_phases = (
+                    base_extra + projection + small + ordinary + index_bytes,
+                    base_extra + overlap + qr + gram + small + ordinary + inner + index_bytes,
+                    base_extra + candidate_q + qr + gram + small + ordinary + index_bytes)
+                ledger = memory.get('payload_ledger')
+                require(memory.get('cap_bytes') == 128 * 1024**2 and
+                        memory.get('scipy_small_matrix_bound') ==
+                        4 * (16 + 2) * (8 + 2) * 16 and
+                        isinstance(ledger, dict) and
+                        ledger.get('peak_bytes') == max(expected_phases) and
+                        memory.get('peak_live_bytes') == max(expected_phases) and
+                        memory.get('cap_peak_bytes') == max(expected_phases) and
+                        memory.get('cap_passed') is (max(expected_phases) <= 128 * 1024**2) and
+                        isinstance(phase, dict) and
+                        tuple(phase.get(name) for name in (
+                            'projection_phase', 'gcrot_phase',
+                            'candidate_validation_phase')) == expected_phases,
+                        f'V9 128MiB memory bound failed at {index}')
+            else:
+                require(memory['cap_bytes'] == 64 * 1024**2 and
                     isinstance(memory['extra_recycling_peak_bytes'], int) and
                     memory['extra_recycling_peak_bytes'] <= memory['cap_bytes'] and
                     isinstance(memory['peak_live_bytes'], int) and
                     memory['peak_live_bytes'] >= memory['extra_recycling_peak_bytes'],
                     f'V8 64MiB memory bound failed at {index}')
-            phase = memory['phase_bounds']
-            require(isinstance(phase, dict) and all(key in phase for key in (
-                'projection_phase', 'gcrot_phase', 'candidate_validation_phase')),
-                f'V8 phase memory table incomplete at {index}')
+                phase = memory['phase_bounds']
+                require(isinstance(phase, dict) and all(key in phase for key in (
+                    'projection_phase', 'gcrot_phase', 'candidate_validation_phase')),
+                    f'V8 phase memory table incomplete at {index}')
 
     if budget is not None:
         for key in ('schema', 'total_limit_seconds', 'finite_control_limit_seconds',
@@ -689,7 +1009,9 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
                                          'charged_seconds', 'finite_control_seconds',
                                          'stage_seconds',
                                          'stages_nonoverlapping')):
-            require(budget['schema'] == 'task39extra.review-v8-k0-k1-budget.v1' and
+            require(budget['schema'] == ('task39extra.review-v9-equal-new-work-budget.v1'
+                                         if v9 else
+                                         'task39extra.review-v8-k0-k1-budget.v1') and
                     budget['total_limit_seconds'] == 3600 and
                     budget['finite_control_limit_seconds'] == 900 and
                     _finite_number(budget['charged_seconds'], nonnegative=True) and
@@ -697,7 +1019,7 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
                     _finite_number(budget['finite_control_seconds'], nonnegative=True) and
                     float(budget['finite_control_seconds']) <= 900 and
                     budget['stages_nonoverlapping'] is True,
-                    'V8 preparation budget contract failed')
+                    'recycled preparation budget contract failed')
             stages = budget['stage_seconds']
             require(isinstance(stages, dict) and all(name in stages for name in (
                 'setup', 'reset_carry_sequences', 'two_pc_controls')),
@@ -742,7 +1064,8 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
 
 def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
                              exit_rows=(), *, control_metadata=None,
-                             budget=None, control_audit_rows=()) -> dict:
+                             budget=None, control_audit_rows=(),
+                             profile='balanced_h6_entity_gcrot8_v8') -> dict:
     """Wire completed finite sequence calls to the final four controls.
 
     The detailed field checks remain in the two existing checkers.  This
@@ -752,6 +1075,9 @@ def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
     """
 
     errors = []
+    v9 = profile == 'balanced_h6_entity_gcrot8_new16_v9'
+    sequence_schema = ('task39extra.review-v9-equal-new-work-sequence.v1'
+                       if v9 else 'task39extra.review-v8-recycling-sequence.v1')
 
     def require(condition, message):
         if not condition:
@@ -763,8 +1089,7 @@ def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
         return dict(passed=False, errors=['V8 K1 control metadata/baseline is missing'])
     reset_summary = sequence_summary.get('reset')
     carry_summary = sequence_summary.get('carry')
-    require(sequence_summary.get('schema') ==
-            'task39extra.review-v8-recycling-sequence.v1',
+    require(sequence_summary.get('schema') == sequence_schema,
             'V8 K1 sequence summary schema is missing or incorrect')
     require(isinstance(reset_summary, dict) and isinstance(carry_summary, dict),
             'V8 K1 RESET/CARRY summaries are incomplete')
@@ -772,9 +1097,10 @@ def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
         return dict(passed=False, errors=errors)
 
     reset = recompute_recycled_i4_sequence(
-        reset_summary.get('records'), sequence='RESET', budget=budget)
+        reset_summary.get('records'), sequence='RESET', budget=budget,
+        profile=profile)
     carry = recompute_recycled_i4_sequence(
-        carry_summary.get('records'), sequence='CARRY')
+        carry_summary.get('records'), sequence='CARRY', profile=profile)
     errors.extend(f'RESET: {error}' for error in reset['errors'])
     errors.extend(f'CARRY: {error}' for error in carry['errors'])
 
@@ -817,7 +1143,7 @@ def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
 
     control = recompute_bounded_i4(
         control_raw, list(pc_rows or []), list(exit_rows or []),
-        profile='balanced_h6_entity_gcrot8_v8', call_start=control_start,
+        profile=profile, call_start=control_start,
         native_seen_before=False)
     errors.extend(f'CONTROLS: {error}' for error in control['errors'])
     costs = recompute_bounded_costs(
@@ -920,6 +1246,101 @@ def recompute_bounded_screen(solve, rows):
                 'saved V7 checkpoint history differs from raw 8-step nodes')
     require(solve.get('mid_budget') == mid,
             'saved V7 mid-budget decision differs from raw monitor')
+    return dict(passed=not errors, errors=errors, nodes=nodes,
+                recomputed_screen=screen, recomputed_mid_budget=mid)
+
+
+def recompute_v9_bounded_screen(solve, rows):
+    """Recompute the V9 absolute 1800-second progress screen.
+
+    Eight-step residuals, including iteration 128, are observations only.
+    The first decision is the first raw node at or after 1800 seconds and
+    uses the absolute ``rho <= 0.10`` gate.  The later 5400-second gate keeps
+    the existing bounded-workflow continuation rule.
+    """
+    errors = []
+
+    def require(condition, message):
+        if not condition:
+            errors.append(message)
+
+    require(solve.get('screen_enabled') is True, 'V9 bounded screen is disabled')
+    require(solve.get('screen_policy') == 'v9_equal_new_work',
+            'V9 bounded screen policy is missing')
+    require(solve.get('restart') == 32 and solve.get('max_it') == 2048,
+            'V9 bounded outer restart/max_it mismatch')
+    require(solve.get('zero_start') is True, 'V9 bounded outer solve is not zero-start')
+    require(solve.get('ksp_create_count') == solve.get('ksp_solve_count') ==
+            solve.get('ksp_destroy_count') == 1,
+            'V9 bounded outer does not have one KSP lifecycle')
+    require(solve.get('residual_interval') == 8 and solve.get('checkpoint_interval') == 32,
+            'V9 bounded outer cadence mismatch')
+    history = []
+    screen = None
+    mid = None
+    nodes = []
+    previous_iteration = -1
+    previous_seconds = -1.0
+    for row in rows:
+        try:
+            iteration = int(row['iteration'])
+            relative = float(row['explicit_true_residual'])
+            seconds = float(row['solve_seconds'])
+        except (KeyError, TypeError, ValueError):
+            errors.append('malformed V9 monitor row')
+            continue
+        require(iteration >= previous_iteration and seconds >= previous_seconds,
+                'V9 monitor order is not monotone')
+        require(np.isfinite([relative, seconds]).all() and relative >= 0 and seconds >= 0,
+                f'invalid V9 monitor scalar at iteration {iteration}')
+        previous_iteration, previous_seconds = iteration, seconds
+        if iteration == 0 or iteration % 8 == 0:
+            if not nodes or nodes[-1][0] != iteration:
+                nodes.append((iteration, relative))
+                history = (history + [(iteration, relative)])[-3:]
+        if relative <= 1e-6:
+            break
+        if screen is None and seconds >= 1800:
+            passed = bool(relative <= 0.10)
+            screen = dict(
+                status='SCREEN_CONTINUE_SAME_LIVE_KSP' if passed
+                else 'TIME_PROGRESS_SCREEN_STOP',
+                passed=passed, iteration=iteration,
+                true_relative=relative, solve_seconds=seconds,
+                checkpoints=list(history), policy='v9_equal_new_work')
+            if not passed:
+                break
+        if mid is None and seconds >= 5400:
+            passed = bool(relative <= 1e-3)
+            mid = dict(
+                status='MID_BUDGET_CONTINUE' if passed
+                else 'PROGRESS_INSUFFICIENT_AT_MID_BUDGET',
+                passed=passed, iteration=iteration,
+                true_relative=relative, solve_seconds=seconds)
+            if not passed:
+                break
+
+    saved = solve.get('screen')
+    if screen is None:
+        require(saved is None, 'saved V9 screen decision differs from recomputation')
+    else:
+        require(isinstance(saved, dict), 'missing saved V9 screen decision')
+        if isinstance(saved, dict):
+            for key in ('status', 'passed', 'iteration', 'policy'):
+                require(saved.get(key) == screen.get(key),
+                        f'saved V9 screen {key} differs from raw nodes')
+            for key in ('true_relative', 'solve_seconds'):
+                require(np.isclose(float(saved.get(key)), float(screen.get(key)),
+                                   rtol=0, atol=1e-10),
+                        f'saved V9 screen {key} differs from raw nodes')
+            saved_nodes = [(int(item[0]), float(item[1]))
+                           for item in (saved.get('checkpoints') or [])]
+            require(len(saved_nodes) == len(screen['checkpoints']) and all(
+                left[0] == right[0] and np.isclose(left[1], right[1], rtol=0, atol=1e-12)
+                for left, right in zip(saved_nodes, screen['checkpoints'])),
+                'saved V9 checkpoint observations differ from raw 8-step nodes')
+    require(solve.get('mid_budget') == mid,
+            'saved V9 mid-budget decision differs from raw monitor')
     return dict(passed=not errors, errors=errors, nodes=nodes,
                 recomputed_screen=screen, recomputed_mid_budget=mid)
 
@@ -1657,7 +2078,11 @@ def check(directory: Path) -> dict:
         require(facts['bounded_i4']['actual_h6_applies'] ==
                 facts['bounded_i4']['completed_pc_count'],
                 'actual H6 smoother count is not one per completed PC')
-        facts['bounded_screen'] = recompute_bounded_screen(
+        screen_checker = (recompute_v9_bounded_screen
+                          if summary['profile']['identity'] ==
+                          'balanced_h6_entity_gcrot8_new16_v9'
+                          else recompute_bounded_screen)
+        facts['bounded_screen'] = screen_checker(
             summary['solve'], rows['monitor_residuals.jsonl'])
         require(facts['bounded_screen']['passed'],
                 'bounded V7 screen differs from raw nodes: '+

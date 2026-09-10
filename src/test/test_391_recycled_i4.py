@@ -9,6 +9,8 @@ import pytest
 from src.solvers.physical_recycled_i4 import (
     BoundedGCROTI4,
     CLOSURE_LIMIT,
+    FIXED_NEW16_PAYLOAD_BYTES,
+    FIXED_NEW16_RECYCLE8,
     GCROT_ATOL,
     GCROT_K,
     GCROT_M,
@@ -20,6 +22,7 @@ from src.solvers.physical_recycled_i4 import (
     POOL_NUMERIC_BYTES_P4_DERIVED,
     RANK_THRESHOLD,
     RECYCLING_EXTRA_BYTES_LIMIT,
+    V8_FIXED_M8_RECYCLE8,
     RecycledI4Error,
     VerifiedRecyclingPool,
     gcrotmk_backend_facts,
@@ -47,6 +50,294 @@ def test_v8_backend_is_the_qualified_local_gcrotmk():
     assert facts["source_sha256"]
     assert facts["required_parameters"] == [
         "CU", "atol", "discard_C", "k", "m", "maxiter", "tol", "truncate"]
+
+
+def test_v9_fixed_new16_uses_one_new_work_budget_on_a_nonhermitian_complex_fixture():
+    """The opt-in policy keeps SciPy ml at 16 while V8 remains unchanged."""
+
+    matrix, rng = _problem(48, shift=2)
+    adapter = BoundedGCROTI4(
+        lambda value: matrix @ value,
+        lambda value: value.copy(),
+        validation_action=lambda value: matrix @ value,
+        model_identity={"case": "tiny-v9", "operator": "nonhermitian"},
+        policy=FIXED_NEW16_RECYCLE8,
+    )
+    try:
+        observed_ranks = set()
+        for _ in range(10):
+            rhs = np.asarray(rng.normal(size=48) + 1j * rng.normal(size=48),
+                             dtype=np.complex128)
+            original = rhs.copy()
+            facts = adapter.solve(rhs)["facts"]
+            rank = facts["effective_pool_rank"]
+            observed_ranks.add(rank)
+            assert facts["policy"] == FIXED_NEW16_RECYCLE8
+            assert facts["m_call"] == 16 - max(8 - rank, 0)
+            assert facts["gcrot_inner_dimension"] == 16
+            assert facts["requested_new_B4"] == 16
+            assert facts["requested_new_arnoldi_directions"] == 16
+            assert facts["status"] == "INNER_APPROXIMATE_RETURN"
+            assert facts["stop_reason"] == "MAXITER_ONE"
+            assert facts["B4_calls"] == 16
+            assert facts["completed_new_arnoldi_directions"] == 16
+            assert facts["rejected_new_B4_callbacks"] == 0
+            assert not facts["work_policy_violation"]
+            assert facts["recycling_memory"]["cap_bytes"] == FIXED_NEW16_PAYLOAD_BYTES
+            assert facts["recycling_memory"]["cap_passed"]
+            assert facts["recycling_memory"]["payload_ledger"]["cap_bytes"] == FIXED_NEW16_PAYLOAD_BYTES
+            assert facts["recycling_memory"]["payload_ledger"]["search_vectors_bytes"] > 0
+            assert facts["recycling_memory"]["payload_ledger"]["index_payload_bytes"] > 0
+            assert facts["recycling_memory"]["scipy_small_matrix_bound"] == (
+                4 * (16 + 2) * (GCROT_K + 2) * 16)
+            assert np.array_equal(rhs, original)
+        assert observed_ranks == set(range(9))
+        assert adapter.snapshot()["fixed"]["policy"] == FIXED_NEW16_RECYCLE8
+        assert adapter.snapshot()["fixed"]["extra_bytes_limit"] == FIXED_NEW16_PAYLOAD_BYTES
+    finally:
+        adapter.destroy()
+
+
+def test_v9_rank_legalization_discards_correlated_old_columns_before_m_call():
+    matrix, rng = _problem(48, shift=2)
+    pool = VerifiedRecyclingPool("tiny-v9-rank")
+    seed = np.zeros(48, dtype=np.complex128)
+    seed[0] = 1.0
+    image = matrix @ seed
+    scale = np.linalg.norm(image)
+    seed /= scale
+    image /= scale
+    pool.replace([(seed.copy(), image.copy()) for _ in range(MAX_POOL_PAIRS)],
+                 closure_errors=[0.0] * MAX_POOL_PAIRS)
+    adapter = BoundedGCROTI4(
+        lambda value: matrix @ value,
+        lambda value: value.copy(),
+        validation_action=lambda value: matrix @ value,
+        model_identity="tiny-v9-rank",
+        pool=pool,
+        policy=FIXED_NEW16_RECYCLE8,
+    )
+    try:
+        rhs = np.asarray(rng.normal(size=48) + 1j * rng.normal(size=48),
+                         dtype=np.complex128)
+        facts = adapter.solve(rhs)["facts"]
+        assert facts["pool_before"] == MAX_POOL_PAIRS
+        assert facts["effective_pool_rank"] == 1
+        assert facts["discarded_pool_directions"] == MAX_POOL_PAIRS - 1
+        assert facts["m_call"] == 9
+        assert facts["gcrot_inner_dimension"] == 16
+        assert facts["requested_new_B4"] == 16
+        assert facts["B4_calls"] == 16
+        assert facts["requested_new_B4_callbacks"] == 16
+        assert facts["rejected_new_B4_callbacks"] == 0
+        assert not facts["work_policy_violation"]
+    finally:
+        adapter.destroy()
+
+
+def test_v9_rejects_a_seventeenth_callback_and_the_petsc_bridge_blocks_it(monkeypatch):
+    from scipy.sparse import linalg as sparse_linalg
+    from src.solvers.physical_bounded_policy import RecycledI4Admission
+
+    class FakeComm:
+        @staticmethod
+        def getSize():
+            return 1
+
+    class FakeVec:
+        def __init__(self, size):
+            self.array = np.zeros(size, dtype=np.complex128)
+            self._comm = FakeComm()
+            self.destroyed = False
+
+        def getComm(self):
+            return self._comm
+
+        def getLocalSize(self):
+            return self.array.size
+
+        def getSize(self):
+            return self.array.size
+
+        def duplicate(self):
+            return FakeVec(self.array.size)
+
+        def set(self, value):
+            self.array.fill(value)
+
+        def destroy(self):
+            self.destroyed = True
+
+    saved = []
+
+    def identity(vector):
+        output = vector.duplicate()
+        output.array[:] = vector.array
+        return output
+
+    def overrun(_operator, rhs, *, M, **_kwargs):
+        for _ in range(17):
+            M.matvec(np.ones_like(rhs))
+        raise AssertionError("the seventeenth callback was not rejected")
+
+    admission = RecycledI4Admission(
+        identity, identity, residual_action=identity,
+        model_identity="tiny-v9-overrun", independent_indices=np.arange(4),
+        sample=lambda: None,
+        save=lambda name, facts: saved.append((name, facts)),
+        stop_requested=lambda: False,
+        policy=FIXED_NEW16_RECYCLE8,
+    )
+    # Backend provenance is captured at construction; replace only the call
+    # used by this focused overrun probe.
+    monkeypatch.setattr(sparse_linalg, "gcrotmk", overrun)
+    rhs = FakeVec(4)
+    rhs.array[:] = [1 + .2j, -2 + .1j, .3 - .4j, 2 - .7j]
+    try:
+        with pytest.raises(RuntimeError, match="implementation blocked"):
+            admission(rhs)
+        assert saved and saved[-1][0] == "recycled_i4_work_policy_violation"
+        facts = saved[-1][1]["facts"]
+        assert facts["requested_new_B4_callbacks"] == 17
+        assert facts["rejected_new_B4_callbacks"] == 1
+        assert facts["completed_new_B4"] == 16
+        assert facts["work_policy_violation"] is True
+        assert facts["pool_after"] == 0
+    finally:
+        rhs.destroy()
+        admission.destroy()
+
+
+def _v9_l1_sequence_facts(residual, seconds, *, completed=16,
+                           stop_reason='MAXITER_ONE'):
+    target = residual <= 1e-4
+    return dict(
+        status='INNER_TARGET_REACHED' if target else 'INNER_APPROXIMATE_RETURN',
+        policy=FIXED_NEW16_RECYCLE8, requested_new_B4=16,
+        requested_new_arnoldi_directions=16,
+        requested_new_B4_callbacks=completed, attempted_B4=completed,
+        completed_B4=completed, completed_new_B4=completed,
+        attempted_new_arnoldi_directions=completed,
+        completed_new_arnoldi_directions=completed,
+        actual_arnoldi_length=completed,
+        discarded_new_B4=16 - completed,
+        discarded_new_arnoldi_directions=16 - completed,
+        rejected_new_B4_callbacks=0, implementation_blocked=False,
+        work_policy_violation=False, input_unchanged=True,
+        recycling_memory={'cap_passed': True}, final_true_residual=residual,
+        actual_elapsed_seconds=seconds, seconds=seconds,
+        timeout_exceeded=False, requested_safe_return=False,
+        stop_reason=stop_reason, pool_update='committed',
+    )
+
+
+def _v9_l1_sequences(reset_values, carry_values, *, completed=16,
+                     reset_times=None, carry_times=None):
+    reset_times = reset_times or [10.0] * len(reset_values)
+    carry_times = carry_times or [5.0] * len(carry_values)
+
+    def records(values, times):
+        return [dict(sequence_index=index, stem=f'stem-{index}',
+                     g_array_sha256=f'g-{index}', status='complete',
+                     facts=_v9_l1_sequence_facts(value, times[index - 1],
+                                                  completed=completed))
+                for index, value in enumerate(values, 1)]
+
+    return dict(reset={'records': records(reset_values, reset_times)},
+                carry={'records': records(carry_values, carry_times)})
+
+
+@pytest.mark.parametrize('mode', ('cold_start_is_excluded', 'all_target_early_stop'))
+def test_v9_l1_admission_classifies_cold_start_and_early_target_separately(mode):
+    from src.runners.physical_bounded_j1 import evaluate_v9_l1_admission
+
+    if mode == 'cold_start_is_excluded':
+        sequences = _v9_l1_sequences(
+            [0.9, .5, .4, .3], [.9, .25, .2, .1],
+            reset_times=[100., 10., 10., 10.],
+            carry_times=[200., 1., 1., 1.])
+        admission = evaluate_v9_l1_admission(sequences)
+        assert admission['effective_pairs'] == 3
+        assert [row['sequence_index'] for row in admission['observations']] == [2, 3, 4]
+        assert admission['carry_reset_time_ratio'] > 1.5
+        assert admission['status'] == 'EQUAL_NEW_WORK_NO_CLEAR_GAIN'
+    else:
+        sequences = _v9_l1_sequences(
+            [8e-5, 7e-5, 6e-5, 5e-5], [7e-5, 6e-5, 5e-5, 4e-5],
+            completed=4)
+        admission = evaluate_v9_l1_admission(sequences)
+        assert admission['all_target'] is True
+        assert admission['full16_pairs'] == 0
+        assert admission['observations'] == []
+        assert len(admission['target_observations']) == 3
+        assert admission['carry_reset_time_ratio'] == .5
+        assert admission['status'] == 'L1_ADMISSION_OPEN'
+
+
+def test_v9_checker_consumes_real_adapter_facts_and_recomputes_payload_bound():
+    from benchmarks.physical_intermediate_checker import recompute_bounded_i4
+
+    matrix, rng = _problem(48, shift=2)
+    adapter = BoundedGCROTI4(
+        lambda value: matrix @ value,
+        lambda value: value.copy(),
+        validation_action=lambda value: matrix @ value,
+        model_identity={'case': 'checker-v9'}, policy=FIXED_NEW16_RECYCLE8)
+    try:
+        rows = []
+        nested = []
+        for call in range(4):
+            rhs = np.asarray(rng.normal(size=48) + 1j * rng.normal(size=48),
+                             dtype=np.complex128)
+            facts = adapter.solve(rhs)['facts']
+            rows.append(dict(call=facts['call'], facts=facts))
+            nested.append(facts)
+
+        def pc_row(index, left, right):
+            audit = dict(actual_audit='PASS' if index == 1 else 'not_sampled')
+            if index == 1:
+                audit['audit'] = dict(closure_norm=0.0,
+                                      operation_scale=1.0, closure_relative=0.0)
+            return dict(
+                apply_count=index, route='BAL_H', status='BALANCED_ACTION_COMPLETED',
+                counts=dict(C=2, smoother=1, A_structure=2, A_inner_true=0,
+                            PH_audit=0),
+                inexact_balance=dict(actual_audit=audit['actual_audit'],
+                                     audit=audit.get('audit'),
+                                     calls=[dict(inner=left), dict(inner=right)]))
+
+        checked = recompute_bounded_i4(
+            rows, [pc_row(1, nested[0], nested[1]),
+                   pc_row(2, nested[2], nested[3])],
+            profile='balanced_h6_entity_gcrot8_new16_v9')
+        assert checked['passed'], checked['errors']
+    finally:
+        adapter.destroy()
+
+
+def test_v9_l1_missing_tail_is_limited_evidence_not_a_quality_error():
+    from src.runners.physical_bounded_j1 import evaluate_v9_l1_admission
+
+    sequences = _v9_l1_sequences(
+        [.9, .5, .4, .3, .2], [.9, .25, .2, .1, .05])
+    sequences['carry']['records'].pop()
+    admission = evaluate_v9_l1_admission(sequences)
+    assert admission['effective_pairs'] == 3
+    assert admission['missing']
+    assert admission['errors'] == []
+    assert admission['status'] == 'L1_ADMISSION_OPEN'
+
+
+def test_v8_default_policy_keeps_its_64_mib_accounting():
+    adapter = BoundedGCROTI4(
+        lambda value: value.copy(), lambda value: value.copy(),
+        model_identity="tiny-v8-default")
+    try:
+        fixed = adapter.snapshot()["fixed"]
+        assert fixed["policy"] == V8_FIXED_M8_RECYCLE8
+        assert fixed["extra_bytes_limit"] == RECYCLING_EXTRA_BYTES_LIMIT
+    finally:
+        adapter.destroy()
 
 
 def test_v8_fixed_round_fills_eight_pair_pool_and_keeps_bytes_bounded():
@@ -604,6 +895,80 @@ def test_v8_k1_real_engine_json_ledger_and_reset_native_state():
                    for facts in control_facts[1:])
         assert admission.snapshot()['calls'] == 16
         assert calls['pc'] > 0 and calls['native'] > 0
+    finally:
+        admission.destroy()
+
+
+def test_v9_real_adapter_sequence_ledger_reaches_sequence_checker():
+    """Exercise the V9 runner/checker boundary with actual adapter facts."""
+    from benchmarks.physical_intermediate_checker import (
+        recompute_recycled_i4_sequence,
+    )
+    from src.runners.physical_bounded_j1 import run_v9_equal_new_work_sequences
+    from src.runners.physical_intermediate import _jsonable
+
+    matrix, rng = _problem(48, shift=2)
+
+    def action(value):
+        return matrix @ value
+
+    def json_roundtrip(value):
+        return json.loads(json.dumps(_jsonable(value), allow_nan=False, sort_keys=True))
+
+    stems = [
+        'A2R160_BAL_H_p4_01', 'A2R160_BAL_H_p4_02',
+        'LIGHT448_BAL_H_p4_09', 'LIGHT448_BAL_H_p4_10',
+        'JOINT448_BAL_H_p4_17', 'JOINT448_BAL_H_p4_18',
+    ]
+    items = [dict(stem=stem, role='g1' if index % 2 == 0 else 'g2',
+                  input_sha256=f'in-v9-{index}', g_array_sha256=f'g-v9-{index}',
+                  reference_status='available_not_used', status='available',
+                  g=np.asarray(rng.normal(size=48) + 1j * rng.normal(size=48),
+                               dtype=np.complex128))
+             for index, stem in enumerate(stems)]
+    engine = BoundedGCROTI4(
+        action, lambda value: value.copy(), validation_action=action,
+        model_identity='v9-real-sequence', policy=FIXED_NEW16_RECYCLE8)
+
+    class EngineAdmission:
+        def __init__(self, engine):
+            self.engine = engine
+
+        @property
+        def calls(self):
+            return self.engine.calls
+
+        def reset(self):
+            self.engine.reset()
+
+        def snapshot(self):
+            return dict(calls=self.engine.calls, engine=self.engine.snapshot())
+
+        def __call__(self, rhs):
+            return self.engine.solve(rhs)
+
+        def destroy(self):
+            self.engine.destroy()
+
+    admission = EngineAdmission(engine)
+    try:
+        result = run_v9_equal_new_work_sequences(
+            admission, items, make_rhs=lambda item: item['g'].copy(),
+            sample=lambda: None,
+            save=lambda *_: None,
+            append=lambda *_: None)
+        serialized = json_roundtrip(result)
+        reset_checked = recompute_recycled_i4_sequence(
+            serialized['reset']['records'], sequence='RESET',
+            profile='balanced_h6_entity_gcrot8_new16_v9')
+        carry_checked = recompute_recycled_i4_sequence(
+            serialized['carry']['records'], sequence='CARRY',
+            profile='balanced_h6_entity_gcrot8_new16_v9')
+        assert reset_checked['passed'], reset_checked['errors']
+        assert carry_checked['passed'], carry_checked['errors']
+        assert serialized['schema'] == 'task39extra.review-v9-equal-new-work-sequence.v1'
+        assert serialized['control_pool']['pairs'] == 0
+        assert serialized['total_calls'] == 12
     finally:
         admission.destroy()
 

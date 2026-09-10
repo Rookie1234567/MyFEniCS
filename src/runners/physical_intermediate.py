@@ -202,10 +202,14 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
 
     identity = payload['solver']['preconditioner']
     from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE
-    from src.io.physical_balanced_profile import BALANCED_PROFILES, BALANCED_ROUTES, BOUNDED_PROFILES
+    from src.io.physical_balanced_profile import (
+        BALANCED_PROFILES, BALANCED_ROUTES, BOUNDED_PROFILES,
+        BOUNDED_ENTITY_GCROT8_NEW16_PROFILE,
+    )
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = identity in RECURSIVE_PROFILES
     bounded = identity in BOUNDED_PROFILES
+    v9_bounded = identity == BOUNDED_ENTITY_GCROT8_NEW16_PROFILE
     if recursive and (identity.endswith('_hi_v6') or payload['geometry'].get('cell_notch')):
         raise ValueError('only original LO G2 is enabled; other profiles await qualification')
     balanced = recursive or identity in BALANCED_PROFILES or bounded
@@ -279,7 +283,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                                    sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
                                    bytes=path.stat().st_size)
         summary['bounded_evidence'] = dict(
-            schema='task39extra.review-v7-bounded-evidence.v1',
+            schema=('task39extra.review-v9-equal-new-work-evidence.v1'
+                    if v9_bounded else 'task39extra.review-v7-bounded-evidence.v1'),
             required=list(names), files=files,
             semantics='hashes are taken after the final solve/exit append; no re-sum of nested clocks')
 
@@ -523,7 +528,9 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 seconds=lambda: ledger.phase_clock_budget.update(clock_sample())['budget_seconds'],
                 resource_sample=sample, stop_requested=lambda: ledger.stop_signal is not None,
                 screen_enabled=True if bounded else not bool(payload['geometry'].get('cell_notch')),
-                **(dict(solve_limit_seconds=solve_limit, v7_policy=True) if bounded else
+                **(dict(solve_limit_seconds=solve_limit, v9_policy=True)
+                    if v9_bounded else
+                   dict(solve_limit_seconds=solve_limit, v7_policy=True) if bounded else
                    dict(solve_limit_seconds=solve_limit) if recursive else {}))
             if recursive:
                 from .physical_recursive_runtime import audit_recursive_exit
@@ -536,7 +543,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
                 summary['bounded_solve_policy'] = dict(
                     policy.identity, solve_limit_seconds=solve_limit,
                     outer_restart=32, outer_max_it=2048, zero_start=True,
-                    ksp_lifecycle='one_create_one_solve_one_destroy')
+                    ksp_lifecycle='one_create_one_solve_one_destroy',
+                    screen_policy=('v9_equal_new_work' if v9_bounded else 'v7'))
                 bind_bounded_evidence()
             else:
                 summary['p4_action_counts'] = dict(policy.action_counts, C=policy.logical_rhs,

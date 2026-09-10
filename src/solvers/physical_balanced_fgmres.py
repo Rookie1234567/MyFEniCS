@@ -78,10 +78,37 @@ class BoundedScreen:
         return self.mid_budget
 
 
+class V9BoundedScreen(BoundedScreen):
+    """V9 absolute-progress screen for the equal-new-work profile.
+
+    The eight-step observations are retained for evidence, but iteration 128
+    alone never opens the decision.  The first investment decision is made at
+    the first safe residual check at or after 1800 seconds and accepts only
+    an absolute true residual of at most 0.10.
+    """
+
+    def inspect(self, iteration, relative, seconds):
+        if iteration == 0 or iteration % 8 == 0:
+            if not self.checkpoints or self.checkpoints[-1][0] != iteration:
+                self.checkpoints.append((iteration, relative))
+                self.checkpoints = self.checkpoints[-3:]
+        if self.decision is not None or seconds < 1800:
+            return self.decision
+        passed = bool(relative <= 0.10)
+        self.decision = dict(
+            status='SCREEN_CONTINUE_SAME_LIVE_KSP' if passed
+            else 'TIME_PROGRESS_SCREEN_STOP',
+            passed=passed, iteration=iteration, true_relative=relative,
+            solve_seconds=seconds, checkpoints=list(self.checkpoints),
+            policy='v9_equal_new_work',
+        )
+        return self.decision
+
+
 def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                        resource_sample=lambda: None, stop_requested=lambda: False,
                        screen_enabled=True, solve_limit_seconds=7200,
-                       v7_policy=False):
+                       v7_policy=False, v9_policy=False):
     """Callbacks own action/PC outputs; seconds is a conservative shared clock.
 
     Exactly one KSP creation and one solve, max2048/restart32/zero start.
@@ -90,8 +117,11 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     """
     if not np.isfinite(solve_limit_seconds) or solve_limit_seconds <= 0:
         raise ValueError('positive finite solve limit required')
-    if v7_policy and float(solve_limit_seconds) != 10800.0:
-        raise ValueError('V7 bounded outer solve limit must be 10800 seconds')
+    if v7_policy and v9_policy:
+        raise ValueError('V7 and V9 bounded screen policies are mutually exclusive')
+    bounded_policy = bool(v7_policy or v9_policy)
+    if bounded_policy and float(solve_limit_seconds) != 10800.0:
+        raise ValueError('bounded outer solve limit must be 10800 seconds')
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
     from .fullspace_physical_intermediate import _destroy
@@ -99,7 +129,8 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     sizes = (rhs.getLocalSize(), rhs.getSize())
     operator = PETSc.Mat().createPython((sizes, sizes), context=ac, comm=rhs.getComm())
     ksp = solution = target = None
-    screen = BoundedScreen() if v7_policy else BalancedScreen()
+    screen = (V9BoundedScreen() if v9_policy else
+              BoundedScreen() if v7_policy else BalancedScreen())
     snapshots = []
     explicit_count = 0
     last_save = -120.
@@ -107,7 +138,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     last_checkpoint_iteration = -1
     result = None
     norm_rhs = max(float(rhs.norm()), np.finfo(float).tiny)
-    if v7_policy and screen_enabled:
+    if bounded_policy and screen_enabled:
         # Seed the two eight-step ratios with the true initial residual.  The
         # value is normalized by the same RHS norm used by every later node.
         screen.inspect(0, 1.0, seconds())
@@ -127,7 +158,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             if not np.isfinite(relative):
                 raise FloatingPointError('nonfinite live FGMRES true residual')
             explicit_count += 1
-            checkpoint_due = (not v7_policy or terminal or iteration == 0 or
+            checkpoint_due = (not bounded_policy or terminal or iteration == 0 or
                               iteration % 32 == 0)
             if checkpoint_due and iteration != last_checkpoint_iteration:
                 checkpoint(iteration, target, relative)
@@ -157,15 +188,15 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                 outer_matvec_count=ac.matvec_count, outer_pc_count=pc_context.apply_count))
             stop = stop_requested() or now >= solve_limit_seconds
             boundary = screen_enabled and screen.decision is None and (
-                iteration >= 128 or now >= 1800)
-            mid_boundary = (v7_policy and not screen.mid_budget_checked and
+                now >= 1800 or (iteration >= 128 and not v9_policy))
+            mid_boundary = (bounded_policy and not screen.mid_budget_checked and
                             now >= 5400)
-            cadence = 8 if v7_policy else 32
+            cadence = 8 if bounded_policy else 32
             if (iteration % cadence == 0 or now-last_save >= 120 or boundary or
                     mid_boundary or stop or reported/norm_rhs <= 1e-6):
-                if v7_policy and iteration % 8 != 0 and not (
+                if bounded_policy and iteration % 8 != 0 and not (
                         boundary or mid_boundary or stop or reported/norm_rhs <= 1e-6):
-                    # The V7 screen is based on completed 8-step nodes.  A
+                    # The bounded screens are based on completed 8-step nodes. A
                     # time-based resource sample may still occur here, but it
                     # must not invent an eighth-step node.
                     return 0
@@ -174,7 +205,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                 if relative <= 1e-6:
                     stop_status = 'TRUE_RESIDUAL_PASS'
                     return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
-                if v7_policy and now >= solve_limit_seconds:
+                if bounded_policy and now >= solve_limit_seconds:
                     # The explicit A6 action and residual assembly are part of
                     # the solve budget, so a post-action overrun is not hidden
                     # behind the callback's earlier timestamp.
@@ -185,7 +216,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                     stop_status = 'PERFORMANCE_CONTROLLED_STOP'
                 elif decision is not None and not decision['passed']:
                     stop_status = decision['status']
-                if v7_policy and stop_status is None:
+                if bounded_policy and stop_status is None:
                     mid_budget = screen.inspect_mid_budget(iteration, relative, now)
                     if mid_budget is not None and not mid_budget['passed']:
                         stop_status = mid_budget['status']
@@ -197,7 +228,7 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
         iteration = int(ksp.getIterationNumber())
         relative, elapsed = snapshot(iteration, None, ksp.getResidualNorm(), terminal=True)
         final_status = stop_status or 'ITERATION_BUDGET_EXHAUSTED'
-        if (v7_policy and relative > 1e-6 and elapsed >= solve_limit_seconds
+        if (bounded_policy and relative > 1e-6 and elapsed >= solve_limit_seconds
                 and final_status == 'ITERATION_BUDGET_EXHAUSTED'):
             final_status = 'PERFORMANCE_CONTROLLED_STOP'
         result = dict(final_solution=solution.copy(), final_true_residual=relative,
@@ -207,10 +238,11 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             explicit_action_count=explicit_count, elapsed_seconds=elapsed,
             ksp_create_count=1, ksp_solve_count=1, ksp_destroy_count=0,
             screen_enabled=screen_enabled,restart=32, max_it=2048, zero_start=True,
-            screen_policy='v7' if v7_policy else 'v5',
-            residual_interval=8 if v7_policy else 32,
+            screen_policy=('v9_equal_new_work' if v9_policy else
+                           'v7' if v7_policy else 'v5'),
+            residual_interval=8 if bounded_policy else 32,
             checkpoint_interval=32,
-            mid_budget=screen.mid_budget if v7_policy else None)
+            mid_budget=screen.mid_budget if bounded_policy else None)
         return result
     finally:
         for value in (ksp, target, solution, operator):

@@ -30,6 +30,10 @@ V8_K1_PREPARATION_SCHEMA = "task39extra.review-v8-k0-k1-budget.v1"
 V8_K1_PREPARATION_LIMIT_SECONDS = 3600.0
 V8_K1_FINITE_CONTROL_LIMIT_SECONDS = 900.0
 V8_K1_SEQUENCE_SCHEMA = "task39extra.review-v8-recycling-sequence.v1"
+V9_K1_SEQUENCE_SCHEMA = "task39extra.review-v9-equal-new-work-sequence.v1"
+V9_L1_PREPARATION_SCHEMA = "task39extra.review-v9-equal-new-work-budget.v1"
+V9_PROFILE = "balanced_h6_entity_gcrot8_new16_v9"
+V9_POLICY = "FIXED_NEW16_RECYCLE8"
 J2_PC_LIMIT_SECONDS = 90.0
 J2_EXCEPTION_OUTER_LIMIT = 8
 J2_EXCEPTION_SECONDS = 600.0
@@ -252,6 +256,10 @@ def _run_v8_recycling_sequence(
     sample: Callable[[], Any],
     save: Callable[[str, dict[str, Any]], None],
     append: Callable[[str, dict[str, Any]], None],
+    sequence_schema: str = V8_K1_SEQUENCE_SCHEMA,
+    sequence_filename: str = "v8_k1_sequence.jsonl",
+    save_prefix: str = "v8_k1_",
+    label: str = "V8",
 ) -> dict[str, Any]:
     """Run one finite six-RHS sequence against one shared admission pool."""
 
@@ -266,8 +274,8 @@ def _run_v8_recycling_sequence(
             reset_applied = True
         before = _recycled_pool_view(admission)
         if reset_each and before["pairs"] != 0:
-            raise RuntimeError(f"V8 {sequence_name} reset did not clear the pool")
-        base = dict(schema=V8_K1_SEQUENCE_SCHEMA, sequence=sequence_name,
+            raise RuntimeError(f"{label} {sequence_name} reset did not clear the pool")
+        base = dict(schema=sequence_schema, sequence=sequence_name,
                     sequence_index=sequence_index, stem=item["stem"], role=item["role"],
                     input_sha256=item["input_sha256"],
                     g_array_sha256=item["g_array_sha256"],
@@ -281,7 +289,7 @@ def _run_v8_recycling_sequence(
                           pool_identity_after=before["model_identity_sha256"],
                           pool_snapshot_after=before, facts=None)
             records.append(record)
-            append("v8_k1_sequence.jsonl", record)
+            append(sequence_filename, record)
             continue
         rhs = result = None
         try:
@@ -290,14 +298,14 @@ def _run_v8_recycling_sequence(
             result = admission(rhs)
             facts = result.get("facts") if isinstance(result, dict) else None
             if not isinstance(facts, dict):
-                raise RuntimeError(f"V8 {sequence_name} returned no I4 facts")
+                raise RuntimeError(f"{label} {sequence_name} returned no I4 facts")
             after = _recycled_pool_view(admission)
             record = dict(base, status="complete", call=facts.get("call"),
                           pool_after=after["pairs"],
                           pool_identity_after=after["model_identity_sha256"],
                           pool_snapshot_after=after, facts=facts)
             records.append(record)
-            append("v8_k1_sequence.jsonl", record)
+            append(sequence_filename, record)
         except BaseException as exc:
             after = _recycled_pool_view(admission)
             record = dict(base, status="failed", exception_type=type(exc).__name__,
@@ -305,7 +313,7 @@ def _run_v8_recycling_sequence(
                           pool_identity_after=after["model_identity_sha256"],
                           pool_snapshot_after=after, facts=None)
             records.append(record)
-            append("v8_k1_sequence.jsonl", record)
+            append(sequence_filename, record)
             raise
         finally:
             if isinstance(result, dict):
@@ -315,7 +323,7 @@ def _run_v8_recycling_sequence(
     end = _recycled_pool_view(admission)
     call_values = [int(row["call"]) for row in records
                    if row.get("status") == "complete" and isinstance(row.get("call"), int)]
-    summary = dict(schema=V8_K1_SEQUENCE_SCHEMA, sequence=sequence_name,
+    summary = dict(schema=sequence_schema, sequence=sequence_name,
                    reset_each=reset_each, calls=sum(row["status"] == "complete"
                                                     for row in records),
                    not_found=sum(row["status"] == "not_found" for row in records),
@@ -332,7 +340,7 @@ def _run_v8_recycling_sequence(
                    elapsed_seconds=sum(float(row["facts"].get("actual_elapsed_seconds",
                                                         row["facts"].get("seconds", 0.0)))
                                        for row in records if row.get("facts")))
-    save("v8_k1_" + sequence_name.lower(), summary)
+    save(save_prefix + sequence_name.lower(), summary)
     return summary
 
 
@@ -369,6 +377,211 @@ def run_v8_k1_recycling_sequences(
                   total_calls=int(reset["calls"] + carry["calls"]))
     save("v8_k1_sequences", result)
     return result
+
+
+def run_v9_equal_new_work_sequences(
+    admission: Any,
+    items: list[dict[str, Any]],
+    *,
+    make_rhs: Callable[[dict[str, Any]], Any],
+    sample: Callable[[], Any],
+    save: Callable[[str, dict[str, Any]], None],
+    append: Callable[[str, dict[str, Any]], None],
+) -> dict[str, Any]:
+    """Run V9 RESET16/CARRY16 and leave an explicitly empty control pool."""
+
+    kwargs = dict(sequence_schema=V9_K1_SEQUENCE_SCHEMA,
+                  sequence_filename="v9_l1_sequence.jsonl",
+                  save_prefix="v9_l1_", label="V9")
+    reset = _run_v8_recycling_sequence(
+        admission, items, sequence_name="RESET", reset_each=True, reset_before=False,
+        make_rhs=make_rhs, sample=sample, save=save, append=append, **kwargs)
+    after_reset = _recycled_pool_view(admission)
+    carry = _run_v8_recycling_sequence(
+        admission, items, sequence_name="CARRY", reset_each=False, reset_before=True,
+        make_rhs=make_rhs, sample=sample, save=save, append=append, **kwargs)
+    after_carry = _recycled_pool_view(admission)
+    admission.reset()
+    before_controls = _recycled_pool_view(admission)
+    if before_controls["pairs"] != 0:
+        raise RuntimeError("V9 control pool was not cleared after CARRY")
+    lifecycle = [
+        dict(action="reset_between_sequences", before=after_reset,
+             after=carry["started_pool"]),
+        dict(action="reset_before_controls", before=after_carry, after=before_controls),
+    ]
+    result = dict(schema=V9_K1_SEQUENCE_SCHEMA, reset=reset, carry=carry,
+                  lifecycle=lifecycle, control_pool=before_controls,
+                  total_calls=int(reset["calls"] + carry["calls"]))
+    save("v9_l1_sequences", result)
+    return result
+
+
+def evaluate_v9_l1_admission(sequences: dict[str, Any]) -> dict[str, Any]:
+    """Recompute the fixed-new-work admission decision from raw sequence rows."""
+    hard_errors: list[str] = []
+    missing: list[dict[str, Any]] = []
+    incomplete: list[dict[str, Any]] = []
+    reset_records = sequences.get("reset", {}).get("records", [])
+    carry_records = sequences.get("carry", {}).get("records", [])
+
+    def index(records, label):
+        result = {}
+        for row in records if isinstance(records, list) else ():
+            if not isinstance(row, dict):
+                hard_errors.append(f"{label} sequence row is not an object")
+                continue
+            key = (row.get("sequence_index"), row.get("stem"),
+                   row.get("g_array_sha256"))
+            if key in result:
+                hard_errors.append(f"duplicate {label} sequence identity: {key!r}")
+            else:
+                result[key] = row
+        return result
+
+    reset_by_key = index(reset_records, "RESET")
+    carry_by_key = index(carry_records, "CARRY")
+    keys = sorted(set(reset_by_key) | set(carry_by_key),
+                  key=lambda key: (key[0], key[1], key[2]))
+    complete_pairs = []
+    full_pairs = []
+    target_pairs = []
+
+    def finite(value):
+        try:
+            return bool(np.isfinite(float(value)) and float(value) >= 0.0)
+        except (TypeError, ValueError):
+            return False
+
+    def base_ok(facts, label, order):
+        memory = facts.get("recycling_memory")
+        ok = (facts.get("policy") == V9_POLICY and
+              facts.get("requested_new_B4") == 16 and
+              facts.get("requested_new_arnoldi_directions") == 16 and
+              facts.get("rejected_new_B4_callbacks") == 0 and
+              facts.get("implementation_blocked") is False and
+              facts.get("work_policy_violation") is False and
+              facts.get("input_unchanged") is True and
+              isinstance(memory, dict) and memory.get("cap_passed") is True and
+              finite(facts.get("final_true_residual")) and
+              finite(facts.get("actual_elapsed_seconds", facts.get("seconds"))))
+        if not ok:
+            hard_errors.append(f"{label} sequence item {order} failed correctness/resource gate")
+        return ok
+
+    for key in keys:
+        reset, carry = reset_by_key.get(key), carry_by_key.get(key)
+        if reset is None or carry is None:
+            missing.append(dict(sequence_index=key[0], stem=key[1],
+                                g_array_sha256=key[2], status="not_found"))
+            continue
+        if reset.get("status") != "complete" or carry.get("status") != "complete":
+            incomplete.append(dict(sequence_index=key[0], stem=key[1],
+                                   g_array_sha256=key[2], status="incomplete"))
+            continue
+        reset_facts, carry_facts = reset.get("facts"), carry.get("facts")
+        if not isinstance(reset_facts, dict) or not isinstance(carry_facts, dict):
+            incomplete.append(dict(sequence_index=key[0], stem=key[1],
+                                   g_array_sha256=key[2], status="incomplete"))
+            continue
+        reset_time = reset_facts.get("actual_elapsed_seconds", reset_facts.get("seconds"))
+        carry_time = carry_facts.get("actual_elapsed_seconds", carry_facts.get("seconds"))
+        if not (base_ok(reset_facts, "RESET", key[0]) and
+                base_ok(carry_facts, "CARRY", key[0])):
+            continue
+        if not (finite(reset_time) and finite(carry_time)):
+            continue
+        reset_rho = float(reset_facts["final_true_residual"])
+        carry_rho = float(carry_facts["final_true_residual"])
+        pair = dict(key=key, reset=reset, carry=carry, reset_facts=reset_facts,
+                    carry_facts=carry_facts, reset_rho=reset_rho,
+                    carry_rho=carry_rho, reset_seconds=float(reset_time),
+                    carry_seconds=float(carry_time))
+        complete_pairs.append(pair)
+
+        safe_return = any(facts.get("timeout_exceeded") is True or
+                          facts.get("requested_safe_return") is True or
+                          facts.get("pool_update") == "validated_not_committed_deadline"
+                          for facts in (reset_facts, carry_facts))
+        bounded_work = all(
+            isinstance(facts.get(field), int) and 0 <= facts[field] <= 16
+            for facts in (reset_facts, carry_facts)
+            for field in ("attempted_B4", "completed_B4",
+                          "attempted_new_arnoldi_directions",
+                          "completed_new_arnoldi_directions",
+                          "actual_arnoldi_length"))
+        target_pair = (not safe_return and bounded_work and
+                       reset_rho <= 1e-4 and carry_rho <= 1e-4 and
+                       all(facts.get("stop_reason") in ("TARGET_REACHED", "MAXITER_ONE")
+                           for facts in (reset_facts, carry_facts)))
+        if target_pair:
+            target_pairs.append(pair)
+
+        full16 = (not safe_return and bounded_work and
+                  all(facts.get("requested_new_B4_callbacks") == 16 and
+                      facts.get("attempted_B4") == 16 and
+                      facts.get("completed_B4") == 16 and
+                      facts.get("completed_new_B4") == 16 and
+                      facts.get("attempted_new_arnoldi_directions") == 16 and
+                      facts.get("completed_new_arnoldi_directions") == 16 and
+                      facts.get("actual_arnoldi_length") == 16 and
+                      facts.get("discarded_new_B4") == 0 and
+                      facts.get("discarded_new_arnoldi_directions") == 0
+                      for facts in (reset_facts, carry_facts)))
+        if full16 and key[0] != 1:
+            full_pairs.append(pair)
+
+    def observation(pair):
+        q = max(pair["carry_rho"], 1e-4) / max(pair["reset_rho"], 1e-4)
+        return dict(sequence_index=pair["key"][0], stem=pair["key"][1],
+                    g_array_sha256=pair["key"][2],
+                    reset_rho=pair["reset_rho"], carry_rho=pair["carry_rho"],
+                    reset_seconds=pair["reset_seconds"],
+                    carry_seconds=pair["carry_seconds"], q=float(q),
+                    reset_completed_new_B4=pair["reset_facts"].get("completed_new_B4"),
+                    carry_completed_new_B4=pair["carry_facts"].get("completed_new_B4"))
+
+    observations = [observation(pair) for pair in full_pairs]
+    target_observations = [observation(pair) for pair in target_pairs if pair["key"][0] != 1]
+    total_reset = float(sum(pair["reset_seconds"] for pair in complete_pairs))
+    total_carry = float(sum(pair["carry_seconds"] for pair in complete_pairs))
+    time_ratio = (total_carry / max(total_reset, np.finfo(float).tiny)
+                  if complete_pairs else None)
+    all_target = bool(target_pairs and len(target_observations) >= 3 and
+                      len(target_pairs) == len(complete_pairs))
+
+    if all_target:
+        geometric_gain = None
+        passed = bool(time_ratio is not None and time_ratio <= 0.90 and not hard_errors)
+        effective_pairs = len(target_observations)
+    else:
+        effective_pairs = len(observations)
+        if effective_pairs < 3:
+            geometric_gain = None
+            passed = False
+        else:
+            q_values = np.asarray([row["q"] for row in observations], dtype=float)
+            geometric_gain = float(np.exp(np.mean(np.log(q_values))))
+            passed = bool(geometric_gain <= 0.90 and
+                          float(np.mean(q_values < 1.0)) >= 0.60 and
+                          float(np.max(q_values)) <= 2.0 and
+                          time_ratio is not None and time_ratio <= 1.50 and
+                          not hard_errors)
+    status = ("L1_ADMISSION_OPEN" if passed else
+              "COMPARISON_EVIDENCE_LIMITED" if effective_pairs < 3 else
+              "EQUAL_NEW_WORK_NO_CLEAR_GAIN")
+    return dict(
+        status=status, passed=bool(passed), control_admission_open=bool(passed),
+        cold_start_excluded=True, effective_pairs=effective_pairs,
+        complete_pairs=len(complete_pairs), full16_pairs=len(full_pairs),
+        target_pairs=len(target_pairs), all_target=all_target,
+        observations=observations, target_observations=target_observations,
+        geometric_gain=geometric_gain, carry_reset_time_ratio=time_ratio,
+        missing=missing, incomplete=incomplete, errors=hard_errors,
+        thresholds=dict(geometric_gain_le=0.90, fraction_q_lt_one_ge=0.60,
+                        q_max_le=2.0, time_ratio_le=1.50,
+                        all_target_time_ratio_le=0.90, minimum_pairs=3),
+    )
 
 
 def _append_json(path: Path, facts: dict[str, Any]) -> None:
@@ -564,9 +777,11 @@ def run_j1_controls(
 
     directory = Path(directory)
     is_v8 = contract.get("route") == "ENTITY_GCROT8"
+    is_v9 = contract.get("route") == "ENTITY_GCROT8_NEW16"
+    is_recycled = is_v8 or is_v9
     records = directory / "records"
     records.mkdir(exist_ok=True)
-    controls = (load_v8_k1_sequence(Path(inventory_path)) if is_v8
+    controls = (load_v8_k1_sequence(Path(inventory_path)) if is_recycled
                 else load_j1_controls(Path(inventory_path)))
     ledger = _J1Ledger(directory, marker)
     append = ledger.append
@@ -574,7 +789,7 @@ def run_j1_controls(
     identity = contract['profile']
     raw_sample = sample
     v8_clock = (ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
-                if is_v8 else None)
+                if is_recycled else None)
     v8_control_clock: ClockBudget | None = None
     v8_stage_seconds: dict[str, float] = {}
     v8_stage_start: dict[str, float] = {}
@@ -620,11 +835,12 @@ def run_j1_controls(
         v8_stage_seconds[name] = float(elapsed)
         v8_active_stage = None
 
-    if is_v8:
+    if is_recycled:
         sample = guarded_sample
         begin_v8_stage("setup")
     summary: dict[str, Any] = dict(
-        schema=(V8_K1_PREPARATION_SCHEMA if is_v8
+        schema=(V9_L1_PREPARATION_SCHEMA if is_v9 else V8_K1_PREPARATION_SCHEMA
+                if is_v8
                 else "task39extra.review-v7-j1-controls.v1"),
         status="STARTED",
         source_sha=source_sha,
@@ -647,6 +863,17 @@ def run_j1_controls(
             g1_g2_share_control_pool=True,
             initial_guess="library_x0_zero_plus_current_pool_projection",
         )
+    elif is_v9:
+        summary["v9_l1"] = dict(
+            sequence_schema=V9_K1_SEQUENCE_SCHEMA,
+            preparation_limit_seconds=V8_K1_PREPARATION_LIMIT_SECONDS,
+            finite_control_limit_seconds=V8_K1_FINITE_CONTROL_LIMIT_SECONDS,
+            control_pool_starts_empty=True,
+            g1_g2_share_control_pool=True,
+            initial_guess="library_x0_zero_plus_current_pool_projection",
+            cold_start_excluded=True,
+            controls_started=False,
+        )
     bundle: dict[str, Any] | None = None
     setup_clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
     try:
@@ -661,8 +888,8 @@ def run_j1_controls(
             raise ValueError("J1 rebuilt p6 native map differs from V5 E1 map")
         current_p4_map = native_map_arrays(
             bundle['levels']['spaces'][4], bundle['levels']['floquets'][4])
-        if is_v8 and not _same_map(current_p4_map, controls["p4_map"]):
-            raise ValueError("V8 K1 rebuilt p4 native map differs from g0 map")
+        if is_recycled and not _same_map(current_p4_map, controls["p4_map"]):
+            raise ValueError("recycled I4 K1 rebuilt p4 native map differs from g0 map")
         p6_indices = current_p6_map["independent_indices"]
         if contract.get('route') == 'PROJECTED_SEQ2_16':
             q_vec = level_vector(bundle['levels'], 6)
@@ -728,6 +955,79 @@ def run_j1_controls(
                 control_pool_before=control_pool,
                 sequence_i4_call_start=summary["v8_k1_sequences"]["reset"]["call_start"],
                 sequence_i4_call_end=summary["v8_k1_sequences"]["carry"]["call_end"],
+                control_i4_call_start=int(bundle["i4_admission"].calls + 1),
+                control_baseline=bounded_terminal_snapshot(bundle),
+            )
+        elif is_v9:
+            save("v9_l1_input_binding", dict(
+                sequence_schema=V9_K1_SEQUENCE_SCHEMA,
+                order=[item["stem"] for item in controls["sequence"]],
+                items=[{key: item[key] for key in (
+                    "stem", "role", "status", "input_json", "input_sha256",
+                    "g_array_sha256", "reference_status")}
+                       for item in controls["sequence"]],
+                p4_map=dict(full_size=controls["p4_full_size"],
+                            independent_count=int(controls["p4_independent_indices"].size),
+                            slave_count=int(controls["p4_slave_indices"].size)),
+                references="not_loaded; reference_y/reference_A4y never seed V9 pool"))
+            end_v8_stage("setup")
+
+            begin_v8_stage("reset_carry_sequences")
+
+            def make_v9_rhs(item):
+                rhs = level_vector(bundle["levels"], 4)
+                rhs.array[:] = item["g"]
+                return rhs
+
+            summary["v9_l1_sequences"] = run_v9_equal_new_work_sequences(
+                bundle["i4_admission"], controls["sequence"], make_rhs=make_v9_rhs,
+                sample=sample, save=save, append=append)
+            end_v8_stage("reset_carry_sequences")
+            admission = evaluate_v9_l1_admission(summary["v9_l1_sequences"])
+            summary["v9_l1"]["admission"] = admission
+            summary["v9_l1"]["sequence_i4_calls"] = (
+                summary["v9_l1_sequences"]["total_calls"])
+            if not admission["passed"]:
+                # V9 is deliberately fail-closed at L1: do not spend two
+                # complete controls when equal-new-work evidence is absent.
+                summary["v9_l1"]["controls_started"] = False
+                summary["v9_l1"]["control_pool_after_l1"] = _recycled_pool_view(
+                    bundle["i4_admission"])
+                summary["pc_seconds"] = {}
+                summary["j2_gate"] = dict(
+                    status="L1_NOT_ADMITTED", controls_started=False,
+                    exception_only=None, route="L4")
+                begin_v8_stage("exit_audit")
+                summary["bounded_terminal"] = audit_bounded_exit(bundle, _Appender(directory))
+                end_v8_stage("exit_audit")
+                total = float(v8_clock.seconds)
+                finite_control = (float(v8_control_clock.seconds)
+                                  if v8_control_clock is not None else 0.0)
+                if total > V8_K1_PREPARATION_LIMIT_SECONDS:
+                    raise RuntimeError("V9 preparation 3600-second budget exhausted")
+                if finite_control > V8_K1_FINITE_CONTROL_LIMIT_SECONDS:
+                    raise RuntimeError("V9 finite-control 900-second budget exhausted")
+                summary["v9_preparation_budget"] = dict(
+                    schema=V9_L1_PREPARATION_SCHEMA,
+                    total_limit_seconds=V8_K1_PREPARATION_LIMIT_SECONDS,
+                    finite_control_limit_seconds=V8_K1_FINITE_CONTROL_LIMIT_SECONDS,
+                    charged_seconds=float(total), finite_control_seconds=finite_control,
+                    stage_seconds=dict(v8_stage_seconds),
+                    stages_nonoverlapping=(
+                        abs(sum(v8_stage_seconds.values()) - float(total)) <= 1e-7),
+                    old_v7_ledger="not_used_or_merged")
+                summary["status"] = admission["status"]
+                append("j1_controls_summary.json", summary)
+                return summary
+            summary["v9_l1"]["controls_started"] = True
+            begin_v8_stage("two_pc_controls")
+            control_pool = _recycled_pool_view(bundle["i4_admission"])
+            if control_pool["pairs"] != 0:
+                raise RuntimeError("V9 two-PC controls did not start from an empty pool")
+            summary["v9_l1"].update(
+                control_pool_before=control_pool,
+                sequence_i4_call_start=summary["v9_l1_sequences"]["reset"]["call_start"],
+                sequence_i4_call_end=summary["v9_l1_sequences"]["carry"]["call_end"],
                 control_i4_call_start=int(bundle["i4_admission"].calls + 1),
                 control_baseline=bounded_terminal_snapshot(bundle),
             )
@@ -830,17 +1130,27 @@ def run_j1_controls(
             end_v8_stage("two_pc_controls")
             summary["v8_k1"]["control_i4_call_end"] = int(bundle["i4_admission"].calls)
             begin_v8_stage("exit_audit")
+        elif is_v9:
+            end_v8_stage("two_pc_controls")
+            summary["v9_l1"]["control_i4_call_end"] = int(bundle["i4_admission"].calls)
+            begin_v8_stage("exit_audit")
 
-        summary["j2_gate"] = dict(
-            one_complete_pc_le_90=any(value <= J2_PC_LIMIT_SECONDS
-                                      for value in summary["pc_seconds"].values()),
-            both_pc_over_90=all(value > J2_PC_LIMIT_SECONDS
-                                 for value in summary["pc_seconds"].values()),
-            exception_only=(J2_EXCEPTION_OUTER_LIMIT, J2_EXCEPTION_SECONDS),
-            status=("J2_ADMISSION_OPEN" if any(value <= J2_PC_LIMIT_SECONDS
-                                                for value in summary["pc_seconds"].values())
-                    else "J2_REVIEW_REQUIRED"),
-        )
+        one_pc_under_limit = any(value <= J2_PC_LIMIT_SECONDS
+                                 for value in summary["pc_seconds"].values())
+        both_pc_over_limit = all(value > J2_PC_LIMIT_SECONDS
+                                 for value in summary["pc_seconds"].values())
+        summary["j2_gate"] = (
+            dict(one_complete_pc_le_90=one_pc_under_limit,
+                 both_pc_over_90=both_pc_over_limit,
+                 exception_only=None,
+                 status=("J2_ADMISSION_OPEN" if one_pc_under_limit
+                         else "COARSE_ACTION_COST_BLOCKED"),
+                 route=("L2" if one_pc_under_limit else "L4")) if is_v9 else
+            dict(one_complete_pc_le_90=one_pc_under_limit,
+                 both_pc_over_90=both_pc_over_limit,
+                 exception_only=(J2_EXCEPTION_OUTER_LIMIT, J2_EXCEPTION_SECONDS),
+                 status=("J2_ADMISSION_OPEN" if one_pc_under_limit
+                         else "J2_REVIEW_REQUIRED")))
         summary["bounded_terminal"] = audit_bounded_exit(bundle, _Appender(directory))
         if is_v8:
             end_v8_stage("exit_audit")
@@ -857,6 +1167,24 @@ def run_j1_controls(
                 finite_control_limit_seconds=V8_K1_FINITE_CONTROL_LIMIT_SECONDS,
                 charged_seconds=float(total),
                 finite_control_seconds=finite_control,
+                stage_seconds=dict(v8_stage_seconds),
+                stages_nonoverlapping=(
+                    abs(sum(v8_stage_seconds.values()) - float(total)) <= 1e-7),
+                old_v7_ledger="not_used_or_merged")
+        elif is_v9:
+            end_v8_stage("exit_audit")
+            total = float(v8_clock.seconds)
+            finite_control = (float(v8_control_clock.seconds)
+                              if v8_control_clock is not None else 0.0)
+            if total > V8_K1_PREPARATION_LIMIT_SECONDS:
+                raise RuntimeError("V9 preparation 3600-second budget exhausted")
+            if finite_control > V8_K1_FINITE_CONTROL_LIMIT_SECONDS:
+                raise RuntimeError("V9 finite-control 900-second budget exhausted")
+            summary["v9_preparation_budget"] = dict(
+                schema=V9_L1_PREPARATION_SCHEMA,
+                total_limit_seconds=V8_K1_PREPARATION_LIMIT_SECONDS,
+                finite_control_limit_seconds=V8_K1_FINITE_CONTROL_LIMIT_SECONDS,
+                charged_seconds=float(total), finite_control_seconds=finite_control,
                 stage_seconds=dict(v8_stage_seconds),
                 stages_nonoverlapping=(
                     abs(sum(v8_stage_seconds.values()) - float(total)) <= 1e-7),
@@ -894,6 +1222,21 @@ def run_j1_controls(
             except BaseException as budget_error:
                 summary["v8_preparation_budget_error"] = (
                     f"{type(budget_error).__name__}: {budget_error}")
+        elif is_v9 and v8_clock is not None:
+            try:
+                total = v8_clock.update(clock_sample())["budget_seconds"]
+                finite_control = (float(v8_control_clock.seconds)
+                                  if v8_control_clock is not None else 0.0)
+                summary["v9_preparation_budget"] = dict(
+                    schema=V9_L1_PREPARATION_SCHEMA,
+                    total_limit_seconds=V8_K1_PREPARATION_LIMIT_SECONDS,
+                    finite_control_limit_seconds=V8_K1_FINITE_CONTROL_LIMIT_SECONDS,
+                    charged_seconds=float(total), finite_control_seconds=finite_control,
+                    stage_seconds=dict(v8_stage_seconds),
+                    old_v7_ledger="not_used_or_merged")
+            except BaseException as budget_error:
+                summary["v9_preparation_budget_error"] = (
+                    f"{type(budget_error).__name__}: {budget_error}")
         append("j1_controls_summary.json", summary)
         raise
     finally:
@@ -902,4 +1245,5 @@ def run_j1_controls(
 
 
 __all__ = ["CONTROL_LABELS", "G0_INVENTORY", "J1_CONTROL_LIMIT_SECONDS",
-           "load_j1_controls", "run_j1_controls"]
+           "evaluate_v9_l1_admission", "load_j1_controls",
+           "run_j1_controls", "run_v9_equal_new_work_sequences"]

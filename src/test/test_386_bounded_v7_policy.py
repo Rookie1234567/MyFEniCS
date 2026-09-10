@@ -10,6 +10,7 @@ from src.io.input_loader import InputError
 from src.io.physical_balanced_profile import (
     BOUNDED_ENTITY_PROFILE,
     BOUNDED_ENTITY_GCROT8_PROFILE,
+    BOUNDED_ENTITY_GCROT8_NEW16_PROFILE,
     BOUNDED_PROFILES,
     BOUNDED_PROJECTED_PROFILE,
 )
@@ -27,6 +28,12 @@ def test_v7_dat_and_profile_contract_is_single_source_of_truth():
             assert facts['recycling']['max_pool_pairs'] == 8
             assert facts['recycling']['m'] == facts['recycling']['k'] == 8
             assert facts['recycling']['maxiter'] == 1
+        elif identity == BOUNDED_ENTITY_GCROT8_NEW16_PROFILE:
+            assert facts['route'] == 'ENTITY_GCROT8_NEW16'
+            assert facts['recycling']['policy'] == 'FIXED_NEW16_RECYCLE8'
+            assert facts['recycling']['m_call_formula'] == '16-max(8-effective_rank,0)'
+            assert facts['recycling']['payload_cap_bytes'] == 128 * 1024**2
+            assert facts['recycling']['new_work_upper_bound'] == 16
         else:
             assert facts['intermediate']['restart'] == 16
             assert facts['intermediate']['max_iterations'] == 16
@@ -131,6 +138,22 @@ def test_bounded_j1_projected_route_uses_existing_dispatch_and_b_contract(monkey
     assert calls[0][1]['contract']['route'] == 'PROJECTED_SEQ2_16'
 
 
+def test_v9_j1_contract_removes_the_old_j2_exception_path():
+    from src.runners import physical_recursive_entry as entry
+
+    args = entry.build_parser().parse_args([
+        '--input', 'original_13p5nm_p6h10_balanced_h6_entity_gcrot8_new16_v9.dat',
+        '--inventory', 'binding.json', '--output', 'out', '--budget', 'budget.json',
+        '--source-sha', 'a' * 40, '--bounded-j1-controls',
+        '--bounded-j1-route', 'ENTITY_GCROT8_NEW16'])
+    contract = entry.selected_contract(args)
+    assert contract['route'] == 'ENTITY_GCROT8_NEW16'
+    assert contract['ledger_schema'] == 'task39extra.review-v9-equal-new-work-budget.v1'
+    assert contract['j2_gate']['both_over_90_action'] == 'COARSE_ACTION_COST_BLOCKED'
+    assert contract['j2_gate']['route'] == 'L4'
+    assert 'both_over_90_exception_outer' not in contract['j2_gate']
+
+
 def test_projected_j1_comparison_helper_uses_current_store_once_for_T(tmp_path):
     from src.runners.physical_bounded_j1 import _projected_seq2_finite_comparison
     from src.solvers.physical_projected_trace import ProjectedSequentialTraceFactorStore
@@ -201,6 +224,23 @@ def test_v7_outer_screen_seeds_zero_and_checks_non8_mid_boundary():
     screen = BoundedScreen()
     assert screen.inspect_mid_budget(19, .0005, 5400.0) is not None
     assert screen.mid_budget['passed']
+
+
+def test_v9_screen_keeps_iteration_128_as_observation_only():
+    from src.solvers.physical_balanced_fgmres import V9BoundedScreen
+
+    screen = V9BoundedScreen()
+    assert screen.inspect(0, 1.0, 0.0) is None
+    assert screen.inspect(8, .5, 100.0) is None
+    assert screen.inspect(128, .2, 1700.0) is None
+    decision = screen.inspect(136, .2, 1800.0)
+    assert decision['status'] == 'TIME_PROGRESS_SCREEN_STOP'
+    assert decision['iteration'] == 136
+
+    screen = V9BoundedScreen()
+    screen.inspect(0, 1.0, 0.0)
+    assert screen.inspect(128, .05, 1700.0) is None
+    assert screen.inspect(136, .05, 1800.0)['passed']
 
 
 def test_v7_batch_charges_one_outer_dual_clock_for_setup_and_failure(monkeypatch, tmp_path):
