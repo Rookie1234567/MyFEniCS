@@ -535,24 +535,37 @@ class MacroLocalVolume:
         if not hasattr(self, "cell_tags"):
             return {f"fixture_{index}": index for index in range(len(self.blocks))}
 
+        def active_rows(rows: Any, values: Any) -> set[int]:
+            row_array = np.asarray(rows, dtype=np.int64)
+            value_array = np.asarray(values)
+            if row_array.shape != value_array.shape:
+                raise ValueError("DtN rows and values must have matching shapes")
+            return set(row_array[np.abs(value_array) > 0.0].tolist())
+
+        active_port_rows: set[int] = set()
+        for entry in carrier.entries:
+            active_port_rows.update(active_rows(entry.coupling_rows, entry.coupling_values))
+            active_port_rows.update(active_rows(entry.projection_rows, entry.projection_values))
+
         port_blocks: list[int] = []
         material_blocks: list[int] = []
         internal_blocks: list[int] = []
         for index, block in enumerate(self.blocks):
             selected = set(np.asarray(block["indices"], dtype=np.int64).tolist())
-            has_dtn = any(
-                bool(selected.intersection(np.asarray(entry.coupling_rows, dtype=np.int64).tolist()))
-                or bool(selected.intersection(np.asarray(entry.projection_rows, dtype=np.int64).tolist()))
-                for entry in carrier.entries
-            )
+            has_dtn = bool(selected.intersection(active_port_rows))
             tags = np.unique(self.cell_tags[np.asarray(block["support_cells"], dtype=np.int64)])
             has_material_interface = tags.size >= 2
             if has_dtn:
                 port_blocks.append(index)
             if has_material_interface:
                 material_blocks.append(index)
-            if not has_dtn and not has_material_interface and tags.size == 1:
+            if not has_dtn:
                 internal_blocks.append(index)
+
+        self.representative_selection_notes = {
+            "active_port_row_count": len(active_port_rows),
+            "interior_category": "no_nonzero_current_DtN_support; material_tags_reported_separately",
+        }
 
         def canonical(category: str, candidates: list[int]) -> int:
             if not candidates:
@@ -562,7 +575,7 @@ class MacroLocalVolume:
         return {
             "material_interface": canonical("material_interface", material_blocks),
             "port_DtN": canonical("port_DtN", port_blocks),
-            "interior_single_material": canonical("interior_single_material", internal_blocks),
+            "interior_no_DtN": canonical("interior_no_DtN", internal_blocks),
         }
 
     def _native_block_witness(
@@ -693,6 +706,7 @@ class MacroLocalVolume:
                 }
                 for category, block_index in representative_by_category.items()
             },
+            "selection_notes": dict(getattr(self, "representative_selection_notes", {})),
             "native_global_matrix": False,
             "global_column_probe": False,
         })
@@ -1137,6 +1151,7 @@ class MacroLocalVolume:
         self.cell_min_points = np.empty((0, 3), dtype=np.float64)
         self.cell_max_points = np.empty((0, 3), dtype=np.float64)
         self.representative_block_indices = {}
+        self.representative_selection_notes = {}
         self.output_weights = np.empty(0, dtype=np.float64)
 
 

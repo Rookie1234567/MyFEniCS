@@ -54,6 +54,26 @@ def test_macro_output_weights_are_partition_of_unity_and_reject_incomplete_cover
     assert np.array_equal(assembled, np.ones(4))
 
 
+def test_macro_representative_selection_uses_nonzero_dtn_rows_and_no_dtn_internal_support():
+    local = MacroLocalVolume.__new__(MacroLocalVolume)
+    local.cell_tags = np.array([1, 1, 2], dtype=np.int32)
+    local.blocks = [
+        {"seed": (0, 0, 0), "indices": np.array([0]), "support_cells": np.array([0])},
+        {"seed": (1, 0, 0), "indices": np.array([1]), "support_cells": np.array([1, 2])},
+    ]
+    entry = SimpleNamespace(
+        coupling_rows=np.array([0, 1]), coupling_values=np.array([0.0 + 0.0j, 1.0 + 0.0j]),
+        projection_rows=np.array([0, 1]), projection_values=np.array([0.0 + 0.0j, 2.0 + 0.0j]),
+    )
+    selected = local._select_representative_blocks(SimpleNamespace(entries=(entry,)))
+    assert selected == {
+        "material_interface": 1,
+        "port_DtN": 1,
+        "interior_no_DtN": 0,
+    }
+    assert local.representative_selection_notes["active_port_row_count"] == 1
+
+
 def test_macro_block_uses_all_support_rows_and_mpc_master_phase_without_input_mutation():
     phase = np.exp(0.37j)
     local = MacroLocalVolume.__new__(MacroLocalVolume)
