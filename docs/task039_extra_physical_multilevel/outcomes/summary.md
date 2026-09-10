@@ -1,4 +1,26 @@
-# Task39extra V7 J5当前结果：两条 bounded 候选均关闭为 controlled negative
+# Task39extra V8 K4当前结果：recycled p4 outer 为受控负结果，V5/V7历史保留
+
+本节是当前权威摘要。V8 在同一物理模型上用有限 GCROT 方向池复用重复的 p4 `B4` 搜索；它降低了有限控制和同前缀内部工作，但没有通过完整外层 residual Gate。`WORKER_FAILED` 是 parent 对正常 screen stop 的包装分类，不是基础设施故障。
+
+| 范围 | 当前结论 |
+|---|---|
+| K1 RESET/CARRY | 六个固定 RHS 的实测序列时间 `103.68024972011335 s` → `84.27563998301048 s`，CARRY 减少 `18.7158207946894%`；六项均无时间回退，但近似返回不逐项等价 |
+| V8 K2 original | 59 PC、终端 full explicit true residual `0.09114277170870674`，独立 checker `0.09114277170870674`；`NORMAL_SCREEN_STOP`，`RECYCLE_BOUNDED_NEGATIVE` |
+| 内部工作 | 118 次 I4 均为 `APPROXIMATE`，目标命中 `0`；B4=`980`、`A4_matvec=1098`、`explicit_A4=260`，最大 I4 elapsed=`16.918557867058553 s`；[逐 I4 compact rows](records/recycled_p4_i4_rows_v8.json) |
+| 同前缀成本 | 第 59 个 PC 的 B4 累计 V8=`980`、V7 A=`1888`，减少 `908`（`48.09322033898305%`）；这是内部工作下降，不是完整求解 speedup |
+| 进展 Gate | 40/48/56 节点 `0.13301163584099004/0.1075737569345282/0.09320528571929491`，几何缩比约 `0.837>0.80`，故停止 |
+| 资源 | process-tree RSS 峰 `1530359808 B`、swap/global delta=`0`、descendants cleared；不是资源阻断 |
+| official/notch/recovery | `not_run_locked`；没有 E/H、near-field、R/T/A、`A_volume` 或衍射级 |
+| 账本 | preparation `3600 s` 是保守 RESERVED 上界，不是实测；K2 actual outer charge `2060.801451572 s`；ledger charged `5660.801451572001 s` 的语义为 reserve+actual，不是累计 CPU/wall |
+| 当前决定 | 不重跑、不扩 rank、不改候选、不启动 workstation heavy；ordinary default 不变 |
+
+同第 56 个实际外层节点，V8/V7 A/V5 exact p4 的 residual 为 `0.09320528571929491/0.075149822567280145/0.030977506489411246`；同时间附近的实际节点和不同停止点见 [V8 K4中心结果](recycled_p4_outer_v8.md)。不能用 V8 更早的总停止时间冒充求解提速。
+
+机器可读证据为 [V8 compact](records/recycled_p4_outer_v8.json)；它绑定 K1 run `09c1b3a6f3c21d4d0e99feb36a97972819971fb3`、K1 checker `49ddad7f4b196e45e449c1044d90b17d6ee6300c`、K2 run `49ddad7f4b196e45e449c1044d90b17d6ee6300c` 及原始/parent/checker/artifact hashes。V5 双模型成功 baseline、V7 A/B controlled negatives、`checker_pre_fix` 和 ignored raw 结果均保持不变。
+
+---
+
+# 历史：Task39extra V7 J5当前结果：两条 bounded 候选均关闭为 controlled negative
 
 本节是当前权威摘要；本节以下的 V6、V5 及更早内容全部是历史记录，保留原始负结果和资源限制，不应按其中旧的“当前/下一步”文字重新授权运行。
 

@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V7 J5 closeout: V5 two-case success baseline retained; V6 diagnostics preserved; V7 A/B frozen bounded candidates closed as controlled progress negatives",
+  "scope": "V8 K4 closeout: V5 success baseline and V7 negatives retained; K1 RESET/CARRY controls and one K2 recycled outer are hash-bound controlled evidence",
   "units": {
     "time": "s",
     "memory": "B"
@@ -896,6 +896,37 @@
       "outer_charge_seconds": 5622.384071101,
       "descendants_cleared": true,
       "compact": "docs/task039_extra_physical_multilevel/outcomes/records/bounded_inexact_outer_b_original_v7.json"
+    },
+    {
+      "id": "V8_K2_recycled_entity_gcrot8_original",
+      "source_sha": "49ddad7f4b196e45e449c1044d90b17d6ee6300c",
+      "category": "measured_controlled_negative",
+      "raw_root": "results/euv_grazing1_phi0/original_13p5nm_p6h10_balanced_h6_entity_gcrot8_v8__full3d_iterative__mpi1__Mna/20260910T024347.350479Z",
+      "classification": "NORMAL_SCREEN_STOP",
+      "semantic_classification": "RECYCLE_BOUNDED_NEGATIVE",
+      "iterations": 59,
+      "full_true_relative_residual": 0.09114277170870674,
+      "screen_iteration": 59,
+      "screen_true_relative_residual": 0.09114277170870674,
+      "screen_solve_seconds": 1831.843792324894,
+      "official_results": "not_run",
+      "notch": "not_run_locked",
+      "recovery": "not_run_locked",
+      "rss_peak_bytes": 1530359808,
+      "swap_peak_bytes": 0,
+      "global_swap_delta": [0, 0],
+      "parent_classification": "WORKER_FAILED",
+      "worker_exit_code": 4,
+      "worker_status": "NORMAL_SCREEN_STOP",
+      "worker_solve_monotonic_seconds": 1686.910741629079,
+      "worker_solve_conservative_seconds": 1839.8522862158648,
+      "watchdog_monotonic_seconds": 1890.020882648998,
+      "watchdog_conservative_seconds": 2060.6735806883685,
+      "outer_charge_seconds": 2060.801451572,
+      "descendants_cleared": true,
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/recycled_p4_outer_v8.json",
+      "ledger": "benchmarks/artifacts/task39extra/v8_k2_original/49ddad7f4b196e45e449c1044d90b17d6ee6300c/v8_batch_ledger.json",
+      "next": "K4 documentation complete; no rerun, rank expansion, notch, recovery, or workstation heavy case"
     }
   ],
   "limitations": [
@@ -987,5 +1018,55 @@
       "remaining_seconds": 30872.401631853
     },
     "next": "J5 documentation and compact closeout only; no new heavy PDE or workstation authorization"
+  },
+  "v8": {
+    "status": "RECYCLE_BOUNDED_NEGATIVE",
+    "source_sha": "49ddad7f4b196e45e449c1044d90b17d6ee6300c",
+    "K1_run_source_sha": "09c1b3a6f3c21d4d0e99feb36a97972819971fb3",
+    "K1_checker_source_sha": "49ddad7f4b196e45e449c1044d90b17d6ee6300c",
+    "K2_run_source_sha": "49ddad7f4b196e45e449c1044d90b17d6ee6300c",
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/recycled_p4_outer_v8.json",
+    "K1": {
+      "reset_seconds": 103.68024972011335,
+      "carry_seconds": 84.27563998301048,
+      "carry_reduction_percent": 18.7158207946894,
+      "reset_B4": 96,
+      "carry_B4": 81,
+      "checker_pre_fix": "retained",
+      "checker_post_fix": "POST_FIX_PASS"
+    },
+    "K2": {
+      "profile": "balanced_h6_entity_gcrot8_v8",
+      "route": "ENTITY_GCROT8",
+      "iterations": 59,
+      "B4_calls": 980,
+      "i4_calls": 118,
+      "i4_target_hits": 0,
+      "A4_matvec": 1098,
+      "explicit_A4": 260,
+      "max_i4_elapsed_seconds": 16.918557867058553,
+      "per_i4_compact": "docs/task039_extra_physical_multilevel/outcomes/records/recycled_p4_i4_rows_v8.json",
+      "per_i4_compact_sha256": "4f5ea66e1be498f9c936cde7f45853af4af1059751c43f1eb5cc21d66340fbfc",
+      "max_pool_pairs": 8,
+      "full_explicit_true_relative_residual": 0.09114277170870674,
+      "worker_status": "NORMAL_SCREEN_STOP",
+      "parent_classification": "WORKER_FAILED",
+      "official_outputs": "not_run",
+      "notch": "not_run_locked",
+      "recovery": "not_run_locked",
+      "rss_peak_bytes": 1530359808,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "ledger": {
+      "batch_limit_seconds": 36000,
+      "preparation_reserved_upper_envelope_seconds": 3600.0,
+      "preparation_reservation_is_measured": false,
+      "k2_actual_outer_charge_seconds": 2060.801451572,
+      "charged_seconds_after_k2": 5660.801451572001,
+      "remaining_seconds_after_k2": 30339.198548428,
+      "old_v7_costs": "not_used_or_merged"
+    },
+    "next": "K4 documentation and compact evidence only; stop for concentrated review"
   }
 }

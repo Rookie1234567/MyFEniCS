@@ -1,3 +1,18 @@
+# Task39extra V8 K4当前登记：recycled p4 受控负结果
+
+本节是当前模型登记入口。V8 K1 只是有限控制序列，V8 K2 是一次未通过完整 outer Gate 的原始模型运行；两者都不能提升 ordinary default，也不能生成 official physical outputs。
+
+| model id | source/input | 方法与实测结果 | 状态/登记边界 |
+|---|---|---|---|
+| `task39_v8_recycled_entity_gcrot8_k2_original` | source `49ddad7f4b196e45e449c1044d90b17d6ee6300c`；13.5 nm、p6/h10、Full3D、MPI1、80 modes | `ENTITY_GCROT8`，最多 8 对方向；59 PC，full explicit true residual `0.09114277170870674`；B4=`980`、I4=`118` | `controlled_negative` / `RECYCLE_BOUNDED_NEGATIVE`；screen stop，official/notch/recovery 未运行 |
+| `task39_v8_k1_reset_carry_controls` | run source `09c1b3a6f3c21d4d0e99feb36a97972819971fb3`；固定六个 p4 RHS | RESET/CARRY 为 `103.68024972011335 s` / `84.27563998301048 s`；per-input native residual、eps 和完整 control closure 已登记 | `finite_control_evidence`；不是 outer solver 或 physics pass |
+| `task39_v5_bal_h_original` | V5 compact；同一 13.5 nm 物理族 | 564 步，完整 true residual `9.932289219916376e-7` | `success_with_qualifications`；保留为历史成功 baseline |
+| `task39_v7_bounded_entity16_a` | V7 A compact | 121 步，true residual `0.04256451212826674` | `controlled_negative`；历史冻结候选，保持不变 |
+
+V8 K2 的 `A4_matvec=1098`、`explicit_A4=260`、最大 I4 elapsed `16.918557867058553 s` 以及 118 行逐 I4 compact 记录见 [K4 compact](task039_extra_physical_multilevel/outcomes/records/recycled_p4_outer_v8.json) 和 [per-I4 rows](task039_extra_physical_multilevel/outcomes/records/recycled_p4_i4_rows_v8.json)。V5/V7 的 official fields、R/T/A 和工作站能力边界不因 V8 改变；ordinary default 仍 unchanged。
+
+---
+
 # Task39extra V7 J5当前登记：两条 bounded 候选关闭，V5 baseline 保留
 
 本节是模型登记表当前入口；以下 V6、V5 和旧 Task39extra 条目均为历史。V7 的 finite/control 通过只表示局部实现和审计闭合，不能把未完成 outer 变成 production model。

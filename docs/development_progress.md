@@ -1,3 +1,22 @@
+# Task39extra V8 K4最新结果：recycled p4 受控负结果，compact 收口完成
+
+本节是当前项目进度入口。K4 在 source `49ddad7f4b196e45e449c1044d90b17d6ee6300c` 上完成 K1 RESET/CARRY 控制记录、K2 original outer 的 compact evidence 和文档收口；没有启动新的 PDE、MPI、rank expansion、candidate rerun 或 workstation heavy case。
+
+| 项目 | 最新结论 |
+|---|---|
+| K1 finite controls | 六个固定 RHS 的 RESET/CARRY 为 `103.68024972011335 s` / `84.27563998301048 s`，CARRY 减少 `18.7158207946894%`；native residual、eps 和完整 control 闭合已逐项登记 |
+| K2 original outer | `59` PC、full explicit true residual `0.09114277170870674`，screen ratio 约 `0.837>0.80`，状态 `RECYCLE_BOUNDED_NEGATIVE` |
+| 内层证据 | `118` 次 I4 全部 approximate，B4=`980`，`A4_matvec=1098`，`explicit_A4=260`，最大 I4 elapsed=`16.918557867058553 s`；逐 I4 compact rows 已保存 |
+| 资源 | process-tree RSS 峰 `1530359808 B`，swap/global delta=`0`，后代清场；这是未完成 outer 的资源观察，不是成功 PDE 资格 |
+| 账本 | preparation `3600 s` 是 RESERVED 上界；K2 actual charge=`2060.801451572 s`；`5660.801451572001 s` 是 reserve+actual 的记账值，不是累计 CPU/wall |
+| 任务边界 | official E/H、R/T/A、`A_volume`、notch、recovery、5 nm/0.7 nm 和 workstation heavy case 均未运行；ordinary default 不变 |
+
+结果入口：[K4 中心结果](task039_extra_physical_multilevel/outcomes/recycled_p4_outer_v8.md)、[outer compact](task039_extra_physical_multilevel/outcomes/records/recycled_p4_outer_v8.json)、[逐 I4 compact](task039_extra_physical_multilevel/outcomes/records/recycled_p4_i4_rows_v8.json)、[summary](task039_extra_physical_multilevel/outcomes/summary.md)、[response V9](task039_extra_physical_multilevel/response_v9.md)。V5 双模型成功 baseline、V7 controlled negatives、旧失败 evidence 和 `checker_pre_fix` 保持不变。
+
+当前仅完成 docs/compact closeout；静态 JSON/hash/link/diff 检查不构成新的数值或 CI 通过，也不构成 `master` merge approval。以下 V6 及更早内容是历史正文。
+
+---
+
 # Task39extra V6最新结果：递归粗逆未资格化，V5双模型成功基线保留
 
 G1/G2已完成，旧新C真实负结果保留；用户补充授权继续有依据的p4/p2诊断，G5与response_v8尚未最终收口。该授权超出V6原停止分流，不改变物理、精度或安全线；不复跑G1/G2。

@@ -1,3 +1,21 @@
+# V8 K4 compact evidence与文档检查
+
+本节是当前 K4 收口记录。K4 只补充可审阅的 compact evidence 和文档索引；没有新建或重跑 PDE、MPI、factor、正式 checker 或 full repository pytest。旧 V7/V6/V5 测试记录继续保留在下文，不能被本节的 docs-only 检查冒作新数值资格。
+
+| 检查 | 结果与边界 |
+|---|---|
+| K1 compact schema/字段 | RESET/CARRY per-input native residual、`eps`、pool、B4/A4，以及两次完整 control 的 PC 秒数、g2 recompute 和 eps closure 已写入 [V8 outer compact](records/recycled_p4_outer_v8.json) |
+| K2 compact schema/字段 | `A4_matvec=1098`、`explicit_A4=260`、最大 I4 elapsed、native spot、pool closure/orthogonality、terminal eps audit 和 118 行逐 I4 标量表已写入 [V8 outer compact](records/recycled_p4_outer_v8.json) 与 [per-I4 rows](records/recycled_p4_i4_rows_v8.json) |
+| K1 prototype focused tests | 已完成 `31` 项 focused tests，绑定 prototype/run source `09c1b3a6f3c21d4d0e99feb36a97972819971fb3`；本轮不重跑 |
+| K1 checker-only tests | checker-only 新增 `1` 项、旧项复核 `4` 项均已完成，绑定 checker-fix source `49ddad7f4b196e45e449c1044d90b17d6ee6300c`；本轮不重跑，pre-fix 与 post-fix checker hash 均保留在 compact |
+| JSON/static validation | qualified activation 下解析新增/更新 JSON，核对 118 行、关键计数、相对路径和逐 I4 compact SHA；结果为通过 |
+| hash/link/diff | 核对 compact record 声明的逐 I4 SHA、相对文档链接和 `git diff --check`；结果为通过 |
+| PDE/solver regression | 未运行；不声称新的 pytest、MPI、formal checker、CI 或 full repository 通过 |
+
+K2 的 `NORMAL_SCREEN_STOP`、full explicit residual `0.09114277170870674`、资源峰值和 reserve/actual ledger 语义见 [K4 中心结果](recycled_p4_outer_v8.md)。这些文档检查不改变 `RECYCLE_BOUNDED_NEGATIVE`，也不把内部 B4 减少改写为完整求解 speedup。
+
+---
+
 # V7 J5本地测试与文档检查
 
 本节是当前 J5 收口记录。以下 V6、V5 及更早验证均为历史批次，原测试结果和失败原因保留，不冒作本轮重跑。

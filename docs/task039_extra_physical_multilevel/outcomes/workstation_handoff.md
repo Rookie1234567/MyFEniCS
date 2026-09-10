@@ -1,3 +1,19 @@
+# Task39extra 工作站移交边界：V8 K4关闭 recycled p4 候选
+
+本节是当前工作站边界。V8 K2 的较低 RSS 只属于第 59 个 PC 后 screen stop 的未完成 outer；它不是成功 PDE 的容量或 solver 资格证据。
+
+| 项目 | 当前结论 |
+|---|---|
+| V8 K2 | `NORMAL_SCREEN_STOP` / `RECYCLE_BOUNDED_NEGATIVE`；full explicit residual `0.09114277170870674`，process-tree RSS 峰 `1530359808 B`，swap/global delta=`0`，后代清场 |
+| 内层证据 | 118 次 I4 全部 approximate、B4=`980`、`A4_matvec=1098`、`explicit_A4=260`；逐 I4 compact rows 仅含标量审阅字段 |
+| V5 baseline | 原始 564 步成功 baseline 保留，可用于复现比较；不外推为 2 GB/0.7 nm 能力 |
+| 未运行 | official E/H、R/T/A、`A_volume`、notch、recovery、5 nm、0.7 nm 和 workstation heavy case |
+| 当前动作 | 无新的 workstation qualification；不重跑、不扩 rank、不换候选；等待集中 review |
+
+证据入口：[V8 中心结果](recycled_p4_outer_v8.md)、[V8 outer compact](records/recycled_p4_outer_v8.json)、[逐 I4 compact](records/recycled_p4_i4_rows_v8.json)。本节不构成 `master` merge approval；普通默认保持不变。
+
+---
+
 # Task39extra 工作站移交边界：V7 J5关闭两条 bounded 候选
 
 本节是当前工作站边界；以下 V2 及更早内容是历史移交记录。V7 没有新的 workstation heavy 授权，也没有把未完成 PDE 的低 RSS 观测写成能力通过。
