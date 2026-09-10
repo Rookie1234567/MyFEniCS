@@ -34,6 +34,7 @@ class BoundedI4Admission:
         save: Callable[[str, dict[str, Any]], None],
         stop_requested: Callable[[], bool],
         residual_action: Any | None = None,
+        macro_policy: bool = False,
     ) -> None:
         self.action = action
         self.pc = pc
@@ -41,6 +42,7 @@ class BoundedI4Admission:
         self.save = save
         self.stop_requested = stop_requested
         self.residual_action = residual_action
+        self.macro_policy = bool(macro_policy)
         self.calls = 0
         self.no_direction_streak = 0
         self.timeout_streak = 0
@@ -71,11 +73,12 @@ class BoundedI4Admission:
                 save=self.save,
                 stop_requested=self.stop_requested,
                 residual_action=self.residual_action,
-                max_it=16,
-                restart=16,
+                max_it=4 if self.macro_policy else 16,
+                restart=4 if self.macro_policy else 16,
                 soft_seconds=25,
                 hard_seconds=30,
-                v7_policy=True,
+                v7_policy=not self.macro_policy,
+                macro_policy=self.macro_policy,
             )
         except RuntimeError as exc:
             if not getattr(exc, 'bounded_i4_no_legal_direction', False):

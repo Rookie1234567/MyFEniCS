@@ -59,7 +59,7 @@ class PhysicalBalancedCoupling:
     """
     def __init__(self, action, coarse, smoother, restriction, *, route, checkpoint=lambda: None,
                  inexact_ledger=None, level_identity=None, capture_vectors=False):
-        if route not in ROUTES:
+        if route not in ROUTES and route != 'ONE_C':
             raise ValueError('unknown balanced route')
         self.A, self.C, self.S, self.PH = action, coarse, smoother, restriction
         self.route, self.checkpoint = route, checkpoint
@@ -71,8 +71,16 @@ class PhysicalBalancedCoupling:
         self.last_apply_facts = {}
         self.capture_vectors = bool(capture_vectors)
         self.last_apply_vectors = {}
-        if inexact_ledger is not None and route != 'BAL_H':
-            raise ValueError('inexact ledger is qualified only for BAL_H')
+        if inexact_ledger is not None and route == 'BAL_H':
+            if getattr(inexact_ledger, 'mode', 'BAL_H') != 'BAL_H':
+                raise ValueError('BAL_H requires a BAL_H inexact ledger')
+        elif inexact_ledger is not None and route == 'ONE_C':
+            if getattr(inexact_ledger, 'mode', None) != 'ONE_C':
+                raise ValueError('ONE_C requires a ONE_C inexact ledger')
+        elif inexact_ledger is not None:
+            raise ValueError('inexact ledger is qualified only for BAL_H or explicit ONE_C')
+        if route == 'ONE_C' and inexact_ledger is None:
+            raise ValueError('ONE_C requires an explicit inexact-balance ledger')
         self.inexact_ledger, self.level_identity = inexact_ledger, level_identity
 
     def apply(self, source):
@@ -90,7 +98,8 @@ class PhysicalBalancedCoupling:
             facts['level_identity'] = self.level_identity
         if self.inexact_ledger is not None:
             self.inexact_ledger.begin()
-            facts['projection_space'] = 'inexact coarse balance, eps1-eps2; not exact projection'
+            identity = 'eps1-eps2' if self.route == 'BAL_H' else 'eps1-g2'
+            facts['projection_space'] = f'inexact coarse balance, {identity}; not exact projection'
 
         def call(name, function, x):
             self.checkpoint()
@@ -130,23 +139,41 @@ class PhysicalBalancedCoupling:
             zc = call('C', self.C, source)
             u = call('A_structure', self.A, zc)
             rc = vectors.copy(source); _axpy(rc, -1, u)
+            if self.inexact_ledger is not None:
+                initial_constraint = {'policy': 'inexact_eps1_not_required_zero'}
+            elif self.route == 'ONE_C':
+                initial_constraint = {'policy': 'one_c_eps1_not_required_zero'}
+            else:
+                initial_constraint = balance(rc, source)
             facts['initial'] = dict(q_norm=_norm(source), zc_norm=_norm(zc), Azc_norm=_norm(u),
-                                    rc_norm=_norm(rc), constraint=(balance(rc, source) if self.inexact_ledger is None else
-                                                {'policy': 'inexact_eps1_not_required_zero'}))
+                                    rc_norm=_norm(rc), constraint=initial_constraint)
             vectors.drop(u)
             if self.route != 'PROJ_K6':
                 s = v = t = None
                 s = call('smoother', self.S, rc)
                 v = call('A_structure', self.A, s)
-                t = call('C', self.C, v)
-                facts['feedback'] = dict(s_norm=_norm(s), As_norm=_norm(v), feedback_norm=_norm(t))
-                before = vectors.copy(rc); _axpy(before, -1, v)
-                facts['feedback']['before_residual_norm'] = _norm(before)
-                vectors.drop(before)
-                z = vectors.copy(zc); _axpy(z, 1, s)
-                facts['feedback']['before_field_norm'] = _norm(z)
-                _axpy(z, -1, t)
-                facts['feedback']['after_field_norm'] = _norm(z)
+                if self.route == 'ONE_C':
+                    # ONE_C deliberately omits the second coarse correction:
+                    # z=zc+s.  Its correctness is the operation-relative
+                    # eps1-g2 identity, audited with the same PH map.
+                    facts['feedback'] = dict(s_norm=_norm(s), As_norm=_norm(v))
+                    g2 = self.PH(v)
+                    vectors.take(g2)
+                    self.inexact_ledger.record_g2(g2)
+                    vectors.drop(g2)
+                    z = vectors.copy(zc)
+                    _axpy(z, 1, s)
+                    facts['feedback']['after_field_norm'] = _norm(z)
+                else:
+                    t = call('C', self.C, v)
+                    facts['feedback'] = dict(s_norm=_norm(s), As_norm=_norm(v), feedback_norm=_norm(t))
+                    before = vectors.copy(rc); _axpy(before, -1, v)
+                    facts['feedback']['before_residual_norm'] = _norm(before)
+                    vectors.drop(before)
+                    z = vectors.copy(zc); _axpy(z, 1, s)
+                    facts['feedback']['before_field_norm'] = _norm(z)
+                    _axpy(z, -1, t)
+                    facts['feedback']['after_field_norm'] = _norm(z)
                 facts['status'] = 'BALANCED_ACTION_COMPLETED'
             else:
                 beta = _norm(rc)

@@ -5,7 +5,7 @@ from .fullspace_physical_intermediate import apply_owned
 
 def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop_requested=lambda: False,
                       residual_norm=None, residual_action=None, max_it=64, restart=16,
-                      soft_seconds=60, hard_seconds=None, v7_policy=False):
+                      soft_seconds=60, hard_seconds=None, v7_policy=False, macro_policy=False):
     """One zero-start FGMRES16 with an opt-in finite V7 policy.
 
     The historical default remains max64/60 seconds.  V7 passes
@@ -18,7 +18,10 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
     from src.runners.workflow_timebase import ClockBudget, clock_sample, CONSERVATIVE_REALTIME
     if target not in (1e-4, 1e-6):
         raise ValueError('I4 target must be LO=1e-4 or HI=1e-6')
-    if int(restart) != 16 or int(max_it) <= 0:
+    if macro_policy:
+        if target != 1e-4 or int(restart) != 4 or int(max_it) != 4:
+            raise ValueError('Review V10 macro I4 fixes target=1e-4, restart=4, max_it=4')
+    elif int(restart) != 16 or int(max_it) <= 0:
         raise ValueError('I4 restart must be 16 and max_it must be positive')
     if not np.isfinite(soft_seconds) or soft_seconds <= 0:
         raise ValueError('I4 soft time limit must be finite and positive')
@@ -27,10 +30,13 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
     if v7_policy and (target != 1e-4 or int(max_it) != 16 or float(soft_seconds) != 25.0 or
                       hard_seconds is None or float(hard_seconds) != 30.0):
         raise ValueError('V7 I4 fixes target=1e-4, max_it=16, soft=25, hard=30')
+    if macro_policy and (float(soft_seconds) != 25.0 or hard_seconds is None or float(hard_seconds) != 30.0):
+        raise ValueError('Review V10 macro I4 fixes soft=25 and hard=30 seconds')
+    bounded_policy = bool(v7_policy or macro_policy)
     budget = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
     seconds = clock or (lambda: budget.update(clock_sample())['budget_seconds'])
     raw_rhs_norm = float(rhs.norm())
-    if v7_policy and raw_rhs_norm == 0.0:
+    if bounded_policy and raw_rhs_norm == 0.0:
         solution = rhs.duplicate(); applied = rhs.duplicate(); eps = rhs.duplicate()
         solution.set(0); applied.set(0); eps.set(0)
         facts = dict(status='INNER_ZERO_RHS', quality_label='ZERO_RHS', target=target,
@@ -51,7 +57,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
         nonlocal legal_direction_count
         attempted['B4_calls'] += 1
         value = pc(x)
-        if v7_policy and value is not None:
+        if bounded_policy and value is not None:
             try:
                 value_norm = float(value.norm())
             except AttributeError:
@@ -119,7 +125,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
                     status = 'INNER_TARGET_REACHED'
                     return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
                 if cap:
-                    status = 'INNER_APPROXIMATE_RETURN' if v7_policy else 'INNER_INEXACT_AT_CAP'
+                    status = 'INNER_APPROXIMATE_RETURN' if bounded_policy else 'INNER_INEXACT_AT_CAP'
                     if stop_reason is None: stop_reason = 'MAX_IT' if it >= max_it else 'I4_SAFE_RETURN_REQUESTED'
                     return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
             return 0
@@ -129,7 +135,7 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
         relative, applied, eps = explicit(x, iterations, retain=True)
         # The terminal native action is part of the V7 30-second cost.  Do not
         # decide timeout status solely from the convergence callback.
-        if v7_policy:
+        if bounded_policy:
             sample()
         terminal_seconds = seconds()
         if hard_seconds is not None and terminal_seconds >= hard_seconds:
@@ -145,19 +151,19 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
         if reason < 0 and reason not in finite_reasons:
             raise RuntimeError(f'inner breakdown reason={reason}, true={relative}')
         finite_correction = False
-        if v7_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN):
+        if bounded_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN):
             try:
                 finite_correction = (iterations > 0 and legal_direction_count > 0
                     and np.isfinite(x.norm()) and float(x.norm()) > 0.0)
             except (AttributeError, FloatingPointError, ValueError):
                 finite_correction = False
-        if (v7_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN)
+        if (bounded_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN)
                 and not finite_correction):
             error = RuntimeError('V7 inner breakdown has no finite legal Krylov direction')
             error.bounded_i4_no_legal_direction = True
             raise error
-        status = 'INNER_TARGET_REACHED' if relative <= target else ('INNER_APPROXIMATE_RETURN' if v7_policy else 'INNER_INEXACT_AT_CAP')
-        if v7_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN):
+        status = 'INNER_TARGET_REACHED' if relative <= target else ('INNER_APPROXIMATE_RETURN' if bounded_policy else 'INNER_INEXACT_AT_CAP')
+        if bounded_policy and reason == int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN):
             stop_reason = 'KRYLOV_BREAKDOWN_WITH_FINITE_RETURN'
         facts = dict(status=status, target=target, final_true_residual=relative,
             explicit_uses_separate_action=residual_action is not None,

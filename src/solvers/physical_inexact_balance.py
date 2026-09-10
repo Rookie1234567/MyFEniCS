@@ -11,13 +11,17 @@ def _array(value):
 
 class InexactBalanceLedger:
     def __init__(self, action, restriction, *, save, checkpoint=lambda: None, every=32,
-                 retain_call_vectors=False):
+                 retain_call_vectors=False, mode='BAL_H'):
         if every < 1:
             raise ValueError('audit period must be positive')
+        if mode not in ('BAL_H', 'ONE_C'):
+            raise ValueError('unknown inexact-balance mode')
         self.A, self.PH, self.save = action, restriction, save
         self.checkpoint, self.every = checkpoint, every
         self.retain_call_vectors = bool(retain_call_vectors)
+        self.mode = mode
         self.calls, self.last = [], None
+        self.g2 = None
         self.audit_count = self.A_count = self.PH_count = 0
         self.audit_seconds = self.A_seconds = self.PH_seconds = 0.
 
@@ -27,14 +31,21 @@ class InexactBalanceLedger:
 
     def record(self, g, applied, residual, facts):
         # A copy is mandatory: the next I4 call may overwrite its work buffer.
-        if len(self.calls) >= 2:
-            raise ValueError('only two coarse calls per balanced action')
+        limit = 2 if self.mode == 'BAL_H' else 1
+        if len(self.calls) >= limit:
+            raise ValueError('too many coarse calls per balanced action')
         item = dict(eps=_copy(residual), rhs_norm=_norm(g),
                     applied_norm=_norm(applied), eps_norm=_norm(residual),
                     inner=dict(facts))
         if self.retain_call_vectors:
             item.update(g=_copy(g), applied=_copy(applied))
         self.calls.append(item)
+
+    def record_g2(self, g2):
+        if self.mode != 'ONE_C' or len(self.calls) != 1 or self.g2 is not None:
+            raise ValueError('ONE_C requires one first coarse record before g2')
+        self.g2 = _copy(g2)
+        self.g2_norm = _norm(g2)
 
     def abort(self):
         for item in self.calls:
@@ -43,6 +54,9 @@ class InexactBalanceLedger:
                 _destroy(item['g'])
                 _destroy(item['applied'])
         self.calls.clear()
+        if self.g2 is not None:
+            _destroy(self.g2)
+            self.g2 = None
 
     def _clear_last(self):
         if self.last is not None:
@@ -54,15 +68,27 @@ class InexactBalanceLedger:
             self.last = None
 
     def finish(self, q, z, iteration):
-        if len(self.calls) != 2:
-            raise ValueError('missing eps1/eps2 from coarse calls')
-        first, second = self.calls
-        difference = _copy(first['eps']); _axpy(difference, -1, second['eps'])
+        required = 2 if self.mode == 'BAL_H' else 1
+        if len(self.calls) != required:
+            raise ValueError('missing coarse residual records')
+        if self.mode == 'ONE_C' and self.g2 is None:
+            raise ValueError('missing g2 from ONE_C smoother feedback')
+        first = self.calls[0]
+        second = self.calls[1] if self.mode == 'BAL_H' else None
+        difference = _copy(first['eps'])
+        if second is not None:
+            _axpy(difference, -1, second['eps'])
+            operation_scale = sum(x['rhs_norm'] + x['applied_norm'] for x in self.calls)
+        else:
+            _axpy(difference, -1, self.g2)
+            operation_scale = first['rhs_norm'] + first['applied_norm'] + self.g2_norm
         summary = dict(policy='INEXACT_EPS_DIFFERENCE', iteration=iteration,
             calls=[{k:v for k,v in x.items() if k not in ('eps', 'g', 'applied')}
                    for x in self.calls],
             difference_norm=_norm(difference),
-            operation_scale=sum(x['rhs_norm']+x['applied_norm'] for x in self.calls),
+            operation_scale=operation_scale,
+            mode=self.mode,
+            identity='eps1-eps2' if self.mode == 'BAL_H' else 'eps1-g2',
             actual_audit='not_sampled')
         call_vectors = ()
         if self.retain_call_vectors:

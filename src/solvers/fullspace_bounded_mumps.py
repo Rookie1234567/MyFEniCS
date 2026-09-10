@@ -22,8 +22,11 @@ class BoundedP1Factor:
     """
 
     def __init__(self, matrix: Any, *, label: str, resource_sample: Callable[[], dict],
-                 marker: Callable[[str, dict], None], physical_p2_pilot: bool = False, extra_local_bytes: int = 0) -> None:
+                 marker: Callable[[str, dict], None], physical_p2_pilot: bool = False,
+                 extra_local_bytes: int = 0, pre_numeric_gate: Callable[[dict], None] | None = None) -> None:
         self.matrix, self.label = matrix, label
+        self.marker = marker
+        self.pre_numeric_gate = pre_numeric_gate
         self.factor = None
         self.solve_count = 0
         self.last_apply_facts: dict = {}
@@ -98,6 +101,8 @@ class BoundedP1Factor:
                 raise RuntimeError(f'{label}: symbolic matrix+factor exceeds 512MiB')
             if memory['rss_bytes'] + estimated >= memory['launch_cap_bytes']:
                 raise RuntimeError(f'{label}: symbolic prediction exceeds whole-workflow cap')
+            if self.pre_numeric_gate is not None:
+                self.pre_numeric_gate(dict(self.audit))
             self.factor.set_memory_limit_mb(max(1, (LOCAL_FACTOR_MAX_BYTES-matrix_budget)//1_000_000))
             start = time.perf_counter()
             self.factor.numeric(matrix)
