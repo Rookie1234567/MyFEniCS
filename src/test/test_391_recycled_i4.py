@@ -2,6 +2,7 @@
 
 import copy
 import json
+from pathlib import Path
 import numpy as np
 import pytest
 
@@ -31,6 +32,11 @@ def _problem(size=16, *, shift=None):
     shift = 4 * size if shift is None else shift
     matrix = np.asarray(matrix + shift * np.eye(size), dtype=np.complex128)
     return matrix, rng
+
+
+V8_K1_ROOT = (Path(__file__).resolve().parents[2] / 'benchmarks' / 'artifacts' /
+              'task39extra' / 'v8_k1_controls' /
+              '09c1b3a6f3c21d4d0e99feb36a97972819971fb3' / 'controls')
 
 
 def test_v8_backend_is_the_qualified_local_gcrotmk():
@@ -638,3 +644,32 @@ def test_v8_provenance_helpers_use_flat_simulation_config_and_realized_arrays():
     assert material['details']['coefficient_source'] == (
         'realized_positive_coefficients_not_raw_material_values')
     assert set(material['details']['coefficient_arrays']) == {'mu', 'mass'}
+
+
+@pytest.mark.skipif(not (V8_K1_ROOT / 'j1_controls.jsonl').is_file(),
+                    reason='ignored immutable V8 K1 fixture is not present')
+def test_v8_k1_checker_counts_explicit_control_audits_from_fixture():
+    from benchmarks.physical_intermediate_checker import recompute_v8_k1_controls
+
+    def rows(name):
+        return [json.loads(line) for line in (V8_K1_ROOT / name).read_text().splitlines()
+                if line.strip()]
+
+    summary = json.loads((V8_K1_ROOT / 'j1_controls_summary.json').read_text())
+    control_audits = rows('j1_controls.jsonl')
+    checked = recompute_v8_k1_controls(
+        summary['v8_k1_sequences'],
+        rows('v8_k1_sequence.jsonl') + rows('bounded_i4.jsonl'),
+        rows('pc_applies.jsonl'), rows('bounded_exit_audit.jsonl'),
+        control_metadata=summary['v8_k1'],
+        budget=summary['v8_preparation_budget'],
+        control_audit_rows=control_audits)
+
+    assert checked['passed'], checked['errors']
+    assert [row['label'] for row in control_audits] == ['A2R160', 'LIGHT448']
+    assert [row['complete_pc_calls'] for row in control_audits] == [1, 2]
+    assert all(row['balance']['closure_relative'] <= 1e-8
+               for row in control_audits)
+    costs = checked['bounded_costs']
+    assert costs['explicit_control_audits'] == 2
+    assert costs['expected_inexact_audits'] == 4

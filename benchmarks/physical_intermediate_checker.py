@@ -21,6 +21,8 @@ _BOUNDED_NEGATIVE_STATUSES = (
     'CONTROLLED_STOP',
 )
 
+_V8_K1_CONTROL_LABELS = ('A2R160', 'LIGHT448')
+
 
 def _stable_sha256(value) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(',', ':'),
@@ -740,7 +742,7 @@ def recompute_recycled_i4_sequence(records, *, sequence=None, budget=None,
 
 def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
                              exit_rows=(), *, control_metadata=None,
-                             budget=None) -> dict:
+                             budget=None, control_audit_rows=()) -> dict:
     """Wire completed finite sequence calls to the final four controls.
 
     The detailed field checks remain in the two existing checkers.  This
@@ -820,7 +822,8 @@ def recompute_v8_k1_controls(sequence_summary, i4_rows, pc_rows,
     errors.extend(f'CONTROLS: {error}' for error in control['errors'])
     costs = recompute_bounded_costs(
         control_raw, list(pc_rows or []), list(exit_rows or []),
-        baseline if isinstance(baseline, dict) else {}, require_lifetime=True)
+        baseline if isinstance(baseline, dict) else {}, require_lifetime=True,
+        control_audit_rows=control_audit_rows)
     errors.extend(f'COSTS: {error}' for error in costs['errors'])
     return dict(passed=not errors, errors=errors, reset=reset, carry=carry,
                 bounded_i4=control, bounded_costs=costs,
@@ -922,8 +925,15 @@ def recompute_bounded_screen(solve, rows):
 
 
 def recompute_bounded_costs(i4_rows, pc_rows, exit_rows=(), setup_costs=None,
-                            *, require_lifetime=False) -> dict:
-    """Recompute cumulative V7 costs, subtracting setup exactly once."""
+                            *, require_lifetime=False, control_audit_rows=()) -> dict:
+    """Recompute cumulative bounded costs, subtracting setup exactly once.
+
+    ``control_audit_rows`` is deliberately opt-in.  V8 K1 calls
+    ``InexactBalanceLedger.audit_last`` once for each named control after its
+    two coarse calls; those explicit audit records are separate from the
+    automatic per-PC audit and the final exit audit.  Keeping the argument
+    empty preserves the formal V7 accounting contract.
+    """
     errors = []
     missing = []
 
@@ -932,6 +942,8 @@ def recompute_bounded_costs(i4_rows, pc_rows, exit_rows=(), setup_costs=None,
             errors.append(message)
 
     setup = setup_costs or {}
+    control_audit_rows = list(control_audit_rows or ())
+    explicit_control_audits = len(control_audit_rows)
     zero_b4 = dict(applies=0, attempted=0, counts={}, operation_seconds={})
     setup_b4 = setup.get('B4', zero_b4)
     setup_i4 = setup.get('I4', {})
@@ -965,6 +977,56 @@ def recompute_bounded_costs(i4_rows, pc_rows, exit_rows=(), setup_costs=None,
             if not present:
                 missing.append(name)
         require(not missing, 'bounded per-PC lifetime counters are missing: '+','.join(missing))
+
+    if control_audit_rows:
+        require(len(control_audit_rows) == len(pc_rows),
+                'V8 K1 explicit control audit row count differs from PC records')
+        require(len(control_audit_rows) == len(_V8_K1_CONTROL_LABELS),
+                'V8 K1 explicit control audit count differs from the two-control contract')
+        for index, row in enumerate(control_audit_rows, 1):
+            require(isinstance(row, dict),
+                    f'V8 K1 explicit control audit record is not a mapping at {index}')
+            if not isinstance(row, dict):
+                continue
+            expected_label = _V8_K1_CONTROL_LABELS[index - 1] \
+                if index <= len(_V8_K1_CONTROL_LABELS) else None
+            require(row.get('status') == 'COMPLETE',
+                    f'V8 K1 explicit control audit status is not COMPLETE at {index}')
+            require(row.get('label') == expected_label,
+                    f'V8 K1 explicit control audit label/order mismatch at {index}')
+            require(row.get('complete_pc_calls') == index,
+                    f'V8 K1 explicit control audit PC count mismatch at {index}')
+            balance = row.get('balance')
+            require(isinstance(balance, dict),
+                    f'V8 K1 explicit control balance record is missing at {index}')
+            if not isinstance(balance, dict):
+                continue
+            for key in ('actual_defect_norm', 'closure_norm', 'operation_scale',
+                        'closure_relative', 'closure_limit', 'defect_scaled'):
+                require(_finite_number(balance.get(key), nonnegative=True),
+                        f'V8 K1 explicit control balance field is invalid at {index}: {key}')
+            if _finite_number(balance.get('operation_scale'), nonnegative=True):
+                require(float(balance['operation_scale']) > 0.0,
+                        f'V8 K1 explicit control operation scale is not positive at {index}')
+            if all(key in balance for key in ('closure_relative', 'closure_limit')):
+                require(balance['closure_limit'] == 1e-8,
+                        f'V8 K1 explicit control closure limit changed at {index}')
+                require(float(balance['closure_relative']) <=
+                        float(balance['closure_limit']),
+                        f'V8 K1 explicit control closure failed at {index}')
+            if (_finite_number(balance.get('closure_norm'), nonnegative=True) and
+                    _finite_number(balance.get('operation_scale'), nonnegative=True) and
+                    float(balance['operation_scale']) > 0.0):
+                expected_relative = (float(balance['closure_norm']) /
+                                     float(balance['operation_scale']))
+                require(np.isclose(float(balance['closure_relative']),
+                                   expected_relative, rtol=0, atol=1e-15),
+                        f'V8 K1 explicit control closure relative is not independently '
+                        f'recomputed at {index}')
+            g2_relative = row.get('g2_relative')
+            require(_finite_number(g2_relative, nonnegative=True) and
+                    float(g2_relative) <= 1e-10,
+                    f'V8 K1 explicit control g2 recompute failed at {index}')
 
     for name, present in (('B4', have_b4), ('S_action', have_s),
                           ('inexact_audit', have_audit)):
@@ -1031,10 +1093,14 @@ def recompute_bounded_costs(i4_rows, pc_rows, exit_rows=(), setup_costs=None,
         audit_total = total.get('inexact_audit', {})
         if audit_total and (have_audit or require_lifetime):
             audits = delta(audit_total, setup_audit, 'audits')
-            expected_audits = sum(row.get('inexact_balance', {}).get('actual_audit') == 'PASS'
-                                  for row in pc_rows) + 1
+            expected_audits = (sum(
+                row.get('inexact_balance', {}).get('actual_audit') == 'PASS'
+                for row in pc_rows) + explicit_control_audits + 1)
             require(audits == expected_audits,
-                    'inexact audit total does not equal PC audits plus one exit audit')
+                    ('inexact audit total does not equal independently counted PC, '
+                     'explicit control, and exit audits'
+                     if explicit_control_audits else
+                     'inexact audit total does not equal PC audits plus one exit audit'))
             exit_costs = (exit_row or {}).get('audit_costs', {})
             for key in ('audits', 'extra_A6', 'extra_PH'):
                 if key in exit_costs:
@@ -1048,8 +1114,15 @@ def recompute_bounded_costs(i4_rows, pc_rows, exit_rows=(), setup_costs=None,
         missing.append('bounded_exit_audit.total')
         require(not require_lifetime, 'bounded exit cumulative counters are missing')
 
+    expected_inexact_audits = None
+    if total and total.get('inexact_audit', {}):
+        expected_inexact_audits = (sum(
+            row.get('inexact_balance', {}).get('actual_audit') == 'PASS'
+            for row in pc_rows) + explicit_control_audits + 1)
     return dict(passed=not errors, errors=errors, missing=missing,
                 i4_totals=i4_totals, expected_b4=expected_b4,
+                explicit_control_audits=explicit_control_audits,
+                expected_inexact_audits=expected_inexact_audits,
                 setup=setup, setup_counts_separate=True)
 
 
