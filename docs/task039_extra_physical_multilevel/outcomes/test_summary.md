@@ -9,7 +9,7 @@
 | V10 focused regression | test361/test379/test410 合计 `55 passed in 1.81 s`；这是 task-focused regression，不是 full repository pytest |
 | V10 macro suite | `9 passed in 0.52 s`；覆盖局部 macro witness/selection/contract，不等于 M1 controls 完成 |
 | 静态代码检查 | macro solver/test Ruff 通过；changed macro modules `py_compile` 通过 |
-| 测试日志 | [v10_m4_test_run.log](records/v10_m4_test_run.log)，SHA `f484c96d8231de6b56052f162457010d8a2bba8d1af6b3992dfc8d950090cc97`；source `b0df7457c0c4b33c66abda16862926da3426bb7d`；手工编译摘录，不是 raw stdout | 轻量 task-focused/static only |
+| 测试日志 | [v10_m4_test_run.log](records/v10_m4_test_run.log)，SHA `f484c96d8231de6b56052f162457010d8a2bba8d1af6b3992dfc8d950090cc97`；source `b0df7457c0c4b33c66abda16862926da3426bb7d`；手工编译摘录，不是 raw stdout；轻量 task-focused/static only |
 | 文档链接/哈希 | 当前 V10 sections 的 8 份文档、26 个本地 Markdown 链接 resolve 通过；`jq empty`、hash 对照和 `git diff --check` 通过；大型 raw/matrix/factor/cache 仍在 ignored artifact |
 | full repository pytest | `not_run` |
 | CI | `not_run`；没有 CI 通过声明 |
