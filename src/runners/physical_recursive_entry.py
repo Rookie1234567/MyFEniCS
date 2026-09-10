@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
+
+from src.io.input_loader import InputError
 
 
 def p4_bridge_status(path):
@@ -81,6 +84,23 @@ def particular_contract():
 
 
 def selected_contract(args):
+    if getattr(args, 'macro_v10_controls', False):
+        from src.io.physical_recursive_profile import macro_v10_profile_facts
+
+        contract = macro_v10_profile_facts()
+        contract.update(
+            workflow='M1_controls',
+            fixed_source='original physical model; no cell notch',
+            inventory_role='G0 hash-bound calibration and balanced e/q packets',
+            reference_role='measurement only; never enters A4/B4/I4',
+            bare_B4_I4_calls=6,
+            shared_framework_samples=3,
+            shared_framework_I4_calls_max=6,
+            new_reference_factor=False,
+            full_outer_solve=False,
+            global_swap_stop=True,
+        )
+        return contract
     if getattr(args, 'bounded_j1_controls', False):
         route = getattr(args, 'bounded_j1_route', 'ENTITY16')
         if route == 'ENTITY_GCROT8_NEW16':
@@ -203,8 +223,16 @@ def selected_contract(args):
 
 
 def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,input_path=None,
-                        model_identity=None):
+                        model_identity=None, build_started=None):
     from . import physical_recursive_controls as controls
+    if getattr(args, 'macro_v10_controls', False):
+        from .physical_macro_controls import run_macro_m1_controls
+        return run_macro_m1_controls(
+            cfg, comm, args.inventory, directory, sample=sample, marker=marker,
+            source_sha=source_sha, input_path=input_path,
+            model_identity=model_identity,
+            build_started=build_started,
+        )
     if getattr(args, 'bounded_j1_controls', False):
         from .physical_bounded_j1 import run_j1_controls
         return run_j1_controls(cfg, comm, args.inventory, directory,
@@ -251,8 +279,17 @@ def atomic(path,data):
     temporary.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n');temporary.replace(path)
 
 
+def _write_identity_files(root, *, source_sha, input_sha256, physical_model_sha256):
+    """Write the small text identities required for every formal macro run."""
+    (root / 'source_sha.txt').write_text(f'{source_sha}\n', encoding='utf-8')
+    (root / 'input_sha256.txt').write_text(f'{input_sha256}\n', encoding='utf-8')
+    (root / 'physical_model_sha256.txt').write_text(
+        f'{physical_model_sha256}\n', encoding='utf-8')
+
+
 def worker(args):
-    cache_home=(Path(args.output)/'jit_cache').resolve()
+    cache_home=Path(getattr(args, 'jit_cache', None) or
+                    (Path(args.output)/'jit_cache')).resolve()
     if os.environ.get('XDG_CACHE_HOME')!=str(cache_home):
         raise RuntimeError('isolated JIT cache must be inherited before worker imports')
     import numpy as np
@@ -272,6 +309,8 @@ def worker(args):
     source=git_state(args.source_sha)
     parent=int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID']);cap=int(os.environ['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'])
     if parent==os.getpid() or not Path(f'/proc/{parent}').exists():raise RuntimeError('dedicated parent missing')
+    macro=getattr(args, 'macro_v10_controls', False)
+    build_started = time.perf_counter() if macro else None
     payload=load_and_resolve(args.input).as_jsonable()
     if (payload['provenance']['physical_model_sha256']!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
         or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
@@ -279,6 +318,11 @@ def worker(args):
     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_enriched_component;particular=args.bubble_particular_diagnostic
     contract=selected_contract(args);root=Path(args.output)
     (root/'input_original.dat').write_bytes(Path(args.input).read_bytes())
+    input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest()
+    physical_sha256=payload['provenance']['physical_model_sha256']
+    if macro:
+        _write_identity_files(root, source_sha=source['head'],
+            input_sha256=input_sha256, physical_model_sha256=physical_sha256)
     atomic(root/'resolved_config.json',dict(physical_input=payload,component_profile=contract,
         original_dat_solver_role='physical template only; old V5 PC is not invoked'))
     import petsc4py,slepc4py,dolfinx,basix,mpi4py
@@ -287,7 +331,182 @@ def worker(args):
     cache_options=get_options(SAME_MESH_JIT_OPTIONS)
     if Path(cache_options['cache_dir']).resolve()!=cache_home/'fenics':
         raise RuntimeError('effective form JIT cache escaped isolated run root')
+    module_objects = (petsc4py, slepc4py, dolfinx, basix, mpi4py)
+    module_paths = {
+        module.__name__: getattr(module, '__file__', None)
+        for module in module_objects
+    }
+    module_versions = {
+        module.__name__: getattr(module, '__version__', None)
+        for module in module_objects
+    }
+    resolved_config_sha256 = hashlib.sha256(
+        (root / 'resolved_config.json').read_bytes()
+    ).hexdigest()
+    if macro:
+        control_phase = 'V10_M1_controls'
+        manifest = {
+            'source': source,
+            'command': [sys.executable, *sys.argv],
+            'input_sha256': input_sha256,
+            'cwd': str(Path.cwd()), 'physical_sha256': physical_sha256,
+            'resolved_config_sha256': resolved_config_sha256,
+            'module_paths': module_paths,
+            'module_versions': module_versions,
+            'profile': selected_contract(args),
+            'control_inventory': str(Path(args.inventory).resolve()),
+            'jit_cache': {
+                'xdg_cache_home': str(cache_home),
+                'effective_cache_dir': str(cache_options['cache_dir']),
+                'timeout': cache_options['timeout'],
+                'initially_empty': not any(cache_home.iterdir()),
+            },
+            'abi': {
+                'python': sys.executable, 'scalar': 'complex128', 'integer': 'int32',
+                'threads': threads,
+            },
+        }
+        atomic(root/'run_manifest.json', manifest)
+        def sample():
+            value=process_tree_snapshot(parent,control_phase,None);envelope=memory_envelope()
+            value['launch_cap_bytes']=min(cap,value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
+            if (not value['all_status_readable'] or value['swap_bytes'] or
+                    value['rss_bytes']>=value['launch_cap_bytes'] or
+                    envelope['effective_available_bytes']<envelope['reserve_bytes']):
+                raise RuntimeError('whole-workflow resource gate failed')
+            return value
+        def marker(name,facts):
+            stamp=clock_sample()
+            atomic(root/'phase.json', {
+                'phase': control_phase, 'stage': name, 'clock': stamp,
+            })
+            with (root/'stages.jsonl').open('a') as stream:
+                stream.write(json.dumps({
+                    'stage': name, 'clock': stamp, 'facts': facts,
+                })+'\n')
+        try:
+            records_root = root / 'records'
+            result=dispatch_components(args,cfg,MPI.COMM_WORLD,records_root,
+                sample=sample,marker=marker,source_sha=source['head'],input_path=Path(args.input),
+                model_identity={
+                    'source_sha': source['head'],
+                    'physical_model_sha256': physical_sha256,
+                    'input_sha256': input_sha256,
+                    'profile': contract.get('profile') or contract.get('identity'),
+                    'scalar_type': 'complex128',
+                    'mpi_size': int(MPI.COMM_WORLD.Get_size()),
+                },
+                build_started=build_started)
+            manifest.update(
+                status='finished', result=result.get('status', 'J1_CONTROLS_COMPLETED'),
+                model_identity=result.get('model_identity'),
+                native_map_sha256=result.get('maps', {}).get('native_map_sha256'),
+                macro_stack_identity=result.get('macro_stack_identity'),
+            )
+            atomic(root/'run_manifest.json', manifest)
+            atomic(root/'run_summary.json', {
+                'schema': 'task39extra.review-v10.m1-run-summary.v1',
+                'status': 'COMPLETED',
+                'command': [sys.executable, *sys.argv],
+                'source_sha': source['head'],
+                'input_sha256': input_sha256,
+                'physical_model_sha256': physical_sha256,
+                'inventory_sha256': hashlib.sha256(
+                    Path(args.inventory).read_bytes()).hexdigest(),
+                'resolved_config_sha256': resolved_config_sha256,
+                'module_paths': module_paths,
+                'module_versions': module_versions,
+                'result_status': result.get('status'),
+                'new_i4_calls': result.get('new_i4_calls'),
+                'attempted_i4_calls': result.get('attempted_i4_calls'),
+                'completed_i4_calls': result.get('completed_i4_calls'),
+                'bare_b4_calls': result.get('bare_b4_calls'),
+                'bare_b4_attempted_calls': result.get('bare_b4_attempted_calls'),
+                'bare_b4_completed_calls': result.get('bare_b4_completed_calls'),
+                'framework_decision': result.get('framework_decision'),
+                'stage_times': result.get('stage_times'),
+                'model_identity': result.get('model_identity'),
+                'native_map_sha256': result.get('maps', {}).get('native_map_sha256'),
+                'macro_stack_identity': result.get('macro_stack_identity'),
+                'run_manifest_sha256': hashlib.sha256(
+                    (root/'run_manifest.json').read_bytes()).hexdigest(),
+            })
+            return result
+        except BaseException as exc:
+            partial_path = root / 'records' / 'm1_summary.json'
+            partial = {}
+            if partial_path.exists():
+                try:
+                    partial = json.loads(partial_path.read_text())
+                except (OSError, json.JSONDecodeError) as partial_exc:
+                    partial = {
+                        'status': 'PARTIAL_SUMMARY_UNREADABLE',
+                        'read_error': f'{type(partial_exc).__name__}: {partial_exc}',
+                    }
+            partial_evidence = {
+                'path': str(partial_path),
+                'sha256': hashlib.sha256(partial_path.read_bytes()).hexdigest()
+                if partial_path.exists() else None,
+                'status': partial.get('status'),
+                'new_i4_calls': partial.get('new_i4_calls'),
+                'attempted_i4_calls': partial.get('attempted_i4_calls'),
+                'completed_i4_calls': partial.get('completed_i4_calls'),
+                'bare_b4_calls': partial.get('bare_b4_calls'),
+                'bare_b4_attempted_calls': partial.get('bare_b4_attempted_calls'),
+                'bare_b4_completed_calls': partial.get('bare_b4_completed_calls'),
+                'stage_times': partial.get('stage_times'),
+                'last_safe_stage': partial.get('last_safe_stage'),
+                'failure_gate': partial.get('failure_gate'),
+                'macro_stack_identity': partial.get('macro_stack_identity'),
+            }
+            manifest.update(status='failed', exception_type=type(exc).__name__,
+                            exception=str(exc), partial_m1_summary=partial_evidence)
+            atomic(root/'run_manifest.json', manifest)
+            atomic(root/'run_summary.json', {
+                'schema': 'task39extra.review-v10.m1-run-summary.v1',
+                'status': 'FAILED',
+                'command': [sys.executable, *sys.argv],
+                'source_sha': source['head'],
+                'input_sha256': input_sha256,
+                'physical_model_sha256': physical_sha256,
+                'inventory_sha256': hashlib.sha256(
+                    Path(args.inventory).read_bytes()).hexdigest(),
+                'resolved_config_sha256': resolved_config_sha256,
+                'module_paths': module_paths,
+                'module_versions': module_versions,
+                'result_status': partial.get('status'),
+                'exception_type': type(exc).__name__,
+                'exception': str(exc),
+                'partial_m1_summary': partial_evidence,
+                'new_i4_calls': partial.get('new_i4_calls'),
+                'attempted_i4_calls': partial.get('attempted_i4_calls'),
+                'completed_i4_calls': partial.get('completed_i4_calls'),
+                'bare_b4_calls': partial.get('bare_b4_calls'),
+                'bare_b4_attempted_calls': partial.get('bare_b4_attempted_calls'),
+                'bare_b4_completed_calls': partial.get('bare_b4_completed_calls'),
+                'framework_decision': partial.get('framework_decision'),
+                'stage_times': partial.get('stage_times'),
+                'model_identity': partial.get('model_identity'),
+                'native_map_sha256': partial.get('maps', {}).get('native_map_sha256'),
+                'macro_stack_identity': partial.get('macro_stack_identity'),
+                'run_manifest_sha256': hashlib.sha256(
+                    (root/'run_manifest.json').read_bytes()).hexdigest(),
+            })
+            raise
+        finally:
+            if (root/'run_manifest.json').exists():
+                manifest['source_after']=git_state(args.source_sha)
+                atomic(root/'run_manifest.json', manifest)
+                summary_path = root/'run_summary.json'
+                if summary_path.exists():
+                    run_summary = json.loads(summary_path.read_text())
+                    run_summary['run_manifest_sha256'] = hashlib.sha256(
+                        (root/'run_manifest.json').read_bytes()).hexdigest()
+                    run_summary['source_after'] = manifest['source_after']
+                    atomic(summary_path, run_summary)
     if getattr(args, 'bounded_j1_controls', False):
+        # Preserve the established J1 worker contract; V10's run summary and
+        # stage ledger are intentionally confined to the macro branch above.
         control_phase = ('B_projected_finite_compare_and_controls'
                          if getattr(args, 'bounded_j1_route', 'ENTITY16') == 'PROJECTED_SEQ2_16'
                          else 'J1_controls')
@@ -370,8 +589,25 @@ def worker(args):
         dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker,
             source_sha=source,input_path=Path(args.input))
     finally:
-        identity=root/'records'/('trace_source_bridge.json' if args.high_trace_component or args.cached_trace_component or args.owner_route_trace_component or args.cell_joint_trace_component else 'amplification_map_bridge.json' if args.bubble_amplification_diagnostic else 'particular_map_bridge.json' if particular else 'bubble_source_bridge.json' if enriched else 'bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
-        manifest['native_map_bridge_status']='PASS' if identity.exists() else 'NOT_REACHED'
+        identity=root/'records'/('m1_summary.json' if macro else 'trace_source_bridge.json' if args.high_trace_component or args.cached_trace_component or args.owner_route_trace_component or args.cell_joint_trace_component else 'amplification_map_bridge.json' if args.bubble_amplification_diagnostic else 'particular_map_bridge.json' if particular else 'bubble_source_bridge.json' if enriched else 'bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
+        if macro:
+            stack_identity = root/'records'/'macro_stack_identity.json'
+            summary_payload = json.loads(identity.read_text()) if identity.exists() else {}
+            stack_payload = json.loads(stack_identity.read_text()) if stack_identity.exists() else {}
+            map_ok = bool(
+                summary_payload.get('status') == 'M1_CONTROLS_COMPLETED'
+                and isinstance(summary_payload.get('maps'), dict)
+                and summary_payload['maps'].get('p6_independent_rows')
+                and summary_payload['maps'].get('p4_independent_rows')
+                and stack_payload.get('profile') == selected_contract(args)['identity']
+                and stack_payload.get('mode_sha256')
+                and stack_payload.get('coverage')
+            )
+            manifest['native_map_bridge_status'] = (
+                'PASS' if map_ok else 'FAIL' if identity.exists() else 'NOT_REACHED'
+            )
+        else:
+            manifest['native_map_bridge_status']='PASS' if identity.exists() else 'NOT_REACHED'
         if diagnostic and identity.exists():
             manifest['native_map_bridge_status']=p4_bridge_status(identity)
         if (projected or enriched or particular or args.bubble_amplification_diagnostic or args.high_trace_component or args.cached_trace_component or args.owner_route_trace_component or args.cell_joint_trace_component) and identity.exists():
@@ -387,6 +623,8 @@ def worker(args):
 def build_parser():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('input','inventory','output','budget','source-sha'):parser.add_argument('--'+name,required=True)
+    parser.add_argument('--jit-cache', type=Path, default=None,
+        help='reusable hash-bound JIT cache; defaults to the attempt-local cache')
     parser.add_argument('--target',choices=('lo',),default='lo')
     group=parser.add_mutually_exclusive_group()
     group.add_argument('--p4-failure-diagnostic',action='store_true')
@@ -400,6 +638,7 @@ def build_parser():
     group.add_argument('--owner-route-trace-component',action='store_true')
     group.add_argument('--cell-joint-trace-component',action='store_true')
     group.add_argument('--bounded-j1-controls',action='store_true')
+    group.add_argument('--macro-v10-controls', action='store_true')
     parser.add_argument('--bounded-j1-route', choices=('ENTITY16', 'PROJECTED_SEQ2_16',
                                                        'ENTITY_GCROT8',
                                                        'ENTITY_GCROT8_NEW16'),
@@ -457,6 +696,12 @@ V9_FINITE_CONTROLS_LIMIT_SECONDS = 900.0
 B_PROJECTED_CONTROLS_LIMIT_SECONDS = 5400.0
 B_PROJECTED_CONTROLS_GROUP = 'B_projected_controls'
 B_PROJECTED_CONTROLS_KIND = 'bounded_projected_controls'
+MACRO_M1_CONTROLS_LIMIT_SECONDS = 1200.0
+MACRO_M1_CONTROLS_GROUP = 'V10_M1_controls'
+MACRO_M1_CONTROLS_KIND = 'physical_macro_dd4_v10_m1_controls'
+MACRO_M1_TOTAL_LIMIT_SECONDS = 5400.0
+MACRO_M1_BUILD_LIMIT_SECONDS = 3600.0
+MACRO_M1_LEDGER_SCHEMA = 'task39extra.review-v10-m0-m1-budget.v1'
 
 
 def _j1_charge_seconds(budget):
@@ -478,6 +723,191 @@ def _controls_charge_seconds(budget, group):
 
 def _j1_controls_charge_seconds(budget):
     return _controls_charge_seconds(budget, 'J0_J1_controls')
+
+
+def _load_macro_ledger(path):
+    path = Path(path)
+    if not path.exists():
+        raise ValueError(
+            'V10 M0/M1 ledger is missing; initialize it once from the explicit preparation record'
+        )
+    budget = json.loads(path.read_text())
+    if budget.get('schema') != MACRO_M1_LEDGER_SCHEMA:
+        raise ValueError('V10 M1 requires its independent M0/M1 ledger; V6 ledger is not accepted')
+    if budget.get('total_limit_seconds') != MACRO_M1_TOTAL_LIMIT_SECONDS:
+        raise ValueError('V10 M0/M1 ledger has the wrong total limit')
+    if budget.get('build_limit_seconds') != MACRO_M1_BUILD_LIMIT_SECONDS:
+        raise ValueError('V10 M0/M1 ledger has the wrong build limit')
+    if budget.get('controls_limit_seconds') != MACRO_M1_CONTROLS_LIMIT_SECONDS:
+        raise ValueError('V10 M0/M1 ledger has the wrong controls limit')
+    return budget
+
+
+def _macro_charged_seconds(budget):
+    return float(budget.get('charged_seconds', 0.0))
+
+
+def _launch_macro_m1_controls(args):
+    """Supervise M1 against the independent inclusive V10 M0/M1 ledger."""
+    from benchmarks.subreaper_watchdog import supervise
+
+    from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
+
+    source = git_state(args.source_sha)
+    budget_path = Path(args.budget).resolve()
+    inventory_path = Path(args.inventory).resolve()
+    if not inventory_path.exists():
+        raise ValueError('V10 M1 requires the audited G0 inventory')
+    input_path = Path(args.input).resolve()
+    input_sha256 = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    inventory_sha256 = hashlib.sha256(inventory_path.read_bytes()).hexdigest()
+    from src.io import load_and_resolve
+    physical_sha256 = load_and_resolve(input_path).physical_model_sha256
+    with (budget_path.with_suffix('.lock')).open('a') as lock_stream:
+        fcntl.flock(lock_stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        budget = _load_macro_ledger(budget_path)
+        if any(item.get('measurement_committed') for item in budget.get('attempts', [])):
+            raise ValueError('V10 M1 measurement is already committed; engineering-only retries must precede a completed control')
+        remaining = MACRO_M1_TOTAL_LIMIT_SECONDS - _macro_charged_seconds(budget)
+        if remaining <= 0:
+            raise RuntimeError('V10 M0/M1 inclusive budget exhausted')
+        active_lock = budget_path.parent / 'macro_v10_m1_active.lock'
+        descriptor = os.open(active_lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        os.close(descriptor)
+        root = Path(args.output)
+        result = None
+        clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
+        entry = {
+            'kind': MACRO_M1_CONTROLS_KIND,
+            'budget_group': MACRO_M1_CONTROLS_GROUP,
+            'source': args.source_sha,
+            'root': str(root),
+            'status': 'RESERVED',
+            'reservation_seconds': remaining,
+            'actual_seconds': None,
+            'measurement_committed': False,
+            'measurement_state': 'not_started',
+            'controls_limit_seconds': MACRO_M1_CONTROLS_LIMIT_SECONDS,
+            'build_limit_seconds': MACRO_M1_BUILD_LIMIT_SECONDS,
+            'total_limit_seconds': MACRO_M1_TOTAL_LIMIT_SECONDS,
+            'inventory': str(inventory_path),
+            'inventory_sha256': inventory_sha256,
+            'input': str(input_path),
+            'input_sha256': input_sha256,
+            'physical_model_sha256': physical_sha256,
+            'nested_ledger': 'independent V10 M0/M1 ledger',
+        }
+        budget.setdefault('attempts', []).append(entry)
+        atomic(budget_path, budget)
+        try:
+            root.mkdir(parents=True, exist_ok=False)
+            cache_home = (root.parent / 'jit_cache').resolve()
+            cache_home.mkdir(parents=True, exist_ok=True)
+            atomic(root / 'launch_plan.json', {
+                'source': source,
+                'contract': selected_contract(args),
+                'wall_seconds': remaining,
+                'budget_before': budget,
+                'inventory': str(inventory_path),
+                'control_group': MACRO_M1_CONTROLS_GROUP,
+                'jit_cache_home': str(cache_home),
+                'jit_cache_initially_empty': not any(cache_home.iterdir()),
+                'jit_cache_reused': any(cache_home.iterdir()),
+                'inclusive_budget': {
+                    'total': MACRO_M1_TOTAL_LIMIT_SECONDS,
+                    'build': MACRO_M1_BUILD_LIMIT_SECONDS,
+                    'controls': MACRO_M1_CONTROLS_LIMIT_SECONDS,
+                },
+            })
+            command = [
+                sys.executable, '-m', 'src.runners.physical_recursive_entry',
+                '--input', str(Path(args.input).resolve()),
+                '--inventory', str(inventory_path),
+                '--output', str(root), '--budget', str(budget_path),
+                '--source-sha', args.source_sha, '--target', 'lo',
+                '--macro-v10-controls', '--jit-cache', str(cache_home), '--worker',
+            ]
+            result = supervise(
+                command, root / 'watchdog', wall_seconds=remaining,
+                phase_path=root / 'phase.json', hard_stop_immediate=True,
+                timebase_guard=True, timebase_policy=CONSERVATIVE_REALTIME,
+                stop_on_global_swap=True, source_state=source,
+                worker_environment={'XDG_CACHE_HOME': str(cache_home)},
+            )
+            interval = result['workflow_clock_interval']
+            charge = float(interval['budget_seconds'])
+            entry['clock_interval'] = interval
+            entry.update(status=result['classification'],
+                         actual_seconds=charge,
+                         conservative_seconds=charge,
+                         descendants_cleared=result.get('descendants_cleared'))
+            summary_path = root / 'run_summary.json'
+            if summary_path.exists():
+                run_summary = json.loads(summary_path.read_text())
+                entry['measurement_committed'] = (
+                    run_summary.get('status') == 'COMPLETED'
+                    and run_summary.get('result_status') == 'M1_CONTROLS_COMPLETED'
+                )
+                entry['measurement_state'] = (
+                    'completed' if entry['measurement_committed'] else 'partial_or_engineering_failure'
+                )
+                entry['run_summary_sha256'] = hashlib.sha256(
+                    summary_path.read_bytes()).hexdigest()
+            budget['charged_seconds'] = _macro_charged_seconds(budget) + charge
+            budget['remaining_seconds'] = MACRO_M1_TOTAL_LIMIT_SECONDS - budget['charged_seconds']
+            atomic(budget_path, budget)
+            atomic(root / 'terminal.json', result)
+            atomic(root / 'source_after.json', git_state(args.source_sha))
+            if result['classification'] != 'COMPLETED':
+                raise SystemExit(1)
+            return result
+        except BaseException as exc:
+            if entry.get('status') == 'RESERVED':
+                entry.update(status='FAILED', exception_type=type(exc).__name__,
+                             exception_message=str(exc))
+            raise
+        finally:
+            if entry.get('actual_seconds') is None:
+                interval = clock.update(clock_sample())
+                charge = float(interval['budget_seconds'])
+                entry['clock_interval'] = interval
+                entry['actual_seconds'] = charge
+                entry['conservative_seconds'] = charge
+                budget['charged_seconds'] = _macro_charged_seconds(budget) + charge
+                budget['remaining_seconds'] = MACRO_M1_TOTAL_LIMIT_SECONDS - budget['charged_seconds']
+            atomic(budget_path, budget)
+            if result is not None and result.get('descendants_cleared'):
+                active_lock.unlink()
+
+
+def launch_macro_v10_workflow(specification, budget_path, inventory_path):
+    """Build the independent, supervised V10 M1 entry for ``run_case``."""
+    try:
+        source_sha = subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], text=True,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise InputError(f'cannot determine V10 M1 source SHA: {exc}') from exc
+    base = Path('benchmarks/artifacts/task39extra/v10_m1') / source_sha
+    root = base / 'm1'
+    if root.exists():
+        index = 2
+        while (base / f'm1_retry_{index:02d}').exists():
+            index += 1
+        root = base / f'm1_retry_{index:02d}'
+    args = argparse.Namespace(
+        input=Path(specification.source_path), inventory=Path(inventory_path),
+        output=root, budget=Path(budget_path), source_sha=source_sha, target='lo',
+        macro_v10_controls=True, bounded_j1_controls=False,
+        bounded_j1_route='ENTITY16', p4_failure_diagnostic=False,
+        projected_p4_component=False, bubble_local_tensor=False,
+        bubble_enriched_component=False, bubble_particular_diagnostic=False,
+        bubble_amplification_diagnostic=False, high_trace_component=False,
+        cached_trace_component=False, owner_route_trace_component=False,
+        cell_joint_trace_component=False, amplification_recording_retry=False,
+        worker=False,
+    )
+    return _launch_macro_m1_controls(args)
 
 
 def _launch_j1_controls(args):
@@ -615,6 +1045,8 @@ def _launch_j1_controls(args):
 def main():
     args=build_parser().parse_args()
     if args.worker:return worker(args)
+    if getattr(args, 'macro_v10_controls', False):
+        return _launch_macro_m1_controls(args)
     if args.bounded_j1_controls:
         return _launch_j1_controls(args)
     source=git_state(args.source_sha)

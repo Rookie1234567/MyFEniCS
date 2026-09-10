@@ -156,7 +156,7 @@ class PhysicalBalancedCoupling:
                     # ONE_C deliberately omits the second coarse correction:
                     # z=zc+s.  Its correctness is the operation-relative
                     # eps1-g2 identity, audited with the same PH map.
-                    facts['feedback'] = dict(s_norm=_norm(s), As_norm=_norm(v))
+                    facts['feedback'] = {'s_norm': _norm(s), 'As_norm': _norm(v)}
                     g2 = self.PH(v)
                     vectors.take(g2)
                     self.inexact_ledger.record_g2(g2)

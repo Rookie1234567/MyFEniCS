@@ -28,6 +28,52 @@ def load_recursive_calibration(inventory_path):
     return result
 
 
+def load_recursive_balanced_inputs(inventory_path):
+    """Load the three audited p6 ``e/q`` packets and native maps.
+
+    This is the shared G0 loader for the V10 control.  It verifies the same
+    E1 audit and packet hashes used by the existing recursive component
+    runner, but does not load any saved solve output or reference field.
+    """
+    from .physical_diagnostic_completion import load_packet
+
+    inventory_path = Path(inventory_path)
+    inventory = json.loads(inventory_path.read_text())
+    rows = inventory.get('six_calibration_rhs', ())
+    if len(rows) != 6:
+        raise ValueError('G0 inventory must contain exactly six calibration rows')
+    root = Path(rows[0]['input_json']).parent
+    audit_path = root.parent / 'e1_audit.json'
+    if hashlib.sha256(audit_path.read_bytes()).hexdigest() != inventory['e1_audit_sha256']:
+        raise ValueError('E1 audit identity mismatch')
+    audit = json.loads(audit_path.read_text())
+    hashes = {item['path']: item['sha256'] for item in audit['raw_hashes']}
+
+    def checked_packet(name):
+        path = root / (name + '.json')
+        if hashlib.sha256(path.read_bytes()).hexdigest() != hashes[str(path)]:
+            raise ValueError('frozen packet identity mismatch')
+        return load_packet(path)
+
+    inputs = {
+        name: checked_packet(name + '_balanced_input')
+        for name in ('A2R160', 'LIGHT448', 'JOINT448')
+    }
+    maps = {
+        6: checked_packet('native_constraint_map_p6'),
+        4: checked_packet('native_constraint_map_p4'),
+    }
+    for name, packet in inputs.items():
+        if 'e' not in packet or 'q' not in packet or packet['e'].shape != packet['q'].shape:
+            raise ValueError(f'{name} balanced input must contain matching e/q arrays')
+        if not np.isfinite(packet['e']).all() or not np.isfinite(packet['q']).all():
+            raise ValueError(f'{name} balanced input contains non-finite values')
+    return {
+        'inventory': inventory, 'root': root, 'inputs': inputs, 'maps': maps,
+        'e1_audit_sha256': inventory['e1_audit_sha256'],
+    }
+
+
 def verify_recursive_map(bundle, degree, reference):
     from src.solvers.condensed_fine_reference import native_map_arrays
     current = native_map_arrays(bundle['levels']['spaces'][degree], bundle['levels']['floquets'][degree])

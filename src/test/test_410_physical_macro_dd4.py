@@ -1,5 +1,7 @@
 """Focused production-path contracts for the Review V10 macro candidate."""
 
+import hashlib
+import json
 from types import SimpleNamespace
 
 import numpy as np
@@ -11,6 +13,7 @@ from src.solvers.physical_inexact_balance import InexactBalanceLedger
 from src.solvers.physical_macro_dd4 import (
     MacroClass,
     MacroLocalVolume,
+    _identity_hash_arrays,
     make_macro_pc,
     output_partition_weights,
 )
@@ -24,6 +27,18 @@ def _resource():
         "all_status_readable": True,
         "swap_bytes": 0,
     }
+
+
+def _bind_fixture_identities(local):
+    """Bind the same immutable identities required by the production builder."""
+    local.mapping_identity_sha256 = _identity_hash_arrays({
+        key: local.mapping[key]
+        for key in ("dofmap", "slaves", "masters", "coefficients",
+                    "offsets", "independent_indices")
+    })
+    local.cell_class_identity_sha256 = hashlib.sha256(
+        json.dumps(list(local.cell_classes), separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
 
 def test_macro_output_weights_are_partition_of_unity_and_reject_incomplete_coverage():
@@ -49,6 +64,7 @@ def test_macro_block_uses_all_support_rows_and_mpc_master_phase_without_input_mu
     local._new_p4_vector = lambda: PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
     local.dofmap = np.array([[0, 1, 2], [0, 3, 2]], dtype=np.int32)
     local.mapping = {
+        "dofmap": local.dofmap,
         "offsets": np.array([0, 0, 1, 1, 1], dtype=np.int64),
         "slaves": np.array([1], dtype=np.int64),
         "masters": np.array([0], dtype=np.int64),
@@ -90,6 +106,7 @@ def test_macro_block_uses_all_support_rows_and_mpc_master_phase_without_input_mu
         ),
     }
     local.cell_classes = ("cell0", "cell1")
+    _bind_fixture_identities(local)
     local.cell_expansions = [[
         (np.array([0]), np.array([1.0 + 0j])),
         (np.array([0]), np.array([phase])),
@@ -346,15 +363,17 @@ def test_macro_add_dtn_single_singular_block_releases_petsc_objects():
     local.marker = lambda name, facts: events.append((name, facts))
     local.save = None
     local.levels = {"mesh": SimpleNamespace(comm=PETSc.COMM_SELF)}
+    local.dofmap = np.array([[0]], dtype=np.int32)
     local.mapping = {
+        "dofmap": local.dofmap,
         "offsets": np.array([0, 0], dtype=np.int64),
         "slaves": np.empty(0, dtype=np.int64),
         "masters": np.empty(0, dtype=np.int64),
         "coefficients": np.empty(0, dtype=np.complex128),
         "independent_indices": np.array([0], dtype=np.int64),
     }
-    local.dofmap = np.array([[0]], dtype=np.int32)
     local.cell_classes = ("singular",)
+    _bind_fixture_identities(local)
     local.cell_expansions = [[
         (np.array([0], dtype=np.int64), np.array([1.0 + 0j], dtype=np.complex128)),
     ]]

@@ -545,6 +545,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "a2r_packed_equivalent_v2",
                 "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9",
                 "p6smooth_p4ref_p6smooth_v1",
+                "physical_macro_dd4_v10",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -560,6 +561,18 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
+            elif preconditioner == "physical_macro_dd4_v10":
+                for section, key, actual, expected in (
+                    ("solver", "restart", solver["restart"], 4),
+                    ("solver", "max_iterations", solver["max_iterations"], 4),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], 5400),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 10.0),
+                ):
+                    if actual != expected:
+                        raise _error(f"{section}.{key}", f"{preconditioner} fixes {key}={expected}")
             elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9"):
                 expanded = preconditioner in ("a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9")
                 for section, key, actual, expected in (

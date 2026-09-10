@@ -117,6 +117,8 @@ def test_worker_dispatch_never_builds_reference(monkeypatch,tmp_path):
     monkeypatch.setenv('PHYSICAL_WATCHDOG_PARENT_PID',str(os.getppid()))
     monkeypatch.setenv('PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES','10000000000')
     monkeypatch.setenv('PHYSICAL_WATCHDOG_PHASE_PATH',str(tmp_path/'phase.json'))
+    monkeypatch.setenv('PHYSICAL_TIMEBASE_GUARD','1')
+    monkeypatch.setenv('PHYSICAL_TIMEBASE_POLICY','conservative_realtime')
     with pytest.raises(ReachedRecursive):run_physical_intermediate(spec().as_jsonable(),tmp_path,source_sha='a'*40)
 
 

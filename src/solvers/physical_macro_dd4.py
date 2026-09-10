@@ -16,18 +16,17 @@ constructing a PDE mesh.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
 import sys
 import time
 import warnings
-from pathlib import Path
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from scipy.linalg import LinAlgWarning, lu_factor, lu_solve
-
 
 MACRO_PROFILE = "physical_macro_dd4_v10"
 MACRO_SCHEMA = "task039.physical-macro-dd4.v10"
@@ -69,6 +68,18 @@ def _readonly(array: np.ndarray) -> np.ndarray:
     value = np.ascontiguousarray(array)
     value.flags.writeable = False
     return value
+
+
+def _identity_hash_arrays(named_arrays: Mapping[str, Any]) -> str:
+    """Hash fixed array identity, including names, dtype, and shape."""
+    digest = hashlib.sha256()
+    for name in sorted(named_arrays):
+        value = np.ascontiguousarray(np.asarray(named_arrays[name]))
+        digest.update(name.encode("utf-8"))
+        digest.update(str(value.dtype).encode("ascii"))
+        digest.update(json.dumps(list(value.shape)).encode("ascii"))
+        digest.update(value.tobytes())
+    return digest.hexdigest()
 
 
 def _checked_local_factor(matrix: np.ndarray) -> tuple[tuple[np.ndarray, np.ndarray], dict[str, Any]]:
@@ -147,10 +158,16 @@ class MacroLocalVolume:
         marker: Callable[[str, Mapping[str, Any]], Any],
         save: Callable[[str, Mapping[str, Any]], Any] | None = None,
     ) -> None:
-        from .condensed_fine_reference import native_map_arrays, project_unconstrained_mpc_dual
+        from .condensed_fine_reference import (
+            native_map_arrays,
+            project_unconstrained_mpc_dual,
+        )
         from .fullspace_same_mesh_hcurl_pmg import _dof_transform, _n1e
         from .fullspace_v17_p3_oracle import compile_physical_diagnostic_volume
-        from .hcurl_assembly_time_condensation import _cell_integral_kernels, _tabulate_raw_tensor_class
+        from .hcurl_assembly_time_condensation import (
+            _cell_integral_kernels,
+            _tabulate_raw_tensor_class,
+        )
         from .physical_bubble_local import fixed_bubble_basis
 
         self.levels = levels
@@ -170,8 +187,13 @@ class MacroLocalVolume:
         self.dofmap = np.asarray(self.mapping["dofmap"], dtype=np.int32)
         if self.dofmap.shape != (252, 300):
             raise ValueError(f"frozen local topology changed: {self.dofmap.shape}")
+        self.mapping_identity_sha256 = _identity_hash_arrays({
+            key: self.mapping[key]
+            for key in ("dofmap", "slaves", "masters", "coefficients",
+                        "offsets", "independent_indices")
+        })
 
-        marker("macro_local_volume_started", {"cells": int(len(self.dofmap)), "local_dimension": 300})
+        marker("macro_local_volume_started", {"cells": len(self.dofmap), "local_dimension": 300})
         quadrature = actions["volume_quadrature_metadata"]
         compiled = compile_physical_diagnostic_volume(
             levels, cfg, 4, volume_quadrature_metadata=quadrature
@@ -279,6 +301,9 @@ class MacroLocalVolume:
             marker("macro_local_class_complete", {"cell": cell, "class_count": class_count, "key": key})
         del compiled, kernels, orientation_cache
         self.cell_classes = tuple(self.cell_classes)
+        self.cell_class_identity_sha256 = hashlib.sha256(
+            json.dumps(list(self.cell_classes), separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
         if len(self.classes) == 0:
             raise ValueError("macro builder produced no local physical classes")
         self._build_cell_groups(levels, geometry, geometry_dofmap)
@@ -414,17 +439,21 @@ class MacroLocalVolume:
             support = np.asarray([cell for cell, active in enumerate(self.cell_active) if np.intersect1d(active, selected).size], dtype=np.int32)
             if selected.size > LOCAL_ROWS_CAP:
                 raise MemoryError(f"macro block {seed} has {selected.size} rows > {LOCAL_ROWS_CAP}")
-            carrier = levels["__macro_dtn_carrier"] if "__macro_dtn_carrier" in levels else None
+            carrier = levels.get("__macro_dtn_carrier")
             blocks.append({"seed": seed, "seed_cells": tuple(seed_cells), "indices": selected,
-                           "support_cells": support, "volume_terms": int(len(support)),
+                           "support_cells": support, "volume_terms": len(support),
                            "dtn_terms": 0, "carrier": carrier})
         self.blocks = blocks
         self.cell_coordinates_array = np.ascontiguousarray(self.cell_coordinates, dtype=np.int32)
 
-    def _mumps_backsolve_gate(self, matrix: Any, factor: Any) -> dict[str, Any]:
+    def _mumps_backsolve_gate(
+        self, matrix: Any, factor: Any, *, save=None, block_index=None,
+        identity: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Check two fixed ``D_i w`` solves through the retained MUMPS factor."""
 
         defects = []
+        probes_facts = []
         n = int(matrix.getSize()[0])
         probes = (
             np.arange(1, n + 1, dtype=np.float64) + 1j * np.arange(n, 0, -1, dtype=np.float64),
@@ -434,17 +463,47 @@ class MacroLocalVolume:
             vector = matrix.createVecRight()
             rhs = matrix.createVecRight()
             solution = checked = None
+            probe_fact: dict[str, Any] = {
+                "probe_index": len(probes_facts),
+                "probe_norm": float(np.linalg.norm(probe)),
+            }
             try:
                 vector.array[:] = probe
                 matrix.mult(vector, rhs)
+                probe_fact["rhs_norm"] = float(np.linalg.norm(rhs.array))
                 solution, _ = factor.solve_lean(rhs)
                 checked = matrix.createVecRight()
                 matrix.mult(solution, checked)
-                defect = float(np.linalg.norm(checked.array - rhs.array) /
-                               max(np.linalg.norm(rhs.array), np.finfo(float).tiny))
+                difference_norm = float(np.linalg.norm(checked.array - rhs.array))
+                rhs_norm = float(np.linalg.norm(rhs.array))
+                defect = difference_norm / max(rhs_norm, np.finfo(float).tiny)
+                probe_fact.update(
+                    solution_norm=float(np.linalg.norm(solution.array)),
+                    checked_norm=float(np.linalg.norm(checked.array)),
+                    difference_norm=difference_norm,
+                    relative_residual=defect,
+                    rhs_sha256=hashlib.sha256(
+                        np.ascontiguousarray(rhs.array).tobytes()).hexdigest(),
+                    residual_sha256=hashlib.sha256(
+                        np.ascontiguousarray(checked.array - rhs.array).tobytes()).hexdigest(),
+                )
                 if not np.isfinite(defect) or defect > LOCAL_SOLVE_LIMIT:
                     raise ValueError(f"local MUMPS backsolve residual {defect} exceeds {LOCAL_SOLVE_LIMIT}")
                 defects.append(defect)
+                probes_facts.append(probe_fact)
+            except BaseException as exc:
+                _save(save, f"macro_block_{block_index:02d}_backsolve_failure"
+                      if block_index is not None else "macro_backsolve_failure", {
+                    "identity": dict(identity or {}),
+                    "probe": probe.copy(),
+                    "rhs": rhs.array.copy(),
+                    "solution": solution.array.copy() if solution is not None else None,
+                    "checked": checked.array.copy() if checked is not None else None,
+                    "probe_facts": probe_fact,
+                    "exception_type": type(exc).__name__,
+                    "exception": str(exc),
+                })
+                raise
             finally:
                 vector.destroy()
                 rhs.destroy()
@@ -455,6 +514,7 @@ class MacroLocalVolume:
         return {
             "test_rhs_count": len(defects),
             "test_relative_residuals": defects,
+            "probe_facts": probes_facts,
             "test_residual_limit": LOCAL_SOLVE_LIMIT,
         }
 
@@ -507,6 +567,7 @@ class MacroLocalVolume:
 
     def _native_block_witness(
         self, block: Mapping[str, Any], selected: np.ndarray, matrix: Any, native_a4: Any,
+        *, save=None, block_index=None, identity: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Compare three fixed embedded block vectors against native A4."""
 
@@ -521,12 +582,14 @@ class MacroLocalVolume:
         slave_indices = np.asarray(self.mapping["slaves"], dtype=np.int64)
         defects = []
         operation_scales = []
+        probe_facts = []
         for seed in range(3):
             local = np.arange(selected.size, dtype=np.float64) + 1.0 + seed
             w = local + 1j * (local[::-1] + 0.25 * seed)
             block_vector = matrix.createVecRight()
             block_rhs = matrix.createVecRight()
             global_vector = native_value = None
+            probe_fact: dict[str, Any] = {"probe_index": seed}
             try:
                 block_vector.array[:] = w
                 matrix.mult(block_vector, block_rhs)
@@ -542,12 +605,38 @@ class MacroLocalVolume:
                 native_norm = float(np.linalg.norm(native_value.array[selected]))
                 block_norm = float(np.linalg.norm(block_rhs.array))
                 operation_scale = max(native_norm + block_norm, np.finfo(float).tiny)
-                defect = float(np.linalg.norm(native_value.array[selected] - block_rhs.array) /
-                               operation_scale)
+                difference_norm = float(np.linalg.norm(native_value.array[selected] - block_rhs.array))
+                defect = float(difference_norm / operation_scale)
+                probe_fact.update(
+                    native_norm=native_norm,
+                    block_norm=block_norm,
+                    difference_norm=difference_norm,
+                    operation_scale=operation_scale,
+                    relative_residual=defect,
+                    block_rhs_sha256=hashlib.sha256(
+                        np.ascontiguousarray(block_rhs.array).tobytes()).hexdigest(),
+                    residual_sha256=hashlib.sha256(
+                        np.ascontiguousarray(
+                            native_value.array[selected] - block_rhs.array
+                        ).tobytes()).hexdigest(),
+                )
                 if not np.isfinite(defect) or defect > 1.0e-10:
                     raise ValueError(f"native A4 block witness residual {defect} exceeds 1e-10")
                 defects.append(defect)
                 operation_scales.append(operation_scale)
+                probe_facts.append(probe_fact)
+            except BaseException as exc:
+                _save(save, f"macro_block_{block_index:02d}_native_witness_failure"
+                      if block_index is not None else "macro_native_witness_failure", {
+                    "identity": dict(identity or {}),
+                    "probe": w.copy(),
+                    "block_rhs": block_rhs.array.copy(),
+                    "native_values": native_value.array.copy() if native_value is not None else None,
+                    "probe_facts": probe_fact,
+                    "exception_type": type(exc).__name__,
+                    "exception": str(exc),
+                })
+                raise
             finally:
                 block_vector.destroy()
                 block_rhs.destroy()
@@ -559,6 +648,7 @@ class MacroLocalVolume:
             "fixed_vectors": 3,
             "relative_residuals": defects,
             "operation_scales": operation_scales,
+            "probe_facts": probe_facts,
             "limit": 1.0e-10,
             "restriction": "R_i",
             "embedding": "R_i^H",
@@ -573,8 +663,21 @@ class MacroLocalVolume:
         """Assemble and retain one qualified sparse MUMPS factor per block."""
 
         from petsc4py import PETSc
+
         from .fullspace_bounded_mumps import BoundedP1Factor
 
+        dtn_identity_arrays: dict[str, Any] = {}
+        for entry_index, entry in enumerate(carrier.entries):
+            dtn_identity_arrays.update({
+                f"{entry_index}:coupling_rows": entry.coupling_rows,
+                f"{entry_index}:coupling_values": entry.coupling_values,
+                f"{entry_index}:projection_rows": entry.projection_rows,
+                f"{entry_index}:projection_values": entry.projection_values,
+                f"{entry_index}:normalization": np.asarray(
+                    [entry.normalization_h], dtype=np.float64),
+            })
+        dtn_identity_sha256 = _identity_hash_arrays(dtn_identity_arrays)
+        self.dtn_identity_sha256 = dtn_identity_sha256
         representative_by_category = self._select_representative_blocks(carrier)
         self.representative_block_indices = dict(representative_by_category)
         representative_blocks = set(representative_by_category.values())
@@ -599,7 +702,7 @@ class MacroLocalVolume:
                 raise MemoryError(f"macro block {index} has an invalid row count")
             position = {int(row): i for i, row in enumerate(selected.tolist())}
             cell_terms = []
-            row_pattern = [set([row]) for row in range(selected.size)]
+            row_pattern = [{row} for row in range(selected.size)]
             for cell in block["support_cells"]:
                 local_rows, block_positions, local_values = [], [], []
                 for local, (ids, values) in enumerate(self.cell_expansions[int(cell)]):
@@ -638,10 +741,14 @@ class MacroLocalVolume:
                                          + (selected.size + 1) * index_bytes)
             resource = self.sample()
             base_resident = self._resident_bytes()
-            if base_resident + 2 * estimated_matrix_bytes > LOCAL_RESIDENT_CAP:
-                raise MemoryError("macro block temporary/resident policy rejects sparse allocation")
+            # The retained-resident gate charges the matrix once.  PETSc's
+            # allocation workspace and the explicit temporary copy are
+            # transient and belong to the RSS/launch-cap gate below, not to
+            # the 2 GiB retained-cache policy.
+            if base_resident + estimated_matrix_bytes > LOCAL_RESIDENT_CAP:
+                raise MemoryError("macro block resident policy rejects sparse allocation")
             if not isinstance(resource, Mapping):
-                raise RuntimeError("macro block resource sample is not a mapping")
+                raise TypeError("macro block resource sample is not a mapping")
             required = ("rss_bytes", "launch_cap_bytes", "all_status_readable", "swap_bytes")
             if any(key not in resource for key in required):
                 raise RuntimeError("macro block resource sample is missing an authoritative field")
@@ -675,26 +782,53 @@ class MacroLocalVolume:
                                      np.asarray(p_indices, dtype=PETSc.IntType), contribution,
                                      addv=PETSc.InsertMode.ADD_VALUES)
                 matrix.assemble()
+                csr_indptr, csr_indices, csr_values = matrix.getValuesCSR()
+                csr_structure_sha256 = _identity_hash_arrays({
+                    "indptr": csr_indptr, "indices": csr_indices,
+                })
+                csr_values_sha256 = _identity_hash_arrays({
+                    "indptr": csr_indptr, "indices": csr_indices, "values": csr_values,
+                })
+                block_identity = {
+                    "block_index": int(index),
+                    "seed": list(block["seed"]),
+                    "block_indices_sha256": _identity_hash_arrays({"indices": selected}),
+                    "support_cells_sha256": _identity_hash_arrays({
+                        "support_cells": np.asarray(block["support_cells"], dtype=np.int32),
+                    }),
+                    "mapping_identity_sha256": self.mapping_identity_sha256,
+                    "cell_class_identity_sha256": self.cell_class_identity_sha256,
+                    "dtn_identity_sha256": dtn_identity_sha256,
+                    "csr_structure_sha256": csr_structure_sha256,
+                    "csr_values_sha256": csr_values_sha256,
+                }
+                block["identity"] = block_identity
+                block["csr_structure_sha256"] = csr_structure_sha256
+                block["csr_values_sha256"] = csr_values_sha256
                 matrix_info = matrix.getInfo()
                 block["matrix_storage_bytes"] = int(matrix_info["nz_allocated"] *
                                                      (np.dtype(PETSc.IntType).itemsize + np.dtype(PETSc.ScalarType).itemsize)
                                                      + (selected.size + 1) * np.dtype(PETSc.IntType).itemsize)
                 resident_before_factor = self._resident_bytes()
-                def pre_numeric_gate(facts: dict[str, Any]) -> None:
+                def pre_numeric_gate(
+                    facts: dict[str, Any], *, block_index=index,
+                    resident_before_factor_bytes=resident_before_factor,
+                    block_ref=block,
+                ) -> None:
                     predicted = int(facts["factor_estimated_padded_bytes"])
                     current = self.sample()
                     gate_facts = {
-                        "block": index,
-                        "resident_before_factor_bytes": resident_before_factor,
-                        "matrix_storage_bytes": block["matrix_storage_bytes"],
+                        "block": block_index,
+                        "resident_before_factor_bytes": resident_before_factor_bytes,
+                        "matrix_storage_bytes": block_ref["matrix_storage_bytes"],
                         "factor_estimated_padded_bytes": predicted,
                         "resident_cap_bytes": LOCAL_RESIDENT_CAP,
                         "temporary_workspace_reserve_bytes": LOCAL_TEMP_RESERVE,
                         "resource": current,
                         "classification": "derived_local_factor_pre_numeric_gate",
                     }
-                    _save(save, f"macro_block_{index:02d}_symbolic_gate", gate_facts)
-                    if (resident_before_factor + predicted > LOCAL_RESIDENT_CAP
+                    _save(save, f"macro_block_{block_index:02d}_symbolic_gate", gate_facts)
+                    if (resident_before_factor_bytes + predicted > LOCAL_RESIDENT_CAP
                             or not current.get("all_status_readable", False)
                             or int(current.get("swap_bytes", 1)) != 0
                             or int(current.get("rss_bytes", 0)) + predicted + LOCAL_TEMP_RESERVE
@@ -702,7 +836,8 @@ class MacroLocalVolume:
                         raise MemoryError("macro symbolic factor exceeds the local or workflow gate")
                 factor = BoundedP1Factor(
                     matrix, label=f"macro_block_{index:02d}", resource_sample=self.sample,
-                    marker=lambda name, facts: self.marker(name, dict(block=index, **facts)),
+                    marker=lambda name, facts, block_index=index:
+                        self.marker(name, dict(block=block_index, **facts)),
                     physical_p2_pilot=False, extra_local_bytes=0,
                     pre_numeric_gate=pre_numeric_gate,
                 )
@@ -711,7 +846,9 @@ class MacroLocalVolume:
                     factor.audit.get("factor_reported_allocated_padded_bytes", 0),
                     factor.audit.get("factor_reported_used_padded_bytes", 0),
                 ))
-                block["backsolve"] = self._mumps_backsolve_gate(matrix, factor)
+                block["backsolve"] = self._mumps_backsolve_gate(
+                    matrix, factor, save=save, block_index=index, identity=block_identity,
+                )
                 factor_facts.update(block["backsolve"])
                 block["matrix"] = matrix
                 block["factor"] = factor
@@ -720,10 +857,17 @@ class MacroLocalVolume:
                 block["resident_bytes"] = int(
                     block["matrix_storage_bytes"] + block["factor_reported_bytes"] + selected.nbytes
                 )
+                retained_after_factor = self._resident_bytes()
+                if retained_after_factor > LOCAL_RESIDENT_CAP:
+                    raise MemoryError(
+                        "macro retained resident policy exceeded after block factorization"
+                    )
+                self.resident_bytes = retained_after_factor
                 if index in representative_blocks:
                     block["representative_categories"] = tuple(representative_categories[index])
                     block["native_witness"] = self._native_block_witness(
-                        block, selected, matrix, native_a4,
+                        block, selected, matrix, native_a4, save=save,
+                        block_index=index, identity=block_identity,
                     )
             except BaseException:
                 if factor is not None:
@@ -747,11 +891,14 @@ class MacroLocalVolume:
             _save(save, f"macro_block_{index:02d}", {
                 "seed_group": list(block["seed"]),
                 "seed_cells": list(block["seed_cells"]),
-                "support_cell_count": int(len(block["support_cells"])),
+                "support_cell_count": len(block["support_cells"]),
                 "rows": int(selected.size),
                 "volume_terms": int(block["volume_terms"]),
-                "dtn_terms": int(len(dtn_terms)),
+                "dtn_terms": len(dtn_terms),
                 "factor": factor_facts,
+                "identity": block.get("identity"),
+                "csr_structure_sha256": block.get("csr_structure_sha256"),
+                "csr_values_sha256": block.get("csr_values_sha256"),
                 "factor_backend": factor_facts["backend"],
                 "full_support": True,
                 "representative_categories": list(block.get("representative_categories", ())),
@@ -782,7 +929,7 @@ class MacroLocalVolume:
             "support_cell_total": int(sum(len(block["support_cells"]) for block in self.blocks)),
             "rows_max": int(max(len(block["indices"]) for block in self.blocks)),
             "resident_bytes": int(self.resident_bytes),
-            "dtn_mode_count": int(len(carrier.entries)),
+            "dtn_mode_count": len(carrier.entries),
             "input_weighting": "none",
             "output_weighting": "1/multiplicity",
         }
@@ -791,9 +938,9 @@ class MacroLocalVolume:
     def build_w_transfer(self) -> Any:
         """Build the current-material W/P transfer used by the real C_U."""
 
+        from .fullspace_physical_intermediate_runtime import AlgebraicOwnerTransfer
         from .fullspace_same_mesh_hcurl_pmg import build_same_mesh_hcurl_transfer
         from .fullspace_same_mesh_hcurl_pmg_runtime import SameMeshHcurlOwnerTransfer
-        from .fullspace_physical_intermediate_runtime import AlgebraicOwnerTransfer
 
         def provider(cell: int, info: int, base: np.ndarray) -> np.ndarray:
             item = self.classes[self.cell_classes[int(cell)]]
@@ -846,9 +993,13 @@ class MacroLocalVolume:
     def insert_volume(self, volume: Any, space: Any, mpc: Any) -> None:
         """Insert the current ``delta = W^H A W - P^H A P`` into p2 volume."""
 
-        from .fullspace_same_mesh_hcurl_pmg_p6 import _cell_expansion_workspace, _fill_cell_expansion
-        from .physical_bubble_global import constrained_cell_correction
         from petsc4py import PETSc
+
+        from .fullspace_same_mesh_hcurl_pmg_p6 import (
+            _cell_expansion_workspace,
+            _fill_cell_expansion,
+        )
+        from .physical_bubble_global import constrained_cell_correction
 
         imap = mpc.function_space.dofmap.index_map
         storage = imap.size_local + imap.num_ghosts
@@ -865,10 +1016,37 @@ class MacroLocalVolume:
         volume.assemble()
         self.sample()
 
-    def build_s_action(self, a4: Any, levels: Mapping[str, Any]) -> "MacroSchurAction":
+    def build_s_action(self, a4: Any, levels: Mapping[str, Any]) -> MacroSchurAction:
         if not hasattr(self, "transfer"):
             raise RuntimeError("W transfer must be built before the Schur action")
         return MacroSchurAction(self.transfer, a4, levels)
+
+    def coarse_restriction(self, value: Any) -> np.ndarray:
+        """Return the existing ``W^H`` restriction plus all ``Q^H`` responses.
+
+        The p2 part is the already-qualified owner restriction.  The appended
+        cell responses are the same local interior ``Q^H value`` quantities
+        used by the existing bounded runtime; they close the C_U balance
+        without introducing a second projection space.
+        """
+
+        coarse = self.transfer.apply_adjoint(value)
+        try:
+            expanded = self._expanded(value.array)
+            internal = np.concatenate([
+                item.Q.conj().T @ expanded[rows]
+                for rows, item in zip(
+                    self.dofmap,
+                    (self.classes[key] for key in self.cell_classes),
+                    strict=True,
+                )
+            ])
+            result = np.concatenate([np.array(coarse.array, copy=True), internal])
+            if not np.isfinite(result).all():
+                raise ValueError("macro coarse restriction returned non-finite values")
+            return result
+        finally:
+            coarse.destroy()
 
     def _expanded(self, array: np.ndarray) -> np.ndarray:
         from .physical_bubble_particular import expand_primal
@@ -922,8 +1100,9 @@ class MacroLocalVolume:
                     if solution is not None:
                         solution.destroy()
             else:
-                solution = lu_solve(factor, array[indices])
-                np.add.at(out, indices, self.output_weights[indices] * solution)
+                raise RuntimeError(
+                    "formal M_D requires the qualified PETSc/MUMPS block factor"
+                )
         out[np.asarray(self.mapping["slaves"], dtype=np.int64)] = 0.0
         return out
 
@@ -972,9 +1151,15 @@ class MacroInternalResponse:
 
     def apply(self, source: Any) -> Any:
         target = self._make()
-        target.array[:] = self.local.internal_array(source.array)
-        self.calls += 1
-        return target
+        try:
+            target.array[:] = self.local.internal_array(source.array)
+            self.calls += 1
+            result = target
+            target = None
+            return result
+        finally:
+            if target is not None:
+                target.destroy()
 
 
 class MacroVolume:
@@ -1137,8 +1322,8 @@ class MacroI4:
         )
 
     def apply(self, rhs: Any) -> dict[str, Any]:
+        self.calls += 1
         result = self.admission(rhs)
-        self.calls = self.admission.calls
         self.records.append(dict(result["facts"]))
         return result
 
@@ -1160,11 +1345,15 @@ def destroy_macro_stack(stack: dict[str, Any]) -> None:
         local.destroy()
     actions = stack.pop("actions", None)
     if actions is not None:
-        from .fullspace_physical_intermediate_runtime import destroy_physical_intermediate_actions
+        from .fullspace_physical_intermediate_runtime import (
+            destroy_physical_intermediate_actions,
+        )
         destroy_physical_intermediate_actions(actions)
     fine = stack.pop("fine", None)
     if fine is not None:
-        from .fullspace_same_mesh_hcurl_pmg_physical import destroy_same_mesh_physical_action
+        from .fullspace_same_mesh_hcurl_pmg_physical import (
+            destroy_same_mesh_physical_action,
+        )
         destroy_same_mesh_physical_action(fine)
     positive = stack.pop("positive", None)
     if positive is not None:
@@ -1208,12 +1397,15 @@ def _build_macro_stack_impl(
 ) -> dict[str, Any]:
     """Internal builder whose partial ownership is visible to the wrapper."""
 
+    from .fullspace_p4_reference import build_reference_matrix
+    from .fullspace_physical_intermediate_runtime import (
+        build_physical_intermediate_actions,
+        level_vector,
+    )
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from .fullspace_same_mesh_hcurl_pmg_physical import build_same_mesh_physical_action
-    from .fullspace_physical_intermediate_runtime import build_physical_intermediate_actions, level_vector
     from .physical_balanced_coupling import PhysicalBalancedCoupling
     from .physical_light_setup import build_light_h6_setup
-    from .fullspace_p4_reference import build_reference_matrix
     from .physical_recursive_coarse import PhysicalP2Inverse
 
     if comm.size != 1:
@@ -1299,7 +1491,7 @@ def _build_macro_stack_impl(
         lambda value: _apply_owned(cached_a4, value),
         coarse.apply,
         additive.apply,
-        local.transfer.apply_adjoint,
+        local.coarse_restriction,
         route="BAL_H",
         checkpoint=sample,
         level_identity="V10_cached_current_A4_CU_MD",
@@ -1382,7 +1574,14 @@ def make_macro_pc(
 
 
 __all__ = [
-    "MACRO_PROFILE", "MACRO_SCHEMA", "MacroLocalVolume", "MacroAdditiveInverse",
-    "MacroCoarse", "MacroI4", "build_macro_stack", "destroy_macro_stack",
-    "make_macro_pc", "output_partition_weights",
+    "MACRO_PROFILE",
+    "MACRO_SCHEMA",
+    "MacroAdditiveInverse",
+    "MacroCoarse",
+    "MacroI4",
+    "MacroLocalVolume",
+    "build_macro_stack",
+    "destroy_macro_stack",
+    "make_macro_pc",
+    "output_partition_weights",
 ]
