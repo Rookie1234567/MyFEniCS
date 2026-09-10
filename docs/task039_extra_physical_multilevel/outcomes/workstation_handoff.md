@@ -1,4 +1,24 @@
-# Task39extra 工作站移交边界：V9关闭等新工作量复用候选
+# Task39extra 工作站移交边界：V10 macro inverse M1 资源阻断
+
+V10 没有形成可移交的 workstation solver 资格。局部块的部分回代证据保留为研究材料；保守 allocated resident policy 在 block 7 超过 2 GiB 后停止，未进入外层、restart 或 official output。
+
+| 项目 | 当前结论 | 口径/边界 |
+|---|---|---|
+| 身份 | source `b0df7457c0c4b33c66abda16862926da3426bb7d`；13.5 nm、p6/h10、Full3D、MPI1、80 modes（冻结输入合同，不是完整新 macro identity 证明）；input/physical hash 见 [V10 compact](records/physical_macro_inverse_v10.json) | final local source state；远端 push 认证仍待用户配置 |
+| M1 local quality | block 0–6 persisted 14 backsolves，最大相对残差 `2.0002787934351233e-15`；6 native witnesses 最大 `8.243915633632588e-16` | `PARTIAL_PASS`；block 7 backsolve residuals 未持久化；不等于 cached/native A4 或 p4 true error |
+| partial stage observables | blocks 0–7 symbolic=`0.13301346899970667 s`、numeric=`0.8125463649976155 s`、matrix NNZ=`5,379,856`、factor entries=`5,796,240` | raw stages sum；回代/缓存加载时钟=`UNKNOWN`，global coarse/Krylov/postprocess=`not_run` |
+| M1 resource | policy value `2,243,365,908 B` > cap `2,147,483,648 B` by `95,882,260 B` | derived conservative allocated envelope；不是实测常驻或系统 OOM |
+| 实测资源 | process-tree RSS peak `1,107,648,512 B`；job swap peak `0 B`；descendants cleared | measured；系统资源 Gate 未触发 |
+| M2/M3 | BAL_H/ONE_C、restart32/64、original、notch、recovery 均 `not_run` | M1 前置 Gate 未通过 |
+| official fields | E/H、near-field、R/T/A、`A_volume`、重要衍射级均 `not_run` | 无 workstation capability claim |
+| 总成本 | preparation=`1281.5 s`（截止 `2026-09-10T12:14:07.163Z`）+ 两次 M1 终态=`380.27739690501534 s`，已记录 charged=`1661.7773969050152 s`；nominal remaining=`3738.222603094985 s` | 12:14 之后 repair/测试/M4 文档未完整计入；complete total cost=`UNKNOWN` |
+| 下一步 | 停止 V10 candidate；任何新局部逆或 workstation heavy case 需新 review、预算和 identity | 不调参、不扩 rank、不复用旧 g1 作本轮证据；唯一主要缺口是完整新局部逆未跨过 allocation 预审 |
+
+证据入口：[V10 中心结果](physical_macro_inverse_v10.md)、[V10 compact](records/physical_macro_inverse_v10.json)、[selective merge manifest](selective_merge_manifest_v10.md)、[M1 ledger](../../../benchmarks/artifacts/task39extra/v10_m1/v10_m1_budget.json)。
+
+---
+
+# 历史：Task39extra 工作站移交边界：V9关闭等新工作量复用候选
 
 本节是当前工作站边界。V9 L2 的较低 RSS 只属于第 38 个 PC 后 time-progress screen stop 的未完成 outer；它不是成功 PDE 的容量或 solver 资格证据。L1 只是一组有限控制，不能作为完整 outer 资格。
 

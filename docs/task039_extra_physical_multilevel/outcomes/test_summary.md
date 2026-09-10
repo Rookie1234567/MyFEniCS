@@ -1,4 +1,24 @@
-# V9 compact evidence与文档检查
+# V10 M4 compact evidence与文档检查
+
+本节是当前 V10 文档/证据收口。V10 不再启动 PDE、MPI、factor 或 M2/M3；静态检查只验证 compact、run index、链接、哈希和文档合同，不把局部小测试冒作 M1 controls 或 physics PASS。
+
+| 检查 | 结果与边界 |
+|---|---|
+| V10 compact JSON | `jq empty` 通过；14 个 persisted local backsolve checks 和 6 个 native witness checks 可从 `difference_norm/rhs_norm` 或 `difference_norm/operation_scale` 独立重算；block 7 pre-factor/numeric INFOG raw fields 已保存；compact SHA=`1615eda5143a351a694b45b180e39a4fa1b728a03d882c513b87864fa7a334cc` |
+| V10 run index | `jq empty` 通过；V5–V9 历史条目保留，V10 source/input/physical/ledger/compact hash 与 `not_run` 边界已登记 |
+| V10 focused regression | test361/test379/test410 合计 `55 passed in 1.81 s`；这是 task-focused regression，不是 full repository pytest |
+| V10 macro suite | `9 passed in 0.52 s`；覆盖局部 macro witness/selection/contract，不等于 M1 controls 完成 |
+| 静态代码检查 | macro solver/test Ruff 通过；changed macro modules `py_compile` 通过 |
+| 测试日志 | [v10_m4_test_run.log](records/v10_m4_test_run.log)，SHA `f484c96d8231de6b56052f162457010d8a2bba8d1af6b3992dfc8d950090cc97`；source `b0df7457c0c4b33c66abda16862926da3426bb7d`；手工编译摘录，不是 raw stdout | 轻量 task-focused/static only |
+| 文档链接/哈希 | 当前 V10 sections 的 8 份文档、26 个本地 Markdown 链接 resolve 通过；`jq empty`、hash 对照和 `git diff --check` 通过；大型 raw/matrix/factor/cache 仍在 ignored artifact |
+| full repository pytest | `not_run` |
+| CI | `not_run`；没有 CI 通过声明 |
+
+本节不改变第二次 M1 的 `RESOURCE_BLOCKED` 结论：system RSS peak=`1107648512 B`、job swap=`0 B`，停止原因是保守 allocated policy 超过 2 GiB，而不是系统 OOM。完整边界见 [V10 中心结果](physical_macro_inverse_v10.md) 和 [V10 compact](records/physical_macro_inverse_v10.json)。
+
+---
+
+# 历史：V9 compact evidence与文档检查
 
 本节是当前 V9 的 L4 收口记录。V9 的 L0 prototype 与 L2 正式 PDE 已在此前完成；本节只补充 compact evidence 和文档索引，不再改代码、不再运行 PDE、MPI、factor、正式 checker 或 full repository pytest。旧 V8/V7/V6/V5 测试记录继续保留在下文，不能被本节的 docs-only 检查冒作新的数值资格。
 

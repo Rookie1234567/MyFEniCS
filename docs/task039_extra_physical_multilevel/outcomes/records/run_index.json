@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V9 closeout: V5 success baseline and V6/V7/V8 negatives retained; L1 equal-new-work controls and one L2 original outer are hash-bound controlled evidence",
+  "scope": "V10 M4 closeout: V5 success baseline and V6/V7/V8/V9 negatives retained; V10 M1 macro local evidence and conservative resource-policy stop are hash-bound controlled evidence",
   "units": {
     "time": "s",
     "memory": "B"
@@ -1176,5 +1176,70 @@
       "workflow_reservation_distinct_from_elapsed": true
     },
     "next": "V9 documentation and compact evidence only; stop for concentrated review"
+  },
+  "v10": {
+    "status": "PARTIAL_WITH_CONTROLLED_NEGATIVES",
+    "classification": [
+      "LOCAL_INVERSE_UNQUALIFIED",
+      "RESOURCE_BLOCKED",
+      "FRAMEWORK_COMPARISON_LIMITED",
+      "RESTART_DIAGNOSIS_LIMITED"
+    ],
+    "source_sha": "b0df7457c0c4b33c66abda16862926da3426bb7d",
+    "input_sha256": "f6a3bc446fa7ce34a446e6a52f07be4a3841df649272fae6164f1ecfaca3dd66",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/physical_macro_inverse_v10.json",
+    "compact_sha256": "1615eda5143a351a694b45b180e39a4fa1b728a03d882c513b87864fa7a334cc",
+    "center_result": "docs/task039_extra_physical_multilevel/outcomes/physical_macro_inverse_v10.md",
+    "formal_launch_working_tree": "clean",
+    "delivery_working_tree": "docs_m4_changes_present",
+    "M1": {
+      "attempts": 2,
+      "first_source_sha": "99428016a73fdbb29f6531974ed1ee4756d96bbc",
+      "first_status": "REPRESENTATIVE_SELECTOR_FAILURE_BEFORE_LOCAL_FACTORIZATION",
+      "second_status": "CONSERVATIVE_CUMULATIVE_ALLOCATION_POLICY_STOP",
+      "i4_attempted": 0,
+      "bare_b4_attempted": 0,
+      "resident_before_factor_bytes": 1982365908,
+      "block7_allocated_factor_bytes": 261000000,
+      "cumulative_policy_bytes": 2243365908,
+      "resident_cap_bytes": 2147483648,
+      "policy_excess_bytes": 95882260,
+      "saved_backsolve_count": 14,
+      "saved_backsolve_max_relative_residual": 2.0002787934351233e-15,
+      "saved_native_witness_count": 6,
+      "saved_native_witness_max_relative_residual": 8.243915633632588e-16,
+      "block7_backsolve_residuals": "NOT_PERSISTED",
+      "rss_peak_bytes": 1107648512,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "partial_observables": {
+      "blocks": "0-7",
+      "symbolic_seconds_sum": 0.13301346899970667,
+      "numeric_seconds_sum": 0.8125463649976155,
+      "matrix_nnz_sum": 5379856,
+      "factor_nonzeros_infog_3_9_sum": 5796240,
+      "local_backsolve_seconds": "UNKNOWN",
+      "warm_cache_load_seconds": "UNKNOWN",
+      "global_coarse_krylov_postprocess": "not_run"
+    },
+    "M2": "not_run_M1_gate",
+    "M3_original": "not_run_M1_gate",
+    "M3_notch": "not_run_M1_gate",
+    "official_outputs": "not_run",
+    "ledger": {
+      "path": "benchmarks/artifacts/task39extra/v10_m1/v10_m1_budget.json",
+      "sha256": "670015db2b57187338b85f12e2a179ca94cd0274ee610718ffe6fa830234dfce",
+      "charged_seconds": 1661.7773969050152,
+      "remaining_seconds": 3738.222603094985,
+      "preparation_envelope_seconds": 1281.5,
+      "preparation_envelope_cutoff_utc": "2026-09-10T12:14:07.163Z",
+      "nominal_remaining_seconds": 3738.222603094985,
+      "complete_total_cost": "UNKNOWN",
+      "remaining_semantics": "nominal remainder after recorded preparation and two M1 terminal charges; later repair/tests/M4 documentation are not fully included",
+      "measurement_committed": false
+    },
+    "next": "M4 documentation and compact closeout only; no new PDE, parameter adjustment, MPI change, or workstation heavy case"
   }
 }

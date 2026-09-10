@@ -1,4 +1,21 @@
-# Task39extra V9最新结果：等新工作量复用对照受控负结果，compact 收口完成
+# Task39extra V10最新结果：macro inverse M1 受控资源负结果，M4收口
+
+本节是当前项目进度入口。V10 在 V9 之后尝试了一个显式 opt-in 的多单元局部物理逆：把相邻单元的内部未知量组成局部块，先解局部物理矩阵，再把局部响应接入全系统纠错。它试图避免直接分解整个 p4/p6 全局矩阵，但局部回代小残差只证明局部测试右端自洽，不能替代完整 p4 true error、外层真残差或物理输出 Gate。
+
+| 项目 | 最新结论 | 数据身份 / 边界 |
+|---|---|---|
+| 身份 | source `b0df7457c0c4b33c66abda16862926da3426bb7d`；13.5 nm、p6/h10、Full3D、MPI1、80 modes（冻结输入合同，不是完整新 macro identity 证明） | hash-bound measured input/physical identity |
+| M1 | 第一次选择逻辑工程失败后已窄修；第二次完成 block 0–7 分解阶段，block 7 后触发 2 GiB conservative allocated policy | partial implementation evidence；M1 未完成 |
+| 内部质量 | 14 个 persisted local backsolves 最大相对残差 `2.0002787934351233e-15`；6 个 native witness 最大 `8.243915633632588e-16` | measured subset；p4 true error、cached/native bridge 未测 |
+| partial stage | blocks 0–7 symbolic=`0.13301346899970667 s`、numeric=`0.8125463649976155 s`、matrix NNZ=`5,379,856`、factor entries=`5,796,240` | raw stage facts；回代/缓存加载=`UNKNOWN`，global coarse/Krylov/postprocess=`not_run` |
+| 资源结论 | policy=`2,243,365,908 B`，cap=`2,147,483,648 B`，excess=`95,882,260 B`；实测 RSS peak=`1,107,648,512 B`，swap=`0 B` | derived policy 与 measured RSS 分开；不是系统 OOM |
+| 成本/后续 | preparation=`1281.5 s`（截至 `2026-09-10T12:14:07.163Z`）+ 两次 M1 终态=`380.27739690501534 s`，已记录 charged=`1661.7773969050152 s`；complete total cost=`UNKNOWN`；BAL/ONE、restart32/64、original/notch、official fields 均 `not_run` | 不提升 production default，不启动 workstation heavy；唯一主要缺口是完整新局部逆未跨过 allocation 预审 |
+
+证据入口：[V10 中心结果](task039_extra_physical_multilevel/outcomes/physical_macro_inverse_v10.md)、[V10 compact](task039_extra_physical_multilevel/outcomes/records/physical_macro_inverse_v10.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)、[selective merge manifest](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v10.md)。
+
+---
+
+# 历史：Task39extra V9最新结果：等新工作量复用对照受控负结果，compact 收口完成
 
 本节是当前项目进度入口。V9 在 source `55b7325cae8477ded7b04cfab42181f18e035a0f` 上已完成 L0 prototype、L1 equal-new-work controls 和唯一授权的 L2 original formal PDE；本次 L4 只做 compact/docs 收口，不再改代码、不再运行新的 PDE、MPI、rank expansion、candidate rerun 或 workstation heavy case。
 

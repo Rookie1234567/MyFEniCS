@@ -1,0 +1,29 @@
+Task39extra V10 M4 final lightweight verification
+kind=MANUALLY_COMPILED_EXECUTION_EXCERPT_NOT_RAW_STDOUT
+note=This file is a manually compiled excerpt of completed commands; it is not captured raw stdout.
+date=2026-09-10
+source_sha=b0df7457c0c4b33c66abda16862926da3426bb7d
+activation=_MYFENICS_WSL_QUALIFIED_ACTIVATION=1
+python=/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python
+PETSc.ScalarType=numpy.complex128
+MPI=size1
+
+command=python -m pytest -q src/test/test_361_physical_pc_profile.py src/test/test_379_recursive_public.py src/test/test_410_physical_macro_dd4.py
+result=55 passed in 1.81s
+
+command=python -m pytest -q src/test/test_410_physical_macro_dd4.py
+result=9 passed in 0.52s
+
+command=PYTHONPATH=/tmp/task39extra-ruff python -m ruff check src/solvers/physical_macro_dd4.py src/runners/physical_macro_controls.py src/test/test_410_physical_macro_dd4.py
+result=All checks passed!
+
+command=python -m py_compile src/solvers/physical_macro_dd4.py src/runners/physical_macro_controls.py src/runners/physical_recursive_entry.py src/io/input_schema.py src/io/input_validation.py src/io/physical_intermediate_profile.py src/io/physical_recursive_profile.py scripts/run_case.py
+result=PASS
+
+command=jq empty compact.json run_index.json; git diff --check; compact hash comparison
+result=git_diff_check=PASS; json_check=PASS; compact_hash_comparison=PASS (final compact hash recorded by run_index)
+
+command=qualified-activation Python markdown relative-link checker over the current V10 sections of 8 documents
+result=link_checker_scope_files=8; link_checker_checked=26; link_checker_result=PASS
+
+scope=docs/static/task-focused only; no PDE, MPI heavy case, factorization, M2, M3, full repository pytest, or CI

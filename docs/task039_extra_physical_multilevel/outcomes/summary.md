@@ -1,4 +1,27 @@
-# Task39extra V9当前结果：等新工作量复用对照为受控负结果
+# Task39extra V10当前结果：macro inverse M1 受控资源负结果
+
+本节是当前权威摘要。V10 的 M0/M1 只推进到局部 macro factorization；第二次 M1 在冻结的局部常驻预审策略处停止，未进入 M2/M3。V9 以及更早的成功/负结果在下方按历史保留，不因本轮局部证据而改判。
+
+| 范围 | 当前结论 | 证据口径/边界 |
+|---|---|---|
+| 输入/身份 | 13.5 nm、p6/h10、Full3D、MPI1、80 DtN modes、`complex128`；80 modes 是冻结输入合同，不是完整新 macro identity 的证明；source `b0df7457c0c4b33c66abda16862926da3426bb7d`；input SHA `f6a3bc446fa7ce34a446e6a52f07be4a3841df649272fae6164f1ecfaca3dd66`；physical SHA `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f` | hash-bound measured identity；非 official PDE output |
+| M1 第一次尝试 | source `99428016a73fdbb29f6531974ed1ee4756d96bbc`；native DtN 已构建，代表块选择逻辑抛出 `ValueError`，I4/B4=`0/0` | `REPRESENTATIVE_SELECTOR_FAILURE_BEFORE_LOCAL_FACTORIZATION`；随后已窄修并保留 raw |
+| M1 第二次尝试 | 42 blocks；局部 cache retained=`45,710,148 B`；block 0–7 进入矩阵/数值阶段；block 7 后触发 resident policy | `RESOURCE_BLOCKED` / `LOCAL_INVERSE_UNQUALIFIED`；不是系统 OOM |
+| 内部质量轴 | block 0–6 保存 14 次回代，最大相对残差=`2.0002787934351233e-15`；代表块 native witness 6 次，最大=`8.243915633632588e-16`；p4 true error/residual 未测 | `PARTIAL_PASS`；block 7 回代值、cached/native bridge 和完整 p4 误差均未持久化/未运行 |
+| 局部阶段 partial observables | blocks 0–7 symbolic=`0.13301346899970667 s`、numeric=`0.8125463649976155 s`、matrix NNZ=`5,379,856`、raw `INFOG(3)=INFOG(9)` factor entries=`5,796,240` | 从 stages facts 汇总；回代耗时/缓存加载=`UNKNOWN`，全局粗层/Krylov/后处理=`not_run` |
+| 框架耦合轴 | `verify_recursive_map`、6 个 g calibration、BAL_H/ONE_C 均 `not_run` | `FRAMEWORK_COMPARISON_LIMITED`；局部小残差不能代替全系统纠错质量 |
+| restart 轴 | restart32/64 均 `not_run` | `RESTART_DIAGNOSIS_LIMITED`；旧 ENTITY16/g1 不作本轮证据 |
+| policy 触发 | `resident_before_factor=1,982,365,908 B`；block 7 allocated factor=`261,000,000 B`；精确保守累计=`2,243,365,908 B`；2 GiB cap 超出=`95,882,260 B` | derived conservative allocation policy；不等于实测常驻或系统 OOM |
+| 实测资源 | process-tree RSS 峰=`1,107,648,512 B`；job swap peak=`0 B`；descendants cleared | measured；系统资源 Gate 未触发 |
+| M2/M3/official | original、notch、E/H、R/T/A、`A_volume` 均 `not_run` | 前置 M1 Gate 未通过，不能写 solver/physics PASS |
+| 总成本轴 | 账本已记录 preparation=`1281.5 s`（截至 `2026-09-10T12:14:07.163Z`）+ 两次 M1 终态=`380.27739690501534 s`，合计 charged=`1661.7773969050152 s`、nominal remaining=`3738.222603094985 s` | 12:14 之后的 repair、测试和 M4 文档未完整计入；complete total cost=`UNKNOWN` |
+| 当前决定 | 停止 V10 candidate；不调参、不改块、不改 MPI、不换 used 值绕 Gate、不重跑；ordinary default 不变 | M4 closeout；唯一主要缺口是完整新局部逆尚未跨过 allocation 预审 |
+
+四条证据轴分别为：内部质量轴（局部 partial，p4 true error/residual 未测）；框架耦合轴；restart 轴；总成本轴。完整中心说明见 [V10 macro inverse 结果](physical_macro_inverse_v10.md)，机器可读证据见 [V10 compact](records/physical_macro_inverse_v10.json)。
+
+---
+
+# 历史：Task39extra V9当前结果：等新工作量复用对照为受控负结果
 
 本节是当前权威摘要。V9 的 L1 以每次 I4 最多 16 个新 B4/Arnoldi 方向隔离新搜索量；12 个 sequence I4 加 4 个 complete-control I4 共 16 次，L2 原始模型的 76 次 I4 也全部完成该上限，但完整外层在首个约 1800 s 安全检查点仍未达到绝对进展门槛。`WORKER_FAILED` 是 runner 对 worker exit 4 的 parent 分类；独立 checker、watchdog 和资源 authority 仍分别保留。
 

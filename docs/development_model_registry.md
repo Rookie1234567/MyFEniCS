@@ -1,4 +1,17 @@
-# Task39extra V9当前登记：等新工作量复用对照受控负结果
+# Task39extra V10当前登记：macro inverse M1 受控资源负结果
+
+本节是当前模型登记入口。V10 macro inverse 是显式 opt-in 的研究候选，不是 ordinary default，也不是完整 Maxwell solver。局部块的回代检查与全系统质量必须分开登记。
+
+| model id | source/input | 方法与实测结果 | 状态/登记边界 |
+|---|---|---|---|
+| `task39_v10_macro_dd4_m1_local` | source `b0df7457c0c4b33c66abda16862926da3426bb7d`；input SHA `f6a3bc446fa7ce34a446e6a52f07be4a3841df649272fae6164f1ecfaca3dd66`；13.5 nm、p6/h10、Full3D、MPI1、80 modes | 42 个 macro blocks；block 0–6 保存 14 次 local MUMPS backsolve，最大相对残差 `2.0002787934351233e-15`；代表块 native witness 6 次，最大 `8.243915633632588e-16`；block 7 后 conservative cumulative policy `2,243,365,908 B` 超过 2 GiB cap `95,882,260 B` | `RESOURCE_BLOCKED` / `LOCAL_INVERSE_UNQUALIFIED`；M1 未完成；M2/M3、cached/native bridge、BAL/ONE、restart、official fields 均 `not_run` |
+| `task39_v10_macro_dd4_m1_repair` | source `99428016a73fdbb29f6531974ed1ee4756d96bbc`；同 physical/input identity | native DtN 已构建；代表块选择器在首次真实构建中拒绝当前 metadata；I4/B4=`0/0`；随后使用活动 DtN 行和当前材料标签窄修 | `REPRESENTATIVE_SELECTOR_FAILURE_BEFORE_LOCAL_FACTORIZATION`；不作为 physics failure；raw evidence 保留 |
+
+实测 process-tree RSS peak=`1,107,648,512 B`、job swap=`0 B`、descendants cleared；这些资源字段不能改写为成功 PDE 或“真实 RAM 不足”。V10 的完整 hash-bound 记录见 [compact](task039_extra_physical_multilevel/outcomes/records/physical_macro_inverse_v10.json)，依赖组边界见 [selective merge manifest](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v10.md)。
+
+---
+
+# 历史：Task39extra V9当前登记：等新工作量复用对照受控负结果
 
 本节是当前模型登记入口。V9 L1 是固定新搜索量的有限控制证据，V9 L2 是一次未通过完整 outer Gate 的原始模型运行；两者都不能提升 ordinary default，也不能生成 official physical outputs。
 

@@ -1,0 +1,383 @@
+{
+  "schema": "task039extra.physical-macro-inverse-v10.compact.v1",
+  "review": "V10",
+  "status": "PARTIAL_WITH_CONTROLLED_NEGATIVES",
+  "classification": [
+    "LOCAL_INVERSE_UNQUALIFIED",
+    "RESOURCE_BLOCKED",
+    "FRAMEWORK_COMPARISON_LIMITED",
+    "RESTART_DIAGNOSIS_LIMITED"
+  ],
+  "source": {
+    "branch": "task39extra",
+    "head": "b0df7457c0c4b33c66abda16862926da3426bb7d",
+    "base_head": "731d65cd6bd4ffe5d86e3a2abf7e0b1db0d36ea3",
+    "formal_launch_working_tree": "clean",
+    "delivery_working_tree": "docs_m4_changes_present",
+    "push_state": "local_commits_ahead; HTTPS_authentication_unavailable",
+    "input_path": "input/task39extra/original_13p5nm_p6h10_macro_v10_m1.dat",
+    "input_sha256": "f6a3bc446fa7ce34a446e6a52f07be4a3841df649272fae6164f1ecfaca3dd66",
+    "inventory_path": "benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+    "inventory_sha256": "b47cbec33ea05842079e10dea486185703cfa541049d291ddb7fcf5369310a6c",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "profile": "physical_macro_dd4_v10",
+    "mpi": 1,
+    "scalar_type": "complex128",
+    "threads": 1
+  },
+  "model_contract": {
+    "levels": [6, 4, 2],
+    "cells": 252,
+    "macro_blocks": 42,
+    "local_rows_cap": 2600,
+    "resident_cap_bytes": 2147483648,
+    "temporary_workspace_reserve_bytes": 1073741824,
+    "p4_global_matrix": false,
+    "p4_global_factor": false,
+    "global_column_probe": false,
+    "outer_execution_enabled": false,
+    "i4_target": 0.0001,
+    "i4_restart": 4,
+    "i4_max_iterations": 4,
+    "i4_safe_return_seconds": 25,
+    "i4_hard_seconds": 30
+  },
+  "attempts": [
+    {
+      "source_sha": "99428016a73fdbb29f6531974ed1ee4756d96bbc",
+      "status": "M1_CONTROLS_FAILED",
+      "classification": "REPRESENTATIVE_SELECTOR_FAILURE_BEFORE_LOCAL_FACTORIZATION",
+      "exception_type": "ValueError",
+      "exception": "no canonical interior_single_material macro block in current metadata",
+      "build_elapsed_seconds": 223.5119686220005,
+      "charged_seconds": 245.63548373799006,
+      "watchdog_monotonic_seconds": 225.09338878999915,
+      "sampled_process_tree_rss_peak_bytes": 1736617984,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "i4_attempted": 0,
+      "i4_completed": 0,
+      "bare_b4_attempted": 0,
+      "bare_b4_completed": 0,
+      "run_summary_sha256": "c4120d9fd0bddf23583e77c856df65ec3685c0f743c57155204f2815fa01f5fe",
+      "m1_summary_sha256": "720577b5e995d775d8d9e9844c635f8ade9cf39aa0604dd5c22a34823694f5fa",
+      "watchdog_summary_sha256": "b874a046e8417ba951c2dff96b0a7bbe9c79af0369742f62056167e630658099",
+      "root": "benchmarks/artifacts/task39extra/v10_m1/99428016a73fdbb29f6531974ed1ee4756d96bbc/m1"
+    },
+    {
+      "source_sha": "b0df7457c0c4b33c66abda16862926da3426bb7d",
+      "status": "M1_CONTROLS_FAILED",
+      "classification": "CONSERVATIVE_CUMULATIVE_ALLOCATION_POLICY_STOP",
+      "exception_type": "MemoryError",
+      "exception": "macro retained resident policy exceeded after block factorization",
+      "build_elapsed_seconds": 121.48271120099889,
+      "charged_seconds": 134.64191316702528,
+      "i4_attempted": 0,
+      "i4_completed": 0,
+      "bare_b4_attempted": 0,
+      "bare_b4_completed": 0,
+      "run_summary_sha256": "2c154491bf380e51c829994160640c0020ac0ae4aa07328635d63f2cc7e54ad5",
+      "m1_summary_sha256": "23fa9d6c3ed917a0ae910266ef48f046d4251bf8457e61b652e0054ef05f4a78",
+      "watchdog_summary_sha256": "a70ed4263dd26ddea5731f50a2d67c7dfcce542fe7a6594a50fe0e5a5c77c421",
+      "root": "benchmarks/artifacts/task39extra/v10_m1/b0df7457c0c4b33c66abda16862926da3426bb7d/m1"
+    }
+  ],
+  "local_gate_audit": {
+    "supervisor_audit_path": "/tmp/task39extra_v10_supervisor_local_gate_audit.json",
+    "supervisor_audit_sha256": "5186b7c920e1ba67a78fe39697d0b76942f896c306ab302bd15b0be19515c4d7",
+    "local_cache_resident_bytes": 45710148,
+    "block7_before_numeric_factor_bytes": 1982365908,
+    "block7_allocated_during_factorization_bytes": 261000000,
+    "cumulative_policy_bytes_recomputed": 2243365908,
+    "resident_limit_bytes": 2147483648,
+    "excess_bytes": 95882260,
+    "matrix_raw_bytes_blocks0_to7": 107655760,
+    "matrix_policy_budget_bytes_blocks0_to7": 349529248,
+    "factor_estimated_padded_bytes_blocks0_to7": 234000000,
+    "factor_allocated_padded_bytes_blocks0_to7": 2090000000,
+    "factor_used_padded_bytes_blocks0_to7": 212000000,
+    "saved_backsolve_count": 14,
+    "saved_backsolve_max_relative_residual": 2.0002787934351233e-15,
+    "saved_native_witness_count": 6,
+    "saved_native_witness_max_relative_residual": 8.243915633632588e-16,
+    "block7_backsolve_residuals": "NOT_PERSISTED",
+    "memory_authority": "INFOG18/19 allocated and INFOG21/22 effectively used during factorization; these are not post-factor factor-only residency measurements. The cumulative policy envelope and RSS are separate quantities.",
+    "mumps_reference": "https://mumps-solver.org/doc/userguide_5.9.1.pdf#page=112",
+    "blocks": [
+      {
+        "block": 0,
+        "seed": [0, 0, 0],
+        "rows": 1944,
+        "categories": ["material_interface", "port_DtN"],
+        "matrix_raw_bytes": 14565860,
+        "matrix_policy_bytes": 45908936,
+        "factor_allocated_bytes": 262000000,
+        "factor_used_bytes": 29000000,
+        "infog_18_19": [261, 261],
+        "infog_21_22": [28, 28],
+        "backsolve_relative_residuals": [1.8764473811290233e-15, 1.5274357739644167e-15],
+        "backsolve_checks": [
+          {"probe_index": 0, "difference_norm": 4.2075540930085406e-8, "rhs_norm": 22422979.37753487},
+          {"probe_index": 1, "difference_norm": 6.800713168153551e-8, "rhs_norm": 44523725.86837148}
+        ],
+        "native_witness_relative_residuals": [8.184824518772149e-16, 7.894724018135163e-16, 8.033987091245929e-16],
+        "native_witness_checks": [
+          {"probe_index": 0, "difference_norm": 3.6705630278633936e-8, "operation_scale": 44845958.75506974},
+          {"probe_index": 1, "difference_norm": 3.5436076150482575e-8, "operation_scale": 44885769.36835474},
+          {"probe_index": 2, "difference_norm": 3.609316237731949e-8, "operation_scale": 44925591.698607124}
+        ],
+        "record_sha256": "6ca94d3c5f90d34e2f1a2ae036cc8d2b0ec747d96d28b196be44a1fbd1766d43"
+      },
+      {
+        "block": 1,
+        "seed": [0, 0, 1],
+        "rows": 1944,
+        "categories": ["interior_no_DtN"],
+        "matrix_raw_bytes": 14279140,
+        "matrix_policy_bytes": 45335496,
+        "factor_allocated_bytes": 261000000,
+        "factor_used_bytes": 28000000,
+        "infog_18_19": [260, 260],
+        "infog_21_22": [27, 27],
+        "backsolve_relative_residuals": [2.0002787934351233e-15, 1.47642155285981e-15],
+        "backsolve_checks": [
+          {"probe_index": 0, "difference_norm": 4.283934706155721e-8, "rhs_norm": 21416688.114754368},
+          {"probe_index": 1, "difference_norm": 6.324183878021647e-8, "rhs_norm": 42834540.485891595}
+        ],
+        "native_witness_relative_residuals": [8.074213076024832e-16, 8.241519708513371e-16, 8.243915633632588e-16],
+        "native_witness_checks": [
+          {"probe_index": 0, "difference_norm": 3.458458064425906e-8, "operation_scale": 42833376.229508735},
+          {"probe_index": 1, "difference_norm": 3.533227735705632e-8, "operation_scale": 42871070.63586657},
+          {"probe_index": 2, "difference_norm": 3.537363340366871e-8, "operation_scale": 42908776.57621263}
+        ],
+        "record_sha256": "02a37b965b9935fcd379ec0acf2671a0763ad2df4be3e9ef10a984ada1d4c2d1"
+      },
+      {
+        "block": 2,
+        "seed": [0, 0, 2],
+        "rows": 1944,
+        "categories": [],
+        "matrix_raw_bytes": 14279140,
+        "matrix_policy_bytes": 45335496,
+        "factor_allocated_bytes": 261000000,
+        "factor_used_bytes": 28000000,
+        "infog_18_19": [260, 260],
+        "infog_21_22": [27, 27],
+        "backsolve_relative_residuals": [2.0002787934351233e-15, 1.47642155285981e-15],
+        "backsolve_checks": [
+          {"probe_index": 0, "difference_norm": 4.283934706155721e-8, "rhs_norm": 21416688.114754368},
+          {"probe_index": 1, "difference_norm": 6.324183878021647e-8, "rhs_norm": 42834540.485891595}
+        ],
+        "record_sha256": "9db11eec1af45f07162428e2f7efba9395aa9fb31f008366a2d8198b8ef226d5"
+      },
+      {
+        "block": 3,
+        "seed": [0, 0, 3],
+        "rows": 1944,
+        "categories": [],
+        "matrix_raw_bytes": 14279140,
+        "matrix_policy_bytes": 45335496,
+        "factor_allocated_bytes": 261000000,
+        "factor_used_bytes": 28000000,
+        "infog_18_19": [260, 260],
+        "infog_21_22": [27, 27],
+        "backsolve_relative_residuals": [2.0002787934351233e-15, 1.47642155285981e-15],
+        "backsolve_checks": [
+          {"probe_index": 0, "difference_norm": 4.283934706155721e-8, "rhs_norm": 21416688.114754368},
+          {"probe_index": 1, "difference_norm": 6.324183878021647e-8, "rhs_norm": 42834540.485891595}
+        ],
+        "record_sha256": "e08802985c62abbab177253cbf808f5a947ba0237a3cfb4ecc1ffbcdb32e4dd8"
+      },
+      {
+        "block": 4,
+        "seed": [0, 0, 4],
+        "rows": 1944,
+        "categories": [],
+        "matrix_raw_bytes": 14279140,
+        "matrix_policy_bytes": 45335496,
+        "factor_allocated_bytes": 261000000,
+        "factor_used_bytes": 28000000,
+        "infog_18_19": [260, 260],
+        "infog_21_22": [27, 27],
+        "backsolve_relative_residuals": [2.0002787934351233e-15, 1.47642155285981e-15],
+        "backsolve_checks": [
+          {"probe_index": 0, "difference_norm": 4.283934706155721e-8, "rhs_norm": 21416688.114754368},
+          {"probe_index": 1, "difference_norm": 6.324183878021647e-8, "rhs_norm": 42834540.485891595}
+        ],
+        "record_sha256": "2cda129d1f3ad8bd3eb521d9fb269bd45d11c8be6ed14a5b81f3e0b8f1bdd69a"
+      },
+      {
+        "block": 5,
+        "seed": [0, 0, 5],
+        "rows": 1944,
+        "categories": [],
+        "matrix_raw_bytes": 14279140,
+        "matrix_policy_bytes": 45335496,
+        "factor_allocated_bytes": 261000000,
+        "factor_used_bytes": 28000000,
+        "infog_18_19": [260, 260],
+        "infog_21_22": [27, 27],
+        "backsolve_relative_residuals": [2.0002787934351233e-15, 1.47642155285981e-15],
+        "backsolve_checks": [
+          {"probe_index": 0, "difference_norm": 4.283934706155721e-8, "rhs_norm": 21416688.114754368},
+          {"probe_index": 1, "difference_norm": 6.324183878021647e-8, "rhs_norm": 42834540.485891595}
+        ],
+        "record_sha256": "f160593d59d37594d2b8a8d04c557849c1cb61ee95cc2f525cfbe912d16fe669"
+      },
+      {
+        "block": 6,
+        "seed": [0, 0, 6],
+        "rows": 1944,
+        "categories": [],
+        "matrix_raw_bytes": 14565860,
+        "matrix_policy_bytes": 45908936,
+        "factor_allocated_bytes": 262000000,
+        "factor_used_bytes": 29000000,
+        "infog_18_19": [261, 261],
+        "infog_21_22": [28, 28],
+        "backsolve_relative_residuals": [1.796439782095394e-15, 1.4067007120732419e-15],
+        "backsolve_checks": [
+          {"probe_index": 0, "difference_norm": 3.8389807648781885e-8, "rhs_norm": 21369938.492457256},
+          {"probe_index": 1, "difference_norm": 6.010410811586205e-8, "rhs_norm": 42727004.82768551}
+        ],
+        "record_sha256": "f52fe85c92140ec6fe09b7f93aeb67265b414e828f26a8bb737bb8cf0048882a"
+      },
+      {
+        "block": 7,
+        "seed": "not_persisted_in_success_record",
+        "rows": 1044,
+        "categories": "not_persisted_in_success_record",
+        "matrix_raw_bytes": 7128340,
+        "matrix_policy_bytes": 31033896,
+        "factor_estimated_bytes": 15000000,
+        "factor_allocated_bytes": 261000000,
+        "factor_used_bytes": 14000000,
+        "pre_numeric_gate": {
+          "resident_before_factor_bytes": 1982365908,
+          "resident_cap_bytes": 2147483648,
+          "matrix_storage_bytes": 7128340,
+          "factor_estimated_padded_bytes": 15000000,
+          "temporary_workspace_reserve_bytes": 1073741824
+        },
+        "infog_18_19": [260, 260],
+        "infog_21_22": [13, 13],
+        "numeric_raw_infog": {
+          "1": 0, "2": 0, "3": 361392, "4": 3356, "5": 300, "6": 7, "7": 2, "8": 100,
+          "9": 361392, "10": 3356, "11": 300, "12": 1, "13": 0, "14": 0, "15": 0,
+          "16": 14, "17": 14, "18": 260, "19": 260, "20": 361392, "21": 13, "22": 13, "29": 361392
+        },
+        "numeric_raw_rinfog": {
+          "1": 73390330.0, "2": 54960.0, "3": 73390330.0, "4": 0.0, "5": 0.0, "6": 0.0,
+          "7": 0.0, "8": 0.0, "9": 0.0, "10": 0.0, "11": 0.0, "12": 0.0, "13": 0.0,
+          "14": 0.0, "15": 5.782272, "16": 0.0, "17": 5.85085, "18": 252.336241,
+          "19": 0.00017859682895889642, "20": 0.00017859682895889642
+        },
+        "backsolve_relative_residuals": "NOT_PERSISTED",
+        "source": "p1_numeric_complete facts in stages.jsonl; macro_block_07.json not written before policy exception"
+      }
+    ],
+    "partial_observables": {
+      "source": "benchmarks/artifacts/task39extra/v10_m1/b0df7457c0c4b33c66abda16862926da3426bb7d/m1/stages.jsonl; p1_symbolic_complete and p1_numeric_complete facts",
+      "source_sha256": "99f44c494f2244e92e5f520c8c785b43a5cde7b583dbc4cd9567621e8a090ec0",
+      "supervisor_audit_path": "/tmp/task39extra_v10_supervisor_partial_costs.json",
+      "supervisor_audit_sha256": "8f39e9b3e7fc620e2288ccfd10d7a2f2af4cc49372c0523fabe0fd86fc2e1117",
+      "blocks": "0-7",
+      "block_facts": [
+        {"block": 0, "symbolic_seconds": 0.013806351000312134, "numeric_seconds": 0.11668158199972822, "matrix_nnz": 727904, "factor_entries_infog3": 806304, "factor_entries_infog9": 806304},
+        {"block": 1, "symbolic_seconds": 0.018878880999182, "numeric_seconds": 0.10861738799940213, "matrix_nnz": 713568, "factor_entries_infog3": 764448, "factor_entries_infog9": 764448},
+        {"block": 2, "symbolic_seconds": 0.020544155999232316, "numeric_seconds": 0.10171340799934114, "matrix_nnz": 713568, "factor_entries_infog3": 764448, "factor_entries_infog9": 764448},
+        {"block": 3, "symbolic_seconds": 0.018839905000277213, "numeric_seconds": 0.11134043399943039, "matrix_nnz": 713568, "factor_entries_infog3": 764448, "factor_entries_infog9": 764448},
+        {"block": 4, "symbolic_seconds": 0.016757145000156015, "numeric_seconds": 0.10472243899857858, "matrix_nnz": 713568, "factor_entries_infog3": 764448, "factor_entries_infog9": 764448},
+        {"block": 5, "symbolic_seconds": 0.018270518999997876, "numeric_seconds": 0.10752476900051988, "matrix_nnz": 713568, "factor_entries_infog3": 764448, "factor_entries_infog9": 764448},
+        {"block": 6, "symbolic_seconds": 0.016268449000563123, "numeric_seconds": 0.11669842400078778, "matrix_nnz": 727904, "factor_entries_infog3": 806304, "factor_entries_infog9": 806304},
+        {"block": 7, "symbolic_seconds": 0.009648062999985996, "numeric_seconds": 0.04524792099982733, "matrix_nnz": 356208, "factor_entries_infog3": 361392, "factor_entries_infog9": 361392}
+      ],
+      "symbolic_seconds_sum": 0.13301346899970667,
+      "numeric_seconds_sum": 0.8125463649976155,
+      "matrix_nnz_sum": 5379856,
+      "factor_nonzeros_infog_3_9_sum": 5796240,
+      "factor_nonzeros_semantics": "raw MUMPS INFOG(3)=INFOG(9) factor-entry count; not a post-factor residency measurement",
+      "block7_stage_facts": "p1_numeric_complete is present, but macro_block_07.json and block-7 backsolve residuals were not persisted before the policy exception",
+      "local_backsolve_seconds": "UNKNOWN",
+      "warm_cache_load_seconds": "UNKNOWN",
+      "global_coarse_krylov_postprocess": "not_run",
+      "cost_scope": "partial block 0-7; exclusive component times already included in parent workflow charge, do not add again"
+    }
+  },
+  "gate_axes": {
+    "local_matrix_assembly": "PARTIAL_PASS: blocks 0-7 assembled and block 0-6 records persisted",
+    "local_factor_backsolve": "PARTIAL_PASS: 14 persisted block 0-6 residual checks; block 7 residuals NOT_PERSISTED",
+    "native_block_witness": "PARTIAL_PASS: 6 persisted witnesses on representative blocks 0 and 1",
+    "p4_true_error_or_reference_error": "NOT_MEASURED",
+    "build_w_transfer_and_cached_action": "NOT_RUN_AFTER_M1_GATE",
+    "cached_native_A4_bridge": "NOT_RUN_AFTER_M1_GATE",
+    "verify_recursive_map": "NOT_RUN_AFTER_M1_GATE",
+    "six_g_calibrations": "NOT_RUN",
+    "BAL_ONE_coupling": "NOT_RUN",
+    "restart32_vs64": "NOT_RUN",
+    "outer_original": "NOT_RUN",
+    "notch": "NOT_RUN",
+    "official_EH_RTA_A_volume": "NOT_RUN"
+  },
+  "resource": {
+    "second_attempt_workflow_charge_seconds": 134.64191316702528,
+    "watchdog_elapsed_monotonic_seconds": 122.92740438799956,
+    "sampled_process_tree_rss_peak_bytes": 1107648512,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "launch_cap_bytes": 9409597440,
+    "descendants_cleared": true,
+    "resource_classification": "system_resource_gate_not_triggered; conservative_local_policy_gate_triggered"
+  },
+  "ledger": {
+    "path": "benchmarks/artifacts/task39extra/v10_m1/v10_m1_budget.json",
+    "sha256": "670015db2b57187338b85f12e2a179ca94cd0274ee610718ffe6fa830234dfce",
+    "charged_seconds": 1661.7773969050152,
+    "remaining_seconds": 3738.222603094985,
+    "remaining_seconds_semantics": "nominal ledger remainder after recorded preparation and the two M1 terminal charges; later repair, tests, and M4 documentation work are not fully included",
+    "nominal_remaining_seconds": 3738.222603094985,
+    "preparation_envelope_seconds": 1281.5,
+    "preparation_envelope_cutoff_utc": "2026-09-10T12:14:07.163Z",
+    "complete_total_cost": "UNKNOWN",
+    "measurement_committed": false,
+    "preparation_audit_path": "benchmarks/artifacts/task39extra/v10_m1/prep_envelope_audit.json",
+    "preparation_audit_sha256": "cb152165c0bfd32000b800c22885a56fa2f319488460a34f6bd1edc78cd6fdd0"
+  },
+  "official_outputs": {
+    "E_H": "not_run",
+    "near_field": "not_run",
+    "R00_s": "not_run",
+    "R00_p": "not_run",
+    "R00_total": "not_run",
+    "Rtotal": "not_run",
+    "Ttotal": "not_run",
+    "A": "not_run",
+    "A_volume": "not_run",
+    "important_diffraction_orders": "not_run",
+    "notch": "not_run",
+    "recovery": "not_run"
+  },
+  "test_and_static_evidence": {
+    "focused_suite": "55 passed in 1.81 s",
+    "macro_suite": "9 passed in 0.52 s",
+    "ruff": "passed for macro solver/test files",
+    "py_compile": "passed for changed macro modules",
+    "test_log": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/v10_m4_test_run.log",
+      "sha256": "f484c96d8231de6b56052f162457010d8a2bba8d1af6b3992dfc8d950090cc97"
+    },
+    "full_repository_pytest": "not_run",
+    "ci": "not_run"
+  },
+  "interpretation": {
+    "positive": "The current local sparse blocks and persisted MUMPS backsolves are numerically consistent on the saved subset.",
+    "negative": "The cumulative local-factor inventory cannot pass the frozen 2 GiB conservative policy at block 7.",
+    "not_inferred": [
+      "not a proof that the mathematical PDE has no solution",
+      "not a proof that all local inverse designs fail",
+      "not a measurement that post-factor residency equals the cumulative policy value",
+      "not a BAL_H versus ONE_C comparison",
+      "not a restart32 versus restart64 result"
+    ],
+    "next": "Stop this V10 candidate at M4; any new local-inverse design requires a new review and a newly frozen budget/identity."
+  }
+}
