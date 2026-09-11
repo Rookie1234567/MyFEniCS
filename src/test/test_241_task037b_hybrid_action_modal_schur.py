@@ -118,6 +118,21 @@ def _gather_vector(vector: PETSc.Vec) -> np.ndarray:
     return result
 
 
+def _gather_matrix(matrix: PETSc.Mat) -> np.ndarray:
+    """Gather locally owned rows for a small test-only dense oracle."""
+
+    comm = matrix.getComm().tompi4py()
+    first, last = (int(value) for value in matrix.getOwnershipRange())
+    rows = np.arange(first, last, dtype=PETSc.IntType)
+    columns = np.arange(matrix.getSize()[1], dtype=PETSc.IntType)
+    local = np.asarray(matrix.getValues(rows, columns), dtype=np.complex128).copy()
+    packets = comm.allgather((first, last, local))
+    result = np.empty(matrix.getSize(), dtype=np.complex128)
+    for packet_first, packet_last, values in packets:
+        result[packet_first:packet_last] = values
+    return result
+
+
 def _tiny_fixture() -> dict[str, object]:
     comm = MPI.COMM_WORLD
     template = PETSc.Vec().createMPI((None, 4), comm=comm)
@@ -996,10 +1011,7 @@ def test_research_exact_side_factory_keeps_direct_and_ilu_inventories_separate(
         direct = build_hybrid_augmented_direct_system(
             fixture["bottom"], fixture["top"], fixture["coupling"]
         )
-        rows = np.arange(direct.A.getSize()[0], dtype=PETSc.IntType)
-        expected = np.linalg.solve(
-            direct.A.getValues(rows, rows), _gather_vector(source)
-        )
+        expected = np.linalg.solve(_gather_matrix(direct.A), _gather_vector(source))
         context.apply(None, source, target)
         assert _relative_array_error(_gather_vector(target), expected) <= 1.0e-11
     finally:

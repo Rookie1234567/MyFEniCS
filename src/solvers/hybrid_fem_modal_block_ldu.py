@@ -5,8 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 from mpi4py import MPI
@@ -22,12 +23,13 @@ from .hybrid_fem_modal_schur_direct import modal_coupling_action
 
 __all__ = (
     "HybridActionModalSchurSystem",
-    "HybridBlockLduPreconditioner",
     "HybridBlockLduIterativeConfig",
     "HybridBlockLduIterativeResult",
+    "HybridBlockLduPreconditioner",
     "build_hybrid_action_modal_schur",
     "create_action_block_ldu_preconditioner",
     "create_research_exact_side_lu_block_ldu_preconditioner",
+    "create_side_balh_block_ldu_preconditioner",
     "multimetric_true_residual_decision",
     "solve_hybrid_block_ldu_iterative",
 )
@@ -874,6 +876,7 @@ class HybridBlockLduPreconditioner:
         top_action: Any,
         action_modal_schur_system: HybridActionModalSchurSystem,
         research_inventory: dict[str, Any] | None = None,
+        dynamic_side_inventory: bool = False,
     ) -> None:
         self.layout = layout
         self.bottom_system = bottom_system
@@ -885,6 +888,7 @@ class HybridBlockLduPreconditioner:
         self._research_inventory = (
             None if research_inventory is None else dict(research_inventory)
         )
+        self._dynamic_side_inventory = bool(dynamic_side_inventory)
         self.modal_schur = action_modal_schur_system.modal_schur
         self.defer_action_modal_schur_release = False
         self._action_modal_schur_released = False
@@ -969,6 +973,44 @@ class HybridBlockLduPreconditioner:
         }
         if self._research_inventory is not None:
             result.update(self._research_inventory)
+        if self._dynamic_side_inventory:
+            nested_live = sum(
+                int(diagnostics.get("nested_iterative_ksp_count", 0))
+                for diagnostics in (bottom, top)
+            )
+            nested_created = sum(
+                int(diagnostics.get("nested_ksp_created_count", 0))
+                for diagnostics in (bottom, top)
+            )
+            nested_destroyed = sum(
+                int(diagnostics.get("nested_ksp_destroy_count", 0))
+                for diagnostics in (bottom, top)
+            )
+            p4_live = sum(
+                int(diagnostics.get("p4_factor_count", 0))
+                for diagnostics in (bottom, top)
+            )
+            p4_created = sum(
+                int(diagnostics.get("p4_factor_created_count", 0))
+                for diagnostics in (bottom, top)
+            )
+            p4_destroyed = sum(
+                int(diagnostics.get("p4_factor_destroy_count", 0))
+                for diagnostics in (bottom, top)
+            )
+            result.update(
+                {
+                    "p4_factor_count": p4_live,
+                    "p4_factor_created_count": p4_created,
+                    "p4_factor_destroy_count": p4_destroyed,
+                    "p6_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "global_hybrid_direct_factor_count": 0,
+                    "nested_iterative_ksp_count": nested_live,
+                    "nested_iterative_ksp_created_count": nested_created,
+                    "nested_iterative_ksp_destroy_count": nested_destroyed,
+                }
+            )
         return result
 
     def _check_layouts(self) -> None:
@@ -1129,6 +1171,100 @@ def create_action_block_ldu_preconditioner(
         raise
 
 
+def create_side_balh_block_ldu_preconditioner(
+    layout: HybridAugmentedLayout,
+    bottom_system: Any,
+    top_system: Any,
+    coupling: HybridInternalModeCoupling,
+    bottom_side_inverse: Any,
+    top_side_inverse: Any,
+    *,
+    sampled_columns: Sequence[int],
+    sampled_column_roles: Mapping[str, Sequence[str]],
+    sampled_column_contract_sha256: str,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> HybridBlockLduPreconditioner:
+    """Build the H1f approximate Schur from two borrowed BAL_H side inverses.
+
+    The side inverses are nonlinear finite-response operators from the H1e
+    candidate path.  Their sampled response columns therefore define only an
+    approximate preconditioner Schur, not the original global or reduced
+    operator.  The caller owns both side inverses and all side systems.
+    """
+
+    from .physical_balanced_side_inverse import SideBalancedInverse
+
+    side_entries = (
+        ("bottom", bottom_system, bottom_side_inverse),
+        ("top", top_system, top_side_inverse),
+    )
+    for side, system, side_inverse in side_entries:
+        if not isinstance(side_inverse, SideBalancedInverse):
+            raise TypeError(
+                f"BAL_H block factory requires a SideBalancedInverse for {side}"
+            )
+        system_operator = getattr(system, "A", None)
+        if not isinstance(system_operator, PETSc.Mat):
+            raise TypeError(f"BAL_H {side} system must expose PETSc A")
+        if int(side_inverse.operator.handle) != int(system_operator.handle):
+            raise ValueError(f"BAL_H {side} inverse operator is not side.A")
+        diagnostics = dict(side_inverse.diagnostics)
+        if diagnostics.get("p4_factor_count") != 1:
+            raise ValueError(f"BAL_H {side} inverse p4 factor count is not one")
+        if diagnostics.get("p6_factor_count") != 0:
+            raise ValueError(f"BAL_H {side} inverse cannot own a p6 factor")
+        if diagnostics.get("global_direct_factor_count") != 0:
+            raise ValueError(f"BAL_H {side} inverse cannot own a global factor")
+        if diagnostics.get("nested_iterative_ksp_count") != 1:
+            raise ValueError(
+                f"BAL_H {side} inverse must expose one live nested KSP"
+            )
+
+    modal_schur = None
+    try:
+        modal_schur = build_hybrid_action_modal_schur(
+            coupling,
+            bottom_side_inverse,
+            top_side_inverse,
+            matrix_repeat_tolerance=1.0e-10,
+            sampled_columns=sampled_columns,
+            sampled_column_roles=sampled_column_roles,
+            sampled_column_contract_sha256=sampled_column_contract_sha256,
+            modal_batch_size=32,
+            early_sample_first=True,
+            marker_callback=marker_callback,
+        )
+        research_inventory = {
+            "research_only": True,
+            "preconditioner_identity": "BAL_H_side_inverse_response_schur",
+            "modal_block_name": (
+                "finite_nonlinear_side_inverse_response_columns"
+            ),
+            "modal_schur_scope": "approximate_preconditioner_only",
+            "not_original_global_operator": True,
+            "not_original_reduced_operator": True,
+            "borrowed_side_actions": True,
+            "global_direct_factor_count": 0,
+            "global_hybrid_direct_factor_count": 0,
+            "p6_factor_count": 0,
+        }
+        return HybridBlockLduPreconditioner(
+            layout,
+            bottom_system,
+            top_system,
+            coupling,
+            bottom_side_inverse,
+            top_side_inverse,
+            modal_schur,
+            research_inventory=research_inventory,
+            dynamic_side_inventory=True,
+        )
+    except BaseException:
+        if modal_schur is not None:
+            modal_schur.destroy()
+        raise
+
+
 def create_research_exact_side_lu_block_ldu_preconditioner(
     layout: HybridAugmentedLayout,
     bottom_system: Any,
@@ -1248,11 +1384,12 @@ class HybridBlockLduIterativeConfig:
             raise ValueError("Only the zero initial guess is supported.")
         if str(self.ksp_type).lower() not in {"fgmres", "gmres"}:
             raise ValueError("Only FGMRES and GMRES outer KSP types are supported.")
-        if str(self.ksp_type).lower() == "gmres":
-            if not self.fixed_preconditioner or int(self.restart) != 10:
-                raise ValueError(
-                    "GMRES is reserved for the fixed-preconditioner restart-10 profile."
-                )
+        if str(self.ksp_type).lower() == "gmres" and (
+            not self.fixed_preconditioner or int(self.restart) != 10
+        ):
+            raise ValueError(
+                "GMRES is reserved for the fixed-preconditioner restart-10 profile."
+            )
 
 
 @dataclass
