@@ -51,5 +51,22 @@ def qualify_native_modes(cfg):
     from src.common.modes_3d import outgoing_port_modes_3d
 
     from .fullspace_dtn_action import build_ordered_mode_manifest
-    _, encoded, _ = build_ordered_mode_manifest(outgoing_port_modes_3d(cfg), cfg)
-    return compare_mode_manifest(encoded), encoded
+    modes = tuple(outgoing_port_modes_3d(cfg))
+    manifest, encoded, digest = build_ordered_mode_manifest(modes, cfg)
+    # The historical WSL packet is a 13.5 nm, 80-mode contract.  Short-wave
+    # native runs use the current input's actual inventory and remain bound to
+    # its manifest hash; they must not be compared with that old packet.
+    if float(cfg.lambda0) == 13.5:
+        bridge = compare_mode_manifest(encoded)
+        bridge.update(wavelength_nm=float(cfg.lambda0), mode_count=len(manifest),
+                      native_sha256=digest)
+        return bridge, encoded
+    return {
+        'status': 'CURRENT_NATIVE_MODE_INVENTORY_PASS',
+        'wavelength_nm': float(cfg.lambda0),
+        'mode_count': len(manifest),
+        'native_sha256': digest,
+        'reference_sha256': None,
+        'maximum_relative_difference': None,
+        'identity_basis': 'current_input_mode_manifest',
+    }, encoded

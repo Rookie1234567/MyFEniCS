@@ -194,15 +194,35 @@ def qualify_physical_intermediate_setup(bundle: dict, *, marker: Callable,
                              for p in levels['spaces']}
     facts['independent_rows'] = {p: rows-facts['owned_slaves'][p] for p, rows in facts['rows'].items()}
     facts['mode_sha256'] = actions['mode_sha256']
+    facts['mode_count'] = len(actions['physical'][6]['modes'])
     expected_mode = 'dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2'
     if mode_identity_bridge is not None:
-        if (mode_identity_bridge['status'] != 'FIELDWISE_MODE_IDENTITY_PASS' or
-                mode_identity_bridge['reference_sha256'] != expected_mode):
+        status = mode_identity_bridge.get('status')
+        if status == 'FIELDWISE_MODE_IDENTITY_PASS':
+            if mode_identity_bridge['reference_sha256'] != expected_mode:
+                raise RuntimeError('historical native mode identity reference mismatch')
+            expected_mode = mode_identity_bridge['native_sha256']
+            if facts['rows']['6'] != 173802 or facts['mode_count'] != 80:
+                raise RuntimeError('historical native mode identity scale mismatch')
+        elif status == 'CURRENT_NATIVE_MODE_INVENTORY_PASS':
+            if (mode_identity_bridge.get('mode_count') != facts['mode_count'] or
+                    mode_identity_bridge.get('native_sha256') != facts['mode_sha256'] or
+                    mode_identity_bridge.get('wavelength_nm') is None):
+                raise RuntimeError('current native mode inventory mismatch')
+            expected_mode = facts['mode_sha256']
+            facts['current_input_mode_identity'] = {
+                'wavelength_nm': mode_identity_bridge['wavelength_nm'],
+                'mode_count': mode_identity_bridge['mode_count'],
+                'native_sha256': mode_identity_bridge['native_sha256'],
+            }
+        else:
             raise RuntimeError('unqualified native mode identity bridge')
-        expected_mode = mode_identity_bridge['native_sha256']
         facts['mode_identity_bridge'] = mode_identity_bridge
-    if facts['rows']['6'] != 173802 or facts['mode_sha256'] != expected_mode:
+    if (mode_identity_bridge is None and
+            (facts['rows']['6'] != 173802 or facts['mode_sha256'] != expected_mode)):
         raise RuntimeError(f'frozen original storage rows/mode identity mismatch: {facts}')
+    if mode_identity_bridge is not None and facts['mode_sha256'] != expected_mode:
+        raise RuntimeError(f'native storage rows/mode identity mismatch: {facts}')
     rng = np.random.default_rng(3901)
     for fine, coarse in actions['transfers']:
         marker('setup_vector_identity_started', {'fine': fine, 'coarse': coarse})

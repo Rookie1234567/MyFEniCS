@@ -45,6 +45,19 @@ def test_native_real_modes_preserve_historical_identity(tmp_path):
     assert len(json.loads(encoded)['modes']) == 80
 
 
+def test_native_5nm_modes_bind_to_current_input_inventory():
+    from src.io.input_validation import simulation_config_3d_from_normalized
+    from src.solvers.native_mode_identity import qualify_native_modes
+    cfg = simulation_config_3d_from_normalized(load_and_resolve(FIVE_NM_INPUT).as_jsonable())
+    bridge, encoded = qualify_native_modes(cfg)
+    payload = json.loads(encoded)
+    assert bridge['status'] == 'CURRENT_NATIVE_MODE_INVENTORY_PASS'
+    assert bridge['wavelength_nm'] == 5.0
+    assert bridge['mode_count'] == len(payload['modes']) == 600
+    assert bridge['reference_sha256'] is None
+    assert bridge['native_sha256'] == __import__('hashlib').sha256(encoded).hexdigest()
+
+
 @pytest.mark.parametrize('change', ['order', 'polarization', 'power', 'nonfinite'])
 def test_native_mode_bridge_rejects_changed_physics(change):
     from src.solvers.native_mode_identity import REFERENCE, compare_mode_manifest

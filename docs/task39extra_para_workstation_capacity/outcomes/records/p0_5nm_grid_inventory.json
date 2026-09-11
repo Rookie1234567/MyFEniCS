@@ -1,0 +1,60 @@
+{
+  "schema": "task39extra.p0.grid-inventory.v1",
+  "status": "P0_GRID_FE_MODE_COMPLETE",
+  "source_sha": "aba005c3963a381b66fd497c67330a512cd2d589",
+  "input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
+  "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+  "resolved_config_sha256": "6f529f67b179bad64fa12b06f5b06428abe5fc8477bcec1c037d2a73922de058",
+  "p0_path": "results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T062135.857550Z__p0_grid_inventory",
+  "mesh": {
+    "axis_plan_source": "src.geometry.mesh_builder_3d._stage4_axis_plan(cfg, comm_size=1)",
+    "resolved_cells": [15, 7, 36],
+    "coordinate_counts": [16, 8, 37],
+    "global_cells": 3780,
+    "spacing_mode": "boundary_fitted",
+    "material_plane_alignment": true
+  },
+  "fe_and_mpc": {
+    "p6_global_rows": 2514372,
+    "p6_element_space_dimension": 882,
+    "p6_mpc_slave_count": 57372,
+    "p4_global_rows": 754696,
+    "p4_element_space_dimension": 300,
+    "p4_mpc_slave_count": 25576,
+    "petsc_int_dtype": "int32",
+    "petsc_scalar_dtype": "complex128",
+    "petsc_int_itemsize": 4,
+    "petsc_scalar_itemsize": 16
+  },
+  "modes": {
+    "count": 600,
+    "propagating": 598,
+    "evanescent": 2,
+    "manifest_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645"
+  },
+  "capacity_semantics": {
+    "p6_formal_representation": "matrix_free_H6_shell_partial_assembly",
+    "p6_global_aij_constructed": false,
+    "p6_formula_nnz_upper_not_a_capacity_gate": 2943067092,
+    "p4_volume_nnz_conservative_upper": 340954696,
+    "p4_mode_entries": 600,
+    "p4_port_added_nnz_conservative_upper": 905635800,
+    "p4_augmented_nnz_conservative_upper": 1246590496,
+    "p4_augmented_nnz_int32_safe": true,
+    "p4_derived_assembly_payload_upper_bytes": 61885248712,
+    "p4_derived_assembly_payload_upper_gib": 57.635129161179066,
+    "p4_payload_semantics": "conservative assembly payload formula; not RSS strict upper and excludes LU",
+    "actual_p4_nnz": "deferred_to_supervised_P1",
+    "lu_status": "deferred_to_P2"
+  },
+  "resource_evidence": {
+    "node1_effective_cap_bytes": 308955803648,
+    "global_effective_available_bytes": 706897485824,
+    "global_reserve_bytes": 324465062092,
+    "p0_rss_peak_bytes": 608460800,
+    "p0_swap_peak_bytes": 0,
+    "watchdog": "COMPLETED_descendants_cleared",
+    "cap_is_not_predicted_usage": true
+  },
+  "scope": "No numeric matrix/factor/RHS/KSP/outer solve was run in P0."
+}
