@@ -18,6 +18,7 @@ from typing import Any, Callable, Mapping
 import numpy as np
 
 from .physical_diagnosis_worker import save_packet
+from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
 
 V12_PROFILE = "physical_macro_dd4_v12"
@@ -658,13 +659,36 @@ def _run_outer_candidate(
     from src.solvers.physical_macro_dd4 import make_macro_pc
 
     started = time.perf_counter()
+    candidate_clock_start = clock_sample()
+    candidate_clock = ClockBudget(candidate_clock_start, policy=CONSERVATIVE_REALTIME)
     node_records: list[dict[str, Any]] = []
     checkpoint_facts: list[dict[str, Any]] = []
     node_checkpoint_facts: list[dict[str, Any]] = []
-    deadline_state = {"requested": False, "reason": None, "last_residual": None}
+    deadline_state = {
+        "requested": False, "reason": None, "last_residual": None,
+        "last_conservative_seconds": 0.0,
+    }
+
+    def timebase_snapshot() -> dict[str, Any]:
+        interval = candidate_clock.update(clock_sample())
+        elapsed = interval["elapsed_seconds"]
+        snapshot = {
+            "policy": interval["policy"],
+            "policy_version": interval["policy_version"],
+            "monotonic_seconds": float(elapsed["monotonic"]),
+            "boottime_seconds": float(elapsed["boottime"]),
+            "utc_seconds": float(elapsed["utc"]),
+            "conservative_seconds": float(interval["budget_seconds"]),
+            "utc_positive_excess_seconds": float(
+                interval["utc_positive_excess_seconds"]
+            ),
+            "discrepancy_seconds": float(interval["discrepancy_seconds"]),
+        }
+        deadline_state["last_conservative_seconds"] = snapshot["conservative_seconds"]
+        return snapshot
 
     def deadline_requested() -> bool:
-        elapsed = time.perf_counter() - started
+        elapsed = timebase_snapshot()["conservative_seconds"]
         residual = deadline_state["last_residual"]
         requested = elapsed >= _stage_timeout(stage)
         if stage in {"O3_ORIGINAL", "O3_NOTCH"} and residual is not None:
@@ -728,6 +752,7 @@ def _run_outer_candidate(
             if key in resource
         }
         cost_snapshot = _stack_cost_snapshot(stack, stack["I4"])
+        timebase = timebase_snapshot()
         row = {
             "iteration": int(iteration),
             "true_residual": float(residual),
@@ -740,6 +765,9 @@ def _run_outer_candidate(
             "physical_model_sha256": physical_sha256,
             "true_residual_definition": "||rhs-A6*x||/||rhs|| from a fresh explicit action",
             "elapsed_seconds": float(time.perf_counter() - started),
+            "elapsed_seconds_monotonic": timebase["monotonic_seconds"],
+            "elapsed_seconds_conservative": timebase["conservative_seconds"],
+            "timebase": timebase,
             "resource": resource_compact,
             "outer_pc_calls": int(getattr(outer_pc, "apply_count", 0)),
             "cost": cost_snapshot,
@@ -750,7 +778,13 @@ def _run_outer_candidate(
             row["reference_field_elapsed_seconds"] = float(
                 time.perf_counter() - field_started
             )
+            # Field comparison is part of the node's recorded cost.  Refresh
+            # all clocks after it so the three timing fields end at one point.
+            timebase = timebase_snapshot()
             row["elapsed_seconds"] = float(time.perf_counter() - started)
+            row["elapsed_seconds_monotonic"] = timebase["monotonic_seconds"]
+            row["elapsed_seconds_conservative"] = timebase["conservative_seconds"]
+            row["timebase"] = timebase
         node_records.append(row)
         if iteration in node_set:
             node_checkpoint = _write_checkpoint(
@@ -783,7 +817,7 @@ def _run_outer_candidate(
         return fact
 
     def stop_after_cycle(cycle: Mapping[str, Any], _cycles: Any) -> bool:
-        elapsed = time.perf_counter() - started
+        elapsed = timebase_snapshot()["conservative_seconds"]
         iteration = int(cycle["end_iteration"])
         residual = float(cycle["explicit_true_residual"])
         if stage.startswith("O2_") and elapsed >= 2400.0:
@@ -795,7 +829,9 @@ def _run_outer_candidate(
                 return True
         marker("outer_cycle_completed", {
             "stage": stage, "framework": framework, "restart": restart,
-            "iteration": iteration, "true_residual": residual, "elapsed_seconds": elapsed,
+            "iteration": iteration, "true_residual": residual,
+            "elapsed_seconds": elapsed,
+            "elapsed_seconds_conservative": elapsed,
         })
         return False
 
@@ -826,9 +862,27 @@ def _run_outer_candidate(
         result["node_records"] = node_records
         result["checkpoint_facts"] = checkpoint_facts
         result["node_checkpoint_facts"] = node_checkpoint_facts
+        final_timebase = timebase_snapshot()
         result["elapsed_seconds_wall"] = time.perf_counter() - started
+        result["elapsed_seconds_monotonic"] = final_timebase["monotonic_seconds"]
+        result["elapsed_seconds_conservative"] = final_timebase["conservative_seconds"]
+        result["timebase"] = {
+            "start": candidate_clock_start,
+            "final": final_timebase,
+        }
         result["deadline"] = dict(deadline_state)
         result["outer_pc_calls"] = int(getattr(outer_pc, "apply_count", 0))
+        result["outer_pc_total_counts"] = dict(
+            getattr(outer_pc, "total_counts", {})
+        )
+        result["outer_pc_total_operation_seconds"] = dict(
+            getattr(outer_pc, "total_operation_seconds", {})
+        )
+        result["outer_pc_cost_semantics"] = (
+            "outer PC totals include the nested I4/coarse calls made by each "
+            "outer apply; report separately from the stack I4 counters and "
+            "do not add parent and child totals"
+        )
         result["cost_start"] = cost_start
         result["cost_end"] = _stack_cost_snapshot(stack, stack["I4"])
         result["cost_delta"] = {
@@ -897,9 +951,38 @@ def run_macro_v12_outer(
     physical_sha256 = str((model_identity or {}).get("physical_model_sha256", ""))
     if len(physical_sha256) != 64:
         raise ValueError("V12 outer stage requires a hash-bound physical model identity")
+    phase_timings: dict[str, dict[str, Any]] = {}
+    active_phases: dict[str, dict[str, Any]] = {}
+
+    def phase_start(name: str) -> None:
+        start_clock = clock_sample()
+        active_phases[name] = start_clock
+        marker(f"{name}_started", {"clock": start_clock})
+
+    def phase_finish(name: str) -> None:
+        start_clock = active_phases.pop(name, None)
+        if start_clock is None:
+            return
+        end_clock = clock_sample()
+        interval = ClockBudget(
+            start_clock, policy=CONSERVATIVE_REALTIME,
+        ).update(end_clock)
+        phase_timings[name] = {
+            "start_clock": start_clock,
+            "end_clock": end_clock,
+            "clock_interval": interval,
+            "elapsed_seconds_monotonic": float(
+                interval["elapsed_seconds"]["monotonic"]
+            ),
+            "elapsed_seconds_conservative": float(interval["budget_seconds"]),
+        }
+        marker(f"{name}_completed", phase_timings[name])
+
+    phase_start("setup")
     inventory = load_recursive_balanced_inputs(inventory_path)
     notch = stage == "O3_NOTCH" or bool(cfg.cell_notch)
     reference_binding = _load_reference_binding(inventory_path, notch=notch)
+    phase_finish("setup")
     stack = None
     rhs = None
     candidate_results: list[dict[str, Any]] = []
@@ -925,14 +1008,19 @@ def run_macro_v12_outer(
         "new_reference_factor": False,
         "candidates": [],
         "official_result": None,
+        "stage_times": phase_timings,
     }
     try:
-        stack = build_macro_stack(
-            cfg, comm, sample=sample, marker=marker,
-            save=lambda name, facts: save_packet(directory, name, facts),
-            memory_policy=V12_MEMORY_POLICY,
-            local_inventory_cap_bytes=V12_LOCAL_INVENTORY_CAP_BYTES,
-        )
+        phase_start("build")
+        try:
+            stack = build_macro_stack(
+                cfg, comm, sample=sample, marker=marker,
+                save=lambda name, facts: save_packet(directory, name, facts),
+                memory_policy=V12_MEMORY_POLICY,
+                local_inventory_cap_bytes=V12_LOCAL_INVENTORY_CAP_BYTES,
+            )
+        finally:
+            phase_finish("build")
         expected_model = reference_binding["model"]
         if str(expected_model.get("physical_sha")) != physical_sha256:
             raise ValueError("V12 input physical identity differs from the selected G0 reference model")
@@ -983,32 +1071,44 @@ def run_macro_v12_outer(
             "mode_sha256": operator_identity["mode_sha256"],
             "native_constraint_maps": operator_identity["native_constraint_maps"],
         }
-        rhs, rhs_facts = build_physical_rhs(stack["fine"])
+        phase_start("rhs")
+        try:
+            rhs, rhs_facts = build_physical_rhs(stack["fine"])
+        finally:
+            phase_finish("rhs")
         save_packet(directory, "physical_rhs", {"rhs": np.array(rhs.array), "facts": rhs_facts})
         checkpoint_root = directory / "checkpoints"
         max_it = 64 if stage.startswith("O2_") else 2048
         if stage.startswith("O2_"):
-            result = _run_outer_candidate(
-                stack, rhs, framework=framework, restart=outer_restart, max_it=max_it,
-                sample=sample, marker=marker, checkpoint_root=checkpoint_root,
-                input_sha256=input_sha256, operator_sha256=operator_sha256,
-                physical_sha256=physical_sha256, source_sha=source_sha, stage=stage,
-                output_name=f"restart_{outer_restart}",
-                reference_x_ref=reference_binding.get("x_ref"),
-            )
+            phase_start("outer")
+            try:
+                result = _run_outer_candidate(
+                    stack, rhs, framework=framework, restart=outer_restart, max_it=max_it,
+                    sample=sample, marker=marker, checkpoint_root=checkpoint_root,
+                    input_sha256=input_sha256, operator_sha256=operator_sha256,
+                    physical_sha256=physical_sha256, source_sha=source_sha, stage=stage,
+                    output_name=f"restart_{outer_restart}",
+                    reference_x_ref=reference_binding.get("x_ref"),
+                )
+            finally:
+                phase_finish("outer")
             candidate_results.append(result)
             summary["candidates"] = [{
                 key: value for key, value in result.items() if key != "final_solution"
             }]
         else:
-            result = _run_outer_candidate(
-                stack, rhs, framework=framework, restart=outer_restart, max_it=max_it,
-                sample=sample, marker=marker, checkpoint_root=checkpoint_root,
-                input_sha256=input_sha256, operator_sha256=operator_sha256,
-                physical_sha256=physical_sha256, source_sha=source_sha, stage=stage,
-                output_name="original" if not notch else "notch",
-                reference_x_ref=reference_binding.get("x_ref"),
-            )
+            phase_start("outer")
+            try:
+                result = _run_outer_candidate(
+                    stack, rhs, framework=framework, restart=outer_restart, max_it=max_it,
+                    sample=sample, marker=marker, checkpoint_root=checkpoint_root,
+                    input_sha256=input_sha256, operator_sha256=operator_sha256,
+                    physical_sha256=physical_sha256, source_sha=source_sha, stage=stage,
+                    output_name="original" if not notch else "notch",
+                    reference_x_ref=reference_binding.get("x_ref"),
+                )
+            finally:
+                phase_finish("outer")
             candidate_results.append(result)
             summary["candidates"] = [{
                 key: value for key, value in result.items() if key != "final_solution"

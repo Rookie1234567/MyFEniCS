@@ -99,6 +99,15 @@ def selected_contract(args):
             global_swap_stop=True,
             memory_policy='SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
         )
+        if getattr(args, 'macro_v12_supplement', False):
+            contract.update(
+                batch='V12_SUPPLEMENT',
+                formal_workflow_limit_seconds=MACRO_V12_SUPPLEMENT_TOTAL_LIMIT_SECONDS,
+                o1_workflow_limit_seconds=3600.0,
+                o1_compute_limit_seconds=MACRO_V12_SUPPLEMENT_O1_COMPUTE_LIMIT_SECONDS,
+                permitted_stages=tuple(MACRO_V12_SUPPLEMENT_STAGE_LIMITS),
+                old_v12_ledger='not_used_or_merged',
+            )
         return contract
     macro_v11 = (getattr(args, 'macro_v11_controls', False)
                  or getattr(args, 'macro_v11_calibration', False))
@@ -770,6 +779,10 @@ def build_parser():
     group.add_argument('--macro-v11-controls', action='store_true')
     group.add_argument('--macro-v11-calibration', action='store_true')
     group.add_argument('--macro-v12', action='store_true')
+    parser.add_argument(
+        '--macro-v12-supplement', action='store_true',
+        help='use the independent bounded V12 supplement ledger',
+    )
     parser.add_argument('--macro-v12-stage', choices=(
         'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS',
         'O2_RESTART_PROBE_32', 'O2_RESTART_PROBE_64',
@@ -846,6 +859,7 @@ MACRO_V11_CONTROLS_LIMIT_SECONDS = 1200.0
 MACRO_V11_CALIBRATION_LIMIT_SECONDS = 900.0
 MACRO_V11_LEDGER_SCHEMA = 'task39extra.review-v11-n0-n2-budget.v1'
 MACRO_V12_LEDGER_SCHEMA = 'task39extra.review-v12-o0-o4-budget.v1'
+MACRO_V12_SUPPLEMENT_LEDGER_SCHEMA = 'task39extra.review-v12-supplement-budget.v1'
 MACRO_V12_STAGE_LIMITS = {
     'O0_PRECHECK': 7200.0,
     'O1_FULL_PHYSICAL_CONTROLS': 7200.0,
@@ -855,6 +869,13 @@ MACRO_V12_STAGE_LIMITS = {
     'O3_NOTCH': 14400.0,
     'O4_FINALIZE': 43200.0,
 }
+MACRO_V12_SUPPLEMENT_STAGE_LIMITS = {
+    'O1_FULL_PHYSICAL_CONTROLS': 3600.0,
+    'O2_RESTART_PROBE_32': 3600.0,
+    'O2_RESTART_PROBE_64': 3600.0,
+}
+MACRO_V12_SUPPLEMENT_TOTAL_LIMIT_SECONDS = 10800.0
+MACRO_V12_SUPPLEMENT_O1_COMPUTE_LIMIT_SECONDS = 1200.0
 
 
 def _j1_charge_seconds(budget):
@@ -910,7 +931,7 @@ def _macro_charged_seconds(budget):
     return float(budget.get('charged_seconds', 0.0))
 
 
-def _load_v12_ledger(path):
+def _load_v12_ledger(path, *, supplement=False):
     """Load the pre-recorded V12 activity ledger; never invent its debit."""
 
     path = Path(path)
@@ -920,12 +941,27 @@ def _load_v12_ledger(path):
             'with its implementation_activity record before launching a stage'
         )
     budget = json.loads(path.read_text())
-    if budget.get('schema') != MACRO_V12_LEDGER_SCHEMA:
-        raise ValueError('V12 stage requires its independent O0-O4 ledger')
-    expected_limits = {
-        'total_limit_seconds': 43200.0,
-        'o0_o1_limit_seconds': 7200.0,
-    }
+    expected_limits = (
+        {
+            'total_limit_seconds': MACRO_V12_SUPPLEMENT_TOTAL_LIMIT_SECONDS,
+            'o1_workflow_limit_seconds': 3600.0,
+            'o1_compute_limit_seconds': MACRO_V12_SUPPLEMENT_O1_COMPUTE_LIMIT_SECONDS,
+        }
+        if supplement else
+        {
+            'total_limit_seconds': 43200.0,
+            'o0_o1_limit_seconds': 7200.0,
+        }
+    )
+    expected_schema = (
+        MACRO_V12_SUPPLEMENT_LEDGER_SCHEMA if supplement
+        else MACRO_V12_LEDGER_SCHEMA
+    )
+    if budget.get('schema') != expected_schema:
+        raise ValueError(
+            'V12 supplement requires its independent supplement ledger'
+            if supplement else 'V12 stage requires its independent O0-O4 ledger'
+        )
     for key, expected in expected_limits.items():
         if budget.get(key) != expected:
             raise ValueError(f'V12 ledger has the wrong {key}')
@@ -937,10 +973,11 @@ def _load_v12_ledger(path):
         raise ValueError('V12 implementation_activity charged_seconds is invalid')
     if float(implementation_seconds) < 0.0:
         raise ValueError('V12 implementation_activity charged_seconds must be non-negative')
-    if float(budget.get('charged_seconds', 0.0)) < float(implementation_seconds):
-        raise ValueError('V12 ledger charged_seconds is below its implementation debit')
-    if float(budget.get('o0_o1_charged_seconds', 0.0)) < float(implementation_seconds):
-        raise ValueError('V12 O0/O1 ledger charge is below its implementation debit')
+    if not supplement:
+        if float(budget.get('charged_seconds', 0.0)) < float(implementation_seconds):
+            raise ValueError('V12 ledger charged_seconds is below its implementation debit')
+        if float(budget.get('o0_o1_charged_seconds', 0.0)) < float(implementation_seconds):
+            raise ValueError('V12 O0/O1 ledger charge is below its implementation debit')
     return budget
 
 
@@ -1294,8 +1331,16 @@ def _launch_macro_v12_stage(args):
     from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
     stage = getattr(args, 'macro_v12_stage', None)
-    if stage not in MACRO_V12_STAGE_LIMITS:
-        raise ValueError('V12 requires an explicit O0/O1/O2/O3/O4 stage')
+    supplement = bool(getattr(args, 'macro_v12_supplement', False))
+    stage_limits = (
+        MACRO_V12_SUPPLEMENT_STAGE_LIMITS if supplement
+        else MACRO_V12_STAGE_LIMITS
+    )
+    if stage not in stage_limits:
+        raise ValueError(
+            'V12 supplement requires O1/O2 stages'
+            if supplement else 'V12 requires an explicit O0/O1/O2/O3/O4 stage'
+        )
     source = git_state(args.source_sha)
     budget_path = Path(args.budget).resolve()
     inventory_path = Path(args.inventory).resolve()
@@ -1642,6 +1687,10 @@ def _launch_macro_v12_stage(args):
                 'iterations': int(candidate.get('iterations', 0)),
                 'final_true_residual': candidate.get('final_true_residual'),
                 'elapsed_seconds_wall': candidate.get('elapsed_seconds_wall'),
+                'elapsed_seconds_conservative': candidate.get(
+                    'elapsed_seconds_conservative',
+                    candidate.get('elapsed_seconds_wall'),
+                ),
                 'reached48': int(candidate.get('iterations', 0)) >= 48,
                 'reached64': int(candidate.get('iterations', 0)) >= 64,
                 'official_result_pass': (summary.get('official_result') or {}).get('status') == 'OFFICIAL_RESULT_PASS',
@@ -1681,8 +1730,16 @@ def _launch_macro_v12_stage(args):
         if both64:
             denominator = float(candidate32.get('final_true_residual', 0.0))
             residual_ratio = float(candidate64.get('final_true_residual', 0.0)) / max(denominator, 1.0e-300)
-            time_ratio = float(candidate64.get('elapsed_seconds_wall', 0.0)) / max(
-                float(candidate32.get('elapsed_seconds_wall', 0.0)), 1.0e-300,
+            time32 = float(candidate32.get(
+                'elapsed_seconds_conservative',
+                candidate32.get('elapsed_seconds_wall', 0.0),
+            ))
+            time64 = float(candidate64.get(
+                'elapsed_seconds_conservative',
+                candidate64.get('elapsed_seconds_wall', 0.0),
+            ))
+            time_ratio = time64 / max(
+                time32, 1.0e-300,
             )
             choose64 = bool(
                 fact32['node_resources_valid'] and fact64['node_resources_valid']
@@ -1720,6 +1777,7 @@ def _launch_macro_v12_stage(args):
             'cost_classification': 'INCOMPLETE_AT_COST_CAP' if not both64 else 'COMPLETE_AT_64',
             'endpoint_residual_ratio_64_over_32': residual_ratio,
             'endpoint_time_ratio_64_over_32': time_ratio,
+            'endpoint_time_ratio_basis': 'elapsed_seconds_conservative; legacy wall fallback only for pre-supplement records',
             'thresholds': {'residual': 0.50, 'time': 1.25},
             'selection_rule': '64 only if both reach64, resource gates pass, and both ratios pass; otherwise32',
         }
@@ -1730,10 +1788,14 @@ def _launch_macro_v12_stage(args):
     budget_path.parent.mkdir(parents=True, exist_ok=True)
     with budget_path.with_suffix('.lock').open('a') as lock_stream:
         fcntl.flock(lock_stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        budget = _load_v12_ledger(budget_path)
+        budget = _load_v12_ledger(budget_path, supplement=supplement)
+        expected_profile = (
+            'physical_macro_dd4_v12_supplement' if supplement
+            else 'physical_macro_dd4_v12'
+        )
         if budget.get('profile') is None:
-            budget['profile'] = 'physical_macro_dd4_v12'
-        elif budget['profile'] != 'physical_macro_dd4_v12':
+            budget['profile'] = expected_profile
+        elif budget['profile'] != expected_profile:
             raise ValueError('V12 ledger profile identity does not match this stage')
         identities = set(budget.get('physical_model_sha256s', []))
         identities.add(physical_model_sha256)
@@ -1753,7 +1815,9 @@ def _launch_macro_v12_stage(args):
         if stage_entry(budget, stage) is not None:
             raise ValueError(f'V12 stage already attempted; no repeat measurement: {stage}')
 
-        if stage == 'O1_FULL_PHYSICAL_CONTROLS':
+        if supplement and stage == 'O1_FULL_PHYSICAL_CONTROLS':
+            pass
+        elif stage == 'O1_FULL_PHYSICAL_CONTROLS':
             _, summary0 = require_completed(budget, 'O0_PRECHECK')
             if summary0.get('status') != 'O0_PRECHECK_COMPLETED':
                 raise ValueError('V12 O0 did not complete its precheck gate')
@@ -1814,11 +1878,16 @@ def _launch_macro_v12_stage(args):
                 )
 
         total_remaining = float(budget['total_limit_seconds']) - float(budget.get('charged_seconds', 0.0))
-        if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
+        if supplement and stage == 'O1_FULL_PHYSICAL_CONTROLS':
+            stage_remaining = (
+                float(budget['o1_workflow_limit_seconds'])
+                - float(budget.get('o1_charged_seconds', 0.0))
+            )
+        elif stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
             stage_remaining = float(budget['o0_o1_limit_seconds']) - float(budget.get('o0_o1_charged_seconds', 0.0))
         else:
-            stage_remaining = float(MACRO_V12_STAGE_LIMITS[stage])
-        wall_seconds = min(float(MACRO_V12_STAGE_LIMITS[stage]), stage_remaining, total_remaining)
+            stage_remaining = float(stage_limits[stage])
+        wall_seconds = min(float(stage_limits[stage]), stage_remaining, total_remaining)
         if wall_seconds <= 0.0:
             raise RuntimeError(f'V12 budget exhausted before {stage}')
 
@@ -1840,17 +1909,25 @@ def _launch_macro_v12_stage(args):
             raise ValueError(f'V12 stage output already exists; choose a fresh path: {root}')
         cache_home = (root / 'jit_cache').resolve()
         entry = {
-            'kind': f'physical_macro_dd4_v12_{stage.lower()}',
+            'kind': f"physical_macro_dd4_v12{'_supplement' if supplement else ''}_{stage.lower()}",
             'stage': stage,
-            'budget_group': 'O0_O1_shared' if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'} else stage,
+            'budget_group': (
+                'SUPPLEMENT_O1' if supplement and stage == 'O1_FULL_PHYSICAL_CONTROLS'
+                else 'O0_O1_shared' if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}
+                else stage
+            ),
             'source': args.source_sha,
             'root': str(root),
             'status': 'RESERVED',
             'reserved_seconds': wall_seconds,
             'input': str(input_path), 'input_sha256': input_sha256,
             'inventory': str(inventory_path), 'inventory_sha256': inventory_sha256,
-            'stage_limit_seconds': float(MACRO_V12_STAGE_LIMITS[stage]),
+            'stage_limit_seconds': float(stage_limits[stage]),
             'admitted_wall_seconds': wall_seconds,
+            'supplement': supplement,
+            'o1_compute_limit_seconds': (
+                MACRO_V12_SUPPLEMENT_O1_COMPUTE_LIMIT_SECONDS if supplement else None
+            ),
             'framework': framework if stage.startswith(('O2_', 'O3_')) else None,
             'outer_restart': requested_restart,
         }
@@ -1863,6 +1940,7 @@ def _launch_macro_v12_stage(args):
             cache_home.mkdir(parents=True, exist_ok=False)
             atomic(root / 'launch_plan.json', {
                 'source': source, 'contract': selected_contract(args), 'stage': stage,
+                'supplement': supplement,
                 'wall_seconds': wall_seconds, 'inventory': str(inventory_path),
                 'input_sha256': input_sha256, 'inventory_sha256': inventory_sha256,
                 'framework': framework if stage.startswith(('O2_', 'O3_')) else None,
@@ -1877,6 +1955,7 @@ def _launch_macro_v12_stage(args):
                 '--macro-v12-stage', stage,
                 '--macro-v12-outer-restart', str(requested_restart),
                 '--macro-v12-framework', framework,
+                *(['--macro-v12-supplement'] if supplement else []),
                 '--jit-cache', str(cache_home), '--worker',
             ]
             result = supervise(
@@ -1892,7 +1971,9 @@ def _launch_macro_v12_stage(args):
                 clock_interval=interval, descendants_cleared=result.get('descendants_cleared'),
             )
             budget['charged_seconds'] = float(budget.get('charged_seconds', 0.0)) + entry['actual_seconds']
-            if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
+            if supplement and stage == 'O1_FULL_PHYSICAL_CONTROLS':
+                budget['o1_charged_seconds'] = float(budget.get('o1_charged_seconds', 0.0)) + entry['actual_seconds']
+            elif stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
                 budget['o0_o1_charged_seconds'] = float(budget.get('o0_o1_charged_seconds', 0.0)) + entry['actual_seconds']
             budget['remaining_seconds'] = float(budget['total_limit_seconds']) - budget['charged_seconds']
             atomic(budget_path, budget)
@@ -1922,7 +2003,9 @@ def _launch_macro_v12_stage(args):
                 entry['clock_interval'] = interval
                 entry['actual_seconds'] = float(interval['budget_seconds'])
                 budget['charged_seconds'] = float(budget.get('charged_seconds', 0.0)) + entry['actual_seconds']
-                if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
+                if supplement and stage == 'O1_FULL_PHYSICAL_CONTROLS':
+                    budget['o1_charged_seconds'] = float(budget.get('o1_charged_seconds', 0.0)) + entry['actual_seconds']
+                elif stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
                     budget['o0_o1_charged_seconds'] = float(budget.get('o0_o1_charged_seconds', 0.0)) + entry['actual_seconds']
                 budget['remaining_seconds'] = float(budget['total_limit_seconds']) - budget['charged_seconds']
             atomic(budget_path, budget)

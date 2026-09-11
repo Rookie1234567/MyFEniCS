@@ -30,6 +30,10 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument('--macro-v11-calibration', action='store_true')
     mode.add_argument('--macro-v12', action='store_true')
     parser.add_argument(
+        '--macro-v12-supplement', action='store_true',
+        help='use the independent bounded V12 supplement ledger',
+    )
+    parser.add_argument(
         '--macro-v12-stage',
         choices=(
             'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS',
@@ -85,6 +89,8 @@ def main(argv: list[str] | None = None) -> int:
             MACRO_V10_PROFILE, MACRO_V11_PROFILE, MACRO_V12_PROFILE,
         )
         macro_v12 = args.macro_v12 or specification.solver.get('preconditioner') == MACRO_V12_PROFILE
+        if args.macro_v12_supplement and not macro_v12:
+            raise InputError('--macro-v12-supplement requires a V12 input')
         if macro_v12:
             if specification.solver.get('preconditioner') != MACRO_V12_PROFILE:
                 raise InputError(
@@ -105,10 +111,16 @@ def main(argv: list[str] | None = None) -> int:
             except (OSError, subprocess.CalledProcessError) as exc:
                 raise InputError(f'cannot determine V12 source SHA: {exc}') from exc
             ledger = args.profile_budget_ledger or Path(
+                'benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_budget.json'
+                if args.macro_v12_supplement else
                 'benchmarks/artifacts/task39extra/v12_o0_o4/v12_o0_o4_budget.json'
             )
             output = args.macro_v12_output or (
-                Path('benchmarks/artifacts/task39extra/v12_o0_o4')
+                Path(
+                    'benchmarks/artifacts/task39extra/v12_supplement'
+                    if args.macro_v12_supplement else
+                    'benchmarks/artifacts/task39extra/v12_o0_o4'
+                )
                 / source_sha / stage.lower()
             )
             from src.runners.physical_recursive_entry import _launch_macro_v12_stage
@@ -118,6 +130,7 @@ def main(argv: list[str] | None = None) -> int:
                 jit_cache=None, macro_v12=True, macro_v12_stage=stage,
                 macro_v12_outer_restart=outer_restart,
                 macro_v12_framework=args.macro_v12_framework,
+                macro_v12_supplement=args.macro_v12_supplement,
             )
             result = _launch_macro_v12_stage(launch_args)
             print(json.dumps(result, sort_keys=True, separators=(',', ':')))
