@@ -565,9 +565,12 @@ def _field_compare(stack: Mapping[str, Any], solution: Any, x_ref: np.ndarray | 
     )
     if x_ref.shape != solution.array.shape:
         return {"status": "REFERENCE_FIELD_SHAPE_MISMATCH", "reference_shape": list(x_ref.shape)}
+    quadrature = stack.get("recovery_quadrature_metadata")
+    if quadrature is None:
+        quadrature = stack["actions"]["volume_quadrature_metadata"]
     metric = LosslessFEMetric(
         stack["fine"]["setup"], 6, stack["fine"]["cfg"].k0,
-        stack.get("recovery_quadrature_metadata"),
+        quadrature,
     )
     try:
         error = np.asarray(solution.array - x_ref, dtype=np.complex128)[indices]
@@ -883,6 +886,28 @@ def _run_outer_candidate(
             "outer apply; report separately from the stack I4 counters and "
             "do not add parent and child totals"
         )
+        i4 = stack["I4"]
+        result["outer_i4_call_records"] = [
+            dict(record) for record in getattr(i4, "records", ())
+        ]
+        ledger = stack.get("outer_ledger")
+        if ledger is not None:
+            last_summary = None
+            if isinstance(getattr(ledger, "last", None), Mapping):
+                last_summary = dict(ledger.last.get("summary", {}))
+            result["outer_balance_ledger"] = {
+                "audit_count": int(getattr(ledger, "audit_count", 0)),
+                "A_count": int(getattr(ledger, "A_count", 0)),
+                "PH_count": int(getattr(ledger, "PH_count", 0)),
+                "audit_seconds": float(getattr(ledger, "audit_seconds", 0.0)),
+                "A_seconds": float(getattr(ledger, "A_seconds", 0.0)),
+                "PH_seconds": float(getattr(ledger, "PH_seconds", 0.0)),
+                "last_summary": last_summary,
+                "cost_semantics": (
+                    "outer balance ledger counters are nested inside outer-PC "
+                    "calls and are reported separately from outer-PC totals"
+                ),
+            }
         result["cost_start"] = cost_start
         result["cost_end"] = _stack_cost_snapshot(stack, stack["I4"])
         result["cost_delta"] = {

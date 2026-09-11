@@ -1831,7 +1831,28 @@ def _launch_macro_v12_stage(args):
                 raise ValueError('V12 O1 has no selected framework authority')
             budget['selected_framework'] = selected_framework
         elif stage == 'O2_RESTART_PROBE_64':
-            require_completed(budget, 'O2_RESTART_PROBE_32')
+            entry32 = stage_entry(budget, 'O2_RESTART_PROBE_32')
+            if supplement and entry32 is not None and entry32.get('status') != 'COMPLETED':
+                summary32 = load_summary(budget, 'O2_RESTART_PROBE_32')
+                recoverable = bool(
+                    entry32.get('status') == 'WORKER_FAILED'
+                    and summary32.get('exception_type') == 'TypeError'
+                    and summary32.get('exception') == "'NoneType' object is not subscriptable"
+                    and summary32.get('status') == 'V12_OUTER_FAILED'
+                )
+                if not recoverable:
+                    raise ValueError(
+                        'V12 supplement O2-64 requires a completed O2-32 or '
+                        'the recorded post-diagnostic metadata failure'
+                    )
+                budget['o2_32_recovery'] = {
+                    'status': 'ALLOWED_AFTER_POST_DIAGNOSTIC_FAILURE',
+                    'reason': 'field diagnostic quadrature metadata was unavailable before the local fallback fix',
+                    'source': entry32.get('source'),
+                    'root': entry32.get('root'),
+                }
+            else:
+                require_completed(budget, 'O2_RESTART_PROBE_32')
             if budget.get('selected_framework') not in ('BAL_H', 'ONE_C'):
                 raise ValueError('V12 O1 framework binding is missing from the ledger')
         elif stage == 'O3_ORIGINAL':
