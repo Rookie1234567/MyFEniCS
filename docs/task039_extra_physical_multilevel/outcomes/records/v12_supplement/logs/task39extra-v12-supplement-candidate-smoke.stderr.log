@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/tmp/task39extra_v12_supplement_candidate_smoke.py", line 17, in <module>
+    from src.runners import physical_macro_v12 as runner
+ModuleNotFoundError: No module named 'src'

@@ -1,0 +1,3 @@
+{"restart": 32, "status": "PASS", "iterations": 64, "nodes": [8, 16, 24, 32, 40, 48, 56, 64], "final_rho": 0.01757480996912387, "directory": "/tmp/task39extra-v12-tiny-o2-b0onxqcr", "new_PDE_runs": 0}
+{"restart": 64, "status": "PASS", "iterations": 64, "nodes": [8, 16, 24, 32, 40, 48, 56, 64], "final_rho": 7.306594861140251e-11, "directory": "/tmp/task39extra-v12-tiny-o2-4ff2zaqn", "new_PDE_runs": 0}
+{"prefix32": "IDENTICAL", "new_PDE_runs": 0}

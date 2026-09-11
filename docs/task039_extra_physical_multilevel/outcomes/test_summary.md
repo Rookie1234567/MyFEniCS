@@ -1,4 +1,23 @@
-# V12 O0–O4 测试、raw 记录与静态收口
+# V12 supplement 最新测试、raw 记录与只读审计
+
+本节是 bounded supplement 的最新测试/evidence closeout；下一节起的原 V12 O0–O4 测试表保留为历史。此轮不重新启动 PDE、MPI、factor 或任何 O2/O3 workflow。
+
+| 检查 | 最新结果与边界 |
+|---|---|
+| repaired-source focused regression | `51 passed`，绑定修复 source `d39261bb17e8d9042c03d4d4990258da5043b621`；raw stdout/stderr 为 [focused stdout](records/v12_supplement/logs/task39extra-v12-supplement-root-repaired-focused.stdout.log) / [focused stderr](records/v12_supplement/logs/task39extra-v12-supplement-root-repaired-focused.stderr.log) |
+| field-metric smoke | 2 个 smoke tests `PASS`；绑定 [stdout](records/v12_supplement/logs/task39extra-v12-supplement-root-repaired-field.stdout.log) / [stderr](records/v12_supplement/logs/task39extra-v12-supplement-root-repaired-field.stderr.log)；只验证保存 field metric 的诊断路径，不构成 PDE rerun 或 official field pass |
+| ABI preflight | qualified Linux activation；PETSc scalar `complex128`、integer `int32`、MPI1、线程1；[ABI stdout](records/v12_supplement/logs/task39extra-v12-supplement-root-abi.stdout.log) / [stderr](records/v12_supplement/logs/task39extra-v12-supplement-root-abi.stderr.log) |
+| read-only budget audit | 最终 continuation ledger `74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329`；`errors=[]`，total `4361.388890249411 s`，remaining `6438.611109750589 s`；`/tmp` 与 tracked audit SHA `838193b6094548405ea74264723f5bca55d638c51018d784fc792628a3ac9d0a` |
+| record audits | O1 inventory `759/0`、O1 p4 `132/0`、O1 shared `96/0`、repaired R32 outer `1187/0`、repaired R32 inventory `759/0`、R64 prefix/resource audits `errors=[]` |
+| raw evidence archive | 六条 O1 p4 calibration JSON 已 byte-identical 归档到 `records/v12_supplement/core/p4_controls/`；首次 R32 与 R64 的 8/16/24 residual prefix 由现有 audit/hash 绑定，未改 raw JSON |
+| docs/JSON/hash checks | 本轮只做 JSON parse、相对链接、tracked-vs-`/tmp` hash 对照和差异检查；不把它们写成 solver test 或 CI pass |
+| full repository pytest / CI | `not_run`；没有 CI 通过声明 |
+
+测试日志只保存轻量 stdout/stderr；大型 matrix/factor/field/cache/timeline 仍在 ignored artifact root。O1 fresh source 为 `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`，修复 R32/R64 focused source 为 `d39261bb17e8d9042c03d4d4990258da5043b621`；不能用 closeout HEAD 替换 run identity。
+
+---
+
+# 历史：V12 O0–O4 测试、raw 记录与静态收口
 
 本节是 V12 source/evidence closeout；不重新启动 PDE、MPI、factor 或 O2/O3。正式 source SHA 为 `e8c3c82bab2687a811a11f0798a2879c725532b5`，review base SHA 为 `96e5d5fcfc3e801ef33d4a2d241ea7571937f734`。测试使用仓库规定的 qualified activation；没有 full repository pytest 或 CI 通过声明。
 

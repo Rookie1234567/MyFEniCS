@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V12 O0-O4 closeout with V5 success baseline and V6/V7/V8/V9/V10/V11 history retained; V12 physical macro controls are hash-bound partial evidence and official outputs remain not_run",
+  "scope": "V12 historical O0-O4 closeout plus bounded supplement; V5 success baseline and V6/V7/V8/V9/V10/V11 history retained; official outputs remain not_run",
   "units": {
     "time": "s",
     "memory": "B"
@@ -1341,6 +1341,114 @@
     },
     "official_outputs": "not_run",
     "next": "same branch submitted for review of this resource negative and implementation; no cap or block-group change in V11"
+  },
+  "v12_supplement": {
+    "status": "BOUNDED_SUPPLEMENT_CLOSED_WITH_CONSTRUCTION_AUDIT_AND_PC_NEGATIVE",
+    "numerical_profile": "physical_macro_dd4_v12",
+    "budget_profile": "physical_macro_dd4_v12_supplement",
+    "source_split": {
+      "o1_and_inherited_failed_r32": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "repaired_r32_and_r64": "d39261bb17e8d9042c03d4d4990258da5043b621"
+    },
+    "formal_budget": {
+      "cap_seconds": 10800.0,
+      "charged_seconds": 4361.38889024941,
+      "remaining_seconds": 6438.61110975059,
+      "ledger_path": "benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_repair_budget.json",
+      "ledger_sha256": "74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329",
+      "budget_audit_path": "docs/task039_extra_physical_multilevel/outcomes/records/v12_supplement/audits/task39extra-v12-supplement-final-budget-audit.json",
+      "budget_audit_sha256": "838193b6094548405ea74264723f5bca55d638c51018d784fc792628a3ac9d0a"
+    },
+    "o1": {
+      "status": "COMPLETED",
+      "physical_macro_blocks": 42,
+      "p4_independent_rows_covered": 48960,
+      "max_block_rows": 1944,
+      "c_u_local_classes": 18,
+      "w_transfer": true,
+      "witnesses_recounted": 84,
+      "inventory_audit": "759 checks / 0 errors",
+      "p4_audit": "132 checks / 0 errors",
+      "shared_audit": "96 checks / 0 errors",
+      "selected_framework": "BAL_H",
+      "tracked_core_p4_root": "docs/task039_extra_physical_multilevel/outcomes/records/v12_supplement/core/p4_controls",
+      "one_c_switch_gate": {
+        "gate_pass": false,
+        "field_l2_geometric_ratio": 1.000603999343256,
+        "residual_geometric_ratio": 1.0240463212446451,
+        "time_total_ratio": 0.6368202549964133,
+        "interpretation": "switch condition only; O1 workflow completed"
+      },
+      "parent_workflow_seconds": 601.0369560300772,
+      "resource": {"samples": 2137, "rss_peak_bytes": 3250446336, "pss_peak_bytes": 3215799296, "pss_all_readable": true, "swap_peak_bytes": 0, "descendants_cleared": true}
+    },
+    "inherited_first_r32": {
+      "status": "WORKER_FAILED",
+      "numeric_result": "partial_checkpoint_evidence",
+      "checkpoint_residuals": [
+        {"iteration": 8, "explicit_true_residual": 0.8283760020203784},
+        {"iteration": 16, "explicit_true_residual": 0.8172376273064963},
+        {"iteration": 24, "explicit_true_residual": 0.811621467511064}
+      ],
+      "candidate": "not_available",
+      "restart_comparison": "incomplete",
+      "charged_seconds": 1028.6465685711235,
+      "error": "TypeError: 'NoneType' object is not subscriptable; recovery quadrature metadata missing",
+      "resource": {"samples": 3654, "rss_peak_bytes": 2534461440, "pss_peak_bytes": 2499849216, "pss_all_readable": true, "swap_peak": 0, "descendants_cleared": true}
+    },
+    "repaired_r32": {
+      "status": "O2_CANDIDATE_COMPLETED",
+      "outer_iterations": 64,
+      "i4_calls": 128,
+      "i4_target_hits": 0,
+      "max_i4_seconds": 10.24374708600115,
+      "final_full_explicit_true_residual": 0.7666389832389989,
+      "residual_gate": "measured_not_met",
+      "field_gate": {
+        "status": "measured_not_met",
+        "node32_l2": 0.9384007607744688,
+        "node32_scaled_curl": 0.9382432819659642,
+        "node64_l2": 0.9488237463600627,
+        "node64_scaled_curl": 0.9486448577201997
+      },
+      "phase_clocks_seconds": {"build": 295.230015322, "rhs": 5.230602902, "outer": 1542.916955076985},
+      "parent_workflow_seconds": 1846.2808846201353,
+      "coupling_closure_relative": 1.4796776236757317e-13,
+      "inventory_bytes": {"allocated": 1671000000, "used": 888000000, "retained": 2180383916, "post_w": 2180380092, "local_cap": 2684354560},
+      "resource": {"samples": 6540, "rss_peak_bytes": 3350794240, "readable_pss_peak_bytes": 3316318208, "pss_all_readable": false, "swap_peak": 0, "descendants_cleared": true},
+      "summary_sha256": "b8bd542ff9a192dbcc530ca3a8c337ea409ab1bf9043bc096891b72177dcbf7e",
+      "terminal_sha256": "776dc9d3bd36ffbec1da8378d3068386bf67a2061faafca7feee5fee323f6d4d"
+    },
+    "r64": {
+      "status": "USER_CONTROLLED_STOP",
+      "numeric_result": "partial_checkpoint_evidence",
+      "checkpoints": [8, 16, 24],
+      "checkpoint_residuals": [
+        {"iteration": 8, "explicit_true_residual": 0.8283760020203784},
+        {"iteration": 16, "explicit_true_residual": 0.8172376273064963},
+        {"iteration": 24, "explicit_true_residual": 0.811621467511064}
+      ],
+      "candidate": "not_available",
+      "restart_comparison": "incomplete",
+      "charged_seconds": 885.4244810280746,
+      "resource": {"samples": 3133, "rss_peak_bytes": 2552774656, "pss_peak_bytes": 2517919744, "pss_all_readable": true, "swap_peak": 0, "descendants_cleared": true},
+      "terminal_sha256": "ca1419f33d0b21c00bf3422cef0e8f77ad8b2f2c50ef11077fd5f926ece28a64",
+      "stop_reason_sha256": "b029a85c03ac4ab865cb72ceacf46001bb23fc32fb554939989f3d169529679e"
+    },
+    "official_boundary": {
+      "residual_gate": "measured_not_met",
+      "official_field_power_recovery": "not_run",
+      "o3_original": "not_run",
+      "o3_notch": "not_run",
+      "E_H_near_field_R_T_A_A_volume_modal_diffraction_conservation": "not_run"
+    },
+    "records": {
+      "center": "docs/task039_extra_physical_multilevel/outcomes/physical_macro_v12.md",
+      "summary": "docs/task039_extra_physical_multilevel/outcomes/summary.md",
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/physical_macro_v12_compact.json",
+      "test_summary": "docs/task039_extra_physical_multilevel/outcomes/test_summary.md",
+      "workstation_handoff": "docs/task039_extra_physical_multilevel/outcomes/workstation_handoff.md"
+    }
   },
   "v12": {
     "status": "PARTIAL_PHYSICAL_CONTROLS_WITH_PERFORMANCE_CONTROLLED_STOP",

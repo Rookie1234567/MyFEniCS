@@ -1,4 +1,20 @@
-# Task39extra Review V12当前模型登记：physical macro DD4 partial physical controls
+# Task39extra V12 supplement 最新模型登记：BAL_H 构造审计与 R32/R64 边界
+
+本节是项目级模型登记中最新的 bounded supplement 入口；下方原 V12 登记保留为历史。源码身份按运行分段保存，不能以文档 closeout HEAD 替换 formal run source。
+
+| model id | source / profile | 方法与实测结果 | 状态/登记边界 |
+|---|---|---|---|
+| `task39_v12_supplement_o1_bal_h` | `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；13.5 nm、Full3D、p6/h10、MPI1、complex128/int32 | 42/42 blocks、18 C_U classes、C_U/W transfer、84 witnesses；6 p4 controls、3 shared-q comparisons；selection 选择 `BAL_H` | local construction/inventory/transfer 已 measured and audited；ONE_C switching gate false 不是 O1 failure；research-only |
+| `task39_v12_supplement_repaired_r32` | `d39261bb17e8d9042c03d4d4990258da5043b621`；同一 profile | 64 outer steps；full explicit residual `0.7666389832389989`；node32/64 field L2=`0.9384007607744688/0.9488237463600627`、scaled curl=`0.9382432819659642/0.9486448577201997`；`0/128` I4 达到 `1e-4` | residual 与 field gate 均 `measured_not_met`；完整 PC 排除为 production candidate；不构成 official Maxwell pass |
+| `task39_v12_supplement_inherited_r32_prefix` | `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；原始 A6/b | 工程 TypeError 前已保存 8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`；最终 candidate unavailable、restart comparison incomplete | `WORKER_FAILED` / `partial_checkpoint_evidence`；不是全程 numeric result `not_run` |
+| `task39_v12_supplement_r64_controlled_stop` | `d39261bb17e8d9042c03d4d4990258da5043b621`；严格继承 R32 dependency | 用户控制停止；保留 8/16/24 residual checkpoints；最终 candidate unavailable、restart comparison incomplete | `USER_CONTROLLED_STOP` / `partial_checkpoint_evidence`；不是 numeric failure |
+| `task39_v12_supplement_official_outputs` | 同一 physical/mode identity | R32 A6 residual gate 已 measured_not_met；field/power recovery、O3 original/notch、E/H、R/T/A、`A_volume`、modal/diffraction、conservation 未运行 | `not_run`；不得从 local residual、低 swap 或资源记录外推 physics/workstation qualification |
+
+续算 formal cap 为 `10800 s`，charged=`4361.38889024941 s`，remaining=`6438.61110975059 s`；continuation ledger SHA=`74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329`。当前登记仍是 research-only，ordinary default unchanged，`NOT_APPROVED_FOR_MASTER_MERGE`。
+
+---
+
+# 历史：Task39extra Review V12当前模型登记：physical macro DD4 partial physical controls
 
 本节是当前模型登记入口。V12 是显式 opt-in 的研究候选，不是 ordinary default，也不是完整 Maxwell solver。42 个宏块各自拥有独立 numeric factor record；18 个 local_classes/local_factors 是 C_U 元素内部响应的类因子，属于不同对象层级。完整字段见 [V12 compact](task039_extra_physical_multilevel/outcomes/records/physical_macro_v12_compact.json) 和 [V12 raw evidence](task039_extra_physical_multilevel/outcomes/records/v12_raw_json_evidence.json)。
 

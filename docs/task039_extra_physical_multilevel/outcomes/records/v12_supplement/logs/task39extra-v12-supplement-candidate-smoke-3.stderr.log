@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/tmp/task39extra_v12_supplement_candidate_smoke.py", line 68, in <module>
+    result = runner._run_outer_candidate(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 839, in _run_outer_candidate
+    result = run_fixed_restart_cycles(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_memory_first_krylov.py", line 706, in run_fixed_restart_cycles
+    active_ksp.solve(rhs, solution)
+  File "petsc4py/PETSc/KSP.pyx", line 403, in petsc4py.PETSc.KSP.solve
+  File "petsc4py/PETSc/petscksp.pxi", line 244, in petsc4py.PETSc.KSP_Monitor
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_memory_first_krylov.py", line 684, in monitor
+    explicit_residual_observer(
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 790, in explicit_node
+    node_checkpoint = _write_checkpoint(
+                      ^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 610, in _write_checkpoint
+    return write_solution_checkpoint(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_memory_first_krylov.py", line 219, in write_solution_checkpoint
+    input_identity_sha256 = _identity_sha(input_identity_sha256, "input_identity_sha256")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_memory_first_krylov.py", line 174, in _identity_sha
+    raise ValueError(f"{name} must be a 64-character lowercase SHA256")
+ValueError: input_identity_sha256 must be a 64-character lowercase SHA256

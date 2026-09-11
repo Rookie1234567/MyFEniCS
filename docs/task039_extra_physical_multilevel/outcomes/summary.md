@@ -1,4 +1,52 @@
-# Task39extra Review V12当前结果：42块物理宏块完成，p4控制受共享预算停止
+# Task39extra Review V12 supplement 最新结果：构造通过、完整 PC 排除、R64 主动停止
+
+本节是 V12 bounded supplement 的最新总览；下方原 V12 O0–O4 表格和更早版本均保留为历史。续算没有追加 O3 original/notch 验证，也没有改变既有 runner/schema/flag。
+
+| 结论层级 | 最新结果 | 证据边界 |
+|---|---|---|
+| local construction / inventory / transfer / I4 coupling | `measured_and_audited` | O1 fresh source `7d9df5e…` 完成 42/42 physical blocks、18 个 C_U internal-response classes、C_U/W transfer、84 witnesses；inventory `759/0`，p4 `132/0`，shared `96/0` |
+| shared-q selection | selected `BAL_H`；ONE_C 切换条件 `gate_pass=false` | A2R160、JOINT448、LIGHT448 三组 matched comparisons；residual geometric mean `1.0240463212446451`，超过 1.0 threshold；L2 geometric `1.000603999343256` 也超过 `0.8`，但 curl、最大 field 和累计 time 条件通过；这不是 O1 workflow 失败 |
+| complete PC efficiency | `negative / unqualified` | repaired R32 source `d39261bb…` 完成 64 outer steps，final full explicit true residual `0.7666389832389989`，未达 A6 `1e-6`；field diagnostics 不能改变此结论 |
+| inherited first R32 | `WORKER_FAILED` / `partial_checkpoint_evidence` | 已保存 8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`；candidate unavailable、restart comparison incomplete；TypeError 是工程失败 |
+| R64 | `USER_CONTROLLED_STOP` / `partial_checkpoint_evidence` | 已保存 8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`；candidate unavailable、restart comparison incomplete；不能写成 numeric failure |
+| official Maxwell | official fields/power 与 O3 formal verification `not_run` | R32 已在原始 A6/b 上实测 full explicit residual `0.7666389832389989`，相对 `1e-6` gate 为 `measured_not_met`；official field/power recovery、O3 original/notch、E/H、near-field、R/T/A、`A_volume`、modal/diffraction/conservation 仍未运行；A6 gate 未放宽 |
+
+## Supplement formal ledger
+
+O1 fresh charge `601.0369560300772 s`、继承的首次 R32 工程失败 `1028.6465685711235 s`、修复 R32 `1846.2808846201353 s`、停止 R64 `885.4244810280746 s`，合计 `4361.38889024941 s`，剩余 `6438.61110975059 s`。最终 continuation ledger SHA 为 `74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329`；旧原始 ledger SHA `af72d67ab51af205841c4757de5b7413ed2f6ddccbbf8c5a92bc4ccbe633d5fe` 保持不变。
+
+源码身份是分段的：O1 fresh summary/terminal 绑定 `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；修复 R32 和 R64 绑定 `d39261bb17e8d9042c03d4d4990258da5043b621`。最终文档 HEAD 不替换 formal run source。
+
+## O1 six p4 controls and three shared comparisons
+
+O1 的 6 条 calibration record 均为 4-step I4、4 次 B4、3 次显式 A4，并以 `INNER_APPROXIMATE_RETURN` 返回：
+
+| record | true residual | field L2 | scaled curl |
+|---|---:|---:|---:|
+| A2R160/01 | 0.9502310252350668 | 0.9647147926182198 | 0.964639027200986 |
+| A2R160/02 | 0.1012649488434464 | 0.8777570760481551 | 0.8773717677729929 |
+| LIGHT448/09 | 0.9778952412775763 | 0.9928176043406823 | 0.9928022756707928 |
+| LIGHT448/10 | 0.10194959659698315 | 0.8775511199054001 | 0.8771869820432219 |
+| JOINT448/17 | 0.9734051084398233 | 0.9806440886743487 | 0.980603344241886 |
+| JOINT448/18 | 0.1011280660537276 | 0.8789881692075479 | 0.8786124210764896 |
+
+三组 `ONE_C/BAL_H` ratios 分别为：A2R160 `time=0.6326677621909856`、`residual=1.0338976430017037`；JOINT448 `0.6375811337022439`、`1.0205035889757637`；LIGHT448 `0.640273569147282`、`1.0178100236981422`。field ratios 都约为 `1.0003–1.0010`。因此 `BAL_H` 是有效选择；未通过的只是 ONE_C switching gate，不是 O1 workflow failure。修复 R32 的 128 次 I4 中 `0/128` 达到内部 `1e-4` target，最大 I4 elapsed 为 `10.24374708600115 s`。
+
+修复 R32 的 32/64 节点对照为：node32 full residual/field L2/scaled-curl=`0.8025891203479081/0.9384007607744688/0.9382432819659642`，node64=`0.7666389832389989/0.9488237463600627/0.9486448577201997`；residual 下降但 field error 变差，故 residual 与 field gate 都是 `measured_not_met`。最后 coupling closure relative 为 `1.4796776236757317e-13`（limit `1e-8`）；inventory allocated/used/retained=`1671000000/888000000/2180383916 B`，local cap=`2684354560 B`。
+
+## 资源、历史对照和测试边界
+
+O1 fresh process-tree RSS/PSS peak 为 `3250446336/3215799296 B`（2137 samples，PSS 全可读）；继承的首次 R32 工程失败为 `2534461440/2499849216 B`（3654 samples，PSS 全可读）；修复 R32 为 `3350794240 B` RSS、可读 PSS 最大 `3316318208 B`（6540 samples，但有一个 exit-phase PSS 缺样）；R64 为 `2552774656/2517919744 B`（3133 samples）。四者 swap 均为 0、后代均清场。这些是 sampled simultaneous process-tree measurements，不是连续峰值或 workstation capacity。
+
+修复 R32 的 8–64 checkpoints 和历史点见 [comparison SVG](charts/v12_supplement_comparison.svg)、[PNG](charts/v12_supplement_comparison.png) 与 [history audit](records/v12_supplement/audits/task39extra-v12-supplement-history.json)。图只绘制 repaired R32 与历史对照，不含 R64 时间曲线；setup、outer、field-diagnostic 的采样频率和时钟口径不同，不能读作连续效率曲线。
+
+修复后 focused regression 为 `51 passed`，另有 2 个 field-metric smoke tests；qualified ABI 为 complex128/int32、MPI1、线程1。最终只读 budget audit 为 `errors=[]`。full repository pytest 和 CI 均 `not_run`。
+
+证据入口：[supplement README](records/v12_supplement/README.md)、[center](physical_macro_v12.md)、[response V13](../response_v13.md)、[compact](records/physical_macro_v12_compact.json)、[run index](records/run_index.json)、[continuation ledger](records/v12_supplement/core/repair_continuation_ledger.json)。当前仍为 research-only、`ordinary default unchanged`、`NOT_APPROVED_FOR_MASTER_MERGE`。
+
+---
+
+# 历史：Task39extra Review V12当前结果：42块物理宏块完成，p4控制受共享预算停止
 
 V12 在 `physical_macro_dd4_v12` 与 `2684354560 B` 局部库存 cap 下完成 O0、42/42 physical macro block numeric inventory、84 witness recount、cached/native bridge、C_U/W transfer 记录及 4 条有限 p4 I4 控制；随后 O1 因共享 O0/O1 保守预算耗尽而 `PERFORMANCE_CONTROLLED_STOP`。42 个宏块各有独立 numeric factor record；另有 18 个 C_U 元素内部响应类因子，二者不是同一计数。
 

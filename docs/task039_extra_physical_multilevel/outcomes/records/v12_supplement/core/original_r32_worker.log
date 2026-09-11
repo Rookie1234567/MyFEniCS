@@ -1,0 +1,37 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py", line 2226, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py", line 2148, in main
+    if args.worker:return worker(args)
+                          ^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py", line 494, in worker
+    result=dispatch_components(args,cfg,MPI.COMM_WORLD,records_root,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py", line 272, in dispatch_components
+    return run_macro_v12_outer(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 1085, in run_macro_v12_outer
+    result = _run_outer_candidate(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 839, in _run_outer_candidate
+    result = run_fixed_restart_cycles(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_memory_first_krylov.py", line 706, in run_fixed_restart_cycles
+    active_ksp.solve(rhs, solution)
+  File "petsc4py/PETSc/KSP.pyx", line 403, in petsc4py.PETSc.KSP.solve
+  File "petsc4py/PETSc/petscksp.pxi", line 244, in petsc4py.PETSc.KSP_Monitor
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_memory_first_krylov.py", line 684, in monitor
+    explicit_residual_observer(
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 777, in explicit_node
+    row["reference_field"] = _field_compare(stack, solution, reference_x_ref)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 568, in _field_compare
+    metric = LosslessFEMetric(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/physical_error_metric.py", line 121, in __init__
+    forms = dict(mass=ufl.inner(u,v)*ufl.dx(domain=self.space.mesh,metadata=quadrature[1]),
+                                                                            ~~~~~~~~~~^^^
+TypeError: 'NoneType' object is not subscriptable

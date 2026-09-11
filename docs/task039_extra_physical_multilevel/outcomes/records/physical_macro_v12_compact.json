@@ -1,6 +1,167 @@
 {
   "schema": "task39extra.review-v12.o0-o4.compact.v1",
-  "scope": "V12 O0/O1/O4 formal evidence; O2/O3 not run after O1 controlled stop; no official Maxwell output",
+  "scope": "Historical V12 O0/O1/O4 formal evidence plus bounded V12 supplement; official Maxwell outputs remain not_run",
+  "latest_supplement": {
+    "numerical_profile": "physical_macro_dd4_v12",
+    "budget_profile": "physical_macro_dd4_v12_supplement",
+    "source_split": {
+      "o1_and_inherited_failed_r32": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "repaired_r32_and_r64": "d39261bb17e8d9042c03d4d4990258da5043b621"
+    },
+    "formal_budget": {
+      "cap_seconds": 10800.0,
+      "charged_seconds": 4361.38889024941,
+      "remaining_seconds": 6438.61110975059,
+      "continuation_ledger_path": "benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_repair_budget.json",
+      "continuation_ledger_sha256": "74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329",
+      "old_ledger_sha256": "af72d67ab51af205841c4757de5b7413ed2f6ddccbbf8c5a92bc4ccbe633d5fe"
+    },
+    "selected_framework": "BAL_H",
+    "one_c_switch_gate": {
+      "gate_pass": false,
+      "time_geometric_ratio": 0.6368330280235603,
+      "time_total_ratio": 0.6368202549964133,
+      "field_l2_geometric_ratio": 1.000603999343256,
+      "scaled_curl_geometric_ratio": 1.0006040295274625,
+      "residual_geometric_ratio": 1.0240463212446451,
+      "thresholds": {
+        "time": 0.8,
+        "field_l2_geometric": 0.8,
+        "field_max": 1.1,
+        "scaled_curl_geometric": 1.1,
+        "residual_geometric": 1.0
+      },
+      "interpretation": "ONE_C switching condition only; O1 workflow completed and BAL_H remains the valid selected framework"
+    },
+    "stages": {
+      "O1": {
+        "status": "COMPLETED",
+        "physical_macro_blocks": 42,
+        "p4_independent_rows_covered": 48960,
+        "max_block_rows": 1944,
+        "block_rows_contract_cap": 2600,
+        "c_u_local_classes": 18,
+        "w_transfer": true,
+        "witnesses_recounted": 84,
+        "inventory_audit": "759 checks / 0 errors",
+        "p4_audit": "132 checks / 0 errors",
+        "shared_audit": "96 checks / 0 errors",
+        "p4_artifact_root": "benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls/records",
+        "tracked_core_p4_root": "docs/task039_extra_physical_multilevel/outcomes/records/v12_supplement/core/p4_controls",
+        "p4_record_count": 6,
+        "build_controls_monotonic_seconds": [274.66687346699837, 274.69729435000045],
+        "parent_workflow_charge_seconds": 601.0369560300772,
+        "p4_controls": [
+          {"stem": "A2R160_BAL_H_p4_01", "i4_true_residual": 0.9502310252350668, "field_l2": 0.9647147926182198, "scaled_curl": 0.964639027200986, "i4_seconds": 8.858072733996924, "artifact_sha256": "ce191f99ff5b68cdba83108096255b7beee8d09a637282c2cd413d0f3baf2898"},
+          {"stem": "A2R160_BAL_H_p4_02", "i4_true_residual": 0.1012649488434464, "field_l2": 0.8777570760481551, "scaled_curl": 0.8773717677729929, "i4_seconds": 6.144728413995638, "artifact_sha256": "6d57c6dd808efafb7786243ca21f3162be80622631fb66aef0c1ed881f2e8dc1"},
+          {"stem": "LIGHT448_BAL_H_p4_09", "i4_true_residual": 0.9778952412775763, "field_l2": 0.9928176043406823, "scaled_curl": 0.9928022756707928, "i4_seconds": 6.104448737998296, "artifact_sha256": "b5a81912d59582b5d6bf1fc75da93fb0acf780c3dc1d957143067758f0ff76ba"},
+          {"stem": "LIGHT448_BAL_H_p4_10", "i4_true_residual": 0.10194959659698315, "field_l2": 0.8775511199054001, "scaled_curl": 0.8771869820432219, "i4_seconds": 5.899943810000565, "artifact_sha256": "6d53aa905dfc8ba7b3e220f625fcf7da49bea77f2c4a02aa49f8a2827bfac081"},
+          {"stem": "JOINT448_BAL_H_p4_17", "i4_true_residual": 0.9734051084398233, "field_l2": 0.9806440886743487, "scaled_curl": 0.980603344241886, "i4_seconds": 5.98696707299945, "artifact_sha256": "cb334d6bfd8c1830d1de6d4f9173455f5221b1e32f814785325497375212b7e6"},
+          {"stem": "JOINT448_BAL_H_p4_18", "i4_true_residual": 0.1011280660537276, "field_l2": 0.8789881692075479, "scaled_curl": 0.8786124210764896, "i4_seconds": 5.896728401001368, "artifact_sha256": "3fe00f8db93e4dbef1e9b597b4425e67224d6f38dd1b4e302f9f609ccc9adc23"}
+        ],
+        "resource": {
+          "samples": 2137,
+          "tree_rss_peak_bytes": 3250446336,
+          "tree_pss_peak_bytes": 3215799296,
+          "pss_all_readable": true,
+          "tree_swap_peak_bytes": 0,
+          "descendants_cleared": true
+        }
+      },
+      "inherited_first_r32": {
+        "source_sha": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+        "status": "WORKER_FAILED",
+        "numeric_result": "partial_checkpoint_evidence",
+        "checkpoint_residuals": [
+          {"iteration": 8, "explicit_true_residual": 0.8283760020203784},
+          {"iteration": 16, "explicit_true_residual": 0.8172376273064963},
+          {"iteration": 24, "explicit_true_residual": 0.811621467511064}
+        ],
+        "candidate": "not_available",
+        "restart_comparison": "incomplete",
+        "error": "TypeError: 'NoneType' object is not subscriptable; recovery quadrature metadata missing",
+        "charged_seconds": 1028.6465685711235,
+        "resource": {
+          "samples": 3654,
+          "tree_rss_peak_bytes": 2534461440,
+          "tree_pss_peak_bytes": 2499849216,
+          "pss_all_readable": true,
+          "tree_swap_peak_bytes": 0,
+          "global_swap_delta_pages": {"pswpin": 0, "pswpout": 0},
+          "descendants_cleared": true
+        }
+      },
+      "repaired_r32": {
+        "source_sha": "d39261bb17e8d9042c03d4d4990258da5043b621",
+        "status": "O2_CANDIDATE_COMPLETED",
+        "outer_iterations": 64,
+        "i4_calls": 128,
+        "i4_target": 0.0001,
+        "i4_target_hits": 0,
+        "max_i4_seconds": 10.24374708600115,
+        "final_full_explicit_true_residual": 0.7666389832389989,
+        "residual_gate": {"status": "measured_not_met", "limit": 1e-6},
+        "field_gate": {
+          "status": "measured_not_met",
+          "node32": {"field_l2": 0.9384007607744688, "scaled_curl": 0.9382432819659642},
+          "node64": {"field_l2": 0.9488237463600627, "scaled_curl": 0.9486448577201997}
+        },
+        "phase_clocks_seconds": {"build": 295.230015322, "rhs": 5.230602902, "outer": 1542.916955076985},
+        "parent_workflow_charge_seconds": 1846.2808846201353,
+        "outer_pc_operation_seconds": {"A_structure": 180.7259436650238, "C": 915.0338269800122, "smoother": 151.25650010298705},
+        "coupling_closure_relative": 1.4796776236757317e-13,
+        "coupling_closure_limit": 1e-8,
+        "inventory_bytes": {"allocated": 1671000000, "used": 888000000, "retained_after_cu": 2180383916, "post_w_transfer": 2180380092, "local_cap": 2684354560},
+        "resource": {
+          "samples": 6540,
+          "tree_rss_peak_bytes": 3350794240,
+          "readable_tree_pss_peak_bytes": 3316318208,
+          "pss_all_readable": false,
+          "pss_caveat": "one exit-phase sample lacked readable PSS",
+          "tree_swap_peak_bytes": 0,
+          "global_swap_delta_pages": {"pswpin": 0, "pswpout": 0},
+          "descendants_cleared": true
+        },
+        "summary_sha256": "b8bd542ff9a192dbcc530ca3a8c337ea409ab1bf9043bc096891b72177dcbf7e",
+        "terminal_sha256": "776dc9d3bd36ffbec1da8378d3068386bf67a2061faafca7feee5fee323f6d4d"
+      },
+      "r64": {
+        "source_sha": "d39261bb17e8d9042c03d4d4990258da5043b621",
+        "status": "USER_CONTROLLED_STOP",
+        "numeric_result": "partial_checkpoint_evidence",
+        "checkpoints": [8, 16, 24],
+        "checkpoint_residuals": [
+          {"iteration": 8, "explicit_true_residual": 0.8283760020203784},
+          {"iteration": 16, "explicit_true_residual": 0.8172376273064963},
+          {"iteration": 24, "explicit_true_residual": 0.811621467511064}
+        ],
+        "candidate": "not_available",
+        "restart_comparison": "incomplete",
+        "resource": {
+          "samples": 3133,
+          "tree_rss_peak_bytes": 2552774656,
+          "tree_pss_peak_bytes": 2517919744,
+          "pss_all_readable": true,
+          "tree_swap_peak_bytes": 0,
+          "global_swap_delta_pages": {"pswpin": 0, "pswpout": 0},
+          "descendants_cleared": true
+        },
+        "terminal_sha256": "ca1419f33d0b21c00bf3422cef0e8f77ad8b2f2c50ef11077fd5f926ece28a64",
+        "stop_reason_sha256": "b029a85c03ac4ab865cb72ceacf46001bb23fc32fb554939989f3d169529679e"
+      }
+    },
+    "official_boundary": {
+      "residual_gate": "measured_not_met",
+      "official_field_power_recovery": "not_run",
+      "o3_original": "not_run",
+      "o3_notch": "not_run",
+      "E_H_near_field_R_T_A_A_volume_modal_diffraction_conservation": "not_run"
+    },
+    "history_audit": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/v12_supplement/audits/task39extra-v12-supplement-history.json",
+      "sha256": "cd1f2fe1ec2765760c81620c16fbe14458dfc4292dc8f08ac0d9657c3a377152"
+    }
+  },
   "identity": {
     "source_sha": "e8c3c82bab2687a811a11f0798a2879c725532b5",
     "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",

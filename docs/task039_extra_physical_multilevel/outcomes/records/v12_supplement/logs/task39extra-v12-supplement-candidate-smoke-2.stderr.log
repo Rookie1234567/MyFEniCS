@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/tmp/task39extra_v12_supplement_candidate_smoke.py", line 67, in <module>
+    result = runner._run_outer_candidate(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 839, in _run_outer_candidate
+    result = run_fixed_restart_cycles(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_memory_first_krylov.py", line 577, in run_fixed_restart_cycles
+    initial_action = apply_action(solution)
+                     ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_v12.py", line 727, in apply_action
+    return apply_owned(a6, source)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_physical_intermediate.py", line 111, in apply_owned
+    returned = action.apply(source, owned_target)
+               ^^^^^^^^^^^^
+AttributeError: 'Action' object has no attribute 'apply'

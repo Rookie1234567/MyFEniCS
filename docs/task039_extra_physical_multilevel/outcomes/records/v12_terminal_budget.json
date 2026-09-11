@@ -12,6 +12,36 @@
     "total_limit_seconds": 43200.0,
     "total_charged_seconds": 7203.373583973936
   },
+  "latest_supplement": {
+    "numerical_profile": "physical_macro_dd4_v12",
+    "budget_profile": "physical_macro_dd4_v12_supplement",
+    "cap_seconds": 10800.0,
+    "charged_seconds": 4361.38889024941,
+    "remaining_seconds": 6438.61110975059,
+    "source_split": {
+      "o1_and_inherited_failed_r32": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "repaired_r32_and_r64": "d39261bb17e8d9042c03d4d4990258da5043b621"
+    },
+    "ledger_path": "benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_repair_budget.json",
+    "ledger_sha256": "74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329",
+    "stages": {
+      "O1": {"status": "COMPLETED", "charged_seconds": 601.0369560300772, "physical_blocks": 42, "selected_framework": "BAL_H"},
+      "inherited_first_r32": {"status": "WORKER_FAILED", "charged_seconds": 1028.6465685711235, "numeric_result": "partial_checkpoint_evidence", "checkpoint_residuals": [{"iteration": 8, "explicit_true_residual": 0.8283760020203784}, {"iteration": 16, "explicit_true_residual": 0.8172376273064963}, {"iteration": 24, "explicit_true_residual": 0.811621467511064}], "candidate": "not_available", "restart_comparison": "incomplete"},
+      "repaired_r32": {"status": "O2_CANDIDATE_COMPLETED", "charged_seconds": 1846.2808846201353, "outer_iterations": 64, "residual": 0.7666389832389989, "residual_gate": "measured_not_met", "field_gate": "measured_not_met"},
+      "r64": {"status": "USER_CONTROLLED_STOP", "charged_seconds": 885.4244810280746, "numeric_result": "partial_checkpoint_evidence", "checkpoints": [8, 16, 24], "checkpoint_residuals": [{"iteration": 8, "explicit_true_residual": 0.8283760020203784}, {"iteration": 16, "explicit_true_residual": 0.8172376273064963}, {"iteration": 24, "explicit_true_residual": 0.811621467511064}], "candidate": "not_available", "restart_comparison": "incomplete"}
+    },
+    "official_boundary": {
+      "official_field_power_recovery": "not_run",
+      "o3_original": "not_run",
+      "o3_notch": "not_run",
+      "residual_gate": "measured_not_met"
+    },
+    "budget_audit": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/v12_supplement/audits/task39extra-v12-supplement-final-budget-audit.json",
+      "sha256": "838193b6094548405ea74264723f5bca55d638c51018d784fc792628a3ac9d0a",
+      "errors": []
+    }
+  },
   "stages": [
     {
       "stage": "O0_PRECHECK",

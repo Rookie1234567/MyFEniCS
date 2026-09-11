@@ -1,4 +1,25 @@
-# Task39extra Review V12最新结果：42块物理宏块完成，p4控制受共享预算停止
+# Task39extra V12 supplement 最新进展：O1 构造审计完成，R32 完整 PC 负结果，R64 受控停止
+
+本节是项目级进度总账中最新的 bounded supplement 状态；下方原 V12 O0–O4 入口保留为历史。O1 与首次 R32 工程失败绑定 source `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；修复 R32/R64 绑定 source `d39261bb17e8d9042c03d4d4990258da5043b621`。续算沿用既有 runner、ledger contract 和 stop semantics，没有新增 repair framework、schema 或 flag。
+
+| 阶段 | 最新结论 | 数据身份 / 边界 |
+|---|---|---|
+| O1 fresh construction | `COMPLETED`；42/42 physical blocks、18 个 C_U internal-response classes、C_U/W transfer、84 witness recount | 覆盖 `48960` 个独立 p4 行，各块实际最大 `1944`（合同上限 `2600`）；inventory `759/0`，p4 `132/0`，shared `96/0`；最大 local residual `2.1772149386553977e-15`；这是构造/接线审计，不是完整 p6 convergence |
+| O1 shared-q | selected `BAL_H` | `gate_pass=false` 只属于 ONE_C switching gate：L2 geometric `1.000603999343256 > 0.8`、residual geometric `1.0240463212446451 > 1.0`；curl、最大 field、累计 time 均通过；不能写成 O1 workflow failure |
+| repaired R32 | `O2_CANDIDATE_COMPLETED`；64 outer steps | final full explicit residual `0.7666389832389989`，relative A6 gate `1e-6` 为 `measured_not_met`；node32/64 field L2=`0.9384007607744688/0.9488237463600627`，scaled curl=`0.9382432819659642/0.9486448577201997`，field gate 亦 `measured_not_met`；`0/128` I4 calls 达到内部 `1e-4` target |
+| inherited first R32 | `WORKER_FAILED` / `partial_checkpoint_evidence` | 已保存 8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`；最终 candidate unavailable、restart comparison incomplete；TypeError 是工程失败 |
+| R64 | `USER_CONTROLLED_STOP` / `partial_checkpoint_evidence` | 已保存 8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`；最终 candidate unavailable、restart comparison incomplete；不是 numeric failure |
+| official boundary | official field/power recovery、O3 original/notch formal verification 仍 `not_run` | R32 residual/field 已测但不合格；不把 official output 或 continuum/workstation qualification 写成通过 |
+
+修复 R32 的 phase clocks 为 build/rhs/outer=`295.230015322/5.230602902/1542.916955076985 s`，parent workflow charge=`1846.2808846201353 s`；最后 coupling closure relative=`1.4796776236757317e-13`（limit `1e-8`）。inventory allocated/used/retained=`1671000000/888000000/2180383916 B`，post-W=`2180380092 B`，local cap=`2684354560 B`。续算 formal cap=`10800 s`，四笔 formal charge=`4361.38889024941 s`，remaining=`6438.61110975059 s`；continuation ledger SHA=`74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329`，旧 ledger 保持不变。
+
+资源记录必须区分四个 process-tree 观测：O1 `2137 samples / RSS-PSS 3250446336/3215799296 B`；继承的首次 R32 工程失败 `3654 / 2534461440/2499849216 B`；修复 R32 `6540 / RSS 3350794240 B、可读 PSS max 3316318208 B`（一个 exit-phase PSS 缺样）；R64 `3133 / 2552774656/2517919744 B`。四者 swap/global swap delta 均为 0、后代清场；这些不是连续峰值或 workstation capacity proof。当前仍为 research-only、ordinary default unchanged、`NOT_APPROVED_FOR_MASTER_MERGE`。
+
+证据入口：[V12 supplement center](task039_extra_physical_multilevel/outcomes/physical_macro_v12.md)、[summary](task039_extra_physical_multilevel/outcomes/summary.md)、[compact](task039_extra_physical_multilevel/outcomes/records/physical_macro_v12_compact.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)、[workstation handoff](task039_extra_physical_multilevel/outcomes/workstation_handoff.md)。
+
+---
+
+# 历史：Task39extra Review V12最新结果：42块物理宏块完成，p4控制受共享预算停止
 
 V12 是显式 physical_macro_dd4_v12 研究候选。它把真实 p4 离散的局部未知量组成 42 个物理宏块，各块独立建立 numeric factor 并供局部回代；另有 18 个 C_U 元素内部响应类因子，这两个层级不混计。完整中心结果见 [V12 physical macro](task039_extra_physical_multilevel/outcomes/physical_macro_v12.md)，机器记录见 [compact](task039_extra_physical_multilevel/outcomes/records/physical_macro_v12_compact.json)。
 

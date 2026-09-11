@@ -1,4 +1,27 @@
-# Task39extra Review V12 selective merge manifest
+# Task39extra Review V12 supplement selective merge manifest（最新）
+
+本节是 bounded supplement 的最新依赖分组，不是 `master` merge approval。O1 fresh 与首次 R32 工程失败绑定 source `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；修复 R32/R64 绑定 `d39261bb17e8d9042c03d4d4990258da5043b621`。最终结论必须同时保留：local construction/inventory/transfer/I4 coupling 已审计；完整 PC efficiency 仍为 negative/unqualified；R64 为 user-controlled stop；official Maxwell outputs `not_run`。
+
+| 依赖组 | 文件/内容 | 数值行为是否改变 | 测试与 fresh evidence | 建议合入顺序/结论 |
+|---|---|---|---|---|
+| production numerical/core | 既有 V12 opt-in core/profile/runner wiring；修复 field metadata fallback 和严格 restart dependency | 显式 research path 的实现/诊断行为改变；ordinary default 不变 | O1 42/42、C_U/transfer；repaired R32 64 outer residual `0.7666389832389989`；无 official fresh PDE pass | 仅作为 research-only core group 审阅；不得升级 ordinary default |
+| reusable runner/watchdog | 既有 `--macro-v12 --macro-v12-supplement --profile-budget-ledger`、whole-tree stop、checkpoint/terminal semantics | 改善工程诊断和 stop provenance；不把 user stop 改成 numeric result | R32 terminal/resource、R64 `USER_CONTROLLED_STOP`、descendants cleared；51 focused tests + 2 field smoke | 与 core 原子审阅；保留 source 分段和 stop classification |
+| checker/benchmark | supplement ledger、O1/R32/R64 summaries、inventory/P4/shared/outer/prefix/resource/budget audits、run index/compact | checker 只重算原始字段，不重新实现求解器 | budget audit `errors=[]`；R32 outer `1187/0`；R64 no selection | 与 raw evidence 绑定审阅；不能把 residual negative 或 R64 stop 改成 pass |
+| compact evidence/docs | response_v13、physical_macro_v12、summary/test/progress/registry/handoff、README、轻量 logs | 无数值行为改变 | source/input/physical/ledger/artifact hashes；history SVG/PNG；tracked-vs-`/tmp` log/audit hashes | 最后合入 docs/evidence；只合轻量 raw，不合 matrix/factor/field/cache/timeline |
+| research-only | 42-block macro factors、C_U classes、BAL_H selection、R32/R64 restart probes | 当前 complete PC 被 fresh evidence 排除为 production candidate | O1 已完成；`gate_pass=false` 只表示 ONE_C 切换条件失败（L2/residual 超阈值），不是 O1 workflow failure；R32 residual/field 均 `measured_not_met`；R64 controlled stop | 整体保持 research-only；不声称 workstation/continuum资格 |
+| do-not-merge | ignored matrix/factor/field/cache/timeline/checkpoint tree；原始/notch/official output的未运行项 | 不适用 | 大型 artifact 只由 hash-bound JSON 指向 | 不合入；重新打开必须新 review、预算和 identity |
+
+## 最新固定边界
+
+- supplement formal cap 为 `10800 s`；四笔 formal charge 为 `4361.38889024941 s`，remaining `6438.61110975059 s`。最终 continuation ledger SHA 为 `74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329`。
+- O1 的 6 条 p4 records 每条只做 4-step I4/B4；3 个 shared-q matched comparisons 选择 `BAL_H`。ONE_C switching gate 的 L2 geometric=`1.000603999343256 > 0.8`、residual geometric=`1.0240463212446451 > 1.0`，而 curl、最大 field 和累计 time 条件通过；`gate_pass=false` 不表示 O1 workflow 失败。
+- O1 42/42 block、C_U/transfer、84 witness 和 local residual 只能证明构造/接线记录一致；修复 R32 的 64-step residual `0.7666389832389989`、node32/64 field L2 `0.9384007607744688/0.9488237463600627` 和 scaled curl `0.9382432819659642/0.9486448577201997` 均已实测但未达 gate，是 complete PC efficiency 的 fresh negative evidence；其 `0/128` I4 calls 达到内部 `1e-4` target。
+- 首次 R32 工程失败与 R64 都保存了 8/16/24 residual checkpoints=`0.8283760020203784/0.8172376273064963/0.811621467511064`；二者均为 `partial_checkpoint_evidence`，最终 candidate unavailable、restart comparison incomplete。R64 的停止分类仍是 `USER_CONTROLLED_STOP`，不是 numeric failure。
+- R32 的 full explicit residual gate 已为 `measured_not_met`，而 official field/power recovery、O3 original/notch、E/H、R/T/A、`A_volume`、modal/diffraction 和 conservation 仍为 `not_run`；ordinary default unchanged，当前 `NOT_APPROVED_FOR_MASTER_MERGE`。
+
+---
+
+# 历史：Task39extra Review V12 selective merge manifest
 
 本 manifest 只登记 V12 的依赖边界，不是 master merge approval。V12 取得了真实 42 块物理宏块 inventory 和 4 条有限 bare B4/I4 控制记录，但 O1 共享预算停止；没有完整 p6 outer 或 official output。因此以下内容整体只能按 research-only / evidence closeout 审阅，不能提升 ordinary default。
 

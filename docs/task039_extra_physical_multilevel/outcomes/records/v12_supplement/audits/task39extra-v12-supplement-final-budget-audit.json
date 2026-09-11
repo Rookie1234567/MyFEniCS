@@ -69,7 +69,7 @@
     "basis": "implementation and repair activity is recorded separately and does not debit the formal supplement cap; the complete implementation duration is unknown and observed subintervals are not summed"
   },
   "hashes": {
-    "benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_repair_budget.json": "f6bac7f0e1d6e6132d9c4a5ccde7a6245a5dd9e5bc55e5d93ae9d9ab4edc80b1",
+    "benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_repair_budget.json": "74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329",
     "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_budget.json": "af72d67ab51af205841c4757de5b7413ed2f6ddccbbf8c5a92bc4ccbe633d5fe",
     "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o2_restart_probe_32/terminal.json": "dad9ac6d76f273e6e6c0682196b2d3237105582ce055184d1dc8af5a3bab25d8",
     "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o2_restart_probe_32/records/outer_summary.json": "34e5bc938e20e3b042f59e412da40a3c0b0748f660831fb1e986c98926a92fac",

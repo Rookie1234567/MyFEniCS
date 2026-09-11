@@ -1,15 +1,15 @@
 # V12 supplement repair evidence index
 
-本目录是 V12 supplement bounded continuation 的轻量、可远程审阅证据索引。正式 workflow 仍绑定源码 `d39261bb17e8d9042c03d4d4990258da5043b621`、物理模型 SHA256 `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f` 和 qualified Linux complex128/int32 ABI。
+本目录是 V12 supplement bounded continuation 的轻量、可远程审阅证据索引。源码身份按 workflow 分段：O1 fresh 与首次失败 R32 绑定 `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；修复后的 R32、R64 和 continuation ledger 绑定 `d39261bb17e8d9042c03d4d4990258da5043b621`。所有 workflow 共享物理模型 SHA256 `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f` 和 qualified Linux complex128/int32 ABI。
 
 ## 结论边界
 
 | 项目 | 结果 | 解释 |
 |---|---|---|
 | O1 fresh physical controls | `COMPLETED`, selected `BAL_H` | 42 个物理 block；3 个 shared-q 比较均匹配；完整摘要见 `core/o1_m1_summary.json`。 |
-| 原始 R32 | `WORKER_FAILED` | 旧 TypeError：field diagnostic 使用了尚未存在的 recovery quadrature metadata；这是 inherited engineering failure，不是数值 PC 结果。 |
+| 原始 R32 | `WORKER_FAILED` / `partial_checkpoint_evidence` | 旧 TypeError：field diagnostic 使用了尚未存在的 recovery quadrature metadata；8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064` 已保存；最终 candidate unavailable、restart comparison incomplete；这是 inherited engineering failure，不是数值 PC 结果。 |
 | 修复后 R32 | `COMPLETED` | 64 outer steps；final true residual `0.7666389832389989`；R32 outer conservative elapsed `1542.916955076985 s`，父 workflow charge `1846.2808846201353 s`；128 次 I4 原始标量和 outer ledger 在 `core/repaired_r32_outer_summary.json`。 |
-| R64 | `USER_REQUESTED_CONTROLLED_STOP` | 用户在 iteration 24 后要求停止；原始 watchdog classification 保留为 `USER_CONTROLLED_STOP`。这不是 R64 数值失败，也没有 restart selection 结论；candidate/I4 counters 标为 unavailable。 |
+| R64 | `USER_REQUESTED_CONTROLLED_STOP` / `partial_checkpoint_evidence` | 按用户要求停止，保存 8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`，最终持久化到 24 步；candidate unavailable、restart comparison incomplete；原始 watchdog classification 保留为 `USER_CONTROLLED_STOP`。这不是 R64 数值失败。 |
 | supplement formal charge | `4361.38889024941 s` | O1 `601.0369560300772 s` + repaired R32 `1846.2808846201353 s` + stopped R64 `885.4244810280746 s` + inherited original R32 `1028.6465685711235 s` 已分别保留；余量 `6438.61110975059 s`。 |
 
 实现活动时间不计入 formal cap；可观测实现子区间保留在 continuation ledger，完整工程耗时保持 `unknown`，没有把子区间相加冒充完整成本。
@@ -19,6 +19,7 @@
 `core/` 保留完整但轻量的阶段身份、terminal、ledger 和 summary：
 
 - `o1_m1_summary.json`、`o1_terminal.json`：O1 完整控制摘要和资源终点。
+- `p4_controls/`：六条 O1 p4 calibration raw JSON 的 byte-identical tracked 副本；原始 artifact 路径和 SHA 仍在 compact 中绑定。
 - `original_supplement_ledger.json`：旧 ledger 原样副本，SHA256 `af72d67ab51af205841c4757de5b7413ed2f6ddccbbf8c5a92bc4ccbe633d5fe`。
 - `original_r32_outer_summary.json`、`original_r32_terminal.json`、`original_r32_worker.log`：旧 TypeError 负证据；outer summary SHA256 `34e5bc938e20e3b042f59e412da40a3c0b0748f660831fb1e986c98926a92fac`，terminal SHA256 `dad9ac6d76f273e6e6c0682196b2d3237105582ce055184d1dc8af5a3bab25d8`。
 - `repaired_r32_outer_summary.json`、`repaired_r32_terminal.json`：修复后 R32；summary SHA256 `b8bd542ff9a192dbcc530ca3a8c337ea409ab1bf9043bc096891b72177dcbf7e`，terminal SHA256 `776dc9d3bd36ffbec1da8378d3068386bf67a2061faafca7feee5fee323f6d4d`。

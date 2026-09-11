@@ -1,4 +1,22 @@
-# Task39extra 工作站移交边界：V12 物理宏块控制未完成 solver 资格
+# Task39extra 工作站移交最新边界：V12 supplement 仍未形成 solver/workstation 资格
+
+本节覆盖最新 supplement；下方原 V12 handoff 表保留为历史。O1 的 42-block construction/inventory/transfer 已审计，但 repaired R32 的 full explicit residual 和 field diagnostics 未达 Gate，R64 为用户受控停止，因此没有可移交的完整 solver 或 workstation capability。
+
+| 项目 | 最新结论 | 口径/边界 |
+|---|---|---|
+| source split | O1/首次 R32 工程失败=`7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；修复 R32/R64=`d39261bb17e8d9042c03d4d4990258da5043b621` | closeout 文档 HEAD 不替换 run source；均属同一执行分支的 hash-bound evidence |
+| O1 construction | 42/42 blocks、18 C_U classes、C_U/W transfer、84 witnesses；inventory `759/0`、p4 `132/0`、shared `96/0` | selected `BAL_H`；ONE_C `gate_pass=false` 只表示 L2/residual switching condition 未通过，不是 O1 workflow failure |
+| inherited first R32 | `WORKER_FAILED` / `partial_checkpoint_evidence` | 8/16/24 residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`；candidate unavailable、restart comparison incomplete；TypeError 是工程失败 |
+| repaired R32 | 64 outer；residual=`0.7666389832389989`；node32→64 field L2=`0.9384007607744688→0.9488237463600627`、curl=`0.9382432819659642→0.9486448577201997` | residual/field 均 `measured_not_met`；`0/128` I4 达到 `1e-4`；不得写成 solver pass |
+| R64 | `USER_CONTROLLED_STOP` / `partial_checkpoint_evidence`；8/16/24 checkpoints | residual=`0.8283760020203784/0.8172376273064963/0.811621467511064`；candidate unavailable、restart comparison incomplete；不是 numeric failure |
+| resources | O1 RSS/PSS=`3250446336/3215799296 B`；failed R32=`2534461440/2499849216 B`；repaired R32 RSS=`3350794240 B`、readable PSS max=`3316318208 B`；R64=`2552774656/2517919744 B` | sampled simultaneous process-tree measurements；swap 0、descendants cleared；repaired R32 一个 exit-phase PSS 不可读；不是连续峰值或 workstation capacity |
+| official boundary | official field/power recovery、O3 original/notch、E/H、R/T/A、`A_volume`、modal/diffraction、conservation | `not_run`；5 nm、0.7 nm、2 TB 和任意非可分结构也未授权 |
+
+续算 cap=`10800 s`，formal charge=`4361.38889024941 s`，remaining=`6438.61110975059 s`；continuation ledger SHA=`74a863666e4b299002306f505d070ff248847c9e7c91d1bc97494beec2b6c329`。证据入口：[center](physical_macro_v12.md)、[compact](records/physical_macro_v12_compact.json)、[run index](records/run_index.json)、[response V13](../response_v13.md)。本表不是 master merge approval。
+
+---
+
+# 历史：Task39extra 工作站移交边界：V12 物理宏块控制未完成 solver 资格
 
 V12 只形成了可审阅的 13.5 nm 本机研究证据，没有形成 workstation solver 资格。42 个宏块各自完成 numeric inventory，18 个 C_U 内部响应类因子另列；4 条 p4 记录只做 bare B4/I4，且未达内部 1e-4 目标。O1 因 shared budget stop 结束，O2/O3/official fields 未启动。
 
