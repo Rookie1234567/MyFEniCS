@@ -1,3 +1,25 @@
+# Task39extra Review V13 p4 direction diagnosis selective merge manifest（最新）
+
+本节登记 V13 的依赖边界，不是 `master` merge approval。V13 是一次 bounded, opt-in 的 p4 方向诊断；正式 replay 在 source `e46fec48dc073a745e9b7e6c9186a147aefbc0a0` 上受控停止，不能把 partial packet、derived operator residual 或 source-liveness lower bound 提升为 solver qualification。普通默认路径保持不变，original/notch、完整 p6 物理求解和 official R/T/A 均为 `not_run`。
+
+| 依赖组 | 文件/内容 | 数值行为是否改变 | 测试与 fresh evidence | 建议合入顺序/结论 |
+|---|---|---|---|---|
+| production numerical/core | V13 opt-in 的 right-PC observer、P0 matrix-free/reference-free probe、P1 local direction capture、P2/P3 response-column capture 及相关 `physical_macro_dd4`/runner wiring | 仅显式诊断路径改变；ordinary default unchanged；尚无 production candidate | 16 个 targeted tests passed；formal replay 完成 P0 直接/pullback 度量检查、1 个 I4、4 个实际 right-PC 输出和部分 P3 原始算子列；最终细分 action 计数未持久化；无 full PDE pass | 保持 research-only；不得按 production numerical/core 合入，须经新 review 重新资格化 |
+| reusable runner/watchdog | V13 opt-in CLI、42-block fresh-process lifecycle、terminal/resource provenance 和 split-git/source identity 记录 | 改善诊断生命周期与受控停止记录；不把 controlled stop 改成数值失败或通过 | 首次失败与一次 user-authorized repair replay 均保留；replay `USER_CONTROLLED_STOP`、descendants cleared；无 OOM 或 RSS-cap violation | 仅作为 research runner/evidence 依赖审阅；与 core 原子评估 |
+| checker/benchmark | V13 compact、offline partial audit、tracked partial-audit script、checker provenance、run-index registration、memory-liveness record | checker 只从原始字段重算结论，不重新实现求解器 | 主控和执行窗口各一次离线 checker 均 16/16；wall `1.70 s + 4.70 s`；未运行新的 PDE | 可作为轻量证据组审阅；不把 derived original-operator rho 当作 physical eta/curl 或 official result |
+| compact evidence/docs | `response_v14.md`、`outcomes/p4_direction_diagnosis_v13.md`、next-method blueprint/decision、summary/test/progress/registry 及本 manifest | 无数值行为改变 | source/input/model/map/raw artifact hashes、terminal/stages/resources hashes 和 provenance 已登记 | 在 code/runner 边界确定后最后审阅；只合 compact/hash-bound evidence，不合大型 arrays/factors/cache/timeline |
+| research-only | P0 metric-equivalence、P1 direction-reconstruction、P2 未闭合、P3 42 个 p-column/A-image 诊断和下一方法设计 | 研究路径；尚不能证明 production PC efficiency、物理误差或 workstation qualification | P0 pass；P1/P3 partial；完整 L 的 derived rho=`0.9358770172082744`、selected response rho=`0.9678905201139729`；eta/curl unavailable；formal resource status `DERIVED_UNCERTIFIED` | 整体保持 research-only；不得升级为 production capability |
+| do-not-merge | ignored matrix/factor/field/cache/timeline/raw tree；未运行的 original/notch/official outputs；未经资格化的 proposed next method | 不适用 | 大型 artifact 仅由 hash-bound records 指向；source-liveness 为 lower bound，不是 RSS 结论 | 不合入；重新打开必须新 review、预算、source 和 artifact identity |
+
+## V13 固定边界
+
+- 正式 replay 绑定 source `e46fec48dc073a745e9b7e6c9186a147aefbc0a0`；此前 source `80d2fb35145ac4770040ec9bb4627dfbe8cc7e67` 的同一诊断首次失败记录必须保留，不能改写为通过。
+- 两次正式尝试的 conservative realtime 合计为 `948.1497426901994 s`；两次离线 checker wall 合计 `6.40 s`；当前可核算总计为 `954.5497426901994 s`。首次失败发生在完成一次 direct mass action 后的同网格 owner-row 一致性检查；不得将该阶段写成 P0 probe 已运行。
+- replay 的 derived lower bounds 为：direct mass action `1`、I4 `1`、实际 right-PC 输出 `4`、bare-B4 `1`、local block replays `210`、A-image `47`（P1 的 4 个加 P3 的 43 个）以及 M0/curl `2`；完整阶段时钟未知，因 `current_counts` 未在受控停止前持久化。
+- replay 在写出 P3 response packet 后受控停止；没有 P2 complete packet、02/09 direction records 或最终 p4 summary。资源记录的 sampled process-tree RSS peak 为 `3125956608 B`、swap `0`；`2.5 GiB` 是 local inventory policy，不是 process-tree RSS cap。停止原因是 diagnostic additional-array/live-object accounting 未闭合，状态为 `DERIVED_UNCERTIFIED`。
+- source liveness lower bound 为 `273571328 B`，相对 `256 MiB` local diagnostic budget 超出 `5135872 B`；该值排除了 Python allocator、maps、local records 和 metric internals，不能替代 process-tree RSS。下一方法的更低 workspace 上界仍是 proposed/unverified。
+- 当前没有可合入的 production candidate；ordinary default unchanged；official p6/original/notch solve、physical eta/curl gate、E/H/R/T/A、`A_volume`、modal/diffraction 和 conservation 均为 `not_run`。当前状态为 `NOT_APPROVED_FOR_MASTER_MERGE`。
+
 # Task39extra Review V12 supplement selective merge manifest（最新）
 
 本节是 bounded supplement 的最新依赖分组，不是 `master` merge approval。O1 fresh 与首次 R32 工程失败绑定 source `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；修复 R32/R64 绑定 `d39261bb17e8d9042c03d4d4990258da5043b621`。最终结论必须同时保留：local construction/inventory/transfer/I4 coupling 已审计；完整 PC efficiency 仍为 negative/unqualified；R64 为 user-controlled stop；official Maxwell outputs `not_run`。

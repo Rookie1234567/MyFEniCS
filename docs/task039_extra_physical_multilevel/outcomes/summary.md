@@ -1,3 +1,22 @@
+# Task39extra Review V13 最新结果：P0通过，P1/P3部分证据，诊断账本受控停止
+
+本节是当前权威收口；V12 及更早章节保持历史。V13 使用固定原始13.5 nm物理模型、p6/p4 map、MPI1 和三份输入 `A2R160/01`、`A2R160/02`、`LIGHT448/09`。它没有完成三输入 P0–P4，也没有产生 official Maxwell 输出。
+
+| 轴 | 当前结论 | 证据边界 |
+|---|---|---|
+| P0 输入身份 | `PASS` | 三份 `g/c_ref/A4c_ref`、map、旧四步包、有限非零 `r_ref` 均可读；物理/模式 hash 保持冻结 |
+| P0 metric | `PASS` | direct/pullback mass/curl 最大输出差约 `2.9e-15`；固定正 D 已落盘；probe 已归一化 |
+| P1 | `PARTIAL` | 仅 A2R160/01；4 个真实 counted right-PC 输出、rank4、重建 `2.873e-16`；02/09 `not_run` |
+| P2 | `INCOMPLETE` | 01 的局部 response 参与了 P3，但完整 `a/d/t`、`D_i d_i`、`D_iR_i e_h` packet 未落盘，三输入阶段表 `not_run` |
+| P3 | `PARTIAL` | 01 的42个 A像和 `A_a/A_t` 落盘；full 48列残差 rho=`0.935877`、rank47；selected 10列 rho=`0.967891`、rank10；eta/curl unavailable |
+| 资源 | `DERIVED_UNCERTIFIED` | 明确同时存活下界 `273571328 B` > 256 MiB新增诊断 cap；不是RSS cap违规，也不是OOM |
+| P4 | `DECISION_DELIVERY_INCOMPLETE` | 唯一下一项 `IMPLEMENTATION_OR_METRIC_REPAIR`；不选D、selective或接口重设计生产路线 |
+| official physics | `not_run` | p6/original/notch、E/H、R/T/A、A_volume、衍射、守恒均未运行 |
+
+V13 的完整叙述见 [P4诊断](p4_direction_diagnosis_v13.md)、[response V14](../response_v14.md)、[下一方法蓝图](next_method_blueprint_v13.md)。机器记录见 [P4 compact](records/p4_direction_diagnosis_v13.json)、[offline audit](records/p4_direction_diagnosis_v13_offline_audit.json) 和 [memory liveness](records/p4_direction_diagnosis_v13_memory_liveness.json)。
+
+---
+
 # Task39extra Review V12 supplement 最新结果：构造通过、完整 PC 排除、R64 主动停止
 
 本节是 V12 bounded supplement 的最新总览；下方原 V12 O0–O4 表格和更早版本均保留为历史。续算没有追加 O3 original/notch 验证，也没有改变既有 runner/schema/flag。

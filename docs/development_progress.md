@@ -1,3 +1,15 @@
+# Task39extra V13 最新进展：P0通过，P1/P3部分证据，诊断账本受控停止
+
+V13 是一次 opt-in 的物理 p4 方向诊断，不改变 ordinary default。固定原始13.5 nm物理模型、p6/p4 map、MPI1 和三份输入下，P0 输入身份与 direct/pullback metric equivalence 通过；A2R160/01 保存了四个实际 counted right-PC 输出和42个局部 A-image。完整 P2 包、其余两份输入和 P3 场/curl 未完成。
+
+修复重放 source `e46fec48dc073a745e9b7e6c9186a147aefbc0a0` 在第一输入的 P2/P3 生命周期处由监督方受控停止。停止不是 2.5 GiB RSS 违规或 OOM：process-tree RSS peak=`3125956608 B`、launch cap=`9189265408 B`、swap=`0`；另有源码生命周期推导下界 `273571328 B > 268435456 B`，因此诊断新增对象账本为 `DERIVED_UNCERTIFIED`。首次失败 source `80d2fb35145ac4770040ec9bb4627dfbe8cc7e67` 的 same-mesh owner-row负结果保留，不改写为数学失败。
+
+P1 A2R160/01 的 actual `rho/eta/eta_curl`=`0.9502310252350668/0.9647147926182198/0.9646390272009856`；reference-only best-Z 的 eta=`0.23602989478833247` 但 rho=`126.80492969347596`；固定Z的D候选 eta ratio约=`0.9954`，未达strong-action至少减半线。保存的 full-L/selected response 只有原算子 rho/rank，场/curl仍缺。当前唯一下一项为 `IMPLEMENTATION_OR_METRIC_REPAIR`，不是生产PC选择。
+
+正式 conservative 账为 `948.1497426901994 s`；两次独立checker wall 合计 `6.40 s`，合计登记 `954.5497426901994 s`，core/elapsed不重复计费。official p6/original/notch solve、E/H、R/T/A、A_volume、衍射和守恒均 `not_run`。证据入口：[V13 response](task039_extra_physical_multilevel/response_v14.md)、[P4诊断](task039_extra_physical_multilevel/outcomes/p4_direction_diagnosis_v13.md)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)、[memory liveness](task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json)。
+
+---
+
 # Task39extra V12 supplement 最新进展：O1 构造审计完成，R32 完整 PC 负结果，R64 受控停止
 
 本节是项目级进度总账中最新的 bounded supplement 状态；下方原 V12 O0–O4 入口保留为历史。O1 与首次 R32 工程失败绑定 source `7d9df5e19d324776588aaa9efc4996cc3fe36d8e`；修复 R32/R64 绑定 source `d39261bb17e8d9042c03d4d4990258da5043b621`。续算沿用既有 runner、ledger contract 和 stop semantics，没有新增 repair framework、schema 或 flag。

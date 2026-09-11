@@ -1,3 +1,13 @@
+# Task39extra V13 最新模型登记：P4诊断部分证据与未完成边界
+
+| Model ID | source / identity | method and measured evidence | status / boundary | evidence |
+|---|---|---|---|---|
+| `task39extra_v13_p4_direction_diagnosis` | source `e46fec48dc073a745e9b7e6c9186a147aefbc0a0`；原始13.5 nm、p6/p4=`164592/48960` independent rows、MPI1、complex128；physical/mode hash冻结 | P0 input identity and direct/pullback metric equivalence PASS；A2R160/01 1 completed counted I4、4 right-PC outputs、P1 reconstruction `2.873275164100603e-16`；42 A-images and selected response packet saved；full-L residual rho=`0.9358770172082744`、selected response rho=`0.9678905201139729` | `DECISION_DELIVERY_INCOMPLETE / USER_CONTROLLED_STOP`；derived liveness lower bound `273571328 B > 256 MiB`，不把RSS写成cap违规；A2R160/02、LIGHT448/09、完整P2 eta/curl、official p6/original/notch和R/T/A均`not_run`；ordinary default unchanged | [P4 compact](task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13.json)、[response V14](task039_extra_physical_multilevel/response_v14.md)、[memory liveness](task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json) |
+
+V13 的下一主项是 `IMPLEMENTATION_OR_METRIC_REPAIR`：先修复 metric opt-in construction、48列 arena/payload lifetime、P2 image checkpoint 和 stage-local count/timing，再由新 review 决定是否资格化生产PC。它不是 DUAL_MASS、SELECTIVE 或接口重设计的生产选择，也不覆盖下方 V12 历史模型。
+
+---
+
 # Task39extra V12 supplement 最新模型登记：BAL_H 构造审计与 R32/R64 边界
 
 本节是项目级模型登记中最新的 bounded supplement 入口；下方原 V12 登记保留为历史。源码身份按运行分段保存，不能以文档 closeout HEAD 替换 formal run source。

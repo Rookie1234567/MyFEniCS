@@ -1,0 +1,43 @@
+{
+  "schema": "task39extra.review-v13.p4-direction-diagnosis.checker-provenance.v1",
+  "source_sha": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0",
+  "raw_records": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis/records",
+  "checker_script": {
+    "tracked_path": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_partial_audit.py",
+    "root_path": "/tmp/task39extra-v13-root-partial-audit.py",
+    "tracked_sha256": "4d1409e76cb07d72267c3a7375ba605a1668c87f3120852f034a90f302f751a2",
+    "root_sha256": "986a9f17e9aa4fbd047967400b43ec53ffd92d4079178c290aa9aee8edb3801d",
+    "contract": "read-only JSON/NPZ; stable QR/SVD; no PDE/PC/factor/action",
+    "format_review": {
+      "ruff": "PASS",
+      "normalized_import_AST_equal_to_pre_format_copy": true,
+      "numerical_rerun_after_format": false,
+      "actual_runs_used": "historical /tmp version, not claimed to execute the formatted tracked copy"
+    }
+  },
+  "runs": [
+    {
+      "label": "root_supervisor_checker",
+      "wall_seconds": 1.7,
+      "core_elapsed_seconds": "not independently added",
+      "max_rss_bytes": 198549504,
+      "swap_bytes": 0,
+      "audit_json_sha256": null,
+      "audit_json_status": "old root numerical audit JSON was overwritten by the later same-content read-only recheck; the old byte identity is not retained",
+      "timing_file": "/tmp/task39extra-v13-root-partial-audit.time",
+      "timing_file_sha256": "7ea6618da2ce851355043cdcd0fbee6fdf2c08ea37d399cc3ab302d3b245c603",
+      "timing_file_text": "\tCommand being timed: \"python /tmp/task39extra-v13-root-partial-audit.py benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis/records\"\n\tUser time (seconds): 1.71\n\tSystem time (seconds): 0.14\n\tPercent of CPU this job got: 108%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:01.70\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 193896\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 44835\n\tVoluntary context switches: 0\n\tInvoluntary context switches: 10\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 16\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+    },
+    {
+      "label": "codex_read_only_recheck",
+      "wall_seconds": 4.7,
+      "core_elapsed_seconds": 1.6693295069999294,
+      "max_rss_bytes": 198344704,
+      "swap_bytes": 0,
+      "audit_json_sha256": "1df38d604b0541515f49decfb21143bfe8240668d20ab7259768c8ebb1843943"
+    }
+  ],
+  "checker_wall_seconds_total": 6.4,
+  "formal_plus_checker_accounted_seconds": 954.5497426901994,
+  "interpretation": "两次离线 checker wall 均保留；core/elapsed 不与 wall 重复计费，checker 只审计已保存的 A2R160/01 部分包。"
+}

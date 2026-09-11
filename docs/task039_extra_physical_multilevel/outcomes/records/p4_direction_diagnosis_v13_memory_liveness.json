@@ -1,0 +1,40 @@
+{
+  "schema": "task39extra.review-v13.p4-direction-diagnosis.memory-liveness.v1",
+  "classification": "DERIVED_SOURCE_LIVENESS_LOWER_BOUND_FOR_P3_STAGE",
+  "source_sha": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0",
+  "stage": "after independent L/AL allocation, before p_columns/p_images deletion, within 42 local curl evaluations",
+  "lower_bound_bytes": 273571328,
+  "cap_bytes": 268435456,
+  "excess_bytes": 5135872,
+  "not_a_measured_array_peak": true,
+  "local_inventory_cap_is_not_process_tree_rss_cap": true,
+  "components": [
+    {"description": "L plus AL, 48 independent columns each", "bytes": 75202560},
+    {"description": "p_columns plus p_images retained during L construction/curl loop", "bytes": 65802240},
+    {"description": "selected columns plus selected images, 10 each", "bytes": 15667200},
+    {"description": "independent Z plus Q, 4 each", "bytes": 6266880},
+    {"description": "metric4 and metric6 values/curls", "bytes": 58097664},
+    {"description": "four SerialAction source/target PETSc vectors", "bytes": 14520704},
+    {"description": "retained RHS/reference/reference_A4 and old I4 solutions", "bytes": 10192128},
+    {"description": "fresh reference/residual/field/P2/P3 arrays", "bytes": 13589504},
+    {"description": "P1 projections and independent inputs", "bytes": 4700160},
+    {"description": "independent views and selected values", "bytes": 5483520},
+    {"description": "PoU/recomposed vectors", "bytes": 1274016},
+    {"description": "D and sqrt(D)", "bytes": 783360},
+    {"description": "remaining direct/pullback probe aliases", "bytes": 1566720},
+    {"description": "p4 position map", "bytes": 424672}
+  ],
+  "excludes": [
+    "native map arrays",
+    "local records and original md_observation",
+    "metric action internal buffers and reference geometry derivatives",
+    "current metric application temporaries",
+    "Python objects and allocator overhead"
+  ],
+  "source_files": {
+    "src/runners/physical_macro_controls.py": "8b076776b94ccb1dbaf3bd8f0d27b6230fdd18f06bf7406734429861cfbb3de2",
+    "src/solvers/physical_error_metric.py": "d35371483dd1d4961ba182899eb324dc2d5bd5a8fba5ba16c1d6c9a461ea1858",
+    "src/solvers/fullspace_quadrature_diagonal.py": "4716006d0a70740ab9d6c684ff844b550984a48b213b1b87cc4b3eccbe6252a6"
+  },
+  "interpretation": "保守的源码生命周期下界；不冒充watchdog RSS/PSS实测峰值，也不把2.5 GiB局部库存配额解释为整机RSS上限。"
+}

@@ -1,3 +1,21 @@
+# V13 P0–P4诊断测试、raw记录与只读审计
+
+本节是当前测试边界；V12及更早测试表保留为历史。V13 本轮实际包含两次构建和一次 I4；受控停止后没有再重跑科学计算，也没有执行新的完整 p6 original/notch 求解。
+
+| 检查 | 结果与边界 |
+|---|---|
+| targeted diagnosis algebra/capture | `src/test/test_412_physical_p4_direction_diagnosis.py` 与 `src/test/test_410_physical_macro_dd4.py` 合计 **16 passed**；覆盖复数 QR/SVD、rank/zero/dependent columns、right-PC observer、PoU/非零 `r_ref` synthetic identity 和历史捕获关闭 |
+| input contract | `python scripts/run_case.py input/task39extra/p4_direction_diagnosis_v13.dat --validate-only` 通过，`run_id=p4_direction_diagnosis_v13` |
+| 新 tracked checker 格式 | Ruff 通过；导入拆分规范化后的 AST 与格式化前相同，数学代码未变；未重复执行已通过的数值审计 |
+| source hygiene | qualified activation 下 `python -m compileall -q src scripts` 通过；split-git `diff --check` 通过；监督 Ruff 发现的 3 个 F841 与新 lambda lint 已修复 |
+| independent raw checker | 两次只读 checker 各 16 项通过；第一次 wall `1.70 s`，第二次 wall `4.70 s`；不调用 PDE、PC、factor、A4、M0 或 curl |
+| resource provenance | checker second MaxRSS `198344704 B`、swap 0；正式 replay 的 process-tree RSS/PSS 与 derived liveness 分开记录 |
+| full repository pytest / CI | `not_run`；无 CI 通过声明 |
+
+测试和 raw 索引见 [V13 response](../response_v14.md)、[P4 compact](records/p4_direction_diagnosis_v13.json)、[checker provenance](records/p4_direction_diagnosis_v13_checker_provenance.json)。
+
+---
+
 # V12 supplement 最新测试、raw 记录与只读审计
 
 本节是 bounded supplement 的最新测试/evidence closeout；下一节起的原 V12 O0–O4 测试表保留为历史。此轮不重新启动 PDE、MPI、factor 或任何 O2/O3 workflow。

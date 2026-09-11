@@ -1,0 +1,44 @@
+{
+  "schema": "task39extra.review-v13.p4-direction-diagnosis.offline-audit.v1",
+  "status": "PARTIAL_SAVED_EVIDENCE_AUDITED",
+  "source_sha": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0",
+  "input": "A2R160_BAL_H_p4_01",
+  "raw_root": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis/records",
+  "checker": {
+    "script_path": "/tmp/task39extra-v13-root-partial-audit.py",
+    "script_sha256": "986a9f17e9aa4fbd047967400b43ec53ffd92d4079178c290aa9aee8edb3801d",
+    "root_json_sha256": "1df38d604b0541515f49decfb21143bfe8240668d20ab7259768c8ebb1843943",
+    "checks": 16,
+    "failed": 0,
+    "core_seconds": 1.6693295069999294,
+    "wall_seconds": 4.70,
+    "max_rss_bytes": 198344704,
+    "swap_bytes": 0,
+    "method": "read-only NumPy/SciPy QR/SVD recomputation; no PDE, PC, factor, A4, M0, or curl action"
+  },
+  "recomputed": {
+    "actual_in_range_Z_relative": 1.1741064872078634e-15,
+    "original_Z_min_projection_relative": 5.958905863621089e-16,
+    "actual_min_residual_difference": 1.7725143591211523e-16,
+    "fixed_D_projection_relative": 2.172720229933366e-15,
+    "oracle_Z_small_projection_relative": 1.574209521966933e-15,
+    "oracle_basis_orthogonality": 1.1063368575619738e-14,
+    "selector_matches_saved_indices": true,
+    "full_L_residual_only_rho": 0.9358770172082744,
+    "full_L_residual_only_rank": 47,
+    "selected_L10_residual_only_rho": 0.9678905201139729,
+    "selected_L10_rank": 10,
+    "selected_indices": [41, 27, 6, 20, 34, 13, 19, 5]
+  },
+  "interpretation": {
+    "P1": "capture, range reconstruction, residual least-squares and fixed-D algebra are internally consistent for the saved input",
+    "P3": "saved response-only residual proxy is reproducible; it is not a physical field/curl result because a/t and the complete P2 packet are absent",
+    "not_run": [
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09",
+      "P2 nonzero-r_ref identity table",
+      "best-L and selected-L10 physical metrics",
+      "official Maxwell outputs"
+    ]
+  }
+}

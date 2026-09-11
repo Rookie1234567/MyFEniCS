@@ -1,0 +1,296 @@
+{
+  "schema": "task39extra.review-v13.p4-direction-diagnosis.compact.v2",
+  "status": "DECISION_DELIVERY_INCOMPLETE",
+  "classification": [
+    "P0_INPUT_IDENTITY_PASS",
+    "P0_METRIC_EQUIVALENCE_PASS",
+    "P1_PARTIAL_A2R160_BAL_H_p4_01",
+    "P3_PARTIAL_RESPONSE_PACKET_A2R160_BAL_H_p4_01",
+    "USER_CONTROLLED_STOP",
+    "NO_OFFICIAL_PHYSICS_OUTPUT"
+  ],
+  "source_sha": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0",
+  "branch": "task39extra",
+  "git_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/.git-codex",
+  "input_sha256": "ed3d32aa9d23a795c18ffa28097b1149ca2706cee3d7d56d7f074527a7b53a06",
+  "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+  "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+  "maps": {
+    "p6_independent_rows": 164592,
+    "p6_storage_rows": 173802,
+    "p4_independent_rows": 48960,
+    "p4_storage_rows": 53084
+  },
+  "selected_stems": [
+    "A2R160_BAL_H_p4_01",
+    "A2R160_BAL_H_p4_02",
+    "LIGHT448_BAL_H_p4_09"
+  ],
+  "limits": {
+    "new_I4_max": 3,
+    "total_B4_max": 15,
+    "A4_max": 200,
+    "M0_max": 240,
+    "curl_max": 240,
+    "dense_ls_workspace_cap_bytes": 268435456,
+    "local_inventory_cap_bytes": 2684354560,
+    "temporary_reserve_bytes": 1073741824,
+    "workflow_seconds": 7200.0
+  },
+  "cost_accounting": {
+    "formal_conservative_seconds": 948.1497426901994,
+    "first_root_checker_wall_seconds": 1.7,
+    "second_checker_wall_seconds": 4.7,
+    "accounted_total_seconds": 954.5497426901994,
+    "note": "checker core/elapsed fields are provenance and are not added again; no scientific rerun follows"
+  },
+  "formal_attempts": [
+    {
+      "source_sha": "80d2fb35145ac4770040ec9bb4627dfbe8cc7e67",
+      "classification": "P4_DIRECTION_DIAGNOSIS_FAILED",
+      "stage": "inside_P0_probe_after_direct_mass_before_first_pullback_mass",
+      "derived_observation": "one direct degree-4 mass action completed before the inherited P64 owner-row check failed; final current_counts were not persisted",
+      "direct_mass_completed": 1,
+      "build_seconds": 285.7317619809983,
+      "total_seconds": 324.42403816400474,
+      "conservative_realtime_seconds": 355.6892665180153,
+      "exception": "same-mesh owner row candidates disagree: 2.4834738612237617e-09 > 1e-11",
+      "raw_record": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/80d2fb35145ac4770040ec9bb4627dfbe8cc7e67/diagnosis/records/p4_direction_diagnosis_v13.json",
+      "raw_record_sha256": "3676ec5d7a39cd0811d140002d0c6e3b8a2a7386ce286ba76f32fa745d9d91fb",
+      "recorded_summary_counts": {
+        "A4": 0,
+        "M0": 0,
+        "curl": 0,
+        "I4": 0,
+        "B4": 0
+      },
+      "counts_interpretation": "recorded summary not flushed from current_counts; direct mass completed once is derived from the failure point and source, not zero total metric actions"
+    },
+    {
+      "source_sha": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0",
+      "classification": "USER_CONTROLLED_STOP",
+      "stage_at_stop": "p2_numeric_complete",
+      "monotonic_seconds": 542.6013903369967,
+      "conservative_realtime_seconds": 592.4604761721841,
+      "derived_counts": {
+        "completed_I4": 1,
+        "counted_right_pc_outputs": 4,
+        "bare_B4": 1,
+        "total_B4_lower_bound": 5,
+        "local_block_replays_lower_bound": 210,
+        "A4_images_lower_bound": 47,
+        "M0_lower_bound": 2,
+        "curl_lower_bound": 2,
+        "complete_action_timing": "unknown",
+        "current_counts_persisted": false
+      },
+      "leader_exit_code": -15,
+      "descendants_cleared": true,
+      "sampled_process_tree_rss_peak_bytes": 3125956608,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "launch_cap_bytes": 9189265408,
+      "resource_scope": "sampled process-tree RSS; not the 2.5 GiB local inventory cap",
+      "stop_basis": "diagnostic additional-array/live-object accounting was not closed; no RSS cap violation is asserted",
+      "raw_root": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis",
+      "terminal_sha256": "4b0a982a90eaaf9179c82194ec0d3df9a5e160d02b4ae183ab8d18dc8ef69e2a",
+      "stages_sha256": "d0268a2ef940563df6a2254d7629e4e3c9750e37f9fb0d33a659d6bc645ed7df",
+      "resources_sha256": "dbfad93cb65619cf575e96c7fa1fe3a5f30c23ce307f494b664e7d0805826efb"
+    }
+  ],
+  "p0": {
+    "old_control_preflight": "PASS",
+    "metric_equivalence": "PASS",
+    "mass_output_relative": 1.8218700611567345e-15,
+    "curl_output_relative": 2.9122511040234625e-15,
+    "mass_square_relative": 3.5981561087706946e-16,
+    "curl_square_relative": 7.121738602661954e-16,
+    "fixed_diagonal": "finite_positive_saved",
+    "probe_normalization": {
+      "raw_l2_norm": 6254724.246660279,
+      "raw_max_abs": 48960.00295138879,
+      "normalized_l2_norm": 0.9999999999999982,
+      "rule": "divide by max(max_abs, l2_norm)"
+    },
+    "record": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis/records/p0_metric_equivalence.json",
+    "record_sha256": "c05ff1a34a387e9a2a8a14f492349a4874e3ba160ed254ae11b8533243cfa3e9"
+  },
+  "inputs": [
+    {
+      "stem": "A2R160_BAL_H_p4_01",
+      "status": "PARTIAL_RAW_EVIDENCE",
+      "p1": {
+        "completed_I4": 1,
+        "counted_right_pc_outputs": 4,
+        "effective_rank": 4,
+        "capture_gate": true,
+        "actual_reconstruction_relative": 2.873275164100603e-16,
+        "actual_reconstruction_gate": true,
+        "min_rho_gate": true,
+        "actual": {
+          "rho": 0.9502310252350668,
+          "eta": 0.9647147926182198,
+          "eta_curl": 0.9646390272009856
+        },
+        "best_Z_residual": {
+          "rho": 0.9502310252350665,
+          "eta": 0.964714792618218,
+          "eta_curl": 0.9646390272009845
+        },
+        "best_Z_field_reference_only": {
+          "rho": 126.80492969347596,
+          "eta": 0.23602989478833247,
+          "eta_curl": 0.33805312121755393
+        },
+        "scaled_Z_dual_mass": {
+          "rho": 1.0241864181252134,
+          "eta": 0.9602831778385792,
+          "eta_curl": 0.9602354345340673
+        },
+        "record": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis/records/A2R160_BAL_H_p4_01_p1_direction_diagnosis.json",
+        "npz_sha256": "05df7a25530c22711a76fc7a7fe16f6db9610d691915a52fedfb807a9112c110"
+      },
+      "p2": "not_run_as_complete_packet; local response was used to form the partial P3 packet",
+      "p3": {
+        "response_columns": 42,
+        "selected_local_columns": 8,
+        "bare_response_family_rank_euclidean": 44,
+        "full_L_columns": 48,
+        "full_L_rank_euclidean": 47,
+        "full_L_residual_rho": 0.9358770172082744,
+        "selected_response_10_rank_euclidean": 10,
+        "selected_response_10_residual_rho": 0.9678905201139729,
+        "interpretation": "derived original-operator rho from saved A-images; eta and curl are unavailable, so this is not a complete physical candidate table",
+        "record": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis/records/A2R160_BAL_H_p4_01_p3_response_columns.json",
+        "npz_sha256": "c9742f991267015a9bfa811665082772d7e1936237bd0c4339465925dff53759"
+      }
+    },
+    {
+      "stem": "A2R160_BAL_H_p4_02",
+      "status": "not_run_after_controlled_stop",
+      "p1": "not_run",
+      "p2": "not_run",
+      "p3": "not_run"
+    },
+    {
+      "stem": "LIGHT448_BAL_H_p4_09",
+      "status": "not_run_after_controlled_stop",
+      "p1": "not_run",
+      "p2": "not_run",
+      "p3": "not_run"
+    }
+  ],
+  "offline_checker": {
+    "status": "PASS_FOR_SAVED_PARTIAL_PACKETS_ONLY",
+    "checks": {
+      "p0_diagonal_finite_positive": true,
+      "p0_metric_limits_recomputed": true,
+      "p1_rhs_applied_residual_closure_relative": 3.519702964385458e-17,
+      "p1_Z_actual_reconstruction_relative": 2.873275164100603e-16,
+      "p1_Q_residual_ls_rho": 0.9502310252350665,
+      "p3_all_42_response_columns_finite": true,
+      "p3_fixed_selector_count": 8,
+      "p3_rank_recomputed_with_relative_cutoff_1e-12": true,
+      "p3_full_L_residual_only_rho": 0.9358770172082744,
+      "p3_full_L_residual_only_rank": 47,
+      "p3_selected_L10_residual_only_rho": 0.9678905201139729,
+      "p3_selected_L10_residual_only_rank": 10
+    },
+    "not_checked": [
+      "P2 nonzero-r_ref block identity because no p2 observation packet was written",
+      "physical M0/curl evaluation of L or L10 because a/t and complete P2 packet are absent",
+      "cross-input strong-action signal",
+      "official Maxwell residual or R/T/A"
+    ],
+    "method": "read-only NumPy/SciPy recomputation from hash-bound ignored NPZ/JSON; no PC, factor, PDE, or new action",
+    "core_seconds": 1.6693295069999294,
+    "wall_seconds": 4.7,
+    "prior_root_checker_wall_seconds": 1.7,
+    "checker_wall_seconds_total": 6.4,
+    "max_rss_bytes": 198344704,
+    "swap_bytes": 0,
+    "tracked_audit": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_offline_audit.json",
+    "tracked_audit_sha256": "575b6420ddea73a4e837252a3511ad9c3ce7439f2c9abc763bcf2036521de9dd",
+    "provenance": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_checker_provenance.json"
+  },
+  "resource_accounting": {
+    "status": "DERIVED_UNCERTIFIED",
+    "saved_npz_payload_bytes": {
+      "p0_metric": 391680,
+      "p1_A2R160_01": 16138144,
+      "p3_A2R160_01": 67760640,
+      "sum": 84290464,
+      "meaning": "disk payload lower bound, not a simultaneous live-set proof"
+    },
+    "existing_workspace_checker_gap": "counts ndarray graphs only; it does not account for ReferenceCellBasis, PETSc vectors, or every live object retained by the resident tuple",
+    "fresh_42_macro_block_inventory": {
+      "source": "fresh aggregation of macro_block_XX.json records with the four core inventory files",
+      "macro_block_count": 42,
+      "allocated_padded_bytes": 1671000000,
+      "used_padded_bytes": 888000000,
+      "allocated_csr_bytes": 450499800,
+      "after_CU_inventory_bytes": 2180383916,
+      "policy_limit_bytes": 2684354560,
+      "within_policy_limit": true,
+      "interpretation": "fresh local inventory policy accounting; allocated is not replaced by used, and this is separate from the V13 diagnostic live-object lower bound"
+    },
+    "local_inventory_cap_bytes": 2684354560,
+    "temporary_reserve_bytes": 1073741824,
+    "additional_arrays_cap_bytes": 268435456,
+    "derived_source_liveness_lower_bound_bytes": 273571328,
+    "derived_source_liveness_excess_bytes": 5135872,
+    "derived_source_liveness_record": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json",
+    "derived_source_liveness_record_sha256": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d",
+    "root_audit_source_sha256": null,
+    "root_audit_status": "old root numerical audit JSON was overwritten by the later same-content read-only recheck; see checker provenance for the retained second audit hash and first-run timing file",
+    "root_checker_timing_file": "/tmp/task39extra-v13-root-partial-audit.time",
+    "root_checker_timing_file_sha256": "7ea6618da2ce851355043cdcd0fbee6fdf2c08ea37d399cc3ab302d3b245c603",
+    "decision": "do not claim the 256 MiB diagnostic budget passed; repair the live-object ledger before any future replay"
+  },
+  "stage_tables": {
+    "candidate_metrics": "A2R160 actual/best-Z/scaled-Z are observed P1 values; A2R160 full-L and selected response rho/rank are derived from saved A-images, while their eta/curl are unavailable; all other inputs are not_run",
+    "p2_stage_metrics": "a/d/t, c_ref-a, c_ref-a-d, c_ref-a-d+t and global M0/curl cancellation are not_run as a complete persisted P2 table"
+  },
+  "decision": {
+    "primary_method": "IMPLEMENTATION_OR_METRIC_REPAIR",
+    "confidence": "high_for_required_repair_only",
+    "decision_status": "DECISION_DELIVERY_INCOMPLETE",
+    "observed_bottleneck": "diagnostic live-object/resource accounting and missing complete P2/P3 cross-input evidence",
+    "counter_evidence": [
+      "P0 direct/pullback metric equivalence passed at approximately 3e-15",
+      "A2R160/01 counted right-PC capture and four-column reconstruction passed",
+      "A2R160/01 selected response has a finite derived original-operator rho with rank 10; its eta/curl remain unavailable"
+    ],
+    "not_claimed": [
+      "DUAL_MASS_SCALED_P4_KRYLOV",
+      "SELECTIVE_MULTIPRECONDITIONED_P4",
+      "PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN",
+      "LOW_MEMORY_SOLVER_PASS",
+      "official physical output"
+    ],
+    "next_validation": "first close the live-object ledger and stream/release P0 metric bases; then close all three diagnostic inputs under a new review, qualify the PC, and only then consider the frozen 13.5 nm p6/h10 original full outer solve followed by same-config notch",
+    "repair_contract": [
+      "release metric4 after D/equivalence and do not construct metric6 cell_energies on this path",
+      "release P1 candidate/residual copies after each packet is hash-bound",
+      "reuse one 48-column arena so p_i/Ap_i and L/AL are not simultaneously duplicated",
+      "persist a/t and each P2 image before any later dense solve",
+      "persist stage-local counts/timings at every safe checkpoint before the next LS stage"
+    ],
+    "solver_method_confidence": "unavailable",
+    "dual_mass_fixed_Z_strong_action_signal": false,
+    "selective_strong_action_signal": null
+  },
+  "official_physics": "not_run",
+  "ordinary_default_changed": false,
+  "action_accounting_boundary": {
+    "derived_from_raw_and_source": {
+      "completed_I4": 1,
+      "captured_right_PC_outputs": 4,
+      "bare_B4": 1,
+      "total_B4": 5,
+      "nested_42_block_backsolves": 210
+    },
+    "no_second_or_third_input_started": true,
+    "final_A4_M0_curl_counters_and_kernel_times": "unknown: controlled stop preceded durable per-input checkpoint",
+    "no_gate_claim_from_missing_counters": true
+  }
+}

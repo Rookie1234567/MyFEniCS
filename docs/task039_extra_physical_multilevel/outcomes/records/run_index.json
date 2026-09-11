@@ -871,7 +871,10 @@
       "official_results": "not_run",
       "rss_peak_bytes": 1449623552,
       "swap_peak_bytes": 0,
-      "global_swap_delta": [0, 0],
+      "global_swap_delta": [
+        0,
+        0
+      ],
       "workflow_monotonic_seconds": 5167.972956766025,
       "parent_whole_conservative_seconds": 5637.122687149011,
       "outer_charge_seconds": 5637.269656583,
@@ -891,7 +894,10 @@
       "official_results": "not_run",
       "rss_peak_bytes": 1517813760,
       "swap_peak_bytes": 0,
-      "global_swap_delta": [0, 0],
+      "global_swap_delta": [
+        0,
+        0
+      ],
       "parent_whole_conservative_seconds": 5622.279368720655,
       "outer_charge_seconds": 5622.384071101,
       "descendants_cleared": true,
@@ -914,7 +920,10 @@
       "recovery": "not_run_locked",
       "rss_peak_bytes": 1530359808,
       "swap_peak_bytes": 0,
-      "global_swap_delta": [0, 0],
+      "global_swap_delta": [
+        0,
+        0
+      ],
       "parent_classification": "WORKER_FAILED",
       "worker_exit_code": 4,
       "worker_status": "NORMAL_SCREEN_STOP",
@@ -947,7 +956,10 @@
       "charged_seconds": 530.530732766,
       "rss_peak_bytes": 1504464896,
       "swap_peak_bytes": 0,
-      "global_swap_delta": [0, 0],
+      "global_swap_delta": [
+        0,
+        0
+      ],
       "descendants_cleared": true,
       "compact": "docs/task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json",
       "budget": "benchmarks/artifacts/task39extra/v9_l1_equal_new_work/55b7325cae8477ded7b04cfab42181f18e035a0f/v9_l1_budget.json",
@@ -975,7 +987,10 @@
       "recovery": "not_run",
       "rss_peak_bytes": 1426276352,
       "swap_peak_bytes": 0,
-      "global_swap_delta": [0, 0],
+      "global_swap_delta": [
+        0,
+        0
+      ],
       "workflow_monotonic_seconds": 1898.7580305780284,
       "outer_charge_seconds": 2071.995232478,
       "parent_exit_code": 3,
@@ -996,8 +1011,14 @@
       "memory_policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
       "input_sha256": "e8fe409069970686d4901ddb1d444e37c2305f46f15cb1697ffc65995641fe64",
       "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
-      "representative_blocks": [0, 1],
-      "numeric_attempts": {"old": 2, "new": 2},
+      "representative_blocks": [
+        0,
+        1
+      ],
+      "numeric_attempts": {
+        "old": 2,
+        "new": 2
+      },
       "numeric_factorizations": 4,
       "max_solves_per_factor": 6,
       "max_local_residual": 5.438606648780365e-13,
@@ -1055,8 +1076,7 @@
     "A3/A4/official outputs/5nm/0.7nm not_run; no mathematical impossibility claim",
     "V7 A and B both stopped at the midpoint with residuals above 1e-3 and no official outputs or notch qualification",
     "V7 RSS values are incomplete failed-workflow observations, not 2 GB successful PDE qualification",
-    "V7 closes only the two frozen bounded candidates; it does not establish a universal no-global-p4-LU impossibility theorem"
-    ,
+    "V7 closes only the two frozen bounded candidates; it does not establish a universal no-global-p4-LU impossibility theorem",
     "V9 L0 preparation is partial: the complete implementation preparation time is unknown, so the full 3600 s preparation Gate cannot be retrospectively verified from the existing ledger",
     "V9 L1 total_i4_calls is 16 = 12 sequence rows + 4 complete-control I4 calls; the compact names these fields separately",
     "V9 L2 is an outer progress negative with no official fields; its low RSS and zero swap do not qualify a successful PDE"
@@ -1326,7 +1346,7 @@
       "path": "benchmarks/artifacts/task39extra/v11_n0_n2/v11_n0_n2_budget.json",
       "charged_seconds": 4857.702833182024,
       "remaining_seconds": 2342.297166817976,
-      "handoff_seconds_n1_to_n2": 204.883895970,
+      "handoff_seconds_n1_to_n2": 204.88389597,
       "n5_documentation_charge": "unknown; separate from N0-N2 ledger"
     },
     "N2": {
@@ -1380,21 +1400,44 @@
         "interpretation": "switch condition only; O1 workflow completed"
       },
       "parent_workflow_seconds": 601.0369560300772,
-      "resource": {"samples": 2137, "rss_peak_bytes": 3250446336, "pss_peak_bytes": 3215799296, "pss_all_readable": true, "swap_peak_bytes": 0, "descendants_cleared": true}
+      "resource": {
+        "samples": 2137,
+        "rss_peak_bytes": 3250446336,
+        "pss_peak_bytes": 3215799296,
+        "pss_all_readable": true,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      }
     },
     "inherited_first_r32": {
       "status": "WORKER_FAILED",
       "numeric_result": "partial_checkpoint_evidence",
       "checkpoint_residuals": [
-        {"iteration": 8, "explicit_true_residual": 0.8283760020203784},
-        {"iteration": 16, "explicit_true_residual": 0.8172376273064963},
-        {"iteration": 24, "explicit_true_residual": 0.811621467511064}
+        {
+          "iteration": 8,
+          "explicit_true_residual": 0.8283760020203784
+        },
+        {
+          "iteration": 16,
+          "explicit_true_residual": 0.8172376273064963
+        },
+        {
+          "iteration": 24,
+          "explicit_true_residual": 0.811621467511064
+        }
       ],
       "candidate": "not_available",
       "restart_comparison": "incomplete",
       "charged_seconds": 1028.6465685711235,
       "error": "TypeError: 'NoneType' object is not subscriptable; recovery quadrature metadata missing",
-      "resource": {"samples": 3654, "rss_peak_bytes": 2534461440, "pss_peak_bytes": 2499849216, "pss_all_readable": true, "swap_peak": 0, "descendants_cleared": true}
+      "resource": {
+        "samples": 3654,
+        "rss_peak_bytes": 2534461440,
+        "pss_peak_bytes": 2499849216,
+        "pss_all_readable": true,
+        "swap_peak": 0,
+        "descendants_cleared": true
+      }
     },
     "repaired_r32": {
       "status": "O2_CANDIDATE_COMPLETED",
@@ -1411,27 +1454,64 @@
         "node64_l2": 0.9488237463600627,
         "node64_scaled_curl": 0.9486448577201997
       },
-      "phase_clocks_seconds": {"build": 295.230015322, "rhs": 5.230602902, "outer": 1542.916955076985},
+      "phase_clocks_seconds": {
+        "build": 295.230015322,
+        "rhs": 5.230602902,
+        "outer": 1542.916955076985
+      },
       "parent_workflow_seconds": 1846.2808846201353,
       "coupling_closure_relative": 1.4796776236757317e-13,
-      "inventory_bytes": {"allocated": 1671000000, "used": 888000000, "retained": 2180383916, "post_w": 2180380092, "local_cap": 2684354560},
-      "resource": {"samples": 6540, "rss_peak_bytes": 3350794240, "readable_pss_peak_bytes": 3316318208, "pss_all_readable": false, "swap_peak": 0, "descendants_cleared": true},
+      "inventory_bytes": {
+        "allocated": 1671000000,
+        "used": 888000000,
+        "retained": 2180383916,
+        "post_w": 2180380092,
+        "local_cap": 2684354560
+      },
+      "resource": {
+        "samples": 6540,
+        "rss_peak_bytes": 3350794240,
+        "readable_pss_peak_bytes": 3316318208,
+        "pss_all_readable": false,
+        "swap_peak": 0,
+        "descendants_cleared": true
+      },
       "summary_sha256": "b8bd542ff9a192dbcc530ca3a8c337ea409ab1bf9043bc096891b72177dcbf7e",
       "terminal_sha256": "776dc9d3bd36ffbec1da8378d3068386bf67a2061faafca7feee5fee323f6d4d"
     },
     "r64": {
       "status": "USER_CONTROLLED_STOP",
       "numeric_result": "partial_checkpoint_evidence",
-      "checkpoints": [8, 16, 24],
+      "checkpoints": [
+        8,
+        16,
+        24
+      ],
       "checkpoint_residuals": [
-        {"iteration": 8, "explicit_true_residual": 0.8283760020203784},
-        {"iteration": 16, "explicit_true_residual": 0.8172376273064963},
-        {"iteration": 24, "explicit_true_residual": 0.811621467511064}
+        {
+          "iteration": 8,
+          "explicit_true_residual": 0.8283760020203784
+        },
+        {
+          "iteration": 16,
+          "explicit_true_residual": 0.8172376273064963
+        },
+        {
+          "iteration": 24,
+          "explicit_true_residual": 0.811621467511064
+        }
       ],
       "candidate": "not_available",
       "restart_comparison": "incomplete",
       "charged_seconds": 885.4244810280746,
-      "resource": {"samples": 3133, "rss_peak_bytes": 2552774656, "pss_peak_bytes": 2517919744, "pss_all_readable": true, "swap_peak": 0, "descendants_cleared": true},
+      "resource": {
+        "samples": 3133,
+        "rss_peak_bytes": 2552774656,
+        "pss_peak_bytes": 2517919744,
+        "pss_all_readable": true,
+        "swap_peak": 0,
+        "descendants_cleared": true
+      },
       "terminal_sha256": "ca1419f33d0b21c00bf3422cef0e8f77ad8b2f2c50ef11077fd5f926ece28a64",
       "stop_reason_sha256": "b029a85c03ac4ab865cb72ceacf46001bb23fc32fb554939989f3d169529679e"
     },
@@ -1495,7 +1575,10 @@
       "i4_calls_lower_bound": 4,
       "b4_calls_lower_bound": 20,
       "md_local_solves_lower_bound": 840,
-      "i4_true_residual_range": [0.1012649488434464, 0.9778952412775763],
+      "i4_true_residual_range": [
+        0.1012649488434464,
+        0.9778952412775763
+      ],
       "framework": "not_selected; record BAL_H stems are historical packet labels; bare B4/I4 only"
     },
     "ledger": {
@@ -1513,5 +1596,117 @@
     "raw_json_evidence": "docs/task039_extra_physical_multilevel/outcomes/records/v12_raw_json_evidence.json",
     "official_outputs": "not_run",
     "next": "review only; continuation requires new review, budget, and re-bound source/input/artifact identity; do not modify frozen input by inference"
+  },
+  "v13": {
+    "status": "DECISION_DELIVERY_INCOMPLETE",
+    "classification": [
+      "P0_INPUT_IDENTITY_PASS",
+      "P0_METRIC_EQUIVALENCE_PASS",
+      "P1_PARTIAL_A2R160_BAL_H_p4_01",
+      "P3_PARTIAL_RESPONSE_PACKET_A2R160_BAL_H_p4_01",
+      "USER_CONTROLLED_STOP",
+      "NO_OFFICIAL_PHYSICS_OUTPUT"
+    ],
+    "source_sha": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0",
+    "input_sha256": "ed3d32aa9d23a795c18ffa28097b1149ca2706cee3d7d56d7f074527a7b53a06",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "profile": "physical_p4_direction_diagnosis_v13",
+    "selected_inputs": [
+      "A2R160_BAL_H_p4_01",
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ],
+    "maps": {
+      "p6_independent_rows": 164592,
+      "p6_storage_rows": 173802,
+      "p4_independent_rows": 48960,
+      "p4_storage_rows": 53084
+    },
+    "attempts": {
+      "first_failed_source_sha": "80d2fb35145ac4770040ec9bb4627dfbe8cc7e67",
+      "first_failure": "same-mesh owner row candidates disagree: 2.4834738612237617e-09 > 1e-11 after one direct mass action; no I4/B4",
+      "first_failure_conservative_seconds": 355.6892665180153,
+      "repair_replay_source_sha": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0",
+      "repair_replay_status": "USER_CONTROLLED_STOP",
+      "repair_replay_conservative_seconds": 592.4604761721841,
+      "formal_conservative_seconds": 948.1497426901994,
+      "leader_exit_code": -15,
+      "descendants_cleared": true,
+      "sampled_process_tree_rss_peak_bytes": 3125956608,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "launch_cap_bytes": 9189265408,
+      "resource_interpretation": "RSS observation is separate from the 2.5 GiB local inventory policy; stop was for diagnostic liveness-accounting uncertainty"
+    },
+    "observed_partial": {
+      "p0_metric_output_max_relative": 2.9122511040234625e-15,
+      "p1_completed_I4": 1,
+      "p1_counted_right_pc_outputs": 4,
+      "p1_effective_rank": 4,
+      "p1_reconstruction_relative": 2.873275164100603e-16,
+      "p2_bare_B4_lower_bound": 1,
+      "p2_local_block_replays_lower_bound": 210,
+      "p3_A_images_lower_bound": 43,
+      "p3_full_L_columns": 48,
+      "p3_full_L_rank": 47,
+      "p3_full_L_residual_rho": 0.9358770172082744,
+      "p3_selected_response_columns": 10,
+      "p3_selected_response_rank": 10,
+      "p3_selected_response_rho": 0.9678905201139729,
+      "fresh_42_macro_block_inventory": {
+        "source": "fresh aggregation of macro_block_XX.json records with the four core inventory files",
+        "macro_block_count": 42,
+        "allocated_padded_bytes": 1671000000,
+        "used_padded_bytes": 888000000,
+        "allocated_csr_bytes": 450499800,
+        "after_CU_inventory_bytes": 2180383916,
+        "policy_limit_bytes": 2684354560,
+        "within_policy_limit": true,
+        "interpretation": "allocated is not replaced by used; this fresh local inventory accounting is separate from V13 diagnostic live-object liveness"
+      }
+    },
+    "derived_resource_liveness": {
+      "additional_array_cap_bytes": 268435456,
+      "lower_bound_bytes": 273571328,
+      "excess_bytes": 5135872,
+      "status": "DERIVED_UNCERTIFIED",
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json",
+      "record_sha256": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
+    },
+    "offline_checkers": {
+      "checks_each": 16,
+      "first_root_wall_seconds": 1.7,
+      "second_wall_seconds": 4.7,
+      "wall_seconds_total": 6.4,
+      "formal_plus_checker_seconds": 954.5497426901994,
+      "record": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_checker_provenance.json"
+    },
+    "decision": {
+      "primary_method": "IMPLEMENTATION_OR_METRIC_REPAIR",
+      "confidence": "high_for_required_repair_only",
+      "status": "DECISION_DELIVERY_INCOMPLETE",
+      "ordinary_default_changed": false,
+      "official_physics": "not_run",
+      "solver_method_confidence": "unavailable"
+    },
+    "records": {
+      "response": "docs/task039_extra_physical_multilevel/response_v14.md",
+      "diagnosis": "docs/task039_extra_physical_multilevel/outcomes/p4_direction_diagnosis_v13.md",
+      "blueprint": "docs/task039_extra_physical_multilevel/outcomes/next_method_blueprint_v13.md",
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13.json",
+      "decision": "docs/task039_extra_physical_multilevel/outcomes/records/next_method_decision_v13.json",
+      "offline_audit": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_offline_audit.json",
+      "memory_liveness": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json",
+      "checker_provenance": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_checker_provenance.json"
+    },
+    "next": "new review and explicit budget required; close three-input diagnosis and qualify a PC before frozen 13.5 nm p6/h10 original, then same-config notch",
+    "evidence_sha256": {
+      "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13.json": "9081fa21e9fd9b87df0520a91b183d090a8e421e2c1e37b3c78cc8b0260dfb96",
+      "docs/task039_extra_physical_multilevel/outcomes/records/next_method_decision_v13.json": "ed246f97a39a54449183d6af5c0e4fd56e23eafab9f0e49d5011cc670c159970",
+      "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_checker_provenance.json": "f122a19c4ab73cea4fea0cb4c3e9d1717351312ef90f83588f7c00a166a334de",
+      "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_partial_audit.py": "4d1409e76cb07d72267c3a7375ba605a1668c87f3120852f034a90f302f751a2",
+      "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_offline_audit.json": "575b6420ddea73a4e837252a3511ad9c3ce7439f2c9abc763bcf2036521de9dd",
+      "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
+    }
   }
 }
