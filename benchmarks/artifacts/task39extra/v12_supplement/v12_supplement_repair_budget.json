@@ -1,0 +1,327 @@
+{
+  "schema": "task39extra.review-v12-supplement-budget.v1",
+  "profile": "physical_macro_dd4_v12_supplement",
+  "source_sha": "d39261bb17e8d9042c03d4d4990258da5043b621",
+  "source_transitions": [
+    {
+      "from": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "to": "d39261bb17e8d9042c03d4d4990258da5043b621",
+      "reason": "continued from the clean supplement implementation after the inherited R32 engineering failure; old evidence remains hash-bound"
+    }
+  ],
+  "total_limit_seconds": 10800.0,
+  "o1_workflow_limit_seconds": 3600.0,
+  "o1_compute_limit_seconds": 1200.0,
+  "charged_seconds": 4361.38889024941,
+  "o1_charged_seconds": 601.0369560300772,
+  "remaining_seconds": 6438.61110975059,
+  "physical_model_sha256s": [
+    "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+  ],
+  "selected_framework": "BAL_H",
+  "batch_contract": {
+    "old_v12_ledger": "not_used_or_merged",
+    "fresh_o1_physical_blocks": 42,
+    "shared_framework_comparisons_max": 3,
+    "per_o2_workflow_limit_seconds": 3600.0,
+    "per_o2_true_outer_limit_seconds": 2400.0,
+    "outer_max_iterations": 64,
+    "original_or_notch_runs": "not_authorized"
+  },
+  "implementation_activity": {
+    "kind": "v12_supplement_implementation_activity",
+    "status": "COMMITTED",
+    "charged_seconds": 0.0,
+    "formal_debit_seconds": 0.0,
+    "elapsed_seconds": null,
+    "elapsed_seconds_status": "UNKNOWN_NOT_SUMMED",
+    "observed_subinterval_seconds": [
+      383.0,
+      407.0
+    ],
+    "activities": [
+      {
+        "elapsed_seconds": 383.0,
+        "started_at": "2026-09-11T20:05:18+08:00",
+        "ended_at": "2026-09-11T20:11:41+08:00",
+        "source_commit": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+        "basis": "observed file-mtime-to-commit subinterval; not a complete implementation duration"
+      },
+      {
+        "elapsed_seconds": 407.0,
+        "started_at": "2026-09-11T20:45:35+08:00",
+        "ended_at": "2026-09-11T20:52:22+08:00",
+        "source_commit": "d39261bb17e8d9042c03d4d4990258da5043b621",
+        "basis": "observed wall subinterval from the field-diagnostic review commit to the strict-dependency repair commit; not a complete implementation duration"
+      }
+    ],
+    "basis": "implementation and repair activity is recorded separately and does not debit the formal supplement cap; the complete implementation duration is unknown and observed subintervals are not summed"
+  },
+  "inherited_source_ledger": {
+    "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_budget.json",
+    "sha256": "af72d67ab51af205841c4757de5b7413ed2f6ddccbbf8c5a92bc4ccbe633d5fe",
+    "source_sha": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+    "charged_seconds": 1629.6835246012006
+  },
+  "inherited_evidence": [
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o2_restart_probe_32/terminal.json",
+      "sha256": "dad9ac6d76f273e6e6c0682196b2d3237105582ce055184d1dc8af5a3bab25d8"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o2_restart_probe_32/records/outer_summary.json",
+      "sha256": "34e5bc938e20e3b042f59e412da40a3c0b0748f660831fb1e986c98926a92fac"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o2_restart_probe_32/watchdog/worker.log",
+      "sha256": "b46cb8de886f8927ed2ae278d65d8f46cb4f2367e07e3fa42fa90af54db04ab3"
+    }
+  ],
+  "attempts": [
+    {
+      "kind": "physical_macro_dd4_v12_supplement_o1_full_physical_controls",
+      "stage": "O1_FULL_PHYSICAL_CONTROLS",
+      "budget_group": "SUPPLEMENT_O1",
+      "source": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls",
+      "status": "COMPLETED",
+      "reserved_seconds": 3600.0,
+      "input": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v12_o1_full_physical_controls_0.dat",
+      "input_sha256": "2fd073a846d1b163b0f87c84e472212e7f8650b4c0bf81066aa20bc051a6bc7a",
+      "inventory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+      "inventory_sha256": "b47cbec33ea05842079e10dea486185703cfa541049d291ddb7fcf5369310a6c",
+      "stage_limit_seconds": 3600.0,
+      "admitted_wall_seconds": 3600.0,
+      "supplement": true,
+      "o1_compute_limit_seconds": 1200.0,
+      "framework": null,
+      "outer_restart": 0,
+      "actual_seconds": 601.0369560300772,
+      "clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 551.1848156850028,
+          "boottime": 551.184817587,
+          "utc": 601.036632193
+        },
+        "budget_seconds": 601.0369560300772,
+        "discrepancy_seconds": 49.851816507997114,
+        "tolerance_seconds": 5.51184817587,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 49.851816507997114,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.004327048001869116,
+            "boottime": 0.004327326001657639,
+            "utc": 0.004327544
+          },
+          "budget_seconds": 0.004327544,
+          "discrepancy_seconds": 4.959981308840303e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 4.959981308840303e-07
+        },
+        "utc_positive_excess_seconds": 49.85183050503337
+      },
+      "descendants_cleared": true,
+      "terminal_classification": "COMPLETED",
+      "reused_from_original_supplement_ledger": true
+    },
+    {
+      "kind": "physical_macro_dd4_v12_supplement_o2_restart_probe_32",
+      "stage": "O2_RESTART_PROBE_32",
+      "budget_group": "O2_RESTART_PROBE_32",
+      "source": "d39261bb17e8d9042c03d4d4990258da5043b621",
+      "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32",
+      "status": "COMPLETED",
+      "reserved_seconds": 3600.0,
+      "input": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v12_o2_restart_probe_32_32.dat",
+      "input_sha256": "9543a2c7c297a7864671922d1be7fdcdae2fe8b99983e18859d69e82a70042d0",
+      "inventory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+      "inventory_sha256": "b47cbec33ea05842079e10dea486185703cfa541049d291ddb7fcf5369310a6c",
+      "stage_limit_seconds": 3600.0,
+      "admitted_wall_seconds": 3600.0,
+      "supplement": true,
+      "o1_compute_limit_seconds": 1200.0,
+      "framework": "BAL_H",
+      "outer_restart": 32,
+      "actual_seconds": 1846.2808846201353,
+      "clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 1693.7443426909995,
+          "boottime": 1693.7443444089986,
+          "utc": 1846.278440302
+        },
+        "budget_seconds": 1846.2808846201353,
+        "discrepancy_seconds": 152.53409761100056,
+        "tolerance_seconds": 16.937443444089986,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 152.53409761100056,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.0034044700005324557,
+            "boottime": 0.0034059300014632754,
+            "utc": 0.003406187
+          },
+          "budget_seconds": 0.003406187,
+          "discrepancy_seconds": 1.716999467544448e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 1.716999467544448e-06
+        },
+        "utc_positive_excess_seconds": 152.53450320099128
+      },
+      "descendants_cleared": true,
+      "terminal_classification": "COMPLETED"
+    },
+    {
+      "kind": "physical_macro_dd4_v12_supplement_o2_restart_probe_64",
+      "stage": "O2_RESTART_PROBE_64",
+      "budget_group": "O2_RESTART_PROBE_64",
+      "source": "d39261bb17e8d9042c03d4d4990258da5043b621",
+      "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64",
+      "status": "USER_CONTROLLED_STOP",
+      "reserved_seconds": 3600.0,
+      "input": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v12_o2_restart_probe_64_64.dat",
+      "input_sha256": "0dc9f76f5e63698e0d18ea75c18ae05cb4ff063b9b0d52be2a3a10c1cfb1622c",
+      "inventory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+      "inventory_sha256": "b47cbec33ea05842079e10dea486185703cfa541049d291ddb7fcf5369310a6c",
+      "stage_limit_seconds": 3600.0,
+      "admitted_wall_seconds": 3600.0,
+      "supplement": true,
+      "o1_compute_limit_seconds": 1200.0,
+      "framework": "BAL_H",
+      "outer_restart": 64,
+      "actual_seconds": 885.4244810280746,
+      "clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 812.095731966001,
+          "boottime": 812.0957318969995,
+          "utc": 885.423690301
+        },
+        "budget_seconds": 885.4244810280746,
+        "discrepancy_seconds": 73.32795840400047,
+        "tolerance_seconds": 8.120957319660011,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 73.32795833499893,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.0023626580004929565,
+            "boottime": 0.0023627439986739773,
+            "utc": 0.00236294
+          },
+          "budget_seconds": 0.00236294,
+          "discrepancy_seconds": 2.8199950704351634e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 2.8199950704351634e-07
+        },
+        "utc_positive_excess_seconds": 73.32809179398326
+      },
+      "descendants_cleared": true,
+      "terminal_classification": "USER_CONTROLLED_STOP",
+      "launcher_exception_type": "SystemExit",
+      "launcher_exception_message": "1",
+      "controlled_stop_reason": "USER_REQUESTED_CONTROLLED_STOP",
+      "numeric_result": "not_run",
+      "candidate_summary": "not_available",
+      "raw_watchdog_terminal": {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/terminal.json",
+        "sha256": "ca1419f33d0b21c00bf3422cef0e8f77ad8b2f2c50ef11077fd5f926ece28a64",
+        "classification": "USER_CONTROLLED_STOP",
+        "leader_exit_code": -15,
+        "descendants_cleared": true,
+        "sampled_process_tree_rss_peak_bytes": 2552774656,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "partial_checkpoints": [
+        {
+          "iteration": 8,
+          "manifest": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000008/manifest.json",
+          "manifest_sha256": "886a3ffe988d2303944b82224b3b0bb4dd5137869765afac6818bd18b4b9fbb7"
+        },
+        {
+          "iteration": 16,
+          "manifest": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000016/manifest.json",
+          "manifest_sha256": "104cbb3d950c6de3612b28f13fc49232ca14e353f56b085b1382e3af63e3ce66"
+        },
+        {
+          "iteration": 24,
+          "manifest": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000024/manifest.json",
+          "manifest_sha256": "36cbab2fae4128faae0b40e79fbeb93c51d91b659251d1587284fc5a0d0e0229"
+        }
+      ]
+    }
+  ],
+  "inherited_engineering_attempts": [
+    {
+      "kind": "inherited_original_supplement_o2_restart_probe_32_engineering_failure",
+      "stage": "O2_RESTART_PROBE_32",
+      "budget_group": "O2_RESTART_PROBE_32",
+      "source": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o2_restart_probe_32",
+      "status": "WORKER_FAILED",
+      "reserved_seconds": 3600.0,
+      "input": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v12_o2_restart_probe_32_32.dat",
+      "input_sha256": "9543a2c7c297a7864671922d1be7fdcdae2fe8b99983e18859d69e82a70042d0",
+      "inventory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+      "inventory_sha256": "b47cbec33ea05842079e10dea486185703cfa541049d291ddb7fcf5369310a6c",
+      "stage_limit_seconds": 3600.0,
+      "admitted_wall_seconds": 3600.0,
+      "supplement": true,
+      "o1_compute_limit_seconds": 1200.0,
+      "framework": "BAL_H",
+      "outer_restart": 32,
+      "actual_seconds": 1028.6465685711235,
+      "clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 943.555645245,
+          "boottime": 943.5556451369994,
+          "utc": 1028.645884725
+        },
+        "budget_seconds": 1028.6465685711235,
+        "discrepancy_seconds": 85.09023958800071,
+        "tolerance_seconds": 9.435556452450001,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 85.09023948000004,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.0015224039998429362,
+            "boottime": 0.0015220970017253421,
+            "utc": 0.001522163
+          },
+          "budget_seconds": 0.0015224039998429362,
+          "discrepancy_seconds": 3.069981175940484e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -2.409998429361848e-07
+        },
+        "utc_positive_excess_seconds": 85.09029080611113
+      },
+      "descendants_cleared": true,
+      "terminal_classification": "WORKER_FAILED",
+      "launcher_exception_type": "SystemExit",
+      "launcher_exception_message": "1",
+      "source_ledger_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/v12_supplement_budget.json",
+      "source_ledger_sha256": "af72d67ab51af205841c4757de5b7413ed2f6ddccbbf8c5a92bc4ccbe633d5fe",
+      "terminal_sha256": "dad9ac6d76f273e6e6c0682196b2d3237105582ce055184d1dc8af5a3bab25d8",
+      "outer_summary_sha256": "34e5bc938e20e3b042f59e412da40a3c0b0748f660831fb1e986c98926a92fac",
+      "worker_log_sha256": "b46cb8de886f8927ed2ae278d65d8f46cb4f2367e07e3fa42fa90af54db04ab3",
+      "classification": "inherited_engineering_failure; not a numeric PC result",
+      "failure": {
+        "outer_summary_status": "V12_OUTER_FAILED",
+        "exception_type": "TypeError",
+        "exception": "'NoneType' object is not subscriptable",
+        "cause": "field diagnostic recovery quadrature metadata was unavailable before the local fallback fix",
+        "numeric_result": "not_run"
+      }
+    }
+  ]
+}
