@@ -1,0 +1,16 @@
+{
+  "review_base": "96e5d5fcfc3e801ef33d4a2d241ea7571937f734",
+  "registry_checker_unchanged_from_base": true,
+  "baseline_registry_errors": [
+    "missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json"
+  ],
+  "current_registry_errors": [
+    "missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json"
+  ],
+  "missing_path_absent_from_base_git_tree": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json",
+  "new_registry_errors": [],
+  "link_checks": 45,
+  "link_errors": [],
+  "historical_run_index_values_unchanged": true,
+  "scope": "Read-only baseline-text comparison using unchanged checker and current filesystem; no old PDE or evidence reconstruction"
+}

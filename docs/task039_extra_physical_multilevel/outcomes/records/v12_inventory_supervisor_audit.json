@@ -1,0 +1,466 @@
+{
+  "lifecycle": {
+    "after_cached_action": {
+      "inventory": 2180383916,
+      "within_cap": true
+    },
+    "after_cu": {
+      "inventory": 2180383916,
+      "within_cap": true
+    },
+    "after_w_transfer": {
+      "inventory": 2180380092,
+      "within_cap": true
+    }
+  },
+  "local_cap_bytes": 2684354560,
+  "max_local_residual": 2.1772149386553977e-15,
+  "numeric_blocks": 42,
+  "p2_stage": {
+    "stage": "p2_numeric_complete",
+    "rows": 7326,
+    "nnz": 818100,
+    "factor_reported_allocated_padded_bytes": 270000000,
+    "factor_reported_used_padded_bytes": 65000000,
+    "derived_matrix_plus_reported_factor_budget_bytes": 341069688,
+    "bottom_budget_bytes": 536870912,
+    "symbolic_seconds": 0.025815314998908434,
+    "numeric_seconds": 0.371230351000122,
+    "classification": "derived_policy_budget_not_RSS",
+    "raw_stage_record": "benchmarks/artifacts/task39extra/v12_o0_o4/e8c3c82bab2687a811a11f0798a2879c725532b5/o1_full_physical_controls_0/stages.jsonl:247",
+    "raw_stage_file_sha256": "4b1fd995693c14177c028304916b964a21cde7a23f833fd24d7b98ac9ac0ca40"
+  },
+  "raw_path": "benchmarks/artifacts/task39extra/v12_o0_o4/e8c3c82bab2687a811a11f0798a2879c725532b5/o1_full_physical_controls_0/records/supervisor_audit.json",
+  "raw_sha256": "1bfe2deff02f1cf55c67460c8e76060ef3c0ae71771e39668e17cf8a0dd0511c",
+  "rows": [
+    {
+      "E": 32000000,
+      "Q": 73000000,
+      "allocated": 53000000,
+      "block": 0,
+      "csr": 14565860,
+      "post_inventory": 113276008,
+      "rows": 1944,
+      "used": 29000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 1,
+      "csr": 14279140,
+      "post_inventory": 178555148,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 2,
+      "csr": 14279140,
+      "post_inventory": 243834288,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 3,
+      "csr": 14279140,
+      "post_inventory": 309113428,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 4,
+      "csr": 14279140,
+      "post_inventory": 374392568,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 5,
+      "csr": 14279140,
+      "post_inventory": 439671708,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 32000000,
+      "Q": 73000000,
+      "allocated": 53000000,
+      "block": 6,
+      "csr": 14565860,
+      "post_inventory": 507237568,
+      "rows": 1944,
+      "used": 29000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 7,
+      "csr": 7128340,
+      "post_inventory": 542365908,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 8,
+      "csr": 7076500,
+      "post_inventory": 577442408,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 9,
+      "csr": 7076500,
+      "post_inventory": 612518908,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 10,
+      "csr": 7076500,
+      "post_inventory": 647595408,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 11,
+      "csr": 7076500,
+      "post_inventory": 682671908,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 12,
+      "csr": 7076500,
+      "post_inventory": 717748408,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 13,
+      "csr": 7128340,
+      "post_inventory": 752876748,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 32000000,
+      "Q": 73000000,
+      "allocated": 53000000,
+      "block": 14,
+      "csr": 14565860,
+      "post_inventory": 820442608,
+      "rows": 1944,
+      "used": 29000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 15,
+      "csr": 14279140,
+      "post_inventory": 885721748,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 16,
+      "csr": 14279140,
+      "post_inventory": 951000888,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 17,
+      "csr": 14279140,
+      "post_inventory": 1016280028,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 18,
+      "csr": 14279140,
+      "post_inventory": 1081559168,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 19,
+      "csr": 14279140,
+      "post_inventory": 1146838308,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 32000000,
+      "Q": 73000000,
+      "allocated": 53000000,
+      "block": 20,
+      "csr": 14565860,
+      "post_inventory": 1214404168,
+      "rows": 1944,
+      "used": 29000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 21,
+      "csr": 7128340,
+      "post_inventory": 1249532508,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 22,
+      "csr": 7076500,
+      "post_inventory": 1284609008,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 23,
+      "csr": 7076500,
+      "post_inventory": 1319685508,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 24,
+      "csr": 7076500,
+      "post_inventory": 1354762008,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 25,
+      "csr": 7076500,
+      "post_inventory": 1389838508,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 26,
+      "csr": 7076500,
+      "post_inventory": 1424915008,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 27,
+      "csr": 7128340,
+      "post_inventory": 1460043348,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 32000000,
+      "Q": 73000000,
+      "allocated": 53000000,
+      "block": 28,
+      "csr": 14565860,
+      "post_inventory": 1527609208,
+      "rows": 1944,
+      "used": 29000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 29,
+      "csr": 14279140,
+      "post_inventory": 1592888348,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 30,
+      "csr": 14279140,
+      "post_inventory": 1658167488,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 31,
+      "csr": 14279140,
+      "post_inventory": 1723446628,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 32,
+      "csr": 14279140,
+      "post_inventory": 1788725768,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 31000000,
+      "Q": 71000000,
+      "allocated": 51000000,
+      "block": 33,
+      "csr": 14279140,
+      "post_inventory": 1854004908,
+      "rows": 1944,
+      "used": 28000000
+    },
+    {
+      "E": 32000000,
+      "Q": 73000000,
+      "allocated": 53000000,
+      "block": 34,
+      "csr": 14565860,
+      "post_inventory": 1921570768,
+      "rows": 1944,
+      "used": 29000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 35,
+      "csr": 7128340,
+      "post_inventory": 1956699108,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 36,
+      "csr": 7076500,
+      "post_inventory": 1991775608,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 37,
+      "csr": 7076500,
+      "post_inventory": 2026852108,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 38,
+      "csr": 7076500,
+      "post_inventory": 2061928608,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 39,
+      "csr": 7076500,
+      "post_inventory": 2097005108,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 40,
+      "csr": 7076500,
+      "post_inventory": 2132081608,
+      "rows": 1044,
+      "used": 14000000
+    },
+    {
+      "E": 15000000,
+      "Q": 39000000,
+      "allocated": 28000000,
+      "block": 41,
+      "csr": 7128340,
+      "post_inventory": 2167209948,
+      "rows": 1044,
+      "used": 14000000
+    }
+  ],
+  "schema": "task39extra.review-v12.inventory-audit-compact.v1",
+  "source_sha": "e8c3c82bab2687a811a11f0798a2879c725532b5",
+  "status": "RECORDS_CONSISTENT",
+  "totals": {
+    "allocated": 1671000000,
+    "csr": 450499800,
+    "used": 888000000
+  },
+  "witnesses_recounted": 84
+}

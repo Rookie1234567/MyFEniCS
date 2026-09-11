@@ -1,4 +1,26 @@
-# V11 N5 compact、文档合同与静态检查
+# V12 O0–O4 测试、raw 记录与静态收口
+
+本节是 V12 source/evidence closeout；不重新启动 PDE、MPI、factor 或 O2/O3。正式 source SHA 为 `e8c3c82bab2687a811a11f0798a2879c725532b5`，review base SHA 为 `96e5d5fcfc3e801ef33d4a2d241ea7571937f734`。测试使用仓库规定的 qualified activation；没有 full repository pytest 或 CI 通过声明。
+
+| 检查 | 结果与边界 |
+|---|---|
+| changed-source focused regression | `27 passed in 0.72 s`；覆盖 `test_260_task038_input_schema.py`、`test_365_light_pc_monitor.py`、`test_410_physical_macro_dd4.py`；[stdout](records/v12_final_root_focused.stdout.log) SHA `06fb627be4f8eb56eda298be72080c1a3e41a61c9046274bcd8b6b9bd0c666dc`；[stderr](records/v12_final_root_focused.stderr.log) SHA `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| supervisor stop smoke | 3 个 `PASS`：monitor-at-10 保留 safe iteration10；external-at-50 保留 iteration48；真实 `FloatingPointError` 原样传播；[stdout](records/v12_stop_smoke.stdout.log) SHA `de2906176ec9a4a43537dff33021072d4edb1ad4a50b0a6b19d354bf38230b29`；[stderr](records/v12_stop_smoke.stderr.log) SHA `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| V12 dat dry-run | 9/9 public dry-run exit `0`，PDE 未启动，old profile caps unchanged；[stdout](records/v12_dat_dry_run.stdout.log) SHA `ac6ea60956a6830a867c246cdfe00e62d8a0f8f433c907d81e041647fbcc6772`；[stderr](records/v12_dat_dry_run.stderr.log) SHA `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| ABI preflight | qualified Linux stack；PETSc scalar `complex128`、integer `int32`、MPI1/线程1；V12 formal identity 与 preflight 文档绑定；没有 Windows ABI 污染 |
+| Python/static | qualified `compileall` exit 0；显式 Git dir/worktree 下 `git diff --check` exit 0 |
+| changed-file Ruff | parent 保存的 Ruff 0.11.13 changed-file F821/F822/F823 检查通过；这不是 full-repository Ruff pass，历史 diagnostics 未改写 |
+| Markdown/registry contract | `test_183_development_model_registry_markdown.py` + `test_26_documentation_contract.py`: `20 passed in 0.05 s`；只验证文档/登记合同，不是 PDE 或 full repository pytest |
+| additional registry audit | `test_development_model_registry_contract.py` 批次为 `20 passed / 1 failed in 0.09 s`；唯一失败是历史缺失 `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json`，该路径在 review base 的既有 registry 引用中已缺失，本轮不修旧 Task038、不伪造 checker；[stdout](records/v12_final_root_docs.stdout.log) SHA `a32d9b6d463456db04c45d997fa2b4d8dc58ff446cf14d1be316caa32309db1c`；[stderr](records/v12_final_root_docs.stderr.log) SHA `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`；[baseline audit](records/v12_final_root_doc_audit.json) SHA `464bae144d1058295f4d16a620d807aa19f3f74e6a05f3e066c7123410d1efd2` |
+| V12 JSON/evidence | compact、terminal/budget、inventory、p4/resource audit、lossless raw JSON evidence 可解析；原始 raw JSON SHA `0ff0246b6c1212b5d1c2706cd1954884626b828192697d1a7d0c9e99d06e6710`，tracked normalized copy SHA `329ed513c351896c3db09ea5899389a060b71ff36805daf456132e304fdd1580`；两者解析后的 JSON 值相同 |
+| formal stage audit | O0/O1/O4 terminal hashes、42-block inventory、88-check p4 arithmetic audit、resource audit 均已写入 [V12 compact](records/physical_macro_v12_compact.json) 及其 records |
+| full repository pytest / CI | `not_run`；没有 CI 通过声明 |
+
+V12 的 `p4` 数值记录只说明有限 4-step I4/B4 控制及其真实 residual/field error；O1 shared budget stop 后没有新 PDE。大型 raw/matrix/factor/field/cache/timeline 保持 ignored，tracked raw 只保存轻量可审阅日志和 hash-bound JSON evidence。
+
+---
+
+# 历史：V11 N5 compact、文档合同与静态检查
 
 本节登记 Review V11 的 docs/evidence closeout，不重新启动 PDE、MPI、factor 或 N3/N4。37 项 source-focused regression 已绑定正式 source SHA 并保持不变；本轮只验证新增 compact、逐块汇编、Markdown 链接/登记合同和源码语法。
 

@@ -1,4 +1,24 @@
-# Task39extra Review V11当前结果：N1 policy equivalence pass，N2 retained-inventory controlled negative
+# Task39extra Review V12当前结果：42块物理宏块完成，p4控制受共享预算停止
+
+V12 在 `physical_macro_dd4_v12` 与 `2684354560 B` 局部库存 cap 下完成 O0、42/42 physical macro block numeric inventory、84 witness recount、cached/native bridge、C_U/W transfer 记录及 4 条有限 p4 I4 控制；随后 O1 因共享 O0/O1 保守预算耗尽而 `PERFORMANCE_CONTROLLED_STOP`。42 个宏块各有独立 numeric factor record；另有 18 个 C_U 元素内部响应类因子，二者不是同一计数。
+
+| 范围 | 当前结论 | 证据口径/边界 |
+|---|---|---|
+| 身份 | source `e8c3c82bab2687a811a11f0798a2879c725532b5`；13.5 nm、p6/h10、Full3D、MPI1、80 modes、complex128；physical/mode SHA 与 p6/p4 size 见 compact | V12 hash-bound；不是 official PDE output |
+| O0 | `O0_PRECHECK_COMPLETED` | 2.0600177589932294 s；RSS 147095552 B；swap 0；descendants cleared |
+| O1 coverage | 42/42 numeric blocks；84 witnesses；covered rows 48960；max local residual `2.1772149386553977e-15`；6 native witnesses max `8.243915633632588e-16` | 局部质量和构建证据，不是 p4/p6 收敛 |
+| bridge/C_U | cached/native relative `2.787784119354311e-15 < 1e-11`；C_U/W inventory recorded | C_U closure scalar `not_persisted_not_verified`；未执行完整 BAL_H/ONE_C outer |
+| p4 controls | 4 persisted records；每条 4 I4 B4 calls、3 explicit A4；I4 residual `0.1012649488434464`–`0.9778952412775763` | record 名称中的 BAL_H 来自历史 packet；本轮只做 bare B4/I4 内部检查；field L2/curl 仍约 0.878–0.993 |
+| O1 stop | `PERFORMANCE_CONTROLLED_STOP` | shared O0/O1 charged `7201.319691806935 s` vs 7200 s；不是 OOM 或 solver exception；tree RSS/PSS 2574671872/2539922432 B，swap 0 |
+| O2/O3/O4 | O2/O3 `not_run`；O4 `O4_FINALIZED` | O1 未完成且无 framework selection；O4 无新 reference solve/factor |
+| official fields | `not_run` | p6 original/notch、A6 `1e-6` true-residual gate、E/H、R/T/A、`A_volume`、modes、diffraction、守恒均未检验 |
+| 当前决定 | `NOT_APPROVED_FOR_MASTER_MERGE`；ordinary default unchanged | V5 原始/notch成功 baseline 与 448 页 global `pswpout` attribution `UNRESOLVED` 保持历史边界 |
+
+四条 p4 的 bare/I4 residual 与 field error 对照、精确资源口径和 raw/hash 入口见 [V12 中心结果](physical_macro_v12.md)；机器记录见 [V12 compact](records/physical_macro_v12_compact.json)、[lossless raw JSON evidence](records/v12_raw_json_evidence.json)、[p4 audit](records/v12_p4_supervisor_audit.json) 和 [resource audit](records/v12_resource_supervisor_audit.json)。测试结果见本目录的 [test summary](test_summary.md)。大型 matrix/factor/field/cache/timeline 仍在 ignored artifact root，不进入 Git。
+
+---
+
+# 历史：Task39extra Review V11当前结果：N1 policy equivalence pass，N2 retained-inventory controlled negative
 
 本节是当前权威摘要。V11 验证显式 `physical_macro_dd4_v11` / `SYMBOLIC_SIZED_LOCAL_MUMPS_V11`：局部块把附近未知量组成小矩阵，先做局部分解并保留因子，再用于局部回代。新的 workspace 请求由 symbolic-sized MUMPS 信息计算，不能用 used/min/RSS 替代。V10 旧策略和 ordinary default 保持不变。
 

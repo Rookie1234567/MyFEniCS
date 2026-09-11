@@ -1,0 +1,10 @@
+{"stage": "O0_PRECHECK", "outer_restart": 0, "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O1_FULL_PHYSICAL_CONTROLS", "outer_restart": 0, "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O2_RESTART_PROBE_32", "outer_restart": 32, "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O2_RESTART_PROBE_64", "outer_restart": 64, "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O3_ORIGINAL", "outer_restart": 32, "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O3_ORIGINAL", "outer_restart": 64, "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O3_NOTCH", "outer_restart": 32, "physical_sha256": "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O3_NOTCH", "outer_restart": 64, "physical_sha256": "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec", "cap": 2684354560, "public_dry_run_exit": 0}
+{"stage": "O4_FINALIZE", "outer_restart": 0, "physical_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f", "cap": 2684354560, "public_dry_run_exit": 0}
+{"dry_run_cases": 9, "old_profile_caps_unchanged": true, "PDE_started": false}

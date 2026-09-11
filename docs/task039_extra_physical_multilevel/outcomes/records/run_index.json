@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V11 N0-N5 closeout: V5 success baseline and V6/V7/V8/V9/V10 history retained; V11 N1 local policy equivalence and N2 retained-inventory controlled negative are hash-bound evidence",
+  "scope": "V12 O0-O4 closeout with V5 success baseline and V6/V7/V8/V9/V10/V11 history retained; V12 physical macro controls are hash-bound partial evidence and official outputs remain not_run",
   "units": {
     "time": "s",
     "memory": "B"
@@ -1341,5 +1341,69 @@
     },
     "official_outputs": "not_run",
     "next": "same branch submitted for review of this resource negative and implementation; no cap or block-group change in V11"
+  },
+  "v12": {
+    "status": "PARTIAL_PHYSICAL_CONTROLS_WITH_PERFORMANCE_CONTROLLED_STOP",
+    "classification": [
+      "O0_PRECHECK_COMPLETED",
+      "42_OF_42_PHYSICAL_MACRO_NUMERIC_BLOCKS",
+      "SAVED_P4_CONTROLS_CONSISTENT",
+      "PERFORMANCE_CONTROLLED_STOP",
+      "O2_O3_NOT_RUN",
+      "O4_FINALIZED"
+    ],
+    "source_sha": "e8c3c82bab2687a811a11f0798a2879c725532b5",
+    "review_base_sha": "96e5d5fcfc3e801ef33d4a2d241ea7571937f734",
+    "profile": "physical_macro_dd4_v12",
+    "memory_policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+    "input_shas": {
+      "o0": "03964d4b9c6698d5583437647cda301c747d55d68a87d0d1970fa007169ce091",
+      "o1": "2fd073a846d1b163b0f87c84e472212e7f8650b4c0bf81066aa20bc051a6bc7a"
+    },
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "inventory": {
+      "physical_macro_blocks": 42,
+      "independent_rows": 48960,
+      "witnesses_recounted": 84,
+      "max_local_residual": 2.1772149386553977e-15,
+      "native_witness_count": 6,
+      "native_witness_max_relative_residual": 8.243915633632588e-16,
+      "c_u_local_classes": 18,
+      "c_u_closure_scalar": "not_persisted_not_verified"
+    },
+    "p2": {
+      "rows": 7326,
+      "nnz": 818100,
+      "allocated_padded_bytes": 270000000,
+      "used_padded_bytes": 65000000,
+      "derived_matrix_plus_reported_factor_budget_bytes": 341069688,
+      "bottom_budget_bytes": 536870912,
+      "raw_stage_record": "stages.jsonl:247",
+      "raw_stage_file_sha256": "4b1fd995693c14177c028304916b964a21cde7a23f833fd24d7b98ac9ac0ca40"
+    },
+    "p4": {
+      "records": 4,
+      "i4_calls_lower_bound": 4,
+      "b4_calls_lower_bound": 20,
+      "md_local_solves_lower_bound": 840,
+      "i4_true_residual_range": [0.1012649488434464, 0.9778952412775763],
+      "framework": "not_selected; record BAL_H stems are historical packet labels; bare B4/I4 only"
+    },
+    "ledger": {
+      "path": "benchmarks/artifacts/task39extra/v12_o0_o4/v12_o0_o4_budget.json",
+      "sha256": "1d22af0d55c3dc1bfd649ae1402b316a78d346c7e7ea800cb305e1f39cedca8a",
+      "o0_o1_limit_seconds": 7200.0,
+      "o0_o1_charged_seconds": 7201.319691806935,
+      "total_limit_seconds": 43200.0,
+      "total_charged_seconds": 7203.373583973936,
+      "build_jit_other_activity": "unknown/included in shared O0/O1; no independent terminal clock"
+    },
+    "center_result": "docs/task039_extra_physical_multilevel/outcomes/physical_macro_v12.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v13.md",
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/physical_macro_v12_compact.json",
+    "raw_json_evidence": "docs/task039_extra_physical_multilevel/outcomes/records/v12_raw_json_evidence.json",
+    "official_outputs": "not_run",
+    "next": "review only; continuation requires new review, budget, and re-bound source/input/artifact identity; do not modify frozen input by inference"
   }
 }

@@ -1,0 +1,3 @@
+{"mode": "monitor_at10", "status": "PASS", "saved_iteration": 10, "actual_PC_attempts": 10, "nodes": [8, 10], "A_count_exact": true}
+{"mode": "external_at50", "status": "PASS", "saved_iteration": 48, "actual_PC_attempts": 50, "nodes": [8, 16, 24, 32, 40, 48], "A_count_exact": true}
+{"mode": "actual_error_at10", "status": "PASS", "actual_failure_preserved": true}

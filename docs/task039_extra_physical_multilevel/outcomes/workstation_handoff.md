@@ -1,4 +1,25 @@
-# Task39extra 工作站移交边界：Review V11 N5 retained-inventory resource block
+# Task39extra 工作站移交边界：V12 物理宏块控制未完成 solver 资格
+
+V12 只形成了可审阅的 13.5 nm 本机研究证据，没有形成 workstation solver 资格。42 个宏块各自完成 numeric inventory，18 个 C_U 内部响应类因子另列；4 条 p4 记录只做 bare B4/I4，且未达内部 1e-4 目标。O1 因 shared budget stop 结束，O2/O3/official fields 未启动。
+
+| 项目 | 当前结论 | 口径/边界 |
+|---|---|---|
+| source / review base | e8c3c82bab2687a811a11f0798a2879c725532b5 / 96e5d5fcfc3e801ef33d4a2d241ea7571937f734 | source已推送 origin/task39extra；docs/evidence仍只在同一执行分支 |
+| physical identity | 13.5 nm、p6/h10、Full3D、MPI1、80 modes、complex128；physical/mode SHA见compact | 不是5 nm、0.7 nm、2 TB或任意非可分结构资格 |
+| macro inventory | 42/42 numeric blocks；84 witnesses；max local residual 2.1772149386553977e-15 | local质量不等于full p4逆或p6 convergence |
+| p4 controls | 4 records；每条4 I4 B4、3 explicit A4；I4 residual 0.1012649488434464–0.9778952412775763 | record名BAL_H来自历史packet；本轮未执行完整BAL_H/ONE_C |
+| S/p2 | rows 7326、NNZ 818100；allocated/used padded 270/65 MB；derived matrix+reported factor 341069688 B < 512 MiB | 与42块local inventory分开，同时存在并计入RSS；stages.jsonl:247 SHA 4b1fd995693c14177c028304916b964a21cde7a23f833fd24d7b98ac9ac0ca40 |
+| resources | O1 tree RSS/PSS peak 2574671872/2539922432 B；swap0；cap violations0；descendants cleared | measured process-tree fields与derived inventory分开，不互相替代 |
+| official | p6 A6 1e-6、E/H、R/T/A、A_volume、modes、diffraction、守恒 | 全部 not_run，没有 workstation handoff |
+| history | V5 original/notch成功保留；448页条件参考 global pswpout attribution UNRESOLVED | 历史 baseline不改判V12 |
+
+没有任何 O2/O3 heavy 授权被隐含继承。若用户/审阅者要继续，需新的 review、独立预算和重新绑定 source/input/artifact identity；不要求修改冻结 input 本身。当前不允许把 V12 低 swap或局部小残差解释为 workstation capacity，也不允许自动提高 cap、延长 I4、扩 MPI、改框架或启动5 nm/0.7 nm。
+
+证据入口：[V12 center](physical_macro_v12.md)、[compact](records/physical_macro_v12_compact.json)、[raw JSON evidence](records/v12_raw_json_evidence.json)、[response V13](../response_v13.md)。本表不是 master merge approval。
+
+---
+
+# 历史：Task39extra 工作站移交边界：Review V11 N5 retained-inventory resource block
 
 V11 没有形成可移交的 workstation solver 资格。局部块的 Dw/seed 质量证据和全 inventory 资源边界分开登记；N2 在 block41 numeric 前停止，未触达完整 p4 误差、外层 Krylov、restart、BAL/ONE 或 official physical output。
 

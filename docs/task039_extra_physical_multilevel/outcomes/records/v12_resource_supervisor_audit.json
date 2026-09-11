@@ -1,0 +1,6 @@
+{
+  "schema": "task39extra.review-v12.resource-supervisor-audit.v1",
+  "o0_precheck": {"samples": 9, "rss_peak": 147095552, "pss_peak": 116390912, "tree_swap_peak": 0, "rss_cap_exceeded_samples": 0, "unreadable_samples": 0, "min_effective_available": 13576249344, "reserve": 4294967296, "global_swap_delta": {"pswpin_pages": 0, "pswpout_pages": 0}, "monotonic_seconds": 2.060014375998435, "charged_seconds": 2.0600177589932294, "classification": "COMPLETED", "descendants_cleared": true},
+  "o1_full_physical_controls_0": {"samples": 1338, "rss_peak": 2574671872, "pss_peak": 2539922432, "tree_swap_peak": 0, "rss_cap_exceeded_samples": 0, "unreadable_samples": 0, "min_effective_available": 11319017472, "reserve": 4294967296, "global_swap_delta": {"pswpin_pages": 0, "pswpout_pages": 0}, "monotonic_seconds": 343.9629517120011, "charged_seconds": 376.259674047942, "classification": "PERFORMANCE_CONTROLLED_STOP", "descendants_cleared": true},
+  "o4_finalize_0": {"samples": 9, "rss_peak": 144691200, "pss_peak": 114022400, "tree_swap_peak": 0, "rss_cap_exceeded_samples": 0, "unreadable_samples": 0, "min_effective_available": 13571411968, "reserve": 4294967296, "global_swap_delta": {"pswpin_pages": 0, "pswpout_pages": 0}, "monotonic_seconds": 2.0538880839994818, "charged_seconds": 2.0538921670007735, "classification": "COMPLETED", "descendants_cleared": true}
+}

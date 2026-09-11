@@ -1,0 +1,76 @@
+{
+  "schema": "task39extra.review-v12.terminal-budget.v1",
+  "source_sha": "e8c3c82bab2687a811a11f0798a2879c725532b5",
+  "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+  "budget": {
+    "path": "benchmarks/artifacts/task39extra/v12_o0_o4/v12_o0_o4_budget.json",
+    "sha256": "1d22af0d55c3dc1bfd649ae1402b316a78d346c7e7ea800cb305e1f39cedca8a",
+    "implementation_activity_seconds": 6823.0,
+    "uncharged_gap_after_implementation_seconds": 65.459151,
+    "o0_o1_limit_seconds": 7200.0,
+    "o0_o1_charged_seconds": 7201.319691806935,
+    "total_limit_seconds": 43200.0,
+    "total_charged_seconds": 7203.373583973936
+  },
+  "stages": [
+    {
+      "stage": "O0_PRECHECK",
+      "classification": "COMPLETED",
+      "budget_seconds": 2.0600177589932294,
+      "terminal_sha256": "042201c8971e95e04ac5d3644fe4578c1f364f47357ee17af67bc99159cfa6fa",
+      "tree_rss_peak_bytes": 147095552,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "stage": "O1_FULL_PHYSICAL_CONTROLS",
+      "classification": "PERFORMANCE_CONTROLLED_STOP",
+      "budget_seconds": 376.259674047942,
+      "terminal_sha256": "dd1d8d3ab7f5608c0437d39a5af504b33901eed81a083c71bc2a2a8cb7c3a344",
+      "tree_rss_peak_bytes": 2574671872,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "utc_monotonic_discrepancy_seconds": 32.296421150998924,
+      "negative_reason": "shared O0/O1 conservative budget exhausted after persisted p4 control records"
+    },
+    {
+      "stage": "O2_RESTART_PROBE_32",
+      "classification": "not_run",
+      "reason": "O1 did not complete and did not select a framework"
+    },
+    {
+      "stage": "O2_RESTART_PROBE_64",
+      "classification": "not_run",
+      "reason": "O1 did not complete and did not select a framework"
+    },
+    {
+      "stage": "O3_ORIGINAL",
+      "classification": "not_run",
+      "reason": "O2 not run"
+    },
+    {
+      "stage": "O3_NOTCH",
+      "classification": "not_run",
+      "reason": "O2/O3 original not run"
+    },
+    {
+      "stage": "O4_FINALIZE",
+      "classification": "COMPLETED",
+      "budget_seconds": 2.0538921670007735,
+      "terminal_sha256": "43844d0d854de35561590512b4debc408562aa572fc1844c65a3bb7b58a68d7b",
+      "summary_sha256": "47d937afd6ebb48aaea33c0029916f062119cadc20bdd1497e94a2b94b3927f8",
+      "tree_rss_peak_bytes": 144691200,
+      "tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "new_reference_solve": false,
+      "new_reference_factor": false
+    }
+  ],
+  "official_outputs": {
+    "field_archives": "not_run",
+    "R_T_A": "not_run",
+    "A_volume": "not_run",
+    "modal_amplitudes": "not_run",
+    "official_result": "not_run"
+  }
+}

@@ -1,4 +1,23 @@
-# Task39extra Review V11最新结果：N1 policy equivalence，N2 retained-inventory controlled negative
+# Task39extra Review V12最新结果：42块物理宏块完成，p4控制受共享预算停止
+
+V12 是显式 physical_macro_dd4_v12 研究候选。它把真实 p4 离散的局部未知量组成 42 个物理宏块，各块独立建立 numeric factor 并供局部回代；另有 18 个 C_U 元素内部响应类因子，这两个层级不混计。完整中心结果见 [V12 physical macro](task039_extra_physical_multilevel/outcomes/physical_macro_v12.md)，机器记录见 [compact](task039_extra_physical_multilevel/outcomes/records/physical_macro_v12_compact.json)。
+
+| 阶段 | 当前结论 | 数据身份 / 边界 |
+|---|---|---|
+| O0 | O0_PRECHECK_COMPLETED | source e8c3c82bab2687a811a11f0798a2879c725532b5；2.0600177589932294 s；RSS 147095552 B；swap 0 |
+| O1 inventory | 42/42 numeric macro blocks；84 witnesses；covered p4 rows 48960 | max local residual 2.1772149386553977e-15；6 native witnesses max 8.243915633632588e-16；局部质量不等于 full p4/p6 convergence |
+| O1 p4 control | 4 persisted bare B4/I4 records；每条4 I4 B4、3 explicit A4 | record 名称的 BAL_H 是历史 packet 标签；本轮没有完整 BAL_H/ONE_C outer；I4 residual 0.1012649488434464–0.9778952412775763 |
+| O1 stop | PERFORMANCE_CONTROLLED_STOP | shared charged 7201.319691806935 s vs 7200 s；树 RSS/PSS峰2574671872/2539922432 B；swap0；无cap violation；build/JIT/其他检查终态时钟 unknown/included |
+| S/p2 | rows 7326、NNZ 818100；allocated/used padded 270000000/65000000 B；derived matrix+reported-factor 341069688 B < 512 MiB | 与42块 local inventory 分开，同时存在并计入RSS；raw stages.jsonl:247 SHA 4b1fd995693c14177c028304916b964a21cde7a23f833fd24d7b98ac9ac0ca40 |
+| O2/O3 | not_run | O1未完成、未形成 framework selection；restart/original/notch均未启动 |
+| O4 | O4_FINALIZED | 无新 reference solve/factor；清场完成 |
+| 当前状态 | NOT_APPROVED_FOR_MASTER_MERGE；ordinary default unchanged | 不是 OOM、MUMPS numeric failure、Maxwell convergence failure或workstation资格 |
+
+V12 的 O2/O3、p6 原方程 1e-6 gate、E/H、R/T/A、A_volume、80 modes、衍射级和守恒均保持 not_run。V5 原始/notch 历史成功保留，448页条件参考 workflow 的 global pswpout attribution 仍为 UNRESOLVED。后续若要继续，需新的 review、预算和重新绑定的 source/input/artifact identity；不要求修改冻结 input 本身，也不自动升 cap、延长 I4、扩 MPI 或启动 workstation heavy case。
+
+---
+
+# 历史：Task39extra Review V11最新结果：N1 policy equivalence，N2 retained-inventory controlled negative
 
 V11 在 V10 的显式局部 macro inverse 候选上验证 symbolic-sized local MUMPS 生命周期。局部块把附近未知量组成小矩阵，分解后保留因子给局部回代；`Q` 是由 MUMPS symbolic estimate 得到的 workspace request，不是 RSS。V10 旧策略和 ordinary default 不变。
 

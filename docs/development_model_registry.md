@@ -1,4 +1,20 @@
-# Task39extra Review V11当前登记：symbolic-sized local MUMPS partial qualification
+# Task39extra Review V12当前模型登记：physical macro DD4 partial physical controls
+
+本节是当前模型登记入口。V12 是显式 opt-in 的研究候选，不是 ordinary default，也不是完整 Maxwell solver。42 个宏块各自拥有独立 numeric factor record；18 个 local_classes/local_factors 是 C_U 元素内部响应的类因子，属于不同对象层级。完整字段见 [V12 compact](task039_extra_physical_multilevel/outcomes/records/physical_macro_v12_compact.json) 和 [V12 raw evidence](task039_extra_physical_multilevel/outcomes/records/v12_raw_json_evidence.json)。
+
+| model id | source/input | 方法与实测结果 | 状态/登记边界 |
+|---|---|---|---|
+| task39_v12_macro_dd4_physical_controls | source e8c3c82bab2687a811a11f0798a2879c725532b5；review base 96e5d5fcfc3e801ef33d4a2d241ea7571937f734；physical SHA 9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f；13.5 nm/p6/h10/Full3D/MPI1 | 42/42 physical macro numeric blocks、84 witness recount、max local residual 2.1772149386553977e-15；4 persisted bare B4/I4 records，I4 residual范围 0.1012649488434464–0.9778952412775763；S/p2 derived policy budget 341069688 B < 536870912 B | PARTIAL_PHYSICAL_CONTROLS_WITH_PERFORMANCE_CONTROLLED_STOP；不是完整 BAL/ONE、p6 outer或official pass；ordinary default unchanged |
+| task39_v12_macro_dd4_official_fields | 同一 source/profile identity | O2/O3 未启动；p6 A6 1e-6 true-residual gate、E/H、R/T/A、A_volume、modal/diffraction fields未检验 | not_run；不得从local residual、reference residual或swap0写成physics pass |
+| task39_v5_bal_h_original_notch_baseline | V5 historical compact；同13.5 nm物理族 | 原始/notch历史成功保留；V5条件参考 workflow 的448页 global pswpout attribution仍 UNRESOLVED | 历史 baseline；不改判V12，也不等于2 GB/0.7 nm定理 |
+
+V12 的 record stem 中 BAL_H 是历史 g/reference packet 名称；O1 只测 bare B4/I4 内部作用，未执行完整 BAL_H 或 ONE_C 框架比较。S/p2 的原始阶段记录在 O1 stages.jsonl:247，与 local inventory 分开且同时存在；build/JIT/其他检查的独立时钟为 unknown/included。
+
+当前状态：NOT_APPROVED_FOR_MASTER_MERGE；若重开，必须重新绑定 source/input/artifact 和新预算，不要求修改冻结 input 本身。
+
+---
+
+# 历史：Task39extra Review V11当前登记：symbolic-sized local MUMPS partial qualification
 
 本节是当前模型登记入口。V11 是显式 opt-in 的局部 macro inverse 生命周期研究候选，不是 ordinary default，也不是完整 Maxwell solver。每个局部块先做小矩阵分解并保留因子；V11 的 workspace `Q` 来自 symbolic-sized MUMPS estimate。N1 的局部 quality 与 N2 的全 inventory resource Gate 分开登记。
 
