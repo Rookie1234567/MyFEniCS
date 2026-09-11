@@ -2894,6 +2894,45 @@ def run_p4_direction_diagnosis(
             }
             d_mass_squared = pullback_metric_square(d, "mass")
             d_curl_squared = pullback_metric_square(d, "curl")
+            a_mass_squared = pullback_metric_square(a, "mass")
+            a_curl_squared = pullback_metric_square(a, "curl")
+            t_mass_squared = pullback_metric_square(t, "mass")
+            t_curl_squared = pullback_metric_square(t, "curl")
+            correction = a + d - t
+            correction_mass_squared = pullback_metric_square(correction, "mass")
+            correction_curl_squared = pullback_metric_square(correction, "curl")
+
+            def metric_norm_record(mass_squared: float, curl_squared: float) -> dict[str, float]:
+                return {
+                    "mass_squared": float(mass_squared),
+                    "curl_squared": float(curl_squared),
+                    "mass_norm": float(np.sqrt(max(mass_squared, 0.0))),
+                    "curl_norm": float(np.sqrt(max(curl_squared, 0.0))),
+                }
+
+            global_physical_norms = {
+                "a": metric_norm_record(a_mass_squared, a_curl_squared),
+                "d": metric_norm_record(d_mass_squared, d_curl_squared),
+                "t": metric_norm_record(t_mass_squared, t_curl_squared),
+                "a_plus_d_minus_t": metric_norm_record(
+                    correction_mass_squared, correction_curl_squared,
+                ),
+            }
+            for metric_name in ("mass", "curl"):
+                term_norm_sum = sum(
+                    global_physical_norms[name][f"{metric_name}_norm"]
+                    for name in ("a", "d", "t")
+                )
+                correction_norm = global_physical_norms["a_plus_d_minus_t"][
+                    f"{metric_name}_norm"
+                ]
+                global_physical_norms[f"{metric_name}_cancellation"] = {
+                    "term_norm_sum": float(term_norm_sum),
+                    "combined_norm": float(correction_norm),
+                    "combined_over_term_sum": float(
+                        correction_norm / max(term_norm_sum, np.finfo(float).tiny)
+                    ),
+                }
             p2_facts["p_i_euclidean_norms"] = p_i_euclidean_norms
             p2_facts["p_i_sum_norm_over_d_norm"] = float(
                 sum(p_i_euclidean_norms)
@@ -2901,6 +2940,7 @@ def run_p4_direction_diagnosis(
             )
             p2_facts["stage_errors"] = p2_stage_candidates
             p2_facts["d_global_mass_squared"] = d_mass_squared
+            p2_facts["global_physical_norms"] = global_physical_norms
             p2_facts["stage_metric_gate"] = bool(
                 all(item["finite"] for item in p2_stage_candidates.values())
                 and np.isfinite(d_mass_squared)
