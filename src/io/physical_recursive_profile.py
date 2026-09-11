@@ -11,6 +11,8 @@ MACRO_V11_PROFILE = 'physical_macro_dd4_v11'
 MACRO_V11_PROFILES = (MACRO_V11_PROFILE,)
 MACRO_V12_PROFILE = 'physical_macro_dd4_v12'
 MACRO_V12_PROFILES = (MACRO_V12_PROFILE,)
+P4_DIRECTION_DIAGNOSIS_PROFILE = 'physical_p4_direction_diagnosis_v13'
+P4_DIRECTION_DIAGNOSIS_PROFILES = (P4_DIRECTION_DIAGNOSIS_PROFILE,)
 
 
 def macro_v10_profile_facts():
@@ -210,6 +212,51 @@ def macro_v12_profile_facts():
         'old_profiles_cap_bytes': 2147483648,
     }
     return facts
+
+
+def p4_direction_diagnosis_profile_facts():
+    """Return the default-closed V13 finite-direction diagnosis contract."""
+
+    return {
+        'identity': P4_DIRECTION_DIAGNOSIS_PROFILE,
+        'scope': 'P0_P4_actual_p4_direction_diagnosis_only',
+        'physical_levels': [6, 4, 2],
+        'model': {
+            'physical_model_sha256': '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f',
+            'mode_sha256': 'dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2',
+            'p6_independent_rows': 164592,
+            'p6_storage_rows': 173802,
+            'p4_independent_rows': 48960,
+            'p4_storage_rows': 53084,
+        },
+        'inputs': [
+            'A2R160_BAL_H_p4_01',
+            'A2R160_BAL_H_p4_02',
+            'LIGHT448_BAL_H_p4_09',
+        ],
+        'I4': {
+            'method': 'right_FGMRES', 'zero_start': True, 'target': 1e-4,
+            'restart': 4, 'max_iterations': 4, 'soft_seconds': 25,
+            'hard_seconds': 30, 'new_calls_max': 3, 'new_B4_max': 12,
+            'pc_output_observer': 'default_closed_deep_copy_at_counted_pc',
+        },
+        'P2': {'bare_B4_max': 3, 'blocks': 42, 'local_response_cap': 8},
+        'diagnostic_actions': {'A4_max': 200, 'M0_max': 240, 'curl_max': 240},
+        'rank': {'method': 'SVD', 'relative_cutoff': 1e-12},
+        'storage': {
+            'p4_global_aij': 0, 'p4_global_factor': 0,
+            'additional_arrays_bytes_cap': 256 * 1024**2,
+            'local_inventory_cap_bytes': 2684354560,
+            'temporary_reserve_bytes': 1 * 1024**3,
+        },
+        'reference_role': 'measurement_only; y_M and best-L are oracle diagnostics',
+        'selection': {
+            'base_directions': ['a', '-t'], 'local_columns_max': 8,
+            'uses_reference': False, 'uses_heldout_answer': False,
+        },
+        'formal_budget_seconds': 7200,
+        'qualification': 'opt_in; diagnosis only; ordinary defaults unchanged; no outer solve',
+    }
 
 
 def recursive_profile_facts(identity):

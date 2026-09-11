@@ -34,6 +34,7 @@ class BoundedI4Admission:
         save: Callable[[str, dict[str, Any]], None],
         stop_requested: Callable[[], bool],
         residual_action: Any | None = None,
+        pc_observer: Callable[[Any, Any, int], None] | None = None,
         macro_policy: bool = False,
     ) -> None:
         self.action = action
@@ -42,6 +43,7 @@ class BoundedI4Admission:
         self.save = save
         self.stop_requested = stop_requested
         self.residual_action = residual_action
+        self.pc_observer = pc_observer
         self.macro_policy = bool(macro_policy)
         self.calls = 0
         self.no_direction_streak = 0
@@ -73,6 +75,7 @@ class BoundedI4Admission:
                 save=self.save,
                 stop_requested=self.stop_requested,
                 residual_action=self.residual_action,
+                pc_observer=self.pc_observer,
                 max_it=4 if self.macro_policy else 16,
                 restart=4 if self.macro_policy else 16,
                 soft_seconds=25,

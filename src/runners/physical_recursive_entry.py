@@ -15,6 +15,20 @@ import numpy as np
 from src.io.input_loader import InputError
 
 
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _git_command(*args: str) -> list[str]:
+    """Use the canonical split-git worktree used by the Codex runner."""
+    git_dir = _REPOSITORY_ROOT / '.git-codex'
+    if git_dir.is_dir():
+        return [
+            'git', '--git-dir', str(git_dir), '--work-tree',
+            str(_REPOSITORY_ROOT), *args,
+        ]
+    return ['git', *args]
+
+
 def p4_bridge_status(path):
     from math import isfinite
     from .physical_diagnostic_completion import load_packet
@@ -87,6 +101,18 @@ def particular_contract():
 
 
 def selected_contract(args):
+    if getattr(args, 'p4_direction_diagnosis', False):
+        from src.io.physical_recursive_profile import p4_direction_diagnosis_profile_facts
+        contract = p4_direction_diagnosis_profile_facts()
+        contract.update(
+            workflow='P0_P4_direction_diagnosis',
+            fixed_source='original 13.5nm physical model; no notch or outer solve',
+            inventory_role='G0 hash-bound maps, g/c_ref/A4c_ref and old I4 identity packets',
+            full_outer_solve=False,
+            global_swap_stop=True,
+            memory_policy='SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+        )
+        return contract
     if getattr(args, 'macro_v12', False):
         from src.io.physical_recursive_profile import macro_v12_profile_facts
         contract = macro_v12_profile_facts()
@@ -258,6 +284,13 @@ def selected_contract(args):
 def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,input_path=None,
                         model_identity=None, build_started=None):
     from . import physical_recursive_controls as controls
+    if getattr(args, 'p4_direction_diagnosis', False):
+        from .physical_macro_controls import run_p4_direction_diagnosis
+        return run_p4_direction_diagnosis(
+            cfg, comm, args.inventory, directory, sample=sample, marker=marker,
+            source_sha=source_sha, input_path=input_path,
+            model_identity=model_identity, build_started=build_started,
+        )
     if getattr(args, 'macro_v12', False):
         from .physical_macro_v12 import (
             run_macro_v12_finalize, run_macro_v12_outer, run_macro_v12_precheck,
@@ -351,7 +384,10 @@ def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,
 
 
 def git_state(expected):
-    def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+    def git(*args):
+        return subprocess.check_output(
+            _git_command(*args), cwd=_REPOSITORY_ROOT, text=True,
+        ).strip()
     head=git('rev-parse','HEAD')
     if head!=expected or git('branch','--show-current')!='task39extra' or git('status','--porcelain'):
         raise RuntimeError('clean expected task39extra source required')
@@ -397,14 +433,22 @@ def worker(args):
     macro=(getattr(args, 'macro_v10_controls', False)
            or getattr(args, 'macro_v11_controls', False)
            or getattr(args, 'macro_v11_calibration', False)
-           or getattr(args, 'macro_v12', False))
+           or getattr(args, 'macro_v12', False)
+           or getattr(args, 'p4_direction_diagnosis', False))
     macro_v11=(getattr(args, 'macro_v11_controls', False)
                or getattr(args, 'macro_v11_calibration', False))
     macro_v11_calibration=getattr(args, 'macro_v11_calibration', False)
     macro_v12=getattr(args, 'macro_v12', False)
     build_started = time.perf_counter() if macro else None
     payload=load_and_resolve(args.input).as_jsonable()
-    if getattr(args, 'macro_v12', False):
+    if getattr(args, 'p4_direction_diagnosis', False):
+        if payload['solver'].get('preconditioner') != 'physical_p4_direction_diagnosis_v13':
+            raise ValueError('p4 direction diagnosis input must select its explicit profile')
+        if payload['provenance']['physical_model_sha256'] != '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f':
+            raise ValueError('p4 direction diagnosis requires the frozen original physical model')
+        if payload['geometry'].get('cell_notch'):
+            raise ValueError('p4 direction diagnosis does not admit a notch model')
+    elif getattr(args, 'macro_v12', False):
         allowed_v12_models = {
             '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f',
             '7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec',
@@ -446,7 +490,8 @@ def worker(args):
     ).hexdigest()
     if macro:
         control_phase = (
-            f"V12_{getattr(args, 'macro_v12_stage', 'stage')}" if getattr(args, 'macro_v12', False)
+            'P4_DIRECTION_DIAGNOSIS_V13' if getattr(args, 'p4_direction_diagnosis', False)
+            else f"V12_{getattr(args, 'macro_v12_stage', 'stage')}" if getattr(args, 'macro_v12', False)
             else 'V11_N1_calibration' if macro_v11_calibration
             else 'V11_M1_controls' if macro_v11 else 'V10_M1_controls'
         )
@@ -510,7 +555,9 @@ def worker(args):
             )
             atomic(root/'run_manifest.json', manifest)
             atomic(root/'run_summary.json', {
-            'schema': ('task39extra.review-v12.stage-run-summary.v1'
+            'schema': ('task39extra.review-v13.p4-direction-run-summary.v1'
+                       if getattr(args, 'p4_direction_diagnosis', False) else
+                       'task39extra.review-v12.stage-run-summary.v1'
                        if macro_v12 else
                        'task39extra.review-v11.m1-run-summary.v1'
                        if macro_v11 else 'task39extra.review-v10.m1-run-summary.v1'),
@@ -542,6 +589,7 @@ def worker(args):
             return result
         except BaseException as exc:
             partial_path = root / 'records' / (
+                'p4_direction_summary.json' if getattr(args, 'p4_direction_diagnosis', False) else
                 'outer_summary.json' if macro_v12 and getattr(args, 'macro_v12_stage', '').startswith(('O2_', 'O3_')) else
                 'm1_summary.json' if macro_v12 and getattr(args, 'macro_v12_stage', '') == 'O1_FULL_PHYSICAL_CONTROLS' else
                 'o0_summary.json' if macro_v12 else
@@ -582,7 +630,9 @@ def worker(args):
                             exception=str(exc), partial_m1_summary=partial_evidence)
             atomic(root/'run_manifest.json', manifest)
             atomic(root/'run_summary.json', {
-                'schema': ('task39extra.review-v12.stage-run-summary.v1'
+                'schema': ('task39extra.review-v13.p4-direction-run-summary.v1'
+                           if getattr(args, 'p4_direction_diagnosis', False) else
+                           'task39extra.review-v12.stage-run-summary.v1'
                            if macro_v12 else
                            'task39extra.review-v11.m1-run-summary.v1'
                            if macro_v11 else 'task39extra.review-v10.m1-run-summary.v1'),
@@ -759,7 +809,8 @@ def worker(args):
 
 def build_parser():
     parser=argparse.ArgumentParser(description=__doc__)
-    for name in ('input','inventory','output','budget','source-sha'):parser.add_argument('--'+name,required=True)
+    for name in ('input','inventory','output','source-sha'):parser.add_argument('--'+name,required=True)
+    parser.add_argument('--budget', required=False, default=None)
     parser.add_argument('--jit-cache', type=Path, default=None,
         help='reusable hash-bound JIT cache; defaults to the attempt-local cache')
     parser.add_argument('--target',choices=('lo',),default='lo')
@@ -779,6 +830,7 @@ def build_parser():
     group.add_argument('--macro-v11-controls', action='store_true')
     group.add_argument('--macro-v11-calibration', action='store_true')
     group.add_argument('--macro-v12', action='store_true')
+    group.add_argument('--p4-direction-diagnosis', action='store_true')
     parser.add_argument(
         '--macro-v12-supplement', action='store_true',
         help='use the independent bounded V12 supplement ledger',
@@ -979,6 +1031,91 @@ def _load_v12_ledger(path, *, supplement=False):
         if float(budget.get('o0_o1_charged_seconds', 0.0)) < float(implementation_seconds):
             raise ValueError('V12 O0/O1 ledger charge is below its implementation debit')
     return budget
+
+
+def launch_p4_direction_diagnosis(args):
+    """Supervise the one-shot V13 P0--P4 direction diagnosis.
+
+    This profile intentionally has no budget ledger.  Its existing runner
+    watchdog and the source/input identities provide the admission boundary;
+    the worker owns the build, per-input, and total safe points.
+    """
+    from benchmarks.subreaper_watchdog import supervise
+    from .workflow_timebase import CONSERVATIVE_REALTIME
+    from src.io import load_and_resolve
+    from src.io.physical_recursive_profile import P4_DIRECTION_DIAGNOSIS_PROFILE
+
+    source = git_state(args.source_sha)
+    input_path = Path(args.input).resolve()
+    inventory_path = Path(args.inventory).resolve()
+    root = Path(args.output).resolve()
+    if not input_path.is_file():
+        raise ValueError(f"p4 direction diagnosis input is missing: {input_path}")
+    if not inventory_path.is_file():
+        raise ValueError(f"p4 direction diagnosis inventory is missing: {inventory_path}")
+    specification = load_and_resolve(input_path)
+    payload = specification.as_jsonable()
+    if payload['solver'].get('preconditioner') != P4_DIRECTION_DIAGNOSIS_PROFILE:
+        raise ValueError('p4 direction diagnosis input selected the wrong profile')
+    if payload['solver'].get('stage') != 'P4_DIRECTION_DIAGNOSIS_V13':
+        raise ValueError('p4 direction diagnosis input selected the wrong stage')
+    if payload['provenance'].get('physical_model_sha256') != (
+        '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
+    ):
+        raise ValueError('p4 direction diagnosis requires the frozen original physical model')
+    if payload['geometry'].get('cell_notch'):
+        raise ValueError('p4 direction diagnosis does not admit a notch model')
+    if root.exists():
+        raise FileExistsError(f"p4 direction diagnosis output must be fresh: {root}")
+    root.mkdir(parents=True, exist_ok=False)
+    cache_home = (root / 'jit_cache').resolve()
+    cache_home.mkdir(parents=True, exist_ok=False)
+    inventory_sha256 = hashlib.sha256(inventory_path.read_bytes()).hexdigest()
+    input_sha256 = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    atomic(root / 'launch_plan.json', {
+        'schema': 'task39extra.review-v13.p4-direction-launch-plan.v1',
+        'source': source,
+        'input': str(input_path),
+        'input_sha256': input_sha256,
+        'inventory': str(inventory_path),
+        'inventory_sha256': inventory_sha256,
+        'profile': P4_DIRECTION_DIAGNOSIS_PROFILE,
+        'stage': 'P4_DIRECTION_DIAGNOSIS_V13',
+        'wall_seconds': 7200.0,
+        'budget_policy': {
+            'total_seconds': 7200.0,
+            'build_seconds': 1200.0,
+            'per_input_seconds': 1500.0,
+            'ledger': 'not_used',
+        },
+        'jit_cache_home': str(cache_home),
+        'jit_cache_initially_empty': True,
+    })
+    command = [
+        sys.executable, '-m', 'src.runners.physical_recursive_entry',
+        '--input', str(input_path), '--inventory', str(inventory_path),
+        '--output', str(root), '--source-sha', args.source_sha,
+        '--target', 'lo', '--p4-direction-diagnosis',
+        '--jit-cache', str(cache_home), '--worker',
+    ]
+    result = None
+    try:
+        result = supervise(
+            command, root / 'watchdog', wall_seconds=7200.0,
+            phase_path=root / 'phase.json', hard_stop_immediate=True,
+            timebase_guard=True, timebase_policy=CONSERVATIVE_REALTIME,
+            stop_on_global_swap=True, source_state=source,
+            worker_environment={'XDG_CACHE_HOME': str(cache_home)},
+        )
+        atomic(root / 'terminal.json', result)
+        atomic(root / 'source_after.json', git_state(args.source_sha))
+        if result.get('classification') != 'COMPLETED':
+            raise SystemExit(1)
+        return result
+    except BaseException:
+        if result is not None and not (root / 'terminal.json').exists():
+            atomic(root / 'terminal.json', result)
+        raise
 
 
 def _launch_macro_m1_controls(args):
@@ -2146,6 +2283,8 @@ def _launch_j1_controls(args):
 def main():
     args=build_parser().parse_args()
     if args.worker:return worker(args)
+    if getattr(args, 'p4_direction_diagnosis', False):
+        return launch_p4_direction_diagnosis(args)
     if getattr(args, 'macro_v12', False):
         return _launch_macro_v12_stage(args)
     if getattr(args, 'macro_v11_calibration', False):

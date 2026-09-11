@@ -140,6 +140,8 @@ def test_macro_block_uses_all_support_rows_and_mpc_master_phase_without_input_mu
         ),
     }
     local.cell_classes = ("cell0", "cell1")
+    local.capture_md_observation = False
+    local.last_md_observation = {}
     _bind_fixture_identities(local)
     local.cell_expansions = [[
         (np.array([0]), np.array([1.0 + 0j])),

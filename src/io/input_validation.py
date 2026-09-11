@@ -548,6 +548,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_macro_dd4_v10",
                 "physical_macro_dd4_v11",
                 "physical_macro_dd4_v12",
+                "physical_p4_direction_diagnosis_v13",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -563,8 +564,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
-            elif preconditioner in ("physical_macro_dd4_v10", "physical_macro_dd4_v11", "physical_macro_dd4_v12"):
+            elif preconditioner in ("physical_macro_dd4_v10", "physical_macro_dd4_v11", "physical_macro_dd4_v12", "physical_p4_direction_diagnosis_v13"):
                 macro_timeout = 5400
+                if preconditioner == "physical_p4_direction_diagnosis_v13":
+                    macro_timeout = 7200
                 if preconditioner == "physical_macro_dd4_v11":
                     macro_timeout = {
                         "N1_CALIBRATION": 900,
@@ -625,6 +628,18 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         raise _error(
                             "solver.outer_restart",
                             f"{stage} requires outer_restart=0",
+                        )
+                if preconditioner == "physical_p4_direction_diagnosis_v13":
+                    stage = solver.get("stage")
+                    if stage != "P4_DIRECTION_DIAGNOSIS_V13":
+                        raise _error(
+                            "solver.stage",
+                            "physical_p4_direction_diagnosis_v13 requires its explicit diagnosis stage",
+                        )
+                    if solver.get("outer_restart") != 0:
+                        raise _error(
+                            "solver.outer_restart",
+                            "p4 direction diagnosis requires outer_restart=0",
                         )
                 if preconditioner == "physical_macro_dd4_v12":
                     stage = solver.get("stage")

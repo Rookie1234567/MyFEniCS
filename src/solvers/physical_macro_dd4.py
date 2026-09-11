@@ -181,6 +181,11 @@ class MacroLocalVolume:
         self.save = save
         self.memory_policy = memory_policy
         self.local_inventory_cap_bytes = int(local_inventory_cap_bytes)
+        # P2 enables this explicitly for one bare B4 call.  The normal
+        # production path keeps the flag false and does not retain any local
+        # response vectors.
+        self.capture_md_observation = False
+        self.last_md_observation: dict[str, Any] = {}
         if self.local_inventory_cap_bytes <= 0:
             raise ValueError("local inventory cap must be positive")
         self.mapping = native_map_arrays(levels["spaces"][4], levels["floquets"][4])
@@ -1339,7 +1344,12 @@ class MacroLocalVolume:
         if array.shape != (len(self.mapping["offsets"]) - 1,) or not np.isfinite(array).all():
             raise ValueError("M_D input has incompatible shape or non-finite values")
         out = np.zeros_like(array)
-        for block in self.blocks:
+        observation = {
+            "input": np.array(array, copy=True),
+            "blocks": [],
+            "accumulation": "np.add.at in existing block order",
+        } if self.capture_md_observation else None
+        for block_index, block in enumerate(self.blocks):
             self.sample()
             indices = np.asarray(block["indices"], dtype=np.int64)
             factor = block["factor"]
@@ -1349,7 +1359,16 @@ class MacroLocalVolume:
                 solution = None
                 try:
                     solution, _ = factor.solve_lean(rhs)
-                    np.add.at(out, indices, self.output_weights[indices] * solution.array)
+                    weighted = self.output_weights[indices] * solution.array
+                    np.add.at(out, indices, weighted)
+                    if observation is not None:
+                        observation["blocks"].append({
+                            "block_index": int(block_index),
+                            "indices": np.array(indices, copy=True),
+                            "d_i": np.array(solution.array, copy=True),
+                            "weighted_values": np.array(weighted, copy=True),
+                            "weights": np.array(self.output_weights[indices], copy=True),
+                        })
                 finally:
                     rhs.destroy()
                     if solution is not None:
@@ -1359,6 +1378,9 @@ class MacroLocalVolume:
                     "formal M_D requires the qualified PETSc/MUMPS block factor"
                 )
         out[np.asarray(self.mapping["slaves"], dtype=np.int64)] = 0.0
+        if observation is not None:
+            observation["output"] = np.array(out, copy=True)
+            self.last_md_observation = observation
         return out
 
     def destroy(self) -> None:
@@ -1556,6 +1578,7 @@ class MacroI4:
         sample: Callable[[], Any],
         save: Callable[[str, Mapping[str, Any]], Any] | None = None,
         stop_requested: Callable[[], bool] = lambda: False,
+        pc_observer: Callable[[Any, Any, int], None] | None = None,
     ):
         from .physical_bounded_policy import BoundedI4Admission
 
@@ -1565,6 +1588,7 @@ class MacroI4:
         self.sample = sample
         self.save = save
         self.stop_requested = stop_requested
+        self.pc_observer = pc_observer
         self.calls = 0
         self.records: list[dict[str, Any]] = []
         self.admission = BoundedI4Admission(
@@ -1574,6 +1598,7 @@ class MacroI4:
             save=save or (lambda _name, _facts: None),
             stop_requested=stop_requested,
             residual_action=lambda value: _apply_owned(self.native_a4, value),
+            pc_observer=pc_observer,
             macro_policy=True,
         )
 
@@ -1582,6 +1607,14 @@ class MacroI4:
         result = self.admission(rhs)
         self.records.append(dict(result["facts"]))
         return result
+
+    def set_pc_observer(
+        self, observer: Callable[[Any, Any, int], None] | None,
+    ) -> None:
+        """Change the opt-in observation callback without changing I4 policy."""
+
+        self.pc_observer = observer
+        self.admission.pc_observer = observer
 
 
 def destroy_macro_stack(stack: dict[str, Any]) -> None:

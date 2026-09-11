@@ -4,7 +4,8 @@ from .fullspace_physical_intermediate import apply_owned
 
 
 def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop_requested=lambda: False,
-                      residual_norm=None, residual_action=None, max_it=64, restart=16,
+                      residual_norm=None, residual_action=None, pc_observer=None,
+                      max_it=64, restart=16,
                       soft_seconds=60, hard_seconds=None, v7_policy=False, macro_policy=False):
     """One zero-start FGMRES16 with an opt-in finite V7 policy.
 
@@ -57,6 +58,15 @@ def solve_physical_i4(rhs, action, pc, *, target, sample, save, clock=None, stop
         nonlocal legal_direction_count
         attempted['B4_calls'] += 1
         value = pc(x)
+        if pc_observer is not None and value is not None:
+            # The KSP owns ``value`` and may reuse it immediately.  The
+            # observer receives independent NumPy copies and cannot change
+            # the production action or PETSc work-vector lifetime.
+            pc_observer(
+                np.array(x.array, dtype=np.complex128, copy=True),
+                np.array(value.array, dtype=np.complex128, copy=True),
+                int(attempted['B4_calls']),
+            )
         if bounded_policy and value is not None:
             try:
                 value_norm = float(value.norm())

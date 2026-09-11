@@ -16,6 +16,25 @@ from src.io import dry_run_payload, load_and_resolve  # noqa: E402
 from src.io.input_loader import InputError  # noqa: E402
 
 
+def _git_command(*args: str) -> list[str]:
+    """Use the canonical Codex worktree git directory when present."""
+    git_dir = _REPOSITORY_ROOT / '.git-codex'
+    if git_dir.is_dir():
+        return [
+            'git', '--git-dir', str(git_dir), '--work-tree',
+            str(_REPOSITORY_ROOT), *args,
+        ]
+    return ['git', *args]
+
+
+def _source_sha() -> str:
+    return subprocess.check_output(
+        _git_command('rev-parse', 'HEAD'),
+        cwd=_REPOSITORY_ROOT,
+        text=True,
+    ).strip()
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run one Task38 .dat input; method and MPI come from the file."
@@ -29,6 +48,7 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument('--macro-v11-controls', action='store_true')
     mode.add_argument('--macro-v11-calibration', action='store_true')
     mode.add_argument('--macro-v12', action='store_true')
+    mode.add_argument('--p4-direction-diagnosis', action='store_true')
     parser.add_argument(
         '--macro-v12-supplement', action='store_true',
         help='use the independent bounded V12 supplement ledger',
@@ -44,6 +64,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument('--macro-v12-outer-restart', type=int, choices=(0, 32, 64))
     parser.add_argument('--macro-v12-framework', choices=('BAL_H', 'ONE_C'))
     parser.add_argument('--macro-v12-output', type=Path)
+    parser.add_argument('--p4-direction-output', type=Path)
     parser.add_argument(
         '--macro-v12-inventory', type=Path,
         default=Path('benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json'),
@@ -87,7 +108,36 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         from src.io.physical_recursive_profile import (
             MACRO_V10_PROFILE, MACRO_V11_PROFILE, MACRO_V12_PROFILE,
+            P4_DIRECTION_DIAGNOSIS_PROFILE,
         )
+        p4_direction = (
+            args.p4_direction_diagnosis
+            or specification.solver.get('preconditioner') == P4_DIRECTION_DIAGNOSIS_PROFILE
+        )
+        if p4_direction:
+            if specification.solver.get('preconditioner') != P4_DIRECTION_DIAGNOSIS_PROFILE:
+                raise InputError(
+                    '--p4-direction-diagnosis requires a .dat with '
+                    f'solver.preconditioner={P4_DIRECTION_DIAGNOSIS_PROFILE}'
+                )
+            if args.profile_budget_ledger is not None:
+                raise InputError('--p4-direction-diagnosis uses the existing runner without a new ledger')
+            try:
+                source_sha = _source_sha()
+            except (OSError, subprocess.CalledProcessError) as exc:
+                raise InputError(f'cannot determine diagnosis source SHA: {exc}') from exc
+            output = args.p4_direction_output or (
+                Path('benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13')
+                / source_sha / 'diagnosis'
+            )
+            from src.runners.physical_recursive_entry import launch_p4_direction_diagnosis
+            result = launch_p4_direction_diagnosis(argparse.Namespace(
+                input=args.input_path, inventory=args.macro_v12_inventory,
+                output=output, source_sha=source_sha, target='lo',
+                p4_direction_diagnosis=True,
+            ))
+            print(json.dumps(result, sort_keys=True, separators=(',', ':')))
+            return 0 if result.get('classification') == 'COMPLETED' else 3
         macro_v12 = args.macro_v12 or specification.solver.get('preconditioner') == MACRO_V12_PROFILE
         if args.macro_v12_supplement and not macro_v12:
             raise InputError('--macro-v12-supplement requires a V12 input')
@@ -105,9 +155,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.macro_v12_outer_restart is not None and args.macro_v12_outer_restart != outer_restart:
                 raise InputError('--macro-v12-outer-restart must match solver.outer_restart in the .dat')
             try:
-                source_sha = subprocess.check_output(
-                    ['git', 'rev-parse', 'HEAD'], text=True,
-                ).strip()
+                source_sha = _source_sha()
             except (OSError, subprocess.CalledProcessError) as exc:
                 raise InputError(f'cannot determine V12 source SHA: {exc}') from exc
             ledger = args.profile_budget_ledger or Path(
