@@ -1,0 +1,41 @@
+usage: run_case.py [-h]
+                   [--validate-only | --dry-run | --physical-pc-profile CHECKPOINT_DIRECTORY | --macro-v10-controls | --macro-v11-controls | --macro-v11-calibration | --macro-v12]
+                   [--macro-v12-supplement]
+                   [--macro-v12-stage {O0_PRECHECK,O1_FULL_PHYSICAL_CONTROLS,O2_RESTART_PROBE_32,O2_RESTART_PROBE_64,O3_ORIGINAL,O3_NOTCH,O4_FINALIZE}]
+                   [--macro-v12-outer-restart {0,32,64}]
+                   [--macro-v12-framework {BAL_H,ONE_C}]
+                   [--macro-v12-output MACRO_V12_OUTPUT]
+                   [--macro-v12-inventory MACRO_V12_INVENTORY]
+                   [--profile-budget-ledger PROFILE_BUDGET_LEDGER]
+                   [--macro-v10-inventory MACRO_V10_INVENTORY]
+                   [--profile-variant {R0,a2r_equivalent_fast_v1,a2r_packed_equivalent_v2}]
+                   [--profile-r0-reference PROFILE_R0_REFERENCE]
+                   [--profile-recovery-from FAILED_R0_DIRECTORY]
+                   input_path
+
+Run one Task38 .dat input; method and MPI come from the file.
+
+positional arguments:
+  input_path            one Task38 .dat input
+
+options:
+  -h, --help            show this help message and exit
+  --validate-only
+  --dry-run
+  --physical-pc-profile CHECKPOINT_DIRECTORY
+  --macro-v10-controls
+  --macro-v11-controls
+  --macro-v11-calibration
+  --macro-v12
+  --macro-v12-supplement
+                        use the independent bounded V12 supplement ledger
+  --macro-v12-stage {O0_PRECHECK,O1_FULL_PHYSICAL_CONTROLS,O2_RESTART_PROBE_32,O2_RESTART_PROBE_64,O3_ORIGINAL,O3_NOTCH,O4_FINALIZE}
+  --macro-v12-outer-restart {0,32,64}
+  --macro-v12-framework {BAL_H,ONE_C}
+  --macro-v12-output MACRO_V12_OUTPUT
+  --macro-v12-inventory MACRO_V12_INVENTORY
+  --profile-budget-ledger PROFILE_BUDGET_LEDGER, --batch-budget-ledger PROFILE_BUDGET_LEDGER
+  --macro-v10-inventory MACRO_V10_INVENTORY
+  --profile-variant {R0,a2r_equivalent_fast_v1,a2r_packed_equivalent_v2}
+  --profile-r0-reference PROFILE_R0_REFERENCE
+  --profile-recovery-from FAILED_R0_DIRECTORY, --profile-cache-recovery-from FAILED_R0_DIRECTORY

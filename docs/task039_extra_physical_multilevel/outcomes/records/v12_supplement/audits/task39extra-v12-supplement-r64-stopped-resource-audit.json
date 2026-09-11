@@ -1,0 +1,53 @@
+{
+  "scope": "sampled simultaneous process-tree RSS/PSS and per-sample resource gates; excludes supervisor/test processes; not a continuous unsampled peak bound",
+  "run": "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64",
+  "samples": 3133,
+  "errors": [],
+  "rss_peak_bytes": 2552774656,
+  "pss_peak_bytes": 2517919744,
+  "pss_all_readable": true,
+  "pss_peak_scope": "maximum of readable simultaneous process-tree PSS samples; missing samples retained separately",
+  "pss_missing_samples": [],
+  "swap_peak_bytes": 0,
+  "global_swap_delta_pages": {
+    "pswpin_pages": 0,
+    "pswpout_pages": 0
+  },
+  "minimum_effective_available_bytes": 11286114304,
+  "minimum_launch_cap_headroom_bytes": 6698807296,
+  "cgroup_scope": "recorded visible cgroup limits are part of each memory_envelope; RSS/PSS columns remain process-tree measurements",
+  "classification": "USER_CONTROLLED_STOP",
+  "descendants_cleared": true,
+  "charged_seconds": 885.4244810280746,
+  "clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 812.095731966001,
+      "boottime": 812.0957318969995,
+      "utc": 885.423690301
+    },
+    "budget_seconds": 885.4244810280746,
+    "discrepancy_seconds": 73.32795840400047,
+    "tolerance_seconds": 8.120957319660011,
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": 73.32795833499893,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.0023626580004929565,
+        "boottime": 0.0023627439986739773,
+        "utc": 0.00236294
+      },
+      "budget_seconds": 0.00236294,
+      "discrepancy_seconds": 2.8199950704351634e-07,
+      "tolerance_seconds": 5.0,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 2.8199950704351634e-07
+    },
+    "utc_positive_excess_seconds": 73.32809179398326
+  },
+  "hashes": {
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/terminal.json": "ca1419f33d0b21c00bf3422cef0e8f77ad8b2f2c50ef11077fd5f926ece28a64",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/watchdog/resources.jsonl": "a407e9e5e305fb54705f2506c981fb6e085f43351c2c3b3f2aa24c5d9b5d643f"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "source_sha": "d39261bb17e8d9042c03d4d4990258da5043b621",
+  "classification": "local_test_evidence",
+  "focused_suite": {
+    "tests": 51,
+    "failed": 0,
+    "elapsed_seconds": 0.84,
+    "files": [
+      "src/test/test_260_task038_input_schema.py",
+      "src/test/test_352_task039_extra_physical_multilevel.py",
+      "src/test/test_365_light_pc_monitor.py",
+      "src/test/test_410_physical_macro_dd4.py"
+    ]
+  },
+  "field_metadata_regression": {
+    "cases": [
+      "live_actions",
+      "after_auxiliary_release"
+    ],
+    "passed": 2,
+    "scope": "synthetic norm arithmetic, quadrature metadata wiring, input unchanged, metric released; no PDE or actual FE quadrature"
+  },
+  "new_PDE_runs": 0,
+  "CI_claim": false,
+  "raw_hashes": {
+    "/tmp/task39extra-v12-supplement-root-repaired-focused.stdout.log": "2f8d343343fb822b22fc26655b843e2690a231d71f5cc5b2c42efd116331ed9d",
+    "/tmp/task39extra-v12-supplement-root-repaired-focused.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/task39extra-v12-supplement-root-repaired-field.stdout.log": "de552e307627b4a1709bec20e35dbfdfc791efcc41f204f774da28e258671d68",
+    "/tmp/task39extra-v12-supplement-root-repaired-field.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/task39extra_v12_supplement_field_metric_smoke.py": "055ba5c0af51e674eda52bfa9909facdd60b1ce1ed0463f2af449a5304ba7b82"
+  },
+  "production_source_hashes": {
+    "src/runners/physical_macro_v12.py": "2db74043e8c722c6e4b2c7e9953904f523f62c371d9a4fe0546228ad0248d588",
+    "src/runners/physical_recursive_entry.py": "e9f467c97bd5ac3895c307b8634061866a817a23e0a989e2bbdb2c7b79e5a3ba",
+    "scripts/run_case.py": "2b734d0a76d9564cbba092fc5af061b7fd5640b83d29ceb164bda29aef07a15e"
+  }
+}

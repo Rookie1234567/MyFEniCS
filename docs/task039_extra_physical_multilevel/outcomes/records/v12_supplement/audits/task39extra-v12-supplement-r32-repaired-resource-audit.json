@@ -1,0 +1,61 @@
+{
+  "scope": "sampled simultaneous process-tree RSS/PSS and per-sample resource gates; excludes supervisor/test processes; not a continuous unsampled peak bound",
+  "run": "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32",
+  "samples": 6540,
+  "errors": [],
+  "rss_peak_bytes": 3350794240,
+  "pss_peak_bytes": 3316318208,
+  "pss_all_readable": false,
+  "pss_peak_scope": "maximum of readable simultaneous process-tree PSS samples; missing samples retained separately",
+  "pss_missing_samples": [
+    {
+      "sample_index": 6534,
+      "timestamp_ns": 1789133329239394676,
+      "rss_bytes": 51187712,
+      "pss_bytes": null,
+      "all_status_readable": true
+    }
+  ],
+  "swap_peak_bytes": 0,
+  "global_swap_delta_pages": {
+    "pswpin_pages": 0,
+    "pswpout_pages": 0
+  },
+  "minimum_effective_available_bytes": 10527989760,
+  "minimum_launch_cap_headroom_bytes": 5921529856,
+  "cgroup_scope": "recorded visible cgroup limits are part of each memory_envelope; RSS/PSS columns remain process-tree measurements",
+  "classification": "COMPLETED",
+  "descendants_cleared": true,
+  "charged_seconds": 1846.2808846201353,
+  "clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 1693.7443426909995,
+      "boottime": 1693.7443444089986,
+      "utc": 1846.278440302
+    },
+    "budget_seconds": 1846.2808846201353,
+    "discrepancy_seconds": 152.53409761100056,
+    "tolerance_seconds": 16.937443444089986,
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": 152.53409761100056,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.0034044700005324557,
+        "boottime": 0.0034059300014632754,
+        "utc": 0.003406187
+      },
+      "budget_seconds": 0.003406187,
+      "discrepancy_seconds": 1.716999467544448e-06,
+      "tolerance_seconds": 5.0,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 1.716999467544448e-06
+    },
+    "utc_positive_excess_seconds": 152.53450320099128
+  },
+  "hashes": {
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/terminal.json": "776dc9d3bd36ffbec1da8378d3068386bf67a2061faafca7feee5fee323f6d4d",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/watchdog/resources.jsonl": "4435bd952c476b4dc46be6c899f3f422c401aff9759d1761e404fc3492dc0812"
+  }
+}

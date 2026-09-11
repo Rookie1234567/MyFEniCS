@@ -1,0 +1,183 @@
+{
+  "clock_info": {
+    "monotonic": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "utc": {
+      "implementation": "clock_gettime(CLOCK_REALTIME)",
+      "monotonic": false,
+      "adjustable": true,
+      "resolution": 1e-09
+    },
+    "boottime": {
+      "available": true,
+      "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+      "resolution": 1e-09
+    }
+  },
+  "clock_start": {
+    "monotonic": 25731.280443381,
+    "boottime": 25731.280444258,
+    "utc_ns": 1789131484251978259
+  },
+  "timebase_policy": "conservative_realtime",
+  "timebase_policy_version": 1,
+  "cache_metadata_stable": true,
+  "classification": "COMPLETED",
+  "leader_exit_code": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    112993,
+    112994,
+    113063,
+    113064,
+    113065,
+    113066,
+    113067,
+    113068,
+    113203,
+    113204,
+    113211,
+    113215,
+    113216,
+    113217,
+    113221,
+    113222,
+    113223,
+    113278,
+    113279,
+    113287,
+    113365,
+    113366,
+    113367,
+    113372,
+    113373,
+    113375,
+    113379,
+    113380,
+    113385,
+    113386,
+    113404,
+    113408,
+    113409,
+    113414,
+    113415,
+    113420,
+    113421,
+    113422,
+    113423,
+    113424,
+    113425,
+    113426,
+    113427,
+    113432,
+    113433,
+    113438,
+    113439,
+    113444,
+    113445,
+    113446,
+    113450,
+    113451,
+    113452,
+    113456,
+    113457,
+    113458,
+    113462,
+    113463,
+    113517,
+    113518,
+    113519,
+    113775,
+    113776,
+    113778,
+    113779,
+    113780,
+    113816,
+    113817,
+    113819,
+    116087,
+    116088,
+    116090,
+    116091,
+    116092,
+    116121,
+    116122,
+    116178
+  ],
+  "sampled_process_tree_rss_peak_bytes": 3350794240,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 11
+    },
+    "end": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 11
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 14654976000,
+    "mem_available_bytes": 13567291392,
+    "effective_total_bytes": 14654976000,
+    "effective_available_bytes": 13567291392,
+    "reserve_bytes": 4294967296,
+    "launch_cap_bytes": 9272324096,
+    "cgroup_limits": []
+  },
+  "samples": 6540,
+  "elapsed_seconds": 1693.744304464999,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": {
+    "head": "d39261bb17e8d9042c03d4d4990258da5043b621",
+    "branch": "task39extra",
+    "git_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/.git-codex",
+    "upstream": "origin/task39extra",
+    "ahead_behind": "0\t0"
+  },
+  "clock_end": {
+    "monotonic": 27425.024786072,
+    "boottime": 27425.024788667,
+    "utc_ns": 1789133330530418561
+  },
+  "workflow_clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 1693.7443426909995,
+      "boottime": 1693.7443444089986,
+      "utc": 1846.278440302
+    },
+    "budget_seconds": 1846.2808846201353,
+    "discrepancy_seconds": 152.53409761100056,
+    "tolerance_seconds": 16.937443444089986,
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": 152.53409761100056,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.0034044700005324557,
+        "boottime": 0.0034059300014632754,
+        "utc": 0.003406187
+      },
+      "budget_seconds": 0.003406187,
+      "discrepancy_seconds": 1.716999467544448e-06,
+      "tolerance_seconds": 5.0,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 1.716999467544448e-06
+    },
+    "utc_positive_excess_seconds": 152.53450320099128
+  }
+}

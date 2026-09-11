@@ -1,0 +1,55 @@
+{
+  "classification": "USER_CONTROLLED_STOP",
+  "errors": [],
+  "new_PDE_runs": 0,
+  "last_saved_iteration": 24,
+  "prefix": [
+    {
+      "iteration": 8,
+      "R32_true_residual": 0.8283760020203784,
+      "R64_true_residual": 0.8283760020203784,
+      "relative_solution_difference": 0.0,
+      "bitwise_equal": true
+    },
+    {
+      "iteration": 16,
+      "R32_true_residual": 0.8172376273064963,
+      "R64_true_residual": 0.8172376273064963,
+      "relative_solution_difference": 0.0,
+      "bitwise_equal": true
+    },
+    {
+      "iteration": 24,
+      "R32_true_residual": 0.811621467511064,
+      "R64_true_residual": 0.811621467511064,
+      "relative_solution_difference": 0.0,
+      "bitwise_equal": true
+    }
+  ],
+  "physical_rhs_array_sha256": "e8ece14d273d8bcdec672f2e29ac8c62971bb0d0fe4af7cc63e741df21934686",
+  "workflow_conservative_seconds": 885.4244810280746,
+  "candidate_summary_available": false,
+  "candidate_cost_and_I4_totals": "not_available; termination occurred before final candidate serialization",
+  "node_time": "not_available in durable solution-only checkpoint manifests",
+  "restart_selection": "not_completed; prefix through 24 does not establish the required through-32 equality or a finite R64 outcome",
+  "exclusion_basis": "completed R32 64-step result and historical comparisons; stopping R64 is a user scope decision",
+  "hashes": {
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/terminal.json": "ca1419f33d0b21c00bf3422cef0e8f77ad8b2f2c50ef11077fd5f926ece28a64",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000008/manifest.json": "886a3ffe988d2303944b82224b3b0bb4dd5137869765afac6818bd18b4b9fbb7",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000008/solution_rank0.npy": "cc603d93f5aa8dac5947da833ea2cde87e05ba7339eda1480a2c55ec667894e7",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/checkpoints/restart_32_periodic_nodes/iteration_00000008/manifest.json": "b0dd4e57f3fe9574fba46c21bca89c84fe51b546b8e45b71b7f1c586257590eb",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/checkpoints/restart_32_periodic_nodes/iteration_00000008/solution_rank0.npy": "cc603d93f5aa8dac5947da833ea2cde87e05ba7339eda1480a2c55ec667894e7",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000016/manifest.json": "104cbb3d950c6de3612b28f13fc49232ca14e353f56b085b1382e3af63e3ce66",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000016/solution_rank0.npy": "47d2f7f14114663e677cff96c70c15ee7098d11c9fb89187f9145a28848c5f01",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/checkpoints/restart_32_periodic_nodes/iteration_00000016/manifest.json": "68f27bce1bf9d55ea810f9e16242c554f0d02be1406aacd56b19e4121de977ac",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/checkpoints/restart_32_periodic_nodes/iteration_00000016/solution_rank0.npy": "47d2f7f14114663e677cff96c70c15ee7098d11c9fb89187f9145a28848c5f01",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000024/manifest.json": "36cbab2fae4128faae0b40e79fbeb93c51d91b659251d1587284fc5a0d0e0229",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/checkpoints/restart_64_periodic_nodes/iteration_00000024/solution_rank0.npy": "6fc0f43e494b399f0f854211d0d1d83c82cda2a032580db387cf166b922583cf",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/checkpoints/restart_32_periodic_nodes/iteration_00000024/manifest.json": "5f747ceda0b7cd18045477866053a80a4f6e891439ee82a38e950311f7583b34",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/checkpoints/restart_32_periodic_nodes/iteration_00000024/solution_rank0.npy": "6fc0f43e494b399f0f854211d0d1d83c82cda2a032580db387cf166b922583cf",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/physical_rhs.json": "864ec90403977e3ee1a4f27b54dc15f1a8f3f0da9ff18882a56c5f9dbc58b351",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_32/records/physical_rhs.npz": "a12ebca5e607877caed9748bdc7d54be65de92661e18cfcf1a66ae940095db35",
+    "benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/physical_rhs.json": "25f38f3b01941d354c876df21e10d6e69d4a9067a567169e3ed3edabc5b01751",
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement_repair/d39261bb17e8d9042c03d4d4990258da5043b621/o2_restart_probe_64/records/physical_rhs.npz": "a12ebca5e607877caed9748bdc7d54be65de92661e18cfcf1a66ae940095db35"
+  }
+}

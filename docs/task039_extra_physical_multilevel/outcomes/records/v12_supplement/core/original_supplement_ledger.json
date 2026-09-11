@@ -1,0 +1,137 @@
+{
+  "schema": "task39extra.review-v12-supplement-budget.v1",
+  "profile": "physical_macro_dd4_v12_supplement",
+  "total_limit_seconds": 10800.0,
+  "o1_workflow_limit_seconds": 3600.0,
+  "o1_compute_limit_seconds": 1200.0,
+  "charged_seconds": 1629.6835246012006,
+  "o1_charged_seconds": 601.0369560300772,
+  "remaining_seconds": 9170.316475398799,
+  "implementation_activity": {
+    "kind": "v12_supplement_implementation_activity",
+    "status": "COMMITTED",
+    "charged_seconds": 0.0,
+    "formal_debit_seconds": 0.0,
+    "elapsed_seconds": 383.0,
+    "started_at": "2026-09-11T20:05:18+08:00",
+    "ended_at": "2026-09-11T20:11:41+08:00",
+    "source_commit": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+    "basis": "observed production-file mtime through the clean implementation commit; engineering is recorded separately and does not debit the 10800-second formal workflow cap"
+  },
+  "batch_contract": {
+    "old_v12_ledger": "not_used_or_merged",
+    "fresh_o1_physical_blocks": 42,
+    "shared_framework_comparisons_max": 3,
+    "per_o2_workflow_limit_seconds": 3600.0,
+    "per_o2_true_outer_limit_seconds": 2400.0,
+    "outer_max_iterations": 64,
+    "original_or_notch_runs": "not_authorized"
+  },
+  "source_sha": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+  "physical_model_sha256s": [
+    "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+  ],
+  "attempts": [
+    {
+      "kind": "physical_macro_dd4_v12_supplement_o1_full_physical_controls",
+      "stage": "O1_FULL_PHYSICAL_CONTROLS",
+      "budget_group": "SUPPLEMENT_O1",
+      "source": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls",
+      "status": "COMPLETED",
+      "reserved_seconds": 3600.0,
+      "input": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v12_o1_full_physical_controls_0.dat",
+      "input_sha256": "2fd073a846d1b163b0f87c84e472212e7f8650b4c0bf81066aa20bc051a6bc7a",
+      "inventory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+      "inventory_sha256": "b47cbec33ea05842079e10dea486185703cfa541049d291ddb7fcf5369310a6c",
+      "stage_limit_seconds": 3600.0,
+      "admitted_wall_seconds": 3600.0,
+      "supplement": true,
+      "o1_compute_limit_seconds": 1200.0,
+      "framework": null,
+      "outer_restart": 0,
+      "actual_seconds": 601.0369560300772,
+      "clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 551.1848156850028,
+          "boottime": 551.184817587,
+          "utc": 601.036632193
+        },
+        "budget_seconds": 601.0369560300772,
+        "discrepancy_seconds": 49.851816507997114,
+        "tolerance_seconds": 5.51184817587,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 49.851816507997114,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.004327048001869116,
+            "boottime": 0.004327326001657639,
+            "utc": 0.004327544
+          },
+          "budget_seconds": 0.004327544,
+          "discrepancy_seconds": 4.959981308840303e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 4.959981308840303e-07
+        },
+        "utc_positive_excess_seconds": 49.85183050503337
+      },
+      "descendants_cleared": true,
+      "terminal_classification": "COMPLETED"
+    },
+    {
+      "kind": "physical_macro_dd4_v12_supplement_o2_restart_probe_32",
+      "stage": "O2_RESTART_PROBE_32",
+      "budget_group": "O2_RESTART_PROBE_32",
+      "source": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+      "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o2_restart_probe_32",
+      "status": "WORKER_FAILED",
+      "reserved_seconds": 3600.0,
+      "input": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/task39extra/v12_o2_restart_probe_32_32.dat",
+      "input_sha256": "9543a2c7c297a7864671922d1be7fdcdae2fe8b99983e18859d69e82a70042d0",
+      "inventory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+      "inventory_sha256": "b47cbec33ea05842079e10dea486185703cfa541049d291ddb7fcf5369310a6c",
+      "stage_limit_seconds": 3600.0,
+      "admitted_wall_seconds": 3600.0,
+      "supplement": true,
+      "o1_compute_limit_seconds": 1200.0,
+      "framework": "BAL_H",
+      "outer_restart": 32,
+      "actual_seconds": 1028.6465685711235,
+      "clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 943.555645245,
+          "boottime": 943.5556451369994,
+          "utc": 1028.645884725
+        },
+        "budget_seconds": 1028.6465685711235,
+        "discrepancy_seconds": 85.09023958800071,
+        "tolerance_seconds": 9.435556452450001,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 85.09023948000004,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.0015224039998429362,
+            "boottime": 0.0015220970017253421,
+            "utc": 0.001522163
+          },
+          "budget_seconds": 0.0015224039998429362,
+          "discrepancy_seconds": 3.069981175940484e-07,
+          "tolerance_seconds": 5.0,
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": -2.409998429361848e-07
+        },
+        "utc_positive_excess_seconds": 85.09029080611113
+      },
+      "descendants_cleared": true,
+      "terminal_classification": "WORKER_FAILED",
+      "launcher_exception_type": "SystemExit",
+      "launcher_exception_message": "1"
+    }
+  ],
+  "selected_framework": "BAL_H"
+}

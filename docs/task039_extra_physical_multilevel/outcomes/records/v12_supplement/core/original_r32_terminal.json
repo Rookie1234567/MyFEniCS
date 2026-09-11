@@ -1,0 +1,174 @@
+{
+  "clock_info": {
+    "monotonic": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "utc": {
+      "implementation": "clock_gettime(CLOCK_REALTIME)",
+      "monotonic": false,
+      "adjustable": true,
+      "resolution": 1e-09
+    },
+    "boottime": {
+      "available": true,
+      "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+      "resolution": 1e-09
+    }
+  },
+  "clock_start": {
+    "monotonic": 23977.174679235,
+    "boottime": 23977.174680192,
+    "utc_ns": 1789129570334240549
+  },
+  "timebase_policy": "conservative_realtime",
+  "timebase_policy_version": 1,
+  "cache_metadata_stable": true,
+  "classification": "WORKER_FAILED",
+  "leader_exit_code": 1,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    106989,
+    106991,
+    107095,
+    107096,
+    107097,
+    107098,
+    107099,
+    107100,
+    107192,
+    107193,
+    107194,
+    107215,
+    107216,
+    107217,
+    107221,
+    107222,
+    107223,
+    107227,
+    107228,
+    107229,
+    107230,
+    107231,
+    107232,
+    107235,
+    107236,
+    107255,
+    107259,
+    107260,
+    107262,
+    107265,
+    107266,
+    107267,
+    107295,
+    107296,
+    107315,
+    107336,
+    107337,
+    107342,
+    107343,
+    107344,
+    107348,
+    107349,
+    107350,
+    107351,
+    107352,
+    107353,
+    107354,
+    107355,
+    107360,
+    107361,
+    107367,
+    107368,
+    107373,
+    107374,
+    107379,
+    107380,
+    107385,
+    107386,
+    107391,
+    107392,
+    107552,
+    107553,
+    107571,
+    107771,
+    107772,
+    107863,
+    107864,
+    107865
+  ],
+  "sampled_process_tree_rss_peak_bytes": 2534461440,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 11
+    },
+    "end": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 11
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 14654976000,
+    "mem_available_bytes": 13513097216,
+    "effective_total_bytes": 14654976000,
+    "effective_available_bytes": 13513097216,
+    "reserve_bytes": 4294967296,
+    "launch_cap_bytes": 9218129920,
+    "cgroup_limits": []
+  },
+  "samples": 3654,
+  "elapsed_seconds": 943.5556444770009,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": {
+    "head": "7d9df5e19d324776588aaa9efc4996cc3fe36d8e",
+    "branch": "task39extra",
+    "git_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/.git-codex",
+    "upstream": "origin/task39extra",
+    "ahead_behind": "0\t0"
+  },
+  "clock_end": {
+    "monotonic": 24920.73032448,
+    "boottime": 24920.730325329,
+    "utc_ns": 1789130598980125274
+  },
+  "workflow_clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 943.555645245,
+      "boottime": 943.5556451369994,
+      "utc": 1028.645884725
+    },
+    "budget_seconds": 1028.6465685711235,
+    "discrepancy_seconds": 85.09023958800071,
+    "tolerance_seconds": 9.435556452450001,
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": 85.09023948000004,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.0015224039998429362,
+        "boottime": 0.0015220970017253421,
+        "utc": 0.001522163
+      },
+      "budget_seconds": 0.0015224039998429362,
+      "discrepancy_seconds": 3.069981175940484e-07,
+      "tolerance_seconds": 5.0,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": -2.409998429361848e-07
+    },
+    "utc_positive_excess_seconds": 85.09029080611113
+  }
+}
