@@ -146,6 +146,7 @@ def test_schema_identity_sections_and_unique_whitelist():
         "p6smooth_p4ref_p6smooth_v1",
         "physical_macro_dd4_v10",
         "physical_macro_dd4_v11",
+        "physical_macro_dd4_v12",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (

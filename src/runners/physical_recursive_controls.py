@@ -5,8 +5,16 @@ from pathlib import Path
 import numpy as np
 
 
-def load_recursive_calibration(inventory_path):
-    """Load only the six audited g/y arrays; independent measurement data."""
+def load_recursive_calibration(inventory_path, *, allow_missing_reference=False):
+    """Load the six audited g/y arrays and optional measurement packets.
+
+    The source RHS and native map remain mandatory identity-bound inputs.  A
+    V12 control may encounter an inventory that has no matching saved
+    reference packet; in that case ``allow_missing_reference=True`` preserves
+    the independent RHS control and marks the item ``REFERENCE_UNAVAILABLE``.
+    Existing reference files are still hash checked and a changed file is a
+    hard identity error, never silently downgraded to unavailable.
+    """
     from .physical_diagnostic_completion import load_packet
     inventory = json.loads(Path(inventory_path).read_text())
     rows = inventory['six_calibration_rhs']
@@ -14,17 +22,35 @@ def load_recursive_calibration(inventory_path):
         raise ValueError('G1 requires exactly six frozen RHS')
     result = []
     for row in rows:
-        for key, hash_key in [('input_json','input_sha256'), ('reference_packet','reference_packet_sha256')]:
-            if hashlib.sha256(Path(row[key]).read_bytes()).hexdigest() != row[hash_key]:
-                raise ValueError('calibration identity mismatch')
-        source, reference = load_packet(Path(row['input_json'])), load_packet(Path(row['reference_packet']))
-        if not np.array_equal(source['g'], reference['g']):
-            raise ValueError('reference RHS differs')
+        input_path = Path(row['input_json'])
+        if hashlib.sha256(input_path.read_bytes()).hexdigest() != row['input_sha256']:
+            raise ValueError('calibration input identity mismatch')
+        source = load_packet(input_path)
+        reference = None
+        reference_status = 'REFERENCE_AVAILABLE'
+        reference_path = row.get('reference_packet')
+        if reference_path is None or not Path(reference_path).exists():
+            if not allow_missing_reference:
+                raise ValueError('calibration reference packet is unavailable')
+            reference_status = 'REFERENCE_UNAVAILABLE'
+        else:
+            reference_path = Path(reference_path)
+            if hashlib.sha256(reference_path.read_bytes()).hexdigest() != row['reference_packet_sha256']:
+                raise ValueError('calibration reference identity mismatch')
+            reference = load_packet(reference_path)
+            if not np.array_equal(source['g'], reference['g']):
+                raise ValueError('reference RHS differs')
         map_path=Path(row['input_json']).parent/'native_constraint_map_p4.json'
         if hashlib.sha256(map_path.read_bytes()).hexdigest() != inventory['checked_file_hashes'][str(map_path)]:
             raise ValueError('frozen native map hash mismatch')
-        result.append(dict(identity=row, rhs=source['g'], reference_y=reference['y'],reference_A4y=reference['A4y'],
-            reference_map=load_packet(Path(row['input_json']).parent/'native_constraint_map_p4.json')))
+        result.append(dict(
+            identity=row, rhs=source['g'],
+            reference_y=None if reference is None else reference['y'],
+            reference_A4y=None if reference is None else reference['A4y'],
+            reference_status=reference_status,
+            reference_available=reference is not None,
+            reference_map=load_packet(map_path),
+        ))
     return result
 
 

@@ -643,7 +643,7 @@ def run_macro_m1_controls(
         destroy_macro_stack,
     )
     from src.io.physical_recursive_profile import (
-        MACRO_V10_PROFILE, MACRO_V11_PROFILE,
+        MACRO_V10_PROFILE, MACRO_V11_PROFILE, MACRO_V12_PROFILE,
     )
     from src.solvers.fullspace_bounded_mumps import (
         LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
@@ -652,12 +652,13 @@ def run_macro_m1_controls(
 
     active_profile = profile or MACRO_V10_PROFILE
     active_memory_policy = memory_policy or (
-        SYMBOLIC_SIZED_LOCAL_MUMPS_V11 if active_profile == MACRO_V11_PROFILE
+        SYMBOLIC_SIZED_LOCAL_MUMPS_V11 if active_profile in (MACRO_V11_PROFILE, MACRO_V12_PROFILE)
         else LEGACY_LOCAL_MUMPS_MEMORY_POLICY
     )
     if (active_profile, active_memory_policy) not in (
         (MACRO_V10_PROFILE, LEGACY_LOCAL_MUMPS_MEMORY_POLICY),
         (MACRO_V11_PROFILE, SYMBOLIC_SIZED_LOCAL_MUMPS_V11),
+        (MACRO_V12_PROFILE, SYMBOLIC_SIZED_LOCAL_MUMPS_V11),
     ):
         raise ValueError("macro profile and memory policy are not a reviewed pair")
 
@@ -676,7 +677,9 @@ def run_macro_m1_controls(
     label = ["m1"]
     scoped_save = _make_scoped_save(save, label)
     inventory_data = load_recursive_balanced_inputs(inventory_path)
-    calibration = load_recursive_calibration(inventory_path)
+    calibration = load_recursive_calibration(
+        inventory_path, allow_missing_reference=active_profile == MACRO_V12_PROFILE,
+    )
     maps = inventory_data["maps"]
     map6 = maps[6]
     map4 = maps[4]
@@ -709,6 +712,10 @@ def run_macro_m1_controls(
             "native_map_sha256": native_map_sha256,
         },
         "bare_calibration": [],
+        "reference_status_counts": {
+            "REFERENCE_AVAILABLE": 0,
+            "REFERENCE_UNAVAILABLE": 0,
+        },
         "shared_framework": [],
         "new_i4_calls": 0,
         "attempted_i4_calls": 0,
@@ -795,6 +802,8 @@ def run_macro_m1_controls(
         stack = build_macro_stack(
             cfg, comm, sample=budget_sample, marker=marker, save=save,
             memory_policy=active_memory_policy,
+            local_inventory_cap_bytes=(2684354560 if active_profile == MACRO_V12_PROFILE
+                                       else 2147483648),
         )
         verify_recursive_map(stack, 6, map6)
         verify_recursive_map(stack, 4, map4)
@@ -847,6 +856,14 @@ def run_macro_m1_controls(
             bare = bare_a = bare_error = result = error = error_a = None
             reference = reference_a = None
             source_before = None
+            reference_available = bool(item.get("reference_available", False))
+            reference_status = item.get(
+                "reference_status",
+                "REFERENCE_AVAILABLE" if reference_available else "REFERENCE_UNAVAILABLE",
+            )
+            summary["reference_status_counts"][reference_status] = (
+                summary["reference_status_counts"].get(reference_status, 0) + 1
+            )
             try:
                 _set_full(rhs, item["rhs"], name=f"{stem} RHS")
                 source_before = rhs.array.copy()
@@ -859,55 +876,65 @@ def run_macro_m1_controls(
                 bare_eps = rhs.array - bare_a.array
                 summary["bare_b4_calls"] += 1
                 summary["bare_b4_completed_calls"] += 1
-                reference_residual = rhs.array - item["reference_A4y"]
-                reference = rhs.duplicate()
-                reference.array[:] = item["reference_y"]
-                reference_a = apply_owned(stack["a4_native"], reference)
-                reference_bridge_scale = max(
-                    np.linalg.norm(reference_a.array) + np.linalg.norm(item["reference_A4y"]),
-                    np.finfo(float).tiny,
-                )
-                reference_bridge = float(
-                    np.linalg.norm(reference_a.array - item["reference_A4y"])
-                    / reference_bridge_scale
-                )
+                reference_residual = None
+                reference_bridge = None
+                reference_bridge_scale = None
+                if reference_available:
+                    reference_residual = rhs.array - item["reference_A4y"]
+                    reference = rhs.duplicate()
+                    reference.array[:] = item["reference_y"]
+                    reference_a = apply_owned(stack["a4_native"], reference)
+                    reference_bridge_scale = max(
+                        np.linalg.norm(reference_a.array) + np.linalg.norm(item["reference_A4y"]),
+                        np.finfo(float).tiny,
+                    )
+                    reference_bridge = float(
+                        np.linalg.norm(reference_a.array - item["reference_A4y"])
+                        / reference_bridge_scale
+                    )
                 result = i4.apply(rhs)
                 summary["new_i4_calls"] += 1
                 summary["attempted_i4_calls"] = i4.calls
                 summary["completed_i4_calls"] = summary["new_i4_calls"]
-                bare_error = rhs.duplicate()
-                bare_error.array[:] = item["reference_y"] - bare.array
-                error = rhs.duplicate()
-                error.array[:] = item["reference_y"] - result["solution"].array
-                error_a = apply_owned(stack["a4_native"], error)
-                identity_rhs = result["residual"].array - reference_residual
-                identity_raw_norm = float(np.linalg.norm(error_a.array - identity_rhs))
-                identity_scale = max(
-                    np.linalg.norm(reference_a.array)
-                    + np.linalg.norm(result["applied"].array)
-                    + np.linalg.norm(rhs.array),
-                    np.finfo(float).tiny,
-                )
-                identity = float(identity_raw_norm / identity_scale)
-                evaluation_started = time.perf_counter()
-                field = _metric_pair(
-                    metric4,
-                    error.array[p4_indices],
-                    item["reference_y"][p4_indices],
-                )
-                bare_field = _metric_pair(
-                    metric4,
-                    bare_error.array[p4_indices],
-                    item["reference_y"][p4_indices],
-                )
-                cell_energies = metric4.cell_energies(
-                    error.array[p4_indices], checkpoint=budget_sample,
-                )
-                evaluation_seconds = time.perf_counter() - evaluation_started
+                field = bare_field = cell_energies = None
+                identity = identity_raw_norm = identity_scale = None
+                if reference_available:
+                    bare_error = rhs.duplicate()
+                    bare_error.array[:] = item["reference_y"] - bare.array
+                    error = rhs.duplicate()
+                    error.array[:] = item["reference_y"] - result["solution"].array
+                    error_a = apply_owned(stack["a4_native"], error)
+                    identity_rhs = result["residual"].array - reference_residual
+                    identity_raw_norm = float(np.linalg.norm(error_a.array - identity_rhs))
+                    identity_scale = max(
+                        np.linalg.norm(reference_a.array)
+                        + np.linalg.norm(result["applied"].array)
+                        + np.linalg.norm(rhs.array),
+                        np.finfo(float).tiny,
+                    )
+                    identity = float(identity_raw_norm / identity_scale)
+                    evaluation_started = time.perf_counter()
+                    field = _metric_pair(
+                        metric4,
+                        error.array[p4_indices],
+                        item["reference_y"][p4_indices],
+                    )
+                    bare_field = _metric_pair(
+                        metric4,
+                        bare_error.array[p4_indices],
+                        item["reference_y"][p4_indices],
+                    )
+                    cell_energies = metric4.cell_energies(
+                        error.array[p4_indices], checkpoint=budget_sample,
+                    )
+                    evaluation_seconds = time.perf_counter() - evaluation_started
+                else:
+                    evaluation_seconds = 0.0
                 rho = float(np.linalg.norm(result["residual"].array) /
                             max(np.linalg.norm(rhs.array), np.finfo(float).tiny))
-                r_ref = float(np.linalg.norm(reference_residual) /
-                              max(np.linalg.norm(rhs.array), np.finfo(float).tiny))
+                r_ref = (float(np.linalg.norm(reference_residual) /
+                               max(np.linalg.norm(rhs.array), np.finfo(float).tiny))
+                         if reference_residual is not None else None)
                 cost_after = _stack_cost_snapshot(stack, i4)
                 facts = {
                     "ordinal": ordinal,
@@ -931,10 +958,12 @@ def run_macro_m1_controls(
                     "A4_error_identity_scale": identity_scale,
                     "A4_error_identity_limit": 1.0e-10,
                     "field": field,
-                    "cell_energies": {
+                    "cell_energies": ({
                         "I4_error": cell_energies,
                         "patch_groups": _seed_energy_groups(cell_energies),
-                    },
+                    } if cell_energies is not None else {
+                        "status": "REFERENCE_UNAVAILABLE",
+                    }),
                     "evaluation_seconds": evaluation_seconds,
                     "cost": {
                         "start": cost_before,
@@ -944,32 +973,39 @@ def run_macro_m1_controls(
                     # Required ignored evidence for an independent checker;
                     # save_packet compacts these into one hash-bound NPZ.
                     "rhs_values": rhs.array.copy(),
-                    "reference_values": reference.array.copy(),
-                    "reference_A4y_values": np.array(item["reference_A4y"], copy=True),
+                    "reference_values": (reference.array.copy()
+                                         if reference is not None else None),
+                    "reference_A4y_values": (np.array(item["reference_A4y"], copy=True)
+                                             if reference_available else None),
                     "bare_solution_values": bare.array.copy(),
                     "bare_applied_values": bare_a.array.copy(),
                     "bare_residual_values": bare_eps.copy(),
                     "I4_solution_values": result["solution"].array.copy(),
                     "I4_applied_values": result["applied"].array.copy(),
                     "I4_residual_values": result["residual"].array.copy(),
-                    "error_values": error.array.copy(),
-                    "A4_error_values": error_a.array.copy(),
-                    "reference_residual_values": reference_residual.copy(),
+                    "error_values": (error.array.copy() if error is not None else None),
+                    "A4_error_values": (error_a.array.copy() if error_a is not None else None),
+                    "reference_residual_values": (reference_residual.copy()
+                                                   if reference_residual is not None else None),
                     "input_unchanged": bool(np.array_equal(rhs.array, source_before)),
-                    "reference_role": "measurement_only",
+                    "reference_role": "measurement_only" if reference_available else "REFERENCE_UNAVAILABLE",
+                    "reference_status": reference_status,
                 }
                 save(f"{stem}_bare_B4_I4", facts)
-                if (reference_bridge > 1.0e-10 or identity > 1.0e-10
-                        or not facts["input_unchanged"]):
+                if (not facts["input_unchanged"] or not np.isfinite(rho)
+                        or not np.isfinite(float(np.linalg.norm(bare_eps)))
+                        or (reference_available and (reference_bridge > 1.0e-10
+                                                     or identity > 1.0e-10))):
                     raise ValueError(f"{stem} M1 p4 identity/input gate failed")
                 summary["bare_calibration"].append({
                     "stem": stem,
                     "rho4": rho,
-                    "eta4_L2": field["L2"]["relative"],
-                    "eta4_scaled_curl": field["scaled_curl"]["relative"],
+                    "eta4_L2": None if field is None else field["L2"]["relative"],
+                    "eta4_scaled_curl": None if field is None else field["scaled_curl"]["relative"],
                     "I4_status": result["facts"].get("status"),
                     "B4_calls": result["facts"].get("B4_calls", 0),
                     "A4_error_identity_relative": identity,
+                    "reference_status": reference_status,
                 })
                 control_checkpoint(f"bare:{stem}")
             finally:

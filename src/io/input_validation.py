@@ -547,6 +547,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "p6smooth_p4ref_p6smooth_v1",
                 "physical_macro_dd4_v10",
                 "physical_macro_dd4_v11",
+                "physical_macro_dd4_v12",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -562,7 +563,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
-            elif preconditioner in ("physical_macro_dd4_v10", "physical_macro_dd4_v11"):
+            elif preconditioner in ("physical_macro_dd4_v10", "physical_macro_dd4_v11", "physical_macro_dd4_v12"):
                 macro_timeout = 5400
                 if preconditioner == "physical_macro_dd4_v11":
                     macro_timeout = {
@@ -571,6 +572,16 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "N3_RESTART_PROBE": 3600,
                         "N4_ORIGINAL": 14400,
                         "N4_NOTCH": 14400,
+                    }.get(solver.get("stage"), 5400)
+                if preconditioner == "physical_macro_dd4_v12":
+                    macro_timeout = {
+                        "O0_PRECHECK": 7200,
+                        "O1_FULL_PHYSICAL_CONTROLS": 7200,
+                        "O2_RESTART_PROBE_32": 3600,
+                        "O2_RESTART_PROBE_64": 3600,
+                        "O3_ORIGINAL": 14400,
+                        "O3_NOTCH": 14400,
+                        "O4_FINALIZE": 43200,
                     }.get(solver.get("stage"), 5400)
                 for section, key, actual, expected in (
                     ("solver", "restart", solver["restart"], 4),
@@ -609,6 +620,36 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                             raise _error(
                                 "solver.outer_restart",
                                 f"{stage} requires outer_restart=32 or 64",
+                            )
+                    elif outer_restart != 0:
+                        raise _error(
+                            "solver.outer_restart",
+                            f"{stage} requires outer_restart=0",
+                        )
+                if preconditioner == "physical_macro_dd4_v12":
+                    stage = solver.get("stage")
+                    if stage not in {
+                        "O0_PRECHECK", "O1_FULL_PHYSICAL_CONTROLS",
+                        "O2_RESTART_PROBE_32", "O2_RESTART_PROBE_64",
+                        "O3_ORIGINAL", "O3_NOTCH", "O4_FINALIZE",
+                    }:
+                        raise _error(
+                            "solver.stage",
+                            "physical_macro_dd4_v12 requires an explicit O0/O1/O2/O3/O4 stage",
+                        )
+                    outer_restart = solver.get("outer_restart")
+                    if stage in {"O2_RESTART_PROBE_32", "O2_RESTART_PROBE_64"}:
+                        expected = 32 if stage == "O2_RESTART_PROBE_32" else 64
+                        if outer_restart != expected:
+                            raise _error(
+                                "solver.outer_restart",
+                                f"{stage} requires outer_restart={expected}",
+                            )
+                    elif stage in {"O3_ORIGINAL", "O3_NOTCH"}:
+                        if outer_restart not in (32, 64):
+                            raise _error(
+                                "solver.outer_restart",
+                                f"{stage} requires the selected O2 outer_restart=32 or 64",
                             )
                     elif outer_restart != 0:
                         raise _error(

@@ -36,6 +36,18 @@ PHYSICAL_PAIR_MARGIN = 1.0e-9
 DIVERGED_ITS = -3
 
 
+class _SafeMonitorStop(Exception):
+    """Internal control flow after an explicit solution snapshot is durable."""
+
+
+class ExternalDeadlineStop(Exception):
+    """Explicit outer-stage stop raised at a safe preconditioner boundary."""
+
+    def __init__(self, reason: str):
+        self.reason = str(reason)
+        super().__init__(self.reason)
+
+
 def _mpi_comm(comm: Any) -> MPI.Comm:
     """Return an mpi4py communicator for PETSc or mpi4py inputs."""
 
@@ -461,6 +473,9 @@ def run_fixed_restart_cycles(
         [Mapping[str, Any], Sequence[Mapping[str, Any]]], bool
     ] | None = None,
     iteration_observer: Callable[[int, float, Any, Any, Mapping[str, Any]], None] | None = None,
+    explicit_residual_interval: int | None = None,
+    explicit_residual_observer: Callable[[int, float, PETSc.Vec], None] | None = None,
+    stop_requested: Callable[[], bool] | None = None,
 ) -> dict[str, Any]:
     """Run a reviewed fixed-restart right-GMRES/FGMRES cycle sequence.
 
@@ -511,6 +526,12 @@ def run_fixed_restart_cycles(
             )
     if not np.isfinite(residual_limit) or residual_limit < 0.0:
         raise ValueError("residual limit must be finite and non-negative")
+    if explicit_residual_interval is not None:
+        explicit_residual_interval = int(explicit_residual_interval)
+        if explicit_residual_interval <= 0:
+            raise ValueError("explicit_residual_interval must be positive")
+    if stop_requested is not None and not callable(stop_requested):
+        raise TypeError("stop_requested must be callable when provided")
     ksp_type = str(ksp_type).lower()
     if ksp_type not in {"gmres", "fgmres"}:
         raise ValueError("ksp_type must be 'gmres' or 'fgmres'")
@@ -523,6 +544,11 @@ def run_fixed_restart_cycles(
     )
     solution: PETSc.Vec | None = None
     active_ksp: PETSc.KSP | None = None
+    # These owners must exist before entering the protected setup path.  If
+    # an initial-guess/identity check fails, the cleanup below must preserve
+    # that original exception rather than raising UnboundLocalError.
+    safe_stop_solution: PETSc.Vec | None = None
+    last_safe_solution: PETSc.Vec | None = None
     try:
         operator.setUp()
         pc_context = _PCContext(apply_preconditioner)
@@ -561,9 +587,22 @@ def run_fixed_restart_cycles(
         cycles: list[dict[str, Any]] = []
         checkpoint_facts: list[dict[str, Any]] = []
         ksp_destroy_count = 0
+        explicit_monitor_count = 0
         cumulative_iteration = start_iteration
+        safe_stop_iteration: int | None = None
+        safe_stop_residual: float | None = None
+        last_safe_iteration = int(start_iteration)
+        last_safe_residual = float(initial_true_relative)
+        if stop_requested is not None:
+            last_safe_solution = solution.copy()
         started = time.perf_counter()
         while cumulative_iteration < max_it:
+            if (
+                stop_requested is not None
+                and cumulative_iteration > start_iteration
+                and bool(stop_requested())
+            ):
+                break
             cycle_index = cumulative_iteration // restart
             cycle_start = cumulative_iteration
             matvec_start = action_context.matvec_count
@@ -582,32 +621,134 @@ def run_fixed_restart_cycles(
             pc.setType(PETSc.PC.Type.PYTHON)
             pc.setPythonContext(pc_context)
             active_ksp.setUp()
-            if iteration_observer is not None:
-                active_ksp.setMonitor(lambda current, iteration, norm:
-                    iteration_observer(cycle_start + int(iteration), float(norm), current, solution,
-                        dict(outer_matvec_count=action_context.matvec_count,
-                             outer_pc_count=pc_context.apply_count,
-                             solve_wall_seconds=time.perf_counter()-started)))
+            if iteration_observer is not None or explicit_residual_observer is not None:
+                def monitor(current, iteration, norm):
+                    nonlocal exact_action_count, explicit_monitor_count
+                    nonlocal safe_stop_iteration, safe_stop_residual, safe_stop_solution
+                    nonlocal last_safe_solution, last_safe_iteration, last_safe_residual
+                    absolute_iteration = cycle_start + int(iteration)
+                    # Preserve the historical observer's vector semantics and
+                    # cost.  Only the new explicit-residual branch builds a
+                    # current FGMRES combination through PETSc; the ordinary
+                    # observer continues to receive the legacy output Vec.
+                    if iteration_observer is not None:
+                        iteration_observer(
+                            absolute_iteration, float(norm), current, solution,
+                            dict(
+                                outer_matvec_count=action_context.matvec_count,
+                                outer_pc_count=pc_context.apply_count,
+                                solve_wall_seconds=time.perf_counter() - started,
+                            ),
+                        )
+                    deadline_due = bool(
+                        stop_requested is not None
+                        and int(iteration) > 0
+                        and stop_requested()
+                    )
+                    if (
+                        explicit_residual_observer is not None
+                        and explicit_residual_interval is not None
+                        and int(iteration) > 0
+                        and (
+                            absolute_iteration % explicit_residual_interval == 0
+                            or deadline_due
+                        )
+                    ):
+                        # ``solution`` is not the current iterate while a
+                        # solve is active.  At a terminal monitor callback
+                        # PETSc has already written the converged Vec into
+                        # ``solution``; rebuilding the terminal correction
+                        # would add the last update twice.  Intermediate
+                        # callbacks still need ``buildSolution`` to form the
+                        # current FGMRES combination.
+                        snapshot = solution.duplicate()
+                        try:
+                            if int(current.getConvergedReason()) != 0:
+                                solution.copy(snapshot)
+                            else:
+                                current.buildSolution(snapshot)
+                            monitor_action = apply_action(snapshot)
+                            exact_action_count += 1
+                            try:
+                                monitor_residual = rhs.copy()
+                                try:
+                                    monitor_residual.axpy(
+                                        PETSc.ScalarType(-1.0), monitor_action
+                                    )
+                                    relative = float(monitor_residual.norm()) / rhs_norm
+                                finally:
+                                    monitor_residual.destroy()
+                            finally:
+                                monitor_action.destroy()
+                            explicit_monitor_count += 1
+                            explicit_residual_observer(
+                                absolute_iteration, relative, snapshot
+                            )
+                            if stop_requested is not None:
+                                if last_safe_solution is not None:
+                                    last_safe_solution.destroy()
+                                last_safe_solution = snapshot.copy()
+                                last_safe_iteration = absolute_iteration
+                                last_safe_residual = relative
+                                if bool(stop_requested()):
+                                    safe_stop_iteration = absolute_iteration
+                                    safe_stop_residual = relative
+                                    safe_stop_solution = last_safe_solution
+                                    last_safe_solution = None
+                                    raise _SafeMonitorStop
+                        finally:
+                            snapshot.destroy()
+                active_ksp.setMonitor(monitor)
             cycle_started = time.perf_counter()
-            active_ksp.solve(rhs, solution)
-            local_iterations = int(active_ksp.getIterationNumber())
-            reason = int(active_ksp.getConvergedReason())
-            reported_final = float(active_ksp.getResidualNorm())
+            safe_cycle_stop = False
+            safe_cycle_stop_reason = None
+            try:
+                active_ksp.solve(rhs, solution)
+                local_iterations = int(active_ksp.getIterationNumber())
+                reason = int(active_ksp.getConvergedReason())
+                reported_final = float(active_ksp.getResidualNorm())
+            except _SafeMonitorStop:
+                safe_cycle_stop = True
+                if safe_stop_solution is None or safe_stop_iteration is None or safe_stop_residual is None:
+                    raise RuntimeError("safe monitor stop lost its durable solution snapshot")
+                safe_stop_solution.copy(solution)
+                local_iterations = int(safe_stop_iteration - cycle_start)
+                reason = int(getattr(PETSc.KSP.ConvergedReason, "CONVERGED_USER", 0))
+                reported_final = float(safe_stop_residual)
+                safe_cycle_stop_reason = "EXTERNAL_DEADLINE_AFTER_EXPLICIT_SNAPSHOT"
+            except ExternalDeadlineStop as exc:
+                if last_safe_solution is None:
+                    raise RuntimeError("external deadline stop has no last validated solution") from exc
+                safe_stop_iteration = last_safe_iteration
+                safe_stop_residual = last_safe_residual
+                safe_stop_solution = last_safe_solution
+                last_safe_solution = None
+                safe_stop_solution.copy(solution)
+                safe_cycle_stop = True
+                safe_cycle_stop_reason = f"EXTERNAL_DEADLINE_DURING_PRECONDITIONER:{exc.reason}"
+                local_iterations = int(safe_stop_iteration - cycle_start)
+                reason = int(getattr(PETSc.KSP.ConvergedReason, "CONVERGED_USER", 0))
+                reported_final = float(safe_stop_residual)
             active_ksp.destroy()
             active_ksp = None
             ksp_destroy_count += 1
 
-            action = apply_action(solution)
-            exact_action_count += 1
-            try:
-                true_residual = rhs.copy()
+            if safe_cycle_stop and safe_stop_residual is not None:
+                explicit_relative = float(safe_stop_residual)
+                safe_stop_solution.destroy()
+                safe_stop_solution = None
+            else:
+                action = apply_action(solution)
+                exact_action_count += 1
                 try:
-                    true_residual.axpy(PETSc.ScalarType(-1.0), action)
-                    explicit_relative = float(true_residual.norm()) / rhs_norm
+                    true_residual = rhs.copy()
+                    try:
+                        true_residual.axpy(PETSc.ScalarType(-1.0), action)
+                        explicit_relative = float(true_residual.norm()) / rhs_norm
+                    finally:
+                        true_residual.destroy()
                 finally:
-                    true_residual.destroy()
-            finally:
-                action.destroy()
+                    action.destroy()
             cumulative_iteration = cycle_start + local_iterations
 
             checkpoint_info = None
@@ -616,7 +757,16 @@ def run_fixed_restart_cycles(
                 checkpoint_due = checkpoint_due or (
                     cumulative_iteration == first_checkpoint_iteration
                 )
-            if checkpoint_writer is not None and checkpoint_due:
+            checkpoint_exists = any(
+                int(item.get("iteration", -1)) == int(cumulative_iteration)
+                for item in checkpoint_facts
+            )
+            if checkpoint_writer is not None and checkpoint_due and not checkpoint_exists:
+                checkpoint_info = dict(
+                    checkpoint_writer(cumulative_iteration, solution, explicit_relative)
+                )
+                checkpoint_facts.append(checkpoint_info)
+            if safe_cycle_stop and checkpoint_writer is not None and checkpoint_info is None and not checkpoint_exists:
                 checkpoint_info = dict(
                     checkpoint_writer(cumulative_iteration, solution, explicit_relative)
                 )
@@ -637,12 +787,17 @@ def run_fixed_restart_cycles(
                 "wall_seconds": float(time.perf_counter() - cycle_started),
                 "resource": resource,
                 "ksp_destroyed": True,
+                "safe_stop": bool(safe_cycle_stop),
+                "safe_stop_reason": safe_cycle_stop_reason,
             }
             if checkpoint_info is not None:
                 cycle["checkpoint"] = checkpoint_info
             cycles.append(cycle)
             if cycle_observer is not None:
                 cycle_observer(cumulative_iteration, solution, cycle)
+
+            if safe_cycle_stop:
+                break
 
             if stop_after_cycle is not None and stop_after_cycle(cycle, cycles):
                 break
@@ -684,6 +839,7 @@ def run_fixed_restart_cycles(
             "matvec_count": int(action_context.matvec_count),
             "pc_apply_count": int(pc_context.apply_count),
             "explicit_action_count": int(exact_action_count),
+            "explicit_monitor_residual_count": int(explicit_monitor_count),
             "ksp_destroy_count": int(ksp_destroy_count),
             "elapsed_seconds": float(time.perf_counter() - started),
             "final_solution": final_solution,
@@ -691,6 +847,10 @@ def run_fixed_restart_cycles(
     finally:
         if active_ksp is not None:
             active_ksp.destroy()
+        if safe_stop_solution is not None:
+            safe_stop_solution.destroy()
+        if last_safe_solution is not None:
+            last_safe_solution.destroy()
         if solution is not None:
             solution.destroy()
         operator.destroy()
@@ -747,6 +907,7 @@ __all__ = [
     "CHECKPOINT_INTERVAL",
     "CHECKPOINT_SCHEMA",
     "CYCLE_MAX_IT",
+    "ExternalDeadlineStop",
     "GMRES_RESTART",
     "PHYSICAL_PAIR_MARGIN",
     "MANDATORY_FIRST_CHECKPOINT",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,6 +28,22 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument('--macro-v10-controls', action='store_true')
     mode.add_argument('--macro-v11-controls', action='store_true')
     mode.add_argument('--macro-v11-calibration', action='store_true')
+    mode.add_argument('--macro-v12', action='store_true')
+    parser.add_argument(
+        '--macro-v12-stage',
+        choices=(
+            'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS',
+            'O2_RESTART_PROBE_32', 'O2_RESTART_PROBE_64',
+            'O3_ORIGINAL', 'O3_NOTCH', 'O4_FINALIZE',
+        ),
+    )
+    parser.add_argument('--macro-v12-outer-restart', type=int, choices=(0, 32, 64))
+    parser.add_argument('--macro-v12-framework', choices=('BAL_H', 'ONE_C'))
+    parser.add_argument('--macro-v12-output', type=Path)
+    parser.add_argument(
+        '--macro-v12-inventory', type=Path,
+        default=Path('benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json'),
+    )
     parser.add_argument('--profile-budget-ledger', '--batch-budget-ledger', dest='profile_budget_ledger', type=Path)
     parser.add_argument('--macro-v10-inventory', type=Path,
                         default=Path('benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json'))
@@ -64,7 +81,47 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             return 0
-        from src.io.physical_recursive_profile import MACRO_V10_PROFILE, MACRO_V11_PROFILE
+        from src.io.physical_recursive_profile import (
+            MACRO_V10_PROFILE, MACRO_V11_PROFILE, MACRO_V12_PROFILE,
+        )
+        macro_v12 = args.macro_v12 or specification.solver.get('preconditioner') == MACRO_V12_PROFILE
+        if macro_v12:
+            if specification.solver.get('preconditioner') != MACRO_V12_PROFILE:
+                raise InputError(
+                    '--macro-v12 requires a .dat with solver.preconditioner=physical_macro_dd4_v12'
+                )
+            stage = specification.solver.get('stage')
+            if args.macro_v12_stage is not None and args.macro_v12_stage != stage:
+                raise InputError('--macro-v12-stage must match solver.stage in the .dat')
+            if stage is None:
+                raise InputError('V12 requires an explicit solver.stage')
+            outer_restart = int(specification.solver.get('outer_restart', 0))
+            if args.macro_v12_outer_restart is not None and args.macro_v12_outer_restart != outer_restart:
+                raise InputError('--macro-v12-outer-restart must match solver.outer_restart in the .dat')
+            try:
+                source_sha = subprocess.check_output(
+                    ['git', 'rev-parse', 'HEAD'], text=True,
+                ).strip()
+            except (OSError, subprocess.CalledProcessError) as exc:
+                raise InputError(f'cannot determine V12 source SHA: {exc}') from exc
+            ledger = args.profile_budget_ledger or Path(
+                'benchmarks/artifacts/task39extra/v12_o0_o4/v12_o0_o4_budget.json'
+            )
+            output = args.macro_v12_output or (
+                Path('benchmarks/artifacts/task39extra/v12_o0_o4')
+                / source_sha / stage.lower()
+            )
+            from src.runners.physical_recursive_entry import _launch_macro_v12_stage
+            launch_args = argparse.Namespace(
+                input=args.input_path, inventory=args.macro_v12_inventory,
+                output=output, budget=ledger, source_sha=source_sha, target='lo',
+                jit_cache=None, macro_v12=True, macro_v12_stage=stage,
+                macro_v12_outer_restart=outer_restart,
+                macro_v12_framework=args.macro_v12_framework,
+            )
+            result = _launch_macro_v12_stage(launch_args)
+            print(json.dumps(result, sort_keys=True, separators=(',', ':')))
+            return 0 if result.get('classification') == 'COMPLETED' else 3
         macro_v11 = (args.macro_v11_controls or args.macro_v11_calibration
                      or specification.solver.get('preconditioner') == MACRO_V11_PROFILE)
         macro_v10 = args.macro_v10_controls or specification.solver.get('preconditioner') == MACRO_V10_PROFILE

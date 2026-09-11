@@ -9,6 +9,8 @@ MACRO_V10_PROFILE = 'physical_macro_dd4_v10'
 MACRO_V10_PROFILES = (MACRO_V10_PROFILE,)
 MACRO_V11_PROFILE = 'physical_macro_dd4_v11'
 MACRO_V11_PROFILES = (MACRO_V11_PROFILE,)
+MACRO_V12_PROFILE = 'physical_macro_dd4_v12'
+MACRO_V12_PROFILES = (MACRO_V12_PROFILE,)
 
 
 def macro_v10_profile_facts():
@@ -109,6 +111,103 @@ def macro_v11_profile_facts():
         'icntl49': 'request 1 only when public getter/setter supports it',
         'unsupported_49': 'COMPACTION_UNSUPPORTED; continue if all other gates pass',
         'no_used_min_or_rss_offset': True,
+    }
+    return facts
+
+
+def macro_v12_profile_facts():
+    """Return the V12 full-validation contract.
+
+    V12 deliberately keeps the V11 symbolic-sized MUMPS policy and physical
+    operator.  Its only changed local allocation authority is the explicit
+    2.5 GiB complete-inventory cap; the old V10/V11 default remains 2 GiB.
+    The O0--O4 stages are recorded here so input validation, manifests, and
+    runners consume one immutable profile rather than duplicating limits.
+    """
+    facts = macro_v11_profile_facts()
+    facts.update(
+        identity=MACRO_V12_PROFILE,
+        scope='O0_O4_full_physical_macro_validation',
+        memory_policy='SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+        # V12 is the first profile that is permitted to enter the physical
+        # outer solve.  Do not inherit V10/V11's control-only switch or their
+        # M1-only accounting fields through the profile copy above.
+        outer_execution_enabled=True,
+        outer_pc_calls=None,
+        dat_contract={
+            'solver_preconditioner': MACRO_V12_PROFILE,
+            'solver_memory_policy': 'SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+            'dispatch': 'profile-selected macro V12 O0/O1/O2/O3/O4 stages',
+        },
+        qualification='opt_in; complete local inventory cap is 2.5 GiB; old defaults unchanged',
+    )
+    facts['macro_blocks'] = {
+        **facts['macro_blocks'],
+        'resident_cap_bytes': 2684354560,
+        'resident_cap_gib': 2.5,
+        'resident_inventory': 'complete simultaneous local arrays, W/P owner cache, C_U, and cached action',
+    }
+    facts['stage_budgets'] = {
+        'O0_PRECHECK': {'workflow_seconds': 7200, 'build_seconds': 3600, 'controls_seconds': 1200},
+        'O1_FULL_PHYSICAL_CONTROLS': {
+            'workflow_seconds': 7200, 'build_seconds': 3600, 'controls_seconds': 1200,
+        },
+        'O2_RESTART_PROBE_32': {'workflow_seconds': 3600, 'solve_seconds': 2400},
+        'O2_RESTART_PROBE_64': {'workflow_seconds': 3600, 'solve_seconds': 2400},
+        'O3_ORIGINAL': {'workflow_seconds': 14400, 'solve_seconds': 10800},
+        'O3_NOTCH': {'workflow_seconds': 14400, 'solve_seconds': 10800},
+        'O4_FINALIZE': {'workflow_seconds': 43200},
+    }
+    facts['O1'] = {
+        'bare_calibration_rhs': 6,
+        'shared_inputs': 3,
+        'new_I4_max': 12,
+        'reference_role': 'measurement_only_or_REFERENCE_UNAVAILABLE',
+        'one_c_gate': {
+            'valid_samples_min': 2,
+            'field_geometric_max': 0.80,
+            'field_maximum': 1.10,
+            'scaled_curl_geometric_max': 1.10,
+            'residual_geometric_max': 1.0,
+            'time_cumulative_max': 0.80,
+        },
+    }
+    facts['O2'] = {
+        'candidate_restarts': [32, 64],
+        'zero_start': True,
+        'same_rhs_and_A6': True,
+        'max_iterations': 64,
+        'checkpoint_nodes': [32, 40, 48, 56, 64],
+        'endpoint_residual_ratio_max_for_64': 0.50,
+        'endpoint_time_ratio_max_for_64': 1.25,
+        'both_fail_before_48': 'WHOLE_PC_COST_NOT_VIABLE',
+    }
+    facts['O3'] = {
+        'original_max_iterations': 2048,
+        'true_residual_interval': 8,
+        'checkpoint_interval': 32,
+        'early_stop_rules': {'rho_gt_0_10_seconds': 1800, 'rho_gt_1e-3_seconds': 5400},
+        'max_solve_seconds': 10800,
+        'conditional_notch': True,
+        'notch_geometry': 'existing V5 nonseparable 8-cell gap',
+    }
+    facts.pop('M1', None)
+    facts['resources'] = {
+        'workflow_seconds': 43200,
+        'cumulative_seconds': 43200,
+        'mpi_size': 1,
+        'require_zero_swap': True,
+        'build_and_controls_are_inclusive': True,
+        'o0_o1_shared_seconds': 7200,
+        'o2_probe_workflow_seconds': 3600,
+        'o2_probe_solve_seconds': 2400,
+        'o3_workflow_seconds': 14400,
+        'o3_solve_seconds': 10800,
+    }
+    facts['memory_policy_contract'] = {
+        **facts['memory_policy_contract'],
+        'complete_inventory_cap_bytes': 2684354560,
+        'old_profiles_cap_bytes': 2147483648,
     }
     return facts
 

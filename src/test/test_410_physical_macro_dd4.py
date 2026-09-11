@@ -41,6 +41,18 @@ def _bind_fixture_identities(local):
     ).hexdigest()
 
 
+def test_macro_local_inventory_cap_is_explicit_per_profile():
+    local = MacroLocalVolume.__new__(MacroLocalVolume)
+    local.memory_policy = "SYMBOLIC_SIZED_LOCAL_MUMPS_V11"
+    local.save = None
+    local._resident_bytes = lambda: 2_250_000_000
+    local.local_inventory_cap_bytes = 2_684_354_560
+    assert local._check_resident_gate("v12_fixture")["resident_cap_bytes"] == 2_684_354_560
+    local.local_inventory_cap_bytes = 2 * 1024**3
+    with pytest.raises(MemoryError, match="exceeds cap"):
+        local._check_resident_gate("old_profile_fixture")
+
+
 def test_macro_output_weights_are_partition_of_unity_and_reject_incomplete_coverage():
     with pytest.raises(ValueError, match="do not cover"):
         output_partition_weights([np.array([0, 2]), np.array([2, 3])], 4)
@@ -56,6 +68,7 @@ def test_macro_output_weights_are_partition_of_unity_and_reject_incomplete_cover
 
 def test_macro_representative_selection_uses_nonzero_dtn_rows_and_no_dtn_internal_support():
     local = MacroLocalVolume.__new__(MacroLocalVolume)
+    local.local_inventory_cap_bytes = 2 * 1024**3
     local.cell_tags = np.array([1, 1, 2], dtype=np.int32)
     local.blocks = [
         {"seed": (0, 0, 0), "indices": np.array([0]), "support_cells": np.array([0, 2])},
@@ -77,6 +90,7 @@ def test_macro_representative_selection_uses_nonzero_dtn_rows_and_no_dtn_interna
 def test_macro_block_uses_all_support_rows_and_mpc_master_phase_without_input_mutation():
     phase = np.exp(0.37j)
     local = MacroLocalVolume.__new__(MacroLocalVolume)
+    local.local_inventory_cap_bytes = 2 * 1024**3
     local.sample = _resource
     local.marker = lambda *_: None
     local.save = None
@@ -378,6 +392,7 @@ def test_make_macro_pc_runs_owned_outer_bal_h_with_separate_native_residual_acti
 
 def test_macro_add_dtn_single_singular_block_releases_petsc_objects():
     local = MacroLocalVolume.__new__(MacroLocalVolume)
+    local.local_inventory_cap_bytes = 2 * 1024**3
     local.sample = _resource
     events = []
     local.marker = lambda name, facts: events.append((name, facts))

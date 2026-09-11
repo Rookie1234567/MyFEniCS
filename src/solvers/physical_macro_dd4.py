@@ -160,6 +160,7 @@ class MacroLocalVolume:
         marker: Callable[[str, Mapping[str, Any]], Any],
         save: Callable[[str, Mapping[str, Any]], Any] | None = None,
         memory_policy: str = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY",
+        local_inventory_cap_bytes: int = LOCAL_RESIDENT_CAP,
     ) -> None:
         from .condensed_fine_reference import (
             native_map_arrays,
@@ -179,6 +180,9 @@ class MacroLocalVolume:
         self.marker = marker
         self.save = save
         self.memory_policy = memory_policy
+        self.local_inventory_cap_bytes = int(local_inventory_cap_bytes)
+        if self.local_inventory_cap_bytes <= 0:
+            raise ValueError("local inventory cap must be positive")
         self.mapping = native_map_arrays(levels["spaces"][4], levels["floquets"][4])
         self.project_dual = project_unconstrained_mpc_dual
         mesh = levels["mesh"]
@@ -312,15 +316,15 @@ class MacroLocalVolume:
             raise ValueError("macro builder produced no local physical classes")
         self._build_cell_groups(levels, geometry, geometry_dofmap)
         self.resident_bytes = self._resident_bytes()
-        if self.resident_bytes > LOCAL_RESIDENT_CAP:
-            raise MemoryError("macro local resident policy exceeds 2 GiB")
+        if self.resident_bytes > self.local_inventory_cap_bytes:
+            raise MemoryError("macro local resident policy exceeds its explicit cap")
         _save(save, "macro_local_volume_complete", {
             "schema": MACRO_SCHEMA,
             "cell_count": 252,
             "class_count": len(self.classes),
             "local_factor_count": len(self.classes),
             "retained_resident_bytes": self.resident_bytes,
-            "resident_cap_bytes": LOCAL_RESIDENT_CAP,
+            "resident_cap_bytes": self.local_inventory_cap_bytes,
             "temporary_workspace_reserve_bytes": LOCAL_TEMP_RESERVE,
             "p4_global_matrix": False,
             "p4_global_factor": False,
@@ -389,7 +393,85 @@ class MacroLocalVolume:
         total += int(sys.getsizeof(getattr(self, "blocks", ())))
         total += int(sum(sys.getsizeof(value) for value in getattr(self, "cell_coordinates", ())))
         total += int(sum(sys.getsizeof(value) for value in getattr(self, "cell_expansions", ())))
+
+        # W/P is an owner-local runtime cache created after coverage.  Its
+        # arrays are not aliases of the p4 class arrays in general, and the
+        # PETSc work fields plus the fixed owner packets remain alive while
+        # C_U and the outer PC are used.  Count this post-coverage inventory
+        # explicitly so a coverage-only snapshot cannot silently understate
+        # the profile cap.
+        def add_retained(value: Any, seen_containers: set[int]) -> int:
+            if isinstance(value, np.ndarray):
+                return add_array(value)
+            if isinstance(value, dict):
+                key = id(value)
+                if key in seen_containers:
+                    return 0
+                seen_containers.add(key)
+                return int(sys.getsizeof(value)) + sum(
+                    add_retained(item, seen_containers) for item in value.values()
+                )
+            if isinstance(value, (tuple, list, set, frozenset)):
+                key = id(value)
+                if key in seen_containers:
+                    return 0
+                seen_containers.add(key)
+                return int(sys.getsizeof(value)) + sum(
+                    add_retained(item, seen_containers) for item in value
+                )
+            return int(sys.getsizeof(value)) if value is not None else 0
+
+        container_ids: set[int] = set()
+        owner = getattr(self, "owner", None)
+        if owner is not None:
+            total += int(sys.getsizeof(owner))
+            for name in (
+                "_records", "_serial_owner_plan", "_dual_flat_slaves",
+                "_dual_flat_masters", "_dual_conjugated_coefficients",
+                "_dual_reduction_work", "_coarse_slaves", "_authority",
+            ):
+                total += add_retained(getattr(owner, name, None), container_ids)
+            for name in ("_coarse_work", "_fine_work"):
+                work = getattr(owner, name, None)
+                if work is not None:
+                    total += add_array(np.asarray(work.x.array))
+            for _key, transfer in getattr(owner, "_map_cache", ()):
+                total += int(sys.getsizeof(transfer))
+                total += add_array(getattr(transfer, "matrix", None))
+            local_transfer = getattr(owner, "local_transfer", None)
+            if local_transfer is not None:
+                total += int(sys.getsizeof(local_transfer))
+                total += add_array(getattr(local_transfer, "matrix", None))
+        transfer = getattr(self, "transfer", None)
+        if transfer is not None:
+            total += int(sys.getsizeof(transfer))
+            total += add_array(getattr(transfer, "fine_slaves", None))
+            total += add_array(getattr(transfer, "coarse_slaves", None))
+        cached_classes = getattr(self, "cached_classes", None)
+        if cached_classes is not None:
+            total += add_retained(cached_classes, container_ids)
+        cached_action = getattr(self, "cached_action", None)
+        if cached_action is not None:
+            total += int(sys.getsizeof(cached_action))
         return total
+
+    def _check_resident_gate(self, stage: str) -> dict[str, Any]:
+        """Recompute the complete retained inventory at a lifecycle boundary."""
+        self.resident_bytes = int(self._resident_bytes())
+        facts = {
+            "stage": str(stage),
+            "retained_inventory_bytes": self.resident_bytes,
+            "resident_cap_bytes": int(self.local_inventory_cap_bytes),
+            "memory_policy": self.memory_policy,
+            "classification": "derived_complete_local_inventory_gate",
+        }
+        _save(self.save, f"macro_local_inventory_{stage}", facts)
+        if self.resident_bytes > self.local_inventory_cap_bytes:
+            raise MemoryError(
+                f"macro local resident policy exceeds cap at {stage}: "
+                f"{self.resident_bytes} > {self.local_inventory_cap_bytes}"
+            )
+        return facts
 
     def _build_cell_groups(self, levels: Mapping[str, Any], geometry: np.ndarray, geometry_dofmap: np.ndarray) -> None:
         mapping = self.mapping
@@ -803,7 +885,7 @@ class MacroLocalVolume:
             # allocation workspace and the explicit temporary copy are
             # transient and belong to the RSS/launch-cap gate below, not to
             # the 2 GiB retained-cache policy.
-            if base_resident + estimated_matrix_bytes > LOCAL_RESIDENT_CAP:
+            if base_resident + estimated_matrix_bytes > self.local_inventory_cap_bytes:
                 raise MemoryError("macro block resident policy rejects sparse allocation")
             if not isinstance(resource, Mapping):
                 raise TypeError("macro block resource sample is not a mapping")
@@ -885,13 +967,13 @@ class MacroLocalVolume:
                         "factor_estimated_padded_bytes": estimated,
                         "factor_requested_padded_bytes": facts.get(
                             "factor_requested_padded_bytes", predicted),
-                        "resident_cap_bytes": LOCAL_RESIDENT_CAP,
+                        "resident_cap_bytes": self.local_inventory_cap_bytes,
                         "temporary_workspace_reserve_bytes": LOCAL_TEMP_RESERVE,
                         "resource": current,
                         "classification": "derived_local_factor_pre_numeric_gate",
                     }
                     _save(save, f"macro_block_{block_index:02d}_symbolic_gate", gate_facts)
-                    if (resident_before_factor_bytes + predicted > LOCAL_RESIDENT_CAP
+                    if (resident_before_factor_bytes + predicted > self.local_inventory_cap_bytes
                             or not current.get("all_status_readable", False)
                             or int(current.get("swap_bytes", 1)) != 0
                             or int(current.get("rss_bytes", 0)) + predicted + LOCAL_TEMP_RESERVE
@@ -942,7 +1024,7 @@ class MacroLocalVolume:
                 post_inventory_gate = {
                     "matrix_plus_reported_factor_bytes": post_conservative,
                     "retained_inventory_bytes": post_inventory,
-                    "local_factor_cap_bytes": LOCAL_RESIDENT_CAP,
+                    "local_factor_cap_bytes": self.local_inventory_cap_bytes,
                     "factor_hard_cap_bytes": 512 * 1024**2,
                     "resource": post_resource,
                     "allocated_padded_bytes": post_allocated,
@@ -958,7 +1040,7 @@ class MacroLocalVolume:
                     "post_backsolve_gate": post_inventory_gate,
                 })
                 if (post_conservative > 512 * 1024**2
-                        or post_inventory > LOCAL_RESIDENT_CAP
+                        or post_inventory > self.local_inventory_cap_bytes
                         or not post_resource.get("all_status_readable", False)
                         or int(post_resource.get("swap_bytes", 1)) != 0
                         or int(post_resource.get("rss_bytes", 0)) + LOCAL_TEMP_RESERVE
@@ -974,7 +1056,7 @@ class MacroLocalVolume:
                     block["matrix_storage_bytes"] + block["factor_reported_bytes"] + selected.nbytes
                 )
                 retained_after_factor = self._resident_bytes()
-                if retained_after_factor > LOCAL_RESIDENT_CAP:
+                if retained_after_factor > self.local_inventory_cap_bytes:
                     raise MemoryError(
                         "macro retained resident policy exceeded after block factorization"
                     )
@@ -1064,8 +1146,8 @@ class MacroLocalVolume:
         self.output_weights = np.zeros(n, dtype=np.float64)
         self.output_weights[independent] = 1.0 / multiplicity[independent].astype(np.float64)
         self.resident_bytes = self._resident_bytes()
-        if self.resident_bytes > LOCAL_RESIDENT_CAP:
-            raise MemoryError("macro local block resident policy exceeds 2 GiB")
+        if self.resident_bytes > self.local_inventory_cap_bytes:
+            raise MemoryError("macro local block resident policy exceeds its explicit cap")
         self.coverage = {
             "block_count": len(self.blocks),
             "independent_rows": int(independent.size),
@@ -1141,6 +1223,7 @@ class MacroLocalVolume:
         )
         self.owner = owner
         self.transfer = AlgebraicOwnerTransfer(owner)
+        self._check_resident_gate("after_w_transfer")
         return self.transfer
 
     def build_cached_action(self, dtn: Any, *, sample: Callable[[], Any]) -> Any:
@@ -1159,6 +1242,7 @@ class MacroLocalVolume:
             lifecycle="formal",
             safe_checkpoint=sample,
         )
+        self._check_resident_gate("after_cached_action")
         return self.cached_action
 
     def insert_volume(self, volume: Any, space: Any, mpc: Any) -> None:
@@ -1538,6 +1622,51 @@ def destroy_macro_stack(stack: dict[str, Any]) -> None:
     stack.clear()
 
 
+def release_macro_auxiliary_for_recovery(stack: dict[str, Any]) -> dict[str, Any]:
+    """Release DD4/outer storage while retaining only the p6 recovery bundle.
+
+    Official output recovery evaluates the already-solved p6 field and does
+    not need the local factors, C_U, p4 actions, positive hierarchy, or outer
+    bookkeeping.  Keeping those objects live during post-processing would
+    turn a valid solve into an avoidable simultaneous-memory violation.
+    """
+
+    ledger = stack.pop("outer_ledger", None)
+    if ledger is not None:
+        ledger.destroy()
+    bottom = stack.pop("p2_inverse", None)
+    if bottom is not None:
+        bottom.destroy()
+    matrix = stack.pop("p2_matrix", None)
+    if matrix is not None:
+        matrix.destroy()
+    local = stack.pop("local", None)
+    if local is not None:
+        local.destroy()
+    actions = stack.pop("actions", None)
+    if actions is not None:
+        from .fullspace_physical_intermediate_runtime import (
+            destroy_physical_intermediate_actions,
+        )
+        quadrature = actions.get("volume_quadrature_metadata")
+        stack["recovery_quadrature_metadata"] = quadrature
+        destroy_physical_intermediate_actions(actions)
+    positive = stack.pop("positive", None)
+    if positive is not None:
+        h6 = positive.pop("h6", None)
+        if h6 is not None:
+            h6.destroy()
+        shell = positive.pop("p6_shell", None)
+        if shell is not None:
+            shell.destroy()
+    for key in (
+        "B4", "a4", "a4_native", "a4_bridge", "internal", "volume",
+        "additive", "coarse", "I4", "outer_pc",
+    ):
+        stack.pop(key, None)
+    return stack
+
+
 def build_macro_stack(
     cfg: Any,
     comm: Any,
@@ -1546,6 +1675,7 @@ def build_macro_stack(
     marker: Callable[[str, Mapping[str, Any]], Any],
     save: Callable[[str, Mapping[str, Any]], Any] | None = None,
     memory_policy: str = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY",
+    local_inventory_cap_bytes: int = LOCAL_RESIDENT_CAP,
 ) -> dict[str, Any]:
     """Build the actual 6/4/2 candidate without an old entity route."""
 
@@ -1554,6 +1684,7 @@ def build_macro_stack(
         return _build_macro_stack_impl(
             cfg, comm, sample=sample, marker=marker, save=save, owned=owned,
             memory_policy=memory_policy,
+            local_inventory_cap_bytes=local_inventory_cap_bytes,
         )
     except BaseException:
         destroy_macro_stack(owned)
@@ -1569,6 +1700,7 @@ def _build_macro_stack_impl(
     save: Callable[[str, Mapping[str, Any]], Any] | None = None,
     owned: dict[str, Any],
     memory_policy: str = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY",
+    local_inventory_cap_bytes: int = LOCAL_RESIDENT_CAP,
 ) -> dict[str, Any]:
     """Internal builder whose partial ownership is visible to the wrapper."""
 
@@ -1598,6 +1730,7 @@ def _build_macro_stack_impl(
     local = MacroLocalVolume(
         levels, cfg, actions, sample=sample, marker=marker, save=save,
         memory_policy=memory_policy,
+        local_inventory_cap_bytes=local_inventory_cap_bytes,
     )
     owned["local"] = local
     native_a4 = actions["physical"][4]["physical_action"]
@@ -1660,6 +1793,7 @@ def _build_macro_stack_impl(
         action_identity="composed_WHA4W_cached_current_A4", extra_local_bytes=0,
     )
     owned["p2_inverse"] = bottom
+    local._check_resident_gate("after_cu")
     internal = MacroInternalResponse(local, levels)
     volume = MacroVolume(local, levels)
     additive = MacroAdditiveInverse(local, levels)
@@ -1705,6 +1839,7 @@ def build_macro_calibration_context(
     marker: Callable[[str, Mapping[str, Any]], Any],
     save: Callable[[str, Mapping[str, Any]], Any] | None = None,
     memory_policy: str = "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+    local_inventory_cap_bytes: int = LOCAL_RESIDENT_CAP,
 ) -> dict[str, Any]:
     """Build only the shared physical data needed for V11 block calibration.
 
@@ -1733,6 +1868,7 @@ def build_macro_calibration_context(
         local = MacroLocalVolume(
             levels, cfg, actions, sample=sample, marker=marker, save=save,
             memory_policy=memory_policy,
+            local_inventory_cap_bytes=local_inventory_cap_bytes,
         )
         owned["local"] = local
         native_a4 = actions["physical"][4]["physical_action"]
@@ -1807,6 +1943,7 @@ __all__ = [
     "MacroLocalVolume",
     "build_macro_stack",
     "destroy_macro_stack",
+    "release_macro_auxiliary_for_recovery",
     "make_macro_pc",
     "output_partition_weights",
 ]

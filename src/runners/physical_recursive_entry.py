@@ -3,11 +3,14 @@ import argparse
 import fcntl
 import hashlib
 import json
+from math import isfinite
 import os
 from pathlib import Path
 import subprocess
 import sys
 import time
+
+import numpy as np
 
 from src.io.input_loader import InputError
 
@@ -84,6 +87,19 @@ def particular_contract():
 
 
 def selected_contract(args):
+    if getattr(args, 'macro_v12', False):
+        from src.io.physical_recursive_profile import macro_v12_profile_facts
+        contract = macro_v12_profile_facts()
+        contract.update(
+            workflow=getattr(args, 'macro_v12_stage', None) or 'profile_selected_stage',
+            fixed_source='original physical model or existing V5 nonseparable notch for O3_NOTCH',
+            inventory_role='G0 hash-bound maps and existing V5 reference bindings',
+            reference_role='measurement only; no new reference factor or solve',
+            full_outer_solve=True,
+            global_swap_stop=True,
+            memory_policy='SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+        )
+        return contract
     macro_v11 = (getattr(args, 'macro_v11_controls', False)
                  or getattr(args, 'macro_v11_calibration', False))
     if macro_v11 or getattr(args, 'macro_v10_controls', False):
@@ -233,6 +249,40 @@ def selected_contract(args):
 def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,input_path=None,
                         model_identity=None, build_started=None):
     from . import physical_recursive_controls as controls
+    if getattr(args, 'macro_v12', False):
+        from .physical_macro_v12 import (
+            run_macro_v12_finalize, run_macro_v12_outer, run_macro_v12_precheck,
+        )
+        stage = getattr(args, 'macro_v12_stage', None)
+        if stage == 'O0_PRECHECK':
+            return run_macro_v12_precheck(
+                args.inventory, directory, source_sha=source_sha,
+                input_path=input_path, model_identity=model_identity,
+            )
+        if stage in {'O2_RESTART_PROBE_32', 'O2_RESTART_PROBE_64', 'O3_ORIGINAL', 'O3_NOTCH'}:
+            return run_macro_v12_outer(
+                cfg, comm, args.inventory, directory, sample=sample, marker=marker,
+                source_sha=source_sha, input_path=input_path,
+                model_identity=model_identity, stage=stage,
+                outer_restart=int(getattr(args, 'macro_v12_outer_restart', 0)),
+                framework=getattr(args, 'macro_v12_framework', 'BAL_H'),
+            )
+        if stage == 'O1_FULL_PHYSICAL_CONTROLS':
+            from .physical_macro_controls import run_macro_m1_controls
+            return run_macro_m1_controls(
+                cfg, comm, args.inventory, directory, sample=sample, marker=marker,
+                source_sha=source_sha, input_path=input_path,
+                model_identity=model_identity, build_started=build_started,
+                profile='physical_macro_dd4_v12',
+                memory_policy='SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+            )
+        if stage == 'O4_FINALIZE':
+            return run_macro_v12_finalize(
+                args.inventory, directory, source_sha=source_sha,
+                input_path=input_path, model_identity=model_identity,
+                budget_path=getattr(args, 'budget', None),
+            )
+        raise ValueError(f'unsupported V12 stage {stage!r}')
     if getattr(args, 'macro_v11_calibration', False):
         from .physical_macro_controls import run_macro_n1_calibration
         return run_macro_n1_calibration(
@@ -337,14 +387,25 @@ def worker(args):
     if parent==os.getpid() or not Path(f'/proc/{parent}').exists():raise RuntimeError('dedicated parent missing')
     macro=(getattr(args, 'macro_v10_controls', False)
            or getattr(args, 'macro_v11_controls', False)
-           or getattr(args, 'macro_v11_calibration', False))
+           or getattr(args, 'macro_v11_calibration', False)
+           or getattr(args, 'macro_v12', False))
     macro_v11=(getattr(args, 'macro_v11_controls', False)
                or getattr(args, 'macro_v11_calibration', False))
     macro_v11_calibration=getattr(args, 'macro_v11_calibration', False)
+    macro_v12=getattr(args, 'macro_v12', False)
     build_started = time.perf_counter() if macro else None
     payload=load_and_resolve(args.input).as_jsonable()
-    if (payload['provenance']['physical_model_sha256']!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
-        or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
+    if getattr(args, 'macro_v12', False):
+        allowed_v12_models = {
+            '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f',
+            '7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec',
+        }
+        if payload['provenance']['physical_model_sha256'] not in allowed_v12_models:
+            raise ValueError('V12 requires one of the frozen original or V5 notch physical models')
+        if payload['geometry'].get('cell_notch') and getattr(args, 'macro_v12_stage', None) != 'O3_NOTCH':
+            raise ValueError('cell_notch is authorized only for the conditional V12 O3_NOTCH stage')
+    elif (payload['provenance']['physical_model_sha256']!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
+          or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
     cfg=simulation_config_3d_from_normalized(payload)
     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_enriched_component;particular=args.bubble_particular_diagnostic
     contract=selected_contract(args);root=Path(args.output)
@@ -376,7 +437,8 @@ def worker(args):
     ).hexdigest()
     if macro:
         control_phase = (
-            'V11_N1_calibration' if macro_v11_calibration
+            f"V12_{getattr(args, 'macro_v12_stage', 'stage')}" if getattr(args, 'macro_v12', False)
+            else 'V11_N1_calibration' if macro_v11_calibration
             else 'V11_M1_controls' if macro_v11 else 'V10_M1_controls'
         )
         manifest = {
@@ -439,8 +501,10 @@ def worker(args):
             )
             atomic(root/'run_manifest.json', manifest)
             atomic(root/'run_summary.json', {
-                'schema': ('task39extra.review-v11.m1-run-summary.v1'
-                           if macro_v11 else 'task39extra.review-v10.m1-run-summary.v1'),
+            'schema': ('task39extra.review-v12.stage-run-summary.v1'
+                       if macro_v12 else
+                       'task39extra.review-v11.m1-run-summary.v1'
+                       if macro_v11 else 'task39extra.review-v10.m1-run-summary.v1'),
                 'status': 'COMPLETED',
                 'command': [sys.executable, *sys.argv],
                 'source_sha': source['head'],
@@ -469,6 +533,9 @@ def worker(args):
             return result
         except BaseException as exc:
             partial_path = root / 'records' / (
+                'outer_summary.json' if macro_v12 and getattr(args, 'macro_v12_stage', '').startswith(('O2_', 'O3_')) else
+                'm1_summary.json' if macro_v12 and getattr(args, 'macro_v12_stage', '') == 'O1_FULL_PHYSICAL_CONTROLS' else
+                'o0_summary.json' if macro_v12 else
                 'n1_summary.json' if macro_v11_calibration else 'm1_summary.json'
             )
             partial = {}
@@ -506,7 +573,9 @@ def worker(args):
                             exception=str(exc), partial_m1_summary=partial_evidence)
             atomic(root/'run_manifest.json', manifest)
             atomic(root/'run_summary.json', {
-                'schema': ('task39extra.review-v11.m1-run-summary.v1'
+                'schema': ('task39extra.review-v12.stage-run-summary.v1'
+                           if macro_v12 else
+                           'task39extra.review-v11.m1-run-summary.v1'
                            if macro_v11 else 'task39extra.review-v10.m1-run-summary.v1'),
                 'status': 'FAILED',
                 'command': [sys.executable, *sys.argv],
@@ -700,6 +769,14 @@ def build_parser():
     group.add_argument('--macro-v10-controls', action='store_true')
     group.add_argument('--macro-v11-controls', action='store_true')
     group.add_argument('--macro-v11-calibration', action='store_true')
+    group.add_argument('--macro-v12', action='store_true')
+    parser.add_argument('--macro-v12-stage', choices=(
+        'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS',
+        'O2_RESTART_PROBE_32', 'O2_RESTART_PROBE_64',
+        'O3_ORIGINAL', 'O3_NOTCH', 'O4_FINALIZE',
+    ), default=None)
+    parser.add_argument('--macro-v12-outer-restart', type=int, choices=(0, 32, 64), default=0)
+    parser.add_argument('--macro-v12-framework', choices=('BAL_H', 'ONE_C'), default='BAL_H')
     parser.add_argument('--bounded-j1-route', choices=('ENTITY16', 'PROJECTED_SEQ2_16',
                                                        'ENTITY_GCROT8',
                                                        'ENTITY_GCROT8_NEW16'),
@@ -768,6 +845,16 @@ MACRO_V11_BUILD_LIMIT_SECONDS = 3600.0
 MACRO_V11_CONTROLS_LIMIT_SECONDS = 1200.0
 MACRO_V11_CALIBRATION_LIMIT_SECONDS = 900.0
 MACRO_V11_LEDGER_SCHEMA = 'task39extra.review-v11-n0-n2-budget.v1'
+MACRO_V12_LEDGER_SCHEMA = 'task39extra.review-v12-o0-o4-budget.v1'
+MACRO_V12_STAGE_LIMITS = {
+    'O0_PRECHECK': 7200.0,
+    'O1_FULL_PHYSICAL_CONTROLS': 7200.0,
+    'O2_RESTART_PROBE_32': 3600.0,
+    'O2_RESTART_PROBE_64': 3600.0,
+    'O3_ORIGINAL': 14400.0,
+    'O3_NOTCH': 14400.0,
+    'O4_FINALIZE': 43200.0,
+}
 
 
 def _j1_charge_seconds(budget):
@@ -821,6 +908,40 @@ def _load_macro_ledger(path, *, v11=False):
 
 def _macro_charged_seconds(budget):
     return float(budget.get('charged_seconds', 0.0))
+
+
+def _load_v12_ledger(path):
+    """Load the pre-recorded V12 activity ledger; never invent its debit."""
+
+    path = Path(path)
+    if not path.is_file():
+        raise ValueError(
+            'V12 O0-O4 ledger is missing; create the explicit artifact ledger '
+            'with its implementation_activity record before launching a stage'
+        )
+    budget = json.loads(path.read_text())
+    if budget.get('schema') != MACRO_V12_LEDGER_SCHEMA:
+        raise ValueError('V12 stage requires its independent O0-O4 ledger')
+    expected_limits = {
+        'total_limit_seconds': 43200.0,
+        'o0_o1_limit_seconds': 7200.0,
+    }
+    for key, expected in expected_limits.items():
+        if budget.get(key) != expected:
+            raise ValueError(f'V12 ledger has the wrong {key}')
+    implementation = budget.get('implementation_activity')
+    if not isinstance(implementation, dict):
+        raise ValueError('V12 ledger must contain the explicit implementation_activity record')
+    implementation_seconds = implementation.get('charged_seconds')
+    if not isinstance(implementation_seconds, (int, float)) or not isfinite(float(implementation_seconds)):
+        raise ValueError('V12 implementation_activity charged_seconds is invalid')
+    if float(implementation_seconds) < 0.0:
+        raise ValueError('V12 implementation_activity charged_seconds must be non-negative')
+    if float(budget.get('charged_seconds', 0.0)) < float(implementation_seconds):
+        raise ValueError('V12 ledger charged_seconds is below its implementation debit')
+    if float(budget.get('o0_o1_charged_seconds', 0.0)) < float(implementation_seconds):
+        raise ValueError('V12 O0/O1 ledger charge is below its implementation debit')
+    return budget
 
 
 def _launch_macro_m1_controls(args):
@@ -1167,6 +1288,646 @@ def launch_macro_v11_calibration(specification, budget_path, inventory_path):
     return _launch_macro_n1_calibration(args)
 
 
+def _launch_macro_v12_stage(args):
+    """Supervise one explicit V12 stage with serial, hash-bound admission."""
+    from benchmarks.subreaper_watchdog import supervise
+    from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
+
+    stage = getattr(args, 'macro_v12_stage', None)
+    if stage not in MACRO_V12_STAGE_LIMITS:
+        raise ValueError('V12 requires an explicit O0/O1/O2/O3/O4 stage')
+    source = git_state(args.source_sha)
+    budget_path = Path(args.budget).resolve()
+    inventory_path = Path(args.inventory).resolve()
+    input_path = Path(args.input).resolve()
+    if not inventory_path.is_file():
+        raise ValueError('V12 requires the audited G0 inventory')
+    if not input_path.is_file():
+        raise ValueError(f'V12 input is missing: {input_path}')
+    input_sha256 = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    inventory_sha256 = hashlib.sha256(inventory_path.read_bytes()).hexdigest()
+    from src.io import load_and_resolve
+    specification = load_and_resolve(input_path)
+    input_payload = specification.as_jsonable()
+    if input_payload['solver'].get('preconditioner') != 'physical_macro_dd4_v12':
+        raise ValueError('V12 stage input must select physical_macro_dd4_v12')
+    if input_payload['solver'].get('stage') != stage:
+        raise ValueError('V12 stage input solver.stage does not match the admitted stage')
+    physical_model_sha256 = str(input_payload['provenance']['physical_model_sha256'])
+    if physical_model_sha256 not in {
+        '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f',
+        '7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec',
+    }:
+        raise ValueError('V12 stage input is outside the two frozen physical model identities')
+
+    def summary_path(entry):
+        root = Path(entry['root'])
+        name = (
+            'o0_summary.json' if entry['stage'] == 'O0_PRECHECK' else
+            'm1_summary.json' if entry['stage'] == 'O1_FULL_PHYSICAL_CONTROLS' else
+            'outer_summary.json' if entry['stage'].startswith(('O2_', 'O3_')) else
+            'o4_summary.json'
+        )
+        return root / 'records' / name
+
+    def stage_entry(budget, selected_stage):
+        entries = [item for item in budget.get('attempts', []) if item.get('stage') == selected_stage]
+        if len(entries) > 1:
+            raise ValueError(f'V12 stage has duplicate ledger attempts: {selected_stage}')
+        return entries[0] if entries else None
+
+    def load_summary(budget, selected_stage):
+        entry = stage_entry(budget, selected_stage)
+        if entry is None:
+            return None
+        path = summary_path(entry)
+        if not path.is_file():
+            raise ValueError(f'V12 completed ledger entry has no stage summary: {path}')
+        return json.loads(path.read_text())
+
+    def require_completed(budget, selected_stage):
+        entry = stage_entry(budget, selected_stage)
+        if entry is None or entry.get('status') != 'COMPLETED':
+            raise ValueError(f'V12 stage {selected_stage} must complete before {stage}')
+        return entry, load_summary(budget, selected_stage)
+
+    def has_terminal_record(entry):
+        if entry is None:
+            return False
+        terminal_path = Path(entry.get('root', '')) / 'terminal.json'
+        if not terminal_path.is_file():
+            return False
+        try:
+            terminal = json.loads(terminal_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            return False
+        return (
+            isinstance(terminal.get('classification'), str)
+            and bool(terminal.get('classification'))
+            and isinstance(terminal.get('descendants_cleared'), bool)
+        )
+
+    def select_o2(budget):
+        available = []
+        for restart, selected_stage in ((32, 'O2_RESTART_PROBE_32'), (64, 'O2_RESTART_PROBE_64')):
+            entry = stage_entry(budget, selected_stage)
+            if entry is None:
+                continue
+            if entry.get('status') != 'COMPLETED':
+                raise ValueError(f'V12 O2 entry is not completed: {selected_stage}')
+            summary = load_summary(budget, selected_stage)
+            candidate = summary.get('candidates', [{}])[0]
+            available.append((restart, entry, summary, candidate))
+        if not available:
+            raise ValueError('V12 O2 selection requires at least one completed probe')
+
+        def watchdog_valid(entry):
+            terminal_path = Path(entry['root']) / 'terminal.json'
+            if not terminal_path.is_file():
+                return False
+            terminal = json.loads(terminal_path.read_text())
+            global_activity = terminal.get('global_swap_activity')
+            global_delta = (
+                global_activity.get('delta')
+                if isinstance(global_activity, dict) else None
+            )
+            global_zero = (
+                isinstance(global_delta, dict)
+                and all(global_delta.get(key) == 0 for key in (
+                    'pswpin_pages', 'pswpout_pages',
+                ))
+            )
+            job_zero = terminal.get('job_swap_activity') == (
+                'zero_supported_by_zero_global_activity'
+            )
+            required = (
+                terminal.get('classification') == 'COMPLETED'
+                and terminal.get('descendants_cleared') is True
+                and not terminal.get('remaining_child_pids')
+                and terminal.get('sampled_process_tree_swap_peak_bytes') == 0
+                and global_zero
+                and job_zero
+                and isinstance(terminal.get('launch_envelope'), dict)
+            )
+            return bool(required)
+
+        def node_resources_valid(candidate):
+            records = candidate.get('node_records', [])
+            return bool(records) and all(
+                item.get('resource', {}).get('all_status_readable') is True
+                and item.get('resource', {}).get('swap_bytes') == 0
+                for item in records
+            )
+
+        def load_node_checkpoint(candidate, iteration):
+            facts = [
+                item for item in candidate.get('node_checkpoint_facts', [])
+                if int(item.get('iteration', -1)) == int(iteration)
+            ]
+            if len(facts) != 1:
+                return None, {
+                    'iteration': int(iteration),
+                    'status': 'CHECKPOINT_MISSING_OR_DUPLICATE',
+                    'count': len(facts),
+                }
+            fact = facts[0]
+            manifest_path = Path(str(fact.get('manifest_path', ''))).resolve()
+            if not manifest_path.is_file():
+                return None, {
+                    'iteration': int(iteration), 'status': 'MANIFEST_MISSING',
+                    'path': str(manifest_path),
+                }
+            actual_manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+            if actual_manifest_sha != fact.get('manifest_sha256'):
+                return None, {
+                    'iteration': int(iteration), 'status': 'MANIFEST_HASH_MISMATCH',
+                    'path': str(manifest_path),
+                }
+            manifest = json.loads(manifest_path.read_text())
+            if (
+                manifest.get('schema') != 'fixed-memory-krylov.solution-checkpoint.v1'
+                or manifest.get('solution_only') is not True
+                or manifest.get('numeric_allgather') is not False
+                or int(manifest.get('iteration', -1)) != int(iteration)
+                or int(manifest.get('mpi_size', -1)) != 1
+            ):
+                return None, {
+                    'iteration': int(iteration), 'status': 'MANIFEST_CONTRACT_MISMATCH',
+                }
+            expected_operator = {
+                item.get('operator_identity_sha256')
+                for item in candidate.get('node_records', [])
+                if int(item.get('iteration', -1)) == int(iteration)
+            }
+            expected_physical = {
+                item.get('physical_model_sha256')
+                for item in candidate.get('node_records', [])
+                if int(item.get('iteration', -1)) == int(iteration)
+            }
+            if (
+                len(expected_operator) != 1
+                or len(expected_physical) != 1
+                or manifest.get('operator_identity_sha256') not in expected_operator
+                or manifest.get('physical_model_sha256') not in expected_physical
+            ):
+                return None, {
+                    'iteration': int(iteration), 'status': 'IDENTITY_MISMATCH',
+                }
+            ranks = manifest.get('ranks', [])
+            if len(ranks) != 1 or int(ranks[0].get('rank', -1)) != 0:
+                return None, {
+                    'iteration': int(iteration), 'status': 'RANK_INVENTORY_MISMATCH',
+                }
+            descriptor = ranks[0].get('solution', {})
+            relative_path = descriptor.get('relative_path')
+            if not isinstance(relative_path, str):
+                return None, {
+                    'iteration': int(iteration), 'status': 'SOLUTION_DESCRIPTOR_MISSING',
+                }
+            solution_path = (manifest_path.parent / relative_path).resolve()
+            if manifest_path.parent not in solution_path.parents or not solution_path.is_file():
+                return None, {
+                    'iteration': int(iteration), 'status': 'SOLUTION_PATH_INVALID',
+                }
+            if hashlib.sha256(solution_path.read_bytes()).hexdigest() != descriptor.get('sha256'):
+                return None, {
+                    'iteration': int(iteration), 'status': 'SOLUTION_HASH_MISMATCH',
+                }
+            values = np.asarray(np.load(solution_path, allow_pickle=False))
+            if (
+                values.dtype != np.dtype('complex128')
+                or list(values.shape) != list(descriptor.get('shape', []))
+                or not np.isfinite(values).all()
+            ):
+                return None, {
+                    'iteration': int(iteration), 'status': 'SOLUTION_ARRAY_INVALID',
+                }
+            return values.copy(), {
+                'iteration': int(iteration),
+                'status': 'AVAILABLE',
+                'manifest_path': str(manifest_path),
+                'manifest_sha256': actual_manifest_sha,
+                'solution_path': str(solution_path),
+                'solution_sha256': descriptor.get('sha256'),
+                'operator_identity_sha256': manifest.get('operator_identity_sha256'),
+                'physical_model_sha256': manifest.get('physical_model_sha256'),
+                'input_identity_sha256': manifest.get('input_identity_sha256'),
+            }
+
+        def first32_identity(candidate):
+            records = {int(item.get('iteration', -1)): item for item in candidate.get('node_records', [])}
+            required_iterations = (8, 16, 24, 32)
+            if any(iteration not in records for iteration in required_iterations):
+                return False, None
+            identity_keys = (
+                'operator_identity_sha256', 'physical_model_sha256',
+            )
+            identities = {
+                tuple(records[iteration].get(key) for key in identity_keys)
+                for iteration in required_iterations
+            }
+            residuals = [
+                float(records[iteration].get('true_residual'))
+                for iteration in required_iterations
+            ]
+            norms = [
+                float(records[iteration].get('solution_norm'))
+                for iteration in required_iterations
+            ]
+            finite = all(isfinite(value) for value in residuals + norms)
+            checkpoints = {}
+            checkpoint_facts = {}
+            for iteration in required_iterations:
+                values, facts = load_node_checkpoint(candidate, iteration)
+                checkpoint_facts[str(iteration)] = facts
+                if values is None:
+                    return False, {
+                        'identity': None,
+                        'iterations': list(required_iterations),
+                        'true_residuals': residuals,
+                        'solution_norms': norms,
+                        'checkpoint_facts': checkpoint_facts,
+                    }
+                checkpoints[iteration] = values
+            if not finite or len(identities) != 1:
+                return False, None
+            identity = next(iter(identities))
+            if any(value is None for value in identity):
+                return False, None
+            return True, {
+                'identity': list(identity),
+                'iterations': list(required_iterations),
+                'true_residuals': residuals,
+                'solution_norms': norms,
+                'checkpoint_facts': checkpoint_facts,
+            }
+
+        def compare_first32(candidate32, candidate64):
+            if candidate32 is None or candidate64 is None:
+                return False, {'status': 'CANDIDATE_MISSING'}
+            rows = []
+            qualified = True
+            for iteration in (8, 16, 24, 32):
+                left, left_facts = load_node_checkpoint(candidate32, iteration)
+                right, right_facts = load_node_checkpoint(candidate64, iteration)
+                if left is None or right is None:
+                    qualified = False
+                    rows.append({
+                        'iteration': iteration,
+                        'status': 'CHECKPOINT_UNAVAILABLE',
+                        'left': left_facts,
+                        'right': right_facts,
+                    })
+                    continue
+                if left.shape != right.shape:
+                    qualified = False
+                    rows.append({
+                        'iteration': iteration,
+                        'status': 'SOLUTION_SHAPE_MISMATCH',
+                        'left_shape': list(left.shape),
+                        'right_shape': list(right.shape),
+                    })
+                    continue
+                denominator = max(float(np.linalg.norm(right)), np.finfo(float).tiny)
+                solution_relative = float(np.linalg.norm(left - right) / denominator)
+                solution_max_absolute = float(np.max(np.abs(left - right), initial=0.0))
+                left_record = next(
+                    item for item in candidate32.get('node_records', [])
+                    if int(item.get('iteration', -1)) == iteration
+                )
+                right_record = next(
+                    item for item in candidate64.get('node_records', [])
+                    if int(item.get('iteration', -1)) == iteration
+                )
+                left_residual = float(left_record['true_residual'])
+                right_residual = float(right_record['true_residual'])
+                residual_absolute = abs(left_residual - right_residual)
+                residual_relative = residual_absolute / max(
+                    abs(right_residual), np.finfo(float).tiny,
+                )
+                row_pass = bool(
+                    isfinite(solution_relative)
+                    and isfinite(solution_max_absolute)
+                    and isfinite(residual_relative)
+                    and solution_relative <= 1.0e-8
+                    and residual_relative <= 1.0e-8
+                )
+                qualified = qualified and row_pass
+                rows.append({
+                    'iteration': iteration,
+                    'status': 'PASS' if row_pass else 'DIFFERENCE_OVER_LIMIT',
+                    'solution_relative_difference': solution_relative,
+                    'solution_max_absolute_difference': solution_max_absolute,
+                    'true_residual_32': left_residual,
+                    'true_residual_64': right_residual,
+                    'true_residual_absolute_difference': residual_absolute,
+                    'true_residual_relative_difference': residual_relative,
+                    'limit': 1.0e-8,
+                    'left_checkpoint': left_facts,
+                    'right_checkpoint': right_facts,
+                })
+            return qualified, {
+                'status': 'PASS' if qualified else 'FAIL',
+                'iterations': [8, 16, 24, 32],
+                'limit': 1.0e-8,
+                'nodes': rows,
+            }
+
+        candidate_facts = {}
+        for restart, entry, summary, candidate in available:
+            node_ok, first32 = first32_identity(candidate)
+            candidate_facts[str(restart)] = {
+                'root': entry['root'],
+                'summary_status': summary.get('status'),
+                'iterations': int(candidate.get('iterations', 0)),
+                'final_true_residual': candidate.get('final_true_residual'),
+                'elapsed_seconds_wall': candidate.get('elapsed_seconds_wall'),
+                'reached48': int(candidate.get('iterations', 0)) >= 48,
+                'reached64': int(candidate.get('iterations', 0)) >= 64,
+                'official_result_pass': (summary.get('official_result') or {}).get('status') == 'OFFICIAL_RESULT_PASS',
+                'node_resources_valid': node_resources_valid(candidate),
+                'watchdog_resources_valid': watchdog_valid(entry),
+                'first32_identity_pass': node_ok,
+                'first32': first32,
+            }
+        candidate32 = next((item[3] for item in available if item[0] == 32), None)
+        candidate64 = next((item[3] for item in available if item[0] == 64), None)
+        fact32 = candidate_facts.get('32')
+        fact64 = candidate_facts.get('64')
+        reached48_32 = bool(fact32 and fact32['reached48'])
+        reached48_64 = bool(fact64 and fact64['reached48'])
+        reached64_32 = bool(fact32 and fact32['reached64'])
+        reached64_64 = bool(fact64 and fact64['reached64'])
+        both64 = reached64_32 and reached64_64
+        first32_cross_ok = False
+        first32_cross = {'status': 'NOT_AVAILABLE'}
+        if candidate32 is not None and candidate64 is not None:
+            first32_cross_ok, first32_cross = compare_first32(candidate32, candidate64)
+        first32_incomplete = bool(
+            candidate32 is None
+            or candidate64 is None
+            or int(candidate32.get('iterations', 0)) < 32
+            or int(candidate64.get('iterations', 0)) < 32
+        )
+        first32_identity_invalid = bool(
+            candidate32 is not None
+            and candidate64 is not None
+            and not first32_cross_ok
+            and not first32_incomplete
+        )
+        residual_ratio = None
+        time_ratio = None
+        choose64 = False
+        if both64:
+            denominator = float(candidate32.get('final_true_residual', 0.0))
+            residual_ratio = float(candidate64.get('final_true_residual', 0.0)) / max(denominator, 1.0e-300)
+            time_ratio = float(candidate64.get('elapsed_seconds_wall', 0.0)) / max(
+                float(candidate32.get('elapsed_seconds_wall', 0.0)), 1.0e-300,
+            )
+            choose64 = bool(
+                fact32['node_resources_valid'] and fact64['node_resources_valid']
+                and fact32['watchdog_resources_valid'] and fact64['watchdog_resources_valid']
+                and fact32['first32_identity_pass'] and fact64['first32_identity_pass']
+                and first32_cross_ok
+                and residual_ratio <= 0.50 and time_ratio <= 1.25
+            )
+        physical_shortcut = len(available) == 1 and candidate_facts[str(available[0][0])]['official_result_pass']
+        if first32_identity_invalid:
+            selection_status = 'O2_SELECTION_IDENTITY_INVALID'
+        elif not reached48_32 and not reached48_64 and not physical_shortcut:
+            selection_status = 'WHOLE_PC_COST_NOT_VIABLE'
+        else:
+            selection_status = 'O2_SELECTION_COMPLETED'
+        selected_restart = available[0][0] if len(available) == 1 else (64 if choose64 else 32)
+        if len(available) == 1 and available[0][0] == 64 and not physical_shortcut:
+            selected_restart = 64
+        selection = {
+            'schema': 'task39extra.review-v12.o2-selection.v1',
+            'status': selection_status,
+            'selected_restart': selected_restart,
+            'selected_framework': budget.get('selected_framework'),
+            'candidates': candidate_facts,
+            'both_reached64': both64,
+            'physical_probe_shortcut': physical_shortcut,
+            'first32_cross_identity_pass': first32_cross_ok,
+            'first32_cross_identity': first32_cross,
+            'first32_cross_identity_status': (
+                'PASS' if first32_cross_ok else
+                'NOT_REQUIRED_PHYSICAL_SHORTCUT' if physical_shortcut else
+                'INCOMPLETE_AT_COST_CAP' if first32_incomplete else
+                'IDENTITY_INVALID'
+            ),
+            'cost_classification': 'INCOMPLETE_AT_COST_CAP' if not both64 else 'COMPLETE_AT_64',
+            'endpoint_residual_ratio_64_over_32': residual_ratio,
+            'endpoint_time_ratio_64_over_32': time_ratio,
+            'thresholds': {'residual': 0.50, 'time': 1.25},
+            'selection_rule': '64 only if both reach64, resource gates pass, and both ratios pass; otherwise32',
+        }
+        budget['o2_selection'] = selection
+        atomic(budget_path, budget)
+        return selection
+
+    budget_path.parent.mkdir(parents=True, exist_ok=True)
+    with budget_path.with_suffix('.lock').open('a') as lock_stream:
+        fcntl.flock(lock_stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        budget = _load_v12_ledger(budget_path)
+        if budget.get('profile') is None:
+            budget['profile'] = 'physical_macro_dd4_v12'
+        elif budget['profile'] != 'physical_macro_dd4_v12':
+            raise ValueError('V12 ledger profile identity does not match this stage')
+        identities = set(budget.get('physical_model_sha256s', []))
+        identities.add(physical_model_sha256)
+        if not identities.issubset({
+            '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f',
+            '7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec',
+        }):
+            raise ValueError('V12 stages must use only the two frozen physical model identities')
+        budget['physical_model_sha256s'] = sorted(identities)
+        previous_source = budget.get('source_sha')
+        if previous_source is not None and str(previous_source) != str(args.source_sha):
+            budget.setdefault('source_transitions', []).append({
+                'from': str(previous_source), 'to': str(args.source_sha),
+                'reason': 'recorded clean engineering source transition; prior evidence remains hash-bound',
+            })
+        budget['source_sha'] = args.source_sha
+        if stage_entry(budget, stage) is not None:
+            raise ValueError(f'V12 stage already attempted; no repeat measurement: {stage}')
+
+        if stage == 'O1_FULL_PHYSICAL_CONTROLS':
+            _, summary0 = require_completed(budget, 'O0_PRECHECK')
+            if summary0.get('status') != 'O0_PRECHECK_COMPLETED':
+                raise ValueError('V12 O0 did not complete its precheck gate')
+        elif stage == 'O2_RESTART_PROBE_32':
+            _, summary1 = require_completed(budget, 'O1_FULL_PHYSICAL_CONTROLS')
+            if summary1.get('status') != 'M1_CONTROLS_COMPLETED':
+                raise ValueError('V12 O1 did not complete its physical controls gate')
+            decision = summary1.get('framework_decision', {})
+            selected_framework = decision.get('selected_framework')
+            if selected_framework not in ('BAL_H', 'ONE_C'):
+                raise ValueError('V12 O1 has no selected framework authority')
+            budget['selected_framework'] = selected_framework
+        elif stage == 'O2_RESTART_PROBE_64':
+            require_completed(budget, 'O2_RESTART_PROBE_32')
+            if budget.get('selected_framework') not in ('BAL_H', 'ONE_C'):
+                raise ValueError('V12 O1 framework binding is missing from the ledger')
+        elif stage == 'O3_ORIGINAL':
+            entry32 = stage_entry(budget, 'O2_RESTART_PROBE_32')
+            entry64 = stage_entry(budget, 'O2_RESTART_PROBE_64')
+            if entry32 is None or entry64 is None:
+                selection = budget.get('o2_selection') or select_o2(budget)
+                if selection.get('physical_probe_shortcut'):
+                    raise ValueError(
+                        'single physically passing O2 probe skips O3_ORIGINAL; '
+                        'continue directly to O3_NOTCH'
+                    )
+                raise ValueError('V12 O3_ORIGINAL requires both finite O2 probes')
+            if not has_terminal_record(entry32) or not has_terminal_record(entry64):
+                raise ValueError('V12 O3_ORIGINAL requires real terminal records for both O2 probes')
+            selection = budget.get('o2_selection') or select_o2(budget)
+            if selection.get('status') != 'O2_SELECTION_COMPLETED':
+                raise ValueError('V12 O2 selection is not viable for O3')
+            if int(getattr(args, 'macro_v12_outer_restart', 0)) != int(selection['selected_restart']):
+                raise ValueError('V12 O3 outer_restart must equal the selected O2 restart')
+        elif stage == 'O3_NOTCH':
+            original_entry = stage_entry(budget, 'O3_ORIGINAL')
+            if original_entry is not None:
+                _, summary3 = require_completed(budget, 'O3_ORIGINAL')
+                if summary3.get('status') != 'O3_COMPLETED':
+                    raise ValueError('V12 notch requires a passing original O3 when original was run')
+            selection = budget.get('o2_selection') or select_o2(budget)
+            selected_facts = selection.get('candidates', {}).get(str(selection.get('selected_restart')), {})
+            if (
+                selection.get('status') != 'O2_SELECTION_COMPLETED'
+                or (original_entry is None and not selected_facts.get('official_result_pass'))
+                or int(getattr(args, 'macro_v12_outer_restart', 0)) != int(selection['selected_restart'])
+            ):
+                raise ValueError('V12 notch must reuse the selected O2 restart')
+        elif stage == 'O4_FINALIZE':
+            prior_stages = (
+                'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS',
+                'O2_RESTART_PROBE_32', 'O2_RESTART_PROBE_64',
+                'O3_ORIGINAL', 'O3_NOTCH',
+            )
+            if not any(has_terminal_record(stage_entry(budget, item)) for item in prior_stages):
+                raise ValueError(
+                    'V12 O4 requires at least one real O0/O1/O2/O3 terminal record'
+                )
+
+        total_remaining = float(budget['total_limit_seconds']) - float(budget.get('charged_seconds', 0.0))
+        if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
+            stage_remaining = float(budget['o0_o1_limit_seconds']) - float(budget.get('o0_o1_charged_seconds', 0.0))
+        else:
+            stage_remaining = float(MACRO_V12_STAGE_LIMITS[stage])
+        wall_seconds = min(float(MACRO_V12_STAGE_LIMITS[stage]), stage_remaining, total_remaining)
+        if wall_seconds <= 0.0:
+            raise RuntimeError(f'V12 budget exhausted before {stage}')
+
+        resolved_framework = budget.get('selected_framework') if stage.startswith(('O2_', 'O3_')) else None
+        requested_framework = getattr(args, 'macro_v12_framework', None)
+        if requested_framework is not None and resolved_framework is not None and requested_framework != resolved_framework:
+            raise ValueError('requested V12 framework differs from the O1 selected framework')
+        framework = resolved_framework or requested_framework or 'BAL_H'
+        requested_restart = int(getattr(args, 'macro_v12_outer_restart', 0))
+        if stage in {'O2_RESTART_PROBE_32', 'O2_RESTART_PROBE_64'}:
+            expected_restart = 32 if stage.endswith('_32') else 64
+            if requested_restart != expected_restart:
+                raise ValueError(f'{stage} requires outer_restart={expected_restart}')
+        if stage.startswith('O3_') and requested_restart not in (32, 64):
+            raise ValueError('V12 O3 requires the selected outer_restart=32 or 64')
+
+        root = Path(args.output).resolve()
+        if root.exists():
+            raise ValueError(f'V12 stage output already exists; choose a fresh path: {root}')
+        cache_home = (root / 'jit_cache').resolve()
+        entry = {
+            'kind': f'physical_macro_dd4_v12_{stage.lower()}',
+            'stage': stage,
+            'budget_group': 'O0_O1_shared' if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'} else stage,
+            'source': args.source_sha,
+            'root': str(root),
+            'status': 'RESERVED',
+            'reserved_seconds': wall_seconds,
+            'input': str(input_path), 'input_sha256': input_sha256,
+            'inventory': str(inventory_path), 'inventory_sha256': inventory_sha256,
+            'stage_limit_seconds': float(MACRO_V12_STAGE_LIMITS[stage]),
+            'admitted_wall_seconds': wall_seconds,
+            'framework': framework if stage.startswith(('O2_', 'O3_')) else None,
+            'outer_restart': requested_restart,
+        }
+        budget.setdefault('attempts', []).append(entry)
+        atomic(budget_path, budget)
+        result = None
+        clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
+        try:
+            root.mkdir(parents=True, exist_ok=False)
+            cache_home.mkdir(parents=True, exist_ok=False)
+            atomic(root / 'launch_plan.json', {
+                'source': source, 'contract': selected_contract(args), 'stage': stage,
+                'wall_seconds': wall_seconds, 'inventory': str(inventory_path),
+                'input_sha256': input_sha256, 'inventory_sha256': inventory_sha256,
+                'framework': framework if stage.startswith(('O2_', 'O3_')) else None,
+                'outer_restart': requested_restart,
+                'jit_cache_home': str(cache_home), 'no_retry': True,
+            })
+            command = [
+                sys.executable, '-m', 'src.runners.physical_recursive_entry',
+                '--input', str(input_path), '--inventory', str(inventory_path),
+                '--output', str(root), '--budget', str(budget_path),
+                '--source-sha', args.source_sha, '--target', 'lo', '--macro-v12',
+                '--macro-v12-stage', stage,
+                '--macro-v12-outer-restart', str(requested_restart),
+                '--macro-v12-framework', framework,
+                '--jit-cache', str(cache_home), '--worker',
+            ]
+            result = supervise(
+                command, root / 'watchdog', wall_seconds=wall_seconds,
+                phase_path=root / 'phase.json', hard_stop_immediate=True,
+                timebase_guard=True, timebase_policy=CONSERVATIVE_REALTIME,
+                stop_on_global_swap=True, source_state=source,
+                worker_environment={'XDG_CACHE_HOME': str(cache_home)},
+            )
+            interval = result['workflow_clock_interval']
+            entry.update(
+                status=result['classification'], actual_seconds=float(interval['budget_seconds']),
+                clock_interval=interval, descendants_cleared=result.get('descendants_cleared'),
+            )
+            budget['charged_seconds'] = float(budget.get('charged_seconds', 0.0)) + entry['actual_seconds']
+            if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
+                budget['o0_o1_charged_seconds'] = float(budget.get('o0_o1_charged_seconds', 0.0)) + entry['actual_seconds']
+            budget['remaining_seconds'] = float(budget['total_limit_seconds']) - budget['charged_seconds']
+            atomic(budget_path, budget)
+            atomic(root / 'terminal.json', result)
+            atomic(root / 'source_after.json', git_state(args.source_sha))
+            entry['terminal_classification'] = result.get('classification')
+            if result['classification'] != 'COMPLETED':
+                raise SystemExit(1)
+            if stage == 'O2_RESTART_PROBE_64':
+                select_o2(budget)
+            return result
+        except BaseException as exc:
+            if entry.get('terminal_classification') is None:
+                entry.update(
+                    status='FAILED', exception_type=type(exc).__name__,
+                    exception_message=str(exc),
+                )
+            else:
+                entry.update(
+                    launcher_exception_type=type(exc).__name__,
+                    launcher_exception_message=str(exc),
+                )
+            raise
+        finally:
+            if entry.get('actual_seconds') is None:
+                interval = clock.update(clock_sample())
+                entry['clock_interval'] = interval
+                entry['actual_seconds'] = float(interval['budget_seconds'])
+                budget['charged_seconds'] = float(budget.get('charged_seconds', 0.0)) + entry['actual_seconds']
+                if stage in {'O0_PRECHECK', 'O1_FULL_PHYSICAL_CONTROLS'}:
+                    budget['o0_o1_charged_seconds'] = float(budget.get('o0_o1_charged_seconds', 0.0)) + entry['actual_seconds']
+                budget['remaining_seconds'] = float(budget['total_limit_seconds']) - budget['charged_seconds']
+            atomic(budget_path, budget)
+
+
 def _launch_j1_controls(args):
     """Supervise one A-J1 or B finite-control worker under the shared ledger."""
     from benchmarks.subreaper_watchdog import supervise
@@ -1302,6 +2063,8 @@ def _launch_j1_controls(args):
 def main():
     args=build_parser().parse_args()
     if args.worker:return worker(args)
+    if getattr(args, 'macro_v12', False):
+        return _launch_macro_v12_stage(args)
     if getattr(args, 'macro_v11_calibration', False):
         return _launch_macro_n1_calibration(args)
     if getattr(args, 'macro_v11_controls', False) or getattr(args, 'macro_v10_controls', False):

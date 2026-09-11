@@ -68,6 +68,48 @@ def test_actual_fgmres_buildsolution_mid_terminal_and_nonzero_second_cycle(nonze
                if name == 'monitor_residuals.jsonl'], flush=True)
 
 
+def test_explicit_snapshot_actions_are_counted_and_hash_bound():
+    n = 96
+    matrix = np.diag(np.geomspace(1., 1e4, n).astype(complex))
+    matrix += np.diag(np.full(n - 1, .1 + .2j), 1)
+    rng = np.random.default_rng(36512)
+    rhs = PETSc.Vec().createSeq(n)
+    try:
+        rhs.array[:] = rng.normal(size=n) + 1j * rng.normal(size=n)
+        calls = {'action': 0}
+        snapshots = {}
+
+        def action(x):
+            calls['action'] += 1
+            out = rhs.duplicate()
+            out.array[:] = matrix @ x.array
+            return out
+
+        def observe(iteration, residual, solution):
+            snapshots[iteration] = (solution.array.copy(), float(residual))
+
+        result = run_fixed_restart_cycles(
+            rhs, action, lambda x: x.copy(), max_it=64,
+            residual_limit=1e-30, resource_sample=lambda: {},
+            start_iteration=0, first_checkpoint_iteration=None,
+            checkpoint_interval=32, ksp_type='fgmres', restart=32,
+            stop_on_true_residual=False, explicit_residual_interval=8,
+            explicit_residual_observer=observe,
+        )
+        try:
+            assert set(snapshots) == set(range(8, 65, 8))
+            assert result['explicit_monitor_residual_count'] == 8
+            assert result['explicit_action_count'] == 1 + 2 + 8
+            assert calls['action'] == result['matvec_count'] + result['explicit_action_count']
+            for iteration, (solution, residual) in snapshots.items():
+                actual = np.linalg.norm(rhs.array - matrix @ solution) / rhs.norm()
+                assert abs(actual - residual) <= 1e-12 * max(1., actual)
+        finally:
+            result['final_solution'].destroy()
+    finally:
+        rhs.destroy()
+
+
 @pytest.mark.parametrize('joint_mr', [False, True])
 def test_actual_h6_pc_counts_and_independent_recount(tmp_path, joint_mr):
     from src.solvers.fullspace_lor_edge_geometric_mg_global import FixedChebyshevJacobiPETSc
