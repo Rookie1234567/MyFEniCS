@@ -2159,10 +2159,18 @@ def run_p4_direction_diagnosis(
             "M0_direct_degree4": 0, "curl_direct_degree4": 0,
             "P64_primal": 0, "P64_adjoint": 0,
         }
-        probe_independent = (
+        # Keep the deterministic reference-free probe well-scaled.  The raw
+        # arange probe reaches the full p4 row count (48,960 here); carrying
+        # that scale into the direct/pullback comparison can turn harmless
+        # floating-point accumulation differences into a false metric gate.
+        probe_raw = (
             np.arange(p4_indices.size, dtype=np.float64) + 1.0
             + 1j * (1.0 + np.arange(p4_indices.size, dtype=np.float64) % 17.0)
         ).astype(np.complex128)
+        probe_max_abs = float(np.max(np.abs(probe_raw)))
+        probe_l2 = float(np.linalg.norm(probe_raw))
+        probe_scale = max(probe_max_abs, probe_l2, np.finfo(float).tiny)
+        probe_independent = np.ascontiguousarray(probe_raw / probe_scale)
         probe_full = np.zeros(n4, dtype=np.complex128)
         probe_full[p4_indices] = probe_independent
         direct_metrics: dict[str, np.ndarray] = {}
@@ -2179,6 +2187,15 @@ def run_p4_direction_diagnosis(
             pullback_metrics[name] = pullback_metric_action(probe_full, name)
         probe_metric_facts: dict[str, Any] = {
             "vector_role": "deterministic_reference_free_probe",
+            "normalization": {
+                "raw_vector_summary": _array_summary(probe_raw),
+                "raw_max_abs": probe_max_abs,
+                "raw_l2_norm": probe_l2,
+                "scale": probe_scale,
+                "normalized_max_abs": float(np.max(np.abs(probe_independent))),
+                "normalized_l2_norm": float(np.linalg.norm(probe_independent)),
+                "rule": "divide by max(max_abs, l2_norm) so both max and 2-norm are bounded",
+            },
             "vector_summary": _array_summary(probe_independent),
             "quadrature": stack["actions"]["volume_quadrature_metadata"],
             "constraint_map_sha256": native_map_sha256["4"],
@@ -2231,7 +2248,7 @@ def run_p4_direction_diagnosis(
         for key in current_counts:
             summary["counts"][key] += current_counts[key]
         current_counts = None
-        del direct_metrics, pullback_metrics, probe_independent, probe_full
+        del direct_metrics, pullback_metrics, probe_raw, probe_independent, probe_full
         gc.collect()
 
         for ordinal, item in enumerate(selected, start=1):
@@ -2638,14 +2655,20 @@ def run_p4_direction_diagnosis(
                     matrix.mult(local_d, local_d_image)
                     local_e.array[:] = e_h[indices]
                     matrix.mult(local_e, local_e_image)
+                    D_i_d_i = np.asarray(
+                        local_d_image.array, dtype=np.complex128,
+                    ).copy()
+                    D_i_R_i_e_h = np.asarray(
+                        local_e_image.array, dtype=np.complex128,
+                    ).copy()
                     ell = np.asarray(
-                        local_d_image.array - h[indices], dtype=np.complex128,
+                        D_i_d_i - h[indices], dtype=np.complex128,
                     )
                     chi = np.asarray(
-                        A_eh[indices] - local_e_image.array, dtype=np.complex128,
+                        A_eh[indices] - D_i_R_i_e_h, dtype=np.complex128,
                     )
                     remainder_lhs = np.asarray(
-                        local_d_image.array - local_e_image.array,
+                        D_i_d_i - D_i_R_i_e_h,
                         dtype=np.complex128,
                     )
                     remainder_rhs = chi + r_ref[indices] + ell
@@ -2673,6 +2696,8 @@ def run_p4_direction_diagnosis(
                     "d_i": di.copy(),
                     "weighted_values": weighted.copy(),
                     "weights": weights.copy(),
+                    "D_i_d_i": D_i_d_i,
+                    "D_i_R_i_e_h": D_i_R_i_e_h,
                     "ell": ell,
                     "chi": chi,
                     "local_solve_relative": local_solve_relative,
@@ -2775,6 +2800,8 @@ def run_p4_direction_diagnosis(
                 "p4_indices": p4_indices,
                 "p_columns_values": p_columns_ind,
                 "p_images_values": p_images_ind,
+                "A_a_values": A_a_ind,
+                "A_t_values": A_t_ind,
                 "selected_indices": selected_indices,
             })
 
