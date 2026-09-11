@@ -1,3 +1,25 @@
+# V11 N5 compact、文档合同与静态检查
+
+本节登记 Review V11 的 docs/evidence closeout，不重新启动 PDE、MPI、factor 或 N3/N4。37 项 source-focused regression 已绑定正式 source SHA 并保持不变；本轮只验证新增 compact、逐块汇编、Markdown 链接/登记合同和源码语法。
+
+形式 N1/N2 仍绑定 source `7c936958451bc196f784ecc30db9278c4e5b402f`。随后仅为新 N1 helper 修复一处 Ruff E731（`save=lambda` 改为等价 `def`），不改变数值语义、策略或 formal artifact identity；因此不重跑 PDE。
+
+| 检查 | 结果与边界 |
+|---|---|
+| formal source-focused regression | `37 passed in 0.57 s` on formal source `7c936958...`；raw stdout/stderr 已复制到 [stdout](records/v11_focused_tests_supervisor.stdout.log) / [stderr](records/v11_focused_tests_supervisor.stderr.log)，SHA `cd8d0d4e20acef2c052a88cb70631a96cf93d4a5e3e701b2835ab51a54bb8455` / `ccb5f758e2b7c490417fb1ecef34a3227cb64cbcbacfcd6d6f4cf92c24db24c4` |
+| final callback-only regression | E731 等价格式修复后 `37 passed in 0.71 s`；raw stdout/stderr 已复制到 [stdout](records/v11_final_focused_tests.stdout.log) / [stderr](records/v11_final_focused_tests.stderr.log)，SHA `70f7b5369ab6599352433826bd9eb3c162011d199701b60923565d6a480e81f0` / `c1c1c3e72eb6feb8cada736d2101da1094b27f850d26e2064c1a8407818a719b`；ABI 摘要见 [ABI](records/v11_final_abi.stdout.log)，SHA `31d16f39e8363f4c5555de06139d80c166ff8e6adb77f345faa17f5fbbec9f6a` |
+| real MUMPS probes | `test_355 -k actual_mumps`: 2 passed；`test_373 -k real_mumps`: 1 passed；另有 backend snapshot 成功；不等于 N2 full inventory |
+| V11 macro contract | `test_410`: 9 passed；`test_260`: 3 passed；`test_355` non-real subset: 13 passed, 2 deselected |
+| documentation/model-registry contract | `test_26_documentation_contract.py` + `test_183_development_model_registry_markdown.py`: `20 passed in 0.05 s`; raw stdout/stderr 已复制到 [stdout](records/v11_n5_docchecks.stdout.log) / [stderr](records/v11_n5_docchecks.stderr.log)，SHA `88d00f8cc25efd895f76b07d9fb811f1782b4872206c18eea2a70638637b1c0a` / `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| Python syntax | qualified activation 下针对 V11 changed runners、input validation 和 focused tests 执行 `python -m py_compile`，通过 |
+| Ruff | 使用官方 Ruff 0.11.13 archive（SHA `01aa32d29d00876b8d1429c617ed63a00b1fc81abfa4183bb05c9cb647fbc3d0`）；13 文件 baseline `85`、current `84`、new `0`，移除的唯一新增诊断是 N1 helper 的 E731；全文件命令仍因历史 diagnostics exit 1，不能写成 Ruff 全通过。raw [delta](records/v11_ruff_delta.json) SHA `7713164d593b24a70dfc4de49cc074adc4bb91f155f44766b58e37e6b2ae82c3`、[baseline](records/v11_ruff_baseline.json) SHA `31c072312e88808ab4d59f3a783b15660e3ea1ddffdfdedfa54f785e39871f62`、[current](records/v11_ruff_current.json) SHA `bddb1fe4a2c543330c67594517adaa5ef41e8a218e7fa7eec5fba98648d6db93`、[check output](records/v11_ruff_check.stdout.log) SHA `c8bb7fad3c1f7bc5c4e13f941cc21142532115f54d1567f0cce1ab155bd4f487`；[before-fix](records/v11_ruff_before_fix.json) SHA `dff3d03e8ff26391eeee839438d04807cd0131c6d66314c33eb790f963de2264` |
+| JSON/static | compact、per-block compact、copied audit、ledger 可 `jq empty`；`git diff --check` 在显式 Git dir/worktree 下执行 |
+| full repository pytest / CI | `not_run`；没有 CI 通过声明 |
+
+证据中心见 [V11 lifecycle](macro_memory_lifecycle_v11.md)、[compact](records/macro_memory_lifecycle_v11.json) 和 [per-block compact](records/macro_memory_lifecycle_v11_blocks.json)。N2 的资源负结果仍为 `LOCAL_INVENTORY_RESOURCE_BLOCKED`，N3/N4 和 official outputs 不因本节静态检查而改变。
+
+---
+
 # V10 M4 compact evidence与文档检查
 
 本节是当前 V10 文档/证据收口。V10 不再启动 PDE、MPI、factor 或 M2/M3；静态检查只验证 compact、run index、链接、哈希和文档合同，不把局部小测试冒作 M1 controls 或 physics PASS。

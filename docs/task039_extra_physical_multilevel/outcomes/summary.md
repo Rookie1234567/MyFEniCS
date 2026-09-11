@@ -1,6 +1,27 @@
-# Task39extra V10当前结果：macro inverse M1 受控资源负结果
+# Task39extra Review V11当前结果：N1 policy equivalence pass，N2 retained-inventory controlled negative
 
-本节是当前权威摘要。V10 的 M0/M1 只推进到局部 macro factorization；第二次 M1 在冻结的局部常驻预审策略处停止，未进入 M2/M3。V9 以及更早的成功/负结果在下方按历史保留，不因本轮局部证据而改判。
+本节是当前权威摘要。V11 验证显式 `physical_macro_dd4_v11` / `SYMBOLIC_SIZED_LOCAL_MUMPS_V11`：局部块把附近未知量组成小矩阵，先做局部分解并保留因子，再用于局部回代。新的 workspace 请求由 symbolic-sized MUMPS 信息计算，不能用 used/min/RSS 替代。V10 旧策略和 ordinary default 保持不变。
+
+| 范围 | 当前结论 | 证据口径/边界 |
+|---|---|---|
+| 身份 | source `7c936958451bc196f784ecc30db9278c4e5b402f`；13.5 nm、p6/h10、Full3D、MPI1、80 modes、`complex128`；physical SHA `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f` | V11 N0–N2 hash-bound run；不是 official PDE output |
+| N0 | qualified activation、PETSc/MUMPS 5.6.2 identity、手册语义和 public controls 已核验 | `/usr/lib/x86_64-linux-gnu/libpetsc_complex.so.3.19.6`、`libzmumps-5.6.1.so`、`libmumps_common-5.6.1.so`、`libmpi.so.40.30.6`；`ICNTL(23)` 可读回；公开 `ICNTL(49)` getter runtime error 62，setter source verified |
+| N1 | 两个冻结代表块 old/new policy equivalence PASS | 4 numeric factorizations；最大 local residual `5.438606648780365e-13`；same-RHS solution diff `0.0`；最大 solves/factor 6 |
+| N1 memory fields | block 0 old/new allocated `262/53 MB`、used `29/29 MB`；block 1 old/new allocated `261/51 MB`、used `28/28 MB`；old/new ICNTL23 `490/73`、`491/71 MB` | decimal padded fields；used 并列保存，不并入 retained inventory |
+| V11 policy | `E=1e6*(1+max(INFOG16,17))`；`Q=1e6*ceil(max(32MiB,2E+8MiB)/1e6)`；设置并读回 `ICNTL(23)=Q/1e6` | 无 used/min/RSS offset；无提高 2 GiB、1 GiB、512 MiB cap |
+| N2 | 41/42 blocks 完成 numeric/backsolve；block 41 在 numeric 前被 local resident workspace Gate 阻断 | retained `2,132,081,608 B` + block41 matrix `7,128,340 B` + Q `39,000,000 B` = `2,178,209,948 B` > cap `2,147,483,648 B`，超 `30,726,300 B` |
+| N2 语义 | `LOCAL_INVENTORY_RESOURCE_BLOCKED` | 不是 system OOM、MUMPS `-9/-19` 或 Maxwell convergence failure；block41 没有 numeric |
+| N3/N4 | `not_run_by_N2_gate` | restart32/64、BAL_H/ONE_C、cached-native/map、p4 true error、original/notch、E/H/R/T/A、official output 均未运行 |
+| ledger | charged `4857.702833182024 s`；remaining `2342.297166817976 s` | independent V11 N0–N2 ledger；exact N1→N2 handoff included once；N5 docs time separate |
+| 当前决定 | N5 closeout：`LOCAL_INVENTORY_RESOURCE_BLOCKED` | 不重跑、不调参、不扩 MPI、不改 cap；重开需新 review、预算和 identity |
+
+中心结果见 [V11 macro memory lifecycle](macro_memory_lifecycle_v11.md)，紧凑记录见 [V11 compact](records/macro_memory_lifecycle_v11.json)，其 SHA256 为 `14df814fe9b59e8dcdfee89a835837318d936d59ac45d060cc6085113845f5e2`。选择性合并边界见 [V11 selective merge manifest](selective_merge_manifest_v11.md)。V10 及更早成功/负结果在下方按历史保留，不因 V11 局部证据改判。
+
+---
+
+# 历史：Task39extra V10结果：macro inverse M1 受控资源负结果
+
+以下是 V10 历史摘要，保留其原始局部证据和负结果；当前授权以本文件上方 V11 节为准。V10 的 M0/M1 只推进到局部 macro factorization；第二次 M1 在冻结的局部常驻预审策略处停止，未进入 M2/M3。V9 以及更早的成功/负结果在下方按历史保留，不因 V11 局部证据而改判。
 
 | 范围 | 当前结论 | 证据口径/边界 |
 |---|---|---|

@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V10 M4 closeout: V5 success baseline and V6/V7/V8/V9 negatives retained; V10 M1 macro local evidence and conservative resource-policy stop are hash-bound controlled evidence",
+  "scope": "V11 N0-N5 closeout: V5 success baseline and V6/V7/V8/V9/V10 history retained; V11 N1 local policy equivalence and N2 retained-inventory controlled negative are hash-bound evidence",
   "units": {
     "time": "s",
     "memory": "B"
@@ -984,6 +984,66 @@
       "compact": "docs/task039_extra_physical_multilevel/outcomes/records/equal_work_recycled_p4_v9.json",
       "stop_record": "benchmarks/artifacts/task39extra/v9_l2_original_p6/55b7325cae8477ded7b04cfab42181f18e035a0f/v9_l2_screen_stop_record.json",
       "next": "V9 documentation and compact evidence only; no rerun, rank expansion, notch, recovery, or workstation heavy case"
+    },
+    {
+      "id": "V11_N1_symbolic_sized_local_mumps_calibration",
+      "source_sha": "7c936958451bc196f784ecc30db9278c4e5b402f",
+      "raw_root": "benchmarks/artifacts/task39extra/v11_n0_n2/7c936958451bc196f784ecc30db9278c4e5b402f/n1",
+      "category": "measured_controlled_finite_evidence",
+      "classification": "N1_CALIBRATION_COMPLETED",
+      "semantic_classification": "N1_LOCAL_POLICY_EQUIVALENCE_PASS",
+      "profile": "physical_macro_dd4_v11",
+      "memory_policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+      "input_sha256": "e8fe409069970686d4901ddb1d444e37c2305f46f15cb1697ffc65995641fe64",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "representative_blocks": [0, 1],
+      "numeric_attempts": {"old": 2, "new": 2},
+      "numeric_factorizations": 4,
+      "max_solves_per_factor": 6,
+      "max_local_residual": 5.438606648780365e-13,
+      "max_solution_difference": 0.0,
+      "allocation_comparison": "block0 old/new allocated 262000000/53000000 B, used 29000000/29000000 B; block1 old/new allocated 261000000/51000000 B, used 28000000/28000000 B",
+      "charged_seconds": 177.4409457569965,
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11.json",
+      "compact_sha256": "14df814fe9b59e8dcdfee89a835837318d936d59ac45d060cc6085113845f5e2",
+      "run_summary_sha256": "01c9fbabbda84cb0e7bbaed05620f897671df33c53e9074d1141e7500923b03c",
+      "watchdog_summary_sha256": "1a01e0d16fa21eff418efd5396727a40c39c384cf89758cb6189b3ecd5f97597",
+      "next": "N1 retained; N2 fresh-process inventory required"
+    },
+    {
+      "id": "V11_N2_full_inventory_controlled_resource_negative",
+      "source_sha": "7c936958451bc196f784ecc30db9278c4e5b402f",
+      "raw_root": "benchmarks/artifacts/task39extra/v11_n0_n2/7c936958451bc196f784ecc30db9278c4e5b402f/m1",
+      "category": "measured_controlled_negative",
+      "classification": "CONTROLLED_RESOURCE_NEGATIVE",
+      "semantic_classification": "LOCAL_INVENTORY_RESOURCE_BLOCKED",
+      "profile": "physical_macro_dd4_v11",
+      "memory_policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+      "input_sha256": "adde8c8c9e17fd8e0a84edb53b524a8c2f0a9e4f78313c9e27872c167abba7ad",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "numeric_blocks": 41,
+      "expected_blocks": 42,
+      "failed_block_index": 41,
+      "failed_stage": "pre_numeric_symbolic_gate",
+      "retained_inventory_bytes": 2132081608,
+      "block41_matrix_bytes": 7128340,
+      "Q_bytes": 39000000,
+      "requested_total_bytes": 2178209948,
+      "resident_cap_bytes": 2147483648,
+      "cap_excess_bytes": 30726300,
+      "peak_rss_watchdog_bytes": 1918558208,
+      "peak_rss_stage_sample_bytes": 1918562304,
+      "swap_peak_bytes": 0,
+      "charged_seconds": 179.5419945970131,
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11.json",
+      "compact_sha256": "14df814fe9b59e8dcdfee89a835837318d936d59ac45d060cc6085113845f5e2",
+      "per_block_compact": "docs/task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11_blocks.json",
+      "per_block_compact_sha256": "445cf3c09bc3bdcd0468c8132f90a5d7ac743d59baac482d212f7c2c26266ccd",
+      "run_summary_sha256": "e7b78aa0fe87249b4b4394379913939d6f7254e6ffbda5bb7fed06f47cb1c3ca",
+      "run_manifest_sha256": "d0933796596533e96c07d4646c9cd18cc290806d5e076f0261c168b2d95c3e75",
+      "descendants_cleared": true,
+      "official_results": "not_run",
+      "next": "N5 closeout; no N2 retry or N3/N4 without new review"
     }
   ],
   "limitations": [
@@ -1241,5 +1301,45 @@
       "measurement_committed": false
     },
     "next": "M4 documentation and compact closeout only; no new PDE, parameter adjustment, MPI change, or workstation heavy case"
+  },
+  "v11": {
+    "status": "PARTIAL_WITH_CONTROLLED_NEGATIVES",
+    "classification": [
+      "N0_ABI_AND_PUBLIC_CONTROL_PASS",
+      "N1_LOCAL_POLICY_EQUIVALENCE_PASS",
+      "LOCAL_INVENTORY_RESOURCE_BLOCKED",
+      "N3_NOT_RUN_BY_N2_GATE",
+      "N4_NOT_RUN_BY_N2_GATE"
+    ],
+    "source_sha": "7c936958451bc196f784ecc30db9278c4e5b402f",
+    "profile": "physical_macro_dd4_v11",
+    "memory_policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+    "n1_input_sha256": "e8fe409069970686d4901ddb1d444e37c2305f46f15cb1697ffc65995641fe64",
+    "n2_input_sha256": "adde8c8c9e17fd8e0a84edb53b524a8c2f0a9e4f78313c9e27872c167abba7ad",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "center_result": "docs/task039_extra_physical_multilevel/outcomes/macro_memory_lifecycle_v11.md",
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11.json",
+    "compact_sha256": "14df814fe9b59e8dcdfee89a835837318d936d59ac45d060cc6085113845f5e2",
+    "per_block_compact": "docs/task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11_blocks.json",
+    "per_block_compact_sha256": "445cf3c09bc3bdcd0468c8132f90a5d7ac743d59baac482d212f7c2c26266ccd",
+    "ledger": {
+      "path": "benchmarks/artifacts/task39extra/v11_n0_n2/v11_n0_n2_budget.json",
+      "charged_seconds": 4857.702833182024,
+      "remaining_seconds": 2342.297166817976,
+      "handoff_seconds_n1_to_n2": 204.883895970,
+      "n5_documentation_charge": "unknown; separate from N0-N2 ledger"
+    },
+    "N2": {
+      "numeric_blocks": 41,
+      "expected_blocks": 42,
+      "failed_block_index": 41,
+      "retained_inventory_bytes": 2132081608,
+      "requested_total_bytes": 2178209948,
+      "resident_cap_bytes": 2147483648,
+      "cap_excess_bytes": 30726300,
+      "semantic_classification": "LOCAL_INVENTORY_RESOURCE_BLOCKED"
+    },
+    "official_outputs": "not_run",
+    "next": "same branch submitted for review of this resource negative and implementation; no cap or block-group change in V11"
   }
 }

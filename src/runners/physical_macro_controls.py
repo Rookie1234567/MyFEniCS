@@ -246,7 +246,10 @@ def run_macro_n1_calibration(
     started = time.perf_counter()
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
-    save = lambda name, facts: save_packet(directory, name, facts)
+
+    def save(name, facts):
+        save_packet(directory, name, facts)
+
     model_facts = dict(model_identity or {})
     summary: dict[str, Any] = {
         "schema": "task39extra.review-v11.n1-calibration.v1",

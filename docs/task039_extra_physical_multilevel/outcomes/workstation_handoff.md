@@ -1,4 +1,21 @@
-# Task39extra 工作站移交边界：V10 macro inverse M1 资源阻断
+# Task39extra 工作站移交边界：Review V11 N5 retained-inventory resource block
+
+V11 没有形成可移交的 workstation solver 资格。局部块的 Dw/seed 质量证据和全 inventory 资源边界分开登记；N2 在 block41 numeric 前停止，未触达完整 p4 误差、外层 Krylov、restart、BAL/ONE 或 official physical output。
+
+| 项目 | 当前结论 | 口径/边界 |
+|---|---|---|
+| source / input | `7c936958451bc196f784ecc30db9278c4e5b402f`；N2 input SHA `adde8c8c9e17fd8e0a84edb53b524a8c2f0a9e4f78313c9e27872c167abba7ad` | 运行时 worktree clean；push 被平台 unverified remote/privacy risk 拒绝，未重试 |
+| N1 local quality | 2 frozen blocks；最大 local residual `5.438606648780365e-13`；same-RHS solution diff `0.0` | old/new policy equivalence；allocated/used 对照已保存；不是 full stack qualification |
+| N2 inventory | block0–40 numeric/backsolve=41；block41 symbolic pre-numeric | retained `2,132,081,608 B` + matrix `7,128,340 B` + Q `39,000,000 B` > 2 GiB cap by `30,726,300 B` |
+| resource semantics | `LOCAL_INVENTORY_RESOURCE_BLOCKED` | watchdog RSS peak `1,918,558,208 B`；phase sample `1,918,562,304 B`；swap0；不称 OOM 或 numeric failure |
+| not run | p4 true error/residual、cached-native/map、BAL_H/ONE_C、restart32/64、original/notch、E/H/R/T/A、`A_volume`、80-mode official channels | `not_run_by_N2_gate` |
+| next | 同一分支提交审阅本轮资源负结果及实现 | 不擅自提高 cap、改 Q policy 或改分块；若范围改变需新的 review/预算/identity |
+
+证据：[V11 lifecycle](macro_memory_lifecycle_v11.md)、[V11 compact](records/macro_memory_lifecycle_v11.json)、[per-block compact](records/macro_memory_lifecycle_v11_blocks.json)、[response V12](../response_v12.md)。V10 与更早 workstation 边界以下按历史保留。
+
+---
+
+# 历史：Task39extra 工作站移交边界：V10 macro inverse M1 资源阻断
 
 V10 没有形成可移交的 workstation solver 资格。局部块的部分回代证据保留为研究材料；保守 allocated resident policy 在 block 7 超过 2 GiB 后停止，未进入外层、restart 或 official output。
 

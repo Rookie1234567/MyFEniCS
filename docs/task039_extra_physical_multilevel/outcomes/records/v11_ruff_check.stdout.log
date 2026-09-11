@@ -1,0 +1,842 @@
+src/io/physical_intermediate_profile.py:9:1: E402 Module level import not at top of file
+   |
+ 7 | PACKED_PROFILE = "a2r_packed_equivalent_v2"
+ 8 | JOINT_PROFILE = "light_p4ref_jointmr3_v2"
+ 9 | from .physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E402
+10 | from .physical_recursive_profile import (
+11 |     MACRO_V11_PROFILES,
+   |
+
+src/io/physical_intermediate_profile.py:10:1: E402 Module level import not at top of file
+   |
+ 8 |   JOINT_PROFILE = "light_p4ref_jointmr3_v2"
+ 9 |   from .physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
+10 | / from .physical_recursive_profile import (
+11 | |     MACRO_V11_PROFILES,
+12 | |     MACRO_V10_PROFILES,
+13 | |     RECURSIVE_PROFILES,
+14 | |     macro_v11_profile_facts,
+15 | |     macro_v10_profile_facts,
+16 | | )
+   | |_^ E402
+17 |
+18 |   PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE) + BALANCED_PROFILES + RECURSIVE_PR…
+   |
+
+src/runners/physical_macro_controls.py:249:5: E731 Do not assign a `lambda` expression, use a `def`
+    |
+247 |     directory = Path(directory)
+248 |     directory.mkdir(parents=True, exist_ok=False)
+249 |     save = lambda name, facts: save_packet(directory, name, facts)
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E731
+250 |     model_facts = dict(model_identity or {})
+251 |     summary: dict[str, Any] = {
+    |
+    = help: Rewrite `save` as a `def`
+
+src/runners/physical_macro_controls.py:672:5: E731 Do not assign a `lambda` expression, use a `def`
+    |
+670 |     directory = Path(directory)
+671 |     directory.mkdir(parents=True, exist_ok=False)
+672 |     save = lambda name, facts: save_packet(directory, name, facts)
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E731
+673 |     label = ["m1"]
+674 |     scoped_save = _make_scoped_save(save, label)
+    |
+    = help: Rewrite `save` as a `def`
+
+src/runners/physical_recursive_entry.py:18:31: E701 Multiple statements on one line (colon)
+   |
+16 |     from math import isfinite
+17 |     from .physical_diagnostic_completion import load_packet
+18 |     if not Path(path).exists():return 'NOT_REACHED'
+   |                               ^ E701
+19 |     errors=load_packet(Path(path))['errors']
+20 |     return 'PASS' if len(errors)==3 and all(isfinite(v) and v<=1e-10 for v in errors.values()) else 'FAIL'
+   |
+
+src/runners/physical_recursive_entry.py:194:52: E702 Multiple statements on one line (semicolon)
+    |
+192 |             j0_j1_controls_limit_seconds=3600)
+193 |     if getattr(args,'cell_joint_trace_component',False):
+194 |         owner_args=argparse.Namespace(**vars(args));owner_args.cell_joint_trace_component=False
+    |                                                    ^ E702
+195 |         owner_args.owner_route_trace_component=True
+196 |         contract=selected_contract(owner_args)
+    |
+
+src/runners/physical_recursive_entry.py:205:54: E702 Multiple statements on one line (semicolon)
+    |
+203 |     if getattr(args,'owner_route_trace_component',False):
+204 |         cached_args=argparse.Namespace(**vars(args))
+205 |         cached_args.owner_route_trace_component=False;cached_args.cached_trace_component=True
+    |                                                      ^ E702
+206 |         contract=selected_contract(cached_args)
+207 |         contract.update(identity='physical_owner_route_trace_component_v1',
+    |
+
+src/runners/physical_recursive_entry.py:305:76: E702 Multiple statements on one line (semicolon)
+    |
+303 | def atomic(path,data):
+304 |     temporary=path.with_suffix(path.suffix+'.tmp')
+305 |     temporary.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n');temporary.replace(path)
+    |                                                                            ^ E702
+    |
+
+src/runners/physical_recursive_entry.py:334:36: E701 Multiple statements on one line (colon)
+    |
+332 |         raise RuntimeError('qualified complex128/int32 MPI1 worker required')
+333 |     threads={k:os.environ.get(k) for k in ('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS')}
+334 |     if set(threads.values())!={'1'}:raise RuntimeError('threads must be one')
+    |                                    ^ E701
+335 |     source=git_state(args.source_sha)
+336 |     parent=int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID']);cap=int(os.environ['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'])
+    |
+
+src/runners/physical_recursive_entry.py:336:59: E702 Multiple statements on one line (semicolon)
+    |
+334 |     if set(threads.values())!={'1'}:raise RuntimeError('threads must be one')
+335 |     source=git_state(args.source_sha)
+336 |     parent=int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID']);cap=int(os.environ['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'])
+    |                                                           ^ E702
+337 |     if parent==os.getpid() or not Path(f'/proc/{parent}').exists():raise RuntimeError('dedicated parent missing')
+338 |     macro=(getattr(args, 'macro_v10_controls', False)
+    |
+
+src/runners/physical_recursive_entry.py:337:67: E701 Multiple statements on one line (colon)
+    |
+335 |     source=git_state(args.source_sha)
+336 |     parent=int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID']);cap=int(os.environ['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'])
+337 |     if parent==os.getpid() or not Path(f'/proc/{parent}').exists():raise RuntimeError('dedicated parent missing')
+    |                                                                   ^ E701
+338 |     macro=(getattr(args, 'macro_v10_controls', False)
+339 |            or getattr(args, 'macro_v11_controls', False)
+    |
+
+src/runners/physical_recursive_entry.py:347:50: E701 Multiple statements on one line (colon)
+    |
+345 |     payload=load_and_resolve(args.input).as_jsonable()
+346 |     if (payload['provenance']['physical_model_sha256']!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
+347 |         or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
+    |                                                  ^ E701
+348 |     cfg=simulation_config_3d_from_normalized(payload)
+349 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_…
+    |
+
+src/runners/physical_recursive_entry.py:349:42: E702 Multiple statements on one line (semicolon)
+    |
+347 |         or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
+348 |     cfg=simulation_config_3d_from_normalized(payload)
+349 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_…
+    |                                          ^ E702
+350 |     contract=selected_contract(args);root=Path(args.output)
+351 |     (root/'input_original.dat').write_bytes(Path(args.input).read_bytes())
+    |
+
+src/runners/physical_recursive_entry.py:349:80: E702 Multiple statements on one line (semicolon)
+    |
+347 |         or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
+348 |     cfg=simulation_config_3d_from_normalized(payload)
+349 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_…
+    |                                                                                ^ E702
+350 |     contract=selected_contract(args);root=Path(args.output)
+351 |     (root/'input_original.dat').write_bytes(Path(args.input).read_bytes())
+    |
+
+src/runners/physical_recursive_entry.py:349:112: E702 Multiple statements on one line (semicolon)
+    |
+347 |         or payload['geometry'].get('cell_notch')):raise ValueError('G1 requires frozen original physical model')
+348 |     cfg=simulation_config_3d_from_normalized(payload)
+349 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_…
+    |                                                                                                                ^ E702
+350 |     contract=selected_contract(args);root=Path(args.output)
+351 |     (root/'input_original.dat').write_bytes(Path(args.input).read_bytes())
+    |
+
+src/runners/physical_recursive_entry.py:349:152: E702 Multiple statements on one line (semicolon)
+    |
+347 | …riginal physical model')
+348 | …
+349 | …rgs.bubble_local_tensor;enriched=args.bubble_enriched_component;particular=args.bubble_particular_diagnostic
+    |                                                                 ^ E702
+350 | …
+351 | …
+    |
+
+src/runners/physical_recursive_entry.py:350:37: E702 Multiple statements on one line (semicolon)
+    |
+348 |     cfg=simulation_config_3d_from_normalized(payload)
+349 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble_…
+350 |     contract=selected_contract(args);root=Path(args.output)
+    |                                     ^ E702
+351 |     (root/'input_original.dat').write_bytes(Path(args.input).read_bytes())
+352 |     input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest()
+    |
+
+src/runners/physical_recursive_entry.py:359:5: E401 [*] Multiple imports on one line
+    |
+357 |     atomic(root/'resolved_config.json',dict(physical_input=payload,component_profile=contract,
+358 |         original_dat_solver_role='physical template only; old V5 PC is not invoked'))
+359 |     import petsc4py,slepc4py,dolfinx,basix,mpi4py
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E401
+360 |     from dolfinx.jit import get_options
+361 |     from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+    |
+    = help: Split imports
+
+src/runners/physical_recursive_entry.py:405:67: E702 Multiple statements on one line (semicolon)
+    |
+403 |         atomic(root/'run_manifest.json', manifest)
+404 |         def sample():
+405 |             value=process_tree_snapshot(parent,control_phase,None);envelope=memory_envelope()
+    |                                                                   ^ E702
+406 |             value['launch_cap_bytes']=min(cap,value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
+407 |             if (not value['all_status_readable'] or value['swap_bytes'] or
+    |
+
+src/runners/physical_recursive_entry.py:574:67: E702 Multiple statements on one line (semicolon)
+    |
+572 |         atomic(root/'run_manifest.json', manifest)
+573 |         def sample():
+574 |             value=process_tree_snapshot(parent,control_phase,None);envelope=memory_envelope()
+    |                                                                   ^ E702
+575 |             value['launch_cap_bytes']=min(cap,value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
+576 |             if (not value['all_status_readable'] or value['swap_bytes'] or
+    |
+
+src/runners/physical_recursive_entry.py:604:23: E702 Multiple statements on one line (semicolon)
+    |
+602 |     inventory=json.loads(Path(args.inventory).read_text())
+603 |     if bubble:
+604 |         native_maps={};mode_sha=inventory['mode_sha256']
+    |                       ^ E702
+605 |     elif diagnostic or projected or enriched or particular or args.bubble_amplification_diagnostic or args.high_trace_component or ar…
+606 |         native_maps={'4':inventory['packets']['map']}
+    |
+
+src/runners/physical_recursive_entry.py:624:18: E701 Multiple statements on one line (colon)
+    |
+622 |             modules={m.__name__:m.__file__ for m in (petsc4py,slepc4py,dolfinx,basix,mpi4py)}),
+623 |         inventory_sha256=hashlib.sha256(Path(args.inventory).read_bytes()).hexdigest())
+624 |     if particular:manifest['native_map_bridge']='frozen p4 DOF/MPC reused; rebuilt geometry/permutations exactly compared'
+    |                  ^ E701
+625 |     atomic(root/'run_manifest.json',manifest)
+626 |     def sample():
+    |
+
+src/runners/physical_recursive_entry.py:627:65: E702 Multiple statements on one line (semicolon)
+    |
+625 |     atomic(root/'run_manifest.json',manifest)
+626 |     def sample():
+627 |         value=process_tree_snapshot(parent,'G1_components',None);envelope=memory_envelope()
+    |                                                                 ^ E702
+628 |         value['launch_cap_bytes']=min(cap,value['rss_bytes']+envelope['effective_available_bytes']-envelope['reserve_bytes'])
+629 |         if (not value['all_status_readable'] or value['swap_bytes'] or value['rss_bytes']>=value['launch_cap_bytes']
+    |
+
+src/runners/physical_recursive_entry.py:636:55: E701 Multiple statements on one line (colon)
+    |
+634 |         stamp=clock_sample()
+635 |         atomic(root/'phase.json',dict(phase='components',stage=name,clock=stamp))
+636 |         with (root/'stages.jsonl').open('a') as stream:stream.write(json.dumps(dict(stage=name,clock=stamp,facts=facts))+'\n')
+    |                                                       ^ E701
+637 |     try:
+638 |         dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker,
+    |
+
+src/runners/physical_recursive_entry.py:676:18: E701 Multiple statements on one line (colon)
+    |
+674 |             error=json.loads(identity.read_text())['relative_error']
+675 |             manifest['native_map_bridge_status']='PASS' if isfinite(error) and error<=1e-10 else 'FAIL'
+676 |         if bubble:manifest['native_map_bridge_status']='NOT_APPLICABLE_LOCAL_TENSOR_ONLY'
+    |                  ^ E701
+677 |         if identity.exists():
+678 |             manifest['fresh_identity']=dict(path=str(identity),sha256=hashlib.sha256(identity.read_bytes()).hexdigest())
+    |
+
+src/runners/physical_recursive_entry.py:684:69: E701 Multiple statements on one line (colon)
+    |
+682 | def build_parser():
+683 |     parser=argparse.ArgumentParser(description=__doc__)
+684 |     for name in ('input','inventory','output','budget','source-sha'):parser.add_argument('--'+name,required=True)
+    |                                                                     ^ E701
+685 |     parser.add_argument('--jit-cache', type=Path, default=None,
+686 |         help='reusable hash-bound JIT cache; defaults to the attempt-local cache')
+    |
+
+src/runners/physical_recursive_entry.py:731:41: E702 Multiple statements on one line (semicolon)
+    |
+729 |     if digest!='11e04fd284f5aa75a6b35a251320730f065c6b43e7276ef6a193cc951299c9be':
+730 |         raise ValueError('reviewed failure readout changed')
+731 |     readout=json.loads(path.read_text());hashes={e['path']:e['sha256'] for e in readout['evidence']}
+    |                                         ^ E702
+732 |     for p in (root/'terminal.json',root/'records/amplification_costs.json',root/'watchdog/worker.log'):
+733 |         if hashlib.sha256(p.read_bytes()).hexdigest()!=hashes[str(p)]:
+    |
+
+src/runners/physical_recursive_entry.py:748:1: E402 Module level import not at top of file
+    |
+748 | from .physical_bounded_budget import LIMIT_SECONDS as J1_BATCH_LIMIT_SECONDS
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E402
+749 | from .physical_bounded_budget import SCHEMA as J1_BUDGET_SCHEMA
+750 | J1_CONTROLS_LIMIT_SECONDS = 3600.0
+    |
+
+src/runners/physical_recursive_entry.py:749:1: E402 Module level import not at top of file
+    |
+748 | from .physical_bounded_budget import LIMIT_SECONDS as J1_BATCH_LIMIT_SECONDS
+749 | from .physical_bounded_budget import SCHEMA as J1_BUDGET_SCHEMA
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E402
+750 | J1_CONTROLS_LIMIT_SECONDS = 3600.0
+751 | V8_K0_K1_BUDGET_SCHEMA = 'task39extra.review-v8-k0-k1-budget.v1'
+    |
+
+src/runners/physical_recursive_entry.py:1258:53: E701 Multiple statements on one line (colon)
+     |
+1256 |             atomic(root/'terminal.json',result)
+1257 |             atomic(root/'source_after.json',git_state(args.source_sha))
+1258 |             if result['classification']!='COMPLETED':raise SystemExit(1)
+     |                                                     ^ E701
+1259 |             return result
+1260 |         except BaseException as exc:
+     |
+
+src/runners/physical_recursive_entry.py:1304:19: E701 Multiple statements on one line (colon)
+     |
+1302 | def main():
+1303 |     args=build_parser().parse_args()
+1304 |     if args.worker:return worker(args)
+     |                   ^ E701
+1305 |     if getattr(args, 'macro_v11_calibration', False):
+1306 |         return _launch_macro_n1_calibration(args)
+     |
+
+src/runners/physical_recursive_entry.py:1314:34: E702 Multiple statements on one line (semicolon)
+     |
+1312 |     from benchmarks.subreaper_watchdog import supervise
+1313 |     from .workflow_timebase import CONSERVATIVE_REALTIME
+1314 |     budget_path=Path(args.budget);budget=json.loads(budget_path.read_text())
+     |                                  ^ E702
+1315 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble…
+1316 |     if diagnostic and Path(args.output).parts[-3:]!=('v6_p4_failure_diagnostic',args.source_sha,'a2r160_g1'):
+     |
+
+src/runners/physical_recursive_entry.py:1315:42: E702 Multiple statements on one line (semicolon)
+     |
+1313 |     from .workflow_timebase import CONSERVATIVE_REALTIME
+1314 |     budget_path=Path(args.budget);budget=json.loads(budget_path.read_text())
+1315 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble…
+     |                                          ^ E702
+1316 |     if diagnostic and Path(args.output).parts[-3:]!=('v6_p4_failure_diagnostic',args.source_sha,'a2r160_g1'):
+1317 |         raise ValueError('diagnostic requires fresh v6_p4_failure_diagnostic/source/a2r160_g1 root')
+     |
+
+src/runners/physical_recursive_entry.py:1315:80: E702 Multiple statements on one line (semicolon)
+     |
+1313 |     from .workflow_timebase import CONSERVATIVE_REALTIME
+1314 |     budget_path=Path(args.budget);budget=json.loads(budget_path.read_text())
+1315 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble…
+     |                                                                                ^ E702
+1316 |     if diagnostic and Path(args.output).parts[-3:]!=('v6_p4_failure_diagnostic',args.source_sha,'a2r160_g1'):
+1317 |         raise ValueError('diagnostic requires fresh v6_p4_failure_diagnostic/source/a2r160_g1 root')
+     |
+
+src/runners/physical_recursive_entry.py:1315:112: E702 Multiple statements on one line (semicolon)
+     |
+1313 |     from .workflow_timebase import CONSERVATIVE_REALTIME
+1314 |     budget_path=Path(args.budget);budget=json.loads(budget_path.read_text())
+1315 |     diagnostic=args.p4_failure_diagnostic;projected=args.projected_p4_component;bubble=args.bubble_local_tensor;enriched=args.bubble…
+     |                                                                                                                ^ E702
+1316 |     if diagnostic and Path(args.output).parts[-3:]!=('v6_p4_failure_diagnostic',args.source_sha,'a2r160_g1'):
+1317 |         raise ValueError('diagnostic requires fresh v6_p4_failure_diagnostic/source/a2r160_g1 root')
+     |
+
+src/runners/physical_recursive_entry.py:1315:152: E702 Multiple statements on one line (semicolon)
+     |
+1313 | …
+1314 | …
+1315 | …gs.bubble_local_tensor;enriched=args.bubble_enriched_component;particular=args.bubble_particular_diagnostic
+     |                                                                ^ E702
+1316 | …ce_sha,'a2r160_g1'):
+1317 | …0_g1 root')
+     |
+
+src/runners/physical_recursive_entry.py:1339:45: E702 Multiple statements on one line (semicolon)
+     |
+1337 |     joint_trace=args.cell_joint_trace_component
+1338 |     owner_trace=args.owner_route_trace_component or joint_trace
+1339 |     cached_trace=args.cached_trace_component;trace=args.high_trace_component or cached_trace or owner_trace
+     |                                             ^ E702
+1340 |     if trace and Path(args.output).parts[-3:]!=('v6_cell_joint_trace_component' if joint_trace else 'v6_owner_route_trace_component'…
+1341 |         raise ValueError('trace component requires fresh source/a2r160_g1 root')
+     |
+
+src/runners/physical_recursive_entry.py:1348:20: E701 Multiple statements on one line (colon)
+     |
+1346 |     retry=amplification_recording_retry(args,budget)
+1347 |     remaining=min(selected_contract(args)['workflow_seconds'],budget['batch_remaining']) if diagnostic or projected or bubble or enr…
+1348 |     if remaining<=0:raise RuntimeError('G1 compute budget exhausted')
+     |                    ^ E701
+1349 |     lock=budget_path.parent/('cell_joint_trace_active.lock' if joint_trace else 'owner_route_trace_active.lock' if owner_trace else …
+1350 |     descriptor=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.close(descriptor)
+     |
+
+src/runners/physical_recursive_entry.py:1350:68: E702 Multiple statements on one line (semicolon)
+     |
+1348 |     if remaining<=0:raise RuntimeError('G1 compute budget exhausted')
+1349 |     lock=budget_path.parent/('cell_joint_trace_active.lock' if joint_trace else 'owner_route_trace_active.lock' if owner_trace else …
+1350 |     descriptor=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.close(descriptor)
+     |                                                                    ^ E702
+1351 |     root=Path(args.output)
+1352 |     result=None
+     |
+
+src/runners/physical_recursive_entry.py:1368:174: E701 Multiple statements on one line (colon)
+     |
+1366 | …t_attempts' if owner_trace else 'cached_trace_component_attempts' if cached_trace else 'high_trace_component_attempts' if trace els…
+1367 | …
+1368 | …ification or trace else ('G0_G1_remaining','batch_remaining')):budget[key]-=charge
+     |                                                                ^ E701
+1369 | …
+1370 | …
+     |
+
+src/runners/physical_recursive_entry.py:1374:49: E701 Multiple statements on one line (colon)
+     |
+1372 |         if diagnostic or projected or bubble or enriched or particular or amplification or trace:
+1373 |             atomic(root/'source_after.json',git_state(args.source_sha))
+1374 |         if result['classification']!='COMPLETED':raise SystemExit(1)
+     |                                                 ^ E701
+1375 |     finally:
+1376 |         # An uncertain launch keeps the lock for review instead of enabling duplicate work.
+     |
+
+src/runners/physical_recursive_entry.py:1377:68: E701 Multiple statements on one line (colon)
+     |
+1375 |     finally:
+1376 |         # An uncertain launch keeps the lock for review instead of enabling duplicate work.
+1377 |         if result is not None and result.get('descendants_cleared'):lock.unlink()
+     |                                                                    ^ E701
+     |
+
+src/runners/physical_recursive_entry.py:1380:24: E701 Multiple statements on one line (colon)
+     |
+1380 | if __name__=='__main__':main()
+     |                        ^ E701
+     |
+
+src/solvers/fullspace_bounded_mumps.py:100:9: E731 Do not assign a `lambda` expression, use a `def`
+    |
+ 98 |             'memory_policy': memory_policy,
+ 99 |         }
+100 |         emit = lambda name, facts: marker(name.replace('p1_', 'p2_') if physical_p2_pilot else name, facts)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E731
+101 |         row_cap = 8192 if physical_p2_pilot else LOCAL_FACTOR_MAX_ROWS
+102 |         rows, columns = matrix.getSize()
+    |
+    = help: Rewrite `emit` as a `def`
+
+src/solvers/fullspace_v17_p3_oracle.py:514:25: F401 [*] `dolfinx.fem` imported but unused
+    |
+512 |     """
+513 |
+514 |     from dolfinx import fem
+    |                         ^^^ F401
+515 |     import dolfinx_mpc
+516 |     import ufl
+    |
+    = help: Remove unused import: `dolfinx.fem`
+
+src/solvers/fullspace_v17_p3_oracle.py:516:12: F401 [*] `ufl` imported but unused
+    |
+514 |     from dolfinx import fem
+515 |     import dolfinx_mpc
+516 |     import ufl
+    |            ^^^ F401
+517 |     from petsc4py import PETSc
+    |
+    = help: Remove unused import: `ufl`
+
+src/solvers/fullspace_v17_p3_oracle.py:519:34: F401 [*] `.common_3d_forms._build_physical_volume_terms` imported but unused
+    |
+517 |     from petsc4py import PETSc
+518 |
+519 |     from .common_3d_forms import _build_physical_volume_terms
+    |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ F401
+520 |     from .dtn_port_3d import _dtn_surface_quadrature_degree
+521 |     from .fullspace_dtn_action import (
+    |
+    = help: Remove unused import: `.common_3d_forms._build_physical_volume_terms`
+
+src/solvers/physical_macro_dd4.py:425:34: E702 Multiple statements on one line (semicolon)
+    |
+424 |         mins = np.asarray([geometry[geometry_dofmap[cell]].min(axis=0) for cell in range(252)])
+425 |         x = np.unique(mins[:, 0]); y = np.unique(mins[:, 1]); z = np.unique(mins[:, 2])
+    |                                  ^ E702
+426 |         if (len(x), len(y), len(z)) != (6, 3, 14):
+427 |             raise ValueError(f"macro topology expected 6x3x14 cell starts, got {(len(x), len(y), len(z))}")
+    |
+
+src/solvers/physical_macro_dd4.py:425:61: E702 Multiple statements on one line (semicolon)
+    |
+424 |         mins = np.asarray([geometry[geometry_dofmap[cell]].min(axis=0) for cell in range(252)])
+425 |         x = np.unique(mins[:, 0]); y = np.unique(mins[:, 1]); z = np.unique(mins[:, 2])
+    |                                                             ^ E702
+426 |         if (len(x), len(y), len(z)) != (6, 3, 14):
+427 |             raise ValueError(f"macro topology expected 6x3x14 cell starts, got {(len(x), len(y), len(z))}")
+    |
+
+src/solvers/physical_macro_dd4.py:604:13: E731 Do not assign a `lambda` expression, use a `def`
+    |
+602 |         make_vector = getattr(self, "_new_p4_vector", None)
+603 |         if make_vector is None:
+604 |             make_vector = lambda: level_vector(self.levels, 4)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E731
+605 |         slave_indices = np.asarray(self.mapping["slaves"], dtype=np.int64)
+606 |         defects = []
+    |
+    = help: Rewrite `make_vector` as a `def`
+
+src/solvers/physical_macro_dd4.py:784:61: E702 Multiple statements on one line (semicolon)
+    |
+782 |                 for row, value in zip(entry.coupling_rows, entry.coupling_values, strict=True):
+783 |                     if int(row) in position and value != 0:
+784 |                         c_indices.append(position[int(row)]); c_values.append(value)
+    |                                                             ^ E702
+785 |                 for row, value in zip(entry.projection_rows, entry.projection_values, strict=True):
+786 |                     if int(row) in position and value != 0:
+    |
+
+src/solvers/physical_macro_dd4.py:787:61: E702 Multiple statements on one line (semicolon)
+    |
+785 |                 for row, value in zip(entry.projection_rows, entry.projection_values, strict=True):
+786 |                     if int(row) in position and value != 0:
+787 |                         p_indices.append(position[int(row)]); p_values.append(value)
+    |                                                             ^ E702
+788 |                 if c_indices and p_indices:
+789 |                     for row in c_indices:
+    |
+
+src/test/test_373_condensed_fine_reference.py:24:35: E702 Multiple statements on one line (semicolon)
+   |
+23 | def test_native_residual_rejects_small_augmented_residual_as_substitute():
+24 |     b=np.array([1+1j,2,0],complex);x=np.array([1,2j,0],complex)
+   |                                   ^ E702
+25 |     ax=b.copy();ax[1]+=1e-8
+26 |     packet=residual_packet(x,b,ax,np.array([2]))
+   |
+
+src/test/test_373_condensed_fine_reference.py:25:16: E702 Multiple statements on one line (semicolon)
+   |
+23 | def test_native_residual_rejects_small_augmented_residual_as_substitute():
+24 |     b=np.array([1+1j,2,0],complex);x=np.array([1,2j,0],complex)
+25 |     ax=b.copy();ax[1]+=1e-8
+   |                ^ E702
+26 |     packet=residual_packet(x,b,ax,np.array([2]))
+27 |     assert packet['status']=='REFERENCE_ACCURACY_UNRESOLVED'
+   |
+
+src/test/test_373_condensed_fine_reference.py:31:35: E701 Multiple statements on one line (colon)
+   |
+29 |     assert packet['status']=='REFERENCE_PASS'
+30 |     x[2]=1
+31 |     with pytest.raises(ValueError):residual_packet(x,b,b,np.array([2]))
+   |                                   ^ E701
+32 |     with pytest.raises(ValueError):relative_difference(np.array([np.nan]),np.ones(1))
+   |
+
+src/test/test_373_condensed_fine_reference.py:32:35: E701 Multiple statements on one line (colon)
+   |
+30 |     x[2]=1
+31 |     with pytest.raises(ValueError):residual_packet(x,b,b,np.array([2]))
+32 |     with pytest.raises(ValueError):relative_difference(np.array([np.nan]),np.ones(1))
+   |                                   ^ E701
+   |
+
+src/test/test_373_condensed_fine_reference.py:39:47: E702 Multiple statements on one line (semicolon)
+   |
+37 |     values=np.array([[3,1j,0],[1,4,1],[0,1,3]],complex)
+38 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+39 |     matrix.setValues(range(3),range(3),values);matrix.assemble()
+   |                                               ^ E702
+40 |     b=matrix.createVecRight();b.array[:]=[1j,2,3-1j]
+41 |     events=[];packets={};returned=()
+   |
+
+src/test/test_373_condensed_fine_reference.py:40:30: E702 Multiple statements on one line (semicolon)
+   |
+38 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+39 |     matrix.setValues(range(3),range(3),values);matrix.assemble()
+40 |     b=matrix.createVecRight();b.array[:]=[1j,2,3-1j]
+   |                              ^ E702
+41 |     events=[];packets={};returned=()
+42 |     class Factor:
+   |
+
+src/test/test_373_condensed_fine_reference.py:41:14: E702 Multiple statements on one line (semicolon)
+   |
+39 |     matrix.setValues(range(3),range(3),values);matrix.assemble()
+40 |     b=matrix.createVecRight();b.array[:]=[1j,2,3-1j]
+41 |     events=[];packets={};returned=()
+   |              ^ E702
+42 |     class Factor:
+43 |         def symbolic(self,a):events.append('symbolic')
+   |
+
+src/test/test_373_condensed_fine_reference.py:41:25: E702 Multiple statements on one line (semicolon)
+   |
+39 |     matrix.setValues(range(3),range(3),values);matrix.assemble()
+40 |     b=matrix.createVecRight();b.array[:]=[1j,2,3-1j]
+41 |     events=[];packets={};returned=()
+   |                         ^ E702
+42 |     class Factor:
+43 |         def symbolic(self,a):events.append('symbolic')
+   |
+
+src/test/test_373_condensed_fine_reference.py:46:67: E702 Multiple statements on one line (semicolon)
+   |
+44 |         def info(self,indices):return {'infog':{'16':1,'17':1}}
+45 |         def symbolic_memory_settings(self):return {'icntl':{},'modified':False}
+46 |         def set_memory_limit_mb(self,limit):events.append('limit');assert limit>0
+   |                                                                   ^ E702
+47 |         def numeric(self,a):
+48 |             events.append('numeric')
+   |
+
+src/test/test_373_condensed_fine_reference.py:49:34: E701 Multiple statements on one line (colon)
+   |
+47 |         def numeric(self,a):
+48 |             events.append('numeric')
+49 |             if failure=='numeric':raise ValueError('numeric failure')
+   |                                  ^ E701
+50 |         def solve(self,rhs,x):
+51 |             events.append('solve');x.array[:]=np.linalg.solve(values,rhs.array)*(1+1e-6)
+   |
+
+src/test/test_373_condensed_fine_reference.py:51:35: E702 Multiple statements on one line (semicolon)
+   |
+49 |             if failure=='numeric':raise ValueError('numeric failure')
+50 |         def solve(self,rhs,x):
+51 |             events.append('solve');x.array[:]=np.linalg.solve(values,rhs.array)*(1+1e-6)
+   |                                   ^ E702
+52 |         def solve_repeated(self,rhs,x):
+53 |             events.append('correction');x.array[:]=np.linalg.solve(values,rhs.array)
+   |
+
+src/test/test_373_condensed_fine_reference.py:53:40: E702 Multiple statements on one line (semicolon)
+   |
+51 |             events.append('solve');x.array[:]=np.linalg.solve(values,rhs.array)*(1+1e-6)
+52 |         def solve_repeated(self,rhs,x):
+53 |             events.append('correction');x.array[:]=np.linalg.solve(values,rhs.array)
+   |                                        ^ E702
+54 |         def destroy(self):
+55 |             events.append('destroy')
+   |
+
+src/test/test_373_condensed_fine_reference.py:56:34: E701 Multiple statements on one line (colon)
+   |
+54 |         def destroy(self):
+55 |             events.append('destroy')
+56 |             if failure=='cleanup':raise RuntimeError('cleanup failure')
+   |                                  ^ E701
+57 |     def save(name,record):
+58 |         packets[name]={k:v.copy() if isinstance(v,np.ndarray) else v for k,v in record.items()}
+   |
+
+src/test/test_373_condensed_fine_reference.py:59:67: E701 Multiple statements on one line (colon)
+   |
+57 |     def save(name,record):
+58 |         packets[name]={k:v.copy() if isinstance(v,np.ndarray) else v for k,v in record.items()}
+59 |         if name=='reference_augmented_initial' and failure=='save':raise OSError('packet failed')
+   |                                                                   ^ E701
+60 |     record=dict(identity={'test':True},cleanup_errors=[])
+61 |     request=SimpleNamespace(A=matrix,b=b,static_condensed_system=SimpleNamespace(
+   |
+
+src/test/test_373_condensed_fine_reference.py:68:33: E702 Multiple statements on one line (semicolon)
+   |
+66 |     try:
+67 |         if failure is None:
+68 |             returned=operation();initial,corrected=returned
+   |                                 ^ E702
+69 |             assert events.count('numeric')==events.count('solve')==events.count('correction')==1
+70 |             assert events.index('destroy')<events.index('fine_reference_factor_released')
+   |
+
+src/test/test_373_condensed_fine_reference.py:77:96: E701 Multiple statements on one line (colon)
+   |
+75 |             np.testing.assert_array_equal(packets['reference_augmented_initial']['x'],initial.array)
+76 |         else:
+77 |             with pytest.raises((FineReferenceCapacityRejected,ValueError,OSError,RuntimeError)):operation()
+   |                                                                                                ^ E701
+78 |             assert 'destroy' in events
+79 |             if failure=='capacity':assert 'numeric' not in events
+   |
+
+src/test/test_373_condensed_fine_reference.py:79:35: E701 Multiple statements on one line (colon)
+   |
+77 |             with pytest.raises((FineReferenceCapacityRejected,ValueError,OSError,RuntimeError)):operation()
+78 |             assert 'destroy' in events
+79 |             if failure=='capacity':assert 'numeric' not in events
+   |                                   ^ E701
+80 |             if failure=='save':assert 'correction' not in events
+81 |     finally:
+   |
+
+src/test/test_373_condensed_fine_reference.py:80:31: E701 Multiple statements on one line (colon)
+   |
+78 |             assert 'destroy' in events
+79 |             if failure=='capacity':assert 'numeric' not in events
+80 |             if failure=='save':assert 'correction' not in events
+   |                               ^ E701
+81 |     finally:
+82 |         for value in returned:value.destroy()
+   |
+
+src/test/test_373_condensed_fine_reference.py:82:30: E701 Multiple statements on one line (colon)
+   |
+80 |             if failure=='save':assert 'correction' not in events
+81 |     finally:
+82 |         for value in returned:value.destroy()
+   |                              ^ E701
+83 |         b.destroy();matrix.destroy()
+   |
+
+src/test/test_373_condensed_fine_reference.py:83:20: E702 Multiple statements on one line (semicolon)
+   |
+81 |     finally:
+82 |         for value in returned:value.destroy()
+83 |         b.destroy();matrix.destroy()
+   |                    ^ E702
+   |
+
+src/test/test_373_condensed_fine_reference.py:89:85: E702 Multiple statements on one line (semicolon)
+   |
+87 |     from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
+88 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+89 |     matrix.setValues(range(3),range(3),np.array([[3,1j,0],[1,4,1],[0,1,3]],complex));matrix.assemble()
+   |                                                                                     ^ E702
+90 |     b=matrix.createVecRight();b.array[:]=[1j,2,3];x=b.duplicate();r=b.duplicate();d=b.duplicate();factor=None
+91 |     try:
+   |
+
+src/test/test_373_condensed_fine_reference.py:90:30: E702 Multiple statements on one line (semicolon)
+   |
+88 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+89 |     matrix.setValues(range(3),range(3),np.array([[3,1j,0],[1,4,1],[0,1,3]],complex));matrix.assemble()
+90 |     b=matrix.createVecRight();b.array[:]=[1j,2,3];x=b.duplicate();r=b.duplicate();d=b.duplicate();factor=None
+   |                              ^ E702
+91 |     try:
+92 |         factor=_MumpsFactor(matrix);factor.symbolic(matrix)
+   |
+
+src/test/test_373_condensed_fine_reference.py:90:50: E702 Multiple statements on one line (semicolon)
+   |
+88 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+89 |     matrix.setValues(range(3),range(3),np.array([[3,1j,0],[1,4,1],[0,1,3]],complex));matrix.assemble()
+90 |     b=matrix.createVecRight();b.array[:]=[1j,2,3];x=b.duplicate();r=b.duplicate();d=b.duplicate();factor=None
+   |                                                  ^ E702
+91 |     try:
+92 |         factor=_MumpsFactor(matrix);factor.symbolic(matrix)
+   |
+
+src/test/test_373_condensed_fine_reference.py:90:66: E702 Multiple statements on one line (semicolon)
+   |
+88 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+89 |     matrix.setValues(range(3),range(3),np.array([[3,1j,0],[1,4,1],[0,1,3]],complex));matrix.assemble()
+90 |     b=matrix.createVecRight();b.array[:]=[1j,2,3];x=b.duplicate();r=b.duplicate();d=b.duplicate();factor=None
+   |                                                                  ^ E702
+91 |     try:
+92 |         factor=_MumpsFactor(matrix);factor.symbolic(matrix)
+   |
+
+src/test/test_373_condensed_fine_reference.py:90:82: E702 Multiple statements on one line (semicolon)
+   |
+88 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+89 |     matrix.setValues(range(3),range(3),np.array([[3,1j,0],[1,4,1],[0,1,3]],complex));matrix.assemble()
+90 |     b=matrix.createVecRight();b.array[:]=[1j,2,3];x=b.duplicate();r=b.duplicate();d=b.duplicate();factor=None
+   |                                                                                  ^ E702
+91 |     try:
+92 |         factor=_MumpsFactor(matrix);factor.symbolic(matrix)
+   |
+
+src/test/test_373_condensed_fine_reference.py:90:98: E702 Multiple statements on one line (semicolon)
+   |
+88 |     matrix=PETSc.Mat().createAIJ((3,3),nnz=3,comm=PETSc.COMM_SELF)
+89 |     matrix.setValues(range(3),range(3),np.array([[3,1j,0],[1,4,1],[0,1,3]],complex));matrix.assemble()
+90 |     b=matrix.createVecRight();b.array[:]=[1j,2,3];x=b.duplicate();r=b.duplicate();d=b.duplicate();factor=None
+   |                                                                                                  ^ E702
+91 |     try:
+92 |         factor=_MumpsFactor(matrix);factor.symbolic(matrix)
+   |
+
+src/test/test_373_condensed_fine_reference.py:92:36: E702 Multiple statements on one line (semicolon)
+   |
+90 |     b=matrix.createVecRight();b.array[:]=[1j,2,3];x=b.duplicate();r=b.duplicate();d=b.duplicate();factor=None
+91 |     try:
+92 |         factor=_MumpsFactor(matrix);factor.symbolic(matrix)
+   |                                    ^ E702
+93 |         initial=factor.symbolic_memory_settings()['icntl']
+94 |         factor.set_memory_limit_mb(512)
+   |
+
+src/test/test_373_condensed_fine_reference.py:106:25: E702 Multiple statements on one line (semicolon)
+    |
+104 |         assert local_info['local_info_supported'] is True
+105 |         factor.solve(b,x)
+106 |         matrix.mult(x,r);r.aypx(-1,b);factor.solve_repeated(r,d);x.axpy(1,d)
+    |                         ^ E702
+107 |         matrix.mult(x,r);r.aypx(-1,b)
+108 |         assert r.norm()/b.norm()<1e-14
+    |
+
+src/test/test_373_condensed_fine_reference.py:106:38: E702 Multiple statements on one line (semicolon)
+    |
+104 |         assert local_info['local_info_supported'] is True
+105 |         factor.solve(b,x)
+106 |         matrix.mult(x,r);r.aypx(-1,b);factor.solve_repeated(r,d);x.axpy(1,d)
+    |                                      ^ E702
+107 |         matrix.mult(x,r);r.aypx(-1,b)
+108 |         assert r.norm()/b.norm()<1e-14
+    |
+
+src/test/test_373_condensed_fine_reference.py:106:65: E702 Multiple statements on one line (semicolon)
+    |
+104 |         assert local_info['local_info_supported'] is True
+105 |         factor.solve(b,x)
+106 |         matrix.mult(x,r);r.aypx(-1,b);factor.solve_repeated(r,d);x.axpy(1,d)
+    |                                                                 ^ E702
+107 |         matrix.mult(x,r);r.aypx(-1,b)
+108 |         assert r.norm()/b.norm()<1e-14
+    |
+
+src/test/test_373_condensed_fine_reference.py:107:25: E702 Multiple statements on one line (semicolon)
+    |
+105 |         factor.solve(b,x)
+106 |         matrix.mult(x,r);r.aypx(-1,b);factor.solve_repeated(r,d);x.axpy(1,d)
+107 |         matrix.mult(x,r);r.aypx(-1,b)
+    |                         ^ E702
+108 |         assert r.norm()/b.norm()<1e-14
+109 |         assert factor.numeric_calls==1 and factor.solve_calls==2
+    |
+
+src/test/test_373_condensed_fine_reference.py:111:30: E701 Multiple statements on one line (colon)
+    |
+109 |         assert factor.numeric_calls==1 and factor.solve_calls==2
+110 |     finally:
+111 |         if factor is not None:factor.destroy()
+    |                              ^ E701
+112 |         for value in (x,r,d,b,matrix):value.destroy()
+    |
+
+src/test/test_373_condensed_fine_reference.py:112:38: E701 Multiple statements on one line (colon)
+    |
+110 |     finally:
+111 |         if factor is not None:factor.destroy()
+112 |         for value in (x,r,d,b,matrix):value.destroy()
+    |                                      ^ E701
+    |
+
+Found 85 errors.
+[*] 4 fixable with the `--fix` option (4 hidden fixes can be enabled with the `--unsafe-fixes` option).

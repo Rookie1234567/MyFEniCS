@@ -1,4 +1,19 @@
-# Task39extra V10当前登记：macro inverse M1 受控资源负结果
+# Task39extra Review V11当前登记：symbolic-sized local MUMPS partial qualification
+
+本节是当前模型登记入口。V11 是显式 opt-in 的局部 macro inverse 生命周期研究候选，不是 ordinary default，也不是完整 Maxwell solver。每个局部块先做小矩阵分解并保留因子；V11 的 workspace `Q` 来自 symbolic-sized MUMPS estimate。N1 的局部 quality 与 N2 的全 inventory resource Gate 分开登记。
+
+| model id | source/input | 方法与实测结果 | 状态/登记边界 |
+|---|---|---|---|
+| `task39_v11_macro_dd4_symbolic_sized_n1` | source `7c936958451bc196f784ecc30db9278c4e5b402f`；N1 input SHA `e8fe409069970686d4901ddb1d444e37c2305f46f15cb1697ffc65995641fe64`；13.5 nm/p6/h10/Full3D/MPI1 | block 0/1 old/new same matrix；4 numeric factorizations；最大 local residual `5.438606648780365e-13`；solution difference `0.0`；old/new allocated `262/53 MB` and `261/51 MB` | `N1_LOCAL_POLICY_EQUIVALENCE_PASS`；只代表冻结 blocks，不是 full macro stack |
+| `task39_v11_macro_dd4_inventory_n2` | same source；N2 input SHA `adde8c8c9e17fd8e0a84edb53b524a8c2f0a9e4f78313c9e27872c167abba7ad`；physical SHA `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f` | blocks 0–40 numeric/backsolve=41；block41 symbolic pre-numeric；retained inventory `2,132,081,608 B`，Q envelope `2,178,209,948 B` | `LOCAL_INVENTORY_RESOURCE_BLOCKED`；p4 true error、BAL/ONE、restart、official fields 均 `not_run` |
+
+`ICNTL(23)` 按 `E=1e6*(1+max(INFOG16,17))` 与 `Q=1e6*ceil(max(32MiB,2E+8MiB)/1e6)` 设置并读回；ICNTL49 getter runtime error62，setter source verified，未伪造 setter runtime probe。block41 的 fixed retained inventory Gate 不是系统 OOM 或 MUMPS numeric error。完整字段、raw SHA 和 N2 audit 见 [V11 lifecycle](task039_extra_physical_multilevel/outcomes/macro_memory_lifecycle_v11.md)、[compact](task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11.json) 和 [per-block compact](task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11_blocks.json)。
+
+当前状态：`NOT_APPROVED_FOR_MASTER_MERGE`；下一步仅为同一分支提交审阅本轮资源负结果及实现。
+
+---
+
+# 历史：Task39extra V10登记：macro inverse M1 受控资源负结果
 
 本节是当前模型登记入口。V10 macro inverse 是显式 opt-in 的研究候选，不是 ordinary default，也不是完整 Maxwell solver。局部块的回代检查与全系统质量必须分开登记。
 

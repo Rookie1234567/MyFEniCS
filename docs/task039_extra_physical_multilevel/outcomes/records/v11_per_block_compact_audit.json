@@ -1,0 +1,18 @@
+{
+  "source": "7c936958451bc196f784ecc30db9278c4e5b402f",
+  "compact_sha256": "445cf3c09bc3bdcd0468c8132f90a5d7ac743d59baac482d212f7c2c26266ccd",
+  "checks": 1231,
+  "blocks": 42,
+  "numeric_blocks": 41,
+  "raw_backsolves_recomputed": 82,
+  "max_residual": 2.1772149386553977e-15,
+  "totals": {
+    "allocated": 1643000000,
+    "used": 874000000,
+    "matrix_CSR": 443371460
+  },
+  "retained_41": 2132081608,
+  "requested_total": 2178209948,
+  "excess": 30726300,
+  "status": "PASS"
+}

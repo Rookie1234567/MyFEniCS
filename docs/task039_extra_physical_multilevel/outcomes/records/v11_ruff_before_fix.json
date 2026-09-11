@@ -1,0 +1,1575 @@
+[
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 75,
+      "row": 9
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/io/physical_intermediate_profile.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 9
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 9,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 16
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/io/physical_intermediate_profile.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 10
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 10,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E731",
+    "end_location": {
+      "column": 67,
+      "row": 249
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_controls.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "def save(name, facts):\n        return save_packet(directory, name, facts)",
+          "end_location": {
+            "column": 67,
+            "row": 249
+          },
+          "location": {
+            "column": 5,
+            "row": 249
+          }
+        }
+      ],
+      "message": "Rewrite `save` as a `def`"
+    },
+    "location": {
+      "column": 5,
+      "row": 249
+    },
+    "message": "Do not assign a `lambda` expression, use a `def`",
+    "noqa_row": 249,
+    "url": "https://docs.astral.sh/ruff/rules/lambda-assignment"
+  },
+  {
+    "cell": null,
+    "code": "E731",
+    "end_location": {
+      "column": 67,
+      "row": 672
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_macro_controls.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "def save(name, facts):\n        return save_packet(directory, name, facts)",
+          "end_location": {
+            "column": 67,
+            "row": 672
+          },
+          "location": {
+            "column": 5,
+            "row": 672
+          }
+        }
+      ],
+      "message": "Rewrite `save` as a `def`"
+    },
+    "location": {
+      "column": 5,
+      "row": 672
+    },
+    "message": "Do not assign a `lambda` expression, use a `def`",
+    "noqa_row": 672,
+    "url": "https://docs.astral.sh/ruff/rules/lambda-assignment"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 32,
+      "row": 18
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 31,
+      "row": 18
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 18,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 53,
+      "row": 194
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 52,
+      "row": 194
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 194,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 55,
+      "row": 205
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 54,
+      "row": 205
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 205,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 77,
+      "row": 305
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 76,
+      "row": 305
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 305,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 37,
+      "row": 334
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 334
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 334,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 60,
+      "row": 336
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 59,
+      "row": 336
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 336,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 68,
+      "row": 337
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 337
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 337,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 51,
+      "row": 347
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 50,
+      "row": 347
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 347,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 43,
+      "row": 349
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 42,
+      "row": 349
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 349,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 81,
+      "row": 349
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 80,
+      "row": 349
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 349,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 113,
+      "row": 349
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 112,
+      "row": 349
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 349,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 153,
+      "row": 349
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 152,
+      "row": 349
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 349,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 38,
+      "row": 350
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 350
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 350,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E401",
+    "end_location": {
+      "column": 50,
+      "row": 359
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "    import petsc4py\n    import slepc4py\n    import dolfinx\n    import basix\n    import mpi4py",
+          "end_location": {
+            "column": 50,
+            "row": 359
+          },
+          "location": {
+            "column": 1,
+            "row": 359
+          }
+        }
+      ],
+      "message": "Split imports"
+    },
+    "location": {
+      "column": 5,
+      "row": 359
+    },
+    "message": "Multiple imports on one line",
+    "noqa_row": 359,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-imports-on-one-line"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 68,
+      "row": 405
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 405
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 405,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 68,
+      "row": 574
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 574
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 574,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 24,
+      "row": 604
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 23,
+      "row": 604
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 604,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 19,
+      "row": 624
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 18,
+      "row": 624
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 624,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 66,
+      "row": 627
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 65,
+      "row": 627
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 627,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 56,
+      "row": 636
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 55,
+      "row": 636
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 636,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 19,
+      "row": 676
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 18,
+      "row": 676
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 676,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 70,
+      "row": 684
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 69,
+      "row": 684
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 684,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 42,
+      "row": 731
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 41,
+      "row": 731
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 731,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 77,
+      "row": 748
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 748
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 748,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 64,
+      "row": 749
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 749
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 749,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 54,
+      "row": 1258
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 53,
+      "row": 1258
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 1258,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 20,
+      "row": 1304
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 19,
+      "row": 1304
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 1304,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 35,
+      "row": 1314
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 1314
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 1314,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 43,
+      "row": 1315
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 42,
+      "row": 1315
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 1315,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 81,
+      "row": 1315
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 80,
+      "row": 1315
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 1315,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 113,
+      "row": 1315
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 112,
+      "row": 1315
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 1315,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 153,
+      "row": 1315
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 152,
+      "row": 1315
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 1315,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 46,
+      "row": 1339
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 45,
+      "row": 1339
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 1339,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 21,
+      "row": 1348
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 1348
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 1348,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 69,
+      "row": 1350
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 68,
+      "row": 1350
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 1350,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 175,
+      "row": 1368
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 174,
+      "row": 1368
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 1368,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 50,
+      "row": 1374
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 49,
+      "row": 1374
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 1374,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 69,
+      "row": 1377
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 68,
+      "row": 1377
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 1377,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 25,
+      "row": 1380
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/runners/physical_recursive_entry.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 1380
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 1380,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E731",
+    "end_location": {
+      "column": 108,
+      "row": 100
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_bounded_mumps.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "def emit(name, facts):\n            return marker(name.replace('p1_', 'p2_') if physical_p2_pilot else name, facts)",
+          "end_location": {
+            "column": 108,
+            "row": 100
+          },
+          "location": {
+            "column": 9,
+            "row": 100
+          }
+        }
+      ],
+      "message": "Rewrite `emit` as a `def`"
+    },
+    "location": {
+      "column": 9,
+      "row": 100
+    },
+    "message": "Do not assign a `lambda` expression, use a `def`",
+    "noqa_row": 100,
+    "url": "https://docs.astral.sh/ruff/rules/lambda-assignment"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 28,
+      "row": 514
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_v17_p3_oracle.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 515
+          },
+          "location": {
+            "column": 1,
+            "row": 514
+          }
+        }
+      ],
+      "message": "Remove unused import: `dolfinx.fem`"
+    },
+    "location": {
+      "column": 25,
+      "row": 514
+    },
+    "message": "`dolfinx.fem` imported but unused",
+    "noqa_row": 514,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 15,
+      "row": 516
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_v17_p3_oracle.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 517
+          },
+          "location": {
+            "column": 1,
+            "row": 516
+          }
+        }
+      ],
+      "message": "Remove unused import: `ufl`"
+    },
+    "location": {
+      "column": 12,
+      "row": 516
+    },
+    "message": "`ufl` imported but unused",
+    "noqa_row": 516,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 62,
+      "row": 519
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/fullspace_v17_p3_oracle.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 520
+          },
+          "location": {
+            "column": 1,
+            "row": 519
+          }
+        }
+      ],
+      "message": "Remove unused import: `.common_3d_forms._build_physical_volume_terms`"
+    },
+    "location": {
+      "column": 34,
+      "row": 519
+    },
+    "message": "`.common_3d_forms._build_physical_volume_terms` imported but unused",
+    "noqa_row": 519,
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 35,
+      "row": 425
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/physical_macro_dd4.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 425
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 425,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 62,
+      "row": 425
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/physical_macro_dd4.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 425
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 425,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E731",
+    "end_location": {
+      "column": 63,
+      "row": 604
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/physical_macro_dd4.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "def make_vector():\n                return level_vector(self.levels, 4)",
+          "end_location": {
+            "column": 63,
+            "row": 604
+          },
+          "location": {
+            "column": 13,
+            "row": 604
+          }
+        }
+      ],
+      "message": "Rewrite `make_vector` as a `def`"
+    },
+    "location": {
+      "column": 13,
+      "row": 604
+    },
+    "message": "Do not assign a `lambda` expression, use a `def`",
+    "noqa_row": 604,
+    "url": "https://docs.astral.sh/ruff/rules/lambda-assignment"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 62,
+      "row": 784
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/physical_macro_dd4.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 784
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 784,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 62,
+      "row": 787
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/solvers/physical_macro_dd4.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 787
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 787,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 36,
+      "row": 24
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 24
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 17,
+      "row": 25
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 25
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 36,
+      "row": 31
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 31
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 31,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 36,
+      "row": 32
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 32
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 48,
+      "row": 39
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 47,
+      "row": 39
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 39,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 31,
+      "row": 40
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 40
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 40,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 15,
+      "row": 41
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 14,
+      "row": 41
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 41,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 26,
+      "row": 41
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 25,
+      "row": 41
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 41,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 68,
+      "row": 46
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 46
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 46,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 35,
+      "row": 49
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 49
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 49,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 36,
+      "row": 51
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 51
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 51,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 41,
+      "row": 53
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 53
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 53,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 35,
+      "row": 56
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 56
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 56,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 68,
+      "row": 59
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 59
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 59,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 34,
+      "row": 68
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 33,
+      "row": 68
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 68,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 97,
+      "row": 77
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 96,
+      "row": 77
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 77,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 36,
+      "row": 79
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 79
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 79,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 32,
+      "row": 80
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 31,
+      "row": 80
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 80,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 31,
+      "row": 82
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 82
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 82,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 21,
+      "row": 83
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 83
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 83,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 86,
+      "row": 89
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 85,
+      "row": 89
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 89,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 31,
+      "row": 90
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 90
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 51,
+      "row": 90
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 50,
+      "row": 90
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 67,
+      "row": 90
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 66,
+      "row": 90
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 83,
+      "row": 90
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 82,
+      "row": 90
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 99,
+      "row": 90
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 98,
+      "row": 90
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 37,
+      "row": 92
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 92
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 92,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 26,
+      "row": 106
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 25,
+      "row": 106
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 106,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 39,
+      "row": 106
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 106
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 106,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 66,
+      "row": 106
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 65,
+      "row": 106
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 106,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E702",
+    "end_location": {
+      "column": 26,
+      "row": 107
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 25,
+      "row": 107
+    },
+    "message": "Multiple statements on one line (semicolon)",
+    "noqa_row": 107,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-semicolon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 31,
+      "row": 111
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 111
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 111,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 39,
+      "row": 112
+    },
+    "filename": "/home/shenjh/Projects/MyFEniCSx_task37_extra/src/test/test_373_condensed_fine_reference.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 112
+    },
+    "message": "Multiple statements on one line (colon)",
+    "noqa_row": 112,
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  }
+]

@@ -1,0 +1,40 @@
+{
+  "base": "826609863b77ab9c2cb1edf06897ccfc0f9abc00",
+  "source": "7c936958451bc196f784ecc30db9278c4e5b402f",
+  "files": [
+    "scripts/run_case.py",
+    "src/io/input_schema.py",
+    "src/io/input_validation.py",
+    "src/io/physical_intermediate_profile.py",
+    "src/io/physical_recursive_profile.py",
+    "src/runners/physical_macro_controls.py",
+    "src/runners/physical_recursive_entry.py",
+    "src/solvers/fullspace_bounded_mumps.py",
+    "src/solvers/fullspace_v17_p3_oracle.py",
+    "src/solvers/physical_macro_dd4.py",
+    "src/test/test_260_task038_input_schema.py",
+    "src/test/test_355_bounded_p1_factor.py",
+    "src/test/test_373_condensed_fine_reference.py"
+  ],
+  "baseline_count": 85,
+  "current_count": 84,
+  "new_count": 0,
+  "source_note": "working tree based on source; final callback-only style edit is bound by file hashes; formal PDE source remains unchanged",
+  "current_file_sha256": {
+    "scripts/run_case.py": "ec366af901d193454eab5395ae27aaf80224bb1442865c0ecff10f831bcd2b7f",
+    "src/io/input_schema.py": "9d7440236a905aa21b0f53c9ad5c3b3944e5c021afa5b5cd344b4841b0ac0858",
+    "src/io/input_validation.py": "3e21907b72be71aa182685ebe7b78341817f519eb82ce7f78d37bcd7296de7eb",
+    "src/io/physical_intermediate_profile.py": "edcf124fdbca2955a282e59290662685c6e66431a4ec504a0c56e72564d638b5",
+    "src/io/physical_recursive_profile.py": "2170c3088d61600a5b474150bd0597dbecafda1b9d1ccfc5cac11ac6e16bf5d0",
+    "src/runners/physical_macro_controls.py": "b3ff1c7ae98219b52bdd12f3b27152012fb831b651bb3d1602c4887c2b3b159f",
+    "src/runners/physical_recursive_entry.py": "3a0cf41adfe17e150257a0345c713fd257181bb07517ff7333f8a172c03e4007",
+    "src/solvers/fullspace_bounded_mumps.py": "3ea048204e2fa95ed2bcefc02fe9bed887b6fb363774855571041640ff31ae07",
+    "src/solvers/fullspace_v17_p3_oracle.py": "0e722b9c97903d4cd51779a8392cc41a6cdcf9872013bac8bab7e15239df9f99",
+    "src/solvers/physical_macro_dd4.py": "72b1143285b98bc6f8db6945dc8fbe9ca9f87d53b4f2ab4799042dba70084cf6",
+    "src/test/test_260_task038_input_schema.py": "0cd902a08cc4fdfc6ba1d20b1eef8700f028fd7641c768c44aaf3bb3102860d3",
+    "src/test/test_355_bounded_p1_factor.py": "391b16f0895578b531ba40d25645daca54e61bd16ad35a1a0356e47c79d4c5b5",
+    "src/test/test_373_condensed_fine_reference.py": "8e1a339ee127e88a8e80906a44b03822db207b1d59d1ddc6ad43da26401865a7"
+  },
+  "comparison_key": "relative filename, diagnostic code/message, first source line, enclosing function/class scope; ignores line-number shifts",
+  "new_diagnostics": []
+}

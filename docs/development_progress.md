@@ -1,4 +1,20 @@
-# Task39extra V10最新结果：macro inverse M1 受控资源负结果，M4收口
+# Task39extra Review V11最新结果：N1 policy equivalence，N2 retained-inventory controlled negative
+
+V11 在 V10 的显式局部 macro inverse 候选上验证 symbolic-sized local MUMPS 生命周期。局部块把附近未知量组成小矩阵，分解后保留因子给局部回代；`Q` 是由 MUMPS symbolic estimate 得到的 workspace request，不是 RSS。V10 旧策略和 ordinary default 不变。
+
+| 阶段 | 当前结论 | 边界 |
+|---|---|---|
+| N0 | qualified ABI、MUMPS 5.6.2 package/header/source identity、resolved library 和 public controls 通过 | PETSc `3.19.6`、complex128/int32、MPI1；ICNTL49 getter runtime error62，setter source verified |
+| N1 | block0/1 old/new policy equivalence PASS | old/new allocated `262/53 MB`、`261/51 MB`；used `29/29 MB`、`28/28 MB`；最大 local residual `5.438606648780365e-13`；solution diff `0.0` |
+| N2 | 41/42 numeric/backsolve 后 controlled resource negative | block41 numeric 前：`2,132,081,608 + 7,128,340 + 39,000,000 = 2,178,209,948 B`，超过 2 GiB cap `30,726,300 B`；不是 OOM、MUMPS -9/-19 或数学失败 |
+| N3/N4 | `not_run_by_N2_gate` | restart32/64、p4 true error、BAL_H/ONE_C、cached-native/map、original/notch、official E/H/R/T/A 均未触达 |
+| N5 | `LOCAL_INVENTORY_RESOURCE_BLOCKED` | 下一步只提交同一分支审阅本轮资源负结果及实现；不擅自提高 cap 或改分块 |
+
+证据入口：[V11 lifecycle](task039_extra_physical_multilevel/outcomes/macro_memory_lifecycle_v11.md)、[V11 compact](task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11.json)、[per-block compact](task039_extra_physical_multilevel/outcomes/records/macro_memory_lifecycle_v11_blocks.json)、[response V12](task039_extra_physical_multilevel/response_v12.md)。N2 41-block audit、allocated/CSR/base breakdown 和 82 次 Dw raw-norm recheck 已保存在 tracked records；大型 matrix/factor/field/cache 仍 ignored。
+
+---
+
+# 历史：Task39extra V10结果：macro inverse M1 受控资源负结果，M4收口
 
 本节是当前项目进度入口。V10 在 V9 之后尝试了一个显式 opt-in 的多单元局部物理逆：把相邻单元的内部未知量组成局部块，先解局部物理矩阵，再把局部响应接入全系统纠错。它试图避免直接分解整个 p4/p6 全局矩阵，但局部回代小残差只证明局部测试右端自洽，不能替代完整 p4 true error、外层真残差或物理输出 Gate。
 

@@ -1,0 +1,21 @@
+{
+  "source": "7c936958451bc196f784ecc30db9278c4e5b402f",
+  "numeric_blocks": 41,
+  "backsolves": 82,
+  "max_residual_from_raw_norms": 2.1772149386553977e-15,
+  "allocated_padded_sum": 1643000000,
+  "used_padded_sum": 874000000,
+  "matrix_CSR_sum": 443371460,
+  "base_and_shared_inventory": 45710148,
+  "retained_after_41": 2132081608,
+  "block41_matrix": 7128340,
+  "before_block41_numeric": 2139209948,
+  "Q41": 39000000,
+  "requested_total": 2178209948,
+  "cap": 2147483648,
+  "excess": 30726300,
+  "peak_RSS": 1918558208,
+  "peak_swap": 0,
+  "charged_seconds": 179.5419945970131,
+  "descendants_cleared": true
+}

@@ -1,0 +1,40 @@
+{
+  "source": "7c936958451bc196f784ecc30db9278c4e5b402f",
+  "rows": [
+    {
+      "block": 0,
+      "raw_solution_relative_difference": 0.0,
+      "raw_repeat_differences": [
+        0.0,
+        0.0
+      ],
+      "max_Dw_residual_from_norms": 1.8764473811290233e-15,
+      "E": 32000000,
+      "Q": 73000000,
+      "old_allocated_padded": 262000000,
+      "new_allocated_padded": 53000000
+    },
+    {
+      "block": 1,
+      "raw_solution_relative_difference": 0.0,
+      "raw_repeat_differences": [
+        0.0,
+        0.0
+      ],
+      "max_Dw_residual_from_norms": 2.0002787934351233e-15,
+      "E": 31000000,
+      "Q": 71000000,
+      "old_allocated_padded": 261000000,
+      "new_allocated_padded": 51000000
+    }
+  ],
+  "attempts": {
+    "new": 2,
+    "old": 2
+  },
+  "max_solves": 6,
+  "peak_rss": 1585606656,
+  "peak_swap": 0,
+  "charged_seconds": 177.4409457569965,
+  "limitation": "Seed-RHS local residuals are measured raw scalar records; CSR matrices were not reconstructed for this supervisor audit."
+}
