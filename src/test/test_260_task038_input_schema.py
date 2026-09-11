@@ -73,17 +73,17 @@ def test_schema_identity_sections_and_unique_whitelist():
         "output",
     )
     assert len(IDENTITY_FIELD_SPECS) == 5
-    assert len(FIELD_SPECS) == 97
-    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 102
+    assert len(FIELD_SPECS) == 101
+    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 106
     assert set(FIELD_SPECS_BY_KEY) == set(PUBLIC_FIELD_KEYS)
     assert {name: len(keys) for name, keys in SECTION_FIELD_KEYS.items()} == {
-        "geometry": 11,
+        "geometry": 12,
         "materials": 6,
         "incidence": 8,
         "discretization": 15,
         "boundary": 10,
         "method": 7,
-        "solver": 14,
+        "solver": 17,
         "execution": 6,
         "output": 20,
     }
@@ -129,6 +129,23 @@ def test_schema_identity_sections_and_unique_whitelist():
     assert FIELD_SPECS_BY_KEY["solver.preconditioner"].allowed == (
         "full3d_scalable_v1",
         "fullspace_pml_double_sweep_v19",
+        "physical_intermediate_p4_shifted_aux_v1",
+        "physical_intermediate_p4_reference_v1",
+        "a2r_equivalent_fast_v1",
+        "a2r_packed_equivalent_v2",
+        "light_p4ref_jointmr3_v2",
+        "balanced_h6_p4_v5",
+        "balanced_s6_p4_v5",
+        "projected_krylov6_h6_p4_v5",
+        "balanced_h6_recursive_p4_lo_v6",
+        "balanced_h6_recursive_p4_hi_v6",
+        "bounded_entity16_v7",
+        "bounded_projected_seq2_16_v7",
+        "balanced_h6_entity_gcrot8_v8",
+        "balanced_h6_entity_gcrot8_new16_v9",
+        "p6smooth_p4ref_p6smooth_v1",
+        "physical_macro_dd4_v10",
+        "physical_macro_dd4_v11",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
@@ -156,7 +173,7 @@ def test_readme_markers_and_continuous_table():
     text, rows = _readme_table()
     marker_pattern = re.compile(r"^<!-- schema-field (\{.*\}) -->$", re.MULTILINE)
     markers = [json.loads(match) for match in marker_pattern.findall(text)]
-    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 102
+    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 106
     assert [marker["key"] for marker in markers] == list(PUBLIC_FIELD_KEYS)
     assert len({marker["key"] for marker in markers}) == len(markers)
     for marker in markers:

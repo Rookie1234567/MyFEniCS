@@ -122,6 +122,377 @@ def _make_scoped_save(save: Callable[[str, Any], Any], label: list[str]):
     return scoped
 
 
+def _calibration_backend_snapshot(factor: Any, *, phase: str) -> dict[str, Any]:
+    """Capture public MUMPS controls and raw fields around repeated solves.
+
+    ``numeric_raw`` in ``factor.audit`` is the post-numeric record.  These
+    separate snapshots deliberately keep the later INFO/RINFO readback from
+    being mistaken for the numeric warning record.
+    """
+    backend = getattr(factor, "factor", None)
+    if backend is None:
+        raise RuntimeError("N1 calibration backend snapshot requires a live factor")
+    return {
+        "phase": phase,
+        "symbolic_memory_settings": backend.symbolic_memory_settings(),
+        "refinement_settings": backend.refinement_settings(),
+        "raw_backend_fields": backend.info(
+            extra_indices=(21, 22, 29), include_local=True,
+        ),
+        "numeric_calls": int(backend.numeric_calls),
+        "solve_calls": int(backend.solve_calls),
+    }
+
+
+def _calibration_solve_probe(
+    matrix: Any,
+    factor: Any,
+    *,
+    block_index: int,
+    policy: str,
+) -> dict[str, Any]:
+    """Run one fixed RHS plus repeated solves, retaining compact vectors."""
+    rhs = matrix.createVecRight()
+    checked = matrix.createVecRight()
+    seed_value = 390391 + 17 * int(block_index)
+    rng = np.random.default_rng(seed_value)
+    real = rng.standard_normal(int(matrix.getSize()[0]))
+    imag = rng.standard_normal(int(matrix.getSize()[0]))
+    rhs.array[:] = real + 1j * imag
+    source = np.array(rhs.array, copy=True)
+    rhs_sha256 = hashlib.sha256(np.ascontiguousarray(source).tobytes()).hexdigest()
+    solutions = []
+    timings = []
+    residuals = []
+    try:
+        for repetition in range(4):
+            started = time.perf_counter()
+            solution, solve_facts = factor.solve_lean(rhs)
+            elapsed = time.perf_counter() - started
+            try:
+                matrix.mult(solution, checked)
+                checked.axpy(-1.0, rhs)
+                residual = float(checked.norm() / max(rhs.norm(), np.finfo(float).tiny))
+                if not np.isfinite(residual) or residual > 1.0e-10:
+                    raise ValueError(
+                        f"block {block_index} {policy} calibration residual {residual} exceeds 1e-10"
+                    )
+                residuals.append(residual)
+                timings.append(elapsed)
+                if repetition in (0, 3):
+                    solutions.append(np.array(solution.array, copy=True))
+            finally:
+                solution.destroy()
+        return {
+            "block_index": int(block_index),
+            "policy": policy,
+            "rhs_values": source,
+            "solution_first_values": solutions[0],
+            "solution_last_values": solutions[-1],
+            "solve_count_added": 4,
+            "solve_timings_seconds": timings,
+            "fixed_seed": int(seed_value),
+            "rhs_sha256": rhs_sha256,
+            "calibration_seed_solve_seconds": timings[0],
+            "hot_solve_seconds": timings[1:],
+            "relative_residuals": residuals,
+            "max_relative_residual": max(residuals),
+            "solution_repeat_difference": float(
+                np.linalg.norm(solutions[-1] - solutions[0]) /
+                max(np.linalg.norm(solutions[0]), np.finfo(float).tiny)
+            ),
+            "solution_repeat_difference_absolute": float(
+                np.linalg.norm(solutions[-1] - solutions[0])
+            ),
+            "solve_facts": solve_facts,
+        }
+    finally:
+        checked.destroy()
+        rhs.destroy()
+
+
+def run_macro_n1_calibration(
+    cfg: Any,
+    comm: Any,
+    directory: str | Path,
+    *,
+    sample: Callable[[], Any],
+    marker: Callable[[str, Any], Any],
+    source_sha: str | None = None,
+    input_path: str | Path | None = None,
+    model_identity: dict[str, Any] | None = None,
+    calibration_seconds: float = 900.0,
+) -> dict[str, Any]:
+    """Compare one old/new factor per canonical representative block.
+
+    This is the bounded V11 N1 stage.  It uses the production local assembly
+    but deliberately does not build a global p4 reference, p2 factor, or
+    outer framework.  Old factors are fully released before the V11 factors
+    are constructed.
+    """
+    from src.io.physical_recursive_profile import MACRO_V11_PROFILE
+    from src.solvers.fullspace_bounded_mumps import (
+        LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+        SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+    )
+    from src.solvers.physical_macro_dd4 import (
+        build_macro_calibration_context,
+        destroy_macro_stack,
+    )
+    from .physical_diagnosis_worker import save_packet
+
+    if comm.size != 1:
+        raise ValueError("V11 N1 calibration is MPI1-only")
+    started = time.perf_counter()
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=False)
+    save = lambda name, facts: save_packet(directory, name, facts)
+    model_facts = dict(model_identity or {})
+    summary: dict[str, Any] = {
+        "schema": "task39extra.review-v11.n1-calibration.v1",
+        "status": "N1_STARTED",
+        "profile": MACRO_V11_PROFILE,
+        "source_sha": source_sha,
+        "input_path": str(Path(input_path).resolve()) if input_path is not None else None,
+        "model_identity": model_facts,
+        "policies": [
+            LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+            SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        ],
+        "representative_blocks": [],
+        "old": [],
+        "new": [],
+        "comparisons": [],
+        "numeric_factorizations": 0,
+        "numeric_attempts": {"old": 0, "new": 0},
+        "max_solves_per_factor": 0,
+        "context_reused_for_n2": False,
+        "n2_context_mode": "fresh_process_rebuild_required",
+        "stage_times": {"build": None, "old": None, "new": None, "total": None},
+        "last_safe_stage": None,
+    }
+    context: dict[str, Any] | None = None
+    active_strategy: str | None = None
+
+    def calibration_marker(name: str, facts: Any) -> None:
+        if name in ("p1_numeric_started", "p2_numeric_started") and active_strategy is not None:
+            summary["numeric_attempts"][active_strategy] += 1
+        marker(name, facts)
+
+    def checkpoint(stage: str) -> None:
+        summary["last_safe_stage"] = stage
+        sample()
+        if time.perf_counter() - started > calibration_seconds:
+            raise TimeoutError(
+                f"N1 calibration budget exceeded after {stage}: "
+                f"{time.perf_counter() - started:.6f}s"
+            )
+
+    try:
+        marker("macro_n1_context_started", {"profile": MACRO_V11_PROFILE})
+        context = build_macro_calibration_context(
+            cfg, comm, sample=sample, marker=calibration_marker, save=save,
+            memory_policy=SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        )
+        local = context["local"]
+        dtn4 = context["dtn4"]
+        native_a4 = context["native_a4"]
+        selected_by_category = local._select_representative_blocks(dtn4.carrier)
+        selected = sorted(set(selected_by_category.values()))
+        if not 1 <= len(selected) <= 3:
+            raise ValueError(f"V11 N1 representative count is {len(selected)}, expected 1..3")
+        summary["representative_selection"] = {
+            "by_category": {key: int(value) for key, value in selected_by_category.items()},
+            "selected_blocks": selected,
+            "selection_notes": dict(getattr(local, "representative_selection_notes", {})),
+        }
+        summary["representative_blocks"] = [
+            {
+                "block_index": int(index),
+                "seed": list(local.blocks[index]["seed"]),
+                "rows": int(np.asarray(local.blocks[index]["indices"]).size),
+                "support_cells": list(local.blocks[index]["support_cells"]),
+            }
+            for index in selected
+        ]
+        save("n1_representative_selection", summary["representative_selection"])
+        checkpoint("representatives_frozen")
+        summary["stage_times"]["build"] = time.perf_counter() - started
+
+        old_records: dict[int, dict[str, Any]] = {}
+        old_save = _make_scoped_save(save, ["old"])
+        old_started = time.perf_counter()
+        active_strategy = "old"
+        local.add_dtn_terms(
+            dtn4.carrier, native_a4=native_a4, save=old_save,
+            block_indices=selected, memory_policy=LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+        )
+        for index in selected:
+            block = local.blocks[index]
+            factor = block["factor"]
+            backend_before = _calibration_backend_snapshot(
+                factor, phase="after_two_Dw_before_seed_repeats",
+            )
+            if backend_before["solve_calls"] != 2:
+                raise RuntimeError(
+                    f"N1 backend sample order invalid before seed repeats: "
+                    f"expected solve_calls=2, got {backend_before['solve_calls']}"
+                )
+            probe = _calibration_solve_probe(
+                block["matrix"], factor, block_index=index,
+                policy=LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+            )
+            # The probe has already completed its four repeated solves.  Keep
+            # this second raw read separate from factor.audit.numeric_raw.
+            backend_after = _calibration_backend_snapshot(
+                factor, phase="after_four_repeated_solves",
+            )
+            if backend_after["solve_calls"] != 6:
+                raise RuntimeError(
+                    f"N1 backend sample order invalid after seed repeats: "
+                    f"expected solve_calls=6, got {backend_after['solve_calls']}"
+                )
+            record = {
+                "block_index": int(index),
+                "identity": dict(block["identity"]),
+                "factor_audit": dict(factor.audit),
+                "backsolve": block.get("backsolve"),
+                "native_witness": block.get("native_witness"),
+                "probe": probe,
+                "backend_before_repeated_solves": backend_before,
+                "backend_after_repeated_solves": backend_after,
+            }
+            old_records[index] = record
+            summary["old"].append(record)
+            summary["numeric_factorizations"] += 1
+            summary["max_solves_per_factor"] = max(
+                summary["max_solves_per_factor"], int(factor.solve_count)
+            )
+            save(f"old_block_{index:02d}_comparison", record)
+            checkpoint(f"old_block_{index:02d}_complete")
+        summary["stage_times"]["old"] = time.perf_counter() - old_started
+        active_strategy = None
+        summary["old_resource_before_release"] = sample()
+        local.release_block_factors(selected)
+        summary["old_resource_after_release"] = sample()
+        save("old_strategy_resources", {
+            "before_release": summary["old_resource_before_release"],
+            "after_release": summary["old_resource_after_release"],
+        })
+        checkpoint("old_factors_released")
+
+        new_save = _make_scoped_save(save, ["new"])
+        new_started = time.perf_counter()
+        active_strategy = "new"
+        local.add_dtn_terms(
+            dtn4.carrier, native_a4=native_a4, save=new_save,
+            block_indices=selected, memory_policy=SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        )
+        for index in selected:
+            block = local.blocks[index]
+            factor = block["factor"]
+            backend_before = _calibration_backend_snapshot(
+                factor, phase="after_two_Dw_before_seed_repeats",
+            )
+            if backend_before["solve_calls"] != 2:
+                raise RuntimeError(
+                    f"N1 backend sample order invalid before seed repeats: "
+                    f"expected solve_calls=2, got {backend_before['solve_calls']}"
+                )
+            probe = _calibration_solve_probe(
+                block["matrix"], factor, block_index=index,
+                policy=SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+            )
+            backend_after = _calibration_backend_snapshot(
+                factor, phase="after_four_repeated_solves",
+            )
+            if backend_after["solve_calls"] != 6:
+                raise RuntimeError(
+                    f"N1 backend sample order invalid after seed repeats: "
+                    f"expected solve_calls=6, got {backend_after['solve_calls']}"
+                )
+            record = {
+                "block_index": int(index),
+                "identity": dict(block["identity"]),
+                "factor_audit": dict(factor.audit),
+                "backsolve": block.get("backsolve"),
+                "native_witness": block.get("native_witness"),
+                "probe": probe,
+                "backend_before_repeated_solves": backend_before,
+                "backend_after_repeated_solves": backend_after,
+            }
+            summary["new"].append(record)
+            summary["numeric_factorizations"] += 1
+            summary["max_solves_per_factor"] = max(
+                summary["max_solves_per_factor"], int(factor.solve_count)
+            )
+            old = old_records[index]
+            old_identity = old["identity"]
+            new_identity = record["identity"]
+            identity_equal = old_identity == new_identity
+            old_solution = old["probe"]["solution_first_values"]
+            new_solution = probe["solution_first_values"]
+            solution_difference = float(
+                np.linalg.norm(new_solution - old_solution) /
+                max(np.linalg.norm(old_solution), np.finfo(float).tiny)
+            )
+            solution_difference_absolute = float(np.linalg.norm(new_solution - old_solution))
+            comparison = {
+                "block_index": int(index),
+                "matrix_identity_equal": identity_equal,
+                "old_csr_values_sha256": old_identity.get("csr_values_sha256"),
+                "new_csr_values_sha256": new_identity.get("csr_values_sha256"),
+                "old_csr_structure_sha256": old_identity.get("csr_structure_sha256"),
+                "new_csr_structure_sha256": new_identity.get("csr_structure_sha256"),
+                "old_max_local_residual": max(old["probe"]["relative_residuals"]),
+                "new_max_local_residual": max(probe["relative_residuals"]),
+                "solution_difference": solution_difference,
+                "solution_difference_absolute": solution_difference_absolute,
+                "solution_difference_limit": 1.0e-10,
+                "local_residual_limit": 1.0e-10,
+                "old_policy": LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+                "new_policy": SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+            }
+            comparison["gate_pass"] = bool(
+                identity_equal and comparison["old_max_local_residual"] <= 1.0e-10
+                and comparison["new_max_local_residual"] <= 1.0e-10
+                and solution_difference <= 1.0e-10
+            )
+            summary["comparisons"].append(comparison)
+            save(f"comparison_block_{index:02d}", comparison)
+            if not comparison["gate_pass"]:
+                active_strategy = None
+                raise RuntimeError(f"LOCAL_NUMERICAL_EQUIVALENCE_FAIL: {comparison}")
+            checkpoint(f"new_block_{index:02d}_complete")
+        summary["stage_times"]["new"] = time.perf_counter() - new_started
+        active_strategy = None
+        summary["new_resource_before_release"] = sample()
+        local.release_block_factors(selected)
+        summary["new_resource_after_release"] = sample()
+        save("new_strategy_resources", {
+            "before_release": summary["new_resource_before_release"],
+            "after_release": summary["new_resource_after_release"],
+        })
+        checkpoint("new_factors_released")
+        summary["stage_times"]["total"] = time.perf_counter() - started
+        summary.update(status="N1_CALIBRATION_COMPLETED", gate_pass=True)
+        save("n1_summary", summary)
+        return summary
+    except BaseException as exc:
+        summary["stage_times"]["total"] = time.perf_counter() - started
+        summary.update(
+            status="N1_CALIBRATION_FAILED",
+            gate_pass=False,
+            exception_type=type(exc).__name__,
+            exception=str(exc),
+        )
+        save("n1_summary", summary)
+        raise
+    finally:
+        if context is not None:
+            destroy_macro_stack(context)
+
+
 def _stack_cost_snapshot(stack: dict[str, Any], i4: Any) -> dict[str, Any]:
     """Read the fixed V10 counters into one flat, hashable snapshot.
 
@@ -248,6 +619,8 @@ def run_macro_m1_controls(
     input_path: str | Path | None = None,
     model_identity: dict[str, Any] | None = None,
     build_started: float | None = None,
+    profile: str | None = None,
+    memory_policy: str | None = None,
 ) -> dict[str, Any]:
     """Run the bounded M1 controls on one shared macro stack.
 
@@ -262,11 +635,28 @@ def run_macro_m1_controls(
     from src.solvers.physical_error_metric import LosslessFEMetric
     from src.solvers.physical_inexact_balance import InexactBalanceLedger
     from src.solvers.physical_macro_dd4 import (
-        MACRO_PROFILE,
         MacroI4,
         build_macro_stack,
         destroy_macro_stack,
     )
+    from src.io.physical_recursive_profile import (
+        MACRO_V10_PROFILE, MACRO_V11_PROFILE,
+    )
+    from src.solvers.fullspace_bounded_mumps import (
+        LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+        SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+    )
+
+    active_profile = profile or MACRO_V10_PROFILE
+    active_memory_policy = memory_policy or (
+        SYMBOLIC_SIZED_LOCAL_MUMPS_V11 if active_profile == MACRO_V11_PROFILE
+        else LEGACY_LOCAL_MUMPS_MEMORY_POLICY
+    )
+    if (active_profile, active_memory_policy) not in (
+        (MACRO_V10_PROFILE, LEGACY_LOCAL_MUMPS_MEMORY_POLICY),
+        (MACRO_V11_PROFILE, SYMBOLIC_SIZED_LOCAL_MUMPS_V11),
+    ):
+        raise ValueError("macro profile and memory policy are not a reviewed pair")
 
     from .physical_diagnosis_worker import save_packet
     from .physical_recursive_controls import (
@@ -300,7 +690,8 @@ def run_macro_m1_controls(
 
     summary: dict[str, Any] = {
         "status": "M1_STARTED",
-        "profile": MACRO_PROFILE,
+        "profile": active_profile,
+        "memory_policy": active_memory_policy,
         "source_sha": source_sha,
         "input_path": str(Path(input_path).resolve()) if input_path is not None else None,
         "model_identity": model_facts,
@@ -398,11 +789,15 @@ def run_macro_m1_controls(
             "shared_inputs": list(input_names),
             "e1_audit_sha256": inventory_data["e1_audit_sha256"],
         })
-        stack = build_macro_stack(cfg, comm, sample=budget_sample, marker=marker, save=save)
+        stack = build_macro_stack(
+            cfg, comm, sample=budget_sample, marker=marker, save=save,
+            memory_policy=active_memory_policy,
+        )
         verify_recursive_map(stack, 6, map6)
         verify_recursive_map(stack, 4, map4)
         stack_identity = {
-            "profile": MACRO_PROFILE,
+            "profile": active_profile,
+            "memory_policy": active_memory_policy,
             "mode_sha256": stack["mode_sha256"],
             "p4_bridge": stack["a4_bridge"],
             "p2_matrix": stack["p2_matrix_facts"],

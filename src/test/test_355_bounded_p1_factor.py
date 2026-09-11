@@ -68,7 +68,7 @@ class V11Factor(Factor):
     def info(self, **kwargs):
         return {
             'info': {'1': 0}, 'rinfo': {'1': 0.0},
-            'infog': {'16': 20, '17': 24, '19': 3, '22': 2, '29': 3},
+            'infog': {'16': 20, '17': 20, '19': 3, '22': 2, '29': 3},
             'rinfog': {'1': 0.0},
         }
 
@@ -88,6 +88,18 @@ class V11Factor(Factor):
 
     def set_memory_limit_mb(self, value):
         self.set_icntl(23, value)
+
+
+class FailingV11Factor(V11Factor):
+    def numeric(self, matrix):
+        self.events.append('numeric')
+        raise RuntimeError('injected numeric failure')
+
+    def info(self, **kwargs):
+        value = super().info(**kwargs)
+        value['info'].update({'1': 0, '2': -19})
+        value['infog'].update({'1': 0, '2': -9, '9': -19, '19': -9})
+        return value
 
 
 @pytest.fixture
@@ -114,18 +126,20 @@ def test_unknown_allocator_has_derived_reserve_and_ordered_factor_lifecycle(fake
 
 def test_symbolic_sized_v11_formula_uses_decimal_mb_and_mpi1_fields():
     result = bounded.symbolic_sized_local_mumps_request(
-        {'infog': {'16': 20, '17': 24}}, mpi_size=1,
+        {'infog': {'16': 20, '17': 20}}, mpi_size=1,
     )
-    assert result['estimate_bytes'] == 25_000_000
-    assert result['minimum_request_bytes'] == 2 * 25_000_000 + 8 * 1024**2
-    assert result['request_bytes'] == 59_000_000
-    assert result['request_mb'] == 59
+    assert result['estimate_bytes'] == 21_000_000
+    assert result['minimum_request_bytes'] == 2 * 21_000_000 + 8 * 1024**2
+    assert result['request_bytes'] == 51_000_000
+    assert result['request_mb'] == 51
     with pytest.raises(ValueError, match='MPI1'):
         bounded.symbolic_sized_local_mumps_request(
-            {'infog': {'16': 20, '17': 24}}, mpi_size=2,
+            {'infog': {'16': 20, '17': 20}}, mpi_size=2,
         )
     with pytest.raises(RuntimeError, match=r'INFOG\(17\)'):
         bounded.symbolic_sized_local_mumps_request({'infog': {'16': 20, '17': -1}})
+    with pytest.raises(RuntimeError, match='MPI1.*disagree'):
+        bounded.symbolic_sized_local_mumps_request({'infog': {'16': 20, '17': 24}})
 
 
 def test_v11_is_explicit_opt_in_and_unsupported_compaction_is_recorded(fake, monkeypatch):
@@ -134,12 +148,12 @@ def test_v11_is_explicit_opt_in_and_unsupported_compaction_is_recorded(fake, mon
         Matrix(), **fake, memory_policy=bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
     )
     assert factor.audit['memory_policy'] == bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11
-    assert factor.audit['icntl23_requested_mb'] == 59
-    assert factor.audit['icntl23_readback_mb'] == 59
+    assert factor.audit['icntl23_requested_mb'] == 51
+    assert factor.audit['icntl23_readback_mb'] == 51
     assert factor.audit['icntl49']['status'] == 'COMPACTION_UNSUPPORTED'
     assert factor.audit['numeric_raw']['info'] == {'1': 0}
     assert Factor.latest.events == [
-        'symbolic', ('set_icntl', 23, 59), 'numeric',
+        'symbolic', ('set_icntl', 23, 51), 'numeric',
     ]
     factor.destroy()
 
@@ -152,6 +166,24 @@ def test_v11_request_is_checked_against_hard_local_cap_before_numeric(fake, monk
             Matrix(), **fake, memory_policy=bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
         )
     assert Factor.latest.events == ['symbolic', 'destroy']
+
+
+def test_v11_numeric_failure_saves_raw_status_before_destroy(fake, monkeypatch):
+    events = []
+    monkeypatch.setattr(bounded, '_MumpsFactor', FailingV11Factor)
+    with pytest.raises(RuntimeError, match='injected numeric failure'):
+        bounded.BoundedP1Factor(
+            Matrix(), **{**fake, 'marker': lambda stage, facts: events.append((stage, facts))},
+            memory_policy=bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        )
+    failed = [facts for stage, facts in events if stage == 'p1_numeric_failed']
+    assert len(failed) == 1
+    facts = failed[0]
+    assert facts['numeric_failure_raw']['info']['2'] == -19
+    assert facts['numeric_failure_raw']['infog']['9'] == -19
+    assert facts['numeric_failure_codes']['INFO(2)'] == -19
+    assert facts['numeric_failure_classification'] == 'NUMERIC_FAILED'
+    assert FailingV11Factor.latest.events[-1] == 'destroy'
 
 
 @pytest.mark.parametrize('field,value', [('nz_used', None), ('nz_allocated', None), ('nz_allocated', 2)])

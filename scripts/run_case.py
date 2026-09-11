@@ -25,6 +25,8 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument('--physical-pc-profile', type=Path, metavar='CHECKPOINT_DIRECTORY')
     mode.add_argument('--macro-v10-controls', action='store_true')
+    mode.add_argument('--macro-v11-controls', action='store_true')
+    mode.add_argument('--macro-v11-calibration', action='store_true')
     parser.add_argument('--profile-budget-ledger', '--batch-budget-ledger', dest='profile_budget_ledger', type=Path)
     parser.add_argument('--macro-v10-inventory', type=Path,
                         default=Path('benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json'))
@@ -62,20 +64,48 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             return 0
-        from src.io.physical_recursive_profile import MACRO_V10_PROFILE
-        if args.macro_v10_controls or specification.solver.get('preconditioner') == MACRO_V10_PROFILE:
-            if args.macro_v10_controls and specification.solver.get('preconditioner') != MACRO_V10_PROFILE:
+        from src.io.physical_recursive_profile import MACRO_V10_PROFILE, MACRO_V11_PROFILE
+        macro_v11 = (args.macro_v11_controls or args.macro_v11_calibration
+                     or specification.solver.get('preconditioner') == MACRO_V11_PROFILE)
+        macro_v10 = args.macro_v10_controls or specification.solver.get('preconditioner') == MACRO_V10_PROFILE
+        if macro_v10 or macro_v11:
+            selected_profile = MACRO_V11_PROFILE if macro_v11 else MACRO_V10_PROFILE
+            if ((args.macro_v10_controls or args.macro_v11_controls)
+                    and specification.solver.get('preconditioner') != selected_profile):
                 raise InputError(
-                    '--macro-v10-controls requires a .dat with '
-                    f'solver.preconditioner={MACRO_V10_PROFILE}'
+                    'macro controls require a .dat with '
+                    f'solver.preconditioner={selected_profile}'
                 )
-            from src.runners.physical_recursive_entry import launch_macro_v10_workflow
-            ledger = args.profile_budget_ledger or Path(
-                'benchmarks/artifacts/task39extra/v10_m1/v10_m1_budget.json'
+            if macro_v11:
+                stage = specification.solver.get('stage')
+                if args.macro_v11_calibration and stage != 'N1_CALIBRATION':
+                    raise InputError(
+                        '--macro-v11-calibration requires solver.stage=N1_CALIBRATION'
+                    )
+                if not args.macro_v11_calibration and stage != 'N2_M1_CONTROLS':
+                    raise InputError(
+                        'V11 M1 controls require solver.stage=N2_M1_CONTROLS'
+                    )
+            from src.runners.physical_recursive_entry import (
+                launch_macro_v10_workflow, launch_macro_v11_workflow,
+                launch_macro_v11_calibration,
             )
-            result = launch_macro_v10_workflow(
-                specification, ledger, args.macro_v10_inventory,
-            )
+            if macro_v11:
+                ledger = args.profile_budget_ledger or Path(
+                    'benchmarks/artifacts/task39extra/v11_n0_n2/v11_n0_n2_budget.json'
+                )
+                result = (launch_macro_v11_calibration(
+                    specification, ledger, args.macro_v10_inventory,
+                ) if args.macro_v11_calibration else launch_macro_v11_workflow(
+                    specification, ledger, args.macro_v10_inventory,
+                ))
+            else:
+                ledger = args.profile_budget_ledger or Path(
+                    'benchmarks/artifacts/task39extra/v10_m1/v10_m1_budget.json'
+                )
+                result = launch_macro_v10_workflow(
+                    specification, ledger, args.macro_v10_inventory,
+                )
             print(json.dumps(result, sort_keys=True, separators=(',', ':')))
             return 0 if result.get('classification') == 'COMPLETED' else 3
         from src.runners.task038_launcher import launch_specification

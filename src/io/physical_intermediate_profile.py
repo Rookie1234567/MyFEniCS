@@ -8,12 +8,14 @@ PACKED_PROFILE = "a2r_packed_equivalent_v2"
 JOINT_PROFILE = "light_p4ref_jointmr3_v2"
 from .physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
 from .physical_recursive_profile import (
+    MACRO_V11_PROFILES,
     MACRO_V10_PROFILES,
     RECURSIVE_PROFILES,
+    macro_v11_profile_facts,
     macro_v10_profile_facts,
 )
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES
 
 
 def profile_facts(identity=PROFILE) -> dict:
@@ -28,6 +30,8 @@ def profile_facts(identity=PROFILE) -> dict:
         return bounded_profile_facts(identity)
     if identity in MACRO_V10_PROFILES:
         return macro_v10_profile_facts()
+    if identity in MACRO_V11_PROFILES:
+        return macro_v11_profile_facts()
     if identity == JOINT_PROFILE:
         facts = profile_facts(LIGHT_PROFILE)
         facts['identity'] = identity

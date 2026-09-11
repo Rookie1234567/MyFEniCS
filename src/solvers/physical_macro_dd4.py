@@ -475,7 +475,10 @@ class MacroLocalVolume:
                 vector.array[:] = probe
                 matrix.mult(vector, rhs)
                 probe_fact["rhs_norm"] = float(np.linalg.norm(rhs.array))
-                solution, _ = factor.solve_lean(rhs)
+                solve_started = time.perf_counter()
+                solution, solve_facts = factor.solve_lean(rhs)
+                probe_fact["solve_seconds"] = time.perf_counter() - solve_started
+                probe_fact["solve_facts"] = dict(solve_facts)
                 checked = matrix.createVecRight()
                 matrix.mult(solution, checked)
                 difference_norm = float(np.linalg.norm(checked.array - rhs.array))
@@ -519,6 +522,8 @@ class MacroLocalVolume:
             "test_rhs_count": len(defects),
             "test_relative_residuals": defects,
             "probe_facts": probes_facts,
+            "first_backsolve_seconds": probes_facts[0].get("solve_seconds"),
+            "first_backsolve_facts": probes_facts[0].get("solve_facts"),
             "test_residual_limit": LOCAL_SOLVE_LIMIT,
         }
 
@@ -677,12 +682,31 @@ class MacroLocalVolume:
     def add_dtn_terms(
         self, carrier: Any, *, native_a4: Any,
         save: Callable[[str, Mapping[str, Any]], Any] | None = None,
+        block_indices: Any | None = None,
+        memory_policy: str | None = None,
+        skip_existing: bool = True,
     ) -> None:
-        """Assemble and retain one qualified sparse MUMPS factor per block."""
+        """Assemble and retain one qualified sparse MUMPS factor per block.
+
+        ``block_indices`` is the bounded V11 calibration path.  It assembles
+        the same production block from the same local metadata while leaving
+        the other 39 blocks unfactored; the normal call still assembles all
+        42 blocks and therefore retains the original V10 behavior.
+        """
 
         from petsc4py import PETSc
 
         from .fullspace_bounded_mumps import BoundedP1Factor
+
+        all_indices = set(range(len(self.blocks)))
+        if block_indices is None:
+            selected_block_indices = all_indices
+        else:
+            selected_block_indices = {int(index) for index in block_indices}
+            if not selected_block_indices or not selected_block_indices <= all_indices:
+                raise ValueError("calibration block selection is empty or out of range")
+        active_memory_policy = self.memory_policy if memory_policy is None else memory_policy
+        self._last_factor_selection = tuple(sorted(selected_block_indices))
 
         dtn_identity_arrays: dict[str, Any] = {}
         for entry_index, entry in enumerate(carrier.entries):
@@ -716,6 +740,21 @@ class MacroLocalVolume:
             "global_column_probe": False,
         })
         for index, block in enumerate(self.blocks):
+            if index not in selected_block_indices:
+                continue
+            existing_factor = block.get("factor")
+            existing_matrix = block.get("matrix")
+            if existing_factor is not None or existing_matrix is not None:
+                if not skip_existing:
+                    raise RuntimeError(f"macro block {index} already owns a factor or matrix")
+                if existing_factor is None or existing_matrix is None:
+                    raise RuntimeError(f"macro block {index} has incomplete factor ownership")
+                existing_policy = getattr(existing_factor, "audit", {}).get("memory_policy")
+                if existing_policy != active_memory_policy:
+                    raise RuntimeError(
+                        f"macro block {index} already uses memory policy {existing_policy!r}"
+                    )
+                continue
             selected = np.asarray(block["indices"], dtype=np.int64)
             if selected.size == 0 or selected.size > LOCAL_ROWS_CAP:
                 raise MemoryError(f"macro block {index} has an invalid row count")
@@ -864,9 +903,15 @@ class MacroLocalVolume:
                         self.marker(name, dict(block=block_index, **facts)),
                     physical_p2_pilot=False, extra_local_bytes=0,
                     pre_numeric_gate=pre_numeric_gate,
-                    memory_policy=self.memory_policy,
+                    memory_policy=active_memory_policy,
                 )
                 factor_facts = dict(backend="petsc_mumps", **factor.audit)
+                _save(save, f"macro_block_{index:02d}_numeric", {
+                    "block_index": int(index),
+                    "identity": block_identity,
+                    "factor": factor_facts,
+                    "memory_policy": active_memory_policy,
+                })
                 block["factor_reported_bytes"] = int(max(
                     factor.audit.get("factor_reported_allocated_padded_bytes", 0),
                     factor.audit.get("factor_reported_used_padded_bytes", 0),
@@ -875,6 +920,52 @@ class MacroLocalVolume:
                     matrix, factor, save=save, block_index=index, identity=block_identity,
                 )
                 factor_facts.update(block["backsolve"])
+                _save(save, f"macro_block_{index:02d}_backsolve", {
+                    "block_index": int(index),
+                    "identity": block_identity,
+                    "backsolve": block["backsolve"],
+                    "factor": factor_facts,
+                })
+                post_backsolve_raw = factor.factor.info(
+                    extra_indices=(21, 22, 29),
+                    include_local=active_memory_policy == "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+                )
+                post_allocated = BoundedP1Factor._mb_upper(post_backsolve_raw, "19")
+                post_used = BoundedP1Factor._mb_upper(post_backsolve_raw, "22")
+                post_reported = max(post_allocated, post_used)
+                post_conservative = int(factor.audit["matrix_storage_budget_bytes"] + post_reported)
+                post_resource = self.sample()
+                block["factor_reported_bytes"] = max(
+                    int(block.get("factor_reported_bytes", 0)), post_reported
+                )
+                post_inventory = int(self._resident_bytes())
+                post_inventory_gate = {
+                    "matrix_plus_reported_factor_bytes": post_conservative,
+                    "retained_inventory_bytes": post_inventory,
+                    "local_factor_cap_bytes": LOCAL_RESIDENT_CAP,
+                    "factor_hard_cap_bytes": 512 * 1024**2,
+                    "resource": post_resource,
+                    "allocated_padded_bytes": post_allocated,
+                    "used_padded_bytes": post_used,
+                    "offset_policy": "none; allocated/used are both preserved",
+                    "stage": "after_first_backsolve_before_next_gate",
+                }
+                _save(save, f"macro_block_{index:02d}_post_backsolve_inventory", {
+                    "block_index": int(index),
+                    "resident_bytes": post_inventory,
+                    "numeric_raw": factor.audit.get("numeric_raw"),
+                    "post_backsolve_raw": post_backsolve_raw,
+                    "post_backsolve_gate": post_inventory_gate,
+                })
+                if (post_conservative > 512 * 1024**2
+                        or post_inventory > LOCAL_RESIDENT_CAP
+                        or not post_resource.get("all_status_readable", False)
+                        or int(post_resource.get("swap_bytes", 1)) != 0
+                        or int(post_resource.get("rss_bytes", 0)) + LOCAL_TEMP_RESERVE
+                        >= int(post_resource.get("launch_cap_bytes", 0))):
+                    raise MemoryError(
+                        "macro post-backsolve conservative inventory/resource gate failed"
+                    )
                 block["matrix"] = matrix
                 block["factor"] = factor
                 block["factor_backend"] = factor_facts["backend"]
@@ -894,11 +985,26 @@ class MacroLocalVolume:
                         block, selected, matrix, native_a4, save=save,
                         block_index=index, identity=block_identity,
                     )
+                    _save(save, f"macro_block_{index:02d}_native", {
+                        "block_index": int(index),
+                        "identity": block_identity,
+                        "native_witness": block["native_witness"],
+                    })
             except BaseException:
+                # The block dictionary becomes the sole owner as soon as the
+                # handles are attached.  Clear those references before
+                # destruction so the outer stack cleanup cannot destroy the
+                # same PETSc object a second time.
+                if block.get("factor") is factor:
+                    block["factor"] = None
+                if block.get("matrix") is matrix:
+                    block["matrix"] = None
                 if factor is not None:
                     factor.destroy()
+                    factor = None
                 if matrix is not None:
                     matrix.destroy()
+                    matrix = None
                 raise
             post_resource = self.sample()
             if (not isinstance(post_resource, Mapping)
@@ -907,9 +1013,13 @@ class MacroLocalVolume:
                     or int(post_resource.get("rss_bytes", 0)) + LOCAL_TEMP_RESERVE
                     >= int(post_resource.get("launch_cap_bytes", 0))):
                 if factor is not None:
+                    if block.get("factor") is factor:
+                        block["factor"] = None
                     factor.destroy()
                     factor = None
                 if matrix is not None:
+                    if block.get("matrix") is matrix:
+                        block["matrix"] = None
                     matrix.destroy()
                     matrix = None
                 raise MemoryError("macro block post-factor resource gate failed")
@@ -930,6 +1040,17 @@ class MacroLocalVolume:
                 "canonical_seed_key": list(block["seed"]),
                 "native_witness": block.get("native_witness"),
             })
+        if selected_block_indices != all_indices:
+            self.calibration_coverage = {
+                "block_count": len(selected_block_indices),
+                "selected_blocks": sorted(selected_block_indices),
+                "complete_production_coverage": False,
+                "resident_bytes": int(self._resident_bytes()),
+                "memory_policy": active_memory_policy,
+            }
+            _save(save, "macro_calibration_coverage", self.calibration_coverage)
+            return
+
         # Independent coordinates are not necessarily numbered 0..Nind-1.
         # Keep a global-row weight array for direct p4 indexing instead of
         # applying a second input-side weight.
@@ -959,6 +1080,31 @@ class MacroLocalVolume:
             "output_weighting": "1/multiplicity",
         }
         _save(save, "macro_coverage", self.coverage)
+
+    def release_block_factors(self, block_indices: Any | None = None) -> None:
+        """Release selected block matrices/factors exactly once.
+
+        Calibration runs call this between the old and V11 policies.  The
+        compact lifecycle facts remain on the block, while all PETSc handles
+        are removed before their destroy calls.
+        """
+        if block_indices is None:
+            selected = range(len(self.blocks))
+        else:
+            selected = [int(index) for index in block_indices]
+        for index in selected:
+            block = self.blocks[index]
+            factor = block.pop("factor", None)
+            matrix = block.pop("matrix", None)
+            if factor is not None:
+                factor.destroy()
+            if matrix is not None:
+                matrix.destroy()
+            block.pop("factor_backend", None)
+            block.pop("factor_reported_bytes", None)
+            block.pop("matrix_storage_bytes", None)
+            block.pop("resident_bytes", None)
+        self.resident_bytes = self._resident_bytes()
 
     def build_w_transfer(self) -> Any:
         """Build the current-material W/P transfer used by the real C_U."""
@@ -1549,6 +1695,53 @@ def _build_macro_stack_impl(
         "mode_sha256": fine["mode_sha256"],
     })
     return owned
+
+
+def build_macro_calibration_context(
+    cfg: Any,
+    comm: Any,
+    *,
+    sample: Callable[[], Any],
+    marker: Callable[[str, Mapping[str, Any]], Any],
+    save: Callable[[str, Mapping[str, Any]], Any] | None = None,
+    memory_policy: str = "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+) -> dict[str, Any]:
+    """Build only the shared physical data needed for V11 block calibration.
+
+    The calibration deliberately omits the p2 reference matrix, p2 factor,
+    cached/native bridge, and outer framework.  It owns the same mesh, mode
+    inventory, local material classes, and DtN carrier used by the production
+    macro builder, so old/new factors see byte-identical matrices.
+    """
+    from .fullspace_physical_intermediate_runtime import build_physical_intermediate_actions
+    from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+    from .fullspace_same_mesh_hcurl_pmg_physical import build_same_mesh_physical_action
+
+    if comm.size != 1:
+        raise ValueError("macro calibration is MPI1-only")
+    owned: dict[str, Any] = {}
+    try:
+        levels = _build_same_mesh_levels(cfg, comm, (6, 4, 2))
+        owned["levels"] = levels
+        fine = build_same_mesh_physical_action(levels, cfg, 6)
+        owned["fine"] = fine
+        actions = build_physical_intermediate_actions(
+            levels, cfg, fine_bundle=fine, stage_callback=marker,
+            physical_only_degrees=(6, 4, 2),
+        )
+        owned["actions"] = actions
+        local = MacroLocalVolume(
+            levels, cfg, actions, sample=sample, marker=marker, save=save,
+            memory_policy=memory_policy,
+        )
+        owned["local"] = local
+        native_a4 = actions["physical"][4]["physical_action"]
+        dtn4 = actions["physical"][4]["dtn_action"]
+        owned.update(native_a4=native_a4, dtn4=dtn4)
+        return owned
+    except BaseException:
+        destroy_macro_stack(owned)
+        raise
 
 
 def make_macro_pc(

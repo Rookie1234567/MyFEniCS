@@ -7,6 +7,8 @@ RECURSIVE_PROFILES = (RECURSIVE_LO, RECURSIVE_HI)
 # from the V6 production-dispatch tuple until its M1/M2 qualification closes.
 MACRO_V10_PROFILE = 'physical_macro_dd4_v10'
 MACRO_V10_PROFILES = (MACRO_V10_PROFILE,)
+MACRO_V11_PROFILE = 'physical_macro_dd4_v11'
+MACRO_V11_PROFILES = (MACRO_V11_PROFILE,)
 
 
 def macro_v10_profile_facts():
@@ -51,6 +53,64 @@ def macro_v10_profile_facts():
         },
         'qualification': 'opt_in; M1 only until M2 selects a fixed framework/restart',
     }
+
+
+def macro_v11_profile_facts():
+    """Return the V11 opt-in contract with the symbolic-sized local policy.
+
+    V11 changes only the local MUMPS work-package policy.  The block topology,
+    physical operator, I4 limits, and the old V10 profile remain separate so
+    selecting this identity is the only way to activate the new allocation
+    controls.
+    """
+    facts = macro_v10_profile_facts()
+    facts.update(
+        identity=MACRO_V11_PROFILE,
+        scope='N0_N5_symbolic_sized_local_mumps_validation',
+        memory_policy='SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+        dat_contract={
+            'solver_preconditioner': MACRO_V11_PROFILE,
+            'solver_memory_policy': 'SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+            'dispatch': 'profile-selected macro V11 M1/N2 controls',
+        },
+        resources={
+            **facts['resources'],
+            'n0_n2_seconds': 7200,
+            'n1_calibration_seconds': 900,
+            'n2_local_build_seconds': 3600,
+            'n2_controls_seconds': 1200,
+            'cumulative_seconds': 43200,
+        },
+        stage_budgets={
+            'N1_CALIBRATION': {'workflow_seconds': 900, 'solve_seconds': 900},
+            'N2_M1_CONTROLS': {
+                'cumulative_n0_n2_seconds': 7200,
+                'build_seconds': 3600,
+                'controls_seconds': 1200,
+            },
+            'N3_RESTART_PROBE': {'workflow_seconds': 3600, 'solve_seconds': 2400},
+            'N4_ORIGINAL': {'workflow_seconds': 14400, 'solve_seconds': 10800},
+            'N4_NOTCH': {'workflow_seconds': 14400, 'solve_seconds': 10800},
+        },
+        qualification='opt_in; V11 symbolic-sized local MUMPS policy; no old-default change',
+    )
+    facts['M1'] = {
+        **facts['M1'],
+        'calibration_blocks_max': 3,
+        'calibration_numeric_max': 6,
+        'calibration_solves_per_factor_max': 16,
+        'calibration_residual_limit': 1e-10,
+        'calibration_solution_difference_limit': 1e-10,
+    }
+    facts['memory_policy_contract'] = {
+        'estimate': '1e6*(1+max(INFOG16,INFOG17))',
+        'request': '1e6*ceil(max(32MiB,2*E+8MiB)/1e6)',
+        'icntl23': 'set and read back before numeric',
+        'icntl49': 'request 1 only when public getter/setter supports it',
+        'unsupported_49': 'COMPACTION_UNSUPPORTED; continue if all other gates pass',
+        'no_used_min_or_rss_offset': True,
+    }
+    return facts
 
 
 def recursive_profile_facts(identity):

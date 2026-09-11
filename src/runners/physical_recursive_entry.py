@@ -84,12 +84,17 @@ def particular_contract():
 
 
 def selected_contract(args):
-    if getattr(args, 'macro_v10_controls', False):
-        from src.io.physical_recursive_profile import macro_v10_profile_facts
+    macro_v11 = (getattr(args, 'macro_v11_controls', False)
+                 or getattr(args, 'macro_v11_calibration', False))
+    if macro_v11 or getattr(args, 'macro_v10_controls', False):
+        from src.io.physical_recursive_profile import (
+            macro_v10_profile_facts, macro_v11_profile_facts,
+        )
 
-        contract = macro_v10_profile_facts()
+        contract = macro_v11_profile_facts() if macro_v11 else macro_v10_profile_facts()
         contract.update(
-            workflow='M1_controls',
+            workflow=('N1_calibration' if getattr(args, 'macro_v11_calibration', False)
+                      else 'M1_controls'),
             fixed_source='original physical model; no cell notch',
             inventory_role='G0 hash-bound calibration and balanced e/q packets',
             reference_role='measurement only; never enters A4/B4/I4',
@@ -99,6 +104,9 @@ def selected_contract(args):
             new_reference_factor=False,
             full_outer_solve=False,
             global_swap_stop=True,
+            memory_policy=contract.get(
+                'memory_policy', 'LEGACY_LOCAL_MUMPS_MEMORY_POLICY'
+            ),
         )
         return contract
     if getattr(args, 'bounded_j1_controls', False):
@@ -225,13 +233,31 @@ def selected_contract(args):
 def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,input_path=None,
                         model_identity=None, build_started=None):
     from . import physical_recursive_controls as controls
-    if getattr(args, 'macro_v10_controls', False):
+    if getattr(args, 'macro_v11_calibration', False):
+        from .physical_macro_controls import run_macro_n1_calibration
+        return run_macro_n1_calibration(
+            cfg, comm, directory, sample=sample, marker=marker,
+            source_sha=source_sha, input_path=input_path,
+            model_identity=model_identity,
+        )
+    if getattr(args, 'macro_v11_controls', False) or getattr(args, 'macro_v10_controls', False):
         from .physical_macro_controls import run_macro_m1_controls
+        from src.io.physical_recursive_profile import (
+            MACRO_V10_PROFILE, MACRO_V11_PROFILE,
+        )
+        from src.solvers.fullspace_bounded_mumps import (
+            LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+            SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        )
+        is_v11 = getattr(args, 'macro_v11_controls', False)
         return run_macro_m1_controls(
             cfg, comm, args.inventory, directory, sample=sample, marker=marker,
             source_sha=source_sha, input_path=input_path,
             model_identity=model_identity,
             build_started=build_started,
+            profile=MACRO_V11_PROFILE if is_v11 else MACRO_V10_PROFILE,
+            memory_policy=(SYMBOLIC_SIZED_LOCAL_MUMPS_V11 if is_v11
+                           else LEGACY_LOCAL_MUMPS_MEMORY_POLICY),
         )
     if getattr(args, 'bounded_j1_controls', False):
         from .physical_bounded_j1 import run_j1_controls
@@ -309,7 +335,12 @@ def worker(args):
     source=git_state(args.source_sha)
     parent=int(os.environ['PHYSICAL_WATCHDOG_PARENT_PID']);cap=int(os.environ['PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES'])
     if parent==os.getpid() or not Path(f'/proc/{parent}').exists():raise RuntimeError('dedicated parent missing')
-    macro=getattr(args, 'macro_v10_controls', False)
+    macro=(getattr(args, 'macro_v10_controls', False)
+           or getattr(args, 'macro_v11_controls', False)
+           or getattr(args, 'macro_v11_calibration', False))
+    macro_v11=(getattr(args, 'macro_v11_controls', False)
+               or getattr(args, 'macro_v11_calibration', False))
+    macro_v11_calibration=getattr(args, 'macro_v11_calibration', False)
     build_started = time.perf_counter() if macro else None
     payload=load_and_resolve(args.input).as_jsonable()
     if (payload['provenance']['physical_model_sha256']!='9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
@@ -344,7 +375,10 @@ def worker(args):
         (root / 'resolved_config.json').read_bytes()
     ).hexdigest()
     if macro:
-        control_phase = 'V10_M1_controls'
+        control_phase = (
+            'V11_N1_calibration' if macro_v11_calibration
+            else 'V11_M1_controls' if macro_v11 else 'V10_M1_controls'
+        )
         manifest = {
             'source': source,
             'command': [sys.executable, *sys.argv],
@@ -405,7 +439,8 @@ def worker(args):
             )
             atomic(root/'run_manifest.json', manifest)
             atomic(root/'run_summary.json', {
-                'schema': 'task39extra.review-v10.m1-run-summary.v1',
+                'schema': ('task39extra.review-v11.m1-run-summary.v1'
+                           if macro_v11 else 'task39extra.review-v10.m1-run-summary.v1'),
                 'status': 'COMPLETED',
                 'command': [sys.executable, *sys.argv],
                 'source_sha': source['head'],
@@ -433,7 +468,9 @@ def worker(args):
             })
             return result
         except BaseException as exc:
-            partial_path = root / 'records' / 'm1_summary.json'
+            partial_path = root / 'records' / (
+                'n1_summary.json' if macro_v11_calibration else 'm1_summary.json'
+            )
             partial = {}
             if partial_path.exists():
                 try:
@@ -457,13 +494,20 @@ def worker(args):
                 'stage_times': partial.get('stage_times'),
                 'last_safe_stage': partial.get('last_safe_stage'),
                 'failure_gate': partial.get('failure_gate'),
+                'numeric_attempts': partial.get('numeric_attempts'),
+                'numeric_factorizations': partial.get('numeric_factorizations'),
+                'comparisons': partial.get('comparisons'),
+                'gate_pass': partial.get('gate_pass'),
+                'exception_type': partial.get('exception_type'),
+                'failure_classification': partial.get('failure_classification'),
                 'macro_stack_identity': partial.get('macro_stack_identity'),
             }
             manifest.update(status='failed', exception_type=type(exc).__name__,
                             exception=str(exc), partial_m1_summary=partial_evidence)
             atomic(root/'run_manifest.json', manifest)
             atomic(root/'run_summary.json', {
-                'schema': 'task39extra.review-v10.m1-run-summary.v1',
+                'schema': ('task39extra.review-v11.m1-run-summary.v1'
+                           if macro_v11 else 'task39extra.review-v10.m1-run-summary.v1'),
                 'status': 'FAILED',
                 'command': [sys.executable, *sys.argv],
                 'source_sha': source['head'],
@@ -485,6 +529,11 @@ def worker(args):
                 'bare_b4_attempted_calls': partial.get('bare_b4_attempted_calls'),
                 'bare_b4_completed_calls': partial.get('bare_b4_completed_calls'),
                 'framework_decision': partial.get('framework_decision'),
+                'numeric_attempts': partial.get('numeric_attempts'),
+                'numeric_factorizations': partial.get('numeric_factorizations'),
+                'comparisons': partial.get('comparisons'),
+                'gate_pass': partial.get('gate_pass'),
+                'failure_classification': partial.get('failure_classification'),
                 'stage_times': partial.get('stage_times'),
                 'model_identity': partial.get('model_identity'),
                 'native_map_sha256': partial.get('maps', {}).get('native_map_sha256'),
@@ -589,7 +638,17 @@ def worker(args):
         dispatch_components(args,cfg,MPI.COMM_WORLD,root/'records',sample=sample,marker=marker,
             source_sha=source,input_path=Path(args.input))
     finally:
-        identity=root/'records'/('m1_summary.json' if macro else 'trace_source_bridge.json' if args.high_trace_component or args.cached_trace_component or args.owner_route_trace_component or args.cell_joint_trace_component else 'amplification_map_bridge.json' if args.bubble_amplification_diagnostic else 'particular_map_bridge.json' if particular else 'bubble_source_bridge.json' if enriched else 'bubble_cell_frozen.json' if bubble else 'projected_source_bridge.json' if projected else 'input_bridge.json' if diagnostic else 'fresh_identity.json')
+        identity=root/'records'/(
+            'n1_summary.json' if macro_v11_calibration else
+            'm1_summary.json' if macro else
+            'trace_source_bridge.json' if args.high_trace_component or args.cached_trace_component or args.owner_route_trace_component or args.cell_joint_trace_component else
+            'amplification_map_bridge.json' if args.bubble_amplification_diagnostic else
+            'particular_map_bridge.json' if particular else
+            'bubble_source_bridge.json' if enriched else
+            'bubble_cell_frozen.json' if bubble else
+            'projected_source_bridge.json' if projected else
+            'input_bridge.json' if diagnostic else 'fresh_identity.json'
+        )
         if macro:
             stack_identity = root/'records'/'macro_stack_identity.json'
             summary_payload = json.loads(identity.read_text()) if identity.exists() else {}
@@ -639,6 +698,8 @@ def build_parser():
     group.add_argument('--cell-joint-trace-component',action='store_true')
     group.add_argument('--bounded-j1-controls',action='store_true')
     group.add_argument('--macro-v10-controls', action='store_true')
+    group.add_argument('--macro-v11-controls', action='store_true')
+    group.add_argument('--macro-v11-calibration', action='store_true')
     parser.add_argument('--bounded-j1-route', choices=('ENTITY16', 'PROJECTED_SEQ2_16',
                                                        'ENTITY_GCROT8',
                                                        'ENTITY_GCROT8_NEW16'),
@@ -702,6 +763,11 @@ MACRO_M1_CONTROLS_KIND = 'physical_macro_dd4_v10_m1_controls'
 MACRO_M1_TOTAL_LIMIT_SECONDS = 5400.0
 MACRO_M1_BUILD_LIMIT_SECONDS = 3600.0
 MACRO_M1_LEDGER_SCHEMA = 'task39extra.review-v10-m0-m1-budget.v1'
+MACRO_V11_TOTAL_LIMIT_SECONDS = 7200.0
+MACRO_V11_BUILD_LIMIT_SECONDS = 3600.0
+MACRO_V11_CONTROLS_LIMIT_SECONDS = 1200.0
+MACRO_V11_CALIBRATION_LIMIT_SECONDS = 900.0
+MACRO_V11_LEDGER_SCHEMA = 'task39extra.review-v11-n0-n2-budget.v1'
 
 
 def _j1_charge_seconds(budget):
@@ -725,21 +791,31 @@ def _j1_controls_charge_seconds(budget):
     return _controls_charge_seconds(budget, 'J0_J1_controls')
 
 
-def _load_macro_ledger(path):
+def _load_macro_ledger(path, *, v11=False):
     path = Path(path)
     if not path.exists():
         raise ValueError(
-            'V10 M0/M1 ledger is missing; initialize it once from the explicit preparation record'
+            ('V11 N0/N2 ledger is missing; initialize it once from the explicit preparation record'
+             if v11 else
+             'V10 M0/M1 ledger is missing; initialize it once from the explicit preparation record')
         )
     budget = json.loads(path.read_text())
-    if budget.get('schema') != MACRO_M1_LEDGER_SCHEMA:
-        raise ValueError('V10 M1 requires its independent M0/M1 ledger; V6 ledger is not accepted')
-    if budget.get('total_limit_seconds') != MACRO_M1_TOTAL_LIMIT_SECONDS:
-        raise ValueError('V10 M0/M1 ledger has the wrong total limit')
-    if budget.get('build_limit_seconds') != MACRO_M1_BUILD_LIMIT_SECONDS:
-        raise ValueError('V10 M0/M1 ledger has the wrong build limit')
-    if budget.get('controls_limit_seconds') != MACRO_M1_CONTROLS_LIMIT_SECONDS:
-        raise ValueError('V10 M0/M1 ledger has the wrong controls limit')
+    schema = MACRO_V11_LEDGER_SCHEMA if v11 else MACRO_M1_LEDGER_SCHEMA
+    total = MACRO_V11_TOTAL_LIMIT_SECONDS if v11 else MACRO_M1_TOTAL_LIMIT_SECONDS
+    build = MACRO_V11_BUILD_LIMIT_SECONDS if v11 else MACRO_M1_BUILD_LIMIT_SECONDS
+    controls = MACRO_V11_CONTROLS_LIMIT_SECONDS if v11 else MACRO_M1_CONTROLS_LIMIT_SECONDS
+    if budget.get('schema') != schema:
+        raise ValueError(
+            'V11 N0/N2 requires its independent ledger; old V10/V6 ledgers are not accepted'
+            if v11 else
+            'V10 M1 requires its independent M0/M1 ledger; V6 ledger is not accepted'
+        )
+    if budget.get('total_limit_seconds') != total:
+        raise ValueError('selected macro ledger has the wrong total limit')
+    if budget.get('build_limit_seconds') != build:
+        raise ValueError('selected macro ledger has the wrong build limit')
+    if budget.get('controls_limit_seconds') != controls:
+        raise ValueError('selected macro ledger has the wrong controls limit')
     return budget
 
 
@@ -748,16 +824,23 @@ def _macro_charged_seconds(budget):
 
 
 def _launch_macro_m1_controls(args):
-    """Supervise M1 against the independent inclusive V10 M0/M1 ledger."""
+    """Supervise V10 M1 or V11 M1/N2 against its independent ledger."""
     from benchmarks.subreaper_watchdog import supervise
 
     from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
     source = git_state(args.source_sha)
+    v11 = getattr(args, 'macro_v11_controls', False)
+    total_limit = MACRO_V11_TOTAL_LIMIT_SECONDS if v11 else MACRO_M1_TOTAL_LIMIT_SECONDS
+    build_limit = MACRO_V11_BUILD_LIMIT_SECONDS if v11 else MACRO_M1_BUILD_LIMIT_SECONDS
+    controls_limit = MACRO_V11_CONTROLS_LIMIT_SECONDS if v11 else MACRO_M1_CONTROLS_LIMIT_SECONDS
+    control_group = 'V11_N0_N2_controls' if v11 else MACRO_M1_CONTROLS_GROUP
+    control_kind = 'physical_macro_dd4_v11_m1_n2_controls' if v11 else MACRO_M1_CONTROLS_KIND
+    profile_label = 'V11' if v11 else 'V10'
     budget_path = Path(args.budget).resolve()
     inventory_path = Path(args.inventory).resolve()
     if not inventory_path.exists():
-        raise ValueError('V10 M1 requires the audited G0 inventory')
+        raise ValueError(f'{profile_label} M1 requires the audited G0 inventory')
     input_path = Path(args.input).resolve()
     input_sha256 = hashlib.sha256(input_path.read_bytes()).hexdigest()
     inventory_sha256 = hashlib.sha256(inventory_path.read_bytes()).hexdigest()
@@ -765,21 +848,33 @@ def _launch_macro_m1_controls(args):
     physical_sha256 = load_and_resolve(input_path).physical_model_sha256
     with (budget_path.with_suffix('.lock')).open('a') as lock_stream:
         fcntl.flock(lock_stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        budget = _load_macro_ledger(budget_path)
-        if any(item.get('measurement_committed') for item in budget.get('attempts', [])):
+        budget = _load_macro_ledger(budget_path, v11=v11)
+        if v11:
+            if any(item.get('kind') == control_kind and item.get('measurement_committed')
+                   for item in budget.get('attempts', [])):
+                raise ValueError('V11 N0/N2 control measurement is already committed')
+            if not any(
+                item.get('kind') == 'physical_macro_dd4_v11_n1_calibration'
+                and item.get('measurement_committed')
+                for item in budget.get('attempts', [])
+            ):
+                raise ValueError('V11 N2 requires a committed successful N1 calibration')
+        elif any(item.get('measurement_committed') for item in budget.get('attempts', [])):
             raise ValueError('V10 M1 measurement is already committed; engineering-only retries must precede a completed control')
-        remaining = MACRO_M1_TOTAL_LIMIT_SECONDS - _macro_charged_seconds(budget)
+        remaining = total_limit - _macro_charged_seconds(budget)
         if remaining <= 0:
-            raise RuntimeError('V10 M0/M1 inclusive budget exhausted')
-        active_lock = budget_path.parent / 'macro_v10_m1_active.lock'
+            raise RuntimeError(f'{profile_label} macro ledger exhausted')
+        active_lock = budget_path.parent / (
+            'macro_v11_n0_n2_active.lock' if v11 else 'macro_v10_m1_active.lock'
+        )
         descriptor = os.open(active_lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         os.close(descriptor)
         root = Path(args.output)
         result = None
         clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
         entry = {
-            'kind': MACRO_M1_CONTROLS_KIND,
-            'budget_group': MACRO_M1_CONTROLS_GROUP,
+            'kind': control_kind,
+            'budget_group': control_group,
             'source': args.source_sha,
             'root': str(root),
             'status': 'RESERVED',
@@ -787,15 +882,15 @@ def _launch_macro_m1_controls(args):
             'actual_seconds': None,
             'measurement_committed': False,
             'measurement_state': 'not_started',
-            'controls_limit_seconds': MACRO_M1_CONTROLS_LIMIT_SECONDS,
-            'build_limit_seconds': MACRO_M1_BUILD_LIMIT_SECONDS,
-            'total_limit_seconds': MACRO_M1_TOTAL_LIMIT_SECONDS,
+            'controls_limit_seconds': controls_limit,
+            'build_limit_seconds': build_limit,
+            'total_limit_seconds': total_limit,
             'inventory': str(inventory_path),
             'inventory_sha256': inventory_sha256,
             'input': str(input_path),
             'input_sha256': input_sha256,
             'physical_model_sha256': physical_sha256,
-            'nested_ledger': 'independent V10 M0/M1 ledger',
+            'nested_ledger': f'independent {profile_label} ledger',
         }
         budget.setdefault('attempts', []).append(entry)
         atomic(budget_path, budget)
@@ -809,14 +904,14 @@ def _launch_macro_m1_controls(args):
                 'wall_seconds': remaining,
                 'budget_before': budget,
                 'inventory': str(inventory_path),
-                'control_group': MACRO_M1_CONTROLS_GROUP,
+                'control_group': control_group,
                 'jit_cache_home': str(cache_home),
                 'jit_cache_initially_empty': not any(cache_home.iterdir()),
                 'jit_cache_reused': any(cache_home.iterdir()),
                 'inclusive_budget': {
-                    'total': MACRO_M1_TOTAL_LIMIT_SECONDS,
-                    'build': MACRO_M1_BUILD_LIMIT_SECONDS,
-                    'controls': MACRO_M1_CONTROLS_LIMIT_SECONDS,
+                    'total': total_limit,
+                    'build': build_limit,
+                    'controls': controls_limit,
                 },
             })
             command = [
@@ -825,7 +920,8 @@ def _launch_macro_m1_controls(args):
                 '--inventory', str(inventory_path),
                 '--output', str(root), '--budget', str(budget_path),
                 '--source-sha', args.source_sha, '--target', 'lo',
-                '--macro-v10-controls', '--jit-cache', str(cache_home), '--worker',
+                ('--macro-v11-controls' if v11 else '--macro-v10-controls'),
+                '--jit-cache', str(cache_home), '--worker',
             ]
             result = supervise(
                 command, root / 'watchdog', wall_seconds=remaining,
@@ -854,7 +950,7 @@ def _launch_macro_m1_controls(args):
                 entry['run_summary_sha256'] = hashlib.sha256(
                     summary_path.read_bytes()).hexdigest()
             budget['charged_seconds'] = _macro_charged_seconds(budget) + charge
-            budget['remaining_seconds'] = MACRO_M1_TOTAL_LIMIT_SECONDS - budget['charged_seconds']
+            budget['remaining_seconds'] = total_limit - budget['charged_seconds']
             atomic(budget_path, budget)
             atomic(root / 'terminal.json', result)
             atomic(root / 'source_after.json', git_state(args.source_sha))
@@ -874,7 +970,7 @@ def _launch_macro_m1_controls(args):
                 entry['actual_seconds'] = charge
                 entry['conservative_seconds'] = charge
                 budget['charged_seconds'] = _macro_charged_seconds(budget) + charge
-                budget['remaining_seconds'] = MACRO_M1_TOTAL_LIMIT_SECONDS - budget['charged_seconds']
+                budget['remaining_seconds'] = total_limit - budget['charged_seconds']
             atomic(budget_path, budget)
             if result is not None and result.get('descendants_cleared'):
                 active_lock.unlink()
@@ -898,7 +994,7 @@ def launch_macro_v10_workflow(specification, budget_path, inventory_path):
     args = argparse.Namespace(
         input=Path(specification.source_path), inventory=Path(inventory_path),
         output=root, budget=Path(budget_path), source_sha=source_sha, target='lo',
-        macro_v10_controls=True, bounded_j1_controls=False,
+        macro_v10_controls=True, macro_v11_controls=False, bounded_j1_controls=False,
         bounded_j1_route='ENTITY16', p4_failure_diagnostic=False,
         projected_p4_component=False, bubble_local_tensor=False,
         bubble_enriched_component=False, bubble_particular_diagnostic=False,
@@ -908,6 +1004,167 @@ def launch_macro_v10_workflow(specification, budget_path, inventory_path):
         worker=False,
     )
     return _launch_macro_m1_controls(args)
+
+
+def launch_macro_v11_workflow(specification, budget_path, inventory_path):
+    """Build the independent, supervised V11 M1/N2 entry for ``run_case``."""
+    try:
+        source_sha = subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], text=True,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise InputError(f'cannot determine V11 M1 source SHA: {exc}') from exc
+    base = Path('benchmarks/artifacts/task39extra/v11_n0_n2') / source_sha
+    root = base / 'm1'
+    if root.exists():
+        index = 2
+        while (base / f'm1_retry_{index:02d}').exists():
+            index += 1
+        root = base / f'm1_retry_{index:02d}'
+    args = argparse.Namespace(
+        input=Path(specification.source_path), inventory=Path(inventory_path),
+        output=root, budget=Path(budget_path), source_sha=source_sha, target='lo',
+        macro_v10_controls=False, macro_v11_controls=True,
+        bounded_j1_controls=False, bounded_j1_route='ENTITY16',
+        p4_failure_diagnostic=False, projected_p4_component=False,
+        bubble_local_tensor=False, bubble_enriched_component=False,
+        bubble_particular_diagnostic=False, bubble_amplification_diagnostic=False,
+        high_trace_component=False, cached_trace_component=False,
+        owner_route_trace_component=False, cell_joint_trace_component=False,
+        amplification_recording_retry=False, worker=False,
+    )
+    return _launch_macro_m1_controls(args)
+
+
+def _launch_macro_n1_calibration(args):
+    """Supervise the independent, 900-second V11 N1 calibration stage."""
+    from benchmarks.subreaper_watchdog import supervise
+    from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
+
+    source = git_state(args.source_sha)
+    budget_path = Path(args.budget).resolve()
+    inventory_path = Path(args.inventory).resolve()
+    input_path = Path(args.input).resolve()
+    with budget_path.with_suffix('.lock').open('a') as lock_stream:
+        fcntl.flock(lock_stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        budget = _load_macro_ledger(budget_path, v11=True)
+        charged = _macro_charged_seconds(budget)
+        remaining = min(MACRO_V11_CALIBRATION_LIMIT_SECONDS,
+                        MACRO_V11_TOTAL_LIMIT_SECONDS - charged)
+        if remaining <= 0:
+            raise RuntimeError('V11 N1 calibration budget exhausted')
+        if any(item.get('kind') == 'physical_macro_dd4_v11_n1_calibration'
+               for item in budget.get('attempts', [])):
+            raise ValueError('V11 N1 calibration already attempted')
+        root = Path(args.output)
+        entry = {
+            'kind': 'physical_macro_dd4_v11_n1_calibration',
+            'budget_group': 'V11_N1_calibration',
+            'source': args.source_sha,
+            'root': str(root),
+            'status': 'RESERVED',
+            'reservation_seconds': remaining,
+            'actual_seconds': None,
+            'calibration_limit_seconds': MACRO_V11_CALIBRATION_LIMIT_SECONDS,
+            'input': str(input_path),
+            'input_sha256': hashlib.sha256(input_path.read_bytes()).hexdigest(),
+            'inventory': str(inventory_path),
+            'inventory_sha256': hashlib.sha256(inventory_path.read_bytes()).hexdigest(),
+        }
+        budget.setdefault('attempts', []).append(entry)
+        atomic(budget_path, budget)
+        result = None
+        clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
+        try:
+            root.mkdir(parents=True, exist_ok=False)
+            cache_home = (root.parent / 'jit_cache').resolve()
+            cache_home.mkdir(parents=True, exist_ok=True)
+            atomic(root / 'launch_plan.json', {
+                'source': source,
+                'contract': selected_contract(args),
+                'wall_seconds': remaining,
+                'budget_before': budget,
+                'calibration_limit_seconds': MACRO_V11_CALIBRATION_LIMIT_SECONDS,
+                'jit_cache_home': str(cache_home),
+                'jit_cache_initially_empty': not any(cache_home.iterdir()),
+            })
+            command = [
+                sys.executable, '-m', 'src.runners.physical_recursive_entry',
+                '--input', str(input_path), '--inventory', str(inventory_path),
+                '--output', str(root), '--budget', str(budget_path),
+                '--source-sha', args.source_sha, '--target', 'lo',
+                '--macro-v11-calibration', '--jit-cache', str(cache_home), '--worker',
+            ]
+            result = supervise(
+                command, root / 'watchdog', wall_seconds=remaining,
+                phase_path=root / 'phase.json', hard_stop_immediate=True,
+                timebase_guard=True, timebase_policy=CONSERVATIVE_REALTIME,
+                stop_on_global_swap=True, source_state=source,
+                worker_environment={'XDG_CACHE_HOME': str(cache_home)},
+            )
+            interval = result['workflow_clock_interval']
+            charge = float(interval['budget_seconds'])
+            entry.update(status=result['classification'], actual_seconds=charge,
+                         conservative_seconds=charge,
+                         descendants_cleared=result.get('descendants_cleared'),
+                         clock_interval=interval)
+            budget['charged_seconds'] = charged + charge
+            budget['remaining_seconds'] = MACRO_V11_TOTAL_LIMIT_SECONDS - budget['charged_seconds']
+            summary_path = root / 'run_summary.json'
+            if summary_path.exists():
+                entry['run_summary_sha256'] = hashlib.sha256(summary_path.read_bytes()).hexdigest()
+                entry['measurement_committed'] = (
+                    json.loads(summary_path.read_text()).get('status') == 'COMPLETED'
+                )
+            atomic(budget_path, budget)
+            atomic(root / 'terminal.json', result)
+            atomic(root / 'source_after.json', git_state(args.source_sha))
+            if result['classification'] != 'COMPLETED':
+                raise SystemExit(1)
+            return result
+        except BaseException as exc:
+            entry.update(status='FAILED', exception_type=type(exc).__name__,
+                         exception_message=str(exc))
+            raise
+        finally:
+            if entry.get('actual_seconds') is None:
+                interval = clock.update(clock_sample())
+                charge = float(interval['budget_seconds'])
+                entry['clock_interval'] = interval
+                entry['actual_seconds'] = charge
+                entry['conservative_seconds'] = charge
+                budget['charged_seconds'] = charged + charge
+                budget['remaining_seconds'] = MACRO_V11_TOTAL_LIMIT_SECONDS - budget['charged_seconds']
+            atomic(budget_path, budget)
+
+
+def launch_macro_v11_calibration(specification, budget_path, inventory_path):
+    """Launch the independent V11 N1 representative-block calibration."""
+    try:
+        source_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise InputError(f'cannot determine V11 N1 source SHA: {exc}') from exc
+    base = Path('benchmarks/artifacts/task39extra/v11_n0_n2') / source_sha
+    root = base / 'n1'
+    if root.exists():
+        index = 2
+        while (base / f'n1_retry_{index:02d}').exists():
+            index += 1
+        root = base / f'n1_retry_{index:02d}'
+    args = argparse.Namespace(
+        input=Path(specification.source_path), inventory=Path(inventory_path),
+        output=root, budget=Path(budget_path), source_sha=source_sha, target='lo',
+        macro_v10_controls=False, macro_v11_controls=False,
+        macro_v11_calibration=True, bounded_j1_controls=False,
+        bounded_j1_route='ENTITY16', p4_failure_diagnostic=False,
+        projected_p4_component=False, bubble_local_tensor=False,
+        bubble_enriched_component=False, bubble_particular_diagnostic=False,
+        bubble_amplification_diagnostic=False, high_trace_component=False,
+        cached_trace_component=False, owner_route_trace_component=False,
+        cell_joint_trace_component=False, amplification_recording_retry=False,
+        worker=False,
+    )
+    return _launch_macro_n1_calibration(args)
 
 
 def _launch_j1_controls(args):
@@ -1045,7 +1302,9 @@ def _launch_j1_controls(args):
 def main():
     args=build_parser().parse_args()
     if args.worker:return worker(args)
-    if getattr(args, 'macro_v10_controls', False):
+    if getattr(args, 'macro_v11_calibration', False):
+        return _launch_macro_n1_calibration(args)
+    if getattr(args, 'macro_v11_controls', False) or getattr(args, 'macro_v10_controls', False):
         return _launch_macro_m1_controls(args)
     if args.bounded_j1_controls:
         return _launch_j1_controls(args)

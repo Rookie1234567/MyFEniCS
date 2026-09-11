@@ -43,6 +43,10 @@ def symbolic_sized_local_mumps_request(
                 f"MEMORY_POLICY_UNSUPPORTED: INFOG({key}) is not a non-negative integer"
             )
         values[key] = int(value)
+    if values["16"] != values["17"]:
+        raise RuntimeError(
+            "MEMORY_POLICY_UNSUPPORTED: MPI1 INFOG(16) and INFOG(17) disagree"
+        )
     estimate_bytes = MUMPS_DECIMAL_MB * (1 + max(values.values()))
     minimum_request = max(
         MUMPS_V11_MIN_BYTES,
@@ -165,20 +169,21 @@ class BoundedP1Factor:
                 estimated = self._mb_upper(raw, '17')
                 requested = estimated
             memory = resource_sample()
-            predicted = matrix_budget + requested
+            estimated_predicted = matrix_budget + estimated
+            requested_predicted = matrix_budget + requested
             self.audit.update(symbolic_raw=raw, symbolic_seconds=time.perf_counter()-start,
                               factor_estimated_padded_bytes=estimated,
-                              derived_matrix_plus_estimated_factor_budget_bytes=predicted,
+                              derived_matrix_plus_estimated_factor_budget_bytes=estimated_predicted,
                               symbolic_resource=memory)
             if symbolic_request is not None:
                 self.audit.update(
                     symbolic_sized_request=symbolic_request,
                     factor_requested_padded_bytes=requested,
-                    derived_matrix_plus_requested_factor_budget_bytes=predicted,
+                    derived_matrix_plus_requested_factor_budget_bytes=requested_predicted,
                     numeric_requested_bytes=requested,
                 )
             emit('p1_symbolic_complete', dict(self.audit))
-            if predicted > LOCAL_FACTOR_MAX_BYTES:
+            if requested_predicted > LOCAL_FACTOR_MAX_BYTES:
                 raise RuntimeError(
                     f'{label}: symbolic matrix+requested factor exceeds 512MiB'
                     if symbolic_request is not None
@@ -231,13 +236,46 @@ class BoundedP1Factor:
                     max(1, (LOCAL_FACTOR_MAX_BYTES-matrix_budget)//1_000_000)
                 )
             start = time.perf_counter()
+            emit('p1_numeric_started', dict(self.audit))
             try:
                 self.factor.numeric(matrix)
             except BaseException as exc:
+                failure_raw = None
+                failure_raw_error = None
+                try:
+                    failure_raw = self.factor.info(
+                        extra_indices=(21, 22, 29),
+                        include_local=memory_policy == SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+                    )
+                except BaseException as info_exc:
+                    failure_raw_error = f"{type(info_exc).__name__}: {info_exc}"
+                failure_codes = {}
+                if isinstance(failure_raw, dict):
+                    infog = failure_raw.get("infog")
+                    info = failure_raw.get("info")
+                    if isinstance(infog, dict):
+                        for index in (1, 2, 9, 19):
+                            if str(index) in infog:
+                                failure_codes[f"INFOG({index})"] = infog[str(index)]
+                    if isinstance(info, dict) and "2" in info:
+                        failure_codes["INFO(2)"] = info["2"]
+                numeric_error_codes = {
+                    key: value for key, value in failure_codes.items()
+                    if key in ("INFO(1)", "INFOG(1)")
+                }
                 self.audit.update(
                     numeric_seconds=time.perf_counter()-start,
                     numeric_exception_type=type(exc).__name__,
                     numeric_exception=str(exc),
+                    numeric_failure_raw=failure_raw,
+                    numeric_failure_raw_error=failure_raw_error,
+                    numeric_failure_codes=failure_codes,
+                    numeric_failure_error_codes=numeric_error_codes,
+                    numeric_failure_classification=(
+                        "LOCAL_WORKSPACE_LIMIT"
+                        if any(value in (-9, -19) for value in numeric_error_codes.values())
+                        else "NUMERIC_FAILED"
+                    ),
                 )
                 emit('p1_numeric_failed', dict(self.audit))
                 raise

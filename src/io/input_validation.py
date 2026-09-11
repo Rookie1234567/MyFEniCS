@@ -546,6 +546,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9",
                 "p6smooth_p4ref_p6smooth_v1",
                 "physical_macro_dd4_v10",
+                "physical_macro_dd4_v11",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -561,18 +562,59 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "solver.max_iterations",
                         "full3d_iterative requires max_iterations>=200",
                     )
-            elif preconditioner == "physical_macro_dd4_v10":
+            elif preconditioner in ("physical_macro_dd4_v10", "physical_macro_dd4_v11"):
+                macro_timeout = 5400
+                if preconditioner == "physical_macro_dd4_v11":
+                    macro_timeout = {
+                        "N1_CALIBRATION": 900,
+                        "N2_M1_CONTROLS": 7200,
+                        "N3_RESTART_PROBE": 3600,
+                        "N4_ORIGINAL": 14400,
+                        "N4_NOTCH": 14400,
+                    }.get(solver.get("stage"), 5400)
                 for section, key, actual, expected in (
                     ("solver", "restart", solver["restart"], 4),
                     ("solver", "max_iterations", solver["max_iterations"], 4),
                     ("execution", "mpi_size", execution["mpi_size"], 1),
-                    ("execution", "timeout_seconds", execution["timeout_seconds"], 5400),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], macro_timeout),
                     ("execution", "require_zero_swap", execution["require_zero_swap"], True),
                     ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
                     ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 10.0),
                 ):
                     if actual != expected:
                         raise _error(f"{section}.{key}", f"{preconditioner} fixes {key}={expected}")
+                expected_memory_policy = (
+                    "LEGACY_LOCAL_MUMPS_MEMORY_POLICY"
+                    if preconditioner == "physical_macro_dd4_v10"
+                    else "SYMBOLIC_SIZED_LOCAL_MUMPS_V11"
+                )
+                if solver.get("memory_policy") != expected_memory_policy:
+                    raise _error(
+                        "solver.memory_policy",
+                        f"{preconditioner} fixes memory_policy={expected_memory_policy}",
+                    )
+                if preconditioner == "physical_macro_dd4_v11":
+                    stage = solver.get("stage")
+                    if stage not in {
+                        "N1_CALIBRATION", "N2_M1_CONTROLS", "N3_RESTART_PROBE",
+                        "N4_ORIGINAL", "N4_NOTCH",
+                    }:
+                        raise _error(
+                            "solver.stage",
+                            "physical_macro_dd4_v11 requires an explicit N1/N2/N3/N4 stage",
+                        )
+                    outer_restart = solver.get("outer_restart")
+                    if stage in {"N3_RESTART_PROBE", "N4_ORIGINAL", "N4_NOTCH"}:
+                        if outer_restart not in (32, 64):
+                            raise _error(
+                                "solver.outer_restart",
+                                f"{stage} requires outer_restart=32 or 64",
+                            )
+                    elif outer_restart != 0:
+                        raise _error(
+                            "solver.outer_restart",
+                            f"{stage} requires outer_restart=0",
+                        )
             elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9"):
                 expanded = preconditioner in ("a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9")
                 for section, key, actual, expected in (

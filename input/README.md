@@ -74,6 +74,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `run_id` | `string` | `none` | yes | `—` | — | all | 单次运行标识 | `run_id` | safe filename characters [A-Za-z0-9_.-]+; must not overwrite an existing result | `"example_run_001"` |
 | `comparison_group` | `string` | `none` | yes | `—` | — | all | 可比较运行的分组标识 | `comparison_group` | safe filename characters [A-Za-z0-9_.-]+ | `"task038_examples"` |
 | `dimension` | `integer` | `none` | yes | `—` | 2, 3 | all | 问题维数 | `dimension` | — | `3` |
+| `geometry.cell_notch` | `string` | `none` | no | `—` | positive_x_middle_y_z40_80 | 2d/3d | 按原网格单元中心把局部光栅改为空气 | `cell_notch` | — | `"positive_x_middle_y_z40_80"` |
 | `geometry.geometry_kind` | `string` | `none` | yes | `—` | euv_grating_2d, layered_2d, airbox, fresnel_interface, flat_layer, rectangular_block_grating | 2d/3d | 形状模型名称 | `geometry_kind` | 2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/flat_layer/rectangular_block_grating | `"rectangular_block_grating"` |
 | `geometry.period_x_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | x 方向周期 | `period_x` | > 0 | `50.0` |
 | `geometry.period_y_nm` | `float` | `nm` | yes | `—` | — | 3d | y 方向周期 | `period_y` | > 0 | `25.0` |
@@ -134,7 +135,10 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `solver.direct_solver_profile` | `enum` | `none` | yes | `—` | default, mumps_ooc, mumps_blr | full3d_direct/hybrid_direct | 有限 direct solver profile | `petsc_direct_solver_profile` | — | `"default"` |
 | `solver.linear_solver` | `enum` | `none` | yes | `—` | direct, fgmres, iterative | 2d_scattered/2d_port/full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative | 线性求解器类型 | `linear_solver` | direct methods require direct; hybrid_iterative requires fgmres; full3d_iterative requires iterative | `"fgmres"` |
 | `solver.ksp_type` | `enum` | `none` | yes | `—` | fgmres | full3d_iterative | Full3D 迭代求解器类型 | `ksp_type` | full3d_iterative fixed profile only | `"fgmres"` |
-| `solver.preconditioner` | `enum` | `none` | yes | `—` | full3d_scalable_v1, fullspace_pml_double_sweep_v19, hybrid_block_ldu_ilu0_dtn_woodbury | full3d_iterative/hybrid_iterative | 公开 preconditioner identity | `preconditioner` | only reviewed iterative identities are public | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
+| `solver.preconditioner` | `enum` | `none` | yes | `—` | full3d_scalable_v1, fullspace_pml_double_sweep_v19, physical_intermediate_p4_shifted_aux_v1, physical_intermediate_p4_reference_v1, a2r_equivalent_fast_v1, a2r_packed_equivalent_v2, light_p4ref_jointmr3_v2, balanced_h6_p4_v5, balanced_s6_p4_v5, projected_krylov6_h6_p4_v5, balanced_h6_recursive_p4_lo_v6, balanced_h6_recursive_p4_hi_v6, bounded_entity16_v7, bounded_projected_seq2_16_v7, balanced_h6_entity_gcrot8_v8, balanced_h6_entity_gcrot8_new16_v9, p6smooth_p4ref_p6smooth_v1, physical_macro_dd4_v10, physical_macro_dd4_v11, hybrid_block_ldu_ilu0_dtn_woodbury | full3d_iterative/hybrid_iterative | 公开 preconditioner identity | `preconditioner` | only reviewed iterative identities are public | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
+| `solver.memory_policy` | `enum` | `none` | no | `LEGACY_LOCAL_MUMPS_MEMORY_POLICY` | LEGACY_LOCAL_MUMPS_MEMORY_POLICY, SYMBOLIC_SIZED_LOCAL_MUMPS_V11 | full3d_iterative | 局部 MUMPS 工作空间分配策略 | `memory_policy` | V11 profile fixes SYMBOLIC_SIZED_LOCAL_MUMPS_V11; legacy remains the default | `"LEGACY_LOCAL_MUMPS_MEMORY_POLICY"` |
+| `solver.stage` | `enum` | `none` | no | `STANDARD` | STANDARD, N1_CALIBRATION, N2_M1_CONTROLS, N3_RESTART_PROBE, N4_ORIGINAL, N4_NOTCH | full3d_iterative | V11/N3/N4 execution stage identity | `stage` | stage is an input identity; its budgets remain in the selected profile ledger | `"STANDARD"` |
+| `solver.outer_restart` | `integer` | `iterations` | no | `0` | 0, 32, 64 | full3d_iterative | N3/N4 outer FGMRES restart；0 表示 macro control stage 未启用 | `outer_restart` | only 0, 32, or 64; macro I4 restart remains solver.restart=4 | `0` |
 | `solver.restart` | `integer` | `iterations` | yes | `—` | — | full3d_iterative/hybrid_iterative | GMRES/FGMRES restart 长度 | `restart` | only iterative methods; > 0 | `90` |
 | `solver.max_iterations` | `integer` | `iterations` | yes | `—` | — | full3d_iterative/hybrid_iterative | 最大迭代步数 | `max_it` | only iterative methods; > 0 | `4500` |
 | `solver.relative_tolerance` | `float` | `relative residual` | yes | `—` | — | hybrid_iterative | 相对残差容差 | `rtol` | only hybrid_iterative; > 0 and finite | `5.0e-9` |
@@ -181,6 +185,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"run_id","unit":"none","applicability":["all"]} -->
 <!-- schema-field {"key":"comparison_group","unit":"none","applicability":["all"]} -->
 <!-- schema-field {"key":"dimension","unit":"none","applicability":["all"]} -->
+<!-- schema-field {"key":"geometry.cell_notch","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"geometry.geometry_kind","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"geometry.period_x_nm","unit":"nm","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"geometry.period_y_nm","unit":"nm","applicability":["3d"]} -->
@@ -242,6 +247,9 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"solver.linear_solver","unit":"none","applicability":["2d_scattered","2d_port","full3d_direct","full3d_iterative","hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.ksp_type","unit":"none","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"solver.preconditioner","unit":"none","applicability":["full3d_iterative","hybrid_iterative"]} -->
+<!-- schema-field {"key":"solver.memory_policy","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"solver.stage","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"solver.outer_restart","unit":"iterations","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"solver.restart","unit":"iterations","applicability":["full3d_iterative","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.max_iterations","unit":"iterations","applicability":["full3d_iterative","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.relative_tolerance","unit":"relative residual","applicability":["hybrid_iterative"]} -->
