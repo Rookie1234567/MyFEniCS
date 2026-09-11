@@ -1413,7 +1413,9 @@ def run_p4_direction_diagnosis(
         raise ValueError("p4 direction diagnosis is qualified only for MPI1")
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
-    save = lambda name, facts: save_packet(directory, name, facts)
+
+    def save(name, facts):
+        return save_packet(directory, name, facts)
 
     selected_stems = (
         "A2R160_BAL_H_p4_01",
@@ -2130,7 +2132,6 @@ def run_p4_direction_diagnosis(
             raise ValueError("fresh p4 storage vector is incompatible with the native map")
         if n6 <= int(p6_indices.max()):
             raise ValueError("fresh p6 storage vector is incompatible with the native map")
-        transfer = stack["actions"]["transfers"][(6, 4)]
         stack["B4"].capture_vectors = False
         stack["local"].capture_md_observation = False
         stack["local"].last_md_observation = {}
@@ -2482,10 +2483,6 @@ def run_p4_direction_diagnosis(
                 float(np.linalg.norm(actual_applied[p4_indices])),
                 np.finfo(float).tiny,
             )
-            reconstruction_rho = float(
-                np.linalg.norm(reconstructed_actual_ind - actual[p4_indices])
-                / reconstruction_scale
-            )
             reconstruction_gate = bool(
                 np.isfinite(reconstruction_relative)
                 and reconstruction_relative <= 1.0e-10
@@ -2764,7 +2761,6 @@ def run_p4_direction_diagnosis(
             a_ind = a[p4_indices]
             A_a_ind = A_a[p4_indices]
             d_ind = d[p4_indices]
-            ad_ind = ad[p4_indices]
             t_ind = t[p4_indices]
             A_t_ind = A_t[p4_indices]
             checkpoint(f"before_selector:{stem}")
