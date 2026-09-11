@@ -225,7 +225,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
     contract = profile_facts(identity)
     workflow_limit, solve_limit = contract['resources']['workflow_seconds'], contract['resources']['solve_seconds']
     summary = {'profile': profile_facts(identity), 'source_sha': source_sha,
-               'official_result': None, 'status': 'STARTED'}
+               'official_result': None, 'status': 'STARTED',
+               'time_limit_mode': 'none' if workflow_limit is None and solve_limit is None else 'bounded'}
     import petsc4py
     import slepc4py
     import dolfinx
@@ -480,7 +481,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['auxiliary_stack_released_before_recovery'] = bundle['auxiliary_stack_released']
         passed = (np.isfinite(result['final_true_residual']) and result['final_true_residual'] <= 1e-6
                   and (result['reason'] >= 0 or result['reason'] == -3)
-                  and summary.get('solve_conservative_seconds', summary['solve_monotonic_seconds']) <= solve_limit
+                  and (solve_limit is None or
+                       summary.get('solve_conservative_seconds', summary['solve_monotonic_seconds']) <= solve_limit)
                   and ledger.stop_signal is None and not summary.get('performance_stop_signal'))
         if passed:
             ledger.set_phase('recovery')
@@ -516,7 +518,8 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         summary['status'] = checker['classification']
         summary['reference_authority'] = checker['reference_authority']
         passed = (check.returncode == 0 and checker['classification'] in ('DISCRETE_SOLVER_OUTPUT_PASS', 'REFERENCE_ONLY_PASS', 'BALANCED_OUTPUT_PASS', 'BALANCED_OUTPUT_AUTHORITY_LIMITED')
-                  and time.monotonic()-ledger.started <= workflow_limit and ledger.stop_signal is None)
+                  and (workflow_limit is None or time.monotonic()-ledger.started <= workflow_limit)
+                  and ledger.stop_signal is None)
         outcome = {'passed': bool(passed), 'errors': [] if passed else checker['gate_failures'] or [summary['status']],
                 'summary': str(directory / 'physical_intermediate_summary.json'),
                 'numerical_output_directory': str(directory / 'numerical_output')}
@@ -566,7 +569,9 @@ def run_physical_intermediate(payload: dict, directory: Path, *, source_sha: str
         if balanced:
             summary['elapsed_conservative_seconds'] = ledger.workflow_clock_budget.update(clock_sample())['budget_seconds']
         if summary['status'] != 'TIMEBASE_INCONSISTENCY' and (
-                summary.get('elapsed_conservative_seconds',summary['elapsed_monotonic_seconds']) > workflow_limit or ledger.stop_signal is not None):
+                (workflow_limit is not None and
+                 summary.get('elapsed_conservative_seconds',summary['elapsed_monotonic_seconds']) > workflow_limit)
+                or ledger.stop_signal is not None):
             summary['status'] = 'PERFORMANCE_CONTROLLED_STOP' if ledger.stop_signal is None else 'CONTROLLED_STOP'
             summary.setdefault('failed_stage', ledger.last_stage)
             if outcome is not None:

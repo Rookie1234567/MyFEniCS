@@ -2,6 +2,8 @@
 import json
 from dataclasses import replace
 from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -15,6 +17,7 @@ from src.solvers.physical_balanced_fgmres import BalancedScreen
 INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_p6h10.dat')
 NATIVE_INPUT = Path('input/task39extra_para_workstation_capacity/nonseparable_13p5nm_p6h10.dat')
 REFERENCE_INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_native_matched_reference.dat')
+FIVE_NM_INPUT = Path('input/task39extra_para_workstation_capacity/original_5nm_si_p6h4_native.dat')
 
 
 def test_native_matched_reference_is_explicit_and_hash_bound():
@@ -77,6 +80,56 @@ def test_native_v5_math_and_physical_identity():
     assert new['resources']['workflow_seconds'] == 64800
 
 
+def test_native_5nm_si_no_deadline_opt_in_preserves_non_time_gates():
+    specification = load_and_resolve(FIVE_NM_INPUT)
+    profile = profile_facts(specification.solver['preconditioner'])
+    assert specification.incidence['wavelength_nm'] == 5.0
+    assert specification.materials['substrate_name'] == 'Si / silicon'
+    assert specification.materials['grating_name'] == 'Si / silicon'
+    assert tuple(specification.materials['n_substrate']) == (0.99396854453, 0.00435380777)
+    assert tuple(specification.materials['n_grating']) == (0.99396854453, 0.00435380777)
+    assert specification.discretization['mesh_target_nm'] == 4.0
+    assert specification.execution['time_limit_mode'] == 'none'
+    assert specification.execution['timeout_seconds'] is None
+    assert profile['resources']['solve_seconds'] is None
+    assert profile['resources']['workflow_seconds'] is None
+    assert profile['resources']['batch_limit_seconds'] is None
+    assert profile['outer']['screen']['iterations'] == 128
+    assert profile['outer']['screen']['solve_seconds'] is None
+    assert profile['outer']['max_iterations'] == 2048
+    assert profile['outer']['restart'] == 32
+    assert profile['outer']['initial_guess'] == 'zero'
+
+
+def test_no_deadline_screen_still_enforces_iteration_gate():
+    screen = BalancedScreen(None)
+    assert screen.inspect(127, 1.0, 10**12) is None
+    decision = screen.inspect(128, 1.0e-2, 10**12)
+    assert decision['status'] == 'SCREEN_CONTINUE_SAME_LIVE_KSP'
+    assert decision['iteration'] == 128
+
+
+def test_no_deadline_watchdog_keeps_resource_monitoring_active(tmp_path):
+    helper = (
+        'import json, sys\n'
+        'from pathlib import Path\n'
+        'from benchmarks.subreaper_watchdog import supervise\n'
+        'summary = supervise([sys.executable, "-c", "pass"], Path(sys.argv[1]), '
+        'wall_seconds=None, solve_seconds=None, interval=0.05, grace_seconds=0.1)\n'
+        'print(json.dumps(summary))\n'
+    )
+    completed = subprocess.run(
+        [sys.executable, '-c', helper, str(tmp_path / 'watchdog')],
+        check=True, capture_output=True, text=True,
+    )
+    summary = json.loads(completed.stdout.strip().splitlines()[-1])
+    assert summary['classification'] == 'COMPLETED'
+    assert summary['time_limit_mode'] == 'none'
+    assert summary['workflow_deadline_seconds'] is None
+    assert summary['solve_deadline_seconds'] is None
+    assert summary['samples'] >= 1
+
+
 def test_native_launcher_uses_actual_budget_and_isolated_cache(monkeypatch, tmp_path):
     from src.runners.task038_launcher import launch_specification
     spec = replace(load_and_resolve(NATIVE_INPUT), expected_output_parent=tmp_path/'run')
@@ -108,6 +161,34 @@ def test_native_launcher_uses_actual_budget_and_isolated_cache(monkeypatch, tmp_
     assert contract['solve_seconds'] == 43200
     assert contract['workflow_seconds'] == 64800
     assert contract['restart'] == 32 and contract['max_iterations'] == 2048
+
+
+def test_native_5nm_launcher_passes_none_deadlines_to_watchdog(monkeypatch, tmp_path):
+    from src.runners.task038_launcher import launch_specification
+
+    spec = replace(load_and_resolve(FIVE_NM_INPUT), expected_output_parent=tmp_path/'run')
+    monkeypatch.setattr('src.runners.task038_launcher._physical_source_gate', lambda *_: {})
+    seen = []
+
+    def supervise(command, directory, **kwargs):
+        assert command[:5] == ['/usr/bin/taskset', '-c', '23', '/usr/bin/numactl', '--membind=1']
+        seen.append(kwargs)
+        return {'leader_exit_code': 0, 'classification': 'COMPLETED',
+                'job_swap_activity': 'zero_supported_by_zero_global_activity',
+                'launch_envelope': {}, 'memory_scope': 'test'}
+
+    monkeypatch.setattr('benchmarks.subreaper_watchdog.supervise', supervise)
+    result = launch_specification(spec, source_sha='b'*40)
+    assert result['result_classification'] == 'worker_exit0'
+    assert seen[0]['wall_seconds'] is None
+    assert seen[0]['solve_seconds'] is None
+    manifest = json.loads(Path(result['manifest']).read_text())
+    contract = manifest['native_capacity_contract']
+    assert contract['time_limit_mode'] == 'none'
+    assert contract['screen']['iterations'] == 128
+    assert contract['screen']['solve_seconds'] is None
+    assert contract['solve_seconds'] is None
+    assert contract['workflow_seconds'] is None
 
 
 def test_native_default_does_not_silently_bind_memory(tmp_path):

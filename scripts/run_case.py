@@ -47,7 +47,8 @@ def main(argv: list[str] | None = None) -> int:
                 "run_id": specification.identity["run_id"],
                 "method": specification.method["kind"],
                 "direct_solver_profile": specification.solver.get("direct_solver_profile", "default"),
-                "timeout_seconds": specification.execution["timeout_seconds"],
+                "time_limit_mode": specification.execution.get("time_limit_mode", "bounded"),
+                "timeout_seconds": specification.execution.get("timeout_seconds"),
             }
             print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
             return 0

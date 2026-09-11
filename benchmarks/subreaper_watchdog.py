@@ -152,7 +152,7 @@ def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
     return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
 
 
-def supervise(command: list[str], directory: Path, *, wall_seconds: float,
+def supervise(command: list[str], directory: Path, *, wall_seconds: float | None,
               interval: float = .25, grace_seconds: float = 2.0,
               cache_path: Path | None = None, phase_path: Path | None = None,
               solve_seconds: float | None = None, source_state: dict | None = None,
@@ -160,8 +160,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               cooperative_performance_stop: bool = False,
               timebase_guard: bool = False, timebase_policy: str = STRICT,
               stop_on_global_swap: bool = False) -> dict:
-    """Supervise one command, with an explicit workflow wall budget."""
-    if not command or min(wall_seconds, interval, grace_seconds) <= 0:
+    """Supervise one command; wall_seconds=None disables only the time gate."""
+    if (not command or interval <= 0 or grace_seconds <= 0 or
+            (wall_seconds is not None and wall_seconds <= 0)):
         raise ValueError('command and positive monitoring budgets are required')
     if cooperative_performance_stop and (phase_path is None or not hard_stop_immediate or grace_seconds > 60):
         raise ValueError('cooperative stop requires phase registration, immediate hard gates and grace <=60s')
@@ -188,7 +189,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     cache_stamp = None
     observed = set()
     leader = None
-    summary = {}
+    summary = {
+        'workflow_deadline_seconds': wall_seconds,
+        'solve_deadline_seconds': solve_seconds,
+        'time_limit_mode': 'none' if wall_seconds is None and solve_seconds is None else 'bounded',
+    }
     clock_start = clock_sample() if timebase_guard else None
     clock_budget = ClockBudget(clock_start, policy=timebase_policy) if timebase_guard else None
     solve_budget = None
@@ -274,7 +279,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         or sample['swap_bytes'] != 0 else
                         'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
                         'TIMEBASE_INCONSISTENCY' if clock_issue else
-                        'PERFORMANCE_CONTROLLED_STOP' if deadline_elapsed >= wall_seconds or solve_expired else
+                        'PERFORMANCE_CONTROLLED_STOP' if (
+                            wall_seconds is not None and
+                            deadline_elapsed >= wall_seconds) or solve_expired else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
                 if stop_on_global_swap:
                     current_swap = vmstat_swap_pages()
@@ -374,7 +381,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             summary['clock_end'] = clock_sample()
             try:
                 summary['workflow_clock_interval'] = clock_budget.update(summary['clock_end'])
-                if (clock_budget.seconds >= wall_seconds and
+                if (wall_seconds is not None and clock_budget.seconds >= wall_seconds and
                         summary['classification'] == 'COMPLETED'):
                     summary['classification'] = 'PERFORMANCE_CONTROLLED_STOP'
             except TimebaseInconsistency as exc:

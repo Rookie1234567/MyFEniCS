@@ -2,10 +2,11 @@
 
 NATIVE_CASES = {
     # User-authorized continuation of the previously stopped 13.5 nm run.
-    # The 128-iteration screen remains fixed in balanced_profile_facts; only
-    # its time allowance and the enclosing solve/workflow budgets change.
+    # The 128-iteration screen remains fixed in balanced_profile_facts.  The
+    # 5 nm user-authorized run has no wall/solve deadline; None is an explicit
+    # contract value, not a large numeric substitute.
     'balanced_h6_p4_native_13p5': (13.5, (10.0,), 7200, 43200, 64800),
-    'balanced_h6_p4_native_5nm': (5.0, (4.0, 3.0), 10800, 86400, 129600),
+    'balanced_h6_p4_native_5nm': (5.0, (4.0, 3.0), None, None, None),
     'balanced_h6_p4_native_3nm': (3.0, (2.5, 2.0), 21600, 172800, 259200),
     'balanced_h6_p4_native_2nm': (2.0, (1.5, 1.0), 21600, 259200, 345600),
 }
@@ -40,7 +41,8 @@ def native_profile_facts(identity):
     facts['p4_assembly_implementation'] = 'native_p4_row_loop_avx512_v1'
     facts['outer']['screen']['solve_seconds'] = screen
     facts['resources'].update(
-        solve_seconds=solve, workflow_seconds=workflow, batch_limit_seconds=864000,
+        solve_seconds=solve, workflow_seconds=workflow,
+        batch_limit_seconds=None if wavelength == 5.0 else 864000,
         absolute_cap_bytes=32*1024**3 if wavelength == 13.5 else int(1.60*1024**4),
         reserve_min_bytes=256*1024**3,
         planning_cap_bytes=24*1024**3 if wavelength == 13.5 else int(1.50*1024**4),
@@ -56,8 +58,10 @@ def native_profile_facts(identity):
         'screen': {
             'iterations': facts['outer']['screen']['iterations'],
             'solve_seconds': screen,
+            'time_limit_mode': 'none' if wavelength == 5.0 else 'bounded',
             'enabled_for_notch': False,
         },
+        'time_limit_mode': 'none' if wavelength == 5.0 else 'bounded',
         'solve_seconds': solve,
         'workflow_seconds': workflow,
         'five_nm_material': USER_MATERIAL_METADATA[5.0],
@@ -72,7 +76,8 @@ def validate_native_case(config):
     wavelength, meshes, _, _, workflow = NATIVE_CASES[identity]
     expected = {
         'solver': {'restart': 32, 'max_iterations': 2048},
-        'execution': {'mpi_size': 1, 'timeout_seconds': workflow, 'require_zero_swap': True},
+        'execution': {'mpi_size': 1, 'require_zero_swap': True,
+                      'time_limit_mode': 'none' if wavelength == 5.0 else 'bounded'},
         'discretization': {'nedelec_degree': 6, 'assembly_backend': 'standard_full',
                                'mesh_cell_type': 'hexahedron', 'mesh_spacing_mode': 'boundary_fitted'},
         'incidence': {'wavelength_nm': wavelength, 'grazing_angle_deg': 1.0,
@@ -84,6 +89,10 @@ def validate_native_case(config):
         for key, value in values.items():
             if config[section][key] != value:
                 raise InputError(f'{identity} fixes {section}.{key}={value}')
+    # None is the only unbounded representation; bounded native profiles
+    # retain their explicit workflow deadline.
+    if config['execution'].get('timeout_seconds') != workflow:
+        raise InputError(f'{identity} fixes execution.timeout_seconds={workflow}')
     if config['discretization']['mesh_target_nm'] not in meshes:
         raise InputError(f'{identity} permits mesh_target_nm in {meshes}')
     for key in ('n_substrate', 'n_grating'):

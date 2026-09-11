@@ -379,6 +379,32 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     kind = method["kind"]
     geometry_kind = geometry["geometry_kind"]
 
+    time_limit_mode = execution.get("time_limit_mode", "bounded")
+    if time_limit_mode == "none":
+        if solver.get("preconditioner") != "balanced_h6_p4_native_5nm":
+            raise _error(
+                "execution.time_limit_mode",
+                "none is authorized only for the native 5 nm capacity profile",
+            )
+        if execution.get("timeout_seconds") is not None:
+            raise _error(
+                "execution.timeout_seconds",
+                "must be omitted when execution.time_limit_mode=none",
+            )
+        # Keep the resolved identity explicit without using a sentinel or infinity.
+        execution["timeout_seconds"] = None
+    elif time_limit_mode == "bounded":
+        if "timeout_seconds" not in execution or execution["timeout_seconds"] is None:
+            raise _error(
+                "execution.timeout_seconds",
+                "is required when execution.time_limit_mode=bounded",
+            )
+    else:
+        raise _error(
+            "execution.time_limit_mode",
+            "must be bounded or none",
+        )
+
     if dimension == 2:
         if not kind.startswith("2d_"):
             raise _error("method.kind", "2D inputs require 2d_scattered or 2d_port")
@@ -547,7 +573,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "discretization.assembly_backend",
                     "native_matched_reference requires assembly_time_static_condensed",
                 )
-            if execution["mpi_size"] != 1 or execution["timeout_seconds"] != 21600:
+            if execution["mpi_size"] != 1 or execution.get("timeout_seconds") != 21600:
                 raise _error(
                     "execution",
                     "native_matched_reference fixes MPI1 and timeout_seconds=21600",
@@ -620,7 +646,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     ("solver", "restart", solver["restart"], 32),
                     ("solver", "max_iterations", solver["max_iterations"], 2048 if expanded else 512),
                     ("execution", "mpi_size", execution["mpi_size"], 1),
-                    ("execution", "timeout_seconds", execution["timeout_seconds"], 14400 if preconditioner in ("balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6") else 10800 if expanded else 7200),
+                    ("execution", "timeout_seconds", execution.get("timeout_seconds"), 14400 if preconditioner in ("balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6") else 10800 if expanded else 7200),
                     ("execution", "require_zero_swap", execution["require_zero_swap"], True),
                     ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
                     ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 10.0),
@@ -1127,7 +1153,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         raise _error(
             "execution", "warning_memory_gib must be below terminate_memory_gib"
         )
-    if execution["timeout_seconds"] <= 0:
+    if time_limit_mode == "bounded" and execution["timeout_seconds"] <= 0:
         raise _error("execution.timeout_seconds", "must be positive")
 
     if dimension == 3:

@@ -174,6 +174,7 @@ def _base_manifest(
                 'solve_seconds': profile['outer']['screen']['solve_seconds'],
                 'notch_policy': 'disabled_without_extra_screen' if snapshot['geometry'].get('cell_notch') else 'enabled',
             },
+            'time_limit_mode': profile.get('campaign_authorization', {}).get('time_limit_mode', 'bounded'),
             'solve_seconds': profile['resources']['solve_seconds'],
             'workflow_seconds': profile['resources']['workflow_seconds'],
             'restart': profile['outer']['restart'],
@@ -265,7 +266,8 @@ def _run_worker(
     execution = specification.execution
     warning_limit = float(execution["warning_memory_gib"]) * 1024**3
     terminate_limit = float(execution["terminate_memory_gib"]) * 1024**3
-    timeout = float(execution["timeout_seconds"])
+    timeout_value = execution.get("timeout_seconds")
+    timeout = None if timeout_value is None else float(timeout_value)
     sample_count = 0
     peak_authority = 0
     peak_process_tree = 0
@@ -310,7 +312,7 @@ def _run_worker(
                 break
             if process.poll() is not None:
                 break
-            if monotonic() - started >= timeout:
+            if timeout is not None and monotonic() - started >= timeout:
                 termination = terminate_factory(process)
                 classification = "timeout"
                 break
@@ -458,11 +460,20 @@ def launch_specification(
             if physical_candidate:
                 from benchmarks.subreaper_watchdog import supervise
 
+                if pc_profile is not None:
+                    watchdog_wall_seconds = max(1e-9, min(
+                        workflow_limit-(monotonic()-workflow_started),
+                        pc_profile['deadline_monotonic']-monotonic()))
+                elif workflow_limit is None:
+                    watchdog_wall_seconds = None
+                else:
+                    watchdog_wall_seconds = max(1e-9,
+                        workflow_limit-(60 if joint else 0)-(
+                            full_clock.update(clock_sample())['budget_seconds']
+                            if balanced else monotonic()-workflow_started))
+
                 authority = supervise(list(plan.argv), run_directory / 'watchdog',
-                    wall_seconds=max(1e-9, min(workflow_limit-(monotonic()-workflow_started),
-                        pc_profile['deadline_monotonic']-monotonic()) if pc_profile is not None
-                        else workflow_limit-(60 if joint else 0)-(full_clock.update(clock_sample())['budget_seconds']
-                            if balanced else monotonic()-workflow_started)),
+                    wall_seconds=watchdog_wall_seconds,
                     solve_seconds=None if pc_profile is not None else solve_limit,
                     phase_path=run_directory / 'workflow_phase.json',
                     cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light or balanced else
@@ -497,6 +508,7 @@ def launch_specification(
                 manifest['effective_watchdog_authority'] = {
                     'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
                     'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else solve_limit,
+                    'time_limit_mode': 'none' if workflow_limit is None and solve_limit is None else 'bounded',
                     'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False}
             else:
                 result = _run_worker(
@@ -513,12 +525,12 @@ def launch_specification(
             }
     if balanced and physical_candidate:
         result['workflow_clock_interval']=full_clock.update(clock_sample())
-        if result['workflow_clock_interval']['budget_seconds']>workflow_limit:
+        if workflow_limit is not None and result['workflow_clock_interval']['budget_seconds']>workflow_limit:
             result['result_classification']='PERFORMANCE_CONTROLLED_STOP'
     end_time = _now()
     if physical_candidate:
         result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
-        if result['full_workflow_monotonic_seconds'] > workflow_limit:
+        if workflow_limit is not None and result['full_workflow_monotonic_seconds'] > workflow_limit:
             result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
     manifest.update(
         {

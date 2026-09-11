@@ -13,7 +13,9 @@ class BalancedScreen:
             if not self.checkpoints or self.checkpoints[-1][0] != iteration:
                 self.checkpoints.append((iteration, relative))
                 self.checkpoints = self.checkpoints[-3:]
-        if self.decision is not None or (iteration < 128 and seconds < self.solve_seconds):
+        if self.decision is not None or (
+                iteration < 128 and
+                (self.solve_seconds is None or seconds < self.solve_seconds)):
             return self.decision
         history = self.checkpoints
         trend = (len(history) == 3 and history[1][0]-history[0][0] == 32 and
@@ -36,7 +38,8 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     Convergence is decided by explicit true residuals from buildSolution while
     KSP is active. Once solve returns, use vec_sol directly, never build again.
     """
-    if not np.isfinite(solve_limit_seconds) or solve_limit_seconds <= 0:
+    if (solve_limit_seconds is not None and
+            (not np.isfinite(solve_limit_seconds) or solve_limit_seconds <= 0)):
         raise ValueError('positive finite solve limit required')
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
@@ -95,8 +98,11 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             iteration = int(iteration); now = seconds(); resource_sample()
             append('iterations.jsonl', dict(iteration=iteration, reported_relative=float(reported)/norm_rhs,
                 outer_matvec_count=ac.matvec_count, outer_pc_count=pc_context.apply_count))
-            stop = stop_requested() or now >= solve_limit_seconds
-            boundary = screen_enabled and screen.decision is None and (iteration >= 128 or now >= screen_seconds)
+            stop = stop_requested() or (
+                solve_limit_seconds is not None and now >= solve_limit_seconds)
+            boundary = screen_enabled and screen.decision is None and (
+                iteration >= 128 or
+                (screen_seconds is not None and now >= screen_seconds))
             if iteration % 32 == 0 or now-last_save >= 120 or boundary or stop or reported/norm_rhs <= 1e-6:
                 relative, now = snapshot(iteration, current, reported)
                 if relative <= 1e-6:
