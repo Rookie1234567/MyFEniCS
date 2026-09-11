@@ -148,6 +148,8 @@ class MacroClass:
 class MacroLocalVolume:
     """Current p4 cell-volume action plus the retained interior response."""
 
+    memory_policy = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY"
+
     def __init__(
         self,
         levels: Mapping[str, Any],
@@ -157,6 +159,7 @@ class MacroLocalVolume:
         sample: Callable[[], Any],
         marker: Callable[[str, Mapping[str, Any]], Any],
         save: Callable[[str, Mapping[str, Any]], Any] | None = None,
+        memory_policy: str = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY",
     ) -> None:
         from .condensed_fine_reference import (
             native_map_arrays,
@@ -175,6 +178,7 @@ class MacroLocalVolume:
         self.sample = sample
         self.marker = marker
         self.save = save
+        self.memory_policy = memory_policy
         self.mapping = native_map_arrays(levels["spaces"][4], levels["floquets"][4])
         self.project_dual = project_unconstrained_mpc_dual
         mesh = levels["mesh"]
@@ -830,13 +834,18 @@ class MacroLocalVolume:
                     resident_before_factor_bytes=resident_before_factor,
                     block_ref=block,
                 ) -> None:
-                    predicted = int(facts["factor_estimated_padded_bytes"])
+                    estimated = int(facts["factor_estimated_padded_bytes"])
+                    predicted = int(facts.get(
+                        "factor_requested_padded_bytes", estimated,
+                    ))
                     current = self.sample()
                     gate_facts = {
                         "block": block_index,
                         "resident_before_factor_bytes": resident_before_factor_bytes,
                         "matrix_storage_bytes": block_ref["matrix_storage_bytes"],
-                        "factor_estimated_padded_bytes": predicted,
+                        "factor_estimated_padded_bytes": estimated,
+                        "factor_requested_padded_bytes": facts.get(
+                            "factor_requested_padded_bytes", predicted),
                         "resident_cap_bytes": LOCAL_RESIDENT_CAP,
                         "temporary_workspace_reserve_bytes": LOCAL_TEMP_RESERVE,
                         "resource": current,
@@ -855,6 +864,7 @@ class MacroLocalVolume:
                         self.marker(name, dict(block=block_index, **facts)),
                     physical_p2_pilot=False, extra_local_bytes=0,
                     pre_numeric_gate=pre_numeric_gate,
+                    memory_policy=self.memory_policy,
                 )
                 factor_facts = dict(backend="petsc_mumps", **factor.audit)
                 block["factor_reported_bytes"] = int(max(
@@ -1389,13 +1399,15 @@ def build_macro_stack(
     sample: Callable[[], Any],
     marker: Callable[[str, Mapping[str, Any]], Any],
     save: Callable[[str, Mapping[str, Any]], Any] | None = None,
+    memory_policy: str = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY",
 ) -> dict[str, Any]:
     """Build the actual 6/4/2 candidate without an old entity route."""
 
     owned: dict[str, Any] = {}
     try:
         return _build_macro_stack_impl(
-            cfg, comm, sample=sample, marker=marker, save=save, owned=owned
+            cfg, comm, sample=sample, marker=marker, save=save, owned=owned,
+            memory_policy=memory_policy,
         )
     except BaseException:
         destroy_macro_stack(owned)
@@ -1410,6 +1422,7 @@ def _build_macro_stack_impl(
     marker: Callable[[str, Mapping[str, Any]], Any],
     save: Callable[[str, Mapping[str, Any]], Any] | None = None,
     owned: dict[str, Any],
+    memory_policy: str = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY",
 ) -> dict[str, Any]:
     """Internal builder whose partial ownership is visible to the wrapper."""
 
@@ -1436,7 +1449,10 @@ def _build_macro_stack_impl(
         levels, cfg, fine_bundle=fine, stage_callback=marker, physical_only_degrees=(6, 4, 2)
     )
     owned["actions"] = actions
-    local = MacroLocalVolume(levels, cfg, actions, sample=sample, marker=marker, save=save)
+    local = MacroLocalVolume(
+        levels, cfg, actions, sample=sample, marker=marker, save=save,
+        memory_policy=memory_policy,
+    )
     owned["local"] = local
     native_a4 = actions["physical"][4]["physical_action"]
     dtn4 = actions["physical"][4]["dtn_action"]

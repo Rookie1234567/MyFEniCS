@@ -57,6 +57,39 @@ class Factor:
         self.events.append('destroy')
 
 
+class V11Factor(Factor):
+    controls = None
+    compaction_supported = False
+
+    def __init__(self, matrix):
+        super().__init__(matrix)
+        V11Factor.controls = {23: 0}
+
+    def info(self, **kwargs):
+        return {
+            'info': {'1': 0}, 'rinfo': {'1': 0.0},
+            'infog': {'16': 20, '17': 24, '19': 3, '22': 2, '29': 3},
+            'rinfog': {'1': 0.0},
+        }
+
+    def get_icntl(self, index):
+        if index == 49 and not self.compaction_supported:
+            raise RuntimeError('MatMumpsGetIcntl(49) returned PETSc error code 62')
+        return self.controls[index]
+
+    def try_get_icntl(self, index):
+        if index == 49 and not self.compaction_supported:
+            return {'index': 49, 'supported': False, 'value': None, 'error_code': 62}
+        return {'index': index, 'supported': True, 'value': self.controls[index], 'error_code': None}
+
+    def set_icntl(self, index, value):
+        self.events.append(('set_icntl', index, value))
+        self.controls[index] = value
+
+    def set_memory_limit_mb(self, value):
+        self.set_icntl(23, value)
+
+
 @pytest.fixture
 def fake(monkeypatch):
     monkeypatch.setattr(bounded, '_MumpsFactor', Factor)
@@ -77,6 +110,48 @@ def test_unknown_allocator_has_derived_reserve_and_ordered_factor_lifecycle(fake
     factor.destroy()
     factor.destroy()
     assert Factor.latest.events.count('destroy') == 1
+
+
+def test_symbolic_sized_v11_formula_uses_decimal_mb_and_mpi1_fields():
+    result = bounded.symbolic_sized_local_mumps_request(
+        {'infog': {'16': 20, '17': 24}}, mpi_size=1,
+    )
+    assert result['estimate_bytes'] == 25_000_000
+    assert result['minimum_request_bytes'] == 2 * 25_000_000 + 8 * 1024**2
+    assert result['request_bytes'] == 59_000_000
+    assert result['request_mb'] == 59
+    with pytest.raises(ValueError, match='MPI1'):
+        bounded.symbolic_sized_local_mumps_request(
+            {'infog': {'16': 20, '17': 24}}, mpi_size=2,
+        )
+    with pytest.raises(RuntimeError, match=r'INFOG\(17\)'):
+        bounded.symbolic_sized_local_mumps_request({'infog': {'16': 20, '17': -1}})
+
+
+def test_v11_is_explicit_opt_in_and_unsupported_compaction_is_recorded(fake, monkeypatch):
+    monkeypatch.setattr(bounded, '_MumpsFactor', V11Factor)
+    factor = bounded.BoundedP1Factor(
+        Matrix(), **fake, memory_policy=bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+    )
+    assert factor.audit['memory_policy'] == bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11
+    assert factor.audit['icntl23_requested_mb'] == 59
+    assert factor.audit['icntl23_readback_mb'] == 59
+    assert factor.audit['icntl49']['status'] == 'COMPACTION_UNSUPPORTED'
+    assert factor.audit['numeric_raw']['info'] == {'1': 0}
+    assert Factor.latest.events == [
+        'symbolic', ('set_icntl', 23, 59), 'numeric',
+    ]
+    factor.destroy()
+
+
+def test_v11_request_is_checked_against_hard_local_cap_before_numeric(fake, monkeypatch):
+    monkeypatch.setattr(bounded, '_MumpsFactor', V11Factor)
+    monkeypatch.setattr(bounded, 'LOCAL_FACTOR_MAX_BYTES', 2 * 116 + 32 * 1024**2)
+    with pytest.raises(RuntimeError, match='512MiB|requested factor'):
+        bounded.BoundedP1Factor(
+            Matrix(), **fake, memory_policy=bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        )
+    assert Factor.latest.events == ['symbolic', 'destroy']
 
 
 @pytest.mark.parametrize('field,value', [('nz_used', None), ('nz_allocated', None), ('nz_allocated', 2)])
@@ -152,5 +227,47 @@ def test_actual_mumps_repeated_solve_and_old_one_shot_contract():
         if old is not None:
             old.destroy()
         solution.destroy()
+        rhs.destroy()
+        matrix.destroy()
+
+
+def test_actual_mumps_v11_controls_and_repeated_solve():
+    from petsc4py import PETSc
+
+    matrix = PETSc.Mat().createAIJ([3, 3], nnz=1, comm=PETSc.COMM_SELF)
+    rhs = matrix.createVecRight()
+    factor = None
+    try:
+        for i, value in enumerate((2 + 1j, 3 + 0.5j, 4 - 0.25j)):
+            matrix.setValue(i, i, value)
+        matrix.assemble()
+        rhs.array[:] = (1.0 + 2.0j, 2.0 - 1.0j, 3.0 + 0.5j)
+        factor = bounded.BoundedP1Factor(
+            matrix,
+            label='tiny_v11',
+            resource_sample=lambda: dict(
+                rss_bytes=100_000_000, launch_cap_bytes=12_000_000_000,
+            ),
+            marker=lambda *_: None,
+            memory_policy=bounded.SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        )
+        assert factor.audit['icntl23_readback_mb'] == factor.audit['symbolic_sized_request']['request_mb']
+        assert factor.audit['icntl49']['status'] == 'COMPACTION_UNSUPPORTED'
+        assert factor.audit['numeric_raw']['local_info_supported'] is True
+        for scale in (1.0, 2.0):
+            rhs.scale(scale)
+            solution, facts = factor.solve_lean(rhs)
+            try:
+                checked = matrix.createVecRight()
+                matrix.mult(solution, checked)
+                checked.axpy(-1.0, rhs)
+                assert checked.norm() / rhs.norm() < 1e-14
+            finally:
+                checked.destroy()
+                solution.destroy()
+        assert facts['solve_count'] == 2
+    finally:
+        if factor is not None:
+            factor.destroy()
         rhs.destroy()
         matrix.destroy()

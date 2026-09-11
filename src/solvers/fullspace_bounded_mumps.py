@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import math
 import time
 from typing import Any
 
@@ -10,6 +11,56 @@ import numpy as np
 
 from .fullspace_physical_intermediate import LOCAL_FACTOR_MAX_BYTES, LOCAL_FACTOR_MAX_ROWS
 from .fullspace_v17_p3_oracle import _MumpsFactor
+
+
+LEGACY_LOCAL_MUMPS_MEMORY_POLICY = "LEGACY_LOCAL_MUMPS_MEMORY_POLICY"
+SYMBOLIC_SIZED_LOCAL_MUMPS_V11 = "SYMBOLIC_SIZED_LOCAL_MUMPS_V11"
+MUMPS_DECIMAL_MB = 1_000_000
+MUMPS_V11_MIN_BYTES = 32 * 1024**2
+MUMPS_V11_MARGIN_BYTES = 8 * 1024**2
+
+
+def symbolic_sized_local_mumps_request(
+    raw: dict[str, Any], *, mpi_size: int = 1,
+) -> dict[str, int | str]:
+    """Convert the reviewed MPI1 symbolic fields into one ICNTL(23) request.
+
+    MUMPS reports these memory fields in decimal megabytes.  The extra one-MB
+    rounding is deliberately retained from the existing bounded-factor audit;
+    the request itself is then rounded up once more to a decimal megabyte.
+    """
+
+    if int(mpi_size) != 1:
+        raise ValueError("SYMBOLIC_SIZED_LOCAL_MUMPS_V11 requires MPI1 INFOG semantics")
+    infog = raw.get("infog")
+    if not isinstance(infog, dict):
+        raise RuntimeError("MEMORY_POLICY_UNSUPPORTED: MUMPS INFOG is unavailable")
+    values: dict[str, int] = {}
+    for key in ("16", "17"):
+        value = infog.get(key)
+        if type(value) is not int or value < 0:
+            raise RuntimeError(
+                f"MEMORY_POLICY_UNSUPPORTED: INFOG({key}) is not a non-negative integer"
+            )
+        values[key] = int(value)
+    estimate_bytes = MUMPS_DECIMAL_MB * (1 + max(values.values()))
+    minimum_request = max(
+        MUMPS_V11_MIN_BYTES,
+        2 * estimate_bytes + MUMPS_V11_MARGIN_BYTES,
+    )
+    request_bytes = MUMPS_DECIMAL_MB * math.ceil(minimum_request / MUMPS_DECIMAL_MB)
+    return {
+        "policy": SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        "mpi_size": 1,
+        "infog16_mb": values["16"],
+        "infog17_mb": values["17"],
+        "estimate_bytes": estimate_bytes,
+        "minimum_request_bytes": minimum_request,
+        "request_bytes": int(request_bytes),
+        "request_mb": int(request_bytes // MUMPS_DECIMAL_MB),
+        "unit_bytes": MUMPS_DECIMAL_MB,
+        "rounding": "decimal_MB_ceiling",
+    }
 
 
 class BoundedP1Factor:
@@ -23,14 +74,25 @@ class BoundedP1Factor:
 
     def __init__(self, matrix: Any, *, label: str, resource_sample: Callable[[], dict],
                  marker: Callable[[str, dict], None], physical_p2_pilot: bool = False,
-                 extra_local_bytes: int = 0, pre_numeric_gate: Callable[[dict], None] | None = None) -> None:
+                 extra_local_bytes: int = 0, pre_numeric_gate: Callable[[dict], None] | None = None,
+                 memory_policy: str = LEGACY_LOCAL_MUMPS_MEMORY_POLICY) -> None:
         self.matrix, self.label = matrix, label
         self.marker = marker
         self.pre_numeric_gate = pre_numeric_gate
+        if memory_policy not in (
+            LEGACY_LOCAL_MUMPS_MEMORY_POLICY,
+            SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+        ):
+            raise ValueError(f"unknown bounded MUMPS memory policy: {memory_policy}")
+        self.memory_policy = memory_policy
         self.factor = None
         self.solve_count = 0
         self.last_apply_facts: dict = {}
-        self.audit: dict = {'label': label, 'bounded_development_coarse_factor': True}
+        self.audit: dict = {
+            'label': label,
+            'bounded_development_coarse_factor': True,
+            'memory_policy': memory_policy,
+        }
         emit = lambda name, facts: marker(name.replace('p1_', 'p2_') if physical_p2_pilot else name, facts)
         row_cap = 8192 if physical_p2_pilot else LOCAL_FACTOR_MAX_ROWS
         rows, columns = matrix.getSize()
@@ -88,25 +150,101 @@ class BoundedP1Factor:
             emit('p1_symbolic_started', {'label': label, **self.audit})
             self.factor = _MumpsFactor(matrix)
             self.factor.symbolic(matrix)
-            raw = self.factor.info(extra_indices=(21, 22, 29))
-            estimated = self._mb_upper(raw, '17')
+            raw = self.factor.info(
+                extra_indices=(21, 22, 29),
+                include_local=memory_policy == SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+            )
+            if memory_policy == SYMBOLIC_SIZED_LOCAL_MUMPS_V11:
+                symbolic_request = symbolic_sized_local_mumps_request(
+                    raw, mpi_size=matrix.getComm().getSize()
+                )
+                estimated = int(symbolic_request["estimate_bytes"])
+                requested = int(symbolic_request["request_bytes"])
+            else:
+                symbolic_request = None
+                estimated = self._mb_upper(raw, '17')
+                requested = estimated
             memory = resource_sample()
-            predicted = matrix_budget + estimated
+            predicted = matrix_budget + requested
             self.audit.update(symbolic_raw=raw, symbolic_seconds=time.perf_counter()-start,
                               factor_estimated_padded_bytes=estimated,
                               derived_matrix_plus_estimated_factor_budget_bytes=predicted,
                               symbolic_resource=memory)
+            if symbolic_request is not None:
+                self.audit.update(
+                    symbolic_sized_request=symbolic_request,
+                    factor_requested_padded_bytes=requested,
+                    derived_matrix_plus_requested_factor_budget_bytes=predicted,
+                    numeric_requested_bytes=requested,
+                )
             emit('p1_symbolic_complete', dict(self.audit))
             if predicted > LOCAL_FACTOR_MAX_BYTES:
-                raise RuntimeError(f'{label}: symbolic matrix+factor exceeds 512MiB')
-            if memory['rss_bytes'] + estimated >= memory['launch_cap_bytes']:
+                raise RuntimeError(
+                    f'{label}: symbolic matrix+requested factor exceeds 512MiB'
+                    if symbolic_request is not None
+                    else f'{label}: symbolic matrix+factor exceeds 512MiB'
+                )
+            if memory['rss_bytes'] + requested >= memory['launch_cap_bytes']:
                 raise RuntimeError(f'{label}: symbolic prediction exceeds whole-workflow cap')
             if self.pre_numeric_gate is not None:
                 self.pre_numeric_gate(dict(self.audit))
-            self.factor.set_memory_limit_mb(max(1, (LOCAL_FACTOR_MAX_BYTES-matrix_budget)//1_000_000))
+            if symbolic_request is not None:
+                # ICNTL(23) is the requested per-instance decimal-MB package;
+                # it is never inferred from the remaining 512 MiB budget.
+                request_mb = int(symbolic_request["request_mb"])
+                try:
+                    self.factor.set_memory_limit_mb(request_mb)
+                    readback = self.factor.get_icntl(23)
+                except BaseException as exc:
+                    raise RuntimeError(
+                        f"MEMORY_POLICY_UNSUPPORTED: ICNTL(23) set/readback failed: {exc}"
+                    ) from exc
+                if readback != request_mb:
+                    raise RuntimeError(
+                        f"MEMORY_POLICY_UNSUPPORTED: ICNTL(23) readback {readback} != {request_mb}"
+                    )
+                compaction = self.factor.try_get_icntl(49)
+                if compaction["supported"]:
+                    try:
+                        self.factor.set_icntl(49, 1)
+                        after = self.factor.get_icntl(49)
+                    except BaseException as exc:
+                        compaction.update(
+                            status="COMPACTION_UNSUPPORTED",
+                            set_error=f"{type(exc).__name__}: {exc}",
+                        )
+                    else:
+                        compaction.update(
+                            status="COMPACTION_REQUESTED" if after == 1 else "COMPACTION_NOT_CONFIRMED",
+                            value_after=after,
+                        )
+                else:
+                    compaction["status"] = "COMPACTION_UNSUPPORTED"
+                self.audit.update(
+                    icntl23_requested_mb=request_mb,
+                    icntl23_readback_mb=readback,
+                    icntl49=compaction,
+                )
+                emit('p1_memory_controls_set', dict(self.audit))
+            else:
+                self.factor.set_memory_limit_mb(
+                    max(1, (LOCAL_FACTOR_MAX_BYTES-matrix_budget)//1_000_000)
+                )
             start = time.perf_counter()
-            self.factor.numeric(matrix)
-            raw = self.factor.info(extra_indices=(21, 22, 29))
+            try:
+                self.factor.numeric(matrix)
+            except BaseException as exc:
+                self.audit.update(
+                    numeric_seconds=time.perf_counter()-start,
+                    numeric_exception_type=type(exc).__name__,
+                    numeric_exception=str(exc),
+                )
+                emit('p1_numeric_failed', dict(self.audit))
+                raise
+            raw = self.factor.info(
+                extra_indices=(21, 22, 29),
+                include_local=memory_policy == SYMBOLIC_SIZED_LOCAL_MUMPS_V11,
+            )
             allocated_factor = self._mb_upper(raw, '19')
             used_factor = self._mb_upper(raw, '22')
             actual = matrix_budget + max(allocated_factor, used_factor)
@@ -114,6 +252,25 @@ class BoundedP1Factor:
                               factor_reported_allocated_padded_bytes=allocated_factor,
                               factor_reported_used_padded_bytes=used_factor,
                               derived_matrix_plus_reported_factor_budget_bytes=actual)
+            if symbolic_request is not None:
+                info = raw.get("info")
+                infog = raw.get("infog")
+                info1 = info.get("1") if isinstance(info, dict) else None
+                infog1 = infog.get("1") if isinstance(infog, dict) else None
+                warning_facts = {
+                    "info1": info1,
+                    "infog1": infog1,
+                    "info_warning": isinstance(info1, int) and info1 > 0,
+                    "infog_warning": isinstance(infog1, int) and infog1 > 0,
+                    "compaction_warning": any(
+                        isinstance(value, int) and value > 0 and value & 4
+                        for value in (info1, infog1)
+                    ),
+                    "warning_encoding": "positive_INFO1_bits_and_MPI1_INFOG1_sum",
+                }
+                self.audit["numeric_warnings"] = warning_facts
+                if warning_facts["compaction_warning"]:
+                    self.audit["icntl49"]["status"] = "COMPACTION_WARNING"
             emit('p1_numeric_complete', dict(self.audit))
             if actual > LOCAL_FACTOR_MAX_BYTES:
                 raise RuntimeError(f'{label}: derived matrix+reported factor budget exceeds 512MiB')

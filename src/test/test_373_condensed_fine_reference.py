@@ -95,7 +95,14 @@ def test_real_mumps_icntl23_one_factor_two_mat_solve():
         changed=factor.symbolic_memory_settings()['icntl']
         assert changed['23']==512
         assert all(changed[k]==v for k,v in initial.items() if k!='23')
-        factor.numeric(matrix);factor.solve(b,x)
+        factor.numeric(matrix)
+        # The legacy read-only control/info access remains available after
+        # numeric; V11 opts into the additional local INFO/RINFO fields.
+        assert factor.symbolic_memory_settings()['icntl']['23']==512
+        assert 'info' not in factor.info()
+        local_info=factor.info(include_local=True)
+        assert local_info['local_info_supported'] is True
+        factor.solve(b,x)
         matrix.mult(x,r);r.aypx(-1,b);factor.solve_repeated(r,d);x.axpy(1,d)
         matrix.mult(x,r);r.aypx(-1,b)
         assert r.norm()/b.norm()<1e-14

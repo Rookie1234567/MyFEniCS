@@ -137,6 +137,15 @@ def _load_petsc_api() -> ctypes.CDLL:
         library.MatMumpsGetInfog.restype = ctypes.c_int
         library.MatMumpsGetRinfog.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
         library.MatMumpsGetRinfog.restype = ctypes.c_int
+        for name, pointer in (
+            ("MatMumpsGetInfo", ctypes.POINTER(ctypes.c_int)),
+            ("MatMumpsGetRinfo", ctypes.POINTER(ctypes.c_double)),
+            ("MatMumpsGetIcntl", ctypes.POINTER(ctypes.c_int)),
+        ):
+            function = getattr(library, name, None)
+            if function is not None:
+                function.argtypes = [void, ctypes.c_int, pointer]
+                function.restype = ctypes.c_int
         library.MatMumpsSetIcntl.argtypes = [void, ctypes.c_int, ctypes.c_int]
         library.MatMumpsSetIcntl.restype = ctypes.c_int
         return library
@@ -220,9 +229,61 @@ class _MumpsFactor:
 
     def set_memory_limit_mb(self, megabytes: int) -> None:
         """Set MUMPS ICNTL(23) before numeric factorization (explicit opt-in)."""
-        if self.destroyed or self.numeric_calls or int(megabytes) <= 0:
+        if int(megabytes) <= 0:
             raise ValueError("MUMPS memory limit must be positive and precede numeric factorization")
-        _petsc_error(self._api.MatMumpsSetIcntl(self._handle, 23, int(megabytes)), "MatMumpsSetIcntl(23)")
+        self.set_icntl(23, megabytes)
+
+    def get_icntl(self, index: int) -> int:
+        """Read one public PETSc/MUMPS integer control from a live factor."""
+        if self.destroyed:
+            raise RuntimeError("MUMPS ICNTL read requires a live factor")
+        index = int(index)
+        if index <= 0:
+            raise ValueError("MUMPS ICNTL index must be positive")
+        function = getattr(self._api, "MatMumpsGetIcntl", None)
+        if function is None:
+            raise RuntimeError("MatMumpsGetIcntl is unavailable in the loaded PETSc API")
+        value = ctypes.c_int()
+        _petsc_error(
+            function(self._handle, index, ctypes.byref(value)),
+            f"MatMumpsGetIcntl({index})",
+        )
+        return int(value.value)
+
+    def try_get_icntl(self, index: int) -> dict[str, Any]:
+        """Read a public integer control without hiding unsupported-interface errors."""
+        if self.destroyed:
+            raise RuntimeError("MUMPS ICNTL read requires a live factor")
+        index = int(index)
+        if index <= 0:
+            raise ValueError("MUMPS ICNTL index must be positive")
+        function = getattr(self._api, "MatMumpsGetIcntl", None)
+        if function is None:
+            return {
+                "index": index, "supported": False, "value": None,
+                "error_code": None, "error": "MatMumpsGetIcntl unavailable",
+            }
+        value = ctypes.c_int()
+        code = int(function(
+            self._handle, index, ctypes.byref(value)))
+        return {
+            "index": index,
+            "supported": code == 0,
+            "value": int(value.value) if code == 0 else None,
+            "error_code": code if code != 0 else None,
+        }
+
+    def set_icntl(self, index: int, value: int) -> None:
+        """Set one public PETSc/MUMPS integer control before numeric factorization."""
+        if self.destroyed or self.numeric_calls:
+            raise RuntimeError("MUMPS ICNTL write requires a live pre-numeric factor")
+        index, value = int(index), int(value)
+        if index <= 0:
+            raise ValueError("MUMPS ICNTL index must be positive")
+        _petsc_error(
+            self._api.MatMumpsSetIcntl(self._handle, index, value),
+            f"MatMumpsSetIcntl({index})",
+        )
 
     def solve(self, rhs: Any, solution: Any) -> None:
         if self.destroyed or self.numeric_calls != 1 or self.solve_calls:
@@ -242,14 +303,9 @@ class _MumpsFactor:
 
     def symbolic_memory_settings(self) -> dict:
         """Read controls relevant to interpreting symbolic memory, without setting them."""
-        function=self._api.MatMumpsGetIcntl
-        function.argtypes=[ctypes.c_void_p,ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
-        function.restype=ctypes.c_int
         result={}
         for index in (7,10,14,18,22,23):
-            value=ctypes.c_int()
-            _petsc_error(function(self._handle,index,ctypes.byref(value)), 'MatMumpsGetIcntl')
-            result[str(index)]=value.value
+            result[str(index)] = self.get_icntl(index)
         return dict(icntl=result,modified=False)
 
     def solve_repeated(self, rhs: Any, solution: Any) -> None:
@@ -264,7 +320,7 @@ class _MumpsFactor:
         )
         self.solve_calls += 1
 
-    def info(self, extra_indices: tuple[int, ...] = ()) -> dict[str, Any]:
+    def info(self, extra_indices: tuple[int, ...] = (), *, include_local: bool = False) -> dict[str, Any]:
         infog: dict[str, int] = {}
         rinfog: dict[str, float] = {}
         for index in (*range(1, 21), *extra_indices):
@@ -279,7 +335,29 @@ class _MumpsFactor:
             if int(code) != 0:
                 break
             rinfog[str(index)] = float(value.value)
-        return {"infog": infog, "rinfog": rinfog}
+        result: dict[str, Any] = {"infog": infog, "rinfog": rinfog}
+        if include_local:
+            info: dict[str, int] = {}
+            rinfo: dict[str, float] = {}
+            info_function = getattr(self._api, "MatMumpsGetInfo", None)
+            rinfo_function = getattr(self._api, "MatMumpsGetRinfo", None)
+            if info_function is None or rinfo_function is None:
+                result.update(info=None, rinfo=None, local_info_supported=False)
+            else:
+                for index in range(1, 21):
+                    value = ctypes.c_int()
+                    code = info_function(self._handle, index, ctypes.byref(value))
+                    if int(code) != 0:
+                        break
+                    info[str(index)] = int(value.value)
+                for index in range(1, 21):
+                    value = ctypes.c_double()
+                    code = rinfo_function(self._handle, index, ctypes.byref(value))
+                    if int(code) != 0:
+                        break
+                    rinfo[str(index)] = float(value.value)
+                result.update(info=info, rinfo=rinfo, local_info_supported=True)
+        return result
 
     def destroy(self) -> None:
         if self.destroyed:
