@@ -12,6 +12,15 @@ from .physical_intermediate import WorkflowLedger,_atomic_json
 from .workflow_timebase import TimebaseInconsistency
 
 
+def _sha256_file(path: Path, *, chunk_bytes: int = 1024 * 1024) -> str:
+    """Hash a packet without creating a second full-file bytes object."""
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(chunk_bytes), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def save_packet(directory,name,facts):
     """Keep numerical arrays ignored; scalar records reference a hashed NPZ."""
     arrays={}
@@ -32,7 +41,7 @@ def save_packet(directory,name,facts):
                 stream.flush()
                 os.fsync(stream.fileno())
             temporary.replace(path)
-            record['arrays']=dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+            record['arrays']=dict(path=str(path),sha256=_sha256_file(path))
         _atomic_json(directory/(name+'.json'),record)
     finally:
         # The recursive compact closure forms a cycle; release its array payload now.

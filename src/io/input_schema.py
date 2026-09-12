@@ -1146,6 +1146,16 @@ FIELD_SPECS: Final = (
         "true",
         required=True,
     ),
+    _f(
+        "execution.p4_diagnosis_workspace_cap_bytes",
+        "integer",
+        "bytes",
+        ("3d",),
+        "P4 方向诊断中附加数组与密集最小二乘工作区的显式上限",
+        "p4 direction diagnosis workspace cap",
+        "536870912",
+        constraints=("> 0; required only for physical_p4_direction_diagnosis_v13",),
+    ),
     # output
     _f(
         "output.results_root",

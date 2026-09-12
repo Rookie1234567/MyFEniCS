@@ -71,6 +71,7 @@ terminate_memory_gib = 12.0
 timeout_seconds = 7200
 memory_limit_gb = 12.0
 require_zero_swap = true
+p4_diagnosis_workspace_cap_bytes = 536870912
 
 [output]
 results_root = "results"

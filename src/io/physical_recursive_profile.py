@@ -13,6 +13,10 @@ MACRO_V12_PROFILE = 'physical_macro_dd4_v12'
 MACRO_V12_PROFILES = (MACRO_V12_PROFILE,)
 P4_DIRECTION_DIAGNOSIS_PROFILE = 'physical_p4_direction_diagnosis_v13'
 P4_DIRECTION_DIAGNOSIS_PROFILES = (P4_DIRECTION_DIAGNOSIS_PROFILE,)
+P4_DIAGNOSIS_WORKSPACE_CAP_BYTES = 512 * 1024**2
+P4_DIAGNOSIS_LEGACY_WORKSPACE_CAP_BYTES = 256 * 1024**2
+P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS = 954.5497426901994
+P4_DIAGNOSIS_WORKFLOW_SECONDS = 7200.0
 
 
 def macro_v10_profile_facts():
@@ -245,7 +249,8 @@ def p4_direction_diagnosis_profile_facts():
         'rank': {'method': 'SVD', 'relative_cutoff': 1e-12},
         'storage': {
             'p4_global_aij': 0, 'p4_global_factor': 0,
-            'additional_arrays_bytes_cap': 256 * 1024**2,
+            'additional_arrays_bytes_cap': P4_DIAGNOSIS_WORKSPACE_CAP_BYTES,
+            'legacy_additional_arrays_bytes_cap': P4_DIAGNOSIS_LEGACY_WORKSPACE_CAP_BYTES,
             'local_inventory_cap_bytes': 2684354560,
             'temporary_reserve_bytes': 1 * 1024**3,
         },
@@ -254,7 +259,11 @@ def p4_direction_diagnosis_profile_facts():
             'base_directions': ['a', '-t'], 'local_columns_max': 8,
             'uses_reference': False, 'uses_heldout_answer': False,
         },
-        'formal_budget_seconds': 7200,
+        'formal_budget_seconds': P4_DIAGNOSIS_WORKFLOW_SECONDS,
+        'prior_charged_seconds': P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS,
+        'remaining_continuation_seconds': (
+            P4_DIAGNOSIS_WORKFLOW_SECONDS - P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS
+        ),
         'qualification': 'opt_in; diagnosis only; ordinary defaults unchanged; no outer solve',
     }
 

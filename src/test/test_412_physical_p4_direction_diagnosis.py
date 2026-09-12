@@ -56,8 +56,14 @@ def test_selector_projects_base_before_first_reference_free_choice():
     local = np.column_stack((eye[:, 0] + 0.1 * eye[:, 3], eye[:, 2]))
 
     selected, facts = select_local_response_indices(rhs, base, local, max_local=1)
+    selected_f, facts_f = select_local_response_indices(
+        np.asfortranarray(rhs), np.asfortranarray(base), np.asfortranarray(local),
+        max_local=1,
+    )
 
     assert selected == [1]
+    assert selected_f == selected
+    assert facts_f["rounds"][0]["current_column_scale"] == facts["rounds"][0]["current_column_scale"]
     assert facts["uses_reference"] is False
     assert facts["rounds"][0]["current_column_scale"] == [10.0, 30.0]
     assert "target" not in inspect.signature(select_local_response_indices).parameters

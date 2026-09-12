@@ -18,7 +18,9 @@ RANK_RTOL = 1.0e-12
 
 
 def _as_columns(value: Any, *, name: str) -> np.ndarray:
-    array = np.ascontiguousarray(np.asarray(value, dtype=np.complex128))
+    array = np.asarray(value, dtype=np.complex128)
+    if not (array.flags.c_contiguous or array.flags.f_contiguous):
+        array = np.ascontiguousarray(array)
     if array.ndim != 2 or array.shape[0] == 0:
         raise ValueError(f"{name} must be a non-empty two-dimensional column array")
     if not np.isfinite(array).all():
@@ -27,7 +29,9 @@ def _as_columns(value: Any, *, name: str) -> np.ndarray:
 
 
 def _as_vector(value: Any, *, name: str, size: int | None = None) -> np.ndarray:
-    array = np.ascontiguousarray(np.asarray(value, dtype=np.complex128))
+    array = np.asarray(value, dtype=np.complex128)
+    if not (array.flags.c_contiguous or array.flags.f_contiguous):
+        array = np.ascontiguousarray(array)
     if array.ndim != 1 or (size is not None and array.size != size):
         raise ValueError(f"{name} has an incompatible vector shape")
     if not np.isfinite(array).all():
@@ -301,7 +305,7 @@ def select_local_response_indices(
         raise ValueError("selector local cap must be non-negative")
 
     chosen: list[int] = []
-    current = np.array(base_images, copy=True)
+    current = base_images
     rounds: list[dict[str, Any]] = []
     for _ in range(min(int(max_local), local_images.shape[1])):
         # Rebuild a rank-revealing orthonormal basis from the currently
@@ -326,11 +330,12 @@ def select_local_response_indices(
         for index in range(local_images.shape[1]):
             if index in chosen:
                 continue
-            raw_candidate = np.array(local_images[:, index], copy=True)
+            raw_candidate = local_images[:, index]
             candidate_scale = max(
                 float(np.linalg.norm(raw_candidate)), np.finfo(float).tiny
             )
-            candidate = raw_candidate / candidate_scale
+            candidate = np.array(raw_candidate, copy=True)
+            candidate /= candidate_scale
             for _pass in range(2):
                 if orthogonal.shape[1]:
                     candidate -= orthogonal @ (orthogonal.conj().T @ candidate)

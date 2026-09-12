@@ -290,6 +290,7 @@ def dispatch_components(args,cfg,comm,directory,*,sample,marker,source_sha=None,
             cfg, comm, args.inventory, directory, sample=sample, marker=marker,
             source_sha=source_sha, input_path=input_path,
             model_identity=model_identity, build_started=build_started,
+            reuse_root=getattr(args, 'p4_direction_reuse_root', None),
         )
     if getattr(args, 'macro_v12', False):
         from .physical_macro_v12 import (
@@ -832,6 +833,10 @@ def build_parser():
     group.add_argument('--macro-v12', action='store_true')
     group.add_argument('--p4-direction-diagnosis', action='store_true')
     parser.add_argument(
+        '--p4-direction-reuse-root', type=Path,
+        help='hash-bound prior P4 diagnosis directory whose qualified packets may be reused',
+    )
+    parser.add_argument(
         '--macro-v12-supplement', action='store_true',
         help='use the independent bounded V12 supplement ledger',
     )
@@ -1043,16 +1048,29 @@ def launch_p4_direction_diagnosis(args):
     from benchmarks.subreaper_watchdog import supervise
     from .workflow_timebase import CONSERVATIVE_REALTIME
     from src.io import load_and_resolve
-    from src.io.physical_recursive_profile import P4_DIRECTION_DIAGNOSIS_PROFILE
+    from src.io.physical_recursive_profile import (
+        P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS,
+        P4_DIAGNOSIS_WORKFLOW_SECONDS,
+        P4_DIAGNOSIS_WORKSPACE_CAP_BYTES,
+        P4_DIRECTION_DIAGNOSIS_PROFILE,
+    )
 
     source = git_state(args.source_sha)
     input_path = Path(args.input).resolve()
     inventory_path = Path(args.inventory).resolve()
     root = Path(args.output).resolve()
+    reuse_root = getattr(args, 'p4_direction_reuse_root', None)
+    if reuse_root is None:
+        raise ValueError(
+            'p4 direction continuation requires --p4-direction-reuse-root'
+        )
+    reuse_root = Path(reuse_root).resolve()
     if not input_path.is_file():
         raise ValueError(f"p4 direction diagnosis input is missing: {input_path}")
     if not inventory_path.is_file():
         raise ValueError(f"p4 direction diagnosis inventory is missing: {inventory_path}")
+    if not (reuse_root / 'records').is_dir():
+        raise ValueError(f"p4 direction reuse root is missing records: {reuse_root}")
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
     if payload['solver'].get('preconditioner') != P4_DIRECTION_DIAGNOSIS_PROFILE:
@@ -1067,6 +1085,7 @@ def launch_p4_direction_diagnosis(args):
         raise ValueError('p4 direction diagnosis does not admit a notch model')
     if root.exists():
         raise FileExistsError(f"p4 direction diagnosis output must be fresh: {root}")
+    remaining_seconds = P4_DIAGNOSIS_WORKFLOW_SECONDS - P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS
     root.mkdir(parents=True, exist_ok=False)
     cache_home = (root / 'jit_cache').resolve()
     cache_home.mkdir(parents=True, exist_ok=False)
@@ -1081,13 +1100,26 @@ def launch_p4_direction_diagnosis(args):
         'inventory_sha256': inventory_sha256,
         'profile': P4_DIRECTION_DIAGNOSIS_PROFILE,
         'stage': 'P4_DIRECTION_DIAGNOSIS_V13',
-        'wall_seconds': 7200.0,
+        'wall_seconds': remaining_seconds,
         'budget_policy': {
-            'total_seconds': 7200.0,
+            'total_seconds': P4_DIAGNOSIS_WORKFLOW_SECONDS,
+            'prior_charged_seconds': P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS,
+            'remaining_continuation_seconds': remaining_seconds,
+            'prior_formal_seconds': 948.1497426901994,
+            'prior_readonly_checker_seconds': 6.4,
+            'prior_cost_identity': '948.1497426901994 + 6.4 = 954.5497426901994; carried, not reset',
             'build_seconds': 1200.0,
             'per_input_seconds': 1500.0,
-            'ledger': 'not_used',
+            'ledger': 'not_used; continuation charge is fixed in profile',
         },
+        'workspace_policy': {
+            'additional_arrays_cap_bytes': P4_DIAGNOSIS_WORKSPACE_CAP_BYTES,
+            'legacy_cap_bytes': 256 * 1024**2,
+            'local_inventory_cap_bytes': 2684354560,
+            'temporary_reserve_bytes': 1073741824,
+        },
+        'reuse_root': str(reuse_root),
+        'reuse_source_sha_file': str(reuse_root / 'source_sha.txt'),
         'jit_cache_home': str(cache_home),
         'jit_cache_initially_empty': True,
     })
@@ -1096,12 +1128,13 @@ def launch_p4_direction_diagnosis(args):
         '--input', str(input_path), '--inventory', str(inventory_path),
         '--output', str(root), '--source-sha', args.source_sha,
         '--target', 'lo', '--p4-direction-diagnosis',
+        '--p4-direction-reuse-root', str(reuse_root),
         '--jit-cache', str(cache_home), '--worker',
     ]
     result = None
     try:
         result = supervise(
-            command, root / 'watchdog', wall_seconds=7200.0,
+            command, root / 'watchdog', wall_seconds=remaining_seconds,
             phase_path=root / 'phase.json', hard_stop_immediate=True,
             timebase_guard=True, timebase_policy=CONSERVATIVE_REALTIME,
             stop_on_global_swap=True, source_state=source,

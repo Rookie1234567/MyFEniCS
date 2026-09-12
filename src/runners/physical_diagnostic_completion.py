@@ -47,11 +47,12 @@ def independent_item(name, operation, save, summary, marker):
 
 
 def load_packet(path):
+    from .physical_diagnosis_worker import _sha256_file
     record=json.loads(path.read_text())
     arrays={}
     if 'arrays' in record:
         target=Path(record['arrays']['path'])
-        if hashlib.sha256(target.read_bytes()).hexdigest()!=record['arrays']['sha256']:
+        if _sha256_file(target)!=record['arrays']['sha256']:
             raise ValueError('packet array hash mismatch: '+str(path))
         with np.load(target,allow_pickle=False) as archive:
             arrays={k:archive[k].copy() for k in archive.files}

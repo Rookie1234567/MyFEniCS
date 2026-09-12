@@ -155,6 +155,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `execution.timeout_seconds` | `integer` | `seconds` | yes | `—` | — | 2d/3d | 单次运行时间上限 | `watchdog timeout` | > 0; generic policy, not authority hard gate | `7200` |
 | `execution.memory_limit_gb` | `float` | `GiB` | no | `—` | — | 3d | Full3D 运行内存上限 | `memory_limit_gb` | > 0; required for full3d_iterative | `2.0` |
 | `execution.require_zero_swap` | `boolean` | `none` | yes | `—` | — | 2d/3d | 是否要求 swap 为零 | `swap policy` | — | `true` |
+| `execution.p4_diagnosis_workspace_cap_bytes` | `integer` | `bytes` | no | `—` | — | 3d | P4 方向诊断附加数组与密集最小二乘工作区上限 | `p4 direction diagnosis workspace cap` | `> 0; required only for physical_p4_direction_diagnosis_v13` | `536870912` |
 | `output.results_root` | `path` | `filesystem path` | yes | `—` | — | 2d/3d | 结果根目录 | `results_root` | must not overwrite an existing run | `"results"` |
 | `output.unique_output` | `boolean` | `none` | no | `true` | — | 2d/3d | 是否创建唯一结果目录 | `unique_output` | — | `true` |
 | `output.export_fields` | `boolean` | `none` | no | `false` | — | 2d/3d | 导出场字段 | `field export policy` | — | `true` |
@@ -266,6 +267,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"execution.timeout_seconds","unit":"seconds","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"execution.memory_limit_gb","unit":"GiB","applicability":["3d"]} -->
 <!-- schema-field {"key":"execution.require_zero_swap","unit":"none","applicability":["2d","3d"]} -->
+<!-- schema-field {"key":"execution.p4_diagnosis_workspace_cap_bytes","unit":"bytes","applicability":["3d"]} -->
 <!-- schema-field {"key":"output.results_root","unit":"filesystem path","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"output.unique_output","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"output.export_fields","unit":"none","applicability":["2d","3d"]} -->

@@ -73,8 +73,8 @@ def test_schema_identity_sections_and_unique_whitelist():
         "output",
     )
     assert len(IDENTITY_FIELD_SPECS) == 5
-    assert len(FIELD_SPECS) == 101
-    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 106
+    assert len(FIELD_SPECS) == 102
+    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 107
     assert set(FIELD_SPECS_BY_KEY) == set(PUBLIC_FIELD_KEYS)
     assert {name: len(keys) for name, keys in SECTION_FIELD_KEYS.items()} == {
         "geometry": 12,
@@ -84,7 +84,7 @@ def test_schema_identity_sections_and_unique_whitelist():
         "boundary": 10,
         "method": 7,
         "solver": 17,
-        "execution": 6,
+        "execution": 7,
         "output": 20,
     }
     assert METHOD_KINDS == (
@@ -147,6 +147,7 @@ def test_schema_identity_sections_and_unique_whitelist():
         "physical_macro_dd4_v10",
         "physical_macro_dd4_v11",
         "physical_macro_dd4_v12",
+        "physical_p4_direction_diagnosis_v13",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
@@ -174,7 +175,7 @@ def test_readme_markers_and_continuous_table():
     text, rows = _readme_table()
     marker_pattern = re.compile(r"^<!-- schema-field (\{.*\}) -->$", re.MULTILINE)
     markers = [json.loads(match) for match in marker_pattern.findall(text)]
-    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 106
+    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 107
     assert [marker["key"] for marker in markers] == list(PUBLIC_FIELD_KEYS)
     assert len({marker["key"] for marker in markers}) == len(markers)
     for marker in markers:

@@ -641,6 +641,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                             "solver.outer_restart",
                             "p4 direction diagnosis requires outer_restart=0",
                         )
+                    if execution.get("p4_diagnosis_workspace_cap_bytes") != 536870912:
+                        raise _error(
+                            "execution.p4_diagnosis_workspace_cap_bytes",
+                            "p4 direction diagnosis fixes the explicit workspace cap to 536870912 bytes",
+                        )
                 if preconditioner == "physical_macro_dd4_v12":
                     stage = solver.get("stage")
                     if stage not in {

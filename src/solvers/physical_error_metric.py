@@ -108,7 +108,7 @@ def _physical_basis(basis, cell, permutation):
 class LosslessFEMetric:
     """Own M0 and k0^-2 curl forms, borrowing mesh/space/MPC from the solver."""
 
-    def __init__(self, levels, degree, k0, quadrature):
+    def __init__(self, levels, degree, k0, quadrature, *, build_cell_basis=True):
         import ufl
         from dolfinx import fem
         from .fullspace_mpc_action import build_fullspace_mpc_form_action
@@ -128,11 +128,15 @@ class LosslessFEMetric:
                     slave_row_identity=False,jit_options=SAME_MESH_JIT_OPTIONS)
                 self.actions[name] = a
                 self.bridges[name] = SerialAction(self.space,self.floquet,a.apply,result='borrowed')
-                self.bases[name] = ReferenceCellBasis(self.space,ufl.action(form,fem.Function(self.space)))
+                if build_cell_basis:
+                    self.bases[name] = ReferenceCellBasis(
+                        self.space, ufl.action(form, fem.Function(self.space))
+                    )
             self.mass,self.curl = self.bridges['mass'],self.bridges['curl']
             self.audit = dict(definition='integral conj(E) dot E; no epsilon, k0 or slave identity',
                 curl_definition='integral abs(curl E)^2 / k0^2',degree=degree,
                 quadrature={k:b.audit for k,b in self.bases.items()},
+                cell_basis_built=bool(build_cell_basis),
                 independent_rows=int(self.mass.indices.size),mpi_size=1)
         except BaseException:
             self.destroy()
@@ -140,6 +144,8 @@ class LosslessFEMetric:
 
     def diagonal(self, *, checkpoint=lambda: None):
         """Exact constrained mass diagonal by cell quadrature, no global AIJ."""
+        if 'mass' not in self.bases:
+            raise RuntimeError('cell quadrature basis was disabled for this metric')
         from .fullspace_same_mesh_hcurl_pmg_p6 import _cell_expansion_workspace,_fill_cell_expansion
         from .fullspace_quadrature_diagonal import accumulate_basis_energy
         work = self.floquet.mpc.function_space
@@ -164,6 +170,8 @@ class LosslessFEMetric:
 
     def cell_energies(self,x, *, checkpoint=lambda: None):
         """Owned-cell integrals; shared DoFs are never counted as energy twice."""
+        if set(self.bases) != {'mass', 'curl'}:
+            raise RuntimeError('cell quadrature bases were disabled for this metric')
         from dolfinx import fem
         field = fem.Function(self.floquet.mpc.function_space)
         field.x.array[:] = 0
@@ -195,3 +203,4 @@ class LosslessFEMetric:
         for action in self.actions.values(): action.destroy()
         self.bridges.clear()
         self.actions.clear()
+        self.bases.clear()

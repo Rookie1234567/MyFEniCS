@@ -1378,6 +1378,7 @@ def run_p4_direction_diagnosis(
     input_path: str | Path | None = None,
     model_identity: dict[str, Any] | None = None,
     build_started: float | None = None,
+    reuse_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run the bounded, reference-free P0--P4 direction diagnosis.
 
@@ -1387,7 +1388,15 @@ def run_p4_direction_diagnosis(
     diagnostics; neither the I4/B4 path nor the selector receives them.
     """
 
-    from src.io.physical_recursive_profile import P4_DIRECTION_DIAGNOSIS_PROFILE
+    from copy import deepcopy
+
+    from src.io.physical_recursive_profile import (
+        P4_DIAGNOSIS_LEGACY_WORKSPACE_CAP_BYTES,
+        P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS,
+        P4_DIAGNOSIS_WORKFLOW_SECONDS,
+        P4_DIAGNOSIS_WORKSPACE_CAP_BYTES,
+        P4_DIRECTION_DIAGNOSIS_PROFILE,
+    )
     from src.solvers.fullspace_physical_intermediate import apply_owned
     from src.solvers.fullspace_physical_intermediate_runtime import level_vector
     from src.solvers.physical_error_metric import LosslessFEMetric
@@ -1402,15 +1411,21 @@ def run_p4_direction_diagnosis(
         svd_lstsq,
         weighted_mgs_lstsq,
     )
-    from .physical_diagnosis_worker import save_packet
+    from .physical_diagnosis_worker import _sha256_file, save_packet
     from .physical_recursive_controls import (
         load_recursive_balanced_inputs,
         load_recursive_calibration,
         verify_recursive_map,
     )
+    from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
     if comm.size != 1:
         raise ValueError("p4 direction diagnosis is qualified only for MPI1")
+    if reuse_root is None:
+        raise ValueError(
+            "P4 continuation requires an explicit --p4-direction-reuse-root; "
+            "a missing reuse root must not trigger a fresh three-input run"
+        )
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
 
@@ -1442,6 +1457,24 @@ def run_p4_direction_diagnosis(
         for degree, packet in maps.items()
     }
 
+    prior_counts = {
+        # These are conservative upper bounds carried from the stopped 01
+        # attempt.  They are budget charges, not newly measured continuation
+        # actions; the exact old split was not recorded.
+        "I4": 1,
+        "A4": 49,
+        "M0": 13,
+        "curl": 49,
+        "bare_B4": 1,
+        "counted_pc_outputs": 4,
+        "M0_pullback": 11,
+        "M0_direct_degree4": 2,
+        "curl_pullback": 48,
+        "curl_direct_degree4": 1,
+        "P64_primal": 59,
+        "P64_adjoint": 59,
+        "P64_primal_attempted_unknown": 1,
+    }
     summary: dict[str, Any] = {
         "schema": "task39extra.review-v13.p4-direction-diagnosis.v1",
         "status": "P4_DIRECTION_DIAGNOSIS_STARTED",
@@ -1449,7 +1482,8 @@ def run_p4_direction_diagnosis(
         "source_sha": source_sha,
         "input_path": str(Path(input_path).resolve()) if input_path is not None else None,
         "inventory_path": str(Path(inventory_path).resolve()),
-        "inventory_sha256": hashlib.sha256(Path(inventory_path).read_bytes()).hexdigest(),
+        "inventory_sha256": _sha256_file(Path(inventory_path)),
+        "reuse_root": None if reuse_root is None else str(Path(reuse_root).resolve()),
         "model_identity": dict(model_identity or {}),
         "selected_stems": list(selected_stems),
         "maps": {
@@ -1462,19 +1496,24 @@ def run_p4_direction_diagnosis(
         "inputs": [],
         "counts": {
             "new_I4": 0,
-            "attempted_I4": 0,
-            "completed_I4": 0,
-            "bare_B4": 0,
-            "attempted_B4": 0,
-            "completed_B4": 0,
-            "A4": 0,
-            "M0_pullback": 0,
-            "curl_pullback": 0,
-            "M0_direct_degree4": 0,
-            "curl_direct_degree4": 0,
-            "P64_primal": 0,
-            "P64_adjoint": 0,
+            "attempted_I4": prior_counts["I4"],
+            "completed_I4": prior_counts["I4"],
+            "bare_B4": prior_counts["bare_B4"],
+            "attempted_B4": prior_counts["bare_B4"],
+            "completed_B4": prior_counts["bare_B4"],
+            "A4": prior_counts["A4"],
+            "M0_pullback": prior_counts["M0_pullback"],
+            "curl_pullback": prior_counts["curl_pullback"],
+            "M0_direct_degree4": prior_counts["M0_direct_degree4"],
+            "curl_direct_degree4": prior_counts["curl_direct_degree4"],
+            "P64_primal": prior_counts["P64_primal"],
+            "P64_adjoint": prior_counts["P64_adjoint"],
+            "P64_primal_attempted": (
+                prior_counts["P64_primal"]
+                + prior_counts["P64_primal_attempted_unknown"]
+            ),
         },
+        "prior_counts_upper_bound": prior_counts,
         "limits": {
             "new_I4_max": 3,
             "total_B4_max": 15,
@@ -1483,7 +1522,11 @@ def run_p4_direction_diagnosis(
             "curl_max": 240,
             "build_seconds": 1200.0,
             "per_input_seconds": 1500.0,
-            "workflow_seconds": 7200.0,
+            "workflow_seconds": P4_DIAGNOSIS_WORKFLOW_SECONDS,
+            "prior_charged_seconds": P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS,
+            "remaining_continuation_seconds": (
+                P4_DIAGNOSIS_WORKFLOW_SECONDS - P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS
+            ),
         },
         "stage_times": {
             "build_seconds": None,
@@ -1499,12 +1542,23 @@ def run_p4_direction_diagnosis(
     metric6: LosslessFEMetric | None = None
     i4: MacroI4 | None = None
     build_start = time.perf_counter() if build_started is None else float(build_started)
+    continuation_clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
     controls_start: float | None = None
     input_start: float | None = None
     current_counts: dict[str, int] | None = None
     current_timings: dict[str, float] | None = None
     n4: int | None = None
-    ls_workspace_cap_bytes = 256 * 1024**2
+    reuse_packets: dict[str, Any] | None = None
+    ls_workspace_cap_bytes = P4_DIAGNOSIS_WORKSPACE_CAP_BYTES
+    if input_path is not None:
+        from src.io import load_and_resolve
+        resolved_execution = load_and_resolve(input_path).execution
+        configured_cap = resolved_execution.get("p4_diagnosis_workspace_cap_bytes")
+        if configured_cap != P4_DIAGNOSIS_WORKSPACE_CAP_BYTES:
+            raise ValueError(
+                "P4 workspace cap must be explicitly configured as 536870912 bytes"
+            )
+        ls_workspace_cap_bytes = int(configured_cap)
     workspace_peak: dict[str, Any] = {
         "max_estimated_bytes": 0,
         "phase": None,
@@ -1512,8 +1566,10 @@ def run_p4_direction_diagnosis(
         "columns": None,
         "resident_bytes": 0,
         "non_ls_resident_bytes": 0,
+        "metric_storage_bytes": 0,
         "temporary_bytes": 0,
         "cap_bytes": ls_workspace_cap_bytes,
+        "legacy_cap_bytes": P4_DIAGNOSIS_LEGACY_WORKSPACE_CAP_BYTES,
     }
 
     def action_budget_failure(name: str, projected: int, limit: int) -> None:
@@ -1562,23 +1618,124 @@ def run_p4_direction_diagnosis(
         current_counts[name] += 1
 
     def _object_array_bytes(value: Any, seen: set[tuple[int, int, int]] | None = None) -> int:
-        """Count live ndarray payloads in the bounded diagnosis object graph."""
+        """Count live ndarray payloads through each array's owning base."""
         if seen is None:
             seen = set()
         if isinstance(value, np.ndarray):
             if value.ndim == 0:
                 return 0
-            pointer = int(value.__array_interface__["data"][0])
-            key = (pointer, int(value.nbytes), int(value.dtype.itemsize))
+            owner = value
+            owner_ids: set[int] = set()
+            while isinstance(getattr(owner, "base", None), np.ndarray):
+                if id(owner) in owner_ids:
+                    break
+                owner_ids.add(id(owner))
+                owner = owner.base
+            pointer = int(owner.__array_interface__["data"][0])
+            key = (pointer, int(owner.nbytes), int(owner.dtype.itemsize))
             if key in seen:
                 return 0
             seen.add(key)
-            return int(value.nbytes)
+            return int(owner.nbytes)
         if isinstance(value, dict):
             return sum(_object_array_bytes(item, seen) for item in value.values())
         if isinstance(value, (list, tuple, set)):
             return sum(_object_array_bytes(item, seen) for item in value)
         return 0
+
+    def _metric_retained_bytes(metric: Any) -> int:
+        """Charge retained metric action/bridge buffers outside ndarray walks."""
+        if metric is None:
+            return 0
+        total = 0
+        scalar_bytes = np.dtype(np.complex128).itemsize
+        for name, action in metric.actions.items():
+            audit = getattr(action, "audit", {})
+            retained = audit.get("retained_numeric_payload_local_bytes", 0)
+            total += int(retained)
+            # The last assembled coefficient pack and the kernel's bounded
+            # per-apply workspace are not retained by the action's payload
+            # audit, but they can coexist with the diagnosis arrays at the
+            # instant of a metric call.  Charge both conservatively.
+            total += int(audit.get("last_packed_coefficient_bytes", 0) or 0)
+            total += int(audit.get("per_apply_bounded_temporary_bytes", 0) or 0)
+            bridge = metric.bridges.get(name)
+            if bridge is not None:
+                total += int(bridge.source.getLocalSize()) * scalar_bytes
+                total += int(bridge.target.getLocalSize()) * scalar_bytes
+                for attribute in (
+                    "indices", "source_slaves", "target_slaves", "target_indices",
+                ):
+                    total += int(np.asarray(getattr(bridge, attribute)).nbytes)
+        if metric is metric6:
+            # One pullback_metric_action owns p4 source/output and p6
+            # source/target Vecs, plus the independent p6 input/output and
+            # the returned p4 array, while the callback is live.  These are
+            # transient but are charged here so a dense LS check cannot pass
+            # by considering only the retained metric objects.
+            total += int(
+                2 * int(n4 or 0) * scalar_bytes
+                + 2 * int(n6 or 0) * scalar_bytes
+                + 2 * int(p6_indices.size) * scalar_bytes
+                + int(p4_indices.size) * scalar_bytes
+            )
+        return int(total)
+
+    def check_live_workspace(
+        *,
+        label: str,
+        resident: tuple[Any, ...] = (),
+        background: tuple[Any, ...] = (),
+        temporary_bytes: int = 0,
+        rows: int | None = None,
+        columns: int | None = None,
+        weighted: bool | None = None,
+    ) -> None:
+        """Check a concrete live object set plus a bounded transient reserve."""
+        resident_bytes = _object_array_bytes(
+            (
+                resident, maps, old_packets, selected, summary["inputs"],
+                reuse_packets, background,
+            )
+        )
+        metric_storage_bytes = _metric_retained_bytes(metric6)
+        resident_bytes += metric_storage_bytes
+        temporary_bytes = int(temporary_bytes)
+        estimate = resident_bytes + temporary_bytes
+        if estimate > int(workspace_peak["max_estimated_bytes"]):
+            workspace_peak.update(
+                max_estimated_bytes=int(estimate),
+                phase=label,
+                rows=None if rows is None else int(rows),
+                columns=None if columns is None else int(columns),
+                resident_bytes=int(resident_bytes),
+                non_ls_resident_bytes=int(
+                    max(0, resident_bytes - _object_array_bytes(resident))
+                ),
+                temporary_bytes=int(temporary_bytes),
+                metric_storage_bytes=int(metric_storage_bytes),
+            )
+        if estimate > ls_workspace_cap_bytes:
+            save("p4_live_workspace_failure", {
+                "label": label,
+                "rows": None if rows is None else int(rows),
+                "columns": None if columns is None else int(columns),
+                "weighted": None if weighted is None else bool(weighted),
+                "resident_bytes": int(resident_bytes),
+                "non_ls_resident_bytes": int(
+                    max(0, resident_bytes - _object_array_bytes(resident))
+                ),
+                "temporary_bytes": int(temporary_bytes),
+                "estimated_bytes": int(estimate),
+                "cap_bytes": int(ls_workspace_cap_bytes),
+                "summary_counts": dict(summary["counts"]),
+                "current_input_counts": dict(current_counts or {}),
+            })
+            raise MemoryError(
+                f"P4 {label} live workspace estimate exceeds "
+                f"{ls_workspace_cap_bytes} bytes: {estimate} > "
+                f"{ls_workspace_cap_bytes}"
+            )
 
     def check_ls_workspace(
         rows: int,
@@ -1600,50 +1757,31 @@ def run_p4_direction_diagnosis(
         rank_cap = min(int(rows), int(columns))
         matrix_bytes = int(rows) * int(columns) * np.dtype(np.complex128).itemsize
         if weighted:
-            temporary = matrix_bytes + 2 * int(rows) * rank_cap * 16
-            temporary += int(rows) * 16 + int(rank_cap) * int(columns) * 16
+            # Include the caller-owned columns, a second contiguous working
+            # view, the two MGS basis families, and the current column plus
+            # its mass image.  The mass action may also hand back a separate
+            # array, so retain one additional row-sized allowance.
+            temporary = 2 * matrix_bytes + 2 * int(rows) * rank_cap * 16
+            temporary += 3 * int(rows) * 16
+            temporary += int(rank_cap) * int(columns) * 16
         else:
-            # SciPy's economic QR owns the scaled/input work buffer and a Q
-            # factor; the only subsequent SVD is on the small R factor.
-            temporary = 2 * matrix_bytes
-            temporary += int(rows) * rank_cap * 16
+            # Count the caller matrix, a scaled Fortran copy, a possible
+            # LAPACK work copy, and the economic Q factor.  The small R SVD
+            # and Q^H rhs buffers are retained explicitly as well.
+            temporary = 3 * matrix_bytes
+            temporary += 2 * int(rows) * rank_cap * 16
             temporary += int(rank_cap) * int(columns) * 16
             temporary += int(rank_cap) * int(rank_cap) * 16
             temporary += int(rows) * 16
-        resident_bytes = _object_array_bytes(
-            (resident, maps, old_packets, selected, summary["inputs"], background)
+        check_live_workspace(
+            label=label,
+            resident=resident,
+            background=background,
+            temporary_bytes=temporary,
+            rows=rows,
+            columns=columns,
+            weighted=weighted,
         )
-        estimate = resident_bytes + temporary
-        non_ls_resident_bytes = max(
-            0, resident_bytes - _object_array_bytes(resident)
-        )
-        if estimate > int(workspace_peak["max_estimated_bytes"]):
-            workspace_peak.update(
-                max_estimated_bytes=int(estimate),
-                phase=label,
-                rows=int(rows),
-                columns=int(columns),
-                resident_bytes=int(resident_bytes),
-                non_ls_resident_bytes=int(non_ls_resident_bytes),
-                temporary_bytes=int(temporary),
-            )
-        if estimate > ls_workspace_cap_bytes:
-            save("p4_ls_workspace_failure", {
-                "label": label,
-                "rows": int(rows), "columns": int(columns),
-                "weighted": bool(weighted),
-                "resident_bytes": int(resident_bytes),
-                "non_ls_resident_bytes": int(non_ls_resident_bytes),
-                "temporary_bytes": int(temporary),
-                "estimated_bytes": int(estimate),
-                "cap_bytes": int(ls_workspace_cap_bytes),
-                "summary_counts": dict(summary["counts"]),
-                "current_input_counts": dict(current_counts or {}),
-            })
-            raise MemoryError(
-                f"P4 {label} dense LS workspace estimate exceeds 256 MiB: "
-                f"{estimate} > {ls_workspace_cap_bytes}"
-            )
 
     def solve_svd(
         matrix: np.ndarray,
@@ -1685,8 +1823,32 @@ def run_p4_direction_diagnosis(
             if current_timings is not None:
                 current_timings["weighted_mgs_seconds"] += time.perf_counter() - started
 
+    def update_time_budget(stage: str) -> dict[str, Any]:
+        clock_facts = continuation_clock.update(clock_sample())
+        formal_elapsed = (
+            P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS + clock_facts["budget_seconds"]
+        )
+        summary["time_budget"] = {
+            "policy": CONSERVATIVE_REALTIME,
+            "policy_version": clock_facts["policy_version"],
+            "stage": stage,
+            "prior_charged_seconds": P4_DIAGNOSIS_PRIOR_CHARGED_SECONDS,
+            "continuation_seconds": float(clock_facts["budget_seconds"]),
+            "formal_accounted_seconds": float(formal_elapsed),
+            "remaining_seconds": float(P4_DIAGNOSIS_WORKFLOW_SECONDS - formal_elapsed),
+            "clock_facts": clock_facts,
+        }
+        return clock_facts
+
     def checkpoint(stage: str) -> Any:
         value = sample()
+        update_time_budget(stage)
+        formal_elapsed = float(summary["time_budget"]["formal_accounted_seconds"])
+        if formal_elapsed > P4_DIAGNOSIS_WORKFLOW_SECONDS:
+            raise TimeoutError(
+                f"P4 cumulative formal budget exceeded after {stage}: "
+                f"{formal_elapsed:.6f}s"
+            )
         now = time.perf_counter()
         if controls_start is None:
             elapsed = now - build_start
@@ -1739,6 +1901,85 @@ def run_p4_direction_diagnosis(
             source.destroy()
             if current_timings is not None:
                 current_timings["native_A4_seconds"] += time.perf_counter() - started
+
+    def coarse_apply(values: np.ndarray) -> tuple[np.ndarray, dict[str, Any]]:
+        """Apply the already-qualified C_U action for repaired P2 fields."""
+        started = time.perf_counter()
+        source = level_vector(stack["levels"], 4)
+        output = None
+        try:
+            _set_full(source, values, name="C_U input")
+            checkpoint("before_C_U_repair")
+            output = stack["coarse"].apply(source)
+            result = np.array(output.array, copy=True)
+            if result.shape != source.array.shape or not np.isfinite(result).all():
+                raise ValueError("C_U repair returned an invalid vector")
+            bottom_facts = deepcopy(stack["p2_inverse"].last_facts)
+            facts = {
+                "calls": 1,
+                "seconds": float(time.perf_counter() - started),
+                "action_identity": stack["coarse"].__class__.__name__ + ":C_U",
+                "bottom_facts": bottom_facts,
+            }
+            return result, facts
+        finally:
+            _destroy(output, source)
+
+    def coarse_restriction_closure(
+        leading_values: np.ndarray,
+        residual_values: np.ndarray,
+        *,
+        label: str,
+    ) -> dict[str, Any]:
+        """Audit existing C_U balance using its native coarse restriction."""
+        started = time.perf_counter()
+        leading_source = level_vector(stack["levels"], 4)
+        residual_source = level_vector(stack["levels"], 4)
+        try:
+            _set_full(leading_source, leading_values, name=f"{label} leading")
+            _set_full(residual_source, residual_values, name=f"{label} residual")
+            checkpoint(f"before_C_U_closure:{label}")
+            leading = np.asarray(
+                stack["local"].coarse_restriction(leading_source),
+                dtype=np.complex128,
+            )
+            residual = np.asarray(
+                stack["local"].coarse_restriction(residual_source),
+                dtype=np.complex128,
+            )
+            leading_norm = float(np.linalg.norm(leading))
+            residual_norm = float(np.linalg.norm(residual))
+            post_difference = leading - residual
+            post_difference_norm = float(np.linalg.norm(post_difference))
+            # Match PhysicalBalancedCoupling.balance: the denominator is the
+            # original coarse-term norm plus the norm after subtracting the
+            # restricted balance residual, not a cancellation-only scale.
+            operation_scale = max(
+                leading_norm + post_difference_norm, np.finfo(float).tiny
+            )
+            relative = float(residual_norm / operation_scale)
+            facts = {
+                "label": label,
+                "leading_role": "original_operation_term",
+                "residual_role": "C_U_balance_residual",
+                "leading_norm": leading_norm,
+                "residual_norm": residual_norm,
+                "post_difference_norm": post_difference_norm,
+                "operation_scale": operation_scale,
+                "relative": relative,
+                "limit": 1.0e-8,
+                "finite": bool(np.isfinite(leading).all() and np.isfinite(residual).all()),
+                "restriction_identity": "stack.local.coarse_restriction",
+            }
+            if not facts["finite"] or not np.isfinite(relative):
+                raise ValueError(f"{label} coarse restriction closure is non-finite")
+            return facts
+        finally:
+            _destroy(residual_source, leading_source)
+            if current_timings is not None:
+                current_timings["coarse_restriction_seconds"] += (
+                    time.perf_counter() - started
+                )
 
     def pullback_metric_action(values: np.ndarray, action_name: str) -> np.ndarray:
         """Apply P64^H M06 P64 or P64^H K06 P64 to a p4 full vector."""
@@ -1842,6 +2083,138 @@ def run_p4_direction_diagnosis(
                 return packet, path
         raise FileNotFoundError(f"old four-step control packet is unavailable for {stem}")
 
+    def load_reuse_packets(root_value: str | Path | None) -> dict[str, Any] | None:
+        """Load only the hash-bound 01 packets admitted for continuation."""
+        if root_value is None:
+            return None
+        from .physical_diagnostic_completion import load_packet
+
+        root = Path(root_value).resolve()
+        records = root / "records"
+        if not records.is_dir():
+            raise FileNotFoundError(f"P4 reuse root has no records directory: {records}")
+        expected_old_source = "e46fec48dc073a745e9b7e6c9186a147aefbc0a0"
+        expected_physical = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+        expected_mode = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+        source_path = root / "source_sha.txt"
+        model_path = root / "physical_model_sha256.txt"
+        if source_path.read_text().strip() != expected_old_source:
+            raise ValueError("P4 reuse root is not the qualified e46fec48 continuation source")
+        if model_path.read_text().strip() != expected_physical:
+            raise ValueError("P4 reuse root physical-model identity differs from the reviewed model")
+        launch_path = root / "launch_plan.json"
+        if launch_path.is_file():
+            launch = json.loads(launch_path.read_text())
+            if launch.get("source", {}).get("head") != expected_old_source:
+                raise ValueError("P4 reuse launch plan is not bound to the qualified continuation source")
+        compact_path = Path(
+            "docs/task039_extra_physical_multilevel/outcomes/records/"
+            "p4_direction_diagnosis_v13.json"
+        )
+        if not compact_path.is_file():
+            raise FileNotFoundError(f"reviewed P4 compact evidence is missing: {compact_path}")
+        compact = json.loads(compact_path.read_text())
+        if (
+            compact.get("source_sha") != expected_old_source
+            or compact.get("physical_model_sha256") != expected_physical
+            or compact.get("ordered_mode_sha256") != expected_mode
+            or compact.get("p0", {}).get("record_sha256")
+            != "c05ff1a34a387e9a2a8a14f492349a4874e3ba160ed254ae11b8533243cfa3e9"
+        ):
+            raise ValueError("reviewed P4 compact evidence does not bind the qualified source/model/P0")
+        expected_npz = {
+            "A2R160_BAL_H_p4_01_p1_direction_diagnosis":
+                "05df7a25530c22711a76fc7a7fe16f6db9610d691915a52fedfb807a9112c110",
+            "A2R160_BAL_H_p4_01_p3_response_columns":
+                "c9742f991267015a9bfa811665082772d7e1936237bd0c4339465925dff53759",
+        }
+        compact_inputs = {
+            item["stem"]: item for item in compact.get("inputs", ())
+        }
+        for name, expected_sha in expected_npz.items():
+            entry = compact_inputs.get(selected_stems[0], {}).get(
+                "p1" if "p1_" in name else "p3", {}
+            )
+            if entry.get("npz_sha256") != expected_sha:
+                raise ValueError(f"reviewed P4 compact evidence does not bind {name} NPZ")
+        old_input_sha_path = root / "input_sha256.txt"
+        if old_input_sha_path.is_file() and compact.get("input_sha256") != old_input_sha_path.read_text().strip():
+            raise ValueError("P4 reuse root input identity differs from reviewed compact evidence")
+        names = (
+            "A2R160_BAL_H_p4_01_p1_direction_diagnosis",
+            "A2R160_BAL_H_p4_01_p3_response_columns",
+            "p0_metric_equivalence",
+        )
+        packets: dict[str, Any] = {}
+        evidence: list[dict[str, Any]] = []
+        for name in names:
+            json_path = records / f"{name}.json"
+            if not json_path.is_file():
+                raise FileNotFoundError(f"required P4 reuse packet is missing: {json_path}")
+            record = json.loads(json_path.read_text())
+            array_meta = record.get("arrays")
+            if not isinstance(array_meta, dict):
+                raise ValueError(f"P4 reuse packet has no hash-bound array archive: {json_path}")
+            array_path = Path(array_meta["path"])
+            if not array_path.is_file():
+                raise FileNotFoundError(f"P4 reuse array archive is missing: {array_path}")
+            json_sha = _sha256_file(json_path)
+            array_sha = _sha256_file(array_path)
+            if array_sha != array_meta.get("sha256"):
+                raise ValueError(f"P4 reuse array hash mismatch: {array_path}")
+            expected_array_sha = expected_npz.get(name)
+            if expected_array_sha is not None and array_sha != expected_array_sha:
+                raise ValueError(
+                    f"P4 reuse array is not the frozen reviewed archive for {name}"
+                )
+            if name == "p0_metric_equivalence":
+                expected_p0_json_sha = (
+                    "c05ff1a34a387e9a2a8a14f492349a4874e3ba160ed254ae11b8533243cfa3e9"
+                )
+                if json_sha != expected_p0_json_sha:
+                    raise ValueError(
+                        "P4 reuse P0 JSON is not the frozen reviewed metric packet"
+                    )
+            packets[name] = load_packet(json_path)
+            evidence.append({
+                "name": name,
+                "json": str(json_path),
+                "json_sha256": json_sha,
+                "npz": str(array_path),
+                "npz_sha256": array_sha,
+            })
+        p1 = packets[names[0]]
+        p3 = packets[names[1]]
+        p0 = packets[names[2]]
+        if p1.get("stem") != selected_stems[0] or p3.get("stem") != selected_stems[0]:
+            raise ValueError("P4 reuse packets are not for the frozen 01 input")
+        frozen_01 = selected[0]
+        if not (
+            np.array_equal(np.asarray(p1.get("rhs_values")), np.asarray(frozen_01["rhs"]))
+            and np.array_equal(np.asarray(p1.get("reference_values")), np.asarray(frozen_01["reference_y"]))
+            and np.array_equal(np.asarray(p1.get("reference_A4_values")), np.asarray(frozen_01["reference_A4y"]))
+        ):
+            raise ValueError("reused P1 g/ref/Aref arrays do not match the frozen 01 calibration")
+        if p1.get("operator_identity", {}).get("independent_indices_sha256") != native_map_sha256["4"]:
+            raise ValueError("P4 reused P1 native map identity differs from the current map")
+        if p3.get("coordinate_map") != "p4_independent" or not np.array_equal(
+            np.asarray(p3.get("p4_indices"), dtype=np.int64), p4_indices,
+        ):
+            raise ValueError("P4 reused P3 coordinate map differs from the current map")
+        diagonal = np.asarray(p0.get("fixed_diagonal_values"), dtype=np.float64)
+        if diagonal.shape != p4_indices.shape or not np.isfinite(diagonal).all() or np.any(diagonal <= 0.0):
+            raise ValueError("P4 reused fixed diagonal is invalid")
+        return {
+            "root": str(root),
+            "records": str(records),
+            "packets": packets,
+            "evidence": evidence,
+            "p1": p1,
+            "p3": p3,
+            "p0": p0,
+            "diagonal": np.array(diagonal, copy=True),
+        }
+
     def interface_blueprint() -> dict[str, Any]:
         carrier = stack["actions"]["physical"][4]["dtn_action"].carrier
         independent = np.asarray(p4_indices, dtype=np.int64)
@@ -1920,10 +2293,14 @@ def run_p4_direction_diagnosis(
         )
         coverage = np.union1d(gamma, interior)
         coverage_defect = np.setdiff1d(independent, coverage)
+        structural_status = (
+            "STRUCTURAL_INVENTORY_COMPLETE"
+            if gamma.size and interface_blocks and coverage_defect.size == 0
+            else "STRUCTURAL_INVENTORY_INCOMPLETE"
+        )
         return {
-            "status": "COMPLETE" if (
-                gamma.size and interface_blocks and coverage_defect.size == 0
-            ) else "INCOMPLETE",
+            "status": structural_status,
+            "blueprint_status": "PENDING_RESPONSE_DOCUMENT",
             "definition": (
                 "Gamma is the union of shared macro-block DOF, nonzero current "
                 "DtN row/column support, and rows in cells with cross-owner "
@@ -1955,9 +2332,10 @@ def run_p4_direction_diagnosis(
                 "current DtN action; no separate T_DtN term is added"
             ),
             "coarse_generation_rule": (
-                "V_coarse = span{R_Gamma^H q_Gamma} + "
-                "sum_i span{R_i^H q_i}; Gamma is generated from the native "
-                "support/incidence rule above, without c_ref or held-out fields"
+                "Defined by the final response blueprint: it must specify the "
+                "executable q_Gamma and q_i construction.  This runtime record "
+                "provides only the Gamma/I structural inventory and does not "
+                "claim an executable coarse-space rule"
             ),
             "restriction_embedding": "R_Gamma^H/R_Gamma and R_i^H/R_i are induced by the native p4 map",
             "capacity_bound": {
@@ -1972,6 +2350,9 @@ def run_p4_direction_diagnosis(
         }
 
     try:
+        reuse_packets = load_reuse_packets(reuse_root)
+        if reuse_packets is not None:
+            summary["reuse_evidence"] = reuse_packets["evidence"]
         # P0 is deliberately completed before any fresh stack construction.
         # This makes missing/changed input, reference, map, or old-return
         # bindings a hard identity failure rather than an expensive PDE
@@ -2104,6 +2485,12 @@ def run_p4_direction_diagnosis(
         }
         save("macro_stack_identity", stack_identity)
         summary["macro_stack_identity"] = stack_identity
+        interface_structure_inventory = interface_blueprint()
+        save("interface_structure_inventory", interface_structure_inventory)
+        summary["interface_blueprint"] = interface_structure_inventory
+        summary["gates"]["interface_structure"] = (
+            interface_structure_inventory["status"] == "STRUCTURAL_INVENTORY_COMPLETE"
+        )
         summary["model_identity"].update(
             mode_sha256=stack["mode_sha256"], native_map_sha256=native_map_sha256,
         )
@@ -2112,13 +2499,15 @@ def run_p4_direction_diagnosis(
             raise TimeoutError("P4 build budget exceeded before diagnosis")
         controls_start = time.perf_counter()
 
-        metric4 = LosslessFEMetric(
-            stack["levels"], 4, cfg.k0,
-            stack["actions"]["volume_quadrature_metadata"],
-        )
+        if reuse_packets is None:
+            metric4 = LosslessFEMetric(
+                stack["levels"], 4, cfg.k0,
+                stack["actions"]["volume_quadrature_metadata"],
+            )
         metric6 = LosslessFEMetric(
             stack["levels"], 6, cfg.k0,
             stack["actions"]["volume_quadrature_metadata"],
+            build_cell_basis=False,
         )
         probe4 = level_vector(stack["levels"], 4)
         probe6 = level_vector(stack["levels"], 6)
@@ -2142,6 +2531,123 @@ def run_p4_direction_diagnosis(
             stop_requested=lambda: False,
         )
 
+        def run_fresh_i4(stem_value: str, rhs_value: np.ndarray, observed_value: list[dict[str, Any]]):
+            rhs_vec = level_vector(stack["levels"], 4)
+            result = None
+            cost_before = _stack_cost_snapshot(stack, i4)
+            try:
+                _set_full(rhs_vec, rhs_value, name=f"{stem_value} RHS")
+                i4.set_pc_observer(
+                    lambda pc_input, pc_output, count: observed_value.append({
+                        "count": int(count),
+                        "input": np.array(pc_input, copy=True),
+                        "output": np.array(pc_output, copy=True),
+                    })
+                )
+                if (
+                    summary["counts"]["attempted_I4"] >= 3
+                    or summary["counts"]["completed_I4"] >= 3
+                ):
+                    action_budget_failure(
+                        "new_I4", summary["counts"]["attempted_I4"] + 1, 3,
+                    )
+                summary["counts"]["attempted_I4"] += 1
+                result = i4.apply(rhs_vec)
+                summary["counts"]["new_I4"] += 1
+                summary["counts"]["completed_I4"] += 1
+                actual_value = np.array(result["solution"].array, copy=True)
+                applied_value = np.array(result["applied"].array, copy=True)
+                residual_value = np.array(result["residual"].array, copy=True)
+                facts_value = dict(result["facts"])
+            except BaseException as exc:
+                observed_inputs = (
+                    np.column_stack([value["input"] for value in observed_value])
+                    if observed_value else np.empty((n4, 0), dtype=np.complex128)
+                )
+                observed_outputs_partial = (
+                    np.column_stack([value["output"] for value in observed_value])
+                    if observed_value else np.empty((n4, 0), dtype=np.complex128)
+                )
+                admission = getattr(i4, "admission", None)
+                records = getattr(i4, "records", ())
+                failure_packet = {
+                    "stem": stem_value,
+                    "rhs_values": rhs_value,
+                    "observed_pc_inputs_values": observed_inputs,
+                    "observed_pc_outputs_values": observed_outputs_partial,
+                    "observed_pc_ordinals": np.asarray(
+                        [value["count"] for value in observed_value], dtype=np.int64,
+                    ),
+                    "partial_actual_solution_values": locals().get("actual_value"),
+                    "partial_actual_applied_values": locals().get("applied_value"),
+                    "partial_actual_residual_values": locals().get("residual_value"),
+                    "i4_last_record": dict(records[-1]) if records else {},
+                    "i4_admission_last_facts": dict(getattr(admission, "last_facts", {})),
+                    "exception_type": type(exc).__name__,
+                    "exception": str(exc),
+                    "operator_identity": {
+                        "A4": "fresh native degree-4 volume plus current DtN",
+                        "PC": "counted production right-FGMRES preconditioner output",
+                        "input_coordinates": "full constrained p4 storage vector",
+                        "independent_indices_sha256": native_map_sha256["4"],
+                    },
+                }
+                try:
+                    save(f"{stem_value}_p1_observation_failure", failure_packet)
+                except BaseException:
+                    pass
+                raise
+            finally:
+                i4.set_pc_observer(None)
+                if result is not None:
+                    _destroy(result.get("solution"), result.get("applied"), result.get("residual"))
+                rhs_vec.destroy()
+            if actual_value is None or residual_value is None:
+                raise RuntimeError(f"{stem_value} I4 returned no solution")
+            cost_after = _stack_cost_snapshot(stack, i4)
+            return (
+                actual_value, applied_value, residual_value, facts_value,
+                _counter_delta(cost_after, cost_before),
+            )
+
+        def run_fresh_bare(stem_value: str, rhs_value: np.ndarray):
+            stack["B4"].capture_vectors = True
+            stack["local"].capture_md_observation = True
+            stack["local"].last_md_observation = {}
+            bare_rhs = level_vector(stack["levels"], 4)
+            bare_output = None
+            cost_before = _stack_cost_snapshot(stack, i4)
+            started = time.perf_counter()
+            try:
+                if (
+                    summary["counts"]["bare_B4"] >= 3
+                    or summary["counts"]["attempted_B4"] >= 3
+                    or summary["counts"]["completed_B4"] >= 3
+                ):
+                    action_budget_failure(
+                        "bare_B4", summary["counts"]["bare_B4"] + 1, 3,
+                    )
+                _set_full(bare_rhs, rhs_value, name=f"{stem_value} bare RHS")
+                summary["counts"]["attempted_B4"] += 1
+                bare_output = stack["B4"].apply(bare_rhs)
+                summary["counts"]["bare_B4"] += 1
+                summary["counts"]["completed_B4"] += 1
+                vectors = dict(stack["B4"].last_apply_vectors)
+                observation = dict(stack["local"].last_md_observation)
+                facts = dict(stack["B4"].last_apply_facts)
+            finally:
+                _destroy(bare_output, bare_rhs)
+                stack["B4"].capture_vectors = False
+                stack["B4"].last_apply_vectors = {}
+                stack["local"].capture_md_observation = False
+                stack["local"].last_md_observation = {}
+            cost_after = _stack_cost_snapshot(stack, i4)
+            return (
+                vectors, observation, facts,
+                float(time.perf_counter() - started),
+                _counter_delta(cost_after, cost_before),
+            )
+
         diagonal: np.ndarray | None = None
         metric_gate = True
         all_capture_gate = True
@@ -2151,109 +2657,129 @@ def run_p4_direction_diagnosis(
         all_p3_gate = True
         metric_equivalence_records = []
 
-        # Degree-4 direct and P6 pullback metrics are compared on a fresh
-        # deterministic vector before any reference field is touched.  Both
-        # paths use the same quadrature metadata and native constraint map;
-        # this is the equivalence gate for the fixed diagonal D below.
-        current_counts = {
-            "A4": 0, "M0_pullback": 0, "curl_pullback": 0,
-            "M0_direct_degree4": 0, "curl_direct_degree4": 0,
-            "P64_primal": 0, "P64_adjoint": 0,
-        }
-        # Keep the deterministic reference-free probe well-scaled.  The raw
-        # arange probe reaches the full p4 row count (48,960 here); carrying
-        # that scale into the direct/pullback comparison can turn harmless
-        # floating-point accumulation differences into a false metric gate.
-        probe_raw = (
-            np.arange(p4_indices.size, dtype=np.float64) + 1.0
-            + 1j * (1.0 + np.arange(p4_indices.size, dtype=np.float64) % 17.0)
-        ).astype(np.complex128)
-        probe_max_abs = float(np.max(np.abs(probe_raw)))
-        probe_l2 = float(np.linalg.norm(probe_raw))
-        probe_scale = max(probe_max_abs, probe_l2, np.finfo(float).tiny)
-        probe_independent = np.ascontiguousarray(probe_raw / probe_scale)
-        probe_full = np.zeros(n4, dtype=np.complex128)
-        probe_full[p4_indices] = probe_independent
-        direct_metrics: dict[str, np.ndarray] = {}
-        pullback_metrics: dict[str, np.ndarray] = {}
-        for name, direct_action in (("mass", metric4.mass), ("curl", metric4.curl)):
-            direct_counter = {
-                "mass": "M0_direct_degree4",
-                "curl": "curl_direct_degree4",
-            }[name]
-            reserve_action(direct_counter)
-            direct_metrics[name] = np.ascontiguousarray(
-                direct_action(probe_independent), dtype=np.complex128,
+        if reuse_packets is not None:
+            # P0 and its fixed diagonal are already qualified and hash-bound.
+            # Do not rebuild the direct degree-4 metric or repeat the P0
+            # pullbacks during continuation.
+            probe_metric_facts = dict(reuse_packets["p0"]["facts"])
+            diagonal = np.array(reuse_packets["diagonal"], copy=True)
+            metric_gate = bool(
+                all(
+                    np.isfinite(float(facts.get(key, np.inf)))
+                    and float(facts.get(key, np.inf)) <= 1.0e-10
+                    for facts in probe_metric_facts.get("actions", {}).values()
+                    for key in ("output_relative", "square_relative")
+                )
             )
-            pullback_metrics[name] = pullback_metric_action(probe_full, name)
-        probe_metric_facts: dict[str, Any] = {
-            "vector_role": "deterministic_reference_free_probe",
-            "normalization": {
-                "raw_vector_summary": _array_summary(probe_raw),
-                "raw_max_abs": probe_max_abs,
-                "raw_l2_norm": probe_l2,
-                "scale": probe_scale,
-                "normalized_max_abs": float(np.max(np.abs(probe_independent))),
-                "normalized_l2_norm": float(np.linalg.norm(probe_independent)),
-                "rule": "divide by max(max_abs, l2_norm) so both max and 2-norm are bounded",
-            },
-            "vector_summary": _array_summary(probe_independent),
-            "quadrature": stack["actions"]["volume_quadrature_metadata"],
-            "constraint_map_sha256": native_map_sha256["4"],
-            "constraint_map_identity": stack["local"].mapping_identity_sha256,
-            "actions": {},
-        }
-        for name in ("mass", "curl"):
-            direct = direct_metrics[name]
-            pullback = pullback_metrics[name]
-            relative = _relative(direct, pullback)
-            direct_square = float(np.real(np.vdot(probe_independent, direct)))
-            pullback_square = float(np.real(np.vdot(probe_independent, pullback)))
-            probe_metric_facts["actions"][name] = {
-                "direct_output_summary": _array_summary(direct),
-                "pullback_output_summary": _array_summary(pullback),
-                "output_relative": relative,
-                "direct_square": direct_square,
-                "pullback_square": pullback_square,
-                "square_relative": float(
-                    abs(direct_square - pullback_square)
-                    / max(abs(pullback_square), np.finfo(float).tiny)
-                ),
-                "limit": 1.0e-10,
+            metric_equivalence_records.append({
+                "reuse": True,
+                "source": reuse_packets["evidence"][-1],
+                "facts": probe_metric_facts,
+            })
+            save("p0_metric_equivalence_reused", {
+                "source": reuse_packets["evidence"][-1],
+                "facts": probe_metric_facts,
+                "fixed_diagonal": _array_summary(diagonal),
+                "counts": dict(reuse_packets["p0"].get("counts", {})),
+            })
+        else:
+            # Degree-4 direct and P6 pullback metrics are compared on a fresh
+            # deterministic vector before any reference field is touched.
+            current_counts = {
+                "A4": 0, "M0_pullback": 0, "curl_pullback": 0,
+                "M0_direct_degree4": 0, "curl_direct_degree4": 0,
+                "P64_primal": 0, "P64_adjoint": 0,
             }
-            if (
-                not np.isfinite(relative)
-                or relative > 1.0e-10
-                or probe_metric_facts["actions"][name]["square_relative"] > 1.0e-10
-            ):
-                metric_gate = False
-        metric_equivalence_records.append(probe_metric_facts)
-        if metric_gate:
-            diagonal = np.asarray(metric4.diagonal(checkpoint=budget_sample), dtype=np.float64)
-            if (
-                diagonal.shape != p4_indices.shape
-                or not np.isfinite(diagonal).all()
-                or np.any(diagonal <= 0.0)
-            ):
-                metric_gate = False
-                diagonal = None
-        save("p0_metric_equivalence", {
-            "facts": probe_metric_facts,
-            "fixed_diagonal": None if diagonal is None else _array_summary(diagonal),
-            # Keep the actual diagonal in the ignored NPZ packet.  The scalar
-            # summary is useful for provenance, but a checker must be able to
-            # recompute the fixed-D quadratic form without reconstructing it.
-            "fixed_diagonal_values": diagonal,
-            "counts": dict(current_counts),
-        })
-        for key in current_counts:
-            summary["counts"][key] += current_counts[key]
-        current_counts = None
-        del direct_metrics, pullback_metrics, probe_raw, probe_independent, probe_full
-        gc.collect()
+            probe_raw = (
+                np.arange(p4_indices.size, dtype=np.float64) + 1.0
+                + 1j * (1.0 + np.arange(p4_indices.size, dtype=np.float64) % 17.0)
+            ).astype(np.complex128)
+            probe_max_abs = float(np.max(np.abs(probe_raw)))
+            probe_l2 = float(np.linalg.norm(probe_raw))
+            probe_scale = max(probe_max_abs, probe_l2, np.finfo(float).tiny)
+            probe_independent = np.ascontiguousarray(probe_raw / probe_scale)
+            probe_full = np.zeros(n4, dtype=np.complex128)
+            probe_full[p4_indices] = probe_independent
+            direct_metrics: dict[str, np.ndarray] = {}
+            pullback_metrics: dict[str, np.ndarray] = {}
+            for name, direct_action in (("mass", metric4.mass), ("curl", metric4.curl)):
+                direct_counter = {
+                    "mass": "M0_direct_degree4",
+                    "curl": "curl_direct_degree4",
+                }[name]
+                reserve_action(direct_counter)
+                direct_metrics[name] = np.ascontiguousarray(
+                    direct_action(probe_independent), dtype=np.complex128,
+                )
+                pullback_metrics[name] = pullback_metric_action(probe_full, name)
+            probe_metric_facts = {
+                "vector_role": "deterministic_reference_free_probe",
+                "normalization": {
+                    "raw_vector_summary": _array_summary(probe_raw),
+                    "raw_max_abs": probe_max_abs,
+                    "raw_l2_norm": probe_l2,
+                    "scale": probe_scale,
+                    "normalized_max_abs": float(np.max(np.abs(probe_independent))),
+                    "normalized_l2_norm": float(np.linalg.norm(probe_independent)),
+                    "rule": "divide by max(max_abs, l2_norm) so both max and 2-norm are bounded",
+                },
+                "vector_summary": _array_summary(probe_independent),
+                "quadrature": stack["actions"]["volume_quadrature_metadata"],
+                "constraint_map_sha256": native_map_sha256["4"],
+                "constraint_map_identity": stack["local"].mapping_identity_sha256,
+                "actions": {},
+            }
+            for name in ("mass", "curl"):
+                direct = direct_metrics[name]
+                pullback = pullback_metrics[name]
+                relative = _relative(direct, pullback)
+                direct_square = float(np.real(np.vdot(probe_independent, direct)))
+                pullback_square = float(np.real(np.vdot(probe_independent, pullback)))
+                probe_metric_facts["actions"][name] = {
+                    "direct_output_summary": _array_summary(direct),
+                    "pullback_output_summary": _array_summary(pullback),
+                    "output_relative": relative,
+                    "direct_square": direct_square,
+                    "pullback_square": pullback_square,
+                    "square_relative": float(
+                        abs(direct_square - pullback_square)
+                        / max(abs(pullback_square), np.finfo(float).tiny)
+                    ),
+                    "limit": 1.0e-10,
+                }
+                if (
+                    not np.isfinite(relative)
+                    or relative > 1.0e-10
+                    or probe_metric_facts["actions"][name]["square_relative"] > 1.0e-10
+                ):
+                    metric_gate = False
+            metric_equivalence_records.append(probe_metric_facts)
+            if metric_gate:
+                diagonal = np.asarray(metric4.diagonal(checkpoint=budget_sample), dtype=np.float64)
+                if (
+                    diagonal.shape != p4_indices.shape
+                    or not np.isfinite(diagonal).all()
+                    or np.any(diagonal <= 0.0)
+                ):
+                    metric_gate = False
+                    diagonal = None
+            save("p0_metric_equivalence", {
+                "facts": probe_metric_facts,
+                "fixed_diagonal": None if diagonal is None else _array_summary(diagonal),
+                "fixed_diagonal_values": diagonal,
+                "counts": dict(current_counts),
+            })
+            for key in current_counts:
+                summary["counts"][key] += current_counts[key]
+            current_counts = None
+            metric4.destroy()
+            metric4 = None
+            del direct_metrics, pullback_metrics, probe_raw, probe_independent, probe_full
+            gc.collect()
 
         for ordinal, item in enumerate(selected, start=1):
             stem = item["identity"]["stem"]
+            reuse_input = reuse_packets is not None and stem == selected_stems[0]
             input_start = time.perf_counter()
             current_counts = {
                 "A4": 0, "M0_pullback": 0, "curl_pullback": 0,
@@ -2270,7 +2796,18 @@ def run_p4_direction_diagnosis(
                 "p3_42_Ap_i_seconds": 0.0,
                 "p3_A_t_seconds": 0.0,
                 "p2_42_p_i_curl_seconds": 0.0,
+                "coarse_restriction_seconds": 0.0,
             }
+            if reuse_input:
+                # The qualified 01 packet carries complete vectors and
+                # identities, but it did not record these continuation-stage
+                # wall times.  Keep them explicitly unknown instead of
+                # turning reused work into synthetic zero-cost evidence.
+                current_timings.update({
+                    "selector_seconds": None,
+                    "p3_42_Ap_i_seconds": None,
+                    "p3_A_t_seconds": None,
+                })
             rhs = np.asarray(item["rhs"], dtype=np.complex128)
             reference = np.asarray(item["reference_y"], dtype=np.complex128)
             expected_reference_a4 = np.asarray(item["reference_A4y"], dtype=np.complex128)
@@ -2282,11 +2819,22 @@ def run_p4_direction_diagnosis(
             old_solution = np.asarray(old_packet["I4_solution_values"], dtype=np.complex128)
             if old_solution.shape != (n4,) or not np.isfinite(old_solution).all():
                 raise ValueError(f"{stem} old I4 solution shape or finiteness gate failed")
+            reuse_p1 = None if not reuse_input else reuse_packets["p1"]
+            reuse_p3 = None if not reuse_input else reuse_packets["p3"]
             reference_slaves = np.asarray(maps[4]["slaves"], dtype=np.int64)
             if np.any(reference[reference_slaves] != 0.0):
                 raise ValueError(f"{stem} reference field is not slave-zero")
 
-            reference_a4 = native_apply(reference)
+            if reuse_input:
+                reuse_rhs = np.asarray(reuse_p1["rhs_values"], dtype=np.complex128)
+                reuse_reference = np.asarray(reuse_p1["reference_values"], dtype=np.complex128)
+                if not (np.array_equal(reuse_rhs, rhs) and np.array_equal(reuse_reference, reference)):
+                    raise ValueError("reused P1 packet does not bind the frozen 01 input")
+                reference_a4 = np.array(
+                    reuse_p1["reference_A4_values"], dtype=np.complex128, copy=True,
+                )
+            else:
+                reference_a4 = native_apply(reference)
             reference_bridge = _relative(reference_a4, expected_reference_a4)
             r_ref = rhs - reference_a4
             r_ref_ratio = float(np.linalg.norm(r_ref) /
@@ -2297,8 +2845,13 @@ def run_p4_direction_diagnosis(
             if not r_ref_gate:
                 all_mapping_gate = False
 
-            reference_mass_squared = pullback_metric_square(reference, "mass")
-            reference_curl_squared = pullback_metric_square(reference, "curl")
+            if reuse_input:
+                reuse_p1_facts = reuse_p1["facts"]
+                reference_mass_squared = float(reuse_p1_facts["reference_mass_squared"])
+                reference_curl_squared = float(reuse_p1_facts["reference_curl_squared"])
+            else:
+                reference_mass_squared = pullback_metric_square(reference, "mass")
+                reference_curl_squared = pullback_metric_square(reference, "curl")
             if reference_mass_squared <= 0.0 or reference_curl_squared <= 0.0:
                 metric_gate = False
 
@@ -2320,219 +2873,263 @@ def run_p4_direction_diagnosis(
                     "output": np.array(pc_output, copy=True),
                 })
 
-            actual = actual_residual = None
-            actual_applied = None
-            rhs_vec = level_vector(stack["levels"], 4)
-            result = None
-            i4_cost_before = _stack_cost_snapshot(stack, i4)
-            try:
-                _set_full(rhs_vec, rhs, name=f"{stem} RHS")
-                i4.set_pc_observer(observe)
-                summary["counts"]["attempted_I4"] += 1
-                result = i4.apply(rhs_vec)
-                summary["counts"]["new_I4"] += 1
-                summary["counts"]["completed_I4"] += 1
-                actual = np.array(result["solution"].array, copy=True)
-                actual_applied = np.array(result["applied"].array, copy=True)
-                actual_residual = np.array(result["residual"].array, copy=True)
-                i4_facts = dict(result["facts"])
-            except BaseException as exc:
-                # Preserve the actual right-FGMRES PC observations even when
-                # the bounded solve aborts before returning a result.  These
-                # are the production PC inputs/outputs, not Arnoldi basis
-                # vectors, and are needed to diagnose a partial P1 run.
-                observed_inputs = (
-                    np.column_stack([value["input"] for value in observed])
-                    if observed else np.empty((n4, 0), dtype=np.complex128)
+            if reuse_input:
+                actual = np.array(
+                    reuse_p1["actual_solution_values"], dtype=np.complex128, copy=True,
                 )
-                observed_outputs_partial = (
-                    np.column_stack([value["output"] for value in observed])
-                    if observed else np.empty((n4, 0), dtype=np.complex128)
+                actual_applied = np.array(
+                    reuse_p1["actual_applied_values"], dtype=np.complex128, copy=True,
                 )
-                admission = getattr(i4, "admission", None)
-                records = getattr(i4, "records", ())
-                last_record = dict(records[-1]) if records else {}
-                failure_packet = {
-                    "stem": stem,
-                    "rhs_values": rhs,
-                    "observed_pc_inputs_values": observed_inputs,
-                    "observed_pc_outputs_values": observed_outputs_partial,
-                    "observed_pc_ordinals": np.asarray(
-                        [value["count"] for value in observed], dtype=np.int64,
-                    ),
-                    "partial_actual_solution_values": actual,
-                    "partial_actual_applied_values": actual_applied,
-                    "partial_actual_residual_values": actual_residual,
-                    "i4_last_record": last_record,
-                    "i4_admission_last_facts": dict(
-                        getattr(admission, "last_facts", {})
-                    ),
-                    "exception_type": type(exc).__name__,
-                    "exception": str(exc),
-                    "operator_identity": {
-                        "A4": "fresh native degree-4 volume plus current DtN",
-                        "PC": "counted production right-FGMRES preconditioner output",
-                        "input_coordinates": "full constrained p4 storage vector",
-                        "independent_indices_sha256": native_map_sha256["4"],
-                    },
+                # The full residual vector is reconstructed from the frozen
+                # P1 identity, not from a new A4 call.
+                actual_residual = rhs - actual_applied
+                Z = np.array(
+                    reuse_p1["pc_outputs_values"], dtype=np.complex128, copy=True,
+                )
+                Q = np.array(
+                    reuse_p1["A_pc_outputs_values"], dtype=np.complex128, copy=True,
+                )
+                observed_outputs = [
+                    np.asarray(Z[:, index], dtype=np.complex128)
+                    for index in range(Z.shape[1])
+                ]
+                observed_count = int(Z.shape[1])
+                observed_ordinals = [int(value) for value in np.asarray(
+                    reuse_p1["observed_pc_ordinals"], dtype=np.int64,
+                )]
+                i4_facts = dict(reuse_p1["facts"].get("I4", {}))
+                i4_facts.update({
+                    "reuse": True,
+                    "old_packet_reused": True,
+                    "timing_status": "not_recorded_in_qualified_01_packet",
+                    "timing_source": "frozen_01_p1_packet",
+                })
+                i4_cost_delta = {
+                    "reuse": True,
+                    "timing_status": "unknown",
+                    "timing_source": "frozen_01_p1_packet",
                 }
-                try:
-                    save(f"{stem}_p1_observation_failure", failure_packet)
-                except BaseException:
-                    # Do not hide the original solver failure behind an
-                    # evidence-write failure.
-                    pass
-                raise
-            finally:
-                i4.set_pc_observer(None)
-                if result is not None:
-                    _destroy(result.get("solution"), result.get("applied"), result.get("residual"))
-                rhs_vec.destroy()
-            if actual is None or actual_residual is None:
-                raise RuntimeError(f"{stem} I4 returned no solution")
-            i4_cost_after = _stack_cost_snapshot(stack, i4)
-            i4_cost_delta = _counter_delta(i4_cost_after, i4_cost_before)
-            observed_outputs = [item["output"] for item in observed]
-            observed_count = len(observed_outputs)
-            b4_in_facts = int(i4_facts.get("B4_calls", observed_count))
-            capture_gate = bool(
-                1 <= observed_count <= 4
-                and observed_count == b4_in_facts
-                and all(np.asarray(value).shape == (n4,) for value in observed_outputs)
-                and all(np.isfinite(value).all() for value in observed_outputs)
-            )
+                capture_gate = bool(
+                    1 <= observed_count <= 4
+                    and observed_count == len(observed_ordinals)
+                    and Z.shape == (n4, observed_count)
+                    and Q.shape == (n4, observed_count)
+                    and np.isfinite(Z).all() and np.isfinite(Q).all()
+                )
+                actual_identity = float(reuse_p1["facts"]["actual_applied_plus_residual_relative"])
+                actual_native_identity = float(reuse_p1["facts"]["actual_native_A4_vs_applied_relative"])
+                actual_i4_consistency_gate = bool(
+                    reuse_p1["facts"].get("actual_i4_consistency_gate", False)
+                )
+                actual_native = np.array(actual_applied, copy=True)
+            else:
+                observed = []
+                actual, actual_applied, actual_residual, i4_facts, i4_cost_delta = (
+                    run_fresh_i4(stem, rhs, observed)
+                )
+                observed_outputs = [item["output"] for item in observed]
+                observed_count = len(observed_outputs)
+                b4_in_facts = int(i4_facts.get("B4_calls", observed_count))
+                capture_gate = bool(
+                    1 <= observed_count <= 4
+                    and observed_count == b4_in_facts
+                    and all(np.asarray(value).shape == (n4,) for value in observed_outputs)
+                    and all(np.isfinite(value).all() for value in observed_outputs)
+                )
+                actual_native = native_apply(actual)
+                actual_identity = _operation_relative(
+                    actual_applied + actual_residual,
+                    rhs,
+                    actual_applied, actual_residual, rhs,
+                )
+                actual_native_identity = _operation_relative(
+                    actual_native, actual_applied, actual_native, actual_applied,
+                )
+                actual_i4_consistency_gate = bool(
+                    np.isfinite(actual_identity)
+                    and actual_identity <= 1.0e-10
+                    and np.isfinite(actual_native_identity)
+                    and actual_native_identity <= 1.0e-10
+                )
             all_capture_gate = all_capture_gate and capture_gate
             if not capture_gate:
                 raise RuntimeError(f"{stem} counted-PC capture gate failed")
             if actual_applied is None:
                 raise RuntimeError(f"{stem} I4 returned no applied vector")
-            actual_native = native_apply(actual)
-            actual_identity = _operation_relative(
-                actual_applied + actual_residual,
-                rhs,
-                actual_applied, actual_residual, rhs,
-            )
-            actual_native_identity = _operation_relative(
-                actual_native, actual_applied, actual_native, actual_applied,
-            )
-            actual_i4_consistency_gate = bool(
-                np.isfinite(actual_identity)
-                and actual_identity <= 1.0e-10
-                and np.isfinite(actual_native_identity)
-                and actual_native_identity <= 1.0e-10
-            )
-            all_p1_gate = all_p1_gate and actual_i4_consistency_gate
-            Z = np.ascontiguousarray(np.column_stack(observed_outputs), dtype=np.complex128)
-            Q = np.ascontiguousarray(np.column_stack([native_apply(column) for column in Z.T]), dtype=np.complex128)
             rhs_ind = rhs[p4_indices]
             reference_ind = reference[p4_indices]
-            Z_ind = Z[p4_indices, :]
-            Q_ind = Q[p4_indices, :]
-            reconstruction_y, reconstruction_facts = solve_svd(
-                Z_ind,
-                actual[p4_indices],
-                label=f"{stem}:P1_actual_reconstruction",
-                resident=(Z, Q, actual, actual_native),
-            )
-            reconstructed_actual_ind = Z_ind @ reconstruction_y
-            reconstruction_scale = max(
-                float(np.linalg.norm(actual[p4_indices])),
-                float(np.linalg.norm(Z_ind) * np.linalg.norm(reconstruction_y)),
-                np.finfo(float).tiny,
-            )
-            reconstruction_relative = float(
-                np.linalg.norm(actual[p4_indices] - reconstructed_actual_ind)
-                / reconstruction_scale
-            )
-            residual_y, residual_facts = solve_svd(
-                Q_ind, rhs_ind, label=f"{stem}:P1_residual",
-                resident=(Z, Q, actual, actual_native),
-            )
-            residual_values = Z @ residual_y
-            field_y = dual_y = None
-            field_values = dual_values = None
-            field_facts = dual_facts = None
-            if metric_gate:
-                field_y, field_facts = solve_weighted(
-                    Z_ind, reference_ind, label=f"{stem}:P1_field",
+            if not reuse_input:
+                actual_native = native_apply(actual)
+                actual_identity = _operation_relative(
+                    actual_applied + actual_residual,
+                    rhs,
+                    actual_applied, actual_residual, rhs,
+                )
+                actual_native_identity = _operation_relative(
+                    actual_native, actual_applied, actual_native, actual_applied,
+                )
+                actual_i4_consistency_gate = bool(
+                    np.isfinite(actual_identity)
+                    and actual_identity <= 1.0e-10
+                    and np.isfinite(actual_native_identity)
+                    and actual_native_identity <= 1.0e-10
+                )
+                all_p1_gate = all_p1_gate and actual_i4_consistency_gate
+                Z = np.ascontiguousarray(np.column_stack(observed_outputs), dtype=np.complex128)
+                Q = np.ascontiguousarray(
+                    np.column_stack([native_apply(column) for column in Z.T]),
+                    dtype=np.complex128,
+                )
+                Z_ind = Z[p4_indices, :]
+                Q_ind = Q[p4_indices, :]
+                reconstruction_y, reconstruction_facts = solve_svd(
+                    Z_ind, actual[p4_indices],
+                    label=f"{stem}:P1_actual_reconstruction",
                     resident=(Z, Q, actual, actual_native),
                 )
-                field_values = Z @ field_y
-                if diagonal is not None:
-                    sqrt_diagonal = np.sqrt(diagonal)
-                    dual_y, dual_facts = solve_svd(
-                        Q_ind / sqrt_diagonal[:, None],
-                        rhs_ind / sqrt_diagonal,
-                        label=f"{stem}:P1_dual_mass",
+                reconstructed_actual_ind = Z_ind @ reconstruction_y
+                reconstruction_scale = max(
+                    float(np.linalg.norm(actual[p4_indices])),
+                    float(np.linalg.norm(Z_ind) * np.linalg.norm(reconstruction_y)),
+                    np.finfo(float).tiny,
+                )
+                reconstruction_relative = float(
+                    np.linalg.norm(actual[p4_indices] - reconstructed_actual_ind)
+                    / reconstruction_scale
+                )
+                residual_y, residual_facts = solve_svd(
+                    Q_ind, rhs_ind, label=f"{stem}:P1_residual",
+                    resident=(Z, Q, actual, actual_native),
+                )
+                residual_values = Z @ residual_y
+                field_y = dual_y = None
+                field_values = dual_values = None
+                field_facts = dual_facts = None
+                if metric_gate:
+                    field_y, field_facts = solve_weighted(
+                        Z_ind, reference_ind, label=f"{stem}:P1_field",
                         resident=(Z, Q, actual, actual_native),
                     )
-                    dual_values = Z @ dual_y
-
-            actual_rho = float(np.linalg.norm(actual_residual[p4_indices]) /
-                               max(np.linalg.norm(rhs_ind), np.finfo(float).tiny))
-            residual_projection = Q_ind @ residual_y
-            actual_rhs_residual = rhs_ind - actual_applied[p4_indices]
-            reconstructed_rhs_residual = rhs_ind - residual_projection
-            min_rho_numerator = abs(
-                float(np.linalg.norm(reconstructed_rhs_residual))
-                - float(np.linalg.norm(actual_rhs_residual))
-            )
-            min_rho_scale = max(
-                float(np.linalg.norm(rhs_ind)),
-                float(np.linalg.norm(Q_ind) * np.linalg.norm(residual_y)),
-                float(np.linalg.norm(actual_applied[p4_indices])),
-                np.finfo(float).tiny,
-            )
-            reconstruction_gate = bool(
-                np.isfinite(reconstruction_relative)
-                and reconstruction_relative <= 1.0e-10
-            )
-            min_rho_gate = bool(
-                np.isfinite(min_rho_numerator)
-                and np.isfinite(min_rho_scale)
-                and min_rho_numerator / min_rho_scale <= 1.0e-10
-            )
-            all_p1_gate = all_p1_gate and reconstruction_gate and min_rho_gate
-            candidate_facts = {
-                "actual": evaluate_candidate(
-                    "actual", actual, actual_applied[p4_indices],
-                    rhs, reference, reference_mass_squared, reference_curl_squared,
-                ),
-                "Z_residual": evaluate_candidate(
-                    "Z_residual", residual_values, (Q @ residual_y)[p4_indices],
-                    rhs, reference, reference_mass_squared, reference_curl_squared,
-                ),
-            }
-            candidate_facts["actual"]["rho"] = actual_rho
-            if field_values is not None:
-                candidate_facts["Z_field"] = evaluate_candidate(
-                    "Z_field", field_values, (Q @ field_y)[p4_indices],
-                    rhs, reference, reference_mass_squared, reference_curl_squared,
+                    field_values = Z @ field_y
+                    if diagonal is not None:
+                        sqrt_diagonal = np.sqrt(diagonal)
+                        dual_y, dual_facts = solve_svd(
+                            Q_ind / sqrt_diagonal[:, None],
+                            rhs_ind / sqrt_diagonal,
+                            label=f"{stem}:P1_dual_mass",
+                            resident=(Z, Q, actual, actual_native),
+                        )
+                        dual_values = Z @ dual_y
+                actual_rho = float(np.linalg.norm(actual_residual[p4_indices]) /
+                                   max(np.linalg.norm(rhs_ind), np.finfo(float).tiny))
+                residual_projection = Q_ind @ residual_y
+                actual_rhs_residual = rhs_ind - actual_applied[p4_indices]
+                reconstructed_rhs_residual = rhs_ind - residual_projection
+                min_rho_numerator = abs(
+                    float(np.linalg.norm(reconstructed_rhs_residual))
+                    - float(np.linalg.norm(actual_rhs_residual))
                 )
-            if dual_values is not None:
-                candidate_facts["Z_dual_mass"] = evaluate_candidate(
-                    "Z_dual_mass", dual_values, (Q @ dual_y)[p4_indices],
-                    rhs, reference, reference_mass_squared, reference_curl_squared,
+                min_rho_scale = max(
+                    float(np.linalg.norm(rhs_ind)),
+                    float(np.linalg.norm(Q_ind) * np.linalg.norm(residual_y)),
+                    float(np.linalg.norm(actual_applied[p4_indices])),
+                    np.finfo(float).tiny,
                 )
-            p1_facts = {
-                "residual_LS": residual_facts,
-                "actual_reconstruction_LS": reconstruction_facts,
-                "field_LS": field_facts,
-                "dual_mass_LS": dual_facts,
-                "actual_reconstruction_relative": reconstruction_relative,
-                "actual_reconstruction_scale": reconstruction_scale,
-                "actual_reconstruction_gate": reconstruction_gate,
-                "min_rho_numerator": min_rho_numerator,
-                "min_rho_scale": min_rho_scale,
-                "min_rho_gate": min_rho_gate,
-                "actual_i4_consistency_gate": actual_i4_consistency_gate,
-                "actual_applied_plus_residual_relative": actual_identity,
-                "actual_native_A4_vs_applied_relative": actual_native_identity,
-                "reference_mass_squared": reference_mass_squared,
-                "reference_curl_squared": reference_curl_squared,
-                "metric_equivalence": metric_equivalence,
-                "candidates": {key: value for key, value in candidate_facts.items()},
-            }
+                reconstruction_gate = bool(
+                    np.isfinite(reconstruction_relative)
+                    and reconstruction_relative <= 1.0e-10
+                )
+                min_rho_gate = bool(
+                    np.isfinite(min_rho_numerator)
+                    and np.isfinite(min_rho_scale)
+                    and min_rho_numerator / min_rho_scale <= 1.0e-10
+                )
+                all_p1_gate = all_p1_gate and reconstruction_gate and min_rho_gate
+                candidate_facts = {
+                    "actual": evaluate_candidate(
+                        "actual", actual, actual_applied[p4_indices],
+                        rhs, reference, reference_mass_squared, reference_curl_squared,
+                    ),
+                    "Z_residual": evaluate_candidate(
+                        "Z_residual", residual_values, (Q @ residual_y)[p4_indices],
+                        rhs, reference, reference_mass_squared, reference_curl_squared,
+                    ),
+                }
+                candidate_facts["actual"]["rho"] = actual_rho
+                if field_values is not None:
+                    candidate_facts["Z_field"] = evaluate_candidate(
+                        "Z_field", field_values, (Q @ field_y)[p4_indices],
+                        rhs, reference, reference_mass_squared, reference_curl_squared,
+                    )
+                if dual_values is not None:
+                    candidate_facts["Z_dual_mass"] = evaluate_candidate(
+                        "Z_dual_mass", dual_values, (Q @ dual_y)[p4_indices],
+                        rhs, reference, reference_mass_squared, reference_curl_squared,
+                    )
+                p1_facts = {
+                    "residual_LS": residual_facts,
+                    "actual_reconstruction_LS": reconstruction_facts,
+                    "field_LS": field_facts,
+                    "dual_mass_LS": dual_facts,
+                    "actual_reconstruction_relative": reconstruction_relative,
+                    "actual_reconstruction_scale": reconstruction_scale,
+                    "actual_reconstruction_gate": reconstruction_gate,
+                    "min_rho_numerator": min_rho_numerator,
+                    "min_rho_scale": min_rho_scale,
+                    "min_rho_gate": min_rho_gate,
+                    "actual_i4_consistency_gate": actual_i4_consistency_gate,
+                    "actual_applied_plus_residual_relative": actual_identity,
+                    "actual_native_A4_vs_applied_relative": actual_native_identity,
+                    "reference_mass_squared": reference_mass_squared,
+                    "reference_curl_squared": reference_curl_squared,
+                    "metric_equivalence": metric_equivalence,
+                    "candidates": {key: value for key, value in candidate_facts.items()},
+                }
+            else:
+                Z_ind = Z[p4_indices, :]
+                Q_ind = Q[p4_indices, :]
+                reconstruction_y = np.asarray(reuse_p1["reconstruction_y"], dtype=np.complex128)
+                residual_y = np.asarray(reuse_p1["residual_y"], dtype=np.complex128)
+                field_y = None if reuse_p1.get("field_y") is None else np.asarray(reuse_p1["field_y"], dtype=np.complex128)
+                dual_y = None if reuse_p1.get("dual_y") is None else np.asarray(reuse_p1["dual_y"], dtype=np.complex128)
+                reconstruction_facts = reuse_p1["facts"].get("actual_reconstruction_LS")
+                residual_facts = reuse_p1["facts"].get("residual_LS")
+                field_facts = reuse_p1["facts"].get("field_LS")
+                dual_facts = reuse_p1["facts"].get("dual_mass_LS")
+                reconstruction_relative = float(reuse_p1["facts"]["actual_reconstruction_relative"])
+                reconstruction_scale = float(reuse_p1["facts"]["actual_reconstruction_scale"])
+                reconstruction_gate = bool(reuse_p1["facts"]["actual_reconstruction_gate"])
+                min_rho_numerator = float(reuse_p1["facts"]["min_rho_numerator"])
+                min_rho_scale = float(reuse_p1["facts"]["min_rho_scale"])
+                min_rho_gate = bool(reuse_p1["facts"]["min_rho_gate"])
+                residual_values = Z @ residual_y
+                field_values = None if field_y is None else Z @ field_y
+                dual_values = None if dual_y is None else Z @ dual_y
+                actual_rho = float(reuse_p1["facts"]["candidates"]["actual"]["rho"])
+                candidate_facts = {
+                    key: dict(value) for key, value in reuse_p1["facts"]["candidates"].items()
+                }
+                p1_facts = dict(reuse_p1["facts"])
+                all_p1_gate = all_p1_gate and actual_i4_consistency_gate and reconstruction_gate and min_rho_gate
+            if reuse_input:
+                all_p1_gate = all_p1_gate and capture_gate
+            p1_facts["continuation_action_counts"] = (
+                {"status": "reused", "new_A4": 0, "new_metric_actions": 0}
+                if reuse_input else dict(current_counts)
+            )
+            p1_facts["continuation_timings"] = (
+                {
+                    "status": "unknown_in_qualified_01_packet",
+                    "i4_seconds": None,
+                    "source": "frozen_01_p1_packet",
+                }
+                if reuse_input else dict(current_timings)
+            )
+            p1_facts["i4_facts"] = deepcopy(i4_facts)
+            p1_facts["i4_cost_delta"] = deepcopy(i4_cost_delta)
+            p1_facts["observed_count"] = int(observed_count)
+            p1_facts["summary_counts_snapshot"] = dict(summary["counts"])
+            p1_facts["current_input_counts_snapshot"] = dict(current_counts)
             save(f"{stem}_p1_direction_diagnosis", {
                 "stem": stem,
                 "rhs_values": rhs,
@@ -2548,11 +3145,17 @@ def run_p4_direction_diagnosis(
                 "residual_y": residual_y,
                 "field_y": field_y,
                 "dual_y": dual_y,
-                "observed_pc_inputs_values": np.column_stack(
-                    [value["input"] for value in observed]
+                "observed_pc_inputs_values": (
+                    np.asarray(reuse_p1["observed_pc_inputs_values"], dtype=np.complex128)
+                    if reuse_input else np.column_stack(
+                        [value["input"] for value in observed]
+                    )
                 ),
-                "observed_pc_ordinals": np.asarray(
-                    [value["count"] for value in observed], dtype=np.int64,
+                "observed_pc_ordinals": (
+                    np.asarray(reuse_p1["observed_pc_ordinals"], dtype=np.int64)
+                    if reuse_input else np.asarray(
+                        [value["count"] for value in observed], dtype=np.int64,
+                    )
                 ),
                 "operator_identity": {
                     "A4": "fresh native degree-4 volume plus current DtN",
@@ -2562,58 +3165,122 @@ def run_p4_direction_diagnosis(
                 },
                 "facts": p1_facts,
             })
-            observed_ordinals = [int(value["count"]) for value in observed]
+            if not reuse_input:
+                observed_ordinals = [int(value["count"]) for value in observed]
             # P1 is now hash-bound on disk.  Keep only independent Z/Q views
             # for the later L construction; the full observed packet and
             # duplicate full output columns are no longer live.
             observed.clear()
             del observed_outputs, actual_native, actual_applied, Z, Q
+            actual_residual = None
+            residual_values = None
+            field_values = None
+            dual_values = None
+            reconstruction_y = None
+            residual_y = None
+            field_y = None
+            dual_y = None
+            if reuse_input:
+                reuse_packets["packets"].pop(
+                    "A2R160_BAL_H_p4_01_p1_direction_diagnosis", None,
+                )
+                reuse_packets["p1"] = None
+                reuse_p1 = None
             gc.collect()
 
-            # One bare B4 call exposes the actual local block responses.  The
-            # production accumulation order remains untouched; only its
-            # default-off observation flag is enabled for this call.
-            stack["B4"].capture_vectors = True
-            stack["local"].capture_md_observation = True
-            stack["local"].last_md_observation = {}
-            bare_rhs = level_vector(stack["levels"], 4)
-            bare_output = None
-            bare_cost_before = _stack_cost_snapshot(stack, i4)
-            bare_started = time.perf_counter()
-            try:
-                _set_full(bare_rhs, rhs, name=f"{stem} bare RHS")
-                summary["counts"]["attempted_B4"] += 1
-                bare_output = stack["B4"].apply(bare_rhs)
-                summary["counts"]["bare_B4"] += 1
-                summary["counts"]["completed_B4"] += 1
-                b4_vectors = dict(stack["B4"].last_apply_vectors)
-                md_observation = dict(stack["local"].last_md_observation)
-                bare_apply_facts = dict(stack["B4"].last_apply_facts)
-            finally:
-                _destroy(bare_output, bare_rhs)
-                stack["B4"].capture_vectors = False
-                stack["B4"].last_apply_vectors = {}
-                stack["local"].capture_md_observation = False
-                stack["local"].last_md_observation = {}
-            bare_seconds = time.perf_counter() - bare_started
-            bare_cost_after = _stack_cost_snapshot(stack, i4)
-            bare_cost_delta = _counter_delta(bare_cost_after, bare_cost_before)
-            required_vectors = ("zc", "rc", "s", "A6s", "c2")
-            if any(b4_vectors.get(name) is None for name in required_vectors):
-                raise RuntimeError(f"{stem} B4 vector capture is incomplete")
-            a = np.asarray(b4_vectors["zc"], dtype=np.complex128)
-            h = np.asarray(b4_vectors["rc"], dtype=np.complex128)
-            d = np.asarray(b4_vectors["s"], dtype=np.complex128)
-            ad = np.asarray(b4_vectors["A6s"], dtype=np.complex128)
-            t = np.asarray(b4_vectors["c2"], dtype=np.complex128)
-            blocks = sorted(
-                md_observation.get("blocks", ()),
-                key=lambda value: value["block_index"],
-            )
-            capture_md_gate = bool(
-                len(blocks) == 42
-                and [int(block["block_index"]) for block in blocks] == list(range(42))
-            )
+            p_columns_source = None
+            p_images_source = None
+            A_a_source = None
+            A_t_source = None
+            b4_vectors = None
+            md_observation = {}
+            blocks = []
+            source_block = None
+            if reuse_input:
+                # Borrow the hash-bound P3 arrays until the single continuation
+                # arena is filled.  Copies here would make old P3, copied P3,
+                # and L/AL coexist unnecessarily.
+                p_columns_source = np.asarray(
+                    reuse_p3["p_columns_values"], dtype=np.complex128,
+                )
+                p_images_source = np.asarray(
+                    reuse_p3["p_images_values"], dtype=np.complex128,
+                )
+                A_a_source = np.asarray(reuse_p3["A_a_values"], dtype=np.complex128)
+                A_t_source = np.asarray(reuse_p3["A_t_values"], dtype=np.complex128)
+                p_columns_ind = p_columns_source
+                if p_columns_source.shape != (p4_indices.size, 42) or p_images_source.shape != p_columns_source.shape:
+                    raise ValueError("reused P3 response columns have incompatible shapes")
+                a, c_u_g_facts = coarse_apply(rhs)
+                A_a_ind = A_a_source
+                A_t_ind = A_t_source
+                A_a = _full_from_independent(n4, p4_indices, A_a_ind)
+                ad = _full_from_independent(n4, p4_indices, np.sum(p_images_source, axis=1))
+                d = _full_from_independent(n4, p4_indices, np.sum(p_columns_source, axis=1))
+                t, c_u_ad_facts = coarse_apply(ad)
+                h = rhs - A_a
+                bare_seconds = None
+                bare_apply_facts = {
+                    "reuse": True,
+                    "timing_status": "not_recorded_in_qualified_01_packet",
+                    "counts": {"C": 2},
+                    "operation_seconds": {"C": (
+                        c_u_g_facts["seconds"] + c_u_ad_facts["seconds"]
+                    )},
+                    "initial": {"constraint": "repaired_from_C_U(g)"},
+                    "feedback": {"constraint": "repaired_from_C_U(A_d)"},
+                    "bottom_facts": {
+                        "initial": deepcopy(c_u_g_facts.get("bottom_facts", {})),
+                        "feedback": deepcopy(c_u_ad_facts.get("bottom_facts", {})),
+                    },
+                }
+                bare_cost_delta = {"reuse": True, "timing_status": "unknown"}
+                for block_index, source_block in enumerate(stack["local"].blocks):
+                    indices = np.asarray(source_block["indices"], dtype=np.int64)
+                    weights = np.asarray(stack["local"].output_weights[indices], dtype=np.float64)
+                    positions = p4_position[indices]
+                    weighted = np.zeros(indices.size, dtype=np.complex128)
+                    valid = positions >= 0
+                    weighted[valid] = p_columns_ind[positions[valid], block_index]
+                    if np.any(weights[valid] <= 0.0) or not np.isfinite(weights).all():
+                        raise ValueError(f"{stem} cannot recover local PoU weights for reused P3")
+                    di = np.zeros(indices.size, dtype=np.complex128)
+                    positive = weights > 0.0
+                    di[positive] = weighted[positive] / weights[positive]
+                    if not np.isfinite(di).all():
+                        raise ValueError(f"{stem} recovered local d_i is non-finite")
+                    blocks.append({
+                        "block_index": int(block_index),
+                        "indices": indices.copy(),
+                        "d_i": di,
+                        "weighted_values": weighted,
+                        "weights": weights,
+                    })
+                capture_md_gate = bool(len(blocks) == 42)
+            else:
+                b4_vectors, md_observation, bare_apply_facts, bare_seconds, bare_cost_delta = (
+                    run_fresh_bare(stem, rhs)
+                )
+                bare_apply_facts["bottom_facts"] = {
+                    "last_C_U": deepcopy(stack["p2_inverse"].last_facts),
+                    "status": "last_C_U_of_single_bare_B4_is_captured",
+                }
+                required_vectors = ("zc", "rc", "s", "A6s", "c2")
+                if any(b4_vectors.get(name) is None for name in required_vectors):
+                    raise RuntimeError(f"{stem} B4 vector capture is incomplete")
+                a = np.asarray(b4_vectors["zc"], dtype=np.complex128)
+                h = np.asarray(b4_vectors["rc"], dtype=np.complex128)
+                d = np.asarray(b4_vectors["s"], dtype=np.complex128)
+                ad = np.asarray(b4_vectors["A6s"], dtype=np.complex128)
+                t = np.asarray(b4_vectors["c2"], dtype=np.complex128)
+                blocks = sorted(
+                    md_observation.get("blocks", ()),
+                    key=lambda value: value["block_index"],
+                )
+                capture_md_gate = bool(
+                    len(blocks) == 42
+                    and [int(block["block_index"]) for block in blocks] == list(range(42))
+                )
             all_capture_gate = all_capture_gate and capture_md_gate
             if not capture_md_gate:
                 raise RuntimeError(f"{stem} local response capture gate failed")
@@ -2628,9 +3295,10 @@ def run_p4_direction_diagnosis(
             pou = np.zeros(n4, dtype=np.float64)
             recomposed = np.zeros(n4, dtype=np.complex128)
             local_records = []
-            p_columns_ind = np.zeros(
-                (p4_indices.size, len(blocks)), dtype=np.complex128,
-            )
+            if not reuse_input:
+                p_columns_ind = np.zeros(
+                    (p4_indices.size, len(blocks)), dtype=np.complex128,
+                )
             for local_column, block in enumerate(blocks):
                 block_index = int(block["block_index"])
                 indices = np.asarray(block["indices"], dtype=np.int64)
@@ -2739,42 +3407,341 @@ def run_p4_direction_diagnosis(
                 ),
             }
 
-            # P3 counts every local A p_i image, even if the reference-free
-            # selector eventually keeps only eight of them.  Only independent
-            # coordinates are retained in dense arrays.
-            p_images_ind = np.empty_like(p_columns_ind)
-            p3_images_started = time.perf_counter()
-            try:
-                for local_column in range(p_columns_ind.shape[1]):
-                    p_column_full = np.zeros(n4, dtype=np.complex128)
-                    p_column_full[p4_indices] = p_columns_ind[:, local_column]
-                    p_image_full = native_apply(p_column_full)
-                    p_images_ind[:, local_column] = p_image_full[p4_indices]
-                    del p_column_full, p_image_full
-            finally:
-                current_timings["p3_42_Ap_i_seconds"] += time.perf_counter() - p3_images_started
-            a_t_started = time.perf_counter()
-            try:
-                A_t = native_apply(t)
-            finally:
-                current_timings["p3_A_t_seconds"] += time.perf_counter() - a_t_started
+            p2_local_rows = max(
+                int(np.asarray(block["indices"]).size) for block in blocks
+            )
+            p2_local_temporary_bytes = 8 * p2_local_rows * np.dtype(
+                np.complex128
+            ).itemsize
+            check_live_workspace(
+                label=f"{stem}:P2_local_records",
+                resident=(
+                    rhs, reference, r_ref, a, h, d, ad, t, A_a, A_eh,
+                    e_h, pou, recomposed, p_columns_ind, blocks, local_records,
+                    b4_vectors, md_observation,
+                ),
+                temporary_bytes=p2_local_temporary_bytes,
+                rows=p2_local_rows,
+                columns=1,
+                weighted=False,
+            )
+
+            # Complete and atomically save P2 before constructing any fresh
+            # P3 response arena.  A_t is a P2 prerequisite (the final
+            # coarse-feedback term), so it is deliberately computed here.
+            if reuse_input:
+                A_t = _full_from_independent(n4, p4_indices, A_t_ind)
+            else:
+                a_t_started = time.perf_counter()
+                try:
+                    A_t = native_apply(t)
+                finally:
+                    current_timings["p3_A_t_seconds"] += time.perf_counter() - a_t_started
             a_ind = a[p4_indices]
-            A_a_ind = A_a[p4_indices]
+            if not reuse_input:
+                A_a_ind = A_a[p4_indices]
             d_ind = d[p4_indices]
             t_ind = t[p4_indices]
             A_t_ind = A_t[p4_indices]
-            checkpoint(f"before_selector:{stem}")
-            selector_started = time.perf_counter()
-            try:
-                selected_indices, selector_facts = select_local_response_indices(
-                    rhs_ind,
-                    np.column_stack((A_a_ind, -A_t_ind)),
-                    p_images_ind,
-                    max_local=8, rtol=RANK_RTOL,
+
+            coarse_closure = {
+                "initial": coarse_restriction_closure(
+                    rhs, h, label=f"{stem}:C_U(g):g-Aa"
+                ),
+                "feedback": coarse_restriction_closure(
+                    ad, ad - A_t, label=f"{stem}:C_U(A_d):A_d-A_t"
+                ),
+                "limit": 1.0e-8,
+                "scale_definition": (
+                    "PhysicalBalancedCoupling.balance: ||P_H residual|| / "
+                    "(||P_H leading|| + ||P_H leading-P_H residual||)"
+                ),
+            }
+            coarse_closure_gate = bool(
+                all(
+                    facts["finite"] and facts["relative"] <= coarse_closure["limit"]
+                    for facts in (coarse_closure["initial"], coarse_closure["feedback"])
                 )
+            )
+            p2_facts["coarse_closure"] = coarse_closure
+            p2_facts["coarse_closure_gate"] = coarse_closure_gate
+            p2_facts["C_U"]["bottom_facts"] = deepcopy(
+                bare_apply_facts.get("bottom_facts", {})
+            )
+            if not coarse_closure_gate:
+                all_local_gate = False
+                p2_facts["gate_pass"] = False
+
+            p_i_euclidean_norms = [
+                float(np.linalg.norm(column)) for column in p_columns_ind.T
+            ]
+            p_i_curl_squared: list[float] = []
+            p_i_curl_started = time.perf_counter()
+            try:
+                for local_column in range(p_columns_ind.shape[1]):
+                    p_column_full = _full_from_independent(
+                        n4, p4_indices, p_columns_ind[:, local_column],
+                    )
+                    metric_image = pullback_metric_action(p_column_full, "curl")
+                    metric_value = float(np.real(np.vdot(
+                        p_columns_ind[:, local_column], metric_image,
+                    )))
+                    scale = max(
+                        np.linalg.norm(p_columns_ind[:, local_column])
+                        * np.linalg.norm(metric_image), np.finfo(float).tiny,
+                    )
+                    if not np.isfinite(metric_value) or metric_value < -1.0e-10 * scale:
+                        raise ValueError(f"{stem} local p_i curl metric is not positive")
+                    p_i_curl_squared.append(max(metric_value, 0.0))
             finally:
-                if current_timings is not None:
-                    current_timings["selector_seconds"] += time.perf_counter() - selector_started
+                current_timings["p2_42_p_i_curl_seconds"] += time.perf_counter() - p_i_curl_started
+            p_i_recomposition_relative = _operation_relative(
+                np.sum(p_columns_ind, axis=1), d_ind,
+                np.sum(p_columns_ind, axis=1), d_ind,
+            )
+
+            zero_rhs_norm = float(np.linalg.norm(rhs_ind))
+            zero_initial_candidate = {
+                "label": "P2_c_ref_zero_initial",
+                "stage": "c_ref",
+                "field_role": "zero_initial_guess",
+                "rho": float(
+                    zero_rhs_norm / max(zero_rhs_norm, np.finfo(float).tiny)
+                ),
+                "mass_squared": float(reference_mass_squared),
+                "curl_squared": float(reference_curl_squared),
+                "reference_mass_squared": float(reference_mass_squared),
+                "reference_curl_squared": float(reference_curl_squared),
+                "mass_error_norm": float(np.sqrt(max(reference_mass_squared, 0.0))),
+                "curl_error_norm": float(np.sqrt(max(reference_curl_squared, 0.0))),
+                "reference_mass_norm": float(np.sqrt(max(reference_mass_squared, 0.0))),
+                "reference_curl_norm": float(np.sqrt(max(reference_curl_squared, 0.0))),
+                "eta": 1.0,
+                "eta_curl": 1.0,
+                "residual_norm": zero_rhs_norm,
+                "finite": bool(
+                    np.isfinite(zero_rhs_norm)
+                    and np.isfinite(reference_mass_squared)
+                    and np.isfinite(reference_curl_squared)
+                ),
+            }
+            p2_stage_candidates = {
+                "c_ref": zero_initial_candidate,
+                "a": evaluate_candidate(
+                    "P2_a", a, A_a[p4_indices], rhs, reference,
+                    reference_mass_squared, reference_curl_squared,
+                ),
+                "a_plus_d": evaluate_candidate(
+                    "P2_a_plus_d", a + d, (A_a + ad)[p4_indices], rhs, reference,
+                    reference_mass_squared, reference_curl_squared,
+                ),
+                "a_plus_d_minus_t": evaluate_candidate(
+                    "P2_a_plus_d_minus_t", a + d - t,
+                    (A_a + ad - A_t)[p4_indices], rhs, reference,
+                    reference_mass_squared, reference_curl_squared,
+                ),
+            }
+            d_mass_squared = pullback_metric_square(d, "mass")
+            d_curl_squared = pullback_metric_square(d, "curl")
+            a_mass_squared = pullback_metric_square(a, "mass")
+            a_curl_squared = pullback_metric_square(a, "curl")
+            t_mass_squared = pullback_metric_square(t, "mass")
+            t_curl_squared = pullback_metric_square(t, "curl")
+            correction = a + d - t
+            correction_mass_squared = pullback_metric_square(correction, "mass")
+            correction_curl_squared = pullback_metric_square(correction, "curl")
+            d_minus_eh = d - e_h
+            d_minus_eh_mass_squared = pullback_metric_square(d_minus_eh, "mass")
+            d_minus_eh_curl_squared = pullback_metric_square(d_minus_eh, "curl")
+
+            def metric_norm_record(mass_squared: float, curl_squared: float) -> dict[str, float]:
+                return {
+                    "mass_squared": float(mass_squared),
+                    "curl_squared": float(curl_squared),
+                    "mass_norm": float(np.sqrt(max(mass_squared, 0.0))),
+                    "curl_norm": float(np.sqrt(max(curl_squared, 0.0))),
+                }
+
+            global_physical_norms = {
+                "a": metric_norm_record(a_mass_squared, a_curl_squared),
+                "d": metric_norm_record(d_mass_squared, d_curl_squared),
+                "t": metric_norm_record(t_mass_squared, t_curl_squared),
+                "d_minus_eh": metric_norm_record(
+                    d_minus_eh_mass_squared, d_minus_eh_curl_squared,
+                ),
+                "a_plus_d_minus_t": metric_norm_record(
+                    correction_mass_squared, correction_curl_squared,
+                ),
+            }
+            for metric_name in ("mass", "curl"):
+                term_norm_sum = sum(
+                    global_physical_norms[name][f"{metric_name}_norm"]
+                    for name in ("a", "d", "t")
+                )
+                correction_norm = global_physical_norms["a_plus_d_minus_t"][
+                    f"{metric_name}_norm"
+                ]
+                global_physical_norms[f"{metric_name}_cancellation"] = {
+                    "term_norm_sum": float(term_norm_sum),
+                    "combined_norm": float(correction_norm),
+                    "combined_over_term_sum": float(
+                        correction_norm / max(term_norm_sum, np.finfo(float).tiny)
+                    ),
+                }
+                eh_norm = global_physical_norms["d_minus_eh"][f"{metric_name}_norm"]
+                global_physical_norms[f"{metric_name}_d_minus_eh"] = {
+                    "combined_norm": float(eh_norm),
+                    "reference": "d-e_h; local recomposition identity",
+                }
+            p2_facts["p_i_euclidean_norms"] = p_i_euclidean_norms
+            p2_facts["p_i_sum_norm_over_d_norm"] = float(
+                sum(p_i_euclidean_norms)
+                / max(float(np.linalg.norm(d_ind)), np.finfo(float).tiny)
+            )
+            p2_facts["stage_errors"] = p2_stage_candidates
+            p2_facts["d_global_mass_squared"] = d_mass_squared
+            p2_facts["global_physical_norms"] = global_physical_norms
+            p2_facts["stage_metric_gate"] = bool(
+                all(item["finite"] for item in p2_stage_candidates.values())
+                and np.isfinite(d_mass_squared)
+            )
+            p2_facts["p_i_original_mass_squared"] = None
+            p2_facts["p_i_original_mass_status"] = (
+                "deferred_to_P3_weighted_mgs_original_mass_energy"
+            )
+            p2_facts["p_i_curl_squared"] = p_i_curl_squared
+            p2_facts["p_i_recomposition_relative"] = p_i_recomposition_relative
+            p2_facts["p_i_original_mass_energy_sum"] = None
+            p2_facts["p_i_curl_energy_sum"] = float(sum(p_i_curl_squared))
+            p2_facts["p_i_mass_to_d_mass_ratio"] = None
+            p2_facts["p_i_curl_to_d_curl_ratio"] = float(
+                sum(p_i_curl_squared) / max(d_curl_squared, np.finfo(float).tiny)
+            )
+            if not p2_facts["stage_metric_gate"] or p_i_recomposition_relative > 1.0e-10:
+                all_local_gate = False
+            p2_facts["gate_pass"] = bool(
+                p2_facts["gate_pass"]
+                and p2_facts["stage_metric_gate"]
+                and p_i_recomposition_relative <= 1.0e-10
+            )
+            p2_facts["p_i_count"] = 42
+            p2_facts["p_i_coordinate_system"] = "p4_independent"
+            p2_facts["A_t"] = _array_summary(A_t)
+            p2_facts["reused_01"] = bool(reuse_input)
+            p2_facts["continuation_action_counts"] = dict(current_counts)
+            p2_facts["continuation_timings"] = dict(current_timings)
+            p2_facts["atomic_save_order"] = "P2 packet completes before P3 response arena/selector"
+            save(f"{stem}_p2_observation", {
+                "stem": stem, "rhs_values": rhs, "reference_values": reference,
+                "r_ref_values": r_ref, "a_values": a, "h_values": h,
+                "d_values": d, "A_d_values": ad, "t_values": t,
+                "A_a_values": A_a, "A_t_values": A_t,
+                "local_blocks": local_records, "facts": p2_facts,
+            })
+            # The large per-block records are now hash-bound in P2.  Keep the
+            # LS resident estimate honest while P3 owns the response arenas.
+            del local_records
+            # Release the captured B4/MD source graph and the temporary local
+            # aliases immediately after the atomic P2 save.  The scalar P2
+            # facts and the global vectors below are the only continuation
+            # inputs still required.
+            del blocks, b4_vectors, md_observation, pou, recomposed, A_eh, e_h
+            del reference_a4, r_ref
+            del weighted, weights, di, indices, block, matrix
+            del local_d, local_d_image, local_e, local_e_image
+            del D_i_d_i, D_i_R_i_e_h, ell, chi, remainder_lhs, remainder_rhs
+            del source_block
+            p2_background = ()
+
+            # Own one pair of 48-column arenas for the rest of P3.  The
+            # response packet is written from views into these arenas, so the
+            # 42 p_i and A p_i families are not duplicated by a second L/AL
+            # allocation.
+            z_columns = int(Z_ind.shape[1])
+            L_column_count = int(z_columns + 1 + 42 + 1)
+            # Store response columns in Fortran order so each column family
+            # remains a contiguous view for the QR/SVD kernels; otherwise a
+            # selector call would allocate another full 42-column copy.
+            L_ind = np.empty(
+                (p4_indices.size, L_column_count),
+                dtype=np.complex128,
+                order="F",
+            )
+            AL_ind = np.empty_like(L_ind, order="F")
+            L_ind[:, :z_columns] = Z_ind
+            L_ind[:, z_columns] = a_ind
+            L_ind[:, z_columns + 1:z_columns + 1 + 42] = p_columns_ind
+            L_ind[:, -1] = -t_ind
+            AL_ind[:, :z_columns] = Q_ind
+            AL_ind[:, z_columns] = A_a_ind
+            AL_ind[:, -1] = -A_t_ind
+            p_columns_ind = L_ind[:, z_columns + 1:z_columns + 1 + 42]
+            p_images_ind = AL_ind[:, z_columns + 1:z_columns + 1 + 42]
+            p3_resident = (
+                rhs, reference, actual, a, h, d, ad, t, A_a, A_t,
+                rhs_ind, reference_ind, Z_ind, Q_ind,
+                a_ind, d_ind, t_ind, A_a_ind, A_t_ind,
+                L_ind, AL_ind, p_columns_ind, p_images_ind,
+            )
+
+            # P3 counts every local A p_i image, even if the reference-free
+            # selector eventually keeps only eight of them.  Reused 01
+            # images are already hash-bound; only 02/09 build these arenas.
+            if reuse_input:
+                p_images_ind[:, :] = np.asarray(
+                    p_images_source, dtype=np.complex128,
+                )
+            else:
+                p3_images_started = time.perf_counter()
+                try:
+                    for local_column in range(p_columns_ind.shape[1]):
+                        p_column_full = np.zeros(n4, dtype=np.complex128)
+                        p_column_full[p4_indices] = p_columns_ind[:, local_column]
+                        p_image_full = native_apply(p_column_full)
+                        p_images_ind[:, local_column] = p_image_full[p4_indices]
+                        del p_column_full, p_image_full
+                finally:
+                    current_timings["p3_42_Ap_i_seconds"] += time.perf_counter() - p3_images_started
+            if reuse_input:
+                selected_indices = [int(index) for index in np.asarray(
+                    reuse_p3["selected_indices"], dtype=np.int64,
+                )]
+                selector_facts = {
+                    "reuse": True,
+                    "old_selector_indices": selected_indices,
+                    "source": reuse_packets["evidence"][1],
+                }
+            else:
+                checkpoint(f"before_selector:{stem}")
+                selector_base_images = np.column_stack((A_a_ind, -A_t_ind))
+                check_ls_workspace(
+                    rhs_ind.size, 10, weighted=False,
+                    label=f"{stem}:P3_selector_rank_basis",
+                    # The selector uses two anchor images but its iterative
+                    # rank basis can retain up to max_local+2 columns.  Use
+                    # the full ten-column bound and the same complete P3
+                    # resident set later supplied to the selected solve.
+                    resident=p3_resident + (selector_base_images,),
+                    background=p2_background,
+                )
+                selector_started = time.perf_counter()
+                try:
+                    selected_indices, selector_facts = select_local_response_indices(
+                        rhs_ind,
+                        selector_base_images,
+                        p_images_ind,
+                        max_local=8, rtol=RANK_RTOL,
+                    )
+                finally:
+                    if current_timings is not None:
+                        current_timings["selector_seconds"] += time.perf_counter() - selector_started
+                del selector_base_images
+            if (
+                len(selected_indices) > 8
+                or len(set(selected_indices)) != len(selected_indices)
+                or any(index < 0 or index >= 42 for index in selected_indices)
+            ):
+                raise ValueError(f"{stem} selected local response indices are invalid")
             selected_columns_ind = np.column_stack(
                 (a_ind, p_columns_ind[:, selected_indices], -t_ind),
             )
@@ -2783,9 +3750,8 @@ def run_p4_direction_diagnosis(
             )
             selected_y, selected_facts = solve_svd(
                 selected_images_ind, rhs_ind, label=f"{stem}:P3_selected",
-                resident=(Z_ind, Q_ind, a, h, d, ad, t, A_a, A_t,
-                          p_columns_ind, p_images_ind, selected_columns_ind),
-                background=(local_records,),
+                resident=p3_resident + (selected_columns_ind, selected_images_ind),
+                background=p2_background,
             )
             selected_values_ind = selected_columns_ind @ selected_y
             selected_applied_ind = selected_images_ind @ selected_y
@@ -2800,53 +3766,25 @@ def run_p4_direction_diagnosis(
                 "A_t_values": A_t_ind,
                 "selected_indices": selected_indices,
             })
+            if reuse_input:
+                reuse_packets["packets"].pop(
+                    "A2R160_BAL_H_p4_01_p3_response_columns", None,
+                )
+                reuse_packets["p3"] = None
+                reuse_p3 = None
+                gc.collect()
+            p_columns_source = None
+            p_images_source = None
+            A_a_source = None
+            A_t_source = None
 
-            L_column_count = int(Z_ind.shape[1] + 1 + p_columns_ind.shape[1] + 1)
-            L_ind = np.empty((p4_indices.size, L_column_count), dtype=np.complex128)
-            AL_ind = np.empty_like(L_ind)
-            z_columns = int(Z_ind.shape[1])
-            L_ind[:, :z_columns] = Z_ind
-            L_ind[:, z_columns] = a_ind
-            L_ind[:, z_columns + 1:z_columns + 1 + p_columns_ind.shape[1]] = p_columns_ind
-            L_ind[:, -1] = -t_ind
-            AL_ind[:, :z_columns] = Q_ind
-            AL_ind[:, z_columns] = A_a_ind
-            AL_ind[:, z_columns + 1:z_columns + 1 + p_images_ind.shape[1]] = p_images_ind
-            AL_ind[:, -1] = -A_t_ind
-            p_i_euclidean_norms = [
-                float(np.linalg.norm(column)) for column in p_columns_ind.T
-            ]
-            p_i_curl_squared: list[float] = []
-            p_i_curl_started = time.perf_counter()
-            try:
-                for local_column in range(p_columns_ind.shape[1]):
-                    p_column_full = _full_from_independent(
-                        n4, p4_indices, p_columns_ind[:, local_column],
-                    )
-                    p_curl_image = pullback_metric_action(p_column_full, "curl")
-                    p_curl_value = float(np.real(np.vdot(
-                        p_columns_ind[:, local_column], p_curl_image,
-                    )))
-                    if not np.isfinite(p_curl_value) or p_curl_value < -1.0e-10 * max(
-                        np.linalg.norm(p_columns_ind[:, local_column])
-                        * np.linalg.norm(p_curl_image), np.finfo(float).tiny,
-                    ):
-                        raise ValueError(f"{stem} local p_i curl metric is not positive")
-                    p_i_curl_squared.append(max(p_curl_value, 0.0))
-            finally:
-                current_timings["p2_42_p_i_curl_seconds"] += time.perf_counter() - p_i_curl_started
-            p_i_recomposition_relative = _operation_relative(
-                np.sum(p_columns_ind, axis=1), d_ind,
-                np.sum(p_columns_ind, axis=1), d_ind,
-            )
             # The full p_i arrays have been hash-bound to the response packet;
             # release them before the 48-column solves so the live-set check
             # covers the independent L/AL pair plus the actual solve buffers.
             del p_columns_ind, p_images_ind
             gc.collect()
             solve_resident = (
-                rhs, reference, actual, a, h, d, ad, t, A_a, A_t,
-                selected_columns_ind, selected_images_ind, L_ind, AL_ind,
+                p3_resident + (selected_columns_ind, selected_images_ind)
             )
             L_field_y = L_field_facts = None
             L_field_values_ind = L_field_applied_ind = None
@@ -2854,14 +3792,14 @@ def run_p4_direction_diagnosis(
                 L_field_y, L_field_facts = solve_weighted(
                     L_ind, reference_ind, label=f"{stem}:P3_field",
                     resident=solve_resident,
-                    background=(local_records,),
+                    background=p2_background,
                 )
                 L_field_values_ind = L_ind @ L_field_y
                 L_field_applied_ind = AL_ind @ L_field_y
             L_residual_y, L_residual_facts = solve_svd(
                 AL_ind, rhs_ind, label=f"{stem}:P3_residual",
                 resident=solve_resident,
-                background=(local_records,),
+                background=p2_background,
             )
             L_residual_values_ind = L_ind @ L_residual_y
             L_residual_applied_ind = AL_ind @ L_residual_y
@@ -2883,6 +3821,20 @@ def run_p4_direction_diagnosis(
                     L_field_applied_ind, rhs, reference,
                     reference_mass_squared, reference_curl_squared,
                 )
+            p_i_original_mass_squared = (
+                None if L_field_facts is None else [
+                    float(value)
+                    for value in L_field_facts["original_mass_energy"][z_columns + 1:-1]
+                ]
+            )
+            p3_metric_association = {
+                "p_i_original_mass_squared": p_i_original_mass_squared,
+                "p_i_original_mass_energy_sum": (
+                    None if p_i_original_mass_squared is None
+                    else float(sum(p_i_original_mass_squared))
+                ),
+                "source": "P3 weighted_mgs original_mass_energy; P2 did not add duplicate M0 actions",
+            }
             L_contains_Z_gate = bool(
                 p3_candidates["L_residual"]["rho"]
                 <= candidate_facts["Z_residual"]["rho"] + 1.0e-9
@@ -2894,115 +3846,6 @@ def run_p4_direction_diagnosis(
                 )
             if not L_contains_Z_gate:
                 all_p3_gate = False
-            p2_stage_candidates = {
-                "c_ref": evaluate_candidate(
-                    "P2_c_ref", np.zeros(n4, dtype=np.complex128),
-                    np.zeros(p4_indices.size, dtype=np.complex128), rhs, reference,
-                    reference_mass_squared, reference_curl_squared,
-                ),
-                "c_ref_minus_a": evaluate_candidate(
-                    "P2_c_ref_minus_a", a, A_a[p4_indices], rhs, reference,
-                    reference_mass_squared, reference_curl_squared,
-                ),
-                "c_ref_minus_a_minus_d": evaluate_candidate(
-                    "P2_c_ref_minus_a_minus_d", a + d,
-                    (A_a + ad)[p4_indices], rhs, reference,
-                    reference_mass_squared, reference_curl_squared,
-                ),
-                "c_ref_minus_a_minus_d_plus_t": evaluate_candidate(
-                    "P2_c_ref_minus_a_minus_d_plus_t", a + d - t,
-                    (A_a + ad - A_t)[p4_indices], rhs, reference,
-                    reference_mass_squared, reference_curl_squared,
-                ),
-            }
-            d_mass_squared = pullback_metric_square(d, "mass")
-            d_curl_squared = pullback_metric_square(d, "curl")
-            a_mass_squared = pullback_metric_square(a, "mass")
-            a_curl_squared = pullback_metric_square(a, "curl")
-            t_mass_squared = pullback_metric_square(t, "mass")
-            t_curl_squared = pullback_metric_square(t, "curl")
-            correction = a + d - t
-            correction_mass_squared = pullback_metric_square(correction, "mass")
-            correction_curl_squared = pullback_metric_square(correction, "curl")
-
-            def metric_norm_record(mass_squared: float, curl_squared: float) -> dict[str, float]:
-                return {
-                    "mass_squared": float(mass_squared),
-                    "curl_squared": float(curl_squared),
-                    "mass_norm": float(np.sqrt(max(mass_squared, 0.0))),
-                    "curl_norm": float(np.sqrt(max(curl_squared, 0.0))),
-                }
-
-            global_physical_norms = {
-                "a": metric_norm_record(a_mass_squared, a_curl_squared),
-                "d": metric_norm_record(d_mass_squared, d_curl_squared),
-                "t": metric_norm_record(t_mass_squared, t_curl_squared),
-                "a_plus_d_minus_t": metric_norm_record(
-                    correction_mass_squared, correction_curl_squared,
-                ),
-            }
-            for metric_name in ("mass", "curl"):
-                term_norm_sum = sum(
-                    global_physical_norms[name][f"{metric_name}_norm"]
-                    for name in ("a", "d", "t")
-                )
-                correction_norm = global_physical_norms["a_plus_d_minus_t"][
-                    f"{metric_name}_norm"
-                ]
-                global_physical_norms[f"{metric_name}_cancellation"] = {
-                    "term_norm_sum": float(term_norm_sum),
-                    "combined_norm": float(correction_norm),
-                    "combined_over_term_sum": float(
-                        correction_norm / max(term_norm_sum, np.finfo(float).tiny)
-                    ),
-                }
-            p2_facts["p_i_euclidean_norms"] = p_i_euclidean_norms
-            p2_facts["p_i_sum_norm_over_d_norm"] = float(
-                sum(p_i_euclidean_norms)
-                / max(float(np.linalg.norm(d_ind)), np.finfo(float).tiny)
-            )
-            p2_facts["stage_errors"] = p2_stage_candidates
-            p2_facts["d_global_mass_squared"] = d_mass_squared
-            p2_facts["global_physical_norms"] = global_physical_norms
-            p2_facts["stage_metric_gate"] = bool(
-                all(item["finite"] for item in p2_stage_candidates.values())
-                and np.isfinite(d_mass_squared)
-            )
-            p2_facts["p_i_original_mass_squared"] = (
-                None if L_field_facts is None else [
-                    float(value)
-                    for value in L_field_facts["original_mass_energy"][z_columns + 1:-1]
-                ]
-            )
-            p2_facts["p_i_curl_squared"] = p_i_curl_squared
-            p2_facts["p_i_recomposition_relative"] = p_i_recomposition_relative
-            p2_facts["p_i_original_mass_energy_sum"] = (
-                None if p2_facts["p_i_original_mass_squared"] is None else
-                float(sum(p2_facts["p_i_original_mass_squared"]))
-            )
-            p2_facts["p_i_curl_energy_sum"] = float(sum(p_i_curl_squared))
-            p2_facts["p_i_mass_to_d_mass_ratio"] = (
-                None if p2_facts["p_i_original_mass_energy_sum"] is None else
-                float(p2_facts["p_i_original_mass_energy_sum"] / max(d_mass_squared, np.finfo(float).tiny))
-            )
-            p2_facts["p_i_curl_to_d_curl_ratio"] = float(
-                sum(p_i_curl_squared) / max(d_curl_squared, np.finfo(float).tiny)
-            )
-            if not p2_facts["stage_metric_gate"] or p_i_recomposition_relative > 1.0e-10:
-                all_local_gate = False
-            p2_facts["gate_pass"] = bool(
-                p2_facts["gate_pass"]
-                and p2_facts["stage_metric_gate"]
-                and p_i_recomposition_relative <= 1.0e-10
-            )
-            p2_facts["p_i_count"] = 42
-            p2_facts["p_i_coordinate_system"] = "p4_independent"
-            save(f"{stem}_p2_observation", {
-                "stem": stem, "rhs_values": rhs, "reference_values": reference,
-                "r_ref_values": r_ref, "a_values": a, "h_values": h,
-                "d_values": d, "A_d_values": ad, "t_values": t,
-                "local_blocks": local_records, "facts": p2_facts,
-            })
             save(f"{stem}_p3_local_directions", {
                 "stem": stem,
                 "response_packet": response_packet_name,
@@ -3017,6 +3860,7 @@ def run_p4_direction_diagnosis(
                     "L_field": L_field_facts,
                     "selector": selector_facts,
                     "selected_solve": selected_facts,
+                    "p2_metric_association": p3_metric_association,
                     "contains_Z": {
                         "gate": L_contains_Z_gate,
                         "limit": 1.0e-9,
@@ -3092,11 +3936,17 @@ def run_p4_direction_diagnosis(
             input_start = None
             current_counts = None
             current_timings = None
-            del solve_resident, L_ind, AL_ind, selected_columns_ind, selected_images_ind
+            del p3_resident, solve_resident, L_ind, AL_ind
+            del selected_columns_ind, selected_images_ind
             del L_field_values_ind, L_field_applied_ind
             del L_residual_values_ind, L_residual_applied_ind
             del selected_values_ind, selected_applied_ind
             del Z_ind, Q_ind, actual
+            if reuse_input:
+                reuse_packets["packets"].pop("p0_metric_equivalence", None)
+                reuse_packets["p0"] = None
+                reuse_packets["packets"].clear()
+                gc.collect()
             gc.collect()
 
         summary["stage_times"]["diagnosis_seconds"] = time.perf_counter() - controls_start
@@ -3112,11 +3962,7 @@ def run_p4_direction_diagnosis(
             source_clean=True,
             input_count=len(summary["inputs"]) == 3,
         )
-        summary["interface_blueprint"] = interface_blueprint()
         summary["gates"]["p0"] = True
-        summary["gates"]["interface_blueprint"] = (
-            summary["interface_blueprint"]["status"] == "COMPLETE"
-        )
 
         by_input = {item["stem"]: item["candidates"] for item in summary["inputs"]}
 
@@ -3158,52 +4004,132 @@ def run_p4_direction_diagnosis(
         total_b4 = summary["counts"]["bare_B4"] + sum(
             int(item["I4"]["counted_pc_outputs"]) for item in summary["inputs"]
         )
-        # Provisional total for the action-budget gate.  It is refreshed after
-        # the complete decision/summary structure is assembled below.
-        summary["stage_times"]["total_seconds"] = time.perf_counter() - build_start
-        count_gate = bool(
-            summary["counts"]["new_I4"] <= 3
-            and total_b4 <= 15
-            and summary["counts"]["A4"] <= 200
-            and summary["counts"]["M0_pullback"] + summary["counts"]["M0_direct_degree4"] <= 240
-            and summary["counts"]["curl_pullback"] + summary["counts"]["curl_direct_degree4"] <= 240
-            and summary["stage_times"]["total_seconds"] <= 7200.0
+
+        def action_count_gate(formal_elapsed: float) -> bool:
+            counts = summary["counts"]
+            return bool(
+                counts["attempted_I4"] <= 3
+                and counts["completed_I4"] <= 3
+                and counts["new_I4"] <= 3
+                and counts["attempted_B4"] <= 3
+                and counts["completed_B4"] <= 3
+                and counts["bare_B4"] <= 3
+                and total_b4 <= 15
+                and counts["A4"] <= 200
+                and counts["M0_pullback"] + counts["M0_direct_degree4"] <= 240
+                and counts["curl_pullback"] + counts["curl_direct_degree4"] <= 240
+                and formal_elapsed <= P4_DIAGNOSIS_WORKFLOW_SECONDS
+            )
+
+        # The continuation clock is the formal workflow budget.  The old
+        # formal/checker charge is carried separately and is never replaced by
+        # the worker's local perf_counter wall value.
+        update_time_budget("preliminary_action_gate")
+        formal_accounted_seconds = float(
+            summary["time_budget"]["formal_accounted_seconds"]
         )
+        summary["stage_times"]["total_seconds"] = time.perf_counter() - build_start
+        summary["stage_times"]["formal_accounted_seconds"] = formal_accounted_seconds
+        summary["counts"]["new_I4_attempted"] = (
+            summary["counts"]["attempted_I4"] - prior_counts["I4"]
+        )
+        summary["counts"]["new_I4_completed"] = (
+            summary["counts"]["completed_I4"] - prior_counts["I4"]
+        )
+        summary["counts"]["new_B4_attempted"] = (
+            summary["counts"]["attempted_B4"] - prior_counts["bare_B4"]
+        )
+        summary["counts"]["new_B4_completed"] = (
+            summary["counts"]["completed_B4"] - prior_counts["bare_B4"]
+        )
+        count_gate = action_count_gate(formal_accounted_seconds)
         summary["counts"]["total_B4"] = total_b4
         summary["gates"]["action_counts"] = count_gate
+
+        def optional_seconds(value: Any) -> float | None:
+            if value is None:
+                return None
+            try:
+                result = float(value)
+            except (TypeError, ValueError):
+                return None
+            return result if np.isfinite(result) and result >= 0.0 else None
+
+        def timing_value(item: dict[str, Any], key: str) -> float | None:
+            return optional_seconds(item.get("timings", {}).get(key))
+
         p3_Ap_i_seconds = [
-            float(item.get("timings", {}).get("p3_42_Ap_i_seconds", 0.0))
+            timing_value(item, "p3_42_Ap_i_seconds")
             for item in summary["inputs"]
         ]
         p3_A_t_seconds = [
-            float(item.get("timings", {}).get("p3_A_t_seconds", 0.0))
+            timing_value(item, "p3_A_t_seconds")
             for item in summary["inputs"]
         ]
         p2_p_i_curl_seconds = [
-            float(item.get("timings", {}).get("p2_42_p_i_curl_seconds", 0.0))
+            timing_value(item, "p2_42_p_i_curl_seconds")
             for item in summary["inputs"]
         ]
-        i4_seconds = [
-            float(
-                item.get("I4", {}).get("facts", {}).get(
-                    "actual_elapsed_seconds",
-                    item.get("I4", {}).get("facts", {}).get("seconds", 0.0),
-                ) or 0.0
+        i4_seconds = []
+        bare_seconds = []
+        selector_qr_seconds = []
+        for item in summary["inputs"]:
+            i4_facts = item.get("I4", {}).get("facts", {})
+            i4_cost = i4_facts.get("cost_delta", {})
+            i4_seconds.append(
+                None if i4_facts.get("timing_status")
+                or i4_cost.get("timing_status") == "unknown"
+                else optional_seconds(
+                    i4_facts.get("actual_elapsed_seconds", i4_facts.get("seconds"))
+                )
             )
-            for item in summary["inputs"]
+            bare_seconds.append(optional_seconds(item.get("P2", {}).get("bare_seconds")))
+            selector_qr_seconds.append(timing_value(item, "selector_seconds"))
+
+        selective_per_input = [
+            None if any(value is None for value in values) else float(sum(values))
+            for values in zip(
+                bare_seconds, p3_Ap_i_seconds, p3_A_t_seconds,
+                selector_qr_seconds, strict=True,
+            )
         ]
-        bare_seconds = [
-            float(item.get("P2", {}).get("bare_seconds", 0.0) or 0.0)
-            for item in summary["inputs"]
+        dual_known = {
+            stem: value for stem, value in zip(selected_stems, i4_seconds, strict=True)
+            if value is not None
+        }
+        selective_known = {
+            stem: value for stem, value in zip(
+                selected_stems, selective_per_input, strict=True,
+            )
+            if value is not None
+        }
+        cost_basis_stems = [
+            stem for stem in selected_stems[1:]
+            if stem in dual_known and stem in selective_known
         ]
-        selector_qr_seconds = [
-            float(item.get("timings", {}).get("selector_seconds", 0.0))
-            for item in summary["inputs"]
-        ]
+        dual_total = (
+            float(sum(i4_seconds)) if all(value is not None for value in i4_seconds)
+            else None
+        )
+        selective_total = (
+            float(sum(selective_per_input))
+            if all(value is not None for value in selective_per_input)
+            else None
+        )
+        dual_known_total = float(sum(dual_known[stem] for stem in cost_basis_stems))
+        selective_known_total = float(
+            sum(selective_known[stem] for stem in cost_basis_stems)
+        )
+        cost_basis_complete = cost_basis_stems == list(selected_stems[1:])
         cost_screen = {
             "dual_mass_scaled": {
                 "measured_i4_seconds_per_input": i4_seconds,
-                "measured_total_seconds": float(sum(i4_seconds)),
+                "measured_total_seconds": dual_total,
+                "measured_known_input_seconds": float(sum(dual_known.values())),
+                "unknown_input_stems": [
+                    stem for stem, value in zip(selected_stems, i4_seconds, strict=True)
+                    if value is None
+                ],
                 "fixed_diagonal_scaling": "one additional vector scaling per Krylov metric action; not separately timed",
             },
             "selective_multiblock": {
@@ -3211,29 +4137,39 @@ def run_p4_direction_diagnosis(
                 "measured_all_42_Ap_i_seconds_per_input": p3_Ap_i_seconds,
                 "measured_A_t_seconds_per_input": p3_A_t_seconds,
                 "measured_selector_seconds_per_input": selector_qr_seconds,
-                "measured_total_seconds": float(sum(
-                    bare + ap + at + selector
-                    for bare, ap, at, selector in zip(
-                        bare_seconds, p3_Ap_i_seconds, p3_A_t_seconds,
-                        selector_qr_seconds, strict=True,
-                    )
-                )),
+                "measured_total_seconds": selective_total,
+                "measured_known_input_seconds": float(sum(selective_known.values())),
+                "unknown_input_stems": [
+                    stem for stem, value in zip(
+                        selected_stems, selective_per_input, strict=True,
+                    ) if value is None
+                ],
                 "future_model": "one bare B4 plus all 42 A p_i images, A(-t), and reference-free selection/QR",
             },
-            "comparison_basis": "measured nested wall-clock seconds; fixed-D scaling is not assigned synthetic seconds",
+            "comparison_basis": {
+                "definition": "measured nested wall-clock seconds; fixed-D scaling is not assigned synthetic seconds",
+                "complete_all_input_totals_available": (
+                    dual_total is not None and selective_total is not None
+                ),
+                "qualified_common_input_stems": cost_basis_stems,
+                "requires_02_and_09_measured": True,
+                "02_and_09_complete": cost_basis_complete,
+                "dual_known_common_seconds": dual_known_total,
+                "selective_known_common_seconds": selective_known_total,
+            },
         }
         if not all(summary["gates"].get(key, False) for key in (
                 "p0", "mapping", "metric", "capture", "local_identities", "p1", "p3",
-                "interface_blueprint",
+                "interface_structure",
                 "input_count", "action_counts")):
             primary = "IMPLEMENTATION_OR_METRIC_REPAIR"
             confidence = "high"
         elif d_strong and s_strong:
             if (
-                np.isfinite(cost_screen["dual_mass_scaled"]["measured_total_seconds"])
-                and np.isfinite(cost_screen["selective_multiblock"]["measured_total_seconds"])
-                and cost_screen["selective_multiblock"]["measured_total_seconds"]
-                < cost_screen["dual_mass_scaled"]["measured_total_seconds"]
+                cost_basis_complete
+                and np.isfinite(dual_known_total)
+                and np.isfinite(selective_known_total)
+                and selective_known_total < dual_known_total
             ):
                 primary = "SELECTIVE_MULTIPRECONDITIONED_P4"
             else:
@@ -3293,10 +4229,23 @@ def run_p4_direction_diagnosis(
             },
             "interface_blueprint": summary["interface_blueprint"],
         }
+        summary["stage_times"]["summary_construction_seconds"] = (
+            time.perf_counter() - build_start - summary["stage_times"]["total_seconds"]
+        )
+        # Charge the final summary construction on the same dual-clock budget
+        # used by every safe point.  The formal gate is based on this carried
+        # charge, not on a local perf_counter value that omits the old run.
+        update_time_budget("final_summary")
+        formal_accounted_seconds = float(
+            summary["time_budget"]["formal_accounted_seconds"]
+        )
+        summary["stage_times"]["total_seconds"] = time.perf_counter() - build_start
+        summary["stage_times"]["formal_accounted_seconds"] = formal_accounted_seconds
+        summary["gates"]["action_counts"] = action_count_gate(formal_accounted_seconds)
         all_gate_pass = bool(
             all(summary["gates"].get(key, False) for key in (
                 "p0", "mapping", "metric", "capture", "local_identities", "p1", "p3",
-                "interface_blueprint",
+                "interface_structure",
                 "input_count", "action_counts",
             ))
         )
@@ -3307,18 +4256,6 @@ def run_p4_direction_diagnosis(
             ),
             gate_pass=all_gate_pass,
         )
-        summary["stage_times"]["summary_construction_seconds"] = (
-            time.perf_counter() - build_start - summary["stage_times"]["total_seconds"]
-        )
-        # The final wall-clock value is recorded only after all structural
-        # facts and the decision have been built.  If summary construction
-        # itself crossed the workflow limit, revoke the action-count gate and
-        # the overall pass before writing the final packet.
-        summary["stage_times"]["total_seconds"] = time.perf_counter() - build_start
-        if summary["stage_times"]["total_seconds"] > 7200.0:
-            summary["gates"]["action_counts"] = False
-            summary["gate_pass"] = False
-            summary["status"] = "P4_DIRECTION_DIAGNOSIS_GATED_FAILURE"
         save("p4_direction_diagnosis_v13", summary)
         save("p4_direction_summary", summary)
         return summary

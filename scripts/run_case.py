@@ -66,6 +66,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument('--macro-v12-output', type=Path)
     parser.add_argument('--p4-direction-output', type=Path)
     parser.add_argument(
+        '--p4-direction-reuse-root', type=Path,
+        help='hash-bound prior P4 diagnosis directory whose qualified packets may be reused',
+    )
+    parser.add_argument(
         '--macro-v12-inventory', type=Path,
         default=Path('benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json'),
     )
@@ -135,6 +139,7 @@ def main(argv: list[str] | None = None) -> int:
                 input=args.input_path, inventory=args.macro_v12_inventory,
                 output=output, source_sha=source_sha, target='lo',
                 p4_direction_diagnosis=True,
+                p4_direction_reuse_root=args.p4_direction_reuse_root,
             ))
             print(json.dumps(result, sort_keys=True, separators=(',', ':')))
             return 0 if result.get('classification') == 'COMPLETED' else 3
