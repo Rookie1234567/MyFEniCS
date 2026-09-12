@@ -167,9 +167,11 @@
       "new_errors": 0,
       "failure": "historical Task038 missing memory_first_small_v2_checker.json; identical before/after",
       "log": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_documentation_tests.log",
-      "log_sha256": "443bc2e5257e900f38b5609923b4b3a7a6be9a7a071b855f6a93dc39fb6890b4",
+      "log_sha256": "b6c0985fbab92a3c37e5932e5132da7b7d8c4f8aa55304dda1c6539824aa40c6",
       "baseline_record": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_documentation_baseline.json",
-      "baseline_record_sha256": "fed4c38ba47701dc0e003925d59376f2107392e6d75e4f6920eaffaf4445cd86"
+      "baseline_record_sha256": "fed4c38ba47701dc0e003925d59376f2107392e6d75e4f6920eaffaf4445cd86",
+      "original_log_sha256": "443bc2e5257e900f38b5609923b4b3a7a6be9a7a071b855f6a93dc39fb6890b4",
+      "log_copy_note": "Only trailing whitespace on a blank line was normalized in the tracked display copy. Original bytes remain in continuation_engineering/root_final_documentation_tests.log and in the preceding evidence commit; outcome unchanged, no test rerun."
     }
   },
   "historical_preservation": {

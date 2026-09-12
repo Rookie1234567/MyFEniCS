@@ -4,7 +4,7 @@ ___________________ test_development_model_registry_contract ___________________
 
     def test_development_model_registry_contract():
         audit = check_registry()
-    
+
 >       assert audit["status"] == "pass", audit["errors"]
 E       AssertionError: ['missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json']
 E       assert 'fail' == 'pass'
