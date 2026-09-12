@@ -261,6 +261,40 @@ class _KspContractStub:
         return self.iterations
 
 
+class _BufferRecordingComm:
+    def __init__(self, comm) -> None:
+        self.comm = comm
+        self.scalar_allreduce_count = 0
+        self.buffer_allreduce_count = 0
+
+    def allreduce(self, value, *, op):
+        self.scalar_allreduce_count += 1
+        return self.comm.allreduce(value, op=op)
+
+    def Allreduce(self, send, receive, *, op):
+        self.buffer_allreduce_count += 1
+        self.comm.Allreduce(send, receive, op=op)
+
+
+class _RepeatedPcKsp:
+    def __init__(self, owner: SideBalancedInverse) -> None:
+        self.owner = owner
+
+    def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        work = target.duplicate()
+        try:
+            self.owner._apply_balanced_pc(source, work)
+            self.owner._apply_balanced_pc(source, target)
+        finally:
+            work.destroy()
+
+    def getConvergedReason(self) -> int:
+        return 1
+
+    def getIterationNumber(self) -> int:
+        return 1
+
+
 class _FullAction:
     def __init__(self, size: int) -> None:
         self.matrix, self.context = _scale_matrix(size, 1.0)
@@ -504,6 +538,67 @@ def test_side_inverse_dense_batch_bound_and_true_error_propagation() -> None:
     finally:
         source_dense.destroy()
         target_dense.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+def test_side_inverse_rhs_timing_uses_one_buffer_for_multiple_pc_calls() -> None:
+    audit_records: list[dict[str, object]] = []
+    inverse, owned = _build_fixture(audit_callback=audit_records.append)
+    operator = owned["operator"]
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    target = operator.createVecLeft()
+    coupling = inverse._coupling
+    assert coupling is not None
+    real_coupling_apply = coupling.apply
+    operation_facts: list[dict[str, float]] = []
+
+    def spy_coupling_apply(value: PETSc.Vec) -> PETSc.Vec:
+        result = real_coupling_apply(value)
+        operation_facts.append(
+            dict(coupling.last_apply_facts["operation_seconds"])
+        )
+        return result
+
+    coupling.apply = spy_coupling_apply  # type: ignore[method-assign]
+    real_ksp = inverse._ksp
+    real_comm = inverse._comm
+    recording_comm = _BufferRecordingComm(real_comm)
+    inverse._ksp = _RepeatedPcKsp(inverse)  # type: ignore[assignment]
+    inverse._comm = recording_comm  # type: ignore[assignment]
+    try:
+        inverse.apply(source, target)
+        record = inverse.diagnostics["last_apply"]
+        timing = record["operation_seconds"]
+        assert record["status"] == "KSP_CONVERGED"
+        assert record["counts"]["delta"]["pc"] == 2
+        assert record["counts"]["delta"]["Q"] == 4
+        assert record["counts"]["delta"]["H6"] == 2
+        assert record["counts"]["delta"]["A6"] == 4
+        assert owned["p4_factor"].solve_count == 4
+        assert owned["h6"].apply_count == 2
+        assert owned["full_action"].context.apply_count == 4
+        assert owned["operator_context"].apply_count == 1
+        assert recording_comm.scalar_allreduce_count == 1
+        assert recording_comm.buffer_allreduce_count == 1
+        assert timing["status"] == "measured_rank_max"
+        assert set(timing["max_rank_accumulated_seconds"]) == {"Q", "H6", "A6"}
+        assert "max_rank_total_seconds" not in timing
+        assert timing["max_rank_uncovered_seconds"] >= 0.0
+        assert len(operation_facts) == 2
+        for name in ("Q", "H6", "A6"):
+            assert timing["per_rank_accumulated_seconds"][name] == pytest.approx(
+                sum(facts[name] for facts in operation_facts),
+                rel=1.0e-12,
+                abs=1.0e-12,
+            )
+        assert len(audit_records) == 1
+    finally:
+        coupling.apply = real_coupling_apply  # type: ignore[method-assign]
+        inverse._ksp = real_ksp
+        inverse._comm = real_comm
+        source.destroy()
+        target.destroy()
         inverse.destroy()
         operator.destroy()
 

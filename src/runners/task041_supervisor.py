@@ -16,7 +16,6 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable, Mapping
-from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -476,6 +475,7 @@ def _run_phase(
     cumulative_compute_limit_seconds: float | None = None,
     global_swap_baseline: Mapping[str, Any] | None = None,
     partial_phase_results: dict[str, Any] | None = None,
+    enforce_time_stops: bool = True,
 ) -> dict[str, Any]:
     if phase_root.exists():
         raise Task041SupervisorError(
@@ -484,7 +484,24 @@ def _run_phase(
             stage=f"{phase}_root_preflight",
         )
     phase_started = monotonic()
-    samples: list[dict[str, Any]] = []
+    sample_count = 0
+    smaps_complete_sample_count = 0
+    pss_uss_missing_sample_count = 0
+    last_sample: dict[str, Any] | None = None
+    peak_values: dict[str, int] = {}
+    minimum_values: dict[str, int] = {}
+    pid_peaks: dict[str, int] = {}
+    global_peak_used: int | None = None
+    global_max_used_delta: int | None = None
+    global_max_pswpin_delta: int | None = None
+    global_max_pswpout_delta: int | None = None
+    sample_time_previous: float | None = None
+    sample_gap_count = 0
+    sample_gap_min: float | None = None
+    sample_gap_max: float | None = None
+    sample_gap_total = 0.0
+    cgroup_ancestor_limit_states: set[str] = set()
+    before_rss: int | None = None
     warning_reached = False
     termination_reason: str | None = None
     termination: dict[str, Any] | None = None
@@ -495,6 +512,90 @@ def _run_phase(
     baseline = None if global_swap_baseline is None else dict(global_swap_baseline)
     worker_process_group_pid: int | None = None
     phase_end_sample: dict[str, Any] | None = None
+
+    def _record_sample(record: dict[str, Any], *, running: bool = False) -> None:
+        nonlocal before_rss
+        nonlocal last_sample, sample_count
+        nonlocal smaps_complete_sample_count, pss_uss_missing_sample_count
+        nonlocal sample_time_previous, sample_gap_count
+        nonlocal sample_gap_min, sample_gap_max, sample_gap_total
+        nonlocal global_peak_used, global_max_used_delta
+        nonlocal global_max_pswpin_delta, global_max_pswpout_delta
+
+        sample_count += 1
+        last_sample = record
+        for name in (
+            "memory_authority_bytes",
+            "process_tree_rss_bytes",
+            "pss_bytes",
+            "uss_bytes",
+            "process_tree_swap_bytes",
+            "dedicated_cgroup_swap_bytes",
+            "swap_bytes",
+            "cgroup_memory_peak_bytes",
+        ):
+            value = record.get(name)
+            if isinstance(value, int):
+                peak_values[name] = max(peak_values.get(name, value), value)
+        for name in (
+            "host_memavailable_bytes",
+            "cgroup_memory_headroom_bytes",
+            "cgroup_ancestor_memory_headroom_bytes",
+        ):
+            value = record.get(name)
+            if isinstance(value, int):
+                minimum_values[name] = min(minimum_values.get(name, value), value)
+        if running:
+            value = record.get("process_tree_rss_bytes")
+            if (
+                record.get("authority_kind") == "process_tree"
+                and isinstance(value, int)
+                and value > 0
+            ):
+                before_rss = value
+        values = record.get("process_tree_rss_by_pid_bytes")
+        if isinstance(values, Mapping):
+            for pid, value in values.items():
+                if isinstance(value, int):
+                    pid_peaks[str(pid)] = max(pid_peaks.get(str(pid), 0), value)
+        value = record.get("global_swap_used_bytes")
+        if isinstance(value, int):
+            global_peak_used = (
+                value if global_peak_used is None else max(global_peak_used, value)
+            )
+        for name, current in (
+            ("global_swap_used_bytes_delta", global_max_used_delta),
+            ("global_pswpin_pages_delta", global_max_pswpin_delta),
+            ("global_pswpout_pages_delta", global_max_pswpout_delta),
+        ):
+            value = record.get(name)
+            if isinstance(value, int):
+                current = value if current is None else max(current, value)
+            if name == "global_swap_used_bytes_delta":
+                global_max_used_delta = current
+            elif name == "global_pswpin_pages_delta":
+                global_max_pswpin_delta = current
+            else:
+                global_max_pswpout_delta = current
+        if isinstance(record.get("pss_bytes"), int) and isinstance(
+            record.get("uss_bytes"), int
+        ):
+            smaps_complete_sample_count += 1
+        if record.get("pss_bytes") is None or record.get("uss_bytes") is None:
+            pss_uss_missing_sample_count += 1
+        state = record.get("cgroup_ancestor_hard_limit_state")
+        if isinstance(state, str):
+            cgroup_ancestor_limit_states.add(state)
+        sample_time = record.get("sample_elapsed_seconds")
+        if isinstance(sample_time, (int, float)) and math.isfinite(float(sample_time)):
+            sample_time = float(sample_time)
+            if sample_time_previous is not None and sample_time >= sample_time_previous:
+                gap = sample_time - sample_time_previous
+                sample_gap_count += 1
+                sample_gap_total += gap
+                sample_gap_min = gap if sample_gap_min is None else min(sample_gap_min, gap)
+                sample_gap_max = gap if sample_gap_max is None else max(sample_gap_max, gap)
+            sample_time_previous = sample_time
 
     def _annotate_sample(
         record: dict[str, Any], *, sample_role: str, worker_pid: int
@@ -565,7 +666,7 @@ def _run_phase(
                     else None
                 )
                 if authority_kind is None:
-                    if samples:
+                    if sample_count:
                         transition_deadline = (
                             now + TASK041_TERMINAL_SAMPLE_TRANSITION_BUDGET_SECONDS
                         )
@@ -634,7 +735,7 @@ def _run_phase(
                     sample_role="phase_running",
                     worker_pid=process.pid,
                 )
-                samples.append(record)
+                _record_sample(record, running=True)
                 _append_jsonl(memory_stages_path, record)
                 memory = record["memory_authority_bytes"]
                 warning_reached = warning_reached or memory >= warning_memory_bytes
@@ -669,16 +770,21 @@ def _run_phase(
                 ):
                     termination_reason = "cgroup_headroom_floor"
                 elif (
-                    cumulative_compute_limit_seconds is not None
+                    enforce_time_stops
+                    and cumulative_compute_limit_seconds is not None
                     and cumulative_compute_used_seconds + (now - phase_started)
                     >= cumulative_compute_limit_seconds
                 ):
                     termination_reason = "cumulative_wall_timeout"
                 elif (
-                    (now - phase_started)
-                    if phase_elapsed_timeout
-                    else (now - workflow_started)
-                ) >= timeout_seconds:
+                    enforce_time_stops
+                    and (
+                        (now - phase_started)
+                        if phase_elapsed_timeout
+                        else (now - workflow_started)
+                    )
+                    >= timeout_seconds
+                ):
                     termination_reason = "wall_timeout"
                 if termination_reason is not None:
                     cleanup_attempted = True
@@ -725,20 +831,9 @@ def _run_phase(
                 sample_role="phase_end_public_root",
                 worker_pid=process.pid,
             )
-            samples.append(phase_end_sample)
+            _record_sample(phase_end_sample)
             _append_jsonl(memory_stages_path, phase_end_sample)
 
-        before_rss = next(
-            (
-                sample["process_tree_rss_bytes"]
-                for sample in reversed(samples)
-                if sample.get("sample_role") == "phase_running"
-                and sample.get("authority_kind") == "process_tree"
-                and isinstance(sample.get("process_tree_rss_bytes"), int)
-                and sample["process_tree_rss_bytes"] > 0
-            ),
-            None,
-        )
         after_rss = (
             phase_end_sample.get("process_tree_rss_bytes")
             if phase_end_sample is not None
@@ -776,6 +871,7 @@ def _run_phase(
                 "wall_seconds": workflow_wall_seconds,
                 "phase_wall_seconds": phase_wall_seconds,
                 "timeout_scope": "phase" if phase_elapsed_timeout else "workflow",
+                "time_stop_enforced": bool(enforce_time_stops),
                 "limits": phase_record_limits,
                 "returncode": returncode,
                 "termination_reason": termination_reason,
@@ -825,7 +921,9 @@ def _run_phase(
                             cumulative_compute_limit_seconds
                         ),
                     },
-                    "sample_count": len(samples),
+                    "time_stop_enforced": bool(enforce_time_stops),
+                    "sample_count": sample_count,
+                    "last_sample": last_sample,
                     "termination_reason": termination_reason or "phase_exception",
                     "termination": termination,
                     "cleanup_attempted": cleanup_attempted,
@@ -845,53 +943,14 @@ def _run_phase(
         raise
 
     def _peak(name: str) -> int | None:
-        values = [row[name] for row in samples if isinstance(row.get(name), int)]
-        return max(values) if values else None
-
-    pid_peaks: dict[str, int] = {}
-    for row in samples:
-        values = row.get("process_tree_rss_by_pid_bytes")
-        if not isinstance(values, Mapping):
-            continue
-        for pid, value in values.items():
-            if isinstance(value, int):
-                pid_peaks[str(pid)] = max(pid_peaks.get(str(pid), 0), value)
+        return peak_values.get(name)
 
     def _minimum(name: str) -> int | None:
-        values = [row[name] for row in samples if isinstance(row.get(name), int)]
-        return min(values) if values else None
+        return minimum_values.get(name)
 
-    global_values = [
-        row["global_swap_used_bytes"]
-        for row in samples
-        if isinstance(row.get("global_swap_used_bytes"), int)
-    ]
-    global_used_deltas = [
-        row["global_swap_used_bytes_delta"]
-        for row in samples
-        if isinstance(row.get("global_swap_used_bytes_delta"), int)
-    ]
-    global_pswpin_deltas = [
-        row["global_pswpin_pages_delta"]
-        for row in samples
-        if isinstance(row.get("global_pswpin_pages_delta"), int)
-    ]
-    global_pswpout_deltas = [
-        row["global_pswpout_pages_delta"]
-        for row in samples
-        if isinstance(row.get("global_pswpout_pages_delta"), int)
-    ]
-    sample_times = [
-        float(row["sample_elapsed_seconds"])
-        for row in samples
-        if isinstance(row.get("sample_elapsed_seconds"), (int, float))
-        and math.isfinite(float(row["sample_elapsed_seconds"]))
-    ]
-    sample_gaps = [
-        later - earlier
-        for earlier, later in pairwise(sample_times)
-        if later >= earlier
-    ]
+    sample_gap_mean = (
+        sample_gap_total / sample_gap_count if sample_gap_count else None
+    )
 
     return {
         "phase": phase,
@@ -902,13 +961,10 @@ def _run_phase(
         "phase_wall_seconds": phase_wall_seconds,
         "workflow_wall_seconds": workflow_wall_seconds,
         "timeout_scope": "phase" if phase_elapsed_timeout else "workflow",
+        "time_stop_enforced": bool(enforce_time_stops),
         "limits": phase_record_limits,
-        "sample_count": len(samples),
-        "smaps_complete_sample_count": sum(
-            isinstance(sample.get("pss_bytes"), int)
-            and isinstance(sample.get("uss_bytes"), int)
-            for sample in samples
-        ),
+        "sample_count": sample_count,
+        "smaps_complete_sample_count": smaps_complete_sample_count,
         "resource_sampling_semantics": (
             "RSS/VmSwap and dedicated cgroup memory/swap are sampled every poll; "
             "PSS/USS are sparse diagnostics."
@@ -918,21 +974,16 @@ def _run_phase(
             "rss_swap_interval_seconds": float(poll_interval),
             "sample_timestamp_basis": "monotonic workflow elapsed seconds",
             "sample_timestamp_gap_seconds": {
-                "count": len(sample_gaps),
-                "min": min(sample_gaps) if sample_gaps else None,
-                "max": max(sample_gaps) if sample_gaps else None,
-                "mean": (
-                    sum(sample_gaps) / len(sample_gaps) if sample_gaps else None
-                ),
+                "count": sample_gap_count,
+                "min": sample_gap_min,
+                "max": sample_gap_max,
+                "mean": sample_gap_mean,
             },
             "pss_uss_interval_seconds": getattr(
                 sample_factory, "smaps_interval_seconds", None
             ),
             "pss_uss_semantics": "sparse; missing samples remain not_measured",
-            "pss_uss_missing_sample_count": sum(
-                row.get("pss_bytes") is None or row.get("uss_bytes") is None
-                for row in samples
-            ),
+            "pss_uss_missing_sample_count": pss_uss_missing_sample_count,
         },
         "warning_reached": warning_reached,
         "termination_reason": termination_reason,
@@ -962,6 +1013,7 @@ def _run_phase(
         "worker_process_group_pid": worker_process_group_pid,
         "worker_process_group_gone": group_gone,
         "phase_end_sample": phase_end_sample,
+        "last_sample": last_sample,
         "process_tree_pid_peak_rss_bytes": pid_peaks,
         "minimum_host_memavailable_bytes": _minimum("host_memavailable_bytes"),
         "minimum_cgroup_memory_headroom_bytes": _minimum(
@@ -970,13 +1022,7 @@ def _run_phase(
         "minimum_cgroup_ancestor_memory_headroom_bytes": _minimum(
             "cgroup_ancestor_memory_headroom_bytes"
         ),
-        "cgroup_ancestor_limit_states": sorted(
-            {
-                row.get("cgroup_ancestor_hard_limit_state")
-                for row in samples
-                if row.get("cgroup_ancestor_hard_limit_state") is not None
-            }
-        ),
+        "cgroup_ancestor_limit_states": sorted(cgroup_ancestor_limit_states),
         "cgroup_history_peak_bytes": _peak("cgroup_memory_peak_bytes"),
         "global_swap": {
             "baseline_used_bytes": (
@@ -984,14 +1030,10 @@ def _run_phase(
                 if baseline is not None
                 else None
             ),
-            "peak_used_bytes": max(global_values) if global_values else None,
-            "new_used_bytes": max(global_used_deltas) if global_used_deltas else None,
-            "pswpin_delta_pages": (
-                max(global_pswpin_deltas) if global_pswpin_deltas else None
-            ),
-            "pswpout_delta_pages": (
-                max(global_pswpout_deltas) if global_pswpout_deltas else None
-            ),
+            "peak_used_bytes": global_peak_used,
+            "new_used_bytes": global_max_used_delta,
+            "pswpin_delta_pages": global_max_pswpin_delta,
+            "pswpout_delta_pages": global_max_pswpout_delta,
             "semantics": "shared-host diagnostic; not the job swap authority",
         },
     }
@@ -1599,6 +1641,7 @@ def run_task041_public_supervisor(
     producer_packet_root: str | Path | None = None,
     legacy_native_packet_descriptor: str | Path | None = None,
     compute_wall_ledger_path: str | Path | None = None,
+    disable_time_stop: bool = False,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -1661,6 +1704,37 @@ def run_task041_public_supervisor(
         shortwave = identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS
         balh = identity["model_id"] in TASK041_BALH_MODEL_IDS
         legacy_native = legacy_native_packet_descriptor is not None
+        if balh:
+            from benchmarks.task041_balh_workflow import (
+                TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+                task041_balh_time_stop_override_record,
+            )
+
+            if disable_time_stop and (
+                identity["model_id"] != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+                or producer_packet_root is None
+                and not legacy_native
+            ):
+                raise Task041SupervisorError(
+                    "time-stop override requires a reused 5 nm BAL_H candidate",
+                    classification="task041_identity_failure",
+                    stage="time_stop_override",
+                )
+            result["time_stop_override"] = (
+                task041_balh_time_stop_override_record(disable_time_stop)
+                | {
+                    "model_id": identity["model_id"],
+                    "run_id": identity.get("run_id"),
+                    "source_sha": source_sha,
+                    "origin": "run_case_cli",
+                }
+            )
+        elif disable_time_stop:
+            raise Task041SupervisorError(
+                "time-stop override is limited to Task041 BAL_H profiles",
+                classification="task041_identity_failure",
+                stage="time_stop_override",
+            )
         if producer_packet_root is not None and not balh:
             raise Task041SupervisorError(
                 "producer packet reuse is enabled only for Task041 side BAL_H profiles",
@@ -1731,7 +1805,7 @@ def run_task041_public_supervisor(
                     "derived_allowance_margin_seconds"
                 ),
             }
-            if remaining <= 0.0:
+            if remaining <= 0.0 and not disable_time_stop:
                 raise Task041SupervisorError(
                     "Task041 cumulative compute wall budget is exhausted",
                     classification="cumulative_wall_timeout",
@@ -2006,6 +2080,7 @@ def run_task041_public_supervisor(
                 ),
                 global_swap_baseline=global_swap_baseline if balh else None,
                 partial_phase_results=result["phase_results"],
+                enforce_time_stops=True,
             )
         producer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
             producer_root
@@ -2105,6 +2180,7 @@ def run_task041_public_supervisor(
                     packet.get("producer_source_sha"),
                     packet_origin=packet.get("packet_origin"),
                     legacy_native_binding=packet.get("legacy_native_binding"),
+                    disable_time_stop=disable_time_stop,
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -2209,6 +2285,7 @@ def run_task041_public_supervisor(
             ),
             global_swap_baseline=global_swap_baseline if balh else None,
             partial_phase_results=result["phase_results"],
+            enforce_time_stops=not disable_time_stop if balh else True,
         )
         consumer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
             consumer_root
@@ -2599,6 +2676,7 @@ def run_task041_public_supervisor(
                 "sum of current non-reused producer/consumer phase wall; "
                 "MPI phase wall counted once and read/wait outside phases excluded"
             ),
+            "time_stop_override": result.get("time_stop_override"),
             "phase_sampling": {
                 name: phase.get("sampling")
                 for name, phase in result["phase_results"].items()

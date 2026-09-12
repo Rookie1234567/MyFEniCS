@@ -221,6 +221,90 @@ def test_task041_balh_scripts_run_case_reaches_public_launcher(monkeypatch):
     assert captured["kwargs"]["producer_packet_root"] is None
 
 
+def test_task041_balh_time_stop_override_is_forwarded_only_to_5nm_candidate(
+    tmp_path, monkeypatch
+):
+    captured = {}
+    from benchmarks import task041_balh_workflow
+
+    def fake_launch(specification, **kwargs):
+        captured["model_id"] = specification.identity["model_id"]
+        captured["kwargs"] = kwargs
+        return {"result_classification": "worker_exit0"}
+
+    monkeypatch.setattr("src.runners.task038_launcher.launch_specification", fake_launch)
+    five_nm_candidate = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+    )
+    packet_root = tmp_path / "producer"
+    assert run_case.main(
+        [
+            str(five_nm_candidate),
+            "--producer-packet-root",
+            str(packet_root),
+            "--task041-balh-candidate-disable-time-stop",
+        ]
+    ) == 0
+    assert captured["model_id"] == "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8"
+    assert captured["kwargs"]["disable_time_stop"] is True
+    assert captured["kwargs"]["producer_packet_root"] == packet_root
+    worker_command = build_task041_balh_candidate_consumer_command(
+        "python",
+        _specification(five_nm_candidate),
+        tmp_path / "manifest.json",
+        tmp_path / "identity.json",
+        "d" * 64,
+        tmp_path / "worker",
+        "c" * 40,
+        "a" * 40,
+        disable_time_stop=True,
+    )
+    assert "--task041-balh-candidate-disable-time-stop" in worker_command
+    worker_args = worker_command[worker_command.index("--worker") :]
+    parsed_worker_args = task041_balh_workflow._parser().parse_args(worker_args)
+    assert parsed_worker_args.task041_balh_candidate_disable_time_stop is True
+
+    shortwave_candidate = next(
+        path for path in BALH_INPUTS if "13p5nm" in path.name and "balh" in path.name
+    )
+    assert run_case.main(
+        [
+            str(shortwave_candidate),
+            "--producer-packet-root",
+            str(packet_root),
+            "--task041-balh-candidate-disable-time-stop",
+        ]
+    ) == 2
+
+
+def test_task041_balh_worker_time_override_keeps_memory_and_swap_gates(monkeypatch):
+    from benchmarks import task041_exact_side_workflow as worker
+
+    limits = {"hard_memory_bytes": 1000, "timeout_seconds": 43200}
+    monkeypatch.setattr(worker.time, "monotonic", lambda: 43201.0)
+    worker._check_resource(
+        {"memory_authority_bytes": 100, "job_no_swap": True},
+        0.0,
+        limits,
+        enforce_time_stop=False,
+    )
+    with pytest.raises(worker.Task041ModePrepError, match="hard RSS"):
+        worker._check_resource(
+            {"memory_authority_bytes": 1000, "job_no_swap": True},
+            0.0,
+            limits,
+            enforce_time_stop=False,
+        )
+    with pytest.raises(worker.Task041ModePrepError, match="swap"):
+        worker._check_resource(
+            {"memory_authority_bytes": 100, "job_no_swap": False},
+            0.0,
+            limits,
+            enforce_time_stop=False,
+        )
+
+
 def test_task041_balh_early_identity_failure_keeps_error_classification(tmp_path):
     specification = _specification(
         REPOSITORY_ROOT

@@ -186,6 +186,7 @@ class SideBalancedInverse:
         self._total_apply_seconds = 0.0
         self._last_apply: dict[str, Any] = {}
         self._last_coupling_failure: dict[str, Any] | None = None
+        self._rhs_operation_seconds = {name: 0.0 for name in ("Q", "H6", "A6")}
         self._cumulative_counts: dict[str, int | None] = {
             "side_A": _context_apply_count(operator),
             "pc": 0,
@@ -730,6 +731,15 @@ class SideBalancedInverse:
                     )
                 self._last_coupling_failure = failure
                 raise
+            finally:
+                operation_seconds = self._coupling.last_apply_facts.get(
+                    "operation_seconds", {}
+                )
+                if isinstance(operation_seconds, Mapping):
+                    for name in self._rhs_operation_seconds:
+                        value = operation_seconds.get(name)
+                        if isinstance(value, (int, float)) and np.isfinite(value):
+                            self._rhs_operation_seconds[name] += float(value)
             self._j_count += 1
             active_output = extract_full_p6_to_active_trace(
                 self._condensed,
@@ -774,6 +784,46 @@ class SideBalancedInverse:
         finally:
             operator_output.destroy()
             residual.destroy()
+
+    def _rhs_operation_timing(
+        self, local_elapsed: float, *, reduce: bool
+    ) -> dict[str, Any]:
+        local = {
+            name: float(value) for name, value in self._rhs_operation_seconds.items()
+        }
+        local_uncovered = max(0.0, float(local_elapsed) - sum(local.values()))
+        if not reduce:
+            return {
+                "status": "local_only_after_exception",
+                "per_rank_accumulated_seconds": local,
+                "per_rank_uncovered_seconds": local_uncovered,
+                "max_rank_accumulated_seconds": None,
+                "max_rank_uncovered_seconds": None,
+                "remaining_diagnostics_seconds": None,
+            }
+        local_values = np.asarray(
+            [local[name] for name in ("Q", "H6", "A6")] + [local_uncovered],
+            dtype=np.float64,
+        )
+        max_values = np.empty_like(local_values)
+        self._comm.Allreduce(local_values, max_values, op=MPI.MAX)
+        max_rank = {
+            name: float(value)
+            for name, value in zip(("Q", "H6", "A6"), max_values[:3])
+        }
+        return {
+            "status": "measured_rank_max",
+            "per_rank_accumulated_seconds": local,
+            "per_rank_uncovered_seconds": local_uncovered,
+            "max_rank_accumulated_seconds": max_rank,
+            "max_rank_uncovered_seconds": float(max_values[3]),
+            "remaining_diagnostics_seconds": float(max_values[3]),
+            "semantics": (
+                "all PC applies in this RHS are accumulated per rank, then one "
+                "MPI.MAX buffer reduction is used; component maxima are not summed "
+                "as wall and uncovered time is reduced independently"
+            ),
+        }
 
     def _count_snapshot(self) -> dict[str, int | None]:
         if self._operator is None:
@@ -822,6 +872,9 @@ class SideBalancedInverse:
         self._apply_count += 1
         before = self._count_snapshot()
         started = perf_counter()
+        self._rhs_operation_seconds = {
+            name: 0.0 for name in ("Q", "H6", "A6")
+        }
         self._last_coupling_failure = None
         rhs_norm: Any = "not_measured"
         reason: int | None = None
@@ -829,6 +882,7 @@ class SideBalancedInverse:
         solve_started = False
         ksp_positive = False
         zero_rhs = False
+        operation_timing: dict[str, Any] = {"status": "not_measured"}
         residual_audit: dict[str, Any] = {
             "rhs_norm": "not_measured",
             "solution_norm": "not_measured",
@@ -860,9 +914,9 @@ class SideBalancedInverse:
                 if not zero_rhs
                 else residual_audit["residual_norm"] == 0.0
             )
-            elapsed = float(
-                self._comm.allreduce(perf_counter() - started, op=MPI.MAX)
-            )
+            local_elapsed = float(perf_counter() - started)
+            elapsed = float(self._comm.allreduce(local_elapsed, op=MPI.MAX))
+            operation_timing = self._rhs_operation_timing(local_elapsed, reduce=True)
             after = self._count_snapshot()
             record = {
                 "status": status,
@@ -873,6 +927,7 @@ class SideBalancedInverse:
                 "ksp_rtol": self._rtol,
                 "ksp_max_it": self._max_it,
                 "elapsed_seconds": elapsed,
+                "operation_seconds": operation_timing,
                 "counts": {
                     "delta": self._count_delta(before, after),
                     "cumulative": after,
@@ -889,6 +944,7 @@ class SideBalancedInverse:
             self._total_iterations += int(iterations)
             elapsed = float(perf_counter() - started)
             self._total_apply_seconds += elapsed
+            operation_timing = self._rhs_operation_timing(elapsed, reduce=False)
             after = self._count_snapshot()
             record = {
                 "status": "FAILED",
@@ -899,9 +955,10 @@ class SideBalancedInverse:
                 "ksp_rtol": self._rtol,
                 "ksp_max_it": self._max_it,
                 "elapsed_seconds": elapsed,
+                "operation_seconds": operation_timing,
                 "exception_type": type(exc).__name__,
                 "exception": str(exc),
-            "counts": {
+                "counts": {
                     "delta": self._count_delta(before, after),
                     "cumulative": after,
                 },

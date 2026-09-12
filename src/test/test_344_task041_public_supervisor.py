@@ -139,6 +139,7 @@ def _run_phase(
     cumulative_compute_limit_seconds=None,
     global_swap_baseline=None,
     partial_phase_results=None,
+    enforce_time_stops=True,
 ):
     (tmp_path / "numerical_output" / "log").mkdir(parents=True)
     limits = {
@@ -181,6 +182,7 @@ def _run_phase(
         cumulative_compute_limit_seconds=cumulative_compute_limit_seconds,
         global_swap_baseline=global_swap_baseline,
         partial_phase_results=partial_phase_results,
+        enforce_time_stops=enforce_time_stops,
         **limits,
     )
 
@@ -406,9 +408,15 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
     def sample(pid):
         sampled_pids.append(pid)
         sample_count[pid] += 1
-        return _complete_resource_sample(
+        sample = _complete_resource_sample(
             rss=100 if sample_count[pid] == 1 else 55
         )
+        if sample_count[pid] == 1:
+            sample["process_tree"]["smaps"] = {
+                "pss_bytes": 80,
+                "uss_bytes": 60,
+            }
+        return sample
 
     def terminate(process):
         terminated.append(process.pid)
@@ -422,6 +430,7 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
         terminate=terminate,
         process_group_gone=lambda _pid: True,
         sample_root_pid=9000,
+        clock=_Clock(0.0, 0.1, 0.4, 0.7, 0.7),
     )
     assert sampled_pids == [9000, 9000]
     assert terminated == []
@@ -432,6 +441,51 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
     assert phase["rss_drop"]["measurement_scope"] == (
         "public_launcher_root_after_worker_group_exit"
     )
+    assert phase["sample_count"] == 2
+    assert phase["smaps_complete_sample_count"] == 1
+    assert phase["sampling"]["pss_uss_missing_sample_count"] == 1
+    assert phase["peak_pss_bytes"] == 80
+    assert phase["peak_uss_bytes"] == 60
+    assert phase["peak_process_tree_rss_bytes"] == 100
+    assert phase["minimum_host_memavailable_bytes"] == 1024
+    gaps = phase["sampling"]["sample_timestamp_gap_seconds"]
+    assert gaps["count"] == 1
+    assert gaps["min"] == pytest.approx(0.6)
+    assert gaps["max"] == pytest.approx(0.6)
+    raw_records = [
+        json.loads(line)
+        for line in (
+            tmp_path / "numerical_output" / "log" / "memory_stages.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+    ]
+    assert [record["sample_role"] for record in raw_records] == [
+        "phase_running",
+        "phase_end_public_root",
+    ]
+    assert max(record["process_tree_rss_bytes"] for record in raw_records) == phase[
+        "peak_process_tree_rss_bytes"
+    ]
+    assert min(record["host_memavailable_bytes"] for record in raw_records) == phase[
+        "minimum_host_memavailable_bytes"
+    ]
+    assert max(
+        record["pss_bytes"]
+        for record in raw_records
+        if record["pss_bytes"] is not None
+    ) == phase["peak_pss_bytes"]
+    assert max(
+        record["uss_bytes"]
+        for record in raw_records
+        if record["uss_bytes"] is not None
+    ) == phase["peak_uss_bytes"]
+    assert sum(
+        record["pss_bytes"] is None or record["uss_bytes"] is None
+        for record in raw_records
+    ) == phase["sampling"]["pss_uss_missing_sample_count"]
+    assert (
+        raw_records[1]["sample_elapsed_seconds"]
+        - raw_records[0]["sample_elapsed_seconds"]
+    ) == pytest.approx(gaps["min"])
 
     low_sample = lambda _pid: _complete_resource_sample(memavailable=100)
     phase = _run_phase(
@@ -448,6 +502,7 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
     assert terminated[-1] != 9000
 
 
+@pytest.mark.parametrize("enforce_time_stops", [True, False])
 @pytest.mark.parametrize(
     ("sample_kwargs", "reason"),
     [
@@ -472,7 +527,7 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
     ],
 )
 def test_balh_runtime_reserves_reject_missing_or_low_measurements(
-    tmp_path, sample_kwargs, reason
+    tmp_path, sample_kwargs, reason, enforce_time_stops
 ):
     terminated = []
 
@@ -491,6 +546,7 @@ def test_balh_runtime_reserves_reject_missing_or_low_measurements(
         min_memavailable_bytes=384,
         min_cgroup_ancestor_headroom_bytes=384,
         hard_memory_bytes=10**9,
+        enforce_time_stops=enforce_time_stops,
     )
     assert phase["termination_reason"] == reason
     assert terminated
@@ -546,6 +602,74 @@ def test_phase_enforces_cumulative_wall_budget_at_phase_boundary(tmp_path):
     )
     assert phase["termination_reason"] == "cumulative_wall_timeout"
     assert phase["limits"]["cumulative_compute_limit_seconds"] == 10.0
+    assert terminated
+
+
+def test_balh_time_stop_override_skips_only_time_gates(tmp_path):
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    timed = _run_phase(
+        tmp_path / "timed_phase",
+        sample=_Samples(),
+        popen_factory=_FakePopen(poll_results=[None]),
+        clock=_Clock(0.0, 43201.0),
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        timeout_seconds=43200,
+        cumulative_compute_used_seconds=0.0,
+        cumulative_compute_limit_seconds=172800.0,
+    )
+    assert timed["termination_reason"] == "wall_timeout"
+
+    cumulative = _run_phase(
+        tmp_path / "timed_cumulative",
+        sample=_Samples(),
+        popen_factory=_FakePopen(poll_results=[None]),
+        clock=_Clock(0.0, 2.0),
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        timeout_seconds=43200,
+        cumulative_compute_used_seconds=172799.0,
+        cumulative_compute_limit_seconds=172800.0,
+    )
+    assert cumulative["termination_reason"] == "cumulative_wall_timeout"
+
+    phase = _run_phase(
+        tmp_path / "time_override",
+        sample=_Samples(),
+        popen_factory=_FakePopen(poll_results=[None, 0]),
+        clock=_Clock(0.0, 43201.0),
+        hard_memory_bytes=10**9,
+        timeout_seconds=43200,
+        cumulative_compute_used_seconds=172799.0,
+        cumulative_compute_limit_seconds=172800.0,
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        enforce_time_stops=False,
+    )
+    assert phase["returncode"] == 0
+    assert phase["time_stop_enforced"] is False
+    assert phase["termination_reason"] is None
+
+    limited = _run_phase(
+        tmp_path / "memory_gate",
+        sample=lambda _pid: _complete_resource_sample(rss=101),
+        popen_factory=_FakePopen(poll_results=[None]),
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        hard_memory_bytes=100,
+        timeout_seconds=43200,
+        cumulative_compute_used_seconds=172799.0,
+        cumulative_compute_limit_seconds=172800.0,
+        enforce_time_stops=False,
+    )
+    assert limited["time_stop_enforced"] is False
+    assert limited["termination_reason"] == "absolute_memory_limit"
     assert terminated
 
 
@@ -999,7 +1123,8 @@ def test_phase_resource_limits_terminate_the_child(tmp_path, reason, memory, swa
     assert len(terminated) == 1
 
 
-def test_phase_cgroup_only_swap_is_authoritative(tmp_path):
+@pytest.mark.parametrize("enforce_time_stops", [True, False])
+def test_phase_cgroup_only_swap_is_authoritative(tmp_path, enforce_time_stops):
     terminated = []
 
     def terminate(process):
@@ -1011,6 +1136,7 @@ def test_phase_cgroup_only_swap_is_authoritative(tmp_path):
         tmp_path,
         sample=_Samples(cgroup_swap=1),
         terminate=terminate,
+        enforce_time_stops=enforce_time_stops,
     )
     assert phase["termination_reason"] == "swap_detected"
     assert phase["peak_swap_bytes"] == 1

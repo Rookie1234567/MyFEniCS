@@ -1044,6 +1044,8 @@ def _resource_phase(
     samples: list[dict[str, Any]],
     raw_sha: str | None,
     expected_limits: Mapping[str, Any],
+    *,
+    time_stop_overridden: bool = False,
 ) -> dict[str, Any]:
     if not isinstance(phase, Mapping):
         return {"status": "not_measured", "pass": False, "reason": "phase_missing"}
@@ -1265,7 +1267,11 @@ def _resource_phase(
     )
     wall = _optional_finite(phase.get("phase_wall_seconds"))
     wall_pass = bool(
-        wall is not None and wall < float(expected_limits["timeout_seconds"])
+        wall is not None
+        and (
+            time_stop_overridden
+            or wall < float(expected_limits["timeout_seconds"])
+        )
     )
     parent_rss = (
         int(phase_end["process_tree_rss_bytes"])
@@ -1334,6 +1340,7 @@ def _resource_phase(
         },
         "phase_wall_seconds": wall,
         "phase_wall_pass": wall_pass,
+        "time_stop_overridden": time_stop_overridden,
         "sample_timestamp_gap_seconds": {
             "count": len(gaps),
             "min": min(gaps) if gaps else None,
@@ -1359,6 +1366,82 @@ def _resources(
             "reason": "public supervisor summary is missing",
         }
     supervisor = _read_json(supervisor_path, "public supervisor summary")
+    time_stop_override: dict[str, Any] = {
+        "status": "not_present",
+        "enabled": False,
+        "applies": False,
+    }
+    if method == "candidate" and model_id == (
+        "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8"
+    ):
+        record = supervisor.get("time_stop_override")
+        manifest_path = public_root / "run_manifest.json"
+        manifest = (
+            _read_json(manifest_path, "Task041 run manifest")
+            if manifest_path.is_file()
+            else {}
+        )
+        consumer_summary_path = public_root / "consumer" / "consumer_summary.json"
+        consumer_summary = (
+            _read_json(consumer_summary_path, "Task041 consumer summary")
+            if consumer_summary_path.is_file()
+            else {}
+        )
+        worker_record = consumer_summary.get("time_stop_override")
+        identity = supervisor.get("identity")
+        valid = (
+            isinstance(record, Mapping)
+            and isinstance(manifest.get("time_stop_override"), Mapping)
+            and dict(record) == dict(manifest["time_stop_override"])
+            and record.get("enabled") is True
+            and record.get("enforced") is False
+            and record.get("scope")
+            == "task041_5nm_balh_candidate_single_invocation"
+            and record.get("reason")
+            == "user_authorized_single_candidate_time_override"
+            and record.get("producer_time_stop_unchanged") is True
+            and isinstance(identity, Mapping)
+            and record.get("model_id") == model_id
+            and record.get("run_id") == identity.get("run_id")
+            and record.get("source_sha") == supervisor.get("source_sha")
+            and record.get("source_sha") == manifest.get("source_sha")
+            and isinstance(worker_record, Mapping)
+            and worker_record.get("enabled") is True
+            and worker_record.get("enforced") is False
+            and worker_record.get("scope") == record.get("scope")
+            and worker_record.get("reason") == record.get("reason")
+            and worker_record.get("model_id") == record.get("model_id")
+            and worker_record.get("run_id") == record.get("run_id")
+            and worker_record.get("source_sha") == record.get("source_sha")
+            and consumer_summary.get("source_sha") == record.get("source_sha")
+        )
+        time_stop_override = {
+            "status": "valid" if valid else "invalid",
+            "enabled": bool(record.get("enabled") is True)
+            if isinstance(record, Mapping)
+            else False,
+            "applies": bool(valid),
+            "record": dict(record) if isinstance(record, Mapping) else None,
+            "evidence": {
+                "run_manifest": {
+                    "path": str(manifest_path),
+                    "sha256": _sha256(manifest_path)
+                    if manifest_path.is_file()
+                    else None,
+                },
+                "supervisor_summary": {
+                    "path": str(supervisor_path),
+                    "sha256": _sha256(supervisor_path),
+                },
+                "consumer_summary": {
+                    "path": str(consumer_summary_path),
+                    "sha256": _sha256(consumer_summary_path)
+                    if consumer_summary_path.is_file()
+                    else None,
+                },
+            },
+        }
+    time_stop_overridden = time_stop_override["applies"] is True
     supervisor_wall_seconds = _optional_finite(supervisor.get("wall_seconds"))
     phase_results = supervisor.get("phase_results")
     if not isinstance(phase_results, Mapping):
@@ -1393,7 +1476,12 @@ def _resources(
         phase = phase_results.get(phase_name)
         samples = _load_samples(sample_path, phase_name)
         phase_views[phase_name] = _resource_phase(
-            phase_name, phase, samples, raw_sha, frozen_limits[phase_name]
+            phase_name,
+            phase,
+            samples,
+            raw_sha,
+            frozen_limits[phase_name],
+            time_stop_overridden=time_stop_overridden,
         )
     current = [
         view
@@ -1457,7 +1545,10 @@ def _resources(
                 and recorded_limit == batch_limit
                 and expected_after is not None
                 and math.isclose(used_after, expected_after, rel_tol=0.0, abs_tol=1.0e-6)
-                and used_after <= batch_limit
+                and (
+                    time_stop_overridden
+                    or used_after <= batch_limit
+                )
             ),
         }
     producer = phase_views["producer"]
@@ -1519,6 +1610,7 @@ def _resources(
         "phases": phase_views,
         "batch_compute_wall": batch,
         "current_invocation_compute_wall_seconds": current_wall,
+        "time_stop_override": time_stop_override,
         "derived_common_producer_workflow": derived,
         "shared_cgroup_history_not_used_as_peak": True,
         "pss_uss_semantics": "optional; unreadable values remain None",

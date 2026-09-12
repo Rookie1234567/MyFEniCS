@@ -20,7 +20,10 @@ from benchmarks.canonical_vector_artifacts import (
 )
 from benchmarks.run_task037b_hybrid_iterative import _write_frozen_m10_grid_payload
 from benchmarks.task039_v3_7_orchestration import _write_v3_7_candidate_authority
-from benchmarks.task041_balh_workflow import build_task041_balh_packet_identity
+from benchmarks.task041_balh_workflow import (
+    build_task041_balh_packet_identity,
+    task041_balh_time_stop_override_record,
+)
 from benchmarks.task041_exact_side_workflow import _inventory_from_payload
 from benchmarks.task041_legacy_native_packet import (
     TASK039_V4_H4_EXTERNAL_SHA256,
@@ -41,6 +44,7 @@ from benchmarks.task041_side_balh_comparison import (
     _compare_selected_fields,
     _own_gates,
     _pair_identity,
+    _resources,
     _validate_legacy_consumer_binding,
     compare_task041_side_balh_pair,
     load_task041_side_balh_result,
@@ -534,6 +538,111 @@ def test_task041_comparison_real_writer_pair_and_workflow_peak(comparison_pair):
     assert workflow["workflow_wall"]["exact_supervisor_wall_seconds"] == 5.0
     assert workflow["workflow_wall"]["candidate_phase_sum_seconds"] == 1.0
     assert workflow["workflow_wall"]["exact_phase_sum_seconds"] == 5.0
+
+
+def test_task041_time_override_is_worker_bound_and_keeps_resource_gates(tmp_path):
+    model_id = "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8"
+    source_sha = "b" * 40
+    run_id = "task041_5nm_p6h4_m480_mpi8_balh"
+    limits = _phase_limits(model_id, "consumer")
+    phase, samples = _measured_phase(
+        model_id,
+        "consumer",
+        float(limits["timeout_seconds"]) + 1.0,
+        500,
+    )
+    root = tmp_path / "time_override"
+    consumer_root = root / "consumer"
+    sample_path = root / "numerical_output" / "log" / "memory_stages.jsonl"
+    consumer_root.mkdir(parents=True)
+    sample_path.parent.mkdir(parents=True)
+    sample_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in samples),
+        encoding="utf-8",
+    )
+    override = task041_balh_time_stop_override_record(True) | {
+        "model_id": model_id,
+        "run_id": run_id,
+        "source_sha": source_sha,
+        "origin": "run_case_cli",
+    }
+    (root / "run_manifest.json").write_text(
+        json.dumps(
+            {"source_sha": source_sha, "time_stop_override": override},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    supervisor = {
+        "source_sha": source_sha,
+        "identity": {"run_id": run_id},
+        "time_stop_override": override,
+        "phase_results": {
+            "producer": {"reused": True, "phase_wall_seconds": 2.0},
+            "consumer": phase,
+        },
+        "wall_seconds": float(limits["timeout_seconds"]) + 1.0,
+        "compute_wall_budget": {
+            "used_before_seconds": 130000.0,
+            "used_after_seconds": 130000.0 + phase["phase_wall_seconds"],
+            "remaining_seconds": 42800.0,
+            "remaining_after_seconds": 0.0,
+            "limit_seconds": 172800.0,
+            "used_before_status": "measured",
+            "used_after_status": "measured",
+            "current_invocation_status": "measured",
+            "basis": "fixture",
+        },
+    }
+    (root / "supervisor_summary.json").write_text(
+        json.dumps(supervisor, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    worker_override = dict(override)
+    worker_override["origin"] = "public_worker_cli"
+    (consumer_root / "consumer_summary.json").write_text(
+        json.dumps(
+            {"source_sha": source_sha, "time_stop_override": worker_override},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    resources = _resources(root, "candidate", model_id)
+    assert resources["time_stop_override"]["status"] == "valid"
+    assert resources["phases"]["consumer"]["phase_wall_pass"] is True
+    assert resources["batch_compute_wall"]["pass"] is True
+    assert resources["pass"] is True
+
+    worker_summary_path = consumer_root / "consumer_summary.json"
+    worker_summary_path.write_text(
+        json.dumps({"source_sha": source_sha}, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    missing_worker = _resources(root, "candidate", model_id)
+    assert missing_worker["time_stop_override"]["status"] == "invalid"
+    assert missing_worker["phases"]["consumer"]["phase_wall_pass"] is False
+    assert missing_worker["pass"] is False
+
+    worker_summary_path.write_text(
+        json.dumps(
+            {"source_sha": source_sha, "time_stop_override": worker_override},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    rows = [dict(row) for row in samples]
+    rows[0]["memory_authority_bytes"] = limits["hard_memory_bytes"] + 1
+    sample_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    memory_failure = _resources(root, "candidate", model_id)
+    assert memory_failure["time_stop_override"]["status"] == "valid"
+    assert memory_failure["phases"]["consumer"]["hard_cap_pass"] is False
+    assert memory_failure["pass"] is False
 
 
 def test_task041_unqualified_producer_does_not_enter_workflow_peak(comparison_pair):

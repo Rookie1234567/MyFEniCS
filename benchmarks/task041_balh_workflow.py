@@ -33,6 +33,30 @@ TASK041_BALH_CANDIDATE_CONSUMER_PROFILE = "task041.side_balh.candidate_consumer.
 TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA = "task041.side_balh.candidate_consumer.v1"
 TASK041_BALH_CANDIDATE_PHASE = "candidate-consumer"
 TASK041_BALH_CONSUMER_PHASE = "consumer"
+TASK041_BALH_5NM_CANDIDATE_MODEL_ID = (
+    "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8"
+)
+TASK041_BALH_TIME_STOP_OVERRIDE_REASON = (
+    "user_authorized_single_candidate_time_override"
+)
+
+
+def task041_balh_time_stop_override_record(enabled: bool) -> dict[str, Any]:
+    return {
+        "enabled": bool(enabled),
+        "enforced": not bool(enabled),
+        "scope": (
+            "task041_5nm_balh_candidate_single_invocation"
+            if enabled
+            else "default_task041_time_contract"
+        ),
+        "reason": (
+            TASK041_BALH_TIME_STOP_OVERRIDE_REASON
+            if enabled
+            else "default_task041_time_contract"
+        ),
+        "producer_time_stop_unchanged": True,
+    }
 
 
 def _valid_sha(value: Any, length: int) -> bool:
@@ -222,6 +246,7 @@ def _mpi8_command(
     module: str,
     packet_origin: str | None = None,
     legacy_native_binding: str | Path | None = None,
+    disable_time_stop: bool = False,
 ) -> list[str]:
     command = [
         "mpiexec",
@@ -271,6 +296,8 @@ def _mpi8_command(
                 str(legacy_native_binding),
             ]
         )
+    if disable_time_stop:
+        command.append("--task041-balh-candidate-disable-time-stop")
     return command
 
 
@@ -343,10 +370,18 @@ def build_task041_balh_candidate_consumer_command(
     packet_producer_source_sha: str | None = None,
     packet_origin: str | None = None,
     legacy_native_binding: str | Path | None = None,
+    disable_time_stop: bool = False,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
         raise ValueError("BAL_H candidate consumer command requires a candidate profile")
+    if (
+        disable_time_stop
+        and str(normalized["model_id"]) != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    ):
+        raise ValueError(
+            "time-stop override is limited to the 5 nm BAL_H candidate profile"
+        )
     return _mpi8_command(
         python_executable,
         TASK041_BALH_CANDIDATE_PHASE,
@@ -360,6 +395,7 @@ def build_task041_balh_candidate_consumer_command(
         module="benchmarks.task041_balh_workflow",
         packet_origin=packet_origin,
         legacy_native_binding=legacy_native_binding,
+        disable_time_stop=disable_time_stop,
     )
 
 
@@ -749,6 +785,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-producer-source-sha")
     parser.add_argument("--packet-origin")
     parser.add_argument("--legacy-native-binding")
+    parser.add_argument(
+        "--task041-balh-candidate-disable-time-stop", action="store_true"
+    )
     return parser
 
 
@@ -767,10 +806,12 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         packet_origin=args.packet_origin,
         legacy_native_binding=args.legacy_native_binding,
         candidate=True,
+        disable_time_stop=args.task041_balh_candidate_disable_time_stop,
     )
 
 
 __all__ = [
+    "TASK041_BALH_5NM_CANDIDATE_MODEL_ID",
     "TASK041_BALH_CANDIDATE_CONSUMER_PROFILE",
     "TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA",
     "TASK041_BALH_CANDIDATE_PHASE",
@@ -789,6 +830,7 @@ __all__ = [
     "task041_balh_exact_consumer_iterative_config",
     "task041_balh_exact_consumer_profile",
     "task041_balh_route",
+    "task041_balh_time_stop_override_record",
     "validate_balh_producer_packet",
 ]
 

@@ -674,6 +674,8 @@ def _check_resource(
     sample: Mapping[str, Any],
     started: float,
     limits: Mapping[str, Any] | None = None,
+    *,
+    enforce_time_stop: bool = True,
 ) -> None:
     active_limits = _task041_legacy_limits() if limits is None else limits
     memory_authority = sample.get("memory_authority_bytes")
@@ -683,7 +685,7 @@ def _check_resource(
         raise Task041ModePrepError("Task041 hard RSS limit reached")
     if sample.get("job_no_swap") is not True:
         raise Task041ModePrepError("Task041 swap limit reached")
-    if time.monotonic() - started >= active_limits["timeout_seconds"]:
+    if enforce_time_stop and time.monotonic() - started >= active_limits["timeout_seconds"]:
         raise Task041ModePrepError("Task041 mode-prep timeout reached")
 
 
@@ -804,10 +806,16 @@ def _write_marker(
     schema: str = TASK041_MODE_PREP_SCHEMA,
     marker_sequence: Sequence[str] = TASK041_MARKER_SEQUENCE,
     limits: Mapping[str, Any] | None = None,
+    enforce_time_stop: bool = True,
 ) -> dict[str, Any]:
     active_limits = _task041_legacy_limits() if limits is None else limits
     resource = _resource_snapshot()
-    _check_resource(resource, started, active_limits)
+    _check_resource(
+        resource,
+        started,
+        active_limits,
+        enforce_time_stop=enforce_time_stop,
+    )
     marker = {
         "schema": schema,
         "stage": stage,
@@ -815,6 +823,7 @@ def _write_marker(
         "wall_seconds": time.monotonic() - started,
         "environment": _jsonable(environment),
         "limits": _jsonable(active_limits),
+        "time_stop_enforced": bool(enforce_time_stop),
         "resource": resource,
         "detail": _jsonable(detail),
     }
@@ -1757,6 +1766,7 @@ def _run_task041_balh_candidate_setup(
     elapsed_seconds: float,
     failure_evidence: dict[str, Any],
     identity: Mapping[str, Any] | None = None,
+    disable_time_stop: bool = False,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
@@ -2025,6 +2035,12 @@ def _run_task041_balh_candidate_setup(
         remaining_budget = max(float(timeout_seconds) - consumer_elapsed, 0.0)
         summary = {
             "status": "derived",
+            "time_stop_enforced": not disable_time_stop,
+            "time_stop_override": (
+                "user_authorized_single_candidate_time_override"
+                if disable_time_stop
+                else None
+            ),
             "rhs_contract": (
                 "modal_traction_positive, modal_traction_negative, "
                 "external_physical_rhs, general_residual"
@@ -2066,9 +2082,14 @@ def _run_task041_balh_candidate_setup(
             "consumer_elapsed_seconds_before_modal_schur": consumer_elapsed,
             "remaining_timeout_seconds": remaining_budget,
         }
-        if all_sides_measured and float(
-            summary["estimate"]["optimistic_seconds_total"]
-        ) > remaining_budget:
+        if (
+            all_sides_measured
+            and not disable_time_stop
+            and float(
+                summary["estimate"]["optimistic_seconds_total"]
+            )
+            > remaining_budget
+        ):
             summary["status"] = "SETUP_COST_BLOCKED"
             summary["block"] = {
                 "basis": (
@@ -2520,6 +2541,7 @@ def run_task041_consumer(
     legacy_native_binding: str | Path | None = None,
     candidate: bool = False,
     comm: Any = MPI.COMM_WORLD,
+    disable_time_stop: bool = False,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -2547,6 +2569,19 @@ def run_task041_consumer(
         raise Task041ModePrepError(
             "Task041 BAL_H candidate profile requires the candidate worker entry point"
         )
+    if contract["balh"]:
+        from benchmarks.task041_balh_workflow import (
+            TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+            task041_balh_time_stop_override_record,
+        )
+
+        if disable_time_stop and (
+            not candidate
+            or normalized["model_id"] != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+        ):
+            raise Task041ModePrepError(
+                "time-stop override requires the 5 nm BAL_H candidate worker"
+            )
     root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
     candidate_audit_path = (
@@ -2588,6 +2623,16 @@ def run_task041_consumer(
     }
     if candidate:
         result["side_rhs_audit_path"] = str(candidate_audit_path)
+    if contract["balh"]:
+        result["time_stop_override"] = (
+            task041_balh_time_stop_override_record(disable_time_stop)
+            | {
+                "model_id": normalized["model_id"],
+                "run_id": normalized["run_id"],
+                "source_sha": source_sha,
+                "origin": "public_worker_cli",
+            }
+        )
     if packet_origin is not None:
         result["packet_origin"] = packet_origin
         result["legacy_native_binding"] = str(legacy_native_binding)
@@ -2613,6 +2658,7 @@ def run_task041_consumer(
             schema=contract["consumer_schema"],
             marker_sequence=TASK041_CONSUMER_MARKER_SEQUENCE,
             limits=contract["limits"],
+            enforce_time_stop=not disable_time_stop if contract["balh"] else True,
         )
         marker_records.append(marker)
 
@@ -3055,7 +3101,14 @@ def run_task041_consumer(
                     if _memory_authority(marker.get("resource", {})) is not None
                 ]
                 after_sample = _resource_snapshot()
-                _check_resource(after_sample, started, contract["limits"])
+                _check_resource(
+                    after_sample,
+                    started,
+                    contract["limits"],
+                    enforce_time_stop=(
+                        not disable_time_stop if contract["balh"] else True
+                    ),
+                )
                 after_rss = _process_tree_rss(after_sample)
                 after_memory_authority = _memory_authority(after_sample)
                 before_rss = max(before_rss_values, default=None)
@@ -3129,6 +3182,7 @@ def run_task041_consumer(
                 elapsed_seconds=time.monotonic() - started,
                 failure_evidence=candidate_failure_evidence,
                 identity=recomputed_identity,
+                disable_time_stop=disable_time_stop,
             )
         else:
             setup_result = run_v5_h4_exact_side_setup_only(

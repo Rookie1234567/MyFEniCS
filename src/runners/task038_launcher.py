@@ -3644,6 +3644,7 @@ def launch_specification(
     producer_packet_root: str | Path | None = None,
     legacy_native_packet_descriptor: str | Path | None = None,
     compute_wall_ledger_path: str | Path | None = None,
+    disable_time_stop: bool = False,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3674,6 +3675,39 @@ def launch_specification(
     task041_public_route = (
         not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
     )
+    balh_time_stop_override = None
+    if task041_public_route and str(
+        specification.identity.get("model_id", "")
+    ) in TASK041_BALH_MODEL_IDS:
+        from benchmarks.task041_balh_workflow import (
+            TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+            task041_balh_time_stop_override_record,
+        )
+
+        model_id = str(specification.identity.get("model_id", ""))
+        if disable_time_stop and (
+            model_id != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+            or producer_packet_root is None
+            and legacy_native_packet_descriptor is None
+        ):
+            raise InputError(
+                "time-stop override requires a reused 5 nm BAL_H candidate"
+            )
+        balh_time_stop_override = task041_balh_time_stop_override_record(
+            disable_time_stop
+        )
+        balh_time_stop_override.update(
+            {
+                "model_id": model_id,
+                "run_id": specification.identity.get("run_id"),
+                "source_sha": source,
+                "origin": "run_case_cli",
+            }
+        )
+    elif disable_time_stop:
+        raise InputError(
+            "--task041-balh-candidate-disable-time-stop is Task041 BAL_H-only"
+        )
     if producer_packet_root is not None and (
         not task041_public_route
         or str(specification.identity.get("model_id", ""))
@@ -3724,6 +3758,9 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if balh_time_stop_override is not None:
+        manifest["time_stop_override"] = balh_time_stop_override
+        _write_json(run_directory / "run_manifest.json", manifest)
     if task041_public_route:
         try:
             from src.runners.task041_supervisor import (
@@ -3745,6 +3782,7 @@ def launch_specification(
                 producer_packet_root=producer_packet_root,
                 legacy_native_packet_descriptor=legacy_native_packet_descriptor,
                 compute_wall_ledger_path=compute_wall_ledger_path,
+                disable_time_stop=disable_time_stop,
             )
         except OSError as exc:
             result = {

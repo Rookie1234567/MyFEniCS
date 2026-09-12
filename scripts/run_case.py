@@ -34,6 +34,11 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="import the explicitly qualified native Task039 V4 packet",
     )
+    parser.add_argument(
+        "--task041-balh-candidate-disable-time-stop",
+        action="store_true",
+        help="disable only the time stops for one reused 5 nm BAL_H candidate",
+    )
     return parser
 
 
@@ -41,6 +46,20 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         specification = load_and_resolve(args.input_path)
+        if args.task041_balh_candidate_disable_time_stop:
+            from benchmarks.task041_balh_workflow import (
+                TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+            )
+
+            if (
+                specification.identity.get("model_id")
+                != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+                or args.producer_packet_root is None
+                and args.legacy_native_packet_descriptor is None
+            ):
+                raise InputError(
+                    "time-stop override requires the reused 5 nm BAL_H candidate"
+                )
         if args.validate_only:
             payload = {
                 "status": "valid",
@@ -66,6 +85,7 @@ def main(argv: list[str] | None = None) -> int:
             specification,
             producer_packet_root=args.producer_packet_root,
             legacy_native_packet_descriptor=args.legacy_native_packet_descriptor,
+            disable_time_stop=args.task041_balh_candidate_disable_time_stop,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3
