@@ -321,6 +321,149 @@ def _normal_identity(raw: Any, label: str) -> dict[str, Any]:
     return result
 
 
+def _normal_legacy_identity(raw: Any, label: str) -> dict[str, Any]:
+    """Validate the one explicitly approved native Task039 packet identity."""
+
+    from benchmarks.task041_legacy_native_packet import (
+        TASK039_V4_H4_EXTERNAL_SHA256,
+        TASK039_V4_H4_IDENTITY_SCHEMA,
+        TASK039_V4_H4_INPUT_SHA256,
+        TASK039_V4_H4_MODE_COUNT,
+        TASK039_V4_H4_MODEL_ID,
+        TASK039_V4_H4_PHYSICAL_SHA256,
+        TASK039_V4_H4_RESOLVED_SHA256,
+        TASK039_V4_H4_RUN_ID,
+        TASK039_V4_H4_SOURCE_SHA,
+    )
+
+    if not isinstance(raw, Mapping):
+        _fail(f"{label} must be a mapping", category="identity")
+    result = dict(raw)
+    if result.get("schema") != TASK039_V4_H4_IDENTITY_SCHEMA:
+        _fail(f"{label}.schema is not the approved native Task039 schema", category="identity")
+    expected = {
+        "scope": "task039_v4_h4_m480",
+        "source_sha": TASK039_V4_H4_SOURCE_SHA,
+        "input_sha256": TASK039_V4_H4_INPUT_SHA256,
+        "resolved_sha256": TASK039_V4_H4_RESOLVED_SHA256,
+        "physical_sha256": TASK039_V4_H4_PHYSICAL_SHA256,
+        "model_id": TASK039_V4_H4_MODEL_ID,
+        "run_id": TASK039_V4_H4_RUN_ID,
+        "mode_count": TASK039_V4_H4_MODE_COUNT,
+        "mpi_size": 8,
+        "external_keys": {
+            "count": 600,
+            "sha256": TASK039_V4_H4_EXTERNAL_SHA256,
+        },
+    }
+    if any(result.get(field) != value for field, value in expected.items()):
+        _fail(f"{label} is not the approved native 5 nm identity", category="identity")
+    _parse_identity_external(result, label)
+    return result
+
+
+def _validate_legacy_consumer_binding(
+    summary: Mapping[str, Any],
+    identity: Mapping[str, Any],
+    producer_identity: Mapping[str, Any],
+    public_root: Path,
+) -> None:
+    from benchmarks.task041_balh_workflow import _physical_contract
+    from benchmarks.task041_legacy_native_packet import (
+        TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+        _physical_binding,
+        _validate_descriptor,
+    )
+
+    if summary.get("packet_origin") != TASK041_LEGACY_NATIVE_PACKET_ORIGIN:
+        _fail("legacy packet origin is missing from the consumer summary", category="identity")
+    binding = summary.get("consumer_binding")
+    if not isinstance(binding, Mapping):
+        _fail("legacy consumer binding evidence is missing", category="identity")
+    if binding.get("origin") != TASK041_LEGACY_NATIVE_PACKET_ORIGIN:
+        _fail("legacy consumer binding origin is invalid", category="identity")
+    if binding.get("producer_identity") != dict(producer_identity):
+        _fail("legacy consumer binding producer identity differs", category="identity")
+    if binding.get("consumer_identity") != dict(identity):
+        _fail("legacy consumer binding consumer identity differs", category="identity")
+    descriptor = binding.get("descriptor")
+    if not isinstance(descriptor, Mapping):
+        _fail("legacy descriptor evidence is missing", category="identity")
+    descriptor_path = _absolute_writer_path(descriptor.get("path"), "legacy descriptor")
+    descriptor_sha = _digest(descriptor.get("sha256"), 64, "legacy descriptor.sha256")
+    if _sha256(descriptor_path) != descriptor_sha:
+        _fail("legacy descriptor SHA mismatch", category="identity")
+    _descriptor, paths = _validate_descriptor(descriptor_path, full_artifacts=False)
+    disk_identity = _read_json(paths["identity"], "legacy packet identity")
+    if disk_identity != dict(producer_identity):
+        _fail("legacy descriptor packet identity differs", category="identity")
+    producer_resolved_sha = _digest(
+        producer_identity.get("resolved_sha256"), 64, "producer_identity.resolved_sha256"
+    )
+    if _sha256(paths["resolved_config"]) != producer_resolved_sha:
+        _fail("legacy descriptor resolved config SHA mismatch", category="identity")
+    producer_resolved = _read_json(
+        paths["resolved_config"], "legacy producer resolved config"
+    )
+    producer_provenance = producer_resolved.get("provenance")
+    if not isinstance(producer_provenance, Mapping):
+        _fail("legacy producer resolved provenance is missing", category="identity")
+    if any(
+        producer_provenance.get(field) != producer_identity.get(identity_field)
+        for field, identity_field in (
+            ("input_sha256", "input_sha256"),
+            ("physical_model_sha256", "physical_sha256"),
+        )
+    ):
+        _fail("legacy producer resolved provenance differs from identity", category="identity")
+    public_resolved_path = public_root / "resolved_config.json"
+    if not public_resolved_path.is_file():
+        _fail("Task041 public resolved_config.json is missing", category="identity")
+    if _sha256(public_resolved_path) != _digest(
+        identity.get("resolved_sha256"), 64, "consumer_identity.resolved_sha256"
+    ):
+        _fail("Task041 public resolved config SHA differs from consumer identity", category="identity")
+    public_resolved = _read_json(
+        public_resolved_path, "Task041 public resolved config"
+    )
+    public_provenance = public_resolved.get("provenance")
+    if not isinstance(public_provenance, Mapping):
+        _fail("Task041 public resolved provenance is missing", category="identity")
+    if any(
+        public_provenance.get(field) != identity.get(identity_field)
+        for field, identity_field in (
+            ("input_sha256", "input_sha256"),
+            ("physical_model_sha256", "physical_sha256"),
+        )
+    ):
+        _fail("Task041 public resolved provenance differs from identity", category="identity")
+    public_contract = _physical_contract(public_resolved)
+    if identity.get("physical_contract") != public_contract:
+        _fail(
+            "consumer identity physical contract differs from public resolved config",
+            category="identity",
+        )
+    physical = binding.get("physical_equivalence")
+    recomputed_physical = _physical_binding(producer_resolved, public_resolved)
+    if physical != recomputed_physical:
+        _fail(
+            "legacy physical equivalence differs from raw resolved contracts",
+            category="identity",
+        )
+    if recomputed_physical["pass"] is not True:
+        _fail("legacy raw physical contracts are not equivalent", category="identity")
+    expected_external = {
+        "producer": producer_identity.get("external_keys"),
+        "consumer": identity.get("external_keys"),
+        "pass": producer_identity.get("external_keys")
+        == identity.get("external_keys"),
+    }
+    if binding.get("external_keys") != expected_external:
+        _fail("legacy external identity binding differs", category="identity")
+    if binding.get("pass") is not recomputed_physical["pass"]:
+        _fail("legacy consumer binding status differs from raw contracts", category="identity")
+
+
 def _canonical_identity_bytes(raw: Mapping[str, Any]) -> bytes:
     return _selected_mode_json_bytes(raw)
 
@@ -926,6 +1069,7 @@ def _resource_phase(
             "phase_wall_seconds": _optional_finite(
                 phase.get("phase_wall_seconds")
             ),
+            "worker_tree": phase.get("worker_tree"),
             "reason": "producer was not run in this public invocation",
         }
     if not samples:
@@ -1427,12 +1571,24 @@ def _load_task041_side_balh_result(
     except Task041ComparisonError as exc:
         exc.category = "identity"
         raise
+    from benchmarks.task041_legacy_native_packet import (
+        TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+    )
+
+    packet_origin = summary.get("packet_origin")
+    legacy_native = packet_origin == TASK041_LEGACY_NATIVE_PACKET_ORIGIN
+    if packet_origin is not None and not legacy_native:
+        _fail("Task041 consumer packet origin is unsupported", category="identity")
     producer_raw = summary.get("producer_identity")
     if not isinstance(producer_raw, Mapping):
         binding = summary.get("consumer_binding")
         producer_raw = binding.get("producer_identity") if isinstance(binding, Mapping) else None
     try:
-        producer_identity = _normal_identity(producer_raw, "producer_identity")
+        producer_identity = (
+            _normal_legacy_identity(producer_raw, "producer_identity")
+            if legacy_native
+            else _normal_identity(producer_raw, "producer_identity")
+        )
     except Task041ComparisonError as exc:
         exc.category = "identity"
         raise
@@ -1440,6 +1596,10 @@ def _load_task041_side_balh_result(
         _fail("consumer summary source SHA differs from consumer identity")
     _validate_manifest_identity(run_manifest, identity, "run_manifest")
     _validate_public_input_artifacts(public_root, run_manifest, identity)
+    if legacy_native:
+        _validate_legacy_consumer_binding(
+            summary, identity, producer_identity, public_root
+        )
     authority_identity = {
         "source_sha": authority.get("source_sha"),
         "physical_model_sha256": authority.get("physical_model_sha256"),
@@ -1897,6 +2057,8 @@ def _side_success(result: Task041Result) -> dict[str, Any]:
         "source_sha": result.identity["source_sha"],
         "identity": dict(result.identity),
         "producer_identity": dict(result.producer_identity),
+        "packet_origin": result.summary.get("packet_origin"),
+        "consumer_binding": result.summary.get("consumer_binding"),
         "own_gates": result.own_gates,
         "resource": result.resources,
         "load_pass": True,
@@ -1945,8 +2107,13 @@ def _common_workflow_resources(
             or candidate_producer.get("status") == "measured"
         )
     )
+    producer_qualified = bool(
+        producer_binding["pass"] and exact_producer.get("pass") is True
+    )
     producer_values = {
         field: _resource_value(exact_producer, field)
+        if producer_qualified
+        else None
         for field in _RESOURCE_PEAK_FIELDS
     }
     producer_wall = _optional_finite(exact_producer.get("phase_wall_seconds"))
@@ -1959,7 +2126,8 @@ def _common_workflow_resources(
         "raw_samples_sha256": exact_producer.get("raw_samples_sha256"),
         "peak": producer_values,
         "phase_wall_seconds": producer_wall,
-        "qualified": bool(producer_binding["pass"] and exact_producer.get("pass")),
+        "qualified": producer_qualified,
+        "worker_tree": exact_producer.get("worker_tree"),
     }
 
     def _difference(
@@ -2006,7 +2174,7 @@ def _common_workflow_resources(
         for field in _WORKFLOW_MEMORY_FIELDS
     }
     common_producer_peak = {
-        field: _resource_value(exact_producer, field)
+        field: producer_values[field]
         for field in _WORKFLOW_MEMORY_FIELDS
     }
     candidate_workflow_peak = {
@@ -2182,6 +2350,7 @@ def compare_task041_side_balh_pair(
             "candidate": candidate_view,
             "exact": exact_view,
             "numerical_pass": False,
+            "consumer_resource_contract_pass": False,
             "resource_contract_pass": False,
             "comparison_contract_pass": False,
             "pass": False,
@@ -2213,6 +2382,9 @@ def compare_task041_side_balh_pair(
         and exact.resources["pass"]
         and common_workflow["pass"]
     )
+    consumer_resource_contract_pass = bool(
+        candidate.resources["pass"] and exact.resources["pass"]
+    )
     comparison_contract_pass = bool(identity["pass"])
     result = {
         "schema": _CONTRACT["schema"],
@@ -2227,6 +2399,7 @@ def compare_task041_side_balh_pair(
         "normal_flux": normal_flux,
         "common_workflow": common_workflow,
         "numerical_pass": numerical_pass,
+        "consumer_resource_contract_pass": consumer_resource_contract_pass,
         "resource_contract_pass": resource_contract_pass,
         "comparison_contract_pass": comparison_contract_pass,
     }

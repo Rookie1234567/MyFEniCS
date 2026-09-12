@@ -23,10 +23,16 @@ def _parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--validate-only", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
-    parser.add_argument(
+    packet_source = parser.add_mutually_exclusive_group()
+    packet_source.add_argument(
         "--producer-packet-root",
         type=Path,
         help="reuse a completed Task041 BAL_H producer packet",
+    )
+    packet_source.add_argument(
+        "--legacy-native-packet-descriptor",
+        type=Path,
+        help="import the explicitly qualified native Task039 V4 packet",
     )
     return parser
 
@@ -59,6 +65,7 @@ def main(argv: list[str] | None = None) -> int:
         result = launch_specification(
             specification,
             producer_packet_root=args.producer_packet_root,
+            legacy_native_packet_descriptor=args.legacy_native_packet_descriptor,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

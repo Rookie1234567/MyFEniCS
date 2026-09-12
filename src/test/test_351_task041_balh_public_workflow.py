@@ -381,7 +381,9 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         "_task041_builders",
         lambda: {
             "balh_mode_prep": lambda *_args: ["mode-prep"],
-            "balh_candidate_consumer": lambda *_args: ["candidate-consumer"],
+            "balh_candidate_consumer": lambda *_args, **_kwargs: [
+                "candidate-consumer"
+            ],
         },
     )
     monkeypatch.setattr(task041_balh_workflow, "validate_balh_producer_packet", fake_validate)

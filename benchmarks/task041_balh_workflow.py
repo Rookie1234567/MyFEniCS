@@ -220,6 +220,8 @@ def _mpi8_command(
     packet_producer_source_sha: str | None,
     *,
     module: str,
+    packet_origin: str | None = None,
+    legacy_native_binding: str | Path | None = None,
 ) -> list[str]:
     command = [
         "mpiexec",
@@ -258,6 +260,17 @@ def _mpi8_command(
         if not _valid_sha(packet_producer_source_sha, 40):
             raise ValueError("packet_producer_source_sha must be a lowercase SHA1")
         command.extend(["--packet-producer-source-sha", packet_producer_source_sha])
+    if (packet_origin is None) != (legacy_native_binding is None):
+        raise ValueError("legacy packet origin and binding must be supplied together")
+    if packet_origin is not None:
+        command.extend(
+            [
+                "--packet-origin",
+                packet_origin,
+                "--legacy-native-binding",
+                str(legacy_native_binding),
+            ]
+        )
     return command
 
 
@@ -297,6 +310,8 @@ def build_task041_balh_exact_consumer_command(
     run_directory: str | Path,
     source_sha: str,
     packet_producer_source_sha: str | None = None,
+    packet_origin: str | None = None,
+    legacy_native_binding: str | Path | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "exact":
@@ -312,6 +327,8 @@ def build_task041_balh_exact_consumer_command(
         source_sha,
         packet_producer_source_sha,
         module="benchmarks.task041_exact_side_workflow",
+        packet_origin=packet_origin,
+        legacy_native_binding=legacy_native_binding,
     )
 
 
@@ -324,6 +341,8 @@ def build_task041_balh_candidate_consumer_command(
     run_directory: str | Path,
     source_sha: str,
     packet_producer_source_sha: str | None = None,
+    packet_origin: str | None = None,
+    legacy_native_binding: str | Path | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -339,6 +358,8 @@ def build_task041_balh_candidate_consumer_command(
         source_sha,
         packet_producer_source_sha,
         module="benchmarks.task041_balh_workflow",
+        packet_origin=packet_origin,
+        legacy_native_binding=legacy_native_binding,
     )
 
 
@@ -726,6 +747,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-identity", required=True)
     parser.add_argument("--packet-manifest-sha256", required=True)
     parser.add_argument("--packet-producer-source-sha")
+    parser.add_argument("--packet-origin")
+    parser.add_argument("--legacy-native-binding")
     return parser
 
 
@@ -741,6 +764,8 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         run_directory=args.run_directory,
         source_sha=args.source_sha,
         packet_producer_source_sha=args.packet_producer_source_sha,
+        packet_origin=args.packet_origin,
+        legacy_native_binding=args.legacy_native_binding,
         candidate=True,
     )
 

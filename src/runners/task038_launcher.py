@@ -3642,6 +3642,7 @@ def launch_specification(
     sleep: Callable[[float], None] = time.sleep,
     poll_interval: float = 0.25,
     producer_packet_root: str | Path | None = None,
+    legacy_native_packet_descriptor: str | Path | None = None,
     compute_wall_ledger_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
@@ -3681,6 +3682,23 @@ def launch_specification(
         raise InputError(
             "--producer-packet-root is supported only for Task041 BAL_H profiles"
         )
+    if legacy_native_packet_descriptor is not None:
+        if producer_packet_root is not None:
+            raise InputError(
+                "legacy native packet descriptor cannot be combined with producer packet reuse"
+            )
+        if not task041_public_route:
+            raise InputError(
+                "--legacy-native-packet-descriptor is supported only for Task041 BAL_H profiles"
+            )
+        from benchmarks.task041_legacy_native_packet import (
+            task041_legacy_native_profile,
+        )
+
+        if not task041_legacy_native_profile(specification):
+            raise InputError(
+                "legacy native packet import is limited to the Task041 5 nm M480 MPI8 profiles"
+            )
     if task041_public_route and sample_factory is resource_authority_sample:
         effective_sample_factory = _task041_sparse_smaps_sample_factory(
             sample_factory,
@@ -3725,6 +3743,7 @@ def launch_specification(
                 sleep=sleep,
                 poll_interval=poll_interval,
                 producer_packet_root=producer_packet_root,
+                legacy_native_packet_descriptor=legacy_native_packet_descriptor,
                 compute_wall_ledger_path=compute_wall_ledger_path,
             )
         except OSError as exc:

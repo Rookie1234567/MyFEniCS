@@ -1300,15 +1300,30 @@ def _task041_consumer_sampled_column_contract(
     identity: Mapping[str, Any],
     manifest_path: Path,
     manifest_sha256: str,
+    *,
+    legacy_native: bool = False,
 ) -> dict[str, Any]:
     """Bind the fixed v1 or shortwave v2 sampled roles to a fresh manifest."""
 
     identity_schema = identity.get("schema")
-    sampled_mode_schema = identity_schema in {
+    if legacy_native:
+        if identity_schema != "task039.v4.h4.mode-identity.v1":
+            raise Task041ModePrepError(
+                "legacy native sampled contract requires the approved Task039 identity"
+            )
+        if identity.get("mode_count") != 480 or identity.get("mpi_size") != 8:
+            raise Task041ModePrepError(
+                "legacy native sampled contract requires M480/MPI8"
+            )
+        mode_count = 480
+        expected_contract_sha256 = None
+        sampled_mode_schema = True
+    else:
+        sampled_mode_schema = identity_schema in {
         TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
         TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
-    }
-    if identity_schema == TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA:
+        }
+    if not legacy_native and identity_schema == TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA:
         case = task041_balh_case(str(identity.get("model_id", "")))
         if case is None or int(identity.get("mode_count", -1)) != int(
             case["mode_count"]
@@ -1328,7 +1343,7 @@ def _task041_consumer_sampled_column_contract(
             )
         mode_count = int(case["mode_count"])
         expected_contract_sha256 = None
-    elif identity_schema == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
+    elif not legacy_native and identity_schema == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
         mode_count = identity.get("mode_count")
         if type(mode_count) is not int or mode_count not in (800, 1200):
             raise Task041ModePrepError(
@@ -1353,7 +1368,7 @@ def _task041_consumer_sampled_column_contract(
                 "Task041 shortwave sampled contract requires input_contiguous_v1"
             )
         expected_contract_sha256 = None
-    else:
+    elif not legacy_native:
         if identity_schema not in (None, TASK041_SELECTED_MODE_IDENTITY_SCHEMA):
             raise Task041ModePrepError(
                 "Task041 consumer sampled contract has an unsupported identity schema"
@@ -1746,14 +1761,14 @@ def _run_task041_balh_candidate_setup(
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
     from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
+    from src.solvers.hybrid_fem_modal_augmented_direct import (
+        internal_modal_rhs_correction,
+    )
     from src.solvers.hybrid_fem_modal_block_ldu import (
         create_side_balh_block_ldu_preconditioner,
     )
     from src.solvers.hybrid_fem_modal_iterative import (
         create_hybrid_assembled_block_action,
-    )
-    from src.solvers.hybrid_fem_modal_augmented_direct import (
-        internal_modal_rhs_correction,
     )
     from src.solvers.hybrid_fem_modal_schur_direct import modal_coupling_action
     from src.solvers.physical_balanced_side_inverse import (
@@ -2501,6 +2516,8 @@ def run_task041_consumer(
     run_directory: str | Path,
     source_sha: str,
     packet_producer_source_sha: str | None = None,
+    packet_origin: str | None = None,
+    legacy_native_binding: str | Path | None = None,
     candidate: bool = False,
     comm: Any = MPI.COMM_WORLD,
 ) -> dict[str, Any]:
@@ -2510,6 +2527,13 @@ def run_task041_consumer(
         raise Task041ModePrepError("source_sha must be a lowercase 40-character SHA")
     if not _valid_sha(packet_manifest_sha256, 64):
         raise Task041ModePrepError("packet manifest SHA must be a lowercase SHA256")
+    legacy_native = packet_origin == "task039.v4.h4.legacy_native"
+    if (packet_origin is None) != (legacy_native_binding is None):
+        raise Task041ModePrepError(
+            "legacy packet origin and binding must be supplied together"
+        )
+    if packet_origin is not None and not legacy_native:
+        raise Task041ModePrepError("unsupported Task041 packet origin")
     specification = load_and_resolve(input_path)
     normalized = specification.as_jsonable()
     contract = _task041_case_contract(normalized, comm.size, phase="consumer")
@@ -2564,6 +2588,9 @@ def run_task041_consumer(
     }
     if candidate:
         result["side_rhs_audit_path"] = str(candidate_audit_path)
+    if packet_origin is not None:
+        result["packet_origin"] = packet_origin
+        result["legacy_native_binding"] = str(legacy_native_binding)
     environment: dict[str, Any] = {}
     marker_records: list[dict[str, Any]] = []
     factor_events: dict[str, list[dict[str, Any]]] = {"bottom": [], "top": []}
@@ -2723,9 +2750,21 @@ def run_task041_consumer(
             )
 
             packet_identity = dict(disk_identity)
-            consumer_binding = task041_balh_consumer_identity_binding(
-                packet_identity, specification, source_sha
-            )
+            if legacy_native:
+                from benchmarks.task041_legacy_native_packet import (
+                    bind_task041_legacy_native_consumer,
+                )
+
+                consumer_binding = bind_task041_legacy_native_consumer(
+                    packet_identity,
+                    specification,
+                    source_sha,
+                    legacy_native_binding,
+                )
+            else:
+                consumer_binding = task041_balh_consumer_identity_binding(
+                    packet_identity, specification, source_sha
+                )
             recomputed_identity = build_task041_balh_packet_identity(
                 specification, normalized, source_sha, resolved_sha
             )
@@ -2758,7 +2797,10 @@ def run_task041_consumer(
         )
         emit("packet_identity_validated", {"path": str(identity_path)})
         sampled_contract = _task041_consumer_sampled_column_contract(
-            packet_identity, manifest_path, packet_manifest_sha256
+            packet_identity,
+            manifest_path,
+            packet_manifest_sha256,
+            legacy_native=legacy_native,
         )
         emit(
             "packet_manifest_validated",
@@ -3410,6 +3452,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-identity")
     parser.add_argument("--packet-manifest-sha256")
     parser.add_argument("--packet-producer-source-sha")
+    parser.add_argument("--packet-origin")
+    parser.add_argument("--legacy-native-binding")
     return parser
 
 
@@ -3444,6 +3488,8 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         run_directory=args.run_directory,
         source_sha=args.source_sha,
         packet_producer_source_sha=args.packet_producer_source_sha,
+        packet_origin=args.packet_origin,
+        legacy_native_binding=args.legacy_native_binding,
     )
 
 

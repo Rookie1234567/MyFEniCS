@@ -1597,6 +1597,7 @@ def run_task041_public_supervisor(
     poll_interval: float = 0.25,
     process_group_gone: Callable[[int], bool] = _process_group_gone,
     producer_packet_root: str | Path | None = None,
+    legacy_native_packet_descriptor: str | Path | None = None,
     compute_wall_ledger_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
@@ -1636,6 +1637,8 @@ def run_task041_public_supervisor(
     compute_wall_ledger: dict[str, Any] | None = None
     global_swap_baseline: dict[str, Any] | None = None
     balh = False
+    legacy_native = False
+    producer_root = root / "producer"
     try:
         if not root.is_dir():
             raise Task041SupervisorError(
@@ -1657,12 +1660,26 @@ def run_task041_public_supervisor(
         result["limits"] = dict(runtime_limits)
         shortwave = identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS
         balh = identity["model_id"] in TASK041_BALH_MODEL_IDS
+        legacy_native = legacy_native_packet_descriptor is not None
         if producer_packet_root is not None and not balh:
             raise Task041SupervisorError(
                 "producer packet reuse is enabled only for Task041 side BAL_H profiles",
                 classification="task041_identity_failure",
                 stage="producer_reuse_contract",
             )
+        if legacy_native:
+            from benchmarks.task041_legacy_native_packet import (
+                task041_legacy_native_profile,
+            )
+
+            if producer_packet_root is not None or not task041_legacy_native_profile(
+                specification
+            ):
+                raise Task041SupervisorError(
+                    "legacy native packet import requires the Task041 5 nm M480 MPI8 profile",
+                    classification="task041_identity_failure",
+                    stage="producer_reuse_contract",
+                )
         timeout_scope = "workflow"
         if shortwave or balh:
             phase_limits = {
@@ -1824,13 +1841,22 @@ def run_task041_public_supervisor(
                     stage="workflow_resource_preflight",
                 )
         python_entry = Path(os.path.abspath(python_executable or sys.executable))
-        producer_root = (
-            Path(producer_packet_root).resolve()
-            if producer_packet_root is not None
-            else root / "producer"
-        )
+        if producer_packet_root is not None:
+            producer_root = Path(producer_packet_root).resolve()
         producer_command_module = _task041_builders()
-        if balh:
+        if legacy_native:
+            from benchmarks.task041_legacy_native_packet import (
+                validate_task041_legacy_native_packet,
+            )
+
+            packet = validate_task041_legacy_native_packet(
+                legacy_native_packet_descriptor,
+                specification,
+                source_sha,
+            )
+            producer_root = Path(packet["producer_root"]).resolve()
+            producer_command = None
+        elif balh:
             producer_command = producer_command_module["balh_mode_prep"](
                 python_entry,
                 specification,
@@ -1851,7 +1877,35 @@ def run_task041_public_supervisor(
                 producer_root,
                 source_sha,
             )
-        if producer_packet_root is not None:
+        if legacy_native:
+            result["workflow_status"] = "producer_reused"
+            producer_result = dict(packet["producer_phase"])
+            producer_result.update(
+                {
+                    "phase": "producer",
+                    "status": "inherited_legacy_native_phase",
+                    "phase_invocation": "not_run_in_current_invocation",
+                    "reused": True,
+                    "resource_source": "inherited_legacy_native_worker_tree",
+                    "producer_resource_qualified": packet[
+                        "producer_resource_qualified"
+                    ],
+                    "supervisor_summary": None,
+                    "supervisor_summary_sha256": None,
+                    "packet_origin": packet[
+                        "legacy_binding"
+                    ]["origin"],
+                }
+            )
+            result["producer_reuse"] = {
+                "status": "validated_legacy_native_packet",
+                "producer_root": str(producer_root),
+                "descriptor": packet["descriptor"],
+                "resource_qualified": packet["producer_resource_qualified"],
+                "phase_status": "inherited_not_run",
+                "resource": packet["producer_resource"],
+            }
+        elif producer_packet_root is not None:
             from benchmarks.task041_balh_workflow import (
                 validate_balh_producer_packet,
             )
@@ -1969,7 +2023,7 @@ def run_task041_public_supervisor(
                 classification="task041_producer_failure",
                 stage="producer_exit",
             )
-        if producer_result.get("process_group_gone") is not True:
+        if not legacy_native and producer_result.get("process_group_gone") is not True:
             raise Task041SupervisorError(
                 "inherited producer phase lacks a completed process-group record",
                 classification="task041_producer_lifecycle_failure",
@@ -1985,7 +2039,7 @@ def run_task041_public_supervisor(
                 classification="task041_producer_lifecycle_failure",
                 stage="producer_handoff",
             )
-        if producer_packet_root is None and balh:
+        if producer_packet_root is None and not legacy_native and balh:
             from benchmarks.task041_balh_workflow import (
                 validate_balh_producer_packet,
             )
@@ -1993,7 +2047,7 @@ def run_task041_public_supervisor(
             packet = validate_balh_producer_packet(
                 producer_root, specification, source_sha
             )
-        elif producer_packet_root is None:
+        elif producer_packet_root is None and not legacy_native:
             packet = _validate_producer_packet(
                 producer_root, specification, source_sha, identity
             )
@@ -2049,6 +2103,8 @@ def run_task041_public_supervisor(
                     consumer_root,
                     source_sha,
                     packet.get("producer_source_sha"),
+                    packet_origin=packet.get("packet_origin"),
+                    legacy_native_binding=packet.get("legacy_native_binding"),
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -2060,6 +2116,8 @@ def run_task041_public_supervisor(
                     consumer_root,
                     source_sha,
                     packet.get("producer_source_sha"),
+                    packet_origin=packet.get("packet_origin"),
+                    legacy_native_binding=packet.get("legacy_native_binding"),
                 )
         elif shortwave:
             consumer_command = producer_command_module["shortwave_consumer"](
@@ -2282,11 +2340,7 @@ def run_task041_public_supervisor(
     finally:
         if balh:
             phase_roots = {
-                "producer": (
-                    Path(producer_packet_root).resolve()
-                    if producer_packet_root is not None
-                    else root / "producer"
-                ),
+                "producer": producer_root,
                 "consumer": root / "consumer",
             }
             for phase_name, phase_root in phase_roots.items():

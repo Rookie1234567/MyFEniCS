@@ -22,12 +22,26 @@ from benchmarks.run_task037b_hybrid_iterative import _write_frozen_m10_grid_payl
 from benchmarks.task039_v3_7_orchestration import _write_v3_7_candidate_authority
 from benchmarks.task041_balh_workflow import build_task041_balh_packet_identity
 from benchmarks.task041_exact_side_workflow import _inventory_from_payload
+from benchmarks.task041_legacy_native_packet import (
+    TASK039_V4_H4_EXTERNAL_SHA256,
+    TASK039_V4_H4_IDENTITY_SCHEMA,
+    TASK039_V4_H4_INPUT_SHA256,
+    TASK039_V4_H4_MODE_COUNT,
+    TASK039_V4_H4_MODEL_ID,
+    TASK039_V4_H4_PHYSICAL_SHA256,
+    TASK039_V4_H4_RUN_ID,
+    TASK039_V4_H4_SOURCE_SHA,
+    TASK041_LEGACY_NATIVE_PACKET_DESCRIPTOR_SCHEMA,
+    TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+    _physical_binding,
+)
 from benchmarks.task041_side_balh_comparison import (
     Task041ComparisonError,
     _compare_external,
     _compare_selected_fields,
     _own_gates,
     _pair_identity,
+    _validate_legacy_consumer_binding,
     compare_task041_side_balh_pair,
     load_task041_side_balh_result,
 )
@@ -48,6 +62,10 @@ EXACT_INPUT = (
 CANDIDATE_INPUT = (
     REPOSITORY_ROOT
     / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_balh.dat"
+)
+LEGACY_NATIVE_INPUT = (
+    REPOSITORY_ROOT
+    / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_exact.dat"
 )
 PUBLIC_SCOPE = "public_launcher_and_all_descendants"
 POST_ROLE = "phase_end_public_root"
@@ -516,6 +534,186 @@ def test_task041_comparison_real_writer_pair_and_workflow_peak(comparison_pair):
     assert workflow["workflow_wall"]["exact_supervisor_wall_seconds"] == 5.0
     assert workflow["workflow_wall"]["candidate_phase_sum_seconds"] == 1.0
     assert workflow["workflow_wall"]["exact_phase_sum_seconds"] == 5.0
+
+
+def test_task041_unqualified_producer_does_not_enter_workflow_peak(comparison_pair):
+    supervisor_path = comparison_pair["exact"] / "supervisor_summary.json"
+    supervisor = json.loads(supervisor_path.read_text(encoding="utf-8"))
+    producer_phase = supervisor["phase_results"]["producer"]
+    producer_phase["reused"] = True
+    producer_phase["worker_tree"] = {"peak_rss_bytes": 900}
+    supervisor["compute_wall_budget"]["used_after_seconds"] = 13.0
+    supervisor["compute_wall_budget"]["remaining_after_seconds"] = 172787.0
+    supervisor_path.write_text(
+        json.dumps(supervisor, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+    )
+    result = compare_task041_side_balh_pair(
+        comparison_pair["candidate"], comparison_pair["exact"]
+    )
+    assert result["consumer_resource_contract_pass"] is True
+    assert result["resource_contract_pass"] is False
+    assert result["pass"] is False
+    workflow = result["common_workflow"]
+    assert workflow["common_producer"]["qualified"] is False
+    assert workflow["common_producer"]["peak"]["process_tree_rss_bytes"] is None
+    assert workflow["common_producer"]["worker_tree"]["peak_rss_bytes"] == 900
+    assert workflow["workflow_peak"]["common_producer_peak"][
+        "process_tree_rss_bytes"
+    ] is None
+
+
+def test_task041_legacy_binding_recomputes_raw_resolved_contract(tmp_path: Path):
+    specification = _specification(LEGACY_NATIVE_INPUT)
+    public_root = tmp_path / "consumer"
+    public_root.mkdir()
+    public_resolved_path = public_root / "resolved_config.json"
+    write_resolved_config(specification, public_resolved_path)
+    public_resolved = json.loads(public_resolved_path.read_text(encoding="utf-8"))
+    consumer_identity = build_task041_balh_packet_identity(
+        specification,
+        specification.as_jsonable(),
+        "c" * 40,
+        resolved_config_sha256(specification),
+    )
+
+    legacy_resolved = json.loads(json.dumps(public_resolved))
+    legacy_resolved["materials"]["substrate_name"] = "legacy substrate"
+    legacy_resolved["materials"]["grating_name"] = "legacy grating"
+    legacy_resolved["provenance"]["input_sha256"] = TASK039_V4_H4_INPUT_SHA256
+    legacy_resolved["provenance"]["physical_model_sha256"] = (
+        TASK039_V4_H4_PHYSICAL_SHA256
+    )
+    producer_root = tmp_path / "producer"
+    producer_root.mkdir()
+    legacy_resolved_path = producer_root / "resolved_config.json"
+    legacy_resolved_path.write_text(
+        json.dumps(legacy_resolved, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    legacy_resolved_sha = hashlib.sha256(legacy_resolved_path.read_bytes()).hexdigest()
+    producer_identity = {
+        "schema": TASK039_V4_H4_IDENTITY_SCHEMA,
+        "scope": "task039_v4_h4_m480",
+        "source_sha": TASK039_V4_H4_SOURCE_SHA,
+        "input_sha256": TASK039_V4_H4_INPUT_SHA256,
+        "resolved_sha256": legacy_resolved_sha,
+        "physical_sha256": TASK039_V4_H4_PHYSICAL_SHA256,
+        "model_id": TASK039_V4_H4_MODEL_ID,
+        "run_id": TASK039_V4_H4_RUN_ID,
+        "mode_count": TASK039_V4_H4_MODE_COUNT,
+        "mpi_size": 8,
+        "external_keys": {
+            "count": consumer_identity["external_keys"]["count"],
+            "sha256": TASK039_V4_H4_EXTERNAL_SHA256,
+        },
+    }
+    packet_root = tmp_path / "packet"
+    packet_root.mkdir()
+    manifest_path = packet_root / "manifest.json"
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    identity_path = packet_root / "identity.json"
+    identity_path.write_text(
+        json.dumps(producer_identity, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    artifact_names = (
+        "run_manifest",
+        "run_summary",
+        "numeric_summary",
+        "resolved_config",
+        "input",
+        "source_record",
+        "input_record",
+        "physical_record",
+        "process_samples",
+    )
+    artifact_hashes = {
+        "packet_manifest": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "packet_identity": hashlib.sha256(identity_path.read_bytes()).hexdigest(),
+        **{name: "0" * 64 for name in artifact_names},
+    }
+    artifact_hashes["resolved_config"] = legacy_resolved_sha
+    descriptor_path = tmp_path / "legacy_descriptor.json"
+    descriptor_path.write_text(
+        json.dumps(
+            {
+                "schema": TASK041_LEGACY_NATIVE_PACKET_DESCRIPTOR_SCHEMA,
+                "origin": TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+                "packet_root": str(packet_root),
+                "identity_path": str(identity_path),
+                "producer_root": str(producer_root),
+                "artifact_sha256": artifact_hashes,
+            },
+            sort_keys=True,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    physical = _physical_binding(legacy_resolved, public_resolved)
+    binding = {
+        "origin": TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+        "pass": True,
+        "producer_identity": producer_identity,
+        "consumer_identity": consumer_identity,
+        "physical_equivalence": physical,
+        "external_keys": {
+            "producer": producer_identity["external_keys"],
+            "consumer": consumer_identity["external_keys"],
+            "pass": True,
+        },
+        "descriptor": {
+            "path": str(descriptor_path),
+            "sha256": hashlib.sha256(descriptor_path.read_bytes()).hexdigest(),
+        },
+    }
+    summary = {
+        "packet_origin": TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+        "consumer_binding": binding,
+    }
+    _validate_legacy_consumer_binding(
+        summary, consumer_identity, producer_identity, public_root
+    )
+
+    legacy_resolved["materials"]["n_grating"][0] += 0.01
+    legacy_resolved_path.write_text(
+        json.dumps(legacy_resolved, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    legacy_resolved_sha = hashlib.sha256(legacy_resolved_path.read_bytes()).hexdigest()
+    producer_identity["resolved_sha256"] = legacy_resolved_sha
+    identity_path.write_text(
+        json.dumps(producer_identity, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    artifact_hashes["packet_identity"] = hashlib.sha256(
+        identity_path.read_bytes()
+    ).hexdigest()
+    artifact_hashes["resolved_config"] = legacy_resolved_sha
+    descriptor_path.write_text(
+        json.dumps(
+            {
+                "schema": TASK041_LEGACY_NATIVE_PACKET_DESCRIPTOR_SCHEMA,
+                "origin": TASK041_LEGACY_NATIVE_PACKET_ORIGIN,
+                "packet_root": str(packet_root),
+                "identity_path": str(identity_path),
+                "producer_root": str(producer_root),
+                "artifact_sha256": artifact_hashes,
+            },
+            sort_keys=True,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    binding["producer_identity"] = producer_identity
+    binding["descriptor"]["sha256"] = hashlib.sha256(
+        descriptor_path.read_bytes()
+    ).hexdigest()
+    with pytest.raises(Task041ComparisonError, match="raw resolved contracts"):
+        _validate_legacy_consumer_binding(
+            summary, consumer_identity, producer_identity, public_root
+        )
 
 
 def _valid_gate_summary() -> dict[str, object]:
