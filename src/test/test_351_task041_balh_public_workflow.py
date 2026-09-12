@@ -5,6 +5,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -113,6 +115,21 @@ def test_task041_balh_public_commands_select_one_consumer():
         assert command.count("--phase") == 1
         assert "--phase" in command
         assert not ("consumer" in command and "candidate-consumer" in command)
+
+
+def test_task041_balh_module_help_executes_public_worker_entrypoint():
+    result = subprocess.run(
+        [sys.executable, "-m", "benchmarks.task041_balh_workflow", "--help"],
+        cwd=REPOSITORY_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    output = result.stdout + result.stderr
+    assert result.returncode == 0
+    assert "usage:" in output
+    assert "--worker" in output
+    assert "--phase" in output
 
 
 def test_task041_balh_identity_keeps_producer_and_consumer_distinct():

@@ -766,3 +766,7 @@ __all__ = [
     "task041_balh_route",
     "validate_balh_producer_packet",
 ]
+
+
+if __name__ == "__main__":
+    main()
