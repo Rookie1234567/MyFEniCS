@@ -139,6 +139,27 @@ def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
     return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
 
 
+def runtime_tree_cap(start_cap_bytes: int, process_tree_rss_bytes: int,
+                     envelope: dict, *, explicit_tree_cap_bytes: int | None = None) -> int:
+    """Return a non-increasing runtime cap without double-counting RSS.
+
+    ``memory_envelope()['launch_cap_bytes']`` is free memory after the
+    reserve, whereas the process-tree sample is already occupied memory.
+    Adding the two gives the current total-capacity estimate; comparing RSS
+    directly with free memory would subtract the current job a second time.
+    """
+    start_cap = int(start_cap_bytes)
+    current_capacity = (
+        int(process_tree_rss_bytes)
+        + int(envelope['effective_available_bytes'])
+        - int(envelope['reserve_bytes'])
+    )
+    limits = [start_cap, current_capacity]
+    if explicit_tree_cap_bytes is not None:
+        limits.append(int(explicit_tree_cap_bytes))
+    return min(limits)
+
+
 def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               interval: float = .25, grace_seconds: float = 2.0,
               cache_path: Path | None = None, phase_path: Path | None = None,
@@ -146,10 +167,13 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               worker_environment: dict | None = None, hard_stop_immediate: bool = False,
               cooperative_performance_stop: bool = False,
               timebase_guard: bool = False, timebase_policy: str = STRICT,
-              stop_on_global_swap: bool = False) -> dict:
+              stop_on_global_swap: bool = False,
+              tree_cap_bytes: int | None = None) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     if not command or min(wall_seconds, interval, grace_seconds) <= 0:
         raise ValueError('command and positive monitoring budgets are required')
+    if tree_cap_bytes is not None and int(tree_cap_bytes) <= 0:
+        raise ValueError('tree_cap_bytes must be positive when supplied')
     if cooperative_performance_stop and (phase_path is None or not hard_stop_immediate or grace_seconds > 60):
         raise ValueError('cooperative stop requires phase registration, immediate hard gates and grace <=60s')
     libc = ctypes.CDLL(None, use_errno=True)
@@ -160,7 +184,16 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         raise RuntimeError('watchdog must be a dedicated parent with no existing children')
     directory.mkdir(parents=True, exist_ok=False)
     envelope = memory_envelope()
-    cap = envelope['launch_cap_bytes']
+    dynamic_cap = int(envelope['launch_cap_bytes'])
+    cap = min(dynamic_cap, int(tree_cap_bytes)) if tree_cap_bytes is not None else dynamic_cap
+    if tree_cap_bytes is not None:
+        envelope = {
+            **envelope,
+            'dynamic_launch_cap_bytes': dynamic_cap,
+            'launch_cap_bytes': cap,
+            'tree_cap_bytes': int(tree_cap_bytes),
+            'cap_policy': 'min(dynamic_memory_envelope, explicit_tree_cap)',
+        }
     if cap <= 0:
         raise RuntimeError('no safe launch memory budget')
     requested_signal = []
@@ -232,13 +265,23 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         clock_issue = str(exc)
                         sample['clock_error'] = clock_issue
                         summary.setdefault('clock_error', clock_issue)
+                current_cap = (
+                    runtime_tree_cap(
+                        cap,
+                        int(sample['rss_bytes']),
+                        current,
+                        explicit_tree_cap_bytes=tree_cap_bytes,
+                    )
+                    if tree_cap_bytes is not None
+                    else cap
+                )
                 if not sample['all_status_readable']:
                     reason = 'MONITORING_FAILED'
                 else:
                     peak_rss = max(peak_rss, sample['rss_bytes'])
                     peak_swap = max(peak_swap, sample['swap_bytes'])
                     reason = (
-                        'RESOURCE_CONTROLLED_STOP' if sample['rss_bytes'] >= cap
+                        'RESOURCE_CONTROLLED_STOP' if sample['rss_bytes'] >= current_cap
                         or current['effective_available_bytes'] < current['reserve_bytes']
                         or sample['swap_bytes'] != 0 else
                         'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
@@ -254,7 +297,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         reason = swap_reason
                 sample.update({'elapsed_seconds': elapsed, 'memory_envelope': current,
                                'worker_phase': phase,
-                               'launch_cap_bytes': cap, 'warning': peak_rss >= .85 * cap,
+                               'launch_cap_bytes': current_cap,
+                               'watchdog_tree_cap_bytes': tree_cap_bytes,
+                               'warning': peak_rss >= .85 * cap,
                                'live_or_unreaped_children': sorted(children)})
                 stage = 'timeline_write'
                 timeline.write(json.dumps(sample, allow_nan=False) + '\n')

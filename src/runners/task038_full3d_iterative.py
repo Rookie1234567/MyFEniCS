@@ -16,6 +16,14 @@ def run_full3d_iterative(
     method = resolved_payload.get("method", {})
     if not isinstance(method, Mapping) or method.get("kind") != "full3d_iterative":
         raise ValueError("full3d_iterative adapter received a mismatched method")
+    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_schur_v14":
+        from .physical_p4_schur_v14 import run_physical_p4_schur_v14
+
+        return run_physical_p4_schur_v14(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+        )
     from src.io.physical_intermediate_profile import PROFILES
 
     if resolved_payload.get("solver", {}).get("preconditioner") in PROFILES:

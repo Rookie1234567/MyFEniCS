@@ -19,10 +19,80 @@ from .physical_recursive_profile import (
     macro_v10_profile_facts,
 )
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+SCHUR_PROFILE = "physical_p4_schur_v14"
+
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == SCHUR_PROFILE:
+        return {
+            'identity': SCHUR_PROFILE,
+            'scope': 'review_v14_Q0_to_Q6_physical_p4_schur',
+            'physical_levels': [6, 4],
+            'common_core': {
+                'active_matrix': 'A_IiIi from native p4 MPC active indices',
+                'interface_matrix': '[S_V B; -D H]',
+                'gamma_support': 'shared cell owners plus both nonzero B/D supports',
+                'internal_blocks': 42,
+                'internal_rows_expected': 35868,
+                'gamma_rows_expected': 13092,
+                'active_rows_expected': 48960,
+                'max_internal_rows': 2048,
+                'batch_columns': 32,
+                'old_macro_objects': False,
+                'old_p2_p1_levels': False,
+                'global_dense_schur': False,
+            },
+            'outer': {
+                'ksp_type': 'right_fgmres', 'restart': 32, 'max_iterations': 2048,
+                'zero_start': True, 'live_KSP': True, 'KSP_create_count': 1,
+                'KSP_solve_count': 1, 'explicit_true_residual_limit': 1e-6,
+            },
+            'direct_controls': {
+                'rhs_count': 3, 'global_factor_count': 1,
+                'internal_factor_count': 42, 'solve_order': 'sequential',
+                'full_reference': 'native p4 A4 with 80 port rows',
+                'schur_reference': 'explicit sparse S_V plus 80 port rows',
+            },
+            'memory_policy': 'SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
+            'resources': {
+                'workflow_seconds': 14400, 'solve_seconds': 10800,
+                'mpi_size': 1, 'require_zero_swap': True,
+                'inventory_memory_cap_bytes_by_stage': {
+                    'Q1_FULL_DIRECT': 6 * 1024**3,
+                    'Q2_SCHUR_DIRECT': 6 * 1024**3,
+                    'Q3_INTERFACE_CONTROL': 3 * 1024**3,
+                    'Q4_ORIGINAL': 3 * 1024**3,
+                    'Q5_NOTCH': 3 * 1024**3,
+                },
+                'shared_temp_workspace_cap_bytes': 1 * 1024**3,
+                'local_factor_matrix_and_allocated_cap_bytes': 512 * 1024**2,
+                'interface_matrix_factor_solve_cap_bytes': 64 * 1024**2,
+                'interface_workspace_cap_bytes': 64 * 1024**2,
+                'tree_cap_bytes': 8 * 1024**3,
+                'dynamic_launch_cap_formula':
+                    'min(8GiB, effective_available_bytes-reserve_bytes)',
+                'reserve_formula': 'max(4GiB, 0.15*effective_total_bytes)',
+                'warning_fraction': 0.85,
+                'stage_budgets': {
+                    'Q0_CORE': {'workflow_seconds': 600, 'solve_seconds': 600},
+                    'Q1_FULL_DIRECT': {'workflow_seconds': 1800, 'solve_seconds': 1800},
+                    'Q2_SCHUR_DIRECT': {'workflow_seconds': 3600, 'solve_seconds': 3600},
+                    'Q3_INTERFACE_CONTROL': {'workflow_seconds': 3600, 'solve_seconds': 3600},
+                    'Q4_ORIGINAL': {'workflow_seconds': 14400, 'solve_seconds': 10800},
+                    'Q5_NOTCH': {'workflow_seconds': 14400, 'solve_seconds': 10800},
+                    'Q6_FINALIZE': {'workflow_seconds': 43200, 'solve_seconds': 43200},
+                },
+            },
+            'gates': {
+                'direct_relative_residual': 1e-10,
+                'field_l2_and_scaled_curl': 1e-8,
+                'interface_rcond': 1e-12,
+                'interface_workspace_bytes': 64 * 1024**2,
+            },
+            'qualification': 'opt_in; Q1/Q2 direct comparison precedes Q3-Q5',
+        }
     if identity in RECURSIVE_PROFILES:
         from .physical_recursive_profile import recursive_profile_facts
         return recursive_profile_facts(identity)

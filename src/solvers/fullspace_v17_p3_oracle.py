@@ -129,6 +129,10 @@ def _load_petsc_api() -> ctypes.CDLL:
         library.MatLUFactorNumeric.restype = ctypes.c_int
         library.MatSolve.argtypes = [void, void, void]
         library.MatSolve.restype = ctypes.c_int
+        transpose = getattr(library, "MatSolveTranspose", None)
+        if transpose is not None:
+            transpose.argtypes = [void, void, void]
+            transpose.restype = ctypes.c_int
         library.MatDestroy.argtypes = [ctypes.POINTER(void)]
         library.MatDestroy.restype = ctypes.c_int
         library.ISDestroy.argtypes = [ctypes.POINTER(void)]
@@ -319,6 +323,36 @@ class _MumpsFactor:
             "MatSolve",
         )
         self.solve_calls += 1
+
+    def solve_adjoint(self, rhs: Any, solution: Any) -> None:
+        """Solve ``A.H x = rhs`` through this same factor.
+
+        PETSc exposes a transpose solve, so conjugating both sides gives
+        ``A.T conj(x) = conj(rhs)``.  This keeps the one-factor invariant and
+        does not create a second numeric factor for adjoint tests/actions.
+        """
+        if self.destroyed or self.numeric_calls != 1:
+            raise RuntimeError("MUMPS adjoint solve requires a live numeric factor")
+        transpose = getattr(self._api, "MatSolveTranspose", None)
+        if transpose is None:
+            raise RuntimeError("PETSc MatSolveTranspose is unavailable")
+        conjugated_rhs = rhs.duplicate()
+        conjugated_solution = solution.duplicate()
+        try:
+            conjugated_rhs.array[:] = np.conj(rhs.array)
+            _petsc_error(
+                transpose(
+                    self._handle,
+                    _petsc_handle(conjugated_rhs),
+                    _petsc_handle(conjugated_solution),
+                ),
+                "MatSolveTranspose",
+            )
+            solution.array[:] = np.conj(conjugated_solution.array)
+            self.solve_calls += 1
+        finally:
+            _destroy(conjugated_rhs)
+            _destroy(conjugated_solution)
 
     def info(self, extra_indices: tuple[int, ...] = (), *, include_local: bool = False) -> dict[str, Any]:
         infog: dict[str, int] = {}

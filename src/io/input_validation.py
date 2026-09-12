@@ -549,6 +549,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_macro_dd4_v11",
                 "physical_macro_dd4_v12",
                 "physical_p4_direction_diagnosis_v13",
+                "physical_p4_schur_v14",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -676,6 +677,60 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                             "solver.outer_restart",
                             f"{stage} requires outer_restart=0",
                         )
+            elif preconditioner == "physical_p4_schur_v14":
+                stage = solver.get("stage")
+                stage_budgets = {
+                    "Q0_CORE": (600, 600),
+                    "Q1_FULL_DIRECT": (1800, 1800),
+                    "Q2_SCHUR_DIRECT": (3600, 3600),
+                    "Q3_INTERFACE_CONTROL": (3600, 3600),
+                    "Q4_ORIGINAL": (14400, 10800),
+                    "Q5_NOTCH": (14400, 10800),
+                    "Q6_FINALIZE": (43200, 43200),
+                }
+                if stage not in stage_budgets:
+                    raise _error(
+                        "solver.stage",
+                        "physical_p4_schur_v14 requires an explicit Q0-Q6 stage",
+                    )
+                for section, key, actual, expected in (
+                    ("solver", "restart", solver["restart"], 32),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], stage_budgets[stage][0]),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 10.0),
+                ):
+                    if actual != expected:
+                        raise _error(
+                            f"{section}.{key}",
+                            f"{preconditioner} fixes {key}={expected} for {stage}",
+                        )
+                if solver.get("memory_policy") != "SYMBOLIC_SIZED_LOCAL_MUMPS_V11":
+                    raise _error(
+                        "solver.memory_policy",
+                        "physical_p4_schur_v14 fixes SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+                    )
+                notch = geometry.get("cell_notch")
+                if stage == "Q5_NOTCH":
+                    if notch != "positive_x_middle_y_z40_80":
+                        raise _error(
+                            "geometry.cell_notch",
+                            "Q5_NOTCH requires the frozen positive_x_middle_y_z40_80 recipe",
+                        )
+                elif stage in {
+                    "Q0_CORE",
+                    "Q1_FULL_DIRECT",
+                    "Q2_SCHUR_DIRECT",
+                    "Q3_INTERFACE_CONTROL",
+                    "Q4_ORIGINAL",
+                } and notch is not None:
+                    raise _error(
+                        "geometry.cell_notch",
+                        f"{stage} is bound to the original no-notch physical recipe",
+                    )
             elif preconditioner in ("physical_intermediate_p4_shifted_aux_v1", "physical_intermediate_p4_reference_v1", "a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9"):
                 expanded = preconditioner in ("a2r_equivalent_fast_v1", "p6smooth_p4ref_p6smooth_v1", "a2r_packed_equivalent_v2", "light_p4ref_jointmr3_v2", "balanced_h6_p4_v5", "balanced_s6_p4_v5", "projected_krylov6_h6_p4_v5", "balanced_h6_recursive_p4_lo_v6", "balanced_h6_recursive_p4_hi_v6", "bounded_entity16_v7", "bounded_projected_seq2_16_v7", "balanced_h6_entity_gcrot8_v8", "balanced_h6_entity_gcrot8_new16_v9")
                 for section, key, actual, expected in (

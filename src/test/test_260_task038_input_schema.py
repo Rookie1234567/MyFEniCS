@@ -148,6 +148,7 @@ def test_schema_identity_sections_and_unique_whitelist():
         "physical_macro_dd4_v11",
         "physical_macro_dd4_v12",
         "physical_p4_direction_diagnosis_v13",
+        "physical_p4_schur_v14",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (

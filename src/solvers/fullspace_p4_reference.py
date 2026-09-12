@@ -30,7 +30,7 @@ def reference_budget(sample, raw_info, future_bytes, *, marker=lambda *_: None):
     return facts
 
 
-def augment_physical_volume(volume, carrier, *, allocation_gate=None):
+def augment_physical_volume(volume, carrier, *, allocation_gate=None, allocation_callback=None):
     """Exactly preallocate [V B; -D H], using sparse carrier data as stored."""
     n = volume.getSize()[0]
     if volume.getComm().getSize() != 1 or carrier.global_rows != n:
@@ -45,6 +45,18 @@ def augment_physical_volume(volume, carrier, *, allocation_gate=None):
         sizes[n+j] = len(item.projection_rows)+1
     if allocation_gate is not None:
         allocation_gate(int(sizes.sum()))
+    if allocation_callback is not None:
+        allocation_callback(dict(
+            volume_rows=int(n),
+            port_rows=int(len(entries)),
+            volume_nnz=int(volume.getInfo().get('nz_allocated', 0)),
+            augmented_nnz=int(sizes.sum()),
+            matrix_payload_bytes=int(
+                (int(n) + len(entries) + 1) * np.dtype(PETSc.IntType).itemsize
+                + int(sizes.sum())
+                * (np.dtype(PETSc.IntType).itemsize + np.dtype(PETSc.ScalarType).itemsize)
+            ),
+        ))
     matrix = PETSc.Mat().createAIJ([len(sizes), len(sizes)], nnz=sizes, comm=volume.getComm())
     try:
         matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
@@ -67,7 +79,8 @@ def augment_physical_volume(volume, carrier, *, allocation_gate=None):
 
 
 def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample, degree=4, row_cap=None,
-                           cell_volume_correction=None, extra_local_bytes=0):
+                           cell_volume_correction=None, extra_local_bytes=0,
+                           allocation_callback=None):
     """Use MPC's exact sparsity constructor before numerical volume assembly."""
     import dolfinx_mpc
     space, mpc = setup['spaces'][degree], setup['floquets'][degree].mpc
@@ -122,8 +135,12 @@ def build_reference_matrix(setup, cfg, native, quadrature, *, marker, sample, de
                 raise ReferenceResourceBlocked('cell correction enlarged original p2 sparsity')
         marker('reference_volume_complete', dict(nnz=int(volume.getInfo()['nz_used'])))
         sample()
-        matrix, facts = augment_physical_volume(volume, carrier,
-            allocation_gate=(lambda nnz: gate('before_augmentation', allocated, nnz)) if pilot else None)
+        matrix, facts = augment_physical_volume(
+            volume,
+            carrier,
+            allocation_gate=(lambda nnz: gate('before_augmentation', allocated, nnz)) if pilot else None,
+            allocation_callback=allocation_callback,
+        )
         try:
             marker('reference_augmentation_complete', facts)
         except BaseException:

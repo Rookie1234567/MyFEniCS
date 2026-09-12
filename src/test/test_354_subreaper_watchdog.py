@@ -8,6 +8,31 @@ import sys
 import pytest
 
 
+def test_explicit_tree_cap_reuses_current_rss_without_double_counting():
+    from benchmarks.subreaper_watchdog import runtime_tree_cap
+
+    envelope = {
+        'effective_available_bytes': 9 * 1024**3,
+        'reserve_bytes': 4 * 1024**3,
+    }
+    assert runtime_tree_cap(
+        8 * 1024**3,
+        3 * 1024**3,
+        envelope,
+        explicit_tree_cap_bytes=8 * 1024**3,
+    ) == 8 * 1024**3
+    occupied_externally = {
+        'effective_available_bytes': 8 * 1024**3,
+        'reserve_bytes': 4 * 1024**3,
+    }
+    assert runtime_tree_cap(
+        8 * 1024**3,
+        3 * 1024**3,
+        occupied_externally,
+        explicit_tree_cap_bytes=8 * 1024**3,
+    ) == 7 * 1024**3
+
+
 @pytest.mark.parametrize('terminate', [False, True])
 def test_orphan_setsid_child_is_sampled_and_reaped(tmp_path, terminate):
     directory = tmp_path / 'run'

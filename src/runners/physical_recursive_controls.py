@@ -47,6 +47,7 @@ def load_recursive_calibration(inventory_path, *, allow_missing_reference=False)
             identity=row, rhs=source['g'],
             reference_y=None if reference is None else reference['y'],
             reference_A4y=None if reference is None else reference['A4y'],
+            reference_identity=None if reference is None else reference.get('identity'),
             reference_status=reference_status,
             reference_available=reference is not None,
             reference_map=load_packet(map_path),
