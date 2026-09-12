@@ -235,18 +235,116 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh() -> None:
         cell_type=mesh.CellType.hexahedron,
         ghost_mode=mesh.GhostMode.shared_facet,
     )
-    space = fem.functionspace(
+    cfg6 = _fixture_config(6)
+    cfg4 = _fixture_config(4)
+    mesh_data = SimpleNamespace(mesh=box, facet_tags=_boundary_tags(box, cfg6))
+    fine_space = fem.functionspace(
+        box,
+        element("N1curl", box.basix_cell(), 6, dtype=default_real_type),
+    )
+    coarse_space = fem.functionspace(
         box,
         element("N1curl", box.basix_cell(), 4, dtype=default_real_type),
     )
-    ranges = _owner_ranges(space.dofmap.index_map, MPI.COMM_WORLD)
+    fine_floquet = build_double_floquet_mpc(fine_space, mesh_data, cfg6)
+    coarse_floquet = build_double_floquet_mpc(coarse_space, mesh_data, cfg4)
+    owner = build_same_mesh_hcurl_owner_transfer(
+        fine_space,
+        fine_floquet,
+        coarse_space,
+        coarse_floquet,
+    )
+    ranges = _owner_ranges(fine_space.dofmap.index_map, MPI.COMM_WORLD)
     assert any(first == last for first, last in ranges)
-    global_rows = int(space.dofmap.index_map.size_global)
+    global_rows = int(fine_space.dofmap.index_map.size_global)
     owners = _owner_ranks(
         np.asarray((0, global_rows - 1), dtype=np.int64),
         ranges,
     )
     assert np.all((owners >= 0) & (owners < MPI.COMM_WORLD.size))
+    coarse = create_vector(
+        [
+            (
+                coarse_space.dofmap.index_map,
+                int(coarse_space.dofmap.index_map_bs),
+            )
+        ]
+    )
+    fine_probe = create_vector(
+        [
+            (
+                fine_space.dofmap.index_map,
+                int(fine_space.dofmap.index_map_bs),
+            )
+        ]
+    )
+    outputs = []
+    coarse_before = None
+    fine_probe_before = None
+    coarse_difference = None
+    fine_difference = None
+    try:
+        coarse_slaves = np.asarray(owner._coarse_slaves, dtype=np.int64)
+        fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
+        _fill_algebraic_vector(coarse, coarse_slaves, 0.75)
+        coarse_before = coarse.duplicate()
+        coarse.copy(coarse_before)
+        fine_output = owner.apply_primal(coarse)
+        outputs.append(fine_output)
+        _fill_algebraic_vector(fine_probe, fine_slaves, -0.5)
+        fine_probe_before = fine_probe.duplicate()
+        fine_probe.copy(fine_probe_before)
+        coarse_output = owner.apply_adjoint(fine_probe)
+        outputs.append(coarse_output)
+
+        fine_slave_values = np.asarray(fine_output.getArray(readonly=True))[
+            fine_slaves
+        ]
+        fine_slave_max = float(
+            np.max(np.abs(fine_slave_values)) if fine_slave_values.size else 0.0
+        )
+        coarse_slave_values = np.asarray(coarse_output.getArray(readonly=True))[
+            coarse_slaves
+        ]
+        coarse_slave_max = float(
+            np.max(np.abs(coarse_slave_values))
+            if coarse_slave_values.size
+            else 0.0
+        )
+        assert MPI.COMM_WORLD.allreduce(fine_slave_max, op=MPI.MAX) == 0.0
+        assert MPI.COMM_WORLD.allreduce(coarse_slave_max, op=MPI.MAX) == 0.0
+        assert coarse.norm() > 0.0
+        assert fine_probe.norm() > 0.0
+        assert fine_output.norm() > 0.0
+        assert coarse_output.norm() > 0.0
+
+        dot_lhs = fine_output.dot(fine_probe)
+        dot_rhs = coarse.dot(coarse_output)
+        dot_scale = max(abs(dot_lhs), abs(dot_rhs), np.finfo(float).tiny)
+        assert abs(dot_lhs - dot_rhs) / dot_scale <= 1.0e-10
+
+        coarse_difference = coarse.duplicate()
+        coarse.copy(coarse_difference)
+        coarse_difference.axpy(PETSc.ScalarType(-1.0), coarse_before)
+        fine_difference = fine_probe.duplicate()
+        fine_probe.copy(fine_difference)
+        fine_difference.axpy(PETSc.ScalarType(-1.0), fine_probe_before)
+        assert coarse_difference.norm() == 0.0
+        assert fine_difference.norm() == 0.0
+    finally:
+        for vector in outputs:
+            vector.destroy()
+        coarse.destroy()
+        fine_probe.destroy()
+        if coarse_before is not None:
+            coarse_before.destroy()
+        if fine_probe_before is not None:
+            fine_probe_before.destroy()
+        if coarse_difference is not None:
+            coarse_difference.destroy()
+        if fine_difference is not None:
+            fine_difference.destroy()
+        owner.destroy()
 
 
 def test_task041_h1b_same_mesh_p_and_ph_conjugacy_and_alternation(

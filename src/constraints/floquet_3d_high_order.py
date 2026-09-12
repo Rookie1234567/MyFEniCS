@@ -250,13 +250,17 @@ def _build_periodic_entity_records(
     entity_dofs: int,
 ) -> list[dict[str, object]]:
     msh = mesh_data.mesh
+    comm = msh.comm
     entities = _periodic_boundary_entities(mesh_data, cfg, entity_dim)
-    if len(entities) == 0:
+    global_entity_count = int(comm.allreduce(len(entities), op=MPI.SUM))
+    if global_entity_count == 0:
         raise RuntimeError(
             f"No periodic boundary entities of dim={entity_dim} were found."
         )
     dof_map = _build_entity_dof_map(V, entity_dim, entity_dofs)
     msh.topology.create_entity_permutations()
+    if len(entities) == 0:
+        return []
     midpoints = mesh.compute_midpoints(msh, entity_dim, entities)
     geometry = cpp.mesh.entities_to_geometry(
         msh._cpp_object, entity_dim, entities, True
@@ -680,7 +684,8 @@ def _build_trace_topology(
         ("edge", 1, edge_records, ("x", "y", "corner")),
         ("face", 2, face_records, ("x", "y")),
     ):
-        if not records:
+        records_present = bool(comm.allreduce(bool(records), op=MPI.LOR))
+        if not records_present:
             for kind in kinds:
                 pair_counts.append((entity_kind, kind, 0))
             continue
