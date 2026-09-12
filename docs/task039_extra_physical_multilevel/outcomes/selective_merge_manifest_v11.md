@@ -1,3 +1,20 @@
+# V13 512 MiB 续算依赖审阅清单（当前，非合并批准）
+
+| 依赖组 | 变更与依赖 | 数值行为 | 验证和合入顺序 |
+|---|---|---|---|
+| production numerical/core | `physical_error_metric` 可选无基表构造；小空间代数保留按列数组；既有宏块观察口 | 普通默认不变，当前宏块PC数学作用不变；无新接口PC实现 | targeted410/412/lifetime；只能连同research诊断证据审阅，不提升为生产默认 |
+| reusable runner/watchdog | schema/profile/dat显式512MiB、复用01入口、原子packet与阶段工作区检查；依赖上述core | 诊断保存与资源生命周期改变，原2.5GiB局部库存/1GiB临时/reserve/watchdog/zero-swap不变 | source `3457b5e2f54dec690fcb70deb1f387fe7f6d57cd` 一次构建、三输入全部完成；先审core再审runner |
+| checker/benchmark | 三份原样执行的只读research审计脚本及compact JSON/log；不实现求解器 | 无新FE/PC/A4/M0/curl | 向量219项、资源34016项通过；块外项只作同块操作诊断；与原始hash一起审阅 |
+| compact evidence/docs | response_v14、三输入诊断、decision/blueprint、run_index、summary/test/progress/registry | 数值数据未改变；新状态是架构优先已具体说明且PC未资格化 | 最后审阅本组；完整旧decision与旧负结果保留 |
+| research-only | opt-in p4诊断及物理接口下一方法提案 | 两便宜候选strong=false；接口谱/Schur尚未实现，无生产性能证明 | 新方法须下一review单独授权、冻结预算并完成original/条件notch |
+| do-not-merge | 大型NPZ/场/矩阵/因子/缓存/原始timeline、未经批准的生产提升、master合并 | 不适用 | 只保留ignored artifact索引和hash；本次仅推送task39extra待审阅 |
+
+历史回放与256MiB停止不能被新512MiB运行替代为通过。旧ABI和MUMPS策略资格被复用；新factor构建真实收费。报告的诊断完成与内部恒等式通过，不是完整PC有效性、A6 1e-6或official Maxwell物理通过。当前 `NOT_APPROVED_FOR_MASTER_MERGE`。
+
+---
+
+> 以下保留续算之前各版本的历史时点；旧文中的“当前/本轮/最新”仅指当时，不覆盖上面的续算结果。
+
 # Task39extra Review V13 p4 direction diagnosis selective merge manifest（最新）
 
 本节登记 V13 的依赖边界，不是 `master` merge approval。V13 是一次 bounded, opt-in 的 p4 方向诊断；正式 replay 在 source `e46fec48dc073a745e9b7e6c9186a147aefbc0a0` 上受控停止，不能把 partial packet、derived operator residual 或 source-liveness lower bound 提升为 solver qualification。普通默认路径保持不变，original/notch、完整 p6 物理求解和 official R/T/A 均为 `not_run`。

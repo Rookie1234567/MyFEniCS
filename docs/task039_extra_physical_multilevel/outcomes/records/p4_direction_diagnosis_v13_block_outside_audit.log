@@ -1,0 +1,91 @@
+{
+  "status": "COMPLETED",
+  "classification": "derived_from_saved_measured_vectors",
+  "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+  "core_seconds": 0.09080690999689978,
+  "new_PC": 0,
+  "new_A4": 0,
+  "new_M0": 0,
+  "new_curl": 0,
+  "meaning": "Block coefficient norms compare operation terms only; overlaps prevent summing them as global field energy or cause percentages.",
+  "input_ranges": [
+    {
+      "stem": "A2R160_BAL_H_p4_01",
+      "ranges": {
+        "chi_norm": {
+          "min": 3.748394253689808,
+          "median": 18.084174988730773,
+          "max": 56.46325168355461
+        },
+        "ell_norm": {
+          "min": 1.1766224075230503e-16,
+          "median": 5.450596891409682e-16,
+          "max": 7.466299998175296e-14
+        },
+        "reference_residual_norm": {
+          "min": 1.1348602271284404e-13,
+          "median": 1.0776080212697587e-12,
+          "max": 1.9538073930813603e-11
+        },
+        "chi_over_Aeh_plus_DReh": {
+          "min": 0.9791692984390234,
+          "median": 0.99796865100185,
+          "max": 0.9990739807896447
+        }
+      }
+    },
+    {
+      "stem": "A2R160_BAL_H_p4_02",
+      "ranges": {
+        "chi_norm": {
+          "min": 1.289787194668923,
+          "median": 4.392058047722505,
+          "max": 8.044861751724047
+        },
+        "ell_norm": {
+          "min": 1.5228013258003628e-16,
+          "median": 9.69595278950643e-16,
+          "max": 6.441219089091825e-15
+        },
+        "reference_residual_norm": {
+          "min": 4.036954568198667e-14,
+          "median": 2.7074466450715444e-13,
+          "max": 2.0297972728265354e-12
+        },
+        "chi_over_Aeh_plus_DReh": {
+          "min": 0.972903370425738,
+          "median": 0.9840960661566445,
+          "max": 0.9891274222490231
+        }
+      }
+    },
+    {
+      "stem": "LIGHT448_BAL_H_p4_09",
+      "ranges": {
+        "chi_norm": {
+          "min": 10.130366678572356,
+          "median": 42.93508393478842,
+          "max": 111.5793031853213
+        },
+        "ell_norm": {
+          "min": 9.229911229367266e-16,
+          "median": 3.262991626739957e-15,
+          "max": 9.028502189236095e-14
+        },
+        "reference_residual_norm": {
+          "min": 2.6277024281072615e-13,
+          "median": 2.6762213730053396e-12,
+          "max": 3.0311201702900227e-11
+        },
+        "chi_over_Aeh_plus_DReh": {
+          "min": 0.9794637178082244,
+          "median": 0.9961730504361788,
+          "max": 0.9965041149793797
+        }
+      }
+    }
+  ]
+}
+real 0.17
+user 0.16
+sys 0.02

@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+  "check_count": 219,
+  "core_seconds": 0.973069714003941,
+  "new_PC": 0,
+  "new_A4": 0,
+  "new_M0": 0,
+  "new_curl": 0,
+  "limitations": "Curl values are checked against saved squared norms; no fresh FE curl action. Weighted-R field check uses the saved measured metric factorization."
+}
+real 1.09
+user 0.64
+sys 0.53

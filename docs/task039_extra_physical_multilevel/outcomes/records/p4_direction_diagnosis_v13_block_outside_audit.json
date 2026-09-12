@@ -1,0 +1,979 @@
+{
+  "status": "COMPLETED",
+  "classification": "derived_from_saved_measured_vectors",
+  "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+  "inputs": [
+    {
+      "stem": "A2R160_BAL_H_p4_01",
+      "p2_npz_sha256": "c48fb33b4e555bcb9df53d4a1d634e62cedbb1c557eeca5bdba703cbcc86696f",
+      "blocks": [
+        {
+          "block_index": 0,
+          "chi_norm": 5.1764386646665885,
+          "ell_norm": 6.637307965660445e-16,
+          "reference_residual_norm": 5.390531801075016e-13,
+          "chi_over_Aeh_plus_DReh": 0.9979334283242496
+        },
+        {
+          "block_index": 1,
+          "chi_norm": 8.802914867645796,
+          "ell_norm": 5.197487747783576e-16,
+          "reference_residual_norm": 2.40890106100823e-12,
+          "chi_over_Aeh_plus_DReh": 0.9989052527134313
+        },
+        {
+          "block_index": 2,
+          "chi_norm": 13.739600691668777,
+          "ell_norm": 2.9713595386251757e-16,
+          "reference_residual_norm": 1.9912240583098063e-12,
+          "chi_over_Aeh_plus_DReh": 0.9990375454996314
+        },
+        {
+          "block_index": 3,
+          "chi_norm": 20.858829819468014,
+          "ell_norm": 1.3508869251161023e-15,
+          "reference_residual_norm": 3.83573423208034e-12,
+          "chi_over_Aeh_plus_DReh": 0.9989906871356201
+        },
+        {
+          "block_index": 4,
+          "chi_norm": 31.14885964802228,
+          "ell_norm": 1.4559413315205094e-15,
+          "reference_residual_norm": 2.5350318279301542e-12,
+          "chi_over_Aeh_plus_DReh": 0.9978733458945364
+        },
+        {
+          "block_index": 5,
+          "chi_norm": 45.4784203477704,
+          "ell_norm": 5.671103952208444e-15,
+          "reference_residual_norm": 1.9538073930813603e-11,
+          "chi_over_Aeh_plus_DReh": 0.9925379906932894
+        },
+        {
+          "block_index": 6,
+          "chi_norm": 55.59555254494478,
+          "ell_norm": 7.466299998175296e-14,
+          "reference_residual_norm": 9.877875773516804e-12,
+          "chi_over_Aeh_plus_DReh": 0.9799677046463469
+        },
+        {
+          "block_index": 7,
+          "chi_norm": 3.7749962458212467,
+          "ell_norm": 4.1840196904967524e-16,
+          "reference_residual_norm": 2.5984194665901276e-13,
+          "chi_over_Aeh_plus_DReh": 0.9978414037345748
+        },
+        {
+          "block_index": 8,
+          "chi_norm": 6.4085631042473565,
+          "ell_norm": 2.0659228051997082e-16,
+          "reference_residual_norm": 1.0521753747155622e-12,
+          "chi_over_Aeh_plus_DReh": 0.9989425875558631
+        },
+        {
+          "block_index": 9,
+          "chi_norm": 10.003804756805499,
+          "ell_norm": 1.3014424100907336e-16,
+          "reference_residual_norm": 1.3151116465874296e-12,
+          "chi_over_Aeh_plus_DReh": 0.9990708732605217
+        },
+        {
+          "block_index": 10,
+          "chi_norm": 15.1878085520783,
+          "ell_norm": 2.637026782224942e-16,
+          "reference_residual_norm": 2.6841665668283917e-12,
+          "chi_over_Aeh_plus_DReh": 0.9990254788762862
+        },
+        {
+          "block_index": 11,
+          "chi_norm": 22.681213331999434,
+          "ell_norm": 5.525505562670569e-16,
+          "reference_residual_norm": 2.0030624527059957e-12,
+          "chi_over_Aeh_plus_DReh": 0.9979447500270954
+        },
+        {
+          "block_index": 12,
+          "chi_norm": 33.12106478352096,
+          "ell_norm": 2.6648468607950496e-15,
+          "reference_residual_norm": 5.171130785679779e-12,
+          "chi_over_Aeh_plus_DReh": 0.992783582487333
+        },
+        {
+          "block_index": 13,
+          "chi_norm": 40.73039324058669,
+          "ell_norm": 3.191531853467714e-14,
+          "reference_residual_norm": 6.174399981295241e-12,
+          "chi_over_Aeh_plus_DReh": 0.9806283241948465
+        },
+        {
+          "block_index": 14,
+          "chi_norm": 5.254117110424777,
+          "ell_norm": 6.486362216534756e-16,
+          "reference_residual_norm": 2.5664153990951814e-13,
+          "chi_over_Aeh_plus_DReh": 0.9979853982626269
+        },
+        {
+          "block_index": 15,
+          "chi_norm": 8.946341090555665,
+          "ell_norm": 2.99401570668321e-16,
+          "reference_residual_norm": 6.347644194192971e-13,
+          "chi_over_Aeh_plus_DReh": 0.9988633568399585
+        },
+        {
+          "block_index": 16,
+          "chi_norm": 13.96488848892545,
+          "ell_norm": 5.074192721690794e-16,
+          "reference_residual_norm": 6.494945717556596e-13,
+          "chi_over_Aeh_plus_DReh": 0.9990035901871861
+        },
+        {
+          "block_index": 17,
+          "chi_norm": 21.201612083554227,
+          "ell_norm": 5.759569448769216e-16,
+          "reference_residual_norm": 8.971348884115219e-13,
+          "chi_over_Aeh_plus_DReh": 0.9989151434492134
+        },
+        {
+          "block_index": 18,
+          "chi_norm": 31.66692116649689,
+          "ell_norm": 1.1163576977607914e-15,
+          "reference_residual_norm": 1.3734719992233993e-12,
+          "chi_over_Aeh_plus_DReh": 0.9978039904765664
+        },
+        {
+          "block_index": 19,
+          "chi_norm": 46.236262164813866,
+          "ell_norm": 5.686429543128975e-15,
+          "reference_residual_norm": 2.565428798322986e-12,
+          "chi_over_Aeh_plus_DReh": 0.9921771794368563
+        },
+        {
+          "block_index": 20,
+          "chi_norm": 56.46325168355461,
+          "ell_norm": 6.062636615154826e-14,
+          "reference_residual_norm": 8.166615594379879e-12,
+          "chi_over_Aeh_plus_DReh": 0.9791692984390234
+        },
+        {
+          "block_index": 21,
+          "chi_norm": 3.828299126594413,
+          "ell_norm": 2.678635466643762e-16,
+          "reference_residual_norm": 1.6448657511085157e-13,
+          "chi_over_Aeh_plus_DReh": 0.9979434378704382
+        },
+        {
+          "block_index": 22,
+          "chi_norm": 6.506925599937681,
+          "ell_norm": 1.1766224075230503e-16,
+          "reference_residual_norm": 3.923293094154336e-13,
+          "chi_over_Aeh_plus_DReh": 0.998899616397718
+        },
+        {
+          "block_index": 23,
+          "chi_norm": 10.157827468868444,
+          "ell_norm": 2.521303114475709e-16,
+          "reference_residual_norm": 4.774659624192077e-13,
+          "chi_over_Aeh_plus_DReh": 0.9990340092548656
+        },
+        {
+          "block_index": 24,
+          "chi_norm": 15.422435859128344,
+          "ell_norm": 3.126516360197887e-16,
+          "reference_residual_norm": 7.707328576431532e-13,
+          "chi_over_Aeh_plus_DReh": 0.9989503164426395
+        },
+        {
+          "block_index": 25,
+          "chi_norm": 23.03545702706006,
+          "ell_norm": 7.686995585774398e-16,
+          "reference_residual_norm": 1.0715186628868048e-12,
+          "chi_over_Aeh_plus_DReh": 0.9978752439322157
+        },
+        {
+          "block_index": 26,
+          "chi_norm": 33.639485776627296,
+          "ell_norm": 3.230465793531645e-15,
+          "reference_residual_norm": 1.7385755503929895e-12,
+          "chi_over_Aeh_plus_DReh": 0.9924283539965845
+        },
+        {
+          "block_index": 27,
+          "chi_norm": 41.32282602372888,
+          "ell_norm": 4.2543779050054514e-14,
+          "reference_residual_norm": 5.866805206751345e-12,
+          "chi_over_Aeh_plus_DReh": 0.9798433521857672
+        },
+        {
+          "block_index": 28,
+          "chi_norm": 5.140040029567018,
+          "ell_norm": 4.73570969485341e-16,
+          "reference_residual_norm": 1.979056304148494e-13,
+          "chi_over_Aeh_plus_DReh": 0.9982690345622496
+        },
+        {
+          "block_index": 29,
+          "chi_norm": 8.736712250499648,
+          "ell_norm": 5.375688220148794e-16,
+          "reference_residual_norm": 6.900756957141071e-13,
+          "chi_over_Aeh_plus_DReh": 0.9989401674291801
+        },
+        {
+          "block_index": 30,
+          "chi_norm": 13.656407876974816,
+          "ell_norm": 4.7564971592119035e-16,
+          "reference_residual_norm": 6.54582390717224e-13,
+          "chi_over_Aeh_plus_DReh": 0.9990444969045733
+        },
+        {
+          "block_index": 31,
+          "chi_norm": 20.7459141183332,
+          "ell_norm": 4.71241113131387e-16,
+          "reference_residual_norm": 1.0836973796527128e-12,
+          "chi_over_Aeh_plus_DReh": 0.9990080616628377
+        },
+        {
+          "block_index": 32,
+          "chi_norm": 30.995254869197513,
+          "ell_norm": 1.052381861279072e-15,
+          "reference_residual_norm": 1.068533245523032e-12,
+          "chi_over_Aeh_plus_DReh": 0.9978826061197246
+        },
+        {
+          "block_index": 33,
+          "chi_norm": 45.27434949424412,
+          "ell_norm": 4.060133854856829e-15,
+          "reference_residual_norm": 5.878630485730681e-12,
+          "chi_over_Aeh_plus_DReh": 0.9925585233784378
+        },
+        {
+          "block_index": 34,
+          "chi_norm": 55.492441408412816,
+          "ell_norm": 5.4765377520492005e-14,
+          "reference_residual_norm": 8.761586037587063e-12,
+          "chi_over_Aeh_plus_DReh": 0.9799325502668826
+        },
+        {
+          "block_index": 35,
+          "chi_norm": 3.748394253689808,
+          "ell_norm": 1.9830546737423717e-16,
+          "reference_residual_norm": 1.1348602271284404e-13,
+          "chi_over_Aeh_plus_DReh": 0.9982142640984776
+        },
+        {
+          "block_index": 36,
+          "chi_norm": 6.361915445248581,
+          "ell_norm": 2.4926048296822192e-16,
+          "reference_residual_norm": 4.3395299777911245e-13,
+          "chi_over_Aeh_plus_DReh": 0.9989693193522111
+        },
+        {
+          "block_index": 37,
+          "chi_norm": 9.944488308935034,
+          "ell_norm": 2.5312792366808573e-16,
+          "reference_residual_norm": 4.605851024380909e-13,
+          "chi_over_Aeh_plus_DReh": 0.9990739807896447
+        },
+        {
+          "block_index": 38,
+          "chi_norm": 15.10650036326182,
+          "ell_norm": 2.476357539513731e-16,
+          "reference_residual_norm": 7.367062632450823e-13,
+          "chi_over_Aeh_plus_DReh": 0.9990390919778572
+        },
+        {
+          "block_index": 39,
+          "chi_norm": 22.571213675046483,
+          "ell_norm": 5.173575707792074e-16,
+          "reference_residual_norm": 8.525325023937122e-13,
+          "chi_over_Aeh_plus_DReh": 0.9979519037410731
+        },
+        {
+          "block_index": 40,
+          "chi_norm": 32.97390315018464,
+          "ell_norm": 2.6744408107508713e-15,
+          "reference_residual_norm": 2.0205746077894528e-12,
+          "chi_over_Aeh_plus_DReh": 0.9928014418484048
+        },
+        {
+          "block_index": 41,
+          "chi_norm": 40.65602483847814,
+          "ell_norm": 3.448402112288781e-14,
+          "reference_residual_norm": 6.027489831762031e-12,
+          "chi_over_Aeh_plus_DReh": 0.980597321444836
+        }
+      ],
+      "ranges": {
+        "chi_norm": {
+          "min": 3.748394253689808,
+          "median": 18.084174988730773,
+          "max": 56.46325168355461
+        },
+        "ell_norm": {
+          "min": 1.1766224075230503e-16,
+          "median": 5.450596891409682e-16,
+          "max": 7.466299998175296e-14
+        },
+        "reference_residual_norm": {
+          "min": 1.1348602271284404e-13,
+          "median": 1.0776080212697587e-12,
+          "max": 1.9538073930813603e-11
+        },
+        "chi_over_Aeh_plus_DReh": {
+          "min": 0.9791692984390234,
+          "median": 0.99796865100185,
+          "max": 0.9990739807896447
+        }
+      }
+    },
+    {
+      "stem": "A2R160_BAL_H_p4_02",
+      "p2_npz_sha256": "53c2426f3b84d4425de8c3db1b6a1606768b29e0e8e7b84542dac0ed98511b82",
+      "blocks": [
+        {
+          "block_index": 0,
+          "chi_norm": 1.7754639431133918,
+          "ell_norm": 2.968001632741803e-16,
+          "reference_residual_norm": 1.678198794209792e-13,
+          "chi_over_Aeh_plus_DReh": 0.9886977139238918
+        },
+        {
+          "block_index": 1,
+          "chi_norm": 2.829236874197801,
+          "ell_norm": 4.893821934145609e-16,
+          "reference_residual_norm": 8.756646008446776e-13,
+          "chi_over_Aeh_plus_DReh": 0.9873374894378679
+        },
+        {
+          "block_index": 2,
+          "chi_norm": 3.9709073324671493,
+          "ell_norm": 8.150925512820347e-16,
+          "reference_residual_norm": 4.833574143119991e-13,
+          "chi_over_Aeh_plus_DReh": 0.986037794699882
+        },
+        {
+          "block_index": 3,
+          "chi_norm": 5.233557369678767,
+          "ell_norm": 1.237288407772596e-15,
+          "reference_residual_norm": 1.1300472721836425e-12,
+          "chi_over_Aeh_plus_DReh": 0.9840733220703526
+        },
+        {
+          "block_index": 4,
+          "chi_norm": 6.543826426517531,
+          "ell_norm": 1.8680112955615513e-15,
+          "reference_residual_norm": 5.603681768376462e-13,
+          "chi_over_Aeh_plus_DReh": 0.9811419404905993
+        },
+        {
+          "block_index": 5,
+          "chi_norm": 7.749308909152593,
+          "ell_norm": 2.304288542957961e-15,
+          "reference_residual_norm": 1.191291421253878e-12,
+          "chi_over_Aeh_plus_DReh": 0.9766839588761768
+        },
+        {
+          "block_index": 6,
+          "chi_norm": 7.919736819531289,
+          "ell_norm": 6.441219089091825e-15,
+          "reference_residual_norm": 2.0297972728265354e-12,
+          "chi_over_Aeh_plus_DReh": 0.9748189299608769
+        },
+        {
+          "block_index": 7,
+          "chi_norm": 1.2954454909714073,
+          "ell_norm": 1.5228013258003628e-16,
+          "reference_residual_norm": 8.511336525878781e-14,
+          "chi_over_Aeh_plus_DReh": 0.9890848956792536
+        },
+        {
+          "block_index": 8,
+          "chi_norm": 2.060541678142571,
+          "ell_norm": 2.821589925767869e-16,
+          "reference_residual_norm": 3.372821395806809e-13,
+          "chi_over_Aeh_plus_DReh": 0.987758937598045
+        },
+        {
+          "block_index": 9,
+          "chi_norm": 2.892557573917446,
+          "ell_norm": 4.350768895081491e-16,
+          "reference_residual_norm": 3.195307499488796e-13,
+          "chi_over_Aeh_plus_DReh": 0.9865057421932463
+        },
+        {
+          "block_index": 10,
+          "chi_norm": 3.8126783171817547,
+          "ell_norm": 5.859538833642698e-16,
+          "reference_residual_norm": 5.570985929717699e-13,
+          "chi_over_Aeh_plus_DReh": 0.984606502063988
+        },
+        {
+          "block_index": 11,
+          "chi_norm": 4.767653387204588,
+          "ell_norm": 1.0516840146056043e-15,
+          "reference_residual_norm": 4.837168193849342e-13,
+          "chi_over_Aeh_plus_DReh": 0.9817707678378077
+        },
+        {
+          "block_index": 12,
+          "chi_norm": 5.646728740313731,
+          "ell_norm": 1.474939023561063e-15,
+          "reference_residual_norm": 5.547290729076411e-13,
+          "chi_over_Aeh_plus_DReh": 0.9774570906760384
+        },
+        {
+          "block_index": 13,
+          "chi_norm": 5.797518764971537,
+          "ell_norm": 2.2227583427822144e-15,
+          "reference_residual_norm": 1.2374830205458008e-12,
+          "chi_over_Aeh_plus_DReh": 0.9757311949899714
+        },
+        {
+          "block_index": 14,
+          "chi_norm": 1.8040547049341626,
+          "ell_norm": 3.981723539160796e-16,
+          "reference_residual_norm": 7.617725433207666e-14,
+          "chi_over_Aeh_plus_DReh": 0.9878120118688717
+        },
+        {
+          "block_index": 15,
+          "chi_norm": 2.876665974071458,
+          "ell_norm": 5.475096058730253e-16,
+          "reference_residual_norm": 1.2734735009645746e-13,
+          "chi_over_Aeh_plus_DReh": 0.986352457427497
+        },
+        {
+          "block_index": 16,
+          "chi_norm": 4.037611713428157,
+          "ell_norm": 8.875065432956813e-16,
+          "reference_residual_norm": 1.678566735437728e-13,
+          "chi_over_Aeh_plus_DReh": 0.9849558125609663
+        },
+        {
+          "block_index": 17,
+          "chi_norm": 5.320774557951322,
+          "ell_norm": 1.3655536102396287e-15,
+          "reference_residual_norm": 2.020967324784327e-13,
+          "chi_over_Aeh_plus_DReh": 0.9828304846066543
+        },
+        {
+          "block_index": 18,
+          "chi_norm": 6.653547598127288,
+          "ell_norm": 2.0143867902552215e-15,
+          "reference_residual_norm": 2.6727892040772016e-13,
+          "chi_over_Aeh_plus_DReh": 0.9796774937900177
+        },
+        {
+          "block_index": 19,
+          "chi_norm": 7.879118824036086,
+          "ell_norm": 2.9136669405946296e-15,
+          "reference_residual_norm": 3.53894445748566e-13,
+          "chi_over_Aeh_plus_DReh": 0.9748718267158223
+        },
+        {
+          "block_index": 20,
+          "chi_norm": 8.044861751724047,
+          "ell_norm": 5.6321490099227966e-15,
+          "reference_residual_norm": 1.6150772474725418e-12,
+          "chi_over_Aeh_plus_DReh": 0.972903370425738
+        },
+        {
+          "block_index": 21,
+          "chi_norm": 1.3149738864372509,
+          "ell_norm": 2.600126537317332e-16,
+          "reference_residual_norm": 5.208300437087959e-14,
+          "chi_over_Aeh_plus_DReh": 0.9882287752233229
+        },
+        {
+          "block_index": 22,
+          "chi_norm": 2.093096598976642,
+          "ell_norm": 4.536137184158879e-16,
+          "reference_residual_norm": 9.457863749807015e-14,
+          "chi_over_Aeh_plus_DReh": 0.9867968065055859
+        },
+        {
+          "block_index": 23,
+          "chi_norm": 2.938124269593928,
+          "ell_norm": 5.834111767416085e-16,
+          "reference_residual_norm": 1.276601692268123e-13,
+          "chi_over_Aeh_plus_DReh": 0.9854454893562424
+        },
+        {
+          "block_index": 24,
+          "chi_norm": 3.8723486488868377,
+          "ell_norm": 8.077061915527981e-16,
+          "reference_residual_norm": 1.7306760471471658e-13,
+          "chi_over_Aeh_plus_DReh": 0.9833891440967312
+        },
+        {
+          "block_index": 25,
+          "chi_norm": 4.842799559694854,
+          "ell_norm": 1.4076783804961508e-15,
+          "reference_residual_norm": 2.0717213059155535e-13,
+          "chi_over_Aeh_plus_DReh": 0.9803363371920369
+        },
+        {
+          "block_index": 26,
+          "chi_norm": 5.735487606853143,
+          "ell_norm": 1.95782517582156e-15,
+          "reference_residual_norm": 2.87793661625239e-13,
+          "chi_over_Aeh_plus_DReh": 0.9756807683901737
+        },
+        {
+          "block_index": 27,
+          "chi_norm": 5.883268733564116,
+          "ell_norm": 3.984554123513899e-15,
+          "reference_residual_norm": 1.0847577886036892e-12,
+          "chi_over_Aeh_plus_DReh": 0.9738625942444389
+        },
+        {
+          "block_index": 28,
+          "chi_norm": 1.7675538874204209,
+          "ell_norm": 3.161287171072865e-16,
+          "reference_residual_norm": 6.335306634153707e-14,
+          "chi_over_Aeh_plus_DReh": 0.9887339210462364
+        },
+        {
+          "block_index": 29,
+          "chi_norm": 2.8136306807303875,
+          "ell_norm": 4.756074638796488e-16,
+          "reference_residual_norm": 2.396537266729922e-13,
+          "chi_over_Aeh_plus_DReh": 0.9873565737046079
+        },
+        {
+          "block_index": 30,
+          "chi_norm": 3.9514861370033243,
+          "ell_norm": 7.807368406679709e-16,
+          "reference_residual_norm": 1.7853536587662244e-13,
+          "chi_over_Aeh_plus_DReh": 0.9860775281636852
+        },
+        {
+          "block_index": 31,
+          "chi_norm": 5.209188504996836,
+          "ell_norm": 1.0982261811949357e-15,
+          "reference_residual_norm": 3.303837028782194e-13,
+          "chi_over_Aeh_plus_DReh": 0.9841188102429363
+        },
+        {
+          "block_index": 32,
+          "chi_norm": 6.514346418847662,
+          "ell_norm": 1.7378131663284583e-15,
+          "reference_residual_norm": 2.742104086065888e-13,
+          "chi_over_Aeh_plus_DReh": 0.9811919163302385
+        },
+        {
+          "block_index": 33,
+          "chi_norm": 7.716661093481234,
+          "ell_norm": 2.7978022789374e-15,
+          "reference_residual_norm": 5.129216068870425e-13,
+          "chi_over_Aeh_plus_DReh": 0.9767502953403971
+        },
+        {
+          "block_index": 34,
+          "chi_norm": 7.903083901149363,
+          "ell_norm": 6.283741854986807e-15,
+          "reference_residual_norm": 1.6661138519638207e-12,
+          "chi_over_Aeh_plus_DReh": 0.9748751521785982
+        },
+        {
+          "block_index": 35,
+          "chi_norm": 1.289787194668923,
+          "ell_norm": 1.7709786523363185e-16,
+          "reference_residual_norm": 4.036954568198667e-14,
+          "chi_over_Aeh_plus_DReh": 0.9891274222490231
+        },
+        {
+          "block_index": 36,
+          "chi_norm": 2.049480900798945,
+          "ell_norm": 2.486306994853516e-16,
+          "reference_residual_norm": 8.397459025457503e-14,
+          "chi_over_Aeh_plus_DReh": 0.9877821254270059
+        },
+        {
+          "block_index": 37,
+          "chi_norm": 2.878629422545475,
+          "ell_norm": 4.393815151418034e-16,
+          "reference_residual_norm": 1.0004978242840081e-13,
+          "chi_over_Aeh_plus_DReh": 0.9865456119528933
+        },
+        {
+          "block_index": 38,
+          "chi_norm": 3.7950938572622377,
+          "ell_norm": 5.876794193117368e-16,
+          "reference_residual_norm": 1.6674123835151891e-13,
+          "chi_over_Aeh_plus_DReh": 0.9846509825889788
+        },
+        {
+          "block_index": 39,
+          "chi_norm": 4.746504382016853,
+          "ell_norm": 1.1257471755255438e-15,
+          "reference_residual_norm": 1.95976019996584e-13,
+          "chi_over_Aeh_plus_DReh": 0.9818204957177363
+        },
+        {
+          "block_index": 40,
+          "chi_norm": 5.623126525982584,
+          "ell_norm": 1.3923138811071787e-15,
+          "reference_residual_norm": 2.6354237220759917e-13,
+          "chi_over_Aeh_plus_DReh": 0.9775212701229904
+        },
+        {
+          "block_index": 41,
+          "chi_norm": 5.785576147317601,
+          "ell_norm": 2.4171474525766488e-15,
+          "reference_residual_norm": 1.1092526642278267e-12,
+          "chi_over_Aeh_plus_DReh": 0.9757873596453291
+        }
+      ],
+      "ranges": {
+        "chi_norm": {
+          "min": 1.289787194668923,
+          "median": 4.392058047722505,
+          "max": 8.044861751724047
+        },
+        "ell_norm": {
+          "min": 1.5228013258003628e-16,
+          "median": 9.69595278950643e-16,
+          "max": 6.441219089091825e-15
+        },
+        "reference_residual_norm": {
+          "min": 4.036954568198667e-14,
+          "median": 2.7074466450715444e-13,
+          "max": 2.0297972728265354e-12
+        },
+        "chi_over_Aeh_plus_DReh": {
+          "min": 0.972903370425738,
+          "median": 0.9840960661566445,
+          "max": 0.9891274222490231
+        }
+      }
+    },
+    {
+      "stem": "LIGHT448_BAL_H_p4_09",
+      "p2_npz_sha256": "2944b01d182ec8a29a4ed59eaa9f5133f5973d660d67d29a976aa857c1a62085",
+      "blocks": [
+        {
+          "block_index": 0,
+          "chi_norm": 13.972192703615665,
+          "ell_norm": 1.9947295682459663e-15,
+          "reference_residual_norm": 2.644813016772646e-12,
+          "chi_over_Aeh_plus_DReh": 0.9961866079829482
+        },
+        {
+          "block_index": 1,
+          "chi_norm": 23.053489319209024,
+          "ell_norm": 2.4571565876157907e-15,
+          "reference_residual_norm": 3.862641474031853e-12,
+          "chi_over_Aeh_plus_DReh": 0.9963068529797665
+        },
+        {
+          "block_index": 2,
+          "chi_norm": 34.41375618462992,
+          "ell_norm": 2.918767592015299e-15,
+          "reference_residual_norm": 3.1365876390600008e-12,
+          "chi_over_Aeh_plus_DReh": 0.9963324658326801
+        },
+        {
+          "block_index": 3,
+          "chi_norm": 49.51967134425275,
+          "ell_norm": 4.386206835213442e-15,
+          "reference_residual_norm": 6.174748012314836e-12,
+          "chi_over_Aeh_plus_DReh": 0.9962061500782414
+        },
+        {
+          "block_index": 4,
+          "chi_norm": 69.58944030060067,
+          "ell_norm": 5.90398434302803e-15,
+          "reference_residual_norm": 1.191052645259725e-11,
+          "chi_over_Aeh_plus_DReh": 0.9953410825726073
+        },
+        {
+          "block_index": 5,
+          "chi_norm": 95.1467834378914,
+          "ell_norm": 1.4077263756922802e-14,
+          "reference_residual_norm": 2.3615430332774305e-11,
+          "chi_over_Aeh_plus_DReh": 0.9909326354853004
+        },
+        {
+          "block_index": 6,
+          "chi_norm": 109.85966290884136,
+          "ell_norm": 8.481783898976946e-14,
+          "reference_residual_norm": 3.0311201702900227e-11,
+          "chi_over_Aeh_plus_DReh": 0.9802126255516208
+        },
+        {
+          "block_index": 7,
+          "chi_norm": 10.190672337309785,
+          "ell_norm": 1.0897652427077158e-15,
+          "reference_residual_norm": 1.542991564319027e-12,
+          "chi_over_Aeh_plus_DReh": 0.9962799049074673
+        },
+        {
+          "block_index": 8,
+          "chi_norm": 16.78407917168221,
+          "ell_norm": 9.229911229367266e-16,
+          "reference_residual_norm": 2.1467976813338124e-12,
+          "chi_over_Aeh_plus_DReh": 0.9964190152704662
+        },
+        {
+          "block_index": 9,
+          "chi_norm": 25.059075309934542,
+          "ell_norm": 1.1803112588722768e-15,
+          "reference_residual_norm": 2.2118296547336934e-12,
+          "chi_over_Aeh_plus_DReh": 0.9964455904588964
+        },
+        {
+          "block_index": 10,
+          "chi_norm": 36.060476550555784,
+          "ell_norm": 2.2795322699134546e-15,
+          "reference_residual_norm": 5.206744494835625e-12,
+          "chi_over_Aeh_plus_DReh": 0.9963250775702619
+        },
+        {
+          "block_index": 11,
+          "chi_norm": 50.67833170923199,
+          "ell_norm": 3.3707441001101905e-15,
+          "reference_residual_norm": 8.795911082045338e-12,
+          "chi_over_Aeh_plus_DReh": 0.9954894866288413
+        },
+        {
+          "block_index": 12,
+          "chi_norm": 69.30156088526472,
+          "ell_norm": 7.048598573927751e-15,
+          "reference_residual_norm": 1.0935308850472349e-11,
+          "chi_over_Aeh_plus_DReh": 0.9912256156521012
+        },
+        {
+          "block_index": 13,
+          "chi_norm": 80.46561688542177,
+          "ell_norm": 3.246622535880234e-14,
+          "reference_residual_norm": 2.1499015680450504e-11,
+          "chi_over_Aeh_plus_DReh": 0.9808802173457237
+        },
+        {
+          "block_index": 14,
+          "chi_norm": 14.183029877244019,
+          "ell_norm": 2.3641829042875702e-15,
+          "reference_residual_norm": 7.456575681612119e-13,
+          "chi_over_Aeh_plus_DReh": 0.9962015292143087
+        },
+        {
+          "block_index": 15,
+          "chi_norm": 23.42088767727397,
+          "ell_norm": 2.2109253498609134e-15,
+          "reference_residual_norm": 9.820648398639943e-13,
+          "chi_over_Aeh_plus_DReh": 0.9961594928894093
+        },
+        {
+          "block_index": 16,
+          "chi_norm": 34.97134343559461,
+          "ell_norm": 3.155239153369723e-15,
+          "reference_residual_norm": 1.3435740541376182e-12,
+          "chi_over_Aeh_plus_DReh": 0.9962196459827521
+        },
+        {
+          "block_index": 17,
+          "chi_norm": 50.328205822485785,
+          "ell_norm": 4.4414973486525125e-15,
+          "reference_residual_norm": 2.0508849772371135e-12,
+          "chi_over_Aeh_plus_DReh": 0.9960357877040183
+        },
+        {
+          "block_index": 18,
+          "chi_norm": 70.73937537358391,
+          "ell_norm": 7.703981372494308e-15,
+          "reference_residual_norm": 3.06951389948531e-12,
+          "chi_over_Aeh_plus_DReh": 0.9951344203946002
+        },
+        {
+          "block_index": 19,
+          "chi_norm": 96.71970948337805,
+          "ell_norm": 1.842344315471772e-14,
+          "reference_residual_norm": 4.24661338618694e-12,
+          "chi_over_Aeh_plus_DReh": 0.9904896431077927
+        },
+        {
+          "block_index": 20,
+          "chi_norm": 111.5793031853213,
+          "ell_norm": 9.028502189236095e-14,
+          "reference_residual_norm": 2.9696166328074334e-11,
+          "chi_over_Aeh_plus_DReh": 0.9794637178082244
+        },
+        {
+          "block_index": 21,
+          "chi_norm": 10.334992878072295,
+          "ell_norm": 1.06547455091308e-15,
+          "reference_residual_norm": 3.627315084330793e-13,
+          "chi_over_Aeh_plus_DReh": 0.9962921787114475
+        },
+        {
+          "block_index": 22,
+          "chi_norm": 17.036415224646635,
+          "ell_norm": 1.2335403897355993e-15,
+          "reference_residual_norm": 7.409970188215722e-13,
+          "chi_over_Aeh_plus_DReh": 0.9962737467916866
+        },
+        {
+          "block_index": 23,
+          "chi_norm": 25.43972687533868,
+          "ell_norm": 1.7167675770664777e-15,
+          "reference_residual_norm": 9.39300030800847e-13,
+          "chi_over_Aeh_plus_DReh": 0.9963335865434397
+        },
+        {
+          "block_index": 24,
+          "chi_norm": 36.61353942969213,
+          "ell_norm": 2.456434916995848e-15,
+          "reference_residual_norm": 1.5431842428110633e-12,
+          "chi_over_Aeh_plus_DReh": 0.9961574112368782
+        },
+        {
+          "block_index": 25,
+          "chi_norm": 51.46473750386568,
+          "ell_norm": 3.960108385726569e-15,
+          "reference_residual_norm": 2.7076297292380333e-12,
+          "chi_over_Aeh_plus_DReh": 0.9952862685140018
+        },
+        {
+          "block_index": 26,
+          "chi_norm": 70.37655145480267,
+          "ell_norm": 1.071469505133849e-14,
+          "reference_residual_norm": 3.95055611726654e-12,
+          "chi_over_Aeh_plus_DReh": 0.9907899891293857
+        },
+        {
+          "block_index": 27,
+          "chi_norm": 81.64265237643409,
+          "ell_norm": 5.991576106453475e-14,
+          "reference_residual_norm": 2.0878231938060193e-11,
+          "chi_over_Aeh_plus_DReh": 0.9801424766577228
+        },
+        {
+          "block_index": 28,
+          "chi_norm": 13.887716003530285,
+          "ell_norm": 2.4729329881285616e-15,
+          "reference_residual_norm": 6.262486728812986e-13,
+          "chi_over_Aeh_plus_DReh": 0.9963917793398358
+        },
+        {
+          "block_index": 29,
+          "chi_norm": 22.89379772959647,
+          "ell_norm": 2.5451748691368444e-15,
+          "reference_residual_norm": 1.2172610576907467e-12,
+          "chi_over_Aeh_plus_DReh": 0.9963524961673252
+        },
+        {
+          "block_index": 30,
+          "chi_norm": 34.213751684131864,
+          "ell_norm": 2.802000974540359e-15,
+          "reference_residual_norm": 1.3094661461847848e-12,
+          "chi_over_Aeh_plus_DReh": 0.9963925615631928
+        },
+        {
+          "block_index": 31,
+          "chi_norm": 49.25662843988471,
+          "ell_norm": 4.0487899470219476e-15,
+          "reference_residual_norm": 2.020893833587035e-12,
+          "chi_over_Aeh_plus_DReh": 0.9962623942349054
+        },
+        {
+          "block_index": 32,
+          "chi_norm": 69.24717012808412,
+          "ell_norm": 7.1047170984606095e-15,
+          "reference_residual_norm": 3.895124725566957e-12,
+          "chi_over_Aeh_plus_DReh": 0.9953869235885857
+        },
+        {
+          "block_index": 33,
+          "chi_norm": 94.72163456755945,
+          "ell_norm": 1.7575286743952697e-14,
+          "reference_residual_norm": 7.601895697106382e-12,
+          "chi_over_Aeh_plus_DReh": 0.9910155912504104
+        },
+        {
+          "block_index": 34,
+          "chi_norm": 109.64525708054488,
+          "ell_norm": 6.983205019626752e-14,
+          "reference_residual_norm": 2.950557895011225e-11,
+          "chi_over_Aeh_plus_DReh": 0.9802600886383773
+        },
+        {
+          "block_index": 35,
+          "chi_norm": 10.130366678572356,
+          "ell_norm": 1.1348268732245986e-15,
+          "reference_residual_norm": 2.6277024281072615e-13,
+          "chi_over_Aeh_plus_DReh": 0.996477326414497
+        },
+        {
+          "block_index": 36,
+          "chi_norm": 16.671624966982257,
+          "ell_norm": 1.782121254056869e-15,
+          "reference_residual_norm": 6.527899921483463e-13,
+          "chi_over_Aeh_plus_DReh": 0.9964634553386135
+        },
+        {
+          "block_index": 37,
+          "chi_norm": 24.916539355152505,
+          "ell_norm": 1.5851514260842675e-15,
+          "reference_residual_norm": 8.701600761870342e-13,
+          "chi_over_Aeh_plus_DReh": 0.9965041149793797
+        },
+        {
+          "block_index": 38,
+          "chi_norm": 35.87172992689867,
+          "ell_norm": 1.8350863272645636e-15,
+          "reference_residual_norm": 1.6217690422421167e-12,
+          "chi_over_Aeh_plus_DReh": 0.9963795942085574
+        },
+        {
+          "block_index": 39,
+          "chi_norm": 50.43322183433779,
+          "ell_norm": 4.443898909201156e-15,
+          "reference_residual_norm": 2.1922966009426986e-12,
+          "chi_over_Aeh_plus_DReh": 0.9955343755434578
+        },
+        {
+          "block_index": 40,
+          "chi_norm": 68.99517365671014,
+          "ell_norm": 7.199746200713563e-15,
+          "reference_residual_norm": 3.4896428741281958e-12,
+          "chi_over_Aeh_plus_DReh": 0.991306491592078
+        },
+        {
+          "block_index": 41,
+          "chi_norm": 80.3124304675074,
+          "ell_norm": 4.184581916180981e-14,
+          "reference_residual_norm": 2.1008666000224304e-11,
+          "chi_over_Aeh_plus_DReh": 0.9809270891352652
+        }
+      ],
+      "ranges": {
+        "chi_norm": {
+          "min": 10.130366678572356,
+          "median": 42.93508393478842,
+          "max": 111.5793031853213
+        },
+        "ell_norm": {
+          "min": 9.229911229367266e-16,
+          "median": 3.262991626739957e-15,
+          "max": 9.028502189236095e-14
+        },
+        "reference_residual_norm": {
+          "min": 2.6277024281072615e-13,
+          "median": 2.6762213730053396e-12,
+          "max": 3.0311201702900227e-11
+        },
+        "chi_over_Aeh_plus_DReh": {
+          "min": 0.9794637178082244,
+          "median": 0.9961730504361788,
+          "max": 0.9965041149793797
+        }
+      }
+    }
+  ],
+  "core_seconds": 0.09080690999689978,
+  "new_PC": 0,
+  "new_A4": 0,
+  "new_M0": 0,
+  "new_curl": 0,
+  "meaning": "Block coefficient norms compare operation terms only; overlaps prevent summing them as global field energy or cause percentages."
+}

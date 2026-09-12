@@ -1,3 +1,18 @@
+# Task39extra V13 续算：三输入证据已补齐，接口方法仅作下一轮优先提案
+
+| 当前事项 | 结果 |
+|---|---|
+| p4诊断 | 01/02/09全部P1–P3完成；21候选残差/场/旋度及C_U—局部—反馈分解可复核；source `3457b5e2f54dec690fcb70deb1f387fe7f6d57cd` |
+| 方法结论 | 固定scaled-Z与selected-L10强信号均失败；PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN 为唯一架构优先，性能仍未资格化 |
+| 成本/内存 | 含旧失败与全部三次只读核查累计2160.401528s；workspace估计369795024B<512MiB；局部库存2180383916B<2.5GiB；同时树RSS采样峰值3287973888B，job swap和全局交换增量0 |
+| 交付与边界 | 保留旧256MiB停止与全部历史负结果；同分支推送待review，不合master，不重建参考、不补R64/p6长跑，不影响5nm |
+
+[统一response](task039_extra_physical_multilevel/response_v14.md)、[三输入诊断](task039_extra_physical_multilevel/outcomes/p4_direction_diagnosis_v13.md)、[decision](task039_extra_physical_multilevel/outcomes/records/next_method_decision_v13.json)、[可执行蓝图](task039_extra_physical_multilevel/outcomes/next_method_blueprint_v13.md)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。下一方法用局部内部消元和容量受限的全局接口粗修正传递跨块变化；新谱setup、因子、非正规耦合及original/notch完整物理/总成本均须下一review裁决。
+
+---
+
+> 以下保留续算之前各版本的历史时点；旧文中的“当前/本轮/最新”仅指当时，不覆盖上面的续算结果。
+
 # Task39extra V13 最新进展：P0通过，P1/P3部分证据，诊断账本受控停止
 
 V13 是一次 opt-in 的物理 p4 方向诊断，不改变 ordinary default。固定原始13.5 nm物理模型、p6/p4 map、MPI1 和三份输入下，P0 输入身份与 direct/pullback metric equivalence 通过；A2R160/01 保存了四个实际 counted right-PC 输出和42个局部 A-image。完整 P2 包、其余两份输入和 P3 场/curl 未完成。

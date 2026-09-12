@@ -1,3 +1,27 @@
+# Task39extra V13 续算当前总览：三输入完整诊断与未资格化的接口提案
+
+| 评审项 | 当前结果 | 具体边界 |
+|---|---|---|
+| P0 / 续算身份 | 已资格化身份复用 | 01 复用 Z/AZ 和42个局部响应；不重建参考、不重做未受影响的 ABI/MUMPS/metric 资格 |
+| P1 / P2 / P3 | 三输入全部完成 | 01、02、09 各 actual / best-Z residual与field / scaled-Z / best-L residual与field / selected-L10，完整向量与恒等式已保存；P1/P2 均先于 P3 原子发布 |
+| 当前 PC 内部质量 | 局部回代与分解准确，全局修正仍弱 | 局部回代最大相对误差3.941e-14；actual 三输入场误差约0.965、0.878、0.993 |
+| 两个便宜候选 | strong-action 均 false | 困难01/09均未让场误差减半；02残差还超过 actual 的1.1倍；不能用参考辅助场最优替代真实残差 |
+| P4 优先项 | PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN | 架构选择 confidence=medium；新PC性能 confidence=low，尚未实现或资格化，非生产默认 |
+| 正式费用（含既有失败与只读核查） | 2160.401528466149 s / 原7200 s | 外层续算保守计费1204.4717857759497 s；工程修复时间单列，未清零或延期 |
+| 新诊断工作集 | 保守估计369,795,024 B < 536,870,912 B | 含QR/SVD临时副本；旧256MiB负结果仍保留 |
+| 其他内存 | 局部保守库存2,180,383,916 B；同时树RSS采样峰值3,287,973,888 B | 局部库存上限2.5GiB、原临时预留1GiB和整机reserve/watchdog不变；job swap与全局交换增量均0 |
+| restart / original / notch / official物理 | 本批 NOT_RUN | 不补R64、不启动p6长跑；原A6最终1e-6及完整物理Gate未放宽；5nm线不变 |
+
+source 为 `3457b5e2f54dec690fcb70deb1f387fe7f6d57cd`，continuation base 为 `07b77c49e65f725f2b8bf00189777ef7f833f1c2`，Review V13 base 为 `1ebe076df8dc1052c5a7ec5ad3d391957ad6c94f`。一次必要 fresh42 构建300.807805 s，三输入阶段216.485850/272.964772/272.377783 s；各时间嵌套于父workflow，不能重复相加。
+
+“接口多层”拟先消去块内部未知量，再对共享行和DtN辐射边界作全局修正。提案明确了真实复物理Schur作用、局部奇异方向与DtN通道、容量受限层级和固定一次周期；它付出新的内部因子与谱setup成本，目前没有性能实测。best-L场误差可到0.213/0.146/0.195但残差为86.7/3.16/110，说明响应含有有用信息，而无参考的经济选择尚不合格，不能推断没有折中组合。
+
+完整表、范数定义、反证和下一original/notch计划见 [统一 response_v14](../response_v14.md)、[方向诊断](p4_direction_diagnosis_v13.md)、[可执行蓝图](next_method_blueprint_v13.md)、[decision](records/next_method_decision_v13.json)。[续算 compact](records/p4_direction_diagnosis_v13_continuation.json)保留完整精度；[provenance](records/p4_direction_diagnosis_v13_continuation_provenance.json)、[向量审计](records/p4_direction_diagnosis_v13_continuation_audit.json)、[资源审计](records/p4_direction_diagnosis_v13_resource_review.json)绑定原始证据。旧失败、旧256MiB停止、V5成功参考及V6–V12负结果均保留。所有新数值路径仍为 research-only，等待 ChatGPT review，不合并 master。
+
+---
+
+> 以下保留续算之前各版本的历史时点；旧文中的“当前/本轮/最新”仅指当时，不覆盖上面的续算结果。
+
 # Task39extra Review V13 最新结果：P0通过，P1/P3部分证据，诊断账本受控停止
 
 本节是当前权威收口；V12 及更早章节保持历史。V13 使用固定原始13.5 nm物理模型、p6/p4 map、MPI1 和三份输入 `A2R160/01`、`A2R160/02`、`LIGHT448/09`。它没有完成三输入 P0–P4，也没有产生 official Maxwell 输出。

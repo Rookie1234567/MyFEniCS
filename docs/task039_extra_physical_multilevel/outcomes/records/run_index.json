@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V12 historical O0-O4 closeout plus bounded supplement; V5 success baseline and V6/V7/V8/V9/V10/V11 history retained; official outputs remain not_run",
+  "scope": "V13 authorized 512 MiB three-input continuation; all prior V5-V13 success, negative and stopped histories retained; no new official p6 outputs",
   "units": {
     "time": "s",
     "memory": "B"
@@ -1065,6 +1065,16 @@
       "descendants_cleared": true,
       "official_results": "not_run",
       "next": "N5 closeout; no N2 retry or N3/N4 without new review"
+    },
+    {
+      "id": "V13_512MiB_three_input_continuation",
+      "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
+      "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+      "raw_root": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis",
+      "profile": "physical_p4_direction_diagnosis_v13",
+      "primary_method": "PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN",
+      "production_pc_qualified": false,
+      "official_p6_physics": "not_run"
     }
   ],
   "limitations": [
@@ -1707,6 +1717,211 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_partial_audit.py": "4d1409e76cb07d72267c3a7375ba605a1668c87f3120852f034a90f302f751a2",
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_offline_audit.json": "575b6420ddea73a4e837252a3511ad9c3ce7439f2c9abc763bcf2036521de9dd",
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
+    }
+  },
+  "current_review_record": "v13_continuation",
+  "v13_continuation": {
+    "id": "V13_512MiB_three_input_continuation",
+    "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
+    "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+    "branch": "task39extra",
+    "review_base_sha": "1ebe076df8dc1052c5a7ec5ad3d391957ad6c94f",
+    "continuation_base_sha": "07b77c49e65f725f2b8bf00189777ef7f833f1c2",
+    "raw_root": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis",
+    "profile": "physical_p4_direction_diagnosis_v13",
+    "model_identity": {
+      "input_sha256": "86829433e2dd4412b5e6b1e7903255ed33a462dcf5afadffe56efa841e5e7692",
+      "mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "mpi_size": 1,
+      "native_map_sha256": {
+        "4": "f175bfce77ca4a6811f12e800c213ade75afd0ce866ae57ae9f5449130cca0fe",
+        "6": "5347ba678fe3b3afb6f4d87df0d45487e60e14623d33e0945f419ead23039f01"
+      },
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "profile": "physical_p4_direction_diagnosis_v13",
+      "scalar_type": "complex128",
+      "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd"
+    },
+    "selected_inputs": [
+      "A2R160_BAL_H_p4_01",
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ],
+    "counts": {
+      "A4": 149,
+      "M0_direct_degree4": 2,
+      "M0_pullback": 211,
+      "P64_adjoint": 428,
+      "P64_primal": 428,
+      "P64_primal_attempted": 60,
+      "attempted_B4": 3,
+      "attempted_I4": 3,
+      "bare_B4": 3,
+      "completed_B4": 3,
+      "completed_I4": 3,
+      "curl_direct_degree4": 1,
+      "curl_pullback": 217,
+      "new_B4_attempted": 2,
+      "new_B4_completed": 2,
+      "new_I4": 2,
+      "new_I4_attempted": 2,
+      "new_I4_completed": 2,
+      "total_B4": 15
+    },
+    "workspace": {
+      "cap_bytes": 536870912,
+      "columns": 48,
+      "legacy_cap_bytes": 268435456,
+      "max_estimated_bytes": 369795024,
+      "metric_storage_bytes": 56375392,
+      "non_ls_resident_bytes": 69817936,
+      "phase": "A2R160_BAL_H_p4_01:P3_residual",
+      "resident_bytes": 180931536,
+      "rows": 48960,
+      "temporary_bytes": 188863488
+    },
+    "fresh_builds_this_continuation": 1,
+    "historical_record": "v13",
+    "prior_charged_seconds": 954.5497426901994,
+    "continuation_parent_charge_seconds": 1204.4717857759497,
+    "postrun_audit_wall_seconds": 1.38,
+    "cumulative_formal_and_audit_seconds": 2160.401528466149,
+    "original_total_budget_seconds": 7200,
+    "remaining_seconds": 5039.598471533851,
+    "process_tree_rss_peak_bytes": 3287973888,
+    "process_tree_pss_peak_bytes": 3254656000,
+    "process_tree_swap_peak_bytes": 0,
+    "global_swap_activity_delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "local_inventory_bytes": 2180383916,
+    "local_cap_bytes": 2684354560,
+    "temporary_reserve_bytes": 1073741824,
+    "machine_reserve_bytes": 4294967296,
+    "launch_cap_bytes": 9375555584,
+    "primary_method": "PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN",
+    "decision_status": "ARCHITECTURE_PRIORITY_SPECIFIED_UNQUALIFIED",
+    "production_pc_qualified": false,
+    "official_p6_physics": "not_run",
+    "candidate_results": {
+      "A2R160_BAL_H_p4_01": {
+        "L_field": {
+          "rho": 86.68845902920187,
+          "eta": 0.21341992673807236,
+          "eta_curl": 0.2926791641807824
+        },
+        "L_residual": {
+          "rho": 0.9358770172082745,
+          "eta": 0.962653537018917,
+          "eta_curl": 0.9625678507191332
+        },
+        "L_selected": {
+          "rho": 0.9678905201139729,
+          "eta": 0.9925837426612292,
+          "eta_curl": 0.9925548551229503
+        },
+        "Z_dual_mass": {
+          "rho": 1.0241864181252134,
+          "eta": 0.9602831778385792,
+          "eta_curl": 0.9602354345340673
+        },
+        "Z_field": {
+          "rho": 126.80492969347596,
+          "eta": 0.23602989478833247,
+          "eta_curl": 0.33805312121755393
+        },
+        "Z_residual": {
+          "rho": 0.9502310252350665,
+          "eta": 0.964714792618218,
+          "eta_curl": 0.9646390272009845
+        },
+        "actual": {
+          "rho": 0.9502310252350668,
+          "eta": 0.9647147926182198,
+          "eta_curl": 0.9646390272009856
+        }
+      },
+      "A2R160_BAL_H_p4_02": {
+        "L_field": {
+          "rho": 3.1628641083848827,
+          "eta": 0.14613246028313487,
+          "eta_curl": 0.18672296533689778
+        },
+        "L_residual": {
+          "rho": 0.09510390849643693,
+          "eta": 0.8834317040797994,
+          "eta_curl": 0.8830388246028268
+        },
+        "L_selected": {
+          "rho": 0.1730077825831745,
+          "eta": 0.9699216802450735,
+          "eta_curl": 0.9695077712816423
+        },
+        "Z_dual_mass": {
+          "rho": 0.16536173726190231,
+          "eta": 0.7429692784436926,
+          "eta_curl": 0.7425650557676639
+        },
+        "Z_field": {
+          "rho": 6.391367537269992,
+          "eta": 0.17091410590841702,
+          "eta_curl": 0.25953130955548576
+        },
+        "Z_residual": {
+          "rho": 0.10126494884344636,
+          "eta": 0.8777570760481544,
+          "eta_curl": 0.8773717677729934
+        },
+        "actual": {
+          "rho": 0.1012649488434464,
+          "eta": 0.8777570760481546,
+          "eta_curl": 0.8773717677729935
+        }
+      },
+      "LIGHT448_BAL_H_p4_09": {
+        "L_field": {
+          "rho": 110.06527125063637,
+          "eta": 0.1946529215147075,
+          "eta_curl": 0.26635703180948817
+        },
+        "L_residual": {
+          "rho": 0.9647946553193857,
+          "eta": 0.9911341251789757,
+          "eta_curl": 0.991113434215415
+        },
+        "L_selected": {
+          "rho": 0.992461078223596,
+          "eta": 0.9971228767885937,
+          "eta_curl": 0.9971129846743467
+        },
+        "Z_dual_mass": {
+          "rho": 0.9971209375582285,
+          "eta": 0.9950165142931066,
+          "eta_curl": 0.9950139274560739
+        },
+        "Z_field": {
+          "rho": 152.55674147745503,
+          "eta": 0.22123781242823282,
+          "eta_curl": 0.31029492709060724
+        },
+        "Z_residual": {
+          "rho": 0.9778952412775761,
+          "eta": 0.9928176043406797,
+          "eta_curl": 0.99280227567079
+        },
+        "actual": {
+          "rho": 0.9778952412775763,
+          "eta": 0.9928176043406824,
+          "eta_curl": 0.9928022756707924
+        }
+      }
+    },
+    "records": {
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation.json",
+      "provenance": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation_provenance.json",
+      "decision": "docs/task039_extra_physical_multilevel/outcomes/records/next_method_decision_v13.json",
+      "blueprint": "docs/task039_extra_physical_multilevel/outcomes/next_method_blueprint_v13.md"
     }
   }
 }

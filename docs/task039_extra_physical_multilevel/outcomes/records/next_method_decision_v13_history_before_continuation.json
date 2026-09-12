@@ -1,0 +1,146 @@
+{
+  "schema": "task39extra.review-v13.next-method-decision.v1",
+  "primary_method": "IMPLEMENTATION_OR_METRIC_REPAIR",
+  "confidence": "high_for_required_repair_only",
+  "decision_status": "DECISION_DELIVERY_INCOMPLETE",
+  "scope": "diagnostic workflow only; no production PC or ordinary default change is authorized",
+  "observed_bottleneck": "the metric/P2/P3 diagnostic did not persist a complete three-input evidence table, and the source-level live-object ledger is incomplete",
+  "evidence_ids": [
+    "p0_metric_equivalence",
+    "A2R160_BAL_H_p4_01_p1_direction_diagnosis",
+    "A2R160_BAL_H_p4_01_p3_response_columns",
+    "p4_direction_diagnosis_v13_offline_audit",
+    "p4_direction_diagnosis_v13_memory_liveness"
+  ],
+  "counter_evidence": [
+    "P0 direct/pullback mass and curl equivalence is approximately 2.9e-15",
+    "the saved A2R160/01 right-PC capture has four finite columns and reconstruction relative 2.87e-16",
+    "the saved 48-column residual family has derived rho 0.935877 and the fixed eight-column selection has derived rho 0.967891",
+    "the reference-best Z field has eta 0.2360299 but rho 126.8049, so the finite directions are not field-inexpressive in the reference-only sense"
+  ],
+  "why_no_solver_candidate_is_selected": "only one of three inputs reached P1/P3, P2 a/t and local identity packets are absent, and eta/curl for L and the selected response cannot be reconstructed; therefore DUAL_MASS_SCALED_P4_KRYLOV and SELECTIVE_MULTIPRECONDITIONED_P4 have no cross-input STRONG_ACTION_SIGNAL",
+  "fixed_Z_screen": {
+    "scaled_Z_eta_ratio_A2R160_01": 0.995405190426173,
+    "strong_action_signal_for_fixed_Z": false,
+    "reason": "the required difficult-input eta reduction by at least one half is not met; this does not decide a future scaled Krylov with changed search directions"
+  },
+  "what_is_preserved": [
+    "original 13.5 nm physical model, ordered modes, p6/p4 maps and ordinary defaults",
+    "counted right-FGMRES PC capture semantics and existing 42-block local factors",
+    "stable complex QR/SVD cutoff 1e-12 and the frozen three-input selection rule"
+  ],
+  "what_is_repaired": [
+    "run_p4_direction_diagnosis live-object ledger and phase-local checkpoint counts/timings",
+    "metric4/metric6 lifetime and unnecessary cell-energy basis construction",
+    "P1/P2/P3 packet lifetime and streaming arena ownership"
+  ],
+  "exact_interfaces": [
+    "src/runners/physical_macro_controls.py: run_p4_direction_diagnosis, check_ls_workspace, solve_svd/solve_weighted",
+    "src/solvers/physical_error_metric.py: LosslessFEMetric construction and diagonal path",
+    "src/runners/physical_diagnosis_worker.py: hash-bound packet persistence"
+  ],
+  "repair_contract": {
+    "metric": "opt-in build_cell_basis=False for metric6 prevents its unused bases from being constructed; destroy metric4 and all related references after D/equivalence; default old calls unchanged",
+    "p1": "after the P1 packet is atomically hash-bound, release duplicate candidate/residual/projection arrays before building the next packet",
+    "p2_p3": "persist a/h/d/A_d/t/r_ref and D_i d_i/D_i R_i e_h before later loops; fill p_i and A p_i directly into two 48-column arenas X/AX, without a separate duplicated 42-column pair",
+    "ledger": "count NumPy payloads, PETSc vectors, ReferenceCellBasis values/curls, local observations, maps and allocator/work buffers at each safe checkpoint",
+    "checkpoint": "persist action counts and stage timings before entering each LS/42-column curl loop; a stopped run must remain independently auditable"
+  },
+  "operator_formulas_for_conditional_followup": {
+    "B4": "a=C_U g; h=g-A4 a; d=M_D h; t=C_U(A4 d); B4 g=a+d-t",
+    "full_L": "[Z,a,p_1,...,p_42,-t], at most 48 columns",
+    "selected_L10": "[a,p_i1,...,p_i8,-t], at most 10 columns, excludes Z",
+    "metric": "M04=P64^H M06 P64; K04=P64^H(k0^-2 curl6)P64",
+    "reference_role": "evaluation and labelled field oracle only; never PC, selector or initial guess",
+    "status": "existing mathematical contract preserved; no new production PC selected"
+  },
+  "why_not_previous_variants": [
+    "not V7/V8/V9 entity or cross-RHS recycling: this repair concerns physical P4 response observability and bounded lifetime, not reuse of a previous RHS",
+    "not BAL_H/ONE_C selection: no complete three-input evidence or full outer solve was produced",
+    "not a larger p2/S factor: the review forbids turning the diagnostic bottom solve into the production endpoint"
+  ],
+  "cost_and_memory": {
+    "formal_conservative_seconds": 948.1497426901994,
+    "formal_components_seconds": {
+      "first_failed_attempt": 355.6892665180153,
+      "controlled_replay": 592.4604761721841
+    },
+    "offline_checker_wall_seconds": 4.7,
+    "offline_checker_core_seconds": 1.6693295069999294,
+    "derived_p3_liveness_lower_bound_bytes": 273571328,
+    "diagnostic_array_cap_bytes": 268435456,
+    "interpretation": "the lower bound exceeds the diagnostic array cap by 5,135,872 B before excluded objects; it is a source-liveness derivation, not a sampled RSS peak",
+    "root_checker_wall_seconds": 1.7,
+    "executor_checker_wall_seconds": 4.7,
+    "known_total_including_both_checkers_seconds": 954.5497426901995,
+    "fine_grained_I4_bare_metric_times": "unknown: not durably checkpointed, never filled from old evidence"
+  },
+  "next_validation": {
+    "prerequisite": "implement and qualify diagnostic lifetime/checkpoint repair under a new explicit review",
+    "diagnostic_sequence": [
+      "A2R160_BAL_H_p4_01",
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ],
+    "normal_build_count": 1,
+    "I4_per_input_B4_max": 4,
+    "bare_B4_per_input_max": 1,
+    "production_selection": "only after complete three-input evaluation, select and qualify one production method under a new review",
+    "first_full_original": "frozen 13.5 nm p6 h10 original geometry and unchanged A6; p4_01 is not a full original solve",
+    "proposed_outer_control": "restart32, maximum64 outer iterations; budget requires next review; no automatic extension or R64",
+    "conditional_notch": "same configuration only after original passes all physical and resource gates",
+    "gates": {
+      "A6_explicit_true_residual": 1e-06,
+      "field_and_curl_error": 0.0001,
+      "R_T_A_A_volume_conservation": 1e-05,
+      "80_complex_mode_amplitudes": 0.0001,
+      "channel_power": 1e-06,
+      "resources": "unchanged local inventory, full simultaneous process-tree/cgroup reserve and launch limits, zero swap, complete descendant cleanup"
+    },
+    "official_output": "only after residual gate; include E/H, near fields and complete observables",
+    "not_run_this_round": true
+  },
+  "stop_rules": {
+    "numerical_stop": "any identity, capture, reconstruction or P2 nonzero-r_ref check >1e-10",
+    "cost_stop": "frozen action/time budgets; no automatic extension",
+    "resource_stop": "diagnostic additional-array/liveness ledger >256 MiB, local inventory policy violation, swap, or uncleared descendants"
+  },
+  "remaining_unknowns": [
+    "cross-input P1/P2/P3 candidate metrics and strong-action signal",
+    "P2 local identity and global a/d/t physical norms",
+    "complete future Krylov behavior under either conditional candidate",
+    "official Maxwell fields, power, diffraction and conservation"
+  ],
+  "not_a_convergence_guarantee": true,
+  "solver_method_confidence": "unavailable_without_complete_three_input_evidence",
+  "conditional_alternative": null,
+  "dual_mass_fixed_Z_strong_action_signal": false,
+  "dual_mass_rejection": {
+    "criterion": "hard01 eta_D/eta_actual <= 0.5",
+    "actual_ratio": 0.9954062954009306,
+    "limit": 0.5,
+    "future_changed_Krylov_directions": "not_evaluated"
+  },
+  "selective_strong_action_signal": null,
+  "proposed_memory_contract": {
+    "status": "PROPOSED_NOT_IMPLEMENTED_OR_VALIDATED",
+    "N": 48960,
+    "k_max": 48,
+    "complex_item_bytes": 16,
+    "X_AX_bytes": 75202560,
+    "phase_reused_QR_workspace_bytes": 75202560,
+    "fixed_objects_and_metric_pool_cap_bytes": 67108864,
+    "small_objects_and_allocator_reserve_bytes": 16777216,
+    "total_target_bytes": 234291200,
+    "hard_cap_bytes": 268435456,
+    "gate": "Every component must be qualified from an actual ownership/lifetime list, including external library copies; unknown or exceeded means stop, no cap increase."
+  },
+  "engineering_windows": {
+    "source": "executor task startedAt and formal terminal UTC timestamps",
+    "pre_first_formal_calendar_seconds": 5042.158266544342,
+    "between_formal_runs_calendar_seconds": 513.781383158,
+    "includes": "reading, implementation, tests, supervision and waiting; not CPU time",
+    "other_engineering_and_document_closeout": "unknown, not individually timed",
+    "not_deducted_from_formal_7200_seconds": true
+  }
+}

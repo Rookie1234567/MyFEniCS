@@ -1,0 +1,1440 @@
+{
+  "status": "PASS",
+  "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+  "checks": [
+    {
+      "name": "A2R160_BAL_H_p4_01:actual_in_Z",
+      "defect": 1.255331250535426e-15,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:reference_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:a_image",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:t_image",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:sum_pi",
+      "defect": 2.3677182695088923e-18,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:sum_Api",
+      "defect": 8.544439371360568e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:reconstructed_B4_vs_qualified_old_bare",
+      "defect": 1.3166771428457543e-14,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:saved_phase_order",
+      "pass": true,
+      "evidence": "local JSON publication timestamps",
+      "mtime_ns": [
+        1789193505841607532,
+        1789193652428653517,
+        1789193652611986844,
+        1789193739719537395
+      ]
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_0",
+      "defect": 2.3260702704997482e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_1",
+      "defect": 2.831202365758428e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_2",
+      "defect": 2.673000142311358e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_3",
+      "defect": 2.880234848736202e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_4",
+      "defect": 2.7353911714197054e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_5",
+      "defect": 2.766734178949765e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_6",
+      "defect": 2.9675634292637997e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_7",
+      "defect": 2.7178259055992203e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_8",
+      "defect": 2.0935014964391807e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_9",
+      "defect": 2.631987481496226e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_10",
+      "defect": 2.8725193457820487e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_11",
+      "defect": 2.8493807079019614e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_12",
+      "defect": 2.2366216385059872e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_13",
+      "defect": 3.296644450726696e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_14",
+      "defect": 2.8491350389922783e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_15",
+      "defect": 2.525589521806404e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_16",
+      "defect": 2.5819353412653657e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_17",
+      "defect": 2.4194744069911238e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_18",
+      "defect": 2.3027277718174815e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_19",
+      "defect": 2.6653613831979863e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_20",
+      "defect": 2.8511560714404986e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_21",
+      "defect": 2.5635908063982425e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_22",
+      "defect": 2.8363780387536404e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_23",
+      "defect": 2.3609813745783892e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_24",
+      "defect": 2.911477385207226e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_25",
+      "defect": 2.193133652945519e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_26",
+      "defect": 2.3963875182495693e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_27",
+      "defect": 2.5137861162163676e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_28",
+      "defect": 2.746478783604414e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_29",
+      "defect": 2.6020985765926247e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_30",
+      "defect": 2.5274294376222863e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_31",
+      "defect": 2.7411744888681824e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_32",
+      "defect": 2.6204647789609097e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_33",
+      "defect": 2.7149199173583372e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_34",
+      "defect": 3.0611966124486366e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_35",
+      "defect": 2.907781297685562e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_36",
+      "defect": 2.4158798360553584e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_37",
+      "defect": 2.6949680500222633e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_38",
+      "defect": 2.886550952243603e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_39",
+      "defect": 2.5553783720672373e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_40",
+      "defect": 2.892998555254537e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:local_identity_41",
+      "defect": 3.31986018171764e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:PoU",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:global_recomposition",
+      "defect": 1.7665526901979317e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:rho:L_residual",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:eta_from_weighted_R:L_residual",
+      "defect": 5.10702591327572e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:curl_norm_record:L_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:rho:L_field",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:eta_from_weighted_R:L_field",
+      "defect": 1.582067810090848e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:curl_norm_record:L_field",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:rho:L_selected",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:eta_from_weighted_R:L_selected",
+      "defect": 9.992007221626409e-16,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:curl_norm_record:L_selected",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:rho:actual",
+      "defect": 3.3306690738754696e-16,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:eta_from_weighted_R:actual",
+      "defect": 1.5543122344752192e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:curl_norm_record:actual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:rho:Z_residual",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:eta_from_weighted_R:Z_residual",
+      "defect": 1.7763568394002505e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:curl_norm_record:Z_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:rho:Z_field",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:eta_from_weighted_R:Z_field",
+      "defect": 1.1657341758564144e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:curl_norm_record:Z_field",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:rho:Z_dual_mass",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:eta_from_weighted_R:Z_dual_mass",
+      "defect": 1.887379141862766e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_01:curl_norm_record:Z_dual_mass",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:actual_in_Z",
+      "defect": 2.8680434087447087e-15,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:reference_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:a_image",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:t_image",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:sum_pi",
+      "defect": 0.0,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:sum_Api",
+      "defect": 1.613796611417743e-14,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:reconstructed_B4_vs_qualified_old_bare",
+      "defect": 0.0,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:saved_phase_order",
+      "pass": true,
+      "evidence": "local JSON publication timestamps",
+      "mtime_ns": [
+        1789193780788724441,
+        1789193927122344011,
+        1789193951127153206,
+        1789194040421869089
+      ]
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_0",
+      "defect": 3.3536746722599954e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_1",
+      "defect": 2.5748588168706543e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_2",
+      "defect": 2.864937102385902e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_3",
+      "defect": 2.7134895704968016e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_4",
+      "defect": 2.7556350881047618e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_5",
+      "defect": 2.9590903816782747e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_6",
+      "defect": 3.365602439055339e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_7",
+      "defect": 3.2738999053091994e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_8",
+      "defect": 3.081072055196929e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_9",
+      "defect": 1.9761388279427518e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_10",
+      "defect": 2.8673769781945976e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_11",
+      "defect": 2.451786053506152e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_12",
+      "defect": 3.014678653201635e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_13",
+      "defect": 3.1829244347753427e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_14",
+      "defect": 2.294906980484713e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_15",
+      "defect": 2.370713581922995e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_16",
+      "defect": 3.163592232105984e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_17",
+      "defect": 2.3970245252823662e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_18",
+      "defect": 2.4563691057360207e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_19",
+      "defect": 2.4949580798992766e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_20",
+      "defect": 3.008302343332315e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_21",
+      "defect": 3.0724269957504394e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_22",
+      "defect": 2.772643582290824e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_23",
+      "defect": 2.223321782021931e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_24",
+      "defect": 2.6362339418289296e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_25",
+      "defect": 2.980821510315045e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_26",
+      "defect": 2.884190284023368e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_27",
+      "defect": 2.3256054068082466e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_28",
+      "defect": 3.007842767184204e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_29",
+      "defect": 2.923639661246232e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_30",
+      "defect": 3.0580181395028355e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_31",
+      "defect": 2.6471387047899857e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_32",
+      "defect": 3.1078747560259367e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_33",
+      "defect": 3.079946562605785e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_34",
+      "defect": 3.019861400737213e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_35",
+      "defect": 2.9072791545078826e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_36",
+      "defect": 2.5086004601067407e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_37",
+      "defect": 2.620657698344474e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_38",
+      "defect": 3.1133766790383833e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_39",
+      "defect": 3.2104759060924904e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_40",
+      "defect": 2.7185896865219545e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:local_identity_41",
+      "defect": 3.579486185058099e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:PoU",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:global_recomposition",
+      "defect": 1.8286556787239946e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:rho:L_residual",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:eta_from_weighted_R:L_residual",
+      "defect": 1.9984014443252818e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:curl_norm_record:L_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:rho:L_field",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:eta_from_weighted_R:L_field",
+      "defect": 1.50712775592865e-14,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:curl_norm_record:L_field",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:rho:L_selected",
+      "defect": 2.7755575615628914e-17,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:eta_from_weighted_R:L_selected",
+      "defect": 1.7763568394002505e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:curl_norm_record:L_selected",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:rho:actual",
+      "defect": 6.938893903907228e-17,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:eta_from_weighted_R:actual",
+      "defect": 9.992007221626409e-16,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:curl_norm_record:actual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:rho:Z_residual",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:eta_from_weighted_R:Z_residual",
+      "defect": 1.3322676295501878e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:curl_norm_record:Z_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:rho:Z_field",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:eta_from_weighted_R:Z_field",
+      "defect": 1.2850831510036187e-14,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:curl_norm_record:Z_field",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:rho:Z_dual_mass",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:eta_from_weighted_R:Z_dual_mass",
+      "defect": 2.220446049250313e-16,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "A2R160_BAL_H_p4_02:curl_norm_record:Z_dual_mass",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:actual_in_Z",
+      "defect": 3.6393799675125516e-15,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:reference_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:a_image",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:t_image",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:sum_pi",
+      "defect": 0.0,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:sum_Api",
+      "defect": 1.6390094660994317e-14,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:reconstructed_B4_vs_qualified_old_bare",
+      "defect": 0.0,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:saved_phase_order",
+      "pass": true,
+      "evidence": "local JSON publication timestamps",
+      "mtime_ns": [
+        1789194079977321111,
+        1789194224865226668,
+        1789194249085883622,
+        1789194336331276820
+      ]
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_0",
+      "defect": 2.8433158736606737e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_1",
+      "defect": 2.884258779804007e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_2",
+      "defect": 2.6850533334578104e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_3",
+      "defect": 2.6073706756408357e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_4",
+      "defect": 2.739309437550031e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_5",
+      "defect": 2.4213355999156616e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_6",
+      "defect": 3.991792178123924e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_7",
+      "defect": 2.376964205541526e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_8",
+      "defect": 2.4333906118951997e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_9",
+      "defect": 2.621217275734013e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_10",
+      "defect": 2.5755122842107686e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_11",
+      "defect": 2.656142411356468e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_12",
+      "defect": 2.3363154421371938e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_13",
+      "defect": 2.5831706495422874e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_14",
+      "defect": 2.0445041134787358e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_15",
+      "defect": 2.9257097426577966e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_16",
+      "defect": 2.96351400101827e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_17",
+      "defect": 2.852528110881539e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_18",
+      "defect": 2.6376873193027746e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_19",
+      "defect": 2.4016737713770753e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_20",
+      "defect": 2.520073120985498e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_21",
+      "defect": 2.8151154498464904e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_22",
+      "defect": 2.839675563705853e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_23",
+      "defect": 3.3281514794718486e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_24",
+      "defect": 2.4144954349809306e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_25",
+      "defect": 2.854137790915077e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_26",
+      "defect": 2.7255633757948373e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_27",
+      "defect": 3.772349670099121e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_28",
+      "defect": 2.959074199881231e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_29",
+      "defect": 2.442482927725884e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_30",
+      "defect": 2.4963755138590524e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_31",
+      "defect": 2.6436258602086525e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_32",
+      "defect": 3.1778915385476764e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_33",
+      "defect": 3.040336634255958e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_34",
+      "defect": 3.674624852255276e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_35",
+      "defect": 2.64560826902612e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_36",
+      "defect": 2.5302800540511183e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_37",
+      "defect": 3.1802795062000655e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_38",
+      "defect": 2.297671501128767e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_39",
+      "defect": 2.7238667096932025e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_40",
+      "defect": 2.6327584929082478e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:local_identity_41",
+      "defect": 3.246031734954668e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:PoU",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:global_recomposition",
+      "defect": 1.5742744966696126e-17,
+      "tolerance": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:rho:L_residual",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:eta_from_weighted_R:L_residual",
+      "defect": 0.0,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:curl_norm_record:L_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:rho:L_field",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:eta_from_weighted_R:L_field",
+      "defect": 1.5543122344752192e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:curl_norm_record:L_field",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:rho:L_selected",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:eta_from_weighted_R:L_selected",
+      "defect": 6.661338147750939e-16,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:curl_norm_record:L_selected",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:rho:actual",
+      "defect": 2.220446049250313e-16,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:eta_from_weighted_R:actual",
+      "defect": 4.440892098500626e-16,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:curl_norm_record:actual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:rho:Z_residual",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:eta_from_weighted_R:Z_residual",
+      "defect": 8.881784197001252e-16,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:curl_norm_record:Z_residual",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:rho:Z_field",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:eta_from_weighted_R:Z_field",
+      "defect": 2.942091015256665e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:curl_norm_record:Z_field",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:rho:Z_dual_mass",
+      "defect": 0.0,
+      "tolerance": 1e-08,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:eta_from_weighted_R:Z_dual_mass",
+      "defect": 3.774758283725532e-15,
+      "tolerance": 1e-07,
+      "pass": true
+    },
+    {
+      "name": "LIGHT448_BAL_H_p4_09:curl_norm_record:Z_dual_mass",
+      "defect": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    }
+  ],
+  "evidence": [
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/p4_direction_summary.json",
+      "sha256": "cb2760fe2b59e0a094c3e09b108568d18296617abfca5f0ef3cf0b14a3d867a8",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/p4_direction_summary.npz",
+      "npz_sha256": "3290e4ccec137acee6f60582fd479bf919f2bb3beccd28bb9faa2515d9113402"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p1_direction_diagnosis.json",
+      "sha256": "2e130f7359eb8f9b0d4c3d198292a6e71f4408c0c25d6031d3712cfab171847a",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p1_direction_diagnosis.npz",
+      "npz_sha256": "05df7a25530c22711a76fc7a7fe16f6db9610d691915a52fedfb807a9112c110"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p2_observation.json",
+      "sha256": "a47273badb8bab388b5ce63fef29ee353492498635a26ae803848361361e4624",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p2_observation.npz",
+      "npz_sha256": "c48fb33b4e555bcb9df53d4a1d634e62cedbb1c557eeca5bdba703cbcc86696f"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p3_response_columns.json",
+      "sha256": "27dce90b3aa19dae3123bc0792c7b0a90cc04ec1509a5d6f9116627808f6e891",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p3_response_columns.npz",
+      "npz_sha256": "d25eb742459816316e860ecdb801051da3095232697135e00789214cb01edf8a"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p3_local_directions.json",
+      "sha256": "758c21be904aa17f4a5717e6da5dd7864d9746af63a27f5f7d41bdf4d3dd9de9",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_01_p3_local_directions.npz",
+      "npz_sha256": "5370dc309b23b2cd8b7c7ea622cb6cd10bb328124dc940b52b0d120f827c85ce"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls/records/A2R160_BAL_H_p4_01_bare_B4_I4.json",
+      "sha256": "ce191f99ff5b68cdba83108096255b7beee8d09a637282c2cd413d0f3baf2898",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls/records/A2R160_BAL_H_p4_01_bare_B4_I4.npz",
+      "npz_sha256": "08f1df4a41134e54ec4fe0de257ce612d0ee24b5cdc7875d17734b5906f70ffc"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p1_direction_diagnosis.json",
+      "sha256": "a5bdcf754b800f624b46e49a656a222771a96a52a1d8f5f130db6b2fc668bb17",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p1_direction_diagnosis.npz",
+      "npz_sha256": "c335229c3c044520948fd22f46150c50db6cb2a5b807108bba1a7e826c308608"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p2_observation.json",
+      "sha256": "b8c4950d8c0e2cc35fdf1357694c87c7c3dd46926dbcc148a37fa1231589450b",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p2_observation.npz",
+      "npz_sha256": "53c2426f3b84d4425de8c3db1b6a1606768b29e0e8e7b84542dac0ed98511b82"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p3_response_columns.json",
+      "sha256": "ff841ffa68968a11c16ab69fb93ffd126d041dfeeb5bf31c609cbd51ed5daa7a",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p3_response_columns.npz",
+      "npz_sha256": "b39fbe008baaf541c4466d6d2f52d3b101dbf7c405b7749d3146893f495f0dad"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p3_local_directions.json",
+      "sha256": "03750232730648abd5b98949e3cb796d911b05d11ee222aaf6fa366456d0fc83",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/A2R160_BAL_H_p4_02_p3_local_directions.npz",
+      "npz_sha256": "798c8b390896b5ccd94b18b85fac7a08d0c2d13d7b9fb82543fa2133536f7077"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls/records/A2R160_BAL_H_p4_02_bare_B4_I4.json",
+      "sha256": "6d57c6dd808efafb7786243ca21f3162be80622631fb66aef0c1ed881f2e8dc1",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls/records/A2R160_BAL_H_p4_02_bare_B4_I4.npz",
+      "npz_sha256": "1ce2e77852408a624e3c73f7993cf402cb8100acd51c0e99adf8dc90d22ba3bd"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p1_direction_diagnosis.json",
+      "sha256": "bceefd136b42e495ec1ea6d6c6230bb8fe77024e9f265bd9ea0efa9eff4445b0",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p1_direction_diagnosis.npz",
+      "npz_sha256": "2cfd13b6103457ed61da7cda3fcc81a3f8b5efef67db65dcb0a0889d63da507a"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p2_observation.json",
+      "sha256": "3508db71cf54d651a02b66dfa5492f5aede3381966f16144d6aa48e7d76123e7",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p2_observation.npz",
+      "npz_sha256": "2944b01d182ec8a29a4ed59eaa9f5133f5973d660d67d29a976aa857c1a62085"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p3_response_columns.json",
+      "sha256": "ce672aa7e7043c84f9c07be7440f6211c3a95b882f62a2c9e86bdf8547774436",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p3_response_columns.npz",
+      "npz_sha256": "cec826e18cad6ee4f7e3716580fb3acbf5879d44d79ee63c1d1bc3340f71a175"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p3_local_directions.json",
+      "sha256": "708234aa2becaf9920f7ab8f47000fa9d39b133cff81374366dcee8ff48c00ad",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/LIGHT448_BAL_H_p4_09_p3_local_directions.npz",
+      "npz_sha256": "9b42ed5402c7c331f973e36e5219c67dafe0feef506b2d237547f90ded19d058"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls/records/LIGHT448_BAL_H_p4_09_bare_B4_I4.json",
+      "sha256": "b5a81912d59582b5d6bf1fc75da93fb0acf780c3dc1d957143067758f0ff76ba",
+      "npz": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/v12_supplement/7d9df5e19d324776588aaa9efc4996cc3fe36d8e/o1_full_physical_controls/records/LIGHT448_BAL_H_p4_09_bare_B4_I4.npz",
+      "npz_sha256": "971147555e8925954522ff7b290f062159f5de7ceff2cbdc2150b7cb13b67b1f"
+    }
+  ],
+  "check_count": 219,
+  "core_seconds": 0.973069714003941,
+  "new_PC": 0,
+  "new_A4": 0,
+  "new_M0": 0,
+  "new_curl": 0,
+  "limitations": "Curl values are checked against saved squared norms; no fresh FE curl action. Weighted-R field check uses the saved measured metric factorization."
+}

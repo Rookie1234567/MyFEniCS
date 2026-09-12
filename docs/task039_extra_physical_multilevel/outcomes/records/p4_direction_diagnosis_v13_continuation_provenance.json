@@ -1,0 +1,182 @@
+{
+  "schema": "task39extra.review-v13.p4-direction-diagnosis.continuation-provenance.v1",
+  "status": "DIAGNOSTIC_COMPLETION_NO_PRODUCTION_PC",
+  "classification": [
+    "P4_DIRECTION_DIAGNOSIS_COMPLETED",
+    "NO_PRODUCTION_PC_SELECTED",
+    "NO_OFFICIAL_PHYSICS_OUTPUT"
+  ],
+  "source": {
+    "branch": "task39extra",
+    "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+    "raw_record": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/3457b5e2f54dec690fcb70deb1f387fe7f6d57cd/diagnosis/records/p4_direction_diagnosis_v13.json",
+    "raw_record_sha256": "1d8af563829348142d8b965e69fafe09a8b60a3056fc444a23e5e26e942bb732",
+    "tracked_compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation.json",
+    "tracked_compact_sha256": "1d8af563829348142d8b965e69fafe09a8b60a3056fc444a23e5e26e942bb732",
+    "model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "input_sha256": "86829433e2dd4412b5e6b1e7903255ed33a462dcf5afadffe56efa841e5e7692"
+  },
+  "identity": {
+    "mpi_size": 1,
+    "scalar_type": "complex128",
+    "int_type": "int32",
+    "p4_rows_independent": 48960,
+    "p4_rows_storage": 53084,
+    "p6_rows_independent": 164592,
+    "p6_rows_storage": 173802,
+    "interface_blocks": 42,
+    "dtn_modes": 80,
+    "inputs": [
+      "A2R160_BAL_H_p4_01",
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ]
+  },
+  "formal_accounting": {
+    "prior_charged_seconds": 954.5497426901994,
+    "continuation_supervisor_seconds": 1204.4717857759497,
+    "continuation_worker_raw_clock_seconds": 1201.563813993922,
+    "corrected_formal_seconds": 2159.021528466149,
+    "root_continuation_audit_wall_seconds": 1.09,
+    "block_outside_audit_wall_seconds": 0.17,
+    "cumulative_through_block_audit_seconds": 2160.281528466149,
+    "cumulative_through_resource_audit_seconds": 2160.401528466149,
+    "remaining_budget_after_resource_audit_seconds": 5039.598471533851,
+    "accounting_note": "The continuation charge uses the outer supervisor budget. The worker raw clock is retained as a diagnostic value; the continuation, block-outside and resource audits are additive evidence-generation work."
+  },
+  "watchdog": {
+    "status": "COMPLETED",
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_children": [],
+    "sampled_process_tree_rss_peak_bytes": 3287973888,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "global_pswpin_delta": 0,
+    "global_pswpout_delta": 0,
+    "launch_memory_cap_bytes": 9375555584,
+    "temporary_reserve_bytes": 1073741824,
+    "memory_total_bytes": 14654976000,
+    "memory_available_bytes": 13670522880,
+    "reserve_bytes": 4294967296,
+    "workflow_elapsed_boottime_seconds": 1103.465745,
+    "workflow_elapsed_utc_seconds": 1204.470328471,
+    "raw_clock_discrepancy_seconds": 101.004583,
+    "resource_note": "RSS and swap are sampled process-tree diagnostics; pswpin/pswpout are global WSL counters, not a dedicated cgroup measurement."
+  },
+  "workspace_bound": {
+    "current_cap_bytes": 536870912,
+    "historical_cap_bytes": 268435456,
+    "max_estimated_bytes": 369795024,
+    "phase": "A2R160_BAL_H_p4_01:P3_residual",
+    "rows": 48960,
+    "columns": 48,
+    "resident_bytes": 180931536,
+    "temporary_bytes": 188863488,
+    "metric_storage_bytes": 56375392,
+    "non_least_squares_resident_bytes": 69817936,
+    "historical_liveness_lower_bound_bytes": 273571328,
+    "historical_liveness_excess_over_256MiB_bytes": 5135872
+  },
+  "local_inventory": {
+    "allocated_padded_bytes": 1671000000,
+    "used_padded_bytes": 888000000,
+    "allocated_csr_bytes": 450499800,
+    "after_c_u_bytes": 2180383916,
+    "local_cap_bytes": 2684354560,
+    "inventory_note": "Allocated capacity, used capacity, diagnostic live-set estimates and process RSS are separate measurements and must not be summed or substituted for one another."
+  },
+  "decision": {
+    "primary_method": "PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN",
+    "decision_status": "ARCHITECTURE_PRIORITY_SPECIFIED_UNQUALIFIED",
+    "confidence": "medium",
+    "confidence_scope": "architecture priority only",
+    "performance_confidence": "low",
+    "production_pc_selected": false,
+    "dual_mass_fixed_z_strong_action_signal": false,
+    "selective_strong_action_signal": false,
+    "official_physics": "not_run",
+    "blueprint": "docs/task039_extra_physical_multilevel/outcomes/next_method_blueprint_v13.md",
+    "decision_note": "The interface redesign is the next qualification priority, not a qualified production preconditioner. Its Schur/spectral performance remains unmeasured."
+  },
+  "audits": {
+    "continuation": {
+      "tracked_json": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation_audit.json",
+      "json_sha256": "27b6e18a58a234359bb482fab18e90835cbb034ef890e4338acd9bc9b4304c43",
+      "tracked_log": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation_audit.log",
+      "log_sha256": "d4bb1d9cdd2358d85cb7f55f562b631ead96a2a71530fecc3475a198b8d4333c",
+      "tracked_script": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation_audit.py",
+      "script_sha256": "15df95233c7c06a91e875519f8a2133d46901fd4e6053fab6c77a880e3966028",
+      "status": "PASS",
+      "check_count": 219,
+      "failed_checks": 0,
+      "core_seconds": 0.973069714003941,
+      "execution_note": "The tracked script is an exact copy of the executed /tmp script; it was not rerun after copying."
+    },
+    "block_outside": {
+      "tracked_json": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_block_outside_audit.json",
+      "json_sha256": "b057acb45dba31a0e620502c69b02ff93b9afd4796a42f6a42810b9ee1011899",
+      "tracked_log": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_block_outside_audit.log",
+      "log_sha256": "4f0a2799ee88b4d0d49c54c091c6b00f007c082523a0071b91a12adf4a7bbd70",
+      "tracked_script": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_block_outside_audit.py",
+      "script_sha256": "d598b7b7eb6748f3e5d83227c28c0ce10cd73b378ac47074b9ffac6294d044b5",
+      "status": "COMPLETED",
+      "classification": "derived_from_saved_measured_vectors",
+      "core_seconds": 0.09080690999689978,
+      "execution_note": "The tracked script is an exact copy of the executed /tmp script; it was not rerun after copying. Block coefficient norms are operation-term diagnostics, not global field-energy percentages."
+    },
+    "resource": {
+      "tracked_json": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_resource_review.json",
+      "json_sha256": "1ecdf8e3ddc8d634265b2befdc47cd7e45817ea888620e9a2c8a1f7b23f388f2",
+      "tracked_log": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_resource_review.log",
+      "log_sha256": "e19f39fe5170a9765978eb968d5f2d9dc47ec0b17f0be8b962de1a916b6e7d82",
+      "tracked_script": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_resource_review.py",
+      "script_sha256": "28651df4fa269fee4676494041fb7aba897f44d986663b667849d87531026618",
+      "status": "PASS",
+      "sample_count": 4252,
+      "checked_item_count": 34016,
+      "passed_item_count": 34016,
+      "rss_peak_bytes": 3287973888,
+      "pss_peak_bytes": 3254656000,
+      "vm_swap_peak_bytes": 0,
+      "available_min_bytes": 10658832384,
+      "reserve_bytes": 4294967296,
+      "wall_seconds": 0.12,
+      "execution_note": "The tracked script is an exact copy of the executed /tmp script; it was not rerun after copying."
+    }
+  },
+  "tests": {
+    "targeted_410": "10 passed",
+    "final_packet_lifetime_412": "7 passed",
+    "related_pre_final": "14 passed",
+    "compileall": "passed",
+    "diff_check": "passed",
+    "ruff": {
+      "files_checked": 12,
+      "baseline_diagnostics": 82,
+      "current_diagnostics": 82,
+      "new_diagnostics": 0,
+      "classification": "historical baseline retained; not a whole-repository Ruff pass"
+    },
+    "full_repository_pytest": "not_run",
+    "ci": "not_run",
+    "final_documentation": {
+      "passed": 20,
+      "failed": 1,
+      "new_errors": 0,
+      "failure": "historical Task038 missing memory_first_small_v2_checker.json; identical before/after",
+      "log": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_documentation_tests.log",
+      "log_sha256": "443bc2e5257e900f38b5609923b4b3a7a6be9a7a071b855f6a93dc39fb6890b4",
+      "baseline_record": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_documentation_baseline.json",
+      "baseline_record_sha256": "fed4c38ba47701dc0e003925d59376f2107392e6d75e4f6920eaffaf4445cd86"
+    }
+  },
+  "historical_preservation": {
+    "initial_compact_packet": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13.json",
+    "initial_memory_liveness": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json",
+    "initial_256MiB_result": "controlled_stop; historical negative evidence retained and not relabeled as PASS",
+    "old_owner_row_failure_sha": "80d2fb35145ac4770040ec9bb4627dfbe8cc7e67",
+    "old_replay_root": "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis"
+  }
+}

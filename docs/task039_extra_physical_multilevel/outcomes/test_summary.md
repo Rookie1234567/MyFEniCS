@@ -1,3 +1,30 @@
+# V13 512 MiB 续算测试与独立审核（当前）
+
+| 检查 | 结果 | 口径/限制 |
+|---|---|---|
+| qualified activation preflight | complex128/int32，PETSc3.19.6，MPI1/线程1 | 复用已资格化 ABI/MUMPS；MPI socket 受默认沙箱限制，测试与正式运行在获准的同一Linux栈完成 |
+| test_410 | 10 passed | pytest1.03s，外层wall1.34s；局部算子与观察接口 |
+| 相关组件测试 | 14 passed | test_412、packet lifetime、schema和profile；不是另14个互不重叠的新测试 |
+| 最后局部清理后的 targeted tests | 7 passed | test_412 + packet lifetime；代码源 `3457b5e2f54dec690fcb70deb1f387fe7f6d57cd` |
+| 源码 compileall / diff-check | 通过 | 无新增PC方法实现；后续文档改动不重跑昂贵PDE |
+| 源码 Ruff 0.11.13 | 12个变更Python文件：历史82条，当前82条，新增0 | 不声称全仓Ruff通过；新research审计脚本保留实际执行字节，不能套用此12文件的结论 |
+| 真实三输入续算 | COMPLETED | 1次fresh42构建，新增2次I4与2次bare；连旧账累计3/3 I4、3/3 bare、B4总15 |
+| 独立向量审计 | 219/219 PASS，wall1.09s | 重算21候选rho与saved weighted-R eta、块恒等式/PoU/旧bare一致性/hash和阶段发布顺序；curl仅复核保存范数，不再施加FE动作 |
+| 块外项归纳 | 完成，wall0.17s | 只从保存的126块操作项取范数，不解释成全局能量百分比 |
+| 全过程资源复核 | 4252样本、34016项PASS，wall0.12s | 同时树RSS/PSS为采样峰值，非连续或cgroup峰值；swap增量0 |
+| 最终文档合同检查 | 20 passed、1 failed（既有缺件） | 旧Task038缺 `memory_first_small_v2_checker.json`；修改前登记表复核完全相同，新增错误0，未伪造旧证据 |
+| full repository pytest / MPI2或4新增资格 / CI | NOT_RUN | 无全仓或CI通过声明；本批正式配置为MPI1 |
+
+[最终文档测试日志](records/p4_direction_diagnosis_v13_documentation_tests.log)与[修改前/后失败对照](records/p4_direction_diagnosis_v13_documentation_baseline.json)保留这一限制。
+
+[工程测试和源码准入的轻量原始证据](records/p4_direction_diagnosis_v13_engineering_evidence.json)包含各条日志原文、hash、ABI preflight与Ruff基线对照。新三份research审计脚本的F821/F822/F823检查通过；保留原样执行版本，不声称其全部格式lint通过。
+
+三个原样执行的轻量复算脚本、JSON和日志在 [records](records/)，由 [续算provenance](records/p4_direction_diagnosis_v13_continuation_provenance.json)绑定。其费用只计外层wall，core包含其中。正式累积为2160.401528466149 s，剩余5039.598471533851 s；后续文档检查属于工程验证，不混入新FE/PC费用。工程修复观察窗口4677s包含实现、测试、监督和等待，完整细分仍unknown。raw tests位于 ignored `continuation_engineering/`，正式模型身份及旧停止见 [response_v14](../response_v14.md)。
+
+---
+
+> 以下保留续算之前各版本的历史时点；旧文中的“当前/本轮/最新”仅指当时，不覆盖上面的续算结果。
+
 # V13 P0–P4诊断测试、raw记录与只读审计
 
 本节是当前测试边界；V12及更早测试表保留为历史。V13 本轮实际包含两次构建和一次 I4；受控停止后没有再重跑科学计算，也没有执行新的完整 p6 original/notch 求解。

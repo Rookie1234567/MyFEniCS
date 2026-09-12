@@ -1,0 +1,42 @@
+{
+  "status": "ENGINEERING_TEST_AND_REVIEW_EVIDENCE",
+  "formal_source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+  "scope": "engineering tests and small metadata review; numerical/resource audit costs are separately included in the original formal budget",
+  "artifacts": [
+    {
+      "name": "root_preflight.json",
+      "sha256": "335f5dfc8718f70f67377fd47a8538b2f37593fc439b37bfb3ff2ea73b5ac8ad",
+      "text": "{\n  \"activation\": 1,\n  \"python\": \"/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python\",\n  \"python_resolved\": \"/usr/bin/python3.12\",\n  \"scalar\": \"complex128\",\n  \"int\": \"int32\",\n  \"petsc\": [\n    3,\n    19,\n    6\n  ],\n  \"scope\": \"lightweight permission/identity check; no ABI or metric requalification\"\n}\n"
+    },
+    {
+      "name": "root_review_admission.json",
+      "sha256": "8828e2f56b09e8d95a43b2623c3768e311aa1b208a3a8fca5a6d66ce1e27e411",
+      "text": "{\n  \"status\": \"CODE_REVIEW_ADMITTED_FOR_ONE_BOUNDED_CONTINUATION\",\n  \"base_sha\": \"07b77c49e65f725f2b8bf00189777ef7f833f1c2\",\n  \"review_base_sha\": \"1ebe076df8dc1052c5a7ec5ad3d391957ad6c94f\",\n  \"source_file_sha256\": {\n    \"scripts/run_case.py\": \"e7cca4eeaa99d94715b6da340bd7ca0af455a89b0830807ed66d0e1d4a429ebf\",\n    \"src/io/input_schema.py\": \"65c193c41fb6d9d081c1d1ec225503091cd0f3cb093eb5780f101898aa7e53eb\",\n    \"src/io/input_validation.py\": \"33ba1c1acc271a13c5b77743d3584117675b616ab1066a60d174a9291408b4c4\",\n    \"src/io/physical_recursive_profile.py\": \"2ff6240976a92f5696ee26061474e6dd7f09e653fc8cb2b5baef9962aadc3df6\",\n    \"src/runners/physical_diagnosis_worker.py\": \"1502e1b177946086c045ac9262d0d904c49de8c099836955a14e6334ca49d1d1\",\n    \"src/runners/physical_diagnostic_completion.py\": \"ea901c4a9e048e4940f17648d1322460203f61d6eb24391e931db92f26b2b3d7\",\n    \"src/runners/physical_macro_controls.py\": \"fb8922716b8045276a04a111eefffda4238312d4e771ec829bf6c3cd7451a13e\",\n    \"src/runners/physical_recursive_entry.py\": \"4f992d3753b8d47d97a80b285cc90759b27bbfda68de9c2bdb731ab487732945\",\n    \"src/solvers/physical_error_metric.py\": \"125bf075cbb0850a4896f7b27b7229322252b26c3bb9aa61c3db57ee19e2308a\",\n    \"src/solvers/physical_p4_direction_diagnosis.py\": \"be785c004ab4d41e840deb64968a9c7c7aea5744ecffe1474935f87cd1365f9c\",\n    \"src/test/test_260_task038_input_schema.py\": \"03e8cd25def0d58571df084a4945ac6b4f73a81d5ea5db2059374183cde9edeb\",\n    \"src/test/test_412_physical_p4_direction_diagnosis.py\": \"12bf4de1a730cb8f0d8bdbcab9bf37e3473f1c3f81742fa2516df014abb74bf1\"\n  },\n  \"workspace_cap_bytes\": 536870912,\n  \"factor_inventory_cap_bytes\": 2684354560,\n  \"temporary_reserve_bytes\": 1073741824,\n  \"prior_formal_and_audit_seconds\": 954.5497426901994,\n  \"formal_total_limit_seconds\": 7200.0,\n  \"remaining_seconds\": 6245.450257309801,\n  \"engineering_window\": {\n    \"scope\": \"observed task dispatch through root code-review completion; includes coordination, code, tests and waiting; not CPU time\",\n    \"start_utc\": \"2026-09-12 04:43:56 UTC\",\n    \"end_utc\": \"2026-09-12 06:01:53 UTC\",\n    \"utc_window_seconds\": 4677,\n    \"fine_grained_total\": \"unknown\",\n    \"formal_budget_charge\": false\n  },\n  \"test_evidence\": {\n    \"root_preflight.json\": {\n      \"path\": \"benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/continuation_engineering/root_preflight.json\",\n      \"sha256\": \"335f5dfc8718f70f67377fd47a8538b2f37593fc439b37bfb3ff2ea73b5ac8ad\"\n    },\n    \"root_test410.log\": {\n      \"path\": \"benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/continuation_engineering/root_test410.log\",\n      \"sha256\": \"b3d959a9d40638d42e61b67c8c57071200141da99421163ee677a4f6f57ec6da\"\n    },\n    \"root_targeted_final.log\": {\n      \"path\": \"benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/continuation_engineering/root_targeted_final.log\",\n      \"sha256\": \"48cc2361de10b5a3bf11027bffc3eb097451d27a7a92537268d9edbd0d1f4c7f\"\n    },\n    \"root_targeted_after_lint.log\": {\n      \"path\": \"benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/continuation_engineering/root_targeted_after_lint.log\",\n      \"sha256\": \"9de5301c27ae23532fb97beb653d0ae02ede7ede4e205624027a3e6ca2a77a20\"\n    },\n    \"root_ruff_final.json\": {\n      \"path\": \"benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/continuation_engineering/root_ruff_final.json\",\n      \"sha256\": \"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"\n    },\n    \"root_ruff_delta.json\": {\n      \"path\": \"benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/continuation_engineering/root_ruff_delta.json\",\n      \"sha256\": \"e780ab000a1b0156e4971e2544a41ab74bd5b1c3a9df9afac6fe1cbb54701094\"\n    }\n  },\n  \"new_full_fresh_builds_admitted\": 1,\n  \"input_order\": [\n    \"A2R160_BAL_H_p4_01\",\n    \"A2R160_BAL_H_p4_02\",\n    \"LIGHT448_BAL_H_p4_09\"\n  ],\n  \"new_I4_limit\": 2,\n  \"new_bare_B4_limit\": 2,\n  \"prior_I4\": 1,\n  \"prior_bare_B4\": 1,\n  \"no_new_reference\": true,\n  \"no_new_PC\": true,\n  \"no_automatic_retry\": true,\n  \"gate_scope\": \"engineering admission only; numerical completion remains unmeasured\"\n}\n"
+    },
+    {
+      "name": "root_ruff_delta.json",
+      "sha256": "e780ab000a1b0156e4971e2544a41ab74bd5b1c3a9df9afac6fe1cbb54701094",
+      "text": "{\n  \"baseline_sha\": \"07b77c49e65f725f2b8bf00189777ef7f833f1c2\",\n  \"files\": [\n    \"scripts/run_case.py\",\n    \"src/io/input_schema.py\",\n    \"src/io/input_validation.py\",\n    \"src/io/physical_recursive_profile.py\",\n    \"src/runners/physical_diagnosis_worker.py\",\n    \"src/runners/physical_diagnostic_completion.py\",\n    \"src/runners/physical_macro_controls.py\",\n    \"src/runners/physical_recursive_entry.py\",\n    \"src/solvers/physical_error_metric.py\",\n    \"src/solvers/physical_p4_direction_diagnosis.py\",\n    \"src/test/test_260_task038_input_schema.py\",\n    \"src/test/test_412_physical_p4_direction_diagnosis.py\"\n  ],\n  \"baseline_diagnostics\": 82,\n  \"current_diagnostics\": 82,\n  \"baseline_exit\": 1,\n  \"current_exit\": 1,\n  \"new_diagnostics\": [],\n  \"method\": \"compare per-file diagnostic code/message multiplicities; no line-number sensitivity\"\n}\n"
+    },
+    {
+      "name": "root_test410.log",
+      "sha256": "b3d959a9d40638d42e61b67c8c57071200141da99421163ee677a4f6f57ec6da",
+      "text": "..........                                                               [100%]\n10 passed in 1.03s\nreal 1.34\nuser 0.59\nsys 0.25\n"
+    },
+    {
+      "name": "root_targeted_final.log",
+      "sha256": "48cc2361de10b5a3bf11027bffc3eb097451d27a7a92537268d9edbd0d1f4c7f",
+      "text": "..............                                                           [100%]\n14 passed in 0.31s\nreal 0.55\nuser 0.48\nsys 0.08\n"
+    },
+    {
+      "name": "root_targeted_after_lint.log",
+      "sha256": "9de5301c27ae23532fb97beb653d0ae02ede7ede4e205624027a3e6ca2a77a20",
+      "text": ".......                                                                  [100%]\n7 passed in 0.22s\n"
+    },
+    {
+      "name": "root_final_compact_review.json",
+      "sha256": "84f3cca94ae03331ce988b56cfb031134fb18e46771c2d0abffa6b0fdc2c1970",
+      "text": "{\n  \"status\": \"PASS\",\n  \"checks\": [\n    \"old decision byte identity\",\n    \"continuation_audit script exact execution copy\",\n    \"block_outside_audit script exact execution copy\",\n    \"resource_review script exact execution copy\",\n    \"continuation json hash\",\n    \"continuation log hash\",\n    \"continuation script hash\",\n    \"block_outside json hash\",\n    \"block_outside log hash\",\n    \"block_outside script hash\",\n    \"resource json hash\",\n    \"resource log hash\",\n    \"resource script hash\",\n    \"compact raw identity\",\n    \"no post-formal src changes\",\n    \"review ancestry\"\n  ],\n  \"scope\": \"small JSON/log/script hash bindings and source identity; no repeated FE/PC/large-array audit\"\n}\n"
+    }
+  ]
+}

@@ -1,82 +1,209 @@
 {
-  "schema": "task39extra.review-v13.next-method-decision.v1",
-  "primary_method": "IMPLEMENTATION_OR_METRIC_REPAIR",
-  "confidence": "high_for_required_repair_only",
-  "decision_status": "DECISION_DELIVERY_INCOMPLETE",
-  "scope": "diagnostic workflow only; no production PC or ordinary default change is authorized",
-  "observed_bottleneck": "the metric/P2/P3 diagnostic did not persist a complete three-input evidence table, and the source-level live-object ledger is incomplete",
+  "schema": "task39extra.review-v13.next-method-decision.v2",
+  "primary_method": "PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN",
+  "confidence": "medium",
+  "confidence_scope": "architecture priority only",
+  "performance_confidence": "low",
+  "decision_status": "ARCHITECTURE_PRIORITY_SPECIFIED_UNQUALIFIED",
+  "scope": "diagnostic workflow completed; the selected item is a next-method architecture priority, not a qualified production PC or ordinary default change",
+  "observed_bottleneck": "the measured block-outside operation terms are large relative to their same-block scale, while the local P2 solves and identities are accurate; residual minimization and field/curl minimization nevertheless select different combinations. This is the observed residual-versus-field diagnostic mismatch; qualification of a future physical-interface method remains a separate question, not a claim about an already measured physical bottleneck.",
+  "source_identity": {
+    "branch": "task39extra",
+    "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+    "model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "input_sha256": "86829433e2dd4412b5e6b1e7903255ed33a462dcf5afadffe56efa841e5e7692",
+    "mpi_size": 1,
+    "scalar_type": "complex128",
+    "int_type": "int32",
+    "inputs": [
+      "A2R160_BAL_H_p4_01",
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ],
+    "p4_rows_independent": 48960,
+    "p4_rows_storage": 53084,
+    "p6_rows_independent": 164592,
+    "p6_rows_storage": 173802,
+    "interface_blocks": 42,
+    "dtn_modes": 80
+  },
   "evidence_ids": [
+    "p4_direction_diagnosis_v13_continuation",
+    "p4_direction_diagnosis_v13_continuation_audit",
+    "p4_direction_diagnosis_v13_block_outside_audit",
+    "p4_direction_diagnosis_v13_resource_review",
     "p0_metric_equivalence",
-    "A2R160_BAL_H_p4_01_p1_direction_diagnosis",
-    "A2R160_BAL_H_p4_01_p3_response_columns",
-    "p4_direction_diagnosis_v13_offline_audit",
-    "p4_direction_diagnosis_v13_memory_liveness"
+    "p4_direction_diagnosis_v13_memory_liveness",
+    "next_method_blueprint_v13"
   ],
+  "current_workflow": {
+    "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
+    "gate_pass": true,
+    "diagnostic_completion": true,
+    "official_physics": "not_run",
+    "production_pc_selected": false,
+    "fresh_42_block_builds": 1,
+    "p1_reuse": [
+      "A2R160_BAL_H_p4_01"
+    ],
+    "new_i4_and_bare_b4": [
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ],
+    "old_failure_preserved": "80d2fb35145ac4770040ec9bb4627dfbe8cc7e67: owner-row discrepancy 2.4834738612237617e-09 > 1e-11 after one direct mass; no I4/B4",
+    "old_replay_preserved": "e46fec48dc073a745e9b7e6c9186a147aefbc0a0: controlled stop; prior charged total including checker 954.5497426901994 s"
+  },
   "counter_evidence": [
-    "P0 direct/pullback mass and curl equivalence is approximately 2.9e-15",
-    "the saved A2R160/01 right-PC capture has four finite columns and reconstruction relative 2.87e-16",
-    "the saved 48-column residual family has derived rho 0.935877 and the fixed eight-column selection has derived rho 0.967891",
-    "the reference-best Z field has eta 0.2360299 but rho 126.8049, so the finite directions are not field-inexpressive in the reference-only sense"
+    "all three inputs have finite actual, reference-only Z, fixed dual-mass-scaled Z, reference-best L and selected-L10 triples",
+    "the continuation audit independently passed 219 of 219 checks; no failed checks were hidden by the recorded status",
+    "P0 direct/pullback mass and curl equivalence remains approximately 2.9e-15",
+    "the saved A2R160/01 right-PC capture has four finite columns and reconstruction relative 2.873275164100603e-16",
+    "the reference-best Z field can reduce eta on each input but has unacceptable rho, so it remains a labelled field oracle rather than a PC",
+    "the three inputs do not provide a strong fixed-Z action signal or a strong selective-L10 action signal",
+    "best-L-field eta=0.2134199267/0.1461324603/0.1946529215 with rho=86.68845903/3.162864108/110.0652713: useful finite-space field information exists, but economic reference-free selection is unqualified; the two optima do not exclude an intermediate compromise."
   ],
-  "why_no_solver_candidate_is_selected": "only one of three inputs reached P1/P3, P2 a/t and local identity packets are absent, and eta/curl for L and the selected response cannot be reconstructed; therefore DUAL_MASS_SCALED_P4_KRYLOV and SELECTIVE_MULTIPRECONDITIONED_P4 have no cross-input STRONG_ACTION_SIGNAL",
+  "why_no_solver_candidate_is_selected": "The completed diagnosis rules out promoting the current fixed dual-mass or selective response route to production: their strong-action signals are false, and the measured selective timing is only basis construction plus QR/SVD, not a complete outer Krylov qualification. The physical-interface multilevel redesign is therefore an architecture priority with low performance confidence, not a selected production preconditioner.",
   "fixed_Z_screen": {
     "scaled_Z_eta_ratio_A2R160_01": 0.995405190426173,
     "strong_action_signal_for_fixed_Z": false,
-    "reason": "the required difficult-input eta reduction by at least one half is not met; this does not decide a future scaled Krylov with changed search directions"
+    "reason": "the difficult-input eta reduction by at least one half is not met; the result does not decide a future interface method with changed physical directions",
+    "reference_role": "measurement-only field oracle; never a PC, selector or initial guess"
+  },
+  "selective_screen": {
+    "strong_action_signal": false,
+    "basis_cost_lower_seconds": {
+      "A2R160_BAL_H_p4_02": 22.533771975984564,
+      "LIGHT448_BAL_H_p4_09": 22.77002781200281
+    },
+    "basis_cost_upper_seconds": {
+      "A2R160_BAL_H_p4_02": 22.936843658972066,
+      "LIGHT448_BAL_H_p4_09": 23.182103394021397
+    },
+    "cost_definition": "bare B4 plus all 42 Ap_i, At and selector; upper adds dense QR/SVD. Neither is a complete future KSP cost, and p4_01 reused its prior qualified I4/bare packet."
   },
   "what_is_preserved": [
-    "original 13.5 nm physical model, ordered modes, p6/p4 maps and ordinary defaults",
-    "counted right-FGMRES PC capture semantics and existing 42-block local factors",
-    "stable complex QR/SVD cutoff 1e-12 and the frozen three-input selection rule"
+    "the original 13.5 nm physical model, ordered modes, p6/p4 maps and ordinary defaults",
+    "counted right-FGMRES PC capture semantics and the existing 42-block local factors used by this continuation only; any future A_II factors for F_interface must be rebuilt and independently qualified",
+    "stable complex QR/SVD cutoff 1e-12 and the frozen three-input selection rule",
+    "the historical 256 MiB controlled-stop and its source-liveness lower bound"
   ],
   "what_is_repaired": [
     "run_p4_direction_diagnosis live-object ledger and phase-local checkpoint counts/timings",
     "metric4/metric6 lifetime and unnecessary cell-energy basis construction",
-    "P1/P2/P3 packet lifetime and streaming arena ownership"
+    "P1/P2/P3 packet lifetime and streaming arena ownership",
+    "hash-bound continuation, block-outside and independent resource-review evidence"
   ],
   "exact_interfaces": [
-    "src/runners/physical_macro_controls.py: run_p4_direction_diagnosis, check_ls_workspace, solve_svd/solve_weighted",
-    "src/solvers/physical_error_metric.py: LosslessFEMetric construction and diagonal path",
-    "src/runners/physical_diagnosis_worker.py: hash-bound packet persistence"
+    "repair: src/runners/physical_macro_controls.py: run_p4_direction_diagnosis, check_ls_workspace, solve_svd/solve_weighted",
+    "repair: src/solvers/physical_error_metric.py: LosslessFEMetric construction and diagonal path",
+    "repair: src/runners/physical_diagnosis_worker.py: hash-bound packet persistence"
   ],
+  "next_method_interfaces": {
+    "implementation_files": [
+      "next method: src/solvers/physical_interface_schur.py: PhysicalInterfaceSchur.apply/adjoint/recover",
+      "next method: src/solvers/physical_interface_schur.py: build_physical_interface_modes",
+      "next method: src/solvers/physical_interface_schur.py: PhysicalInterfaceHierarchy.apply"
+    ],
+    "i4_wiring": "src/solvers/physical_recursive_coarse.py: replace only the B4 internal implementation; retain the existing C_U global coarse correction and BAL_H external wiring",
+    "retained_components": "existing C_U and BAL_H wiring are retained for the first comparison; existing 42-block factors are not reused as future A_II factors",
+    "setup_cost": {
+      "formula": "sum_i factor(A_IiIi) + sum_p spectral S_p/S_p^H actions and independent residual checks + DtN direction/QR + each P^H S P construction + bottom factor",
+      "first_level_spectral_internal_backsolves_upper": 225792,
+      "coarse_496_S_actions_upper": 496,
+      "coarse_496_internal_backsolves_upper": 20832,
+      "note": "Actual adjacency sum(nu_p), spectral convergence, A_II factor allocation, coarse construction time and communication are unknown and must be measured."
+    },
+    "apply_cost": {
+      "F_interface": "internal right-hand-side elimination + one fixed B_S Vcycle + internal recovery",
+      "one_level_internal_backsolves_upper": 168,
+      "B4_new_logical_C_U_applications": 2,
+      "B4_new_logical_A4_applications": 2,
+      "note": "The 168 first-level internal back-solves are only part of F_interface; they are not the complete B4_new action count."
+    },
+    "temporary_and_payload_upper_bounds": {
+      "resident_work_vectors_max": 32,
+      "local_P_payload_bytes": 10450944,
+      "all_DtN_candidate_payload_bytes": 33515520,
+      "single_patch_H_work_vectors_bytes": 2097152,
+      "bottom_factor_allocated_bytes": 67108864,
+      "bottom_rows": 512,
+      "rows_per_patch": 2048
+    },
+    "qualification_guards": "account QR copies, operator temporaries, direction de-correlation, level transfer, local/bottom factors, RSS and communication separately; do not automatically increase the current budget"
+  },
   "repair_contract": {
-    "metric": "opt-in build_cell_basis=False for metric6 prevents its unused bases from being constructed; destroy metric4 and all related references after D/equivalence; default old calls unchanged",
+    "status": "COMPLETED_FOR_THIS_DIAGNOSTIC",
+    "metric": "opt-in build_cell_basis=False for metric6 prevents its unused bases from being constructed; destroy metric4 and related references after D/equivalence; default old calls unchanged",
     "p1": "after the P1 packet is atomically hash-bound, release duplicate candidate/residual/projection arrays before building the next packet",
-    "p2_p3": "persist a/h/d/A_d/t/r_ref and D_i d_i/D_i R_i e_h before later loops; fill p_i and A p_i directly into two 48-column arenas X/AX, without a separate duplicated 42-column pair",
+    "p2_p3": "persist a/h/d/A_d/t/r_ref and D_i d_i/D_i R_i e_h before later loops; fill p_i and A p_i directly into two 48-column arenas X/AX",
     "ledger": "count NumPy payloads, PETSc vectors, ReferenceCellBasis values/curls, local observations, maps and allocator/work buffers at each safe checkpoint",
-    "checkpoint": "persist action counts and stage timings before entering each LS/42-column curl loop; a stopped run must remain independently auditable"
+    "checkpoint": "persist action counts and stage timings before each LS/42-column curl loop; a stopped run remains independently auditable"
   },
   "operator_formulas_for_conditional_followup": {
-    "B4": "a=C_U g; h=g-A4 a; d=M_D h; t=C_U(A4 d); B4 g=a+d-t",
-    "full_L": "[Z,a,p_1,...,p_42,-t], at most 48 columns",
-    "selected_L10": "[a,p_i1,...,p_i8,-t], at most 10 columns, excludes Z",
+    "B4_old": "a=C_U g; h=g-A4 a; d=M_D h; t=C_U(A4 d); B4 g=a+d-t",
+    "B4_new": "B4_new g = C_U g + (I-C_U A4) F_interface (I-A4 C_U) g",
+    "F_interface": "physical-interface operator consisting of local elimination, one fixed V-cycle and reconstruction; it acts on the interface Schur problem",
+    "new_B4_action_accounting": {
+      "first_level_internal_backsolves_max": 168,
+      "logical_C_U_applications": 2,
+      "logical_A4_applications": 2,
+      "note": "The 168 internal back-solves are only the first level of F_interface. They are not the complete B4 action count; the two C_U and two A4 logical applications must also be retained."
+    },
+    "proposed_physical_interface_contract": {
+      "actual_complex_physical_schur_singular_directions": "use singular directions of the actual complex physical local Schur operator together with nonzero DtN bilateral channels",
+      "verified_directions_per_patch_max": 8,
+      "equivalent_augmented_actions_including_verification_max": 64,
+      "work_vectors_max": 32,
+      "rows_per_patch_max": 2048,
+      "projected_operator": "P^H S P",
+      "smoother": "one fixed Vcycle",
+      "bottom_rows_max": 512,
+      "bottom_allocated_bytes_max": 67108864,
+      "aggregation": "aggregate up to 8 neighboring patches if a bottom block exceeds 512 rows",
+      "stop_rule": "strict reduction is required; otherwise stop and retain the method as unqualified"
+    },
+    "existing_p2_limit": {
+      "rows_max": 8192,
+      "allocated_bytes_max": 536870912,
+      "growth": "forbidden"
+    },
     "metric": "M04=P64^H M06 P64; K04=P64^H(k0^-2 curl6)P64",
     "reference_role": "evaluation and labelled field oracle only; never PC, selector or initial guess",
-    "status": "existing mathematical contract preserved; no new production PC selected"
+    "status": "conditional proposal only; not implemented or qualified in this batch",
+    "S": "A_GG - sum_i A_GIi A_IiIi^(-1) A_IiG",
+    "S_adjoint": "A_GG^H - sum_i A_IiG^H A_IiIi^(-H) A_GIi^H",
+    "interface_rhs": "g_G - sum_i A_GIi A_IiIi^(-1) g_Ii",
+    "interior_recovery": "x_Ii=A_IiIi^(-1)(g_Ii-A_IiG*x_G)"
   },
   "why_not_previous_variants": [
-    "not V7/V8/V9 entity or cross-RHS recycling: this repair concerns physical P4 response observability and bounded lifetime, not reuse of a previous RHS",
-    "not BAL_H/ONE_C selection: no complete three-input evidence or full outer solve was produced",
-    "not a larger p2/S factor: the review forbids turning the diagnostic bottom solve into the production endpoint"
+    "not V7/V8/V9 entity or cross-RHS recycling: this result concerns physical P4 response observability and interface structure, not reuse of a previous RHS",
+    "not fixed dual-mass or selective-L10 production selection: their strong-action signals are false and no complete outer solve was qualified",
+    "not a larger P2/S factor: the review forbids turning the diagnostic bottom solve into the production endpoint",
+    "not a claim of convergence: the finest successful discrete result remains a discrete reference only"
   ],
   "cost_and_memory": {
-    "formal_conservative_seconds": 948.1497426901994,
-    "formal_components_seconds": {
-      "first_failed_attempt": 355.6892665180153,
-      "controlled_replay": 592.4604761721841
-    },
-    "offline_checker_wall_seconds": 4.7,
-    "offline_checker_core_seconds": 1.6693295069999294,
-    "derived_p3_liveness_lower_bound_bytes": 273571328,
-    "diagnostic_array_cap_bytes": 268435456,
-    "interpretation": "the lower bound exceeds the diagnostic array cap by 5,135,872 B before excluded objects; it is a source-liveness derivation, not a sampled RSS peak",
-    "root_checker_wall_seconds": 1.7,
-    "executor_checker_wall_seconds": 4.7,
-    "known_total_including_both_checkers_seconds": 954.5497426901995,
-    "fine_grained_I4_bare_metric_times": "unknown: not durably checkpointed, never filled from old evidence"
+    "historical_formal_conservative_seconds": 954.5497426901994,
+    "continuation_supervisor_seconds": 1204.4717857759497,
+    "continuation_worker_raw_clock_seconds": 1201.563813993922,
+    "corrected_formal_conservative_seconds": 2159.021528466149,
+    "root_continuation_audit_wall_seconds": 1.09,
+    "block_outside_audit_wall_seconds": 0.17,
+    "resource_review_wall_seconds": 0.12,
+    "cumulative_evidence_seconds": 2160.401528466149,
+    "sampled_process_tree_rss_peak_bytes": 3287973888,
+    "sampled_process_tree_pss_peak_bytes": 3254656000,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "available_memory_min_bytes_resource_review": 10658832384,
+    "reserve_bytes": 4294967296,
+    "workspace_cap_bytes": 536870912,
+    "workspace_max_estimated_bytes": 369795024,
+    "historical_derived_p3_liveness_lower_bound_bytes": 273571328,
+    "historical_diagnostic_array_cap_bytes": 268435456,
+    "interpretation": "The historical lower bound exceeded the old 256 MiB diagnostic cap by 5,135,872 B; it is preserved as a negative liveness result, not a sampled RSS peak. Current continuation used a 512 MiB workspace cap, while the next interface proposal keeps the existing P2 8192-row/512 MiB limit unchanged."
   },
   "next_validation": {
-    "prerequisite": "implement and qualify diagnostic lifetime/checkpoint repair under a new explicit review",
+    "prerequisite": "new review and explicit budget for the physical-interface method",
     "diagnostic_sequence": [
       "A2R160_BAL_H_p4_01",
       "A2R160_BAL_H_p4_02",
@@ -85,10 +212,10 @@
     "normal_build_count": 1,
     "I4_per_input_B4_max": 4,
     "bare_B4_per_input_max": 1,
-    "production_selection": "only after complete three-input evaluation, select and qualify one production method under a new review",
+    "production_selection": "not selected; architecture priority only; qualify only after the next review",
     "first_full_original": "frozen 13.5 nm p6 h10 original geometry and unchanged A6; p4_01 is not a full original solve",
     "proposed_outer_control": "restart32, maximum64 outer iterations; budget requires next review; no automatic extension or R64",
-    "conditional_notch": "same configuration only after original passes all physical and resource gates",
+    "conditional_notch": "same configuration only after the original passes all physical and resource gates",
     "gates": {
       "A6_explicit_true_residual": 1e-06,
       "field_and_curl_error": 0.0001,
@@ -98,32 +225,45 @@
       "resources": "unchanged local inventory, full simultaneous process-tree/cgroup reserve and launch limits, zero swap, complete descendant cleanup"
     },
     "official_output": "only after residual gate; include E/H, near fields and complete observables",
-    "not_run_this_round": true
+    "not_run_this_round": true,
+    "not_run_items": [
+      "official Maxwell p6 solve and R/T/A/A_volume",
+      "production-PC qualification and full outer KSP residual history",
+      "implementation and performance qualification of F_interface"
+    ]
   },
   "stop_rules": {
     "numerical_stop": "any identity, capture, reconstruction or P2 nonzero-r_ref check >1e-10",
     "cost_stop": "frozen action/time budgets; no automatic extension",
-    "resource_stop": "diagnostic additional-array/liveness ledger >256 MiB, local inventory policy violation, swap, or uncleared descendants"
+    "resource_stop": {
+      "diagnostic_workspace": "additional diagnostic workspace/live-set >536870912 B (512 MiB)",
+      "existing_p2_factor": "existing P2 path remains limited to 8192 rows and 536870912 B (512 MiB) allocated; it cannot grow",
+      "local_inventory": "local factor inventory exceeds 2684354560 B (2.5 GiB) policy",
+      "temporary_reserve": "temporary reserve requirement is 1073741824 B (1 GiB)",
+      "whole_machine_reserve": "reserve=max(4 GiB,15% effective_total); launch_cap<=min(12000000000 B,effective_available-reserve), including physical/cgroup limits. Current observed reserve was 4294967296 B and launch cap was 9375555584 B; these observations do not replace the scaling rule.",
+      "process_state": "any swap or uncleared descendants stops the run"
+    },
+    "method_stop": "if the projected physical-interface Schur method fails strict reduction, stop and retain it as unqualified"
   },
   "remaining_unknowns": [
-    "cross-input P1/P2/P3 candidate metrics and strong-action signal",
-    "P2 local identity and global a/d/t physical norms",
-    "complete future Krylov behavior under either conditional candidate",
+    "spectral reduction and true residual behavior of the proposed physical-interface Schur method",
+    "full B4_new cost, including F_interface, its 168 first-level internal back-solves where applicable, and the two C_U plus two A4 logical applications; F_interface itself excludes those outer C_U/A4 wrappers",
+    "production outer Krylov behavior under the next-method contract",
     "official Maxwell fields, power, diffraction and conservation"
   ],
   "not_a_convergence_guarantee": true,
-  "solver_method_confidence": "unavailable_without_complete_three_input_evidence",
+  "solver_method_confidence": "low_unqualified",
   "conditional_alternative": null,
   "dual_mass_fixed_Z_strong_action_signal": false,
   "dual_mass_rejection": {
     "criterion": "hard01 eta_D/eta_actual <= 0.5",
-    "actual_ratio": 0.9954062954009306,
+    "actual_ratio": 0.995405190426173,
     "limit": 0.5,
     "future_changed_Krylov_directions": "not_evaluated"
   },
-  "selective_strong_action_signal": null,
-  "proposed_memory_contract": {
-    "status": "PROPOSED_NOT_IMPLEMENTED_OR_VALIDATED",
+  "selective_strong_action_signal": false,
+  "historical_memory_contract": {
+    "status": "HISTORICAL_PROPOSED_NOT_IMPLEMENTED_OR_VALIDATED",
     "N": 48960,
     "k_max": 48,
     "complex_item_bytes": 16,
@@ -133,14 +273,36 @@
     "small_objects_and_allocator_reserve_bytes": 16777216,
     "total_target_bytes": 234291200,
     "hard_cap_bytes": 268435456,
-    "gate": "Every component must be qualified from an actual ownership/lifetime list, including external library copies; unknown or exceeded means stop, no cap increase."
+    "gate": "This old 256 MiB proposal is retained only to explain the historical negative liveness result; unknown or exceeded was correctly treated as stop."
   },
   "engineering_windows": {
     "source": "executor task startedAt and formal terminal UTC timestamps",
     "pre_first_formal_calendar_seconds": 5042.158266544342,
     "between_formal_runs_calendar_seconds": 513.781383158,
     "includes": "reading, implementation, tests, supervision and waiting; not CPU time",
-    "other_engineering_and_document_closeout": "unknown, not individually timed",
+    "other_engineering_and_document_closeout": "not individually timed",
     "not_deducted_from_formal_7200_seconds": true
+  },
+  "historical_decision_before_continuation": "docs/task039_extra_physical_multilevel/outcomes/records/next_method_decision_v13_history_before_continuation.json",
+  "provenance_record": "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation_provenance.json",
+  "2TB_0p7nm_blocker_removed": false,
+  "reference_free_construction": {
+    "Gamma": "shared macro independent rows union nonzero DtN row/column support union all candidate internal rows in a cell with cross-owner interior volume incidence; repeat coverage check",
+    "small_problem": "T_i=D_i^(-1/2) (R_Gi S R_Gi^H) D_i^(-1/2), H_i=[[0,T_i],[T_i^H,0]]; all neighboring interior responses included",
+    "selection": "up to 8 converged small Ritz singular directions, verified relative singular-pair residual<=1e-8; 64 equivalent single-column H actions including verification, 32 work vectors; not a guarantee of the exact smallest singular values",
+    "prolongation": "P_i=R_Gi^H W_i D_i^(-1/2) v_i; P=[P_local,P_DtN], restriction=P^H, coarse=S_c=P^H S P",
+    "DtN": "for each existing nonzero u_m v_m^T term include D_G^(-1)u_m and D_G^(-1)conj(v_m); fixed mode order and QR relative cutoff1e-12; at most160 candidates, rank unknown",
+    "reference_role": "No reference, reference-error POD, diagnostic oracle coefficients or cross-RHS history in construction",
+    "status": "SPECIFIED_PROPOSAL_NOT_IMPLEMENTED"
+  },
+  "local_factor_and_global_coarse_growth": {
+    "new_A_II_factors_required": true,
+    "old_full_overlap_factors_reusable_as_A_II_inverse": false,
+    "release_old_inventory_first": true,
+    "bottom_rows_max_proposed": 512,
+    "bottom_allocated_cap_bytes_proposed": 67108864,
+    "beyond_bottom": "deterministic volume-interface graph aggregation of up to8 neighboring patches; repeat physical mode rule, require strict reduction or stop",
+    "existing_C_U_p2_growth": "forbidden beyond existing8192 rows/512MiB cap",
+    "0p7nm_scaling_qualified": false
   }
 }

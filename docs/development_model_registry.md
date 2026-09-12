@@ -1,3 +1,16 @@
+# Task39extra V13 512 MiB 续算模型登记（当前）
+
+| Model ID | 来源/配置 | 结果 | 边界与证据 |
+|---|---|---|---|
+| `task39extra_v13_p4_diagnosis_continuation` | `3457b5e2f54dec690fcb70deb1f387fe7f6d57cd`；冻结13.5nm模型，p4独立48960行、p6参考映射164592行，MPI1 complex128/int32；01/02/09 | 三输入actual场误差0.964715/0.877757/0.992818；scaled-Z和selected-L10强信号均false；完整分解与21候选已保存 | 诊断完成，不是official p6模型通过；[compact](task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_continuation.json)、[response](task039_extra_physical_multilevel/response_v14.md) |
+| `task39extra_v13_physical_interface_proposal` | Gamma13092/I35868结构实测；真实复物理Schur局部奇异方向+DtN通道、固定一次周期、容量受限分层 | ARCHITECTURE_PRIORITY_SPECIFIED_UNQUALIFIED；架构置信度medium，性能low | 尚未实现或运行；[decision](task039_extra_physical_multilevel/outcomes/records/next_method_decision_v13.json)、[blueprint](task039_extra_physical_multilevel/outcomes/next_method_blueprint_v13.md) |
+
+现有PC、原A6及物理要求不变。本轮工作区上限仅一次性从256MiB改为512MiB，其余资源线保持；旧256MiB停止和旧模型登记作为历史保留。
+
+---
+
+> 以下保留续算之前各版本的历史时点；旧文中的“当前/本轮/最新”仅指当时，不覆盖上面的续算结果。
+
 # Task39extra V13 最新模型登记：P4诊断部分证据与未完成边界
 
 | Model ID | source / identity | method and measured evidence | status / boundary | evidence |

@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "source_sha": "3457b5e2f54dec690fcb70deb1f387fe7f6d57cd",
+  "source_resources_sha256": "9c8e8ae8632063de4c78cf42c0f9757aa29a7e67fe846c32381028851e28109e",
+  "samples": 4252,
+  "sample_checks": 34016,
+  "failures": [],
+  "simultaneous_tree_rss_peak_bytes": 3287973888,
+  "simultaneous_tree_pss_peak_bytes": 3254656000,
+  "tree_swap_peak_bytes": 0,
+  "effective_available_min_bytes": 10658832384,
+  "global_swap_delta": {
+    "pswpin_pages": 0,
+    "pswpout_pages": 0
+  },
+  "max_parent_budget_seconds": 1204.4717857759497,
+  "no_new_FE_PC_actions": true,
+  "core_seconds": 0.09536349499830976,
+  "limitations": "Sampled simultaneous RSS/PSS, not an unsampled continuous or cgroup peak."
+}
+real 0.12
+user 0.12
+sys 0.00
