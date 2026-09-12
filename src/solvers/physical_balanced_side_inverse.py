@@ -388,8 +388,8 @@ class SideBalancedInverse:
             )
             from dolfinx import fem
 
-            coarse_field = fem.Function(owner.coarse_space)
-            fine_oracle = fem.Function(owner.fine_space)
+            coarse_field = fem.Function(owner.coarse_floquet.mpc.function_space)
+            fine_oracle = fem.Function(owner.fine_floquet.mpc.function_space)
             try:
                 q1.copy(coarse_field.x.petsc_vec)
                 coarse_field.x.scatter_forward()

@@ -29,8 +29,8 @@ from src.solvers.physical_balanced_trace_bridge import (
 )
 
 pytestmark = pytest.mark.skipif(
-    MPI.COMM_WORLD.size not in (1, 2),
-    reason="Task041 H1b bridge tests are focused on serial and MPI2",
+    MPI.COMM_WORLD.size not in (1, 2, 8),
+    reason="Task041 H1b bridge tests are focused on serial, MPI2, and one MPI8 audit",
 )
 
 
@@ -180,6 +180,10 @@ def small_fe_fixture():
         condensed.destroy()
 
 
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size == 8,
+    reason="the ordinary H1b bridge fixture is serial/MPI2-only",
+)
 def test_task041_h1b_j_and_jh_are_owned_trace_only(small_fe_fixture) -> None:
     data = small_fe_fixture
     condensed = data["condensed"]
@@ -347,6 +351,10 @@ def test_task041_h1b_empty_owner_range_is_supported_on_one_cell_mesh() -> None:
         owner.destroy()
 
 
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size == 8,
+    reason="the ordinary H1b bridge fixture is serial/MPI2-only",
+)
 def test_task041_h1b_same_mesh_p_and_ph_conjugacy_and_alternation(
     small_fe_fixture,
 ) -> None:
@@ -370,8 +378,8 @@ def test_task041_h1b_same_mesh_p_and_ph_conjugacy_and_alternation(
         [(fine_space.dofmap.index_map, int(fine_space.dofmap.index_map_bs))]
     )
     outputs = []
-    coarse_field = fem.Function(coarse_space)
-    fine_oracle = fem.Function(fine_space)
+    coarse_field = fem.Function(data["coarse_floquet"].mpc.function_space)
+    fine_oracle = fem.Function(data["fine_floquet"].mpc.function_space)
     try:
         _fill_algebraic_vector(q1, coarse_slaves, 2.0)
         q1_before = np.asarray(q1.getArray(readonly=True), dtype=np.complex128).copy()
@@ -432,3 +440,168 @@ def test_task041_h1b_same_mesh_p_and_ph_conjugacy_and_alternation(
         q1.destroy()
         q2.destroy()
         fine_probe.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 8,
+    reason="remote-master finalized MPC regression is MPI8-only",
+)
+def test_task041_h1b_mpi8_remote_master_ghost_uses_finalized_oracle() -> None:
+    comm = MPI.COMM_WORLD
+    cfg6 = _fixture_config(6)
+    cfg4 = _fixture_config(4)
+    box = mesh.create_unit_cube(
+        comm,
+        4,
+        2,
+        2,
+        cell_type=mesh.CellType.hexahedron,
+        ghost_mode=mesh.GhostMode.shared_facet,
+    )
+    mesh_data = SimpleNamespace(mesh=box, facet_tags=_boundary_tags(box, cfg6))
+    fine_space = fem.functionspace(
+        box,
+        element("N1curl", box.basix_cell(), 6, dtype=default_real_type),
+    )
+    coarse_space = fem.functionspace(
+        box,
+        element("N1curl", box.basix_cell(), 4, dtype=default_real_type),
+    )
+    fine_floquet = None
+    coarse_floquet = None
+    owner = None
+    q1 = None
+    q1_before = None
+    fine_probe = None
+    fine_probe_before = None
+    p_q1 = None
+    ph_probe = None
+    coarse_field = None
+    fine_oracle = None
+    try:
+        fine_floquet = build_double_floquet_mpc(fine_space, mesh_data, cfg6)
+        coarse_floquet = build_double_floquet_mpc(coarse_space, mesh_data, cfg4)
+        owner = build_same_mesh_hcurl_owner_transfer(
+            fine_space,
+            fine_floquet,
+            coarse_space,
+            coarse_floquet,
+        )
+        old_storage_short = False
+        new_storage_closed = True
+        for space, floquet in (
+            (coarse_space, coarse_floquet),
+            (fine_space, fine_floquet),
+        ):
+            old_map = space.dofmap.index_map
+            new_map = floquet.mpc.function_space.dofmap.index_map
+            old_storage = int(old_map.size_local + old_map.num_ghosts)
+            new_storage = int(new_map.size_local + new_map.num_ghosts)
+            master_links = [
+                np.asarray(floquet.mpc.masters.links(int(slave)), dtype=np.int64)
+                for slave in np.asarray(floquet.mpc.slaves, dtype=np.int64)
+            ]
+            masters = (
+                np.concatenate(master_links)
+                if master_links
+                else np.empty(0, dtype=np.int64)
+            )
+            master_max = int(masters.max()) if masters.size else -1
+            old_storage_short |= master_max >= old_storage
+            new_storage_closed &= master_max < new_storage
+        old_storage_short_count = int(
+            comm.allreduce(int(old_storage_short), op=MPI.SUM)
+        )
+        assert old_storage_short_count >= 1
+        assert bool(comm.allreduce(new_storage_closed, op=MPI.LAND))
+
+        coarse_slaves = np.asarray(owner._coarse_slaves, dtype=np.int64)
+        fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
+        q1 = create_vector(
+            [
+                (
+                    coarse_space.dofmap.index_map,
+                    int(coarse_space.dofmap.index_map_bs),
+                )
+            ]
+        )
+        fine_probe = create_vector(
+            [
+                (
+                    fine_space.dofmap.index_map,
+                    int(fine_space.dofmap.index_map_bs),
+                )
+            ]
+        )
+        _fill_algebraic_vector(q1, coarse_slaves, 1.75)
+        _fill_algebraic_vector(fine_probe, fine_slaves, -0.875)
+        q1_before = q1.duplicate()
+        q1.copy(q1_before)
+        fine_probe_before = fine_probe.duplicate()
+        fine_probe.copy(fine_probe_before)
+        p_q1 = owner.apply_primal(q1)
+        ph_probe = owner.apply_adjoint(fine_probe)
+
+        coarse_field = fem.Function(coarse_floquet.mpc.function_space)
+        fine_oracle = fem.Function(fine_floquet.mpc.function_space)
+        q1.copy(coarse_field.x.petsc_vec)
+        coarse_field.x.scatter_forward()
+        coarse_floquet.mpc.homogenize(coarse_field)
+        coarse_field.x.scatter_forward()
+        coarse_floquet.mpc.backsubstitution(coarse_field)
+        coarse_field.x.scatter_forward()
+        fine_oracle.interpolate(coarse_field)
+        fine_oracle.x.scatter_forward()
+        fine_floquet.mpc.homogenize(fine_oracle)
+        fine_oracle.x.scatter_forward()
+
+        p_values = np.asarray(p_q1.getArray(readonly=True), dtype=np.complex128)
+        oracle_values = np.asarray(
+            fine_oracle.x.petsc_vec.getArray(readonly=True),
+            dtype=np.complex128,
+        )
+        fine_owned = int(fine_space.dofmap.index_map.size_local)
+        assert p_values.size == fine_owned
+        assert oracle_values.size == fine_owned
+        difference_local = float(
+            np.vdot(p_values - oracle_values, p_values - oracle_values).real
+        )
+        difference = float(np.sqrt(comm.allreduce(difference_local, op=MPI.SUM)))
+        p_norm = float(p_q1.norm())
+        relative = difference / max(p_norm, 1.0e-30)
+        assert np.isfinite(relative)
+        assert relative <= 1.0e-10
+
+        lhs = p_q1.dot(fine_probe)
+        rhs = q1.dot(ph_probe)
+        dot_relative = abs(lhs - rhs) / max(
+            abs(lhs), abs(rhs), np.finfo(float).tiny
+        )
+        assert dot_relative <= 1.0e-10
+        assert p_q1.norm() > 0.0
+        assert ph_probe.norm() > 0.0
+        assert q1.norm() > 0.0
+        assert fine_probe.norm() > 0.0
+        assert np.all(p_values[fine_slaves] == 0.0)
+        assert np.all(
+            np.asarray(ph_probe.getArray(readonly=True))[coarse_slaves] == 0.0
+        )
+        np.testing.assert_array_equal(q1.getArray(readonly=True), q1_before.getArray(readonly=True))
+        np.testing.assert_array_equal(
+            fine_probe.getArray(readonly=True), fine_probe_before.getArray(readonly=True)
+        )
+        if comm.rank == 0:
+            print(
+                "task041 MPI8 finalized-MPC oracle: "
+                f"relative={relative:.16e}, dot_relative={dot_relative:.16e}, "
+                f"old_short_ranks={old_storage_short_count}",
+                flush=True,
+            )
+    finally:
+        for vector in (p_q1, ph_probe, q1_before, fine_probe_before, q1, fine_probe):
+            if vector is not None:
+                vector.destroy()
+        del coarse_field, fine_oracle
+        if owner is not None:
+            owner.destroy()
+        del owner, fine_floquet, coarse_floquet, fine_space, coarse_space, box
