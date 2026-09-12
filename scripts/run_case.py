@@ -11,8 +11,8 @@ _REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPOSITORY_ROOT))
 
-from src.io import dry_run_payload, load_and_resolve  # noqa: E402
-from src.io.input_loader import InputError  # noqa: E402
+from src.io import dry_run_payload, load_and_resolve
+from src.io.input_loader import InputError
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -23,6 +23,11 @@ def _parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--validate-only", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--producer-packet-root",
+        type=Path,
+        help="reuse a completed Task041 BAL_H producer packet",
+    )
     return parser
 
 
@@ -51,7 +56,10 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         from src.runners.task038_launcher import launch_specification
 
-        result = launch_specification(specification)
+        result = launch_specification(
+            specification,
+            producer_packet_root=args.producer_packet_root,
+        )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3
     except InputError as exc:

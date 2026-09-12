@@ -14,7 +14,7 @@ kept until the residual audit and then destroyed by the wrapper.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -47,6 +47,7 @@ from .mpc_form_action import MpcFormActionContext
 __all__ = (
     "FullSpacePhysicalDtnActionSystem",
     "P4ExactFactor",
+    "P4PhysicalResidualGateError",
     "build_fullspace_physical_dtn_action",
     "build_p4_exact_factor",
 )
@@ -54,6 +55,18 @@ __all__ = (
 
 def _idx(values: Iterable[int]) -> np.ndarray:
     return np.fromiter(values, dtype=PETSc.IntType)
+
+
+class P4PhysicalResidualGateError(RuntimeError):
+    """Report one p4 physical residual gate without losing its audit."""
+
+    def __init__(self, audit: Mapping[str, Any]) -> None:
+        self.audit = dict(audit)
+        super().__init__(
+            "p4 exact factor physical residual refinement exceeded the fixed "
+            f"tolerance: relative={self.audit.get('relative_residual')!s}, "
+            f"tolerance={self.audit.get('residual_tolerance')!s}"
+        )
 
 
 @dataclass(frozen=True)
@@ -612,9 +625,22 @@ class P4ExactFactor:
         _require_vector_layout(solution, self.augmented_rows, "p4 augmented solution")
         fe_rhs = self.extract_fe_solution(rhs)
         physical_rhs_norm = float(fe_rhs.norm())
+        self._last_solve_audit = {
+            "status": "started",
+            "rhs_norm": physical_rhs_norm,
+            "residual_norm": "not_measured",
+            "relative_residual": "not_measured",
+            "physical_residual_norm": "not_measured",
+            "physical_relative_residual": "not_measured",
+            "residual_tolerance": float(residual_tolerance),
+            "backsolve_count": 0,
+            "refinement_count": 0,
+            "same_factor_refinement": False,
+        }
         if not np.isfinite(physical_rhs_norm):
             fe_rhs.destroy()
-            raise RuntimeError("p4 physical RHS norm is non-finite")
+            self._last_solve_audit["status"] = "failed_nonfinite_rhs"
+            raise P4PhysicalResidualGateError(dict(self._last_solve_audit))
         backsolves = 0
         correction = None
         fe_solution = None
@@ -642,23 +668,39 @@ class P4ExactFactor:
                     physical_output,
                 )
                 physical_residual_norm = float(physical_residual.norm())
-                if physical_rhs_norm > 0.0:
-                    physical_relative = physical_residual_norm / physical_rhs_norm
-                    if not np.isfinite(physical_relative):
-                        raise RuntimeError("p4 physical residual ratio is non-finite")
-                    physical_passed = physical_relative <= float(
-                        residual_tolerance
-                    )
-                else:
-                    if not np.isfinite(physical_residual_norm):
-                        raise RuntimeError(
-                            "p4 zero-RHS physical residual is non-finite"
-                        )
-                    physical_relative = physical_residual_norm
-                    physical_passed = physical_residual_norm <= float(
-                        residual_tolerance
-                    )
+                physical_relative = (
+                    physical_residual_norm / physical_rhs_norm
+                    if physical_rhs_norm > 0.0
+                    else physical_residual_norm
+                )
+                physical_passed = bool(
+                    np.isfinite(physical_relative)
+                    and physical_relative <= float(residual_tolerance)
+                )
 
+                self._last_solve_audit = {
+                    "status": (
+                        "passed"
+                        if physical_passed
+                        else (
+                            "failed_nonfinite_residual"
+                            if not np.isfinite(physical_relative)
+                            else "gate_failed"
+                        )
+                    ),
+                    "rhs_norm": physical_rhs_norm,
+                    "residual_norm": physical_residual_norm,
+                    "relative_residual": physical_relative,
+                    "physical_residual_norm": physical_residual_norm,
+                    "physical_relative_residual": physical_relative,
+                    "residual_tolerance": float(residual_tolerance),
+                    "backsolve_count": backsolves,
+                    "refinement_count": max(backsolves - 1, 0),
+                    "same_factor_refinement": backsolves > 1,
+                }
+
+                if not np.isfinite(physical_relative):
+                    raise P4PhysicalResidualGateError(dict(self._last_solve_audit))
                 if physical_passed:
                     break
                 if refinement == 2:
@@ -676,21 +718,8 @@ class P4ExactFactor:
             if not np.isfinite(physical_relative) or physical_relative > float(
                 residual_tolerance
             ):
-                raise RuntimeError(
-                    "p4 exact factor physical residual refinement exceeded the fixed "
-                    f"tolerance: relative={physical_relative:.6e}, "
-                    f"tolerance={residual_tolerance:.6e}"
-                )
-            self._last_solve_audit = {
-                "rhs_norm": physical_rhs_norm,
-                "residual_norm": physical_residual_norm,
-                "relative_residual": physical_relative,
-                "physical_residual_norm": physical_residual_norm,
-                "physical_relative_residual": physical_relative,
-                "backsolve_count": backsolves,
-                "refinement_count": backsolves - 1,
-                "same_factor_refinement": backsolves > 1,
-            }
+                self._last_solve_audit["status"] = "failed_gate"
+                raise P4PhysicalResidualGateError(dict(self._last_solve_audit))
             return dict(self._last_solve_audit)
         finally:
             fe_rhs.destroy()

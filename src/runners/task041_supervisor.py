@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import platform
 import subprocess
 import sys
 import time
 from collections.abc import Callable, Mapping
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -25,14 +27,22 @@ from benchmarks.watchdog_process_control import (
 )
 from src.io.execution_plan import TASK041_PUBLIC_SUPERVISOR_ADAPTER
 from src.io.input_validation import (
+    TASK041_BALH_CANDIDATE_MODEL_IDS,
+    TASK041_BALH_MODEL_IDS,
+    TASK041_BALH_MPI_SIZE,
     TASK041_MODEL_ID,
     TASK041_RUN_ID,
     TASK041_SHORTWAVE_MODEL_IDS,
     TASK041_SHORTWAVE_MPI_SIZE,
     TASK041_SHORTWAVE_WORKFLOW_LIMITS,
+    task041_balh_case,
+    task041_balh_phase_limits_for_model,
+    task041_balh_profile_errors,
+    task041_balh_timeout_scope,
+    task041_balh_workflow_limits,
     task041_profile_errors,
     task041_shortwave_case,
-    task041_shortwave_phase_limits,
+    task041_shortwave_phase_limits,  # noqa: F401 - preserve the reviewed public helper
     task041_shortwave_phase_limits_for_model,
     task041_shortwave_profile_errors,
     task041_shortwave_timeout_scope,
@@ -65,6 +75,8 @@ TASK041_REQUIRED_THREADS = (
     "VECLIB_MAXIMUM_THREADS",
     "NUMEXPR_NUM_THREADS",
 )
+TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS = 172800.0
+TASK041_COMPUTE_WALL_LEDGER_NAME = "task041_compute_wall_ledger.json"
 
 PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
@@ -120,6 +132,19 @@ def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, int]:
                 stage="runtime_limits",
             )
         return dict(task041_shortwave_workflow_limits(str(model_id)))
+    if model_id in TASK041_BALH_MODEL_IDS:
+        case = task041_balh_case(str(model_id))
+        if (
+            case is None
+            or identity.get("requested_modes") != case["mode_count"]
+            or identity.get("mpi_size") != TASK041_BALH_MPI_SIZE
+        ):
+            raise Task041SupervisorError(
+                "validated Task041 side BAL_H identity has unexpected M/MPI",
+                classification="task041_identity_failure",
+                stage="runtime_limits",
+            )
+        return dict(task041_balh_workflow_limits(str(model_id)))
     raise Task041SupervisorError(
         f"runtime limits require a validated Task041 identity, got {model_id!r}",
         classification="task041_identity_failure",
@@ -203,12 +228,83 @@ def _sample_record(
     job_cgroup = authority.get("job_cgroup")
     if not isinstance(job_cgroup, Mapping):
         job_cgroup = {}
+    host_memory = authority.get("host_memory")
+    if not isinstance(host_memory, Mapping):
+        host_memory = {}
+    global_swap = authority.get("global_swap")
+    if not isinstance(global_swap, Mapping):
+        global_swap = {}
+    global_vmstat = authority.get("wsl_vm_global_swap_diagnostic")
+    if not isinstance(global_vmstat, Mapping):
+        global_vmstat = {}
     authority_kind = authority_kind or _resource_authority_kind(authority)
     memory = _numeric(authority.get("memory_authority_bytes"))
     cgroup_memory = _numeric(job_cgroup.get("memory_current_bytes"))
     rss = _numeric(process_tree.get("rss_bytes"))
     process_swap = _numeric(process_tree.get("swap_bytes"))
     dedicated_swap = _numeric(job_cgroup.get("swap_current_bytes"))
+    host_memavailable = _numeric(host_memory.get("mem_available_bytes"))
+    host_memtotal = _numeric(host_memory.get("mem_total_bytes"))
+    global_swap_used = _numeric(global_swap.get("used_bytes"))
+    global_pswpin = _numeric(global_vmstat.get("pswpin_pages"))
+    global_pswpout = _numeric(global_vmstat.get("pswpout_pages"))
+    pid_rss = {
+        str(pid): int(value)
+        for pid, value in (
+            process_tree.get("rss_by_pid_bytes", {})
+            if isinstance(process_tree.get("rss_by_pid_bytes"), Mapping)
+            else {}
+        ).items()
+        if _numeric(value) is not None
+    }
+    pid_swap = {
+        str(pid): int(value)
+        for pid, value in (
+            process_tree.get("swap_by_pid_bytes", {})
+            if isinstance(process_tree.get("swap_by_pid_bytes"), Mapping)
+            else {}
+        ).items()
+        if _numeric(value) is not None
+    }
+    common = {
+        "sample_elapsed_seconds": float(elapsed),
+        "host_memavailable_bytes": host_memavailable,
+        "host_memtotal_bytes": host_memtotal,
+        "cgroup_memory_current_bytes": cgroup_memory,
+        "cgroup_memory_peak_bytes": _numeric(job_cgroup.get("memory_peak_bytes")),
+        "cgroup_memory_limit_bytes": _numeric(job_cgroup.get("memory_limit_bytes")),
+        "cgroup_memory_limit_state": job_cgroup.get("memory_limit_state"),
+        "cgroup_memory_headroom_bytes": _numeric(
+            job_cgroup.get("memory_headroom_bytes")
+        ),
+        "cgroup_ancestor_hard_limit_bytes": _numeric(
+            job_cgroup.get("ancestor_hard_limit_bytes")
+        ),
+        "cgroup_ancestor_hard_limit_state": job_cgroup.get(
+            "ancestor_hard_limit_state"
+        ),
+        "cgroup_ancestor_memory_headroom_bytes": _numeric(
+            job_cgroup.get("ancestor_memory_headroom_bytes")
+        ),
+        "cgroup_ancestor_memory": job_cgroup.get("ancestor_memory", []),
+        "cgroup_ancestor_limit_states": sorted(
+            {
+                row.get("memory_limit_state")
+                for row in job_cgroup.get("ancestor_memory", [])
+                if isinstance(row, Mapping)
+                and row.get("memory_limit_state") is not None
+            }
+        ),
+        "cgroup_scope_semantics": job_cgroup.get("scope_semantics"),
+        "cgroup_dedicated_job_cgroup": job_cgroup.get("dedicated_job_cgroup"),
+        "global_swap_used_bytes": global_swap_used,
+        "global_swap_readable": global_swap.get("readable"),
+        "global_pswpin_pages": global_pswpin,
+        "global_pswpout_pages": global_pswpout,
+        "process_tree_pids": list(process_tree.get("pids", ())),
+        "process_tree_rss_by_pid_bytes": pid_rss,
+        "process_tree_swap_by_pid_bytes": pid_swap,
+    }
     if authority_kind == "dedicated_cgroup_fallback":
         if cgroup_memory is None or dedicated_swap is None:
             raise Task041SupervisorError(
@@ -218,6 +314,7 @@ def _sample_record(
             )
         memory = max(memory or 0, cgroup_memory)
         return {
+            **common,
             "phase": phase,
             "elapsed_seconds": float(elapsed),
             "authority_kind": authority_kind,
@@ -254,6 +351,7 @@ def _sample_record(
         )
     swap = max(process_swap, dedicated_swap)
     return {
+        **common,
         "phase": phase,
         "elapsed_seconds": float(elapsed),
         "authority_kind": authority_kind,
@@ -270,6 +368,55 @@ def _sample_record(
         "uss_bytes": uss,
         "all_status_readable": process_tree.get("all_status_readable"),
     }
+
+
+def _cgroup_ancestor_headroom_unmeasured(
+    record: Mapping[str, Any],
+) -> bool:
+    """Return whether a visible finite ancestor limit lacks current usage."""
+
+    states = record.get("cgroup_ancestor_limit_states")
+    visible_states = set(states) if isinstance(states, list) else set()
+    aggregate_state = record.get("cgroup_ancestor_hard_limit_state")
+    current_limit_state = record.get("cgroup_memory_limit_state")
+    current_limit_visible = bool(
+        isinstance(record.get("cgroup_memory_limit_bytes"), int)
+        or current_limit_state == "finite"
+    )
+    if current_limit_visible and (
+        not isinstance(record.get("cgroup_memory_current_bytes"), int)
+        or not isinstance(record.get("cgroup_memory_headroom_bytes"), int)
+    ):
+        return True
+    finite_visible = bool(
+        isinstance(record.get("cgroup_ancestor_hard_limit_bytes"), int)
+        or "finite" in visible_states
+        or aggregate_state in {"finite", "partially_unreadable"}
+    )
+    if not finite_visible:
+        return False
+    if aggregate_state == "partially_unreadable":
+        return True
+    rows = record.get("cgroup_ancestor_memory")
+    finite_rows = (
+        [
+            row
+            for row in rows
+            if isinstance(row, Mapping)
+            and row.get("memory_limit_state") == "finite"
+        ]
+        if isinstance(rows, list)
+        else []
+    )
+    if not finite_rows:
+        return not isinstance(
+            record.get("cgroup_ancestor_memory_headroom_bytes"), int
+        )
+    return any(
+        not isinstance(row.get("memory_current_bytes"), int)
+        or not isinstance(row.get("memory_headroom_bytes"), int)
+        for row in finite_rows
+    )
 
 
 def _process_group_gone(pid: int) -> bool:
@@ -322,6 +469,13 @@ def _run_phase(
     hard_memory_bytes: int = TASK041_HARD_MEMORY_BYTES,
     timeout_seconds: int = TASK041_TIMEOUT_SECONDS,
     phase_elapsed_timeout: bool = False,
+    sample_root_pid: int | None = None,
+    min_memavailable_bytes: int | None = None,
+    min_cgroup_ancestor_headroom_bytes: int | None = None,
+    cumulative_compute_used_seconds: float = 0.0,
+    cumulative_compute_limit_seconds: float | None = None,
+    global_swap_baseline: Mapping[str, Any] | None = None,
+    partial_phase_results: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if phase_root.exists():
         raise Task041SupervisorError(
@@ -337,6 +491,47 @@ def _run_phase(
     process: Any | None = None
     cleanup_attempted = False
     group_gone = False
+    sampling_root_pid = None if sample_root_pid is None else int(sample_root_pid)
+    baseline = None if global_swap_baseline is None else dict(global_swap_baseline)
+    worker_process_group_pid: int | None = None
+    phase_end_sample: dict[str, Any] | None = None
+
+    def _annotate_sample(
+        record: dict[str, Any], *, sample_role: str, worker_pid: int
+    ) -> dict[str, Any]:
+        nonlocal baseline
+        record["sample_role"] = sample_role
+        record["sample_root_pid"] = (
+            worker_pid if sampling_root_pid is None else sampling_root_pid
+        )
+        record["worker_process_group_pid"] = worker_pid
+        record["worker_process_group_gone"] = bool(
+            sample_role == "phase_end_public_root"
+        )
+        if baseline is None:
+            baseline = {
+                name: record.get(name)
+                for name in (
+                    "global_swap_used_bytes",
+                    "global_pswpin_pages",
+                    "global_pswpout_pages",
+                )
+                if isinstance(record.get(name), int)
+            }
+        for name in (
+            "global_swap_used_bytes",
+            "global_pswpin_pages",
+            "global_pswpout_pages",
+        ):
+            value = record.get(name)
+            initial = baseline.get(name) if baseline is not None else None
+            record[f"{name}_delta"] = (
+                None
+                if not isinstance(value, int) or not isinstance(initial, int)
+                else max(0, value - initial)
+            )
+        return record
+
     stdout_path = log_root / f"{phase}_stdout.txt"
     try:
         _append_jsonl(
@@ -354,12 +549,16 @@ def _run_phase(
                 text=True,
                 **worker_process_group_popen_kwargs(),
             )
+            worker_process_group_pid = int(process.pid)
             while True:
                 returncode = process.poll()
                 now = monotonic()
                 if returncode is not None:
                     break
-                authority = sample_factory(process.pid)
+                sample_pid = (
+                    process.pid if sampling_root_pid is None else sampling_root_pid
+                )
+                authority = sample_factory(sample_pid)
                 authority_kind = (
                     _resource_authority_kind(authority)
                     if isinstance(authority, Mapping)
@@ -393,7 +592,7 @@ def _run_phase(
                                     classification="task041_resource_sample_failure",
                                     stage=f"{phase}_resource_sample",
                                 )
-                            authority = sample_factory(process.pid)
+                            authority = sample_factory(sample_pid)
                             authority_kind = (
                                 _resource_authority_kind(authority)
                                 if isinstance(authority, Mapping)
@@ -408,7 +607,7 @@ def _run_phase(
                             returncode = process.poll()
                             if returncode is None:
                                 now = monotonic()
-                                authority = sample_factory(process.pid)
+                                authority = sample_factory(sample_pid)
                                 authority_kind = (
                                     _resource_authority_kind(authority)
                                     if isinstance(authority, Mapping)
@@ -430,14 +629,51 @@ def _run_phase(
                     now - workflow_started,
                     authority_kind=authority_kind,
                 )
+                record = _annotate_sample(
+                    record,
+                    sample_role="phase_running",
+                    worker_pid=process.pid,
+                )
                 samples.append(record)
                 _append_jsonl(memory_stages_path, record)
                 memory = record["memory_authority_bytes"]
                 warning_reached = warning_reached or memory >= warning_memory_bytes
                 if memory >= hard_memory_bytes:
                     termination_reason = "absolute_memory_limit"
+                elif (
+                    min_memavailable_bytes is not None
+                    and not isinstance(record.get("host_memavailable_bytes"), int)
+                ):
+                    termination_reason = "memavailable_unmeasured"
+                elif (
+                    min_cgroup_ancestor_headroom_bytes is not None
+                    and _cgroup_ancestor_headroom_unmeasured(record)
+                ):
+                    termination_reason = "cgroup_headroom_unmeasured"
                 elif record["swap_bytes"] > 0 or record["job_no_swap"] is not True:
                     termination_reason = "swap_detected"
+                elif (
+                    min_memavailable_bytes is not None
+                    and isinstance(record.get("host_memavailable_bytes"), int)
+                    and record["host_memavailable_bytes"]
+                    < min_memavailable_bytes
+                ):
+                    termination_reason = "memavailable_floor"
+                elif (
+                    min_cgroup_ancestor_headroom_bytes is not None
+                    and isinstance(
+                        record.get("cgroup_ancestor_memory_headroom_bytes"), int
+                    )
+                    and record["cgroup_ancestor_memory_headroom_bytes"]
+                    < min_cgroup_ancestor_headroom_bytes
+                ):
+                    termination_reason = "cgroup_headroom_floor"
+                elif (
+                    cumulative_compute_limit_seconds is not None
+                    and cumulative_compute_used_seconds + (now - phase_started)
+                    >= cumulative_compute_limit_seconds
+                ):
+                    termination_reason = "cumulative_wall_timeout"
                 elif (
                     (now - phase_started)
                     if phase_elapsed_timeout
@@ -466,21 +702,57 @@ def _run_phase(
                 stage=f"{phase}_process_group_linger",
             )
 
+        if sampling_root_pid is not None:
+            post_authority = sample_factory(sampling_root_pid)
+            post_kind = (
+                _resource_authority_kind(post_authority)
+                if isinstance(post_authority, Mapping)
+                else None
+            )
+            if post_kind is None:
+                raise Task041SupervisorError(
+                    f"{phase} public launcher root could not be sampled after worker exit",
+                    classification="task041_resource_sample_failure",
+                    stage=f"{phase}_resource_sample",
+                )
+            phase_end_sample = _annotate_sample(
+                _sample_record(
+                    post_authority,
+                    phase,
+                    monotonic() - workflow_started,
+                    authority_kind=post_kind,
+                ),
+                sample_role="phase_end_public_root",
+                worker_pid=process.pid,
+            )
+            samples.append(phase_end_sample)
+            _append_jsonl(memory_stages_path, phase_end_sample)
+
         before_rss = next(
             (
                 sample["process_tree_rss_bytes"]
                 for sample in reversed(samples)
-                if sample.get("authority_kind") == "process_tree"
+                if sample.get("sample_role") == "phase_running"
+                and sample.get("authority_kind") == "process_tree"
                 and isinstance(sample.get("process_tree_rss_bytes"), int)
                 and sample["process_tree_rss_bytes"] > 0
             ),
             None,
         )
-        after_rss = 0
+        after_rss = (
+            phase_end_sample.get("process_tree_rss_bytes")
+            if phase_end_sample is not None
+            else 0
+        )
         rss_drop = {
             "before_process_tree_rss_bytes": before_rss,
             "after_process_tree_rss_bytes": after_rss,
             "process_group_gone": group_gone,
+            "measurement_scope": (
+                "public_launcher_root_after_worker_group_exit"
+                if phase_end_sample is not None
+                else "legacy_worker_group_process_tree"
+            ),
             "pass": bool(isinstance(before_rss, int) and after_rss < before_rss),
         }
         finished_at = monotonic()
@@ -491,6 +763,11 @@ def _run_phase(
             "hard_memory_bytes": hard_memory_bytes,
             "swap_limit_bytes": 0,
             "timeout_seconds": timeout_seconds,
+            "min_memavailable_bytes": min_memavailable_bytes,
+            "min_cgroup_ancestor_headroom_bytes": (
+                min_cgroup_ancestor_headroom_bytes
+            ),
+            "cumulative_compute_limit_seconds": cumulative_compute_limit_seconds,
         }
         _append_jsonl(
             marker_path,
@@ -506,19 +783,115 @@ def _run_phase(
             },
         )
     except Exception:
-        if process is not None and not cleanup_attempted:
-            try:
-                gone = bool(process_group_gone(process.pid))
-            except Exception:  # noqa: BLE001 - failed liveness probe requires cleanup
-                gone = False
-            if not gone:
-                cleanup_attempted = True
-                _terminate_and_verify(process, terminate_factory, process_group_gone)
+        try:
+            if process is not None and not cleanup_attempted:
+                try:
+                    gone = bool(process_group_gone(process.pid))
+                except Exception:  # noqa: BLE001 - failed liveness probe requires cleanup
+                    gone = False
+                if not gone:
+                    cleanup_attempted = True
+                    termination = _terminate_and_verify(
+                        process, terminate_factory, process_group_gone
+                    )
+        finally:
+            if partial_phase_results is not None and process is not None:
+                try:
+                    final_group_gone = bool(process_group_gone(process.pid))
+                except Exception:  # noqa: BLE001 - final liveness is diagnostic
+                    final_group_gone = False
+                finished_at = monotonic()
+                phase_wall_seconds = max(0.0, finished_at - phase_started)
+                partial_phase_results[phase] = {
+                    "phase": phase,
+                    "argv": list(argv),
+                    "stdout": str(stdout_path),
+                    "returncode": process.poll(),
+                    "wall_seconds": phase_wall_seconds,
+                    "phase_wall_seconds": phase_wall_seconds,
+                    "workflow_wall_seconds": max(
+                        0.0, finished_at - workflow_started
+                    ),
+                    "limits": {
+                        "warning_memory_bytes": warning_memory_bytes,
+                        "hard_memory_bytes": hard_memory_bytes,
+                        "swap_limit_bytes": 0,
+                        "timeout_seconds": timeout_seconds,
+                        "min_memavailable_bytes": min_memavailable_bytes,
+                        "min_cgroup_ancestor_headroom_bytes": (
+                            min_cgroup_ancestor_headroom_bytes
+                        ),
+                        "cumulative_compute_limit_seconds": (
+                            cumulative_compute_limit_seconds
+                        ),
+                    },
+                    "sample_count": len(samples),
+                    "termination_reason": termination_reason or "phase_exception",
+                    "termination": termination,
+                    "cleanup_attempted": cleanup_attempted,
+                    "process_group_gone": final_group_gone,
+                    "worker_process_group_pid": worker_process_group_pid,
+                    "sample_root_pid": (
+                        sampling_root_pid or worker_process_group_pid
+                    ),
+                    "sample_root_scope": (
+                        "public_launcher_and_all_descendants"
+                        if sampling_root_pid is not None
+                        else "worker_process_group_tree"
+                    ),
+                    "resource_source": "current_invocation_partial",
+                    "partial": True,
+                }
         raise
 
-    def _peak(name: str) -> int:
+    def _peak(name: str) -> int | None:
         values = [row[name] for row in samples if isinstance(row.get(name), int)]
-        return max(values, default=0)
+        return max(values) if values else None
+
+    pid_peaks: dict[str, int] = {}
+    for row in samples:
+        values = row.get("process_tree_rss_by_pid_bytes")
+        if not isinstance(values, Mapping):
+            continue
+        for pid, value in values.items():
+            if isinstance(value, int):
+                pid_peaks[str(pid)] = max(pid_peaks.get(str(pid), 0), value)
+
+    def _minimum(name: str) -> int | None:
+        values = [row[name] for row in samples if isinstance(row.get(name), int)]
+        return min(values) if values else None
+
+    global_values = [
+        row["global_swap_used_bytes"]
+        for row in samples
+        if isinstance(row.get("global_swap_used_bytes"), int)
+    ]
+    global_used_deltas = [
+        row["global_swap_used_bytes_delta"]
+        for row in samples
+        if isinstance(row.get("global_swap_used_bytes_delta"), int)
+    ]
+    global_pswpin_deltas = [
+        row["global_pswpin_pages_delta"]
+        for row in samples
+        if isinstance(row.get("global_pswpin_pages_delta"), int)
+    ]
+    global_pswpout_deltas = [
+        row["global_pswpout_pages_delta"]
+        for row in samples
+        if isinstance(row.get("global_pswpout_pages_delta"), int)
+    ]
+    sample_times = [
+        float(row["sample_elapsed_seconds"])
+        for row in samples
+        if isinstance(row.get("sample_elapsed_seconds"), (int, float))
+        and math.isfinite(float(row["sample_elapsed_seconds"]))
+    ]
+    sample_gaps = [
+        later - earlier
+        for earlier, later in pairwise(sample_times)
+        if later >= earlier
+    ]
 
     return {
         "phase": phase,
@@ -540,6 +913,27 @@ def _run_phase(
             "RSS/VmSwap and dedicated cgroup memory/swap are sampled every poll; "
             "PSS/USS are sparse diagnostics."
         ),
+        "sampling": {
+            "configured_poll_interval_seconds": float(poll_interval),
+            "rss_swap_interval_seconds": float(poll_interval),
+            "sample_timestamp_basis": "monotonic workflow elapsed seconds",
+            "sample_timestamp_gap_seconds": {
+                "count": len(sample_gaps),
+                "min": min(sample_gaps) if sample_gaps else None,
+                "max": max(sample_gaps) if sample_gaps else None,
+                "mean": (
+                    sum(sample_gaps) / len(sample_gaps) if sample_gaps else None
+                ),
+            },
+            "pss_uss_interval_seconds": getattr(
+                sample_factory, "smaps_interval_seconds", None
+            ),
+            "pss_uss_semantics": "sparse; missing samples remain not_measured",
+            "pss_uss_missing_sample_count": sum(
+                row.get("pss_bytes") is None or row.get("uss_bytes") is None
+                for row in samples
+            ),
+        },
         "warning_reached": warning_reached,
         "termination_reason": termination_reason,
         "termination": termination,
@@ -555,6 +949,51 @@ def _run_phase(
         ),
         "peak_swap_bytes": _peak("swap_bytes"),
         "swap_semantics": "max(process-tree VmSwap, dedicated job cgroup swap.current)",
+        "sample_root_pid": (
+            sampling_root_pid
+            if sampling_root_pid is not None
+            else worker_process_group_pid
+        ),
+        "sample_root_scope": (
+            "public_launcher_and_all_descendants"
+            if sampling_root_pid is not None
+            else "worker_process_group_tree"
+        ),
+        "worker_process_group_pid": worker_process_group_pid,
+        "worker_process_group_gone": group_gone,
+        "phase_end_sample": phase_end_sample,
+        "process_tree_pid_peak_rss_bytes": pid_peaks,
+        "minimum_host_memavailable_bytes": _minimum("host_memavailable_bytes"),
+        "minimum_cgroup_memory_headroom_bytes": _minimum(
+            "cgroup_memory_headroom_bytes"
+        ),
+        "minimum_cgroup_ancestor_memory_headroom_bytes": _minimum(
+            "cgroup_ancestor_memory_headroom_bytes"
+        ),
+        "cgroup_ancestor_limit_states": sorted(
+            {
+                row.get("cgroup_ancestor_hard_limit_state")
+                for row in samples
+                if row.get("cgroup_ancestor_hard_limit_state") is not None
+            }
+        ),
+        "cgroup_history_peak_bytes": _peak("cgroup_memory_peak_bytes"),
+        "global_swap": {
+            "baseline_used_bytes": (
+                baseline.get("global_swap_used_bytes")
+                if baseline is not None
+                else None
+            ),
+            "peak_used_bytes": max(global_values) if global_values else None,
+            "new_used_bytes": max(global_used_deltas) if global_used_deltas else None,
+            "pswpin_delta_pages": (
+                max(global_pswpin_deltas) if global_pswpin_deltas else None
+            ),
+            "pswpout_delta_pages": (
+                max(global_pswpout_deltas) if global_pswpout_deltas else None
+            ),
+            "semantics": "shared-host diagnostic; not the job swap authority",
+        },
     }
 
 
@@ -696,6 +1135,19 @@ def _validate_specification(specification: Any, repository_root: Path) -> dict[s
         expected_run_id = TASK041_RUN_ID
         expected_modes = TASK041_MODE_COUNT
         expected_mpi_size = TASK041_MPI_SIZE
+    elif model_id in TASK041_BALH_MODEL_IDS:
+        case = task041_balh_case(model_id)
+        if case is None:
+            raise Task041SupervisorError(
+                "Task041 side BAL_H case contract is unavailable",
+                classification="task041_identity_failure",
+                stage="input_identity",
+            )
+        profile_validator = task041_balh_profile_errors
+        expected_input = (repository_root / str(case["input"])).resolve()
+        expected_run_id = str(case["run_id"])
+        expected_modes = int(case["mode_count"])
+        expected_mpi_size = TASK041_BALH_MPI_SIZE
     elif model_id in TASK041_SHORTWAVE_MODEL_IDS:
         case = task041_shortwave_case(model_id)
         if case is None:
@@ -891,6 +1343,28 @@ def _artifact_metadata(path: Path) -> dict[str, Any]:
     }
 
 
+def _rank_pid_affinity_artifact(phase_root: Path) -> dict[str, Any]:
+    path = phase_root / "rank_pid_affinity.json"
+    if not path.is_file():
+        return {
+            "status": "not_measured",
+            "path": str(path),
+            "records": [],
+        }
+    payload = _read_json(path)
+    records = payload.get("records")
+    return {
+        "status": payload.get("status", "measured"),
+        "path": str(path),
+        "sha256": _sha256_file(path),
+        "bytes": path.stat().st_size,
+        "phase": payload.get("phase"),
+        "source_sha": payload.get("source_sha"),
+        "mpi_size": payload.get("mpi_size"),
+        "records": records if isinstance(records, list) else [],
+    }
+
+
 def _consumer_result(
     consumer_root: Path, *, process_group_gone: bool | None = None
 ) -> dict[str, Any]:
@@ -914,10 +1388,16 @@ def _consumer_result(
     lifecycle = summary.get("lifecycle")
     gates = summary.get("gates")
     worker_classification = summary.get("classification")
+    balh_consumer = str(summary.get("schema", "")).startswith(
+        "task041.side_balh."
+    )
     lifecycle_gate = (
         isinstance(lifecycle, Mapping)
         and lifecycle.get("setup_released") is True
-        and lifecycle.get("rss_drop_pass") is True
+        and (
+            balh_consumer
+            or lifecycle.get("rss_drop_pass") is True
+        )
         and lifecycle.get("rss_marker_emitted") is True
     )
     marker_gate = isinstance(observed, list) and "final_cleanup_complete" in observed
@@ -966,7 +1446,12 @@ def _consumer_result(
 def _phase_resource_failure(phase_result: Mapping[str, Any]) -> bool:
     return phase_result.get("termination_reason") in {
         "absolute_memory_limit",
+        "cgroup_headroom_floor",
+        "cgroup_headroom_unmeasured",
+        "memavailable_floor",
+        "memavailable_unmeasured",
         "swap_detected",
+        "cumulative_wall_timeout",
         "wall_timeout",
     }
 
@@ -976,9 +1461,125 @@ def _phase_resource_classification(
 ) -> str | None:
     return {
         "absolute_memory_limit": "memory_terminate",
+        "cgroup_headroom_floor": "cgroup_headroom_floor",
+        "cgroup_headroom_unmeasured": "cgroup_headroom_unmeasured",
+        "memavailable_floor": "memavailable_floor",
+        "memavailable_unmeasured": "memavailable_unmeasured",
         "swap_detected": "swap_policy_violation",
+        "cumulative_wall_timeout": "cumulative_wall_timeout",
         "wall_timeout": "timeout",
     }.get(str(phase_result.get("termination_reason")))
+
+
+def _wall_seconds(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    value = float(value)
+    return value if math.isfinite(value) and value >= 0.0 else None
+
+
+def _load_task041_compute_wall_ledger(
+    ledger_path: Path,
+) -> tuple[Path, dict[str, Any]]:
+    if not ledger_path.is_file():
+        raise Task041SupervisorError(
+            f"Task041 compute wall ledger is required but missing: {ledger_path}",
+            classification="task041_identity_failure",
+            stage="workflow_wall_budget",
+        )
+    payload = _read_json(ledger_path)
+    used = _wall_seconds(payload.get("used_compute_wall_seconds"))
+    if used is None:
+        raise Task041SupervisorError(
+            f"Task041 compute wall ledger has no finite used value: {ledger_path}",
+            classification="task041_identity_failure",
+            stage="workflow_wall_budget",
+        )
+    source_records = payload.get("source_records")
+    if not isinstance(source_records, list):
+        source_records = []
+    if not source_records:
+        for name in ("measured", "derived_upper_bound"):
+            section = payload.get(name)
+            if isinstance(section, Mapping) and isinstance(
+                section.get("records"), list
+            ):
+                source_records.extend(section["records"])
+    return ledger_path, {
+        "used_compute_wall_seconds": used,
+        "used_status": str(payload.get("used_status", "derived")),
+        "basis": payload.get("basis", "explicit compact ledger"),
+        "initial_batch_allowance": payload.get("initial_batch_allowance"),
+        "derived_allowance_margin_seconds": payload.get(
+            "derived_allowance_margin_seconds"
+        ),
+        "source_records": source_records,
+        "measured": payload.get("measured"),
+        "derived_upper_bound": payload.get("derived_upper_bound"),
+    }
+
+
+def _write_task041_compute_wall_ledger(
+    ledger_path: Path,
+    *,
+    used_before: Mapping[str, Any],
+    current_seconds: float,
+    run_directory: Path,
+    phase_seconds: Mapping[str, float] | None = None,
+) -> dict[str, Any]:
+    before = float(used_before["used_compute_wall_seconds"])
+    current_seconds = max(0.0, float(current_seconds))
+    total = before + current_seconds
+    status = (
+        str(used_before.get("used_status"))
+        if str(used_before.get("used_status", "")).startswith("derived")
+        else "measured"
+    )
+    measured = used_before.get("measured")
+    current_record = {
+        "path": str(run_directory),
+        "seconds": current_seconds,
+        "status": "measured",
+        "current_invocation": True,
+        "phase_seconds": (
+            dict(phase_seconds) if phase_seconds is not None else None
+        ),
+    }
+    if isinstance(measured, Mapping):
+        measured = dict(measured)
+        measured_seconds = _wall_seconds(measured.get("seconds"))
+        measured["seconds"] = (
+            (measured_seconds if measured_seconds is not None else 0.0)
+            + current_seconds
+        )
+        measured_records = measured.get("records")
+        measured["records"] = [
+            *(
+                measured_records
+                if isinstance(measured_records, list)
+                else []
+            ),
+            current_record,
+        ]
+    payload = {
+        "schema": "task041.compute_wall_ledger.v1",
+        "limit_seconds": TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS,
+        "used_compute_wall_seconds": total,
+        "used_status": status,
+        "basis": used_before.get("basis"),
+        "initial_batch_allowance": used_before.get("initial_batch_allowance"),
+        "derived_allowance_margin_seconds": used_before.get(
+            "derived_allowance_margin_seconds"
+        ),
+        "measured": measured,
+        "derived_upper_bound": used_before.get("derived_upper_bound"),
+        "source_records": [
+            *list(used_before.get("source_records", [])),
+            current_record,
+        ],
+    }
+    _write_json(ledger_path, payload)
+    return payload
 
 
 def run_task041_public_supervisor(
@@ -995,12 +1596,15 @@ def run_task041_public_supervisor(
     sleep: Callable[[float], None] = time.sleep,
     poll_interval: float = 0.25,
     process_group_gone: Callable[[int], bool] = _process_group_gone,
+    producer_packet_root: str | Path | None = None,
+    compute_wall_ledger_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Run legacy MPI1 or shortwave MPI8 children from an outer MPI1 process."""
+    """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
     root = Path(run_directory).resolve()
     repository_root = Path(__file__).resolve().parents[2]
     started = monotonic()
+    public_launcher_pid = os.getpid()
     result: dict[str, Any] = {
         "schema": "task041.public.supervisor.v1",
         "adapter": TASK041_PUBLIC_SUPERVISOR_ADAPTER,
@@ -1029,6 +1633,9 @@ def run_task041_public_supervisor(
         "timeout_seconds": TASK041_TIMEOUT_SECONDS,
     }
     phase_limits: dict[str, dict[str, int]] = {}
+    compute_wall_ledger: dict[str, Any] | None = None
+    global_swap_baseline: dict[str, Any] | None = None
+    balh = False
     try:
         if not root.is_dir():
             raise Task041SupervisorError(
@@ -1049,18 +1656,70 @@ def run_task041_public_supervisor(
         runtime_limits = _runtime_limits_for_identity(identity)
         result["limits"] = dict(runtime_limits)
         shortwave = identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS
+        balh = identity["model_id"] in TASK041_BALH_MODEL_IDS
+        if producer_packet_root is not None and not balh:
+            raise Task041SupervisorError(
+                "producer packet reuse is enabled only for Task041 side BAL_H profiles",
+                classification="task041_identity_failure",
+                stage="producer_reuse_contract",
+            )
         timeout_scope = "workflow"
-        if shortwave:
+        if shortwave or balh:
             phase_limits = {
                 phase: dict(
-                    task041_shortwave_phase_limits_for_model(
+                    task041_balh_phase_limits_for_model(identity["model_id"], phase)
+                    if balh
+                    else task041_shortwave_phase_limits_for_model(
                         identity["model_id"], phase
                     )
                 )
                 for phase in ("producer", "consumer")
             }
             result["phase_limits"] = phase_limits
-            timeout_scope = task041_shortwave_timeout_scope(identity["model_id"])
+            timeout_scope = (
+                task041_balh_timeout_scope(identity["model_id"])
+                if balh
+                else task041_shortwave_timeout_scope(identity["model_id"])
+            )
+        if balh:
+            if compute_wall_ledger_path is None:
+                raise Task041SupervisorError(
+                    "Task041 BAL_H requires an explicit compute wall ledger path",
+                    classification="task041_identity_failure",
+                    stage="workflow_wall_budget",
+                )
+            compute_wall_ledger_path, compute_wall_ledger = (
+                _load_task041_compute_wall_ledger(
+                    Path(compute_wall_ledger_path).resolve()
+                )
+            )
+            used_before = float(
+                compute_wall_ledger["used_compute_wall_seconds"]
+            )
+            remaining = max(
+                0.0,
+                TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS - used_before,
+            )
+            result["compute_wall_budget"] = {
+                "limit_seconds": TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS,
+                "used_before_seconds": used_before,
+                "used_before_status": compute_wall_ledger["used_status"],
+                "remaining_seconds": remaining,
+                "ledger_path": str(compute_wall_ledger_path),
+                "basis": compute_wall_ledger["basis"],
+                "initial_batch_allowance": compute_wall_ledger.get(
+                    "initial_batch_allowance"
+                ),
+                "derived_allowance_margin_seconds": compute_wall_ledger.get(
+                    "derived_allowance_margin_seconds"
+                ),
+            }
+            if remaining <= 0.0:
+                raise Task041SupervisorError(
+                    "Task041 cumulative compute wall budget is exhausted",
+                    classification="cumulative_wall_timeout",
+                    stage="workflow_wall_budget",
+                )
         git_identity = _git_identity(repository_root, source_sha)
         environment_snapshot = _environment_snapshot(repository_root)
         result["identity"] = identity
@@ -1086,10 +1745,99 @@ def run_task041_public_supervisor(
                 },
             },
         )
+        if balh:
+            preflight_authority = sample_factory(public_launcher_pid)
+            preflight_kind = (
+                _resource_authority_kind(preflight_authority)
+                if isinstance(preflight_authority, Mapping)
+                else None
+            )
+            preflight = _sample_record(
+                preflight_authority,
+                "preflight",
+                monotonic() - started,
+                authority_kind=preflight_kind,
+            )
+            preflight.update(
+                {
+                    "sample_role": "preflight_public_root",
+                    "sample_root_pid": public_launcher_pid,
+                    "worker_process_group_pid": None,
+                    "worker_process_group_gone": None,
+                }
+            )
+            result["resource_preflight"] = preflight
+            _append_jsonl(
+                root / "numerical_output" / "log" / "memory_stages.jsonl",
+                preflight,
+            )
+            global_swap_baseline = {
+                name: preflight.get(name)
+                for name in (
+                    "global_swap_used_bytes",
+                    "global_pswpin_pages",
+                    "global_pswpout_pages",
+                )
+                if isinstance(preflight.get(name), int)
+            }
+            minimum_available = phase_limits["producer"].get(
+                "min_memavailable_bytes"
+            )
+            if (
+                isinstance(minimum_available, int)
+                and not isinstance(preflight.get("host_memavailable_bytes"), int)
+            ):
+                raise Task041SupervisorError(
+                    "Task041 MemAvailable is not measurable at BAL_H preflight",
+                    classification="memavailable_unmeasured",
+                    stage="workflow_resource_preflight",
+                )
+            if (
+                isinstance(minimum_available, int)
+                and preflight["host_memavailable_bytes"] < minimum_available
+            ):
+                raise Task041SupervisorError(
+                    "Task041 MemAvailable is below the BAL_H preflight floor",
+                    classification="memavailable_floor",
+                    stage="workflow_resource_preflight",
+                )
+            if (
+                isinstance(minimum_available, int)
+                and _cgroup_ancestor_headroom_unmeasured(preflight)
+            ):
+                raise Task041SupervisorError(
+                    "Task041 visible cgroup ancestor headroom is not measurable at BAL_H preflight",
+                    classification="cgroup_headroom_unmeasured",
+                    stage="workflow_resource_preflight",
+                )
+            if (
+                isinstance(minimum_available, int)
+                and isinstance(
+                    preflight.get("cgroup_ancestor_memory_headroom_bytes"), int
+                )
+                and preflight["cgroup_ancestor_memory_headroom_bytes"]
+                < minimum_available
+            ):
+                raise Task041SupervisorError(
+                    "Task041 visible cgroup ancestor headroom is below the BAL_H preflight floor",
+                    classification="cgroup_headroom_floor",
+                    stage="workflow_resource_preflight",
+                )
         python_entry = Path(os.path.abspath(python_executable or sys.executable))
-        producer_root = root / "producer"
+        producer_root = (
+            Path(producer_packet_root).resolve()
+            if producer_packet_root is not None
+            else root / "producer"
+        )
         producer_command_module = _task041_builders()
-        if identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS:
+        if balh:
+            producer_command = producer_command_module["balh_mode_prep"](
+                python_entry,
+                specification,
+                producer_root,
+                source_sha,
+            )
+        elif shortwave:
             producer_command = producer_command_module["shortwave_mode_prep"](
                 python_entry,
                 specification,
@@ -1103,44 +1851,110 @@ def run_task041_public_supervisor(
                 producer_root,
                 source_sha,
             )
-        producer_argv = _mpiexec_argv(
-            producer_command,
-            mpiexec_command,
-        )
-        result["workflow_status"] = "producer_running"
-        producer_result = _run_phase(
-            "producer",
-            producer_argv,
-            producer_root,
-            log_root=root / "numerical_output" / "log",
-            environment=child_environment,
-            repository_root=repository_root,
-            workflow_started=started,
-            popen_factory=popen_factory,
-            sample_factory=sample_factory,
-            terminate_factory=terminate_factory,
-            monotonic=monotonic,
-            sleep=sleep,
-            poll_interval=poll_interval,
-            memory_stages_path=root
-            / "numerical_output"
-            / "log"
-            / "memory_stages.jsonl",
-            marker_path=root
-            / "numerical_output"
-            / "log"
-            / "memory_stage_markers.jsonl",
-            process_group_gone=process_group_gone,
-            warning_memory_bytes=(
-                phase_limits.get("producer", runtime_limits)["warning_memory_bytes"]
-            ),
-            hard_memory_bytes=(
-                phase_limits.get("producer", runtime_limits)["hard_memory_bytes"]
-            ),
-            timeout_seconds=(
-                phase_limits.get("producer", runtime_limits)["timeout_seconds"]
-            ),
-            phase_elapsed_timeout=timeout_scope == "phase",
+        if producer_packet_root is not None:
+            from benchmarks.task041_balh_workflow import (
+                validate_balh_producer_packet,
+            )
+
+            result["workflow_status"] = "producer_reused"
+            packet = validate_balh_producer_packet(
+                producer_root,
+                specification,
+                source_sha,
+                require_public_supervisor_summary=True,
+            )
+            producer_result = dict(packet["producer_phase"])
+            producer_result.update(
+                {
+                    "phase": "producer",
+                    "status": "inherited_public_supervisor_phase",
+                    "phase_invocation": "not_run_in_current_invocation",
+                    "reused": True,
+                    "resource_source": "inherited_public_supervisor_summary",
+                    "producer_resource_qualified": packet[
+                        "producer_resource_qualified"
+                    ],
+                    "supervisor_summary": packet[
+                        "producer_supervisor_summary"
+                    ],
+                    "supervisor_summary_sha256": packet[
+                        "producer_supervisor_summary_sha256"
+                    ],
+                }
+            )
+            result["producer_reuse"] = {
+                "status": "validated_inherited_producer",
+                "producer_root": str(producer_root),
+                "supervisor_summary": packet["producer_supervisor_summary"],
+                "supervisor_summary_sha256": packet[
+                    "producer_supervisor_summary_sha256"
+                ],
+                "resource_qualified": packet["producer_resource_qualified"],
+                "phase_status": "inherited_not_run",
+            }
+        else:
+            producer_argv = _mpiexec_argv(
+                producer_command,
+                mpiexec_command,
+            )
+            result["workflow_status"] = "producer_running"
+            producer_result = _run_phase(
+                "producer",
+                producer_argv,
+                producer_root,
+                log_root=root / "numerical_output" / "log",
+                environment=child_environment,
+                repository_root=repository_root,
+                workflow_started=started,
+                popen_factory=popen_factory,
+                sample_factory=sample_factory,
+                terminate_factory=terminate_factory,
+                monotonic=monotonic,
+                sleep=sleep,
+                poll_interval=poll_interval,
+                memory_stages_path=root
+                / "numerical_output"
+                / "log"
+                / "memory_stages.jsonl",
+                marker_path=root
+                / "numerical_output"
+                / "log"
+                / "memory_stage_markers.jsonl",
+                process_group_gone=process_group_gone,
+                warning_memory_bytes=(
+                    phase_limits.get("producer", runtime_limits)["warning_memory_bytes"]
+                ),
+                hard_memory_bytes=(
+                    phase_limits.get("producer", runtime_limits)["hard_memory_bytes"]
+                ),
+                timeout_seconds=(
+                    phase_limits.get("producer", runtime_limits)["timeout_seconds"]
+                ),
+                phase_elapsed_timeout=timeout_scope == "phase",
+                sample_root_pid=public_launcher_pid if balh else None,
+                min_memavailable_bytes=(
+                    phase_limits.get("producer", {}).get("min_memavailable_bytes")
+                    if balh
+                    else None
+                ),
+                min_cgroup_ancestor_headroom_bytes=(
+                    phase_limits.get("producer", {}).get("min_memavailable_bytes")
+                    if balh
+                    else None
+                ),
+                cumulative_compute_used_seconds=(
+                    float(compute_wall_ledger["used_compute_wall_seconds"])
+                    if balh and compute_wall_ledger is not None
+                    else 0.0
+                ),
+                cumulative_compute_limit_seconds=(
+                    TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS if balh else None
+                ),
+                global_swap_baseline=global_swap_baseline if balh else None,
+                partial_phase_results=result["phase_results"],
+            )
+        producer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
+            producer_root
         )
         result["phase_results"]["producer"] = producer_result
         if _phase_resource_failure(producer_result):
@@ -1155,9 +1969,34 @@ def run_task041_public_supervisor(
                 classification="task041_producer_failure",
                 stage="producer_exit",
             )
-        packet = _validate_producer_packet(
-            producer_root, specification, source_sha, identity
-        )
+        if producer_result.get("process_group_gone") is not True:
+            raise Task041SupervisorError(
+                "inherited producer phase lacks a completed process-group record",
+                classification="task041_producer_lifecycle_failure",
+                stage="producer_handoff",
+            )
+        if (
+            producer_packet_root is None
+            and not balh
+            and producer_result.get("rss_drop", {}).get("pass") is not True
+        ):
+            raise Task041SupervisorError(
+                "Task041 producer did not release its measured process-tree RSS",
+                classification="task041_producer_lifecycle_failure",
+                stage="producer_handoff",
+            )
+        if producer_packet_root is None and balh:
+            from benchmarks.task041_balh_workflow import (
+                validate_balh_producer_packet,
+            )
+
+            packet = validate_balh_producer_packet(
+                producer_root, specification, source_sha
+            )
+        elif producer_packet_root is None:
+            packet = _validate_producer_packet(
+                producer_root, specification, source_sha, identity
+            )
         worker_environment = packet["summary"].get("environment")
         if isinstance(worker_environment, Mapping):
             worker_fields = (
@@ -1186,7 +2025,7 @@ def run_task041_public_supervisor(
             {
                 "schema": "task041.public.external_mode_manifest.v1",
                 "source": "selected_mode_packet_identity",
-                "source_sha": source_sha,
+                "source_sha": packet.get("producer_source_sha", source_sha),
                 "identity": {
                     "mode_count": packet["identity"].get("mode_count"),
                     "mpi_size": packet["identity"].get("mpi_size"),
@@ -1195,19 +2034,39 @@ def run_task041_public_supervisor(
                 "packet_manifest_sha256": packet["manifest_sha256"],
             },
         )
-        if producer_result.get("rss_drop", {}).get("pass") is not True:
-            raise Task041SupervisorError(
-                "producer process-group/RSS handoff gate failed",
-                classification="task041_producer_lifecycle_failure",
-                stage="producer_handoff",
-            )
         consumer_root = root / "consumer"
-        if identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS:
+        packet_identity_path = Path(
+            packet.get("identity_path", producer_root / "packet_identity.json")
+        )
+        if balh:
+            if identity["model_id"] in TASK041_BALH_CANDIDATE_MODEL_IDS:
+                consumer_command = producer_command_module["balh_candidate_consumer"](
+                    python_entry,
+                    specification,
+                    Path(packet["manifest"]),
+                    packet_identity_path,
+                    packet["manifest_sha256"],
+                    consumer_root,
+                    source_sha,
+                    packet.get("producer_source_sha"),
+                )
+            else:
+                consumer_command = producer_command_module["balh_exact_consumer"](
+                    python_entry,
+                    specification,
+                    Path(packet["manifest"]),
+                    packet_identity_path,
+                    packet["manifest_sha256"],
+                    consumer_root,
+                    source_sha,
+                    packet.get("producer_source_sha"),
+                )
+        elif shortwave:
             consumer_command = producer_command_module["shortwave_consumer"](
                 python_entry,
                 specification,
                 Path(packet["manifest"]),
-                producer_root / "packet_identity.json",
+                packet_identity_path,
                 packet["manifest_sha256"],
                 consumer_root,
                 source_sha,
@@ -1217,7 +2076,7 @@ def run_task041_public_supervisor(
                 python_entry,
                 repository_root / TASK041_INPUT,
                 Path(packet["manifest"]),
-                producer_root / "packet_identity.json",
+                packet_identity_path,
                 packet["manifest_sha256"],
                 consumer_root,
                 source_sha,
@@ -1260,6 +2119,41 @@ def run_task041_public_supervisor(
                 phase_limits.get("consumer", runtime_limits)["timeout_seconds"]
             ),
             phase_elapsed_timeout=timeout_scope == "phase",
+            sample_root_pid=public_launcher_pid if balh else None,
+            min_memavailable_bytes=(
+                phase_limits.get("consumer", {}).get("min_memavailable_bytes")
+                if balh
+                else None
+            ),
+            min_cgroup_ancestor_headroom_bytes=(
+                phase_limits.get("consumer", {}).get("min_memavailable_bytes")
+                if balh
+                else None
+            ),
+            cumulative_compute_used_seconds=(
+                (
+                    float(compute_wall_ledger["used_compute_wall_seconds"])
+                    + _wall_seconds(producer_result.get("phase_wall_seconds"))
+                )
+                if balh
+                and compute_wall_ledger is not None
+                and producer_result.get("reused") is not True
+                and _wall_seconds(producer_result.get("phase_wall_seconds"))
+                is not None
+                else (
+                    float(compute_wall_ledger["used_compute_wall_seconds"])
+                    if balh and compute_wall_ledger is not None
+                    else 0.0
+                )
+            ),
+            cumulative_compute_limit_seconds=(
+                TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS if balh else None
+            ),
+            global_swap_baseline=global_swap_baseline if balh else None,
+            partial_phase_results=result["phase_results"],
+        )
+        consumer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
+            consumer_root
         )
         result["phase_results"]["consumer"] = consumer_result
         consumer_exit = consumer_result.get("returncode")
@@ -1386,34 +2280,257 @@ def run_task041_public_supervisor(
             "stage": "unexpected",
         }
     finally:
+        if balh:
+            phase_roots = {
+                "producer": (
+                    Path(producer_packet_root).resolve()
+                    if producer_packet_root is not None
+                    else root / "producer"
+                ),
+                "consumer": root / "consumer",
+            }
+            for phase_name, phase_root in phase_roots.items():
+                phase_result = result["phase_results"].get(phase_name)
+                if (
+                    isinstance(phase_result, dict)
+                    and "rank_pid_affinity" not in phase_result
+                ):
+                    phase_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
+                        phase_root
+                    )
         phases = list(result["phase_results"].values())
+        current_phases = [
+            phase for phase in phases if phase.get("reused") is not True
+        ]
         total_wall_seconds = max(0.0, monotonic() - started)
         result["wall_seconds"] = total_wall_seconds
-        result["workflow_peak"] = {
-            "memory_authority_bytes": max(
-                (int(phase.get("peak_memory_authority_bytes", 0)) for phase in phases),
-                default=0,
-            ),
-            "process_tree_rss_bytes": max(
-                (int(phase.get("peak_process_tree_rss_bytes", 0)) for phase in phases),
-                default=0,
-            ),
-            "pss_bytes": max(
-                (int(phase.get("peak_pss_bytes", 0)) for phase in phases),
-                default=0,
-            ),
-            "uss_bytes": max(
-                (int(phase.get("peak_uss_bytes", 0)) for phase in phases),
-                default=0,
-            ),
-            "swap_bytes": max(
-                (int(phase.get("peak_swap_bytes", 0)) for phase in phases),
-                default=0,
-            ),
-            "semantics": "max(producer, consumer), never sum",
+
+        def _phase_peak(phase: Mapping[str, Any], field: str) -> int | None:
+            value = phase.get(field)
+            return int(value) if isinstance(value, int) else None
+
+        def _aggregate_peak(field: str) -> int | None:
+            values = [
+                peak
+                for phase in current_phases
+                if (peak := _phase_peak(phase, field)) is not None
+            ]
+            return max(values) if values else None
+
+        resource_peak_fields = {
+            "memory_authority_bytes": "peak_memory_authority_bytes",
+            "process_tree_rss_bytes": "peak_process_tree_rss_bytes",
+            "pss_bytes": "peak_pss_bytes",
+            "uss_bytes": "peak_uss_bytes",
+            "swap_bytes": "peak_swap_bytes",
         }
+        qualification_peak_fields = (
+            "peak_memory_authority_bytes",
+            "peak_process_tree_rss_bytes",
+            "peak_swap_bytes",
+        )
+
+        def _phase_resource_qualified(phase: Mapping[str, Any]) -> bool:
+            return bool(
+                isinstance(phase.get("sample_count"), int)
+                and phase["sample_count"] > 0
+                and phase.get("process_group_gone") is True
+                and all(
+                    isinstance(phase.get(field), int)
+                    for field in qualification_peak_fields
+                )
+                and phase.get("termination_reason")
+                not in {
+                    "absolute_memory_limit",
+                    "cgroup_headroom_floor",
+                    "cgroup_headroom_unmeasured",
+                    "memavailable_floor",
+                    "memavailable_unmeasured",
+                    "swap_detected",
+                    "cumulative_wall_timeout",
+                    "wall_timeout",
+                }
+            )
+
+        def _phase_resource_values(phase: Mapping[str, Any]) -> dict[str, Any]:
+            return {
+                name: phase.get(field)
+                for name, field in resource_peak_fields.items()
+            }
+
+        producer_phase = result["phase_results"].get("producer", {})
+        consumer_phase = result["phase_results"].get("consumer", {})
+        producer_qualified = (
+            producer_phase.get("producer_resource_qualified") is True
+            if producer_phase.get("reused") is True
+            else _phase_resource_qualified(producer_phase)
+        )
+        consumer_qualified = _phase_resource_qualified(consumer_phase)
+        derived_common_envelope: dict[str, Any]
+        if producer_qualified and consumer_qualified:
+            producer_values = _phase_resource_values(producer_phase)
+            consumer_values = _phase_resource_values(consumer_phase)
+            envelope_peak: dict[str, int | None] = {}
+            measurement_status: dict[str, str] = {}
+            for name in resource_peak_fields:
+                producer_value = producer_values[name]
+                consumer_value = consumer_values[name]
+                if isinstance(producer_value, int) and isinstance(consumer_value, int):
+                    envelope_peak[name] = max(producer_value, consumer_value)
+                    measurement_status[name] = "measured"
+                else:
+                    envelope_peak[name] = None
+                    measurement_status[name] = "not_measured"
+            derived_common_envelope = {
+                "status": "derived",
+                "semantics": "max(producer, consumer) per measured resource quantity",
+                "peak": envelope_peak,
+                "measurement_status": measurement_status,
+                "producer": {
+                    "values": producer_values,
+                    "qualified": producer_qualified,
+                    "resource_source": producer_phase.get(
+                        "resource_source", "current_invocation"
+                    ),
+                    "supervisor_summary": producer_phase.get("supervisor_summary"),
+                    "supervisor_summary_sha256": producer_phase.get(
+                        "supervisor_summary_sha256"
+                    ),
+                },
+                "consumer": {
+                    "values": consumer_values,
+                    "qualified": consumer_qualified,
+                    "resource_source": consumer_phase.get(
+                        "resource_source", "current_invocation"
+                    ),
+                    "run_directory": str(root),
+                },
+            }
+        else:
+            derived_common_envelope = {
+                "status": "unqualified",
+                "semantics": "complete producer/consumer envelope not proven",
+                "peak": None,
+                "measurement_status": {
+                    name: "not_measured" for name in resource_peak_fields
+                },
+                "producer": {
+                    "values": _phase_resource_values(producer_phase),
+                    "qualified": producer_qualified,
+                    "resource_source": producer_phase.get(
+                        "resource_source", "current_invocation"
+                    ),
+                    "supervisor_summary": producer_phase.get("supervisor_summary"),
+                    "supervisor_summary_sha256": producer_phase.get(
+                        "supervisor_summary_sha256"
+                    ),
+                },
+                "consumer": {
+                    "values": _phase_resource_values(consumer_phase),
+                    "qualified": consumer_qualified,
+                    "resource_source": consumer_phase.get(
+                        "resource_source", "current_invocation"
+                    ),
+                    "run_directory": str(root),
+                },
+            }
+
+        result["workflow_peak"] = {
+            "memory_authority_bytes": _aggregate_peak("peak_memory_authority_bytes"),
+            "process_tree_rss_bytes": _aggregate_peak("peak_process_tree_rss_bytes"),
+            "pss_bytes": _aggregate_peak("peak_pss_bytes"),
+            "uss_bytes": _aggregate_peak("peak_uss_bytes"),
+            "swap_bytes": _aggregate_peak("peak_swap_bytes"),
+            "semantics": "current invocation measured phases only",
+        }
+        current_phase_seconds: dict[str, float] = {}
+        for name, phase in result["phase_results"].items():
+            if phase.get("reused") is True:
+                continue
+            seconds = _wall_seconds(phase.get("phase_wall_seconds"))
+            if seconds is not None:
+                current_phase_seconds[str(phase.get("phase", name))] = seconds
+        current_compute_seconds = (
+            sum(current_phase_seconds.values()) if current_phase_seconds else None
+        )
+        result["compute_wall_seconds"] = current_compute_seconds
+        if balh and compute_wall_ledger is not None:
+            budget = result.get("compute_wall_budget")
+            if not isinstance(budget, dict):
+                budget = {
+                    "limit_seconds": TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS,
+                    "used_before_seconds": compute_wall_ledger[
+                        "used_compute_wall_seconds"
+                    ],
+                    "used_before_status": compute_wall_ledger["used_status"],
+                    "ledger_path": str(compute_wall_ledger_path),
+                    "basis": compute_wall_ledger["basis"],
+                    "initial_batch_allowance": compute_wall_ledger.get(
+                        "initial_batch_allowance"
+                    ),
+                    "derived_allowance_margin_seconds": compute_wall_ledger.get(
+                        "derived_allowance_margin_seconds"
+                    ),
+                }
+            if current_compute_seconds is not None:
+                updated_ledger = _write_task041_compute_wall_ledger(
+                    compute_wall_ledger_path,
+                    used_before=compute_wall_ledger,
+                    current_seconds=current_compute_seconds,
+                    run_directory=root,
+                    phase_seconds=current_phase_seconds,
+                )
+                budget.update(
+                    {
+                        "current_invocation_seconds": current_compute_seconds,
+                        "current_invocation_status": "measured",
+                        "used_after_seconds": updated_ledger[
+                            "used_compute_wall_seconds"
+                        ],
+                        "used_after_status": updated_ledger["used_status"],
+                        "remaining_after_seconds": max(
+                            0.0,
+                            TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
+                            - updated_ledger["used_compute_wall_seconds"],
+                        ),
+                        "ledger_update": "current_phase_wall_appended",
+                    }
+                )
+            else:
+                used_before = float(
+                    compute_wall_ledger["used_compute_wall_seconds"]
+                )
+                budget.update(
+                    {
+                        "current_invocation_seconds": None,
+                        "current_invocation_status": "not_measured_no_phase",
+                        "used_after_seconds": used_before,
+                        "used_after_status": compute_wall_ledger["used_status"],
+                        "remaining_after_seconds": max(
+                            0.0,
+                            TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS - used_before,
+                        ),
+                        "ledger_update": "not_appended_no_phase_completed",
+                    }
+                )
+            result["compute_wall_budget"] = budget
+        reused_producer = any(phase.get("reused") is True for phase in phases)
+        current_measured_phase = any(
+            phase.get("reused") is not True
+            and isinstance(phase.get("sample_count"), int)
+            and phase.get("sample_count", 0) > 0
+            for phase in phases
+        )
         resource_authority = {
-            "status": "measured" if phases else "not_sampled",
+            "status": (
+                "measured_with_inherited_producer"
+                if reused_producer and current_measured_phase
+                else "measured"
+                if current_measured_phase
+                else "inherited_only"
+                if reused_producer
+                else "not_sampled"
+            ),
             "warning_memory_bytes": runtime_limits["warning_memory_bytes"],
             "hard_memory_bytes": runtime_limits["hard_memory_bytes"],
             "swap_limit_bytes": runtime_limits["swap_limit_bytes"],
@@ -1423,6 +2540,15 @@ def run_task041_public_supervisor(
             "workflow_peak": result["workflow_peak"],
             "total_wall_seconds": total_wall_seconds,
             "wall_seconds": total_wall_seconds,
+            "compute_wall_seconds": current_compute_seconds,
+            "compute_wall_semantics": (
+                "sum of current non-reused producer/consumer phase wall; "
+                "MPI phase wall counted once and read/wait outside phases excluded"
+            ),
+            "phase_sampling": {
+                name: phase.get("sampling")
+                for name, phase in result["phase_results"].items()
+            },
             "phase_peaks": {
                 name: {
                     "memory_authority_bytes": phase.get("peak_memory_authority_bytes"),
@@ -1436,10 +2562,240 @@ def run_task041_public_supervisor(
                         "peak_dedicated_cgroup_swap_bytes"
                     ),
                     "swap_bytes": phase.get("peak_swap_bytes"),
+                    "cgroup_memory_headroom_bytes": phase.get(
+                        "minimum_cgroup_memory_headroom_bytes"
+                    ),
+                    "cgroup_ancestor_memory_headroom_bytes": phase.get(
+                        "minimum_cgroup_ancestor_memory_headroom_bytes"
+                    ),
+                    "cgroup_history_peak_bytes": phase.get(
+                        "cgroup_history_peak_bytes"
+                    ),
+                    "sample_root_pid": phase.get("sample_root_pid"),
+                    "sample_root_scope": phase.get("sample_root_scope"),
+                    "worker_process_group_pid": phase.get(
+                        "worker_process_group_pid"
+                    ),
+                    "worker_process_group_gone": phase.get(
+                        "worker_process_group_gone"
+                    ),
+                    "rank_pid_affinity": phase.get("rank_pid_affinity"),
                 }
                 for name, phase in result["phase_results"].items()
             },
+            "derived_common_producer_envelope": derived_common_envelope,
         }
+        if balh:
+            preflight = result.get("resource_preflight", {})
+            if not isinstance(preflight, Mapping):
+                preflight = {}
+
+            def _int_values(values: list[Any]) -> list[int]:
+                return [value for value in values if isinstance(value, int)]
+
+            runtime_memavailable = _int_values(
+                [
+                    phase.get("minimum_host_memavailable_bytes")
+                    for phase in current_phases
+                ]
+            )
+            observed_memavailable = _int_values(
+                [preflight.get("host_memavailable_bytes"), *runtime_memavailable]
+            )
+            memavailable_floor = phase_limits.get("producer", {}).get(
+                "min_memavailable_bytes"
+            )
+            memavailable_missing = bool(
+                not isinstance(preflight.get("host_memavailable_bytes"), int)
+                or any(
+                    phase.get("termination_reason") == "memavailable_unmeasured"
+                    for phase in current_phases
+                )
+            )
+            resource_authority["memavailable"] = {
+                "floor_bytes": memavailable_floor,
+                "preflight_bytes": preflight.get("host_memavailable_bytes"),
+                "minimum_runtime_bytes": (
+                    min(runtime_memavailable) if runtime_memavailable else None
+                ),
+                "minimum_observed_bytes": (
+                    min(observed_memavailable) if observed_memavailable else None
+                ),
+                "status": (
+                    "partially_measured"
+                    if memavailable_missing and observed_memavailable
+                    else "not_measured"
+                    if memavailable_missing or not observed_memavailable
+                    else "measured"
+                ),
+                "missing_required_measurement": memavailable_missing,
+                "pass": (
+                    False
+                    if memavailable_missing
+                    else None
+                    if not observed_memavailable
+                    or not isinstance(memavailable_floor, int)
+                    else all(value >= memavailable_floor for value in observed_memavailable)
+                ),
+                "semantics": "host MemAvailable reserve; shared-host diagnostic",
+            }
+            runtime_cgroup_headroom = _int_values(
+                [
+                    phase.get("minimum_cgroup_ancestor_memory_headroom_bytes")
+                    for phase in current_phases
+                ]
+            )
+            observed_cgroup_headroom = _int_values(
+                [
+                    preflight.get("cgroup_ancestor_memory_headroom_bytes"),
+                    *runtime_cgroup_headroom,
+                ]
+            )
+            preflight_states = preflight.get("cgroup_ancestor_limit_states", [])
+            cgroup_states = (
+                list(preflight_states)
+                if isinstance(preflight_states, list)
+                else []
+            )
+            cgroup_states.append(
+                preflight.get("cgroup_ancestor_hard_limit_state")
+            )
+            for phase in current_phases:
+                phase_states = phase.get("cgroup_ancestor_limit_states", [])
+                if isinstance(phase_states, list):
+                    cgroup_states.extend(phase_states)
+            cgroup_states = sorted({state for state in cgroup_states if state})
+            cgroup_finite_seen = "finite" in cgroup_states
+            cgroup_measurement_missing = bool(
+                _cgroup_ancestor_headroom_unmeasured(preflight)
+                or any(
+                    phase.get("termination_reason")
+                    == "cgroup_headroom_unmeasured"
+                    or _cgroup_ancestor_headroom_unmeasured(phase)
+                    for phase in current_phases
+                )
+            )
+            cgroup_missing_finite = (
+                cgroup_measurement_missing
+                or cgroup_finite_seen
+                and not observed_cgroup_headroom
+            )
+            cgroup_headroom_reserve = phase_limits.get("producer", {}).get(
+                "min_memavailable_bytes"
+            )
+            resource_authority["cgroup"] = {
+                "scope_semantics": preflight.get("cgroup_scope_semantics"),
+                "dedicated_job_cgroup": preflight.get(
+                    "cgroup_dedicated_job_cgroup"
+                ),
+                "visible_ancestor_limit_states": cgroup_states,
+                "preflight_ancestor_memory": preflight.get(
+                    "cgroup_ancestor_memory", []
+                ),
+                "ancestor_headroom_reserve_bytes": cgroup_headroom_reserve,
+                "preflight_ancestor_headroom_bytes": preflight.get(
+                    "cgroup_ancestor_memory_headroom_bytes"
+                ),
+                "minimum_runtime_ancestor_headroom_bytes": (
+                    min(runtime_cgroup_headroom)
+                    if runtime_cgroup_headroom
+                    else None
+                ),
+                "minimum_observed_ancestor_headroom_bytes": (
+                    min(observed_cgroup_headroom)
+                    if observed_cgroup_headroom
+                    else None
+                ),
+                "status": (
+                    "partially_measured"
+                    if cgroup_missing_finite
+                    else "measured"
+                    if observed_cgroup_headroom
+                    else "not_measured"
+                ),
+                "missing_required_measurement": cgroup_measurement_missing,
+                "pass": (
+                    False
+                    if cgroup_measurement_missing
+                    else None
+                    if not observed_cgroup_headroom
+                    or not isinstance(cgroup_headroom_reserve, int)
+                    else all(
+                        value >= cgroup_headroom_reserve
+                        for value in observed_cgroup_headroom
+                    )
+                ),
+                "history_peak_bytes": max(
+                    (
+                        phase.get("cgroup_history_peak_bytes")
+                        for phase in current_phases
+                        if isinstance(phase.get("cgroup_history_peak_bytes"), int)
+                    ),
+                    default=None,
+                ),
+                "history_semantics": (
+                    "visible cgroup memory.peak history; not the job process-tree peak"
+                ),
+                "missing_finite_headroom_is": (
+                    "not_measured" if cgroup_missing_finite else None
+                ),
+            }
+            phase_global_swap = [
+                phase.get("global_swap", {}) for phase in current_phases
+            ]
+            global_peak_values = _int_values(
+                [
+                    preflight.get("global_swap_used_bytes"),
+                    *[
+                        row.get("peak_used_bytes")
+                        for row in phase_global_swap
+                        if isinstance(row, Mapping)
+                    ],
+                ]
+            )
+            global_new_values = _int_values(
+                [
+                    row.get("new_used_bytes")
+                    for row in phase_global_swap
+                    if isinstance(row, Mapping)
+                ]
+            )
+            resource_authority["global_swap"] = {
+                "baseline_used_bytes": (
+                    global_swap_baseline.get("global_swap_used_bytes")
+                    if global_swap_baseline is not None
+                    else preflight.get("global_swap_used_bytes")
+                ),
+                "peak_used_bytes": max(global_peak_values, default=None),
+                "new_activity_bytes": max(global_new_values, default=None),
+                "preexisting_activity_semantics": (
+                    "baseline global swap is recorded separately from this invocation"
+                ),
+                "job_swap_peak_bytes": result["workflow_peak"].get("swap_bytes"),
+                "vmstat_deltas": {
+                    "pswpin_pages": max(
+                        _int_values(
+                            [
+                                row.get("pswpin_delta_pages")
+                                for row in phase_global_swap
+                                if isinstance(row, Mapping)
+                            ]
+                        ),
+                        default=None,
+                    ),
+                    "pswpout_pages": max(
+                        _int_values(
+                            [
+                                row.get("pswpout_delta_pages")
+                                for row in phase_global_swap
+                                if isinstance(row, Mapping)
+                            ]
+                        ),
+                        default=None,
+                    ),
+                },
+                "semantics": "shared-host diagnostic; job swap authority remains process tree/cgroup",
+            }
         if phase_limits:
             resource_authority["phase_limits"] = {
                 phase: dict(limits) for phase, limits in phase_limits.items()
@@ -1473,6 +2829,11 @@ def _child_environment() -> dict[str, str]:
 
 
 def _task041_builders() -> dict[str, Callable[..., list[str]]]:
+    from benchmarks.task041_balh_workflow import (
+        build_task041_balh_candidate_consumer_command,
+        build_task041_balh_exact_consumer_command,
+        build_task041_balh_mode_prep_command,
+    )
     from benchmarks.task041_exact_side_workflow import (
         build_task041_consumer_command,
         build_task041_mode_prep_command,
@@ -1485,6 +2846,9 @@ def _task041_builders() -> dict[str, Callable[..., list[str]]]:
         "consumer": build_task041_consumer_command,
         "shortwave_mode_prep": build_task041_shortwave_mode_prep_command,
         "shortwave_consumer": build_task041_shortwave_consumer_command,
+        "balh_mode_prep": build_task041_balh_mode_prep_command,
+        "balh_exact_consumer": build_task041_balh_exact_consumer_command,
+        "balh_candidate_consumer": build_task041_balh_candidate_consumer_command,
     }
 
 

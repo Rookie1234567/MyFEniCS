@@ -17,6 +17,21 @@ def _read_int(path: Path) -> int | None:
         return None
 
 
+def _read_limit(path: Path) -> tuple[int | None, str]:
+    """Read a cgroup limit while retaining the ``max``/unreadable state."""
+
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None, "unreadable"
+    if value == "max":
+        return None, "max_or_unlimited"
+    try:
+        return int(value), "finite"
+    except ValueError:
+        return None, "unreadable"
+
+
 def _read_key_kib(path: Path, key: str) -> int | None:
     try:
         lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
@@ -46,6 +61,39 @@ def current_cgroup_path(pid: int | str = "self") -> Path | None:
     return None
 
 
+def _cgroup_memory_ancestors(path: Path) -> list[dict[str, Any]]:
+    root = Path("/sys/fs/cgroup")
+    rows: list[dict[str, Any]] = []
+    current = path
+    while root == current or root in current.parents:
+        limit, limit_state = _read_limit(current / "memory.max")
+        try:
+            relative = current.relative_to(root).as_posix()
+        except ValueError:
+            relative = str(current)
+        current_memory = _read_int(current / "memory.current")
+        if current == root and limit_state == "unreadable" and current_memory is None:
+            limit_state = "not_applicable_root"
+        rows.append(
+            {
+                "path": "/" if relative in {"", "."} else f"/{relative}",
+                "memory_current_bytes": current_memory,
+                "memory_peak_bytes": _read_int(current / "memory.peak"),
+                "memory_limit_bytes": limit,
+                "memory_limit_state": limit_state,
+                "memory_headroom_bytes": (
+                    None
+                    if limit is None or current_memory is None
+                    else max(0, limit - current_memory)
+                ),
+            }
+        )
+        if current == root:
+            break
+        current = current.parent
+    return rows
+
+
 def cgroup_snapshot(pid: int | str = "self") -> dict[str, Any]:
     path = current_cgroup_path(pid)
     if path is None:
@@ -56,6 +104,12 @@ def cgroup_snapshot(pid: int | str = "self") -> dict[str, Any]:
             "memory_current_bytes": None,
             "memory_peak_bytes": None,
             "memory_limit_bytes": None,
+            "memory_limit_state": "unreadable",
+            "memory_headroom_bytes": None,
+            "ancestor_memory": [],
+            "ancestor_hard_limit_bytes": None,
+            "ancestor_hard_limit_state": "unreadable",
+            "ancestor_memory_headroom_bytes": None,
             "swap_current_bytes": None,
         }
     try:
@@ -77,14 +131,59 @@ def cgroup_snapshot(pid: int | str = "self") -> dict[str, Any]:
     dedicated = bool(
         relative not in {".", "", "init.scope"} and not session_scope
     )
+    ancestor_memory = _cgroup_memory_ancestors(path)
+    finite_limits = [
+        int(row["memory_limit_bytes"])
+        for row in ancestor_memory
+        if row.get("memory_limit_state") == "finite"
+    ]
+    finite_headroom = [
+        int(row["memory_headroom_bytes"])
+        for row in ancestor_memory
+        if isinstance(row.get("memory_headroom_bytes"), int)
+    ]
+    ancestor_states = {
+        row.get("memory_limit_state")
+        for row in ancestor_memory
+        if row.get("memory_limit_state") != "not_applicable_root"
+    }
+    if finite_limits:
+        ancestor_limit_state = (
+            "partially_unreadable"
+            if "unreadable" in ancestor_states
+            else "finite"
+        )
+    elif not ancestor_states and ancestor_memory:
+        ancestor_limit_state = "not_applicable_root"
+    elif ancestor_memory and "unreadable" not in ancestor_states:
+        ancestor_limit_state = "max_or_unlimited"
+    else:
+        ancestor_limit_state = "unreadable"
+    current_limit, current_limit_state = _read_limit(path / "memory.max")
+    current_memory = _read_int(path / "memory.current")
     return {
         "path": f"/{relative}" if relative not in {".", ""} else "/",
         "readable": (path / "memory.current").is_file(),
         "dedicated_job_cgroup": dedicated,
         "member_count": len(members),
-        "memory_current_bytes": _read_int(path / "memory.current"),
+        "memory_current_bytes": current_memory,
         "memory_peak_bytes": _read_int(path / "memory.peak"),
-        "memory_limit_bytes": _read_int(path / "memory.max"),
+        "memory_limit_bytes": current_limit,
+        "memory_limit_state": current_limit_state,
+        "memory_headroom_bytes": (
+            None
+            if current_limit is None or current_memory is None
+            else max(0, current_limit - current_memory)
+        ),
+        "ancestor_memory": ancestor_memory,
+        "ancestor_hard_limit_bytes": min(finite_limits, default=None),
+        "ancestor_hard_limit_state": ancestor_limit_state,
+        "ancestor_memory_headroom_bytes": min(finite_headroom, default=None),
+        "scope_semantics": (
+            "shared_cgroup_diagnostic_only"
+            if not dedicated
+            else "dedicated_job_cgroup_authority"
+        ),
         "swap_current_bytes": _read_int(path / "memory.swap.current"),
     }
 
@@ -105,6 +204,50 @@ def vmstat_swap_pages() -> dict[str, int | None]:
     return {
         "pswpin_pages": values.get("pswpin"),
         "pswpout_pages": values.get("pswpout"),
+    }
+
+
+def proc_swaps_snapshot() -> dict[str, Any]:
+    """Read system swap-device usage as a shared-host diagnostic."""
+
+    try:
+        lines = Path("/proc/swaps").read_text(
+            encoding="utf-8", errors="ignore"
+        ).splitlines()
+    except OSError:
+        return {
+            "readable": False,
+            "device_count": None,
+            "used_bytes": None,
+        }
+    rows: list[dict[str, Any]] = []
+    for line in lines[1:]:
+        fields = line.split()
+        if len(fields) < 5:
+            continue
+        try:
+            size_kib = int(fields[2])
+            used_kib = int(fields[3])
+            priority = int(fields[4])
+        except ValueError:
+            return {
+                "readable": False,
+                "device_count": None,
+                "used_bytes": None,
+            }
+        rows.append(
+            {
+                "type": fields[1],
+                "size_bytes": size_kib * 1024,
+                "used_bytes": used_kib * 1024,
+                "priority": priority,
+            }
+        )
+    return {
+        "readable": True,
+        "device_count": len(rows),
+        "used_bytes": sum(int(row["used_bytes"]) for row in rows),
+        "devices": rows,
     }
 
 
@@ -156,6 +299,8 @@ class ProcessTreeSample:
     rss_bytes: int
     swap_bytes: int
     all_status_readable: bool
+    rss_by_pid_bytes: dict[int, int]
+    swap_by_pid_bytes: dict[int, int]
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -286,6 +431,16 @@ def process_tree_sample(root_pid: int) -> ProcessTreeSample:
         rss_bytes=sum(int(rss or 0) * 1024 for _ppid, rss, _swap in observed),
         swap_bytes=sum(int(swap or 0) * 1024 for _ppid, _rss, swap in observed),
         all_status_readable=readable,
+        rss_by_pid_bytes={
+            pid: int(processes[pid][1] or 0) * 1024
+            for pid in selected
+            if pid in processes
+        },
+        swap_by_pid_bytes={
+            pid: int(processes[pid][2] or 0) * 1024
+            for pid in selected
+            if pid in processes
+        },
     )
 
 
@@ -339,6 +494,8 @@ def resource_authority_sample(
     return {
         "process_tree": process_tree_payload,
         "job_cgroup": cgroup,
+        "host_memory": wsl_memory_snapshot(),
+        "global_swap": proc_swaps_snapshot(),
         "wsl_vm_global_swap_diagnostic": vmstat_swap_pages(),
         "memory_authority_bytes": memory_authority,
         "memory_authority_semantics": (

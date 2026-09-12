@@ -1,10 +1,14 @@
-from pathlib import Path
+import json
+import os
 import shutil
+from pathlib import Path
 
-from mpi4py import MPI
 import numpy as np
 import pytest
+from mpi4py import MPI
+from petsc4py import PETSc
 
+from benchmarks.task041_exact_side_workflow import _write_rank_pid_affinity
 from src.solvers.full3d_lifecycle_packet import (
     _ownership_is_contiguous,
     load_packet,
@@ -50,6 +54,148 @@ def test_pre_recovery_packet_roundtrip_hash_and_no_solver_objects(
     assert loaded["ownership_range"] == ownership
     assert loaded["global_size"] == 2 * comm.size
     assert result["manifest_sha256"] == loaded["manifest_sha256"]
+    comm.barrier()
+
+
+def test_pre_recovery_packet_roundtrip_from_petsc_vec_preserves_metadata(
+    tmp_path: Path,
+) -> None:
+    tmp_path, comm = _shared_packet_dir(tmp_path)
+    solution_vec = PETSc.Vec().createMPI((2, 2 * comm.size), comm=comm)
+    rhs_vec = PETSc.Vec().createMPI((2, 2 * comm.size), comm=comm)
+    try:
+        solution_vec.getArray()[:] = np.asarray(
+            [1.0 + 0.5j + comm.rank, 2.0 - 0.25j - comm.rank],
+            dtype=np.complex128,
+        )
+        rhs_vec.getArray()[:] = np.asarray(
+            [3.0 + 0.75j, 4.0 - 0.5j], dtype=np.complex128
+        )
+        ownership = tuple(int(value) for value in solution_vec.getOwnershipRange())
+        rank_offset = 2 * int(comm.rank)
+        identity = {
+            "source_sha": "a" * 40,
+            "input_sha256": "b" * 64,
+            "mpi_size": comm.size,
+        }
+        metadata = {
+            "layout": {
+                "type": "HybridAugmentedLayout",
+                "global_size": 2 * comm.size,
+                "bottom_ranges": [[rank, rank + 1] for rank in range(comm.size)],
+                "top_ranges": [[rank, rank + 1] for rank in range(comm.size)],
+                "combined_offsets": [2 * rank for rank in range(comm.size)],
+                "rank_offset": rank_offset,
+                "bottom_local_sizes": [1 for _ in range(comm.size)],
+                "top_local_sizes": [1 for _ in range(comm.size)],
+                "modal_count": 0,
+                "modal_owner": comm.size - 1,
+            },
+            "solve_report": {
+                "pass": False,
+                "relative_residual": 2.5e-8,
+                "reason": "diagnostic_failed_gate",
+                "backsolve_count": 1,
+            },
+            "qualification": "diagnostic-only",
+        }
+        result = write_packet(
+            tmp_path,
+            solution_vec.getArray(readonly=True),
+            rhs_vec.getArray(readonly=True),
+            identity=identity,
+            metadata=metadata,
+            ownership_range=ownership,
+            comm=comm,
+        )
+        assert result["pass"] is True
+        loaded = load_packet(
+            tmp_path / "manifest.json",
+            identity=identity,
+            expected_manifest_sha256=result["manifest_sha256"],
+            comm=comm,
+        )
+        np.testing.assert_array_equal(
+            loaded["solution"], solution_vec.getArray(readonly=True)
+        )
+        np.testing.assert_array_equal(loaded["rhs"], rhs_vec.getArray(readonly=True))
+        assert loaded["ownership_range"] == ownership
+        assert loaded["metadata"]["layout"]["modal_count"] == 0
+        assert loaded["metadata"]["solve_report"] == metadata["solve_report"]
+        assert loaded["metadata"]["qualification"] == "diagnostic-only"
+    finally:
+        solution_vec.destroy()
+        rhs_vec.destroy()
+    comm.barrier()
+
+
+def test_pre_recovery_packet_nonfinite_diagnostic_is_global_failure(tmp_path: Path):
+    tmp_path, comm = _shared_packet_dir(tmp_path)
+    solution_vec = PETSc.Vec().createMPI((2, 2 * comm.size), comm=comm)
+    rhs_vec = PETSc.Vec().createMPI((2, 2 * comm.size), comm=comm)
+    try:
+        solution_vec.getArray()[:] = np.asarray(
+            [1.0 + 1.0j, 2.0 - 1.0j], dtype=np.complex128
+        )
+        if comm.rank == 0:
+            solution_vec.getArray()[0] = np.nan + 0.0j
+        rhs_vec.getArray()[:] = np.asarray(
+            [1.0 + 0.0j, 2.0 + 0.0j], dtype=np.complex128
+        )
+        identity = {"source_sha": "c" * 40, "mpi_size": comm.size}
+        ownership = tuple(int(value) for value in solution_vec.getOwnershipRange())
+        result = write_packet(
+            tmp_path,
+            solution_vec.getArray(readonly=True),
+            rhs_vec.getArray(readonly=True),
+            identity=identity,
+            metadata={
+                "solve_report": {"pass": False, "reason": "nonfinite_residual"},
+                "qualification": "diagnostic-only",
+            },
+            ownership_range=ownership,
+            comm=comm,
+            allow_nonfinite_diagnostic=True,
+        )
+        assert result["pass"] is False
+        loaded = load_packet(
+            tmp_path / "manifest.json",
+            identity=identity,
+            expected_manifest_sha256=result["manifest_sha256"],
+            comm=comm,
+        )
+        if comm.rank == 0:
+            assert np.isnan(loaded["solution"][0])
+            manifest = json.loads((tmp_path / "manifest.json").read_text())
+            assert manifest["diagnostic_nonfinite"] is True
+        else:
+            assert np.isfinite(loaded["solution"]).all()
+        assert loaded["metadata"]["qualification"] == "diagnostic-only"
+    finally:
+        solution_vec.destroy()
+        rhs_vec.destroy()
+    comm.barrier()
+
+
+def test_rank_pid_affinity_map_uses_one_real_comm_gather(tmp_path: Path):
+    tmp_path, comm = _shared_packet_dir(tmp_path)
+    if comm.rank == 0:
+        tmp_path.mkdir(parents=True, exist_ok=True)
+    comm.barrier()
+    _write_rank_pid_affinity(
+        tmp_path,
+        phase="consumer",
+        source_sha="d" * 40,
+        comm=comm,
+    )
+    mapping = json.loads(
+        (tmp_path / "rank_pid_affinity.json").read_text(encoding="utf-8")
+    )
+    assert mapping["mpi_size"] == comm.size
+    assert mapping["record_count"] == comm.size
+    own = next(row for row in mapping["records"] if row["rank"] == comm.rank)
+    assert own["pid"] == os.getpid()
+    assert own["cpu_affinity_status"] in {"measured", "not_measured"}
     comm.barrier()
 
 

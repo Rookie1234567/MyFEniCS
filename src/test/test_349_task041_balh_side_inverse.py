@@ -9,6 +9,10 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.solvers.physical_balanced_physical_operator import (
+    P4ExactFactor,
+    P4PhysicalResidualGateError,
+)
 from src.solvers.physical_balanced_side_inverse import SideBalancedInverse
 
 pytestmark = pytest.mark.skipif(
@@ -155,6 +159,64 @@ class _IdentityP4:
         self.destroy_count += 1
 
 
+class _NonfiniteP4(_IdentityP4):
+    def solve_with_refinement(
+        self,
+        rhs: PETSc.Vec,
+        _solution: PETSc.Vec,
+        *,
+        residual_tolerance: float,
+    ) -> dict[str, object]:
+        self.solve_count += 1
+        rhs_norm = float(rhs.norm())
+        raise P4PhysicalResidualGateError(
+            {
+                "status": "failed_nonfinite_residual",
+                "rhs_norm": rhs_norm,
+                "residual_norm": float("nan"),
+                "relative_residual": float("nan"),
+                "residual_tolerance": float(residual_tolerance),
+                "backsolve_count": self.solve_count,
+                "refinement_count": 0,
+            }
+        )
+
+
+class _RefinementFactor:
+    def __init__(self) -> None:
+        self.solve_count = 0
+        self.destroy_count = 0
+
+    def solve(self, _rhs: PETSc.Vec, solution: PETSc.Vec) -> None:
+        self.solve_count += 1
+        if self.solve_count <= 3:
+            solution.set(0.0)
+            return
+        _rhs.copy(solution)
+        solution.scale(PETSc.ScalarType(0.5))
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "solve_count": self.solve_count,
+            "direct_factor_count": int(self.destroy_count == 0),
+            "factor_destroyed": bool(self.destroy_count),
+        }
+
+    def destroy(self) -> None:
+        self.destroy_count += 1
+
+
+class _PhysicalP4Action:
+    def __init__(self, matrix: PETSc.Mat) -> None:
+        self.matrix = matrix
+        self.full_rows = 2
+        self.modes: tuple[object, ...] = ()
+
+    def destroy(self) -> None:
+        self.matrix.destroy()
+
+
 class _IdentityH6:
     def __init__(self) -> None:
         self.apply_count = 0
@@ -235,6 +297,7 @@ def _build_fixture(
     *,
     checkpoint_callback=None,
     audit_callback=None,
+    p4_factor=None,
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
     operator, operator_context = _scale_matrix(size, 2.0)
     condensed = _IdentityCondensed(size)
@@ -245,7 +308,7 @@ def _build_fixture(
         side="bottom",
     )
     full_action = _FullAction(size)
-    p4_factor = _IdentityP4(size)
+    p4_factor = _IdentityP4(size) if p4_factor is None else p4_factor
     transfer = _IdentityTransfer()
     h6 = _IdentityH6()
     inverse = SideBalancedInverse(
@@ -443,6 +506,102 @@ def test_side_inverse_dense_batch_bound_and_true_error_propagation() -> None:
         target_dense.destroy()
         inverse.destroy()
         operator.destroy()
+
+
+def test_side_inverse_preserves_current_nonfinite_p4_gate_audit() -> None:
+    audit_records: list[dict[str, object]] = []
+    failing_p4 = _NonfiniteP4(2)
+    inverse, owned = _build_fixture(
+        p4_factor=failing_p4,
+        audit_callback=audit_records.append,
+    )
+    operator = owned["operator"]
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    source_before = source.copy()
+    target = operator.createVecLeft()
+    try:
+        with pytest.raises((RuntimeError, PETSc.Error)):
+            inverse.apply(source, target)
+        record = inverse.diagnostics["last_apply"]
+        assert record["status"] == "FAILED"
+        assert record["failure_classification"] == "P4_PHYSICAL_RESIDUAL_GATE"
+        assert record["relative_residual"] == "not_measured"
+        assert record["p4_solve_audit"]["status"] == "failed_nonfinite_residual"
+        assert np.isnan(record["p4_solve_audit"]["relative_residual"])
+        assert record["p4_solve_audit"]["backsolve_count"] == 1
+        assert _relative_difference(source, source_before) == 0.0
+        assert audit_records[-1]["p4_solve_audit"]["rhs_norm"] > 0.0
+    finally:
+        source.destroy()
+        source_before.destroy()
+        target.destroy()
+        inverse.destroy()
+        operator.destroy()
+
+
+def test_p4_physical_gate_audit_uses_each_real_vec_rhs() -> None:
+    physical_matrix, physical_context = _scale_matrix(2, 2.0)
+    augmented_matrix, _augmented_context = _scale_matrix(2, 1.0)
+    physical_action = _PhysicalP4Action(physical_matrix)
+    factor = _RefinementFactor()
+    p4 = P4ExactFactor(
+        physical_action=physical_action,
+        matrix=augmented_matrix,
+        factor=factor,
+        factor_events=["created"],
+    )
+    rhs1 = _new_vector(physical_matrix, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    augmented_rhs1 = p4.create_rhs(rhs1)
+    solution1 = augmented_rhs1.duplicate()
+    solution1.set(0.0)
+    rhs2 = _new_vector(physical_matrix, np.asarray([2.0 - 0.1j, 0.25 + 0.5j]))
+    augmented_rhs2 = p4.create_rhs(rhs2)
+    solution2 = augmented_rhs2.duplicate()
+    solution2.set(0.0)
+    rhs3 = _new_vector(physical_matrix, np.asarray([-0.3 + 0.6j, 0.9 - 0.2j]))
+    augmented_rhs3 = p4.create_rhs(rhs3)
+    solution3 = augmented_rhs3.duplicate()
+    solution3.set(0.0)
+    try:
+        with pytest.raises(P4PhysicalResidualGateError) as first_failure:
+            p4.solve_with_refinement(augmented_rhs1, solution1)
+        first_audit = first_failure.value.audit
+        assert first_audit["status"] == "failed_gate"
+        assert first_audit["residual_norm"] == pytest.approx(rhs1.norm())
+        assert first_audit["relative_residual"] == pytest.approx(1.0)
+        assert first_audit["backsolve_count"] == 3
+        assert first_audit["refinement_count"] == 2
+
+        second_audit = p4.solve_with_refinement(augmented_rhs2, solution2)
+        assert second_audit["status"] == "passed"
+        assert second_audit["rhs_norm"] == pytest.approx(rhs2.norm())
+        assert second_audit["rhs_norm"] != first_audit["rhs_norm"]
+        assert second_audit["backsolve_count"] == 1
+        assert second_audit["refinement_count"] == 0
+
+        physical_context.scale = PETSc.ScalarType(np.nan)
+        with pytest.raises(P4PhysicalResidualGateError) as nonfinite_failure:
+            p4.solve_with_refinement(augmented_rhs3, solution3)
+        nonfinite_audit = nonfinite_failure.value.audit
+        assert nonfinite_audit["status"] == "failed_nonfinite_residual"
+        assert np.isnan(nonfinite_audit["relative_residual"])
+        assert nonfinite_audit["backsolve_count"] == 1
+        assert nonfinite_audit["refinement_count"] == 0
+        assert factor.solve_count == 5
+        last_audit = p4.diagnostics["last_solve"]
+        assert last_audit["status"] == "failed_nonfinite_residual"
+        assert last_audit["backsolve_count"] == 1
+    finally:
+        rhs1.destroy()
+        augmented_rhs1.destroy()
+        solution1.destroy()
+        rhs2.destroy()
+        augmented_rhs2.destroy()
+        solution2.destroy()
+        rhs3.destroy()
+        augmented_rhs3.destroy()
+        solution3.destroy()
+        p4.destroy()
 
 
 @pytest.mark.parametrize(

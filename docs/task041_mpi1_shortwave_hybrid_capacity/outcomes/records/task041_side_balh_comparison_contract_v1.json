@@ -1,0 +1,74 @@
+{
+  "schema": "task041.side_balh.comparison_contract.v1",
+  "pair": {
+    "candidate_side": "left",
+    "exact_side": "right",
+    "phase_fit": false,
+    "consumer_sources_may_differ": true,
+    "selected_packet_must_match": true
+  },
+  "payload": {
+    "keys": [
+      "x_nm",
+      "y_nm",
+      "z_nm",
+      "E_V_per_m",
+      "H_A_per_m",
+      "modal_amplitudes",
+      "bottom_q",
+      "top_q"
+    ],
+    "field_shape": [5, 20, 40, 3],
+    "z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+    "coordinate_match": "exact",
+    "dtype": {
+      "coordinates": "float64",
+      "complex_arrays": "complex128"
+    },
+    "canonical_roles": [
+      "bottom.active_trace",
+      "bottom.full_fe",
+      "top.active_trace",
+      "top.full_fe"
+    ]
+  },
+  "thresholds": {
+    "observable_absolute": 1e-8,
+    "selected_field_relative_l2": 1e-6,
+    "selected_field_denominator_floor": 1e-30,
+    "canonical_relative_l2": 1e-5,
+    "canonical_denominator_floor": "numpy.finfo(float).tiny",
+    "external_significant_power_floor": 1e-8,
+    "external_significant_relative": 1e-6,
+    "normal_flux_relative_l2": 1e-4,
+    "own_residual": 5e-9,
+    "own_projection": 1e-8,
+    "own_traction": 1e-8,
+    "own_external_q": 1e-10,
+    "own_balance_volume": 1e-5,
+    "own_energy_closure": 1e-5
+  },
+  "own_gate": {
+    "residual_fields": [
+      "reported_relative_residual",
+      "global_true_relative_residual",
+      "bottom_true_relative_residual",
+      "top_true_relative_residual",
+      "modal_true_relative_residual"
+    ],
+    "outer_reason": "positive",
+    "rta_fields": ["R_total", "T_total", "A_balance", "A_volume"],
+    "official_fields_require_passed_residual_gate": true
+  },
+  "resource": {
+    "raw_sample_source": "numerical_output/log/memory_stages.jsonl",
+    "batch_wall_limit_seconds": 172800.0,
+    "sample_scope": "public_launcher_and_all_descendants",
+    "post_phase_sample_role": "phase_end_public_root",
+    "job_swap_bytes": 0,
+    "reserve_bytes": 412316860416,
+    "pss_uss": "optional_none_when_unreadable",
+    "current_invocation_peak": "raw_current_phase_samples",
+    "derived_common_workflow": "max(producer,consumer)_per_quantity"
+  }
+}

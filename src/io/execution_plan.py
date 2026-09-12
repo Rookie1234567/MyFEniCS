@@ -12,6 +12,7 @@ from typing import Any
 
 from .input_loader import InputError
 from .input_validation import (
+    TASK041_BALH_MODEL_IDS,
     TASK041_MODEL_ID,
     TASK041_SHORTWAVE_MODEL_IDS,
     task039_model_id_matches,
@@ -72,6 +73,7 @@ def method_adapter_identity(method: str, model_id: str | None = None) -> str:
     if method == "hybrid_iterative" and model_text in {
         TASK041_MODEL_ID,
         *TASK041_SHORTWAVE_MODEL_IDS,
+        *TASK041_BALH_MODEL_IDS,
     }:
         return TASK041_PUBLIC_SUPERVISOR_ADAPTER
     if model_text.startswith("task039_0p7nm"):
@@ -99,6 +101,7 @@ def method_adapter_available(method: str, model_id: str | None = None) -> bool:
     if method == "hybrid_iterative" and model_text in {
         TASK041_MODEL_ID,
         *TASK041_SHORTWAVE_MODEL_IDS,
+        *TASK041_BALH_MODEL_IDS,
     }:
         return True
     if model_text.startswith("task039_0p7nm"):

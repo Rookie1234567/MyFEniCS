@@ -178,8 +178,8 @@ FIELD_SPECS: Final = (
             "rectangular_block_grating",
         ),
         constraints=(
-            "2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/"
-            "flat_layer/rectangular_block_grating",
+            ("2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/"
+            "flat_layer/rectangular_block_grating"),
         ),
     ),
     _f(
@@ -268,8 +268,8 @@ FIELD_SPECS: Final = (
         "2D grating_width / 3D grating_width_x",
         "17.0",
         constraints=(
-            ">= 0; required only for grating geometry; optional or 0 for "
-            "non-grating geometry",
+            (">= 0; required only for grating geometry; optional or 0 for "
+            "non-grating geometry"),
         ),
     ),
     _f(
@@ -293,8 +293,8 @@ FIELD_SPECS: Final = (
         "grating_height",
         "120.0",
         constraints=(
-            ">= 0; required only for grating geometry; optional or 0 for "
-            "non-grating geometry",
+            (">= 0; required only for grating geometry; optional or 0 for "
+            "non-grating geometry"),
         ),
     ),
     # materials
@@ -379,8 +379,8 @@ FIELD_SPECS: Final = (
         "incident_theta_deg = 90 - grazing_angle_deg",
         "1.0",
         constraints=(
-            "required for Stage4 grating; 0 < value <= 90; mutually exclusive "
-            "with tilt_from_downward_z_deg",
+            ("required for Stage4 grating; 0 < value <= 90; mutually exclusive "
+            "with tilt_from_downward_z_deg"),
         ),
     ),
     _f(
@@ -392,8 +392,8 @@ FIELD_SPECS: Final = (
         "incident_theta_deg",
         "10.0",
         constraints=(
-            "finite; use for Stage1/Stage2 airbox/Fresnel, mutually exclusive "
-            "with grazing_angle_deg",
+            ("finite; use for Stage1/Stage2 airbox/Fresnel, mutually exclusive "
+            "with grazing_angle_deg"),
         ),
     ),
     _f(
@@ -607,8 +607,8 @@ FIELD_SPECS: Final = (
             "assembly_time_static_condensed",
         ),
         constraints=(
-            "assembly_time_variable_p_condensed remains internal/research-only "
-            "because its geometry-bound degree plan is not a v1 input",
+            ("assembly_time_variable_p_condensed remains internal/research-only "
+            "because its geometry-bound degree plan is not a v1 input"),
         ),
     ),
     _f(
@@ -668,11 +668,11 @@ FIELD_SPECS: Final = (
             "robin",
         ),
         constraints=(
-            "3D uses dtn_port/pml/robin0/strong_dirichlet; airbox maps to "
+            ("3D uses dtn_port/pml/robin0/strong_dirichlet; airbox maps to "
             "stage1_airbox/floquet_airbox/pml_airbox by Floquet/PML, Fresnel uses "
             "pml, Stage4 uses dtn_port/pml/robin0; 2d_port uses dtn/robin; "
             "2d_scattered uses pml; layered is scattering_background, not a "
-            "vertical boundary",
+            "vertical boundary"),
         ),
     ),
     _f(
@@ -685,8 +685,8 @@ FIELD_SPECS: Final = (
         '"layered"',
         allowed=("air", "layered"),
         constraints=(
-            "required for 2d_scattered and Stage4 3D; Stage4 currently requires "
-            "layered; may be omitted for port-only methods",
+            ("required for 2d_scattered and Stage4 3D; Stage4 currently requires "
+            "layered; may be omitted for port-only methods"),
         ),
     ),
     _f(
@@ -699,12 +699,12 @@ FIELD_SPECS: Final = (
         '"auto_propagating"',
         allowed=("zero_order", "auto_propagating"),
         constraints=(
-            "required only when vertical_boundary is dtn or dtn_port; 2D port maps "
+            ("required only when vertical_boundary is dtn or dtn_port; 2D port maps "
             "to port_use_diffraction_orders; explicit 2D port accepts zero_order "
             "or auto_propagating; ordinary TE with a 2D dtn boundary uses "
             "zero_order, while the explicit Task39 V3 TE profile opts into "
             "auto_propagating; legacy manual order selection is internal because "
-            "it mixed output fields into PDE selection",
+            "it mixed output fields into PDE selection"),
         ),
     ),
     _f(
@@ -772,9 +772,9 @@ FIELD_SPECS: Final = (
         required=True,
         allowed=METHOD_KINDS,
         constraints=(
-            "2D uses exactly one of 2d_scattered or 2d_port; 3D uses "
+            ("2D uses exactly one of 2d_scattered or 2d_port; 3D uses "
             "full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative; "
-            "no both/all mode",
+            "no both/all mode"),
         ),
     ),
     _f(
@@ -919,6 +919,7 @@ FIELD_SPECS: Final = (
             "full3d_m3a_physical_slab_two_level",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
             "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+            "hybrid_block_ldu_balh_side_inverse",
         ),
         constraints=("only reviewed iterative identities are public",),
     ),
@@ -1325,13 +1326,13 @@ SECTION_FIELD_KEYS: Final = MappingProxyType(
 __all__ = [
     "FIELD_SPECS",
     "FIELD_SPECS_BY_KEY",
-    "FieldSpec",
-    "IDENTITY_KEYS",
     "IDENTITY_FIELD_SPECS",
+    "IDENTITY_KEYS",
     "METHOD_KINDS",
-    "PUBLIC_FIELD_SPECS",
     "PUBLIC_FIELD_KEYS",
+    "PUBLIC_FIELD_SPECS",
     "SCHEMA_VERSION",
     "SECTION_FIELD_KEYS",
     "SECTION_NAMES",
+    "FieldSpec",
 ]

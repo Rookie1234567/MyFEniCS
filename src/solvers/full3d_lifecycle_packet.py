@@ -73,8 +73,14 @@ def write_packet(
     metadata: Mapping[str, Any],
     ownership_range: tuple[int, int] | np.ndarray,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
+    allow_nonfinite_diagnostic: bool = False,
 ) -> dict[str, Any]:
-    """Write one local ``npz`` shard and a rank-zero manifest."""
+    """Write one local ``npz`` shard and a rank-zero manifest.
+
+    Non-finite arrays remain rejected by default.  The explicit diagnostic
+    opt-in preserves a failed solve's owner shard for post-mortem inspection;
+    such a packet is never reported as a qualified recovery packet.
+    """
 
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
@@ -82,7 +88,8 @@ def write_packet(
     rhs = np.asarray(rhs, dtype=np.complex128)
     if solution.ndim != 1 or rhs.shape != solution.shape:
         raise ValueError("pre-recovery packet arrays must be matching 1-D vectors")
-    if not np.isfinite(solution).all() or not np.isfinite(rhs).all():
+    local_finite = bool(np.isfinite(solution).all() and np.isfinite(rhs).all())
+    if not local_finite and not allow_nonfinite_diagnostic:
         raise ValueError("pre-recovery packet arrays must be finite")
     ownership = tuple(int(value) for value in np.asarray(ownership_range).tolist())
     if len(ownership) != 2 or ownership[1] - ownership[0] != solution.size:
@@ -105,15 +112,14 @@ def write_packet(
     }
     shards = comm.allgather(shard)
     ownership_pass = _ownership_is_contiguous(shards)
+    global_finite = bool(comm.allreduce(local_finite, op=MPI.LAND))
     identity_value = _safe(identity)
     identity_sha = _sha256(_json_bytes(identity_value))
     identity_hashes = comm.allgather(identity_sha)
     if len(set(identity_hashes)) != 1:
         raise ValueError("pre-recovery identity hash differs across ranks")
     manifest_path = directory / "manifest.json"
-    local_pass = bool(
-        np.isfinite(solution).all() and np.isfinite(rhs).all() and ownership_pass
-    )
+    local_pass = bool(local_finite and ownership_pass)
     if comm.rank == 0:
         manifest = {
             "schema": PACKET_SCHEMA,
@@ -123,6 +129,7 @@ def write_packet(
             "global_size": int(max(item["ownership_range"][1] for item in shards)),
             "shards": sorted(shards, key=lambda item: item["rank"]),
             "metadata": _safe(metadata),
+            "diagnostic_nonfinite": bool(allow_nonfinite_diagnostic and not global_finite),
         }
         _atomic(manifest_path, _json_bytes(manifest) + b"\n")
     comm.barrier()

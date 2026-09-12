@@ -14,7 +14,7 @@ import json
 import os
 import sys
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -26,16 +26,22 @@ from petsc4py import PETSc
 
 from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.task039_v4_selected_mode_packet import (
+    TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
     TASK041_SELECTED_MODE_IDENTITY_SCHEMA,
     TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
     task041_selected_mode_scope,
     task041_shortwave_selected_mode_scope,
 )
 from src.io.input_validation import (
+    TASK041_BALH_MPI_SIZE,
     TASK041_MODEL_ID,
     TASK041_SHORTWAVE_MPI_SIZE,
     load_and_resolve,
     simulation_config_3d_from_normalized,
+    task041_balh_case,
+    task041_balh_phase_limits_for_model,
+    task041_balh_profile_errors,
+    task041_balh_workflow_limits,
     task041_profile_errors,
     task041_shortwave_case,
     task041_shortwave_phase_limits_for_model,
@@ -43,6 +49,7 @@ from src.io.input_validation import (
     task041_shortwave_workflow_limits,
 )
 from src.io.resolved_config import resolved_config_sha256
+from src.solvers.full3d_lifecycle_packet import write_packet
 from src.solvers.hybrid_interface_basis import canonical_mode_keys_sha256
 
 TASK041_MODE_PREP_SCHEMA = "task041.exact_side.mode_prep.v1"
@@ -98,6 +105,7 @@ TASK041_CONSUMER_MARKER_SEQUENCE = (
     "outer_solve_ready",
     "solve_complete",
     "true_residual_complete",
+    "solution_checkpoint_saved",
     "minimal_recovery_packet_saved",
     "outer_ksp_destroyed",
     "bottom_top_factors_destroyed",
@@ -385,6 +393,7 @@ def _task041_case_contract(
             raise Task041ModePrepError("Task041 legacy case requires MPI1")
         return {
             "shortwave": False,
+            "balh": False,
             "mpi_size": 1,
             "mode_count": 480,
             "mesh_target_nm": 4.0,
@@ -393,6 +402,46 @@ def _task041_case_contract(
             "consumer_schema": TASK041_CONSUMER_SCHEMA,
             "consumer_profile": TASK041_CONSUMER_PROFILE,
             "limits": _task041_legacy_limits(),
+        }
+
+    balh_case = task041_balh_case(model_id)
+    if balh_case is not None:
+        failures = tuple(task041_balh_profile_errors(normalized))
+        if failures:
+            detail = "; ".join(f"{field}: {message}" for field, message in failures)
+            raise Task041ModePrepError("Task041 side BAL_H profile rejected: " + detail)
+        if comm_size != TASK041_BALH_MPI_SIZE:
+            raise Task041ModePrepError("Task041 side BAL_H case requires MPI8")
+        from benchmarks.task041_balh_workflow import (
+            TASK041_BALH_CANDIDATE_CONSUMER_PROFILE,
+            TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA,
+            TASK041_BALH_EXACT_CONSUMER_PROFILE,
+            TASK041_BALH_EXACT_CONSUMER_SCHEMA,
+            TASK041_BALH_MODE_PREP_PROFILE,
+        )
+
+        route = str(balh_case["route"])
+        return {
+            "shortwave": False,
+            "balh": True,
+            "balh_route": route,
+            "mpi_size": TASK041_BALH_MPI_SIZE,
+            "mode_count": int(balh_case["mode_count"]),
+            "mesh_target_nm": float(balh_case["mesh_target_nm"]),
+            "degree": 6,
+            "mode_prep_profile": TASK041_BALH_MODE_PREP_PROFILE,
+            "consumer_schema": (
+                TASK041_BALH_EXACT_CONSUMER_SCHEMA
+                if route == "exact"
+                else TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA
+            ),
+            "consumer_profile": (
+                TASK041_BALH_EXACT_CONSUMER_PROFILE
+                if route == "exact"
+                else TASK041_BALH_CANDIDATE_CONSUMER_PROFILE
+            ),
+            "limits": dict(task041_balh_phase_limits_for_model(model_id, phase)),
+            "workflow_limits": dict(task041_balh_workflow_limits(model_id)),
         }
 
     failures = tuple(task041_shortwave_profile_errors(normalized))
@@ -408,6 +457,7 @@ def _task041_case_contract(
     phase_limits = dict(task041_shortwave_phase_limits_for_model(model_id, phase))
     return {
         "shortwave": True,
+        "balh": False,
         "mpi_size": TASK041_SHORTWAVE_MPI_SIZE,
         "mode_count": int(case["mode_count"]),
         "mesh_target_nm": discretization["mesh_target_nm"],
@@ -700,6 +750,49 @@ def _write_rank0_json(path: Path, payload: Mapping[str, Any], comm: Any) -> None
     comm.Barrier()
 
 
+def _write_rank_pid_affinity(
+    root: Path,
+    *,
+    phase: str,
+    source_sha: str,
+    comm: Any,
+) -> None:
+    """Persist one small rank-to-process/affinity map at worker preflight."""
+
+    try:
+        cpu_affinity = sorted(int(cpu) for cpu in os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        cpu_affinity = None
+    local = {
+        "rank": int(comm.rank),
+        "pid": int(os.getpid()),
+        "cpu_affinity": cpu_affinity,
+        "cpu_affinity_status": (
+            "measured" if cpu_affinity is not None else "not_measured"
+        ),
+    }
+    records = comm.gather(local, root=0)
+    if comm.rank == 0:
+        ordered = sorted(records or [], key=lambda row: int(row["rank"]))
+        _write_json(
+            root / "rank_pid_affinity.json",
+            {
+                "schema": "task041.rank_pid_affinity.v1",
+                "phase": phase,
+                "source_sha": source_sha,
+                "mpi_size": int(comm.size),
+                "record_count": len(ordered),
+                "status": (
+                    "measured"
+                    if len(ordered) == int(comm.size)
+                    else "partially_measured"
+                ),
+                "records": ordered,
+            },
+        )
+    comm.Barrier()
+
+
 def _write_marker(
     root: Path,
     started: float,
@@ -835,6 +928,13 @@ def run_task041_mode_prep(
     try:
         environment = _environment_snapshot()
         result["environment"] = environment
+        if contract["balh"]:
+            _write_rank_pid_affinity(
+                root,
+                phase=TASK041_MODE_PREP_PHASE,
+                source_sha=source_sha,
+                comm=comm,
+            )
         _write_marker(
             root,
             started,
@@ -850,11 +950,18 @@ def run_task041_mode_prep(
         result["memavailable_bytes"] = available
         resolved_sha = resolved_config_sha256(specification)
         cfg = simulation_config_3d_from_normalized(normalized)
-        identity_builder = (
-            build_task041_shortwave_packet_identity
-            if contract["shortwave"]
-            else build_task041_packet_identity
-        )
+        if contract["balh"]:
+            from benchmarks.task041_balh_workflow import (
+                build_task041_balh_packet_identity,
+            )
+
+            identity_builder = build_task041_balh_packet_identity
+        else:
+            identity_builder = (
+                build_task041_shortwave_packet_identity
+                if contract["shortwave"]
+                else build_task041_packet_identity
+            )
         identity = identity_builder(specification, normalized, source_sha, resolved_sha)
         recomputed_identity = identity_builder(
             specification, normalized, source_sha, resolved_sha
@@ -889,7 +996,7 @@ def run_task041_mode_prep(
                     "mesh_target_nm": contract["mesh_target_nm"],
                     "degree": contract["degree"],
                 }
-                if contract["shortwave"]
+                if contract["shortwave"] or contract["balh"]
                 else {}
             ),
         )
@@ -1197,16 +1304,39 @@ def _task041_consumer_sampled_column_contract(
     """Bind the fixed v1 or shortwave v2 sampled roles to a fresh manifest."""
 
     identity_schema = identity.get("schema")
-    if identity_schema == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
+    sampled_mode_schema = identity_schema in {
+        TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
+        TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
+    }
+    if identity_schema == TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA:
+        case = task041_balh_case(str(identity.get("model_id", "")))
+        if case is None or int(identity.get("mode_count", -1)) != int(
+            case["mode_count"]
+        ):
+            raise Task041ModePrepError(
+                "Task041 BAL_H sampled contract requires the registered M120/M480 case"
+            )
+        if identity.get("mpi_size") != TASK041_BALH_MPI_SIZE:
+            raise Task041ModePrepError("Task041 BAL_H sampled contract requires MPI8")
+        if identity.get("scope") != case["scope"]:
+            raise Task041ModePrepError(
+                "Task041 BAL_H sampled contract scope does not match the case"
+            )
+        if identity.get("cross_section_partition") != "input_contiguous_v1":
+            raise Task041ModePrepError(
+                "Task041 BAL_H sampled contract requires input_contiguous_v1"
+            )
+        mode_count = int(case["mode_count"])
+        expected_contract_sha256 = None
+    elif identity_schema == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
         mode_count = identity.get("mode_count")
         if type(mode_count) is not int or mode_count not in (800, 1200):
             raise Task041ModePrepError(
                 "Task041 shortwave sampled contract requires M800 or M1200"
             )
-        if (
-            type(identity.get("mpi_size")) is not int
-            or identity.get("mpi_size") != TASK041_SHORTWAVE_MPI_SIZE
-        ):
+        if type(identity.get("mpi_size")) is not int or identity.get(
+            "mpi_size"
+        ) != TASK041_SHORTWAVE_MPI_SIZE:
             raise Task041ModePrepError(
                 "Task041 shortwave sampled contract requires MPI8"
             )
@@ -1222,6 +1352,25 @@ def _task041_consumer_sampled_column_contract(
             raise Task041ModePrepError(
                 "Task041 shortwave sampled contract requires input_contiguous_v1"
             )
+        expected_contract_sha256 = None
+    else:
+        if identity_schema not in (None, TASK041_SELECTED_MODE_IDENTITY_SCHEMA):
+            raise Task041ModePrepError(
+                "Task041 consumer sampled contract has an unsupported identity schema"
+            )
+        if int(identity.get("mode_count", -1)) != 480 or int(
+            identity.get("mpi_size", -1)
+        ) != 1:
+            raise Task041ModePrepError("Task041 consumer sampled contract requires M480/MPI1")
+        contract = {
+            "columns": list(TASK041_CONSUMER_SAMPLE_COLUMNS),
+            "mode_count_per_direction": 480,
+            "roles": {
+                key: list(value) for key, value in TASK041_CONSUMER_SAMPLE_ROLES.items()
+            },
+        }
+        expected_contract_sha256 = TASK041_CONSUMER_SAMPLE_CONTRACT_SHA256
+    if sampled_mode_schema:
         offsets = (0, 1, mode_count // 2, mode_count - 1)
         columns = [*offsets, *(mode_count + offset for offset in offsets)]
         roles = {
@@ -1267,24 +1416,6 @@ def _task041_consumer_sampled_column_contract(
             "mode_count_per_direction": mode_count,
             "roles": roles,
         }
-        expected_contract_sha256 = None
-    else:
-        if identity_schema not in (None, TASK041_SELECTED_MODE_IDENTITY_SCHEMA):
-            raise Task041ModePrepError(
-                "Task041 consumer sampled contract has an unsupported identity schema"
-            )
-        if int(identity.get("mode_count", -1)) != 480 or int(
-            identity.get("mpi_size", -1)
-        ) != 1:
-            raise Task041ModePrepError("Task041 consumer sampled contract requires M480/MPI1")
-        contract = {
-            "columns": list(TASK041_CONSUMER_SAMPLE_COLUMNS),
-            "mode_count_per_direction": 480,
-            "roles": {
-                key: list(value) for key, value in TASK041_CONSUMER_SAMPLE_ROLES.items()
-            },
-        }
-        expected_contract_sha256 = TASK041_CONSUMER_SAMPLE_CONTRACT_SHA256
     if not manifest_path.is_file() or not _valid_sha(manifest_sha256, 64):
         raise Task041ModePrepError("Task041 consumer packet manifest is not available")
     actual_manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
@@ -1597,6 +1728,770 @@ def _task041_consumer_authority_gate(
     return gates
 
 
+def _run_task041_balh_candidate_setup(
+    setup: Any,
+    layout: Any,
+    *,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    sampled_column_contract: Mapping[str, Any],
+    qualification_scope: str,
+    full_formal_runner: Callable[..., Mapping[str, Any]],
+    timeout_seconds: float,
+    audit_path: Path,
+    elapsed_seconds: float,
+    failure_evidence: dict[str, Any],
+    identity: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the finite-response BAL_H Schur and run the shared formal path."""
+
+    from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
+    from src.solvers.hybrid_fem_modal_block_ldu import (
+        create_side_balh_block_ldu_preconditioner,
+    )
+    from src.solvers.hybrid_fem_modal_iterative import (
+        create_hybrid_assembled_block_action,
+    )
+    from src.solvers.hybrid_fem_modal_augmented_direct import (
+        internal_modal_rhs_correction,
+    )
+    from src.solvers.hybrid_fem_modal_schur_direct import modal_coupling_action
+    from src.solvers.physical_balanced_side_inverse import (
+        build_side_balanced_inverse,
+    )
+
+    side_inverses: dict[str, Any] = {}
+    probe_records: dict[str, list[dict[str, Any]]] = {
+        "bottom": [],
+        "top": [],
+    }
+    probe_active = {"bottom": True, "top": True}
+    context = None
+    operator = None
+    operator_context = None
+    released = False
+    side_diagnostics_before: dict[str, dict[str, Any]] = {}
+    side_diagnostics_after: dict[str, dict[str, Any]] = {}
+    context_inventory_before: dict[str, Any] | None = None
+    audit_path = Path(audit_path)
+    audit_path.parent.mkdir(parents=True, exist_ok=True)
+    helper_started = time.monotonic()
+    audit_indices = {"bottom": 0, "top": 0}
+    audit_phase = {"bottom": "cost_probe", "top": "cost_probe"}
+    global_source: PETSc.Vec | None = None
+    global_source_before: PETSc.Vec | None = None
+    global_action_before: PETSc.Vec | None = None
+    global_rhs_before: PETSc.Vec | None = None
+
+    def audit_callback(side: str) -> Callable[[dict[str, Any]], None]:
+        def record(audit: dict[str, Any]) -> None:
+            index = audit_indices[side]
+            audit_indices[side] += 1
+            if probe_active[side]:
+                probe_records[side].append(dict(audit))
+            payload = {
+                "phase": audit_phase[side],
+                "side": side,
+                "index": index,
+                "status": audit.get("status"),
+                "reason": audit.get("reason"),
+                "iterations": audit.get("iterations"),
+                "elapsed_seconds": audit.get("elapsed_seconds"),
+                "counts": audit.get("counts"),
+                "audit": dict(audit),
+            }
+            if comm.rank == 0:
+                with audit_path.open("a", encoding="utf-8") as stream:
+                    stream.write(
+                        json.dumps(_jsonable(payload), sort_keys=True) + "\n"
+                    )
+                    stream.flush()
+
+        return record
+
+    def copy_vector(source: PETSc.Vec) -> PETSc.Vec:
+        target = source.duplicate()
+        source.copy(target)
+        return target
+
+    def fill_global_source(vector: PETSc.Vec) -> None:
+        first, last = (int(value) for value in vector.getOwnershipRange())
+        global_ids = np.arange(first, last, dtype=np.int64)
+        vector.getArray()[:] = (
+            0.21875
+            + 0.0078125 * (global_ids % 17)
+            + 1j * (0.09375 + 0.00390625 * (global_ids % 19))
+        ).astype(PETSc.ScalarType)
+        vector.assemble()
+
+    def vector_difference_norm(left: PETSc.Vec, right: PETSc.Vec) -> float:
+        difference = left.duplicate()
+        try:
+            left.copy(difference)
+            difference.axpy(PETSc.ScalarType(-1.0), right)
+            return float(difference.norm())
+        finally:
+            difference.destroy()
+
+    def probe_side(side: str, inverse: Any, system: Any) -> None:
+        mode_count = int(setup.coupling.mode_count_per_direction)
+        owned_vectors: list[PETSc.Vec] = []
+        try:
+            positive_values = np.zeros(2 * mode_count, dtype=np.complex128)
+            positive_values[0] = 1.0 + 0.25j
+            positive_modal_rhs = modal_coupling_action(
+                side, setup.coupling, positive_values
+            )
+            owned_vectors.append(positive_modal_rhs)
+
+            negative_values = np.zeros(2 * mode_count, dtype=np.complex128)
+            negative_values[mode_count] = -0.35 + 0.15j
+            negative_modal_rhs = modal_coupling_action(
+                side, setup.coupling, negative_values
+            )
+            owned_vectors.append(negative_modal_rhs)
+
+            external_rhs = copy_vector(system.b)
+            owned_vectors.append(external_rhs)
+            general_state = system.A.createVecRight()
+            owned_vectors.append(general_state)
+            first, last = map(int, general_state.getOwnershipRange())
+            seed_values = np.asarray(
+                (
+                    0.125 + 0.03125j,
+                    -0.0625 + 0.09375j,
+                    0.1875 - 0.046875j,
+                    -0.109375 - 0.078125j,
+                ),
+                dtype=PETSc.ScalarType,
+            )
+            general_state.getArray()[:] = np.asarray(
+                seed_values[
+                    np.mod(
+                        np.arange(first, last, dtype=np.int64), seed_values.size
+                    )
+                ],
+                dtype=PETSc.ScalarType,
+            )
+            general_state.assemble()
+            general_action = system.A.createVecLeft()
+            owned_vectors.append(general_action)
+            system.A.mult(general_state, general_action)
+            general_residual = copy_vector(external_rhs)
+            owned_vectors.append(general_residual)
+            general_residual.axpy(
+                PETSc.ScalarType(-1.0), general_action
+            )
+            rhs_items = (
+                ("modal_traction_positive", positive_modal_rhs),
+                ("modal_traction_negative", negative_modal_rhs),
+                ("external_physical_rhs", external_rhs),
+                ("general_residual", general_residual),
+            )
+            for label, rhs in rhs_items:
+                record_start = len(probe_records[side])
+                target = system.A.createVecLeft()
+                try:
+                    inverse.apply(rhs, target)
+                except BaseException:
+                    audit = dict(inverse.diagnostics.get("last_apply", {}))
+                    marker_callback(
+                        "candidate_cost_probe",
+                        {"side": side, "label": label, "audit": audit},
+                    )
+                    raise
+                finally:
+                    target.destroy()
+                if len(probe_records[side]) != record_start + 1:
+                    raise RuntimeError(
+                        f"BAL_H {side} cost probe did not receive an apply audit"
+                    )
+                marker_callback(
+                    "candidate_cost_probe",
+                    {
+                        "side": side,
+                        "label": label,
+                        "audit": dict(probe_records[side][-1]),
+                    },
+                )
+        finally:
+            probe_active[side] = False
+            for vector in owned_vectors:
+                vector.destroy()
+
+    def cost_probe_summary() -> dict[str, Any]:
+        sampled_count = len(sampled_column_contract["columns"])
+        internal_count = 2 * int(setup.coupling.mode_count_per_direction)
+        modal_build_calls = internal_count + 2 * sampled_count
+
+        def stats(values: list[float]) -> dict[str, Any]:
+            if not values:
+                return {
+                    "count": 0,
+                    "min_seconds": None,
+                    "mean_seconds": None,
+                    "max_seconds": None,
+                }
+            return {
+                "count": len(values),
+                "min_seconds": float(min(values)),
+                "mean_seconds": float(sum(values) / len(values)),
+                "max_seconds": float(max(values)),
+            }
+
+        side_summary: dict[str, Any] = {}
+        for side, records in probe_records.items():
+            nonzero_elapsed_values = [
+                float(record["elapsed_seconds"])
+                for record in records
+                if isinstance(record.get("elapsed_seconds"), (int, float))
+                and np.isfinite(float(record["elapsed_seconds"]))
+                and isinstance(record.get("rhs_norm"), (int, float))
+                and np.isfinite(float(record["rhs_norm"]))
+                and float(record["rhs_norm"]) > 0.0
+            ]
+            zero_rhs_count = sum(
+                1
+                for record in records
+                if isinstance(record.get("rhs_norm"), (int, float))
+                and np.isfinite(float(record["rhs_norm"]))
+                and float(record["rhs_norm"]) == 0.0
+            )
+            measured = stats(nonzero_elapsed_values)
+            if nonzero_elapsed_values:
+                estimates = {
+                    "optimistic_seconds": float(
+                        measured["min_seconds"] * modal_build_calls
+                    ),
+                    "central_seconds": float(
+                        measured["mean_seconds"] * modal_build_calls
+                    ),
+                    "conservative_seconds": float(
+                        measured["max_seconds"] * modal_build_calls
+                    ),
+                }
+            else:
+                estimates = {
+                    "optimistic_seconds": None,
+                    "central_seconds": None,
+                    "conservative_seconds": None,
+                }
+            side_summary[side] = {
+                "probe_call_count": len(records),
+                "measured_nonzero_rhs_elapsed": measured,
+                "zero_rhs_excluded_count": zero_rhs_count,
+                "probe_records": [dict(record) for record in records],
+                "derived_modal_schur_seconds": estimates,
+            }
+        optimistic_values = [
+            value["derived_modal_schur_seconds"]["optimistic_seconds"]
+            for value in side_summary.values()
+            if value["derived_modal_schur_seconds"]["optimistic_seconds"]
+            is not None
+        ]
+        central_values = [
+            value["derived_modal_schur_seconds"]["central_seconds"]
+            for value in side_summary.values()
+            if value["derived_modal_schur_seconds"]["central_seconds"] is not None
+        ]
+        conservative_values = [
+            value["derived_modal_schur_seconds"]["conservative_seconds"]
+            for value in side_summary.values()
+            if value["derived_modal_schur_seconds"]["conservative_seconds"]
+            is not None
+        ]
+        all_sides_measured = len(optimistic_values) == len(side_summary)
+        local_consumer_elapsed = float(elapsed_seconds) + (
+            time.monotonic() - helper_started
+        )
+        consumer_elapsed = float(
+            comm.allreduce(local_consumer_elapsed, op=MPI.MAX)
+        )
+        remaining_budget = max(float(timeout_seconds) - consumer_elapsed, 0.0)
+        summary = {
+            "status": "derived",
+            "rhs_contract": (
+                "modal_traction_positive, modal_traction_negative, "
+                "external_physical_rhs, general_residual"
+            ),
+            "side": side_summary,
+            "actual_probe_call_count": sum(
+                int(value["probe_call_count"]) for value in side_summary.values()
+            ),
+            "modal_schur_work_contract": {
+                "full_column_count_per_side": internal_count,
+                "sampled_column_count_per_side": sampled_count,
+                "sampled_repeat_builds_per_side": 2,
+                "full_builds_per_side": 1,
+                "planned_inverse_calls_per_side": modal_build_calls,
+                "planned_inverse_calls_total": 2 * modal_build_calls,
+                "batch_size": 32,
+            },
+            "estimate": {
+                "status": "derived" if all_sides_measured else "not_measured",
+                "optimistic_seconds_total": (
+                    float(sum(optimistic_values)) if all_sides_measured else None
+                ),
+                "central_seconds_total": (
+                    float(sum(central_values)) if all_sides_measured else None
+                ),
+                "conservative_seconds_total": (
+                    float(sum(conservative_values)) if all_sides_measured else None
+                ),
+                "uncertainty": {
+                    "method": "nonzero probe elapsed min-to-max representative range",
+                    "source": "four fixed side RHS measurements per side",
+                    "strict_bounds": False,
+                    "assumption": (
+                        "the observed min/mean/max per-RHS costs represent the "
+                        "planned modal columns and repeated builds"
+                    ),
+                },
+            },
+            "consumer_elapsed_seconds_before_modal_schur": consumer_elapsed,
+            "remaining_timeout_seconds": remaining_budget,
+        }
+        if all_sides_measured and float(
+            summary["estimate"]["optimistic_seconds_total"]
+        ) > remaining_budget:
+            summary["status"] = "SETUP_COST_BLOCKED"
+            summary["block"] = {
+                "basis": (
+                    "representative optimistic estimate exceeds remaining budget"
+                ),
+                "optimistic_seconds_total": summary["estimate"][
+                    "optimistic_seconds_total"
+                ],
+                "remaining_timeout_seconds": remaining_budget,
+                "strict_bound": False,
+            }
+            _write_rank0_json(
+                audit_path.with_name("candidate_setup_cost.json"), summary, comm
+            )
+            raise Task041ModePrepError(
+                "BAL_H modal Schur setup optimistic estimate exceeds remaining phase budget"
+            )
+        _write_rank0_json(
+            audit_path.with_name("candidate_setup_cost.json"), summary, comm
+        )
+        return summary
+
+    def release_before_recovery() -> Mapping[str, Any]:
+        nonlocal context, operator_context, operator, released
+        nonlocal global_source, global_source_before
+        nonlocal global_action_before, global_rhs_before
+        context_status = "not_created"
+        operator_context_status = "not_created"
+        operator_status = "not_created"
+        if context is not None and not bool(getattr(context, "_destroyed", False)):
+            context.destroy()
+            context_status = (
+                "destroyed"
+                if bool(getattr(context, "_destroyed", False))
+                else "destroy_failed"
+            )
+        elif context is not None:
+            context_status = "destroyed"
+        context = None
+        if operator_context is not None:
+            operator_context.destroy()
+            operator_context_status = (
+                "destroyed"
+                if bool(getattr(operator_context, "_destroyed", True))
+                else "destroy_failed"
+            )
+            operator_context = None
+        if operator is not None:
+            operator.destroy()
+            operator_status = "destroyed"
+            operator = None
+        for vector in (
+            global_source,
+            global_source_before,
+            global_action_before,
+            global_rhs_before,
+        ):
+            if vector is not None:
+                vector.destroy()
+        global_source = None
+        global_source_before = None
+        global_action_before = None
+        global_rhs_before = None
+        for side, inverse in side_inverses.items():
+            inverse.destroy()
+            side_diagnostics_after[side] = dict(inverse.diagnostics)
+            marker_callback(
+                f"{side}_construction_cleanup",
+                {
+                    "source": "SideBalancedInverse.destroy",
+                    "diagnostics": side_diagnostics_after[side],
+                    "p4_factor_count": side_diagnostics_after[side].get(
+                        "p4_factor_count"
+                    ),
+                    "nested_iterative_ksp_count": side_diagnostics_after[side].get(
+                        "nested_iterative_ksp_count"
+                    ),
+                },
+            )
+        cleanup = collective_heap_cleanup(comm)
+        released = True
+        factor_counts = {
+            side: int(diagnostics.get("p4_factor_count", 0))
+            for side, diagnostics in side_diagnostics_after.items()
+        }
+        objects_destroyed = bool(
+            side_diagnostics_after
+            and all(
+                diagnostics.get("destroyed") is True
+                for diagnostics in side_diagnostics_after.values()
+            )
+        )
+        factor_cleanup_pass = bool(
+            factor_counts
+            and all(count == 0 for count in factor_counts.values())
+        )
+        component_cleanup_pass = bool(
+            context_status in {"destroyed", "not_created"}
+            and operator_context_status in {"destroyed", "not_created"}
+            and operator_status in {"destroyed", "not_created"}
+            and objects_destroyed
+            and factor_cleanup_pass
+            and all(
+                int(diagnostics.get("nested_iterative_ksp_count", 0)) == 0
+                for diagnostics in side_diagnostics_after.values()
+            )
+        )
+        return {
+            "factor_count_after_cleanup": factor_counts,
+            "factor_cleanup_pass": factor_cleanup_pass,
+            "actions_destroyed": objects_destroyed,
+            "side_inverses_destroyed": objects_destroyed,
+            "component_cleanup_pass": component_cleanup_pass,
+            "component_cleanup": {
+                "status": "candidate_owned_components_destroyed",
+                "owned": {
+                    "modal_schur_context": context_status,
+                    "outer_operator_context": operator_context_status,
+                    "outer_operator": operator_status,
+                    "side_python_pc_and_ksp": objects_destroyed
+                    and all(
+                        int(diagnostics.get("nested_iterative_ksp_count", 0)) == 0
+                        for diagnostics in side_diagnostics_after.values()
+                    ),
+                    "full_action": objects_destroyed,
+                    "p4_factor": factor_cleanup_pass,
+                    "h6": objects_destroyed,
+                    "owner_transfer": objects_destroyed,
+                },
+                "borrowed_retained_for_recovery": [
+                    "setup.bottom",
+                    "setup.top",
+                    "setup.coupling",
+                    "side_systems.mesh_and_final_MPC",
+                ],
+            },
+            "collective_heap_cleanup": cleanup,
+            "side_diagnostics_after_destroy": {
+                side: dict(diagnostics)
+                for side, diagnostics in side_diagnostics_after.items()
+            },
+        }
+
+    try:
+        operator, operator_context = create_hybrid_assembled_block_action(
+            setup.bottom, setup.top, setup.coupling
+        )
+        global_source = layout.create_vector()
+        fill_global_source(global_source)
+        global_source_before = copy_vector(global_source)
+        global_action_before = operator.createVecLeft()
+        operator.mult(global_source, global_action_before)
+        global_rhs_before = layout.pack(
+            setup.bottom.b,
+            setup.top.b,
+            internal_modal_rhs_correction(setup.coupling),
+        )
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            marker_callback(
+                f"{side}_factor_setup_begin",
+                {
+                    "source": "build_side_balanced_inverse",
+                    "max_it": 128,
+                    "rtol": 1.0e-2,
+                },
+            )
+            side_inverses[side] = build_side_balanced_inverse(
+                system,
+                max_it=128,
+                rtol=1.0e-2,
+                audit_callback=audit_callback(side),
+            )
+            marker_callback(
+                f"{side}_F_ready",
+                {"source": "build_fullspace_physical_dtn_action"},
+            )
+            side_diagnostics_before[side] = dict(side_inverses[side].diagnostics)
+            marker_callback(
+                f"{side}_factor_ready",
+                {"source": "build_side_balanced_inverse", "diagnostics": side_diagnostics_before[side]},
+            )
+            marker_callback(
+                f"{side}_woodbury_ready",
+                {
+                    "source": "BAL_H_side_inverse",
+                    "qualification_method": "task041_balh_side_inverse_response_fgmres32",
+                },
+            )
+
+        admission_audits: dict[str, Any] = {}
+        for side, inverse in side_inverses.items():
+            admission_audits[side] = inverse.admission_audit(identity=identity)
+        admission_payload = {
+            "schema": "task041.h1g2b2b.candidate_side_admission.v1",
+            "identity": dict(identity) if identity is not None else {},
+            "sides": admission_audits,
+            "pass": all(
+                bool(audit.get("pass")) for audit in admission_audits.values()
+            ),
+        }
+        _write_rank0_json(
+            audit_path.with_name("balh_admission_audit.json"),
+            admission_payload,
+            comm,
+        )
+        if not admission_payload["pass"]:
+            failure_evidence["admission_audit"] = admission_payload
+            raise Task041ModePrepError(
+                "BAL_H side admission audit failed; raw audit was persisted"
+            )
+        global_action_after = operator.createVecLeft()
+        global_rhs_after = None
+        try:
+            operator.mult(global_source, global_action_after)
+            global_rhs_after = layout.pack(
+                setup.bottom.b,
+                setup.top.b,
+                internal_modal_rhs_correction(setup.coupling),
+            )
+            action_absolute = vector_difference_norm(
+                global_action_before, global_action_after
+            )
+            rhs_absolute = vector_difference_norm(
+                global_rhs_before, global_rhs_after
+            )
+            source_absolute = vector_difference_norm(
+                global_source_before, global_source
+            )
+            action_relative = action_absolute / max(
+                float(global_action_before.norm()), 1.0e-30
+            )
+            rhs_relative = rhs_absolute / max(
+                float(global_rhs_before.norm()), 1.0e-30
+            )
+            source_relative = source_absolute / max(
+                float(global_source_before.norm()), 1.0e-30
+            )
+        finally:
+            global_action_after.destroy()
+            if global_rhs_after is not None:
+                global_rhs_after.destroy()
+        global_identity = {
+            "source": "one original assembled global operator reused before/after side PC construction",
+            "action_absolute": action_absolute,
+            "action_relative": action_relative,
+            "rhs_absolute": rhs_absolute,
+            "rhs_relative": rhs_relative,
+            "source_unchanged_absolute": source_absolute,
+            "source_unchanged_relative": source_relative,
+            "threshold": 1.0e-12,
+            "pass": bool(
+                action_relative <= 1.0e-12
+                and rhs_relative <= 1.0e-12
+                and source_relative <= 1.0e-12
+            ),
+        }
+        admission_payload["global_operator_identity"] = global_identity
+        admission_payload["pass"] = bool(
+            admission_payload["pass"] and global_identity["pass"]
+        )
+        _write_rank0_json(
+            audit_path.with_name("balh_admission_audit.json"),
+            admission_payload,
+            comm,
+        )
+        for side, audit in admission_audits.items():
+            marker_callback(
+                f"{side}_admission_audit",
+                {"audit": audit, "pass": admission_payload["pass"]},
+            )
+        if not admission_payload["pass"]:
+            failure_evidence["admission_audit"] = admission_payload
+            raise Task041ModePrepError(
+                "BAL_H admission audit failed; raw audit was persisted"
+            )
+
+        for vector in (
+            global_source,
+            global_source_before,
+            global_action_before,
+            global_rhs_before,
+        ):
+            if vector is not None:
+                vector.destroy()
+        global_source = None
+        global_source_before = None
+        global_action_before = None
+        global_rhs_before = None
+
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            probe_side(side, side_inverses[side], system)
+        cost_probe = cost_probe_summary()
+        for side in audit_phase:
+            audit_phase[side] = "modal_schur"
+        p4_factor_counts_at_setup = {
+            side: int(diagnostics.get("p4_factor_count", 0))
+            for side, diagnostics in side_diagnostics_before.items()
+        }
+        nested_ksp_counts_at_setup = {
+            side: int(diagnostics.get("nested_iterative_ksp_count", 0))
+            for side, diagnostics in side_diagnostics_before.items()
+        }
+
+        marker_callback(
+            "both_side_actions_ready",
+            {
+                "source": "BAL_H_side_inverse_response_operators",
+                "inventory": {
+                    side: dict(diagnostics)
+                    for side, diagnostics in side_diagnostics_before.items()
+                },
+                "p4_factor_count": sum(p4_factor_counts_at_setup.values()),
+                "p6_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_iterative_ksp_count": sum(nested_ksp_counts_at_setup.values()),
+            },
+        )
+        marker_callback(
+            "modal_schur_build_begin",
+            {
+                "source": "create_side_balh_block_ldu_preconditioner",
+                "sampled_column_contract_sha256": sampled_column_contract["sha256"],
+            },
+        )
+        context = create_side_balh_block_ldu_preconditioner(
+            layout,
+            setup.bottom,
+            setup.top,
+            setup.coupling,
+            side_inverses["bottom"],
+            side_inverses["top"],
+            sampled_columns=sampled_column_contract["columns"],
+            sampled_column_roles=sampled_column_contract["roles"],
+            sampled_column_contract_sha256=sampled_column_contract["sha256"],
+            marker_callback=marker_callback,
+        )
+        context_inventory_before = dict(context.inventory)
+        marker_callback(
+            "modal_schur_ready",
+            {
+                "source": "create_side_balh_block_ldu_preconditioner",
+                "inventory": context_inventory_before,
+            },
+        )
+        for side in audit_phase:
+            audit_phase[side] = "outer"
+        marker_callback(
+            "outer_ksp_setup_ready",
+            {
+                "source": "formal_candidate_ksp_setup",
+                "ksp_type": "fgmres",
+                "restart": 32,
+                "max_it": 2048,
+                "threshold": 5.0e-9,
+                "initial_guess": "zero",
+                "pc_side": "right",
+                "preconditioner_inventory": context_inventory_before,
+                "setup_probe": False,
+            },
+        )
+        formal_result = dict(
+            full_formal_runner(
+                setup=setup,
+                layout=layout,
+                operator=operator,
+                context=context,
+                comm=comm,
+                marker_callback=marker_callback,
+                release_before_recovery=release_before_recovery,
+            )
+        )
+        return {
+            "schema": "task041.side_balh.candidate_setup.v1",
+            "status": str(formal_result.get("status")),
+            "qualification_scope": qualification_scope,
+            "qualification_method": "task041_balh_side_inverse_response_fgmres32",
+            "qualification": "research_only_approximate_candidate",
+            "admission_audit": admission_payload,
+            "cost_probe": cost_probe,
+            "side_rhs_audit_path": str(audit_path),
+            "side_actions": {
+                side: dict(diagnostics)
+                for side, diagnostics in side_diagnostics_before.items()
+            },
+            "side_diagnostics_after_destroy": {
+                side: dict(diagnostics)
+                for side, diagnostics in side_diagnostics_after.items()
+            },
+            "candidate_inventory": {
+                "p4_factor_count_at_setup": sum(
+                    p4_factor_counts_at_setup.values()
+                ),
+                "p4_factor_count_after_cleanup": {
+                    side: int(diagnostics.get("p4_factor_count", 0))
+                    for side, diagnostics in side_diagnostics_after.items()
+                },
+                "p6_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_iterative_ksp_count_at_setup": sum(
+                    nested_ksp_counts_at_setup.values()
+                ),
+                "nested_iterative_ksp_count_after_cleanup": {
+                    side: int(diagnostics.get("nested_iterative_ksp_count", 0))
+                    for side, diagnostics in side_diagnostics_after.items()
+                },
+                "modal_block": "finite_nonlinear_side_inverse_response_columns",
+                "approximate_preconditioner_only": True,
+                "component_cleanup_pass": formal_result.get(
+                    "release_before_recovery", {}
+                ).get("component_cleanup_pass"),
+            },
+            "modal_schur": context_inventory_before.get("modal_schur")
+            if context_inventory_before is not None
+            else None,
+            "outer_ksp": {
+                "type": "fgmres",
+                "restart": 32,
+                "max_it": 2048,
+                "threshold": 5.0e-9,
+                "initial_guess": "zero",
+                "pc_side": "right",
+                "setup_probe": False,
+            },
+            "full_formal": formal_result,
+        }
+    except BaseException:
+        for side, inverse in side_inverses.items():
+            last_apply = dict(inverse.diagnostics.get("last_apply", {}))
+            if last_apply.get("failure_classification") in {
+                "P4_PHYSICAL_RESIDUAL_GATE",
+                "BALANCED_CONSTRAINT_REJECTED",
+            }:
+                failure_evidence[side] = last_apply
+        if not released:
+            release_before_recovery()
+        raise
+
+
 def run_task041_consumer(
     *,
     input_path: str | Path,
@@ -1606,9 +2501,10 @@ def run_task041_consumer(
     run_directory: str | Path,
     source_sha: str,
     packet_producer_source_sha: str | None = None,
+    candidate: bool = False,
     comm: Any = MPI.COMM_WORLD,
 ) -> dict[str, Any]:
-    """Consume one fresh Task041 packet through the reviewed exact-side path."""
+    """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
     if not _valid_sha(source_sha, 40):
         raise Task041ModePrepError("source_sha must be a lowercase 40-character SHA")
@@ -1617,8 +2513,21 @@ def run_task041_consumer(
     specification = load_and_resolve(input_path)
     normalized = specification.as_jsonable()
     contract = _task041_case_contract(normalized, comm.size, phase="consumer")
+    if candidate and not (
+        contract["balh"] and contract.get("balh_route") == "balh"
+    ):
+        raise Task041ModePrepError(
+            "Task041 candidate worker requires the registered BAL_H candidate profile"
+        )
+    if not candidate and contract["balh"] and contract.get("balh_route") == "balh":
+        raise Task041ModePrepError(
+            "Task041 BAL_H candidate profile requires the candidate worker entry point"
+        )
     root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
+    candidate_audit_path = (
+        root / "numerical_output" / "balh_side_rhs_audits.jsonl"
+    )
     result: dict[str, Any] = {
         "schema": contract["consumer_schema"],
         "profile": contract["consumer_profile"],
@@ -1653,12 +2562,15 @@ def run_task041_consumer(
             "recovery": 0,
         },
     }
+    if candidate:
+        result["side_rhs_audit_path"] = str(candidate_audit_path)
     environment: dict[str, Any] = {}
     marker_records: list[dict[str, Any]] = []
     factor_events: dict[str, list[dict[str, Any]]] = {"bottom": [], "top": []}
     setup = None
     cleanup_release: dict[str, Any] = {"status": "not_run"}
     release_audit: dict[str, Any] = {}
+    candidate_failure_evidence: dict[str, Any] = {}
     error: BaseException | None = None
     current_stage = "consumer_preflight"
     recovery_markers_started = False
@@ -1699,18 +2611,54 @@ def run_task041_consumer(
             solve_report = detail.get("solve_report", detail)
             emit("solve_complete", {"solve": solve_report})
             emit("true_residual_complete", {"solve": solve_report})
+            if not contract["balh"]:
+                snapshot_path = root / "minimal_recovery_packet.json"
+                _write_rank0_json(
+                    snapshot_path,
+                    {
+                        "schema": "task041.exact_side.minimal_recovery_packet.v1",
+                        "status": "manifest_only",
+                        "source": "retained_solution_snapshot",
+                        "snapshot_location": "process_memory",
+                        "snapshot_lifetime": "until_recovery_consumes_it",
+                        "consumed_by": "run_v3_7_recovery_runner",
+                        "json_contains_solution": False,
+                        "solve_report_status": solve_report.get("status"),
+                    },
+                    comm,
+                )
+                emit(
+                    "minimal_recovery_packet_saved",
+                    {
+                        "path": str(snapshot_path),
+                        "kind": "manifest_only",
+                        "snapshot_location": "process_memory",
+                        "consumed_by": "run_v3_7_recovery_runner",
+                        "json_contains_solution": False,
+                    },
+                )
+        elif stage == "solution_checkpoint_saved":
+            checkpoint = detail.get("checkpoint")
             snapshot_path = root / "minimal_recovery_packet.json"
             _write_rank0_json(
                 snapshot_path,
                 {
-                    "schema": "task041.exact_side.minimal_recovery_packet.v1",
-                    "status": "manifest_only",
-                    "source": "retained_solution_snapshot",
-                    "snapshot_location": "process_memory",
-                    "snapshot_lifetime": "until_recovery_consumes_it",
+                    "schema": "task041.side_balh.minimal_recovery_packet.v2",
+                    "status": (
+                        checkpoint.get("qualification", "diagnostic-only")
+                        if isinstance(checkpoint, Mapping)
+                        else "diagnostic-only"
+                    ),
+                    "source": "retained_solution_owner_sharded_packet",
+                    "snapshot_location": (
+                        None
+                        if not isinstance(checkpoint, Mapping)
+                        else checkpoint.get("manifest")
+                    ),
+                    "snapshot_lifetime": "persistent_owner_sharded_disk_packet",
                     "consumed_by": "run_v3_7_recovery_runner",
                     "json_contains_solution": False,
-                    "solve_report_status": solve_report.get("status"),
+                    "checkpoint": checkpoint,
                 },
                 comm,
             )
@@ -1718,10 +2666,8 @@ def run_task041_consumer(
                 "minimal_recovery_packet_saved",
                 {
                     "path": str(snapshot_path),
-                    "kind": "manifest_only",
-                    "snapshot_location": "process_memory",
-                    "consumed_by": "run_v3_7_recovery_runner",
-                    "json_contains_solution": False,
+                    "kind": "owner_sharded_solution_packet",
+                    "checkpoint": checkpoint,
                 },
             )
         elif stage == "outer_solve_objects_cleanup":
@@ -1737,6 +2683,13 @@ def run_task041_consumer(
     try:
         environment = _environment_snapshot()
         result["environment"] = environment
+        if contract["balh"]:
+            _write_rank_pid_affinity(
+                root,
+                phase=TASK041_CONSUMER_PHASE,
+                source_sha=source_sha,
+                comm=comm,
+            )
         emit("preflight_begin", {"mpi_size": comm.size})
         available = _memavailable_bytes()
         if available < contract["limits"]["min_memavailable_bytes"]:
@@ -1754,25 +2707,58 @@ def run_task041_consumer(
             disk_identity.get("source_sha"),
         )
         packet_source_sha = source_identity["producer_source_sha"]
-        identity_builder = (
-            build_task041_shortwave_packet_identity
-            if contract["shortwave"]
-            else build_task041_packet_identity
-        )
-        recomputed_identity = identity_builder(
-            specification, normalized, packet_source_sha, resolved_sha
-        )
-        if dict(disk_identity) != recomputed_identity:
-            raise Task041ModePrepError("Task041 consumer packet identity recomputation mismatch")
+        consumer_binding: dict[str, Any] | None = None
+        if contract["balh"]:
+            if candidate and contract["balh_route"] != "balh":
+                raise Task041ModePrepError(
+                    "Task041 candidate worker received a non-candidate BAL_H profile"
+                )
+            if not candidate and contract["balh_route"] != "exact":
+                raise Task041ModePrepError(
+                    "Task041 BAL_H candidate profile requires the candidate worker entry point"
+                )
+            from benchmarks.task041_balh_workflow import (
+                build_task041_balh_packet_identity,
+                task041_balh_consumer_identity_binding,
+            )
+
+            packet_identity = dict(disk_identity)
+            consumer_binding = task041_balh_consumer_identity_binding(
+                packet_identity, specification, source_sha
+            )
+            recomputed_identity = build_task041_balh_packet_identity(
+                specification, normalized, source_sha, resolved_sha
+            )
+        else:
+            identity_builder = (
+                build_task041_shortwave_packet_identity
+                if contract["shortwave"]
+                else build_task041_packet_identity
+            )
+            recomputed_identity = identity_builder(
+                specification, normalized, packet_source_sha, resolved_sha
+            )
+            if dict(disk_identity) != recomputed_identity:
+                raise Task041ModePrepError(
+                    "Task041 consumer packet identity recomputation mismatch"
+                )
+            packet_identity = recomputed_identity
         if (
             recomputed_identity["mode_count"] != contract["mode_count"]
             or recomputed_identity["mpi_size"] != contract["mpi_size"]
         ):
             raise Task041ModePrepError("Task041 consumer identity does not match case contract")
-        emit("input_validated", {"identity": recomputed_identity})
+        emit(
+            "input_validated",
+            {
+                "identity": recomputed_identity,
+                "producer_identity": packet_identity,
+                "consumer_binding": consumer_binding,
+            },
+        )
         emit("packet_identity_validated", {"path": str(identity_path)})
         sampled_contract = _task041_consumer_sampled_column_contract(
-            recomputed_identity, manifest_path, packet_manifest_sha256
+            packet_identity, manifest_path, packet_manifest_sha256
         )
         emit(
             "packet_manifest_validated",
@@ -1784,16 +2770,35 @@ def run_task041_consumer(
         )
         cfg = simulation_config_3d_from_normalized(normalized)
         modal_cfg = deepcopy(cfg)
-        profile = (
-            _task041_shortwave_consumer_profile(specification)
-            if contract["shortwave"]
-            else _task041_consumer_profile()
-        )
-        iterative_config = (
-            task041_shortwave_consumer_iterative_config()
-            if contract["shortwave"]
-            else task041_consumer_iterative_config()
-        )
+        if contract["balh"]:
+            from benchmarks.task041_balh_workflow import (
+                task041_balh_candidate_consumer_iterative_config,
+                task041_balh_candidate_consumer_profile,
+                task041_balh_exact_consumer_iterative_config,
+                task041_balh_exact_consumer_profile,
+            )
+
+            profile = (
+                task041_balh_candidate_consumer_profile(specification)
+                if candidate
+                else task041_balh_exact_consumer_profile(specification)
+            )
+            iterative_config = (
+                task041_balh_candidate_consumer_iterative_config()
+                if candidate
+                else task041_balh_exact_consumer_iterative_config()
+            )
+        else:
+            profile = (
+                _task041_shortwave_consumer_profile(specification)
+                if contract["shortwave"]
+                else _task041_consumer_profile()
+            )
+            iterative_config = (
+                task041_shortwave_consumer_iterative_config()
+                if contract["shortwave"]
+                else task041_consumer_iterative_config()
+            )
         producer = {
             "producer_source_sha": packet_source_sha,
             "consumer_source_sha": source_sha,
@@ -1803,11 +2808,26 @@ def run_task041_consumer(
             "mpi_size": recomputed_identity["mpi_size"],
             "task041_scope": recomputed_identity["scope"],
             "qualification_scope": recomputed_identity["scope"],
-            "qualification_method": "task041_exact_side_full_formal",
+            "qualification_method": (
+                "task041_balh_side_inverse_response_fgmres32"
+                if candidate
+                else "task041_exact_side_full_formal"
+            ),
             "canonical_authority": True,
+            "consumer_route": "balh_candidate" if candidate else "balh_exact",
         }
         result["identity"] = recomputed_identity
+        result["producer_identity"] = packet_identity
+        if consumer_binding is not None:
+            result["consumer_binding"] = consumer_binding
         result["source_identity"] = source_identity
+        result["consumer_route"] = (
+            "task041_balh_candidate" if candidate else "task041_balh_exact"
+        ) if contract["balh"] else "task041_legacy"
+        result["qualification_method"] = producer["qualification_method"]
+        result["qualification_status"] = (
+            "research_only_approximate_candidate" if candidate else "exact_side"
+        )
         result["profile_config"] = _jsonable(asdict(profile))
         result["outer_config"] = _jsonable(asdict(iterative_config))
         if contract["shortwave"]:
@@ -1847,7 +2867,7 @@ def run_task041_consumer(
             exact_one_cell_work_dir=root / "numerical_output" / "exact_one_cell",
             detail_stage_callback=callback,
             selected_mode_packet_manifest=manifest_path,
-            selected_mode_packet_identity=recomputed_identity,
+            selected_mode_packet_identity=packet_identity,
             selected_mode_packet_manifest_sha256=packet_manifest_sha256,
             sampled_column_contract=sampled_contract,
         )
@@ -1898,6 +2918,82 @@ def run_task041_consumer(
                 recovery_producer,
                 run_integrated_checker=False,
             )
+
+        def retained_solution_checkpoint(
+            solution: PETSc.Vec,
+            rhs: PETSc.Vec,
+            solve_report: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            ownership = tuple(int(value) for value in solution.getOwnershipRange())
+            identity_value = {
+                "source_sha": source_sha,
+                "input_sha256": specification.input_sha256,
+                "physical_model_sha256": specification.physical_model_sha256,
+                "resolved_config_sha256": resolved_sha,
+                "producer_source_sha": packet_source_sha,
+                "producer_packet_manifest_sha256": packet_manifest_sha256,
+                "producer_packet_identity_sha256": hashlib.sha256(
+                    identity_path.read_bytes()
+                ).hexdigest(),
+                "model_id": recomputed_identity["model_id"],
+                "run_id": recomputed_identity["run_id"],
+                "mode_count": recomputed_identity["mode_count"],
+                "mpi_size": int(comm.size),
+            }
+            metadata = {
+                "source": "task041_balh_retained_solution",
+                "input_sha256": specification.input_sha256,
+                "physical_model_sha256": specification.physical_model_sha256,
+                "resolved_config_sha256": resolved_sha,
+                "producer_packet_manifest_sha256": packet_manifest_sha256,
+                "mpi": {"size": int(comm.size)},
+                "layout": {
+                    "type": type(layout).__name__,
+                    "global_size": int(solution.getSize()),
+                    "bottom_ranges": [list(row) for row in layout.bottom_ranges],
+                    "top_ranges": [list(row) for row in layout.top_ranges],
+                    "combined_offsets": list(layout.combined_offsets),
+                    "bottom_local_sizes": list(layout.bottom_local_sizes),
+                    "top_local_sizes": list(layout.top_local_sizes),
+                    "modal_count": int(layout.modal_count),
+                    "modal_owner": int(layout.modal_owner),
+                    "ownership": "contiguous rank-sharded PETSc ownership",
+                },
+                "ownership": {
+                    "global_size": int(solution.getSize()),
+                    "range": list(ownership),
+                },
+                "dtype": str(np.asarray(solution.getArray(readonly=True)).dtype),
+                "residual_gate_pass": bool(solve_report.get("pass") is True),
+                "solve_status": solve_report.get("status"),
+                "solve_report": _jsonable(solve_report),
+            }
+            packet_result = write_packet(
+                root / "numerical_output" / "retained_solution_packet",
+                np.asarray(solution.getArray(readonly=True)).copy(),
+                np.asarray(rhs.getArray(readonly=True)).copy(),
+                identity=identity_value,
+                metadata=metadata,
+                ownership_range=ownership,
+                comm=comm,
+                allow_nonfinite_diagnostic=True,
+            )
+            packet_pass = bool(packet_result.get("pass") is True)
+            residual_gate_pass = bool(solve_report.get("pass") is True)
+            return {
+                **packet_result,
+                "residual_gate_pass": residual_gate_pass,
+                "packet_pass": packet_pass,
+                "qualification": (
+                    "qualified-for-recovery"
+                    if residual_gate_pass and packet_pass
+                    else "diagnostic-only"
+                ),
+                "ownership_range": list(ownership),
+                "global_size": int(solution.getSize()),
+                "dtype": metadata["dtype"],
+                "solve_report": _jsonable(solve_report),
+            }
 
         def full_formal_runner(**kwargs: Any) -> Mapping[str, Any]:
             base_release = kwargs.pop("release_before_recovery")
@@ -1959,6 +3055,10 @@ def run_task041_consumer(
                 producer={**producer, "_stage_callback": callback},
                 run_directory=root,
                 iterative_config=iterative_config,
+                require_rss_drop=not contract["balh"],
+                retained_solution_checkpoint=(
+                    retained_solution_checkpoint if contract["balh"] else None
+                ),
                 release_before_recovery=release_before_recovery,
                 **kwargs,
             )
@@ -1970,31 +3070,49 @@ def run_task041_consumer(
                 "modal_batch_size": 32,
                 "early_sample_first": True,
             }
-            if contract["shortwave"]
+            if contract["shortwave"] or contract["balh"]
             else {}
         )
-        setup_result = run_v5_h4_exact_side_setup_only(
-            setup,
-            layout,
-            comm=comm,
-            marker_callback=callback,
-            qualification_scope=(
-                recomputed_identity["scope"]
-                if contract["shortwave"]
-                else "task039_v4_p6h4_m480_1deg_s"
-            ),
-            sampled_column_contract=sampled_contract,
-            v6_profile=False,
-            matrix_repeat_tolerance=(
-                V3_7_MATRIX_REPEAT_TOLERANCE if contract["shortwave"] else None
-            ),
-            **shortwave_batch_kwargs,
-            exact_spool_root=None,
-            packet_identity=recomputed_identity,
-            packet_manifest_sha256=packet_manifest_sha256,
-            full_formal_runner=full_formal_runner,
-            outer_probe_config=iterative_config,
-        )
+        if candidate:
+            setup_result = _run_task041_balh_candidate_setup(
+                setup,
+                layout,
+                comm=comm,
+                marker_callback=callback,
+                sampled_column_contract=sampled_contract,
+                qualification_scope=recomputed_identity["scope"],
+                full_formal_runner=full_formal_runner,
+                timeout_seconds=contract["limits"]["timeout_seconds"],
+                audit_path=candidate_audit_path,
+                elapsed_seconds=time.monotonic() - started,
+                failure_evidence=candidate_failure_evidence,
+                identity=recomputed_identity,
+            )
+        else:
+            setup_result = run_v5_h4_exact_side_setup_only(
+                setup,
+                layout,
+                comm=comm,
+                marker_callback=callback,
+                qualification_scope=(
+                    recomputed_identity["scope"]
+                    if contract["shortwave"] or contract["balh"]
+                    else "task039_v4_p6h4_m480_1deg_s"
+                ),
+                sampled_column_contract=sampled_contract,
+                v6_profile=False,
+                matrix_repeat_tolerance=(
+                    V3_7_MATRIX_REPEAT_TOLERANCE
+                    if contract["shortwave"] or contract["balh"]
+                    else None
+                ),
+                **shortwave_batch_kwargs,
+                exact_spool_root=None,
+                packet_identity=packet_identity,
+                packet_manifest_sha256=packet_manifest_sha256,
+                full_formal_runner=full_formal_runner,
+                outer_probe_config=iterative_config,
+            )
         formal_result = setup_result.get("full_formal")
         if not isinstance(formal_result, Mapping):
             raise Task041ModePrepError("Task041 consumer did not return full-formal result")
@@ -2046,7 +3164,11 @@ def run_task041_consumer(
         result["consumer_scope"] = {
             "local_systems": "created_and_released",
             "coupling": "created_and_released",
-            "factor": "local_exact_side_only",
+            "factor": (
+                "local_balh_side_inverse_response_schur"
+                if candidate
+                else "local_exact_side_only"
+            ),
             "solve": "right_gmres" if contract["shortwave"] else "right_fgmres",
             "recovery": "run_v3_7_recovery_runner",
         }
@@ -2059,6 +3181,32 @@ def run_task041_consumer(
             "direct_fallback": False,
             "old_mpi8_packet_loader": False,
         }
+        if candidate:
+            candidate_inventory = setup_result.get("candidate_inventory", {})
+            result["matrix_inventory"].update(
+                {
+                    "p4_factor_count_at_setup": candidate_inventory.get(
+                        "p4_factor_count_at_setup"
+                    ),
+                    "p4_factor_count_after_cleanup": candidate_inventory.get(
+                        "p4_factor_count_after_cleanup"
+                    ),
+                    "p6_factor_count": candidate_inventory.get("p6_factor_count"),
+                    "nested_iterative_ksp_count_at_setup": candidate_inventory.get(
+                        "nested_iterative_ksp_count_at_setup"
+                    ),
+                    "nested_iterative_ksp_count_after_cleanup": candidate_inventory.get(
+                        "nested_iterative_ksp_count_after_cleanup"
+                    ),
+                    "preconditioner_identity": candidate_inventory.get(
+                        "modal_block"
+                    ),
+                    "approximate_preconditioner_only": candidate_inventory.get(
+                        "approximate_preconditioner_only"
+                    ),
+                }
+            )
+            result["setup_cost_probe"] = setup_result.get("cost_probe")
         if gates["pass"] is not True:
             if formal_numerical_failure:
                 result["status"] = str(
@@ -2106,6 +3254,39 @@ def run_task041_consumer(
             "message": str(exc),
             "stage": current_stage,
         }
+        if candidate and candidate_failure_evidence:
+            result["failure_evidence"] = {
+                "side_rhs_audits": _jsonable(candidate_failure_evidence),
+            }
+            failure_classes = {
+                str(audit.get("failure_classification"))
+                for audit in candidate_failure_evidence.values()
+            }
+            if "P4_PHYSICAL_RESIDUAL_GATE" in failure_classes:
+                result["status"] = "task041_consumer_p4_gate_failure"
+                result["classification"] = (
+                    "TASK041_CONSUMER_P4_PHYSICAL_RESIDUAL_GATE"
+                )
+            elif "BALANCED_CONSTRAINT_REJECTED" in failure_classes:
+                result["status"] = "task041_consumer_balanced_constraint_failure"
+                result["classification"] = (
+                    "TASK041_CONSUMER_BALANCED_CONSTRAINT_REJECTED"
+                )
+        if candidate and candidate_audit_path.with_name(
+            "candidate_setup_cost.json"
+        ).is_file():
+            cost_path = candidate_audit_path.with_name("candidate_setup_cost.json")
+            cost_payload = json.loads(cost_path.read_text(encoding="utf-8"))
+            if (
+                isinstance(cost_payload, Mapping)
+                and cost_payload.get("status") == "SETUP_COST_BLOCKED"
+            ):
+                result["setup_cost_probe"] = _jsonable(cost_payload)
+                result["failure_evidence"] = {
+                    "cost_probe": _jsonable(cost_payload),
+                }
+                result["status"] = "SETUP_COST_BLOCKED"
+                result["classification"] = "TASK041_CONSUMER_SETUP_COST_BLOCKED"
     finally:
         current_stage = "final_cleanup"
         try:
@@ -2151,8 +3332,16 @@ def run_task041_consumer(
         }
         result["cleanup"] = cleanup_release
         result["factor_inventory"] = {
-            "schema": "task041.exact_side.factor_inventory.v1",
-            "source": "consumer factor_ready marker INFOG/RINFOG/Mat diagnostics",
+            "schema": (
+                "task041.side_balh.candidate_factor_inventory.v1"
+                if candidate
+                else "task041.exact_side.factor_inventory.v1"
+            ),
+            "source": (
+                "candidate SideBalancedInverse and BAL_H block diagnostics"
+                if candidate
+                else "consumer factor_ready marker INFOG/RINFOG/Mat diagnostics"
+            ),
             "bottom": factor_events["bottom"],
             "top": factor_events["top"],
             "not_used": {
@@ -2161,6 +3350,14 @@ def run_task041_consumer(
                 "ooc": 0,
             },
         }
+        if candidate:
+            result["factor_inventory"]["candidate_inventory"] = _jsonable(
+                result.get("setup", {}).get("candidate_inventory", {})
+            )
+            if candidate_failure_evidence:
+                result["factor_inventory"]["failure_evidence"] = _jsonable(
+                    candidate_failure_evidence
+                )
         try:
             emit(
                 "all_setup_objects_cleanup",

@@ -2,8 +2,9 @@
 
 import json
 import re
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 from src.io.input_schema import (
     FIELD_SPECS,
@@ -17,7 +18,6 @@ from src.io.input_schema import (
     SECTION_FIELD_KEYS,
     SECTION_NAMES,
 )
-
 
 ROOT = Path(__file__).parents[2]
 README = ROOT / "input" / "README.md"
@@ -132,6 +132,8 @@ def test_schema_identity_sections_and_unique_whitelist():
     assert FIELD_SPECS_BY_KEY["solver.preconditioner"].allowed == (
         "full3d_m3a_physical_slab_two_level",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
+        "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+        "hybrid_block_ldu_balh_side_inverse",
     )
     for key in (
         "geometry.period_y_nm",

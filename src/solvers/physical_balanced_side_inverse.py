@@ -10,7 +10,7 @@ remain borrowed.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from time import perf_counter
 from typing import Any
 
@@ -19,9 +19,13 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from .hybrid_local_dtn_action import HybridLocalDtnActionSystem
-from .physical_balanced_coupling import PhysicalBalancedCoupling
+from .physical_balanced_coupling import (
+    BalancedConstraintRejected,
+    PhysicalBalancedCoupling,
+)
 from .physical_balanced_h6 import build_balanced_h6
 from .physical_balanced_physical_operator import (
+    P4PhysicalResidualGateError,
     build_fullspace_physical_dtn_action,
     build_p4_exact_factor,
 )
@@ -181,6 +185,7 @@ class SideBalancedInverse:
         self._total_iterations = 0
         self._total_apply_seconds = 0.0
         self._last_apply: dict[str, Any] = {}
+        self._last_coupling_failure: dict[str, Any] | None = None
         self._cumulative_counts: dict[str, int | None] = {
             "side_A": _context_apply_count(operator),
             "pc": 0,
@@ -246,6 +251,374 @@ class SideBalancedInverse:
     def _checkpoint(self) -> None:
         self._checkpoint_count += 1
         self._checkpoint_callback()
+
+    def admission_audit(
+        self,
+        *,
+        identity: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Audit the owned BAL_H maps against the live side objects.
+
+        This is a bounded admission check for one side.  It exercises the
+        existing owner-routed ``P/P^H`` and ``J/J^H`` adapters, the matching
+        p4/p6 actions, and the borrowed ``F/C/D/H`` view.  It records scalar
+        distributed norms only; no FE-sized gather or new p6/p4 factor is built.
+        """
+
+        if (
+            self._destroyed
+            or self._side_system is None
+            or self._condensed is None
+            or self._operator is None
+            or self._full_action is None
+            or self._p4_factor is None
+            or self._owner_transfer is None
+        ):
+            raise RuntimeError("BAL_H admission audit requires live side components")
+
+        side_system = self._side_system
+        condensed = self._condensed
+        operator = self._operator
+        full_matrix = self._full_action.matrix
+        p4_matrix = self._p4_factor.physical_action.matrix
+        owner = self._owner_transfer
+        comm = self._comm
+        vectors: list[PETSc.Vec] = []
+
+        def keep(vector: PETSc.Vec) -> PETSc.Vec:
+            vectors.append(vector)
+            return vector
+
+        def copy_vector(vector: PETSc.Vec) -> PETSc.Vec:
+            result = keep(vector.duplicate())
+            vector.copy(result)
+            return result
+
+        def fill_bounded(
+            vector: PETSc.Vec,
+            seed: float,
+            slaves: np.ndarray | None = None,
+        ) -> None:
+            first, last = (int(value) for value in vector.getOwnershipRange())
+            global_ids = np.arange(first, last, dtype=np.int64)
+            values = vector.getArray()
+            values[:] = (
+                seed
+                + 0.0078125 * (global_ids % 11)
+                + 1j * (0.125 * seed + 0.00390625 * (global_ids % 13))
+            ).astype(PETSc.ScalarType)
+            if slaves is not None and len(slaves):
+                values[np.asarray(slaves, dtype=np.int64)] = 0.0
+            vector.assemble()
+
+        def norm(vector: PETSc.Vec) -> float:
+            return float(vector.norm())
+
+        def relative(numerator: float, denominator: float) -> float:
+            return numerator / max(denominator, 1.0e-30)
+
+        def difference_norm(left: PETSc.Vec, right: PETSc.Vec) -> float:
+            difference = left.duplicate()
+            try:
+                left.copy(difference)
+                difference.axpy(PETSc.ScalarType(-1.0), right)
+                return norm(difference)
+            finally:
+                difference.destroy()
+
+        def all_finite(*items: PETSc.Vec) -> bool:
+            local = all(
+                bool(np.isfinite(vector.getArray(readonly=True)).all())
+                for vector in items
+            )
+            return bool(comm.allreduce(local, op=MPI.LAND))
+
+        def max_selected(vector: PETSc.Vec, indices: np.ndarray) -> float:
+            values = np.asarray(vector.getArray(readonly=True))
+            local = (
+                float(np.max(np.abs(values[indices])))
+                if len(indices)
+                else 0.0
+            )
+            return float(comm.allreduce(local, op=MPI.MAX))
+
+        def complex_scalar(value: Any) -> dict[str, float]:
+            number = complex(value)
+            return {
+                "real": float(number.real),
+                "imag": float(number.imag),
+                "abs": float(abs(number)),
+            }
+
+        thresholds = {
+            "transfer_dot_relative": 1.0e-10,
+            "trace_dot_relative": 1.0e-10,
+            "galerkin_relative": 1.0e-10,
+            "condensed_action_relative": 1.0e-10,
+        }
+        try:
+            coarse_slaves = np.asarray(owner._coarse_slaves, dtype=np.int64)
+            fine_slaves = np.asarray(owner._fine_slaves, dtype=np.int64)
+
+            q1 = keep(p4_matrix.createVecRight())
+            q2 = keep(q1.duplicate())
+            fill_bounded(q1, 0.125, coarse_slaves)
+            fill_bounded(q2, -0.375, coarse_slaves)
+            q1_before = copy_vector(q1)
+            q2_before = copy_vector(q2)
+            p_q1 = keep(owner.apply_primal(q1))
+            p_q2 = keep(owner.apply_primal(q2))
+            p_q1_repeat = keep(owner.apply_primal(q1))
+            fine_probe = keep(full_matrix.createVecRight())
+            fill_bounded(fine_probe, 0.625, fine_slaves)
+            fine_probe_before = copy_vector(fine_probe)
+            ph_probe = keep(owner.apply_adjoint(fine_probe))
+
+            transfer_lhs = p_q1.dot(fine_probe)
+            transfer_rhs = q1.dot(ph_probe)
+            transfer_dot_abs = float(abs(transfer_lhs - transfer_rhs))
+            transfer_dot_rel = relative(
+                transfer_dot_abs,
+                max(abs(transfer_lhs), abs(transfer_rhs)),
+            )
+            p_alternation_abs = difference_norm(p_q1, p_q1_repeat)
+            p_alternation_rel = relative(
+                p_alternation_abs,
+                max(norm(p_q1), norm(p_q1_repeat)),
+            )
+            from dolfinx import fem
+
+            coarse_field = fem.Function(owner.coarse_space)
+            fine_oracle = fem.Function(owner.fine_space)
+            try:
+                q1.copy(coarse_field.x.petsc_vec)
+                coarse_field.x.scatter_forward()
+                owner.coarse_floquet.mpc.homogenize(coarse_field)
+                coarse_field.x.scatter_forward()
+                owner.coarse_floquet.mpc.backsubstitution(coarse_field)
+                coarse_field.x.scatter_forward()
+                fine_oracle.interpolate(coarse_field)
+                fine_oracle.x.scatter_forward()
+                owner.fine_floquet.mpc.homogenize(fine_oracle)
+                fine_oracle.x.scatter_forward()
+                oracle_absolute = difference_norm(
+                    p_q1, fine_oracle.x.petsc_vec
+                )
+                oracle_norm = norm(fine_oracle.x.petsc_vec)
+            finally:
+                del coarse_field, fine_oracle
+            oracle_relative = relative(oracle_absolute, norm(p_q1))
+            transfer = {
+                "dot_lhs_Pq_f": complex_scalar(transfer_lhs),
+                "dot_rhs_q_PHf": complex_scalar(transfer_rhs),
+                "dot_absolute": transfer_dot_abs,
+                "dot_relative": transfer_dot_rel,
+                "q1_input_unchanged_norm": difference_norm(q1_before, q1),
+                "q2_input_unchanged_norm": difference_norm(q2_before, q2),
+                "fine_probe_input_unchanged_norm": difference_norm(
+                    fine_probe_before, fine_probe
+                ),
+                "fine_owned_slave_max": max_selected(p_q1, fine_slaves),
+                "coarse_owned_slave_max": max_selected(ph_probe, coarse_slaves),
+                "alternating_q1_repeat_absolute": p_alternation_abs,
+                "alternating_q1_repeat_relative": p_alternation_rel,
+                "independent_fe_oracle_absolute": oracle_absolute,
+                "independent_fe_oracle_relative": oracle_relative,
+                "independent_fe_oracle_norm": oracle_norm,
+                "q1_norm": norm(q1),
+                "q2_norm": norm(q2),
+                "fine_probe_norm": norm(fine_probe),
+                "finite": all_finite(q1, q2, p_q1, p_q2, p_q1_repeat, fine_probe, ph_probe),
+            }
+            transfer_checks = {
+                "finite": transfer["finite"],
+                "dot": bool(transfer_dot_rel <= thresholds["transfer_dot_relative"]),
+                "fine_owned_slaves_zero": transfer["fine_owned_slave_max"] == 0.0,
+                "coarse_owned_slaves_zero": transfer["coarse_owned_slave_max"] == 0.0,
+                "inputs_unchanged": bool(
+                    transfer["q1_input_unchanged_norm"] == 0.0
+                    and transfer["q2_input_unchanged_norm"] == 0.0
+                    and transfer["fine_probe_input_unchanged_norm"] == 0.0
+                ),
+                "alternating": bool(
+                    p_alternation_rel <= thresholds["transfer_dot_relative"]
+                ),
+                "independent_fe_oracle": bool(
+                    oracle_relative <= thresholds["transfer_dot_relative"]
+                ),
+                "nonzero_inputs": bool(
+                    transfer["q1_norm"] > 0.0
+                    and transfer["q2_norm"] > 0.0
+                    and transfer["fine_probe_norm"] > 0.0
+                ),
+            }
+            transfer["checks"] = transfer_checks
+            transfer["pass"] = all(transfer_checks.values())
+
+            full_probe = keep(full_matrix.createVecRight())
+            fill_bounded(full_probe, -0.25)
+            full_probe_before = copy_vector(full_probe)
+            active_probe = keep(operator.createVecRight())
+            fill_bounded(active_probe, 0.875)
+            active_probe_before = copy_vector(active_probe)
+            active_j = keep(extract_full_p6_to_active_trace(condensed, full_probe))
+            full_jh = keep(full_matrix.createVecRight())
+            inject_active_residual_to_full_p6(condensed, active_probe, full_jh)
+            active_original = np.asarray(
+                condensed.trace_constraints.owned_active_original_dofs,
+                dtype=PETSc.IntType,
+            )
+            full_first = int(full_jh.getOwnershipRange()[0])
+            local_active = active_original.astype(np.int64) - full_first
+            local_interior = np.ones(full_jh.getLocalSize(), dtype=bool)
+            local_interior[local_active] = False
+            interior_max_local = (
+                float(
+                    np.max(
+                        np.abs(
+                            np.asarray(full_jh.getArray(readonly=True))[local_interior]
+                        )
+                    )
+                )
+                if np.any(local_interior)
+                else 0.0
+            )
+            interior_max = float(comm.allreduce(interior_max_local, op=MPI.MAX))
+            trace_lhs = active_j.dot(active_probe)
+            trace_rhs = full_probe.dot(full_jh)
+            trace_dot_abs = float(abs(trace_lhs - trace_rhs))
+            trace_dot_rel = relative(
+                trace_dot_abs,
+                max(abs(trace_lhs), abs(trace_rhs)),
+            )
+            trace = {
+                "dot_lhs_Jfull_y": complex_scalar(trace_lhs),
+                "dot_rhs_full_JHy": complex_scalar(trace_rhs),
+                "dot_absolute": trace_dot_abs,
+                "dot_relative": trace_dot_rel,
+                "full_input_unchanged_norm": difference_norm(
+                    full_probe_before, full_probe
+                ),
+                "active_input_unchanged_norm": difference_norm(
+                    active_probe_before, active_probe
+                ),
+                "injected_interior_max": interior_max,
+                "active_rows_local": int(active_original.size),
+                "finite": all_finite(full_probe, active_probe, active_j, full_jh),
+            }
+            trace_checks = {
+                "finite": trace["finite"],
+                "dot": bool(trace_dot_rel <= thresholds["trace_dot_relative"]),
+                "interior_zero": trace["injected_interior_max"] == 0.0,
+                "inputs_unchanged": bool(
+                    trace["full_input_unchanged_norm"] == 0.0
+                    and trace["active_input_unchanged_norm"] == 0.0
+                ),
+                "nonzero_inputs": bool(
+                    norm(full_probe) > 0.0 and norm(active_probe) > 0.0
+                ),
+            }
+            trace["checks"] = trace_checks
+            trace["pass"] = all(trace_checks.values())
+
+            a6_pq = keep(full_matrix.createVecLeft())
+            full_matrix.mult(p_q1, a6_pq)
+            ph_a6_p = keep(owner.apply_adjoint(a6_pq))
+            a4_q = keep(p4_matrix.createVecLeft())
+            p4_matrix.mult(q1, a4_q)
+            galerkin_absolute = difference_norm(ph_a6_p, a4_q)
+            galerkin_relative = relative(galerkin_absolute, norm(a4_q))
+            galerkin = {
+                "absolute": galerkin_absolute,
+                "relative": galerkin_relative,
+                "p4_output_norm": norm(a4_q),
+                "finite": all_finite(p_q1, a6_pq, ph_a6_p, a4_q),
+            }
+            galerkin_checks = {
+                "finite": galerkin["finite"],
+                "relative": bool(
+                    galerkin_relative <= thresholds["galerkin_relative"]
+                ),
+                "nonzero_input": bool(norm(q1) > 0.0),
+            }
+            galerkin["checks"] = galerkin_checks
+            galerkin["pass"] = all(galerkin_checks.values())
+
+            from .hybrid_local_dtn_action import (
+                create_hybrid_local_dtn_action_components,
+            )
+
+            action_source = keep(operator.createVecRight())
+            fill_bounded(action_source, 0.4375)
+            action_source_before = copy_vector(action_source)
+            action_before = keep(operator.createVecLeft())
+            operator.mult(action_source, action_before)
+            components = create_hybrid_local_dtn_action_components(side_system)
+            components_destroyed = False
+            try:
+                component_action = keep(operator.createVecLeft())
+                components.mult(action_source, component_action)
+                component_difference = difference_norm(action_before, component_action)
+                small_h_condition_number = float(components.h_condition_number)
+            finally:
+                components.destroy()
+                components_destroyed = True
+            action_relative = relative(component_difference, norm(action_before))
+            condensed_action = {
+                "F_C_H_D_action_absolute": component_difference,
+                "F_C_H_D_action_relative": action_relative,
+                "source_unchanged_norm": difference_norm(
+                    action_source_before, action_source
+                ),
+                "small_h_audit_factor": {
+                    "created": True,
+                    "creation_count": 1,
+                    "destroyed": components_destroyed,
+                    "destroy_count": int(components_destroyed),
+                    "source": "borrowed side_system.blocks.H",
+                    "condition_number": small_h_condition_number,
+                    "new_p6_p4_factor": False,
+                },
+                "finite": all_finite(
+                    action_source,
+                    action_before,
+                    component_action,
+                ),
+            }
+            condensed_checks = {
+                "finite": condensed_action["finite"],
+                "F_C_H_D_identity": bool(
+                    action_relative <= thresholds["condensed_action_relative"]
+                ),
+                "source_unchanged": bool(
+                    condensed_action["source_unchanged_norm"] == 0.0
+                ),
+                "nonzero_input": bool(norm(action_source) > 0.0),
+            }
+            condensed_action["checks"] = condensed_checks
+            condensed_action["pass"] = all(condensed_checks.values())
+
+            checks = {
+                "P_PH": bool(transfer["pass"]),
+                "J_JH": bool(trace["pass"]),
+                "Galerkin": bool(galerkin["pass"]),
+                "condensed_action": bool(condensed_action["pass"]),
+            }
+            return {
+                "schema": "task041.h1g2b2b.side_admission.v1",
+                "side": str(side_system.side),
+                "identity": dict(identity) if identity is not None else {},
+                "thresholds": thresholds,
+                "P_PH": transfer,
+                "J_JH": trace,
+                "Galerkin": galerkin,
+                "condensed_action": condensed_action,
+                "checks": checks,
+                "pass": all(checks.values()),
+            }
+        finally:
+            for vector in reversed(vectors):
+                vector.destroy()
 
     def _apply_a6_callback(self, source: PETSc.Vec) -> PETSc.Vec:
         if self._full_action is None:
@@ -334,7 +707,29 @@ class SideBalancedInverse:
             )
             if self._coupling is None:
                 raise RuntimeError("BAL_H coupling has been destroyed")
-            full_output = self._coupling.apply(full_source)
+            try:
+                full_output = self._coupling.apply(full_source)
+            except BaseException as exc:
+                failure: dict[str, Any] = {
+                    "exception_type": type(exc).__name__,
+                    "exception": str(exc),
+                }
+                if isinstance(exc, P4PhysicalResidualGateError):
+                    failure.update(
+                        {
+                            "failure_classification": "P4_PHYSICAL_RESIDUAL_GATE",
+                            "p4_solve_audit": dict(exc.audit),
+                        }
+                    )
+                elif isinstance(exc, BalancedConstraintRejected):
+                    failure.update(
+                        {
+                            "failure_classification": "BALANCED_CONSTRAINT_REJECTED",
+                            "balance_audit": dict(exc.facts),
+                        }
+                    )
+                self._last_coupling_failure = failure
+                raise
             self._j_count += 1
             active_output = extract_full_p6_to_active_trace(
                 self._condensed,
@@ -427,6 +822,7 @@ class SideBalancedInverse:
         self._apply_count += 1
         before = self._count_snapshot()
         started = perf_counter()
+        self._last_coupling_failure = None
         rhs_norm: Any = "not_measured"
         reason: int | None = None
         iterations = 0
@@ -511,6 +907,22 @@ class SideBalancedInverse:
                 },
                 **residual_audit,
             }
+            if self._last_coupling_failure is not None:
+                record.update(dict(self._last_coupling_failure))
+            elif isinstance(exc, P4PhysicalResidualGateError):
+                record.update(
+                    {
+                        "failure_classification": "P4_PHYSICAL_RESIDUAL_GATE",
+                        "p4_solve_audit": dict(exc.audit),
+                    }
+                )
+            elif isinstance(exc, BalancedConstraintRejected):
+                record.update(
+                    {
+                        "failure_classification": "BALANCED_CONSTRAINT_REJECTED",
+                        "balance_audit": dict(exc.facts),
+                    }
+                )
             self._last_apply = dict(record)
             if self._audit_callback is not None:
                 self._audit_callback(dict(record))

@@ -132,6 +132,13 @@ def _run_phase(
     timeout_seconds=None,
     workflow_started=0.0,
     phase_elapsed_timeout=False,
+    sample_root_pid=None,
+    min_memavailable_bytes=None,
+    min_cgroup_ancestor_headroom_bytes=None,
+    cumulative_compute_used_seconds=0.0,
+    cumulative_compute_limit_seconds=None,
+    global_swap_baseline=None,
+    partial_phase_results=None,
 ):
     (tmp_path / "numerical_output" / "log").mkdir(parents=True)
     limits = {
@@ -167,6 +174,13 @@ def _run_phase(
         / "memory_stage_markers.jsonl",
         process_group_gone=process_group_gone or (lambda _pid: True),
         phase_elapsed_timeout=phase_elapsed_timeout,
+        sample_root_pid=sample_root_pid,
+        min_memavailable_bytes=min_memavailable_bytes,
+        min_cgroup_ancestor_headroom_bytes=min_cgroup_ancestor_headroom_bytes,
+        cumulative_compute_used_seconds=cumulative_compute_used_seconds,
+        cumulative_compute_limit_seconds=cumulative_compute_limit_seconds,
+        global_swap_baseline=global_swap_baseline,
+        partial_phase_results=partial_phase_results,
         **limits,
     )
 
@@ -333,6 +347,208 @@ def test_phase_handoff_records_rss_drop_and_pss_uss_without_summing(tmp_path):
     assert phase["resource_sampling_semantics"].startswith("RSS/VmSwap")
 
 
+def _complete_resource_sample(
+    *,
+    rss: int = 100,
+    memavailable: int | None = 1024,
+    cgroup_state: str = "max_or_unlimited",
+    cgroup_current: int | None = None,
+    cgroup_headroom: int | None = None,
+):
+    host_memory = (
+        {}
+        if memavailable is None
+        else {"mem_available_bytes": memavailable}
+    )
+    job_cgroup = {
+        "dedicated_job_cgroup": False,
+        "swap_current_bytes": 0,
+        "ancestor_hard_limit_state": cgroup_state,
+        "ancestor_memory_headroom_bytes": cgroup_headroom,
+        "ancestor_memory": [],
+    }
+    if cgroup_state == "finite":
+        job_cgroup.update(
+            {
+                "memory_limit_state": "finite",
+                "memory_limit_bytes": 1024,
+                "memory_current_bytes": cgroup_current,
+                "memory_headroom_bytes": cgroup_headroom,
+                "ancestor_hard_limit_bytes": 1024,
+                "ancestor_memory": [
+                    {
+                        "memory_limit_state": "finite",
+                        "memory_current_bytes": cgroup_current,
+                        "memory_headroom_bytes": cgroup_headroom,
+                    }
+                ],
+            }
+        )
+    return {
+        "memory_authority_bytes": rss,
+        "job_no_swap": True,
+        "host_memory": host_memory,
+        "process_tree": {
+            "rss_bytes": rss,
+            "swap_bytes": 0,
+            "all_status_readable": True,
+            "smaps": {"pss_bytes": None, "uss_bytes": None},
+        },
+        "job_cgroup": job_cgroup,
+    }
+
+
+def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
+    sampled_pids = []
+    terminated = []
+    sample_count = {9000: 0}
+
+    def sample(pid):
+        sampled_pids.append(pid)
+        sample_count[pid] += 1
+        return _complete_resource_sample(
+            rss=100 if sample_count[pid] == 1 else 55
+        )
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    phase = _run_phase(
+        tmp_path,
+        sample=sample,
+        popen_factory=_FakePopen(poll_results=[None, 0]),
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        sample_root_pid=9000,
+    )
+    assert sampled_pids == [9000, 9000]
+    assert terminated == []
+    assert phase["sample_root_pid"] == 9000
+    assert phase["worker_process_group_pid"] != 9000
+    assert phase["sample_root_scope"] == "public_launcher_and_all_descendants"
+    assert phase["rss_drop"]["after_process_tree_rss_bytes"] == 55
+    assert phase["rss_drop"]["measurement_scope"] == (
+        "public_launcher_root_after_worker_group_exit"
+    )
+
+    low_sample = lambda _pid: _complete_resource_sample(memavailable=100)
+    phase = _run_phase(
+        tmp_path / "low",
+        sample=low_sample,
+        popen_factory=_FakePopen(poll_results=[None]),
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        sample_root_pid=9000,
+        min_memavailable_bytes=384,
+        hard_memory_bytes=10**9,
+    )
+    assert phase["termination_reason"] == "memavailable_floor"
+    assert terminated[-1] != 9000
+
+
+@pytest.mark.parametrize(
+    ("sample_kwargs", "reason"),
+    [
+        ({"memavailable": None}, "memavailable_unmeasured"),
+        ({"memavailable": 100}, "memavailable_floor"),
+        (
+            {
+                "cgroup_state": "finite",
+                "cgroup_current": None,
+                "cgroup_headroom": None,
+            },
+            "cgroup_headroom_unmeasured",
+        ),
+        (
+            {
+                "cgroup_state": "finite",
+                "cgroup_current": 900,
+                "cgroup_headroom": 100,
+            },
+            "cgroup_headroom_floor",
+        ),
+    ],
+)
+def test_balh_runtime_reserves_reject_missing_or_low_measurements(
+    tmp_path, sample_kwargs, reason
+):
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    phase = _run_phase(
+        tmp_path,
+        sample=lambda _pid: _complete_resource_sample(**sample_kwargs),
+        popen_factory=_FakePopen(poll_results=[None]),
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        sample_root_pid=9100,
+        min_memavailable_bytes=384,
+        min_cgroup_ancestor_headroom_bytes=384,
+        hard_memory_bytes=10**9,
+    )
+    assert phase["termination_reason"] == reason
+    assert terminated
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        {"cgroup_ancestor_hard_limit_state": "not_applicable_root"},
+        {"cgroup_ancestor_hard_limit_state": "max_or_unlimited"},
+        {
+            "cgroup_ancestor_hard_limit_state": "max_or_unlimited",
+            "cgroup_ancestor_limit_states": ["max_or_unlimited"],
+        },
+    ],
+)
+def test_balh_unlimited_or_root_cgroup_does_not_require_headroom(record):
+    assert supervisor._cgroup_ancestor_headroom_unmeasured(record) is False
+
+
+def test_phase_reports_actual_sampling_gaps(tmp_path):
+    phase = _run_phase(
+        tmp_path,
+        sample=_Samples(),
+        popen_factory=_FakePopen(poll_results=[None, None, 0]),
+        clock=_Clock(0.0, 0.1, 0.4, 0.8, 0.8),
+    )
+    gaps = phase["sampling"]["sample_timestamp_gap_seconds"]
+    assert gaps["count"] == 1
+    assert gaps["min"] == pytest.approx(0.3)
+    assert gaps["max"] == pytest.approx(0.3)
+    assert gaps["mean"] == pytest.approx(0.3)
+
+
+def test_phase_enforces_cumulative_wall_budget_at_phase_boundary(tmp_path):
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    phase = _run_phase(
+        tmp_path,
+        sample=lambda _pid: _complete_resource_sample(),
+        popen_factory=_FakePopen(poll_results=[None]),
+        terminate=terminate,
+        process_group_gone=lambda _pid: True,
+        clock=_Clock(0.0, 2.0, 2.0, 2.0),
+        hard_memory_bytes=10**9,
+        cumulative_compute_used_seconds=9.0,
+        cumulative_compute_limit_seconds=10.0,
+    )
+    assert phase["termination_reason"] == "cumulative_wall_timeout"
+    assert phase["limits"]["cumulative_compute_limit_seconds"] == 10.0
+    assert terminated
+
+
 @pytest.mark.parametrize(
     ("warning_memory_bytes", "hard_memory_bytes", "timeout_seconds", "reason"),
     [
@@ -375,6 +591,9 @@ def test_phase_uses_phase_elapsed_for_shortwave_wall_timeout(tmp_path):
         "hard_memory_bytes": 10**9,
         "swap_limit_bytes": 0,
         "timeout_seconds": 1,
+        "min_memavailable_bytes": None,
+        "min_cgroup_ancestor_headroom_bytes": None,
+        "cumulative_compute_limit_seconds": None,
     }
     finished = json.loads(
         (tmp_path / "numerical_output" / "log" / "memory_stage_markers.jsonl")
@@ -578,6 +797,7 @@ def test_phase_rechecks_natural_exit_after_terminal_unreadable_sample(tmp_path):
         "before_process_tree_rss_bytes": 100,
         "after_process_tree_rss_bytes": 0,
         "process_group_gone": True,
+        "measurement_scope": "legacy_worker_group_process_tree",
         "pass": True,
     }
     assert phase["process_group_gone"] is True
@@ -650,6 +870,7 @@ def test_phase_ignores_terminal_readable_zero_for_rss_drop(tmp_path):
         "before_process_tree_rss_bytes": 100,
         "after_process_tree_rss_bytes": 0,
         "process_group_gone": True,
+        "measurement_scope": "legacy_worker_group_process_tree",
         "pass": True,
     }
 
@@ -672,6 +893,7 @@ def test_phase_accepts_dedicated_cgroup_fallback_during_natural_exit(tmp_path):
         "before_process_tree_rss_bytes": 100,
         "after_process_tree_rss_bytes": 0,
         "process_group_gone": True,
+        "measurement_scope": "legacy_worker_group_process_tree",
         "pass": True,
     }
     records = [
@@ -844,6 +1066,97 @@ def test_phase_monitor_failure_cleans_up_and_does_not_linger(tmp_path):
         )
     assert str(error.value) == "sample failed"
     assert terminated
+
+
+def test_phase_exception_records_cleanup_and_partial_wall_after_spawn(tmp_path):
+    (tmp_path / "numerical_output" / "log").mkdir(parents=True)
+    partial = {}
+    terminated = []
+    calls = 0
+
+    def sample(_pid):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return _Samples()(_pid)
+        raise RuntimeError("sample failed after spawn")
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    gone_states = iter((False, True, True))
+    with pytest.raises(RuntimeError, match="sample failed after spawn"):
+        supervisor._run_phase(
+            "producer",
+            ["fake"],
+            tmp_path / "producer",
+            log_root=tmp_path / "numerical_output" / "log",
+            environment={"OMP_NUM_THREADS": "1"},
+            repository_root=tmp_path,
+            workflow_started=0.0,
+            popen_factory=_FakePopen(poll_results=[None, None]),
+            sample_factory=sample,
+            terminate_factory=terminate,
+            monotonic=_Clock(0.0, 0.2, 0.5, 0.5, 0.5),
+            sleep=lambda _seconds: None,
+            poll_interval=0.01,
+            memory_stages_path=tmp_path / "stages.jsonl",
+            marker_path=tmp_path / "markers.jsonl",
+            process_group_gone=lambda _pid: next(gone_states),
+            partial_phase_results=partial,
+        )
+    record = partial["producer"]
+    assert terminated
+    assert record["cleanup_attempted"] is True
+    assert record["process_group_gone"] is True
+    assert record["sample_count"] == 1
+    assert record["phase_wall_seconds"] == pytest.approx(0.5)
+    assert record["partial"] is True
+
+
+def test_compute_wall_ledger_accumulates_current_phases_without_reuse_reset(
+    tmp_path,
+):
+    ledger_path = tmp_path / "compute_wall_ledger.json"
+    initial = {
+        "used_compute_wall_seconds": 10.0,
+        "used_status": "derived_conservative_allowance",
+        "basis": "test ledger",
+        "initial_batch_allowance": {"seconds": 6000.0},
+        "derived_allowance_margin_seconds": 2008.69,
+        "source_records": [{"path": "history", "seconds": 10.0}],
+        "measured": {
+            "status": "measured",
+            "seconds": 2.0,
+            "records": [{"path": "earlier", "seconds": 2.0}],
+        },
+        "derived_upper_bound": {"status": "derived", "seconds": 8.0},
+    }
+    producer = supervisor._write_task041_compute_wall_ledger(
+        ledger_path,
+        used_before=initial,
+        current_seconds=4.0,
+        run_directory=tmp_path / "producer",
+        phase_seconds={"producer": 4.0},
+    )
+    consumer = supervisor._write_task041_compute_wall_ledger(
+        ledger_path,
+        used_before=producer,
+        current_seconds=3.0,
+        run_directory=tmp_path / "consumer",
+        phase_seconds={"consumer": 3.0},
+    )
+    assert consumer["used_compute_wall_seconds"] == pytest.approx(17.0)
+    assert consumer["measured"]["seconds"] == pytest.approx(9.0)
+    assert consumer["source_records"][-2]["phase_seconds"] == {"producer": 4.0}
+    assert consumer["source_records"][-1]["phase_seconds"] == {"consumer": 3.0}
+    assert all(
+        "producer" not in record.get("phase_seconds", {})
+        for record in consumer["source_records"][-1:]
+    )
+    assert json.loads(ledger_path.read_text(encoding="utf-8")) == consumer
 
 
 def test_phase_normal_exit_with_lingering_group_is_cleaned_and_fails(tmp_path):

@@ -11191,6 +11191,10 @@ def _run_v7_h4_exact_side_full_formal(
     run_directory: str | Path,
     release_before_recovery: Callable[[], Mapping[str, Any]],
     iterative_config: HybridBlockLduIterativeConfig | None = None,
+    require_rss_drop: bool = True,
+    retained_solution_checkpoint: Callable[
+        [PETSc.Vec, PETSc.Vec, Mapping[str, Any]], Mapping[str, Any]
+    ] | None = None,
 ) -> dict[str, Any]:
     """Run the explicit V7 outer solve, then the existing recovery authority."""
 
@@ -11214,6 +11218,7 @@ def _run_v7_h4_exact_side_full_formal(
     rhs = _default_rhs(setup, layout)
     iterative = None
     retained_solution = None
+    solution_checkpoint: dict[str, Any] | None = None
     try:
         _emit_marker(
             marker_callback,
@@ -11224,7 +11229,11 @@ def _run_v7_h4_exact_side_full_formal(
             max_it=config_max_it,
             threshold=config_threshold,
             fixed_preconditioner=bool(effective_config.fixed_preconditioner),
-            nested_ksp=False,
+            nested_ksp=bool(
+                dict(getattr(context, "inventory", {})).get(
+                    "nested_iterative_ksp_count", 0
+                )
+            ),
         )
         iterative = solve_hybrid_block_ldu_iterative(
             operator,
@@ -11289,13 +11298,26 @@ def _run_v7_h4_exact_side_full_formal(
             source="solve_hybrid_block_ldu_iterative",
             solve_report=solve_report,
         )
+        if retained_solution_checkpoint is not None:
+            solution_checkpoint = dict(
+                retained_solution_checkpoint(retained_solution, rhs, solve_report)
+            )
+            _emit_marker(
+                marker_callback,
+                "solution_checkpoint_saved",
+                source="task041_balh_retained_solution_packet",
+                checkpoint=solution_checkpoint,
+            )
         iterative.destroy()
         iterative = None
         release = dict(release_before_recovery())
+        component_cleanup_pass = bool(
+            release.get("component_cleanup_pass") is True
+        )
         release_pass = bool(
             release.get("factor_cleanup_pass") is True
             and release.get("actions_destroyed") is True
-            and release.get("component_cleanup_pass") is True
+            and component_cleanup_pass
             and isinstance(release.get("collective_heap_cleanup"), Mapping)
             and release["collective_heap_cleanup"].get("collective_call_completed")
             is True
@@ -11303,7 +11325,10 @@ def _run_v7_h4_exact_side_full_formal(
                 int(value) == 0
                 for value in release.get("factor_count_after_cleanup", {}).values()
             )
-            and release.get("rss_drop", {"pass": True}).get("pass") is True
+            and (
+                not require_rss_drop
+                or release.get("rss_drop", {"pass": True}).get("pass") is True
+            )
         )
         release["pass"] = release_pass
         _emit_marker(
@@ -11319,6 +11344,7 @@ def _run_v7_h4_exact_side_full_formal(
                 "solve": solve_report,
                 "recovery": "not_run",
                 "release_before_recovery": release,
+                "solution_checkpoint": solution_checkpoint,
             }
         if not release_pass:
             return {
@@ -11326,6 +11352,7 @@ def _run_v7_h4_exact_side_full_formal(
                 "solve": solve_report,
                 "recovery": "not_run",
                 "release_before_recovery": release,
+                "solution_checkpoint": solution_checkpoint,
             }
         _emit_marker(
             marker_callback,
@@ -11356,6 +11383,7 @@ def _run_v7_h4_exact_side_full_formal(
             "solve": solve_report,
             "recovery": recovery,
             "release_before_recovery": release,
+            "solution_checkpoint": solution_checkpoint,
             "authority_path": str(
                 Path(run_directory).resolve()
                 / "numerical_output"

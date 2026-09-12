@@ -11,21 +11,21 @@ import hashlib
 import json
 import resource
 import time
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Mapping
+from typing import Any, Self
 
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from src.io.input_validation import task041_shortwave_case
+from src.io.input_validation import task041_balh_case, task041_shortwave_case
 from src.modes.selected_mode_packet import (
     load_selected_mode_packet,
     write_selected_mode_packet,
 )
-
 
 TASK039_V4_SELECTED_MODE_SCOPE = "task039_v4_h4_m480"
 TASK039_V5_H5_SELECTED_MODE_SCOPE = "task039_v5_h5_m480"
@@ -33,6 +33,9 @@ TASK039_V4_SELECTED_MODE_COUNT = 480
 TASK041_SELECTED_MODE_IDENTITY_SCHEMA = "task041.selected_mode_packet.identity.v1"
 TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA = (
     "task041.selected_mode_packet.identity.v2"
+)
+TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA = (
+    "task041.selected_mode_packet.identity.balh.v1"
 )
 TASK041_CROSS_SECTION_PARTITION_FIELD = "cross_section_partition"
 TASK041_CROSS_SECTION_PARTITION_POLICY = "input_contiguous_v1"
@@ -125,7 +128,7 @@ class Task039V4SelectedModeMmapContext:
 
         gc.collect()
 
-    def __enter__(self) -> "Task039V4SelectedModeMmapContext":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
@@ -511,9 +514,90 @@ def _require_task041_shortwave_identity(identity: Mapping[str, Any]) -> None:
         )
 
 
+def _require_task041_balh_identity(identity: Mapping[str, Any]) -> None:
+    required = (
+        "schema",
+        "scope",
+        "source_sha",
+        "input_sha256",
+        "resolved_sha256",
+        "physical_sha256",
+        "wavelength_nm",
+        "model_id",
+        "run_id",
+        "comparison_group",
+        "mesh",
+        "mode_count",
+        "mpi_size",
+        "requested_modes_per_direction",
+        "dtn_order_policy",
+        "external_keys",
+        "cross_section_partition",
+        "physical_contract",
+    )
+    missing = [key for key in required if key not in identity]
+    if missing:
+        raise ValueError(f"Task041 BAL_H identity missing: {missing}")
+    if identity["schema"] != TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA:
+        raise ValueError("Task041 BAL_H identity schema mismatch")
+    for field, length in (
+        ("source_sha", 40),
+        ("input_sha256", 64),
+        ("resolved_sha256", 64),
+        ("physical_sha256", 64),
+    ):
+        if not _valid_hex_digest(identity[field], length):
+            raise ValueError(f"Task041 BAL_H {field} is invalid")
+    model_id = str(identity["model_id"])
+    case = task041_balh_case(model_id)
+    if case is None:
+        raise ValueError("Task041 BAL_H identity model is not registered")
+    if identity["scope"] != case["scope"]:
+        raise ValueError("Task041 BAL_H identity scope mismatch")
+    if identity["run_id"] != case["run_id"]:
+        raise ValueError("Task041 BAL_H identity run mismatch")
+    if identity["comparison_group"] != case["comparison_group"]:
+        raise ValueError("Task041 BAL_H identity comparison group mismatch")
+    if identity["wavelength_nm"] != case["wavelength_nm"]:
+        raise ValueError("Task041 BAL_H identity wavelength mismatch")
+    if identity["mesh"] != {
+        "cell_type": "hexahedron",
+        "kind": "full3d_uniform_cg",
+        "mesh_target_nm": case["mesh_target_nm"],
+        "nedelec_degree": 6,
+        "spacing_mode": "boundary_fitted",
+    }:
+        raise ValueError("Task041 BAL_H identity mesh mismatch")
+    if identity["mode_count"] != case["mode_count"]:
+        raise ValueError("Task041 BAL_H identity mode count mismatch")
+    if identity["requested_modes_per_direction"] != case["mode_count"]:
+        raise ValueError("Task041 BAL_H requested-mode identity mismatch")
+    if identity["mpi_size"] != 8:
+        raise ValueError("Task041 BAL_H selected-mode packet requires MPI8")
+    if identity["dtn_order_policy"] != "auto_propagating":
+        raise ValueError("Task041 BAL_H DtN policy mismatch")
+    external_keys = identity["external_keys"]
+    if not isinstance(external_keys, Mapping) or set(external_keys) != {
+        "count",
+        "sha256",
+    }:
+        raise ValueError("Task041 BAL_H external key identity is invalid")
+    if type(external_keys["count"]) is not int or external_keys["count"] <= 0:
+        raise ValueError("Task041 BAL_H external key count is invalid")
+    if not _valid_hex_digest(external_keys["sha256"], 64):
+        raise ValueError("Task041 BAL_H external key SHA is invalid")
+    if identity["cross_section_partition"] != "input_contiguous_v1":
+        raise ValueError("Task041 BAL_H cross-section partition policy is invalid")
+    if not isinstance(identity["physical_contract"], Mapping):
+        raise TypeError("Task041 BAL_H physical contract is missing")
+
+
 def _require_task041_identity(identity: Mapping[str, Any]) -> None:
     if identity.get("schema") == TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA:
         _require_task041_shortwave_identity(identity)
+        return
+    if identity.get("schema") == TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA:
+        _require_task041_balh_identity(identity)
         return
     required = (
         "schema",
@@ -593,6 +677,7 @@ def _is_task041_identity(identity: Mapping[str, Any] | None) -> bool:
         in {
             TASK041_SELECTED_MODE_IDENTITY_SCHEMA,
             TASK041_SHORTWAVE_SELECTED_MODE_IDENTITY_SCHEMA,
+            TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
         }
     )
 
@@ -766,6 +851,8 @@ def hydrate_task039_v4_selected_mode_packet(
                 int(packet_identity["mpi_size"]),
                 model_id=str(packet_identity["model_id"]),
             )
+        elif packet_identity.get("schema") == TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA:
+            expected_scope = str(packet_identity["scope"])
         else:
             expected_scope = task041_selected_mode_scope(
                 expected_mode_count, int(packet_identity["mpi_size"])

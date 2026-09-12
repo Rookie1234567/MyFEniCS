@@ -3,25 +3,22 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import platform
-import math
 import subprocess
 import sys
 import time
+from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from benchmarks.task034_wsl_resources import (
     cgroup_snapshot,
     resource_authority_sample,
     wsl_memory_snapshot,
-)
-from benchmarks.watchdog_process_control import (
-    terminate_process_tree,
-    worker_process_group_popen_kwargs,
 )
 from benchmarks.task039_memory_telemetry import (
     task039_h5_hybrid_direct_formal_profile,
@@ -30,7 +27,10 @@ from benchmarks.task039_memory_telemetry import (
     task039_v3_2d_formal_profile,
     task039_v4_h4_hybrid_direct_formal_profile,
 )
-
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
 from src.io.execution_plan import (
     CONTRACT_PROBE_ADAPTER,
     TASK041_PUBLIC_SUPERVISOR_ADAPTER,
@@ -39,10 +39,9 @@ from src.io.execution_plan import (
     method_adapter_identity,
 )
 from src.io.input_loader import InputError
-from src.io.input_validation import task039_model_id_matches
+from src.io.input_validation import TASK041_BALH_MODEL_IDS, task039_model_id_matches
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
-
 
 PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
@@ -67,6 +66,7 @@ def _task041_sparse_smaps_sample_factory(
             last_smaps_at = now
         return authority
 
+    sample.smaps_interval_seconds = float(interval)
     return sample
 
 
@@ -1264,24 +1264,27 @@ def _run_worker(
                 process.wait()
             exit_status = process.poll()
         _align_formal_markers(formal_last_sample)
-        if formal_v7_h4_full and full_timeout_decision is not None:
-            if full_timeout_decision.get("status") == "pending":
-                status = (
-                    "not_needed_process_exit"
-                    if classification is None
-                    else f"not_reached_due_to_{classification}"
-                )
-                full_timeout_decision = {
-                    "status": status,
-                    "default_timeout_seconds": (
-                        V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS
-                    ),
-                    "effective_timeout_seconds": int(timeout),
-                    "classification": classification,
-                    "outer_entered": full_outer_entered,
-                    "initial_multimetric_max_true_residual": full_initial_residual,
-                    "minimum_multimetric_max_true_residual": full_min_residual,
-                }
+        if (
+            formal_v7_h4_full
+            and full_timeout_decision is not None
+            and full_timeout_decision.get("status") == "pending"
+        ):
+            status = (
+                "not_needed_process_exit"
+                if classification is None
+                else f"not_reached_due_to_{classification}"
+            )
+            full_timeout_decision = {
+                "status": status,
+                "default_timeout_seconds": (
+                    V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS
+                ),
+                "effective_timeout_seconds": int(timeout),
+                "classification": classification,
+                "outer_entered": full_outer_entered,
+                "initial_multimetric_max_true_residual": full_initial_residual,
+                "minimum_multimetric_max_true_residual": full_min_residual,
+            }
     finally:
         if formal_sample_stream is not None:
             formal_sample_stream.close()
@@ -3638,6 +3641,8 @@ def launch_specification(
     monotonic: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
     poll_interval: float = 0.25,
+    producer_packet_root: str | Path | None = None,
+    compute_wall_ledger_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3668,10 +3673,29 @@ def launch_specification(
     task041_public_route = (
         not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
     )
+    if producer_packet_root is not None and (
+        not task041_public_route
+        or str(specification.identity.get("model_id", ""))
+        not in TASK041_BALH_MODEL_IDS
+    ):
+        raise InputError(
+            "--producer-packet-root is supported only for Task041 BAL_H profiles"
+        )
     if task041_public_route and sample_factory is resource_authority_sample:
         effective_sample_factory = _task041_sparse_smaps_sample_factory(
             sample_factory,
             monotonic,
+        )
+    if (
+        task041_public_route
+        and str(specification.identity.get("model_id", "")) in TASK041_BALH_MODEL_IDS
+        and compute_wall_ledger_path is None
+    ):
+        compute_wall_ledger_path = (
+            Path(__file__).resolve().parents[2]
+            / "results"
+            / "task041_side_balh_component_audit"
+            / "task041_compute_wall_ledger.json"
         )
     run_directory = _timestamp_directory(specification, timestamp)
     start_time = _now()
@@ -3700,6 +3724,8 @@ def launch_specification(
                 monotonic=monotonic,
                 sleep=sleep,
                 poll_interval=poll_interval,
+                producer_packet_root=producer_packet_root,
+                compute_wall_ledger_path=compute_wall_ledger_path,
             )
         except OSError as exc:
             result = {
@@ -3753,7 +3779,7 @@ def launch_specification(
                     "error": str(exc),
                     "resource_authority": {"status": "not_sampled"},
                 }
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - preserve launcher failure evidence
                 result = {
                     "exit_status": None,
                     "result_classification": "launcher_failure",

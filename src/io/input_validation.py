@@ -426,6 +426,175 @@ TASK041_SHORTWAVE_TIMEOUT_SCOPE_BY_MODEL_ID = MappingProxyType(
     }
 )
 
+TASK041_BALH_COMPARISON_GROUP = "task041_side_balh"
+TASK041_BALH_MPI_SIZE = 8
+TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES = 384 * 2**30
+TASK041_BALH_N_13P5 = (0.999002304859, 0.00182649365)
+TASK041_BALH_N_5NM = TASK041_N
+TASK041_BALH_SI_LABEL = "Si / silicon, 13.5 nm Task041 authority"
+TASK041_BALH_W_LABEL = TASK041_MATERIAL_LABEL
+
+TASK041_BALH_CASES = {
+    "task041_13p5nm_exact_side_hybrid_iterative_p6h10_m120_mpi8": {
+        "run_id": "task041_13p5nm_p6h10_m120_mpi8_exact",
+        "scope": "task041_13p5nm_p6h10_m120_mpi8",
+        "comparison_group": "task041_side_balh_13p5nm_p6h10_m120",
+        "input": "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_exact.dat",
+        "route": "exact",
+        "wavelength_nm": 13.5,
+        "material_n": TASK041_BALH_N_13P5,
+        "material_label": TASK041_BALH_SI_LABEL,
+        "mesh_target_nm": 10.0,
+        "mode_count": 120,
+        "warning_memory_gib": 48.0,
+        "terminate_memory_gib": 64.0,
+        "absolute_terminate_memory_bytes": 64 * 2**30,
+        "producer_timeout_seconds": 18000,
+        "consumer_timeout_seconds": 14400,
+        "solver_contract": "task041_side_balh_exact_fgmres32_v1",
+        "preconditioner": "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+    },
+    "task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8": {
+        "run_id": "task041_13p5nm_p6h10_m120_mpi8_balh",
+        "scope": "task041_13p5nm_p6h10_m120_mpi8",
+        "comparison_group": "task041_side_balh_13p5nm_p6h10_m120",
+        "input": "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_balh.dat",
+        "route": "balh",
+        "wavelength_nm": 13.5,
+        "material_n": TASK041_BALH_N_13P5,
+        "material_label": TASK041_BALH_SI_LABEL,
+        "mesh_target_nm": 10.0,
+        "mode_count": 120,
+        "warning_memory_gib": 48.0,
+        "terminate_memory_gib": 64.0,
+        "absolute_terminate_memory_bytes": 64 * 2**30,
+        "producer_timeout_seconds": 18000,
+        "consumer_timeout_seconds": 14400,
+        "solver_contract": "task041_side_balh_candidate_fgmres32_v1",
+        "preconditioner": "hybrid_block_ldu_balh_side_inverse",
+    },
+    "task041_5nm_exact_side_hybrid_iterative_p6h4_m480_mpi8": {
+        "run_id": "task041_5nm_p6h4_m480_mpi8_exact",
+        "scope": "task041_5nm_p6h4_m480_mpi8",
+        "comparison_group": "task041_side_balh_5nm_p6h4_m480",
+        "input": "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_exact.dat",
+        "route": "exact",
+        "wavelength_nm": 5.0,
+        "material_n": TASK041_BALH_N_5NM,
+        "material_label": TASK041_BALH_W_LABEL,
+        "mesh_target_nm": 4.0,
+        "mode_count": 480,
+        "warning_memory_gib": 224.0,
+        "terminate_memory_gib": 256.0,
+        "absolute_terminate_memory_bytes": 256 * 2**30,
+        "producer_timeout_seconds": 18000,
+        "consumer_timeout_seconds": 43200,
+        "solver_contract": "task041_side_balh_exact_fgmres32_v1",
+        "preconditioner": "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+    },
+    "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8": {
+        "run_id": "task041_5nm_p6h4_m480_mpi8_balh",
+        "scope": "task041_5nm_p6h4_m480_mpi8",
+        "comparison_group": "task041_side_balh_5nm_p6h4_m480",
+        "input": "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat",
+        "route": "balh",
+        "wavelength_nm": 5.0,
+        "material_n": TASK041_BALH_N_5NM,
+        "material_label": TASK041_BALH_W_LABEL,
+        "mesh_target_nm": 4.0,
+        "mode_count": 480,
+        "warning_memory_gib": 224.0,
+        "terminate_memory_gib": 256.0,
+        "absolute_terminate_memory_bytes": 256 * 2**30,
+        "producer_timeout_seconds": 18000,
+        "consumer_timeout_seconds": 43200,
+        "solver_contract": "task041_side_balh_candidate_fgmres32_v1",
+        "preconditioner": "hybrid_block_ldu_balh_side_inverse",
+    },
+}
+TASK041_BALH_MODEL_IDS = frozenset(TASK041_BALH_CASES)
+TASK041_BALH_EXACT_MODEL_IDS = frozenset(
+    model_id for model_id, case in TASK041_BALH_CASES.items() if case["route"] == "exact"
+)
+TASK041_BALH_CANDIDATE_MODEL_IDS = frozenset(
+    model_id for model_id, case in TASK041_BALH_CASES.items() if case["route"] == "balh"
+)
+TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID = MappingProxyType(
+    {
+        model_id: MappingProxyType(
+            {
+                "warning_memory_bytes": int(case["warning_memory_gib"] * 2**30),
+                "hard_memory_bytes": case["absolute_terminate_memory_bytes"],
+                "swap_limit_bytes": 0,
+                "timeout_seconds": max(
+                    case["producer_timeout_seconds"],
+                    case["consumer_timeout_seconds"],
+                ),
+            }
+        )
+        for model_id, case in TASK041_BALH_CASES.items()
+    }
+)
+TASK041_BALH_PHASE_LIMITS_BY_MODEL_ID = MappingProxyType(
+    {
+        model_id: MappingProxyType(
+            {
+                "producer": MappingProxyType(
+                    {
+                        "warning_memory_bytes": int(case["warning_memory_gib"] * 2**30),
+                        "hard_memory_bytes": case["absolute_terminate_memory_bytes"],
+                        "min_memavailable_bytes": TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES,
+                        "swap_limit_bytes": 0,
+                        "timeout_seconds": case["producer_timeout_seconds"],
+                    }
+                ),
+                "consumer": MappingProxyType(
+                    {
+                        "warning_memory_bytes": int(case["warning_memory_gib"] * 2**30),
+                        "hard_memory_bytes": case["absolute_terminate_memory_bytes"],
+                        "min_memavailable_bytes": TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES,
+                        "swap_limit_bytes": 0,
+                        "timeout_seconds": case["consumer_timeout_seconds"],
+                    }
+                ),
+            }
+        )
+        for model_id, case in TASK041_BALH_CASES.items()
+    }
+)
+
+
+def task041_balh_case(model_id: str) -> Mapping[str, Any] | None:
+    """Return one explicitly registered Task041 side-BAL_H profile."""
+
+    case = TASK041_BALH_CASES.get(str(model_id))
+    return None if case is None else dict(case)
+
+
+def task041_balh_workflow_limits(model_id: str) -> Mapping[str, int]:
+    try:
+        return TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID[str(model_id)]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 BAL_H model: {model_id!r}") from exc
+
+
+def task041_balh_phase_limits_for_model(
+    model_id: str, phase: str
+) -> Mapping[str, int]:
+    try:
+        model_limits = TASK041_BALH_PHASE_LIMITS_BY_MODEL_ID[str(model_id)]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 BAL_H model: {model_id!r}") from exc
+    try:
+        return model_limits[phase]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task041 BAL_H phase: {phase!r}") from exc
+
+
+def task041_balh_timeout_scope(model_id: str) -> str:
+    task041_balh_workflow_limits(model_id)
+    return "phase"
+
 
 def task041_shortwave_workflow_limits(model_id: str) -> Mapping[str, int]:
     """Return the immutable workflow envelope for one approved shortwave case."""
@@ -571,6 +740,10 @@ def _is_task041_shortwave_profile(config: Mapping[str, Any]) -> bool:
     return str(config.get("model_id", "")) in TASK041_SHORTWAVE_MODEL_IDS
 
 
+def _is_task041_balh_profile(config: Mapping[str, Any]) -> bool:
+    return str(config.get("model_id", "")) in TASK041_BALH_MODEL_IDS
+
+
 def task041_shortwave_case(model_id: str) -> Mapping[str, Any] | None:
     """Return one explicitly registered 3 nm shortwave case contract."""
 
@@ -708,6 +881,44 @@ def task041_shortwave_material_provenance(
         "n": [float(n.real), float(n.imag)],
         "epsilon_r": [float(epsilon.real), float(epsilon.imag)],
         "wavelength_nm": 3.0,
+        "substrate_label": materials.get("substrate_name"),
+        "grating_label": materials.get("grating_name"),
+        "finite": bool(np.isfinite(epsilon.real) and np.isfinite(epsilon.imag)),
+        "imaginary_sign_preserved": True,
+    }
+
+
+def task041_balh_material_provenance(
+    config: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Return the parsed material identity for one side-BAL_H profile."""
+
+    case = task041_balh_case(str(config.get("model_id", "")))
+    materials = config.get("materials")
+    incidence = config.get("incidence")
+    if case is None or not isinstance(materials, Mapping) or not isinstance(
+        incidence, Mapping
+    ):
+        return None
+    if (
+        incidence.get("wavelength_nm") != case["wavelength_nm"]
+        or not _same_profile_value(materials.get("n_substrate"), case["material_n"])
+        or not _same_profile_value(materials.get("n_grating"), case["material_n"])
+        or materials.get("substrate_name") != case["material_label"]
+        or materials.get("grating_name") != case["material_label"]
+    ):
+        return None
+    n = complex(*case["material_n"])
+    epsilon = n**2
+    return {
+        "source": "Task041 side BAL_H parsed input material",
+        "authority": "Task041 side BAL_H profile contract",
+        "model_id": str(config.get("model_id")),
+        "material_label": case["material_label"],
+        "material_role": "physical parsed material identity",
+        "n": [float(n.real), float(n.imag)],
+        "epsilon_r": [float(epsilon.real), float(epsilon.imag)],
+        "wavelength_nm": float(case["wavelength_nm"]),
         "substrate_label": materials.get("substrate_name"),
         "grating_label": materials.get("grating_name"),
         "finite": bool(np.isfinite(epsilon.real) and np.isfinite(epsilon.imag)),
@@ -959,6 +1170,129 @@ def task041_shortwave_profile_errors(
                 "Task41 shortwave input identity requires a provenance mapping",
             )
         )
+    return errors
+
+
+def task041_balh_profile_errors(
+    config: Mapping[str, Any],
+) -> list[tuple[str, str]]:
+    """Return errors for one explicit Task041 exact or BAL_H MPI8 profile."""
+
+    model_id = str(config.get("model_id", ""))
+    case = task041_balh_case(model_id)
+    if case is None:
+        return [("model_id", "Task041 side BAL_H accepts only registered profiles")]
+    expected: dict[str | None, dict[str, Any]] = {
+        None: {
+            "model_id": model_id,
+            "run_id": case["run_id"],
+            "comparison_group": case["comparison_group"],
+        },
+        "geometry": {
+            "geometry_kind": "rectangular_block_grating",
+            "period_x_nm": 50.0,
+            "period_y_nm": 25.0,
+            "z_min_nm": -10.0,
+            "z_max_nm": 130.0,
+            "interface_z_nm": 0.0,
+            "air_height_nm": 130.0,
+            "substrate_thickness_nm": 10.0,
+            "grating_width_x_nm": 17.0,
+            "grating_width_y_nm": 25.0,
+            "grating_height_nm": 120.0,
+        },
+        "materials": {
+            "n_air": (1.0, 0.0),
+            "mu_r": (1.0, 0.0),
+            "n_substrate": case["material_n"],
+            "n_grating": case["material_n"],
+            "substrate_name": case["material_label"],
+            "grating_name": case["material_label"],
+        },
+        "incidence": {
+            "wavelength_nm": case["wavelength_nm"],
+            "grazing_angle_deg": 1.0,
+            "azimuth_deg": 0.0,
+            "polarization": "s",
+            "electric_amplitude": 1.0,
+        },
+        "discretization": {
+            "nedelec_degree": 6,
+            "visualization_degree": 6,
+            "mesh_target_nm": case["mesh_target_nm"],
+            "mesh_cell_type": "hexahedron",
+            "mesh_spacing_mode": "boundary_fitted",
+            "assembly_backend": "assembly_time_static_condensed",
+            "floquet_constraint_mode": "auto",
+        },
+        "boundary": {
+            "use_floquet_x": True,
+            "use_floquet_y": True,
+            "vertical_boundary": "dtn_port",
+            "scattering_background": "layered",
+            "dtn_order_policy": "auto_propagating",
+            "dtn_assembly": "auxiliary",
+            "use_pml": False,
+            "pml_alpha": 5.0,
+        },
+        "method": {
+            "kind": "hybrid_iterative",
+            "bottom_interface_nm": 10.0,
+            "top_interface_nm": 110.0,
+            "requested_modes_per_direction": case["mode_count"],
+            "propagation_model": "full3d_uniform_cg",
+            "traction_model": "full3d_one_cell_exact_schur",
+        },
+        "solver": {
+            "linear_solver": "fgmres",
+            "preconditioner": case["preconditioner"],
+            "restart": 32,
+            "max_iterations": 2048,
+            "relative_tolerance": 5.0e-9,
+            "absolute_tolerance": 0.0,
+            "initial_guess": "zero",
+            "ilu_level": 0,
+            "ilu_shift": 0.1,
+            "subdomain_count_per_endcap": 1,
+            "overlap_fraction": 0.0,
+            "side_residual_correction_steps": 1,
+        },
+        "execution": {
+            "mpi_size": TASK041_BALH_MPI_SIZE,
+            "warning_memory_gib": case["warning_memory_gib"],
+            "terminate_memory_gib": case["terminate_memory_gib"],
+            "absolute_terminate_memory_bytes": case[
+                "absolute_terminate_memory_bytes"
+            ],
+            "timeout_seconds": case["consumer_timeout_seconds"],
+            "require_zero_swap": True,
+        },
+        "output": {
+            "results_root": "results",
+            "unique_output": True,
+            "export_fields": True,
+            "export_diffraction_orders": True,
+            "export_canonical_vectors": True,
+            "export_modal_amplitudes": True,
+            "export_reference_planes": True,
+            "reference_plane_z_nm": (10.0, 30.0, 60.0, 90.0, 110.0),
+            "sample_count_x": 40,
+            "sample_count_y": 20,
+            "diffraction_sample_count_x": 32,
+            "diffraction_sample_count_y": 32,
+            "probe_fraction": 0.75,
+            "diffraction_order_max_m": 25,
+            "diffraction_order_max_n": 25,
+        },
+    }
+    errors: list[tuple[str, str]] = []
+    for section, expected_values in expected.items():
+        values = config if section is None else config.get(section, {})
+        for key, expected_value in expected_values.items():
+            actual = values.get(key) if isinstance(values, Mapping) else None
+            if not _same_profile_value(actual, expected_value):
+                path = key if section is None else f"{section}.{key}"
+                errors.append((path, f"Task041 side BAL_H requires {expected_value!r}"))
     return errors
 
 
@@ -1805,12 +2139,17 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     if model_id.startswith("task041_") and model_id not in {
         TASK041_MODEL_ID,
         *TASK041_SHORTWAVE_MODEL_IDS,
+        *TASK041_BALH_MODEL_IDS,
     }:
         raise _error(
             "model_id",
             "unknown Task41 profile; only the approved finite Task41 models are supported",
         )
-    if model_id in {TASK041_MODEL_ID, *TASK041_SHORTWAVE_MODEL_IDS} and (
+    if model_id in {
+        TASK041_MODEL_ID,
+        *TASK041_SHORTWAVE_MODEL_IDS,
+        *TASK041_BALH_MODEL_IDS,
+    } and (
         dimension != 3 or method.get("kind") != "hybrid_iterative"
     ):
         raise _error(
@@ -2160,10 +2499,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID,
                 TASK041_MODEL_ID,
                 *TASK041_SHORTWAVE_MODEL_IDS,
+                *TASK041_BALH_EXACT_MODEL_IDS,
             }
             allowed_preconditioners = {
                 "hybrid_block_ldu_ilu0_dtn_woodbury",
                 "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+                "hybrid_block_ldu_balh_side_inverse",
             }
             if (
                 solver["preconditioner"] not in allowed_preconditioners
@@ -2173,6 +2514,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     and not exact_side_h4
                 )
                 or (
+                    solver["preconditioner"]
+                    == "hybrid_block_ldu_balh_side_inverse"
+                    and model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS
+                )
+                or (
                     exact_side_h4
                     and solver["preconditioner"]
                     != "hybrid_block_ldu_exact_side_lu_dtn_woodbury"
@@ -2180,7 +2526,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             ):
                 raise _error(
                     "solver.preconditioner",
-                    "only the accepted Task39 Hybrid block-LDU preconditioner is public",
+                    "only the registered Task39/Task041 Hybrid block-LDU preconditioners are public",
                 )
             if d["assembly_backend"] != "assembly_time_static_condensed":
                 raise _error(
@@ -2309,6 +2655,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 if _is_task039_candidate(config)
                 else task041_profile_errors(config)
                 if _is_task041_profile(config)
+                else task041_balh_profile_errors(config)
+                if _is_task041_balh_profile(config)
                 else task041_shortwave_profile_errors(config)
                 if _is_task041_shortwave_profile(config)
                 else task038_hybrid_iterative_profile_errors(config)
@@ -2964,6 +3312,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         _task039_v3_identity_enabled(config)
         or _is_task041_profile(config)
         or _is_task041_shortwave_profile(config)
+        or _is_task041_balh_profile(config)
     ):
         derived["angle_identity"] = task039_incidence_identity(config)
     if _is_task041_profile(config):
@@ -2980,9 +3329,25 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
             "old_fixed_smoother_refinement": False,
             "contract": case["solver_contract"],
         }
+    if _is_task041_balh_profile(config):
+        case = task041_balh_case(str(config.get("model_id", "")))
+        derived["task041_solver_contract"] = {
+            "route": case["route"],
+            "outer_ksp_type": "fgmres",
+            "outer_restart": 32,
+            "outer_max_iterations": 2048,
+            "outer_relative_tolerance": 5.0e-9,
+            "side_inner_profiles": (
+                {"max_iterations": 128, "relative_tolerance": 1.0e-2},
+                {"max_iterations": 256, "relative_tolerance": 1.0e-4},
+            ),
+            "contract": case["solver_contract"],
+        }
     material_provenance = task041_material_provenance(config)
     if material_provenance is None:
         material_provenance = task041_shortwave_material_provenance(config)
+    if material_provenance is None:
+        material_provenance = task041_balh_material_provenance(config)
     if material_provenance is None:
         material_provenance = task039_material_provenance(config)
     if material_provenance is not None:
@@ -3050,6 +3415,19 @@ def load_and_resolve(path: str | Path) -> RunSpecification:
 
 
 __all__ = [
+    "TASK041_BALH_CANDIDATE_MODEL_IDS",
+    "TASK041_BALH_CASES",
+    "TASK041_BALH_COMPARISON_GROUP",
+    "TASK041_BALH_EXACT_MODEL_IDS",
+    "TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES",
+    "TASK041_BALH_MODEL_IDS",
+    "TASK041_BALH_MPI_SIZE",
+    "TASK041_BALH_N_5NM",
+    "TASK041_BALH_N_13P5",
+    "TASK041_BALH_PHASE_LIMITS_BY_MODEL_ID",
+    "TASK041_BALH_SI_LABEL",
+    "TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID",
+    "TASK041_BALH_W_LABEL",
     "TASK041_COMPARISON_GROUP",
     "TASK041_HARD_MEMORY_BYTES",
     "TASK041_HARD_MEMORY_GIB",
@@ -3075,11 +3453,11 @@ __all__ = [
     "TASK041_SHORTWAVE_N",
     "TASK041_SHORTWAVE_PHASE_LIMITS",
     "TASK041_SHORTWAVE_PHASE_LIMITS_BY_MODEL_ID",
-    "TASK041_SHORTWAVE_TIMEOUT_SECONDS",
     "TASK041_SHORTWAVE_TIMEOUT_SCOPE_BY_MODEL_ID",
+    "TASK041_SHORTWAVE_TIMEOUT_SECONDS",
+    "TASK041_SHORTWAVE_WARNING_MEMORY_GIB",
     "TASK041_SHORTWAVE_WORKFLOW_LIMITS",
     "TASK041_SHORTWAVE_WORKFLOW_LIMITS_BY_MODEL_ID",
-    "TASK041_SHORTWAVE_WARNING_MEMORY_GIB",
     "TASK041_TIMEOUT_SECONDS",
     "TASK041_WARNING_MEMORY_GIB",
     "InputError",
@@ -3097,6 +3475,12 @@ __all__ = [
     "task039_v3_2d_auto_dtn_order_count",
     "task039_v3_2d_profile_errors",
     "task039_v3_3d_profile_errors",
+    "task041_balh_case",
+    "task041_balh_material_provenance",
+    "task041_balh_phase_limits_for_model",
+    "task041_balh_profile_errors",
+    "task041_balh_timeout_scope",
+    "task041_balh_workflow_limits",
     "task041_material_provenance",
     "task041_profile_errors",
     "task041_shortwave_case",
