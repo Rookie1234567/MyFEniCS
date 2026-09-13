@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Review V15 + user observe-only continuation of Review V14: matched Q1/Q2 accurate controls, measured Q3 rejection and Q6 evidence closure; all older evidence retained; no new official p6 outputs",
+  "scope": "Review V17 closeout of Review V16 p4 BLR S2: one clean-source BLR factor, three RHS control and independent memory/quality decision; S3/S4 and all official p6 outputs not_run; all older evidence retained",
   "units": {
     "time": "s",
     "memory": "B"
@@ -1187,6 +1187,150 @@
       },
       "official_results": "not_run",
       "next": "No new PDE; retain Q6 packet as final incomplete-evidence closure."
+    },
+    {
+      "id": "V16_S2_p4_BLR_control",
+      "status": "S2_BLR_CONTROL_PASS",
+      "source_sha": "24bd767e6b0d158ac20deb360a135f10c0611ede",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v16_s2_blr_control__full3d_iterative__mpi1__Mna/20260913T163912.716491Z",
+      "profile": "physical_p4_blr_bal_h_v16",
+      "stage": "S2_BLR_CONTROL",
+      "formal_batch_scope": "p4 augmented control only: 53164 rows; p6/h10 host model, no p6 outer solve",
+      "input_sha256": "80773699be0a210d67f074661be48b78526bf3257c0c57299e9b28371d552cf9",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+      "resolved_config_sha256": "b7d705178c1abb24670aa8d3d9f89a891c6891de2519e054a84e8b83aafe41ea",
+      "worker_status": "S2_BLR_CONTROL_PASS",
+      "worker_classification": "DISCRETE_SOLVER_OUTPUT_PASS",
+      "worker_error": null,
+      "ledger_status": "worker_exit0",
+      "time_policy": "observe_only",
+      "conservative_settled_seconds": 625.736658980034,
+      "parent_monotonic_seconds": 571.4837973679969,
+      "full_workflow_monotonic_seconds": 571.5147310050015,
+      "process_tree_rss_peak_bytes": 2741243904,
+      "process_tree_pss_peak_bytes": 2710780928,
+      "factor_live_rss_peak_bytes": 2741243904,
+      "resident_inventory_peak_bytes": 2256619390,
+      "workspace_peak_bytes": 17825792,
+      "job_swap_peak_bytes": 0,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "rhs": {
+        "count": 3,
+        "stems": [
+          "A2R160_BAL_H_p4_01",
+          "A2R160_BAL_H_p4_02",
+          "LIGHT448_BAL_H_p4_09"
+        ],
+        "native_A4_relative_residual": [
+          0.012747787228447355,
+          0.0007166869050548434,
+          0.01767784455927856
+        ],
+        "field_l2_relative": [
+          0.0004689413782647275,
+          0.0006381970572039616,
+          0.0005184603039686529
+        ],
+        "scaled_curl_relative": [
+          0.00046501472893071427,
+          0.000633006283574765,
+          0.0005142289126743576
+        ],
+        "one_mat_solve_per_rhs": true
+      },
+      "memory_decision": {
+        "status": "STRONG_BUT_INSUFFICIENT_MEMORY_GAIN",
+        "quality_pass": true,
+        "R_peak": 0.9700174654134085,
+        "R_live": 0.9700174654134085,
+        "admit_s3": false,
+        "exact_q1_rss_peak_bytes": 2825973760,
+        "exact_q1_inventory_peak_bytes": 2906619390,
+        "exact_q1_factor_allocated_bytes_upper": 2343000000,
+        "blr_factor_allocated_bytes_upper": 1693000000,
+        "exact_q1_factor_used_bytes_upper": 1382000000,
+        "blr_factor_used_bytes_upper": 1420000000,
+        "native_entries": {
+          "exact_infog29": 53417584,
+          "blr_infog9": 53040280,
+          "blr_infog35": 53040280,
+          "native_entry_reduction_fraction": 0.007063292117442,
+          "derived_from_measured_entries": 0.992936707882558
+        }
+      },
+      "paired_cost": {
+        "q1_exact": {
+          "symbolic_seconds": 0.2683213069976773,
+          "numeric_seconds": 18.488779414998135,
+          "full_monotonic_seconds": 536.4680422439997,
+          "conservative_settled_seconds": 584.7709557270404
+        },
+        "s2_blr": {
+          "symbolic_seconds": 0.33692986499954714,
+          "numeric_seconds": 19.946495771997434,
+          "full_monotonic_seconds": 571.5147310050015,
+          "conservative_settled_seconds": 625.736658980034
+        },
+        "blr_theoretical_flops_rinfog3": 39449025878.0,
+        "blr_actual_flops_rinfog14": 41079564559.0
+      },
+      "backend_controls": {
+        "post_symbolic_icntl": {
+          "6": 7,
+          "7": 7,
+          "8": 77,
+          "14": 20,
+          "18": 0,
+          "28": 1,
+          "29": 0
+        },
+        "post_symbolic_cntl": {
+          "1": 0.01,
+          "3": 0.0,
+          "4": -1.0
+        },
+        "icntl23_after_symbolic_memory_limit_mb": 3127,
+        "icntl49": "public_getter_unsupported; no_new_investigation_or_strategy_change",
+        "adaptive_precision_storage_control": "not_available_in_mumps_5.6.2_batch; complex128_retained"
+      },
+      "resource_limits": {
+        "parent_tree_cap_bytes": 8589934592,
+        "inventory_cap_bytes": 6442450944,
+        "shared_temp_workspace_cap_bytes": 1073741824,
+        "host_reserve_bytes": 4294967296,
+        "job_swap_peak_bytes": 0,
+        "global_swap_delta_pages": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "worker_dynamic_tree_cap_formula": "min(parent_tree_cap,current_tree_rss+available-reserve)",
+        "host_reserve_formula": "max(4 GiB,0.15*effective_total_bytes)"
+      },
+      "s3_original": "not_run",
+      "s4_notch": "not_run",
+      "official_results": "not_run",
+      "artifact_hashes": {
+        "independent_checker": "benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/s2_independent_check.json",
+        "independent_checker_sha256": "2ee19cc9ee33d3373f46d7c2cb7eebfe2dc444468e42034603f53a6d3781c173",
+        "s0_preflight": "benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/s0_final_preflight.json",
+        "phase_time_audit": "benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/s2_phase_time_audit.json",
+        "formal_summary": "results/euv_grazing1_phi0/task39extra_v16_s2_blr_control__full3d_iterative__mpi1__Mna/20260913T163912.716491Z/physical_p4_blr_v16_summary.json",
+        "run_summary": "results/euv_grazing1_phi0/task39extra_v16_s2_blr_control__full3d_iterative__mpi1__Mna/20260913T163912.716491Z/run_summary.json"
+      },
+      "records": {
+        "response": "docs/task039_extra_physical_multilevel/response_v17.md",
+        "outcome": "docs/task039_extra_physical_multilevel/outcomes/p4_blr_v16.md",
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_blr_v16_compact.json",
+        "decision": "docs/task039_extra_physical_multilevel/outcomes/records/p4_blr_v16_decision.json",
+        "selective_merge": "docs/task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v17.md"
+      },
+      "next": "Close fixed p4 BLR configuration; do not start S3/S4, epsilon scan, ICNTL49 investigation, ABI upgrade, or p6/5nm/0.7nm follow-up."
     }
   ],
   "limitations": [
@@ -1831,7 +1975,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "review_v16_time_observe_finalization",
+  "current_review_record": "review_v17_p4_blr_closeout",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -2315,6 +2459,105 @@
       "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
       "no_missing_evidence_implies_method_failure": true
     }
+  },
+  "review_v17_p4_blr_closeout": {
+    "id": "V17_p4_BLR_S2_closeout",
+    "status": "S5_DECISION_RECORDED_PENDING_REVIEW",
+    "execution_base_sha": "972393f41e1cc14af87022d2997ddc5936c0f4e4",
+    "formal_source_sha": "24bd767e6b0d158ac20deb360a135f10c0611ede",
+    "branch": "task39extra",
+    "model_identity": {
+      "profile": "physical_p4_blr_bal_h_v16",
+      "wavelength_nm": 13.5,
+      "formulation": "Full3D",
+      "host_p": 6,
+      "host_h": 10,
+      "formal_matrix": "p4 augmented 53164 rows",
+      "mpi": 1,
+      "dtn_modes": 80,
+      "scalar": "complex128",
+      "integer": "int32",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+    },
+    "s2_run": {
+      "id": "V16_S2_p4_BLR_control",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v16_s2_blr_control__full3d_iterative__mpi1__Mna/20260913T163912.716491Z",
+      "status": "S2_BLR_CONTROL_PASS",
+      "worker_exit": 0,
+      "official_result": false,
+      "rhs_count": 3,
+      "one_factor": true,
+      "one_mat_solve_per_rhs": true
+    },
+    "decision": {
+      "status": "STRONG_BUT_INSUFFICIENT_MEMORY_GAIN",
+      "quality_pass": true,
+      "admit_s3": false,
+      "s3_original": "not_run",
+      "s4_notch": "not_run",
+      "full_p6": "not_run",
+      "nonseparable_3d": "not_run",
+      "ordinary_default_changed": false,
+      "master_merge_approved": false
+    },
+    "memory": {
+      "q1_exact_rss_peak_bytes": 2825973760,
+      "s2_blr_rss_peak_bytes": 2741243904,
+      "R_peak": 0.9700174654134085,
+      "R_live": 0.9700174654134085,
+      "q1_inventory_peak_bytes": 2906619390,
+      "s2_inventory_peak_bytes": 2256619390,
+      "q1_factor_allocated_bytes_upper": 2343000000,
+      "s2_factor_allocated_bytes_upper": 1693000000,
+      "q1_factor_used_bytes_upper": 1382000000,
+      "s2_factor_used_bytes_upper": 1420000000,
+      "native_entry_ratio_measured": 0.992936707882558
+    },
+    "cost": {
+      "q1_symbolic_seconds": 0.2683213069976773,
+      "s2_symbolic_seconds": 0.33692986499954714,
+      "q1_numeric_seconds": 18.488779414998135,
+      "s2_numeric_seconds": 19.946495771997434,
+      "q1_full_monotonic_seconds": 536.4680422439997,
+      "s2_full_monotonic_seconds": 571.5147310050015,
+      "q1_conservative_settled_seconds": 584.7709557270404,
+      "s2_conservative_settled_seconds": 625.736658980034,
+      "blr_theoretical_flops_rinfog3": 39449025878.0,
+      "blr_actual_flops_rinfog14": 41079564559.0
+    },
+    "resource_and_control_boundary": {
+      "parent_tree_cap_bytes": 8589934592,
+      "inventory_cap_bytes": 6442450944,
+      "shared_temp_workspace_cap_bytes": 1073741824,
+      "host_reserve_bytes": 4294967296,
+      "host_reserve_formula": "min(parent_tree_cap,current_tree_rss+available-reserve)",
+      "job_swap_peak_bytes": 0,
+      "global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "icntl49": "public_getter_unsupported; no_new_investigation_or_strategy_change",
+      "adaptive_precision_storage_control": "not_available_in_mumps_5.6.2_batch; complex128_retained"
+    },
+    "ledger": {
+      "batch_identity": "review_v16_p4_blr",
+      "settled_seconds": 625.736658980034,
+      "reserved_seconds": 14400.0,
+      "unique_bug_replay_count": 0,
+      "old_v14_ledger_sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3",
+      "old_policy_debit_semantics": "reference_only_nonrefundable_not_measured_elapsed; new_batch_ledger_keeps_reference"
+    },
+    "records": {
+      "response": "docs/task039_extra_physical_multilevel/response_v17.md",
+      "outcome": "docs/task039_extra_physical_multilevel/outcomes/p4_blr_v16.md",
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_blr_v16_compact.json",
+      "decision": "docs/task039_extra_physical_multilevel/outcomes/records/p4_blr_v16_decision.json",
+      "selective_merge": "docs/task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v17.md",
+      "independent_checker": "benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/s2_independent_check.json",
+      "independent_checker_sha256": "2ee19cc9ee33d3373f46d7c2cb7eebfe2dc444468e42034603f53a6d3781c173"
+    },
+    "next": "wait_for_review; no_new_pde_no_new_route_no_master_merge"
   },
   "review_v16_time_observe_finalization": {
     "status": "Q6_FINALIZED_WITH_MEASURED_NEGATIVE_INTERFACE",
