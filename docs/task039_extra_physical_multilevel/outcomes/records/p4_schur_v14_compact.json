@@ -1,11 +1,11 @@
 {
   "schema": "task039extra.v14.p4-schur-compact.v1",
   "review": "review_v14",
-  "scope": "Historical V14 Q0-Q2 audit plus V15 R1 recovery, one new Q0 controlled stop, and Q6 evidence finalization; Q1-Q5 were not run",
+  "scope": "Historical V14 Q0-Q2 audit plus V15 recovery and the current Q1/Q2/Q3 execution with Q6 evidence finalization; Q4/Q5 were not run and no official p6 result exists",
   "historical_scope": "The original top-level model, accounting, stage, and artifact fields are the historical pre-recovery Q0 snapshot. review_v15_continuation is the current authoritative continuation group.",
-  "status": "Q0_PERFORMANCE_CONTROLLED_STOP_Q6_EVIDENCE_INCOMPLETE",
-  "current_review": "review_v15",
-  "current_review_status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
+  "status": "Q6_FINALIZED_Q3_MEASURED_NEGATIVE_Q4_Q5_NOT_RUN",
+  "current_review": "review_v16_time_observe_finalization",
+  "current_review_status": "Q6_FINALIZED_CLOSE_FIXED_INTERFACE_CONFIGURATION",
   "current_review_evidence": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
   "source_identity": {
     "branch": "task39extra",
@@ -73,7 +73,10 @@
           "event": "v14_common_setup_started",
           "timestamp": "2026-09-12T12:36:00.043279+00:00",
           "facts": {
-            "levels": [6, 4]
+            "levels": [
+              6,
+              4
+            ]
           }
         },
         {
@@ -81,7 +84,10 @@
           "timestamp": "2026-09-12T12:36:05.654845+00:00",
           "facts": {
             "quadrature_degree": 15,
-            "components": ["curl", "material_mass"]
+            "components": [
+              "curl",
+              "material_mass"
+            ]
           }
         },
         {
@@ -126,8 +132,12 @@
           "swap_peak_bytes": 0,
           "all_valid_samples_job_swap_zero": true,
           "global_swap_counters_observed": {
-            "pswpin_pages": [18],
-            "pswpout_pages": [2039],
+            "pswpin_pages": [
+              18
+            ],
+            "pswpout_pages": [
+              2039
+            ],
             "observed_prefix_delta": {
               "pswpin_pages": 0,
               "pswpout_pages": 0
@@ -390,8 +400,19 @@
     "unexecuted_r1_draft": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r1_unexecuted_draft/"
   },
   "review_v15_continuation": {
-    "status": "Q0_PERFORMANCE_CONTROLLED_STOP_Q6_EVIDENCE_INCOMPLETE",
+    "status": "Q6_FINALIZED_Q3_MEASURED_NEGATIVE_Q4_Q5_NOT_RUN",
     "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+    "source_sha_scope": "Historical q0_new source only; current stage bindings are listed explicitly below.",
+    "stage_source_shas": {
+      "Q0_historical_attempt_1": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+      "Q0_recovery_attempt_2": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "Q0_fresh_attempt_3": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q1_FULL_DIRECT": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q2_SCHUR_DIRECT": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q3_original_resource_stop": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q3_replay": "188224ad5fc81b34156a0ae3678bd2121b1206da",
+      "Q6_FINALIZE": "d9530636ab2f043a84235b515846b410a8deb4b3"
+    },
     "r1": {
       "status": "APPLIED",
       "recovery_id": "V15_Q0_EIO_ONCE",
@@ -458,18 +479,290 @@
       "new_pde_actions": 1,
       "pde_action_boundary": "Formal Q0 worker entered common setup/assembly and public volume compilation; no completed core qualification or linear solve was emitted."
     },
+    "q0_fresh_attempt_3": {
+      "worker_status": "Q0_CORE_PASS",
+      "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T114541.274952Z",
+      "q6_summary_record_only": true,
+      "q6_downstream_numerical_checker_called": false,
+      "historical_q0_attempt_1_terminal_coverage": "incomplete",
+      "historical_q0_attempt_1_actual_elapsed_seconds": null,
+      "root_audit": {
+        "full_parent_rss_peak_bytes": 1399427072,
+        "full_parent_pss_peak_bytes": 1369008128,
+        "all_pss_samples_readable": true,
+        "inventory_peak_bytes": 68803850,
+        "workspace_peak_bytes": 0,
+        "job_swap_peak_bytes": 0,
+        "full_workflow_monotonic_seconds": 511.37043482100125,
+        "raw_trace_sha256": "9c40018f6c4ca400335c8fd3faf2dc7636c192faa2f0acc10b7f36769bb813be"
+      },
+      "boundary": "Fresh worker core pass is separate from the Q6 summary's retained historical-coverage field; no fresh Q0 numerical failure is inferred."
+    },
     "q1_q2": {
-      "status": "not_run_after_q0_gate",
-      "memory_comparison": "COMPARISON_INCONCLUSIVE",
-      "reason": "No qualified matched Q1/Q2 accuracy and full measured memory"
+      "status": "QUALIFIED_MATCHED_WORKFLOWS",
+      "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "common_scope": {
+        "model_id": "euv_grazing1_phi0",
+        "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+        "mpi_size": 1,
+        "scalar_type": "complex128",
+        "integer_type": "int32",
+        "rhs_names": [
+          "A2R160_BAL_H_p4_01",
+          "A2R160_BAL_H_p4_02",
+          "LIGHT448_BAL_H_p4_09"
+        ],
+        "direct_residual_limit": 1e-10,
+        "field_l2_and_scaled_curl_limit": 1e-08
+      },
+      "q1_full_direct": {
+        "status": "Q1_FULL_DIRECT_PASS",
+        "qualified": true,
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z",
+        "native_A4_relative_residuals": [
+          4.2425248271538786e-11,
+          1.5748080059992652e-12,
+          6.55690292958073e-11
+        ],
+        "field_l2_relative_errors": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scaled_curl_relative_errors": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "call_seconds": [
+          1.8946262239987846,
+          1.856757703004405,
+          1.8279908199983765
+        ],
+        "preflight_through_setup_utc_seconds": 560.968651644,
+        "factor_symbolic_seconds": 0.2683213069976773,
+        "factor_numeric_seconds": 18.488779414998135,
+        "settled_full_workflow_seconds": 584.7709557270404,
+        "root_audit": {
+          "full_parent_rss_peak_bytes": 2825973760,
+          "full_parent_pss_peak_bytes": 2795549696,
+          "all_pss_samples_readable": true,
+          "sample_count": 2091,
+          "inventory_peak_bytes": 2906619390,
+          "workspace_peak_bytes": 17825792,
+          "job_swap_peak_bytes": 0,
+          "full_workflow_monotonic_seconds": 536.4680422439997,
+          "raw_trace_sha256": "a43a832a0307e7e9a87208a1afaa7e80b9da070cb56a1d7d6698770efcd115c8"
+        },
+        "setup_and_cleanup": "setup is represented by preflight_through_setup_utc_seconds; no separate cleanup_seconds field was published",
+        "matrix_and_factor_memory": {
+          "global_augmented_rows": 53164,
+          "global_augmented_nnz": 24730144,
+          "global_factor_padded_allocated_bytes": 2343000000,
+          "global_factor_padded_used_bytes": 1382000000,
+          "global_factor_raw_infog19_decimal_mb": 2342,
+          "global_factor_raw_infog22_decimal_mb": 1381,
+          "global_matrix_payload_bytes": 494815540,
+          "global_factor_entries": 53417584,
+          "icntl23_request_decimal_mb": 3127,
+          "symbolic_quota_formula": "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))",
+          "internal_factor_count": 0,
+          "internal_factor_padded_allocated_bytes": 0,
+          "internal_factor_padded_used_bytes": 0,
+          "internal_coupling_bytes": 0,
+          "internal_index_bytes": 0,
+          "scope": "MUMPS allocated/used from qualified INFOG19/22 decimal MB with existing +1MB padding per factor; matrix/coupling/index are derived payloads. These are components, not substitutes for full RSS or live inventory.",
+          "raw_binding": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/physical_p4_schur_v14_summary.json",
+            "sha256": "758b35b5f8ab3f48fa821f953a08cc66383a985de4527205416fbc95c94e8b8d"
+          },
+          "all_factors_padded_allocated_bytes": 2343000000,
+          "all_factors_padded_used_bytes": 1382000000
+        }
+      },
+      "q2_schur_direct": {
+        "status": "Q2_SCHUR_DIRECT_PASS",
+        "qualified": true,
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q2_schur_direct__full3d_iterative__mpi1__Mna/20260913T120955.025403Z",
+        "native_A4_relative_residuals": [
+          6.810607525295704e-11,
+          2.6309427155888944e-12,
+          8.675448391967837e-11
+        ],
+        "field_l2_relative_errors": [
+          1.9382733804620823e-12,
+          1.7324963445666793e-12,
+          1.863046505541404e-12
+        ],
+        "scaled_curl_relative_errors": [
+          1.938608248500389e-12,
+          1.7340766930064221e-12,
+          1.8635035517959532e-12
+        ],
+        "call_seconds": [
+          1.3508192650042474,
+          1.2933194120050757,
+          1.300694712997938
+        ],
+        "preflight_through_setup_utc_seconds": 748.901532761,
+        "factor_symbolic_seconds": {
+          "interface": 0.28045079900039127,
+          "internal_total": 0.11194131200318225
+        },
+        "factor_numeric_seconds": {
+          "interface": 42.07447280899942,
+          "internal_total": 0.8972232259911834
+        },
+        "settled_full_workflow_seconds": 773.0191102288234,
+        "root_audit": {
+          "full_parent_rss_peak_bytes": 4267347968,
+          "full_parent_pss_peak_bytes": 4236889088,
+          "all_pss_samples_readable": true,
+          "sample_count": 2742,
+          "inventory_peak_bytes": 4698023554,
+          "workspace_peak_bytes": 17825792,
+          "job_swap_peak_bytes": 0,
+          "full_workflow_monotonic_seconds": 708.4317903820047,
+          "raw_trace_sha256": "6540162d614da17cea7d2e13c8b8cca967c8b3a3d8d88c8654274cf3eb8a415a"
+        },
+        "setup_and_cleanup": "setup is represented by preflight_through_setup_utc_seconds; no separate cleanup_seconds field was published",
+        "matrix_and_factor_memory": {
+          "global_augmented_rows": 13172,
+          "global_augmented_nnz": 15190976,
+          "global_factor_padded_allocated_bytes": 1636000000,
+          "global_factor_padded_used_bytes": 957000000,
+          "global_factor_raw_infog19_decimal_mb": 1635,
+          "global_factor_raw_infog22_decimal_mb": 956,
+          "global_matrix_payload_bytes": 303872212,
+          "global_factor_entries": 40027600,
+          "icntl23_request_decimal_mb": 2183,
+          "symbolic_quota_formula": "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))",
+          "internal_factor_count": 42,
+          "internal_factor_padded_allocated_bytes": 945000000,
+          "internal_factor_padded_used_bytes": 357000000,
+          "internal_coupling_bytes": 789970944,
+          "internal_index_bytes": 717024,
+          "scope": "MUMPS allocated/used from qualified INFOG19/22 decimal MB with existing +1MB padding per factor; matrix/coupling/index are derived payloads. These are components, not substitutes for full RSS or live inventory.",
+          "raw_binding": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q2_schur_direct__full3d_iterative__mpi1__Mna/20260913T120955.025403Z/physical_p4_schur_v14_summary.json",
+            "sha256": "715565883dc430698f4593195634b2c0b2fb2e11282409984dc23ff2fdc5db0a"
+          },
+          "all_factors_padded_allocated_bytes": 2581000000,
+          "all_factors_padded_used_bytes": 1314000000
+        }
+      },
+      "derived_comparison": {
+        "memory_ratio_q2_over_q1": 1.5100451491807199,
+        "resident_inventory_ratio_q2_over_q1": 1.616318796387029,
+        "rss_difference_bytes": 1441374208,
+        "resident_inventory_difference_bytes": 1791404164,
+        "classification": "NO_OBSERVED_MEMORY_REDUCTION",
+        "scope": "one fixed model, one MPI1 run per lane, same three RHS and full parent cleanup trace; not a statistical claim"
+      }
     },
     "q3_q4_q5": {
-      "status": "not_run_after_q0_gate",
+      "status": "Q3_MEASURED_NEGATIVE_Q4_Q5_NOT_RUN",
       "interface_admission": false,
+      "q3_admission_thresholds": {
+        "A2R160_BAL_H_p4_01": {
+          "rho_max": 0.5,
+          "field_l2_max": 0.5,
+          "scaled_curl_max": 0.6
+        },
+        "A2R160_BAL_H_p4_02": {
+          "rho_max": 0.2,
+          "field_l2_max": 0.9,
+          "scaled_curl_max": 0.9
+        },
+        "LIGHT448_BAL_H_p4_09": {
+          "rho_max": 0.5,
+          "field_l2_max": 0.5,
+          "scaled_curl_max": 0.6
+        }
+      },
+      "q3_original_resource_stop": {
+        "status": "CONTROLLED_STOP",
+        "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T122513.140250Z",
+        "settled_seconds": 650.6994420740033,
+        "root_audit": {
+          "full_parent_rss_peak_bytes": 2866094080,
+          "full_parent_pss_peak_bytes": 2835682304,
+          "all_pss_samples_readable": true,
+          "sample_count": 2323,
+          "inventory_peak_bytes": 2758151342,
+          "workspace_peak_bytes": 17825792,
+          "job_swap_peak_bytes": 0,
+          "full_workflow_monotonic_seconds": 598.0826068289971,
+          "raw_trace_sha256": "80c7f470403ea7e45a58e665c9d62c153b2fe767287b52461350963dbb6d8b3"
+        },
+        "stop_reason": "projected live inventory 3331318958 B exceeded independent cap 3221225472 B; current inventory 2758151342 B",
+        "factor_timing_evidence": "Per-factor symbolic/numeric timing and event hashes are retained in raw v14_events.jsonl; repeated notification records are not summed as a unique factor-cost series."
+      },
+      "q3_replay": {
+        "source_sha": "188224ad5fc81b34156a0ae3678bd2121b1206da",
+        "source_state": "clean committed source",
+        "worker_status": "WORKER_FAILED",
+        "saved_packet_q6_readonly_classification": "MEASURED_NEGATIVE_CANDIDATE",
+        "q3_admission": false,
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z",
+        "settled_seconds": 899.7366529591454,
+        "rhs_values": [
+          {
+            "stem": "A2R160_BAL_H_p4_01",
+            "rho": 37.272086354522806,
+            "field_l2": 1.0109520125493028,
+            "scaled_curl": 1.0111238291276385,
+            "numeric_pass": false,
+            "operation_audit": true
+          },
+          {
+            "stem": "A2R160_BAL_H_p4_02",
+            "rho": 0.7264141173308372,
+            "field_l2": 0.962889553402386,
+            "scaled_curl": 0.9623991552131675,
+            "numeric_pass": false,
+            "operation_audit": true
+          },
+          {
+            "stem": "LIGHT448_BAL_H_p4_09",
+            "rho": 41.82593596121638,
+            "field_l2": 1.002128283771333,
+            "scaled_curl": 1.0023196526476357,
+            "numeric_pass": false,
+            "operation_audit": true
+          }
+        ],
+        "root_audit": {
+          "full_parent_rss_peak_bytes": 3468599296,
+          "full_parent_pss_peak_bytes": 3438116864,
+          "all_pss_samples_readable": true,
+          "sample_count": 3199,
+          "inventory_peak_bytes": 3115588906,
+          "workspace_peak_bytes": 531718272,
+          "job_swap_peak_bytes": 0,
+          "full_workflow_monotonic_seconds": 826.424954023998,
+          "raw_trace_sha256": "7603bd02688b645072907cab7f98e8f7b71d8aea535425e2d6ccb261392f2f05"
+        },
+        "factor_timing_evidence": "Per-factor symbolic/numeric timing and event hashes are retained in raw v14_events.jsonl; repeated notification records are not summed as a unique factor-cost series.",
+        "saved_packet": {
+          "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z/q3_rhs_packets/three_rhs_complete_before_balanced_audit.json",
+          "sha256": "658a9dd4a6fcb845459a6d5f787ce8eed45d42e46813dfac440655b46bc54c35"
+        },
+        "balanced_p6_audit": {
+          "status": "NOT_COMPLETED",
+          "error_type": "ValueError",
+          "error": "Q3 p6 balanced input differs from the fresh native map",
+          "interpretation": "map metadata key-set/identity guard compared numerical map keys with arrays/provenance metadata keys; numerical map arrays are not thereby shown different or equal",
+          "earlier_lifecycle_bug_replay": "active-volume matrix was released before local J allocation; recorded separately from this map metadata guard"
+        }
+      },
       "full_p6_original_qualified": false,
-      "full_p6_notch_qualified": false
+      "full_p6_notch_qualified": false,
+      "official_outputs": "no official field, R/T/A, A_volume, diffraction, or conservation output"
     },
-    "q6": {
+    "historical_q6_before_refresh": {
       "status": "Q6_EVIDENCE_INCOMPLETE",
       "outer_classification": "WORKER_FAILED",
       "outer_exit_status": 4,
@@ -484,9 +777,10 @@
       "post_settlement_elapsed_seconds": 613.2807354921454,
       "post_settlement_elapsed_seconds_semantics": "ledger field settled under conservative-realtime accounting, not a monotonic-only elapsed claim",
       "error": null,
-      "new_pde_actions": 0
+      "new_pde_actions": 0,
+      "preserved_as_historical": true
     },
-    "final_ledger": {
+    "historical_ledger_before_observe": {
       "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
       "sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
       "total_budget_seconds": 43200.0,
@@ -497,19 +791,70 @@
       "remaining_seconds": 41983.619264507855,
       "active_attempts": [],
       "infrastructure_recovery_count": 1,
-      "unique_bug_replay_count": 0
+      "unique_bug_replay_count": 0,
+      "preserved_as_historical": true
+    },
+    "q6": {
+      "status": "Q6_FINALIZED",
+      "result_classification": "FINALIZATION_COMPLETE",
+      "official_result": false,
+      "source_sha": "d9530636ab2f043a84235b515846b410a8deb4b3",
+      "outer_classification": "worker_exit0",
+      "outer_exit_status": 0,
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z",
+      "new_pde_actions": 0,
+      "read_errors": {},
+      "stage_pass": true,
+      "q6_decision_sha256": "ea07b54e221a32de35cc2e47a037922833ee3135429bc90dd6ba649dcf539fe7",
+      "summary_sha256": "9a7d6c6a9c264df8e337ef622572b8bcd18c979d66e5a30133243957f9c92ef5",
+      "run_summary_sha256": "e1da7f942a4b81bdcbb4e3a2bf77aaf284403b6c1e2998e3c492c9b039f15c2e",
+      "run_manifest_sha256": "9b70ff4229d569fdb3e42336223e2ca3b21fab3da8eaa9d884bcaa9e3d1f84f5",
+      "watchdog_summary_sha256": "3dac5a2da3c8bfef674f929096bf9c815a17418c333c0399378a92f3cb23cc8d",
+      "no_missing_evidence_implies_method_failure": true
+    },
+    "final_ledger": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+      "sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3",
+      "total_budget_seconds": 43200.0,
+      "settled_elapsed_seconds": 4082.128437647174,
+      "settled_elapsed_seconds_semantics": "live ledger conservative-realtime settled accounting/cost; monotonic intervals are retained as a separate diagnostic",
+      "completed_attempt_monotonic_interval_sum_seconds": 3738.8149168420023,
+      "q6_final_monotonic_seconds": 2.3434535039996263,
+      "policy_debit_seconds": 600.0,
+      "conservative_allowance_seconds": 3.1,
+      "effective_cost_seconds": 4685.228437647174,
+      "effective_remaining_seconds": 38514.77156235283,
+      "active_attempts": [],
+      "infrastructure_recovery_count": 1,
+      "unique_bug_replay_count": 1,
+      "old_policy_actual_elapsed_seconds": null
     },
     "scientific_answers": {
-      "accurate_schur_memory": "COMPARISON_INCONCLUSIVE",
-      "interface_approximate_inverse": "EVIDENCE_INCOMPLETE; Q3_admission=false",
-      "full_p6_original_notch": "not_qualified",
+      "accurate_schur_memory": "NO_OBSERVED_MEMORY_REDUCTION_SINGLE_CASE",
+      "interface_approximate_inverse": "MEASURED_NEGATIVE_CANDIDATE; Q3_admission=false",
+      "full_p6_original_notch": "not_run_after_Q3_admission_false",
       "official_R_T_A_A_volume_diffraction_conservation": "not_run",
-      "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
-      "no_missing_evidence_implies_method_failure": true
+      "next": "CLOSE_FIXED_INTERFACE_CONFIGURATION",
+      "no_missing_evidence_implies_method_failure": true,
+      "merge_status": "NOT_APPROVED_FOR_MASTER_MERGE"
     }
   },
+  "historical_ledger_before_observe": {
+    "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+    "sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
+    "total_budget_seconds": 43200.0,
+    "settled_elapsed_seconds": 613.2807354921454,
+    "policy_debit_seconds": 600.0,
+    "conservative_allowance_seconds": 3.1,
+    "budget_used_seconds": 1216.3807354921453,
+    "remaining_seconds": 41983.619264507855,
+    "active_attempts": [],
+    "unique_bug_replay_count": 0,
+    "preserved_as_historical": true
+  },
   "time_observe_only": {
-    "status": "implemented_not_run",
+    "status": "Q6_FINALIZED",
+    "historical_implementation_status": "implemented_not_run",
     "authorization": {
       "date": "2026-09-13",
       "user_text": "先不考虑时间gate，继续推进看看",
@@ -584,6 +929,7 @@
       },
       "pde_status": "not run"
     },
-    "pde_status": "no observe_only PDE run or qualification evidence"
+    "pde_status": "Q1/Q2 executed and Q3 closed as measured negative; Q4/Q5 not run; Q6 finalized with no new PDE action",
+    "current_conclusion": "CLOSE_FIXED_INTERFACE_CONFIGURATION"
   }
 }

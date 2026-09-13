@@ -1,4 +1,24 @@
-# V16 时间观察策略实现与收尾测试
+# 当前验证：V14/V15 续算、生命周期修复与 Q6 负结果读取
+
+| 检查 | 已完成结果 | 来源与限制 |
+|---|---|---|
+| 同一 qualified ABI | complex128/int32、MPI1、线程1；新正式入口 clean | 沿用相同 Linux PETSc/SLEPc/DOLFINx 栈，未重新调查 ABI/MUMPS/metric。 |
+| 时间策略 targeted 主批 | 77 passed in 10.99s | 对应实现随后提交 `6a8b273c383d5bd9da37d6630a48bd24d6a90cce`；纯 FGMRES policy 另9项，真实PETSc两策略另4项（0.40s）。这是此前已完成测试，非本次文档阶段重跑。 |
+| owned active volume 生命周期修复 | 10 passed in 0.87s；控制测试另3 passed in 0.38s | `test_390_physical_interface_schur.py`、`test_physical_schur_v14_fint.py`、`test_physical_schur_v14_q4_mock.py` 等；释放owned句柄后作用/伴随/恢复不变，borrowed对象仍可用。实现提交 `188224ad5fc81b34156a0ae3678bd2121b1206da`。 |
+| Q6 保存负结果读取 | 17 passed in 0.10s | `test_physical_schur_v14_q6_evidence.py` 与 `test_physical_schur_v14_evidence.py`；覆盖真实累计计数1/2/3、错误计数、非有限/零参考范数拒绝、全通过但BAL未完成不误判negative。 |
+| Q6 reader 编译与差异检查 | compileall / diff-check 通过 | 17项测试在188 HEAD+未提交reader改动上运行，随后相同代码提交 `d9530636ab2f043a84235b515846b410a8deb4b3`；不混作188 clean源码的测试。 |
+| 新正式数值 | Q0核心与Q1/Q2准确配对通过；Q3三输入全部未准入 | 第一次Q3资源停止保留，唯一重放完成三输入后BAL map guard异常；全部具体数值与门槛见详细结果表。 |
+| Q6真实保存包 | MEASURED_NEGATIVE_CANDIDATE；Q6_FINALIZED | 主控已从三份NPZ残差向量重算rho并核对hash；Q6在d953 clean source上零PDE收口。不是p6或物理PASS。 |
+| 最终文档合同检查 | **20 passed in 0.08s** | qualified actual-host preflight后运行 `test_26_documentation_contract.py` + `test_183_development_model_registry_markdown.py`；原始stdout/ABI记录见run_index当前组。未重复PDE或未受影响工程测试。 |
+| full repository pytest / Ruff / CI | 本轮未运行 | 既有Task038 registry缺件仍保留；不安装工具或升级ABI为绿表补测。 |
+
+原始工程证据：[生命周期修复记录](../../../benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/active_volume_release_fix_20260913.json)（SHA `c88528572d18227d0b670ae7f8bc81c7a515e6c587ec3bad94f9ad4d2b02e70d`）；[主控读包与17项stdout](../../../benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/q0_q3_time_observe_review_20260913.json)（SHA `f98926d4ed661b45156805a2a04be833124413eb487b1f01f7aef63c803d78a8`）。前者保留测试时未提交身份，最终实现SHA如表。工程完整总时长unknown；可核验单项计时与formal ledger分开，不双重计费。
+
+[response_v16](../response_v16.md)、[详细数值/资源表](p4_schur_v14.md)、[run index](records/run_index.json)提供阶段source和原始hash。下方均为原时点历史测试/停止状态，不覆盖当前三输入负结论。
+
+---
+
+# 历史实施快照：V16 时间观察策略测试（正式续算前）
 
 | 检查 | 最终结果 | 口径/限制 |
 |---|---|---|

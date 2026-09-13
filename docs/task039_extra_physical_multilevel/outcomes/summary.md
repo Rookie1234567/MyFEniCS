@@ -1,4 +1,27 @@
-# Task39extra Review V15 最终汇总：Q0 受控停止与 Q6 证据不完整
+# 当前汇总：准确 Schur 不省内存，固定接口近似未通过准入
+
+| 当前问题 | 实测结论 | 原因及证据范围 |
+|---|---|---|
+| 准确 Schur 是否省内存 | 精度通过，内存没有节省 | Q1/Q2 RSS 2825973760/4267347968 B，Q2/Q1=1.510045；常驻库存2906619390/4698023554 B，比值1.616319。 |
+| 接口近似是否有效 | 冻结候选关闭 | 三 RHS 的 rho=37.272086/.726414/41.825936；分别要求≤.5/≤.2/≤.5，L2/curl 也全部未过。 |
+| original/notch 是否通过 | 两者未运行 | Q3 未准入；无本轮 A6 最终1e-6、E/H、R/T/A、A_volume、80模式或守恒资格。 |
+| Q6 是否完成 | Q6_FINALIZED | 零 PDE 的证据收口，不能理解为完整 PC/物理通过；BAL_H map guard 异常及旧失败保留。 |
+
+模型为13.5 nm、p6/h10、252 hex、Full3D、MPI1/线程1、complex128/int32。Schur先消去42宏块内部，只在共享接口求解再恢复完整场；全流程同时包含内部与接口因子，接口行数减少并不自动节省内存。Q1原p4 LU与Q2准确Schur在同一source、同三输入及原A4残差/场/旋度标准下配对；两个全局factor顺序运行。
+
+准确Q1/Q2三份原A4残差最大值为6.55690292958073e-11/8.675448391967837e-11（限1e-10），最大参考场/旋度差0/1.938608248500389e-12（限1e-8）；Q1的零差是复现既有离散向量，不是连续物理误差为零。完整三输入表、setup/调用、allocated/used、全部内部耦合与全过程RSS/PSS见[当前详细结果](p4_schur_v14.md)与[response_v16](../response_v16.md)。
+
+Q3第一次因常驻库存projected3331318958 B超过3 GiB而停止；唯一生命周期修复提前释放无用active volume430410244 B，原cap不变。重放完成42个局部LU/SVD与rank416的小粗层，三次F_int含评价约1秒，内部残差约1e-12，但全场误差接近1、接口残差大。三输入向量/指标先保存，随后BAL_H metadata key-set guard异常。worker真实终态WORKER_FAILED与保存包重算MEASURED_NEGATIVE_CANDIDATE分别保留；没有为了补BAL_H再跑PC。
+
+Q0/Q1/Q2/第一次Q3 source为`6a8b273c383d5bd9da37d6630a48bd24d6a90cce`；正式Q3重放为clean `188224ad5fc81b34156a0ae3678bd2121b1206da`；Q6只读汇总为`d9530636ab2f043a84235b515846b410a8deb4b3`。fresh Q0实际核心PASS；Q6仍保留旧Q0终态未知字段，不追溯认证旧EIO。用户时间授权仅启用observe_only，原残差、步数、内存、reserve、zero-swap、清场与物理规则不变。
+
+Q1/Q2全流程保守计费584.770956/773.019110秒，monotonic536.468042/708.431790秒。最终formal ledger结算4082.128437647174秒，另列旧600秒政策占用和3.1秒保守allowance，有效费用4685.228437647174秒；旧EIO实际耗时和完整工程总时长仍unknown。ledger hash为`1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3`；Q6自身结算前快照不作为最终总数。新增各场job swap0、global delta0/0、最终子进程清空；旧负结果及未知范围不被覆盖。
+
+[compact](records/p4_schur_v14_compact.json)、[comparison](records/p4_schur_v14_comparison.json)、[run index](records/run_index.json)保存精确source、数值、运行目录与raw hashes；[test_summary](test_summary.md)区分新旧工程资格。没有本轮p6完整物理输出，不扩大该固定案例到5nm/0.7nm或连续收敛结论。接口候选保持research-only，保留共同消元核心和所有负证据；不提升production default，不合并master，同分支推送后等待统一审阅。
+
+---
+
+# 历史快照：Task39extra Review V15 汇总（Q6 refresh 前）
 
 本批最终不是完整 Maxwell 数值通过，而是一次有界的恢复、Q0 性能受控停止和既有证据收口。模型为 13.5 nm fixed、p6/h10、Full3D、MPI1、complex128/int32，源码绑定 `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`。
 

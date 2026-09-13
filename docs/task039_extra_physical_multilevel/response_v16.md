@@ -1,4 +1,102 @@
-# Review V15 最终回应：Q0 受控停止，Q6 完成证据收口
+# Review V15 与用户时间授权回应：准确 Schur 不省内存，固定接口候选关闭
+
+本次按用户“先不考虑时间gate，继续推进看看”的授权，使用显式 `--v14-time-policy observe_only` 完成了可准入的 Q0→Q1/Q2→Q3→Q6。结论分别是：**准确 Schur 精度通过但没有省内存；固定接口近似在三份真实 p4 输入上均失败；original/notch 因 Q3 不准入而未运行。** Q6 的 `Q6_FINALIZED` 只表示负结果及证据完成汇总，不是完整 PC 或物理通过。下方历史快照保留原停止事实，不代表当前执行状态。
+
+准确 Schur 是先解并消去 42 个宏块内部未知量，再解共享接口，最后恢复完整场；本例宏块覆盖 252 个六面体单元。它重写同一个方程，减少接口行数也会增加消元填充和耦合存储，收益必须用全部因子、装配转换和恢复的成本衡量。Q3 将全局接口分解换成一次固定的局部修正—小粗修正—局部修正，直接替换整个旧 I4；没有叠加旧 C_U/S-p2、四步内层、recycling 或新增路线。参考仅作评价。
+
+## 当前阶段与源码身份
+
+| 阶段 | 精确 source SHA | 实际结果 |
+|---|---|---|
+| fresh Q0 attempt 3 | `6a8b273c383d5bd9da37d6630a48bd24d6a90cce` | worker `Q0_CORE_PASS`，独立/存储 p4 行 48960/53084，内部/接口 35868/13092，42 块全覆盖、跨内部 owner 连接为零。 |
+| Q1 原 p4 LU → Q2 准确 Schur | `6a8b273c383d5bd9da37d6630a48bd24d6a90cce` | 两场均准确性与资源准入通过；两个全局 factor 顺序运行，前场清空后才启动后场。 |
+| Q3 第一次 | `6a8b273c383d5bd9da37d6630a48bd24d6a90cce` | worker `RESOURCE_CONTROLLED_STOP`，parent `WORKER_FAILED`；在局部构建前被常驻库存预审阻止，无 F_int 调用。 |
+| Q3 唯一 bug replay | `188224ad5fc81b34156a0ae3678bd2121b1206da` | **已提交、clean 的正式运行**；3 次真实 F_int 与指标已保存，随后 BAL_H map guard 抛错，worker/parent 最终 `WORKER_FAILED`。保存包重算是 `MEASURED_NEGATIVE_CANDIDATE`。 |
+| Q4 original / Q5 notch | — | `not_run_after_Q3_admission_failure`；未产生本轮原 A6、完整场或 official 物理输出。 |
+| Q6 证据收口 | `d9530636ab2f043a84235b515846b410a8deb4b3` | `Q6_FINALIZED`，`new_pde_actions=0`，各阶段 `read_errors={}`，固定候选关闭。 |
+
+全部新正式 worker 的前后源码均 clean，使用同一 qualified Linux complex128/int32 ABI、MPI1、线程1。时间授权基线为 `d041da66bdcea74bdd82197cb0b8818d231b4a2d`，Review V15 base 为 `9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77`。最终文档提交不改变上述阶段 source。Q6 对 Q0 只记录、未调用后继数值 checker，仍保存 `qualified=false` 和旧 EIO 的历史覆盖不完整 reason；这与 fresh Q0 worker 的核心 PASS 分列，不把旧未知终态认证为通过。
+
+## 三份同输入的精度与准入
+
+`rho` 是恢复后完整原 A4 残差除以原 RHS 范数；L2 和 scaled-curl 是相对既有离散参考的场与旋度差。Q1/Q2 的准确求解精度线和 Q3 的有限近似准入线不同。表中数值作显示舍入，完整精度与 RHS/参考哈希在 compact、comparison 和原始包中。
+
+| 方法 / RHS | rho | L2 相对差 | scaled-curl 相对差 | rho / L2 / curl 限值与结果 |
+|---|---:|---:|---:|---|
+| Q1 原 p4 LU / A2R160_BAL_H_p4_01 | 4.24252482715e-11 | 0 | 0 | ≤1e-10 / ≤1e-8 / ≤1e-8；通过 |
+| Q1 原 p4 LU / A2R160_BAL_H_p4_02 | 1.574808006e-12 | 0 | 0 | ≤1e-10 / ≤1e-8 / ≤1e-8；通过 |
+| Q1 原 p4 LU / LIGHT448_BAL_H_p4_09 | 6.55690292958e-11 | 0 | 0 | ≤1e-10 / ≤1e-8 / ≤1e-8；通过 |
+| Q2 准确 Schur / A2R160_BAL_H_p4_01 | 6.8106075253e-11 | 1.93827338046e-12 | 1.9386082485e-12 | ≤1e-10 / ≤1e-8 / ≤1e-8；通过 |
+| Q2 准确 Schur / A2R160_BAL_H_p4_02 | 2.63094271559e-12 | 1.73249634457e-12 | 1.73407669301e-12 | ≤1e-10 / ≤1e-8 / ≤1e-8；通过 |
+| Q2 准确 Schur / LIGHT448_BAL_H_p4_09 | 8.67544839197e-11 | 1.86304650554e-12 | 1.8635035518e-12 | ≤1e-10 / ≤1e-8 / ≤1e-8；通过 |
+| Q3 接口近似 / A2R160_BAL_H_p4_01 | 37.2720863545 | 1.01095201255 | 1.01112382913 | ≤0.5 / ≤0.5 / ≤0.6；三项均未通过 |
+| Q3 接口近似 / A2R160_BAL_H_p4_02 | 0.726414117331 | 0.962889553402 | 0.962399155213 | ≤0.2 / ≤0.9 / ≤0.9；三项均未通过 |
+| Q3 接口近似 / LIGHT448_BAL_H_p4_09 | 41.8259359612 | 1.00212828377 | 1.00231965265 | ≤0.5 / ≤0.5 / ≤0.6；三项均未通过 |
+
+Q1 的三个新求解向量与已有参考向量逐字节相同，所以表中场差为 0；这表示复现该离散参考，不是连续物理误差为零。Q1/Q2 全部无需迭代改进；它们以原 A4 精度裁决，端口增广矩阵的另一种残差仅作诊断。Q2 的作用/伴随/恢复检查约 1e-14，释放显式 Schur 后恢复差为 0，均通过原 1e-10 门槛。
+
+Q3 的内部残差依次为 `2.98540615181059e-12 / 5.63818281749144e-14 / 2.9411258186821423e-12`，完整残差主要留在接口。主控已核对保存向量/NPZ 身份并从残差向量独立重算 rho，三项与上表一致。因此本次证据支持“准确内部消元成立，冻结接口近似纠错不足”，不推论所有 Schur 方法都不可行。
+
+与 V13 已有四步 I4 同 RHS 的 rho `0.950231025 / 0.101264949 / 0.977895241`、L2 差 `0.964714793 / 0.877757076 / 0.992817604`、curl 差 `0.964639027 / 0.877371768 / 0.992802276` 相比，本次固定候选在三输入质量上均更差。该旧对照绑定 source `3457b5e2f54dec690fcb70deb1f387fe7f6d57cd` 和 response_v14 §7.2；未重跑旧 PC，也没有新 p6/KSP 同步数或同时间节点可比较。
+
+## 全过程内存与完整成本
+
+RSS/PSS 是完整 parent 进程树采样峰值，PSS 由全部可读 parent 样本取最大值；不能用 worker 稀疏 trace 代替。常驻库存是同时存活对象的保守字节账，workspace 是并存临时工作区；allocated、used 与 RSS 各有口径。以下每场费用包含该 worker 的预检、装配、构建、求解、评价、保存及清理；monotonic 与原保守时钟结算费用并列。
+
+| workflow | RSS / PSS（B） | 常驻库存 / workspace（B） | 全流程 monotonic（s） | 保守结算费用（s） |
+|---|---:|---:|---:|---:|
+| Q0 fresh | 1399427072 / 1369008128 | 68803850 / 0 | 511.370434821 | 558.278084820 |
+| Q1 原 p4 LU | 2825973760 / 2795549696 | 2906619390 / 17825792 | 536.468042244 | 584.770955727 |
+| Q2 准确 Schur | 4267347968 / 4236889088 | 4698023554 / 17825792 | 708.431790382 | 773.019110229 |
+| Q3 首次资源停止 | 2866094080 / 2835682304 | 2758151342 / 17825792 | 598.082606829 | 650.699442074 |
+| Q3 唯一 replay | 3468599296 / 3438116864 | 3115588906 / 531718272 | 826.424954024 | 899.736652959 |
+| Q6 只读收口 | 145199104 / 未在摘要单列 | 不作 PC 内存对照 | 2.343135095（watchdog） | 2.343456346 |
+
+**准确 Schur 的 RSS 比为 1.5100451491807199，增加 1441374208 B；常驻库存比为 1.616318796387029，增加 1791404164 B。** 因此判为 `NO_OBSERVED_MEMORY_REDUCTION`。它是一次固定案例观测，不是统计性结论；准确 Schur 更占内存未被用来阻止后续 Q3。
+
+| 时间口径 | Q1 | Q2 |
+|---|---:|---:|
+| preflight 起至首 RHS 开始的 UTC 事件区间，含完整 setup（s） | 560.968651644 | 748.901532761 |
+| common setup 开始至首 RHS 的 monotonic 采样夹界，派生区间（s） | [514.603056361, 515.118303291] | [685.995946833, 686.513720302] |
+| 全局 symbolic / numeric 分解自身计时（s） | 0.268321307 / 18.488779415 | 0.280450799 / 42.074472809 |
+| Q2 42 个内部 symbolic / numeric 计时之和（s） | 不适用 | 0.111941312 / 0.897223226 |
+| 三 RHS 调用，含 native 检查与评价（s） | 1.894626224 / 1.856757703 / 1.827990820 | 1.350819265 / 1.293319412 / 1.300694713 |
+
+UTC 区间与 monotonic 区间有实际时钟差，不能互相减算费用或当同一个计时器。Q2 setup 包含消元装配、转换、公共正确性检查和可复用状态保存；全部计入流程。两场沿用既有 JIT cache、相同 MUMPS/V11 symbolic 配额策略，未清缓存、未启用 BLR/OOC、未升级 ABI。两场准确 factor 均存活到三 RHS 及评价完成。
+
+| 库存组成，分别报告后端与派生口径 | Q1 | Q2 |
+|---|---:|---:|
+| 全局增广 rows / NNZ | 53164 / 24730144 | 13172 / 15190976 |
+| 全局 factor padded allocated / padded used（B） | 2343000000 / 1382000000 | 1636000000 / 957000000 |
+| 内部 42 factors padded allocated / padded used 合计（B） | 不适用 | 945000000 / 357000000 |
+| 全部 factor allocated / used 合计（B） | 2343000000 / 1382000000 | 2581000000 / 1314000000 |
+| 全局增广稀疏矩阵载荷（B） | 494815540 | 303872212 |
+| 内部耦合 / 索引（B） | 不适用 | 789970944 / 717024 |
+| 活跃体积矩阵 / 稀疏 S_V 载荷（B） | 见完整库存账 | 430410244 / 302591572 |
+
+后端 used 略降不能替代 allocated 或完整库存通过 Gate。新增局部因子、耦合和消元填充抵消了接口行数缩减的表面优势。
+
+Q3 首次在 `current=2758151342 B`、`projected=3331318958 B > 3221225472 B` 停止。唯一修复是在独立子块、耦合与 S_V 已建立后释放不再使用、由核心拥有的 active volume；释放 `430410244 B` 后同一预审 projected 为 `2900908714 B`，未提高 3 GiB cap。旧停止与费用保留，`unique_bug_replay_count=1`。重放构建 42 个局部 LU 与受限直接 SVD，最大 patch 768 行，候选上界 496、实际配对秩 416；局部构建 `159.270087089 s`，没有扩 rank 或步骤。单次 F_int 核心时间 `0.503379593 / 0.432578284 / 0.429629345 s`，含 native 检查与评价后为 `1.007764964 / 0.959829724 / 0.930653996 s`。每次真实计数为内部回代 168、接口局部回代 84、小粗回代 1，无旧 I4/C_U。更便宜的单次调用没有换来合格纠错。
+
+资源规则继续为整树 min(8 GiB, 动态可用量−reserve)、reserve=max(4 GiB,15%)、Q1/Q2 常驻 6 GiB、Q3 常驻 3 GiB、临时 1 GiB。新增各场 job swap 峰值 0、global swap delta 0/0、最终子进程清空；本批 baseline 为 39/149 页，不能与旧 baseline 混算，也不据此认证工程间隙或旧 EIO 失联期间零交换。原 A6 最终 1e-6、完整物理、restart32/步数与第64步 rho≤0.10 数值门槛保留，但此次未准入 p6。
+
+## 真实终止原因、费用历史和审阅边界
+
+三份 Q3 指标及向量在 BAL_H 审计前已原子保存。之后实际异常为 `ValueError: Q3 p6 balanced input differs from the fresh native map`。静态检查发现 guard 用数值 map key 集合与含 `arrays`/`provenance` 的保存包 key 集合比较；这是元数据检查问题，区别于前一次 active-volume 生命周期修复。它既不证明 map 数组不同，也不证明它们已通过核验。BAL_H 保持 `NOT_COMPLETED`；小粗矩阵 E 的完整数值 rcond 未在最终失败摘要中保全，不编造该值。已保存的三输入负结果足以关闭冻结候选，没有为此再跑 PC/BAL_H、original/notch 或任何新方法。
+
+最终共享账本在 Q6 结算后为 `4082.128437647174 s`，是 conservative-realtime 已结算费用；已结算 attempt 的 ledger monotonic 区间合计 `3738.8149168420023 s`，不包含没有该区间的 R0 采集，且不是 CPU 时间。另列旧 Q0 的 `600 s` 政策占用、`3.1 s` 保守 allowance，有效费用 `4685.228437647174 s`、名义剩余 `38514.77156235283 s`。原总额 43200 s 仍记录，本轮不据时间触发停止或准入拒绝；所有历史费用没有清零。Q6 原始 packet 嵌入的是自身结算前账本/预留，最终数以 live ledger hash `1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3` 为准。
+
+旧 attempt1 的 EIO、`RESERVED` 原字段及实际耗时 unknown 保留；600 s 不是旧实测，也不是已证明的真实耗时上界。旧 attempt2 时间停止计费 `604.5503952971432 s`、旧 Q6 不完整计费 `3.9161199980033103 s`、首次 Q3 资源停止费用均在原账内。一次基础设施恢复与一次实现 bug replay 计数分别为 1；没有重跑恢复检查、旧 ABI/MUMPS/metric 资格或新建全局参考。
+
+工程修改、监督及文档工作的完整总时长未独立计量，记 `unknown`，不伪装为 0 或并入 PDE。可核实的相关测试为时间策略主批 77 项、纯 FGMRES policy 9 项、真实 PETSc 两策略 4 项；生命周期修复 10 项和控制测试 3 项；Q6 reader 17 项，compileall/diff 检查通过。17 项测试是在 `188224ad5fc81b34156a0ae3678bd2121b1206da` HEAD 加未提交 reader 改动上运行，最终相同代码提交为 `d9530636ab2f043a84235b515846b410a8deb4b3`，不与 clean source 的正式 Q3 重放混写。主控只读数组/资源核验计时 `0.548287564 s` 单列，不重复计入 formal ledger。最终文档检查见 test_summary；未宣称 full repository pytest、Ruff 或 CI 通过，旧 Task038 registry 缺件保留。
+
+正式输出边界仍是：没有本轮完整 p6 场、R/T/A、A_volume、全部 80 模式或守恒 Gate PASS。唯一结论是 `CLOSE_FIXED_INTERFACE_CONFIGURATION`，保留准确消元共同核心的测试证据与全部负结果，接口候选不提升 production default。5 nm 分支 HEAD `54e13335fe4313a111a33768e7b257a7a49b6541` 未受本任务修改；不合并 master，提交推送 task39extra 后等待统一审核。
+
+证据入口：[完整阶段表](outcomes/p4_schur_v14.md)、[compact](outcomes/records/p4_schur_v14_compact.json)、[comparison](outcomes/records/p4_schur_v14_comparison.json)、[run index](outcomes/records/run_index.json)、[tests](outcomes/test_summary.md)。完整向量与原始轨迹留在 ignored artifacts；三 RHS 保存包 SHA256 为 `658a9dd4a6fcb845459a6d5f787ce8eed45d42e46813dfac440655b46bc54c35`，Q6 decision 为 `ea07b54e221a32de35cc2e47a037922833ee3135429bc90dd6ba649dcf539fe7`。主控 read-only audit（含后追加的17项测试 stdout）SHA 为 `f98926d4ed661b45156805a2a04be833124413eb487b1f01f7aef63c803d78a8`；仅移除新增 helper 子记录可复原原 audit hash `da2607bd96f6cb144ffd149c02bc2e03edf7a5953bb60720bf785d5186d4e42d`。
+
+---
+
+# 历史快照：Review V15 初次收口（Q6 refresh 前）
 
 本次最终收口已按授权完成 R1、一次新的 Q0 和既有证据的 Q6 finalization；没有重试 Q0，也没有运行 Q1–Q5。源码绑定为 `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`，qualified WSL/Linux ABI preflight 通过：PETSc scalar `complex128`、integer `int32`、MPI1、线程 1，工作树在每个正式入口均 clean。
 
@@ -84,7 +182,9 @@ R1、新 Q0、Q1/Q2、条件 Q3/Q4/Q5 和正式 Q6 均因本次 R0 Gate 未运�
 
 ---
 
-# 用户时间授权续算增量：显式 `time-observe-only`（尚未运行 PDE）
+# 历史快照：用户时间授权续算增量：显式 `time-observe-only`（当时尚未运行 PDE；不覆盖上方最终 Q1–Q6）
+
+以下内容属于实现阶段的历史快照；后续 Q1/Q2/Q3 正式运行与 Q6 finalization 已在本文件首段另行收口。
 
 2026-09-13，基于用户原文“先不考虑时间gate，继续推进看看”的明确授权，以及基线 `d041da66bdcea74bdd82197cb0b8818d231b4a2d`，本轮实现一个默认关闭的、只针对 `physical_p4_schur_v14` 的时间观察策略。这只是时间执行豁免，不开启新的 Review V17；原 Review V15 仍是科学合同。命令行入口为 `--v14-time-policy {enforce,observe_only}`；缺省值仍是 `enforce`，其他 profile 和 contract probe 不接受 `observe_only`。旧 attempt、旧 manifest 或旧 worker 中缺少该字段时一律按 `enforce` 解释，因此历史记录和默认路径不被改写。
 

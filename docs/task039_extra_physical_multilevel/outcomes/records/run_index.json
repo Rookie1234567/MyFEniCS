@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Finalized V15 continuation of the V14 Q0-Q2 audit; all prior V5-V14 success, negative and stopped histories retained; no new official p6 outputs",
+  "scope": "Review V15 + user observe-only continuation of Review V14: matched Q1/Q2 accurate controls, measured Q3 rejection and Q6 evidence closure; all older evidence retained; no new official p6 outputs",
   "units": {
     "time": "s",
     "memory": "B"
@@ -1831,7 +1831,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "review_v15_continuation",
+  "current_review_record": "review_v16_time_observe_finalization",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -2197,7 +2197,11 @@
       "all_admission_gates": true,
       "actual_probe_payload_bytes": 16178076,
       "cumulative_probe_payload_bytes": 32955292,
-      "measured_time_components_seconds": [2.387310507, 2.298935873001028, 0.12797381699783728],
+      "measured_time_components_seconds": [
+        2.387310507,
+        2.298935873001028,
+        0.12797381699783728
+      ],
       "derived_allowance_seconds": 3.1
     },
     "r1": {
@@ -2310,6 +2314,429 @@
       "official_R_T_A_A_volume_diffraction_conservation": "not_run",
       "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
       "no_missing_evidence_implies_method_failure": true
+    }
+  },
+  "review_v16_time_observe_finalization": {
+    "status": "Q6_FINALIZED_WITH_MEASURED_NEGATIVE_INTERFACE",
+    "authorization": "用户：先不考虑时间gate，继续推进看看",
+    "review_base_sha": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "authorization_base_sha": "d041da66bdcea74bdd82197cb0b8818d231b4a2d",
+    "time_policy_source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+    "lifecycle_fix_source_sha": "188224ad5fc81b34156a0ae3678bd2121b1206da",
+    "final_numerical_reader_source_sha": "d9530636ab2f043a84235b515846b410a8deb4b3",
+    "source_scope": "All new formal runs used committed clean source; the Q6 reader engineering tests used HEAD 188224ad plus the changes subsequently committed as d9530636.",
+    "answers": {
+      "exact_schur_memory": {
+        "inventory_difference_bytes": 1791404164,
+        "memory_ratio": 1.5100451491807199,
+        "reason": "same ABI/RHS and full-workflow scope; setup/apply costs reported separately",
+        "resident_inventory_ratio": 1.616318796387029,
+        "rss_difference_bytes": 1441374208,
+        "single_case_observation_not_statistical_claim": true,
+        "status": "NO_OBSERVED_MEMORY_REDUCTION"
+      },
+      "full_p6": {
+        "notch_qualified": false,
+        "original_qualified": false
+      },
+      "interface_approximation": {
+        "Q3_admission": false,
+        "measured_stop_stages": [
+          "Q3_INTERFACE_CONTROL"
+        ],
+        "status": "MEASURED_FIXED_CONFIGURATION_STOP"
+      },
+      "next_choice": {
+        "accurate_reference_retention_supported": false,
+        "status": "CLOSE_FIXED_INTERFACE_CONFIGURATION"
+      }
+    },
+    "runs": [
+      {
+        "stage": "Q0_CORE",
+        "attempt": 3,
+        "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T114541.274952Z",
+        "time_policy": "observe_only",
+        "worker_status": "Q0_CORE_PASS",
+        "worker_classification": "DISCRETE_SOLVER_OUTPUT_PASS",
+        "worker_error": null,
+        "ledger_status": "worker_exit0",
+        "conservative_settled_seconds": 558.2780848200184,
+        "parent_monotonic_seconds": 511.37040338000224,
+        "full_process_tree_sampled_rss_peak_bytes": 1399427072,
+        "job_swap_peak_bytes": 0,
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "bindings": {
+          "physical_p4_schur_v14_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T114541.274952Z/physical_p4_schur_v14_summary.json",
+            "sha256": "e832cb7480317092ebf31091528ffeef2b7685afff6774c9fad4693ec38820b4"
+          },
+          "run_manifest.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T114541.274952Z/run_manifest.json",
+            "sha256": "0e2078285f00f31eeeb113d608e04e870be6c0c86196f490f5581431b7c49078"
+          },
+          "run_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T114541.274952Z/run_summary.json",
+            "sha256": "c045cfbaa09124ea990bfda4c7641773bba243738fee75ae3ceff8084371004e"
+          },
+          "watchdog/summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T114541.274952Z/watchdog/summary.json",
+            "sha256": "96d21ed63d16141dfb9843c8f745453bff3dca25e8a8664f1c29c4086802420a"
+          }
+        }
+      },
+      {
+        "stage": "Q1_FULL_DIRECT",
+        "attempt": 1,
+        "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z",
+        "time_policy": "observe_only",
+        "worker_status": "Q1_FULL_DIRECT_PASS",
+        "worker_classification": "DISCRETE_SOLVER_OUTPUT_PASS",
+        "worker_error": null,
+        "ledger_status": "worker_exit0",
+        "conservative_settled_seconds": 584.7709557270404,
+        "parent_monotonic_seconds": 536.4679948669946,
+        "full_process_tree_sampled_rss_peak_bytes": 2825973760,
+        "job_swap_peak_bytes": 0,
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "bindings": {
+          "physical_p4_schur_v14_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/physical_p4_schur_v14_summary.json",
+            "sha256": "758b35b5f8ab3f48fa821f953a08cc66383a985de4527205416fbc95c94e8b8d"
+          },
+          "run_manifest.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/run_manifest.json",
+            "sha256": "03b385987b90b8a6005b247d3dad9eae6581736ba3a6889f14f852c19e9ad32d"
+          },
+          "run_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/run_summary.json",
+            "sha256": "b2365837abd84edc192065506da810700d5f70a84608e918c20837021eb73245"
+          },
+          "watchdog/summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/watchdog/summary.json",
+            "sha256": "6a8f2f51488ed75ac5a0e2c5d562f96f370377ce5da68d3b99cbcf259d24c231"
+          }
+        }
+      },
+      {
+        "stage": "Q2_SCHUR_DIRECT",
+        "attempt": 1,
+        "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q2_schur_direct__full3d_iterative__mpi1__Mna/20260913T120955.025403Z",
+        "time_policy": "observe_only",
+        "worker_status": "Q2_SCHUR_DIRECT_PASS",
+        "worker_classification": "DISCRETE_SOLVER_OUTPUT_PASS",
+        "worker_error": null,
+        "ledger_status": "worker_exit0",
+        "conservative_settled_seconds": 773.0191102288234,
+        "parent_monotonic_seconds": 708.4317361930007,
+        "full_process_tree_sampled_rss_peak_bytes": 4267347968,
+        "job_swap_peak_bytes": 0,
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "bindings": {
+          "physical_p4_schur_v14_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q2_schur_direct__full3d_iterative__mpi1__Mna/20260913T120955.025403Z/physical_p4_schur_v14_summary.json",
+            "sha256": "715565883dc430698f4593195634b2c0b2fb2e11282409984dc23ff2fdc5db0a"
+          },
+          "run_manifest.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q2_schur_direct__full3d_iterative__mpi1__Mna/20260913T120955.025403Z/run_manifest.json",
+            "sha256": "93190e08532cbd019a87120f27f12a12e52d9807df42b5679b12015352335795"
+          },
+          "run_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q2_schur_direct__full3d_iterative__mpi1__Mna/20260913T120955.025403Z/run_summary.json",
+            "sha256": "1b91beecdeb7dae7cd020c2e47e95cb5c61530e305deee12f6983cc3a2d5d959"
+          },
+          "watchdog/summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q2_schur_direct__full3d_iterative__mpi1__Mna/20260913T120955.025403Z/watchdog/summary.json",
+            "sha256": "ec58cce1910b569206661b91838c3eb38c8d6f347512664dac1fa5e23531cec7"
+          }
+        }
+      },
+      {
+        "stage": "Q3_INTERFACE_CONTROL",
+        "attempt": 1,
+        "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T122513.140250Z",
+        "time_policy": "observe_only",
+        "worker_status": "CONTROLLED_STOP",
+        "worker_classification": "RESOURCE_CONTROLLED_STOP",
+        "worker_error": "V14 projected live inventory exceeds cap: {'label': 'q3_local_smoother', 'current_inventory_bytes': 2758151342, 'projected_inventory_bytes': 3331318958, 'inventory_cap_bytes': 3221225472, 'gate': 'independent_live_inventory_cap'}",
+        "ledger_status": "WORKER_FAILED",
+        "conservative_settled_seconds": 650.6994420740033,
+        "parent_monotonic_seconds": 598.0823531330025,
+        "full_process_tree_sampled_rss_peak_bytes": 2866094080,
+        "job_swap_peak_bytes": 0,
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "bindings": {
+          "physical_p4_schur_v14_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T122513.140250Z/physical_p4_schur_v14_summary.json",
+            "sha256": "8c69bd5a009c6a5e2361c4bb25f14127ff12810aba6bcf33209301bdd25f3ffe"
+          },
+          "run_manifest.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T122513.140250Z/run_manifest.json",
+            "sha256": "5693030bbe2137af4e3890b5a27706921587fd48aad2618f49fd8597bb089793"
+          },
+          "run_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T122513.140250Z/run_summary.json",
+            "sha256": "46fe7093cba4ef90f1dbbe5eeda0613720391fdf20bb09c11f222d753505ec0f"
+          },
+          "watchdog/summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T122513.140250Z/watchdog/summary.json",
+            "sha256": "9af5af3465cb747bae20896c82185c5d1201acd92fed1e344d23048da6642d43"
+          }
+        }
+      },
+      {
+        "stage": "Q3_INTERFACE_CONTROL",
+        "attempt": 2,
+        "source_sha": "188224ad5fc81b34156a0ae3678bd2121b1206da",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z",
+        "time_policy": "observe_only",
+        "worker_status": "FAILED",
+        "worker_classification": "WORKER_FAILED",
+        "worker_error": {
+          "message": "Q3 p6 balanced input differs from the fresh native map",
+          "type": "ValueError"
+        },
+        "ledger_status": "WORKER_FAILED",
+        "conservative_settled_seconds": 899.7366529591454,
+        "parent_monotonic_seconds": 826.4248944099963,
+        "full_process_tree_sampled_rss_peak_bytes": 3468599296,
+        "job_swap_peak_bytes": 0,
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "bindings": {
+          "physical_p4_schur_v14_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z/physical_p4_schur_v14_summary.json",
+            "sha256": "c0f5f796d438228b4a01795b44ac9370164c4c89f829df76dcd351a62c26dc02"
+          },
+          "run_manifest.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z/run_manifest.json",
+            "sha256": "23d14c8ff797b6a1d743bdacee2d5f0fa53593ec4b7ae13a670d3378d1d20267"
+          },
+          "run_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z/run_summary.json",
+            "sha256": "4b2ab5034cbe601df3d9c6c87826bb43c6362cf26524898fc8cf47cb1194f2a0"
+          },
+          "watchdog/summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z/watchdog/summary.json",
+            "sha256": "6641fcd79a87d9f27be95483f9198e95c28267a17d4bc6f80a6f85b834ac76ac"
+          }
+        },
+        "saved_three_rhs_negative_packet": {
+          "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z/q3_rhs_packets/three_rhs_complete_before_balanced_audit.json",
+          "sha256": "658a9dd4a6fcb845459a6d5f787ce8eed45d42e46813dfac440655b46bc54c35"
+        },
+        "numerical_conclusion": "MEASURED_NEGATIVE_CANDIDATE",
+        "balanced_p6": "NOT_COMPLETED",
+        "formal_source_was_clean": true
+      },
+      {
+        "stage": "Q6_FINALIZE",
+        "attempt": 2,
+        "source_sha": "d9530636ab2f043a84235b515846b410a8deb4b3",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z",
+        "time_policy": "observe_only",
+        "worker_status": "Q6_FINALIZED",
+        "worker_classification": "FINALIZATION_COMPLETE",
+        "worker_error": null,
+        "ledger_status": "worker_exit0",
+        "conservative_settled_seconds": 2.3434563459972413,
+        "parent_monotonic_seconds": 2.3431024460005574,
+        "full_process_tree_sampled_rss_peak_bytes": 145199104,
+        "job_swap_peak_bytes": 0,
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "bindings": {
+          "physical_p4_schur_v14_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z/physical_p4_schur_v14_summary.json",
+            "sha256": "9a7d6c6a9c264df8e337ef622572b8bcd18c979d66e5a30133243957f9c92ef5"
+          },
+          "run_manifest.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z/run_manifest.json",
+            "sha256": "9b70ff4229d569fdb3e42336223e2ca3b21fab3da8eaa9d884bcaa9e3d1f84f5"
+          },
+          "run_summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z/run_summary.json",
+            "sha256": "e1da7f942a4b81bdcbb4e3a2bf77aaf284403b6c1e2998e3c492c9b039f15c2e"
+          },
+          "watchdog/summary.json": {
+            "path": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z/watchdog/summary.json",
+            "sha256": "3dac5a2da3c8bfef674f929096bf9c815a17418c333c0399378a92f3cb23cc8d"
+          }
+        },
+        "decision": {
+          "path": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z/q6_decision.json",
+          "sha256": "ea07b54e221a32de35cc2e47a037922833ee3135429bc90dd6ba649dcf539fe7"
+        },
+        "new_pde_actions": 0
+      }
+    ],
+    "Q0_scope": "Fresh attempt3 worker Q0_CORE_PASS; Q6 records Q0 qualified=false with the historical unknown-coverage reason and does not run a Q0 qualification checker. Old attempt1 remains unknown.",
+    "Q4_ORIGINAL": {
+      "status": "not_run_after_Q3_admission_failure",
+      "official_result": false
+    },
+    "Q5_NOTCH": {
+      "status": "not_run_after_Q3_admission_failure",
+      "official_result": false
+    },
+    "final_ledger": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+      "sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3",
+      "conservative_settled_workflow_seconds": 4082.128437647174,
+      "policy_debit_seconds": 600.0,
+      "historical_actual_elapsed_seconds": null,
+      "conservative_allowance_seconds": 3.1,
+      "effective_budget_used_seconds": 4685.228437647174,
+      "nominal_total_budget_seconds": 43200.0,
+      "nominal_remaining_seconds": 38514.77156235283,
+      "time_gates_enforced": false,
+      "active_attempts": [],
+      "infrastructure_recovery_count": 1,
+      "unique_bug_replay_count": 1,
+      "scope": "Final ledger after Q6 settlement. Q6 embeds a pre-settlement snapshot with its own active reservation; that snapshot is not the final total."
+    },
+    "history_retained": [
+      "review_v15_infrastructure_gate",
+      "review_v15_continuation",
+      "v14_q0_q2_audit"
+    ],
+    "root_readonly_audit": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/q0_q3_time_observe_review_20260913.json",
+      "sha256": "f98926d4ed661b45156805a2a04be833124413eb487b1f01f7aef63c803d78a8"
+    },
+    "historical_ledger_snapshot": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/V15_Q0_EIO_ONCE/original_ledger_snapshot.json",
+      "sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0"
+    },
+    "records": {
+      "response": "docs/task039_extra_physical_multilevel/response_v16.md",
+      "outcome": "docs/task039_extra_physical_multilevel/outcomes/p4_schur_v14.md",
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json",
+      "comparison": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_comparison.json",
+      "recovery": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json"
+    },
+    "not_approved_for_master_merge": true,
+    "derived_setup_intervals": {
+      "Q1": {
+        "derived_monotonic_interval_seconds": [
+          514.6030563609966,
+          515.1183032909976
+        ],
+        "common_setup_through_first_rhs_utc_seconds": 560.183768181,
+        "event_range_ns": [
+          1789300643270284166,
+          1789301203454052347
+        ],
+        "monotonic_sample_brackets": [
+          [
+            37700.487013302,
+            37700.74157882
+          ],
+          [
+            38215.344635181,
+            38215.605316593
+          ]
+        ],
+        "events_sha256": "2246d4a576845d66a1b9dbd7e1011f01ac443c1f5c6c931932390c07c6feab06",
+        "resources_sha256": "a43a832a0307e7e9a87208a1afaa7e80b9da070cb56a1d7d6698770efcd115c8",
+        "scope": "Derived monotonic interval bounded by parent samples bracketing common setup start and first RHS UTC event; no interpolation or new PDE."
+      },
+      "Q2": {
+        "derived_monotonic_interval_seconds": [
+          685.995946832998,
+          686.5137203019985
+        ],
+        "common_setup_through_first_rhs_utc_seconds": 748.100706639,
+        "event_range_ns": [
+          1789301395824325156,
+          1789302143925031795
+        ],
+        "monotonic_sample_brackets": [
+          [
+            38390.339124925,
+            38390.593965491
+          ],
+          [
+            39076.589912324,
+            39076.852845227
+          ]
+        ],
+        "events_sha256": "7fbcad1878bd85cf49fdf142f77bfbb053f8631210ecdf57cf3173046ee3b900",
+        "resources_sha256": "6540162d614da17cea7d2e13c8b8cca967c8b3a3d8d88c8654274cf3eb8a415a",
+        "scope": "Derived monotonic interval bounded by parent samples bracketing common setup start and first RHS UTC event; no interpolation or new PDE."
+      }
+    },
+    "final_documentation_validation": {
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "result": "20 passed in 0.08s",
+      "scope": "Documentation-only checks on final numerical source d9530636; no new PDE, factor or ABI requalification; result text/record hashes are updated after this check.",
+      "stdout": {
+        "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v16_final_documentation_tests.log",
+        "sha256": "22d16909bb9cb74a42c226188c6992b148a70f2b1c5b6b545b394e2266eedfcb"
+      },
+      "qualified_abi_preflight": {
+        "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v16_final_documentation_abi.json",
+        "sha256": "b0bdaa73ab5e68c65de30ba24bb8b8812d5478037722eee7db8d86da25bc18ee"
+      },
+      "stdout_text": "....................                                                     [100%]\n20 passed in 0.08s\n"
+    },
+    "final_evidence_review": {
+      "scope": "Final compact/document review; zero PDE and operator actions; no formal ledger mutation",
+      "source_sha": "d9530636ab2f043a84235b515846b410a8deb4b3",
+      "checks": [
+        "time authorization and distinct budget/recovery counters",
+        "Q1/Q2 raw source, three residual/field/curl/call values and RSS",
+        "Q3 unchanged admission limits and separate saved negative/BAL exception",
+        "old Q0/Q6/ledger/R1 and complete older index objects preserved",
+        "24 raw hashes, terminal cleanup and immutable old ledger",
+        "27 current local links, all changed JSON parse, authorized file scope"
+      ],
+      "passed": true,
+      "corrected_during_review": [
+        "Historical Q6 snapshot restored two omitted/shortened fields verbatim from HEAD before final validation."
+      ],
+      "elapsed_monotonic_seconds": 0.014344777999212965,
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v16_final_evidence_review.json",
+      "sha256": "ad608218a86b3738332426aa9c618dd9b72c5af50c8cceb565dffc4343c33cf8"
+    },
+    "record_sha256": {
+      "response": "23da2affb95045cf0a63ee3cff1b376094c8f8d4a699ba3ce98350c5a69347c4",
+      "outcome": "5b9305c17e4e651a5b332b376199a8221ba5a471d55db9b4ef4bd46b19a01767",
+      "compact": "48272303756d62286469690a40a3f0088a095b85ff57f875dcef067d839afbcd",
+      "comparison": "ed587ee13ef98e227ceee0a1450950b6ba500fee474f70dea5946e2140928c4f",
+      "recovery": "2698f7febd6c6bb914fc59dae33d999fd26c5d68177f674613ed91d2c409a181"
     }
   }
 }

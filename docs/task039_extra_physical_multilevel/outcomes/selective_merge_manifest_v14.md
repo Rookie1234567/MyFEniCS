@@ -1,4 +1,21 @@
-# Review V15 最终 selective merge 决策
+# 当前 selective merge 边界：保留共同核心，固定接口候选关闭
+
+仍为 **NOT_APPROVED_FOR_MASTER_MERGE**。本批新profile为显式研究路径；Q1/Q2准确性通过不等于省内存，Q3负结果不提升生产默认。以下分组是供后续审阅的依赖关系，不是合并授权。
+
+| 依赖组 | 当前内容与数值行为 | 依赖、测试与fresh证据 | 后续若获批准的顺序 |
+|---|---|---|---|
+| production numerical/core | 不新增production default；共同准确消元核心在固定p4上通过 | `physical_interface_schur.py`依赖现有MUMPS/carrier/约束；owned-volume释放有真实PETSc生命周期测试；Q1/Q2三输入A4与场/旋度通过 | 单独审查可复用核心及其测试；不将失败接口PC一并提升。 |
+| reusable runner/watchdog | 显式observe_only及原预算历史保留，旧profile默认enforce | `task038_launcher.py`、`subreaper_watchdog.py`、runtime clock/FGMRES；6a8主批77+9+4工程检查；所有新formal使用同策略、原资源线 | 时间策略入口、父/子/账本/checker作为一致依赖组审阅。 |
+| checker/benchmark | Q6读取实际保存的三输入负结果，缺数据/坏计数不得误判PASS或negative | `physical_p4_schur_v14.py`只读增量及17项相关测试；d953的真实Q6为零PDE证据闭环 | 与固定profile/schema及原始字段测试一起审阅，不独立复制数值求解器。 |
+| compact evidence/docs | response_v16、现有outcomes/compact/comparison/recovery/run_index及项目进度 | 逐场完整source/raw hashes；Q1/Q2内存增加、Q3首次资源停止及三输入negative、BAL缺口、旧EIO/unknown均保留 | 当前可直接审阅的证据组；先于任何生产资格决定。 |
+| research-only | 准确Schur对照与固定接口两级逆 | Q1/Q2内存比1.510/1.616；Q3三输入全部不准入，BAL_H未完成，original/notch未运行 | 关闭冻结接口配置，不扩rank/步骤、不保留为默认PC，不据此新增路线。 |
+| do-not-merge | ignored完整场、矩阵/factor、trace、活动/历史ledger、工程临时文件、凭据 | compact仅保存数值、路径和hash；不可删改旧raw失败/未知 | 不提交大产物，不改master、5nm环境或工作树。 |
+
+新source链：时间策略与Q0/Q1/Q2/首次Q3为`6a8b273c383d5bd9da37d6630a48bd24d6a90cce`；生命周期修复及唯一Q3重放为`188224ad5fc81b34156a0ae3678bd2121b1206da`；Q6负结果读取及收口为`d9530636ab2f043a84235b515846b410a8deb4b3`。工程测试、formal运行与文档提交身份分列；详见[response](../response_v16.md)、[test_summary](test_summary.md)和[run index](records/run_index.json)。
+
+---
+
+# 历史快照：Review V15 初次 selective merge 决策
 
 当前仍为 **`NOT_APPROVED_FOR_MASTER_MERGE`**。最终新增的是 R0/R1 审计、一次 Q0 `PERFORMANCE_CONTROLLED_STOP`、Q6 `EVIDENCE_INCOMPLETE` packet 和紧凑文档；Q1–Q5 未运行，不能以剩余预算越过第三次 Q0 禁令。
 

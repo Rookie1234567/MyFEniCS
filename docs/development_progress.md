@@ -1,4 +1,21 @@
-# Task39extra Review V15 最终进展：Q0 受控停止，Q6 证据不完整收口
+# Task39extra 当前进展：准确 Schur 内存对照与接口候选负结果已完成
+
+| 本轮问题 | 当前结论 |
+|---|---|
+| 准确Schur是否省内存 | Q1/Q2同三RHS精度通过；RSS从2825973760升至4267347968 B（+51.0%），常驻库存从2906619390升至4698023554 B（+61.6%），没有观察到节省。 |
+| 接口近似逆是否有效 | 首次Q3受3GiB库存Gate停止；唯一生命周期修复提前释放无用体积矩阵，重放完成三输入，但rho37.272086/.726414/41.825936全部未达.5/.2/.5，L2/curl也全部失败。 |
+| 完整original/notch | 因Q3不准入均未运行；BAL_H后续map metadata guard异常保留；无本轮A6/完整物理PASS。 |
+| Q6和当前行动 | Q6_FINALIZED仅为零PDE证据收口；关闭本固定接口配置，提交同分支等待审阅，不合并master。 |
+
+Schur先消去42个宏块内部未知量，在共享接口求解再恢复完整场；包含全部内部/接口因子、耦合、装配转换和评价后，接口行数缩小未带来内存收益。用户时间豁免通过显式observe_only记录，原数值、资源、zero-swap与步数规则保留；没有换算法、扩rank或新增参考。
+
+Q0/Q1/Q2与首次Q3绑定clean source `6a8b273c383d5bd9da37d6630a48bd24d6a90cce`；唯一Q3重放为`188224ad5fc81b34156a0ae3678bd2121b1206da`；Q6只读收口为`d9530636ab2f043a84235b515846b410a8deb4b3`。最终formal保守结算4082.128437647174秒，加旧600秒政策占用和3.1秒allowance为4685.228437647174秒；旧EIO真实耗时仍unknown。新各场job swap0、global delta0/0、最终子进程清空。5nm分支未改动。
+
+完整三输入精度、setup/调用/全过程成本、RSS/PSS与allocated/used、真实终止原因及历史证据见[response_v16](task039_extra_physical_multilevel/response_v16.md)、[数值与资源总表](task039_extra_physical_multilevel/outcomes/p4_schur_v14.md)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。下方全部原有任务与负结果历史保留。
+
+---
+
+# 历史快照：Task39extra Review V15 初次进展收口
 
 最终状态为 **`FINALIZED_WITH_EVIDENCE_INCOMPLETE`**。R1 只做一次已授权的账本恢复；随后只运行了一次新 Q0 和一次 Q6 finalization。共同 Q0 未完成后，Q1–Q5 均未运行，没有第三次 Q0，也没有把剩余预算当作继续运行许可。
 

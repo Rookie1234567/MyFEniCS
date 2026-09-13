@@ -1,19 +1,30 @@
 {
   "schema": "task039extra.v15.io-recovery-compact.v1",
   "review": "review_v15",
-  "status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
-  "scope": "Historical R0 host verification plus the authorized R1 recovery, one new Q0 controlled stop, and Q6 evidence finalization; Q1-Q5 were not run and no third Q0 or PDE replay was authorized",
+  "current_review": "review_v16_time_observe_finalization",
+  "status": "Q6_FINALIZED_CLOSE_FIXED_INTERFACE_CONFIGURATION",
+  "scope": "Historical R0/R1 recovery objects plus the current Q0 fresh pass, matched Q1/Q2 comparison, Q3 negative candidate and Q6 evidence finalization; Q4/Q5 and official p6 outputs were not run",
   "source_identity": {
     "branch": "task39extra",
     "reviewed_head": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
     "r0_reviewed_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
     "final_source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+    "current_finalization_source_sha": "d9530636ab2f043a84235b515846b410a8deb4b3",
+    "current_stage_source_shas": {
+      "Q0_fresh_attempt_3": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q1_FULL_DIRECT": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q2_SCHUR_DIRECT": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q3_original_resource_stop": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+      "Q3_replay": "188224ad5fc81b34156a0ae3678bd2121b1206da",
+      "Q6_FINALIZE": "d9530636ab2f043a84235b515846b410a8deb4b3"
+    },
     "interrupted_q0_source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
     "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
     "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
     "model": "13.5 nm fixed Review V14 model; p6/h10; Full3D; MPI1; complex128/int32",
     "source_tree_restored_after_unexecuted_r1_draft": true,
-    "historical_scope": "The r0_reviewed_head and interrupted_q0_source_sha identify the pre-recovery R0 snapshot; continuation.source_sha is authoritative for the current closeout."
+    "historical_scope": "The r0_reviewed_head and interrupted_q0_source_sha identify the pre-recovery R0 snapshot; continuation.source_sha is authoritative for the current closeout.",
+    "final_source_sha_scope": "Historical recovery source; current finalization and every later formal stage are bound separately by current_finalization_source_sha/current_stage_source_shas."
   },
   "r0": {
     "historical_scope": "Historical pre-cleanup R0 gate; superseded as current status by continuation.r0_recheck_after_cleanup.",
@@ -249,9 +260,11 @@
     "reviewer_check_correction": "Initial comparison rejected the intentionally updated run_index scope text; numerical fields were unchanged. The corrected check allows only scope/current-review metadata changes."
   },
   "continuation": {
-    "status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
-    "review": "Review V15 continuation after user-authorized host recovery",
+    "status": "Q6_FINALIZED_CLOSE_FIXED_INTERFACE_CONFIGURATION",
+    "review": "review_v16_time_observe_finalization",
+    "historical_review": "Review V15 continuation after user-authorized host recovery",
     "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+    "source_sha_scope": "Historical Q0 recovery source; current stage-specific bindings and d953 finalization are in current_finalization.",
     "abi": {
       "activation": "qualified WSL/Linux activation",
       "petsc_scalar": "complex128",
@@ -371,6 +384,7 @@
       }
     },
     "q6": {
+      "historical_scope": "Pre-Q6-refresh object; current_finalization.q6 is authoritative.",
       "stage": "Q6_FINALIZE",
       "status": "Q6_EVIDENCE_INCOMPLETE",
       "outer_classification": "WORKER_FAILED",
@@ -451,6 +465,7 @@
       }
     },
     "final_ledger": {
+      "historical_scope": "Pre-observe-only-settlement object; current_finalization.current_ledger is authoritative.",
       "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
       "sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
       "total_budget_seconds": 43200.0,
@@ -473,7 +488,7 @@
         "Q6_FINALIZE": "WORKER_FAILED_WITH_EVIDENCE_PACKET"
       }
     },
-    "scientific_answers": {
+    "historical_scientific_answers": {
       "accurate_schur_memory": "COMPARISON_INCONCLUSIVE",
       "interface_approximate_inverse": "EVIDENCE_INCOMPLETE; Q3_admission=false",
       "full_p6_original_notch": "not_qualified",
@@ -481,6 +496,166 @@
       "algorithm_failure": false,
       "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD"
     },
-    "status_boundary": "Q0 stopped during assembly under the performance Gate; Q1-Q5 were not run; Q6 preserved the old EIO and missing-terminal evidence without treating missing evidence as method failure. The final state is not a production numerical qualification and remains NOT_APPROVED_FOR_MASTER_MERGE."
+    "scientific_answers": {
+      "accurate_schur_memory": "NO_OBSERVED_MEMORY_REDUCTION_SINGLE_CASE",
+      "interface_approximate_inverse": "MEASURED_NEGATIVE_CANDIDATE; Q3_admission=false",
+      "full_p6_original_notch": "not_run_after_Q3_admission_false",
+      "official_R_T_A_A_volume_diffraction_conservation": "not_run",
+      "algorithm_failure": false,
+      "next": "CLOSE_FIXED_INTERFACE_CONFIGURATION",
+      "no_missing_evidence_implies_method_failure": true,
+      "merge_status": "NOT_APPROVED_FOR_MASTER_MERGE"
+    },
+    "status_boundary": "Historical Q0/Q6 objects above remain preserved; the current finalization below closes the fixed configuration without promoting it to production or master merge.",
+    "current_finalization": {
+      "review": "review_v16_time_observe_finalization",
+      "status": "Q6_FINALIZED_CLOSE_FIXED_INTERFACE_CONFIGURATION",
+      "q0_fresh_attempt_3": {
+        "worker_status": "Q0_CORE_PASS",
+        "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T114541.274952Z",
+        "q6_summary_record_only": true,
+        "q6_downstream_numerical_checker_called": false,
+        "historical_q0_attempt_1_terminal_coverage": "incomplete",
+        "historical_q0_attempt_1_actual_elapsed_seconds": null,
+        "root_audit_trace_sha256": "9c40018f6c4ca400335c8fd3faf2dc7636c192faa2f0acc10b7f36769bb813be"
+      },
+      "q1_q2": {
+        "status": "QUALIFIED_MATCHED_WORKFLOWS",
+        "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "classification": "NO_OBSERVED_MEMORY_REDUCTION_SINGLE_CASE",
+        "memory_ratio_q2_over_q1": 1.5100451491807199,
+        "resident_inventory_ratio_q2_over_q1": 1.616318796387029,
+        "rss_difference_bytes": 1441374208,
+        "resident_inventory_difference_bytes": 1791404164,
+        "setup_seconds": {
+          "Q1": 560.968651644,
+          "Q2": 748.901532761
+        },
+        "settled_full_workflow_seconds": {
+          "Q1": 584.7709557270404,
+          "Q2": 773.0191102288234
+        },
+        "root_audit_parent_pss_complete": true,
+        "q1_root_audit": {
+          "rss_bytes": 2825973760,
+          "pss_bytes": 2795549696,
+          "inventory_bytes": 2906619390,
+          "workspace_bytes": 17825792,
+          "swap_bytes": 0
+        },
+        "q2_root_audit": {
+          "rss_bytes": 4267347968,
+          "pss_bytes": 4236889088,
+          "inventory_bytes": 4698023554,
+          "workspace_bytes": 17825792,
+          "swap_bytes": 0
+        }
+      },
+      "q3": {
+        "status": "MEASURED_NEGATIVE_CANDIDATE",
+        "admission": false,
+        "original_resource_stop_source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+        "replay_source_sha": "188224ad5fc81b34156a0ae3678bd2121b1206da",
+        "replay_source_state": "clean committed source",
+        "replay_worker_status": "WORKER_FAILED",
+        "replay_saved_packet_classification": "MEASURED_NEGATIVE_CANDIDATE",
+        "original_settled_seconds": 650.6994420740033,
+        "replay_settled_seconds": 899.7366529591454,
+        "original_root_audit": {
+          "rss_bytes": 2866094080,
+          "pss_bytes": 2835682304,
+          "inventory_bytes": 2758151342,
+          "workspace_bytes": 17825792,
+          "swap_bytes": 0
+        },
+        "replay_root_audit": {
+          "rss_bytes": 3468599296,
+          "pss_bytes": 3438116864,
+          "inventory_bytes": 3115588906,
+          "workspace_bytes": 531718272,
+          "swap_bytes": 0
+        },
+        "admission_thresholds": {
+          "A2R160_BAL_H_p4_01": {
+            "rho_max": 0.5,
+            "field_l2_max": 0.5,
+            "scaled_curl_max": 0.6
+          },
+          "A2R160_BAL_H_p4_02": {
+            "rho_max": 0.2,
+            "field_l2_max": 0.9,
+            "scaled_curl_max": 0.9
+          },
+          "LIGHT448_BAL_H_p4_09": {
+            "rho_max": 0.5,
+            "field_l2_max": 0.5,
+            "scaled_curl_max": 0.6
+          }
+        },
+        "saved_packet": {
+          "path": "results/euv_grazing1_phi0/task39extra_v14_q3_interface_control__full3d_iterative__mpi1__Mna/20260913T125020.794934Z/q3_rhs_packets/three_rhs_complete_before_balanced_audit.json",
+          "sha256": "658a9dd4a6fcb845459a6d5f787ce8eed45d42e46813dfac440655b46bc54c35"
+        },
+        "balanced_p6_audit": {
+          "status": "NOT_COMPLETED",
+          "error": "Q3 p6 balanced input differs from the fresh native map",
+          "interpretation": "map metadata key-set/identity guard; numerical map arrays are not thereby shown different or equal",
+          "earlier_lifecycle_bug_replay": "active-volume matrix release before local J allocation, recorded separately"
+        }
+      },
+      "q4_q5": {
+        "status": "not_run_after_Q3_admission_false",
+        "official_outputs": "not_run"
+      },
+      "q6": {
+        "status": "Q6_FINALIZED",
+        "result_classification": "FINALIZATION_COMPLETE",
+        "source_sha": "d9530636ab2f043a84235b515846b410a8deb4b3",
+        "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T133440.999261Z",
+        "new_pde_actions": 0,
+        "official_result": false,
+        "read_errors": {},
+        "q6_decision_sha256": "ea07b54e221a32de35cc2e47a037922833ee3135429bc90dd6ba649dcf539fe7",
+        "summary_sha256": "9a7d6c6a9c264df8e337ef622572b8bcd18c979d66e5a30133243957f9c92ef5",
+        "run_summary_sha256": "e1da7f942a4b81bdcbb4e3a2bf77aaf284403b6c1e2998e3c492c9b039f15c2e",
+        "run_manifest_sha256": "9b70ff4229d569fdb3e42336223e2ca3b21fab3da8eaa9d884bcaa9e3d1f84f5",
+        "watchdog_summary_sha256": "3dac5a2da3c8bfef674f929096bf9c815a17418c333c0399378a92f3cb23cc8d"
+      },
+      "current_ledger": {
+        "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+        "sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3",
+        "total_budget_seconds": 43200.0,
+        "settled_elapsed_seconds": 4082.128437647174,
+        "settled_elapsed_seconds_semantics": "live ledger conservative-realtime settled accounting/cost",
+        "completed_attempt_monotonic_interval_sum_seconds": 3738.8149168420023,
+        "q6_final_monotonic_seconds": 2.3434535039996263,
+        "policy_debit_seconds": 600.0,
+        "conservative_allowance_seconds": 3.1,
+        "effective_cost_seconds": 4685.228437647174,
+        "effective_remaining_seconds": 38514.77156235283,
+        "active_attempts": [],
+        "infrastructure_recovery_count": 1,
+        "unique_bug_replay_count": 1,
+        "old_policy_actual_elapsed_seconds": null
+      },
+      "scientific_answers": {
+        "accurate_schur_memory": "NO_OBSERVED_MEMORY_REDUCTION_SINGLE_CASE",
+        "interface_approximate_inverse": "MEASURED_NEGATIVE_CANDIDATE; Q3_admission=false",
+        "full_p6_original_notch": "not_run_after_Q3_admission_false",
+        "official_R_T_A_A_volume_diffraction_conservation": "not_run",
+        "next": "CLOSE_FIXED_INTERFACE_CONFIGURATION",
+        "no_missing_evidence_implies_method_failure": true,
+        "merge_status": "NOT_APPROVED_FOR_MASTER_MERGE"
+      },
+      "engineering_evidence": {
+        "root_record_path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/q0_q3_time_observe_review_20260913.json",
+        "root_record_sha256": "f98926d4ed661b45156805a2a04be833124413eb487b1f01f7aef63c803d78a8",
+        "helper_test_result": "17 passed in 0.10s",
+        "helper_test_source_sha": "188224ad5fc81b34156a0ae3678bd2121b1206da",
+        "helper_test_source_provenance": "188 HEAD plus uncommitted reader changes; equivalent reader code subsequently committed as d9530636ab2f043a84235b515846b410a8deb4b3",
+        "formal_q3_replay_source_provenance": "clean committed 188 source"
+      }
+    }
   }
 }
