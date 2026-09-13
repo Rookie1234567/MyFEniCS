@@ -13,6 +13,7 @@ from collections.abc import Mapping
 import ctypes
 import ctypes.util
 import hashlib
+import os
 from typing import Any
 
 import numpy as np
@@ -145,6 +146,7 @@ def _load_petsc_api() -> ctypes.CDLL:
             ("MatMumpsGetInfo", ctypes.POINTER(ctypes.c_int)),
             ("MatMumpsGetRinfo", ctypes.POINTER(ctypes.c_double)),
             ("MatMumpsGetIcntl", ctypes.POINTER(ctypes.c_int)),
+            ("MatMumpsGetCntl", ctypes.POINTER(ctypes.c_double)),
         ):
             function = getattr(library, name, None)
             if function is not None:
@@ -152,6 +154,10 @@ def _load_petsc_api() -> ctypes.CDLL:
                 function.restype = ctypes.c_int
         library.MatMumpsSetIcntl.argtypes = [void, ctypes.c_int, ctypes.c_int]
         library.MatMumpsSetIcntl.restype = ctypes.c_int
+        set_cntl = getattr(library, "MatMumpsSetCntl", None)
+        if set_cntl is not None:
+            set_cntl.argtypes = [void, ctypes.c_int, ctypes.c_double]
+            set_cntl.restype = ctypes.c_int
         return library
     raise RuntimeError("qualified PETSc complex library was not found")
 
@@ -289,6 +295,102 @@ class _MumpsFactor:
             f"MatMumpsSetIcntl({index})",
         )
 
+    def get_cntl(self, index: int) -> float:
+        """Read one public PETSc/MUMPS real control from a live factor."""
+
+        if self.destroyed:
+            raise RuntimeError("MUMPS CNTL read requires a live factor")
+        index = int(index)
+        if index <= 0:
+            raise ValueError("MUMPS CNTL index must be positive")
+        function = getattr(self._api, "MatMumpsGetCntl", None)
+        if function is None:
+            raise RuntimeError("MatMumpsGetCntl is unavailable in the loaded PETSc API")
+        value = ctypes.c_double()
+        _petsc_error(
+            function(self._handle, index, ctypes.byref(value)),
+            f"MatMumpsGetCntl({index})",
+        )
+        return float(value.value)
+
+    def try_get_cntl(self, index: int) -> dict[str, Any]:
+        """Read one real control while retaining an unsupported-interface code."""
+
+        if self.destroyed:
+            raise RuntimeError("MUMPS CNTL read requires a live factor")
+        index = int(index)
+        if index <= 0:
+            raise ValueError("MUMPS CNTL index must be positive")
+        function = getattr(self._api, "MatMumpsGetCntl", None)
+        if function is None:
+            return {
+                "index": index,
+                "supported": False,
+                "value": None,
+                "error_code": None,
+                "error": "MatMumpsGetCntl unavailable",
+            }
+        value = ctypes.c_double()
+        code = int(function(self._handle, index, ctypes.byref(value)))
+        return {
+            "index": index,
+            "supported": code == 0,
+            "value": float(value.value) if code == 0 else None,
+            "error_code": code if code != 0 else None,
+        }
+
+    def set_cntl(self, index: int, value: float) -> None:
+        """Set one public PETSc/MUMPS real control before numeric factorization."""
+
+        if self.destroyed or self.numeric_calls:
+            raise RuntimeError("MUMPS CNTL write requires a live pre-numeric factor")
+        index, value = int(index), float(value)
+        if index <= 0 or not np.isfinite(value):
+            raise ValueError("MUMPS CNTL index/value is invalid")
+        function = getattr(self._api, "MatMumpsSetCntl", None)
+        if function is None:
+            raise RuntimeError("MatMumpsSetCntl is unavailable in the loaded PETSc API")
+        _petsc_error(
+            function(self._handle, index, value),
+            f"MatMumpsSetCntl({index})",
+        )
+
+    def public_backend_facts(self) -> dict[str, Any]:
+        """Return link-level facts without reading private MUMPS structures.
+
+        The PETSc public API does not expose the Fortran ``version_number``
+        field.  The linked SONAME and available public entry points are still
+        useful provenance; a caller that needs the exact MUMPS release must
+        bind it to the local package/header probe in its run manifest.
+        """
+
+        petsc_name = getattr(self._api, "_name", None)
+        petsc_soname = ctypes.util.find_library("petsc_complex")
+        petsc_path = petsc_name if petsc_name and os.path.isabs(petsc_name) else None
+        mumps_soname = ctypes.util.find_library("zmumps")
+        return {
+            "petsc_library_identifier": petsc_name,
+            "petsc_library_soname": petsc_soname,
+            "petsc_library_path": petsc_path,
+            "mumps_library_soname": mumps_soname,
+            "mumps_version_public_api": "not_exposed",
+            "local_mumps_control_boundary": {
+                "reserved_icntl": "41-48",
+                "adaptive_precision_storage_control": "not_supported_by_local_public_controls",
+            },
+            "public_symbols": {
+                name: hasattr(self._api, name)
+                for name in (
+                    "MatMumpsGetIcntl",
+                    "MatMumpsSetIcntl",
+                    "MatMumpsGetCntl",
+                    "MatMumpsSetCntl",
+                    "MatMumpsGetInfog",
+                    "MatMumpsGetRinfog",
+                )
+            },
+        }
+
     def solve(self, rhs: Any, solution: Any) -> None:
         if self.destroyed or self.numeric_calls != 1 or self.solve_calls:
             raise RuntimeError("MUMPS solve has an invalid lifecycle")
@@ -357,19 +459,27 @@ class _MumpsFactor:
     def info(self, extra_indices: tuple[int, ...] = (), *, include_local: bool = False) -> dict[str, Any]:
         infog: dict[str, int] = {}
         rinfog: dict[str, float] = {}
+        infog_errors: dict[str, int] = {}
+        rinfog_errors: dict[str, int] = {}
         for index in (*range(1, 21), *extra_indices):
             value = ctypes.c_int()
             code = self._api.MatMumpsGetInfog(self._handle, index, ctypes.byref(value))
             if int(code) != 0:
-                break
+                infog_errors[str(index)] = int(code)
+                continue
             infog[str(index)] = int(value.value)
         for index in range(1, 21):
             value = ctypes.c_double()
             code = self._api.MatMumpsGetRinfog(self._handle, index, ctypes.byref(value))
             if int(code) != 0:
-                break
+                rinfog_errors[str(index)] = int(code)
+                continue
             rinfog[str(index)] = float(value.value)
         result: dict[str, Any] = {"infog": infog, "rinfog": rinfog}
+        if infog_errors:
+            result["infog_errors"] = infog_errors
+        if rinfog_errors:
+            result["rinfog_errors"] = rinfog_errors
         if include_local:
             info: dict[str, int] = {}
             rinfo: dict[str, float] = {}
@@ -378,19 +488,29 @@ class _MumpsFactor:
             if info_function is None or rinfo_function is None:
                 result.update(info=None, rinfo=None, local_info_supported=False)
             else:
+                local_info_errors: dict[str, int] = {}
+                local_rinfo_errors: dict[str, int] = {}
                 for index in range(1, 21):
                     value = ctypes.c_int()
                     code = info_function(self._handle, index, ctypes.byref(value))
                     if int(code) != 0:
-                        break
+                        local_info_errors[str(index)] = int(code)
+                        continue
                     info[str(index)] = int(value.value)
                 for index in range(1, 21):
                     value = ctypes.c_double()
                     code = rinfo_function(self._handle, index, ctypes.byref(value))
                     if int(code) != 0:
-                        break
+                        local_rinfo_errors[str(index)] = int(code)
+                        continue
                     rinfo[str(index)] = float(value.value)
-                result.update(info=info, rinfo=rinfo, local_info_supported=True)
+                result.update(
+                    info=info,
+                    rinfo=rinfo,
+                    local_info_supported=True,
+                    local_info_errors=local_info_errors,
+                    local_rinfo_errors=local_rinfo_errors,
+                )
         return result
 
     def destroy(self) -> None:
@@ -407,6 +527,299 @@ class _MumpsFactor:
             )
             self._handle = ctypes.c_void_p()
         self.destroyed = True
+
+
+MUMPS_BLR_V16_CONTROLS: dict[str, dict[int, int | float]] = {
+    "icntl": {
+        10: 0,
+        22: 0,
+        31: 0,
+        32: 0,
+        35: 2,
+        37: 0,
+    },
+    "cntl": {7: 1.0e-5},
+}
+MUMPS_BLR_V16_DEFAULT_ICNTL = (36, 38, 39)
+MUMPS_BLR_V16_TRACE_ICNTL = (
+    6, 7, 8, 10, 14, 18, 22, 23, 28, 29, 31, 32, 35, 36, 37, 38, 39, 49
+)
+MUMPS_BLR_V16_TRACE_CNTL = (1, 3, 4, 7)
+
+
+class MumpsBLRFactor(_MumpsFactor):
+    """Explicit opt-in MUMPS BLR factor for the Review V16 p4 candidate.
+
+    The ordinary ``_MumpsFactor`` path remains unchanged.  This subclass
+    makes the one reviewed BLR configuration a separate lifecycle: every
+    control is read/set through PETSc's public API before symbolic analysis,
+    every required value is read back, and symbolic analysis refuses to start
+    until that handshake has completed.
+    """
+
+    profile = "physical_p4_blr_bal_h_v16"
+
+    def __init__(self, matrix: Any) -> None:
+        super().__init__(matrix)
+        self._blr_configured = False
+        self.blr_control_facts: dict[str, Any] | None = None
+
+    def _read_icntl_bundle(self, indices: tuple[int, ...]) -> dict[str, Any]:
+        return {str(index): self.try_get_icntl(index) for index in indices}
+
+    def _read_cntl_bundle(self, indices: tuple[int, ...]) -> dict[str, Any]:
+        return {str(index): self.try_get_cntl(index) for index in indices}
+
+    def control_readback(self, *, stage: str) -> dict[str, Any]:
+        """Read the complete reviewed control bundle at one lifecycle point."""
+
+        if self.destroyed:
+            raise RuntimeError("MUMPS BLR control readback requires a live factor")
+        return {
+            "stage": str(stage),
+            "icntl": self._read_icntl_bundle(MUMPS_BLR_V16_TRACE_ICNTL),
+            "cntl": self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL),
+        }
+
+    @staticmethod
+    def _require_readback(
+        record: Mapping[str, Any], index: int, expected: int | float, *, kind: str
+    ) -> None:
+        item = record.get(str(index))
+        if not isinstance(item, Mapping) or item.get("supported") is not True:
+            raise RuntimeError(
+                f"MUMPS BLR {kind}({index}) public readback is unavailable: {item}"
+            )
+        actual = item.get("value")
+        if kind == "CNTL":
+            matches = np.isclose(float(actual), float(expected), rtol=0.0, atol=1.0e-15)
+        else:
+            matches = type(actual) is int and int(actual) == int(expected)
+        if not matches:
+            raise RuntimeError(
+                f"MUMPS BLR {kind}({index}) readback {actual!r} != {expected!r}"
+            )
+
+    def configure_blr(self) -> dict[str, Any]:
+        """Apply and verify the single frozen Review V16 BLR configuration.
+
+        ``ICNTL(36/38/39)`` are deliberately not written.  Their local
+        defaults are captured so the run manifest can freeze the backend's
+        estimate inputs.  PETSc 3.19 exposes only MUMPS ``ICNTL(1..38)`` via
+        its public getter, so an unsupported ``ICNTL(39)`` is retained as an
+        explicit unavailable field rather than guessed from a private struct.
+        """
+
+        if self.destroyed or self.symbolic_calls or self.numeric_calls:
+            raise RuntimeError("MUMPS BLR controls must be configured before symbolic analysis")
+        if self._blr_configured:
+            raise RuntimeError("MUMPS BLR controls may be configured only once")
+        defaults = self._read_icntl_bundle(
+            tuple(dict.fromkeys((*MUMPS_BLR_V16_TRACE_ICNTL, *MUMPS_BLR_V16_DEFAULT_ICNTL)))
+        )
+        cntl_before = self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL)
+
+        for index, value in MUMPS_BLR_V16_CONTROLS["icntl"].items():
+            self.set_icntl(index, int(value))
+        for index, value in MUMPS_BLR_V16_CONTROLS["cntl"].items():
+            self.set_cntl(index, float(value))
+
+        after = self._read_icntl_bundle(MUMPS_BLR_V16_TRACE_ICNTL)
+        cntl_after = self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL)
+        for index, value in MUMPS_BLR_V16_CONTROLS["icntl"].items():
+            self._require_readback(after, index, value, kind="ICNTL")
+        for index, value in MUMPS_BLR_V16_CONTROLS["cntl"].items():
+            self._require_readback(cntl_after, index, value, kind="CNTL")
+
+        # The reviewed Q1 ordering, pivot and distributed-input controls are
+        # inherited, not silently changed by the BLR opt-in.
+        for index in (6, 7, 8, 14, 18, 28, 29):
+            before_item = defaults[str(index)]
+            after_item = after[str(index)]
+            if before_item != after_item:
+                raise RuntimeError(
+                    f"MUMPS BLR changed inherited ICNTL({index}): "
+                    f"{before_item} -> {after_item}"
+                )
+        for index in (1, 3, 4):
+            before_item = cntl_before[str(index)]
+            after_item = cntl_after[str(index)]
+            if before_item != after_item:
+                raise RuntimeError(
+                    f"MUMPS BLR changed inherited CNTL({index}): "
+                    f"{before_item} -> {after_item}"
+                )
+        self.blr_control_facts = {
+            "schema": "task039extra.v16.mumps-blr-controls.v1",
+            "profile": self.profile,
+            "configured_before_symbolic": True,
+            "requested": {
+                "icntl": {str(k): int(v) for k, v in MUMPS_BLR_V16_CONTROLS["icntl"].items()},
+                "cntl": {str(k): float(v) for k, v in MUMPS_BLR_V16_CONTROLS["cntl"].items()},
+            },
+            "defaults_before": defaults,
+            "cntl_before": cntl_before,
+            "effective_after": after,
+            "cntl_after": cntl_after,
+            "public_initial_state_is_pre_symbolic": True,
+            "default_controls_frozen": {
+                str(index): defaults[str(index)]
+                for index in MUMPS_BLR_V16_DEFAULT_ICNTL
+            },
+            "icntl39_public_getter_unavailable_is_explicit": not defaults["39"]["supported"],
+            "public_backend": self.public_backend_facts(),
+        }
+        self._blr_configured = True
+        assert self.blr_control_facts is not None
+        return self.blr_control_facts
+
+    def symbolic(self, matrix: Any) -> None:
+        if not self._blr_configured:
+            raise RuntimeError("MUMPS BLR symbolic analysis requires pre-symbolic control setup")
+        super().symbolic(matrix)
+        post_symbolic = self._read_icntl_bundle(MUMPS_BLR_V16_TRACE_ICNTL)
+        cntl_post_symbolic = self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL)
+        for index, value in MUMPS_BLR_V16_CONTROLS["icntl"].items():
+            self._require_readback(post_symbolic, index, value, kind="ICNTL")
+        for index, value in MUMPS_BLR_V16_CONTROLS["cntl"].items():
+            self._require_readback(cntl_post_symbolic, index, value, kind="CNTL")
+        if self.blr_control_facts is None:
+            raise RuntimeError("MUMPS BLR control facts disappeared before symbolic readback")
+        self.blr_control_facts["effective_after_symbolic"] = post_symbolic
+        self.blr_control_facts["cntl_after_symbolic"] = cntl_post_symbolic
+        self.blr_control_facts["default_controls_frozen"] = {
+            str(index): post_symbolic[str(index)]
+            for index in MUMPS_BLR_V16_DEFAULT_ICNTL
+        }
+        self.blr_control_facts["default_controls_frozen_phase"] = (
+            "post_symbolic_public_readback"
+        )
+        self.blr_control_facts["icntl39_public_getter_unavailable_is_explicit"] = (
+            not post_symbolic["39"]["supported"]
+        )
+
+    def numeric(self, matrix: Any) -> None:
+        super().numeric(matrix)
+        if self.blr_control_facts is None:
+            raise RuntimeError("MUMPS BLR controls disappeared before numeric readback")
+        self.blr_control_facts["effective_after_numeric"] = self.control_readback(
+            stage="numeric_after"
+        )
+
+    def _record_solve_control_readback(self, solve_index: int) -> dict[str, Any]:
+        if self.blr_control_facts is None:
+            raise RuntimeError("MUMPS BLR controls disappeared before solve readback")
+        # A solve audit is deliberately bounded: the runner owns the one
+        # per-RHS record, while the factor retains only the latest readback.
+        # Keeping the complete ICNTL bundle for every MatSolve would make a
+        # long iterative run grow with its solve count.
+        readback = {
+            "stage": f"solve_{int(solve_index)}_after",
+            "solve_index": int(solve_index),
+            "icntl": {
+                str(index): self.try_get_icntl(index) for index in (10, 35)
+            },
+            "cntl": {"7": self.try_get_cntl(7)},
+        }
+        self.blr_control_facts["solve_control_readback_latest"] = readback
+        return readback
+
+    def solve_once(self, rhs: Any, solution: Any) -> dict[str, Any]:
+        """Apply one ``F_tau`` action and prove it issued one MatSolve."""
+
+        before = int(self.solve_calls)
+        self.solve_repeated(rhs, solution)
+        after = int(self.solve_calls)
+        if after - before != 1:
+            raise RuntimeError(
+                f"MUMPS BLR F_tau expected one MatSolve, observed {after - before}"
+            )
+        solve_control_readback = self._record_solve_control_readback(after)
+        return {
+            "profile": self.profile,
+            "factor_solve_calls_before": before,
+            "factor_solve_calls_after": after,
+            "factor_solve_call_delta": after - before,
+            "hidden_refinement": False,
+            "controls_after_solve": solve_control_readback,
+        }
+
+    def blr_statistics(self) -> dict[str, Any]:
+        """Return raw native statistics without inventing a compression ratio."""
+
+        raw_info = self.info(
+            extra_indices=(9, 21, 22, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40),
+            include_local=True,
+        )
+        blr_field_keys = tuple(str(index) for index in (9, 29, 35, 36, 37))
+        available_fields = [
+            key for key in blr_field_keys if key in raw_info.get("infog", {})
+        ]
+
+        def native_entry(key: str) -> dict[str, Any] | None:
+            value = raw_info.get("infog", {}).get(key)
+            if type(value) is not int:
+                return None
+            if value < 0:
+                return {
+                    "raw": int(value),
+                    "value": float(-value) * 1_000_000.0,
+                    "unit": "entries",
+                    "encoding": "negative_millions",
+                }
+            return {
+                "raw": int(value),
+                "value": float(value),
+                "unit": "entries",
+                "encoding": "integer",
+            }
+
+        native_compression = {
+            "infog9_actual_storage_entries": native_entry("9"),
+            "infog29_theoretical_entries": native_entry("29"),
+            "infog35_effective_entries": native_entry("35"),
+            "infog36_blr_symbolic_max_mb": raw_info.get("infog", {}).get("36"),
+            "infog37_blr_symbolic_sum_mb": raw_info.get("infog", {}).get("37"),
+            "rinfog3_theoretical_flops": raw_info.get("rinfog", {}).get("3"),
+            "rinfog14_actual_flops": raw_info.get("rinfog", {}).get("14"),
+        }
+        return {
+            "schema": "task039extra.v16.mumps-blr-statistics.v1",
+            "backend": "mumps",
+            "profile": self.profile,
+            "controls": self.blr_control_facts,
+            "raw_info_after_numeric": raw_info,
+            "compression_stats_status": (
+                "RAW_NATIVE_FIELDS_AVAILABLE"
+                if available_fields
+                else "COMPRESSION_STATS_UNAVAILABLE"
+            ),
+            "blr_field_keys_checked": list(blr_field_keys),
+            "blr_field_keys_available": available_fields,
+            "native_compression_fields": native_compression,
+            "compression_ratio": None,
+            "compression_ratio_not_inferred_from_icntl38": True,
+            "unknown_fields_are_not_measured": True,
+        }
+
+
+def configured_mumps_blr_factor(matrix: Any) -> MumpsBLRFactor:
+    """Create a V16 BLR factor with controls committed before symbolic.
+
+    This small factory is the adapter for the existing generic
+    ``_prepare_factor`` lifecycle.  If the public-control handshake fails,
+    the newly created PETSc factor is destroyed before the exception escapes;
+    callers therefore do not need a second wrapper with a duplicate
+    symbolic/numeric/solve ledger.
+    """
+
+    factor = MumpsBLRFactor(matrix)
+    try:
+        factor.configure_blr()
+    except BaseException:
+        factor.destroy()
+        raise
+    return factor
 
 
 def analyze_mumps_p3(matrix: Any) -> tuple[Any, dict[str, Any]]:
@@ -653,7 +1066,9 @@ __all__ = (
     "ORACLE_A_RESIDUAL_LIMIT",
     "ORACLE_A_RHO3_LIMIT",
     "ORACLE_A_RHO_REF_LIMIT",
+    "MumpsBLRFactor",
     "analyze_mumps_p3",
     "build_p3_physical_diagnostic_matrix",
+    "configured_mumps_blr_factor",
     "solve_mumps_p3",
 )

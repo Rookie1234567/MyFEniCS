@@ -277,15 +277,21 @@ class _V14Runtime:
         *,
         root: Path,
         source_sha: str,
+        batch_identity: str = "review_v14",
+        evidence_prefix: str = "v14",
     ) -> None:
         self.directory = directory
         self.stage = stage
         self.contract = contract
         self.root = root
         self.source_sha = source_sha
-        self.events_path = directory / "v14_events.jsonl"
-        self.resources_path = directory / "v14_worker_resources.jsonl"
-        self.inventory_path = directory / "v14_inventory.json"
+        self.batch_identity = str(batch_identity)
+        self.evidence_prefix = str(evidence_prefix)
+        if not self.batch_identity or not self.evidence_prefix:
+            raise ValueError("runtime batch identity and evidence prefix are required")
+        self.events_path = directory / f"{self.evidence_prefix}_events.jsonl"
+        self.resources_path = directory / f"{self.evidence_prefix}_worker_resources.jsonl"
+        self.inventory_path = directory / f"{self.evidence_prefix}_inventory.json"
         self.phase_path = Path(
             os.environ.get("PHYSICAL_WATCHDOG_PHASE_PATH", directory / "workflow_phase.json")
         )
@@ -324,8 +330,8 @@ class _V14Runtime:
         if self._stage_attempt_index < 0:
             raise RuntimeError("V14 parent ledger attempt index is missing")
         shared_ledger = json.loads(self._ledger_path.read_text(encoding="utf-8"))
-        if shared_ledger.get("batch_identity") != "review_v14":
-            raise RuntimeError("V14 parent ledger batch identity changed")
+        if shared_ledger.get("batch_identity") != self.batch_identity:
+            raise RuntimeError("parent ledger batch identity changed")
         attempts = list(
             shared_ledger.get("stages", {}).get(self.stage, {}).get("attempts", [])
         )
@@ -385,7 +391,7 @@ class _V14Runtime:
         _write_json(
             self.inventory_path,
             {
-                "schema": "task039extra.v14.inventory-ledger.v1",
+                "schema": f"task039extra.{self.evidence_prefix}.inventory-ledger.v1",
                 "stage": self.stage,
                 "source_sha": self.source_sha,
                 "inventory_cap_bytes": self.inventory_cap,
@@ -878,13 +884,23 @@ def _v14_known_preallocation_gate(
     augmented_payload = (p4_augmented_rows + 1) * index_bytes + p4_augmented_nnz * (
         index_bytes + scalar_bytes
     )
-    if stage == "Q1_FULL_DIRECT":
+    if stage in {"Q1_FULL_DIRECT", "S2_BLR_CONTROL"}:
         pair_upper = volume_payload + augmented_payload + 128 * 1024**2
+        gate_label = (
+            "q1_original_volume_and_augmented_preallocation"
+            if stage == "Q1_FULL_DIRECT"
+            else "s2_blr_volume_and_augmented_preallocation"
+        )
+        marker_name = (
+            "q1_original_sparse_preallocation_gate"
+            if stage == "Q1_FULL_DIRECT"
+            else "v16_s2_blr_sparse_preallocation_gate"
+        )
         runtime.check_projected(
-            "q1_original_volume_and_augmented_preallocation", pair_upper
+            gate_label, pair_upper
         )
         runtime.marker(
-            "q1_original_sparse_preallocation_gate",
+            marker_name,
             {
                 "volume_rows": p4_storage_rows,
                 "volume_nnz_upper": p4_volume_nnz,
@@ -1215,6 +1231,7 @@ def _prepare_reviewed_rhs(
     """Bind the frozen packets to the freshly rebuilt p4 map and physics."""
 
     from src.solvers.condensed_fine_reference import native_map_arrays
+    from src.solvers.physical_map_identity import compare_native_map_identity
 
     runtime.marker("v14_reviewed_rhs_loading_started", {})
     records = _load_rhs_and_reference(root, storage_rows)
@@ -1227,12 +1244,11 @@ def _prepare_reviewed_rhs(
     identity_records = []
     for item in records:
         reference_map = item["reference_map"]
-        missing = sorted(set(current_map) - set(reference_map))
-        if missing or any(
-            key not in reference_map or not np.array_equal(current_map[key], reference_map[key])
-            for key in current_map
-        ):
-            raise ValueError(f"{item['stem']} fresh p4 native constraint map differs")
+        map_identity = compare_native_map_identity(
+            current_map,
+            reference_map,
+            context=f"{item['stem']} fresh p4 native constraint map",
+        )
         reference_identity = item.get("reference_identity") or {}
         expected_mode = reference_identity.get("mode_sha256")
         expected_physical = reference_identity.get("original_physical_sha256")
@@ -1265,6 +1281,7 @@ def _prepare_reviewed_rhs(
                 "fresh_p4_map": {
                     key: _jsonable(value) for key, value in current_map.items()
                 },
+                "fresh_p4_map_identity": map_identity,
                 "fresh_p6_map": {
                     key: _jsonable(value) for key, value in current_map6.items()
                 },
@@ -3847,6 +3864,7 @@ def _q3_balanced_p6_audit(runtime, common, fint):
     from src.runners.physical_recursive_controls import load_recursive_balanced_inputs
     from src.solvers.condensed_fine_reference import native_map_arrays
     from src.solvers.fullspace_physical_intermediate import apply_owned
+    from src.solvers.physical_map_identity import compare_native_map_identity
 
     runtime.reserve_workspace("q3_balanced_inputs", 32 << 20)
     e = q = ae = z = az = None
@@ -3857,11 +3875,11 @@ def _q3_balanced_p6_audit(runtime, common, fint):
         item = inputs["inputs"]["A2R160"]
         p6_space = common["levels"]["spaces"][6]
         current_map = native_map_arrays(p6_space, common["levels"]["floquets"][6])
-        if set(current_map) != set(inputs["maps"][6]) or any(
-            not np.array_equal(value, inputs["maps"][6][key])
-            for key, value in current_map.items()
-        ):
-            raise ValueError("Q3 p6 balanced input differs from the fresh native map")
+        map_identity = compare_native_map_identity(
+            current_map,
+            inputs["maps"][6],
+            context="Q3 p6 balanced input/fresh native map",
+        )
         indices = np.asarray(current_map["independent_indices"], dtype=np.int64)
         if item["q"].shape != indices.shape or item["e"].shape != indices.shape:
             raise ValueError("Q3 p6 balanced input has an incompatible active layout")
@@ -3876,6 +3894,7 @@ def _q3_balanced_p6_audit(runtime, common, fint):
         runtime.marker("q3_balanced_p6_input_complete", {
             "name": "A2R160", "q_bridge_relative": bridge,
             "e1_audit_sha256": inputs["e1_audit_sha256"],
+            "map_identity": map_identity,
             "q": _q3_array_summary(item["q"]), "e": _q3_array_summary(item["e"]),
         })
         if not np.isfinite(bridge) or bridge > 1e-10:

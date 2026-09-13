@@ -20,11 +20,93 @@ from .physical_recursive_profile import (
 )
 
 SCHUR_PROFILE = "physical_p4_schur_v14"
+P4_BLR_PROFILE = "physical_p4_blr_bal_h_v16"
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == P4_BLR_PROFILE:
+        stage_budgets = {
+            "S0_PREFLIGHT": {"workflow_seconds": 600, "solve_seconds": 600},
+            "S1_CONTROL": {"workflow_seconds": 1800, "solve_seconds": 1800},
+            "S2_BLR_CONTROL": {"workflow_seconds": 14400, "solve_seconds": 14400},
+            "S3_ORIGINAL": {"workflow_seconds": 14400, "solve_seconds": 10800},
+            "S4_NOTCH": {"workflow_seconds": 14400, "solve_seconds": 10800},
+            "S5_FINALIZE": {"workflow_seconds": 43200, "solve_seconds": 43200},
+        }
+        return {
+            "identity": P4_BLR_PROFILE,
+            "scope": "review_v16_p4_blr",
+            "physical_levels": [6, 4],
+            "common_core": {
+                "active_matrix": "native p4 MPC augmented A4 with 80 carrier rows",
+                "interface_matrix": "[V B; -D H]",
+                "rhs_source": "three hash-bound reviewed V14 Q1 RHS records",
+                "factor_lifetime": "one global BLR factor and matrix retained through all three evaluations",
+                "reference_in_factor_or_initial_guess": False,
+                "old_macro_objects": False,
+                "old_p2_p1_levels": False,
+            },
+            "outer": {
+                "ksp_type": "right_fgmres",
+                "restart": 32,
+                "max_iterations": 2048,
+                "zero_start": True,
+                "live_KSP": True,
+                "explicit_true_residual_limit": 1.0e-6,
+            },
+            "direct_controls": {
+                "rhs_count": 3,
+                "global_factor_count": 1,
+                "solve_order": "sequential",
+                "one_mat_solve_per_rhs": True,
+                "full_reference": "native p4 A4 with 80 port rows",
+                "immediate_packet_fields": [
+                    "full_augmented_solution",
+                    "native_A4_residual",
+                    "native_residual_identity",
+                    "rho",
+                    "field_l2",
+                    "scaled_curl",
+                    "solve_counters",
+                    "timings",
+                ],
+            },
+            "memory_policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+            "resources": {
+                "workflow_seconds": 43200,
+                "solve_seconds": 43200,
+                "pc_soft_seconds": 0,
+                "pc_hard_seconds": 0,
+                "mpi_size": 1,
+                "require_zero_swap": True,
+                "time_policy": "observe_only",
+                "require_observe_only": True,
+                "inventory_memory_cap_bytes_by_stage": {
+                    stage: 6 * 1024**3 for stage in stage_budgets
+                },
+                "shared_temp_workspace_cap_bytes": 1 * 1024**3,
+                "local_factor_matrix_and_allocated_cap_bytes": 6 * 1024**3,
+                "interface_matrix_factor_solve_cap_bytes": 6 * 1024**3,
+                "interface_workspace_cap_bytes": 1 * 1024**3,
+                "tree_cap_bytes": 8 * 1024**3,
+                "dynamic_launch_cap_formula": "min(8GiB, effective_available_bytes-reserve_bytes)",
+                "reserve_formula": "max(4GiB, 0.15*effective_total_bytes)",
+                "warning_fraction": 0.85,
+                "stage_budgets": stage_budgets,
+            },
+            "gates": {
+                "native_A4_relative_residual": 0.5,
+                "field_l2_and_scaled_curl": 0.25,
+                "solve_call_delta": 1,
+                "rhs_input_unchanged": True,
+                "linearity_repeat": 1.0e-12,
+                "zero_action": 1.0e-12,
+                "p6_interface_is_conditional": True,
+            },
+            "qualification": "opt_in; S1 bridge and S2 BLR control evidence precede S3 original p6 and S4 notch stages",
+        }
     if identity == SCHUR_PROFILE:
         return {
             'identity': SCHUR_PROFILE,

@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 import hashlib
+import math
 import time
 from typing import Any, Callable
 
@@ -33,23 +34,70 @@ def _sparse_payload_bytes(nnz: int, rows: int, petsc: Any) -> int:
     )
 
 
-def v11_memory_request_mb(symbolic_raw: Mapping[str, Any]) -> dict[str, Any]:
+def v11_memory_request_mb(
+    symbolic_raw: Mapping[str, Any], *, blr: bool = False
+) -> dict[str, Any]:
     """Return the exact decimal-MB request prescribed by Review V14.
 
     MUMPS ``INFOG(16)`` is an integer estimate in megabytes.  The estimate is
-    interpreted as a sizing input, not as a measured peak.
+    interpreted as a sizing input, not as a measured peak.  The explicit BLR
+    route additionally admits the native ``INFOG(36/37)`` fields and sizes
+    from ``max(16, 17, 36, 37)`` without rewriting any raw backend value.
     """
 
     from .fullspace_bounded_mumps import symbolic_sized_local_mumps_request
 
-    result = dict(symbolic_sized_local_mumps_request(symbolic_raw, mpi_size=1))
+    infog = symbolic_raw.get("infog")
+    if not blr:
+        result = dict(symbolic_sized_local_mumps_request(symbolic_raw, mpi_size=1))
+    else:
+        if not isinstance(infog, Mapping):
+            raise RuntimeError("MEMORY_POLICY_UNSUPPORTED: MUMPS INFOG is unavailable")
+        values: dict[str, int] = {}
+        for key in ("16", "17", "36", "37"):
+            value = infog.get(key)
+            if type(value) is not int or value < 0:
+                raise RuntimeError(
+                    "MEMORY_POLICY_UNSUPPORTED: BLR INFOG "
+                    f"{key} is not a non-negative integer"
+                )
+            values[key] = int(value)
+        estimate_mb = max(values.values())
+        estimate_bytes = 1_000_000 * (1 + estimate_mb)
+        minimum_request = max(
+            32 * 1024**2,
+            2 * estimate_bytes + 8 * 1024**2,
+        )
+        request_bytes = 1_000_000 * math.ceil(minimum_request / 1_000_000)
+        result = {
+            "policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+            "mpi_size": 1,
+            "infog16_mb": values["16"],
+            "infog17_mb": values["17"],
+            "infog36_symbolic_max_mb": values["36"],
+            "infog37_symbolic_sum_mb": values["37"],
+            "sizing_estimate_mb": int(estimate_mb),
+            "estimate_bytes": int(estimate_bytes),
+            "minimum_request_bytes": int(minimum_request),
+            "request_bytes": int(request_bytes),
+            "request_mb": int(request_bytes // 1_000_000),
+            "unit_bytes": 1_000_000,
+            "rounding": "decimal_MB_ceiling",
+            "sizing_formula": "max(INFOG(16),INFOG(17),INFOG(36),INFOG(37))",
+            "raw_fields_preserved": True,
+        }
     result.update(
         {
-            "formula": "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))",
-            "symbolic_estimate_mb": int(result["infog16_mb"]),
+            "formula": (
+                "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))"
+            ),
+            "symbolic_estimate_mb": int(
+                result.get("sizing_estimate_mb", result["infog16_mb"])
+            ),
             "symbolic_estimate_padded_bytes": int(result["estimate_bytes"]),
             "requested_memory_limit_mb": int(result["request_mb"]),
             "unit": "decimal_MB_for_MUMPS_ICNTL_23",
+            "blr_sizing": bool(blr),
         }
     )
     return result
@@ -2752,6 +2800,8 @@ def _prepare_factor(
         return {str(key): int(value) for key, value in values.items()}
 
     factor = factor_factory(matrix)
+    blr_memory_mode = str(getattr(factor, "profile", "")) == "physical_p4_blr_bal_h_v16"
+    info_indices = (9, 22, 29, 35, 36, 37) if blr_memory_mode else (22, 29)
     matrix_facts = {
         "label": label,
         "rows": int(matrix.getSize()[0]),
@@ -2763,8 +2813,8 @@ def _prepare_factor(
         symbolic_started = time.perf_counter()
         factor.symbolic(matrix)
         symbolic_seconds = time.perf_counter() - symbolic_started
-        symbolic_raw = factor.info((22, 29))
-        memory_request = v11_memory_request_mb(symbolic_raw)
+        symbolic_raw = factor.info(info_indices)
+        memory_request = v11_memory_request_mb(symbolic_raw, blr=blr_memory_mode)
         set_memory_limit = getattr(factor, "set_memory_limit_mb", None)
         if not callable(set_memory_limit):
             raise RuntimeError("V11 factor does not expose ICNTL(23) memory setting")
@@ -2809,6 +2859,9 @@ def _prepare_factor(
             "symbolic_seconds": symbolic_seconds,
             "symbolic_resource": sample(),
         }
+        backend_controls = getattr(factor, "blr_control_facts", None)
+        if backend_controls is not None:
+            symbolic_facts["backend_control_facts"] = dict(backend_controls)
         symbolic_facts["inventory_components"] = inventory(symbolic_facts)
         if pre_numeric_gate is not None:
             pre_numeric_gate(symbolic_facts)
@@ -2819,7 +2872,7 @@ def _prepare_factor(
         numeric_started = time.perf_counter()
         factor.numeric(matrix)
         numeric_seconds = time.perf_counter() - numeric_started
-        numeric_raw = factor.info((22, 29))
+        numeric_raw = factor.info(info_indices)
         facts = {
             "label": label,
             "rows": int(matrix.getSize()[0]),
@@ -2834,6 +2887,12 @@ def _prepare_factor(
             "matrix_info_after_factor": matrix.getInfo(),
             "numeric_resource": sample(),
         }
+        backend_controls = getattr(factor, "blr_control_facts", None)
+        if backend_controls is not None:
+            facts["backend_control_facts"] = dict(backend_controls)
+        backend_statistics = getattr(factor, "blr_statistics", None)
+        if callable(backend_statistics):
+            facts["backend_statistics"] = backend_statistics()
         facts["inventory_components"] = inventory(facts)
         facts["factor_solve_calls_at_factorization"] = int(
             getattr(factor, "solve_calls", 0)

@@ -24,6 +24,14 @@ def run_full3d_iterative(
             Path(run_directory),
             source_sha=_kwargs["source_sha"],
         )
+    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_blr_bal_h_v16":
+        from .physical_p4_blr_v16 import run_physical_p4_blr_v16
+
+        return run_physical_p4_blr_v16(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+        )
     from src.io.physical_intermediate_profile import PROFILES
 
     if resolved_payload.get("solver", {}).get("preconditioner") in PROFILES:

@@ -123,6 +123,9 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
 V14_SHARED_WORKFLOW_SECONDS = 43_200.0
 V15_Q0_EIO_RECOVERY_ID = "V15_Q0_EIO_ONCE"
 V16_Q6_REFRESH_ID = "V16_Q6_EVIDENCE_REFRESH_ONCE"
+V16_PREDECESSOR_V14_LEDGER_SHA256 = (
+    "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3"
+)
 V15_Q0_EIO_SOURCE_SHA = "efea244159d63a7c9db67ca091e29a9c19f9ce88"
 V15_R0_SOURCE_SHA = "665a09b6a7d66eff15b4a744036d21f1dad3649d"
 V15_Q0_EIO_RUN_DIRECTORY = (
@@ -198,6 +201,20 @@ def _v14_shared_ledger_path(repo_root: Path) -> Path:
         / "task39extra"
         / "p4_schur_v14"
         / "review_v14"
+        / "shared_workflow_ledger.json"
+    )
+
+
+def _blr_v16_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent V16 ledger; never alias the historical V14 file."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "p4_blr_v16"
+        / "review_v16_p4_blr"
         / "shared_workflow_ledger.json"
     )
 
@@ -807,6 +824,220 @@ def _reserve_v14_shared_budget(
     }
 
 
+def _reserve_blr_v16_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve one V16 stage without mutating the historical V14 ledger."""
+
+    try:
+        time_policy = normalize_v14_time_policy(time_policy)
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
+    if time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V16 BLR profile requires the explicit observe_only time policy")
+    repo_root = Path(repo_root).resolve()
+    path = _blr_v16_shared_ledger_path(repo_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V16 BLR shared ledger cannot be read") from exc
+        if ledger.get("batch_identity") != "review_v16_p4_blr":
+            raise InputError("V16 BLR shared ledger batch identity changed")
+    else:
+        predecessor = _v14_shared_ledger_path(repo_root)
+        try:
+            predecessor_bytes = predecessor.read_bytes()
+            predecessor_ledger = json.loads(predecessor_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V16 BLR requires the readable final V14 ledger reference") from exc
+        predecessor_sha = hashlib.sha256(predecessor_bytes).hexdigest()
+        if predecessor_sha != V16_PREDECESSOR_V14_LEDGER_SHA256:
+            raise InputError("V16 predecessor V14 ledger hash changed")
+        if predecessor_ledger.get("batch_identity") != "review_v14":
+            raise InputError("V16 predecessor ledger is not the review_v14 ledger")
+        old_effective = read_v14_effective_budget(predecessor_ledger)
+        unknown_attempts = []
+        for old_stage, old_record in predecessor_ledger.get("stages", {}).items():
+            for index, attempt in enumerate(old_record.get("attempts", [])):
+                if attempt.get("actual_elapsed_seconds") is None:
+                    unknown_attempts.append(
+                        {
+                            "stage": str(old_stage),
+                            "attempt_index": int(index),
+                            "status": attempt.get("status"),
+                            "reserved_seconds": attempt.get("reserved_seconds"),
+                            "actual_elapsed_seconds": None,
+                        }
+                    )
+        predecessor_reference = {
+            "read_only": True,
+            "path": str(predecessor),
+            "sha256": predecessor_sha,
+            "batch_identity": predecessor_ledger.get("batch_identity"),
+            "schema": predecessor_ledger.get("schema"),
+            "measured_elapsed_seconds": predecessor_ledger.get("elapsed_seconds"),
+            "conservative_allowance_seconds": predecessor_ledger.get(
+                "conservative_allowance_seconds", 0.0
+            ),
+            "policy_debits": list(predecessor_ledger.get("policy_debits", [])),
+            "policy_debit_seconds": old_effective["policy_debit_seconds"],
+            "unknown_elapsed_attempts": unknown_attempts,
+            "unknown_elapsed_is_not_new_measurement": True,
+            "effective_budget_snapshot": old_effective,
+        }
+        # Carry only the historical policy accounting into the independent
+        # batch.  Unknown elapsed time stays unknown and is not copied into
+        # the new measured ``elapsed_seconds`` field.
+        inherited_debits = [
+            {
+                **dict(item),
+                "basis": "HISTORICAL_V14_POLICY_REFERENCE",
+                "source_ledger_sha256": predecessor_sha,
+            }
+            for item in predecessor_reference["policy_debits"]
+        ]
+        ledger = {
+            "schema": "task039extra.v16.shared-workflow-ledger.v1",
+            "batch_identity": "review_v16_p4_blr",
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": float(
+                predecessor_reference["conservative_allowance_seconds"]
+            ),
+            "policy_debits": inherited_debits,
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "replay_policy": "no automatic replay; each V16 stage attempt is explicit",
+            "predecessor_v14_ledger": predecessor_reference,
+            "unique_bug_replay_count": 0,
+        }
+    predecessor_reference = ledger.get("predecessor_v14_ledger")
+    if not isinstance(predecessor_reference, Mapping):
+        raise InputError("V16 BLR ledger lacks its immutable V14 predecessor reference")
+    if predecessor_reference.get("sha256") != V16_PREDECESSOR_V14_LEDGER_SHA256:
+        raise InputError("V16 predecessor V14 reference hash changed")
+    for old_stage, old_record in ledger.get("stages", {}).items():
+        if old_record.get("active_attempt") is not None:
+            raise InputError(
+                f"V16 BLR attempt {old_stage} is unsettled; settle it before another launch"
+            )
+    effective_before = read_v14_effective_budget(ledger)
+    workflow_budget = float(stage_budget.get("workflow_seconds", 0.0))
+    if workflow_budget <= 0.0:
+        raise InputError("V16 BLR stage budget must be positive")
+    stage_record = dict(ledger.get("stages", {}).get(stage, {}))
+    attempts = list(stage_record.get("attempts", []))
+    replay = False
+    replay_evidence = None
+    if attempts:
+        if len(attempts) >= 2:
+            raise InputError(f"V16 BLR stage {stage} has exhausted its one repair replay")
+        previous = attempts[-1]
+        if previous.get("source_sha") == source_sha:
+            raise InputError(f"V16 BLR stage {stage} cannot replay the same source SHA")
+        if int(ledger.get("unique_bug_replay_count", 0)) >= 1:
+            raise InputError("V16 BLR batch has exhausted its one implementation-bug replay")
+        previous_run_directory = Path(str(previous.get("run_directory", "")))
+        evidence_path = previous_run_directory / "implementation_bug_replay.json"
+        summary_path = previous_run_directory / "physical_p4_blr_v16_summary.json"
+        try:
+            evidence_bytes = evidence_path.read_bytes()
+            evidence = json.loads(evidence_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V16 repair replay requires implementation_bug_replay.json") from exc
+        try:
+            summary_bytes = summary_path.read_bytes()
+            previous_summary = json.loads(summary_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError(
+                "V16 repair replay requires the hash-bound failed worker summary"
+            ) from exc
+        if (
+            evidence.get("classification") != "IMPLEMENTATION_BUG"
+            or evidence.get("stage") != stage
+            or evidence.get("failed_source_sha") != previous.get("source_sha")
+            or evidence.get("fixed_source_sha") != source_sha
+            or not evidence.get("bug_and_fix")
+            or previous.get("status") not in {"WORKER_FAILED", "FAILED"}
+            or previous.get("watchdog_classification") not in {None, "WORKER_FAILED"}
+            or previous_summary.get("status") != "FAILED"
+            or previous_summary.get("result_classification") != "WORKER_FAILED"
+            or not previous_summary.get("error")
+            or previous_summary.get("source_sha") != previous.get("source_sha")
+        ):
+            raise InputError(
+                "V16 repair replay requires a genuine worker exception, changed source, and bound fix"
+            )
+        replay = True
+        replay_evidence = {
+            "path": str(evidence_path),
+            "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
+            "worker_summary_path": str(summary_path),
+            "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
+            "worker_summary_result_classification": previous_summary.get(
+                "result_classification"
+            ),
+            **evidence,
+        }
+    reservation = workflow_budget
+    if reservation <= 0.0:
+        raise InputError("V16 BLR stage reservation is empty")
+    attempt = {
+        "source_sha": str(source_sha),
+        "run_directory": str(run_directory),
+        "status": "RESERVED",
+        "attempt": len(attempts) + 1,
+        "replay": replay,
+        "replay_evidence": replay_evidence,
+        "bug_replay_count_before": int(ledger.get("unique_bug_replay_count", 0)),
+        "workflow_clock_start": dict(workflow_clock_start),
+        "reserved_timestamp_ns": time.time_ns(),
+        "reserved_seconds": reservation,
+        "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
+        "effective_budget_before_reservation": effective_before,
+        "time_policy": time_policy,
+        **v14_time_policy_facts(time_policy),
+    }
+    attempts.append(attempt)
+    stage_record.update({"attempts": attempts, "active_attempt": len(attempts) - 1})
+    ledger["stages"] = dict(ledger.get("stages", {}))
+    ledger["stages"][stage] = stage_record
+    ledger["source_attempts"] = list(ledger.get("source_attempts", []))
+    ledger["source_attempts"].append(
+        {"stage": stage, "source_sha": str(source_sha), "attempt": len(attempts)}
+    )
+    ledger["fresh_worker_count"] = int(ledger.get("fresh_worker_count", 0)) + 1
+    if replay:
+        ledger["unique_bug_replay_count"] = int(
+            ledger.get("unique_bug_replay_count", 0)
+        ) + 1
+    _write_v14_ledger(path, ledger)
+    effective_after = read_v14_effective_budget(ledger)
+    return {
+        "path": str(path),
+        "stage": str(stage),
+        "attempt_index": len(attempts) - 1,
+        "reserved_seconds": reservation,
+        "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
+        "replay": replay,
+        "replay_evidence": replay_evidence,
+        "time_policy": time_policy,
+        **v14_time_policy_facts(time_policy),
+        "effective_budget_before_reservation": effective_before,
+        "effective_budget_after_reservation": effective_after,
+    }
+
+
 def _settle_v14_shared_budget(
     lease: Mapping[str, Any],
     *,
@@ -1099,13 +1330,14 @@ def launch_specification(
         else _source_sha(Path(__file__).resolve().parents[2])
     )
     from src.io.physical_intermediate_profile import PROFILES
-    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, profile_facts
+    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, P4_BLR_PROFILE, profile_facts
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = specification.solver.get('preconditioner') in RECURSIVE_PROFILES
     bounded = specification.solver.get('preconditioner') in BOUNDED_PROFILES
     balanced = recursive or bounded or specification.solver.get('preconditioner') in BALANCED_PROFILES
     schur_v14 = specification.solver.get('preconditioner') == 'physical_p4_schur_v14'
+    blr_v16 = specification.solver.get('preconditioner') == P4_BLR_PROFILE
     packed = specification.solver.get('preconditioner') == PACKED_PROFILE
     if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
@@ -1116,10 +1348,14 @@ def launch_specification(
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
     if (
         v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
-        and (not schur_v14 or not physical_candidate)
+        and (not (schur_v14 or blr_v16) or not physical_candidate)
     ):
         raise InputError(
-            'observe_only V14 time policy is accepted only by physical_p4_schur_v14'
+            'observe_only time policy is accepted only by the reviewed V14/V16 physical profiles'
+        )
+    if blr_v16 and v14_time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError(
+            'V16 BLR profile requires the explicit observe_only time policy'
         )
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
@@ -1130,16 +1366,27 @@ def launch_specification(
         )
         if schur_stage_budget is None:
             raise InputError('V14 Schur stage has no reviewed watchdog budget')
+    blr_stage_budget = None
+    if physical_candidate and blr_v16:
+        blr_stage_budget = physical_resources.get('stage_budgets', {}).get(
+            specification.solver.get('stage')
+        )
+        if blr_stage_budget is None:
+            raise InputError('V16 BLR stage has no reviewed watchdog budget')
     workflow_limit = (
         (2400 if packed else 1800)
         if pc_profile is not None
         else schur_stage_budget['workflow_seconds']
         if schur_stage_budget is not None
+        else blr_stage_budget['workflow_seconds']
+        if blr_stage_budget is not None
         else physical_resources.get('workflow_seconds', 7200)
     )
     solve_limit = (
         schur_stage_budget['solve_seconds']
         if schur_stage_budget is not None
+        else blr_stage_budget['solve_seconds']
+        if blr_stage_budget is not None
         else physical_resources.get('solve_seconds', 3600)
     )
     v14_lease = None
@@ -1151,6 +1398,14 @@ def launch_specification(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=str(specification.solver['stage']),
             stage_budget=schur_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
+    elif blr_v16 and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_blr_v16_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=str(specification.solver['stage']),
+            stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
     try:
@@ -1172,7 +1427,7 @@ def launch_specification(
             start_time=start_time,
         )
         if (
-            schur_v14
+            (schur_v14 or blr_v16)
             and physical_candidate
             and v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
         ):
@@ -1261,7 +1516,7 @@ def launch_specification(
                                 else {}
                             ),
                         )
-                    if schur_v14:
+                    if schur_v14 or blr_v16:
                         watchdog_kwargs.update(
                             stop_on_global_swap=True,
                             grace_seconds=30,
@@ -1270,9 +1525,12 @@ def launch_specification(
                             timebase_guard=True,
                             timebase_policy='conservative_realtime',
                             tree_cap_bytes=int(physical_resources['tree_cap_bytes']),
-                            active_pc_seconds=float(physical_resources['pc_hard_seconds']),
                             time_policy=v14_time_policy,
                         )
+                        if schur_v14:
+                            watchdog_kwargs['active_pc_seconds'] = float(
+                                physical_resources['pc_hard_seconds']
+                            )
                     if v14_lease is not None:
                         watchdog_environment = dict(
                             watchdog_kwargs.get('worker_environment', {})
@@ -1294,7 +1552,7 @@ def launch_specification(
                         - (60 if joint else 0)
                         - (
                             full_clock.update(clock_sample())['budget_seconds']
-                            if balanced or schur_v14
+                            if balanced or schur_v14 or blr_v16
                             else monotonic() - workflow_started
                         )
                     )
@@ -1350,7 +1608,7 @@ def launch_specification(
                         'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False,
                         **(
                             v14_time_policy_facts(v14_time_policy)
-                            if schur_v14
+                            if schur_v14 or blr_v16
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,
@@ -1368,9 +1626,9 @@ def launch_specification(
                     "error": str(exc),
                     "resource_authority": {"status": "not_sampled"},
                 }
-        if (balanced or schur_v14) and physical_candidate:
+        if (balanced or schur_v14 or blr_v16) and physical_candidate:
             result['workflow_clock_interval']=full_clock.update(clock_sample())
-            if schur_v14:
+            if schur_v14 or blr_v16:
                 result.update(v14_time_policy_facts(v14_time_policy))
                 result['time_observations'] = {
                     'workflow_seconds': result['workflow_clock_interval']['budget_seconds'],
@@ -1390,7 +1648,7 @@ def launch_specification(
             if (
                 result['workflow_clock_interval']['budget_seconds']
                 > min(workflow_limit, float(v14_lease['reserved_seconds']) if v14_lease else workflow_limit)
-                and (not schur_v14 or v14_time_policy == V14_TIME_POLICY_ENFORCE)
+                and (not (schur_v14 or blr_v16) or v14_time_policy == V14_TIME_POLICY_ENFORCE)
             ):
                 result['result_classification']='PERFORMANCE_CONTROLLED_STOP'
         end_time = _now()
@@ -1399,7 +1657,7 @@ def launch_specification(
             result['full_workflow_time_exceeded'] = bool(
                 result['full_workflow_monotonic_seconds'] > workflow_limit
             )
-            if schur_v14:
+            if schur_v14 or blr_v16:
                 result['time_observations'].update(
                     {
                         'full_workflow_monotonic_seconds': result[
@@ -1411,7 +1669,7 @@ def launch_specification(
                     }
                 )
             if result['full_workflow_time_exceeded'] and (
-                not schur_v14 or v14_time_policy == V14_TIME_POLICY_ENFORCE
+                not (schur_v14 or blr_v16) or v14_time_policy == V14_TIME_POLICY_ENFORCE
             ):
                 result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
         manifest.update(
@@ -1455,5 +1713,6 @@ __all__ = [
     "launch_specification",
     "recover_v15_q0_eio_once",
     "_reserve_v14_shared_budget",
+    "_reserve_blr_v16_shared_budget",
     "_settle_v14_shared_budget",
 ]
