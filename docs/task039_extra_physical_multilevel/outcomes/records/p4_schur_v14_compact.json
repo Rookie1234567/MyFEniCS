@@ -1,0 +1,301 @@
+{
+  "schema": "task039extra.v14.p4-schur-compact.v1",
+  "review": "review_v14",
+  "scope": "Q0-Q2 existing-evidence audit; no PDE replay and no budget repair",
+  "status": "Q0_PARTIAL_Q1_Q2_NOT_AVAILABLE",
+  "source_identity": {
+    "branch": "task39extra",
+    "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+    "review_base_sha": "25c90229410ca4f75406307ff55ea1ebad343b7b",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "input_sha256": "76e5ce396f064d7e1e7db3d0d283c7260c07cf7f0d9275783c3a10037a1afd29",
+    "resolved_config_sha256": "8c6590a404ef518bfc6f9db05ed8a6386aa152574df2d6b0ccfa1f6ac27a290d",
+    "abi": "qualified Linux activation; complex128/int32; MPI1; thread setting not available in the unfinalized worker record"
+  },
+  "model": {
+    "model_id": "euv_grazing1_phi0",
+    "profile": "physical_p4_schur_v14",
+    "stage": "Q0_CORE",
+    "p4_independent_rows": 48960,
+    "p4_storage_rows": 53084,
+    "p6_storage_rows": 173802,
+    "port_count": 80,
+    "geometry_identity": "13.5 nm fixed Review V14 model; raw resolved_config is the authority"
+  },
+  "stages": {
+    "Q0_CORE": {
+      "status": "partial_observation",
+      "result_classification": "parent_io_failure_unfinalized",
+      "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+      "official_result": "not_available",
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z",
+      "absolute_run_directory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z",
+      "observed_last_phase": "setup",
+      "observed_last_event": "v14_p64_transfer_complete",
+      "completion_marker": "not_available",
+      "worker_summary": "not_available",
+      "rhs_metrics": {
+        "reviewed_rhs_packets": "not_available",
+        "native_A4_relative_residual": "not_available",
+        "field_l2_relative": "not_available",
+        "scaled_curl_relative": "not_available",
+        "reason": "Q0 stopped before reviewed RHS preparation and solve/recovery metrics"
+      },
+      "observed_events": [
+        {
+          "event": "v14_projected_allocation_gate",
+          "timestamp": "2026-09-12T12:35:59.892856+00:00",
+          "facts": {
+            "allocation_bytes": 525254912,
+            "rss_bytes": 140754944,
+            "projected_rss_bytes": 1739751680,
+            "launch_cap_bytes": 8589934592
+          }
+        },
+        {
+          "event": "v14_common_preallocation_gate",
+          "timestamp": "2026-09-12T12:35:59.894340+00:00",
+          "facts": {
+            "allocation_bytes": 525254912,
+            "p4_storage_rows": 53084,
+            "p6_storage_rows": 173802,
+            "port_count": 80,
+            "estimate_classification": "derived_conservative_estimate"
+          }
+        },
+        {
+          "event": "v14_common_setup_started",
+          "timestamp": "2026-09-12T12:36:00.043279+00:00",
+          "facts": {
+            "levels": [6, 4]
+          }
+        },
+        {
+          "event": "v14_fine_quadrature_complete",
+          "timestamp": "2026-09-12T12:36:05.654845+00:00",
+          "facts": {
+            "quadrature_degree": 15,
+            "components": ["curl", "material_mass"]
+          }
+        },
+        {
+          "event": "v14_p64_transfer_complete",
+          "timestamp": "2026-09-12T12:37:37.862986+00:00",
+          "facts": {
+            "fine_global_rows": 173802,
+            "coarse_global_rows": 53084,
+            "local_cache_array_bytes": 21168000,
+            "nontrivial_cell_permutation_count_local": 82,
+            "orientation_application": "Basix_T_apply_exact_cell_permutation",
+            "phase_application": "finalized_floquet_mpc_once"
+          }
+        }
+      ],
+      "timing": {
+        "run_start": "2026-09-12T12:35:58.976504+00:00",
+        "workflow_phase_started": "2026-09-12T12:36:00.043031+00:00",
+        "common_setup_to_last_event_seconds": 97.819706335,
+        "watchdog_first_sample": "2026-09-12T12:35:58.988001+00:00",
+        "watchdog_last_complete_sample": "2026-09-12T12:37:43.112614+00:00",
+        "watchdog_valid_prefix_interval_seconds": 104.12461363,
+        "setup_seconds": "not_available",
+        "apply_seconds": "not_available",
+        "cleanup_seconds": "not_available",
+        "reason": "the worker never emitted a terminal summary or completed-setup marker"
+      },
+      "resources": {
+        "process_tree_watchdog_prefix": {
+          "complete_samples": 373,
+          "invalid_lines": [
+            {
+              "line": 374,
+              "bytes": 3276,
+              "reason": "NUL-filled/non-JSON leftover"
+            }
+          ],
+          "peak_rss_bytes": 1417695232,
+          "peak_pss_bytes": 1385432064,
+          "peak_timestamp": "2026-09-12T12:36:52.744457+00:00",
+          "last_complete_conservative_seconds": 104.12926405597166,
+          "swap_peak_bytes": 0,
+          "all_valid_samples_job_swap_zero": true,
+          "global_swap_counters_observed": {
+            "pswpin_pages": [18],
+            "pswpout_pages": [2039],
+            "observed_prefix_delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            },
+            "interpretation": "cumulative global counters; zero delta is only within the observed prefix, not a whole-workflow swap proof"
+          },
+          "last_sample_phase": "setup",
+          "terminal_coverage": "incomplete_prefix"
+        },
+        "worker_resource_samples": {
+          "sample_count": 5,
+          "peak_rss_bytes": 726052864,
+          "peak_pss_bytes": 697837568,
+          "swap_peak_bytes": 0,
+          "scope": "sparse worker-triggered process-tree samples (root plus mpiexec plus worker); not a complete process-tree peak"
+        },
+        "inventory": {
+          "bootstrap_inventory_used_bytes": 0,
+          "bootstrap_inventory_peak_bytes": 0,
+          "resident_inventory_bytes": "not_available",
+          "workspace_peak_bytes": "not_available",
+          "interpretation": "the empty bootstrap file is not evidence that live inventory stayed at zero"
+        }
+      },
+      "stop": {
+        "watchdog_stop_reason": "not_triggered_in_observed_prefix",
+        "worker_exit_code": "not_available",
+        "outer_exit_code": 135,
+        "classification": "PARENT_IO_FAILURE",
+        "observation_timestamp": "2026-09-12T12:38:19.308Z",
+        "detail": "launcher failed with EIO while writing run_manifest.json; its settlement path then failed with EIO while reading shared_workflow_ledger.json",
+        "observed_prefix_stop_gate": "none",
+        "worker_final_classification": "not_available",
+        "numerical_failure_classification": "not_available",
+        "resource_stop_classification": "not_available",
+        "interpretation": "the known direct error is parent EIO; the valid prefix shows no triggered watchdog gate, but the missing worker terminal record prevents excluding an unknown terminal cause"
+      }
+    },
+    "Q1_FULL_DIRECT": {
+      "status": "not_available",
+      "result_classification": "not_available_in_current_workspace",
+      "source_sha": "not_available",
+      "run_directory": "not_available",
+      "rhs_metrics": {
+        "reviewed_rhs_names": [
+          "A2R160_BAL_H_p4_01",
+          "A2R160_BAL_H_p4_02",
+          "LIGHT448_BAL_H_p4_09"
+        ],
+        "rhs_records": "not_available",
+        "native_A4_relative_residual": "not_available",
+        "field_l2_relative": "not_available",
+        "scaled_curl_relative": "not_available"
+      },
+      "resources": "not_available",
+      "reason": "no matching Q1 run directory or final record was found; historical V5/V13 values are not substituted"
+    },
+    "Q2_SCHUR_DIRECT": {
+      "status": "not_available",
+      "result_classification": "not_available_in_current_workspace",
+      "source_sha": "not_available",
+      "run_directory": "not_available",
+      "rhs_metrics": {
+        "reviewed_rhs_names": [
+          "A2R160_BAL_H_p4_01",
+          "A2R160_BAL_H_p4_02",
+          "LIGHT448_BAL_H_p4_09"
+        ],
+        "rhs_records": "not_available",
+        "native_A4_relative_residual": "not_available",
+        "field_l2_relative": "not_available",
+        "scaled_curl_relative": "not_available"
+      },
+      "resources": "not_available",
+      "reason": "no matching Q2 run directory or final record was found; historical V5/V13 values are not substituted"
+    }
+  },
+  "accounting": {
+    "ledger_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+    "ledger_status": "RESERVED",
+    "ledger_active_attempt": 0,
+    "ledger_reserved_seconds": 600.0,
+    "ledger_elapsed_seconds": 0.0,
+    "formal_charged_seconds": "not_available",
+    "settled_seconds": "not_available",
+    "total_budget_seconds": 43200.0,
+    "fresh_worker_count": 1,
+    "unique_bug_replay_count": 0,
+    "interpretation": "ledger elapsed 0.0 is an unsettled snapshot, not a claim that the observed worker consumed zero seconds"
+  },
+  "artifact_hashes": {
+    "raw_manifest": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/run_manifest.json",
+      "sha256": "efe17e9b1829aadd5a9b78515370be731c4632a1627341957cfcce2d1438a487",
+      "bytes": 1560
+    },
+    "raw_summary": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/run_summary.json",
+      "sha256": "5e717fd729bcef0f5167caa4251e1549cc5ee2e063eff52f355d4fa492ec2a40",
+      "bytes": 522
+    },
+    "source_sha_file": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/source_sha.txt",
+      "sha256": "1e7067fcc7c58e30f00e86bfec8b484866914abf0ed97fe678f5e70430913418",
+      "bytes": 41
+    },
+    "input_original": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/input_original.dat",
+      "sha256": "76e5ce396f064d7e1e7db3d0d283c7260c07cf7f0d9275783c3a10037a1afd29",
+      "bytes": 2113
+    },
+    "resolved_config": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/resolved_config.json",
+      "sha256": "8c6590a404ef518bfc6f9db05ed8a6386aa152574df2d6b0ccfa1f6ac27a290d",
+      "bytes": 6441
+    },
+    "workflow_phase": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/workflow_phase.json",
+      "sha256": "21e45b1f3c26ccce9fe3cc5ed57826a30fb03d3cbf7f564e5068b03165c66b72",
+      "bytes": 254
+    },
+    "inventory_bootstrap": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/v14_inventory.json",
+      "sha256": "fadebe477fe6d42d2a324856bdaaa487f9f918198b1c12def76de8fb9fe0a418",
+      "bytes": 319
+    },
+    "v14_events": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/v14_events.jsonl",
+      "sha256": "72413c5df8436c6ce2437a9044f664593382340fdbdb0119c920a5282881bc1a",
+      "bytes": 4228
+    },
+    "worker_resources": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/v14_worker_resources.jsonl",
+      "sha256": "ee801bd0acc0201353e76567ceb27d918c81f0cea2a40e9f30aafcafbee4159c",
+      "bytes": 18917
+    },
+    "watchdog_resources": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/watchdog/resources.jsonl",
+      "sha256": "5305b78e3e9c08cdc91c0cd54e7e9e41dea08389a0571690295fd8c57bc45b19",
+      "bytes": 2027520
+    },
+    "watchdog_worker_log": {
+      "path": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z/watchdog/worker.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "shared_workflow_ledger": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+      "sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+      "bytes": 957
+    },
+    "recovered_io_tool_output": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/recovered_q0_io_tool_output.json",
+      "sha256": "d9dc96535b9e272e7cb4cf27a24e8bd1f8855f3b888d05bc776175bb18638f41",
+      "bytes": 2161
+    },
+    "existing_evidence_audit": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/recovery_audit_20260913.json",
+      "sha256": "e8f2bf7fb3294131339d0fadae94f30c64bb1d4f782cdaf188a484c7651fb075",
+      "bytes": 5177
+    }
+  },
+  "decision_boundary": {
+    "q1_q2_memory_comparison": "not_available",
+    "q1_q2_accuracy_comparison": "not_available",
+    "q3_q4_q5_q6": "pending_review_v14_continuation",
+    "official_maxwell_outputs": "not_available",
+    "do_not_infer": [
+      "Q0 partial setup is not a Q0 solver pass",
+      "the empty inventory bootstrap is not a zero live-inventory measurement",
+      "the watchdog prefix peak is not a complete workflow peak",
+      "the known direct error is parent I/O; the missing terminal record leaves the final numerical/resource classification not_available",
+      "Q1/Q2 absence is not evidence that accurate Schur is worse or better"
+    ]
+  }
+}

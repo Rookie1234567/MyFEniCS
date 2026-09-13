@@ -1075,6 +1075,40 @@
       "primary_method": "PHYSICAL_INTERFACE_MULTILEVEL_REDESIGN",
       "production_pc_qualified": false,
       "official_p6_physics": "not_run"
+    },
+    {
+      "id": "V14_Q0_physical_p4_schur_partial",
+      "status": "PARENT_IO_FAILURE_AFTER_PARTIAL_SETUP",
+      "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z",
+      "profile": "physical_p4_schur_v14",
+      "stage": "Q0_CORE",
+      "observed_last_phase": "setup",
+      "observed_last_event": "v14_p64_transfer_complete",
+      "watchdog_prefix_samples": 373,
+      "watchdog_invalid_lines": 1,
+      "watchdog_prefix_peak_rss_bytes": 1417695232,
+      "watchdog_prefix_peak_pss_bytes": 1385432064,
+      "watchdog_prefix_swap_peak_bytes": 0,
+      "observed_prefix_stop_gate": "none",
+      "worker_final_classification": "not_available",
+      "resource_classification": "not_available",
+      "worker_summary": "not_available",
+      "native_A4_residual": "not_available",
+      "field_l2": "not_available",
+      "scaled_curl": "not_available",
+      "formal_charged_seconds": "not_available",
+      "shared_ledger_status": "RESERVED",
+      "q1_q2_comparison": "not_available",
+      "official_results": "not_available",
+      "evidence": {
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json",
+        "comparison": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_comparison.json",
+        "outcome": "docs/task039_extra_physical_multilevel/outcomes/p4_schur_v14.md",
+        "existing_evidence_audit": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/recovery_audit_20260913.json",
+        "io_fault": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/recovered_q0_io_tool_output.json"
+      },
+      "next": "Q1/Q2 records are not available in the current workspace; keep Q3-Q6 pending and do not infer a Schur memory result"
     }
   ],
   "limitations": [
@@ -1719,7 +1753,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "v13_continuation",
+  "current_review_record": "v14_q0_q2_audit",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -1923,5 +1957,56 @@
       "decision": "docs/task039_extra_physical_multilevel/outcomes/records/next_method_decision_v13.json",
       "blueprint": "docs/task039_extra_physical_multilevel/outcomes/next_method_blueprint_v13.md"
     }
+  },
+  "v14_q0_q2_audit": {
+    "id": "V14_Q0_physical_p4_schur_partial",
+    "status": "PARENT_IO_FAILURE_AFTER_PARTIAL_SETUP",
+    "review_base_sha": "25c90229410ca4f75406307ff55ea1ebad343b7b",
+    "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+    "profile": "physical_p4_schur_v14",
+    "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z",
+    "stage_status": {
+      "Q0_CORE": "partial_observation",
+      "Q1_FULL_DIRECT": "not_available",
+      "Q2_SCHUR_DIRECT": "not_available"
+    },
+    "stage_source_sha": {
+      "Q0_CORE": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+      "Q1_FULL_DIRECT": "not_available",
+      "Q2_SCHUR_DIRECT": "not_available"
+    },
+    "q0_last_phase": "setup",
+    "q0_last_event": "v14_p64_transfer_complete",
+    "q0_watchdog_prefix": {
+      "complete_samples": 373,
+      "invalid_lines": 1,
+      "peak_rss_bytes": 1417695232,
+      "peak_pss_bytes": 1385432064,
+      "swap_peak_bytes": 0,
+      "prefix_seconds": 104.12461363,
+      "terminal_coverage": "incomplete_prefix"
+    },
+    "q0_metrics": {
+      "native_A4_relative_residual": "not_available",
+      "field_l2_relative": "not_available",
+      "scaled_curl_relative": "not_available",
+      "setup_seconds": "not_available",
+      "apply_seconds": "not_available",
+      "resident_inventory_bytes": "not_available"
+    },
+    "io_fault_observed_utc": "2026-09-12T12:38:19.308Z",
+    "outer_exit_code": 135,
+    "shared_ledger_status": "RESERVED",
+    "formal_charged_seconds": "not_available",
+    "records": {
+      "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json",
+      "comparison": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_comparison.json",
+      "outcome": "docs/task039_extra_physical_multilevel/outcomes/p4_schur_v14.md"
+    },
+    "raw_audit": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/recovery_audit_20260913.json",
+      "sha256": "e8f2bf7fb3294131339d0fadae94f30c64bb1d4f782cdaf188a484c7651fb075"
+    },
+    "next": "Q1/Q2 and conditional Q3-Q6 remain pending; no Schur memory conclusion"
   }
 }

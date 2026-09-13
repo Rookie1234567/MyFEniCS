@@ -1,0 +1,88 @@
+{
+  "schema": "task039extra.v14.p4-schur-comparison.v1",
+  "review": "review_v14",
+  "scope": "Q1 full-direct versus Q2 Schur-direct; comparison requires both complete workflows",
+  "status": "COMPARISON_INCONCLUSIVE_Q1_Q2_NOT_AVAILABLE",
+  "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+  "model_identity": {
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "p4_independent_rows": 48960,
+    "p4_storage_rows": 53084,
+    "p6_storage_rows": 173802,
+    "mpi_size": 1,
+    "scalar_type": "complex128",
+    "integer_type": "int32"
+  },
+  "required_common_scope": [
+    "same cold/warm JIT and cache scope",
+    "same public p4 equation, three reviewed RHS packets and P64/field metrics",
+    "complete process-tree RSS/PSS timeline through cleanup",
+    "factor-live repeated solves and post-release RSS",
+    "backend allocated/used plus derived inventory, separately reported"
+  ],
+  "q1_full_direct": {
+    "status": "not_available",
+    "source_sha": "not_available",
+    "run_directory": "not_available",
+    "reviewed_rhs_names": [
+      "A2R160_BAL_H_p4_01",
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ],
+    "rhs_records": "not_available",
+    "native_A4_relative_residuals": "not_available",
+    "field_l2_relative_errors": "not_available",
+    "scaled_curl_relative_errors": "not_available",
+    "matrix_and_factor_facts": "not_available",
+    "workflow_peak_rss_bytes": "not_available",
+    "workflow_peak_pss_bytes": "not_available",
+    "resident_inventory_bytes": "not_available",
+    "setup_seconds": "not_available",
+    "three_rhs_apply_seconds": "not_available",
+    "cleanup_seconds": "not_available",
+    "reason": "no Q1 run directory or final record in the current workspace"
+  },
+  "q2_schur_direct": {
+    "status": "not_available",
+    "source_sha": "not_available",
+    "run_directory": "not_available",
+    "reviewed_rhs_names": [
+      "A2R160_BAL_H_p4_01",
+      "A2R160_BAL_H_p4_02",
+      "LIGHT448_BAL_H_p4_09"
+    ],
+    "rhs_records": "not_available",
+    "native_A4_relative_residuals": "not_available",
+    "field_l2_relative_errors": "not_available",
+    "scaled_curl_relative_errors": "not_available",
+    "matrix_and_factor_facts": "not_available",
+    "workflow_peak_rss_bytes": "not_available",
+    "workflow_peak_pss_bytes": "not_available",
+    "resident_inventory_bytes": "not_available",
+    "setup_seconds": "not_available",
+    "three_rhs_apply_seconds": "not_available",
+    "cleanup_seconds": "not_available",
+    "reason": "no Q2 run directory or final record in the current workspace"
+  },
+  "derived_comparison": {
+    "memory_ratio_q2_over_q1": "not_available",
+    "resident_ratio_q2_over_q1": "not_available",
+    "peak_absolute_difference_bytes": "not_available",
+    "setup_time_difference_seconds": "not_available",
+    "repeat_apply_time_difference_seconds": "not_available",
+    "accuracy_gate": "not_available",
+    "classification": "COMPARISON_INCONCLUSIVE",
+    "reason": "Q0 ended during setup with a parent I/O failure; Q1 and Q2 were not found, so no Schur memory or speed conclusion is permitted"
+  },
+  "q0_context_not_comparable": {
+    "status": "partial_observation",
+    "watchdog_prefix_peak_rss_bytes": 1417695232,
+    "watchdog_prefix_peak_pss_bytes": 1385432064,
+    "watchdog_prefix_swap_peak_bytes": 0,
+    "peak_scope": "partial simultaneous parent process-tree prefix only",
+    "not_used_as_q1_or_q2": true,
+    "evidence": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json#/stages/Q0_CORE"
+  },
+  "next": "Keep Q3-Q6 pending; do not close the review or infer the accurate-Schur memory answer from the Q0 prefix"
+}
