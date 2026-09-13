@@ -1,3 +1,21 @@
+# Task39extra 当前进展：p4 BLR S2 质量通过但内存收益不足，任务收口
+
+| 本轮问题 | 当前结论 |
+|---|---|
+| p4 BLR 实际压缩 | `INFOG9/35=53040280` 对 exact `INFOG29=53417584`，实测条目比 `0.992936707882558`，约少0.706%；可选 wrapper 字段为空，不从 ICNTL38 推断。 |
+| 内存是否足够改善 | 不足；RSS `2825973760 -> 2741243904 B`，`R_peak=R_live=0.9700174654134085`；allocated upper下降但 used upper增加，workspace不变。 |
+| 三 RHS 质量 | S2 质量筛选通过；rho `.012747787/.000716687/.017677845`，field/curl均小于0.001，且每个恰好一次 MatSolve。 |
+| 完整 original/notch/非可分 | 均 `not_run`；S3/S4 memory admission 不成立，没有完整 p6 outer或official物理结果。 |
+| 当前行动 | 关闭唯一固定 BLR 配置；不试新 epsilon、不启动p6；TRACE bundle 的 ICNTL(49) public getter unsupported，本轮不展开新调查、不改变策略，也不升级ABI；保留research evidence，等待同分支审阅。 |
+
+直接求解会保存消元产生的矩阵块；BLR在原p4端口增广矩阵的全局 MUMPS 分解中用较少数据近似部分块，尝试省内存，代价是回代误差需要检查；它仍保留全局消元树，不是 factor-free PC。source `24bd767e6b0d158ac20deb360a135f10c0611ede` 的三 RHS control、资源和独立 checker 均 hash-bound；形式模型是 p6/h10，但本批只做 p4 `53164` 行增广控制，没有 p6 outer solve。用户时间策略为 `observe_only`，但 monotonic/UTC/保守结算仍分列。
+
+Q0/Q1/Q2与首次Q3绑定clean source `6a8b273c383d5bd9da37d6630a48bd24d6a90cce`；唯一Q3重放为`188224ad5fc81b34156a0ae3678bd2121b1206da`；Q6只读收口为`d9530636ab2f043a84235b515846b410a8deb4b3`。最终formal保守结算4082.128437647174秒，加旧600秒政策占用和3.1秒allowance为4685.228437647174秒；旧EIO真实耗时仍unknown。新各场job swap0、global delta0/0、最终子进程清空。5nm分支未改动。
+
+三 RHS 质量、控制读回、factor-live/完整 RSS、phase-derived 时间、ledger 和未运行边界见[response_v17](task039_extra_physical_multilevel/response_v17.md)、[p4 BLR outcome](task039_extra_physical_multilevel/outcomes/p4_blr_v16.md)、[V17 compact/decision](task039_extra_physical_multilevel/outcomes/records/p4_blr_v16_compact.json) 和[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。下方 V14/V15 及更早负结果历史全部保留。
+
+# 历史快照（HEAD 原始当前段）
+
 # Task39extra 当前进展：准确 Schur 内存对照与接口候选负结果已完成
 
 | 本轮问题 | 当前结论 |

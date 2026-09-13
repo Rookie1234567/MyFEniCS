@@ -1,4 +1,15 @@
-# Task39extra Review V15 最终模型登记：Q0/Q6 证据边界
+# Task39extra Response V17 / Review V16 执行结果：p4 BLR S2 证据边界
+
+| Model ID | 当前来源/配置 | 实测结果 | 状态与边界 |
+|---|---|---|---|
+| `task39extra_v16_s2_p4_blr_control` | source `24bd767e6b0d158ac20deb360a135f10c0611ede`；13.5 nm、p6/h10、Full3D、MPI1、complex128/int32；形式模型为 p6/h10，但正式批只做 p4 增广53164行、80 DtN modes，无 p6 outer solve | 单一 MUMPS BLR factor，三 RHS 各一次 MatSolve；rho=`0.012747787/.000716687/.017677845`；field L2=`.000468941/.000638197/.000518460`；scaled curl=`.000465015/.000633006/.000514229`；RSS peak `2741243904 B`，factor-live同值；exact Q1 `2825973760 B`；native entry ratio `0.992936707882558` | `S2_BLR_CONTROL_PASS` / `DISCRETE_SOLVER_OUTPUT_PASS`；质量通过但 `R_peak=R_live=0.9700174654134085`，内存收益不足，`STRONG_BUT_INSUFFICIENT_MEMORY_GAIN`；S3/S4、完整p6、非可分、official fields/power均 `not_run`；ICNTL(49) getter unsupported，本轮不展开新调查且不改变策略；ordinary default unchanged；[V17 compact](task039_extra_physical_multilevel/outcomes/records/p4_blr_v16_compact.json) |
+| `task39extra_v16_s2_p4_blr_backend_identity` | linked `libzmumps-5.6.1.so`；strings/header/package/manual 5.6.2；ICNTL35/CNTL7 symbolic前设置并读回 | `INFOG9/35=53040280`、`INFOG29=53417584`；INFOG36/37=1405 MB；post-symbolic `ICNTL6/7/8/14/18/28/29=7/7/77/20/0/1/0`、`CNTL1/3/4=.01/0/-1`、ICNTL23=3127 MB | 后端控制与 raw fields 可核验；原生条目比从 measured fields 派生，不从 ICNTL38推断；ICNTL49 getter unsupported，本轮不展开新调查、不改变策略；MUMPS 5.6.2无本批可用 adaptive precision storage control，保留complex128；[MUMPS identity](../benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/mumps_5_6_2_primary_identity.json) |
+
+S2 通过只代表一个 p4 BLR control：它没有提供完整 p6 outer true residual、非可分三维、E/H、R/T/A、`A_volume`、80模式或守恒证据。allocated upper `2343000000 -> 1693000000 B` 不能代替 RSS；used upper `1382000000 -> 1420000000 B` 增加，workspace两边均 `17825792 B`。选择性合并边界见 [manifest V17](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v17.md)；当前不批准 master merge。
+
+---
+
+# 历史快照：Task39extra Review V15 最终模型登记：Q0/Q6 证据边界
 
 | Model ID | 当前来源/配置 | 结果 | 状态与边界 |
 |---|---|---|---|

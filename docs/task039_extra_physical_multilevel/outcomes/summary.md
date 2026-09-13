@@ -1,3 +1,27 @@
+# 当前汇总：S2 p4 BLR 质量通过但内存收益不足，S3/S4 未准入
+
+| 当前问题 | 实测结论 | 原因及证据范围 |
+|---|---|---|
+| 实际压缩与内存收益 | `STRONG_BUT_INSUFFICIENT_MEMORY_GAIN` | S2 BLR native entries `53417584 -> 53040280`，实测条目比 `0.992936707882558`，约降 `0.706%`；完整 RSS `2825973760 -> 2741243904 B`，`R_peak=R_live=0.9700174654134085`，约降3.0%。 |
+| allocated/used 是否一致改善 | 不一致 | allocated upper `2343000000 -> 1693000000 B` 降27.7%，但 used upper `1382000000 -> 1420000000 B` 增 `38000000 B`；workspace 两边均 `17825792 B`。不能用 allocated-only 通过 RSS Gate。 |
+| 三 RHS 是否保住 p4 全局纠错 | S2 质量筛选通过 | rho=`.012747787/.000716687/.017677845`；field L2=`.000468941/.000638197/.000518460`；scaled-curl=`.000465015/.000633006/.000514229`；每个恰好一次 MatSolve。 |
+| 完整 p6/original/notch/非可分 | 全部 `not_run` | S3 memory admission 未满足；没有 p6 outer true residual、E/H、R/T/A、`A_volume`、80模式或守恒结果。 |
+| 最终决定 | 关闭固定 BLR 配置 | 不试新 epsilon、不启动 p6；TRACE bundle 的 ICNTL(49) public getter unsupported，本轮不展开新调查、不改变策略，也不升级 ABI；保留 p4 research evidence，ordinary default不变。 |
+
+模型为13.5 nm、p6/h10、252 cells、Full3D、MPI1/线程1、complex128/int32；但正式批只对 p4 的 `53164` 行增广矩阵做控制，没有 p6 outer solve。直接求解会保存消元产生的矩阵块，BLR 用较少数据近似其中一部分以尝试省内存，代价是回代误差需检查；它不是 factor-free PC。S2 正式 source 为 `24bd767e6b0d158ac20deb360a135f10c0611ede`，三个 RHS 使用同一个 BLR factor，控制在 symbolic 前设置并逐次读回。
+
+S2 的 `S2_BLR_CONTROL_PASS` / `DISCRETE_SOLVER_OUTPUT_PASS` 只适用于 p4 三 RHS control。三次 native identity relative 为 `8.30e-17/2.74e-18/9.82e-17`；没有 refinement 或参考解进入回代。完整四问、控制读回、factor-live/全流程资源和 phase-derived 时间见 [V17 response](../response_v17.md) 与 [p4 BLR outcome](p4_blr_v16.md)。
+
+独立 checker 从 raw vectors/resources/factor fields 重新计算：comparison、control、resource gates 全过；质量通过但 `R_peak/R_live` 不满足 S3 线，所以 S3 original、S4 notch 不启动。这个结果不否定全部 BLR 或全部 p4，只关闭当前固定配置的内存适用边界。
+
+完整 formal workflow monotonic `571.514731005 s`，phase-derived setup/assembly/factor 为 `37.088510941/494.414024999/20.378098889 s`；parent monotonic `571.483797368 s`，conservative settled `625.736658980034 s`。phase audit 是从记录边界派生，不把每段写成独立函数计时；工程窗口单独记录，不并入 PDE ledger。Q1/S2 配对成本为 symbolic `0.2683213069976773/0.33692986499954714 s`、numeric `18.488779414998135/19.946495771997434 s`、full monotonic `536.4680422439997/571.5147310050015 s`、conservative settled `584.7709557270404/625.736658980034 s`；BLR `RINFOG3=39449025878.0` theoretical、`RINFOG14=41079564559.0` actual。
+
+V16 使用独立 batch ledger `review_v16_p4_blr`，旧 V14 ledger SHA `1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3` 和旧 `600 s` policy debit 只读保留；该引用不可返还、不可冒作新实测，新 batch ledger 单列其关系；新 batch unique replay 为0。S2 job swap为0、global delta为0/0、后代清场；旧 Schur/interface 负结果和未知范围不被覆盖。
+
+[V17 compact](records/p4_blr_v16_compact.json)、[decision](records/p4_blr_v16_decision.json)、[run index](records/run_index.json)绑定 source/input/physical/mode/run/resource hashes；[test_summary](test_summary.md)记录 128 项相关测试和未运行的 full repository/Ruff/CI。选择性合并边界见 [manifest V17](selective_merge_manifest_v17.md)。不扩大到5nm/0.7nm或连续收敛，不合并 master。
+
+# 历史快照（HEAD 原始当前段）
+
 # 当前汇总：准确 Schur 不省内存，固定接口近似未通过准入
 
 | 当前问题 | 实测结论 | 原因及证据范围 |

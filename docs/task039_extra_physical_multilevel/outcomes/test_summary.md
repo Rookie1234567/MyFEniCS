@@ -1,3 +1,24 @@
+# 当前验证：V16 p4 BLR S2 与历史 V14/V15 证据分层
+
+| 检查 | 已完成结果 | 来源与限制 |
+|---|---|---|
+| S0 qualified ABI / source gate | `PASS` | source `24bd767e6b0d158ac20deb360a135f10c0611ede`；complex128/int32、MPI1、线程1；formal input 启动前 clean |
+| V16 directly-related targeted tests | **128 passed** | V16 BLR、controls/algebra/interface/schema/launcher/dispatch、real tiny MUMPS 和 saved Q1；不是 full repository pytest |
+| 最终文档与 Markdown 合同 | **20 passed** | `test_26_documentation_contract.py` 与 `test_183_development_model_registry_markdown.py`；根控最终修订后验证，stdout 为 `p4_blr_v16/root_engineering/s5_doc_tests.log` |
+| formal input validate / dry-run | `PASS / PASS` | `input/task39extra/v16_s2_blr_control.dat`；只验证配置路由，不是 PDE 结果 |
+| S2 formal worker | `worker_exit0` / `S2_BLR_CONTROL_PASS` | 三 RHS、one factor、one MatSolve/RHS、native identity、field metrics和资源清场均有 raw evidence |
+| independent checker | `quality_pass=true`; decision `STRONG_BUT_INSUFFICIENT_MEMORY_GAIN` | raw-vector/resource/factor/control fields 独立重算；Rpeak/Rlive未达S3线，因此S3/S4 not_run |
+| formal resource | `PASS` | RSS/PSS readable、tree/inventory/workspace/host reserve、zero job swap、descendants cleared；full RSS peak `2741243904 B` |
+| sandbox MPI permission / process-view record | engineering-only false negative，已由实际宿主复核纠正 | OpenMPI/PMIx singleton 权限和 sandbox PID 视图不计为 PDE failure 或 bug replay；本轮没有因此重跑 PDE 或增加 route |
+| compileall / diff-check | `PASS` | parent formal source commit 后完成；本轮文档不改数值源码 |
+| Ruff / full repository pytest / CI | unavailable / not_run / not_claimed | 不补装 Ruff、不把局部测试改写为全仓或 CI 通过 |
+
+原始 V16 工程证据：[S0 preflight](../../../benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/s0_final_preflight.json)、[independent checker](../../../benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/s2_independent_check.json)、[phase audit](../../../benchmarks/artifacts/task39extra/p4_blr_v16/root_engineering/s2_phase_time_audit.json)。S0 app-reported `1761.112 s` 与最终 preflight engineering elapsed `5235.60104560852 s` 是重叠工程窗口，不相加；formal ledger 只计 S2 worker workflow。
+
+[response_v17](../response_v17.md)、[p4 BLR outcome](p4_blr_v16.md)、[V17 compact](records/p4_blr_v16_compact.json)、[run index](records/run_index.json)提供当前 source、raw hash、三 RHS 和资源口径；下方 V14/V15 均为历史测试状态，不被 V16 S2 误并为完整 p6 资格。
+
+# 历史快照（HEAD 原始当前段）
+
 # 当前验证：V14/V15 续算、生命周期修复与 Q6 负结果读取
 
 | 检查 | 已完成结果 | 来源与限制 |
