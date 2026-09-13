@@ -135,7 +135,7 @@ def global_swap_stop(baseline, current, *, enabled=False):
 
 
 def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
-    hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'TIMEBASE_INCONSISTENCY', 'GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED')
+    hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'TIMEBASE_INCONSISTENCY', 'GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED', 'PC_TIME_CONTROLLED_STOP')
     return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
 
 
@@ -168,12 +168,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               cooperative_performance_stop: bool = False,
               timebase_guard: bool = False, timebase_policy: str = STRICT,
               stop_on_global_swap: bool = False,
-              tree_cap_bytes: int | None = None) -> dict:
+              tree_cap_bytes: int | None = None,
+              active_pc_seconds: float | None = None) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     if not command or min(wall_seconds, interval, grace_seconds) <= 0:
         raise ValueError('command and positive monitoring budgets are required')
     if tree_cap_bytes is not None and int(tree_cap_bytes) <= 0:
         raise ValueError('tree_cap_bytes must be positive when supplied')
+    if active_pc_seconds is not None and (
+            not 0 < float(active_pc_seconds) < float('inf') or
+            phase_path is None or not timebase_guard or not hard_stop_immediate):
+        raise ValueError('active PC limit requires positive seconds, a phase file, '
+                         'guarded clocks and immediate hard stopping')
     if cooperative_performance_stop and (phase_path is None or not hard_stop_immediate or grace_seconds > 60):
         raise ValueError('cooperative stop requires phase registration, immediate hard gates and grace <=60s')
     libc = ctypes.CDLL(None, use_errno=True)
@@ -212,6 +218,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     clock_start = clock_sample() if timebase_guard else None
     clock_budget = ClockBudget(clock_start, policy=timebase_policy) if timebase_guard else None
     solve_budget = None
+    pc_budget = None
     stop_clock = None
     if timebase_guard:
         summary.update(clock_info=clock_info(), clock_start=clock_start,
@@ -245,6 +252,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 solve_expired = (solve_seconds is not None and phase.get('phase') == 'solve'
                                  and time.monotonic() - phase['phase_started_monotonic'] >= solve_seconds)
                 clock_issue = None
+                pc_expired = False
                 deadline_elapsed = elapsed
                 if timebase_guard:
                     clock_now = clock_sample()
@@ -261,6 +269,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                             sample['solve_clock_interval'] = solve_budget.update(clock_now)
                             solve_expired = (solve_seconds is not None and
                                             sample['solve_clock_interval']['budget_seconds'] >= solve_seconds)
+                        if active_pc_seconds is not None:
+                            active_pc = phase.get('active_pc')
+                            if active_pc is None:
+                                pc_budget = None
+                            else:
+                                pc_start = active_pc['started_clock']
+                                if pc_budget is None or pc_budget.start != pc_start:
+                                    pc_budget = ClockBudget(pc_start, policy=timebase_policy)
+                                sample['pc_clock_interval'] = pc_budget.update(clock_now)
+                                sample['pc_limit_seconds'] = float(active_pc_seconds)
+                                pc_expired = (sample['pc_clock_interval']['budget_seconds']
+                                              >= active_pc_seconds)
                     except TimebaseInconsistency as exc:
                         clock_issue = str(exc)
                         sample['clock_error'] = clock_issue
@@ -286,6 +306,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         or sample['swap_bytes'] != 0 else
                         'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
                         'TIMEBASE_INCONSISTENCY' if clock_issue else
+                        'PC_TIME_CONTROLLED_STOP' if pc_expired else
                         'PERFORMANCE_CONTROLLED_STOP' if deadline_elapsed >= wall_seconds or solve_expired else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
                 if stop_on_global_swap:

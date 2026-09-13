@@ -58,6 +58,7 @@ def profile_facts(identity=PROFILE) -> dict:
             'memory_policy': 'SYMBOLIC_SIZED_LOCAL_MUMPS_V11',
             'resources': {
                 'workflow_seconds': 14400, 'solve_seconds': 10800,
+                'pc_soft_seconds': 25, 'pc_hard_seconds': 30,
                 'mpi_size': 1, 'require_zero_swap': True,
                 'inventory_memory_cap_bytes_by_stage': {
                     'Q1_FULL_DIRECT': 6 * 1024**3,

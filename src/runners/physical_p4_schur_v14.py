@@ -1,10 +1,10 @@
-"""Task39extra V14 workers for the fresh p4 full/direct Schur comparison.
+"""Task39extra V14 workers for the fresh p4/fullspace Schur comparison.
 
 Q1 and Q2 are deliberately separate worker stages.  Each worker builds the
 same p6/p4 mesh, mode inventory and three hash-bound p4 right-hand sides, then
 exits after its own factors have been destroyed.  Q3 is a diagnostic interface
-candidate stage; Q4--Q6 remain explicit not-run stages until later gates
-authorize them.
+candidate stage; Q4/Q5 run the fresh fullspace conditional solve and Q6 writes
+the cross-stage decision record.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import signal
 import time
+from types import SimpleNamespace
 from typing import Any, Mapping
 
 import numpy as np
@@ -62,7 +63,11 @@ _Q1_Q2_RHS = (
 
 
 class V14ResourceStop(RuntimeError):
-    """The worker-side stage inventory gate requested a controlled stop."""
+    """A measured resource or time boundary stopped the current stage."""
+
+    def __init__(self, message: str, *, classification="RESOURCE_CONTROLLED_STOP"):
+        super().__init__(message)
+        self.classification = classification
 
 
 def _sha256_bytes(value: bytes) -> str:
@@ -327,36 +332,21 @@ class _V14Runtime:
         reserved_seconds = attempt.get("reserved_seconds")
         workflow_clock_source = "parent_attempt.workflow_clock_start"
         if not isinstance(workflow_clock_start, Mapping):
-            # Older unit-test fixtures predate the parent clock fields.  Keep
-            # those non-Q3 runtime tests focused on their clock semantics, but
-            # never allow the production Q3 stage to run without the parent
-            # attempt's immutable start sample.
-            if self.stage == "Q3_INTERFACE_CONTROL":
-                raise RuntimeError("V14 parent workflow clock start is missing")
-            from .workflow_timebase import clock_sample
-
-            workflow_clock_start = clock_sample()
-            workflow_clock_source = (
-                "worker_start_fallback_for_non_q3_legacy_fixture"
-            )
+            raise RuntimeError("V14 parent workflow clock start is missing")
         if (
             not isinstance(reserved_seconds, (int, float))
             or not np.isfinite(float(reserved_seconds))
             or float(reserved_seconds) <= 0.0
         ):
-            if self.stage == "Q3_INTERFACE_CONTROL":
-                raise RuntimeError("V14 parent workflow reservation is invalid")
-            reserved_seconds = (
-                contract["resources"].get("stage_budgets", {})
-                .get(self.stage, {})
-                .get("workflow_seconds", self.SHARED_WORKFLOW_SECONDS)
-            )
-            workflow_clock_source = (
-                "worker_start_fallback_for_non_q3_legacy_fixture"
-            )
+            raise RuntimeError("V14 parent workflow reservation is invalid")
         self.workflow_clock_start = dict(workflow_clock_start)
         self.workflow_reserved_seconds = float(reserved_seconds)
         self.workflow_clock_source = workflow_clock_source
+        from .workflow_timebase import ClockBudget, CONSERVATIVE_REALTIME
+
+        self._workflow_clock = ClockBudget(
+            self.workflow_clock_start, policy=CONSERVATIVE_REALTIME
+        )
         self.phase_path.parent.mkdir(parents=True, exist_ok=True)
         self.set_phase(self._phase)
         self._persist_inventory()
@@ -389,13 +379,9 @@ class _V14Runtime:
     def workflow_clock_interval(self) -> dict[str, Any]:
         """Return elapsed time from the parent attempt's immutable clock start."""
 
-        from .workflow_timebase import CONSERVATIVE_REALTIME, checked_interval, clock_sample
+        from .workflow_timebase import clock_sample
 
-        return checked_interval(
-            self.workflow_clock_start,
-            clock_sample(),
-            policy=CONSERVATIVE_REALTIME,
-        )
+        return self._workflow_clock.update(clock_sample())
 
     def _inventory_size(self, components: Mapping[str, int]) -> int:
         values = {str(key): int(value) for key, value in components.items()}
@@ -682,7 +668,10 @@ class _V14Runtime:
         )
         self.marker("v14_whole_pc_returned", facts)
         if completed and facts["hard_limit_exceeded"]:
-            raise V14ResourceStop(f"PC_TIME_CONTROLLED_STOP: {facts}")
+            raise V14ResourceStop(
+                f"PC_TIME_CONTROLLED_STOP: {facts}",
+                classification="PC_TIME_CONTROLLED_STOP",
+            )
         return facts
 
     def marker(self, name: str, facts: Mapping[str, Any] | None = None) -> None:
@@ -911,6 +900,27 @@ def _v14_known_preallocation_gate(
                     "allowance; not a measured sparse payload"
                 ),
                 "gate": "q3_full_and_active_sparse_objects_before_matrix_free_release",
+            },
+        )
+    elif stage in {"Q4_ORIGINAL", "Q5_NOTCH"}:
+        runtime.check_projected(
+            f"{str(stage).lower()}_full_and_active_volume_preallocation",
+            volume_payload * 2 + 128 * 1024**2,
+        )
+        runtime.marker(
+            f"{str(stage).lower()}_volume_preallocation_gate",
+            {
+                "full_storage_payload_upper_bytes": volume_payload,
+                "active_payload_upper_bytes": volume_payload,
+                "temporary_workspace_upper_bytes": 128 * 1024**2,
+                "simultaneous_upper_bytes": volume_payload * 2 + 128 * 1024**2,
+                "estimate_classification": "derived_conservative_estimate",
+                "strict_upper_bound": False,
+                "allowance_basis": (
+                    "implementation-derived active-volume and Schur construction "
+                    "allowance; not a measured sparse payload"
+                ),
+                "gate": "fresh_full_and_active_sparse_objects_before_matrix_free_release",
             },
         )
     elif stage == "Q0_CORE":
@@ -1473,10 +1483,14 @@ def _physical_residual_decomposition(
     applied = solution.duplicate()
     try:
         action.apply(solution, applied)
+        # Keep the exact action output and residual from this one A4 action in
+        # the packet.  Callers must bind the displayed decomposition to these
+        # arrays rather than reapplying A4 while writing evidence.
+        applied_array = np.asarray(applied.array, dtype=np.complex128).copy()
         residual = np.asarray(
-            rhs.array - applied.array,
+            rhs.array - applied_array,
             dtype=np.complex128,
-        )
+        ).copy()
         denominator = max(
             float(np.linalg.norm(rhs.array)),
             np.finfo(float).tiny,
@@ -1496,6 +1510,9 @@ def _physical_residual_decomposition(
         return {
             "total_absolute_norm": total_norm,
             "total_relative": total_norm / denominator,
+            "rhs_norm": float(np.linalg.norm(rhs.array)),
+            "applied_array": applied_array,
+            "residual_array": residual,
             "internal_absolute_norm": internal_norm,
             "internal_relative": internal_norm / denominator,
             "interface_absolute_norm": interface_norm,
@@ -1624,6 +1641,7 @@ def _augmented_residual_arrays(
         "port_relative": port_relative,
         "augmented_total_relative": total_relative,
         "native_A4_norm": float(np.linalg.norm(native_A4_top)),
+        "rhs_norm": float(np.linalg.norm(rhs.array)),
         "native_volume_top_norm": float(np.linalg.norm(native_volume_top)),
         "augmented_top_norm": float(np.linalg.norm(augmented_top)),
         "port_residual_norm": float(np.linalg.norm(port)),
@@ -3423,6 +3441,7 @@ def _q3_delta_from_unweighted_p4_mass(
         "p0_metric_equivalence.json"
     )
     expected_physical = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+    qualified_notch_physical = "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec"
     expected_mode = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
     expected_p0_json_sha = "c05ff1a34a387e9a2a8a14f492349a4874e3ba160ed254ae11b8533243cfa3e9"
     expected_p0_npz_sha = "c0fc7ad54001f11033cea4c0340075da6569df828f2bd94430835580677a1e83"
@@ -3453,8 +3472,12 @@ def _q3_delta_from_unweighted_p4_mass(
         "physical_model_sha256"
     )
     actual_mode = str(common["p4"]["mode_sha256"])
-    if actual_physical != expected_physical or actual_mode != expected_mode:
-        raise ValueError("current Q3 physical or ordered-mode identity differs from V13 p0")
+    qualified_physical = {expected_physical, qualified_notch_physical}
+    if actual_physical not in qualified_physical or actual_mode != expected_mode:
+        raise ValueError(
+            "current physical or ordered-mode identity is not one of the "
+            "qualified V13 unweighted-diagonal reuse identities"
+        )
     current_map = native_map_arrays(
         common["levels"]["spaces"][4], common["levels"]["floquets"][4]
     )
@@ -3504,6 +3527,8 @@ def _q3_delta_from_unweighted_p4_mass(
         "p0_npz_sha256": expected_p0_npz_sha,
         "source_physical_model_sha256": expected_physical,
         "current_physical_model_sha256": actual_physical,
+        "qualified_physical_identities": sorted(qualified_physical),
+        "reuse_basis": "same geometry/map/mode; unweighted material-independent diagonal",
         "source_ordered_mode_sha256": expected_mode,
         "current_ordered_mode_sha256": actual_mode,
         "physical_model_sha256": actual_physical,
@@ -3535,81 +3560,69 @@ def _q3_interface_operation_audit(
     interface_facts: Mapping[str, Any],
     internal_factor_count: int,
 ) -> dict[str, Any]:
-    """Audit one F_int against its explicit finite operation envelope.
+    """Recompute the finite work envelope from the actual phase counters.
 
-    ``factor_solve_delta`` is deliberately a per-block list.  A single F_int
-    performs one reduction, two interface-Schur actions and one recovery, so
-    a complete route has four internal solves per block (168 for the frozen
-    42-block p4 core), not one solve per block.  Keeping the list here also
-    lets the checker distinguish an under-executed route from an over-budget
-    route without trusting a pre-aggregated counter.
+    Four internal solves per block and 84 local backsolves are maxima.
+    A disconnected block may skip a reduction/Schur solve; the complete
+    reduce/J-C-J/recover route must still be present.
     """
 
-    internal_count = int(internal_factor_count)
-    if internal_count < 0:
+    count = int(internal_factor_count)
+    if count < 0:
         raise ValueError("internal_factor_count must be non-negative")
-    raw_delta = interface_facts.get("factor_solve_delta")
-    factor_delta: list[int] = []
-    factor_delta_error = None
-    if isinstance(raw_delta, (list, tuple, np.ndarray)):
-        try:
-            factor_delta = [int(value) for value in raw_delta]
-        except (TypeError, ValueError, OverflowError) as exc:
-            factor_delta_error = f"invalid factor_solve_delta values: {exc}"
-    else:
-        factor_delta_error = "factor_solve_delta is not a per-block list"
+    internal = interface_facts.get("factor_solve_delta", ())
+    local = interface_facts.get("local_patch_solve_delta", ())
+    operations = interface_facts.get("operation_counts") or {}
+    phases = operations.get("factor_solve_delta_by_phase") or {}
 
-    def integer_fact(key: str) -> int:
-        try:
-            return int(interface_facts.get(key, -1))
-        except (TypeError, ValueError, OverflowError):
-            return -1
+    def valid_counts(values, size, limit):
+        return (isinstance(values, (list, tuple, np.ndarray))
+                and len(values) == size
+                and all(isinstance(v, (int, np.integer)) and 0 <= v <= limit
+                        for v in values))
 
-    internal_total = int(sum(factor_delta))
-    internal_max = max(factor_delta, default=0)
-    internal_expected = int(4 * internal_count)
-    local_patch = integer_fact("local_patch_apply_count")
-    local_smoother = integer_fact("local_smoother_apply_count")
-    coarse = integer_fact("coarse_solve_count")
-    complete_route = bool(
-        factor_delta_error is None
-        and len(factor_delta) == internal_count
-        and all(value == 4 for value in factor_delta)
-        and internal_total == internal_expected
-    )
-    within_upper_bounds = bool(
-        factor_delta_error is None
-        and len(factor_delta) == internal_count
-        and all(0 <= value <= 4 for value in factor_delta)
-        and internal_total <= internal_expected
-        and 0 <= local_patch <= 84
-        and 0 <= local_smoother <= 2
-        and 0 <= coarse <= 1
-    )
+    internal_valid = valid_counts(internal, count, 4)
+    local_valid = (isinstance(local, (list, tuple, np.ndarray))
+                   and 0 < len(local) <= 42
+                   and valid_counts(local, len(local), 2))
+    phase_names = ("reduce", "S1", "S2", "recover")
+    phase_valid = all(valid_counts(phases.get(name, ()), count, 1)
+                      for name in phase_names)
+    phase_matches = bool(internal_valid and phase_valid and all(
+        sum(phases[name][i] for name in phase_names) == internal[i]
+        for i in range(count)))
+    route_complete = bool(
+        operations.get("route") == ["reduce", "J1", "S1", "E1", "S2", "J2", "recover"]
+        and operations.get("schur_action_count") == 2
+        and operations.get("local_action_count") == 2
+        and interface_facts.get("local_smoother_apply_count") == 2
+        and interface_facts.get("coarse_solve_count") == 1
+        and phase_valid and all(v == 1 for v in phases["recover"])
+        and interface_facts.get("ksp_created") is False
+        and interface_facts.get("inner_iteration_count") == 0
+        and interface_facts.get("reference_used") is False)
+    within_limits = bool(
+        internal_valid and local_valid
+        and interface_facts.get("local_patch_apply_count") == sum(local))
+    total = int(sum(internal)) if internal_valid else None
     return {
         "schema": "task039extra.v14.interface-operation-audit.v1",
-        "internal_factor_count": internal_count,
-        "factor_solve_delta": factor_delta,
-        "factor_solve_delta_error": factor_delta_error,
-        "internal_factor_solve_total": internal_total,
-        "internal_factor_solve_max_per_block": internal_max,
-        "internal_factor_solve_expected_total": internal_expected,
-        "internal_factor_solve_limit_total": internal_expected,
+        "internal_factor_count": count,
+        "factor_solve_delta": list(internal) if internal_valid else None,
+        "internal_factor_solve_total": total,
+        "internal_factor_solve_max_per_block": int(max(internal, default=0)) if internal_valid else None,
+        "internal_factor_solve_limit_total": 4 * count,
         "internal_factor_solve_limit_per_block": 4,
-        "local_patch_apply_count": local_patch,
+        "local_patch_apply_count": int(sum(local)) if local_valid else None,
         "local_patch_apply_limit": 84,
-        "local_smoother_apply_count": local_smoother,
-        "local_smoother_apply_limit": 2,
-        "coarse_solve_count": coarse,
+        "local_smoother_apply_count": interface_facts.get("local_smoother_apply_count"),
+        "coarse_solve_count": interface_facts.get("coarse_solve_count"),
         "coarse_solve_limit": 1,
-        "within_upper_bounds": within_upper_bounds,
-        "complete_route": complete_route,
-        "passed": bool(
-            complete_route
-            and local_patch == 84
-            and local_smoother == 2
-            and coarse == 1
-        ),
+        "within_upper_bounds": within_limits,
+        "phase_sum_matches_per_block": phase_matches,
+        "route_basis": "actual_adapter_phase_counters",
+        "complete_route": route_complete,
+        "passed": bool(route_complete and phase_matches and within_limits),
     }
 
 
@@ -3623,9 +3636,10 @@ def _q3_local_setup_prediction(
 
     The first two patches are the frozen geometry/graph representatives.  The
     remaining work is estimated from the largest measured seconds-per-
-    ``(rows**2 + rows)`` unit, which covers the dense extraction, LU and SVD
-    work performed for every requested patch.  The result is a derived budget
-    envelope, never a substitute for the later measured build time.
+    ``(rows**2 + rows)`` unit.  This empirical extrapolation includes extraction,
+    LU and SVD in the measured samples, but is not a proven runtime upper bound:
+    conditioning, fill and system load can change their relative costs.  The
+    measured workflow clock remains authoritative.
     """
 
     rows_tuple = tuple(np.asarray(rows, dtype=np.int64).reshape(-1) for rows in patch_rows)
@@ -3673,7 +3687,8 @@ def _q3_local_setup_prediction(
     )
     return {
         "schema": "task039extra.v14.q3-local-setup-prediction.v1",
-        "classification": "derived_upper_envelope_not_measured",
+        "classification": "derived_empirical_estimate_not_measured",
+        "proven_runtime_upper_bound": False,
         "representative_patch_ids": list(representatives),
         "representative_durations_seconds": {
             str(patch_id): durations[patch_id] for patch_id in representatives
@@ -3847,21 +3862,18 @@ def _q3_balanced_p6_audit(runtime, common, fint):
             work = []
             for call in calls:
                 facts = call["interface_facts"]
+                operation_audit = _q3_interface_operation_audit(facts, 42)
                 internal = np.asarray(facts["factor_solve_delta"])
                 local = np.asarray(facts["local_patch_solve_delta"])
                 valid = bool(
                     internal.shape == (42,) and local.shape == (42,)
-                    and np.all((internal >= 0) & (internal <= 4))
-                    and np.all((local >= 0) & (local <= 2))
-                    and int(facts["coarse_solve_count"]) == 1
-                    and int(facts["local_smoother_apply_count"]) == 2
-                    and facts["inner_iteration_count"] == 0
-                    and not facts["ksp_created"]
+                    and operation_audit["passed"]
                 )
                 work.append({
                     "internal_backsolves": int(internal.sum()),
                     "local_backsolves": int(local.sum()),
                     "coarse_solves": int(facts["coarse_solve_count"]),
+                    "operation_audit": operation_audit,
                     "passed": valid,
                 })
             fint_delta = int(fint.apply_count) - fint_before
@@ -3918,57 +3930,101 @@ def _q3_balanced_p6_audit(runtime, common, fint):
         runtime.release_workspace("q3_balanced_inputs")
 
 
-def _q3_interface_control(
+@contextmanager
+def _v14_interface_live_stack(
     runtime: _V14Runtime,
     common: dict[str, Any],
-    rhs_records: list[dict[str, Any]],
     resolved_payload: Mapping[str, Any],
     *,
+    stage: str,
     stage_started_monotonic: float | None = None,
-) -> dict[str, Any]:
-    """Build and exercise the fixed matrix-free Q3 interface candidate."""
+):
+    """Build the shared matrix-free interface stack and own one cleanup path.
+
+    Q3, Q4 and Q5 all use the same p4 elimination, local ``J`` factors, paired
+    ``P/Q`` directions, small ``E`` factor and ``F_int`` adapter.  This context
+    keeps those allocations alive only for the stage that uses them and makes
+    the explicit ``S_V``/active-volume release and generic internal-factor
+    cleanup identical for the diagnostic and fresh p6 paths.
+    """
 
     from src.solvers.physical_interface_schur import (
         InterfaceFintAdapter,
+        build_interface_candidate_directions,
+        build_interface_coarse_pair,
         build_interface_local_smoother,
         build_interface_partition,
-        build_interface_coarse_pair,
         build_physical_interface_schur,
-        build_interface_candidate_directions,
         interface_patch_rows_from_core,
         orthonormalize_paired_directions,
+        _submatrix,
     )
 
+    stage = str(stage)
+    if stage not in {"Q3_INTERFACE_CONTROL", "Q4_ORIGINAL", "Q5_NOTCH"}:
+        raise ValueError(f"unsupported live interface stack stage {stage!r}")
+    prefix = {
+        "Q3_INTERFACE_CONTROL": "q3",
+        "Q4_ORIGINAL": "q4",
+        "Q5_NOTCH": "q5",
+    }[stage]
+    label = lambda suffix: f"{prefix}_{suffix}"
     storage_rows = int(common["p4"]["dtn_action"].carrier.global_rows)
     if storage_rows != 53084:
         raise ValueError(f"V14 p4 carrier storage rows changed: {storage_rows}")
+
     full_volume = active_volume = storage_template = None
     core = smoother = coarse_pair = fint = paired = None
     raw_P = raw_Q = None
     reserved_labels: set[str] = set()
     reserved_workspaces: set[str] = set()
-    q3_stage_start = (
+    stage_start = (
         time.monotonic()
         if stage_started_monotonic is None
         else float(stage_started_monotonic)
     )
+    resources = runtime.contract["resources"]
+    stage_budget = resources.get("stage_budgets", {}).get(stage, {})
+    workflow_limit = float(stage_budget.get("workflow_seconds", 0.0))
+    reserved_workflow = float(getattr(runtime, "workflow_reserved_seconds", 0.0))
+    workflow_limit = min(workflow_limit, reserved_workflow)
+    if workflow_limit <= 0.0:
+        raise ValueError(f"{stage} parent workflow reservation is invalid")
+
+    def workflow_elapsed() -> tuple[float, dict[str, Any]]:
+        interval_method = getattr(runtime, "workflow_clock_interval", None)
+        if not callable(interval_method):
+            raise RuntimeError("V14 live stack requires the parent workflow clock")
+        interval = dict(interval_method())
+        return float(interval["budget_seconds"]), interval
+
+    def performance_stop(message: str) -> None:
+        raise V14ResourceStop(
+            message,
+            classification="PERFORMANCE_CONTROLLED_STOP",
+        )
+
     try:
         carrier = common["p4"]["dtn_action"].carrier
         runtime.set_phase("assembly")
+        full_label = label("full_volume")
+        active_label = label("active_volume")
+        vgg_label = label("V_GG")
+        sv_label = label("S_V")
         full_volume = _assemble_volume(
-            runtime, common, inventory_label="q3_full_volume"
+            runtime, common, inventory_label=full_label
         )
+        reserved_labels.add(full_label)
         partition, port_data = build_interface_partition(
             common["levels"]["spaces"][4],
             common["levels"]["floquets"][4],
             carrier,
             volume=full_volume,
         )
-        runtime.marker("q3_partition_complete", partition.audit())
+        runtime.marker(f"{prefix}_partition_complete", partition.audit())
         full_info = full_volume.getInfo()
         full_rows = int(full_volume.getSize()[0])
         full_payload = _sparse_payload_bytes(full_info, full_rows)
-        active_label = "q3_active_volume"
         runtime.check_projected(active_label, full_payload)
         runtime.reserve_inventory(
             active_label,
@@ -3977,10 +4033,7 @@ def _q3_interface_control(
         )
         reserved_labels.add(active_label)
         storage_template = full_volume.createVecRight()
-        active_volume = __import__(
-            "src.solvers.physical_interface_schur",
-            fromlist=["_submatrix"],
-        )._submatrix(full_volume, partition.active_full_indices)
+        active_volume = _submatrix(full_volume, partition.active_full_indices)
         active_info = active_volume.getInfo()
         active_payload = _sparse_payload_bytes(
             active_info, int(active_volume.getSize()[0])
@@ -3991,50 +4044,54 @@ def _q3_interface_control(
         )
         full_volume.destroy()
         full_volume = None
-        runtime.release_inventory("q3_full_volume")
+        runtime.release_inventory(full_label)
+        reserved_labels.discard(full_label)
 
-        def allocation_gate(label: str, facts: Mapping[str, Any]) -> None:
-            if label == "V_GG":
+        def allocation_gate(allocation_label: str, facts: Mapping[str, Any]) -> None:
+            if allocation_label == "V_GG":
                 allocation = int(facts["matrix_payload_bytes"])
-                runtime.check_projected("q3_V_GG", allocation)
+                runtime.check_projected(vgg_label, allocation)
                 runtime.reserve_inventory(
-                    "q3_V_GG",
+                    vgg_label,
                     {"matrix_payload_upper_bytes": allocation},
                     check_rss=False,
                 )
-                reserved_labels.add("q3_V_GG")
+                reserved_labels.add(vgg_label)
                 return
-            if label.startswith("internal_coupling_"):
+            if allocation_label.startswith("internal_coupling_"):
                 block = int(facts["block_index"])
                 coupling = int(facts["coupling_bytes"])
                 index_bytes = int(facts["index_bytes"])
                 workspace = int(facts["workspace_bytes"])
                 runtime.check_inventory_projected(
-                    f"q3_internal_{block}", coupling + index_bytes + workspace
+                    label(f"internal_{block}"), coupling + index_bytes + workspace
                 )
                 runtime.check_projected(
-                    f"q3_internal_coupling_{block}",
+                    label(f"internal_coupling_{block}"),
                     coupling + index_bytes,
                     workspace_bytes=workspace,
                 )
                 return
-            if label == "S_V":
+            if allocation_label == "S_V":
                 allocation = int(facts["matrix_payload_bytes"])
                 workspace = int(facts.get("workspace_bytes", 0))
                 runtime.check_projected(
-                    "q3_S_V", allocation, workspace_bytes=workspace
+                    sv_label, allocation, workspace_bytes=workspace
                 )
                 runtime.reserve_inventory(
-                    "q3_S_V",
+                    sv_label,
                     {"matrix_payload_upper_bytes": allocation},
                     check_rss=False,
                 )
-                reserved_labels.add("q3_S_V")
+                reserved_labels.add(sv_label)
                 if workspace:
-                    runtime.reserve_workspace("q3_S_V_assembly", workspace)
-                    reserved_workspaces.add("q3_S_V_assembly")
+                    sv_workspace = label("S_V_assembly")
+                    runtime.reserve_workspace(sv_workspace, workspace)
+                    reserved_workspaces.add(sv_workspace)
                 return
-            raise ValueError(f"unexpected Q3 Schur allocation gate: {label}")
+            raise ValueError(
+                f"unexpected {stage} Schur allocation gate: {allocation_label}"
+            )
 
         before, after = _factor_gates(runtime, local_limit=True)
         core = build_physical_interface_schur(
@@ -4042,7 +4099,7 @@ def _q3_interface_control(
             partition,
             carrier,
             port_data=port_data,
-            resource_sample=lambda: runtime.sample("q3_internal_factor"),
+            resource_sample=lambda: runtime.sample(f"{prefix}_internal_factor"),
             marker=runtime.marker,
             pre_numeric_gate=before,
             post_numeric_gate=after,
@@ -4053,9 +4110,9 @@ def _q3_interface_control(
         active_volume = None
         for workspace_label in tuple(reserved_workspaces):
             runtime.release_workspace(workspace_label)
-            reserved_workspaces.remove(workspace_label)
+            reserved_workspaces.discard(workspace_label)
         runtime.replace_inventory(
-            "q3_V_GG",
+            vgg_label,
             {
                 "matrix_payload_bytes": _sparse_payload_bytes(
                     core.V_GG.getInfo(), int(core.V_GG.getSize()[0])
@@ -4063,7 +4120,7 @@ def _q3_interface_control(
             },
         )
         runtime.replace_inventory(
-            "q3_S_V",
+            sv_label,
             {
                 "matrix_payload_bytes": _sparse_payload_bytes(
                     core.S_V.getInfo(), int(core.S_V.getSize()[0])
@@ -4071,7 +4128,7 @@ def _q3_interface_control(
             },
         )
         runtime.marker(
-            "q3_local_core_complete",
+            f"{prefix}_local_core_complete",
             {
                 "partition": partition.audit(),
                 "internal_factor_count": len(core.internal),
@@ -4088,7 +4145,9 @@ def _q3_interface_control(
         largest_patch, dtn_patch, representative_facts = _q3_representative_patches(
             patch_rows, core.port_data
         )
-        runtime.marker("q3_representative_patches_selected", representative_facts)
+        runtime.marker(
+            f"{prefix}_representative_patches_selected", representative_facts
+        )
         delta_gamma, delta_facts = _q3_delta_from_unweighted_p4_mass(
             runtime, common, partition, resolved_payload
         )
@@ -4102,7 +4161,6 @@ def _q3_interface_control(
             if patch_id not in {largest_patch, dtn_patch}
         )
         process_order = (largest_patch, dtn_patch, *remaining_patch_ids)
-        resources = runtime.contract["resources"]
         local_factor_cap = int(
             resources["local_factor_matrix_and_allocated_cap_bytes"]
         )
@@ -4117,53 +4175,6 @@ def _q3_interface_control(
             for rows in patch_rows
         ]
         local_factor_upper = int(sum(local_factor_patch_upper))
-        q3_contract_workflow_seconds = float(
-            resources["stage_budgets"]["Q3_INTERFACE_CONTROL"]["workflow_seconds"]
-        )
-        q3_reserved_workflow_seconds = float(
-            getattr(runtime, "workflow_reserved_seconds", q3_contract_workflow_seconds)
-        )
-        q3_workflow_seconds = min(
-            q3_contract_workflow_seconds, q3_reserved_workflow_seconds
-        )
-        q3_representative_seconds = 900.0
-        if not (
-            q3_workflow_seconds > 0.0
-            and q3_reserved_workflow_seconds > 0.0
-        ):
-            raise ValueError("Q3 parent workflow reservation is invalid")
-        q3_known_future_controls = {
-            "three_fint_admission_seconds_upper": float(15.0 * len(rhs_records)),
-            "balanced_pc_hard_seconds": float(resources["pc_hard_seconds"]),
-            "candidate_S_action_count_upper": 496,
-            "candidate_S_action_seconds": "unknown",
-            "mgs_seconds": "unknown",
-            "packet_save_seconds": "unknown",
-            "classification": "known_limits_plus_unmeasured_components",
-            "seconds_upper_excludes": [
-                "candidate S-action time",
-                "MGS/orthonormalization time",
-                "packet save and hashing time",
-            ],
-        }
-        q3_known_future_seconds = float(
-            q3_known_future_controls["three_fint_admission_seconds_upper"]
-            + q3_known_future_controls["balanced_pc_hard_seconds"]
-        )
-
-        workflow_clock_method = getattr(runtime, "workflow_clock_interval", None)
-
-        def workflow_elapsed() -> tuple[float, dict[str, Any]]:
-            interval_method = workflow_clock_method
-            if callable(interval_method):
-                interval = dict(interval_method())
-                return float(interval["budget_seconds"]), interval
-            elapsed = max(0.0, time.monotonic() - q3_stage_start)
-            return elapsed, {
-                "budget_seconds": elapsed,
-                "source": "worker_start_fallback_for_direct_helper_use",
-            }
-
         local_workspace = max(
             int(
                 3 * rows.size * rows.size * scalar_bytes
@@ -4182,52 +4193,64 @@ def _q3_interface_control(
         local_workspace = max(local_workspace, paired_svd_workspace)
         if max(local_factor_patch_upper) > local_factor_cap:
             raise V14ResourceStop(
-                "Q3 one local factor matrix inventory exceeds 512MiB: "
+                f"{stage} one local factor matrix inventory exceeds 512MiB: "
                 f"{max(local_factor_patch_upper)} > {local_factor_cap}"
             )
-        # The 512 MiB policy is per local patch.  The complete 42-patch
-        # library is a separate live-inventory item and is checked against
-        # Q3's 3 GiB stage cap below; comparing the aggregate to the
-        # per-patch limit would reject a valid complete smoother.
-        runtime.check_inventory_projected("q3_local_smoother", local_factor_upper)
+        runtime.check_inventory_projected(label("local_smoother"), local_factor_upper)
         runtime.check_projected(
-            "q3_local_smoother",
+            label("local_smoother"),
             local_factor_upper,
             workspace_bytes=local_workspace,
         )
-        local_setup_stage_elapsed, local_setup_clock = workflow_elapsed()
-        if local_setup_stage_elapsed + q3_known_future_seconds >= q3_workflow_seconds:
-            raise V14ResourceStop(
-                "Q3 local setup has no remaining workflow time after known controls"
-            )
-        runtime.reserve_workspace("q3_local_smoother_build", local_workspace)
-        reserved_workspaces.add("q3_local_smoother_build")
-        completed_representatives: set[int] = set()
-        representative_started_local: dict[int, float] = {}
-        representative_durations: dict[int, float] = {}
-        representative_ids = (largest_patch, dtn_patch)
+
+        q3_setup = stage == "Q3_INTERFACE_CONTROL"
+        q3_known_future_controls = {
+            "three_fint_admission_seconds_upper": 45.0,
+            "balanced_pc_hard_seconds": float(resources["pc_hard_seconds"]),
+            "candidate_S_action_count_upper": 496,
+            "candidate_S_action_seconds": "unknown",
+            "mgs_seconds": "unknown",
+            "packet_save_seconds": "unknown",
+            "classification": "known_limits_plus_unmeasured_components",
+        }
+        known_future_seconds = (
+            float(q3_known_future_controls["three_fint_admission_seconds_upper"])
+            + float(q3_known_future_controls["balanced_pc_hard_seconds"])
+            if q3_setup
+            else 0.0
+        )
+        if q3_setup:
+            representative_limit = 900.0
+            if workflow_elapsed()[0] + known_future_seconds >= workflow_limit:
+                performance_stop(
+                    "Q3 local setup has no remaining workflow time after known controls"
+                )
+        else:
+            representative_limit = None
         setup_budget_facts: dict[str, Any] = {
-            "schema": "task039extra.v14.q3-local-setup-budget.v1",
-            "workflow_clock_source": (
-                "parent_attempt.workflow_clock_start"
-                if callable(workflow_clock_method)
-                else "worker_start_fallback_for_direct_helper_use"
+            "schema": "task039extra.v14.interface-local-setup-budget.v2",
+            "stage": stage,
+            "workflow_clock_source": getattr(
+                runtime, "workflow_clock_source", "parent_attempt.workflow_clock_start"
             ),
             "workflow_clock_start": dict(
                 getattr(runtime, "workflow_clock_start", {})
             ),
-            "reserved_workflow_seconds": q3_reserved_workflow_seconds,
-            "contract_workflow_seconds": q3_contract_workflow_seconds,
-            "workflow_limit_seconds": q3_workflow_seconds,
-            "representative_limit_seconds": q3_representative_seconds,
-            "known_future_controls": q3_known_future_controls,
-            "known_future_controls_seconds": q3_known_future_seconds,
-            "representative_patch_ids": list(representative_ids),
+            "reserved_workflow_seconds": reserved_workflow,
+            "workflow_limit_seconds": workflow_limit,
+            "known_future_controls": q3_known_future_controls
+            if q3_setup
+            else {"classification": "not_applied_to_fresh_p6_stage"},
+            "known_future_controls_seconds": known_future_seconds,
+            "representative_patch_ids": [largest_patch, dtn_patch],
             "process_order": list(process_order),
-            "elapsed_before_local_setup_seconds": local_setup_stage_elapsed,
-            "clock_at_local_setup_start": local_setup_clock,
+            "elapsed_before_local_setup_seconds": workflow_elapsed()[0],
             "prediction": None,
         }
+        completed_representatives: set[int] = set()
+        representative_started_local: dict[int, float] = {}
+        representative_durations: dict[int, float] = {}
+        representative_ids = (largest_patch, dtn_patch)
 
         def local_progress(progress: Mapping[str, Any]) -> None:
             event = str(progress["event"])
@@ -4237,71 +4260,73 @@ def _q3_interface_control(
             setup_budget_facts["last_stage_elapsed_seconds"] = stage_elapsed
             setup_budget_facts["last_workflow_clock_interval"] = stage_clock
             setup_budget_facts["last_local_builder_elapsed_seconds"] = local_elapsed
-            runtime.sample(f"q3_local_patch_{patch_id}_{event}")
-            if stage_elapsed >= q3_workflow_seconds:
-                raise V14ResourceStop(
-                    "Q3 workflow reached its 3600-second budget before local setup completed"
+            runtime.sample(f"{prefix}_local_patch_{patch_id}_{event}")
+            if stage_elapsed >= workflow_limit:
+                performance_stop(
+                    f"{stage} workflow reached its configured budget during local setup"
                 )
-            if stage_elapsed + q3_known_future_seconds >= q3_workflow_seconds:
-                raise V14ResourceStop(
-                    "Q3 local setup exhausted the known future-control budget"
-                )
-            if patch_id not in representative_ids:
-                return
-            if event == "patch_started":
-                representative_started_local[patch_id] = local_elapsed
-            elif event == "patch_completed":
-                started_local = representative_started_local.get(patch_id)
-                if started_local is None:
-                    raise RuntimeError(
-                        f"Q3 representative patch {patch_id} completed before it started"
+            if q3_setup:
+                if stage_elapsed + known_future_seconds >= workflow_limit:
+                    performance_stop(
+                        "Q3 local setup exhausted the known future-control budget"
                     )
-                representative_durations[patch_id] = max(
-                    0.0, local_elapsed - started_local
-                )
-                completed_representatives.add(patch_id)
-                representative_elapsed = float(sum(representative_durations.values()))
-                if representative_elapsed >= q3_representative_seconds:
-                    raise V14ResourceStop(
-                        "Q3 representative local setup reached its 900-second budget"
-                    )
-                if len(completed_representatives) == len(representative_ids):
-                    prediction = _q3_local_setup_prediction(
-                        patch_rows,
-                        process_order,
-                        representative_ids,
-                        representative_durations,
-                    )
-                    prediction.update(
-                        {
-                            "stage_elapsed_at_representatives_seconds": stage_elapsed,
-                            "elapsed_before_local_setup_seconds": max(
-                                0.0, stage_elapsed - local_elapsed
-                            ),
-                            "known_future_controls_seconds": q3_known_future_seconds,
-                            "predicted_workflow_total_seconds": (
-                                max(0.0, stage_elapsed - local_elapsed)
-                                + prediction["predicted_local_setup_seconds"]
-                                + q3_known_future_seconds
-                            ),
-                        }
-                    )
-                    prediction[
-                        "remaining_workflow_after_predicted_setup_and_known_controls_seconds"
-                    ] = (
-                        q3_workflow_seconds
-                        - prediction["predicted_workflow_total_seconds"]
-                    )
-                    setup_budget_facts["prediction"] = prediction
-                    runtime.marker("q3_local_setup_prediction", prediction)
-                    if prediction[
-                        "remaining_workflow_after_predicted_setup_and_known_controls_seconds"
-                    ] <= 0.0:
-                        raise V14ResourceStop(
-                            "Q3 predicted complete local setup leaves no time for "
-                            "the known future controls"
+                if patch_id not in representative_ids:
+                    return
+                if event == "patch_started":
+                    representative_started_local[patch_id] = local_elapsed
+                elif event == "patch_completed":
+                    started_local = representative_started_local.get(patch_id)
+                    if started_local is None:
+                        raise RuntimeError(
+                            f"Q3 representative patch {patch_id} completed before it started"
                         )
+                    representative_durations[patch_id] = max(
+                        0.0, local_elapsed - started_local
+                    )
+                    completed_representatives.add(patch_id)
+                    representative_elapsed = float(
+                        sum(representative_durations.values())
+                    )
+                    if representative_elapsed >= float(representative_limit):
+                        performance_stop(
+                            "Q3 representative local setup reached its 900-second budget"
+                        )
+                    if len(completed_representatives) == len(representative_ids):
+                        prediction = _q3_local_setup_prediction(
+                            patch_rows,
+                            process_order,
+                            representative_ids,
+                            representative_durations,
+                        )
+                        prediction.update(
+                            {
+                                "stage_elapsed_at_representatives_seconds": stage_elapsed,
+                                "elapsed_before_local_setup_seconds": max(
+                                    0.0, stage_elapsed - local_elapsed
+                                ),
+                                "known_future_controls_seconds": known_future_seconds,
+                                "predicted_workflow_total_seconds": (
+                                    max(0.0, stage_elapsed - local_elapsed)
+                                    + prediction["predicted_local_setup_seconds"]
+                                    + known_future_seconds
+                                ),
+                            }
+                        )
+                        prediction[
+                            "remaining_workflow_after_predicted_setup_and_known_controls_seconds"
+                        ] = workflow_limit - prediction["predicted_workflow_total_seconds"]
+                        setup_budget_facts["prediction"] = prediction
+                        runtime.marker(f"{prefix}_local_setup_prediction", prediction)
+                        if prediction[
+                            "remaining_workflow_after_predicted_setup_and_known_controls_seconds"
+                        ] <= 0.0:
+                            performance_stop(
+                                "Q3 predicted complete local setup leaves no time for known controls"
+                            )
 
+        local_workspace_label = label("local_smoother_build")
+        runtime.reserve_workspace(local_workspace_label, local_workspace)
+        reserved_workspaces.add(local_workspace_label)
         smoother = build_interface_local_smoother(
             core.S_V,
             patch_rows,
@@ -4315,8 +4340,8 @@ def _q3_interface_control(
             process_order=process_order,
             progress_callback=local_progress,
         )
-        runtime.release_workspace("q3_local_smoother_build")
-        reserved_workspaces.remove("q3_local_smoother_build")
+        runtime.release_workspace(local_workspace_label)
+        reserved_workspaces.discard(local_workspace_label)
         local_audit = smoother.audit()
         setup_budget_facts.update(
             {
@@ -4324,32 +4349,29 @@ def _q3_interface_control(
                 "measured_local_builder_seconds": float(
                     local_audit["build_elapsed_seconds"]
                 ),
-                "stage_elapsed_after_local_setup_seconds": (
-                    workflow_elapsed()[0]
-                ),
+                "stage_elapsed_after_local_setup_seconds": workflow_elapsed()[0],
             }
         )
-        setup_budget_facts[
-            "workflow_remaining_after_local_setup_seconds"
-        ] = q3_workflow_seconds - setup_budget_facts[
-            "stage_elapsed_after_local_setup_seconds"
-        ]
-        runtime.marker("q3_local_setup_budget_complete", setup_budget_facts)
-        if (
+        setup_budget_facts["workflow_remaining_after_local_setup_seconds"] = (
+            workflow_limit - setup_budget_facts["stage_elapsed_after_local_setup_seconds"]
+        )
+        runtime.marker(f"{prefix}_local_setup_budget_complete", setup_budget_facts)
+        if q3_setup and (
             setup_budget_facts["stage_elapsed_after_local_setup_seconds"]
-            + q3_known_future_seconds
-            >= q3_workflow_seconds
+            + known_future_seconds
+            >= workflow_limit
         ):
-            raise V14ResourceStop(
+            performance_stop(
                 "Q3 completed local setup without enough time for known controls"
             )
         local_resident_bytes = int(
             local_audit["retained_factor_bytes"]
             + local_audit["retained_paired_basis_bytes"]
         )
-        runtime.check_inventory_projected("q3_local_smoother", local_resident_bytes)
+        local_label = label("local_smoother")
+        runtime.check_inventory_projected(local_label, local_resident_bytes)
         runtime.reserve_inventory(
-            "q3_local_smoother",
+            local_label,
             {
                 "retained_factor_bytes": int(local_audit["retained_factor_bytes"]),
                 "retained_paired_basis_bytes": int(
@@ -4358,12 +4380,13 @@ def _q3_interface_control(
             },
             check_rss=False,
         )
-        reserved_labels.add("q3_local_smoother")
+        reserved_labels.add(local_label)
         if sorted(smoother.paired_bases) != list(range(len(patch_rows))):
-            raise RuntimeError("Q3 local builder did not produce all 42 local SVD bases")
-        local_audit["setup_budget"] = setup_budget_facts
+            raise RuntimeError(
+                f"{stage} local builder did not produce all local SVD bases"
+            )
         runtime.marker(
-            "q3_local_smoother_complete",
+            f"{prefix}_local_smoother_complete",
             {
                 "patch_rows": [int(rows.size) for rows in patch_rows],
                 "representatives": representative_facts,
@@ -4379,21 +4402,24 @@ def _q3_interface_control(
                 "audit": local_audit,
             },
         )
+
         action_checks = _q3_action_checks(runtime, core, common, storage_template)
         if not action_checks["passed"]:
-            raise RuntimeError(f"Q3 explicit/matrix-free action gate failed: {action_checks}")
+            raise RuntimeError(
+                f"{stage} explicit/matrix-free action gate failed: {action_checks}"
+            )
 
-        candidate_workspace_label = "q3_candidate_mgs_coarse"
+        candidate_workspace_label = label("candidate_mgs_coarse")
 
         def candidate_preallocation(facts: Mapping[str, Any]) -> None:
             workspace = int(facts["workspace_upper_bytes"])
             if workspace > shared_temp_cap:
                 raise V14ResourceStop(
-                    "Q3 candidate/MGS/coarse temporary workspace exceeds 1GiB: "
+                    f"{stage} candidate/MGS/coarse temporary workspace exceeds 1GiB: "
                     f"{workspace} > {shared_temp_cap}"
                 )
             runtime.check_workspace_projected(candidate_workspace_label, workspace)
-            runtime.marker("q3_candidate_preallocation_gate", dict(facts))
+            runtime.marker(f"{prefix}_candidate_preallocation_gate", dict(facts))
             runtime.reserve_workspace(candidate_workspace_label, workspace)
             reserved_workspaces.add(candidate_workspace_label)
 
@@ -4409,7 +4435,9 @@ def _q3_interface_control(
             )
         )
         if not candidate_facts["all_42_local_bases"]:
-            raise RuntimeError("Q3 candidate construction did not receive all 42 local bases")
+            raise RuntimeError(
+                f"{stage} candidate construction did not receive all local bases"
+            )
         paired = orthonormalize_paired_directions(
             raw_P,
             raw_Q,
@@ -4419,23 +4447,22 @@ def _q3_interface_control(
         paired_facts = paired.audit()
         del raw_P, raw_Q
         raw_P = raw_Q = None
-        paired_capacity = int(
-            paired_facts["checks"]["output_basis_capacity_bytes"]
-        )
+        paired_capacity = int(paired_facts["checks"]["output_basis_capacity_bytes"])
         if paired_capacity % 2:
-            raise RuntimeError("Q3 paired P/Q capacity is not evenly split")
-        runtime.check_inventory_projected("q3_paired_basis", paired_capacity)
+            raise RuntimeError(f"{stage} paired P/Q capacity is not evenly split")
+        paired_label = label("paired_basis")
+        runtime.check_inventory_projected(paired_label, paired_capacity)
         runtime.reserve_inventory(
-            "q3_paired_basis",
+            paired_label,
             {
                 "P_capacity_bytes": paired_capacity // 2,
                 "Q_capacity_bytes": paired_capacity // 2,
             },
             check_rss=False,
         )
-        reserved_labels.add("q3_paired_basis")
+        reserved_labels.add(paired_label)
         runtime.marker(
-            "q3_paired_candidates_complete",
+            f"{prefix}_paired_candidates_complete",
             {
                 "candidate": candidate_facts,
                 "paired": paired_facts,
@@ -4443,45 +4470,47 @@ def _q3_interface_control(
             },
         )
         if paired.rank == 0:
-            raise np.linalg.LinAlgError("COARSE_PAIR_UNSTABLE: paired candidate rank is zero")
+            raise np.linalg.LinAlgError(
+                "COARSE_PAIR_UNSTABLE: paired candidate rank is zero"
+            )
         coarse_bound = int(
             3 * paired.rank * paired.rank * np.dtype(np.complex128).itemsize
             + 3 * paired.rank * np.dtype(np.complex128).itemsize
             + paired.rank * np.dtype(np.int64).itemsize
         )
-        runtime.check_inventory_projected("q3_coarse_pair", coarse_bound)
-        runtime.check_projected("q3_coarse_pair_factor", coarse_bound)
+        coarse_label = label("coarse_pair")
+        runtime.check_inventory_projected(coarse_label, coarse_bound)
+        runtime.check_projected(coarse_label, coarse_bound)
 
-        # Release the construction-only global sparse Schur before forming E;
-        # the retained V_GG/internal factors and carrier now define S_gamma.
+        # Keep only V_GG, couplings, local factors and the carrier for the
+        # matrix-free route.  S_V and the active sparse volume are construction
+        # objects and must be gone before the coarse action is formed.
         core.release_explicit_schur()
-        runtime.release_inventory("q3_S_V")
-        reserved_labels.discard("q3_S_V")
-        runtime.release_inventory("q3_active_volume")
-        reserved_labels.discard("q3_active_volume")
+        runtime.release_inventory(sv_label)
+        reserved_labels.discard(sv_label)
+        runtime.release_inventory(active_label)
+        reserved_labels.discard(active_label)
         coarse_pair = build_interface_coarse_pair(
             core.apply_physical_schur_block,
             paired.P,
             paired.Q,
             max_rows=512,
-            max_workspace_bytes=int(
-                runtime.contract["resources"]["interface_workspace_cap_bytes"]
-            ),
+            max_workspace_bytes=int(resources["interface_workspace_cap_bytes"]),
             max_temp_workspace_bytes=shared_temp_cap,
             rcond_rtol=1.0e-12,
             solve_rtol=1.0e-10,
         )
-        runtime.release_workspace(candidate_workspace_label)
-        reserved_workspaces.remove(candidate_workspace_label)
-        coarse_audit = coarse_pair.audit()
+        if candidate_workspace_label in reserved_workspaces:
+            runtime.release_workspace(candidate_workspace_label)
+            reserved_workspaces.discard(candidate_workspace_label)
         coarse_resident_bytes = int(
             coarse_pair.E.nbytes
             + coarse_pair.lu.nbytes
             + coarse_pair.pivots.nbytes
         )
-        runtime.check_inventory_projected("q3_coarse_pair", coarse_resident_bytes)
+        runtime.check_inventory_projected(coarse_label, coarse_resident_bytes)
         runtime.reserve_inventory(
-            "q3_coarse_pair",
+            coarse_label,
             {
                 "E_bytes": int(coarse_pair.E.nbytes),
                 "LU_bytes": int(coarse_pair.lu.nbytes),
@@ -4489,8 +4518,113 @@ def _q3_interface_control(
             },
             check_rss=False,
         )
-        reserved_labels.add("q3_coarse_pair")
+        reserved_labels.add(coarse_label)
         fint = InterfaceFintAdapter(core, smoother, coarse_pair)
+        stack = {
+            "schema": "task039extra.v14.live-interface-stack.v1",
+            "stage": stage,
+            "prefix": prefix,
+            "partition": partition,
+            "port_data": port_data,
+            "storage_template": storage_template,
+            "core": core,
+            "local_smoother": smoother,
+            "coarse_pair": coarse_pair,
+            "fint": fint,
+            "patch_rows": patch_rows,
+            "delta_gamma": delta_gamma,
+            "delta_facts": delta_facts,
+            "representative_facts": representative_facts,
+            "local_audit": local_audit,
+            "setup_budget": setup_budget_facts,
+            "action_checks": action_checks,
+            "candidate_mapping": candidate_mapping,
+            "candidate_facts": candidate_facts,
+            "paired_facts": paired_facts,
+            "local_factor_patch_upper_bytes": local_factor_patch_upper,
+            "local_factor_upper_bytes": local_factor_upper,
+            "local_workspace_upper_bytes": local_workspace,
+            "coarse_bound_bytes": coarse_bound,
+            "q3_stage_start_monotonic": stage_start,
+        }
+        runtime.marker(
+            f"{prefix}_live_interface_stack_ready",
+            {
+                "schema": stack["schema"],
+                "stage": stage,
+                "internal_factor_count": len(core.internal),
+                "gamma_rows": int(partition.gamma_rows),
+                "paired_rank": int(paired.rank),
+                "global_interface_matrix_built": False,
+                "global_dense_schur_constructed": False,
+            },
+        )
+        yield stack
+    finally:
+        for workspace_label in tuple(reserved_workspaces):
+            runtime.release_workspace(workspace_label)
+        if raw_P is not None:
+            del raw_P
+        if raw_Q is not None:
+            del raw_Q
+        if fint is not None:
+            fint.destroy()
+        if coarse_pair is not None:
+            coarse_pair.destroy()
+        paired = None
+        if smoother is not None:
+            smoother.destroy()
+        if core is not None:
+            core.destroy()
+        elif active_volume is not None:
+            active_volume.destroy()
+        if full_volume is not None:
+            full_volume.destroy()
+        if storage_template is not None:
+            storage_template.destroy()
+        for label_name in tuple(reserved_labels):
+            runtime.release_inventory(label_name)
+        for label_name in (
+            label("coarse_pair"),
+            label("paired_basis"),
+            label("local_smoother"),
+            label("S_V"),
+            label("V_GG"),
+            label("active_volume"),
+            label("full_volume"),
+        ):
+            runtime.release_inventory(label_name)
+        # _factor_gates registers internal factors under their solver labels;
+        # release every such label even if construction stopped halfway through
+        # the 42-block sequence.
+        for label_name in tuple(runtime.inventory_entries):
+            if str(label_name).startswith("internal_"):
+                runtime.release_inventory(label_name)
+
+
+def _q3_interface_control(
+    runtime: _V14Runtime,
+    common: dict[str, Any],
+    rhs_records: list[dict[str, Any]],
+    resolved_payload: Mapping[str, Any],
+    *,
+    stage_started_monotonic: float | None = None,
+) -> dict[str, Any]:
+    """Exercise the shared live stack against the three reviewed p4 RHSs."""
+
+    with _v14_interface_live_stack(
+        runtime,
+        common,
+        resolved_payload,
+        stage="Q3_INTERFACE_CONTROL",
+        stage_started_monotonic=stage_started_monotonic,
+    ) as stack:
+        core = stack["core"]
+        smoother = stack["local_smoother"]
+        coarse_pair = stack["coarse_pair"]
+        fint = stack["fint"]
+        partition = stack["partition"]
+        storage_template = stack["storage_template"]
         solution_arrays: list[np.ndarray] = []
         solve_records: list[dict[str, Any]] = []
         three_rhs_fint_apply_deltas: list[int] = []
@@ -4511,6 +4645,8 @@ def _q3_interface_control(
                     solution,
                     partition,
                 )
+                applied_array = residual_decomposition.pop("applied_array")
+                residual_array = residual_decomposition.pop("residual_array")
                 solution_array = np.asarray(solution.array).copy()
                 solution_arrays.append(solution_array)
                 interface_facts = {
@@ -4539,7 +4675,7 @@ def _q3_interface_control(
                     runtime.directory / "q3_rhs_packets",
                     reviewed["stem"],
                     {
-                        "schema": "task039extra.v14.q3-rhs-packet.v1",
+                        "schema": "task039extra.v14.q3-rhs-packet.v2",
                         "identity": {
                             key: value
                             for key, value in reviewed.items()
@@ -4553,6 +4689,8 @@ def _q3_interface_control(
                         },
                         "solve": solve_record,
                         "x_storage": solution_array,
+                        "A4x_storage": applied_array,
+                        "residual_storage": residual_array,
                     },
                     runtime=runtime,
                 )
@@ -4587,9 +4725,8 @@ def _q3_interface_control(
                 "eta_curl": item["field_metrics"]["scaled_curl_relative"],
                 "elapsed_seconds": item["elapsed_seconds"],
                 "passed": (
-                    item["native_A4_relative_residual"] <= (
-                        0.2 if item["stem"].endswith("_02") else 0.5
-                    )
+                    item["native_A4_relative_residual"]
+                    <= (0.2 if item["stem"].endswith("_02") else 0.5)
                     and item["field_metrics"]["field_l2_relative"]
                     <= (0.9 if item["stem"].endswith("_02") else 0.5)
                     and item["field_metrics"]["scaled_curl_relative"]
@@ -4606,6 +4743,25 @@ def _q3_interface_control(
             len(three_rhs_fint_apply_deltas) == len(rhs_records)
             and all(delta == 1 for delta in three_rhs_fint_apply_deltas)
         )
+        pre_balanced_packet = _save_packet(
+            runtime.directory / "q3_rhs_packets",
+            "three_rhs_complete_before_balanced_audit",
+            {
+                "schema": "task039extra.v14.q3-three-rhs-complete.v1",
+                "solve_records": solve_records,
+                "admission": admission_by_stem,
+                "three_rhs_fint_apply_deltas": three_rhs_fint_apply_deltas,
+                "three_rhs_fint_apply_count": three_rhs_fint_count,
+                "three_rhs_fint_apply_count_passed": three_rhs_fint_count_passed,
+                "max_native_A4_relative_residual": max_rho,
+                "max_field_l2_or_scaled_curl": max_field,
+            },
+            runtime=runtime,
+        )
+        runtime.marker(
+            "q3_three_rhs_complete_before_balanced_audit",
+            {"packet": pre_balanced_packet},
+        )
         balanced_audit = _q3_balanced_p6_audit(runtime, common, fint)
         stage_pass = bool(
             admission_pass
@@ -4613,8 +4769,10 @@ def _q3_interface_control(
             and balanced_audit["passed"]
         )
         record = {
-            "schema": "task039extra.v14.q3-interface-control.v1",
-            "status": "Q3_INTERFACE_CONTROL_PASS" if stage_pass else "INTERFACE_CONTROL_UNQUALIFIED",
+            "schema": "task039extra.v14.q3-interface-control.v2",
+            "status": "Q3_INTERFACE_CONTROL_PASS"
+            if stage_pass
+            else "INTERFACE_CONTROL_UNQUALIFIED",
             "stage_pass": stage_pass,
             "admission_pass": admission_pass,
             "official_result": False,
@@ -4625,16 +4783,17 @@ def _q3_interface_control(
             ),
             "partition": partition.audit(),
             "core": core.factor_facts,
-            "representative_patches": representative_facts,
-            "delta": delta_facts,
-            "local_smoother": local_audit,
-            "action_checks": action_checks,
-            "candidate": candidate_facts,
-            "paired_basis": paired_facts,
-            "coarse_pair": coarse_audit,
+            "representative_patches": stack["representative_facts"],
+            "delta": stack["delta_facts"],
+            "local_smoother": stack["local_audit"],
+            "action_checks": stack["action_checks"],
+            "candidate": stack["candidate_facts"],
+            "paired_basis": stack["paired_facts"],
+            "coarse_pair": coarse_pair.audit(),
             "solve_records": solve_records,
             "admission": admission_by_stem,
             "balanced_p6_audit": balanced_audit,
+            "three_rhs_complete_packet": pre_balanced_packet,
             "gates": {
                 "candidate_input_upper_bound": 496,
                 "coarse_rows": 512,
@@ -4664,9 +4823,7 @@ def _q3_interface_control(
                 "three_rhs_fint_apply_deltas": three_rhs_fint_apply_deltas,
                 "three_rhs_fint_apply_count": three_rhs_fint_count,
                 "three_rhs_fint_apply_count_expected": len(rhs_records),
-                "fint_apply_count_expected_after_balanced_audit": (
-                    len(rhs_records) + 2
-                ),
+                "fint_apply_count_expected_after_balanced_audit": len(rhs_records) + 2,
                 "local_smoother": smoother.audit(),
                 "coarse_pair": coarse_pair.audit(),
                 "inventory_peak_bytes": runtime.inventory_peak_bytes,
@@ -4675,40 +4832,1493 @@ def _q3_interface_control(
         }
         runtime.marker("q3_interface_control_complete", record)
         return record
-    finally:
-        for workspace_label in tuple(reserved_workspaces):
+
+
+def _v14_physical_checks(solver, field, comparison) -> dict[str, bool]:
+    """Apply the unchanged physical gates to recorded numerical quantities."""
+
+    from src.runners.physical_macro_v12 import (
+        _SELECTED_FIELD_COORDINATE_KEYS, _SELECTED_FIELD_VALUE_KEYS,
+    )
+
+    def bounded(value, limit):
+        return bool(np.isfinite(value) and 0 <= value <= limit)
+
+    current, reference = comparison["current"], comparison["reference"]
+    modal, selected = comparison["modal"], comparison["selected_field"]
+    checks = {
+        "A6": bounded(solver["final_true_residual"], 1e-6),
+        "single_zero_start_FGMRES32": (
+            solver["ksp_create_count"] == solver["ksp_solve_count"] == 1
+            and solver["restart"] == 32 and solver["max_it"] == 2048
+            and solver["zero_start"] is True),
+        "solve_time": bounded(solver["elapsed_seconds"], 10800.),
+        "mode_count": modal["mode_count"] == 80,
+        "mode_amplitudes": bounded(modal["amplitude_relative_difference"], 1e-4),
+        "mode_powers": bounded(modal["power_max_absolute_difference"], 1e-6),
+        "no_phase_fit": modal["phase_fitting"] is False,
+        "coordinates": all(selected["coordinates"][key]["exact"] is True
+                           for key in _SELECTED_FIELD_COORDINATE_KEYS),
+    }
+    for name in ("L2", "scaled_curl"):
+        value = field[name]
+        ratio = value["absolute_error_norm"] / max(value["reference_norm"], np.finfo(float).tiny)
+        checks[name] = bounded(ratio, 1e-4)
+    for name in ("R", "T", "A", "A_volume"):
+        checks[name] = bounded(abs(current[name] - reference[name]), 1e-5)
+    checks["energy_conservation"] = bounded(abs(current["R"] + current["T"] + current["A_volume"] - 1.), 1e-5)
+    checks["absorption_consistency"] = bounded(abs(current["A"] - current["A_volume"]), 1e-5)
+    for name in _SELECTED_FIELD_VALUE_KEYS:
+        value = selected["differences"][name]
+        checks[name] = bool(bounded(value["relative"], 1e-4) or (
+            bounded(value["reference_norm"], 1e-12) and bounded(value["max_absolute"], 1e-10)))
+    for name in ("electric_finite", "magnetic_finite", "auxiliary_finite", "curl_postprocess_success"):
+        checks[name] = comparison["finite"][name] is True
+    return checks
+
+
+def _v14_settled_stage_gate(runtime: _V14Runtime, required: str) -> dict[str, Any]:
+    """Use the same settled evidence checks for admission and Q6 reporting."""
+
+    if required not in {"Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT", "Q3_INTERFACE_CONTROL", "Q4_ORIGINAL", "Q5_NOTCH"}:
+        raise ValueError(f"unsupported settled V14 stage {required}")
+    original = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+    notch = "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec"
+    mode = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+    facts = {"required_stage": required, "qualified": False, "bindings": {}, "checks": {}}
+
+    def load(path):
+        data = Path(path).read_bytes()
+        facts["bindings"][str(path)] = _sha256_bytes(data)
+        return json.loads(data)
+
+    def bounded(value, limit):
+        return bool(np.isfinite(value) and 0 <= value <= limit)
+
+    try:
+        ledger = load(runtime._ledger_path)
+        record = ledger["stages"][required]
+        attempt = record["attempts"][-1]
+        directory = Path(attempt["run_directory"])
+        worker = load(directory / "physical_p4_schur_v14_summary.json")
+        manifest = load(directory / "run_manifest.json")
+        parent = load(directory / "run_summary.json")
+        watchdog = load(directory / "watchdog/summary.json")
+        resolved_path = directory / "resolved_config.json"
+        resolved = load(resolved_path)
+        source = attempt["source_sha"]
+        exact = required in {"Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT"}
+        expected_physical = notch if required == "Q5_NOTCH" else original
+        if exact:
+            rhs_identity = load(directory / "reviewed_rhs_identity.json")
+            worker_modes = [item["fresh_mode_sha256"] for item in rhs_identity["records"]]
+        else:
+            worker_modes = [worker["delta"]["current_ordered_mode_sha256"] if required == "Q3_INTERFACE_CONTROL"
+                            else worker["operator_identity"]["ordered_mode_sha256"]]
+        checks = facts["checks"]
+        checks.update({
+            "batch": ledger["batch_identity"] == "review_v14",
+            "settled": record["active_attempt"] is None and bounded(attempt["settled_seconds"], attempt["reserved_seconds"]),
+            "source": (len(source) == 40 and worker["source_sha"] == manifest["source_sha"] == source
+                       == watchdog["source_state"]["source_sha"]),
+            "source_clean_before_after": (
+                watchdog["source_state"]["tracked_and_nonignored_untracked_clean"] is True
+                and manifest["source_after"]["tracked_and_nonignored_untracked_clean"] is True
+                and manifest["source_after"]["source_sha"] == source),
+            "stage_profile": (worker["stage"] == manifest["solver"]["stage"] == resolved["solver"]["stage"] == required
+                              and resolved["solver"]["preconditioner"] == SCHUR_PROFILE),
+            "resolved_hash": facts["bindings"][str(resolved_path)] == manifest["resolved_config_sha256"],
+            "input_hash": resolved["provenance"]["input_sha256"] == manifest["input_sha256"],
+            "physical_mode": (manifest["physical_model_sha256"] == resolved["provenance"]["physical_model_sha256"] == expected_physical
+                              and bool(worker_modes) and all(value == mode for value in worker_modes)),
+            "parent_exit": (manifest["status"] == parent["status"] == "finished"
+                            and parent["exit_status"] == watchdog["leader_exit_code"] == 0
+                            and parent["result_classification"] == "worker_exit0"
+                            and watchdog["classification"] == "COMPLETED"),
+            "cleanup": watchdog["descendants_cleared"] is True and watchdog["remaining_child_pids"] == [],
+            "zero_swap": (watchdog["sampled_process_tree_swap_peak_bytes"] == 0
+                          and parent["job_swap_qualification"] == "qualified_zero"
+                          and set(watchdog["global_swap_activity"]["delta"]) == {"pswpin_pages", "pswpout_pages"}
+                          and all(value == 0 for value in watchdog["global_swap_activity"]["delta"].values())),
+            "workflow_time": bounded(parent["workflow_clock_interval"]["budget_seconds"], attempt["reserved_seconds"]),
+        })
+        samples = 0
+        trace_pass = True
+        peak_rss = 0
+        trace_path = directory / "watchdog/resources.jsonl"
+        with trace_path.open(encoding="utf-8") as stream:
+            for line in stream:
+                row = json.loads(line)
+                samples += 1
+                envelope = row["memory_envelope"]
+                peak_rss = max(peak_rss, row["rss_bytes"])
+                trace_pass &= bool(
+                    row["all_status_readable"] is True and row["swap_bytes"] == 0
+                    and 0 <= row["rss_bytes"] < min(row["launch_cap_bytes"], 8 << 30)
+                    and envelope["effective_available_bytes"] >= envelope["reserve_bytes"]
+                    and row["global_swap_pages"] == watchdog["global_swap_activity"]["baseline"])
+        facts["bindings"][str(trace_path)] = _sha256_file(trace_path)
+        checks["full_parent_samples"] = bool(samples and trace_pass
+            and peak_rss == watchdog["sampled_process_tree_rss_peak_bytes"])
+        worker_resources = _v14_resource_facts(SimpleNamespace(
+            resources_path=directory / "v14_worker_resources.jsonl", workspace_cap=1 << 30,
+            inventory_cap=(6 if exact else 3) << 30))
+        facts["worker_resource_samples"] = worker_resources
+        checks["inventory_workspace_samples"] = worker_resources["gate"]
+        if not all(checks.values()):
+            facts["reason"] = "predecessor_identity_or_parent_resource_failed"
+            return facts
+
+        if exact:
+            rows = worker["solve_records"]
+            stems = [row["stem"] for row in _Q1_Q2_RHS]
+            checks["three_frozen_RHS_order"] = [row["stem"] for row in rows] == stems
+            checks["RHS_identity"] = bool(
+                rhs_identity["source_sha"] == source and rhs_identity["ordered_stems"] == stems
+                and len(rhs_identity["records"]) == 3
+                and all(item["fresh_physical_model_sha256"] == original
+                        and bounded(item["fresh_A4y_relative_to_saved"], 1e-10)
+                        for item in rhs_identity["records"]))
+            for row in rows:
+                native = row["augmented_residual"]
+                rho = native["native_A4_norm"] / max(native["rhs_norm"], np.finfo(float).tiny)
+                fields = row["field_metrics"]["fields"]
+                checks[row["stem"]] = bool(bounded(rho, 1e-10)
+                    and len(row["refinements"]) <= 2
+                    and all(bounded(fields[name]["absolute_error_norm"] / max(fields[name]["reference_norm"], np.finfo(float).tiny), 1e-8)
+                            for name in ("L2", "scaled_curl")))
+            if required == "Q2_SCHUR_DIRECT":
+                checks["post_release_recovery"] = bounded(worker["gates"]["post_release_recovery_relative"], 1e-10)
+                checks["internal_factor_count"] = worker["lifecycle"]["internal_factor_count"] == 42
+                checks["common_actions"] = all(bounded(worker["action_checks"][name], 1e-10) for name in (
+                    "volume_explicit_vs_matrix_free", "volume_adjoint_explicit_vs_matrix_free",
+                    "interface_explicit_vs_matrix_free", "physical_schur_vs_native_carrier",
+                    "physical_schur_adjoint_formula", "local_backsolve_original_matrix_max_relative",
+                    "g_minus_A4F_gamma_relative", "physical_schur_complex_inner_product_relative"))
+        elif required == "Q3_INTERFACE_CONTROL":
+            rows = worker["solve_records"]
+            checks["three_frozen_RHS_order"] = [row["stem"] for row in rows] == [row["stem"] for row in _Q1_Q2_RHS]
+            checks["internal_factor_count"] = worker["lifecycle"]["internal_factor_count"] == 42
+            for row in rows:
+                stem = row["stem"]
+                feedback = stem.endswith("_02")
+                residual = row["native_A4_residual_decomposition"]
+                rho = residual["total_absolute_norm"] / max(residual["rhs_norm"], np.finfo(float).tiny)
+                fields = row["field_metrics"]["fields"]
+                errors = [fields[key]["absolute_error_norm"] / max(fields[key]["reference_norm"], np.finfo(float).tiny)
+                          for key in ("L2", "scaled_curl")]
+                checks[stem] = bool(
+                    bounded(rho, .2 if feedback else .5)
+                    and bounded(errors[0], .9 if feedback else .5)
+                    and bounded(errors[1], .9 if feedback else .6)
+                    and bounded(row["elapsed_seconds"], 15.)
+                    and row["fint_apply_count_delta"] == 1
+                    and _q3_interface_operation_audit(row["interface_facts"], 42)["passed"])
+            balanced = worker["balanced_p6_audit"]
+            closure = balanced["closure"]
+            closure_ratio = closure["closure_norm"] / max(closure["operation_scale"], np.finfo(float).tiny)
+            checks["BAL_H_closure"] = bounded(closure_ratio, 1e-8) and np.isfinite(closure["actual_defect_norm"])
+            checks["BAL_H_work"] = bool(
+                balanced["completed"] is True and bounded(balanced["q_bridge_relative"], 1e-10)
+                and balanced["pc_counts"] == dict(C=2, smoother=1, A_structure=2, A_inner_true=0, PH_audit=0)
+                and balanced["fint_apply_delta"] == 2 and balanced["h6_apply_delta"] == 1
+                and balanced["native_A4_action_count"] == 2
+                and len(balanced["coarse_calls"]) == 2
+                and all(_q3_interface_operation_audit(call["interface_facts"], 42)["passed"]
+                        for call in balanced["coarse_calls"]))
+        else:
+            checks.update(_v14_physical_checks(worker["solver"], worker["field"], worker["comparison"]))
+            checks["independent_final_A6"] = bounded(worker["final_explicit_relative_residual"], 1e-6)
+            checks["full_solve_clock"] = bounded(worker["gates"]["solve_clock_interval"]["budget_seconds"], 10800.)
+        facts["qualified"] = bool(all(checks.values()))
+        facts["reason"] = "qualified" if facts["qualified"] else "predecessor_numerical_gate_failed"
+    except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
+        facts["reason"] = f"predecessor_evidence_error:{type(exc).__name__}:{exc}"
+    return facts
+
+
+def _v14_predecessor_gate(runtime, stage, *, resolved_payload=None) -> dict[str, Any]:
+    required = {"Q4_ORIGINAL": "Q3_INTERFACE_CONTROL", "Q5_NOTCH": "Q4_ORIGINAL"}[stage]
+    facts = _v14_settled_stage_gate(runtime, required)
+    expected = ("9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+                if stage == "Q4_ORIGINAL" else
+                "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec")
+    current = (resolved_payload or {}).get("provenance", {}).get("physical_model_sha256")
+    facts["checks"]["current_physical"] = current == expected
+    facts["qualified"] = bool(facts["qualified"] and current == expected)
+    if current != expected:
+        facts["reason"] = "current_physical_identity_failed"
+    return facts
+
+
+
+def _v14_history_facts(
+    root: Path,
+    common: Mapping[str, Any],
+    solver_facts: Mapping[str, Any],
+    *,
+    notch: bool,
+    physical_sha256: str,
+) -> dict[str, Any]:
+    """Compare hash-bound measured nodes, including the nearest actual times."""
+
+    path = root / "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/frozen_history.json"
+    facts = {
+        "path": str(path), "status": "MISSING",
+        "new_PDE_runs": 0, "new_operator_actions": 0,
+        "comparison_rule": "same iteration and nearest measured conservative time; no interpolation",
+        "current_time_scope": "conservative solve time including checkpoint evaluation",
+        "diagnostic_frequency_note": "V14 native residual every 8, field every 32; historical recorded cadence retained",
+        "same_identity_cases": [],
+    }
+    if not path.is_file():
+        return facts
+
+    def node_values(row, *, v12=False):
+        return {
+            "iteration": int(row["iteration"]),
+            "explicit_true_residual": float(row["true_residual"] if v12 else row["explicit_true_residual"]),
+            "solve_seconds": float(row["elapsed_seconds_conservative"] if v12 else row["solve_seconds"]),
+            "monotonic_seconds": row.get("elapsed_seconds_monotonic") if v12 else None,
+            "reference_field": row.get("reference_field"),
+            "cost": row.get("cost"),
+        }
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        facts["sha256"] = _sha256_file(path)
+        current = {int(row["iteration"]): node_values(row)
+                   for row in solver_facts["snapshots"]}
+        current_32_64 = {str(i): current[i] for i in (32, 64) if i in current}
+        terminal = int(solver_facts["iterations"])
+        targets = sorted({i for i in (32, 64, terminal) if i in current and i > 0})
+        facts["current_nodes_32_64"] = current_32_64
+        early_terminal = terminal < 64 and float(solver_facts["final_true_residual"]) <= 1e-6
+        facts["required_nodes_gate"] = {
+            "early_terminal_before_64": early_terminal,
+            "current_32_present": 32 in current, "current_64_present": 64 in current,
+            "passed": bool(notch or early_terminal or (32 in current and 64 in current)),
+            "scope": "availability only; never a reason to extend a stopped solve",
+        }
+        mode = str(common["fine"]["mode_sha256"])
+        for case in payload["cases"]:
+            v12 = "source_record" in case
+            old_mode = case["operator_identity"]["mode_sha256"] if v12 else case["mode_sha256"]
+            if case["physical_model_sha256"] != physical_sha256 or old_mode != mode:
+                continue
+            binding = case["source_record"] if v12 else case["raw_binding"]
+            source_path = root / binding["path"]
+            if _sha256_file(source_path) != binding["sha256"]:
+                raise ValueError(f"historical raw binding changed: {source_path}")
+            if v12:
+                source = json.loads(source_path.read_text(encoding="utf-8"))
+                raw_nodes = source["candidates"][0]["node_records"]
+            else:
+                with source_path.open(encoding="utf-8") as stream:
+                    raw_nodes = [json.loads(line) for line in stream if line.strip()]
+            nodes = {}
+            for raw in raw_nodes:
+                node = node_values(raw, v12=v12)
+                if not np.isfinite(node["solve_seconds"]) or not np.isfinite(node["explicit_true_residual"]):
+                    raise ValueError("non-finite historical residual or time")
+                nodes.setdefault(node["iteration"], node)
+            if not nodes:
+                raise ValueError("historical binding contains no measured nodes")
+            nearest = []
+            for i in targets:
+                target = current[i]
+                old = min(nodes.values(), key=lambda x: (abs(x["solve_seconds"] - target["solve_seconds"]), x["iteration"]))
+                nearest.append({
+                    "current": target, "historical": old,
+                    "signed_time_difference_seconds": old["solve_seconds"] - target["solve_seconds"],
+                    "requested_time_inside_measured_range": min(x["solve_seconds"] for x in nodes.values()) <= target["solve_seconds"] <= max(x["solve_seconds"] for x in nodes.values()),
+                })
+            facts["same_identity_cases"].append({
+                "label": case["label"], "source_sha": case["source_sha"],
+                "raw_binding": dict(binding),
+                "required_32_64_nodes": {str(i): nodes[i] for i in (32, 64) if i in nodes},
+                "nearest_time_nodes": nearest,
+                "node_time_scope": case.get("node_time_scope", "V12 elapsed_seconds_conservative; monotonic reported separately"),
+                "measured_iteration_cadence": sorted(nodes),
+                "setup_to_solve_start": case.get("setup_to_solve_start"),
+                "stage_times": case.get("stage_times"),
+                "resource": case.get("resource"),
+                "scope": case.get("scope"),
+            })
+        facts["status"] = "AVAILABLE" if facts["same_identity_cases"] else "NO_MATCHING_HISTORY"
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        facts.update(status="READ_ERROR", error=f"{type(exc).__name__}: {exc}")
+    return facts
+
+
+def _v14_resource_facts(runtime: _V14Runtime) -> dict[str, Any]:
+    """Stream worker-emitted parent-tree samples without retaining the log."""
+
+    path = Path(runtime.resources_path)
+    facts = {
+        "path": str(path), "status": "MISSING", "sample_count": 0,
+        "scope": "worker-emitted samples of the parent process tree through this call",
+        "final_parent_cleanup_included": False,
+        "final_authority": "settled parent run_summary and watchdog/summary.json",
+        "zero_swap": True, "all_status_readable": True, "pss_all_readable": True,
+        "rss_peak_bytes": None, "pss_peak_bytes": None, "swap_peak_bytes": None,
+        "ledger_inventory_peak_bytes": 0, "ledger_workspace_peak_bytes": 0,
+        "first_failed_sample": None, "gate": False,
+    }
+    if not path.is_file():
+        facts.update(zero_swap=False, all_status_readable=False, pss_all_readable=False)
+        return facts
+    line_number = 0
+    try:
+        with path.open(encoding="utf-8") as stream:
+            for line_number, line in enumerate(stream, 1):
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                facts["sample_count"] += 1
+                rss, swap = int(row["rss_bytes"]), int(row["swap_bytes"])
+                envelope = row["memory_envelope"]
+                cap = row["inventory_memory_cap_bytes"]
+                frozen_cap = getattr(runtime, "inventory_cap", None)
+                if frozen_cap is not None:
+                    cap = int(frozen_cap) if cap is None else min(int(cap), int(frozen_cap))
+                checks = {
+                    "readable": row["all_status_readable"] is True,
+                    "zero_swap": swap == 0,
+                    "rss": 0 <= rss < min(int(row["launch_cap_bytes"]), 8 << 30),
+                    "reserve": int(envelope["effective_available_bytes"]) >= int(envelope["reserve_bytes"]),
+                    "inventory": 0 <= int(row["inventory_used_bytes"]) and (cap is None or int(row["inventory_used_bytes"]) <= int(cap)),
+                    "workspace": 0 <= int(row["workspace_live_bytes"]) <= runtime.workspace_cap,
+                }
+                facts["zero_swap"] &= checks["zero_swap"]
+                facts["all_status_readable"] &= checks["readable"]
+                for name, value in (("rss_peak_bytes", rss), ("swap_peak_bytes", swap)):
+                    facts[name] = value if facts[name] is None else max(facts[name], value)
+                pss = row.get("pss_bytes")
+                readable_pss = row.get("pss_all_readable") is True and pss is not None
+                facts["pss_all_readable"] &= readable_pss
+                if readable_pss:
+                    facts["pss_peak_bytes"] = max(facts["pss_peak_bytes"] or 0, int(pss))
+                facts["ledger_inventory_peak_bytes"] = max(facts["ledger_inventory_peak_bytes"], int(row["inventory_peak_bytes"]))
+                facts["ledger_workspace_peak_bytes"] = max(facts["ledger_workspace_peak_bytes"], int(row["workspace_peak_bytes"]))
+                facts["last_timestamp_ns"] = row["timestamp_ns"]
+                if not all(checks.values()) and facts["first_failed_sample"] is None:
+                    facts["first_failed_sample"] = {"line": line_number, "label": row["label"], "checks": checks}
+        facts["sha256"] = _sha256_file(path)
+        facts["status"] = "AVAILABLE" if facts["sample_count"] else "EMPTY"
+        facts["gate"] = bool(facts["sample_count"] and facts["first_failed_sample"] is None)
+        if not facts["sample_count"]:
+            facts.update(zero_swap=False, all_status_readable=False, pss_all_readable=False)
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        facts.update(status="READ_ERROR", gate=False, failed_line=line_number,
+                     error=f"{type(exc).__name__}: {exc}")
+    return facts
+
+
+
+def _v14_operator_identity(
+    common: Mapping[str, Any],
+    resolved_payload: Mapping[str, Any],
+    partition: Any,
+    *,
+    stage: str,
+) -> tuple[dict[str, Any], str]:
+    from src.runners.physical_macro_controls import _mapping_identity_sha256
+    from src.solvers.condensed_fine_reference import native_map_arrays
+
+    provenance = resolved_payload.get("provenance", {})
+    if not isinstance(provenance, Mapping):
+        provenance = {}
+    input_sha = str(
+        provenance.get("input_sha256", resolved_payload.get("input_sha256", ""))
+    )
+    physical_sha = str(
+        provenance.get(
+            "physical_model_sha256",
+            resolved_payload.get("physical_model_sha256", ""),
+        )
+    )
+    if len(input_sha) != 64 or len(physical_sha) != 64:
+        raise ValueError("V14 fresh p6 stage requires input and physical identities")
+    p4_map = native_map_arrays(
+        common["levels"]["spaces"][4], common["levels"]["floquets"][4]
+    )
+    p6_map = native_map_arrays(
+        common["levels"]["spaces"][6], common["levels"]["floquets"][6]
+    )
+    identity = {
+        "schema": "task039extra.v14.fresh-p6-operator-identity.v1",
+        "stage": str(stage),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "ordered_mode_sha256": str(common["fine"]["mode_sha256"]),
+        "p4_native_map_sha256": _mapping_identity_sha256(p4_map),
+        "p6_native_map_sha256": _mapping_identity_sha256(p6_map),
+        "p4_storage_rows": int(common["p4"]["dtn_action"].carrier.global_rows),
+        "p6_storage_rows": int(common["fine"]["dtn_action"].carrier.global_rows),
+        "partition": {
+            "storage_size": int(partition.storage_size),
+            "active_rows": int(partition.active_rows),
+            "gamma_rows": int(partition.gamma_rows),
+            "active_full_indices_sha256": _sha256_bytes(
+                np.asarray(partition.active_full_indices, dtype=np.int64).tobytes()
+            ),
+            "gamma_full_indices_sha256": _sha256_bytes(
+                np.asarray(partition.gamma_full_indices, dtype=np.int64).tobytes()
+            ),
+        },
+        "quadrature": _jsonable(common["quadrature"]),
+        "reference_used_for_operator_or_initial_guess": False,
+        "initial_guess": "zero",
+    }
+    encoded = json.dumps(
+        _jsonable(identity), sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return identity, _sha256_bytes(encoded)
+
+
+def _v14_p6_field_comparison(
+    common: Mapping[str, Any], solution: Any, reference: np.ndarray | None
+) -> dict[str, Any]:
+    """Compare the fresh p6 field with the bound reference in the metric space."""
+
+    if reference is None:
+        raise ValueError("reference field vector is unavailable")
+    solution_array = np.asarray(solution.array, dtype=np.complex128)
+    reference_array = np.asarray(reference, dtype=np.complex128)
+    if solution_array.shape != reference_array.shape:
+        raise ValueError(
+            "fresh p6 solution and reference field have different storage shapes"
+        )
+    metric = common["metric"]
+    indices = np.asarray(metric.mass.indices, dtype=np.int64)
+    from src.solvers.physical_error_diagnostics import metric_square
+
+    error = solution_array[indices] - reference_array[indices]
+    reference_values = reference_array[indices]
+    fields: dict[str, dict[str, float]] = {}
+    for name, action in (("L2", metric.mass), ("scaled_curl", metric.curl)):
+        error_norm = float(np.sqrt(metric_square(action, error)))
+        reference_norm = float(np.sqrt(metric_square(action, reference_values)))
+        fields[name] = {
+            "absolute_error_norm": error_norm,
+            "reference_norm": reference_norm,
+            "relative": error_norm / max(reference_norm, np.finfo(float).tiny),
+        }
+    return fields
+
+
+def _v14_q4_q5_fullspace(
+    runtime: _V14Runtime,
+    common: dict[str, Any],
+    resolved_payload: Mapping[str, Any],
+    *,
+    stage: str,
+    predecessor: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Run one fresh p6 outer solve with the live interface BAL_H stack.
+
+    The p4 stack is rebuilt inside this function for both conditional stages.
+    Only structural identity is shared by the implementation; numeric factors,
+    local directions and the p6 positive setup are constructed afresh for each
+    stage.  The existing reference is loaded lazily by the checkpoint
+    evaluation closure and is never handed to an operator, preconditioner, or
+    initial guess; official output remains gated by the independent final
+    residual.
+    """
+
+    from src.runners.physical_macro_v12 import (
+        _compare_saved_output,
+        _load_reference_binding,
+        _write_checkpoint,
+    )
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        build_physical_rhs,
+        recover_p0_outputs,
+    )
+    from src.solvers.physical_balanced_fgmres import run_balanced_fgmres
+    from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
+
+    stage = str(stage)
+    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH"}:
+        raise ValueError(f"unsupported fresh p6 stage {stage!r}")
+    notch = stage == "Q5_NOTCH"
+    expected_notch = "positive_x_middle_y_z40_80"
+    cell_notch = getattr(common["cfg"], "cell_notch", None)
+    if notch and cell_notch != expected_notch:
+        raise ValueError(f"{stage} received the wrong frozen notch recipe")
+    if not notch and cell_notch not in (None, ""):
+        raise ValueError("Q4_ORIGINAL must use the original, unnotched geometry")
+
+    resources = runtime.contract["resources"]
+    stage_budget = resources.get("stage_budgets", {}).get(stage)
+    if not isinstance(stage_budget, Mapping):
+        raise ValueError(f"{stage} has no frozen stage budget")
+    solve_limit = float(stage_budget["solve_seconds"])
+    workflow_limit = min(
+        float(stage_budget["workflow_seconds"]),
+        float(getattr(runtime, "workflow_reserved_seconds", 0.0)),
+    )
+    if solve_limit != 10800.0 or workflow_limit <= 0.0:
+        raise ValueError(f"{stage} has an invalid conditional-stage budget")
+
+    provenance = resolved_payload.get("provenance", {})
+    if not isinstance(provenance, Mapping):
+        provenance = {}
+    input_sha = str(provenance.get("input_sha256", ""))
+    physical_sha = str(provenance.get("physical_model_sha256", ""))
+    if len(input_sha) != 64 or len(physical_sha) != 64:
+        raise ValueError(f"{stage} requires hash-bound input and physical identities")
+
+    prefix = "q4" if not notch else "q5"
+    final_solution = rhs = final_applied = final_residual = None
+    solve_result: dict[str, Any] | None = None
+    solve_clock: ClockBudget | None = None
+    checkpoint_records: list[dict[str, Any]] = []
+    pc_boundary_records: list[dict[str, Any]] = []
+    stop_state: dict[str, Any] = {"requested": False, "reason": None}
+    reference_binding: dict[str, Any] | None = None
+    reference_vector: np.ndarray | None = None
+    reference_attempted = False
+    reference_error: dict[str, Any] | None = None
+    reference_load_workspace_label = f"{prefix}_reference_load"
+    reference_load_workspace_live = False
+    reference_load_workspace_bytes = 64 << 20
+    reference_workspace_label = f"{prefix}_reference_evaluation"
+    reference_workspace_live = False
+    reference_workspace_bytes = 0
+    reference_field_temp_bytes = 0
+    field_checkpoint_records: list[dict[str, Any]] = []
+    outer_active = False
+    outer_workspace_label = f"{prefix}_outer_krylov"
+    outer_workspace_live = False
+    outer_workspace_bytes = 0
+
+    @contextmanager
+    def owned_p6_vectors():
+        nonlocal outer_active, outer_workspace_live
+        nonlocal reference_load_workspace_live, reference_workspace_live
+        nonlocal reference_vector
+        try:
+            yield
+        finally:
+            if outer_active:
+                try:
+                    runtime.finish_outer_solve()
+                finally:
+                    outer_active = False
+            if outer_workspace_live:
+                runtime.release_workspace(outer_workspace_label)
+                outer_workspace_live = False
+            if reference_load_workspace_live:
+                runtime.release_workspace(reference_load_workspace_label)
+                reference_load_workspace_live = False
+            if reference_workspace_live:
+                runtime.release_workspace(reference_workspace_label)
+                reference_workspace_live = False
+            if reference_binding is not None:
+                reference_binding.pop("x_ref", None)
+            reference_vector = None
+            if final_residual is not None:
+                final_residual.destroy()
+            if final_applied is not None:
+                final_applied.destroy()
+            if final_solution is not None:
+                final_solution.destroy()
+            if rhs is not None:
+                rhs.destroy()
+
+    def append(name: str, row: Mapping[str, Any]) -> None:
+        _append_jsonl(runtime.directory / str(name), row)
+
+    def current_workflow_interval() -> dict[str, Any]:
+        return dict(runtime.workflow_clock_interval())
+
+    def apply_fine(source: Any) -> Any:
+        """Return an owned A6 action output for the generic Krylov adapter."""
+
+        target = source.duplicate()
+        try:
+            common["fine"]["physical_action"].apply(source, target)
+        except BaseException:
+            target.destroy()
+            raise
+        return target
+
+    def evaluation_reference() -> np.ndarray:
+        """Load the immutable reference once, for checkpoint diagnostics only."""
+
+        nonlocal reference_attempted, reference_binding, reference_vector
+        nonlocal reference_error, reference_load_workspace_live
+        nonlocal reference_workspace_live, reference_workspace_bytes
+        nonlocal reference_field_temp_bytes
+        if reference_attempted:
+            if reference_error is not None:
+                raise ValueError(reference_error["message"])
+            if reference_vector is None:
+                raise ValueError("reference evaluation vector is unavailable")
+            return reference_vector
+
+        reference_attempted = True
+        try:
+            runtime.reserve_workspace(
+                reference_load_workspace_label,
+                reference_load_workspace_bytes,
+            )
+            reference_load_workspace_live = True
+            runtime.marker(
+                f"{prefix}_reference_loading_started",
+                {
+                    "workspace_bytes": reference_load_workspace_bytes,
+                    "fixed_storage_rows": 173802,
+                    "complex_scalar_bytes": np.dtype(np.complex128).itemsize,
+                    "scope": (
+                        "bounded reference packet/load and field-diagnostic pool; "
+                        "not an operator or initial-guess allocation"
+                    ),
+                },
+            )
+            binding = _load_reference_binding(
+                runtime.root
+                / "benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json",
+                notch=notch,
+            )
+            reference_model = binding.get("model", {})
+            if reference_model.get("physical_sha") != physical_sha:
+                raise ValueError(f"{stage} reference physical identity differs")
+            if reference_model.get("mode_sha") != identity["ordered_mode_sha256"]:
+                raise ValueError(f"{stage} reference ordered mode identity differs")
+            candidate = binding.pop("x_ref", None)
+            if candidate is None:
+                raise ValueError(f"{stage} reference residual has no field vector")
+            candidate = np.asarray(candidate, dtype=np.complex128)
+            reference_bytes = max(int(candidate.nbytes), 1)
+            # Replace the pre-load pool with the actual retained reference
+            # vector plus a conservative metric scratch allowance.  The
+            # allowance covers the fixed p6 storage shape, indexed error and
+            # reference copies, and the metric kernel's temporary vectors.
+            reference_field_temp_bytes = 6 * reference_bytes
+            reference_workspace_bytes = reference_bytes + reference_field_temp_bytes
+            runtime.release_workspace(reference_load_workspace_label)
+            reference_load_workspace_live = False
+            runtime.reserve_workspace(
+                reference_workspace_label,
+                reference_workspace_bytes,
+            )
+            reference_workspace_live = True
+            reference_binding = binding
+            reference_vector = candidate
+            runtime.marker(
+                f"{prefix}_reference_binding_loaded",
+                {
+                    "model": {
+                        "name": reference_model.get("name"),
+                        "physical_sha": reference_model.get("physical_sha"),
+                        "mode_sha": reference_model.get("mode_sha"),
+                    },
+                    "reference_vector_bytes": reference_bytes,
+                    "field_metric_temporary_allowance_bytes": reference_field_temp_bytes,
+                    "retained_evaluation_workspace_bytes": reference_workspace_bytes,
+                    "reference_vector_in_operator": False,
+                    "reference_vector_in_initial_guess": False,
+                    "evaluation_only": True,
+                },
+            )
+            return candidate
+        except V14ResourceStop:
+            raise
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            if reference_load_workspace_live:
+                runtime.release_workspace(reference_load_workspace_label)
+                reference_load_workspace_live = False
+            reference_error = {
+                "type": type(exc).__name__,
+                "message": str(exc),
+            }
+            raise
+
+    def evaluate_checkpoint_field(
+        iteration: int, solution: Any, residual: float
+    ) -> dict[str, Any]:
+        """Evaluate a saved checkpoint without influencing the live solve."""
+
+        started = time.perf_counter()
+        row: dict[str, Any] = {
+            "iteration": int(iteration),
+            "explicit_relative_residual": float(residual),
+            "evaluation_only": True,
+            "reference_vector_in_operator": False,
+            "reference_vector_in_initial_guess": False,
+        }
+        try:
+            reference = evaluation_reference()
+            row["field_metrics"] = _v14_p6_field_comparison(
+                common, solution, reference
+            )
+            row["status"] = "AVAILABLE"
+        except V14ResourceStop:
+            raise
+        except (OSError, ValueError, TypeError, KeyError, FloatingPointError) as exc:
+            row.update(
+                status="EVIDENCE_INCOMPLETE",
+                error={"type": type(exc).__name__, "message": str(exc)},
+                field_metrics={},
+            )
+        row["evaluation_seconds"] = time.perf_counter() - started
+        row["solve_seconds"] = solve_seconds()
+        row["workflow_seconds"] = current_workflow_interval()["budget_seconds"]
+        field_checkpoint_records.append(dict(row))
+        append("field_checkpoint_metrics.jsonl", row)
+        runtime.sample(f"{prefix}_field_checkpoint_complete")
+        return row
+
+    def solve_seconds() -> float:
+        if solve_clock is None:
+            raise RuntimeError("conditional solve clock was not anchored")
+        return float(solve_clock.update(clock_sample())["budget_seconds"])
+
+    def checkpoint(iteration: int, solution: Any, residual: float) -> dict[str, Any]:
+        iteration = int(iteration)
+        workspace_label = f"{prefix}_checkpoint_{iteration}"
+        runtime.reserve_workspace(workspace_label, 8 << 20)
+        try:
+            runtime.sample(f"{prefix}_checkpoint_{iteration}_started")
+            facts = _write_checkpoint(
+                runtime.directory / "checkpoints",
+                solution,
+                iteration,
+                residual,
+                input_sha256=input_sha,
+                operator_sha256=operator_sha256,
+                physical_sha256=physical_sha,
+                source_sha=runtime.source_sha,
+                prefix=prefix,
+            )
+            runtime.sample(f"{prefix}_checkpoint_{iteration}_complete")
+        finally:
             runtime.release_workspace(workspace_label)
-        if raw_P is not None:
-            del raw_P
-        if raw_Q is not None:
-            del raw_Q
-        if fint is not None:
-            fint.destroy()
-        if coarse_pair is not None:
-            coarse_pair.destroy()
-        paired = None
-        if smoother is not None:
-            smoother.destroy()
-        if core is not None:
-            core.destroy()
-        elif active_volume is not None:
-            active_volume.destroy()
-        if full_volume is not None:
-            full_volume.destroy()
-        if storage_template is not None:
-            storage_template.destroy()
-        for label in tuple(reserved_labels):
-            runtime.release_inventory(label)
-        for label in (
-            "q3_coarse_pair",
-            "q3_paired_basis",
-            "q3_local_smoother",
-            "q3_S_V",
-            "q3_V_GG",
-            "q3_active_volume",
-            "q3_full_volume",
+        field_facts = evaluate_checkpoint_field(iteration, solution, residual)
+        checkpoint_record = dict(facts)
+        checkpoint_record["field_evaluation"] = field_facts
+        checkpoint_records.append(checkpoint_record)
+        return checkpoint_record
+
+    def stop_requested() -> bool:
+        if runtime.stop_requested:
+            stop_state.update(requested=True, reason="parent_stop_requested")
+            return True
+        if runtime.pc_soft_stop_requested:
+            stop_state.update(requested=True, reason="pc_soft_limit_requested")
+            return True
+        elapsed = solve_seconds()
+        workflow = current_workflow_interval()["budget_seconds"]
+        if elapsed >= solve_limit:
+            stop_state.update(requested=True, reason="solve_budget_reached")
+            return True
+        if workflow >= workflow_limit:
+            stop_state.update(requested=True, reason="workflow_budget_reached")
+            return True
+        return False
+
+    def apply_pc(source: Any) -> Any:
+        sequence = len(pc_boundary_records) + 1
+        runtime.begin_pc(sequence)
+        value = None
+        try:
+            value = pc.apply(source)
+        except BaseException:
+            boundary = None
+            boundary_error = None
+            try:
+                boundary = runtime.finish_pc(completed=False)
+            except BaseException as exc:
+                boundary_error = {"type": type(exc).__name__, "message": str(exc)}
+            # An incomplete action has no valid output and cannot be returned
+            # to PETSc.  The adapter owns its internal cleanup.
+            value = None
+            pc_boundary_records.append(
+                {
+                    "sequence": sequence,
+                    "completed": False,
+                    "runtime": boundary,
+                    "runtime_error": boundary_error,
+                    "pc": dict(pc.last_apply_facts),
+                }
+            )
+            raise
+        try:
+            boundary = runtime.finish_pc(completed=True)
+        except BaseException as exc:
+            if value is not None:
+                value.destroy()
+            pc_boundary_records.append(
+                {
+                    "sequence": sequence,
+                    "completed": True,
+                    "runtime": None,
+                    "runtime_error": {
+                        "type": type(exc).__name__,
+                        "message": str(exc),
+                    },
+                    "return_destroyed": True,
+                    "pc": dict(pc.last_apply_facts),
+                }
+            )
+            raise
+        pc_boundary_records.append(
+            {
+                "sequence": sequence,
+                "completed": True,
+                "runtime": boundary,
+                "pc": dict(pc.last_apply_facts),
+            }
+        )
+        return value
+
+    with owned_p6_vectors(), _v14_interface_live_stack(
+        runtime,
+        common,
+        resolved_payload,
+        stage=stage,
+    ) as stack:
+        identity, operator_sha256 = _v14_operator_identity(
+            common, resolved_payload, stack["partition"], stage=stage
+        )
+        identity_packet = _save_packet(
+            runtime.directory,
+            f"{prefix}_operator_identity",
+            {
+                "schema": "task039extra.v14.fresh-p6-operator-identity-packet.v1",
+                "identity": identity,
+                "operator_identity_sha256": operator_sha256,
+                "reference_used_for_operator_or_initial_guess": False,
+            },
+            runtime=runtime,
+        )
+        runtime.marker(
+            f"{prefix}_fresh_operator_identity_complete",
+            {"identity": identity, "operator_identity_sha256": operator_sha256},
+        )
+
+        rhs, rhs_facts = build_physical_rhs(common["fine"])
+        rhs_packet = _save_packet(
+            runtime.directory,
+            f"{prefix}_physical_rhs",
+            {
+                "schema": "task039extra.v14.fresh-p6-rhs-packet.v1",
+                "identity": identity,
+                "rhs_facts": rhs_facts,
+                "rhs_storage": np.asarray(rhs.array).copy(),
+            },
+            runtime=runtime,
+        )
+        runtime.marker(f"{prefix}_physical_rhs_complete", {"packet": rhs_packet})
+
+        pc = None
+        positive = None
+        pc_facts: dict[str, Any] = {}
+        def current_pc_facts() -> dict[str, Any]:
+            if pc is None:
+                return {}
+            balanced = pc.balanced
+            return {
+                "apply_count": int(pc.apply_count),
+                "native_A4_action_count": int(pc.native_A4_count),
+                "total_counts": dict(balanced.total_counts),
+                "total_operation_seconds": dict(balanced.total_operation_seconds),
+                "last_apply_facts": dict(pc.last_apply_facts),
+                "coarse_calls": list(pc.coarse_calls),
+                "ledger": {
+                    "A_count": int(pc.ledger.A_count),
+                    "PH_count": int(pc.ledger.PH_count),
+                    "audit_count": int(pc.ledger.audit_count),
+                    "A_seconds": float(pc.ledger.A_seconds),
+                    "PH_seconds": float(pc.ledger.PH_seconds),
+                },
+                "h6_apply_count": int(positive["h6"].apply_count)
+                if positive is not None
+                else None,
+                "h6_facts": dict(positive["light_facts"])
+                if positive is not None
+                else {},
+                "boundary_records": list(pc_boundary_records),
+            }
+
+        with _v14_balanced_adapter(
+            runtime, common, stack["fint"], capture_vectors=False
+        ) as (pc, positive):
+            # H6 setup is complete at this point.  Only now does the single
+            # outer solve clock begin, and the KSP vector estimate joins the
+            # already-live BAL_H workspace in the same shared 1 GiB pool.
+            runtime.begin_outer_solve()
+            outer_active = True
+            solve_clock = ClockBudget(clock_sample(), policy=CONSERVATIVE_REALTIME)
+            restart = 32
+            krylov_vector_count = 2 * (restart + 1) + 8
+            outer_workspace_bytes = max(
+                1,
+                krylov_vector_count
+                * int(rhs.getLocalSize())
+                * np.dtype(np.complex128).itemsize,
+            )
+            runtime.reserve_workspace(outer_workspace_label, outer_workspace_bytes)
+            outer_workspace_live = True
+            try:
+                solve_result = run_balanced_fgmres(
+                    rhs,
+                    apply_fine,
+                    apply_pc,
+                    checkpoint=checkpoint,
+                    append=append,
+                    seconds=solve_seconds,
+                    resource_sample=lambda: runtime.sample(
+                        f"{prefix}_solve_resource"
+                    ),
+                    stop_requested=stop_requested,
+                    screen_enabled=True,
+                    solve_limit_seconds=solve_limit,
+                    v14_policy=True,
+                )
+                final_solution = solve_result["final_solution"]
+            except BaseException as exc:
+                # Persist the counters and completed checkpoints before the
+                # enclosing cleanup path destroys BAL_H, so an interrupted
+                # run remains auditable even when no worker summary is made.
+                pc_facts = current_pc_facts()
+                failure = {
+                    "schema": "task039extra.v14.fresh-p6-solve-failure.v1",
+                    "stage": stage,
+                    "error": {"type": type(exc).__name__, "message": str(exc)},
+                    "checkpoint_records": list(checkpoint_records),
+                    "field_checkpoint_records": list(field_checkpoint_records),
+                    "pc_boundary_records": list(pc_boundary_records),
+                    "pc": pc_facts,
+                    "outer_workspace_bytes": outer_workspace_bytes,
+                }
+                try:
+                    failure["packet"] = _save_packet(
+                        runtime.directory / "solve_failure",
+                        f"{prefix}_outer",
+                        failure,
+                        runtime=runtime,
+                    )
+                except BaseException as save_exc:
+                    failure["packet_error"] = {
+                        "type": type(save_exc).__name__,
+                        "message": str(save_exc),
+                    }
+                try:
+                    runtime.marker(f"{prefix}_outer_solve_failed", failure)
+                except BaseException:
+                    pass
+                raise
+            pc_facts = current_pc_facts()
+
+        if solve_result is None:
+            raise RuntimeError(f"{stage} outer FGMRES returned no result")
+        final_solution = solve_result["final_solution"]
+
+        # This is the one independent post-KSP A6 action.  It is deliberately
+        # separate from the solver's monitor snapshots and is the only residual
+        # used to authorize output recovery below.
+        final_applied = rhs.duplicate()
+        common["fine"]["physical_action"].apply(final_solution, final_applied)
+        final_residual = rhs.copy()
+        final_residual.axpy(-1.0, final_applied)
+        rhs_norm = max(float(rhs.norm()), np.finfo(float).tiny)
+        final_explicit_relative = float(final_residual.norm()) / rhs_norm
+        if not np.isfinite(final_explicit_relative):
+            raise FloatingPointError(f"{stage} independent A6 residual is nonfinite")
+        final_residual_packet = _save_packet(
+            runtime.directory / "final_residual",
+            f"{prefix}_final",
+            {
+                "schema": "task039extra.v14.fresh-p6-final-residual-packet.v1",
+                "identity": identity,
+                "rhs_norm": rhs_norm,
+                "independent_action_count": 1,
+                "explicit_relative_residual": final_explicit_relative,
+                "solver_reported_final_true_residual": solve_result[
+                    "final_true_residual"
+                ],
+                "rhs": np.asarray(rhs.array).copy(),
+                "solution": np.asarray(final_solution.array).copy(),
+                "applied": np.asarray(final_applied.array).copy(),
+                "residual": np.asarray(final_residual.array).copy(),
+            },
+            runtime=runtime,
+        )
+        runtime.marker(
+            f"{prefix}_independent_final_residual_complete",
+            {
+                "packet": final_residual_packet,
+                "relative": final_explicit_relative,
+            },
+        )
+        # Freeze the solve-clock evidence here.  Reading historical files and
+        # assembling the later report is workflow time, not solve time.
+        solve_clock_interval = dict(solve_clock.update(clock_sample()))
+        # The solve clock covers KSP, BAL_H, checkpoint field comparisons and
+        # the independent final A6 action/packet.  Close it only after that
+        # final residual checkpoint, before any official output recovery.
+        if outer_active:
+            try:
+                runtime.finish_outer_solve()
+            finally:
+                outer_active = False
+        if outer_workspace_live:
+            runtime.release_workspace(outer_workspace_label)
+            outer_workspace_live = False
+        runtime.marker(
+            f"{prefix}_outer_solve_finished",
+            {"after_independent_final_residual": True},
+        )
+
+        solver_facts = {
+            key: value
+            for key, value in solve_result.items()
+            if key != "final_solution"
+        }
+        solver_facts["checkpoint_records"] = list(checkpoint_records)
+        solver_facts["field_checkpoint_records"] = list(field_checkpoint_records)
+        solver_facts["stop_state"] = dict(stop_state)
+        history_facts = _v14_history_facts(
+            runtime.root,
+            common,
+            solver_facts,
+            notch=notch,
+            physical_sha256=physical_sha,
+        )
+
+        stack_facts = {
+            "schema": stack["schema"],
+            "stage": stage,
+            "partition": stack["partition"].audit(),
+            "core": stack["core"].factor_facts,
+            "representative_patches": stack["representative_facts"],
+            "delta": stack["delta_facts"],
+            "local_smoother": stack["local_audit"],
+            "action_checks": stack["action_checks"],
+            "candidate": stack["candidate_facts"],
+            "paired_basis": stack["paired_facts"],
+            "coarse_pair": stack["coarse_pair"].audit(),
+            "global_interface_matrix_built": False,
+            "global_dense_schur_constructed": False,
+            "explicit_schur_released_before_outer_solve": True,
+        }
+        base_record = {
+            "schema": f"task039extra.v14.{stage.lower()}.v2",
+            "stage": stage,
+            "predecessor": dict(predecessor),
+            "operator_identity": identity,
+            "operator_identity_sha256": operator_sha256,
+            "operator_identity_packet": identity_packet,
+            "rhs_packet": rhs_packet,
+            "rhs_facts": rhs_facts,
+            "interface_stack": stack_facts,
+            "delta": stack["delta_facts"],
+            "lifecycle": {
+                "internal_factor_count": len(stack["core"].internal),
+                "outer_krylov_workspace_bytes": outer_workspace_bytes,
+                "outer_krylov_workspace_scope": (
+                    "derived upper-count estimate for FGMRES32 basis, action, "
+                    "preconditioner and explicit-residual vectors"
+                ),
+                "outer_solve_finished_after_independent_final_residual": True,
+            },
+            "solver": solver_facts,
+            "pc": pc_facts,
+            "pc_boundary_contract": {
+                "route": "BAL_H",
+                "coarse_calls_per_apply": 2,
+                "fint_direct": True,
+                "inner_ksp": False,
+                "restart": 32,
+                "max_it": 2048,
+                "zero_start": True,
+                "soft_pc_seconds": float(resources["pc_soft_seconds"]),
+                "hard_pc_seconds": float(resources["pc_hard_seconds"]),
+            },
+            "final_residual": final_residual_packet,
+            "final_explicit_relative_residual": final_explicit_relative,
+            "history": history_facts,
+            "stop_state": dict(stop_state),
+            "reference_evaluation": {
+                "attempted": reference_attempted,
+                "loaded": reference_binding is not None and reference_vector is not None,
+                "error": reference_error,
+                "load_workspace_bytes": reference_load_workspace_bytes,
+                "retained_workspace_bytes": reference_workspace_bytes,
+                "field_metric_temporary_allowance_bytes": reference_field_temp_bytes,
+                "checkpoint_count": len(field_checkpoint_records),
+                "checkpoint_records": list(field_checkpoint_records),
+                "evaluation_only": True,
+            },
+            "fresh_numerical_stack": True,
+            "reused_structural_maps_only": True,
+            "reused_numeric_factor": False,
+            "reused_interface_directions": False,
+        }
+
+        solver_status = str(solver_facts.get("status", ""))
+        solver_gate = bool(
+            solver_status == "TRUE_RESIDUAL_PASS"
+            and np.isfinite(float(solver_facts.get("final_true_residual", np.nan)))
+            and float(solver_facts["final_true_residual"]) <= 1.0e-6
+            and final_explicit_relative <= 1.0e-6
+            and np.isfinite(float(solver_facts.get("elapsed_seconds", np.nan)))
+            and float(solver_facts["elapsed_seconds"]) <= solve_limit
+            and np.isfinite(float(solve_clock_interval.get("budget_seconds", np.nan)))
+            and float(solve_clock_interval["budget_seconds"]) <= solve_limit
+        )
+        base_record["gates"] = {
+            "solver_status": solver_status,
+            "solver_reported_true_residual": solver_facts.get(
+                "final_true_residual"
+            ),
+            "independent_final_explicit_relative_residual": final_explicit_relative,
+            "solver_gate": solver_gate,
+            "solve_clock_interval": solve_clock_interval,
+        }
+        if not solver_gate:
+            performance_statuses = {
+                "PERFORMANCE_CONTROLLED_STOP",
+                "V14_PROGRESS_SCREEN_STOP",
+                "NORMAL_SCREEN_STOP",
+                "PROGRESS_INSUFFICIENT_AT_MID_BUDGET",
+                "ITERATION_BUDGET_EXHAUSTED",
+            }
+            controlled = solver_status in performance_statuses or bool(
+                stop_state.get("requested")
+            )
+            base_record.update(
+                {
+                    "status": (
+                        f"{stage}_PERFORMANCE_CONTROLLED_STOP"
+                        if controlled
+                        else f"{stage}_FULLSPACE_RESIDUAL_GATE_FAIL"
+                    ),
+                    "official_result": False,
+                    "stage_pass": False,
+                    "result_classification": (
+                        "PERFORMANCE_CONTROLLED_STOP"
+                        if controlled
+                        else "FULLSPACE_RESIDUAL_GATE_FAIL"
+                    ),
+                    "output_role": "diagnostic_solution_only",
+                    "field": {},
+                    "comparison": {
+                        "status": "NOT_EVALUATED_RESIDUAL_GATE"
+                    },
+                    "physical_checks": {},
+                }
+            )
+            runtime.marker(f"{prefix}_fullspace_residual_gate_failed", base_record)
+            return base_record
+
+        runtime.set_phase("evaluation")
+        terminal_field_records = [
+            item
+            for item in field_checkpoint_records
+            if int(item.get("iteration", -1))
+            == int(solver_facts.get("iterations", -2))
+        ]
+        terminal_field = (
+            terminal_field_records[-1] if terminal_field_records else None
+        )
+        if (
+            reference_error is not None
+            or reference_binding is None
+            or reference_vector is None
+            or terminal_field is None
+            or terminal_field.get("status") != "AVAILABLE"
+            or not terminal_field.get("field_metrics")
         ):
-            runtime.release_inventory(label)
+            evaluation_error = reference_error
+            if evaluation_error is None and terminal_field is not None:
+                evaluation_error = terminal_field.get("error")
+            if evaluation_error is None:
+                evaluation_error = {
+                    "type": "MissingCheckpointEvaluation",
+                    "message": (
+                        "the terminal checkpoint did not retain an evaluation-only "
+                        "reference field comparison"
+                    ),
+                }
+            base_record.update(
+                {
+                    "status": f"{stage}_REFERENCE_EVIDENCE_INCOMPLETE",
+                    "official_result": False,
+                    "stage_pass": False,
+                    "result_classification": "EVIDENCE_INCOMPLETE",
+                    "output_role": "diagnostic_solution_only",
+                    "reference_error": evaluation_error,
+                    "field": {},
+                    "comparison": {"status": "REFERENCE_EVIDENCE_INCOMPLETE"},
+                    "physical_checks": {},
+                }
+            )
+            runtime.marker(f"{prefix}_reference_binding_failed", base_record)
+            return base_record
+
+        # The terminal checkpoint was evaluated immediately after its complete
+        # solution was written.  Reuse those norms; no second metric or
+        # reference load is performed after the residual gate.
+        field = dict(terminal_field["field_metrics"])
+        base_record["reference_evaluation"]["terminal_field_reused"] = True
+        output_dir = runtime.directory / "numerical_output"
+        runtime.sample(f"{prefix}_before_output_recovery")
+        output = recover_p0_outputs(
+            common["fine"],
+            final_solution,
+            output_dir,
+            export_all_port_modes=True,
+        )
+        output_packet = _save_packet(
+            runtime.directory / "official_output",
+            f"{prefix}_output",
+            {
+                "schema": "task039extra.v14.fresh-p6-output-packet.v1",
+                "identity": identity,
+                "output": output,
+            },
+            runtime=runtime,
+        )
+        comparison = _compare_saved_output(
+            output,
+            reference_binding["reference_output"],
+            current_dir=output_dir,
+            reference_dir=Path(reference_binding["reference_output_dir"]),
+        )
+        runtime.marker(
+            f"{prefix}_physical_output_comparison_complete",
+            {"packet": output_packet, "comparison": comparison},
+        )
+        runtime.sample(f"{prefix}_output_recovery_complete")
+        resource_facts = _v14_resource_facts(runtime)
+        workflow_interval = current_workflow_interval()
+        physical_checks = _v14_physical_checks(
+            solver_facts, field, comparison
+        )
+        physical_pass = bool(physical_checks) and all(
+            bool(value) for value in physical_checks.values()
+        )
+        resource_pass = bool(resource_facts.get("gate"))
+        workflow_pass = bool(
+            np.isfinite(float(workflow_interval.get("budget_seconds", np.nan)))
+            and float(workflow_interval["budget_seconds"]) <= workflow_limit
+        )
+        stage_pass = bool(physical_pass and resource_pass and workflow_pass)
+        base_record.update(
+            {
+                "status": (
+                    f"{stage}_FULLSPACE_OFFICIAL_PASS"
+                    if stage_pass
+                    else f"{stage}_PHYSICAL_OUTPUT_GATE_FAIL"
+                ),
+                "official_result": stage_pass,
+                "stage_pass": stage_pass,
+                "result_classification": (
+                    "DISCRETE_SOLVER_OUTPUT_PASS"
+                    if stage_pass
+                    else "PHYSICAL_OUTPUT_GATE_FAIL"
+                ),
+                "output_role": "official" if stage_pass else "diagnostic_only",
+                "field": field,
+                "comparison": comparison,
+                "physical_checks": physical_checks,
+                "output": output_packet,
+                "output_facts": {
+                    key: value for key, value in output.items() if key != "auxiliary"
+                },
+                "reference_binding": reference_binding,
+                "resource": resource_facts,
+                "workflow_clock_interval": workflow_interval,
+                "gates": {
+                    **base_record["gates"],
+                    "physical_checks_pass": physical_pass,
+                    "resource_prefix_pass": resource_pass,
+                    "workflow_pass": workflow_pass,
+                    "stage_pass": stage_pass,
+                },
+            }
+        )
+        runtime.marker(f"{prefix}_fullspace_stage_complete", base_record)
+        return base_record
+
+
+def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
+    """Summarize existing attempts without substituting missing data for failure."""
+
+    ledger_data = Path(runtime._ledger_path).read_bytes()
+    ledger = json.loads(ledger_data)
+    if ledger["batch_identity"] != "review_v14":
+        raise ValueError("Q6 requires the unchanged review_v14 ledger")
+    stage_names = ("Q0_CORE", "Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT",
+                   "Q3_INTERFACE_CONTROL", "Q4_ORIGINAL", "Q5_NOTCH")
+    stages = {}
+    workers = {}
+    for stage in stage_names:
+        stage_record = ledger.get("stages", {}).get(stage, {})
+        attempts = stage_record.get("attempts", [])
+        item = {"stage": stage, "attempts": attempts, "qualified": False,
+                "status": "not_run", "memory": {}, "cost": {}, "numerical": {},
+                "bindings": {}, "read_errors": {}}
+        stages[stage] = item
+        if not attempts:
+            item["reason"] = "no_recorded_attempt"
+            continue
+        attempt = attempts[-1]
+        directory = Path(attempt["run_directory"])
+        settled = (stage_record["active_attempt"] is None
+                   and attempt.get("settled_seconds") is not None)
+        item.update(status="settled_attempt" if settled else "unsettled_attempt",
+                    source_sha=attempt["source_sha"], run_directory=str(directory))
+        records = {}
+        for name, filename in (
+            ("worker", "physical_p4_schur_v14_summary.json"),
+            ("parent", "run_summary.json"), ("watchdog", "watchdog/summary.json")):
+            path = directory / filename
+            try:
+                data = path.read_bytes()
+                records[name] = json.loads(data)
+                item["bindings"][str(path)] = _sha256_bytes(data)
+            except (OSError, ValueError, TypeError) as exc:
+                item["read_errors"][name] = f"{type(exc).__name__}: {exc}"
+                records[name] = {}
+        worker, parent, watchdog = (records[name] for name in ("worker", "parent", "watchdog"))
+        workers[stage] = worker
+        resource = _v14_resource_facts(SimpleNamespace(
+            resources_path=directory / "v14_worker_resources.jsonl", workspace_cap=1 << 30,
+            inventory_cap=((6 if stage in {"Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT"} else 3) << 30)
+            if stage != "Q0_CORE" else None))
+        item["resource_trace"] = resource
+        item["memory"] = {
+            "full_process_tree_sampled_rss_peak_bytes": watchdog.get("sampled_process_tree_rss_peak_bytes"),
+            "full_process_tree_sampled_pss_peak_bytes": watchdog.get("sampled_process_tree_pss_peak_bytes"),
+            "known_inventory_peak_bytes": resource["ledger_inventory_peak_bytes"] if resource["sample_count"] and stage != "Q0_CORE" else None,
+            "workspace_peak_bytes": resource["ledger_workspace_peak_bytes"] if resource["sample_count"] else None,
+            "scope": "parent full workflow sampled tree peak; separate known live-object inventory",
+            "final_cleanup_observed": watchdog.get("descendants_cleared") is True,
+        }
+        item["cost"] = {
+            "settled_seconds": attempt.get("settled_seconds"),
+            "reserved_seconds": attempt["reserved_seconds"],
+            "workflow_clock_interval": parent.get("workflow_clock_interval"),
+            "calls": [{"stem": row["stem"], "elapsed_seconds": row["elapsed_seconds"]}
+                      for row in worker.get("solve_records", [])],
+            "factor_setup": worker.get("factor", worker.get("factor_inventory")),
+            "lifecycle": worker.get("lifecycle"),
+            "solver": worker.get("solver"),
+            "full_setup_seconds": None,
+        }
+        # This UTC-only duration includes preflight, assembly and conversion
+        # before the first RHS. It is not substituted for the conservative
+        # ledger charge or a separately measured numeric-factor timer.
+        events_path = directory / "v14_events.jsonl"
+        if stage in {"Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT"} and events_path.is_file():
+            try:
+                with events_path.open(encoding="utf-8") as stream:
+                    for line in stream:
+                        event = json.loads(line)
+                        if event["event"] == ("q1_rhs_solve_started" if stage == "Q1_FULL_DIRECT" else "q2_rhs_solve_started"):
+                            item["cost"]["preflight_through_setup_utc_seconds"] = (
+                                event["timestamp_ns"] - attempt["workflow_clock_start"]["utc_ns"]) / 1e9
+                            break
+                item["bindings"][str(events_path)] = _sha256_file(events_path)
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                item["read_errors"]["setup_clock"] = f"{type(exc).__name__}: {exc}"
+        item["numerical"] = {key: worker.get(key) for key in (
+            "status", "result_classification", "error", "solve_records", "gates",
+            "field", "comparison", "balanced_p6_audit", "history",
+            "final_explicit_relative_residual")}
+        item["termination"] = {
+            "parent_classification": parent.get("result_classification"),
+            "watchdog_classification": watchdog.get("classification"),
+            "leader_exit_code": watchdog.get("leader_exit_code"),
+            "remaining_child_pids": watchdog.get("remaining_child_pids"),
+            "settled": settled,
+        }
+        if stage != "Q0_CORE" and settled:
+            item["gate"] = _v14_settled_stage_gate(runtime, stage)
+            item["qualified"] = item["gate"]["qualified"]
+        item["reason"] = ("latest_attempt_unsettled" if not settled else
+                          item.get("gate", {}).get("reason", "Q0_recorded_only"))
+        item["measured_candidate_stop"] = bool(
+            stage in {"Q3_INTERFACE_CONTROL", "Q4_ORIGINAL", "Q5_NOTCH"}
+            and settled and worker.get("source_sha") == attempt["source_sha"]
+            and watchdog.get("descendants_cleared") is True
+            and watchdog.get("remaining_child_pids") == []
+            and (item.get("gate", {}).get("reason") == "predecessor_numerical_gate_failed"
+                 or worker.get("result_classification") in {
+                     "RESOURCE_CONTROLLED_STOP", "PERFORMANCE_CONTROLLED_STOP", "PC_TIME_CONTROLLED_STOP",
+                     "controlled_negative_interface_candidate", "FULLSPACE_RESIDUAL_GATE_FAIL",
+                     "PHYSICAL_OUTPUT_GATE_FAIL"}))
+
+    q1, q2, q3, q4, q5 = (stages[name] for name in stage_names[1:])
+    memory_answer = {"status": "COMPARISON_INCONCLUSIVE", "memory_ratio": None,
+                     "resident_inventory_ratio": None,
+                     "reason": "needs qualified matched Q1/Q2 accuracy and full measured memory"}
+    if q1["qualified"] and q2["qualified"]:
+        a, b = q1["memory"], q2["memory"]
+        keys = ("full_process_tree_sampled_rss_peak_bytes", "known_inventory_peak_bytes")
+        values = [row[key] for row in (a, b) for key in keys]
+        same_environment = workers["Q1_FULL_DIRECT"]["abi"] == workers["Q2_SCHUR_DIRECT"]["abi"]
+        same_rhs = workers["Q1_FULL_DIRECT"]["rhs"] == workers["Q2_SCHUR_DIRECT"]["rhs"]
+        if same_environment and same_rhs and all(isinstance(v, (int, float)) and np.isfinite(v) and v > 0 for v in values):
+            ratio = b[keys[0]] / a[keys[0]]
+            resident_ratio = b[keys[1]] / a[keys[1]]
+            memory_answer.update(
+                status=("MEANINGFUL_FIXED_CASE_MEMORY_REDUCTION" if ratio <= .9 else
+                        "SMALL_OBSERVED_REDUCTION" if ratio < 1. else "NO_OBSERVED_MEMORY_REDUCTION"),
+                memory_ratio=ratio, resident_inventory_ratio=resident_ratio,
+                rss_difference_bytes=b[keys[0]] - a[keys[0]],
+                inventory_difference_bytes=b[keys[1]] - a[keys[1]],
+                reason="same ABI/RHS and full-workflow scope; setup/apply costs reported separately",
+                single_case_observation_not_statistical_claim=True)
+        else:
+            memory_answer["reason"] = "environment/RHS mismatch or incomplete positive memory measurements"
+
+    stopped = [name for name in stage_names[3:] if stages[name].get("measured_candidate_stop")]
+    full_pass = q3["qualified"] and q4["qualified"] and q5["qualified"]
+    if full_pass:
+        interface_status = "FULL_ORIGINAL_AND_NOTCH_PASS"
+        next_method = "RETAIN_FIXED_INTERFACE_CANDIDATE_ONE_SCALE_VALIDATION"
+    elif stopped:
+        interface_status = "MEASURED_FIXED_CONFIGURATION_STOP"
+        next_method = "CLOSE_FIXED_INTERFACE_CONFIGURATION"
+    else:
+        interface_status = "EVIDENCE_INCOMPLETE"
+        next_method = "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD"
+    direct_resolved = all(row["status"] == "settled_attempt" and not row["read_errors"]
+                          for row in (q1, q2))
+    no_unsettled = all(row["status"] != "unsettled_attempt" for row in stages.values())
+    complete = bool(direct_resolved and no_unsettled and (full_pass or stopped))
+    record = {
+        "schema": "task039extra.v14.q6-finalize.v2",
+        "status": "Q6_FINALIZED" if complete else "Q6_EVIDENCE_INCOMPLETE",
+        "stage_pass": complete, "official_result": False,
+        "result_classification": "FINALIZATION_COMPLETE" if complete else "EVIDENCE_INCOMPLETE",
+        "ledger": {"path": str(runtime._ledger_path), "sha256": _sha256_bytes(ledger_data),
+                   "recorded_elapsed_seconds": ledger["elapsed_seconds"],
+                   "unsettled_cost_is_not_zero": not no_unsettled},
+        "answers": {
+            "exact_schur_memory": memory_answer,
+            "interface_approximation": {"status": interface_status, "measured_stop_stages": stopped,
+                                       "Q3_admission": q3["qualified"]},
+            "full_p6": {"original_qualified": q4["qualified"], "notch_qualified": q5["qualified"]},
+            "next_choice": {"status": next_method,
+                            "accurate_reference_retention_supported": (
+                                q1["qualified"] and q2["qualified"]
+                                and memory_answer["memory_ratio"] is not None
+                                and memory_answer["memory_ratio"] < 1.)},
+        },
+        "stages": stages, "new_pde_actions": 0, "ledger_modified": False,
+        "no_missing_evidence_implies_method_failure": True,
+    }
+    record["packet"] = _save_packet(runtime.directory, "q6_decision", record, runtime=runtime)
+    runtime.marker("q6_finalize_complete", record)
+    return record
 
 
 def _q0_core(runtime: _V14Runtime, common: dict[str, Any]) -> dict[str, Any]:
@@ -4792,32 +6402,77 @@ def run_physical_p4_schur_v14(
                 signum, lambda _value, _frame: setattr(runtime, "stop_requested", True)
             )
         runtime.sample("preflight")
-        if stage in {
-            "Q0_CORE",
-            "Q1_FULL_DIRECT",
-            "Q2_SCHUR_DIRECT",
-            "Q3_INTERFACE_CONTROL",
-        }:
-            # Only the common-cache estimate is checked before construction.
-            # The Q1/Q2 matrix estimates are deliberately deferred until the
-            # actual common core (and, for Q1/Q2, reviewed RHS packets) is
-            # resident, immediately before volume allocation.
-            _v14_known_preallocation_gate(
+        record = None
+        if stage in {"Q4_ORIGINAL", "Q5_NOTCH"}:
+            # The conditional worker must not allocate a second p4/p6 stack
+            # until the settled parent-owned predecessor has passed its own
+            # evidence gate.
+            predecessor = _v14_predecessor_gate(
                 runtime,
                 str(stage),
-                include_common=True,
-                include_matrices=False,
+                resolved_payload=resolved_payload,
             )
-        if stage in {"Q4_ORIGINAL", "Q5_NOTCH", "Q6_FINALIZE"}:
-            record = {
-                "schema": f"task039extra.v14.{str(stage).lower()}.v1",
-                "status": "NOT_RUN",
-                "official_result": False,
-                "stage_pass": False,
-                "result_classification": "controlled_not_run_pending_prior_stage_qualification",
-                "reason": "This execution slice does not include the later conditional stage",
-            }
+            if not predecessor.get("qualified"):
+                record = {
+                    "schema": f"task039extra.v14.{str(stage).lower()}.v2",
+                    "stage": str(stage),
+                    "status": f"{stage}_PREDECESSOR_NOT_QUALIFIED",
+                    "official_result": False,
+                    "stage_pass": False,
+                    "result_classification": "PREDECESSOR_NOT_QUALIFIED",
+                    "predecessor": predecessor,
+                }
+                runtime.marker(f"{str(stage).lower()}_predecessor_not_qualified", record)
+            else:
+                # Only the common-cache estimate is checked before common
+                # construction.  The fresh volume estimate is checked after
+                # the actual common objects are resident.
+                _v14_known_preallocation_gate(
+                    runtime,
+                    str(stage),
+                    include_common=True,
+                    include_matrices=False,
+                )
+                cfg_common = _build_common(runtime, cfg)
+                try:
+                    _v14_known_preallocation_gate(
+                        runtime,
+                        str(stage),
+                        include_common=False,
+                        include_matrices=True,
+                    )
+                    record = _v14_q4_q5_fullspace(
+                        runtime,
+                        cfg_common,
+                        resolved_payload,
+                        stage=str(stage),
+                        predecessor=predecessor,
+                    )
+                finally:
+                    runtime.set_phase("cleanup")
+                    _destroy_common(cfg_common, runtime)
+                    runtime.sample("post_common_cleanup")
+        elif stage == "Q6_FINALIZE":
+            record = _q6_finalize(runtime)
+            runtime.set_phase("cleanup")
+            runtime.sample("q6_finalize_cleanup")
         else:
+            if stage in {
+                "Q0_CORE",
+                "Q1_FULL_DIRECT",
+                "Q2_SCHUR_DIRECT",
+                "Q3_INTERFACE_CONTROL",
+            }:
+                # Only the common-cache estimate is checked before
+                # construction.  The matrix estimate is deferred until the
+                # actual common core (and reviewed RHS packets where needed)
+                # is resident immediately before volume allocation.
+                _v14_known_preallocation_gate(
+                    runtime,
+                    str(stage),
+                    include_common=True,
+                    include_matrices=False,
+                )
             cfg_common = _build_common(runtime, cfg)
             try:
                 if stage == "Q0_CORE":
@@ -4891,13 +6546,15 @@ def run_physical_p4_schur_v14(
         summary.update(
             status="CONTROLLED_STOP",
             official_result=False,
-            result_classification="RESOURCE_CONTROLLED_STOP",
+            stage_pass=False,
+            result_classification=exc.classification,
             error=str(exc),
         )
     except Exception as exc:
         summary.update(
             status="FAILED",
             official_result=False,
+            stage_pass=False,
             result_classification="WORKER_FAILED",
             error={"type": type(exc).__name__, "message": str(exc)},
         )

@@ -669,6 +669,7 @@ def launch_specification(
                             timebase_guard=True,
                             timebase_policy='conservative_realtime',
                             tree_cap_bytes=int(physical_resources['tree_cap_bytes']),
+                            active_pc_seconds=float(physical_resources['pc_hard_seconds']),
                         )
                     if v14_lease is not None:
                         watchdog_environment = dict(

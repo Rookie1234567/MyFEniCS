@@ -127,6 +127,7 @@ def test_launcher_subtracts_preflight_and_charges_final_evidence_saves(tmp_path,
     def supervise(*_args, **kwargs):
         assert kwargs['wall_seconds'] == 96  # remaining 100 minus parent preflight 4
         assert kwargs['solve_seconds'] == 96
+        assert kwargs['active_pc_seconds'] == 30
         start = _clock(now[0])
         now[0] += 6
         return dict(leader_exit_code=0, classification='COMPLETED',

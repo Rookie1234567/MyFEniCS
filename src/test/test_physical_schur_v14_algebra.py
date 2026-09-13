@@ -15,7 +15,7 @@ from src.solvers.physical_interface_schur import (
 )
 
 
-def test_q3_operation_audit_uses_per_block_factor_list_and_168_total():
+def test_q3_maximal_counters_alone_do_not_prove_a_complete_route():
     facts = {
         "factor_solve_delta": [4] * 42,
         "local_patch_apply_count": 84,
@@ -25,8 +25,8 @@ def test_q3_operation_audit_uses_per_block_factor_list_and_168_total():
     audit = _q3_interface_operation_audit(facts, 42)
     assert audit["internal_factor_solve_total"] == 168
     assert audit["internal_factor_solve_max_per_block"] == 4
-    assert audit["internal_factor_solve_expected_total"] == 168
-    assert audit["passed"] is True
+    assert audit["internal_factor_solve_limit_total"] == 168
+    assert audit["passed"] is False
 
     malformed = dict(facts, factor_solve_delta={"internal_total": 42})
     assert _q3_interface_operation_audit(malformed, 42)["passed"] is False

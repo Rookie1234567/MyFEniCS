@@ -105,10 +105,52 @@ class V9BoundedScreen(BoundedScreen):
         return self.decision
 
 
+class V14SchurScreen(BoundedScreen):
+    """Independent 64-step and elapsed-time gates for the fixed interface PC."""
+
+    def __init__(self):
+        super().__init__()
+        self.window64_checked = False
+        self.early_time_checked = False
+        self.decisions = []
+
+    def check_due(self, iteration, seconds):
+        return ((not self.window64_checked and iteration >= 64) or
+                (not self.early_time_checked and seconds >= 1800))
+
+    def inspect(self, iteration, relative, seconds):
+        if iteration % 8 == 0:
+            if not self.checkpoints or self.checkpoints[-1][0] != iteration:
+                self.checkpoints.append((iteration, relative))
+                self.checkpoints = self.checkpoints[-3:]
+        if self.decision is not None and not self.decision['passed']:
+            return self.decision
+        gates = []
+        if not self.window64_checked and iteration >= 64:
+            self.window64_checked = True
+            gates.append(('window64', relative <= .10 and seconds <= 1800))
+        if not self.early_time_checked and seconds >= 1800:
+            self.early_time_checked = True
+            gates.append(('early_time', relative <= .10))
+        for name, passed in gates:
+            self.decision = dict(
+                status='SCREEN_CONTINUE_SAME_LIVE_KSP' if passed
+                else 'V14_PROGRESS_SCREEN_STOP',
+                passed=bool(passed), iteration=iteration,
+                true_relative=relative, solve_seconds=seconds,
+                checkpoints=list(self.checkpoints), gate=name,
+                policy='v14_interface',
+            )
+            self.decisions.append(dict(self.decision))
+            if not passed:
+                break
+        return self.decision
+
+
 def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                        resource_sample=lambda: None, stop_requested=lambda: False,
                        screen_enabled=True, solve_limit_seconds=7200,
-                       v7_policy=False, v9_policy=False):
+                       v7_policy=False, v9_policy=False, v14_policy=False):
     """Callbacks own action/PC outputs; seconds is a conservative shared clock.
 
     Exactly one KSP creation and one solve, max2048/restart32/zero start.
@@ -117,11 +159,13 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     """
     if not np.isfinite(solve_limit_seconds) or solve_limit_seconds <= 0:
         raise ValueError('positive finite solve limit required')
-    if v7_policy and v9_policy:
-        raise ValueError('V7 and V9 bounded screen policies are mutually exclusive')
-    bounded_policy = bool(v7_policy or v9_policy)
+    if sum(bool(value) for value in (v7_policy, v9_policy, v14_policy)) > 1:
+        raise ValueError('V7, V9 and V14 bounded screen policies are mutually exclusive')
+    bounded_policy = bool(v7_policy or v9_policy or v14_policy)
     if bounded_policy and float(solve_limit_seconds) != 10800.0:
         raise ValueError('bounded outer solve limit must be 10800 seconds')
+    if v14_policy and not screen_enabled:
+        raise ValueError('V14 requires the frozen progress screen')
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
     from .fullspace_physical_intermediate import _destroy
@@ -129,7 +173,8 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     sizes = (rhs.getLocalSize(), rhs.getSize())
     operator = PETSc.Mat().createPython((sizes, sizes), context=ac, comm=rhs.getComm())
     ksp = solution = target = None
-    screen = (V9BoundedScreen() if v9_policy else
+    screen = (V14SchurScreen() if v14_policy else
+              V9BoundedScreen() if v9_policy else
               BoundedScreen() if v7_policy else BalancedScreen())
     snapshots = []
     explicit_count = 0
@@ -187,8 +232,10 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             append('iterations.jsonl', dict(iteration=iteration, reported_relative=float(reported)/norm_rhs,
                 outer_matvec_count=ac.matvec_count, outer_pc_count=pc_context.apply_count))
             stop = stop_requested() or now >= solve_limit_seconds
-            boundary = screen_enabled and screen.decision is None and (
-                now >= 1800 or (iteration >= 128 and not v9_policy))
+            boundary = screen_enabled and (
+                screen.check_due(iteration, now) if v14_policy else
+                screen.decision is None and (
+                    now >= 1800 or (iteration >= 128 and not v9_policy)))
             mid_boundary = (bounded_policy and not screen.mid_budget_checked and
                             now >= 5400)
             cadence = 8 if bounded_policy else 32
@@ -202,6 +249,9 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
                     return 0
                 relative, now = snapshot(iteration, current, reported,
                                          terminal=stop)
+                if v14_policy and now > solve_limit_seconds:
+                    stop_status = 'PERFORMANCE_CONTROLLED_STOP'
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
                 if relative <= 1e-6:
                     stop_status = 'TRUE_RESIDUAL_PASS'
                     return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
@@ -228,6 +278,8 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
         iteration = int(ksp.getIterationNumber())
         relative, elapsed = snapshot(iteration, None, ksp.getResidualNorm(), terminal=True)
         final_status = stop_status or 'ITERATION_BUDGET_EXHAUSTED'
+        if v14_policy and elapsed > solve_limit_seconds:
+            final_status = 'PERFORMANCE_CONTROLLED_STOP'
         if (bounded_policy and relative > 1e-6 and elapsed >= solve_limit_seconds
                 and final_status == 'ITERATION_BUDGET_EXHAUSTED'):
             final_status = 'PERFORMANCE_CONTROLLED_STOP'
@@ -238,11 +290,14 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
             explicit_action_count=explicit_count, elapsed_seconds=elapsed,
             ksp_create_count=1, ksp_solve_count=1, ksp_destroy_count=0,
             screen_enabled=screen_enabled,restart=32, max_it=2048, zero_start=True,
-            screen_policy=('v9_equal_new_work' if v9_policy else
+            screen_policy=('v14_interface' if v14_policy else
+                           'v9_equal_new_work' if v9_policy else
                            'v7' if v7_policy else 'v5'),
             residual_interval=8 if bounded_policy else 32,
             checkpoint_interval=32,
             mid_budget=screen.mid_budget if bounded_policy else None)
+        if v14_policy:
+            result['progress_decisions'] = list(screen.decisions)
         return result
     finally:
         for value in (ksp, target, solution, operator):

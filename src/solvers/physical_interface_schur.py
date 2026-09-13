@@ -566,6 +566,16 @@ def orthonormalize_paired_directions(
     input_basis_bytes = int(P_array.nbytes + Q_array.nbytes)
     output_basis_capacity_bytes = int(P_storage.nbytes + Q_storage.nbytes)
     candidate_work_bytes = int(2 * ambient_rows * np.dtype(np.complex128).itemsize)
+    # P_out/Q_out are views into the two storage arrays, but a contiguous
+    # public-basis copy can coexist with all four raw/storage libraries while
+    # the final Gram checks and identity hashes are evaluated.  Account for
+    # that fifth full library and the small matrix/identity temporaries.
+    public_basis_copy_bytes = int(
+        ambient_rows * len(accepted) * np.dtype(np.complex128).itemsize
+    )
+    gram_identity_bytes = int(
+        3 * len(accepted) * len(accepted) * np.dtype(np.complex128).itemsize
+    )
     checks = {
         "two_pass_gram_schmidt": True,
         "pair_tolerance": float(pair_tol),
@@ -587,8 +597,14 @@ def orthonormalize_paired_directions(
         "input_basis_bytes": input_basis_bytes,
         "output_basis_capacity_bytes": output_basis_capacity_bytes,
         "candidate_work_bytes": candidate_work_bytes,
+        "public_basis_copy_bytes": public_basis_copy_bytes,
+        "gram_identity_bytes": gram_identity_bytes,
         "workspace_bytes": int(
-            input_basis_bytes + output_basis_capacity_bytes + candidate_work_bytes
+            input_basis_bytes
+            + output_basis_capacity_bytes
+            + candidate_work_bytes
+            + public_basis_copy_bytes
+            + gram_identity_bytes
         ),
     }
     if p_gram_error > 1.0e-10 or q_gram_error > 1.0e-10:
@@ -662,7 +678,10 @@ class InterfaceCoarsePair:
         values = np.asarray(rhs, dtype=np.complex128)
         if values.ndim not in (1, 2) or values.shape[0] != self.ambient_rows:
             raise ValueError("interface RHS has the wrong shape")
-        coefficients = self.Q.conj().T @ values
+        # Form Q^H values without materializing a conjugated/transposed copy
+        # of the full Gamma-by-rank basis.  This is algebraically identical to
+        # ``Q.conj().T @ values`` for vectors and blocks.
+        coefficients = np.conjugate(self.Q.T @ np.conjugate(values))
         return np.ascontiguousarray(self.P @ self.solve(coefficients))
 
     def audit(self) -> dict[str, Any]:
@@ -1008,17 +1027,48 @@ class InterfaceFintAdapter:
         port_rhs = np.asarray(port_rhs, dtype=np.complex128)
         if np.linalg.norm(port_rhs) != 0.0:
             raise ValueError("interface F_int expects a zero auxiliary port RHS")
+
+        def factor_delta(before: list[int]) -> list[int]:
+            after = self._factor_counts(self.core)
+            return [
+                int(current - previous)
+                for previous, current in zip(before, after, strict=True)
+            ]
+
+        phase_factor_deltas: dict[str, list[int]] = {
+            "reduce": factor_delta(counts_before),
+        }
+        schur_call = 0
+
+        def traced_schur(values: np.ndarray) -> np.ndarray:
+            nonlocal schur_call
+            before = self._factor_counts(self.core)
+            result = self.core.apply_physical_schur_array(values)
+            schur_call += 1
+            phase_factor_deltas[f"S{schur_call}"] = factor_delta(before)
+            return result
+
+        local_call = 0
+
+        def traced_local(values: np.ndarray) -> np.ndarray:
+            nonlocal local_call
+            result = self.local_smoother.apply(values)
+            local_call += 1
+            return result
+
         gamma_solution, cycle_facts = apply_interface_cycle(
             reduced,
-            self.core.apply_physical_schur_array,
-            self.local_smoother.apply,
+            traced_schur,
+            traced_local,
             self.coarse_pair,
         )
+        before_recovery = self._factor_counts(self.core)
         result, recovery_facts = self.core.recover(
             rhs,
             gamma_solution,
             return_facts=True,
         )
+        phase_factor_deltas["recover"] = factor_delta(before_recovery)
         counts_after = self._factor_counts(self.core)
         local_solve_after = [
             int(patch.solve_count) for patch in self.local_smoother.patches
@@ -1044,6 +1094,21 @@ class InterfaceFintAdapter:
             "gamma_solution_norm": float(np.linalg.norm(gamma_solution)),
             "cycle": cycle_facts,
             "recovery": recovery_facts,
+            "operation_counts": {
+                "route": ["reduce", "J1", "S1", "E1", "S2", "J2", "recover"],
+                "reduce_internal_solves": int(sum(phase_factor_deltas["reduce"])),
+                "local_J1_apply_count": int(local_call >= 1),
+                "S1_internal_solves": int(sum(phase_factor_deltas.get("S1", []))),
+                "coarse_E1_apply_count": int(
+                    coarse_solve_after - coarse_solve_before
+                ),
+                "S2_internal_solves": int(sum(phase_factor_deltas.get("S2", []))),
+                "local_J2_apply_count": int(local_call >= 2),
+                "recover_internal_solves": int(sum(phase_factor_deltas["recover"])),
+                "factor_solve_delta_by_phase": phase_factor_deltas,
+                "schur_action_count": int(schur_call),
+                "local_action_count": int(local_call),
+            },
             "factor_solve_counts_before": counts_before,
             "factor_solve_counts_after": counts_after,
             "factor_solve_delta": factor_solve_delta,
@@ -1835,8 +1900,23 @@ def build_interface_candidate_directions(
         2 * gamma_rows * mgs_output_capacity * scalar_bytes
     )
     mgs_work_bytes = int(2 * gamma_rows * scalar_bytes)
+    # The public P/Q views are backed by the row-major storage libraries, but
+    # the final Gram checks and the two identity hashes may materialize one
+    # additional full basis copy while all four input/storage libraries are
+    # still live.  Keep that fifth-library peak in the shared workspace fact.
+    public_basis_copy_bytes = int(
+        gamma_rows * mgs_output_capacity * scalar_bytes
+    )
+    gram_identity_bytes = int(
+        3 * mgs_output_capacity * mgs_output_capacity * scalar_bytes
+    )
     mgs_peak_bytes = int(
-        raw_P_bytes + raw_Q_bytes + mgs_output_basis_bytes + mgs_work_bytes
+        raw_P_bytes
+        + raw_Q_bytes
+        + mgs_output_basis_bytes
+        + mgs_work_bytes
+        + public_basis_copy_bytes
+        + gram_identity_bytes
     )
     candidate_build_peak_bytes = int(
         raw_P_bytes + raw_Q_bytes + port_output_bytes + port_temporary_bytes
@@ -1882,6 +1962,8 @@ def build_interface_candidate_directions(
         "port_temporary_bytes": port_temporary_bytes,
         "mgs_output_basis_capacity_bytes": mgs_output_basis_bytes,
         "mgs_work_bytes": mgs_work_bytes,
+        "public_basis_copy_bytes": public_basis_copy_bytes,
+        "gram_identity_bytes": gram_identity_bytes,
         "mgs_peak_bytes": mgs_peak_bytes,
         "candidate_build_peak_bytes": candidate_build_peak_bytes,
         "q_h_copy_bytes": q_h_copy_bytes,
