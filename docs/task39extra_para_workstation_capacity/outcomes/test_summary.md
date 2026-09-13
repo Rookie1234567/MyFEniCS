@@ -13,6 +13,7 @@
 | 最终native监督与纯测试 | 3 passed、3 deselected，2.10 s | 新增真实native supervisor的PSS跳采测试；另外3项FE测试已在相同数值代码通过，不重复编译 |
 | Ruff | 新模块/新测试/改动的physical action通过；其余修改文件65项均为基线已有，无新增 | 保留逐文件baseline/current比较；不声称全库lint通过 |
 | 文档合同（原则、回顾、总账Markdown） | 20 passed，0.05 s | 最终任务材料本地检查 |
+| 5 nm checker no-deadline focused | 4 passed，19 deselected，0.12 s | bounded/none 的 screen、solve、workflow 门限；不启动 PDE |
 | compileall / git diff --check | 受影响模块通过 / 通过 | 未跑全库pytest，未跑CI |
 
 这里按实际命令报告，不把重复运行相加当独立测试数。新测试文件共有6项，分两次覆盖全部；相关旧回归87项在分类修复后分组覆盖。唯一历史deselected项`test_real_e1_inputs_load_without_fe`需要未随Git提供的ignored diagnostic_audit.json，之前已实际失败于FileNotFoundError，未篡改成通过。
@@ -20,3 +21,5 @@
 本次有一条回归命令使用了错误旧文件名，exit4、no tests ran；更正后才取得上表86/1结果。首次独立p6诊断以脚本方式启动时未找到tmp namespace，改用模块方式后完成；都不是formal PDE retry。新文件的5项Ruff格式提示已修复，未作无关代码整理。
 
 监督分类修复只把`cooperative_stop_identity_and_signal`异常记为MONITORING_FAILED，保留原异常与清场；没有放宽RSS/swap或时间上限。其余监督改动为native PSS约5秒采样，RSS/swap照常读取。FE优化使用严格浮点、禁止FMA contraction，不使用fast-math。逐行诊断与拒绝方案见[kernel evidence](records/kernel_performance.json)，日志hash见[test evidence](records/performance_tests.json)。
+
+checker no-deadline 修复提交为 `d64398cb1fecd90867071688dca94e501235cf7a`；修复后对同一 5 nm run 只读执行独立 recheck，结果 `independent_output_gates_passed=true`、`gate_failures=[]`。原 checker/summary/manifest 与资源连续性缺口未被覆盖或提升。

@@ -8,8 +8,19 @@
 | R1 attempt3，13.5 nm Si p6/h10，550步 | own数值 Gate 通过；`BALANCED_OUTPUT_AUTHORITY_LIMITED` | [attempt3 compact](records/r1_attempt3.json) |
 | R1 native direct matched reference | NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL | [reference compact](records/r1_native_reference.json)、[80通道](records/r1_native_reference_80_channels.json) |
 | R2 notch、条件native reference | `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`；已清场，待审 | [R2负结果 compact](records/r2_notch_attempt1.json) |
-| S5 / S3 / S2 / G | R2 未完成；5 nm LOCKED | [容量边界](capacity_frontier.md) |
-| 性能修复 | 局部等价性通过；修复后13.5 nm R1 own与native匹配 reference 通过，R2 attempt1归因未决 | `f124679e75915758076d9240bd4bef2f5c772752`；[R1 compact](records/r1_native_reference.json)；[R2 compact](records/r2_notch_attempt1.json)；[测试](test_summary.md) |
+| 5 nm formal p6/h4 | own数值/物理 Gate 通过；`REFERENCE_AUTHORITY_LIMITED`；资源连续资格不追认 | [5 nm compact](records/5nm_formal_attempt1.json)、[资源记录](records/5nm_resource_coverage.json) |
+| S5 / S3 / S2 / G | R2仍为独立未决负结果；5 nm own已完成；3/2 nm与G未解锁 | [运行总账](records/run_index.json) |
+| 性能/检查修复 | 性能修复后13.5 nm R1与native reference通过；5 nm checker修复后独立recheck通过，R2归因仍未决 | `f124679e75915758076d9240bd4bef2f5c772752`；checker `d64398cb1fecd90867071688dca94e501235cf7a`；[测试](test_summary.md) |
+
+## 5 nm formal attempt 1（用户授权跳过未通过 R2）
+
+用户明确覆盖执行顺序后，按原正式入口完成同一 5 nm Si p6/h4 离散解；这不把 R2 写成通过，也不解锁 3/2 nm 或 G。run 为 `20260911T065955.813489Z`，source `85a681b9bd61104466888546b83df87c27806169`，zero start、restart32、max2048、screen128，时间模式为显式 `none`。
+
+数值结果：iteration `698`，full explicit true residual=`9.986638454029182e-7`，screen128 通过；p4 为 `1396` RHS、`1419` MatSolve、`23` refinement，terminal p4 relative residual max=`9.989282114125241e-11`。official DtN 共 `600` 个 channel，复振幅/功率与 E/H 均有限；R=`0.7331834812424759`、T=`0.00022243948430485038`、A_balance=`0.26659407927321926`、A_volume=`0.26659407694262094`，独立能量误差=`2.33059826992843e-9`。
+
+独立 recheck：[recheck/checker.json](../../../results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z/recheck/checker.json) 的 `independent_output_gates_passed=true`、`gate_failures=[]`、分类为 `BALANCED_OUTPUT_AUTHORITY_LIMITED`。`REFERENCE_AUTHORITY_LIMITED` 仅表示没有 5 nm matched fine/continuum 精度参考；`official_result.diffraction_channel_count=150` 是 diagnostic Fourier 计数，不替代或削减 DtN 的 600 channel。
+
+资源与生命周期单列：[资源记录](records/5nm_resource_coverage.json)。原 parent watchdog 有监督断档，旧 wait 退出码 `UNAVAILABLE`；不能追认连续 `RESOURCE_PASS`。原始失败/launching summary、V2 recovery、原始 checker 均保留。观测整树 RSS 峰为 `50161172480 B`、swap peak=`0`；这只是外置采样可观测峰值，不填补断档。
 
 ## 最新正式 original run（attempt3）
 
@@ -29,13 +40,13 @@
 
 阶段资源峰值也已在 compact 中逐项保存：setup `3404267520 B`、solve `3085901824 B`、recovery/final peak `3631751168 B`、checker `3558637568 B`、complete `3202437120 B`，均 swap `0`。绑核证据只说明 CPU23/CPU9 affinity，不推出共享内存带宽或功耗无竞争。
 
-因此旧 own run 的 authority 仍单独标为 limited；native direct matched reference 已完成全部本机 R1 比较资格，但不改写“完整 WSL 全场未提供”的边界。R1 不重跑 550 步；R2 attempt1 已因全局 swap 归因未决清场，暂不重跑或进入5 nm。
+因此旧 own run 的 authority 仍单独标为 limited；native direct matched reference 已完成全部本机 R1 比较资格，但不改写“完整 WSL 全场未提供”的边界。R1 不重跑 550 步；R2 attempt1 已因全局 swap 归因未决清场，暂不重跑或进入5 nm。（这是顺序覆盖前的历史状态；后续用户明确授权后执行5 nm，见上。）
 
 ## R2 notch attempt1（独立负结果）
 
 原 V5 notch 输入以 clean source `f21a33914765a10adfa43735fb2e1ac3013ff905` 启动，input SHA=`b7ba606a5bf056d06e13065c6500c99301c7e6e4a0ec8eec1ad20797c28185c3`、notch physical SHA=`7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec`。run `20260909T191201.621471Z` 在 iteration3、outer matvec/PC=3 时由既有 watchdog 因 `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED` 受控停止：全局诊断 `pswpout delta=2` 页，进程树采样 `VmSwap peak=0`；leader=`-9`、`descendants_cleared=true`、remaining children 为空，RSS peak=`3406852096 B`。该结果不称 OOM、数值失败或邻居归因，且没有自动 retry。
 
-早期 solve 计时与 p4/PC 证据见 [R2 compact](records/r2_notch_attempt1.json)；R2 未取得数值资格，5 nm 继续锁定。
+早期 solve 计时与 p4/PC 证据见 [R2 compact](records/r2_notch_attempt1.json)；R2 未取得数值资格，5 nm 继续锁定。（后续用户明确覆盖顺序后已执行5 nm，见上。）
 
 ## R1 native direct matched reference（最新 Gate）
 

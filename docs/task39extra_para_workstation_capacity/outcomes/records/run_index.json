@@ -62,8 +62,28 @@
       "physical_model_sha256": "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec",
       "descendants_cleared": true,
       "job_swap_activity": "UNRESOLVED_global_activity_cannot_be_attributed"
+    },
+    {
+      "stage": "5NM",
+      "attempt": 1,
+      "run_id": "20260911T065955.813489Z",
+      "record": "5nm_formal_attempt1.json",
+      "resource_record": "5nm_resource_coverage.json",
+      "status": "COMPLETED_OWN_NUMERICAL_PHYSICAL_GATES_REFERENCE_LIMITED_RESOURCE_CONTINUITY_UNQUALIFIED",
+      "source_sha": "85a681b9bd61104466888546b83df87c27806169",
+      "input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "iterations": 698,
+      "true_residual": 9.986638454029182e-7,
+      "R": 0.7331834812424759,
+      "T": 0.00022243948430485038,
+      "A_balance": 0.26659407927321926,
+      "A_volume": 0.26659407694262094,
+      "reference_status": "REFERENCE_AUTHORITY_LIMITED",
+      "resource_qualification": "NOT_CONTINUOUS_RESOURCE_PASS",
+      "checker_fix_commit_sha": "d64398cb1fecd90867071688dca94e501235cf7a"
     }
   ],
-  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_LOCKED",
-  "next_gate": "R2_REVIEW_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED"
+  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_3NM_2NM_LOCKED",
+  "next_gate": "5NM_RECORD_REVIEW_NO_3NM_2NM_UNLOCK"
 }

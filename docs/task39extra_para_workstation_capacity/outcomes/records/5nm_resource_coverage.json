@@ -1,0 +1,85 @@
+{
+  "schema": "native-capacity.5nm-resource-coverage.v1",
+  "run_id": "20260911T065955.813489Z",
+  "source_sha": "85a681b9bd61104466888546b83df87c27806169",
+  "qualification": "NOT_CONTINUOUS_RESOURCE_PASS",
+  "scope": "streamed original watchdog and recovery records; no resource file overwritten",
+  "stage_wall_from_adjacent_markers_seconds": {
+    "setup": 10520.935363765,
+    "solve": 206615.968982019,
+    "release": 0.248503511,
+    "recovery": 527.748098134,
+    "checker": 0.271950261
+  },
+  "stage_wall_note": "Adjacent marker differences; nested markers are not summed into phase totals.",
+  "setup_marker_intervals_seconds": {
+    "h6_original_setup_to_packed_action_complete": 2099.983613362,
+    "fine_physical_to_native_physical": 345.322709642,
+    "native_physical_to_owner_transfer": 92.593430845,
+    "owner_transfer_to_reference_volume_compile": 24.693904323,
+    "reference_volume_compile_to_metadata": 34.431748336,
+    "reference_volume_pattern_to_complete": 7294.11859562,
+    "reference_volume_complete_to_augmentation_complete": 13.777772147,
+    "reference_symbolic_start_to_complete": 12.351664861,
+    "reference_numeric_preflight_to_complete": 460.476449937,
+    "setup_vector_identity_start_to_complete": 84.360889163
+  },
+  "observed_phase_peaks_bytes": {
+    "original_watchdog": {
+      "samples": 83313,
+      "coverage_utc": ["2026-09-11T06:59:55.921208Z", "2026-09-11T15:13:08.090484Z"],
+      "setup_rss_peak": 50077958144,
+      "solve_rss_peak": 49547399168,
+      "swap_peak": 0,
+      "global_swap_states": [{"pswpin_pages": 0, "pswpout_pages": 2}],
+      "all_status_readable": true
+    },
+    "recovery_sampler": {
+      "samples": 600,
+      "coverage_utc": ["2026-09-11T23:47:11.820370Z", "2026-09-11T23:57:48.220103Z"],
+      "rss_peak": 49506689024,
+      "swap_peak": 0,
+      "identity_readable": true
+    },
+    "v1_guard": {
+      "samples": 218,
+      "coverage_utc": ["2026-09-11T23:54:57.496828Z", "2026-09-11T23:58:46.721917Z"],
+      "rss_peak": 49506689024,
+      "swap_peak": 0,
+      "identity_pass": 218,
+      "signals_sent": 0
+    },
+    "continuous_sampler": {
+      "samples": 776,
+      "coverage_utc": ["2026-09-11T23:57:37.953977Z", "2026-09-12T00:11:17.506837Z"],
+      "rss_peak": 49506689024,
+      "swap_peak": 0,
+      "identity_pass": 776
+    },
+    "v2_guard": {
+      "samples": 146748,
+      "coverage_utc": ["2026-09-12T00:09:58.915885Z", "2026-09-13T19:27:47.035810Z"],
+      "solve_rss_peak": 49506967552,
+      "release_rss_peak": 49056784384,
+      "recovery_rss_peak": 50161172480,
+      "overall_rss_peak": 50161172480,
+      "swap_peak": 0,
+      "global_swap_states": [{"pswpin_pages": 0, "pswpout_pages": 2}],
+      "identity_status_counts": {
+        "IDENTITY_PASS": 146746,
+        "WORKER_EXITING_ROOT_ALIVE": 1,
+        "RUN_EXITED_BOTH_IDENTITIES": 1
+      },
+      "signals_sent": 0
+    }
+  },
+  "coverage_gap": {
+    "old_watchdog_last_sample_utc": "2026-09-11T15:13:08.090484Z",
+    "first_recovery_sample_utc": "2026-09-11T23:47:11.820370Z",
+    "seconds": 30843.729885301,
+    "human_note": "约8小时34分；旧父监督断档，父wait退出码UNAVAILABLE，不能追认连续资源PASS。",
+    "old_watchdog_to_v2_first_seconds": 32210.825400594,
+    "v2_note": "V2于首个recovery sampler之后启动；两者覆盖有重叠。"
+  },
+  "rss_interpretation": "这些是各采样载体可观测的整树RSS峰值；原physical summary的rss_before_release/rss_after_release=0因原父监督失效，不作0内存或100%释放解释。"
+}

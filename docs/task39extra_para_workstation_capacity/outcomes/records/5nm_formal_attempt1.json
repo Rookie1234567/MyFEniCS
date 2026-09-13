@@ -1,0 +1,88 @@
+{
+  "schema": "native-capacity.5nm-formal-attempt.v1",
+  "run_id": "20260911T065955.813489Z",
+  "run_directory": "results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z",
+  "status": "COMPLETED_NUMERICAL_PHYSICAL_GATES_REFERENCE_LIMITED_RESOURCE_CONTINUITY_UNQUALIFIED",
+  "source_sha": "85a681b9bd61104466888546b83df87c27806169",
+  "input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
+  "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+  "resolved_config_sha256": "6f529f67b179bad64fa12b06f5b06428abe5fc8477bcec1c037d2a73922de058",
+  "checker_fix_commit_sha": "d64398cb1fecd90867071688dca94e501235cf7a",
+  "checker_source_sha256": "97c78fd960429d45decc3f821ab0c1ee674a649a4ca24ea9be673a3c5813d5ae",
+  "material": {
+    "name": "Si / silicon",
+    "density_g_cm3": 2.33,
+    "delta": 0.00603145547,
+    "beta": 0.00435380777,
+    "n": [0.99396854453, 0.00435380777],
+    "authority": "user-provided; not independently database-verified"
+  },
+  "configuration": {
+    "wavelength_nm": 5.0,
+    "mesh": "p6h4",
+    "mode_count": 600,
+    "max_iterations": 2048,
+    "restart": 32,
+    "initial_guess": "zero",
+    "time_limit_mode": "none"
+  },
+  "solve": {
+    "status": "TRUE_RESIDUAL_PASS",
+    "iterations": 698,
+    "outer_matvec_count": 719,
+    "outer_pc_count": 698,
+    "final_true_residual": 9.986638454029182e-7,
+    "screen128": {"passed": true, "iteration": 128},
+    "solve_seconds": 206568.51908412296,
+    "workflow_seconds": 217665.16384237396,
+    "ksp_create_solve_destroy": [1, 1, 1]
+  },
+  "p4": {
+    "passed": true,
+    "logical_rhs": 1396,
+    "MatSolve": 1419,
+    "refinements": 23,
+    "max_terminal_relative_residual": 9.989282114125241e-11
+  },
+  "official_dtn_port": {
+    "channel_count": 600,
+    "complex_amplitudes_finite": true,
+    "R_total": 0.7331834812424759,
+    "T_total": 0.00022243948430485038,
+    "A_balance": 0.26659407927321926,
+    "A_volume": 0.26659407694262094,
+    "volume_energy_error": 2.33059826992843e-9,
+    "absorption_difference": 2.3305983254395812e-9,
+    "diagnostic_fourier_channel_count": 150,
+    "diagnostic_fourier_not_used_as_DtN_count": true
+  },
+  "field_eh": {
+    "archive_shape": [5, 20, 40, 3],
+    "E_H_complex_finite": true,
+    "full_field_reference_archive_sha256": "cf481be49d4efb10a49f5bb019f2ea89a769998c75f9b4e96061bd1017c5a605"
+  },
+  "checker": {
+    "classification": "BALANCED_OUTPUT_AUTHORITY_LIMITED",
+    "reference_authority": "REFERENCE_AUTHORITY_LIMITED",
+    "independent_output_gates_passed": true,
+    "gate_failures": [],
+    "reason": "no shortwave matched fine/continuum precision reference; this is accuracy authority limitation, not missing required A4 solve"
+  },
+  "resource_authority": {
+    "qualification": "NOT_CONTINUOUS_RESOURCE_PASS",
+    "v2_guard": "RUN_EXITED",
+    "signals_sent": 0,
+    "global_swap_baseline_pages": {"pswpin_pages": 0, "pswpout_pages": 2},
+    "max_observed_tree_rss_bytes": 50161172480,
+    "max_observed_tree_swap_bytes": 0,
+    "old_parent_wait_exit_code": "UNAVAILABLE",
+    "old_watchdog_last_to_first_recovery_seconds": 30843.729885301,
+    "coverage_gap_note": "about 8h34m; old watchdog last sample to first recovery sampler sample"
+  },
+  "recheck": {
+    "directory": "results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z/recheck",
+    "checker_json": "recheck/checker.json",
+    "original_checker_preserved": true,
+    "original_summary_manifest_preserved": true
+  }
+}
