@@ -1,0 +1,240 @@
+{
+  "schema": "task039extra.v15.io-recovery-compact.v1",
+  "review": "review_v15",
+  "status": "INFRASTRUCTURE_BLOCKED",
+  "scope": "Read-only host verification plus the one authorized R0 I/O recovery probe; no R1 ledger migration, new Q0, PDE replay, or formal budget mutation",
+  "source_identity": {
+    "branch": "task39extra",
+    "reviewed_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "interrupted_q0_source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "model": "13.5 nm fixed Review V14 model; p6/h10; Full3D; MPI1; complex128/int32",
+    "source_tree_restored_after_unexecuted_r1_draft": true
+  },
+  "r0": {
+    "classification": "INFRASTRUCTURE_BLOCKED",
+    "report_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r0_report.json",
+    "report_sha256": "d61561d645073565db1206bbdacd74faf66007c55e26fb2201e2ee793dd2da5f",
+    "report_schema": "task039extra.review_v15.r0_io_recovery.v1",
+    "sandbox_elapsed_seconds": 0.497437906,
+    "sandbox_utc_interval_seconds": 0.497441,
+    "write_probe": {
+      "parents": [
+        "ledger",
+        "results"
+      ],
+      "rounds_per_parent": 2,
+      "payload_bytes_per_round": 4194304,
+      "total_rounds": 4,
+      "total_payload_bytes": 16777216,
+      "checks": [
+        "exclusive_create",
+        "file_fsync",
+        "close_reopen_hash",
+        "same_directory_atomic_rename",
+        "parent_directory_fsync",
+        "post_rename_reopen_hash",
+        "own_probe_cleanup",
+        "post_cleanup_parent_fsync"
+      ],
+      "observed_result": "all_probe_checks_passed",
+      "formal_ledger_mutation": false,
+      "scope_caveat": "The R0 process scan and /mnt/c free-space view were restricted sandbox views; they are not host-wide evidence."
+    },
+    "observed_fault_like_log_lines": 4,
+    "fault_root_cause": "not_established",
+    "fault_interpretation": "Observed orphan/recovery/journal-like messages are preserved observations only and do not prove the old EIO root cause.",
+    "journal_evidence": {
+      "old_window_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/kernel_old_q0_window.log",
+      "old_window_sha256": "1da8c9a3e7a2a336c8758da0585e3125147420b2029d7493bd96e9c624ec95b2",
+      "old_window_query": "journalctl -k --no-pager --since 2026-09-12 12:30:00 --until 2026-09-12 13:00:00",
+      "time_basis": "not_explicitly_utc_in_saved_command_or_output",
+      "coverage": "incomplete_for_the_2026-09-12T12:35Z_to_12:40Z_fault_window",
+      "interpretation": "A no-entry or limited-entry result cannot prove that the historical EIO had no kernel evidence or that the requested UTC window was correctly covered; no further journal query was performed during this closeout."
+    },
+    "current_kernel_log_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/kernel_current.log",
+    "current_kernel_log_sha256": "9e29e17b22aa3668ce12259716175c495459829047af99eb488ae70ba9f3809f",
+    "fault_lines_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/kernel_fault_lines.txt",
+    "fault_lines_sha256": "a6dfac3eb0d09183dfd61779c384f2198966ce4c45f21f27fa9094b07c79392f"
+  },
+  "root_scope_verification": {
+    "scope": "unsandboxed read-only verification of missing R0 scope; it wrote this evidence JSON but made no additional probe-payload or PDE action",
+    "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/root_scope_verification.json",
+    "sha256": "0485560050ed880dca11a87fda4d853f3db1ecc3f4cefbd7e045838878d696dc",
+    "numeric_process_count": 33,
+    "old_q0_matches": [],
+    "current_no_live_old_attempt": true,
+    "historical_cleanup_proven": false,
+    "new_write_probe_bytes": 0,
+    "additional_probe_payload_bytes": 0,
+    "new_pde_actions": 0,
+    "evidence_json_written": true,
+    "boot_id": "ad6fc087-25d1-416e-8404-68a48b15039e",
+    "clock_policy": "conservative_realtime_v1",
+    "root_scope_utc_interval_seconds": 1.889869507,
+    "clock_discrepancy_seconds": 4.260002057554502e-06,
+    "clock_tolerance_seconds": 5.0
+  },
+  "host_storage": {
+    "qualification": "host_identity_confirmed_but_space_gate_failed",
+    "wsl_distribution": "Ubuntu-24.04",
+    "linux_root_device_observed": "/dev/sdd",
+    "windows_vhd": {
+      "drive": "C",
+      "base_path": "C:\\Users\\admin\\AppData\\Local\\wsl\\{bb298883-9031-4854-a46f-fe067cfd0cb8}",
+      "vhd_file_name": "ext4.vhdx",
+      "identity_only": true,
+      "size_measurement": "not_measured_as_vhd_file"
+    },
+    "backing_host_volume": {
+      "drive": "C",
+      "size_bytes": 407550365696,
+      "remaining_bytes": 827174912,
+      "health_status": "Healthy",
+      "operational_status": "OK"
+    },
+    "other_host_volume": {
+      "drive": "D",
+      "remaining_bytes": 540298133504,
+      "action": "not_used_or_moved"
+    },
+    "restricted_sandbox_mnt_c_free_bytes": 852455424,
+    "restricted_view_warning": "The sandbox 9p /mnt/c view is not substituted for the host C: backing-volume measurement."
+  },
+  "canonical_registration": {
+    "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/v15_git_registration.json",
+    "sha256": "a4c2a3db99ef1160281a836bd55dc2074d7efc4ce8f57e2c9b673dff702ef776",
+    "canonical_execution_directory": "/home/shenjh/Projects/MyFEniCSx_task37_extra",
+    "canonical_branch": "task39extra",
+    "canonical_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "ordinary_git_verified": true,
+    "split_git_metadata_preserved_in_ignored_backup": true
+  },
+  "ledger": {
+    "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+    "sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+    "bytes": 957,
+    "snapshot_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/old_ledger_snapshot.json",
+    "snapshot_sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+    "snapshot_mode": "0444",
+    "snapshot_read_only": true,
+    "unchanged_from_pre_r0": true,
+    "status": "RESERVED",
+    "active_attempt": 0,
+    "reserved_seconds": 600.0,
+    "elapsed_seconds": 0.0,
+    "actual_old_elapsed_seconds": null,
+    "formal_policy_debit_posted": false,
+    "r1_migration_executed": false,
+    "infrastructure_recovery_count": 0,
+    "infrastructure_recovery_allowance": 1,
+    "new_q0_attempts": 0,
+    "unique_bug_replay_count": 0,
+    "interpretation": "The unchanged RESERVED ledger is an un-settled historical record; its zero elapsed field is not a zero-cost claim."
+  },
+  "budget": {
+    "total_budget_seconds": 43200.0,
+    "old_reservation_policy_responsibility_seconds": 600.0,
+    "old_actual_elapsed_seconds": null,
+    "known_r0_collection_seconds": 2.387310507,
+    "known_r0_collection_definition": "sandbox UTC interval 0.497441 s plus root-scope UTC interval 1.889869507 s; supplemental root scope made no additional probe payload or PDE action, but wrote its evidence JSON",
+    "known_minimum_budget_responsibility_seconds": 602.387310507,
+    "remaining_budget_upper_bound_seconds": 42597.612689493,
+    "unmeasured_save_review_seconds": null,
+    "formal_ledger_debit_seconds": 0.0,
+    "formal_ledger_debit_interpretation": "No ledger mutation occurred; zero here means no posted debit, not zero actual cost.",
+    "launch_permission": "none",
+    "reservation_refund": "not_performed"
+  },
+  "stage_decision": {
+    "Q0_CORE": "not_run_by_infrastructure_gate",
+    "Q1_FULL_DIRECT": "not_run_by_infrastructure_gate",
+    "Q2_SCHUR_DIRECT": "not_run_by_infrastructure_gate",
+    "Q3_INTERFACE_CONTROL": "not_run_by_infrastructure_gate",
+    "Q4_ORIGINAL": "not_run_by_infrastructure_gate",
+    "Q5_NOTCH": "not_run_by_infrastructure_gate",
+    "Q6_FINALIZE": "not_run_by_infrastructure_gate",
+    "v14_partial_q0_preserved": true,
+    "r1_unexecuted_draft": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r1_unexecuted_draft/"
+  },
+  "scientific_answers": {
+    "accurate_schur_memory": "inconclusive_q1_q2_not_run",
+    "interface_approximate_inverse": "not_qualified_no_three_rhs_or_p6_admission",
+    "next_method": "no_new_method; user handles host storage; review V15 admission on later instruction under the original V14 contract and unused recovery allowance",
+    "algorithm_failure": false,
+    "official_physics": "not_run",
+    "full_p6_original_notch": "not_run_this_review"
+  },
+  "decision": {
+    "classification": "INFRASTRUCTURE_BLOCKED",
+    "blocking_gate": "The C: backing host volume for the Ubuntu WSL VHD has 827174912 B remaining; that persistent storage risk is not compatible with R1 ledger migration and formal PDE continuation.",
+    "do_not_infer": [
+      "The R0 write probe passing in its restricted view does not prove host-wide storage safety.",
+      "No old Q0 match in the current host process view does not prove historical cleanup.",
+      "No Q1/Q2 result is not evidence that accurate Schur is better or worse.",
+      "The observed journal/orphan messages do not establish the old EIO root cause."
+    ],
+    "next_action": "Host storage is for user/system administration; stop and await unified review. On later instruction, recheck V15 admission under the original V14 contract and unused recovery allowance; do not use D: or modify the VHD as part of this task."
+  },
+  "validation": {
+    "source_base": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "final_source_input_solver_changes": false,
+    "old_numerical_json_fields_unchanged": true,
+    "old_ledger_hash_unchanged": true,
+    "documentation_tests": [
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/documentation_tests.log",
+        "sha256": "6de8f653cf0c532273df70747e7087d29888c881fc218b02da2f52cfd02d4cf9",
+        "raw_output": "....................                                                     [100%]\n20 passed in 0.06s"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/documentation_tests_final.log",
+        "sha256": "88d00f8cc25efd895f76b07d9fb811f1782b4872206c18eea2a70638637b1c0a",
+        "raw_output": "....................                                                     [100%]\n20 passed in 0.05s"
+      }
+    ],
+    "documentation_abi": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/documentation_abi.log",
+      "sha256": "42959b0d842c7d0d472e0cf998cd8f30452975ec31c309544034b30c1b19b9ba",
+      "record": {
+        "python": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+        "scalar": "complex128",
+        "integer": "int32",
+        "threads": {
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1",
+          "NUMEXPR_NUM_THREADS": "1"
+        },
+        "modules": {
+          "petsc4py": {
+            "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+            "version": "3.19.6"
+          },
+          "slepc4py": {
+            "path": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+            "version": "3.19.2"
+          },
+          "dolfinx": {
+            "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+            "version": "0.10.0.post2"
+          },
+          "mpi4py": {
+            "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+            "version": "3.1.5"
+          },
+          "basix": {
+            "path": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "version": "0.10.0"
+          }
+        }
+      }
+    },
+    "new_markdown_links_checked": 19,
+    "added_table_column_counts": "PASS",
+    "github_rendered_view": "not_verified",
+    "new_formal_workers": 0,
+    "reviewer_check_correction": "Initial comparison rejected the intentionally updated run_index scope text; numerical fields were unchanged. The corrected check allows only scope/current-review metadata changes."
+  }
+}

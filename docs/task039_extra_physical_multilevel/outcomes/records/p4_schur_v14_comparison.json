@@ -1,8 +1,11 @@
 {
   "schema": "task039extra.v14.p4-schur-comparison.v1",
   "review": "review_v14",
-  "scope": "Q1 full-direct versus Q2 Schur-direct; comparison requires both complete workflows",
+  "scope": "V14 Q1 full-direct versus Q2 Schur-direct audit plus V15 infrastructure gate; comparison still requires both complete workflows",
   "status": "COMPARISON_INCONCLUSIVE_Q1_Q2_NOT_AVAILABLE",
+  "current_review": "review_v15",
+  "current_review_status": "INFRASTRUCTURE_BLOCKED",
+  "current_review_evidence": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
   "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
   "model_identity": {
     "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
@@ -84,5 +87,45 @@
     "not_used_as_q1_or_q2": true,
     "evidence": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json#/stages/Q0_CORE"
   },
-  "next": "Keep Q3-Q6 pending; do not close the review or infer the accurate-Schur memory answer from the Q0 prefix"
+  "next": "Keep Q3-Q6 pending; do not close the review or infer the accurate-Schur memory answer from the Q0 prefix",
+  "review_v15_infrastructure_gate": {
+    "status": "INFRASTRUCTURE_BLOCKED",
+    "reviewed_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "r0_report": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r0_report.json",
+    "r0_report_sha256": "d61561d645073565db1206bbdacd74faf66007c55e26fb2201e2ee793dd2da5f",
+    "root_scope_verification": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/root_scope_verification.json",
+    "root_scope_verification_sha256": "0485560050ed880dca11a87fda4d853f3db1ecc3f4cefbd7e045838878d696dc",
+    "host_storage": {
+      "wsl_distribution": "Ubuntu-24.04",
+      "wsl_vhd_identity": {
+        "host_volume": "C:",
+        "vhd_file": "C:\\Users\\admin\\AppData\\Local\\wsl\\{bb298883-9031-4854-a46f-fe067cfd0cb8}\\ext4.vhdx",
+        "size_measurement": "not_measured_as_vhd_file"
+      },
+      "backing_host_volume": {
+        "host_volume": "C:",
+        "size_bytes": 407550365696,
+        "remaining_bytes": 827174912,
+        "health_status": "Healthy",
+        "operational_status": "OK"
+      },
+      "d_volume_not_used_or_moved": true
+    },
+    "process_scope": {
+      "numeric_process_count": 33,
+      "old_q0_matches": [],
+      "current_no_live_old_attempt": true,
+      "historical_cleanup_proven": false
+    },
+    "q1_q2_comparison": "not_run_by_infrastructure_gate",
+    "official_physics": "not_run",
+    "full_p6_original_notch": "not_run_this_review",
+    "ledger_unchanged": true,
+    "migration_executed": false,
+    "root_scope_additional_probe_payload_bytes": 0,
+    "root_scope_additional_pde_actions": 0,
+    "root_scope_evidence_json_written": true,
+    "journal_coverage_gap": "The saved old-window journal query has no explicit UTC basis and cannot prove coverage of the 2026-09-12T12:35Z fault window.",
+    "next": "Host storage is for user/system administration; stop and await unified review. On later instruction, recheck V15 admission under the original V14 contract and unused recovery allowance; this gate is not an algorithm result."
+  }
 }

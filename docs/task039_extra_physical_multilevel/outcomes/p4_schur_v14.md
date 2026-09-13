@@ -1,3 +1,20 @@
+# Task39extra Review V15 增量：R0 宿主存储 Gate
+
+本次增量的最终状态为 **`INFRASTRUCTURE_BLOCKED`**，不是算法失败。R0 在受限 sandbox 视图中完成了两个父目录、四轮共 `16777216 B` 的原子写入/重开哈希/目录 `fsync`/自身清理探针；但宿主范围核验确认承载 Ubuntu-24.04 WSL VHD 的 Windows `C:` NTFS 卷只剩 `827174912 B`。健康状态 `Healthy/OK` 不消除这个持续性空间风险，因此没有进行 R1 账本迁移、恢复 Q0 或任何正式 PDE。
+
+| V15 项目 | 结果 | 解释 |
+|---|---|---|
+| 宿主身份 | Ubuntu-24.04 → `C:\Users\admin\AppData\Local\wsl\{bb298883-9031-4854-a46f-fe067cfd0cb8}\ext4.vhdx` | 路径是 VHD 身份；`407550365696/827174912 B` 是承载它的 C: 宿主卷容量/余量，不是 VHD 文件大小 |
+| 当前旧 Q0 进程 | `old_q0_matches=[]`；33 个数值进程条目 | 当前未发现旧 Q0 活跃匹配；`historical_cleanup_proven=false`，不证明历史清场 |
+| ledger | SHA `b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0`，前后不变 | snapshot 为 `old_ledger_snapshot.json`、mode `0444`；`RESERVED/active_attempt=0` 仍是未结算状态 |
+| R1 / new Q0 | `not_run` / `0` | 没有正式政策扣账、没有新的 Q0、没有新的 PDE |
+| 已知基础设施收集时间 | `2.387310507 s` | sandbox UTC 区间 `0.497441 s` 加宿主只读 UTC 区间 `1.889869507 s`；不是正式 PDE 费用 |
+| 历史日志边界 | `incomplete` | 旧窗口命令没有明确 UTC 基准，不能证明覆盖 `2026-09-12T12:35Z` 故障窗口；journal/orphan 行不证明 EIO 根因 |
+
+Review V15 规定的旧 `600 s` 只作为不返还的政策预算责任，本轮未写入真实 ledger；旧实际耗时仍 `unknown`。因此已知最低责任为 `602.387310507 s`，剩余只能写成 `42597.612689493 s` 上界，不能作为启动许可。Q0–Q6 均为 `not_run_by_infrastructure_gate`；V14 的 partial setup、parent `EIO`、缺失终态和 Q1/Q2 不可用记录保持原判定。
+
+完整状态、原始报告和所有 hash 见 [response_v16](../response_v16.md) 与 [V15 I/O compact](records/v14_io_recovery_v15.json)。本页以下的 V14 内容是历史证据，不被本增量覆盖。
+
 # Task39extra Review V14：Q0–Q2阶段证据
 
 本页只登记现有运行目录和审计结果，不把未完成的 Q0 变成通过，也不把 Q1/Q2 缺失写成数值失败。Q0–Q2 的机器记录见 [compact](records/p4_schur_v14_compact.json) 和 [comparison](records/p4_schur_v14_comparison.json)。Q3–Q6 仍是待继续的工作，不在本页提前结项。

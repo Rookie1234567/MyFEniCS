@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V13 authorized 512 MiB three-input continuation; all prior V5-V13 success, negative and stopped histories retained; no new official p6 outputs",
+  "scope": "V15 infrastructure-gate continuation of the V14 Q0-Q2 audit; all prior V5-V14 success, negative and stopped histories retained; no new official p6 outputs",
   "units": {
     "time": "s",
     "memory": "B"
@@ -2019,5 +2019,87 @@
     "formal_status": "Q0 partial EIO; Q1/Q2 completed results unavailable; Q3-Q6 not formally completed",
     "qualification": "engineering_tests_only; no effective-PC or complete-p6 claim",
     "push_status": "remote_confirmed_through_9512bbd687ed9bd795611a68deba1cd48fc0cebf"
+  },
+  "review_v15_infrastructure_gate": {
+    "id": "V15_R0_infrastructure_host_storage_gate",
+    "source_sha": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "category": "measured_infrastructure_gate",
+    "raw_root": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z",
+    "status": "INFRASTRUCTURE_BLOCKED",
+    "semantic_classification": "WSL_VHD_HOST_STORAGE_RISK_BEFORE_R1",
+    "r0_report_sha256": "d61561d645073565db1206bbdacd74faf66007c55e26fb2201e2ee793dd2da5f",
+    "root_scope_verification_sha256": "0485560050ed880dca11a87fda4d853f3db1ecc3f4cefbd7e045838878d696dc",
+    "canonical_registration_sha256": "a4c2a3db99ef1160281a836bd55dc2074d7efc4ce8f57e2c9b673dff702ef776",
+    "r0_probe_elapsed_seconds": 0.497437906,
+    "r0_probe_utc_interval_seconds": 0.497441,
+    "root_scope_read_only_seconds": 1.889869507,
+    "known_collection_seconds": 2.387310507,
+    "collection_time_policy": "conservative sum of the two UTC intervals; supplemental root scope made no additional probe payload or PDE action, but wrote its evidence JSON",
+    "write_probe_payload_bytes": 16777216,
+    "write_probe_rounds": 4,
+    "write_probe_status": "PASS_WITHIN_RESTRICTED_SANDBOX_VIEW",
+    "sandbox_process_scan_status": "restricted_view_only",
+    "root_scope_additional_probe_payload_bytes": 0,
+    "root_scope_additional_pde_actions": 0,
+    "root_scope_evidence_json_written": true,
+    "old_q0_host_scope_matches": [],
+    "historical_cleanup_proven": false,
+    "wsl_vhd_identity": {
+      "drive": "C",
+      "base_path": "C:\\Users\\admin\\AppData\\Local\\wsl\\{bb298883-9031-4854-a46f-fe067cfd0cb8}",
+      "vhd_file_name": "ext4.vhdx",
+      "size_measurement": "not_measured_as_vhd_file"
+    },
+    "backing_host_volume": {
+      "drive": "C",
+      "size_bytes": 407550365696,
+      "remaining_bytes": 827174912,
+      "health_status": "Healthy",
+      "operational_status": "OK"
+    },
+    "other_host_volume": {
+      "drive": "D",
+      "remaining_bytes": 540298133504,
+      "action": "not_used_or_moved"
+    },
+    "ledger": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+      "sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+      "snapshot_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/old_ledger_snapshot.json",
+      "snapshot_sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+      "snapshot_mode": "0444",
+      "snapshot_read_only": true,
+      "unchanged": true,
+      "status": "RESERVED",
+      "active_attempt": 0,
+      "actual_old_elapsed_seconds": null,
+      "formal_policy_debit_posted": false,
+      "infrastructure_recovery_count": 0,
+      "infrastructure_recovery_allowance": 1,
+      "new_q0_attempts": 0,
+      "unique_bug_replay_count": 0
+    },
+    "journal_coverage_gap": "Saved old-window journal query has no explicit UTC basis and cannot prove coverage of the 2026-09-12T12:35Z fault window.",
+    "budget": {
+      "total_budget_seconds": 43200.0,
+      "policy_responsibility_seconds": 600.0,
+      "known_minimum_budget_responsibility_seconds": 602.387310507,
+      "remaining_budget_upper_bound_seconds": 42597.612689493,
+      "unmeasured_save_review_seconds": null,
+      "launch_permission": "none"
+    },
+    "official_results": "not_run",
+    "stage_status": {
+      "Q0_CORE": "not_run_by_infrastructure_gate",
+      "Q1_FULL_DIRECT": "not_run_by_infrastructure_gate",
+      "Q2_SCHUR_DIRECT": "not_run_by_infrastructure_gate",
+      "Q3_INTERFACE_CONTROL": "not_run_by_infrastructure_gate",
+      "Q4_ORIGINAL": "not_run_by_infrastructure_gate",
+      "Q5_NOTCH": "not_run_by_infrastructure_gate",
+      "Q6_FINALIZE": "not_run_by_infrastructure_gate"
+    },
+    "next": "Host storage is for user/system administration; stop and await unified review. On later instruction, recheck V15 admission under the original V14 contract and unused recovery allowance; do not infer algorithm failure.",
+    "compact_path": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
+    "compact_sha256": "c46f6dc3f3154366ed85acf337e54b8ba6ccc457e63f9487fd8c72fbd89f8f85"
   }
 }

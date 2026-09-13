@@ -1,3 +1,40 @@
+# Task39extra Review V15 当前收口：宿主存储 Gate 阻断
+
+本节是当前状态入口，覆盖 Review V15 的 R0 基础设施恢复检查。R0 用小型临时文件验证独占创建、哈希回读、同目录原子发布和目录持久化；它不能证明重型 PDE 的可用空间或旧故障的唯一根因。本轮最终分类为 **`INFRASTRUCTURE_BLOCKED`**：宿主范围核验显示 Ubuntu-24.04 WSL VHD 位于 Windows `C:` 宿主卷，而该卷只剩 `827174912 B`。健康状态为 `Healthy/OK`，但空间风险足以阻止 R1 账本迁移和正式计算。
+
+| 评审轴 | 当前结果 | 证据与边界 |
+|---|---|---|
+| source / 工作树 | `9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77` / `task39extra` | canonical linked worktree 已登记；本轮没有源码数值改动 |
+| 模型身份 | 13.5 nm、p6/h10、Full3D、80 DtN modes、MPI1、complex128/int32 | 沿用 V14 physical/mode identity；没有新 p/h、Hybrid、M 或 MPI 结果 |
+| R0 写入探针 | `PASS_WITHIN_RESTRICTED_SANDBOX_VIEW` | ledger/results 各两轮、每轮 `4194304 B`，共 `16777216 B`；hash、rename、fsync、清理均通过，但 sandbox PID/`/mnt/c` 视图不代表宿主全局 |
+| 宿主范围核验 | `BLOCKED` | 33 个进程 PID 条目中 `old_q0_matches=[]`；当前无旧 Q0 匹配，但 `historical_cleanup_proven=false` |
+| 承载卷 | C: NTFS，`407550365696 B` 总容量，`827174912 B` 剩余，`Healthy/OK` | Ubuntu-24.04 注册路径为 `C:\Users\admin\AppData\Local\wsl\{bb298883-9031-4854-a46f-fe067cfd0cb8}\ext4.vhdx`；上述容量/余量属于承载卷，不是 VHD 文件大小 |
+| D: 卷 | `540298133504 B` 剩余 | 本轮没有使用、搬移或改变 D: |
+| V14 formal Q0 | `partial_observation` 保留 | 最后可靠阶段仍为 `setup`；parent `EIO`、缺失 worker 终态和 373 个有效 watchdog 前缀不改判为 solver pass |
+| V15 R1 / PDE | `not_run` | 没有 ledger migration、新 Q0、Q1/Q2、Q3–Q6 或 official p6 output |
+
+## 本轮预算与科学结论
+
+| 项目 | 数值/状态 | 口径 |
+|---|---:|---|
+| 总预算 | `43200 s` | V14 总批次上限不变 |
+| 旧 Q0 实际耗时 | `unknown` | 原 ledger `elapsed_seconds=0.0` 是未结算字段，不是零耗时；不能写成 `600 s` 实测 |
+| 旧预留的政策责任 | `600 s` | 不返还责任；本轮未正式写入真实 ledger |
+| R0 已知收集时间 | `2.387310507 s` | sandbox UTC `0.497441 s` + 宿主只读 UTC `1.889869507 s`；属于应计原总预算的准入费用，尚未写入 ledger |
+| 已知最低预算责任 | `602.387310507 s` | `600 + 2.387310507`；未测保存/审核时间仍 unknown |
+| 剩余预算上界 | `42597.612689493 s` | 只是上界，不是继续运行许可 |
+| 真实 ledger | `RESERVED`, `active_attempt=0`，SHA 前后均为 `b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0` | `old_ledger_snapshot.json` mode `0444`；formal policy debit、R1 migration 均 false |
+
+准确 Schur 的内存问题仍为 `inconclusive`，因为 Q1 全局直接法和 Q2 准确 Schur 没有配对完成；唯一接口近似逆仍 `not_qualified`，因为没有三 RHS/p6 admission；下一方法不变，先处理宿主存储并按后续指令复核 V15 准入。这个停止是基础设施边界，不是算法失败。
+
+历史正式模型的统一 R/T/A、`A_volume`、衍射、DoF/NNZ、峰值内存和分阶段时间仍见下方 V14/V13/V12 表；本轮没有产生新的 R/T/A 或 `A_volume`。Full3D/Hybrid、p/h、M 和 MPI 的历史结果不得被本轮 `not_run` 状态替代，也不得用历史数值填充本轮 Q1/Q2。
+
+## 证据入口
+
+完整逐项回应见 [response_v16](../response_v16.md)；机器记录见 [V15 I/O compact](records/v14_io_recovery_v15.json)、[V14 compact](records/p4_schur_v14_compact.json)、[comparison](records/p4_schur_v14_comparison.json) 和 [run index](records/run_index.json)。原始 R0 报告 SHA 为 `d61561d645073565db1206bbdacd74faf66007c55e26fb2201e2ee793dd2da5f`；宿主范围 JSON SHA 为 `0485560050ed880dca11a87fda4d853f3db1ecc3f4cefbd7e045838878d696dc`。旧窗口 journal 命令没有明确 UTC 基准，不能证明覆盖 `2026-09-12T12:35Z` 故障窗口；保存的 orphan/recovery/journal 行不证明 EIO 根因。
+
+本轮新增内容只属于 compact evidence/docs。未执行的 R1 草稿、ignored raw、大型 field/matrix/factor/timeline、原 ledger 和任何凭据均不进入 Git 或 master；合入边界见 [V14 selective manifest](selective_merge_manifest_v14.md)。
+
 # Task39extra Review V14 当前阶段：Q0部分证据，Q1/Q2待可用记录
 
 | 阶段 | 当前状态 | 证据边界 |

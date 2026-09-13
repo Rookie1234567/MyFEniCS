@@ -1,3 +1,13 @@
+# Task39extra Review V15 基础设施 Gate 登记
+
+| Model ID | 来源/配置 | 结果 | 状态与边界 |
+|---|---|---|---|
+| `task39extra_v15_infrastructure_gate` | reviewed HEAD `9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77`；Ubuntu-24.04、13.5 nm、p6/h10、Full3D、MPI1、complex128/int32；原中断 Q0 source `efea244159d63a7c9db67ca091e29a9c19f9ce88` | R0 受限 I/O probe：4 轮、总 `16777216 B`，原子发布/hash/fsync/清理通过；宿主范围确认 C: 承载卷余量 `827174912 B`；没有 R1/Q0/PDE | `INFRASTRUCTURE_BLOCKED`；不代表算法失败、Schur 优劣或接口近似逆资格；full p6 original/notch、R/T/A、`A_volume`、衍射和守恒均 `not_run`；ordinary default 不变；[V15 compact](task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json)、[response](task039_extra_physical_multilevel/response_v16.md) |
+
+该登记把 VHD 路径与承载卷容量分开：`C:\Users\admin\AppData\Local\wsl\{bb298883-9031-4854-a46f-fe067cfd0cb8}\ext4.vhdx` 是 WSL VHD 身份，`407550365696/827174912 B` 是 C: 宿主卷的容量/余量，不是 VHD 文件大小。宿主范围发现当前没有旧 Q0 匹配，但历史清场未被证明；旧 ledger 和 `0444` snapshot 未改变。R1 草稿未执行，不登记为模型实现或测试通过。
+
+---
+
 # Task39extra Review V14 阶段模型登记
 
 | Model ID | 来源/配置 | 实测结果 | 边界与证据 |

@@ -1,8 +1,11 @@
 {
   "schema": "task039extra.v14.p4-schur-compact.v1",
   "review": "review_v14",
-  "scope": "Q0-Q2 existing-evidence audit; no PDE replay and no budget repair",
+  "scope": "V14 Q0-Q2 existing-evidence audit plus V15 R0 infrastructure gate; no PDE replay, R1 migration, or budget repair",
   "status": "Q0_PARTIAL_Q1_Q2_NOT_AVAILABLE",
+  "current_review": "review_v15",
+  "current_review_status": "INFRASTRUCTURE_BLOCKED",
+  "current_review_evidence": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
   "source_identity": {
     "branch": "task39extra",
     "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
@@ -297,5 +300,90 @@
       "the known direct error is parent I/O; the missing terminal record leaves the final numerical/resource classification not_available",
       "Q1/Q2 absence is not evidence that accurate Schur is worse or better"
     ]
+  },
+  "review_v15_infrastructure_recovery": {
+    "status": "INFRASTRUCTURE_BLOCKED",
+    "response": "docs/task039_extra_physical_multilevel/response_v16.md",
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
+    "reviewed_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "interrupted_q0_source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+    "r0_report_sha256": "d61561d645073565db1206bbdacd74faf66007c55e26fb2201e2ee793dd2da5f",
+    "root_scope_verification_sha256": "0485560050ed880dca11a87fda4d853f3db1ecc3f4cefbd7e045838878d696dc",
+    "canonical_registration_sha256": "a4c2a3db99ef1160281a836bd55dc2074d7efc4ce8f57e2c9b673dff702ef776",
+    "host_storage_gate": {
+      "wsl_distribution": "Ubuntu-24.04",
+      "wsl_vhd_identity": {
+        "host_volume": "C:",
+        "vhd_file": "C:\\Users\\admin\\AppData\\Local\\wsl\\{bb298883-9031-4854-a46f-fe067cfd0cb8}\\ext4.vhdx",
+        "size_measurement": "not_measured_as_vhd_file"
+      },
+      "backing_host_volume": {
+        "host_volume": "C:",
+        "size_bytes": 407550365696,
+        "remaining_bytes": 827174912,
+        "health_status": "Healthy",
+        "operational_status": "OK"
+      },
+      "d_volume_not_used_or_moved": true
+    },
+    "process_scope": {
+      "numeric_process_count": 33,
+      "old_q0_matches": [],
+      "current_no_live_old_attempt": true,
+      "historical_cleanup_proven": false
+    },
+    "r0_write_probe": {
+      "total_rounds": 4,
+      "payload_bytes": 16777216,
+      "all_hash_rename_fsync_cleanup_checks_passed": true,
+      "formal_ledger_mutation": false,
+      "sandbox_scope_restricted": true,
+      "root_scope_additional_probe_payload_bytes": 0,
+      "root_scope_additional_pde_actions": 0,
+      "root_scope_evidence_json_written": true
+    },
+    "ledger": {
+      "sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+      "snapshot_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/old_ledger_snapshot.json",
+      "snapshot_sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+      "snapshot_mode": "0444",
+      "snapshot_read_only": true,
+      "unchanged": true,
+      "status": "RESERVED",
+      "active_attempt": 0,
+      "actual_old_elapsed_seconds": null,
+      "formal_policy_debit_posted": false,
+      "infrastructure_recovery_count": 0,
+      "infrastructure_recovery_allowance": 1,
+      "new_q0_attempts": 0,
+      "unique_bug_replay_count": 0
+    },
+    "budget": {
+      "total_seconds": 43200.0,
+      "policy_responsibility_seconds": 600.0,
+      "known_r0_collection_seconds": 2.387310507,
+      "known_minimum_responsibility_seconds": 602.387310507,
+      "remaining_upper_bound_seconds": 42597.612689493,
+      "unmeasured_save_review_seconds": null,
+      "launch_permission": "none"
+    },
+    "stage_status": {
+      "Q0_CORE": "not_run_by_infrastructure_gate",
+      "Q1_FULL_DIRECT": "not_run_by_infrastructure_gate",
+      "Q2_SCHUR_DIRECT": "not_run_by_infrastructure_gate",
+      "Q3_INTERFACE_CONTROL": "not_run_by_infrastructure_gate",
+      "Q4_ORIGINAL": "not_run_by_infrastructure_gate",
+      "Q5_NOTCH": "not_run_by_infrastructure_gate",
+      "Q6_FINALIZE": "not_run_by_infrastructure_gate"
+    },
+    "scientific_answers": {
+      "accurate_schur_memory": "inconclusive",
+      "interface_approximate_inverse": "not_qualified",
+      "next_method": "no_new_method; user handles host storage; review V15 admission on later instruction under the original V14 contract and unused recovery allowance",
+      "not_algorithm_failure": true,
+      "full_p6_original_notch": "not_run_this_review"
+    },
+    "journal_coverage_gap": "The saved old-window journal query has no explicit UTC basis and cannot prove coverage of the 2026-09-12T12:35Z fault window; preserved in v14_io_recovery_v15.json.",
+    "unexecuted_r1_draft": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r1_unexecuted_draft/"
   }
 }

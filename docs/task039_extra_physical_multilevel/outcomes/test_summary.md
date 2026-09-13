@@ -1,3 +1,22 @@
+# Review V15 宿主存储 Gate：测试与核验边界
+
+| 检查 | 结果 | 口径/限制 |
+|---|---|---|
+| R0 原子 I/O 探针 | `all_probe_checks_passed` | ledger/results 各两轮、每轮 `4194304 B`，共 `16777216 B`；独占创建、文件/目录 fsync、重开 hash、rename 和自身清理均通过；这是受限 sandbox 视图，不是宿主存储资格 |
+| 宿主范围补充核验 | `INFRASTRUCTURE_BLOCKED` | 只读确认 Ubuntu-24.04 的 C: 承载卷余量 `827174912 B`；没有新增 probe payload 或 PDE action，但写入了本核验 JSON；`old_q0_matches=[]` 不等于历史清场已证明 |
+| 旧 ledger / snapshot | `unchanged` | 原 ledger 与 `old_ledger_snapshot.json` SHA 均为 `b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0`；snapshot mode `0444`；没有正式 policy debit 或 R1 migration |
+| 本轮文档 ABI preflight | `PASS` | 沿用既有 qualified activation，complex128/int32、MPI1、线程 1；日志 `documentation_abi.log`，不重新资格化 MUMPS/metric |
+| 本轮文档合同测试 | **20 passed** | `test_26_documentation_contract.py` 和 `test_183_development_model_registry_markdown.py`；原始输出 `documentation_tests.log`，不包含新 PDE |
+| JSON / 证据 hash / diff | `PASS` | 旧数值字段、原账本和源码保持原样；新增记录只保存本轮基础设施停止及未执行范围 |
+| GitHub rendered view | `not_verified` | 不宣称远端公式/表格渲染已通过；JSON、Markdown 合同和本地路径核对不替代这项检查 |
+| V15 R1 / 新 Q0 / Q1–Q6 | `not_run_by_infrastructure_gate` | 没有新 worker、PDE、MPI2/4 或 official result；V14 partial Q0 和 parent EIO 历史保留 |
+| V14 已通过 104/30 工程测试 | `not_rerun` | 复用既有 source-bound evidence；本轮为文档/compact 增量，不把旧测试重写成新测试 |
+| full repository pytest / Ruff / CI | `not_run` | 没有 CI 或全仓通过声明 |
+
+R0 的原始报告、宿主范围 JSON、时间口径、C:/D: 卷身份、历史 UTC journal 覆盖缺口和完整负结果见 [V15 I/O compact](records/v14_io_recovery_v15.json) 与 [response_v16](../response_v16.md)。旧窗口命令没有明确 UTC 基准，不能用其有限输出证明覆盖 `2026-09-12T12:35Z` 故障窗口；orphan/recovery/journal 行也不证明 EIO 根因。R0 已知收集时间 `2.387310507 s` 是应纳入原 43200 秒总预算的基础设施采集费用，本轮尚未写入 ledger；不代表 solver/PDE pass。
+
+本轮文档测试日志与 ABI 日志位于 ignored `benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/`，其 hash 和紧凑结果随 V15 compact 保存。上表检查针对最终文档；未执行的恢复草稿不计为测试通过代码。
+
 # Review V14 工程测试（正式数值任务尚未完成）
 
 | 检查 | 实际结果 | 边界 |

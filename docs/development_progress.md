@@ -1,3 +1,16 @@
+# Task39extra Review V15 当前进展：基础设施 Gate 阻断，未启动恢复运行
+
+| 当前事项 | 结果与边界 |
+|---|---|
+| 最终状态 | `INFRASTRUCTURE_BLOCKED`；不是算法失败，也不是 Q1/Q2 数值负结果 |
+| R0 / 宿主 | 受限 sandbox 的四轮、共 `16777216 B` 原子 I/O 探针通过；宿主范围只读核验确认 Ubuntu-24.04 WSL VHD 位于 C: 承载卷，余量 `827174912 B`，因此停止 |
+| 旧 Q0 进程 | 宿主 33 个进程 PID 条目中 `old_q0_matches=[]`；当前未见旧 Q0 匹配，但 `historical_cleanup_proven=false` |
+| ledger / 预算 | 原 ledger SHA `b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0` 前后不变；旧 `600 s` 只记政策责任、未正式扣账，旧实际耗时 unknown；已知收集时间 `2.387310507 s`，已知最低责任 `602.387310507 s`，不构成启动许可 |
+| R1 / Q0–Q6 | R1 migration、新 Q0、Q1/Q2、接口 admission、original/notch 和 Q6 均 `not_run_by_infrastructure_gate`；V14 partial setup/EIO 证据保留 |
+| 交付边界 | 仅新增 V15 I/O compact 和 docs 增量；不修改源码、不使用 D:、不改 VHD、不合入 master |
+
+证据入口：[response_v16](task039_extra_physical_multilevel/response_v16.md)、[V15 I/O compact](task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。旧窗口 journal 查询没有明确 UTC 基准，不能证明覆盖 `2026-09-12T12:35Z` 故障窗口；保存的 journal/orphan/recovery 行不证明 EIO 根因。宿主存储由用户/系统管理员处理；按后续指令沿用原 V14 合同和未用恢复额度复核 V15 准入，当前停止等待统一审核。
+
 # Task39extra Review V14 阶段进展：Q0 中断证据已整理
 
 | 当前事项 | 结果与边界 |
