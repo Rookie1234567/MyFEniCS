@@ -23,6 +23,7 @@ from typing import Any, Mapping
 import numpy as np
 
 from src.io.physical_intermediate_profile import SCHUR_PROFILE, profile_facts
+from .physical_v14_budget import read_v14_effective_budget
 
 
 _Q1_Q2_RHS = (
@@ -328,6 +329,14 @@ class _V14Runtime:
             raise RuntimeError("V14 parent ledger source SHA differs from worker")
         if attempt.get("status") not in {"RESERVED", "RUNNING"}:
             raise RuntimeError("V14 parent ledger attempt is not live")
+        try:
+            self.shared_budget = read_v14_effective_budget(shared_ledger)
+        except ValueError as exc:
+            raise RuntimeError(f"V14 shared ledger budget is invalid: {exc}") from exc
+        self.shared_attempt = dict(attempt)
+        self.infrastructure_recovery = (
+            attempt.get("recovery_id") == "V15_Q0_EIO_ONCE"
+        )
         workflow_clock_start = attempt.get("workflow_clock_start")
         reserved_seconds = attempt.get("reserved_seconds")
         workflow_clock_source = "parent_attempt.workflow_clock_start"
@@ -6154,6 +6163,15 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
     ledger = json.loads(ledger_data)
     if ledger["batch_identity"] != "review_v14":
         raise ValueError("Q6 requires the unchanged review_v14 ledger")
+    effective_budget = read_v14_effective_budget(ledger)
+    recovery_events = [
+        event for event in ledger.get("infrastructure_recoveries", [])
+        if isinstance(event, Mapping)
+        and event.get("recovery_id") == "V15_Q0_EIO_ONCE"
+        and event.get("actual_elapsed_seconds") is None
+        and event.get("historical_terminal_coverage") == "incomplete"
+    ]
+    historical_unknown_cost = bool(recovery_events)
     stage_names = ("Q0_CORE", "Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT",
                    "Q3_INTERFACE_CONTROL", "Q4_ORIGINAL", "Q5_NOTCH")
     stages = {}
@@ -6168,12 +6186,25 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
         if not attempts:
             item["reason"] = "no_recorded_attempt"
             continue
+        stage_historical_unknown = stage == "Q0_CORE" and historical_unknown_cost
         attempt = attempts[-1]
         directory = Path(attempt["run_directory"])
+        administrative_closed = bool(
+            stage == "Q0_CORE"
+            and stage_historical_unknown
+            and stage_record.get("active_attempt") is None
+            and len(attempts) == 1
+        )
         settled = (stage_record["active_attempt"] is None
-                   and attempt.get("settled_seconds") is not None)
-        item.update(status="settled_attempt" if settled else "unsettled_attempt",
-                    source_sha=attempt["source_sha"], run_directory=str(directory))
+                   and (attempt.get("settled_seconds") is not None or administrative_closed))
+        item.update(status=("administratively_closed" if administrative_closed else
+                            "settled_attempt" if settled else "unsettled_attempt"),
+                    source_sha=attempt["source_sha"], run_directory=str(directory),
+                    historical_unknown_cost=stage_historical_unknown,
+                    historical_terminal_coverage=(
+                        "incomplete" if stage_historical_unknown else "not_applicable"
+                    ),
+                    historical_recovery_events=(recovery_events if stage == "Q0_CORE" else []))
         records = {}
         for name, filename in (
             ("worker", "physical_p4_schur_v14_summary.json"),
@@ -6203,7 +6234,10 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
         }
         item["cost"] = {
             "settled_seconds": attempt.get("settled_seconds"),
+            "actual_elapsed_seconds": attempt.get("actual_elapsed_seconds"),
             "reserved_seconds": attempt["reserved_seconds"],
+            "historical_unknown_cost": stage_historical_unknown,
+            "historical_recovery_events": recovery_events if stage == "Q0_CORE" else [],
             "workflow_clock_interval": parent.get("workflow_clock_interval"),
             "calls": [{"stem": row["stem"], "elapsed_seconds": row["elapsed_seconds"]}
                       for row in worker.get("solve_records", [])],
@@ -6242,8 +6276,12 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
         if stage != "Q0_CORE" and settled:
             item["gate"] = _v14_settled_stage_gate(runtime, stage)
             item["qualified"] = item["gate"]["qualified"]
-        item["reason"] = ("latest_attempt_unsettled" if not settled else
-                          item.get("gate", {}).get("reason", "Q0_recorded_only"))
+        item["reason"] = (
+            "administrative_closure_historical_terminal_coverage_incomplete"
+            if stage_historical_unknown
+            else "latest_attempt_unsettled" if not settled
+            else item.get("gate", {}).get("reason", "Q0_recorded_only")
+        )
         item["measured_candidate_stop"] = bool(
             stage in {"Q3_INTERFACE_CONTROL", "Q4_ORIGINAL", "Q5_NOTCH"}
             and settled and worker.get("source_sha") == attempt["source_sha"]
@@ -6301,6 +6339,12 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
         "result_classification": "FINALIZATION_COMPLETE" if complete else "EVIDENCE_INCOMPLETE",
         "ledger": {"path": str(runtime._ledger_path), "sha256": _sha256_bytes(ledger_data),
                    "recorded_elapsed_seconds": ledger["elapsed_seconds"],
+                   "elapsed_seconds_semantics": effective_budget["elapsed_seconds_semantics"],
+                   "effective_budget": effective_budget,
+                   "historical_unknown_cost": historical_unknown_cost,
+                   "historical_cost_status": (
+                       "UNKNOWN_HISTORICAL_ATTEMPT" if historical_unknown_cost else "KNOWN_OR_NOT_APPLICABLE"
+                   ),
                    "unsettled_cost_is_not_zero": not no_unsettled},
         "answers": {
             "exact_schur_memory": memory_answer,
@@ -6397,6 +6441,13 @@ def run_physical_p4_schur_v14(
             root=root,
             source_sha=source_sha,
         )
+        summary["shared_budget"] = runtime.shared_budget
+        summary["shared_attempt"] = {
+            "attempt_index": runtime._stage_attempt_index,
+            "reserved_seconds": runtime.workflow_reserved_seconds,
+            "recovery_id": runtime.shared_attempt.get("recovery_id"),
+            "infrastructure_recovery": runtime.infrastructure_recovery,
+        }
         for signum in (signal.SIGTERM, signal.SIGINT):
             handlers[signum] = signal.signal(
                 signum, lambda _value, _frame: setattr(runtime, "stop_requested", True)

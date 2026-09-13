@@ -49,6 +49,10 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument('--macro-v11-calibration', action='store_true')
     mode.add_argument('--macro-v12', action='store_true')
     mode.add_argument('--p4-direction-diagnosis', action='store_true')
+    mode.add_argument(
+        '--recover-v15-q0-eio-once', action='store_true',
+        help='apply the one reviewed administrative V15 Q0 recovery; does not run PDE',
+    )
     parser.add_argument(
         '--macro-v12-supplement', action='store_true',
         help='use the independent bounded V12 supplement ledger',
@@ -80,12 +84,27 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument('--profile-r0-reference', type=Path)
     parser.add_argument('--profile-recovery-from', '--profile-cache-recovery-from',
                         dest='profile_recovery_from', type=Path, metavar='FAILED_R0_DIRECTORY')
+    parser.add_argument(
+        '--r0-evidence', type=Path, metavar='ACCEPTED_R0_JSON',
+        help='fixed accepted R0 record required by --recover-v15-q0-eio-once',
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.r0_evidence is not None and not args.recover_v15_q0_eio_once:
+            raise InputError('--r0-evidence requires --recover-v15-q0-eio-once')
+        if args.recover_v15_q0_eio_once:
+            if args.r0_evidence is None:
+                raise InputError('--recover-v15-q0-eio-once requires --r0-evidence')
+            from src.runners.task038_launcher import recover_v15_q0_eio_once
+            result = recover_v15_q0_eio_once(
+                _REPOSITORY_ROOT, r0_evidence=args.r0_evidence,
+            )
+            print(json.dumps(result, sort_keys=True, separators=(',', ':')))
+            return 0
         if args.profile_recovery_from is not None and args.physical_pc_profile is None:
             raise InputError('--profile-recovery-from requires --physical-pc-profile')
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):

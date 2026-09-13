@@ -13,8 +13,10 @@ def _runtime(tmp_path, monkeypatch):
     monkeypatch.setattr(workflow_timebase, 'clock_sample', lambda: {
         'monotonic': now[0], 'boottime': now[0], 'utc_ns': int(now[0]*1e9)})
     ledger = tmp_path/'ledger.json'
-    ledger.write_text(json.dumps({'batch_identity': 'review_v14', 'stages': {
-        'Q4_ORIGINAL': {'attempts': [{
+    ledger.write_text(json.dumps({'batch_identity': 'review_v14',
+        'total_budget_seconds': 43200., 'elapsed_seconds': 0.,
+        'stages': {
+        'Q4_ORIGINAL': {'active_attempt': 0, 'attempts': [{
             'source_sha': 'a'*40, 'status': 'RESERVED',
             'workflow_clock_start': workflow_timebase.clock_sample(),
             'reserved_seconds': 14400.,

@@ -9,6 +9,7 @@ import platform
 import subprocess
 import sys
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -28,6 +29,7 @@ from src.io.execution_plan import (
 from src.io.input_loader import InputError
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
+from .physical_v14_budget import read_v14_effective_budget
 
 
 PopenFactory = Callable[..., Any]
@@ -113,15 +115,72 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
 
 
 V14_SHARED_WORKFLOW_SECONDS = 43_200.0
+V15_Q0_EIO_RECOVERY_ID = "V15_Q0_EIO_ONCE"
+V15_Q0_EIO_SOURCE_SHA = "efea244159d63a7c9db67ca091e29a9c19f9ce88"
+V15_R0_SOURCE_SHA = "665a09b6a7d66eff15b4a744036d21f1dad3649d"
+V15_Q0_EIO_RUN_DIRECTORY = (
+    "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/"
+    "task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260912T123558.964217Z"
+)
+V15_Q0_EIO_ORIGINAL_LEDGER_SHA256 = (
+    "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0"
+)
+V15_Q0_EIO_OBSERVED_LOWER_BOUND_SECONDS = 104.12926405597166
+V15_Q0_EIO_POLICY_DEBIT_SECONDS = 600.0
+V15_Q0_EIO_ACCOUNTING_BASIS = "ORIGINAL_RESERVATION_NOT_REFUNDED"
+V15_R0_PRIOR_COLLECTION_SECONDS = 2.387310507
+V15_R0_CURRENT_RAW_COLLECTION_SECONDS = 2.298935873001028
+V15_R0_CURRENT_KERNEL_COLLECTION_SECONDS = 0.12797381699783728
+V15_R0_DERIVED_UPPER_SECONDS = 3.1
+V15_R0_MEASURED_COLLECTION_SECONDS = (
+    V15_R0_PRIOR_COLLECTION_SECONDS
+    + V15_R0_CURRENT_RAW_COLLECTION_SECONDS
+    + V15_R0_CURRENT_KERNEL_COLLECTION_SECONDS
+)
+V15_R0_TOTAL_COLLECTION_SECONDS = (
+    V15_R0_MEASURED_COLLECTION_SECONDS + V15_R0_DERIVED_UPPER_SECONDS
+)
+V15_R0_ACCEPTED_SCHEMA = "task039extra.review_v15.r0_recheck.accepted.v1"
+V15_R0_ACCEPTED_SHA256 = (
+    "ac5dc36921c33bee4da3fb490249066fb870e308d7d595975a93a5a14a4e76ba"
+)
+V15_R0_RAW_REPORT_SHA256 = (
+    "8a12a75e607480ebc4ce8f1ac121789897af664abe915d2a8c18597d9aa83652"
+)
+V15_R0_KERNEL_SHA256 = (
+    "cc8d75087e02713e668162fa484fc493919728a004278fa9fe50254621fbaff1"
+)
+
+
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(str(path), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _write_atomic_bytes(path: Path, payload: bytes) -> None:
+    """Publish a small evidence/ledger file with fsync and an atomic rename."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp")
+    try:
+        with temporary.open("xb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        _fsync_directory(path.parent)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def _write_v14_ledger(path: Path, ledger: dict[str, Any]) -> None:
-    temporary = path.with_suffix('.json.tmp')
-    with temporary.open('wb') as stream:
-        stream.write(canonical_json_bytes(ledger) + b'\n')
-        stream.flush()
-        os.fsync(stream.fileno())
-    os.replace(temporary, path)
+    _write_atomic_bytes(path, canonical_json_bytes(ledger) + b"\n")
 
 
 def _v14_shared_ledger_path(repo_root: Path) -> Path:
@@ -134,6 +193,407 @@ def _v14_shared_ledger_path(repo_root: Path) -> Path:
         / "review_v14"
         / "shared_workflow_ledger.json"
     )
+
+
+def _v15_review_root(repo_root: Path) -> Path:
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "p4_schur_v14"
+        / "review_v15"
+    )
+
+
+def _v15_path_under(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _v15_q0_live_processes(run_directory: Path) -> list[dict[str, Any]]:
+    """Find a process whose command or real cwd still owns the old Q0 run."""
+
+    matches: list[dict[str, Any]] = []
+    run_text = str(run_directory)
+    try:
+        boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+    except OSError:
+        boot_id = "unreadable"
+    for proc_path in Path("/proc").glob("[0-9]*"):
+        try:
+            command = (
+                proc_path.joinpath("cmdline")
+                .read_bytes()
+                .replace(b"\0", b" ")
+                .decode(errors="replace")
+                .strip()
+            )
+            cwd = os.readlink(proc_path / "cwd")
+        except OSError:
+            continue
+        if run_text not in command and not (
+            cwd == run_text or cwd.startswith(run_text + os.sep)
+        ):
+            continue
+        record: dict[str, Any] = {
+            "pid": int(proc_path.name),
+            "cmdline": command,
+            "cwd": cwd,
+            "boot_id": boot_id,
+        }
+        try:
+            stat_text = (proc_path / "stat").read_text(errors="replace")
+            closing = stat_text.rfind(")")
+            fields = stat_text[closing + 2 :].split()
+            record["ppid"] = int(fields[1])
+            record["state"] = fields[0]
+            record["start_ticks"] = int(fields[19])
+        except (OSError, IndexError, ValueError):
+            record["start_identity_error"] = "unreadable_or_invalid_proc_stat"
+        matches.append(record)
+    return matches
+
+
+def _v15_r0_evidence(
+    evidence: str | Path,
+    *,
+    repo_root: Path,
+    expected_ledger_sha256: str,
+) -> dict[str, Any]:
+    """Validate the reviewed post-cleanup record and its on-disk bindings."""
+
+    if not isinstance(evidence, (str, Path)):
+        raise InputError("V15 R0 evidence must be the fixed JSON path")
+    evidence_path = Path(evidence)
+    if not evidence_path.is_absolute():
+        evidence_path = repo_root / evidence_path
+    evidence_path = evidence_path.resolve()
+    if (
+        evidence_path.name != "r0_recheck_accepted.json"
+        or not evidence_path.parent.name.startswith("r0_recheck_")
+        or not _v15_path_under(evidence_path, _v15_review_root(repo_root))
+    ):
+        raise InputError("V15 R1 requires the fixed accepted R0 evidence path")
+    try:
+        evidence_bytes = evidence_path.read_bytes()
+        data = json.loads(evidence_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V15 accepted R0 evidence cannot be read") from exc
+    evidence_sha256 = hashlib.sha256(evidence_bytes).hexdigest()
+    if evidence_sha256 != V15_R0_ACCEPTED_SHA256 or not isinstance(data, Mapping):
+        raise InputError("V15 accepted R0 evidence file is not the reviewed record")
+    if data.get("schema") != V15_R0_ACCEPTED_SCHEMA or data.get("status") != "R0_PASS":
+        raise InputError("V15 R0 evidence is not accepted as R0_PASS v1")
+    gates = data.get("gates")
+    if not isinstance(gates, Mapping) or any(
+        gates.get(key) is not True
+        for key in ("process_absence", "io_probe", "ledger_identity", "host_storage", "abi", "mounts_and_space")
+    ):
+        raise InputError("V15 R0 evidence does not contain all passing admission gates")
+    source = data.get("source")
+    if (
+        not isinstance(source, Mapping)
+        or source.get("branch") != "task39extra"
+        or source.get("head") != V15_R0_SOURCE_SHA
+        or source.get("status_porcelain") != ""
+    ):
+        raise InputError("V15 R0 evidence source identity is not the reviewed clean source")
+    ledger = data.get("ledger")
+    if (
+        not isinstance(ledger, Mapping)
+        or ledger.get("sha256_before") != expected_ledger_sha256
+        or ledger.get("sha256_after") != expected_ledger_sha256
+        or ledger.get("unchanged") is not True
+        or ledger.get("new_ledger_mutations") != 0
+    ):
+        raise InputError("V15 R0 evidence does not bind the unchanged original ledger")
+
+    def bound_file(section: Mapping[str, Any], *, name: str, fixed_sha256: str) -> tuple[str, str]:
+        value = Path(str(section.get("path", "")))
+        path = value if value.is_absolute() else repo_root / value
+        path = path.resolve()
+        if path.parent != evidence_path.parent or path.name != name:
+            raise InputError(f"V15 bound file is outside the accepted R0 directory: {name}")
+        try:
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            raise InputError(f"V15 bound file is not readable: {path}") from exc
+        if section.get("sha256") != fixed_sha256 or actual != fixed_sha256:
+            raise InputError(f"V15 bound file hash mismatch: {path}")
+        return str(path), actual
+
+    raw_path, raw_sha256 = bound_file(
+        data.get("raw_report", {}), name="r0_recheck.json", fixed_sha256=V15_R0_RAW_REPORT_SHA256
+    )
+    history = data.get("historical_log_boundary")
+    kernel = history.get("current_kernel_check") if isinstance(history, Mapping) else {}
+    kernel_path, kernel_sha256 = bound_file(
+        kernel, name="root_current_kernel_check.json",
+        fixed_sha256=V15_R0_KERNEL_SHA256,
+    )
+    return {
+        "data": dict(data), "path": str(evidence_path), "sha256": evidence_sha256,
+        "raw_report_path": raw_path, "raw_report_sha256": raw_sha256,
+        "current_kernel_check_path": kernel_path, "current_kernel_check_sha256": kernel_sha256,
+    }
+
+
+def _v15_recovery_digest(record: Mapping[str, Any]) -> str:
+    immutable = {key: value for key, value in record.items() if key != "recovery_record_sha256"}
+    return hashlib.sha256(canonical_json_bytes(immutable)).hexdigest()
+
+
+def _v15_recovery_artifact_dir(repo_root: Path) -> Path:
+    return _v15_review_root(repo_root) / V15_Q0_EIO_RECOVERY_ID
+
+
+def _v15_verify_snapshot(
+    path: Path, expected_bytes: bytes | None, expected_sha256: str
+) -> None:
+    try:
+        actual = path.read_bytes()
+    except OSError as exc:
+        raise InputError("V15 original ledger snapshot is missing") from exc
+    if (
+        (expected_bytes is not None and actual != expected_bytes)
+        or hashlib.sha256(actual).hexdigest() != expected_sha256
+    ):
+        raise InputError("V15 original ledger snapshot hash mismatch")
+    import stat
+
+    if stat.S_IMODE(path.stat().st_mode) != 0o444:
+        raise InputError("V15 original ledger snapshot must be immutable mode 0444")
+
+
+def _v15_validate_recovery_record(
+    record: Mapping[str, Any],
+    *,
+    expected_source_sha: str,
+    expected_run_directory: str,
+    expected_original_ledger_sha256: str,
+) -> None:
+    expected = {
+        "recovery_id": V15_Q0_EIO_RECOVERY_ID,
+        "status": "APPLIED",
+        "terminal_status": "EVIDENCE_INCOMPLETE",
+        "failed_source_sha": expected_source_sha,
+        "old_run_directory": expected_run_directory,
+        "original_ledger_sha256": expected_original_ledger_sha256,
+        "actual_elapsed_seconds": None,
+        "accounting_policy_debit_seconds": V15_Q0_EIO_POLICY_DEBIT_SECONDS,
+        "accounting_basis": V15_Q0_EIO_ACCOUNTING_BASIS,
+        "historical_terminal_coverage": "incomplete",
+        "administrative_closure": "INFRASTRUCTURE_INTERRUPTED_UNFINALIZED",
+        "infrastructure_recovery_count": 1,
+        "r0_collection_accounting": {
+            "measured_seconds": V15_R0_MEASURED_COLLECTION_SECONDS,
+            "derived_upper_seconds": V15_R0_DERIVED_UPPER_SECONDS,
+            "total_seconds": V15_R0_TOTAL_COLLECTION_SECONDS,
+        },
+    }
+    if any(record.get(key) != value for key, value in expected.items()):
+        raise InputError("V15 Q0 recovery event does not match its immutable contract")
+    if record.get("recovery_record_sha256") != _v15_recovery_digest(record):
+        raise InputError("V15 Q0 recovery event hash is invalid")
+
+
+def recover_v15_q0_eio_once(
+    repo_root: Path,
+    *,
+    r0_evidence: str | Path,
+    expected_source_sha: str = V15_Q0_EIO_SOURCE_SHA,
+    expected_run_directory: str = V15_Q0_EIO_RUN_DIRECTORY,
+    expected_original_ledger_sha256: str = V15_Q0_EIO_ORIGINAL_LEDGER_SHA256,
+) -> dict[str, Any]:
+    """Administratively close the interrupted Q0 exactly once.
+
+    No worker is started.  The old attempt retains unknown measured elapsed
+    time, while one non-refundable 600-second policy debit is recorded in a
+    separate ledger field.  A repeated matching call is read-only.
+    """
+
+    repo_root = Path(repo_root).resolve()
+    try:
+        current_source_sha = _source_sha(repo_root)
+        status = subprocess.run(
+            _git_argv(repo_root, "status", "--porcelain"),
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise InputError(f"V15 recovery cannot establish clean source identity: {exc}") from exc
+    if status.strip():
+        raise InputError("V15 recovery requires a clean source worktree")
+
+    path = _v14_shared_ledger_path(repo_root)
+    try:
+        original_bytes = path.read_bytes()
+        original_ledger = json.loads(original_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V15 recovery cannot read the shared ledger") from exc
+    observed_sha256 = hashlib.sha256(original_bytes).hexdigest()
+    if original_ledger.get("batch_identity") != "review_v14":
+        raise InputError("V15 Q0 recovery requires the review_v14 ledger")
+    artifact_dir = _v15_recovery_artifact_dir(repo_root)
+    snapshot_path = artifact_dir / "original_ledger_snapshot.json"
+    existing = original_ledger.get("infrastructure_recoveries", [])
+    if not isinstance(existing, list):
+        raise InputError("V15 infrastructure recovery list is invalid")
+    matching = [
+        item for item in existing
+        if isinstance(item, Mapping) and item.get("recovery_id") == V15_Q0_EIO_RECOVERY_ID
+    ]
+    policy_debit = {
+        "recovery_id": V15_Q0_EIO_RECOVERY_ID,
+        "seconds": V15_Q0_EIO_POLICY_DEBIT_SECONDS,
+        "basis": V15_Q0_EIO_ACCOUNTING_BASIS,
+        "actual_elapsed_seconds": None,
+    }
+    policy_debits = [policy_debit]
+    if matching:
+        if len(existing) != 1 or len(matching) != 1 or original_ledger.get("infrastructure_recovery_count") != 1:
+            raise InputError("V15 Q0 recovery record is not unique")
+        record = dict(matching[0])
+        _v15_validate_recovery_record(
+            record,
+            expected_source_sha=expected_source_sha,
+            expected_run_directory=expected_run_directory,
+            expected_original_ledger_sha256=expected_original_ledger_sha256,
+        )
+        if original_ledger.get("policy_debits") != policy_debits:
+            raise InputError("V15 Q0 policy debit is not idempotent")
+        if original_ledger.get("predecessor_ledger_sha256") != expected_original_ledger_sha256:
+            raise InputError("V15 predecessor ledger hash is not preserved")
+        if original_ledger.get("conservative_allowance_seconds") != V15_R0_DERIVED_UPPER_SECONDS:
+            raise InputError("V15 R0 conservative allowance is not idempotent")
+        _v15_verify_snapshot(snapshot_path, None, expected_original_ledger_sha256)
+        return {
+            "recovery_id": V15_Q0_EIO_RECOVERY_ID,
+            "applied": False,
+            "already_applied": True,
+            "ledger_path": str(path),
+            "ledger_sha256": observed_sha256,
+            "recovery": record,
+            "effective_budget": read_v14_effective_budget(original_ledger),
+        }
+    if existing or original_ledger.get("infrastructure_recovery_count", 0) != 0:
+        raise InputError("V15 ledger already contains a different infrastructure recovery")
+    if observed_sha256 != expected_original_ledger_sha256:
+        raise InputError(
+            "V15 Q0 recovery original ledger hash mismatch: "
+            f"observed={observed_sha256} expected={expected_original_ledger_sha256}"
+        )
+    facts = _v15_r0_evidence(
+        r0_evidence,
+        repo_root=repo_root,
+        expected_ledger_sha256=expected_original_ledger_sha256,
+    )
+    if _v15_q0_live_processes(Path(expected_run_directory)):
+        raise InputError("V15 Q0 recovery rejected because the old Q0 is still live")
+    stages = original_ledger.get("stages")
+    q0_record = stages.get("Q0_CORE") if isinstance(stages, Mapping) else None
+    if not isinstance(q0_record, Mapping) or q0_record.get("active_attempt") != 0:
+        raise InputError("V15 Q0 recovery requires the original active Q0 attempt")
+    attempts = q0_record.get("attempts", [])
+    if not isinstance(attempts, list) or len(attempts) != 1 or not isinstance(attempts[0], Mapping):
+        raise InputError("V15 Q0 recovery requires exactly one original Q0 attempt")
+    original_attempt = deepcopy(dict(attempts[0]))
+    if (
+        original_attempt.get("source_sha") != expected_source_sha
+        or original_attempt.get("run_directory") != expected_run_directory
+        or original_attempt.get("status") not in {"RESERVED", "RUNNING"}
+        or original_attempt.get("settled_seconds") is not None
+    ):
+        raise InputError("V15 Q0 recovery found a changed or already settled original attempt")
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    if snapshot_path.exists():
+        _v15_verify_snapshot(snapshot_path, original_bytes, expected_original_ledger_sha256)
+    else:
+        _write_atomic_bytes(snapshot_path, original_bytes)
+        os.chmod(snapshot_path, 0o444)
+        _fsync_directory(snapshot_path.parent)
+        _v15_verify_snapshot(snapshot_path, original_bytes, expected_original_ledger_sha256)
+    recovery = {
+        "recovery_id": V15_Q0_EIO_RECOVERY_ID,
+        "status": "APPLIED",
+        "terminal_status": "EVIDENCE_INCOMPLETE",
+        "failed_source_sha": expected_source_sha,
+        "recovery_source_sha": current_source_sha,
+        "old_run_directory": expected_run_directory,
+        "old_attempt_index": 0,
+        "old_attempt": original_attempt,
+        "original_ledger_sha256": expected_original_ledger_sha256,
+        "original_ledger_snapshot_path": str(snapshot_path),
+        "original_ledger_snapshot_sha256": expected_original_ledger_sha256,
+        "r0_evidence_path": facts["path"],
+        "r0_evidence_sha256": facts["sha256"],
+        "r0_raw_report_path": facts["raw_report_path"],
+        "r0_raw_report_sha256": facts["raw_report_sha256"],
+        "current_kernel_check_path": facts["current_kernel_check_path"],
+        "current_kernel_check_sha256": facts["current_kernel_check_sha256"],
+        "observed_elapsed_lower_bound_seconds": V15_Q0_EIO_OBSERVED_LOWER_BOUND_SECONDS,
+        "actual_elapsed_seconds": None,
+        "accounting_policy_debit_seconds": V15_Q0_EIO_POLICY_DEBIT_SECONDS,
+        "accounting_basis": V15_Q0_EIO_ACCOUNTING_BASIS,
+        "historical_terminal_coverage": "incomplete",
+        "administrative_closure": "INFRASTRUCTURE_INTERRUPTED_UNFINALIZED",
+        "infrastructure_recovery_count": 1,
+        "new_q0_max_reservation_seconds": V15_Q0_EIO_POLICY_DEBIT_SECONDS,
+        "r0_collection_accounting": {
+            "measured_seconds": V15_R0_MEASURED_COLLECTION_SECONDS,
+            "derived_upper_seconds": V15_R0_DERIVED_UPPER_SECONDS,
+            "total_seconds": V15_R0_TOTAL_COLLECTION_SECONDS,
+        },
+        "applied_timestamp_ns": time.time_ns(),
+    }
+    recovery["recovery_record_sha256"] = _v15_recovery_digest(recovery)
+    new_q0_record = dict(q0_record)
+    new_q0_record["attempts"] = [original_attempt]
+    new_q0_record["active_attempt"] = None
+    new_ledger = dict(original_ledger)
+    new_ledger["stages"] = dict(stages)
+    new_ledger["stages"]["Q0_CORE"] = new_q0_record
+    new_ledger["infrastructure_recoveries"] = [recovery]
+    new_ledger["infrastructure_recovery_count"] = 1
+    new_ledger["predecessor_ledger_sha256"] = expected_original_ledger_sha256
+    new_ledger["policy_debits"] = policy_debits
+    new_ledger["elapsed_seconds"] = (
+        float(original_ledger.get("elapsed_seconds", 0.0))
+        + V15_R0_MEASURED_COLLECTION_SECONDS
+    )
+    new_ledger["conservative_allowance_seconds"] = (
+        float(original_ledger.get("conservative_allowance_seconds", 0.0))
+        + V15_R0_DERIVED_UPPER_SECONDS
+    )
+    _write_v14_ledger(path, new_ledger)
+    written_bytes = path.read_bytes()
+    written = json.loads(written_bytes.decode("utf-8"))
+    _v15_validate_recovery_record(
+        dict(written["infrastructure_recoveries"][0]),
+        expected_source_sha=expected_source_sha,
+        expected_run_directory=expected_run_directory,
+        expected_original_ledger_sha256=expected_original_ledger_sha256,
+    )
+    _v15_verify_snapshot(snapshot_path, original_bytes, expected_original_ledger_sha256)
+    return {
+        "recovery_id": V15_Q0_EIO_RECOVERY_ID,
+        "applied": True,
+        "already_applied": False,
+        "ledger_path": str(path),
+        "ledger_sha256": hashlib.sha256(written_bytes).hexdigest(),
+        "original_ledger_sha256": observed_sha256,
+        "snapshot_path": str(snapshot_path),
+        "snapshot_sha256": expected_original_ledger_sha256,
+        "recovery": recovery,
+        "effective_budget": read_v14_effective_budget(written),
+        "unique_bug_replay_count": written.get("unique_bug_replay_count"),
+    }
 
 
 def _reserve_v14_shared_budget(
@@ -165,11 +625,13 @@ def _reserve_v14_shared_budget(
             "source_attempts": [],
             "stages": {},
         }
-    for old_stage, old_record in ledger['stages'].items():
+        ledger["policy_debits"] = []
+    for old_stage, old_record in ledger.get("stages", {}).items():
         if old_record.get('active_attempt') is not None:
             raise InputError(f'V14 attempt {old_stage} is unsettled; preserve and settle its evidence before another launch')
-    elapsed = float(ledger.get("elapsed_seconds", 0.0))
-    remaining = V14_SHARED_WORKFLOW_SECONDS - elapsed
+    effective_before = read_v14_effective_budget(ledger)
+    elapsed = effective_before["measured_elapsed_seconds"]
+    remaining = effective_before["remaining_seconds"]
     workflow_budget = float(stage_budget["workflow_seconds"])
     if remaining <= 0 or workflow_budget <= 0:
         raise InputError("V14 shared 43200-second budget is unavailable")
@@ -177,9 +639,27 @@ def _reserve_v14_shared_budget(
     attempts = list(stage_record.get("attempts", []))
     if len(attempts) >= 2:
         raise InputError(f"V14 stage {stage} has exhausted its one-replay allowance")
-    if attempts and attempts[-1].get("source_sha") == source_sha:
+    recoveries = ledger.get("infrastructure_recoveries", [])
+    recovery = next(
+        (
+            item for item in recoveries
+            if isinstance(item, Mapping)
+            and item.get("recovery_id") == V15_Q0_EIO_RECOVERY_ID
+        ),
+        None,
+    ) if isinstance(recoveries, list) else None
+    recovery_q0 = bool(
+        stage == "Q0_CORE"
+        and len(attempts) == 1
+        and isinstance(recovery, Mapping)
+        and recovery.get("old_attempt_index") == 0
+        and attempts[0] == recovery.get("old_attempt")
+    )
+    if recovery_q0 and source_sha == V15_Q0_EIO_SOURCE_SHA:
+        raise InputError("V15 recovered Q0 requires a new clean source SHA")
+    if attempts and not recovery_q0 and attempts[-1].get("source_sha") == source_sha:
         raise InputError(f"V14 stage {stage} cannot replay the same source SHA")
-    replay = bool(attempts)
+    replay = bool(attempts) and not recovery_q0
     replay_evidence = None
     if replay:
         if int(ledger['unique_bug_replay_count']) >= 1:
@@ -195,7 +675,11 @@ def _reserve_v14_shared_budget(
         if any(evidence.get(key) != value for key, value in expected.items()) or not evidence.get('bug_and_fix'):
             raise InputError('V14 bug replay evidence does not bind the failed and corrected attempt')
         replay_evidence = dict(path=str(evidence_path), sha256=hashlib.sha256(evidence_bytes).hexdigest(), **evidence)
-    reservation = min(workflow_budget, remaining)
+    reservation = min(
+        workflow_budget,
+        remaining,
+        V15_Q0_EIO_POLICY_DEBIT_SECONDS if recovery_q0 else workflow_budget,
+    )
     attempt = {
         "source_sha": source_sha,
         "run_directory": str(run_directory),
@@ -203,10 +687,14 @@ def _reserve_v14_shared_budget(
         "attempt": len(attempts) + 1,
         "replay": replay,
         "replay_evidence": replay_evidence,
+        "recovery_id": V15_Q0_EIO_RECOVERY_ID if recovery_q0 else None,
+        "infrastructure_recovery": recovery_q0,
+        "accounting_policy_debit_seconds": 0.0,
         "workflow_clock_start": dict(workflow_clock_start),
         "reserved_timestamp_ns": time.time_ns(),
         "reserved_seconds": reservation,
         "elapsed_before_seconds": elapsed,
+        "effective_budget_before_reservation": effective_before,
     }
     attempts.append(attempt)
     stage_record.update({"attempts": attempts, "active_attempt": len(attempts) - 1})
@@ -222,6 +710,7 @@ def _reserve_v14_shared_budget(
             ledger.get("unique_bug_replay_count", 0)
         ) + 1
     _write_v14_ledger(path, ledger)
+    effective_after = read_v14_effective_budget(ledger)
     return {
         "path": str(path),
         "stage": stage,
@@ -229,6 +718,11 @@ def _reserve_v14_shared_budget(
         "reserved_seconds": reservation,
         "elapsed_before_seconds": elapsed,
         "replay": replay,
+        "recovery_id": V15_Q0_EIO_RECOVERY_ID if recovery_q0 else None,
+        "infrastructure_recovery": recovery_q0,
+        "policy_debit_seconds": 0.0,
+        "effective_budget_before_reservation": effective_before,
+        "effective_budget_after_reservation": effective_after,
     }
 
 
@@ -268,6 +762,7 @@ def _settle_v14_shared_budget(
             "status": str(status),
             "settled_timestamp_ns": time.time_ns(),
             "settled_seconds": settled,
+            "actual_elapsed_seconds": settled,
             "parent_workflow_clock_interval": dict(parent_interval),
             "reservation_exceeded_seconds": max(0.0, settled - float(lease['reserved_seconds'])),
             "watchdog_classification": None if authority is None else authority.get("classification"),
@@ -799,4 +1294,9 @@ def launch_specification(
 
 
 
-__all__ = ["launch_specification"]
+__all__ = [
+    "launch_specification",
+    "recover_v15_q0_eio_once",
+    "_reserve_v14_shared_budget",
+    "_settle_v14_shared_budget",
+]

@@ -18,7 +18,7 @@ def _runtime(tmp_path, ledger, monkeypatch):
 
 
 def test_q6_unsettled_io_attempt_is_neither_zero_cost_nor_method_failure(tmp_path, monkeypatch):
-    ledger = dict(batch_identity='review_v14', elapsed_seconds=0., stages={'Q0_CORE': {
+    ledger = dict(batch_identity='review_v14', total_budget_seconds=43200., elapsed_seconds=0., stages={'Q0_CORE': {
         'active_attempt': 0, 'attempts': [dict(source_sha='a'*40, reserved_seconds=600.,
             run_directory=str(tmp_path/'interrupted'), status='RESERVED')]}})
     runtime = _runtime(tmp_path, ledger, monkeypatch)
@@ -40,7 +40,7 @@ def test_q6_unsettled_io_attempt_is_neither_zero_cost_nor_method_failure(tmp_pat
     (600, 'NO_OBSERVED_MEMORY_REDUCTION'),
 ])
 def test_q6_memory_categories_do_not_turn_q3_pass_into_full_p6_pass(tmp_path, monkeypatch, q2_rss, expected):
-    ledger = dict(batch_identity='review_v14', elapsed_seconds=30., stages={})
+    ledger = dict(batch_identity='review_v14', total_budget_seconds=43200., elapsed_seconds=30., stages={})
     for stage, rss in [('Q1_FULL_DIRECT', 600), ('Q2_SCHUR_DIRECT', q2_rss), ('Q3_INTERFACE_CONTROL', 500)]:
         directory = tmp_path/stage
         (directory/'watchdog').mkdir(parents=True)
