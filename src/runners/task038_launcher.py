@@ -29,7 +29,13 @@ from src.io.execution_plan import (
 from src.io.input_loader import InputError
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
-from .physical_v14_budget import read_v14_effective_budget
+from .physical_v14_budget import (
+    V14_TIME_POLICY_ENFORCE,
+    V14_TIME_POLICY_OBSERVE_ONLY,
+    normalize_v14_time_policy,
+    read_v14_effective_budget,
+    v14_time_policy_facts,
+)
 
 
 PopenFactory = Callable[..., Any]
@@ -116,6 +122,7 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
 
 V14_SHARED_WORKFLOW_SECONDS = 43_200.0
 V15_Q0_EIO_RECOVERY_ID = "V15_Q0_EIO_ONCE"
+V16_Q6_REFRESH_ID = "V16_Q6_EVIDENCE_REFRESH_ONCE"
 V15_Q0_EIO_SOURCE_SHA = "efea244159d63a7c9db67ca091e29a9c19f9ce88"
 V15_R0_SOURCE_SHA = "665a09b6a7d66eff15b4a744036d21f1dad3649d"
 V15_Q0_EIO_RUN_DIRECTORY = (
@@ -604,8 +611,14 @@ def _reserve_v14_shared_budget(
     stage: str,
     stage_budget: Mapping[str, Any],
     workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
 ) -> dict[str, Any]:
     """Reserve one stage slice in the fixed batch ledger before launch."""
+
+    try:
+        time_policy = normalize_v14_time_policy(time_policy)
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
 
     path = _v14_shared_ledger_path(repo_root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -633,11 +646,65 @@ def _reserve_v14_shared_budget(
     elapsed = effective_before["measured_elapsed_seconds"]
     remaining = effective_before["remaining_seconds"]
     workflow_budget = float(stage_budget["workflow_seconds"])
-    if remaining <= 0 or workflow_budget <= 0:
+    if workflow_budget <= 0 or (
+        remaining <= 0 and time_policy == V14_TIME_POLICY_ENFORCE
+    ):
         raise InputError("V14 shared 43200-second budget is unavailable")
     stage_record = dict(ledger.get("stages", {}).get(stage, {}))
     attempts = list(stage_record.get("attempts", []))
-    if len(attempts) >= 2:
+    recovery_q0 = False
+    observe_q0_continuation = False
+    q6_evidence_refresh = False
+    if stage == "Q6_FINALIZE" and len(attempts) == 1:
+        previous = attempts[-1]
+        previous_directory = Path(str(previous.get("run_directory", "")))
+        decision_path = previous_directory / "q6_decision.json"
+        parent_summary_path = previous_directory / "run_summary.json"
+        watchdog_summary_path = previous_directory / "watchdog" / "summary.json"
+        try:
+            previous_decision = json.loads(
+                decision_path.read_text(encoding="utf-8")
+            )
+            previous_parent_summary = json.loads(
+                parent_summary_path.read_text(encoding="utf-8")
+            )
+            previous_watchdog_summary = json.loads(
+                watchdog_summary_path.read_text(encoding="utf-8")
+            )
+        except (OSError, ValueError, TypeError):
+            previous_decision = None
+            previous_parent_summary = None
+            previous_watchdog_summary = None
+        q6_evidence_refresh = bool(
+            time_policy == V14_TIME_POLICY_OBSERVE_ONLY
+            and isinstance(previous, Mapping)
+            and previous.get("status") == "WORKER_FAILED"
+            and previous.get("watchdog_classification") == "WORKER_FAILED"
+            and previous.get("time_policy") in (None, V14_TIME_POLICY_ENFORCE)
+            and previous.get("source_sha") != source_sha
+            and isinstance(previous_decision, Mapping)
+            and previous_decision.get("status") == "Q6_EVIDENCE_INCOMPLETE"
+            and previous_decision.get("result_classification") == "EVIDENCE_INCOMPLETE"
+            and previous_decision.get("stage_pass") is False
+            and previous_decision.get("official_result") is False
+            and previous_decision.get("new_pde_actions") == 0
+            and isinstance(previous_parent_summary, Mapping)
+            and previous_parent_summary.get("exit_status") == 4
+            and isinstance(previous_watchdog_summary, Mapping)
+            and previous_watchdog_summary.get("classification") == "WORKER_FAILED"
+            and previous_watchdog_summary.get("leader_exit_code") == 4
+        )
+    if len(attempts) == 2 and stage == "Q0_CORE" and time_policy == V14_TIME_POLICY_OBSERVE_ONLY:
+        previous_recovery = attempts[-1]
+        observe_q0_continuation = bool(
+            isinstance(previous_recovery, Mapping)
+            and previous_recovery.get("recovery_id") == V15_Q0_EIO_RECOVERY_ID
+            and previous_recovery.get("infrastructure_recovery") is True
+            and previous_recovery.get("time_policy")
+            in (None, V14_TIME_POLICY_ENFORCE)
+            and previous_recovery.get("status") == "PERFORMANCE_CONTROLLED_STOP"
+        )
+    if len(attempts) >= 2 and not observe_q0_continuation and not q6_evidence_refresh:
         raise InputError(f"V14 stage {stage} has exhausted its one-replay allowance")
     recoveries = ledger.get("infrastructure_recoveries", [])
     recovery = next(
@@ -659,7 +726,7 @@ def _reserve_v14_shared_budget(
         raise InputError("V15 recovered Q0 requires a new clean source SHA")
     if attempts and not recovery_q0 and attempts[-1].get("source_sha") == source_sha:
         raise InputError(f"V14 stage {stage} cannot replay the same source SHA")
-    replay = bool(attempts) and not recovery_q0
+    replay = bool(attempts) and not recovery_q0 and not observe_q0_continuation and not q6_evidence_refresh
     replay_evidence = None
     if replay:
         if int(ledger['unique_bug_replay_count']) >= 1:
@@ -675,10 +742,14 @@ def _reserve_v14_shared_budget(
         if any(evidence.get(key) != value for key, value in expected.items()) or not evidence.get('bug_and_fix'):
             raise InputError('V14 bug replay evidence does not bind the failed and corrected attempt')
         replay_evidence = dict(path=str(evidence_path), sha256=hashlib.sha256(evidence_bytes).hexdigest(), **evidence)
-    reservation = min(
-        workflow_budget,
-        remaining,
-        V15_Q0_EIO_POLICY_DEBIT_SECONDS if recovery_q0 else workflow_budget,
+    reservation = (
+        workflow_budget
+        if time_policy == V14_TIME_POLICY_OBSERVE_ONLY
+        else min(
+            workflow_budget,
+            remaining,
+            V15_Q0_EIO_POLICY_DEBIT_SECONDS if recovery_q0 else workflow_budget,
+        )
     )
     attempt = {
         "source_sha": source_sha,
@@ -689,12 +760,17 @@ def _reserve_v14_shared_budget(
         "replay_evidence": replay_evidence,
         "recovery_id": V15_Q0_EIO_RECOVERY_ID if recovery_q0 else None,
         "infrastructure_recovery": recovery_q0,
+        "authorized_observe_continuation": observe_q0_continuation,
+        "refresh_id": V16_Q6_REFRESH_ID if q6_evidence_refresh else None,
+        "authorized_q6_refresh": q6_evidence_refresh,
         "accounting_policy_debit_seconds": 0.0,
         "workflow_clock_start": dict(workflow_clock_start),
         "reserved_timestamp_ns": time.time_ns(),
         "reserved_seconds": reservation,
         "elapsed_before_seconds": elapsed,
         "effective_budget_before_reservation": effective_before,
+        "time_policy": time_policy,
+        **v14_time_policy_facts(time_policy),
     }
     attempts.append(attempt)
     stage_record.update({"attempts": attempts, "active_attempt": len(attempts) - 1})
@@ -720,6 +796,11 @@ def _reserve_v14_shared_budget(
         "replay": replay,
         "recovery_id": V15_Q0_EIO_RECOVERY_ID if recovery_q0 else None,
         "infrastructure_recovery": recovery_q0,
+        "authorized_observe_continuation": observe_q0_continuation,
+        "refresh_id": V16_Q6_REFRESH_ID if q6_evidence_refresh else None,
+        "authorized_q6_refresh": q6_evidence_refresh,
+        "time_policy": time_policy,
+        **v14_time_policy_facts(time_policy),
         "policy_debit_seconds": 0.0,
         "effective_budget_before_reservation": effective_before,
         "effective_budget_after_reservation": effective_after,
@@ -1001,9 +1082,14 @@ def launch_specification(
     sleep: Callable[[float], None] = time.sleep,
     poll_interval: float = 0.25,
     pc_profile: dict | None = None,
+    v14_time_policy: str = V14_TIME_POLICY_ENFORCE,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
+    try:
+        v14_time_policy = normalize_v14_time_policy(v14_time_policy)
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
     from .workflow_timebase import ClockBudget, clock_sample, CONSERVATIVE_REALTIME
     full_clock=ClockBudget(clock_sample(),policy=CONSERVATIVE_REALTIME)
     workflow_started = monotonic()
@@ -1028,6 +1114,13 @@ def launch_specification(
     joint = physical_candidate and specification.solver.get('preconditioner') == JOINT_PROFILE
     light = physical_candidate and specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE)
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
+    if (
+        v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
+        and (not schur_v14 or not physical_candidate)
+    ):
+        raise InputError(
+            'observe_only V14 time policy is accepted only by physical_p4_schur_v14'
+        )
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
     schur_stage_budget = None
@@ -1058,6 +1151,7 @@ def launch_specification(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=str(specification.solver['stage']),
             stage_budget=schur_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
         )
     try:
         physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
@@ -1077,6 +1171,18 @@ def launch_specification(
             adapter_identity=adapter,
             start_time=start_time,
         )
+        if (
+            schur_v14
+            and physical_candidate
+            and v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
+        ):
+            manifest.update(
+                {
+                    "v14_time_policy": v14_time_policy,
+                    "v14_time_gate": v14_time_policy_facts(v14_time_policy),
+                }
+            )
+            _write_json(run_directory / "run_manifest.json", manifest)
         if pc_profile is not None:
             from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
             from .physical_pc_profile import PACKED_CHECKPOINT_MANIFEST_SHA, PACKED_CHECKPOINT_SOLUTION_SHA, paired_schedule
@@ -1165,6 +1271,7 @@ def launch_specification(
                             timebase_policy='conservative_realtime',
                             tree_cap_bytes=int(physical_resources['tree_cap_bytes']),
                             active_pc_seconds=float(physical_resources['pc_hard_seconds']),
+                            time_policy=v14_time_policy,
                         )
                     if v14_lease is not None:
                         watchdog_environment = dict(
@@ -1193,12 +1300,17 @@ def launch_specification(
                     )
                     if v14_lease is not None:
                         wall_budget = min(wall_budget, float(v14_lease['reserved_seconds']) - full_clock.seconds)
-                        if wall_budget <= 0:
+                        if wall_budget <= 0 and v14_time_policy == V14_TIME_POLICY_ENFORCE:
                             raise InputError('V14 preflight exhausted the stage or shared workflow budget')
+                    watchdog_wall_seconds = (
+                        float(workflow_limit)
+                        if v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
+                        else max(1e-9, wall_budget)
+                    )
                     authority = supervise(
                         list(plan.argv),
                         run_directory / 'watchdog',
-                        wall_seconds=max(1e-9, wall_budget),
+                        wall_seconds=watchdog_wall_seconds,
                         solve_seconds=(
                             None
                             if pc_profile is not None
@@ -1206,6 +1318,7 @@ def launch_specification(
                                 solve_limit,
                                 wall_budget
                                 if v14_lease is not None
+                                and v14_time_policy == V14_TIME_POLICY_ENFORCE
                                 else solve_limit,
                             )
                         ),
@@ -1234,7 +1347,14 @@ def launch_specification(
                     manifest['effective_watchdog_authority'] = {
                         'launch_envelope': authority['launch_envelope'], 'warning_fraction': 0.85,
                         'workflow_seconds': workflow_limit, 'solve_seconds': None if pc_profile is not None else solve_limit,
-                        'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False}
+                        'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False,
+                        **(
+                            v14_time_policy_facts(v14_time_policy)
+                            if schur_v14
+                            else {}
+                        ),
+                        'wall_reference_seconds': watchdog_wall_seconds,
+                    }
                 else:
                     result = _run_worker(
                         plan, specification, run_directory, popen_factory=popen_factory,
@@ -1250,12 +1370,49 @@ def launch_specification(
                 }
         if (balanced or schur_v14) and physical_candidate:
             result['workflow_clock_interval']=full_clock.update(clock_sample())
-            if result['workflow_clock_interval']['budget_seconds'] > min(workflow_limit, float(v14_lease['reserved_seconds']) if v14_lease else workflow_limit):
+            if schur_v14:
+                result.update(v14_time_policy_facts(v14_time_policy))
+                result['time_observations'] = {
+                    'workflow_seconds': result['workflow_clock_interval']['budget_seconds'],
+                    'workflow_limit_seconds': float(workflow_limit),
+                    'reservation_seconds': (
+                        None if v14_lease is None else float(v14_lease['reserved_seconds'])
+                    ),
+                    'workflow_exceeded': bool(
+                        result['workflow_clock_interval']['budget_seconds'] > float(workflow_limit)
+                    ),
+                    'reservation_exceeded': bool(
+                        v14_lease is not None
+                        and result['workflow_clock_interval']['budget_seconds']
+                        > float(v14_lease['reserved_seconds'])
+                    ),
+                }
+            if (
+                result['workflow_clock_interval']['budget_seconds']
+                > min(workflow_limit, float(v14_lease['reserved_seconds']) if v14_lease else workflow_limit)
+                and (not schur_v14 or v14_time_policy == V14_TIME_POLICY_ENFORCE)
+            ):
                 result['result_classification']='PERFORMANCE_CONTROLLED_STOP'
         end_time = _now()
         if physical_candidate:
             result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
-            if result['full_workflow_monotonic_seconds'] > workflow_limit:
+            result['full_workflow_time_exceeded'] = bool(
+                result['full_workflow_monotonic_seconds'] > workflow_limit
+            )
+            if schur_v14:
+                result['time_observations'].update(
+                    {
+                        'full_workflow_monotonic_seconds': result[
+                            'full_workflow_monotonic_seconds'
+                        ],
+                        'full_workflow_monotonic_exceeded': result[
+                            'full_workflow_time_exceeded'
+                        ],
+                    }
+                )
+            if result['full_workflow_time_exceeded'] and (
+                not schur_v14 or v14_time_policy == V14_TIME_POLICY_ENFORCE
+            ):
                 result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
         manifest.update(
             {

@@ -81,3 +81,20 @@ Review base 为 `9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77`，初次 R0 报告确
 已有 `104 passed` 与另 `30 passed` 是上轮工程证据，保留其原源码与日志身份，不重报成本、不称为本轮新数值资格。本轮文档合同测试 **20 passed**，轻量 ABI preflight 确认同一 complex128/int32、MPI1、线程 1 环境，JSON/hash/diff 检查通过。详情见 [test_summary](outcomes/test_summary.md)；没有运行新的 PDE、MUMPS/metric 资格、full repository pytest 或 CI。GitHub rendered view 仍为 `not_verified`，不宣称远端渲染通过。
 
 R1、新 Q0、Q1/Q2、条件 Q3/Q4/Q5 和正式 Q6 均因本次 R0 Gate 未运行；现有 outcomes 仅增量记录这一事实，不用占位或局部 PASS 代替完整求解。宿主存储由用户处理，后续按指令复核同一 V15 准入及预算边界，沿用原 V14 方法和未使用的恢复额度。此次不修盘、重新挂载、重启系统、迁移到 D 盘或合并 master；推送同一 `task39extra` 后统一等待审核。
+
+---
+
+# 用户时间授权续算增量：显式 `time-observe-only`（尚未运行 PDE）
+
+2026-09-13，基于用户原文“先不考虑时间gate，继续推进看看”的明确授权，以及基线 `d041da66bdcea74bdd82197cb0b8818d231b4a2d`，本轮实现一个默认关闭的、只针对 `physical_p4_schur_v14` 的时间观察策略。这只是时间执行豁免，不开启新的 Review V17；原 Review V15 仍是科学合同。命令行入口为 `--v14-time-policy {enforce,observe_only}`；缺省值仍是 `enforce`，其他 profile 和 contract probe 不接受 `observe_only`。旧 attempt、旧 manifest 或旧 worker 中缺少该字段时一律按 `enforce` 解释，因此历史记录和默认路径不被改写。
+
+`observe_only` 不把时间上限改成无穷大，也不伪造通过。共享账本仍保留固定的 `43200 s` 总额、原始阶段名和名义阶段预留；即使有效余额已经为负，观察尝试也记录完整名义预留，不把它裁剪成剩余额度。worker、parent、watchdog 和 checker 都绑定同一个 attempt policy，并保留有限、非负的原始秒数、阈值、`exceeded` 和 `time_gate_evaluated` 字段。watchdog 在子进程清场、最终保存和 cleanup 后再写一次 workflow 观察，cleanup overrun 不会消失。
+
+观察策略只改变时间触发的停止/资格判定：PC 的 25/30 秒、Q3 单次 `F_int` 的 15 秒、接口 setup/workflow 预测、Q4/Q5 solve/workflow 时间节点以及外层 FGMRES 的 1800/5400 秒节点不再因超时主动停止；这些超时仍写入证据。FGMRES 第 64 步的数值 `rho <= 0.10` 仍是硬准入门槛，显式真残差、资源/内存、EIO、用户中止、时钟一致性、清场和有限性检查也保持有效。`solve_time_within_limit=false` 等原始事实与独立的 `solve_time_qualified` 分开保存，不能由观察模式把数值失败改写成通过。
+
+账本中只有两个窄授权扩展：
+
+- Q0 第三次尝试必须是 V15 recovery 后第二次 attempt 且状态严格为 `PERFORMANCE_CONTROLLED_STOP`，只允许一次 `observe_only` continuation；它不增加 `unique_bug_replay_count`，第四次仍拒绝。
+- 已有 Q6 若同时具备真实 `run_summary.exit_status=4`、watchdog `WORKER_FAILED/leader_exit_code=4`、Q6 `EVIDENCE_INCOMPLETE` 且 `new_pde_actions=0`，只在**本次**显式 `observe_only` 下允许一次 `V16_Q6_EVIDENCE_REFRESH_ONCE`。它不索取或消耗 implementation-bug replay 额度；默认 `enforce` 仍走原有 bug-evidence 要求。
+
+当前工作树已完成上述 launcher、worker、watchdog、FGMRES、checker、CLI、Q0/Q6 ledger guard 和 targeted fixture 修改；新增 compact 仅登记实现边界与轻量验证，不登记新的 PDE 数值结果。qualified activation 下的实际宿主 preflight 通过（complex128、int32、MPI1），随后两个真实 PETSc/KSP 测试各运行 `enforce` 与 `observe_only` 两种策略，共 `4 passed, 9 deselected in 0.40s`：两种策略均在单位算子测试中保持 1 步 `TRUE_RESIDUAL_PASS`，在链式算子测试中保持 64 步数值停止，KSP 数量断言不变。纯 Python policy fixture、相关 budget/recovery/watchdog/evidence/Q6/q4 mock 回归、文档/JSON/compile 检查也已通过；完整 PDE 仍未启动。当前改动尚未形成新的 clean commit，`NOT_APPROVED_FOR_MASTER_MERGE` 继续有效。

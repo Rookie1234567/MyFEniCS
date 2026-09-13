@@ -1,3 +1,21 @@
+# V16 时间观察策略实现与收尾测试
+
+| 检查 | 最终结果 | 口径/限制 |
+|---|---|---|
+| qualified ABI / actual-host preflight | `PASS` | `_MYFENICS_WSL_QUALIFIED_ACTIVATION=1`；PETSc `complex128/int32`；MPI1；实际宿主与正式入口一致 |
+| V16 相关主套 targeted regression | **77 passed in 10.99s** | 覆盖 time-policy、budget/recovery、runtime clock、watchdog、evidence、Q6 和 Q4 mock；不替代 PDE qualification |
+| 纯 Python FGMRES policy screen | **9 passed, 2 test functions deselected** | 覆盖 observe-only 的 step-64 数值 Gate 与时间观察语义；被 deselect 的两个 PETSc/KSP 测试随后在实际宿主参数化为下行 4 个 case |
+| 实际 PETSc/KSP policy matrix | **4 passed, 9 deselected in 0.40s** | `enforce`/`observe_only` 两种策略均在单位算子测试保持 1 步 `TRUE_RESIDUAL_PASS`，在链式算子测试保持 64 步 `V14_PROGRESS_SCREEN_STOP`，KSP 数量断言通过 |
+| current documentation contract | **15 passed in 0.08s** | `test_26_documentation_contract.py`；当前 response/compact 修改后复核 |
+| JSON / py_compile / diff-check | `PASS` | compact 可解析，修改后的 Python 可编译，`git diff --check` 无错误 |
+| PDE / formal physical qualification | `not_run` | observe-only Q0 尚未启动；无新的 R/T/A、residual 或物理 Gate 结论 |
+
+此前默认 sandbox 的 OpenMPI/PMIx singleton socket `errno=1` 只表示执行环境受限；实际宿主复核已通过，不能计为数值失败或 implementation-bug replay。早期 fixture 期望错误保持其原有测试语义，不改写为 PDE 失败。
+
+当前新增测试与策略边界见 [Q0/Q6 compact](records/p4_schur_v14_compact.json) 和 [response_v16](../response_v16.md)；正式运行仍须保留资源、存储、zero-swap、清场和数值停止证据。
+
+---
+
 # Review V15 最终测试与证据收口
 
 | 检查 | 最终结果 | 口径/限制 |

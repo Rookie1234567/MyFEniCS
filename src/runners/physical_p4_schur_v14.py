@@ -23,7 +23,14 @@ from typing import Any, Mapping
 import numpy as np
 
 from src.io.physical_intermediate_profile import SCHUR_PROFILE, profile_facts
-from .physical_v14_budget import read_v14_effective_budget
+from .physical_v14_budget import (
+    V14_TIME_POLICY_ENFORCE,
+    V14_TIME_POLICY_OBSERVE_ONLY,
+    normalize_v14_time_policy,
+    read_v14_effective_budget,
+    v14_time_gate_facts,
+    v14_time_policy_facts,
+)
 
 
 _Q1_Q2_RHS = (
@@ -334,6 +341,13 @@ class _V14Runtime:
         except ValueError as exc:
             raise RuntimeError(f"V14 shared ledger budget is invalid: {exc}") from exc
         self.shared_attempt = dict(attempt)
+        try:
+            self.time_policy = normalize_v14_time_policy(
+                attempt.get("time_policy")
+            )
+        except ValueError as exc:
+            raise RuntimeError(f"V14 parent time policy is invalid: {exc}") from exc
+        self.time_policy_facts = v14_time_policy_facts(self.time_policy)
         self.infrastructure_recovery = (
             attempt.get("recovery_id") == "V15_Q0_EIO_ONCE"
         )
@@ -658,25 +672,44 @@ class _V14Runtime:
         if self._pc_clock is None:
             raise RuntimeError("no whole V14 PC action is active")
         interval = self._pc_clock.update(clock_sample())
+        soft_limit = float(self.contract["resources"]["pc_soft_seconds"])
+        hard_limit = float(self.contract["resources"]["pc_hard_seconds"])
+        soft_time = v14_time_gate_facts(
+            interval["budget_seconds"], soft_limit, self.time_policy, inclusive=True
+        )
+        hard_time = v14_time_gate_facts(
+            interval["budget_seconds"], hard_limit, self.time_policy, inclusive=True
+        )
         facts = {
             **self._phase_record["active_pc"],
             "completed": bool(completed),
             "clock_interval": interval,
-            "soft_limit_seconds": self.contract["resources"]["pc_soft_seconds"],
-            "hard_limit_seconds": self.contract["resources"]["pc_hard_seconds"],
+            "soft_limit_seconds": soft_limit,
+            "hard_limit_seconds": hard_limit,
+            **self.time_policy_facts,
+            "soft_time_gate": soft_time,
+            "hard_time_gate": hard_time,
         }
         self._phase_record["active_pc"] = None
         self._phase_record["solve_subphase"] = "between_pc"
         self._pc_clock = None
         _write_json(self.phase_path, self._phase_record)
-        if completed and interval["budget_seconds"] >= facts["soft_limit_seconds"]:
+        if (
+            completed
+            and self.time_policy == V14_TIME_POLICY_ENFORCE
+            and interval["budget_seconds"] >= facts["soft_limit_seconds"]
+        ):
             self.pc_soft_stop_requested = True
         facts["soft_stop_requested"] = self.pc_soft_stop_requested
         facts["hard_limit_exceeded"] = (
             interval["budget_seconds"] >= facts["hard_limit_seconds"]
         )
         self.marker("v14_whole_pc_returned", facts)
-        if completed and facts["hard_limit_exceeded"]:
+        if (
+            completed
+            and facts["hard_limit_exceeded"]
+            and self.time_policy == V14_TIME_POLICY_ENFORCE
+        ):
             raise V14ResourceStop(
                 f"PC_TIME_CONTROLLED_STOP: {facts}",
                 classification="PC_TIME_CONTROLLED_STOP",
@@ -736,6 +769,7 @@ class _V14Runtime:
                 "workspace_peak_bytes": self.workspace_peak_bytes,
                 "cap_policy": "min(parent_tree_cap,current_tree_rss+available-reserve)",
                 "inventory_policy": "independent_live_matrix_factor_coupling_workspace_sum",
+                **self.time_policy_facts,
             }
         )
         _append_jsonl(self.resources_path, value)
@@ -4005,9 +4039,26 @@ def _v14_interface_live_stack(
         if not callable(interval_method):
             raise RuntimeError("V14 live stack requires the parent workflow clock")
         interval = dict(interval_method())
-        return float(interval["budget_seconds"]), interval
+        elapsed = float(interval["budget_seconds"])
+        if not np.isfinite(elapsed) or elapsed < 0.0:
+            raise RuntimeError("V14 workflow clock interval is not finite")
+        return elapsed, interval
+
+    time_policy = normalize_v14_time_policy(getattr(runtime, "time_policy", None))
+    workflow_time_observation: dict[str, Any] | None = None
+    setup_budget_facts: dict[str, Any] | None = None
 
     def performance_stop(message: str) -> None:
+        nonlocal workflow_time_observation
+        elapsed, _interval = workflow_elapsed()
+        workflow_time_observation = v14_time_gate_facts(
+            elapsed, workflow_limit, time_policy, inclusive=True
+        )
+        if setup_budget_facts is not None:
+            setup_budget_facts["workflow_time_gate"] = dict(workflow_time_observation)
+            setup_budget_facts["workflow_time_boundary_message"] = message
+        if time_policy == V14_TIME_POLICY_OBSERVE_ONLY:
+            return
         raise V14ResourceStop(
             message,
             classification="PERFORMANCE_CONTROLLED_STOP",
@@ -4236,7 +4287,7 @@ def _v14_interface_live_stack(
                 )
         else:
             representative_limit = None
-        setup_budget_facts: dict[str, Any] = {
+        setup_budget_facts = {
             "schema": "task039extra.v14.interface-local-setup-budget.v2",
             "stage": stage,
             "workflow_clock_source": getattr(
@@ -4247,6 +4298,8 @@ def _v14_interface_live_stack(
             ),
             "reserved_workflow_seconds": reserved_workflow,
             "workflow_limit_seconds": workflow_limit,
+            **v14_time_policy_facts(time_policy),
+            "workflow_time_gate": workflow_time_observation,
             "known_future_controls": q3_known_future_controls
             if q3_setup
             else {"classification": "not_applied_to_fresh_p6_stage"},
@@ -4352,6 +4405,10 @@ def _v14_interface_live_stack(
         runtime.release_workspace(local_workspace_label)
         reserved_workspaces.discard(local_workspace_label)
         local_audit = smoother.audit()
+        final_setup_elapsed, _final_setup_clock = workflow_elapsed()
+        workflow_time_observation = v14_time_gate_facts(
+            final_setup_elapsed, workflow_limit, time_policy, inclusive=True
+        )
         setup_budget_facts.update(
             {
                 "completed": True,
@@ -4359,6 +4416,7 @@ def _v14_interface_live_stack(
                     local_audit["build_elapsed_seconds"]
                 ),
                 "stage_elapsed_after_local_setup_seconds": workflow_elapsed()[0],
+                "workflow_time_gate": workflow_time_observation,
             }
         )
         setup_budget_facts["workflow_remaining_after_local_setup_seconds"] = (
@@ -4555,6 +4613,7 @@ def _v14_interface_live_stack(
             "local_workspace_upper_bytes": local_workspace,
             "coarse_bound_bytes": coarse_bound,
             "q3_stage_start_monotonic": stage_start,
+            **v14_time_policy_facts(time_policy),
         }
         runtime.marker(
             f"{prefix}_live_interface_stack_ready",
@@ -4727,25 +4786,38 @@ def _q3_interface_control(
             )
             for item in solve_records
         )
-        admission_by_stem = {
-            item["stem"]: {
+        admission_by_stem = {}
+        for item in solve_records:
+            fint_time = v14_time_gate_facts(
+                item["elapsed_seconds"],
+                15.0,
+                normalize_v14_time_policy(getattr(runtime, "time_policy", None)),
+            )
+            fint_time["gate"] = f"Q3_INTERFACE_CONTROL.fint.{item['stem']}"
+            numeric_pass = bool(
+                item["native_A4_relative_residual"]
+                <= (0.2 if item["stem"].endswith("_02") else 0.5)
+                and item["field_metrics"]["field_l2_relative"]
+                <= (0.9 if item["stem"].endswith("_02") else 0.5)
+                and item["field_metrics"]["scaled_curl_relative"]
+                <= (0.9 if item["stem"].endswith("_02") else 0.6)
+                and item["operation_count_passed"]
+            )
+            admission_by_stem[item["stem"]] = {
                 "rho": item["native_A4_relative_residual"],
                 "eta": item["field_metrics"]["field_l2_relative"],
                 "eta_curl": item["field_metrics"]["scaled_curl_relative"],
                 "elapsed_seconds": item["elapsed_seconds"],
-                "passed": (
-                    item["native_A4_relative_residual"]
-                    <= (0.2 if item["stem"].endswith("_02") else 0.5)
-                    and item["field_metrics"]["field_l2_relative"]
-                    <= (0.9 if item["stem"].endswith("_02") else 0.5)
-                    and item["field_metrics"]["scaled_curl_relative"]
-                    <= (0.9 if item["stem"].endswith("_02") else 0.6)
-                    and item["elapsed_seconds"] <= 15.0
-                    and item["operation_count_passed"]
+                "numeric_pass": numeric_pass,
+                "time_gate": fint_time,
+                "passed": bool(
+                    numeric_pass
+                    and (
+                        not fint_time["time_gate_evaluated"]
+                        or not fint_time["exceeded"]
+                    )
                 ),
             }
-            for item in solve_records
-        }
         admission_pass = all(item["passed"] for item in admission_by_stem.values())
         three_rhs_fint_count = int(sum(three_rhs_fint_apply_deltas))
         three_rhs_fint_count_passed = bool(
@@ -4802,6 +4874,9 @@ def _q3_interface_control(
             "solve_records": solve_records,
             "admission": admission_by_stem,
             "balanced_p6_audit": balanced_audit,
+            **v14_time_policy_facts(
+                normalize_v14_time_policy(getattr(runtime, "time_policy", None))
+            ),
             "three_rhs_complete_packet": pre_balanced_packet,
             "gates": {
                 "candidate_input_upper_bound": 496,
@@ -4815,6 +4890,13 @@ def _q3_interface_control(
                 "feedback_eta": 0.9,
                 "feedback_eta_curl": 0.9,
                 "single_fint_seconds": 15.0,
+                "time_policy": normalize_v14_time_policy(
+                    getattr(runtime, "time_policy", None)
+                ),
+                "time_gate_evaluated": normalize_v14_time_policy(
+                    getattr(runtime, "time_policy", None)
+                )
+                == V14_TIME_POLICY_ENFORCE,
                 "max_native_A4_relative_residual": max_rho,
                 "max_field_l2_or_scaled_curl": max_field,
                 "three_rhs_fint_apply_deltas": three_rhs_fint_apply_deltas,
@@ -4843,7 +4925,9 @@ def _q3_interface_control(
         return record
 
 
-def _v14_physical_checks(solver, field, comparison) -> dict[str, bool]:
+def _v14_physical_checks(
+    solver, field, comparison, *, time_policy=V14_TIME_POLICY_ENFORCE
+) -> dict[str, bool]:
     """Apply the unchanged physical gates to recorded numerical quantities."""
 
     from src.runners.physical_macro_v12 import (
@@ -4855,13 +4939,22 @@ def _v14_physical_checks(solver, field, comparison) -> dict[str, bool]:
 
     current, reference = comparison["current"], comparison["reference"]
     modal, selected = comparison["modal"], comparison["selected_field"]
+    normalized_policy = normalize_v14_time_policy(time_policy)
+    solve_seconds = float(solver["elapsed_seconds"])
     checks = {
         "A6": bounded(solver["final_true_residual"], 1e-6),
         "single_zero_start_FGMRES32": (
             solver["ksp_create_count"] == solver["ksp_solve_count"] == 1
             and solver["restart"] == 32 and solver["max_it"] == 2048
             and solver["zero_start"] is True),
-        "solve_time": bounded(solver["elapsed_seconds"], 10800.),
+        "solve_time": bool(
+            np.isfinite(solve_seconds)
+            and solve_seconds >= 0.0
+            and (
+                normalized_policy == V14_TIME_POLICY_OBSERVE_ONLY
+                or solve_seconds <= 10800.0
+            )
+        ),
         "mode_count": modal["mode_count"] == 80,
         "mode_amplitudes": bounded(modal["amplitude_relative_difference"], 1e-4),
         "mode_powers": bounded(modal["power_max_absolute_difference"], 1e-6),
@@ -4916,6 +5009,30 @@ def _v14_settled_stage_gate(runtime: _V14Runtime, required: str) -> dict[str, An
         resolved_path = directory / "resolved_config.json"
         resolved = load(resolved_path)
         source = attempt["source_sha"]
+        attempt_time_policy = normalize_v14_time_policy(
+            attempt.get("time_policy")
+        )
+        manifest_time_policy = normalize_v14_time_policy(
+            manifest.get("v14_time_policy")
+        )
+        parent_time_policy = normalize_v14_time_policy(
+            parent.get("time_policy")
+        )
+        watchdog_time_policy = normalize_v14_time_policy(
+            watchdog.get("time_policy")
+        )
+        worker_time_policy = normalize_v14_time_policy(
+            worker.get("time_policy")
+        )
+        policy_facts = v14_time_policy_facts(attempt_time_policy)
+        facts.update(policy_facts)
+        facts["time_policy_sources"] = {
+            "attempt": attempt_time_policy,
+            "manifest": manifest_time_policy,
+            "parent": parent_time_policy,
+            "watchdog": watchdog_time_policy,
+            "worker": worker_time_policy,
+        }
         exact = required in {"Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT"}
         expected_physical = notch if required == "Q5_NOTCH" else original
         if exact:
@@ -4925,9 +5042,45 @@ def _v14_settled_stage_gate(runtime: _V14Runtime, required: str) -> dict[str, An
             worker_modes = [worker["delta"]["current_ordered_mode_sha256"] if required == "Q3_INTERFACE_CONTROL"
                             else worker["operator_identity"]["ordered_mode_sha256"]]
         checks = facts["checks"]
+        settled_seconds = float(attempt.get("settled_seconds", np.nan))
+        reserved_seconds = float(attempt.get("reserved_seconds", np.nan))
+        settled_finite = bool(
+            np.isfinite(settled_seconds) and settled_seconds >= 0.0
+        )
+        settled_within_reservation = bool(
+            settled_finite
+            and np.isfinite(reserved_seconds)
+            and reserved_seconds >= 0.0
+            and settled_seconds <= reserved_seconds
+        )
+        workflow_interval = parent.get("workflow_clock_interval", {})
+        workflow_seconds = float(workflow_interval.get("budget_seconds", np.nan))
+        workflow_time_gate = (
+            v14_time_gate_facts(
+                workflow_seconds, reserved_seconds, attempt_time_policy
+            )
+            if settled_finite
+            and np.isfinite(reserved_seconds)
+            and reserved_seconds > 0.0
+            else None
+        )
         checks.update({
             "batch": ledger["batch_identity"] == "review_v14",
-            "settled": record["active_attempt"] is None and bounded(attempt["settled_seconds"], attempt["reserved_seconds"]),
+            "time_policy_binding": len({
+                attempt_time_policy,
+                manifest_time_policy,
+                parent_time_policy,
+                watchdog_time_policy,
+                worker_time_policy,
+            }) == 1,
+            "settled": bool(
+                record["active_attempt"] is None
+                and settled_finite
+                and (
+                    settled_within_reservation
+                    or attempt_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
+                )
+            ),
             "source": (len(source) == 40 and worker["source_sha"] == manifest["source_sha"] == source
                        == watchdog["source_state"]["source_sha"]),
             "source_clean_before_after": (
@@ -4949,8 +5102,16 @@ def _v14_settled_stage_gate(runtime: _V14Runtime, required: str) -> dict[str, An
                           and parent["job_swap_qualification"] == "qualified_zero"
                           and set(watchdog["global_swap_activity"]["delta"]) == {"pswpin_pages", "pswpout_pages"}
                           and all(value == 0 for value in watchdog["global_swap_activity"]["delta"].values())),
-            "workflow_time": bounded(parent["workflow_clock_interval"]["budget_seconds"], attempt["reserved_seconds"]),
+            "workflow_time": bool(
+                workflow_time_gate is not None and workflow_time_gate["passed"]
+            ),
         })
+        facts["time_observations"] = {
+            "settled_seconds": settled_seconds,
+            "reserved_seconds": reserved_seconds,
+            "settled_within_reservation": settled_within_reservation,
+            "workflow": workflow_time_gate,
+        }
         samples = 0
         trace_pass = True
         peak_rss = 0
@@ -5016,11 +5177,14 @@ def _v14_settled_stage_gate(runtime: _V14Runtime, required: str) -> dict[str, An
                 fields = row["field_metrics"]["fields"]
                 errors = [fields[key]["absolute_error_norm"] / max(fields[key]["reference_norm"], np.finfo(float).tiny)
                           for key in ("L2", "scaled_curl")]
+                fint_time_gate = v14_time_gate_facts(
+                    row["elapsed_seconds"], 15.0, attempt_time_policy
+                )
                 checks[stem] = bool(
                     bounded(rho, .2 if feedback else .5)
                     and bounded(errors[0], .9 if feedback else .5)
                     and bounded(errors[1], .9 if feedback else .6)
-                    and bounded(row["elapsed_seconds"], 15.)
+                    and fint_time_gate["passed"]
                     and row["fint_apply_count_delta"] == 1
                     and _q3_interface_operation_audit(row["interface_facts"], 42)["passed"])
             balanced = worker["balanced_p6_audit"]
@@ -5036,9 +5200,21 @@ def _v14_settled_stage_gate(runtime: _V14Runtime, required: str) -> dict[str, An
                 and all(_q3_interface_operation_audit(call["interface_facts"], 42)["passed"]
                         for call in balanced["coarse_calls"]))
         else:
-            checks.update(_v14_physical_checks(worker["solver"], worker["field"], worker["comparison"]))
+            checks.update(
+                _v14_physical_checks(
+                    worker["solver"],
+                    worker["field"],
+                    worker["comparison"],
+                    time_policy=attempt_time_policy,
+                )
+            )
             checks["independent_final_A6"] = bounded(worker["final_explicit_relative_residual"], 1e-6)
-            checks["full_solve_clock"] = bounded(worker["gates"]["solve_clock_interval"]["budget_seconds"], 10800.)
+            solve_clock_seconds = worker["gates"]["solve_clock_interval"]["budget_seconds"]
+            solve_time_gate = v14_time_gate_facts(
+                solve_clock_seconds, 10800.0, attempt_time_policy
+            )
+            checks["full_solve_clock"] = solve_time_gate["passed"]
+            facts["time_observations"]["full_solve_clock"] = solve_time_gate
         facts["qualified"] = bool(all(checks.values()))
         facts["reason"] = "qualified" if facts["qualified"] else "predecessor_numerical_gate_failed"
     except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
@@ -5360,6 +5536,8 @@ def _v14_q4_q5_fullspace(
         raise ValueError("Q4_ORIGINAL must use the original, unnotched geometry")
 
     resources = runtime.contract["resources"]
+    time_policy = normalize_v14_time_policy(getattr(runtime, "time_policy", None))
+    time_policy_facts = v14_time_policy_facts(time_policy)
     stage_budget = resources.get("stage_budgets", {}).get(stage)
     if not isinstance(stage_budget, Mapping):
         raise ValueError(f"{stage} has no frozen stage budget")
@@ -5385,7 +5563,11 @@ def _v14_q4_q5_fullspace(
     solve_clock: ClockBudget | None = None
     checkpoint_records: list[dict[str, Any]] = []
     pc_boundary_records: list[dict[str, Any]] = []
-    stop_state: dict[str, Any] = {"requested": False, "reason": None}
+    stop_state: dict[str, Any] = {
+        "requested": False,
+        "reason": None,
+        **time_policy_facts,
+    }
     reference_binding: dict[str, Any] | None = None
     reference_vector: np.ndarray | None = None
     reference_attempted = False
@@ -5621,10 +5803,18 @@ def _v14_q4_q5_fullspace(
             return True
         elapsed = solve_seconds()
         workflow = current_workflow_interval()["budget_seconds"]
-        if elapsed >= solve_limit:
+        solve_time = v14_time_gate_facts(
+            elapsed, solve_limit, time_policy, inclusive=True
+        )
+        workflow_time = v14_time_gate_facts(
+            workflow, workflow_limit, time_policy, inclusive=True
+        )
+        stop_state["solve_time_gate"] = solve_time
+        stop_state["workflow_time_gate"] = workflow_time
+        if elapsed >= solve_limit and time_policy == V14_TIME_POLICY_ENFORCE:
             stop_state.update(requested=True, reason="solve_budget_reached")
             return True
-        if workflow >= workflow_limit:
+        if workflow >= workflow_limit and time_policy == V14_TIME_POLICY_ENFORCE:
             stop_state.update(requested=True, reason="workflow_budget_reached")
             return True
         return False
@@ -5787,6 +5977,7 @@ def _v14_q4_q5_fullspace(
                     screen_enabled=True,
                     solve_limit_seconds=solve_limit,
                     v14_policy=True,
+                    time_policy=time_policy,
                 )
                 final_solution = solve_result["final_solution"]
             except BaseException as exc:
@@ -5936,6 +6127,7 @@ def _v14_q4_q5_fullspace(
                 "outer_solve_finished_after_independent_final_residual": True,
             },
             "solver": solver_facts,
+            **time_policy_facts,
             "pc": pc_facts,
             "pc_boundary_contract": {
                 "route": "BAL_H",
@@ -5970,15 +6162,37 @@ def _v14_q4_q5_fullspace(
         }
 
         solver_status = str(solver_facts.get("status", ""))
+        solver_elapsed = float(solver_facts.get("elapsed_seconds", np.nan))
+        solve_clock_seconds = float(
+            solve_clock_interval.get("budget_seconds", np.nan)
+        )
+        solver_time_finite = bool(
+            np.isfinite(solver_elapsed) and solver_elapsed >= 0.0
+        )
+        solve_clock_time_finite = bool(
+            np.isfinite(solve_clock_seconds) and solve_clock_seconds >= 0.0
+        )
+        solver_time_gate = (
+            v14_time_gate_facts(solver_elapsed, solve_limit, time_policy)
+            if solver_time_finite
+            else None
+        )
+        solve_clock_time_gate = (
+            v14_time_gate_facts(solve_clock_seconds, solve_limit, time_policy)
+            if solve_clock_time_finite
+            else None
+        )
         solver_gate = bool(
             solver_status == "TRUE_RESIDUAL_PASS"
             and np.isfinite(float(solver_facts.get("final_true_residual", np.nan)))
             and float(solver_facts["final_true_residual"]) <= 1.0e-6
             and final_explicit_relative <= 1.0e-6
-            and np.isfinite(float(solver_facts.get("elapsed_seconds", np.nan)))
-            and float(solver_facts["elapsed_seconds"]) <= solve_limit
-            and np.isfinite(float(solve_clock_interval.get("budget_seconds", np.nan)))
-            and float(solve_clock_interval["budget_seconds"]) <= solve_limit
+            and solver_time_finite
+            and solver_time_gate is not None
+            and solver_time_gate["passed"]
+            and solve_clock_time_finite
+            and solve_clock_time_gate is not None
+            and solve_clock_time_gate["passed"]
         )
         base_record["gates"] = {
             "solver_status": solver_status,
@@ -5988,6 +6202,27 @@ def _v14_q4_q5_fullspace(
             "independent_final_explicit_relative_residual": final_explicit_relative,
             "solver_gate": solver_gate,
             "solve_clock_interval": solve_clock_interval,
+            "solve_time_within_limit": bool(
+                solver_time_finite and not solver_time_gate["exceeded"]
+            ) if solver_time_gate is not None else False,
+            "solve_time_qualified": bool(
+                solver_time_gate is not None and solver_time_gate["passed"]
+            ),
+            "solve_time_exceeded": bool(
+                solver_time_gate is not None and solver_time_gate["exceeded"]
+            ),
+            "solve_clock_within_limit": bool(
+                solve_clock_time_finite and not solve_clock_time_gate["exceeded"]
+            ) if solve_clock_time_gate is not None else False,
+            "solve_clock_time_qualified": bool(
+                solve_clock_time_gate is not None and solve_clock_time_gate["passed"]
+            ),
+            "solve_clock_time_exceeded": bool(
+                solve_clock_time_gate is not None and solve_clock_time_gate["exceeded"]
+            ),
+            "solve_time_gate": solver_time_gate,
+            "solve_clock_time_gate": solve_clock_time_gate,
+            **time_policy_facts,
         }
         if not solver_gate:
             performance_statuses = {
@@ -6106,16 +6341,21 @@ def _v14_q4_q5_fullspace(
         runtime.sample(f"{prefix}_output_recovery_complete")
         resource_facts = _v14_resource_facts(runtime)
         workflow_interval = current_workflow_interval()
+        workflow_seconds = float(workflow_interval.get("budget_seconds", np.nan))
+        workflow_time_gate = (
+            v14_time_gate_facts(workflow_seconds, workflow_limit, time_policy)
+            if np.isfinite(workflow_seconds) and workflow_seconds >= 0.0
+            else None
+        )
         physical_checks = _v14_physical_checks(
-            solver_facts, field, comparison
+            solver_facts, field, comparison, time_policy=time_policy
         )
         physical_pass = bool(physical_checks) and all(
             bool(value) for value in physical_checks.values()
         )
         resource_pass = bool(resource_facts.get("gate"))
         workflow_pass = bool(
-            np.isfinite(float(workflow_interval.get("budget_seconds", np.nan)))
-            and float(workflow_interval["budget_seconds"]) <= workflow_limit
+            workflow_time_gate is not None and workflow_time_gate["passed"]
         )
         stage_pass = bool(physical_pass and resource_pass and workflow_pass)
         base_record.update(
@@ -6148,6 +6388,17 @@ def _v14_q4_q5_fullspace(
                     "physical_checks_pass": physical_pass,
                     "resource_prefix_pass": resource_pass,
                     "workflow_pass": workflow_pass,
+                    "workflow_within_limit": bool(
+                        workflow_time_gate is not None
+                        and not workflow_time_gate["exceeded"]
+                    ),
+                    "workflow_time_qualified": workflow_pass,
+                    "workflow_time_exceeded": bool(
+                        workflow_time_gate is not None
+                        and workflow_time_gate["exceeded"]
+                    ),
+                    "workflow_time_gate": workflow_time_gate,
+                    **time_policy_facts,
                     "stage_pass": stage_pass,
                 },
             }
@@ -6181,13 +6432,17 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
         attempts = stage_record.get("attempts", [])
         item = {"stage": stage, "attempts": attempts, "qualified": False,
                 "status": "not_run", "memory": {}, "cost": {}, "numerical": {},
-                "bindings": {}, "read_errors": {}}
+                "bindings": {}, "read_errors": {},
+                **v14_time_policy_facts(V14_TIME_POLICY_ENFORCE)}
         stages[stage] = item
         if not attempts:
             item["reason"] = "no_recorded_attempt"
             continue
         stage_historical_unknown = stage == "Q0_CORE" and historical_unknown_cost
         attempt = attempts[-1]
+        attempt_time_policy = normalize_v14_time_policy(
+            attempt.get("time_policy")
+        )
         directory = Path(attempt["run_directory"])
         administrative_closed = bool(
             stage == "Q0_CORE"
@@ -6205,6 +6460,13 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
                         "incomplete" if stage_historical_unknown else "not_applicable"
                     ),
                     historical_recovery_events=(recovery_events if stage == "Q0_CORE" else []))
+        item.update(v14_time_policy_facts(attempt_time_policy))
+        item["time_observations"] = {
+            "settled_seconds": attempt.get("settled_seconds"),
+            "reserved_seconds": attempt.get("reserved_seconds"),
+            "reservation_exceeded_seconds": attempt.get("reservation_exceeded_seconds"),
+            "policy": attempt_time_policy,
+        }
         records = {}
         for name, filename in (
             ("worker", "physical_p4_schur_v14_summary.json"),
@@ -6245,6 +6507,12 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
             "lifecycle": worker.get("lifecycle"),
             "solver": worker.get("solver"),
             "full_setup_seconds": None,
+            "time_policy": attempt_time_policy,
+            "time_gate_evaluated": attempt_time_policy == V14_TIME_POLICY_ENFORCE,
+            "settled_within_reservation": (
+                attempt.get("reservation_exceeded_seconds") is not None
+                and float(attempt.get("reservation_exceeded_seconds")) <= 0.0
+            ) if attempt.get("reservation_exceeded_seconds") is not None else None,
         }
         # This UTC-only duration includes preflight, assembly and conversion
         # before the first RHS. It is not substituted for the conservative
@@ -6272,6 +6540,7 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
             "leader_exit_code": watchdog.get("leader_exit_code"),
             "remaining_child_pids": watchdog.get("remaining_child_pids"),
             "settled": settled,
+            **v14_time_policy_facts(attempt_time_policy),
         }
         if stage != "Q0_CORE" and settled:
             item["gate"] = _v14_settled_stage_gate(runtime, stage)
@@ -6346,6 +6615,10 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
                        "UNKNOWN_HISTORICAL_ATTEMPT" if historical_unknown_cost else "KNOWN_OR_NOT_APPLICABLE"
                    ),
                    "unsettled_cost_is_not_zero": not no_unsettled},
+        **v14_time_policy_facts(
+            normalize_v14_time_policy(getattr(runtime, "time_policy", None))
+        ),
+        "time_policy_scope": "each stage uses its own attempt policy; historical missing fields default to enforce",
         "answers": {
             "exact_schur_memory": memory_answer,
             "interface_approximation": {"status": interface_status, "measured_stop_stages": stopped,
@@ -6447,7 +6720,9 @@ def run_physical_p4_schur_v14(
             "reserved_seconds": runtime.workflow_reserved_seconds,
             "recovery_id": runtime.shared_attempt.get("recovery_id"),
             "infrastructure_recovery": runtime.infrastructure_recovery,
+            **runtime.time_policy_facts,
         }
+        summary.update(runtime.time_policy_facts)
         for signum in (signal.SIGTERM, signal.SIGINT):
             handlers[signum] = signal.signal(
                 signum, lambda _value, _frame: setattr(runtime, "stop_requested", True)
@@ -6580,6 +6855,7 @@ def run_physical_p4_schur_v14(
                 _destroy_common(cfg_common, runtime)
                 runtime.sample("post_common_cleanup")
         summary.update(record)
+        summary.update(runtime.time_policy_facts)
         summary["status"] = record["status"]
         summary["official_result"] = bool(record.get("official_result", False))
         summary["stage_pass"] = bool(

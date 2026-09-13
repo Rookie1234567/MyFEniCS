@@ -2276,7 +2276,18 @@
       "compileall_command": "source scripts/activate_myfenics_wsl.sh && python -m compileall -q src scripts",
       "compileall_result": "exit_code=0; observed wall 0.226307897s",
       "editing_supervision_documentation_total_seconds": null,
-      "editing_supervision_documentation_total_status": "unknown_not_independently_metered; observed engineering windows are not included in the formal PDE ledger"
+      "editing_supervision_documentation_total_status": "unknown_not_independently_metered; observed engineering windows are not included in the formal PDE ledger",
+      "v16_time_policy_validation": {
+        "qualified_actual_host": "complex128/int32; MPI1; PASS",
+        "main_targeted_result": "77 passed in 10.99s",
+        "pure_fgmres_policy_result": "9 passed; 2 deselected",
+        "real_petsc_ksp_command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_physical_schur_v14_fgmres.py -k 'goal_before64 or real_restart32'",
+        "real_petsc_ksp_result": "4 passed, 9 deselected in 0.40s",
+        "real_petsc_ksp_semantics": "enforce and observe_only each retain 1-step TRUE_RESIDUAL_PASS and 64-step V14_PROGRESS_SCREEN_STOP",
+        "documentation_result": "15 passed in 0.08s",
+        "sandbox_socket_failure": "environment-only OpenMPI/PMIx singleton errno=1; not a numerical or replay failure",
+        "pde_status": "not_run_at_validation_time"
+      }
     },
     "records": {
       "recovery_compact": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
@@ -2286,10 +2297,10 @@
       "response": "docs/task039_extra_physical_multilevel/response_v16.md",
       "sha256": {
         "recovery_compact": "6fd088846d90f9a4e9ce70a20632700dba22280cf730269edf90218ad690e597",
-        "p4_compact": "26708d72e1c83024bfaaf641fe0f5e8576c354c2bbc04427b2a5abe9d7655f5b",
+        "p4_compact": "447c08fa61f345d040b3d3fefee029e92391076df320d5ba1713fd1482abef99",
         "comparison": "02149097f07cc6d305dde6a9c67322d606eb9b5160479b58465645aaebf6bd52",
         "outcome": "f76b11695d2599e058974121c42aecc15a3c25288bbc62e60d139ba8e8c0e46d",
-        "response": "657010c4a8c8c2d926a820b8ab9f8b1fbc96eebac130e6b419f21af4afc92fd0"
+        "response": "ca60b569b5508bbe9e0855c71b3a860322a07484064df8e5f0455a024bc42cfd"
       }
     },
     "answers": {

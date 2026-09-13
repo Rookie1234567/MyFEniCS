@@ -11,6 +11,7 @@ import argparse
 import ctypes
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -21,6 +22,12 @@ from benchmarks.task034_wsl_resources import current_cgroup_path, vmstat_swap_pa
 from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
 from src.runners.workflow_timebase import (TimebaseInconsistency, budget_elapsed,
     clock_info, clock_sample, ClockBudget, STRICT, POLICY_VERSION)
+from src.runners.physical_v14_budget import (
+    V14_TIME_POLICY_ENFORCE,
+    normalize_v14_time_policy,
+    v14_time_gate_facts,
+    v14_time_policy_facts,
+)
 
 
 def memory_envelope() -> dict:
@@ -169,10 +176,22 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               timebase_guard: bool = False, timebase_policy: str = STRICT,
               stop_on_global_swap: bool = False,
               tree_cap_bytes: int | None = None,
-              active_pc_seconds: float | None = None) -> dict:
+              active_pc_seconds: float | None = None,
+              time_policy: str = V14_TIME_POLICY_ENFORCE) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
-    if not command or min(wall_seconds, interval, grace_seconds) <= 0:
+    try:
+        time_policy = normalize_v14_time_policy(time_policy)
+    except ValueError as exc:
+        raise ValueError(str(exc)) from exc
+    if not command or any(
+        not math.isfinite(float(value)) or float(value) <= 0.0
+        for value in (wall_seconds, interval, grace_seconds)
+    ):
         raise ValueError('command and positive monitoring budgets are required')
+    if solve_seconds is not None and (
+        not math.isfinite(float(solve_seconds)) or float(solve_seconds) <= 0.0
+    ):
+        raise ValueError('solve_seconds must be finite and positive when supplied')
     if tree_cap_bytes is not None and int(tree_cap_bytes) <= 0:
         raise ValueError('tree_cap_bytes must be positive when supplied')
     if active_pc_seconds is not None and (
@@ -213,6 +232,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     stable_since = None
     cache_stamp = None
     observed = set()
+    workflow_time_exceeded = False
+    solve_time_exceeded = False
+    pc_time_exceeded = False
     leader = None
     summary = {}
     clock_start = clock_sample() if timebase_guard else None
@@ -223,6 +245,14 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
     if timebase_guard:
         summary.update(clock_info=clock_info(), clock_start=clock_start,
                        timebase_policy=timebase_policy, timebase_policy_version=POLICY_VERSION)
+    summary.update(
+        v14_time_policy_facts(time_policy),
+        time_reference_seconds={
+            'workflow': float(wall_seconds),
+            'solve': None if solve_seconds is None else float(solve_seconds),
+            'active_pc': None if active_pc_seconds is None else float(active_pc_seconds),
+        },
+    )
     stage = 'launch'
     swap_baseline = vmstat_swap_pages()
     try:
@@ -249,10 +279,14 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 current = memory_envelope()
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}
-                solve_expired = (solve_seconds is not None and phase.get('phase') == 'solve'
-                                 and time.monotonic() - phase['phase_started_monotonic'] >= solve_seconds)
+                solve_observed = None
+                solve_expired = False
+                if solve_seconds is not None and phase.get('phase') == 'solve':
+                    solve_observed = time.monotonic() - phase['phase_started_monotonic']
+                    solve_expired = solve_observed >= solve_seconds
                 clock_issue = None
                 pc_expired = False
+                pc_observed = None
                 deadline_elapsed = elapsed
                 if timebase_guard:
                     clock_now = clock_sample()
@@ -267,8 +301,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                             if solve_budget is None or solve_budget.start != phase_start:
                                 solve_budget = ClockBudget(phase_start, policy=timebase_policy)
                             sample['solve_clock_interval'] = solve_budget.update(clock_now)
+                            solve_observed = sample['solve_clock_interval']['budget_seconds']
                             solve_expired = (solve_seconds is not None and
-                                            sample['solve_clock_interval']['budget_seconds'] >= solve_seconds)
+                                            solve_observed >= solve_seconds)
                         if active_pc_seconds is not None:
                             active_pc = phase.get('active_pc')
                             if active_pc is None:
@@ -279,12 +314,36 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                                     pc_budget = ClockBudget(pc_start, policy=timebase_policy)
                                 sample['pc_clock_interval'] = pc_budget.update(clock_now)
                                 sample['pc_limit_seconds'] = float(active_pc_seconds)
-                                pc_expired = (sample['pc_clock_interval']['budget_seconds']
-                                              >= active_pc_seconds)
+                                pc_observed = sample['pc_clock_interval']['budget_seconds']
+                                pc_expired = pc_observed >= active_pc_seconds
                     except TimebaseInconsistency as exc:
                         clock_issue = str(exc)
                         sample['clock_error'] = clock_issue
                         summary.setdefault('clock_error', clock_issue)
+                workflow_gate = v14_time_gate_facts(
+                    deadline_elapsed, wall_seconds, time_policy, inclusive=True
+                )
+                solve_gate = (
+                    None
+                    if solve_seconds is None or solve_observed is None
+                    else v14_time_gate_facts(
+                        solve_observed, solve_seconds, time_policy, inclusive=True
+                    )
+                )
+                pc_gate = (
+                    None
+                    if active_pc_seconds is None or pc_observed is None
+                    else v14_time_gate_facts(
+                        pc_observed, active_pc_seconds, time_policy, inclusive=True
+                    )
+                )
+                workflow_time_exceeded = workflow_time_exceeded or workflow_gate["exceeded"]
+                solve_time_exceeded = solve_time_exceeded or bool(
+                    solve_gate is not None and solve_gate["exceeded"]
+                )
+                pc_time_exceeded = pc_time_exceeded or bool(
+                    pc_gate is not None and pc_gate["exceeded"]
+                )
                 current_cap = (
                     runtime_tree_cap(
                         cap,
@@ -306,8 +365,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                         or sample['swap_bytes'] != 0 else
                         'USER_CONTROLLED_STOP' if timebase_guard and requested_signal else
                         'TIMEBASE_INCONSISTENCY' if clock_issue else
-                        'PC_TIME_CONTROLLED_STOP' if pc_expired else
-                        'PERFORMANCE_CONTROLLED_STOP' if deadline_elapsed >= wall_seconds or solve_expired else
+                        'PC_TIME_CONTROLLED_STOP'
+                        if pc_expired and time_policy == V14_TIME_POLICY_ENFORCE else
+                        'PERFORMANCE_CONTROLLED_STOP'
+                        if time_policy == V14_TIME_POLICY_ENFORCE
+                        and (deadline_elapsed >= wall_seconds or solve_expired) else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
                 if stop_on_global_swap:
                     current_swap = vmstat_swap_pages()
@@ -321,7 +383,29 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                                'launch_cap_bytes': current_cap,
                                'watchdog_tree_cap_bytes': tree_cap_bytes,
                                'warning': peak_rss >= .85 * cap,
-                               'live_or_unreaped_children': sorted(children)})
+                               'live_or_unreaped_children': sorted(children),
+                               'time_policy': time_policy,
+                               'time_gate_evaluated': time_policy == V14_TIME_POLICY_ENFORCE,
+                               'time_gate_action': (
+                                   'enforce'
+                                   if time_policy == V14_TIME_POLICY_ENFORCE
+                                   else 'observe_only'
+                               ),
+                               'time_reference_seconds': {
+                                   'workflow': float(wall_seconds),
+                                   'solve': None if solve_seconds is None else float(solve_seconds),
+                                   'active_pc': None if active_pc_seconds is None else float(active_pc_seconds),
+                               },
+                               'time_exceeded': {
+                                   'workflow': workflow_gate['exceeded'],
+                                   'solve': bool(solve_gate is not None and solve_gate['exceeded']),
+                                   'active_pc': bool(pc_gate is not None and pc_gate['exceeded']),
+                               },
+                               'time_gates': {
+                                   'workflow': workflow_gate,
+                                   'solve': solve_gate,
+                                   'active_pc': pc_gate,
+                               }})
                 stage = 'timeline_write'
                 timeline.write(json.dumps(sample, allow_nan=False) + '\n')
                 timeline.flush()
@@ -402,12 +486,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             'elapsed_seconds': time.monotonic() - started,
             'cache_metadata_stamp': cache_stamp,
             'source_state': source_state if source_state is not None else 'development_worktree; not formal PDE provenance',
+            'time_exceeded': {
+                'workflow': workflow_time_exceeded,
+                'solve': solve_time_exceeded,
+                'active_pc': pc_time_exceeded,
+            },
         })
         if timebase_guard:
             summary['clock_end'] = clock_sample()
             try:
                 summary['workflow_clock_interval'] = clock_budget.update(summary['clock_end'])
-                if (clock_budget.seconds >= wall_seconds and
+                if (time_policy == V14_TIME_POLICY_ENFORCE
+                        and clock_budget.seconds >= wall_seconds and
                         summary['classification'] == 'COMPLETED'):
                     summary['classification'] = 'PERFORMANCE_CONTROLLED_STOP'
             except TimebaseInconsistency as exc:
@@ -416,6 +506,23 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                                                           budget_complete=False)
                 if summary['classification'] in (None, 'COMPLETED'):
                     summary['classification'] = 'TIMEBASE_INCONSISTENCY'
+        try:
+            end_workflow_seconds = float(
+                summary.get('workflow_clock_interval', {}).get(
+                    'budget_seconds', summary['elapsed_seconds']
+                )
+            )
+            end_workflow_gate = v14_time_gate_facts(
+                end_workflow_seconds, wall_seconds, time_policy, inclusive=True
+            )
+            summary['time_end_observation'] = end_workflow_gate
+            summary['time_exceeded']['workflow'] = bool(
+                summary['time_exceeded']['workflow'] or end_workflow_gate['exceeded']
+            )
+        except (TypeError, ValueError) as exc:
+            summary['time_end_observation_error'] = str(exc)
+            if summary['classification'] in (None, 'COMPLETED'):
+                summary['classification'] = 'TIMEBASE_INCONSISTENCY'
         (directory / 'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False) + '\n')
     return summary
 

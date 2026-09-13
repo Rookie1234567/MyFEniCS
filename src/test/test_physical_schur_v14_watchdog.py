@@ -63,3 +63,58 @@ print(json.dumps(result))
     assert starts and all(x == starts[0] for x in starts)
     if active_limit is None:
         assert not any('pc_clock_interval' in x for x in rows)
+
+
+def test_observe_only_records_overruns_without_time_termination(tmp_path):
+    run = tmp_path / 'observe_watchdog'
+    phase = tmp_path / 'phase.json'
+    worker = '''import json,os,pathlib,time
+from src.runners.workflow_timebase import clock_sample
+p=pathlib.Path(os.environ['PHYSICAL_WATCHDOG_PHASE_PATH'])
+c=clock_sample()
+record=dict(
+    phase='solve', phase_started_monotonic=c['monotonic'],
+    phase_started_clock=c, active_pc=dict(sequence=1, started_clock=c))
+tmp=p.with_suffix('.tmp')
+tmp.write_text(json.dumps(record))
+tmp.replace(p)
+time.sleep(.25)
+'''
+    monitor = f'''import json,sys
+from pathlib import Path
+from benchmarks.subreaper_watchdog import supervise
+result=supervise([sys.executable,'-c',{worker!r}],Path({str(run)!r}),
+    wall_seconds=.05, solve_seconds=.05, active_pc_seconds=.05,
+    phase_path=Path({str(phase)!r}), interval=.01, grace_seconds=.1,
+    hard_stop_immediate=True, timebase_guard=True,
+    timebase_policy='conservative_realtime', time_policy='observe_only')
+print(json.dumps(result))
+'''
+    process = subprocess.run([sys.executable, '-c', monitor], capture_output=True, text=True)
+    assert process.returncode == 0, process.stdout + process.stderr
+    summary = json.loads((run / 'summary.json').read_text())
+    assert summary['classification'] == 'COMPLETED'
+    assert summary['time_policy'] == 'observe_only'
+    assert summary['time_gate_evaluated'] is False
+    assert summary['time_exceeded']['workflow']
+    assert summary['time_exceeded']['solve']
+    assert summary['time_exceeded']['active_pc']
+    assert 'first_SIGKILL' not in summary
+    assert summary['time_end_observation']['exceeded']
+
+
+def test_observe_only_does_not_bypass_resource_tree_cap(tmp_path):
+    run = tmp_path / 'observe_resource_watchdog'
+    monitor = f'''import sys
+from pathlib import Path
+from benchmarks.subreaper_watchdog import supervise
+supervise([sys.executable,'-c','import time;time.sleep(60)'],
+    Path({str(run)!r}), wall_seconds=60, interval=.01, grace_seconds=.1,
+    hard_stop_immediate=True, tree_cap_bytes=1, time_policy='observe_only')
+'''
+    process = subprocess.run([sys.executable, '-c', monitor], capture_output=True, text=True)
+    assert process.returncode == 0, process.stdout + process.stderr
+    summary = json.loads((run / 'summary.json').read_text())
+    assert summary['classification'] == 'RESOURCE_CONTROLLED_STOP'
+    assert summary['time_policy'] == 'observe_only'
+    assert summary['descendants_cleared']

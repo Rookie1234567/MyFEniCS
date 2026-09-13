@@ -40,6 +40,32 @@ def test_early_time_gate_can_stop_before64_and_mid_gate_remains_independent():
     assert not screen.inspect_mid_budget(201, .002, 5400.)['passed']
 
 
+def test_observe_only_keeps_the_numeric_step64_gate_without_time_boundaries():
+    screen = V14SchurScreen("observe_only")
+    assert screen.inspect(13, .4, 1800.) is None
+    assert not screen.check_due(13, 1800.)
+    assert screen.check_due(64, 1800.01)
+    passed = screen.inspect(64, .09, 1800.01)
+    assert passed["passed"]
+    assert passed["time_gate"]["exceeded"]
+    assert not passed["time_gate"]["time_gate_evaluated"]
+    assert not screen.mid_budget_checked
+    assert not screen.check_due(200, 5400.01)
+
+
+def test_observe_only_still_stops_on_a_failed_step64_numeric_gate():
+    screen = V14SchurScreen("observe_only")
+    decision = screen.inspect(64, .10001, 2000.)
+    assert not decision["passed"]
+    assert decision["numeric_gate_passed"] is False
+
+
+def test_observe_only_step64_is_not_required_before_the_1800_second_observation():
+    screen = V14SchurScreen("observe_only")
+    assert screen.inspect(32, .4, 2000.) is None
+    assert screen.check_due(64, 2000.)
+
+
 def test_v14_policy_is_exclusive_and_has_frozen_solve_budget():
     arguments = dict(checkpoint=None, append=None, seconds=None)
     with pytest.raises(ValueError, match='mutually exclusive'):
@@ -53,7 +79,11 @@ def test_v14_policy_is_exclusive_and_has_frozen_solve_budget():
                            **arguments)
 
 
-def test_goal_before64_finishes_without_filling_the_window():
+@pytest.mark.parametrize(
+    'time_policy,seconds',
+    [('enforce', 1.), ('observe_only', 20000.)],
+)
+def test_goal_before64_finishes_without_filling_the_window(time_policy, seconds):
     from petsc4py import PETSc
 
     rhs = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
@@ -63,7 +93,8 @@ def test_goal_before64_finishes_without_filling_the_window():
         result = run_balanced_fgmres(
             rhs, lambda x: x.copy(), lambda x: x.copy(),
             checkpoint=lambda *_: None, append=lambda *_: None,
-            seconds=lambda: 1., v14_policy=True, solve_limit_seconds=10800,
+            seconds=lambda: seconds, v14_policy=True,
+            solve_limit_seconds=10800, time_policy=time_policy,
         )
         assert result['status'] == 'TRUE_RESIDUAL_PASS'
         assert result['iterations'] == 1
@@ -75,7 +106,11 @@ def test_goal_before64_finishes_without_filling_the_window():
         rhs.destroy()
 
 
-def test_real_restart32_keeps_one_ksp_and_stops_at64():
+@pytest.mark.parametrize(
+    'time_policy,seconds',
+    [('enforce', 1.), ('observe_only', 20000.)],
+)
+def test_real_restart32_keeps_one_ksp_and_stops_at64(time_policy, seconds):
     """The bidiagonal chain needs a long Krylov space; no PDE/factor is used."""
     from petsc4py import PETSc
 
@@ -95,7 +130,8 @@ def test_real_restart32_keeps_one_ksp_and_stops_at64():
             rhs, action, lambda source: source.copy(),
             checkpoint=lambda iteration, _x, rho: checkpoints.append((iteration, rho)),
             append=lambda name, row: records.append((name, row)),
-            seconds=lambda: 1., v14_policy=True, solve_limit_seconds=10800,
+            seconds=lambda: seconds, v14_policy=True,
+            solve_limit_seconds=10800, time_policy=time_policy,
         )
         assert result['iterations'] == 64
         assert result['status'] == 'V14_PROGRESS_SCREEN_STOP'

@@ -12,6 +12,68 @@ import math
 from typing import Any, Mapping
 
 
+V14_TIME_POLICY_ENFORCE = "enforce"
+V14_TIME_POLICY_OBSERVE_ONLY = "observe_only"
+V14_TIME_POLICIES = frozenset(
+    {V14_TIME_POLICY_ENFORCE, V14_TIME_POLICY_OBSERVE_ONLY}
+)
+
+
+def normalize_v14_time_policy(value: Any) -> str:
+    """Normalize a persisted V14 time policy without changing old records.
+
+    Historical attempts have no policy field.  They intentionally resolve to
+    the original enforcing behavior; only the explicit ``observe_only`` value
+    changes deadline handling for a newly bound attempt.
+    """
+
+    if value is None:
+        return V14_TIME_POLICY_ENFORCE
+    if not isinstance(value, str) or value not in V14_TIME_POLICIES:
+        raise ValueError(
+            "V14 time policy must be one of: "
+            f"{V14_TIME_POLICY_ENFORCE}, {V14_TIME_POLICY_OBSERVE_ONLY}"
+        )
+    return value
+
+
+def v14_time_policy_facts(value: Any) -> dict[str, Any]:
+    """Return stable evidence fields shared by launcher, worker and checker."""
+
+    policy = normalize_v14_time_policy(value)
+    enforced = policy == V14_TIME_POLICY_ENFORCE
+    return {
+        "time_policy": policy,
+        "time_gate_evaluated": enforced,
+        "time_gate_action": "enforce" if enforced else "observe_only",
+    }
+
+
+def v14_time_gate_facts(
+    observed_seconds: Any,
+    limit_seconds: Any,
+    policy: Any = V14_TIME_POLICY_ENFORCE,
+    *,
+    inclusive: bool = False,
+) -> dict[str, Any]:
+    """Validate one elapsed-time observation and apply its persisted policy."""
+
+    observed = _finite_nonnegative(observed_seconds, field="observed_seconds")
+    limit = _finite_nonnegative(limit_seconds, field="limit_seconds")
+    if limit <= 0.0:
+        raise ValueError("V14 time gate limit must be finite and positive")
+    facts = v14_time_policy_facts(policy)
+    exceeded = observed >= limit if inclusive else observed > limit
+    return {
+        **facts,
+        "observed_seconds": observed,
+        "limit_seconds": limit,
+        "inclusive": bool(inclusive),
+        "exceeded": exceeded,
+        "passed": bool(not exceeded or not facts["time_gate_evaluated"]),
+    }
+
+
 def _finite_nonnegative(value: Any, *, field: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"V14 budget field {field!r} must be a number")
@@ -88,6 +150,9 @@ def read_v14_effective_budget(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "attempt_index": active_index,
                 "reserved_seconds": reserved,
                 "recovery_id": attempt.get("recovery_id"),
+                "time_policy": normalize_v14_time_policy(
+                    attempt.get("time_policy")
+                ),
             }
         )
 
@@ -107,4 +172,12 @@ def read_v14_effective_budget(ledger: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-__all__ = ["read_v14_effective_budget"]
+__all__ = [
+    "V14_TIME_POLICIES",
+    "V14_TIME_POLICY_ENFORCE",
+    "V14_TIME_POLICY_OBSERVE_ONLY",
+    "normalize_v14_time_policy",
+    "read_v14_effective_budget",
+    "v14_time_gate_facts",
+    "v14_time_policy_facts",
+]

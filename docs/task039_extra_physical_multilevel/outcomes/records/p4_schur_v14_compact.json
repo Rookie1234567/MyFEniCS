@@ -507,5 +507,83 @@
       "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
       "no_missing_evidence_implies_method_failure": true
     }
+  },
+  "time_observe_only": {
+    "status": "implemented_not_run",
+    "authorization": {
+      "date": "2026-09-13",
+      "user_text": "先不考虑时间gate，继续推进看看",
+      "baseline_sha": "d041da66bdcea74bdd82197cb0b8818d231b4a2d",
+      "scientific_contract": "Review V15",
+      "scope": "time execution exemption only; no Review V17"
+    },
+    "policy_value": "observe_only",
+    "default_policy": "enforce",
+    "accepted_preconditioner": "physical_p4_schur_v14",
+    "historical_missing_policy": "enforce",
+    "binding_sources": [
+      "shared_workflow_ledger.attempt",
+      "run_manifest",
+      "run_summary",
+      "watchdog.summary",
+      "physical_p4_schur_v14_summary"
+    ],
+    "time_limits_seconds": {
+      "pc_soft": 25,
+      "pc_hard": 30,
+      "q3_single_fint": 15,
+      "v14_step64_observation": 1800,
+      "v14_mid_budget_node": 5400,
+      "v14_solve": 10800,
+      "v14_workflow_q4_q5": 14400
+    },
+    "observe_behavior": {
+      "finite_elapsed_is_required": true,
+      "raw_exceeded_is_retained": true,
+      "time_gate_action": "record_only",
+      "disabled_deadline_actions": [
+        "PC_TIME_CONTROLLED_STOP",
+        "PERFORMANCE_CONTROLLED_STOP",
+        "V14_PROGRESS_SCREEN_STOP_due_only_to_elapsed_time",
+        "Q3_fint_time_rejection",
+        "Q4_Q5_solve_or_workflow_time_rejection"
+      ],
+      "step64_numeric_rho_limit": 0.1,
+      "resource_eio_user_abort_cleanup_and_timebase_gates": "preserved"
+    },
+    "q0_continuation": {
+      "allowed_only_after": "the V15 recovery attempt has status PERFORMANCE_CONTROLLED_STOP",
+      "max_new_attempts": 1,
+      "nominal_reservation_preserved": true,
+      "negative_shared_balance_does_not_clip_reservation": true,
+      "implementation_bug_replay_count_incremented": false,
+      "fourth_attempt": "rejected"
+    },
+    "q6_refresh": {
+      "id": "V16_Q6_EVIDENCE_REFRESH_ONCE",
+      "requires_current_policy": "observe_only",
+      "requires_prior_evidence": "WORKER_FAILED with Q6_EVIDENCE_INCOMPLETE and new_pde_actions=0",
+      "implementation_bug_replay_count_incremented": false,
+      "max_refreshes": 1
+    },
+    "engineering_validation": {
+      "qualified_activation": "passed; complex128/int32; MPI1",
+      "real_petsc_ksp_policy_matrix": {
+        "status": "passed",
+        "command": "python -m pytest -q src/test/test_physical_schur_v14_fgmres.py -k 'goal_before64 or real_restart32'",
+        "result": "4 passed, 9 deselected in 0.40s",
+        "enforce": {
+          "goal_before64": "1 step TRUE_RESIDUAL_PASS",
+          "real_restart32": "64-step V14_PROGRESS_SCREEN_STOP"
+        },
+        "observe_only": {
+          "goal_before64": "1 step TRUE_RESIDUAL_PASS",
+          "real_restart32": "64-step V14_PROGRESS_SCREEN_STOP"
+        },
+        "ksp_count_assertions": "unchanged and passed"
+      },
+      "pde_status": "not run"
+    },
+    "pde_status": "no observe_only PDE run or qualification evidence"
   }
 }

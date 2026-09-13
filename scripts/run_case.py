@@ -85,6 +85,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument('--profile-recovery-from', '--profile-cache-recovery-from',
                         dest='profile_recovery_from', type=Path, metavar='FAILED_R0_DIRECTORY')
     parser.add_argument(
+        '--v14-time-policy',
+        choices=('enforce', 'observe_only'),
+        default='enforce',
+        help='V14 Schur timing policy; observe_only keeps finite timing evidence without deadline termination',
+    )
+    parser.add_argument(
         '--r0-evidence', type=Path, metavar='ACCEPTED_R0_JSON',
         help='fixed accepted R0 record required by --recover-v15-q0-eio-once',
     )
@@ -110,6 +116,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
+        if (
+            args.v14_time_policy == 'observe_only'
+            and specification.solver.get('preconditioner') != 'physical_p4_schur_v14'
+        ):
+            raise InputError(
+                '--v14-time-policy observe_only requires '
+                'solver.preconditioner=physical_p4_schur_v14'
+            )
         if args.validate_only:
             payload = {
                 "status": "valid",
@@ -286,7 +300,9 @@ def main(argv: list[str] | None = None) -> int:
                 return 0 if result['result_classification'] == 'worker_exit0' else 3
             if args.profile_budget_ledger is not None:
                 raise InputError('--profile-budget-ledger requires --physical-pc-profile')
-            result = launch_specification(specification)
+            result = launch_specification(
+                specification, v14_time_policy=args.v14_time_policy
+            )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3
     except InputError as exc:

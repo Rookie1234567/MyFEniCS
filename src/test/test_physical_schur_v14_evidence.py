@@ -181,6 +181,39 @@ def test_notch_predecessor_requires_final_parent_samples_and_real_physical_value
     assert not gate()['qualified']  # A stale COMPLETED summary cannot hide a bad trace.
 
 
+def test_settled_checker_uses_each_attempt_policy_for_overrun_qualification(tmp_path):
+    worker, write, gate = _predecessor_fixture(tmp_path)
+    run = tmp_path / 'original'
+    worker['time_policy'] = 'observe_only'
+    worker['solver']['elapsed_seconds'] = 10801.0
+    worker['gates']['solve_clock_interval']['budget_seconds'] = 10801.0
+    manifest = json.loads((run / 'run_manifest.json').read_text())
+    manifest['v14_time_policy'] = 'observe_only'
+    parent = json.loads((run / 'run_summary.json').read_text())
+    parent['time_policy'] = 'observe_only'
+    parent['workflow_clock_interval']['budget_seconds'] = 14401.0
+    watchdog = json.loads((run / 'watchdog/summary.json').read_text())
+    watchdog['time_policy'] = 'observe_only'
+    write('physical_p4_schur_v14_summary.json', worker)
+    write('run_manifest.json', manifest)
+    write('run_summary.json', parent)
+    write('watchdog/summary.json', watchdog)
+    ledger = json.loads((tmp_path / 'ledger.json').read_text())
+    ledger['stages']['Q4_ORIGINAL']['attempts'][0].update(
+        time_policy='observe_only', settled_seconds=14401.0,
+        reservation_exceeded_seconds=1.0
+    )
+    (tmp_path / 'ledger.json').write_text(json.dumps(ledger))
+    result = gate()
+    assert result['qualified']
+    assert result['time_policy'] == 'observe_only'
+    assert not result['time_observations']['settled_within_reservation']
+    assert result['checks']['full_solve_clock']
+    worker['time_policy'] = 'enforce'
+    write('physical_p4_schur_v14_summary.json', worker)
+    assert not gate()['qualified']
+
+
 def test_original_admission_recomputes_three_rhs_and_actual_balanced_work(tmp_path):
     from copy import deepcopy
     from src.runners.physical_p4_schur_v14 import _Q1_Q2_RHS

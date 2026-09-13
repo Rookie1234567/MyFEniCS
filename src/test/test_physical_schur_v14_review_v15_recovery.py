@@ -213,6 +213,98 @@ def test_recovery_entrypoint_is_idempotent_and_preserves_old_attempt(tmp_path, m
         )
 
 
+def test_observe_only_allows_one_authorized_third_q0_without_refunding_budget(
+    tmp_path, monkeypatch
+):
+    repo, ledger_path, old_attempt, ledger_sha, evidence = _recovery_fixture(tmp_path)
+    _prepare_recovery(monkeypatch, repo, ledger_path, evidence)
+    launcher.recover_v15_q0_eio_once(
+        repo,
+        r0_evidence=evidence[1],
+        expected_run_directory=old_attempt["run_directory"],
+        expected_original_ledger_sha256=ledger_sha,
+    )
+    second = launcher._reserve_v14_shared_budget(
+        repo,
+        tmp_path / "second_q0",
+        source_sha="b" * 40,
+        stage="Q0_CORE",
+        stage_budget={"workflow_seconds": 600.0},
+        workflow_clock_start={"monotonic": 1.0, "boottime": 1.0, "utc_ns": 1_000_000_000},
+    )
+    launcher._settle_v14_shared_budget(
+        second,
+        status="PERFORMANCE_CONTROLLED_STOP",
+        authority={"classification": "PERFORMANCE_CONTROLLED_STOP"},
+        parent_interval={"budget_seconds": 700.0},
+        parent_clock_end={"monotonic": 701.0, "boottime": 701.0, "utc_ns": 701_000_000_000},
+    )
+    third = launcher._reserve_v14_shared_budget(
+        repo,
+        tmp_path / "third_q0",
+        source_sha="c" * 40,
+        stage="Q0_CORE",
+        stage_budget={"workflow_seconds": 600.0},
+        workflow_clock_start={"monotonic": 702.0, "boottime": 702.0, "utc_ns": 702_000_000_000},
+        time_policy="observe_only",
+    )
+    current = json.loads(ledger_path.read_text(encoding="utf-8"))
+    attempts = current["stages"]["Q0_CORE"]["attempts"]
+    assert third["time_policy"] == "observe_only"
+    assert third["authorized_observe_continuation"] is True
+    assert third["reserved_seconds"] == 600.0
+    assert attempts[0] == old_attempt
+    assert attempts[1]["time_policy"] == "enforce"
+    assert attempts[1]["status"] == "PERFORMANCE_CONTROLLED_STOP"
+    assert current["unique_bug_replay_count"] == 0
+    launcher._settle_v14_shared_budget(
+        third,
+        status="worker_exit0",
+        authority=None,
+        parent_interval={"budget_seconds": 900.0},
+        parent_clock_end={"monotonic": 1602.0, "boottime": 1602.0, "utc_ns": 1_602_000_000_000},
+    )
+    with pytest.raises(InputError, match="exhausted"):
+        launcher._reserve_v14_shared_budget(
+            repo,
+            tmp_path / "fourth_q0",
+            source_sha="d" * 40,
+            stage="Q0_CORE",
+            stage_budget={"workflow_seconds": 600.0},
+            workflow_clock_start={"monotonic": 1603.0, "boottime": 1603.0, "utc_ns": 1_603_000_000_000},
+            time_policy="observe_only",
+        )
+
+
+def test_observe_only_does_not_reserve_against_an_already_negative_shared_balance(
+    tmp_path, monkeypatch
+):
+    ledger_path = tmp_path / "shared.json"
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "batch_identity": "review_v14",
+                "total_budget_seconds": 10.0,
+                "elapsed_seconds": 20.0,
+                "policy_debits": [],
+                "stages": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(launcher, "_v14_shared_ledger_path", lambda _root: ledger_path)
+    lease = launcher._reserve_v14_shared_budget(
+        tmp_path,
+        tmp_path / "observe",
+        source_sha="a" * 40,
+        stage="Q0_CORE",
+        stage_budget={"workflow_seconds": 600.0},
+        workflow_clock_start={"monotonic": 0.0, "boottime": 0.0, "utc_ns": 0},
+        time_policy="observe_only",
+    )
+    assert lease["reserved_seconds"] == 600.0
+
+
 def test_recovery_can_retry_after_predecessor_publish_failure(tmp_path, monkeypatch):
     repo, ledger_path, _old_attempt, ledger_sha, evidence = _recovery_fixture(tmp_path)
     _prepare_recovery(monkeypatch, repo, ledger_path, evidence)

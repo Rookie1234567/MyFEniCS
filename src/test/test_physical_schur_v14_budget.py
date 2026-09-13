@@ -80,6 +80,62 @@ def test_batch_allows_only_one_evidenced_bug_replay(tmp_path):
     assert len(ledger['stages']['Q1_FULL_DIRECT']['attempts']) == 2
 
 
+def test_q6_incomplete_finalization_has_one_narrow_refresh_without_bug_debit(tmp_path):
+    old_directory = tmp_path / 'old_q6'
+    old_directory.mkdir()
+    (old_directory / 'watchdog').mkdir()
+    (old_directory / 'q6_decision.json').write_text(json.dumps({
+        'status': 'Q6_EVIDENCE_INCOMPLETE',
+        'result_classification': 'EVIDENCE_INCOMPLETE',
+        'stage_pass': False,
+        'official_result': False,
+        'new_pde_actions': 0,
+    }))
+    (old_directory / 'run_summary.json').write_text(json.dumps({'exit_status': 4}))
+    (old_directory / 'watchdog' / 'summary.json').write_text(json.dumps({
+        'classification': 'WORKER_FAILED', 'leader_exit_code': 4,
+    }))
+    ledger_path = launcher._v14_shared_ledger_path(tmp_path)
+    ledger_path.parent.mkdir(parents=True)
+    ledger_path.write_text(json.dumps({
+        'schema': 'task039extra.v14.shared-workflow-ledger.v1',
+        'batch_identity': 'review_v14', 'total_budget_seconds': 43200.0,
+        'elapsed_seconds': 10.0, 'unique_bug_replay_count': 0,
+        'policy_debits': [], 'stages': {'Q6_FINALIZE': {
+            'active_attempt': None,
+            'attempts': [{
+                'attempt': 1, 'source_sha': 'a' * 40,
+                'run_directory': str(old_directory), 'status': 'WORKER_FAILED',
+                'watchdog_classification': 'WORKER_FAILED',
+                'reserved_seconds': 100.0,
+                'settled_seconds': 3.0,
+            }],
+        }},
+    }))
+    with pytest.raises(InputError, match='implementation_bug_replay.json'):
+        launcher._reserve_v14_shared_budget(
+            tmp_path, tmp_path / 'default_q6', source_sha='b' * 40,
+            stage='Q6_FINALIZE', stage_budget={'workflow_seconds': 43200.0},
+            workflow_clock_start=_clock(20),
+        )
+    lease = launcher._reserve_v14_shared_budget(
+        tmp_path, tmp_path / 'new_q6', source_sha='b' * 40,
+        stage='Q6_FINALIZE', stage_budget={'workflow_seconds': 43200.0},
+        workflow_clock_start=_clock(20), time_policy='observe_only',
+    )
+    assert lease['authorized_q6_refresh'] is True
+    assert lease['refresh_id'] == launcher.V16_Q6_REFRESH_ID
+    assert lease['replay'] is False
+    assert _ledger(lease)['unique_bug_replay_count'] == 0
+    _settle(lease, 4)
+    with pytest.raises(InputError, match='exhausted'):
+        launcher._reserve_v14_shared_budget(
+            tmp_path, tmp_path / 'third_q6', source_sha='c' * 40,
+            stage='Q6_FINALIZE', stage_budget={'workflow_seconds': 43200.0},
+            workflow_clock_start=_clock(30),
+        )
+
+
 def test_watchdog_utc_excursions_and_parent_prefix_suffix_are_all_charged(tmp_path):
     lease = _reserve(tmp_path)
     authority = dict(clock_start=_clock(2), clock_end=_clock(8), elapsed_seconds=6,

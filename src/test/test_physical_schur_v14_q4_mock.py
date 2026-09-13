@@ -226,7 +226,7 @@ def _patch_q4_dependencies(monkeypatch, fail):
     })
     monkeypatch.setattr(v14, "_v14_history_facts", lambda *_a, **_k: {"status": "mock"})
     monkeypatch.setattr(v14, "_v14_resource_facts", lambda *_a, **_k: {"gate": True})
-    monkeypatch.setattr(v14, "_v14_physical_checks", lambda *_a: {"all": True})
+    monkeypatch.setattr(v14, "_v14_physical_checks", lambda *_a, **_k: {"all": True})
     monkeypatch.setattr(macro, "_load_reference_binding", load_reference)
     monkeypatch.setattr(macro, "_write_checkpoint", fake_checkpoint)
     monkeypatch.setattr(macro, "_compare_saved_output", lambda *_a, **_k: {})
