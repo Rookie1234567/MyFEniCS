@@ -2,12 +2,14 @@
 
 Q1 and Q2 are deliberately separate worker stages.  Each worker builds the
 same p6/p4 mesh, mode inventory and three hash-bound p4 right-hand sides, then
-exits after its own factors have been destroyed.  Q3--Q6 are explicit
-not-run stages until the Q2 accuracy and memory decision authorizes them.
+exits after its own factors have been destroyed.  Q3 is a diagnostic interface
+candidate stage; Q4--Q6 remain explicit not-run stages until later gates
+authorize them.
 """
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 import gc
 import hashlib
 import json
@@ -286,6 +288,10 @@ class _V14Runtime:
             contract["resources"]["shared_temp_workspace_cap_bytes"]
         )
         self.stop_requested = False
+        self.pc_soft_stop_requested = False
+        self._pc_clock = None
+        self._outer_solve_active = False
+        self._phase_record = None
         self._phase = "preflight"
         self.inventory_entries: dict[str, dict[str, Any]] = {}
         self.inventory_used_bytes = 0
@@ -317,6 +323,40 @@ class _V14Runtime:
             raise RuntimeError("V14 parent ledger source SHA differs from worker")
         if attempt.get("status") not in {"RESERVED", "RUNNING"}:
             raise RuntimeError("V14 parent ledger attempt is not live")
+        workflow_clock_start = attempt.get("workflow_clock_start")
+        reserved_seconds = attempt.get("reserved_seconds")
+        workflow_clock_source = "parent_attempt.workflow_clock_start"
+        if not isinstance(workflow_clock_start, Mapping):
+            # Older unit-test fixtures predate the parent clock fields.  Keep
+            # those non-Q3 runtime tests focused on their clock semantics, but
+            # never allow the production Q3 stage to run without the parent
+            # attempt's immutable start sample.
+            if self.stage == "Q3_INTERFACE_CONTROL":
+                raise RuntimeError("V14 parent workflow clock start is missing")
+            from .workflow_timebase import clock_sample
+
+            workflow_clock_start = clock_sample()
+            workflow_clock_source = (
+                "worker_start_fallback_for_non_q3_legacy_fixture"
+            )
+        if (
+            not isinstance(reserved_seconds, (int, float))
+            or not np.isfinite(float(reserved_seconds))
+            or float(reserved_seconds) <= 0.0
+        ):
+            if self.stage == "Q3_INTERFACE_CONTROL":
+                raise RuntimeError("V14 parent workflow reservation is invalid")
+            reserved_seconds = (
+                contract["resources"].get("stage_budgets", {})
+                .get(self.stage, {})
+                .get("workflow_seconds", self.SHARED_WORKFLOW_SECONDS)
+            )
+            workflow_clock_source = (
+                "worker_start_fallback_for_non_q3_legacy_fixture"
+            )
+        self.workflow_clock_start = dict(workflow_clock_start)
+        self.workflow_reserved_seconds = float(reserved_seconds)
+        self.workflow_clock_source = workflow_clock_source
         self.phase_path.parent.mkdir(parents=True, exist_ok=True)
         self.set_phase(self._phase)
         self._persist_inventory()
@@ -344,6 +384,17 @@ class _V14Runtime:
                 "component_totals": component_totals,
                 "entries": self.inventory_entries,
             },
+        )
+
+    def workflow_clock_interval(self) -> dict[str, Any]:
+        """Return elapsed time from the parent attempt's immutable clock start."""
+
+        from .workflow_timebase import CONSERVATIVE_REALTIME, checked_interval, clock_sample
+
+        return checked_interval(
+            self.workflow_clock_start,
+            clock_sample(),
+            policy=CONSERVATIVE_REALTIME,
         )
 
     def _inventory_size(self, components: Mapping[str, int]) -> int:
@@ -550,6 +601,12 @@ class _V14Runtime:
         return facts
 
     def set_phase(self, phase: str) -> None:
+        if self._outer_solve_active and phase != "solve":
+            self._phase_record["solve_subphase"] = str(phase)
+            _write_json(self.phase_path, self._phase_record)
+            return
+        if self._phase_record is not None and phase == self._phase:
+            return
         self._phase = str(phase)
         from .workflow_timebase import clock_sample
 
@@ -561,11 +618,75 @@ class _V14Runtime:
             "phase_started_monotonic": time.monotonic(),
             "phase_started_clock": clock,
             "clock_error": None,
+            "active_pc": None,
         }
+        self._phase_record = value
         _write_json(self.phase_path, value)
 
+    def begin_outer_solve(self) -> None:
+        """Anchor the single KSP run, including all in-solve checkpoints."""
+
+        if self._outer_solve_active or self._pc_clock is not None:
+            raise RuntimeError("cannot restart an active V14 outer solve")
+        # Earlier setup/backsolve probes may also have used the solve phase.
+        # Only this explicit transition establishes the one outer KSP start.
+        self._phase_record = None
+        self.set_phase("solve")
+        self._outer_solve_active = True
+
+    def finish_outer_solve(self) -> None:
+        if not self._outer_solve_active or self._pc_clock is not None:
+            raise RuntimeError("V14 outer solve must finish between whole PC actions")
+        self._outer_solve_active = False
+
+    def begin_pc(self, sequence: int) -> None:
+        """Arm the parent deadline for one whole BAL_H action."""
+
+        from .workflow_timebase import ClockBudget, CONSERVATIVE_REALTIME, clock_sample
+
+        if self._pc_clock is not None:
+            raise RuntimeError("a whole V14 PC action is already active")
+        self.set_phase("solve")
+        start = clock_sample()
+        self._pc_clock = ClockBudget(start, policy=CONSERVATIVE_REALTIME)
+        self._phase_record["active_pc"] = {
+            "sequence": int(sequence), "started_clock": start,
+        }
+        self._phase_record["solve_subphase"] = "pc"
+        _write_json(self.phase_path, self._phase_record)
+
+    def finish_pc(self, *, completed: bool = True) -> dict[str, Any]:
+        """Disarm after return and request soft stop only for a complete PC."""
+
+        from .workflow_timebase import clock_sample
+
+        if self._pc_clock is None:
+            raise RuntimeError("no whole V14 PC action is active")
+        interval = self._pc_clock.update(clock_sample())
+        facts = {
+            **self._phase_record["active_pc"],
+            "completed": bool(completed),
+            "clock_interval": interval,
+            "soft_limit_seconds": self.contract["resources"]["pc_soft_seconds"],
+            "hard_limit_seconds": self.contract["resources"]["pc_hard_seconds"],
+        }
+        self._phase_record["active_pc"] = None
+        self._phase_record["solve_subphase"] = "between_pc"
+        self._pc_clock = None
+        _write_json(self.phase_path, self._phase_record)
+        if completed and interval["budget_seconds"] >= facts["soft_limit_seconds"]:
+            self.pc_soft_stop_requested = True
+        facts["soft_stop_requested"] = self.pc_soft_stop_requested
+        facts["hard_limit_exceeded"] = (
+            interval["budget_seconds"] >= facts["hard_limit_seconds"]
+        )
+        self.marker("v14_whole_pc_returned", facts)
+        if completed and facts["hard_limit_exceeded"]:
+            raise V14ResourceStop(f"PC_TIME_CONTROLLED_STOP: {facts}")
+        return facts
+
     def marker(self, name: str, facts: Mapping[str, Any] | None = None) -> None:
-        if name.endswith("started") or name.endswith("_started"):
+        if self._pc_clock is None and name.endswith("started"):
             if "numeric" in name or "symbolic" in name or "factor" in name:
                 self.set_phase("factor")
             elif "solve" in name:
@@ -585,6 +706,10 @@ class _V14Runtime:
     def sample(self, label: str | None = None) -> dict[str, Any]:
         if self.stop_requested:
             raise V14ResourceStop("parent requested a V14 worker stop")
+        if self._pc_clock is not None:
+            from .workflow_timebase import clock_sample
+
+            self._pc_clock.update(clock_sample())
         if self.parent_pid <= 0 or self.parent_pid == os.getpid() or not Path(
             f"/proc/{self.parent_pid}"
         ).is_dir():
@@ -765,6 +890,27 @@ def _v14_known_preallocation_gate(
                     "active-volume construction assumptions; not separately calibrated"
                 ),
                 "gate": "full_and_active_sparse_objects_overlap_during_submatrix",
+            },
+        )
+    elif stage == "Q3_INTERFACE_CONTROL":
+        runtime.check_projected(
+            "q3_full_and_active_volume_preallocation",
+            volume_payload * 2 + 128 * 1024**2,
+        )
+        runtime.marker(
+            "q3_volume_preallocation_gate",
+            {
+                "full_storage_payload_upper_bytes": volume_payload,
+                "active_payload_upper_bytes": volume_payload,
+                "temporary_workspace_upper_bytes": 128 * 1024**2,
+                "simultaneous_upper_bytes": volume_payload * 2 + 128 * 1024**2,
+                "estimate_classification": "derived_conservative_estimate",
+                "strict_upper_bound": False,
+                "allowance_basis": (
+                    "implementation-derived active-volume and Schur construction "
+                    "allowance; not a measured sparse payload"
+                ),
+                "gate": "q3_full_and_active_sparse_objects_before_matrix_free_release",
             },
         )
     elif stage == "Q0_CORE":
@@ -1312,6 +1458,62 @@ def _physical_residual(action: Any, rhs: Any, solution: Any) -> float:
         if not np.isfinite(value):
             raise FloatingPointError("nonfinite native physical residual")
         return value
+    finally:
+        applied.destroy()
+
+
+def _physical_residual_decomposition(
+    action: Any,
+    rhs: Any,
+    solution: Any,
+    partition: Any,
+) -> dict[str, Any]:
+    """Evaluate one native A4 residual and split it into I/Gamma pieces."""
+
+    applied = solution.duplicate()
+    try:
+        action.apply(solution, applied)
+        residual = np.asarray(
+            rhs.array - applied.array,
+            dtype=np.complex128,
+        )
+        denominator = max(
+            float(np.linalg.norm(rhs.array)),
+            np.finfo(float).tiny,
+        )
+        active = residual[partition.active_full_indices]
+        interface = active[partition.gamma_active_indices]
+        internal_parts = [active[block] for block in partition.internal_blocks_active]
+        internal = (
+            np.concatenate(internal_parts)
+            if internal_parts
+            else np.empty(0, dtype=np.complex128)
+        )
+        total_norm = float(np.linalg.norm(residual))
+        internal_norm = float(np.linalg.norm(internal))
+        interface_norm = float(np.linalg.norm(interface))
+        partition_norm = float(np.hypot(internal_norm, interface_norm))
+        return {
+            "total_absolute_norm": total_norm,
+            "total_relative": total_norm / denominator,
+            "internal_absolute_norm": internal_norm,
+            "internal_relative": internal_norm / denominator,
+            "interface_absolute_norm": interface_norm,
+            "interface_relative": interface_norm / denominator,
+            "partition_absolute_norm": partition_norm,
+            "partition_relative": partition_norm / denominator,
+            "partition_residual_pythagorean_relative": abs(
+                partition_norm - float(np.linalg.norm(active))
+            )
+            / max(float(np.linalg.norm(active)), np.finfo(float).tiny),
+            "normalization": "full_storage_rhs_norm",
+            "native_action_count": 1,
+            "finite": bool(
+                np.isfinite(total_norm)
+                and np.isfinite(internal_norm)
+                and np.isfinite(interface_norm)
+            ),
+        }
     finally:
         applied.destroy()
 
@@ -2772,6 +2974,9 @@ def _q2_schur_direct(
                     "interface_relative_residual": interface_evidence[
                         "interface_relative_residual"
                     ],
+                    "interface_reduced_rhs_relative_residual": interface_evidence[
+                        "interface_reduced_rhs_relative_residual"
+                    ],
                     "interface_residual_norm": float(
                         np.linalg.norm(interface_evidence["interface_residual"])
                     ),
@@ -2978,6 +3183,1534 @@ def _q2_schur_direct(
             runtime.release_inventory(f"internal_{index}")
 
 
+def _q3_action_checks(
+    runtime: _V14Runtime,
+    core: Any,
+    common: Mapping[str, Any],
+    storage_template: Any,
+) -> dict[str, Any]:
+    """Check the matrix-free physical Gamma action before releasing ``S_V``."""
+
+    runtime.set_phase("action_checks")
+    gamma = core.V_GG.createVecRight()
+    gamma_y = gamma.duplicate()
+    gamma_mf = gamma.duplicate()
+    gamma_explicit = gamma.duplicate()
+    gamma_adjoint = gamma.duplicate()
+    gamma_adj_explicit = gamma.duplicate()
+    zero_storage = storage_template.duplicate()
+    physical = physical_adjoint = recovered = native_output = None
+    try:
+        gamma.array[:] = np.arange(gamma.getLocalSize(), dtype=np.float64) + 0.25j
+        gamma.array[:] /= max(float(gamma.norm()), 1.0)
+        gamma_y.array[:] = 1.0 + 1j * np.arange(
+            gamma_y.getLocalSize(), dtype=np.float64
+        )
+        gamma_y.array[:] /= max(float(gamma_y.norm()), 1.0)
+        core.S_V.mult(gamma, gamma_explicit)
+        core.apply_volume_schur(gamma, gamma_mf)
+        core.S_V.multHermitian(gamma, gamma_adj_explicit)
+        core.apply_volume_schur_adjoint(gamma, gamma_adjoint)
+
+        zero_storage.set(0)
+        recovered = core.recover(zero_storage, gamma)
+        native_output = recovered.duplicate()
+        common["p4"]["physical_action"].apply(recovered, native_output)
+        native_gamma = np.asarray(
+            native_output.array[core.partition.gamma_full_indices],
+            dtype=np.complex128,
+        )
+        physical = core.apply_physical_schur(gamma)
+        physical_difference = float(
+            np.linalg.norm(native_gamma - physical.array)
+        ) / max(float(physical.norm()), np.finfo(float).tiny)
+
+        physical_adjoint = core.apply_physical_schur_adjoint(gamma)
+        expected_adjoint = gamma_adj_explicit.duplicate()
+        try:
+            expected_adjoint.array[:] = gamma_adj_explicit.array
+            for entry in core.port_data:
+                value = np.dot(
+                    np.conj(entry["b_values"]), gamma.array[entry["b_gamma"]]
+                ) / np.conj(entry["normalization_h"])
+                expected_adjoint.array[entry["d_gamma"]] += (
+                    np.conj(entry["d_values"]) * value
+                )
+            physical_adjoint_difference = float(
+                np.linalg.norm(physical_adjoint.array - expected_adjoint.array)
+            ) / max(float(expected_adjoint.norm()), np.finfo(float).tiny)
+        finally:
+            expected_adjoint.destroy()
+
+        block_input = np.empty((gamma.getLocalSize(), 2), dtype=np.complex128)
+        block_input[:, 0] = gamma.array
+        block_input[:, 1] = gamma_y.array
+        block_output = core.apply_physical_schur_block(block_input)
+        block_first_difference = float(
+            np.linalg.norm(block_output[:, 0] - physical.array)
+        ) / max(float(physical.norm()), np.finfo(float).tiny)
+        physical_y = core.apply_physical_schur(gamma_y)
+        try:
+            block_second_difference = float(
+                np.linalg.norm(block_output[:, 1] - physical_y.array)
+            ) / max(float(physical_y.norm()), np.finfo(float).tiny)
+        finally:
+            physical_y.destroy()
+
+        adjoint_y = core.apply_physical_schur_adjoint(gamma_y)
+        try:
+            lhs = complex(physical.dot(gamma_y))
+            rhs_inner = complex(gamma.dot(adjoint_y))
+            inner_scale = max(
+                abs(lhs),
+                abs(rhs_inner),
+                float(physical.norm()) * float(gamma_y.norm()),
+                np.finfo(float).tiny,
+            )
+            adjoint_inner_relative = abs(lhs - rhs_inner) / inner_scale
+        finally:
+            adjoint_y.destroy()
+
+        facts = {
+            "schema": "task039extra.v14.q3-action-checks.v1",
+            "volume_explicit_vs_matrix_free": _vec_relative(
+                gamma_explicit, gamma_mf
+            ),
+            "volume_adjoint_explicit_vs_matrix_free": _vec_relative(
+                gamma_adj_explicit, gamma_adjoint
+            ),
+            "physical_schur_vs_native_carrier": physical_difference,
+            "physical_schur_adjoint_formula": physical_adjoint_difference,
+            "physical_block_first_column": block_first_difference,
+            "physical_block_second_column": block_second_difference,
+            "physical_schur_complex_inner_product_relative": float(
+                adjoint_inner_relative
+            ),
+            "global_dense_schur_constructed": False,
+            "interface_matrix_built": False,
+            "matrix_free_block_action": True,
+            "batch_columns": 32,
+        }
+        facts["limits"] = {
+            "action_bridge": 1.0e-10,
+            "physical_schur": 1.0e-10,
+            "adjoint_inner_product": 1.0e-10,
+        }
+        facts["passed"] = bool(
+            facts["volume_explicit_vs_matrix_free"] <= facts["limits"]["action_bridge"]
+            and facts["volume_adjoint_explicit_vs_matrix_free"]
+            <= facts["limits"]["action_bridge"]
+            and facts["physical_schur_vs_native_carrier"]
+            <= facts["limits"]["physical_schur"]
+            and facts["physical_schur_adjoint_formula"]
+            <= facts["limits"]["physical_schur"]
+            and facts["physical_block_first_column"]
+            <= facts["limits"]["physical_schur"]
+            and facts["physical_block_second_column"]
+            <= facts["limits"]["physical_schur"]
+            and facts["physical_schur_complex_inner_product_relative"]
+            <= facts["limits"]["adjoint_inner_product"]
+        )
+        runtime.marker("v14_q3_action_checks_complete", facts)
+        runtime.sample("q3_action_checks_complete")
+        return facts
+    finally:
+        for value in (
+            gamma,
+            gamma_y,
+            gamma_mf,
+            gamma_explicit,
+            gamma_adjoint,
+            gamma_adj_explicit,
+            zero_storage,
+            physical,
+            physical_adjoint,
+            recovered,
+            native_output,
+        ):
+            if value is not None:
+                value.destroy()
+
+
+def _q3_representative_patches(
+    patch_rows: tuple[np.ndarray, ...],
+    port_data: list[Mapping[str, Any]],
+) -> tuple[int, int, dict[str, Any]]:
+    """Choose the two deterministic geometry/graph representative patches."""
+
+    sizes = [int(rows.size) for rows in patch_rows]
+    # Form the physical nonzero DtN support once.  Rebuilding a row set for
+    # every port and every patch made representative selection needlessly
+    # quadratic in Python and, more importantly, admitted zero carrier
+    # entries as if they were physical support.
+    nonzero_dtn_support: set[int] = set()
+    for entry in port_data:
+        for rows, values in (
+            (entry["b_gamma"], entry["b_values"]),
+            (entry["d_gamma"], entry["d_values"]),
+        ):
+            row_array = np.asarray(rows, dtype=np.int64).reshape(-1)
+            value_array = np.asarray(values, dtype=np.complex128).reshape(-1)
+            if row_array.size != value_array.size:
+                raise ValueError("DtN representative support/value sizes differ")
+            nonzero_dtn_support.update(
+                int(row)
+                for row, value in zip(row_array, value_array, strict=True)
+                if abs(value) > 0.0
+            )
+    patch_sets = [set(np.asarray(rows, dtype=np.int64).tolist()) for rows in patch_rows]
+    support_sets = [patch_set & nonzero_dtn_support for patch_set in patch_sets]
+    support_counts = [len(values) for values in support_sets]
+    largest = min(range(len(patch_rows)), key=lambda index: (-sizes[index], index))
+    dtn_order = sorted(
+        range(len(patch_rows)),
+        key=lambda index: (-support_counts[index], -sizes[index], index),
+    )
+    dtn_patch = next((index for index in dtn_order if index != largest), None)
+    if dtn_patch is None:
+        raise ValueError("Q3 representative patch selection needs two distinct patches")
+    facts = {
+        "selection_rule": (
+            "largest canonical seed/Gamma support; then largest nonzero DtN "
+            "support, tie-broken by size and patch id, forced distinct"
+        ),
+        "largest_patch": largest,
+        "dtn_patch": dtn_patch,
+        "patch_sizes": sizes,
+        "nonzero_dtn_support_counts": support_counts,
+        "nonzero_dtn_support_union_count": len(nonzero_dtn_support),
+        "largest_patch_rows_sha256": _sha256_bytes(
+            np.ascontiguousarray(patch_rows[largest]).tobytes()
+        ),
+        "dtn_patch_rows_sha256": _sha256_bytes(
+            np.ascontiguousarray(patch_rows[dtn_patch]).tobytes()
+        ),
+    }
+    return largest, dtn_patch, facts
+
+
+def _q3_delta_from_unweighted_p4_mass(
+    runtime: _V14Runtime,
+    common: Mapping[str, Any],
+    partition: Any,
+    resolved_payload: Mapping[str, Any],
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Reuse the qualified V13 p0 diagonal after current identity checks.
+
+    The diagonal was already proved equivalent to the unweighted p4 mass in
+    V13.  Q3 only loads that hash-bound packet and restricts it to the current
+    Gamma map; it never reconstructs a second metric or cell-basis library.
+    """
+
+    from src.runners.physical_diagnostic_completion import load_packet
+    from src.runners.physical_macro_controls import _mapping_identity_sha256
+    from src.solvers.condensed_fine_reference import native_map_arrays
+    from src.solvers.physical_macro_dd4 import _identity_hash_arrays
+
+    runtime.set_phase("assembly")
+    runtime.marker(
+        "q3_unweighted_p4_mass_diagonal_started",
+        {
+            "definition": "V13 qualified integral conjugate(E) dot E; no material weight",
+            "construction": "hash-bound p0 packet reuse; no metric rebuild",
+        },
+    )
+    root = _repo_root()
+    compact_path = root / "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13.json"
+    p0_path = root / (
+        "benchmarks/artifacts/task39extra/p4_direction_diagnosis_v13/"
+        "e46fec48dc073a745e9b7e6c9186a147aefbc0a0/diagnosis/records/"
+        "p0_metric_equivalence.json"
+    )
+    expected_physical = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+    expected_mode = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+    expected_p0_json_sha = "c05ff1a34a387e9a2a8a14f492349a4874e3ba160ed254ae11b8533243cfa3e9"
+    expected_p0_npz_sha = "c0fc7ad54001f11033cea4c0340075da6569df828f2bd94430835580677a1e83"
+    expected_map_summary_sha = "f175bfce77ca4a6811f12e800c213ade75afd0ce866ae57ae9f5449130cca0fe"
+    expected_local_map_sha = "f788b961933cf814014feacea4a787ded7b8041bd51111a30424c042e4721cbd"
+
+    compact = json.loads(compact_path.read_text(encoding="utf-8"))
+    if (
+        compact.get("source_sha") != "e46fec48dc073a745e9b7e6c9186a147aefbc0a0"
+        or compact.get("physical_model_sha256") != expected_physical
+        or compact.get("ordered_mode_sha256") != expected_mode
+        or compact.get("p0", {}).get("record_sha256") != expected_p0_json_sha
+    ):
+        raise ValueError("V13 p0 compact identity is not the qualified physical packet")
+    if _sha256_file(p0_path) != expected_p0_json_sha:
+        raise ValueError("V13 p0 JSON packet hash changed")
+    p0_record = json.loads(p0_path.read_text(encoding="utf-8"))
+    array_meta = p0_record.get("arrays")
+    if not isinstance(array_meta, Mapping):
+        raise ValueError("V13 p0 packet has no hash-bound array archive")
+    array_path = Path(array_meta["path"])
+    if not array_path.is_file() or _sha256_file(array_path) != expected_p0_npz_sha:
+        raise ValueError("V13 p0 fixed-diagonal archive hash changed")
+    if array_meta.get("sha256") != expected_p0_npz_sha:
+        raise ValueError("V13 p0 packet does not name the qualified array archive")
+
+    actual_physical = resolved_payload.get("provenance", {}).get(
+        "physical_model_sha256"
+    )
+    actual_mode = str(common["p4"]["mode_sha256"])
+    if actual_physical != expected_physical or actual_mode != expected_mode:
+        raise ValueError("current Q3 physical or ordered-mode identity differs from V13 p0")
+    current_map = native_map_arrays(
+        common["levels"]["spaces"][4], common["levels"]["floquets"][4]
+    )
+    current_map_summary_sha = _mapping_identity_sha256(current_map)
+    current_local_map_sha = _identity_hash_arrays(
+        {
+            key: current_map[key]
+            for key in (
+                "dofmap",
+                "slaves",
+                "masters",
+                "coefficients",
+                "offsets",
+                "independent_indices",
+            )
+        }
+    )
+    if current_map_summary_sha != expected_map_summary_sha:
+        raise ValueError("current native p4 map summary differs from V13 p0")
+    if current_local_map_sha != expected_local_map_sha:
+        raise ValueError("current local p4 map identity differs from V13 p0")
+    p0 = load_packet(p0_path)
+    active_delta = np.ascontiguousarray(
+        np.asarray(p0.get("fixed_diagonal_values"), dtype=np.float64)
+    )
+    if _sha256_bytes(active_delta.tobytes()) != p0_record["fixed_diagonal"]["sha256"]:
+        raise ValueError("V13 p0 fixed diagonal content hash differs")
+    if active_delta.shape != (partition.active_rows,):
+        raise ValueError("V13 p0 Delta has an unexpected active-row shape")
+    delta_gamma = np.ascontiguousarray(
+        active_delta[partition.gamma_active_indices], dtype=np.float64
+    )
+    if (
+        delta_gamma.shape != (partition.gamma_rows,)
+        or not np.all(np.isfinite(delta_gamma))
+        or np.any(delta_gamma <= 0.0)
+    ):
+        raise ValueError("unweighted p4 Delta is not finite and strictly positive")
+    facts = {
+        "definition": "V13 qualified unweighted p4 lossless mass diagonal restricted to Gamma",
+        "material_weight_included": False,
+        "reuse": True,
+        "metric_rebuilt": False,
+        "p0_json": str(p0_path),
+        "p0_json_sha256": expected_p0_json_sha,
+        "p0_npz": str(array_path),
+        "p0_npz_sha256": expected_p0_npz_sha,
+        "source_physical_model_sha256": expected_physical,
+        "current_physical_model_sha256": actual_physical,
+        "source_ordered_mode_sha256": expected_mode,
+        "current_ordered_mode_sha256": actual_mode,
+        "physical_model_sha256": actual_physical,
+        "ordered_mode_sha256": actual_mode,
+        "constraint_map_sha256": current_map_summary_sha,
+        "constraint_map_identity": current_local_map_sha,
+        "active_rows": int(active_delta.size),
+        "gamma_rows": int(delta_gamma.size),
+        "active_sha256": _sha256_bytes(active_delta.tobytes()),
+        "gamma_sha256": _sha256_bytes(delta_gamma.tobytes()),
+        "minimum": float(np.min(delta_gamma)),
+        "maximum": float(np.max(delta_gamma)),
+    }
+    runtime.marker("q3_unweighted_p4_mass_diagonal_complete", facts)
+    return delta_gamma, facts
+
+
+def _q3_array_summary(value: Any) -> dict[str, Any]:
+    array = np.ascontiguousarray(np.asarray(value))
+    return {
+        "shape": list(array.shape),
+        "dtype": str(array.dtype),
+        "norm": float(np.linalg.norm(array)),
+        "sha256": _sha256_bytes(array.tobytes()),
+    }
+
+
+def _q3_interface_operation_audit(
+    interface_facts: Mapping[str, Any],
+    internal_factor_count: int,
+) -> dict[str, Any]:
+    """Audit one F_int against its explicit finite operation envelope.
+
+    ``factor_solve_delta`` is deliberately a per-block list.  A single F_int
+    performs one reduction, two interface-Schur actions and one recovery, so
+    a complete route has four internal solves per block (168 for the frozen
+    42-block p4 core), not one solve per block.  Keeping the list here also
+    lets the checker distinguish an under-executed route from an over-budget
+    route without trusting a pre-aggregated counter.
+    """
+
+    internal_count = int(internal_factor_count)
+    if internal_count < 0:
+        raise ValueError("internal_factor_count must be non-negative")
+    raw_delta = interface_facts.get("factor_solve_delta")
+    factor_delta: list[int] = []
+    factor_delta_error = None
+    if isinstance(raw_delta, (list, tuple, np.ndarray)):
+        try:
+            factor_delta = [int(value) for value in raw_delta]
+        except (TypeError, ValueError, OverflowError) as exc:
+            factor_delta_error = f"invalid factor_solve_delta values: {exc}"
+    else:
+        factor_delta_error = "factor_solve_delta is not a per-block list"
+
+    def integer_fact(key: str) -> int:
+        try:
+            return int(interface_facts.get(key, -1))
+        except (TypeError, ValueError, OverflowError):
+            return -1
+
+    internal_total = int(sum(factor_delta))
+    internal_max = max(factor_delta, default=0)
+    internal_expected = int(4 * internal_count)
+    local_patch = integer_fact("local_patch_apply_count")
+    local_smoother = integer_fact("local_smoother_apply_count")
+    coarse = integer_fact("coarse_solve_count")
+    complete_route = bool(
+        factor_delta_error is None
+        and len(factor_delta) == internal_count
+        and all(value == 4 for value in factor_delta)
+        and internal_total == internal_expected
+    )
+    within_upper_bounds = bool(
+        factor_delta_error is None
+        and len(factor_delta) == internal_count
+        and all(0 <= value <= 4 for value in factor_delta)
+        and internal_total <= internal_expected
+        and 0 <= local_patch <= 84
+        and 0 <= local_smoother <= 2
+        and 0 <= coarse <= 1
+    )
+    return {
+        "schema": "task039extra.v14.interface-operation-audit.v1",
+        "internal_factor_count": internal_count,
+        "factor_solve_delta": factor_delta,
+        "factor_solve_delta_error": factor_delta_error,
+        "internal_factor_solve_total": internal_total,
+        "internal_factor_solve_max_per_block": internal_max,
+        "internal_factor_solve_expected_total": internal_expected,
+        "internal_factor_solve_limit_total": internal_expected,
+        "internal_factor_solve_limit_per_block": 4,
+        "local_patch_apply_count": local_patch,
+        "local_patch_apply_limit": 84,
+        "local_smoother_apply_count": local_smoother,
+        "local_smoother_apply_limit": 2,
+        "coarse_solve_count": coarse,
+        "coarse_solve_limit": 1,
+        "within_upper_bounds": within_upper_bounds,
+        "complete_route": complete_route,
+        "passed": bool(
+            complete_route
+            and local_patch == 84
+            and local_smoother == 2
+            and coarse == 1
+        ),
+    }
+
+
+def _q3_local_setup_prediction(
+    patch_rows: tuple[np.ndarray, ...],
+    process_order: tuple[int, ...],
+    representative_patch_ids: tuple[int, int],
+    representative_durations: Mapping[int, float],
+) -> dict[str, Any]:
+    """Predict the remaining sequential local setup from measured patches.
+
+    The first two patches are the frozen geometry/graph representatives.  The
+    remaining work is estimated from the largest measured seconds-per-
+    ``(rows**2 + rows)`` unit, which covers the dense extraction, LU and SVD
+    work performed for every requested patch.  The result is a derived budget
+    envelope, never a substitute for the later measured build time.
+    """
+
+    rows_tuple = tuple(np.asarray(rows, dtype=np.int64).reshape(-1) for rows in patch_rows)
+    order = tuple(int(patch_id) for patch_id in process_order)
+    representatives = tuple(int(patch_id) for patch_id in representative_patch_ids)
+    if len(representatives) != 2 or representatives[0] == representatives[1]:
+        raise ValueError("Q3 setup prediction needs two distinct representatives")
+    if sorted(order) != list(range(len(rows_tuple))):
+        raise ValueError("Q3 setup prediction process order is not a permutation")
+    if any(
+        patch_id < 0 or patch_id >= len(rows_tuple)
+        for patch_id in representatives
+    ):
+        raise ValueError("Q3 setup prediction representative is outside patch rows")
+    if any(patch_id not in order[:2] for patch_id in representatives):
+        raise ValueError("Q3 representatives must be processed before remaining patches")
+
+    structural_weight = {
+        patch_id: int(rows_tuple[patch_id].size * (rows_tuple[patch_id].size + 1))
+        for patch_id in range(len(rows_tuple))
+    }
+    durations: dict[int, float] = {}
+    for patch_id in representatives:
+        duration = float(representative_durations.get(patch_id, -1.0))
+        if not np.isfinite(duration) or duration < 0.0:
+            raise ValueError("Q3 representative duration must be finite and non-negative")
+        durations[patch_id] = duration
+    rates = [
+        durations[patch_id] / max(structural_weight[patch_id], 1)
+        for patch_id in representatives
+    ]
+    seconds_per_structure_unit = max(rates, default=0.0)
+    remaining_patch_ids = tuple(
+        patch_id for patch_id in order if patch_id not in set(representatives)
+    )
+    representative_structure_weight = int(
+        sum(structural_weight[patch_id] for patch_id in representatives)
+    )
+    remaining_structure_weight = int(
+        sum(structural_weight[patch_id] for patch_id in remaining_patch_ids)
+    )
+    measured_representative_seconds = float(sum(durations.values()))
+    predicted_remaining_seconds = float(
+        seconds_per_structure_unit * remaining_structure_weight
+    )
+    return {
+        "schema": "task039extra.v14.q3-local-setup-prediction.v1",
+        "classification": "derived_upper_envelope_not_measured",
+        "representative_patch_ids": list(representatives),
+        "representative_durations_seconds": {
+            str(patch_id): durations[patch_id] for patch_id in representatives
+        },
+        "representative_structure_weight": representative_structure_weight,
+        "remaining_patch_ids": list(remaining_patch_ids),
+        "remaining_structure_weight": remaining_structure_weight,
+        "patch_structure_weights": {
+            str(patch_id): structural_weight[patch_id]
+            for patch_id in order
+        },
+        "seconds_per_structure_unit_upper": seconds_per_structure_unit,
+        "measured_representative_seconds": measured_representative_seconds,
+        "predicted_remaining_seconds": predicted_remaining_seconds,
+        "predicted_local_setup_seconds": (
+            measured_representative_seconds + predicted_remaining_seconds
+        ),
+        "prediction_formula": (
+            "sum(measured representative seconds) + max(measured seconds/"
+            "(rows^2+rows)) * remaining structure weight"
+        ),
+    }
+
+
+@contextmanager
+def _v14_balanced_adapter(runtime, common, fint, *, capture_vectors=False):
+    """Own H6 and its audit buffers; borrow the existing fixed interface stack."""
+
+    from src.solvers.fullspace_physical_intermediate import apply_owned
+    from src.solvers.fullspace_physical_intermediate_runtime import AlgebraicOwnerTransfer
+    from src.solvers.physical_interface_balanced import InterfaceBalancedCoupling
+    from src.solvers.physical_light_setup import build_light_h6_setup
+
+    n6 = int(common["fine"]["dtn_action"].carrier.global_rows)
+    n4 = int(common["p4"]["dtn_action"].carrier.global_rows)
+    # Same-degree positive setup uses the already-qualified H6 constructor.
+    # The two existing physical component payloads and twelve fine vectors
+    # provide a construction estimate; measured RSS remains independent.
+    component_payload = sum(
+        int(action.audit["retained_numeric_payload_local_bytes"])
+        for action in common["fine"]["volume_action"].component_actions.values()
+    )
+    setup_estimate = 2 * component_payload + 12 * n6 * 16
+    runtime.check_inventory_projected("v14_h6_setup", setup_estimate)
+    runtime.check_projected("v14_h6_setup", setup_estimate, workspace_bytes=64 << 20)
+    runtime.marker("v14_h6_setup_preallocation", {
+        "classification": "derived_conservative_estimate",
+        "inventory_estimate_bytes": setup_estimate,
+        "temporary_allowance_bytes": 64 << 20,
+        "basis": "two same-degree physical component payloads plus twelve fine vectors",
+    })
+    positive = pc = None
+    live_workspaces = set()
+    inventory_live = False
+    try:
+        runtime.reserve_workspace("v14_h6_build", 64 << 20)
+        live_workspaces.add("v14_h6_build")
+        positive = build_light_h6_setup(common["levels"], common["cfg"], runtime.marker)
+        h6, shell = positive["h6"], positive["p6_shell"]
+        transfer = AlgebraicOwnerTransfer(common["transfer"])
+        components = dict(shell.action.audit["retained_numeric_payload_components"])
+        components["h6_diagonal_bytes"] = int(shell.diagonal.array.nbytes)
+        for name in ("_inv_sqrt", "_scaled_input", "_scaled_action", "_rhs_scaled",
+                     "_residual", "_direction", "_solution", "_action"):
+            components["h6" + name + "_bytes"] = int(getattr(h6, name).array.nbytes)
+        components["algebraic_transfer_slave_indices_bytes"] = int(
+            transfer.fine_slaves.nbytes + transfer.coarse_slaves.nbytes)
+        runtime.reserve_inventory("v14_h6", components, check_rss=False)
+        inventory_live = True
+        runtime.release_workspace("v14_h6_build")
+        live_workspaces.remove("v14_h6_build")
+        # Fine work vectors, retained audit copies, p4 residual copies and
+        # H6's bounded packed-kernel temporaries share the existing 1 GiB pool.
+        fine_vectors = 64 if capture_vectors else 40
+        coarse_vectors = 16 if capture_vectors else 12
+        kernel_temp = int(positive["light_facts"]["kernel"]["temporary_budget_bytes"])
+        pc_workspace = fine_vectors * n6 * 16 + coarse_vectors * n4 * 16 + kernel_temp
+        runtime.reserve_workspace("v14_balanced_apply", pc_workspace)
+        live_workspaces.add("v14_balanced_apply")
+        runtime.marker("v14_balanced_workspace", {
+            "fine_vector_upper_count": fine_vectors,
+            "coarse_vector_upper_count": coarse_vectors,
+            "kernel_temporary_bytes": kernel_temp,
+            "workspace_upper_bytes": pc_workspace,
+            "scope": "new PC/ledger/capture vectors; outer Krylov storage accounted separately",
+        })
+        pc = InterfaceBalancedCoupling(
+            lambda x: apply_owned(common["fine"]["physical_action"], x),
+            lambda x: apply_owned(common["p4"]["physical_action"], x),
+            transfer, fint, h6.apply,
+            save=lambda name, facts: _save_packet(
+                runtime.directory / "inexact_balance", name, facts, runtime=runtime),
+            checkpoint=lambda: runtime.sample("v14_balanced_checkpoint"),
+            capture_vectors=capture_vectors,
+        )
+        runtime.sample("v14_balanced_adapter_ready")
+        yield pc, positive
+    finally:
+        if pc is not None:
+            pc.destroy()
+        if positive is not None:
+            positive["h6"].destroy()
+            positive["p6_shell"].destroy()
+        for label in live_workspaces:
+            runtime.release_workspace(label)
+        if inventory_live:
+            runtime.release_inventory("v14_h6")
+
+
+def _q3_balanced_p6_audit(runtime, common, fint):
+    """Check the actual c1/H6-generated feedback and eps1-eps2 closure."""
+
+    from src.runners.physical_recursive_controls import load_recursive_balanced_inputs
+    from src.solvers.condensed_fine_reference import native_map_arrays
+    from src.solvers.fullspace_physical_intermediate import apply_owned
+
+    runtime.reserve_workspace("q3_balanced_inputs", 32 << 20)
+    e = q = ae = z = az = None
+    pc = None
+    try:
+        inputs = load_recursive_balanced_inputs(
+            runtime.root / "benchmarks/artifacts/task39extra/v6_recursive/g0_inventory.json")
+        item = inputs["inputs"]["A2R160"]
+        p6_space = common["levels"]["spaces"][6]
+        current_map = native_map_arrays(p6_space, common["levels"]["floquets"][6])
+        if set(current_map) != set(inputs["maps"][6]) or any(
+            not np.array_equal(value, inputs["maps"][6][key])
+            for key, value in current_map.items()
+        ):
+            raise ValueError("Q3 p6 balanced input differs from the fresh native map")
+        indices = np.asarray(current_map["independent_indices"], dtype=np.int64)
+        if item["q"].shape != indices.shape or item["e"].shape != indices.shape:
+            raise ValueError("Q3 p6 balanced input has an incompatible active layout")
+        e = _new_storage_vector(p6_space)
+        q = _new_storage_vector(p6_space)
+        e.set(0)
+        q.set(0)
+        e.array[indices], q.array[indices] = item["e"], item["q"]
+        ae = apply_owned(common["fine"]["physical_action"], e)
+        q_norm = max(float(q.norm()), np.finfo(float).tiny)
+        bridge = float(np.linalg.norm(ae.array[indices] - item["q"])) / q_norm
+        runtime.marker("q3_balanced_p6_input_complete", {
+            "name": "A2R160", "q_bridge_relative": bridge,
+            "e1_audit_sha256": inputs["e1_audit_sha256"],
+            "q": _q3_array_summary(item["q"]), "e": _q3_array_summary(item["e"]),
+        })
+        if not np.isfinite(bridge) or bridge > 1e-10:
+            raise ValueError("Q3 frozen q differs from actual A6 e")
+        # e is used only for this input identity check, never by the PC.
+        ae.destroy()
+        e.destroy()
+        ae = e = None
+        with _v14_balanced_adapter(runtime, common, fint, capture_vectors=True) as (pc, positive):
+            fint_before = int(fint.apply_count)
+            h6_before = int(positive["h6"].apply_count)
+            runtime.begin_pc(1)
+            try:
+                z = pc.apply(q)
+            except BaseException:
+                runtime.finish_pc(completed=False)
+                raise
+            pc_finish = runtime.finish_pc()
+            az = apply_owned(common["fine"]["physical_action"], z)
+            output_relative = float(np.linalg.norm(q.array - az.array)) / q_norm
+            balance = pc.last_apply_facts["inexact_balance"]
+            closure = balance["audit"]
+            counts = dict(pc.last_apply_facts["counts"])
+            expected_counts = dict(C=2, smoother=1, A_structure=2,
+                                   A_inner_true=0, PH_audit=0)
+            calls = pc.coarse_calls
+            work = []
+            for call in calls:
+                facts = call["interface_facts"]
+                internal = np.asarray(facts["factor_solve_delta"])
+                local = np.asarray(facts["local_patch_solve_delta"])
+                valid = bool(
+                    internal.shape == (42,) and local.shape == (42,)
+                    and np.all((internal >= 0) & (internal <= 4))
+                    and np.all((local >= 0) & (local <= 2))
+                    and int(facts["coarse_solve_count"]) == 1
+                    and int(facts["local_smoother_apply_count"]) == 2
+                    and facts["inner_iteration_count"] == 0
+                    and not facts["ksp_created"]
+                )
+                work.append({
+                    "internal_backsolves": int(internal.sum()),
+                    "local_backsolves": int(local.sum()),
+                    "coarse_solves": int(facts["coarse_solve_count"]),
+                    "passed": valid,
+                })
+            fint_delta = int(fint.apply_count) - fint_before
+            h6_delta = int(positive["h6"].apply_count) - h6_before
+            passed = bool(
+                len(work) == 2 and all(row["passed"] for row in work)
+                and counts == expected_counts and fint_delta == 2 and h6_delta == 1
+                and pc.native_A4_count == 2 and balance["actual_audit"] == "PASS"
+                and np.isfinite(closure["closure_relative"])
+                and closure["closure_relative"] <= 1e-8
+                and np.isfinite(output_relative)
+            )
+            facts = {
+                "schema": "task039extra.v14.q3.balanced-p6-audit.v2",
+                "input_name": "A2R160", "q_bridge_relative": bridge,
+                "pc": pc.last_apply_facts, "pc_finish": pc_finish,
+                "coarse_calls": calls, "work": work,
+                "pc_counts": counts, "pc_counts_expected": expected_counts,
+                "fint_apply_delta": fint_delta, "h6_apply_delta": h6_delta,
+                "native_A4_action_count": pc.native_A4_count,
+                "identity_A6_action_count": 1, "output_A6_action_count": 1,
+                "ledger_A6_action_count": pc.ledger.A_count,
+                "ledger_PH_action_count": pc.ledger.PH_count,
+                "g2_source": "P64^H A6 H6(q-A6 P64 Fint(P64^H q))",
+                "closure": closure, "output_residual_relative": output_relative,
+                "passed": passed, "completed": True,
+            }
+            packet_arrays = {
+                "q": q.array.copy(), "z": z.array.copy(), "A6z": az.array.copy(),
+                "eps_difference": pc.ledger.last["difference"].array.copy(),
+                **pc.last_apply_vectors,
+            }
+            for index, call in enumerate(pc.ledger.last["call_vectors"], 1):
+                for name in ("g", "applied", "eps"):
+                    packet_arrays[f"{name}{index}"] = call[name].array.copy()
+            packet = _save_packet(
+                runtime.directory / "q3_balanced_p6", "A2R160_BAL_H",
+                {"schema": "task039extra.v14.q3-balanced-p6-packet.v2",
+                 "facts": facts, **packet_arrays}, runtime=runtime)
+            facts["packet"] = packet
+            runtime.marker("q3_balanced_p6_audit_complete", facts)
+            return facts
+    except BaseException as exc:
+        _save_packet(
+            runtime.directory / "q3_balanced_p6", "A2R160_BAL_H_failure",
+            {"error": {"type": type(exc).__name__, "message": str(exc)},
+             "coarse_calls": [] if pc is None else pc.coarse_calls},
+            runtime=runtime)
+        raise
+    finally:
+        for vector in (az, z, ae, q, e):
+            if vector is not None:
+                vector.destroy()
+        runtime.release_workspace("q3_balanced_inputs")
+
+
+def _q3_interface_control(
+    runtime: _V14Runtime,
+    common: dict[str, Any],
+    rhs_records: list[dict[str, Any]],
+    resolved_payload: Mapping[str, Any],
+    *,
+    stage_started_monotonic: float | None = None,
+) -> dict[str, Any]:
+    """Build and exercise the fixed matrix-free Q3 interface candidate."""
+
+    from src.solvers.physical_interface_schur import (
+        InterfaceFintAdapter,
+        build_interface_local_smoother,
+        build_interface_partition,
+        build_interface_coarse_pair,
+        build_physical_interface_schur,
+        build_interface_candidate_directions,
+        interface_patch_rows_from_core,
+        orthonormalize_paired_directions,
+    )
+
+    storage_rows = int(common["p4"]["dtn_action"].carrier.global_rows)
+    if storage_rows != 53084:
+        raise ValueError(f"V14 p4 carrier storage rows changed: {storage_rows}")
+    full_volume = active_volume = storage_template = None
+    core = smoother = coarse_pair = fint = paired = None
+    raw_P = raw_Q = None
+    reserved_labels: set[str] = set()
+    reserved_workspaces: set[str] = set()
+    q3_stage_start = (
+        time.monotonic()
+        if stage_started_monotonic is None
+        else float(stage_started_monotonic)
+    )
+    try:
+        carrier = common["p4"]["dtn_action"].carrier
+        runtime.set_phase("assembly")
+        full_volume = _assemble_volume(
+            runtime, common, inventory_label="q3_full_volume"
+        )
+        partition, port_data = build_interface_partition(
+            common["levels"]["spaces"][4],
+            common["levels"]["floquets"][4],
+            carrier,
+            volume=full_volume,
+        )
+        runtime.marker("q3_partition_complete", partition.audit())
+        full_info = full_volume.getInfo()
+        full_rows = int(full_volume.getSize()[0])
+        full_payload = _sparse_payload_bytes(full_info, full_rows)
+        active_label = "q3_active_volume"
+        runtime.check_projected(active_label, full_payload)
+        runtime.reserve_inventory(
+            active_label,
+            {"matrix_payload_upper_bytes": full_payload},
+            check_rss=False,
+        )
+        reserved_labels.add(active_label)
+        storage_template = full_volume.createVecRight()
+        active_volume = __import__(
+            "src.solvers.physical_interface_schur",
+            fromlist=["_submatrix"],
+        )._submatrix(full_volume, partition.active_full_indices)
+        active_info = active_volume.getInfo()
+        active_payload = _sparse_payload_bytes(
+            active_info, int(active_volume.getSize()[0])
+        )
+        runtime.replace_inventory(
+            active_label,
+            {"matrix_payload_bytes": active_payload},
+        )
+        full_volume.destroy()
+        full_volume = None
+        runtime.release_inventory("q3_full_volume")
+
+        def allocation_gate(label: str, facts: Mapping[str, Any]) -> None:
+            if label == "V_GG":
+                allocation = int(facts["matrix_payload_bytes"])
+                runtime.check_projected("q3_V_GG", allocation)
+                runtime.reserve_inventory(
+                    "q3_V_GG",
+                    {"matrix_payload_upper_bytes": allocation},
+                    check_rss=False,
+                )
+                reserved_labels.add("q3_V_GG")
+                return
+            if label.startswith("internal_coupling_"):
+                block = int(facts["block_index"])
+                coupling = int(facts["coupling_bytes"])
+                index_bytes = int(facts["index_bytes"])
+                workspace = int(facts["workspace_bytes"])
+                runtime.check_inventory_projected(
+                    f"q3_internal_{block}", coupling + index_bytes + workspace
+                )
+                runtime.check_projected(
+                    f"q3_internal_coupling_{block}",
+                    coupling + index_bytes,
+                    workspace_bytes=workspace,
+                )
+                return
+            if label == "S_V":
+                allocation = int(facts["matrix_payload_bytes"])
+                workspace = int(facts.get("workspace_bytes", 0))
+                runtime.check_projected(
+                    "q3_S_V", allocation, workspace_bytes=workspace
+                )
+                runtime.reserve_inventory(
+                    "q3_S_V",
+                    {"matrix_payload_upper_bytes": allocation},
+                    check_rss=False,
+                )
+                reserved_labels.add("q3_S_V")
+                if workspace:
+                    runtime.reserve_workspace("q3_S_V_assembly", workspace)
+                    reserved_workspaces.add("q3_S_V_assembly")
+                return
+            raise ValueError(f"unexpected Q3 Schur allocation gate: {label}")
+
+        before, after = _factor_gates(runtime, local_limit=True)
+        core = build_physical_interface_schur(
+            active_volume,
+            partition,
+            carrier,
+            port_data=port_data,
+            resource_sample=lambda: runtime.sample("q3_internal_factor"),
+            marker=runtime.marker,
+            pre_numeric_gate=before,
+            post_numeric_gate=after,
+            allocation_gate=allocation_gate,
+            owns_volume=True,
+            build_interface_matrix=False,
+        )
+        active_volume = None
+        for workspace_label in tuple(reserved_workspaces):
+            runtime.release_workspace(workspace_label)
+            reserved_workspaces.remove(workspace_label)
+        runtime.replace_inventory(
+            "q3_V_GG",
+            {
+                "matrix_payload_bytes": _sparse_payload_bytes(
+                    core.V_GG.getInfo(), int(core.V_GG.getSize()[0])
+                )
+            },
+        )
+        runtime.replace_inventory(
+            "q3_S_V",
+            {
+                "matrix_payload_bytes": _sparse_payload_bytes(
+                    core.S_V.getInfo(), int(core.S_V.getSize()[0])
+                )
+            },
+        )
+        runtime.marker(
+            "q3_local_core_complete",
+            {
+                "partition": partition.audit(),
+                "internal_factor_count": len(core.internal),
+                "factor_inventory": core.factor_facts,
+                "interface_matrix_built": False,
+            },
+        )
+
+        patch_rows = interface_patch_rows_from_core(
+            core,
+            common["levels"]["spaces"][4],
+            common["levels"]["floquets"][4],
+        )
+        largest_patch, dtn_patch, representative_facts = _q3_representative_patches(
+            patch_rows, core.port_data
+        )
+        runtime.marker("q3_representative_patches_selected", representative_facts)
+        delta_gamma, delta_facts = _q3_delta_from_unweighted_p4_mass(
+            runtime, common, partition, resolved_payload
+        )
+        all_deltas = {
+            patch_id: delta_gamma[patch_rows[patch_id]]
+            for patch_id in range(len(patch_rows))
+        }
+        remaining_patch_ids = tuple(
+            patch_id
+            for patch_id in range(len(patch_rows))
+            if patch_id not in {largest_patch, dtn_patch}
+        )
+        process_order = (largest_patch, dtn_patch, *remaining_patch_ids)
+        resources = runtime.contract["resources"]
+        local_factor_cap = int(
+            resources["local_factor_matrix_and_allocated_cap_bytes"]
+        )
+        shared_temp_cap = int(resources["shared_temp_workspace_cap_bytes"])
+        scalar_bytes = np.dtype(np.complex128).itemsize
+        index_bytes = np.dtype(np.int64).itemsize
+        local_factor_patch_upper = [
+            int(
+                2 * rows.size * rows.size * scalar_bytes
+                + 3 * rows.size * index_bytes
+            )
+            for rows in patch_rows
+        ]
+        local_factor_upper = int(sum(local_factor_patch_upper))
+        q3_contract_workflow_seconds = float(
+            resources["stage_budgets"]["Q3_INTERFACE_CONTROL"]["workflow_seconds"]
+        )
+        q3_reserved_workflow_seconds = float(
+            getattr(runtime, "workflow_reserved_seconds", q3_contract_workflow_seconds)
+        )
+        q3_workflow_seconds = min(
+            q3_contract_workflow_seconds, q3_reserved_workflow_seconds
+        )
+        q3_representative_seconds = 900.0
+        if not (
+            q3_workflow_seconds > 0.0
+            and q3_reserved_workflow_seconds > 0.0
+        ):
+            raise ValueError("Q3 parent workflow reservation is invalid")
+        q3_known_future_controls = {
+            "three_fint_admission_seconds_upper": float(15.0 * len(rhs_records)),
+            "balanced_pc_hard_seconds": float(resources["pc_hard_seconds"]),
+            "candidate_S_action_count_upper": 496,
+            "candidate_S_action_seconds": "unknown",
+            "mgs_seconds": "unknown",
+            "packet_save_seconds": "unknown",
+            "classification": "known_limits_plus_unmeasured_components",
+            "seconds_upper_excludes": [
+                "candidate S-action time",
+                "MGS/orthonormalization time",
+                "packet save and hashing time",
+            ],
+        }
+        q3_known_future_seconds = float(
+            q3_known_future_controls["three_fint_admission_seconds_upper"]
+            + q3_known_future_controls["balanced_pc_hard_seconds"]
+        )
+
+        workflow_clock_method = getattr(runtime, "workflow_clock_interval", None)
+
+        def workflow_elapsed() -> tuple[float, dict[str, Any]]:
+            interval_method = workflow_clock_method
+            if callable(interval_method):
+                interval = dict(interval_method())
+                return float(interval["budget_seconds"]), interval
+            elapsed = max(0.0, time.monotonic() - q3_stage_start)
+            return elapsed, {
+                "budget_seconds": elapsed,
+                "source": "worker_start_fallback_for_direct_helper_use",
+            }
+
+        local_workspace = max(
+            int(
+                3 * rows.size * rows.size * scalar_bytes
+                + 3 * rows.size * scalar_bytes
+                + rows.size * index_bytes
+            )
+            for rows in patch_rows
+        )
+        paired_svd_workspace = max(
+            int(
+                12 * rows.size * rows.size * scalar_bytes
+                + 8 * rows.size * scalar_bytes
+            )
+            for rows in patch_rows
+        )
+        local_workspace = max(local_workspace, paired_svd_workspace)
+        if max(local_factor_patch_upper) > local_factor_cap:
+            raise V14ResourceStop(
+                "Q3 one local factor matrix inventory exceeds 512MiB: "
+                f"{max(local_factor_patch_upper)} > {local_factor_cap}"
+            )
+        # The 512 MiB policy is per local patch.  The complete 42-patch
+        # library is a separate live-inventory item and is checked against
+        # Q3's 3 GiB stage cap below; comparing the aggregate to the
+        # per-patch limit would reject a valid complete smoother.
+        runtime.check_inventory_projected("q3_local_smoother", local_factor_upper)
+        runtime.check_projected(
+            "q3_local_smoother",
+            local_factor_upper,
+            workspace_bytes=local_workspace,
+        )
+        local_setup_stage_elapsed, local_setup_clock = workflow_elapsed()
+        if local_setup_stage_elapsed + q3_known_future_seconds >= q3_workflow_seconds:
+            raise V14ResourceStop(
+                "Q3 local setup has no remaining workflow time after known controls"
+            )
+        runtime.reserve_workspace("q3_local_smoother_build", local_workspace)
+        reserved_workspaces.add("q3_local_smoother_build")
+        completed_representatives: set[int] = set()
+        representative_started_local: dict[int, float] = {}
+        representative_durations: dict[int, float] = {}
+        representative_ids = (largest_patch, dtn_patch)
+        setup_budget_facts: dict[str, Any] = {
+            "schema": "task039extra.v14.q3-local-setup-budget.v1",
+            "workflow_clock_source": (
+                "parent_attempt.workflow_clock_start"
+                if callable(workflow_clock_method)
+                else "worker_start_fallback_for_direct_helper_use"
+            ),
+            "workflow_clock_start": dict(
+                getattr(runtime, "workflow_clock_start", {})
+            ),
+            "reserved_workflow_seconds": q3_reserved_workflow_seconds,
+            "contract_workflow_seconds": q3_contract_workflow_seconds,
+            "workflow_limit_seconds": q3_workflow_seconds,
+            "representative_limit_seconds": q3_representative_seconds,
+            "known_future_controls": q3_known_future_controls,
+            "known_future_controls_seconds": q3_known_future_seconds,
+            "representative_patch_ids": list(representative_ids),
+            "process_order": list(process_order),
+            "elapsed_before_local_setup_seconds": local_setup_stage_elapsed,
+            "clock_at_local_setup_start": local_setup_clock,
+            "prediction": None,
+        }
+
+        def local_progress(progress: Mapping[str, Any]) -> None:
+            event = str(progress["event"])
+            patch_id = int(progress["patch_id"])
+            local_elapsed = float(progress["elapsed_seconds"])
+            stage_elapsed, stage_clock = workflow_elapsed()
+            setup_budget_facts["last_stage_elapsed_seconds"] = stage_elapsed
+            setup_budget_facts["last_workflow_clock_interval"] = stage_clock
+            setup_budget_facts["last_local_builder_elapsed_seconds"] = local_elapsed
+            runtime.sample(f"q3_local_patch_{patch_id}_{event}")
+            if stage_elapsed >= q3_workflow_seconds:
+                raise V14ResourceStop(
+                    "Q3 workflow reached its 3600-second budget before local setup completed"
+                )
+            if stage_elapsed + q3_known_future_seconds >= q3_workflow_seconds:
+                raise V14ResourceStop(
+                    "Q3 local setup exhausted the known future-control budget"
+                )
+            if patch_id not in representative_ids:
+                return
+            if event == "patch_started":
+                representative_started_local[patch_id] = local_elapsed
+            elif event == "patch_completed":
+                started_local = representative_started_local.get(patch_id)
+                if started_local is None:
+                    raise RuntimeError(
+                        f"Q3 representative patch {patch_id} completed before it started"
+                    )
+                representative_durations[patch_id] = max(
+                    0.0, local_elapsed - started_local
+                )
+                completed_representatives.add(patch_id)
+                representative_elapsed = float(sum(representative_durations.values()))
+                if representative_elapsed >= q3_representative_seconds:
+                    raise V14ResourceStop(
+                        "Q3 representative local setup reached its 900-second budget"
+                    )
+                if len(completed_representatives) == len(representative_ids):
+                    prediction = _q3_local_setup_prediction(
+                        patch_rows,
+                        process_order,
+                        representative_ids,
+                        representative_durations,
+                    )
+                    prediction.update(
+                        {
+                            "stage_elapsed_at_representatives_seconds": stage_elapsed,
+                            "elapsed_before_local_setup_seconds": max(
+                                0.0, stage_elapsed - local_elapsed
+                            ),
+                            "known_future_controls_seconds": q3_known_future_seconds,
+                            "predicted_workflow_total_seconds": (
+                                max(0.0, stage_elapsed - local_elapsed)
+                                + prediction["predicted_local_setup_seconds"]
+                                + q3_known_future_seconds
+                            ),
+                        }
+                    )
+                    prediction[
+                        "remaining_workflow_after_predicted_setup_and_known_controls_seconds"
+                    ] = (
+                        q3_workflow_seconds
+                        - prediction["predicted_workflow_total_seconds"]
+                    )
+                    setup_budget_facts["prediction"] = prediction
+                    runtime.marker("q3_local_setup_prediction", prediction)
+                    if prediction[
+                        "remaining_workflow_after_predicted_setup_and_known_controls_seconds"
+                    ] <= 0.0:
+                        raise V14ResourceStop(
+                            "Q3 predicted complete local setup leaves no time for "
+                            "the known future controls"
+                        )
+
+        smoother = build_interface_local_smoother(
+            core.S_V,
+            patch_rows,
+            port_data=core.port_data,
+            ambient_rows=partition.gamma_rows,
+            max_rows=2048,
+            max_workspace_bytes=local_factor_cap,
+            paired_basis_workspace_bytes=shared_temp_cap,
+            solve_rtol=1.0e-10,
+            paired_patch_deltas=all_deltas,
+            process_order=process_order,
+            progress_callback=local_progress,
+        )
+        runtime.release_workspace("q3_local_smoother_build")
+        reserved_workspaces.remove("q3_local_smoother_build")
+        local_audit = smoother.audit()
+        setup_budget_facts.update(
+            {
+                "completed": True,
+                "measured_local_builder_seconds": float(
+                    local_audit["build_elapsed_seconds"]
+                ),
+                "stage_elapsed_after_local_setup_seconds": (
+                    workflow_elapsed()[0]
+                ),
+            }
+        )
+        setup_budget_facts[
+            "workflow_remaining_after_local_setup_seconds"
+        ] = q3_workflow_seconds - setup_budget_facts[
+            "stage_elapsed_after_local_setup_seconds"
+        ]
+        runtime.marker("q3_local_setup_budget_complete", setup_budget_facts)
+        if (
+            setup_budget_facts["stage_elapsed_after_local_setup_seconds"]
+            + q3_known_future_seconds
+            >= q3_workflow_seconds
+        ):
+            raise V14ResourceStop(
+                "Q3 completed local setup without enough time for known controls"
+            )
+        local_resident_bytes = int(
+            local_audit["retained_factor_bytes"]
+            + local_audit["retained_paired_basis_bytes"]
+        )
+        runtime.check_inventory_projected("q3_local_smoother", local_resident_bytes)
+        runtime.reserve_inventory(
+            "q3_local_smoother",
+            {
+                "retained_factor_bytes": int(local_audit["retained_factor_bytes"]),
+                "retained_paired_basis_bytes": int(
+                    local_audit["retained_paired_basis_bytes"]
+                ),
+            },
+            check_rss=False,
+        )
+        reserved_labels.add("q3_local_smoother")
+        if sorted(smoother.paired_bases) != list(range(len(patch_rows))):
+            raise RuntimeError("Q3 local builder did not produce all 42 local SVD bases")
+        local_audit["setup_budget"] = setup_budget_facts
+        runtime.marker(
+            "q3_local_smoother_complete",
+            {
+                "patch_rows": [int(rows.size) for rows in patch_rows],
+                "representatives": representative_facts,
+                "delta": delta_facts,
+                "process_order": list(process_order),
+                "local_factor_cap_bytes": local_factor_cap,
+                "local_factor_cap_scope": "per_patch_matrix_plus_LU",
+                "local_factor_patch_upper_bytes": local_factor_patch_upper,
+                "shared_temp_cap_bytes": shared_temp_cap,
+                "local_factor_upper_bytes": local_factor_upper,
+                "local_workspace_upper_bytes": local_workspace,
+                "setup_budget": setup_budget_facts,
+                "audit": local_audit,
+            },
+        )
+        action_checks = _q3_action_checks(runtime, core, common, storage_template)
+        if not action_checks["passed"]:
+            raise RuntimeError(f"Q3 explicit/matrix-free action gate failed: {action_checks}")
+
+        candidate_workspace_label = "q3_candidate_mgs_coarse"
+
+        def candidate_preallocation(facts: Mapping[str, Any]) -> None:
+            workspace = int(facts["workspace_upper_bytes"])
+            if workspace > shared_temp_cap:
+                raise V14ResourceStop(
+                    "Q3 candidate/MGS/coarse temporary workspace exceeds 1GiB: "
+                    f"{workspace} > {shared_temp_cap}"
+                )
+            runtime.check_workspace_projected(candidate_workspace_label, workspace)
+            runtime.marker("q3_candidate_preallocation_gate", dict(facts))
+            runtime.reserve_workspace(candidate_workspace_label, workspace)
+            reserved_workspaces.add(candidate_workspace_label)
+
+        raw_P, raw_Q, candidate_mapping, candidate_facts = (
+            build_interface_candidate_directions(
+                patch_rows,
+                smoother.paired_bases,
+                core.port_data,
+                delta_gamma,
+                max_candidates=496,
+                max_mgs_rows=512,
+                preallocation_callback=candidate_preallocation,
+            )
+        )
+        if not candidate_facts["all_42_local_bases"]:
+            raise RuntimeError("Q3 candidate construction did not receive all 42 local bases")
+        paired = orthonormalize_paired_directions(
+            raw_P,
+            raw_Q,
+            pair_tol=1.0e-12,
+            max_pairs=512,
+        )
+        paired_facts = paired.audit()
+        del raw_P, raw_Q
+        raw_P = raw_Q = None
+        paired_capacity = int(
+            paired_facts["checks"]["output_basis_capacity_bytes"]
+        )
+        if paired_capacity % 2:
+            raise RuntimeError("Q3 paired P/Q capacity is not evenly split")
+        runtime.check_inventory_projected("q3_paired_basis", paired_capacity)
+        runtime.reserve_inventory(
+            "q3_paired_basis",
+            {
+                "P_capacity_bytes": paired_capacity // 2,
+                "Q_capacity_bytes": paired_capacity // 2,
+            },
+            check_rss=False,
+        )
+        reserved_labels.add("q3_paired_basis")
+        runtime.marker(
+            "q3_paired_candidates_complete",
+            {
+                "candidate": candidate_facts,
+                "paired": paired_facts,
+                "mapping": candidate_mapping,
+            },
+        )
+        if paired.rank == 0:
+            raise np.linalg.LinAlgError("COARSE_PAIR_UNSTABLE: paired candidate rank is zero")
+        coarse_bound = int(
+            3 * paired.rank * paired.rank * np.dtype(np.complex128).itemsize
+            + 3 * paired.rank * np.dtype(np.complex128).itemsize
+            + paired.rank * np.dtype(np.int64).itemsize
+        )
+        runtime.check_inventory_projected("q3_coarse_pair", coarse_bound)
+        runtime.check_projected("q3_coarse_pair_factor", coarse_bound)
+
+        # Release the construction-only global sparse Schur before forming E;
+        # the retained V_GG/internal factors and carrier now define S_gamma.
+        core.release_explicit_schur()
+        runtime.release_inventory("q3_S_V")
+        reserved_labels.discard("q3_S_V")
+        runtime.release_inventory("q3_active_volume")
+        reserved_labels.discard("q3_active_volume")
+        coarse_pair = build_interface_coarse_pair(
+            core.apply_physical_schur_block,
+            paired.P,
+            paired.Q,
+            max_rows=512,
+            max_workspace_bytes=int(
+                runtime.contract["resources"]["interface_workspace_cap_bytes"]
+            ),
+            max_temp_workspace_bytes=shared_temp_cap,
+            rcond_rtol=1.0e-12,
+            solve_rtol=1.0e-10,
+        )
+        runtime.release_workspace(candidate_workspace_label)
+        reserved_workspaces.remove(candidate_workspace_label)
+        coarse_audit = coarse_pair.audit()
+        coarse_resident_bytes = int(
+            coarse_pair.E.nbytes
+            + coarse_pair.lu.nbytes
+            + coarse_pair.pivots.nbytes
+        )
+        runtime.check_inventory_projected("q3_coarse_pair", coarse_resident_bytes)
+        runtime.reserve_inventory(
+            "q3_coarse_pair",
+            {
+                "E_bytes": int(coarse_pair.E.nbytes),
+                "LU_bytes": int(coarse_pair.lu.nbytes),
+                "pivots_bytes": int(coarse_pair.pivots.nbytes),
+            },
+            check_rss=False,
+        )
+        reserved_labels.add("q3_coarse_pair")
+        fint = InterfaceFintAdapter(core, smoother, coarse_pair)
+        solution_arrays: list[np.ndarray] = []
+        solve_records: list[dict[str, Any]] = []
+        three_rhs_fint_apply_deltas: list[int] = []
+        for reviewed in rhs_records:
+            runtime.set_phase("solve")
+            runtime.marker("q3_rhs_solve_started", {"stem": reviewed["stem"]})
+            started = time.perf_counter()
+            rhs = storage_template.copy()
+            rhs.array[:] = reviewed["rhs"]
+            result = None
+            fint_apply_before = int(fint.apply_count)
+            try:
+                result = fint.solve_intermediate(rhs)
+                solution = result["final_solution"]
+                residual_decomposition = _physical_residual_decomposition(
+                    common["p4"]["physical_action"],
+                    rhs,
+                    solution,
+                    partition,
+                )
+                solution_array = np.asarray(solution.array).copy()
+                solution_arrays.append(solution_array)
+                interface_facts = {
+                    key: value for key, value in result.items() if key != "final_solution"
+                }
+                operation_audit = _q3_interface_operation_audit(
+                    interface_facts, len(core.internal)
+                )
+                operation_count_passed = bool(operation_audit["passed"])
+                fint_apply_delta = int(fint.apply_count) - fint_apply_before
+                three_rhs_fint_apply_deltas.append(fint_apply_delta)
+                solve_record = {
+                    "stem": reviewed["stem"],
+                    "logical_rhs": reviewed["logical_rhs"],
+                    "elapsed_seconds": time.perf_counter() - started,
+                    "native_A4_relative_residual": residual_decomposition["total_relative"],
+                    "native_A4_residual_decomposition": residual_decomposition,
+                    "interface_facts": interface_facts,
+                    "operation_audit": operation_audit,
+                    "operation_count_passed": operation_count_passed,
+                    "fint_apply_count_delta": fint_apply_delta,
+                    "solution_sha256": _sha256_bytes(solution_array.tobytes()),
+                    "reference_true_residual": reviewed["reference_true_residual"],
+                }
+                packet = _save_packet(
+                    runtime.directory / "q3_rhs_packets",
+                    reviewed["stem"],
+                    {
+                        "schema": "task039extra.v14.q3-rhs-packet.v1",
+                        "identity": {
+                            key: value
+                            for key, value in reviewed.items()
+                            if key
+                            not in {
+                                "rhs",
+                                "reference_solution",
+                                "reference_A4y",
+                                "reference_map",
+                            }
+                        },
+                        "solve": solve_record,
+                        "x_storage": solution_array,
+                    },
+                    runtime=runtime,
+                )
+                solve_record["packet"] = packet
+                solve_records.append(solve_record)
+            finally:
+                if result is not None:
+                    result["final_solution"].destroy()
+                rhs.destroy()
+            runtime.sample(f"q3_rhs_{reviewed['stem']}_complete")
+
+        field = _field_metrics(
+            runtime,
+            common,
+            solution_arrays,
+            [item["reference_solution"] for item in rhs_records],
+        )
+        for solve, field_record in zip(solve_records, field, strict=True):
+            solve["field_metrics"] = field_record
+        max_rho = max(item["native_A4_relative_residual"] for item in solve_records)
+        max_field = max(
+            max(
+                item["field_metrics"]["field_l2_relative"],
+                item["field_metrics"]["scaled_curl_relative"],
+            )
+            for item in solve_records
+        )
+        admission_by_stem = {
+            item["stem"]: {
+                "rho": item["native_A4_relative_residual"],
+                "eta": item["field_metrics"]["field_l2_relative"],
+                "eta_curl": item["field_metrics"]["scaled_curl_relative"],
+                "elapsed_seconds": item["elapsed_seconds"],
+                "passed": (
+                    item["native_A4_relative_residual"] <= (
+                        0.2 if item["stem"].endswith("_02") else 0.5
+                    )
+                    and item["field_metrics"]["field_l2_relative"]
+                    <= (0.9 if item["stem"].endswith("_02") else 0.5)
+                    and item["field_metrics"]["scaled_curl_relative"]
+                    <= (0.9 if item["stem"].endswith("_02") else 0.6)
+                    and item["elapsed_seconds"] <= 15.0
+                    and item["operation_count_passed"]
+                ),
+            }
+            for item in solve_records
+        }
+        admission_pass = all(item["passed"] for item in admission_by_stem.values())
+        three_rhs_fint_count = int(sum(three_rhs_fint_apply_deltas))
+        three_rhs_fint_count_passed = bool(
+            len(three_rhs_fint_apply_deltas) == len(rhs_records)
+            and all(delta == 1 for delta in three_rhs_fint_apply_deltas)
+        )
+        balanced_audit = _q3_balanced_p6_audit(runtime, common, fint)
+        stage_pass = bool(
+            admission_pass
+            and three_rhs_fint_count_passed
+            and balanced_audit["passed"]
+        )
+        record = {
+            "schema": "task039extra.v14.q3-interface-control.v1",
+            "status": "Q3_INTERFACE_CONTROL_PASS" if stage_pass else "INTERFACE_CONTROL_UNQUALIFIED",
+            "stage_pass": stage_pass,
+            "admission_pass": admission_pass,
+            "official_result": False,
+            "result_classification": (
+                "diagnostic_interface_candidate_pass"
+                if stage_pass
+                else "controlled_negative_interface_candidate"
+            ),
+            "partition": partition.audit(),
+            "core": core.factor_facts,
+            "representative_patches": representative_facts,
+            "delta": delta_facts,
+            "local_smoother": local_audit,
+            "action_checks": action_checks,
+            "candidate": candidate_facts,
+            "paired_basis": paired_facts,
+            "coarse_pair": coarse_audit,
+            "solve_records": solve_records,
+            "admission": admission_by_stem,
+            "balanced_p6_audit": balanced_audit,
+            "gates": {
+                "candidate_input_upper_bound": 496,
+                "coarse_rows": 512,
+                "coarse_rcond": 1.0e-12,
+                "coarse_solve_residual": 1.0e-10,
+                "difficult_rho": 0.5,
+                "difficult_eta": 0.5,
+                "difficult_eta_curl": 0.6,
+                "feedback_rho": 0.2,
+                "feedback_eta": 0.9,
+                "feedback_eta_curl": 0.9,
+                "single_fint_seconds": 15.0,
+                "max_native_A4_relative_residual": max_rho,
+                "max_field_l2_or_scaled_curl": max_field,
+                "three_rhs_fint_apply_deltas": three_rhs_fint_apply_deltas,
+                "three_rhs_fint_apply_count": three_rhs_fint_count,
+                "three_rhs_fint_apply_expected": len(rhs_records),
+                "three_rhs_fint_apply_count_passed": three_rhs_fint_count_passed,
+            },
+            "lifecycle": {
+                "global_interface_matrix_built": False,
+                "global_interface_factor_built": False,
+                "global_dense_schur_constructed": False,
+                "explicit_S_V_released_before_candidate_solves": True,
+                "internal_factor_count": len(core.internal),
+                "fint_apply_count": fint.apply_count,
+                "three_rhs_fint_apply_deltas": three_rhs_fint_apply_deltas,
+                "three_rhs_fint_apply_count": three_rhs_fint_count,
+                "three_rhs_fint_apply_count_expected": len(rhs_records),
+                "fint_apply_count_expected_after_balanced_audit": (
+                    len(rhs_records) + 2
+                ),
+                "local_smoother": smoother.audit(),
+                "coarse_pair": coarse_pair.audit(),
+                "inventory_peak_bytes": runtime.inventory_peak_bytes,
+                "workspace_peak_bytes": runtime.workspace_peak_bytes,
+            },
+        }
+        runtime.marker("q3_interface_control_complete", record)
+        return record
+    finally:
+        for workspace_label in tuple(reserved_workspaces):
+            runtime.release_workspace(workspace_label)
+        if raw_P is not None:
+            del raw_P
+        if raw_Q is not None:
+            del raw_Q
+        if fint is not None:
+            fint.destroy()
+        if coarse_pair is not None:
+            coarse_pair.destroy()
+        paired = None
+        if smoother is not None:
+            smoother.destroy()
+        if core is not None:
+            core.destroy()
+        elif active_volume is not None:
+            active_volume.destroy()
+        if full_volume is not None:
+            full_volume.destroy()
+        if storage_template is not None:
+            storage_template.destroy()
+        for label in tuple(reserved_labels):
+            runtime.release_inventory(label)
+        for label in (
+            "q3_coarse_pair",
+            "q3_paired_basis",
+            "q3_local_smoother",
+            "q3_S_V",
+            "q3_V_GG",
+            "q3_active_volume",
+            "q3_full_volume",
+        ):
+            runtime.release_inventory(label)
+
+
 def _q0_core(runtime: _V14Runtime, common: dict[str, Any]) -> dict[str, Any]:
     volume = None
     try:
@@ -3059,7 +4792,12 @@ def run_physical_p4_schur_v14(
                 signum, lambda _value, _frame: setattr(runtime, "stop_requested", True)
             )
         runtime.sample("preflight")
-        if stage in {"Q0_CORE", "Q1_FULL_DIRECT", "Q2_SCHUR_DIRECT"}:
+        if stage in {
+            "Q0_CORE",
+            "Q1_FULL_DIRECT",
+            "Q2_SCHUR_DIRECT",
+            "Q3_INTERFACE_CONTROL",
+        }:
             # Only the common-cache estimate is checked before construction.
             # The Q1/Q2 matrix estimates are deliberately deferred until the
             # actual common core (and, for Q1/Q2, reviewed RHS packets) is
@@ -3070,13 +4808,14 @@ def run_physical_p4_schur_v14(
                 include_common=True,
                 include_matrices=False,
             )
-        if stage in {"Q3_INTERFACE_CONTROL", "Q4_ORIGINAL", "Q5_NOTCH", "Q6_FINALIZE"}:
+        if stage in {"Q4_ORIGINAL", "Q5_NOTCH", "Q6_FINALIZE"}:
             record = {
                 "schema": f"task039extra.v14.{str(stage).lower()}.v1",
                 "status": "NOT_RUN",
                 "official_result": False,
-                "result_classification": "controlled_not_run_pending_Q2_accuracy_and_memory_decision",
-                "reason": "Review V14 requires Q2 to authorize the conditional later stages",
+                "stage_pass": False,
+                "result_classification": "controlled_not_run_pending_prior_stage_qualification",
+                "reason": "This execution slice does not include the later conditional stage",
             }
         else:
             cfg_common = _build_common(runtime, cfg)
@@ -3107,6 +4846,26 @@ def run_physical_p4_schur_v14(
                         record = _q1_full_direct(runtime, cfg_common, rhs_records)
                     else:
                         record = _q2_schur_direct(runtime, cfg_common, rhs_records)
+                elif stage == "Q3_INTERFACE_CONTROL":
+                    rhs_records = _prepare_reviewed_rhs(
+                        runtime,
+                        cfg_common,
+                        resolved_payload,
+                        root,
+                        53084,
+                    )
+                    _v14_known_preallocation_gate(
+                        runtime,
+                        str(stage),
+                        include_common=False,
+                        include_matrices=True,
+                    )
+                    record = _q3_interface_control(
+                        runtime,
+                        cfg_common,
+                        rhs_records,
+                        resolved_payload,
+                    )
                 else:
                     raise ValueError(f"unsupported V14 stage {stage!r}")
             finally:
@@ -3117,10 +4876,16 @@ def run_physical_p4_schur_v14(
         summary.update(record)
         summary["status"] = record["status"]
         summary["official_result"] = bool(record.get("official_result", False))
-        summary["result_classification"] = (
+        summary["stage_pass"] = bool(
+            record.get("stage_pass", summary["official_result"])
+        )
+        if "admission_pass" in record:
+            summary["admission_pass"] = bool(record["admission_pass"])
+        summary["result_classification"] = record.get(
+            "result_classification",
             "DISCRETE_SOLVER_OUTPUT_PASS"
             if summary["official_result"]
-            else record.get("status", "NOT_RUN")
+            else record.get("status", "NOT_RUN"),
         )
     except V14ResourceStop as exc:
         summary.update(
@@ -3143,9 +4908,9 @@ def run_physical_p4_schur_v14(
         if runtime is not None:
             runtime.marker("v14_worker_complete", summary)
     return {
-        "passed": bool(summary.get("official_result")),
+        "passed": bool(summary.get("stage_pass", summary.get("official_result"))),
         "errors": []
-        if summary.get("official_result")
+        if summary.get("stage_pass", summary.get("official_result"))
         else [str(summary.get("error", summary.get("status", "V14 stage did not pass")))],
         "summary": summary,
         "numerical_output_directory": str(directory / "numerical_output"),
