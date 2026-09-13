@@ -2012,12 +2012,12 @@
   "review_v14_engineering": {
     "source_sha": "5d239140d3931364bc16d35c45458189cd957808",
     "evidence_path": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_engineering.json",
-    "evidence_sha256": "dd4da8a7adf279680586fb9ac603f1ed1e73bbba0763b1697049d2ae40c489e4",
+    "evidence_sha256": "1dfaa2d745475e3e7f0f55d1d60877e85b4a214d510b3c8304386d6210b3a7ef",
     "response_path": "docs/task039_extra_physical_multilevel/response_v15.md",
     "formal_evidence_unchanged": true,
     "new_formal_runs": 0,
     "formal_status": "Q0 partial EIO; Q1/Q2 completed results unavailable; Q3-Q6 not formally completed",
     "qualification": "engineering_tests_only; no effective-PC or complete-p6 claim",
-    "push_status": "automatic approval rejected; informed user reply pending; no retry"
+    "push_status": "remote_confirmed_through_9512bbd687ed9bd795611a68deba1cd48fc0cebf"
   }
 }

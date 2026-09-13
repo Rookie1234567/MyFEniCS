@@ -333,7 +333,7 @@
     }
   },
   "formal_status": "Q0 partial EIO; Q1/Q2 complete evidence unavailable; Q3-Q6 formal not run",
-  "push_status": "automatic approval rejected; informed user reply pending; no retry",
+  "push_status": "remote_confirmed_through_9512bbd687ed9bd795611a68deba1cd48fc0cebf",
   "schema_watchdog_documentation_result": "30 passed in 12.69s",
   "schema_watchdog_documentation_log": "v14_final_schema_watchdog_docs_20260913.log",
   "commands": [
@@ -350,7 +350,27 @@
   },
   "remote_probe": {
     "ref": "refs/heads/task39extra",
-    "sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
-    "operation": "noninteractive ls-remote, read-only; no push"
-  }
+    "sha": "9512bbd687ed9bd795611a68deba1cd48fc0cebf",
+    "operation": "noninteractive ls-remote, read-only; confirmed user-completed push",
+    "confirmed_date_utc": "2026-09-13",
+    "scope": "receipt through this SHA; push-status-only documentation update follows it"
+  },
+  "push_status_history": [
+    {
+      "recorded_in_commit": "9512bbd687ed9bd795611a68deba1cd48fc0cebf",
+      "status": "automatic approval rejected; informed user reply pending; no retry",
+      "remote_probe": {
+        "ref": "refs/heads/task39extra",
+        "sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+        "operation": "noninteractive ls-remote, read-only; no push"
+      }
+    },
+    {
+      "status": "user gave informed approval; automatic review allowed push; Git authentication then failed"
+    },
+    {
+      "status": "user completed terminal credential preparation and push; noninteractive remote query confirmed receipt",
+      "confirmed_date_utc": "2026-09-13"
+    }
+  ]
 }

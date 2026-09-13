@@ -41,4 +41,4 @@ Q1/Q2 尚没有本轮 source、残差、场误差、curl、矩阵/因子 NNZ、�
 
 ## 后续工程进展（不改变上述正式证据）
 
-工程代码已提交为 `5d239140d3931364bc16d35c45458189cd957808`，固定接口候选与条件式 p6 接线的联合测试 104 passed，输入/旧 watchdog/文档另有 30 passed。没有新增正式 worker，Q0–Q2 数值字段和原 ledger 未变。实现细节、测试原始输出及当前推送阻断见 [阶段 response_v15](../response_v15.md) 和 [工程证据](records/p4_schur_v14_engineering.json)；本次阶段记录不是 Q6 最终结项。
+工程代码已提交为 `5d239140d3931364bc16d35c45458189cd957808`，固定接口候选与条件式 p6 接线的联合测试 104 passed，输入/旧 watchdog/文档另有 30 passed。没有新增正式 worker，Q0–Q2 数值字段和原 ledger 未变。实现细节、测试原始输出及已核实的推送状态见 [阶段 response_v15](../response_v15.md) 和 [工程证据](records/p4_schur_v14_engineering.json)；本次阶段记录不是 Q6 最终结项。

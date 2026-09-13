@@ -19,7 +19,7 @@
 | Review base | `25c90229410ca4f75406307ff55ea1ebad343b7b` |
 | 已有正式 Q0 source SHA | `efea244159d63a7c9db67ca091e29a9c19f9ce88` |
 | Q0–Q2 五份紧凑证据本地提交 | `4b7175abe02a3a67c63a87234e24877eeab0a78e` |
-| 已核对的远端 task39extra HEAD | `efea244159d63a7c9db67ca091e29a9c19f9ce88`，尚未包含上述证据提交 |
+| 已核对的远端 task39extra HEAD | 2026-09-13 非交互查询确认为 `9512bbd687ed9bd795611a68deba1cd48fc0cebf`，已包含紧凑证据、工程实现与本阶段回应；本条推送状态更新在其后提交 |
 | 最后可靠 Q0 阶段 | 公共 setup，P64 transfer 已生成；没有 metric 完成、reviewed RHS 或 `q0_core_complete` |
 | RSS / PSS | watchdog 有效前缀 373 行的进程树采样峰值 `1,417,695,232 / 1,385,432,064 B`，不是完整 workflow 峰值 |
 | 常驻 inventory / 完整 setup / 调用时间 | `not_available`；启动空清单中的 0 不代表实际库存为零 |
@@ -46,6 +46,6 @@ Q4/Q5 的独立 A6 残差、完整物理输出和最终父进程资源检查均�
 
 ## 提交、推送和合并状态
 
-五份紧凑阶段证据已经形成独立本地提交 `4b7175abe02a3a67c63a87234e24877eeab0a78e`，未因远端缺记录重做计算。该提交的推送尚未成功；正在等待针对确切仓库、分支和内容的明确批准。后续工程提交 `5d239140d3931364bc16d35c45458189cd957808` 也仍仅在本地。当前合入边界见 [V14 selective manifest](outcomes/selective_merge_manifest_v14.md)；没有合并 master，没有改变 5 nm 工作线。
+五份紧凑阶段证据提交 `4b7175abe02a3a67c63a87234e24877eeab0a78e`、工程提交 `5d239140d3931364bc16d35c45458189cd957808` 及阶段回应提交 `9512bbd687ed9bd795611a68deba1cd48fc0cebf` 已推送到同一 `task39extra` 分支。2026-09-13 非交互远端查询确认已收到 `9512bbd687ed9bd795611a68deba1cd48fc0cebf`。没有为了补记录重跑计算；本次仅更新推送状态。当前合入边界见 [V14 selective manifest](outcomes/selective_merge_manifest_v14.md)；没有合并 master，没有改变 5 nm 工作线。
 
-自动批准审查拒绝了向 `https://github.com/Rookie1234567/MyFEniCS` 的 `task39extra` 推送，理由是认为此操作向尚未核实的外部 GitHub 目的地导出私有仓库内容。用户先前的推送授权已存在；本次额外阻断来自自动批准审查。没有通过其他执行路径绕过，也没有重试被拒绝的操作。
+历史阻断保留：自动批准审查曾拒绝向 `https://github.com/Rookie1234567/MyFEniCS` 的 `task39extra` 推送，理由是认为此操作向尚未核实的外部 GitHub 目的地导出私有仓库内容。用户了解该原因后明确批准，后续批准审查允许推送，但 Git 因未配置认证而失败。用户随后在终端完成凭据准备与推送，以上远端查询已验证成功；当前不再等待推送批准或认证。此状态变化不改变 Q0 中断、未结算费用或任何数值结论。
