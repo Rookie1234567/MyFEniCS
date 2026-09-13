@@ -1,4 +1,19 @@
-# Task39extra Review V15 基础设施 Gate 登记
+# Task39extra Review V15 最终模型登记：Q0/Q6 证据边界
+
+| Model ID | 当前来源/配置 | 结果 | 状态与边界 |
+|---|---|---|---|
+| `task39extra_v15_q0_recovery` | source `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`；13.5 nm fixed、p6/h10、Full3D、MPI1、complex128/int32；Q0 run `20260913T082401.240994Z` | assembly 到 `v14_p4_volume_compile_started`；settled `604.5503952971432 s`；树 RSS `1769385984 B`；可读 PSS 样本峰值 `1734977536 B`（2151/2152），swap 0 | `PERFORMANCE_CONTROLLED_STOP`；formal worker 1，completed core qualification/linear solve 0；无 worker summary、RHS、A4/field/curl或official result；不是算法失败；[Q0 compact](task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json) |
+| `task39extra_v15_q1_q2_pair` | 同一 physical/mode/input identity；Q1 full direct 与 Q2 accurate Schur | 没有运行记录 | `not_run_after_q0_gate`；memory ratio、resident-inventory ratio、三份 RHS accuracy和全过程 setup/apply 均不可得，不能判断 Schur 省不省内存 |
+| `task39extra_v15_interface_and_p6` | 同一 fixed model；Q3 interface admission、Q4 original、Q5 notch | 没有运行记录 | Q3 `EVIDENCE_INCOMPLETE`/admission false；original/notch 未资格化；无 R/T/A、`A_volume`、衍射或守恒结果 |
+| `task39extra_v15_q6_finalize` | source `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`；Q6 packet `3e1179a645d5e180851a4cf1329090021eeb190085b944d32b1d955f22a3d616` | existing evidence closure，`error=null`，new PDE actions 0 | `Q6_EVIDENCE_INCOMPLETE`；外层 exit4 是既有 worker-exit-4 语义；`COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD`；不提升 production default |
+
+R0 cleanup 后的准入记录为 source `665a09b6a7d66eff15b4a744036d21f1dad3649d`，C: 剩余 `37233180672 B`，全部 gates 通过；4 轮实际 probe payload `16178076 B`，与先前 `16777216 B` 合计 `32955292 B`。最终 ledger SHA 为 `59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba`，仍为 `NOT_APPROVED_FOR_MASTER_MERGE`。
+
+---
+
+# 历史快照：Task39extra Review V15 基础设施 Gate 登记（后续已解除）
+
+以下登记保留 R0 阻断时点的旧 source、宿主空间和未运行状态；当前模型以本页上方表格为准。
 
 | Model ID | 来源/配置 | 结果 | 状态与边界 |
 |---|---|---|---|

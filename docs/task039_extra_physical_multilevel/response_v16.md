@@ -1,4 +1,34 @@
-# Review V15 回应：R0 宿主存储风险阻断，未启动新的 Q0
+# Review V15 最终回应：Q0 受控停止，Q6 完成证据收口
+
+本次最终收口已按授权完成 R1、一次新的 Q0 和既有证据的 Q6 finalization；没有重试 Q0，也没有运行 Q1–Q5。源码绑定为 `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`，qualified WSL/Linux ABI preflight 通过：PETSc scalar `complex128`、integer `int32`、MPI1、线程 1，工作树在每个正式入口均 clean。
+
+| 阶段 | 最终状态 | 可支持的事实与边界 |
+|---|---|---|
+| R0 → R1 | `APPLIED` | R0 复核证据 `ac5dc36921c33bee4da3fb490249066fb870e308d7d595975a93a5a14a4e76ba`；恢复事件 `V15_Q0_EIO_ONCE`，记录 hash `d3dffd1a97fc8492a0d0a293cecfb8a75174171ca752ed4ae1efe486dd54f418`；无 PDE action。旧 600 s 按原 reservation 不返还，且只计一次。 |
+| 新 Q0 `Q0_CORE` | `PERFORMANCE_CONTROLLED_STOP` | 在 `assembly` 的 `v14_p4_volume_compile_started` 后达到 600 s reservation 的保守 realtime Gate，settled `604.5503952971432 s`，超出 `4.5503952971431545 s`；formal worker attempt `1`，completed core qualification/linear solve `0/0`；leader exit 1 是受控停止语义，descendants 已清空。没有 worker summary、RHS、A4 true residual、field L2、scaled curl 或 official result。 |
+| Q1/Q2 | `not_run_after_q0_gate` | 没有匹配的全局直接法/准确 Schur 配对，因此 memory ratio、resident-inventory ratio、三份 RHS 精度和 setup/apply 比较均不可得。 |
+| Q3/Q4/Q5 | `not_run_after_q0_gate` | 没有接口三 RHS 准入，也没有 original/notch 的完整 p6 求解。 |
+| Q6 | `Q6_EVIDENCE_INCOMPLETE` | Q6 packet 已生成；外层 `WORKER_FAILED`、exit 4 是既有 worker-exit-4 对 `stage_pass=false` 的适配语义，`error=null`、`new_pde_actions=0`，不是新的算法异常，也不把缺失证据判成方法失败。 |
+
+清理后 R0 的实际准入记录绑定 source `665a09b6a7d66eff15b4a744036d21f1dad3649d`；全部准入 gate 通过，C: 承载卷剩余 `37233180672 B`。4 轮 I/O probe 的实际 payload 为 `16178076 B`，与先前 `16777216 B` 合计 `32955292 B`；三项已测收集时间为 `2.387310507 s`、`2.298935873001028 s`、`0.12797381699783728 s`，另有 `3.1 s` derived correction upper bound。accepted record、raw report 和 current-kernel-check 的路径与 hash 已集中登记在 [唯一 recovery compact](outcomes/records/v14_io_recovery_v15.json) 的 `continuation.r0_recheck_after_cleanup`。
+
+新 Q0 的正式运行目录为 `results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T082401.240994Z`。watchdog 观察到 parent/descendant 树 2152 个样本，simultaneous RSS 峰值 `1769385984 B`；其中 2151/2152 行的同时进程树 PSS 可读，PSS 可读样本峰值为 `1734977536 B`，另有 1 行 PSS 不完整，因此不把它写成全覆盖峰值保证。job swap 峰值 `0 B`，全局 swap delta `0/0`，descendants `[]`。worker 稀疏 trace 的 RSS/PSS `1256816640/1226375168 B` 只代表另一采样范围，不能替代 watchdog 资源口径。Q0 的 monotonic/boottime 有效时长约 `551.7746 s`，但 conservative realtime/UTC 计费间隔为 `604.5503952971432 s`；两者相差约 `52.77514 s`，因此账本采用保守时钟，不把 monotonic 值当作费用。最后 phase 是 `assembly`，没有数值 solve 或物理输出。
+
+最终共享账本位于 [shared workflow ledger](../../benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json)（compact 中的绝对路径和 hash 为准），SHA256 为 `59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba`。它记录总预算 `43200 s`、按既定 conservative-realtime 规则结算的 workflow elapsed 字段 `613.2807354921454 s`、保守 allowance `3.1 s`、一次 `600 s` policy debit，最终 `budget_used=1216.3807354921453 s`、`remaining=41983.619264507855 s`，无 active attempt。这里的账本结算字段包含 R0 已测 `4.814220196998866 s`、新 Q0 settled `604.5503952971432 s` 和 Q6 `3.9161199980033103 s`；真实 monotonic/boottime/UTC 区间分别保存在 Q0/Q6 watchdog 和 parent ledger 记录中，R0 的 derived allowance 另按账本规则计入 budget used。
+
+Q6 的最终科学边界是：准确 Schur 内存比较 `COMPARISON_INCONCLUSIVE`，因为缺少合格匹配的 Q1/Q2 accuracy 和完整 measured memory；接口近似逆 `EVIDENCE_INCOMPLETE` 且 `Q3_admission=false`；Full p6 original/notch 均未资格化；下一项为 `COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD`，不支持保留准确参考作为已验证结论。没有 R/T/A、`A_volume`、衍射级或守恒量可报告。旧 Q0 的 EIO、未完成终态和未知历史费用仍保留在最终账本与 compact 中；新 Q0 的受控停止是独立的 performance negative evidence，不改写旧 EIO，也不证明算法失败。
+
+工程编辑、监督和文档核验没有完整独立计时，按 `unknown` 登记；24 项 targeted tests 的实测 pytest wall 为 `0.17 s`，20 项 Markdown/documentation tests 为 `0.05 s`，compileall 观察 wall 为 `0.226307897 s`，均不并入正式 PDE 账本。另有 1 项历史 registry contract audit 因缺失的 Task038 文件失败，未修复无关旧证据。
+
+Q0 raw run summary SHA256 为 `fb9d7fc023406210c44d6774e154498fced5ce5d90b050d1d16c9af65282bd2c`，watchdog summary SHA256 为 `ec4767595d63a031bd7b541c1c6b7b3ba752f26be9f55a119ff6f35925f493b8`，events SHA256 为 `043a7045efe6756a75086c14b53f4230ce1e44dc6cf7ebb4c31196f7d27b7e0d`。Q6 packet `q6_decision.json` SHA256 为 `3e1179a645d5e180851a4cf1329090021eeb190085b944d32b1d955f22a3d616`，worker summary SHA256 为 `17259b658329da691c15b43d5c56650ee413459c386711dc75871c696d87a9b7`。完整 hash 索引见 [最终 compact](outcomes/records/p4_schur_v14_compact.json)、[comparison](outcomes/records/p4_schur_v14_comparison.json) 和 [run index](outcomes/records/run_index.json)。
+
+本轮不是完整数值任务通过：没有官方 Maxwell 输出，没有准确 Schur 节省内存结论，没有接口准入，没有 original/notch 通过。`NOT_APPROVED_FOR_MASTER_MERGE` 仍有效；可审阅的是受控停止、恢复/账本审计和紧凑证据文档，不是 production numerical qualification。
+
+---
+
+# 历史快照：Review V15 R0 宿主存储风险阻断（后续已解除）
+
+以下 R0 段落保留当时的宿主存储 Gate、未执行 R1 的状态和对应 hash。最终状态已在上方记录；其中“未启动新的 Q0”等措辞只属于 R0 历史时点，不再代表当前状态。
 
 本轮停止于 **R0：`INFRASTRUCTURE_BLOCKED`**。实际 ledger/results 目录的四轮读写核验通过，但当前 Ubuntu-24.04 的虚拟磁盘位于 C 盘，宿主查询时该卷只剩 **827,174,912 B，约 789 MiB**。这不足以排除后续文件增长的持续风险，因此按 [Review V15](review_report_v15.md) 停止正式路径，没有迁移账本或启动恢复 Q0。此报告交付的是停止证据，**原 Review V14 的数值任务尚未完成**。
 

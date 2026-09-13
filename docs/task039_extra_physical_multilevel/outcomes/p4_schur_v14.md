@@ -1,4 +1,24 @@
-# Task39extra Review V15 增量：R0 宿主存储 Gate
+# Task39extra Review V15 最终增量：Q0 受控停止与 Q6 证据收口
+
+本轮在同一 `task39extra` 分支上完成了授权的 R1、一次新的 Q0 和 Q6 finalization；按照共同 Q0 Gate，Q1–Q5 没有运行，也没有第三次 Q0。正式源码为 `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`，ABI 为 qualified Linux、PETSc `complex128/int32`、MPI1、线程 1。
+
+| 项目 | 最终结果 | 说明 |
+|---|---|---|
+| R1 recovery | `APPLIED` | `V15_Q0_EIO_ONCE`；600 s policy debit；无 PDE action；恢复记录 hash `d3dffd1a97fc8492a0d0a293cecfb8a75174171ca752ed4ae1efe486dd54f418`。 |
+| 新 Q0 | `PERFORMANCE_CONTROLLED_STOP` | settled `604.5503952971432 s`，reservation `600 s`，超出 `4.5503952971431545 s`；最后在 `assembly / v14_p4_volume_compile_started`，不是数值失败。树 RSS 峰值 `1769385984 B`；2151/2152 行 PSS 可读样本的峰值为 `1734977536 B`，另有 1 行 PSS 不完整，不能当作全覆盖峰值；swap `0 B`，descendants 已清空。 |
+| Q1/Q2 | `not_run_after_q0_gate` | 没有配对精度和完整全过程资源，准确 Schur memory comparison 不可判定。 |
+| Q3/Q4/Q5 | `not_run_after_q0_gate` | 没有接口准入或 original/notch p6 物理输出。 |
+| Q6 | `Q6_EVIDENCE_INCOMPLETE` | packet 已生成；外层 exit 4/`WORKER_FAILED` 是 stage-pass 适配语义，`error=null`，没有新的 PDE action。 |
+
+最终账本 SHA256 为 `59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba`：总预算 `43200 s`，按既定 conservative-realtime 规则结算的 workflow elapsed 字段 `613.2807354921454 s`，policy debit `600 s`，conservative allowance `3.1 s`，budget used `1216.3807354921453 s`，remaining `41983.619264507855 s`，active attempts 为空。Q6 的 settled workflow time 是 `3.9161199980033103 s`。真实 monotonic/boottime/UTC 区间另有记录；最终没有 official R/T/A、`A_volume`、衍射或守恒结果。
+
+Q6 的回答保持保守：准确 Schur 为 `COMPARISON_INCONCLUSIVE`；接口近似逆为 `EVIDENCE_INCOMPLETE`、`Q3_admission=false`；original/notch 均未资格化；下一项为 `COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD`。旧 Q0 EIO 和未知历史费用没有被抹除，新的 Q0 performance stop 也不被解释为算法失败。
+
+主要证据入口：[Q0 run summary](../../../results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T082401.240994Z/run_summary.json)、[Q0 watchdog summary](../../../results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T082401.240994Z/watchdog/summary.json)、[Q6 packet](../../../results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T083532.738337Z/q6_decision.json)、[最终 compact](records/p4_schur_v14_compact.json)、[最终 comparison](records/p4_schur_v14_comparison.json)。大型运行产物仍 ignored，不纳入 Git。
+
+## 历史快照：Review V15 R0 宿主存储 Gate（后续已解除）
+
+以下 R0 段落保留当时的宿主存储阻断和“没有 R1/Q0/PDE”状态；最终状态见上方，不以历史措辞覆盖本轮收口。
 
 本次增量的最终状态为 **`INFRASTRUCTURE_BLOCKED`**，不是算法失败。R0 在受限 sandbox 视图中完成了两个父目录、四轮共 `16777216 B` 的原子写入/重开哈希/目录 `fsync`/自身清理探针；但宿主范围核验确认承载 Ubuntu-24.04 WSL VHD 的 Windows `C:` NTFS 卷只剩 `827174912 B`。健康状态 `Healthy/OK` 不消除这个持续性空间风险，因此没有进行 R1 账本迁移、恢复 Q0 或任何正式 PDE。
 

@@ -1,10 +1,11 @@
 {
   "schema": "task039extra.v14.p4-schur-comparison.v1",
   "review": "review_v14",
-  "scope": "V14 Q1 full-direct versus Q2 Schur-direct audit plus V15 infrastructure gate; comparison still requires both complete workflows",
+  "scope": "V14 Q1 full-direct versus Q2 Schur-direct audit plus V15 R1/Q0/Q6 continuation; comparison still requires both complete workflows",
+  "historical_scope": "The original Q0 context, Q1/Q2 fields, and infrastructure-gate object are historical snapshots. review_v15_continuation is the current authoritative source/run continuation.",
   "status": "COMPARISON_INCONCLUSIVE_Q1_Q2_NOT_AVAILABLE",
   "current_review": "review_v15",
-  "current_review_status": "INFRASTRUCTURE_BLOCKED",
+  "current_review_status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
   "current_review_evidence": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
   "source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
   "model_identity": {
@@ -87,8 +88,9 @@
     "not_used_as_q1_or_q2": true,
     "evidence": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json#/stages/Q0_CORE"
   },
-  "next": "Keep Q3-Q6 pending; do not close the review or infer the accurate-Schur memory answer from the Q0 prefix",
+  "next": "Q1-Q5 remain not_run_after_q0_gate; Q6 finalized the existing review with incomplete evidence and no new method",
   "review_v15_infrastructure_gate": {
+    "historical_scope": "Historical pre-cleanup R0-only object; review_v15_continuation is authoritative for current R1/Q0/Q6 state.",
     "status": "INFRASTRUCTURE_BLOCKED",
     "reviewed_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
     "r0_report": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r0_report.json",
@@ -127,5 +129,86 @@
     "root_scope_evidence_json_written": true,
     "journal_coverage_gap": "The saved old-window journal query has no explicit UTC basis and cannot prove coverage of the 2026-09-12T12:35Z fault window.",
     "next": "Host storage is for user/system administration; stop and await unified review. On later instruction, recheck V15 admission under the original V14 contract and unused recovery allowance; this gate is not an algorithm result."
+  },
+  "review_v15_continuation": {
+    "status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
+    "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+    "r1": {
+      "status": "APPLIED",
+      "recovery_id": "V15_Q0_EIO_ONCE",
+      "policy_debit_seconds": 600.0,
+      "pde_actions": 0,
+      "ledger_after_sha256": "4a1d78622f54c5fe23cac5cfbf297ce7859fb731f393eebb5352ae9a557ee1eb"
+    },
+    "q0_new": {
+      "status": "PERFORMANCE_CONTROLLED_STOP",
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T082401.240994Z",
+      "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "last_phase": "assembly",
+      "last_event": "v14_p4_volume_compile_started",
+      "settled_seconds": 604.5503952971432,
+      "reservation_seconds": 600.0,
+      "reservation_exceeded_seconds": 4.5503952971431545,
+      "process_tree_rss_peak_bytes": 1769385984,
+      "process_tree_pss_readable_sample_peak_bytes": 1734977536,
+      "process_tree_samples": 2152,
+      "process_tree_pss_readable_samples": 2151,
+      "pss_coverage": "2151/2152 readable; one sample incomplete, so not a full-coverage peak guarantee",
+      "sparse_worker_rss_peak_bytes": 1256816640,
+      "sparse_worker_pss_peak_bytes": 1226375168,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "worker_summary": "not_available",
+      "formal_worker_attempts": 1,
+      "completed_core_qualifications": 0,
+      "completed_linear_solves": 0,
+      "new_pde_actions": 1,
+      "pde_action_boundary": "Formal Q0 worker entered common setup/assembly and public volume compilation; no completed core qualification or linear solve was emitted.",
+      "native_A4_relative_residual": "not_available",
+      "field_l2_relative": "not_available",
+      "scaled_curl_relative": "not_available",
+      "artifact_hashes": {
+        "run_summary_sha256": "fb9d7fc023406210c44d6774e154498fced5ce5d90b050d1d16c9af65282bd2c",
+        "watchdog_summary_sha256": "ec4767595d63a031bd7b541c1c6b7b3ba752f26be9f55a119ff6f35925f493b8",
+        "watchdog_resources_sha256": "dff45ce652e1621791acd287168fb711c0d0f356614f1025e771d8d2aacdedb6",
+        "events_sha256": "043a7045efe6756a75086c14b53f4230ce1e44dc6cf7ebb4c31196f7d27b7e0d",
+        "worker_resources_sha256": "323f92109af12cf5b50459fb6d5d5379ba18e9359a187f80fc06ebab2e734510"
+      }
+    },
+    "q1_q2": {
+      "status": "not_run_after_q0_gate",
+      "classification": "COMPARISON_INCONCLUSIVE",
+      "memory_ratio_q2_over_q1": null,
+      "resident_inventory_ratio_q2_over_q1": null,
+      "reason": "needs qualified matched Q1/Q2 accuracy and full measured memory"
+    },
+    "q3_q4_q5": {
+      "status": "not_run_after_q0_gate",
+      "interface_Q3_admission": false,
+      "original_qualified": false,
+      "notch_qualified": false
+    },
+    "q6": {
+      "status": "Q6_EVIDENCE_INCOMPLETE",
+      "outer_classification": "WORKER_FAILED",
+      "outer_exit_status": 4,
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T083532.738337Z",
+      "q6_packet_sha256": "3e1179a645d5e180851a4cf1329090021eeb190085b944d32b1d955f22a3d616",
+      "worker_summary_sha256": "17259b658329da691c15b43d5c56650ee413459c386711dc75871c696d87a9b7",
+      "pre_settlement_ledger_sha256": "cfeeb95265b9596b6e0caad17317265fd69bf816be0a3a3b3164706faa309f67",
+      "post_settlement_ledger_sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
+      "post_settlement_elapsed_seconds": 613.2807354921454,
+      "post_settlement_elapsed_seconds_semantics": "ledger field settled under conservative-realtime accounting",
+      "error": null,
+      "new_pde_actions": 0
+    },
+    "final_answers": {
+      "accurate_schur_memory": "COMPARISON_INCONCLUSIVE",
+      "interface_approximate_inverse": "EVIDENCE_INCOMPLETE; Q3_admission=false",
+      "full_p6_original_notch": "not_qualified",
+      "official_R_T_A_A_volume_diffraction_conservation": "not_run",
+      "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
+      "no_missing_evidence_implies_method_failure": true
+    }
   }
 }

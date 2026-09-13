@@ -1,4 +1,24 @@
-# Task39extra Review V15 当前进展：基础设施 Gate 阻断，未启动恢复运行
+# Task39extra Review V15 最终进展：Q0 受控停止，Q6 证据不完整收口
+
+最终状态为 **`FINALIZED_WITH_EVIDENCE_INCOMPLETE`**。R1 只做一次已授权的账本恢复；随后只运行了一次新 Q0 和一次 Q6 finalization。共同 Q0 未完成后，Q1–Q5 均未运行，没有第三次 Q0，也没有把剩余预算当作继续运行许可。
+
+| 当前事项 | 最终结果与边界 |
+|---|---|
+| 源码与 ABI | source `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`；qualified WSL/Linux，PETSc `complex128/int32`，MPI1，线程1；正式入口工作树 clean |
+| R0 → R1 | R0 cleanup 后准入全部通过；R1 `V15_Q0_EIO_ONCE`=`APPLIED`，policy debit `600 s`，无 PDE action |
+| 新 Q0 | `PERFORMANCE_CONTROLLED_STOP`；在 `assembly / v14_p4_volume_compile_started` 停止；settled `604.5503952971432 s`，reservation `600 s`，超出 `4.5503952971431545 s`；formal worker 1，但 completed core qualification/linear solve 均为 0 |
+| Q0 资源 | watchdog 树 RSS 峰值 `1769385984 B`；2151/2152 行 PSS 可读样本峰值 `1734977536 B`，另 1 行不完整，不能视为全覆盖峰值；swap `0 B`，descendants 已清空 |
+| Q1–Q5 | `not_run_after_q0_gate`；没有 Q1/Q2 配对、Q3 接口准入或 Q4/Q5 完整 p6 物理结果 |
+| Q6 | `Q6_EVIDENCE_INCOMPLETE`；packet 已生成，外层 `WORKER_FAILED`/exit4 是既有 stage-pass 适配语义，`error=null`，无新增 PDE action |
+| 账本 | SHA `59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba`；按 conservative-realtime 规则结算的 elapsed 字段 `613.2807354921454 s`，policy `600 s`，allowance `3.1 s`，budget used `1216.3807354921453 s`，remaining `41983.619264507855 s`，active 为空 |
+
+三项科学结论仍有明确边界：准确 Schur memory 为 `COMPARISON_INCONCLUSIVE`（缺合格匹配的 Q1/Q2 accuracy 与完整 measured memory）；接口近似逆为 `EVIDENCE_INCOMPLETE` 且 `Q3_admission=false`；Full p6 original/notch 均未资格化。没有可报告的 R/T/A、`A_volume`、衍射或守恒结果；缺少这些证据不等于算法失败。入口见 [最终回应](task039_extra_physical_multilevel/response_v16.md)、[最终 compact](task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json)、[最终 comparison](task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_comparison.json) 和 [最终 run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+
+---
+
+# 历史快照：Review V15 基础设施 Gate 阻断（后续已解除）
+
+以下段落只描述 R0 阻断时点；其中旧的“未启动恢复运行”不覆盖上面的最终状态。
 
 | 当前事项 | 结果与边界 |
 |---|---|

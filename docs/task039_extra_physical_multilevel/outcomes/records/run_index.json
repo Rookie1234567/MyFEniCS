@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "V15 infrastructure-gate continuation of the V14 Q0-Q2 audit; all prior V5-V14 success, negative and stopped histories retained; no new official p6 outputs",
+  "scope": "Finalized V15 continuation of the V14 Q0-Q2 audit; all prior V5-V14 success, negative and stopped histories retained; no new official p6 outputs",
   "units": {
     "time": "s",
     "memory": "B"
@@ -1109,6 +1109,84 @@
         "io_fault": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/recovered_q0_io_tool_output.json"
       },
       "next": "Q1/Q2 records are not available in the current workspace; keep Q3-Q6 pending and do not infer a Schur memory result"
+    },
+    {
+      "id": "V15_Q0_recovery_controlled_stop",
+      "status": "PERFORMANCE_CONTROLLED_STOP",
+      "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T082401.240994Z",
+      "profile": "physical_p4_schur_v14",
+      "stage": "Q0_CORE",
+      "input_sha256": "76e5ce396f064d7e1e7db3d0d283c7260c07cf7f0d9275783c3a10037a1afd29",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "resolved_config_sha256": "88009e3837f20fa9cb7791e6821dfda35c7ea8fe9b95d891f6ccbeb7dacba975",
+      "last_phase": "assembly",
+      "last_event": "v14_p4_volume_compile_started",
+      "formal_worker_attempts": 1,
+      "completed_core_qualifications": 0,
+      "completed_linear_solves": 0,
+      "settled_seconds": 604.5503952971432,
+      "reservation_seconds": 600.0,
+      "reservation_exceeded_seconds": 4.5503952971431545,
+      "watchdog_monotonic_seconds": 551.7470358259998,
+      "watchdog_boottime_seconds": 551.7470386770001,
+      "full_workflow_monotonic_seconds": 551.7746037959987,
+      "watchdog_conservative_realtime_seconds": 604.522483040144,
+      "parent_conservative_realtime_seconds": 604.5500914300039,
+      "process_tree_rss_peak_bytes": 1769385984,
+      "process_tree_pss_readable_sample_peak_bytes": 1734977536,
+      "process_tree_samples": 2152,
+      "process_tree_pss_readable_samples": 2151,
+      "pss_coverage": "2151/2152 readable; one sample incomplete, so not a full-coverage peak guarantee",
+      "sparse_worker_rss_peak_bytes": 1256816640,
+      "sparse_worker_pss_peak_bytes": 1226375168,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "worker_summary": "not_available",
+      "native_A4_residual": "not_available",
+      "field_l2": "not_available",
+      "scaled_curl": "not_available",
+      "official_results": "not_run",
+      "q1_q2_comparison": "not_run_after_q0_gate",
+      "artifact_hashes": {
+        "run_manifest_sha256": "d7d034b5a0a3c6d2a293197b920897b8a6867f280ff0a990a24f0273de5bc673",
+        "run_summary_sha256": "fb9d7fc023406210c44d6774e154498fced5ce5d90b050d1d16c9af65282bd2c",
+        "workflow_phase_sha256": "a1a92b0d12538d65fabc81f22704622cfcc544b23f87d9a50a9eebd2e70f757d",
+        "events_sha256": "043a7045efe6756a75086c14b53f4230ce1e44dc6cf7ebb4c31196f7d27b7e0d",
+        "worker_resources_sha256": "323f92109af12cf5b50459fb6d5d5379ba18e9359a187f80fc06ebab2e734510",
+        "watchdog_summary_sha256": "ec4767595d63a031bd7b541c1c6b7b3ba752f26be9f55a119ff6f35925f493b8",
+        "watchdog_resources_sha256": "dff45ce652e1621791acd287168fb711c0d0f356614f1025e771d8d2aacdedb6"
+      },
+      "next": "Do not run Q1-Q5 after the common Q0 Gate; retain this controlled stop as negative performance evidence."
+    },
+    {
+      "id": "V15_Q6_existing_review_finalization",
+      "status": "Q6_EVIDENCE_INCOMPLETE",
+      "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T083532.738337Z",
+      "profile": "physical_p4_schur_v14",
+      "stage": "Q6_FINALIZE",
+      "outer_classification": "WORKER_FAILED",
+      "outer_exit_code": 4,
+      "error": null,
+      "new_pde_actions": 0,
+      "ledger_modified": false,
+      "q6_packet_sha256": "3e1179a645d5e180851a4cf1329090021eeb190085b944d32b1d955f22a3d616",
+      "worker_summary_sha256": "17259b658329da691c15b43d5c56650ee413459c386711dc75871c696d87a9b7",
+      "run_manifest_sha256": "2ef93e576eab9d29132f163cbf32f426e886fa56bfc5c9bd9f3eb98d583a17b0",
+      "run_summary_sha256": "6fe76720f066a68698a2f2a41ed35d365b4fb6de2ea563f2ed51b38c213cd7a7",
+      "pre_settlement_ledger_sha256": "cfeeb95265b9596b6e0caad17317265fd69bf816be0a3a3b3164706faa309f67",
+      "post_settlement_ledger_sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
+      "settled_seconds": 3.9161199980033103,
+      "answers": {
+        "exact_schur_memory": "COMPARISON_INCONCLUSIVE",
+        "interface_approximation": "EVIDENCE_INCOMPLETE; Q3_admission=false",
+        "full_p6_original_notch": "not_qualified",
+        "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD"
+      },
+      "official_results": "not_run",
+      "next": "No new PDE; retain Q6 packet as final incomplete-evidence closure."
     }
   ],
   "limitations": [
@@ -1753,7 +1831,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "v14_q0_q2_audit",
+  "current_review_record": "review_v15_continuation",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -1959,6 +2037,7 @@
     }
   },
   "v14_q0_q2_audit": {
+    "historical_scope": "Historical pre-recovery Q0-Q2 audit; current V15 status is in review_v15_continuation and the two appended run entries.",
     "id": "V14_Q0_physical_p4_schur_partial",
     "status": "PARENT_IO_FAILURE_AFTER_PARTIAL_SETUP",
     "review_base_sha": "25c90229410ca4f75406307ff55ea1ebad343b7b",
@@ -2022,6 +2101,7 @@
   },
   "review_v15_infrastructure_gate": {
     "id": "V15_R0_infrastructure_host_storage_gate",
+    "historical_scope": "R0 pre-cleanup/host-space snapshot only; review_v15_continuation below is authoritative for the current settled continuation.",
     "source_sha": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
     "category": "measured_infrastructure_gate",
     "raw_root": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z",
@@ -2101,5 +2181,124 @@
     "next": "Host storage is for user/system administration; stop and await unified review. On later instruction, recheck V15 admission under the original V14 contract and unused recovery allowance; do not infer algorithm failure.",
     "compact_path": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
     "compact_sha256": "c46f6dc3f3154366ed85acf337e54b8ba6ccc457e63f9487fd8c72fbd89f8f85"
+  },
+  "review_v15_continuation": {
+    "id": "V15_R1_Q0_Q6_finalization",
+    "status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
+    "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+    "historical_r0_record": "review_v15_infrastructure_gate",
+    "r0_recheck_after_cleanup": {
+      "status": "R0_PASS",
+      "source_sha": "665a09b6a7d66eff15b4a744036d21f1dad3649d",
+      "accepted_record_sha256": "ac5dc36921c33bee4da3fb490249066fb870e308d7d595975a93a5a14a4e76ba",
+      "raw_report_sha256": "8a12a75e607480ebc4ce8f1ac121789897af664abe915d2a8c18597d9aa83652",
+      "current_kernel_check_sha256": "cc8d75087e02713e668162fa484fc493919728a004278fa9fe50254621fbaff1",
+      "host_c_remaining_bytes": 37233180672,
+      "all_admission_gates": true,
+      "actual_probe_payload_bytes": 16178076,
+      "cumulative_probe_payload_bytes": 32955292,
+      "measured_time_components_seconds": [2.387310507, 2.298935873001028, 0.12797381699783728],
+      "derived_allowance_seconds": 3.1
+    },
+    "r1": {
+      "status": "APPLIED",
+      "recovery_id": "V15_Q0_EIO_ONCE",
+      "policy_debit_seconds": 600.0,
+      "pde_actions": 0,
+      "ledger_after_sha256": "4a1d78622f54c5fe23cac5cfbf297ce7859fb731f393eebb5352ae9a557ee1eb"
+    },
+    "q0": {
+      "run_id": "V15_Q0_recovery_controlled_stop",
+      "status": "PERFORMANCE_CONTROLLED_STOP",
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T082401.240994Z",
+      "settled_seconds": 604.5503952971432,
+      "reservation_seconds": 600.0,
+      "reservation_exceeded_seconds": 4.5503952971431545,
+      "last_phase": "assembly",
+      "last_event": "v14_p4_volume_compile_started",
+      "formal_worker_attempts": 1,
+      "completed_core_qualifications": 0,
+      "completed_linear_solves": 0,
+      "process_tree_rss_peak_bytes": 1769385984,
+      "process_tree_pss_readable_sample_peak_bytes": 1734977536,
+      "process_tree_samples": 2152,
+      "process_tree_pss_readable_samples": 2151,
+      "pss_coverage": "2151/2152 readable; one sample incomplete",
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "worker_summary": "not_available",
+      "official_results": "not_run"
+    },
+    "q1_q2": {
+      "status": "not_run_after_q0_gate",
+      "comparison": "COMPARISON_INCONCLUSIVE",
+      "memory_ratio_q2_over_q1": null,
+      "resident_inventory_ratio_q2_over_q1": null
+    },
+    "q3_q4_q5": {
+      "status": "not_run_after_q0_gate",
+      "interface_admission": false,
+      "original_qualified": false,
+      "notch_qualified": false
+    },
+    "q6": {
+      "run_id": "V15_Q6_existing_review_finalization",
+      "status": "Q6_EVIDENCE_INCOMPLETE",
+      "outer_classification": "WORKER_FAILED",
+      "outer_exit_code": 4,
+      "error": null,
+      "new_pde_actions": 0,
+      "q6_packet_sha256": "3e1179a645d5e180851a4cf1329090021eeb190085b944d32b1d955f22a3d616",
+      "settled_seconds": 3.9161199980033103,
+      "official_results": "not_run"
+    },
+    "final_ledger": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+      "sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
+      "total_budget_seconds": 43200.0,
+      "settled_elapsed_seconds": 613.2807354921454,
+      "settled_elapsed_semantics": "ledger field settled under conservative-realtime policy",
+      "policy_debit_seconds": 600.0,
+      "conservative_allowance_seconds": 3.1,
+      "budget_used_seconds": 1216.3807354921453,
+      "remaining_seconds": 41983.619264507855,
+      "active_attempts": [],
+      "infrastructure_recovery_count": 1,
+      "unique_bug_replay_count": 0
+    },
+    "engineering_validation": {
+      "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "targeted_command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_physical_schur_v14_budget.py src/test/test_physical_schur_v14_q6_evidence.py src/test/test_physical_schur_v14_runtime_clock.py src/test/test_physical_schur_v14_review_v15_recovery.py",
+      "targeted_result": "24 passed in 0.17s",
+      "documentation_command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py",
+      "documentation_result": "20 passed in 0.05s",
+      "historical_registry_audit": "1 failed in 0.01s: missing evidence path docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json",
+      "compileall_command": "source scripts/activate_myfenics_wsl.sh && python -m compileall -q src scripts",
+      "compileall_result": "exit_code=0; observed wall 0.226307897s",
+      "editing_supervision_documentation_total_seconds": null,
+      "editing_supervision_documentation_total_status": "unknown_not_independently_metered; observed engineering windows are not included in the formal PDE ledger"
+    },
+    "records": {
+      "recovery_compact": "docs/task039_extra_physical_multilevel/outcomes/records/v14_io_recovery_v15.json",
+      "p4_compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_compact.json",
+      "comparison": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_comparison.json",
+      "outcome": "docs/task039_extra_physical_multilevel/outcomes/p4_schur_v14.md",
+      "response": "docs/task039_extra_physical_multilevel/response_v16.md",
+      "sha256": {
+        "recovery_compact": "6fd088846d90f9a4e9ce70a20632700dba22280cf730269edf90218ad690e597",
+        "p4_compact": "26708d72e1c83024bfaaf641fe0f5e8576c354c2bbc04427b2a5abe9d7655f5b",
+        "comparison": "02149097f07cc6d305dde6a9c67322d606eb9b5160479b58465645aaebf6bd52",
+        "outcome": "f76b11695d2599e058974121c42aecc15a3c25288bbc62e60d139ba8e8c0e46d",
+        "response": "657010c4a8c8c2d926a820b8ab9f8b1fbc96eebac130e6b419f21af4afc92fd0"
+      }
+    },
+    "answers": {
+      "accurate_schur_memory": "COMPARISON_INCONCLUSIVE",
+      "interface_approximate_inverse": "EVIDENCE_INCOMPLETE; Q3_admission=false",
+      "full_p6_original_notch": "not_qualified",
+      "official_R_T_A_A_volume_diffraction_conservation": "not_run",
+      "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
+      "no_missing_evidence_implies_method_failure": true
+    }
   }
 }

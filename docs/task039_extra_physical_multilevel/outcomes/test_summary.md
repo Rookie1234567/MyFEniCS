@@ -1,4 +1,23 @@
-# Review V15 宿主存储 Gate：测试与核验边界
+# Review V15 最终测试与证据收口
+
+| 检查 | 最终结果 | 口径/限制 |
+|---|---|---|
+| qualified ABI preflight | `PASS` | `_MYFENICS_WSL_QUALIFIED_ACTIVATION=1`；Python 位于 `.venv`；PETSc `complex128/int32`；Linux WSL2、MPI1、线程1；未混用 Windows 栈 |
+| V15 recovery/runtime targeted tests | `24 passed` | 绑定实现 source `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`；覆盖 budget、runtime clock、Q6 evidence、recovery synthetic contracts；不替代 PDE qualification |
+| compileall | `PASS` | `python -m compileall -q src scripts`；源码与脚本可编译 |
+| final Q0 | `PERFORMANCE_CONTROLLED_STOP` | 一次正式 worker；assembly 后达到 600 s Gate；RSS/PSS 资源与清理证据已 hash-bound；没有 residual/field/official result |
+| final Q6 | `Q6_EVIDENCE_INCOMPLETE` | packet 生成；外层 exit4 为既有 stage-pass 语义，`error=null`，new PDE actions 0 |
+| documentation/model-registry Markdown checks | **20 passed in 0.05s** | `test_26_documentation_contract.py` + `test_183_development_model_registry_markdown.py`；本轮最终文档可通过这组检查 |
+| historical registry contract audit | **1 failed in 0.01s** | 既有缺件 `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json`；未为本任务伪造或修复旧 Task038 证据 |
+| Ruff / full repository pytest / CI | `not_run` | 当前 qualified venv 无 Ruff；没有全仓或 CI 通过声明 |
+
+Q0 watchdog 2152 行中 2151 行 PSS 可读；可读样本峰值 `1734977536 B`，完整树 RSS 峰值 `1769385984 B`，另有 1 行 PSS 不完整。24 项 targeted tests 的实际命令、源码 SHA 和原始 stdout 文本登记在 [recovery compact](records/v14_io_recovery_v15.json) 的 `continuation.engineering_validation`；测试与运行状态入口为 [response_v16](../response_v16.md)、[Q0/Q6 compact](records/p4_schur_v14_compact.json) 和 [run index](records/run_index.json)。最终仍无 Q1–Q5；三类数值结论不因测试通过而改变。
+
+---
+
+# 历史快照：Review V15 宿主存储 Gate 测试与核验边界（后续已解除）
+
+以下段落保留 R0 阻断时点的旧测试结论。
 
 | 检查 | 结果 | 口径/限制 |
 |---|---|---|

@@ -1,4 +1,24 @@
-# Task39extra Review V15 当前收口：宿主存储 Gate 阻断
+# Task39extra Review V15 最终汇总：Q0 受控停止与 Q6 证据不完整
+
+本批最终不是完整 Maxwell 数值通过，而是一次有界的恢复、Q0 性能受控停止和既有证据收口。模型为 13.5 nm fixed、p6/h10、Full3D、MPI1、complex128/int32，源码绑定 `ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e`。
+
+| 阶段/模型 | 状态 | 实际结果 | 关键边界与证据 |
+|---|---|---|---|
+| R0 cleanup → R1 | `R0_PASS` → `APPLIED` | C: 剩余 `37233180672 B`；全部准入通过；实际 4 轮 probe `16178076 B`，累计 `32955292 B`；R1 policy debit `600 s` | R0 accepted/source `665a09b6a7d66eff15b4a744036d21f1dad3649d`；无 R1 PDE action；[I/O compact](records/v14_io_recovery_v15.json) |
+| Q0 `Q0_CORE` | `PERFORMANCE_CONTROLLED_STOP` | settled `604.5503952971432 s` / reservation `600 s`；assembly 后 `v14_p4_volume_compile_started`；树 RSS `1769385984 B`；PSS 可读样本峰值 `1734977536 B`（2151/2152）；swap 0；formal worker 1 | completed core qualification=0、linear solve=0、worker summary unavailable；不是 numerical failure；[Q0 compact](records/p4_schur_v14_compact.json) |
+| Q1/Q2 | `not_run_after_q0_gate` | no matched full-direct/accurate-Schur workflow | memory ratio、resident inventory、三 RHS residual/field/curl、setup/apply不可得 |
+| Q3/Q4/Q5 | `not_run_after_q0_gate` | no interface admission、original/notch p6 run | official R/T/A、`A_volume`、衍射、守恒均 `not_run` |
+| Q6 | `Q6_EVIDENCE_INCOMPLETE` | packet generated；outer `WORKER_FAILED` exit4，`error=null`，new PDE actions 0 | no missing evidence ⇒ no method-failure claim；下一项 `COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD` |
+
+最终账本 SHA256 为 `59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba`。`613.2807354921454 s` 是按既定 conservative-realtime 规则结算的账本 elapsed 字段，不是 monotonic-only 运行时长；policy debit `600 s`、allowance `3.1 s`、budget used `1216.3807354921453 s`、remaining `41983.619264507855 s`、active attempts 为空。准确 Schur memory 仍 `COMPARISON_INCONCLUSIVE`；接口近似逆 `EVIDENCE_INCOMPLETE`/`Q3_admission=false`；original/notch 均未资格化。状态仍为 `NOT_APPROVED_FOR_MASTER_MERGE`。
+
+工程编辑、监督和等待没有完整独立计时，记为 `unknown`，不写成 0，也不并入 PDE 账本。可复核的观察窗口是 targeted tests `0.17 s`、文档契约测试 `0.05 s`、compileall `0.226307897 s`；这些是工程验证时间，不是正式 PDE 的 residual/solve 时间。文档测试的既有 registry 审计另有 1 个历史缺件失败，详见 [test summary](test_summary.md) 与 recovery compact 的 `engineering_validation`。
+
+---
+
+# 历史快照：Review V15 宿主存储 Gate 阻断（后续已解除）
+
+以下段落保留 R0 阻断时点；其“没有 R1/Q0/PDE”只适用于当时，不覆盖上面的最终汇总。
 
 本节是当前状态入口，覆盖 Review V15 的 R0 基础设施恢复检查。R0 用小型临时文件验证独占创建、哈希回读、同目录原子发布和目录持久化；它不能证明重型 PDE 的可用空间或旧故障的唯一根因。本轮最终分类为 **`INFRASTRUCTURE_BLOCKED`**：宿主范围核验显示 Ubuntu-24.04 WSL VHD 位于 Windows `C:` 宿主卷，而该卷只剩 `827174912 B`。健康状态为 `Healthy/OK`，但空间风险足以阻止 R1 账本迁移和正式计算。
 

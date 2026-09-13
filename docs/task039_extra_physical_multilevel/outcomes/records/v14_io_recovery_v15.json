@@ -1,18 +1,22 @@
 {
   "schema": "task039extra.v15.io-recovery-compact.v1",
   "review": "review_v15",
-  "status": "INFRASTRUCTURE_BLOCKED",
-  "scope": "Read-only host verification plus the one authorized R0 I/O recovery probe; no R1 ledger migration, new Q0, PDE replay, or formal budget mutation",
+  "status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
+  "scope": "Historical R0 host verification plus the authorized R1 recovery, one new Q0 controlled stop, and Q6 evidence finalization; Q1-Q5 were not run and no third Q0 or PDE replay was authorized",
   "source_identity": {
     "branch": "task39extra",
-    "reviewed_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "reviewed_head": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+    "r0_reviewed_head": "9aeee371d3ad8a3fcfcc776bd13e5e2c10518e77",
+    "final_source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
     "interrupted_q0_source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
     "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
     "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
     "model": "13.5 nm fixed Review V14 model; p6/h10; Full3D; MPI1; complex128/int32",
-    "source_tree_restored_after_unexecuted_r1_draft": true
+    "source_tree_restored_after_unexecuted_r1_draft": true,
+    "historical_scope": "The r0_reviewed_head and interrupted_q0_source_sha identify the pre-recovery R0 snapshot; continuation.source_sha is authoritative for the current closeout."
   },
   "r0": {
+    "historical_scope": "Historical pre-cleanup R0 gate; superseded as current status by continuation.r0_recheck_after_cleanup.",
     "classification": "INFRASTRUCTURE_BLOCKED",
     "report_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r0_report.json",
     "report_sha256": "d61561d645073565db1206bbdacd74faf66007c55e26fb2201e2ee793dd2da5f",
@@ -59,6 +63,7 @@
     "fault_lines_sha256": "a6dfac3eb0d09183dfd61779c384f2198966ce4c45f21f27fa9094b07c79392f"
   },
   "root_scope_verification": {
+    "historical_scope": "Historical R0 root-scope supplement; current continuation evidence is authoritative for the post-cleanup run.",
     "scope": "unsandboxed read-only verification of missing R0 scope; it wrote this evidence JSON but made no additional probe-payload or PDE action",
     "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/root_scope_verification.json",
     "sha256": "0485560050ed880dca11a87fda4d853f3db1ecc3f4cefbd7e045838878d696dc",
@@ -77,6 +82,7 @@
     "clock_tolerance_seconds": 5.0
   },
   "host_storage": {
+    "historical_scope": "Historical pre-cleanup host-space observation; superseded by continuation.r0_recheck_after_cleanup.host_storage.",
     "qualification": "host_identity_confirmed_but_space_gate_failed",
     "wsl_distribution": "Ubuntu-24.04",
     "linux_root_device_observed": "/dev/sdd",
@@ -112,6 +118,7 @@
     "split_git_metadata_preserved_in_ignored_backup": true
   },
   "ledger": {
+    "historical_scope": "Historical unchanged pre-R1 ledger snapshot; continuation.final_ledger is authoritative for the settled closeout.",
     "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
     "sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
     "bytes": 957,
@@ -134,6 +141,7 @@
     "interpretation": "The unchanged RESERVED ledger is an un-settled historical record; its zero elapsed field is not a zero-cost claim."
   },
   "budget": {
+    "historical_scope": "Historical pre-R1 budget view; continuation.final_ledger and continuation.accounting are authoritative for current settlement.",
     "total_budget_seconds": 43200.0,
     "old_reservation_policy_responsibility_seconds": 600.0,
     "old_actual_elapsed_seconds": null,
@@ -148,6 +156,7 @@
     "reservation_refund": "not_performed"
   },
   "stage_decision": {
+    "historical_scope": "Historical R0 decision before the authorized continuation; current stage statuses are in continuation.final_ledger.",
     "Q0_CORE": "not_run_by_infrastructure_gate",
     "Q1_FULL_DIRECT": "not_run_by_infrastructure_gate",
     "Q2_SCHUR_DIRECT": "not_run_by_infrastructure_gate",
@@ -159,6 +168,7 @@
     "r1_unexecuted_draft": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_io_recovery_20260913T140500Z/r1_unexecuted_draft/"
   },
   "scientific_answers": {
+    "historical_scope": "Historical R0 scientific-status snapshot; current answers are in continuation.scientific_answers.",
     "accurate_schur_memory": "inconclusive_q1_q2_not_run",
     "interface_approximate_inverse": "not_qualified_no_three_rhs_or_p6_admission",
     "next_method": "no_new_method; user handles host storage; review V15 admission on later instruction under the original V14 contract and unused recovery allowance",
@@ -167,6 +177,7 @@
     "full_p6_original_notch": "not_run_this_review"
   },
   "decision": {
+    "historical_scope": "Historical pre-cleanup R0 decision; superseded as current workflow state by continuation.",
     "classification": "INFRASTRUCTURE_BLOCKED",
     "blocking_gate": "The C: backing host volume for the Ubuntu WSL VHD has 827174912 B remaining; that persistent storage risk is not compatible with R1 ledger migration and formal PDE continuation.",
     "do_not_infer": [
@@ -236,5 +247,240 @@
     "github_rendered_view": "not_verified",
     "new_formal_workers": 0,
     "reviewer_check_correction": "Initial comparison rejected the intentionally updated run_index scope text; numerical fields were unchanged. The corrected check allows only scope/current-review metadata changes."
+  },
+  "continuation": {
+    "status": "FINALIZED_WITH_EVIDENCE_INCOMPLETE",
+    "review": "Review V15 continuation after user-authorized host recovery",
+    "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+    "abi": {
+      "activation": "qualified WSL/Linux activation",
+      "petsc_scalar": "complex128",
+      "petsc_integer": "int32",
+      "mpi": 1,
+      "threads": 1
+    },
+    "r0_recheck_after_cleanup": {
+      "status": "R0_PASS",
+      "scope": "Post-cleanup R0 adjudication; no second write probe, PDE, or ledger mutation",
+      "source_sha": "665a09b6a7d66eff15b4a744036d21f1dad3649d",
+      "accepted_record_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_recheck_20260913T073416Z/r0_recheck_accepted.json",
+      "accepted_record_sha256": "ac5dc36921c33bee4da3fb490249066fb870e308d7d595975a93a5a14a4e76ba",
+      "raw_report_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_recheck_20260913T073416Z/r0_recheck.json",
+      "raw_report_sha256": "8a12a75e607480ebc4ce8f1ac121789897af664abe915d2a8c18597d9aa83652",
+      "current_kernel_check_path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v15/r0_recheck_20260913T073416Z/root_current_kernel_check.json",
+      "current_kernel_check_sha256": "cc8d75087e02713e668162fa484fc493919728a004278fa9fe50254621fbaff1",
+      "all_admission_gates": {
+        "process_absence": true,
+        "io_probe": true,
+        "ledger_identity": true,
+        "host_storage": true,
+        "abi": true,
+        "mounts_and_space": true
+      },
+      "host_storage": {
+        "backing_volume": "C:",
+        "remaining_bytes": 37233180672,
+        "health_status": "Healthy",
+        "operational_status": "OK",
+        "vhd_size_measured": false
+      },
+      "io_probe": {
+        "rounds": 4,
+        "payload_bytes_per_round_actual": 4044519,
+        "payload_bytes_total_actual": 16178076,
+        "cumulative_r0_payload_bytes": 32955292,
+        "cumulative_payload_cap_bytes": 33554432,
+        "all_rounds_ok_and_cleaned": true
+      },
+      "time_accounting": {
+        "prior_r0_collection_seconds": 2.387310507,
+        "current_raw_recheck_conservative_seconds": 2.298935873001028,
+        "current_kernel_check_three_clock_max_seconds": 0.12797381699783728,
+        "derived_read_only_correction_wall_upper_seconds": 3.1,
+        "all_known_r0_collection_upper_seconds": 7.914220196998865
+      }
+    },
+    "r1_recovery": {
+      "status": "APPLIED",
+      "recovery_id": "V15_Q0_EIO_ONCE",
+      "already_applied": false,
+      "pde_actions": 0,
+      "policy_debit_seconds": 600.0,
+      "accounting_basis": "ORIGINAL_RESERVATION_NOT_REFUNDED",
+      "ledger_after_sha256": "4a1d78622f54c5fe23cac5cfbf297ce7859fb731f393eebb5352ae9a557ee1eb",
+      "recovery_record_sha256": "d3dffd1a97fc8492a0d0a293cecfb8a75174171ca752ed4ae1efe486dd54f418",
+      "measured_elapsed_seconds_added": 4.814220196998866,
+      "conservative_allowance_seconds_added": 3.1,
+      "note": "R1 was an administrative ledger recovery; it did not replay the old mathematical run."
+    },
+    "q0_new": {
+      "stage": "Q0_CORE",
+      "status": "PERFORMANCE_CONTROLLED_STOP",
+      "outer_exit_status": 1,
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q0_core__full3d_iterative__mpi1__Mna/20260913T082401.240994Z",
+      "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "input_sha256": "76e5ce396f064d7e1e7db3d0d283c7260c07cf7f0d9275783c3a10037a1afd29",
+      "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+      "resolved_config_sha256": "88009e3837f20fa9cb7791e6821dfda35c7ea8fe9b95d891f6ccbeb7dacba975",
+      "last_phase": "assembly",
+      "last_event": "v14_p4_volume_compile_started",
+      "worker_summary": "not_available",
+      "native_A4_relative_residual": "not_available",
+      "field_l2_relative": "not_available",
+      "scaled_curl_relative": "not_available",
+      "settled_seconds": 604.5503952971432,
+      "reservation_seconds": 600.0,
+      "reservation_exceeded_seconds": 4.5503952971431545,
+      "watchdog_monotonic_seconds": 551.7470358259998,
+      "watchdog_boottime_seconds": 551.7470386770001,
+      "full_workflow_monotonic_seconds": 551.7746037959987,
+      "watchdog_conservative_realtime_seconds": 604.522483040144,
+      "parent_conservative_realtime_seconds": 604.5500914300039,
+      "workflow_utc_minus_monotonic_seconds": 52.77514153999755,
+      "process_tree_rss_peak_bytes": 1769385984,
+      "process_tree_pss_readable_sample_peak_bytes": 1734977536,
+      "process_tree_pss_readable_samples": 2151,
+      "process_tree_samples": 2152,
+      "process_tree_pss_coverage": "2151/2152 readable; one sample had incomplete PSS, so this is not a full-coverage peak guarantee",
+      "sparse_worker_rss_peak_bytes": 1256816640,
+      "sparse_worker_pss_peak_bytes": 1226375168,
+      "known_inventory_peak_bytes": 68803850,
+      "workspace_peak_bytes": 0,
+      "swap_peak_bytes": 0,
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "formal_worker_attempts": 1,
+      "completed_core_qualifications": 0,
+      "completed_linear_solves": 0,
+      "new_pde_actions": 1,
+      "pde_action_boundary": "Formal Q0 worker entered common setup/assembly and public volume compilation; no completed core qualification or linear solve was emitted.",
+      "artifact_hashes": {
+        "run_manifest_sha256": "d7d034b5a0a3c6d2a293197b920897b8a6867f280ff0a990a24f0273de5bc673",
+        "run_summary_sha256": "fb9d7fc023406210c44d6774e154498fced5ce5d90b050d1d16c9af65282bd2c",
+        "workflow_phase_sha256": "a1a92b0d12538d65fabc81f22704622cfcc544b23f87d9a50a9eebd2e70f757d",
+        "inventory_sha256": "b6a0146abed3876e2a02ede5e721da626d7039d3454a34b2075450ab6723abf3",
+        "events_sha256": "043a7045efe6756a75086c14b53f4230ce1e44dc6cf7ebb4c31196f7d27b7e0d",
+        "worker_resources_sha256": "323f92109af12cf5b50459fb6d5d5379ba18e9359a187f80fc06ebab2e734510",
+        "watchdog_summary_sha256": "ec4767595d63a031bd7b541c1c6b7b3ba752f26be9f55a119ff6f35925f493b8",
+        "watchdog_resources_sha256": "dff45ce652e1621791acd287168fb711c0d0f356614f1025e771d8d2aacdedb6",
+        "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "q6": {
+      "stage": "Q6_FINALIZE",
+      "status": "Q6_EVIDENCE_INCOMPLETE",
+      "outer_classification": "WORKER_FAILED",
+      "outer_exit_status": 4,
+      "run_directory": "results/euv_grazing1_phi0/task39extra_v14_q6_finalize__full3d_iterative__mpi1__Mna/20260913T083532.738337Z",
+      "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "error": null,
+      "new_pde_actions": 0,
+      "ledger_modified": false,
+      "pre_settlement_ledger_sha256": "cfeeb95265b9596b6e0caad17317265fd69bf816be0a3a3b3164706faa309f67",
+      "pre_settlement_measured_elapsed_seconds": 609.3646154941421,
+      "post_settlement_ledger_sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
+      "post_settlement_elapsed_seconds": 613.2807354921454,
+      "answers": {
+        "exact_schur_memory": {
+          "status": "COMPARISON_INCONCLUSIVE",
+          "memory_ratio": null,
+          "resident_inventory_ratio": null,
+          "reason": "needs qualified matched Q1/Q2 accuracy and full measured memory"
+        },
+        "interface_approximation": {
+          "status": "EVIDENCE_INCOMPLETE",
+          "Q3_admission": false,
+          "measured_stop_stages": []
+        },
+        "full_p6": {
+          "original_qualified": false,
+          "notch_qualified": false
+        },
+        "next_choice": {
+          "status": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
+          "accurate_reference_retention_supported": false
+        }
+      },
+      "no_missing_evidence_implies_method_failure": true
+    },
+    "engineering_validation": {
+      "source_sha": "ea5ed4cd511a9f169cd5bbf63c06f33bfed85d9e",
+      "source_binding": "The test files and runner contents are bound by the clean committed source tree at this SHA; this is not a PDE result.",
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_physical_schur_v14_budget.py src/test/test_physical_schur_v14_q6_evidence.py src/test/test_physical_schur_v14_runtime_clock.py src/test/test_physical_schur_v14_review_v15_recovery.py",
+      "test_paths": [
+        "src/test/test_physical_schur_v14_budget.py",
+        "src/test/test_physical_schur_v14_q6_evidence.py",
+        "src/test/test_physical_schur_v14_runtime_clock.py",
+        "src/test/test_physical_schur_v14_review_v15_recovery.py"
+      ],
+      "result": "24 passed in 0.17s",
+      "raw_output_text": "........................                                                 [100%]\n24 passed in 0.17s\n",
+      "observed_pytest_wall_seconds": 0.17,
+      "formal_pde_actions": 0,
+      "evidence_scope": "small unit, synthetic budget/clock/recovery and Q6 reader tests; no PDE, MPI solve, factorization, or field output",
+      "local_evidence_entry": "This object in v14_io_recovery_v15.json; source code is the ea5ed4 commit and the raw run artifacts are bound separately above.",
+      "documentation_contract": {
+        "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py",
+        "result": "20 passed in 0.05s",
+        "raw_output_text": "....................                                                     [100%]\n20 passed in 0.05s\n",
+        "observed_wall_seconds": 0.05,
+        "formal_pde_actions": 0
+      },
+      "historical_registry_contract_check": {
+        "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_development_model_registry_contract.py",
+        "result": "1 failed in 0.01s",
+        "failure": "missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json",
+        "classification": "pre-existing historical registry reference; not repaired or fabricated in this task",
+        "observed_wall_seconds": 0.01,
+        "formal_pde_actions": 0
+      },
+      "cost_accounting": {
+        "engineering_editing_seconds": null,
+        "engineering_editing_status": "unknown_not_independently_metered",
+        "targeted_test_wall_seconds": 0.17,
+        "documentation_contract_wall_seconds": 0.05,
+        "compileall_wall_seconds": 0.226307897,
+        "compileall_command": "source scripts/activate_myfenics_wsl.sh && python -m compileall -q src scripts",
+        "compileall_result": "exit_code=0; observed wall 0.226307897s",
+        "complete_engineering_total_seconds": null,
+        "accounting_rule": "Observed test wall times remain engineering validation costs and are not added to the formal PDE ledger elapsed field; no complete editing/supervision/documentation total is claimed and none is treated as zero."
+      }
+    },
+    "final_ledger": {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+      "sha256": "59aa33110927596a27af04382ac7830b0631fb3a1892e3460a77d812ab6b75ba",
+      "total_budget_seconds": 43200.0,
+      "elapsed_seconds": 613.2807354921454,
+      "elapsed_seconds_semantics": "ledger field settled under the conservative-realtime policy; monotonic, boottime, and UTC intervals are retained separately in the run records",
+      "policy_debit_seconds": 600.0,
+      "conservative_allowance_seconds": 3.1,
+      "budget_used_seconds": 1216.3807354921453,
+      "remaining_seconds": 41983.619264507855,
+      "active_attempts": [],
+      "infrastructure_recovery_count": 1,
+      "unique_bug_replay_count": 0,
+      "stage_status": {
+        "Q0_CORE": "PERFORMANCE_CONTROLLED_STOP",
+        "Q1_FULL_DIRECT": "not_run",
+        "Q2_SCHUR_DIRECT": "not_run",
+        "Q3_INTERFACE_CONTROL": "not_run",
+        "Q4_ORIGINAL": "not_run",
+        "Q5_NOTCH": "not_run",
+        "Q6_FINALIZE": "WORKER_FAILED_WITH_EVIDENCE_PACKET"
+      }
+    },
+    "scientific_answers": {
+      "accurate_schur_memory": "COMPARISON_INCONCLUSIVE",
+      "interface_approximate_inverse": "EVIDENCE_INCOMPLETE; Q3_admission=false",
+      "full_p6_original_notch": "not_qualified",
+      "official_R_T_A_A_volume_diffraction_conservation": "not_run",
+      "algorithm_failure": false,
+      "next": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD"
+    },
+    "status_boundary": "Q0 stopped during assembly under the performance Gate; Q1-Q5 were not run; Q6 preserved the old EIO and missing-terminal evidence without treating missing evidence as method failure. The final state is not a production numerical qualification and remains NOT_APPROVED_FOR_MASTER_MERGE."
   }
 }
