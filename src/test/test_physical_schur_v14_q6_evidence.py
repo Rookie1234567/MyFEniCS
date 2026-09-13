@@ -100,3 +100,134 @@ def test_exact_stage_gate_recomputes_original_rhs_normalized_A4_error(tmp_path):
     worker['solve_records'][0]['augmented_residual']['rhs_norm'] = 1e-4
     write('physical_p4_schur_v14_summary.json', worker)
     assert not runner._v14_settled_stage_gate(runtime, stage)['qualified']
+
+
+def _saved_q3_packet_fixture(tmp_path, *, values='negative', invalid=None):
+    source = 'a' * 40
+    original = '9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f'
+    mode = 'dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2'
+    directory = tmp_path / 'q3'
+    packet_directory = directory / 'q3_rhs_packets'
+    packet_directory.mkdir(parents=True)
+
+    def interface(apply_count, bad=False):
+        phases = {name: [1] * 42 for name in ('reduce', 'S1', 'S2', 'recover')}
+        operations = {
+            'route': ['reduce', 'J1', 'S1', 'E1', 'S2', 'J2', 'recover'],
+            'schur_action_count': 2, 'local_action_count': 2,
+            'factor_solve_delta_by_phase': phases,
+        }
+        if bad:
+            operations['route'] = ['bad']
+        return {
+            'apply_count': apply_count, 'coarse_solve_count': 1,
+            'local_smoother_apply_count': 2, 'ksp_created': False,
+            'inner_iteration_count': 0, 'reference_used': False,
+            'local_patch_apply_count': 84,
+            'factor_solve_delta': [4] * 42,
+            'local_patch_solve_delta': [2] * 42,
+            'operation_counts': operations,
+        }
+
+    records = []
+    for index, expected in enumerate(runner._Q1_Q2_RHS):
+        if values == 'pass':
+            rho, eta, curl = 0.0, 0.0, 0.0
+        else:
+            rho, eta, curl = (37.0, 1.0, 1.0) if index != 1 else (0.7, 0.7, 0.7)
+        rhs_norm, l2_ref, curl_ref = 1.0, 1.0, 1.0
+        total_norm, l2_abs, curl_abs = rho, eta, curl
+        bad_operation = invalid == 'operation' and index == 1
+        if invalid == 'nan' and index == 1:
+            total_norm = float('nan')
+        if invalid == 'zero_reference' and index == 1:
+            l2_ref = 0.0
+        packet_identity = {
+            key: expected[key] for key in (
+                'stem', 'logical_rhs', 'input_sha256', 'input_npz_sha256',
+                'g_sha256', 'reference_json_sha256', 'reference_npz_sha256',
+            )
+        }
+        packet_identity['reference_identity'] = {
+            'mode_sha256': mode,
+            'physical': {'original_physical_sha256': original},
+        }
+        records.append({
+            'stem': expected['stem'], 'logical_rhs': expected['logical_rhs'],
+            'elapsed_seconds': 1.0,
+            'fint_apply_count_delta': 1,
+            'native_A4_residual_decomposition': {
+                'total_absolute_norm': total_norm, 'rhs_norm': rhs_norm,
+            },
+            'field_metrics': {'fields': {
+                'L2': {'absolute_error_norm': l2_abs, 'reference_norm': l2_ref},
+                'scaled_curl': {'absolute_error_norm': curl_abs, 'reference_norm': curl_ref},
+            }},
+            'interface_facts': interface(index + 1, bad=bad_operation),
+            'packet': {'identity': packet_identity},
+        })
+    packet = {
+        'schema': 'task039extra.v14.q3-three-rhs-complete.v1',
+        'solve_records': records,
+        'three_rhs_fint_apply_deltas': [1, 1, 1],
+        'three_rhs_fint_apply_count': 3,
+    }
+    (packet_directory / 'three_rhs_complete_before_balanced_audit.json').write_text(
+        json.dumps(packet)
+    )
+    (directory / 'reviewed_rhs_identity.json').write_text(json.dumps({
+        'source_sha': source,
+        'ordered_stems': [item['stem'] for item in runner._Q1_Q2_RHS],
+        'records': [dict(
+            fresh_mode_sha256=mode, fresh_physical_model_sha256=original,
+            fresh_A4y_relative_to_saved=0.0
+        ) for _ in runner._Q1_Q2_RHS],
+    }))
+    worker = {
+        'source_sha': source, 'stage': 'Q3_INTERFACE_CONTROL',
+        'result_classification': 'WORKER_FAILED',
+        'error': {'message': 'Q3 p6 balanced input differs from the fresh native map'},
+    }
+    manifest = {
+        'source_sha': source,
+        'source_after': {'source_sha': source, 'tracked_and_nonignored_untracked_clean': True},
+        'solver': {'stage': 'Q3_INTERFACE_CONTROL'},
+        'physical_model_sha256': original,
+    }
+    watchdog = {
+        'source_state': {'source_sha': source, 'tracked_and_nonignored_untracked_clean': True},
+        'descendants_cleared': True, 'remaining_child_pids': [],
+    }
+    return dict(
+        stage_record={'active_attempt': None},
+        attempt={'source_sha': source, 'settled_seconds': 10.0},
+        directory=directory, worker=worker, manifest=manifest,
+        watchdog=watchdog, time_policy='observe_only',
+    )
+
+
+def test_q6_reads_three_rhs_negative_packet_and_keeps_balanced_incomplete(tmp_path):
+    result = runner._q6_saved_q3_negative_evidence(**_saved_q3_packet_fixture(tmp_path))
+    assert result['status'] == 'MEASURED_NEGATIVE_CANDIDATE'
+    assert result['measured_candidate_stop']
+    assert result['balanced_p6']['status'] == 'NOT_COMPLETED'
+    assert [row['stem'] for row in result['values']] == [item['stem'] for item in runner._Q1_Q2_RHS]
+    assert [row['operation_audit']['coarse_solve_count'] for row in result['values']] == [1, 1, 1]
+    assert [row['operation_audit']['local_patch_apply_count'] for row in result['values']] == [84, 84, 84]
+
+
+def test_q6_all_pass_saved_packet_cannot_create_a_negative_stop(tmp_path):
+    result = runner._q6_saved_q3_negative_evidence(
+        **_saved_q3_packet_fixture(tmp_path, values='pass')
+    )
+    assert result['status'] == 'EVIDENCE_INCOMPLETE'
+    assert not result['measured_candidate_stop']
+
+
+@pytest.mark.parametrize('invalid', ['nan', 'zero_reference', 'operation'])
+def test_q6_invalid_saved_packet_cannot_create_a_negative_stop(tmp_path, invalid):
+    result = runner._q6_saved_q3_negative_evidence(
+        **_saved_q3_packet_fixture(tmp_path, invalid=invalid)
+    )
+    assert result['status'] == 'EVIDENCE_INCOMPLETE'
+    assert not result['measured_candidate_stop']

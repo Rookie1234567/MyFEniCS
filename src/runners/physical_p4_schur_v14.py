@@ -5239,6 +5239,173 @@ def _v14_predecessor_gate(runtime, stage, *, resolved_payload=None) -> dict[str,
     return facts
 
 
+def _q6_saved_q3_negative_evidence(
+    *,
+    stage_record: Mapping[str, Any],
+    attempt: Mapping[str, Any],
+    directory: Path,
+    worker: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+    watchdog: Mapping[str, Any],
+    time_policy: str,
+) -> dict[str, Any]:
+    """Bind the three completed Q3 RHS calls without completing BAL_H."""
+
+    packet_path = directory / "q3_rhs_packets" / "three_rhs_complete_before_balanced_audit.json"
+    result = {
+        "schema": "task039extra.v14.q6.saved-q3-negative.v1",
+        "status": "EVIDENCE_INCOMPLETE",
+        "measured_candidate_stop": False,
+        "packet": {"path": str(packet_path)},
+        "bindings": {},
+        "values": [],
+        "balanced_p6": {
+            "status": "NOT_COMPLETED",
+            "worker_error": worker.get("error"),
+        },
+    }
+    expected_stems = [item["stem"] for item in _Q1_Q2_RHS]
+    original_physical = "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f"
+    mode_sha = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+
+    try:
+        packet_bytes = packet_path.read_bytes()
+        packet = json.loads(packet_bytes)
+        identity_path = directory / "reviewed_rhs_identity.json"
+        identity_bytes = identity_path.read_bytes()
+        identity = json.loads(identity_bytes)
+        packet_sha = _sha256_bytes(packet_bytes)
+        result["packet"]["sha256"] = packet_sha
+        result["bindings"].update({
+            str(packet_path): packet_sha,
+            str(identity_path): _sha256_bytes(identity_bytes),
+        })
+
+        source = attempt["source_sha"]
+        records = packet["solve_records"]
+        identity_ok = (
+            stage_record["active_attempt"] is None
+            and np.isfinite(float(attempt["settled_seconds"]))
+            and float(attempt["settled_seconds"]) >= 0.0
+            and worker["source_sha"] == source
+            and manifest["source_sha"] == source
+            and manifest["source_after"]["source_sha"] == source
+            and watchdog["source_state"]["source_sha"] == source
+            and worker["stage"] == manifest["solver"]["stage"] == "Q3_INTERFACE_CONTROL"
+            and manifest["physical_model_sha256"] == original_physical
+            and manifest["source_after"]["tracked_and_nonignored_untracked_clean"] is True
+            and watchdog["source_state"]["tracked_and_nonignored_untracked_clean"] is True
+            and watchdog["descendants_cleared"] is True
+            and watchdog["remaining_child_pids"] == []
+            and worker["result_classification"] == "WORKER_FAILED"
+            and worker["error"]["message"] == "Q3 p6 balanced input differs from the fresh native map"
+            and "balanced_p6_audit" not in worker
+            and packet["schema"] == "task039extra.v14.q3-three-rhs-complete.v1"
+            and len(records) == len(_Q1_Q2_RHS)
+            and [row["stem"] for row in records] == expected_stems
+            and identity["source_sha"] == source
+            and identity["ordered_stems"] == expected_stems
+            and len(identity["records"]) == len(_Q1_Q2_RHS)
+            and all(
+                item["fresh_mode_sha256"] == mode_sha
+                and item["fresh_physical_model_sha256"] == original_physical
+                and np.isfinite(float(item["fresh_A4y_relative_to_saved"]))
+                and float(item["fresh_A4y_relative_to_saved"]) >= 0.0
+                and float(item["fresh_A4y_relative_to_saved"]) <= 1.0e-10
+                for item in identity["records"]
+            )
+        )
+        fint_deltas = []
+        interface_apply_counts = []
+        complete_rows = []
+        for expected, row in zip(_Q1_Q2_RHS, records):
+            packet_identity = row["packet"]["identity"]
+            physical = packet_identity["reference_identity"]["physical"]
+            identity_ok &= (
+                all(
+                    packet_identity[key] == expected[key]
+                    for key in (
+                        "stem", "logical_rhs", "input_sha256", "input_npz_sha256",
+                        "g_sha256", "reference_json_sha256", "reference_npz_sha256",
+                    )
+                )
+                and packet_identity["reference_identity"]["mode_sha256"] == mode_sha
+                and physical["original_physical_sha256"] == original_physical
+            )
+            residual = row["native_A4_residual_decomposition"]
+            fields = row["field_metrics"]["fields"]
+            rhs_norm = float(residual["rhs_norm"])
+            total_norm = float(residual["total_absolute_norm"])
+            l2_abs = float(fields["L2"]["absolute_error_norm"])
+            l2_ref = float(fields["L2"]["reference_norm"])
+            curl_abs = float(fields["scaled_curl"]["absolute_error_norm"])
+            curl_ref = float(fields["scaled_curl"]["reference_norm"])
+            rho = total_norm / max(
+                rhs_norm, np.finfo(float).tiny
+            )
+            eta = l2_abs / max(l2_ref, np.finfo(float).tiny)
+            eta_curl = curl_abs / max(curl_ref, np.finfo(float).tiny)
+            elapsed = float(row["elapsed_seconds"])
+            fint_delta = row["fint_apply_count_delta"]
+            operation_audit = _q3_interface_operation_audit(
+                row["interface_facts"], 42
+            )
+            feedback = expected["stem"].endswith("_02")
+            limits = (0.2, 0.9, 0.9) if feedback else (0.5, 0.5, 0.6)
+            finite = all(np.isfinite(value) and value >= 0.0 for value in (
+                rhs_norm, total_norm, l2_abs, l2_ref, curl_abs, curl_ref,
+                rho, eta, eta_curl, elapsed,
+            ))
+            row_complete = bool(
+                finite and rhs_norm > 0.0 and l2_ref > 0.0 and curl_ref > 0.0
+                and fint_delta == 1 and operation_audit["passed"]
+            )
+            if not row_complete:
+                raise ValueError(f"invalid saved Q3 evidence for {expected['stem']}")
+            numeric_pass = bool(
+                finite
+                and rho <= limits[0]
+                and eta <= limits[1]
+                and eta_curl <= limits[2]
+                and v14_time_gate_facts(elapsed, 15.0, time_policy)["passed"]
+                and row_complete
+            )
+            result["values"].append({
+                "stem": expected["stem"],
+                "rho": rho,
+                "eta": eta,
+                "eta_curl": eta_curl,
+                "elapsed_seconds": elapsed,
+                "operation_audit": operation_audit,
+                "numeric_pass": numeric_pass,
+            })
+            fint_deltas.append(fint_delta)
+            interface_apply_counts.append(
+                row["interface_facts"].get("apply_count")
+            )
+            complete_rows.append(row_complete)
+
+        identity_ok &= (
+            fint_deltas == [1, 1, 1]
+            and interface_apply_counts == [1, 2, 3]
+            and packet["three_rhs_fint_apply_deltas"] == fint_deltas
+            and packet["three_rhs_fint_apply_count"] == 3
+            and all(complete_rows)
+        )
+        rejected = any(not value["numeric_pass"] for value in result["values"])
+        if identity_ok and len(result["values"]) == 3 and rejected:
+            result.update(
+                status="MEASURED_NEGATIVE_CANDIDATE",
+                measured_candidate_stop=True,
+                reason="three_frozen_rhs_recomputed_admission_failed_before_balanced_audit",
+            )
+        else:
+            result["reason"] = "saved_q3_negative_evidence_incomplete"
+    except (OSError, ValueError, TypeError, KeyError, IndexError, OverflowError) as exc:
+        result["error"] = f"{type(exc).__name__}: {exc}"
+        result["reason"] = "saved_q3_negative_evidence_incomplete"
+    return result
+
 
 def _v14_history_facts(
     root: Path,
@@ -6482,7 +6649,9 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
             except (OSError, ValueError, TypeError) as exc:
                 item["read_errors"][name] = f"{type(exc).__name__}: {exc}"
                 records[name] = {}
-        worker, parent, watchdog = (records[name] for name in ("worker", "parent", "watchdog"))
+        worker, parent, watchdog = (
+            records[name] for name in ("worker", "parent", "watchdog")
+        )
         workers[stage] = worker
         resource = _v14_resource_facts(SimpleNamespace(
             resources_path=directory / "v14_worker_resources.jsonl", workspace_cap=1 << 30,
@@ -6564,6 +6733,33 @@ def _q6_finalize(runtime: _V14Runtime) -> dict[str, Any]:
                      "RESOURCE_CONTROLLED_STOP", "PERFORMANCE_CONTROLLED_STOP", "PC_TIME_CONTROLLED_STOP",
                      "controlled_negative_interface_candidate", "FULLSPACE_RESIDUAL_GATE_FAIL",
                      "PHYSICAL_OUTPUT_GATE_FAIL"}))
+        if (stage == "Q3_INTERFACE_CONTROL" and settled
+                and worker.get("result_classification") == "WORKER_FAILED"):
+            try:
+                manifest = json.loads(
+                    (directory / "run_manifest.json").read_text(encoding="utf-8")
+                )
+            except (OSError, ValueError, TypeError):
+                manifest = {}
+            saved_negative = _q6_saved_q3_negative_evidence(
+                stage_record=stage_record,
+                attempt=attempt,
+                directory=directory,
+                worker=worker,
+                manifest=manifest,
+                watchdog=watchdog,
+                time_policy=attempt_time_policy,
+            )
+            item["saved_q3_negative_evidence"] = saved_negative
+            if saved_negative.get("status") == "MEASURED_NEGATIVE_CANDIDATE":
+                item["cost"]["calls"] = [
+                    {"stem": value["stem"], "elapsed_seconds": value["elapsed_seconds"]}
+                    for value in saved_negative["values"]
+                ]
+            if saved_negative["measured_candidate_stop"]:
+                item["measured_candidate_stop"] = True
+                item["qualified"] = False
+                item["reason"] = "measured_negative_pre_balanced_q3_evidence"
 
     q1, q2, q3, q4, q5 = (stages[name] for name in stage_names[1:])
     memory_answer = {"status": "COMPARISON_INCONCLUSIVE", "memory_ratio": None,
