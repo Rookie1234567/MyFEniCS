@@ -122,6 +122,47 @@ def test_no_deadline_screen_still_enforces_iteration_gate():
     assert decision['iteration'] == 128
 
 
+def test_checker_no_deadline_screen_still_uses_iteration_not_time():
+    from benchmarks.physical_intermediate_checker import recompute_balanced_screen
+
+    rows = [
+        {'iteration': 31, 'explicit_true_residual': .1, 'solve_seconds': 10**12},
+        {'iteration': 128, 'explicit_true_residual': .1, 'solve_seconds': 10**12},
+    ]
+    result = recompute_balanced_screen(
+        {'screen_enabled': True, 'screen_seconds': None,
+         'screen': {'iteration': 128, 'passed': False}}, rows)
+    assert result['matches']
+
+
+def test_checker_time_limits_preserve_bounded_and_none_contracts():
+    from benchmarks.physical_intermediate_checker import _check_optional_time_limits
+
+    summary = {
+        'status': 'RUNNING',
+        'solve_conservative_seconds': 11,
+        'solve_monotonic_seconds': 11,
+        'elapsed_conservative_seconds': 21,
+        'elapsed_monotonic_seconds': 21,
+    }
+
+    def collect(resources):
+        errors = []
+
+        def require(condition, message, *, expected=False):
+            if not condition:
+                errors.append((message, expected))
+
+        _check_optional_time_limits(summary, resources, require)
+        return errors
+
+    assert collect({'solve_seconds': 10, 'workflow_seconds': 20}) == [
+        ('solve budget exceeded', False),
+        ('workflow budget exceeded before checker', False),
+    ]
+    assert collect({'solve_seconds': None, 'workflow_seconds': None}) == []
+
+
 def test_no_deadline_watchdog_keeps_resource_monitoring_active(tmp_path):
     helper = (
         'import json, sys\n'

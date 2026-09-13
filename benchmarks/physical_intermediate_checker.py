@@ -99,11 +99,12 @@ def recompute_balanced_screen(solve, rows):
     if not solve['screen_enabled']:
         return dict(matches=solve.get('screen') is None, enabled=False)
     history=[]; decision=None
+    screen_seconds = solve.get('screen_seconds', 1800)
     for row in rows:
         i=row['iteration']; r=row['explicit_true_residual']
         if i and i%32==0 and (not history or history[-1][0]!=i):
             history=(history+[(i,r)])[-3:]
-        if i>=128 or row['solve_seconds']>=solve.get('screen_seconds',1800):
+        if i>=128 or (screen_seconds is not None and row['solve_seconds']>=screen_seconds):
             if r<=1e-6 and solve.get('screen') is None:
                 return dict(matches=True,converged_before_screen=True)
             trend=(len(history)==3 and history[1][0]-history[0][0]==32 and
@@ -114,6 +115,19 @@ def recompute_balanced_screen(solve, rows):
     matches=(saved is None) if decision is None else (saved is not None and
         saved['iteration']==decision['iteration'] and saved['passed']==decision['passed'])
     return dict(matches=matches,recomputed=decision)
+
+
+def _check_optional_time_limits(summary, resources, require):
+    """Apply finite solve/workflow gates while allowing explicit no-deadline runs."""
+    expected = summary['status'] == 'PERFORMANCE_CONTROLLED_STOP'
+    solve_limit = resources['solve_seconds']
+    if solve_limit is not None:
+        require(summary.get('solve_conservative_seconds', summary['solve_monotonic_seconds']) <= solve_limit,
+                'solve budget exceeded', expected=expected)
+    workflow_limit = resources['workflow_seconds']
+    if workflow_limit is not None:
+        require(summary.get('elapsed_conservative_seconds', summary['elapsed_monotonic_seconds']) <= workflow_limit,
+                'workflow budget exceeded before checker', expected=expected)
 
 
 def balanced_output_classification(summary, errors, expected_errors=()):
@@ -276,8 +290,7 @@ def check(directory: Path) -> dict:
         with np.load(directory/raw['filename'], allow_pickle=False) as arrays:
             require(hashlib.sha256(arrays['solution'].tobytes()).hexdigest() == summary['final_solution_sha256'],
                     'final solution hash mismatch before recovery')
-    require(summary.get('solve_conservative_seconds', summary['solve_monotonic_seconds']) <= resources['solve_seconds'], 'solve budget exceeded', expected=summary['status']=='PERFORMANCE_CONTROLLED_STOP')
-    require(summary.get('elapsed_conservative_seconds', summary['elapsed_monotonic_seconds']) <= resources['workflow_seconds'], 'workflow budget exceeded before checker', expected=summary['status']=='PERFORMANCE_CONTROLLED_STOP')
+    _check_optional_time_limits(summary, resources, require)
     require(summary['auxiliary_stack_released_before_recovery'] is True, 'auxiliary stack not released')
     output = summary.get('official_result')
     if output is None:
