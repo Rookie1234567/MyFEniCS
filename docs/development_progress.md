@@ -1,3 +1,16 @@
+# Task39extra Review V14 阶段进展：Q0 中断证据已整理
+
+| 当前事项 | 结果与边界 |
+|---|---|
+| 既有正式运行 | source `efea244159d63a7c9db67ca091e29a9c19f9ce88` 的 Q0 在公共 setup 后遇到 EIO；无完成摘要，预算仍未结算 |
+| Q1/Q2 配对 | 当前已查目录无完成结果；三 RHS 原 A4 精度、全过程内存和 setup/调用时间不可用，不为补远程记录重跑 |
+| 接口候选与完整 p6 | 工程提交 `5d239140d3931364bc16d35c45458189cd957808`，联合测试 104 passed；尚无真实准入或完整 original/notch 通过证据，不把缺记录解释为候选无效 |
+| 提交状态 | 紧凑证据本地提交 `4b7175abe02a3a67c63a87234e24877eeab0a78e`，推送被自动批准审查阻断；尚未合并 master |
+
+[阶段 response_v15](task039_extra_physical_multilevel/response_v15.md)、[Q0–Q2 证据](task039_extra_physical_multilevel/outcomes/p4_schur_v14.md)。本批仍按 Review V14 继续，工程测试不替代正式数值结果。以下保留各轮历史时点。
+
+---
+
 # Task39extra V13 续算：三输入证据已补齐，接口方法仅作下一轮优先提案
 
 | 当前事项 | 结果 |

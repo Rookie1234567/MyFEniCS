@@ -2008,5 +2008,16 @@
       "sha256": "e8f2bf7fb3294131339d0fadae94f30c64bb1d4f782cdaf188a484c7651fb075"
     },
     "next": "Q1/Q2 and conditional Q3-Q6 remain pending; no Schur memory conclusion"
+  },
+  "review_v14_engineering": {
+    "source_sha": "5d239140d3931364bc16d35c45458189cd957808",
+    "evidence_path": "docs/task039_extra_physical_multilevel/outcomes/records/p4_schur_v14_engineering.json",
+    "evidence_sha256": "dd4da8a7adf279680586fb9ac603f1ed1e73bbba0763b1697049d2ae40c489e4",
+    "response_path": "docs/task039_extra_physical_multilevel/response_v15.md",
+    "formal_evidence_unchanged": true,
+    "new_formal_runs": 0,
+    "formal_status": "Q0 partial EIO; Q1/Q2 completed results unavailable; Q3-Q6 not formally completed",
+    "qualification": "engineering_tests_only; no effective-PC or complete-p6 claim",
+    "push_status": "automatic approval rejected; informed user reply pending; no retry"
   }
 }

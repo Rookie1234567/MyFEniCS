@@ -6,9 +6,9 @@
 | Q1 `Q1_FULL_DIRECT` | `not_available` | 当前工作区没有 Q1 run directory 或终态记录；不复用 V5/V13 数值 |
 | Q2 `Q2_SCHUR_DIRECT` | `not_available` | 当前工作区没有 Q2 run directory 或终态记录；不复用 V5/V13 数值 |
 | Q1/Q2 memory comparison | `COMPARISON_INCONCLUSIVE` | 没有配对的完整 RSS/PSS、inventory、factor-live repeated apply、setup/cleanup 与 residual/field/curl 数据，不能回答准确 Schur 是否省内存 |
-| Q3–Q6 | `pending_review_v14_continuation` | 本阶段只补证据，不提前结项、不修改 ledger、不进行 PDE replay |
+| Q3–Q6 | `pending_review_v14_continuation` | 工程实现和测试继续，正式准入未完成；不提前结项、不修改 ledger、不进行 PDE replay |
 
-Q0 的唯一现有目录、I/O 故障、373 个有效 watchdog 前缀样本及全部 SHA 见 [V14阶段记录](p4_schur_v14.md)、[Q0–Q2 compact](records/p4_schur_v14_compact.json) 和 [comparison](records/p4_schur_v14_comparison.json)。这次 parent launcher 在写 `run_manifest.json` 时遇到 `EIO`，ledger settlement 读取时再次遇到 `EIO`；这是已知工程 I/O 故障。有效前缀没有触发资源 Gate，但 worker 终态缺失，最终数值/资源分类为 `not_available`。共享 ledger 原样保持 `RESERVED`，所以 `elapsed_seconds=0.0` 不被解释为零消耗。
+Q0 的唯一现有目录、I/O 故障、373 个有效 watchdog 前缀样本及全部 SHA 见 [阶段 response_v15](../response_v15.md)、[V14阶段记录](p4_schur_v14.md)、[Q0–Q2 compact](records/p4_schur_v14_compact.json) 和 [comparison](records/p4_schur_v14_comparison.json)。这次 parent launcher 在写 `run_manifest.json` 时遇到 `EIO`，ledger settlement 读取时再次遇到 `EIO`；这是已知工程 I/O 故障。有效前缀没有触发资源 Gate，但 worker 终态缺失，最终数值/资源分类为 `not_available`。共享 ledger 原样保持 `RESERVED`，所以 `elapsed_seconds=0.0` 不被解释为零消耗。
 
 ---
 

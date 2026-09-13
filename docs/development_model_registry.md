@@ -1,3 +1,15 @@
+# Task39extra Review V14 阶段模型登记
+
+| Model ID | 来源/配置 | 实测结果 | 边界与证据 |
+|---|---|---|---|
+| `task39extra_v14_q0_core` | source `efea244159d63a7c9db67ca091e29a9c19f9ce88`；冻结原始 13.5 nm，p6/p4，MPI1 complex128/int32 | 公共 setup 到 P64 transfer；watchdog 有效前缀树 RSS/PSS 峰值 `1417695232/1385432064 B` | EIO 中断、终态缺失；无 A4/场/旋度/完整资源通过；[阶段证据](task039_extra_physical_multilevel/outcomes/p4_schur_v14.md) |
+| `task39extra_v14_q1_q2_pair` | 原 p4 LU 与准确接口 Schur，同三份冻结 RHS | `not_available` | 尚未找到完成的配对记录；不能推断省内存或数值失败 |
+| `task39extra_v14_interface_candidate` | 固定内部消元、42 个接口局部修正、配对 P/Q、小粗矩阵；直接替换旧 I4 | 工程提交 `5d239140d3931364bc16d35c45458189cd957808`，联合测试 104 passed；正式候选效果 `not_available` | 无 Q3 准入和完整 p6 original/notch 结论，不提升 production default；[阶段回应](task039_extra_physical_multilevel/response_v15.md) |
+
+以下各轮原始模型登记保留为历史，不用其数值填充本批缺失结果。
+
+---
+
 # Task39extra V13 512 MiB 续算模型登记（当前）
 
 | Model ID | 来源/配置 | 结果 | 边界与证据 |

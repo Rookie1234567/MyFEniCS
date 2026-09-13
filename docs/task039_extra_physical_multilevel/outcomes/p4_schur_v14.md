@@ -38,3 +38,7 @@ ledger 保持原样：`review_v14`、Q0 attempt 1、`status=RESERVED`、`active_
 本次 Q0 绑定 source `efea244159d63a7c9db67ca091e29a9c19f9ce88`、input SHA `76e5ce396f064d7e1e7db3d0d283c7260c07cf7f0d9275783c3a10037a1afd29`、physical model SHA `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f` 和 resolved-config SHA `8c6590a404ef518bfc6f9db05ed8a6386aa152574df2d6b0ccfa1f6ac27a290d`。完整 raw 文件 hash、审计 hash 和缺失字段原因见 compact；原始大型 timeline 仍留在 ignored artifact root。
 
 Q1/Q2 尚没有本轮 source、残差、场误差、curl、矩阵/因子 NNZ、常驻 inventory、setup/apply/cleanup 时间，也没有 memory ratio；三份冻结 RHS 名称已列入 compact，但每项数据均为 `not_available`。当前缺少共同核心的正式资格，Q3 工程实现仍需继续；后续准入按 Review V14 的共同正确性和资源条件决定，不以准确 Schur 内存节省为条件。
+
+## 后续工程进展（不改变上述正式证据）
+
+工程代码已提交为 `5d239140d3931364bc16d35c45458189cd957808`，固定接口候选与条件式 p6 接线的联合测试 104 passed，输入/旧 watchdog/文档另有 30 passed。没有新增正式 worker，Q0–Q2 数值字段和原 ledger 未变。实现细节、测试原始输出及当前推送阻断见 [阶段 response_v15](../response_v15.md) 和 [工程证据](records/p4_schur_v14_engineering.json)；本次阶段记录不是 Q6 最终结项。

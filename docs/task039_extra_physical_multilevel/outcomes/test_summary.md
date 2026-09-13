@@ -1,3 +1,19 @@
+# Review V14 工程测试（正式数值任务尚未完成）
+
+| 检查 | 实际结果 | 边界 |
+|---|---|---|
+| 最终 qualified ABI | complex128/int32，PETSc 3.19.6、SLEPc 3.19.2、DOLFINx 0.10.0.post2、MPI1/线程1 | 同一 Linux activation；本地 MPI socket 需获准在默认沙箱外初始化，不升级 ABI |
+| 最终 V14 与相关旧策略联合测试 | **104 passed in 9.71s** | 小型 Schur/P/Q/Fint/BAL_H、有限 KSP、watchdog、Q4 mock、Q6/前置证据检查；代码字节绑定 `5d239140d3931364bc16d35c45458189cd957808` |
+| 最终输入 schema、旧 watchdog 和文档登记检查 | **30 passed in 12.69s** | `test_260`、`test_354`、`test_26`、`test_183`；当前实测通过，旧轮次失败记录仍保留 |
+| compileall / diff-check | 通过 | 最终源码修改后执行；无正式 PDE |
+| 实际账本的只读 Q6 smoke | `Q6_EVIDENCE_INCOMPLETE` | Q0 保留未结算；缺 Q1/Q2 不变成方法失败；账本 SHA 不变 |
+| Ruff / full repository pytest / CI | `not_run` | 当前资格化环境未安装 Ruff；不声明全仓或 CI 通过 |
+| 正式 Q0–Q6 | Q0 partial，其余完整结果不可用 | 工程测试不能填充三 RHS 精度、全过程资源或 p6 物理结果 |
+
+[工程证据 JSON](records/p4_schur_v14_engineering.json)保留 27 份原始日志、hash、代码文件身份和早期失败；各阶段测试集合重叠，不相加当作新的测试总数。完整工程编辑/监督耗时未单独计量，不能写成零。正式中断边界见 [response_v15](../response_v15.md)。
+
+---
+
 # V13 512 MiB 续算测试与独立审核（当前）
 
 | 检查 | 结果 | 口径/限制 |

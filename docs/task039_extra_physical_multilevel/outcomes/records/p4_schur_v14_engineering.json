@@ -1,0 +1,356 @@
+{
+  "schema": "task039extra.v14.engineering-evidence.v1",
+  "timestamp_utc": "2026-09-13T04:43:59.653993+00:00",
+  "review_base_sha": "25c90229410ca4f75406307ff55ea1ebad343b7b",
+  "formal_Q0_source_sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+  "engineering_source_sha": "5d239140d3931364bc16d35c45458189cd957808",
+  "tested_code_bytes_match_commit": true,
+  "test_tree_scope": "engineering tests with documentation edits; no formal clean-source PDE run",
+  "final_focused_result": "104 passed in 9.71s",
+  "final_focused_log": "v14_final_focused_20260913.log",
+  "compileall_exit_code": 0,
+  "diff_check_exit_code": 0,
+  "ruff_status": "not_run; qualified environment has no Ruff installation",
+  "full_repository_pytest": "not_run",
+  "CI": "not_run",
+  "formal_runs_started_this_supervision": 0,
+  "formal_ledger_unchanged_sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+  "engineering_total_wall_seconds": null,
+  "engineering_time_scope": "test log durations are measured pytest execution; full editing/supervision/wait time was not separately metered and is not zero",
+  "files": [
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "bytes": 23748,
+      "sha256": "0181e2db73e304f3a54d6aea12dcffaba09e3a6c2aab1b0ac3cb30f4781797bf"
+    },
+    {
+      "path": "src/io/physical_intermediate_profile.py",
+      "bytes": 10740,
+      "sha256": "1461394969a532be63d98039bb5719dcc63cebb27fe2351cf49ee23e454894b1"
+    },
+    {
+      "path": "src/runners/physical_p4_schur_v14.py",
+      "bytes": 293405,
+      "sha256": "87927beb6208d856ace30e933ee7f713a4cd10b8612fbe83cc8fec7f960c3573"
+    },
+    {
+      "path": "src/runners/task038_launcher.py",
+      "bytes": 35443,
+      "sha256": "ffcbab36cf2a5b0525e435d7e6982ba488cdb741158443869545eea22f14b735"
+    },
+    {
+      "path": "src/solvers/physical_balanced_fgmres.py",
+      "bytes": 15574,
+      "sha256": "3ffa1e106348a3e7e92de6116cf5236cc1292c084d04dcc7b332804bb0f2f2c9"
+    },
+    {
+      "path": "src/solvers/physical_interface_balanced.py",
+      "bytes": 3293,
+      "sha256": "3520474173238355da96ab92a62c31a8d43430ab5130899697d7b378433a3e29"
+    },
+    {
+      "path": "src/solvers/physical_interface_schur.py",
+      "bytes": 140127,
+      "sha256": "884ffa2a8a8832bb22222a9748a90892261df99f0f5526928fb4550ca1d924bf"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_algebra.py",
+      "bytes": 6669,
+      "sha256": "97943ddd0afa54880fc3acc17d07a43b60f9dc39af2c07a69f5babfff8df4137"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_balanced.py",
+      "bytes": 3057,
+      "sha256": "1f0735f5741f641ed1bc693753ff8bf7bd406f638e253c1472627a0f016c8033"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_budget.py",
+      "bytes": 7193,
+      "sha256": "52a73e14aeefbb3e7858d1b19e3c453d9e14f73cd46d996fd78b40eaefa09b92"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_evidence.py",
+      "bytes": 13433,
+      "sha256": "32153c7a94e58593a970a553f7c5a42f5d77b3cb7127c689c21bcd20260e0171"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_fgmres.py",
+      "bytes": 4586,
+      "sha256": "ed30b223bbc0163cd48d72c31eae2a7a4dc07020d2568a4f68ee09e6be2d9002"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_fint.py",
+      "bytes": 4525,
+      "sha256": "e2946cb1ec6090f27dcdfb319eb6fd862477767d0935a861d7bf794a37043072"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_interface_contract.py",
+      "bytes": 8952,
+      "sha256": "7576604f38cf52cf15435546a7d8adb62130b055e0bd70e0f47670f25c511bf8"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_q4_mock.py",
+      "bytes": 10059,
+      "sha256": "3f0bd8ded5815926291230d4aabe33013b7dfa53d2c7899b20113781e3a381a5"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_q6_evidence.py",
+      "bytes": 5974,
+      "sha256": "685d50d12ef4fd92b1a968fcc4fb4dd0d8a88804d8700d8e1322a2eb942d0ace"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_representatives.py",
+      "bytes": 694,
+      "sha256": "7c7f8dd18f30ccb6af2b2ec6e42d07a0231224b85fb726a19c4a71cf32fe8c86"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_runtime_clock.py",
+      "bytes": 5257,
+      "sha256": "1d25ee9426743dbdd8b16960022bc57a2eaead320a83d106877778bedb9e55a0"
+    },
+    {
+      "path": "src/test/test_physical_schur_v14_watchdog.py",
+      "bytes": 2627,
+      "sha256": "5d4d3932b728ac3639480383f40c3b4fdba16c36851a7f04d2b584cec8bce549"
+    }
+  ],
+  "logs": [
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_balanced_first_audit_20260913.log",
+      "bytes": 98,
+      "sha256": "c9104009f8d316fbd88020f3dfb1ea271692c623b1a4c29dd4a2d2c07cbc4862",
+      "raw_text": "..                                                                       [100%]\n2 passed in 0.36s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_documentation_abi_20260913.log",
+      "bytes": 874,
+      "sha256": "960b14ad04585585815385cd4acdff39fc06fd9a2418571a1667ee8cf93b6916",
+      "raw_text": "{'python': '/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python', 'scalar': 'complex128', 'integer': 'int32', 'threads': {'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1', 'NUMEXPR_NUM_THREADS': '1'}, 'modules': {'petsc4py': {'path': '/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py', 'version': '3.19.6'}, 'slepc4py': {'path': '/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py', 'version': '3.19.2'}, 'dolfinx': {'path': '/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py', 'version': '0.10.0.post2'}, 'mpi4py': {'path': '/usr/lib/python3/dist-packages/mpi4py/__init__.py', 'version': '3.1.5'}, 'basix': {'path': '/usr/lib/python3/dist-packages/basix/__init__.py', 'version': '0.10.0'}}}\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_evidence_readers_final_20260913.log",
+      "bytes": 98,
+      "sha256": "28f94f35a697eb110a559cd36372f2edb63dbb960fb282482e1dcc485cb9a73e",
+      "raw_text": "...                                                                      [100%]\n3 passed in 0.10s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_fgmres_tests_20260913.log",
+      "bytes": 99,
+      "sha256": "ae63da7ba57429baf87177f763e5ec8b4770dd9eaff8ceac14b2f29c433014be",
+      "raw_text": "................................................                         [100%]\n48 passed in 1.51s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_final_abi_20260913.log",
+      "bytes": 874,
+      "sha256": "960b14ad04585585815385cd4acdff39fc06fd9a2418571a1667ee8cf93b6916",
+      "raw_text": "{'python': '/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python', 'scalar': 'complex128', 'integer': 'int32', 'threads': {'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1', 'NUMEXPR_NUM_THREADS': '1'}, 'modules': {'petsc4py': {'path': '/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py', 'version': '3.19.6'}, 'slepc4py': {'path': '/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py', 'version': '3.19.2'}, 'dolfinx': {'path': '/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py', 'version': '0.10.0.post2'}, 'mpi4py': {'path': '/usr/lib/python3/dist-packages/mpi4py/__init__.py', 'version': '3.1.5'}, 'basix': {'path': '/usr/lib/python3/dist-packages/basix/__init__.py', 'version': '0.10.0'}}}\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_final_compileall_20260913.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_text": ""
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_final_diffcheck_20260913.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_text": ""
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_final_focused_20260913.log",
+      "bytes": 180,
+      "sha256": "c08a7caf1b6cc46b29f4d0df6f80a22e8799e2ad9bf31cc24022c3a899a973a1",
+      "raw_text": "........................................................................ [ 69%]\n................................                                         [100%]\n104 passed in 9.71s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_final_schema_watchdog_docs_20260913.log",
+      "bytes": 100,
+      "sha256": "53cbbfa843b088deabd56b2c7b7a8e1b986094d78d63b899e4041e0afa6caba8",
+      "raw_text": "..............................                                           [100%]\n30 passed in 12.69s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_fint_first_audit_20260913.log",
+      "bytes": 98,
+      "sha256": "1de7af18a082aed8ed2db28a900eee55720e6fca28b21af9e1bac8ef498046d9",
+      "raw_text": "..                                                                       [100%]\n2 passed in 0.45s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_interface_apply_final_20260913.log",
+      "bytes": 99,
+      "sha256": "ed3d19286295fd5d35f1c667946a3fa375145539ff7f67689f1f37eb9d00c244",
+      "raw_text": "..................                                                       [100%]\n18 passed in 0.41s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_interface_first_audit_20260913.log",
+      "bytes": 5617,
+      "sha256": "13df0b0adb17b181c3ff858135909fadeca022b972054d2f6cd64f5e94fdb5f4",
+      "raw_text": "FFFF.                                                                    [100%]\n=================================== FAILURES ===================================\n____________ test_oversize_patch_is_refused_before_dense_conversion ____________\n\n    def test_oversize_patch_is_refused_before_dense_conversion():\n        class Oversize:\n            shape = (2049, 2049)\n    \n            def toarray(self):\n                raise AssertionError('an oversized patch must never be materialized')\n    \n        with pytest.raises(ValueError, match='2048'):\n>           build_paired_patch_basis(Oversize(), np.ones(2049), patch_id=0)\n\nsrc/test/test_physical_schur_v14_interface_contract.py:21: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/solvers/physical_interface_schur.py:193: in build_paired_patch_basis\n    matrix = _complex_matrix(local_schur, name=\"local_schur\")\nsrc/solvers/physical_interface_schur.py:86: in _complex_matrix\n    value = value.toarray()\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <src.test.test_physical_schur_v14_interface_contract.test_oversize_patch_is_refused_before_dense_conversion.<locals>.Oversize object at 0x75bfac7c0fb0>\n\n    def toarray(self):\n>       raise AssertionError('an oversized patch must never be materialized')\nE       AssertionError: an oversized patch must never be materialized\n\nsrc/test/test_physical_schur_v14_interface_contract.py:18: AssertionError\n_________ test_small_operator_scale_does_not_hide_bad_singular_vectors _________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75bfab536ed0>\n\n    def test_small_operator_scale_does_not_hide_bad_singular_vectors(monkeypatch):\n        def incorrect_svd(matrix, **_kwargs):\n            return np.eye(2, dtype=complex), np.array([2., 1.])*1e-90, np.eye(2, dtype=complex)\n    \n        monkeypatch.setattr('scipy.linalg.svd', incorrect_svd)\n        matrix = 1e-90*np.array([[2., .3j], [.1, 1.]], dtype=complex)\n>       with pytest.raises(FloatingPointError):\nE       Failed: DID NOT RAISE <class 'FloatingPointError'>\n\nsrc/test/test_physical_schur_v14_interface_contract.py:30: Failed\n__________ test_operator_error_does_not_trigger_hidden_repeat_actions __________\n\n    def test_operator_error_does_not_trigger_hidden_repeat_actions():\n        calls = []\n    \n        def invalid_action(values):\n            calls.append(values.shape)\n            raise ValueError('original action failure')\n    \n        with pytest.raises(ValueError, match='original action failure'):\n            build_interface_coarse_pair(invalid_action, np.eye(4), np.eye(4))\n>       assert len(calls) == 1\nE       assert 2 == 1\nE        +  where 2 = len([(4, 4), (4,)])\n\nsrc/test/test_physical_schur_v14_interface_contract.py:43: AssertionError\n________ test_coarse_assembly_is_bounded_and_keeps_two_distinct_spaces _________\n\n    def test_coarse_assembly_is_bounded_and_keeps_two_distinct_spaces():\n        rng = np.random.default_rng(140)\n        n, rank = 73, 40\n        P = np.ascontiguousarray(np.linalg.qr(\n            rng.normal(size=(n, rank)) + 1j*rng.normal(size=(n, rank)))[0])\n        Q = np.ascontiguousarray(np.linalg.qr(\n            P + .01*(rng.normal(size=(n, rank)) + 1j*rng.normal(size=(n, rank))))[0])\n        A = np.eye(n, dtype=complex)\n        A[np.arange(n-1), np.arange(1, n)] = .1j\n        widths = []\n    \n        def action(values):\n            width = 1 if values.ndim == 1 else values.shape[1]\n            assert width <= 32\n            widths.append(width)\n            return A @ values\n    \n        coarse = build_interface_coarse_pair(action, P, Q)\n        try:\n            assert sum(widths) == rank\n>           assert np.shares_memory(coarse.P, P)\nE           AssertionError: assert False\nE            +  where False = <function shares_memory at 0x75bfad20ecb0>(array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ...,  0.04739248-0.0232982j...      0.01458347+0.17038034j, ..., -0.08571602-0.01643178j,\\n         0.04198379-0.08582466j,  0.07572129+0.02351313j]]), array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ...,  0.04739248-0.0232982j...      0.01458347+0.17038034j, ..., -0.08571602-0.01643178j,\\n         0.04198379-0.08582466j,  0.07572129+0.02351313j]]))\nE            +    where <function shares_memory at 0x75bfad20ecb0> = np.shares_memory\nE            +    and   array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ...,  0.04739248-0.0232982j...      0.01458347+0.17038034j, ..., -0.08571602-0.01643178j,\\n         0.04198379-0.08582466j,  0.07572129+0.02351313j]]) = InterfaceCoarsePair(P=array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ..., ...'reference_used': False, 'factor_count': 1, 'assembly_batch_columns': 32, 'full_S_P_retained': False}, destroyed=False).P\n\nsrc/test/test_physical_schur_v14_interface_contract.py:66: AssertionError\n=========================== short test summary info ============================\nFAILED src/test/test_physical_schur_v14_interface_contract.py::test_oversize_patch_is_refused_before_dense_conversion\nFAILED src/test/test_physical_schur_v14_interface_contract.py::test_small_operator_scale_does_not_hide_bad_singular_vectors\nFAILED src/test/test_physical_schur_v14_interface_contract.py::test_operator_error_does_not_trigger_hidden_repeat_actions\nFAILED src/test/test_physical_schur_v14_interface_contract.py::test_coarse_assembly_is_bounded_and_keeps_two_distinct_spaces\n4 failed, 1 passed in 0.15s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_interface_second_audit_20260913.log",
+      "bytes": 11200,
+      "sha256": "606e432505c552f84c9044eb5c5ddd67d0f2ee9958884a504e86e53682d5683b",
+      "raw_text": "....F...                                                                 [100%]\n=================================== FAILURES ===================================\n_______ test_accurate_small_singular_modes_use_operator_scaled_residuals _______\n\n    def test_accurate_small_singular_modes_use_operator_scaled_residuals():\n        rng = np.random.default_rng(141)\n        left = np.linalg.qr(rng.normal(size=(8, 8)) + 1j*rng.normal(size=(8, 8)))[0]\n        right = np.linalg.qr(rng.normal(size=(8, 8)) + 1j*rng.normal(size=(8, 8)))[0]\n        matrix = (left * np.geomspace(1., 1e-8, 8)) @ right.conj().T\n>       basis = build_paired_patch_basis(matrix, np.ones(8), patch_id=0)\n\nsrc/test/test_physical_schur_v14_interface_contract.py:71: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nlocal_schur = array([[-0.01619524+2.05964977e-02j, -0.01534885-1.20980199e-01j,\n         0.0071762 -4.40646320e-02j,  0.11546723-6.1...6233 -7.53646980e-02j, -0.16099669+1.38680966e-01j,\n         0.00973756-6.47841626e-02j,  0.28189542+2.95365787e-01j]])\ndelta = array([1., 1., 1., 1., 1., 1., 1., 1.])\n\n    def build_paired_patch_basis(\n        local_schur: Any,\n        delta: Any,\n        *,\n        patch_id: int | str,\n        max_pairs: int = 8,\n        pair_rtol: float = 1.0e-12,\n        action_atol: float = 1.0e-10,\n    ) -> PairedPatchBasis:\n        \"\"\"Build the fixed, paired ``gesvd`` directions for one local Schur patch.\n    \n        The local matrix is intentionally limited to the Review V14 patch size.\n        The smallest singular values are selected deterministically, while the\n        left and right vectors remain paired even for a non-Hermitian matrix.  The\n        returned ``P``/``Q`` are the Delta-scaled vectors used by the interface\n        coarse pair; callers must add any patch restriction/weight maps explicitly.\n        \"\"\"\n    \n        if not isinstance(max_pairs, (int, np.integer)) or not 1 <= int(max_pairs) <= 8:\n            raise ValueError(\"max_pairs must be between 1 and 8\")\n        if not np.isfinite(pair_rtol) or pair_rtol <= 0:\n            raise ValueError(\"pair_rtol must be positive and finite\")\n        if not np.isfinite(action_atol) or action_atol <= 0:\n            raise ValueError(\"action_atol must be positive and finite\")\n        matrix = _complex_matrix(\n            local_schur,\n            name=\"local_schur\",\n            max_rows=MAX_INTERNAL_ROWS,\n        )\n        rows = int(matrix.shape[0])\n        delta_array = np.asarray(delta)\n        if delta_array.ndim == 2:\n            if delta_array.shape != (rows, rows):\n                raise ValueError(\"Delta matrix has the wrong shape\")\n            delta_array = np.diag(delta_array)\n        delta_array = np.asarray(delta_array, dtype=np.complex128).reshape(-1)\n        if delta_array.size != rows or not np.all(np.isfinite(delta_array)):\n            raise ValueError(\"Delta must be a finite positive diagonal of local Schur size\")\n        if np.max(np.abs(delta_array.imag), initial=0.0) > 1.0e-14:\n            raise ValueError(\"Delta must be real and positive\")\n        delta_real = np.asarray(delta_array.real, dtype=np.float64)\n        if np.any(delta_real <= 0):\n            raise ValueError(\"Delta must be strictly positive\")\n    \n        from scipy.linalg import svd\n    \n        delta_inv_sqrt = 1.0 / np.sqrt(delta_real)\n        scaled = delta_inv_sqrt[:, None] * matrix * delta_inv_sqrt[None, :]\n        left, singular_values, right_h = svd(\n            scaled,\n            full_matrices=False,\n            check_finite=True,\n            lapack_driver=\"gesvd\",\n            overwrite_a=False,\n        )\n        left = np.asarray(left, dtype=np.complex128)\n        singular_values = np.asarray(singular_values, dtype=np.float64)\n        right_h = np.asarray(right_h, dtype=np.complex128)\n        if (\n            left.shape != scaled.shape\n            or right_h.shape != scaled.shape\n            or singular_values.shape != (rows,)\n            or not np.all(np.isfinite(left))\n            or not np.all(np.isfinite(singular_values))\n            or not np.all(np.isfinite(right_h))\n        ):\n            raise FloatingPointError(\"local paired SVD returned invalid factors\")\n    \n        tiny = np.finfo(np.float64).tiny\n        spectral_scale = max(tiny, float(abs(singular_values[0])))\n        full_left_scaled = left * singular_values[None, :]\n        reconstructed = full_left_scaled @ right_h\n        reconstruction_error = reconstructed - scaled\n        reconstruction_workspace_bytes = int(\n            full_left_scaled.nbytes + reconstructed.nbytes + reconstruction_error.nbytes\n        )\n        full_reconstruction_relative = float(\n            np.linalg.norm(reconstruction_error, ord=\"fro\")\n            / max(tiny, float(np.linalg.norm(scaled, ord=\"fro\")))\n        )\n        order = np.argsort(singular_values, kind=\"stable\")[: int(max_pairs)]\n        selected_sigma = np.asarray(singular_values[order], dtype=np.float64)\n        selected_left = np.asarray(left[:, order], dtype=np.complex128)\n        selected_right = np.asarray(right_h.conj().T[:, order], dtype=np.complex128)\n        P = delta_inv_sqrt[:, None] * selected_right\n        Q = delta_inv_sqrt[:, None] * selected_left\n        if not np.all(np.isfinite(P)) or not np.all(np.isfinite(Q)):\n            raise FloatingPointError(\"paired local SVD directions are non-finite\")\n    \n        identity = np.eye(selected_sigma.size, dtype=np.complex128)\n        p_gram = P.conj().T @ (delta_real[:, None] * P)\n        q_gram = Q.conj().T @ (delta_real[:, None] * Q)\n        right_error = scaled @ selected_right - selected_left * selected_sigma[None, :]\n        left_error = scaled.conj().T @ selected_left - selected_right * selected_sigma[None, :]\n        pair_scales = []\n        for sigma in selected_sigma:\n            pair_scale = max(tiny, float(abs(sigma)))\n            # A mathematically zero singular value has a residual set by the\n            # matrix-scale roundoff of the SVD, so use the already-returned largest\n            # singular value only for that zero-scale case.  This never replaces a\n            # genuinely small nonzero pair scale.\n            if pair_scale <= np.finfo(np.float64).eps * spectral_scale:\n                pair_scale = spectral_scale\n            pair_scales.append(pair_scale)\n        pair_scales_array = np.asarray(pair_scales, dtype=np.float64)\n        right_action_relative_per_pair = np.linalg.norm(right_error, axis=0) / pair_scales_array\n        left_action_relative_per_pair = np.linalg.norm(left_error, axis=0) / pair_scales_array\n        svd_workspace_bytes = int(\n            sum(\n                int(array.nbytes)\n                for array in (\n                    scaled,\n                    left,\n                    singular_values,\n                    right_h,\n                    full_left_scaled,\n                    reconstructed,\n                    reconstruction_error,\n                    selected_left,\n                    selected_right,\n                    P,\n                    Q,\n                )\n            )\n        )\n        gram_scale = max(tiny, float(np.linalg.norm(identity, ord=\"fro\")))\n        p_gram_relative = float(np.linalg.norm(p_gram - identity, ord=\"fro\") / gram_scale)\n        q_gram_relative = float(np.linalg.norm(q_gram - identity, ord=\"fro\") / gram_scale)\n        checks = {\n            \"finite\": True,\n            \"rows\": rows,\n            \"rank\": int(selected_sigma.size),\n            \"svd_driver\": \"gesvd\",\n            \"pair_relative_tolerance\": float(pair_rtol),\n            \"action_tolerance\": float(action_atol),\n            \"right_action_relative\": float(\n                np.linalg.norm(right_error, ord=\"fro\") / spectral_scale\n            ),\n            \"left_action_relative\": float(\n                np.linalg.norm(left_error, ord=\"fro\") / spectral_scale\n            ),\n            \"right_action_relative_per_pair\": right_action_relative_per_pair.tolist(),\n            \"left_action_relative_per_pair\": left_action_relative_per_pair.tolist(),\n            \"pair_operation_scales\": pair_scales_array.tolist(),\n            \"right_delta_orthogonality\": float(np.linalg.norm(p_gram - identity)),\n            \"left_delta_orthogonality\": float(np.linalg.norm(q_gram - identity)),\n            \"right_delta_subspace_gram_relative\": p_gram_relative,\n            \"left_delta_subspace_gram_relative\": q_gram_relative,\n            \"full_reconstruction_relative\": full_reconstruction_relative,\n            \"reconstruction_workspace_bytes\": reconstruction_workspace_bytes,\n            \"svd_workspace_bytes\": svd_workspace_bytes,\n            \"operator_scale\": spectral_scale,\n            \"operator_frobenius_norm\": float(np.linalg.norm(scaled, ord=\"fro\")),\n            \"p_sha256\": _array_sha256(P),\n            \"q_sha256\": _array_sha256(Q),\n            \"accepted_as_paired\": True,\n        }\n        if (\n            max(\n                checks[\"right_action_relative\"],\n                checks[\"left_action_relative\"],\n                max(right_action_relative_per_pair, default=0.0),\n                max(left_action_relative_per_pair, default=0.0),\n            )\n            > action_atol\n            or full_reconstruction_relative > action_atol\n        ):\n>           raise FloatingPointError(f\"local paired SVD action check failed: {checks}\")\nE           FloatingPointError: local paired SVD action check failed: {'finite': True, 'rows': 8, 'rank': 8, 'svd_driver': 'gesvd', 'pair_relative_tolerance': 1e-12, 'action_tolerance': 1e-10, 'right_action_relative': 5.341066359329802e-16, 'left_action_relative': 5.262463764107021e-16, 'right_action_relative_per_pair': [7.021626071663397e-09, 6.594681051408042e-10, 7.309503200162692e-11, 2.82342177760895e-12, 4.102143680939342e-13, 2.782490422317961e-14, 2.14291879134779e-15, 4.2231877759864124e-16], 'left_action_relative_per_pair': [1.1115511632882782e-08, 8.472260821443876e-10, 6.906575056994054e-11, 4.8279671611557e-12, 1.4949931919503792e-13, 1.8649242670984685e-14, 1.9647454691664433e-15, 4.2864368583522564e-16], 'pair_operation_scales': [9.999999983452068e-09, 1.3894954943354708e-07, 1.9306977288807493e-06, 2.6826957952792436e-05, 0.0003727593720314855, 0.0051794746792312414, 0.07196856730011521, 0.9999999999999997], 'right_delta_orthogonality': 2.389635738622151e-15, 'left_delta_orthogonality': 1.7477565006554904e-15, 'right_delta_subspace_gram_relative': 8.4486381767272355e-16, 'left_delta_subspace_gram_relative': 6.179252367381839e-16, 'full_reconstruction_relative': 3.7440583532108824e-16, 'reconstruction_workspace_bytes': 3072, 'svd_workspace_bytes': 10304, 'operator_scale': 0.9999999999999997, 'operator_frobenius_norm': 1.0025998410682928, 'p_sha256': '77e96632e4cff201ae1d73098bcdda80618c1db54fa1ccf640c36715c78b2c8a', 'q_sha256': 'b9cb1f5564e7e049070ed8da9ecfddcd6ff725e361e9a37b4a7793b8b83b9490', 'accepted_as_paired': True}\n\nsrc/solvers/physical_interface_schur.py:359: FloatingPointError\n=========================== short test summary info ============================\nFAILED src/test/test_physical_schur_v14_interface_contract.py::test_accurate_small_singular_modes_use_operator_scaled_residuals\n1 failed, 7 passed in 0.17s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_interface_third_audit_20260913.log",
+      "bytes": 2735,
+      "sha256": "b130541d9778fbf6279edefb1589a0d32ecbb5dea0a9156c3c558e6905d7ae0c",
+      "raw_text": ".......F.                                                                [100%]\n=================================== FAILURES ===================================\n_______ test_coarse_assembly_is_bounded_and_keeps_two_distinct_spaces[F] _______\n\nstorage_order = 'F'\n\n    @pytest.mark.parametrize('storage_order', ['C', 'F'])\n    def test_coarse_assembly_is_bounded_and_keeps_two_distinct_spaces(storage_order):\n        rng = np.random.default_rng(140)\n        n, rank = 73, 40\n        P = np.array(np.linalg.qr(\n            rng.normal(size=(n, rank)) + 1j*rng.normal(size=(n, rank)))[0], order=storage_order)\n        Q = np.array(np.linalg.qr(\n            P + .01*(rng.normal(size=(n, rank)) + 1j*rng.normal(size=(n, rank))))[0],\n            order=storage_order)\n        A = np.eye(n, dtype=complex)\n        A[np.arange(n-1), np.arange(1, n)] = .1j\n        widths = []\n    \n        def action(values):\n            width = 1 if values.ndim == 1 else values.shape[1]\n            assert width <= 32\n            widths.append(width)\n            return A @ values\n    \n        coarse = build_interface_coarse_pair(action, P, Q)\n        try:\n            assert sum(widths) == rank\n>           assert np.shares_memory(coarse.P, P)\nE           AssertionError: assert False\nE            +  where False = <function shares_memory at 0x7b6d5eb65630>(array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ...,  0.04739248-0.0232982j...      0.01458347+0.17038034j, ..., -0.08571602-0.01643178j,\\n         0.04198379-0.08582466j,  0.07572129+0.02351313j]]), array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ...,  0.04739248-0.0232982j...      0.01458347+0.17038034j, ..., -0.08571602-0.01643178j,\\n         0.04198379-0.08582466j,  0.07572129+0.02351313j]]))\nE            +    where <function shares_memory at 0x7b6d5eb65630> = np.shares_memory\nE            +    and   array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ...,  0.04739248-0.0232982j...      0.01458347+0.17038034j, ..., -0.08571602-0.01643178j,\\n         0.04198379-0.08582466j,  0.07572129+0.02351313j]]) = InterfaceCoarsePair(P=array([[-0.10203307+0.1639623j ,  0.14918847+0.13446173j,\\n        -0.07317182-0.1108627j , ..., ...relative': 6.288258397271857e-16, 'q_subspace_gram_relative': 6.400840696396795e-16}, owns_basis=True, destroyed=False).P\n\nsrc/test/test_physical_schur_v14_interface_contract.py:112: AssertionError\n=========================== short test summary info ============================\nFAILED src/test/test_physical_schur_v14_interface_contract.py::test_coarse_assembly_is_bounded_and_keeps_two_distinct_spaces[F]\n1 failed, 8 passed in 0.12s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_parent_and_physical_gates_20260913.log",
+      "bytes": 98,
+      "sha256": "625cd9db075f0d063982baf4c6b8144844ffe79aa412f50047a80fc4dcddb921",
+      "raw_text": ".....                                                                    [100%]\n5 passed in 0.19s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_parent_final_residual_gate_20260913.log",
+      "bytes": 98,
+      "sha256": "6b9ffd6b9a3baa1f0f65b43fd8e9939ac47909d796917593222ef0ccd5a23556",
+      "raw_text": ".....                                                                    [100%]\n5 passed in 0.11s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_phase_counts_final_20260913.log",
+      "bytes": 99,
+      "sha256": "2f4d61c97214bae6a0ce36067be8dcbb3a8fe5008ddc7e32aacbdf4a4b362540",
+      "raw_text": "..........                                                               [100%]\n10 passed in 0.43s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_q6_and_predecessor_final_20260913.log",
+      "bytes": 99,
+      "sha256": "80cc2ecf12ffc8469e01131917b32ec0682eac22f6e92080be3e6d3a005b8aa8",
+      "raw_text": "...........                                                              [100%]\n11 passed in 0.08s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_root_owned_final_20260913.log",
+      "bytes": 99,
+      "sha256": "da07fb71dab64b0c80c8b70b56f77bbd9bd0aaf3063885e41ae8039224094ead",
+      "raw_text": "........................                                                 [100%]\n24 passed in 8.39s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_runtime_clock_checkpoint_tests_20260913.log",
+      "bytes": 98,
+      "sha256": "91e7809b3e27d7be1de9408076076bc6e6dd5b4dae4cd48d190cef0d8ffa906b",
+      "raw_text": ".....                                                                    [100%]\n5 passed in 0.10s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_runtime_clock_final_tests_20260913.log",
+      "bytes": 98,
+      "sha256": "7256316818e0211d1c4dc30d19c5b69dd944b4f7c923e409b47993643d15fb98",
+      "raw_text": "....                                                                     [100%]\n4 passed in 0.09s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_runtime_clock_tests_20260913.log",
+      "bytes": 98,
+      "sha256": "28f94f35a697eb110a559cd36372f2edb63dbb960fb282482e1dcc485cb9a73e",
+      "raw_text": "...                                                                      [100%]\n3 passed in 0.10s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_runtime_reason_final_20260913.log",
+      "bytes": 98,
+      "sha256": "6b9ffd6b9a3baa1f0f65b43fd8e9939ac47909d796917593222ef0ccd5a23556",
+      "raw_text": ".....                                                                    [100%]\n5 passed in 0.11s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_three_rhs_admission_gate_20260913.log",
+      "bytes": 98,
+      "sha256": "efb4cc1ce219481f3402d2af55e9136236d8c64373d15989442ebcea41df9cb3",
+      "raw_text": "......                                                                   [100%]\n6 passed in 0.07s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_watchdog_targeted_final_20260913.log",
+      "bytes": 98,
+      "sha256": "96f3ca6991d781f6b6d1daa25e846f2690776525b6476e73d185c423fcfc981a",
+      "raw_text": "...                                                                      [100%]\n3 passed in 5.22s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_watchdog_tests_20260913.log",
+      "bytes": 3173,
+      "sha256": "f75a776834d8cac1f01522f1f7e958f120bdc6bdacb31560b25f17f4e4aad0ef",
+      "raw_text": ".F...............................                                        [100%]\n=================================== FAILURES ===================================\n________ test_pc_deadline_is_opt_in_and_only_counts_active_pc[0.2-True] ________\n\ntmp_path = PosixPath('/tmp/pytest-of-shenjh/pytest-1/test_pc_deadline_is_opt_in_and1')\nactive_limit = 0.2, complete_pc = True\n\n    @pytest.mark.parametrize('active_limit,complete_pc', [(.2, False), (.2, True), (None, False)])\n    def test_pc_deadline_is_opt_in_and_only_counts_active_pc(tmp_path, active_limit, complete_pc):\n        run = tmp_path/'watchdog'\n        phase = tmp_path/'phase.json'\n        worker = f'''\n    import json,os,pathlib,signal,time\n    from src.runners.workflow_timebase import clock_sample\n    signal.signal(signal.SIGTERM, signal.SIG_IGN)\n    p=pathlib.Path(os.environ['PHYSICAL_WATCHDOG_PHASE_PATH'])\n    start=clock_sample()\n    record={{'phase':'solve','phase_started_clock':start,\n             'phase_started_monotonic':start['monotonic'],\n             'active_pc':{{'sequence':1,'started_clock':start}}}}\n    def save():\n        tmp=p.with_suffix('.tmp')\n        tmp.write_text(json.dumps(record))\n        tmp.replace(p)\n    save()\n    if {complete_pc!r}:\n        time.sleep(.05)\n        record['active_pc']=None\n        save()\n        time.sleep(.4)\n    else:\n        time.sleep({60 if active_limit is not None else .4})\n    '''\n        monitor = f'''\n    import json,sys\n    from pathlib import Path\n    from benchmarks.subreaper_watchdog import supervise\n    result=supervise([sys.executable,'-c',{worker!r}],Path({str(run)!r}),\n        wall_seconds=4,solve_seconds=3,active_pc_seconds={active_limit!r},\n        phase_path=Path({str(phase)!r}),interval=.02,grace_seconds=.1,\n        hard_stop_immediate=True,timebase_guard=True,timebase_policy='conservative_realtime')\n    print(json.dumps(result))\n    '''\n        process = subprocess.run([sys.executable, '-c', monitor], capture_output=True, text=True)\n        assert process.returncode == 0, process.stdout + process.stderr\n        result = json.loads((run/'summary.json').read_text())\n        assert result['descendants_cleared']\n        rows = [json.loads(x) for x in (run/'resources.jsonl').read_text().splitlines()]\n        if active_limit is not None and not complete_pc:\n            assert result['classification'] == 'PC_TIME_CONTROLLED_STOP'\n            assert 'first_SIGKILL' in result\n            assert 'first_SIGTERM' not in result\n            assert any(x.get('pc_clock_interval', {}).get('budget_seconds', 0) >= active_limit\n                       for x in rows)\n            assert result['elapsed_seconds'] < 3\n        else:\n>           assert result['classification'] == 'COMPLETED'\nE           AssertionError: assert 'PERFORMANCE_CONTROLLED_STOP' == 'COMPLETED'\nE             - COMPLETED\nE             + PERFORMANCE_CONTROLLED_STOP\n\nsrc/test/test_physical_schur_v14_watchdog.py:60: AssertionError\n=========================== short test summary info ============================\nFAILED src/test/test_physical_schur_v14_watchdog.py::test_pc_deadline_is_opt_in_and_only_counts_active_pc[0.2-True]\n1 failed, 32 passed in 20.16s\n"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_schur_v14/root_engineering/v14_workflow_clock_final_20260913.log",
+      "bytes": 98,
+      "sha256": "bef8623b25b25ab880ba85efeef2d92c7d65627f885fe3b9c983593ce2c4795b",
+      "raw_text": "......                                                                   [100%]\n6 passed in 0.11s\n"
+    }
+  ],
+  "read_only_actual_ledger_smoke": {
+    "scope": "engineering read-only Q6 reader smoke, not a formal Q6 worker",
+    "formal_pde_actions": 0,
+    "ledger_unchanged": true,
+    "ledger_sha256": "b3ef68488207af8130cf906222f8699183881645ddbaa7e9cc5081b02eecf8f0",
+    "status": "Q6_EVIDENCE_INCOMPLETE",
+    "answers": {
+      "exact_schur_memory": {
+        "status": "COMPARISON_INCONCLUSIVE",
+        "memory_ratio": null,
+        "resident_inventory_ratio": null,
+        "reason": "needs qualified matched Q1/Q2 accuracy and full measured memory"
+      },
+      "interface_approximation": {
+        "status": "EVIDENCE_INCOMPLETE",
+        "measured_stop_stages": [],
+        "Q3_admission": false
+      },
+      "full_p6": {
+        "original_qualified": false,
+        "notch_qualified": false
+      },
+      "next_choice": {
+        "status": "COMPLETE_EXISTING_REVIEW_NO_NEW_METHOD",
+        "accurate_reference_retention_supported": false
+      }
+    },
+    "stages": {
+      "Q0_CORE": {
+        "status": "unsettled_attempt",
+        "qualified": false
+      },
+      "Q1_FULL_DIRECT": {
+        "status": "not_run",
+        "qualified": false
+      },
+      "Q2_SCHUR_DIRECT": {
+        "status": "not_run",
+        "qualified": false
+      },
+      "Q3_INTERFACE_CONTROL": {
+        "status": "not_run",
+        "qualified": false
+      },
+      "Q4_ORIGINAL": {
+        "status": "not_run",
+        "qualified": false
+      },
+      "Q5_NOTCH": {
+        "status": "not_run",
+        "qualified": false
+      }
+    }
+  },
+  "formal_status": "Q0 partial EIO; Q1/Q2 complete evidence unavailable; Q3-Q6 formal not run",
+  "push_status": "automatic approval rejected; informed user reply pending; no retry",
+  "schema_watchdog_documentation_result": "30 passed in 12.69s",
+  "schema_watchdog_documentation_log": "v14_final_schema_watchdog_docs_20260913.log",
+  "commands": [
+    "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_physical_schur_v14_*.py src/test/test_390_physical_interface_schur.py src/test/test_375_balanced_coupling.py src/test/test_386_bounded_v7_policy.py src/test/test_379_recursive_public.py",
+    "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_260_task038_input_schema.py src/test/test_354_subreaper_watchdog.py src/test/test_26_documentation_contract.py src/test/test_183_development_model_registry_markdown.py",
+    "source scripts/activate_myfenics_wsl.sh && python -m compileall -q src scripts benchmarks/subreaper_watchdog.py",
+    "git --git-dir=.git-codex --work-tree=. diff --check"
+  ],
+  "compact_validation": {
+    "engineering_file_and_log_hashes": "PASS",
+    "new_section_markdown_links_checked": 17,
+    "original_Q0_Q2_record_unchanged": true,
+    "review_and_5nm_branch_unmodified": true
+  },
+  "remote_probe": {
+    "ref": "refs/heads/task39extra",
+    "sha": "efea244159d63a7c9db67ca091e29a9c19f9ce88",
+    "operation": "noninteractive ls-remote, read-only; no push"
+  }
+}
