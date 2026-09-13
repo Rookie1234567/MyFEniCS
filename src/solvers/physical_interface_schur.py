@@ -2643,11 +2643,26 @@ class PhysicalInterfaceSchur:
         self.internal.clear()
         for value in (self.interface_matrix, self.S_V, self.V_GG):
             _destroy(value)
-        if self.owns_volume:
-            _destroy(self.volume)
+        self.release_owned_volume()
         self.interface_matrix = self.S_V = self.V_GG = None
         self.volume = None
         self.destroyed = True
+
+    def release_owned_volume(self) -> None:
+        """Release the owned active-volume matrix while keeping Schur state.
+
+        The explicit ``S_V`` and matrix-free state retain all data needed for
+        later local-action, reduction, recovery, and physical-Schur checks.
+        A borrowed volume remains owned by the caller and is left untouched.
+        The ownership flag is cleared after release so later cleanup is
+        idempotent.
+        """
+
+        if not self.owns_volume:
+            return
+        _destroy(self.volume)
+        self.volume = None
+        self.owns_volume = False
 
     def release_explicit_schur(self) -> None:
         """Release global/interface matrices while preserving recovery state.
@@ -2664,9 +2679,7 @@ class PhysicalInterfaceSchur:
         self.S_V = None
         _destroy(self.interface_matrix)
         self.interface_matrix = None
-        if self.owns_volume:
-            _destroy(self.volume)
-            self.volume = None
+        self.release_owned_volume()
 
     def release_global_factor(self) -> None:
         """Release the optional global interface numeric factor only."""

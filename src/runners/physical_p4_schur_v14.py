@@ -4196,6 +4196,9 @@ def _v14_interface_live_stack(
                 "interface_matrix_built": False,
             },
         )
+        core.release_owned_volume()
+        runtime.release_inventory(active_label)
+        reserved_labels.discard(active_label)
 
         patch_rows = interface_patch_rows_from_core(
             core,

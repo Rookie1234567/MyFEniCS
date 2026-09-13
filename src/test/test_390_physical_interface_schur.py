@@ -76,7 +76,7 @@ def _matrix(values):
     return matrix
 
 
-def _core():
+def _core(*, owns_volume=False):
     rng = np.random.default_rng(39)
     volume = rng.normal(size=(7, 7)) + 1j * rng.normal(size=(7, 7))
     internal_a = [0, 1]
@@ -131,7 +131,7 @@ def _core():
         partition,
         carrier,
         factor_factory=NumpyFactor,
-        owns_volume=False,
+        owns_volume=owns_volume,
     )
     return core, matrix, volume, B, D, H
 
@@ -268,6 +268,81 @@ def test_production_schur_apply_adjoint_recover_and_nonhermitian_ports():
             locals().get("recovered_after_factor_release"),
             locals().get("physical_after_release"),
         ):
+            if value is not None:
+                value.destroy()
+        core.destroy()
+        volume_matrix.destroy()
+
+
+def test_owned_volume_release_preserves_explicit_schur_actions_and_recovery():
+    core, volume_matrix, _volume, _B, _D, _H = _core(owns_volume=True)
+    rhs_vec = x_gamma = None
+    before = {}
+    after = {}
+    try:
+        rng = np.random.default_rng(401)
+        rhs_vec = volume_matrix.createVecRight()
+        rhs_vec.array[:] = rng.normal(size=7) + 1j * rng.normal(size=7)
+        x_gamma = core.S_V.createVecRight()
+        x_gamma.array[:] = rng.normal(size=3) + 1j * rng.normal(size=3)
+
+        before["explicit"] = core.S_V.createVecLeft()
+        core.S_V.mult(x_gamma, before["explicit"])
+        before["matrix_free"] = core.apply_volume_schur(x_gamma)
+        before["physical"] = core.apply_physical_schur(x_gamma)
+        before["physical_adjoint"] = core.apply_physical_schur_adjoint(x_gamma)
+        before["reduced"], before["ports"] = core.reduce(rhs_vec)
+        before["recovered"] = core.recover(rhs_vec, x_gamma)
+
+        core.release_owned_volume()
+        assert core.volume is None
+        assert not core.owns_volume
+        assert volume_matrix.handle == 0
+        assert core.S_V is not None
+        assert core.V_GG is not None
+
+        after["explicit"] = core.S_V.createVecLeft()
+        core.S_V.mult(x_gamma, after["explicit"])
+        after["matrix_free"] = core.apply_volume_schur(x_gamma)
+        after["physical"] = core.apply_physical_schur(x_gamma)
+        after["physical_adjoint"] = core.apply_physical_schur_adjoint(x_gamma)
+        after["reduced"], after["ports"] = core.reduce(rhs_vec)
+        after["recovered"] = core.recover(rhs_vec, x_gamma)
+
+        np.testing.assert_allclose(
+            after["explicit"].array, after["matrix_free"].array, rtol=0, atol=2e-12
+        )
+        for name in ("explicit", "matrix_free", "physical", "physical_adjoint"):
+            np.testing.assert_allclose(
+                after[name].array, before[name].array, rtol=0, atol=2e-12
+            )
+        np.testing.assert_allclose(after["reduced"], before["reduced"], rtol=0, atol=2e-12)
+        np.testing.assert_allclose(after["ports"], before["ports"], rtol=0, atol=2e-12)
+        np.testing.assert_allclose(
+            after["recovered"].array, before["recovered"].array, rtol=0, atol=2e-12
+        )
+    finally:
+        for value in (*before.values(), *after.values(), rhs_vec, x_gamma):
+            if hasattr(value, "destroy"):
+                value.destroy()
+        core.destroy()
+
+
+def test_owned_volume_release_does_not_destroy_borrowed_volume():
+    core, volume_matrix, _volume, _B, _D, _H = _core(owns_volume=False)
+    probe = output = None
+    try:
+        borrowed = core.volume
+        core.release_owned_volume()
+        assert core.volume is borrowed is volume_matrix
+        assert not core.owns_volume
+        probe = volume_matrix.createVecRight()
+        probe.set(1)
+        output = volume_matrix.createVecLeft()
+        volume_matrix.mult(probe, output)
+        assert np.all(np.isfinite(output.array))
+    finally:
+        for value in (probe, output):
             if value is not None:
                 value.destroy()
         core.destroy()
