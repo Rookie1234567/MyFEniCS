@@ -189,7 +189,8 @@ def run_balanced_fgmres(rhs, action, pc, *, checkpoint, append, seconds,
     time_policy = normalize_v14_time_policy(time_policy)
     if time_policy != V14_TIME_POLICY_ENFORCE and not v14_policy:
         raise ValueError('observe_only time policy requires the V14 screen policy')
-    if bounded_policy and float(solve_limit_seconds) != 10800.0:
+    if (bounded_policy and time_policy == V14_TIME_POLICY_ENFORCE
+            and float(solve_limit_seconds) != 10800.0):
         raise ValueError('bounded outer solve limit must be 10800 seconds')
     if v14_policy and not screen_enabled:
         raise ValueError('V14 requires the frozen progress screen')

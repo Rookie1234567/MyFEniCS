@@ -80,10 +80,11 @@ def test_v14_policy_is_exclusive_and_has_frozen_solve_budget():
 
 
 @pytest.mark.parametrize(
-    'time_policy,seconds',
-    [('enforce', 1.), ('observe_only', 20000.)],
+    'time_policy,seconds,limit',
+    [('enforce', 1., 10800), ('observe_only', 20000., 10800),
+     ('observe_only', 50000., 43200)],
 )
-def test_goal_before64_finishes_without_filling_the_window(time_policy, seconds):
+def test_goal_before64_finishes_without_filling_the_window(time_policy, seconds, limit):
     from petsc4py import PETSc
 
     rhs = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
@@ -94,7 +95,7 @@ def test_goal_before64_finishes_without_filling_the_window(time_policy, seconds)
             rhs, lambda x: x.copy(), lambda x: x.copy(),
             checkpoint=lambda *_: None, append=lambda *_: None,
             seconds=lambda: seconds, v14_policy=True,
-            solve_limit_seconds=10800, time_policy=time_policy,
+            solve_limit_seconds=limit, time_policy=time_policy,
         )
         assert result['status'] == 'TRUE_RESIDUAL_PASS'
         assert result['iterations'] == 1
@@ -107,10 +108,11 @@ def test_goal_before64_finishes_without_filling_the_window(time_policy, seconds)
 
 
 @pytest.mark.parametrize(
-    'time_policy,seconds',
-    [('enforce', 1.), ('observe_only', 20000.)],
+    'time_policy,seconds,limit',
+    [('enforce', 1., 10800), ('observe_only', 20000., 10800),
+     ('observe_only', 50000., 43200)],
 )
-def test_real_restart32_keeps_one_ksp_and_stops_at64(time_policy, seconds):
+def test_real_restart32_keeps_one_ksp_and_stops_at64(time_policy, seconds, limit):
     """The bidiagonal chain needs a long Krylov space; no PDE/factor is used."""
     from petsc4py import PETSc
 
@@ -131,7 +133,7 @@ def test_real_restart32_keeps_one_ksp_and_stops_at64(time_policy, seconds):
             checkpoint=lambda iteration, _x, rho: checkpoints.append((iteration, rho)),
             append=lambda name, row: records.append((name, row)),
             seconds=lambda: seconds, v14_policy=True,
-            solve_limit_seconds=10800, time_policy=time_policy,
+            solve_limit_seconds=limit, time_policy=time_policy,
         )
         assert result['iterations'] == 64
         assert result['status'] == 'V14_PROGRESS_SCREEN_STOP'

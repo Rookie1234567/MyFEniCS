@@ -1684,6 +1684,34 @@
       "checker_sha256": "2fd62a8527f62de132bd6ffdb471bb482fb1d4681216551a5d2fff14fd9465d1",
       "time_policy": "observe_only",
       "time_gate_evaluated": false
+    },
+    {
+      "id": "V18_U4_original_attempt1_implementation_bug",
+      "status": "IMPLEMENTATION_BUG_BEFORE_KSP",
+      "stage": "U4_ORIGINAL",
+      "source_sha": "4f15f7182289b3911bba6f766c5cd7e9a7026401",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T042511.389547Z",
+      "error": {
+        "message": "bounded outer solve limit must be 10800 seconds",
+        "type": "ValueError"
+      },
+      "pc_apply_count": 0,
+      "ksp_created": false,
+      "numerical_p6_result": "not_run",
+      "official_result": false,
+      "full_workflow_monotonic_seconds": 147.52729119799915,
+      "conservative_settled_seconds": 162.41545671800114,
+      "process_tree_rss_peak_bytes": 2504851456,
+      "zero_job_and_new_global_swap": true,
+      "descendants_cleared": true,
+      "time_policy": "observe_only",
+      "evidence": {
+        "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T042511.389547Z/physical_p4_cell_condensed_v18_summary.json": "3f76276307a32c6531a63e96fc6b82539d4e5f6670cb402f12c4829d076261ff",
+        "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T042511.389547Z/run_summary.json": "476879b9a52054784d61cb26b1911fceffef863e8733cfcaa124f29d17c67a30",
+        "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T042511.389547Z/solve_failure/u4_outer.json": "ffd58fa9641e3da9dbd157427b4ee17f8db5d6bd2638f5f15303ad9e191845e1",
+        "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_replay_guard_tests.log": "c1b5ca2e84fac8b950077a90783a2f93f080c54e497c9f715ef6a056b853686b"
+      },
+      "fix": "Limit the historical 10800-parameter restriction to enforce mode; preserve positive-finite guard, original numeric screens and observe_only."
     }
   ],
   "limitations": [
