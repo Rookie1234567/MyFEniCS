@@ -124,6 +124,7 @@ def main(argv: list[str] | None = None) -> int:
                 'physical_p4_blr_tradeoff_v17',
                 'physical_p4_cell_condensed_exact_v18',
                 'physical_p4_cell_condensed_blr_v18',
+                'physical_p6_trace_p4_condensed_balh_v19',
             }
         ):
             raise InputError(

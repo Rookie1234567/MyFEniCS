@@ -1495,6 +1495,7 @@ def build_unconstrained_assembly_time_condensation(
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap] = []
+    action_tensor_identities: dict[str, Any] = {}
     local_schur_seconds = 0.0
     local_insert_seconds = 0.0
     local_lu_residual_max = 0.0
@@ -1519,6 +1520,14 @@ def build_unconstrained_assembly_time_condensation(
                     dtype=np.uint32,
                 ),
             )
+            if not materialize_global_matrix:
+                # Bind the complete physical tensor before elimination.  Only
+                # digests survive; no extra full local tensor is retained.
+                action_tensor_identities[repr(class_key)] = {
+                    "shape": list(oriented.shape), "dtype": str(oriented.dtype),
+                    "raw_sha256": hashlib.sha256(memoryview(np.ascontiguousarray(tensor)).cast("B")).hexdigest(),
+                    "oriented_sha256": hashlib.sha256(memoryview(np.ascontiguousarray(oriented)).cast("B")).hexdigest(),
+                }
             A_ii = oriented[np.ix_(interior_positions, interior_positions)]
             A_it = oriented[np.ix_(interior_positions, trace_positions)]
             A_ti = oriented[np.ix_(trace_positions, interior_positions)]
@@ -1788,6 +1797,8 @@ def build_unconstrained_assembly_time_condensation(
             "retained_numeric_cache_bytes_sum": retained_cache_bytes_sum,
             "retained_numeric_cache_bytes_max": retained_cache_bytes_max,
             "oriented_schur_class_count_sum": oriented_class_count,
+            **({"action_only_complete_tensor_identities": action_tensor_identities}
+               if not materialize_global_matrix else {}),
             "cell_kernel_evaluation_fraction": float(
                 raw_class_count / max(global_cells, 1)
             ),

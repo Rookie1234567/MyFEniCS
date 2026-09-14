@@ -554,6 +554,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p4_blr_tradeoff_v17",
                 "physical_p4_cell_condensed_exact_v18",
                 "physical_p4_cell_condensed_blr_v18",
+                "physical_p6_trace_p4_condensed_balh_v19",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -828,6 +829,23 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "geometry.cell_notch",
                         f"{stage} is bound to the original no-notch physical recipe",
                     )
+            elif preconditioner == "physical_p6_trace_p4_condensed_balh_v19":
+                for section, key, actual, expected in (
+                    ("solver", "stage", solver.get("stage"), "X2_ORIGINAL"),
+                    ("solver", "restart", solver["restart"], 32),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    ("solver", "memory_policy", solver.get("memory_policy"), "SYMBOLIC_SIZED_LOCAL_MUMPS_V11"),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], 43200),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 10.0),
+                ):
+                    if actual != expected:
+                        raise _error(f"{section}.{key}", f"{preconditioner} fixes {key}={expected}")
+                if geometry.get("cell_notch") is not None:
+                    raise _error("geometry.cell_notch", "V19 authorizes only the new original; no notch")
             elif preconditioner in (
                 "physical_p4_cell_condensed_exact_v18",
                 "physical_p4_cell_condensed_blr_v18",

@@ -24,12 +24,13 @@ P4_BLR_PROFILE = "physical_p4_blr_bal_h_v16"
 P4_BLR_TRADEOFF_PROFILE = "physical_p4_blr_tradeoff_v17"
 CELL_CONDENSED_EXACT_PROFILE = "physical_p4_cell_condensed_exact_v18"
 CELL_CONDENSED_BLR_PROFILE = "physical_p4_cell_condensed_blr_v18"
+DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_balh_v19"
 P4_BLR_TRADEOFF_THRESHOLDS = {
     "T1_BLR_CONTROL": 1.0e-3,
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -44,6 +45,49 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == DUAL_CELL_CONDENSED_PROFILE:
+        # Each call returns a fresh V18 dictionary; its qualified profile is
+        # unchanged. Only the new outer space, bridge and stage are different.
+        facts = profile_facts(CELL_CONDENSED_EXACT_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v19_p6_p4_cell_condensed",
+            qualification="opt_in; X0/X1 checks then one original X2; no notch or BLR",
+        )
+        facts["common_core"].update(
+            p6_operator="cell-local Schur plus streaming augmented port action",
+            p6_global_matrix=False,
+            p6_global_factor=False,
+            p4_inverse="unchanged V18 exact cell-condensed LU and complete recovery",
+        )
+        facts["outer"].update(
+            unknowns="independent p6 trace plus original 80 ports",
+            pc_bridge="J M_aug J^H; original Hp inverse; one BAL_H and two p4 solves",
+            full_FE_initial_state="internal particular solution from physical b_i",
+            progress_screen="64/128 full-space residuals observed only",
+            convergence="original native A6 and port closure; same KSP",
+            residual_interval=8,
+            checkpoint_interval=32,
+        )
+        facts["direct_controls"].update(rhs_count=0, additional_rhs_count=0)
+        facts["resources"]["stage_budgets"] = {
+            "X2_ORIGINAL": {"workflow_seconds": 43200, "solve_seconds": 43200}
+        }
+        facts["resources"]["inventory_memory_cap_bytes_by_stage"] = {
+            "X2_ORIGINAL": 6 * 1024**3
+        }
+        facts["gates"].update(
+            p4_qualification="accepted V18 exact control; no fresh three-RHS control in V19",
+            linearity_repeat="X0 small fixtures; V18 p4 qualification reused",
+            full_p6_field_l2_and_scaled_curl=1.0e-4,
+            original_A6_relative_residual=1.0e-6,
+            port_closure_relative=1.0e-8,
+            internal_and_residual_identity_relative=1.0e-10,
+            setup_action_vector_count=3,
+            setup_PC_count=1,
+            p6_interface_is_conditional=False,
+        )
+        return facts
     if identity in {CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE}:
         stages = {
             "U0_PREFLIGHT": {"workflow_seconds": 600, "solve_seconds": 600},

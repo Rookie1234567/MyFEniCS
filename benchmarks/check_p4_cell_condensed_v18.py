@@ -83,11 +83,11 @@ def exact_fallback_allowed(*, selected_backend: str, original_pass: bool,
                 and not common_error and prior_fallback_count == 0)
 
 
-def resource_facts(directory: Path, *, fullspace: bool = False) -> dict:
+def resource_facts(directory: Path, *, fullspace: bool = False, prefix: str = "v18") -> dict:
     """Separate the three-input main window from U2's extra calls."""
     samples = _jsonl(directory / "watchdog/resources.jsonl")
-    events = _jsonl(directory / "v18_events.jsonl")
-    worker = _jsonl(directory / "v18_worker_resources.jsonl")
+    events = _jsonl(directory / f"{prefix}_events.jsonl")
+    worker = _jsonl(directory / f"{prefix}_worker_resources.jsonl")
     run = _json(directory / "run_summary.json")
     manifest = _json(directory / "run_manifest.json")
     numeric = [r for r in events if r["event"] == "schur_factor_numeric_complete"]
@@ -135,7 +135,7 @@ def resource_facts(directory: Path, *, fullspace: bool = False) -> dict:
             "workspace_peak_bytes": max(s["workspace_peak_bytes"] for s in worker),
             "full_workflow_monotonic_seconds": run["full_workflow_monotonic_seconds"],
             "hashes": {name: _hash(directory / name) for name in (
-                "watchdog/resources.jsonl", "v18_events.jsonl", "v18_worker_resources.jsonl",
+                "watchdog/resources.jsonl", f"{prefix}_events.jsonl", f"{prefix}_worker_resources.jsonl",
                 "run_summary.json", "run_manifest.json")}}
 
 

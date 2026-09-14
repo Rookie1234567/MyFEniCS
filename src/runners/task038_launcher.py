@@ -277,6 +277,11 @@ def _cell_condensed_v18_shared_ledger_path(repo_root: Path) -> Path:
     )
 
 
+def _dual_condensed_v19_shared_ledger_path(repo_root: Path) -> Path:
+    return (repo_root / "benchmarks/artifacts/task39extra/dual_cell_condensed_v19"
+            / "review_v19_p6_p4_cell_condensed/shared_workflow_ledger.json")
+
+
 def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Require a settled, hash-bound T1 checker decision before T2 launch."""
 
@@ -1608,6 +1613,63 @@ def _reserve_v18_shared_budget(
     )
 
 
+V19_PREDECESSOR_V18_LEDGER_SHA256 = "3e0cfa997a4b96f2d0b4f546ce5f423182d6eb571a6d777ebf406a7e8ab1aab7"
+
+
+def _reserve_v19_shared_budget(
+    repo_root: Path, run_directory: Path, *, source_sha: str, stage: str,
+    stage_budget: Mapping[str, Any], workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """One new original; preserve V18 policy charges as historical evidence."""
+    if stage != "X2_ORIGINAL" or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V19 permits only X2_ORIGINAL with observe_only")
+    repo_root = Path(repo_root).resolve()
+    path = _dual_condensed_v19_shared_ledger_path(repo_root)
+    prior_path = (repo_root / "benchmarks/artifacts/task39extra/p4_cell_condensed_v18"
+                  / "root_engineering/user_closed_final_ledger.json")
+    reference = _v18_historical_ledger_reference(
+        prior_path, expected_sha=V19_PREDECESSOR_V18_LEDGER_SHA256,
+        expected_identity="review_v18_p4_cell_condensed",
+    )
+    # The V18 snapshot also retains the earlier 600-second unknown policy item.
+    reference["historical_predecessors"] = json.loads(prior_path.read_text())["predecessors"]
+    admission_path = path.parent.parent / "root_engineering/x0_admission.json"
+    try:
+        admission_bytes = admission_path.read_bytes()
+        admission = json.loads(admission_bytes)
+    except (OSError, ValueError) as exc:
+        raise InputError("V19 requires the saved X0 service and focused-check admission") from exc
+    if admission.get("status") != "PASS" or admission.get("source_sha") != source_sha:
+        raise InputError("V19 X0 admission must match the clean execution source")
+    if path.exists():
+        ledger = json.loads(path.read_text())
+        if (ledger.get("batch_identity") != "review_v19_p6_p4_cell_condensed"
+                or ledger.get("predecessors", {}).get("v18") != reference):
+            raise InputError("V19 ledger or immutable predecessor changed")
+    else:
+        ledger = {
+            "schema": "task039extra.v19.shared-workflow-ledger.v1",
+            "batch_identity": "review_v19_p6_p4_cell_condensed",
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0, "conservative_allowance_seconds": 0.0,
+            "policy_debits": [], "fresh_worker_count": 0, "source_attempts": [],
+            "stages": {}, "unique_bug_replay_count": 0,
+            "predecessors": {"v18": reference},
+            "replay_policy": "one evidence-bound implementation-bug replay; no numerical retry or infrastructure recovery",
+        }
+    return _reserve_blr_stage_from_ledger(
+        path, ledger, stage=stage, run_directory=run_directory,
+        source_sha=source_sha, stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start, time_policy=time_policy,
+        error_prefix="V19", summary_filename="physical_dual_cell_condensed_v19_summary.json",
+        prerequisite={"x0_admission": {"path": str(admission_path),
+                                      "sha256": hashlib.sha256(admission_bytes).hexdigest()},
+                      "p4_backend": "V18_EXACT_UNCHANGED", "new_notch_authorized": False},
+        bug_replay_limit=1,
+    )
+
+
 def _settle_v14_shared_budget(
     lease: Mapping[str, Any],
     *,
@@ -1904,6 +1966,7 @@ def launch_specification(
         FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE,
         P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE,
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
+        DUAL_CELL_CONDENSED_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -1915,8 +1978,10 @@ def launch_specification(
     blr_v16 = specification.solver.get('preconditioner') == P4_BLR_PROFILE
     blr_v17 = specification.solver.get('preconditioner') == P4_BLR_TRADEOFF_PROFILE
     blr_profile = blr_v16 or blr_v17
+    dual_condensed_profile = specification.solver.get('preconditioner') == DUAL_CELL_CONDENSED_PROFILE
     cell_condensed_profile = specification.solver.get('preconditioner') in {
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
+        DUAL_CELL_CONDENSED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     if cell_condensed_profile:
@@ -2018,6 +2083,14 @@ def launch_specification(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=str(specification.solver['stage']),
             stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
+    elif dual_condensed_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v19_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
     elif cell_condensed_profile and physical_candidate:
@@ -2340,6 +2413,8 @@ __all__ = [
     "_reserve_blr_v16_shared_budget",
     "_reserve_blr_v17_shared_budget",
     "_reserve_v18_shared_budget",
+    "_reserve_v19_shared_budget",
+    "_dual_condensed_v19_shared_ledger_path",
     "_cell_condensed_v18_shared_ledger_path",
     "_validate_v17_t2_prerequisite",
     "_validate_v18_prerequisite",

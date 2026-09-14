@@ -5701,6 +5701,7 @@ def _v14_q4_q5_fullspace(
     stage: str,
     predecessor: Mapping[str, Any],
     stack_factory: Any | None = None,
+    outer_adapter_factory: Any | None = None,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
 
@@ -5726,8 +5727,10 @@ def _v14_q4_q5_fullspace(
     from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
     stage = str(stage)
-    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK"}:
+    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL"}:
         raise ValueError(f"unsupported fresh p6 stage {stage!r}")
+    if (stage == "X2_ORIGINAL") != (outer_adapter_factory is not None):
+        raise ValueError("only X2_ORIGINAL uses the retained-space outer adapter")
     notch = stage in {"Q5_NOTCH", "U5_NOTCH"}
     expected_notch = "positive_x_middle_y_z40_80"
     cell_notch = getattr(common["cfg"], "cell_notch", None)
@@ -5750,7 +5753,7 @@ def _v14_q4_q5_fullspace(
     if (
         workflow_limit <= 0.0
         or (stage in {"Q4_ORIGINAL", "Q5_NOTCH"} and solve_limit != 10800.0)
-        or (stage in {"U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK"} and solve_limit <= 0.0)
+        or (stage in {"U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL"} and solve_limit <= 0.0)
     ):
         raise ValueError(f"{stage} has an invalid conditional-stage budget")
 
@@ -5763,6 +5766,7 @@ def _v14_q4_q5_fullspace(
         raise ValueError(f"{stage} requires hash-bound input and physical identities")
 
     prefix = (
+        "x2" if stage == "X2_ORIGINAL" else
         "u5" if stage == "U5_NOTCH" else
         "u4_fallback" if stage == "U4_EXACT_FALLBACK" else
         "u4" if stage == "U4_ORIGINAL" else
@@ -5794,6 +5798,7 @@ def _v14_q4_q5_fullspace(
     outer_workspace_label = f"{prefix}_outer_krylov"
     outer_workspace_live = False
     outer_workspace_bytes = 0
+    outer_adapter = None
 
     @contextmanager
     def owned_p6_vectors():
@@ -5826,6 +5831,8 @@ def _v14_q4_q5_fullspace(
                 final_applied.destroy()
             if final_solution is not None:
                 final_solution.destroy()
+            if outer_adapter is not None:
+                outer_adapter.destroy()
             if rhs is not None:
                 rhs.destroy()
 
@@ -6170,6 +6177,30 @@ def _v14_q4_q5_fullspace(
         with _v14_balanced_adapter(
             runtime, common, stack["fint"], capture_vectors=False
         ) as (pc, positive):
+            if outer_adapter_factory is not None:
+                # X1 checks and its one PC call share the actual X2 objects.
+                # This setup is outside the solve clock but inside workflow
+                # time; the adapter stays alive through final field output.
+                outer_adapter = outer_adapter_factory(
+                    runtime, common, resolved_payload, rhs, apply_pc,
+                    p4_identity_sha256=operator_sha256,
+                    pc_counts=lambda: {
+                        "bal_h": int(pc.apply_count),
+                        "p4_mat_solve": int(stack["inverse"].solve_count),
+                        "h6": int(positive["h6"].apply_count),
+                    },
+                )
+                outer_adapter.setup_checks()
+                identity = {**identity, "retained_p6": outer_adapter.identity,
+                            "initial_guess": "zero_retained_y; full_field_contains_internal_rhs_particular"}
+                operator_sha256 = _sha256_bytes(
+                    json.dumps(_jsonable(identity), sort_keys=True, separators=(",", ":")).encode()
+                )
+                identity_packet = _save_packet(
+                    runtime.directory, f"{prefix}_dual_operator_identity",
+                    {"identity": identity, "operator_identity_sha256": operator_sha256},
+                    runtime=runtime,
+                )
             # H6 setup is complete at this point.  Only now does the single
             # outer solve clock begin, and the KSP vector estimate joins the
             # already-live BAL_H workspace in the same shared 1 GiB pool.
@@ -6181,28 +6212,26 @@ def _v14_q4_q5_fullspace(
             outer_workspace_bytes = max(
                 1,
                 krylov_vector_count
-                * int(rhs.getLocalSize())
+                * int((rhs if outer_adapter is None else outer_adapter.rhs).getLocalSize())
                 * np.dtype(np.complex128).itemsize,
             )
             runtime.reserve_workspace(outer_workspace_label, outer_workspace_bytes)
             outer_workspace_live = True
             try:
-                solve_result = run_balanced_fgmres(
-                    rhs,
-                    apply_fine,
-                    apply_pc,
-                    checkpoint=checkpoint,
-                    append=append,
-                    seconds=solve_seconds,
-                    resource_sample=lambda: runtime.sample(
-                        f"{prefix}_solve_resource"
-                    ),
-                    stop_requested=stop_requested,
-                    screen_enabled=True,
-                    solve_limit_seconds=solve_limit,
-                    v14_policy=True,
-                    time_policy=time_policy,
-                )
+                if outer_adapter is None:
+                    solve_result = run_balanced_fgmres(
+                        rhs, apply_fine, apply_pc,
+                        checkpoint=checkpoint, append=append, seconds=solve_seconds,
+                        resource_sample=lambda: runtime.sample(f"{prefix}_solve_resource"),
+                        stop_requested=stop_requested, screen_enabled=True,
+                        solve_limit_seconds=solve_limit, v14_policy=True, time_policy=time_policy,
+                    )
+                else:
+                    solve_result = outer_adapter.solve(
+                        checkpoint=checkpoint, append=append, seconds=solve_seconds,
+                        resource_sample=lambda: runtime.sample(f"{prefix}_solve_resource"),
+                        stop_requested=stop_requested,
+                    )
                 final_solution = solve_result["final_solution"]
             except BaseException as exc:
                 # Persist the counters and completed checkpoints before the
@@ -6306,6 +6335,8 @@ def _v14_q4_q5_fullspace(
         solver_facts["checkpoint_records"] = list(checkpoint_records)
         solver_facts["field_checkpoint_records"] = list(field_checkpoint_records)
         solver_facts["stop_state"] = dict(stop_state)
+        if outer_adapter is not None:
+            solver_facts["retained_outer"] = outer_adapter.facts()
         history_facts = _v14_history_facts(
             runtime.root,
             common,
