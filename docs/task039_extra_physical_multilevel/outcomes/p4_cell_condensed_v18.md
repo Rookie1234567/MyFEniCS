@@ -8,7 +8,8 @@
 |---|---|---|
 | U0 | 新代码及旧 profile/budget 定向测试 74 passed；旧 helper 串行 4 passed；MPI2 三项各 rank 3 passed | 仅小算例和接口合同，不等于正式三输入或 p6 通过 |
 | U1 | 复用 Q1 原始三 RHS、原始资源轨迹与环境身份，基线 RSS 2,825,973,760 B | 最终比较须同时核对新运行 scope；历史 Q1 无 CSR 内容 hash，不补造 |
-| U2–U5 | 正式结果待追加 | 不将未运行项写成通过 |
+| U2 | 3 个原 A4 残差为 7.52866e-11、3.70778e-12、6.72895e-11；场/旋度误差均通过 1e-8；3 次附加调用也通过 | 1 次 symbolic、1 次 numeric、6 次全局 MatSolve；12 类共享局部 LU；没有旧宏块 |
+| U3–U5 | 继续唯一凝聚 BLR control，再执行选定后端的完整 p6 | 不将未运行项写成通过 |
 | U6 | `response_v19.md` 与最终 compact/decision 在全流程裁决后提交 | 不合并 master |
 
 U0 包含真实两材料单元的完整张量先相加再凝聚、复数 MPC、非零内部 RHS 和端口左右耦合、完整恢复及 slave-zero、重复/线性、CSR 内容身份、owning 清理、真实 p6 dispatch，以及逐 RHS 保存与异常保留。开发中发现并修复了组合积分丢项、端口矩阵插入布局、缓存记账和测试夹具符号等问题；失败日志保留在 ignored 工程目录，尚未使用正式计算的 bug replay。
@@ -16,3 +17,7 @@ U0 包含真实两材料单元的完整张量先相加再凝聚、复数 MPC、�
 工程证据目录：`benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/`。独立检查器是 `benchmarks/check_p4_cell_condensed_v18.py`。准入检查从原始数组、范数、factor 控制和连续进程树轨迹重算；准确路线不设内存节省百分比门槛。U3 仅允许新凝聚矩阵的一个 `tau=1e-5`，不足则选择准确凝聚继续。
 
 本地未安装 Ruff，未安装新包；没有执行全仓库 pytest 或声称 CI 通过。完整 formal source SHA、命令与阶段结果随正式证据追加。
+
+U2 formal source 为 `e1b5a398a199cdbc7c26ce3af8645daed2eeb7d6`。全局凝聚矩阵 21,824 行、8,184,464 个存储条目，恢复 27,216 个内部坐标；CSR 内容 hash 在 factor 前后及六次调用后保持一致。完整/主三输入 RSS 峰值均为 1,785,585,664 B，相对 Q1 下降 36.8152%；库存保守峰值 1,776,346,158 B，临时预留峰值 134,217,728 B，全部安全检查通过。
+
+凝聚装配到逆就绪为 32.9821 s，其中全局 numeric 21.5539 s（Q1 numeric 为 18.4888 s，减少内存并未让该阶段更快）。三份主输入的纯缩减—回代—恢复耗时 0.23449/0.21033/0.18422 s；原生残差评价、场度量与保存分别记录，不与 Q1 包含残差检查的调用耗时直接相除。U2 整个进程树工作流 monotonic 为 93.1324 s；历史 Q1 的 JIT/缓存与启动时钟费用单列，不能从总耗时差直接宣称算法加速。证据和全部原始 hash 见 `records/p4_cell_condensed_v18_compact.json`。

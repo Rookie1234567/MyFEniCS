@@ -1,0 +1,1270 @@
+{
+  "schema": "task039extra.v18.cell-condensed-compact.v1",
+  "review": "review_report_v18.md",
+  "base_sha": "96827e89ce5ba446c4faa7cb507b777f21953af8",
+  "status": "U2_QUALIFIED_CONTINUING",
+  "controls": {
+    "U2": {
+      "status": "U2_EXACT_CONTROL_PASS",
+      "directory": "results/euv_grazing1_phi0/task39extra_v18_u2_exact_control__full3d_iterative__mpi1__Mna/20260914T041305.738867Z",
+      "source_sha": "e1b5a398a199cdbc7c26ce3af8645daed2eeb7d6",
+      "independent": {
+        "schema": "task039extra.v18.independent-checker.v1",
+        "source_sha": "e1b5a398a199cdbc7c26ce3af8645daed2eeb7d6",
+        "backend": "exact",
+        "stage": "U2_EXACT_CONTROL",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u2_exact_control__full3d_iterative__mpi1__Mna/20260914T041305.738867Z",
+        "summary_sha256": "7d9f447da6a2d549dc93ba522ac7e31aec988c111b3dbec8b27b30f5d7f724b6",
+        "quality": {
+          "backend": "exact",
+          "limits": {
+            "rho": 1e-10,
+            "field_l2_relative": 1e-08,
+            "scaled_curl_relative": 1e-08,
+            "native_identity_relative": 1e-10
+          },
+          "checks": {
+            "three_frozen_rhs": true,
+            "A2R160_BAL_H_p4_01.rho": true,
+            "A2R160_BAL_H_p4_01.field_l2_relative": true,
+            "A2R160_BAL_H_p4_01.scaled_curl_relative": true,
+            "A2R160_BAL_H_p4_01.native_identity_relative": true,
+            "A2R160_BAL_H_p4_01.strict_slave_zero": true,
+            "A2R160_BAL_H_p4_01.one_solve": true,
+            "A2R160_BAL_H_p4_01.evidence": true,
+            "A2R160_BAL_H_p4_02.rho": true,
+            "A2R160_BAL_H_p4_02.field_l2_relative": true,
+            "A2R160_BAL_H_p4_02.scaled_curl_relative": true,
+            "A2R160_BAL_H_p4_02.native_identity_relative": true,
+            "A2R160_BAL_H_p4_02.strict_slave_zero": true,
+            "A2R160_BAL_H_p4_02.one_solve": true,
+            "A2R160_BAL_H_p4_02.evidence": true,
+            "LIGHT448_BAL_H_p4_09.rho": true,
+            "LIGHT448_BAL_H_p4_09.field_l2_relative": true,
+            "LIGHT448_BAL_H_p4_09.scaled_curl_relative": true,
+            "LIGHT448_BAL_H_p4_09.native_identity_relative": true,
+            "LIGHT448_BAL_H_p4_09.strict_slave_zero": true,
+            "LIGHT448_BAL_H_p4_09.one_solve": true,
+            "LIGHT448_BAL_H_p4_09.evidence": true
+          },
+          "quality_pass": true,
+          "failures": []
+        },
+        "rows": [
+          {
+            "stem": "A2R160_BAL_H_p4_01",
+            "rho": 7.528660119978472e-11,
+            "field_l2_relative": 5.202062771435569e-12,
+            "scaled_curl_relative": 5.1994716108378585e-12,
+            "native_identity_relative": 8.409006152942192e-17,
+            "slave_nonzero_count": 0,
+            "factor_solve_call_delta": 1,
+            "evidence_checks": {
+              "same_input_and_reference": true,
+              "input_file": true,
+              "same_g": true,
+              "g_hash": true,
+              "native_action": true,
+              "matching_storage": true,
+              "input_unchanged": true,
+              "no_refinement": true,
+              "icntl10": true,
+              "icntl35": true,
+              "positive_identity_scale": true,
+              "identity_difference_norm": true,
+              "identity_operation_scale": true,
+              "input_npz": true,
+              "reference_json": true,
+              "reference_npz": true,
+              "one_symbolic": true,
+              "one_numeric": true,
+              "local_lu_reused": true,
+              "saved_solution_hash": true,
+              "timings": true
+            }
+          },
+          {
+            "stem": "A2R160_BAL_H_p4_02",
+            "rho": 3.707784037502491e-12,
+            "field_l2_relative": 5.212667187637672e-12,
+            "scaled_curl_relative": 5.210315186931798e-12,
+            "native_identity_relative": 2.7292074287711503e-18,
+            "slave_nonzero_count": 0,
+            "factor_solve_call_delta": 1,
+            "evidence_checks": {
+              "same_input_and_reference": true,
+              "input_file": true,
+              "same_g": true,
+              "g_hash": true,
+              "native_action": true,
+              "matching_storage": true,
+              "input_unchanged": true,
+              "no_refinement": true,
+              "icntl10": true,
+              "icntl35": true,
+              "positive_identity_scale": true,
+              "identity_difference_norm": true,
+              "identity_operation_scale": true,
+              "input_npz": true,
+              "reference_json": true,
+              "reference_npz": true,
+              "one_symbolic": true,
+              "one_numeric": true,
+              "local_lu_reused": true,
+              "saved_solution_hash": true,
+              "timings": true
+            }
+          },
+          {
+            "stem": "LIGHT448_BAL_H_p4_09",
+            "rho": 6.728950574269478e-11,
+            "field_l2_relative": 5.2131078148817665e-12,
+            "scaled_curl_relative": 5.2110691899320534e-12,
+            "native_identity_relative": 9.51927846961016e-17,
+            "slave_nonzero_count": 0,
+            "factor_solve_call_delta": 1,
+            "evidence_checks": {
+              "same_input_and_reference": true,
+              "input_file": true,
+              "same_g": true,
+              "g_hash": true,
+              "native_action": true,
+              "matching_storage": true,
+              "input_unchanged": true,
+              "no_refinement": true,
+              "icntl10": true,
+              "icntl35": true,
+              "positive_identity_scale": true,
+              "identity_difference_norm": true,
+              "identity_operation_scale": true,
+              "input_npz": true,
+              "reference_json": true,
+              "reference_npz": true,
+              "one_symbolic": true,
+              "one_numeric": true,
+              "local_lu_reused": true,
+              "saved_solution_hash": true,
+              "timings": true
+            }
+          }
+        ],
+        "additional_rows": [
+          {
+            "stem": "extra_01_repeat",
+            "rho": 7.528660119978472e-11,
+            "linearity_relative": 0.0,
+            "checks": {
+              "expected_input": true,
+              "rho": true,
+              "linearity": true,
+              "slave_zero": true,
+              "one_solve": true,
+              "one_factor": true,
+              "local_lu_reused": true
+            },
+            "passed": true
+          },
+          {
+            "stem": "extra_01_plus_i02",
+            "rho": 2.4805403332032526e-11,
+            "linearity_relative": 1.8375468729425753e-13,
+            "checks": {
+              "expected_input": true,
+              "rho": true,
+              "linearity": true,
+              "slave_zero": true,
+              "one_solve": true,
+              "one_factor": true,
+              "local_lu_reused": true
+            },
+            "passed": true
+          },
+          {
+            "stem": "extra_09_minus_01",
+            "rho": 4.6160833264499946e-11,
+            "linearity_relative": 1.7639968386378232e-13,
+            "checks": {
+              "expected_input": true,
+              "rho": true,
+              "linearity": true,
+              "slave_zero": true,
+              "one_solve": true,
+              "one_factor": true,
+              "local_lu_reused": true
+            },
+            "passed": true
+          }
+        ],
+        "structural_checks": {
+          "matrix": true,
+          "resources": true,
+          "one_symbolic_numeric": true,
+          "solve_budget": true,
+          "sum_before_schur": true,
+          "strict_local_checks": true,
+          "no_full_p4_matrix": true,
+          "no_full_trace_matrix": true,
+          "no_macro_mumps": true,
+          "retained_through_postprocess": true,
+          "icntl10_before_symbolic": true,
+          "icntl35_before_symbolic": true,
+          "additional_calls": true
+        },
+        "control_qualified": true,
+        "matrix_identity": {
+          "checks": {
+            "required_fields": true,
+            "complex128": true,
+            "nonempty_sparse": true,
+            "unchanged_through_factor": true,
+            "mapping_sha256": true,
+            "values_sha256": true,
+            "csr_sha256": true,
+            "unchanged_through_calls": true
+          },
+          "passed": true,
+          "matrix": {
+            "csr_sha256": "19b9fbf759e6dc586d1316b53c69099647bd3a23e43378535b718c1db2c218d8",
+            "dense_gather": false,
+            "dtype": "complex128",
+            "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+            "index_dtype": "int64-little-endian-canonical",
+            "mapping_sha256": "aeaabb3ae1358a3979fc3dbd98b0c59d0b39e3c8fa2c3d31433b1ccdfed75b89",
+            "nnz": 8184464,
+            "nnz_semantics": "owned-row-getRow-stored-entries",
+            "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+            "shape": [
+              21824,
+              21824
+            ],
+            "value_endianness": "little",
+            "values_sha256": "1641af69d3380132fb9dd84372defef6998f38373e203bf6dc85cc5f08e473b8"
+          },
+          "scope": "streamed matrix bytes at worker assembly and factor boundaries"
+        },
+        "resources": {
+          "scope": "continuous_parent_process_tree",
+          "gates": {
+            "readable": true,
+            "tree_cap": true,
+            "inventory_cap": true,
+            "workspace_cap": true,
+            "reserve": true,
+            "zero_swap": true,
+            "cleaned": true,
+            "clean_source": true,
+            "observe_only": true
+          },
+          "passed": true,
+          "main_window_end_ns": 1789359283931691692,
+          "main_full_rss_peak_bytes": 1785585664,
+          "main_live_rss_peak_bytes": 1785585664,
+          "main_full_pss_peak_bytes": 1755026432,
+          "main_live_pss_peak_bytes": 1755026432,
+          "whole_run_rss_peak_bytes": 1785585664,
+          "inventory_peak_bytes": 1776346158,
+          "workspace_peak_bytes": 134217728,
+          "full_workflow_monotonic_seconds": 93.13239309299388,
+          "hashes": {
+            "watchdog/resources.jsonl": "d4d163eac4a677f9c5c6b27666bc2f99aab8b2537f6fcf037afcc0e23f24c6b9",
+            "v18_events.jsonl": "23efeb29f2618f73fd49049525d47d37247bbe8df8839e267c4c091b6b22a8a6",
+            "v18_worker_resources.jsonl": "9b93ee1c0cc0673211f8a3f538f9447f44638e2605175d3f0d2038651a3477fa",
+            "run_summary.json": "8cd5c4ca782963296e1349e9bfafbabd6011b95afc7909694626efbe9db63699",
+            "run_manifest.json": "a28bbc9d2c92262c6dee1cc8bac1440550b6cb97e3b88dabcadf64ff284137cc"
+          }
+        },
+        "baseline_resources": {
+          "scope": "continuous_parent_process_tree",
+          "full_sample_count": 2091,
+          "live_sample_count": 75,
+          "live_start_ns": 1789301203452879624,
+          "live_end_ns": 1789301225877312566,
+          "full_rss_peak_bytes": 2825973760,
+          "live_rss_peak_bytes": 2825973760,
+          "full_pss_peak_bytes": 2795549696,
+          "live_pss_peak_bytes": 2795549696,
+          "inventory_peak_bytes": 2906619390,
+          "workspace_peak_bytes": 17825792,
+          "gates": {
+            "all_rss_pss_readable": true,
+            "tree_cap": true,
+            "resident_inventory_cap": true,
+            "shared_workspace_cap": true,
+            "host_reserve": true,
+            "zero_swap": true,
+            "descendants_cleared": true,
+            "clean_source_after": true,
+            "observe_only": true
+          },
+          "passed": true,
+          "full_workflow_monotonic_seconds": 536.4680422439997,
+          "workflow_clock_interval": {
+            "budget_seconds": 584.7702858959946,
+            "discrepancy_seconds": 48.30229089300542,
+            "elapsed_seconds": {
+              "boottime": 536.4679951869985,
+              "monotonic": 536.4679948669946,
+              "utc": 584.77028576
+            },
+            "policy": "conservative_realtime",
+            "policy_version": 1,
+            "step": {
+              "budget_seconds": 584.752999274,
+              "discrepancy_seconds": 48.302291029,
+              "elapsed_seconds": {
+                "boottime": 536.4507085719961,
+                "monotonic": 536.450708245,
+                "utc": 584.752999274
+              },
+              "policy": "conservative_realtime",
+              "policy_version": 1,
+              "tolerance_seconds": 5.364507085719961,
+              "utc_minus_monotonic_seconds": 48.302291029
+            },
+            "tolerance_seconds": 5.364679951869984,
+            "utc_minus_monotonic_seconds": 48.30229089300542,
+            "utc_positive_excess_seconds": 48.302290702003916
+          },
+          "hashes": {
+            "watchdog/resources.jsonl": "a43a832a0307e7e9a87208a1afaa7e80b9da070cb56a1d7d6698770efcd115c8",
+            "v14_events.jsonl": "2246d4a576845d66a1b9dbd7e1011f01ac443c1f5c6c931932390c07c6feab06",
+            "v14_worker_resources.jsonl": "5f63776feda18979da9f3859a3f5f050f94ec76ded5933722785187463edf5b4",
+            "run_manifest.json": "03b385987b90b8a6005b247d3dad9eae6581736ba3a6889f14f852c19e9ad32d",
+            "run_summary.json": "b2365837abd84edc192065506da810700d5f70a84608e918c20837021eb73245"
+          }
+        },
+        "comparison_valid": true,
+        "memory": {
+          "peak_ratio": 0.6318479277033344,
+          "live_ratio": 0.6318479277033344,
+          "peak_gate": true,
+          "live_gate": true,
+          "peak_with_live_gate": true,
+          "memory_pass": true
+        },
+        "compression": {
+          "actual_storage_entries": 40282272.0,
+          "theoretical_entries": 40282272.0,
+          "effective_storage_entries": 40282272.0,
+          "native_flops": {
+            "3": 44396550096.0,
+            "14": 0.0
+          },
+          "infog_encoding": {
+            "9": "native_entry_encoding",
+            "29": "native_entry_encoding",
+            "35": "native_entry_encoding"
+          },
+          "raw_infog": {
+            "1": 0,
+            "10": 197648,
+            "11": 1800,
+            "12": 128,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 971,
+            "17": 971,
+            "18": 1462,
+            "19": 1462,
+            "2": 0,
+            "20": 40282272,
+            "22": 837,
+            "29": 40282272,
+            "3": 40282272,
+            "35": 40282272,
+            "36": 0,
+            "37": 0,
+            "4": 197648,
+            "5": 1800,
+            "6": 164,
+            "7": 4,
+            "8": 100,
+            "9": 40282272
+          },
+          "raw_rinfog": {
+            "1": 44396550096.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 0.0,
+            "15": 644.516352,
+            "16": 0.0,
+            "17": 646.282502,
+            "18": 1298.481461,
+            "19": 0.0003958012807960031,
+            "2": 46475648.0,
+            "20": 0.0003958012807960031,
+            "3": 44396550096.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0
+          },
+          "actual_compression_present": false,
+          "ratio": null
+        },
+        "coverage": {
+          "status": "not_applicable_exact",
+          "passed": true
+        },
+        "memory_denominator": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z",
+        "time_policy": "observe_only",
+        "official_p6_pass": false
+      },
+      "factor": {
+        "rows": 21824,
+        "symbolic_seconds": 0.1686379429884255,
+        "numeric_seconds": 21.553869957002462,
+        "memory_request": {
+          "blr_sizing": false,
+          "estimate_bytes": 972000000,
+          "formula": "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))",
+          "infog16_mb": 971,
+          "infog17_mb": 971,
+          "minimum_request_bytes": 1952388608,
+          "mpi_size": 1,
+          "policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+          "request_bytes": 1953000000,
+          "request_mb": 1953,
+          "requested_memory_limit_mb": 1953,
+          "rounding": "decimal_MB_ceiling",
+          "symbolic_estimate_mb": 971,
+          "symbolic_estimate_padded_bytes": 972000000,
+          "unit": "decimal_MB_for_MUMPS_ICNTL_23",
+          "unit_bytes": 1000000
+        },
+        "mumps_memory_observation": {
+          "allocation_is_not_inferred_from_icntl23": true,
+          "infog19_allocated_bytes_upper": 1463000000,
+          "infog19_allocated_mb": 1462,
+          "infog22_used_bytes_upper": 838000000,
+          "infog22_used_mb": 837,
+          "raw_infog19_and_22": {
+            "19": 1462,
+            "22": 837
+          },
+          "unit": "decimal_MB",
+          "unit_bytes": 1000000
+        },
+        "factor_inventory_components": {
+          "factor_infog19_allocated_bytes_upper": 1463000000,
+          "matrix_payload_bytes": 232205060
+        },
+        "numeric_raw": {
+          "infog": {
+            "1": 0,
+            "10": 197648,
+            "11": 1800,
+            "12": 128,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 971,
+            "17": 971,
+            "18": 1462,
+            "19": 1462,
+            "2": 0,
+            "20": 40282272,
+            "22": 837,
+            "29": 40282272,
+            "3": 40282272,
+            "35": 40282272,
+            "36": 0,
+            "37": 0,
+            "4": 197648,
+            "5": 1800,
+            "6": 164,
+            "7": 4,
+            "8": 100,
+            "9": 40282272
+          },
+          "rinfog": {
+            "1": 44396550096.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 0.0,
+            "15": 644.516352,
+            "16": 0.0,
+            "17": 646.282502,
+            "18": 1298.481461,
+            "19": 0.0003958012807960031,
+            "2": 46475648.0,
+            "20": 0.0003958012807960031,
+            "3": 44396550096.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0
+          }
+        },
+        "controls_before_symbolic": {
+          "cntl": {
+            "1": {
+              "error_code": null,
+              "index": 1,
+              "supported": true,
+              "value": 0.0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 0.0
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 0.0
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 0.0
+            }
+          },
+          "icntl": {
+            "10": {
+              "error_code": null,
+              "index": 10,
+              "supported": true,
+              "value": 0
+            },
+            "14": {
+              "error_code": null,
+              "index": 14,
+              "supported": true,
+              "value": 0
+            },
+            "18": {
+              "error_code": null,
+              "index": 18,
+              "supported": true,
+              "value": 0
+            },
+            "2": {
+              "error_code": null,
+              "index": 2,
+              "supported": true,
+              "value": 0
+            },
+            "22": {
+              "error_code": null,
+              "index": 22,
+              "supported": true,
+              "value": 0
+            },
+            "23": {
+              "error_code": null,
+              "index": 23,
+              "supported": true,
+              "value": 0
+            },
+            "28": {
+              "error_code": null,
+              "index": 28,
+              "supported": true,
+              "value": 0
+            },
+            "29": {
+              "error_code": null,
+              "index": 29,
+              "supported": true,
+              "value": 0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 6
+            },
+            "35": {
+              "error_code": null,
+              "index": 35,
+              "supported": true,
+              "value": 0
+            },
+            "36": {
+              "error_code": null,
+              "index": 36,
+              "supported": true,
+              "value": 0
+            },
+            "37": {
+              "error_code": null,
+              "index": 37,
+              "supported": true,
+              "value": 0
+            },
+            "38": {
+              "error_code": null,
+              "index": 38,
+              "supported": true,
+              "value": 0
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 2
+            },
+            "6": {
+              "error_code": null,
+              "index": 6,
+              "supported": true,
+              "value": 0
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 0
+            },
+            "8": {
+              "error_code": null,
+              "index": 8,
+              "supported": true,
+              "value": 0
+            }
+          },
+          "stage": "solve_0_after"
+        }
+      },
+      "setup_seconds": 32.98212516399508,
+      "retained_cache": {
+        "lu_bytes": 2244672,
+        "recovery_bytes": 3981312,
+        "residual_projection_bytes": 0,
+        "retained_numeric_cache_bytes": 11327040,
+        "retained_schur_bytes": 0,
+        "rhs_projection_bytes": 1119744,
+        "rhs_trace_bytes": 3981312,
+        "solution_embedding_bytes": 0
+      },
+      "cell_classes": {
+        "oriented_schur_class_count_sum": 12,
+        "raw_tensor_class_count_global_unique": 5,
+        "raw_tensor_class_count_sum": 5,
+        "raw_tensor_class_owner_ranks": {
+          "('actual_space', 1, 8.25, 8.333333333333, 10.0)": 0,
+          "('actual_space', 1, 8.5, 8.333333333333, 10.0)": 0,
+          "('actual_space', 2, 8.25, 8.333333333333, 10.0)": 0,
+          "('actual_space', 2, 8.5, 8.333333333333, 10.0)": 0,
+          "('actual_space', 3, 8.5, 8.333333333333, 10.0)": 0
+        },
+        "raw_tensor_class_use_count_sum": 5,
+        "raw_tensor_class_user_rank_counts": {
+          "('actual_space', 1, 8.25, 8.333333333333, 10.0)": 1,
+          "('actual_space', 1, 8.5, 8.333333333333, 10.0)": 1,
+          "('actual_space', 2, 8.25, 8.333333333333, 10.0)": 1,
+          "('actual_space', 2, 8.5, 8.333333333333, 10.0)": 1,
+          "('actual_space', 3, 8.5, 8.333333333333, 10.0)": 1
+        },
+        "raw_tensor_classes": [
+          {
+            "active_kernel_ids": [
+              1
+            ],
+            "canonical_coordinates_sha256": "8dc169a252e3dd698f06a4bfae4a67d89457486e780854febce8bd74330b71ed",
+            "cell_widths": [
+              8.25,
+              8.333333333333,
+              10.0
+            ],
+            "consumer_rank_count": 1,
+            "dimension": 300,
+            "material_tag": 1,
+            "owner_rank": 0,
+            "policy": "actual_space",
+            "tensor_bytes": 1440000
+          },
+          {
+            "active_kernel_ids": [
+              1
+            ],
+            "canonical_coordinates_sha256": "7c86022653a0d978b24eb7cbf69216effee836ca72d50c3500f3bc2eb92cbeff",
+            "cell_widths": [
+              8.5,
+              8.333333333333,
+              10.0
+            ],
+            "consumer_rank_count": 1,
+            "dimension": 300,
+            "material_tag": 1,
+            "owner_rank": 0,
+            "policy": "actual_space",
+            "tensor_bytes": 1440000
+          },
+          {
+            "active_kernel_ids": [
+              2
+            ],
+            "canonical_coordinates_sha256": "8dc169a252e3dd698f06a4bfae4a67d89457486e780854febce8bd74330b71ed",
+            "cell_widths": [
+              8.25,
+              8.333333333333,
+              10.0
+            ],
+            "consumer_rank_count": 1,
+            "dimension": 300,
+            "material_tag": 2,
+            "owner_rank": 0,
+            "policy": "actual_space",
+            "tensor_bytes": 1440000
+          },
+          {
+            "active_kernel_ids": [
+              2
+            ],
+            "canonical_coordinates_sha256": "7c86022653a0d978b24eb7cbf69216effee836ca72d50c3500f3bc2eb92cbeff",
+            "cell_widths": [
+              8.5,
+              8.333333333333,
+              10.0
+            ],
+            "consumer_rank_count": 1,
+            "dimension": 300,
+            "material_tag": 2,
+            "owner_rank": 0,
+            "policy": "actual_space",
+            "tensor_bytes": 1440000
+          },
+          {
+            "active_kernel_ids": [
+              3
+            ],
+            "canonical_coordinates_sha256": "7c86022653a0d978b24eb7cbf69216effee836ca72d50c3500f3bc2eb92cbeff",
+            "cell_widths": [
+              8.5,
+              8.333333333333,
+              10.0
+            ],
+            "consumer_rank_count": 1,
+            "dimension": 300,
+            "material_tag": 3,
+            "owner_rank": 0,
+            "policy": "actual_space",
+            "tensor_bytes": 1440000
+          }
+        ],
+        "retained_local_schur_class_count_local": 0,
+        "retained_local_schur_class_count_sum": 0
+      },
+      "calls": [
+        {
+          "stem": "A2R160_BAL_H_p4_01",
+          "apply_seconds": 0.23448700399603695,
+          "native_evaluation_seconds": 0.8368078719940968,
+          "field_metric_seconds": 4.6332263619988225,
+          "packet_save_seconds": 0.03359313200053293,
+          "elapsed_seconds": 5.739405726999394,
+          "linearity_relative": null
+        },
+        {
+          "stem": "A2R160_BAL_H_p4_02",
+          "apply_seconds": 0.2103263320022961,
+          "native_evaluation_seconds": 0.8412749199924292,
+          "field_metric_seconds": 4.732775138996658,
+          "packet_save_seconds": 0.03961805200378876,
+          "elapsed_seconds": 5.826158213007147,
+          "linearity_relative": null
+        },
+        {
+          "stem": "LIGHT448_BAL_H_p4_09",
+          "apply_seconds": 0.1842169670126168,
+          "native_evaluation_seconds": 0.8758258950110758,
+          "field_metric_seconds": 4.692846111007384,
+          "packet_save_seconds": 0.04080826499557588,
+          "elapsed_seconds": 5.7949062140105525,
+          "linearity_relative": null
+        },
+        {
+          "stem": "extra_01_repeat",
+          "apply_seconds": 0.2067092090001097,
+          "native_evaluation_seconds": 0.8670869380002841,
+          "field_metric_seconds": 4.2399915400892496e-07,
+          "packet_save_seconds": 0.03718227200442925,
+          "elapsed_seconds": 1.1125158930080943,
+          "linearity_relative": 0.0
+        },
+        {
+          "stem": "extra_01_plus_i02",
+          "apply_seconds": 0.19071786699350923,
+          "native_evaluation_seconds": 0.866834996995749,
+          "field_metric_seconds": 3.079912858083844e-07,
+          "packet_save_seconds": 0.046417017991188914,
+          "elapsed_seconds": 1.105334722000407,
+          "linearity_relative": 1.8375468729425753e-13
+        },
+        {
+          "stem": "extra_09_minus_01",
+          "apply_seconds": 0.19227952099754475,
+          "native_evaluation_seconds": 0.8488993150094757,
+          "field_metric_seconds": 3.609893610700965e-07,
+          "packet_save_seconds": 0.03750246300478466,
+          "elapsed_seconds": 1.0804487470013555,
+          "linearity_relative": 1.7639968386378232e-13
+        }
+      ],
+      "settled_seconds": 103.41273827694835,
+      "checker_descriptor": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
+        "sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0"
+      }
+    }
+  },
+  "p6": {},
+  "baseline": {
+    "baseline_dir": "results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z",
+    "source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+    "environment": {
+      "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "python_executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "qualified_activation": "1"
+    },
+    "abi": {
+      "integer": "int32",
+      "modules": {
+        "basix": {
+          "path": "/usr/lib/python3/dist-packages/basix/__init__.py",
+          "version": "0.10.0"
+        },
+        "dolfinx": {
+          "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+          "version": "0.10.0.post2"
+        },
+        "mpi4py": {
+          "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+          "version": "3.1.5"
+        },
+        "petsc4py": {
+          "path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+          "version": "3.19.6"
+        },
+        "slepc4py": {
+          "path": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+          "version": "3.19.2"
+        }
+      },
+      "python": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "scalar": "complex128",
+      "threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      }
+    },
+    "physical_model_sha256": "9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f",
+    "resources": {
+      "scope": "continuous_parent_process_tree",
+      "full_sample_count": 2091,
+      "live_sample_count": 75,
+      "live_start_ns": 1789301203452879624,
+      "live_end_ns": 1789301225877312566,
+      "full_rss_peak_bytes": 2825973760,
+      "live_rss_peak_bytes": 2825973760,
+      "full_pss_peak_bytes": 2795549696,
+      "live_pss_peak_bytes": 2795549696,
+      "inventory_peak_bytes": 2906619390,
+      "workspace_peak_bytes": 17825792,
+      "gates": {
+        "all_rss_pss_readable": true,
+        "tree_cap": true,
+        "resident_inventory_cap": true,
+        "shared_workspace_cap": true,
+        "host_reserve": true,
+        "zero_swap": true,
+        "descendants_cleared": true,
+        "clean_source_after": true,
+        "observe_only": true
+      },
+      "passed": true,
+      "full_workflow_monotonic_seconds": 536.4680422439997,
+      "workflow_clock_interval": {
+        "budget_seconds": 584.7702858959946,
+        "discrepancy_seconds": 48.30229089300542,
+        "elapsed_seconds": {
+          "boottime": 536.4679951869985,
+          "monotonic": 536.4679948669946,
+          "utc": 584.77028576
+        },
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "step": {
+          "budget_seconds": 584.752999274,
+          "discrepancy_seconds": 48.302291029,
+          "elapsed_seconds": {
+            "boottime": 536.4507085719961,
+            "monotonic": 536.450708245,
+            "utc": 584.752999274
+          },
+          "policy": "conservative_realtime",
+          "policy_version": 1,
+          "tolerance_seconds": 5.364507085719961,
+          "utc_minus_monotonic_seconds": 48.302291029
+        },
+        "tolerance_seconds": 5.364679951869984,
+        "utc_minus_monotonic_seconds": 48.30229089300542,
+        "utc_positive_excess_seconds": 48.302290702003916
+      },
+      "hashes": {
+        "watchdog/resources.jsonl": "a43a832a0307e7e9a87208a1afaa7e80b9da070cb56a1d7d6698770efcd115c8",
+        "v14_events.jsonl": "2246d4a576845d66a1b9dbd7e1011f01ac443c1f5c6c931932390c07c6feab06",
+        "v14_worker_resources.jsonl": "5f63776feda18979da9f3859a3f5f050f94ec76ded5933722785187463edf5b4",
+        "run_manifest.json": "03b385987b90b8a6005b247d3dad9eae6581736ba3a6889f14f852c19e9ad32d",
+        "run_summary.json": "b2365837abd84edc192065506da810700d5f70a84608e918c20837021eb73245"
+      }
+    },
+    "lifecycle": {
+      "factor_count": 1,
+      "factor_live_through_all_rhs_and_metrics": true,
+      "factor_solve_count": 3,
+      "sequential_rhs": true
+    },
+    "matrix": {
+      "allocated_nnz": 24730144,
+      "augmented_rows": 53164,
+      "fe_rows": 53084,
+      "matrix_info": {
+        "assemblies": 1.0,
+        "block_size": 1.0,
+        "factor_mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "mallocs": 0.0,
+        "memory": 0.0,
+        "nz_allocated": 24730144.0,
+        "nz_unneeded": 0.0,
+        "nz_used": 24730144.0
+      },
+      "port_rows": 80,
+      "preallocated_nnz": 24730144
+    },
+    "factor": {
+      "factor_inventory_components": {
+        "factor_infog19_allocated_bytes_upper": 2343000000,
+        "matrix_payload_bytes": 494815540
+      },
+      "factor_solve_calls_at_factorization": 0,
+      "icntl23_readback_mb": 3127,
+      "inventory_components": {},
+      "label": "q1_full_global",
+      "matrix_info_after_factor": {
+        "assemblies": 1.0,
+        "block_size": 1.0,
+        "factor_mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "mallocs": 0.0,
+        "memory": 0.0,
+        "nz_allocated": 24730144.0,
+        "nz_unneeded": 0.0,
+        "nz_used": 24730144.0
+      },
+      "memory_request": {
+        "estimate_bytes": 1559000000,
+        "formula": "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))",
+        "infog16_mb": 1558,
+        "infog17_mb": 1558,
+        "minimum_request_bytes": 3126388608,
+        "mpi_size": 1,
+        "policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+        "request_bytes": 3127000000,
+        "request_mb": 3127,
+        "requested_memory_limit_mb": 3127,
+        "rounding": "decimal_MB_ceiling",
+        "symbolic_estimate_mb": 1558,
+        "symbolic_estimate_padded_bytes": 1559000000,
+        "unit": "decimal_MB_for_MUMPS_ICNTL_23",
+        "unit_bytes": 1000000
+      },
+      "mumps_memory_observation": {
+        "allocation_is_not_inferred_from_icntl23": true,
+        "infog19_allocated_bytes_upper": 2343000000,
+        "infog19_allocated_mb": 2342,
+        "infog22_used_bytes_upper": 1382000000,
+        "infog22_used_mb": 1381,
+        "raw_infog19_and_22": {
+          "19": 2342,
+          "22": 1381
+        },
+        "unit": "decimal_MB",
+        "unit_bytes": 1000000
+      },
+      "numeric_raw": {
+        "infog": {
+          "1": 0,
+          "10": 359252,
+          "11": 1592,
+          "12": 81,
+          "13": 0,
+          "14": 0,
+          "15": 0,
+          "16": 1558,
+          "17": 1558,
+          "18": 2342,
+          "19": 2342,
+          "2": 0,
+          "20": 53417584,
+          "22": 1381,
+          "29": 53417584,
+          "3": 53417584,
+          "4": 359252,
+          "5": 1592,
+          "6": 375,
+          "7": 4,
+          "8": 100,
+          "9": 53417584
+        },
+        "rinfog": {
+          "1": 39449025878.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 854.681344,
+          "16": 0.0,
+          "17": 858.48103,
+          "18": 1848.295589,
+          "19": 4.384896634175505e-05,
+          "2": 57660288.0,
+          "20": 4.384896634175505e-05,
+          "3": 39449025878.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0
+        }
+      },
+      "numeric_resource": {
+        "all_status_readable": true,
+        "cap_policy": "min(parent_tree_cap,current_tree_rss+available-reserve)",
+        "compiler_descendant_count": 0,
+        "exit_code": null,
+        "inventory_memory_cap_bytes": 6442450944,
+        "inventory_peak_bytes": 68803850,
+        "inventory_policy": "independent_live_matrix_factor_coupling_workspace_sum",
+        "inventory_used_bytes": 68803850,
+        "label": "q1_factor",
+        "launch_cap_bytes": 8589934592,
+        "members": [
+          {
+            "cmdline": "python scripts/run_case.py input/task39extra/v14_q1_full_direct.dat --v14-time-policy observe_only",
+            "comm": "python",
+            "exit_code": null,
+            "pid": 140308,
+            "ppid": 594,
+            "pss_bytes": 26927104,
+            "rss_bytes": 36741120,
+            "stage": "factor",
+            "state": "S",
+            "swap_bytes": 0,
+            "timestamp_ns": 1789301203429061978
+          },
+          {
+            "cmdline": "/usr/bin/mpiexec -n 1 /home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python -m src.runners.task038_input_worker --resolved-config /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/resolved_config.json --manifest /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/run_manifest.json --expected-input-sha256 3a8ebca9c06ee21c6fc2be079835e25ec237544e67d52df7762b11646814434b --expected-physical-model-sha256 9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f --expected-source-sha 6a8b273c383d5bd9da37d6630a48bd24d6a90cce --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z --resolved-config-sha256 d788ab5398baa6cbfd6fb896ca3ff776c0b265fe0f29901850718a1757f49b02",
+            "comm": "mpiexec",
+            "exit_code": null,
+            "pid": 140358,
+            "ppid": 140308,
+            "pss_bytes": 8146944,
+            "rss_bytes": 14483456,
+            "stage": "factor",
+            "state": "S",
+            "swap_bytes": 0,
+            "timestamp_ns": 1789301203429403377
+          },
+          {
+            "cmdline": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python -m src.runners.task038_input_worker --resolved-config /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/resolved_config.json --manifest /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z/run_manifest.json --expected-input-sha256 3a8ebca9c06ee21c6fc2be079835e25ec237544e67d52df7762b11646814434b --expected-physical-model-sha256 9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f --expected-source-sha 6a8b273c383d5bd9da37d6630a48bd24d6a90cce --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v14_q1_full_direct__full3d_iterative__mpi1__Mna/20260913T115722.489252Z --resolved-config-sha256 d788ab5398baa6cbfd6fb896ca3ff776c0b265fe0f29901850718a1757f49b02",
+            "comm": "python",
+            "exit_code": null,
+            "pid": 140361,
+            "ppid": 140358,
+            "pss_bytes": 2753303552,
+            "rss_bytes": 2767577088,
+            "stage": "factor",
+            "state": "R",
+            "swap_bytes": 0,
+            "timestamp_ns": 1789301203436278069
+          }
+        ],
+        "memory_envelope": {
+          "cgroup_limits": [],
+          "effective_available_bytes": 11185848320,
+          "effective_total_bytes": 14654971904,
+          "launch_cap_bytes": 6890881024,
+          "mem_available_bytes": 11185848320,
+          "mem_total_bytes": 14654971904,
+          "reserve_bytes": 4294967296
+        },
+        "parent_tree_cap_bytes": 8589934592,
+        "pss_all_readable": true,
+        "pss_bytes": 2788377600,
+        "readability_retry_count": 0,
+        "root_pid": 140308,
+        "rss_bytes": 2818801664,
+        "schema": "task038.v14.j3.process-sample.v1",
+        "stage": "factor",
+        "swap_bytes": 0,
+        "time_gate_action": "observe_only",
+        "time_gate_evaluated": false,
+        "time_policy": "observe_only",
+        "timestamp_ns": 1789301203436285255,
+        "unreadable_pids": [],
+        "vanished_pids": [],
+        "workspace_live_bytes": 0,
+        "workspace_peak_bytes": 17825792
+      },
+      "numeric_seconds": 18.488779414998135,
+      "rows": 53164,
+      "symbolic_memory_settings": {
+        "icntl": {
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 0,
+          "7": 7
+        },
+        "modified": false
+      },
+      "symbolic_memory_settings_after_memory_limit": {
+        "icntl": {
+          "10": 0,
+          "14": 20,
+          "18": 0,
+          "22": 0,
+          "23": 3127,
+          "7": 7
+        },
+        "modified": false
+      },
+      "symbolic_raw": {
+        "infog": {
+          "1": 0,
+          "10": 0,
+          "11": 0,
+          "12": 0,
+          "13": 0,
+          "14": 0,
+          "15": 0,
+          "16": 1558,
+          "17": 1558,
+          "18": 0,
+          "19": 0,
+          "2": 0,
+          "20": 53417584,
+          "22": 0,
+          "29": 0,
+          "3": 53417584,
+          "4": 359252,
+          "5": 1592,
+          "6": 375,
+          "7": 4,
+          "8": 100,
+          "9": 0
+        },
+        "rinfog": {
+          "1": 39449025878.0,
+          "10": 0.0,
+          "11": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 854.681344,
+          "16": 0.0,
+          "17": 1.507566,
+          "18": 1.507061,
+          "19": 0.0,
+          "2": 0.0,
+          "20": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0,
+          "8": 0.0,
+          "9": 0.0
+        }
+      },
+      "symbolic_seconds": 0.2683213069976773
+    },
+    "gates": {
+      "admission_basis": "original_A4_and_P64_field_metrics",
+      "field_l2_and_scaled_curl": 1e-08,
+      "matrix_and_augmented_residuals_are_diagnostics_only": true,
+      "max_augmented_total_relative_residual": 1.8551179836236932e-10,
+      "max_field_l2_or_scaled_curl": 0.0,
+      "max_matrix_relative_residual": 1.8552802861660122e-10,
+      "max_native_A4_relative_residual": 6.55690292958073e-11,
+      "native_A4_relative_residual": 1e-10
+    },
+    "numerical_summary_sha256": "758b35b5f8ab3f48fa821f953a08cc66383a985de4527205416fbc95c94e8b8d",
+    "new_full_p4_controls": 0,
+    "scope_assessment": "Q1 full process tree and factor-live until all three evaluations are reusable if new common objects and sampling/lifecycle stay the same; actual new-run scope to be checked after implementation. Missing historical CSR content hash alone does not require rerun.",
+    "memory_comparison_finalized": false
+  },
+  "u0": {
+    "schema": "task039extra.v18.u0-source-review.v1",
+    "base_sha": "96827e89ce5ba446c4faa7cb507b777f21953af8",
+    "formal_runs": 0,
+    "formal_bug_replays": 0,
+    "old_files_checked": 41,
+    "old_files_unchanged": true,
+    "old_profiles_unchanged": true,
+    "tests": {
+      "u0_final_focused_fixed.log": {
+        "sha256": "7c15f303545d90ae392b0b8f74daa9fd88d7c7b087029e5c48e28a3ceefcb68d",
+        "tail": "........................................................................ [ 97%]\n..                                                                       [100%]\n74 passed in 2.62s\n"
+      },
+      "u0_final_legacy_serial.log": {
+        "sha256": "4d86afefb94f11d5dda99533605f37d9101c9b0e8ff02fbcd8c6fb251a0ff994",
+        "tail": "....                                                                     [100%]\n4 passed, 9 deselected in 3.48s\n"
+      },
+      "u0_final_legacy_mpi2.log": {
+        "sha256": "d77edef09e4142d5222e9a95ec03c3c7babf44e3cf9768c3dd24d4b98cdcc8aa",
+        "tail": "......                                                                      [100%]                                                                      [100%]\n3 passed, 10 deselected in 1.94s\n\n3 passed, 10 deselected in 1.94s\n"
+      },
+      "u0_actual_stack.log": {
+        "sha256": "9a3c622361049ab16f7caf97ad274b9f1741f4f3ed923c711daf6fe08d61ac8d",
+        "tail": "..                                                                       [100%]\n2 passed in 1.87s\n"
+      },
+      "u0_control_packets.log": {
+        "sha256": "9a3c622361049ab16f7caf97ad274b9f1741f4f3ed923c711daf6fe08d61ac8d",
+        "tail": "..                                                                       [100%]\n2 passed in 1.87s\n"
+      }
+    },
+    "ruff": "not_installed",
+    "full_pytest": "not_run",
+    "ci": "not_claimed",
+    "engineering_observation": {
+      "start": {
+        "clock": {
+          "utc": "2026-09-14T02:14:19.642588+00:00",
+          "unix": 1789352059.6426287,
+          "monotonic": 84654.701198433
+        },
+        "scope": "Root observation starts here; earlier preparation not independently timed; no PDE cost included"
+      },
+      "end_utc": "2026-09-14T04:11:34.333044+00:00",
+      "end_monotonic": 91103.946583228,
+      "scope": "engineering lower-bound observation, separate from formal PDE; earlier preparation unknown"
+    }
+  },
+  "old_negative_results_preserved": true,
+  "time_policy": "observe_only",
+  "master_merge_approved": false
+}

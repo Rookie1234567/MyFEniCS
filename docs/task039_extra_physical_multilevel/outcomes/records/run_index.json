@@ -1392,6 +1392,173 @@
         "run_summary.json": "42eaf4135090a2b3dfbb8c7abb568ab262e45850a464fdcbf290c941c0116cf7"
       },
       "details_record": "review_v17_p4_blr_tradeoff_closeout"
+    },
+    {
+      "id": "V18_U2_p4_cell_exact_control",
+      "stage": "U2_EXACT_CONTROL",
+      "status": "U2_EXACT_CONTROL_PASS",
+      "source_sha": "e1b5a398a199cdbc7c26ce3af8645daed2eeb7d6",
+      "profile": "physical_p4_cell_condensed_exact_v18",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v18_u2_exact_control__full3d_iterative__mpi1__Mna/20260914T041305.738867Z",
+      "official_result": false,
+      "quality_pass": true,
+      "resources_pass": true,
+      "process_tree_rss_peak_bytes": 1785585664,
+      "factor_live_rss_peak_bytes": 1785585664,
+      "resident_inventory_peak_bytes": 1776346158,
+      "full_workflow_monotonic_seconds": 93.13239309299388,
+      "conservative_settled_seconds": 103.41273827694835,
+      "matrix_content_sha256": "19b9fbf759e6dc586d1316b53c69099647bd3a23e43378535b718c1db2c218d8",
+      "strict_slave_zero": true,
+      "rhs": [
+        {
+          "stem": "A2R160_BAL_H_p4_01",
+          "rho": 7.528660119978472e-11,
+          "field_l2_relative": 5.202062771435569e-12,
+          "scaled_curl_relative": 5.1994716108378585e-12,
+          "native_identity_relative": 8.409006152942192e-17,
+          "slave_nonzero_count": 0,
+          "factor_solve_call_delta": 1,
+          "evidence_checks": {
+            "same_input_and_reference": true,
+            "input_file": true,
+            "same_g": true,
+            "g_hash": true,
+            "native_action": true,
+            "matching_storage": true,
+            "input_unchanged": true,
+            "no_refinement": true,
+            "icntl10": true,
+            "icntl35": true,
+            "positive_identity_scale": true,
+            "identity_difference_norm": true,
+            "identity_operation_scale": true,
+            "input_npz": true,
+            "reference_json": true,
+            "reference_npz": true,
+            "one_symbolic": true,
+            "one_numeric": true,
+            "local_lu_reused": true,
+            "saved_solution_hash": true,
+            "timings": true
+          }
+        },
+        {
+          "stem": "A2R160_BAL_H_p4_02",
+          "rho": 3.707784037502491e-12,
+          "field_l2_relative": 5.212667187637672e-12,
+          "scaled_curl_relative": 5.210315186931798e-12,
+          "native_identity_relative": 2.7292074287711503e-18,
+          "slave_nonzero_count": 0,
+          "factor_solve_call_delta": 1,
+          "evidence_checks": {
+            "same_input_and_reference": true,
+            "input_file": true,
+            "same_g": true,
+            "g_hash": true,
+            "native_action": true,
+            "matching_storage": true,
+            "input_unchanged": true,
+            "no_refinement": true,
+            "icntl10": true,
+            "icntl35": true,
+            "positive_identity_scale": true,
+            "identity_difference_norm": true,
+            "identity_operation_scale": true,
+            "input_npz": true,
+            "reference_json": true,
+            "reference_npz": true,
+            "one_symbolic": true,
+            "one_numeric": true,
+            "local_lu_reused": true,
+            "saved_solution_hash": true,
+            "timings": true
+          }
+        },
+        {
+          "stem": "LIGHT448_BAL_H_p4_09",
+          "rho": 6.728950574269478e-11,
+          "field_l2_relative": 5.2131078148817665e-12,
+          "scaled_curl_relative": 5.2110691899320534e-12,
+          "native_identity_relative": 9.51927846961016e-17,
+          "slave_nonzero_count": 0,
+          "factor_solve_call_delta": 1,
+          "evidence_checks": {
+            "same_input_and_reference": true,
+            "input_file": true,
+            "same_g": true,
+            "g_hash": true,
+            "native_action": true,
+            "matching_storage": true,
+            "input_unchanged": true,
+            "no_refinement": true,
+            "icntl10": true,
+            "icntl35": true,
+            "positive_identity_scale": true,
+            "identity_difference_norm": true,
+            "identity_operation_scale": true,
+            "input_npz": true,
+            "reference_json": true,
+            "reference_npz": true,
+            "one_symbolic": true,
+            "one_numeric": true,
+            "local_lu_reused": true,
+            "saved_solution_hash": true,
+            "timings": true
+          }
+        }
+      ],
+      "additional_rhs": [
+        {
+          "stem": "extra_01_repeat",
+          "rho": 7.528660119978472e-11,
+          "linearity_relative": 0.0,
+          "checks": {
+            "expected_input": true,
+            "rho": true,
+            "linearity": true,
+            "slave_zero": true,
+            "one_solve": true,
+            "one_factor": true,
+            "local_lu_reused": true
+          },
+          "passed": true
+        },
+        {
+          "stem": "extra_01_plus_i02",
+          "rho": 2.4805403332032526e-11,
+          "linearity_relative": 1.8375468729425753e-13,
+          "checks": {
+            "expected_input": true,
+            "rho": true,
+            "linearity": true,
+            "slave_zero": true,
+            "one_solve": true,
+            "one_factor": true,
+            "local_lu_reused": true
+          },
+          "passed": true
+        },
+        {
+          "stem": "extra_09_minus_01",
+          "rho": 4.6160833264499946e-11,
+          "linearity_relative": 1.7639968386378232e-13,
+          "checks": {
+            "expected_input": true,
+            "rho": true,
+            "linearity": true,
+            "slave_zero": true,
+            "one_solve": true,
+            "one_factor": true,
+            "local_lu_reused": true
+          },
+          "passed": true
+        }
+      ],
+      "checker": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
+      "checker_sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0",
+      "time_policy": "observe_only",
+      "time_gate_evaluated": false
     }
   ],
   "limitations": [
