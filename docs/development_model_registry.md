@@ -1,3 +1,15 @@
+# Task39extra 当前模型登记：Review V20 low-memory lifecycle
+
+| Model ID | profile / source | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
+|---|---|---|---|---|---|
+| `task39extra_v20_y3_lowmem_original` | `physical_p6_trace_p4_condensed_lowmem_v20` / `b337d215c3d278d0c1e715f53e28b69f7f0ee3fe` | 13.5 nm、Full3D、p6/h10、252 cells、MPI1；p6 form 前置编译、共享 identity、完整场后释放 | 112 FGMRES32 steps；independent A6=`9.730817853580463e-7`；R/T/A/`A_volume` 通过；solution 与 V19 saved comparison bitwise equal | full RSS=`2831749120 B`，PSS=`2797270016 B`，swap0；monotonic=`1479.1772295139963 s`；比 V19 RSS低28.59098%，但时间慢9.4056% | `PASS_ORIGINAL_MEMORY_LIFECYCLE_MIXED_TRADEOFF`；只作 explicit opt-in research candidate；V18 是较低RSS基线，V19 是时间基线；ordinary default 不变 |
+
+方法说明：p6 的单元凝聚先解单元内部未知量，再在共享 trace/端口空间做外层迭代，最后恢复完整场；它减少外层未知量，但需要局部缓存。V20 的 p4 矩阵没有在 factor 存活时提前销毁，因为实际 PETSc/MUMPS 路径借用 SeqAIJ values pointer，未取得安全 public detach 证明。MUMPS allocated/used/matrix upper=`1463000000 / 838000000 / 232205060 B`，这些不是 RSS。
+
+证据入口：[V20 response](task039_extra_physical_multilevel/response_v21.md)、[lifecycle outcome](task039_extra_physical_multilevel/outcomes/dual_condensed_memory_v20.md)、[compact](task039_extra_physical_multilevel/outcomes/records/dual_condensed_memory_v20_compact.json)、[decision](task039_extra_physical_multilevel/outcomes/records/dual_condensed_memory_v20_decision.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。旧模型登记与负结果均在下方保留。
+
+---
+
 # Task39extra Response V20 / Review V19：original 112步完整通过，以更高内存换取时间
 
 单元凝聚是在每个有限元单元内先解掉内部未知量，只迭代相邻单元共享的边界与原80端口；最后把内部场准确恢复。本轮把这个过程也用于p6，p4继续用V18准确凝聚LU。这样减少外层向量与全局纠错次数，代价是新增局部缓存；原p6本来就是matrix-free，没有删除一张原本存在的全局A6矩阵。

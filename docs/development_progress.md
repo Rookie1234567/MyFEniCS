@@ -1,3 +1,21 @@
+# Task39extra 当前进展：Review V20 low-memory lifecycle 已完成一场 original PASS
+
+V20 在固定 original 上把 p6 form preparation 前置到大因子之前，把 12 类相同的 450 阶 identity 改成一个只读共享表示，并在完整场 packet 与 residual Gate 完成后按 preconditioner → p6 → p4 factor 顺序释放对象。p4 矩阵因 PETSc/MUMPS 借用 SeqAIJ values pointer，仍采用 `MATRIX_RETAINED_BACKEND_DEPENDENCY`，没有未经证明的 factor-live early free。
+
+| 当前模型 | 实测结果 | 解释与边界 |
+|---|---:|---|
+| `task39extra_v20_y3_lowmem_original` / `physical_p6_trace_p4_condensed_lowmem_v20` | 112 步，A6=`9.730817853580463e-7` | independent 与 worker post-release 均过 `1e-6`；57/24 checks 全通过 |
+| Full3D p6/h10，13.5 nm，MPI1 | full RSS=`2831749120 B`，PSS=`2797270016 B` | 比 V19 低28.59098%，比 V18 高11.99498%；这是 mixed tradeoff |
+| 完整流程 | monotonic=`1479.1772295139963 s` | 比 V19 measured monotonic 慢9.4056%；V19 继续作为时间基线 |
+| lifecycle | p4 early release=`false`，sampled release drop=`25165824 B` | drop 是相邻 watchdog 样本，不等于 MUMPS payload 全部归还 |
+| physical | R/T/A/`A_volume`=`0.3656258136701664 / 0.012990624019505325 / 0.6213835623103282 / 0.6213833803349053` | saved field/observable comparison 与 V19 逐字节 solution 一致 |
+
+决策：V20 是显式 opt-in 的研究候选；同 original 以内存优先时采用 lowmem，时间优先仍参考 V19，ordinary default 不变。不新增必须低于 V18 峰值或快于 V19 的硬门槛，不重启 detach 研究。旧 V18/V19 负结果、policy debit 和 actual-unknown 历史保留；notch/5nm/0.7nm/MPI2/4 新资格均未运行。
+
+正式 source 为 `b337d215c3d278d0c1e715f53e28b69f7f0ee3fe`；结果与文档在同一 task39extra 分支交付，等待审核，不合并 master。
+
+---
+
 # Task39extra Response V20 / Review V19：original 112步完整通过，以更高内存换取时间
 
 单元凝聚是在每个有限元单元内先解掉内部未知量，只迭代相邻单元共享的边界与原80端口；最后把内部场准确恢复。本轮把这个过程也用于p6，p4继续用V18准确凝聚LU。这样减少外层向量与全局纠错次数，代价是新增局部缓存；原p6本来就是matrix-free，没有删除一张原本存在的全局A6矩阵。

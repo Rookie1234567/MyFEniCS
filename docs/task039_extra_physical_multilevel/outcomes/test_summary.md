@@ -1,3 +1,24 @@
+# Review V20 / Response V21：V20 low-memory lifecycle 的测试与 formal 边界
+
+| 验证 | 实际结果 | 证据/边界 |
+|---|---|---|
+| ABI/Y1 admission | PASS | qualification 为 Python `.venv`、PETSc 3.19.6 `complex128/int32`、DOLFINx 0.10.0.post2、Basix 0.10.0、SLEPc 3.19.6、Open MPI 4.1.6 |
+| 最终 focused suite | **116 passed / 1 skipped** | skip 是 MPI2/4 专用 fixture；不是 V20 formal failure |
+| compileall / diff / frozen contract | PASS / PASS / PASS | `changed_files=0`、`changed_profiles=0`；formal source 为 `b337d215c3d278d0c1e715f53e28b69f7f0ee3fe` |
+| Y3 independent checker | PASS | 57 independent checks、24 physical subchecks；保存 checkpoint 由 worker 每8步写入，checker 读取并重算 |
+| Y4 文档合同 | **21 passed** | `test_26_documentation_contract.py`、`test_183_development_model_registry_markdown.py`、`test_development_model_registry_contract.py`；仅本地合同检查，未声称 GitHub 网页视觉核验 |
+| 正式 original | PASS | 112 步，independent A6=`9.730817853580463e-7`，完整 field/80 modes/RTA/守恒/资源检查通过；formal run 1，PDE replay 0 |
+| 服务与资源安全 | PASS | exit0、后代清场、zero swap、连续 parent-process-tree 资源记录；full RSS=`2831749120 B` |
+| 后端 fixture 初次错误 | 保留工程失败，已修正 | 初次 NumPy `int64` 与 PETSc `IntType=int32` 不匹配；未启动 PDE，修正后 fixture 通过 |
+| sandbox PMIx 现象 | 保留工程记录 | sandbox-only `errno=1`；实际宿主 qualified ABI/MPI1 通过，不计作数值失败 |
+| 未运行/未声称 | not_run | notch、5 nm/0.7 nm、MPI2/4 新资格、Ruff、full repository pytest、CI、detach restart |
+
+轻量证据 SHA：focused `f87cfccd8f5f512dd83d3b6f08268d3146449d16f2bfb6e316850a7d021751bb`；compileall `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`；ABI `2524f8c8a3ee4d625cd8b091de1f89213ad20a66bf8c03b5569640855e6acfb4`；frozen contract `53c79154b678ce48d23e8b5a0f3185e896a1471c37ed25a34a8b3398a83f7b42`；independent `8224cf22ff7143315ae911c0011633f8554e596c2532e7a2789428eb17fbdef1`。
+
+Y3 原始 field/matrix/factor/cache/timeline 仍在 ignored artifact root；本页只陈述本地测试与正式 evidence，不声称 CI 或全仓测试通过。
+
+---
+
 # Review V19 / Response V20：新p6保留空间原始模型完成
 
 | 验证 | 实际结果 | 证据/边界 |

@@ -1,3 +1,23 @@
+# Task39extra 当前汇总：Review V20 双层凝聚低内存生命周期完成一场 original PASS
+
+单元凝聚先消去每个有限元单元内部未知量，只把共享 trace 和端口交给外层迭代，最后恢复完整场。本轮 V20 只资格化一个固定的 13.5 nm、Full3D p6/h10、252 cells、MPI1 original；目标是把 p6 编译、identity payload 和求解对象释放顺序做成可核验的生命周期，而不是宣称新的物理模型或生产默认。
+
+| 项目 | 当前结论 | 证据边界 |
+|---|---|---|
+| 范围与身份 | source `b337d215c3d278d0c1e715f53e28b69f7f0ee3fe`；profile `physical_p6_trace_p4_condensed_lowmem_v20`；run id `task39extra_v20_y3_lowmem_original` | one-dat/one-run；formal run 1，PDE replay 0 |
+| 数值 Gate | independent A6=`9.730817853580463e-7`，limit `1e-6`；112 步 | port closure `5.8476980231808125e-16`、internal residual `2.1627175873860883e-17`；independent 57 checks/24 physical subchecks 全通过 |
+| 官方物理量 | R/T/A/`A_volume`=`0.3656258136701664 / 0.012990624019505325 / 0.6213835623103282 / 0.6213833803349053` | 最大 total power difference `1.981579103027542e-7 < 1e-5`；selected field difference `8.291924787930399e-7 < 1e-4` |
+| 内存 | full tree RSS=`2831749120 B`，PSS=`2797270016 B`，swap=`0` | 比 V19 低 `28.59098%`，但比 V18 高 `11.99498%`；不是全面低内存 |
+| 时间 | measured monotonic=`1479.1772295139963 s`；conservative billing=`1611.2442379729905 s` | billing 不是 measured runtime，也不与 monotonic 相加；本场比 V19 measured monotonic 慢 `9.4056%` |
+| 后端生命周期 | p4 policy=`MATRIX_RETAINED_BACKEND_DEPENDENCY`，early-release saved=`0 B` | MUMPS allocated/used/matrix upper=`1463000000 / 838000000 / 232205060 B`，均不是 RSS |
+| 交付分类 | `PASS_ORIGINAL_MEMORY_LIFECYCLE_MIXED_TRADEOFF` | explicit lowmem 可作为同 original 的内存优先候选；V19 保留为时间基线；ordinary default 不变 |
+
+已完成：V20 Y0/Y1/Y2/Y3 证据和轻量文档收口。未运行：notch、5 nm、0.7 nm、MPI2/4 新资格、Ruff、全仓 pytest、CI 和 detach 研究重启。负结果和未知账本（包括旧 V18/V19 policy/unknown history）保留，不改写为通过、零费用或已测 runtime。
+
+机器可读入口：[V20 compact](records/dual_condensed_memory_v20_compact.json)、[V20 decision](records/dual_condensed_memory_v20_decision.json)、[V20 lifecycle outcome](dual_condensed_memory_v20.md)、[V20 response](../response_v21.md)、[run index](records/run_index.json)、[selective merge manifest](selective_merge_manifest_v21.md)。
+
+---
+
 # Task39extra Response V20 / Review V19：original 112步完整通过，以更高内存换取时间
 
 单元凝聚是在每个有限元单元内先解掉内部未知量，只迭代相邻单元共享的边界与原80端口；最后把内部场准确恢复。本轮把这个过程也用于p6，p4继续用V18准确凝聚LU。这样减少外层向量与全局纠错次数，代价是新增局部缓存；原p6本来就是matrix-free，没有删除一张原本存在的全局A6矩阵。
