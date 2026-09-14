@@ -207,3 +207,59 @@ def test_v18_allows_one_batch_replay_only(tmp_path: Path):
             stage="U1_CONTROL_BRIDGE",
             source="e" * 40,
         )
+
+
+@pytest.mark.parametrize("invalid", [None, "source", "summary", "count", "numerical"])
+def test_v18_explicit_p6_bug_continuation_preserves_history(tmp_path: Path, invalid):
+    repo = _repo_with_historical_ledgers(tmp_path)
+    ledger_directory = repo / "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/review_v18_p4_cell_condensed"
+    ledger_directory.mkdir(parents=True)
+    evidence = tmp_path / "qualified_exact.json"
+    evidence.write_text("{}")
+    (ledger_directory / "selection.json").write_text(json.dumps({
+        "batch_identity": "review_v18_p4_cell_condensed",
+        "admit_u4": True,
+        "selected_backend": "exact",
+        "evidence": [{"path": str(evidence), "sha256": hashlib.sha256(evidence.read_bytes()).hexdigest()}],
+    }))
+    first = _reserve(repo, tmp_path / "first", stage="U4_ORIGINAL", source="a" * 40)
+    _settle_worker_failure(first, "b" * 40)
+    second = _reserve(repo, tmp_path / "second", stage="U4_ORIGINAL", source="b" * 40)
+    _settle_worker_failure(second, "c" * 40)
+    before = json.loads(Path(second["path"]).read_text())
+    summary_path = tmp_path / "second/physical_p4_cell_condensed_v18_summary.json"
+    if invalid == "numerical":
+        summary = json.loads(summary_path.read_text())
+        summary["result_classification"] = "NUMERICAL_CONTROLLED_STOP"
+        summary_path.write_text(json.dumps(summary))
+    authorization = {
+        "classification": "USER_AUTHORIZED_IMPLEMENTATION_BUG_CONTINUATION",
+        "stage": "U4_ORIGINAL",
+        "failed_source_sha": "b" * 40,
+        "fixed_source_sha": "c" * 40,
+        "worker_summary_sha256": hashlib.sha256(summary_path.read_bytes()).hexdigest(),
+        "previous_bug_replay_count": 1,
+        "additional_bug_replays": 1,
+        "user_instruction": "Complete p6h10; repair implementation bugs, retaining numerical gates.",
+    }
+    if invalid == "source":
+        authorization["fixed_source_sha"] = "d" * 40
+    if invalid == "summary":
+        authorization["worker_summary_sha256"] = "0" * 64
+    if invalid == "count":
+        authorization["previous_bug_replay_count"] = 0
+    (tmp_path / "second/p6h10_bug_continuation.json").write_text(json.dumps(authorization))
+    if invalid:
+        with pytest.raises(InputError):
+            _reserve(repo, tmp_path / "third", stage="U4_ORIGINAL", source="c" * 40)
+        assert json.loads(Path(second["path"]).read_text()) == before
+        return
+    third = _reserve(repo, tmp_path / "third", stage="U4_ORIGINAL", source="c" * 40)
+    assert third["prerequisite"]["user_bug_continuation"]["authorization"] == authorization
+    after = json.loads(Path(third["path"]).read_text())
+    assert after["stages"]["U4_ORIGINAL"]["attempts"][:2] == before["stages"]["U4_ORIGINAL"]["attempts"]
+    assert after["elapsed_seconds"] == before["elapsed_seconds"]
+    assert after["unique_bug_replay_count"] == 2
+    _settle_worker_failure(third, "d" * 40)
+    with pytest.raises(InputError, match="exhausted"):
+        _reserve(repo, tmp_path / "fourth", stage="U4_ORIGINAL", source="d" * 40)

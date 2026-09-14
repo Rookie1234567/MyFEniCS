@@ -1007,6 +1007,7 @@ def _reserve_blr_stage_from_ledger(
     error_prefix: str,
     summary_filename: str,
     prerequisite: Mapping[str, Any] | None = None,
+    bug_replay_limit: int = 1,
 ) -> dict[str, Any]:
     """Share replay, reservation, and settlement metadata across BLR batches."""
 
@@ -1024,12 +1025,12 @@ def _reserve_blr_stage_from_ledger(
     replay = False
     replay_evidence = None
     if attempts:
-        if len(attempts) >= 2:
+        if len(attempts) >= bug_replay_limit + 1:
             raise InputError(f"{error_prefix} BLR stage {stage} has exhausted its one repair replay")
         previous = attempts[-1]
         if previous.get("source_sha") == source_sha:
             raise InputError(f"{error_prefix} BLR stage {stage} cannot replay the same source SHA")
-        if int(ledger.get("unique_bug_replay_count", 0)) >= 1:
+        if int(ledger.get("unique_bug_replay_count", 0)) >= bug_replay_limit:
             raise InputError(f"{error_prefix} BLR batch has exhausted its one implementation-bug replay")
         previous_run_directory = Path(str(previous.get("run_directory", "")))
         evidence_path = previous_run_directory / "implementation_bug_replay.json"
@@ -1556,9 +1557,41 @@ def _reserve_v18_shared_budget(
             raise InputError(f"V18 attempt {old_stage} is unsettled")
     stage_record = ledger.get("stages", {}).get(stage, {})
     attempts = list(stage_record.get("attempts", []))
-    if len(attempts) >= 2:
-        raise InputError(f"V18 stage {stage} has exhausted its one repair replay")
     prerequisite = _validate_v18_prerequisite(path, stage)
+    bug_replay_limit = 1
+    # A later user instruction may authorize a specific failed p6 continuation.
+    # Bind each allowance to its failed attempt; never reset historical charges.
+    if attempts and stage in {"U4_ORIGINAL", "U5_NOTCH"}:
+        previous = attempts[-1]
+        previous_directory = Path(str(previous.get("run_directory", "")))
+        authorization_path = previous_directory / "p6h10_bug_continuation.json"
+        if authorization_path.exists():
+            try:
+                authorization_bytes = authorization_path.read_bytes()
+                authorization = json.loads(authorization_bytes)
+                summary_hash = hashlib.sha256((previous_directory /
+                    "physical_p4_cell_condensed_v18_summary.json").read_bytes()).hexdigest()
+            except (OSError, ValueError) as exc:
+                raise InputError("V18 p6 continuation authorization cannot be read") from exc
+            replay_count = int(ledger.get("unique_bug_replay_count", 0))
+            if (
+                authorization.get("classification") != "USER_AUTHORIZED_IMPLEMENTATION_BUG_CONTINUATION"
+                or authorization.get("stage") != stage
+                or authorization.get("failed_source_sha") != previous.get("source_sha")
+                or authorization.get("fixed_source_sha") != source_sha
+                or authorization.get("worker_summary_sha256") != summary_hash
+                or authorization.get("previous_bug_replay_count") != replay_count
+                or authorization.get("additional_bug_replays") != 1
+                or not authorization.get("user_instruction")
+            ):
+                raise InputError("V18 p6 continuation authorization identity changed")
+            bug_replay_limit = replay_count + 1
+            prerequisite = dict(prerequisite or {})
+            prerequisite["user_bug_continuation"] = {
+                "path": str(authorization_path),
+                "sha256": hashlib.sha256(authorization_bytes).hexdigest(),
+                "authorization": authorization,
+            }
     return _reserve_blr_stage_from_ledger(
         path,
         ledger,
@@ -1571,6 +1604,7 @@ def _reserve_v18_shared_budget(
         error_prefix="V18",
         summary_filename="physical_p4_cell_condensed_v18_summary.json",
         prerequisite=prerequisite,
+        bug_replay_limit=bug_replay_limit,
     )
 
 

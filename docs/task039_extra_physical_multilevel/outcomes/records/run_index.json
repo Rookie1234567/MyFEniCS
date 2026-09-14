@@ -1712,6 +1712,113 @@
         "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_replay_guard_tests.log": "c1b5ca2e84fac8b950077a90783a2f93f080c54e497c9f715ef6a056b853686b"
       },
       "fix": "Limit the historical 10800-parameter restriction to enforce mode; preserve positive-finite guard, original numeric screens and observe_only."
+    },
+    {
+      "id": "V18_U4_original_attempt2_implementation_bug",
+      "status": "IMPLEMENTATION_BUG_REPLAY_EXHAUSTED",
+      "stage": "U4_ORIGINAL",
+      "source_sha": "37e25d63fd5ac56ad95425a292ad291a7e564d56",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T043233.005266Z",
+      "completed_PC_before_discard": 1,
+      "completed_outer_update_count": 0,
+      "A6_last_saved": 1.0,
+      "A6_last_saved_iteration": 0,
+      "final_A6": null,
+      "official_result": false,
+      "partial_balance": {
+        "passed": true,
+        "checks_failed": [],
+        "pc_count": 1,
+        "global_mat_solve_count": 2,
+        "closure_samples": [
+          {
+            "pc": 1,
+            "closure_norm": 3.9662901453962054e-11,
+            "operation_scale": 5.792987818511472,
+            "relative": 6.8467089344153964e-12
+          }
+        ],
+        "coarse_defects": [
+          {
+            "pc": 1,
+            "call": 1,
+            "rhs_norm": 0.7913581987689474,
+            "defect_norm": 5.778346657818629e-11,
+            "rho": 7.301809303053333e-11
+          },
+          {
+            "pc": 1,
+            "call": 2,
+            "rhs_norm": 2.105135710486809,
+            "defect_norm": 6.923250537798418e-12,
+            "rho": 3.288743097801247e-12
+          }
+        ],
+        "max_closure_relative": 6.8467089344153964e-12
+      },
+      "resources": {
+        "scope": "continuous_parent_process_tree",
+        "gates": {
+          "readable": true,
+          "tree_cap": true,
+          "inventory_cap": true,
+          "workspace_cap": true,
+          "reserve": true,
+          "zero_swap": true,
+          "cleaned": true,
+          "clean_source": true,
+          "observe_only": true
+        },
+        "passed": true,
+        "main_window_end_ns": 1789360487182741766,
+        "factor_live_end_ns": 1789360483826643933,
+        "fullspace_scope": true,
+        "main_full_rss_peak_bytes": 1878298624,
+        "main_live_rss_peak_bytes": 1878298624,
+        "main_full_pss_peak_bytes": 1847871488,
+        "main_live_pss_peak_bytes": 1847871488,
+        "whole_run_rss_peak_bytes": 1878298624,
+        "inventory_peak_bytes": 1830284886,
+        "workspace_peak_bytes": 396129600,
+        "full_workflow_monotonic_seconds": 123.89161285098817,
+        "hashes": {
+          "watchdog/resources.jsonl": "2ec7e28b452477b8f2cec55c4cc950a253a98e9bed0ddce9cdbb521d64d566ea",
+          "v18_events.jsonl": "735b2e97b7b45c5cb951c35a2a6532c54f89e8eb2f4ed0f03083d131636e56ae",
+          "v18_worker_resources.jsonl": "5a8d25302fe69c3f779264bee9a4cda4ff97a0cad806157f12057490587e014c",
+          "run_summary.json": "5daa0d7ded563024b4b0f6e7e4da983828e2cf4deefcc5e9d54eaa2b13641fc3",
+          "run_manifest.json": "2a5b359fcb37862a948cfb9dc9e4b081f21eea1264e9e7a28027e79329de25f6"
+        }
+      },
+      "cost": {
+        "stage": "U4_ORIGINAL",
+        "attempt": 2,
+        "source_sha": "37e25d63fd5ac56ad95425a292ad291a7e564d56",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T043233.005266Z",
+        "status": "WORKER_FAILED",
+        "monotonic_seconds": 123.89161285098817,
+        "settled_seconds": 134.21457089194774,
+        "rss_peak_bytes": 1878298624,
+        "hashes": {
+          "run_summary.json": "5daa0d7ded563024b4b0f6e7e4da983828e2cf4deefcc5e9d54eaa2b13641fc3",
+          "run_manifest.json": "2a5b359fcb37862a948cfb9dc9e4b081f21eea1264e9e7a28027e79329de25f6",
+          "physical_p4_cell_condensed_v18_summary.json": "e7317393bca018e1ffa826b264b7ef0dd01ea428d547641cb0c98a41cc407e4a",
+          "watchdog/resources.jsonl": "2ec7e28b452477b8f2cec55c4cc950a253a98e9bed0ddce9cdbb521d64d566ea",
+          "v18_events.jsonl": "735b2e97b7b45c5cb951c35a2a6532c54f89e8eb2f4ed0f03083d131636e56ae",
+          "v18_worker_resources.jsonl": "5a8d25302fe69c3f779264bee9a4cda4ff97a0cad806157f12057490587e014c"
+        }
+      },
+      "root_error": {
+        "message": "V14 time gate limit must be finite and positive",
+        "type": "ValueError"
+      },
+      "masked_by_cleanup_error": {
+        "message": "V14 outer solve must finish between whole PC actions",
+        "type": "RuntimeError"
+      },
+      "checker": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt2_independent.json",
+        "sha256": "b6d2ef5c1ca9fdd689f958a2c19debfee4acddc5c78455f56e5e4c79329e39c4"
+      }
     }
   ],
   "limitations": [
@@ -2356,7 +2463,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "review_v17_p4_blr_tradeoff_closeout",
+  "current_review_record": "review_v18_p4_cell_condensed_closeout",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -3662,5 +3769,73 @@
       "p4_blr_tradeoff_v17_compact.json": "0d0a1c716d5002f950bb325f83660a98b21d376dc28cc27c6356b58fb8123df0",
       "p4_blr_tradeoff_v17_decision.json": "211cc2114d37a167c0f2388487151c84c3124a6665bb79feb2024ad4b1e84082"
     }
+  },
+  "review_v18_p4_cell_condensed_closeout": {
+    "review": "review_report_v18.md",
+    "response": "response_v19.md",
+    "status": "U6_REVIEW_REQUIRED_IMPLEMENTATION_REPLAY_EXHAUSTED",
+    "decision": {
+      "schema": "task039extra.v18.final-decision.v1",
+      "batch_identity": "review_v18_p4_cell_condensed",
+      "status": "U6_REVIEW_REQUIRED_IMPLEMENTATION_REPLAY_EXHAUSTED",
+      "selected_backend": "exact",
+      "next_action": "WAIT_REVIEW",
+      "exact_control_qualified": true,
+      "exact_memory_comparison": "OBSERVED_REDUCTION",
+      "exact_RSS_reduction_fraction": 0.3681520722966656,
+      "BLR_quality_qualified": true,
+      "BLR_additional_value": false,
+      "original_passed": false,
+      "original_status": "IMPLEMENTATION_BLOCKED",
+      "notch_status": "NOT_RUN_ORIGINAL_NOT_QUALIFIED",
+      "p6_numerical_failure_demonstrated": false,
+      "admit_u4": false,
+      "admit_u4_reason": "batch implementation-bug replay already consumed; this is an execution cap, not an exact-core rejection",
+      "exact_fallback_authorized": false,
+      "more_formal_runs_in_this_batch": false,
+      "formal_bug_replay_count": 1,
+      "post_stop_fix_source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
+      "post_stop_fix_full_model_qualification": "NOT_RUN",
+      "time_policy": "observe_only",
+      "old_negative_results_preserved": true,
+      "master_merge_approved": false,
+      "evidence": [
+        {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
+          "sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
+          "sha256": "2fd62a8527f62de132bd6ffdb471bb482fb1d4681216551a5d2fff14fd9465d1"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt1_independent.json",
+          "sha256": "2ccfe2c0f4e6fe64aaf80d3ce5bc5aa1ba4832235042addc62c9801c14932ccc"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt2_independent.json",
+          "sha256": "b6d2ef5c1ca9fdd689f958a2c19debfee4acddc5c78455f56e5e4c79329e39c4"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_focused_tests.log",
+          "sha256": "9dcba0c3f7a78970bb1a5f6e41fb15ff340fe58b688efb5b40aa4ab1dcb7d09f"
+        }
+      ],
+      "next_review_scope": "Decide whether to authorize a new exact-only original run after the tested timer repairs, then the same notch only if original fully passes. No algorithm or epsilon changes proposed."
+    },
+    "compact": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/p4_cell_condensed_v18_compact.json",
+      "sha256": "d6b3a9495ad11eb142e68f6510e1ec87aedeab32aa7ef3efbe534e456cd381d4"
+    },
+    "decision_record": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/p4_cell_condensed_v18_decision.json",
+      "sha256": "6d3627ad4c7e69358a01ac7d34249eda0fd54a29b42ea55cbc3842b0c993a030"
+    }
+  },
+  "user_continuation_v18": {
+    "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
+    "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
+    "status": "AUTHORIZED_CONTINUATION_PENDING_CLEAN_SOURCE",
+    "previous_bug_replay_count": 1
   }
 }

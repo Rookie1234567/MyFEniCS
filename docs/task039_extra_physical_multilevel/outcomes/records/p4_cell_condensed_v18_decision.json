@@ -1,34 +1,55 @@
 {
-  "selected_backend": "exact",
-  "admit_u4": true,
-  "memory": {
-    "peak_ratio": 1.0141626943528148,
-    "live_ratio": 1.0141626943528148,
-    "peak_gate": false,
-    "live_gate": false,
-    "peak_with_live_gate": true,
-    "memory_pass": false
-  },
-  "exact_admission_has_memory_saving_threshold": false,
-  "status": "SELECT_EXACT",
-  "time_policy": "observe_only",
+  "schema": "task039extra.v18.final-decision.v1",
   "batch_identity": "review_v18_p4_cell_condensed",
+  "status": "U4_USER_AUTHORIZED_BUG_CONTINUATION",
+  "selected_backend": "exact",
+  "next_action": "CONTINUE_U4_EXACT",
   "exact_control_qualified": true,
-  "exact_core_safe": true,
+  "exact_memory_comparison": "OBSERVED_REDUCTION",
+  "exact_RSS_reduction_fraction": 0.3681520722966656,
+  "BLR_quality_qualified": true,
+  "BLR_additional_value": false,
+  "original_passed": false,
+  "original_status": "IMPLEMENTATION_BLOCKED",
+  "notch_status": "NOT_RUN_ORIGINAL_NOT_QUALIFIED",
+  "p6_numerical_failure_demonstrated": false,
+  "admit_u4": true,
+  "admit_u4_reason": "Explicit later user instruction; each continuation requires bound implementation-bug evidence.",
   "exact_fallback_authorized": false,
-  "backend_is_provisional_until_U3": false,
-  "reason": "BLR quality passed, actual entries reduced 2.3564%, but full/live RSS ratio 1.014162694 > memory admission; use qualified exact condensation",
+  "more_formal_runs_in_this_batch": true,
+  "formal_bug_replay_count": 1,
+  "post_stop_fix_source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
+  "post_stop_fix_full_model_qualification": "NOT_RUN",
+  "time_policy": "observe_only",
+  "old_negative_results_preserved": true,
+  "master_merge_approved": false,
   "evidence": [
     {
-      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
       "sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0"
     },
     {
-      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
       "sha256": "2fd62a8527f62de132bd6ffdb471bb482fb1d4681216551a5d2fff14fd9465d1"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt1_independent.json",
+      "sha256": "2ccfe2c0f4e6fe64aaf80d3ce5bc5aa1ba4832235042addc62c9801c14932ccc"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt2_independent.json",
+      "sha256": "b6d2ef5c1ca9fdd689f958a2c19debfee4acddc5c78455f56e5e4c79329e39c4"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_focused_tests.log",
+      "sha256": "9dcba0c3f7a78970bb1a5f6e41fb15ff340fe58b688efb5b40aa4ab1dcb7d09f"
     }
   ],
-  "next_stage": "U4_ORIGINAL",
-  "next_input": "input/task39extra/v18_u4_original_exact.dat",
-  "no_more_tau_trials": true
+  "next_review_scope": "Review complete original and conditional notch evidence after execution.",
+  "user_continuation": {
+    "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
+    "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
+    "status": "AUTHORIZED_CONTINUATION_PENDING_CLEAN_SOURCE",
+    "previous_bug_replay_count": 1
+  }
 }

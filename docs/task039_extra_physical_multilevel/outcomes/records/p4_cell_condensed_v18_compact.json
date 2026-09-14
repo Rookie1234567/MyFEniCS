@@ -2,7 +2,7 @@
   "schema": "task039extra.v18.cell-condensed-compact.v1",
   "review": "review_report_v18.md",
   "base_sha": "96827e89ce5ba446c4faa7cb507b777f21953af8",
-  "status": "REPAIRING_ONE_U4_IMPLEMENTATION_BUG",
+  "status": "U4_USER_AUTHORIZED_BUG_CONTINUATION",
   "controls": {
     "U2": {
       "status": "U2_EXACT_CONTROL_PASS",
@@ -3168,7 +3168,171 @@
         "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T042511.389547Z/solve_failure/u4_outer.json": "ffd58fa9641e3da9dbd157427b4ee17f8db5d6bd2638f5f15303ad9e191845e1",
         "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_replay_guard_tests.log": "c1b5ca2e84fac8b950077a90783a2f93f080c54e497c9f715ef6a056b853686b"
       },
-      "fix": "Limit the historical 10800-parameter restriction to enforce mode; preserve positive-finite guard, original numeric screens and observe_only."
+      "fix": "Limit the historical 10800-parameter restriction to enforce mode; preserve positive-finite guard, original numeric screens and observe_only.",
+      "independent": {
+        "schema": "task039extra.v18.partial-fullspace-independent.v1",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T042511.389547Z",
+        "source_sha": "4f15f7182289b3911bba6f766c5cd7e9a7026401",
+        "resources": {
+          "scope": "continuous_parent_process_tree",
+          "gates": {
+            "readable": true,
+            "tree_cap": true,
+            "inventory_cap": true,
+            "workspace_cap": true,
+            "reserve": true,
+            "zero_swap": true,
+            "cleaned": true,
+            "clean_source": true,
+            "observe_only": true
+          },
+          "passed": true,
+          "main_window_end_ns": 1789360073769048183,
+          "factor_live_end_ns": 1789360070084617460,
+          "fullspace_scope": true,
+          "main_full_rss_peak_bytes": 2504851456,
+          "main_live_rss_peak_bytes": 2504851456,
+          "main_full_pss_peak_bytes": 2470751232,
+          "main_live_pss_peak_bytes": 2470751232,
+          "whole_run_rss_peak_bytes": 2504851456,
+          "inventory_peak_bytes": 1830284886,
+          "workspace_peak_bytes": 346846528,
+          "full_workflow_monotonic_seconds": 147.52729119799915,
+          "hashes": {
+            "watchdog/resources.jsonl": "55ccbb4aa3d3fb47b8c2dc6d0e674633b177f3c0d3f9294bd2cdd244a499ee4c",
+            "v18_events.jsonl": "ae09c20cd796aa46aec94bef251e680eac431cd30a7c30b1da013ae24379de43",
+            "v18_worker_resources.jsonl": "9e90197f8c56bd59fc3aadd268fb9d66fd8e053ddaa2eb5143dfcebe3a193d4d",
+            "run_summary.json": "476879b9a52054784d61cb26b1911fceffef863e8733cfcaa124f29d17c67a30",
+            "run_manifest.json": "7410190477d1f1eca66cfef024c7d791f4e216bca0320621bef24eb7cc396354"
+          }
+        },
+        "balance": {
+          "passed": false,
+          "checks_failed": [],
+          "pc_count": 0,
+          "global_mat_solve_count": 0,
+          "closure_samples": [],
+          "coarse_defects": [],
+          "max_closure_relative": null
+        },
+        "actual_PC_count": 0,
+        "root_error": {
+          "message": "bounded outer solve limit must be 10800 seconds",
+          "type": "ValueError"
+        },
+        "worker_cleanup_error": {
+          "message": "bounded outer solve limit must be 10800 seconds",
+          "type": "ValueError"
+        },
+        "last_A6_snapshot": null,
+        "completed_outer_update_count": 0,
+        "p6_qualified": false,
+        "official_outputs": false,
+        "reason": "exception before returned PC was accepted by KSP; no final independent A6 or physical outputs",
+        "hashes": {
+          "physical_p4_cell_condensed_v18_summary.json": "3f76276307a32c6531a63e96fc6b82539d4e5f6670cb402f12c4829d076261ff",
+          "solve_failure/u4_outer.json": "ffd58fa9641e3da9dbd157427b4ee17f8db5d6bd2638f5f15303ad9e191845e1",
+          "run_summary.json": "476879b9a52054784d61cb26b1911fceffef863e8733cfcaa124f29d17c67a30"
+        }
+      }
+    },
+    "U4_attempt2": {
+      "schema": "task039extra.v18.partial-fullspace-independent.v1",
+      "directory": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T043233.005266Z",
+      "source_sha": "37e25d63fd5ac56ad95425a292ad291a7e564d56",
+      "resources": {
+        "scope": "continuous_parent_process_tree",
+        "gates": {
+          "readable": true,
+          "tree_cap": true,
+          "inventory_cap": true,
+          "workspace_cap": true,
+          "reserve": true,
+          "zero_swap": true,
+          "cleaned": true,
+          "clean_source": true,
+          "observe_only": true
+        },
+        "passed": true,
+        "main_window_end_ns": 1789360487182741766,
+        "factor_live_end_ns": 1789360483826643933,
+        "fullspace_scope": true,
+        "main_full_rss_peak_bytes": 1878298624,
+        "main_live_rss_peak_bytes": 1878298624,
+        "main_full_pss_peak_bytes": 1847871488,
+        "main_live_pss_peak_bytes": 1847871488,
+        "whole_run_rss_peak_bytes": 1878298624,
+        "inventory_peak_bytes": 1830284886,
+        "workspace_peak_bytes": 396129600,
+        "full_workflow_monotonic_seconds": 123.89161285098817,
+        "hashes": {
+          "watchdog/resources.jsonl": "2ec7e28b452477b8f2cec55c4cc950a253a98e9bed0ddce9cdbb521d64d566ea",
+          "v18_events.jsonl": "735b2e97b7b45c5cb951c35a2a6532c54f89e8eb2f4ed0f03083d131636e56ae",
+          "v18_worker_resources.jsonl": "5a8d25302fe69c3f779264bee9a4cda4ff97a0cad806157f12057490587e014c",
+          "run_summary.json": "5daa0d7ded563024b4b0f6e7e4da983828e2cf4deefcc5e9d54eaa2b13641fc3",
+          "run_manifest.json": "2a5b359fcb37862a948cfb9dc9e4b081f21eea1264e9e7a28027e79329de25f6"
+        }
+      },
+      "balance": {
+        "passed": true,
+        "checks_failed": [],
+        "pc_count": 1,
+        "global_mat_solve_count": 2,
+        "closure_samples": [
+          {
+            "pc": 1,
+            "closure_norm": 3.9662901453962054e-11,
+            "operation_scale": 5.792987818511472,
+            "relative": 6.8467089344153964e-12
+          }
+        ],
+        "coarse_defects": [
+          {
+            "pc": 1,
+            "call": 1,
+            "rhs_norm": 0.7913581987689474,
+            "defect_norm": 5.778346657818629e-11,
+            "rho": 7.301809303053333e-11
+          },
+          {
+            "pc": 1,
+            "call": 2,
+            "rhs_norm": 2.105135710486809,
+            "defect_norm": 6.923250537798418e-12,
+            "rho": 3.288743097801247e-12
+          }
+        ],
+        "max_closure_relative": 6.8467089344153964e-12
+      },
+      "actual_PC_count": 1,
+      "root_error": {
+        "message": "V14 time gate limit must be finite and positive",
+        "type": "ValueError"
+      },
+      "worker_cleanup_error": {
+        "message": "V14 outer solve must finish between whole PC actions",
+        "type": "RuntimeError"
+      },
+      "last_A6_snapshot": {
+        "explicit_true_residual": 1.0,
+        "iteration": 0,
+        "reported_relative": 1.0,
+        "solution_source": "live_buildSolution",
+        "solve_seconds": 4.476542423981857
+      },
+      "completed_outer_update_count": 0,
+      "p6_qualified": false,
+      "official_outputs": false,
+      "reason": "exception before returned PC was accepted by KSP; no final independent A6 or physical outputs",
+      "hashes": {
+        "physical_p4_cell_condensed_v18_summary.json": "e7317393bca018e1ffa826b264b7ef0dd01ea428d547641cb0c98a41cc407e4a",
+        "solve_failure/u4_outer.json": "366d1c0e44f770caee18aabe24c7d8a15cb93efe20af5fdb16cc574b6d498cdf",
+        "run_summary.json": "5daa0d7ded563024b4b0f6e7e4da983828e2cf4deefcc5e9d54eaa2b13641fc3"
+      }
+    },
+    "U5": {
+      "status": "NOT_RUN_ORIGINAL_NOT_QUALIFIED",
+      "official_result": false
     }
   },
   "baseline": {
@@ -3616,37 +3780,288 @@
   "time_policy": "observe_only",
   "master_merge_approved": false,
   "decision": {
-    "selected_backend": "exact",
-    "admit_u4": true,
-    "memory": {
-      "peak_ratio": 1.0141626943528148,
-      "live_ratio": 1.0141626943528148,
-      "peak_gate": false,
-      "live_gate": false,
-      "peak_with_live_gate": true,
-      "memory_pass": false
-    },
-    "exact_admission_has_memory_saving_threshold": false,
-    "status": "SELECT_EXACT",
-    "time_policy": "observe_only",
+    "schema": "task039extra.v18.final-decision.v1",
     "batch_identity": "review_v18_p4_cell_condensed",
+    "status": "U6_REVIEW_REQUIRED_IMPLEMENTATION_REPLAY_EXHAUSTED",
+    "selected_backend": "exact",
+    "next_action": "WAIT_REVIEW",
     "exact_control_qualified": true,
-    "exact_core_safe": true,
+    "exact_memory_comparison": "OBSERVED_REDUCTION",
+    "exact_RSS_reduction_fraction": 0.3681520722966656,
+    "BLR_quality_qualified": true,
+    "BLR_additional_value": false,
+    "original_passed": false,
+    "original_status": "IMPLEMENTATION_BLOCKED",
+    "notch_status": "NOT_RUN_ORIGINAL_NOT_QUALIFIED",
+    "p6_numerical_failure_demonstrated": false,
+    "admit_u4": false,
+    "admit_u4_reason": "batch implementation-bug replay already consumed; this is an execution cap, not an exact-core rejection",
     "exact_fallback_authorized": false,
-    "backend_is_provisional_until_U3": false,
-    "reason": "BLR quality passed, actual entries reduced 2.3564%, but full/live RSS ratio 1.014162694 > memory admission; use qualified exact condensation",
+    "more_formal_runs_in_this_batch": false,
+    "formal_bug_replay_count": 1,
+    "post_stop_fix_source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
+    "post_stop_fix_full_model_qualification": "NOT_RUN",
+    "time_policy": "observe_only",
+    "old_negative_results_preserved": true,
+    "master_merge_approved": false,
     "evidence": [
       {
-        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
         "sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0"
       },
       {
-        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
         "sha256": "2fd62a8527f62de132bd6ffdb471bb482fb1d4681216551a5d2fff14fd9465d1"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt1_independent.json",
+        "sha256": "2ccfe2c0f4e6fe64aaf80d3ce5bc5aa1ba4832235042addc62c9801c14932ccc"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt2_independent.json",
+        "sha256": "b6d2ef5c1ca9fdd689f958a2c19debfee4acddc5c78455f56e5e4c79329e39c4"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_focused_tests.log",
+        "sha256": "9dcba0c3f7a78970bb1a5f6e41fb15ff340fe58b688efb5b40aa4ab1dcb7d09f"
       }
     ],
-    "next_stage": "U4_ORIGINAL",
-    "next_input": "input/task39extra/v18_u4_original_exact.dat",
-    "no_more_tau_trials": true
+    "next_review_scope": "Decide whether to authorize a new exact-only original run after the tested timer repairs, then the same notch only if original fully passes. No algorithm or epsilon changes proposed.",
+    "superseded_by_user_continuation": {
+      "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
+      "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
+      "status": "AUTHORIZED_CONTINUATION_PENDING_CLEAN_SOURCE",
+      "previous_bug_replay_count": 1
+    }
+  },
+  "post_stop_fix": {
+    "source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
+    "changes": [
+      "new V18 profiles use positive 25/30-second observation references; observe_only remains mandatory",
+      "disarm returned PC before validating timing metadata, preserving the original exception during cleanup"
+    ],
+    "tests": "99 passed in 1.79s",
+    "test_log": {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_focused_tests.log",
+      "sha256": "9dcba0c3f7a78970bb1a5f6e41fb15ff340fe58b688efb5b40aa4ab1dcb7d09f"
+    },
+    "formal_PDE_after_fix": "not_run_replay_exhausted",
+    "mathematical_PC_changed": false
+  },
+  "formal_time": {
+    "runs": [
+      {
+        "stage": "U2_EXACT_CONTROL",
+        "attempt": 1,
+        "source_sha": "e1b5a398a199cdbc7c26ce3af8645daed2eeb7d6",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u2_exact_control__full3d_iterative__mpi1__Mna/20260914T041305.738867Z",
+        "status": "worker_exit0",
+        "monotonic_seconds": 93.13239309299388,
+        "settled_seconds": 103.41273827694835,
+        "rss_peak_bytes": 1785585664,
+        "hashes": {
+          "run_summary.json": "8cd5c4ca782963296e1349e9bfafbabd6011b95afc7909694626efbe9db63699",
+          "run_manifest.json": "a28bbc9d2c92262c6dee1cc8bac1440550b6cb97e3b88dabcadf64ff284137cc",
+          "physical_p4_cell_condensed_v18_summary.json": "7d9f447da6a2d549dc93ba522ac7e31aec988c111b3dbec8b27b30f5d7f724b6",
+          "watchdog/resources.jsonl": "d4d163eac4a677f9c5c6b27666bc2f99aab8b2537f6fcf037afcc0e23f24c6b9",
+          "v18_events.jsonl": "23efeb29f2618f73fd49049525d47d37247bbe8df8839e267c4c091b6b22a8a6",
+          "v18_worker_resources.jsonl": "9b93ee1c0cc0673211f8a3f538f9447f44638e2605175d3f0d2038651a3477fa"
+        }
+      },
+      {
+        "stage": "U3_BLR_CONTROL",
+        "attempt": 1,
+        "source_sha": "5e95066d80579b0e135643f9fd114bd3dcc43424",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u3_blr_control__full3d_iterative__mpi1__Mna/20260914T041932.897188Z",
+        "status": "worker_exit0",
+        "monotonic_seconds": 89.98775546900288,
+        "settled_seconds": 98.82488292499107,
+        "rss_peak_bytes": 1810874368,
+        "hashes": {
+          "run_summary.json": "7bd72273b8054c223644700f80c7ef00a88614ac465e608208827f0b7dcaf64c",
+          "run_manifest.json": "8dc75b36b8a17893ec01178bea41e35885b6cfa094c008ee35b19749e85c637c",
+          "physical_p4_cell_condensed_v18_summary.json": "a5b6b2a48d25eca163d7789dca579e1d72655151c457dabc10ff0189bbb9b84c",
+          "watchdog/resources.jsonl": "f7f3020ec3e17d20700b3abcfa4d97b2f82ff85d652857fb7e15a0369a119bfd",
+          "v18_events.jsonl": "5f5e3ae90856845290ac2a0e6f697569969a9d4ac08ff7ddafdf2df17167d2d2",
+          "v18_worker_resources.jsonl": "05e9b6bd9d370801a57fa72ad34327b0bfa1914a9feceff720cc1da70889c44c"
+        }
+      },
+      {
+        "stage": "U4_ORIGINAL",
+        "attempt": 1,
+        "source_sha": "4f15f7182289b3911bba6f766c5cd7e9a7026401",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T042511.389547Z",
+        "status": "WORKER_FAILED",
+        "monotonic_seconds": 147.52729119799915,
+        "settled_seconds": 162.41545671800114,
+        "rss_peak_bytes": 2504851456,
+        "hashes": {
+          "run_summary.json": "476879b9a52054784d61cb26b1911fceffef863e8733cfcaa124f29d17c67a30",
+          "run_manifest.json": "7410190477d1f1eca66cfef024c7d791f4e216bca0320621bef24eb7cc396354",
+          "physical_p4_cell_condensed_v18_summary.json": "3f76276307a32c6531a63e96fc6b82539d4e5f6670cb402f12c4829d076261ff",
+          "watchdog/resources.jsonl": "55ccbb4aa3d3fb47b8c2dc6d0e674633b177f3c0d3f9294bd2cdd244a499ee4c",
+          "v18_events.jsonl": "ae09c20cd796aa46aec94bef251e680eac431cd30a7c30b1da013ae24379de43",
+          "v18_worker_resources.jsonl": "9e90197f8c56bd59fc3aadd268fb9d66fd8e053ddaa2eb5143dfcebe3a193d4d"
+        }
+      },
+      {
+        "stage": "U4_ORIGINAL",
+        "attempt": 2,
+        "source_sha": "37e25d63fd5ac56ad95425a292ad291a7e564d56",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T043233.005266Z",
+        "status": "WORKER_FAILED",
+        "monotonic_seconds": 123.89161285098817,
+        "settled_seconds": 134.21457089194774,
+        "rss_peak_bytes": 1878298624,
+        "hashes": {
+          "run_summary.json": "5daa0d7ded563024b4b0f6e7e4da983828e2cf4deefcc5e9d54eaa2b13641fc3",
+          "run_manifest.json": "2a5b359fcb37862a948cfb9dc9e4b081f21eea1264e9e7a28027e79329de25f6",
+          "physical_p4_cell_condensed_v18_summary.json": "e7317393bca018e1ffa826b264b7ef0dd01ea428d547641cb0c98a41cc407e4a",
+          "watchdog/resources.jsonl": "2ec7e28b452477b8f2cec55c4cc950a253a98e9bed0ddce9cdbb521d64d566ea",
+          "v18_events.jsonl": "735b2e97b7b45c5cb951c35a2a6532c54f89e8eb2f4ed0f03083d131636e56ae",
+          "v18_worker_resources.jsonl": "5a8d25302fe69c3f779264bee9a4cda4ff97a0cad806157f12057490587e014c"
+        }
+      }
+    ],
+    "monotonic_sum_seconds": 454.5390526109841,
+    "conservative_settled_sum_seconds": 498.8676488118883,
+    "source": {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/review_v18_p4_cell_condensed/shared_workflow_ledger.json",
+      "sha256": "e24fba12a020fe506c99928dfc7a4ecccd4ae80aa06884273fe3637d068d4d1b"
+    },
+    "time_policy": "observe_only",
+    "global_symbolic_count": 4,
+    "global_numeric_count": 4,
+    "global_MatSolve_count": 11,
+    "formal_bug_replay_count": 1,
+    "active_attempts": []
+  },
+  "historical_budget": {
+    "predecessors": {
+      "v14": {
+        "batch_identity": "review_v14",
+        "effective_budget_snapshot": {
+          "active_attempts": [],
+          "active_reservations_seconds": 0.0,
+          "budget_used_seconds": 4685.228437647174,
+          "conservative_allowance_seconds": 3.1,
+          "elapsed_seconds_semantics": "measured_workflow_time_only",
+          "measured_elapsed_seconds": 4082.128437647174,
+          "policy_debit_seconds": 600.0,
+          "policy_debits": [
+            {
+              "actual_elapsed_seconds": null,
+              "basis": "ORIGINAL_RESERVATION_NOT_REFUNDED",
+              "recovery_id": "V15_Q0_EIO_ONCE",
+              "seconds": 600.0
+            }
+          ],
+          "remaining_seconds": 38514.77156235283,
+          "total_budget_seconds": 43200.0
+        },
+        "measured_elapsed_seconds": 4082.128437647174,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_schur_v14/review_v14/shared_workflow_ledger.json",
+        "policy_debits": [
+          {
+            "actual_elapsed_seconds": null,
+            "basis": "ORIGINAL_RESERVATION_NOT_REFUNDED",
+            "recovery_id": "V15_Q0_EIO_ONCE",
+            "seconds": 600.0
+          }
+        ],
+        "read_only": true,
+        "schema": "task039extra.v14.shared-workflow-ledger.v1",
+        "sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3",
+        "unknown_elapsed_attempts": [
+          {
+            "actual_elapsed_seconds": null,
+            "attempt_index": 0,
+            "reserved_seconds": 600.0,
+            "stage": "Q0_CORE",
+            "status": "RESERVED"
+          }
+        ],
+        "unknown_elapsed_is_not_new_measurement": true
+      },
+      "v16": {
+        "batch_identity": "review_v16_p4_blr",
+        "effective_budget_snapshot": {
+          "active_attempts": [],
+          "active_reservations_seconds": 0.0,
+          "budget_used_seconds": 1228.836658980034,
+          "conservative_allowance_seconds": 3.1,
+          "elapsed_seconds_semantics": "measured_workflow_time_only",
+          "measured_elapsed_seconds": 625.736658980034,
+          "policy_debit_seconds": 600.0,
+          "policy_debits": [
+            {
+              "actual_elapsed_seconds": null,
+              "basis": "HISTORICAL_V14_POLICY_REFERENCE",
+              "recovery_id": "V15_Q0_EIO_ONCE",
+              "seconds": 600.0,
+              "source_ledger_sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3"
+            }
+          ],
+          "remaining_seconds": 41971.163341019965,
+          "total_budget_seconds": 43200.0
+        },
+        "measured_elapsed_seconds": 625.736658980034,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_blr_v16/review_v16_p4_blr/shared_workflow_ledger.json",
+        "policy_debits": [
+          {
+            "actual_elapsed_seconds": null,
+            "basis": "HISTORICAL_V14_POLICY_REFERENCE",
+            "recovery_id": "V15_Q0_EIO_ONCE",
+            "seconds": 600.0,
+            "source_ledger_sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3"
+          }
+        ],
+        "read_only": true,
+        "schema": "task039extra.v16.shared-workflow-ledger.v1",
+        "sha256": "cc97e1c1c00ef78111450c6d37cb98ce40f074d547bd4d75fd9a16b308816d7a",
+        "unknown_elapsed_attempts": [],
+        "unknown_elapsed_is_not_new_measurement": true
+      },
+      "v17": {
+        "batch_identity": "review_v17_p4_blr_tradeoff",
+        "effective_budget_snapshot": {
+          "active_attempts": [],
+          "active_reservations_seconds": 0.0,
+          "budget_used_seconds": 626.1990331012247,
+          "conservative_allowance_seconds": 0.0,
+          "elapsed_seconds_semantics": "measured_workflow_time_only",
+          "measured_elapsed_seconds": 626.1990331012247,
+          "policy_debit_seconds": 0.0,
+          "policy_debits": [],
+          "remaining_seconds": 42573.80096689877,
+          "total_budget_seconds": 43200.0
+        },
+        "measured_elapsed_seconds": 626.1990331012247,
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/review_v17_p4_blr_tradeoff/shared_workflow_ledger.json",
+        "policy_debits": [],
+        "read_only": true,
+        "schema": "task039extra.v17.shared-workflow-ledger.v1",
+        "sha256": "b5192686a1f3f498ee522f14def3f641b87a39a5df4da18622c24823040d290f",
+        "unknown_elapsed_attempts": [],
+        "unknown_elapsed_is_not_new_measurement": true
+      }
+    },
+    "old_600_seconds": "policy occupation only; actual elapsed remains unknown",
+    "new_fees_do_not_replace_old_fees": true
+  },
+  "engineering_time": {
+    "pre_formal_observed_window_utc_seconds": 7126.093486070633,
+    "scope": "root/Luna overlapping review, implementation, tests and waiting; wall observation, not CPU time",
+    "earlier_preparation_seconds": null,
+    "post_formal_repairs_and_documentation_seconds": null,
+    "unknowns_not_zero": true,
+    "repair_1_window": "between first U4 termination and the one replay; formal costs are separately retained",
+    "post_stop_reporting_utc": "2026-09-14T04:48:18.797500+00:00"
+  },
+  "user_continuation": {
+    "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
+    "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
+    "status": "AUTHORIZED_CONTINUATION_PENDING_CLEAN_SOURCE",
+    "previous_bug_replay_count": 1
   }
 }

@@ -1,3 +1,21 @@
+# Task39extra Response V19 / Review V18：准确单元凝聚有效，完整p6尚未资格化
+
+用户最新授权：完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug。以下两场实现失败及费用保留为续跑前快照；原重放额度不再阻断本次有明确 bug 证据的续跑。准确凝聚、原数值/物理/资源 Gate 和 observe_only 均保持，U4 正在继续，U5 仍以 original 完整通过为条件。
+
+| 问题 | 证据与结论 |
+|---|---|
+| 准确p4逆 | 三冻结RHS和三次重复/线性调用通过原A4及场/旋度检查，strict slave-zero；252单元共享12类局部LU，trace+80端口仅一个全局因子 |
+| 内存 | Q1 2,825,973,760 B→U2 1,785,585,664 B，全过程RSS减少36.8152%；allocated/used/缓存/临时池分列 |
+| 可选BLR | 新矩阵唯一tau1e-5质量通过，但RSS增加1.4163%，关闭BLR，选择准确凝聚 |
+| 完整三维 | original两次实现异常，唯一bug replay耗尽；第二次已完成一个真实BAL_H PC，两粗修正和闭合通过，但返回被计时异常丢弃，0次有效外层更新。notch条件不成立 |
+| 修复与界限 | 停止后修复计时观察值和错误清理，99项测试通过，未再运行PDE；不称数值不收敛、不称完整PC已通过；不合并master |
+
+单元凝聚先消去单元内部未知量，解共享trace和端口后再恢复完整场，以局部缓存费用换取较小全局因子。本轮完整p6没有最终A6、official E/H、近场、R/T/A、A_volume、80模式或守恒证据；成功的p4内存百分比不能当作完整p6优化幅度。正式费用含所有失败和重放，保守累计498.867649 s，旧600秒政策占用的真实耗时仍unknown。
+
+模型登记：`task39extra_v18_u2_exact_control`、`task39extra_v18_u3_blr_control`、`task39extra_v18_u4_original_exact`（两attempt）；notch未运行。[逐场索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+
+---
+
 # Task39extra Response V18 / Review V17 执行结果：有限 BLR tradeoff
 
 | Model ID | 来源/配置 | 实测结果 | 状态与边界 |

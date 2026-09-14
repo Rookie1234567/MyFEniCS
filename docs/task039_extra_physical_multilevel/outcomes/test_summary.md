@@ -1,3 +1,19 @@
+# Response V19 / Review V18 验证
+
+用户最新授权：完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug。以下两场实现失败及费用保留为续跑前快照；原重放额度不再阻断本次有明确 bug 证据的续跑。准确凝聚、原数值/物理/资源 Gate 和 observe_only 均保持，U4 正在继续，U5 仍以 original 完整通过为条件。
+
+| 验证 | 结果与口径 |
+|---|---|
+| 最终相关测试 | 99 passed in 1.79s，`root_engineering/final_focused_tests.log`；包含真实单元/两单元凝聚、非零端口/内部RHS、CSR、清理、入口、ledger、旧BLR/profile/budget、真实KSP与计时 |
+| 共享helper旧路径 | 最后相关helper改动后串行4 passed；MPI2三个fixture各rank3 passed，无新增正式MPI2大模型 |
+| 独立checker | U2及U3原始数组/范数/计数/资源重算；U3 memory=false；两次U4资源通过，第二次一个PC闭合通过但完整p6=false |
+| 停止后的修复 | 新profile仅改正观察参考值，observe_only不变；记录错误不会再留住PC标记，原始异常得到保留；未在完整PDE中再次验证 |
+| 未运行 | Ruff未安装；full repository pytest、MPI4新资格与CI未运行，未声称通过 |
+
+最终测试命令以 qualified activation 为前提：`python -m pytest -q src/test/test_physical_schur_v14_runtime_clock.py src/test/test_physical_schur_v14_fgmres.py src/test/test_task39extra_v18_*.py src/test/test_task39extra_v16_blr.py src/test/test_task39extra_v17_blr.py src/test/test_260_task038_input_schema.py src/test/test_physical_schur_v14_budget.py`。compileall、diff-check通过；文档/身份最终复核另存final_static_checks.json。开发期失败日志和旧数值负结果保留。[完整边界](../response_v19.md)。
+
+---
+
 # 当前验证：Response V18 / Review V17 的有限 BLR 试验
 
 | 检查 | 本轮结果 | 证据范围 |
