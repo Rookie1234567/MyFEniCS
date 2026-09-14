@@ -1586,3 +1586,14 @@ default，也不批准合入 master；raw failure root 与 negative authority �
 补充诊断口径：20260907 fresh 的 reported/global/bottom/modal/top=`7.246419845266236e-10 / 6.711767430501667e-10 / 6.842952026951734e-12 / 7.252171978674087e-11 / 6.339676899706935e-10` 仅为 diagnostic marker only；formal_result/gates/physics=null，failure stage=consumer_exit(solution_snapshot_destroyed)。其 lifecycle actions_destroyed/component_cleanup/factor_cleanup/rss_drop均通过，factor count after cleanup bottom/top=0/0，memory authority=`274205020160→260347596800 B`。producer telemetry为 qep_begin=`0.192512509 s`、qep_ready=`17998.540383 s`、packet bytes=`913401973`、packet write max-rank=`0.963676714 s`、consumer_qep_required=false；qep区间不等于 eigensolve。
 
 两次峰值可作跨 run 比较，但不能相加为同一 workflow，也不能把约 `42.166 GiB`差额写成对象释放量；factor NNZ发生变化。retry release-before-recovery 的 cgroup authority=`229028663296→218838220800 B`，final marker=`211014574080 B`。
+
+## Task041 BAL_H：13.5 nm 与 5 nm exact 对照登记（2026-09-14）
+
+| model / method | p / h / M / MPI | 数值身份与状态 | 资源/时间边界 | registry 结论 |
+|---|---|---|---|---|
+| 13.5 nm exact | p6 / 10 nm / 120 / 8 | source `cda7cc8a785c38352c840e6ec2737c08215e7ed7`；冻结 comparator PASS | consumer `390.9697992079891 s`；public tree 合同通过 | exact reference for H2 |
+| 13.5 nm BAL_H | p6 / 10 nm / 120 / 8 | source `49604fd4f7907082642430a12c0bf9de35c58df2`；冻结 comparator PASS | consumer `3002.409810984973 s`；consumer resource 合同通过；共同 producer peak `2722349056 B` | research-only opt-in comparison |
+| 5 nm exact | p6 / 4 nm / 480 / 8 | source `db07f1cfb34f0135f636fa96a0a37b29a3a2969b`；五 residual、R/T/A、场与 canonical 通过 | consumer `1868.4593736410607 s`；完整 public-tree RSS/PSS/USS `89123696640/87368944640/87121264640 B` | exact reference for H3 |
+| 5 nm BAL_H | p6 / 4 nm / 480 / 8 | source `51694bbc49d90e70eef87c953f07c695f5fc519c`；numerical/comparison contract PASS | worker `191662.819902868 s`；public parent/summary 缺失，orphan terminal gate false；完整 consumer resource unqualified | `RESOURCE_COMPARISON_INCONCLUSIVE`，不得升级 production |
+
+BAL_H 的可复用接线依赖 `physical_balanced_*` core、side/trace transfer、modal block-LDU、Task041 workflow/launcher/supervisor 和冻结 comparator；对应 H1 admission/组件、H2/H3 fresh evidence 与 test351/352 记录在 Task041 中心报告。它改变了本轮研究实现的数值组件，但不改变旧 exact/default 路径。H3 legacy packet descriptor/manifest 仍只读绑定；Task39extra V5 donor source 是 `094204b7281fe867744fe334e8753d2faebaf89b`。H3g orphan sampler 是 incident-specific `do-not-merge/not qualified for reuse`，不能登记为 reusable watchdog。

@@ -2676,3 +2676,11 @@ architecture 判断是工程推断，不是正式容量外推。
 5 nm 继续区分 Task039 inherited、Task041 MPI8 reproduction 和 MPI1；
 MPI1 equivalence 未建立。完整 raw evidence 仍在 ignored roots，compact
 checkpoint v2 和 Task041 outcomes 为证据入口。
+
+## 2026-09-14：Task041 BAL_H H2/H3 证据收口
+
+Task041 的 BAL_H 是显式 research-only opt-in：它以每侧一个准确 p4 粗因子和迭代平衡响应，替代完整 p6 侧区精确因子的驻留；全局 Maxwell 方程、global action/RHS、P/PH 传递和 recovery 定义保持不变。H2（13.5 nm、M120）与 H3（5 nm、M480）的 exact/BAL_H 数值对照通过冻结合同；H3 BAL_H worker 的数值与物理 own gates 通过，但 public supervisor 早在 `2026-09-13T03:06:53.264Z` 附近丢失，结果落盘后的 orphan sampler 又发生 terminal gate false 与 TERM/KILL 退出竞态，因此完整 consumer/共同 producer 资源资格仍为 `RESOURCE_COMPARISON_INCONCLUSIVE`。
+
+H3 candidate 为 `p6/h4/M480/MPI8`，worker wall `191662.819902868 s`（约 `53.239672 h`），Schur `183016.74211002886 s`；p6 factor=0、每侧 p4=1、每侧 nested KSP=1，清理后归零。旧 public 段观测 RSS/PSS/USS 峰为 `53221163008/50485623808/50090246144 B`（raw 总计 226484 行，其中 consumer 226483 行内 2287 行同时可读、224196 行缺测，另含 preflight 1 行），但仅覆盖该段；orphan 三类记录 `sample/read_only/gate_v2=822/6284/442921` 来自同一文件，不能拼成完整峰。完整 H3 exact public-tree RSS/PSS/USS 为 `89123696640/87368944640/87121264640 B`。详细数值、身份、hash 和失败边界见 [Task041 BAL_H 中心报告](task041_mpi1_shortwave_hybrid_capacity/outcomes/side_balh_transfer_v1.md) 与 [compact record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_side_balh_transfer_v1.json)。
+
+本轮新增 BAL_H numerical/core 组件以及 Floquet empty-rank collective 修复；BAL_H 仍是 research-only opt-in，未提升为 production default 或 master 合入。Task39extra V5 donor source 为 `094204b7281fe867744fe334e8753d2faebaf89b`，只作为迁移来源记录。

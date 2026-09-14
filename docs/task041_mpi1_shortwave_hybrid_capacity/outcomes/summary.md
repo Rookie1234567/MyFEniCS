@@ -1,6 +1,27 @@
 # Task041 outcomes summary
 
-## 总结判定
+## H4 当前 Task041 BAL_H 终态（2026-09-14）
+
+BAL_H 用每侧一个准确 p4 粗因子和迭代平衡响应替代完整 p6 侧区精确因子；全局 Maxwell 方程、全局 action/RHS 和正式 recovery 定义不变。它是降低因子驻留内存的研究候选，代价是重复侧区求解和更长 wall，仍为显式 `research_only_approximate_candidate`，没有提升为 production default。
+
+| 项目 | 结果 |
+|---|---|
+| 最终审查分类 | `RESOURCE_COMPARISON_INCONCLUSIVE` |
+| 数值/物理 | H2 13.5 nm exact/BAL_H 与 H3 5 nm exact/BAL_H 均通过冻结比较；H3 candidate worker own gates 通过 |
+| H3 comparator 原始分类 | `TASK041_SIDE_BALH_NUMERICAL_OR_RESOURCE_FAIL`，exit1；`numerical_pass=true`、`comparison_contract_pass=true`、consumer resource false |
+| H3 exact | p6/h4/M480/MPI8，consumer wall `1868.4593736410607 s`，完整 public-tree RSS/PSS/USS `89123696640/87368944640/87121264640 B` |
+| H3 BAL_H | p6/h4/M480/MPI8，worker wall `191662.819902868 s`；Schur `183016.74211002886 s`、outer `5486.829851052957 s`；public parent/最终 summary 缺失，资源/正常退出未资格化 |
+| H2 consumer 描述 | BAL_H RSS 比 exact 低 `254894080 B`（`2.707606%`），但 consumer wall 约慢 `7.68x`；不裁决跨模型可信节省 |
+| 未运行 | `full3d_secondary`、H3/H4 的 5 nm 新 producer/QEP、全仓 pytest、CI；不启动更短波长 |
+| 核心证据 | [H4 中心报告](side_balh_transfer_v1.md)、[compact record](records/task041_side_balh_transfer_v1.json)、[H3 completion audit](../../../results/task041_side_balh_component_audit/h3h_final_20260914_51694bbc/h3_completion_audit.json) |
+
+H3 candidate 的完整数值比较仍为 PASS；整体 false 仅表示 public supervisor/资源证据不完整。H3g 的 terminal sampler 最后一行 gate false、实际九组 TERM 与 rank0 组 KILL、`notLoaded` 通知失败和 parent 丢失均保留，不改写成正常 MPI 退出或全流程资源通过。
+
+H3 candidate 的 public memory 段是无 `record_type` 的 synthetic label：226484 行（preflight 1 + consumer 226483），RSS 峰 `53221163008 B`，同时可读 PSS/USS 峰 `50485623808/50090246144 B`（2287 行可读、224196 行缺测），min MemAvailable=`2023682953216 B`。job swap 为 `0`，global used 的既有 baseline 为 `8192 B`，used/pswpin/pswpout delta 为 `0`；这些只是该段观测，不能升级为完整 consumer 峰。
+
+账本当前 `203701.83937335422 s` 仅是显式 measured records 的覆盖和；初始 `6000 s` 是 derived conservative allowance，不是数学上界，不能写成整批完整实测耗时。三段 orphan 记录均来自同一个 hash-bound 文件，按 `record_type` 为 `822/6284/442921`，不是三个独立 raw 文件。
+
+## 历史 3 nm 总结判定
 
 | 字段 | 最终值 |
 |---|---|
