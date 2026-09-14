@@ -1,0 +1,54 @@
+{
+  "record_type": "2nm_h1p5_formal_geometry_rule_scan",
+  "status": "READ_ONLY_DIAGNOSTIC",
+  "run_reference": "results/euv_grazing1_phi0/original_2nm_si_p6h1p5_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260914T013346.036155Z",
+  "source_sha_before_geometry_patch": "296afa6a6c231b6ab067ad928c9f827ee72f5e98",
+  "scope": "Actual 34x17x94 Q1 geometry (54332 cells), one-cell p6 ReferenceCellBasis metadata, no actual p6 space, MPC, AIJ, H6 setup, factor, or PDE.",
+  "input_geometry": {
+    "axis_cells": [34, 17, 94],
+    "axis_points": [35, 18, 95],
+    "geometry_dofmap_shape": [54332, 8],
+    "geometry_cmap_degree": 1
+  },
+  "material_rule_identity": {
+    "mu_storage": "same dummy DG0 Function, all values 1",
+    "mass_storage": "same dummy DG0 Function, all values 2",
+    "original_and_action_forms_share_coefficients": true,
+    "quadrature_audit_equal": true
+  },
+  "criterion": "max(abs(J(q)-J(q0))) <= 128*eps*max(abs(J(q0)))",
+  "summation": "NumPy default einsum optimize=False for batch scan; worst raw and centered cells independently rechecked with the production per-cell expression einsum('aqi,ib->qba', derivatives, x).",
+  "rules": {
+    "original_form": {
+      "audit": {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "points": 512,
+        "points_sha256": "dfd7f88ca358f9ef5a1a48bbd8b09e080b0bc24ce6215cb74718bd13dd5e2fc0",
+        "weights_sha256": "5eedb32c5e648bf31a102add0c230ccd7513f59b75fc28b21dd2c613db1ef09d",
+        "geometry_derivatives_shape": [3, 512, 8]
+      },
+      "batch_scan": {
+        "batch_cells": 512,
+        "raw_exceed_count": 25432,
+        "centered_exceed_count": 0,
+        "raw_worst_cell": 34968,
+        "raw_worst_delta": 9.501427422620168e-14,
+        "centered_worst_cell": 352,
+        "centered_worst_delta": 1.5543122344752192e-15,
+        "min_det": 2.9761904761904217,
+        "max_det": 3.3088235294118395
+      },
+      "production_rechecks": {
+        "raw_worst": {"cell": 34968, "delta": 9.501427422620168e-14, "threshold": 4.263256414560682e-14, "ratio": 2.2286783854166243, "exceeds": true, "det": 3.3088235294118262},
+        "centered_worst": {"cell": 352, "delta": 1.5543122344752192e-15, "threshold": 4.2632564145606005e-14, "ratio": 0.036458333333333336, "exceeds": false, "det": 3.1512605042016752}
+      }
+    },
+    "action_form": {
+      "audit_same_as_original_form": true,
+      "batch_scan_same_as_original_form": true,
+      "production_rechecks_same_as_original_form": true
+    }
+  },
+  "interpretation": "Both formal p6 quadrature rules reproduce the common absolute-coordinate cancellation; centered coordinates produce zero false rejections and positive determinants across the actual mesh. This is a geometry-rule diagnostic, not evidence that the failed formal run reached a uniquely identified call site; its log had no traceback and the two same-message candidates remain recorded."
+}

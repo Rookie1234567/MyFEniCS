@@ -1,0 +1,95 @@
+{
+  "record_type": "2nm_h1p5_formal_failure_compact",
+  "status": "PRESERVED_FAILURE_NO_RETRY",
+  "run": {
+    "path": "results/euv_grazing1_phi0/original_2nm_si_p6h1p5_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260914T013346.036155Z",
+    "run_id": "original_2nm_si_p6h1p5_balanced_h6_p4_native",
+    "source_sha": "296afa6a6c231b6ab067ad928c9f827ee72f5e98",
+    "input_sha256": "34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f",
+    "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "start_time": "2026-09-14T01:33:46.036233+00:00",
+    "end_time": "2026-09-14T03:00:01.909375+00:00",
+    "workflow_seconds": 5175.897725678049,
+    "time_limit_mode": "none",
+    "exit_status": 4,
+    "result_classification": "WORKER_FAILED",
+    "failure_message": "Task38 Full3D iterative adapter failed: only affine geometry is qualified",
+    "iterations_present": false,
+    "monitor_residuals_present": false,
+    "original_artifacts_retained": true
+  },
+  "stages": [
+    {"stage": "workflow_started", "phase": "setup", "elapsed_monotonic_seconds": 0.000031762052},
+    {"stage": "shared_mesh_spaces_started", "phase": "setup", "elapsed_monotonic_seconds": 1.478377611144, "facts": {"degrees": [6, 4]}},
+    {"stage": "h6_original_setup_started", "phase": "setup", "elapsed_monotonic_seconds": 150.889051767066}
+  ],
+  "resources": {
+    "watchdog_classification": "WORKER_FAILED",
+    "samples": 15434,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [1520747, 1520757, 1522912, 1522913, 1523152],
+    "rss_peak_bytes": 5115244544,
+    "swap_peak_bytes": 0,
+    "global_pswp_baseline_pages": {"pswpin": 0, "pswpout": 2},
+    "global_pswp_delta_pages": {"pswpin": 0, "pswpout": 0},
+    "launch_cap_bytes": 1730480331161,
+    "planning_cap_bytes": 1622325310464,
+    "effective_available_bytes_at_launch": 2074612776960,
+    "resource_gate_cause": false,
+    "source_clean_at_end": true
+  },
+  "p0_ledger_reference": {
+    "record": "docs/task39extra_para_workstation_capacity/outcomes/records/2nm_p0_preflight_v1.json",
+    "derived_payload_bytes": 1256737280880,
+    "engineering_allowance_bytes": 137438953472,
+    "aggregate_planning_bytes": 1394176234352,
+    "planning_cap_bytes": 1622325310464,
+    "planning_headroom_bytes": 228149076112,
+    "lu_bytes": "not included; P2 not reached"
+  },
+  "geometry_probe": {
+    "scope": "read-only Q1 geometry on actual h1.5 boundary-fitted mesh; no FE space, MPC, AIJ, H6, or outer iteration",
+    "synthetic_diagnostic_note": "The earlier 1156-cell count used synthetic points [[0,0,0],[0.25,-0.25,0.5],[-0.4,0.3,-0.2]], not the formal quadrature points; it is not a formal-kernel trigger count.",
+    "axis_cells": [34, 17, 94],
+    "axis_points": [35, 18, 95],
+    "mesh_cells": 54332,
+    "geometry_cmap_degree": 1,
+    "geometry_dofmap_shape": [54332, 8],
+    "derivative_partition_sum_max": 4.996003610813204e-16,
+    "criterion": "max(abs(J(q)-J(q0))) <= 128*eps*max(abs(J(q0)))",
+    "raw_absolute_coordinate_check": {
+      "exceed_count": 1156,
+      "worst_cell": 26298,
+      "worst_vertices_min": [0.0, 0.0, 93.0],
+      "worst_vertices_max": [1.5, 1.4705882352941178, 94.5],
+      "cell_widths": [1.5, 1.4705882352941178, 1.5],
+      "max_delta": 5.054290319606025e-14,
+      "threshold": 4.263256414560612e-14,
+      "ratio": 1.1855468749999971,
+      "min_det": 2.9761904761903675,
+      "max_det": 3.308823529411778
+    },
+    "translated_local_coordinate_check": {
+      "coordinate_expression": "x - x[0]",
+      "exceed_count": 0,
+      "max_delta": 4.979676801627541e-16,
+      "max_ratio": 0.011680453431372556,
+      "translation_shift_test": [1000000.0, -2000000.0, 3000000.0],
+      "local_jacobian_difference_after_shift": 1.0956746621104685e-10
+    },
+    "synthetic_nonaffine_cell": {
+      "vertex_perturbation": 0.05,
+      "delta": 0.03400000000000012,
+      "threshold": 4.263256414560599e-14,
+      "ratio": 797512434013.5286,
+      "original_criterion_rejects": true
+    },
+    "root_cause_status": "absolute-coordinate cancellation in the affine Q1 Jacobian check is confirmed by synthetic and formal-rule scans; the failed run had no traceback, so the original exception remains two candidate call sites (partial assembly and PositiveCellBasis.cell), not a uniquely captured stack. Preserve threshold and reject genuine non-affine cells."
+  },
+  "notification_gap": {
+    "watchdog_resources_continued": true,
+    "automatic_notify_v2_wiring": false,
+    "observer": "pending_main_review; read-only detached observer proposed, no observer started"
+  }
+}

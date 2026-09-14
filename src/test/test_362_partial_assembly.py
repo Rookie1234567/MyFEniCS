@@ -13,6 +13,8 @@ import ufl
 
 from src.solvers.fullspace_mpc_action import FullspaceMpcFormAction
 from src.solvers.fullspace_partial_assembly import IsotropicPartialAssembly
+from src.solvers.fullspace_quadrature_diagonal import PositiveCellBasis
+from src.solvers.physical_error_metric import _physical_basis
 from src.solvers.fullspace_same_mesh_hcurl_pmg_global import same_mesh_positive_form
 
 
@@ -139,6 +141,37 @@ def test_nonaffine_geometry_and_nonpositive_material_rejected():
     domain.geometry.x[0, 0] += .05
     with pytest.raises(NotImplementedError, match="affine"):
         IsotropicPartialAssembly(space, mu, mass)
+
+
+def test_translated_affine_geometry_is_qualified_by_all_three_metrics():
+    """A large origin must not turn an affine Q1 cell into a false rejection."""
+    domain = mesh.create_unit_cube(MPI.COMM_SELF, 1, 1, 1,
+                                   cell_type=mesh.CellType.hexahedron)
+    domain.geometry.x[:] += np.array([1.0e6, -2.0e6, 3.0e6])
+    space = fem.functionspace(domain, ("N1curl", 2))
+    dg = fem.functionspace(domain, ("DG", 0))
+    mu, mass = fem.Function(dg), fem.Function(dg)
+    mu.x.array[:] = 1.
+    mass.x.array[:] = 2.
+
+    # This is the actual H6 partial-assembly construction path's geometry check.
+    partial = IsotropicPartialAssembly(space, mu, mass)
+    domain.topology.create_entity_permutations()
+    permutation = domain.topology.get_cell_permutation_info()[0]
+
+    # The original diagonal and lossless metric use the same ReferenceCellBasis
+    # quadrature metadata but are checked independently here.
+    diagonal = PositiveCellBasis(space, mu, mass)
+    values, curls, weights, coefficients = diagonal.cell(0, permutation)
+    metric_values, metric_curls, metric_weights = _physical_basis(
+        diagonal, 0, permutation)
+    assert np.isfinite(partial.metrics).all()
+    assert np.isfinite(values).all() and np.isfinite(curls).all()
+    assert np.isfinite(metric_values).all() and np.isfinite(metric_curls).all()
+    np.testing.assert_allclose(weights, metric_weights)
+    np.testing.assert_allclose(values, metric_values)
+    np.testing.assert_allclose(curls, metric_curls)
+    assert coefficients == [1., 2.]
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size != 2, reason="explicit tiny MPI2 qualification only")

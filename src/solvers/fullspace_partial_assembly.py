@@ -54,6 +54,7 @@ class IsotropicPartialAssembly:
         self.metrics = np.empty((self.cell_count, 2, 3, 3))
         for cell in range(self.cell_count):
             x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
+            x = x - x[0]
             jacobians = np.einsum('aqi,ib->qba', self.basis.geometry_derivatives, x)
             jacobian = jacobians[0]
             scale = max(float(np.max(np.abs(jacobian))), np.finfo(float).tiny)

@@ -89,6 +89,7 @@ def _physical_basis(basis, cell, permutation):
     space = basis.space
     mesh = space.mesh
     x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
+    x = x - x[0]
     jacobians = np.einsum('aqi,ib->qba',basis.geometry_derivatives,x)
     jacobian = jacobians[0]
     scale = max(float(np.max(np.abs(jacobian))),np.finfo(float).tiny)

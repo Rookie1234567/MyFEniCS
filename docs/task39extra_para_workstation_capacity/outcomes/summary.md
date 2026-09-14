@@ -9,9 +9,17 @@
 | R1 native direct matched reference | NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL | [reference compact](records/r1_native_reference.json)、[80通道](records/r1_native_reference_80_channels.json) |
 | R2 notch、条件native reference | `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`；已清场，待审 | [R2负结果 compact](records/r2_notch_attempt1.json) |
 | 5 nm formal p6/h4 | own数值/物理 Gate 通过；`REFERENCE_AUTHORITY_LIMITED`；资源连续资格不追认 | [5 nm compact](records/5nm_formal_attempt1.json)、[600通道CSV](records/5nm_dtn_600_channels.csv)、[tracked checker](records/5nm_checker_recheck.json)、[资源记录](records/5nm_resource_coverage.json) |
-| 2 nm Si h1.5 P0 | 实际网格/FE/MPC/模式与保守结构预算完成；P1受监督准入待审，未启动FEM | [2 nm P0记录](records/2nm_p0_preflight_v1.json) |
+| 2 nm Si h1.5 formal attempt1 | setup 内 affine geometry Gate 失败，未进入 P2/numeric；三处局部修复和小 oracle 已通过，唯一 retry 待启动 | [失败compact](records/2nm_h1p5_formal_failure_compact_v1.json)、[规则扫描](records/2nm_h1p5_formal_geometry_rule_scan_v1.json)、[修复验证](records/2nm_h1p5_geometry_fix_validation_v1.json) |
 | S5 / S3 / S2 / G | R2仍为独立未决负结果；5 nm own已完成；2 nm停在P0审查，3 nm/G未解锁 | [运行总账](records/run_index.json) |
 | 性能/检查修复 | 性能修复后13.5 nm R1与native reference通过；5 nm checker修复后独立recheck通过，R2归因仍未决 | `f124679e75915758076d9240bd4bef2f5c772752`；checker `d64398cb1fecd90867071688dca94e501235cf7a`；[测试](test_summary.md) |
+
+## 2 nm Si h1.5 formal attempt 1：setup affine Gate 负结果
+
+run `20260914T013346.036155Z` 在 source `296afa6a6c231b6ab067ad928c9f827ee72f5e98` 下完成 workflow/shared-mesh/H6 setup marker，约 `5175.8977 s` 后 exit4；worker 明确报 `only affine geometry is qualified`，未进入 P2、numeric、outer，无 iterations/residual。watchdog sampled tree RSS peak=`5115244544 B`（约 `5.12 GB`）、swap peak=`0`、global pswp delta=`0`、descendants cleared；`effective_available_bytes_at_launch=2074612776960 B`。该 run 是 `WORKER_FAILED`，不写成 OOM、数值失败或 P2/LU 结论。
+
+实际 h1.5 规则扫描在 `54332` 个 Q1 cell 上使用同一 DG0 `mu=1/mass=2` 的 p6 original/action `ReferenceCellBasis`，两个 audit 相同；默认 NumPy 求和下 raw 绝对坐标误触发 `25432` 个 cell，centered `x-x[0]` 为 `0`，最坏 raw/centered 均用生产逐 cell 表达式复核，det 范围=`2.9761904761904217–3.3088235294118395`。早先 synthetic `1156` 计数不代表正式 kernel 触发；失败日志无 traceback，partial 与 PositiveCellBasis 两候选点保持如实记录。
+
+三处局部修复和 translated-affine/non-affine 回归已完成；用隔离 `.venv/bin/python3 -m pytest` 跑既有 357/362 为 `16 passed, 1 skipped`。独立只读 observer 的无 PDE 自测和实际主控 SELFTEST notify-v2 ACK 也已完成。主控已放行唯一根因 retry；失败目录保留，新 run/新 observer 独立启动，h2 不启动。
 
 ## 5 nm formal attempt 1（用户授权跳过未通过 R2）
 

@@ -1,5 +1,15 @@
 # Response V2：用户授权后的性能验证接线
 
+## 当前新增：2 nm Si h1.5 formal attempt1 与唯一根因 retry
+
+2 nm Si `p6/h1.5` formal attempt `20260914T013346.036155Z` 使用 source `296afa6a6c231b6ab067ad928c9f827ee72f5e98`、input SHA `34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f` 和 physical SHA `fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef`。运行仅完成 workflow/shared-mesh/H6 setup marker，约 `5175.8977 s`（`1.438 h`）后 exit `4`；worker 明确报 `only affine geometry is qualified`，未进入 P2、numeric 或 outer，无 iterations/residual。watchdog sampled tree RSS peak=`5115244544 B`（约 `5.12 GB`）、swap peak=`0`、global pswp delta=`0`、descendants cleared；该结果保留为 `WORKER_FAILED`，不是数值失败或容量 Gate 通过。原资源字段按 `effective_available_bytes_at_launch` 记录。
+
+在实际 `34×17×94=54332` 个 Q1 cell 上完成正式 quadrature-rule 只读扫描：同一 DG0 `mu=1/mass=2` 取得 p6 original/action `ReferenceCellBasis`，两套 audit 完全相同（degree 15、512 points、同一 points/weights hash）。保持默认 NumPy `einsum` 求和顺序时，绝对坐标诊断误触发 `25432/54332`，每 cell 使用 `x-x[0]` 后为 `0/54332`；最坏 raw/centered cell 均用生产逐 cell 表达式复核，det 范围=`2.9761904761904217–3.3088235294118395`。早先 synthetic 点集的 `1156` 计数不是正式 kernel 触发统计；原日志无 traceback，因此 partial 与 `PositiveCellBasis.cell` 两个同字符串候选不冒称唯一栈点。详见 [`2nm_h1p5_formal_geometry_rule_scan_v1.json`](outcomes/records/2nm_h1p5_formal_geometry_rule_scan_v1.json)。
+
+三处局部修复已通过 translated-affine、正 det 和 genuine non-affine 回归；正确隔离解释器命令 `python3 -m pytest` 跑既有 357/362 为 `16 passed, 1 skipped`。首次裸 `pytest` 的 13 个 CFFI 错误来自 `/usr/bin/pytest` shebang 选择了系统 Python，未安装 setuptools、未改 build-tools/PETSc；JIT 已在 `.venv/bin/python3` 下成功。独立 observer [`scripts/task39extra_event_observer.py`](../../scripts/task39extra_event_observer.py) 无 PDE 自测、真实主控 SELFTEST notify-v2 均 ACK；仅监听重大阶段/P2/stale/失败/终态，不改 watchdog、不发 signal、不自动重启。
+
+主控已审核 WIP 并批准唯一根因 retry。失败目录不复用；新 run 必须继续沿已审 detached `stdin=DEVNULL/start_new_session` launcher、CPU23/preferred node1、None 时间模式、restart32/max2048/zero/screen128 和既有 P2/数值/物理/资源 Gate。retry 结果与失败记录分列，未把 h1.5 预先写成通过。
+
 本轮由主控明确授权继续执行原生 Linux native-capacity campaign。此前 `f124679e75915758076d9240bd4bef2f5c772752` 已提交的 p4 按行内核、p4/p6 curl 独立循环合并和 PSS 降频作为唯一性能实现；不新增求解算法、预条件器、子域法或参数扫描。旧的 13.5 nm screen 负结果和首次 mode 失败保留不变，新正式运行必须从零、冷缓存、clean source 开始。
 
 ## 生效合同

@@ -80,3 +80,23 @@ P0 初次实际网格计数得到 54332 cells、p4 10604228 rows、p6 35594790 r
 接受上述 P0 规划进入正式 P1 的方向。执行专用完成对应记录及已要求的 focused 检查、clean 提交后，主控核对该 source SHA、输入 hash 和 detached 启动/监督命令再放行。保留所有实测资源 Gate，P2 必须用真实 symbolic 估计与同一时刻 RSS 单独核验 numeric/outer/recovery 预算。无需继续扩大预检、添加新算法或新资源框架。
 
 主控已读取临时 launcher `/tmp/task39extra-2nm-h1p5-launch.py`：CPU9 执行 task-local activation 后单次 `run_case.py`，Popen 使用 `stdin=DEVNULL`、独立日志、`start_new_session=True`；worker 的 CPU23/preferred-node1 由已审输入和原 launcher 生成，无嵌套 MPI 或第二套 watchdog。批准已审 WIP 完成限定检查、clean 提交并记录完整 SHA/hash 后由执行专用直接启动 h1.5；该条件满足后不再增加许可环节。P2 使用既有 symbolic/reference_budget 的实际数值自动判准入并提交阶段证据，不引入人工暂停，也不预先宣称 LU 通过。启动后核验实际 parent/worker 身份、独立存活、采样连续性和 fresh cap，执行专用继续监督并在异常、阶段实质变化或终态通知主控。
+
+## 6. h1.5 首次正式 setup 失败的审查方向
+
+运行 `20260914T013346.036155Z`（clean source `296afa6a6c231b6ab067ad928c9f827ee72f5e98`）在约 5175.9 s 后以 `WORKER_FAILED` / exit4 结束，原日志为 `only affine geometry is qualified`。末阶段为 H6 setup，未进入 P2、numeric 或 outer，无 R/T/A。15434 个资源样本、同期整树 RSS 峰 `5115244544 B`、job swap 0、global pswp 增量 0，且 descendants 已清场；这不是已证实的内存边界或收敛失败。
+
+异常文本不能证明当前几何非仿射。先核对 boundary-fitted 轴网格各 cell 的实际 Q1 坐标和 Jacobian，并区分真实几何变化与绝对坐标参与导数求和的浮点消去误差。允许执行专用做无完整 H6/AIJ/LU/outer 的轻量几何调查。候选最小修复是用单元局部坐标计算 Jacobian，利用形函数导数和为零的恒等式改善平移不变性；须先证明根因，不放大现有 128·eps 判据，不改 mesh/material/quadrature、不引入非仿射新方法。
+
+具体小 diff 必须有当前 h1.5 实际 cell 的前后误差与阈值证据、平移不变性、真实非仿射负例，以及对原 FFCx 算子/对角项的定向回归。共享根因的相邻调用点可同批最小修复；不因无关文档重跑完整旧成功案例。保留首次负结果、计入迁移 retry 账，修复审阅与 clean 提交后才能使用原输入开始新的正式 run，不覆盖本次目录。
+
+首次只读探针的 1156 个触发 cell 来自三个人工选点，部分位于 Basix 参考单元之外；该证据保留为消去误差的诊断示例，不能称正式积分规则的触发统计。正式重试前用原 positive diagonal / action 的 FFCx 积分规则补核实际网格，无需构建完整 H6。原日志未捕获 traceback，两个候选调用点使用同一异常文字，不能仅凭文字唯一定位到 partial assembly。
+
+另核实本次资源 watchdog 一直独立采样，但执行专用对话结束后没有独立的终态通知动作，实际终态直到用户再次查询才上报。前次主控把资源监督和自动通知一并验收，证据不足。重试前补最小只读独立 observer：固定本 run 和 PID/start_ticks，低频、增量读取已有记录，重大阶段、采样失鲜或终态才通知并保存回执；不发送 FEM 信号、不重启、不修改资源 Gate。通知接口与无 PDE 事件自测须先审阅，不扩大为新 watchdog 框架。
+
+后续正式规则补证已核对：从同 ABI 的单单元 p6 空间及 DG0 系数取得原 form/action 的 FFCx degree15、512 点规则，两者点/权重 hash 相同。在实际 54332 个 Q1 cell 上使用默认求和顺序，绝对坐标触发数为 25432，局部坐标触发数为 0；最坏候选用生产逐 cell 表达式复核，误差 `9.501427422620168e-14` 超过原阈值 `4.263256414560682e-14`。局部坐标最大差 `1.5543122344752192e-15`，保持正 determinant。此前三人工点、字面系数/优化求和的诊断统计与此补证分开。接受三处仅增加 `x = x - x[0]` 的改动：数学映射不变，不放宽 128·eps、不支持新的非仿射几何。
+
+通知代码审阅已修正实际 `result.data[].id/status` 路由、失败保留 pending/成功后去重、终态回执后退出、真实资源 timestamp 与实际阶段名。无 PDE 自测覆盖活动 turn、失败重试、失鲜和终态；主控已实际收到标为 SELFTEST 的通知。正式启动后仍需确认独立 observer PID/日志在启动调用结束后继续存在，不能把一次性接口回执当作持续运行证明。
+
+最终 357/362 定向检查为 **16 passed、1 skipped，94.21 s**；跳过项是明确的 MPI2 专项，本次合同为 MPI1。p3 装配 MPC 对角参考相对差 `9.14128559598911e-16`，p6 原 FFCx action 与正项/分量/packed 对照均保持原 `1e-11` 容差通过，平移仿射与真实非仿射负例通过。初次裸 `pytest` 命中 `/usr/bin/pytest` 的系统解释器，导致 13 项 CFFI 缺 setuptools；改为已激活 `.venv` 的 `python3 -m pytest` 后通过，未安装包或重建运行环境，保留该测试调用负记录。
+
+批准已审三行修复、现有测试增补、最小通知脚本及本轮失败/验证/回复记录完成 clean 提交并正常推送本执行分支后，直接用同一 h1.5 输入启动一个新的正式 run。无需再次请求许可、重跑 P0 FE 计数或旧完整成功案例。启动仍使用已审 detached launcher、CPU23/MPI1、CPU9 监督、preferred_node1、实际 fresh cap 与原数值/物理/P2 Gate，无时间上限；保留首次失败目录并计入一次该根因迁移重试。只读 observer 同步以 CPU9、独立 session、固定新 run 与 PID/start_ticks 启动，通知本主控线程；启动后核验 watchdog 持续采样及 observer 独立存活，再按实质阶段或异常通知。

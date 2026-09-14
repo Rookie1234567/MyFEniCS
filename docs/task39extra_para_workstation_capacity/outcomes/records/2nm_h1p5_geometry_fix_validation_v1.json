@@ -1,0 +1,40 @@
+{
+  "record_type": "2nm_h1p5_geometry_fix_validation",
+  "status": "PATCH_VALIDATED_NO_FORMAL_RETRY",
+  "base_source_sha": "296afa6a6c231b6ab067ad928c9f827ee72f5e98",
+  "source_changes": {
+    "files": [
+      "src/solvers/fullspace_partial_assembly.py",
+      "src/solvers/fullspace_quadrature_diagonal.py",
+      "src/solvers/physical_error_metric.py"
+    ],
+    "change": "center each cell geometry as x-x[0] before the existing Jacobian einsum; retain 128*eps criterion, positive finite determinant gate, and genuine non-affine rejection",
+    "formal_retry_started": false
+  },
+  "test_interpreter_correction": {
+    "activation": "scripts/activate_task39extra_int64.sh",
+    "correct_python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python3",
+    "setuptools_version": "84.0.0",
+    "setuptools_origin": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/lib/python3.12/site-packages/setuptools/__init__.py",
+    "isolated_build_tools": "/tmp/task39extra_para_int64_stack/build-tools",
+    "build_tools_setuptools_present": false,
+    "bad_invocation": {"command": "pytest", "resolved_path": "/usr/bin/pytest", "shebang": "#!/usr/bin/python3", "result": "13 CFFI-stage failures because system interpreter could not import setuptools"},
+    "correct_invocation": "python3 -m pytest"
+  },
+  "focused_oracles": {
+    "command_scope": "existing src/test/test_357_quadrature_positive_diagonal.py and src/test/test_362_partial_assembly.py; CPU10-13; host MPI permission; no formal FEM",
+    "passed": 16,
+    "skipped": 1,
+    "failed": 0,
+    "p3_assembled_mpc_relative_error": 9.14128559598911e-16,
+    "translated_affine_and_nonaffine_checks": "both passed",
+    "jit_ffcx_cffi": "successful under .venv python3; no package installation or PETSc rebuild"
+  },
+  "observer": {
+    "script": "scripts/task39extra_event_observer.py",
+    "self_test": {"status": "PASS", "active_turn_schema": "result.data[0].id/status", "notification_attempts": 4, "retry_after_failure": true, "stale_after_sampling_stop": true, "terminal_ack_exit": true, "pde_started": false},
+    "real_notify_selftest": {"status": "ACK", "target_thread": "01a084a4-d4d5-7cb3-a407-f2ff7ee1e2ad", "turn": "01a09e69-35a1-7b92-8f85-ca795522dff0"},
+    "major_stage_whitelist": ["h6_original_window_and_packed_action_complete", "reference_volume_complete", "reference_symbolic_started", "reference_symbolic_complete", "reference_symbolic_resource", "reference_budget_evaluated", "reference_numeric_preflight", "reference_numeric_complete", "solve_started", "recovery_started", "checker_started"],
+    "signals_or_restart": false
+  }
+}
