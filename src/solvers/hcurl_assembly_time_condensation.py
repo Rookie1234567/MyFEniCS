@@ -24,13 +24,14 @@ from dataclasses import dataclass, field
 import hashlib
 from time import perf_counter
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Callable
+import warnings
 
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from scipy import sparse
-from scipy.linalg import lu_factor, lu_solve
+from scipy.linalg import LinAlgWarning, lu_factor, lu_solve
 
 
 def _idx(values) -> np.ndarray:
@@ -173,7 +174,11 @@ def _cell_tag_array(cell_tags, owned_cells: int) -> np.ndarray:
     return tags
 
 
-def _cell_integral_kernels(compiled_form) -> dict[int, Any]:
+def _cell_integral_kernels(
+    compiled_form,
+    *,
+    sum_duplicate_cell_integrals: bool = False,
+) -> dict[int, Any]:
     ufcx_form = compiled_form.ufcx_form
     start = int(ufcx_form.form_integral_offsets[0])
     stop = int(ufcx_form.form_integral_offsets[1])
@@ -184,7 +189,12 @@ def _cell_integral_kernels(compiled_form) -> dict[int, Any]:
         kernel = integral.tabulate_tensor_complex128
         if kernel == compiled_form.module.ffi.NULL:
             raise TypeError("compiled form does not expose a complex128 cell kernel")
-        kernels[integral_id] = kernel
+        if sum_duplicate_cell_integrals:
+            kernels.setdefault(integral_id, []).append(kernel)
+        else:
+            # Preserve the historical single-kernel map unless the caller
+            # explicitly opts into the correct multi-integral profile.
+            kernels[integral_id] = kernel
     if not kernels:
         raise ValueError("compiled form exposes no cell integrals")
     if int(ufcx_form.num_coefficients) != 0:
@@ -471,6 +481,7 @@ def _distributed_trace_preallocation(
     appended_global_rows: int,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...],
     appended_support_group_by_row: tuple[int, ...],
+    dense_appended_block: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """Build exact base and support-safe appended AIJ preallocation."""
 
@@ -482,6 +493,7 @@ def _distributed_trace_preallocation(
         normalized_group_by_row = tuple(
             int(group) for group in appended_support_group_by_row
         )
+        normalized_dense_appended_block = bool(dense_appended_block)
         if len(normalized_active_counts) != comm.size:
             raise ValueError("active row counts do not match the MPI communicator")
         if any(count < 0 for count in normalized_active_counts):
@@ -524,6 +536,7 @@ def _distributed_trace_preallocation(
             normalized_appended_rows,
             group_count,
             normalized_group_by_row,
+            normalized_dense_appended_block,
         )
     except Exception as error:
         local_validation_error = f"{type(error).__name__}: {error}"
@@ -541,6 +554,7 @@ def _distributed_trace_preallocation(
         normalized_appended_rows,
         _group_count,
         normalized_group_by_row,
+        normalized_dense_appended_block,
     ) = local_contract
     active_offsets = np.concatenate(
         (
@@ -678,14 +692,23 @@ def _distributed_trace_preallocation(
             for appended_index in range(normalized_appended_rows):
                 local_row = local_active_rows + appended_index
                 group = normalized_group_by_row[appended_index]
+                appended_columns = (
+                    np.arange(
+                        active_rows,
+                        active_rows + normalized_appended_rows,
+                        dtype=PETSc.IntType,
+                    )
+                    if normalized_dense_appended_block
+                    else np.asarray(
+                        [active_rows + appended_index],
+                        dtype=PETSc.IntType,
+                    )
+                )
                 columns = np.unique(
                     np.concatenate(
                         (
                             support_groups[group],
-                            np.asarray(
-                                [active_rows + appended_index],
-                                dtype=PETSc.IntType,
-                            ),
+                            appended_columns,
                         )
                     )
                 )
@@ -742,6 +765,7 @@ def _distributed_trace_preallocation(
                 int(len(support)) for support in support_groups
             ],
             "appended_rows_per_support_group": [int(len(rows)) for rows in group_rows],
+            "dense_appended_block": normalized_dense_appended_block,
             "new_nonzero_allocation_error_enabled": True,
             "ordinary_default_changed": False,
         },
@@ -834,25 +858,29 @@ def _tabulate_raw_tensor_class(
     dimension: int,
 ) -> np.ndarray:
     tensor = np.zeros((dimension, dimension), dtype=np.complex128)
-    default_kernel = kernels.get(-1)
-    if default_kernel is not None:
-        tensor += _tabulate_cell_tensor(
-            compiled_form,
-            default_kernel,
-            coordinates,
-            dimension,
-        )
-    tagged_kernel = kernels.get(int(tag))
-    if tagged_kernel is not None:
-        tensor += _tabulate_cell_tensor(
-            compiled_form,
-            tagged_kernel,
-            coordinates,
-            dimension,
-        )
-    if default_kernel is None and tagged_kernel is None:
+    default_kernels = kernels.get(-1)
+    tagged_kernels = kernels.get(int(tag))
+    if default_kernels is None and tagged_kernels is None:
         raise ValueError(f"compiled form has no default or tagged kernel for tag {tag}")
+    if not isinstance(default_kernels, (tuple, list)):
+        default_kernels = () if default_kernels is None else (default_kernels,)
+    if not isinstance(tagged_kernels, (tuple, list)):
+        tagged_kernels = () if tagged_kernels is None else (tagged_kernels,)
+    for kernel in (*default_kernels, *tagged_kernels):
+        tensor += _tabulate_cell_tensor(
+            compiled_form,
+            kernel,
+            coordinates,
+            dimension,
+        )
     return tensor
+
+
+def _kernel_count(kernels: dict[int, Any], integral_id: int) -> int:
+    value = kernels.get(int(integral_id))
+    if value is None:
+        return 0
+    return len(value) if isinstance(value, (tuple, list)) else 1
 
 
 def _global_raw_tensor_cache(
@@ -873,6 +901,10 @@ def _global_raw_tensor_cache(
         policy: {
             "dimension": int(dimension),
             "kernel_ids": tuple(sorted(int(key) for key in kernels)),
+            "kernel_counts": tuple(
+                (int(key), _kernel_count(kernels, int(key)))
+                for key in sorted(kernels)
+            ),
             "dtype": str(np.dtype(compiled_form.dtype)),
             "element_hash": int(
                 compiled_form.function_spaces[0].element.basix_element.hash()
@@ -918,8 +950,8 @@ def _global_raw_tensor_cache(
             -(
                 int(policy_forms[str(value[0])][2]) ** 2
                 * (
-                    int(-1 in policy_forms[str(value[0])][1])
-                    + int(int(value[1]) in policy_forms[str(value[0])][1])
+                    _kernel_count(policy_forms[str(value[0])][1], -1)
+                    + _kernel_count(policy_forms[str(value[0])][1], int(value[1]))
                 )
             ),
             value,
@@ -928,8 +960,8 @@ def _global_raw_tensor_cache(
         owner = min(range(comm.size), key=lambda rank: (owner_loads[rank], rank))
         owner_by_class[key] = int(owner)
         owner_loads[owner] += int(policy_forms[str(key[0])][2]) ** 2 * (
-            int(-1 in policy_forms[str(key[0])][1])
-            + int(int(key[1]) in policy_forms[str(key[0])][1])
+            _kernel_count(policy_forms[str(key[0])][1], -1)
+            + _kernel_count(policy_forms[str(key[0])][1], int(key[1]))
         )
     cache: dict[tuple[Any, ...], np.ndarray] = {}
     local_kernel_seconds = 0.0
@@ -1012,6 +1044,7 @@ def _global_raw_tensor_cache(
             ),
             "raw_tensor_owner_cost_loads": owner_loads,
             "raw_tensor_policy_signatures_identical": True,
+            "raw_tensor_policy_signatures": policy_signatures[0],
             "raw_tensor_owner_evaluation_sync_seconds_max": float(
                 comm.allreduce(owner_sync_seconds, op=MPI.MAX)
             ),
@@ -1085,6 +1118,51 @@ def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> N
     tensor[:] = transpose.T
 
 
+def _strict_local_lu(
+    matrix: np.ndarray,
+    *,
+    residual_tolerance: float = 1.0e-11,
+) -> tuple[tuple[np.ndarray, np.ndarray], float]:
+    """Factor one cell-interior block with a small, explicit safety check.
+
+    The check is deliberately a stability guard rather than a condition
+    estimator: it turns LAPACK singularity warnings, non-finite factors, and
+    a visibly defective reconstructed identity into a hard setup failure.
+    The ordinary condensation path does not call this helper.
+    """
+
+    values = np.asarray(matrix, dtype=np.complex128)
+    if not np.all(np.isfinite(values)):
+        raise FloatingPointError("cell-interior tensor contains non-finite values")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", LinAlgWarning)
+        factor = lu_factor(values, check_finite=True)
+    lu, pivots = factor
+    if not np.all(np.isfinite(lu)):
+        raise FloatingPointError("cell-interior LU contains non-finite values")
+    identity = np.eye(values.shape[0], dtype=np.complex128)
+    reconstructed = lu_solve(factor, identity)
+    defect = float(np.linalg.norm(values @ reconstructed - identity))
+    scale = max(float(np.linalg.norm(values)) * float(np.linalg.norm(reconstructed)), 1.0)
+    relative_defect = defect / scale
+    if not np.isfinite(relative_defect) or relative_defect > float(residual_tolerance):
+        raise np.linalg.LinAlgError(
+            "cell-interior LU identity check failed: "
+            f"relative defect {relative_defect:.3e} > {float(residual_tolerance):.3e}"
+        )
+    return (lu, pivots), relative_defect
+
+
+def _retained_array_bytes(value: Any) -> int:
+    """Count bytes in a retained NumPy array or a tuple of arrays."""
+
+    if isinstance(value, np.ndarray):
+        return int(value.nbytes)
+    if isinstance(value, (tuple, list)):
+        return int(sum(_retained_array_bytes(item) for item in value))
+    return 0
+
+
 def build_unconstrained_assembly_time_condensation(
     compiled_form,
     function_space,
@@ -1094,10 +1172,14 @@ def build_unconstrained_assembly_time_condensation(
     appended_global_rows: int = 0,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
+    dense_appended_block: bool = False,
+    sum_duplicate_cell_integrals: bool = False,
+    strict_local_checks: bool = False,
     defer_final_assembly: bool = False,
     retain_local_schur_for_matrix_free: bool = False,
     materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
+    allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1134,7 +1216,10 @@ def build_unconstrained_assembly_time_condensation(
     tdim = mesh.topology.dim
     owned_cells = int(mesh.topology.index_map(tdim).size_local)
     tags = _cell_tag_array(cell_tags, owned_cells)
-    kernels = _cell_integral_kernels(compiled_form)
+    kernels = _cell_integral_kernels(
+        compiled_form,
+        sum_duplicate_cell_integrals=sum_duplicate_cell_integrals,
+    )
     unknown_tags = [] if -1 in kernels else sorted(set(map(int, tags)) - set(kernels))
     if unknown_tags:
         raise ValueError(f"compiled form has no cell integral for tags {unknown_tags}")
@@ -1197,6 +1282,7 @@ def build_unconstrained_assembly_time_condensation(
                 appended_global_rows=appended_global_rows,
                 appended_support_owned_cell_groups=(appended_support_owned_cell_groups),
                 appended_support_group_by_row=(appended_support_group_by_row),
+                dense_appended_block=dense_appended_block,
             )
         )
         preallocation_audit["build_seconds"] = float(
@@ -1205,6 +1291,24 @@ def build_unconstrained_assembly_time_condensation(
                 op=MPI.MAX,
             )
         )
+        if allocation_gate is not None:
+            allocation_gate(
+                "condensed_matrix",
+                {
+                    "rows": int(matrix_rows),
+                    "nnz": int(preallocation_audit["preallocated_structural_nnz"]),
+                    "matrix_payload_bytes": int(
+                        (matrix_rows + 1) * np.dtype(PETSc.IntType).itemsize
+                        + int(preallocation_audit["preallocated_structural_nnz"])
+                        * (
+                            np.dtype(PETSc.IntType).itemsize
+                            + np.dtype(PETSc.ScalarType).itemsize
+                        )
+                    ),
+                    "workspace_bytes": 0,
+                    "gate_scope": "before_PETSc_condensed_matrix_creation",
+                },
+            )
         condensed = PETSc.Mat().createAIJ(
             size=(
                 (len(owned_active) + local_appended, matrix_rows),
@@ -1282,6 +1386,94 @@ def build_unconstrained_assembly_time_condensation(
                 if error is not None
             )
         )
+    if allocation_gate is not None:
+        # This gate is deliberately based only on the class metadata already
+        # collected above.  It runs before the raw tensor broadcast and the
+        # first oriented Schur class are materialized, so the caller can
+        # reserve the shared temporary window without probing platform RSS or
+        # evaluating a full cell tensor just to estimate its size.
+        local_raw_classes = {
+            policy_raw_key for _raw_key, policy_raw_key in cell_raw_metadata
+        }
+        local_oriented_classes = {
+            (raw_key, int(cell_permutations[cell]))
+            for cell, (raw_key, _policy_raw_key) in enumerate(cell_raw_metadata)
+        }
+        raw_class_packets = comm.allgather(tuple(local_raw_classes))
+        oriented_class_packets = comm.allgather(tuple(local_oriented_classes))
+        global_raw_classes = {
+            key for packet in raw_class_packets for key in packet
+        }
+        global_oriented_classes = {
+            key for packet in oriented_class_packets for key in packet
+        }
+        scalar_bytes = int(np.dtype(np.complex128).itemsize)
+        real_bytes = int(np.dtype(np.float64).itemsize)
+        index_bytes = int(np.dtype(PETSc.IntType).itemsize)
+        full_tensor_bytes = int(dimension * dimension * scalar_bytes)
+        interior_dimension = int(len(interior_positions))
+        trace_dimension = int(len(trace_positions))
+        schur_bytes = int(trace_dimension * trace_dimension * scalar_bytes)
+        retained_per_oriented_class = int(
+            interior_dimension * interior_dimension * scalar_bytes
+            + interior_dimension * index_bytes
+            + interior_dimension * trace_dimension * scalar_bytes
+            + trace_dimension * interior_dimension * scalar_bytes
+            + interior_dimension * interior_dimension * real_bytes
+            + (
+                schur_bytes
+                if retain_local_schur_for_matrix_free
+                else 0
+            )
+        )
+        retained_numeric_bytes_upper = int(
+            len(global_oriented_classes) * retained_per_oriented_class
+        )
+        raw_cache_bytes_upper = int(len(global_raw_classes) * full_tensor_bytes)
+        oriented_tensor_bytes_upper = int(
+            len(global_oriented_classes) * full_tensor_bytes
+        )
+        schur_cache_bytes_upper = int(
+            len(global_oriented_classes) * schur_bytes
+        )
+        # One oriented tensor is transformed at a time.  The block extracts
+        # are copies, while the retained LU/recovery arrays are accounted for
+        # separately above.  The two Schur terms cover the sparse constrained
+        # product's output and one transient product buffer.
+        local_working_bytes_upper = int(
+            2 * full_tensor_bytes
+            + full_tensor_bytes
+            + interior_dimension * interior_dimension * scalar_bytes
+            + interior_dimension * index_bytes
+            + 2 * interior_dimension * trace_dimension * scalar_bytes
+            + 2 * schur_bytes
+        )
+        allocation_gate(
+            "cell_tensor_working_set",
+            {
+                "retained_numeric_bytes_upper": retained_numeric_bytes_upper,
+                "workspace_bytes": int(
+                    raw_cache_bytes_upper
+                    + oriented_tensor_bytes_upper
+                    + schur_cache_bytes_upper
+                    + local_working_bytes_upper
+                ),
+                "raw_cache_bytes_upper": raw_cache_bytes_upper,
+                "oriented_tensor_bytes_upper": oriented_tensor_bytes_upper,
+                "schur_cache_bytes_upper": schur_cache_bytes_upper,
+                "local_working_bytes_upper": local_working_bytes_upper,
+                "raw_class_count_local": int(len(local_raw_classes)),
+                "raw_class_count_global_unique": int(len(global_raw_classes)),
+                "oriented_class_count_local": int(len(local_oriented_classes)),
+                "oriented_class_count_global_unique": int(
+                    len(global_oriented_classes)
+                ),
+                "tensor_dimension": int(dimension),
+                "interior_dimension": interior_dimension,
+                "trace_dimension": trace_dimension,
+                "gate_scope": "before_raw_and_oriented_cell_tensor_cache_construction",
+            },
+        )
     policy_forms: dict[str, tuple[Any, dict[int, Any], int]] = {
         "actual_space": (compiled_form, kernels, dimension),
     }
@@ -1305,6 +1497,7 @@ def build_unconstrained_assembly_time_condensation(
     recovery_maps: list[CellRecoveryMap] = []
     local_schur_seconds = 0.0
     local_insert_seconds = 0.0
+    local_lu_residual_max = 0.0
     for cell, (original_dofs, metadata) in enumerate(
         zip(local_cell_dofs, cell_raw_metadata, strict=True)
     ):
@@ -1330,7 +1523,20 @@ def build_unconstrained_assembly_time_condensation(
             A_it = oriented[np.ix_(interior_positions, trace_positions)]
             A_ti = oriented[np.ix_(trace_positions, interior_positions)]
             A_tt = oriented[np.ix_(trace_positions, trace_positions)]
-            interior_lu = lu_factor(A_ii)
+            try:
+                if strict_local_checks:
+                    interior_lu, lu_residual = _strict_local_lu(A_ii)
+                    local_lu_residual_max = max(
+                        local_lu_residual_max, float(lu_residual)
+                    )
+                else:
+                    interior_lu = lu_factor(A_ii)
+            except Exception:
+                # The matrix exists before local classes are factored.  Do
+                # not leave an abnormal setup with a live PETSc allocation.
+                if condensed is not None:
+                    condensed.destroy()
+                raise
             interior_from_trace = -lu_solve(
                 interior_lu,
                 A_it,
@@ -1421,6 +1627,68 @@ def build_unconstrained_assembly_time_condensation(
         retained_bytes_local = 0
         retained_class_count_sum = 0
         retained_bytes_sum = 0
+
+    def unique_mapping_bytes(
+        mappings: tuple[tuple[str, Mapping[Any, Any]], ...],
+    ) -> dict[str, int]:
+        """Count the fixed setup caches once even when aliases share arrays."""
+
+        seen: set[int] = set()
+        result: dict[str, int] = {}
+        for name, mapping in mappings:
+            amount = 0
+            for value in mapping.values():
+                values = value if isinstance(value, (tuple, list)) else (value,)
+                for array in values:
+                    if not isinstance(array, np.ndarray) or id(array) in seen:
+                        continue
+                    seen.add(id(array))
+                    amount += int(array.nbytes)
+            result[name] = amount
+        result["retained_numeric_cache_bytes"] = int(sum(result.values()))
+        return result
+
+    retained_cache_bytes_local = unique_mapping_bytes(
+        (
+            ("lu_bytes", lu_cache),
+            ("recovery_bytes", recovery_cache),
+            ("rhs_trace_bytes", rhs_trace_cache),
+            ("rhs_projection_bytes", rhs_projection_cache),
+            ("solution_embedding_bytes", solution_embedding_cache),
+            ("residual_projection_bytes", residual_projection_cache),
+            (
+                "retained_schur_bytes",
+                schur_cache if retain_local_schur_for_matrix_free else {},
+            ),
+        )
+    )
+    assembly_temporary_bytes_local = {
+        "raw_tensor_bytes": int(
+            sum(_retained_array_bytes(value) for value in raw_cache.values())
+        ),
+        "oriented_schur_bytes": int(
+            sum(_retained_array_bytes(value) for value in schur_cache.values())
+        ),
+        "scope": "assembly-time peak components; raw/oriented arrays are released after return",
+    }
+    retained_cache_bytes_sum = {
+        key: int(comm.allreduce(value, op=MPI.SUM))
+        for key, value in retained_cache_bytes_local.items()
+    }
+    retained_cache_bytes_max = {
+        key: int(comm.allreduce(value, op=MPI.MAX))
+        for key, value in retained_cache_bytes_local.items()
+    }
+    assembly_temporary_bytes_sum = {
+        key: int(comm.allreduce(value, op=MPI.SUM))
+        for key, value in assembly_temporary_bytes_local.items()
+        if key != "scope"
+    }
+    assembly_temporary_bytes_max = {
+        key: int(comm.allreduce(value, op=MPI.MAX))
+        for key, value in assembly_temporary_bytes_local.items()
+        if key != "scope"
+    }
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
         owned_trace_original_dofs=owned_trace,
@@ -1486,6 +1754,12 @@ def build_unconstrained_assembly_time_condensation(
             "final_matrix_assembly_deferred_for_appended_rows": bool(
                 materialize_global_matrix and defer_final_assembly
             ),
+            "dense_appended_block": bool(dense_appended_block),
+            "sum_duplicate_cell_integrals": bool(sum_duplicate_cell_integrals),
+            "strict_local_checks": bool(strict_local_checks),
+            "local_lu_identity_relative_residual_max": float(
+                comm.allreduce(local_lu_residual_max, op=MPI.MAX)
+            ),
             "axis_aligned_affine_geometry_verified": True,
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
             "retained_local_schur_class_count_local": retained_class_count_local,
@@ -1493,6 +1767,26 @@ def build_unconstrained_assembly_time_condensation(
             "retained_local_schur_bytes_local": retained_bytes_local,
             "retained_local_schur_bytes_sum": retained_bytes_sum,
             **raw_cache_audit,
+            "operator_cache_identity": {
+                "scope": "single builder invocation; no cross-form reuse",
+                "key_dependencies": [
+                    "material_tag",
+                    "cell_widths_and_jacobian",
+                    "cell_orientation",
+                    "polynomial_degree_and_basis_hash",
+                    "ufcx_integral_ids_and_kernel_counts",
+                    "complex128_scalar_type",
+                ],
+                "policy_signatures": raw_cache_audit.get(
+                    "raw_tensor_policy_signatures", {}
+                ),
+            },
+            "assembly_temporary_cache_bytes_local": assembly_temporary_bytes_local,
+            "assembly_temporary_cache_bytes_sum": assembly_temporary_bytes_sum,
+            "assembly_temporary_cache_bytes_max": assembly_temporary_bytes_max,
+            "retained_numeric_cache_bytes_local": retained_cache_bytes_local,
+            "retained_numeric_cache_bytes_sum": retained_cache_bytes_sum,
+            "retained_numeric_cache_bytes_max": retained_cache_bytes_max,
             "oriented_schur_class_count_sum": oriented_class_count,
             "cell_kernel_evaluation_fraction": float(
                 raw_class_count / max(global_cells, 1)

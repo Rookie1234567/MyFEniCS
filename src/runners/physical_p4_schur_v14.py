@@ -5696,6 +5696,7 @@ def _v14_q4_q5_fullspace(
     *,
     stage: str,
     predecessor: Mapping[str, Any],
+    stack_factory: Any | None = None,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
 
@@ -5721,9 +5722,9 @@ def _v14_q4_q5_fullspace(
     from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
     stage = str(stage)
-    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH"}:
+    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK"}:
         raise ValueError(f"unsupported fresh p6 stage {stage!r}")
-    notch = stage == "Q5_NOTCH"
+    notch = stage in {"Q5_NOTCH", "U5_NOTCH"}
     expected_notch = "positive_x_middle_y_z40_80"
     cell_notch = getattr(common["cfg"], "cell_notch", None)
     if notch and cell_notch != expected_notch:
@@ -5742,7 +5743,11 @@ def _v14_q4_q5_fullspace(
         float(stage_budget["workflow_seconds"]),
         float(getattr(runtime, "workflow_reserved_seconds", 0.0)),
     )
-    if solve_limit != 10800.0 or workflow_limit <= 0.0:
+    if (
+        workflow_limit <= 0.0
+        or (stage in {"Q4_ORIGINAL", "Q5_NOTCH"} and solve_limit != 10800.0)
+        or (stage in {"U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK"} and solve_limit <= 0.0)
+    ):
         raise ValueError(f"{stage} has an invalid conditional-stage budget")
 
     provenance = resolved_payload.get("provenance", {})
@@ -5753,7 +5758,12 @@ def _v14_q4_q5_fullspace(
     if len(input_sha) != 64 or len(physical_sha) != 64:
         raise ValueError(f"{stage} requires hash-bound input and physical identities")
 
-    prefix = "q4" if not notch else "q5"
+    prefix = (
+        "u5" if stage == "U5_NOTCH" else
+        "u4_fallback" if stage == "U4_EXACT_FALLBACK" else
+        "u4" if stage == "U4_ORIGINAL" else
+        "q5" if notch else "q4"
+    )
     final_solution = rhs = final_applied = final_residual = None
     solve_result: dict[str, Any] | None = None
     solve_clock: ClockBudget | None = None
@@ -6070,15 +6080,29 @@ def _v14_q4_q5_fullspace(
         )
         return value
 
-    with owned_p6_vectors(), _v14_interface_live_stack(
-        runtime,
-        common,
-        resolved_payload,
-        stage=stage,
-    ) as stack:
-        identity, operator_sha256 = _v14_operator_identity(
-            common, resolved_payload, stack["partition"], stage=stage
+    stack_context = (
+        _v14_interface_live_stack(
+            runtime,
+            common,
+            resolved_payload,
+            stage=stage,
         )
+        if stack_factory is None
+        else stack_factory(
+            runtime,
+            common,
+            resolved_payload,
+            stage=stage,
+        )
+    )
+    with owned_p6_vectors(), stack_context as stack:
+        if stack.get("operator_identity") is not None:
+            identity = dict(stack["operator_identity"])
+            operator_sha256 = str(stack["operator_identity_sha256"])
+        else:
+            identity, operator_sha256 = _v14_operator_identity(
+                common, resolved_payload, stack["partition"], stage=stage
+            )
         identity_packet = _save_packet(
             runtime.directory,
             f"{prefix}_operator_identity",
@@ -6286,22 +6310,29 @@ def _v14_q4_q5_fullspace(
             physical_sha256=physical_sha,
         )
 
-        stack_facts = {
-            "schema": stack["schema"],
-            "stage": stage,
-            "partition": stack["partition"].audit(),
-            "core": stack["core"].factor_facts,
-            "representative_patches": stack["representative_facts"],
-            "delta": stack["delta_facts"],
-            "local_smoother": stack["local_audit"],
-            "action_checks": stack["action_checks"],
-            "candidate": stack["candidate_facts"],
-            "paired_basis": stack["paired_facts"],
-            "coarse_pair": stack["coarse_pair"].audit(),
-            "global_interface_matrix_built": False,
-            "global_dense_schur_constructed": False,
-            "explicit_schur_released_before_outer_solve": True,
-        }
+        if stack.get("stack_facts") is not None:
+            stack_facts = dict(stack["stack_facts"])
+        else:
+            stack_facts = {
+                "schema": stack["schema"],
+                "stage": stage,
+                "partition": stack["partition"].audit(),
+                "core": stack["core"].factor_facts,
+                "representative_patches": stack["representative_facts"],
+                "delta": stack["delta_facts"],
+                "local_smoother": stack["local_audit"],
+                "action_checks": stack["action_checks"],
+                "candidate": stack["candidate_facts"],
+                "paired_basis": stack["paired_facts"],
+                "coarse_pair": stack["coarse_pair"].audit(),
+                "global_interface_matrix_built": False,
+                "global_dense_schur_constructed": False,
+                "explicit_schur_released_before_outer_solve": True,
+            }
+        core = stack.get("core")
+        internal_factor_count = stack.get("internal_factor_count")
+        if internal_factor_count is None and core is not None:
+            internal_factor_count = len(core.internal)
         base_record = {
             "schema": f"task039extra.v14.{stage.lower()}.v2",
             "stage": stage,
@@ -6312,9 +6343,9 @@ def _v14_q4_q5_fullspace(
             "rhs_packet": rhs_packet,
             "rhs_facts": rhs_facts,
             "interface_stack": stack_facts,
-            "delta": stack["delta_facts"],
+            "delta": stack_facts.get("delta", {}),
             "lifecycle": {
-                "internal_factor_count": len(stack["core"].internal),
+                "internal_factor_count": int(internal_factor_count or 0),
                 "outer_krylov_workspace_bytes": outer_workspace_bytes,
                 "outer_krylov_workspace_scope": (
                     "derived upper-count estimate for FGMRES32 basis, action, "

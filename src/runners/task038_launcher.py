@@ -145,6 +145,15 @@ V16_PREDECESSOR_V14_LEDGER_SHA256 = (
 V17_PREDECESSOR_V16_LEDGER_SHA256 = (
     "cc97e1c1c00ef78111450c6d37cb98ce40f074d547bd4d75fd9a16b308816d7a"
 )
+V18_PREDECESSOR_V14_LEDGER_SHA256 = (
+    "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3"
+)
+V18_PREDECESSOR_V16_LEDGER_SHA256 = (
+    "cc97e1c1c00ef78111450c6d37cb98ce40f074d547bd4d75fd9a16b308816d7a"
+)
+V18_PREDECESSOR_V17_LEDGER_SHA256 = (
+    "b5192686a1f3f498ee522f14def3f641b87a39a5df4da18622c24823040d290f"
+)
 V17_T1_DECISION_FILENAME = "t1_independent_check.json"
 V17_T1_SUMMARY_FILENAME = "physical_p4_blr_v17_summary.json"
 V15_Q0_EIO_SOURCE_SHA = "efea244159d63a7c9db67ca091e29a9c19f9ce88"
@@ -250,6 +259,20 @@ def _blr_v17_shared_ledger_path(repo_root: Path) -> Path:
         / "task39extra"
         / "p4_blr_tradeoff_v17"
         / "review_v17_p4_blr_tradeoff"
+        / "shared_workflow_ledger.json"
+    )
+
+
+def _cell_condensed_v18_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent V18 ledger; historical ledgers are read-only."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "p4_cell_condensed_v18"
+        / "review_v18_p4_cell_condensed"
         / "shared_workflow_ledger.json"
     )
 
@@ -1328,6 +1351,229 @@ def _reserve_blr_v17_shared_budget(
     )
 
 
+def _v18_historical_ledger_reference(
+    path: Path,
+    *,
+    expected_sha: str,
+    expected_identity: str,
+) -> dict[str, Any]:
+    """Read one predecessor without importing its elapsed time into V18."""
+
+    try:
+        payload = path.read_bytes()
+        ledger = json.loads(payload.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError(f"V18 predecessor ledger cannot be read: {path}") from exc
+    observed_sha = hashlib.sha256(payload).hexdigest()
+    if observed_sha != expected_sha:
+        raise InputError(f"V18 predecessor ledger hash changed: {path}")
+    if ledger.get("batch_identity") != expected_identity:
+        raise InputError(f"V18 predecessor ledger identity changed: {path}")
+    unknown = []
+    for old_stage, old_record in ledger.get("stages", {}).items():
+        for index, attempt in enumerate(old_record.get("attempts", [])):
+            elapsed = attempt.get("actual_elapsed_seconds", attempt.get("settled_seconds"))
+            if elapsed is None:
+                unknown.append(
+                    {
+                        "stage": str(old_stage),
+                        "attempt_index": int(index),
+                        "status": attempt.get("status"),
+                        "reserved_seconds": attempt.get("reserved_seconds"),
+                        "actual_elapsed_seconds": None,
+                    }
+                )
+    return {
+        "read_only": True,
+        "path": str(path),
+        "sha256": observed_sha,
+        "batch_identity": ledger.get("batch_identity"),
+        "schema": ledger.get("schema"),
+        "measured_elapsed_seconds": ledger.get("elapsed_seconds"),
+        "effective_budget_snapshot": read_v14_effective_budget(ledger),
+        "policy_debits": list(ledger.get("policy_debits", [])),
+        "unknown_elapsed_attempts": unknown,
+        "unknown_elapsed_is_not_new_measurement": True,
+    }
+
+
+def _validate_v18_prerequisite(
+    ledger_path: Path, stage: str
+) -> dict[str, Any] | None:
+    """Verify the independent selection evidence used by conditional V18 stages.
+
+    The worker and independent checker own the mathematical branch decision.
+    The launcher only verifies that the checker-produced selection record is
+    present beside the shared ledger and that every referenced evidence file
+    still has the recorded content hash.  This keeps the lease from
+    reimplementing the selector while preventing a stale or edited selection
+    from authorizing a later stage.
+    """
+
+    if stage not in {
+        "U3_BLR_CONTROL",
+        "U4_ORIGINAL",
+        "U4_EXACT_FALLBACK",
+        "U5_NOTCH",
+    }:
+        return None
+    selection_path = Path(ledger_path).resolve().parent / "selection.json"
+    try:
+        selection_bytes = selection_path.read_bytes()
+        selection = json.loads(selection_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError(
+            f"V18 {stage} requires a readable checker selection record"
+        ) from exc
+    if not isinstance(selection, Mapping):
+        raise InputError("V18 selection record must be a JSON object")
+    if selection.get("batch_identity") != "review_v18_p4_cell_condensed":
+        raise InputError("V18 selection batch identity changed")
+    evidence = selection.get("evidence")
+    if not isinstance(evidence, list) or not evidence:
+        raise InputError("V18 selection record lacks hash-bound evidence")
+    verified_evidence = []
+    for descriptor in evidence:
+        if not isinstance(descriptor, Mapping):
+            raise InputError("V18 selection evidence descriptor is malformed")
+        evidence_path_text = str(descriptor.get("path", ""))
+        evidence_path = Path(evidence_path_text)
+        expected_sha = str(descriptor.get("sha256", ""))
+        if not evidence_path_text or len(expected_sha) != 64:
+            raise InputError("V18 selection evidence descriptor lacks path/hash")
+        try:
+            evidence_bytes = evidence_path.read_bytes()
+        except OSError as exc:
+            raise InputError(
+                f"V18 selection evidence is not readable: {evidence_path}"
+            ) from exc
+        observed_sha = hashlib.sha256(evidence_bytes).hexdigest()
+        if observed_sha != expected_sha:
+            raise InputError(
+                f"V18 selection evidence hash changed: {evidence_path}"
+            )
+        verified_evidence.append(
+            {
+                "path": str(evidence_path),
+                "sha256": observed_sha,
+                "bytes": len(evidence_bytes),
+            }
+        )
+    return {
+        "selection_path": str(selection_path),
+        "selection_sha256": hashlib.sha256(selection_bytes).hexdigest(),
+        "selection_stage": str(stage),
+        "evidence": verified_evidence,
+        "selector_owned_by": "independent_checker_and_v18_worker",
+    }
+
+
+def _reserve_v18_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve one explicit V18 stage in a new, hash-bound workflow ledger."""
+
+    try:
+        time_policy = normalize_v14_time_policy(time_policy)
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
+    if time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V18 cell-condensed profiles require observe_only time policy")
+    stage = str(stage)
+    allowed = {
+        "U0_PREFLIGHT", "U1_CONTROL_BRIDGE", "U2_EXACT_CONTROL",
+        "U3_BLR_CONTROL", "U4_ORIGINAL", "U4_EXACT_FALLBACK",
+        "U5_NOTCH", "U6_FINALIZE",
+    }
+    if stage not in allowed:
+        raise InputError(f"V18 stage is not in the reviewed ledger contract: {stage}")
+    repo_root = Path(repo_root).resolve()
+    path = _cell_condensed_v18_shared_ledger_path(repo_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    predecessor_paths = {
+        "v14": (
+            _v14_shared_ledger_path(repo_root),
+            V18_PREDECESSOR_V14_LEDGER_SHA256,
+            "review_v14",
+        ),
+        "v16": (
+            _blr_v16_shared_ledger_path(repo_root),
+            V18_PREDECESSOR_V16_LEDGER_SHA256,
+            "review_v16_p4_blr",
+        ),
+        "v17": (
+            _blr_v17_shared_ledger_path(repo_root),
+            V18_PREDECESSOR_V17_LEDGER_SHA256,
+            "review_v17_p4_blr_tradeoff",
+        ),
+    }
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V18 shared ledger cannot be read") from exc
+        if ledger.get("batch_identity") != "review_v18_p4_cell_condensed":
+            raise InputError("V18 shared ledger batch identity changed")
+        predecessors = ledger.get("predecessors", {})
+        if not isinstance(predecessors, Mapping):
+            raise InputError("V18 shared ledger lacks predecessor references")
+        for name, (_path, expected_sha, _identity) in predecessor_paths.items():
+            reference = predecessors.get(name)
+            if not isinstance(reference, Mapping) or reference.get("sha256") != expected_sha:
+                raise InputError(f"V18 predecessor reference changed: {name}")
+    else:
+        predecessors = {
+            name: _v18_historical_ledger_reference(
+                predecessor_path,
+                expected_sha=expected_sha,
+                expected_identity=identity,
+            )
+            for name, (predecessor_path, expected_sha, identity) in predecessor_paths.items()
+        }
+        ledger = {
+            "schema": "task039extra.v18.shared-workflow-ledger.v1",
+            "batch_identity": "review_v18_p4_cell_condensed",
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "replay_policy": "one evidence-bound implementation-bug replay in the V18 batch; no mathematical retry",
+            "predecessors": predecessors,
+            "unique_bug_replay_count": 0,
+        }
+    for old_stage, old_record in ledger.get("stages", {}).items():
+        if old_record.get("active_attempt") is not None:
+            raise InputError(f"V18 attempt {old_stage} is unsettled")
+    stage_record = ledger.get("stages", {}).get(stage, {})
+    attempts = list(stage_record.get("attempts", []))
+    if len(attempts) >= 2:
+        raise InputError(f"V18 stage {stage} has exhausted its one repair replay")
+    prerequisite = _validate_v18_prerequisite(path, stage)
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V18",
+        summary_filename="physical_p4_cell_condensed_v18_summary.json",
+        prerequisite=prerequisite,
+    )
+
+
 def _settle_v14_shared_budget(
     lease: Mapping[str, Any],
     *,
@@ -1620,7 +1866,12 @@ def launch_specification(
         else _source_sha(Path(__file__).resolve().parents[2])
     )
     from src.io.physical_intermediate_profile import PROFILES
-    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, profile_facts
+    from src.io.physical_intermediate_profile import (
+        FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE,
+        P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE,
+        CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
+        profile_facts,
+    )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = specification.solver.get('preconditioner') in RECURSIVE_PROFILES
@@ -1630,6 +1881,18 @@ def launch_specification(
     blr_v16 = specification.solver.get('preconditioner') == P4_BLR_PROFILE
     blr_v17 = specification.solver.get('preconditioner') == P4_BLR_TRADEOFF_PROFILE
     blr_profile = blr_v16 or blr_v17
+    cell_condensed_profile = specification.solver.get('preconditioner') in {
+        CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
+    }
+    cell_stage = str(specification.solver.get('stage', ''))
+    if cell_condensed_profile:
+        cell_is_exact = specification.solver.get('preconditioner') == CELL_CONDENSED_EXACT_PROFILE
+        if cell_is_exact and cell_stage == 'U3_BLR_CONTROL':
+            raise InputError('V18 U3_BLR_CONTROL requires the reviewed BLR profile')
+        if not cell_is_exact and cell_stage == 'U2_EXACT_CONTROL':
+            raise InputError('V18 U2_EXACT_CONTROL requires the reviewed exact profile')
+        if not cell_is_exact and cell_stage == 'U4_EXACT_FALLBACK':
+            raise InputError('V18 exact fallback must use the exact profile dat')
     packed = specification.solver.get('preconditioner') == PACKED_PROFILE
     if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
@@ -1640,7 +1903,7 @@ def launch_specification(
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
     if (
         v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
-        and (not (schur_v14 or blr_profile) or not physical_candidate)
+        and (not (schur_v14 or blr_profile or cell_condensed_profile) or not physical_candidate)
     ):
         raise InputError(
             'observe_only time policy is accepted only by the reviewed V14/V16 physical profiles'
@@ -1648,6 +1911,10 @@ def launch_specification(
     if blr_profile and v14_time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
         raise InputError(
             'reviewed BLR profiles require the explicit observe_only time policy'
+        )
+    if cell_condensed_profile and v14_time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError(
+            'V18 cell-condensed profiles require the explicit observe_only time policy'
         )
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
@@ -1665,6 +1932,13 @@ def launch_specification(
         )
         if blr_stage_budget is None:
             raise InputError('reviewed BLR stage has no reviewed watchdog budget')
+    cell_stage_budget = None
+    if physical_candidate and cell_condensed_profile:
+        cell_stage_budget = physical_resources.get('stage_budgets', {}).get(
+            specification.solver.get('stage')
+        )
+        if cell_stage_budget is None:
+            raise InputError('V18 cell-condensed stage has no reviewed watchdog budget')
     workflow_limit = (
         (2400 if packed else 1800)
         if pc_profile is not None
@@ -1672,6 +1946,8 @@ def launch_specification(
         if schur_stage_budget is not None
         else blr_stage_budget['workflow_seconds']
         if blr_stage_budget is not None
+        else cell_stage_budget['workflow_seconds']
+        if cell_stage_budget is not None
         else physical_resources.get('workflow_seconds', 7200)
     )
     solve_limit = (
@@ -1679,6 +1955,8 @@ def launch_specification(
         if schur_stage_budget is not None
         else blr_stage_budget['solve_seconds']
         if blr_stage_budget is not None
+        else cell_stage_budget['solve_seconds']
+        if cell_stage_budget is not None
         else physical_resources.get('solve_seconds', 3600)
     )
     v14_lease = None
@@ -1708,6 +1986,14 @@ def launch_specification(
             stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
+    elif cell_condensed_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v18_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
     try:
         physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                            if physical_candidate else None)
@@ -1727,7 +2013,7 @@ def launch_specification(
             start_time=start_time,
         )
         if (
-            (schur_v14 or blr_profile)
+            (schur_v14 or blr_profile or cell_condensed_profile)
             and physical_candidate
             and v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
         ):
@@ -1816,7 +2102,7 @@ def launch_specification(
                                 else {}
                             ),
                         )
-                    if schur_v14 or blr_profile:
+                    if schur_v14 or blr_profile or cell_condensed_profile:
                         watchdog_kwargs.update(
                             stop_on_global_swap=True,
                             grace_seconds=30,
@@ -1852,7 +2138,7 @@ def launch_specification(
                         - (60 if joint else 0)
                         - (
                             full_clock.update(clock_sample())['budget_seconds']
-                            if balanced or schur_v14 or blr_profile
+                            if balanced or schur_v14 or blr_profile or cell_condensed_profile
                             else monotonic() - workflow_started
                         )
                     )
@@ -1908,7 +2194,7 @@ def launch_specification(
                         'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False,
                         **(
                             v14_time_policy_facts(v14_time_policy)
-                            if schur_v14 or blr_profile
+                            if schur_v14 or blr_profile or cell_condensed_profile
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,
@@ -1926,13 +2212,13 @@ def launch_specification(
                     "error": str(exc),
                     "resource_authority": {"status": "not_sampled"},
                 }
-        if blr_v17 and physical_candidate:
-            # The V17 checker accepts this explicit descriptor only; it does
-            # not guess worker_stdout.txt or a watchdog path after the fact.
+        if (blr_v17 or cell_condensed_profile) and physical_candidate:
+            # The BLR/V18 checkers accept this explicit descriptor only; they
+            # do not guess worker_stdout.txt or a watchdog path after the fact.
             result["launcher_stdout"] = _launcher_stdout_descriptor(run_directory)
-        if (balanced or schur_v14 or blr_profile) and physical_candidate:
+        if (balanced or schur_v14 or blr_profile or cell_condensed_profile) and physical_candidate:
             result['workflow_clock_interval']=full_clock.update(clock_sample())
-            if schur_v14 or blr_profile:
+            if schur_v14 or blr_profile or cell_condensed_profile:
                 result.update(v14_time_policy_facts(v14_time_policy))
                 result['time_observations'] = {
                     'workflow_seconds': result['workflow_clock_interval']['budget_seconds'],
@@ -1952,7 +2238,7 @@ def launch_specification(
             if (
                 result['workflow_clock_interval']['budget_seconds']
                 > min(workflow_limit, float(v14_lease['reserved_seconds']) if v14_lease else workflow_limit)
-                        and (not (schur_v14 or blr_profile) or v14_time_policy == V14_TIME_POLICY_ENFORCE)
+                        and (not (schur_v14 or blr_profile or cell_condensed_profile) or v14_time_policy == V14_TIME_POLICY_ENFORCE)
             ):
                 result['result_classification']='PERFORMANCE_CONTROLLED_STOP'
         end_time = _now()
@@ -1961,7 +2247,7 @@ def launch_specification(
             result['full_workflow_time_exceeded'] = bool(
                 result['full_workflow_monotonic_seconds'] > workflow_limit
             )
-            if schur_v14 or blr_profile:
+            if schur_v14 or blr_profile or cell_condensed_profile:
                 result['time_observations'].update(
                     {
                         'full_workflow_monotonic_seconds': result[
@@ -1973,7 +2259,7 @@ def launch_specification(
                     }
                 )
             if result['full_workflow_time_exceeded'] and (
-                not (schur_v14 or blr_profile) or v14_time_policy == V14_TIME_POLICY_ENFORCE
+                not (schur_v14 or blr_profile or cell_condensed_profile) or v14_time_policy == V14_TIME_POLICY_ENFORCE
             ):
                 result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
         manifest.update(
@@ -2019,6 +2305,9 @@ __all__ = [
     "_reserve_v14_shared_budget",
     "_reserve_blr_v16_shared_budget",
     "_reserve_blr_v17_shared_budget",
+    "_reserve_v18_shared_budget",
+    "_cell_condensed_v18_shared_ledger_path",
     "_validate_v17_t2_prerequisite",
+    "_validate_v18_prerequisite",
     "_settle_v14_shared_budget",
 ]

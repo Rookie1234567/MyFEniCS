@@ -88,7 +88,7 @@ def _parser() -> argparse.ArgumentParser:
         '--v14-time-policy',
         choices=('enforce', 'observe_only'),
         default='enforce',
-        help='V14 Schur/V16 BLR timing policy; observe_only keeps finite timing evidence without deadline termination',
+        help='reviewed V14/V16/V17/V18 timing policy; observe_only keeps finite timing evidence without deadline termination',
     )
     parser.add_argument(
         '--r0-evidence', type=Path, metavar='ACCEPTED_R0_JSON',
@@ -122,13 +122,14 @@ def main(argv: list[str] | None = None) -> int:
                 'physical_p4_schur_v14',
                 'physical_p4_blr_bal_h_v16',
                 'physical_p4_blr_tradeoff_v17',
+                'physical_p4_cell_condensed_exact_v18',
+                'physical_p4_cell_condensed_blr_v18',
             }
         ):
             raise InputError(
                 '--v14-time-policy observe_only requires '
-                'solver.preconditioner=physical_p4_schur_v14 or '
-                'physical_p4_blr_bal_h_v16 or '
-                'physical_p4_blr_tradeoff_v17'
+                'a reviewed physical_p4_schur_v14, physical_p4_blr_bal_h_v16, '
+                'physical_p4_blr_tradeoff_v17, or V18 cell-condensed profile'
             )
         if args.validate_only:
             payload = {

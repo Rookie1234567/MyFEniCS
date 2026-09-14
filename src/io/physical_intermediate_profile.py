@@ -22,12 +22,14 @@ from .physical_recursive_profile import (
 SCHUR_PROFILE = "physical_p4_schur_v14"
 P4_BLR_PROFILE = "physical_p4_blr_bal_h_v16"
 P4_BLR_TRADEOFF_PROFILE = "physical_p4_blr_tradeoff_v17"
+CELL_CONDENSED_EXACT_PROFILE = "physical_p4_cell_condensed_exact_v18"
+CELL_CONDENSED_BLR_PROFILE = "physical_p4_cell_condensed_blr_v18"
 P4_BLR_TRADEOFF_THRESHOLDS = {
     "T1_BLR_CONTROL": 1.0e-3,
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -42,6 +44,105 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity in {CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE}:
+        stages = {
+            "U0_PREFLIGHT": {"workflow_seconds": 600, "solve_seconds": 600},
+            "U1_CONTROL_BRIDGE": {"workflow_seconds": 1800, "solve_seconds": 1800},
+            "U2_EXACT_CONTROL": {"workflow_seconds": 43200, "solve_seconds": 43200},
+            "U3_BLR_CONTROL": {"workflow_seconds": 43200, "solve_seconds": 43200},
+            "U4_ORIGINAL": {"workflow_seconds": 43200, "solve_seconds": 43200},
+            "U4_EXACT_FALLBACK": {"workflow_seconds": 43200, "solve_seconds": 43200},
+            "U5_NOTCH": {"workflow_seconds": 43200, "solve_seconds": 43200},
+            "U6_FINALIZE": {"workflow_seconds": 43200, "solve_seconds": 43200},
+        }
+        backend = (
+            "blr" if identity == CELL_CONDENSED_BLR_PROFILE else "exact"
+        )
+        return {
+            "identity": identity,
+            "scope": "review_v18_p4_cell_condensed",
+            "backend": backend,
+            "physical_levels": [6, 4],
+            "common_core": {
+                "active_matrix": "assembly-time p4 independent trace plus 80 carrier rows",
+                "interface_matrix": "[S_V Bhat; -Dhat Hhat] from complete cell-local elimination",
+                "cell_operator": "complete curl-plus-complex-material volume tensor before Schur",
+                "interior_factor": "one LAPACK complex128 LU per verified cell class",
+                "global_factor": "one condensed sparse MUMPS factor retained through postprocess",
+                "mpi_size": 1,
+                "ordinary_default_changed": False,
+                "old_macro_objects": False,
+                "old_full_p4_matrix": False,
+            },
+            "assembly": {
+                "dense_appended_block": True,
+                "sum_duplicate_cell_integrals": True,
+                "strict_local_checks": True,
+                "quadrature_changed": False,
+                "trace_order_changed": False,
+                "cache_key_dependencies": [
+                    "material_tag", "cell_widths", "jacobian", "orientation",
+                    "degree_and_basis_hash", "ufcx_integral_ids", "kernel_counts",
+                ],
+            },
+            "outer": {
+                "ksp_type": "right_fgmres",
+                "restart": 32,
+                "max_iterations": 2048,
+                "zero_start": True,
+                "live_KSP": True,
+                "explicit_true_residual_limit": 1.0e-6,
+                "balanced_route": "existing_InterfaceBalancedCoupling_BAL_H",
+            },
+            "direct_controls": {
+                "rhs_count": 3,
+                "additional_rhs_count": 3 if backend == "exact" else 0,
+                "global_factor_count": 1,
+                "one_mat_solve_per_nonzero_rhs": True,
+                "full_reference": "native p4 matrix-free action plus carrier",
+                "icntl": {"10": 0, "35": 0 if backend == "exact" else 2},
+                "cntl": {"7": None if backend == "exact" else 1.0e-5},
+            },
+            "memory_policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+            "resources": {
+                "workflow_seconds": 43200,
+                "solve_seconds": 43200,
+                "pc_soft_seconds": 0,
+                "pc_hard_seconds": 0,
+                "mpi_size": 1,
+                "require_zero_swap": True,
+                "time_policy": "observe_only",
+                "require_observe_only": True,
+                "inventory_memory_cap_bytes_by_stage": {
+                    stage: 6 * 1024**3 for stage in stages
+                },
+                "shared_temp_workspace_cap_bytes": 1 * 1024**3,
+                "local_factor_matrix_and_allocated_cap_bytes": 6 * 1024**3,
+                "interface_matrix_factor_solve_cap_bytes": 6 * 1024**3,
+                "interface_workspace_cap_bytes": 1 * 1024**3,
+                "tree_cap_bytes": 8 * 1024**3,
+                "dynamic_launch_cap_formula": "min(8GiB, effective_available_bytes-reserve_bytes)",
+                "reserve_formula": "max(4GiB, 0.15*effective_total_bytes)",
+                "warning_fraction": 0.85,
+                "stage_budgets": stages,
+            },
+            "gates": {
+                "native_A4_relative_residual": 1.0e-10 if backend == "exact" else 0.5,
+                "native_identity_relative": 1.0e-10,
+                "field_l2_and_scaled_curl": 1.0e-8 if backend == "exact" else 0.25,
+                "solve_call_delta": 1,
+                "rhs_input_unchanged": True,
+                "linearity_repeat": "reported_from_three_additional_exact_calls"
+                if backend == "exact" else "not_applicable_in_U3",
+                "zero_action": 1.0e-12,
+                "strict_slave_zero": True,
+                "p6_interface_is_conditional": True,
+            },
+            "qualification": (
+                "opt_in; U0 then matched U1/U2, optional single tau=1e-5 U3, "
+                "then selected U4/U5; observe_only"
+            ),
+        }
     if identity == P4_BLR_PROFILE:
         stage_budgets = {
             "S0_PREFLIGHT": {"workflow_seconds": 600, "solve_seconds": 600},

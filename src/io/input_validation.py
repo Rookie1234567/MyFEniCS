@@ -552,6 +552,8 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p4_schur_v14",
                 "physical_p4_blr_bal_h_v16",
                 "physical_p4_blr_tradeoff_v17",
+                "physical_p4_cell_condensed_exact_v18",
+                "physical_p4_cell_condensed_blr_v18",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -820,6 +822,61 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         raise _error(
                             "geometry.cell_notch",
                             "T4_NOTCH requires the frozen positive_x_middle_y_z40_80 recipe",
+                        )
+                elif notch is not None:
+                    raise _error(
+                        "geometry.cell_notch",
+                        f"{stage} is bound to the original no-notch physical recipe",
+                    )
+            elif preconditioner in (
+                "physical_p4_cell_condensed_exact_v18",
+                "physical_p4_cell_condensed_blr_v18",
+            ):
+                stage = solver.get("stage")
+                stage_budgets = {
+                    "U0_PREFLIGHT": (600, 600),
+                    "U1_CONTROL_BRIDGE": (1800, 1800),
+                    "U2_EXACT_CONTROL": (43200, 43200),
+                    "U3_BLR_CONTROL": (43200, 43200),
+                    "U4_ORIGINAL": (43200, 43200),
+                    "U4_EXACT_FALLBACK": (43200, 43200),
+                    "U5_NOTCH": (43200, 43200),
+                    "U6_FINALIZE": (43200, 43200),
+                }
+                if stage not in stage_budgets:
+                    raise _error(
+                        "solver.stage",
+                        f"{preconditioner} requires an explicit U0-U6 stage",
+                    )
+                for section, key, actual, expected in (
+                    ("solver", "restart", solver["restart"], 32),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    (
+                        "execution", "timeout_seconds", execution["timeout_seconds"],
+                        stage_budgets[stage][0],
+                    ),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"], 10.0),
+                ):
+                    if actual != expected:
+                        raise _error(
+                            f"{section}.{key}",
+                            f"{preconditioner} fixes {key}={expected} for {stage}",
+                        )
+                if solver.get("memory_policy") != "SYMBOLIC_SIZED_LOCAL_MUMPS_V11":
+                    raise _error(
+                        "solver.memory_policy",
+                        f"{preconditioner} fixes SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+                    )
+                notch = geometry.get("cell_notch")
+                if stage == "U5_NOTCH":
+                    if notch != "positive_x_middle_y_z40_80":
+                        raise _error(
+                            "geometry.cell_notch",
+                            "U5_NOTCH requires the frozen positive_x_middle_y_z40_80 recipe",
                         )
                 elif notch is not None:
                     raise _error(

@@ -40,6 +40,19 @@ def run_full3d_iterative(
             Path(run_directory),
             source_sha=_kwargs["source_sha"],
         )
+    if resolved_payload.get("solver", {}).get("preconditioner") in {
+        "physical_p4_cell_condensed_exact_v18",
+        "physical_p4_cell_condensed_blr_v18",
+    }:
+        from .physical_p4_cell_condensed_v18 import (
+            run_physical_p4_cell_condensed_v18,
+        )
+
+        return run_physical_p4_cell_condensed_v18(
+            resolved_payload,
+            Path(run_directory),
+            source_sha=_kwargs["source_sha"],
+        )
     from src.io.physical_intermediate_profile import PROFILES
 
     if resolved_payload.get("solver", {}).get("preconditioner") in PROFILES:

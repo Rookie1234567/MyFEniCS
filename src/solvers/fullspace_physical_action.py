@@ -79,6 +79,21 @@ class FullspaceSplitVolumeAction:
         })
 
     @property
+    def bilinear_form(self) -> Any:
+        """Return the complete unsplit UFL form used by cell condensation.
+
+        The physical action still evaluates the two components separately for
+        its established matrix-free path.  The V18 assembly-time route needs
+        the two terms combined *before* each local Schur complement is formed,
+        so it borrows their original bilinear forms without retaining a
+        second assembled matrix.
+        """
+
+        if self._destroyed:
+            raise RuntimeError("split volume action has been destroyed")
+        return self._curl_action._bilinear_form + self._mass_action._bilinear_form
+
+    @property
     def audit(self) -> Mapping[str, Any]:
         if self._destroyed:
             return MappingProxyType(

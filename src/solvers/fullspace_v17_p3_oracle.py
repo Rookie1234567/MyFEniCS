@@ -546,6 +546,7 @@ MUMPS_BLR_V16_TRACE_ICNTL = (
 )
 MUMPS_BLR_V16_TRACE_CNTL = (1, 3, 4, 7)
 MUMPS_BLR_TRADEOFF_PROFILE = "physical_p4_blr_tradeoff_v17"
+MUMPS_BLR_CELL_CONDENSED_PROFILE = "physical_p4_cell_condensed_blr_v18"
 MUMPS_BLR_TRADEOFF_THRESHOLDS = (1.0e-3, 1.0e-4)
 
 
@@ -567,6 +568,12 @@ def _validate_blr_profile_threshold(
         if not enable_coverage_statistics:
             raise ValueError(
                 "physical_p4_blr_tradeoff_v17 requires bounded coverage statistics"
+            )
+        return
+    if profile == MUMPS_BLR_CELL_CONDENSED_PROFILE:
+        if threshold != 1.0e-5:
+            raise ValueError(
+                "physical_p4_cell_condensed_blr_v18 is frozen at CNTL(7)=1e-5"
             )
         return
     raise ValueError(f"unsupported reviewed MUMPS BLR profile: {profile!r}")
@@ -717,6 +724,8 @@ class MumpsBLRFactor(_MumpsFactor):
             "schema": (
                 "task039extra.v17.mumps-blr-controls.v1"
                 if self.profile == MUMPS_BLR_TRADEOFF_PROFILE
+                else "task039extra.v18.mumps-blr-controls.v1"
+                if self.profile == MUMPS_BLR_CELL_CONDENSED_PROFILE
                 else "task039extra.v16.mumps-blr-controls.v1"
             ),
             "profile": self.profile,
@@ -737,7 +746,10 @@ class MumpsBLRFactor(_MumpsFactor):
             "icntl39_public_getter_unavailable_is_explicit": not defaults["39"]["supported"],
             "public_backend": self.public_backend_facts(),
         }
-        if self.profile == MUMPS_BLR_TRADEOFF_PROFILE:
+        if self.profile in {
+            MUMPS_BLR_TRADEOFF_PROFILE,
+            MUMPS_BLR_CELL_CONDENSED_PROFILE,
+        }:
             self.blr_control_facts.update(
                 {
                     "threshold": self.threshold,
@@ -882,6 +894,8 @@ class MumpsBLRFactor(_MumpsFactor):
             "schema": (
                 "task039extra.v17.mumps-blr-statistics.v1"
                 if self.profile == MUMPS_BLR_TRADEOFF_PROFILE
+                else "task039extra.v18.mumps-blr-statistics.v1"
+                if self.profile == MUMPS_BLR_CELL_CONDENSED_PROFILE
                 else "task039extra.v16.mumps-blr-statistics.v1"
             ),
             "backend": "mumps",
@@ -900,7 +914,10 @@ class MumpsBLRFactor(_MumpsFactor):
             "compression_ratio_not_inferred_from_icntl38": True,
             "unknown_fields_are_not_measured": True,
         }
-        if self.profile == MUMPS_BLR_TRADEOFF_PROFILE:
+        if self.profile in {
+            MUMPS_BLR_TRADEOFF_PROFILE,
+            MUMPS_BLR_CELL_CONDENSED_PROFILE,
+        }:
             result["coverage_statistics"] = {
                 "requested": self.enable_coverage_statistics,
                 "source": "mumps_stdout",
