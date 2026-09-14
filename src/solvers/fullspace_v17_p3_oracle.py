@@ -545,6 +545,53 @@ MUMPS_BLR_V16_TRACE_ICNTL = (
     6, 7, 8, 10, 14, 18, 22, 23, 28, 29, 31, 32, 35, 36, 37, 38, 39, 49
 )
 MUMPS_BLR_V16_TRACE_CNTL = (1, 3, 4, 7)
+MUMPS_BLR_TRADEOFF_PROFILE = "physical_p4_blr_tradeoff_v17"
+MUMPS_BLR_TRADEOFF_THRESHOLDS = (1.0e-3, 1.0e-4)
+
+
+def _validate_blr_profile_threshold(
+    profile: str, threshold: float, enable_coverage_statistics: bool
+) -> None:
+    threshold = float(threshold)
+    if profile == "physical_p4_blr_bal_h_v16":
+        if threshold != 1.0e-5 or enable_coverage_statistics:
+            raise ValueError(
+                "physical_p4_blr_bal_h_v16 is frozen at CNTL(7)=1e-5 without coverage statistics"
+            )
+        return
+    if profile == MUMPS_BLR_TRADEOFF_PROFILE:
+        if threshold not in MUMPS_BLR_TRADEOFF_THRESHOLDS:
+            raise ValueError(
+                "physical_p4_blr_tradeoff_v17 accepts only CNTL(7)=1e-3 or 1e-4"
+            )
+        if not enable_coverage_statistics:
+            raise ValueError(
+                "physical_p4_blr_tradeoff_v17 requires bounded coverage statistics"
+            )
+        return
+    raise ValueError(f"unsupported reviewed MUMPS BLR profile: {profile!r}")
+
+
+def _blr_control_spec(
+    *, threshold: float, enable_coverage_statistics: bool
+) -> tuple[dict[str, dict[int, int | float]], tuple[int, ...]]:
+    """Build the frozen V16/V17 control bundle without changing V16 defaults."""
+
+    threshold = float(threshold)
+    if not np.isfinite(threshold) or threshold <= 0.0:
+        raise ValueError("MUMPS BLR threshold must be finite and positive")
+    controls: dict[str, dict[int, int | float]] = {
+        "icntl": dict(MUMPS_BLR_V16_CONTROLS["icntl"]),
+        "cntl": {7: threshold},
+    }
+    trace = tuple(MUMPS_BLR_V16_TRACE_ICNTL)
+    if enable_coverage_statistics:
+        # MUMPS 5.6.2: ICNTL(2)=0 suppresses rank progress, ICNTL(3)=6
+        # routes global output to stdout, and ICNTL(4)=2 keeps the main
+        # statistics block.  These affect observability, not factor algebra.
+        controls["icntl"].update({2: 0, 3: 6, 4: 2})
+        trace = tuple(dict.fromkeys((*trace, 2, 3, 4)))
+    return controls, trace
 
 
 class MumpsBLRFactor(_MumpsFactor):
@@ -559,8 +606,25 @@ class MumpsBLRFactor(_MumpsFactor):
 
     profile = "physical_p4_blr_bal_h_v16"
 
-    def __init__(self, matrix: Any) -> None:
+    def __init__(
+        self,
+        matrix: Any,
+        *,
+        profile: str = "physical_p4_blr_bal_h_v16",
+        threshold: float = 1.0e-5,
+        enable_coverage_statistics: bool = False,
+    ) -> None:
+        self.profile = str(profile)
+        self.threshold = float(threshold)
+        self.enable_coverage_statistics = bool(enable_coverage_statistics)
+        _validate_blr_profile_threshold(
+            self.profile, self.threshold, self.enable_coverage_statistics
+        )
         super().__init__(matrix)
+        self._blr_controls, self._trace_icntl = _blr_control_spec(
+            threshold=self.threshold,
+            enable_coverage_statistics=self.enable_coverage_statistics,
+        )
         self._blr_configured = False
         self.blr_control_facts: dict[str, Any] | None = None
 
@@ -577,7 +641,7 @@ class MumpsBLRFactor(_MumpsFactor):
             raise RuntimeError("MUMPS BLR control readback requires a live factor")
         return {
             "stage": str(stage),
-            "icntl": self._read_icntl_bundle(MUMPS_BLR_V16_TRACE_ICNTL),
+            "icntl": self._read_icntl_bundle(self._trace_icntl),
             "cntl": self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL),
         }
 
@@ -615,20 +679,20 @@ class MumpsBLRFactor(_MumpsFactor):
         if self._blr_configured:
             raise RuntimeError("MUMPS BLR controls may be configured only once")
         defaults = self._read_icntl_bundle(
-            tuple(dict.fromkeys((*MUMPS_BLR_V16_TRACE_ICNTL, *MUMPS_BLR_V16_DEFAULT_ICNTL)))
+            tuple(dict.fromkeys((*self._trace_icntl, *MUMPS_BLR_V16_DEFAULT_ICNTL)))
         )
         cntl_before = self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL)
 
-        for index, value in MUMPS_BLR_V16_CONTROLS["icntl"].items():
+        for index, value in self._blr_controls["icntl"].items():
             self.set_icntl(index, int(value))
-        for index, value in MUMPS_BLR_V16_CONTROLS["cntl"].items():
+        for index, value in self._blr_controls["cntl"].items():
             self.set_cntl(index, float(value))
 
-        after = self._read_icntl_bundle(MUMPS_BLR_V16_TRACE_ICNTL)
+        after = self._read_icntl_bundle(self._trace_icntl)
         cntl_after = self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL)
-        for index, value in MUMPS_BLR_V16_CONTROLS["icntl"].items():
+        for index, value in self._blr_controls["icntl"].items():
             self._require_readback(after, index, value, kind="ICNTL")
-        for index, value in MUMPS_BLR_V16_CONTROLS["cntl"].items():
+        for index, value in self._blr_controls["cntl"].items():
             self._require_readback(cntl_after, index, value, kind="CNTL")
 
         # The reviewed Q1 ordering, pivot and distributed-input controls are
@@ -650,12 +714,16 @@ class MumpsBLRFactor(_MumpsFactor):
                     f"{before_item} -> {after_item}"
                 )
         self.blr_control_facts = {
-            "schema": "task039extra.v16.mumps-blr-controls.v1",
+            "schema": (
+                "task039extra.v17.mumps-blr-controls.v1"
+                if self.profile == MUMPS_BLR_TRADEOFF_PROFILE
+                else "task039extra.v16.mumps-blr-controls.v1"
+            ),
             "profile": self.profile,
             "configured_before_symbolic": True,
             "requested": {
-                "icntl": {str(k): int(v) for k, v in MUMPS_BLR_V16_CONTROLS["icntl"].items()},
-                "cntl": {str(k): float(v) for k, v in MUMPS_BLR_V16_CONTROLS["cntl"].items()},
+                "icntl": {str(k): int(v) for k, v in self._blr_controls["icntl"].items()},
+                "cntl": {str(k): float(v) for k, v in self._blr_controls["cntl"].items()},
             },
             "defaults_before": defaults,
             "cntl_before": cntl_before,
@@ -669,6 +737,13 @@ class MumpsBLRFactor(_MumpsFactor):
             "icntl39_public_getter_unavailable_is_explicit": not defaults["39"]["supported"],
             "public_backend": self.public_backend_facts(),
         }
+        if self.profile == MUMPS_BLR_TRADEOFF_PROFILE:
+            self.blr_control_facts.update(
+                {
+                    "threshold": self.threshold,
+                    "coverage_statistics_requested": self.enable_coverage_statistics,
+                }
+            )
         self._blr_configured = True
         assert self.blr_control_facts is not None
         return self.blr_control_facts
@@ -677,15 +752,33 @@ class MumpsBLRFactor(_MumpsFactor):
         if not self._blr_configured:
             raise RuntimeError("MUMPS BLR symbolic analysis requires pre-symbolic control setup")
         super().symbolic(matrix)
-        post_symbolic = self._read_icntl_bundle(MUMPS_BLR_V16_TRACE_ICNTL)
+        # PETSc's MUMPS symbolic setup may re-apply its option defaults for
+        # the output controls.  Keep the numerical controls frozen from the
+        # pre-symbolic handshake, but restore only the three V17 observability
+        # controls after that PETSc transition and retain both readbacks.
+        post_symbolic_before_reapply = self._read_icntl_bundle(self._trace_icntl)
+        post_symbolic = post_symbolic_before_reapply
+        observability_reapplied = False
+        if self.enable_coverage_statistics:
+            for index in (2, 3, 4):
+                self.set_icntl(index, int(self._blr_controls["icntl"][index]))
+            post_symbolic = self._read_icntl_bundle(self._trace_icntl)
+            observability_reapplied = True
         cntl_post_symbolic = self._read_cntl_bundle(MUMPS_BLR_V16_TRACE_CNTL)
-        for index, value in MUMPS_BLR_V16_CONTROLS["icntl"].items():
+        for index, value in self._blr_controls["icntl"].items():
             self._require_readback(post_symbolic, index, value, kind="ICNTL")
-        for index, value in MUMPS_BLR_V16_CONTROLS["cntl"].items():
+        for index, value in self._blr_controls["cntl"].items():
             self._require_readback(cntl_post_symbolic, index, value, kind="CNTL")
         if self.blr_control_facts is None:
             raise RuntimeError("MUMPS BLR control facts disappeared before symbolic readback")
         self.blr_control_facts["effective_after_symbolic"] = post_symbolic
+        if self.enable_coverage_statistics:
+            self.blr_control_facts[
+                "effective_after_symbolic_before_observability_reapply"
+            ] = post_symbolic_before_reapply
+            self.blr_control_facts[
+                "observability_controls_reapplied_after_symbolic"
+            ] = observability_reapplied
         self.blr_control_facts["cntl_after_symbolic"] = cntl_post_symbolic
         self.blr_control_facts["default_controls_frozen"] = {
             str(index): post_symbolic[str(index)]
@@ -721,6 +814,7 @@ class MumpsBLRFactor(_MumpsFactor):
             },
             "cntl": {"7": self.try_get_cntl(7)},
         }
+        self._require_readback(readback["cntl"], 7, self.threshold, kind="CNTL")
         self.blr_control_facts["solve_control_readback_latest"] = readback
         return readback
 
@@ -735,7 +829,7 @@ class MumpsBLRFactor(_MumpsFactor):
                 f"MUMPS BLR F_tau expected one MatSolve, observed {after - before}"
             )
         solve_control_readback = self._record_solve_control_readback(after)
-        return {
+        result = {
             "profile": self.profile,
             "factor_solve_calls_before": before,
             "factor_solve_calls_after": after,
@@ -743,6 +837,7 @@ class MumpsBLRFactor(_MumpsFactor):
             "hidden_refinement": False,
             "controls_after_solve": solve_control_readback,
         }
+        return result
 
     def blr_statistics(self) -> dict[str, Any]:
         """Return raw native statistics without inventing a compression ratio."""
@@ -783,8 +878,12 @@ class MumpsBLRFactor(_MumpsFactor):
             "rinfog3_theoretical_flops": raw_info.get("rinfog", {}).get("3"),
             "rinfog14_actual_flops": raw_info.get("rinfog", {}).get("14"),
         }
-        return {
-            "schema": "task039extra.v16.mumps-blr-statistics.v1",
+        result = {
+            "schema": (
+                "task039extra.v17.mumps-blr-statistics.v1"
+                if self.profile == MUMPS_BLR_TRADEOFF_PROFILE
+                else "task039extra.v16.mumps-blr-statistics.v1"
+            ),
             "backend": "mumps",
             "profile": self.profile,
             "controls": self.blr_control_facts,
@@ -801,10 +900,24 @@ class MumpsBLRFactor(_MumpsFactor):
             "compression_ratio_not_inferred_from_icntl38": True,
             "unknown_fields_are_not_measured": True,
         }
+        if self.profile == MUMPS_BLR_TRADEOFF_PROFILE:
+            result["coverage_statistics"] = {
+                "requested": self.enable_coverage_statistics,
+                "source": "mumps_stdout",
+                "status": "requires_stdout_capture",
+                "fronts_fields_not_inferred_from_infog": True,
+            }
+        return result
 
 
-def configured_mumps_blr_factor(matrix: Any) -> MumpsBLRFactor:
-    """Create a V16 BLR factor with controls committed before symbolic.
+def configured_mumps_blr_factor(
+    matrix: Any,
+    *,
+    profile: str = "physical_p4_blr_bal_h_v16",
+    threshold: float = 1.0e-5,
+    enable_coverage_statistics: bool = False,
+) -> MumpsBLRFactor:
+    """Create a reviewed BLR factor with controls committed before symbolic.
 
     This small factory is the adapter for the existing generic
     ``_prepare_factor`` lifecycle.  If the public-control handshake fails,
@@ -813,7 +926,24 @@ def configured_mumps_blr_factor(matrix: Any) -> MumpsBLRFactor:
     symbolic/numeric/solve ledger.
     """
 
-    factor = MumpsBLRFactor(matrix)
+    _validate_blr_profile_threshold(
+        str(profile), float(threshold), bool(enable_coverage_statistics)
+    )
+    if (
+        profile == "physical_p4_blr_bal_h_v16"
+        and float(threshold) == 1.0e-5
+        and not enable_coverage_statistics
+    ):
+        # Preserve the V16 one-argument factory seam used by existing tests
+        # and adapters; the class itself still validates the frozen defaults.
+        factor = MumpsBLRFactor(matrix)
+    else:
+        factor = MumpsBLRFactor(
+            matrix,
+            profile=profile,
+            threshold=threshold,
+            enable_coverage_statistics=enable_coverage_statistics,
+        )
     try:
         factor.configure_blr()
     except BaseException:

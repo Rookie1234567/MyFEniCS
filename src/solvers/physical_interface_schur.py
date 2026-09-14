@@ -2800,7 +2800,10 @@ def _prepare_factor(
         return {str(key): int(value) for key, value in values.items()}
 
     factor = factor_factory(matrix)
-    blr_memory_mode = str(getattr(factor, "profile", "")) == "physical_p4_blr_bal_h_v16"
+    blr_memory_mode = str(getattr(factor, "profile", "")) in {
+        "physical_p4_blr_bal_h_v16",
+        "physical_p4_blr_tradeoff_v17",
+    }
     info_indices = (9, 22, 29, 35, 36, 37) if blr_memory_mode else (22, 29)
     matrix_facts = {
         "label": label,

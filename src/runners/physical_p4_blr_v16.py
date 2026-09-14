@@ -17,7 +17,12 @@ from typing import Any, Mapping
 import numpy as np
 
 from src.io.input_validation import simulation_config_3d_from_normalized
-from src.io.physical_intermediate_profile import P4_BLR_PROFILE, profile_facts
+from src.io.physical_intermediate_profile import (
+    P4_BLR_PROFILE,
+    P4_BLR_TRADEOFF_PROFILE,
+    profile_facts,
+    p4_blr_tradeoff_threshold,
+)
 from src.solvers.fullspace_p4_blr import augmented_residual_identity
 from src.solvers.fullspace_v17_p3_oracle import configured_mumps_blr_factor
 from src.solvers.physical_interface_schur import _prepare_factor
@@ -481,17 +486,44 @@ def _s2_blr_control(
     runtime: _V14Runtime,
     common: dict[str, Any],
     rhs_records: list[dict[str, Any]],
+    *,
+    profile: str = P4_BLR_PROFILE,
+    threshold: float = 1.0e-5,
+    evidence_prefix: str = "v16",
+    control_stage: str = "S2_BLR_CONTROL",
+    packet_directory: str = "s2_rhs_packets",
+    enable_coverage_statistics: bool = False,
 ) -> dict[str, Any]:
     from src.solvers.fullspace_p4_reference import build_reference_matrix
 
     storage_rows = int(common["p4"]["dtn_action"].carrier.global_rows)
     if storage_rows != 53084:
-        raise ValueError(f"V16 p4 carrier storage rows changed: {storage_rows}")
+        raise ValueError(f"{profile} p4 carrier storage rows changed: {storage_rows}")
     matrix = None
     factor = None
     factor_facts: dict[str, Any] | None = None
     solve_records: list[dict[str, Any]] = []
     workspace_label = "s2_augmented_matrix_workspace"
+    factor_label = (
+        "s2_p4_blr_global"
+        if evidence_prefix == "v16"
+        else f"{control_stage.lower()}_p4_blr_global"
+    )
+    packet_schema = (
+        "task039extra.v16.s2-blr-rhs-packet.v1"
+        if evidence_prefix == "v16"
+        else f"task039extra.{evidence_prefix}.{control_stage.lower()}.rhs-packet.v1"
+    )
+    record_schema = (
+        "task039extra.v16.s2-blr-control.v1"
+        if evidence_prefix == "v16"
+        else f"task039extra.{evidence_prefix}.{control_stage.lower()}.v1"
+    )
+    record_stem = (
+        "s2_blr_control"
+        if evidence_prefix == "v16"
+        else f"{evidence_prefix}_{control_stage.lower()}"
+    )
     runtime.set_phase("assembly")
     try:
         matrix, matrix_facts = build_reference_matrix(
@@ -506,13 +538,23 @@ def _s2_blr_control(
         )
         runtime.release_workspace(workspace_label)
         if int(matrix.getSize()[0]) != storage_rows + len(common["p4"]["dtn_action"].carrier.entries):
-            raise ValueError("V16 augmented matrix row count changed")
+            raise ValueError(f"{profile} augmented matrix row count changed")
         before, after = _factor_gates(runtime)
         runtime.set_phase("factor")
+        factor_factory = (
+            configured_mumps_blr_factor
+            if evidence_prefix == "v16"
+            else lambda value: configured_mumps_blr_factor(
+                value,
+                profile=profile,
+                threshold=threshold,
+                enable_coverage_statistics=enable_coverage_statistics,
+            )
+        )
         factor, factor_facts = _prepare_factor(
             matrix,
-            configured_mumps_blr_factor,
-            label="s2_p4_blr_global",
+            factor_factory,
+            label=factor_label,
             resource_sample=lambda: runtime.sample("s2_factor"),
             marker=runtime.marker,
             pre_numeric_gate=before,
@@ -521,7 +563,9 @@ def _s2_blr_control(
         runtime.sample("s2_post_numeric_factor_live")
         for reviewed in rhs_records:
             if runtime.stop_requested:
-                raise V14ResourceStop("V16 stop requested before the next RHS")
+                raise V14ResourceStop(
+                    f"{profile} stop requested before the next RHS"
+                )
             runtime.set_phase("solve")
             started = time.perf_counter()
             rhs = matrix.createVecRight()
@@ -613,30 +657,45 @@ def _s2_blr_control(
                         np.ascontiguousarray(solution.array).tobytes()
                     ),
                 }
+                if evidence_prefix != "v16":
+                    solve_record["hidden_refinement"] = bool(
+                        solve_facts.get("hidden_refinement", False)
+                    )
                 packet_save_started = time.perf_counter()
-                packet = _save_packet(
-                    runtime.directory / "s2_rhs_packets",
-                    reviewed["stem"],
-                    {
-                        "schema": "task039extra.v16.s2-blr-rhs-packet.v1",
-                        "identity": {
-                            key: value
-                            for key, value in reviewed.items()
-                            if key
-                            not in {"rhs", "reference_solution", "reference_A4y", "reference_map"}
-                        },
-                        "solve": solve_record,
-                        "x_augmented": np.asarray(solution.array).copy(),
-                        "x_storage": solution_array,
-                        "native_A4_residual": native_a4,
-                        "native_volume_top_residual": native_volume,
-                        "augmented_top_residual": augmented_top,
-                        "port_residual": port,
-                        "raw_native_A4_residual": raw_native_a4,
-                        "raw_native_volume_top_residual": raw_native_volume,
-                        "raw_augmented_top_residual": raw_augmented_top,
-                        "raw_port_residual": raw_port,
+                packet_facts = {
+                    "schema": packet_schema,
+                    "identity": {
+                        key: value
+                        for key, value in reviewed.items()
+                        if key
+                        not in {"rhs", "reference_solution", "reference_A4y", "reference_map"}
                     },
+                    "solve": solve_record,
+                    "x_augmented": np.asarray(solution.array).copy(),
+                    "x_storage": solution_array,
+                    "native_A4_residual": native_a4,
+                    "native_volume_top_residual": native_volume,
+                    "augmented_top_residual": augmented_top,
+                    "port_residual": port,
+                    "raw_native_A4_residual": raw_native_a4,
+                    "raw_native_volume_top_residual": raw_native_volume,
+                    "raw_augmented_top_residual": raw_augmented_top,
+                    "raw_port_residual": raw_port,
+                }
+                if evidence_prefix != "v16":
+                    # These are already-live vectors used for the native
+                    # residual and identity norm.  Keep the exact objects in
+                    # the V17 packet; V16's packet lifecycle is unchanged.
+                    packet_facts.update(
+                        {
+                            "g": reviewed["rhs"],
+                            "native_action": native_action,
+                        }
+                    )
+                packet = _save_packet(
+                    runtime.directory / packet_directory,
+                    reviewed["stem"],
+                    packet_facts,
                     runtime=runtime,
                 )
                 solve_record["packet_save_seconds"] = (
@@ -649,7 +708,7 @@ def _s2_blr_control(
                 # record as the in-memory engineering record.
                 packet["solve"] = dict(solve_record)
                 _write_json(
-                    runtime.directory / "s2_rhs_packets" / f"{reviewed['stem']}.json",
+                    runtime.directory / packet_directory / f"{reviewed['stem']}.json",
                     packet,
                 )
                 solve_record["packet"] = packet
@@ -694,7 +753,7 @@ def _s2_blr_control(
                 .get("cntl", {})
                 .get("7", {})
                 .get("value")
-                == 1.0e-5
+                == float(threshold)
                 for item in solve_records
             ),
             "timing_fields": all(
@@ -736,9 +795,9 @@ def _s2_blr_control(
             else False,
         }
         record = {
-            "schema": "task039extra.v16.s2-blr-control.v1",
-            "stage": "S2_BLR_CONTROL",
-            "status": "S2_BLR_CONTROL_PASS" if all(gates.values()) else "S2_BLR_CONTROL_REJECTED",
+            "schema": record_schema,
+            "stage": control_stage,
+            "status": f"{control_stage}_PASS" if all(gates.values()) else f"{control_stage}_REJECTED",
             "official_result": False,
             "stage_pass": bool(all(gates.values())),
             "result_classification": "DISCRETE_SOLVER_OUTPUT_PASS"
@@ -755,13 +814,22 @@ def _s2_blr_control(
                 "resources": str(runtime.resources_path),
                 "parent_resources": str(runtime.directory / "watchdog" / "resources.jsonl"),
                 "inventory": str(runtime.inventory_path),
-                "rhs_packets": str(runtime.directory / "s2_rhs_packets"),
+                "rhs_packets": str(runtime.directory / packet_directory),
             },
             "inventory_cap_bytes": int(runtime.inventory_cap),
             "shared_temp_workspace_cap_bytes": int(runtime.workspace_cap),
         }
-        runtime.marker("v16_s2_blr_control_complete", record)
-        _save_packet(runtime.directory, "s2_blr_control", record, runtime=runtime)
+        if evidence_prefix != "v16":
+            record.update(
+                {
+                    "blr_threshold": float(threshold),
+                    "coverage_statistics_requested": bool(enable_coverage_statistics),
+                }
+            )
+            runtime.marker(f"{evidence_prefix}_{control_stage.lower()}_complete", record)
+        else:
+            runtime.marker("v16_s2_blr_control_complete", record)
+        _save_packet(runtime.directory, record_stem, record, runtime=runtime)
         return record
     finally:
         try:
@@ -772,7 +840,7 @@ def _s2_blr_control(
                 matrix.destroy()
         # This entry covers BOTH the factor and the matrix. An exception in
         # either destroy must not falsely clear its inventory observation.
-        runtime.release_inventory("s2_p4_blr_global")
+        runtime.release_inventory(factor_label)
         runtime.release_workspace(workspace_label)
 
 
@@ -788,21 +856,27 @@ def _not_run_stage(stage: str, reason: str) -> dict[str, Any]:
     }
 
 
-def run_physical_p4_blr_v16(
+def _run_physical_p4_blr(
     resolved_payload: Mapping[str, Any],
     run_directory: str | Path,
     *,
     source_sha: str,
+    profile: str,
+    batch_identity: str,
+    evidence_prefix: str,
+    control_stages: tuple[str, ...],
+    fixed_threshold: float | None = None,
+    enable_coverage_statistics: bool = False,
 ) -> dict[str, Any]:
-    """Run S0/S1/S2 V16 wiring; later stages remain explicitly not run."""
+    """Run the shared p4 BLR control wiring for one reviewed profile."""
 
     directory = Path(run_directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
-    contract = profile_facts(P4_BLR_PROFILE)
+    contract = profile_facts(profile)
     stage = str(resolved_payload.get("solver", {}).get("stage"))
     summary: dict[str, Any] = {
-        "schema": "task039extra.v16.worker-summary.v1",
-        "profile": P4_BLR_PROFILE,
+        "schema": f"task039extra.{evidence_prefix}.worker-summary.v1",
+        "profile": profile,
         "stage": stage,
         "source_sha": source_sha,
         "status": "STARTED",
@@ -814,15 +888,15 @@ def run_physical_p4_blr_v16(
     handlers: dict[int, Any] = {}
     try:
         if resolved_payload.get("dimension") != 3:
-            raise ValueError("V16 BLR requires dimension=3")
+            raise ValueError(f"{profile} requires dimension=3")
         if resolved_payload.get("method", {}).get("kind") != "full3d_iterative":
-            raise ValueError("V16 BLR requires method.kind=full3d_iterative")
-        if resolved_payload.get("solver", {}).get("preconditioner") != P4_BLR_PROFILE:
-            raise ValueError("V16 worker received a different preconditioner")
+            raise ValueError(f"{profile} requires method.kind=full3d_iterative")
+        if resolved_payload.get("solver", {}).get("preconditioner") != profile:
+            raise ValueError(f"BLR worker received a different preconditioner than {profile}")
         if resolved_payload.get("derived", {}).get("physical_intermediate_profile") != contract:
-            raise ValueError("V16 resolved profile differs from the frozen contract")
+            raise ValueError(f"{profile} resolved profile differs from the frozen contract")
         if not isinstance(source_sha, str) or len(source_sha) != 40:
-            raise ValueError("V16 requires the complete launch source SHA")
+            raise ValueError(f"{profile} requires the complete launch source SHA")
         summary["abi"] = _abi_facts()
         cfg = simulation_config_3d_from_normalized(resolved_payload)
         root = _repo_root()
@@ -832,8 +906,8 @@ def run_physical_p4_blr_v16(
             contract,
             root=root,
             source_sha=source_sha,
-            batch_identity="review_v16_p4_blr",
-            evidence_prefix="v16",
+            batch_identity=batch_identity,
+            evidence_prefix=evidence_prefix,
         )
         summary["shared_budget"] = runtime.shared_budget
         summary["shared_attempt"] = {
@@ -849,7 +923,11 @@ def run_physical_p4_blr_v16(
         runtime.sample("s0_preflight")
         if stage == "S0_PREFLIGHT":
             record = {
-                "schema": "task039extra.v16.s0-preflight.v1",
+                "schema": (
+                    "task039extra.v16.s0-preflight.v1"
+                    if evidence_prefix == "v16"
+                    else f"task039extra.{evidence_prefix}.s0-preflight.v1"
+                ),
                 "stage": stage,
                 "status": "S0_PREFLIGHT_PASS",
                 "official_result": False,
@@ -861,17 +939,17 @@ def run_physical_p4_blr_v16(
         elif stage == "S1_CONTROL":
             record = bridge_q1_baseline(root, runtime)
             record["stage_pass"] = bool(record["passed"])
-        elif stage == "S2_BLR_CONTROL":
+        elif stage in control_stages:
             s1_bridge = bridge_q1_baseline(root, runtime)
             summary["s1_bridge"] = s1_bridge
             if not s1_bridge.get("passed"):
                 raise ValueError(
-                    "S2_BLR_CONTROL requires the qualified S1 Q1 bridge: "
+                    f"{stage} requires the qualified S1 Q1 bridge: "
                     f"{s1_bridge.get('errors', [])}"
                 )
             _v14_known_preallocation_gate(
                 runtime,
-                "S2_BLR_CONTROL",
+                stage,
                 include_common=True,
                 include_matrices=False,
             )
@@ -882,11 +960,30 @@ def run_physical_p4_blr_v16(
                 )
                 _v14_known_preallocation_gate(
                     runtime,
-                    "S2_BLR_CONTROL",
+                    stage,
                     include_common=False,
                     include_matrices=True,
                 )
-                record = _s2_blr_control(runtime, common, rhs_records)
+                threshold = (
+                    float(fixed_threshold)
+                    if fixed_threshold is not None
+                    else p4_blr_tradeoff_threshold(stage)
+                )
+                record = _s2_blr_control(
+                    runtime,
+                    common,
+                    rhs_records,
+                    profile=profile,
+                    threshold=threshold,
+                    evidence_prefix=evidence_prefix,
+                    control_stage=stage,
+                    packet_directory=(
+                        "s2_rhs_packets"
+                        if evidence_prefix == "v16"
+                        else f"{stage.lower()}_rhs_packets"
+                    ),
+                    enable_coverage_statistics=enable_coverage_statistics,
+                )
             finally:
                 if rhs_records is not None:
                     for item in rhs_records:
@@ -900,7 +997,11 @@ def run_physical_p4_blr_v16(
         else:
             record = _not_run_stage(
                 stage,
-                "S3/S4 conditional physical runs are not connected in this wiring turn",
+                (
+                    "S3/S4 conditional physical runs are not connected in this wiring turn"
+                    if evidence_prefix == "v16"
+                    else "conditional physical runs are not connected in this wiring turn"
+                ),
             )
         summary.update(record)
         summary["status"] = record["status"]
@@ -925,19 +1026,60 @@ def run_physical_p4_blr_v16(
             _destroy_common(common, runtime)
         for signum, handler in handlers.items():
             signal.signal(signum, handler)
-        _write_json(directory / "physical_p4_blr_v16_summary.json", summary)
+        _write_json(directory / f"physical_p4_blr_{evidence_prefix}_summary.json", summary)
         if runtime is not None:
-            runtime.marker("v16_worker_complete", summary)
+            runtime.marker(f"{evidence_prefix}_worker_complete", summary)
     return {
         "passed": bool(summary.get("stage_pass", False)),
-        "errors": [] if summary.get("stage_pass", False) else [str(summary.get("error", summary.get("status", "V16 stage did not pass")))],
+        "errors": [] if summary.get("stage_pass", False) else [str(summary.get("error", summary.get("status", f"{profile} stage did not pass")))],
         "summary": summary,
         "numerical_output_directory": str(directory / "numerical_output"),
     }
 
 
+def run_physical_p4_blr_v16(
+    resolved_payload: Mapping[str, Any],
+    run_directory: str | Path,
+    *,
+    source_sha: str,
+) -> dict[str, Any]:
+    """Run the unchanged V16 S0/S1/S2 control wiring."""
+
+    return _run_physical_p4_blr(
+        resolved_payload,
+        run_directory,
+        source_sha=source_sha,
+        profile=P4_BLR_PROFILE,
+        batch_identity="review_v16_p4_blr",
+        evidence_prefix="v16",
+        control_stages=("S2_BLR_CONTROL",),
+        fixed_threshold=1.0e-5,
+    )
+
+
+def run_physical_p4_blr_tradeoff_v17(
+    resolved_payload: Mapping[str, Any],
+    run_directory: str | Path,
+    *,
+    source_sha: str,
+) -> dict[str, Any]:
+    """Run one explicit V17 T1/T2 threshold control."""
+
+    return _run_physical_p4_blr(
+        resolved_payload,
+        run_directory,
+        source_sha=source_sha,
+        profile=P4_BLR_TRADEOFF_PROFILE,
+        batch_identity="review_v17_p4_blr_tradeoff",
+        evidence_prefix="v17",
+        control_stages=("T1_BLR_CONTROL", "T2_BLR_CONTROL"),
+        enable_coverage_statistics=True,
+    )
+
+
 __all__ = [
     "Q1_BRIDGE_PATH",
     "bridge_q1_baseline",
+    "run_physical_p4_blr_tradeoff_v17",
     "run_physical_p4_blr_v16",
 ]

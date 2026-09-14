@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import json
 import hashlib
+import math
 import platform
 import subprocess
 import sys
@@ -120,12 +121,32 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
     path.write_bytes(canonical_json_bytes(value) + b"\n")
 
 
+def _launcher_stdout_descriptor(run_directory: Path) -> dict[str, Any]:
+    """Bind the V17 checker to the log actually opened by the supervisor."""
+
+    path = (run_directory / "watchdog" / "worker.log").resolve()
+    try:
+        payload = path.read_bytes()
+    except OSError:
+        return {"path": str(path), "sha256": None, "bytes": None}
+    return {
+        "path": str(path),
+        "sha256": hashlib.sha256(payload).hexdigest(),
+        "bytes": len(payload),
+    }
+
+
 V14_SHARED_WORKFLOW_SECONDS = 43_200.0
 V15_Q0_EIO_RECOVERY_ID = "V15_Q0_EIO_ONCE"
 V16_Q6_REFRESH_ID = "V16_Q6_EVIDENCE_REFRESH_ONCE"
 V16_PREDECESSOR_V14_LEDGER_SHA256 = (
     "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3"
 )
+V17_PREDECESSOR_V16_LEDGER_SHA256 = (
+    "cc97e1c1c00ef78111450c6d37cb98ce40f074d547bd4d75fd9a16b308816d7a"
+)
+V17_T1_DECISION_FILENAME = "t1_independent_check.json"
+V17_T1_SUMMARY_FILENAME = "physical_p4_blr_v17_summary.json"
 V15_Q0_EIO_SOURCE_SHA = "efea244159d63a7c9db67ca091e29a9c19f9ce88"
 V15_R0_SOURCE_SHA = "665a09b6a7d66eff15b4a744036d21f1dad3649d"
 V15_Q0_EIO_RUN_DIRECTORY = (
@@ -217,6 +238,132 @@ def _blr_v16_shared_ledger_path(repo_root: Path) -> Path:
         / "review_v16_p4_blr"
         / "shared_workflow_ledger.json"
     )
+
+
+def _blr_v17_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent V17 threshold-tradeoff ledger."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "p4_blr_tradeoff_v17"
+        / "review_v17_p4_blr_tradeoff"
+        / "shared_workflow_ledger.json"
+    )
+
+
+def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    """Require a settled, hash-bound T1 checker decision before T2 launch."""
+
+    stages = ledger.get("stages")
+    t1 = stages.get("T1_BLR_CONTROL") if isinstance(stages, Mapping) else None
+    if not isinstance(t1, Mapping) or t1.get("active_attempt") is not None:
+        raise InputError(
+            "V17 T2 requires a settled T1_BLR_CONTROL attempt before launch"
+        )
+    attempts = t1.get("attempts")
+    if not isinstance(attempts, list) or not attempts:
+        raise InputError("V17 T2 requires one settled T1 attempt")
+    attempt = attempts[-1]
+    if not isinstance(attempt, Mapping):
+        raise InputError("V17 T1 settled attempt metadata is invalid")
+    elapsed = attempt.get("actual_elapsed_seconds", attempt.get("settled_seconds"))
+    try:
+        if not math.isfinite(float(elapsed)) or float(elapsed) < 0.0:
+            raise ValueError
+    except (TypeError, ValueError):
+        raise InputError("V17 T2 requires a hash-bound settled T1 elapsed time") from None
+    if attempt.get("status") in {None, "RESERVED", "RUNNING"}:
+        raise InputError("V17 T2 cannot use an unsettled T1 worker identity")
+    run_directory = Path(str(attempt.get("run_directory", ""))).resolve()
+    decision_path = run_directory / V17_T1_DECISION_FILENAME
+    summary_path = run_directory / V17_T1_SUMMARY_FILENAME
+    manifest_path = run_directory / "run_manifest.json"
+    try:
+        decision_bytes = decision_path.read_bytes()
+        decision = json.loads(decision_bytes.decode("utf-8"))
+        summary_bytes = summary_path.read_bytes()
+        summary = json.loads(summary_bytes.decode("utf-8"))
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError(
+            "V17 T2 requires t1_independent_check.json and the settled T1 summaries"
+        ) from exc
+    if not isinstance(decision, Mapping) or not isinstance(summary, Mapping):
+        raise InputError("V17 T1 decision or summary has an invalid JSON shape")
+    manifest_after = manifest.get("source_after") if isinstance(manifest, Mapping) else {}
+    manifest_after_sha = (
+        manifest_after.get("source_sha")
+        if isinstance(manifest_after, Mapping)
+        else None
+    )
+    decision_facts = decision.get("decision")
+    comparison = decision.get("comparison_gates")
+    decision_action = (
+        decision_facts.get("action") if isinstance(decision_facts, Mapping) else None
+    )
+    decision_threshold = (
+        decision_facts.get("next_threshold")
+        if isinstance(decision_facts, Mapping)
+        else None
+    )
+    resource_complete = (
+        decision_facts.get("resource_evidence_complete")
+        if isinstance(decision_facts, Mapping)
+        else None
+    )
+    quality = decision_facts.get("quality") if isinstance(decision_facts, Mapping) else None
+    memory = decision_facts.get("memory") if isinstance(decision_facts, Mapping) else None
+    compression = (
+        decision_facts.get("compression") if isinstance(decision_facts, Mapping) else None
+    )
+    if (
+        decision.get("schema") != "task039extra.v17.independent-checker.v1"
+        or decision.get("stage") != "T1_BLR_CONTROL"
+        or decision.get("source_sha") != attempt.get("source_sha")
+        or summary.get("source_sha") != attempt.get("source_sha")
+        or decision.get("directory") != str(run_directory)
+        or decision.get("summary_sha256")
+        != hashlib.sha256(summary_bytes).hexdigest()
+        or decision.get("manifest_sha256")
+        != hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        or decision_action != "RUN_T2"
+        or decision_threshold != 1.0e-4
+        or not isinstance(comparison, Mapping)
+        or not comparison
+        or not all(value is True for value in comparison.values())
+        or not isinstance(quality, Mapping)
+        or quality.get("correctness_pass") is not True
+        or quality.get("quality_pass") is not False
+        or not isinstance(memory, Mapping)
+        or memory.get("memory_pass") is not True
+        or not isinstance(compression, Mapping)
+        or compression.get("actual_compression_present") is not True
+        or resource_complete is not True
+        or not isinstance(manifest, Mapping)
+        or manifest.get("status") != "finished"
+        or manifest.get("source_sha") != attempt.get("source_sha")
+        or manifest_after_sha != attempt.get("source_sha")
+    ):
+        raise InputError(
+            "V17 T2 requires a settled T1 decision whose hash-bound action is RUN_T2"
+        )
+    return {
+        "stage": "T1_BLR_CONTROL",
+        "source_sha": str(attempt["source_sha"]),
+        "run_directory": str(run_directory),
+        "decision_path": str(decision_path),
+        "decision_sha256": hashlib.sha256(decision_bytes).hexdigest(),
+        "summary_path": str(summary_path),
+        "summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
+        "manifest_path": str(manifest_path),
+        "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "settled_elapsed_seconds": float(elapsed),
+        "action": "RUN_T2",
+        "next_threshold": 1.0e-4,
+    }
 
 
 def _v15_review_root(repo_root: Path) -> Path:
@@ -824,6 +971,132 @@ def _reserve_v14_shared_budget(
     }
 
 
+def _reserve_blr_stage_from_ledger(
+    path: Path,
+    ledger: dict[str, Any],
+    *,
+    stage: str,
+    run_directory: Path,
+    source_sha: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str,
+    error_prefix: str,
+    summary_filename: str,
+    prerequisite: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Share replay, reservation, and settlement metadata across BLR batches."""
+
+    for old_stage, old_record in ledger.get("stages", {}).items():
+        if old_record.get("active_attempt") is not None:
+            raise InputError(
+                f"{error_prefix} BLR attempt {old_stage} is unsettled; settle it before another launch"
+            )
+    effective_before = read_v14_effective_budget(ledger)
+    workflow_budget = float(stage_budget.get("workflow_seconds", 0.0))
+    if workflow_budget <= 0.0:
+        raise InputError(f"{error_prefix} BLR stage budget must be positive")
+    stage_record = dict(ledger.get("stages", {}).get(stage, {}))
+    attempts = list(stage_record.get("attempts", []))
+    replay = False
+    replay_evidence = None
+    if attempts:
+        if len(attempts) >= 2:
+            raise InputError(f"{error_prefix} BLR stage {stage} has exhausted its one repair replay")
+        previous = attempts[-1]
+        if previous.get("source_sha") == source_sha:
+            raise InputError(f"{error_prefix} BLR stage {stage} cannot replay the same source SHA")
+        if int(ledger.get("unique_bug_replay_count", 0)) >= 1:
+            raise InputError(f"{error_prefix} BLR batch has exhausted its one implementation-bug replay")
+        previous_run_directory = Path(str(previous.get("run_directory", "")))
+        evidence_path = previous_run_directory / "implementation_bug_replay.json"
+        summary_path = previous_run_directory / summary_filename
+        try:
+            evidence_bytes = evidence_path.read_bytes()
+            evidence = json.loads(evidence_bytes.decode("utf-8"))
+            summary_bytes = summary_path.read_bytes()
+            previous_summary = json.loads(summary_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError(f"{error_prefix} repair replay requires hash-bound bug evidence") from exc
+        if (
+            evidence.get("classification") != "IMPLEMENTATION_BUG"
+            or evidence.get("stage") != stage
+            or evidence.get("failed_source_sha") != previous.get("source_sha")
+            or evidence.get("fixed_source_sha") != source_sha
+            or not evidence.get("bug_and_fix")
+            or previous.get("status") not in {"WORKER_FAILED", "FAILED"}
+            or previous.get("watchdog_classification") not in {None, "WORKER_FAILED"}
+            or previous_summary.get("status") != "FAILED"
+            or previous_summary.get("result_classification") != "WORKER_FAILED"
+            or not previous_summary.get("error")
+            or previous_summary.get("source_sha") != previous.get("source_sha")
+        ):
+            raise InputError(
+                f"{error_prefix} repair replay requires a genuine worker exception, changed source, and bound fix"
+            )
+        replay = True
+        replay_evidence = {
+            "path": str(evidence_path),
+            "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
+            "worker_summary_path": str(summary_path),
+            "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
+            "worker_summary_result_classification": previous_summary.get(
+                "result_classification"
+            ),
+            **evidence,
+        }
+    attempt = {
+        "source_sha": str(source_sha),
+        "run_directory": str(run_directory),
+        "status": "RESERVED",
+        "attempt": len(attempts) + 1,
+        "replay": replay,
+        "replay_evidence": replay_evidence,
+        "bug_replay_count_before": int(ledger.get("unique_bug_replay_count", 0)),
+        "workflow_clock_start": dict(workflow_clock_start),
+        "reserved_timestamp_ns": time.time_ns(),
+        "reserved_seconds": workflow_budget,
+        "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
+        "effective_budget_before_reservation": effective_before,
+        "time_policy": time_policy,
+        **v14_time_policy_facts(time_policy),
+    }
+    if prerequisite is not None:
+        attempt["prerequisite"] = dict(prerequisite)
+    attempts.append(attempt)
+    stage_record.update({"attempts": attempts, "active_attempt": len(attempts) - 1})
+    ledger["stages"] = dict(ledger.get("stages", {}))
+    ledger["stages"][stage] = stage_record
+    ledger["source_attempts"] = list(ledger.get("source_attempts", []))
+    ledger["source_attempts"].append(
+        {"stage": stage, "source_sha": str(source_sha), "attempt": len(attempts)}
+    )
+    ledger["fresh_worker_count"] = int(ledger.get("fresh_worker_count", 0)) + 1
+    if replay:
+        ledger["unique_bug_replay_count"] = int(
+            ledger.get("unique_bug_replay_count", 0)
+        ) + 1
+    _write_v14_ledger(path, ledger)
+    effective_after = read_v14_effective_budget(ledger)
+    result = {
+        "path": str(path),
+        "stage": str(stage),
+        "attempt_index": len(attempts) - 1,
+        "reserved_seconds": workflow_budget,
+        "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
+        "replay": replay,
+        "replay_evidence": replay_evidence,
+        "time_policy": time_policy,
+        **v14_time_policy_facts(time_policy),
+        "policy_debit_seconds": 0.0,
+        "effective_budget_before_reservation": effective_before,
+        "effective_budget_after_reservation": effective_after,
+    }
+    if prerequisite is not None:
+        result["prerequisite"] = dict(prerequisite)
+    return result
+
+
 def _reserve_blr_v16_shared_budget(
     repo_root: Path,
     run_directory: Path,
@@ -926,116 +1199,133 @@ def _reserve_blr_v16_shared_budget(
         raise InputError("V16 BLR ledger lacks its immutable V14 predecessor reference")
     if predecessor_reference.get("sha256") != V16_PREDECESSOR_V14_LEDGER_SHA256:
         raise InputError("V16 predecessor V14 reference hash changed")
-    for old_stage, old_record in ledger.get("stages", {}).items():
-        if old_record.get("active_attempt") is not None:
-            raise InputError(
-                f"V16 BLR attempt {old_stage} is unsettled; settle it before another launch"
-            )
-    effective_before = read_v14_effective_budget(ledger)
-    workflow_budget = float(stage_budget.get("workflow_seconds", 0.0))
-    if workflow_budget <= 0.0:
-        raise InputError("V16 BLR stage budget must be positive")
-    stage_record = dict(ledger.get("stages", {}).get(stage, {}))
-    attempts = list(stage_record.get("attempts", []))
-    replay = False
-    replay_evidence = None
-    if attempts:
-        if len(attempts) >= 2:
-            raise InputError(f"V16 BLR stage {stage} has exhausted its one repair replay")
-        previous = attempts[-1]
-        if previous.get("source_sha") == source_sha:
-            raise InputError(f"V16 BLR stage {stage} cannot replay the same source SHA")
-        if int(ledger.get("unique_bug_replay_count", 0)) >= 1:
-            raise InputError("V16 BLR batch has exhausted its one implementation-bug replay")
-        previous_run_directory = Path(str(previous.get("run_directory", "")))
-        evidence_path = previous_run_directory / "implementation_bug_replay.json"
-        summary_path = previous_run_directory / "physical_p4_blr_v16_summary.json"
-        try:
-            evidence_bytes = evidence_path.read_bytes()
-            evidence = json.loads(evidence_bytes.decode("utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise InputError("V16 repair replay requires implementation_bug_replay.json") from exc
-        try:
-            summary_bytes = summary_path.read_bytes()
-            previous_summary = json.loads(summary_bytes.decode("utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise InputError(
-                "V16 repair replay requires the hash-bound failed worker summary"
-            ) from exc
-        if (
-            evidence.get("classification") != "IMPLEMENTATION_BUG"
-            or evidence.get("stage") != stage
-            or evidence.get("failed_source_sha") != previous.get("source_sha")
-            or evidence.get("fixed_source_sha") != source_sha
-            or not evidence.get("bug_and_fix")
-            or previous.get("status") not in {"WORKER_FAILED", "FAILED"}
-            or previous.get("watchdog_classification") not in {None, "WORKER_FAILED"}
-            or previous_summary.get("status") != "FAILED"
-            or previous_summary.get("result_classification") != "WORKER_FAILED"
-            or not previous_summary.get("error")
-            or previous_summary.get("source_sha") != previous.get("source_sha")
-        ):
-            raise InputError(
-                "V16 repair replay requires a genuine worker exception, changed source, and bound fix"
-            )
-        replay = True
-        replay_evidence = {
-            "path": str(evidence_path),
-            "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
-            "worker_summary_path": str(summary_path),
-            "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
-            "worker_summary_result_classification": previous_summary.get(
-                "result_classification"
-            ),
-            **evidence,
-        }
-    reservation = workflow_budget
-    if reservation <= 0.0:
-        raise InputError("V16 BLR stage reservation is empty")
-    attempt = {
-        "source_sha": str(source_sha),
-        "run_directory": str(run_directory),
-        "status": "RESERVED",
-        "attempt": len(attempts) + 1,
-        "replay": replay,
-        "replay_evidence": replay_evidence,
-        "bug_replay_count_before": int(ledger.get("unique_bug_replay_count", 0)),
-        "workflow_clock_start": dict(workflow_clock_start),
-        "reserved_timestamp_ns": time.time_ns(),
-        "reserved_seconds": reservation,
-        "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
-        "effective_budget_before_reservation": effective_before,
-        "time_policy": time_policy,
-        **v14_time_policy_facts(time_policy),
-    }
-    attempts.append(attempt)
-    stage_record.update({"attempts": attempts, "active_attempt": len(attempts) - 1})
-    ledger["stages"] = dict(ledger.get("stages", {}))
-    ledger["stages"][stage] = stage_record
-    ledger["source_attempts"] = list(ledger.get("source_attempts", []))
-    ledger["source_attempts"].append(
-        {"stage": stage, "source_sha": str(source_sha), "attempt": len(attempts)}
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V16",
+        summary_filename="physical_p4_blr_v16_summary.json",
     )
-    ledger["fresh_worker_count"] = int(ledger.get("fresh_worker_count", 0)) + 1
-    if replay:
-        ledger["unique_bug_replay_count"] = int(
-            ledger.get("unique_bug_replay_count", 0)
-        ) + 1
-    _write_v14_ledger(path, ledger)
-    effective_after = read_v14_effective_budget(ledger)
-    return {
-        "path": str(path),
-        "stage": str(stage),
-        "attempt_index": len(attempts) - 1,
-        "reserved_seconds": reservation,
-        "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
-        "replay": replay,
-        "replay_evidence": replay_evidence,
-        "time_policy": time_policy,
-        **v14_time_policy_facts(time_policy),
-        "effective_budget_before_reservation": effective_before,
-        "effective_budget_after_reservation": effective_after,
-    }
+
+
+def _reserve_blr_v17_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve one V17 threshold stage in an independent hash-bound ledger."""
+
+    try:
+        time_policy = normalize_v14_time_policy(time_policy)
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
+    if time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError(
+            "physical_p4_blr_tradeoff_v17 requires the explicit observe_only time policy"
+        )
+    repo_root = Path(repo_root).resolve()
+    path = _blr_v17_shared_ledger_path(repo_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    predecessor = _blr_v16_shared_ledger_path(repo_root)
+    try:
+        predecessor_bytes = predecessor.read_bytes()
+        predecessor_ledger = json.loads(predecessor_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V17 BLR requires the readable final V16 ledger reference") from exc
+    predecessor_sha = hashlib.sha256(predecessor_bytes).hexdigest()
+    if predecessor_sha != V17_PREDECESSOR_V16_LEDGER_SHA256:
+        raise InputError("V17 predecessor V16 ledger hash changed")
+    if predecessor_ledger.get("batch_identity") != "review_v16_p4_blr":
+        raise InputError("V17 predecessor ledger is not the review_v16_p4_blr ledger")
+    predecessor_v14 = predecessor_ledger.get("predecessor_v14_ledger")
+    if (
+        not isinstance(predecessor_v14, Mapping)
+        or predecessor_v14.get("sha256") != V16_PREDECESSOR_V14_LEDGER_SHA256
+    ):
+        raise InputError("V17 predecessor V16 ledger lacks the hash-bound V14 reference")
+
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V17 BLR shared ledger cannot be read") from exc
+        if ledger.get("batch_identity") != "review_v17_p4_blr_tradeoff":
+            raise InputError("V17 BLR shared ledger batch identity changed")
+    else:
+        predecessor_effective = read_v14_effective_budget(predecessor_ledger)
+        ledger = {
+            "schema": "task039extra.v17.shared-workflow-ledger.v1",
+            "batch_identity": "review_v17_p4_blr_tradeoff",
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "replay_policy": "one evidence-bound implementation-bug replay for the batch",
+            "predecessor_v16_ledger": {
+                "read_only": True,
+                "path": str(predecessor),
+                "sha256": predecessor_sha,
+                "batch_identity": predecessor_ledger.get("batch_identity"),
+                "schema": predecessor_ledger.get("schema"),
+                "measured_elapsed_seconds": predecessor_ledger.get("elapsed_seconds"),
+                "effective_budget_snapshot": predecessor_effective,
+                "policy_debits": list(predecessor_ledger.get("policy_debits", [])),
+                "predecessor_v14_ledger": dict(predecessor_v14),
+                "unknown_elapsed_attempts": [
+                    {
+                        "stage": str(old_stage),
+                        "attempt_index": int(index),
+                        "status": attempt.get("status"),
+                        "reserved_seconds": attempt.get("reserved_seconds"),
+                        "actual_elapsed_seconds": None,
+                    }
+                    for old_stage, old_record in predecessor_ledger.get("stages", {}).items()
+                    for index, attempt in enumerate(old_record.get("attempts", []))
+                    if attempt.get(
+                        "actual_elapsed_seconds", attempt.get("settled_seconds")
+                    ) is None
+                ],
+                "unknown_elapsed_is_not_new_measurement": True,
+            },
+            "unique_bug_replay_count": 0,
+        }
+
+    predecessor_reference = ledger.get("predecessor_v16_ledger")
+    if not isinstance(predecessor_reference, Mapping):
+        raise InputError("V17 BLR ledger lacks its immutable V16 predecessor reference")
+    if predecessor_reference.get("sha256") != V17_PREDECESSOR_V16_LEDGER_SHA256:
+        raise InputError("V17 predecessor V16 reference hash changed")
+    prerequisite = (
+        _validate_v17_t2_prerequisite(ledger)
+        if stage == "T2_BLR_CONTROL"
+        else None
+    )
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V17",
+        summary_filename="physical_p4_blr_v17_summary.json",
+        prerequisite=prerequisite,
+    )
 
 
 def _settle_v14_shared_budget(
@@ -1330,7 +1620,7 @@ def launch_specification(
         else _source_sha(Path(__file__).resolve().parents[2])
     )
     from src.io.physical_intermediate_profile import PROFILES
-    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, P4_BLR_PROFILE, profile_facts
+    from src.io.physical_intermediate_profile import FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, profile_facts
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
     from src.io.physical_recursive_profile import RECURSIVE_PROFILES
     recursive = specification.solver.get('preconditioner') in RECURSIVE_PROFILES
@@ -1338,6 +1628,8 @@ def launch_specification(
     balanced = recursive or bounded or specification.solver.get('preconditioner') in BALANCED_PROFILES
     schur_v14 = specification.solver.get('preconditioner') == 'physical_p4_schur_v14'
     blr_v16 = specification.solver.get('preconditioner') == P4_BLR_PROFILE
+    blr_v17 = specification.solver.get('preconditioner') == P4_BLR_TRADEOFF_PROFILE
+    blr_profile = blr_v16 or blr_v17
     packed = specification.solver.get('preconditioner') == PACKED_PROFILE
     if specification.solver.get('preconditioner') in (FAST_PROFILE, PACKED_PROFILE) and pc_profile is None:
         raise InputError('fast backend is currently qualified for seven-PC diagnostic mode only')
@@ -1348,14 +1640,14 @@ def launch_specification(
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
     if (
         v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
-        and (not (schur_v14 or blr_v16) or not physical_candidate)
+        and (not (schur_v14 or blr_profile) or not physical_candidate)
     ):
         raise InputError(
             'observe_only time policy is accepted only by the reviewed V14/V16 physical profiles'
         )
-    if blr_v16 and v14_time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+    if blr_profile and v14_time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
         raise InputError(
-            'V16 BLR profile requires the explicit observe_only time policy'
+            'reviewed BLR profiles require the explicit observe_only time policy'
         )
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
@@ -1367,12 +1659,12 @@ def launch_specification(
         if schur_stage_budget is None:
             raise InputError('V14 Schur stage has no reviewed watchdog budget')
     blr_stage_budget = None
-    if physical_candidate and blr_v16:
+    if physical_candidate and blr_profile:
         blr_stage_budget = physical_resources.get('stage_budgets', {}).get(
             specification.solver.get('stage')
         )
         if blr_stage_budget is None:
-            raise InputError('V16 BLR stage has no reviewed watchdog budget')
+            raise InputError('reviewed BLR stage has no reviewed watchdog budget')
     workflow_limit = (
         (2400 if packed else 1800)
         if pc_profile is not None
@@ -1408,6 +1700,14 @@ def launch_specification(
             stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
+    elif blr_v17 and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_blr_v17_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=str(specification.solver['stage']),
+            stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
     try:
         physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                            if physical_candidate else None)
@@ -1427,7 +1727,7 @@ def launch_specification(
             start_time=start_time,
         )
         if (
-            (schur_v14 or blr_v16)
+            (schur_v14 or blr_profile)
             and physical_candidate
             and v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
         ):
@@ -1516,7 +1816,7 @@ def launch_specification(
                                 else {}
                             ),
                         )
-                    if schur_v14 or blr_v16:
+                    if schur_v14 or blr_profile:
                         watchdog_kwargs.update(
                             stop_on_global_swap=True,
                             grace_seconds=30,
@@ -1552,7 +1852,7 @@ def launch_specification(
                         - (60 if joint else 0)
                         - (
                             full_clock.update(clock_sample())['budget_seconds']
-                            if balanced or schur_v14 or blr_v16
+                            if balanced or schur_v14 or blr_profile
                             else monotonic() - workflow_started
                         )
                     )
@@ -1608,7 +1908,7 @@ def launch_specification(
                         'scope': authority['memory_scope'], 'legacy_resource_fields_enforced': False,
                         **(
                             v14_time_policy_facts(v14_time_policy)
-                            if schur_v14 or blr_v16
+                            if schur_v14 or blr_profile
                             else {}
                         ),
                         'wall_reference_seconds': watchdog_wall_seconds,
@@ -1626,9 +1926,13 @@ def launch_specification(
                     "error": str(exc),
                     "resource_authority": {"status": "not_sampled"},
                 }
-        if (balanced or schur_v14 or blr_v16) and physical_candidate:
+        if blr_v17 and physical_candidate:
+            # The V17 checker accepts this explicit descriptor only; it does
+            # not guess worker_stdout.txt or a watchdog path after the fact.
+            result["launcher_stdout"] = _launcher_stdout_descriptor(run_directory)
+        if (balanced or schur_v14 or blr_profile) and physical_candidate:
             result['workflow_clock_interval']=full_clock.update(clock_sample())
-            if schur_v14 or blr_v16:
+            if schur_v14 or blr_profile:
                 result.update(v14_time_policy_facts(v14_time_policy))
                 result['time_observations'] = {
                     'workflow_seconds': result['workflow_clock_interval']['budget_seconds'],
@@ -1648,7 +1952,7 @@ def launch_specification(
             if (
                 result['workflow_clock_interval']['budget_seconds']
                 > min(workflow_limit, float(v14_lease['reserved_seconds']) if v14_lease else workflow_limit)
-                and (not (schur_v14 or blr_v16) or v14_time_policy == V14_TIME_POLICY_ENFORCE)
+                        and (not (schur_v14 or blr_profile) or v14_time_policy == V14_TIME_POLICY_ENFORCE)
             ):
                 result['result_classification']='PERFORMANCE_CONTROLLED_STOP'
         end_time = _now()
@@ -1657,7 +1961,7 @@ def launch_specification(
             result['full_workflow_time_exceeded'] = bool(
                 result['full_workflow_monotonic_seconds'] > workflow_limit
             )
-            if schur_v14 or blr_v16:
+            if schur_v14 or blr_profile:
                 result['time_observations'].update(
                     {
                         'full_workflow_monotonic_seconds': result[
@@ -1669,7 +1973,7 @@ def launch_specification(
                     }
                 )
             if result['full_workflow_time_exceeded'] and (
-                not (schur_v14 or blr_v16) or v14_time_policy == V14_TIME_POLICY_ENFORCE
+                not (schur_v14 or blr_profile) or v14_time_policy == V14_TIME_POLICY_ENFORCE
             ):
                 result['result_classification'] = 'PERFORMANCE_CONTROLLED_STOP'
         manifest.update(
@@ -1714,5 +2018,7 @@ __all__ = [
     "recover_v15_q0_eio_once",
     "_reserve_v14_shared_budget",
     "_reserve_blr_v16_shared_budget",
+    "_reserve_blr_v17_shared_budget",
+    "_validate_v17_t2_prerequisite",
     "_settle_v14_shared_budget",
 ]

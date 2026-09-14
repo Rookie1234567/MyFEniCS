@@ -121,12 +121,14 @@ def main(argv: list[str] | None = None) -> int:
             and specification.solver.get('preconditioner') not in {
                 'physical_p4_schur_v14',
                 'physical_p4_blr_bal_h_v16',
+                'physical_p4_blr_tradeoff_v17',
             }
         ):
             raise InputError(
                 '--v14-time-policy observe_only requires '
                 'solver.preconditioner=physical_p4_schur_v14 or '
-                'physical_p4_blr_bal_h_v16'
+                'physical_p4_blr_bal_h_v16 or '
+                'physical_p4_blr_tradeoff_v17'
             )
         if args.validate_only:
             payload = {

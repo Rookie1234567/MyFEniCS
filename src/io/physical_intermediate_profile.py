@@ -21,8 +21,24 @@ from .physical_recursive_profile import (
 
 SCHUR_PROFILE = "physical_p4_schur_v14"
 P4_BLR_PROFILE = "physical_p4_blr_bal_h_v16"
+P4_BLR_TRADEOFF_PROFILE = "physical_p4_blr_tradeoff_v17"
+P4_BLR_TRADEOFF_THRESHOLDS = {
+    "T1_BLR_CONTROL": 1.0e-3,
+    "T2_BLR_CONTROL": 1.0e-4,
+}
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+
+
+def p4_blr_tradeoff_threshold(stage: str) -> float:
+    """Return the one frozen V17 threshold represented by ``stage``."""
+
+    try:
+        return float(P4_BLR_TRADEOFF_THRESHOLDS[str(stage)])
+    except (KeyError, TypeError) as exc:
+        raise ValueError(
+            "physical_p4_blr_tradeoff_v17 requires T1_BLR_CONTROL or T2_BLR_CONTROL"
+        ) from exc
 
 
 def profile_facts(identity=PROFILE) -> dict:
@@ -107,6 +123,37 @@ def profile_facts(identity=PROFILE) -> dict:
             },
             "qualification": "opt_in; S1 bridge and S2 BLR control evidence precede S3 original p6 and S4 notch stages",
         }
+    if identity == P4_BLR_TRADEOFF_PROFILE:
+        facts = profile_facts(P4_BLR_PROFILE)
+        stage_budgets = {
+            "T1_BLR_CONTROL": {"workflow_seconds": 14400, "solve_seconds": 14400},
+            "T2_BLR_CONTROL": {"workflow_seconds": 14400, "solve_seconds": 14400},
+            "T3_ORIGINAL": {"workflow_seconds": 14400, "solve_seconds": 10800},
+            "T4_NOTCH": {"workflow_seconds": 14400, "solve_seconds": 10800},
+            "T5_FINALIZE": {"workflow_seconds": 43200, "solve_seconds": 43200},
+        }
+        facts["identity"] = P4_BLR_TRADEOFF_PROFILE
+        facts["scope"] = "review_v17_p4_blr_tradeoff"
+        facts["direct_controls"] = {
+            **facts["direct_controls"],
+            "allowed_blr_thresholds": dict(P4_BLR_TRADEOFF_THRESHOLDS),
+            "coverage_statistics": {
+                "stdout_enabled": True,
+                "icntl": {"2": 0, "3": 6, "4": 2},
+                "meaning": "MUMPS BLR front coverage lines are read from bounded standard output",
+            },
+        }
+        facts["resources"] = {
+            **facts["resources"],
+            "stage_budgets": stage_budgets,
+            "inventory_memory_cap_bytes_by_stage": {
+                stage: 6 * 1024**3 for stage in stage_budgets
+            },
+        }
+        facts["qualification"] = (
+            "opt_in; T1=1e-3, conditional T2=1e-4, then at most one selected T3/T4 pair"
+        )
+        return facts
     if identity == SCHUR_PROFILE:
         return {
             'identity': SCHUR_PROFILE,

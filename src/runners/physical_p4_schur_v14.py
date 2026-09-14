@@ -884,18 +884,25 @@ def _v14_known_preallocation_gate(
     augmented_payload = (p4_augmented_rows + 1) * index_bytes + p4_augmented_nnz * (
         index_bytes + scalar_bytes
     )
-    if stage in {"Q1_FULL_DIRECT", "S2_BLR_CONTROL"}:
+    if stage in {
+        "Q1_FULL_DIRECT",
+        "S2_BLR_CONTROL",
+        "T1_BLR_CONTROL",
+        "T2_BLR_CONTROL",
+    }:
         pair_upper = volume_payload + augmented_payload + 128 * 1024**2
-        gate_label = (
-            "q1_original_volume_and_augmented_preallocation"
-            if stage == "Q1_FULL_DIRECT"
-            else "s2_blr_volume_and_augmented_preallocation"
-        )
-        marker_name = (
-            "q1_original_sparse_preallocation_gate"
-            if stage == "Q1_FULL_DIRECT"
-            else "v16_s2_blr_sparse_preallocation_gate"
-        )
+        gate_label = {
+            "Q1_FULL_DIRECT": "q1_original_volume_and_augmented_preallocation",
+            "S2_BLR_CONTROL": "s2_blr_volume_and_augmented_preallocation",
+            "T1_BLR_CONTROL": "t1_blr_volume_and_augmented_preallocation",
+            "T2_BLR_CONTROL": "t2_blr_volume_and_augmented_preallocation",
+        }[stage]
+        marker_name = {
+            "Q1_FULL_DIRECT": "q1_original_sparse_preallocation_gate",
+            "S2_BLR_CONTROL": "v16_s2_blr_sparse_preallocation_gate",
+            "T1_BLR_CONTROL": "v17_t1_blr_sparse_preallocation_gate",
+            "T2_BLR_CONTROL": "v17_t2_blr_sparse_preallocation_gate",
+        }[stage]
         runtime.check_projected(
             gate_label, pair_upper
         )
