@@ -1,18 +1,34 @@
 {
+  "selected_backend": "exact",
+  "admit_u4": true,
+  "memory": {
+    "peak_ratio": 1.0141626943528148,
+    "live_ratio": 1.0141626943528148,
+    "peak_gate": false,
+    "live_gate": false,
+    "peak_with_live_gate": true,
+    "memory_pass": false
+  },
+  "exact_admission_has_memory_saving_threshold": false,
+  "status": "SELECT_EXACT",
+  "time_policy": "observe_only",
   "batch_identity": "review_v18_p4_cell_condensed",
-  "status": "U2_QUALIFIED_RUN_SINGLE_U3",
   "exact_control_qualified": true,
   "exact_core_safe": true,
-  "admit_u4": true,
-  "selected_backend": "exact",
-  "backend_is_provisional_until_U3": true,
+  "exact_fallback_authorized": false,
+  "backend_is_provisional_until_U3": false,
+  "reason": "BLR quality passed, actual entries reduced 2.3564%, but full/live RSS ratio 1.014162694 > memory admission; use qualified exact condensation",
   "evidence": [
     {
       "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
       "sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0"
+    },
+    {
+      "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
+      "sha256": "2fd62a8527f62de132bd6ffdb471bb482fb1d4681216551a5d2fff14fd9465d1"
     }
   ],
-  "exact_control_source_sha": "e1b5a398a199cdbc7c26ce3af8645daed2eeb7d6",
-  "no_exact_memory_saving_veto": true,
-  "time_policy": "observe_only"
+  "next_stage": "U4_ORIGINAL",
+  "next_input": "input/task39extra/v18_u4_original_exact.dat",
+  "no_more_tau_trials": true
 }

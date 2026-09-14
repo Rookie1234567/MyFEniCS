@@ -2,7 +2,7 @@
   "schema": "task039extra.v18.cell-condensed-compact.v1",
   "review": "review_report_v18.md",
   "base_sha": "96827e89ce5ba446c4faa7cb507b777f21953af8",
-  "status": "U2_QUALIFIED_CONTINUING",
+  "status": "EXACT_SELECTED_CONTINUING_U4",
   "controls": {
     "U2": {
       "status": "U2_EXACT_CONTROL_PASS",
@@ -820,6 +820,2325 @@
         "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
         "sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0"
       }
+    },
+    "U3": {
+      "status": "OPTIONAL_BLR_MEMORY_NEGATIVE",
+      "worker_status": "U3_BLR_CONTROL_PASS",
+      "directory": "results/euv_grazing1_phi0/task39extra_v18_u3_blr_control__full3d_iterative__mpi1__Mna/20260914T041932.897188Z",
+      "source_sha": "5e95066d80579b0e135643f9fd114bd3dcc43424",
+      "independent": {
+        "schema": "task039extra.v18.independent-checker.v1",
+        "source_sha": "5e95066d80579b0e135643f9fd114bd3dcc43424",
+        "backend": "blr",
+        "stage": "U3_BLR_CONTROL",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u3_blr_control__full3d_iterative__mpi1__Mna/20260914T041932.897188Z",
+        "summary_sha256": "a5b6b2a48d25eca163d7789dca579e1d72655151c457dabc10ff0189bbb9b84c",
+        "quality": {
+          "backend": "blr",
+          "limits": {
+            "rho": 0.5,
+            "field_l2_relative": 0.25,
+            "scaled_curl_relative": 0.25,
+            "native_identity_relative": 1e-10
+          },
+          "checks": {
+            "three_frozen_rhs": true,
+            "A2R160_BAL_H_p4_01.rho": true,
+            "A2R160_BAL_H_p4_01.field_l2_relative": true,
+            "A2R160_BAL_H_p4_01.scaled_curl_relative": true,
+            "A2R160_BAL_H_p4_01.native_identity_relative": true,
+            "A2R160_BAL_H_p4_01.strict_slave_zero": true,
+            "A2R160_BAL_H_p4_01.one_solve": true,
+            "A2R160_BAL_H_p4_01.evidence": true,
+            "A2R160_BAL_H_p4_02.rho": true,
+            "A2R160_BAL_H_p4_02.field_l2_relative": true,
+            "A2R160_BAL_H_p4_02.scaled_curl_relative": true,
+            "A2R160_BAL_H_p4_02.native_identity_relative": true,
+            "A2R160_BAL_H_p4_02.strict_slave_zero": true,
+            "A2R160_BAL_H_p4_02.one_solve": true,
+            "A2R160_BAL_H_p4_02.evidence": true,
+            "LIGHT448_BAL_H_p4_09.rho": true,
+            "LIGHT448_BAL_H_p4_09.field_l2_relative": true,
+            "LIGHT448_BAL_H_p4_09.scaled_curl_relative": true,
+            "LIGHT448_BAL_H_p4_09.native_identity_relative": true,
+            "LIGHT448_BAL_H_p4_09.strict_slave_zero": true,
+            "LIGHT448_BAL_H_p4_09.one_solve": true,
+            "LIGHT448_BAL_H_p4_09.evidence": true
+          },
+          "quality_pass": true,
+          "failures": []
+        },
+        "rows": [
+          {
+            "stem": "A2R160_BAL_H_p4_01",
+            "rho": 0.007627545845580857,
+            "field_l2_relative": 0.0001569675766622447,
+            "scaled_curl_relative": 0.00015376142706151124,
+            "native_identity_relative": 8.363930888138195e-17,
+            "slave_nonzero_count": 0,
+            "factor_solve_call_delta": 1,
+            "evidence_checks": {
+              "same_input_and_reference": true,
+              "input_file": true,
+              "same_g": true,
+              "g_hash": true,
+              "native_action": true,
+              "matching_storage": true,
+              "input_unchanged": true,
+              "no_refinement": true,
+              "icntl10": true,
+              "icntl35": true,
+              "positive_identity_scale": true,
+              "identity_difference_norm": true,
+              "identity_operation_scale": true,
+              "cntl7": true,
+              "input_npz": true,
+              "reference_json": true,
+              "reference_npz": true,
+              "one_symbolic": true,
+              "one_numeric": true,
+              "local_lu_reused": true,
+              "saved_solution_hash": true,
+              "timings": true
+            }
+          },
+          {
+            "stem": "A2R160_BAL_H_p4_02",
+            "rho": 0.0004823487063592453,
+            "field_l2_relative": 0.00024899741734659683,
+            "scaled_curl_relative": 0.00024424391615428335,
+            "native_identity_relative": 2.5117920258924252e-18,
+            "slave_nonzero_count": 0,
+            "factor_solve_call_delta": 1,
+            "evidence_checks": {
+              "same_input_and_reference": true,
+              "input_file": true,
+              "same_g": true,
+              "g_hash": true,
+              "native_action": true,
+              "matching_storage": true,
+              "input_unchanged": true,
+              "no_refinement": true,
+              "icntl10": true,
+              "icntl35": true,
+              "positive_identity_scale": true,
+              "identity_difference_norm": true,
+              "identity_operation_scale": true,
+              "cntl7": true,
+              "input_npz": true,
+              "reference_json": true,
+              "reference_npz": true,
+              "one_symbolic": true,
+              "one_numeric": true,
+              "local_lu_reused": true,
+              "saved_solution_hash": true,
+              "timings": true
+            }
+          },
+          {
+            "stem": "LIGHT448_BAL_H_p4_09",
+            "rho": 0.011037408702671052,
+            "field_l2_relative": 0.00018409008580257325,
+            "scaled_curl_relative": 0.00018045098206176318,
+            "native_identity_relative": 9.394668198521085e-17,
+            "slave_nonzero_count": 0,
+            "factor_solve_call_delta": 1,
+            "evidence_checks": {
+              "same_input_and_reference": true,
+              "input_file": true,
+              "same_g": true,
+              "g_hash": true,
+              "native_action": true,
+              "matching_storage": true,
+              "input_unchanged": true,
+              "no_refinement": true,
+              "icntl10": true,
+              "icntl35": true,
+              "positive_identity_scale": true,
+              "identity_difference_norm": true,
+              "identity_operation_scale": true,
+              "cntl7": true,
+              "input_npz": true,
+              "reference_json": true,
+              "reference_npz": true,
+              "one_symbolic": true,
+              "one_numeric": true,
+              "local_lu_reused": true,
+              "saved_solution_hash": true,
+              "timings": true
+            }
+          }
+        ],
+        "additional_rows": [],
+        "structural_checks": {
+          "matrix": true,
+          "resources": true,
+          "one_symbolic_numeric": true,
+          "solve_budget": true,
+          "sum_before_schur": true,
+          "strict_local_checks": true,
+          "no_full_p4_matrix": true,
+          "no_full_trace_matrix": true,
+          "no_macro_mumps": true,
+          "retained_through_postprocess": true,
+          "icntl10_before_symbolic": true,
+          "icntl35_before_symbolic": true,
+          "additional_calls": true,
+          "tau_before_symbolic": true,
+          "coverage_statistics": true,
+          "icntl36_actual_solve": true,
+          "icntl37_actual_solve": true,
+          "icntl38_actual_solve": true
+        },
+        "control_qualified": true,
+        "matrix_identity": {
+          "checks": {
+            "required_fields": true,
+            "complex128": true,
+            "nonempty_sparse": true,
+            "unchanged_through_factor": true,
+            "mapping_sha256": true,
+            "values_sha256": true,
+            "csr_sha256": true,
+            "same_exact_and_blr_matrix": true,
+            "unchanged_through_calls": true
+          },
+          "passed": true,
+          "matrix": {
+            "csr_sha256": "19b9fbf759e6dc586d1316b53c69099647bd3a23e43378535b718c1db2c218d8",
+            "dense_gather": false,
+            "dtype": "complex128",
+            "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+            "index_dtype": "int64-little-endian-canonical",
+            "mapping_sha256": "aeaabb3ae1358a3979fc3dbd98b0c59d0b39e3c8fa2c3d31433b1ccdfed75b89",
+            "nnz": 8184464,
+            "nnz_semantics": "owned-row-getRow-stored-entries",
+            "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+            "shape": [
+              21824,
+              21824
+            ],
+            "value_endianness": "little",
+            "values_sha256": "1641af69d3380132fb9dd84372defef6998f38373e203bf6dc85cc5f08e473b8"
+          },
+          "scope": "streamed matrix bytes at worker assembly and factor boundaries"
+        },
+        "resources": {
+          "scope": "continuous_parent_process_tree",
+          "gates": {
+            "readable": true,
+            "tree_cap": true,
+            "inventory_cap": true,
+            "workspace_cap": true,
+            "reserve": true,
+            "zero_swap": true,
+            "cleaned": true,
+            "clean_source": true,
+            "observe_only": true
+          },
+          "passed": true,
+          "main_window_end_ns": 1789359669982808639,
+          "main_full_rss_peak_bytes": 1810874368,
+          "main_live_rss_peak_bytes": 1810874368,
+          "main_full_pss_peak_bytes": 1780285440,
+          "main_live_pss_peak_bytes": 1780285440,
+          "whole_run_rss_peak_bytes": 1810874368,
+          "inventory_peak_bytes": 1340346158,
+          "workspace_peak_bytes": 134217728,
+          "full_workflow_monotonic_seconds": 89.98775546900288,
+          "hashes": {
+            "watchdog/resources.jsonl": "f7f3020ec3e17d20700b3abcfa4d97b2f82ff85d652857fb7e15a0369a119bfd",
+            "v18_events.jsonl": "5f5e3ae90856845290ac2a0e6f697569969a9d4ac08ff7ddafdf2df17167d2d2",
+            "v18_worker_resources.jsonl": "05e9b6bd9d370801a57fa72ad34327b0bfa1914a9feceff720cc1da70889c44c",
+            "run_summary.json": "7bd72273b8054c223644700f80c7ef00a88614ac465e608208827f0b7dcaf64c",
+            "run_manifest.json": "8dc75b36b8a17893ec01178bea41e35885b6cfa094c008ee35b19749e85c637c"
+          }
+        },
+        "baseline_resources": {
+          "scope": "continuous_parent_process_tree",
+          "full_sample_count": 2091,
+          "live_sample_count": 75,
+          "live_start_ns": 1789301203452879624,
+          "live_end_ns": 1789301225877312566,
+          "full_rss_peak_bytes": 2825973760,
+          "live_rss_peak_bytes": 2825973760,
+          "full_pss_peak_bytes": 2795549696,
+          "live_pss_peak_bytes": 2795549696,
+          "inventory_peak_bytes": 2906619390,
+          "workspace_peak_bytes": 17825792,
+          "gates": {
+            "all_rss_pss_readable": true,
+            "tree_cap": true,
+            "resident_inventory_cap": true,
+            "shared_workspace_cap": true,
+            "host_reserve": true,
+            "zero_swap": true,
+            "descendants_cleared": true,
+            "clean_source_after": true,
+            "observe_only": true
+          },
+          "passed": true,
+          "full_workflow_monotonic_seconds": 536.4680422439997,
+          "workflow_clock_interval": {
+            "budget_seconds": 584.7702858959946,
+            "discrepancy_seconds": 48.30229089300542,
+            "elapsed_seconds": {
+              "boottime": 536.4679951869985,
+              "monotonic": 536.4679948669946,
+              "utc": 584.77028576
+            },
+            "policy": "conservative_realtime",
+            "policy_version": 1,
+            "step": {
+              "budget_seconds": 584.752999274,
+              "discrepancy_seconds": 48.302291029,
+              "elapsed_seconds": {
+                "boottime": 536.4507085719961,
+                "monotonic": 536.450708245,
+                "utc": 584.752999274
+              },
+              "policy": "conservative_realtime",
+              "policy_version": 1,
+              "tolerance_seconds": 5.364507085719961,
+              "utc_minus_monotonic_seconds": 48.302291029
+            },
+            "tolerance_seconds": 5.364679951869984,
+            "utc_minus_monotonic_seconds": 48.30229089300542,
+            "utc_positive_excess_seconds": 48.302290702003916
+          },
+          "hashes": {
+            "watchdog/resources.jsonl": "a43a832a0307e7e9a87208a1afaa7e80b9da070cb56a1d7d6698770efcd115c8",
+            "v14_events.jsonl": "2246d4a576845d66a1b9dbd7e1011f01ac443c1f5c6c931932390c07c6feab06",
+            "v14_worker_resources.jsonl": "5f63776feda18979da9f3859a3f5f050f94ec76ded5933722785187463edf5b4",
+            "run_manifest.json": "03b385987b90b8a6005b247d3dad9eae6581736ba3a6889f14f852c19e9ad32d",
+            "run_summary.json": "b2365837abd84edc192065506da810700d5f70a84608e918c20837021eb73245"
+          }
+        },
+        "comparison_valid": true,
+        "memory": {
+          "peak_ratio": 1.0141626943528148,
+          "live_ratio": 1.0141626943528148,
+          "peak_gate": false,
+          "live_gate": false,
+          "peak_with_live_gate": true,
+          "memory_pass": false
+        },
+        "compression": {
+          "actual_storage_entries": 39333043.0,
+          "theoretical_entries": 40282272.0,
+          "effective_storage_entries": 39333043.0,
+          "native_flops": {
+            "3": 44396550096.0,
+            "14": 45827096092.0
+          },
+          "infog_encoding": {
+            "9": "native_entry_encoding",
+            "29": "native_entry_encoding",
+            "35": "native_entry_encoding"
+          },
+          "raw_infog": {
+            "1": 0,
+            "10": 197648,
+            "11": 1800,
+            "12": 128,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 971,
+            "17": 971,
+            "18": 1026,
+            "19": 1026,
+            "2": 0,
+            "20": 40282272,
+            "22": 873,
+            "29": 40282272,
+            "3": 40282272,
+            "35": 39333043,
+            "36": 766,
+            "37": 766,
+            "4": 197648,
+            "5": 1800,
+            "6": 164,
+            "7": 4,
+            "8": 100,
+            "9": 39333043
+          },
+          "raw_rinfog": {
+            "1": 44396550096.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 45827096092.0,
+            "15": 93.466624,
+            "16": 0.0,
+            "17": 631.261878,
+            "18": 859.976397,
+            "19": 0.0003958012807960031,
+            "2": 46475648.0,
+            "20": 0.0003958012807960031,
+            "3": 44396550096.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0
+          },
+          "actual_compression_present": true,
+          "ratio": 0.9764355645083773
+        },
+        "coverage": {
+          "captures": [
+            {
+              "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u3_blr_control__full3d_iterative__mpi1__Mna/20260914T041932.897188Z/watchdog/worker.log",
+              "sha256": "46b084d8aea1f7d5e49f52a1de2e19f76690dbcb515479c2c850d76fb874aa5b",
+              "bytes": 6909
+            }
+          ],
+          "markers": {
+            "Beginning of BLR statistics": true,
+            "Number of BLR fronts": true,
+            "Fraction of factors in BLR fronts": true,
+            "INFOG(29)": true,
+            "INFOG(35)": true,
+            "RINFOG(3)": true,
+            "RINFOG(14)": true
+          },
+          "coverage": {
+            "number_of_blr_fronts": 34,
+            "percent_of_factors_in_blr_fronts": 85.5,
+            "fraction_of_factors_in_blr_fronts": 0.855,
+            "fronts_parsed": true,
+            "fraction_parsed": true
+          },
+          "bounded_stdout_present": true,
+          "status": "measured",
+          "passed": true
+        },
+        "memory_denominator": "results/euv_grazing1_phi0/task39extra_v18_u2_exact_control__full3d_iterative__mpi1__Mna/20260914T041305.738867Z",
+        "time_policy": "observe_only",
+        "official_p6_pass": false
+      },
+      "setup_seconds": 33.83483081099985,
+      "factor": {
+        "rows": 21824,
+        "symbolic_seconds": 0.166224325002986,
+        "numeric_seconds": 22.301600060993223,
+        "memory_request": {
+          "blr_sizing": true,
+          "estimate_bytes": 972000000,
+          "formula": "ceil_MB(max(32 MiB, 2*symbolic_estimate_padded+8 MiB))",
+          "infog16_mb": 971,
+          "infog17_mb": 971,
+          "infog36_symbolic_max_mb": 766,
+          "infog37_symbolic_sum_mb": 766,
+          "minimum_request_bytes": 1952388608,
+          "mpi_size": 1,
+          "policy": "SYMBOLIC_SIZED_LOCAL_MUMPS_V11",
+          "raw_fields_preserved": true,
+          "request_bytes": 1953000000,
+          "request_mb": 1953,
+          "requested_memory_limit_mb": 1953,
+          "rounding": "decimal_MB_ceiling",
+          "sizing_estimate_mb": 971,
+          "sizing_formula": "max(INFOG(16),INFOG(17),INFOG(36),INFOG(37))",
+          "symbolic_estimate_mb": 971,
+          "symbolic_estimate_padded_bytes": 972000000,
+          "unit": "decimal_MB_for_MUMPS_ICNTL_23",
+          "unit_bytes": 1000000
+        },
+        "mumps_memory_observation": {
+          "allocation_is_not_inferred_from_icntl23": true,
+          "infog19_allocated_bytes_upper": 1027000000,
+          "infog19_allocated_mb": 1026,
+          "infog22_used_bytes_upper": 874000000,
+          "infog22_used_mb": 873,
+          "raw_infog19_and_22": {
+            "19": 1026,
+            "22": 873
+          },
+          "unit": "decimal_MB",
+          "unit_bytes": 1000000
+        },
+        "factor_inventory_components": {
+          "factor_infog19_allocated_bytes_upper": 1027000000,
+          "matrix_payload_bytes": 232205060
+        },
+        "numeric_raw": {
+          "infog": {
+            "1": 0,
+            "10": 197648,
+            "11": 1800,
+            "12": 128,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 971,
+            "17": 971,
+            "18": 1026,
+            "19": 1026,
+            "2": 0,
+            "20": 40282272,
+            "22": 873,
+            "29": 40282272,
+            "3": 40282272,
+            "35": 39333043,
+            "36": 766,
+            "37": 766,
+            "4": 197648,
+            "5": 1800,
+            "6": 164,
+            "7": 4,
+            "8": 100,
+            "9": 39333043
+          },
+          "rinfog": {
+            "1": 44396550096.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 45827096092.0,
+            "15": 93.466624,
+            "16": 0.0,
+            "17": 631.261878,
+            "18": 859.976397,
+            "19": 0.0003958012807960031,
+            "2": 46475648.0,
+            "20": 0.0003958012807960031,
+            "3": 44396550096.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0
+          }
+        },
+        "backend_control_facts": {
+          "cntl_after": {
+            "1": {
+              "error_code": null,
+              "index": 1,
+              "supported": true,
+              "value": 0.0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 0.0
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 0.0
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 1e-05
+            }
+          },
+          "cntl_after_symbolic": {
+            "1": {
+              "error_code": null,
+              "index": 1,
+              "supported": true,
+              "value": 0.01
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 0.0
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": -1.0
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 1e-05
+            }
+          },
+          "cntl_before": {
+            "1": {
+              "error_code": null,
+              "index": 1,
+              "supported": true,
+              "value": 0.0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 0.0
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 0.0
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 0.0
+            }
+          },
+          "configured_before_symbolic": true,
+          "coverage_statistics_requested": true,
+          "default_controls_frozen": {
+            "36": {
+              "error_code": null,
+              "index": 36,
+              "supported": true,
+              "value": 0
+            },
+            "38": {
+              "error_code": null,
+              "index": 38,
+              "supported": true,
+              "value": 600
+            },
+            "39": {
+              "error_code": 62,
+              "index": 39,
+              "supported": false,
+              "value": null
+            }
+          },
+          "default_controls_frozen_phase": "post_symbolic_public_readback",
+          "defaults_before": {
+            "10": {
+              "error_code": null,
+              "index": 10,
+              "supported": true,
+              "value": 0
+            },
+            "14": {
+              "error_code": null,
+              "index": 14,
+              "supported": true,
+              "value": 0
+            },
+            "18": {
+              "error_code": null,
+              "index": 18,
+              "supported": true,
+              "value": 0
+            },
+            "2": {
+              "error_code": null,
+              "index": 2,
+              "supported": true,
+              "value": 0
+            },
+            "22": {
+              "error_code": null,
+              "index": 22,
+              "supported": true,
+              "value": 0
+            },
+            "23": {
+              "error_code": null,
+              "index": 23,
+              "supported": true,
+              "value": 0
+            },
+            "28": {
+              "error_code": null,
+              "index": 28,
+              "supported": true,
+              "value": 0
+            },
+            "29": {
+              "error_code": null,
+              "index": 29,
+              "supported": true,
+              "value": 0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 0
+            },
+            "31": {
+              "error_code": null,
+              "index": 31,
+              "supported": true,
+              "value": 0
+            },
+            "32": {
+              "error_code": null,
+              "index": 32,
+              "supported": true,
+              "value": 0
+            },
+            "35": {
+              "error_code": null,
+              "index": 35,
+              "supported": true,
+              "value": 0
+            },
+            "36": {
+              "error_code": null,
+              "index": 36,
+              "supported": true,
+              "value": 0
+            },
+            "37": {
+              "error_code": null,
+              "index": 37,
+              "supported": true,
+              "value": 0
+            },
+            "38": {
+              "error_code": null,
+              "index": 38,
+              "supported": true,
+              "value": 0
+            },
+            "39": {
+              "error_code": 62,
+              "index": 39,
+              "supported": false,
+              "value": null
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 0
+            },
+            "49": {
+              "error_code": 62,
+              "index": 49,
+              "supported": false,
+              "value": null
+            },
+            "6": {
+              "error_code": null,
+              "index": 6,
+              "supported": true,
+              "value": 0
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 0
+            },
+            "8": {
+              "error_code": null,
+              "index": 8,
+              "supported": true,
+              "value": 0
+            }
+          },
+          "effective_after": {
+            "10": {
+              "error_code": null,
+              "index": 10,
+              "supported": true,
+              "value": 0
+            },
+            "14": {
+              "error_code": null,
+              "index": 14,
+              "supported": true,
+              "value": 0
+            },
+            "18": {
+              "error_code": null,
+              "index": 18,
+              "supported": true,
+              "value": 0
+            },
+            "2": {
+              "error_code": null,
+              "index": 2,
+              "supported": true,
+              "value": 0
+            },
+            "22": {
+              "error_code": null,
+              "index": 22,
+              "supported": true,
+              "value": 0
+            },
+            "23": {
+              "error_code": null,
+              "index": 23,
+              "supported": true,
+              "value": 0
+            },
+            "28": {
+              "error_code": null,
+              "index": 28,
+              "supported": true,
+              "value": 0
+            },
+            "29": {
+              "error_code": null,
+              "index": 29,
+              "supported": true,
+              "value": 0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 6
+            },
+            "31": {
+              "error_code": null,
+              "index": 31,
+              "supported": true,
+              "value": 0
+            },
+            "32": {
+              "error_code": null,
+              "index": 32,
+              "supported": true,
+              "value": 0
+            },
+            "35": {
+              "error_code": null,
+              "index": 35,
+              "supported": true,
+              "value": 2
+            },
+            "36": {
+              "error_code": null,
+              "index": 36,
+              "supported": true,
+              "value": 0
+            },
+            "37": {
+              "error_code": null,
+              "index": 37,
+              "supported": true,
+              "value": 0
+            },
+            "38": {
+              "error_code": null,
+              "index": 38,
+              "supported": true,
+              "value": 0
+            },
+            "39": {
+              "error_code": 62,
+              "index": 39,
+              "supported": false,
+              "value": null
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 2
+            },
+            "49": {
+              "error_code": 62,
+              "index": 49,
+              "supported": false,
+              "value": null
+            },
+            "6": {
+              "error_code": null,
+              "index": 6,
+              "supported": true,
+              "value": 0
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 0
+            },
+            "8": {
+              "error_code": null,
+              "index": 8,
+              "supported": true,
+              "value": 0
+            }
+          },
+          "effective_after_numeric": {
+            "cntl": {
+              "1": {
+                "error_code": null,
+                "index": 1,
+                "supported": true,
+                "value": 0.01
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 0.0
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": -1.0
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 1e-05
+              }
+            },
+            "icntl": {
+              "10": {
+                "error_code": null,
+                "index": 10,
+                "supported": true,
+                "value": 0
+              },
+              "14": {
+                "error_code": null,
+                "index": 14,
+                "supported": true,
+                "value": 20
+              },
+              "18": {
+                "error_code": null,
+                "index": 18,
+                "supported": true,
+                "value": 0
+              },
+              "2": {
+                "error_code": null,
+                "index": 2,
+                "supported": true,
+                "value": 0
+              },
+              "22": {
+                "error_code": null,
+                "index": 22,
+                "supported": true,
+                "value": 0
+              },
+              "23": {
+                "error_code": null,
+                "index": 23,
+                "supported": true,
+                "value": 1953
+              },
+              "28": {
+                "error_code": null,
+                "index": 28,
+                "supported": true,
+                "value": 1
+              },
+              "29": {
+                "error_code": null,
+                "index": 29,
+                "supported": true,
+                "value": 0
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 6
+              },
+              "31": {
+                "error_code": null,
+                "index": 31,
+                "supported": true,
+                "value": 0
+              },
+              "32": {
+                "error_code": null,
+                "index": 32,
+                "supported": true,
+                "value": 0
+              },
+              "35": {
+                "error_code": null,
+                "index": 35,
+                "supported": true,
+                "value": 2
+              },
+              "36": {
+                "error_code": null,
+                "index": 36,
+                "supported": true,
+                "value": 0
+              },
+              "37": {
+                "error_code": null,
+                "index": 37,
+                "supported": true,
+                "value": 0
+              },
+              "38": {
+                "error_code": null,
+                "index": 38,
+                "supported": true,
+                "value": 600
+              },
+              "39": {
+                "error_code": 62,
+                "index": 39,
+                "supported": false,
+                "value": null
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": 2
+              },
+              "49": {
+                "error_code": 62,
+                "index": 49,
+                "supported": false,
+                "value": null
+              },
+              "6": {
+                "error_code": null,
+                "index": 6,
+                "supported": true,
+                "value": 7
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 7
+              },
+              "8": {
+                "error_code": null,
+                "index": 8,
+                "supported": true,
+                "value": 77
+              }
+            },
+            "stage": "numeric_after"
+          },
+          "effective_after_symbolic": {
+            "10": {
+              "error_code": null,
+              "index": 10,
+              "supported": true,
+              "value": 0
+            },
+            "14": {
+              "error_code": null,
+              "index": 14,
+              "supported": true,
+              "value": 20
+            },
+            "18": {
+              "error_code": null,
+              "index": 18,
+              "supported": true,
+              "value": 0
+            },
+            "2": {
+              "error_code": null,
+              "index": 2,
+              "supported": true,
+              "value": 0
+            },
+            "22": {
+              "error_code": null,
+              "index": 22,
+              "supported": true,
+              "value": 0
+            },
+            "23": {
+              "error_code": null,
+              "index": 23,
+              "supported": true,
+              "value": 0
+            },
+            "28": {
+              "error_code": null,
+              "index": 28,
+              "supported": true,
+              "value": 1
+            },
+            "29": {
+              "error_code": null,
+              "index": 29,
+              "supported": true,
+              "value": 0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 6
+            },
+            "31": {
+              "error_code": null,
+              "index": 31,
+              "supported": true,
+              "value": 0
+            },
+            "32": {
+              "error_code": null,
+              "index": 32,
+              "supported": true,
+              "value": 0
+            },
+            "35": {
+              "error_code": null,
+              "index": 35,
+              "supported": true,
+              "value": 2
+            },
+            "36": {
+              "error_code": null,
+              "index": 36,
+              "supported": true,
+              "value": 0
+            },
+            "37": {
+              "error_code": null,
+              "index": 37,
+              "supported": true,
+              "value": 0
+            },
+            "38": {
+              "error_code": null,
+              "index": 38,
+              "supported": true,
+              "value": 600
+            },
+            "39": {
+              "error_code": 62,
+              "index": 39,
+              "supported": false,
+              "value": null
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 2
+            },
+            "49": {
+              "error_code": 62,
+              "index": 49,
+              "supported": false,
+              "value": null
+            },
+            "6": {
+              "error_code": null,
+              "index": 6,
+              "supported": true,
+              "value": 7
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 7
+            },
+            "8": {
+              "error_code": null,
+              "index": 8,
+              "supported": true,
+              "value": 77
+            }
+          },
+          "effective_after_symbolic_before_observability_reapply": {
+            "10": {
+              "error_code": null,
+              "index": 10,
+              "supported": true,
+              "value": 0
+            },
+            "14": {
+              "error_code": null,
+              "index": 14,
+              "supported": true,
+              "value": 20
+            },
+            "18": {
+              "error_code": null,
+              "index": 18,
+              "supported": true,
+              "value": 0
+            },
+            "2": {
+              "error_code": null,
+              "index": 2,
+              "supported": true,
+              "value": 0
+            },
+            "22": {
+              "error_code": null,
+              "index": 22,
+              "supported": true,
+              "value": 0
+            },
+            "23": {
+              "error_code": null,
+              "index": 23,
+              "supported": true,
+              "value": 0
+            },
+            "28": {
+              "error_code": null,
+              "index": 28,
+              "supported": true,
+              "value": 1
+            },
+            "29": {
+              "error_code": null,
+              "index": 29,
+              "supported": true,
+              "value": 0
+            },
+            "3": {
+              "error_code": null,
+              "index": 3,
+              "supported": true,
+              "value": 0
+            },
+            "31": {
+              "error_code": null,
+              "index": 31,
+              "supported": true,
+              "value": 0
+            },
+            "32": {
+              "error_code": null,
+              "index": 32,
+              "supported": true,
+              "value": 0
+            },
+            "35": {
+              "error_code": null,
+              "index": 35,
+              "supported": true,
+              "value": 2
+            },
+            "36": {
+              "error_code": null,
+              "index": 36,
+              "supported": true,
+              "value": 0
+            },
+            "37": {
+              "error_code": null,
+              "index": 37,
+              "supported": true,
+              "value": 0
+            },
+            "38": {
+              "error_code": null,
+              "index": 38,
+              "supported": true,
+              "value": 600
+            },
+            "39": {
+              "error_code": 62,
+              "index": 39,
+              "supported": false,
+              "value": null
+            },
+            "4": {
+              "error_code": null,
+              "index": 4,
+              "supported": true,
+              "value": 0
+            },
+            "49": {
+              "error_code": 62,
+              "index": 49,
+              "supported": false,
+              "value": null
+            },
+            "6": {
+              "error_code": null,
+              "index": 6,
+              "supported": true,
+              "value": 7
+            },
+            "7": {
+              "error_code": null,
+              "index": 7,
+              "supported": true,
+              "value": 7
+            },
+            "8": {
+              "error_code": null,
+              "index": 8,
+              "supported": true,
+              "value": 77
+            }
+          },
+          "icntl39_public_getter_unavailable_is_explicit": true,
+          "observability_controls_reapplied_after_symbolic": true,
+          "profile": "physical_p4_cell_condensed_blr_v18",
+          "public_backend": {
+            "local_mumps_control_boundary": {
+              "adaptive_precision_storage_control": "not_supported_by_local_public_controls",
+              "reserved_icntl": "41-48"
+            },
+            "mumps_library_soname": "libzmumps-5.6.so",
+            "mumps_version_public_api": "not_exposed",
+            "petsc_library_identifier": "libpetsc_complex.so.3.19",
+            "petsc_library_path": null,
+            "petsc_library_soname": "libpetsc_complex.so.3.19",
+            "public_symbols": {
+              "MatMumpsGetCntl": true,
+              "MatMumpsGetIcntl": true,
+              "MatMumpsGetInfog": true,
+              "MatMumpsGetRinfog": true,
+              "MatMumpsSetCntl": true,
+              "MatMumpsSetIcntl": true
+            }
+          },
+          "public_initial_state_is_pre_symbolic": true,
+          "requested": {
+            "cntl": {
+              "7": 1e-05
+            },
+            "icntl": {
+              "10": 0,
+              "2": 0,
+              "22": 0,
+              "3": 6,
+              "31": 0,
+              "32": 0,
+              "35": 2,
+              "37": 0,
+              "4": 2
+            }
+          },
+          "schema": "task039extra.v18.mumps-blr-controls.v1",
+          "threshold": 1e-05
+        },
+        "backend_statistics": {
+          "backend": "mumps",
+          "blr_field_keys_available": [
+            "9",
+            "29",
+            "35",
+            "36",
+            "37"
+          ],
+          "blr_field_keys_checked": [
+            "9",
+            "29",
+            "35",
+            "36",
+            "37"
+          ],
+          "compression_ratio": null,
+          "compression_ratio_not_inferred_from_icntl38": true,
+          "compression_stats_status": "RAW_NATIVE_FIELDS_AVAILABLE",
+          "controls": {
+            "cntl_after": {
+              "1": {
+                "error_code": null,
+                "index": 1,
+                "supported": true,
+                "value": 0.0
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 0.0
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": 0.0
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 1e-05
+              }
+            },
+            "cntl_after_symbolic": {
+              "1": {
+                "error_code": null,
+                "index": 1,
+                "supported": true,
+                "value": 0.01
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 0.0
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": -1.0
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 1e-05
+              }
+            },
+            "cntl_before": {
+              "1": {
+                "error_code": null,
+                "index": 1,
+                "supported": true,
+                "value": 0.0
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 0.0
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": 0.0
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 0.0
+              }
+            },
+            "configured_before_symbolic": true,
+            "coverage_statistics_requested": true,
+            "default_controls_frozen": {
+              "36": {
+                "error_code": null,
+                "index": 36,
+                "supported": true,
+                "value": 0
+              },
+              "38": {
+                "error_code": null,
+                "index": 38,
+                "supported": true,
+                "value": 600
+              },
+              "39": {
+                "error_code": 62,
+                "index": 39,
+                "supported": false,
+                "value": null
+              }
+            },
+            "default_controls_frozen_phase": "post_symbolic_public_readback",
+            "defaults_before": {
+              "10": {
+                "error_code": null,
+                "index": 10,
+                "supported": true,
+                "value": 0
+              },
+              "14": {
+                "error_code": null,
+                "index": 14,
+                "supported": true,
+                "value": 0
+              },
+              "18": {
+                "error_code": null,
+                "index": 18,
+                "supported": true,
+                "value": 0
+              },
+              "2": {
+                "error_code": null,
+                "index": 2,
+                "supported": true,
+                "value": 0
+              },
+              "22": {
+                "error_code": null,
+                "index": 22,
+                "supported": true,
+                "value": 0
+              },
+              "23": {
+                "error_code": null,
+                "index": 23,
+                "supported": true,
+                "value": 0
+              },
+              "28": {
+                "error_code": null,
+                "index": 28,
+                "supported": true,
+                "value": 0
+              },
+              "29": {
+                "error_code": null,
+                "index": 29,
+                "supported": true,
+                "value": 0
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 0
+              },
+              "31": {
+                "error_code": null,
+                "index": 31,
+                "supported": true,
+                "value": 0
+              },
+              "32": {
+                "error_code": null,
+                "index": 32,
+                "supported": true,
+                "value": 0
+              },
+              "35": {
+                "error_code": null,
+                "index": 35,
+                "supported": true,
+                "value": 0
+              },
+              "36": {
+                "error_code": null,
+                "index": 36,
+                "supported": true,
+                "value": 0
+              },
+              "37": {
+                "error_code": null,
+                "index": 37,
+                "supported": true,
+                "value": 0
+              },
+              "38": {
+                "error_code": null,
+                "index": 38,
+                "supported": true,
+                "value": 0
+              },
+              "39": {
+                "error_code": 62,
+                "index": 39,
+                "supported": false,
+                "value": null
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": 0
+              },
+              "49": {
+                "error_code": 62,
+                "index": 49,
+                "supported": false,
+                "value": null
+              },
+              "6": {
+                "error_code": null,
+                "index": 6,
+                "supported": true,
+                "value": 0
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 0
+              },
+              "8": {
+                "error_code": null,
+                "index": 8,
+                "supported": true,
+                "value": 0
+              }
+            },
+            "effective_after": {
+              "10": {
+                "error_code": null,
+                "index": 10,
+                "supported": true,
+                "value": 0
+              },
+              "14": {
+                "error_code": null,
+                "index": 14,
+                "supported": true,
+                "value": 0
+              },
+              "18": {
+                "error_code": null,
+                "index": 18,
+                "supported": true,
+                "value": 0
+              },
+              "2": {
+                "error_code": null,
+                "index": 2,
+                "supported": true,
+                "value": 0
+              },
+              "22": {
+                "error_code": null,
+                "index": 22,
+                "supported": true,
+                "value": 0
+              },
+              "23": {
+                "error_code": null,
+                "index": 23,
+                "supported": true,
+                "value": 0
+              },
+              "28": {
+                "error_code": null,
+                "index": 28,
+                "supported": true,
+                "value": 0
+              },
+              "29": {
+                "error_code": null,
+                "index": 29,
+                "supported": true,
+                "value": 0
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 6
+              },
+              "31": {
+                "error_code": null,
+                "index": 31,
+                "supported": true,
+                "value": 0
+              },
+              "32": {
+                "error_code": null,
+                "index": 32,
+                "supported": true,
+                "value": 0
+              },
+              "35": {
+                "error_code": null,
+                "index": 35,
+                "supported": true,
+                "value": 2
+              },
+              "36": {
+                "error_code": null,
+                "index": 36,
+                "supported": true,
+                "value": 0
+              },
+              "37": {
+                "error_code": null,
+                "index": 37,
+                "supported": true,
+                "value": 0
+              },
+              "38": {
+                "error_code": null,
+                "index": 38,
+                "supported": true,
+                "value": 0
+              },
+              "39": {
+                "error_code": 62,
+                "index": 39,
+                "supported": false,
+                "value": null
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": 2
+              },
+              "49": {
+                "error_code": 62,
+                "index": 49,
+                "supported": false,
+                "value": null
+              },
+              "6": {
+                "error_code": null,
+                "index": 6,
+                "supported": true,
+                "value": 0
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 0
+              },
+              "8": {
+                "error_code": null,
+                "index": 8,
+                "supported": true,
+                "value": 0
+              }
+            },
+            "effective_after_numeric": {
+              "cntl": {
+                "1": {
+                  "error_code": null,
+                  "index": 1,
+                  "supported": true,
+                  "value": 0.01
+                },
+                "3": {
+                  "error_code": null,
+                  "index": 3,
+                  "supported": true,
+                  "value": 0.0
+                },
+                "4": {
+                  "error_code": null,
+                  "index": 4,
+                  "supported": true,
+                  "value": -1.0
+                },
+                "7": {
+                  "error_code": null,
+                  "index": 7,
+                  "supported": true,
+                  "value": 1e-05
+                }
+              },
+              "icntl": {
+                "10": {
+                  "error_code": null,
+                  "index": 10,
+                  "supported": true,
+                  "value": 0
+                },
+                "14": {
+                  "error_code": null,
+                  "index": 14,
+                  "supported": true,
+                  "value": 20
+                },
+                "18": {
+                  "error_code": null,
+                  "index": 18,
+                  "supported": true,
+                  "value": 0
+                },
+                "2": {
+                  "error_code": null,
+                  "index": 2,
+                  "supported": true,
+                  "value": 0
+                },
+                "22": {
+                  "error_code": null,
+                  "index": 22,
+                  "supported": true,
+                  "value": 0
+                },
+                "23": {
+                  "error_code": null,
+                  "index": 23,
+                  "supported": true,
+                  "value": 1953
+                },
+                "28": {
+                  "error_code": null,
+                  "index": 28,
+                  "supported": true,
+                  "value": 1
+                },
+                "29": {
+                  "error_code": null,
+                  "index": 29,
+                  "supported": true,
+                  "value": 0
+                },
+                "3": {
+                  "error_code": null,
+                  "index": 3,
+                  "supported": true,
+                  "value": 6
+                },
+                "31": {
+                  "error_code": null,
+                  "index": 31,
+                  "supported": true,
+                  "value": 0
+                },
+                "32": {
+                  "error_code": null,
+                  "index": 32,
+                  "supported": true,
+                  "value": 0
+                },
+                "35": {
+                  "error_code": null,
+                  "index": 35,
+                  "supported": true,
+                  "value": 2
+                },
+                "36": {
+                  "error_code": null,
+                  "index": 36,
+                  "supported": true,
+                  "value": 0
+                },
+                "37": {
+                  "error_code": null,
+                  "index": 37,
+                  "supported": true,
+                  "value": 0
+                },
+                "38": {
+                  "error_code": null,
+                  "index": 38,
+                  "supported": true,
+                  "value": 600
+                },
+                "39": {
+                  "error_code": 62,
+                  "index": 39,
+                  "supported": false,
+                  "value": null
+                },
+                "4": {
+                  "error_code": null,
+                  "index": 4,
+                  "supported": true,
+                  "value": 2
+                },
+                "49": {
+                  "error_code": 62,
+                  "index": 49,
+                  "supported": false,
+                  "value": null
+                },
+                "6": {
+                  "error_code": null,
+                  "index": 6,
+                  "supported": true,
+                  "value": 7
+                },
+                "7": {
+                  "error_code": null,
+                  "index": 7,
+                  "supported": true,
+                  "value": 7
+                },
+                "8": {
+                  "error_code": null,
+                  "index": 8,
+                  "supported": true,
+                  "value": 77
+                }
+              },
+              "stage": "numeric_after"
+            },
+            "effective_after_symbolic": {
+              "10": {
+                "error_code": null,
+                "index": 10,
+                "supported": true,
+                "value": 0
+              },
+              "14": {
+                "error_code": null,
+                "index": 14,
+                "supported": true,
+                "value": 20
+              },
+              "18": {
+                "error_code": null,
+                "index": 18,
+                "supported": true,
+                "value": 0
+              },
+              "2": {
+                "error_code": null,
+                "index": 2,
+                "supported": true,
+                "value": 0
+              },
+              "22": {
+                "error_code": null,
+                "index": 22,
+                "supported": true,
+                "value": 0
+              },
+              "23": {
+                "error_code": null,
+                "index": 23,
+                "supported": true,
+                "value": 0
+              },
+              "28": {
+                "error_code": null,
+                "index": 28,
+                "supported": true,
+                "value": 1
+              },
+              "29": {
+                "error_code": null,
+                "index": 29,
+                "supported": true,
+                "value": 0
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 6
+              },
+              "31": {
+                "error_code": null,
+                "index": 31,
+                "supported": true,
+                "value": 0
+              },
+              "32": {
+                "error_code": null,
+                "index": 32,
+                "supported": true,
+                "value": 0
+              },
+              "35": {
+                "error_code": null,
+                "index": 35,
+                "supported": true,
+                "value": 2
+              },
+              "36": {
+                "error_code": null,
+                "index": 36,
+                "supported": true,
+                "value": 0
+              },
+              "37": {
+                "error_code": null,
+                "index": 37,
+                "supported": true,
+                "value": 0
+              },
+              "38": {
+                "error_code": null,
+                "index": 38,
+                "supported": true,
+                "value": 600
+              },
+              "39": {
+                "error_code": 62,
+                "index": 39,
+                "supported": false,
+                "value": null
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": 2
+              },
+              "49": {
+                "error_code": 62,
+                "index": 49,
+                "supported": false,
+                "value": null
+              },
+              "6": {
+                "error_code": null,
+                "index": 6,
+                "supported": true,
+                "value": 7
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 7
+              },
+              "8": {
+                "error_code": null,
+                "index": 8,
+                "supported": true,
+                "value": 77
+              }
+            },
+            "effective_after_symbolic_before_observability_reapply": {
+              "10": {
+                "error_code": null,
+                "index": 10,
+                "supported": true,
+                "value": 0
+              },
+              "14": {
+                "error_code": null,
+                "index": 14,
+                "supported": true,
+                "value": 20
+              },
+              "18": {
+                "error_code": null,
+                "index": 18,
+                "supported": true,
+                "value": 0
+              },
+              "2": {
+                "error_code": null,
+                "index": 2,
+                "supported": true,
+                "value": 0
+              },
+              "22": {
+                "error_code": null,
+                "index": 22,
+                "supported": true,
+                "value": 0
+              },
+              "23": {
+                "error_code": null,
+                "index": 23,
+                "supported": true,
+                "value": 0
+              },
+              "28": {
+                "error_code": null,
+                "index": 28,
+                "supported": true,
+                "value": 1
+              },
+              "29": {
+                "error_code": null,
+                "index": 29,
+                "supported": true,
+                "value": 0
+              },
+              "3": {
+                "error_code": null,
+                "index": 3,
+                "supported": true,
+                "value": 0
+              },
+              "31": {
+                "error_code": null,
+                "index": 31,
+                "supported": true,
+                "value": 0
+              },
+              "32": {
+                "error_code": null,
+                "index": 32,
+                "supported": true,
+                "value": 0
+              },
+              "35": {
+                "error_code": null,
+                "index": 35,
+                "supported": true,
+                "value": 2
+              },
+              "36": {
+                "error_code": null,
+                "index": 36,
+                "supported": true,
+                "value": 0
+              },
+              "37": {
+                "error_code": null,
+                "index": 37,
+                "supported": true,
+                "value": 0
+              },
+              "38": {
+                "error_code": null,
+                "index": 38,
+                "supported": true,
+                "value": 600
+              },
+              "39": {
+                "error_code": 62,
+                "index": 39,
+                "supported": false,
+                "value": null
+              },
+              "4": {
+                "error_code": null,
+                "index": 4,
+                "supported": true,
+                "value": 0
+              },
+              "49": {
+                "error_code": 62,
+                "index": 49,
+                "supported": false,
+                "value": null
+              },
+              "6": {
+                "error_code": null,
+                "index": 6,
+                "supported": true,
+                "value": 7
+              },
+              "7": {
+                "error_code": null,
+                "index": 7,
+                "supported": true,
+                "value": 7
+              },
+              "8": {
+                "error_code": null,
+                "index": 8,
+                "supported": true,
+                "value": 77
+              }
+            },
+            "icntl39_public_getter_unavailable_is_explicit": true,
+            "observability_controls_reapplied_after_symbolic": true,
+            "profile": "physical_p4_cell_condensed_blr_v18",
+            "public_backend": {
+              "local_mumps_control_boundary": {
+                "adaptive_precision_storage_control": "not_supported_by_local_public_controls",
+                "reserved_icntl": "41-48"
+              },
+              "mumps_library_soname": "libzmumps-5.6.so",
+              "mumps_version_public_api": "not_exposed",
+              "petsc_library_identifier": "libpetsc_complex.so.3.19",
+              "petsc_library_path": null,
+              "petsc_library_soname": "libpetsc_complex.so.3.19",
+              "public_symbols": {
+                "MatMumpsGetCntl": true,
+                "MatMumpsGetIcntl": true,
+                "MatMumpsGetInfog": true,
+                "MatMumpsGetRinfog": true,
+                "MatMumpsSetCntl": true,
+                "MatMumpsSetIcntl": true
+              }
+            },
+            "public_initial_state_is_pre_symbolic": true,
+            "requested": {
+              "cntl": {
+                "7": 1e-05
+              },
+              "icntl": {
+                "10": 0,
+                "2": 0,
+                "22": 0,
+                "3": 6,
+                "31": 0,
+                "32": 0,
+                "35": 2,
+                "37": 0,
+                "4": 2
+              }
+            },
+            "schema": "task039extra.v18.mumps-blr-controls.v1",
+            "threshold": 1e-05
+          },
+          "coverage_statistics": {
+            "fronts_fields_not_inferred_from_infog": true,
+            "requested": true,
+            "source": "mumps_stdout",
+            "status": "requires_stdout_capture"
+          },
+          "native_compression_fields": {
+            "infog29_theoretical_entries": {
+              "encoding": "integer",
+              "raw": 40282272,
+              "unit": "entries",
+              "value": 40282272.0
+            },
+            "infog35_effective_entries": {
+              "encoding": "integer",
+              "raw": 39333043,
+              "unit": "entries",
+              "value": 39333043.0
+            },
+            "infog36_blr_symbolic_max_mb": 766,
+            "infog37_blr_symbolic_sum_mb": 766,
+            "infog9_actual_storage_entries": {
+              "encoding": "integer",
+              "raw": 39333043,
+              "unit": "entries",
+              "value": 39333043.0
+            },
+            "rinfog14_actual_flops": 45827096092.0,
+            "rinfog3_theoretical_flops": 44396550096.0
+          },
+          "profile": "physical_p4_cell_condensed_blr_v18",
+          "raw_info_after_numeric": {
+            "info": {
+              "1": 0,
+              "10": 197648,
+              "11": 1800,
+              "12": 128,
+              "13": 0,
+              "14": 0,
+              "15": 971,
+              "16": 1026,
+              "17": 266,
+              "18": 0,
+              "19": 389688,
+              "2": 0,
+              "20": 5678304,
+              "3": 40282272,
+              "4": 197648,
+              "5": 1800,
+              "6": 0,
+              "7": 316396,
+              "8": 50329392,
+              "9": 39333043
+            },
+            "infog": {
+              "1": 0,
+              "10": 197648,
+              "11": 1800,
+              "12": 128,
+              "13": 0,
+              "14": 0,
+              "15": 0,
+              "16": 971,
+              "17": 971,
+              "18": 1026,
+              "19": 1026,
+              "2": 0,
+              "20": 40282272,
+              "21": 873,
+              "22": 873,
+              "29": 40282272,
+              "3": 40282272,
+              "30": 0,
+              "31": 0,
+              "32": 1,
+              "33": 7,
+              "34": 0,
+              "35": 39333043,
+              "36": 766,
+              "37": 766,
+              "38": 663,
+              "39": 663,
+              "4": 197648,
+              "40": 787,
+              "5": 1800,
+              "6": 164,
+              "7": 4,
+              "8": 100,
+              "9": 39333043
+            },
+            "local_info_errors": {},
+            "local_info_supported": true,
+            "local_rinfo_errors": {},
+            "rinfo": {
+              "1": 44396550096.0,
+              "10": 0.0,
+              "11": 0.0,
+              "12": 0.0,
+              "13": 0.0,
+              "14": 0.0,
+              "15": 0.0,
+              "16": 0.0,
+              "17": 0.0,
+              "18": 0.0,
+              "19": 0.0,
+              "2": 46475648.0,
+              "20": 0.0,
+              "3": 44396550096.0,
+              "4": 48751890196.0,
+              "5": 93.466624,
+              "6": 0.0,
+              "7": 631.261878,
+              "8": 859.976397,
+              "9": 0.0
+            },
+            "rinfog": {
+              "1": 44396550096.0,
+              "10": 0.0,
+              "11": 0.0,
+              "12": 0.0,
+              "13": 0.0,
+              "14": 45827096092.0,
+              "15": 93.466624,
+              "16": 0.0,
+              "17": 631.261878,
+              "18": 859.976397,
+              "19": 0.0003958012807960031,
+              "2": 46475648.0,
+              "20": 0.0003958012807960031,
+              "3": 44396550096.0,
+              "4": 0.0,
+              "5": 0.0,
+              "6": 0.0,
+              "7": 0.0,
+              "8": 0.0,
+              "9": 0.0
+            }
+          },
+          "schema": "task039extra.v18.mumps-blr-statistics.v1",
+          "unknown_fields_are_not_measured": true
+        }
+      },
+      "calls": [
+        {
+          "stem": "A2R160_BAL_H_p4_01",
+          "apply_seconds": 0.238189419003902,
+          "native_evaluation_seconds": 0.8312997989996802,
+          "field_metric_seconds": 4.641174677002709,
+          "packet_save_seconds": 0.03023419999226462,
+          "elapsed_seconds": 5.742960029005189
+        },
+        {
+          "stem": "A2R160_BAL_H_p4_02",
+          "apply_seconds": 0.19323736400110647,
+          "native_evaluation_seconds": 0.8499259020027239,
+          "field_metric_seconds": 4.5093554179911735,
+          "packet_save_seconds": 0.037706006987718865,
+          "elapsed_seconds": 5.591348041998572
+        },
+        {
+          "stem": "LIGHT448_BAL_H_p4_09",
+          "apply_seconds": 0.188553692001733,
+          "native_evaluation_seconds": 0.8458211010001833,
+          "field_metric_seconds": 4.648799307004083,
+          "packet_save_seconds": 0.047086388993193395,
+          "elapsed_seconds": 5.731714080990059
+        }
+      ],
+      "settled_seconds": 98.82488292499107,
+      "checker_correction": "Initial checker erroneously tested native ICNTL38 before MUMPS initialization (read 0). Final checker checks actual per-solve 600; pre-symbolic 35=2/CNTL7=1e-5 still strictly checked. No numerical rerun.",
+      "initial_checker": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent.json",
+        "sha256": "38a17d3771f5b253e6c04207269ed58d878e6295fc55cc742395c31e0b89d090"
+      },
+      "checker_descriptor": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
+        "sha256": "2fd62a8527f62de132bd6ffdb471bb482fb1d4681216551a5d2fff14fd9465d1"
+      }
     }
   },
   "p6": {},
@@ -1266,5 +3585,39 @@
   },
   "old_negative_results_preserved": true,
   "time_policy": "observe_only",
-  "master_merge_approved": false
+  "master_merge_approved": false,
+  "decision": {
+    "selected_backend": "exact",
+    "admit_u4": true,
+    "memory": {
+      "peak_ratio": 1.0141626943528148,
+      "live_ratio": 1.0141626943528148,
+      "peak_gate": false,
+      "live_gate": false,
+      "peak_with_live_gate": true,
+      "memory_pass": false
+    },
+    "exact_admission_has_memory_saving_threshold": false,
+    "status": "SELECT_EXACT",
+    "time_policy": "observe_only",
+    "batch_identity": "review_v18_p4_cell_condensed",
+    "exact_control_qualified": true,
+    "exact_core_safe": true,
+    "exact_fallback_authorized": false,
+    "backend_is_provisional_until_U3": false,
+    "reason": "BLR quality passed, actual entries reduced 2.3564%, but full/live RSS ratio 1.014162694 > memory admission; use qualified exact condensation",
+    "evidence": [
+      {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u2_independent.json",
+        "sha256": "00b0ab821d7dd1fe6f2424edb20b21d6392bde0a92a5efbec77362b1205a29e0"
+      },
+      {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u3_independent_final.json",
+        "sha256": "2fd62a8527f62de132bd6ffdb471bb482fb1d4681216551a5d2fff14fd9465d1"
+      }
+    ],
+    "next_stage": "U4_ORIGINAL",
+    "next_input": "input/task39extra/v18_u4_original_exact.dat",
+    "no_more_tau_trials": true
+  }
 }

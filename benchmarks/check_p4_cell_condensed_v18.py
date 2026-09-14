@@ -308,7 +308,12 @@ def check_run(directory: Path, baseline: Path, root: Path, *, exact_control: Pat
     if backend == "blr":
         structural["coverage_statistics"] = coverage["passed"]
         for index, expected in ((36, 0), (37, 0), (38, 600)):
-            structural[f"icntl{index}_before_symbolic"] = _control_value(controls, "icntl", index) == expected
+            # Before MUMPS initialization, unset native defaults read as zero.
+            # Only ICNTL35/CNTL7 require an explicit pre-symbolic write; verify
+            # the unchanged native 36/37/38 defaults on every actual solve.
+            structural[f"icntl{index}_actual_solve"] = all(
+                _control_value(record["controls_after_solve"], "icntl", index) == expected
+                for record in records)
     denominator = resource_facts(exact_control) if exact_control is not None else baseline_resources
     denominator_full = denominator.get("main_full_rss_peak_bytes", denominator.get("full_rss_peak_bytes"))
     denominator_live = denominator.get("main_live_rss_peak_bytes", denominator.get("live_rss_peak_bytes"))
