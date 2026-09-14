@@ -144,3 +144,26 @@ def test_main_memory_window_excludes_extra_calls_but_safety_does_not(monkeypatch
     assert facts["whole_run_rss_peak_bytes"] == 800
     samples[-1]["swap_bytes"] = 1
     assert not checker.resource_facts(tmp_path)["passed"]
+    samples[-1]["swap_bytes"] = 0
+    events[-1] = dict(event="v14_inventory_released", timestamp_ns=4,
+                      facts={"label": "v18_exact_condensed_global"})
+    full = checker.resource_facts(tmp_path, fullspace=True)
+    assert full["passed"] and full["main_full_rss_peak_bytes"] == 800
+    assert full["main_live_rss_peak_bytes"] == 200
+
+
+def test_actual_balance_norms_and_one_solve_counts_override_status():
+    calls = [dict(rhs_norm=float(j), applied_norm=float(j), eps_norm=1e-11,
+                  inner={"interface_facts": dict(factor_solve_call_delta=1,
+                       factor_solve_count=j, duplicate_C_H_applied=False)})
+             for j in (1, 2)]
+    balance = dict(calls=calls, mode="BAL_H", operation_scale=6.,
+                   audit={"closure_norm": 1e-12}, actual_audit="PASS")
+    rows = [dict(completed=True, pc={"inexact_balance": balance})]
+    assert checker.fullspace_balance_facts(rows)["passed"]
+    assert not checker.fullspace_balance_facts([])["passed"]
+    calls[1]["inner"]["interface_facts"]["factor_solve_count"] = 3
+    assert not checker.fullspace_balance_facts(rows)["passed"]
+    calls[1]["inner"]["interface_facts"]["factor_solve_count"] = 2
+    balance["audit"]["closure_norm"] = 1e-4
+    assert not checker.fullspace_balance_facts(rows)["passed"]

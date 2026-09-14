@@ -107,8 +107,10 @@ def profile_facts(identity=PROFILE) -> dict:
             "resources": {
                 "workflow_seconds": 43200,
                 "solve_seconds": 43200,
-                "pc_soft_seconds": 0,
-                "pc_hard_seconds": 0,
+                # Positive legacy reference values are observed only. Zero is
+                # not a valid input to the shared time-observation recorder.
+                "pc_soft_seconds": 25,
+                "pc_hard_seconds": 30,
                 "mpi_size": 1,
                 "require_zero_swap": True,
                 "time_policy": "observe_only",

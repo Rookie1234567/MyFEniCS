@@ -678,6 +678,14 @@ class _V14Runtime:
         if self._pc_clock is None:
             raise RuntimeError("no whole V14 PC action is active")
         interval = self._pc_clock.update(clock_sample())
+        active_pc = dict(self._phase_record["active_pc"])
+        # The numerical action has returned even if its observation metadata
+        # is invalid. Disarm before validating it so cleanup preserves that
+        # original error instead of reporting a still-active PC.
+        self._phase_record["active_pc"] = None
+        self._phase_record["solve_subphase"] = "between_pc"
+        self._pc_clock = None
+        _write_json(self.phase_path, self._phase_record)
         soft_limit = float(self.contract["resources"]["pc_soft_seconds"])
         hard_limit = float(self.contract["resources"]["pc_hard_seconds"])
         soft_time = v14_time_gate_facts(
@@ -687,7 +695,7 @@ class _V14Runtime:
             interval["budget_seconds"], hard_limit, self.time_policy, inclusive=True
         )
         facts = {
-            **self._phase_record["active_pc"],
+            **active_pc,
             "completed": bool(completed),
             "clock_interval": interval,
             "soft_limit_seconds": soft_limit,
@@ -696,10 +704,6 @@ class _V14Runtime:
             "soft_time_gate": soft_time,
             "hard_time_gate": hard_time,
         }
-        self._phase_record["active_pc"] = None
-        self._phase_record["solve_subphase"] = "between_pc"
-        self._pc_clock = None
-        _write_json(self.phase_path, self._phase_record)
         if (
             completed
             and self.time_policy == V14_TIME_POLICY_ENFORCE

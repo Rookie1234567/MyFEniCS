@@ -118,3 +118,35 @@ def test_workflow_prediction_does_not_refund_a_recorded_utc_jump(tmp_path, monke
     assert runtime.workflow_clock_interval()['budget_seconds'] == 20.
     sample.update(monotonic=11., boottime=11., utc_ns=11_000_000_000)
     assert runtime.workflow_clock_interval()['budget_seconds'] == 21.
+
+
+@pytest.mark.parametrize('profile', ['physical_p4_cell_condensed_exact_v18',
+                                    'physical_p4_cell_condensed_blr_v18'])
+def test_v18_actual_pc_recorder_observes_positive_limits_without_stopping(tmp_path, monkeypatch, profile):
+    from src.runners.physical_v14_budget import v14_time_policy_facts
+
+    runtime, now = _runtime(tmp_path, monkeypatch)
+    runtime.contract = profile_facts(profile)
+    runtime.time_policy = 'observe_only'
+    runtime.time_policy_facts = v14_time_policy_facts('observe_only')
+    runtime.begin_outer_solve()
+    runtime.begin_pc(1)
+    now[0] = 50000.
+    facts = runtime.finish_pc()
+    assert facts['hard_limit_exceeded']
+    assert not facts['soft_stop_requested'] and not facts['time_gate_evaluated']
+    assert facts['soft_limit_seconds'] == 25 and facts['hard_limit_seconds'] == 30
+    runtime.finish_outer_solve()
+    assert json.loads(runtime.phase_path.read_text())['active_pc'] is None
+
+
+def test_invalid_observation_metadata_cannot_mask_failure_during_cleanup(tmp_path, monkeypatch):
+    runtime, now = _runtime(tmp_path, monkeypatch)
+    runtime.contract['resources']['pc_soft_seconds'] = 0
+    runtime.begin_outer_solve()
+    runtime.begin_pc(1)
+    now[0] = 1.
+    with pytest.raises(ValueError, match='finite and positive'):
+        runtime.finish_pc()
+    runtime.finish_outer_solve()
+    assert json.loads(runtime.phase_path.read_text())['active_pc'] is None

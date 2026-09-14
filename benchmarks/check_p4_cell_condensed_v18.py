@@ -83,7 +83,7 @@ def exact_fallback_allowed(*, selected_backend: str, original_pass: bool,
                 and not common_error and prior_fallback_count == 0)
 
 
-def resource_facts(directory: Path) -> dict:
+def resource_facts(directory: Path, *, fullspace: bool = False) -> dict:
     """Separate the three-input main window from U2's extra calls."""
     samples = _jsonl(directory / "watchdog/resources.jsonl")
     events = _jsonl(directory / "v18_events.jsonl")
@@ -91,12 +91,15 @@ def resource_facts(directory: Path) -> dict:
     run = _json(directory / "run_summary.json")
     manifest = _json(directory / "run_manifest.json")
     numeric = [r for r in events if r["event"] == "schur_factor_numeric_complete"]
-    ends = [r for r in events if r["event"] == "u2_main_rhs_window_complete"]
+    ends = ([r for r in events if r["event"] == "v14_inventory_released"
+             and str(r["facts"]["label"]).endswith("_condensed_global")]
+            if fullspace else
+            [r for r in events if r["event"] == "u2_main_rhs_window_complete"])
     if len(numeric) != 1 or len(ends) != 1:
         raise ValueError("one numeric and one explicit main-window end are required")
     start, end = numeric[0]["timestamp_ns"], ends[0]["timestamp_ns"]
-    main = [s for s in samples if s["timestamp_ns"] <= end]
-    live = [s for s in main if s["timestamp_ns"] >= start]
+    main = samples if fullspace else [s for s in samples if s["timestamp_ns"] <= end]
+    live = [s for s in main if start <= s["timestamp_ns"] <= end]
     if not main or not live or not worker:
         raise ValueError("main/live/worker samples are missing")
     authority = run["resource_authority"]
@@ -121,7 +124,8 @@ def resource_facts(directory: Path) -> dict:
                                 and not s["time_gate_evaluated"] for s in samples),
     }
     return {"scope": "continuous_parent_process_tree", "gates": gates,
-            "passed": all(gates.values()), "main_window_end_ns": end,
+            "passed": all(gates.values()), "main_window_end_ns": samples[-1]["timestamp_ns"] if fullspace else end,
+            "factor_live_end_ns": end, "fullspace_scope": fullspace,
             "main_full_rss_peak_bytes": max(s["rss_bytes"] for s in main),
             "main_live_rss_peak_bytes": max(s["rss_bytes"] for s in live),
             "main_full_pss_peak_bytes": max(s["pss_bytes"] for s in main),
@@ -329,6 +333,46 @@ def check_run(directory: Path, baseline: Path, root: Path, *, exact_control: Pat
             "memory": memory, "compression": compression_facts(summary), "coverage": coverage,
             "memory_denominator": str(exact_control or baseline),
             "time_policy": "observe_only", "official_p6_pass": False}
+
+
+def fullspace_balance_facts(boundaries):
+    """Check both live coarse defects and the stored closure operation norms."""
+    checks, closure_rows, coarse_rows = {}, [], []
+    solve_count = 0
+    for number, boundary in enumerate(boundaries, 1):
+        facts = boundary["pc"]
+        balance = facts["inexact_balance"]
+        calls = balance["calls"]
+        checks[f"pc{number}.two_live_calls"] = len(calls) == 2 and balance["mode"] == "BAL_H"
+        checks[f"pc{number}.completed"] = boundary["completed"] is True
+        scale = sum(c["rhs_norm"] + c["applied_norm"] for c in calls)
+        checks[f"pc{number}.operation_scale"] = math.isclose(
+            scale, balance["operation_scale"], rel_tol=1e-12, abs_tol=1e-30)
+        for j, call in enumerate(calls, 1):
+            inner = call["inner"]
+            direct = inner["interface_facts"]
+            expected_calls = int(call["rhs_norm"] > 0)
+            solve_count += expected_calls
+            checks[f"pc{number}.call{j}.one_solve"] = direct["factor_solve_call_delta"] == expected_calls
+            checks[f"pc{number}.call{j}.shared_factor"] = direct["factor_solve_count"] == solve_count
+            checks[f"pc{number}.call{j}.no_dual_reapplication"] = direct["duplicate_C_H_applied"] is False
+            coarse_rows.append({"pc": number, "call": j, "rhs_norm": call["rhs_norm"],
+                                "defect_norm": call["eps_norm"],
+                                "rho": call["eps_norm"] / max(call["rhs_norm"], np.finfo(float).tiny)})
+        if number == 1 or number % 32 == 0:
+            audit = balance.get("audit", {})
+            numerator = audit.get("closure_norm")
+            ratio = float(numerator) / scale if _finite_nonnegative(numerator) and scale > 0 else math.inf
+            checks[f"pc{number}.closure"] = math.isfinite(ratio) and ratio <= 1e-8
+            closure_rows.append({"pc": number, "closure_norm": numerator,
+                                 "operation_scale": scale, "relative": ratio if math.isfinite(ratio) else None})
+    return {"passed": bool(boundaries) and all(checks.values()),
+            "checks_failed": [k for k, v in checks.items() if not v],
+            "pc_count": len(boundaries), "global_mat_solve_count": solve_count,
+            "closure_samples": closure_rows, "coarse_defects": coarse_rows,
+            "max_closure_relative": max((r["relative"] for r in closure_rows
+                                          if r["relative"] is not None), default=None)}
+
 
 
 def main():
