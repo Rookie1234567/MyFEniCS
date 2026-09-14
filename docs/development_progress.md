@@ -1,3 +1,19 @@
+# 当前进展：Task39extra Response V18 / Review V17 关闭有界 BLR 阈值试验
+
+| 问题 | 本次证据与决定 |
+|---|---|
+| 实际压缩 | T1=1e-3，33个BLR fronts覆盖49.0%的条目；实际条目53417584→48706124，减少8.8201% |
+| 内存与修正质量 | 全过程/live RSS均2672054272 B，对Q1比值0.945534，仅降5.4466%，M=false；三RHS L2约0.60–0.68，Q=false |
+| 完整三维 | T2及条件original/notch均not_run，无本轮A6/完整物理结果；未把p4控制当完整PC资格 |
+| 终止与费用 | 正式一次、重放0；数值拒绝后清场，资源通过。全流程571.4613 monotonic s，保守结算626.1990 s另列；旧账、600 s未知实耗政策占用保留 |
+| 审计边界 | 全局矩阵内容hash缺失、4个约1e-18 slave尾项未满足严格坐标格式；不为补metadata重复计算；不影响5 nm线，不合并master |
+
+BLR以低秩近似减少部分全局因子数据，代价是回代误差。本次固定阈值的内存与质量筛选均失败，关闭本批有限设计；不追加epsilon，不宣称所有BLR无效。formal source `a1bc6b54e613ebf91c5c97ecddcc14555b084ee0`，base `863c71d5133b137a888a587becb9cbe8ed2daca9`，最终相关测试137通过。
+
+[response_v18](task039_extra_physical_multilevel/response_v18.md)、[tradeoff结果](task039_extra_physical_multilevel/outcomes/p4_blr_tradeoff_v17.md)、[compact](task039_extra_physical_multilevel/outcomes/records/p4_blr_tradeoff_v17_compact.json)、[decision](task039_extra_physical_multilevel/outcomes/records/p4_blr_tradeoff_v17_decision.json)及[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)提供统一证据。下方历史完整保留。
+
+---
+
 # Task39extra 当前进展：p4 BLR S2 质量通过但内存收益不足，任务收口
 
 | 本轮问题 | 当前结论 |

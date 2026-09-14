@@ -1,3 +1,27 @@
+# 当前汇总：Review V17 的 T1 同时未达内存与质量线，关闭本批阈值试验
+
+BLR 用较少数据近似全局消元因子中的部分矩阵块，代价是回代误差。本次唯一新 p4 控制使用 `CNTL(7)=1e-3`；三个真实输入共用一份因子，各做一次 MatSolve，没有迭代改进。它仍需要全局因子，不代表已完成完整 p6 求解。
+
+| 指标 | 原 p4 LU（历史 Q1） | 旧 BLR 1e-5（历史 V16） | 本次 T1 1e-3 | 条件 T2 1e-4 |
+|---|---:|---:|---:|---|
+| 全过程 / factor-live 树 RSS，B | 2825973760 / 2825973760 | 2741243904 / 2741243904 | 2672054272 / 2672054272 | not_run |
+| 实际因子条目 | 53417584 | 53040280 | 48706124 | not_run |
+| allocated / used upper，B | 2343000000 / 1382000000 | 1693000000 / 1420000000 | 1623000000 / 1351000000 | not_run |
+| 全流程 monotonic，s | 536.468042244 | 571.514731005 | 571.461267577 | not_run |
+| 三 RHS 质量线 | 通过原 A4 精度 | 通过历史 p4 筛选 | rho 与场误差均有失败项 | not_run |
+
+RSS 和条目是实测字段；upper bytes 是由后端实测 decimal-MB 字段保守换算。T1 fronts=33，覆盖比例49.0%；条目减少8.8201%，RSS减少5.4466%。`R_peak=R_live=0.945534` 未达0.90，亦未达 resident 分支的0.80，故 M=false。三 RHS rho为4.78774/0.194757/6.06357（限值0.5），场L2为0.604297/0.682241/0.620539，scaled-curl为0.603768/0.681708/0.620123（均限值0.25），Q=false。
+
+T1 source为 `a1bc6b54e613ebf91c5c97ecddcc14555b084ee0`，requested base为 `863c71d5133b137a888a587becb9cbe8ed2daca9`。模型为13.5 nm、252 hex、p6/h10宿主、MPI1/线程1；实际控制是p4增广53164行、80端口、24730144 NNZ。全部资源检查通过，zero job swap、全局交换增量0、后代清空；时间保持observe_only。571.4613 s 中，setup37.4301 s、assembly494.3436 s、factor阶段17.0804 s。保守ledger结算626.1990 s另列，不能与monotonic相加；旧V14/V16费用及600 s真实耗时unknown的政策占用仍保留。
+
+全局矩阵内容hash未采集；三个输出各有4个约1e-18的slave存储残量，strict slave-zero检查未通过。维数、输入/map/source hash和三个冻结向量的算子作用核对不冒充矩阵字节相等证明。这些证据/坐标格式缺口如实保留，M的独立失败已经足以禁止T2，不为补metadata重跑。
+
+最终行动 `T5_CLOSE`。T2、T3 original、T4 notch均未触发；没有本轮原A6、完整E/H、R/T/A、A_volume、80模式或守恒的通过/失败结论。此次关闭有限设计，不推断整个BLR阈值区间无解，不影响5 nm线，不合并master。
+
+完整数值、调用与全过程成本见 [response_v18](../response_v18.md)、[tradeoff结果](p4_blr_tradeoff_v17.md)、[compact](records/p4_blr_tradeoff_v17_compact.json)、[decision](records/p4_blr_tradeoff_v17_decision.json)、[测试](test_summary.md)和[selective manifest V18](selective_merge_manifest_v18.md)。下方历史全部原样保留。
+
+---
+
 # 当前汇总：S2 p4 BLR 质量通过但内存收益不足，S3/S4 未准入
 
 | 当前问题 | 实测结论 | 原因及证据范围 |

@@ -1,3 +1,23 @@
+# 当前验证：Response V18 / Review V17 的有限 BLR 试验
+
+| 检查 | 本轮结果 | 证据范围 |
+|---|---|---|
+| 最终直接相关测试 | **137 passed in 1.23s** | V17、旧V16、控制/代数/接口、schema/launcher/dispatch；真实资格化WSL complex128/int32栈 |
+| 小型 MUMPS API 检查 | 1e-3和1e-4各3×3通过 | 控制读回、一次symbolic/numeric、每动作一次MatSolve且无refinement；不是正式p4试验 |
+| 输入 / 编译 / diff | 两个新输入validate通过；compileall与diff通过 | 没有另行声称dry-run；默认profile与旧证据保持不变 |
+| 正式 T1 | `NUMERICAL_GATE_REJECTED` | 三RHS全部保存；Q=false、M=false；包装exit4/WORKER_FAILED来自数值拒绝 |
+| 独立原始数据复算 | `T5_CLOSE` | 原A4恒等式和计数核验，保存矩阵hash缺失及strict slave-zero失败，未将checker正常退出当作PC通过 |
+| 正式资源 | 通过 | 树RSS2672054272 B、PSS2641505280 B；zero swap、reserve/库存/工作区、清场成立；时间observe_only |
+| 文档/Markdown最终检查 | **20 passed** | [本地日志](../../../benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/final_documentation_tests_v17.log)，最终新增文档与登记结构检查 |
+| T2 / original / notch | not_run | T1内存准入失败，不额外启动计算 |
+| Ruff / 全仓pytest / CI | unavailable / not_run / not_claimed | 沿用既有工具可用性，不安装额外工具 |
+
+[最终相关测试日志](../../../benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/final_evidence_tests_v17.log)、[tiny MUMPS日志](../../../benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/tiny_mumps_v17_fixed.log)、[最终checker](../../../benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/t1_checker_final_v2.json)和[独立主控复算](../../../benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/t1_root_audit.json)均为本地证据。正式source为 `a1bc6b54e613ebf91c5c97ecddcc14555b084ee0`；后续checker修改只补单位和证据口径，未重跑PDE。最初日志控制小测试错误及sandbox MPI限制保留为工程记录，正式fresh=1、replay=0。
+
+前期工程只有UTC窗口4093.641020536 s，含root/Luna重叠工作和等待；更早准备及后期文档审核独立耗时unknown，不混入正式571.461267577 s或626.199033101 s保守结算。完整费用见[response_v18](../response_v18.md)。下方旧测试历史保持原样。
+
+---
+
 # 当前验证：V16 p4 BLR S2 与历史 V14/V15 证据分层
 
 | 检查 | 已完成结果 | 来源与限制 |

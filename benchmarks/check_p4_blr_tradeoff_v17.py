@@ -256,6 +256,43 @@ def compression_facts(summary: Mapping[str, Any]) -> dict[str, Any]:
     return _raw_compression_facts(summary)
 
 
+def _matrix_content_hash_facts(
+    summary: Mapping[str, Any], baseline: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Report serialized global-matrix content identity separately.
+
+    The p4 records currently retain dimensions/NNZ and operator-action
+    diagnostics, but do not retain a byte hash of the global CSR numerical
+    values.  Do not infer such a hash from dimensions, NNZ, input identity,
+    or source/map hashes.
+    """
+
+    current_matrix = summary.get("matrix")
+    baseline_matrix = baseline.get("matrix")
+    current_matrix = current_matrix if isinstance(current_matrix, Mapping) else {}
+    baseline_matrix = baseline_matrix if isinstance(baseline_matrix, Mapping) else {}
+    current_hash = current_matrix.get("matrix_content_sha256")
+    baseline_hash = baseline_matrix.get("matrix_content_sha256")
+    current_hash = current_hash if isinstance(current_hash, str) and current_hash else None
+    baseline_hash = (
+        baseline_hash if isinstance(baseline_hash, str) and baseline_hash else None
+    )
+    return {
+        "available": current_hash is not None,
+        "current_available": current_hash is not None,
+        "baseline_available": baseline_hash is not None,
+        "comparable": current_hash is not None and baseline_hash is not None,
+        "match": (
+            current_hash == baseline_hash
+            if current_hash is not None and baseline_hash is not None
+            else None
+        ),
+        "field": "matrix.matrix_content_sha256",
+        "current_sha256": current_hash,
+        "baseline_sha256": baseline_hash,
+    }
+
+
 def decide_t1(
     summary: Mapping[str, Any],
     *,
@@ -478,7 +515,11 @@ def _stdout_coverage_facts(
     unavailable = {
         "captures": [],
         "markers": {marker: False for marker in markers},
-        "coverage": {"number_of_blr_fronts": None, "fraction_of_factors_in_blr_fronts": None},
+        "coverage": {
+            "number_of_blr_fronts": None,
+            "percent_of_factors_in_blr_fronts": None,
+            "fraction_of_factors_in_blr_fronts": None,
+        },
         "bounded_stdout_present": False,
         "status": "coverage_unavailable",
         "passed": False,
@@ -515,18 +556,20 @@ def _stdout_coverage_facts(
     )
     fraction_match = re.search(
         r"Fraction\s+of\s+factors\s+in\s+BLR\s+fronts\s*[:=]\s*"
-        r"([-+0-9.eE]+)",
+        r"([-+0-9.eE]+)\s*%",
         text,
         re.IGNORECASE,
     )
     fronts = int(fronts_match.group(1)) if fronts_match else None
-    fraction = float(fraction_match.group(1)) if fraction_match else None
-    finite_fraction = fraction is not None and math.isfinite(fraction)
+    percent = float(fraction_match.group(1)) if fraction_match else None
+    finite_fraction = percent is not None and math.isfinite(percent)
+    fraction = percent / 100.0 if finite_fraction else None
     return {
         "captures": captures,
         "markers": found,
         "coverage": {
             "number_of_blr_fronts": fronts,
+            "percent_of_factors_in_blr_fronts": percent,
             "fraction_of_factors_in_blr_fronts": fraction,
             "fronts_parsed": fronts is not None,
             "fraction_parsed": finite_fraction,
@@ -873,9 +916,16 @@ def check_run(directory: Path, baseline: Path, root: Path) -> dict[str, Any]:
         _map_descriptor, map_arrays = map_cache[map_cache_key]
         x_storage = _array(packet, "x_storage", root)
         slave_indices = map_arrays["slaves"]
+        slave_values = x_storage[slave_indices]
+        slave_norm = float(np.linalg.norm(slave_values))
         row["solution_layout"] = {
             "storage_rows": int(x_storage.size),
             "slave_count": int(slave_indices.size),
+            "slave_nonzero_count": int(np.count_nonzero(slave_values)),
+            "slave_max_abs": float(np.max(np.abs(slave_values), initial=0.0)),
+            "slave_norm": slave_norm,
+            "slave_relative_norm": slave_norm
+            / max(float(np.linalg.norm(x_storage)), np.finfo(float).tiny),
             "slave_zero": bool(
                 slave_indices.size == 0
                 or (
@@ -932,6 +982,8 @@ def check_run(directory: Path, baseline: Path, root: Path) -> dict[str, Any]:
         key: summary.get("matrix", {}).get(key) == exact.get("matrix", {}).get(key)
         for key in MATRIX_KEYS
     }
+    matrix_dimensions_match = all(matrix_gates.values())
+    matrix_content = _matrix_content_hash_facts(summary, exact)
     comparison_gates = {
         "BLR_resources": current_scope["passed"],
         "exact_resources": exact_scope["passed"],
@@ -939,7 +991,8 @@ def check_run(directory: Path, baseline: Path, root: Path) -> dict[str, Any]:
         "all_rhs_evidence": all(row["gates"]["all_raw_evidence"] for row in rows),
         "map_file": all(map_file_gate.values()),
         "map_identity": all(row["map"]["passed"] for row in rows),
-        "matrix_identity": all(matrix_gates.values()),
+        "matrix_dimensions_match": matrix_dimensions_match,
+        "matrix_content_hash_available": matrix_content["available"],
         "physical_identity": source_gates["physical_model_identity"],
         "source_identity": all(source_gates.values()),
         "controls": controls_pass,
@@ -979,6 +1032,16 @@ def check_run(directory: Path, baseline: Path, root: Path) -> dict[str, Any]:
         "manifest_sha256": _hash(directory / "run_manifest.json"),
         "decision": decision,
         "comparison_gates": comparison_gates,
+        "matrix_evidence": {
+            "dimensions_match": matrix_dimensions_match,
+            "dimension_fields": matrix_gates,
+            "content_hash_available": matrix_content["available"],
+            "content_hash_comparable": matrix_content["comparable"],
+            "content_hash_match": matrix_content["match"],
+            "content_hash_field": matrix_content["field"],
+            "current_content_sha256": matrix_content["current_sha256"],
+            "baseline_content_sha256": matrix_content["baseline_sha256"],
+        },
         "control_gates": control_facts,
         "stdout_coverage": stdout_facts,
         "rhs": rows,

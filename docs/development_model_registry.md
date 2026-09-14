@@ -1,3 +1,13 @@
+# Task39extra Response V18 / Review V17 执行结果：有限 BLR tradeoff
+
+| Model ID | 来源/配置 | 实测结果 | 状态与边界 |
+|---|---|---|---|
+| `task39extra_v17_t1_blr_tradeoff` | source `a1bc6b54e613ebf91c5c97ecddcc14555b084ee0`；13.5 nm、Full3D、p6/h10宿主、MPI1/线程1、complex128/int32；实际仅p4增广53164行/80端口 | 一份BLR factor、CNTL7=1e-3、三次MatSolve；rho 4.78774/.194757/6.06357，L2 .604297/.682241/.620539；RSS2672054272 B，条目48706124 | `NUMERICAL_GATE_REJECTED`，Q/M均false，`T5_CLOSE`。T2/original/notch和official物理not_run；矩阵内容hash缺失、strict slave-zero残量保留；[compact](task039_extra_physical_multilevel/outcomes/records/p4_blr_tradeoff_v17_compact.json) |
+
+BLR用低秩数据近似部分消元因子，目标为减少全局分解存储。本次33个fronts覆盖49.0%条目，因子条目降8.8201%、全过程RSS降5.4466%，未达到10%峰值或20%常驻收益要求，修正质量也未达标。结论限于本批固定设计，不将not_run写成完整三维失败。无隐藏refinement，旧默认、旧证据与5 nm工作线保持；[response_v18](task039_extra_physical_multilevel/response_v18.md)和[manifest V18](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v18.md)给出成本与合并边界，master merge未批准。
+
+---
+
 # Task39extra Response V17 / Review V16 执行结果：p4 BLR S2 证据边界
 
 | Model ID | 当前来源/配置 | 实测结果 | 状态与边界 |

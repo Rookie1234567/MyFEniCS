@@ -1,0 +1,313 @@
+{
+  "schema": "task039extra.v17.p4-blr-tradeoff-decision.v1",
+  "review": "review_v17_p4_blr_tradeoff",
+  "requested_base_sha": "863c71d5133b137a888a587becb9cbe8ed2daca9",
+  "accepted_q1_source_sha": "6a8b273c383d5bd9da37d6630a48bd24d6a90cce",
+  "source_sha": "a1bc6b54e613ebf91c5c97ecddcc14555b084ee0",
+  "stage": "T5",
+  "decision": "CLOSE_FIXED_TAU_1E-3_CONFIGURATION",
+  "action": "T5_CLOSE",
+  "quality_pass": false,
+  "memory_pass": false,
+  "formal_batch_scope": "p4 augmented control only: 53164 rows; p6/h10 is the host model and no p6 outer solve was run",
+  "admission": {
+    "t1_quality": false,
+    "t1_memory": false,
+    "t2": "not_run",
+    "t3_original": "not_run",
+    "t4_notch": "not_run",
+    "reason": "T1 quality gates fail and R_peak/R_live do not satisfy the fixed memory rule; no conditional T2 is authorized.",
+    "quality_thresholds": {
+      "rho_max": 0.5,
+      "field_l2_max": 0.25,
+      "scaled_curl_max": 0.25,
+      "native_identity_max": 1e-10
+    },
+    "memory_thresholds": {
+      "r_peak_max": 0.9,
+      "r_live_max_for_exception": 0.8,
+      "r_peak_max_with_live_exception": 1.05
+    },
+    "observed": {
+      "R_peak": 0.9455339995796705,
+      "R_live": 0.9455339995796705
+    }
+  },
+  "quality": {
+    "rhs_count": 3,
+    "finite": true,
+    "native_identity_pass": true,
+    "native_identity_relative_range": [
+      1.1217099246371649e-17,
+      2.097189693808333e-16
+    ],
+    "rho_pass": false,
+    "field_l2_pass": false,
+    "scaled_curl_pass": false,
+    "all_quality_gates_passed": false,
+    "rho": [
+      4.78774161579983,
+      0.1947573245406759,
+      6.063573601898471
+    ],
+    "field_l2_relative": [
+      0.6042973308874857,
+      0.6822411297187286,
+      0.6205385284813106
+    ],
+    "scaled_curl_relative": [
+      0.6037676857908261,
+      0.6817077538074453,
+      0.6201228657608676
+    ],
+    "mat_solve_delta": [
+      1,
+      1,
+      1
+    ],
+    "interpretation": "Native finite-vector identity is self-consistent, but field-quality and rho gates are not met; this is not a complete p6 PC or Maxwell solver qualification."
+  },
+  "factor": {
+    "blr_threshold": 0.001,
+    "blr_fronts": 33,
+    "blr_coverage_percent": 49.0,
+    "blr_coverage_fraction": 0.49,
+    "theoretical_entries": 53417584,
+    "effective_entries": 48706124,
+    "actual_storage_entries": 48706124,
+    "effective_to_theoretical_ratio": 0.9117994554003042,
+    "entry_reduction_fraction": 0.08820054459969584,
+    "theoretical_operations": 39449025878,
+    "effective_operations": 29823939778,
+    "controls": {
+      "ICNTL_35": 2,
+      "ICNTL_37": 0,
+      "ICNTL_10": 0,
+      "ICNTL_36": 0,
+      "ICNTL_38": 600,
+      "ICNTL_39": "unavailable_error_62",
+      "ICNTL_49": "unsupported_in_trace",
+      "CNTL_7": 0.001,
+      "scalar_type": "complex128"
+    }
+  },
+  "four_way_comparison": {
+    "original_lu_q1": {
+      "status": "measured_accepted",
+      "full_rss_peak_bytes": 2825973760,
+      "factor_live_rss_peak_bytes": 2825973760,
+      "entries": 53417584,
+      "allocated_upper_bytes": 2343000000,
+      "used_upper_bytes": 1382000000,
+      "symbolic_seconds": 0.2683213069976773,
+      "numeric_seconds": 18.488779414998135,
+      "full_workflow_monotonic_seconds": 536.4680422439997
+    },
+    "old_blr_tau_1e-5": {
+      "status": "measured_historical",
+      "full_rss_peak_bytes": 2741243904,
+      "factor_live_rss_peak_bytes": 2741243904,
+      "entries": 53040280,
+      "allocated_upper_bytes": 1693000000,
+      "used_upper_bytes": 1420000000,
+      "symbolic_seconds": 0.33692986499954714,
+      "numeric_seconds": 19.946495771997434,
+      "full_workflow_monotonic_seconds": 571.5147310050015
+    },
+    "t1_blr_tau_1e-3": {
+      "status": "measured_candidate",
+      "full_rss_peak_bytes": 2672054272,
+      "factor_live_rss_peak_bytes": 2672054272,
+      "entries": 48706124,
+      "allocated_upper_bytes": 1623000000,
+      "used_upper_bytes": 1351000000,
+      "symbolic_seconds": 0.38182590098585933,
+      "numeric_seconds": 16.59896270200261,
+      "full_workflow_monotonic_seconds": 571.461267577004
+    },
+    "conditional_t2_tau_1e-4": {
+      "status": "not_run"
+    }
+  },
+  "memory": {
+    "candidate": {
+      "full_rss_peak_bytes": 2672054272,
+      "live_rss_peak_bytes": 2672054272,
+      "full_pss_peak_bytes": 2641505280,
+      "live_pss_peak_bytes": 2641505280,
+      "inventory_peak_bytes": 2186619390,
+      "workspace_peak_bytes": 17825792
+    },
+    "accepted_q1": {
+      "full_rss_peak_bytes": 2825973760,
+      "live_rss_peak_bytes": 2825973760,
+      "full_pss_peak_bytes": 2795549696,
+      "live_pss_peak_bytes": 2795549696,
+      "inventory_peak_bytes": 2906619390,
+      "workspace_peak_bytes": 17825792
+    },
+    "R_peak": 0.9455339995796705,
+    "R_live": 0.9455339995796705,
+    "memory_gate": false,
+    "interpretation": "RSS ratio fails independently; allocated/used and entry reductions do not replace the RSS rule."
+  },
+  "timing": {
+    "full_workflow_monotonic_seconds": 571.461267577004,
+    "run_summary_conservative_seconds": 626.1982250330033,
+    "v17_ledger_settled_seconds": 626.1990331012247,
+    "mumps_symbolic_seconds": 0.38182590098585933,
+    "mumps_numeric_seconds": 16.59896270200261,
+    "phase_evidence": {
+      "path": "benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/t1_phase_times.json",
+      "sha256": "59486e60be355f93dff2c2fd0bc379fb3c3e264c63766a9bdf497126ac001e59",
+      "classification": "derived_nonoverlapping_parent_phase_intervals",
+      "seconds": {
+        "bootstrap": 0.7846034320100443,
+        "preflight": 0.2211279399925843,
+        "setup": 37.43005693399755,
+        "assembly": 494.3436057490035,
+        "factor": 17.08037491000141,
+        "solve": 3.0864612699951977,
+        "evaluation": 15.065360085005523,
+        "cleanup": 3.449677256998257
+      }
+    },
+    "rhs": [
+      {
+        "stem": "A2R160_BAL_H_p4_01",
+        "mat_solve_seconds": 0.07739068599767052,
+        "native_check_evaluation_seconds": 0.9463301349896938,
+        "field_metric_seconds": 4.937293752009282,
+        "packet_save_seconds": 0.03273259299749043,
+        "full_rhs_elapsed_seconds": 6.005135503000929
+      },
+      {
+        "stem": "A2R160_BAL_H_p4_02",
+        "mat_solve_seconds": 0.0726615859894082,
+        "native_check_evaluation_seconds": 0.9441446370037738,
+        "field_metric_seconds": 4.945715775000281,
+        "packet_save_seconds": 0.04656879699905403,
+        "full_rhs_elapsed_seconds": 6.013098786002956
+      },
+      {
+        "stem": "LIGHT448_BAL_H_p4_09",
+        "mat_solve_seconds": 0.07599825100624003,
+        "native_check_evaluation_seconds": 0.9516965229995549,
+        "field_metric_seconds": 5.006521974995849,
+        "packet_save_seconds": 0.031142690000706352,
+        "full_rhs_elapsed_seconds": 6.067275527995662
+      }
+    ],
+    "time_policy": "observe_only",
+    "time_gate_evaluated": false,
+    "time_veto_enabled": false,
+    "time_exceeded_observation": false
+  },
+  "resources": {
+    "scope": "continuous_parent_process_tree",
+    "full_samples": 2224,
+    "live_samples": 70,
+    "rss_pss_readable": true,
+    "zero_swap": true,
+    "descendants_cleared": true,
+    "resource_gate_pass": true,
+    "time_policy": "observe_only",
+    "time_gate_evaluated": false
+  },
+  "identity_evidence": {
+    "matrix_dimensions_match": true,
+    "matrix_content_hash_available": false,
+    "matrix_content_comparable": false,
+    "current_matrix_content_sha256": null,
+    "baseline_matrix_content_sha256": null,
+    "strict_slave_zero_contract": "exact_equality",
+    "strict_slave_zero_all_rhs": false,
+    "strict_slave_count": 4124,
+    "strict_slave_nonzero_count_per_rhs": 4,
+    "strict_slave_max_abs_by_rhs": [
+      1.1944835754278534e-18,
+      2.5375811041732586e-19,
+      2.8203945422370365e-18
+    ],
+    "strict_slave_relative_norm_by_rhs": [
+      1.755971158596816e-20,
+      4.0619426974113303e-20,
+      2.293194807761172e-20
+    ],
+    "fresh_A4y_relative_to_saved": 0.0,
+    "finite_vector_action_is_not_full_matrix_equality": true,
+    "existing_backend_identity_difference_is_not_new_operator_error": true
+  },
+  "ledger": {
+    "v14_settled_seconds": 4082.128437647174,
+    "v16_settled_seconds": 625.736658980034,
+    "v16_reserved_seconds": 14400.0,
+    "v17_settled_seconds": 626.1990331012247,
+    "old_v14_ledger_sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3",
+    "old_policy_debit_seconds": 600.0,
+    "old_unknown_elapsed_preserved": true,
+    "engineering_utc_span": {
+      "start_unix": 1789342708.248257,
+      "end_unix": 1789346801.8892775,
+      "seconds": 4093.6410205364227,
+      "start_utc": "2026-09-13T23:38:28.248257Z",
+      "end_utc": "2026-09-14T00:46:41.889278Z",
+      "scope": "Recorded pre-T1 engineering window with overlapping root/Luna work and waiting; not monotonic/CPU or PDE ledger.",
+      "before_t1_unmeasured": "unknown",
+      "after_t1_documentation_unmeasured": "unknown"
+    },
+    "old_v14_conservative_allowance_seconds": 3.1,
+    "old_v16_ledger_sha256": "cc97e1c1c00ef78111450c6d37cb98ce40f074d547bd4d75fd9a16b308816d7a"
+  },
+  "validation": {
+    "related_tests": "137 passed in 1.23s",
+    "compileall": "passed",
+    "diff_check": "passed",
+    "launch_preflight": "passed",
+    "input_validate": "valid",
+    "dry_run": "not_recorded",
+    "final_checker": {
+      "path": "benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/t1_checker_final_v2.json",
+      "sha256": "63327177a9b9cacf6b5f40dfb28df9b8071b207a8079011c37516de2b8616b4f",
+      "exit": 0
+    },
+    "tests_log": {
+      "path": "benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/final_evidence_tests_v17.log",
+      "sha256": "6fb46b927b7cc999b2d5ea4f0b02d73886a33d7297f2d25c3b0971149fee1ffb"
+    },
+    "documentation_tests": {
+      "result": "20 passed",
+      "path": "benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/final_documentation_tests_v17.log"
+    }
+  },
+  "scope": {
+    "t1": "measured_negative",
+    "t2": "not_run",
+    "t3_original": "not_run",
+    "t4_notch": "not_run",
+    "full_p6": "not_run",
+    "nonseparable_3d": "not_run",
+    "official_rta_eh_modes_conservation": "not_run",
+    "ordinary_default_changed": false,
+    "master_merge_approved": false
+  },
+  "next_action": "CLOSE_FIXED_CONFIGURATION",
+  "prohibitions": [
+    "do_not_scan_epsilon",
+    "do_not_start_p6",
+    "do_not_claim_full_pc_pass",
+    "do_not_claim_0p7nm_or_continuum_qualification",
+    "do_not_infer_matrix_content_identity_from_dimensions",
+    "do_not_relax_strict_slave_zero_without_authority"
+  ],
+  "evidence": {
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/p4_blr_tradeoff_v17_compact.json",
+    "formal_summary": "results/euv_grazing1_phi0/task39extra_v17_t1_blr_tradeoff__full3d_iterative__mpi1__Mna/20260914T004735.607836Z/physical_p4_blr_v17_summary.json",
+    "root_audit": "benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/t1_root_audit.json",
+    "phase_times": "benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/t1_phase_times.json",
+    "independent_checker": "benchmarks/artifacts/task39extra/p4_blr_tradeoff_v17/root_engineering/t1_checker_final_v2.json",
+    "selective_merge": "docs/task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v18.md",
+    "compact_sha256": "0d0a1c716d5002f950bb325f83660a98b21d376dc28cc27c6356b58fb8123df0",
+    "independent_checker_sha256": "63327177a9b9cacf6b5f40dfb28df9b8071b207a8079011c37516de2b8616b4f"
+  }
+}

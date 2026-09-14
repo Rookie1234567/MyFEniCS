@@ -4,10 +4,32 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
+
+
+def test_mumps_coverage_percent_is_converted_to_a_fraction(tmp_path):
+    from benchmarks.check_p4_blr_tradeoff_v17 import _stdout_coverage_facts
+
+    log = tmp_path / "worker.log"
+    log.write_text(
+        "Beginning of BLR statistics\n"
+        "Number of BLR fronts = 33\n"
+        "Fraction of factors in BLR fronts = 49.0%\n"
+        "INFOG(29) INFOG(35) RINFOG(3) RINFOG(14)\n"
+    )
+    descriptor = {
+        "path": str(log),
+        "sha256": hashlib.sha256(log.read_bytes()).hexdigest(),
+        "bytes": log.stat().st_size,
+    }
+    facts = _stdout_coverage_facts(tmp_path, {"launcher_stdout": descriptor})
+    assert facts["coverage"]["percent_of_factors_in_blr_fronts"] == 49.0
+    assert facts["coverage"]["fraction_of_factors_in_blr_fronts"] == 0.49
+    assert _stdout_coverage_facts(tmp_path, {})["status"] == "coverage_unavailable"
 
 
 def _summary(*, rho: float = 0.2, field: float = 0.1) -> dict:
