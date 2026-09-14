@@ -1,3 +1,30 @@
+# Review V19 / Response V20：新p6保留空间原始模型完成
+
+| 验证 | 实际结果 | 证据/边界 |
+|---|---|---|
+| 最终focused | 82 passed / 1 skipped，pytest 1.67 s | MPI2/MPI4专用fixture跳过；正式profile MPI1；代码与8eff提交相同 |
+| 数学/FE覆盖 | PASS | 非Hermitian、非零Bi/Di/内部和端口RHS、MPC/方向、恢复恒等式、J增广逆、非交换反例、输入不改/重复/线性/清理、tiny非零RHS不误判 |
+| 接线/旧路径 | PASS | retained FGMRES/public dispatch/ledger/checker、V18旧dispatcher/ledger/checker/core/ports及action-only回归 |
+| compileall / public dat | PASS / valid | 最终实现后验证，未升级ABI |
+| 非PDE服务 | PASS_AFTER_PROBE_FIX | 1个测试、2次工程尝试：第一次漏phase_path失败清场，修正后脱离调用shell正常完成；不是2次PDE |
+| 正式同根X1 | PASS | 3个固定向量+1PC；恒等式≤5.97668e-14，PC计数1BAL_H/1H6/2p4，全部对象复用X2 |
+| 正式X2与独立checker | PASS | 112步、A6=9.730817853580687e-7，完整原生E/H/80端口/功率/守恒/资源；一场、正式重放0 |
+| 服务完整生存/退出 | PASS | user service inactive/dead、exit0、完整后代清场、zero swap；正式source_after clean |
+| 交付静态检查 | PASS | 132份raw hash、43项独立checker条件、36条旧运行、45个冻结文件、24个旧profile、JSON/表格/公式围栏/相对链接；图表已目视检查。本地HTML已生成，Codex预览排队；浏览器/GitHub公式渲染未目视核验 |
+| 独立checker入口纠正 | 保留工程失败 | 直接文件调用模块搜索路径失败，改用python -m从原数组通过；无源码修补/计算重跑 |
+| 未运行 | Ruff（未安装）、full repository pytest、MPI2/4、CI | 不声称其通过；旧U2/U3/BLR/参考没有重复计算 |
+
+测试日志`benchmarks/artifacts/task39extra/dual_cell_condensed_v19/root_engineering/x0_precommit_focused.log`，SHA256 `db6c054ef70a6f0fa4b298267148321c41336f104ea6698cf65e67f7d977cb28`。source `8eff068b06f4713cc6d1281c92ed82d370060403`，base `3c7b6ecfd7aede2651dd973052a097dbed601d03`。同shell先资格化activation/ABI；后续只有文档和证据变化，不触发重型回归。
+
+```bash
+source scripts/activate_myfenics_wsl.sh
+python -m pytest -q -rs src/test/test_task39extra_v19_p6_cell_condensed_action.py src/test/test_task39extra_v19_adapter_identity.py src/test/test_task39extra_v19_retained_fgmres.py src/test/test_task39extra_v19_outer_dispatch.py src/test/test_task39extra_v19_profile_ledger.py src/test/test_task39extra_v19_checker.py src/test/test_task39extra_v18_outer_dispatch.py src/test/test_task39extra_v18_launcher_ledger.py src/test/test_task39extra_v18_cell_condensed_checker.py src/test/test_physical_schur_v14_q4_mock.py src/test/test_task39extra_v18_cell_condensed_core.py src/test/test_task39extra_v18_cell_condensed_ports.py src/test/test_229_task037_action_only_condensation.py
+```
+
+[完整结果](dual_cell_condensed_v19.md)与[compact](records/dual_cell_condensed_v19_compact.json)保存小测试、formal和原始hash。旧失败/未知记录在下方保留。
+
+---
+
 # Response V19 / Review V18 最终验证
 
 | 检查 | 结果与实际范围 |

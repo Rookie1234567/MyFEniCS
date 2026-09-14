@@ -1,0 +1,113 @@
+{
+  "schema": "task039extra.v19.dual-cell-condensed.decision.v1",
+  "base_sha": "3c7b6ecfd7aede2651dd973052a097dbed601d03",
+  "numerical_source_sha": "8eff068b06f4713cc6d1281c92ed82d370060403",
+  "branch": "task39extra",
+  "status": "PASS_ORIGINAL_TIME_GAIN_MEMORY_REGRESSION",
+  "stage_status": {
+    "X0": "PASS_AFTER_NON_PDE_PROBE_FIX",
+    "X1": "PASS",
+    "X2": "COMPLETE_ORIGINAL_PASS",
+    "X3": "CLOSED_PENDING_REVIEW"
+  },
+  "numerical_pass": true,
+  "physical_pass": true,
+  "resource_safety_pass": true,
+  "memory_gain": false,
+  "time_gain_observed": true,
+  "resource_comparison_status": "MATCHED_FULL_RUN_COVERAGE_WITH_DIFFERENT_JIT_CACHE_CONTENTS",
+  "resource_comparison": {
+    "full_tree_RSS_bytes": {
+      "new": 3965534208,
+      "V18": 2528460800,
+      "delta": 1437073408,
+      "ratio": 1.5683589826664506,
+      "change_percent": 56.83589826664506,
+      "classification": "derived_from_measured"
+    },
+    "full_tree_PSS_bytes": {
+      "new": 3931141120,
+      "V18": 2494237696,
+      "delta": 1436903424,
+      "ratio": 1.576089210063803,
+      "change_percent": 57.60892100638031,
+      "classification": "derived_from_measured"
+    },
+    "resident_inventory_bytes": {
+      "new": 2031387110,
+      "V18": 1830284886,
+      "delta": 201102224,
+      "ratio": 1.1098748208752898,
+      "change_percent": 10.987482087528978,
+      "classification": "derived_from_measured"
+    },
+    "temporary_pool_bytes": {
+      "new": 423441224,
+      "V18": 396129600,
+      "delta": 27311624,
+      "ratio": 1.068946183269314,
+      "change_percent": 6.89461832693139,
+      "classification": "derived_from_measured"
+    },
+    "full_workflow_monotonic_seconds": {
+      "new": 1352.0121227929922,
+      "V18": 6609.6613787800015,
+      "delta": -5257.649255987009,
+      "ratio": 0.2045508907814191,
+      "change_percent": -79.54491092185809,
+      "classification": "derived_from_measured"
+    },
+    "outer_iterations": {
+      "new": 112,
+      "V18": 564,
+      "delta": -452,
+      "ratio": 0.19858156028368795,
+      "change_percent": -80.1418439716312,
+      "classification": "derived_from_measured"
+    }
+  },
+  "priority_method": "V19_P6_RETAINED_J_Maug_JH_WITH_V18_EXACT_P4",
+  "decision_reason": "本固定 original 完整通过，步骤少80.14%、全过程时间少79.54%，因此建议把V19作为下一轮唯一优先验证候选；同时RSS峰值高56.84%、库存高10.99%，不能宣称省内存。V18继续保留为内存较低的已通过基线。",
+  "scope_of_adoption": "research candidate for subsequent separately authorized validation; ordinary production default unchanged",
+  "memory_constrained_fallback_baseline": "V18 exact-p4 full-space FGMRES32, already accepted; no new fallback run",
+  "review_table_interpretation": "本结果具有明确时间收益与内存退步，不属于所有资源均无收益的PASS_NUMERICAL_ONLY_NO_RESOURCE_GAIN；也不是内存/时间全面改善。",
+  "global_work": {
+    "outer_vector_rows": 51272,
+    "previous_storage_rows": 173802,
+    "KSP_count": 1,
+    "outer_iterations": 112,
+    "outer_matvecs": 115,
+    "previous_outer_matvecs": 581,
+    "solve_BAL_H_calls": 112,
+    "setup_BAL_H_calls": 1,
+    "total_p4_MatSolve": 226,
+    "previous_solve_p4_MatSolve": 1128,
+    "no_global_A6_or_S6_matrix_or_factor": true,
+    "arithmetic_flops_measured": null,
+    "separate_orthogonalization_seconds": null
+  },
+  "p4_unchanged": true,
+  "PC_formula": "J M_aug J^H",
+  "trace_Galerkin_assumption": false,
+  "formal_runs": 1,
+  "formal_bug_replays": 0,
+  "new_infrastructure_recoveries": 0,
+  "notch": "NOT_RUN_NOT_AUTHORIZED",
+  "old_notch": "USER_CLOSED_FINAL_UNKNOWN_UNCHANGED",
+  "BLR": "CLOSED_UNCHANGED",
+  "next_action": "Push response_v20 and compact evidence to task39extra; wait unified review. No automatic additional calculation.",
+  "limits": [
+    "Single fixed 13.5 nm p6/h10 MPI1 affine-hex original; no nonseparable-notch final qualification.",
+    "No 5 nm/0.7 nm, MPI scaling, continuum convergence or 2 TB production scalability claim.",
+    "p4 global trace LU still grows; 201102224 B new p6 cache plus JIT exceeds Krylov payload savings.",
+    "Complete runs share process-tree/lifecycle scope, but kernel/cache histories differ; no claimed warm-only causal RSS or robust multi-run speedup.",
+    "Isolated p4 reduction/MatSolve/recovery and orthogonalization timing remain unknown; saved combined intervals suffice for observed total-cost comparison."
+  ],
+  "merge_master_approved": false,
+  "ordinary_default_changed": false,
+  "compact": {
+    "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_cell_condensed_v19_compact.json",
+    "sha256": "5f63fc59652badd3b8085a041273e899c830f3dde76d969967050c77eda9c4e3",
+    "bytes": 391011
+  }
+}

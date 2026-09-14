@@ -1971,6 +1971,102 @@
         "notch_final_official_result": false
       },
       "historical_recovery_strategy_note": "The forensics snapshot records a proposed fresh recovery. It was NOT executed; the latest user instruction supersedes that proposal."
+    },
+    {
+      "id": "V19_X2_original_dual_condensed_attempt1",
+      "stage": "X2_ORIGINAL",
+      "status": "COMPLETE_ORIGINAL_PASS_TIME_MEMORY_TRADEOFF",
+      "source_sha": "8eff068b06f4713cc6d1281c92ed82d370060403",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v19_x2_dual_condensed_original__full3d_iterative__mpi1__Mna/20260914T105711.660799Z",
+      "official_result": true,
+      "solver": {
+        "checkpoint_interval": 32,
+        "elapsed_seconds": 1148.3261811950235,
+        "explicit_action_count": 19,
+        "final_true_residual": 9.730817853580463e-07,
+        "iterations": 112,
+        "ksp_create_count": 1,
+        "ksp_destroy_count": 1,
+        "ksp_solve_count": 1,
+        "ksp_solve_monotonic_seconds": 1049.7850373949914,
+        "matvec_count": 115,
+        "max_it": 2048,
+        "pc_apply_count": 112,
+        "reason": 2,
+        "residual_interval": 8,
+        "restart": 32,
+        "retained_global_size": 51272,
+        "retained_local_size": 51272,
+        "screen_enabled": false,
+        "screen_policy": "v19_fullspace_progress_observed_only",
+        "status": "TRUE_RESIDUAL_PASS",
+        "time_gate_evaluated": false,
+        "time_policy": "observe_only",
+        "zero_start": true,
+        "zero_start_scope": "retained unknowns; full field includes internal particular solution"
+      },
+      "final_native_A6": 9.730817853580463e-07,
+      "field": {
+        "L2": {
+          "absolute_error_norm": 2.786553655937058e-05,
+          "reference_norm": 175.69146510732992,
+          "relative": 1.5860495296312503e-07
+        },
+        "scaled_curl": {
+          "absolute_error_norm": 2.6998048852977373e-05,
+          "reference_norm": 175.776913800432,
+          "relative": 1.5359268899003175e-07
+        }
+      },
+      "power": {
+        "R": 0.3656258136701664,
+        "T": 0.012990624019505325,
+        "A": 0.6213835623103282,
+        "A_volume": 0.6213833803349053
+      },
+      "resources": {
+        "scope": "continuous_parent_process_tree",
+        "gates": {
+          "readable": true,
+          "tree_cap": true,
+          "inventory_cap": true,
+          "workspace_cap": true,
+          "reserve": true,
+          "zero_swap": true,
+          "cleaned": true,
+          "clean_source": true,
+          "observe_only": true
+        },
+        "passed": true,
+        "main_window_end_ns": 1789384906483300649,
+        "factor_live_end_ns": 1789384904230448736,
+        "fullspace_scope": true,
+        "main_full_rss_peak_bytes": 3965534208,
+        "main_live_rss_peak_bytes": 3965534208,
+        "main_full_pss_peak_bytes": 3931141120,
+        "main_live_pss_peak_bytes": 3931141120,
+        "whole_run_rss_peak_bytes": 3965534208,
+        "inventory_peak_bytes": 2031387110,
+        "workspace_peak_bytes": 423441224,
+        "full_workflow_monotonic_seconds": 1352.0121227929922,
+        "hashes": {
+          "watchdog/resources.jsonl": "6a12bd02e0f8353971a9098e9c6a9be5541ecdea8e4e1cdf4f15c92e4572d694",
+          "v19_events.jsonl": "141e7eb6aa422c365d9fb3c8218a4f32ec98e8e2db4dab0fc32ff125fc84639e",
+          "v19_worker_resources.jsonl": "5158e66670f12b72a99c3f55a263a960a70241f76cebcb5caf4e2dc7532bb5c0",
+          "run_summary.json": "d240259bfe934c734e87e3144648d87ec1906e21e4dc05d6185a31477c4acb4f",
+          "run_manifest.json": "32ddc9111137947cc97dac7891dd918ebda6ece57a0eef57d9171eec791eb6aa"
+        }
+      },
+      "compact": {
+        "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_cell_condensed_v19_compact.json",
+        "sha256": "5f63fc59652badd3b8085a041273e899c830f3dde76d969967050c77eda9c4e3",
+        "bytes": 391011
+      },
+      "decision": {
+        "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_cell_condensed_v19_decision.json",
+        "sha256": "d17fa993d09f64c1aa555b042417e3c162a8690ebb714fc16f9634c2a623c338",
+        "bytes": 4781
+      }
     }
   ],
   "limitations": [
@@ -4055,5 +4151,20 @@
     "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
     "previous_bug_replay_count": 1
   },
-  "current_scope": "ORIGINAL_FULL_PASS_NOTCH_EXTERNAL_STOP_USER_CLOSED"
+  "current_scope": "Review V19 X0-X3: p6 retained-space FGMRES32 with unchanged exact condensed p4; one complete original PASS, faster but higher full RSS; no notch.",
+  "review_v19_dual_cell_condensed_closeout": {
+    "base_sha": "3c7b6ecfd7aede2651dd973052a097dbed601d03",
+    "source_sha": "8eff068b06f4713cc6d1281c92ed82d370060403",
+    "compact": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_cell_condensed_v19_compact.json",
+      "sha256": "5f63fc59652badd3b8085a041273e899c830f3dde76d969967050c77eda9c4e3",
+      "bytes": 391011
+    },
+    "decision": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_cell_condensed_v19_decision.json",
+      "sha256": "d17fa993d09f64c1aa555b042417e3c162a8690ebb714fc16f9634c2a623c338",
+      "bytes": 4781
+    },
+    "prior_runs_preserved": 36
+  }
 }
