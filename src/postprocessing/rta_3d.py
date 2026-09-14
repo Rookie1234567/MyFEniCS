@@ -40,19 +40,37 @@ def _global_cell_count(mesh_data, tag: int) -> int:
     return int(mesh_data.mesh.comm.allreduce(local_count, op=MPI.SUM))
 
 
-def _region_volume(mesh_data, tag: int) -> float:
+def _region_volume(mesh_data, tag: int, *, jit_options=None) -> float:
     msh = mesh_data.mesh
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
-    local = fem.assemble_scalar(fem.form(ufl.as_ufl(1.0) * dx(tag)))
+    local = fem.assemble_scalar(
+        fem.form(
+            ufl.as_ufl(1.0) * dx(tag),
+            jit_options=None if jit_options is None else dict(jit_options),
+        )
+    )
     return float(np.real(msh.comm.allreduce(local, op=MPI.SUM)))
 
 
-def _region_absorbed_power(mesh_data, cfg: SimulationConfig3D, E_total, tag: int, eps_r: complex) -> float:
+def _region_absorbed_power(
+    mesh_data,
+    cfg: SimulationConfig3D,
+    E_total,
+    tag: int,
+    eps_r: complex,
+    *,
+    jit_options=None,
+) -> float:
     msh = mesh_data.mesh
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
     field_abs2 = ufl.real(ufl.inner(E_total, E_total))
     density_scale = 0.5 * cfg.k0 * float(complex(eps_r).imag)
-    local = fem.assemble_scalar(fem.form(density_scale * field_abs2 * dx(tag)))
+    local = fem.assemble_scalar(
+        fem.form(
+            density_scale * field_abs2 * dx(tag),
+            jit_options=None if jit_options is None else dict(jit_options),
+        )
+    )
     absorbed = float(np.real(msh.comm.allreduce(local, op=MPI.SUM)))
     return max(absorbed, 0.0)
 
@@ -68,6 +86,7 @@ def _region_absorption(
     n_value: complex,
     material_label: str | None,
     incident_power: float,
+    jit_options=None,
 ) -> dict[str, Any]:
     cell_count = _global_cell_count(mesh_data, tag)
     eps_imag = float(complex(eps_r).imag)
@@ -75,7 +94,11 @@ def _region_absorption(
         "name": name,
         "tag": int(tag),
         "cell_count": cell_count,
-        "volume_nm3": _region_volume(mesh_data, tag) if cell_count > 0 else 0.0,
+        "volume_nm3": (
+            _region_volume(mesh_data, tag, jit_options=jit_options)
+            if cell_count > 0
+            else 0.0
+        ),
         "n_complex": _complex_pair(n_value),
         "epsilon_r_complex": _complex_pair(eps_r),
         "Im_epsilon_r": eps_imag,
@@ -101,7 +124,9 @@ def _region_absorption(
             }
         )
         return region
-    absorbed_power = _region_absorbed_power(mesh_data, cfg, E_total, tag, eps_r)
+    absorbed_power = _region_absorbed_power(
+        mesh_data, cfg, E_total, tag, eps_r, jit_options=jit_options
+    )
     region.update(
         {
             "status": "ok",
@@ -131,6 +156,7 @@ def compute_volume_absorption_3d(
     incident_power: float,
     port_metrics: dict[str, Any] | None = None,
     probe_metrics: dict[str, Any] | None = None,
+    jit_options=None,
 ) -> dict[str, Any]:
     """Compute material volume absorption from the total electric field.
 
@@ -150,6 +176,7 @@ def compute_volume_absorption_3d(
             n_value=cfg.grating_index,
             material_label=cfg.grating_material_label,
             incident_power=incident_power,
+            jit_options=jit_options,
         ),
         "substrate": _region_absorption(
             mesh_data,
@@ -161,6 +188,7 @@ def compute_volume_absorption_3d(
             n_value=cfg.substrate_index,
             material_label=cfg.substrate_material_label,
             incident_power=incident_power,
+            jit_options=jit_options,
         ),
     }
     A_grating = _maybe_float(regions["grating"]["A_volume"])

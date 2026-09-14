@@ -25,12 +25,13 @@ P4_BLR_TRADEOFF_PROFILE = "physical_p4_blr_tradeoff_v17"
 CELL_CONDENSED_EXACT_PROFILE = "physical_p4_cell_condensed_exact_v18"
 CELL_CONDENSED_BLR_PROFILE = "physical_p4_cell_condensed_blr_v18"
 DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_balh_v19"
+LOWMEM_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_lowmem_v20"
 P4_BLR_TRADEOFF_THRESHOLDS = {
     "T1_BLR_CONTROL": 1.0e-3,
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -45,6 +46,54 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == LOWMEM_DUAL_CELL_CONDENSED_PROFILE:
+        # Start from the accepted V19 contract so every mathematical and
+        # resource control remains frozen unless this opt-in profile names a
+        # lifecycle change explicitly.
+        facts = profile_facts(DUAL_CELL_CONDENSED_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v20_dual_condensed_memory_lifecycle",
+            qualification=(
+                "opt_in; Y2 preparation and one Y3 original; observe_only; "
+                "V19 default and checker remain unchanged"
+            ),
+        )
+        facts["common_core"].update(
+            p4_matrix_lifecycle="MATRIX_RETAINED_BACKEND_DEPENDENCY",
+            p4_matrix_release="after_factor_and_post_KSP_residual_only",
+            p6_cache_lifecycle="release_after_complete_field_packet_and_A6_check",
+        )
+        facts["assembly"].update(
+            form_preparation="same_watchdog_pre_factor_compilation",
+            compiled_form_reuse="prepared_p6_and_p4_forms_are_reused_by_consumers",
+            identity_cache_mode="shared_read_only_per_interior_shape",
+            identity_cache_semantics="exact_float64_identity; no physical projection removed",
+        )
+        facts["outer"].update(
+            lifecycle="save_full_field_rhs_y_then_A6_then_release_before_official_output",
+            post_release_native_A6_check=True,
+            official_output_requires_post_release_check=True,
+        )
+        facts["direct_controls"].update(
+            p4_matrix_lifecycle="MATRIX_RETAINED_BACKEND_DEPENDENCY",
+            p4_matrix_release_before_official_output=True,
+            p4_matrix_copy=False,
+        )
+        facts["resources"]["stage_budgets"] = {
+            "Y3_ORIGINAL": {"workflow_seconds": 43200, "solve_seconds": 43200}
+        }
+        facts["resources"]["inventory_memory_cap_bytes_by_stage"] = {
+            "Y3_ORIGINAL": 6 * 1024**3
+        }
+        facts["gates"].update(
+            release_order="field_packet_and_pre_release_A6 < p6_release < p4_release < post_release_A6 < official_output",
+            post_release_A6_relative_residual=1.0e-6,
+            p4_matrix_lifecycle="MATRIX_RETAINED_BACKEND_DEPENDENCY",
+            shared_identity_readonly=True,
+            prepared_form_reuse=True,
+        )
+        return facts
     if identity == DUAL_CELL_CONDENSED_PROFILE:
         # Each call returns a fresh V18 dictionary; its qualified profile is
         # unchanged. Only the new outer space, bridge and stage are different.

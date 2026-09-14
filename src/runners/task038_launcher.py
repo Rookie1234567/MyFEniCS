@@ -282,6 +282,20 @@ def _dual_condensed_v19_shared_ledger_path(repo_root: Path) -> Path:
             / "review_v19_p6_p4_cell_condensed/shared_workflow_ledger.json")
 
 
+def _dual_condensed_lowmem_v20_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent V20 lifecycle ledger."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "dual_condensed_lowmem_v20"
+        / "review_v20_dual_condensed_memory_lifecycle"
+        / "shared_workflow_ledger.json"
+    )
+
+
 def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Require a settled, hash-bound T1 checker decision before T2 launch."""
 
@@ -1632,6 +1646,7 @@ def _reserve_v19_shared_budget(
         prior_path, expected_sha=V19_PREDECESSOR_V18_LEDGER_SHA256,
         expected_identity="review_v18_p4_cell_condensed",
     )
+
     # The V18 snapshot also retains the earlier 600-second unknown policy item.
     reference["historical_predecessors"] = json.loads(prior_path.read_text())["predecessors"]
     admission_path = path.parent.parent / "root_engineering/x0_admission.json"
@@ -1666,6 +1681,106 @@ def _reserve_v19_shared_budget(
         prerequisite={"x0_admission": {"path": str(admission_path),
                                       "sha256": hashlib.sha256(admission_bytes).hexdigest()},
                       "p4_backend": "V18_EXACT_UNCHANGED", "new_notch_authorized": False},
+        bug_replay_limit=1,
+    )
+
+
+V20_PREDECESSOR_V19_LEDGER_SHA256 = (
+    "294cfab422cde53c9dd4d15e23026f36f4abd49dc10dd2a243bce20987a0d7ac"
+)
+
+
+def _reserve_v20_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve the V20 lifecycle attempt in a new, hash-bound ledger."""
+
+    if stage != "Y3_ORIGINAL" or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V20 permits only Y3_ORIGINAL with observe_only")
+    repo_root = Path(repo_root).resolve()
+    path = _dual_condensed_lowmem_v20_shared_ledger_path(repo_root)
+    predecessor_path = _dual_condensed_v19_shared_ledger_path(repo_root)
+    try:
+        predecessor_bytes = predecessor_path.read_bytes()
+        predecessor = json.loads(predecessor_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V20 requires the readable accepted V19 ledger") from exc
+    predecessor_sha = hashlib.sha256(predecessor_bytes).hexdigest()
+    if predecessor_sha != V20_PREDECESSOR_V19_LEDGER_SHA256:
+        raise InputError("V20 predecessor V19 ledger hash changed")
+    if predecessor.get("batch_identity") != "review_v19_p6_p4_cell_condensed":
+        raise InputError("V20 predecessor ledger identity changed")
+    predecessor_reference = {
+        "read_only": True,
+        "path": str(predecessor_path),
+        "sha256": predecessor_sha,
+        "batch_identity": predecessor.get("batch_identity"),
+        "schema": predecessor.get("schema"),
+        "measured_elapsed_seconds": predecessor.get("elapsed_seconds"),
+        "effective_budget_snapshot": read_v14_effective_budget(predecessor),
+        "policy_debits": list(predecessor.get("policy_debits", [])),
+        "unknown_elapsed_is_not_new_measurement": True,
+        # Preserve the complete V19 historical chain (including the V18
+        # 43,200-second and earlier 600-second policy items) as immutable
+        # evidence.  The new V20 ledger starts its own measured elapsed time
+        # at zero; this reference is not a debit or a reset of that history.
+        "historical_predecessors": predecessor["predecessors"],
+        "historical_effective_budget_snapshot": read_v14_effective_budget(
+            predecessor
+        ),
+        "new_batch_elapsed_seconds_semantics": (
+            "new V20 batch measured_workflow_time starts at zero; "
+            "historical predecessor cost remains read_only evidence"
+        ),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V20 shared ledger cannot be read") from exc
+        if (
+            ledger.get("batch_identity")
+            != "review_v20_dual_condensed_memory_lifecycle"
+            or ledger.get("predecessor_v19_ledger") != predecessor_reference
+        ):
+            raise InputError("V20 ledger or immutable predecessor changed")
+    else:
+        ledger = {
+            "schema": "task039extra.v20.shared-workflow-ledger.v1",
+            "batch_identity": "review_v20_dual_condensed_memory_lifecycle",
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "replay_policy": (
+                "one evidence-bound implementation-bug replay; no numerical retry"
+            ),
+            "predecessor_v19_ledger": predecessor_reference,
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V20",
+        summary_filename="physical_dual_condensed_memory_v20_summary.json",
+        prerequisite={"predecessor_v19_ledger": predecessor_reference},
         bug_replay_limit=1,
     )
 
@@ -1967,6 +2082,7 @@ def launch_specification(
         P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE,
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
         DUAL_CELL_CONDENSED_PROFILE,
+        LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -1979,9 +2095,10 @@ def launch_specification(
     blr_v17 = specification.solver.get('preconditioner') == P4_BLR_TRADEOFF_PROFILE
     blr_profile = blr_v16 or blr_v17
     dual_condensed_profile = specification.solver.get('preconditioner') == DUAL_CELL_CONDENSED_PROFILE
+    lowmem_v20_profile = specification.solver.get('preconditioner') == LOWMEM_DUAL_CELL_CONDENSED_PROFILE
     cell_condensed_profile = specification.solver.get('preconditioner') in {
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
-        DUAL_CELL_CONDENSED_PROFILE,
+        DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     if cell_condensed_profile:
@@ -2083,6 +2200,14 @@ def launch_specification(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=str(specification.solver['stage']),
             stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
+    elif lowmem_v20_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v20_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
     elif dual_condensed_profile and physical_candidate:
@@ -2414,7 +2539,9 @@ __all__ = [
     "_reserve_blr_v17_shared_budget",
     "_reserve_v18_shared_budget",
     "_reserve_v19_shared_budget",
+    "_reserve_v20_shared_budget",
     "_dual_condensed_v19_shared_ledger_path",
+    "_dual_condensed_lowmem_v20_shared_ledger_path",
     "_cell_condensed_v18_shared_ledger_path",
     "_validate_v17_t2_prerequisite",
     "_validate_v18_prerequisite",

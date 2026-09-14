@@ -1177,6 +1177,7 @@ def build_unconstrained_assembly_time_condensation(
     strict_local_checks: bool = False,
     defer_final_assembly: bool = False,
     retain_local_schur_for_matrix_free: bool = False,
+    share_identity_cache: bool = False,
     materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
     allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
@@ -1188,7 +1189,11 @@ def build_unconstrained_assembly_time_condensation(
     identity rows are allocated.
 
     ``retain_local_schur_for_matrix_free`` retains one readonly Schur array
-    per local class for a later owner-computes action.
+    per local class for a later owner-computes action.  When
+    ``share_identity_cache`` is true, the exact real identity used by the
+    three recovery/projection roles is shared read-only across all local
+    classes with the same interior shape.  The default keeps the historical
+    per-class allocation.
     """
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
@@ -1419,15 +1424,21 @@ def build_unconstrained_assembly_time_condensation(
             + interior_dimension * index_bytes
             + interior_dimension * trace_dimension * scalar_bytes
             + trace_dimension * interior_dimension * scalar_bytes
-            + interior_dimension * interior_dimension * real_bytes
             + (
                 schur_bytes
                 if retain_local_schur_for_matrix_free
                 else 0
             )
         )
+        identity_class_count = (
+            1 if share_identity_cache and global_oriented_classes else len(global_oriented_classes)
+        )
+        identity_cache_bytes_upper = int(
+            identity_class_count * interior_dimension * interior_dimension * real_bytes
+        )
         retained_numeric_bytes_upper = int(
             len(global_oriented_classes) * retained_per_oriented_class
+            + identity_cache_bytes_upper
         )
         raw_cache_bytes_upper = int(len(global_raw_classes) * full_tensor_bytes)
         oriented_tensor_bytes_upper = int(
@@ -1499,6 +1510,12 @@ def build_unconstrained_assembly_time_condensation(
     local_schur_seconds = 0.0
     local_insert_seconds = 0.0
     local_lu_residual_max = 0.0
+    shared_interior_identity = None
+    if share_identity_cache:
+        shared_interior_identity = np.eye(
+            len(interior_positions), dtype=np.float64
+        )
+        shared_interior_identity.setflags(write=False)
     for cell, (original_dofs, metadata) in enumerate(
         zip(local_cell_dofs, cell_raw_metadata, strict=True)
     ):
@@ -1561,10 +1578,13 @@ def build_unconstrained_assembly_time_condensation(
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
             lu_cache[class_key] = interior_lu
-            interior_identity = np.eye(
-                len(interior_positions),
-                dtype=np.float64,
-            )
+            if shared_interior_identity is None:
+                interior_identity = np.eye(
+                    len(interior_positions),
+                    dtype=np.float64,
+                )
+            else:
+                interior_identity = shared_interior_identity
             rhs_projection_cache[class_key] = interior_identity
             solution_embedding_cache[class_key] = interior_identity
             rhs_trace_cache[class_key] = trace_from_interior_rhs
@@ -1775,6 +1795,24 @@ def build_unconstrained_assembly_time_condensation(
             "retained_local_schur_class_count_sum": retained_class_count_sum,
             "retained_local_schur_bytes_local": retained_bytes_local,
             "retained_local_schur_bytes_sum": retained_bytes_sum,
+            "identity_cache_mode": (
+                "shared_read_only_per_interior_shape"
+                if share_identity_cache
+                else "per_oriented_class"
+            ),
+            "identity_cache_readonly": bool(share_identity_cache),
+            "identity_cache_class_count_local": (
+                1 if share_identity_cache and len(schur_cache) else len(schur_cache)
+            ),
+            "identity_cache_bytes_local": int(
+                0
+                if not schur_cache
+                else len(interior_positions) ** 2 * np.dtype(np.float64).itemsize
+                if share_identity_cache
+                else len(schur_cache)
+                * len(interior_positions) ** 2
+                * np.dtype(np.float64).itemsize
+            ),
             **raw_cache_audit,
             "operator_cache_identity": {
                 "scope": "single builder invocation; no cross-form reuse",

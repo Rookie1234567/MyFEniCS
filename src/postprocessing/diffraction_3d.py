@@ -488,12 +488,18 @@ def _interpolation_points(V):
     return points() if callable(points) else points
 
 
-def _h_from_curl_function(E_total, cfg: SimulationConfig3D):
+def _h_from_curl_function(E_total, cfg: SimulationConfig3D, *, jit_options=None):
     msh = E_total.function_space.mesh
     V_dg = fem.functionspace(msh, ("DG", max(int(cfg.visualization_degree), 1), (3,)))
     h_expr = (1.0 / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_total)
     H = fem.Function(V_dg, name="H_code_from_curl")
-    H.interpolate(fem.Expression(h_expr, _interpolation_points(V_dg)))
+    H.interpolate(
+        fem.Expression(
+            h_expr,
+            _interpolation_points(V_dg),
+            jit_options=None if jit_options is None else dict(jit_options),
+        )
+    )
     H.x.scatter_forward()
     return H
 
@@ -613,6 +619,7 @@ def _calibrated_amplitudes(
     points: np.ndarray,
     *,
     side: str,
+    jit_options=None,
 ) -> tuple[dict[tuple[int, int, str, str], complex], float | None]:
     keys = [key for key, _ in _modal_columns(cfg, orders, points, side=side)]
     if not keys:
@@ -622,7 +629,7 @@ def _calibrated_amplitudes(
     for key in keys:
         kvec, e_vec = vectors[key]
         mode_field = _mode_field(E_total.function_space, kvec, e_vec)
-        mode_h = _h_from_curl_function(mode_field, cfg)
+        mode_h = _h_from_curl_function(mode_field, cfg, jit_options=jit_options)
         mode_e_values = _sample_field_at_points(mode_field, points)
         mode_h_values = _sample_field_at_points(mode_h, points)
         apparent, _ = fit_diffraction_amplitudes_from_samples(
@@ -655,6 +662,7 @@ def compute_diffraction_orders_3d(
     out_dir: Path,
     *,
     E_scattered=None,
+    jit_options=None,
 ) -> dict[str, Any]:
     """Compute 3D reflected/transmitted diffraction-order powers from probes."""
 
@@ -678,13 +686,15 @@ def compute_diffraction_orders_3d(
         # substrate phase.  Official power postprocess therefore samples the
         # numerical scattered field and adds the exact layered background on the
         # probe planes.
-        H_scattered = _h_from_curl_function(E_scattered, cfg)
+        H_scattered = _h_from_curl_function(
+            E_scattered, cfg, jit_options=jit_options
+        )
         top_e = _sample_field_at_points(E_scattered, top_points) + electric_field_code_values(cfg, top_points)
         top_h = _sample_field_at_points(H_scattered, top_points) + magnetic_field_code_values(cfg, top_points)
         bottom_e = _sample_field_at_points(E_scattered, bottom_points) + electric_field_code_values(cfg, bottom_points)
         bottom_h = _sample_field_at_points(H_scattered, bottom_points) + magnetic_field_code_values(cfg, bottom_points)
     else:
-        H_total = _h_from_curl_function(E_total, cfg)
+        H_total = _h_from_curl_function(E_total, cfg, jit_options=jit_options)
         top_e = _sample_field_at_points(E_total, top_points)
         top_h = _sample_field_at_points(H_total, top_points)
         bottom_e = _sample_field_at_points(E_total, bottom_points)
@@ -729,6 +739,7 @@ def compute_diffraction_orders_3d(
             orders,
             top_points,
             side="top",
+            jit_options=jit_options,
         )
         bottom_amp, bottom_response_condition = _calibrated_amplitudes(
             bottom_amp,
@@ -737,6 +748,7 @@ def compute_diffraction_orders_3d(
             orders,
             bottom_points,
             side="bottom",
+            jit_options=jit_options,
         )
     else:
         top_amp = {}

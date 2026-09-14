@@ -30,6 +30,14 @@ def run_full3d_iterative(
         return run_physical_dual_cell_condensed_v19(
             resolved_payload, Path(run_directory), source_sha=_kwargs["source_sha"]
         )
+    if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p6_trace_p4_condensed_lowmem_v20":
+        from .physical_dual_cell_condensed_lowmem_v20 import (
+            run_physical_dual_cell_condensed_lowmem_v20,
+        )
+
+        return run_physical_dual_cell_condensed_lowmem_v20(
+            resolved_payload, Path(run_directory), source_sha=_kwargs["source_sha"]
+        )
     if resolved_payload.get("solver", {}).get("preconditioner") == "physical_p4_blr_bal_h_v16":
         from .physical_p4_blr_v16 import run_physical_p4_blr_v16
 

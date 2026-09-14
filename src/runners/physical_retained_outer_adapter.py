@@ -2,6 +2,11 @@
 
 import hashlib
 import json
+import gc
+import errno
+import os
+from pathlib import Path
+import time
 from time import perf_counter
 
 import numpy as np
@@ -18,7 +23,76 @@ def _array_identity(value):
             "sha256": hashlib.sha256(memoryview(array).cast("B") if array.size else b"").hexdigest()}
 
 
-def _cache_identity(action):
+def _identity_cache_facts(system):
+    """Return compact facts for the opt-in shared identity cache."""
+
+    roles = (
+        "interior_rhs_projection_by_class",
+        "interior_solution_embedding_by_class",
+        "interior_residual_projection_by_class",
+    )
+    values = [value for role in roles for value in getattr(system, role).values()]
+    if not values or not all(isinstance(value, np.ndarray) for value in values):
+        raise ValueError("identity cache contains an unexpected non-array projection")
+
+    roots = {}
+    for value in values:
+        root = value
+        while isinstance(getattr(root, "base", None), np.ndarray):
+            root = root.base
+        roots[id(root)] = root
+    arrays = list(roots.values())
+    sample = np.asarray(arrays[0])
+    shape = list(sample.shape)
+    dtype = str(sample.dtype)
+    dimension = int(shape[0]) if len(shape) == 2 and shape[0] == shape[1] else -1
+    if dimension < 0:
+        raise ValueError("identity cache arrays are not square")
+    for array in arrays:
+        if (
+            list(array.shape) != shape
+            or str(array.dtype) != dtype
+            or not np.isfinite(array).all()
+            or int(np.count_nonzero(array)) != dimension
+            or not np.all(np.diagonal(array) == 1.0)
+        ):
+            raise ValueError("identity cache contains a non-identity projection")
+    readonly = all(not array.flags.writeable for array in arrays)
+    if not readonly:
+        raise ValueError("shared identity cache arrays must be readonly")
+
+    audit = system.build_audit
+    mode = str(audit["identity_cache_mode"])
+    logical_class_count = len(system.interior_rhs_projection_by_class)
+    representation = {
+        "mode": mode,
+        "read_only": readonly,
+        "shape": shape,
+        "dtype": dtype,
+        "logical_class_count": logical_class_count,
+        "unique_storage_count": len(arrays),
+        "unique_storage_bytes": int(sum(array.nbytes for array in arrays)),
+    }
+    semantic = {
+        "operator": "identity",
+        "shape": shape,
+        "dtype": dtype,
+        "roles": list(roles),
+        "logical_class_count": logical_class_count,
+        "dimension": dimension,
+    }
+    digest = lambda value: hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {
+        "semantic": semantic,
+        "semantic_sha256": digest(semantic),
+        "representation_sha256": digest(representation),
+        "representation": representation,
+    }
+
+
+def _cache_identity(action, *, include_identity=False):
     """Hash this component's actual arrays and count aliased storage once."""
     system = action.condensed
     arrays = {}
@@ -70,18 +144,53 @@ def _cache_identity(action):
         identities[name] = _array_identity(value)
     # Keep detailed maps in a packet, and a single recipe digest in summaries.
     digest = hashlib.sha256(json.dumps(identities, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    return {"arrays": identities, "array_content_sha256": digest,
-            "unique_numpy_bytes": sum(unique.values()), "components": groups,
-            "scatter_vectors_bytes": 0,
-            "scope": "resident numerical payload; Python/PETSc allocator overhead measured by full tree RSS"}
+    result = {"arrays": identities, "array_content_sha256": digest,
+              "unique_numpy_bytes": sum(unique.values()), "components": groups,
+              "scatter_vectors_bytes": 0,
+              "scope": "resident numerical payload; Python/PETSc allocator overhead measured by full tree RSS"}
+    if include_identity:
+        identity_cache = _identity_cache_facts(system)
+        result.update(
+            {
+                "identity_cache": identity_cache,
+                "identity_cache_semantic_sha256": identity_cache[
+                    "semantic_sha256"
+                ],
+                "identity_cache_representation_sha256": identity_cache[
+                    "representation_sha256"
+                ],
+            }
+        )
+    return result
 
 
 class RetainedOuterAdapter:
-    def __init__(self, runtime, common, resolved, full_rhs, apply_pc, *, p4_identity_sha256, pc_counts):
+    def __init__(
+        self,
+        runtime,
+        common,
+        resolved,
+        full_rhs,
+        apply_pc,
+        *,
+        p4_identity_sha256,
+        pc_counts,
+        compiled_form=None,
+        identity_cache_mode="per_oriented_class",
+        evidence_prefix="v19",
+    ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
         self.p4_identity_sha256 = p4_identity_sha256
         self.pc_counts = pc_counts
+        self.compiled_form = compiled_form
+        self.identity_cache_mode = str(identity_cache_mode)
+        self.evidence_prefix = str(evidence_prefix)
+        if self.identity_cache_mode not in {
+            "per_oriented_class",
+            "shared_read_only_per_interior_shape",
+        }:
+            raise ValueError(f"unsupported identity cache mode: {self.identity_cache_mode}")
         self.action = self.rhs = self.condensed = None
         self.full_source = self.full_target = None
         self.last_evaluation = None
@@ -89,6 +198,9 @@ class RetainedOuterAdapter:
         self.checks = {}
         self.residual_packets = []
         self.retained_checkpoints = {}
+        self._final_packet_saved = False
+        self._released_after_final_residual = False
+        self._released_facts = None
         self.time = {"setup_seconds": 0.0, "schur_action_seconds": 0.0,
                      "bridge_seconds": 0.0, "bal_h_seconds": 0.0,
                      "native_action_seconds": 0.0, "recovery_evaluation_seconds": 0.0,
@@ -103,31 +215,64 @@ class RetainedOuterAdapter:
         )
         runtime, levels = self.runtime, self.common["levels"]
         started = perf_counter()
+        prefix = self.evidence_prefix
+        compiled_form = self.compiled_form
+        owns_compiled_form = compiled_form is None
+        if compiled_form is None:
+            compiled_form = fem.form(self.common["fine"]["volume_action"].bilinear_form)
 
         def allocation_gate(name, facts):
             if name != "cell_tensor_working_set":
                 raise ValueError("V19 p6 unexpectedly requested global matrix storage")
             amount = int(facts["retained_numeric_bytes_upper"])
-            runtime.check_inventory_projected("v19_p6_local_caches", amount)
-            runtime.check_projected("v19_p6_local_caches", amount, workspace_bytes=int(facts["workspace_bytes"]))
-            runtime.reserve_workspace("v19_p6_setup", int(facts["workspace_bytes"]))
+            runtime.check_inventory_projected(f"{prefix}_p6_local_caches", amount)
+            runtime.check_projected(f"{prefix}_p6_local_caches", amount, workspace_bytes=int(facts["workspace_bytes"]))
+            runtime.reserve_workspace(f"{prefix}_p6_setup", int(facts["workspace_bytes"]))
 
-        runtime.marker("v19_p6_local_setup_started", {"global_matrix": False})
+        runtime.marker(f"{prefix}_p6_local_setup_started", {"global_matrix": False})
         self.condensed = build_unconstrained_assembly_time_condensation(
-            fem.form(self.common["fine"]["volume_action"].bilinear_form),
+            compiled_form,
             levels["spaces"][6], levels["mesh_data"].cell_tags, mpc=levels["floquets"][6].mpc,
             appended_global_rows=len(self.common["fine"]["dtn_action"].carrier.entries),
             sum_duplicate_cell_integrals=True, strict_local_checks=True,
             materialize_global_matrix=False, retain_local_schur_for_matrix_free=True,
+            share_identity_cache=(self.identity_cache_mode == "shared_read_only_per_interior_shape"),
             allocation_gate=allocation_gate,
         )
-        runtime.release_workspace("v19_p6_setup")
-        runtime.reserve_workspace("v19_p6_setup", 128 << 20)
+        runtime.release_workspace(f"{prefix}_p6_setup")
+        runtime.reserve_workspace(f"{prefix}_p6_setup", 128 << 20)
         self.action = build_p6_cell_condensed_action_from_carrier(
             self.condensed, self.common["fine"]["dtn_action"].carrier,
         )
-        cache = _cache_identity(self.action)
-        runtime.reserve_inventory("v19_p6_local_caches", {
+        shared_identity_mode = (
+            self.identity_cache_mode == "shared_read_only_per_interior_shape"
+        )
+        cache = _cache_identity(self.action, include_identity=shared_identity_mode)
+        if shared_identity_mode:
+            identity_facts = cache["identity_cache"]
+            if not (
+                identity_facts["semantic"]["operator"] == "identity"
+                and identity_facts["representation"]["read_only"] is True
+                and identity_facts["representation"]["unique_storage_count"] == 1
+            ):
+                raise ValueError(
+                    "shared identity cache is not a verified readonly identity"
+                )
+        if shared_identity_mode:
+            self.condensed.build_audit.update(
+                {
+                    "identity_cache_semantic_sha256": cache[
+                        "identity_cache_semantic_sha256"
+                    ],
+                    "identity_cache_representation_sha256": cache[
+                        "identity_cache_representation_sha256"
+                    ],
+                    "identity_cache_representation": cache["identity_cache"][
+                        "representation"
+                    ],
+                }
+            )
+        runtime.reserve_inventory(f"{prefix}_p6_local_caches", {
             "unique_numeric_arrays": cache["unique_numpy_bytes"],
             "scatter_vectors": cache["scatter_vectors_bytes"],
         }, check_rss=False)
@@ -140,19 +285,40 @@ class RetainedOuterAdapter:
             "p6_array_content_sha256": cache["array_content_sha256"],
             "p6_build_audit": self.condensed.build_audit,
         }
-        self._packet("x1_p6_cache_identity", {"identity": self.identity, "cache": cache})
+        if shared_identity_mode:
+            self.identity.update(
+                {
+                    "identity_cache_mode": self.identity_cache_mode,
+                    "compiled_form_reused": not owns_compiled_form,
+                    "p6_identity_cache_semantic_sha256": cache[
+                        "identity_cache_semantic_sha256"
+                    ],
+                    "p6_identity_cache_representation_sha256": cache[
+                        "identity_cache_representation_sha256"
+                    ],
+                }
+            )
+        cache_packet_name = (
+            "x1_p6_cache_identity"
+            if prefix == "v19"
+            else f"{prefix}_x1_p6_cache_identity"
+        )
+        self._packet(cache_packet_name, {"identity": self.identity, "cache": cache})
         self.cache = {k: v for k, v in cache.items() if k != "arrays"}
-        runtime.release_workspace("v19_p6_setup")
+        runtime.release_workspace(f"{prefix}_p6_setup")
         # Simultaneous full scratch, residual packet arrays, bridge outputs,
         # and the fixed three-vector setup fixture; the Krylov pool is separate.
         scratch_bytes = 24 * int(self.full_rhs.getLocalSize()) * 16 + 10 * self.action.reduced_size * 16
-        runtime.reserve_workspace("v19_p6_full_scratch", scratch_bytes)
+        runtime.reserve_workspace(f"{prefix}_p6_full_scratch", scratch_bytes)
         self.full_source, self.full_target = self.full_rhs.duplicate(), self.full_rhs.duplicate()
         self.rhs = self.action.create_reduced_rhs_vector()
         self.rhs.array[:] = self.action.reduce_rhs(self.full_rhs, rhs_is_mpc_dual=True)
         self.bridge = P6RetainedBALHBridge(self.action, self._bal_h_array)
         self.time["setup_seconds"] = perf_counter() - started
-        runtime.marker("v19_p6_local_setup_complete", {"identity": self.identity, "cache": self.cache})
+        runtime.marker(f"{prefix}_p6_local_setup_complete", {"identity": self.identity, "cache": self.cache})
+        if owns_compiled_form:
+            del compiled_form
+        self.compiled_form = None
 
     def _packet(self, name, facts):
         started = perf_counter()
@@ -214,7 +380,9 @@ class RetainedOuterAdapter:
         facts["original_A6_relative"] = facts["native_residual_relative"]
         facts["port_closure_relative"] = facts["port_residual_relative"]
         facts["counts"] = dict(self.count)
-        facts["resource"] = dict(self.runtime.sample("v19_native_residual"))
+        facts["resource"] = dict(
+            self.runtime.sample(f"{self.evidence_prefix}_native_residual")
+        )
         return facts
 
     def setup_checks(self):
@@ -316,16 +484,58 @@ class RetainedOuterAdapter:
         )
         y = result.pop("final_solution")
         try:
-            cache_after = _cache_identity(self.action)
+            cache_after = _cache_identity(
+                self.action,
+                include_identity=(
+                    self.identity_cache_mode
+                    == "shared_read_only_per_interior_shape"
+                ),
+            )
             if cache_after["array_content_sha256"] != self.cache["array_content_sha256"]:
                 raise ValueError("p6 condensation cache content changed across outer calls")
             if cache_after["unique_numpy_bytes"] != self.cache["unique_numpy_bytes"]:
                 raise ValueError("p6 condensation cache payload grew across calls")
             result["p6_cache_after"] = {k: v for k, v in cache_after.items() if k != "arrays"}
             result["actual_pc_counts_including_one_setup_call"] = self.pc_counts()
-            self._packet("x2_retained_final", {"identity": self.identity, "retained_y": y.array_r.copy(),
-                         "physical_rhs": self.full_rhs.array_r.copy(), "facts": result["final_evaluation"],
-                         "residuals": self.last_evaluation})
+            final_packet = {
+                "identity": self.identity,
+                "retained_y": y.array_r.copy(),
+                "physical_rhs": self.full_rhs.array_r.copy(),
+                "saved_before_field_evaluation": True,
+                "facts": result["final_evaluation"],
+                "residuals": self.last_evaluation,
+            }
+            if self.evidence_prefix == "v20":
+                from src.solvers.fullspace_physical_intermediate_runtime import (
+                    owned_slave_indices,
+                )
+
+                final_packet.update(
+                    {
+                        "original_rhs": self.full_rhs.array_r.copy(),
+                        "full_solution": np.asarray(
+                            self.last_evaluation["storage_solution"],
+                            dtype=np.complex128,
+                        ).copy(),
+                        "owned_slave_rows": owned_slave_indices(
+                            self.common["levels"]["spaces"][6],
+                            self.common["levels"]["floquets"][6],
+                        ),
+                        "complete_field_saved": True,
+                    }
+                )
+            self._packet("x2_retained_final", final_packet)
+            self._final_packet_saved = True
+            if self.evidence_prefix == "v20":
+                self.runtime.marker(
+                    "v20_complete_field_packet_saved",
+                    {
+                        "packet": "x2_retained_final.json",
+                        "retained_y_saved": True,
+                        "original_rhs_saved": True,
+                        "full_solution_saved": True,
+                    },
+                )
             result["final_solution"] = self.full_rhs.duplicate()
             result["final_solution"].array[:] = self.last_evaluation["storage_solution"]
         finally:
@@ -333,6 +543,8 @@ class RetainedOuterAdapter:
         return result
 
     def facts(self):
+        if self._released_after_final_residual and self._released_facts is not None:
+            return dict(self._released_facts)
         return {"identity": self.identity, "setup_checks": self.checks, "cache": self.cache,
                 "counts": dict(self.count), "timings": dict(self.time),
                 "core_counts": dict(self.action.audit),
@@ -341,6 +553,47 @@ class RetainedOuterAdapter:
                 "orthogonalization_seconds": None,
                 "orthogonalization_timing_status": "not separately instrumented; included in KSP total",
                 "factor_lifetime": "p4 LU and p6 caches retained through final native field evaluation"}
+
+    def release_after_final_residual(self):
+        """Release p6-owned data after the saved field and pre-release A6 gate."""
+
+        if self._released_after_final_residual:
+            return {"status": "ALREADY_RELEASED"}
+        if not self._final_packet_saved:
+            raise RuntimeError(
+                "cannot release p6 cache before the complete field packet is saved"
+            )
+        snapshot = self.facts()
+        self.runtime.marker(
+            "v20_p6_release_started",
+            {
+                "field_packet_saved": True,
+                "pre_release_A6_checked": True,
+                "identity_cache_mode": self.identity_cache_mode,
+            },
+        )
+        self.destroy()
+        self._released_after_final_residual = True
+        snapshot["factor_lifetime"] = "p6 caches released after pre-release A6 and before official output"
+        snapshot["released_after_final_residual"] = True
+        snapshot["release_owner_refs_cleared"] = True
+        self._released_facts = snapshot
+        self.runtime.marker(
+            "v20_p6_release_complete",
+            {
+                "released_after_final_residual": True,
+                "owner_refs_cleared": True,
+                "workspace_labels_released": [
+                    "v20_p6_setup", "v20_p6_full_scratch"
+                ],
+                "inventory_label_released": "v20_p6_local_caches",
+            },
+        )
+        return {
+            "status": "RELEASED",
+            "released_after_final_residual": True,
+            "owner_refs_cleared": True,
+        }
 
     def destroy(self):
         self.last_evaluation = None
@@ -353,9 +606,19 @@ class RetainedOuterAdapter:
             self.condensed.destroy()
         self.action = self.condensed = self.rhs = self.full_source = self.full_target = None
         self.bridge = None
-        self.runtime.release_workspace("v19_p6_setup")
-        self.runtime.release_workspace("v19_p6_full_scratch")
-        self.runtime.release_inventory("v19_p6_local_caches")
+        # These are owner/closure references, not external resources.  Clear
+        # them after the numerical objects have been destroyed so a V20
+        # weak-reference probe can distinguish a real release from a ledger
+        # decrement that leaves the p6 graph reachable.
+        self.bal_h = None
+        self.common = None
+        self.resolved = None
+        self.pc_counts = None
+        self.compiled_form = None
+        self.full_rhs = None
+        self.runtime.release_workspace(f"{self.evidence_prefix}_p6_setup")
+        self.runtime.release_workspace(f"{self.evidence_prefix}_p6_full_scratch")
+        self.runtime.release_inventory(f"{self.evidence_prefix}_p6_local_caches")
 
 
 def build_retained_outer_adapter(*args, **kwargs):
@@ -366,3 +629,314 @@ def build_retained_outer_adapter(*args, **kwargs):
     except BaseException:
         adapter.destroy()
         raise
+
+
+def _compiled_form_identity(compiled_form):
+    """Return small, JSON-safe identity facts for one prepared DOLFINx form."""
+
+    module = getattr(compiled_form, "module", None)
+    if isinstance(module, (tuple, list)):
+        module_files = [str(getattr(item, "__file__", "")) for item in module]
+    else:
+        module_files = [str(getattr(module, "__file__", ""))]
+    module_files = [value for value in module_files if value]
+    form_rank = getattr(compiled_form, "rank", None)
+    try:
+        form_rank = None if form_rank is None else int(form_rank)
+    except (TypeError, ValueError):
+        form_rank = str(form_rank)
+    return {
+        "dtype": str(getattr(compiled_form, "dtype", "unknown")),
+        "module_file": module_files[0] if module_files else None,
+        "module_files": module_files,
+        "module_count": len(module_files),
+        "rank": form_rank,
+        "cache_state": "observed_from_ffcx_return_code",
+    }
+
+
+_V20_EXCLUDED_FFCX_MODULE = (
+    "libffcx_forms_9c081a2454e80304289733853e6aa2b2d94badd9"
+)
+
+
+def _v20_form_cache(runtime):
+    """Create the run-owned FFCx cache and hard-link only eligible modules."""
+
+    from dolfinx import jit
+
+    source = Path(jit.get_options()["cache_dir"]).expanduser().resolve()
+    target = (Path(runtime.directory) / "v20_jit_cache" / "fenics").resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    copied = hardlinked = copied_bytes = excluded = excluded_bytes = 0
+    if source.is_dir() and source != target:
+        for source_path in source.rglob("*"):
+            if not source_path.is_file():
+                continue
+            relative = source_path.relative_to(source)
+            if source_path.name.startswith(_V20_EXCLUDED_FFCX_MODULE):
+                excluded += 1
+                excluded_bytes += int(source_path.stat().st_size)
+                continue
+            destination = target / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if destination.exists():
+                continue
+            try:
+                os.link(source_path, destination)
+                hardlinked += 1
+            except OSError as exc:
+                if exc.errno != errno.EXDEV:
+                    raise
+                # A run directory can be on a different filesystem.  Keep the
+                # same exact cache population contract in that case, while
+                # making the fallback explicit in the evidence.
+                import shutil
+
+                shutil.copy2(source_path, destination)
+                copied += 1
+            copied_bytes += int(source_path.stat().st_size)
+    for existing in target.rglob("*"):
+        if existing.is_file() and existing.name.startswith(_V20_EXCLUDED_FFCX_MODULE):
+            raise RuntimeError(
+                "V20 dedicated cache contains the excluded V19 target module family"
+            )
+    return target, {
+        "source_cache_dir": str(source),
+        "formal_cache_dir": str(target),
+        "same_compiler_options": ["-O2", "-g0"],
+        "hardlinked_eligible_files": hardlinked,
+        "copied_eligible_files": copied,
+        "eligible_bytes": copied_bytes,
+        "excluded_module_family": _V20_EXCLUDED_FFCX_MODULE,
+        "excluded_file_count": excluded,
+        "excluded_bytes": excluded_bytes,
+        "source_cache_untouched": True,
+    }
+
+
+def _module_files(module):
+    if isinstance(module, (tuple, list)):
+        return [str(getattr(item, "__file__", "")) for item in module]
+    return [str(getattr(module, "__file__", ""))]
+
+
+def _module_file_facts(paths, hash_cache):
+    facts = []
+    for raw_path in paths:
+        path = Path(raw_path) if raw_path else None
+        if path is None or not path.is_file():
+            facts.append({"path": raw_path, "size": None, "sha256": None})
+            continue
+        key = str(path)
+        digest = hash_cache.get(key)
+        if digest is None:
+            hasher = hashlib.sha256()
+            with path.open("rb") as stream:
+                for block in iter(lambda: stream.read(1 << 20), b""):
+                    hasher.update(block)
+            digest = hasher.hexdigest()
+            hash_cache[key] = digest
+        facts.append(
+            {
+                "path": key,
+                "size": int(path.stat().st_size),
+                "sha256": digest,
+            }
+        )
+    return facts
+
+
+def _small_option_facts(value):
+    if not isinstance(value, dict):
+        return None
+    result = {}
+    for key, item in value.items():
+        if isinstance(item, (str, int, float, bool)) or item is None:
+            result[str(key)] = item
+        elif isinstance(item, (tuple, list)):
+            result[str(key)] = [str(entry) for entry in item]
+        else:
+            result[str(key)] = str(item)
+    return result
+
+
+def _v20_observed_code(returned_code):
+    if not isinstance(returned_code, tuple) or len(returned_code) != 2:
+        raise RuntimeError("dolfinx.jit.ffcx_jit returned an invalid code tuple")
+    return [None if item is None else "<non_none>" for item in returned_code]
+
+
+def prepare_dual_condensed_forms(runtime, common):
+    """Compile the p6 and p4 complete cell forms before factor construction.
+
+    The returned compiled objects are intentionally borrowed by the caller for
+    one setup root and are not inserted into the ordinary V19 path.
+    """
+
+    from dolfinx import fem, jit
+    import ufl
+
+    cache_dir, cache_facts = _v20_form_cache(runtime)
+    jit_options = {
+        "cache_dir": str(cache_dir),
+        "cffi_extra_compile_args": ["-O2", "-g0"],
+        "cffi_debug": False,
+    }
+    compiler_events = []
+    original_ffcx_jit = jit.ffcx_jit
+    module_hash_cache = {}
+
+    def observed_ffcx_jit(*args, **kwargs):
+        started_ns = time.time_ns()
+        started = perf_counter()
+        compiled_object, module, returned_code = original_ffcx_jit(*args, **kwargs)
+        elapsed_seconds = perf_counter() - started
+        finished_ns = time.time_ns()
+        code = _v20_observed_code(returned_code)
+        module_files = _module_files(module)
+        call = {
+            "index": len(compiler_events),
+            "module_files": module_files,
+            "module_file_facts": _module_file_facts(module_files, module_hash_cache),
+            "code": code,
+            "cache_hit": code == [None, None],
+            "started_timestamp_ns": started_ns,
+            "finished_timestamp_ns": finished_ns,
+            "elapsed_seconds": elapsed_seconds,
+            "form_compiler_options": _small_option_facts(
+                kwargs.get("form_compiler_options")
+                if "form_compiler_options" in kwargs
+                else (args[1] if len(args) > 1 else None)
+            ),
+            "jit_options": _small_option_facts(kwargs.get("jit_options")),
+        }
+        compiler_events.append(
+            call
+        )
+        return compiled_object, module, returned_code
+
+    jit.ffcx_jit = observed_ffcx_jit
+    prepared = {}
+    form_metadata = {}
+    official_roles = []
+
+    def compile_form(role, form):
+        before = len(compiler_events)
+        compiled = fem.form(form, jit_options=dict(jit_options))
+        events = compiler_events[before:]
+        for event in events:
+            event["role"] = role
+        form_metadata[role] = {
+            "form": _compiled_form_identity(compiled),
+            "compiler_events": list(events),
+            "cache_hit": bool(events and all(event["cache_hit"] for event in events)),
+        }
+        return compiled
+
+    def compile_expression(role, expression, points):
+        before = len(compiler_events)
+        compiled = fem.Expression(
+            expression,
+            points,
+            jit_options=dict(jit_options),
+        )
+        events = compiler_events[before:]
+        for event in events:
+            event["role"] = role
+        official_roles.append(
+            {
+                "role": role,
+                "kind": "Expression",
+                "compiler_events": list(events),
+                "cache_hit": bool(events and all(event["cache_hit"] for event in events)),
+            }
+        )
+        return compiled
+
+    try:
+        runtime.marker(
+            "v20_form_preparation_started",
+            {
+                "roles": ["p6_condensation", "p4_condensation"],
+                "evaluation_forms": "official postprocess kernels are compiled below",
+                "jit_options": jit_options,
+                "cache": cache_facts,
+            },
+        )
+        for role, action in (
+            ("p6_condensation", common["fine"]["volume_action"]),
+            ("p4_condensation", common["p4"]["volume_action"]),
+        ):
+            prepared[role] = compile_form(role, action.bilinear_form)
+
+        # These are the actual rank-zero/Expression kernels used by the
+        # official 3D output path.  Compiling the native rank-one action or
+        # the lossless diagnostic metric is not a substitute for them.
+        levels = common["levels"]
+        cfg = common["cfg"]
+        field = fem.Function(
+            levels["floquets"][6].mpc.function_space,
+            name="v20_postprocess_probe_field",
+        )
+        mesh_data = levels["mesh_data"]
+        dx = ufl.Measure("dx", domain=mesh_data.mesh, subdomain_data=mesh_data.cell_tags)
+        d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
+        for component in range(3):
+            role = f"postprocess_component_l2_{component}"
+            compile_form(role, ufl.inner(field[component], field[component]) * d_physical)
+            official_roles.append({"role": role, "kind": "Form", **form_metadata[role]})
+        for tag_name, tag in (("grating", cfg.tags.grating), ("substrate", cfg.tags.substrate)):
+            volume_role = f"rta_region_volume_{tag_name}"
+            compile_form(volume_role, ufl.as_ufl(1.0) * dx(tag))
+            official_roles.append({"role": volume_role, "kind": "Form", **form_metadata[volume_role]})
+            absorption_role = f"rta_region_absorption_{tag_name}"
+            density_scale = 0.5 * cfg.k0 * float(
+                complex(cfg.eps_grating if tag_name == "grating" else cfg.eps_substrate).imag
+            )
+            compile_form(
+                absorption_role,
+                density_scale * ufl.real(ufl.inner(field, field)) * dx(tag),
+            )
+            official_roles.append({"role": absorption_role, "kind": "Form", **form_metadata[absorption_role]})
+
+        from src.postprocessing.postprocess_3d import _interpolation_points as postprocess_points
+        from src.postprocessing.diffraction_3d import _interpolation_points as diffraction_points
+
+        postprocess_space = fem.functionspace(
+            mesh_data.mesh, ("DG", cfg.visualization_degree, (3,))
+        )
+        diffraction_space = fem.functionspace(
+            mesh_data.mesh, ("DG", max(int(cfg.visualization_degree), 1), (3,))
+        )
+        postprocess_h = (cfg.magnetic_field_scale_A_per_m / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(field)
+        diffraction_h = (1.0 / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(field)
+        for role, expression, points in (
+            ("postprocess_E_to_H_expression", postprocess_h, postprocess_points(postprocess_space)),
+            ("diffraction_E_to_H_expression", diffraction_h, diffraction_points(diffraction_space)),
+        ):
+            expression_object = compile_expression(role, expression, points)
+            del expression_object
+        del postprocess_space, diffraction_space, field
+        gc.collect()
+    finally:
+        jit.ffcx_jit = original_ffcx_jit
+
+    facts = {
+        "schema": "task039extra.v20.prepared-forms.v2",
+        "same_watchdog_root": True,
+        "pre_factor": True,
+        "jit_options": jit_options,
+        "cache": cache_facts,
+        "roles": {key: _compiled_form_identity(value) for key, value in prepared.items()},
+        "compiler_events": list(compiler_events),
+        "compiler_event_count": len(compiler_events),
+        "official_evaluation_roles": official_roles,
+        "official_evaluation_role_count": len(official_roles),
+        "p6_module_reused_by_adapter": True,
+        "p4_module_reused_by_stack": True,
+        "identity_cache_mode": "shared_read_only_per_interior_shape",
+        "cache_claim": "derived from ffcx_jit return code [None, None] and compiler module paths",
+    }
+    runtime.marker("v20_form_preparation_complete", facts)
+    return prepared, facts

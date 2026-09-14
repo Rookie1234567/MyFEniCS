@@ -465,6 +465,7 @@ def recover_p0_outputs(
     bundle: Mapping[str, Any], solution: Any, output_dir: Path, *,
     canonical_export: Any | None = None,
     export_all_port_modes: bool = False,
+    jit_options: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Recover E/H and compute the existing modal and diagnostic outputs."""
 
@@ -503,7 +504,8 @@ def recover_p0_outputs(
             _write_port_outputs(output_dir, bundle['cfg'], list(bundle['modes']), aux,
                 list(bundle['incident_projections']), port_metrics, setup['mesh_data'].mesh.comm)
         field_export = save_airbox_3d_fields(
-            setup["mesh_data"], bundle["cfg"], field, output_dir
+            setup["mesh_data"], bundle["cfg"], field, output_dir,
+            jit_options=jit_options,
         )
         volume_metrics = compute_volume_absorption_3d(
             setup["mesh_data"],
@@ -512,9 +514,11 @@ def recover_p0_outputs(
             output_dir,
             incident_power=incident_power_3d(bundle["cfg"]),
             port_metrics=port_metrics,
+            jit_options=jit_options,
         )
         diffraction_metrics = compute_diffraction_orders_3d(
-            setup["mesh_data"], bundle["cfg"], field, output_dir
+            setup["mesh_data"], bundle["cfg"], field, output_dir,
+            jit_options=jit_options,
         )
         facts = {
             "field_model": "total_field",

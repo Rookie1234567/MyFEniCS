@@ -131,7 +131,13 @@ def _global_mean_vector(comm, values: np.ndarray, mask: np.ndarray | None = None
     return np.asarray(total_sum, dtype=np.float64) / float(total_count)
 
 
-def _field_component_l2_metrics(mesh_data, cfg: SimulationConfig3D, field) -> dict[str, object]:
+def _field_component_l2_metrics(
+    mesh_data,
+    cfg: SimulationConfig3D,
+    field,
+    *,
+    jit_options=None,
+) -> dict[str, object]:
     """Assemble component L2 diagnostics on the original H(curl) field.
 
     These metrics bypass DG/ParaView interpolation.  They are useful for
@@ -144,7 +150,12 @@ def _field_component_l2_metrics(mesh_data, cfg: SimulationConfig3D, field) -> di
     comm = mesh_data.mesh.comm
     integrals: list[float] = []
     for component in range(3):
-        local = fem.assemble_scalar(fem.form(ufl.inner(field[component], field[component]) * d_physical))
+        local = fem.assemble_scalar(
+            fem.form(
+                ufl.inner(field[component], field[component]) * d_physical,
+                jit_options=None if jit_options is None else dict(jit_options),
+            )
+        )
         total = comm.allreduce(local, op=MPI.SUM)
         integrals.append(max(float(np.real(total)), 0.0) * cfg.electric_field_scale_V_per_m**2)
     total_integral = max(float(sum(integrals)), 0.0)
@@ -173,6 +184,7 @@ def save_airbox_3d_fields(
     E_scattered=None,
     E_background=None,
     E_incident_port=None,
+    jit_options=None,
 ) -> dict[str, object]:
     """Save compact 3D E/H fields and return reconstruction metrics.
 
@@ -222,7 +234,13 @@ def save_airbox_3d_fields(
 
     h_expr = (cfg.magnetic_field_scale_A_per_m / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_numerical)
     H_dg = fem.Function(V_dg, name="H_A_per_m_from_curl")
-    H_dg.interpolate(fem.Expression(h_expr, _interpolation_points(V_dg)))
+    H_dg.interpolate(
+        fem.Expression(
+            h_expr,
+            _interpolation_points(V_dg),
+            jit_options=None if jit_options is None else dict(jit_options),
+        )
+    )
 
     reference_export_metrics: dict[str, object] = {}
     if cfg.full3d_reference_export:
@@ -408,7 +426,11 @@ def save_airbox_3d_fields(
             ),
         ],
     }
-    result.update(_field_component_l2_metrics(mesh_data, cfg, E_numerical))
+    result.update(
+        _field_component_l2_metrics(
+            mesh_data, cfg, E_numerical, jit_options=jit_options
+        )
+    )
     result.update(reference_export_metrics)
     if e_sca is not None:
         result["max_abs_E_sca"] = _global_max_norm(comm, e_sca, owned_point_mask)

@@ -78,6 +78,17 @@ class V14ResourceStop(RuntimeError):
         self.classification = classification
 
 
+class V20ReleaseGateStop(RuntimeError):
+    """A finite but unqualified pre-release V20 residual gate."""
+
+    def __init__(self, facts: Mapping[str, Any]):
+        self.facts = dict(facts)
+        self.classification = "V20_RELEASE_GATE_FAIL"
+        super().__init__(self.classification + ": " + json.dumps(
+            _jsonable(self.facts), sort_keys=True, separators=(",", ":")
+        ))
+
+
 def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -3814,6 +3825,32 @@ def _v14_balanced_adapter(runtime, common, fint, *, capture_vectors=False):
     positive = pc = None
     live_workspaces = set()
     inventory_live = False
+    cleaned = False
+
+    def cleanup_balanced_objects() -> None:
+        nonlocal cleaned, pc, positive
+        if cleaned:
+            return
+        cleaned = True
+        if pc is not None:
+            pc.destroy()
+            pc = None
+        if positive is not None:
+            h6 = positive.pop("h6", None)
+            shell = positive.pop("p6_shell", None)
+            if h6 is not None:
+                h6.destroy()
+            if shell is not None:
+                shell.destroy()
+            positive.clear()
+            positive = None
+        for label in live_workspaces:
+            runtime.release_workspace(label)
+        live_workspaces.clear()
+        if inventory_live:
+            runtime.release_inventory("v14_h6")
+        runtime._deferred_balanced_cleanup = None
+        runtime._defer_balanced_release = False
     try:
         runtime.reserve_workspace("v14_h6_build", 64 << 20)
         live_workspaces.add("v14_h6_build")
@@ -3858,15 +3895,10 @@ def _v14_balanced_adapter(runtime, common, fint, *, capture_vectors=False):
         runtime.sample("v14_balanced_adapter_ready")
         yield pc, positive
     finally:
-        if pc is not None:
-            pc.destroy()
-        if positive is not None:
-            positive["h6"].destroy()
-            positive["p6_shell"].destroy()
-        for label in live_workspaces:
-            runtime.release_workspace(label)
-        if inventory_live:
-            runtime.release_inventory("v14_h6")
+        if getattr(runtime, "_defer_balanced_release", False):
+            runtime._deferred_balanced_cleanup = cleanup_balanced_objects
+        else:
+            cleanup_balanced_objects()
 
 
 def _q3_balanced_p6_audit(runtime, common, fint):
@@ -5693,6 +5725,158 @@ def _v14_p6_field_comparison(
     return fields
 
 
+def _run_v20_release_after_final_residual(
+    runtime: _V14Runtime,
+    common: dict[str, Any],
+    stack: Mapping[str, Any],
+    outer_adapter: Any,
+    *,
+    stage: str,
+    prefix: str,
+    identity: Mapping[str, Any],
+    solve_result: Mapping[str, Any],
+    final_solution: Any,
+    rhs: Any,
+    rhs_norm: float,
+    final_explicit_relative: float,
+    release_after_final_residual: bool,
+) -> dict[str, Any] | None:
+    """Run the exact V20 save/gate/release/post-native boundary sequence."""
+
+    if not release_after_final_residual:
+        return None
+    release_gate_facts = {
+        "field_packet_saved": bool(
+            getattr(outer_adapter, "_final_packet_saved", False)
+        ),
+        "pre_release_A6_relative": final_explicit_relative,
+        "pre_release_A6_limit": 1.0e-6,
+        "pre_release_A6_finite": bool(np.isfinite(final_explicit_relative)),
+        "pre_release_A6_passed": bool(
+            np.isfinite(final_explicit_relative)
+            and final_explicit_relative <= 1.0e-6
+        ),
+        "identity_values": {
+            key: float(solve_result["final_evaluation"][key])
+            for key in (
+                "port_closure_relative",
+                "internal_residual_relative",
+                "native_identity_relative",
+                "schur_port_identity_relative",
+            )
+        },
+        "identity_limits": {
+            "port_closure_relative": 1.0e-8,
+            "internal_residual_relative": 1.0e-10,
+            "native_identity_relative": 1.0e-10,
+            "schur_port_identity_relative": 1.0e-10,
+        },
+    }
+    release_gate_facts["pre_release_identity_passed"] = all(
+        np.isfinite(value)
+        and value <= release_gate_facts["identity_limits"][key]
+        for key, value in release_gate_facts["identity_values"].items()
+    )
+    release_gate_facts["passed"] = bool(
+        release_gate_facts["field_packet_saved"]
+        and release_gate_facts["pre_release_A6_passed"]
+        and release_gate_facts["pre_release_identity_passed"]
+    )
+    runtime.marker("v20_release_gate_checked", release_gate_facts)
+    if not release_gate_facts["passed"]:
+        release_gate_facts["classification"] = "V20_RELEASE_GATE_FAIL"
+        release_gate_facts["reason"] = (
+            "finite-but-over-limit residual/identity"
+            if release_gate_facts["pre_release_A6_finite"]
+            else "nonfinite pre-release A6"
+        )
+        _save_packet(
+            runtime.directory / "release_gate_failure",
+            "v20_release_gate",
+            release_gate_facts,
+            runtime=runtime,
+        )
+        runtime.marker("v20_release_gate_failed", release_gate_facts)
+        raise V20ReleaseGateStop(release_gate_facts)
+
+    runtime.marker(
+        "v20_preconditioner_release_started",
+        {"pre_release_gate_passed": True},
+    )
+    deferred_cleanup = getattr(runtime, "_deferred_balanced_cleanup", None)
+    if deferred_cleanup is None:
+        raise RuntimeError(
+            "V20 expected the BAL_H/H6 cleanup to remain deferred until after A6"
+        )
+    deferred_cleanup()
+    runtime.marker(
+        "v20_preconditioner_release_complete",
+        {"h6_and_bal_h_released_after_final_A6": True},
+    )
+    p6_release = outer_adapter.release_after_final_residual()
+    p4_release = stack.get("release_after_final_residual")
+    if not callable(p4_release):
+        raise RuntimeError("V20 stack did not expose its post-KSP release hook")
+    p4_release = p4_release()
+    release_facts = {
+        "p6": p6_release,
+        "p4": p4_release,
+        "h6_and_bal_h": "RELEASED",
+        "matrix_lifecycle_policy": "MATRIX_RETAINED_BACKEND_DEPENDENCY",
+    }
+    post_release_applied = rhs.duplicate()
+    post_release_residual = None
+    try:
+        common["fine"]["physical_action"].apply(
+            final_solution, post_release_applied
+        )
+        post_release_residual = rhs.copy()
+        post_release_residual.axpy(-1.0, post_release_applied)
+        post_release_relative = float(post_release_residual.norm()) / rhs_norm
+        if not np.isfinite(post_release_relative):
+            raise FloatingPointError(
+                f"{stage} post-release A6 residual is nonfinite"
+            )
+        post_release_residual_packet = _save_packet(
+            runtime.directory / "post_release_final_residual",
+            f"{prefix}_post_release_final",
+            {
+                "schema": "task039extra.v20.post-release-final-residual-packet.v1",
+                "identity": identity,
+                "rhs_norm": rhs_norm,
+                "independent_action_count": 1,
+                "explicit_relative_residual": post_release_relative,
+                "release_facts": release_facts,
+                "rhs": np.asarray(rhs.array).copy(),
+                "solution": np.asarray(final_solution.array).copy(),
+                "applied": np.asarray(post_release_applied.array).copy(),
+                "residual": np.asarray(post_release_residual.array).copy(),
+            },
+            runtime=runtime,
+        )
+        runtime.marker(
+            "v20_post_release_final_residual_complete",
+            {
+                "packet": post_release_residual_packet,
+                "relative": post_release_relative,
+                "release_complete": True,
+            },
+        )
+    except BaseException:
+        if post_release_residual is not None:
+            post_release_residual.destroy()
+        post_release_applied.destroy()
+        raise
+    return {
+        "release_gate": release_gate_facts,
+        "release_facts": release_facts,
+        "post_release_applied": post_release_applied,
+        "post_release_residual": post_release_residual,
+        "post_release_relative": post_release_relative,
+        "post_release_residual_packet": post_release_residual_packet,
+    }
+
+
 def _v14_q4_q5_fullspace(
     runtime: _V14Runtime,
     common: dict[str, Any],
@@ -5702,6 +5886,8 @@ def _v14_q4_q5_fullspace(
     predecessor: Mapping[str, Any],
     stack_factory: Any | None = None,
     outer_adapter_factory: Any | None = None,
+    release_after_final_residual: bool = False,
+    official_jit_options: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
 
@@ -5727,10 +5913,13 @@ def _v14_q4_q5_fullspace(
     from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
     stage = str(stage)
-    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL"}:
+    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL", "Y3_ORIGINAL"}:
         raise ValueError(f"unsupported fresh p6 stage {stage!r}")
-    if (stage == "X2_ORIGINAL") != (outer_adapter_factory is not None):
-        raise ValueError("only X2_ORIGINAL uses the retained-space outer adapter")
+    retained_stage = stage in {"X2_ORIGINAL", "Y3_ORIGINAL"}
+    if retained_stage != (outer_adapter_factory is not None):
+        raise ValueError("only retained-space original stages use the outer adapter")
+    if release_after_final_residual and stage != "Y3_ORIGINAL":
+        raise ValueError("post-KSP release is only enabled for Y3_ORIGINAL")
     notch = stage in {"Q5_NOTCH", "U5_NOTCH"}
     expected_notch = "positive_x_middle_y_z40_80"
     cell_notch = getattr(common["cfg"], "cell_notch", None)
@@ -5766,6 +5955,7 @@ def _v14_q4_q5_fullspace(
         raise ValueError(f"{stage} requires hash-bound input and physical identities")
 
     prefix = (
+        "y3" if stage == "Y3_ORIGINAL" else
         "x2" if stage == "X2_ORIGINAL" else
         "u5" if stage == "U5_NOTCH" else
         "u4_fallback" if stage == "U4_EXACT_FALLBACK" else
@@ -5773,6 +5963,10 @@ def _v14_q4_q5_fullspace(
         "q5" if notch else "q4"
     )
     final_solution = rhs = final_applied = final_residual = None
+    post_release_applied = post_release_residual = None
+    post_release_residual_packet = None
+    post_release_relative = None
+    release_facts: dict[str, Any] | None = None
     solve_result: dict[str, Any] | None = None
     solve_clock: ClockBudget | None = None
     checkpoint_records: list[dict[str, Any]] = []
@@ -5799,6 +5993,9 @@ def _v14_q4_q5_fullspace(
     outer_workspace_live = False
     outer_workspace_bytes = 0
     outer_adapter = None
+    if release_after_final_residual:
+        runtime._defer_balanced_release = True
+        runtime._deferred_balanced_cleanup = None
 
     @contextmanager
     def owned_p6_vectors():
@@ -5829,10 +6026,18 @@ def _v14_q4_q5_fullspace(
                 final_residual.destroy()
             if final_applied is not None:
                 final_applied.destroy()
+            if post_release_residual is not None:
+                post_release_residual.destroy()
+            if post_release_applied is not None:
+                post_release_applied.destroy()
             if final_solution is not None:
                 final_solution.destroy()
             if outer_adapter is not None:
                 outer_adapter.destroy()
+            deferred_cleanup = getattr(runtime, "_deferred_balanced_cleanup", None)
+            if deferred_cleanup is not None:
+                deferred_cleanup()
+            runtime._defer_balanced_release = False
             if rhs is not None:
                 rhs.destroy()
 
@@ -6217,6 +6422,22 @@ def _v14_q4_q5_fullspace(
             )
             runtime.reserve_workspace(outer_workspace_label, outer_workspace_bytes)
             outer_workspace_live = True
+            if release_after_final_residual:
+                runtime.marker(
+                    "v20_outer_ksp_started",
+                    {
+                        "stage": stage,
+                        "setup_checks_complete": bool(
+                            outer_adapter is not None
+                            and outer_adapter.checks.get("status") == "PASS"
+                        ),
+                        "begin_outer_solve": True,
+                        "outer_workspace_bytes": outer_workspace_bytes,
+                        "h6_and_bal_h_live": True,
+                        "p4_factor_live": True,
+                        "p6_cache_live": True,
+                    },
+                )
             try:
                 if outer_adapter is None:
                     solve_result = run_balanced_fgmres(
@@ -6308,6 +6529,31 @@ def _v14_q4_q5_fullspace(
                 "relative": final_explicit_relative,
             },
         )
+        if release_after_final_residual:
+            release_result = _run_v20_release_after_final_residual(
+                runtime,
+                common,
+                stack,
+                outer_adapter,
+                stage=stage,
+                prefix=prefix,
+                identity=identity,
+                solve_result=solve_result,
+                final_solution=final_solution,
+                rhs=rhs,
+                rhs_norm=rhs_norm,
+                final_explicit_relative=final_explicit_relative,
+                release_after_final_residual=release_after_final_residual,
+            )
+            assert release_result is not None
+            release_gate_facts = release_result["release_gate"]
+            release_facts = release_result["release_facts"]
+            post_release_applied = release_result["post_release_applied"]
+            post_release_residual = release_result["post_release_residual"]
+            post_release_relative = release_result["post_release_relative"]
+            post_release_residual_packet = release_result[
+                "post_release_residual_packet"
+            ]
         # Freeze the solve-clock evidence here.  Reading historical files and
         # assembling the later report is workflow time, not solve time.
         solve_clock_interval = dict(solve_clock.update(clock_sample()))
@@ -6404,6 +6650,10 @@ def _v14_q4_q5_fullspace(
             },
             "final_residual": final_residual_packet,
             "final_explicit_relative_residual": final_explicit_relative,
+            "post_release_final_residual": post_release_residual_packet,
+            "post_release_explicit_relative_residual": post_release_relative,
+            "release_after_final_residual": bool(release_after_final_residual),
+            "release_facts": release_facts,
             "history": history_facts,
             "stop_state": dict(stop_state),
             "reference_evaluation": {
@@ -6455,6 +6705,13 @@ def _v14_q4_q5_fullspace(
             and solve_clock_time_finite
             and solve_clock_time_gate is not None
             and solve_clock_time_gate["passed"]
+            and (
+                not release_after_final_residual
+                or (
+                    post_release_relative is not None
+                    and post_release_relative <= 1.0e-6
+                )
+            )
         )
         base_record["gates"] = {
             "solver_status": solver_status,
@@ -6462,6 +6719,14 @@ def _v14_q4_q5_fullspace(
                 "final_true_residual"
             ),
             "independent_final_explicit_relative_residual": final_explicit_relative,
+            "post_release_final_explicit_relative_residual": post_release_relative,
+            "post_release_residual_gate": (
+                not release_after_final_residual
+                or (
+                    post_release_relative is not None
+                    and post_release_relative <= 1.0e-6
+                )
+            ),
             "solver_gate": solver_gate,
             "solve_clock_interval": solve_clock_interval,
             "solve_time_within_limit": bool(
@@ -6579,6 +6844,7 @@ def _v14_q4_q5_fullspace(
             final_solution,
             output_dir,
             export_all_port_modes=True,
+            jit_options=official_jit_options,
         )
         output_packet = _save_packet(
             runtime.directory / "official_output",

@@ -23,6 +23,7 @@ class InterfaceBalancedCoupling:
         self.p4_action, self.transfer, self.fint = p4_action, transfer, fint
         self.coarse_calls = []
         self.native_A4_count = 0
+        self._destroyed = False
         self.ledger = InexactBalanceLedger(
             fine_action, transfer.apply_adjoint, save=save,
             checkpoint=checkpoint, every=32, mode='BAL_H',
@@ -77,8 +78,30 @@ class InterfaceBalancedCoupling:
         return self.balanced.last_apply_vectors
 
     def destroy(self):
-        self.ledger.destroy()
+        ledger = self.ledger
+        if ledger is not None:
+            ledger.destroy()
         # These compact scalar facts remain useful after cleanup, especially
         # when a second coarse call or a resource boundary interrupts the PC.
         # They own no PETSc vectors or large arrays.
-        self.balanced.last_apply_vectors.clear()
+        balanced = self.balanced
+        if balanced is not None:
+            balanced.last_apply_vectors.clear()
+            # The callbacks are bound methods/closures over the full p6/p4
+            # graph.  Clearing them is part of destruction, not an optional
+            # memory-ledger optimization: otherwise a released BAL_H object
+            # can remain reachable through the balanced coupling.
+            balanced.A = None
+            balanced.C = None
+            balanced.S = None
+            balanced.PH = None
+            balanced.checkpoint = None
+            balanced.inexact_ledger = None
+        # Keep the small scalar balanced shell so the established
+        # ``apply_count``/``last_apply_facts`` accessors remain readable after
+        # cleanup.  Its numerical callbacks and ledger have been severed.
+        self._destroyed = True
+        self.ledger = None
+        self.p4_action = None
+        self.transfer = None
+        self.fint = None

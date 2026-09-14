@@ -230,6 +230,9 @@ def cell_condensed_stack(
     *,
     stage: str,
     backend: str = "exact",
+    compiled_form: Any | None = None,
+    compiled_form_holder: dict[str, Any] | None = None,
+    matrix_lifecycle_policy: str = "LEGACY_RETAIN_THROUGH_POSTPROCESS",
 ):
     """Build and own the V18 condensed matrix/factor for one stage.
 
@@ -257,10 +260,14 @@ def cell_condensed_stack(
     volume_action = p4["volume_action"]
     carrier = p4["dtn_action"].carrier
     volume_form = volume_action.bilinear_form
-    compiled_form = None
+    owns_compiled_form = compiled_form is None
     condensed = None
     factor = None
     inverse = None
+    adapter = None
+    stack_result = None
+    port_terms = {}
+    mapping_arrays = []
     matrix_inventory_label = f"v18_{backend}_condensed_matrix"
     factor_inventory_label = f"v18_{backend}_condensed_global"
     assembly_workspace = f"v18_{backend}_assembly"
@@ -288,7 +295,8 @@ def cell_condensed_stack(
     try:
         runtime.set_phase("assembly")
         _runtime_marker(runtime, "v18_cell_condensed_assembly_started", {"stage": stage})
-        compiled_form = fem.form(volume_form)
+        if compiled_form is None:
+            compiled_form = fem.form(volume_form)
         condensed = build_unconstrained_assembly_time_condensation(
             compiled_form,
             levels["spaces"][4],
@@ -308,6 +316,17 @@ def cell_condensed_stack(
             defer_final_assembly=True,
             allocation_gate=allocation_gate,
         )
+        # The V20 lifecycle explicitly releases the complete compiled form
+        # after its setup consumer has built the owned kernels.  Preserve the
+        # historical V18/V19 lifetime when neither the new policy nor an
+        # explicit holder was supplied.
+        if (
+            matrix_lifecycle_policy == "MATRIX_RETAINED_BACKEND_DEPENDENCY"
+            or compiled_form_holder is not None
+        ):
+            compiled_form = None
+            if compiled_form_holder is not None:
+                compiled_form_holder["form"] = None
         runtime.release_workspace(assembly_workspace)
         # Bound local carrier/recovery construction and map/hash temporaries.
         runtime.reserve_workspace(assembly_workspace, 64 << 20)
@@ -387,7 +406,9 @@ def cell_condensed_stack(
             port_terms=port_terms,
             owns_condensed=True,
             owns_factor=True,
-            retain_through_postprocess_v18=True,
+            retain_through_postprocess_v18=(
+                matrix_lifecycle_policy == "LEGACY_RETAIN_THROUGH_POSTPROCESS"
+            ),
         )
         runtime.reserve_inventory(f"v18_{backend}_port_recovery", {
             "XiB_bytes": sum(a.nbytes for a in inverse._xiB_by_cell.values()),
@@ -420,14 +441,130 @@ def cell_condensed_stack(
             "global_dense_schur_constructed": False,
             "old_full_p4_matrix_allocated": False,
             "old_macro_objects_constructed": False,
-            "retain_through_postprocess_v18": True,
+            "retain_through_postprocess_v18": (
+                matrix_lifecycle_policy == "LEGACY_RETAIN_THROUGH_POSTPROCESS"
+            ),
+            "matrix_lifecycle_policy": str(matrix_lifecycle_policy),
+            "matrix_release_before_official_output": (
+                matrix_lifecycle_policy == "MATRIX_RETAINED_BACKEND_DEPENDENCY"
+            ),
             "setup_seconds": time.perf_counter() - setup_started,
             "allocation_audit": allocation_audit,
             "local_port_terms_bytes": port_bytes,
             "numeric_mapping_bytes": mapping_bytes,
         }
         _runtime_marker(runtime, "v18_condensed_factor_ready", stack_facts)
-        yield {
+        released_after_final_residual = False
+
+        def release_after_final_residual():
+            nonlocal inverse, factor, condensed, compiled_form
+            nonlocal adapter, stack_result, port_terms, mapping_arrays
+            nonlocal released_after_final_residual
+            if released_after_final_residual:
+                return {"status": "ALREADY_RELEASED"}
+            if matrix_lifecycle_policy != "MATRIX_RETAINED_BACKEND_DEPENDENCY":
+                raise RuntimeError(
+                    "post-KSP p4 release is only enabled for the explicit V20 policy"
+                )
+            _runtime_marker(
+                runtime,
+                "v20_p4_release_started",
+                {
+                    "matrix_lifecycle_policy": matrix_lifecycle_policy,
+                    "factor_destroy_before_matrix": True,
+                    "borrowed_backend_dependency_respected": True,
+                },
+            )
+            # Keep the matrix alive through this final streaming observation;
+            # no dense or copied global CSR is created.
+            matrix_identity_started = time.perf_counter()
+            matrix_identity_before_release = petsc_csr_content_identity(
+                condensed.matrix
+            )
+            matrix_identity_before_release_seconds = (
+                time.perf_counter() - matrix_identity_started
+            )
+            matrix_identity_before_release_matches_setup = (
+                matrix_identity_before_release == matrix_before
+            )
+            matrix_identity_before_release_matches_factor = (
+                matrix_identity_before_release == matrix_after
+            )
+            matrix_identity_before_release_consistent = bool(
+                matrix_identity_before_release_matches_setup
+                and matrix_identity_before_release_matches_factor
+            )
+            release_matrix_facts = {
+                "matrix_identity_before_release": matrix_identity_before_release,
+                "matrix_identity_before_release_matches_setup": (
+                    matrix_identity_before_release_matches_setup
+                ),
+                "matrix_identity_before_release_matches_factor": (
+                    matrix_identity_before_release_matches_factor
+                ),
+                "matrix_identity_before_release_consistent": (
+                    matrix_identity_before_release_consistent
+                ),
+                "matrix_identity_before_release_seconds": (
+                    matrix_identity_before_release_seconds
+                ),
+            }
+            # Persist the observation before evaluating it so a changed
+            # matrix leaves durable negative evidence.
+            _runtime_marker(
+                runtime,
+                "v20_p4_matrix_identity_before_release",
+                release_matrix_facts,
+            )
+            stack_facts.update(release_matrix_facts)
+            if not matrix_identity_before_release_consistent:
+                raise RuntimeError(
+                    "condensed matrix content changed before V20 p4 release"
+                )
+            if inverse is not None:
+                inverse.destroy()
+                if adapter is not None:
+                    adapter.inverse = None
+                inverse = None
+                factor = None
+                condensed = None
+            elif factor is not None:
+                destroy = getattr(factor, "destroy", None)
+                if callable(destroy):
+                    destroy()
+                factor = None
+            if condensed is not None:
+                condensed.destroy()
+                condensed = None
+            port_terms.clear()
+            mapping_arrays.clear()
+            if adapter is not None:
+                adapter.inverse = None
+            adapter = None
+            if stack_result is not None:
+                stack_result["fint"] = None
+                stack_result["inverse"] = None
+                stack_result["factor"] = None
+                stack_result["condensed"] = None
+                stack_result["released_after_final_residual"] = True
+            compiled_form = None
+            released_after_final_residual = True
+            runtime.release_inventory(factor_inventory_label)
+            runtime.release_inventory(matrix_inventory_label)
+            runtime.release_inventory(f"v18_{backend}_port_recovery")
+            runtime.release_workspace(assembly_workspace)
+            facts = {
+                "status": "RELEASED",
+                "released_after_final_residual": True,
+                "matrix_lifecycle_policy": matrix_lifecycle_policy,
+                "factor_destroy_before_matrix": True,
+                "borrowed_backend_dependency_respected": True,
+                **release_matrix_facts,
+            }
+            _runtime_marker(runtime, "v20_p4_release_complete", facts)
+            return facts
+
+        stack_result = {
             "schema": stack_facts["schema"],
             "fint": adapter,
             "inverse": inverse,
@@ -438,6 +575,9 @@ def cell_condensed_stack(
             "stack_facts": stack_facts,
             "internal_factor_count": 0,
         }
+        if matrix_lifecycle_policy == "MATRIX_RETAINED_BACKEND_DEPENDENCY":
+            stack_result["release_after_final_residual"] = release_after_final_residual
+        yield stack_result
     finally:
         if inverse is not None:
             inverse.destroy()
@@ -452,16 +592,39 @@ def cell_condensed_stack(
         if condensed is not None:
             condensed.destroy()
             condensed = None
+        v20_lifecycle = (
+            matrix_lifecycle_policy == "MATRIX_RETAINED_BACKEND_DEPENDENCY"
+        )
+        port_terms.clear()
+        mapping_arrays.clear()
+        if v20_lifecycle and adapter is not None:
+            adapter.inverse = None
+        if v20_lifecycle:
+            adapter = None
+        if v20_lifecycle and stack_result is not None:
+            stack_result["fint"] = None
+            stack_result["inverse"] = None
+            stack_result["factor"] = None
+            stack_result["condensed"] = None
+        if v20_lifecycle or compiled_form_holder is not None:
+            compiled_form = None
         release_inventory = getattr(runtime, "release_inventory", None)
         if callable(release_inventory):
             release_inventory(factor_inventory_label)
             release_inventory(matrix_inventory_label)
             release_inventory(f"v18_{backend}_port_recovery")
         runtime.release_workspace(assembly_workspace)
-        del compiled_form
+        if owns_compiled_form and compiled_form is not None:
+            del compiled_form
 
 
-def cell_condensed_stack_factory(*, backend: str = "exact"):
+def cell_condensed_stack_factory(
+    *,
+    backend: str = "exact",
+    compiled_form: Any | None = None,
+    compiled_form_holder: dict[str, Any] | None = None,
+    matrix_lifecycle_policy: str = "LEGACY_RETAIN_THROUGH_POSTPROCESS",
+):
     """Return the small factory consumed by the existing V14 outer helper."""
 
     def factory(runtime, common, resolved_payload, *, stage):
@@ -471,6 +634,9 @@ def cell_condensed_stack_factory(*, backend: str = "exact"):
             resolved_payload,
             stage=stage,
             backend=backend,
+            compiled_form=compiled_form,
+            compiled_form_holder=compiled_form_holder,
+            matrix_lifecycle_policy=matrix_lifecycle_policy,
         )
 
     return factory
