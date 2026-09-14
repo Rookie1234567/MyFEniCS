@@ -1,5 +1,7 @@
 """V18 branching boundaries, independent of PETSc and worker PASS labels."""
 
+import hashlib
+
 import pytest
 import numpy as np
 
@@ -167,3 +169,21 @@ def test_actual_balance_norms_and_one_solve_counts_override_status():
     calls[1]["inner"]["interface_facts"]["factor_solve_count"] = 2
     balance["audit"]["closure_norm"] = 1e-4
     assert not checker.fullspace_balance_facts(rows)["passed"]
+
+
+@pytest.mark.parametrize('rho,passed', [(1e-7, True), (2e-6, False)])
+def test_saved_A6_overrules_worker_label(tmp_path, rho, passed):
+    values = {'rhs': np.array([1, 0], complex),
+              'applied': np.array([1-rho, 0], complex),
+              'residual': np.array([rho, 0], complex),
+              'solution': np.array([2, 0], complex)}
+    archive = tmp_path / 'saved.npz'
+    np.savez(archive, **values)
+    packet = {name: {'array_key': name, 'shape': list(a.shape), 'dtype': str(a.dtype)}
+              for name, a in values.items()}
+    packet.update(arrays={'path': str(archive), 'sha256': hashlib.sha256(archive.read_bytes()).hexdigest()},
+                  independent_action_count=1, explicit_relative_residual=rho, status='PASS')
+    facts = checker.fullspace_residual_facts(packet, tmp_path)
+    assert facts['passed'] is passed
+    packet['explicit_relative_residual'] = rho / 2
+    assert not checker.fullspace_residual_facts(packet, tmp_path)['checks']['reported_rho']

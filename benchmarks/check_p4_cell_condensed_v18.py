@@ -335,6 +335,26 @@ def check_run(directory: Path, baseline: Path, root: Path, *, exact_control: Pat
             "time_policy": "observe_only", "official_p6_pass": False}
 
 
+def fullspace_residual_facts(packet, root):
+    """Recompute final A6 from the saved independent post-KSP action."""
+    rhs, applied, residual, solution = (
+        _array(packet, name, root) for name in ("rhs", "applied", "residual", "solution"))
+    rhs_norm = float(np.linalg.norm(rhs))
+    rho = float(np.linalg.norm(residual)) / max(rhs_norm, np.finfo(float).tiny)
+    operation_scale = max(rhs_norm + float(np.linalg.norm(applied)), np.finfo(float).tiny)
+    identity_error = float(np.linalg.norm(rhs - applied - residual)) / operation_scale
+    checks = {"finite_nonzero_rhs": math.isfinite(rhs_norm) and rhs_norm > 0,
+              "matching_shape": rhs.shape == applied.shape == residual.shape == solution.shape,
+              "native_residual_identity": identity_error <= 1e-14,
+              "A6": _finite_nonnegative(rho) and rho <= 1e-6,
+              "one_independent_final_action": packet["independent_action_count"] == 1,
+              "reported_rho": math.isclose(rho, packet["explicit_relative_residual"],
+                                             rel_tol=1e-11, abs_tol=1e-16)}
+    return {"rho": rho, "rhs_norm": rhs_norm, "identity_relative": identity_error,
+            "solution_sha256": _array_sha256(solution), "checks": checks,
+            "passed": all(checks.values())}
+
+
 def fullspace_balance_facts(boundaries):
     """Check both live coarse defects and the stored closure operation norms."""
     checks, closure_rows, coarse_rows = {}, [], []
@@ -375,19 +395,99 @@ def fullspace_balance_facts(boundaries):
 
 
 
+def check_fullspace(directory, root):
+    """Read final vectors, saved modal/near-field outputs and resource traces."""
+    from src.runners.physical_macro_v12 import _compare_saved_output
+    from src.runners.physical_p4_schur_v14 import _v14_physical_checks
+
+    summary_path = directory / "physical_p4_cell_condensed_v18_summary.json"
+    summary = _json(summary_path)
+    resources = resource_facts(directory, fullspace=True)
+    result = {"schema": "task039extra.v18.fullspace-independent.v1",
+              "directory": str(directory), "source_sha": summary["source_sha"],
+              "backend": summary["backend"], "stage": summary["stage"],
+              "worker_status": summary["status"], "resources": resources,
+              "summary_sha256": _hash(summary_path), "passed": False}
+    if "final_residual" not in summary:
+        return {**result, "reason": "no_completed_post_KSP_residual", "error": summary.get("error")}
+    residual = fullspace_residual_facts(summary["final_residual"], root)
+    solver = summary["solver"]
+    balance = fullspace_balance_facts(summary["pc"]["boundary_records"])
+    stack = summary["interface_stack"]
+    matrix = matrix_identity_facts(stack["matrix_identity_before_factor"],
+                                   stack["matrix_identity_after_factor"])
+    manifest = _json(directory / "run_manifest.json")
+    resolved = _json(directory / "resolved_config.json")
+    identity = summary["operator_identity"]
+    checks = {
+        "A6": residual["passed"], "balance": balance["passed"], "resources": resources["passed"],
+        "matrix_identity": matrix["passed"], "same_backend": stack["backend"] == summary["backend"],
+        "zero_macro_mumps": stack["internal_factor_count"] == 0,
+        "no_old_matrices_or_macros": stack["old_full_p4_matrix_allocated"] is False
+                                    and stack["old_macro_objects_constructed"] is False,
+        "no_refinement": _control_value(stack["factor"]["controls_before_symbolic"], "icntl", 10) == 0,
+        "selected_factor_control": _control_value(stack["factor"]["controls_before_symbolic"], "icntl", 35)
+                                   == (0 if summary["backend"] == "exact" else 2),
+        "one_KSP": solver["ksp_create_count"] == solver["ksp_solve_count"] == 1,
+        "restart32_max2048": solver["restart"] == 32 and solver["max_it"] == 2048
+                            and 0 <= solver["iterations"] <= 2048,
+        "zero_start": solver["zero_start"] is True,
+        "source": summary["source_sha"] == manifest["source_sha"] == manifest["source_after"]["source_sha"],
+        "physical_identity": identity["physical_model_sha256"] == manifest["physical_model_sha256"]
+                             == resolved["provenance"]["physical_model_sha256"],
+        "input_identity": identity["input_sha256"] == manifest["input_sha256"]
+                          == resolved["provenance"]["input_sha256"],
+        "reference_free_PC": identity["reference_used_for_operator_or_initial_guess"] is False,
+        "factor_retained": stack["retain_through_postprocess_v18"] is True,
+    }
+    result.update(residual=residual, balance=balance, matrix=matrix,
+                  solver={k:solver[k] for k in ("iterations", "elapsed_seconds", "restart", "max_it",
+                                               "ksp_create_count", "ksp_solve_count", "final_true_residual")})
+    comparison, physical = None, {}
+    if residual["passed"] and "output" in summary:
+        binding = summary["reference_binding"]
+        descriptors = list(binding["binding_files"].values()) + [binding["residual_binding"]]
+        for i, descriptor in enumerate(descriptors):
+            checks[f"reference_binding_{i}"] = _hash(Path(descriptor["path"])) == descriptor["sha256"]
+        for name, digest in binding["reference_output_file_hashes"].items():
+            checks[f"reference_output_{name}"] = _hash(Path(binding["reference_output_dir"]) / name) == digest
+        output = summary["output"]["output"]
+        comparison = _compare_saved_output(output, binding["reference_output"],
+                                           current_dir=directory / "numerical_output",
+                                           reference_dir=Path(binding["reference_output_dir"]))
+        physical = _v14_physical_checks(solver, summary["field"], comparison, time_policy="observe_only")
+        events = _jsonl(directory / "v18_events.jsonl")
+        evaluated = [e["timestamp_ns"] for e in events if e["event"].endswith("_physical_output_comparison_complete")]
+        released = [e["timestamp_ns"] for e in events if e["event"] == "v14_inventory_released"
+                    and e["facts"]["label"] == f"v18_{summary['backend']}_condensed_global"]
+        checks["retained_through_actual_evaluation"] = bool(evaluated and len(released) == 1
+                                                            and released[0] > max(evaluated))
+    checks["physical_outputs"] = bool(physical) and all(physical.values())
+    result.update(checks=checks, physical_checks=physical, comparison=comparison,
+                  field=summary.get("field"), passed=all(checks.values()))
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
-    parser.add_argument("--baseline", type=Path, required=True)
+    parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--fullspace", action="store_true")
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--exact-control", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    facts = check_run(args.directory, args.baseline, args.root, exact_control=args.exact_control)
+    if args.fullspace:
+        facts = check_fullspace(args.directory, args.root)
+    else:
+        if args.baseline is None:
+            parser.error("control checking requires --baseline")
+        facts = check_run(args.directory, args.baseline, args.root, exact_control=args.exact_control)
     temporary = args.output.with_suffix(".tmp")
     temporary.write_text(json.dumps(facts, indent=2, allow_nan=False) + "\n")
     temporary.replace(args.output)
-    print(json.dumps({"control_qualified": facts["control_qualified"],
+    print(json.dumps({"fullspace_qualified": facts["passed"]} if args.fullspace else
+                     {"control_qualified": facts["control_qualified"],
                       "quality": facts["quality"]["quality_pass"],
                       "resources": facts["resources"]["passed"]}))
 

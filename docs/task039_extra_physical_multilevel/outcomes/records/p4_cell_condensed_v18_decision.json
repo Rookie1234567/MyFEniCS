@@ -1,25 +1,25 @@
 {
   "schema": "task039extra.v18.final-decision.v1",
   "batch_identity": "review_v18_p4_cell_condensed",
-  "status": "U4_USER_AUTHORIZED_BUG_CONTINUATION",
+  "status": "U4_FULLSPACE_PASS_U5_ADMITTED",
   "selected_backend": "exact",
-  "next_action": "CONTINUE_U4_EXACT",
+  "next_action": "RUN_U5_NOTCH_EXACT",
   "exact_control_qualified": true,
   "exact_memory_comparison": "OBSERVED_REDUCTION",
   "exact_RSS_reduction_fraction": 0.3681520722966656,
   "BLR_quality_qualified": true,
   "BLR_additional_value": false,
-  "original_passed": false,
-  "original_status": "IMPLEMENTATION_BLOCKED",
-  "notch_status": "NOT_RUN_ORIGINAL_NOT_QUALIFIED",
+  "original_passed": true,
+  "original_status": "U4_ORIGINAL_FULLSPACE_OFFICIAL_PASS",
+  "notch_status": "ADMITTED_NOT_STARTED",
   "p6_numerical_failure_demonstrated": false,
-  "admit_u4": true,
-  "admit_u4_reason": "Explicit later user instruction; each continuation requires bound implementation-bug evidence.",
+  "admit_u4": false,
+  "admit_u4_reason": "Original completed successfully; next stage is same-backend notch.",
   "exact_fallback_authorized": false,
   "more_formal_runs_in_this_batch": true,
-  "formal_bug_replay_count": 1,
+  "formal_bug_replay_count": 2,
   "post_stop_fix_source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
-  "post_stop_fix_full_model_qualification": "NOT_RUN",
+  "post_stop_fix_full_model_qualification": "ORIGINAL_PASSED",
   "time_policy": "observe_only",
   "old_negative_results_preserved": true,
   "master_merge_approved": false,
@@ -43,13 +43,18 @@
     {
       "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_focused_tests.log",
       "sha256": "9dcba0c3f7a78970bb1a5f6e41fb15ff340fe58b688efb5b40aa4ab1dcb7d09f"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt3_independent.json",
+      "sha256": "4c082163161669f65c4c64d34d02dc41b979129d07a8b27f000aefdd0a08982f"
     }
   ],
   "next_review_scope": "Review complete original and conditional notch evidence after execution.",
   "user_continuation": {
     "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
     "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
-    "status": "AUTHORIZED_CONTINUATION_PENDING_CLEAN_SOURCE",
+    "status": "U4_COMPLETE_U5_ADMITTED",
     "previous_bug_replay_count": 1
-  }
+  },
+  "original_passed_backend": "exact"
 }

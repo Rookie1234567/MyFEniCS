@@ -1819,6 +1819,88 @@
         "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt2_independent.json",
         "sha256": "b6d2ef5c1ca9fdd689f958a2c19debfee4acddc5c78455f56e5e4c79329e39c4"
       }
+    },
+    {
+      "id": "V18_U4_original_attempt3_pass",
+      "source_sha": "8a2d5cbba6ed834a6d731a30dd3735c8824fa762",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T045836.140614Z",
+      "status": "U4_ORIGINAL_FULLSPACE_OFFICIAL_PASS",
+      "iterations": 564,
+      "full_true_relative_residual": 9.92314718715201e-07,
+      "official_result": true,
+      "physical": {
+        "R": 0.3656257909689885,
+        "T": 0.012990632321222292,
+        "A": 0.6213835767097892,
+        "A_volume": 0.6213835745968793
+      },
+      "field": {
+        "L2": {
+          "absolute_error_norm": 2.3972719677605987e-06,
+          "reference_norm": 175.69146510732992,
+          "relative": 1.3644783292666524e-08
+        },
+        "scaled_curl": {
+          "absolute_error_norm": 7.683957225488e-07,
+          "reference_norm": 175.776913800432,
+          "relative": 4.3714257232960455e-09
+        }
+      },
+      "resources": {
+        "scope": "continuous_parent_process_tree",
+        "gates": {
+          "readable": true,
+          "tree_cap": true,
+          "inventory_cap": true,
+          "workspace_cap": true,
+          "reserve": true,
+          "zero_swap": true,
+          "cleaned": true,
+          "clean_source": true,
+          "observe_only": true
+        },
+        "passed": true,
+        "main_window_end_ns": 1789369126378826542,
+        "factor_live_end_ns": 1789369124210474787,
+        "fullspace_scope": true,
+        "main_full_rss_peak_bytes": 2528460800,
+        "main_live_rss_peak_bytes": 2528460800,
+        "main_full_pss_peak_bytes": 2494237696,
+        "main_live_pss_peak_bytes": 2494237696,
+        "whole_run_rss_peak_bytes": 2528460800,
+        "inventory_peak_bytes": 1830284886,
+        "workspace_peak_bytes": 396129600,
+        "full_workflow_monotonic_seconds": 6609.6613787800015,
+        "hashes": {
+          "watchdog/resources.jsonl": "ed092524ca391b39664e73a0559222799e22d5e1a4271115131a2aae82843537",
+          "v18_events.jsonl": "4a40cb47f8f4821ad7f5a89f3a6fc9008deaebd752c0897eb5a4cab73afefec2",
+          "v18_worker_resources.jsonl": "b9a7b7079b2ce0d9f8120c2a35c629bf92532525e8af479ff58909258ea40009",
+          "run_summary.json": "01ce56cba4e2a974362211096113193b618f272a5331c961e8c5aafdb20829ce",
+          "run_manifest.json": "cd742ff2984a0b33d4353646b22be1286d94e5d01b699204dd8e1db9594146e2"
+        }
+      },
+      "cost": {
+        "stage": "U4_ORIGINAL",
+        "attempt": 3,
+        "source_sha": "8a2d5cbba6ed834a6d731a30dd3735c8824fa762",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T045836.140614Z",
+        "status": "worker_exit0",
+        "monotonic_seconds": 6609.6613787800015,
+        "settled_seconds": 7210.314084736167,
+        "rss_peak_bytes": 2528460800,
+        "hashes": {
+          "run_summary.json": "01ce56cba4e2a974362211096113193b618f272a5331c961e8c5aafdb20829ce",
+          "run_manifest.json": "cd742ff2984a0b33d4353646b22be1286d94e5d01b699204dd8e1db9594146e2",
+          "physical_p4_cell_condensed_v18_summary.json": "4f0073ac5afb4ea510f9e5b7477cc6e78e73d2adb92e6fc2dd1b526ab17339af",
+          "watchdog/resources.jsonl": "ed092524ca391b39664e73a0559222799e22d5e1a4271115131a2aae82843537",
+          "v18_events.jsonl": "4a40cb47f8f4821ad7f5a89f3a6fc9008deaebd752c0897eb5a4cab73afefec2",
+          "v18_worker_resources.jsonl": "b9a7b7079b2ce0d9f8120c2a35c629bf92532525e8af479ff58909258ea40009"
+        }
+      },
+      "checker": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt3_independent.json",
+        "sha256": "4c082163161669f65c4c64d34d02dc41b979129d07a8b27f000aefdd0a08982f"
+      }
     }
   ],
   "limitations": [
@@ -3773,29 +3855,29 @@
   "review_v18_p4_cell_condensed_closeout": {
     "review": "review_report_v18.md",
     "response": "response_v19.md",
-    "status": "U6_REVIEW_REQUIRED_IMPLEMENTATION_REPLAY_EXHAUSTED",
+    "status": "U4_FULLSPACE_PASS_U5_ADMITTED",
     "decision": {
       "schema": "task039extra.v18.final-decision.v1",
       "batch_identity": "review_v18_p4_cell_condensed",
-      "status": "U6_REVIEW_REQUIRED_IMPLEMENTATION_REPLAY_EXHAUSTED",
+      "status": "U4_FULLSPACE_PASS_U5_ADMITTED",
       "selected_backend": "exact",
-      "next_action": "WAIT_REVIEW",
+      "next_action": "RUN_U5_NOTCH_EXACT",
       "exact_control_qualified": true,
       "exact_memory_comparison": "OBSERVED_REDUCTION",
       "exact_RSS_reduction_fraction": 0.3681520722966656,
       "BLR_quality_qualified": true,
       "BLR_additional_value": false,
-      "original_passed": false,
-      "original_status": "IMPLEMENTATION_BLOCKED",
-      "notch_status": "NOT_RUN_ORIGINAL_NOT_QUALIFIED",
+      "original_passed": true,
+      "original_status": "U4_ORIGINAL_FULLSPACE_OFFICIAL_PASS",
+      "notch_status": "ADMITTED_NOT_STARTED",
       "p6_numerical_failure_demonstrated": false,
       "admit_u4": false,
-      "admit_u4_reason": "batch implementation-bug replay already consumed; this is an execution cap, not an exact-core rejection",
+      "admit_u4_reason": "Original completed successfully; next stage is same-backend notch.",
       "exact_fallback_authorized": false,
-      "more_formal_runs_in_this_batch": false,
-      "formal_bug_replay_count": 1,
+      "more_formal_runs_in_this_batch": true,
+      "formal_bug_replay_count": 2,
       "post_stop_fix_source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
-      "post_stop_fix_full_model_qualification": "NOT_RUN",
+      "post_stop_fix_full_model_qualification": "ORIGINAL_PASSED",
       "time_policy": "observe_only",
       "old_negative_results_preserved": true,
       "master_merge_approved": false,
@@ -3819,17 +3901,28 @@
         {
           "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_focused_tests.log",
           "sha256": "9dcba0c3f7a78970bb1a5f6e41fb15ff340fe58b688efb5b40aa4ab1dcb7d09f"
+        },
+        {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt3_independent.json",
+          "sha256": "4c082163161669f65c4c64d34d02dc41b979129d07a8b27f000aefdd0a08982f"
         }
       ],
-      "next_review_scope": "Decide whether to authorize a new exact-only original run after the tested timer repairs, then the same notch only if original fully passes. No algorithm or epsilon changes proposed."
+      "next_review_scope": "Review complete original and conditional notch evidence after execution.",
+      "user_continuation": {
+        "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
+        "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
+        "status": "U4_COMPLETE_U5_ADMITTED",
+        "previous_bug_replay_count": 1
+      },
+      "original_passed_backend": "exact"
     },
     "compact": {
       "path": "docs/task039_extra_physical_multilevel/outcomes/records/p4_cell_condensed_v18_compact.json",
-      "sha256": "d6b3a9495ad11eb142e68f6510e1ec87aedeab32aa7ef3efbe534e456cd381d4"
+      "sha256": "bf4e3e7235942ab73e784c8da601bf1dc2b1e696923ec9f9dd6e0a919c150725"
     },
     "decision_record": {
       "path": "docs/task039_extra_physical_multilevel/outcomes/records/p4_cell_condensed_v18_decision.json",
-      "sha256": "6d3627ad4c7e69358a01ac7d34249eda0fd54a29b42ea55cbc3842b0c993a030"
+      "sha256": "75bb76e077db1a990bc3d70daf02db47583e49d1ee95c69ba0046dea5b184f1a"
     }
   },
   "user_continuation_v18": {
