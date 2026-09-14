@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import ctypes
-import ctypes.util
 import hashlib
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -106,41 +106,53 @@ def _petsc_error(code: int, operation: str) -> None:
 
 
 def _load_petsc_api() -> ctypes.CDLL:
-    names = []
-    found = ctypes.util.find_library("petsc_complex")
-    if found:
-        names.append(found)
-    names.extend(("libpetsc_complex.so.3.19", "libpetsc_complex.so"))
-    for name in names:
-        try:
-            library = ctypes.CDLL(name)
-        except OSError:
+    from petsc4py import PETSc
+
+    int_bytes = np.dtype(PETSc.IntType).itemsize
+    if int_bytes not in (4, 8):
+        raise RuntimeError(f"unsupported runtime PETSc PetscInt width: {int_bytes} bytes")
+    petsc_int = ctypes.c_int64 if int_bytes == 8 else ctypes.c_int32
+    loaded = set()
+    for line in Path("/proc/self/maps").read_text().splitlines():
+        fields = line.split()
+        if not fields or not fields[-1].startswith("/"):
             continue
-        void = ctypes.c_void_p
-        library.MatGetFactor.argtypes = [void, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(void)]
-        library.MatGetFactor.restype = ctypes.c_int
-        library.MatFactorInfoInitialize.argtypes = [ctypes.POINTER(_MatFactorInfo)]
-        library.MatFactorInfoInitialize.restype = ctypes.c_int
-        library.MatFactorGetPreferredOrdering.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)]
-        library.MatFactorGetPreferredOrdering.restype = ctypes.c_int
-        library.MatLUFactorSymbolic.argtypes = [void, void, void, void, ctypes.POINTER(_MatFactorInfo)]
-        library.MatLUFactorSymbolic.restype = ctypes.c_int
-        library.MatLUFactorNumeric.argtypes = [void, void, ctypes.POINTER(_MatFactorInfo)]
-        library.MatLUFactorNumeric.restype = ctypes.c_int
-        library.MatSolve.argtypes = [void, void, void]
-        library.MatSolve.restype = ctypes.c_int
-        library.MatDestroy.argtypes = [ctypes.POINTER(void)]
-        library.MatDestroy.restype = ctypes.c_int
-        library.ISDestroy.argtypes = [ctypes.POINTER(void)]
-        library.ISDestroy.restype = ctypes.c_int
-        library.MatMumpsGetInfog.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_int)]
-        library.MatMumpsGetInfog.restype = ctypes.c_int
-        library.MatMumpsGetRinfog.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
-        library.MatMumpsGetRinfog.restype = ctypes.c_int
-        library.MatMumpsSetIcntl.argtypes = [void, ctypes.c_int, ctypes.c_int]
-        library.MatMumpsSetIcntl.restype = ctypes.c_int
-        return library
-    raise RuntimeError("qualified PETSc complex library was not found")
+        path = Path(fields[-1])
+        if path.name.startswith("libpetsc") and path.exists():
+            loaded.add(str(path.resolve()))
+    if len(loaded) != 1:
+        raise RuntimeError(f"expected one loaded PETSc library, found {sorted(loaded)}")
+    library = ctypes.CDLL(next(iter(loaded)))
+    void = ctypes.c_void_p
+    library.MatGetFactor.argtypes = [void, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(void)]
+    library.MatGetFactor.restype = ctypes.c_int
+    library.MatFactorInfoInitialize.argtypes = [ctypes.POINTER(_MatFactorInfo)]
+    library.MatFactorInfoInitialize.restype = ctypes.c_int
+    library.MatFactorGetPreferredOrdering.argtypes = [void, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)]
+    library.MatFactorGetPreferredOrdering.restype = ctypes.c_int
+    library.MatLUFactorSymbolic.argtypes = [void, void, void, void, ctypes.POINTER(_MatFactorInfo)]
+    library.MatLUFactorSymbolic.restype = ctypes.c_int
+    library.MatLUFactorNumeric.argtypes = [void, void, ctypes.POINTER(_MatFactorInfo)]
+    library.MatLUFactorNumeric.restype = ctypes.c_int
+    library.MatSolve.argtypes = [void, void, void]
+    library.MatSolve.restype = ctypes.c_int
+    library.MatDestroy.argtypes = [ctypes.POINTER(void)]
+    library.MatDestroy.restype = ctypes.c_int
+    library.ISDestroy.argtypes = [ctypes.POINTER(void)]
+    library.ISDestroy.restype = ctypes.c_int
+    library.MatMumpsGetInfog.argtypes = [void, petsc_int, ctypes.POINTER(petsc_int)]
+    library.MatMumpsGetInfog.restype = ctypes.c_int
+    library.MatMumpsGetRinfog.argtypes = [void, petsc_int, ctypes.POINTER(ctypes.c_double)]
+    library.MatMumpsGetRinfog.restype = ctypes.c_int
+    library.MatMumpsSetIcntl.argtypes = [void, petsc_int, petsc_int]
+    library.MatMumpsSetIcntl.restype = ctypes.c_int
+    library.MatMumpsGetIcntl.argtypes = [void, petsc_int, ctypes.POINTER(petsc_int)]
+    library.MatMumpsGetIcntl.restype = ctypes.c_int
+    library.MatMumpsGetCntl.argtypes = [void, petsc_int, ctypes.POINTER(ctypes.c_double)]
+    library.MatMumpsGetCntl.restype = ctypes.c_int
+    library._task_petsc_path = next(iter(loaded))
+    library._task_petsc_int = petsc_int
+    return library
 
 
 class _MumpsFactor:
@@ -148,6 +160,7 @@ class _MumpsFactor:
 
     def __init__(self, matrix: Any) -> None:
         self._api = _load_petsc_api()
+        self._petsc_int = self._api._task_petsc_int
         self._handle = ctypes.c_void_p()
         _petsc_error(
             self._api.MatGetFactor(
@@ -231,23 +244,21 @@ class _MumpsFactor:
 
     def refinement_settings(self) -> dict:
         """Read the existing MUMPS internal refinement controls without changing them."""
-        integer, real = ctypes.c_int(), ctypes.c_double()
+        integer, real = self._petsc_int(), ctypes.c_double()
         for name, value, index in (('MatMumpsGetIcntl', integer, 10),
                                    ('MatMumpsGetCntl', real, 2)):
             function = getattr(self._api, name)
-            function.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(type(value))]
+            function.argtypes = [ctypes.c_void_p, self._petsc_int, ctypes.POINTER(type(value))]
             function.restype = ctypes.c_int
             _petsc_error(function(self._handle, index, ctypes.byref(value)), name)
         return {'ICNTL(10)': integer.value, 'CNTL(2)': real.value, 'modified': False}
 
     def symbolic_memory_settings(self) -> dict:
         """Read controls relevant to interpreting symbolic memory, without setting them."""
-        function=self._api.MatMumpsGetIcntl
-        function.argtypes=[ctypes.c_void_p,ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
-        function.restype=ctypes.c_int
+        function = self._api.MatMumpsGetIcntl
         result={}
         for index in (7,10,14,18,22,23):
-            value=ctypes.c_int()
+            value=self._petsc_int()
             _petsc_error(function(self._handle,index,ctypes.byref(value)), 'MatMumpsGetIcntl')
             result[str(index)]=value.value
         return dict(icntl=result,modified=False)
@@ -268,7 +279,7 @@ class _MumpsFactor:
         infog: dict[str, int] = {}
         rinfog: dict[str, float] = {}
         for index in (*range(1, 21), *extra_indices):
-            value = ctypes.c_int()
+            value = self._petsc_int()
             code = self._api.MatMumpsGetInfog(self._handle, index, ctypes.byref(value))
             if int(code) != 0:
                 break
