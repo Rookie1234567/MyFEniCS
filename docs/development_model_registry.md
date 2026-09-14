@@ -1,20 +1,23 @@
-# Task39extra Response V19 / Review V18：准确单元凝聚有效，完整p6尚未资格化
+# Task39extra Response V19 / Review V18：原始p6通过，notch按用户要求停止续算
 
-当前进展（原始模型完成后的增量）：U4 第三次运行已独立核验通过，564 步、最终 A6=9.92314718715201e-7，L2/scaled-curl=1.3644783292666524e-8/4.3714257232960455e-9。R/T/A/A_volume=0.3656257909689885/0.012990632321222292/0.6213835767097892/0.6213835745968793；完整物理 Gate、80模式、近场与守恒通过。全过程 RSS峰值2528460800 B，库存1830284886 B，临时396129600 B，zero-swap与清场通过。该场 monotonic 6609.661379 s、保守结算7210.314085 s；本批累计保守7709.181734 s。源码8a2d5cbba6ed834a6d731a30dd3735c8824fa762；28项只读checker/ledger测试通过。U5同配置准确notch已准入，尚未运行。下方两次失败及其当时停止结论属于历史快照，全部费用保留，不再是当前阻断。
-
-用户最新授权：完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug。以下两场实现失败及费用保留为续跑前快照；原重放额度不再阻断本次有明确 bug 证据的续跑。准确凝聚、原数值/物理/资源 Gate 和 observe_only 均保持，U4 正在继续，U5 仍以 original 完整通过为条件。
-
-| 问题 | 证据与结论 |
+| 研究问题/模型 | 已测结果与结论 |
 |---|---|
-| 准确p4逆 | 三冻结RHS和三次重复/线性调用通过原A4及场/旋度检查，strict slave-zero；252单元共享12类局部LU，trace+80端口仅一个全局因子 |
-| 内存 | Q1 2,825,973,760 B→U2 1,785,585,664 B，全过程RSS减少36.8152%；allocated/used/缓存/临时池分列 |
-| 可选BLR | 新矩阵唯一tau1e-5质量通过，但RSS增加1.4163%，关闭BLR，选择准确凝聚 |
-| 完整三维 | original两次实现异常，唯一bug replay耗尽；第二次已完成一个真实BAL_H PC，两粗修正和闭合通过，但返回被计时异常丢弃，0次有效外层更新。notch条件不成立 |
-| 修复与界限 | 停止后修复计时观察值和错误清理，99项测试通过，未再运行PDE；不称数值不收敛、不称完整PC已通过；不合并master |
+| 同三RHS的准确p4凝聚 | 原A4残差≤7.52867e-11，场/旋度约5.2e-12；共享12类局部LU，trace+80端口仅一个21824行全局因子，NNZ8184464；完整恢复和slave-zero通过 |
+| 同口径p4内存 | Q1全过程RSS2825973760 B→U2 1785585664 B，减少36.8152%；库存1776346158 B，临时134217728 B。不是完整p6内存百分比 |
+| 唯一凝聚BLR tau1e-5 | 质量通过，条目减2.3564%，RSS反增1.4163%；保留负结果并选exact |
+| original p6/h10，Full3D，13.5 nm，MPI1 | **564步，A6=9.92314718715201e-7，完整物理/资源PASS**；L2/curl=1.36448e-8/4.37143e-9；RSS2528460800 B，库存1830284886 B，临时396129600 B |
+| original物理量 | R/T/A/A_volume=0.365625790969/0.0129906323212/0.621383576710/0.621383574597；80模式、近场和守恒通过；能量偏差2.11291e-9 |
+| notch同配置 | 494步后父watchdog丢失；最后真实残差第488步5.478307207552461e-6，未到1e-6；第480步L2/curl=8.36579e-8/4.43005e-8。无最终official物理资格，只有收敛趋势 |
+| 失败与修复 | original前两次计时实现失败保留，修复后第三次通过；notch外部父监控失联已用独立用户服务薄入口修正，仅ABI/help验证，最新用户要求不再恢复计算 |
+| 完整成本 | original通过场monotonic6609.661379 s，保守结算7210.314085 s；五个已结算场保守总7709.181734 s，notch已见前缀另5704.197024 s，完整总耗时unknown |
 
-单元凝聚先消去单元内部未知量，解共享trace和端口后再恢复完整场，以局部缓存费用换取较小全局因子。本轮完整p6没有最终A6、official E/H、近场、R/T/A、A_volume、80模式或守恒证据；成功的p4内存百分比不能当作完整p6优化幅度。正式费用含所有失败和重放，保守累计498.867649 s，旧600秒政策占用的真实耗时仍unknown。
+单元凝聚先消去单元内部未知量，解共享边界与原端口后恢复完整场，以局部缓存费用换取较小全局因子。本批改进准确粗逆的存储组织，保留BAL_H/H6与同一FGMRES32；历史V5原始模型也需564步，因此没有迭代加速结论。基线复用Q1，旧宏块与BLR负结果保留，不新增参考或扫描参数。
 
-模型登记：`task39extra_v18_u2_exact_control`、`task39extra_v18_u3_blr_control`、`task39extra_v18_u4_original_exact`（两attempt）；notch未运行。[逐场索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)。
+notch的Codex空闲任务卸载记录与最后父心跳同秒，worker明确报专用watchdog不存在；具体退出信号和最终结算unknown。已见资源前缀安全、宿主进程清场确认，但缺父最终资源authority，不能称完整资源PASS。旧43200秒未结算预留以幂等记录转成政策占用，不改写为实测；无活动attempt、无基础设施重跑，原600秒unknown历史不改。
+
+最新用户明确要求修正后不再计算：original收敛已有实证；notch不凭趋势升级PASS。106项相关测试通过，运行方式仅轻量验证。保持ordinary default与5nm工作线，等待统一审阅，不合并master。
+
+模型登记：`task39extra_v18_u2_exact_control`、`task39extra_v18_u3_blr_control`、`task39extra_v18_u4_original_exact`（3 attempts）、`task39extra_v18_u5_notch_exact`（1 interrupted attempt）。original成功source为`8a2d5cbba6ed834a6d731a30dd3735c8824fa762`；notch source为`c56437271a4e3c34c984e4c3dee111b61dc5130e`。[逐场索引](task039_extra_physical_multilevel/outcomes/records/run_index.json)、[详细回应](task039_extra_physical_multilevel/response_v19.md)。
 
 ---
 
@@ -1766,7 +1769,7 @@ R4 overall is `FAIL / CONTROLLED_STOP_RESOURCE`; R5/T6-S, T6-F, official E/H/RTA
 | Model ID | source / scope | measured result | resource / status | evidence |
 |---|---|---|---|---|
 | `task038_v9_P0_memory_first_authority` | P0 fresh source `ba9016310d09c388a953fce93d9e71761343311f`；p2/h50/MPI1 | checkpoint/restart、explicit residual、PC legality 和 provenance PASS | P0 PASS；不是 p6/PDE 结果 | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_authority_contract.md` |
-| `task038_v9_P1_memory_first_small_v2` | source `891ef7fba8cb7d154ad9cac61d67652f02063fbb`；p2/p3 × MPI1/MPI2，固定 `restart=20`、`max_it=2000`；实际 9/16 | 8 p2 cases PASS；`p3-mpi1/random` 在 2000 steps 后 explicit true residual `0.01027838962263555 > 1e-8` | `FAILED_AT_FIXED_MEMORY_ITERATION_CAP`；p3 cycle process-tree peak `155860992 B`，process-tree/rank swap `0`，GNU time `Swaps=0`；共享 cgroup 只作 diagnostic，不是 dedicated Gate | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/memory_first_small_v2.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2.md` |
+| `task038_v9_P1_memory_first_small_v2` | source `891ef7fba8cb7d154ad9cac61d67652f02063fbb`；p2/p3 × MPI1/MPI2，固定 `restart=20`、`max_it=2000`；实际 9/16 | 8 p2 cases PASS；`p3-mpi1/random` 在 2000 steps 后 explicit true residual `0.01027838962263555 > 1e-8` | `FAILED_AT_FIXED_MEMORY_ITERATION_CAP`；p3 cycle process-tree peak `155860992 B`，process-tree/rank swap `0`，GNU time `Swaps=0`；共享 cgroup 只作 diagnostic，不是 dedicated Gate | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/memory_first_small_v2.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/memory_first_small_v2_checker.json`; `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2.md` |
 
 P1 剩余 7 个 frozen cases 与 P2–P7 均为 `not_run_by_gate`。本登记不包含 p6 setup、PDE、official physics 或 `<2 GB` complete-workflow authority；完整 raw arrays/checkpoints 仍在 ignored formal root，compact 只保存 hash-bound 标量摘要。
 

@@ -1,17 +1,15 @@
-# V19 selective merge 边界：待审，不批准master合并
+# V19 selective merge边界：等待审阅，未批准master合并
 
-当前进展（原始模型完成后的增量）：U4 第三次运行已独立核验通过，564 步、最终 A6=9.92314718715201e-7，L2/scaled-curl=1.3644783292666524e-8/4.3714257232960455e-9。R/T/A/A_volume=0.3656257909689885/0.012990632321222292/0.6213835767097892/0.6213835745968793；完整物理 Gate、80模式、近场与守恒通过。全过程 RSS峰值2528460800 B，库存1830284886 B，临时396129600 B，zero-swap与清场通过。该场 monotonic 6609.661379 s、保守结算7210.314085 s；本批累计保守7709.181734 s。源码8a2d5cbba6ed834a6d731a30dd3735c8824fa762；28项只读checker/ledger测试通过。U5同配置准确notch已准入，尚未运行。下方两次失败及其当时停止结论属于历史快照，全部费用保留，不再是当前阻断。
+准确凝聚已在固定original p6/h10完成A6、完整物理和资源验证；notch被外部父监控失联中断，按最新用户指令不再恢复。以下仅为审阅依赖组，不是合并授权。
 
-用户最新授权：完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug。以下两场实现失败及费用保留为续跑前快照；原重放额度不再阻断本次有明确 bug 证据的续跑。准确凝聚、原数值/物理/资源 Gate 和 observe_only 均保持，U4 正在继续，U5 仍以 original 完整通过为条件。
-
-| 依赖组 | 内容 | 数值行为、验证与顺序 |
+| 依赖组 | 内容 | 数值变化、依赖与验证 |
 |---|---|---|
-| production numerical/core | 本轮不提升任何研究PC为普通默认 | 当前没有完整p6资格；不得因U2通过合入默认 |
-| reusable numerical/core | `hcurl_assembly_time_condensation.py`显式选项、`FullspaceSplitVolumeAction.bilinear_form`、新`p4_cell_condensed_inverse.py` | 增加受限轴对齐hex单元凝聚；旧选项默认保留。先审单元数学/所有权/CSR测试与U2六次调用 |
-| reusable runner/watchdog | 新V18 worker、薄dispatch、既有outer stack factory、V18 ledger；`physical_balanced_fgmres` observe_only参数和`finish_pc`错误保留 | 不增加算法；后两处计时修复只有小型测试资格，完整original仍缺。依赖core及profile |
-| checker/benchmark | `check_p4_cell_condensed_v18.py`、新dat、schema与测试 | 只读重算数组/范数/计数/资源；BLR拒绝、部分p6不冒充完整通过。依赖对应原始schema |
-| compact evidence/docs | response_v19、outcomes、compact/decision、run_index增量、progress/registry | 保留旧负结果与全部失败费用，建议可独立审阅/选择性保留；大数据只给hash索引 |
-| research-only | V18 exact/BLR profile及所有original/notch入口 | 只显式opt-in。准确p4合格；BLR额外收益不足；完整p6未资格化 |
-| do-not-merge | ignored vectors/matrices/factors/timelines、临时脚本、任何无用户授权或无 bug 证据的重放或生产默认切换 | 不提交大型raw，不扩大epsilon/rank/步数，不使用新PC路线 |
+| production numerical/core | 普通默认不提升；无默认PC切换 | 固定original证据不等于任意几何/0.7nm的production资格 |
+| reusable numerical/core | `hcurl_assembly_time_condensation.py`显式选项、`FullspaceSplitVolumeAction.bilinear_form`、`p4_cell_condensed_inverse.py` | 先组合完整张量再消元、MPC/非零RHS/左右端口/恢复；依赖现有carrier与LU；小fixture、U2六调用和original完整结果支持；旧默认保留 |
+| reusable runner/watchdog | V18 worker、薄dispatch、既有outer stack、V18 ledger；observe_only参数与finish_pc异常保留；`scripts/run_case_in_user_service.sh` | 不加新算法；计时修复已由original第三次验证。新shell仅把原launcher交给user systemd立即执行，无timer；仅ABI/help验证，无full PDE服务资格；依赖core/profile和用户systemd |
+| checker/benchmark | `check_p4_cell_condensed_v18.py`、新dat/schema和测试 | 重算control及fullspace保存证据；依赖原始schema/hash；106项最终相关测试、28项checker/ledger及original独立PASS |
+| compact evidence/docs | response_v19、outcomes、compact/decision、run_index增量、progress/registry、轻量残差PNG | 保留全部负结果、费用及unknown；准确source/原始hash索引；可单独审阅，先后于对应core均可但须保持依赖说明 |
+| research-only | V18 exact/BLR及original/notch显式入口 | exact控制等价且省内存、original完整通过；BLR无额外收益不提升；notch未最终资格化，用户已关闭续算 |
+| do-not-merge | 大型ignored vectors/matrices/factors/timelines、工程脚本、未使用重放草稿、任何production默认切换 | 不提交大raw；不扩epsilon/rank/步数；不把未执行的恢复草稿作为已验证功能 |
 
-顺序为core→profile/runner→checker与测试→compact文档；这是评审依赖顺序，不是merge授权。99项最终相关测试、旧helper串行/MPI2和U2/U3证据支持上述边界。停止后的最终修复源码为`14f0bdf6627c98c41cac0b6f9784e07a415cd56d`，其后无fresh PDE；用户已明确授权继续完整original并修复非数值Gate的bug，费用和失败记录累计保留。
+建议审阅顺序：core→profile/runner→checker与测试→compact/docs。只有审查批准和用户授权后才另行合并；当前全部提交留在task39extra，不影响5nm线。完整源SHA、base、测试与fresh PDE证据见[response V19](../response_v19.md)。

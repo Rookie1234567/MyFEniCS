@@ -1,9 +1,9 @@
 {
   "schema": "task039extra.v18.final-decision.v1",
   "batch_identity": "review_v18_p4_cell_condensed",
-  "status": "U4_FULLSPACE_PASS_U5_ADMITTED",
+  "status": "ORIGINAL_FULL_PASS_NOTCH_EXTERNAL_STOP_USER_CLOSED",
   "selected_backend": "exact",
-  "next_action": "RUN_U5_NOTCH_EXACT",
+  "next_action": "WAIT_REVIEW_NO_MORE_COMPUTATION",
   "exact_control_qualified": true,
   "exact_memory_comparison": "OBSERVED_REDUCTION",
   "exact_RSS_reduction_fraction": 0.3681520722966656,
@@ -11,12 +11,12 @@
   "BLR_additional_value": false,
   "original_passed": true,
   "original_status": "U4_ORIGINAL_FULLSPACE_OFFICIAL_PASS",
-  "notch_status": "ADMITTED_NOT_STARTED",
+  "notch_status": "EXTERNAL_PARENT_LOSS_UNQUALIFIED_USER_STOP",
   "p6_numerical_failure_demonstrated": false,
   "admit_u4": false,
-  "admit_u4_reason": "Original completed successfully; next stage is same-backend notch.",
+  "admit_u4_reason": "Original fully passed; user closed this batch after operational repair.",
   "exact_fallback_authorized": false,
-  "more_formal_runs_in_this_batch": true,
+  "more_formal_runs_in_this_batch": false,
   "formal_bug_replay_count": 2,
   "post_stop_fix_source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
   "post_stop_fix_full_model_qualification": "ORIGINAL_PASSED",
@@ -47,14 +47,55 @@
     {
       "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt3_independent.json",
       "sha256": "4c082163161669f65c4c64d34d02dc41b979129d07a8b27f000aefdd0a08982f"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_forensics.json",
+      "sha256": "21cc0088519c0c98350c527829723f6756a43328fa989bd620606a78926e0ac0"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_recovery_record.json",
+      "sha256": "031d54e21cf2f00da11a0b78193e9467ef7168d279d2b63b4c8fa2ef6bc3d999"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_codex_event.json",
+      "sha256": "925de1cf28ce5301cc38a7638214c12e14868e68429946ac3cae82dedd826b2b"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_sql_tool_output.json",
+      "sha256": "a9207a5550dfb82d5852a6edc6c8c887a5f801e27765b402800e8855fd50b0be"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/service_wrapper_help_verification.json",
+      "sha256": "7b3f9646a9a6d274d2c90103c9abcc31201bc8fa41fcc55bc1037093d634a74c"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_delivery_tests.log",
+      "sha256": "86359deb47516a2888eff30d08dc5e4ed4f77a1768b2c78b7d0394bb86a5ea3b"
+    },
+    {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/user_closed_final_ledger.json",
+      "sha256": "3e0cfa997a4b96f2d0b4f546ce5f423182d6eb571a6d777ebf406a7e8ab1aab7"
     }
   ],
-  "next_review_scope": "Review complete original and conditional notch evidence after execution.",
+  "next_review_scope": "Review original full pass, optional BLR negative, interrupted notch prefix and operational repair; no automatic PDE or master merge.",
   "user_continuation": {
     "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
     "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
-    "status": "U4_COMPLETE_U5_ADMITTED",
+    "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
     "previous_bug_replay_count": 1
   },
-  "original_passed_backend": "exact"
+  "original_passed_backend": "exact",
+  "notch_passed": false,
+  "admit_u5": false,
+  "admit_u5_reason": "Notch interrupted externally; latest user instruction forbids resuming or rerunning.",
+  "infrastructure_recovery_count": 0,
+  "user_closeout": {
+    "user_instruction": "修正后就不要恢复计算了，我看收敛的趋势很好，只需要知道其确实可以收敛的就行",
+    "status": "FINAL_USER_CLOSED",
+    "additional_PDE_authorized": false,
+    "formal_runs_after_operational_fix": 0,
+    "original_convergence": "MEASURED_FULL_PASS",
+    "notch_convergence": "TREND_ONLY_FINAL_A6_NOT_REACHED",
+    "notch_final_official_result": false
+  }
 }

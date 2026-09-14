@@ -2,7 +2,7 @@
   "schema": "task039extra.v18.cell-condensed-compact.v1",
   "review": "review_report_v18.md",
   "base_sha": "96827e89ce5ba446c4faa7cb507b777f21953af8",
-  "status": "U4_FULLSPACE_PASS_U5_ADMITTED",
+  "status": "ORIGINAL_FULL_PASS_NOTCH_EXTERNAL_STOP_USER_CLOSED",
   "controls": {
     "U2": {
       "status": "U2_EXACT_CONTROL_PASS",
@@ -3331,9 +3331,270 @@
       }
     },
     "U5": {
-      "status": "ADMITTED_NOT_STARTED",
-      "backend": "exact",
-      "official_result": false
+      "id": "V18_U5_notch_attempt1_external_parent_loss",
+      "status": "EXTERNAL_PARENT_LOSS_UNQUALIFIED_USER_STOP",
+      "stage": "U5_NOTCH",
+      "source_sha": "c56437271a4e3c34c984e4c3dee111b61dc5130e",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z",
+      "official_result": false,
+      "numerical_gate_rejected": false,
+      "final_numerical_result": "unqualified",
+      "last_completed_iteration": {
+        "iteration": 494,
+        "outer_matvec_count": 509,
+        "outer_pc_count": 494,
+        "reported_relative": 5.15758355639567e-06
+      },
+      "last_explicit_residual": {
+        "explicit_true_residual": 5.478307207552461e-06,
+        "iteration": 488,
+        "reported_relative": 5.478307194676371e-06,
+        "solution_source": "live_buildSolution",
+        "solve_seconds": 5516.482711764031
+      },
+      "last_saved_field_evaluation": {
+        "evaluation_only": true,
+        "evaluation_seconds": 2.797184406997985,
+        "explicit_relative_residual": 5.763060073012618e-06,
+        "field_metrics": {
+          "L2": {
+            "absolute_error_norm": 1.5487533401275456e-05,
+            "reference_norm": 185.12929979505182,
+            "relative": 8.365792674860758e-08
+          },
+          "scaled_curl": {
+            "absolute_error_norm": 8.20468524346621e-06,
+            "reference_norm": 185.20520736783976,
+            "relative": 4.430051055298203e-08
+          }
+        },
+        "iteration": 480,
+        "reference_vector_in_initial_guess": false,
+        "reference_vector_in_operator": false,
+        "solve_seconds": 5426.497431797023,
+        "status": "AVAILABLE",
+        "workflow_seconds": 5546.446525316961
+      },
+      "field_checkpoint_metrics": {
+        "path": "results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/field_checkpoint_metrics.jsonl",
+        "sha256": "f2f8a5f5c731791c34d8f9ae6e4cc6841b0198dbb57f969c654e1c5235ccb5c4"
+      },
+      "forensics": {
+        "classification": "EXTERNAL_PARENT_LOSS",
+        "failed_source_sha": "c56437271a4e3c34c984e4c3dee111b61dc5130e",
+        "stage": "U5_NOTCH",
+        "run_directory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z",
+        "ledger_snapshot": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/ledger_before_notch_parent_loss_recovery.json",
+          "sha256": "7d304e2036e9057c51c383c733473dfaacd2be105516acbcfd6b714c28f92f51"
+        },
+        "codex_shutdown_event": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_codex_event.json",
+          "sha256": "925de1cf28ce5301cc38a7638214c12e14868e68429946ac3cae82dedd826b2b"
+        },
+        "last_iteration": {
+          "iteration": 494,
+          "outer_matvec_count": 509,
+          "outer_pc_count": 494,
+          "reported_relative": 5.15758355639567e-06
+        },
+        "last_explicit_residual": {
+          "explicit_true_residual": 5.478307207552461e-06,
+          "iteration": 488,
+          "reported_relative": 5.478307194676371e-06,
+          "solution_source": "live_buildSolution",
+          "solve_seconds": 5516.482711764031
+        },
+        "sample_count": 20113,
+        "observed_prefix_monotonic_seconds": 5221.108862313995,
+        "observed_prefix_conservative_seconds": 5704.197023532811,
+        "actual_total_elapsed_seconds": null,
+        "actual_exit_signal": null,
+        "actual_parent_exit_code": null,
+        "prefix_RSS_peak_bytes": 2012508160,
+        "prefix_swap_peak_bytes": 0,
+        "prefix_global_swap_unchanged": true,
+        "prefix_resource_samples_safe": true,
+        "last_parent_clock": {
+          "monotonic": 105844.670292639,
+          "boottime": 105844.670293531,
+          "utc_ns": 1789375177607056415
+        },
+        "parent_pid": 327503,
+        "last_member_pids": [
+          327503,
+          327517,
+          327520
+        ],
+        "worker_status": "FAILED",
+        "worker_classification": "CLEANUP_FAILED",
+        "worker_error": {
+          "message": "V14 worker requires the dedicated parent watchdog",
+          "type": "RuntimeError"
+        },
+        "source_files": {
+          "run_summary.json": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/run_summary.json",
+            "sha256": "37d34cab119d7da646d60d35fd64b19dc181adae4638a578ddc76cbd7a18f064"
+          },
+          "run_manifest.json": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/run_manifest.json",
+            "sha256": "e41f1d0f6096cf2514e08fbadfeae326e2a377a38dbbae1b3611fedf42b8dc0c"
+          },
+          "physical_p4_cell_condensed_v18_summary.json": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/physical_p4_cell_condensed_v18_summary.json",
+            "sha256": "5b655e8884f210ce274b273f32dd313e81a9b3aab622bad81cf9b5d1c913da58"
+          },
+          "watchdog/worker.log": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/watchdog/worker.log",
+            "sha256": "2dcd71c80dc170f172a3241dd3fa656d5a6a7b44a374aa3f632fa64f68ecab8c"
+          },
+          "watchdog/resources.jsonl": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/watchdog/resources.jsonl",
+            "sha256": "342a35f952a3d603563b016390ecd8374259e87f2f2f28df6d6a3b80861d97c9"
+          },
+          "v18_events.jsonl": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/v18_events.jsonl",
+            "sha256": "84f238661b65ebb761a3c6446ea64eadabc9c3e9cfb7374c1b20790a974dc00f"
+          },
+          "v18_worker_resources.jsonl": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/v18_worker_resources.jsonl",
+            "sha256": "2315b5105d1348d0f8d2545cd21702efd4f0a3d38e8101dcdd693dc02938ad43"
+          },
+          "monitor_residuals.jsonl": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/monitor_residuals.jsonl",
+            "sha256": "8eb303a916ebd2c1d89b4f8872a31d412a05f6714481f56bb4005772ecaab8ef"
+          },
+          "iterations.jsonl": {
+            "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/iterations.jsonl",
+            "sha256": "14cdf9667c007bb7f6f01c82ca74a4fa243e68b2f18955df218465044977fa4b"
+          }
+        },
+        "reason": "Same-second local Codex idle/no-subscriber thread shutdown and last parent heartbeat; worker then detected lost dedicated watchdog. Parent exit/signal and completed elapsed time remain unknown.",
+        "time_policy": "observe_only",
+        "recovery_strategy": "Immediate transient user service owned by systemd retaining the same dedicated parent watchdog; fresh zero-start KSP because saved checkpoints contain solution only.",
+        "postmortem_host_observation": {
+          "checked_absent_pids": [
+            327503,
+            327517,
+            327520
+          ],
+          "checked_in_host_namespace": true,
+          "observed_no_ongoing_heavy_process": true,
+          "observation_UTC": "2026-09-14T08:50:00Z",
+          "timestamp_precision": "minute-level recollection; not used for runtime accounting"
+        },
+        "service_probe": {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/systemd_service_probe.json",
+          "result": "qualified ABI; PID340580 directly parented by user systemd PID436"
+        },
+        "pc_execution_prefix": {
+          "completed_PC_count": 494,
+          "incomplete_PC_sequence": 495,
+          "source": "v14_whole_pc_returned completed flags and last iterations row",
+          "global_mat_solve_count": null,
+          "global_mat_solve_upper_bound": 990,
+          "reason_unknown": "final in-memory boundary counters were not saved after parent supervision was lost; do not fabricate exact factor solve count"
+        }
+      },
+      "forensics_record": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_forensics.json",
+        "sha256": "21cc0088519c0c98350c527829723f6756a43328fa989bd620606a78926e0ac0"
+      },
+      "administrative_closeout": {
+        "schema": "task039extra.v18.infrastructure-recovery-record.v1",
+        "classification": "EXTERNAL_PARENT_LOSS",
+        "stage": "U5_NOTCH",
+        "recovery_id": "v18_u5_codex_idle_parent_loss_20260914",
+        "failed_source_sha": "c56437271a4e3c34c984e4c3dee111b61dc5130e",
+        "run_directory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z",
+        "prior_ledger_snapshot": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/ledger_before_notch_parent_loss_recovery.json",
+          "sha256": "7d304e2036e9057c51c383c733473dfaacd2be105516acbcfd6b714c28f92f51"
+        },
+        "forensics": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_forensics.json",
+          "sha256": "21cc0088519c0c98350c527829723f6756a43328fa989bd620606a78926e0ac0"
+        },
+        "service_probe": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/systemd_service_probe.json",
+          "sha256": "223701e039a2440fb0c0e6450aca1569afef8a4064a2c5d32c69c8bf7bd08b79"
+        },
+        "worker_summary": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/physical_p4_cell_condensed_v18_summary.json",
+          "sha256": "5b655e8884f210ce274b273f32dd313e81a9b3aab622bad81cf9b5d1c913da58"
+        },
+        "checked_absent_pids": [
+          327503,
+          327517,
+          327520
+        ],
+        "host_process_check_timestamp_ns": 1789376557970354963,
+        "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
+        "policy_debit_seconds": 43200.0,
+        "actual_total_elapsed_seconds": null,
+        "settled_seconds": null,
+        "observed_prefix_monotonic_seconds": 5221.108862313995,
+        "observed_prefix_conservative_seconds": 5704.197023532811,
+        "budget_before": {
+          "total_budget_seconds": 43200.0,
+          "measured_elapsed_seconds": 7709.1817335480555,
+          "policy_debit_seconds": 0.0,
+          "conservative_allowance_seconds": 0.0,
+          "budget_used_seconds": 7709.1817335480555,
+          "active_reservations_seconds": 43200.0,
+          "remaining_seconds": -7709.181733548059,
+          "policy_debits": [],
+          "active_attempts": [
+            {
+              "stage": "U5_NOTCH",
+              "attempt_index": 0,
+              "reserved_seconds": 43200.0,
+              "recovery_id": null,
+              "time_policy": "observe_only"
+            }
+          ],
+          "elapsed_seconds_semantics": "measured_workflow_time_only"
+        },
+        "measured_elapsed_unchanged": true,
+        "user_stop_instruction": "修正后就不要恢复计算了，我看收敛的趋势很好，只需要知道其确实可以收敛的就行",
+        "resume_authorized": false,
+        "formal_runs_after_fix": 0,
+        "reason": "Administrative closeout only: parent settlement missing. Preserve the full reservation as policy occupation, not measured time; keep the observed incomplete prefix separately. User cancelled all further computation."
+      },
+      "administrative_closeout_record": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_recovery_record.json",
+        "sha256": "031d54e21cf2f00da11a0b78193e9467ef7168d279d2b63b4c8fa2ef6bc3d999"
+      },
+      "final_resource_authority": "unknown_parent_finalization_missing",
+      "postmortem_no_remaining_processes": true,
+      "user_closeout": {
+        "user_instruction": "修正后就不要恢复计算了，我看收敛的趋势很好，只需要知道其确实可以收敛的就行",
+        "status": "FINAL_USER_CLOSED",
+        "additional_PDE_authorized": false,
+        "formal_runs_after_operational_fix": 0,
+        "original_convergence": "MEASURED_FULL_PASS",
+        "notch_convergence": "TREND_ONLY_FINAL_A6_NOT_REACHED",
+        "notch_final_official_result": false
+      },
+      "historical_recovery_strategy_note": "The forensics snapshot records a proposed fresh recovery. It was NOT executed; the latest user instruction supersedes that proposal.",
+      "observed_codex_parent_shutdown_event": {
+        "source": "captured read-only SQL tool output in this root task rollout",
+        "rollout_path": "/mnt/c/Users/admin/.codex/sessions/2026/09/10/rollout-2026-09-10T17-11-00-01a08a95-afb8-7432-aa08-cefd32b0f4ae.jsonl",
+        "rollout_line": 33026,
+        "immutable_tool_output": {
+          "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_sql_tool_output.json",
+          "sha256": "a9207a5550dfb82d5852a6edc6c8c887a5f801e27765b402800e8855fd50b0be"
+        },
+        "database_queried": "/home/shenjh/.codex/sqlite/logs_2.sqlite",
+        "event": {
+          "ts": 1789375177,
+          "level": "INFO",
+          "target": "codex_app_server::request_processors::thread_lifecycle",
+          "feedback_log_body": "thread 01a08a95-afb8-7432-aa08-cefd32b0f4ae has no subscribers and is idle; shutting down"
+        },
+        "later_database_requery": "record no longer returned; original tool output preserved verbatim"
+      }
     },
     "U4_attempt3": {
       "schema": "task039extra.v18.fullspace-independent.v1",
@@ -12102,9 +12363,9 @@
   "decision": {
     "schema": "task039extra.v18.final-decision.v1",
     "batch_identity": "review_v18_p4_cell_condensed",
-    "status": "U4_FULLSPACE_PASS_U5_ADMITTED",
+    "status": "ORIGINAL_FULL_PASS_NOTCH_EXTERNAL_STOP_USER_CLOSED",
     "selected_backend": "exact",
-    "next_action": "RUN_U5_NOTCH_EXACT",
+    "next_action": "WAIT_REVIEW_NO_MORE_COMPUTATION",
     "exact_control_qualified": true,
     "exact_memory_comparison": "OBSERVED_REDUCTION",
     "exact_RSS_reduction_fraction": 0.3681520722966656,
@@ -12112,12 +12373,12 @@
     "BLR_additional_value": false,
     "original_passed": true,
     "original_status": "U4_ORIGINAL_FULLSPACE_OFFICIAL_PASS",
-    "notch_status": "ADMITTED_NOT_STARTED",
+    "notch_status": "EXTERNAL_PARENT_LOSS_UNQUALIFIED_USER_STOP",
     "p6_numerical_failure_demonstrated": false,
     "admit_u4": false,
-    "admit_u4_reason": "Original completed successfully; next stage is same-backend notch.",
+    "admit_u4_reason": "Original fully passed; user closed this batch after operational repair.",
     "exact_fallback_authorized": false,
-    "more_formal_runs_in_this_batch": true,
+    "more_formal_runs_in_this_batch": false,
     "formal_bug_replay_count": 2,
     "post_stop_fix_source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
     "post_stop_fix_full_model_qualification": "ORIGINAL_PASSED",
@@ -12148,16 +12409,57 @@
       {
         "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/u4_attempt3_independent.json",
         "sha256": "4c082163161669f65c4c64d34d02dc41b979129d07a8b27f000aefdd0a08982f"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_forensics.json",
+        "sha256": "21cc0088519c0c98350c527829723f6756a43328fa989bd620606a78926e0ac0"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_recovery_record.json",
+        "sha256": "031d54e21cf2f00da11a0b78193e9467ef7168d279d2b63b4c8fa2ef6bc3d999"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_codex_event.json",
+        "sha256": "925de1cf28ce5301cc38a7638214c12e14868e68429946ac3cae82dedd826b2b"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_sql_tool_output.json",
+        "sha256": "a9207a5550dfb82d5852a6edc6c8c887a5f801e27765b402800e8855fd50b0be"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/service_wrapper_help_verification.json",
+        "sha256": "7b3f9646a9a6d274d2c90103c9abcc31201bc8fa41fcc55bc1037093d634a74c"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_delivery_tests.log",
+        "sha256": "86359deb47516a2888eff30d08dc5e4ed4f77a1768b2c78b7d0394bb86a5ea3b"
+      },
+      {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/user_closed_final_ledger.json",
+        "sha256": "3e0cfa997a4b96f2d0b4f546ce5f423182d6eb571a6d777ebf406a7e8ab1aab7"
       }
     ],
-    "next_review_scope": "Review complete original and conditional notch evidence after execution.",
+    "next_review_scope": "Review original full pass, optional BLR negative, interrupted notch prefix and operational repair; no automatic PDE or master merge.",
     "user_continuation": {
       "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
       "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
-      "status": "U4_COMPLETE_U5_ADMITTED",
+      "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
       "previous_bug_replay_count": 1
     },
-    "original_passed_backend": "exact"
+    "original_passed_backend": "exact",
+    "notch_passed": false,
+    "admit_u5": false,
+    "admit_u5_reason": "Notch interrupted externally; latest user instruction forbids resuming or rerunning.",
+    "infrastructure_recovery_count": 0,
+    "user_closeout": {
+      "user_instruction": "修正后就不要恢复计算了，我看收敛的趋势很好，只需要知道其确实可以收敛的就行",
+      "status": "FINAL_USER_CLOSED",
+      "additional_PDE_authorized": false,
+      "formal_runs_after_operational_fix": 0,
+      "original_convergence": "MEASURED_FULL_PASS",
+      "notch_convergence": "TREND_ONLY_FINAL_A6_NOT_REACHED",
+      "notch_final_official_result": false
+    }
   },
   "post_stop_fix": {
     "source_sha": "14f0bdf6627c98c41cac0b6f9784e07a415cd56d",
@@ -12264,20 +12566,58 @@
           "v18_events.jsonl": "4a40cb47f8f4821ad7f5a89f3a6fc9008deaebd752c0897eb5a4cab73afefec2",
           "v18_worker_resources.jsonl": "b9a7b7079b2ce0d9f8120c2a35c629bf92532525e8af479ff58909258ea40009"
         }
+      },
+      {
+        "stage": "U5_NOTCH",
+        "attempt": 1,
+        "source_sha": "c56437271a4e3c34c984e4c3dee111b61dc5130e",
+        "directory": "results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z",
+        "status": "EXTERNAL_PARENT_LOSS",
+        "monotonic_seconds": null,
+        "settled_seconds": null,
+        "rss_peak_bytes": null,
+        "observed_prefix_monotonic_seconds": 5221.108862313995,
+        "observed_prefix_conservative_seconds": 5704.197023532811,
+        "observed_prefix_rss_peak_bytes": 2012508160,
+        "policy_debit_seconds": 43200.0,
+        "hashes": {
+          "run_summary.json": "37d34cab119d7da646d60d35fd64b19dc181adae4638a578ddc76cbd7a18f064",
+          "run_manifest.json": "e41f1d0f6096cf2514e08fbadfeae326e2a377a38dbbae1b3611fedf42b8dc0c",
+          "physical_p4_cell_condensed_v18_summary.json": "5b655e8884f210ce274b273f32dd313e81a9b3aab622bad81cf9b5d1c913da58",
+          "watchdog/worker.log": "2dcd71c80dc170f172a3241dd3fa656d5a6a7b44a374aa3f632fa64f68ecab8c",
+          "watchdog/resources.jsonl": "342a35f952a3d603563b016390ecd8374259e87f2f2f28df6d6a3b80861d97c9",
+          "v18_events.jsonl": "84f238661b65ebb761a3c6446ea64eadabc9c3e9cfb7374c1b20790a974dc00f",
+          "v18_worker_resources.jsonl": "2315b5105d1348d0f8d2545cd21702efd4f0a3d38e8101dcdd693dc02938ad43",
+          "monitor_residuals.jsonl": "8eb303a916ebd2c1d89b4f8872a31d412a05f6714481f56bb4005772ecaab8ef",
+          "iterations.jsonl": "14cdf9667c007bb7f6f01c82ca74a4fa243e68b2f18955df218465044977fa4b"
+        }
       }
     ],
     "monotonic_sum_seconds": 7064.200431390986,
     "conservative_settled_sum_seconds": 7709.1817335480555,
     "source": {
-      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/ledger_after_original_pass.json",
-      "sha256": "40683cc02802c8a856f2c38156e79fc33cf9d4e759524a2398fea62ff90a3a38"
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/user_closed_final_ledger.json",
+      "sha256": "3e0cfa997a4b96f2d0b4f546ce5f423182d6eb571a6d777ebf406a7e8ab1aab7"
     },
     "time_policy": "observe_only",
-    "global_symbolic_count": 5,
-    "global_numeric_count": 5,
-    "global_MatSolve_count": 1139,
+    "global_symbolic_count": 6,
+    "global_numeric_count": 6,
+    "global_MatSolve_count": null,
     "formal_bug_replay_count": 2,
-    "active_attempts": []
+    "active_attempts": [],
+    "completed_run_count": 5,
+    "started_run_count": 6,
+    "sums_scope": "Five parent-finalized runs only; incomplete notch prefix is separate and not added to ledger measured time.",
+    "actual_all_runs_total_seconds": null,
+    "observed_monotonic_lower_bound_seconds": 12285.30929370498,
+    "observed_conservative_clock_lower_bound_seconds": 13413.378757080867,
+    "policy_debit_seconds": 43200.0,
+    "budget_used_seconds": 50909.18173354806,
+    "completed_runs_global_MatSolve_count": 1139,
+    "incomplete_notch_global_MatSolve_count": null,
+    "incomplete_notch_global_MatSolve_upper_bound": 990,
+    "infrastructure_recovery_count": 0,
+    "no_time_termination_restored": true
   },
   "historical_budget": {
     "predecessors": {
@@ -12399,12 +12739,826 @@
     "post_formal_repairs_and_documentation_seconds": null,
     "unknowns_not_zero": true,
     "repair_1_window": "between first U4 termination and the one replay; formal costs are separately retained",
-    "post_stop_reporting_utc": "2026-09-14T04:48:18.797500+00:00"
+    "post_stop_reporting_utc": "2026-09-14T04:48:18.797500+00:00",
+    "operational_fix_scope": "Forensics, one small immediate-service shell wrapper, ABI/help checks, administrative ledger closeout and documentation; wall/CPU engineering duration not separately measured."
   },
   "user_continuation": {
     "user_instruction": "完整地跑个p6h10的模型，看看结果，如果不是数值gate，那么就修正那些bug",
     "scope": "Continue original p6h10 and repair concrete implementation bugs; preserve numerical and resource gates, all prior attempts and charges.",
-    "status": "U4_COMPLETE_U5_ADMITTED",
+    "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
     "previous_bug_replay_count": 1
+  },
+  "user_closeout": {
+    "user_instruction": "修正后就不要恢复计算了，我看收敛的趋势很好，只需要知道其确实可以收敛的就行",
+    "status": "FINAL_USER_CLOSED",
+    "additional_PDE_authorized": false,
+    "formal_runs_after_operational_fix": 0,
+    "original_convergence": "MEASURED_FULL_PASS",
+    "notch_convergence": "TREND_ONLY_FINAL_A6_NOT_REACHED",
+    "notch_final_official_result": false
+  },
+  "operational_fix": {
+    "path": "scripts/run_case_in_user_service.sh",
+    "purpose": "Place the existing run_case parent watchdog under user systemd, independently of Codex task unload.",
+    "timer_created": false,
+    "new_numerical_runner": false,
+    "watchdog_or_resource_gates_removed": false,
+    "verification": {
+      "timestamp_ns": 1789377091634432169,
+      "source_sha": "c56437271a4e3c34c984e4c3dee111b61dc5130e",
+      "qualified_activation": true,
+      "scalar": "complex128",
+      "int": "int32",
+      "wrapper_test_arguments": [
+        "--help"
+      ],
+      "unit": "myfenics-case-20260914T090136-344218.service",
+      "unit_state": {
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "PDE_launched": false,
+      "no_matching_p6_processes_in_host_namespace": true,
+      "post_fix_full_model_service_qualification": "not_run_per_user"
+    },
+    "ABI_probe": {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/systemd_service_probe.json",
+      "sha256": "223701e039a2440fb0c0e6450aca1569afef8a4064a2c5d32c69c8bf7bd08b79"
+    },
+    "test_record": {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/service_wrapper_help_verification.json",
+      "sha256": "7b3f9646a9a6d274d2c90103c9abcc31201bc8fa41fcc55bc1037093d634a74c"
+    },
+    "wrapper": {
+      "path": "scripts/run_case_in_user_service.sh",
+      "sha256": "ff0698a305e4a3a221ad4a5336ee50c323be068708dd96a56aaf3949b813affa"
+    },
+    "full_PDE_service_test": "not_run_per_latest_user_instruction",
+    "unused_replay_admission_drafts": "not_committed_not_executed"
+  },
+  "closeout_audit": {
+    "record": {
+      "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/user_closeout_static_checks.json",
+      "sha256": "bd5195759ec47c73bb39efa800a6602f80990a28e43e1fc805e763c97958b6cd"
+    },
+    "result": {
+      "status": "PASS",
+      "source_head_before_closeout_commit": "c56437271a4e3c34c984e4c3dee111b61dc5130e",
+      "base_sha": "96827e89ce5ba446c4faa7cb507b777f21953af8",
+      "frozen_files_unchanged": 41,
+      "historical_run_prefix_unchanged": 30,
+      "run_count": 36,
+      "decision_consistent": true,
+      "new_evidence_hashes_pass": true,
+      "no_numerical_changes_since_notch_source": true,
+      "effective_budget": {
+        "total_budget_seconds": 43200.0,
+        "measured_elapsed_seconds": 7709.1817335480555,
+        "policy_debit_seconds": 43200.0,
+        "conservative_allowance_seconds": 0.0,
+        "budget_used_seconds": 50909.18173354806,
+        "active_reservations_seconds": 0.0,
+        "remaining_seconds": -7709.181733548059,
+        "policy_debits": [
+          {
+            "actual_elapsed_seconds": null,
+            "id": "v18_u5_codex_idle_parent_loss_20260914",
+            "kind": "UNSETTLED_PARENT_LOSS_RESERVATION",
+            "record": {
+              "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/notch_parent_loss_recovery_record.json",
+              "sha256": "031d54e21cf2f00da11a0b78193e9467ef7168d279d2b63b4c8fa2ef6bc3d999"
+            },
+            "seconds": 43200.0,
+            "source_sha": "c56437271a4e3c34c984e4c3dee111b61dc5130e",
+            "stage": "U5_NOTCH"
+          }
+        ],
+        "active_attempts": [],
+        "elapsed_seconds_semantics": "measured_workflow_time_only"
+      },
+      "latest_user_no_more_PDE": true,
+      "active_attempts": [],
+      "host_cleanup_and_service_help": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/service_wrapper_help_verification.json",
+        "sha256": "7b3f9646a9a6d274d2c90103c9abcc31201bc8fa41fcc55bc1037093d634a74c"
+      },
+      "focused_tests": {
+        "count": 106,
+        "record": {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/final_delivery_tests.log",
+          "sha256": "86359deb47516a2888eff30d08dc5e4ed4f77a1768b2c78b7d0394bb86a5ea3b"
+        }
+      },
+      "documentation_tests": {
+        "count": 21,
+        "record": {
+          "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/user_closeout_documentation_tests.log",
+          "sha256": "b90e7b36e126a76e6729ad424f3c9d0a6d739d09c958cfad28aa36e3d7e55a3e"
+        }
+      },
+      "initial_documentation_failure_preserved": {
+        "path": "benchmarks/artifacts/task39extra/p4_cell_condensed_v18/root_engineering/user_closeout_documentation_initial_failure.log",
+        "sha256": "84c329c17720937d7be156381fbd36bf41f3d3f379d2ec0eac9f425695e508ce"
+      },
+      "historical_link_fix": {
+        "from": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json",
+        "to": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/memory_first_small_v2_checker.json",
+        "data_or_status_changed": false
+      },
+      "bash_syntax": true,
+      "diff_check": true,
+      "current_md_links_exist": true,
+      "plot_visual_inspection": "PASS; complete labels, log scale, original final and notch true-prefix endpoints",
+      "GitHub_rendered_view": "not_checked",
+      "no_new_formal_reference_or_PDE": true
+    }
+  },
+  "residual_history": {
+    "original": {
+      "source": "results/euv_grazing1_phi0/task39extra_v18_u4_original_exact__full3d_iterative__mpi1__Mna/20260914T045836.140614Z/monitor_residuals.jsonl",
+      "sha256": "5547c200c132472784e8e16baafae268ee4e7a62225ade0620536f7c0b80c019",
+      "values_iteration_rho": [
+        [
+          0,
+          1.0
+        ],
+        [
+          8,
+          0.8738514487011658
+        ],
+        [
+          16,
+          0.47616955695863733
+        ],
+        [
+          24,
+          0.150711901359533
+        ],
+        [
+          32,
+          0.07312259253939729
+        ],
+        [
+          32,
+          0.07312259253939729
+        ],
+        [
+          40,
+          0.06654507256707533
+        ],
+        [
+          48,
+          0.042389438200508577
+        ],
+        [
+          56,
+          0.03097750648941487
+        ],
+        [
+          64,
+          0.01915747640755475
+        ],
+        [
+          64,
+          0.01915747640755475
+        ],
+        [
+          72,
+          0.017379906286951623
+        ],
+        [
+          80,
+          0.014559353196258765
+        ],
+        [
+          88,
+          0.008226818986684788
+        ],
+        [
+          96,
+          0.005743801051738831
+        ],
+        [
+          96,
+          0.005743801051738831
+        ],
+        [
+          104,
+          0.005315588915500447
+        ],
+        [
+          112,
+          0.004578006994437549
+        ],
+        [
+          120,
+          0.00365255429483249
+        ],
+        [
+          128,
+          0.0024441945048511203
+        ],
+        [
+          128,
+          0.0024441945048511203
+        ],
+        [
+          136,
+          0.0020591536766156517
+        ],
+        [
+          144,
+          0.0016595119752672116
+        ],
+        [
+          152,
+          0.001251804892347769
+        ],
+        [
+          160,
+          0.0010143071825118029
+        ],
+        [
+          160,
+          0.0010143071825118029
+        ],
+        [
+          168,
+          0.0009368620782079028
+        ],
+        [
+          176,
+          0.0008607708979107327
+        ],
+        [
+          184,
+          0.0007573488318768842
+        ],
+        [
+          192,
+          0.0005754101127246266
+        ],
+        [
+          192,
+          0.0005754101127246266
+        ],
+        [
+          200,
+          0.0005004329307207181
+        ],
+        [
+          208,
+          0.0004457141067961382
+        ],
+        [
+          216,
+          0.00039607043412028615
+        ],
+        [
+          224,
+          0.00031954824423664974
+        ],
+        [
+          224,
+          0.00031954824423664974
+        ],
+        [
+          232,
+          0.000285544978615009
+        ],
+        [
+          240,
+          0.00026105061941401235
+        ],
+        [
+          248,
+          0.00021996427712640275
+        ],
+        [
+          256,
+          0.00018554995235470548
+        ],
+        [
+          256,
+          0.00018554995235470548
+        ],
+        [
+          264,
+          0.00017006713962044515
+        ],
+        [
+          272,
+          0.0001542818030731558
+        ],
+        [
+          280,
+          0.00013173379476242314
+        ],
+        [
+          288,
+          0.00011172566275579686
+        ],
+        [
+          288,
+          0.00011172566275579686
+        ],
+        [
+          296,
+          0.00010481236712567383
+        ],
+        [
+          304,
+          9.529678782792367e-05
+        ],
+        [
+          312,
+          8.009210105762904e-05
+        ],
+        [
+          320,
+          6.718601702383985e-05
+        ],
+        [
+          320,
+          6.718601702383985e-05
+        ],
+        [
+          328,
+          6.19240203356141e-05
+        ],
+        [
+          336,
+          5.6398877836215676e-05
+        ],
+        [
+          344,
+          5.0141095045997616e-05
+        ],
+        [
+          352,
+          4.363570602534626e-05
+        ],
+        [
+          352,
+          4.363570602534626e-05
+        ],
+        [
+          360,
+          4.151080047784668e-05
+        ],
+        [
+          368,
+          3.8871833599001154e-05
+        ],
+        [
+          376,
+          3.311988680488748e-05
+        ],
+        [
+          384,
+          2.5590440712039823e-05
+        ],
+        [
+          384,
+          2.5590440712039823e-05
+        ],
+        [
+          392,
+          2.2613154230425735e-05
+        ],
+        [
+          400,
+          1.9693227623265437e-05
+        ],
+        [
+          408,
+          1.726476515608667e-05
+        ],
+        [
+          416,
+          1.4648216778350024e-05
+        ],
+        [
+          416,
+          1.4648216778350024e-05
+        ],
+        [
+          424,
+          1.3862263698461195e-05
+        ],
+        [
+          432,
+          1.2963064158601317e-05
+        ],
+        [
+          440,
+          1.150165408191366e-05
+        ],
+        [
+          448,
+          8.269158579766467e-06
+        ],
+        [
+          448,
+          8.269158579766467e-06
+        ],
+        [
+          456,
+          7.219677090119688e-06
+        ],
+        [
+          464,
+          6.246023210169115e-06
+        ],
+        [
+          472,
+          5.7075602050188615e-06
+        ],
+        [
+          480,
+          4.705409359475261e-06
+        ],
+        [
+          480,
+          4.705409359475261e-06
+        ],
+        [
+          488,
+          4.362020894218846e-06
+        ],
+        [
+          496,
+          4.074821714141464e-06
+        ],
+        [
+          504,
+          3.645364068777166e-06
+        ],
+        [
+          512,
+          2.587326911636758e-06
+        ],
+        [
+          512,
+          2.587326911636758e-06
+        ],
+        [
+          520,
+          2.2743577818151445e-06
+        ],
+        [
+          528,
+          1.848528691013947e-06
+        ],
+        [
+          536,
+          1.6598209604944262e-06
+        ],
+        [
+          544,
+          1.3289156103235348e-06
+        ],
+        [
+          544,
+          1.3289156103235348e-06
+        ],
+        [
+          552,
+          1.2139617656960574e-06
+        ],
+        [
+          560,
+          1.117274838944609e-06
+        ],
+        [
+          564,
+          9.923147187151997e-07
+        ],
+        [
+          564,
+          9.923147187151997e-07
+        ]
+      ]
+    },
+    "notch": {
+      "source": "results/euv_grazing1_phi0/task39extra_v18_u5_notch_exact__full3d_iterative__mpi1__Mna/20260914T070433.394538Z/monitor_residuals.jsonl",
+      "sha256": "8eb303a916ebd2c1d89b4f8872a31d412a05f6714481f56bb4005772ecaab8ef",
+      "values_iteration_rho": [
+        [
+          0,
+          1.0
+        ],
+        [
+          8,
+          0.884550784631093
+        ],
+        [
+          16,
+          0.49699332722722694
+        ],
+        [
+          24,
+          0.16097277706063773
+        ],
+        [
+          32,
+          0.07798371424978681
+        ],
+        [
+          32,
+          0.07798371424978681
+        ],
+        [
+          40,
+          0.0709251290565781
+        ],
+        [
+          48,
+          0.04871381208588258
+        ],
+        [
+          56,
+          0.03514969954342817
+        ],
+        [
+          64,
+          0.021955239252830498
+        ],
+        [
+          64,
+          0.021955239252830498
+        ],
+        [
+          72,
+          0.020448623733351597
+        ],
+        [
+          80,
+          0.015327546831743182
+        ],
+        [
+          88,
+          0.010226573927968838
+        ],
+        [
+          96,
+          0.006219726227433172
+        ],
+        [
+          96,
+          0.006219726227433172
+        ],
+        [
+          104,
+          0.0056890201971869225
+        ],
+        [
+          112,
+          0.00512940018475421
+        ],
+        [
+          120,
+          0.003983026051617027
+        ],
+        [
+          128,
+          0.0026867569565445374
+        ],
+        [
+          128,
+          0.0026867569565445374
+        ],
+        [
+          136,
+          0.0023832235218878323
+        ],
+        [
+          144,
+          0.002005721070303572
+        ],
+        [
+          152,
+          0.0016107633700242704
+        ],
+        [
+          160,
+          0.0012054931535931649
+        ],
+        [
+          160,
+          0.0012054931535931649
+        ],
+        [
+          168,
+          0.00111981800690628
+        ],
+        [
+          176,
+          0.0010106314604652444
+        ],
+        [
+          184,
+          0.000932276690246132
+        ],
+        [
+          192,
+          0.0006493000951074394
+        ],
+        [
+          192,
+          0.0006493000951074394
+        ],
+        [
+          200,
+          0.0005673877125032775
+        ],
+        [
+          208,
+          0.0005127469636374874
+        ],
+        [
+          216,
+          0.00045236876052809566
+        ],
+        [
+          224,
+          0.000364585405182609
+        ],
+        [
+          224,
+          0.000364585405182609
+        ],
+        [
+          232,
+          0.00034055218167706
+        ],
+        [
+          240,
+          0.0003123663292012952
+        ],
+        [
+          248,
+          0.0002665663121187089
+        ],
+        [
+          256,
+          0.00021092882708916556
+        ],
+        [
+          256,
+          0.00021092882708916556
+        ],
+        [
+          264,
+          0.0001936795545051502
+        ],
+        [
+          272,
+          0.0001771053245872074
+        ],
+        [
+          280,
+          0.0001592100815292019
+        ],
+        [
+          288,
+          0.00013375935958569076
+        ],
+        [
+          288,
+          0.00013375935958569076
+        ],
+        [
+          296,
+          0.00012501027512388306
+        ],
+        [
+          304,
+          0.00011532212163617112
+        ],
+        [
+          312,
+          9.865013187704051e-05
+        ],
+        [
+          320,
+          7.695657413949636e-05
+        ],
+        [
+          320,
+          7.695657413949636e-05
+        ],
+        [
+          328,
+          6.818028910939871e-05
+        ],
+        [
+          336,
+          6.157737173855232e-05
+        ],
+        [
+          344,
+          5.392038958392403e-05
+        ],
+        [
+          352,
+          4.630496467093239e-05
+        ],
+        [
+          352,
+          4.630496467093239e-05
+        ],
+        [
+          360,
+          4.3458395816744184e-05
+        ],
+        [
+          368,
+          4.0476027392445635e-05
+        ],
+        [
+          376,
+          3.398925570983129e-05
+        ],
+        [
+          384,
+          2.7903449699967802e-05
+        ],
+        [
+          384,
+          2.7903449699967802e-05
+        ],
+        [
+          392,
+          2.4798794518314264e-05
+        ],
+        [
+          400,
+          2.194766559739367e-05
+        ],
+        [
+          408,
+          1.8915780655427967e-05
+        ],
+        [
+          416,
+          1.6407292116872745e-05
+        ],
+        [
+          416,
+          1.6407292116872745e-05
+        ],
+        [
+          424,
+          1.554655900130077e-05
+        ],
+        [
+          432,
+          1.4248766847695613e-05
+        ],
+        [
+          440,
+          1.1485641687155847e-05
+        ],
+        [
+          448,
+          9.211101550390701e-06
+        ],
+        [
+          448,
+          9.211101550390701e-06
+        ],
+        [
+          456,
+          8.325952555757651e-06
+        ],
+        [
+          464,
+          7.331775591244106e-06
+        ],
+        [
+          472,
+          6.461274224139458e-06
+        ],
+        [
+          480,
+          5.763060073012618e-06
+        ],
+        [
+          480,
+          5.763060073012618e-06
+        ],
+        [
+          488,
+          5.478307207552461e-06
+        ]
+      ]
+    }
+  },
+  "residual_plot": {
+    "path": "docs/task039_extra_physical_multilevel/outcomes/figures/v18_residual_history.png",
+    "sha256": "baf5a8093c5313ba1ad6ff1c83bd1ab45923078440303c36b41a72fe343a1d25"
   }
 }
