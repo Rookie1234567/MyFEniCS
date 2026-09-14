@@ -1,0 +1,106 @@
+{
+  "schema": "task039extra.v20.dual-condensed-memory.decision.v1",
+  "batch_identity": "review_v20_dual_condensed_memory_lifecycle",
+  "branch": "task39extra",
+  "base_sha": "322cec9d699d24e0feed045136a7bbc41cfc10ab",
+  "numerical_source_sha": "b337d215c3d278d0c1e715f53e28b69f7f0ee3fe",
+  "status": "PASS_ORIGINAL_MEMORY_LIFECYCLE_MIXED_TRADEOFF",
+  "stage_status": {
+    "Y0": "PASS_WITH_BACKEND_DEPENDENCY_RETAINED",
+    "Y1": "PASS_116_PLUS_ONE_SKIP",
+    "Y2": "PASS_SAME_ROOT_ADMISSION",
+    "Y3": "COMPLETE_ORIGINAL_OFFICIAL_PASS",
+    "Y4": "COMPLETE_EVIDENCE_DOCS_WAIT_REVIEW"
+  },
+  "numerical_pass": true,
+  "physical_pass": true,
+  "resource_safety_pass": true,
+  "memory_comparison": {
+    "vs_v19": {
+      "full_rss_new_bytes": 2831749120,
+      "full_rss_old_bytes": 3965534208,
+      "delta_bytes": -1133785088,
+      "change_percent": -28.590979891504187,
+      "classification": "measured_then_derived"
+    },
+    "vs_v18": {
+      "full_rss_new_bytes": 2831749120,
+      "full_rss_old_bytes": 2528460800,
+      "delta_bytes": 303288320,
+      "change_percent": 11.994978130568601,
+      "classification": "measured_then_derived"
+    }
+  },
+  "time_comparison": {
+    "new_full_workflow_monotonic_seconds": 1479.1772295139963,
+    "v19_full_workflow_monotonic_seconds": 1352.0121227929922,
+    "change_percent_vs_v19": 9.4056188237651,
+    "conservative_billing_seconds": 1611.2442379729905,
+    "billing_is_not_measured_runtime": true,
+    "utc_minus_monotonic_positive_discrepancy_seconds": 132.06802093302758
+  },
+  "optimization_decisions": {
+    "compile_before_factor": "PASS_ACTUAL_TARGET_MISS_BEFORE_SYMBOLIC",
+    "identity_cache": "PASS_SHARED_READ_ONLY_IDENTITY",
+    "p4_matrix": "MATRIX_RETAINED_BACKEND_DEPENDENCY",
+    "post_release_lifecycle": "PASS_PACKET_A6_RELEASE_ORDER_AND_OFFICIAL_OUTPUT"
+  },
+  "p4_matrix_reason": "Installed PETSc/MUMPS conversion borrows SeqAIJ values into the MUMPS structure; no verified public detach proves factor-live matrix destruction safe. The safe retention fixture passed; unsafe free was not run.",
+  "formal_runs": 1,
+  "formal_bug_replays": 0,
+  "infrastructure_recoveries": 0,
+  "solver": {
+    "iterations": 112,
+    "retained_rows": 51272,
+    "final_independent_A6": 9.730817853580463e-07,
+    "final_worker_post_release_A6": 9.730817853580687e-07,
+    "A6_limit": 1e-06,
+    "global_p4_mat_solve_count": 226
+  },
+  "physical": {
+    "R": 0.3656258136701664,
+    "T": 0.012990624019505325,
+    "A": 0.6213835623103282,
+    "A_volume": 0.6213833803349053,
+    "max_power_difference": 1.981579103027542e-07,
+    "max_selected_field_relative_difference": 8.291924787930399e-07,
+    "passed": true
+  },
+  "scope": {
+    "notch": "NOT_RUN_NOT_AUTHORIZED",
+    "five_nm": "NOT_RUN",
+    "zero_point_seven_nm": "NOT_RUN",
+    "mpi_scaling": "NOT_RUN",
+    "ordinary_default_changed": false,
+    "master_merge_approved": false,
+    "continuum_convergence_claim": false,
+    "production_scalability_claim": false,
+    "qualification": "仅本次固定离散original；没有跨网格/MPI/任意几何或连续极限保证。"
+  },
+  "decision_reason": "本轮全部授权阶段完成；原场、物理、资源与冷编译资格均通过。全峰较V19低28.59%，本场时间高9.41%，完整场及操作数相同。矩阵保留是合同允许的后端依赖分支；V18峰值及更快运行时间均不作为新Gate。",
+  "next_action": "提交推送后等待Review。若另获授权继续降低峰值，当前主要瓶颈仍是完整p6 form的编译窗口（全峰2.832GB，cc1约1.577GB）；本轮不再调查detach、不调allocator、不重跑或启动notch。",
+  "evidence": {
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_memory_v20_compact.json",
+    "report": "docs/task039_extra_physical_multilevel/outcomes/dual_condensed_memory_v20.md",
+    "independent": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_independent.json",
+    "lifecycle": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_root_lifecycle_review.json",
+    "backend": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y0_backend_dependency.json",
+    "observable_comparison": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_actual_v19_observable_comparison.json",
+    "compact_binding": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_memory_v20_compact.json",
+      "sha256": "6f0a994f8eae76837c0383660e811a1d9a8282133917ead68446045c2ccb83ef",
+      "bytes": 377270
+    },
+    "independent_binding": {
+      "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_independent.json",
+      "sha256": "8224cf22ff7143315ae911c0011633f8554e596c2532e7a2789428eb17fbdef1",
+      "bytes": 115770
+    }
+  },
+  "authorized_engineering_scope_complete": true,
+  "measured_full_RSS_improved_vs_V19": true,
+  "factor_live_matrix_release": false,
+  "faster_than_V19_this_run": false,
+  "recommendation": "建议在本次固定p6/h10、MPI1 original且内存优先时采用显式V20 lowmem配置；保留V19为已测时间基线、V18为较低RSS基线。普通默认不变，等待同分支review。",
+  "recommended_profile": "physical_p6_trace_p4_condensed_lowmem_v20"
+}

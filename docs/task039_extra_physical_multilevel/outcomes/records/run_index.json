@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Review V17 closeout of Review V16 p4 BLR S2: one clean-source BLR factor, three RHS control and independent memory/quality decision; S3/S4 and all official p6 outputs not_run; all older evidence retained",
+  "scope": "Review V20 closeout: one clean-source V20 low-memory original with independent residual/physical/lifecycle checks; mixed time-memory tradeoff; all older evidence and unknown policy history retained",
   "units": {
     "time": "s",
     "memory": "B"
@@ -2067,6 +2067,181 @@
         "sha256": "d17fa993d09f64c1aa555b042417e3c162a8690ebb714fc16f9634c2a623c338",
         "bytes": 4781
       }
+    },
+    {
+      "id": "V20_Y3_original_dual_condensed_memory_attempt1",
+      "stage": "Y3_ORIGINAL",
+      "status": "COMPLETE_ORIGINAL_PASS_MEMORY_LIFECYCLE_MIXED_TRADEOFF",
+      "source_sha": "b337d215c3d278d0c1e715f53e28b69f7f0ee3fe",
+      "profile": "physical_p6_trace_p4_condensed_lowmem_v20",
+      "run_id": "task39extra_v20_y3_lowmem_original",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z",
+      "official_result": true,
+      "formal_runs": 1,
+      "pde_replays": 0,
+      "solver": {
+        "outer_method": "FGMRES32",
+        "iterations": 112,
+        "retained_rows": 51272,
+        "max_it": 2048,
+        "final_independent_A6": 9.730817853580463e-07,
+        "final_worker_post_release_A6": 9.730817853580687e-07,
+        "A6_limit": 1e-06,
+        "pc_apply_count": 113,
+        "global_p4_mat_solve_count": 226,
+        "online_p4_A4_max": 5.0455949355168026e-11,
+        "outer_pc_apply_count": 112,
+        "setup_pc_apply_count": 1,
+        "outer_p4_mat_solve_count": 224,
+        "setup_p4_mat_solve_count": 2,
+        "pc_apply_count_scope": "setup plus outer"
+      },
+      "field": {
+        "L2_relative": 1.5860495296312503e-07,
+        "scaled_curl_relative": 1.5359268899003175e-07
+      },
+      "power": {
+        "R": 0.3656258136701664,
+        "T": 0.012990624019505325,
+        "A": 0.6213835623103282,
+        "A_volume": 0.6213833803349053
+      },
+      "resources": {
+        "scope": "continuous_parent_process_tree",
+        "full_rss_peak_bytes": 2831749120,
+        "full_pss_peak_bytes": 2797270016,
+        "live_rss_peak_bytes": 2278993920,
+        "inventory_peak_bytes": 2013567110,
+        "workspace_peak_bytes": 423441224,
+        "swap_peak_bytes": 0,
+        "full_workflow_monotonic_seconds": 1479.1772295139963,
+        "conservative_billing_seconds": 1611.2442379729905,
+        "billing_is_not_measured_runtime": true,
+        "vs_v19_full_rss_percent": -28.590979891504187,
+        "vs_v18_full_rss_percent": 11.994978130568601
+      },
+      "decision": {
+        "authorized_engineering_scope_complete": true,
+        "measured_full_RSS_improved_vs_V19": true,
+        "factor_live_matrix_release": false,
+        "faster_than_V19_this_run": false,
+        "ordinary_default_changed": false,
+        "master_merge_approved": false,
+        "recommendation": "Use explicit lowmem when same-original memory is the priority; retain V19 as time baseline; do not add a V18-peak or V19-time hard gate and do not restart detach research."
+      },
+      "evidence": {
+        "worker_summary": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/physical_dual_condensed_memory_v20_summary.json",
+          "sha256": "3f9bc80fabe82e8d3ac76250255f3aeb89605007df1680fb72a43b2c0abdf28c"
+        },
+        "independent": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_independent.json",
+          "sha256": "8224cf22ff7143315ae911c0011633f8554e596c2532e7a2789428eb17fbdef1"
+        },
+        "lifecycle": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_root_lifecycle_review.json",
+          "sha256": "cd24282b5cae5703ab8b02812f61ca0adde848f4bbd36d8a38cbcdd3e1d8dc06"
+        },
+        "backend": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y0_backend_dependency.json",
+          "sha256": "5b241e94355a1e561cc161fa6820f4637aed655a63210ef50f20478cd33d5628"
+        },
+        "backend_fixture_initial_failure": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y0_backend_fixture_initial_failure.json",
+          "sha256": "a16550204e1e027fca812e5b2dbdcbb48ee18e53f03f5742a20bf20d09389dbd"
+        },
+        "y1_admission": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y1_admission.json",
+          "sha256": "5348fa759a86fd6026739e7ea4ddf9bc514c9bc752ba5ceea82aad067a52befb"
+        },
+        "y1_focused": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y1_final_focused.log",
+          "sha256": "f87cfccd8f5f512dd83d3b6f08268d3146449d16f2bfb6e316850a7d021751bb"
+        },
+        "y1_compileall": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y1_final_compileall.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "y1_abi": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y1_final_abi.json",
+          "sha256": "2524f8c8a3ee4d625cd8b091de1f89213ad20a66bf8c03b5569640855e6acfb4"
+        },
+        "y1_frozen_contract": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y1_frozen_contract_check.json",
+          "sha256": "53c79154b678ce48d23e8b5a0f3185e896a1471c37ed25a34a8b3398a83f7b42"
+        },
+        "same_field_comparison": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_actual_v19_observable_comparison.json",
+          "sha256": "0dc17b35edc00effccb5df807004838b11ea90ea6928f5f27f46c17d7b1c7aa5"
+        },
+        "same_target_C": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_same_target_C.json",
+          "sha256": "44735a2a51a00f3ddfb3c001caf98efb93a1a28b7430b38a00083bc8cff4b69a"
+        },
+        "target_C_diagnostic": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y3_target_C_order_diagnostic.json",
+          "sha256": "c2e365a1357688640fc5a0a46e77b376a05141d78aafff8f2261e39adc01af38"
+        },
+        "run_summary": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/run_summary.json",
+          "sha256": "866dc9c72153bebeedb7438b7a9a49db3fd72cdc10367dcbdf06a5dd576db6ec"
+        },
+        "final_residual": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/final_residual/y3_final.json",
+          "sha256": "9d3a16baaf90bfd5162dd30a19531d964096c537fd611cc05ed2c847a6f36b44"
+        },
+        "post_release_residual": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/post_release_final_residual/y3_post_release_final.json",
+          "sha256": "a755fb44f315aa29739b985715126d99ae2b3b6718ade187533607cdd7e49b0d"
+        },
+        "retained_final_packet": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/x2_retained_final.json",
+          "sha256": "9fa52c8ddcfd2249cf57f3d91b3c898099fc95d58984d6bd6ffc95e3f9f1e11b"
+        },
+        "operator_identity": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/y3_operator_identity.json",
+          "sha256": "2e726b4e8141b160bd154994eb82626cd7a0431416dd498178e539ec75145539"
+        },
+        "dual_operator_identity": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/y3_dual_operator_identity.json",
+          "sha256": "00bf6683482cb68995c4a26ee299b8e360220e55399f00c2812c3b09a4c5933e"
+        },
+        "p6_cache_identity": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/v20_x1_p6_cache_identity.json",
+          "sha256": "ce786bdbae6580ddd1f72f2eb85d4ed5b654237a5e1b26efa1f74b690428aa58"
+        },
+        "official_output": {
+          "path": "results/euv_grazing1_phi0/task39extra_v20_y3_lowmem_original__full3d_iterative__mpi1__Mna/20260914T163338.120918Z/official_output/y3_output.json",
+          "sha256": "9cefb1f8a68d2f3a9d308acf2ebf4933498fbf55b7df7a3311a7e83174d58021"
+        },
+        "new_shared_ledger": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/review_v20_dual_condensed_memory_lifecycle/shared_workflow_ledger.json",
+          "sha256": "17cd06ff6bc25aef8dc5885fc2a8c3e178e245d41c33d3a85f551ce5eefadcb6"
+        },
+        "old_v19_compact": {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_cell_condensed_v19_compact.json",
+          "sha256": "5f63fc59652badd3b8085a041273e899c830f3dde76d969967050c77eda9c4e3"
+        },
+        "old_v19_decision": {
+          "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_cell_condensed_v19_decision.json",
+          "sha256": "d17fa993d09f64c1aa555b042417e3c162a8690ebb714fc16f9634c2a623c338"
+        },
+        "old_v14_ledger_sha256": "1e3b9c01745fef72f7a794b23e5077508fd65b3951485131d8b639043bd4ecb3",
+        "old_policy_unknown_history": "V18/V19 conservative policy debits and actual-unknown fields remain preserved; no historical charge is rewritten as measured runtime or zeroed.",
+        "documentation_tests": {
+          "path": "benchmarks/artifacts/task39extra/dual_condensed_lowmem_v20/root_engineering/y4_final_documentation_tests.log",
+          "sha256": "b90e7b36e126a76e6729ad424f3c9d0a6d739d09c958cfad28aa36e3d7e55a3e",
+          "bytes": 99
+        }
+      },
+      "not_run": [
+        "notch",
+        "5_nm",
+        "0.7_nm",
+        "MPI2_MPI4_new_qualification",
+        "Ruff_full_repository_pytest_CI",
+        "detach_research_restart"
+      ]
     }
   ],
   "limitations": [
@@ -4151,7 +4326,8 @@
     "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
     "previous_bug_replay_count": 1
   },
-  "current_scope": "Review V19 X0-X3: p6 retained-space FGMRES32 with unchanged exact condensed p4; one complete original PASS, faster but higher full RSS; no notch.",
+  "current_scope": "Review V20 Y0-Y4: opt-in dual-condensed low-memory lifecycle with one complete original PASS, lower full RSS than V19 but slower in this run; no notch or detach restart.",
+  "current_review_record": "review_v20_dual_condensed_memory_lifecycle",
   "review_v19_dual_cell_condensed_closeout": {
     "base_sha": "3c7b6ecfd7aede2651dd973052a097dbed601d03",
     "source_sha": "8eff068b06f4713cc6d1281c92ed82d370060403",
@@ -4166,5 +4342,28 @@
       "bytes": 4781
     },
     "prior_runs_preserved": 36
+  },
+  "review_v20_dual_condensed_memory_lifecycle": {
+    "base_sha": "322cec9d699d24e0feed045136a7bbc41cfc10ab",
+    "source_sha": "b337d215c3d278d0c1e715f53e28b69f7f0ee3fe",
+    "profile": "physical_p6_trace_p4_condensed_lowmem_v20",
+    "run_id": "task39extra_v20_y3_lowmem_original",
+    "status": "PASS_ORIGINAL_MEMORY_LIFECYCLE_MIXED_TRADEOFF",
+    "formal_runs": 1,
+    "pde_replays": 0,
+    "compact": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_memory_v20_compact.json",
+      "sha256": "6f0a994f8eae76837c0383660e811a1d9a8282133917ead68446045c2ccb83ef",
+      "bytes": 377270
+    },
+    "decision": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_memory_v20_decision.json",
+      "sha256": "b963382f8d8103f03342daabe794ffc8c7f027e368bec5418f1be393a49dfbbb",
+      "bytes": 5346
+    },
+    "old_unknown_and_policy_history_preserved": true,
+    "ordinary_default_changed": false,
+    "master_merge_approved": false,
+    "recommendation": "For same-original memory priority use explicit lowmem; retain V19 as time baseline; do not add V18-peak or V19-time hard gate and do not restart detach research."
   }
 }
