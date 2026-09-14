@@ -381,10 +381,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
 
     time_limit_mode = execution.get("time_limit_mode", "bounded")
     if time_limit_mode == "none":
-        if solver.get("preconditioner") != "balanced_h6_p4_native_5nm":
+        from .native_capacity_profile import NATIVE_NONE_TIME_PROFILES
+        if solver.get("preconditioner") not in NATIVE_NONE_TIME_PROFILES:
             raise _error(
                 "execution.time_limit_mode",
-                "none is authorized only for the native 5 nm capacity profile",
+                "none is authorized only for an explicit native capacity profile",
             )
         if execution.get("timeout_seconds") is not None:
             raise _error(

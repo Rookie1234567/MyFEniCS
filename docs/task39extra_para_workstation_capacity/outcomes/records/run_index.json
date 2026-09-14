@@ -69,6 +69,9 @@
       "run_id": "20260911T065955.813489Z",
       "record": "5nm_formal_attempt1.json",
       "resource_record": "5nm_resource_coverage.json",
+      "output_compact_record": "5nm_output_compact_v1.json",
+      "tracked_600_channel_record": "5nm_dtn_600_channels.csv",
+      "tracked_checker_record": "5nm_checker_recheck.json",
       "status": "COMPLETED_OWN_NUMERICAL_PHYSICAL_GATES_REFERENCE_LIMITED_RESOURCE_CONTINUITY_UNQUALIFIED",
       "source_sha": "85a681b9bd61104466888546b83df87c27806169",
       "input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
@@ -82,8 +85,30 @@
       "reference_status": "REFERENCE_AUTHORITY_LIMITED",
       "resource_qualification": "NOT_CONTINUOUS_RESOURCE_PASS",
       "checker_fix_commit_sha": "d64398cb1fecd90867071688dca94e501235cf7a"
+    },
+    {
+      "stage": "2NM_P0_PREP",
+      "case": "h1p5",
+      "record": "2nm_p0_preflight_v1.json",
+      "status": "STRUCTURAL_MODE_INVENTORY_COMPLETE_P1_CAPACITY_ADMISSION_PENDING",
+      "input_sha256": "34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "resolved_config_sha256": "f15856991ffa66276a0086837a8742a4066520c9456e6d457d316dfef915ec5d",
+      "mode_count": 3904,
+      "resource_qualification": "NOT_STARTED"
+    },
+    {
+      "stage": "2NM_P0_PREP",
+      "case": "h2",
+      "record": "2nm_p0_preflight_v1.json",
+      "status": "GRID_MODE_INVENTORY_READY_P0_STRUCTURE_DEFERRED",
+      "input_sha256": "1f4880e55622324f5d0824a87be17ea0c3aae49b690267d1d32f548d5f90e328",
+      "physical_model_sha256": "06c2a2986226eb9ef9db9104cf37dd2a451c8d4add8e129e04b64d4db1f89433",
+      "resolved_config_sha256": "af53c69fb2a5b3b8601fc6a5410b26e67c5142b076ec5fe7224fb132b105e321",
+      "mode_count": 3904,
+      "resource_qualification": "NOT_STARTED"
     }
   ],
-  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_3NM_2NM_LOCKED",
-  "next_gate": "5NM_RECORD_REVIEW_NO_3NM_2NM_UNLOCK"
+  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_P0_PENDING_3NM_LOCKED",
+  "next_gate": "2NM_H1P5_P0_REVIEW_BEFORE_P1"
 }

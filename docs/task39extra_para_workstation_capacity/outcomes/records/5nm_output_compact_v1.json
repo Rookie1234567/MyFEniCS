@@ -1,0 +1,74 @@
+{
+  "schema": "native-capacity.5nm-output-compact.v1",
+  "run_id": "20260911T065955.813489Z",
+  "source_sha": "85a681b9bd61104466888546b83df87c27806169",
+  "input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
+  "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+  "checker_fix_commit_sha": "d64398cb1fecd90867071688dca94e501235cf7a",
+  "checker_source_sha256": "97c78fd960429d45decc3f821ab0c1ee674a649a4ca24ea9be673a3c5813d5ae",
+  "numerical": {
+    "iterations": 698,
+    "true_residual": 9.986638454029182e-7,
+    "screen128": true,
+    "p4_rhs": 1396,
+    "p4_matsolve": 1419,
+    "p4_refinements": 23,
+    "p4_terminal_relative_residual": 9.989282114125241e-11
+  },
+  "official_dtn": {
+    "channel_count": 600,
+    "complex_amplitudes_finite": true,
+    "R": 0.7331834812424759,
+    "T": 0.00022243948430485038,
+    "A_balance": 0.26659407927321926,
+    "A_volume": 0.26659407694262094,
+    "volume_energy_error": 2.33059826992843e-9,
+    "diagnostic_fourier_channel_count": 150,
+    "diagnostic_fourier_is_not_DtN_count": true
+  },
+  "tracked_evidence_index": {
+    "run_root": "results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z",
+    "native_mode_manifest": {
+      "path": "native_mode_manifest.json",
+      "sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+      "entries": 600
+    },
+    "complete_600_amplitude_and_power_carrier": {
+      "path": "outcomes/records/5nm_dtn_600_channels.csv",
+      "sha256": "0945d2e543bd7374ff73fdb4a480f67230f6dc19a5d25371c71b116308dd8ceb",
+      "entries": 600,
+      "required_fields": ["auxiliary_index", "side", "m", "n", "polarization", "auxiliary_amplitude_total_projection", "outgoing_amplitude", "outgoing_amplitude_at_boundary", "modal_power_code_units", "power_ratio"],
+      "source_ignored_path": "numerical_output/dtn_port_diffraction_orders_3d.csv",
+      "source_ignored_sha256": "0945d2e543bd7374ff73fdb4a480f67230f6dc19a5d25371c71b116308dd8ceb",
+      "status": "tracked_complete_600_channel_key_complex_amplitude_and_power_csv"
+    },
+    "complete_600_power_carrier": {
+      "path": "numerical_output/dtn_port_power_metrics_3d.json",
+      "sha256": "a75249d02e2ff2b779027312d2defd6670f43c184d77eb35f86352bdd38108d0",
+      "status": "existing_ignored_full_channel_power_evidence"
+    },
+    "checker_original": {"path": "checker.json", "sha256": "b75c99e482ef32447a6322cb0a03f964ccfcef89923eb5d46ec8bf1de2216bc0"},
+    "checker_recheck": {
+      "path": "outcomes/records/5nm_checker_recheck.json",
+      "sha256": "2c7bf4e9a66297facbdf9b778d4925b3eccebe88b41c6e347f0418fc88b1ded5",
+      "source_ignored_path": "recheck/checker.json",
+      "source_ignored_sha256": "2c7bf4e9a66297facbdf9b778d4925b3eccebe88b41c6e347f0418fc88b1ded5",
+      "status": "tracked_checker_recheck_copy"
+    },
+    "resolved_config": {"path": "resolved_config.json", "sha256": "6f529f67b179bad64fa12b06f5b06428abe5fc8477bcec1c037d2a73922de058"}
+  },
+  "checker": {
+    "independent_output_gates_passed": true,
+    "gate_failures": [],
+    "classification": "BALANCED_OUTPUT_AUTHORITY_LIMITED",
+    "reference_authority": "REFERENCE_AUTHORITY_LIMITED"
+  },
+  "resource_authority": {
+    "qualification": "NOT_CONTINUOUS_RESOURCE_PASS",
+    "observed_tree_rss_peak_bytes": 50161172480,
+    "observed_tree_swap_peak_bytes": 0,
+    "old_parent_wait_exit_code": "UNAVAILABLE",
+    "coverage_gap_seconds": 30843.729885301,
+    "note": "This compact indexes existing ignored artifacts; it does not convert an observation gap into continuous resource qualification."
+  }
+}

@@ -18,6 +18,8 @@ INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_p6h10.
 NATIVE_INPUT = Path('input/task39extra_para_workstation_capacity/nonseparable_13p5nm_p6h10.dat')
 REFERENCE_INPUT = Path('input/task39extra_para_workstation_capacity/original_13p5nm_native_matched_reference.dat')
 FIVE_NM_INPUT = Path('input/task39extra_para_workstation_capacity/original_5nm_si_p6h4_native.dat')
+TWO_NM_INPUT = Path('input/task39extra_para_workstation_capacity/original_2nm_si_p6h1p5_native.dat')
+TWO_NM_H2_INPUT = Path('input/task39extra_para_workstation_capacity/original_2nm_si_p6h2_native.dat')
 
 
 def test_native_matched_reference_is_explicit_and_hash_bound():
@@ -102,6 +104,31 @@ def test_native_5nm_si_no_deadline_opt_in_preserves_non_time_gates():
     assert tuple(specification.materials['n_substrate']) == (0.99396854453, 0.00435380777)
     assert tuple(specification.materials['n_grating']) == (0.99396854453, 0.00435380777)
     assert specification.discretization['mesh_target_nm'] == 4.0
+    assert specification.execution['time_limit_mode'] == 'none'
+    assert specification.execution['timeout_seconds'] is None
+    assert profile['resources']['solve_seconds'] is None
+    assert profile['resources']['workflow_seconds'] is None
+    assert profile['resources']['batch_limit_seconds'] is None
+    assert profile['outer']['screen']['iterations'] == 128
+    assert profile['outer']['screen']['solve_seconds'] is None
+    assert profile['outer']['max_iterations'] == 2048
+    assert profile['outer']['restart'] == 32
+    assert profile['outer']['initial_guess'] == 'zero'
+
+
+@pytest.mark.parametrize(
+    ('path', 'mesh_target'),
+    [(TWO_NM_INPUT, 1.5), (TWO_NM_H2_INPUT, 2.0)],
+)
+def test_native_2nm_si_no_deadline_profiles_are_explicit(path, mesh_target):
+    specification = load_and_resolve(path)
+    profile = profile_facts(specification.solver['preconditioner'])
+    assert specification.incidence['wavelength_nm'] == 2.0
+    assert specification.materials['substrate_name'] == 'Si / silicon'
+    assert specification.materials['grating_name'] == 'Si / silicon'
+    assert tuple(specification.materials['n_substrate']) == (0.99880148307, 0.000213688647)
+    assert tuple(specification.materials['n_grating']) == (0.99880148307, 0.000213688647)
+    assert specification.discretization['mesh_target_nm'] == mesh_target
     assert specification.execution['time_limit_mode'] == 'none'
     assert specification.execution['timeout_seconds'] is None
     assert profile['resources']['solve_seconds'] is None
@@ -243,6 +270,35 @@ def test_native_5nm_launcher_passes_none_deadlines_to_watchdog(monkeypatch, tmp_
     assert contract['screen']['solve_seconds'] is None
     assert contract['solve_seconds'] is None
     assert contract['workflow_seconds'] is None
+
+
+def test_native_2nm_manifest_records_user_material_authority(monkeypatch, tmp_path):
+    from src.runners.task038_launcher import launch_specification
+
+    spec = replace(load_and_resolve(TWO_NM_INPUT), expected_output_parent=tmp_path/'run')
+    monkeypatch.setattr('src.runners.task038_launcher._physical_source_gate', lambda *_: {})
+
+    def supervise(command, directory, **kwargs):
+        assert command[:5] == ['/usr/bin/taskset', '-c', '23', '/usr/bin/numactl', '--preferred=1']
+        assert kwargs['wall_seconds'] is None
+        assert kwargs['solve_seconds'] is None
+        return {'leader_exit_code': 0, 'classification': 'COMPLETED',
+                'job_swap_activity': 'zero_supported_by_zero_global_activity',
+                'launch_envelope': {}, 'memory_scope': 'test'}
+
+    monkeypatch.setattr('benchmarks.subreaper_watchdog.supervise', supervise)
+    result = launch_specification(spec, source_sha='c'*40)
+    manifest = json.loads(Path(result['manifest']).read_text())
+    contract = manifest['native_capacity_contract']
+    assert contract['material_authority'].startswith('user-provided')
+    assert contract['time_limit_mode'] == 'none'
+
+
+def test_native_preferred_node1_prefix_is_explicit_and_not_strict():
+    from src.io.execution_plan import native_memory_policy_prefix
+
+    assert native_memory_policy_prefix('preferred_node1') == ('/usr/bin/numactl', '--preferred=1')
+    assert native_memory_policy_prefix('membind_node1') == ('/usr/bin/numactl', '--membind=1')
 
 
 def test_native_default_does_not_silently_bind_memory(tmp_path):

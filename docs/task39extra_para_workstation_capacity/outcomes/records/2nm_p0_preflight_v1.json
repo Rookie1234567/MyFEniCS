@@ -1,0 +1,435 @@
+{
+  "record": "2nm_p0_preflight_v1",
+  "source_git_sha_base": "414be774d0534ace01d0d9da47707d0075a74c18",
+  "source_status": "local_wip_int64_bindings_and_preferred_node1_wiring_pending_review",
+  "oracle_fix_commit": "cb7429d",
+  "material": {
+    "name": "Si / silicon",
+    "density_g_cm3": 2.33,
+    "delta": 0.00119851693,
+    "beta": 0.000213688647,
+    "n": [0.99880148307, 0.000213688647],
+    "authority": "user_input_this_round"
+  },
+  "abi": {
+    "qualified_records": [
+      "docs/task39extra_para_workstation_capacity/outcomes/records/native_abi.json",
+      "benchmarks/artifacts/native_capacity/abi_initial.json"
+    ],
+    "petsc": "3.19.6",
+    "scalar": "complex128",
+    "integer": "int32_default; int64_isolated_opt_in",
+    "installed_petsc_arches_checked": ["x86_64-linux-gnu-complex", "x86_64-linux-gnu-real"],
+    "petsc_c_int_bytes": 4,
+    "petsc_use_64bit_indices": true,
+    "runtime_petsc_int_type": "int64_in_isolated_stack; int32_in_default_stack",
+    "mumps_version": "5.5.1",
+    "mumps_row_column_int_width": 32,
+    "mumps_nnz_width": "selective_int64",
+    "qualified_project_int64_stack": true,
+    "note": "PETSC_SIZEOF_INT=4 is only the C int width; PETSC_USE_64BIT_INDICES and runtime PetscInt/CSR dtypes are the qualification evidence. PETSc 3.19 MUMPS uses selective 64-bit NNZ with 32-bit row/column MUMPS_INT here."
+  },
+  "isolated_int64_stack": {
+    "qualification_scope": "small MPI1 p4/MPC/MUMPS fixture only; no formal FEM or large assembly",
+    "build_root": "/tmp/task39extra_para_int64_stack",
+    "build_affinity": "CPU10-13, -j4",
+    "petsc_source_head": "daf32f5ece2612daa6ea91d46615463471ef4efa",
+    "dolfinx_source_head": "b8375fa9fb932cbfce43005eeb4a3d52293f428b",
+    "dolfinx_mpc_source_head": "a444aa3006fdf492091443cc8c885c1eec006c2f",
+    "petsc_prefix": "/tmp/task39extra_para_int64_stack/prefix/petsc",
+    "dolfinx_prefix": "/tmp/task39extra_para_int64_stack/prefix/dolfinx",
+    "dolfinx_python_prefix": "/tmp/task39extra_para_int64_stack/prefix/dolfinx-python",
+    "dolfinx_mpc_prefix": "/tmp/task39extra_para_int64_stack/prefix/dolfinx_mpc-int64",
+    "dolfinx_mpc_python_prefix": "/tmp/task39extra_para_int64_stack/prefix/dolfinx_mpc-python",
+    "activation_entry": "scripts/activate_task39extra_int64.sh",
+    "activation_entry_sha256": "668030a0bc29a3651d75fdc3d7cfd93f45ad9c0f61f580aae43dbb0438ff41cc",
+    "configure": {
+      "petsc": "complex shared PETSc 3.19.6, --with-64-bit-indices=1, --download-mumps=1, --download-scalapack=1",
+      "dolfinx": "DOLFINX_ENABLE_SLEPC=OFF; PETSc and PT-SCOTCH explicitly from isolated/custom targets",
+      "python_install": "--no-build-isolation --no-deps --ignore-installed --target",
+      "mpc_python_wheel_sha256": "ceae31626b5b57c24c1a7a986b26c672625102ef0ab37efb51a7f92aeb33d47a"
+    },
+    "runtime": {
+      "petsc_version": "3.19.6",
+      "petsc_int": "int64",
+      "scalar": "complex128",
+      "p4_cell_dofs": 300,
+      "p4_cell_dof_dtype": "int32",
+      "p4_local_dofs": 300,
+      "mpc_type": "MultiPointConstraint_complex_double",
+      "mumps_row_column_int_width": 32,
+      "mumps_nnz_width": "selective_int64",
+      "mumps_api_library": "/tmp/task39extra_para_int64_stack/prefix/petsc/lib/libpetsc.so.3.19.6",
+      "mumps_api_petsc_int_ctype": "c_long (8 bytes)",
+      "mumps_symbolic_calls": 1,
+      "mumps_numeric_calls": 1,
+      "mumps_solve_calls": 1,
+      "mumps_residual_norm": 2.482534153247273e-16,
+      "module_maps": [
+        "/tmp/task39extra_para_int64_stack/prefix/petsc/lib/libpetsc.so.3.19.6",
+        "/tmp/task39extra_para_int64_stack/prefix/dolfinx/lib/libdolfinx.so.0.10.0",
+        "/tmp/task39extra_para_int64_stack/prefix/dolfinx_mpc-int64/lib/libdolfinx_mpc.so.0.10.1",
+        "/tmp/task39extra_para_int64_stack/prefix/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so"
+      ],
+      "ldd_identity": {
+        "dolfinx_mpc": "isolated dolfinx_mpc-int64 -> isolated dolfinx -> isolated libpetsc; system MPI/PT-SCOTCH only; no SLEPc dependency",
+        "dolfinx": "isolated dolfinx -> isolated libpetsc; system MPI/PT-SCOTCH only; no SLEPc dependency"
+      },
+      "slepc4py": {
+        "module": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py",
+        "status": "wrapper_imported_only",
+        "loaded_shared_objects": [],
+        "qualification": "NOT_LOADED"
+      }
+    },
+    "existing_tests": {
+      "isolated_int64": "src/test/test_372_condensed_reference_preflight.py + src/test/test_373_condensed_fine_reference.py: 2 passed, 22 deselected",
+      "default_int32": "same two tests: 2 passed, 22 deselected; PETSc 3.19.6 complex128 IntType int32"
+    },
+    "hand_aij_mumps_fixture": {
+      "status": "PASS_NOT_P4_MPC",
+      "scope": "MPI1 COMM_SELF; hand-built 4x4 AIJ only",
+      "mumps_symbolic_numeric_solve": "1/1/1",
+      "residual_norm": 2.482534153247273e-16,
+      "note": "This residual is not evidence for a p4/MPC-assembled matrix."
+    },
+    "p4_mpc_fixture": {
+      "status": "PASS",
+      "scope": "MPI1 COMM_SELF; 2x2x2 hexahedron; N1curl p4; actual dolfinx_mpc create_matrix/assemble path",
+      "mesh_cells": 8,
+      "p4_cell_dofs": 300,
+      "p4_local_dofs": 1944,
+      "mpc_type": "MultiPointConstraint_complex_double",
+      "mpc_slave_count": 1,
+      "mpc_master_count": 1,
+      "matrix_shape": [1944, 1944],
+      "assembled_matrix_nnz": 701496,
+      "csr_index_dtype": "int64",
+      "petsc_int": "int64",
+      "petsc_scalar": "complex128",
+      "mumps_version": "5.5.1 bundled with isolated PETSc 3.19.6",
+      "mumps_symbolic_numeric_solve": "1/1/1",
+      "mumps_infog_22_29": [0, 0],
+      "original_matrix_relative_true_residual": 2.9040599435881406e-11,
+      "process_maps_confirmed": "isolated PETSc/DOLFINx/MPC libraries listed above; no SLEPc shared object",
+      "prior_fixture_failure": "the earlier 4x4 residual remains separately recorded; it was not used as p4 evidence"
+    },
+    "a4_contract_reuse": {
+      "symbolic_contract": "src/test/test_372_condensed_reference_preflight.py::test_real_mumps_analysis_reads_controls_without_numeric; INFOG(22,29) and ICNTL readback; numeric/solve calls remain zero",
+      "numeric_contract": "src/test/test_373_condensed_fine_reference.py::test_real_mumps_icntl23_one_factor_two_mat_solve; ICNTL(23) set before numeric, one factor, two MatSolve calls, residual < 1e-14",
+      "isolated_int64_result": "2 passed, residual 2.482534153247273e-16 in combined fixture",
+      "default_int32_result": "2 passed under untouched default activation",
+      "mathematics_changed": false
+    },
+    "final_focused_checks": {
+      "status": "PASS",
+      "default_native_policy_deadline_material_preferred_meminfo_swap": {
+        "scope": "native launcher, deadline None contract, user material authority, preferred_node1 admission, meminfo/swap guards",
+        "result": "14 passed, 13 deselected in 1.53s",
+        "activation": "untouched default project activation",
+        "formal_fem_started": false
+      },
+      "isolated_int64_real_mumps": {
+        "scope": "test_372_condensed_reference_preflight.py and test_373_condensed_fine_reference.py real MUMPS subset",
+        "result": "2 passed, 22 deselected in 0.52s",
+        "activation": "scripts/activate_task39extra_int64.sh",
+        "formal_fem_started": false
+      },
+      "note": "These are the final focused checks for the reviewed preparation package; no large 2 nm assembly, factor, or FEM was run."
+    },
+    "temporary_negative_evidence": [
+      "first petsc4py build failed on setuptools rpath_option list handling; temporary source patch only",
+      "second petsc4py build failed on incompatible execute(dry_run=); temporary source patch only",
+      "first MPC C++ configure resolved system DOLFINx/SLEPc/PETSc and was rejected; corrected explicit-target build is the qualified one",
+      "initial PETSc core build used CPU8-22,24-47 and therefore included socket1/CPU2; it completed and is superseded; all subsequent builds used CPU10-13/-j4"
+    ]
+  },
+  "small_sparsity_fixture": {
+    "mesh": "COMM_SELF hexahedron 2x2x2",
+    "element": "N1curl degree 1",
+    "cells": 8,
+    "cell_dofs": 12,
+    "formula_nnz": 966,
+    "actual_pattern_nnz": 966,
+    "matrix_type": "seqaij",
+    "petsc_int_type": "int32",
+    "csr_row_offset_dtype": "int32",
+    "csr_column_index_dtype": "int32",
+    "petsc_scalar_type": "complex128",
+    "numeric_fe_assembly": false
+  },
+  "five_nm_reference_split": {
+    "reference_volume_pattern_or_complete_nnz": 342181856,
+    "reference_augmentation_final_nnz": 345872226,
+    "note": "volume and final augmented pattern are separate stages"
+  },
+  "p0_h1p5_actual_structure": {
+    "status": "STRUCTURAL_INVENTORY_COMPLETE_NO_MATRIX_OR_NUMERIC",
+    "input_sha256": "34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f",
+    "resolved_config_sha256": "f15856991ffa66276a0086837a8742a4066520c9456e6d457d316dfef915ec5d",
+    "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "mesh": {"axis_cells": [34, 17, 94], "axis_points": [35, 18, 95], "global_cells": 54332},
+    "p6": {
+      "global_rows": 35594790,
+      "cell_dofs": 882,
+      "mpc_constraints": 346038,
+      "representation": "matrix-free H6 shell/partial assembly; no global AIJ"
+    },
+    "p4": {
+      "global_rows": 10604228,
+      "cell_dofs": 300,
+      "mpc_constraints": 153988,
+      "cell_to_slaves_link_count": 191384,
+      "cell_to_slaves_vs_cell_dof_mismatch_cells": 0,
+      "max_masters_per_slave": 1,
+      "original_cell_clique_sum": 4889880000,
+      "expanded_support_square_sum_upper": 5012622944,
+      "max_expanded_cell_support": 376,
+      "cells_with_slave_master_expansion": 4700,
+      "petsc_int": "int64",
+      "csr_payload_upper_bytes": 120387784488,
+      "matrix_allocated": false,
+      "numeric_or_lu_run": false
+    },
+    "port_bound": {
+      "mode_count": 3904,
+      "propagating_count": 3902,
+      "mode_manifest_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+      "boundary_cells_per_z_side": 578,
+      "max_expanded_support_per_boundary_cell": 376,
+      "per_side_support_upper": 217328,
+      "port_added_nnz_upper": 1696900928,
+      "augmented_nnz_upper": 6709523872,
+      "payload_upper_bytes": 498938445392,
+      "formula": "existing p4_reference payload formula; int64 indices, complex128 values, volume+augmentation, augmented COO conversion, 16 p4 vectors, 16MiB",
+      "semantics": "conservative P0 planning bound, not measured carrier NNZ, RSS, LU, or strict peak upper bound"
+    },
+    "mode_inventory": {
+      "h1p5_mode_count": 3904,
+      "row_count": 3904,
+      "propagating_count": 3902,
+      "manifest_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364"
+    },
+    "live_set_accounting": {
+      "basis": "derived/planning ledger from the existing physical_intermediate -> runtime -> physical_light_setup -> BAL_H call chain; no additional setup or allocation probe",
+      "planning_cap_bytes": 1622325310464,
+      "p4_sparsity_aij_csr_conversion": {
+        "payload_upper_bytes": 498938445392,
+        "source": "fullspace_p4_reference.py payload formula with the corrected h1.5 volume/port bounds",
+        "semantics": "planning bound; not measured RSS, strict peak upper bound, or LU"
+      },
+      "fgmres": {
+        "N6": 35594790,
+        "complex128_bytes_per_vector": 16,
+        "max_live_vectors": 65,
+        "derived_bytes": 37018581600,
+        "semantics": "65-vector FGMRES basis planning payload"
+      },
+      "source_work_vectors": {
+        "coupling_live_vector_peak": 32,
+        "coupling_derived_bytes": 18224532480,
+        "h6_action_transfer_rhs_allowance_vectors": 8,
+        "h6_action_transfer_rhs_allowance_bytes": 4556133120,
+        "source_note": "allowance, not a claim that all named objects are simultaneously constructed; p3/p1 PMG 12-vector helper is not counted as this BAL_H object"
+      },
+      "h6_a6_partial_assembly": {
+        "shared_p6_kernel_object": false,
+        "kernel_accounting": "line item is the payload of one H6/A6 partial-assembly kernel instance; additional positive/curl/mass kernel instances and unenumerated containers are covered only by the separate 128GiB engineering allowance",
+        "batch_size": 8,
+        "cells": 54332,
+        "cell_dofs": 882,
+        "dofs_int32_bytes": 191683296,
+        "material_indices_int32_bytes": 434656,
+        "metrics_float64_bytes": 7823808,
+        "known_cell_metadata_bytes": 199941760,
+        "reference_table_bytes": 21778432,
+        "reference_initialization_array_upper_bound_bytes": 173522944,
+        "packing_workspace_upper_bound_bytes": 309504,
+        "temporary_budget_bytes": 1813760,
+        "derived_kernel_line_item_bytes": 397366400,
+        "source": "physical_light_setup.py and fullspace_partial_assembly.py; no dense cell tensor; reference tables independent of h"
+      },
+      "fullspace_mpc_action": {
+        "coefficient_and_output_complex128_bytes": 1139033280,
+        "constraint_index_arrays_int32_bytes": 5536608,
+        "constraint_complex_work_bytes": 16609824,
+        "derived_bytes": 1161179712,
+        "constraint_count": 346038,
+        "source": "fullspace_mpc_action.py retained components"
+      },
+      "trace_carrier": {
+        "p6_per_mode_support_upper": 1019592,
+        "p6_single_copy_payload_bytes": 191063477760,
+        "p6_component_cache_plus_original_entries_plus_normalized_entries_copies": 3,
+        "p6_construction_planning_bytes": 573190433280,
+        "p6_one_mode_temporary_peak_bytes": 48940416,
+        "p4_single_copy_payload_bytes": 40725622272,
+        "p4_component_cache_plus_original_entries_plus_normalized_entries_copies": 3,
+        "p4_construction_planning_bytes": 122176866816,
+        "p4_one_mode_temporary_peak_bytes": 10431744,
+        "source": "fullspace_dtn_action.py component_cache/original entries/normalized copies; batch modal arrays are not multiplied by mode count",
+        "semantics": "support-based conservative functional payload, not exact per-mode NNZ; one-mode temporary is counted once, not multiplied by 3904"
+      },
+      "modal_batch_arrays_bytes": 256,
+      "jit_allocator_engineering_allowance_bytes": 1073741824,
+      "jit_allocator_allowance_basis": "existing fullspace_p4_reference reference_budget engineering_buffer_bytes=1GiB; not a strict RSS bound",
+      "lu_symbolic_numeric": "deferred to P2; no LU bytes included",
+      "one_mode_temporary_peak_is_not_added_again": true,
+      "derived_total_bytes": 1256737280880,
+      "derived_total_gib": 1170.4278000444174,
+      "engineering_allowance_bytes": 137438953472,
+      "engineering_allowance_gib": 128.0,
+      "engineering_allowance_scope": "mesh/MPC/owner-transfer Python containers, reference basis, JIT/allocator and unenumerated transient vectors; allowance is not an RSS strict upper bound",
+      "aggregate_planning_bytes": 1394176234352,
+      "aggregate_planning_gib": 1298.4278000444174,
+      "planning_headroom_bytes": 228149076112,
+      "planning_headroom_gib": 212.4803849607706,
+      "aggregate_fraction_of_planning_cap": 0.859369095310023,
+      "lu_symbolic_numeric_bytes": "not included; P2 admission required",
+      "status": "P0_DERIVED_PAYLOAD_PLUS_128GIB_ENGINEERING_ALLOWANCE_WITHIN_PLANNING_CAP__P1_SUPERVISED_ADMISSION_AND_P2_LU_REMAIN"
+    },
+    "development_probe": {
+      "script": "/tmp/task39extra_p0_port_probe.py",
+      "status": "STOPPED_BEFORE_FORMAL_FEM",
+      "reason": "probe began full 3904-mode surface integration; stopped as unnecessary for P0 topology bound",
+      "pid": 1504101,
+      "start_ticks": 145800142,
+      "signal": "SIGTERM",
+      "descendants_cleared": true,
+      "result_used_for_gate": false
+    },
+    "memory_envelope": {
+      "effective_available_bytes": 2074292690944,
+      "effective_total_bytes": 2163100413952,
+      "launch_cap_bytes": 1730480331161,
+      "planning_cap_bytes": 1622325310464,
+      "reserve_bytes": 324465062092,
+      "swap_current_bytes": 0
+    }
+  },
+  "legacy_int32_preflight": {
+    "stack": "default qualified PETSc 3.19.6 complex128 with PetscInt/CSR int32",
+    "h1p5": {
+      "structural_lower_bound": 3854072080,
+      "status": "NEGATIVE_INDEX_CAPACITY_PRECHECK",
+      "reason": "exceeds signed int32 structural index range under current cell-dof clique pattern"
+    },
+    "h2": {
+      "structural_lower_bound": 2099485888,
+      "status": "NOT_BLOCKED_BY_THIS_INT32_BOUND",
+      "note": "not a numeric or capacity pass; exact pattern/assembly remains unbuilt"
+    },
+    "preservation": "historical default-stack result; not overwritten by isolated int64 evidence"
+  },
+  "cases": {
+    "h1p5": {
+      "input": "input/task39extra_para_workstation_capacity/original_2nm_si_p6h1p5_native.dat",
+      "input_sha256": "34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f",
+      "input_sha256_before_preferred_node1": "599632cb74c9c75dc8f139da0e8ae2f2b44d058c1908251ef0a114d70aa1ac26",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "native_memory_policy": "preferred_node1",
+      "mesh_target_nm": 1.5,
+      "axis_cells": [34, 17, 94],
+      "axis_points": [35, 18, 95],
+      "global_cells": 54332,
+      "resolved_config_sha256": "f15856991ffa66276a0086837a8742a4066520c9456e6d457d316dfef915ec5d",
+      "channels": {"count": 3904, "propagating": 3902, "manifest_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364"},
+      "interior_axis_after_periodic_x_y_layers": [32, 15, 94],
+      "structural_nnz_lower_bound": 3854072080,
+      "index_gate": "DEFAULT_INT32_BLOCKED_INT64_STACK_AVAILABLE",
+      "status": "P0_STRUCTURAL_AND_MODE_INVENTORY_COMPLETE; P1_SUPERVISED_CAPACITY_ADMISSION_PENDING",
+      "basis": "current cell-dof clique pattern; interior rows/columns are outside periodic x/y slave layers and are not removed by MPC; the 3,854,072,080 lower bound exceeds int32 but is representable by the qualified isolated PetscInt64 stack"
+    },
+    "h2": {
+      "input": "input/task39extra_para_workstation_capacity/original_2nm_si_p6h2_native.dat",
+      "input_sha256": "1f4880e55622324f5d0824a87be17ea0c3aae49b690267d1d32f548d5f90e328",
+      "input_sha256_before_preferred_node1": "08804071129249a42d6cf8990861208840568f7ce45d8041f7fa92ba75658c75",
+      "physical_model_sha256": "06c2a2986226eb9ef9db9104cf37dd2a451c8d4add8e129e04b64d4db1f89433",
+      "native_memory_policy": "preferred_node1",
+      "mesh_target_nm": 2.0,
+      "axis_cells": [27, 13, 70],
+      "axis_points": [28, 14, 71],
+      "global_cells": 24570,
+      "resolved_config_sha256": "af53c69fb2a5b3b8601fc6a5410b26e67c5142b076ec5fe7224fb132b105e321",
+      "channels": {"count": 3904, "propagating": 3902, "manifest_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364"},
+      "full_structural_nnz_lower_bound": 2099485888,
+      "index_gate": "NOT_BLOCKED_BY_THIS_LOWER_BOUND",
+      "status": "PREFLIGHT_UNCERTAIN_NO_MATRIX_OR_NUMERIC_ASSEMBLY"
+    }
+  },
+  "memory_snapshot": {
+    "global_mem_total_bytes": 2163100413952,
+    "global_mem_available_bytes": 2074631897088,
+    "node1_memfree_bytes": 657734017024,
+    "node1_memavailable_bytes": null,
+    "hard_ceiling_bytes": 1730480331161,
+    "planning_ceiling_bytes": 1622325310464,
+    "strict_node1_launch_cap_snapshot_bytes": 657734017024,
+    "strict_node1_planning_cap_snapshot_bytes": 657734017024,
+    "effective_profile_cap": "not_yet_formal_guard_admission",
+    "swap_current_bytes": 0,
+    "note": "input 600 GiB display fields are not evidence that a native cap was raised",
+    "preferred_node1_read_only_admission": {
+      "policy": "preferred_node1",
+      "command_prefix": ["/usr/bin/taskset", "-c", "23", "/usr/bin/numactl", "--preferred=1"],
+      "allowed_mems": [0, 1],
+      "allowed_mems_source": "/proc/self/status:Mems_allowed_list",
+      "cgroup_path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2112.scope",
+      "node1_memfree_bytes": 656766132224,
+      "node1_memfree_unit": "bytes_from_kB",
+      "node1_memfree_below_global_effective_cap": true,
+      "fallback_allowed": true,
+      "global_effective_available_bytes": 2074590273536,
+      "global_effective_cap_bytes": 1730480331161,
+      "global_reserve_bytes": 324465062092,
+      "global_reserve_minimum_bytes": 274877906944,
+      "strict_node1_cap_inherited": false,
+      "strict_node1_cap_tightened": false,
+      "task_cgroup_swap_bytes": 0,
+      "preexisting_global_swap_policy": "preexisting_global_swap_reported_outside_current_cgroup",
+      "global_pswp_delta": {"pswpin_pages": 0, "pswpout_pages": 0},
+      "formal_run": false,
+      "note": "read-only guard admission snapshot; formal startup must freeze a fresh envelope and retain the same zero-new-swap Gate"
+    }
+  },
+  "independent_watchdog": {
+    "status": "READY_FOR_REUSE_NOT_ACTIVE",
+    "implementation": "existing benchmarks.subreaper_watchdog launched detached with stdin=DEVNULL, start_new_session, redirected logs; no new framework",
+    "script_sha256": "2b5191f2689d7c7e58e828430aa3cca10ed3c63e1652d04e5d09f4cfff8560e9",
+    "prior_selftest": "isolated parent/child sleep plus independent witness: PASS; target cleanup and witness survival verified",
+    "prior_live_validation": "64 one-second samples; identity/readability PASS; signals_sent=0; hard cap/reserve and global pswp baseline recorded",
+    "reused_lifecycle_test": "src/test/test_354_subreaper_watchdog.py -k orphan_setsid_child_is_sampled_and_reaped: 2 passed",
+    "detached_lifecycle_witness": {
+      "run_directory": "/tmp/task39extra-detached-watchdog.a7ljrf99",
+      "guard_pid": 1488472,
+      "guard_start_ticks": 145656569,
+      "guard_ppid_after_launch_call": 1,
+      "samples": 31,
+      "sample_trace": [25, 26, 27, 28, 29],
+      "natural_status": "COMPLETED",
+      "descendants_cleared": true,
+      "leader_exit_code": 0,
+      "signals_sent": 0,
+      "elapsed_seconds": 32.405
+    },
+    "required_formal_scope": "start independently of the dialogue exec; PID/start_ticks-limited full parent/MPI/worker tree; 1s RSS/swap; existing hard/resource/global-swap stop behavior; no time deadline",
+    "current_case_status": "not started for h1.5; detached lifecycle qualified, no formal resource qualification claimed"
+  },
+  "formal_launch_plan": {
+    "status": "PREPARED_NOT_STARTED",
+    "case": "2nm_si_p6h1p5",
+    "outer_argv": ["/usr/bin/taskset", "-c", "9", "/bin/bash", "-lc", "source scripts/activate_task39extra_int64.sh && exec python scripts/run_case.py input/task39extra_para_workstation_capacity/original_2nm_si_p6h1p5_native.dat"],
+    "popen": {
+      "cwd": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+      "stdin": "DEVNULL",
+      "stdout_stderr": "independent launch log; stderr redirected to stdout",
+      "start_new_session": true,
+      "close_fds": true
+    },
+    "internal_contract": "run_case.py -> native_capacity_guard/launch_specification -> existing subreaper supervise; no outer MPI and no second watchdog",
+    "worker_contract": "input execution plan supplies taskset CPU23, MPI1/thread1, numactl --preferred=1; fresh envelope, hard/reserve/zero-new-swap Gates",
+    "time_limits": {"screen": null, "solve": null, "workflow": null, "campaign": null},
+    "iteration_contract": {"screen_progress": 128, "restart": 32, "max_iterations": 2048, "initial_state": "zero"}
+  },
+  "formal_run_started": false
+}

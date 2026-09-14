@@ -157,6 +157,11 @@ def _base_manifest(
         material = snapshot['materials']
         properties = derived.get('config_properties', {})
         campaign = profile_snapshot.get('campaign_authorization', {})
+        material_authority = campaign.get('user_material', {}).get('authority')
+        if material_authority is None and snapshot['incidence']['wavelength_nm'] == 5.0:
+            material_authority = campaign.get('five_nm_material', {}).get('authority')
+        if material_authority is None:
+            material_authority = 'task-V5-input-identity'
         manifest['native_capacity_contract'] = {
             'profile': native_identity,
             'wavelength_nm': snapshot['incidence']['wavelength_nm'],
@@ -180,11 +185,7 @@ def _base_manifest(
             'restart': profile['outer']['restart'],
             'max_iterations': profile['outer']['max_iterations'],
             'initial_guess': profile['outer']['initial_guess'],
-            'material_authority': (
-                campaign.get('five_nm_material', {}).get('authority')
-                if snapshot['incidence']['wavelength_nm'] == 5.0
-                else 'task-V5-input-identity'
-            ),
+            'material_authority': material_authority,
         }
     return manifest
 

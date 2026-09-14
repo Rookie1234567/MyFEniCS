@@ -193,7 +193,7 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         swap_launch = _launch_swap_snapshot()
         swap_launch['policy'] = _validate_preexisting_swap(swap_launch)
         node_admission = None
-        if memory_policy == 'membind_node1':
+        if memory_policy in {'membind_node1', 'preferred_node1'}:
             cgroup = current_cgroup_path()
             allowed_mems = None
             allowed_mems_source = '/proc/self/status:Mems_allowed_list'
@@ -211,7 +211,7 @@ def native_capacity_guard(profile, *, memory_policy='none'):
             except (OSError, IndexError, StopIteration, ValueError):
                 allowed_mems = None
             if not allowed_mems or 1 not in allowed_mems:
-                raise InputError('native membind_node1 requires Mems_allowed_list including node1')
+                raise InputError('native node1 memory policy requires Mems_allowed_list including node1')
             node_meminfo = Path('/sys/devices/system/node/node1/meminfo')
             try:
                 node_values = _parse_node1_meminfo(node_meminfo.read_text())
@@ -220,22 +220,30 @@ def native_capacity_guard(profile, *, memory_policy='none'):
             node_total_kib = node_values.get('Node 1 MemTotal')
             node_free_kib = node_values.get('Node 1 MemFree')
             if node_free_kib is None or node_total_kib is None:
-                raise InputError('native membind_node1 requires readable node1 MemFree')
+                raise InputError('native node1 memory policy requires readable node1 MemFree')
             resources = native_profile_facts(profile)['resources']
             from benchmarks.subreaper_watchdog import memory_envelope
+            if memory_policy == 'preferred_node1':
+                # Do not inherit a cap tightened by an earlier strict-node1 launch.
+                os.environ.pop('PHYSICAL_NATIVE_NODE_CAP_BYTES', None)
             envelope = memory_envelope()
             effective_cap = int(envelope['launch_cap_bytes'])
             if effective_cap <= 0:
                 raise InputError('native global memory envelope has no launch capacity')
-            node_cap = min(effective_cap, node_free_kib * 1024)
-            if node_cap < effective_cap:
+            node_cap = effective_cap
+            if memory_policy == 'membind_node1':
+                node_cap = min(effective_cap, node_free_kib * 1024)
+            if memory_policy == 'membind_node1' and node_cap < effective_cap:
                 os.environ['PHYSICAL_NATIVE_NODE_CAP_BYTES'] = str(node_cap)
                 envelope = memory_envelope()
-            if int(envelope['launch_cap_bytes']) > node_free_kib * 1024:
+            if (memory_policy == 'membind_node1' and
+                    int(envelope['launch_cap_bytes']) > node_free_kib * 1024):
                 raise InputError('node1 MemFree cannot support the effective native launch cap')
             node_admission = {
-                'policy': 'strict_membind',
+                'policy': ('strict_membind' if memory_policy == 'membind_node1'
+                           else 'preferred_node1'),
                 'node': 1,
+                'fallback_allowed': memory_policy == 'preferred_node1',
                 'cgroup_path': None if cgroup is None else str(cgroup),
                 'allowed_mems': sorted(allowed_mems),
                 'allowed_mems_source': allowed_mems_source,
@@ -245,6 +253,7 @@ def native_capacity_guard(profile, *, memory_policy='none'):
                 'effective_launch_cap_before_node1_bytes': effective_cap,
                 'effective_launch_cap_bytes': int(envelope['launch_cap_bytes']),
                 'node1_cap_tightened': node_cap < effective_cap,
+                'node1_memfree_below_effective_cap': node_free_kib * 1024 < effective_cap,
                 'global_effective_available_bytes': int(envelope['effective_available_bytes']),
                 'global_reserve_bytes': int(envelope['reserve_bytes']),
                 'global_reserve_minimum_bytes': int(resources['reserve_min_bytes']),
@@ -255,6 +264,9 @@ def native_capacity_guard(profile, *, memory_policy='none'):
                      'worker_affinity': [23],
                      'worker_memory_policy': ({'mode': 'strict_membind', 'node': 1}
                                               if memory_policy == 'membind_node1'
+                                              else {'mode': 'preferred', 'preferred_node': 1,
+                                                    'fallback': 'allowed_mems'}
+                                              if memory_policy == 'preferred_node1'
                                               else {'mode': 'default'}),
                      'native_memory_policy': memory_policy,
                      'native_command_prefix': ['/usr/bin/taskset', '-c', '23', *memory_prefix],

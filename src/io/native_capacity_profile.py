@@ -8,9 +8,18 @@ NATIVE_CASES = {
     'balanced_h6_p4_native_13p5': (13.5, (10.0,), 7200, 43200, 64800),
     'balanced_h6_p4_native_5nm': (5.0, (4.0, 3.0), None, None, None),
     'balanced_h6_p4_native_3nm': (3.0, (2.5, 2.0), 21600, 172800, 259200),
-    'balanced_h6_p4_native_2nm': (2.0, (1.5, 1.0), 21600, 259200, 345600),
+    'balanced_h6_p4_native_2nm': (2.0, (1.5, 2.0), None, None, None),
 }
 NATIVE_PROFILES = tuple(NATIVE_CASES)
+NATIVE_TIME_LIMIT_MODES = {
+    'balanced_h6_p4_native_13p5': 'bounded',
+    'balanced_h6_p4_native_5nm': 'none',
+    'balanced_h6_p4_native_3nm': 'bounded',
+    'balanced_h6_p4_native_2nm': 'none',
+}
+NATIVE_NONE_TIME_PROFILES = frozenset(
+    identity for identity, mode in NATIVE_TIME_LIMIT_MODES.items() if mode == 'none'
+)
 MATERIALS = {
     13.5: (0.999002304859, 0.00182649365),
     5.0: (0.99396854453, 0.00435380777),
@@ -19,6 +28,14 @@ MATERIALS = {
 }
 
 USER_MATERIAL_METADATA = {
+    2.0: {
+        'material': 'Si / silicon',
+        'density_g_cm3': 2.33,
+        'delta': 0.00119851693,
+        'beta': 0.000213688647,
+        'authority': 'user-provided for this execution; not independently database-verified',
+        'interpretation': 'complex refractive index n=1-delta+i*beta; epsilon=n*n',
+    },
     5.0: {
         'material': 'Si / silicon',
         'density_g_cm3': 2.33,
@@ -33,6 +50,8 @@ USER_MATERIAL_METADATA = {
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
     wavelength, meshes, screen, solve, workflow = NATIVE_CASES[identity]
+    time_limit_mode = NATIVE_TIME_LIMIT_MODES[identity]
+    user_material = USER_MATERIAL_METADATA.get(wavelength)
     facts = balanced_profile_facts('balanced_h6_p4_v5')
     facts.update(identity=identity, native_capacity=True,
                  wavelength_nm=wavelength, allowed_mesh_targets_nm=list(meshes))
@@ -42,7 +61,7 @@ def native_profile_facts(identity):
     facts['outer']['screen']['solve_seconds'] = screen
     facts['resources'].update(
         solve_seconds=solve, workflow_seconds=workflow,
-        batch_limit_seconds=None if wavelength == 5.0 else 864000,
+        batch_limit_seconds=None if time_limit_mode == 'none' else 864000,
         absolute_cap_bytes=32*1024**3 if wavelength == 13.5 else int(1.60*1024**4),
         reserve_min_bytes=256*1024**3,
         planning_cap_bytes=24*1024**3 if wavelength == 13.5 else int(1.50*1024**4),
@@ -58,14 +77,19 @@ def native_profile_facts(identity):
         'screen': {
             'iterations': facts['outer']['screen']['iterations'],
             'solve_seconds': screen,
-            'time_limit_mode': 'none' if wavelength == 5.0 else 'bounded',
+            'time_limit_mode': time_limit_mode,
             'enabled_for_notch': False,
         },
-        'time_limit_mode': 'none' if wavelength == 5.0 else 'bounded',
+        'time_limit_mode': time_limit_mode,
         'solve_seconds': solve,
         'workflow_seconds': workflow,
-        'five_nm_material': USER_MATERIAL_METADATA[5.0],
     }
+    if user_material is not None:
+        facts['campaign_authorization']['user_material'] = user_material
+        if wavelength == 5.0:
+            facts['campaign_authorization']['five_nm_material'] = user_material
+        if wavelength == 2.0:
+            facts['campaign_authorization']['two_nm_material'] = user_material
     return facts
 
 
@@ -74,10 +98,11 @@ def validate_native_case(config):
     from .input_loader import InputError
     identity = config['solver']['preconditioner']
     wavelength, meshes, _, _, workflow = NATIVE_CASES[identity]
+    time_limit_mode = NATIVE_TIME_LIMIT_MODES[identity]
     expected = {
         'solver': {'restart': 32, 'max_iterations': 2048},
         'execution': {'mpi_size': 1, 'require_zero_swap': True,
-                      'time_limit_mode': 'none' if wavelength == 5.0 else 'bounded'},
+                      'time_limit_mode': time_limit_mode},
         'discretization': {'nedelec_degree': 6, 'assembly_backend': 'standard_full',
                                'mesh_cell_type': 'hexahedron', 'mesh_spacing_mode': 'boundary_fitted'},
         'incidence': {'wavelength_nm': wavelength, 'grazing_angle_deg': 1.0,
@@ -98,9 +123,10 @@ def validate_native_case(config):
     for key in ('n_substrate', 'n_grating'):
         if tuple(config['materials'][key]) != MATERIALS[wavelength]:
             raise InputError(f'{identity} fixes materials.{key}')
-    if wavelength == 5.0:
+    user_material = USER_MATERIAL_METADATA.get(wavelength)
+    if user_material is not None:
         for key in ('substrate_name', 'grating_name'):
-            if config['materials'][key] != USER_MATERIAL_METADATA[5.0]['material']:
-                raise InputError(f'{identity} fixes materials.{key}=Si / silicon')
+            if config['materials'][key] != user_material['material']:
+                raise InputError(f'{identity} fixes materials.{key}={user_material["material"]}')
     if wavelength != 13.5 and config['geometry'].get('cell_notch'):
         raise InputError('shortwave notch is outside this campaign')

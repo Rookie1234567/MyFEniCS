@@ -8,8 +8,9 @@
 | R1 attempt3，13.5 nm Si p6/h10，550步 | own数值 Gate 通过；`BALANCED_OUTPUT_AUTHORITY_LIMITED` | [attempt3 compact](records/r1_attempt3.json) |
 | R1 native direct matched reference | NATIVE_OWN_PASS_MATCHED_REFERENCE_WSL_ARRAYS_PARTIAL | [reference compact](records/r1_native_reference.json)、[80通道](records/r1_native_reference_80_channels.json) |
 | R2 notch、条件native reference | `GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED`；已清场，待审 | [R2负结果 compact](records/r2_notch_attempt1.json) |
-| 5 nm formal p6/h4 | own数值/物理 Gate 通过；`REFERENCE_AUTHORITY_LIMITED`；资源连续资格不追认 | [5 nm compact](records/5nm_formal_attempt1.json)、[资源记录](records/5nm_resource_coverage.json) |
-| S5 / S3 / S2 / G | R2仍为独立未决负结果；5 nm own已完成；3/2 nm与G未解锁 | [运行总账](records/run_index.json) |
+| 5 nm formal p6/h4 | own数值/物理 Gate 通过；`REFERENCE_AUTHORITY_LIMITED`；资源连续资格不追认 | [5 nm compact](records/5nm_formal_attempt1.json)、[600通道CSV](records/5nm_dtn_600_channels.csv)、[tracked checker](records/5nm_checker_recheck.json)、[资源记录](records/5nm_resource_coverage.json) |
+| 2 nm Si h1.5 P0 | 实际网格/FE/MPC/模式与保守结构预算完成；P1受监督准入待审，未启动FEM | [2 nm P0记录](records/2nm_p0_preflight_v1.json) |
+| S5 / S3 / S2 / G | R2仍为独立未决负结果；5 nm own已完成；2 nm停在P0审查，3 nm/G未解锁 | [运行总账](records/run_index.json) |
 | 性能/检查修复 | 性能修复后13.5 nm R1与native reference通过；5 nm checker修复后独立recheck通过，R2归因仍未决 | `f124679e75915758076d9240bd4bef2f5c772752`；checker `d64398cb1fecd90867071688dca94e501235cf7a`；[测试](test_summary.md) |
 
 ## 5 nm formal attempt 1（用户授权跳过未通过 R2）
@@ -18,7 +19,7 @@
 
 数值结果：iteration `698`，full explicit true residual=`9.986638454029182e-7`，screen128 通过；p4 为 `1396` RHS、`1419` MatSolve、`23` refinement，terminal p4 relative residual max=`9.989282114125241e-11`。official DtN 共 `600` 个 channel，复振幅/功率与 E/H 均有限；R=`0.7331834812424759`、T=`0.00022243948430485038`、A_balance=`0.26659407927321926`、A_volume=`0.26659407694262094`，独立能量误差=`2.33059826992843e-9`。
 
-独立 recheck：[recheck/checker.json](../../../results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z/recheck/checker.json) 的 `independent_output_gates_passed=true`、`gate_failures=[]`、分类为 `BALANCED_OUTPUT_AUTHORITY_LIMITED`。`REFERENCE_AUTHORITY_LIMITED` 仅表示没有 5 nm matched fine/continuum 精度参考；`official_result.diffraction_channel_count=150` 是 diagnostic Fourier 计数，不替代或削减 DtN 的 600 channel。
+独立 recheck 的 tracked 副本：[5nm_checker_recheck.json](records/5nm_checker_recheck.json)（来源仍为 ignored `recheck/checker.json`）具有 `independent_output_gates_passed=true`、`gate_failures=[]`、分类为 `BALANCED_OUTPUT_AUTHORITY_LIMITED`。完整 600 条 mode key/复振幅/边界振幅/逐通道功率字段已进入 [5nm_dtn_600_channels.csv](records/5nm_dtn_600_channels.csv)，并保留来源 SHA。`REFERENCE_AUTHORITY_LIMITED` 仅表示没有 5 nm matched fine/continuum 精度参考；`official_result.diffraction_channel_count=150` 是 diagnostic Fourier 计数，不替代或削减 DtN 的 600 channel。
 
 资源与生命周期单列：[资源记录](records/5nm_resource_coverage.json)。原 parent watchdog 有监督断档，旧 wait 退出码 `UNAVAILABLE`；不能追认连续 `RESOURCE_PASS`。原始失败/launching summary、V2 recovery、原始 checker 均保留。观测整树 RSS 峰为 `50161172480 B`、swap peak=`0`；这只是外置采样可观测峰值，不填补断档。
 

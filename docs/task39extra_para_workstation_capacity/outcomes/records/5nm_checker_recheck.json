@@ -1,0 +1,33 @@
+{
+  "classification": "BALANCED_OUTPUT_AUTHORITY_LIMITED",
+  "reference_authority": "REFERENCE_AUTHORITY_LIMITED",
+  "independent_output_gates_passed": true,
+  "gate_failures": [],
+  "raw_facts": {
+    "p4_decisions": {
+      "passed": true,
+      "errors": [],
+      "logical_rhs": 1396,
+      "MatSolve": 1419,
+      "refinements": 23
+    },
+    "balanced_screen": {
+      "matches": true,
+      "recomputed": {
+        "iteration": 128,
+        "passed": true
+      }
+    },
+    "full_explicit_true_relative_residual": 9.986638454029182e-07,
+    "physics": {
+      "R": 0.7331834812424759,
+      "T": 0.00022243948430485038,
+      "A": 0.26659407927321926,
+      "A_volume": 0.26659407694262094,
+      "volume_energy_error": 2.33059826992843e-09,
+      "absorption_difference": 2.3305983254395812e-09
+    }
+  },
+  "checker_seconds": 176.8853508499451,
+  "resource_authority": "separate enclosing parent verdict required"
+}

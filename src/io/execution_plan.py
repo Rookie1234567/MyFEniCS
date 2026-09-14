@@ -79,6 +79,8 @@ def native_memory_policy_prefix(policy: str | None) -> tuple[str, ...]:
         return ()
     if policy == "membind_node1":
         return ("/usr/bin/numactl", "--membind=1")
+    if policy == "preferred_node1":
+        return ("/usr/bin/numactl", "--preferred=1")
     raise InputError(f"unsupported native_memory_policy: {policy!r}")
 
 

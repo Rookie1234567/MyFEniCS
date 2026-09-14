@@ -340,6 +340,9 @@ def main(argv=None, *, native_capacity_isolation=None):
                             native_memory_policy=native_memory_policy,
                             worker_memory_policy=({'mode': 'strict_membind', 'node': 1}
                                                   if native_memory_policy == 'membind_node1'
+                                                  else {'mode': 'preferred', 'preferred_node': 1,
+                                                        'fallback': 'allowed_mems'}
+                                                  if native_memory_policy == 'preferred_node1'
                                                   else {'mode': 'default'}))
             if native_capacity_isolation is not None:
                 manifest['native_capacity_isolation'] = native_capacity_isolation
