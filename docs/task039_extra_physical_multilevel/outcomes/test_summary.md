@@ -1,3 +1,26 @@
+# Review V21 / Response V22：Z5 证据、测试与 formal 边界
+
+Z5 汇总阶段只读取已保存原始记录，没有额外 PDE；本批 Z2/Z3 已分别启动 A、B，C 未运行。测试集合保持分离：Z1 preformal engineering qualification=`99 passed`；A 更正 repair path=`49 passed`；A checker/recheck=`65/65` checks；不能把三者相加。B checker=`not_run`，因为 B 没有终态 residual 或 physical fields。
+
+| 验证 | 实际结果 | 证据/边界 |
+|---|---|---|
+| A formal residual/physical | PASS | worker explicit residual=`9.756517234801763e-7`；independent A6=`9.756517234802322e-7`；80 modes、R/T/A/`A_volume`、closure、field/curl gates 通过 |
+| A checker | **65/65** | current/recheck hash=`149747de773e9cded62898195cc4b1e58d0714cf691e5b7b7c20316619590bce`；original failed copy 保留，原失败仅 `release_timeline`、`summary_schema` |
+| A corrected repair path | **49 passed** | `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_fix_targeted_tests_corrected_path.log`；不含 PDE 重跑 |
+| Z1 preformal engineering qualification | **99 passed** | `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z1_final_targeted_tests.log`；与 49/65 分开统计 |
+| B resource stop audit | PASS as classification evidence | p4 CSR identity、symbolic stats、capacity arithmetic、parent/worker/systemd terminal fields 均保存；B checker 不运行、不伪造通过 |
+| Z5 frozen authority | **passed** | `50` frozen files、`26` old profiles、`changed=0`；SHA256=`880534b2c2bb72939669ef098cb809510b666930101a74a0a1312905e0b3a5b3` |
+| Z5 文档合同 | **15 passed** | `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_documentation_tests.log`；仅文档检查，无 PDE |
+| Z5 saved cost comparison | read-only verified | SHA256=`87975d656484936f6b3ca1ca067bd539fd6a752a91a98acb8816fd2e6fe1d577`；O10/A 单步及 setup measured fields 分开记录 |
+| prepared-form cache audit | consistent | O10 `10 hit/1 miss`（`p6_condensation`）；A/B 各 `11 hit/0 miss`；A/B 无 compiler descendant samples；不声称 warm-cache RSS 收益 |
+| 未运行/未声称 | not_run | C、B outer solve、numeric factor allocation、Ruff、full repository pytest、CI、MPI2/4 新资格、任何新 PC 或新 heavy PDE |
+
+几何审计也已冻结：notch union=`x=[16.5,33.5] nm, y=[0,8.333333333333334] nm, z=[40,80] nm`，8 个实体；h7.5 每轴 `[9,5,22]`、owned cells=`990`，含 neutral alignment planes，不写成 720 cells 或 uniform multiplier。Z1 base=`f9e16c21b936673b5a2dadcf52d2c344e61aabe8`；当前 pre-Z5 HEAD=`f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48`。没有声称 GitHub Actions/CI 通过，也没有把资源控制停止当作数值失败。
+
+证据入口：[V21 compact](records/dual_condensed_robustness_v21_compact.json)、[V21 decision](records/dual_condensed_robustness_v21_decision.json)、[Z5 frozen authority](../../../benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_frozen_authority_check.json)、[Z5 saved cost](../../../benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_saved_cost_comparison.json)。
+
+---
+
 # Review V20 / Response V21：V20 low-memory lifecycle 的测试与 formal 边界
 
 | 验证 | 实际结果 | 证据/边界 |

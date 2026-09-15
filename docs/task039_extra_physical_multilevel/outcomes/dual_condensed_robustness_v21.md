@@ -1,6 +1,17 @@
-# Task39extra V21：非可分 h10 缺口的双层凝聚鲁棒性结果
+# Task39extra V21 Z5：非可分 h10 通过，h7.5 在全局 trace 因子容量 Gate 前止步
 
-本报告记录 Review V21 的 A 场：冻结的非可分材料缺口、13.5 nm、Full3D、p6/h10、MPI1。单元凝聚的含义是先在每个有限元单元内消去内部未知量，只把相邻单元共享的 trace 和 80 个端口未知量交给外层迭代，最后再恢复完整三维场；它减少外层问题的规模，但需要保留局部缓存和一个准确的 p4 trace/端口因子。本场只验证这一固定方法在非可分材料分布上的行为，不证明任意三维几何或连续极限收敛。
+本报告记录 Review V21 的完整 Z5：A 是冻结非可分材料缺口的 13.5 nm、Full3D、p6/h10、MPI1 正式场；B 是原始材料的 p6/h7.5 容量预审/止步记录；C 因 B 的适用资源前置条件失败而未启动。单元凝聚的含义是先在每个有限元单元内消去内部未知量，只把相邻单元共享的 trace 和 80 个端口未知量交给外层迭代，最后再恢复完整三维场；它减少外层问题的规模，但需要保留局部缓存和一个准确的 p4 trace/端口因子。本批只证明 A 这个固定非可分材料分布可用，并形成 B 的笔记本容量边界，不证明任意三维几何或连续极限收敛。
+
+## Z5 首屏聚合
+
+| 场 | 状态 | residual/reference | 迭代与资源 | 边界 |
+|---|---|---|---|---|
+| O10 只读复用 | `reused_read_only` | 112 步；A6=`9.730817853580463e-7` | full RSS=`2831749120 B`；不新运行 | 仅作 `B/112` 基线 |
+| A / Z2 | `MATCHED_REFERENCE_PASS` | 146 步；independent A6=`9.756517234802322e-7`；65/65 | RSS=`2297982976 B`，swap0 | 非可分 h10 可用 |
+| B / Z3 | `H7P5_RESOURCE_BLOCKED_ON_LAPTOP` | p4 CSR 已装配；numeric factor/outer residual=`not_run` | tree RSS=`2318045184 B`；symbolic-after/numeric-before request 不是 RSS | 父层原始 `WORKER_FAILED`、worker 层 `RESOURCE_CONTROLLED_STOP` |
+| C / Z4 | `not_run_by_review_condition` | `not_run` | 无 C 资源/时间 | B 资源前置 Gate 失败 |
+
+因此 compact 顶层是 **batch aggregate**；A 的 `official_result=true` 只属于 A case，不能因为 batch 还包含 B/C 而误读为 A 失败。普通默认不变，master merge 未批准。
 
 ## 1. 结论和正式身份
 
@@ -95,18 +106,70 @@ V21 原始事件使用 label `v21_p6_local_caches`，释放了 `183282224 B`，�
 
 当前 checker source SHA256 为 `acbad332f35ccf3302fb027335b93ed399941c2a937012c86f2cc51f3beabcb6`；current/recheck checker SHA256 均为 `149747de773e9cded62898195cc4b1e58d0714cf691e5b7b7c20316619590bce`，65/65 checks 通过，`errors=[]`，`evidence_valid=true`。修复测试的更正路径结果为 `49 passed`；没有用 `--no-verify` 绕过提交检查，也没有修改共享 hook/config。
 
-## 6. B/C 范围边界
+## 6. B：h7.5 p4 装配完成，numeric factor 前容量阻断
 
-在 A compact 记录时：
+B 的实际顺序是：forms/geometry/mesh → p4 cell-condensed assembly → p4 global trace CSR identity → symbolic factor statistics → independent live inventory cap。p6 local cache 按正式流程是在 p4/H6 setup 之后、outer KSP 之前建立；B 在 p4 factor numeric 前就停止，所以 p6 local cache 是 `not_built`，不是“运行过但为零”。
 
-| 场 | 状态 | 启动条件 |
+冻结几何计划中的 notch union 为 `x=[16.5,33.5] nm`、`y=[0,8.333333333333334] nm`、`z=[40,80] nm`，来自 8 个原始实体；这里不采用历史 center-origin 文字做额外平移。B/C h7.5 的每轴 cell counts 为 `[9,5,22]`、owned cells=`990`，包含保持外边界对齐的 neutral alignment planes；它不是 720 cells，也不是 uniform multiplier。
+
+| B 字段 | 已保存结果 | 解释 |
+|---|---:|---|
+| p4 condensed matrix | `84680×84680`，`32320342` stored NNZ | complex128 CSR 已 materialize；CSR SHA=`857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0` |
+| matrix mapping / values SHA | `bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d` / `cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34` | 同一 p4 CSR 内容身份；不是 factor identity |
+| raw/oriented class | `12 / 26` | 实际 assembly audit；不是 p6 class |
+| retained local numeric cache | `24541920 B` | LU=`4863456 B`、recovery=`8626176 B`、RHS projection=`2426112 B`、RHS trace=`8626176 B` |
+| assembly temporary components | raw/oriented=`17280000/15335424 B` | assembly return 后释放；不是 simultaneous tree RSS |
+| symbolic rows / NNZ fields | rows=`84680`；`nz_used/nz_allocated=32320342/45403840` | `nz_used` 与已装配 CSR stored NNZ 相符；`nz_allocated` 是结构预分配 |
+| INFOG fields | `INFOG16/17=5060/5060 MB`；`INFOG3/20=221594144/221594144` | symbolic/predicted factor statistics |
+
+冻结 V11 公式给出的 numeric-before 保守请求为：
+
+```text
+ceil_MB(max(32 MiB, 2*(5060+1)*1e6 + 8 MiB)) = 10131 MB
+request = 10,131,000,000 B
+```
+
+容量 Gate 的精确算术是：
+
+```text
+current inventory  1,136,131,046 B
++ request          10,131,000,000 B
+= projected       11,267,131,046 B
+> cap              6,442,450,944 B
+```
+
+`10,131,000,000 B` 是 symbolic-after/numeric-before 的保守政策请求，不是已分配 factor 内存、不是实测 numeric RSS，也不证明 numeric 阶段一定会实际占用 10 GB。尚未测得的正是 numeric factor allocated/used bytes、numeric factor RSS，以及 p6 cache 建立后的生命周期。
+
+B 的资源 authority 实测 simultaneous tree RSS/PSS=`2318045184/2287882240 B`（worker sample RSS=`2318233600 B`），inventory/workspace=`1136131046/76405680 B`，swap=`0 B`，311 samples，descendants cleared；monotonic=`79.78535183999338 s`，conservative=`85.640744153 s`，time gate 未超限。父层 raw classification 是 `WORKER_FAILED`、exit4；worker summary 是 `CONTROLLED_STOP/RESOURCE_CONTROLLED_STOP`；systemd 是 `MainPID=0, ActiveState=failed, SubState=failed, Result=exit-code, ExecMainStatus=3`。这不是 OOM kill，也不是 numerical failure。
+
+## 7. O10/A 单步与 setup 口径
+
+为回答单步成本，只比较已测 O10/A，不能把它们解释成纯 PC 成本：
+
+| 指标 | O10 只读复用 | A / Z2 | 说明 |
+|---|---:|---:|---|
+| KSP monotonic / outer steps | `1151.6350344140083 / 112 = 10.282455664410788 s/step` | `1394.9292688659916 / 146 = 9.55431006072597 s/step` | 含检查/保存的 KSP 平均，不是 pure-PC cost |
+| BAL_H total / calls | `1067.2167201989505 / 113 = 9.444395753973014 s/call` | `1292.2156548238418 / 147 = 8.790582685876474 s/call` | 含 setup 一次；不与 outer steps 混同 |
+| p4 setup / symbolic / numeric (s) | `37.73026903902064 / 0.36884564999490976 / 23.69310698399204` | `34.0570986730163 / 0.15249989298172295 / 22.365533358009998` | 分阶段 measured fields |
+| frozen symbolic package request | `1953 MB` | `1953 MB` | request policy，不是已分配内存 |
+| B symbolic package request | — | `10131 MB` | 预测 request，不能与 O10/A 已分配内存混比 |
+
+这些数字只用于已完成 O10/A 的口径对照；B/C 仍不填迭代增长。
+
+### 7.1 prepared-form cache 账本
+
+11 个必要 prepared forms 的 cache 计数为：O10=`10 hit / 1 miss`（唯一 miss 是 `p6_condensation`），A=`11 / 0`，B=`11 / 0`。form-preparation event time 分别为 O10=`56.7998199990252 s`、A=`0.017299229046329856 s`、B=`0.02241471700835973 s`；A/B 均无 compiler descendant sample。这里的计数和 event time 不等于完整 setup/workflow 时间，也不支持从 warm cache 推断 RSS 优势。
+
+## 8. B/C 范围边界与最终裁决
+
+| 场 | 状态 | 原因 |
 |---|---|---|
-| B / `Z3_ORIGINAL_H7P5` | `not_run` | A 的 residual/physics/resource Gate 已通过；需先完成 A evidence commit 和 B 的实际资源预审，再按原始 `v21_z3_original_h7p5.dat` 启动 |
-| C / `Z4_NOTCH_H7P5` | `not_run` | 只有 B 的可适用求解/一致性 Gate 和资源预审通过后，才使用同一 h7.5 网格与冻结缺口启动 |
+| B / `Z3_ORIGINAL_H7P5` | `H7P5_RESOURCE_BLOCKED_ON_LAPTOP` | p4 matrix、raw/oriented class 和 local cache 已完成；numeric factor 前 independent live inventory cap 失败；outer solve、residual、physical output `not_run` |
+| C / `Z4_NOTCH_H7P5` | `not_run_by_review_condition` | B 的适用 h7.5 资源前置条件失败；没有 C worker |
 
-`not_run` 不是数值失败，也不能从 A 的 2.30 GB RSS 线性外推 h7.5 资源。B/C 不共享不同材料矩阵的 LU、不用前一场解初始化、不切换 PC、不暗中改用更粗网格。普通默认保持不变，V21 仍是有限的 13.5 nm research validation。
+因此 `B/112`、`C/A`、`C/B` 都是 `not_run`。不能从 A 的 2.30 GB RSS 线性外推 h7.5，也不能把 symbolic request 写成 numeric RSS。下一研究对象是全局 p4 trace 因子规模或替代表示；本阶段不实现新 PC、不重试 B/C。普通默认不变，V21 仍是有限的 13.5 nm research validation。
 
-## 7. 机器可读证据
+## 9. 机器可读证据
 
 - [V21 compact](records/dual_condensed_robustness_v21_compact.json)
 - `results/.../physical_dual_condensed_robustness_v21_summary.json`：原始 worker summary
@@ -115,5 +178,10 @@ V21 原始事件使用 label `v21_p6_local_caches`，释放了 `183282224 B`，�
 - `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_metadata_recheck.json`
 - `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_preserved_raw_and_negative_audit.json`
 - `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_completed_result_audit.json`
+- `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_root_stop_audit.json`
+- `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_resource_stop_compact.json`
+- `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_frozen_authority_check.json`：50 frozen files、26 old profiles、changed=`0`、passed=`true`；SHA256=`880534b2c2bb72939669ef098cb809510b666930101a74a0a1312905e0b3a5b3`
+- `benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_saved_cost_comparison.json`：O10/A cost comparison；SHA256=`87975d656484936f6b3ca1ca067bd539fd6a752a91a98acb8816fd2e6fe1d577`
+- B raw `results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z/v21_events.jsonl`
 
 大量场、矩阵、完整时间线和 raw event 保留在 ignored artifact；tracked compact 只保存审阅所需的 hash-bound identity、数值、资源口径和边界。

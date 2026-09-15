@@ -1,3 +1,24 @@
+# Task39extra 当前进展：Review V21 / Response V22 Z5 已完成证据收口
+
+Z5 汇总 O10/A/B/C 四个模型状态：O10 是只读 V20 original baseline；A 的非可分 h10 正式场通过；B 的原始 h7.5 场在全局 p4 trace 因子 symbolic-after/numeric-before 容量 Gate 前受控停止；C 因 B 的适用资源前置条件失败未启动。没有新增 PDE、没有补造 checker 通过，也没有改变 ordinary default。
+
+| 模型 | 当前状态 | 关键数值/资源 | 证据边界 |
+|---|---|---|---|
+| O10 | `reused_read_only` | 112 步；A6=`9.730817853580463e-7`；tree RSS=`2831749120 B` | 只读分母，不是 fresh Z5 run |
+| A / Z2 notch h10 | `MATCHED_REFERENCE_PASS` | 146 步；worker residual=`9.756517234801763e-7`；independent A6=`9.756517234802322e-7`；tree RSS=`2297982976 B` | 本批新场 official result 仅 A；O10 仍为历史 PASS；65/65 checker；R/T/A、closure、80 modes、field/curl 通过 |
+| B / Z3 original h7.5 | `H7P5_RESOURCE_BLOCKED_ON_LAPTOP` | p4 CSR=`84680×84680`、NNZ=`32320342`、raw/oriented class=`12/26`、local cache=`24541920 B`；symbolic request=`10131000000 B`；tree RSS=`2318045184 B` | numeric factor allocation、p6 local cache、outer KSP、residual、physical outputs 均 `not_run`；非 OOM、非 numerical failure |
+| C / Z4 notch h7.5 | `not_run_by_review_condition` | 无 worker | 不从 B 或 A 外推迭代/物理量 |
+
+B 的 capacity arithmetic 为 `1,136,131,046 + 10,131,000,000 = 11,267,131,046 B > cap 6,442,450,944 B`；request 是冻结政策上界，不是 RSS。冻结几何 notch union 为 `x=[16.5,33.5] nm`、`y=[0,8.333333333333334] nm`、`z=[40,80] nm`，来自 8 个实体；h7.5 每轴 `[9,5,22]`、owned cells=`990`，含 neutral alignment planes，不是 720/uniform multiplier。
+
+11 个 prepared forms 的 cache 账本：O10=`10 hit/1 miss`（`p6_condensation`）、A=`11/0`、B=`11/0`；event time=`56.7998199990252 / 0.017299229046329856 / 0.02241471700835973 s`；A/B 无 compiler descendant samples，不宣称 warm-cache RSS 优势。Z5 frozen authority 检查 `50` frozen files、`26` old profiles，`changed=0`、`passed=true`；check SHA=`880534b2c2bb72939669ef098cb809510b666930101a74a0a1312905e0b3a5b3`。
+
+身份：Z1 base=`f9e16c21b936673b5a2dadcf52d2c344e61aabe8`；当前 pre-Z5 HEAD=`f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48`；A formal solver source=`863ec3bcd7eead867795284db11fc39e758a6f08`。测试集合分开报告：Z1 preformal=`99 passed`，A repair path=`49 passed`，A checker=`65/65`；不能相加。当前状态为 `LOCAL_REVIEWED_REMOTE_PUSH_PENDING_AUTH`，主控已完成执行把关，最终提交身份以回复为准；远端推送待 GitHub 凭据恢复。
+
+证据入口：[V21 aggregate](task039_extra_physical_multilevel/outcomes/dual_condensed_robustness_v21.md)、[compact](task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_compact.json)、[decision](task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_decision.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)、[selective merge manifest V22](task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v22.md)。
+
+---
+
 # Task39extra 当前进展：Review V20 low-memory lifecycle 已完成一场 original PASS
 
 V20 在固定 original 上把 p6 form preparation 前置到大因子之前，把 12 类相同的 450 阶 identity 改成一个只读共享表示，并在完整场 packet 与 residual Gate 完成后按 preconditioner → p6 → p4 factor 顺序释放对象。p4 矩阵因 PETSc/MUMPS 借用 SeqAIJ values pointer，仍采用 `MATRIX_RETAINED_BACKEND_DEPENDENCY`，没有未经证明的 factor-live early free。

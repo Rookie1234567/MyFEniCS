@@ -1,3 +1,30 @@
+# Task39extra 当前汇总：Review V21 / Response V22 Z5 四模型收口
+
+Z5 是一个聚合账本，不是一次新的 PDE 重跑：O10 只读复用，A 完成正式非可分 h10，B 在 h7.5 全局 p4 trace 因子的 symbolic-after/numeric-before 容量 Gate 前受控停止，C 因 B 的适用前置条件失败而未启动。Z1 base=`f9e16c21b936673b5a2dadcf52d2c344e61aabe8`；B formal run source/current pre-Z5 HEAD=`f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48`；A formal solver source=`863ec3bcd7eead867795284db11fc39e758a6f08`。ordinary default 不变，master merge 未批准。
+
+| 模型 | 状态与 residual | 资源/时间 | 结果边界 |
+|---|---|---|---|
+| O10 只读复用 | 112 步；A6=`9.730817853580463e-7` | tree RSS=`2831749120 B`；monotonic=`1479.1772295139963 s` | V20 original baseline；不是本轮 fresh PDE，仅作 `B/112` 分母 |
+| A / `Z2_NOTCH_H10` | **MATCHED_REFERENCE_PASS**；146 步；worker residual=`9.756517234801763e-7`；independent A6=`9.756517234802322e-7` | tree RSS/PSS=`2297982976/2267706368 B`；swap=`0 B`；monotonic=`1648.8478095369937 s` | 本批新场 official result 仅属于 A，O10 为历史 PASS；R/T/A/`A_volume`、80 modes、closure 和 field/curl gates 通过；checker `65/65` |
+| B / `Z3_ORIGINAL_H7P5` | `H7P5_RESOURCE_BLOCKED_ON_LAPTOP`；outer residual/physical outputs=`not_run` | watchdog tree RSS=`2318045184 B`；worker-sampled tree PSS=`2287882240 B`；inventory/workspace=`1136131046/76405680 B`；swap=`0 B` | p4 CSR 已 materialize；symbolic request=`10131000000 B`，不是已分配内存；父层 `WORKER_FAILED`，worker 层 `RESOURCE_CONTROLLED_STOP`；不是 OOM 或 numerical failure |
+| C / `Z4_NOTCH_H7P5` | `not_run_by_review_condition` | 无 C worker/资源/时间 | B 的 h7.5 资源前置 Gate 失败，不能填充 C 的迭代或物理量 |
+
+## B 的可审计中间结果
+
+B 已完成 `84680×84680` complex128 p4 CSR，exact stored NNZ=`32320342`；CSR/mapping/values SHA256 分别为 `857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0`、`bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d`、`cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34`。raw tensor class=`12`、oriented Schur class=`26`、retained local numeric cache=`24541920 B`（LU/recovery/RHS projection/RHS trace=`4863456/8626176/2426112/8626176 B`）；p6 local cache=`not_built`。
+
+symbolic rows=`84680`，`nz_used/nz_allocated=32320342/45403840`，INFOG16/17=`5060/5060 MB`，INFOG3/20=`221594144/221594144`。冻结公式给出 request=`10,131,000,000 B`；`1,136,131,046 + 10,131,000,000 = 11,267,131,046 B > cap 6,442,450,944 B`，所以在 numeric factor 前停止。该 request 是政策上界，不是 numeric RSS 或已经分配的 factor。
+
+## 几何、缓存与证据闭环
+
+冻结 notch union 是 `x=[16.5,33.5] nm`、`y=[0,8.333333333333334] nm`、`z=[40,80] nm`，来自 8 个实体；h7.5 mesh 每轴 `[9,5,22]`、owned cells=`990`，含保持外边界对齐的 neutral alignment planes，不是 720 cells 或 uniform multiplier。11 个 prepared forms 的 cache 计数为 O10=`10 hit/1 miss`（唯一 miss=`p6_condensation`）、A=`11/0`、B=`11/0`；form event time 为 `56.7998199990252 / 0.017299229046329856 / 0.02241471700835973 s`。A/B 没有 compiler descendant samples；这些不是完整 setup/workflow，也不支持 warm-cache RSS 优势。
+
+Z5 frozen authority check 已检查 `50` 个 frozen files、`26` 个旧 profiles，`changed=0`、`passed=true`，SHA256=`880534b2c2bb72939669ef098cb809510b666930101a74a0a1312905e0b3a5b3`；saved cost comparison SHA256=`87975d656484936f6b3ca1ca067bd539fd6a752a91a98acb8816fd2e6fe1d577`。A 的更正路径为 `49 passed`，Z1 formal 前工程资格为 `99 passed`，A checker 为 `65/65`；三组集合不相加，B checker=`not_run`。
+
+机器可读入口：[V21 compact](records/dual_condensed_robustness_v21_compact.json)、[V21 decision](records/dual_condensed_robustness_v21_decision.json)、[V21 detailed outcome](dual_condensed_robustness_v21.md)、[V22 response](../response_v22.md)、[run index](records/run_index.json)、[selective merge manifest V22](selective_merge_manifest_v22.md)。当前 tracked Z5 状态：`LOCAL_REVIEWED_REMOTE_PUSH_PENDING_AUTH`。
+
+---
+
 # Task39extra 当前汇总：Review V20 双层凝聚低内存生命周期完成一场 original PASS
 
 单元凝聚先消去每个有限元单元内部未知量，只把共享 trace 和端口交给外层迭代，最后恢复完整场。本轮 V20 只资格化一个固定的 13.5 nm、Full3D p6/h10、252 cells、MPI1 original；目标是把 p6 编译、identity payload 和求解对象释放顺序做成可核验的生命周期，而不是宣称新的物理模型或生产默认。

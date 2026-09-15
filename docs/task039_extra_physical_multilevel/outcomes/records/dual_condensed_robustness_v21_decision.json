@@ -1,0 +1,142 @@
+{
+  "schema": "task039extra.v21.dual-condensed-robustness.decision.v1",
+  "review": "Review V21 / Response V22",
+  "status": "A_PASS_B_RESOURCE_CONTROLLED_STOP_C_NOT_RUN",
+  "classification": "A_MATCHED_REFERENCE_PASS_B_H7P5_RESOURCE_BLOCKED_ON_LAPTOP_C_NOT_RUN",
+  "official_result": {
+    "A": true,
+    "B": false,
+    "C": false,
+    "scope": "A only"
+  },
+  "source_identity": {
+    "z1_base_sha": "f9e16c21b936673b5a2dadcf52d2c344e61aabe8",
+    "current_pre_z5_head": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
+    "A_formal_solver_source_sha": "863ec3bcd7eead867795284db11fc39e758a6f08",
+    "B_formal_solver_source_sha": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48"
+  },
+  "models": {
+    "O10": {
+      "status": "reused_read_only",
+      "source": "task39extra_v20_y3_lowmem_original",
+      "iterations": 112,
+      "full_tree_rss_peak_bytes": 2831749120,
+      "full_workflow_monotonic_seconds": 1479.1772295139963
+    },
+    "A": {
+      "status": "MATCHED_REFERENCE_PASS",
+      "stage": "Z2_NOTCH_H10",
+      "iterations": 146,
+      "final_explicit_true_residual": 9.756517234801763e-7,
+      "independent_A6": 9.756517234802322e-7,
+      "full_tree_rss_peak_bytes": 2297982976,
+      "full_workflow_monotonic_seconds": 1648.8478095369937,
+      "checker": "65/65; historical compatibility hash-bound; original failed copy retained"
+    },
+    "B": {
+      "status": "H7P5_RESOURCE_BLOCKED_ON_LAPTOP",
+      "stage": "Z3_ORIGINAL_H7P5",
+      "parent_classification": "WORKER_FAILED",
+      "worker_classification": "RESOURCE_CONTROLLED_STOP",
+      "symbolic_rows": 84680,
+      "symbolic_nz_used": 32320342,
+      "symbolic_nz_allocated": 45403840,
+      "symbolic_infog16_mb": 5060,
+      "symbolic_infog17_mb": 5060,
+      "symbolic_infog3_factor_entries": 221594144,
+      "symbolic_infog20_factor_entries": 221594144,
+      "p4_matrix_assembly": "completed",
+      "p4_matrix_shape": [84680, 84680],
+      "p4_matrix_nnz": 32320342,
+      "p4_matrix_csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+      "p4_matrix_mapping_sha256": "bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d",
+      "p4_matrix_values_sha256": "cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34",
+      "p4_raw_tensor_class_count": 12,
+      "p4_oriented_schur_class_count": 26,
+      "p4_retained_numeric_cache_bytes": 24541920,
+      "numeric_factor_started": false,
+      "outer_solve_started": false,
+      "p6_local_cache": "not_built",
+      "numeric_factor_nnz": "unknown_not_constructed",
+      "numeric_factor_allocated_used_entries_and_rss": "unknown_not_constructed",
+      "iterations": "not_run",
+      "true_residual": "not_run",
+      "physical_outputs": "not_run",
+      "capacity_gate": {
+        "current_inventory_bytes": 1136131046,
+        "numeric_request_bytes": 10131000000,
+        "projected_inventory_bytes": 11267131046,
+        "inventory_cap_bytes": 6442450944,
+        "formula": "ceil_MB(max(32 MiB, 2*(5060+1)*1e6+8 MiB)) = 10131 MB",
+        "request_is": "symbolic-after/numeric-before conservative policy request, not measured RSS or allocated factor memory"
+      },
+      "resources": {
+        "tree_rss_peak_bytes": 2318045184,
+        "worker_rss_peak_bytes": 2318233600,
+        "worker_pss_peak_bytes": 2287882240,
+        "swap_peak_bytes": 0,
+        "inventory_peak_bytes": 1136131046,
+        "workspace_peak_bytes": 76405680,
+        "full_workflow_monotonic_seconds": 79.78535183999338,
+        "conservative_workflow_seconds": 85.640744153
+      }
+    },
+    "C": {
+      "status": "not_run",
+      "reason": "B applicable h7.5 resource prerequisite failed before outer solve"
+    }
+  },
+  "cross_model_comparisons": {
+    "A_over_O10": {
+      "status": "observed_only",
+      "iterations": "146 versus 112; different material variant, not a h7.5 robustness ratio",
+      "full_tree_rss_peak_bytes": "2297982976 versus 2831749120"
+    },
+    "B_over_O10_112": "not_run",
+    "C_over_A": "not_run",
+    "C_over_B": "not_run"
+  },
+  "decision": {
+    "nonseparable_A_is_usable": true,
+    "h7p5_completed": false,
+    "h7p5_block_type": "capacity_policy_block_on_symbolic_global_p4_trace_factor",
+    "next_research": "quantify or replace the global p4 trace factor at h7.5; no new PC implementation in this closeout",
+    "ordinary_default_changed": false,
+    "master_merge_approved": false,
+    "retry_authorized": false
+  },
+  "checker_and_history": {
+    "A_original_checker_failures": ["release_timeline", "summary_schema"],
+    "A_repair_tests": "49 passed in corrected-path log",
+    "A_preformal_engineering_tests": "99 passed; separate qualification, not added to 49 or 65",
+    "B_checker": "not_run; raw stop summary and termination reason retained",
+    "historical_unknowns_preserved": true,
+    "old_policy_and_unknown_costs": "read-only; not reclassified as measured runtime or zeroed"
+  },
+  "form_cache_accounting": {
+    "prepared_form_count": 11,
+    "O10": {"cache_hits": 10, "cache_misses": 1, "miss_role": "p6_condensation", "form_preparation_event_seconds": 56.7998199990252},
+    "A": {"cache_hits": 11, "cache_misses": 0, "form_preparation_event_seconds": 0.017299229046329856},
+    "B": {"cache_hits": 11, "cache_misses": 0, "form_preparation_event_seconds": 0.02241471700835973},
+    "compiler_descendant_samples": {"A": 0, "B": 0},
+    "interpretation": "Counters/timings describe prepared-form events, not complete setup or workflow time; no warm-cache RSS reduction is claimed"
+  },
+  "geometry_evidence": {
+    "frozen_notch_union_nm": {"x": [16.5, 33.5], "y": [0.0, 8.333333333333334], "z": [40.0, 80.0]},
+    "source_entity_count": 8,
+    "h7p5_owned_cells": 990,
+    "h7p5_neutral_alignment_planes": true,
+    "coordinate_policy": "actual frozen union; no historical center-origin translation"
+  },
+  "evidence": {
+    "compact": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_compact.json",
+    "outcome": "docs/task039_extra_physical_multilevel/outcomes/dual_condensed_robustness_v21.md",
+    "B_stop_audit": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_root_stop_audit.json",
+    "B_resource_compact": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_resource_stop_compact.json",
+    "B_run_root": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z",
+    "z5_frozen_authority_check": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_frozen_authority_check.json",
+    "z5_frozen_authority_check_sha256": "880534b2c2bb72939669ef098cb809510b666930101a74a0a1312905e0b3a5b3",
+    "z5_saved_cost_comparison": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_saved_cost_comparison.json",
+    "z5_saved_cost_comparison_sha256": "87975d656484936f6b3ca1ca067bd539fd6a752a91a98acb8816fd2e6fe1d577"
+  }
+}

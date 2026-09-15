@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.run-index.v1",
-  "scope": "Review V20 closeout: one clean-source V20 low-memory original with independent residual/physical/lifecycle checks; mixed time-memory tradeoff; all older evidence and unknown policy history retained",
+  "scope": "Review V21 / Response V22 Z5 aggregate: O10 read-only baseline, A nonseparable h10 matched-reference pass, B original h7.5 resource-controlled stop before numeric factor, C not run; all older evidence and unknown policy history retained",
   "units": {
     "time": "s",
     "memory": "B"
@@ -2242,6 +2242,194 @@
         "Ruff_full_repository_pytest_CI",
         "detach_research_restart"
       ]
+    },
+    {
+      "id": "V21_Z2_notch_h10_robustness_attempt1",
+      "source_sha": "863ec3bcd7eead867795284db11fc39e758a6f08",
+      "stage": "Z2_NOTCH_H10",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z",
+      "status": "MATCHED_REFERENCE_PASS",
+      "official_result": true,
+      "profile": "physical_p6_trace_p4_condensed_robustness_v21",
+      "input": "input/task39extra/v21_z2_notch_h10.dat",
+      "input_sha256": "748e1d685e65447f3dce4effa2744cbb24d7ccedf08ed830f65f624553111e87",
+      "iterations": 146,
+      "full_true_relative_residual": 9.756517234801763e-07,
+      "independent_A6_before_after_release": [
+        9.756517234802322e-07,
+        9.756517234802322e-07
+      ],
+      "field_l2_relative": 7.179947262584934e-08,
+      "scaled_curl_relative": 6.541279198551157e-08,
+      "physical_outputs": {
+        "R": 0.3371205735636914,
+        "T": 0.016288676112780145,
+        "A": 0.6465907503235284,
+        "A_volume": 0.6465908230964357,
+        "energy_closure_abs": 7.277290725582475e-08,
+        "mode_count": 80
+      },
+      "dimensions": {
+        "owned_cells": 252,
+        "p6_counts": [
+          173802,
+          51192,
+          113400,
+          80
+        ],
+        "p4_counts": [
+          53084,
+          21744,
+          27216,
+          80
+        ],
+        "retained_global_rows": 51272,
+        "condensed_matrix_shape": [
+          21824,
+          21824
+        ],
+        "condensed_matrix_nnz": 8184464
+      },
+      "resources": {
+        "process_tree_rss_peak_bytes": 2297982976,
+        "process_tree_pss_peak_bytes": 2267706368,
+        "inventory_peak_bytes": 2013567110,
+        "workspace_peak_bytes": 423441224,
+        "swap_peak_bytes": 0,
+        "sample_count": 6351
+      },
+      "timing": {
+        "full_workflow_monotonic_seconds": 1648.8478095369937,
+        "ksp_solve_monotonic_seconds": 1394.9292688659916,
+        "formal_ledger_conservative_billing_seconds": 1798.8260412538452
+      },
+      "checker": {
+        "status": "65/65",
+        "current_sha256": "149747de773e9cded62898195cc4b1e58d0714cf691e5b7b7c20316619590bce",
+        "source_sha256": "acbad332f35ccf3302fb027335b93ed399941c2a937012c86f2cc51f3beabcb6",
+        "original_failed_copy_preserved": true,
+        "original_failed_copy_sha256": "93a7a7663ad3df38a5cea75449d550d0cdcd29ee613feef54e42b7d0718d8f94"
+      },
+      "evidence": {
+        "compact": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_compact.json",
+        "worker_summary": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z/physical_dual_condensed_robustness_v21_summary.json",
+        "preserved_raw_audit": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_preserved_raw_and_negative_audit.json"
+      },
+      "other_cases_outside_this_A_run": [
+        "B_h7p5",
+        "C_h7p5"
+      ]
+    },
+    {
+      "id": "V21_Z3_original_h7p5_resource_stop_attempt1",
+      "source_sha": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
+      "stage": "Z3_ORIGINAL_H7P5",
+      "raw_root": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z",
+      "status": "H7P5_RESOURCE_BLOCKED_ON_LAPTOP",
+      "official_result": false,
+      "profile": "physical_p6_trace_p4_condensed_robustness_v21",
+      "input": "input/task39extra/v21_z3_original_h7p5.dat",
+      "input_sha256": "7e582415e6a523959066846e996951419117938f4f676f576308e2b708069f70",
+      "physical_model_sha256": "d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036",
+      "parent_classification": "WORKER_FAILED",
+      "worker_classification": "RESOURCE_CONTROLLED_STOP",
+      "worker_exit_status": 4,
+      "mesh": {
+        "geometry_identity": "v21_original_h7p5",
+        "axis_cell_counts": [
+          9,
+          5,
+          22
+        ],
+        "owned_cells": 990,
+        "p6_counts": [
+          667152,
+          199260,
+          445500,
+          80
+        ],
+        "p4_counts": [
+          201520,
+          84600,
+          106920,
+          80
+        ],
+        "neutral_alignment_planes": true
+      },
+      "p4_assembly": {
+        "matrix_shape": [
+          84680,
+          84680
+        ],
+        "matrix_nnz": 32320342,
+        "matrix_csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+        "matrix_mapping_sha256": "bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d",
+        "matrix_values_sha256": "cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34",
+        "raw_tensor_class_count": 12,
+        "oriented_schur_class_count": 26,
+        "retained_numeric_cache_bytes": 24541920,
+        "total_build_seconds": 26.78675495798234
+      },
+      "symbolic": {
+        "rows": 84680,
+        "nz_used": 32320342,
+        "nz_allocated": 45403840,
+        "infog16_mb": 5060,
+        "infog17_mb": 5060,
+        "infog3_factor_entries": 221594144,
+        "infog20_factor_entries": 221594144
+      },
+      "capacity_gate": {
+        "current_inventory_bytes": 1136131046,
+        "numeric_request_bytes": 10131000000,
+        "projected_inventory_bytes": 11267131046,
+        "inventory_cap_bytes": 6442450944,
+        "formula": "ceil_MB(max(32 MiB, 2*(5060+1)*1e6+8 MiB)) = 10131 MB",
+        "numeric_factor_started": false,
+        "p6_local_cache": "not_built",
+        "outer_solve": "not_run"
+      },
+      "resources": {
+        "process_tree_rss_peak_bytes": 2318045184,
+        "worker_sample_rss_peak_bytes": 2318233600,
+        "worker_sample_pss_peak_bytes": 2287882240,
+        "inventory_peak_bytes": 1136131046,
+        "workspace_peak_bytes": 76405680,
+        "swap_peak_bytes": 0,
+        "sample_count": 311,
+        "full_workflow_monotonic_seconds": 79.78535183999338,
+        "conservative_workflow_seconds": 85.640744153,
+        "descendants_cleared": true
+      },
+      "terminal": {
+        "systemd_MainPID": 0,
+        "systemd_ActiveState": "failed",
+        "systemd_SubState": "failed",
+        "systemd_Result": "exit-code",
+        "systemd_ExecMainStatus": 3,
+        "not_oom_kill": true,
+        "not_numerical_failure": true
+      },
+      "shared_workflow_ledger": {
+        "fresh_worker_count": 2,
+        "unique_bug_replay_count": 0,
+        "elapsed_seconds": 1884.4679552510706,
+        "scope": "A and B stages only; C has no worker"
+      },
+      "evidence": {
+        "resource_stop_compact": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_resource_stop_compact.json",
+        "stop_audit": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_root_stop_audit.json",
+        "worker_summary": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z/physical_dual_condensed_robustness_v21_summary.json"
+      },
+      "not_run": [
+        "numeric_factor_allocation",
+        "p6_local_cache",
+        "outer_ksp",
+        "true_residual",
+        "physical_outputs",
+        "B_checker",
+        "C_Z4_notch_h7p5"
+      ]
     }
   ],
   "limitations": [
@@ -2886,7 +3074,7 @@
       "docs/task039_extra_physical_multilevel/outcomes/records/p4_direction_diagnosis_v13_memory_liveness.json": "bf94adb607a11a9eb76c616f56e57c7e2298cb646ab263375b8283c392802a5d"
     }
   },
-  "current_review_record": "review_v18_p4_cell_condensed_closeout",
+  "current_review_record": "review_v21_dual_condensed_geometry_h7p5",
   "v13_continuation": {
     "id": "V13_512MiB_three_input_continuation",
     "status": "P4_DIRECTION_DIAGNOSIS_COMPLETED",
@@ -4326,8 +4514,45 @@
     "status": "COMPLETED_ORIGINAL_THEN_SUPERSEDED_BY_USER_STOP",
     "previous_bug_replay_count": 1
   },
-  "current_scope": "Review V20 Y0-Y4: opt-in dual-condensed low-memory lifecycle with one complete original PASS, lower full RSS than V19 but slower in this run; no notch or detach restart.",
-  "current_review_record": "review_v20_dual_condensed_memory_lifecycle",
+  "current_scope": "Review V21 / Response V22 Z5: A nonseparable h10 PASS, B h7.5 capacity-policy stop before numeric factor, C not_run_by_review_condition; O10 reused read-only; no new PC or PDE replay.",
+  "review_v21_dual_condensed_geometry_h7p5": {
+    "base_sha": "f9e16c21b936673b5a2dadcf52d2c344e61aabe8",
+    "current_pre_z5_head": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
+    "A_formal_solver_source_sha": "863ec3bcd7eead867795284db11fc39e758a6f08",
+    "B_formal_solver_source_sha": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
+    "status": "A_PASS_B_RESOURCE_CONTROLLED_STOP_C_NOT_RUN",
+    "official_result_scope": "A only",
+    "formal_runs": 2,
+    "pde_replays_for_checker_repair": 0,
+    "run_ids": [
+      "V21_Z2_notch_h10_robustness_attempt1",
+      "V21_Z3_original_h7p5_resource_stop_attempt1"
+    ],
+    "compact": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_compact.json",
+      "sha256": "8c05262fd7e0998644fba59d5231d4046f14ad55c72471d1fbc9a3b5538ebd1d",
+      "bytes": 20679
+    },
+    "decision": {
+      "path": "docs/task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_decision.json",
+      "sha256": "3286185cd1892c7979e317ba463726b0ff8b944c81eefd7cf6f473d67ebe8079",
+      "bytes": 6994
+    },
+    "outcome": "docs/task039_extra_physical_multilevel/outcomes/dual_condensed_robustness_v21.md",
+    "response": "docs/task039_extra_physical_multilevel/response_v22.md",
+    "selective_merge_manifest": "docs/task039_extra_physical_multilevel/outcomes/selective_merge_manifest_v22.md",
+    "z5_frozen_authority": {
+      "path": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_frozen_authority_check.json",
+      "sha256": "880534b2c2bb72939669ef098cb809510b666930101a74a0a1312905e0b3a5b3",
+      "frozen_files_checked": 50,
+      "old_profiles_checked": 26,
+      "changed_files": 0,
+      "passed": true
+    },
+    "ordinary_default_changed": false,
+    "master_merge_approved": false,
+    "next_research": "quantify or replace the global p4 trace factor at h7.5; no new PC implementation in this closeout"
+  },
   "review_v19_dual_cell_condensed_closeout": {
     "base_sha": "3c7b6ecfd7aede2651dd973052a097dbed601d03",
     "source_sha": "8eff068b06f4713cc6d1281c92ed82d370060403",

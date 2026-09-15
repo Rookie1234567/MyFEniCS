@@ -1,17 +1,248 @@
 {
-  "schema": "task039extra.v21.dual-condensed-robustness.compact.v1",
-  "model_id": "task39extra_v21_z2_notch_h10",
-  "stage": "Z2_NOTCH_H10",
-  "status": "PASS",
-  "official_result": true,
-  "classification": "MATCHED_REFERENCE_PASS",
+  "schema": "task039extra.v21.dual-condensed-robustness.compact.v2",
+  "batch_id": "task39extra_v21_z5_dual_condensed",
+  "model_id": "task39extra_v21_z5_batch",
+  "A_case_model_id": "task39extra_v21_z2_notch_h10",
+  "stage": "Z5_AGGREGATE",
+  "status": "A_PASS_B_RESOURCE_CONTROLLED_STOP_C_NOT_RUN",
+  "official_result": false,
+  "official_result_scope": "A only",
+  "classification": "A_MATCHED_REFERENCE_PASS_B_H7P5_RESOURCE_BLOCKED_ON_LAPTOP_C_NOT_RUN",
   "scope": {
-    "formal_pde": "A only",
+    "formal_pde": "A completed; B reached symbolic capacity gate and stopped before numeric factor/outer solve; C was not started",
+    "A": "MATCHED_REFERENCE_PASS",
+    "B": "H7P5_RESOURCE_BLOCKED_ON_LAPTOP",
+    "C": "not_run_by_review_condition",
     "pde_rerun_for_checker_repair": false,
-    "B": "not_run",
-    "C": "not_run",
+    "B_parent_classification": "WORKER_FAILED",
+    "B_worker_classification": "RESOURCE_CONTROLLED_STOP",
     "ordinary_default": "unchanged",
     "master_merge": "NOT_APPROVED"
+  },
+  "z5_closeout": {
+    "review": "Review V21 / Response V22",
+    "O10": "reused_read_only_existing_original_h10",
+    "A_nonseparable": "PASS",
+    "B_original_h7p5": "capacity_blocked_before_numeric_factor_and_outer_solve",
+    "C_notch_h7p5": "not_run_because_B_applicable_resource_gate_failed",
+    "iteration_growth": {
+      "B_over_O10_112": "not_run",
+      "C_over_A": "not_run",
+      "C_over_B": "not_run"
+    },
+    "next_research": "global p4 trace-factor scaling or a reviewed replacement; no new PC implemented in this closeout",
+    "historical_unknowns_preserved": true,
+    "raw_evidence_read_only": true
+  },
+  "source_identity": {
+    "z1_base_sha": "f9e16c21b936673b5a2dadcf52d2c344e61aabe8",
+    "current_pre_z5_head": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
+    "A_formal_solver_source_sha": "863ec3bcd7eead867795284db11fc39e758a6f08",
+    "B_formal_solver_source_sha": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
+    "interpretation": "A and B run identities remain bound to their own formal source; the current Z5 closeout documents are pending on the pre-Z5 source and do not claim a final commit SHA"
+  },
+  "form_cache_accounting": {
+    "prepared_form_count": 11,
+    "O10": {
+      "cache_hits": 10,
+      "cache_misses": 1,
+      "miss_role": "p6_condensation",
+      "form_preparation_event_seconds": 56.7998199990252
+    },
+    "A": {
+      "cache_hits": 11,
+      "cache_misses": 0,
+      "form_preparation_event_seconds": 0.017299229046329856
+    },
+    "B": {
+      "cache_hits": 11,
+      "cache_misses": 0,
+      "form_preparation_event_seconds": 0.02241471700835973
+    },
+    "compiler_descendant_samples": {
+      "A": 0,
+      "B": 0
+    },
+    "interpretation": "These are prepared-form cache counters and event timings, not full workflow/setup times; the records do not support claiming a warm-cache RSS reduction"
+  },
+  "geometry_evidence": {
+    "frozen_notch_union_nm": {
+      "x": [16.5, 33.5],
+      "y": [0.0, 8.333333333333334],
+      "z": [40.0, 80.0]
+    },
+    "source_entity_count": 8,
+    "coordinate_policy": "actual notch union from the frozen plan; do not translate it using historical center-origin wording",
+    "h7p5_owned_cells": 990,
+    "h7p5_neutral_alignment_planes": true,
+    "h7p5_is_not_720_cells_or_a_uniform_multiplier": true,
+    "plan": "docs/task039_extra_physical_multilevel/outcomes/records/v21_frozen_geometry_mesh_plan.json"
+  },
+  "z5_authority": {
+    "frozen_check": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_frozen_authority_check.json",
+    "frozen_check_sha256": "880534b2c2bb72939669ef098cb809510b666930101a74a0a1312905e0b3a5b3",
+    "frozen_files_checked": 50,
+    "old_profiles_checked": 26,
+    "changed_files": 0,
+    "passed": true,
+    "saved_cost_comparison": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z5_root_saved_cost_comparison.json",
+    "saved_cost_comparison_sha256": "87975d656484936f6b3ca1ca067bd539fd6a752a91a98acb8816fd2e6fe1d577"
+  },
+  "case_records": {
+    "O10": {
+      "model_id": "task39extra_v20_y3_lowmem_original",
+      "status": "reused_read_only",
+      "iterations": 112,
+      "official_result": true,
+      "new_formal_run": false,
+      "source": "run_index V20_Y3_original_dual_condensed_memory_attempt1"
+    },
+    "A": {
+      "model_id": "task39extra_v21_z2_notch_h10",
+      "status": "MATCHED_REFERENCE_PASS",
+      "official_result": true,
+      "field_owner": "top-level identity/dimensions/residuals/physical_outputs/resources below"
+    },
+    "B": {
+      "model_id": "task39extra_v21_z3_original_h7p5",
+      "status": "H7P5_RESOURCE_BLOCKED_ON_LAPTOP",
+      "official_result": false,
+      "outer_solve": "not_run",
+      "stop_reason": "independent_live_inventory_cap before numeric factor allocation"
+    },
+    "C": {
+      "model_id": "task39extra_v21_z4_notch_h7p5",
+      "status": "not_run_by_review_condition",
+      "official_result": false,
+      "reason": "B applicable h7.5 resource prerequisite failed"
+    }
+  },
+  "B_resource_stop": {
+    "stage": "Z3_ORIGINAL_H7P5",
+    "model_id": "task39extra_v21_z3_original_h7p5",
+    "profile": "physical_p6_trace_p4_condensed_robustness_v21",
+    "source_sha": "f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48",
+    "input": "input/task39extra/v21_z3_original_h7p5.dat",
+    "input_sha256": "7e582415e6a523959066846e996951419117938f4f676f576308e2b708069f70",
+    "physical_model_sha256": "d8c5abb837adda92ea86e257cff9e2ff01ccf466879b08a2cde9a071e1d1d036",
+    "run_root": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z",
+    "mesh": {
+      "geometry_identity": "v21_original_h7p5",
+      "axis_cell_counts": [9, 5, 22],
+      "axis_plan_sha256": "14d44ee25cdc60773031ea6ae405a0c6cff14ad23c33bdf3a575388370e8a115",
+      "geometry_entity_sha256": "477e4eaedd9a4da4ef9f779e8e51d807b214ec9a930ea919309a525bc2abf77d",
+      "owned_cell_count": 990,
+      "p6_counts_full_active_interior_appended": [667152, 199260, 445500, 80],
+      "p4_counts_full_active_interior_appended": [201520, 84600, 106920, 80]
+    },
+    "execution": {
+      "prepared_forms_and_geometry": true,
+      "p4_condensed_matrix_assembly": "completed",
+      "symbolic_factor_stage_completed": true,
+      "numeric_factor_started": false,
+      "outer_ksp_started": false,
+      "p6_local_cache": "not_built",
+      "outer_iterations": "not_run",
+      "true_residual": "not_run",
+      "physical_outputs": "not_run",
+      "p4_matrix_nnz": 32320342,
+      "numeric_factor_allocated_used_entries_and_rss": "unknown_numeric_factor_not_constructed"
+    },
+    "p4_assembly": {
+      "matrix_shape": [84680, 84680],
+      "matrix_nnz": 32320342,
+      "matrix_csr_sha256": "857bc8bb5f04b28a55283fb960a2b695e1078983e55ff151687780de5dab8ee0",
+      "matrix_mapping_sha256": "bed2794532a40630632e06637cfda5a7bb52a06a7209824d5344085b6fa2cb1d",
+      "matrix_values_sha256": "cf081185f6950ebb2c704e0426e02bb0687ef7ae47faf34115d729c8eb832b34",
+      "matrix_materialized": true,
+      "raw_tensor_class_count_global_unique": 12,
+      "raw_tensor_class_count_sum": 12,
+      "oriented_schur_class_count_sum": 26,
+      "identity_cache_class_count_local": 26,
+      "retained_numeric_cache_bytes_local": {
+        "lu_bytes": 4863456,
+        "recovery_bytes": 8626176,
+        "rhs_projection_bytes": 2426112,
+        "rhs_trace_bytes": 8626176,
+        "retained_numeric_cache_bytes": 24541920
+      },
+      "assembly_temporary_cache_bytes_max": {
+        "raw_tensor_bytes": 17280000,
+        "oriented_schur_bytes": 15335424,
+        "released_after_return": true
+      },
+      "total_build_seconds": 26.78675495798234,
+      "evidence": "v21_events.jsonl:v18_cell_condensed_assembly_complete"
+    },
+    "symbolic": {
+      "rows": 84680,
+      "nz_used": 32320342,
+      "nz_allocated": 45403840,
+      "infog16_mb": 5060,
+      "infog17_mb": 5060,
+      "infog3_factor_entries": 221594144,
+      "infog20_factor_entries": 221594144,
+      "note": "INFOG fields are symbolic/predicted factor statistics; exact p4 CSR matrix identity is recorded separately; numeric factor allocation/used entries/RSS was not constructed"
+    },
+    "capacity_gate": {
+      "gate": "independent_live_inventory_cap",
+      "label": "v18_exact_condensed_global",
+      "current_inventory_bytes": 1136131046,
+      "numeric_request_bytes": 10131000000,
+      "projected_inventory_bytes": 11267131046,
+      "inventory_cap_bytes": 6442450944,
+      "formula": "ceil_MB(max(32 MiB, 2*(5060+1)*1e6+8 MiB)) = 10131 MB",
+      "request_semantics": "frozen V11 symbolic-after/numeric-before conservative allocation request; not allocated factor bytes or measured RSS",
+      "gate_conclusion": "capacity policy blocked; this does not prove the numeric factor would actually consume the request as RSS"
+    },
+    "resources": {
+      "watchdog_process_tree_rss_peak_bytes": 2318045184,
+      "worker_sample_rss_peak_bytes": 2318233600,
+      "worker_sample_pss_peak_bytes": 2287882240,
+      "swap_peak_bytes": 0,
+      "inventory_peak_bytes": 1136131046,
+      "workspace_peak_bytes": 76405680,
+      "sample_count": 311,
+      "full_workflow_monotonic_seconds": 79.78535183999338,
+      "conservative_workflow_seconds": 85.640744153,
+      "time_gate_exceeded": false,
+      "descendants_cleared": true
+    },
+    "workflow_accounting": {
+      "shared_ledger_fresh_worker_count": 2,
+      "shared_ledger_unique_bug_replay_count": 0,
+      "shared_ledger_elapsed_seconds": 1884.4679552510706,
+      "scope": "A and B stages only; C has no worker"
+    },
+    "terminal": {
+      "parent_classification": "WORKER_FAILED",
+      "worker_classification": "RESOURCE_CONTROLLED_STOP",
+      "worker_exit_status": 4,
+      "systemd": {
+        "MainPID": 0,
+        "ActiveState": "failed",
+        "SubState": "failed",
+        "Result": "exit-code",
+        "ExecMainStatus": 3
+      },
+      "not_oom_kill": true,
+      "not_numerical_failure": true,
+      "derived_classification": "H7P5_RESOURCE_BLOCKED_ON_LAPTOP"
+    },
+    "evidence": {
+      "resource_stop_compact": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_resource_stop_compact.json",
+      "stop_audit": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z3_root_stop_audit.json",
+      "run_manifest": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z/run_manifest.json",
+      "run_summary": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z/run_summary.json",
+      "worker_summary": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z/physical_dual_condensed_robustness_v21_summary.json",
+      "worker_log": "results/euv_grazing1_phi0/task39extra_v21_z3_original_h7p5__full3d_iterative__mpi1__Mna/20260915T065308.474983Z/watchdog/worker.log",
+      "shared_workflow_ledger": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/review_v21_dual_condensed_geometry_h7p5/shared_workflow_ledger.json"
+    }
+  },
+  "B_checker": {
+    "status": "not_run",
+    "reason": "B has no terminal residual or physical output fields; existing checker is not used to fabricate a pass",
+    "raw_stop_summary_preserved": true
   },
   "identity": {
     "profile": "physical_p6_trace_p4_condensed_robustness_v21",

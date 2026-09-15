@@ -1,3 +1,18 @@
+# Task39extra 当前模型登记：Review V21 / Response V22 Z5 四模型聚合
+
+| Model ID | profile / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
+|---|---|---|---|---|---|
+| `task39extra_v20_y3_lowmem_original`（O10） | `physical_p6_trace_p4_condensed_lowmem_v20`；read-only V20 source `b337d215c3d278d0c1e715f53e28b69f7f0ee3fe` | 13.5 nm、Full3D、p6/h10、MPI1、112-step original baseline | existing official PASS；A6=`9.730817853580463e-7` | tree RSS=`2831749120 B`；monotonic=`1479.1772295139963 s` | 只读复用，不是本轮 fresh PDE；仅作 B/112 分母 |
+| `task39extra_v21_z2_notch_h10`（A） | `physical_p6_trace_p4_condensed_robustness_v21` / formal solver source `863ec3bcd7eead867795284db11fc39e758a6f08`；input SHA `748e1d685e65447f3dce4effa2744cbb24d7ccedf08ed830f65f624553111e87` | frozen nonseparable notch h10、Full3D、p6 retained-space FGMRES32、p4 exact condensed trace/port LU、252 cells、MPI1、80 modes | **MATCHED_REFERENCE_PASS**；146 steps；worker residual=`9.756517234801763e-7`；independent A6=`9.756517234802322e-7`；R/T/A/`A_volume` 与 closure 通过 | tree RSS/PSS=`2297982976/2267706368 B`；swap0；monotonic=`1648.8478095369937 s` | checker `65/65`；raw failed copy/schema compatibility hash-bound；本批新场 official result 仅 A，O10 为历史 official PASS；ordinary default 不变 |
+| `task39extra_v21_z3_original_h7p5`（B） | same V21 profile / formal run source `f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48`；input SHA `7e582415e6a523959066846e996951419117938f4f676f576308e2b708069f70` | original h7.5、axis cells `[9,5,22]`、990 owned cells；p4 global trace path | **H7P5_RESOURCE_BLOCKED_ON_LAPTOP**；p4 CSR `84680×84680`, NNZ `32320342`; raw/oriented class `12/26`; local retained cache `24541920 B` | watchdog tree RSS=`2318045184 B`；worker-sampled tree PSS=`2287882240 B`；inventory=`1136131046 B`；swap0；workflow=`79.78535183999338 s` | symbolic request=`10131000000 B` 在 numeric 前触发 cap；numeric allocation/used entries/RSS、p6 local cache、outer solve/residual/physical output `not_run`；父 `WORKER_FAILED` 与 worker `RESOURCE_CONTROLLED_STOP` 均保留 |
+| `task39extra_v21_z4_notch_h7p5`（C） | same frozen V21 geometry family；未启动 | notch h7.5；h7.5 prerequisite candidate | `not_run_by_review_condition` | 无 worker | 不从 B 的 stop 或 A 的 h10 结果推断 C；master merge 未批准 |
+
+冻结身份和几何：Z1 base=`f9e16c21b936673b5a2dadcf52d2c344e61aabe8`；current pre-Z5 HEAD=`f8d0fbf3da48fd3cbe5cc3a226dbff3feb1d9b48`；notch union=`x=[16.5,33.5] nm, y=[0,8.333333333333334] nm, z=[40,80] nm`，8 个实体；h7.5 mesh 含 neutral alignment planes，owned cells=`990`，不是 720/uniform multiplier。11 prepared forms 为 O10=`10/1`（唯一 miss=`p6_condensation`）、A/B=`11/0`；A/B 无 compiler descendant samples，不宣称 warm-cache RSS 改善。
+
+本节是当前 Z5 aggregate 登记；详细 p4 CSR hashes、symbolic fields、capacity arithmetic、resource terminal 和原始 evidence 见 [V21 outcome](task039_extra_physical_multilevel/outcomes/dual_condensed_robustness_v21.md)、[compact](task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_compact.json)、[decision](task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_decision.json)。Z5 frozen authority 检查 `50` frozen files / `26` old profiles / `changed=0` / `passed=true`；当前状态 `LOCAL_REVIEWED_REMOTE_PUSH_PENDING_AUTH`。
+
+---
+
 # Task39extra 当前模型登记：Review V21 A 非可分 h10 robustness
 
 | Model ID | profile / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
