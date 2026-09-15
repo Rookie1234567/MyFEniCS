@@ -2684,3 +2684,30 @@ Task041 的 BAL_H 是显式 research-only opt-in：它以每侧一个准确 p4 �
 H3 candidate 为 `p6/h4/M480/MPI8`，worker wall `191662.819902868 s`（约 `53.239672 h`），Schur `183016.74211002886 s`；p6 factor=0、每侧 p4=1、每侧 nested KSP=1，清理后归零。旧 public 段观测 RSS/PSS/USS 峰为 `53221163008/50485623808/50090246144 B`（raw 总计 226484 行，其中 consumer 226483 行内 2287 行同时可读、224196 行缺测，另含 preflight 1 行），但仅覆盖该段；orphan 三类记录 `sample/read_only/gate_v2=822/6284/442921` 来自同一文件，不能拼成完整峰。完整 H3 exact public-tree RSS/PSS/USS 为 `89123696640/87368944640/87121264640 B`。详细数值、身份、hash 和失败边界见 [Task041 BAL_H 中心报告](task041_mpi1_shortwave_hybrid_capacity/outcomes/side_balh_transfer_v1.md) 与 [compact record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_side_balh_transfer_v1.json)。
 
 本轮新增 BAL_H numerical/core 组件以及 Floquet empty-rank collective 修复；BAL_H 仍是 research-only opt-in，未提升为 production default 或 master 合入。Task39extra V5 donor source 为 `094204b7281fe867744fe334e8753d2faebaf89b`，只作为迁移来源记录。
+
+## 2026-09-15：Task041 S1f fixed-eight baseline 资源受控停止
+
+在 source `1c1d36b168bfb3939314ee2faf5b943cca804382`、5 nm p6/h4/M480/MPI8、
+`task041_schur_speed_v2` profile 下，未优化 fixed-eight RHS baseline 进入
+`top_factor_setup_begin`，尚未执行第一条代表性 RHS（`0/8`）。外层 authority memory
+raw 为 7350 行、26,113,795 B、SHA=`5a46a99427c7d82e5c4eb9d8209b887e0a33c66f5ff865ae12df0c786e75c5b8`；
+line 7313 首次达到 90% warning（elapsed `2210.5727085701656 s`，RSS
+`47914586112 B`），line 7349 首次且唯一超过 strict process-tree RSS cap
+`53221163008 B`（峰 `53331742720 B`，超 `110579712 B`，逐 PID 求和一致）。
+
+job swap 为 0；global used `8192 B` 是既有 baseline，新增 used/pswpin/pswpout delta 均为
+0；host/cgroup reserve 未触发。PSS/USS 为稀疏观测峰 `40538401792/40140140544 B`，74 条
+smaps-complete、7276 条缺测，不能替代同一时刻 RSS。外层 phase 返回 `-15`、
+`process_tree_rss_limit`；parent pre-exit 仍有 MPI 成员，后续 systemd cgroup 才清空，
+finalizer 为 `service_boundary_failure`，所以不称自然 MPI 退出或数值失败。
+
+本条状态为 `controlled_negative_resource_stop/process_tree_rss_limit`，只说明严格资源
+入场失败，不提供新的 RHS、等价性或性能结果；shared S0/S1/S3 6 小时预算未触发，不能
+与旧 H3 的 `RESOURCE_COMPARISON_INCONCLUSIVE` 混写。S2/S4、optimized/A-D、producer/QEP
+和 Full3D secondary 均 `not_run`。紧凑索引与全部原始路径/hash 见 Task041 的[中心报告](task041_mpi1_shortwave_hybrid_capacity/outcomes/schur_speed_v2.md)与[compact JSON](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_schur_speed_v2.json)，以及
+`results/task041_side_balh_component_audit/s5a_s1f_resource_stop_20260915_1c1d36b1/s5a_completion_evidence.json`；
+unit 六条原始 journal 另存于
+`results/task041_side_balh_component_audit/s5a_s1f_resource_stop_20260915_1c1d36b1/task041-s1e-rhs-baseline-1c1d36b1.journal.jsonl`
+（SHA=`33b847ddf7206e33e876d290cb9130fcff55c90c07c55eb28aa55889694b2d96`）。BAL_H 仍为
+research-only opt-in，未提升普通 production default；用户 04:59 已明确授权 CPU0–7
+与 CPU23 保护作业并行，本轮不把该共存误记为违规。

@@ -1,5 +1,38 @@
 # Test and evidence summary
 
+## S5a S1f 结果整理
+
+S1f 的固定八 RHS baseline 在代表性 RHS 前因 `process_tree_rss_limit` 停止，`0/8`；S5a
+整理阶段未再运行 PDE/MPI；已审 S1d/S1c6 证据中的 105 focused pytest、6 targeted
+pytest 与 Ruff/compileall/diff 静态检查分开记录，本阶段未运行 full repository pytest。外层原始 evidence 与 compact
+索引见 [S5a report](schur_speed_v2.md)、[S0/S1 compact](records/task041_schur_speed_v2.json) 及
+`results/task041_side_balh_component_audit/s5a_s1f_resource_stop_20260915_1c1d36b1/s5a_completion_evidence.json`。
+
+| 项目 | 结果 |
+|---|---|
+| S1f numeric/coverage | `not_run` / fixed RHS `0/8`；停止点 `top_factor_setup_begin` |
+| S1f resource | outer RSS `53331742720 B` > cap `53221163008 B`；job swap `0`、global baseline `8192 B` 且新增 delta `0`，终止原因为 RSS cap |
+| S1f lifecycle | public PGID gone，但 parent `pre_exit_members_clean=false`；之后 systemd 清空 cgroup，finalizer 保留 `service_boundary_failure` |
+| prior source/tests | source `1c1d36b168bfb3939314ee2faf5b943cca804382`；已审 focused/static/服务资格证据不因 docs-only 收口重跑 |
+| full suite/CI | `not_run` |
+
+## S1d/S1c6 可审计证据入口
+
+| 证据 | 实际路径与 SHA256 |
+|---|---|
+| S1d result index | `results/task041_side_balh_component_audit/s1d_validation_20260915_3890cdd/s1d_result_index.json`；`1b1f76c52de24a81ed47bb8086b190f9481bee97cf04db7d5164198ff4b09f53`（105 focused + 6 targeted/static） |
+| S1c6c qualification | `results/task041_side_balh_component_audit/s1c6_service_qualification/s1c6c_qualification_summary.json`；`43e2d3a1a8879943d46f09b1fa9c2f200088f64049dc6e7b0b72e627853466a5` |
+
+S5a 最终文档合同检查使用 native activation，`python -m pytest` 为 `15 passed`、exit `0`；
+ABI/JSON/8 条 manifest 绑定核对与 `git diff --check` 同一外层
+`CLOCK_MONOTONIC` wall=`1.110528022 s`、exit `0`。原始命令输出与哈希摘录见
+`results/task041_side_balh_component_audit/s5a_s1f_resource_stop_20260915_1c1d36b1/s5a_document_validation_final.json`。
+首次同一文档检查由独立公开命令 `exec-8aeefee0-c65b-41ba-840e-96497cc1c563`
+保留为 `1.125902230 s`，第二次为 `exec-264fa7da-838b-43d7-86b8-6cbe117ba429`、
+`1.110528022 s`；两次均分别计入 shared；最终账本 used=`2881.0536036838917 s`、
+SHA=`902e8bbd40c5df4cbfef0a1f9c501d33575516e084fed6a10c54c275add26f7a`。不把 pytest
+内层时间或 nested CPU time 写成完整 wall。
+
 ## H4 当前结果证据与边界
 
 H2/H3 的正式 raw comparison 已由 frozen comparator 独立重算；本轮 H4 不重跑

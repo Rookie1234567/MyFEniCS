@@ -1,0 +1,170 @@
+{
+  "schema": "task041.schur_speed_v2.s5a_completion_record.v1",
+  "status": "controlled_negative_resource_stop",
+  "classification": "process_tree_rss_limit",
+  "source_control": {
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "source_sha": "1c1d36b168bfb3939314ee2faf5b943cca804382",
+    "base_sha": "50897c0c62d1f35abed5b196ae17997b2e7521cc",
+    "parent_sha": "3890cdd25b58afabf7df244f388aa2885f0ed0f6",
+    "upstream": "origin/codex/20260902-task41-mpi1-shortwave-hybrid-capacity"
+  },
+  "run": {
+    "model": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8",
+    "profile": "task041_schur_speed_v2",
+    "scope": "representative_rhs",
+    "input_path": "/home/fenics/Projects/MyFEniCS/input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat",
+    "input_sha256": "9e77be901d54a8eb6d4f090588dec26c4913facd7c16c53fb46c0025eb31adb2",
+    "public_runroot": "/home/fenics/Projects/MyFEniCS/results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260915T050245.489415Z",
+    "supervision_root": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s1e_preparation_20260915_1c1d36b1/unoptimized_rhs_baseline_1c1d36b1",
+    "unit": "task041-s1e-rhs-baseline-1c1d36b1.service",
+    "invocation_id": "3186f34e93a9475f88aba9fbd0843352",
+    "mpi": "public MPI1, worker MPI8",
+    "threads": 1,
+    "os_cpus": "0-7",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int32"
+  },
+  "fixed_inputs": {
+    "legacy_descriptor_path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/task041_h3b_legacy_native_packet_descriptor.json",
+    "legacy_descriptor_sha256": "175a2463e15e039ff4dec91eed6a1f011d8eca338e1d2cc98cd8e30e37d86c86",
+    "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+    "rhs_manifest_path": "/home/fenics/Projects/MyFEniCS/docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_representative_rhs_v1.json",
+    "rhs_manifest_sha256": "fb68011ed3e55861c59455d082be549cdd9f6c2d5a569015cf88bdc739f5636a",
+    "resolved_sha256": "95a155334dacf75d30c005338ff689fd676532b49ae392e6fad868d0eee23e51",
+    "physical_value_sha256": "65bb1e2947604a7efe54b2d6450a63a583714341505c207241f4278bd25b22a4"
+  },
+  "representative_rhs_binding": {
+    "count": 8,
+    "source_vector_sha256": "not_yet_materialized",
+    "response_vector_sha256": "not_run",
+    "entries": [
+      {"ordinal": 0, "side": "bottom", "branch": "positive", "audit_index": 227, "formal_column": 207, "raw_line_1based": 248, "raw_line_sha256": "024448eeff43bba710be97e1d49bcd79f185cd8d282b2d78003c6150da3e2fc8"},
+      {"ordinal": 1, "side": "bottom", "branch": "positive", "audit_index": 35, "formal_column": 15, "raw_line_1based": 56, "raw_line_sha256": "ed276d1089d2817cdc28e364bef077614fa87289c7b101eced3549b3c9b01ca4"},
+      {"ordinal": 2, "side": "bottom", "branch": "negative", "audit_index": 691, "formal_column": 671, "raw_line_1based": 712, "raw_line_sha256": "41b12548ba21a651a72410da5029cc724b6843472be45c6fb96071903e288d56"},
+      {"ordinal": 3, "side": "bottom", "branch": "negative", "audit_index": 513, "formal_column": 493, "raw_line_1based": 534, "raw_line_sha256": "4d9cf19d8aafd7cbd5adc4e6ce74cf66b24e55374bae85fad36619bcdebcc0c3"},
+      {"ordinal": 4, "side": "top", "branch": "positive", "audit_index": 330, "formal_column": 310, "raw_line_1based": 1311, "raw_line_sha256": "e3145d4263674b3a48cc12564f7d52f3fe20b004fced6fa10af69f89003585e0"},
+      {"ordinal": 5, "side": "top", "branch": "positive", "audit_index": 32, "formal_column": 12, "raw_line_1based": 1013, "raw_line_sha256": "3c6de105a6e2e7be93c4cd85d55710107c2572c14c1297255cbbc07ada5638a9"},
+      {"ordinal": 6, "side": "top", "branch": "negative", "audit_index": 686, "formal_column": 666, "raw_line_1based": 1667, "raw_line_sha256": "07203408136ba732c6fd614f7f1cbada7fe187350811b0d2d5a78b9d07a9add8"},
+      {"ordinal": 7, "side": "top", "branch": "negative", "audit_index": 513, "formal_column": 493, "raw_line_1based": 1494, "raw_line_sha256": "b363d21ab1fd80423e55768c90fd532e0648147c911a2c782e9f6e6b0b7704b3"}
+    ],
+    "generation": "modal_coupling_action(e_column); corresponding factor is applied inside the function",
+    "branch_ordinal": "formal_column % 480",
+    "formal_column": "audit_index - 20 for modal audit indices 20..979"
+  },
+  "s0_rhs_attribution": {
+    "path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/task041_schur_speed_v2_s1a_3890cdd2/s0_rhs_statistics_v2.json",
+    "bytes": 18352,
+    "sha256": "36781c22a3565d70ed37364c94a0c2ec104b12279bbad0a8f27c06f2ef8917cf",
+    "raw_rhs_path": "/home/fenics/Projects/MyFEniCS/results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260912T075551.700563Z/consumer/numerical_output/balh_side_rhs_audits.jsonl",
+    "raw_rhs_bytes": 3852327,
+    "raw_rhs_sha256": "b84de36f3eacd82eab6ff8fad03c689bb49476efb153e7c4096fcdf61b3fc51b",
+    "record_counts": {"cost_probe": 8, "modal_schur": 1952, "formal_modal": 1920, "sample_repeat": 32, "outer": 20},
+    "p90_definition": "ceil(0.9*n)-1 (0-based; nearest-rank)",
+    "counts_are_calls_not_wall": true,
+    "phase_stats": {
+      "bottom": {
+        "cost_probe": {"count": 4, "seconds": 260.7828994761221, "median_seconds": 68.59954152896535, "p90_seconds": 123.52996737207286, "max_seconds": 123.52996737207286, "Q_seconds": 139.978631448932, "H6_seconds": 17.73412113590166, "A6_seconds": 84.75987191987224, "uncovered_seconds": 18.957641705172136},
+        "modal_schur_including_samples": {"count": 976, "seconds": 91474.11646683724, "median_seconds": 105.85667004948482, "p90_seconds": 136.14961000392213, "max_seconds": 306.09375961800106, "Q_seconds": 48837.256919305306, "H6_seconds": 6176.029820939526, "A6_seconds": 29594.821537523763, "uncovered_seconds": 7081.481639462756},
+        "formal_modal": {"count": 960, "seconds": 90340.85915887542, "median_seconds": 105.87993654445745, "p90_seconds": 136.18737301789224, "max_seconds": 306.09375961800106, "Q_seconds": 48227.36092880694, "H6_seconds": 6099.419908887241, "A6_seconds": 29230.498126879567, "uncovered_seconds": 6996.194431796903},
+        "outer": {"count": 10, "seconds": 2395.5638189439196, "median_seconds": 80.39208332798444, "p90_seconds": 650.1598564439919, "max_seconds": 689.9339378490113, "Q_seconds": 1280.078159764642, "H6_seconds": 168.65051933540963, "A6_seconds": 775.5702761069406, "uncovered_seconds": 176.9064923322294}
+      },
+      "top": {
+        "cost_probe": {"count": 4, "seconds": 407.6624744720757, "median_seconds": 94.19762945745606, "p90_seconds": 156.4351340380963, "max_seconds": 156.4351340380963, "Q_seconds": 219.0618424054701, "H6_seconds": 29.374434218974784, "A6_seconds": 130.7482474767603, "uncovered_seconds": 29.49469513213262},
+        "modal_schur_including_samples": {"count": 976, "seconds": 91493.65305071231, "median_seconds": 105.6035790470196, "p90_seconds": 136.7951175631024, "max_seconds": 359.24694890808314, "Q_seconds": 48862.51957798959, "H6_seconds": 6559.03811931028, "A6_seconds": 29394.25792963244, "uncovered_seconds": 6902.41703384812},
+        "formal_modal": {"count": 960, "seconds": 90443.30406217626, "median_seconds": 105.69277824799065, "p90_seconds": 136.9260180380661, "max_seconds": 359.24694890808314, "Q_seconds": 48289.96794238221, "H6_seconds": 6487.024378872709, "A6_seconds": 29061.782369388267, "uncovered_seconds": 6826.525625325739},
+        "outer": {"count": 10, "seconds": 3087.595475415932, "median_seconds": 162.52467558102217, "p90_seconds": 627.8503135940991, "max_seconds": 634.0634857409168, "Q_seconds": 1659.1153715432156, "H6_seconds": 222.75653227930889, "A6_seconds": 995.1049590934999, "uncovered_seconds": 218.2386420373805}
+      }
+    },
+    "semantics": "Each seconds field is a sum of per-RHS logging-rank max diagnostics. It is not a campaign rank maximum, parent wall, or critical-path sum; component fields are not added to wall. P/PH/MatSolve/A4 residual detail was not exported in S0."
+  },
+  "s1f_stop": {
+    "fixed_rhs_completed": "0/8",
+    "stage": "top_factor_setup_begin",
+    "outer_memory_path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s1e_preparation_20260915_1c1d36b1/unoptimized_rhs_baseline_1c1d36b1/memory_stages.jsonl",
+    "outer_memory_bytes": 26113795,
+    "outer_memory_lines": 7350,
+    "outer_memory_sha256": "5a46a99427c7d82e5c4eb9d8209b887e0a33c66f5ff865ae12df0c786e75c5b8",
+    "first_warning": {"line": 7313, "elapsed_seconds": 2210.5727085701656, "rss_bytes": 47914586112, "threshold_bytes": 47899046707},
+    "first_and_only_cap_exceedance": {"line": 7349, "elapsed_seconds": 2221.3724097050726, "rss_bytes": 53331742720, "cap_bytes": 53221163008, "excess_bytes": 110579712, "rss_sum_matches_pid_sum": true},
+    "rss_by_pid_bytes": {"2397691": 39407616, "2397697": 90730496, "2397715": 16154624, "2397777": 16162816, "2397780": 9443794944, "2397781": 5784555520, "2397782": 6292807680, "2397783": 6591094784, "2397784": 6521180160, "2397785": 5941657600, "2397786": 6000390144, "2397787": 6593806336},
+    "pss_uss_observed_peak_bytes": {"pss": 40538401792, "uss": 40140140544, "smaps_complete_sample_count": 74, "missing_sample_count": 7276, "semantics": "sparse diagnostics, not same-time RSS"},
+    "sampling": {"rss_vmswap_period_seconds": 0.25, "pss_uss_sparse_period_seconds": 30.0, "max_rss_gap_seconds": 0.8098343990277499},
+    "swap_reserve": {"job_swap_bytes": 0, "global_used_baseline_bytes": 8192, "global_pswpin_baseline_pages": 0, "global_pswpout_baseline_pages": 2, "global_used_delta_bytes": 0, "global_pswpin_delta_pages": 0, "global_pswpout_delta_pages": 0, "reserve_triggered": false},
+    "public_summary": {"status": "launching", "exit_status": null, "result_classification": "not_run"}
+  },
+  "lifecycle_and_timing": {
+    "outer_returncode": -15,
+    "outer_termination_reason": "process_tree_rss_limit",
+    "outer_process_group_gone": true,
+    "parent_pre_exit_members_clean": false,
+    "finalizer_status": "failed",
+    "finalizer_classification": "service_boundary_failure",
+    "service_result": "exit-code",
+    "service_exit_code": "exited",
+    "service_exit_status": 3,
+    "post_cgroup_finalizer_only": true,
+    "known_task_pids_finally_gone": true,
+    "foreign_full3d_pids_untouched": [1652293, 1652340, 1652343],
+    "outer_phase_wall_seconds": 2221.4903851540294,
+    "parent_wall_seconds": 2221.674698243,
+    "finalizer_unit_elapsed_seconds": 2223.491907262,
+    "journal_terminal_utc": "2026-09-15T05:39:48.194451Z",
+    "accounting": "finalizer unit elapsed charged once; nested phase, post and journal CPU time are not added",
+    "unit_journal": {
+      "path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s5a_s1f_resource_stop_20260915_1c1d36b1/task041-s1e-rhs-baseline-1c1d36b1.journal.jsonl",
+      "lines": 6,
+      "sha256": "33b847ddf7206e33e876d290cb9130fcff55c90c07c55eb28aa55889694b2d96",
+      "invocation_id": "3186f34e93a9475f88aba9fbd0843352",
+      "unit_start_monotonic_ns": 1558321618156000,
+      "last_consumed_monotonic_us": 1560545135499,
+      "last_consumed_utc": "2026-09-15T05:39:48.195160Z",
+      "main_exit_utc": "2026-09-15T05:39:46.376100Z",
+      "control_exit_utc": "2026-09-15T05:39:48.194340Z",
+      "external_terminal_envelope_seconds": 2223.517343,
+      "previously_charged_finalizer_seconds": 2223.491907262,
+      "tail_difference_seconds": 0.025435738,
+      "systemd_cpu_usage_ns": 18526354337000,
+      "systemd_memory_peak_bytes": 36464922624,
+      "semantics": "raw journal records for this unit only; systemd CPU/memory fields are diagnostics, not the process-tree RSS authority"
+    }
+  },
+  "historical_comparisons": {
+    "h2_13p5nm": {"status": "numerical_and_comparison_pass", "consumer_seconds": 390.9697992079891, "artifact_sha256": "c8d3c7bf259d8d78a0b8d1152f7184216156824bf764c8366604fb72d374387d"},
+    "h2_13p5nm_balh": {"status": "numerical_and_comparison_pass", "producer_seconds": 26.684, "consumer_seconds": 3002.409810984973, "rss_difference_bytes": 254894080, "rss_difference_percent": 2.707606},
+    "h3_5nm_exact": {"status": "numerical_and_comparison_pass", "consumer_seconds": 1868.4593736410607, "consumer_rss_pss_uss_bytes": [89123696640, 87368944640, 87121264640]},
+    "h3_5nm_balh": {"status": "numerical_and_comparison_pass_resource_inconclusive", "consumer_seconds": 191662.819902868, "schur_seconds": 183016.74211002886}
+  },
+  "not_run": ["S1f representative response shards", "S1f full Schur", "S1f outer solve", "S1f recovery", "S1f official RTA", "S1f optimized A-D", "S1f new producer/QEP (5nm)", "Full3D secondary"],
+  "evidence": {
+    "s5a_completion_evidence_path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s5a_s1f_resource_stop_20260915_1c1d36b1/s5a_completion_evidence.json",
+    "s5a_completion_evidence_sha256": "5bae6062f6ad91abf3f4dfd91e21b9ed66c90b4e8c3e8a2a1e0df3d687330c3c",
+    "startup_index_path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s1f_baseline_20260915T050245_1c1d36b1/s1f_startup_index.json",
+    "startup_index_sha256": "5990b173942d4567012aaf255e613e378432c919c43206cf551118f7fe1e9191",
+    "launch_manifest_path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s1e_preparation_20260915_1c1d36b1/unoptimized_rhs_baseline_1c1d36b1/launch_manifest.json",
+    "launch_manifest_sha256": "e4f5b98556490a6036ded8966f3b6e9713cfd3bb4d3bcb34efd6788b179e245e",
+    "s1d_result_index_path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s1d_validation_20260915_3890cdd/s1d_result_index.json",
+    "s1d_result_index_sha256": "1b1f76c52de24a81ed47bb8086b190f9481bee97cf04db7d5164198ff4b09f53",
+    "s1c6c_qualification_summary_path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/s1c6_service_qualification/s1c6c_qualification_summary.json",
+    "s1c6c_qualification_summary_sha256": "43e2d3a1a8879943d46f09b1fa9c2f200088f64049dc6e7b0b72e627853466a5"
+  },
+  "ledger": {
+    "path": "/home/fenics/Projects/MyFEniCS/results/task041_side_balh_component_audit/task041_schur_speed_v2_s1a_3890cdd2/task041_schur_speed_v2_compute_wall_ledger.json",
+    "sha256_before_s5a_doc_checks": "ceeb0ae79ed90d48dd1aef015777ae6a7a386e506dd1cd69ff0f84f36231deca",
+    "used_compute_wall_seconds_before_s5a_doc_checks": 2878.8171734318917,
+    "shared_limit_seconds": 21600.0,
+    "shared_remaining_before_s5a_doc_checks": 18721.182826568107,
+    "batch_limit_seconds": 201600.0,
+    "batch_remaining_before_s5a_doc_checks": 198721.1828265681,
+    "S2_used_seconds": 0.0,
+    "S4_used_seconds": 0.0,
+    "doc_check_charge": "two independent final documentation-check outer walls charged once each",
+    "doc_check_charge_seconds": 2.236430252,
+    "journal_terminal_tail_charge_seconds": 0.025435738,
+    "used_compute_wall_seconds_after_journal_tail": 2878.8171734318917,
+    "sha256_after_s5a_doc_checks": "902e8bbd40c5df4cbfef0a1f9c501d33575516e084fed6a10c54c275add26f7a",
+    "used_compute_wall_seconds_after_s5a_doc_checks": 2881.0536036838917,
+    "shared_remaining_after_s5a_doc_checks": 18718.946396316107,
+    "batch_remaining_after_s5a_doc_checks": 198718.9463963161
+  }
+}

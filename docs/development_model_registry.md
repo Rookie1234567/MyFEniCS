@@ -1597,3 +1597,15 @@ default，也不批准合入 master；raw failure root 与 negative authority �
 | 5 nm BAL_H | p6 / 4 nm / 480 / 8 | source `51694bbc49d90e70eef87c953f07c695f5fc519c`；numerical/comparison contract PASS | worker `191662.819902868 s`；public parent/summary 缺失，orphan terminal gate false；完整 consumer resource unqualified | `RESOURCE_COMPARISON_INCONCLUSIVE`，不得升级 production |
 
 BAL_H 的可复用接线依赖 `physical_balanced_*` core、side/trace transfer、modal block-LDU、Task041 workflow/launcher/supervisor 和冻结 comparator；对应 H1 admission/组件、H2/H3 fresh evidence 与 test351/352 记录在 Task041 中心报告。它改变了本轮研究实现的数值组件，但不改变旧 exact/default 路径。H3 legacy packet descriptor/manifest 仍只读绑定；Task39extra V5 donor source 是 `094204b7281fe867744fe334e8753d2faebaf89b`。H3g orphan sampler 是 incident-specific `do-not-merge/not qualified for reuse`，不能登记为 reusable watchdog。
+
+### Task041 S1f fixed-eight baseline（2026-09-15）
+
+在 source `1c1d36b168bfb3939314ee2faf5b943cca804382`、5 nm p6/h4/M480/MPI8、
+`task041_schur_speed_v2` 下，fixed-eight baseline 在第一条代表性 RHS 前因严格
+`process_tree_rss_limit` 受控停止，实际覆盖 `0/8`。这是
+`controlled_negative_resource_stop`，不是数值失败、提速结果或内存节省通过；旧 H3 的
+`RESOURCE_COMPARISON_INCONCLUSIVE` 仍单独保留。峰值为 `53331742720 B`，严格 cap
+`53221163008 B`，超出 `110579712 B`；shared S0/S1/S3 6 小时预算未触发。该阶段包含
+BAL_H numerical core 与计时适配的 research opt-in 路径，但没有 A–D 等价性能优化，
+也未改变 exact/default 的生产行为。证据入口为 Task041 S5a 的[中心报告](task041_mpi1_shortwave_hybrid_capacity/outcomes/schur_speed_v2.md)、[S0/S1 compact JSON](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_schur_speed_v2.json)和
+ignored raw authority；本轮不得登记为 production capacity result。

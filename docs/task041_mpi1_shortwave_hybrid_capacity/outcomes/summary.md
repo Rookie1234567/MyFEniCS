@@ -1,5 +1,31 @@
 # Task041 outcomes summary
 
+## S5a：S1f fixed-eight baseline 的资源受控停止（2026-09-15）
+
+本轮唯一新增 heavy 是未优化的固定 8 RHS baseline；它在第一条代表性 RHS 之前的
+`top_factor_setup_begin` 阶段触发 simultaneous process-tree RSS cap，实际 `0/8`，
+因此没有新的数值、物理、等价性或提速结果。状态是
+`controlled_negative_resource_stop`，原因是 `process_tree_rss_limit`。本轮 shared
+S0/S1/S3 的 21600 秒（6 小时）预算未触发；`RESOURCE_COMPARISON_INCONCLUSIVE` 仅
+属于旧 H3 BAL_H 的完整资源比较缺口。这不是数值失败，也不能因为 host 余量充足而提高
+cap；严格 cap 为 `53221163008 B`，外层峰为 `53331742720 B`，超出 `110579712 B`。
+
+| S5a 项目 | 实际值/边界 |
+|---|---|
+| source / model / profile | `1c1d36b168bfb3939314ee2faf5b943cca804382` / `task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8` / `task041_schur_speed_v2` |
+| scope | `representative_rhs`；固定 RHS `0/8`；full Schur、outer、recovery、official RTA `not_run` |
+| outer wall | `2221.4903851540294 s`；service unit elapsed `2223.491907262 s`；两者不相加 |
+| RSS authority | outer raw peak `53331742720 B`，cap `53221163008 B`，delta `110579712 B`；line 7349，PID sum 一致 |
+| warning | line 7313，elapsed `2210.5727085701656 s`，RSS `47914586112 B` |
+| sparse PSS/USS | `40538401792/40140140544 B`；74 complete、7276 missing；不是同刻度 RSS 替代 |
+| swap / reserve | job swap `0`；global baseline `8192 B`，新增 used/pswpin/pswpout delta `0`；reserve 未触发 |
+| lifecycle | outer return `-15`/`process_tree_rss_limit`；parent pre-exit members 不清空；finalizer `service_boundary_failure`、systemd exit status3；最终 cgroup 清空但不称自然成功 |
+| evidence | [S5a report](schur_speed_v2.md)；[S0/S1 compact](records/task041_schur_speed_v2.json)；ignored compact=`results/task041_side_balh_component_audit/s5a_s1f_resource_stop_20260915_1c1d36b1/s5a_completion_evidence.json`，SHA=`5bae6062f6ad91abf3f4dfd91e21b9ed66c90b4e8c3e8a2a1e0df3d687330c3c` |
+
+完整 raw memory、markers、parent/finalizer、journal 和 public-only 段仍保留在 compact 指向的
+ignored root；public `run_summary` 为 `launching/exit_status=null`，本次外层终态不从它推断。
+此前 H2/H3 数值比较 PASS、H3 资源不完整、H3g 事故和所有旧负结果均保持不变。
+
 ## H4 当前 Task041 BAL_H 终态（2026-09-14）
 
 BAL_H 用每侧一个准确 p4 粗因子和迭代平衡响应替代完整 p6 侧区精确因子；全局 Maxwell 方程、全局 action/RHS 和正式 recovery 定义不变。它是降低因子驻留内存的研究候选，代价是重复侧区求解和更长 wall，仍为显式 `research_only_approximate_candidate`，没有提升为 production default。
