@@ -42,6 +42,10 @@ from src.runners.physical_p4_schur_v14 import _v14_physical_checks
 CHECKER_SCHEMA = "task039extra.v21.authority-checker.v1"
 PASS_CLASSIFICATION = "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
 MODE_SHA = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+V20_P6_INVENTORY_LABEL = "v20_p6_local_caches"
+V21_P6_INVENTORY_LABEL = "v21_p6_local_caches"
+HISTORICAL_V21_Z2_SOURCE_SHA = "863ec3bcd7eead867795284db11fc39e758a6f08"
+HISTORICAL_V21_Z2_SUMMARY_SCHEMA = "task039extra.v14.z2_notch_h10.v2"
 
 
 def _sha256(path: Path) -> str:
@@ -390,7 +394,156 @@ def _alias_v21_events(
             copied["event"] = alias
             copied["aliased_from"] = event.get("event")
             result.append(copied)
+        # The V20 lifecycle helper has a deliberately independent, historical
+        # label.  Keep the raw V21 inventory event untouched and add only an
+        # exact in-memory compatibility row for that helper.
+        if (
+            stage_prefix is not None
+            and event.get("event") == "v14_inventory_released"
+            and isinstance(event.get("facts"), Mapping)
+            and event["facts"].get("label") == V21_P6_INVENTORY_LABEL
+        ):
+            copied = dict(event)
+            copied["facts"] = dict(event["facts"])
+            copied["facts"]["label"] = V20_P6_INVENTORY_LABEL
+            copied["aliased_from"] = event.get("event")
+            copied["label_aliased_from"] = V21_P6_INVENTORY_LABEL
+            result.append(copied)
     return result
+
+
+def _v21_release_timeline_facts(
+    events: list[Mapping[str, Any]], *, stage: str
+) -> dict[str, Any]:
+    """Run the V20 chronology checks plus raw V21 label/owner/amount checks."""
+
+    aliased_events = _alias_v21_events(events, stage=stage)
+    legacy = release_timeline_facts(aliased_events)
+    checks = dict(legacy.get("checks", {}))
+    reserve_rows = [
+        event
+        for event in events
+        if event.get("event") == "v14_inventory_reserved"
+        and isinstance(event.get("facts"), Mapping)
+        and event["facts"].get("label") == V21_P6_INVENTORY_LABEL
+    ]
+    release_rows = [
+        event
+        for event in events
+        if event.get("event") == "v14_inventory_released"
+        and isinstance(event.get("facts"), Mapping)
+        and event["facts"].get("label") == V21_P6_INVENTORY_LABEL
+    ]
+    start_rows = [
+        event for event in events if event.get("event") == "v20_p6_release_started"
+    ]
+    complete_rows = [
+        event for event in events if event.get("event") == "v20_p6_release_complete"
+    ]
+    reserve_facts = (
+        reserve_rows[0].get("facts", {})
+        if len(reserve_rows) == 1
+        and isinstance(reserve_rows[0].get("facts"), Mapping)
+        else {}
+    )
+    release_facts = (
+        release_rows[0].get("facts", {})
+        if len(release_rows) == 1
+        and isinstance(release_rows[0].get("facts"), Mapping)
+        else {}
+    )
+    reserve_entry = reserve_facts.get("entry", {})
+    reserved_bytes = (
+        reserve_entry.get("bytes")
+        if isinstance(reserve_entry, Mapping)
+        else None
+    )
+    released_bytes = release_facts.get("bytes")
+    complete_facts = (
+        complete_rows[0].get("facts", {})
+        if len(complete_rows) == 1
+        and isinstance(complete_rows[0].get("facts"), Mapping)
+        else {}
+    )
+    checks["v21_p6_raw_inventory_label"] = (
+        len(reserve_rows) == 1 and len(release_rows) == 1
+    )
+    checks["v21_p6_release_owner_refs"] = (
+        len(complete_rows) == 1
+        and complete_facts.get("owner_refs_cleared") is True
+    )
+    checks["v21_p6_release_after_final_residual"] = (
+        len(complete_rows) == 1
+        and complete_facts.get("released_after_final_residual") is True
+    )
+    checks["v21_p6_release_timing"] = (
+        len(start_rows) == 1
+        and len(release_rows) == 1
+        and len(complete_rows) == 1
+        and int(start_rows[0].get("timestamp_ns", -1))
+        < int(release_rows[0].get("timestamp_ns", -1))
+        < int(complete_rows[0].get("timestamp_ns", -1))
+    )
+    checks["v21_p6_release_amount"] = (
+        type(reserved_bytes) is int
+        and reserved_bytes > 0
+        and type(released_bytes) is int
+        and released_bytes > 0
+    )
+    checks["v21_p6_release_amount_matches_reservation"] = (
+        checks["v21_p6_release_amount"]
+        and released_bytes == reserved_bytes
+    )
+    return {
+        "checks": checks,
+        "passed": all(checks.values()),
+        "legacy_helper": legacy,
+        "inventory_amount": {
+            "reserve_label": V21_P6_INVENTORY_LABEL,
+            "reserved_bytes": reserved_bytes,
+            "released_bytes": released_bytes,
+            "reserve_count": len(reserve_rows),
+            "release_count": len(release_rows),
+        },
+        "label_adapter": {
+            "raw_label": V21_P6_INVENTORY_LABEL,
+            "legacy_label": V20_P6_INVENTORY_LABEL,
+            "in_memory_only": True,
+        },
+    }
+
+
+def _summary_schema_facts(
+    summary: Mapping[str, Any], *, source_sha: str, stage: str
+) -> dict[str, Any]:
+    """Accept only the known historical V21 overwrite, never arbitrary drift."""
+
+    observed = summary.get("schema")
+    native = observed == "task039extra.v21.worker-summary.v1"
+    historical_compatibility = (
+        source_sha == HISTORICAL_V21_Z2_SOURCE_SHA
+        and stage == "Z2_NOTCH_H10"
+        and summary.get("profile")
+        == "physical_p6_trace_p4_condensed_robustness_v21"
+        and observed == HISTORICAL_V21_Z2_SUMMARY_SCHEMA
+    )
+    return {
+        "observed": observed,
+        "expected": "task039extra.v21.worker-summary.v1",
+        "native_pass": native,
+        "compatibility_applied": historical_compatibility,
+        "compatibility_scope": (
+            {
+                "source_sha": HISTORICAL_V21_Z2_SOURCE_SHA,
+                "stage": "Z2_NOTCH_H10",
+                "observed_schema": HISTORICAL_V21_Z2_SUMMARY_SCHEMA,
+                "reason": "historical V14 record.update overwrote the V21 adapter schema",
+            }
+            if historical_compatibility
+            else None
+        ),
+        "passed": native or historical_compatibility,
+    }
 
 
 def _mode_identity_facts_v21(
@@ -835,6 +988,9 @@ def check_run(run_directory: str | Path, *, expected_source_sha: str | None = No
     root = Path(__file__).resolve().parents[1]
     stage = str(summary.get("stage", ""))
     source_sha = str(summary.get("source_sha", ""))
+    summary_schema_facts = _summary_schema_facts(
+        summary, source_sha=source_sha, stage=stage
+    )
     checks: dict[str, bool] = {
         "source_identity": bool(
             len(source_sha) == 40
@@ -845,8 +1001,7 @@ def check_run(run_directory: str | Path, *, expected_source_sha: str | None = No
         "stage": stage in {"Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"},
         "profile": summary.get("profile")
         == "physical_p6_trace_p4_condensed_robustness_v21",
-        "summary_schema": summary.get("schema")
-        == "task039extra.v21.worker-summary.v1",
+        "summary_schema": summary_schema_facts["passed"],
     }
     solver = summary.get("solver", {})
     retained = solver.get("retained_outer", {})
@@ -1128,7 +1283,7 @@ def check_run(run_directory: str | Path, *, expected_source_sha: str | None = No
             identity.get("retained_p6", {}).get("p6_build_audit", {}),
             identity.get("retained_p6", {}).get("p6_recipe", {}),
         )
-        lifecycle = release_timeline_facts(aliased_events)
+        lifecycle = _v21_release_timeline_facts(events, stage=stage)
         checks["resource_gate"] = resources["passed"]
         checks["phase_evidence"] = phases.get("status") == "MEASURED"
         checks["jit_preparation"] = jit["passed"]
@@ -1188,12 +1343,15 @@ def check_run(run_directory: str | Path, *, expected_source_sha: str | None = No
         "stage": stage,
         "run_directory": str(run_directory),
         "source_sha": source_sha,
+        "solver_source_sha": source_sha,
+        "checker_source_sha256": _sha256(Path(__file__).resolve()),
         "expected_source_sha": expected_source_sha,
         "worker_summary_path": str(summary_path),
         "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
         "manifest_sha256": manifest_sha256,
         "checks": checks,
         "errors": errors,
+        "summary_schema_facts": summary_schema_facts,
         "dimension_facts": dimension_facts,
         "residual_before": residual_before,
         "residual_after": residual_after,
@@ -1258,4 +1416,6 @@ __all__ = [
     "_field_output_facts_v21",
     "_jit_preparation_facts_v21",
     "_mode_identity_facts_v21",
+    "_summary_schema_facts",
+    "_v21_release_timeline_facts",
 ]

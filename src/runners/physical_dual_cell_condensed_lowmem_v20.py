@@ -36,6 +36,7 @@ def _run_physical_dual_cell_condensed_lowmem(
     predecessor_by_stage=None,
     notch_by_stage=None,
     rhs_identity_policy="fixed_historical_contract",
+    restore_summary_schema=False,
 ):
     """Run one parameterized dual-condensed robustness stage."""
 
@@ -429,6 +430,12 @@ def _run_physical_dual_cell_condensed_lowmem(
             path = directory / f"{name}.json"
             if path.exists():
                 summary[name] = json.loads(path.read_text(encoding="utf-8"))
+        if restore_summary_schema:
+            # The shared V14 record contains its own schema and is merged into
+            # this top-level worker summary above.  Only the opt-in V21 path
+            # restores the adapter's public schema; the historical V20 route
+            # keeps its existing write contract byte-for-byte.
+            summary["schema"] = summary_schema
         _write_json(
             directory / summary_filename, summary
         )

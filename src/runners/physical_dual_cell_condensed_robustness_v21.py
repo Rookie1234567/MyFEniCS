@@ -34,6 +34,7 @@ def run_physical_dual_cell_condensed_robustness_v21(
         summary_filename="physical_dual_condensed_robustness_v21_summary.json",
         derive_live_space_identity=True,
         rhs_identity_policy="case_bound_physical_rhs",
+        restore_summary_schema=True,
         reference_mode_by_stage={
             "Z2_NOTCH_H10": "required",
             "Z3_ORIGINAL_H7P5": "authority_limited",

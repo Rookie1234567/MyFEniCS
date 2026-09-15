@@ -746,15 +746,17 @@ class RetainedOuterAdapter:
         snapshot["released_after_final_residual"] = True
         snapshot["release_owner_refs_cleared"] = True
         self._released_facts = snapshot
+        inventory_label = f"{self.evidence_prefix}_p6_local_caches"
         self.runtime.marker(
             "v20_p6_release_complete",
             {
                 "released_after_final_residual": True,
                 "owner_refs_cleared": True,
                 "workspace_labels_released": [
-                    "v20_p6_setup", "v20_p6_full_scratch"
+                    f"{self.evidence_prefix}_p6_setup",
+                    f"{self.evidence_prefix}_p6_full_scratch",
                 ],
-                "inventory_label_released": "v20_p6_local_caches",
+                "inventory_label_released": inventory_label,
             },
         )
         return {
