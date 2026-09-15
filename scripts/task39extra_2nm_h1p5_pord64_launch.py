@@ -11,7 +11,6 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-
 WORKTREE = Path("/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity")
 COMMAND = (
     "source scripts/activate_task39extra_pord64.sh && "

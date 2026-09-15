@@ -167,7 +167,7 @@
       "unique_petsc_maps": ["/tmp/task39extra-pord64/petsc/lib/libpetsc.so.3.19.6"]
     },
     "formal_launcher": "scripts/task39extra_2nm_h1p5_pord64_launch.py",
-    "formal_launcher_sha256": "a0681ed82d3b6f59aa1a6287213883c7b8f6cd95e201b31529f0e08c7204764f",
+    "formal_launcher_sha256": "65e7ee8b113b7724e2ccb8d38a3308335b9e2df1afe68d2660194ccde3424377",
     "formal_input_sha256": "34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f",
     "formal_launcher_status": "prepared_not_executed",
     "status": "opt_in_only"

@@ -32,3 +32,5 @@ checker no-deadline 修复提交为 `d64398cb1fecd90867071688dca94e501235cf7a`�
 | PORD64 MUMPS fixture | PASS：`mat_mumps_icntl_7=4`，`INFOG(7)=4`、`INFOG(1)=0`，symbolic/numeric/solve=1/1/1，relative true residual `2.922259846318588e-11` | 8-cell、1944行、701496 NNZ组件资格；不代表h1.5整网numeric |
 | PORD32 boundary fixture | PASS：`NEDGES8=2147483648` 返回 `-51/-2147`，NCMPA哨兵不变 | 受控边界证据；不是正式图NEDGES实测 |
 | recipe/document JSON validation | PASS：记录JSON可解析、build recipe与新launcher存在、`bash -n` activation通过 | 临时 `/tmp/task39extra-pord64` 构建目录不入Git |
+| 新 PORD64 launcher Ruff | PASS：`ruff check scripts/task39extra_2nm_h1p5_pord64_launch.py` | 仅 launcher 静态检查 |
+| 既有文档合同轻检查 | **15 passed**：`.venv/bin/python -m pytest -q src/test/test_26_documentation_contract.py` | 不含 FE/MPI/全库回归 |
