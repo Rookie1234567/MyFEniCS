@@ -1,3 +1,13 @@
+# Task39extra 当前模型登记：Review V21 A 非可分 h10 robustness
+
+| Model ID | profile / source / input | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
+|---|---|---|---|---|---|
+| `task39extra_v21_z2_notch_h10` | `physical_p6_trace_p4_condensed_robustness_v21` / `863ec3bcd7eead867795284db11fc39e758a6f08`；input SHA `748e1d685e65447f3dce4effa2744cbb24d7ccedf08ed830f65f624553111e87`；frozen notch h10 | 非可分冻结缺口、Full3D p6/h10、p4 exact trace/port factor、MPI1；252 cells，80 DtN modes；p6/p4 full rows `173802/53084`，condensed matrix `21824×21824`、NNZ `8184464` | 146 steps；independent A6 `9.756517234802322e-7`；L2/curl `7.179947262584934e-8 / 6.541279198551157e-8`；R/T/A/`A_volume`=`0.3371205735636914 / 0.016288676112780145 / 0.6465907503235284 / 0.6465908230964357`；80-channel and energy/absorption gates pass | tree RSS/PSS=`2297982976/2267706368 B`，swap0；inventory/workspace=`2013567110/423441224 B`；workflow monotonic `1648.8478095369937 s`，KSP monotonic `1394.9292688659916 s`，conservative ledger billing `1798.8260412538452 s`（分开计） | `MATCHED_REFERENCE_PASS`；checker 65/65；历史 summary schema compatibility 明确 hash-bound，raw schema 未改名；B original h7.5 与 C notch h7.5 在 A compact 时 `not_run`；ordinary default 不变；[V21 report](task039_extra_physical_multilevel/outcomes/dual_condensed_robustness_v21.md)、[compact](task039_extra_physical_multilevel/outcomes/records/dual_condensed_robustness_v21_compact.json) |
+
+本场是一次新的有限鲁棒性验证，不重跑 V20 original；修复后的 checker 只对已保存 A 记录增加精确的 p6 release-timeline label 兼容和历史 summary schema 兼容，且保留原始 failed checker、events、summary、final residual NPZ、manifest 和 ledger。`A-A_volume` 的 signed value 为 `-7.277290725582475e-8`，报告中的 `abs` 字段不替代 signed 值。p4 的 factor allocated/used、matrix payload/NNZ、p6 cache payload 和 simultaneous RSS 是不同账本，不互相冒充。B/C 是否继续由各自实际资源预审和适用 Gate 决定。
+
+---
+
 # Task39extra 当前模型登记：Review V20 low-memory lifecycle
 
 | Model ID | profile / source | 模型与方法 | 正式结果 | 资源与时间 | 资格边界 |
