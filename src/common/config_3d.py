@@ -75,6 +75,10 @@ class SimulationConfig3D:
     grating_width_x: float = 0.0
     grating_width_y: float = 0.0
     cell_notch: str | None = None
+    # Review V21 carries these identities explicitly so a stage cannot infer
+    # geometry from its name or silently fall back to a different mesh plan.
+    geometry_model_variant: str | None = None
+    geometry_identity: str | None = None
     n_substrate: complex | None = None
     n_grating: complex | None = None
     substrate_material_label: str | None = None
@@ -126,8 +130,12 @@ class SimulationConfig3D:
     # Exact tensor-axis authority for a fixed rectangular hexahedral mesh.
     # ``None`` preserves the ordinary target-size policy.
     mesh_axis_cell_counts: tuple[int, int, int] | None = None
+    mesh_axis_x_values: tuple[float, ...] | None = None
+    mesh_axis_y_values: tuple[float, ...] | None = None
     mesh_axis_z_values: tuple[float, ...] | None = None
     mesh_axis_z_profile: str | None = None
+    mesh_plan_id: str | None = None
+    mesh_plan_sha256: str | None = None
     mesh_refined_size: float | None = None
     mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = (
@@ -359,6 +367,37 @@ class SimulationConfig3D:
                 "mesh_axis_z_values must be strictly increasing."
             )
         return coordinates
+
+    def _mesh_axis_values_requested(
+        self, values: tuple[float, ...] | None, axis_name: str
+    ) -> tuple[float, ...] | None:
+        if values is None:
+            return None
+        if (
+            not isinstance(values, (tuple, list, np.ndarray))
+            or len(values) < 2
+            or any(
+                isinstance(value, (bool, np.bool_))
+                or not isinstance(value, (int, float, np.integer, np.floating))
+                or not np.isfinite(float(value))
+                for value in values
+            )
+        ):
+            raise ValueError(
+                f"mesh_axis_{axis_name}_values must contain at least two finite numbers."
+            )
+        coordinates = tuple(float(value) for value in values)
+        if any(right <= left for left, right in zip(coordinates, coordinates[1:])):
+            raise ValueError(f"mesh_axis_{axis_name}_values must be strictly increasing.")
+        return coordinates
+
+    @property
+    def mesh_axis_x_values_requested(self) -> tuple[float, ...] | None:
+        return self._mesh_axis_values_requested(self.mesh_axis_x_values, "x")
+
+    @property
+    def mesh_axis_y_values_requested(self) -> tuple[float, ...] | None:
+        return self._mesh_axis_values_requested(self.mesh_axis_y_values, "y")
 
     @property
     def mesh_refined_size_resolved(self) -> float:
@@ -619,6 +658,19 @@ class SimulationConfig3D:
         units all come from the same config used by the solver.
         """
         data = asdict(self)
+        # Keep historical config snapshots byte-compatible when the optional
+        # V21 identity/axis fields are not in use.  Explicit V21 inputs retain
+        # the fields below so the runtime identity is visible in evidence.
+        for key in (
+            "geometry_model_variant",
+            "geometry_identity",
+            "mesh_axis_x_values",
+            "mesh_axis_y_values",
+            "mesh_plan_id",
+            "mesh_plan_sha256",
+        ):
+            if data.get(key) is None:
+                data.pop(key, None)
         for key in ("n_air", "mu_r", "n_substrate", "n_grating", "incident_amplitude"):
             data[key] = _complex_or_none(data[key])
         data["custom_polarization"] = _vector_or_none(self.custom_polarization)
@@ -638,6 +690,14 @@ class SimulationConfig3D:
             if self.mesh_axis_cell_counts_requested is None
             else list(self.mesh_axis_cell_counts_requested)
         )
+        if self.mesh_axis_x_values_requested is not None:
+            data["mesh_axis_x_values_requested"] = list(
+                self.mesh_axis_x_values_requested
+            )
+        if self.mesh_axis_y_values_requested is not None:
+            data["mesh_axis_y_values_requested"] = list(
+                self.mesh_axis_y_values_requested
+            )
         data["mesh_axis_z_values_requested"] = (
             None
             if self.mesh_axis_z_values_requested is None

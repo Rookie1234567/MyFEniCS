@@ -108,6 +108,12 @@ def _parse_value(spec: Any, value: Any) -> Any:
         result = tuple(
             _finite_number(item, f"{path}[{index}]") for index, item in enumerate(value)
         )
+    elif value_type == "integer_array":
+        if not isinstance(value, (list, tuple)):
+            raise _error(path, "expected an array of integers")
+        if any(isinstance(item, bool) or not isinstance(item, int) for item in value):
+            raise _error(path, "expected an array of integers; boolean is not an integer")
+        result = tuple(int(item) for item in value)
     else:
         raise InputError(f"schema has unsupported value type {value_type!r} for {path}")
 
@@ -556,6 +562,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "physical_p4_cell_condensed_blr_v18",
                 "physical_p6_trace_p4_condensed_balh_v19",
                 "physical_p6_trace_p4_condensed_lowmem_v20",
+                "physical_p6_trace_p4_condensed_robustness_v21",
             }:
                 raise _error(
                     "solver.preconditioner",
@@ -864,6 +871,42 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         raise _error(f"{section}.{key}", f"{preconditioner} fixes {key}={expected}")
                 if geometry.get("cell_notch") is not None:
                     raise _error("geometry.cell_notch", "V20 authorizes only the original no-notch geometry")
+            elif preconditioner == "physical_p6_trace_p4_condensed_robustness_v21":
+                stage = solver.get("stage")
+                stage_budgets = {
+                    "Z2_NOTCH_H10": (43200, 43200),
+                    "Z3_ORIGINAL_H7P5": (43200, 43200),
+                    "Z4_NOTCH_H7P5": (43200, 43200),
+                }
+                if stage not in stage_budgets:
+                    raise _error(
+                        "solver.stage",
+                        "physical_p6_trace_p4_condensed_robustness_v21 requires an explicit Z2/Z3/Z4 stage",
+                    )
+                for section, key, actual, expected in (
+                    ("solver", "restart", solver["restart"], 32),
+                    ("solver", "max_iterations", solver["max_iterations"], 2048),
+                    ("solver", "outer_restart", solver.get("outer_restart"), 0),
+                    ("solver", "memory_policy", solver.get("memory_policy"), "SYMBOLIC_SIZED_LOCAL_MUMPS_V11"),
+                    ("execution", "mpi_size", execution["mpi_size"], 1),
+                    ("execution", "timeout_seconds", execution["timeout_seconds"], stage_budgets[stage][0]),
+                    ("execution", "require_zero_swap", execution["require_zero_swap"], True),
+                    ("discretization", "nedelec_degree", discretization["nedelec_degree"], 6),
+                    ("discretization", "mesh_target_nm", discretization["mesh_target_nm"],
+                     10.0 if stage == "Z2_NOTCH_H10" else 7.5),
+                ):
+                    if actual != expected:
+                        raise _error(f"{section}.{key}", f"{preconditioner} fixes {key}={expected} for {stage}")
+                if geometry.get("cell_notch") is not None and stage == "Z3_ORIGINAL_H7P5":
+                    raise _error("geometry.cell_notch", "Z3_ORIGINAL_H7P5 is the explicit original geometry")
+                if stage in {"Z2_NOTCH_H10", "Z4_NOTCH_H7P5"} and geometry.get("cell_notch") != "positive_x_middle_y_z40_80":
+                    raise _error("geometry.cell_notch", f"{stage} requires the frozen positive_x_middle_y_z40_80 recipe")
+                try:
+                    from src.geometry.v21_frozen_plan import validate_v21_input
+
+                    validate_v21_input(stage, geometry, discretization)
+                except (OSError, TypeError, ValueError, KeyError) as exc:
+                    raise _error("geometry/discretization", str(exc)) from exc
             elif preconditioner in (
                 "physical_p4_cell_condensed_exact_v18",
                 "physical_p4_cell_condensed_blr_v18",
@@ -1666,6 +1709,8 @@ def simulation_config_3d_from_normalized(
         grating_width_x=g.get("grating_width_x_nm", 0.0),
         grating_width_y=g.get("grating_width_y_nm", 0.0),
         cell_notch=g.get("cell_notch"),
+        geometry_model_variant=g.get("model_variant"),
+        geometry_identity=g.get("geometry_identity"),
         n_substrate=(
             None if m.get("n_substrate") is None else _complex(m["n_substrate"])
         ),
@@ -1697,6 +1742,29 @@ def simulation_config_3d_from_normalized(
         mesh_target_size=d["mesh_target_nm"],
         mesh_cell_type=d["mesh_cell_type"],
         mesh_spacing_mode=d.get("mesh_spacing_mode", "auto"),
+        mesh_axis_z_profile=d.get("mesh_axis_z_profile"),
+        mesh_axis_cell_counts=(
+            None
+            if d.get("mesh_axis_cell_counts") is None
+            else tuple(d["mesh_axis_cell_counts"])
+        ),
+        mesh_axis_x_values=(
+            None
+            if d.get("mesh_axis_x_values") is None
+            else tuple(d["mesh_axis_x_values"])
+        ),
+        mesh_axis_y_values=(
+            None
+            if d.get("mesh_axis_y_values") is None
+            else tuple(d["mesh_axis_y_values"])
+        ),
+        mesh_axis_z_values=(
+            None
+            if d.get("mesh_axis_z_values") is None
+            else tuple(d["mesh_axis_z_values"])
+        ),
+        mesh_plan_id=d.get("mesh_plan_id"),
+        mesh_plan_sha256=d.get("mesh_plan_sha256"),
         mesh_refined_size=d.get("mesh_refined_size_nm"),
         mesh_refinement_radius=d.get("mesh_refinement_radius_nm"),
         floquet_constraint_mode=d.get("floquet_constraint_mode", "auto"),
@@ -1799,6 +1867,101 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
+    if config["solver"].get("preconditioner") == (
+        "physical_p6_trace_p4_condensed_robustness_v21"
+    ):
+        # V21 deliberately keeps the matched Z2 physical-model hash
+        # compatible with the existing V5 notch reference.  The omitted
+        # metadata are nevertheless bound below by independent semantic
+        # identities, so an axis/geometry change cannot hide behind that
+        # compatibility projection.
+        from src.geometry.v21_frozen_plan import (
+            PLAN_SHA256,
+            geometry_entity_payload,
+            geometry_entity_sha256,
+            load_frozen_plan,
+        )
+
+        plan, _binding = load_frozen_plan()
+        stage = str(config["solver"]["stage"])
+        entry = plan["A"] if stage == "Z2_NOTCH_H10" else plan["BC"]
+        excluded_fields = [
+            "geometry.model_variant",
+            "geometry.geometry_identity",
+            "discretization.mesh_plan_id",
+            "discretization.mesh_plan_sha256",
+            "discretization.mesh_axis_z_profile",
+            "discretization.mesh_axis_cell_counts",
+            "discretization.mesh_axis_x_values",
+            "discretization.mesh_axis_y_values",
+            "discretization.mesh_axis_z_values",
+        ]
+
+        def semantic_sha(value: Any) -> str:
+            return sha256(canonical_json_bytes(value)).hexdigest()
+
+        geometry_semantic = geometry_entity_payload(config["geometry"], plan)
+        discretization_semantic = {
+            key: config["discretization"].get(key)
+            for key in (
+                "nedelec_degree",
+                "visualization_degree",
+                "mesh_target_nm",
+                "mesh_cell_type",
+                "mesh_spacing_mode",
+                "assembly_backend",
+                "floquet_constraint_mode",
+            )
+        }
+        mesh_semantic = {
+            "mesh_plan_id": config["discretization"].get("mesh_plan_id"),
+            "mesh_plan_sha256": PLAN_SHA256,
+            "axis_plan_sha256": entry.get("axis_plan_sha256"),
+            "axis_cell_counts": list(
+                config["discretization"].get("mesh_axis_cell_counts", ())
+            ),
+            "axis_x_values": list(
+                config["discretization"].get("mesh_axis_x_values", ())
+            ),
+            "axis_y_values": list(
+                config["discretization"].get("mesh_axis_y_values", ())
+            ),
+            "axis_z_values": list(
+                config["discretization"].get("mesh_axis_z_values", ())
+            ),
+            "mesh_cell_type": config["discretization"].get("mesh_cell_type"),
+            "mesh_spacing_mode": config["discretization"].get(
+                "mesh_spacing_mode"
+            ),
+        }
+        result["v21_identity"] = {
+            "schema": "task039extra.v21.semantic-identities.v1",
+            "stage": stage,
+            "plan_id": config["discretization"].get("mesh_plan_id"),
+            "plan_sha256": PLAN_SHA256,
+            "physical_hash_projection": "compatibility_projection_v5_reference",
+            "physical_hash_excluded_fields": excluded_fields,
+            "geometry_semantic_sha256": geometry_entity_sha256(
+                config["geometry"], plan
+            ),
+            "geometry_entity_payload": geometry_semantic,
+            "geometry_entity_sha256": geometry_entity_sha256(
+                config["geometry"], plan
+            ),
+            "frozen_notch_geometry_semantic_sha256": plan[
+                "frozen_notch_geometry"
+            ]["geometry_semantic_sha256"],
+            "discretization_semantic_sha256": semantic_sha(
+                discretization_semantic
+            ),
+            "mesh_semantic_sha256": semantic_sha(mesh_semantic),
+            "axis_plan_sha256": entry.get("axis_plan_sha256"),
+            "axis_cell_counts": list(
+                config["discretization"].get("mesh_axis_cell_counts", ())
+            ),
+            "geometry_model_variant": config["geometry"].get("model_variant"),
+            "geometry_identity": config["geometry"].get("geometry_identity"),
+        }
     if config["method"]["kind"] == "full3d_iterative":
         from .physical_intermediate_profile import PROFILES, profile_facts
 
@@ -1826,7 +1989,7 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
         _build_2d_config(normalized) if dimension == 2 else _build_3d_config(normalized)
     )
     physical = {
-        section: normalized[section]
+        section: dict(normalized[section])
         for section in (
             "geometry",
             "materials",
@@ -1835,6 +1998,25 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
             "boundary",
         )
     }
+    # V21 metadata binds the frozen entity/axis plan but is not a physical
+    # material/operator identity.  Omitting it keeps Z2 compatible with the
+    # existing matched V5 notch reference; the complete resolved input and
+    # plan hash still bind the new run independently.
+    if normalized["solver"].get("preconditioner") == (
+        "physical_p6_trace_p4_condensed_robustness_v21"
+    ):
+        for key in ("model_variant", "geometry_identity"):
+            physical["geometry"].pop(key, None)
+        for key in (
+            "mesh_plan_id",
+            "mesh_plan_sha256",
+            "mesh_axis_z_profile",
+            "mesh_axis_cell_counts",
+            "mesh_axis_x_values",
+            "mesh_axis_y_values",
+            "mesh_axis_z_values",
+        ):
+            physical["discretization"].pop(key, None)
     physical_sha = sha256(canonical_json_bytes(physical)).hexdigest()
     output = normalized["output"]
     method = normalized["method"]["kind"]

@@ -1,0 +1,105 @@
+# Review V21 Z2: frozen nonseparable notch geometry at the matched h=10 plan.
+schema_version = 1
+model_id = "euv_grazing1_phi0"
+run_id = "task39extra_v21_z2_notch_h10"
+comparison_group = "review_v21_dual_condensed_geometry_h7p5"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+model_variant = "frozen_notch"
+geometry_identity = "v21_frozen_notch_h10"
+cell_notch = "positive_x_middle_y_z40_80"
+period_x_nm = 50.0
+period_y_nm = 25.0
+z_min_nm = -10.0
+z_max_nm = 130.0
+interface_z_nm = 0.0
+air_height_nm = 130.0
+substrate_thickness_nm = 10.0
+grating_width_x_nm = 17.0
+grating_width_y_nm = 25.0
+grating_height_nm = 120.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.999002304859, 0.00182649365]
+grating_name = "Si / silicon"
+n_grating = [0.999002304859, 0.00182649365]
+
+[incidence]
+wavelength_nm = 13.5
+grazing_angle_deg = 1.0
+azimuth_deg = 0.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 10.0
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+mesh_plan_id = "task039extra.v21.frozen-geometry-mesh-plan.v1"
+mesh_plan_sha256 = "b5bab6aae4668be60aacbb49265b4c875def42e2620256cd168d8c26207dc157"
+mesh_axis_z_profile = "v21_frozen_geometry_mesh_plan"
+mesh_axis_cell_counts = [6, 3, 14]
+mesh_axis_x_values = [0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0]
+mesh_axis_y_values = [0.0, 8.333333333333334, 16.666666666666668, 25.0]
+mesh_axis_z_values = [
+  -10.0, 0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0,
+  70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0
+]
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[method]
+kind = "full3d_iterative"
+
+[solver]
+linear_solver = "iterative"
+ksp_type = "fgmres"
+preconditioner = "physical_p6_trace_p4_condensed_robustness_v21"
+stage = "Z2_NOTCH_H10"
+memory_policy = "SYMBOLIC_SIZED_LOCAL_MUMPS_V11"
+outer_restart = 0
+restart = 32
+max_iterations = 2048
+
+[execution]
+mpi_size = 1
+warning_memory_gib = 6.0
+terminate_memory_gib = 8.0
+timeout_seconds = 43200
+memory_limit_gb = 8.0
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [10.0, 30.0, 60.0, 90.0, 110.0]
+sample_count_x = 40
+sample_count_y = 20
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 24
+top_probe_z_nm = 127.5
+bottom_probe_z_nm = -7.5
+probe_fraction = 0.75
+diffraction_order_max_m = 2
+diffraction_order_max_n = 2

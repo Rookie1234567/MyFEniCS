@@ -296,6 +296,20 @@ def _dual_condensed_lowmem_v20_shared_ledger_path(repo_root: Path) -> Path:
     )
 
 
+def _dual_condensed_robustness_v21_shared_ledger_path(repo_root: Path) -> Path:
+    """Return the independent V21 geometry-robustness ledger."""
+
+    return (
+        repo_root
+        / "benchmarks"
+        / "artifacts"
+        / "task39extra"
+        / "dual_condensed_robustness_v21"
+        / "review_v21_dual_condensed_geometry_h7p5"
+        / "shared_workflow_ledger.json"
+    )
+
+
 def _validate_v17_t2_prerequisite(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Require a settled, hash-bound T1 checker decision before T2 launch."""
 
@@ -1689,6 +1703,12 @@ V20_PREDECESSOR_V19_LEDGER_SHA256 = (
     "294cfab422cde53c9dd4d15e23026f36f4abd49dc10dd2a243bce20987a0d7ac"
 )
 
+V21_PREDECESSOR_V20_LEDGER_SHA256 = (
+    "17cd06ff6bc25aef8dc5885fc2a8c3e178e245d41c33d3a85f551ce5eefadcb6"
+)
+V21_CHECKER_SCHEMA = "task039extra.v21.authority-checker.v1"
+V21_CHECKER_FILENAME = "v21_checker_result.json"
+
 
 def _reserve_v20_shared_budget(
     repo_root: Path,
@@ -1781,6 +1801,294 @@ def _reserve_v20_shared_budget(
         error_prefix="V20",
         summary_filename="physical_dual_condensed_memory_v20_summary.json",
         prerequisite={"predecessor_v19_ledger": predecessor_reference},
+        bug_replay_limit=1,
+    )
+
+
+def _validate_v21_checker_prerequisites(
+    ledger_path: Path, stage: str, source_sha: str
+) -> dict[str, Any]:
+    """Require settled, hash-bound checker results before B/C admission.
+
+    The ledger's stage booleans are only reservation metadata.  A later V21
+    stage is admitted from the actual worker summary, run manifest, and
+    independent checker result, all bound to the settled prerequisite attempt.
+    The current source is checked separately by the clean-launch gate; a later
+    documentation/evidence commit must not invalidate an otherwise settled
+    prerequisite merely because its SHA differs from that earlier attempt.
+    """
+
+    required_by_stage = {
+        "Z3_ORIGINAL_H7P5": ("Z2_NOTCH_H10",),
+        "Z4_NOTCH_H7P5": ("Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5"),
+    }
+    required = required_by_stage.get(str(stage))
+    if required is None:
+        raise InputError(
+            f"V21 stage {stage} does not have a checker prerequisite contract"
+        )
+    try:
+        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V21 prerequisite ledger cannot be read") from exc
+    stages = ledger.get("stages")
+    if not isinstance(stages, Mapping):
+        raise InputError("V21 prerequisite ledger has no stage records")
+    records: list[dict[str, Any]] = []
+    for prerequisite_stage in required:
+        stage_record = stages.get(prerequisite_stage)
+        if not isinstance(stage_record, Mapping):
+            raise InputError(
+                f"V21 {stage} requires a settled {prerequisite_stage} stage"
+            )
+        if stage_record.get("active_attempt") is not None:
+            raise InputError(
+                f"V21 {stage} cannot start while {prerequisite_stage} is active"
+            )
+        attempts = stage_record.get("attempts")
+        if not isinstance(attempts, list) or not attempts:
+            raise InputError(
+                f"V21 {stage} requires one settled {prerequisite_stage} attempt"
+            )
+        attempt = attempts[-1]
+        if not isinstance(attempt, Mapping):
+            raise InputError(
+                f"V21 {prerequisite_stage} settled attempt metadata is invalid"
+            )
+        settled = attempt.get("actual_elapsed_seconds", attempt.get("settled_seconds"))
+        try:
+            if not math.isfinite(float(settled)) or float(settled) < 0.0:
+                raise ValueError
+        except (TypeError, ValueError):
+            raise InputError(
+                f"V21 {stage} requires a settled {prerequisite_stage} elapsed time"
+            ) from None
+        attempt_source = str(attempt.get("source_sha", ""))
+        if (
+            len(attempt_source) != 40
+            or attempt_source.lower() != attempt_source
+            or any(character not in "0123456789abcdef" for character in attempt_source)
+        ):
+            raise InputError(
+                f"V21 {stage} prerequisite {prerequisite_stage} has an invalid source SHA"
+            )
+        run_directory = Path(str(attempt.get("run_directory", ""))).resolve()
+        result_path = run_directory / V21_CHECKER_FILENAME
+        summary_path = run_directory / "physical_dual_condensed_robustness_v21_summary.json"
+        manifest_path = run_directory / "run_manifest.json"
+        try:
+            result_bytes = result_path.read_bytes()
+            result = json.loads(result_bytes.decode("utf-8"))
+            summary_bytes = summary_path.read_bytes()
+            summary = json.loads(summary_bytes.decode("utf-8"))
+            manifest_bytes = manifest_path.read_bytes()
+            manifest = json.loads(manifest_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError(
+                f"V21 {stage} requires the settled {prerequisite_stage} checker result"
+            ) from exc
+        if not isinstance(result, Mapping) or not isinstance(summary, Mapping):
+            raise InputError("V21 prerequisite checker or worker summary has invalid JSON")
+        expected_classification = (
+            "MATCHED_REFERENCE_PASS"
+            if prerequisite_stage == "Z2_NOTCH_H10"
+            else "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
+        )
+        result_summary_path = Path(str(result.get("worker_summary_path", ""))).resolve()
+        checks = result.get("checks")
+        if (
+            result.get("schema") != V21_CHECKER_SCHEMA
+            or result.get("status") != "PASS"
+            or result.get("evidence_valid") is not True
+            or result.get("stage_pass") is not True
+            or result.get("stage") != prerequisite_stage
+            or result.get("classification") != expected_classification
+            or result.get("source_sha") != attempt_source
+            or result_summary_path != summary_path
+            or result.get("worker_summary_sha256")
+            != hashlib.sha256(summary_bytes).hexdigest()
+            or result.get("manifest_sha256")
+            != hashlib.sha256(manifest_bytes).hexdigest()
+            or result.get("summary_sha256") not in (None, hashlib.sha256(summary_bytes).hexdigest())
+            or not isinstance(checks, Mapping)
+            or not checks
+            or not all(value is True for value in checks.values())
+            or summary.get("source_sha") != attempt_source
+            or summary.get("stage") != prerequisite_stage
+            or summary.get("stage_pass") is not True
+            or manifest.get("status") != "finished"
+            or manifest.get("source_sha") != attempt_source
+            or manifest.get("source_after", {}).get("source_sha") != attempt_source
+            or manifest.get("source_after", {}).get(
+                "tracked_and_nonignored_untracked_clean"
+            ) is not True
+        ):
+            raise InputError(
+                f"V21 {stage} prerequisite {prerequisite_stage} checker evidence is not settled and hash-bound"
+            )
+        records.append(
+            {
+                "stage": prerequisite_stage,
+                "attempt": int(attempt.get("attempt", len(attempts))),
+                "source_sha": attempt_source,
+                "run_directory": str(run_directory),
+                "settled_elapsed_seconds": float(settled),
+                "checker_result_path": str(result_path),
+                "checker_result_sha256": hashlib.sha256(result_bytes).hexdigest(),
+                "worker_summary_path": str(summary_path),
+                "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
+                "run_manifest_path": str(manifest_path),
+                "run_manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+                "classification": expected_classification,
+                "all_checker_checks_true": True,
+            }
+        )
+    return {
+        "schema": "task039extra.v21.settled-checker-prerequisite.v1",
+        "current_stage": str(stage),
+        "source_sha": str(source_sha),
+        "current_source_sha_is_checked_by_clean_launch_gate": True,
+        "required_stages": list(required),
+        "records": records,
+    }
+
+
+def _reserve_v21_shared_budget(
+    repo_root: Path,
+    run_directory: Path,
+    *,
+    source_sha: str,
+    stage: str,
+    stage_budget: Mapping[str, Any],
+    workflow_clock_start: Mapping[str, Any],
+    time_policy: str = V14_TIME_POLICY_ENFORCE,
+) -> dict[str, Any]:
+    """Reserve one independent V21 A/B/C stage without recycling V20 cost."""
+
+    if time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise InputError("V21 robustness stages require observe_only time policy")
+    allowed = {"Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}
+    if stage not in allowed:
+        raise InputError(f"V21 stage is not in the reviewed ledger contract: {stage}")
+    repo_root = Path(repo_root).resolve()
+    path = _dual_condensed_robustness_v21_shared_ledger_path(repo_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    v20_path = _dual_condensed_lowmem_v20_shared_ledger_path(repo_root)
+    try:
+        predecessor_bytes = v20_path.read_bytes()
+        predecessor = json.loads(predecessor_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("V21 requires the readable accepted V20 ledger") from exc
+    predecessor_sha = hashlib.sha256(predecessor_bytes).hexdigest()
+    if predecessor_sha != V21_PREDECESSOR_V20_LEDGER_SHA256:
+        raise InputError("V21 predecessor V20 ledger hash changed")
+    if predecessor.get("batch_identity") != "review_v20_dual_condensed_memory_lifecycle":
+        raise InputError("V21 predecessor ledger identity changed")
+    unknown_elapsed_attempts: list[dict[str, Any]] = []
+    for historical_stage, stage_record in predecessor.get("stages", {}).items():
+        if not isinstance(stage_record, Mapping):
+            continue
+        for attempt_index, attempt in enumerate(stage_record.get("attempts", [])):
+            if not isinstance(attempt, Mapping):
+                continue
+            if attempt.get("actual_elapsed_seconds") is None and attempt.get(
+                "settled_seconds"
+            ) is None:
+                unknown_elapsed_attempts.append(
+                    {
+                        "stage": str(historical_stage),
+                        "attempt_index": int(attempt_index),
+                        "status": attempt.get("status"),
+                        "reserved_seconds": attempt.get("reserved_seconds"),
+                    }
+                )
+    # V20's predecessor object already contains the complete V19/V18/V14
+    # chain.  Keep it byte-bound and also retain the V20 stage/source ledger
+    # so a later reviewer can see every historical attempt without treating
+    # any of it as new V21 budget.
+    predecessors = {
+        "v20": {
+            "read_only": True,
+            "required_for_new_budget": False,
+            "path": str(v20_path),
+            "sha256": predecessor_sha,
+            "bytes": len(predecessor_bytes),
+            "batch_identity": predecessor.get("batch_identity"),
+            "schema": predecessor.get("schema"),
+            "measured_elapsed_seconds": predecessor.get("elapsed_seconds"),
+            "effective_budget_snapshot": read_v14_effective_budget(predecessor),
+            "policy_debits": list(predecessor.get("policy_debits", [])),
+            "historical_predecessors": deepcopy(
+                predecessor.get("predecessor_v19_ledger", {})
+            ),
+            "historical_source_attempts": deepcopy(
+                predecessor.get("source_attempts", [])
+            ),
+            "historical_stages": deepcopy(predecessor.get("stages", {})),
+            "unknown_elapsed_attempts": unknown_elapsed_attempts,
+            "unknown_elapsed_is_not_new_measurement": True,
+            "cross_case_recycling": False,
+            "new_batch_elapsed_seconds_semantics": (
+                "V21 measured workflow time starts at zero; V20 and its "
+                "historical chain are read-only context"
+            ),
+        }
+    }
+    prerequisite = {
+        "cross_case_recycling": False,
+        "fresh_geometry_input": True,
+        "frozen_geometry_plan": "task039extra.v21.frozen-geometry-mesh-plan.v1",
+        "predecessor_v20_ledger": predecessors["v20"],
+    }
+    if stage in {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"}:
+        prerequisite["settled_checker_prerequisites"] = _validate_v21_checker_prerequisites(
+            path, stage, source_sha
+        )
+    if path.exists():
+        try:
+            ledger = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputError("V21 shared ledger cannot be read") from exc
+        if (
+            ledger.get("batch_identity")
+            != "review_v21_dual_condensed_geometry_h7p5"
+            or ledger.get("predecessors") != predecessors
+        ):
+            raise InputError("V21 ledger or read-only predecessor context changed")
+    else:
+        ledger = {
+            "schema": "task039extra.v21.shared-workflow-ledger.v1",
+            "batch_identity": "review_v21_dual_condensed_geometry_h7p5",
+            "total_budget_seconds": V14_SHARED_WORKFLOW_SECONDS,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "policy_debits": [],
+            "fresh_worker_count": 0,
+            "source_attempts": [],
+            "stages": {},
+            "unique_bug_replay_count": 0,
+            "replay_policy": (
+                "one evidence-bound implementation-bug replay per V21 batch; "
+                "no mathematical retry"
+            ),
+            "predecessors": predecessors,
+            "cross_case_recycling": False,
+            "geometry_plan_identity": (
+                "task039extra.v21.frozen-geometry-mesh-plan.v1"
+            ),
+        }
+    return _reserve_blr_stage_from_ledger(
+        path,
+        ledger,
+        stage=stage,
+        run_directory=run_directory,
+        source_sha=source_sha,
+        stage_budget=stage_budget,
+        workflow_clock_start=workflow_clock_start,
+        time_policy=time_policy,
+        error_prefix="V21",
+        summary_filename="physical_dual_condensed_robustness_v21_summary.json",
+        prerequisite=prerequisite,
         bug_replay_limit=1,
     )
 
@@ -2083,6 +2391,7 @@ def launch_specification(
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
         DUAL_CELL_CONDENSED_PROFILE,
         LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
+        ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
         profile_facts,
     )
     from src.io.physical_balanced_profile import BALANCED_PROFILES, BOUNDED_PROFILES
@@ -2096,9 +2405,11 @@ def launch_specification(
     blr_profile = blr_v16 or blr_v17
     dual_condensed_profile = specification.solver.get('preconditioner') == DUAL_CELL_CONDENSED_PROFILE
     lowmem_v20_profile = specification.solver.get('preconditioner') == LOWMEM_DUAL_CELL_CONDENSED_PROFILE
+    robustness_v21_profile = specification.solver.get('preconditioner') == ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE
     cell_condensed_profile = specification.solver.get('preconditioner') in {
         CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE,
         DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE,
+        ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE,
     }
     cell_stage = str(specification.solver.get('stage', ''))
     if cell_condensed_profile:
@@ -2200,6 +2511,14 @@ def launch_specification(
             Path(__file__).resolve().parents[2], run_directory,
             source_sha=source, stage=str(specification.solver['stage']),
             stage_budget=blr_stage_budget, workflow_clock_start=full_clock.start,
+            time_policy=v14_time_policy,
+        )
+    elif robustness_v21_profile and physical_candidate:
+        run_directory = _timestamp_directory(specification, timestamp)
+        v14_lease = _reserve_v21_shared_budget(
+            Path(__file__).resolve().parents[2], run_directory,
+            source_sha=source, stage=cell_stage,
+            stage_budget=cell_stage_budget, workflow_clock_start=full_clock.start,
             time_policy=v14_time_policy,
         )
     elif lowmem_v20_profile and physical_candidate:
@@ -2540,8 +2859,12 @@ __all__ = [
     "_reserve_v18_shared_budget",
     "_reserve_v19_shared_budget",
     "_reserve_v20_shared_budget",
+    "_reserve_v21_shared_budget",
+    "_validate_v21_checker_prerequisites",
+    "V21_PREDECESSOR_V20_LEDGER_SHA256",
     "_dual_condensed_v19_shared_ledger_path",
     "_dual_condensed_lowmem_v20_shared_ledger_path",
+    "_dual_condensed_robustness_v21_shared_ledger_path",
     "_cell_condensed_v18_shared_ledger_path",
     "_validate_v17_t2_prerequisite",
     "_validate_v18_prerequisite",

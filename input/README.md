@@ -75,6 +75,8 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `comparison_group` | `string` | `none` | yes | `—` | — | all | 可比较运行的分组标识 | `comparison_group` | safe filename characters [A-Za-z0-9_.-]+ | `"task038_examples"` |
 | `dimension` | `integer` | `none` | yes | `—` | 2, 3 | all | 问题维数 | `dimension` | — | `3` |
 | `geometry.cell_notch` | `string` | `none` | no | `—` | positive_x_middle_y_z40_80 | 2d/3d | 按原网格单元中心把局部光栅改为空气 | `cell_notch` | — | `"positive_x_middle_y_z40_80"` |
+| `geometry.model_variant` | `enum` | `none` | no | `—` | original, frozen_notch | full3d_iterative | 显式几何模型分支标识；不由 stage 名称推断 | `geometry_model_variant` | — | `"original"` |
+| `geometry.geometry_identity` | `string` | `none` | no | `—` | — | full3d_iterative | 冻结几何实体/坐标身份 | `geometry_identity` | — | `"v21_original_h7p5"` |
 | `geometry.geometry_kind` | `string` | `none` | yes | `—` | euv_grating_2d, layered_2d, airbox, fresnel_interface, flat_layer, rectangular_block_grating | 2d/3d | 形状模型名称 | `geometry_kind` | 2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/flat_layer/rectangular_block_grating | `"rectangular_block_grating"` |
 | `geometry.period_x_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | x 方向周期 | `period_x` | > 0 | `50.0` |
 | `geometry.period_y_nm` | `float` | `nm` | yes | `—` | — | 3d | y 方向周期 | `period_y` | > 0 | `25.0` |
@@ -107,6 +109,13 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `discretization.mesh_target_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | 目标网格尺寸 | `mesh_target_size` | > 0 | `10.0` |
 | `discretization.mesh_cell_type` | `enum` | `none` | yes | `—` | auto, triangle, quadrilateral, tetrahedron, hexahedron | 2d/3d | 网格单元类型 | `2D mesh_cell_shape / 3D mesh_cell_type` | 2D allows triangle/quadrilateral; 3D allows auto/tetrahedron/hexahedron | `"hexahedron"` |
 | `discretization.mesh_spacing_mode` | `enum` | `none` | no | `auto` | auto, uniform_strict, boundary_fitted, local_refined | 3d | 三维网格尺寸分配策略 | `mesh_spacing_mode` | — | `"boundary_fitted"` |
+| `discretization.mesh_plan_id` | `string` | `none` | no | `—` | — | full3d_iterative | 冻结轴/实体网格计划标识 | `mesh_plan_id` | — | `"task039extra.v21.frozen-geometry-mesh-plan.v1"` |
+| `discretization.mesh_plan_sha256` | `string` | `sha256` | no | `—` | — | full3d_iterative | 冻结轴/实体网格计划内容哈希 | `mesh_plan_sha256` | 64 lowercase hexadecimal characters | `"b5bab6..."` |
+| `discretization.mesh_axis_cell_counts` | `integer_array` | `cells` | no | `—` | — | full3d_iterative | 显式 x/y/z 张量轴单元数 | `mesh_axis_cell_counts` | exactly three positive integers | `[9, 5, 22]` |
+| `discretization.mesh_axis_z_profile` | `string` | `none` | no | `—` | — | full3d_iterative | z 轴计划的局部身份标签 | `mesh_axis_z_profile` | — | `"v21_frozen_geometry_mesh_plan"` |
+| `discretization.mesh_axis_x_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative | 显式 x 轴坐标；与冻结计划逐项绑定 | `mesh_axis_x_values` | strictly increasing; endpoints equal x bounds | `[0.0, 5.5, 11.0, 16.5, 22.166666666666668, 27.833333333333336, 33.5, 39.0, 44.5, 50.0]` |
+| `discretization.mesh_axis_y_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative | 显式 y 轴坐标；与冻结计划逐项绑定 | `mesh_axis_y_values` | strictly increasing; endpoints equal y bounds | `[0.0, 4.166666666666667, 8.333333333333334, 13.88888888888889, 19.444444444444443, 25.0]` |
+| `discretization.mesh_axis_z_values` | `float_array` | `nm` | no | `—` | — | full3d_iterative | 显式 z 轴坐标；与冻结计划逐项绑定 | `mesh_axis_z_values` | strictly increasing; endpoints equal z bounds | `[-10.0, -5.0, 0.0, 6.666666666666667, 13.333333333333334, 20.0, 26.666666666666668, 33.333333333333336, 40.0, 46.666666666666664, 53.333333333333336, 60.0, 66.66666666666667, 73.33333333333334, 80.0, 86.66666666666667, 93.33333333333333, 100.0, 106.66666666666667, 113.33333333333334, 120.0, 125.0, 130.0]` |
 | `discretization.mesh_refined_size_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化尺寸 | `mesh_refined_size` | > 0 when refinement is enabled | `5.0` |
 | `discretization.mesh_refinement_radius_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化半径 | `mesh_refinement_radius` | > 0 when refinement is enabled | `25.0` |
 | `discretization.lock_near_field_template` | `boolean` | `none` | yes | `—` | — | 2d | 是否锁定二维近场采样模板 | `mesh_lock_near_field_template` | — | `true` |
@@ -187,6 +196,8 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"comparison_group","unit":"none","applicability":["all"]} -->
 <!-- schema-field {"key":"dimension","unit":"none","applicability":["all"]} -->
 <!-- schema-field {"key":"geometry.cell_notch","unit":"none","applicability":["2d","3d"]} -->
+<!-- schema-field {"key":"geometry.model_variant","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"geometry.geometry_identity","unit":"none","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"geometry.geometry_kind","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"geometry.period_x_nm","unit":"nm","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"geometry.period_y_nm","unit":"nm","applicability":["3d"]} -->
@@ -219,6 +230,13 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"discretization.mesh_target_nm","unit":"nm","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"discretization.mesh_cell_type","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"discretization.mesh_spacing_mode","unit":"none","applicability":["3d"]} -->
+<!-- schema-field {"key":"discretization.mesh_plan_id","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"discretization.mesh_plan_sha256","unit":"sha256","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_cell_counts","unit":"cells","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_z_profile","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_x_values","unit":"nm","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_y_values","unit":"nm","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"discretization.mesh_axis_z_values","unit":"nm","applicability":["full3d_iterative"]} -->
 <!-- schema-field {"key":"discretization.mesh_refined_size_nm","unit":"nm","applicability":["3d"]} -->
 <!-- schema-field {"key":"discretization.mesh_refinement_radius_nm","unit":"nm","applicability":["3d"]} -->
 <!-- schema-field {"key":"discretization.lock_near_field_template","unit":"none","applicability":["2d"]} -->

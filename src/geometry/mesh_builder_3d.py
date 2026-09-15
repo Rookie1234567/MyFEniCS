@@ -112,8 +112,19 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
         )
         values[in_block] = cfg.tags.grating
 
-    if cfg.cell_notch is not None:
+    if cfg.geometry_model_variant == "frozen_notch" and str(
+        cfg.geometry_identity or ""
+    ).startswith("v21_"):
+        from .v21_frozen_plan import apply_v21_frozen_notch
+
+        geometry_dofmap = np.asarray(msh.geometry.dofmap, dtype=np.int64)
+        cell_vertices = msh.geometry.x[geometry_dofmap[cells]]
+        values = apply_v21_frozen_notch(
+            midpoints, values, cfg, cell_vertices=cell_vertices
+        )
+    elif cfg.cell_notch is not None:
         from .cell_notch import apply_cell_notch
+
         values = apply_cell_notch(midpoints, values, cfg)
     return mesh.meshtags(msh, tdim, cells, values)
 
@@ -419,8 +430,22 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
 
     _validate_stage4_hexa_geometry(cfg)
     explicit_counts = cfg.mesh_axis_cell_counts_requested
+    explicit_x_values = cfg.mesh_axis_x_values_requested
+    explicit_y_values = cfg.mesh_axis_y_values_requested
     explicit_z_values = cfg.mesh_axis_z_values_requested
     explicit_z_profile = cfg.mesh_axis_z_profile
+    explicit_xy_values = (explicit_x_values, explicit_y_values)
+    if any(value is not None for value in explicit_xy_values) and not all(
+        value is not None for value in explicit_xy_values
+    ):
+        raise ValueError(
+            "mesh_axis_x_values and mesh_axis_y_values must be supplied together."
+        )
+    if any(value is not None for value in explicit_xy_values) and explicit_counts is None:
+        raise ValueError(
+            "explicit x/y axis values require mesh_axis_cell_counts so the exact "
+            "tensor topology is explicit."
+        )
     if (explicit_z_values is None) != (explicit_z_profile is None):
         raise ValueError(
             "mesh_axis_z_values and mesh_axis_z_profile must be supplied "
@@ -480,34 +505,41 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                 spans.items()
             )
         }
-        if explicit_z_values is not None:
-            if len(explicit_z_values) != explicit_counts[2] + 1:
+        explicit_axes = {
+            "x": explicit_x_values,
+            "y": explicit_y_values,
+            "z": explicit_z_values,
+        }
+        for index, (axis_name, (start, stop)) in enumerate(spans.items()):
+            requested = explicit_axes[axis_name]
+            if requested is None:
+                continue
+            if len(requested) != explicit_counts[index] + 1:
                 raise ValueError(
-                    "mesh_axis_z_values length must equal NZ + 1 from "
-                    "mesh_axis_cell_counts."
+                    f"mesh_axis_{axis_name}_values length must equal the requested "
+                    f"{axis_name.upper()} count + 1."
                 )
             if not (
-                np.isclose(
-                    explicit_z_values[0],
-                    cfg.domain_z_min,
-                    rtol=0.0,
-                    atol=1.0e-12,
-                )
-                and np.isclose(
-                    explicit_z_values[-1],
-                    cfg.domain_z_max,
-                    rtol=0.0,
-                    atol=1.0e-12,
-                )
+                np.isclose(requested[0], start, rtol=0.0, atol=1.0e-12)
+                and np.isclose(requested[-1], stop, rtol=0.0, atol=1.0e-12)
             ):
                 raise ValueError(
-                    "mesh_axis_z_values endpoints must equal the Stage-4 "
-                    "domain z bounds."
+                    f"mesh_axis_{axis_name}_values endpoints must equal the "
+                    f"Stage-4 {axis_name} bounds."
                 )
-            axes["z"] = np.asarray(explicit_z_values, dtype=np.float64)
-            mode = "boundary_fitted_exact_counts_explicit_z"
+            axes[axis_name] = np.asarray(requested, dtype=np.float64)
+        if explicit_z_values is not None:
+            mode = (
+                "boundary_fitted_exact_counts_explicit_axes"
+                if explicit_x_values is not None
+                else "boundary_fitted_exact_counts_explicit_z"
+            )
         else:
-            mode = "boundary_fitted_exact_counts"
+            mode = (
+                "boundary_fitted_exact_counts_explicit_xy"
+                if explicit_x_values is not None
+                else "boundary_fitted_exact_counts"
+            )
         regions: dict[str, list[list[float]]] = {
             "x": [],
             "y": [],

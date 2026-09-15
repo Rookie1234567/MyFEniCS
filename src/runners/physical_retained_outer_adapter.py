@@ -23,6 +23,107 @@ def _array_identity(value):
             "sha256": hashlib.sha256(memoryview(array).cast("B") if array.size else b"").hexdigest()}
 
 
+def derive_condensed_space_identity(function_space, mpc, *, appended_rows: int):
+    """Derive the expected retained-space layout from the live FE/MPC objects.
+
+    The V21 robustness profile cannot inherit V20's fixed h10 row tuple.  This
+    small pre-build calculation uses the live index map, Basix interior entity
+    DoFs, and actual MPC slave rows.  It does not build a second trace expansion
+    dictionary; the condensed system is later compared against this tuple in
+    ``setup_checks``.
+    """
+
+    mesh = function_space.mesh
+    if int(mesh.comm.size) != 1:
+        raise ValueError("V21 live dimension identity is qualified for MPI1 only")
+    tdim = mesh.topology.dim
+    owned_cells = int(mesh.topology.index_map(tdim).size_local)
+    dofmap = function_space.dofmap
+    index_map = dofmap.index_map
+    interior_positions = np.asarray(
+        function_space.element.basix_element.entity_dofs[tdim][0],
+        dtype=np.int32,
+    )
+    if interior_positions.size == 0:
+        raise ValueError("live V21 retained space has no cell-interior DoFs")
+    local_interiors = []
+    for cell in range(owned_cells):
+        local = np.asarray(dofmap.cell_dofs(cell), dtype=np.int32)
+        original = np.asarray(
+            dofmap.index_map.local_to_global(local), dtype=np.int64
+        )
+        local_interiors.append(original[interior_positions])
+    full_rows = int(index_map.size_global * dofmap.index_map_bs)
+    all_interiors = (
+        np.concatenate(local_interiors)
+        if local_interiors
+        else np.empty(0, dtype=np.int64)
+    )
+    if np.unique(all_interiors).size != all_interiors.size:
+        raise ValueError("live V21 cell-interior DoFs are not globally unique")
+    interior_rows = int(all_interiors.size)
+    trace_rows = int(full_rows - interior_rows)
+    local_slaves = np.unique(np.asarray(mpc.slaves, dtype=np.int64))
+    owned_slaves = local_slaves[
+        (local_slaves >= 0) & (local_slaves < int(index_map.size_local))
+    ]
+    slave_rows = np.asarray(
+        index_map.local_to_global(owned_slaves.astype(np.int32)), dtype=np.int64
+    )
+    if np.unique(slave_rows).size != slave_rows.size:
+        raise ValueError("live V21 MPC slave rows are duplicated")
+    interior_set = set(int(value) for value in all_interiors)
+    slave_set = set(int(value) for value in slave_rows)
+    if interior_set.intersection(slave_set):
+        raise ValueError("live V21 MPC slave rows intersect cell interiors")
+    if any(value < 0 or value >= full_rows for value in slave_set):
+        raise ValueError("live V21 MPC slave rows exceed the FE space")
+    active_rows = int(trace_rows - len(slave_rows))
+    if active_rows <= 0 or active_rows + len(slave_rows) != trace_rows:
+        raise ValueError("live V21 trace/slave counts do not close")
+    owned_trace = np.setdiff1d(
+        np.arange(full_rows, dtype=np.int64), all_interiors, assume_unique=True
+    )
+    active = np.setdiff1d(
+        owned_trace, slave_rows, assume_unique=True
+    )
+    appended_rows = int(appended_rows)
+    if appended_rows < 0:
+        raise ValueError("appended_rows must be non-negative")
+
+    def digest(values) -> str:
+        encoded = hashlib.sha256()
+        for value in values:
+            array = np.ascontiguousarray(value)
+            encoded.update(str(array.shape).encode("ascii"))
+            encoded.update(str(array.dtype).encode("ascii"))
+            encoded.update(memoryview(array).cast("B"))
+        return encoded.hexdigest()
+
+    expected = (
+        int(full_rows),
+        active_rows,
+        interior_rows,
+        appended_rows,
+    )
+    facts = {
+        "expected_space_counts": list(expected),
+        "full_rows": int(full_rows),
+        "trace_rows": int(trace_rows),
+        "active_rows": active_rows,
+        "slave_rows": int(len(slave_rows)),
+        "interior_rows": interior_rows,
+        "appended_rows": appended_rows,
+        "owned_cell_count": owned_cells,
+        "local_interior_dof_count": int(all_interiors.size),
+        "cell_interior_dofs_sha256": digest((all_interiors,)),
+        "slave_rows_sha256": digest((slave_rows,)),
+        "owned_active_trace_dofs_sha256": digest((active,)),
+        "source": "live_function_space_mpc_and_cell_interior_dofs",
+    }
+    return expected, facts
+
+
 def _identity_cache_facts(system):
     """Return compact facts for the opt-in shared identity cache."""
 
@@ -178,6 +279,9 @@ class RetainedOuterAdapter:
         compiled_form=None,
         identity_cache_mode="per_oriented_class",
         evidence_prefix="v19",
+        expected_space_counts=(173802, 51192, 113400, 80),
+        expected_space_facts=None,
+        rhs_identity_policy="fixed_historical_contract",
     ):
         self.runtime, self.common, self.resolved = runtime, common, resolved
         self.full_rhs, self.bal_h = full_rhs, apply_pc
@@ -186,6 +290,22 @@ class RetainedOuterAdapter:
         self.compiled_form = compiled_form
         self.identity_cache_mode = str(identity_cache_mode)
         self.evidence_prefix = str(evidence_prefix)
+        self.expected_space_counts = (
+            None
+            if expected_space_counts is None
+            else tuple(int(value) for value in expected_space_counts)
+        )
+        self.expected_space_facts = (
+            None if expected_space_facts is None else dict(expected_space_facts)
+        )
+        self.rhs_identity_policy = str(rhs_identity_policy)
+        if self.rhs_identity_policy not in {
+            "fixed_historical_contract",
+            "case_bound_physical_rhs",
+        }:
+            raise ValueError(
+                f"unsupported RHS identity policy: {self.rhs_identity_policy}"
+            )
         if self.identity_cache_mode not in {
             "per_oriented_class",
             "shared_read_only_per_interior_shape",
@@ -285,6 +405,23 @@ class RetainedOuterAdapter:
             "p6_array_content_sha256": cache["array_content_sha256"],
             "p6_build_audit": self.condensed.build_audit,
         }
+        from src.runners.physical_macro_controls import _mapping_identity_sha256
+        from src.solvers.condensed_fine_reference import native_map_arrays
+
+        p6_native_map = native_map_arrays(
+            levels["spaces"][6], levels["floquets"][6]
+        )
+        self.identity["p6_native_map_sha256"] = _mapping_identity_sha256(
+            p6_native_map
+        )
+        self.identity["p6_native_map_array_facts"] = {
+            key: _array_identity(value)
+            for key, value in sorted(p6_native_map.items())
+            if isinstance(value, np.ndarray)
+        }
+        del p6_native_map
+        if self.expected_space_facts is not None:
+            self.identity["expected_space_facts"] = dict(self.expected_space_facts)
         if shared_identity_mode:
             self.identity.update(
                 {
@@ -389,11 +526,30 @@ class RetainedOuterAdapter:
         started = perf_counter()
         system = self.condensed
         actual = (system.full_rows, system.active_rows, system.interior_rows, system.appended_rows)
-        expected = (173802, 51192, 113400, 80)
+        expected = self.expected_space_counts
+        if expected is None:
+            raise ValueError(
+                "retained outer setup requires an explicit expected space tuple"
+            )
         if actual != expected:
             raise ValueError(f"derived p6 topology differs: {actual} != {expected}")
-        if _array_identity(self.full_rhs.array_r)["sha256"] != BASELINE_RHS_SHA256:
-            raise ValueError("new original physical RHS differs from accepted V18")
+        dynamic_space_gate = bool(
+            all(int(value) > 0 for value in actual[:3])
+            and int(actual[3]) == len(self.common["fine"]["dtn_action"].carrier.entries)
+        )
+        if not dynamic_space_gate:
+            raise ValueError(f"derived p6 topology is not a positive carrier-bound layout: {actual}")
+        rhs_identity = _array_identity(self.full_rhs.array_r)
+        if self.rhs_identity_policy == "fixed_historical_contract":
+            if rhs_identity["sha256"] != BASELINE_RHS_SHA256:
+                raise ValueError("new original physical RHS differs from accepted V18")
+        else:
+            if (
+                rhs_identity["shape"] != [int(system.full_rows)]
+                or rhs_identity["dtype"] != "complex128"
+                or not np.isfinite(self.full_rhs.array_r).all()
+            ):
+                raise ValueError("case-bound physical RHS has invalid live identity")
         inputs = self.rhs.duplicate()
         output = None
         try:
@@ -434,8 +590,20 @@ class RetainedOuterAdapter:
             if output.getSize() != inputs.getSize() or not np.isfinite(output.array_r).all():
                 raise ValueError("X1 bridge changed size or returned nonfinite data")
             self.checks = {"status": "PASS", "fixed_vector_count": 3, "vectors": rows,
-                           "physical_rhs_sha256": BASELINE_RHS_SHA256,
-                           "space_counts": list(actual), "setup_pc_calls": 1,
+                           "physical_rhs_sha256": rhs_identity["sha256"],
+                           "physical_rhs_identity": rhs_identity,
+                           "rhs_identity_policy": self.rhs_identity_policy,
+                           "space_counts": list(actual),
+                           "space_count_policy": (
+                               "live_fe_mpc_cell_interior_identity"
+                               if self.expected_space_facts is not None
+                               else "fixed_historical_contract"
+                           ),
+                           "expected_space_counts": list(expected),
+                           "expected_space_facts": self.expected_space_facts,
+                           "actual_space_counts": list(actual),
+                           "space_count_gate": dynamic_space_gate,
+                           "setup_pc_calls": 1,
                            "setup_pc_input": inputs.array_r.copy(), "setup_pc_output": output.array_r.copy(),
                            "counts_before_pc": before, "counts_after_pc": dict(self.count),
                            "setup_pc_counts": pc_delta, "setup_pc_cumulative": pc_after,
@@ -505,7 +673,7 @@ class RetainedOuterAdapter:
                 "facts": result["final_evaluation"],
                 "residuals": self.last_evaluation,
             }
-            if self.evidence_prefix == "v20":
+            if self.evidence_prefix in {"v20", "v21"}:
                 from src.solvers.fullspace_physical_intermediate_runtime import (
                     owned_slave_indices,
                 )
@@ -526,7 +694,7 @@ class RetainedOuterAdapter:
                 )
             self._packet("x2_retained_final", final_packet)
             self._final_packet_saved = True
-            if self.evidence_prefix == "v20":
+            if self.evidence_prefix in {"v20", "v21"}:
                 self.runtime.marker(
                     "v20_complete_field_packet_saved",
                     {
@@ -660,8 +828,20 @@ _V20_EXCLUDED_FFCX_MODULE = (
 )
 
 
-def _v20_form_cache(runtime):
-    """Create the run-owned FFCx cache and hard-link only eligible modules."""
+def _v20_form_cache(runtime, *, cache_policy="v20_exclude_old_family"):
+    """Create the run-owned FFCx cache under an explicit profile policy.
+
+    The historical V20 default keeps its excluded-module contract.  V21 opts
+    into the same run-owned hard-link cache while reusing every qualified
+    module; it records actual compiler hit/miss observations under the same
+    watchdog root instead of manufacturing a cold-miss comparison.
+    """
+
+    if cache_policy not in {
+        "v20_exclude_old_family",
+        "v21_reuse_all_qualified",
+    }:
+        raise ValueError(f"unsupported prepared-form cache policy: {cache_policy}")
 
     from dolfinx import jit
 
@@ -674,7 +854,10 @@ def _v20_form_cache(runtime):
             if not source_path.is_file():
                 continue
             relative = source_path.relative_to(source)
-            if source_path.name.startswith(_V20_EXCLUDED_FFCX_MODULE):
+            if (
+                cache_policy == "v20_exclude_old_family"
+                and source_path.name.startswith(_V20_EXCLUDED_FFCX_MODULE)
+            ):
                 excluded += 1
                 excluded_bytes += int(source_path.stat().st_size)
                 continue
@@ -697,18 +880,27 @@ def _v20_form_cache(runtime):
                 copied += 1
             copied_bytes += int(source_path.stat().st_size)
     for existing in target.rglob("*"):
-        if existing.is_file() and existing.name.startswith(_V20_EXCLUDED_FFCX_MODULE):
+        if (
+            cache_policy == "v20_exclude_old_family"
+            and existing.is_file()
+            and existing.name.startswith(_V20_EXCLUDED_FFCX_MODULE)
+        ):
             raise RuntimeError(
                 "V20 dedicated cache contains the excluded V19 target module family"
             )
     return target, {
+        "cache_policy": cache_policy,
         "source_cache_dir": str(source),
         "formal_cache_dir": str(target),
         "same_compiler_options": ["-O2", "-g0"],
         "hardlinked_eligible_files": hardlinked,
         "copied_eligible_files": copied,
         "eligible_bytes": copied_bytes,
-        "excluded_module_family": _V20_EXCLUDED_FFCX_MODULE,
+        "excluded_module_family": (
+            _V20_EXCLUDED_FFCX_MODULE
+            if cache_policy == "v20_exclude_old_family"
+            else None
+        ),
         "excluded_file_count": excluded,
         "excluded_bytes": excluded_bytes,
         "source_cache_untouched": True,
@@ -767,7 +959,9 @@ def _v20_observed_code(returned_code):
     return [None if item is None else "<non_none>" for item in returned_code]
 
 
-def prepare_dual_condensed_forms(runtime, common):
+def prepare_dual_condensed_forms(
+    runtime, common, *, cache_policy="v20_exclude_old_family"
+):
     """Compile the p6 and p4 complete cell forms before factor construction.
 
     The returned compiled objects are intentionally borrowed by the caller for
@@ -777,7 +971,7 @@ def prepare_dual_condensed_forms(runtime, common):
     from dolfinx import fem, jit
     import ufl
 
-    cache_dir, cache_facts = _v20_form_cache(runtime)
+    cache_dir, cache_facts = _v20_form_cache(runtime, cache_policy=cache_policy)
     jit_options = {
         "cache_dir": str(cache_dir),
         "cffi_extra_compile_args": ["-O2", "-g0"],
@@ -924,6 +1118,7 @@ def prepare_dual_condensed_forms(runtime, common):
 
     facts = {
         "schema": "task039extra.v20.prepared-forms.v2",
+        "cache_policy": cache_policy,
         "same_watchdog_root": True,
         "pre_factor": True,
         "jit_options": jit_options,

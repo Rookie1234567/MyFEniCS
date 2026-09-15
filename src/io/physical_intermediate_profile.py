@@ -26,12 +26,13 @@ CELL_CONDENSED_EXACT_PROFILE = "physical_p4_cell_condensed_exact_v18"
 CELL_CONDENSED_BLR_PROFILE = "physical_p4_cell_condensed_blr_v18"
 DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_balh_v19"
 LOWMEM_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_lowmem_v20"
+ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE = "physical_p6_trace_p4_condensed_robustness_v21"
 P4_BLR_TRADEOFF_THRESHOLDS = {
     "T1_BLR_CONTROL": 1.0e-3,
     "T2_BLR_CONTROL": 1.0e-4,
 }
 
-PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
+PROFILES = (PROFILE, REFERENCE_PROFILE, FAST_PROFILE, LIGHT_PROFILE, PACKED_PROFILE, JOINT_PROFILE, SCHUR_PROFILE, P4_BLR_PROFILE, P4_BLR_TRADEOFF_PROFILE, CELL_CONDENSED_EXACT_PROFILE, CELL_CONDENSED_BLR_PROFILE, DUAL_CELL_CONDENSED_PROFILE, LOWMEM_DUAL_CELL_CONDENSED_PROFILE, ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE) + BALANCED_PROFILES + RECURSIVE_PROFILES + BOUNDED_PROFILES + MACRO_V10_PROFILES + MACRO_V11_PROFILES + MACRO_V12_PROFILES + P4_DIRECTION_DIAGNOSIS_PROFILES
 
 
 def p4_blr_tradeoff_threshold(stage: str) -> float:
@@ -46,6 +47,51 @@ def p4_blr_tradeoff_threshold(stage: str) -> float:
 
 
 def profile_facts(identity=PROFILE) -> dict:
+    if identity == ROBUSTNESS_DUAL_CELL_CONDENSED_PROFILE:
+        # V21 keeps the accepted V20 numerical/lifecycle route and changes
+        # only the explicit geometry cases, batch identity, and reference
+        # authority.  The three stages are intentionally independent runs;
+        # no stage may infer a geometry or reuse a predecessor cache.
+        facts = profile_facts(LOWMEM_DUAL_CELL_CONDENSED_PROFILE)
+        facts.update(
+            identity=identity,
+            scope="review_v21_dual_condensed_geometry_h7p5",
+            qualification=(
+                "opt_in; Z2 matched h10 notch, then conditional Z3 original "
+                "and Z4 notch h7.5; observe_only; no cross-case recycling"
+            ),
+        )
+        facts["resources"]["stage_budgets"] = {
+            stage: {"workflow_seconds": 43200, "solve_seconds": 43200}
+            for stage in ("Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5")
+        }
+        facts["resources"]["inventory_memory_cap_bytes_by_stage"] = {
+            stage: 6 * 1024**3
+            for stage in ("Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5")
+        }
+        facts["gates"].update(
+            reference_authority={
+                "Z2_NOTCH_H10": "MATCHED_REFERENCE_AVAILABLE",
+                "Z3_ORIGINAL_H7P5": "AUTHORITY_LIMITED",
+                "Z4_NOTCH_H7P5": "AUTHORITY_LIMITED",
+            },
+            authority_limited_result=(
+                "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
+            ),
+            actual_dimension_identity=True,
+            actual_resource_gate=True,
+            frozen_geometry_plan_sha256=(
+                "b5bab6aae4668be60aacbb49265b4c875def42e2620256cd168d8c26207dc157"
+            ),
+            h7p5_resource_block_classification="H7P5_RESOURCE_BLOCKED_ON_LAPTOP",
+        )
+        facts["geometry_plan"] = {
+            "path": "docs/task039_extra_physical_multilevel/outcomes/records/v21_frozen_geometry_mesh_plan.json",
+            "sha256": "b5bab6aae4668be60aacbb49265b4c875def42e2620256cd168d8c26207dc157",
+            "axis_source": "explicit_input_axis_arrays_verified_against_hash_bound_plan",
+            "actual_counts_required": True,
+        }
+        return facts
     if identity == LOWMEM_DUAL_CELL_CONDENSED_PROFILE:
         # Start from the accepted V19 contract so every mathematical and
         # resource control remains frozen unless this opt-in profile names a

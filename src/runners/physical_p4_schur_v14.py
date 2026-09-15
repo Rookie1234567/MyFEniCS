@@ -70,6 +70,14 @@ _Q1_Q2_RHS = (
 )
 
 
+_V21_REFERENCE_PRE_NUMERIC_RHS_JSON_SHA256 = (
+    "d816a30dca0718116d989c06d79c72b13fe9cd93d2dd6e9ea7470af0eb1d7ef7"
+)
+_V21_REFERENCE_PRE_NUMERIC_RHS_NPZ_SHA256 = (
+    "9b24bb578baeb6ed314292f02e2812429930e71fb1ab8f388cf9efa7e90941ea"
+)
+
+
 class V14ResourceStop(RuntimeError):
     """A measured resource or time boundary stopped the current stage."""
 
@@ -1026,7 +1034,9 @@ def _v14_known_preallocation_gate(
         )
 
 
-def _build_common(runtime: _V14Runtime, cfg: Any) -> dict[str, Any]:
+def _build_common(
+    runtime: _V14Runtime, cfg: Any, *, prebuilt_levels: dict[str, Any] | None = None
+) -> dict[str, Any]:
     from mpi4py import MPI
     from src.solvers.fullspace_physical_intermediate_runtime import (
         fine_volume_quadrature_metadata,
@@ -1045,8 +1055,12 @@ def _build_common(runtime: _V14Runtime, cfg: Any) -> dict[str, Any]:
 
     runtime.set_phase("setup")
     runtime.marker("v14_common_setup_started", {"levels": [6, 4]})
-    levels = _build_same_mesh_levels(
-        cfg, MPI.COMM_WORLD, (6, 4), include_positive_coefficients=True
+    levels = (
+        _build_same_mesh_levels(
+            cfg, MPI.COMM_WORLD, (6, 4), include_positive_coefficients=True
+        )
+        if prebuilt_levels is None
+        else prebuilt_levels
     )
     runtime.sample("same_mesh_levels")
     quadrature, integral_records = fine_volume_quadrature_metadata(levels, cfg)
@@ -5044,6 +5058,307 @@ def _v14_physical_checks(
     return checks
 
 
+def _v21_authority_limited_checks(
+    solver_facts: Mapping[str, Any], output: Mapping[str, Any],
+    *, post_release_relative: float | None,
+    common: Mapping[str, Any] | None = None,
+    output_dir: Path | None = None,
+) -> tuple[dict[str, bool], dict[str, Any]]:
+    """Check B/C outputs without inventing a missing reference comparison.
+
+    The channel files are read back from disk and compared with the live
+    80-mode inventory.  This keeps the authority-limited branch independent
+    of the worker's aggregate status fields and catches a dropped/reordered
+    mode, nonfinite amplitude, bad normalization, or a negative modal power.
+    """
+
+    port = output.get("port_metrics", {})
+    volume = output.get("volume_metrics", {})
+    values = {
+        "R": float(port.get("R_total", np.nan)),
+        "T": float(port.get("T_total", np.nan)),
+        "A": float(port.get("A_balance", np.nan)),
+        "A_volume": float(volume.get("A_volume_total", np.nan)),
+    }
+    closure = {
+        "A_minus_A_volume": abs(values["A"] - values["A_volume"]),
+        "R_plus_T_plus_A_volume_minus_one": abs(
+            values["R"] + values["T"] + values["A_volume"] - 1.0
+        ),
+        "R_plus_T_minus_modal": abs(
+            float(port.get("R_plus_T", np.nan)) - values["R"] - values["T"]
+        ),
+    }
+    evaluation = solver_facts.get("final_evaluation", {})
+    identity_limits = {
+        "port_closure_relative": 1.0e-8,
+        "internal_residual_relative": 1.0e-10,
+        "native_identity_relative": 1.0e-10,
+        "schur_port_identity_relative": 1.0e-10,
+    }
+    identity_values = {
+        key: float(evaluation.get(key, np.nan)) for key in identity_limits
+    }
+    finite = {
+        "power": bool(np.isfinite(list(values.values())).all()),
+        "electric": bool(output.get("electric_finite") is True),
+        "auxiliary": bool(output.get("auxiliary_finite") is True),
+        "magnetic": bool(
+            np.isfinite(
+                float(output.get("field_export", {}).get("max_abs_H", np.nan))
+            )
+        ),
+        "curl": bool(
+            output.get("field_export", {}).get("curl_postprocess_success") is True
+        ),
+    }
+    channel_checks = {
+        "files": False,
+        "mode_key_order": False,
+        "amplitudes_finite": False,
+        "powers_finite": False,
+        "modal_sums": False,
+        "normalization": False,
+        "passivity": False,
+    }
+    channel_facts: dict[str, Any] = {
+        "status": "NOT_AVAILABLE",
+        "expected_count": 80,
+        "checked_count": 0,
+        "failure_keys": [],
+    }
+
+    def complex_value(value: Any) -> complex:
+        if isinstance(value, Mapping):
+            return complex(float(value["real"]), float(value["imag"]))
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            return complex(float(value[0]), float(value[1]))
+        return complex(value)
+
+    if common is not None and output_dir is not None:
+        try:
+            orders_path = Path(output_dir) / "dtn_port_diffraction_orders_3d.json"
+            amplitudes_path = Path(output_dir) / "dtn_auxiliary_amplitudes_3d.json"
+            orders_payload = json.loads(orders_path.read_text(encoding="utf-8"))
+            amplitude_rows = json.loads(amplitudes_path.read_text(encoding="utf-8"))
+            order_rows = orders_payload["orders"]
+            expected_modes = list(common["fine"]["modes"])
+            expected_keys = [
+                (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+                for mode in expected_modes
+            ]
+
+            def row_key(row: Mapping[str, Any]) -> tuple[str, int, int, str]:
+                return (
+                    str(row["side"]),
+                    int(row["m"]),
+                    int(row["n"]),
+                    str(row["polarization"]),
+                )
+
+            order_keys = [row_key(row) for row in order_rows]
+            amplitude_keys = [row_key(row) for row in amplitude_rows]
+            order_key_set = set(order_keys)
+            amplitude_key_set = set(amplitude_keys)
+            unique_keys = (
+                len(order_keys) == len(order_key_set)
+                and len(amplitude_keys) == len(amplitude_key_set)
+            )
+            channel_checks["files"] = (
+                len(order_rows) == 80
+                and len(amplitude_rows) == 80
+                and unique_keys
+            )
+            channel_checks["mode_key_order"] = (
+                order_keys == expected_keys and amplitude_keys == expected_keys
+            )
+            order_by_key = {key: row for key, row in zip(order_keys, order_rows)}
+            amplitude_by_key = {
+                key: row for key, row in zip(amplitude_keys, amplitude_rows)
+            }
+            per_channel = []
+            amplitude_finite = True
+            power_finite = True
+            passivity = True
+            modal_r = 0.0
+            modal_t = 0.0
+            failures = []
+            for key in expected_keys:
+                order = order_by_key.get(key)
+                amplitude = amplitude_by_key.get(key)
+                if order is None or amplitude is None:
+                    failures.append(list(key))
+                    continue
+                complex_fields = (
+                    "auxiliary_amplitude_total_projection",
+                    "incident_projection",
+                    "outgoing_amplitude",
+                    "outgoing_amplitude_at_boundary",
+                )
+                finite_amplitude = all(
+                    np.isfinite(complex_value(order[field]))
+                    and np.isfinite(complex_value(amplitude[field]))
+                    for field in complex_fields
+                )
+                finite_power = all(
+                    np.isfinite(float(order[field]))
+                    for field in ("modal_power_code_units", "power_ratio", "R", "T")
+                )
+                power_ratio = float(order["power_ratio"])
+                r_value = float(order["R"])
+                t_value = float(order["T"])
+                channel_passive = (
+                    power_ratio >= -1.0e-12
+                    and r_value >= -1.0e-12
+                    and t_value >= -1.0e-12
+                )
+                same_outgoing = all(
+                    abs(
+                        complex_value(order[field])
+                        - complex_value(amplitude[field])
+                    )
+                    <= 1.0e-12
+                    for field in (
+                        "outgoing_amplitude",
+                        "outgoing_amplitude_at_boundary",
+                    )
+                )
+                amplitude_finite = amplitude_finite and finite_amplitude and same_outgoing
+                power_finite = power_finite and finite_power
+                passivity = passivity and channel_passive
+                modal_r += r_value
+                modal_t += t_value
+                if not (finite_amplitude and finite_power and channel_passive and same_outgoing):
+                    failures.append(list(key))
+                per_channel.append(
+                    {
+                        "key": list(key),
+                        "finite_amplitude": bool(finite_amplitude),
+                        "finite_power": bool(finite_power),
+                        "power_ratio": power_ratio,
+                        "R": r_value,
+                        "T": t_value,
+                        "outgoing_fields_match": bool(same_outgoing),
+                        "passive": bool(channel_passive),
+                    }
+                )
+            metrics_incident = float(port.get("incident_power_code_units", np.nan))
+            output_aux = np.asarray(output.get("auxiliary", ()), dtype=np.complex128)
+            channel_checks["amplitudes_finite"] = bool(
+                len(per_channel) == 80
+                and amplitude_finite
+                and output_aux.shape == (80,)
+                and np.isfinite(output_aux).all()
+            )
+            channel_checks["powers_finite"] = bool(
+                len(per_channel) == 80 and power_finite
+            )
+            channel_checks["modal_sums"] = bool(
+                np.isfinite(modal_r)
+                and np.isfinite(modal_t)
+                and abs(modal_r - values["R"]) <= 1.0e-8
+                and abs(modal_t - values["T"]) <= 1.0e-8
+                and abs((modal_r + modal_t) - float(port.get("R_plus_T", np.nan)))
+                <= 1.0e-8
+            )
+            channel_checks["normalization"] = bool(
+                np.isfinite(metrics_incident)
+                and metrics_incident > 0.0
+                and abs(
+                    metrics_incident
+                    - float(
+                        orders_payload.get("metrics", {}).get(
+                            "incident_power_code_units", np.nan
+                        )
+                    )
+                )
+                <= 1.0e-12 * max(abs(metrics_incident), 1.0)
+            )
+            channel_checks["passivity"] = bool(
+                passivity
+                and values["R"] >= -1.0e-12
+                and values["T"] >= -1.0e-12
+                and values["A_volume"] >= -1.0e-12
+                and values["R"] + values["T"] + values["A_volume"]
+                <= 1.0 + 1.0e-5
+            )
+            channel_facts = {
+                "status": "CHECKED",
+                "expected_count": 80,
+                "checked_count": len(per_channel),
+                "order_keys": [list(key) for key in order_keys],
+                "amplitude_keys": [list(key) for key in amplitude_keys],
+                "failure_keys": failures,
+                "modal_R": modal_r,
+                "modal_T": modal_t,
+                "incident_power_code_units": metrics_incident,
+                "per_channel": per_channel,
+                "files": {
+                    "orders": str(orders_path),
+                    "amplitudes": str(amplitudes_path),
+                },
+            }
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            channel_facts = {
+                "status": "FAILED_TO_READ_OR_VALIDATE",
+                "expected_count": 80,
+                "checked_count": 0,
+                "failure_keys": [],
+                "error": {"type": type(exc).__name__, "message": str(exc)},
+            }
+    checks = {
+        "solver_gate": bool(
+            solver_facts.get("status") == "TRUE_RESIDUAL_PASS"
+            and np.isfinite(
+                float(solver_facts.get("final_true_residual", np.nan))
+            )
+            and float(solver_facts.get("final_true_residual", np.inf)) <= 1.0e-6
+        ),
+        "post_release_residual": bool(
+            post_release_relative is not None
+            and np.isfinite(post_release_relative)
+            and post_release_relative <= 1.0e-6
+        ),
+        "identity": all(
+            np.isfinite(identity_values[key])
+            and 0.0 <= identity_values[key] <= limit
+            for key, limit in identity_limits.items()
+        ),
+        "power_finite": finite["power"],
+        "field_finite": all(finite.values()),
+        "energy_closure": bool(
+            np.isfinite(closure["R_plus_T_plus_A_volume_minus_one"])
+            and closure["R_plus_T_plus_A_volume_minus_one"] <= 1.0e-5
+        ),
+        "absorption_consistency": bool(
+            np.isfinite(closure["A_minus_A_volume"])
+            and closure["A_minus_A_volume"] <= 1.0e-5
+        ),
+        "modal_power_closure": bool(
+            np.isfinite(closure["R_plus_T_minus_modal"])
+            and closure["R_plus_T_minus_modal"] <= 1.0e-5
+        ),
+        "channel_files": channel_checks["files"],
+        "channel_mode_key_order": channel_checks["mode_key_order"],
+        "channel_amplitudes_finite": channel_checks["amplitudes_finite"],
+        "channel_powers_finite": channel_checks["powers_finite"],
+        "channel_modal_sums": channel_checks["modal_sums"],
+        "channel_normalization": channel_checks["normalization"],
+        "channel_passivity": channel_checks["passivity"],
+    }
+    facts = {
+        "power": values,
+        "closure": closure,
+        "identity_values": identity_values,
+        "identity_limits": identity_limits,
+        "finite": finite,
+        "channel_checks": channel_checks,
+        "channel_facts": channel_facts,
+        "reference_comparison": "NOT_ATTEMPTED_REFERENCE_UNAVAILABLE",
+    }
+    return checks, facts
+
+
 def _v14_settled_stage_gate(runtime: _V14Runtime, required: str) -> dict[str, Any]:
     """Use the same settled evidence checks for admission and Q6 reporting."""
 
@@ -5888,6 +6203,8 @@ def _v14_q4_q5_fullspace(
     outer_adapter_factory: Any | None = None,
     release_after_final_residual: bool = False,
     official_jit_options: Mapping[str, Any] | None = None,
+    reference_mode: str = "required",
+    notch_override: bool | None = None,
 ) -> dict[str, Any]:
     """Run one fresh p6 outer solve with the live interface BAL_H stack.
 
@@ -5913,20 +6230,43 @@ def _v14_q4_q5_fullspace(
     from .workflow_timebase import CONSERVATIVE_REALTIME, ClockBudget, clock_sample
 
     stage = str(stage)
-    if stage not in {"Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL", "Y3_ORIGINAL"}:
+    if stage not in {
+        "Q4_ORIGINAL", "Q5_NOTCH", "U4_ORIGINAL", "U5_NOTCH",
+        "U4_EXACT_FALLBACK", "X2_ORIGINAL", "Y3_ORIGINAL",
+        "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
+    }:
         raise ValueError(f"unsupported fresh p6 stage {stage!r}")
-    retained_stage = stage in {"X2_ORIGINAL", "Y3_ORIGINAL"}
+    retained_stage = stage in {
+        "X2_ORIGINAL", "Y3_ORIGINAL",
+        "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
+    }
     if retained_stage != (outer_adapter_factory is not None):
         raise ValueError("only retained-space original stages use the outer adapter")
-    if release_after_final_residual and stage != "Y3_ORIGINAL":
-        raise ValueError("post-KSP release is only enabled for Y3_ORIGINAL")
-    notch = stage in {"Q5_NOTCH", "U5_NOTCH"}
+    if release_after_final_residual and stage not in {
+        "Y3_ORIGINAL", "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
+    }:
+        raise ValueError("post-KSP release is not enabled for this stage")
+    if reference_mode not in {"required", "authority_limited"}:
+        raise ValueError(f"unsupported reference mode {reference_mode!r}")
+    if stage == "Z2_NOTCH_H10" and reference_mode != "required":
+        raise ValueError("Z2_NOTCH_H10 must use the matched-reference branch")
+    if stage in {"Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5"} and reference_mode != "authority_limited":
+        raise ValueError(f"{stage} must use the authority-limited branch")
+    if reference_mode == "authority_limited" and stage not in {
+        "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
+    }:
+        raise ValueError("authority-limited reference mode is reserved for V21 Z3/Z4")
+    notch = (
+        bool(notch_override)
+        if notch_override is not None
+        else stage in {"Q5_NOTCH", "U5_NOTCH"}
+    )
     expected_notch = "positive_x_middle_y_z40_80"
     cell_notch = getattr(common["cfg"], "cell_notch", None)
     if notch and cell_notch != expected_notch:
         raise ValueError(f"{stage} received the wrong frozen notch recipe")
     if not notch and cell_notch not in (None, ""):
-        raise ValueError("Q4_ORIGINAL must use the original, unnotched geometry")
+        raise ValueError(f"{stage} must use the original, unnotched geometry")
 
     resources = runtime.contract["resources"]
     time_policy = normalize_v14_time_policy(getattr(runtime, "time_policy", None))
@@ -5942,7 +6282,13 @@ def _v14_q4_q5_fullspace(
     if (
         workflow_limit <= 0.0
         or (stage in {"Q4_ORIGINAL", "Q5_NOTCH"} and solve_limit != 10800.0)
-        or (stage in {"U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL"} and solve_limit <= 0.0)
+        or (
+            stage in {
+                "U4_ORIGINAL", "U5_NOTCH", "U4_EXACT_FALLBACK", "X2_ORIGINAL",
+                "Z2_NOTCH_H10", "Z3_ORIGINAL_H7P5", "Z4_NOTCH_H7P5",
+            }
+            and solve_limit <= 0.0
+        )
     ):
         raise ValueError(f"{stage} has an invalid conditional-stage budget")
 
@@ -5957,6 +6303,9 @@ def _v14_q4_q5_fullspace(
     prefix = (
         "y3" if stage == "Y3_ORIGINAL" else
         "x2" if stage == "X2_ORIGINAL" else
+        "z2" if stage == "Z2_NOTCH_H10" else
+        "z3" if stage == "Z3_ORIGINAL_H7P5" else
+        "z4" if stage == "Z4_NOTCH_H7P5" else
         "u5" if stage == "U5_NOTCH" else
         "u4_fallback" if stage == "U4_EXACT_FALLBACK" else
         "u4" if stage == "U4_ORIGINAL" else
@@ -6101,6 +6450,112 @@ def _v14_q4_q5_fullspace(
                 raise ValueError(f"{stage} reference physical identity differs")
             if reference_model.get("mode_sha") != identity["ordered_mode_sha256"]:
                 raise ValueError(f"{stage} reference ordered mode identity differs")
+            if stage == "Z2_NOTCH_H10":
+                # The historical loader binds only the reference model/mode
+                # hashes.  Z2 additionally compares the live numeric MPC map
+                # and the saved independent physical RHS; no ABI or reference
+                # is re-qualified here.
+                from src.solvers.condensed_fine_reference import (
+                    native_map_arrays,
+                    project_unconstrained_mpc_dual,
+                )
+                from src.solvers.physical_map_identity import (
+                    compare_native_map_identity,
+                )
+
+                native_map_manifest_path = Path(
+                    str(binding["reference_native_map"])
+                )
+                native_map_manifest = json.loads(
+                    native_map_manifest_path.read_text(encoding="utf-8")
+                )
+                native_map_archive_path = Path(
+                    str(native_map_manifest["arrays"]["path"])
+                )
+                native_map_archive_bytes = native_map_archive_path.read_bytes()
+                if _sha256_bytes(native_map_archive_bytes) != native_map_manifest[
+                    "arrays"
+                ]["sha256"]:
+                    raise ValueError("Z2 reference native-map archive hash changed")
+                with np.load(native_map_archive_path, allow_pickle=False) as archive:
+                    saved_native_map = {
+                        key: np.asarray(archive[descriptor["array_key"]])
+                        for key, descriptor in native_map_manifest.items()
+                        if key
+                        in {
+                            "dofmap",
+                            "geometry",
+                            "geometry_dofmap",
+                            "permutations",
+                            "slaves",
+                            "masters",
+                            "coefficients",
+                            "offsets",
+                            "independent_indices",
+                        }
+                    }
+                current_native_map = native_map_arrays(
+                    common["levels"]["spaces"][6],
+                    common["levels"]["floquets"][6],
+                )
+                native_map_facts = compare_native_map_identity(
+                    current_native_map,
+                    saved_native_map,
+                    context="Z2 matched notch reference native map",
+                )
+
+                rhs_manifest_path = native_map_manifest_path.parent / (
+                    "reference_pre_numeric_rhs.json"
+                )
+                rhs_manifest_bytes = rhs_manifest_path.read_bytes()
+                if _sha256_bytes(rhs_manifest_bytes) != _V21_REFERENCE_PRE_NUMERIC_RHS_JSON_SHA256:
+                    raise ValueError("Z2 reference pre-numeric RHS manifest hash changed")
+                rhs_manifest = json.loads(rhs_manifest_bytes.decode("utf-8"))
+                rhs_archive_path = Path(str(rhs_manifest["arrays"]["path"]))
+                rhs_archive_bytes = rhs_archive_path.read_bytes()
+                if (
+                    _sha256_bytes(rhs_archive_bytes)
+                    != _V21_REFERENCE_PRE_NUMERIC_RHS_NPZ_SHA256
+                    or rhs_manifest["arrays"].get("sha256")
+                    != _V21_REFERENCE_PRE_NUMERIC_RHS_NPZ_SHA256
+                ):
+                    raise ValueError("Z2 reference pre-numeric RHS archive hash changed")
+                with np.load(rhs_archive_path, allow_pickle=False) as archive:
+                    native_rhs = np.asarray(
+                        archive[rhs_manifest["native_independent_rhs"]["array_key"]],
+                        dtype=np.complex128,
+                    )
+                projected_rhs = project_unconstrained_mpc_dual(
+                    np.asarray(rhs.array, dtype=np.complex128), current_native_map
+                )
+                independent = np.asarray(
+                    current_native_map["independent_indices"], dtype=np.int64
+                )
+                if projected_rhs.shape[0] <= int(np.max(independent)):
+                    raise ValueError("Z2 projected RHS is shorter than its native map")
+                rhs_difference = projected_rhs[independent] - native_rhs
+                rhs_relative = float(
+                    np.linalg.norm(rhs_difference)
+                    / max(np.linalg.norm(native_rhs), np.finfo(float).tiny)
+                )
+                if not np.isfinite(rhs_relative) or rhs_relative > 1.0e-10:
+                    raise ValueError(
+                        f"Z2 physical RHS differs from the matched native witness: {rhs_relative}"
+                    )
+                binding["v21_native_map_identity"] = native_map_facts
+                binding["v21_native_rhs_identity"] = {
+                    "manifest": str(rhs_manifest_path),
+                    "manifest_sha256": _V21_REFERENCE_PRE_NUMERIC_RHS_JSON_SHA256,
+                    "arrays_sha256": _V21_REFERENCE_PRE_NUMERIC_RHS_NPZ_SHA256,
+                    "independent_rows": int(native_rhs.size),
+                    "relative_difference": rhs_relative,
+                    "limit": 1.0e-10,
+                    "definition": (
+                        "C^H of current full physical RHS compared with the saved "
+                        "independent native RHS"
+                    ),
+                }
+                del current_native_map, saved_native_map, native_rhs, projected_rhs
             candidate = binding.pop("x_ref", None)
             if candidate is None:
                 raise ValueError(f"{stage} reference residual has no field vector")
@@ -6160,15 +6615,24 @@ def _v14_q4_q5_fullspace(
             "iteration": int(iteration),
             "explicit_relative_residual": float(residual),
             "evaluation_only": True,
+            "reference_authority": (
+                "MATCHED_REFERENCE_AVAILABLE"
+                if reference_mode == "required"
+                else "MATCHED_REFERENCE_NOT_AVAILABLE"
+            ),
             "reference_vector_in_operator": False,
             "reference_vector_in_initial_guess": False,
         }
         try:
-            reference = evaluation_reference()
-            row["field_metrics"] = _v14_p6_field_comparison(
-                common, solution, reference
-            )
-            row["status"] = "AVAILABLE"
+            if reference_mode == "authority_limited":
+                row["field_metrics"] = {}
+                row["status"] = "NOT_ATTEMPTED"
+            else:
+                reference = evaluation_reference()
+                row["field_metrics"] = _v14_p6_field_comparison(
+                    common, solution, reference
+                )
+                row["status"] = "AVAILABLE"
         except V14ResourceStop:
             raise
         except (OSError, ValueError, TypeError, KeyError, FloatingPointError) as exc:
@@ -6657,6 +7121,12 @@ def _v14_q4_q5_fullspace(
             "history": history_facts,
             "stop_state": dict(stop_state),
             "reference_evaluation": {
+                "authority": (
+                    "MATCHED_REFERENCE_AVAILABLE"
+                    if reference_mode == "required"
+                    else "MATCHED_REFERENCE_NOT_AVAILABLE"
+                ),
+                "mode": reference_mode,
                 "attempted": reference_attempted,
                 "loaded": reference_binding is not None and reference_vector is not None,
                 "error": reference_error,
@@ -6785,6 +7255,122 @@ def _v14_q4_q5_fullspace(
                 }
             )
             runtime.marker(f"{prefix}_fullspace_residual_gate_failed", base_record)
+            return base_record
+
+        if reference_mode == "authority_limited":
+            # B/C have no matched field reference.  Output recovery remains
+            # downstream of the same independent residual and release gates;
+            # only the reference-comparison branch is replaced by explicit
+            # finite/closure/identity checks.
+            runtime.set_phase("evaluation")
+            output_dir = runtime.directory / "numerical_output"
+            runtime.sample(f"{prefix}_before_output_recovery")
+            output = recover_p0_outputs(
+                common["fine"],
+                final_solution,
+                output_dir,
+                export_all_port_modes=True,
+                jit_options=official_jit_options,
+            )
+            output_packet = _save_packet(
+                runtime.directory / "official_output",
+                f"{prefix}_output",
+                {
+                    "schema": "task039extra.v21.authority-limited-output-packet.v1",
+                    "identity": identity,
+                    "output": output,
+                },
+                runtime=runtime,
+            )
+            runtime.marker(
+                f"{prefix}_authority_limited_output_complete",
+                {"packet": output_packet},
+            )
+            runtime.sample(f"{prefix}_output_recovery_complete")
+            resource_facts = _v14_resource_facts(runtime)
+            workflow_interval = current_workflow_interval()
+            workflow_seconds = float(
+                workflow_interval.get("budget_seconds", np.nan)
+            )
+            workflow_time_gate = (
+                v14_time_gate_facts(workflow_seconds, workflow_limit, time_policy)
+                if np.isfinite(workflow_seconds) and workflow_seconds >= 0.0
+                else None
+            )
+            authority_checks, authority_facts = _v21_authority_limited_checks(
+                solver_facts,
+                output,
+                post_release_relative=post_release_relative,
+                common=common,
+                output_dir=output_dir,
+            )
+            authority_checks["solver_gate"] = bool(
+                base_record["gates"].get("solver_gate")
+            )
+            resource_pass = bool(resource_facts.get("gate"))
+            workflow_pass = bool(
+                workflow_time_gate is not None and workflow_time_gate["passed"]
+            )
+            stage_pass = bool(
+                all(authority_checks.values()) and resource_pass and workflow_pass
+            )
+            base_record.update(
+                {
+                    "status": (
+                        f"{stage}_AUTHORITY_LIMITED_PASS"
+                        if stage_pass
+                        else f"{stage}_CONSISTENCY_GATE_FAIL"
+                    ),
+                    "official_result": stage_pass,
+                    "stage_pass": stage_pass,
+                    "result_classification": (
+                        "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
+                        if stage_pass
+                        else "AUTHORITY_LIMITED_CONSISTENCY_GATE_FAIL"
+                    ),
+                    "output_role": (
+                        "official_authority_limited"
+                        if stage_pass
+                        else "diagnostic_only"
+                    ),
+                    "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE",
+                    "field": {},
+                    "comparison": {
+                        "status": "MATCHED_REFERENCE_NOT_AVAILABLE",
+                        "reference_evaluation_attempted": False,
+                    },
+                    "authority_limited_checks": authority_facts,
+                    "physical_checks": authority_checks,
+                    "output": output_packet,
+                    "output_facts": {
+                        key: value for key, value in output.items() if key != "auxiliary"
+                    },
+                    "reference_binding": None,
+                    "resource": resource_facts,
+                    "workflow_clock_interval": workflow_interval,
+                    "gates": {
+                        **base_record["gates"],
+                        "authority_limited_checks_pass": bool(
+                            all(authority_checks.values())
+                        ),
+                        "resource_prefix_pass": resource_pass,
+                        "workflow_pass": workflow_pass,
+                        "workflow_within_limit": bool(
+                            workflow_time_gate is not None
+                            and not workflow_time_gate["exceeded"]
+                        ),
+                        "workflow_time_qualified": workflow_pass,
+                        "workflow_time_exceeded": bool(
+                            workflow_time_gate is not None
+                            and workflow_time_gate["exceeded"]
+                        ),
+                        "workflow_time_gate": workflow_time_gate,
+                        **time_policy_facts,
+                        "stage_pass": stage_pass,
+                    },
+                }
+            )
+            runtime.marker(f"{prefix}_fullspace_stage_complete", base_record)
             return base_record
 
         runtime.set_phase("evaluation")

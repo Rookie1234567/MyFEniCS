@@ -73,14 +73,14 @@ def test_schema_identity_sections_and_unique_whitelist():
         "output",
     )
     assert len(IDENTITY_FIELD_SPECS) == 5
-    assert len(FIELD_SPECS) == 102
-    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 107
+    assert len(FIELD_SPECS) == 111
+    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 116
     assert set(FIELD_SPECS_BY_KEY) == set(PUBLIC_FIELD_KEYS)
     assert {name: len(keys) for name, keys in SECTION_FIELD_KEYS.items()} == {
-        "geometry": 12,
+        "geometry": 14,
         "materials": 6,
         "incidence": 8,
-        "discretization": 15,
+        "discretization": 22,
         "boundary": 10,
         "method": 7,
         "solver": 17,
@@ -151,9 +151,12 @@ def test_schema_identity_sections_and_unique_whitelist():
         "physical_p4_schur_v14",
         "physical_p4_blr_bal_h_v16",
         "physical_p4_blr_tradeoff_v17",
-        "physical_p4_cell_condensed_exact_v18",
-        "physical_p4_cell_condensed_blr_v18",
-        "hybrid_block_ldu_ilu0_dtn_woodbury",
+            "physical_p4_cell_condensed_exact_v18",
+            "physical_p4_cell_condensed_blr_v18",
+            "physical_p6_trace_p4_condensed_balh_v19",
+            "physical_p6_trace_p4_condensed_lowmem_v20",
+            "physical_p6_trace_p4_condensed_robustness_v21",
+            "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
         "geometry.period_y_nm",
@@ -180,7 +183,7 @@ def test_readme_markers_and_continuous_table():
     text, rows = _readme_table()
     marker_pattern = re.compile(r"^<!-- schema-field (\{.*\}) -->$", re.MULTILINE)
     markers = [json.loads(match) for match in marker_pattern.findall(text)]
-    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 107
+    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 116
     assert [marker["key"] for marker in markers] == list(PUBLIC_FIELD_KEYS)
     assert len({marker["key"] for marker in markers}) == len(markers)
     for marker in markers:
