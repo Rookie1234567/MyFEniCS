@@ -95,12 +95,43 @@ class _IdentityTransfer:
         source.copy(target)
         return target
 
-    def apply_adjoint(self, source: PETSc.Vec) -> PETSc.Vec:
+    def apply_adjoint(
+        self,
+        source: PETSc.Vec,
+        *,
+        timing: dict[str, float] | None = None,
+    ) -> PETSc.Vec:
         self.apply_count += 1
+        if timing is not None:
+            timing.update(
+                {
+                    "cell_adjoint_seconds": 1.0e-4,
+                    "dual_reduce_seconds": 2.0e-4,
+                    "mpi_exchange_seconds": 4.0e-4,
+                    "ghost_mpc_prepare_seconds": 5.0e-4,
+                    "ghost_mpc_check_seconds": 6.0e-4,
+                }
+            )
         return self._copy(source)
 
-    def apply_primal(self, source: PETSc.Vec) -> PETSc.Vec:
+    def apply_primal(
+        self,
+        source: PETSc.Vec,
+        *,
+        timing: dict[str, float] | None = None,
+    ) -> PETSc.Vec:
         self.apply_count += 1
+        if timing is not None:
+            timing.update(
+                {
+                    "local_candidate_generation_seconds": 1.0e-4,
+                    "route_sort_index_seconds": 2.0e-4,
+                    "mpi_exchange_seconds": 3.0e-4,
+                    "duplicate_row_check_seconds": 4.0e-4,
+                    "ghost_mpc_prepare_seconds": 5.0e-4,
+                    "ghost_mpc_check_seconds": 6.0e-4,
+                }
+            )
         return self._copy(source)
 
     @property
@@ -133,10 +164,15 @@ class _IdentityP4:
         solution: PETSc.Vec,
         *,
         residual_tolerance: float,
+        timing=None,
     ) -> dict[str, object]:
         del residual_tolerance
         rhs.copy(solution)
         self.solve_count += 1
+        if timing is not None:
+            timing["factor_solve_seconds"] = 1.0e-3
+            timing["A4_residual_refinement_seconds"] = 2.0e-3
+            timing["physical_action_matrix_mult_seconds"] = 3.0e-4
         return {"backsolve_count": 1, "relative_residual": 0.0}
 
     def extract_fe_solution(self, solution: PETSc.Vec) -> PETSc.Vec:
@@ -275,6 +311,9 @@ class _BufferRecordingComm:
         self.buffer_allreduce_count += 1
         self.comm.Allreduce(send, receive, op=op)
 
+    def Get_rank(self) -> int:
+        return self.comm.Get_rank()
+
 
 class _RepeatedPcKsp:
     def __init__(self, owner: SideBalancedInverse) -> None:
@@ -332,6 +371,7 @@ def _build_fixture(
     checkpoint_callback=None,
     audit_callback=None,
     p4_factor=None,
+    detailed_timing: bool = False,
 ) -> tuple[SideBalancedInverse, dict[str, object]]:
     operator, operator_context = _scale_matrix(size, 2.0)
     condensed = _IdentityCondensed(size)
@@ -353,6 +393,7 @@ def _build_fixture(
         h6,
         checkpoint_callback=checkpoint_callback,
         audit_callback=audit_callback,
+        detailed_timing=detailed_timing,
     )
     return inverse, {
         "operator": operator,
@@ -365,12 +406,16 @@ def _build_fixture(
     }
 
 
-def test_side_inverse_right_pc_reuse_zero_and_cleanup() -> None:
+@pytest.mark.parametrize("detailed_timing", [False, True])
+def test_side_inverse_right_pc_reuse_zero_and_cleanup(
+    detailed_timing: bool,
+) -> None:
     checkpoint_calls: list[None] = []
     audit_records: list[dict[str, object]] = []
     inverse, owned = _build_fixture(
         checkpoint_callback=lambda: checkpoint_calls.append(None),
         audit_callback=audit_records.append,
+        detailed_timing=detailed_timing,
     )
     operator = owned["operator"]
     q1 = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
@@ -426,6 +471,20 @@ def test_side_inverse_right_pc_reuse_zero_and_cleanup() -> None:
         last = inverse.diagnostics["last_apply"]
         assert last["status"] == "ZERO_RHS_EXACT"
         assert last["explicit_true_target_reached"] is True
+        if detailed_timing:
+            zero_timing = last["operation_seconds"]
+            assert zero_timing["status"] == "measured_rank_max"
+            assert all(
+                value == "not_called"
+                for value in zero_timing["detailed"]["measurement_status"].values()
+            )
+            assert all(
+                value is None
+                for value in zero_timing["detailed"]["max_rank_seconds"].values()
+            )
+        else:
+            assert inverse.diagnostics["detailed_timing"] is False
+            assert "detailed" not in last["operation_seconds"]
         diagnostics = inverse.diagnostics
         assert diagnostics["apply_count"] == 5
         assert diagnostics["p4_factor_count"] == 1
@@ -476,7 +535,10 @@ def test_side_inverse_right_pc_reuse_zero_and_cleanup() -> None:
 
 def test_side_inverse_dense_batch_bound_and_true_error_propagation() -> None:
     audit_records: list[dict[str, object]] = []
-    inverse, owned = _build_fixture(audit_callback=audit_records.append)
+    inverse, owned = _build_fixture(
+        audit_callback=audit_records.append,
+        detailed_timing=True,
+    )
     operator = owned["operator"]
     comm = MPI.COMM_WORLD
     width = 3
@@ -530,6 +592,22 @@ def test_side_inverse_dense_batch_bound_and_true_error_propagation() -> None:
             assert failed["status"] == "FAILED"
             assert failed["exception_type"]
             assert failed["residual_norm"] == "not_measured"
+            failed_timing = failed["operation_seconds"]["detailed"]
+            assert failed_timing["measurement_status"]["q_ph_seconds"] == "measured"
+            assert failed_timing["per_rank_seconds"]["q_ph_seconds"] > 0.0
+            assert failed_timing["max_rank_seconds"] is None
+            for name in (
+                "q_ph_route_sort_index_seconds",
+                "q_ph_duplicate_row_check_seconds",
+                "balance_ph_route_sort_index_seconds",
+                "balance_ph_duplicate_row_check_seconds",
+            ):
+                assert failed_timing["measurement_status"][name] == "not_called"
+                assert failed_timing["per_rank_seconds"][name] is None
+            assert (
+                failed_timing["measurement_status"]["balance_h6_seconds"]
+                == "measured"
+            )
             assert audit_records[-1]["status"] == "FAILED"
         finally:
             source.destroy()
@@ -544,7 +622,10 @@ def test_side_inverse_dense_batch_bound_and_true_error_propagation() -> None:
 
 def test_side_inverse_rhs_timing_uses_one_buffer_for_multiple_pc_calls() -> None:
     audit_records: list[dict[str, object]] = []
-    inverse, owned = _build_fixture(audit_callback=audit_records.append)
+    inverse, owned = _build_fixture(
+        audit_callback=audit_records.append,
+        detailed_timing=True,
+    )
     operator = owned["operator"]
     source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
     target = operator.createVecLeft()
@@ -567,32 +648,141 @@ def test_side_inverse_rhs_timing_uses_one_buffer_for_multiple_pc_calls() -> None
     inverse._ksp = _RepeatedPcKsp(inverse)  # type: ignore[assignment]
     inverse._comm = recording_comm  # type: ignore[assignment]
     try:
+        unmeasured = inverse._rhs_operation_timing(0.0, reduce=False)
+        assert all(
+            value is None
+            for value in unmeasured["detailed"]["per_rank_seconds"].values()
+        )
+        assert all(
+            status == "not_called"
+            for status in unmeasured["detailed"]["measurement_status"].values()
+        )
         inverse.apply(source, target)
-        record = inverse.diagnostics["last_apply"]
-        timing = record["operation_seconds"]
-        assert record["status"] == "KSP_CONVERGED"
-        assert record["counts"]["delta"]["pc"] == 2
-        assert record["counts"]["delta"]["Q"] == 4
-        assert record["counts"]["delta"]["H6"] == 2
-        assert record["counts"]["delta"]["A6"] == 4
+        first_record = inverse.diagnostics["last_apply"]
+        first_timing = first_record["operation_seconds"]
+        assert first_record["status"] == "KSP_CONVERGED"
+        assert first_record["counts"]["delta"]["pc"] == 2
+        assert first_record["counts"]["delta"]["Q"] == 4
+        assert first_record["counts"]["delta"]["H6"] == 2
+        assert first_record["counts"]["delta"]["A6"] == 4
         assert owned["p4_factor"].solve_count == 4
         assert owned["h6"].apply_count == 2
         assert owned["full_action"].context.apply_count == 4
         assert owned["operator_context"].apply_count == 1
         assert recording_comm.scalar_allreduce_count == 1
         assert recording_comm.buffer_allreduce_count == 1
-        assert timing["status"] == "measured_rank_max"
-        assert set(timing["max_rank_accumulated_seconds"]) == {"Q", "H6", "A6"}
-        assert "max_rank_total_seconds" not in timing
-        assert timing["max_rank_uncovered_seconds"] >= 0.0
-        assert len(operation_facts) == 2
+        assert first_timing["status"] == "measured_rank_max"
+        assert set(first_timing["max_rank_accumulated_seconds"]) == {
+            "Q",
+            "H6",
+            "A6",
+        }
+        assert "max_rank_total_seconds" not in first_timing
+        assert first_timing["max_rank_uncovered_seconds"] >= 0.0
+        first_operation_facts = operation_facts[:]
+        assert len(first_operation_facts) == 2
+        first_detail = first_timing["detailed"]
+        assert first_detail["logging_rank"] == MPI.COMM_WORLD.Get_rank()
+        assert first_detail["local_scope"] == "logging_rank_only"
+        measured_names = (
+            "q_ph_seconds",
+            "q_ph_cell_adjoint_seconds",
+            "q_ph_dual_reduce_seconds",
+            "q_ph_mpi_exchange_seconds",
+            "q_ph_ghost_mpc_prepare_seconds",
+            "q_ph_ghost_mpc_check_seconds",
+            "q_p_seconds",
+            "q_p_local_candidate_generation_seconds",
+            "q_p_route_sort_index_seconds",
+            "q_p_mpi_exchange_seconds",
+            "q_p_duplicate_row_check_seconds",
+            "q_p_ghost_mpc_prepare_seconds",
+            "q_p_ghost_mpc_check_seconds",
+            "q_augmented_rhs_extract_seconds",
+            "q_factor_solve_seconds",
+            "q_a4_residual_refinement_seconds",
+            "q_physical_action_matrix_mult_seconds",
+            "balance_ph_seconds",
+            "balance_ph_cell_adjoint_seconds",
+            "balance_ph_dual_reduce_seconds",
+            "balance_ph_mpi_exchange_seconds",
+            "balance_ph_ghost_mpc_prepare_seconds",
+            "balance_ph_ghost_mpc_check_seconds",
+            "balance_a6_seconds",
+            "balance_h6_seconds",
+            "balance_jh_inject_allocate_seconds",
+        )
+        assert all(
+            first_detail["measurement_status"][name] == "measured"
+            for name in measured_names
+        )
+        not_called_names = (
+            "q_ph_route_sort_index_seconds",
+            "q_ph_duplicate_row_check_seconds",
+            "balance_ph_route_sort_index_seconds",
+            "balance_ph_duplicate_row_check_seconds",
+        )
+        assert all(
+            first_detail["measurement_status"][name] == "not_called"
+            and first_detail["max_rank_seconds"][name] is None
+            for name in not_called_names
+        )
+        assert first_detail["max_rank_seconds"]["q_factor_solve_seconds"] == pytest.approx(
+            4.0e-3
+        )
+        assert first_detail["max_rank_seconds"][
+            "q_a4_residual_refinement_seconds"
+        ] == pytest.approx(8.0e-3)
+        assert first_detail["max_rank_seconds"][
+            "q_physical_action_matrix_mult_seconds"
+        ] == pytest.approx(1.2e-3)
+        assert first_detail["max_rank_seconds"][
+            "q_ph_mpi_exchange_seconds"
+        ] == pytest.approx(1.6e-3)
+        assert first_detail["max_rank_seconds"][
+            "q_p_local_candidate_generation_seconds"
+        ] == pytest.approx(4.0e-4)
+        assert first_detail["max_rank_seconds"][
+            "balance_ph_mpi_exchange_seconds"
+        ] == pytest.approx(1.6e-3)
+        assert first_detail["max_rank_seconds"][
+            "balance_jh_inject_allocate_seconds"
+        ] >= 0.0
         for name in ("Q", "H6", "A6"):
-            assert timing["per_rank_accumulated_seconds"][name] == pytest.approx(
+            assert first_timing["per_rank_accumulated_seconds"][name] == pytest.approx(
                 sum(facts[name] for facts in operation_facts),
                 rel=1.0e-12,
                 abs=1.0e-12,
             )
-        assert len(audit_records) == 1
+        inverse.apply(source, target)
+        second_record = inverse.diagnostics["last_apply"]
+        second_timing = second_record["operation_seconds"]
+        assert second_record["counts"]["delta"]["pc"] == 2
+        assert second_record["counts"]["delta"]["Q"] == 4
+        assert second_timing["detailed"]["max_rank_seconds"][
+            "q_factor_solve_seconds"
+        ] == pytest.approx(4.0e-3)
+        assert second_timing["detailed"]["max_rank_seconds"][
+            "q_a4_residual_refinement_seconds"
+        ] == pytest.approx(8.0e-3)
+        assert recording_comm.scalar_allreduce_count == 2
+        assert recording_comm.buffer_allreduce_count == 2
+        assert len(operation_facts) == 4
+        for timing, facts in (
+            (first_timing, first_operation_facts),
+            (second_timing, operation_facts[2:]),
+        ):
+            for name in ("Q", "H6", "A6"):
+                assert timing["per_rank_accumulated_seconds"][name] == pytest.approx(
+                    sum(item[name] for item in facts),
+                    rel=1.0e-12,
+                    abs=1.0e-12,
+                )
+        assert owned["p4_factor"].solve_count == 8
+        assert owned["h6"].apply_count == 4
+        assert owned["full_action"].context.apply_count == 8
+        assert owned["operator_context"].apply_count == 2
+        assert len(audit_records) == 2
     finally:
         coupling.apply = real_coupling_apply  # type: ignore[method-assign]
         inverse._ksp = real_ksp

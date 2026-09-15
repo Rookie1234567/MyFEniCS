@@ -9,8 +9,10 @@ materialise a global transfer matrix or use a numerical allgather.
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from dataclasses import dataclass
 from itertools import pairwise
+from time import perf_counter
 from types import MappingProxyType
 from typing import Any
 
@@ -23,6 +25,25 @@ from petsc4py import PETSc
 
 SAME_MESH_TRANSFER_PAIRS = ((6, 4),)
 ROW_CONSISTENCY_LIMIT = 1.0e-11
+_TRANSFER_TIMING_NAMES = (
+    "local_candidate_generation_seconds",
+    "route_sort_index_seconds",
+    "mpi_exchange_seconds",
+    "duplicate_row_check_seconds",
+    "ghost_mpc_prepare_seconds",
+    "cell_adjoint_seconds",
+    "dual_reduce_seconds",
+    "ghost_mpc_check_seconds",
+)
+
+
+def _add_timing(
+    timing: MutableMapping[str, float] | None,
+    name: str,
+    elapsed: float,
+) -> None:
+    if timing is not None:
+        timing[name] = float(timing.get(name, 0.0)) + max(0.0, float(elapsed))
 
 
 def _n1e(degree: int) -> Any:
@@ -162,11 +183,14 @@ def _alltoallv_candidates(
     values: np.ndarray,
     ranges: tuple[tuple[int, int], ...],
     comm: Any,
+    *,
+    timing: MutableMapping[str, float] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     ids = np.ascontiguousarray(ids, dtype=np.uint64)
     values = np.ascontiguousarray(values, dtype=np.complex128)
     if ids.ndim != 1 or values.ndim != 1 or ids.size != values.size:
         raise ValueError("owner candidate packet shape is not closed")
+    route_started = perf_counter()
     destinations = _owner_ranks(ids, ranges)
     order = np.argsort(destinations, kind="stable")
     send_ids = np.ascontiguousarray(ids[order], dtype=np.uint64)
@@ -177,22 +201,50 @@ def _alltoallv_candidates(
     send_displacements = np.zeros(int(comm.size), dtype=np.int32)
     if int(comm.size) > 1:
         send_displacements[1:] = np.cumsum(send_counts[:-1], dtype=np.int32)
+    _add_timing(
+        timing,
+        "route_sort_index_seconds",
+        perf_counter() - route_started,
+    )
     recv_counts = np.empty(int(comm.size), dtype=np.int32)
-    comm.Alltoall(send_counts, recv_counts)
+    exchange_started = perf_counter()
+    try:
+        comm.Alltoall(send_counts, recv_counts)
+    finally:
+        _add_timing(
+            timing,
+            "mpi_exchange_seconds",
+            perf_counter() - exchange_started,
+        )
+    route_started = perf_counter()
     recv_displacements = np.zeros(int(comm.size), dtype=np.int32)
     if int(comm.size) > 1:
         recv_displacements[1:] = np.cumsum(recv_counts[:-1], dtype=np.int32)
     recv_size = int(np.sum(recv_counts, dtype=np.int64))
     recv_ids = np.empty(recv_size, dtype=np.uint64)
     recv_values = np.empty(recv_size, dtype=np.complex128)
-    comm.Alltoallv(
-        [send_ids, (send_counts, send_displacements), MPI.UNSIGNED_LONG_LONG],
-        [recv_ids, (recv_counts, recv_displacements), MPI.UNSIGNED_LONG_LONG],
+    _add_timing(
+        timing,
+        "route_sort_index_seconds",
+        perf_counter() - route_started,
     )
-    comm.Alltoallv(
-        [send_values, (send_counts, send_displacements), MPI.C_DOUBLE_COMPLEX],
-        [recv_values, (recv_counts, recv_displacements), MPI.C_DOUBLE_COMPLEX],
-    )
+    exchange_started = perf_counter()
+    try:
+        comm.Alltoallv(
+            [send_ids, (send_counts, send_displacements), MPI.UNSIGNED_LONG_LONG],
+            [recv_ids, (recv_counts, recv_displacements), MPI.UNSIGNED_LONG_LONG],
+        )
+        comm.Alltoallv(
+            [send_values, (send_counts, send_displacements), MPI.C_DOUBLE_COMPLEX],
+            [recv_values, (recv_counts, recv_displacements), MPI.C_DOUBLE_COMPLEX],
+        )
+    finally:
+        _add_timing(
+            timing,
+            "mpi_exchange_seconds",
+            perf_counter() - exchange_started,
+        )
+    route_started = perf_counter()
     source_ranks = np.repeat(
         np.arange(int(comm.size), dtype=np.int32), recv_counts.astype(np.int64)
     )
@@ -202,6 +254,11 @@ def _alltoallv_candidates(
             source_ranks,
             recv_ids,
         )
+    )
+    _add_timing(
+        timing,
+        "route_sort_index_seconds",
+        perf_counter() - route_started,
     )
     return recv_ids[order], recv_values[order], source_ranks[order]
 
@@ -560,33 +617,71 @@ class SameMeshHcurlOwnerTransfer:
             np.concatenate(values).astype(np.complex128, copy=False),
         )
 
-    def apply_primal_into(self, source: Any, target: Any) -> None:
+    def apply_primal_into(
+        self,
+        source: Any,
+        target: Any,
+        *,
+        timing: MutableMapping[str, float] | None = None,
+    ) -> None:
         self._require_live()
         self._require_algebraic(source, self._coarse_slaves)
         self._require_vector(target, self.fine_space.dofmap.index_map)
-        self._prepare_primal(source, self._coarse_work, self.coarse_floquet)
-        candidate_ids, candidate_values = self._candidate_packet()
+        started = perf_counter()
+        try:
+            self._prepare_primal(source, self._coarse_work, self.coarse_floquet)
+        finally:
+            _add_timing(timing, "ghost_mpc_prepare_seconds", perf_counter() - started)
+        started = perf_counter()
+        try:
+            candidate_ids, candidate_values = self._candidate_packet()
+        finally:
+            _add_timing(
+                timing,
+                "local_candidate_generation_seconds",
+                perf_counter() - started,
+            )
         received_ids, received_values, source_ranks = _alltoallv_candidates(
-            candidate_ids, candidate_values, self.fine_ranges, self.comm
+            candidate_ids,
+            candidate_values,
+            self.fine_ranges,
+            self.comm,
+            timing=timing,
         )
-        owned_ids, owned_values, defect, packet_size = _resolve_owner_candidates(
-            received_ids, received_values, source_ranks, self.comm.rank, self.comm
-        )
-        self._fine_work.x.array[:] = 0.0
-        local_ids = owned_ids.astype(np.int64) - self._fine_owned_start
-        if np.any(local_ids < 0) or np.any(local_ids >= self._fine_owned_size):
-            raise ValueError("resolved owner ids are not locally owned")
-        if local_ids.size:
-            self._fine_work.x.array[local_ids] = owned_values
-        self._fine_work.x.scatter_forward()
-        self._finalize_primal(self._fine_work, self.fine_floquet)
-        constraint = _mpc_constraint_residual(self._fine_work, self.fine_floquet)
-        self._fine_work.x.array[self._fine_slaves] = 0.0
-        self._fine_work.x.scatter_forward()
-        finite = _finite_global(self._fine_work.x.array, self.comm)
-        if not finite or not np.isfinite(constraint):
-            raise RuntimeError("same-mesh primal output is non-finite")
-        self._fine_work.x.petsc_vec.copy(target)
+        started = perf_counter()
+        try:
+            owned_ids, owned_values, defect, packet_size = _resolve_owner_candidates(
+                received_ids,
+                received_values,
+                source_ranks,
+                self.comm.rank,
+                self.comm,
+            )
+        finally:
+            _add_timing(
+                timing,
+                "duplicate_row_check_seconds",
+                perf_counter() - started,
+            )
+        started = perf_counter()
+        try:
+            self._fine_work.x.array[:] = 0.0
+            local_ids = owned_ids.astype(np.int64) - self._fine_owned_start
+            if np.any(local_ids < 0) or np.any(local_ids >= self._fine_owned_size):
+                raise ValueError("resolved owner ids are not locally owned")
+            if local_ids.size:
+                self._fine_work.x.array[local_ids] = owned_values
+            self._fine_work.x.scatter_forward()
+            self._finalize_primal(self._fine_work, self.fine_floquet)
+            constraint = _mpc_constraint_residual(self._fine_work, self.fine_floquet)
+            self._fine_work.x.array[self._fine_slaves] = 0.0
+            self._fine_work.x.scatter_forward()
+            finite = _finite_global(self._fine_work.x.array, self.comm)
+            if not finite or not np.isfinite(constraint):
+                raise RuntimeError("same-mesh primal output is non-finite")
+            self._fine_work.x.petsc_vec.copy(target)
+        finally:
+            _add_timing(timing, "ghost_mpc_check_seconds", perf_counter() - started)
         self._last_apply_facts = {
             "operation": "primal",
             "finite": finite,
@@ -597,8 +692,15 @@ class SameMeshHcurlOwnerTransfer:
             "fine_owned_slaves_zero": True,
             "phase_application": "finalized_floquet_mpc_once",
         }
+        if timing is not None:
+            self._last_apply_facts["timing"] = dict(timing)
 
-    def apply_primal(self, source: Any) -> Any:
+    def apply_primal(
+        self,
+        source: Any,
+        *,
+        timing: MutableMapping[str, float] | None = None,
+    ) -> Any:
         self._require_live()
         target = create_vector(
             [
@@ -609,62 +711,92 @@ class SameMeshHcurlOwnerTransfer:
             ]
         )
         try:
-            self.apply_primal_into(source, target)
+            self.apply_primal_into(source, target, timing=timing)
             return target
         except BaseException:
             target.destroy()
             raise
 
-    def apply_adjoint_into(self, source: Any, target: Any) -> None:
+    def apply_adjoint_into(
+        self,
+        source: Any,
+        target: Any,
+        *,
+        timing: MutableMapping[str, float] | None = None,
+    ) -> None:
         self._require_live()
         self._require_algebraic(source, self._fine_slaves)
         self._require_vector(source, self.fine_space.dofmap.index_map)
         self._require_vector(target, self.coarse_space.dofmap.index_map)
-        source.copy(self._fine_work.x.petsc_vec)
-        self._fine_work.x.scatter_forward()
-        self.fine_floquet.mpc.homogenize(self._fine_work)
-        self._fine_work.x.scatter_forward()
+        started = perf_counter()
+        try:
+            source.copy(self._fine_work.x.petsc_vec)
+            self._fine_work.x.scatter_forward()
+            self.fine_floquet.mpc.homogenize(self._fine_work)
+            self._fine_work.x.scatter_forward()
+        finally:
+            _add_timing(timing, "ghost_mpc_prepare_seconds", perf_counter() - started)
         self._coarse_work.x.array[:] = 0.0
-        for record in self._records:
-            values = np.asarray(
-                self._fine_work.x.array[record["fine_local"]],
-                dtype=np.complex128,
-            )
-            contribution = record["matrix"].conj().T @ (
-                values * record["authority"]
-            )
-            np.add.at(
-                self._coarse_work.x.array,
-                record["coarse_local"],
-                contribution,
-            )
+        started = perf_counter()
+        try:
+            for record in self._records:
+                values = np.asarray(
+                    self._fine_work.x.array[record["fine_local"]],
+                    dtype=np.complex128,
+                )
+                contribution = record["matrix"].conj().T @ (
+                    values * record["authority"]
+                )
+                np.add.at(
+                    self._coarse_work.x.array,
+                    record["coarse_local"],
+                    contribution,
+                )
+        finally:
+            _add_timing(timing, "cell_adjoint_seconds", perf_counter() - started)
         if self._dual_flat_slaves.size:
-            np.take(
-                self._coarse_work.x.array,
-                self._dual_flat_slaves,
-                out=self._dual_reduction_work,
-            )
-            np.multiply(
-                self._dual_reduction_work,
-                self._dual_conjugated_coefficients,
-                out=self._dual_reduction_work,
-            )
-            np.add.at(
-                self._coarse_work.x.array,
-                self._dual_flat_masters,
-                self._dual_reduction_work,
-            )
-            self._coarse_work.x.array[self._coarse_mpc_slaves] = 0.0
-        self._coarse_work.x.petsc_vec.ghostUpdate(
-            addv=PETSc.InsertMode.ADD_VALUES,
-            mode=PETSc.ScatterMode.REVERSE,
-        )
-        self._coarse_work.x.scatter_forward()
-        finite = _finite_global(self._coarse_work.x.array, self.comm)
-        slave_max = _slave_storage_max(self._coarse_work, self.coarse_floquet)
-        if not finite or not np.isfinite(slave_max):
-            raise RuntimeError("same-mesh adjoint output is non-finite")
-        self._coarse_work.x.petsc_vec.copy(target)
+            started = perf_counter()
+            try:
+                np.take(
+                    self._coarse_work.x.array,
+                    self._dual_flat_slaves,
+                    out=self._dual_reduction_work,
+                )
+                np.multiply(
+                    self._dual_reduction_work,
+                    self._dual_conjugated_coefficients,
+                    out=self._dual_reduction_work,
+                )
+                np.add.at(
+                    self._coarse_work.x.array,
+                    self._dual_flat_masters,
+                    self._dual_reduction_work,
+                )
+                self._coarse_work.x.array[self._coarse_mpc_slaves] = 0.0
+            finally:
+                _add_timing(timing, "dual_reduce_seconds", perf_counter() - started)
+        started = perf_counter()
+        try:
+            exchange_started = perf_counter()
+            try:
+                self._coarse_work.x.petsc_vec.ghostUpdate(
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                    mode=PETSc.ScatterMode.REVERSE,
+                )
+            finally:
+                _add_timing(
+                    timing,
+                    "mpi_exchange_seconds",
+                    perf_counter() - exchange_started,
+                )
+            self._coarse_work.x.scatter_forward()
+            finite = _finite_global(self._coarse_work.x.array, self.comm)
+            slave_max = _slave_storage_max(self._coarse_work, self.coarse_floquet)
+            if not finite or not np.isfinite(slave_max):
+                raise RuntimeError("same-mesh adjoint output is non-finite")
+            self._coarse_work.x.petsc_vec.copy(target)
+        finally:
+            _add_timing(timing, "ghost_mpc_check_seconds", perf_counter() - started)
         self._last_apply_facts = {
             "operation": "adjoint",
             "finite": finite,
@@ -673,8 +805,15 @@ class SameMeshHcurlOwnerTransfer:
             "coarse_dual_reduction": "C^H_once",
             "phase_application": "fine_dual_homogenize_then_coarse_C^H_once",
         }
+        if timing is not None:
+            self._last_apply_facts["timing"] = dict(timing)
 
-    def apply_adjoint(self, source: Any) -> Any:
+    def apply_adjoint(
+        self,
+        source: Any,
+        *,
+        timing: MutableMapping[str, float] | None = None,
+    ) -> Any:
         self._require_live()
         target = create_vector(
             [
@@ -685,7 +824,7 @@ class SameMeshHcurlOwnerTransfer:
             ]
         )
         try:
-            self.apply_adjoint_into(source, target)
+            self.apply_adjoint_into(source, target, timing=timing)
             return target
         except BaseException:
             target.destroy()

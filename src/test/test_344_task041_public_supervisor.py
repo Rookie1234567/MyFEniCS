@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -129,6 +130,8 @@ def _run_phase(
     process_group_gone=None,
     warning_memory_bytes=None,
     hard_memory_bytes=None,
+    process_tree_rss_warning_bytes=None,
+    process_tree_rss_cap_bytes=None,
     timeout_seconds=None,
     workflow_started=0.0,
     phase_elapsed_timeout=False,
@@ -175,6 +178,8 @@ def _run_phase(
         / "memory_stage_markers.jsonl",
         process_group_gone=process_group_gone or (lambda _pid: True),
         phase_elapsed_timeout=phase_elapsed_timeout,
+        process_tree_rss_warning_bytes=process_tree_rss_warning_bytes,
+        process_tree_rss_cap_bytes=process_tree_rss_cap_bytes,
         sample_root_pid=sample_root_pid,
         min_memavailable_bytes=min_memavailable_bytes,
         min_cgroup_ancestor_headroom_bytes=min_cgroup_ancestor_headroom_bytes,
@@ -312,6 +317,37 @@ def test_outer_mpi_launch_identity_accepts_openmpi_markers(monkeypatch):
     }
 
 
+def test_v2_outer_identity_accepts_native_public_singleton(monkeypatch):
+    monkeypatch.setattr(supervisor, "_outer_mpi_size", lambda: 1)
+    monkeypatch.setattr(supervisor, "_outer_mpi_rank", lambda: 0)
+    monkeypatch.delenv("OMPI_COMM_WORLD_SIZE", raising=False)
+    monkeypatch.delenv("OMPI_COMM_WORLD_RANK", raising=False)
+
+    identity = supervisor._outer_mpi_launch_identity(
+        "task041_schur_speed_v2"
+    )
+
+    assert identity["launcher"] == "native_python_singleton"
+    assert identity["mpi_size"] == 1
+    assert identity["mpi_rank"] == 0
+    assert identity["launched_via_mpiexec"] is False
+    assert identity["native_public_singleton"] is True
+    assert identity["qualification"] == "native_public_singleton"
+
+
+def test_v2_outer_identity_rejects_outer_multi_rank(monkeypatch):
+    monkeypatch.setattr(supervisor, "_outer_mpi_size", lambda: 2)
+    monkeypatch.setattr(supervisor, "_outer_mpi_rank", lambda: 0)
+    monkeypatch.delenv("OMPI_COMM_WORLD_SIZE", raising=False)
+    monkeypatch.delenv("OMPI_COMM_WORLD_RANK", raising=False)
+
+    with pytest.raises(supervisor.Task041SupervisorError) as error:
+        supervisor._outer_mpi_launch_identity("task041_schur_speed_v2")
+
+    assert error.value.classification == "task041_identity_failure"
+    assert error.value.stage == "outer_mpi_identity"
+
+
 @pytest.mark.parametrize(
     ("size_marker", "rank_marker"),
     [(None, "0"), ("2", "0"), ("1", "1")],
@@ -347,6 +383,60 @@ def test_phase_handoff_records_rss_drop_and_pss_uss_without_summing(tmp_path):
     assert phase["sample_count"] == 1
     assert phase["smaps_complete_sample_count"] == 1
     assert phase["resource_sampling_semantics"].startswith("RSS/VmSwap")
+
+
+def test_v2_rss_cap_uses_complete_process_tree_rss_in_addition_to_authority(
+    tmp_path,
+):
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        return {"requested": True}
+
+    sample = _complete_resource_sample(rss=250)
+    sample["memory_authority_bytes"] = 100
+    samples = iter((sample, _complete_resource_sample(rss=100)))
+    phase = _run_phase(
+        tmp_path,
+        sample=lambda _pid: next(samples),
+        terminate=terminate,
+        hard_memory_bytes=1000,
+        process_tree_rss_warning_bytes=180,
+        process_tree_rss_cap_bytes=200,
+        sample_root_pid=9000,
+        process_group_gone=lambda _pid: True,
+    )
+    assert phase["termination_reason"] == "process_tree_rss_limit"
+    assert phase["process_tree_rss_warning_reached"] is True
+    assert phase["limits"]["process_tree_rss_cap_bytes"] == 200
+    assert terminated
+
+
+def test_v2_rss_cap_waits_for_normal_exit_when_tree_rss_is_incomplete(tmp_path):
+    terminated = []
+    sample = _complete_resource_sample(rss=250)
+    sample["memory_authority_bytes"] = 100
+    sample["process_tree"]["all_status_readable"] = False
+    sample["job_cgroup"].update(
+        {
+            "dedicated_job_cgroup": True,
+            "readable": True,
+            "memory_current_bytes": 100,
+            "swap_current_bytes": 0,
+        }
+    )
+
+    phase = _run_phase(
+        tmp_path,
+        sample=lambda _pid: sample,
+        popen_factory=_FakePopen(poll_results=[None, None, 0]),
+        terminate=lambda process: terminated.append(process.pid),
+        process_tree_rss_cap_bytes=200,
+    )
+    assert phase["termination_reason"] is None
+    assert phase["sample_count"] == 0
+    assert terminated == []
 
 
 def _complete_resource_sample(
@@ -400,6 +490,399 @@ def _complete_resource_sample(
     }
 
 
+def test_supervised_public_command_keeps_outer_evidence_and_limits_separate(
+    tmp_path,
+):
+    public_root = tmp_path / "public_runroot"
+    final_copy_marker = public_root / "final-copy-complete"
+    command = [
+        "qualified-python",
+        "scripts/run_case.py",
+        "one_dat",
+        "--task041-performance-profile",
+        "task041_schur_speed_v2",
+    ]
+    launch_manifest = {
+        "profile_id": "task041_schur_speed_v2",
+        "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8",
+        "source_sha": "a" * 40,
+        "parent_pid": os.getpid(),
+        "invocation_id": "test-invocation",
+        "ledger_owner": "service_finalizer",
+        "ledger_path": str((tmp_path / "compute_wall_ledger.json").resolve()),
+    }
+    calls = []
+    sample_observations = []
+
+    class _FinalCopyProcess(_FakeProcess):
+        def __init__(self):
+            super().__init__(poll_results=[None, None, 0])
+
+        def poll(self):
+            if self.poll_results and self.poll_results[0] == 0:
+                final_copy_marker.parent.mkdir(parents=True, exist_ok=True)
+                final_copy_marker.write_text("complete", encoding="utf-8")
+            return super().poll()
+
+    def popen_factory(argv, **kwargs):
+        manifest_path = Path(
+            argv[argv.index("--task041-supervision-record") + 1]
+        )
+        assert manifest_path.is_file()
+        assert json.loads(manifest_path.read_text(encoding="utf-8")) == (
+            launch_manifest
+        )
+        calls.append((list(argv), kwargs))
+        return _FinalCopyProcess()
+
+    def sample(_pid):
+        sample_observations.append((_pid, final_copy_marker.exists()))
+        return _complete_resource_sample(rss=100)
+
+    sample.smaps_interval_seconds = 30.0
+    profile_contract = {
+        "profile_id": "task041_schur_speed_v2",
+        "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8",
+        "memory_cap_bytes": 900,
+        "warning_memory_bytes": 810,
+        "phase_budgets_seconds": {
+            "shared_S0_S1_S3": 21600.0,
+            "S2": 7200.0,
+            "S4": 100.0,
+        },
+        "active_consumer_phase": "S4",
+        "batch_budget_seconds": 1000.0,
+    }
+    ledger_snapshot = {
+        "S4_used_seconds": 20.0,
+        "batch_used_compute_wall_seconds": 30.0,
+        "used_compute_wall_seconds": 30.0,
+    }
+    resource_limits = {
+        "warning_memory_bytes": 1000,
+        "hard_memory_bytes": 2000,
+        "swap_limit_bytes": 0,
+        "min_memavailable_bytes": 384,
+        "min_cgroup_ancestor_headroom_bytes": 384,
+    }
+    environment = {
+        name: "1" for name in supervisor.TASK041_REQUIRED_THREADS
+    }
+    result = supervisor.run_task041_supervised_public_command(
+        command,
+        tmp_path / "supervision",
+        profile_contract=profile_contract,
+        ledger_snapshot=ledger_snapshot,
+        resource_limits=resource_limits,
+        environment=environment,
+        sample_factory=sample,
+        repository_root=tmp_path,
+        popen_factory=popen_factory,
+        terminate_factory=lambda _process: pytest.fail(
+            "normal public completion must not request termination"
+        ),
+        monotonic=_Clock(0.0, 0.0, 0.1, 0.2, 0.3, 0.3),
+        sleep=lambda _seconds: None,
+        process_group_gone=lambda _pid: True,
+        global_swap_baseline={
+            "global_swap_used_bytes": 0,
+            "global_pswpin_pages": 0,
+            "global_pswpout_pages": 0,
+        },
+        launch_manifest=launch_manifest,
+    )
+
+    supervision_root = tmp_path / "supervision"
+    spawned_command = command + [
+        "--task041-supervision-record",
+        str(supervision_root / "launch_manifest.json"),
+    ]
+    phase = result["phase_result"]
+    assert result["status"] == "completed"
+    assert result["result_classification"] == "worker_exit0"
+    assert result["budget"]["effective_remaining_seconds"] == 80.0
+    assert phase["argv"] == spawned_command
+    assert phase["sample_root_pid"] == os.getpid()
+    assert phase["sample_root_scope"] == "public_launcher_and_all_descendants"
+    assert phase["limits"]["timeout_seconds"] == 80.0
+    assert phase["limits"]["cumulative_compute_limit_seconds"] == 100.0
+    assert phase["process_group_gone"] is True
+    assert phase["termination"] is None
+    assert calls[0][0] == spawned_command
+    assert sample_observations
+    assert {pid for pid, _marker_exists in sample_observations} == {os.getpid()}
+    assert any(not marker_exists for _pid, marker_exists in sample_observations)
+    assert any(marker_exists for _pid, marker_exists in sample_observations)
+    assert final_copy_marker.is_file()
+    assert (supervision_root / "memory_stages.jsonl").is_file()
+    assert (supervision_root / "markers.jsonl").is_file()
+    assert (supervision_root / "log" / "public_command_stdout.txt").is_file()
+    assert (supervision_root / "summary.json").is_file()
+    assert result["launch_manifest"]["path"] == str(
+        supervision_root / "launch_manifest.json"
+    )
+    assert result["launch_manifest"]["ledger_owner"] == "service_finalizer"
+    assert not (public_root / "memory_stages.jsonl").exists()
+
+    failed_root = tmp_path / "failed_supervision"
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    def high_rss_sample(_pid):
+        return _complete_resource_sample(rss=901)
+
+    failed = supervisor.run_task041_supervised_public_command(
+        command,
+        failed_root,
+        profile_contract=profile_contract,
+        ledger_snapshot=ledger_snapshot,
+        resource_limits=resource_limits,
+        environment=environment,
+        sample_factory=high_rss_sample,
+        repository_root=tmp_path,
+        popen_factory=_FakePopen(poll_results=[None]),
+        terminate_factory=terminate,
+        monotonic=_Clock(1.0, 1.0, 1.0, 1.0, 1.0),
+        sleep=lambda _seconds: None,
+        process_group_gone=lambda _pid: True,
+    )
+    assert failed["status"] == "failed"
+    assert failed["result_classification"] == "process_tree_rss_limit"
+    assert terminated
+
+
+def test_supervised_public_command_stops_before_spawn_when_budget_is_exhausted(
+    tmp_path,
+):
+    profile_contract = {
+        "profile_id": "task041_schur_speed_v2",
+        "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8",
+        "memory_cap_bytes": 900,
+        "warning_memory_bytes": 810,
+        "phase_budgets_seconds": {"S4": 100.0},
+        "active_consumer_phase": "S4",
+        "batch_budget_seconds": 100.0,
+    }
+    resource_limits = {
+        "warning_memory_bytes": 1000,
+        "hard_memory_bytes": 2000,
+        "swap_limit_bytes": 0,
+        "min_memavailable_bytes": 384,
+        "min_cgroup_ancestor_headroom_bytes": 384,
+    }
+    environment = {
+        name: "1" for name in supervisor.TASK041_REQUIRED_THREADS
+    }
+    calls = []
+
+    def unexpected_popen(*_args, **_kwargs):
+        calls.append(True)
+        raise AssertionError("zero remaining budget must not spawn")
+
+    result = supervisor.run_task041_supervised_public_command(
+        ["qualified-python", "scripts/run_case.py", "one_dat"],
+        tmp_path / "zero_budget",
+        profile_contract=profile_contract,
+        ledger_snapshot={
+            "S4_used_seconds": 100.0,
+            "batch_used_compute_wall_seconds": 100.0,
+        },
+        resource_limits=resource_limits,
+        environment=environment,
+        sample_factory=lambda _pid: _complete_resource_sample(),
+        repository_root=tmp_path,
+        popen_factory=unexpected_popen,
+    )
+
+    assert result["prestart_stop"] is True
+    assert result["result_classification"] == "cumulative_wall_timeout"
+    assert result["phase_result"] is None
+    assert calls == []
+    assert json.loads(
+        (tmp_path / "zero_budget" / "summary.json").read_text(
+            encoding="utf-8"
+        )
+    )["prestart_stop"] is True
+
+
+def test_supervised_public_command_preserves_partial_supervisor_error(
+    tmp_path,
+):
+    profile_contract = {
+        "profile_id": "task041_schur_speed_v2",
+        "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8",
+        "memory_cap_bytes": 900,
+        "warning_memory_bytes": 810,
+        "phase_budgets_seconds": {"S4": 100.0},
+        "active_consumer_phase": "S4",
+        "batch_budget_seconds": 1000.0,
+    }
+    resource_limits = {
+        "warning_memory_bytes": 1000,
+        "hard_memory_bytes": 2000,
+        "swap_limit_bytes": 0,
+        "min_memavailable_bytes": 384,
+        "min_cgroup_ancestor_headroom_bytes": 384,
+    }
+    environment = {
+        name: "1" for name in supervisor.TASK041_REQUIRED_THREADS
+    }
+    sample_calls = []
+
+    def sample(pid):
+        sample_calls.append(pid)
+        if len(sample_calls) == 1:
+            return _complete_resource_sample(rss=100)
+        raise supervisor.Task041SupervisorError(
+            "sample failed after spawn",
+            classification="task041_resource_sample_failure",
+            stage="public_command_resource_sample",
+        )
+
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        process.terminated = True
+        return {"requested": True}
+
+    gone_states = iter((False, True, True))
+    result = supervisor.run_task041_supervised_public_command(
+        ["qualified-python", "scripts/run_case.py", "one_dat"],
+        tmp_path / "partial_error",
+        profile_contract=profile_contract,
+        ledger_snapshot={
+            "S4_used_seconds": 20.0,
+            "batch_used_compute_wall_seconds": 30.0,
+        },
+        resource_limits=resource_limits,
+        environment=environment,
+        sample_factory=sample,
+        repository_root=tmp_path,
+        popen_factory=_FakePopen(poll_results=[None, None]),
+        terminate_factory=terminate,
+        monotonic=_Clock(0.0, 0.1, 0.2, 0.3, 0.3),
+        sleep=lambda _seconds: None,
+        process_group_gone=lambda _pid: next(gone_states),
+    )
+
+    assert result["status"] == "failed"
+    assert result["result_classification"] == (
+        "task041_resource_sample_failure"
+    )
+    assert result["phase_result"] is not None
+    assert result["phase_result"]["partial"] is True
+    assert result["phase_result"]["sample_count"] == 1
+    assert result["phase_result"]["termination"] is not None
+    assert result["phase_result"]["cleanup_attempted"] is True
+    assert result["phase_result"]["process_group_gone"] is True
+    assert terminated
+
+
+def test_task041_supervision_record_defers_v2_ledger_after_time_gate(
+    tmp_path, monkeypatch
+):
+    from benchmarks.task041_balh_workflow import task041_schur_speed_v2_contract
+
+    specification = load_and_resolve(
+        ROOT / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+    )
+    source_sha = "a" * 40
+    contract = task041_schur_speed_v2_contract(
+        str(specification.identity["model_id"])
+    )
+    ledger_path = tmp_path / "compute_wall_ledger.json"
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "schema": "task041.compute_wall_ledger.v2",
+                "used_compute_wall_seconds": contract["batch_budget_seconds"],
+                "batch_used_compute_wall_seconds": contract[
+                    "batch_budget_seconds"
+                ],
+                "shared_S0_S1_S3_used_seconds": 21600.0,
+                "S2_used_seconds": 7200.0,
+                "S4_used_seconds": contract["active_consumer_budget_seconds"],
+                "used_status": "measured",
+                "basis": "test-local V2 ledger",
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    invocation_id = "test-supervision-invocation"
+    monkeypatch.setenv("INVOCATION_ID", invocation_id)
+    monkeypatch.setattr(
+        supervisor,
+        "_outer_mpi_launch_identity",
+        lambda _profile: {
+            "launcher": "native_python_singleton",
+            "markers": {
+                "OMPI_COMM_WORLD_SIZE": None,
+                "OMPI_COMM_WORLD_RANK": None,
+            },
+            "mpi_size": 1,
+            "mpi_rank": 0,
+            "launched_via_mpiexec": False,
+            "native_public_singleton": True,
+            "qualification": "native_public_singleton",
+        },
+    )
+    monkeypatch.setattr(
+        supervisor,
+        "_write_task041_compute_wall_ledger",
+        lambda *_args, **_kwargs: pytest.fail(
+            "external supervision must defer the global ledger write"
+        ),
+    )
+    record_path = tmp_path / "launch_manifest.json"
+    record_path.write_text(
+        json.dumps(
+            {
+                "profile_id": contract["profile_id"],
+                "model_id": specification.identity["model_id"],
+                "source_sha": source_sha,
+                "scope": contract["scope"],
+                "representative_rhs_probe": None,
+                "parent_pid": os.getppid(),
+                "invocation_id": invocation_id,
+                "ledger_owner": "service_finalizer",
+                "ledger_path": str(ledger_path.resolve()),
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "workflow").mkdir()
+    result = supervisor.run_task041_public_supervisor(
+        specification,
+        source_sha=source_sha,
+        run_directory=tmp_path / "workflow",
+        compute_wall_ledger_path=ledger_path,
+        legacy_native_packet_descriptor=tmp_path / "descriptor.json",
+        performance_profile=contract["profile_id"],
+        task041_supervision_record=record_path,
+        popen_factory=lambda *_args, **_kwargs: pytest.fail(
+            "time gate must stop before spawning a worker"
+        ),
+    )
+    assert result["result_classification"] == "cumulative_wall_timeout"
+    assert result["supervision_record"]["sha256"] == hashlib.sha256(
+        record_path.read_bytes()
+    ).hexdigest()
+    assert result["ledger_owner"] == "service_finalizer"
+    assert result["ledger_update"] == "deferred_to_service_finalizer"
+    assert result["used_after"] == "pending"
+    assert result["compute_wall_budget"]["used_after"] == "pending"
+    assert result["compute_wall_budget"]["used_after_seconds"] is None
+
+
 def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
     sampled_pids = []
     terminated = []
@@ -430,6 +913,7 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
         terminate=terminate,
         process_group_gone=lambda _pid: True,
         sample_root_pid=9000,
+        process_tree_rss_cap_bytes=200,
         clock=_Clock(0.0, 0.1, 0.4, 0.7, 0.7),
     )
     assert sampled_pids == [9000, 9000]
@@ -458,6 +942,15 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
             tmp_path / "numerical_output" / "log" / "memory_stages.jsonl"
         ).read_text(encoding="utf-8").splitlines()
     ]
+    markers = [
+        json.loads(line)
+        for line in (
+            tmp_path / "numerical_output" / "log" / "memory_stage_markers.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+    ]
+    assert markers[0]["stage"] == "producer_started"
+    assert markers[0]["workflow_started_monotonic_seconds"] == 0.0
+    assert markers[0]["clock"] == "CLOCK_MONOTONIC"
     assert [record["sample_role"] for record in raw_records] == [
         "phase_running",
         "phase_end_public_root",
@@ -500,6 +993,134 @@ def test_balh_public_root_sampling_and_worker_only_termination(tmp_path):
     )
     assert phase["termination_reason"] == "memavailable_floor"
     assert terminated[-1] != 9000
+
+
+def _phase_end_gate_sample_pair(first, second):
+    samples = iter((first, second))
+
+    def sample(_pid):
+        return next(samples)
+
+    return sample
+
+
+@pytest.mark.parametrize(
+    ("second", "phase_kwargs", "reason"),
+    [
+        (
+            _complete_resource_sample(rss=201),
+            {"process_tree_rss_cap_bytes": 200},
+            "process_tree_rss_limit",
+        ),
+        (
+            {
+                **_complete_resource_sample(rss=100),
+                "job_no_swap": False,
+            },
+            {"process_tree_rss_cap_bytes": 200},
+            "swap_detected",
+        ),
+        (
+            _complete_resource_sample(memavailable=100),
+            {
+                "process_tree_rss_cap_bytes": 200,
+                "min_memavailable_bytes": 384,
+            },
+            "memavailable_floor",
+        ),
+        (
+            _complete_resource_sample(
+                cgroup_state="finite", cgroup_current=900, cgroup_headroom=100
+            ),
+            {
+                "process_tree_rss_cap_bytes": 200,
+                "min_cgroup_ancestor_headroom_bytes": 384,
+            },
+            "cgroup_headroom_floor",
+        ),
+        (
+            {
+                "memory_authority_bytes": 100,
+                "job_no_swap": True,
+                "process_tree": {
+                    "rss_bytes": None,
+                    "swap_bytes": None,
+                    "all_status_readable": False,
+                },
+                "job_cgroup": {
+                    "dedicated_job_cgroup": True,
+                    "readable": True,
+                    "memory_current_bytes": 100,
+                    "swap_current_bytes": 0,
+                },
+            },
+            {"process_tree_rss_cap_bytes": 200},
+            "process_tree_rss_unmeasured",
+        ),
+    ],
+)
+def test_v2_phase_end_resource_gate_fails_without_signalling_gone_group(
+    tmp_path, second, phase_kwargs, reason
+):
+    partial = {}
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        return {"requested": True}
+
+    with pytest.raises(supervisor.Task041SupervisorError) as error:
+        _run_phase(
+            tmp_path,
+            sample=_phase_end_gate_sample_pair(
+                _complete_resource_sample(rss=100), second
+            ),
+            popen_factory=_FakePopen(poll_results=[None, 0]),
+            terminate=terminate,
+            process_group_gone=lambda _pid: True,
+            sample_root_pid=9000,
+            partial_phase_results=partial,
+            clock=_Clock(0.0, 0.1, 0.2, 0.3, 0.4),
+            **phase_kwargs,
+        )
+
+    record = partial["producer"]
+    assert error.value.classification == "task041_resource_sample_failure"
+    assert record["termination_reason"] == reason
+    assert record["returncode"] == 0
+    assert record["process_group_gone"] is True
+    assert record["partial"] is True
+    assert terminated == []
+
+
+def test_v2_phase_end_resource_gate_time_failure_keeps_exit_without_signal(tmp_path):
+    partial = {}
+    terminated = []
+
+    def terminate(process):
+        terminated.append(process.pid)
+        return {"requested": True}
+
+    with pytest.raises(supervisor.Task041SupervisorError):
+        _run_phase(
+            tmp_path,
+            sample=_phase_end_gate_sample_pair(
+                _complete_resource_sample(), _complete_resource_sample()
+            ),
+            popen_factory=_FakePopen(poll_results=[None, 0]),
+            process_group_gone=lambda _pid: True,
+            sample_root_pid=9000,
+            partial_phase_results=partial,
+            process_tree_rss_cap_bytes=200,
+            timeout_seconds=1.0,
+            clock=_Clock(0.0, 0.1, 0.2, 2.0, 2.1),
+            terminate=terminate,
+        )
+
+    assert partial["producer"]["termination_reason"] == "wall_timeout"
+    assert partial["producer"]["returncode"] == 0
+    assert partial["producer"]["process_group_gone"] is True
+    assert terminated == []
 
 
 @pytest.mark.parametrize("enforce_time_stops", [True, False])
@@ -1283,6 +1904,105 @@ def test_compute_wall_ledger_accumulates_current_phases_without_reuse_reset(
         for record in consumer["source_records"][-1:]
     )
     assert json.loads(ledger_path.read_text(encoding="utf-8")) == consumer
+
+
+def test_task041_v2_ledger_keeps_group_buckets_and_history(tmp_path):
+    ledger_path = tmp_path / "task041_schur_speed_v2_compute_wall_ledger.json"
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "schema": "task041.compute_wall_ledger.v2",
+                "profile_id": "task041_schur_speed_v2",
+                "phase_scope": "S0/S1/S3",
+                "history": {"previous": "kept"},
+                "used_compute_wall_seconds": 3.7,
+                "used_status": "measured_scoped_checks",
+                "budget_semantics": "shared S0/S1/S3 history",
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _, loaded = supervisor._load_task041_compute_wall_ledger(ledger_path)
+    shared_first = supervisor._write_task041_compute_wall_ledger(
+        ledger_path,
+        used_before=loaded,
+        current_seconds=2.0,
+        run_directory=tmp_path / "s1",
+        phase_seconds={"S1": 2.0},
+        limit_seconds=201600.0,
+        profile_id="task041_schur_speed_v2",
+        phase_group="shared_S0_S1_S3",
+    )
+    shared_second = supervisor._write_task041_compute_wall_ledger(
+        ledger_path,
+        used_before=shared_first,
+        current_seconds=4.0,
+        run_directory=tmp_path / "s3",
+        phase_seconds={"S3": 4.0},
+        limit_seconds=201600.0,
+        profile_id="task041_schur_speed_v2",
+        phase_group="shared_S0_S1_S3",
+    )
+    final = supervisor._write_task041_compute_wall_ledger(
+        ledger_path,
+        used_before=shared_second,
+        current_seconds=7.0,
+        run_directory=tmp_path / "s4",
+        phase_seconds={"S4": 7.0},
+        limit_seconds=201600.0,
+        profile_id="task041_schur_speed_v2",
+        phase_group="S4",
+    )
+    assert final["schema"] == "task041.compute_wall_ledger.v2"
+    assert final["history"] == {"previous": "kept"}
+    assert final["phase_scope"] == "S0/S1/S3"
+    assert final["shared_S0_S1_S3_used_seconds"] == pytest.approx(9.7)
+    assert final["S2_used_seconds"] == pytest.approx(0.0)
+    assert final["S4_used_seconds"] == pytest.approx(7.0)
+    assert final["batch_used_compute_wall_seconds"] == pytest.approx(16.7)
+    assert final["used_compute_wall_seconds"] == pytest.approx(16.7)
+    assert final["budget_limit_seconds"] == pytest.approx(201600.0)
+    assert final["phase_remaining_seconds"]["S4"] == pytest.approx(172793.0)
+    assert [
+        record["phase_group"] for record in final["source_records"]
+    ] == [
+        "shared_S0_S1_S3",
+        "shared_S0_S1_S3",
+        "S4",
+    ]
+    mixed_before = dict(final)
+    mixed_before["used_status"] = "measured_plus_conservative_upper_bound"
+    mixed = supervisor._write_task041_compute_wall_ledger(
+        ledger_path,
+        used_before=mixed_before,
+        current_seconds=463.599,
+        run_directory=tmp_path / "s1a_2b_turn",
+        phase_seconds={"s1a_2b_turn": 463.599},
+        limit_seconds=201600.0,
+        profile_id="task041_schur_speed_v2",
+        phase_group="shared_S0_S1_S3",
+    )
+    assert mixed["used_status"] == "measured_plus_conservative_upper_bound"
+    assert mixed["remaining_status"] == (
+        "derived_from_measured_and_conservative_upper_bound"
+    )
+    assert mixed["shared_S0_S1_S3_used_seconds"] == pytest.approx(
+        9.7 + 463.599
+    )
+    assert mixed["source_records"][-1]["seconds"] == pytest.approx(463.599)
+
+
+def test_task041_terminal_copy_and_streaming_hash_keep_artifact_bytes(tmp_path):
+    source = tmp_path / "source.bin"
+    destination = tmp_path / "terminal.bin"
+    source.write_bytes((bytes(range(256)) * 8193) + b"tail")
+    supervisor._copy_file_bounded(source, destination)
+    assert destination.read_bytes() == source.read_bytes()
+    assert supervisor._sha256_file(destination) == hashlib.sha256(
+        source.read_bytes()
+    ).hexdigest()
 
 
 def test_phase_normal_exit_with_lingering_group_is_cleaned_and_fails(tmp_path):

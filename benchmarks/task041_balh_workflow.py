@@ -15,10 +15,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from benchmarks.task039_v4_selected_mode_packet import (
-    TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
-)
 from src.io.input_validation import (
+    TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MPI_SIZE,
     task041_balh_case,
     task041_balh_profile_errors,
@@ -39,6 +37,103 @@ TASK041_BALH_5NM_CANDIDATE_MODEL_ID = (
 TASK041_BALH_TIME_STOP_OVERRIDE_REASON = (
     "user_authorized_single_candidate_time_override"
 )
+TASK041_SCHUR_SPEED_V2_PROFILE = "task041_schur_speed_v2"
+TASK041_SCHUR_SPEED_V2_WARNING_FRACTION = 0.90
+TASK041_SCHUR_SPEED_V2_S0_S1_S3_BUDGET_SECONDS = 21600.0
+TASK041_SCHUR_SPEED_V2_S2_BUDGET_SECONDS = 7200.0
+TASK041_SCHUR_SPEED_V2_S4_BUDGET_SECONDS = 172800.0
+TASK041_SCHUR_SPEED_V2_BATCH_BUDGET_SECONDS = 201600.0
+_TASK041_SCHUR_SPEED_V2_MEMORY_CAPS = {
+    "task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8": 9159106560,
+    "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8": 53221163008,
+}
+_TASK041_SCHUR_SPEED_V2_ACTIVE_PHASES = {
+    "task041_13p5nm_balh_hybrid_iterative_p6h10_m120_mpi8": "S2",
+    "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8": "S4",
+}
+TASK041_SCHUR_SPEED_V2_LEDGER_NAME = (
+    "task041_schur_speed_v2_compute_wall_ledger.json"
+)
+TASK041_REPRESENTATIVE_RHS_SCOPE = "representative_rhs"
+TASK041_REPRESENTATIVE_RHS_SCHEMA = "task041.representative_rhs_manifest.v1"
+TASK041_REPRESENTATIVE_RHS_COUNT = 8
+TASK041_REPRESENTATIVE_RHS_MODE_COUNT = 480
+_TASK041_REPRESENTATIVE_RHS_EXPECTED = (
+    ("bottom", "positive", 227, 207, 207),
+    ("bottom", "positive", 35, 15, 15),
+    ("bottom", "negative", 691, 671, 191),
+    ("bottom", "negative", 513, 493, 13),
+    ("top", "positive", 330, 310, 310),
+    ("top", "positive", 32, 12, 12),
+    ("top", "negative", 686, 666, 186),
+    ("top", "negative", 513, 493, 13),
+)
+
+
+def task041_schur_speed_v2_contract(
+    model_id: str, *, scope: str | None = None
+) -> dict[str, Any]:
+    """Return the explicit S1/S2/S3/S4 budget contract for one candidate."""
+
+    case = _require_case(model_id)
+    if model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS or case["route"] != "balh":
+        raise ValueError("task041_schur_speed_v2 requires a BAL_H candidate")
+    if scope not in {None, TASK041_REPRESENTATIVE_RHS_SCOPE}:
+        raise ValueError(f"unsupported Task041 performance scope: {scope!r}")
+    try:
+        memory_cap = int(_TASK041_SCHUR_SPEED_V2_MEMORY_CAPS[str(model_id)])
+    except KeyError as exc:
+        raise ValueError(
+            "task041_schur_speed_v2 is registered only for the two BAL_H candidates"
+        ) from exc
+    active_phase = _TASK041_SCHUR_SPEED_V2_ACTIVE_PHASES[str(model_id)]
+    phase_budgets = {
+        "shared_S0_S1_S3": TASK041_SCHUR_SPEED_V2_S0_S1_S3_BUDGET_SECONDS,
+        "S2": TASK041_SCHUR_SPEED_V2_S2_BUDGET_SECONDS,
+        "S4": TASK041_SCHUR_SPEED_V2_S4_BUDGET_SECONDS,
+    }
+    active_budget_group = (
+        "shared_S0_S1_S3" if scope == TASK041_REPRESENTATIVE_RHS_SCOPE else active_phase
+    )
+    return {
+        "profile_id": TASK041_SCHUR_SPEED_V2_PROFILE,
+        "model_id": str(model_id),
+        "scope": scope or "formal_consumer",
+        "budget_group": active_budget_group,
+        "memory_cap_bytes": memory_cap,
+        "memory_cap_source": "review_report_v2_section_5_explicit_cap",
+        "memory_gate_source": "simultaneous_process_tree_rss",
+        "warning_fraction": TASK041_SCHUR_SPEED_V2_WARNING_FRACTION,
+        "warning_memory_bytes": int(
+            memory_cap * TASK041_SCHUR_SPEED_V2_WARNING_FRACTION
+        ),
+        "swap_limit_bytes": 0,
+        "phase_budgets_seconds": phase_budgets,
+        "active_consumer_phase": active_budget_group,
+        "active_consumer_budget_seconds": phase_budgets[active_budget_group],
+        "batch_budget_seconds": TASK041_SCHUR_SPEED_V2_BATCH_BUDGET_SECONDS,
+        "producer": {
+            "mode": "reused",
+            "invocation": "not_run",
+            "time_stop_enforced": True,
+            "qep": "not_run",
+        },
+        "time_stop": {
+            "consumer_enforced": True,
+            "disable_time_stop_inherited": False,
+            "mutually_exclusive_with": (
+                "--task041-balh-candidate-disable-time-stop"
+            ),
+        },
+        "ledger": {
+            "schema": "task041.compute_wall_ledger.v2",
+            "filename": TASK041_SCHUR_SPEED_V2_LEDGER_NAME,
+        },
+        "budget_semantics": (
+            "S0/S1/S3 share 21600 seconds; S2 and S4 are separate review phases; "
+            "the batch value is the cumulative stop budget across these groups"
+        ),
+    }
 
 
 def task041_balh_time_stop_override_record(enabled: bool) -> dict[str, Any]:
@@ -66,6 +161,77 @@ def _valid_sha(value: Any, length: int) -> bool:
         and value == value.lower()
         and all(char in "0123456789abcdef" for char in value)
     )
+
+
+def load_task041_representative_rhs_manifest(
+    path: str | Path,
+) -> dict[str, Any]:
+    """Load the one fixed, reviewed eight-RHS probe manifest."""
+
+    manifest_path = Path(path)
+    if not manifest_path.is_absolute():
+        raise ValueError("representative RHS manifest must be an absolute path")
+    raw = manifest_path.read_bytes()
+    payload = json.loads(raw)
+    if not isinstance(payload, Mapping):
+        raise TypeError("representative RHS manifest must be a JSON object")
+    if payload.get("schema") != TASK041_REPRESENTATIVE_RHS_SCHEMA:
+        raise ValueError("unsupported representative RHS manifest schema")
+    if payload.get("scope") != TASK041_REPRESENTATIVE_RHS_SCOPE:
+        raise ValueError("representative RHS manifest has the wrong scope")
+    if payload.get("model_id") != TASK041_BALH_5NM_CANDIDATE_MODEL_ID:
+        raise ValueError("representative RHS probe is limited to the 5 nm BAL_H candidate")
+    if payload.get("profile_id") != TASK041_SCHUR_SPEED_V2_PROFILE:
+        raise ValueError("representative RHS probe requires task041_schur_speed_v2")
+    if int(payload.get("mode_count", -1)) != TASK041_REPRESENTATIVE_RHS_MODE_COUNT:
+        raise ValueError("representative RHS probe requires 480 modes per direction")
+    if int(payload.get("mpi_size", -1)) != TASK041_BALH_MPI_SIZE:
+        raise ValueError("representative RHS probe requires MPI8")
+    budget = payload.get("budget")
+    if not isinstance(budget, Mapping) or (
+        budget.get("group") != "shared_S0_S1_S3"
+        or float(budget.get("phase_limit_seconds", -1.0))
+        != TASK041_SCHUR_SPEED_V2_S0_S1_S3_BUDGET_SECONDS
+        or float(budget.get("batch_limit_seconds", -1.0))
+        != TASK041_SCHUR_SPEED_V2_BATCH_BUDGET_SECONDS
+        or int(budget.get("memory_cap_bytes", -1))
+        != _TASK041_SCHUR_SPEED_V2_MEMORY_CAPS[
+            TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+        ]
+        or budget.get("swap_limit_bytes") != 0
+        or budget.get("time_stop_override") is not False
+    ):
+        raise ValueError("representative RHS budget binding is invalid")
+    entries = payload.get("entries")
+    if not isinstance(entries, list) or len(entries) != TASK041_REPRESENTATIVE_RHS_COUNT:
+        raise ValueError("representative RHS manifest must contain exactly eight entries")
+    signature = tuple(
+        (
+            str(entry["side"]),
+            str(entry["branch"]),
+            int(entry["audit_index"]),
+            int(entry["formal_column"]),
+            int(entry["branch_ordinal"]),
+        )
+        for entry in entries
+    )
+    if signature != _TASK041_REPRESENTATIVE_RHS_EXPECTED:
+        raise ValueError("representative RHS entries do not match the reviewed fixed order")
+    packet_binding = payload.get("packet_binding")
+    if not isinstance(packet_binding, Mapping) or not _valid_sha(
+        packet_binding.get("packet_manifest_sha256"), 64
+    ) or not _valid_sha(packet_binding.get("packet_identity_sha256"), 64):
+        raise ValueError("representative RHS packet binding is incomplete")
+    source_audit = payload.get("source_audit")
+    if not isinstance(source_audit, Mapping) or not _valid_sha(
+        source_audit.get("rhs_audit_sha256"), 64
+    ) or not _valid_sha(source_audit.get("source_git_sha"), 40):
+        raise ValueError("representative RHS source audit binding is incomplete")
+    return {
+        **dict(payload),
+        "path": str(manifest_path),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+    }
 
 
 def _jsonable(value: Any) -> Any:
@@ -190,6 +356,10 @@ def build_task041_balh_packet_identity(
 ) -> dict[str, Any]:
     """Build the new strict MPI8 packet identity without rewriting old schemas."""
 
+    from benchmarks.task039_v4_selected_mode_packet import (
+        TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
+    )
+
     failures = tuple(task041_balh_profile_errors(normalized))
     if failures:
         detail = "; ".join(f"{field}: {message}" for field, message in failures)
@@ -247,6 +417,8 @@ def _mpi8_command(
     packet_origin: str | None = None,
     legacy_native_binding: str | Path | None = None,
     disable_time_stop: bool = False,
+    performance_profile: str | None = None,
+    task041_rhs_probe_manifest: str | Path | None = None,
 ) -> list[str]:
     command = [
         "mpiexec",
@@ -298,6 +470,14 @@ def _mpi8_command(
         )
     if disable_time_stop:
         command.append("--task041-balh-candidate-disable-time-stop")
+    if performance_profile is not None:
+        if performance_profile != TASK041_SCHUR_SPEED_V2_PROFILE:
+            raise ValueError(
+                f"unsupported Task041 performance profile: {performance_profile}"
+            )
+        command.extend(["--task041-performance-profile", performance_profile])
+    if task041_rhs_probe_manifest is not None:
+        command.extend(["--task041-rhs-probe", str(task041_rhs_probe_manifest)])
     return command
 
 
@@ -371,6 +551,8 @@ def build_task041_balh_candidate_consumer_command(
     packet_origin: str | None = None,
     legacy_native_binding: str | Path | None = None,
     disable_time_stop: bool = False,
+    performance_profile: str | None = None,
+    task041_rhs_probe_manifest: str | Path | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -382,6 +564,30 @@ def build_task041_balh_candidate_consumer_command(
         raise ValueError(
             "time-stop override is limited to the 5 nm BAL_H candidate profile"
         )
+    if performance_profile is not None:
+        if disable_time_stop:
+            raise ValueError(
+                "performance profile and time-stop override are mutually exclusive"
+            )
+        task041_schur_speed_v2_contract(
+            str(normalized["model_id"]),
+            scope=(
+                TASK041_REPRESENTATIVE_RHS_SCOPE
+                if task041_rhs_probe_manifest is not None
+                else None
+            ),
+        )
+    if task041_rhs_probe_manifest is not None:
+        if (
+            str(normalized["model_id"]) != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+            or performance_profile != TASK041_SCHUR_SPEED_V2_PROFILE
+            or disable_time_stop
+        ):
+            raise ValueError(
+                "representative RHS probe requires the reused 5 nm task041_schur_speed_v2 candidate"
+            )
+        if not Path(task041_rhs_probe_manifest).is_absolute():
+            raise ValueError("representative RHS manifest must be an absolute path")
     return _mpi8_command(
         python_executable,
         TASK041_BALH_CANDIDATE_PHASE,
@@ -396,6 +602,8 @@ def build_task041_balh_candidate_consumer_command(
         packet_origin=packet_origin,
         legacy_native_binding=legacy_native_binding,
         disable_time_stop=disable_time_stop,
+        performance_profile=performance_profile,
+        task041_rhs_probe_manifest=task041_rhs_probe_manifest,
     )
 
 
@@ -486,6 +694,10 @@ def task041_balh_consumer_identity_binding(
     consumer_source_sha: str,
 ) -> dict[str, Any]:
     """Bind a producer packet to a distinct consumer identity by physics/layout."""
+
+    from benchmarks.task039_v4_selected_mode_packet import (
+        TASK041_BALH_SELECTED_MODE_IDENTITY_SCHEMA,
+    )
 
     if not isinstance(producer_identity, Mapping):
         raise TypeError("Task041 side BAL_H producer identity must be a mapping")
@@ -785,7 +997,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-producer-source-sha")
     parser.add_argument("--packet-origin")
     parser.add_argument("--legacy-native-binding")
-    parser.add_argument(
+    parser.add_argument("--task041-rhs-probe")
+    time_control = parser.add_mutually_exclusive_group()
+    time_control.add_argument(
+        "--task041-performance-profile",
+        choices=(TASK041_SCHUR_SPEED_V2_PROFILE,),
+    )
+    time_control.add_argument(
         "--task041-balh-candidate-disable-time-stop", action="store_true"
     )
     return parser
@@ -807,6 +1025,8 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         legacy_native_binding=args.legacy_native_binding,
         candidate=True,
         disable_time_stop=args.task041_balh_candidate_disable_time_stop,
+        performance_profile=args.task041_performance_profile,
+        task041_rhs_probe_manifest=args.task041_rhs_probe,
     )
 
 
@@ -820,10 +1040,16 @@ __all__ = [
     "TASK041_BALH_EXACT_CONSUMER_SCHEMA",
     "TASK041_BALH_MODE_PREP_PHASE",
     "TASK041_BALH_MODE_PREP_PROFILE",
+    "TASK041_REPRESENTATIVE_RHS_COUNT",
+    "TASK041_REPRESENTATIVE_RHS_MODE_COUNT",
+    "TASK041_REPRESENTATIVE_RHS_SCOPE",
+    "TASK041_SCHUR_SPEED_V2_LEDGER_NAME",
+    "TASK041_SCHUR_SPEED_V2_PROFILE",
     "build_task041_balh_candidate_consumer_command",
     "build_task041_balh_exact_consumer_command",
     "build_task041_balh_mode_prep_command",
     "build_task041_balh_packet_identity",
+    "load_task041_representative_rhs_manifest",
     "task041_balh_candidate_consumer_iterative_config",
     "task041_balh_candidate_consumer_profile",
     "task041_balh_consumer_identity_binding",
@@ -831,6 +1057,7 @@ __all__ = [
     "task041_balh_exact_consumer_profile",
     "task041_balh_route",
     "task041_balh_time_stop_override_record",
+    "task041_schur_speed_v2_contract",
     "validate_balh_producer_packet",
 ]
 

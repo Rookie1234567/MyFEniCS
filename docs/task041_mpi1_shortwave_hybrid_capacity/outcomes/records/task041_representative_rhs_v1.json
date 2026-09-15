@@ -1,0 +1,143 @@
+{
+  "schema": "task041.representative_rhs_manifest.v1",
+  "scope": "representative_rhs",
+  "purpose": "finite audited BAL_H component probe; full Schur, outer solve, recovery and official RTA remain not_run",
+  "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8",
+  "profile_id": "task041_schur_speed_v2",
+  "mode_count": 480,
+  "mpi_size": 8,
+  "budget": {
+    "group": "shared_S0_S1_S3",
+    "phase_limit_seconds": 21600.0,
+    "batch_limit_seconds": 201600.0,
+    "memory_cap_bytes": 53221163008,
+    "swap_limit_bytes": 0,
+    "time_stop_override": false
+  },
+  "packet_binding": {
+    "origin": "task039.v4.h4.legacy_native",
+    "packet_root": "/home/fenics/Projects/MyFEniCS/results/task041_5nm_mpi8_fresh_selected_packet_b01a5932_r1",
+    "packet_manifest": "/home/fenics/Projects/MyFEniCS/results/task041_5nm_mpi8_fresh_selected_packet_b01a5932_r1/manifest.json",
+    "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+    "packet_identity": "/home/fenics/Projects/MyFEniCS/results/task041_5nm_mpi8_fresh_selected_packet_identity_b01a5932_r1.json",
+    "packet_identity_sha256": "2a5cd006e87c48a89fa8166f687413ee0007346d6cf63d76c1cf9fb03ee994eb"
+  },
+  "source_audit": {
+    "source_git_sha": "51694bbc49d90e70eef87c953f07c695f5fc519c",
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "rhs_audit_path": "/home/fenics/Projects/MyFEniCS/results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8/task041_5nm_p6h4_m480_mpi8_balh__hybrid_iterative__mpi8__M480/20260912T075551.700563Z/consumer/numerical_output/balh_side_rhs_audits.jsonl",
+    "rhs_audit_sha256": "b84de36f3eacd82eab6ff8fad03c689bb49476efb153e7c4096fcdf61b3fc51b",
+    "rhs_audit_bytes": 3852327,
+    "rhs_audit_rows": 1980
+  },
+  "generation_contract": {
+    "source_function": "src/solvers/hybrid_fem_modal_schur_direct.py:modal_coupling_action",
+    "formal_column_rule": "formal_column = audit_index - 20",
+    "branch_ordinal_rule": "branch_ordinal = formal_column % 480",
+    "propagation": {
+      "bottom_positive": "direct modal branch inside modal_coupling_action",
+      "bottom_negative": "backward factor applied inside modal_coupling_action",
+      "top_positive": "forward factor applied inside modal_coupling_action",
+      "top_negative": "direct modal branch inside modal_coupling_action"
+    },
+    "response_vector_hashes": "not_yet_materialized"
+  },
+  "entries": [
+    {
+      "ordinal": 0,
+      "side": "bottom",
+      "branch": "positive",
+      "audit_index": 227,
+      "formal_column": 207,
+      "branch_ordinal": 207,
+      "raw_line_1based": 248,
+      "raw_line_sha256": "024448eeff43bba710be97e1d49bcd79f185cd8d282b2d78003c6150da3e2fc8",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    },
+    {
+      "ordinal": 1,
+      "side": "bottom",
+      "branch": "positive",
+      "audit_index": 35,
+      "formal_column": 15,
+      "branch_ordinal": 15,
+      "raw_line_1based": 56,
+      "raw_line_sha256": "ed276d1089d2817cdc28e364bef077614fa87289c7b101eced3549b3c9b01ca4",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    },
+    {
+      "ordinal": 2,
+      "side": "bottom",
+      "branch": "negative",
+      "audit_index": 691,
+      "formal_column": 671,
+      "branch_ordinal": 191,
+      "raw_line_1based": 712,
+      "raw_line_sha256": "41b12548ba21a651a72410da5029cc724b6843472be45c6fb96071903e288d56",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    },
+    {
+      "ordinal": 3,
+      "side": "bottom",
+      "branch": "negative",
+      "audit_index": 513,
+      "formal_column": 493,
+      "branch_ordinal": 13,
+      "raw_line_1based": 534,
+      "raw_line_sha256": "4d9cf19d8aafd7cbd5adc4e6ce74cf66b24e55374bae85fad36619bcdebcc0c3",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    },
+    {
+      "ordinal": 4,
+      "side": "top",
+      "branch": "positive",
+      "audit_index": 330,
+      "formal_column": 310,
+      "branch_ordinal": 310,
+      "raw_line_1based": 1311,
+      "raw_line_sha256": "e3145d4263674b3a48cc12564f7d52f3fe20b004fced6fa10af69f89003585e0",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    },
+    {
+      "ordinal": 5,
+      "side": "top",
+      "branch": "positive",
+      "audit_index": 32,
+      "formal_column": 12,
+      "branch_ordinal": 12,
+      "raw_line_1based": 1013,
+      "raw_line_sha256": "3c6de105a6e2e7be93c4cd85d55710107c2572c14c1297255cbbc07ada5638a9",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    },
+    {
+      "ordinal": 6,
+      "side": "top",
+      "branch": "negative",
+      "audit_index": 686,
+      "formal_column": 666,
+      "branch_ordinal": 186,
+      "raw_line_1based": 1667,
+      "raw_line_sha256": "07203408136ba732c6fd614f7f1cbada7fe187350811b0d2d5a78b9d07a9add8",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    },
+    {
+      "ordinal": 7,
+      "side": "top",
+      "branch": "negative",
+      "audit_index": 513,
+      "formal_column": 493,
+      "branch_ordinal": 13,
+      "raw_line_1based": 1494,
+      "raw_line_sha256": "b363d21ab1fd80423e55768c90fd532e0648147c911a2c782e9f6e6b0b7704b3",
+      "rhs_vector_sha256": null,
+      "response_vector_sha256": null
+    }
+  ]
+}

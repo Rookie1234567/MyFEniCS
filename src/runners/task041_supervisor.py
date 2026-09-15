@@ -152,10 +152,16 @@ def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, int]:
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.write_text(
-        json.dumps(payload, sort_keys=True, indent=2, default=str) + "\n",
-        encoding="utf-8",
-    )
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(
+            json.dumps(payload, sort_keys=True, indent=2, default=str) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -177,7 +183,105 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def _sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _load_task041_supervision_record(
+    record_path: str | Path,
+    *,
+    profile_id: str,
+    model_id: str,
+    source_sha: str,
+    scope: str,
+    representative_rhs_probe: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    path = Path(record_path)
+    if not path.is_absolute():
+        raise Task041SupervisorError(
+            "Task041 supervision record must be an absolute path",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
+    path = path.resolve()
+    payload = _read_json(path)
+    invocation_id = os.environ.get("INVOCATION_ID")
+    parent_pid = os.getppid()
+    if not isinstance(invocation_id, str) or not invocation_id:
+        raise Task041SupervisorError(
+            "Task041 supervision requires a non-empty inherited INVOCATION_ID",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
+    expected = {
+        "profile_id": profile_id,
+        "model_id": model_id,
+        "source_sha": source_sha,
+        "scope": scope,
+        "ledger_owner": "service_finalizer",
+        "parent_pid": parent_pid,
+        "invocation_id": invocation_id,
+    }
+    if isinstance(payload.get("parent_pid"), bool) or not isinstance(
+        payload.get("parent_pid"), int
+    ):
+        raise Task041SupervisorError(
+            "Task041 supervision record parent_pid must be an integer",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
+    for field, value in expected.items():
+        if field not in payload or payload[field] != value:
+            raise Task041SupervisorError(
+                f"Task041 supervision record {field} does not match the current public process",
+                classification="task041_identity_failure",
+                stage="supervision_record",
+            )
+    if (
+        "representative_rhs_probe" not in payload
+        or payload["representative_rhs_probe"] != representative_rhs_probe
+    ):
+        raise Task041SupervisorError(
+            "Task041 supervision record representative_rhs_probe does not match the current public process",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
+    ledger_value = payload.get("ledger_path")
+    if not isinstance(ledger_value, str) or not Path(ledger_value).is_absolute():
+        raise Task041SupervisorError(
+            "Task041 supervision record ledger_path must be absolute",
+            classification="task041_identity_failure",
+            stage="supervision_record",
+        )
+    return {
+        "path": str(path),
+        "sha256": _sha256_file(path),
+        "profile_id": profile_id,
+        "model_id": model_id,
+        "source_sha": source_sha,
+        "scope": scope,
+        "representative_rhs_probe": representative_rhs_probe,
+        "parent_pid": parent_pid,
+        "invocation_id": expected["invocation_id"],
+        "ledger_path": str(Path(ledger_value).resolve()),
+        "outer_owner": "service_finalizer",
+        "ledger_owner": "service_finalizer",
+    }
+
+
+def _copy_file_bounded(source: Path, destination: Path) -> None:
+    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+    try:
+        with source.open("rb") as source_stream, temporary.open("wb") as target:
+            while chunk := source_stream.read(1024 * 1024):
+                target.write(chunk)
+        os.replace(temporary, destination)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def _append_jsonl(path: Path, payload: Mapping[str, Any]) -> None:
@@ -466,6 +570,8 @@ def _run_phase(
     process_group_gone: Callable[[int], bool] = _process_group_gone,
     warning_memory_bytes: int = TASK041_WARNING_MEMORY_BYTES,
     hard_memory_bytes: int = TASK041_HARD_MEMORY_BYTES,
+    process_tree_rss_warning_bytes: int | None = None,
+    process_tree_rss_cap_bytes: int | None = None,
     timeout_seconds: int = TASK041_TIMEOUT_SECONDS,
     phase_elapsed_timeout: bool = False,
     sample_root_pid: int | None = None,
@@ -503,6 +609,7 @@ def _run_phase(
     cgroup_ancestor_limit_states: set[str] = set()
     before_rss: int | None = None
     warning_reached = False
+    process_tree_rss_warning_reached = False
     termination_reason: str | None = None
     termination: dict[str, Any] | None = None
     process: Any | None = None
@@ -512,6 +619,41 @@ def _run_phase(
     baseline = None if global_swap_baseline is None else dict(global_swap_baseline)
     worker_process_group_pid: int | None = None
     phase_end_sample: dict[str, Any] | None = None
+
+    def _authority_complete_for_profile(
+        authority: Mapping[str, Any] | None,
+        authority_kind: str | None,
+    ) -> bool:
+        if authority_kind is None:
+            return False
+        if process_tree_rss_cap_bytes is None:
+            return True
+        process_tree = authority.get("process_tree") if authority else None
+        return bool(
+            authority_kind == "process_tree"
+            and isinstance(process_tree, Mapping)
+            and isinstance(process_tree.get("rss_bytes"), int)
+        )
+
+    def _phase_limit_record() -> dict[str, Any]:
+        limits: dict[str, Any] = {
+            "warning_memory_bytes": warning_memory_bytes,
+            "hard_memory_bytes": hard_memory_bytes,
+            "swap_limit_bytes": 0,
+            "timeout_seconds": timeout_seconds,
+            "min_memavailable_bytes": min_memavailable_bytes,
+            "min_cgroup_ancestor_headroom_bytes": (
+                min_cgroup_ancestor_headroom_bytes
+            ),
+            "cumulative_compute_limit_seconds": cumulative_compute_limit_seconds,
+        }
+        if process_tree_rss_warning_bytes is not None:
+            limits["process_tree_rss_warning_bytes"] = (
+                process_tree_rss_warning_bytes
+            )
+        if process_tree_rss_cap_bytes is not None:
+            limits["process_tree_rss_cap_bytes"] = process_tree_rss_cap_bytes
+        return limits
 
     def _record_sample(record: dict[str, Any], *, running: bool = False) -> None:
         nonlocal before_rss
@@ -633,11 +775,74 @@ def _run_phase(
             )
         return record
 
+    def _resource_termination_reason(
+        record: Mapping[str, Any], now: float
+    ) -> str | None:
+        memory = record.get("memory_authority_bytes")
+        process_tree_rss = record.get("process_tree_rss_bytes")
+        if not isinstance(memory, int) or memory >= hard_memory_bytes:
+            return "absolute_memory_limit"
+        if process_tree_rss_cap_bytes is not None and not isinstance(
+            process_tree_rss, int
+        ):
+            return "process_tree_rss_unmeasured"
+        if (
+            process_tree_rss_cap_bytes is not None
+            and process_tree_rss >= process_tree_rss_cap_bytes
+        ):
+            return "process_tree_rss_limit"
+        if (
+            min_memavailable_bytes is not None
+            and not isinstance(record.get("host_memavailable_bytes"), int)
+        ):
+            return "memavailable_unmeasured"
+        if (
+            min_cgroup_ancestor_headroom_bytes is not None
+            and _cgroup_ancestor_headroom_unmeasured(record)
+        ):
+            return "cgroup_headroom_unmeasured"
+        if record["swap_bytes"] > 0 or record["job_no_swap"] is not True:
+            return "swap_detected"
+        if (
+            min_memavailable_bytes is not None
+            and isinstance(record.get("host_memavailable_bytes"), int)
+            and record["host_memavailable_bytes"] < min_memavailable_bytes
+        ):
+            return "memavailable_floor"
+        if (
+            min_cgroup_ancestor_headroom_bytes is not None
+            and isinstance(
+                record.get("cgroup_ancestor_memory_headroom_bytes"), int
+            )
+            and record["cgroup_ancestor_memory_headroom_bytes"]
+            < min_cgroup_ancestor_headroom_bytes
+        ):
+            return "cgroup_headroom_floor"
+        if (
+            enforce_time_stops
+            and cumulative_compute_limit_seconds is not None
+            and cumulative_compute_used_seconds + (now - phase_started)
+            >= cumulative_compute_limit_seconds
+        ):
+            return "cumulative_wall_timeout"
+        if enforce_time_stops and (
+            (now - phase_started)
+            if phase_elapsed_timeout
+            else (now - workflow_started)
+        ) >= timeout_seconds:
+            return "wall_timeout"
+        return None
+
     stdout_path = log_root / f"{phase}_stdout.txt"
     try:
         _append_jsonl(
             marker_path,
-            {"stage": f"{phase}_started", "wall_seconds": phase_started - workflow_started},
+            {
+                "stage": f"{phase}_started",
+                "wall_seconds": phase_started - workflow_started,
+                "workflow_started_monotonic_seconds": workflow_started,
+                "clock": "CLOCK_MONOTONIC",
+            },
         )
         with stdout_path.open("w", encoding="utf-8") as stdout:
             process = popen_factory(
@@ -665,12 +870,14 @@ def _run_phase(
                     if isinstance(authority, Mapping)
                     else None
                 )
-                if authority_kind is None:
+                if not _authority_complete_for_profile(authority, authority_kind):
                     if sample_count:
                         transition_deadline = (
                             now + TASK041_TERMINAL_SAMPLE_TRANSITION_BUDGET_SECONDS
                         )
-                        while authority_kind is None:
+                        while not _authority_complete_for_profile(
+                            authority, authority_kind
+                        ):
                             returncode = process.poll()
                             if returncode is not None:
                                 break
@@ -714,11 +921,15 @@ def _run_phase(
                                     if isinstance(authority, Mapping)
                                     else None
                                 )
-                                if authority_kind is None:
+                                if not _authority_complete_for_profile(
+                                    authority, authority_kind
+                                ):
                                     returncode = process.poll()
                         if returncode is not None:
                             break
-                        if authority_kind is None:
+                        if not _authority_complete_for_profile(
+                            authority, authority_kind
+                        ):
                             raise Task041SupervisorError(
                                 f"{phase} resource authorities are incomplete",
                                 classification="task041_resource_sample_failure",
@@ -738,54 +949,19 @@ def _run_phase(
                 _record_sample(record, running=True)
                 _append_jsonl(memory_stages_path, record)
                 memory = record["memory_authority_bytes"]
-                warning_reached = warning_reached or memory >= warning_memory_bytes
-                if memory >= hard_memory_bytes:
-                    termination_reason = "absolute_memory_limit"
-                elif (
-                    min_memavailable_bytes is not None
-                    and not isinstance(record.get("host_memavailable_bytes"), int)
-                ):
-                    termination_reason = "memavailable_unmeasured"
-                elif (
-                    min_cgroup_ancestor_headroom_bytes is not None
-                    and _cgroup_ancestor_headroom_unmeasured(record)
-                ):
-                    termination_reason = "cgroup_headroom_unmeasured"
-                elif record["swap_bytes"] > 0 or record["job_no_swap"] is not True:
-                    termination_reason = "swap_detected"
-                elif (
-                    min_memavailable_bytes is not None
-                    and isinstance(record.get("host_memavailable_bytes"), int)
-                    and record["host_memavailable_bytes"]
-                    < min_memavailable_bytes
-                ):
-                    termination_reason = "memavailable_floor"
-                elif (
-                    min_cgroup_ancestor_headroom_bytes is not None
-                    and isinstance(
-                        record.get("cgroup_ancestor_memory_headroom_bytes"), int
+                process_tree_rss = record.get("process_tree_rss_bytes")
+                if isinstance(memory, int):
+                    warning_reached = (
+                        warning_reached or memory >= warning_memory_bytes
                     )
-                    and record["cgroup_ancestor_memory_headroom_bytes"]
-                    < min_cgroup_ancestor_headroom_bytes
+                if process_tree_rss_warning_bytes is not None and isinstance(
+                    process_tree_rss, int
                 ):
-                    termination_reason = "cgroup_headroom_floor"
-                elif (
-                    enforce_time_stops
-                    and cumulative_compute_limit_seconds is not None
-                    and cumulative_compute_used_seconds + (now - phase_started)
-                    >= cumulative_compute_limit_seconds
-                ):
-                    termination_reason = "cumulative_wall_timeout"
-                elif (
-                    enforce_time_stops
-                    and (
-                        (now - phase_started)
-                        if phase_elapsed_timeout
-                        else (now - workflow_started)
+                    process_tree_rss_warning_reached = (
+                        process_tree_rss_warning_reached
+                        or process_tree_rss >= process_tree_rss_warning_bytes
                     )
-                    >= timeout_seconds
-                ):
-                    termination_reason = "wall_timeout"
+                termination_reason = _resource_termination_reason(record, now)
                 if termination_reason is not None:
                     cleanup_attempted = True
                     termination = _terminate_and_verify(
@@ -816,16 +992,32 @@ def _run_phase(
                 else None
             )
             if post_kind is None:
+                if (
+                    process_tree_rss_cap_bytes is not None
+                    and termination_reason is None
+                ):
+                    termination_reason = "process_tree_rss_unmeasured"
                 raise Task041SupervisorError(
                     f"{phase} public launcher root could not be sampled after worker exit",
                     classification="task041_resource_sample_failure",
                     stage=f"{phase}_resource_sample",
                 )
+            if process_tree_rss_cap_bytes is not None and not _authority_complete_for_profile(
+                post_authority, post_kind
+            ):
+                if termination_reason is None:
+                    termination_reason = "process_tree_rss_unmeasured"
+                raise Task041SupervisorError(
+                    f"{phase} public launcher root resource authority is incomplete",
+                    classification="task041_resource_sample_failure",
+                    stage=f"{phase}_resource_sample",
+                )
+            post_now = monotonic()
             phase_end_sample = _annotate_sample(
                 _sample_record(
                     post_authority,
                     phase,
-                    monotonic() - workflow_started,
+                    post_now - workflow_started,
                     authority_kind=post_kind,
                 ),
                 sample_role="phase_end_public_root",
@@ -833,6 +1025,19 @@ def _run_phase(
             )
             _record_sample(phase_end_sample)
             _append_jsonl(memory_stages_path, phase_end_sample)
+            post_reason = (
+                _resource_termination_reason(phase_end_sample, post_now)
+                if process_tree_rss_cap_bytes is not None
+                else None
+            )
+            if post_reason is not None:
+                if termination_reason is None:
+                    termination_reason = post_reason
+                raise Task041SupervisorError(
+                    f"{phase} terminal resource gate failed: {post_reason}",
+                    classification="task041_resource_sample_failure",
+                    stage=f"{phase}_resource_sample",
+                )
 
         after_rss = (
             phase_end_sample.get("process_tree_rss_bytes")
@@ -853,17 +1058,7 @@ def _run_phase(
         finished_at = monotonic()
         phase_wall_seconds = finished_at - phase_started
         workflow_wall_seconds = finished_at - workflow_started
-        phase_record_limits = {
-            "warning_memory_bytes": warning_memory_bytes,
-            "hard_memory_bytes": hard_memory_bytes,
-            "swap_limit_bytes": 0,
-            "timeout_seconds": timeout_seconds,
-            "min_memavailable_bytes": min_memavailable_bytes,
-            "min_cgroup_ancestor_headroom_bytes": (
-                min_cgroup_ancestor_headroom_bytes
-            ),
-            "cumulative_compute_limit_seconds": cumulative_compute_limit_seconds,
-        }
+        phase_record_limits = _phase_limit_record()
         _append_jsonl(
             marker_path,
             {
@@ -908,21 +1103,13 @@ def _run_phase(
                     "workflow_wall_seconds": max(
                         0.0, finished_at - workflow_started
                     ),
-                    "limits": {
-                        "warning_memory_bytes": warning_memory_bytes,
-                        "hard_memory_bytes": hard_memory_bytes,
-                        "swap_limit_bytes": 0,
-                        "timeout_seconds": timeout_seconds,
-                        "min_memavailable_bytes": min_memavailable_bytes,
-                        "min_cgroup_ancestor_headroom_bytes": (
-                            min_cgroup_ancestor_headroom_bytes
-                        ),
-                        "cumulative_compute_limit_seconds": (
-                            cumulative_compute_limit_seconds
-                        ),
-                    },
+                    "limits": _phase_limit_record(),
                     "time_stop_enforced": bool(enforce_time_stops),
                     "sample_count": sample_count,
+                    "warning_reached": warning_reached,
+                    "process_tree_rss_warning_reached": (
+                        process_tree_rss_warning_reached
+                    ),
                     "last_sample": last_sample,
                     "termination_reason": termination_reason or "phase_exception",
                     "termination": termination,
@@ -986,6 +1173,7 @@ def _run_phase(
             "pss_uss_missing_sample_count": pss_uss_missing_sample_count,
         },
         "warning_reached": warning_reached,
+        "process_tree_rss_warning_reached": process_tree_rss_warning_reached,
         "termination_reason": termination_reason,
         "termination": termination,
         "process_group_gone": group_gone,
@@ -1037,6 +1225,239 @@ def _run_phase(
             "semantics": "shared-host diagnostic; not the job swap authority",
         },
     }
+
+
+def run_task041_supervised_public_command(
+    command: list[str],
+    supervision_root: str | Path,
+    *,
+    profile_contract: Mapping[str, Any],
+    ledger_snapshot: Mapping[str, Any],
+    resource_limits: Mapping[str, Any],
+    environment: Mapping[str, str],
+    sample_factory: SampleFactory,
+    repository_root: str | Path | None = None,
+    popen_factory: PopenFactory = subprocess.Popen,
+    terminate_factory: TerminateFactory = terminate_process_tree,
+    monotonic: Clock = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
+    process_group_gone: Callable[[int], bool] = _process_group_gone,
+    global_swap_baseline: Mapping[str, Any] | None = None,
+    poll_interval: float = 0.25,
+    launch_manifest: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Supervise one public command with an independent outer evidence root.
+
+    The caller supplies already validated profile, ledger, resource limits, and
+    child environment.  This narrow wrapper intentionally does not construct
+    the numerical child environment or copy the child's output files.
+    """
+
+    profile_id = profile_contract["profile_id"]
+    model_id = profile_contract["model_id"]
+    if profile_id != "task041_schur_speed_v2":
+        raise Task041SupervisorError(
+            "Task041 supervised public command requires task041_schur_speed_v2",
+            classification="task041_identity_failure",
+            stage="supervised_public_profile",
+        )
+    if model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS:
+        raise Task041SupervisorError(
+            "Task041 supervised public command is limited to BAL_H candidates",
+            classification="task041_identity_failure",
+            stage="supervised_public_profile",
+        )
+    active_phase = profile_contract["active_consumer_phase"]
+    phase_budget = float(profile_contract["phase_budgets_seconds"][active_phase])
+    batch_budget = float(profile_contract["batch_budget_seconds"])
+    batch_used = float(ledger_snapshot["batch_used_compute_wall_seconds"])
+    phase_used = _task041_v2_group_used(ledger_snapshot, active_phase)
+    phase_remaining = max(0.0, phase_budget - phase_used)
+    batch_remaining = max(0.0, batch_budget - batch_used)
+    effective_remaining = min(phase_remaining, batch_remaining)
+
+    warning_memory_bytes = resource_limits["warning_memory_bytes"]
+    hard_memory_bytes = resource_limits["hard_memory_bytes"]
+    swap_limit_bytes = resource_limits["swap_limit_bytes"]
+    if swap_limit_bytes != 0:
+        raise Task041SupervisorError(
+            "Task041 supervised public command requires the zero-swap contract",
+            classification="task041_identity_failure",
+            stage="supervised_public_limits",
+        )
+    rss_warning_bytes = profile_contract["warning_memory_bytes"]
+    rss_cap_bytes = profile_contract["memory_cap_bytes"]
+
+    root = Path(supervision_root).resolve()
+    root.mkdir(parents=True, exist_ok=False)
+    log_root = root / "log"
+    log_root.mkdir()
+    launch_manifest_path: Path | None = None
+    spawn_command = list(command)
+    if launch_manifest is not None:
+        if "--task041-supervision-record" in spawn_command:
+            raise Task041SupervisorError(
+                "supervised public command must not predefine its launch manifest path",
+                classification="task041_identity_failure",
+                stage="supervised_public_manifest",
+            )
+        launch_manifest_path = root / "launch_manifest.json"
+        _write_json(launch_manifest_path, launch_manifest)
+        spawn_command.extend(
+            ["--task041-supervision-record", str(launch_manifest_path)]
+        )
+    repository = (
+        Path(repository_root).resolve()
+        if repository_root is not None
+        else Path(__file__).resolve().parents[2]
+    )
+    started = monotonic()
+    phase_result: dict[str, Any] | None = None
+    partial_phase_results: dict[str, Any] = {}
+    result = {
+        "schema": "task041.supervised_public_command.v1",
+        "status": "failed",
+        "result_classification": None,
+        "exit_status": None,
+        "supervision_root": str(root),
+        "command": spawn_command,
+        "profile_id": profile_id,
+        "model_id": model_id,
+        "budget": {
+            "phase_group": active_phase,
+            "phase_budget_seconds": phase_budget,
+            "phase_used_before_seconds": phase_used,
+            "phase_remaining_seconds": phase_remaining,
+            "batch_budget_seconds": batch_budget,
+            "batch_used_before_seconds": batch_used,
+            "batch_remaining_seconds": batch_remaining,
+            "effective_remaining_seconds": effective_remaining,
+            "basis": "min(phase_remaining_seconds, batch_remaining_seconds)",
+        },
+        "limits": {
+            "warning_memory_bytes": warning_memory_bytes,
+            "hard_memory_bytes": hard_memory_bytes,
+            "swap_limit_bytes": swap_limit_bytes,
+            "process_tree_rss_warning_bytes": rss_warning_bytes,
+            "process_tree_rss_cap_bytes": rss_cap_bytes,
+            "min_memavailable_bytes": resource_limits[
+                "min_memavailable_bytes"
+            ],
+            "min_cgroup_ancestor_headroom_bytes": resource_limits[
+                "min_cgroup_ancestor_headroom_bytes"
+            ],
+        },
+        "environment_threads": {
+            name: environment.get(name) for name in TASK041_REQUIRED_THREADS
+        },
+        "service_cgroup_cleanup": "not_checked_by_POSIX_phase_helper",
+        "phase_result": None,
+    }
+    if launch_manifest_path is not None:
+        result["launch_manifest"] = {
+            "path": str(launch_manifest_path),
+            "sha256": _sha256_file(launch_manifest_path),
+            "outer_owner": launch_manifest.get("outer_owner"),
+            "ledger_owner": launch_manifest.get("ledger_owner"),
+        }
+    if effective_remaining <= 0.0:
+        result.update(
+            {
+                "result_classification": "cumulative_wall_timeout",
+                "error": {
+                    "type": "Task041SupervisorError",
+                    "message": "no verified V2 budget remains before public launch",
+                    "stage": "supervised_public_budget",
+                },
+                "prestart_stop": True,
+            }
+        )
+        _write_json(root / "summary.json", result)
+        return result
+    try:
+        phase_result = _run_phase(
+            "public_command",
+            spawn_command,
+            root / "public_command_phase",
+            log_root=log_root,
+            environment=dict(environment),
+            repository_root=repository,
+            workflow_started=started,
+            popen_factory=popen_factory,
+            sample_factory=sample_factory,
+            terminate_factory=terminate_factory,
+            monotonic=monotonic,
+            sleep=sleep,
+            poll_interval=poll_interval,
+            memory_stages_path=root / "memory_stages.jsonl",
+            marker_path=root / "markers.jsonl",
+            process_group_gone=process_group_gone,
+            warning_memory_bytes=warning_memory_bytes,
+            hard_memory_bytes=hard_memory_bytes,
+            process_tree_rss_warning_bytes=rss_warning_bytes,
+            process_tree_rss_cap_bytes=rss_cap_bytes,
+            timeout_seconds=effective_remaining,
+            phase_elapsed_timeout=True,
+            sample_root_pid=os.getpid(),
+            min_memavailable_bytes=resource_limits["min_memavailable_bytes"],
+            min_cgroup_ancestor_headroom_bytes=resource_limits[
+                "min_cgroup_ancestor_headroom_bytes"
+            ],
+            cumulative_compute_used_seconds=phase_used,
+            cumulative_compute_limit_seconds=phase_used + effective_remaining,
+            global_swap_baseline=global_swap_baseline,
+            partial_phase_results=partial_phase_results,
+            enforce_time_stops=True,
+        )
+        resource_failure = _phase_resource_failure(phase_result)
+        if resource_failure:
+            classification = _phase_resource_classification(phase_result)
+            result_status = "failed"
+            result_classification = classification or "task041_resource_failure"
+            exit_status = phase_result.get("returncode")
+        else:
+            result_status = (
+                "completed" if phase_result.get("returncode") == 0 else "failed"
+            )
+            result_classification = (
+                "worker_exit0"
+                if phase_result.get("returncode") == 0
+                else "task041_public_command_nonzero"
+            )
+            exit_status = phase_result.get("returncode")
+        result.update(
+            {
+                "status": result_status,
+                "result_classification": result_classification,
+                "exit_status": exit_status,
+                "phase_result": phase_result,
+            }
+        )
+    except Task041SupervisorError as exc:
+        phase_result = partial_phase_results.get("public_command")
+        phase_classification = (
+            _phase_resource_classification(phase_result)
+            if isinstance(phase_result, Mapping)
+            else None
+        )
+        result.update(
+            {
+                "result_classification": phase_classification or exc.classification,
+                "exit_status": (
+                    phase_result.get("returncode")
+                    if isinstance(phase_result, Mapping)
+                    else None
+                ),
+                "error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "stage": exc.stage,
+                },
+                "phase_result": phase_result,
+            }
+        )
+    _write_json(root / "summary.json", result)
+    return result
 
 
 def _git_identity(repository_root: Path, source_sha: str) -> dict[str, Any]:
@@ -1131,13 +1552,51 @@ def _outer_mpi_rank() -> int:
     return int(MPI.COMM_WORLD.rank)
 
 
-def _outer_mpi_launch_identity() -> dict[str, Any]:
+def _outer_mpi_launch_identity(
+    performance_profile: str | None = None,
+) -> dict[str, Any]:
     size = _outer_mpi_size()
     rank = _outer_mpi_rank()
     markers = {
         "OMPI_COMM_WORLD_SIZE": os.environ.get("OMPI_COMM_WORLD_SIZE"),
         "OMPI_COMM_WORLD_RANK": os.environ.get("OMPI_COMM_WORLD_RANK"),
     }
+    if performance_profile is not None:
+        from benchmarks.task041_balh_workflow import (
+            TASK041_SCHUR_SPEED_V2_PROFILE,
+        )
+
+        if performance_profile != TASK041_SCHUR_SPEED_V2_PROFILE:
+            raise Task041SupervisorError(
+                "unsupported Task041 performance profile",
+                classification="task041_identity_failure",
+                stage="outer_mpi_identity",
+            )
+        failures: list[str] = []
+        if size != TASK041_MPI_SIZE:
+            failures.append(f"MPI.COMM_WORLD.size must be 1, got {size}")
+        if rank != 0:
+            failures.append(f"MPI.COMM_WORLD.rank must be 0, got {rank}")
+        for name, value in markers.items():
+            if value is not None:
+                failures.append(
+                    f"{name} must be absent for native public singleton, got {value!r}"
+                )
+        if failures:
+            raise Task041SupervisorError(
+                "; ".join(failures),
+                classification="task041_identity_failure",
+                stage="outer_mpi_identity",
+            )
+        return {
+            "launcher": "native_python_singleton",
+            "markers": markers,
+            "mpi_size": size,
+            "mpi_rank": rank,
+            "launched_via_mpiexec": False,
+            "native_public_singleton": True,
+            "qualification": "native_public_singleton",
+        }
     expected = {
         "OMPI_COMM_WORLD_SIZE": str(size),
         "OMPI_COMM_WORLD_RANK": str(rank),
@@ -1407,8 +1866,575 @@ def _rank_pid_affinity_artifact(phase_root: Path) -> dict[str, Any]:
     }
 
 
+def _validate_representative_rhs_result(
+    consumer_root: Path,
+    summary: Mapping[str, Any],
+    binding: Mapping[str, Any],
+    *,
+    process_group_gone: bool | None,
+) -> dict[str, Any]:
+    """Independently validate the fixed finite-response worker evidence."""
+
+    from benchmarks.task041_balh_workflow import (
+        _TASK041_REPRESENTATIVE_RHS_EXPECTED,
+        TASK041_REPRESENTATIVE_RHS_COUNT,
+        TASK041_REPRESENTATIVE_RHS_SCOPE,
+    )
+
+    failures: list[str] = []
+    checks: dict[str, Any] = {}
+    expected_entries = binding.get("entries")
+    expected_by_ordinal: dict[int, Mapping[str, Any]] = {}
+    if isinstance(expected_entries, list):
+        for entry in expected_entries:
+            if isinstance(entry, Mapping) and isinstance(entry.get("ordinal"), int):
+                expected_by_ordinal[int(entry["ordinal"])] = entry
+    expected_signature = (
+        tuple(
+            (
+                str(entry.get("side")),
+                str(entry.get("branch")),
+                entry.get("audit_index"),
+                entry.get("formal_column"),
+                entry.get("branch_ordinal"),
+            )
+            for entry in expected_entries
+            if isinstance(entry, Mapping)
+        )
+        if isinstance(expected_entries, list)
+        and all(isinstance(entry, Mapping) for entry in expected_entries)
+        else ()
+    )
+    budget = binding.get("budget")
+    checks["fixed_binding"] = bool(
+        binding.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
+        and len(expected_by_ordinal) == TASK041_REPRESENTATIVE_RHS_COUNT
+        and expected_signature == _TASK041_REPRESENTATIVE_RHS_EXPECTED
+        and isinstance(budget, Mapping)
+        and budget.get("group") == "shared_S0_S1_S3"
+    )
+    if not checks["fixed_binding"]:
+        failures.append("fixed_probe_binding_mismatch")
+
+    manifest_path = binding.get("path")
+    manifest_sha = binding.get("sha256")
+    if isinstance(manifest_path, str) and _valid_sha(manifest_sha, 64):
+        try:
+            checks["probe_manifest_hash"] = (
+                Path(manifest_path).is_file()
+                and _sha256_file(Path(manifest_path)) == manifest_sha
+            )
+        except OSError:
+            checks["probe_manifest_hash"] = False
+    else:
+        checks["probe_manifest_hash"] = False
+    if not checks["probe_manifest_hash"]:
+        failures.append("probe_manifest_hash_mismatch")
+
+    source_audit = binding.get("source_audit")
+    if isinstance(source_audit, Mapping):
+        source_path = source_audit.get("rhs_audit_path")
+        source_sha = source_audit.get("rhs_audit_sha256")
+        if isinstance(source_path, str) and _valid_sha(source_sha, 64):
+            try:
+                checks["source_audit_hash"] = (
+                    Path(source_path).is_file()
+                    and _sha256_file(Path(source_path)) == source_sha
+                )
+            except OSError:
+                checks["source_audit_hash"] = False
+        else:
+            checks["source_audit_hash"] = False
+    else:
+        checks["source_audit_hash"] = False
+    if not checks["source_audit_hash"]:
+        failures.append("source_audit_hash_mismatch")
+
+    probe_summary = summary.get("representative_rhs_probe")
+    checks["summary_probe_binding"] = bool(
+        isinstance(probe_summary, Mapping)
+        and probe_summary.get("path") == binding.get("path")
+        and probe_summary.get("sha256") == binding.get("sha256")
+        and probe_summary.get("scope") == TASK041_REPRESENTATIVE_RHS_SCOPE
+        and probe_summary.get("budget_group") == "shared_S0_S1_S3"
+    )
+    if not checks["summary_probe_binding"]:
+        failures.append("summary_probe_binding_mismatch")
+
+    packet_binding = binding.get("packet_binding")
+    packet_summary = summary.get("packet")
+    expected_packet_sha = (
+        packet_binding.get("packet_manifest_sha256")
+        if isinstance(packet_binding, Mapping)
+        else None
+    )
+    expected_identity_path = (
+        packet_binding.get("packet_identity")
+        if isinstance(packet_binding, Mapping)
+        else None
+    )
+    identity_summary = summary.get("identity")
+    checks["source_and_packet_identity"] = bool(
+        _valid_sha(summary.get("source_sha"), 40)
+        and isinstance(identity_summary, Mapping)
+        and identity_summary.get("source_sha") == summary.get("source_sha")
+        and identity_summary.get("model_id")
+        == "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8"
+        and identity_summary.get("mode_count") == 480
+        and identity_summary.get("mpi_size") == 8
+        and isinstance(packet_summary, Mapping)
+        and packet_summary.get("manifest_sha256") == expected_packet_sha
+        and packet_summary.get("identity") == expected_identity_path
+        and isinstance(packet_binding, Mapping)
+        and _valid_sha(packet_binding.get("packet_identity_sha256"), 64)
+    )
+    if not checks["source_and_packet_identity"]:
+        failures.append("source_or_packet_identity_mismatch")
+    if isinstance(expected_identity_path, str) and _valid_sha(
+        packet_binding.get("packet_identity_sha256") if isinstance(packet_binding, Mapping) else None,
+        64,
+    ):
+        try:
+            checks["packet_identity_hash"] = (
+                Path(expected_identity_path).is_file()
+                and _sha256_file(Path(expected_identity_path))
+                == packet_binding["packet_identity_sha256"]
+            )
+        except OSError:
+            checks["packet_identity_hash"] = False
+    else:
+        checks["packet_identity_hash"] = False
+    if not checks["packet_identity_hash"]:
+        failures.append("packet_identity_hash_mismatch")
+
+    raw_path = consumer_root / "numerical_output" / "representative_rhs_audits.jsonl"
+    raw_by_ordinal: dict[int, tuple[Mapping[str, Any], Mapping[str, Any]]] = {}
+    raw_errors: list[str] = []
+    if not raw_path.is_file():
+        failures.append("representative_rhs_audits_missing")
+    else:
+        try:
+            with raw_path.open(encoding="utf-8") as stream:
+                for line_number, line in enumerate(stream, 1):
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        raw_errors.append(f"line_{line_number}_invalid_json")
+                        continue
+                    if not isinstance(row, Mapping):
+                        raw_errors.append(f"line_{line_number}_not_object")
+                        continue
+                    audit = row.get("audit")
+                    ordinal = (
+                        audit.get("representative_ordinal")
+                        if isinstance(audit, Mapping)
+                        else None
+                    )
+                    if not isinstance(ordinal, int) or isinstance(ordinal, bool):
+                        raw_errors.append(f"line_{line_number}_missing_ordinal")
+                        continue
+                    if ordinal in raw_by_ordinal:
+                        raw_errors.append(f"ordinal_{ordinal}_duplicated")
+                        continue
+                    if isinstance(audit, Mapping):
+                        raw_by_ordinal[ordinal] = (row, audit)
+                    else:
+                        raw_errors.append(f"line_{line_number}_missing_audit")
+        except OSError as exc:
+            raw_errors.append(f"read_error:{type(exc).__name__}")
+    if raw_errors:
+        failures.extend(raw_errors)
+
+    def audit_failures(
+        entry: Mapping[str, Any], row: Mapping[str, Any], audit: Mapping[str, Any]
+    ) -> list[str]:
+        local: list[str] = []
+        for field in ("side", "phase"):
+            expected = entry["side"] if field == "side" else "representative_rhs"
+            if row.get(field) != expected:
+                local.append(f"{field}_binding")
+        for field in (
+            "representative_ordinal",
+            "source_audit_index",
+            "formal_column",
+            "branch_ordinal",
+        ):
+            expected_field = {
+                "representative_ordinal": "ordinal",
+                "source_audit_index": "audit_index",
+                "formal_column": "formal_column",
+                "branch_ordinal": "branch_ordinal",
+            }[field]
+            if audit.get(field) != entry[expected_field]:
+                local.append(f"{field}_binding")
+        if audit.get("status") != "KSP_CONVERGED":
+            local.append("status")
+        if not isinstance(audit.get("reason"), int) or isinstance(
+            audit.get("reason"), bool
+        ) or audit["reason"] <= 0:
+            local.append("reason")
+        if audit.get("ksp_positive") is not True:
+            local.append("ksp_positive")
+        if audit.get("explicit_true_target_reached") is not True:
+            local.append("explicit_true_target_reached")
+        residual = audit.get("relative_residual")
+        if (
+            isinstance(residual, bool)
+            or not isinstance(residual, (int, float))
+            or not math.isfinite(float(residual))
+            or float(residual) < 0.0
+            or float(residual) > 1.0e-2
+        ):
+            local.append("relative_residual")
+        rhs_norm = audit.get("rhs_norm")
+        if (
+            isinstance(rhs_norm, bool)
+            or not isinstance(rhs_norm, (int, float))
+            or not math.isfinite(float(rhs_norm))
+            or float(rhs_norm) < 0.0
+        ):
+            local.append("rhs_norm")
+        residual_norm = audit.get("residual_norm")
+        if (
+            isinstance(residual_norm, bool)
+            or not isinstance(residual_norm, (int, float))
+            or not math.isfinite(float(residual_norm))
+            or float(residual_norm) < 0.0
+        ):
+            local.append("residual_norm")
+        elif (
+            isinstance(rhs_norm, (int, float))
+            and not isinstance(rhs_norm, bool)
+            and math.isfinite(float(rhs_norm))
+        ):
+            recomputed_relative = (
+                float(residual_norm) / float(rhs_norm)
+                if float(rhs_norm) > 0.0
+                else float(residual_norm)
+            )
+            if (
+                not math.isfinite(recomputed_relative)
+                or recomputed_relative < 0.0
+                or recomputed_relative > 1.0e-2
+            ):
+                local.append("recomputed_relative_residual")
+        if audit.get("ksp_max_it") != 128 or audit.get("ksp_rtol") != 1.0e-2:
+            local.append("ksp_contract")
+        delta = audit.get("counts", {}).get("delta")
+        for name in ("pc", "Q", "H6", "A6", "P", "PH_audit", "p4_backsolve"):
+            value = delta.get(name) if isinstance(delta, Mapping) else None
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                local.append(f"count_{name}")
+        return local
+
+    checks["raw_audits"] = {"count": len(raw_by_ordinal), "expected": 8}
+    for ordinal, entry in expected_by_ordinal.items():
+        pair = raw_by_ordinal.get(ordinal)
+        if pair is None:
+            failures.append(f"raw_ordinal_{ordinal}_missing")
+            continue
+        row, audit = pair
+        local_failures = audit_failures(entry, row, audit)
+        failures.extend(f"ordinal_{ordinal}_{item}" for item in local_failures)
+    if len(raw_by_ordinal) != TASK041_REPRESENTATIVE_RHS_COUNT:
+        failures.append("raw_audit_count_mismatch")
+
+    setup = summary.get("setup")
+    admission = setup.get("admission_audit") if isinstance(setup, Mapping) else None
+    global_identity = (
+        admission.get("global_operator_identity")
+        if isinstance(admission, Mapping)
+        else None
+    )
+    checks["admission_gate"] = bool(
+        isinstance(admission, Mapping)
+        and admission.get("pass") is True
+        and isinstance(global_identity, Mapping)
+        and global_identity.get("pass") is True
+    )
+    if not checks["admission_gate"]:
+        failures.append("admission_gate")
+
+    representative = summary.get("representative_rhs")
+    summary_records = (
+        representative.get("entries") if isinstance(representative, Mapping) else None
+    )
+    summary_by_ordinal: dict[int, Mapping[str, Any]] = {}
+    if isinstance(summary_records, list):
+        for record in summary_records:
+            if isinstance(record, Mapping) and isinstance(record.get("ordinal"), int):
+                summary_by_ordinal[int(record["ordinal"])] = record
+    checks["summary_records"] = {
+        "count": len(summary_by_ordinal),
+        "expected": TASK041_REPRESENTATIVE_RHS_COUNT,
+    }
+    for ordinal, entry in expected_by_ordinal.items():
+        record = summary_by_ordinal.get(ordinal)
+        if record is None:
+            failures.append(f"summary_ordinal_{ordinal}_missing")
+            continue
+        if (
+            record.get("side") != entry["side"]
+            or record.get("branch") != entry["branch"]
+            or record.get("audit_index") != entry["audit_index"]
+            or record.get("formal_column") != entry["formal_column"]
+            or record.get("branch_ordinal") != entry["branch_ordinal"]
+            or record.get("status") != "completed"
+        ):
+            failures.append(f"summary_ordinal_{ordinal}_binding")
+        raw_pair = raw_by_ordinal.get(ordinal)
+        record_audit = record.get("audit")
+        if raw_pair is None or not isinstance(record_audit, Mapping):
+            failures.append(f"summary_ordinal_{ordinal}_audit_missing")
+        else:
+            for field in (
+                "status",
+                "reason",
+                "relative_residual",
+                "rhs_norm",
+                "residual_norm",
+                "ksp_max_it",
+                "ksp_rtol",
+            ):
+                if record_audit.get(field) != raw_pair[1].get(field):
+                    failures.append(f"summary_ordinal_{ordinal}_{field}_mismatch")
+        artifact = record.get("artifact")
+        rank_shards = record.get("rank_shards")
+        if not isinstance(artifact, Mapping) or not _valid_sha(
+            artifact.get("manifest_sha256"), 64
+        ):
+            failures.append(f"summary_ordinal_{ordinal}_artifact_manifest")
+        if not isinstance(rank_shards, list) or {
+            shard.get("rank")
+            for shard in rank_shards
+            if isinstance(shard, Mapping)
+        } != set(range(8)):
+            failures.append(f"summary_ordinal_{ordinal}_rank_shards")
+        else:
+            for shard in rank_shards:
+                if not isinstance(shard, Mapping) or not _valid_sha(
+                    shard.get("owned_rhs_sha256"), 64
+                ) or not _valid_sha(shard.get("owned_response_sha256"), 64):
+                    failures.append(f"summary_ordinal_{ordinal}_owned_hash")
+                if not isinstance(shard, Mapping) or shard.get("dtype") != "complex128":
+                    failures.append(f"summary_ordinal_{ordinal}_dtype")
+                if not isinstance(shard, Mapping) or shard.get(
+                    "packet_manifest_sha256"
+                ) != expected_packet_sha:
+                    failures.append(f"summary_ordinal_{ordinal}_packet_manifest")
+        artifact_failures: list[str] = []
+        response_manifest: Mapping[str, Any] | None = None
+        response_manifest_path: Path | None = None
+        response_manifest_sha: str | None = None
+        if not isinstance(artifact, Mapping):
+            artifact_failures.append("artifact_missing")
+        else:
+            manifest_value = artifact.get("manifest")
+            response_manifest_sha = artifact.get("manifest_sha256")
+            if not isinstance(manifest_value, str) or not manifest_value:
+                artifact_failures.append("artifact_manifest_path")
+            else:
+                response_manifest_path = Path(manifest_value)
+                if not response_manifest_path.is_file():
+                    artifact_failures.append("artifact_manifest_missing")
+                else:
+                    try:
+                        actual_manifest_sha = _sha256_file(response_manifest_path)
+                        if actual_manifest_sha != response_manifest_sha:
+                            artifact_failures.append("artifact_manifest_hash")
+                        response_manifest_sha = actual_manifest_sha
+                        loaded_manifest = json.loads(
+                            response_manifest_path.read_text(encoding="utf-8")
+                        )
+                        if isinstance(loaded_manifest, Mapping):
+                            response_manifest = loaded_manifest
+                        else:
+                            artifact_failures.append("artifact_manifest_object")
+                    except (OSError, json.JSONDecodeError):
+                        artifact_failures.append("artifact_manifest_read")
+            artifact_identity_sha = artifact.get("identity_sha256")
+            if not _valid_sha(artifact_identity_sha, 64):
+                artifact_failures.append("artifact_identity_hash")
+        if response_manifest is not None and response_manifest_path is not None:
+            manifest_identity = response_manifest.get("identity")
+            manifest_identity_sha = response_manifest.get("identity_sha256")
+            if not isinstance(manifest_identity, Mapping):
+                artifact_failures.append("artifact_identity_missing")
+            else:
+                try:
+                    canonical_identity = json.dumps(
+                        manifest_identity, sort_keys=True, separators=(",", ":")
+                    ).encode("utf-8")
+                    computed_identity_sha = hashlib.sha256(canonical_identity).hexdigest()
+                except (TypeError, ValueError):
+                    computed_identity_sha = None
+                if (
+                    not _valid_sha(manifest_identity_sha, 64)
+                    or computed_identity_sha != manifest_identity_sha
+                    or manifest_identity_sha != artifact.get("identity_sha256")
+                ):
+                    artifact_failures.append("artifact_identity_binding")
+                if (
+                    manifest_identity.get("schema")
+                    != "task041.representative_rhs.response_identity.v1"
+                    or manifest_identity.get("source_sha")
+                    != summary.get("source_sha")
+                    or manifest_identity.get("probe_manifest_sha256")
+                    != binding.get("sha256")
+                    or manifest_identity.get("packet_manifest_sha256")
+                    != expected_packet_sha
+                    or manifest_identity.get("ordinal") != ordinal
+                    or manifest_identity.get("side") != entry["side"]
+                    or manifest_identity.get("formal_column")
+                    != entry["formal_column"]
+                    or manifest_identity.get("branch_ordinal")
+                    != entry["branch_ordinal"]
+                ):
+                    artifact_failures.append("artifact_identity_scope")
+            manifest_shards = response_manifest.get("shards")
+            manifest_ranks = (
+                {
+                    int(shard["rank"])
+                    for shard in manifest_shards
+                    if isinstance(shard, Mapping) and "rank" in shard
+                }
+                if isinstance(manifest_shards, list)
+                else set()
+            )
+            if (
+                response_manifest.get("schema") != "myfenics.full3d.pre_recovery_packet.v1"
+                or response_manifest.get("rank_count") != 8
+                or not isinstance(manifest_shards, list)
+                or len(manifest_shards) != 8
+                or manifest_ranks != set(range(8))
+            ):
+                artifact_failures.append("artifact_shard_layout")
+            manifest_by_rank = {
+                int(shard["rank"]): shard
+                for shard in manifest_shards
+                if isinstance(shard, Mapping) and "rank" in shard
+            } if isinstance(manifest_shards, list) else {}
+            expected_start = 0
+            for rank in sorted(manifest_by_rank):
+                shard = manifest_by_rank[rank]
+                ownership = shard.get("ownership_range")
+                size = shard.get("size")
+                shard_path_value = shard.get("path")
+                try:
+                    start, end = (int(value) for value in ownership)
+                    shard_size = int(size)
+                except (TypeError, ValueError):
+                    artifact_failures.append(f"artifact_shard_{rank}_layout")
+                    continue
+                if start != expected_start or end < start or end - start != shard_size:
+                    artifact_failures.append(f"artifact_shard_{rank}_ownership")
+                expected_start = end
+                if not isinstance(shard_path_value, str) or not _valid_sha(
+                    shard.get("sha256"), 64
+                ):
+                    artifact_failures.append(f"artifact_shard_{rank}_metadata")
+                    continue
+                shard_path = response_manifest_path.parent / shard_path_value
+                if shard_path.parent != response_manifest_path.parent or not shard_path.is_file():
+                    artifact_failures.append(f"artifact_shard_{rank}_missing")
+                else:
+                    try:
+                        if _sha256_file(shard_path) != shard["sha256"]:
+                            artifact_failures.append(f"artifact_shard_{rank}_hash")
+                    except OSError:
+                        artifact_failures.append(f"artifact_shard_{rank}_read")
+            if response_manifest.get("global_size") != expected_start:
+                artifact_failures.append("artifact_global_size")
+            if not isinstance(rank_shards, list) or len(rank_shards) != 8:
+                artifact_failures.append("rank_shards_count")
+            else:
+                rank_records_by_rank = {
+                    int(shard["rank"]): shard
+                    for shard in rank_shards
+                    if isinstance(shard, Mapping) and "rank" in shard
+                }
+                if set(rank_records_by_rank) != set(range(8)):
+                    artifact_failures.append("rank_shards_binding_ranks")
+                for rank, rank_record in rank_records_by_rank.items():
+                    manifest_shard = manifest_by_rank.get(rank)
+                    if manifest_shard is None:
+                        continue
+                    if (
+                        rank_record.get("ownership_range")
+                        != manifest_shard.get("ownership_range")
+                        or rank_record.get("local_size") != manifest_shard.get("size")
+                        or rank_record.get("packet_shard_path")
+                        != manifest_shard.get("path")
+                        or rank_record.get("packet_shard_sha256")
+                        != manifest_shard.get("sha256")
+                        or rank_record.get("response_packet_manifest_sha256")
+                        != response_manifest_sha
+                    ):
+                        artifact_failures.append(f"rank_{rank}_artifact_binding")
+        if artifact_failures:
+            failures.extend(
+                f"summary_ordinal_{ordinal}_{item}" for item in artifact_failures
+            )
+
+    matrix = summary.get("matrix_inventory")
+    after_p4 = matrix.get("p4_factor_count_after_cleanup") if isinstance(matrix, Mapping) else None
+    after_nested = (
+        matrix.get("nested_iterative_ksp_count_after_cleanup")
+        if isinstance(matrix, Mapping)
+        else None
+    )
+    checks["component_inventory"] = bool(
+        isinstance(matrix, Mapping)
+        and matrix.get("qep_calls") == 0
+        and matrix.get("consumer_qep_required") is False
+        and matrix.get("p4_factor_count_at_setup") == 2
+        and matrix.get("nested_iterative_ksp_count_at_setup") == 2
+        and matrix.get("p6_factor_count") == 0
+        and matrix.get("global_direct_factor_count") == 0
+        and isinstance(after_p4, Mapping)
+        and set(after_p4) == {"bottom", "top"}
+        and all(value == 0 for value in after_p4.values())
+        and isinstance(after_nested, Mapping)
+        and set(after_nested) == {"bottom", "top"}
+        and all(value == 0 for value in after_nested.values())
+    )
+    if not checks["component_inventory"]:
+        failures.append("component_inventory_gate")
+
+    lifecycle = summary.get("lifecycle")
+    observed = summary.get("markers", {}).get("observed")
+    checks["cleanup_and_scope"] = bool(
+        isinstance(lifecycle, Mapping)
+        and lifecycle.get("setup_released") is True
+        and lifecycle.get("representative_rhs_cleanup_pass") is True
+        and lifecycle.get("rss_marker_emitted") is True
+        and isinstance(observed, list)
+        and {"bottom_construction_cleanup", "top_construction_cleanup", "final_cleanup_complete"}
+        <= set(observed)
+        and process_group_gone is True
+        and summary.get("gates", {}).get("pass") is False
+        and summary.get("official_rta", {}).get("status") == "not_run"
+        and isinstance(summary.get("formal"), Mapping)
+        and summary["formal"].get("status") == "not_run"
+    )
+    if not checks["cleanup_and_scope"]:
+        failures.append("cleanup_or_not_run_scope_gate")
+    return {
+        "pass": not failures,
+        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        "raw_path": str(raw_path),
+        "checks": checks,
+        "failures": failures,
+    }
+
+
 def _consumer_result(
-    consumer_root: Path, *, process_group_gone: bool | None = None
+    consumer_root: Path,
+    *,
+    process_group_gone: bool | None = None,
+    representative_rhs_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     summary_path = consumer_root / "consumer_summary.json"
     if not summary_path.is_file():
@@ -1430,10 +2456,21 @@ def _consumer_result(
     lifecycle = summary.get("lifecycle")
     gates = summary.get("gates")
     worker_classification = summary.get("classification")
+    representative_scope = representative_rhs_binding is not None
+    representative_validation = (
+        _validate_representative_rhs_result(
+            consumer_root,
+            summary,
+            representative_rhs_binding,
+            process_group_gone=process_group_gone,
+        )
+        if representative_rhs_binding is not None
+        else None
+    )
     balh_consumer = str(summary.get("schema", "")).startswith(
         "task041.side_balh."
     )
-    lifecycle_gate = (
+    regular_lifecycle_gate = (
         isinstance(lifecycle, Mapping)
         and lifecycle.get("setup_released") is True
         and (
@@ -1442,18 +2479,41 @@ def _consumer_result(
         )
         and lifecycle.get("rss_marker_emitted") is True
     )
+    representative_lifecycle_gate = (
+        isinstance(lifecycle, Mapping)
+        and lifecycle.get("setup_released") is True
+        and lifecycle.get("representative_rhs_cleanup_pass") is True
+        and lifecycle.get("rss_marker_emitted") is True
+    )
+    lifecycle_gate = (
+        representative_lifecycle_gate if representative_scope else regular_lifecycle_gate
+    )
     marker_gate = isinstance(observed, list) and "final_cleanup_complete" in observed
-    complete = bool(
-        worker_classification == "TASK041_CONSUMER_PASS"
-        and summary.get("status") == "task041_consumer_completed"
-        and isinstance(gates, Mapping)
-        and gates.get("pass") is True
+    representative_complete = bool(
+        representative_scope
+        and worker_classification == "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+        and summary.get("status") == "task041_representative_rhs_completed"
+        and representative_validation is not None
+        and representative_validation.get("pass") is True
         and lifecycle_gate
         and process_group_gone is True
         and marker_gate
     )
+    regular_complete = bool(
+        not representative_scope
+        and worker_classification == "TASK041_CONSUMER_PASS"
+        and summary.get("status") == "task041_consumer_completed"
+        and isinstance(gates, Mapping)
+        and gates.get("pass") is True
+        and regular_lifecycle_gate
+        and process_group_gone is True
+        and marker_gate
+    )
+    complete = representative_complete or regular_complete
     if complete:
         classification = "worker_exit0"
+    elif representative_scope:
+        classification = "task041_representative_rhs_validation_failure"
     elif worker_classification != "TASK041_CONSUMER_PASS":
         classification = worker_classification or "task041_consumer_summary_invalid"
     else:
@@ -1482,12 +2542,18 @@ def _consumer_result(
         "official_rta": summary.get("official_rta", {"status": "not_available"}),
         "process_group_gone": process_group_gone,
         "lifecycle_gate": lifecycle_gate,
+        "representative_validation": representative_validation,
+        "completion_scope": (
+            "representative_rhs" if representative_complete else "formal"
+        ),
     }
 
 
 def _phase_resource_failure(phase_result: Mapping[str, Any]) -> bool:
     return phase_result.get("termination_reason") in {
         "absolute_memory_limit",
+        "process_tree_rss_unmeasured",
+        "process_tree_rss_limit",
         "cgroup_headroom_floor",
         "cgroup_headroom_unmeasured",
         "memavailable_floor",
@@ -1503,6 +2569,8 @@ def _phase_resource_classification(
 ) -> str | None:
     return {
         "absolute_memory_limit": "memory_terminate",
+        "process_tree_rss_unmeasured": "process_tree_rss_unmeasured",
+        "process_tree_rss_limit": "process_tree_rss_limit",
         "cgroup_headroom_floor": "cgroup_headroom_floor",
         "cgroup_headroom_unmeasured": "cgroup_headroom_unmeasured",
         "memavailable_floor": "memavailable_floor",
@@ -1547,18 +2615,34 @@ def _load_task041_compute_wall_ledger(
                 section.get("records"), list
             ):
                 source_records.extend(section["records"])
-    return ledger_path, {
-        "used_compute_wall_seconds": used,
-        "used_status": str(payload.get("used_status", "derived")),
-        "basis": payload.get("basis", "explicit compact ledger"),
-        "initial_batch_allowance": payload.get("initial_batch_allowance"),
-        "derived_allowance_margin_seconds": payload.get(
-            "derived_allowance_margin_seconds"
-        ),
-        "source_records": source_records,
-        "measured": payload.get("measured"),
-        "derived_upper_bound": payload.get("derived_upper_bound"),
-    }
+    loaded = dict(payload)
+    loaded["used_compute_wall_seconds"] = used
+    loaded["used_status"] = str(payload.get("used_status", "derived"))
+    loaded["basis"] = payload.get("basis", "explicit compact ledger")
+    loaded["source_records"] = source_records
+    return ledger_path, loaded
+
+
+def _task041_v2_group_used(
+    ledger: Mapping[str, Any], phase_group: str
+) -> float:
+    field = {
+        "shared_S0_S1_S3": "shared_S0_S1_S3_used_seconds",
+        "S2": "S2_used_seconds",
+        "S4": "S4_used_seconds",
+    }.get(phase_group)
+    if field is None:
+        raise ValueError(f"unknown Task041 V2 phase group: {phase_group!r}")
+    value = _wall_seconds(ledger.get(field))
+    if value is not None:
+        return value
+    phase_scope = str(ledger.get("phase_scope", ""))
+    shared_scope = {"S0/S1/S3", "shared_S0_S1_S3"}
+    if (phase_group == "shared_S0_S1_S3" and phase_scope in shared_scope) or (
+        phase_group != "shared_S0_S1_S3" and phase_scope == phase_group
+    ):
+        return float(ledger["used_compute_wall_seconds"])
+    return 0.0
 
 
 def _write_task041_compute_wall_ledger(
@@ -1568,13 +2652,17 @@ def _write_task041_compute_wall_ledger(
     current_seconds: float,
     run_directory: Path,
     phase_seconds: Mapping[str, float] | None = None,
+    limit_seconds: float | None = None,
+    profile_id: str | None = None,
+    phase_group: str | None = None,
 ) -> dict[str, Any]:
     before = float(used_before["used_compute_wall_seconds"])
     current_seconds = max(0.0, float(current_seconds))
     total = before + current_seconds
+    previous_status = str(used_before.get("used_status", ""))
     status = (
-        str(used_before.get("used_status"))
-        if str(used_before.get("used_status", "")).startswith("derived")
+        previous_status
+        if previous_status.startswith("derived")
         else "measured"
     )
     measured = used_before.get("measured")
@@ -1587,6 +2675,94 @@ def _write_task041_compute_wall_ledger(
             dict(phase_seconds) if phase_seconds is not None else None
         ),
     }
+    if profile_id is not None:
+        if previous_status == "measured_plus_conservative_upper_bound":
+            status = previous_status
+        if phase_group is None:
+            phase_names = tuple(phase_seconds or {})
+            if len(phase_names) == 1:
+                phase_group = phase_names[0]
+                if phase_group in {"S0", "S1", "S3"}:
+                    phase_group = "shared_S0_S1_S3"
+        if phase_group not in {"shared_S0_S1_S3", "S2", "S4"}:
+            raise ValueError(
+                "Task041 V2 ledger update requires one explicit phase group"
+            )
+        from benchmarks.task041_balh_workflow import (
+            TASK041_SCHUR_SPEED_V2_BATCH_BUDGET_SECONDS,
+            TASK041_SCHUR_SPEED_V2_S0_S1_S3_BUDGET_SECONDS,
+            TASK041_SCHUR_SPEED_V2_S2_BUDGET_SECONDS,
+            TASK041_SCHUR_SPEED_V2_S4_BUDGET_SECONDS,
+        )
+
+        phase_budgets = {
+            "shared_S0_S1_S3": TASK041_SCHUR_SPEED_V2_S0_S1_S3_BUDGET_SECONDS,
+            "S2": TASK041_SCHUR_SPEED_V2_S2_BUDGET_SECONDS,
+            "S4": TASK041_SCHUR_SPEED_V2_S4_BUDGET_SECONDS,
+        }
+        shared_used = _task041_v2_group_used(
+            used_before, "shared_S0_S1_S3"
+        )
+        s2_used = _task041_v2_group_used(used_before, "S2")
+        s4_used = _task041_v2_group_used(used_before, "S4")
+        if phase_group == "shared_S0_S1_S3":
+            shared_used += current_seconds
+        elif phase_group == "S2":
+            s2_used += current_seconds
+        else:
+            s4_used += current_seconds
+        batch_used = shared_used + s2_used + s4_used
+        limit = float(
+            limit_seconds
+            if limit_seconds is not None
+            else TASK041_SCHUR_SPEED_V2_BATCH_BUDGET_SECONDS
+        )
+        current_record["profile_id"] = profile_id
+        current_record["phase_group"] = phase_group
+        current_record["phase_budget_seconds"] = phase_budgets[phase_group]
+        payload = dict(used_before)
+        payload.update(
+            {
+                "schema": used_before.get(
+                    "schema", "task041.compute_wall_ledger.v2"
+                ),
+                "profile_id": profile_id,
+                "budget_limit_seconds": limit,
+                "batch_budget_seconds": limit,
+                "phase_budgets_seconds": phase_budgets,
+                "shared_S0_S1_S3_used_seconds": shared_used,
+                "S2_used_seconds": s2_used,
+                "S4_used_seconds": s4_used,
+                "batch_used_compute_wall_seconds": batch_used,
+                "used_compute_wall_seconds": batch_used,
+                "used_status": status,
+                "last_phase_group": phase_group,
+                "source_records": [
+                    *list(used_before.get("source_records", [])),
+                    current_record,
+                ],
+                "phase_remaining_seconds": {
+                    name: max(0.0, budget - used)
+                    for name, budget, used in (
+                        (
+                            "shared_S0_S1_S3",
+                            phase_budgets["shared_S0_S1_S3"],
+                            shared_used,
+                        ),
+                        ("S2", phase_budgets["S2"], s2_used),
+                        ("S4", phase_budgets["S4"], s4_used),
+                    )
+                },
+                "remaining_budget_seconds": max(0.0, limit - batch_used),
+                "remaining_status": (
+                    "derived_from_measured_and_conservative_upper_bound"
+                    if status == "measured_plus_conservative_upper_bound"
+                    else "derived_from_current_and_prior_records"
+                ),
+            }
+        )
+        _write_json(ledger_path, payload)
+        return payload
     if isinstance(measured, Mapping):
         measured = dict(measured)
         measured_seconds = _wall_seconds(measured.get("seconds"))
@@ -1642,6 +2818,9 @@ def run_task041_public_supervisor(
     legacy_native_packet_descriptor: str | Path | None = None,
     compute_wall_ledger_path: str | Path | None = None,
     disable_time_stop: bool = False,
+    performance_profile: str | None = None,
+    task041_supervision_record: str | Path | None = None,
+    task041_rhs_probe_manifest: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -1676,11 +2855,19 @@ def run_task041_public_supervisor(
         "swap_limit_bytes": 0,
         "timeout_seconds": TASK041_TIMEOUT_SECONDS,
     }
-    phase_limits: dict[str, dict[str, int]] = {}
+    phase_limits: dict[str, dict[str, Any]] = {}
     compute_wall_ledger: dict[str, Any] | None = None
     global_swap_baseline: dict[str, Any] | None = None
     balh = False
     legacy_native = False
+    performance_contract: dict[str, Any] | None = None
+    representative_rhs_binding: dict[str, Any] | None = None
+    compute_wall_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
+    compute_wall_phase_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
+    compute_wall_phase_group: str | None = None
+    compute_wall_phase_used_seconds = 0.0
+    compute_wall_enforced_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
+    supervision_binding: dict[str, Any] | None = None
     producer_root = root / "producer"
     try:
         if not root.is_dir():
@@ -1696,7 +2883,11 @@ def run_task041_public_supervisor(
                 classification="task041_identity_failure",
                 stage="source_identity",
             )
-        outer_mpi_identity = _outer_mpi_launch_identity()
+        outer_mpi_identity = (
+            _outer_mpi_launch_identity(performance_profile)
+            if performance_profile is not None
+            else _outer_mpi_launch_identity()
+        )
         outer_mpi_size = outer_mpi_identity["mpi_size"]
         identity = _validate_specification(specification, repository_root)
         runtime_limits = _runtime_limits_for_identity(identity)
@@ -1754,6 +2945,139 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="producer_reuse_contract",
                 )
+        if performance_profile is not None:
+            if not balh or identity["model_id"] not in TASK041_BALH_CANDIDATE_MODEL_IDS:
+                raise Task041SupervisorError(
+                    "task041_schur_speed_v2 is limited to Task041 BAL_H candidates",
+                    classification="task041_identity_failure",
+                    stage="performance_profile",
+                )
+            from benchmarks.task041_balh_workflow import (
+                TASK041_REPRESENTATIVE_RHS_SCOPE,
+                TASK041_SCHUR_SPEED_V2_PROFILE,
+                task041_schur_speed_v2_contract,
+            )
+
+            if performance_profile != TASK041_SCHUR_SPEED_V2_PROFILE:
+                raise Task041SupervisorError(
+                    "unsupported Task041 performance profile",
+                    classification="task041_identity_failure",
+                    stage="performance_profile",
+                )
+            if producer_packet_root is None and not legacy_native:
+                raise Task041SupervisorError(
+                    "task041_schur_speed_v2 requires a reused BAL_H candidate packet",
+                    classification="task041_identity_failure",
+                    stage="performance_profile",
+                )
+            if disable_time_stop:
+                raise Task041SupervisorError(
+                    "performance profile and time-stop override are mutually exclusive",
+                    classification="task041_identity_failure",
+                    stage="performance_profile",
+                )
+            try:
+                performance_contract = task041_schur_speed_v2_contract(
+                    str(identity["model_id"]),
+                    scope=(
+                        TASK041_REPRESENTATIVE_RHS_SCOPE
+                        if task041_rhs_probe_manifest is not None
+                        else None
+                    ),
+                )
+            except ValueError as exc:
+                raise Task041SupervisorError(
+                    str(exc),
+                    classification="task041_identity_failure",
+                    stage="performance_profile",
+                ) from exc
+            compute_wall_limit_seconds = float(
+                performance_contract["batch_budget_seconds"]
+            )
+            compute_wall_phase_group = str(
+                performance_contract["active_consumer_phase"]
+            )
+            compute_wall_phase_limit_seconds = float(
+                performance_contract["active_consumer_budget_seconds"]
+            )
+        if task041_rhs_probe_manifest is not None:
+            if (
+                performance_contract is None
+                or identity["model_id"] != TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+                or disable_time_stop
+            ):
+                raise Task041SupervisorError(
+                    "representative RHS probe requires the reused 5 nm task041_schur_speed_v2 candidate",
+                    classification="task041_identity_failure",
+                    stage="representative_rhs_probe",
+                )
+            from benchmarks.task041_balh_workflow import (
+                load_task041_representative_rhs_manifest,
+            )
+
+            try:
+                representative_rhs_binding = (
+                    load_task041_representative_rhs_manifest(
+                        task041_rhs_probe_manifest
+                    )
+                )
+            except (OSError, TypeError, ValueError) as exc:
+                raise Task041SupervisorError(
+                    f"invalid representative RHS manifest: {exc}",
+                    classification="task041_identity_failure",
+                    stage="representative_rhs_probe",
+                ) from exc
+            if (
+                performance_contract["scope"]
+                != representative_rhs_binding["scope"]
+                or performance_contract["budget_group"]
+                != representative_rhs_binding["budget"]["group"]
+            ):
+                raise Task041SupervisorError(
+                    "representative RHS scope does not match the V2 budget contract",
+                    classification="task041_identity_failure",
+                    stage="representative_rhs_probe",
+                )
+            result["representative_rhs_probe"] = {
+                "path": representative_rhs_binding["path"],
+                "sha256": representative_rhs_binding["sha256"],
+                "scope": representative_rhs_binding["scope"],
+                "purpose": representative_rhs_binding["purpose"],
+                "budget_group": performance_contract["budget_group"],
+            }
+        if task041_supervision_record is not None:
+            if performance_contract is None:
+                raise Task041SupervisorError(
+                    "supervision record requires task041_schur_speed_v2",
+                    classification="task041_identity_failure",
+                    stage="supervision_record",
+                )
+            supervision_binding = _load_task041_supervision_record(
+                task041_supervision_record,
+                profile_id=performance_contract["profile_id"],
+                model_id=identity["model_id"],
+                source_sha=source_sha,
+                scope=performance_contract["scope"],
+                representative_rhs_probe=(
+                    {
+                        "path": representative_rhs_binding["path"],
+                        "sha256": representative_rhs_binding["sha256"],
+                    }
+                    if representative_rhs_binding is not None
+                    else None
+                ),
+            )
+            if compute_wall_ledger_path is not None and Path(
+                compute_wall_ledger_path
+            ).resolve() != Path(supervision_binding["ledger_path"]).resolve():
+                raise Task041SupervisorError(
+                    "supervision record ledger_path conflicts with explicit ledger path",
+                    classification="task041_identity_failure",
+                    stage="supervision_record",
+                )
+            compute_wall_ledger_path = supervision_binding["ledger_path"]
+            result["supervision_record"] = supervision_binding
+            result["ledger_owner"] = "service_finalizer"
         timeout_scope = "workflow"
         if shortwave or balh:
             phase_limits = {
@@ -1772,6 +3096,43 @@ def run_task041_public_supervisor(
                 if balh
                 else task041_shortwave_timeout_scope(identity["model_id"])
             )
+        if performance_contract is not None:
+            active_timeout = int(performance_contract["active_consumer_budget_seconds"])
+            runtime_limits = dict(runtime_limits)
+            runtime_limits.update(
+                {
+                    "swap_limit_bytes": int(
+                        performance_contract["swap_limit_bytes"]
+                    ),
+                    "process_tree_rss_warning_bytes": int(
+                        performance_contract["warning_memory_bytes"]
+                    ),
+                    "process_tree_rss_cap_bytes": int(
+                        performance_contract["memory_cap_bytes"]
+                    ),
+                    "memory_cap_source": performance_contract["memory_gate_source"],
+                }
+            )
+            runtime_limits["timeout_seconds"] = active_timeout
+            phase_limits["consumer"] = dict(phase_limits["consumer"])
+            phase_limits["consumer"].update(
+                {
+                    "swap_limit_bytes": int(
+                        performance_contract["swap_limit_bytes"]
+                    ),
+                    "process_tree_rss_warning_bytes": int(
+                        performance_contract["warning_memory_bytes"]
+                    ),
+                    "process_tree_rss_cap_bytes": int(
+                        performance_contract["memory_cap_bytes"]
+                    ),
+                    "memory_cap_source": performance_contract["memory_gate_source"],
+                }
+            )
+            phase_limits["consumer"]["timeout_seconds"] = active_timeout
+            result["limits"] = dict(runtime_limits)
+            result["phase_limits"] = phase_limits
+            result["performance_profile"] = performance_contract
         if balh:
             if compute_wall_ledger_path is None:
                 raise Task041SupervisorError(
@@ -1787,12 +3148,31 @@ def run_task041_public_supervisor(
             used_before = float(
                 compute_wall_ledger["used_compute_wall_seconds"]
             )
+            if compute_wall_phase_group is not None:
+                compute_wall_phase_used_seconds = _task041_v2_group_used(
+                    compute_wall_ledger, compute_wall_phase_group
+                )
+            else:
+                compute_wall_phase_used_seconds = used_before
+            batch_remaining = max(
+                0.0, compute_wall_limit_seconds - used_before
+            )
+            phase_remaining = max(
+                0.0,
+                compute_wall_phase_limit_seconds
+                - compute_wall_phase_used_seconds,
+            )
             remaining = max(
                 0.0,
-                TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS - used_before,
+                min(batch_remaining, phase_remaining),
             )
-            result["compute_wall_budget"] = {
-                "limit_seconds": TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS,
+            compute_wall_enforced_limit_seconds = (
+                compute_wall_phase_used_seconds + remaining
+                if performance_contract is not None
+                else compute_wall_limit_seconds
+            )
+            compute_wall_budget = {
+                "limit_seconds": compute_wall_limit_seconds,
                 "used_before_seconds": used_before,
                 "used_before_status": compute_wall_ledger["used_status"],
                 "remaining_seconds": remaining,
@@ -1805,6 +3185,19 @@ def run_task041_public_supervisor(
                     "derived_allowance_margin_seconds"
                 ),
             }
+            if performance_contract is not None:
+                compute_wall_budget.update(
+                    {
+                        "phase_limit_seconds": compute_wall_phase_limit_seconds,
+                        "phase_group": compute_wall_phase_group,
+                        "phase_used_before_seconds": compute_wall_phase_used_seconds,
+                        "batch_remaining_seconds": batch_remaining,
+                        "phase_remaining_seconds": phase_remaining,
+                        "enforced_limit_seconds": compute_wall_enforced_limit_seconds,
+                        "remaining_basis": "min(phase_remaining_seconds, batch_remaining_seconds)",
+                    }
+                )
+            result["compute_wall_budget"] = compute_wall_budget
             if remaining <= 0.0 and not disable_time_stop:
                 raise Task041SupervisorError(
                     "Task041 cumulative compute wall budget is exhausted",
@@ -1862,6 +3255,23 @@ def run_task041_public_supervisor(
                 root / "numerical_output" / "log" / "memory_stages.jsonl",
                 preflight,
             )
+            process_tree_rss_cap = runtime_limits.get(
+                "process_tree_rss_cap_bytes"
+            )
+            if process_tree_rss_cap is not None:
+                process_tree_rss = preflight.get("process_tree_rss_bytes")
+                if not isinstance(process_tree_rss, int):
+                    raise Task041SupervisorError(
+                        "Task041 process-tree RSS is not measurable at BAL_H preflight",
+                        classification="task041_resource_sample_failure",
+                        stage="workflow_resource_preflight",
+                    )
+                if process_tree_rss >= process_tree_rss_cap:
+                    raise Task041SupervisorError(
+                        "Task041 process-tree RSS cap reached at BAL_H preflight",
+                        classification="memory_terminate",
+                        stage="workflow_resource_preflight",
+                    )
             global_swap_baseline = {
                 name: preflight.get(name)
                 for name in (
@@ -2076,7 +3486,7 @@ def run_task041_public_supervisor(
                     else 0.0
                 ),
                 cumulative_compute_limit_seconds=(
-                    TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS if balh else None
+                    compute_wall_limit_seconds if balh else None
                 ),
                 global_swap_baseline=global_swap_baseline if balh else None,
                 partial_phase_results=result["phase_results"],
@@ -2125,6 +3535,32 @@ def run_task041_public_supervisor(
         elif producer_packet_root is None and not legacy_native:
             packet = _validate_producer_packet(
                 producer_root, specification, source_sha, identity
+            )
+        if representative_rhs_binding is not None:
+            packet_binding = representative_rhs_binding["packet_binding"]
+            packet_identity_file = Path(
+                packet.get("identity_path", producer_root / "packet_identity.json")
+            )
+            if (
+                packet_binding["packet_manifest_sha256"]
+                != packet["manifest_sha256"]
+                or packet_binding["packet_identity_sha256"]
+                != _sha256_file(packet_identity_file)
+            ):
+                raise Task041SupervisorError(
+                    "representative RHS probe packet binding does not match the loaded packet",
+                    classification="task041_identity_failure",
+                    stage="representative_rhs_probe",
+                )
+            result["representative_rhs_probe"].update(
+                {
+                    "packet_manifest_sha256": packet["manifest_sha256"],
+                    "packet_identity_sha256": packet_binding[
+                        "packet_identity_sha256"
+                    ],
+                    "entries": representative_rhs_binding["entries"],
+                    "source_audit": representative_rhs_binding["source_audit"],
+                }
             )
         worker_environment = packet["summary"].get("environment")
         if isinstance(worker_environment, Mapping):
@@ -2181,6 +3617,12 @@ def run_task041_public_supervisor(
                     packet_origin=packet.get("packet_origin"),
                     legacy_native_binding=packet.get("legacy_native_binding"),
                     disable_time_stop=disable_time_stop,
+                    performance_profile=performance_profile,
+                    task041_rhs_probe_manifest=(
+                        representative_rhs_binding["path"]
+                        if representative_rhs_binding is not None
+                        else None
+                    ),
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -2249,6 +3691,20 @@ def run_task041_public_supervisor(
             hard_memory_bytes=(
                 phase_limits.get("consumer", runtime_limits)["hard_memory_bytes"]
             ),
+            process_tree_rss_warning_bytes=(
+                phase_limits.get("consumer", {}).get(
+                    "process_tree_rss_warning_bytes"
+                )
+                if performance_contract is not None
+                else None
+            ),
+            process_tree_rss_cap_bytes=(
+                phase_limits.get("consumer", {}).get(
+                    "process_tree_rss_cap_bytes"
+                )
+                if performance_contract is not None
+                else None
+            ),
             timeout_seconds=(
                 phase_limits.get("consumer", runtime_limits)["timeout_seconds"]
             ),
@@ -2265,23 +3721,31 @@ def run_task041_public_supervisor(
                 else None
             ),
             cumulative_compute_used_seconds=(
-                (
-                    float(compute_wall_ledger["used_compute_wall_seconds"])
-                    + _wall_seconds(producer_result.get("phase_wall_seconds"))
-                )
-                if balh
-                and compute_wall_ledger is not None
-                and producer_result.get("reused") is not True
-                and _wall_seconds(producer_result.get("phase_wall_seconds"))
-                is not None
+                compute_wall_phase_used_seconds
+                if performance_contract is not None
                 else (
-                    float(compute_wall_ledger["used_compute_wall_seconds"])
-                    if balh and compute_wall_ledger is not None
-                    else 0.0
+                    (
+                        float(compute_wall_ledger["used_compute_wall_seconds"])
+                        + _wall_seconds(producer_result.get("phase_wall_seconds"))
+                    )
+                    if balh
+                    and compute_wall_ledger is not None
+                    and producer_result.get("reused") is not True
+                    and _wall_seconds(producer_result.get("phase_wall_seconds"))
+                    is not None
+                    else (
+                        float(compute_wall_ledger["used_compute_wall_seconds"])
+                        if balh and compute_wall_ledger is not None
+                        else 0.0
+                    )
                 )
             ),
             cumulative_compute_limit_seconds=(
-                TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS if balh else None
+                compute_wall_enforced_limit_seconds
+                if performance_contract is not None
+                else compute_wall_limit_seconds
+                if balh
+                else None
             ),
             global_swap_baseline=global_swap_baseline if balh else None,
             partial_phase_results=result["phase_results"],
@@ -2297,6 +3761,11 @@ def run_task041_public_supervisor(
                 consumer_status = _consumer_result(
                     consumer_root,
                     process_group_gone=consumer_result.get("process_group_gone") is True,
+                    **(
+                        {"representative_rhs_binding": representative_rhs_binding}
+                        if representative_rhs_binding is not None
+                        else {}
+                    ),
                 )
             except Task041SupervisorError as exc:
                 consumer_status = {
@@ -2344,6 +3813,11 @@ def run_task041_public_supervisor(
             consumer_status = _consumer_result(
                 consumer_root,
                 process_group_gone=consumer_result.get("process_group_gone") is True,
+                **(
+                    {"representative_rhs_binding": representative_rhs_binding}
+                    if representative_rhs_binding is not None
+                    else {}
+                ),
             )
         except Task041SupervisorError as exc:
             consumer_status = {
@@ -2367,6 +3841,9 @@ def run_task041_public_supervisor(
                 stage="consumer_result",
             ) from exc
         result["consumer"] = consumer_status
+        representative_completion = (
+            consumer_status.get("completion_scope") == "representative_rhs"
+        )
         if not consumer_status["complete"]:
             result["exit_status"] = consumer_exit
             raise Task041SupervisorError(
@@ -2387,13 +3864,19 @@ def run_task041_public_supervisor(
         factor_inventory = consumer_status.get("factor_inventory", {})
         factor_source = consumer_root / "factor_inventory.json"
         if factor_source.is_file():
-            (root / "factor_inventory.json").write_bytes(factor_source.read_bytes())
+            _copy_file_bounded(factor_source, root / "factor_inventory.json")
         else:
             if not isinstance(factor_inventory, Mapping):
                 factor_inventory = {"status": "not_available"}
             _write_json(root / "factor_inventory.json", factor_inventory)
-        result["status"] = "completed"
-        result["workflow_status"] = "completed"
+        result["status"] = (
+            "representative_rhs_completed" if representative_completion else "completed"
+        )
+        result["workflow_status"] = (
+            "representative_rhs_completed"
+            if representative_completion
+            else "completed"
+        )
         result["result_classification"] = "worker_exit0"
         result["exit_status"] = 0
     except Task041SupervisorError as exc:
@@ -2473,6 +3956,8 @@ def run_task041_public_supervisor(
                 and phase.get("termination_reason")
                 not in {
                     "absolute_memory_limit",
+                    "process_tree_rss_unmeasured",
+                    "process_tree_rss_limit",
                     "cgroup_headroom_floor",
                     "cgroup_headroom_unmeasured",
                     "memavailable_floor",
@@ -2589,7 +4074,7 @@ def run_task041_public_supervisor(
             budget = result.get("compute_wall_budget")
             if not isinstance(budget, dict):
                 budget = {
-                    "limit_seconds": TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS,
+                    "limit_seconds": compute_wall_limit_seconds,
                     "used_before_seconds": compute_wall_ledger[
                         "used_compute_wall_seconds"
                     ],
@@ -2603,47 +4088,129 @@ def run_task041_public_supervisor(
                         "derived_allowance_margin_seconds"
                     ),
                 }
-            if current_compute_seconds is not None:
+            if supervision_binding is not None:
+                budget.update(
+                    {
+                        "nested_phase_wall_seconds": current_compute_seconds,
+                        "current_invocation_seconds": current_compute_seconds,
+                        "current_invocation_status": (
+                            "measured_nested_phase"
+                            if current_compute_seconds is not None
+                            else "not_measured_no_phase"
+                        ),
+                        "used_after": "pending",
+                        "used_after_seconds": None,
+                        "used_after_status": "pending",
+                        "remaining_after_seconds": None,
+                        "remaining_after_status": "pending",
+                        "ledger_update": "deferred_to_service_finalizer",
+                        "ledger_owner": "service_finalizer",
+                    }
+                )
+                result.update(
+                    {
+                        "nested_phase_wall_seconds": current_compute_seconds,
+                        "ledger_update": "deferred_to_service_finalizer",
+                        "used_after": "pending",
+                    }
+                )
+            elif current_compute_seconds is not None:
                 updated_ledger = _write_task041_compute_wall_ledger(
                     compute_wall_ledger_path,
                     used_before=compute_wall_ledger,
                     current_seconds=current_compute_seconds,
                     run_directory=root,
                     phase_seconds=current_phase_seconds,
+                    limit_seconds=compute_wall_limit_seconds,
+                    profile_id=performance_profile,
+                    phase_group=compute_wall_phase_group,
                 )
-                budget.update(
-                    {
-                        "current_invocation_seconds": current_compute_seconds,
-                        "current_invocation_status": "measured",
-                        "used_after_seconds": updated_ledger[
-                            "used_compute_wall_seconds"
-                        ],
-                        "used_after_status": updated_ledger["used_status"],
-                        "remaining_after_seconds": max(
-                            0.0,
-                            TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
-                            - updated_ledger["used_compute_wall_seconds"],
-                        ),
-                        "ledger_update": "current_phase_wall_appended",
-                    }
-                )
+                budget_update = {
+                    "current_invocation_seconds": current_compute_seconds,
+                    "current_invocation_status": "measured",
+                    "used_after_seconds": updated_ledger[
+                        "used_compute_wall_seconds"
+                    ],
+                    "used_after_status": updated_ledger["used_status"],
+                    "remaining_after_seconds": max(
+                        0.0,
+                        compute_wall_limit_seconds
+                        - updated_ledger["used_compute_wall_seconds"],
+                    ),
+                    "ledger_update": "current_phase_wall_appended",
+                }
+                if performance_contract is not None:
+                    phase_used_after = _task041_v2_group_used(
+                        updated_ledger, compute_wall_phase_group
+                    )
+                    phase_remaining_after = updated_ledger.get(
+                        "phase_remaining_seconds", {}
+                    ).get(compute_wall_phase_group)
+                    batch_remaining_after = max(
+                        0.0,
+                        compute_wall_limit_seconds
+                        - updated_ledger["used_compute_wall_seconds"],
+                    )
+                    budget_update.update(
+                        {
+                            "phase_used_after_seconds": phase_used_after,
+                            "phase_remaining_after_seconds": phase_remaining_after,
+                            "batch_remaining_after_seconds": batch_remaining_after,
+                            "remaining_after_seconds": min(
+                                value
+                                for value in (
+                                    phase_remaining_after,
+                                    batch_remaining_after,
+                                )
+                                if isinstance(value, (int, float))
+                            ),
+                            "remaining_after_basis": (
+                                "min(phase_remaining_after_seconds, "
+                                "batch_remaining_after_seconds)"
+                            ),
+                        }
+                    )
+                budget.update(budget_update)
             else:
                 used_before = float(
                     compute_wall_ledger["used_compute_wall_seconds"]
                 )
-                budget.update(
-                    {
-                        "current_invocation_seconds": None,
-                        "current_invocation_status": "not_measured_no_phase",
-                        "used_after_seconds": used_before,
-                        "used_after_status": compute_wall_ledger["used_status"],
-                        "remaining_after_seconds": max(
-                            0.0,
-                            TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS - used_before,
-                        ),
-                        "ledger_update": "not_appended_no_phase_completed",
-                    }
-                )
+                budget_update = {
+                    "current_invocation_seconds": None,
+                    "current_invocation_status": "not_measured_no_phase",
+                    "used_after_seconds": used_before,
+                    "used_after_status": compute_wall_ledger["used_status"],
+                    "remaining_after_seconds": max(
+                        0.0,
+                        compute_wall_limit_seconds - used_before,
+                    ),
+                    "ledger_update": "not_appended_no_phase_completed",
+                }
+                if performance_contract is not None:
+                    batch_remaining_after = max(
+                        0.0,
+                        compute_wall_limit_seconds - used_before,
+                    )
+                    phase_remaining_after = max(
+                        0.0,
+                        compute_wall_phase_limit_seconds
+                        - compute_wall_phase_used_seconds,
+                    )
+                    budget_update.update(
+                        {
+                            "phase_used_after_seconds": compute_wall_phase_used_seconds,
+                            "phase_remaining_after_seconds": phase_remaining_after,
+                            "batch_remaining_after_seconds": batch_remaining_after,
+                            "remaining_after_seconds": min(
+                                phase_remaining_after, batch_remaining_after
+                            ),
+                            "remaining_after_basis": (
+                                "min(phase_remaining_after_seconds, "
+                                "batch_remaining_after_seconds)"
+                            ),
+                        }
+                    )
+                budget.update(budget_update)
             result["compute_wall_budget"] = budget
         reused_producer = any(phase.get("reused") is True for phase in phases)
         current_measured_phase = any(
@@ -2942,12 +4509,12 @@ def run_task041_public_supervisor(
             result["git_after"] = {"status": "not_reached"}
         factor_source = root / "consumer" / "factor_inventory.json"
         if factor_source.is_file():
-            (root / "factor_inventory.json").write_bytes(factor_source.read_bytes())
+            _copy_file_bounded(factor_source, root / "factor_inventory.json")
         log_root = root / "numerical_output" / "log"
         for name in ("memory_stages.jsonl", "memory_stage_markers.jsonl"):
             log_path = log_root / name
             if log_path.is_file():
-                (root / name).write_bytes(log_path.read_bytes())
+                _copy_file_bounded(log_path, root / name)
         _write_json(root / "resource_summary.json", result["resource_authority"])
         _write_json(root / "workflow_summary.json", result)
         _write_json(root / "supervisor_summary.json", result)
@@ -2994,4 +4561,5 @@ __all__ = [
     "TASK041_WARNING_MEMORY_BYTES",
     "Task041SupervisorError",
     "run_task041_public_supervisor",
+    "run_task041_supervised_public_command",
 ]

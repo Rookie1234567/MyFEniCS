@@ -30,6 +30,7 @@ from .physical_balanced_physical_operator import (
     build_p4_exact_factor,
 )
 from .physical_balanced_same_mesh_transfer import (
+    _TRANSFER_TIMING_NAMES,
     build_same_mesh_hcurl_owner_transfer,
 )
 from .physical_balanced_trace_bridge import (
@@ -45,6 +46,71 @@ __all__ = (
 
 _MAX_DENSE_COLUMNS = 32
 _ALLOWED_KSP = ((128, 1.0e-2), (256, 1.0e-4))
+_DETAIL_TIMING_NAMES = (
+    "q_ph_seconds",
+    "q_ph_cell_adjoint_seconds",
+    "q_ph_dual_reduce_seconds",
+    "q_ph_route_sort_index_seconds",
+    "q_ph_mpi_exchange_seconds",
+    "q_ph_duplicate_row_check_seconds",
+    "q_ph_ghost_mpc_prepare_seconds",
+    "q_ph_ghost_mpc_check_seconds",
+    "q_augmented_rhs_extract_seconds",
+    "q_factor_solve_seconds",
+    "q_a4_residual_refinement_seconds",
+    "q_physical_action_matrix_mult_seconds",
+    "q_p_seconds",
+    "q_p_local_candidate_generation_seconds",
+    "q_p_route_sort_index_seconds",
+    "q_p_mpi_exchange_seconds",
+    "q_p_duplicate_row_check_seconds",
+    "q_p_ghost_mpc_prepare_seconds",
+    "q_p_ghost_mpc_check_seconds",
+    "balance_ph_seconds",
+    "balance_ph_cell_adjoint_seconds",
+    "balance_ph_dual_reduce_seconds",
+    "balance_ph_route_sort_index_seconds",
+    "balance_ph_mpi_exchange_seconds",
+    "balance_ph_duplicate_row_check_seconds",
+    "balance_ph_ghost_mpc_prepare_seconds",
+    "balance_ph_ghost_mpc_check_seconds",
+    "balance_a6_seconds",
+    "balance_h6_seconds",
+    "balance_jh_inject_allocate_seconds",
+)
+_DETAIL_TIMING_SEMANTICS = {
+    "q_ph_seconds": "inclusive q PH transfer; q_ph_* intervals are nested",
+    "q_p_seconds": "inclusive q P transfer; q_p_* intervals are nested",
+    "balance_ph_seconds": (
+        "inclusive BAL_H balance PH transfer; balance_ph_* intervals are nested"
+    ),
+    "*_route_sort_index_seconds": (
+        "local owner routing, sorting, counts, displacements, and index ordering; "
+        "excludes MPI calls"
+    ),
+    "*_mpi_exchange_seconds": (
+        "only the transfer Alltoall/Alltoallv or PH ghostUpdate call; for PH "
+        "this is nested in *_ghost_mpc_check_seconds, while prepare/check can "
+        "include other communication and are not additive MPI totals"
+    ),
+    "*_duplicate_row_check_seconds": (
+        "owner-row duplicate consistency check, including its existing scalar MAX"
+    ),
+    "*_ghost_mpc_prepare_seconds": "input copy, ghost update, and MPC preparation",
+    "*_ghost_mpc_check_seconds": (
+        "output ghost/MPC finalization, zero/check, other communication, and "
+        "finite validation; PH mpi_exchange_seconds is nested here"
+    ),
+    "q_a4_residual_refinement_seconds": (
+        "inclusive extraction, Vec allocation, physical action, norm, and audit work"
+    ),
+    "q_physical_action_matrix_mult_seconds": (
+        "physical_action.matrix.mult only; nested inside q_a4_residual_refinement_seconds"
+    ),
+    "balance_jh_inject_allocate_seconds": (
+        "JH injection and its Vec allocation only; not all allocation/packing"
+    ),
+}
 # Native PETSc names the task's DIVERGED_ITS budget result DIVERGED_MAX_IT.
 _DIVERGED_ITS = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
 
@@ -139,6 +205,7 @@ class SideBalancedInverse:
         rtol: float = 1.0e-2,
         checkpoint_callback: Callable[[], None] | None = None,
         audit_callback: Callable[[dict[str, Any]], None] | None = None,
+        detailed_timing: bool = False,
     ) -> None:
         _validate_ksp_pair(max_it, rtol)
         operator = side_system.A
@@ -164,6 +231,7 @@ class SideBalancedInverse:
         self._comm = operator.getComm().tompi4py()
         self._max_it = int(max_it)
         self._rtol = float(rtol)
+        self._detailed_timing = bool(detailed_timing)
         self._destroyed = False
         self._p4_factor_created_count = 1
         self._p4_factor_destroy_count = 0
@@ -187,6 +255,12 @@ class SideBalancedInverse:
         self._last_apply: dict[str, Any] = {}
         self._last_coupling_failure: dict[str, Any] | None = None
         self._rhs_operation_seconds = {name: 0.0 for name in ("Q", "H6", "A6")}
+        self._rhs_detail_seconds = {
+            name: 0.0 for name in _DETAIL_TIMING_NAMES
+        }
+        self._rhs_detail_seen = {
+            name: False for name in _DETAIL_TIMING_NAMES
+        }
         self._cumulative_counts: dict[str, int | None] = {
             "side_A": _context_apply_count(operator),
             "pc": 0,
@@ -252,6 +326,26 @@ class SideBalancedInverse:
     def _checkpoint(self) -> None:
         self._checkpoint_count += 1
         self._checkpoint_callback()
+
+    def _add_rhs_detail_seconds(self, name: str, elapsed: float) -> None:
+        if self._detailed_timing:
+            self._rhs_detail_seen[name] = True
+            self._rhs_detail_seconds[name] += max(0.0, float(elapsed))
+
+    def _merge_transfer_timing(
+        self,
+        timing: Mapping[str, float],
+        prefix: str,
+    ) -> None:
+        if not self._detailed_timing:
+            return
+        for name in _TRANSFER_TIMING_NAMES:
+            value = timing.get(name)
+            if isinstance(value, (int, float)) and np.isfinite(value):
+                self._add_rhs_detail_seconds(
+                    f"{prefix}_{name}",
+                    float(value),
+                )
 
     def admission_audit(
         self,
@@ -625,6 +719,7 @@ class SideBalancedInverse:
         if self._full_action is None:
             raise RuntimeError("BAL_H full p6 action has been destroyed")
         target = self._full_action.matrix.createVecLeft()
+        started = perf_counter()
         try:
             self._full_action.matrix.mult(source, target)
             self._a6_count += 1
@@ -632,48 +727,126 @@ class SideBalancedInverse:
         except BaseException:
             target.destroy()
             raise
+        finally:
+            self._add_rhs_detail_seconds(
+                "balance_a6_seconds", perf_counter() - started
+            )
 
     def _apply_ph_callback(self, source: PETSc.Vec) -> PETSc.Vec:
         if self._owner_transfer is None:
             raise RuntimeError("BAL_H owner transfer has been destroyed")
         self._ph_audit_count += 1
         self._ph_total_count += 1
-        return self._owner_transfer.apply_adjoint(source)
+        started = perf_counter()
+        transfer_timing: dict[str, float] = {}
+        try:
+            kwargs = {"timing": transfer_timing} if self._detailed_timing else {}
+            return self._owner_transfer.apply_adjoint(source, **kwargs)
+        finally:
+            self._add_rhs_detail_seconds(
+                "balance_ph_seconds", perf_counter() - started
+            )
+            self._merge_transfer_timing(transfer_timing, "balance_ph")
 
     def _apply_h6_callback(self, source: PETSc.Vec) -> PETSc.Vec:
         if self._h6 is None:
             raise RuntimeError("BAL_H H6 action has been destroyed")
         self._h6_count += 1
-        return self._h6.apply(source)
+        started = perf_counter()
+        try:
+            return self._h6.apply(source)
+        finally:
+            self._add_rhs_detail_seconds(
+                "balance_h6_seconds", perf_counter() - started
+            )
 
     def _apply_q_callback(self, source: PETSc.Vec) -> PETSc.Vec:
         if self._owner_transfer is None or self._p4_factor is None:
             raise RuntimeError("BAL_H coarse components have been destroyed")
         self._q_count += 1
         self._ph_total_count += 1
-        coarse_rhs = self._owner_transfer.apply_adjoint(source)
+        ph_started = perf_counter()
+        ph_transfer_timing: dict[str, float] = {}
+        try:
+            kwargs = (
+                {"timing": ph_transfer_timing} if self._detailed_timing else {}
+            )
+            coarse_rhs = self._owner_transfer.apply_adjoint(source, **kwargs)
+        finally:
+            self._add_rhs_detail_seconds(
+                "q_ph_seconds", perf_counter() - ph_started
+            )
+            self._merge_transfer_timing(ph_transfer_timing, "q_ph")
         augmented_rhs = None
         augmented_solution = None
         coarse_solution = None
+        p4_timing: dict[str, float] = {}
         factor_solve_before = int(
             self._p4_factor.diagnostics["research_factor"]["solve_count"]
         )
         try:
-            augmented_rhs = self._p4_factor.create_rhs(coarse_rhs)
-            augmented_solution = augmented_rhs.duplicate()
-            augmented_solution.set(0.0)
+            allocation_started = perf_counter()
+            try:
+                augmented_rhs = self._p4_factor.create_rhs(coarse_rhs)
+                augmented_solution = augmented_rhs.duplicate()
+                augmented_solution.set(0.0)
+            finally:
+                self._add_rhs_detail_seconds(
+                    "q_augmented_rhs_extract_seconds",
+                    perf_counter() - allocation_started,
+                )
+            solve_kwargs: dict[str, Any] = {"residual_tolerance": 1.0e-10}
+            if self._detailed_timing:
+                solve_kwargs["timing"] = p4_timing
             self._p4_factor.solve_with_refinement(
                 augmented_rhs,
                 augmented_solution,
-                residual_tolerance=1.0e-10,
+                **solve_kwargs,
             )
-            coarse_solution = self._p4_factor.extract_fe_solution(
-                augmented_solution
-            )
-            result = self._owner_transfer.apply_primal(coarse_solution)
+            extract_started = perf_counter()
+            try:
+                coarse_solution = self._p4_factor.extract_fe_solution(
+                    augmented_solution
+                )
+            finally:
+                self._add_rhs_detail_seconds(
+                    "q_augmented_rhs_extract_seconds",
+                    perf_counter() - extract_started,
+                )
+            p_started = perf_counter()
+            p_transfer_timing: dict[str, float] = {}
+            try:
+                kwargs = (
+                    {"timing": p_transfer_timing} if self._detailed_timing else {}
+                )
+                result = self._owner_transfer.apply_primal(
+                    coarse_solution,
+                    **kwargs,
+                )
+            finally:
+                self._add_rhs_detail_seconds(
+                    "q_p_seconds", perf_counter() - p_started
+                )
+                self._merge_transfer_timing(p_transfer_timing, "q_p")
             self._p_count += 1
             return result
         finally:
+            if self._detailed_timing:
+                if "factor_solve_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_factor_solve_seconds",
+                        p4_timing["factor_solve_seconds"],
+                    )
+                if "A4_residual_refinement_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_a4_residual_refinement_seconds",
+                        p4_timing["A4_residual_refinement_seconds"],
+                    )
+                if "physical_action_matrix_mult_seconds" in p4_timing:
+                    self._add_rhs_detail_seconds(
+                        "q_physical_action_matrix_mult_seconds",
+                        p4_timing["physical_action_matrix_mult_seconds"],
+                    )
             factor_solve_after = int(
                 self._p4_factor.diagnostics["research_factor"]["solve_count"]
             )
@@ -696,16 +869,24 @@ class SideBalancedInverse:
         if target.getSize() != self.operator.getSize()[0]:
             raise ValueError("BAL_H side PC target has the wrong active size")
         self._pc_apply_count += 1
-        full_source = self._full_action.matrix.createVecRight()
+        full_source = None
         full_output = None
         active_output = None
         try:
-            self._jh_count += 1
-            inject_active_residual_to_full_p6(
-                self._condensed,
-                source,
-                full_source,
-            )
+            packing_started = perf_counter()
+            try:
+                full_source = self._full_action.matrix.createVecRight()
+                self._jh_count += 1
+                inject_active_residual_to_full_p6(
+                    self._condensed,
+                    source,
+                    full_source,
+                )
+            finally:
+                self._add_rhs_detail_seconds(
+                    "balance_jh_inject_allocate_seconds",
+                    perf_counter() - packing_started,
+                )
             if self._coupling is None:
                 raise RuntimeError("BAL_H coupling has been destroyed")
             try:
@@ -747,7 +928,8 @@ class SideBalancedInverse:
             )
             active_output.copy(target)
         finally:
-            full_source.destroy()
+            if full_source is not None:
+                full_source.destroy()
             if full_output is not None:
                 full_output.destroy()
             if active_output is not None:
@@ -791,9 +973,15 @@ class SideBalancedInverse:
         local = {
             name: float(value) for name, value in self._rhs_operation_seconds.items()
         }
+        local_detail = {
+            name: (
+                float(value) if self._rhs_detail_seen[name] else None
+            )
+            for name, value in self._rhs_detail_seconds.items()
+        }
         local_uncovered = max(0.0, float(local_elapsed) - sum(local.values()))
         if not reduce:
-            return {
+            result = {
                 "status": "local_only_after_exception",
                 "per_rank_accumulated_seconds": local,
                 "per_rank_uncovered_seconds": local_uncovered,
@@ -801,17 +989,60 @@ class SideBalancedInverse:
                 "max_rank_uncovered_seconds": None,
                 "remaining_diagnostics_seconds": None,
             }
+            if self._detailed_timing:
+                result["detailed"] = {
+                    "logging_rank": int(self._comm.Get_rank()),
+                    "local_scope": "logging_rank_only",
+                    "per_rank_seconds": local_detail,
+                    "max_rank_seconds": None,
+                    "interval_semantics": dict(_DETAIL_TIMING_SEMANTICS),
+                    "measurement_status": {
+                        name: (
+                            "measured" if value is not None else "not_called"
+                        )
+                        for name, value in local_detail.items()
+                    },
+                    "semantics": (
+                        "inclusive local timing regions; q_ph_seconds and q_p_seconds "
+                        "contain their prefixed transfer subregions; q_a4_residual_"
+                        "refinement_seconds includes extraction, allocation, physical "
+                        "action, norm, and audit work, with q_physical_action_matrix_"
+                        "mult_seconds nested inside it; balance_jh_inject_allocate_"
+                        "seconds covers only JH injection and its Vec allocation"
+                    ),
+                }
+            return result
+        names = ("Q", "H6", "A6")
+        detail_values = (
+            [
+                float(self._rhs_detail_seconds[name])
+                for name in _DETAIL_TIMING_NAMES
+            ]
+            if self._detailed_timing
+            else []
+        )
+        detail_seen = (
+            [
+                float(self._rhs_detail_seen[name])
+                for name in _DETAIL_TIMING_NAMES
+            ]
+            if self._detailed_timing
+            else []
+        )
         local_values = np.asarray(
-            [local[name] for name in ("Q", "H6", "A6")] + [local_uncovered],
+            [local[name] for name in names]
+            + [local_uncovered]
+            + detail_values
+            + detail_seen,
             dtype=np.float64,
         )
         max_values = np.empty_like(local_values)
         self._comm.Allreduce(local_values, max_values, op=MPI.MAX)
         max_rank = {
             name: float(value)
-            for name, value in zip(("Q", "H6", "A6"), max_values[:3])
+            for name, value in zip(names, max_values[:3])
         }
-        return {
+        result = {
             "status": "measured_rank_max",
             "per_rank_accumulated_seconds": local,
             "per_rank_uncovered_seconds": local_uncovered,
@@ -821,9 +1052,61 @@ class SideBalancedInverse:
             "semantics": (
                 "all PC applies in this RHS are accumulated per rank, then one "
                 "MPI.MAX buffer reduction is used; component maxima are not summed "
-                "as wall and uncovered time is reduced independently"
+                "as wall and uncovered time is reduced independently; detailed "
+                "transfer fields are local intervals, while the q_ph/q_p and "
+                "balance_ph fields are inclusive wrappers"
             ),
         }
+        if self._detailed_timing:
+            detail_start = 4
+            detail_stop = detail_start + len(_DETAIL_TIMING_NAMES)
+            result["detailed"] = {
+                "logging_rank": int(self._comm.Get_rank()),
+                "local_scope": "logging_rank_only",
+                "per_rank_seconds": local_detail,
+                "interval_semantics": dict(_DETAIL_TIMING_SEMANTICS),
+                "max_rank_seconds": {
+                    name: (
+                        float(value)
+                        if bool(
+                            max_values[
+                                detail_start + index + len(_DETAIL_TIMING_NAMES)
+                            ]
+                        )
+                        else None
+                    )
+                    for index, (name, value) in enumerate(
+                        zip(
+                            _DETAIL_TIMING_NAMES,
+                            max_values[detail_start:detail_stop],
+                        )
+                    )
+                },
+                "measurement_status": {
+                    name: (
+                        "measured"
+                        if bool(
+                            max_values[
+                                detail_start
+                                + len(_DETAIL_TIMING_NAMES)
+                                + index
+                            ]
+                        )
+                        else "not_called"
+                    )
+                    for index, name in enumerate(_DETAIL_TIMING_NAMES)
+                },
+                "semantics": (
+                    "inclusive local timing regions reduced with the same single "
+                    "MPI.MAX buffer; component maxima are not summed as wall; "
+                    "q_a4_residual_refinement_seconds includes extraction, "
+                    "allocation, physical action, norm, and audit work, and "
+                    "q_physical_action_matrix_mult_seconds is its nested matrix "
+                    "mult interval; balance_jh_inject_allocate_seconds is only "
+                    "the JH injection/Vec allocation interval"
+                ),
+            }
+        return result
 
     def _count_snapshot(self) -> dict[str, int | None]:
         if self._operator is None:
@@ -875,6 +1158,12 @@ class SideBalancedInverse:
         self._rhs_operation_seconds = {
             name: 0.0 for name in ("Q", "H6", "A6")
         }
+        self._rhs_detail_seconds = {
+            name: 0.0 for name in _DETAIL_TIMING_NAMES
+        }
+        self._rhs_detail_seen = {
+            name: False for name in _DETAIL_TIMING_NAMES
+        }
         self._last_coupling_failure = None
         rhs_norm: Any = "not_measured"
         reason: int | None = None
@@ -919,6 +1208,7 @@ class SideBalancedInverse:
             operation_timing = self._rhs_operation_timing(local_elapsed, reduce=True)
             after = self._count_snapshot()
             record = {
+                "rank": int(self._comm.Get_rank()),
                 "status": status,
                 "reason": reason,
                 "iterations": int(iterations),
@@ -947,6 +1237,7 @@ class SideBalancedInverse:
             operation_timing = self._rhs_operation_timing(elapsed, reduce=False)
             after = self._count_snapshot()
             record = {
+                "rank": int(self._comm.Get_rank()),
                 "status": "FAILED",
                 "reason": reason,
                 "iterations": int(iterations),
@@ -1055,6 +1346,7 @@ class SideBalancedInverse:
             "zero_initial_guess": True,
             "ksp_rtol": self._rtol,
             "ksp_max_it": self._max_it,
+            "detailed_timing": self._detailed_timing,
             "preconditioner": "J BAL_H JH",
             "apply_count": int(self._apply_count),
             "total_iterations": int(self._total_iterations),
@@ -1144,6 +1436,7 @@ def build_side_balanced_inverse(
     rtol: float = 1.0e-2,
     checkpoint_callback: Callable[[], None] | None = None,
     audit_callback: Callable[[dict[str, Any]], None] | None = None,
+    detailed_timing: bool = False,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
@@ -1174,6 +1467,7 @@ def build_side_balanced_inverse(
             rtol=rtol,
             checkpoint_callback=checkpoint_callback,
             audit_callback=audit_callback,
+            detailed_timing=detailed_timing,
         )
     except BaseException:
         if h6 is not None:

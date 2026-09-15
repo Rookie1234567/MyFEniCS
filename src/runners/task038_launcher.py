@@ -39,7 +39,11 @@ from src.io.execution_plan import (
     method_adapter_identity,
 )
 from src.io.input_loader import InputError
-from src.io.input_validation import TASK041_BALH_MODEL_IDS, task039_model_id_matches
+from src.io.input_validation import (
+    TASK041_BALH_CANDIDATE_MODEL_IDS,
+    TASK041_BALH_MODEL_IDS,
+    task039_model_id_matches,
+)
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
 
@@ -3645,6 +3649,9 @@ def launch_specification(
     legacy_native_packet_descriptor: str | Path | None = None,
     compute_wall_ledger_path: str | Path | None = None,
     disable_time_stop: bool = False,
+    performance_profile: str | None = None,
+    task041_supervision_record: str | Path | None = None,
+    task041_rhs_probe_manifest: str | Path | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3676,6 +3683,7 @@ def launch_specification(
         not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
     )
     balh_time_stop_override = None
+    performance_contract = None
     if task041_public_route and str(
         specification.identity.get("model_id", "")
     ) in TASK041_BALH_MODEL_IDS:
@@ -3708,6 +3716,75 @@ def launch_specification(
         raise InputError(
             "--task041-balh-candidate-disable-time-stop is Task041 BAL_H-only"
         )
+    if performance_profile is not None:
+        if not task041_public_route or str(
+            specification.identity.get("model_id", "")
+        ) not in TASK041_BALH_CANDIDATE_MODEL_IDS:
+            raise InputError(
+                "--task041-performance-profile is limited to Task041 BAL_H candidates"
+            )
+        from benchmarks.task041_balh_workflow import TASK041_SCHUR_SPEED_V2_PROFILE
+
+        if performance_profile != TASK041_SCHUR_SPEED_V2_PROFILE:
+            raise InputError("unsupported Task041 performance profile")
+        if producer_packet_root is None and legacy_native_packet_descriptor is None:
+            raise InputError(
+                "task041_schur_speed_v2 requires a reused BAL_H candidate packet"
+            )
+        if disable_time_stop:
+            raise InputError(
+                "performance profile and time-stop override are mutually exclusive"
+            )
+        from benchmarks.task041_balh_workflow import (
+            TASK041_REPRESENTATIVE_RHS_SCOPE,
+            task041_schur_speed_v2_contract,
+        )
+
+        try:
+            performance_contract = task041_schur_speed_v2_contract(
+                str(specification.identity["model_id"]),
+                scope=(
+                    TASK041_REPRESENTATIVE_RHS_SCOPE
+                    if task041_rhs_probe_manifest is not None
+                    else None
+                ),
+            )
+        except ValueError as exc:
+            raise InputError(str(exc)) from exc
+    rhs_probe_path = None
+    rhs_probe_binding = None
+    if task041_rhs_probe_manifest is not None:
+        if performance_contract is None or str(
+            specification.identity.get("model_id", "")
+        ) != TASK041_BALH_5NM_CANDIDATE_MODEL_ID:
+            raise InputError(
+                "--task041-rhs-probe requires the reused 5 nm task041_schur_speed_v2 candidate"
+            )
+        rhs_probe_path = Path(task041_rhs_probe_manifest)
+        if not rhs_probe_path.is_absolute():
+            raise InputError("--task041-rhs-probe must be an absolute path")
+        from benchmarks.task041_balh_workflow import (
+            load_task041_representative_rhs_manifest,
+        )
+
+        try:
+            rhs_probe_binding = load_task041_representative_rhs_manifest(
+                rhs_probe_path
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise InputError(f"invalid representative RHS manifest: {exc}") from exc
+    supervision_record_path = None
+    if task041_supervision_record is not None:
+        if performance_contract is None:
+            raise InputError(
+                "--task041-supervision-record requires task041_schur_speed_v2"
+            )
+        supervision_record_path = Path(task041_supervision_record)
+        if not supervision_record_path.is_absolute():
+            raise InputError(
+                "--task041-supervision-record must be an absolute path"
+            )
+        supervision_record_path = supervision_record_path.resolve()
     if producer_packet_root is not None and (
         not task041_public_route
         or str(specification.identity.get("model_id", ""))
@@ -3742,12 +3819,17 @@ def launch_specification(
         task041_public_route
         and str(specification.identity.get("model_id", "")) in TASK041_BALH_MODEL_IDS
         and compute_wall_ledger_path is None
+        and supervision_record_path is None
     ):
         compute_wall_ledger_path = (
             Path(__file__).resolve().parents[2]
             / "results"
             / "task041_side_balh_component_audit"
-            / "task041_compute_wall_ledger.json"
+            / (
+                "task041_schur_speed_v2_compute_wall_ledger.json"
+                if performance_contract is not None
+                else "task041_compute_wall_ledger.json"
+            )
         )
     run_directory = _timestamp_directory(specification, timestamp)
     start_time = _now()
@@ -3760,6 +3842,27 @@ def launch_specification(
     )
     if balh_time_stop_override is not None:
         manifest["time_stop_override"] = balh_time_stop_override
+        _write_json(run_directory / "run_manifest.json", manifest)
+    if performance_contract is not None:
+        manifest["performance_profile"] = performance_contract
+        _write_json(run_directory / "run_manifest.json", manifest)
+    if rhs_probe_binding is not None:
+        manifest["representative_rhs_probe"] = {
+            "path": rhs_probe_binding["path"],
+            "sha256": rhs_probe_binding["sha256"],
+            "scope": rhs_probe_binding["scope"],
+            "purpose": rhs_probe_binding["purpose"],
+            "budget_group": rhs_probe_binding["budget"]["group"],
+        }
+        _write_json(run_directory / "run_manifest.json", manifest)
+    if supervision_record_path is not None:
+        manifest["supervision_record"] = {
+            "path": str(supervision_record_path),
+            "sha256": None,
+            "status": "pending_public_supervisor_validation",
+            "outer_owner": "service_finalizer",
+            "ledger_owner": "service_finalizer",
+        }
         _write_json(run_directory / "run_manifest.json", manifest)
     if task041_public_route:
         try:
@@ -3783,6 +3886,9 @@ def launch_specification(
                 legacy_native_packet_descriptor=legacy_native_packet_descriptor,
                 compute_wall_ledger_path=compute_wall_ledger_path,
                 disable_time_stop=disable_time_stop,
+                performance_profile=performance_profile,
+                task041_supervision_record=supervision_record_path,
+                task041_rhs_probe_manifest=rhs_probe_path,
             )
         except OSError as exc:
             result = {
@@ -3853,6 +3959,10 @@ def launch_specification(
             "status": "finished",
         }
     )
+    if "supervision_record" in result:
+        manifest["supervision_record"] = result["supervision_record"]
+    if "ledger_owner" in result:
+        manifest["ledger_owner"] = result["ledger_owner"]
     summary = {
         "status": "finished",
         "run_id": manifest["run_id"],

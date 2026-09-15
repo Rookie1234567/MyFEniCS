@@ -14,7 +14,8 @@ kept until the residual audit and then destroyed by the wrapper.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+import time
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -67,6 +68,15 @@ class P4PhysicalResidualGateError(RuntimeError):
             f"tolerance: relative={self.audit.get('relative_residual')!s}, "
             f"tolerance={self.audit.get('residual_tolerance')!s}"
         )
+
+
+def _timing_add(
+    timing: MutableMapping[str, float] | None,
+    name: str,
+    seconds: float,
+) -> None:
+    if timing is not None:
+        timing[name] = float(timing.get(name, 0.0)) + max(0.0, float(seconds))
 
 
 @dataclass(frozen=True)
@@ -620,6 +630,7 @@ class P4ExactFactor:
         solution: PETSc.Vec,
         *,
         residual_tolerance: float = 1.0e-10,
+        timing: MutableMapping[str, float] | None = None,
     ) -> dict[str, Any]:
         _require_vector_layout(rhs, self.augmented_rows, "p4 augmented RHS")
         _require_vector_layout(solution, self.augmented_rows, "p4 augmented solution")
@@ -649,7 +660,15 @@ class P4ExactFactor:
         physical_relative = np.inf
         physical_residual_norm = np.inf
         try:
-            self.factor.solve(rhs, solution)
+            factor_started = time.perf_counter()
+            try:
+                self.factor.solve(rhs, solution)
+            finally:
+                _timing_add(
+                    timing,
+                    "factor_solve_seconds",
+                    time.perf_counter() - factor_started,
+                )
             backsolves += 1
             for refinement in range(3):
                 if fe_solution is not None:
@@ -658,46 +677,62 @@ class P4ExactFactor:
                     physical_output.destroy()
                 if physical_residual is not None:
                     physical_residual.destroy()
-                fe_solution = self.extract_fe_solution(solution)
-                physical_output = fe_solution.duplicate()
-                self.physical_action.matrix.mult(fe_solution, physical_output)
-                physical_residual = fe_rhs.duplicate()
-                fe_rhs.copy(physical_residual)
-                physical_residual.axpy(
-                    PETSc.ScalarType(-1.0),
-                    physical_output,
-                )
-                physical_residual_norm = float(physical_residual.norm())
-                physical_relative = (
-                    physical_residual_norm / physical_rhs_norm
-                    if physical_rhs_norm > 0.0
-                    else physical_residual_norm
-                )
-                physical_passed = bool(
-                    np.isfinite(physical_relative)
-                    and physical_relative <= float(residual_tolerance)
-                )
-
-                self._last_solve_audit = {
-                    "status": (
-                        "passed"
-                        if physical_passed
-                        else (
-                            "failed_nonfinite_residual"
-                            if not np.isfinite(physical_relative)
-                            else "gate_failed"
+                residual_started = time.perf_counter()
+                try:
+                    fe_solution = self.extract_fe_solution(solution)
+                    physical_output = fe_solution.duplicate()
+                    matrix_mult_started = time.perf_counter()
+                    try:
+                        self.physical_action.matrix.mult(fe_solution, physical_output)
+                    finally:
+                        _timing_add(
+                            timing,
+                            "physical_action_matrix_mult_seconds",
+                            time.perf_counter() - matrix_mult_started,
                         )
-                    ),
-                    "rhs_norm": physical_rhs_norm,
-                    "residual_norm": physical_residual_norm,
-                    "relative_residual": physical_relative,
-                    "physical_residual_norm": physical_residual_norm,
-                    "physical_relative_residual": physical_relative,
-                    "residual_tolerance": float(residual_tolerance),
-                    "backsolve_count": backsolves,
-                    "refinement_count": max(backsolves - 1, 0),
-                    "same_factor_refinement": backsolves > 1,
-                }
+                    physical_residual = fe_rhs.duplicate()
+                    fe_rhs.copy(physical_residual)
+                    physical_residual.axpy(
+                        PETSc.ScalarType(-1.0),
+                        physical_output,
+                    )
+                    physical_residual_norm = float(physical_residual.norm())
+                    physical_relative = (
+                        physical_residual_norm / physical_rhs_norm
+                        if physical_rhs_norm > 0.0
+                        else physical_residual_norm
+                    )
+                    physical_passed = bool(
+                        np.isfinite(physical_relative)
+                        and physical_relative <= float(residual_tolerance)
+                    )
+
+                    self._last_solve_audit = {
+                        "status": (
+                            "passed"
+                            if physical_passed
+                            else (
+                                "failed_nonfinite_residual"
+                                if not np.isfinite(physical_relative)
+                                else "gate_failed"
+                            )
+                        ),
+                        "rhs_norm": physical_rhs_norm,
+                        "residual_norm": physical_residual_norm,
+                        "relative_residual": physical_relative,
+                        "physical_residual_norm": physical_residual_norm,
+                        "physical_relative_residual": physical_relative,
+                        "residual_tolerance": float(residual_tolerance),
+                        "backsolve_count": backsolves,
+                        "refinement_count": max(backsolves - 1, 0),
+                        "same_factor_refinement": backsolves > 1,
+                    }
+                finally:
+                    _timing_add(
+                        timing,
+                        "A4_residual_refinement_seconds",
+                        time.perf_counter() - residual_started,
+                    )
 
                 if not np.isfinite(physical_relative):
                     raise P4PhysicalResidualGateError(dict(self._last_solve_audit))
@@ -710,7 +745,15 @@ class P4ExactFactor:
                 correction = solution.duplicate()
                 correction_rhs = self.create_rhs(physical_residual)
                 try:
-                    self.factor.solve(correction_rhs, correction)
+                    factor_started = time.perf_counter()
+                    try:
+                        self.factor.solve(correction_rhs, correction)
+                    finally:
+                        _timing_add(
+                            timing,
+                            "factor_solve_seconds",
+                            time.perf_counter() - factor_started,
+                        )
                 finally:
                     correction_rhs.destroy()
                 backsolves += 1

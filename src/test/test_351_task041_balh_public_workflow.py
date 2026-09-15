@@ -12,10 +12,12 @@ from pathlib import Path
 import pytest
 
 from benchmarks.task041_balh_workflow import (
+    TASK041_SCHUR_SPEED_V2_PROFILE,
     build_task041_balh_candidate_consumer_command,
     build_task041_balh_exact_consumer_command,
     build_task041_balh_mode_prep_command,
     task041_balh_consumer_identity_binding,
+    task041_schur_speed_v2_contract,
     validate_balh_producer_packet,
 )
 from benchmarks.task041_exact_side_workflow import _task041_case_contract
@@ -29,7 +31,9 @@ from src.io.execution_plan import (
 from src.io.input_loader import InputError
 from src.io.input_validation import load_and_resolve, task041_balh_profile_errors
 from src.io.resolved_config import resolved_config_sha256
+from src.runners import task041_supervisor as supervisor
 from src.runners.task041_supervisor import (
+    _validate_representative_rhs_result,
     _validate_specification,
     run_task041_public_supervisor,
 )
@@ -115,6 +119,101 @@ def test_task041_balh_public_commands_select_one_consumer():
         assert command.count("--phase") == 1
         assert "--phase" in command
         assert not ("consumer" in command and "candidate-consumer" in command)
+
+
+def test_task041_schur_speed_v2_profile_is_explicit_and_candidate_only(
+    tmp_path: Path, monkeypatch
+):
+    from benchmarks import task041_balh_workflow
+
+    candidate_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_balh.dat"
+    )
+    candidate = _specification(candidate_path)
+    candidate_model = str(candidate.identity["model_id"])
+    contract = task041_schur_speed_v2_contract(candidate_model)
+    assert contract["profile_id"] == TASK041_SCHUR_SPEED_V2_PROFILE
+    assert contract["phase_budgets_seconds"] == {
+        "shared_S0_S1_S3": 21600.0,
+        "S2": 7200.0,
+        "S4": 172800.0,
+    }
+    assert contract["batch_budget_seconds"] == 201600.0
+    assert contract["active_consumer_phase"] == "S2"
+    assert contract["memory_cap_bytes"] == 9159106560
+    assert contract["warning_memory_bytes"] == int(9159106560 * 0.9)
+    assert contract["memory_gate_source"] == "simultaneous_process_tree_rss"
+    assert contract["producer"] == {
+        "mode": "reused",
+        "invocation": "not_run",
+        "time_stop_enforced": True,
+        "qep": "not_run",
+    }
+
+    supervision_record = (tmp_path / "launch_manifest.json").resolve()
+    captured = {}
+
+    def fake_launch(specification, **kwargs):
+        captured["model_id"] = specification.identity["model_id"]
+        captured["kwargs"] = kwargs
+        return {"result_classification": "worker_exit0"}
+
+    monkeypatch.setattr("src.runners.task038_launcher.launch_specification", fake_launch)
+    assert run_case.main(
+        [
+            str(candidate_path),
+            "--producer-packet-root",
+            str(tmp_path / "producer"),
+            "--task041-performance-profile",
+            TASK041_SCHUR_SPEED_V2_PROFILE,
+            "--task041-supervision-record",
+            str(supervision_record),
+        ]
+    ) == 0
+    assert captured["model_id"] == candidate_model
+    assert captured["kwargs"]["performance_profile"] == (
+        TASK041_SCHUR_SPEED_V2_PROFILE
+    )
+    assert captured["kwargs"]["disable_time_stop"] is False
+    assert captured["kwargs"]["task041_supervision_record"] == supervision_record
+
+    command = build_task041_balh_candidate_consumer_command(
+        "python",
+        candidate,
+        tmp_path / "manifest.json",
+        tmp_path / "identity.json",
+        "b" * 64,
+        tmp_path / "worker",
+        "c" * 40,
+        "a" * 40,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+    )
+    assert "--task041-performance-profile" in command
+    worker_args = command[command.index("--worker") :]
+    parsed_worker_args = task041_balh_workflow._parser().parse_args(worker_args)
+    assert parsed_worker_args.task041_performance_profile == (
+        TASK041_SCHUR_SPEED_V2_PROFILE
+    )
+
+    exact = _specification(
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_exact.dat"
+    )
+    with pytest.raises(ValueError, match="BAL_H candidate"):
+        task041_schur_speed_v2_contract(str(exact.identity["model_id"]))
+    with pytest.raises(ValueError, match="unsupported Task041 performance profile"):
+        build_task041_balh_candidate_consumer_command(
+            "python",
+            candidate,
+            tmp_path / "manifest.json",
+            tmp_path / "identity.json",
+            "b" * 64,
+            tmp_path / "worker",
+            "c" * 40,
+            "a" * 40,
+            performance_profile="not-a-profile",
+        )
 
 
 def test_task041_balh_module_help_executes_public_worker_entrypoint():
@@ -790,3 +889,214 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     )
     assert incomplete_packet["producer_resource_qualified"] is False
     assert incomplete_packet["producer_phase"]["peak_process_tree_rss_bytes"] is None
+
+
+def _write_representative_result_fixture(tmp_path: Path):
+    from benchmarks.task041_balh_workflow import (
+        _TASK041_REPRESENTATIVE_RHS_EXPECTED,
+        TASK041_REPRESENTATIVE_RHS_SCOPE,
+    )
+
+    root = tmp_path / "representative_consumer"
+    output = root / "numerical_output"
+    output.mkdir(parents=True)
+    source_sha = "c" * 40
+    probe_path = tmp_path / "representative_rhs.json"
+    probe_path.write_text('{"fixed":true}\n', encoding="utf-8")
+    probe_sha = hashlib.sha256(probe_path.read_bytes()).hexdigest()
+    packet_manifest_sha = "d" * 64
+    packet_identity_path = tmp_path / "packet_identity.json"
+    packet_identity_path.write_text('{"packet":"fixed"}\n', encoding="utf-8")
+    packet_identity_sha = hashlib.sha256(packet_identity_path.read_bytes()).hexdigest()
+    entries = [
+        dict(zip(("ordinal", "side", "branch", "audit_index", "formal_column", "branch_ordinal"), (ordinal, *values)))
+        for ordinal, values in enumerate(_TASK041_REPRESENTATIVE_RHS_EXPECTED)
+    ]
+    count_delta = dict.fromkeys(
+        ("pc", "Q", "H6", "A6", "P", "PH_audit", "p4_backsolve"), 1
+    )
+    raw_rows, result_entries = [], []
+    for entry in entries:
+        ordinal = entry["ordinal"]
+        audit = {
+            **{key: entry[value] for key, value in {
+                "representative_ordinal": "ordinal",
+                "source_audit_index": "audit_index",
+                "formal_column": "formal_column",
+                "branch_ordinal": "branch_ordinal",
+            }.items()},
+            "status": "KSP_CONVERGED",
+            "reason": 2,
+            "ksp_positive": True,
+            "explicit_true_target_reached": True,
+            "relative_residual": 1.0e-3,
+            "rhs_norm": 1.0,
+            "residual_norm": 1.0e-3,
+            "ksp_max_it": 128,
+            "ksp_rtol": 1.0e-2,
+            "counts": {"delta": count_delta},
+        }
+        raw_rows.append({"phase": "representative_rhs", "side": entry["side"], "audit": audit})
+        response_dir = root / "response" / str(ordinal)
+        response_dir.mkdir(parents=True)
+        shards = []
+        for rank in range(8):
+            name = f"rank{rank:04d}.npz"
+            payload = f"response-{ordinal}-{rank}".encode()
+            path = response_dir / name
+            path.write_bytes(payload)
+            shards.append({
+                "rank": rank, "path": name,
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "size": 1, "ownership_range": [rank, rank + 1],
+            })
+        response_identity = {
+            "schema": "task041.representative_rhs.response_identity.v1",
+            "source_sha": source_sha,
+            "probe_manifest_sha256": probe_sha,
+            "packet_manifest_sha256": packet_manifest_sha,
+            "ordinal": ordinal, "side": entry["side"],
+            "formal_column": entry["formal_column"],
+            "branch_ordinal": entry["branch_ordinal"],
+        }
+        identity_sha = hashlib.sha256(
+            json.dumps(response_identity, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        response_manifest_path = response_dir / "manifest.json"
+        response_manifest_path.write_text(
+            json.dumps({
+                "schema": "myfenics.full3d.pre_recovery_packet.v1",
+                "identity": response_identity, "identity_sha256": identity_sha,
+                "rank_count": 8, "global_size": 8, "shards": shards,
+                "metadata": {},
+            }, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        response_manifest_sha = hashlib.sha256(response_manifest_path.read_bytes()).hexdigest()
+        result_entries.append({
+            **entry, "status": "completed", "audit": audit,
+            "artifact": {
+                "manifest": str(response_manifest_path),
+                "manifest_sha256": response_manifest_sha,
+                "identity_sha256": identity_sha,
+            },
+            "rank_shards": [
+                {
+                    "rank": shard["rank"], "ownership_range": shard["ownership_range"],
+                    "local_size": 1, "dtype": "complex128",
+                    "owned_rhs_sha256": hashlib.sha256(
+                        f"rhs-{ordinal}-{shard['rank']}".encode()
+                    ).hexdigest(),
+                    "owned_response_sha256": shard["sha256"],
+                    "packet_manifest_sha256": packet_manifest_sha,
+                    "packet_shard_path": shard["path"],
+                    "packet_shard_sha256": shard["sha256"],
+                    "response_packet_manifest_sha256": response_manifest_sha,
+                }
+                for shard in shards
+            ],
+        })
+    raw_path = output / "representative_rhs_audits.jsonl"
+    raw_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in raw_rows),
+        encoding="utf-8",
+    )
+    binding = {
+        "path": str(probe_path), "sha256": probe_sha,
+        "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+        "budget": {"group": "shared_S0_S1_S3"}, "entries": entries,
+        "source_audit": {
+            "rhs_audit_path": str(raw_path),
+            "rhs_audit_sha256": hashlib.sha256(raw_path.read_bytes()).hexdigest(),
+        },
+        "packet_binding": {
+            "packet_manifest_sha256": packet_manifest_sha,
+            "packet_identity": str(packet_identity_path),
+            "packet_identity_sha256": packet_identity_sha,
+        },
+    }
+    summary = {
+        "schema": "task041.side_balh.candidate_consumer.v1",
+        "source_sha": source_sha,
+        "status": "task041_representative_rhs_completed",
+        "classification": "TASK041_REPRESENTATIVE_RHS_COMPLETED",
+        "representative_rhs_probe": {
+            "path": str(probe_path), "sha256": probe_sha,
+            "scope": TASK041_REPRESENTATIVE_RHS_SCOPE,
+            "budget_group": "shared_S0_S1_S3",
+        },
+        "identity": {
+            "source_sha": source_sha,
+            "model_id": "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8",
+            "mode_count": 480, "mpi_size": 8,
+        },
+        "packet": {"manifest_sha256": packet_manifest_sha, "identity": str(packet_identity_path)},
+        "setup": {"admission_audit": {"pass": True, "global_operator_identity": {"pass": True}}},
+        "representative_rhs": {"entries": result_entries},
+        "matrix_inventory": {
+            "qep_calls": 0, "consumer_qep_required": False,
+            "p4_factor_count_at_setup": 2, "nested_iterative_ksp_count_at_setup": 2,
+            "p6_factor_count": 0, "global_direct_factor_count": 0,
+            "p4_factor_count_after_cleanup": {"bottom": 0, "top": 0},
+            "nested_iterative_ksp_count_after_cleanup": {"bottom": 0, "top": 0},
+        },
+        "lifecycle": {
+            "setup_released": True, "representative_rhs_cleanup_pass": True,
+            "rss_marker_emitted": True,
+        },
+        "markers": {"observed": [
+            "bottom_construction_cleanup", "top_construction_cleanup", "final_cleanup_complete"
+        ]},
+        "gates": {"pass": False}, "official_rta": {"status": "not_run"},
+        "formal": {"status": "not_run"},
+    }
+    return root, summary, binding, raw_path
+
+
+@pytest.mark.parametrize("mutation", [None, "residual", "key", "shard", "cleanup"])
+def test_representative_rhs_result_requires_fixed_raw_and_shard_binding(
+    tmp_path, mutation
+):
+    root, summary, binding, raw_path = _write_representative_result_fixture(tmp_path)
+    if mutation == "residual":
+        rows = [json.loads(line) for line in raw_path.read_text().splitlines()]
+        rows[0]["audit"]["residual_norm"] = 0.1
+        raw_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        binding["source_audit"]["rhs_audit_sha256"] = hashlib.sha256(
+            raw_path.read_bytes()
+        ).hexdigest()
+    elif mutation == "key":
+        rows = [json.loads(line) for line in raw_path.read_text().splitlines()]
+        rows[0]["audit"]["formal_column"] += 1
+        raw_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        binding["source_audit"]["rhs_audit_sha256"] = hashlib.sha256(
+            raw_path.read_bytes()
+        ).hexdigest()
+    elif mutation == "shard":
+        artifact = summary["representative_rhs"]["entries"][0]["artifact"]
+        Path(artifact["manifest"]).with_name("rank0000.npz").write_bytes(b"tampered")
+    elif mutation == "cleanup":
+        summary["lifecycle"]["representative_rhs_cleanup_pass"] = False
+    result = _validate_representative_rhs_result(
+        root, summary, binding, process_group_gone=True
+    )
+    assert result["pass"] is (mutation is None)
+
+
+def test_formal_mode_does_not_accept_representative_summary(tmp_path):
+    root, summary, binding, _raw_path = _write_representative_result_fixture(tmp_path)
+    (root / "consumer_summary.json").write_text(
+        json.dumps(summary, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    representative_result = supervisor._consumer_result(
+        root, process_group_gone=True, representative_rhs_binding=binding
+    )
+    assert representative_result["complete"] is True
+    result = supervisor._consumer_result(root, process_group_gone=True)
+    assert result["complete"] is False
+    assert result["completion_scope"] == "formal"

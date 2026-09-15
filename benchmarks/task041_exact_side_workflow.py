@@ -683,6 +683,22 @@ def _check_resource(
         raise Task041ModePrepError("resource sample lacks memory_authority_bytes")
     if float(memory_authority) >= active_limits["hard_memory_bytes"]:
         raise Task041ModePrepError("Task041 hard RSS limit reached")
+    process_tree_rss_cap = active_limits.get("process_tree_rss_cap_bytes")
+    if process_tree_rss_cap is not None:
+        process_tree = sample.get("process_tree")
+        process_tree_complete = bool(
+            isinstance(process_tree, Mapping)
+            and process_tree.get("all_status_readable") is True
+        )
+        process_tree_rss = (
+            _process_tree_rss(sample) if process_tree_complete else None
+        )
+        if process_tree_rss is None:
+            raise Task041ModePrepError(
+                "resource sample lacks complete simultaneous process-tree RSS"
+            )
+        if process_tree_rss >= process_tree_rss_cap:
+            raise Task041ModePrepError("Task041 process-tree RSS cap reached")
     if sample.get("job_no_swap") is not True:
         raise Task041ModePrepError("Task041 swap limit reached")
     if enforce_time_stop and time.monotonic() - started >= active_limits["timeout_seconds"]:
@@ -1767,6 +1783,8 @@ def _run_task041_balh_candidate_setup(
     failure_evidence: dict[str, Any],
     identity: Mapping[str, Any] | None = None,
     disable_time_stop: bool = False,
+    detailed_timing: bool = False,
+    representative_rhs_contract: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
@@ -1790,6 +1808,14 @@ def _run_task041_balh_candidate_setup(
         "bottom": [],
         "top": [],
     }
+    representative_records: dict[str, list[dict[str, Any]]] = {
+        "bottom": [],
+        "top": [],
+    }
+    representative_context: dict[str, Mapping[str, Any] | None] = {
+        "bottom": None,
+        "top": None,
+    }
     probe_active = {"bottom": True, "top": True}
     context = None
     operator = None
@@ -1812,18 +1838,29 @@ def _run_task041_balh_candidate_setup(
         def record(audit: dict[str, Any]) -> None:
             index = audit_indices[side]
             audit_indices[side] += 1
-            if probe_active[side]:
-                probe_records[side].append(dict(audit))
+            recorded_audit = dict(audit)
+            if audit_phase[side] == "representative_rhs":
+                context = representative_context[side]
+                if context is not None:
+                    recorded_audit.update(context)
+                representative_records[side].append(recorded_audit)
+            elif probe_active[side]:
+                probe_records[side].append(recorded_audit)
             payload = {
                 "phase": audit_phase[side],
                 "side": side,
                 "index": index,
-                "status": audit.get("status"),
-                "reason": audit.get("reason"),
-                "iterations": audit.get("iterations"),
-                "elapsed_seconds": audit.get("elapsed_seconds"),
-                "counts": audit.get("counts"),
-                "audit": dict(audit),
+                "status": recorded_audit.get("status"),
+                "reason": recorded_audit.get("reason"),
+                "iterations": recorded_audit.get("iterations"),
+                "elapsed_seconds": recorded_audit.get("elapsed_seconds"),
+                "rank": recorded_audit.get("rank"),
+                "parent_wall_seconds": max(
+                    0.0, time.monotonic() - helper_started
+                ),
+                "parent_wall_scope": "rank0_candidate_setup_helper_monotonic",
+                "counts": recorded_audit.get("counts"),
+                "audit": recorded_audit,
             }
             if comm.rank == 0:
                 with audit_path.open("a", encoding="utf-8") as stream:
@@ -2233,6 +2270,340 @@ def _run_task041_balh_candidate_setup(
             },
         }
 
+    def representative_apply_gate(
+        entry: Mapping[str, Any], audit: Mapping[str, Any]
+    ) -> None:
+        failures: list[str] = []
+        reason = audit.get("reason")
+        if not isinstance(reason, int) or isinstance(reason, bool) or reason <= 0:
+            failures.append("reason_not_positive")
+        if audit.get("ksp_positive") is not True:
+            failures.append("ksp_not_positive")
+        if audit.get("explicit_true_target_reached") is not True:
+            failures.append("explicit_true_target_not_reached")
+        relative_residual = audit.get("relative_residual")
+        relative_residual_numeric = (
+            isinstance(relative_residual, (int, float))
+            and not isinstance(relative_residual, bool)
+        )
+        relative_gate_failure = bool(
+            relative_residual_numeric
+            and (
+                not np.isfinite(relative_residual)
+                or relative_residual < 0.0
+                or relative_residual > 1.0e-2
+            )
+        )
+        if (
+            not relative_residual_numeric
+            or relative_gate_failure
+        ):
+            failures.append("relative_residual_not_within_1e-2")
+        rhs_norm = audit.get("rhs_norm")
+        rhs_norm_valid = bool(
+            isinstance(rhs_norm, (int, float))
+            and not isinstance(rhs_norm, bool)
+            and np.isfinite(rhs_norm)
+            and rhs_norm > 0.0
+        )
+        if (
+            not rhs_norm_valid
+        ):
+            failures.append("rhs_not_finite_nonzero")
+        residual_norm = audit.get("residual_norm")
+        residual_norm_numeric = bool(
+            isinstance(residual_norm, (int, float))
+            and not isinstance(residual_norm, bool)
+        )
+        residual_gate_failure = bool(
+            residual_norm_numeric
+            and (
+                not np.isfinite(residual_norm)
+                or residual_norm < 0.0
+            )
+        )
+        recomputed_relative: float | None = None
+        recomputed_gate_failure = False
+        if (
+            not residual_norm_numeric
+            or residual_gate_failure
+        ):
+            failures.append("residual_not_finite_nonnegative")
+        elif rhs_norm_valid:
+            recomputed_relative = residual_norm / rhs_norm
+            recomputed_gate_failure = bool(
+                not np.isfinite(recomputed_relative)
+                or recomputed_relative < 0.0
+                or recomputed_relative > 1.0e-2
+            )
+            if recomputed_gate_failure:
+                failures.append("recomputed_relative_residual_not_within_1e-2")
+        if audit.get("ksp_max_it") != 128 or audit.get("ksp_rtol") != 1.0e-2:
+            failures.append("ksp_contract_mismatch")
+        counts = audit.get("counts")
+        delta = counts.get("delta") if isinstance(counts, Mapping) else None
+        count_nonpositive = False
+        count_protocol_failure = False
+        for name in ("pc", "Q", "H6", "A6", "P", "PH_audit", "p4_backsolve"):
+            value = delta.get(name) if isinstance(delta, Mapping) else None
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                failures.append(f"{name}_count_missing")
+                count_protocol_failure = True
+            elif value == 0:
+                failures.append(f"{name}_count_not_positive")
+                count_nonpositive = True
+        if failures:
+            reason_numeric = isinstance(reason, int) and not isinstance(reason, bool)
+            reason_gate_failure = bool(reason_numeric and reason <= 0)
+            ksp_positive = audit.get("ksp_positive")
+            explicit_target = audit.get("explicit_true_target_reached")
+            contract_failure = bool(
+                not reason_numeric
+                or (ksp_positive is not True and ksp_positive is not False)
+                or (explicit_target is not True and explicit_target is not False)
+                or not rhs_norm_valid
+                or (
+                    "relative_residual_not_within_1e-2" in failures
+                    and not relative_residual_numeric
+                )
+                or (
+                    "residual_not_finite_nonnegative" in failures
+                    and not residual_norm_numeric
+                )
+                or "ksp_contract_mismatch" in failures
+                or count_protocol_failure
+            )
+            numerical_gate_failure = bool(
+                not contract_failure
+                and (
+                    reason_gate_failure
+                    or ksp_positive is False
+                    or explicit_target is False
+                    or relative_gate_failure
+                    or residual_gate_failure
+                    or recomputed_gate_failure
+                    or count_nonpositive
+                )
+            )
+            evidence = {
+                "entry": dict(entry),
+                "audit": _jsonable(dict(audit)),
+                "failures": failures,
+                "failure_classification": (
+                    "REPRESENTATIVE_RHS_NUMERICAL_GATE"
+                    if numerical_gate_failure
+                    else "REPRESENTATIVE_RHS_CONTRACT_FAILURE"
+                ),
+                "key": {
+                    "ordinal": int(entry["ordinal"]),
+                    "side": str(entry["side"]),
+                    "branch": str(entry["branch"]),
+                    "audit_index": int(entry["audit_index"]),
+                    "formal_column": int(entry["formal_column"]),
+                    "branch_ordinal": int(entry["branch_ordinal"]),
+                },
+                "actual": {
+                    "reason": reason,
+                    "ksp_positive": ksp_positive,
+                    "explicit_true_target_reached": explicit_target,
+                    "relative_residual": relative_residual,
+                    "rhs_norm": rhs_norm,
+                    "residual_norm": residual_norm,
+                    "recomputed_relative_residual": recomputed_relative,
+                },
+                "limits": {
+                    "relative_residual": 1.0e-2,
+                    "recomputed_relative_residual": 1.0e-2,
+                },
+            }
+            failure_evidence.setdefault("representative_rhs", {})[
+                str(entry["ordinal"])
+            ] = evidence
+            raise Task041ModePrepError(
+                "representative RHS apply gate failed for "
+                f"ordinal {entry['ordinal']}: {', '.join(failures)}"
+            )
+
+    def run_representative_rhs_probe() -> dict[str, Any]:
+        if representative_rhs_contract is None:
+            raise RuntimeError("representative RHS contract is missing")
+        entries = representative_rhs_contract["entries"]
+        records: list[dict[str, Any]] = []
+        mode_count = int(setup.coupling.mode_count_per_direction)
+        if mode_count != int(representative_rhs_contract["mode_count"]):
+            raise Task041ModePrepError(
+                "representative RHS mode count does not match the setup"
+            )
+        for entry in entries:
+            side = str(entry["side"])
+            branch = str(entry["branch"])
+            ordinal = int(entry["ordinal"])
+            formal_column = int(entry["formal_column"])
+            modal = np.zeros(2 * mode_count, dtype=PETSc.ScalarType)
+            modal[formal_column] = PETSc.ScalarType(1.0)
+            rhs: PETSc.Vec | None = None
+            response: PETSc.Vec | None = None
+            rhs_array: np.ndarray | None = None
+            response_array: np.ndarray | None = None
+            audit_start = len(representative_records[side])
+            audit_phase[side] = "representative_rhs"
+            representative_context[side] = {
+                "representative_ordinal": ordinal,
+                "source_audit_index": int(entry["audit_index"]),
+                "formal_column": formal_column,
+                "branch_ordinal": int(entry["branch_ordinal"]),
+            }
+            try:
+                rhs = modal_coupling_action(side, setup.coupling, modal)
+                response = getattr(setup, side).A.createVecLeft()
+                try:
+                    side_inverses[side].apply(rhs, response)
+                except BaseException:
+                    if len(representative_records[side]) > audit_start:
+                        failure_evidence.setdefault("representative_rhs", {})[
+                            str(ordinal)
+                        ] = {
+                            "entry": dict(entry),
+                            "audit": _jsonable(
+                                representative_records[side][-1]
+                            ),
+                        }
+                    raise
+                if len(representative_records[side]) != audit_start + 1:
+                    raise Task041ModePrepError(
+                        f"representative RHS {ordinal} did not receive one apply audit"
+                    )
+                apply_audit = dict(representative_records[side][-1])
+                representative_apply_gate(entry, apply_audit)
+                ownership = tuple(int(value) for value in response.getOwnershipRange())
+                shard_directory = (
+                    audit_path.parent
+                    / "representative_rhs"
+                    / f"{ordinal:02d}_{side}_{branch}"
+                )
+                response_array = np.asarray(response.getArray(readonly=True))
+                rhs_array = np.asarray(rhs.getArray(readonly=True))
+                response_bytes = memoryview(response_array).cast("B")
+                try:
+                    rhs_bytes = memoryview(rhs_array).cast("B")
+                    try:
+                        response_sha256 = hashlib.sha256(response_bytes).hexdigest()
+                        rhs_sha256 = hashlib.sha256(rhs_bytes).hexdigest()
+                    finally:
+                        rhs_bytes.release()
+                finally:
+                    response_bytes.release()
+                packet = write_packet(
+                    shard_directory,
+                    response_array,
+                    rhs_array,
+                    identity={
+                        "schema": "task041.representative_rhs.response_identity.v1",
+                        "source_sha": identity["source_sha"],
+                        "probe_manifest_sha256": representative_rhs_contract["sha256"],
+                        "packet_manifest_sha256": representative_rhs_contract[
+                            "packet_binding"
+                        ]["packet_manifest_sha256"],
+                        "ordinal": ordinal,
+                        "side": side,
+                        "formal_column": formal_column,
+                        "branch_ordinal": int(entry["branch_ordinal"]),
+                    },
+                    metadata={
+                        "scope": "representative_rhs",
+                        "entry": dict(entry),
+                        "source_function": (
+                            "src/solvers/hybrid_fem_modal_schur_direct.py:"
+                            "modal_coupling_action"
+                        ),
+                        "rhs_array_name": "rhs",
+                        "response_array_name": "solution",
+                        "dtype": str(
+                            response_array.dtype
+                        ),
+                        "owned_rhs_sha256": rhs_sha256,
+                        "owned_response_sha256": response_sha256,
+                        "apply_audit": _jsonable(apply_audit),
+                    },
+                    ownership_range=ownership,
+                    comm=comm,
+                )
+                response_manifest_path = Path(packet["manifest"])
+                response_manifest = json.loads(
+                    response_manifest_path.read_text(encoding="utf-8")
+                )
+                response_shard = next(
+                    shard
+                    for shard in response_manifest["shards"]
+                    if int(shard["rank"]) == int(comm.rank)
+                )
+                local_record = {
+                    "rank": int(comm.rank),
+                    "ownership_range": list(ownership),
+                    "local_size": int(response.getLocalSize()),
+                    "dtype": str(response_array.dtype),
+                    "owned_rhs_sha256": rhs_sha256,
+                    "owned_response_sha256": response_sha256,
+                    "packet_manifest_sha256": representative_rhs_contract[
+                        "packet_binding"
+                    ]["packet_manifest_sha256"],
+                    "packet_shard_path": response_shard["path"],
+                    "packet_shard_sha256": response_shard["sha256"],
+                    "response_packet_manifest_sha256": packet["manifest_sha256"],
+                }
+                rank_records = comm.gather(local_record, root=0)
+                record = None
+                if comm.rank == 0:
+                    record = {
+                        "ordinal": ordinal,
+                        "side": side,
+                        "branch": branch,
+                        "audit_index": int(entry["audit_index"]),
+                        "formal_column": formal_column,
+                        "branch_ordinal": int(entry["branch_ordinal"]),
+                        "status": "completed",
+                        "audit": _jsonable(apply_audit),
+                        "artifact": packet,
+                        "rank_shards": sorted(
+                            rank_records or [], key=lambda row: int(row["rank"])
+                        ),
+                    }
+                record = comm.bcast(record, root=0)
+                records.append(record)
+                marker_callback(
+                    "system_setup_stage",
+                    {
+                        "name": "representative_rhs",
+                        "ordinal": ordinal,
+                        "side": side,
+                        "formal_column": formal_column,
+                        "status": "completed",
+                    },
+                )
+            finally:
+                representative_context[side] = None
+                response_array = None
+                rhs_array = None
+                if response is not None:
+                    response.destroy()
+                if rhs is not None:
+                    rhs.destroy()
+        return {
+            "scope": "representative_rhs",
+            "status": "completed",
+            "expected_count": len(entries),
+            "completed_count": len(records),
+            "entries": records,
+            "source_manifest": {
+                "path": representative_rhs_contract["path"],
+                "sha256": representative_rhs_contract["sha256"],
+                "scope": representative_rhs_contract["scope"],
+            },
+            "source_audit": dict(representative_rhs_contract["source_audit"]),
+            "packet_binding": dict(representative_rhs_contract["packet_binding"]),
+            "full_formal": "not_run",
+        }
+
     try:
         operator, operator_context = create_hybrid_assembled_block_action(
             setup.bottom, setup.top, setup.coupling
@@ -2261,6 +2632,7 @@ def _run_task041_balh_candidate_setup(
                 max_it=128,
                 rtol=1.0e-2,
                 audit_callback=audit_callback(side),
+                detailed_timing=detailed_timing,
             )
             marker_callback(
                 f"{side}_F_ready",
@@ -2379,11 +2751,6 @@ def _run_task041_balh_candidate_setup(
         global_action_before = None
         global_rhs_before = None
 
-        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
-            probe_side(side, side_inverses[side], system)
-        cost_probe = cost_probe_summary()
-        for side in audit_phase:
-            audit_phase[side] = "modal_schur"
         p4_factor_counts_at_setup = {
             side: int(diagnostics.get("p4_factor_count", 0))
             for side, diagnostics in side_diagnostics_before.items()
@@ -2392,6 +2759,95 @@ def _run_task041_balh_candidate_setup(
             side: int(diagnostics.get("nested_iterative_ksp_count", 0))
             for side, diagnostics in side_diagnostics_before.items()
         }
+        if representative_rhs_contract is not None:
+            marker_callback(
+                "both_side_actions_ready",
+                {
+                    "source": "BAL_H_side_inverse_response_operators",
+                    "inventory": {
+                        side: dict(diagnostics)
+                        for side, diagnostics in side_diagnostics_before.items()
+                    },
+                    "p4_factor_count": sum(p4_factor_counts_at_setup.values()),
+                    "p6_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_iterative_ksp_count": sum(
+                        nested_ksp_counts_at_setup.values()
+                    ),
+                    "scope": "representative_rhs",
+                },
+            )
+            representative = run_representative_rhs_probe()
+            cleanup = release_before_recovery()
+            representative["cleanup"] = cleanup
+            after_diagnostics = {
+                side: dict(diagnostics)
+                for side, diagnostics in side_diagnostics_after.items()
+            }
+            return {
+                "schema": "task041.side_balh.representative_rhs_setup.v1",
+                "status": "representative_rhs_completed",
+                "qualification_scope": qualification_scope,
+                "qualification_method": (
+                    "task041_balh_side_inverse_response_fgmres32"
+                ),
+                "qualification": "diagnostic_component_only",
+                "admission_audit": admission_payload,
+                "representative_rhs": representative,
+                "cost_probe": {
+                    "status": "not_run",
+                    "reason": "representative_rhs_scope",
+                },
+                "side_rhs_audit_path": str(audit_path),
+                "side_actions": {
+                    side: dict(diagnostics)
+                    for side, diagnostics in side_diagnostics_before.items()
+                },
+                "side_diagnostics_after_destroy": after_diagnostics,
+                "candidate_inventory": {
+                    "p4_factor_count_at_setup": sum(
+                        p4_factor_counts_at_setup.values()
+                    ),
+                    "p4_factor_count_after_cleanup": {
+                        side: int(diagnostics.get("p4_factor_count", 0))
+                        for side, diagnostics in side_diagnostics_after.items()
+                    },
+                    "p6_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_iterative_ksp_count_at_setup": sum(
+                        nested_ksp_counts_at_setup.values()
+                    ),
+                    "nested_iterative_ksp_count_after_cleanup": {
+                        side: int(diagnostics.get("nested_iterative_ksp_count", 0))
+                        for side, diagnostics in side_diagnostics_after.items()
+                    },
+                    "modal_block": "representative_rhs_only",
+                    "approximate_preconditioner_only": True,
+                    "component_cleanup_pass": cleanup.get(
+                        "component_cleanup_pass"
+                    ),
+                },
+                "modal_schur": {
+                    "status": "not_run",
+                    "reason": "representative_rhs_scope",
+                },
+                "outer_ksp": {
+                    "status": "not_run",
+                    "reason": "representative_rhs_scope",
+                },
+                "full_formal": {
+                    "status": "not_run",
+                    "reason": "representative_rhs_scope",
+                    "solve": {"status": "not_run"},
+                    "recovery": {"status": "not_run"},
+                },
+            }
+
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            probe_side(side, side_inverses[side], system)
+        cost_probe = cost_probe_summary()
+        for side in audit_phase:
+            audit_phase[side] = "modal_schur"
 
         marker_callback(
             "both_side_actions_ready",
@@ -2542,6 +2998,8 @@ def run_task041_consumer(
     candidate: bool = False,
     comm: Any = MPI.COMM_WORLD,
     disable_time_stop: bool = False,
+    performance_profile: str | None = None,
+    task041_rhs_probe_manifest: str | Path | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -2582,10 +3040,89 @@ def run_task041_consumer(
             raise Task041ModePrepError(
                 "time-stop override requires the 5 nm BAL_H candidate worker"
             )
+    performance_contract = None
+    representative_rhs_contract: Mapping[str, Any] | None = None
+    if performance_profile is not None:
+        if not candidate or not contract["balh"]:
+            raise Task041ModePrepError(
+                "task041_schur_speed_v2 requires a BAL_H candidate worker"
+            )
+        from benchmarks.task041_balh_workflow import (
+            TASK041_REPRESENTATIVE_RHS_SCOPE,
+            TASK041_SCHUR_SPEED_V2_PROFILE,
+            load_task041_representative_rhs_manifest,
+            task041_schur_speed_v2_contract,
+        )
+
+        if performance_profile != TASK041_SCHUR_SPEED_V2_PROFILE:
+            raise Task041ModePrepError("unsupported Task041 performance profile")
+        if disable_time_stop:
+            raise Task041ModePrepError(
+                "performance profile and time-stop override are mutually exclusive"
+            )
+        try:
+            performance_contract = task041_schur_speed_v2_contract(
+                str(normalized["model_id"]),
+                scope=(
+                    TASK041_REPRESENTATIVE_RHS_SCOPE
+                    if task041_rhs_probe_manifest is not None
+                    else None
+                ),
+            )
+        except ValueError as exc:
+            raise Task041ModePrepError(str(exc)) from exc
+        if task041_rhs_probe_manifest is not None:
+            if normalized["model_id"] != TASK041_BALH_5NM_CANDIDATE_MODEL_ID:
+                raise Task041ModePrepError(
+                    "representative RHS probe requires the 5 nm BAL_H candidate"
+                )
+            try:
+                representative_rhs_contract = load_task041_representative_rhs_manifest(
+                    task041_rhs_probe_manifest
+                )
+            except (OSError, TypeError, ValueError) as exc:
+                raise Task041ModePrepError(
+                    f"invalid representative RHS manifest: {exc}"
+                ) from exc
+            if (
+                performance_contract["scope"]
+                != representative_rhs_contract["scope"]
+                or performance_contract["budget_group"]
+                != representative_rhs_contract["budget"]["group"]
+            ):
+                raise Task041ModePrepError(
+                    "representative RHS scope does not match the V2 budget contract"
+                )
+        effective_limits = dict(contract["limits"])
+        effective_limits.update(
+            {
+                "swap_limit_bytes": int(
+                    performance_contract["swap_limit_bytes"]
+                ),
+                "process_tree_rss_warning_bytes": int(
+                    performance_contract["warning_memory_bytes"]
+                ),
+                "process_tree_rss_cap_bytes": int(
+                    performance_contract["memory_cap_bytes"]
+                ),
+                "memory_cap_source": performance_contract["memory_gate_source"],
+            }
+        )
+        effective_limits["timeout_seconds"] = int(
+            performance_contract["active_consumer_budget_seconds"]
+        )
+        contract = dict(contract)
+        contract["limits"] = effective_limits
+    if task041_rhs_probe_manifest is not None and representative_rhs_contract is None:
+        raise Task041ModePrepError(
+            "representative RHS probe requires task041_schur_speed_v2"
+        )
     root = _collective_fresh_root(run_directory, comm)
     started = time.monotonic()
-    candidate_audit_path = (
-        root / "numerical_output" / "balh_side_rhs_audits.jsonl"
+    candidate_audit_path = root / "numerical_output" / (
+        "representative_rhs_audits.jsonl"
+        if representative_rhs_contract is not None
+        else "balh_side_rhs_audits.jsonl"
     )
     result: dict[str, Any] = {
         "schema": contract["consumer_schema"],
@@ -2621,6 +3158,16 @@ def run_task041_consumer(
             "recovery": 0,
         },
     }
+    if performance_contract is not None:
+        result["performance_profile"] = performance_contract
+    if representative_rhs_contract is not None:
+        result["representative_rhs_probe"] = {
+            "path": representative_rhs_contract["path"],
+            "sha256": representative_rhs_contract["sha256"],
+            "scope": representative_rhs_contract["scope"],
+            "purpose": representative_rhs_contract["purpose"],
+            "budget_group": performance_contract["budget_group"],
+        }
     if candidate:
         result["side_rhs_audit_path"] = str(candidate_audit_path)
     if contract["balh"]:
@@ -2774,6 +3321,16 @@ def run_task041_consumer(
         disk_identity = json.loads(identity_path.read_text(encoding="utf-8"))
         if not isinstance(disk_identity, Mapping):
             raise Task041ModePrepError("Task041 packet identity is not a mapping")
+        if representative_rhs_contract is not None:
+            packet_binding = representative_rhs_contract["packet_binding"]
+            if (
+                packet_binding["packet_manifest_sha256"] != packet_manifest_sha256
+                or packet_binding["packet_identity_sha256"]
+                != hashlib.sha256(identity_path.read_bytes()).hexdigest()
+            ):
+                raise Task041ModePrepError(
+                    "representative RHS probe packet binding does not match the worker packet"
+                )
         source_identity = _task041_packet_source_identity(
             source_sha,
             packet_producer_source_sha,
@@ -3183,6 +3740,8 @@ def run_task041_consumer(
                 failure_evidence=candidate_failure_evidence,
                 identity=recomputed_identity,
                 disable_time_stop=disable_time_stop,
+                detailed_timing=performance_contract is not None,
+                representative_rhs_contract=representative_rhs_contract,
             )
         else:
             setup_result = run_v5_h4_exact_side_setup_only(
@@ -3212,124 +3771,193 @@ def run_task041_consumer(
         formal_result = setup_result.get("full_formal")
         if not isinstance(formal_result, Mapping):
             raise Task041ModePrepError("Task041 consumer did not return full-formal result")
-        formal_solve = formal_result.get("solve")
-        formal_recovery = formal_result.get("recovery")
-        formal_numerical_failure = bool(
-            isinstance(formal_solve, Mapping) and formal_solve.get("pass") is False
-        ) or bool(
-            isinstance(formal_recovery, Mapping)
-            and formal_recovery.get("pass") is False
-        )
-        formal_lifecycle_failure = (
-            formal_result.get("status") == "full_formal_lifecycle_failure"
-        )
-        formal_short_circuit = formal_numerical_failure or formal_lifecycle_failure
-        authority_value = formal_result.get("authority_path")
-        authority_path = (
-            Path(authority_value).resolve()
-            if authority_value
-            else None
-        )
-        if formal_short_circuit:
-            gates = {
-                "pass": False,
-                "status": (
-                    "not_run_due_to_formal_numerical_failure"
-                    if formal_numerical_failure
-                    else "not_run_due_to_formal_lifecycle_failure"
-                ),
-                "authority_available": authority_path is not None
-                and authority_path.is_file(),
-            }
-        else:
-            if authority_path is None:
-                raise Task041ModePrepError("Task041 consumer authority path is missing")
-            current_stage = "authority_validation"
-            gates = _task041_consumer_authority_gate(
-                authority_path,
-                formal_result,
-                recomputed_identity,
-                expected_consumer_source_sha=source_sha,
-            )
-            emit("authority_validated", {"gates": gates, "path": str(authority_path)})
-        result["setup"] = _jsonable(setup_result)
-        result["formal"] = _jsonable(formal_result)
-        result["gates"] = gates
-        if authority_path is not None:
-            result["authority_path"] = str(authority_path)
-        result["consumer_scope"] = {
-            "local_systems": "created_and_released",
-            "coupling": "created_and_released",
-            "factor": (
-                "local_balh_side_inverse_response_schur"
-                if candidate
-                else "local_exact_side_only"
-            ),
-            "solve": "right_gmres" if contract["shortwave"] else "right_fgmres",
-            "recovery": "run_v3_7_recovery_runner",
-        }
-        result["matrix_inventory"] = {
-            "qep_calls": qep_release["qep_calls"],
-            "consumer_qep_required": qep_release["consumer_qep_required"],
-            "global_direct_factor_count": 0,
-            "global_coarse_factor_count": 0,
-            "task040_pc": False,
-            "direct_fallback": False,
-            "old_mpi8_packet_loader": False,
-        }
-        if candidate:
-            candidate_inventory = setup_result.get("candidate_inventory", {})
-            result["matrix_inventory"].update(
-                {
-                    "p4_factor_count_at_setup": candidate_inventory.get(
-                        "p4_factor_count_at_setup"
-                    ),
-                    "p4_factor_count_after_cleanup": candidate_inventory.get(
-                        "p4_factor_count_after_cleanup"
-                    ),
-                    "p6_factor_count": candidate_inventory.get("p6_factor_count"),
-                    "nested_iterative_ksp_count_at_setup": candidate_inventory.get(
-                        "nested_iterative_ksp_count_at_setup"
-                    ),
-                    "nested_iterative_ksp_count_after_cleanup": candidate_inventory.get(
-                        "nested_iterative_ksp_count_after_cleanup"
-                    ),
-                    "preconditioner_identity": candidate_inventory.get(
-                        "modal_block"
-                    ),
-                    "approximate_preconditioner_only": candidate_inventory.get(
-                        "approximate_preconditioner_only"
-                    ),
-                }
-            )
-            result["setup_cost_probe"] = setup_result.get("cost_probe")
-        if gates["pass"] is not True:
-            if formal_numerical_failure:
-                result["status"] = str(
-                    formal_result.get("status", "full_formal_numerical_failure")
+        if representative_rhs_contract is not None:
+            representative = setup_result.get("representative_rhs")
+            candidate_inventory = setup_result.get("candidate_inventory")
+            if not isinstance(representative, Mapping) or not isinstance(
+                candidate_inventory, Mapping
+            ):
+                raise Task041ModePrepError(
+                    "representative RHS setup did not return its component result"
                 )
-                result["classification"] = "TASK041_CONSUMER_NUMERICAL_FAILURE"
-            elif formal_lifecycle_failure:
-                result["status"] = str(formal_result["status"])
-                result["classification"] = "TASK041_CONSUMER_LIFECYCLE_FAILURE"
-            else:
-                result["status"] = "task041_consumer_formal_failure"
-                result["classification"] = "TASK041_CONSUMER_GATE_FAILURE"
-        else:
-            result["status"] = "task041_consumer_completed"
-            result["classification"] = "TASK041_CONSUMER_PASS"
-        if formal_short_circuit:
-            result["official_rta"] = {
-                "status": "not_available_due_to_formal_failure"
+            result["setup"] = _jsonable(setup_result)
+            result["formal"] = _jsonable(formal_result)
+            result["representative_rhs"] = _jsonable(representative)
+            result["gates"] = {
+                "pass": False,
+                "status": "not_run_representative_rhs_scope",
+                "full_formal": "not_run",
+                "official_rta": "not_run",
             }
+            result["official_rta"] = {
+                "status": "not_run",
+                "reason": "representative_rhs_scope",
+            }
+            result["consumer_scope"] = {
+                "local_systems": "created_and_released",
+                "coupling": "created_and_released",
+                "factor": "representative_rhs_side_inverse",
+                "solve": "not_run",
+                "recovery": "not_run",
+            }
+            result["matrix_inventory"] = {
+                "qep_calls": qep_release.get("qep_calls"),
+                "consumer_qep_required": qep_release.get(
+                    "consumer_qep_required"
+                ),
+                "global_direct_factor_count": 0,
+                "global_coarse_factor_count": 0,
+                "p4_factor_count_at_setup": candidate_inventory.get(
+                    "p4_factor_count_at_setup"
+                ),
+                "p4_factor_count_after_cleanup": candidate_inventory.get(
+                    "p4_factor_count_after_cleanup"
+                ),
+                "p6_factor_count": candidate_inventory.get("p6_factor_count"),
+                "nested_iterative_ksp_count_at_setup": candidate_inventory.get(
+                    "nested_iterative_ksp_count_at_setup"
+                ),
+                "nested_iterative_ksp_count_after_cleanup": candidate_inventory.get(
+                    "nested_iterative_ksp_count_after_cleanup"
+                ),
+                "task040_pc": False,
+                "direct_fallback": False,
+                "old_mpi8_packet_loader": False,
+                "preconditioner_identity": candidate_inventory.get("modal_block"),
+                "approximate_preconditioner_only": candidate_inventory.get(
+                    "approximate_preconditioner_only"
+                ),
+            }
+            result["setup_cost_probe"] = setup_result.get("cost_probe")
+            result["status"] = "task041_representative_rhs_completed"
+            result["classification"] = "TASK041_REPRESENTATIVE_RHS_COMPLETED"
+            emit(
+                "official_outputs_written",
+                {
+                    "scope": "representative_rhs",
+                    "status": result["status"],
+                    "official_rta": result["official_rta"],
+                },
+            )
         else:
-            result["official_rta"] = dict(gates["official_rta"])
-            if gates["pass"] is not True and result["official_rta"]["status"] == "measured":
-                result["official_rta"]["status"] = "measured_candidate"
-        emit(
-            "official_outputs_written",
-            {"status": result["status"], "official_rta": result["official_rta"]},
-        )
+            formal_solve = formal_result.get("solve")
+            formal_recovery = formal_result.get("recovery")
+            formal_numerical_failure = bool(
+                isinstance(formal_solve, Mapping) and formal_solve.get("pass") is False
+            ) or bool(
+                isinstance(formal_recovery, Mapping)
+                and formal_recovery.get("pass") is False
+            )
+            formal_lifecycle_failure = (
+                formal_result.get("status") == "full_formal_lifecycle_failure"
+            )
+            formal_short_circuit = formal_numerical_failure or formal_lifecycle_failure
+            authority_value = formal_result.get("authority_path")
+            authority_path = (
+                Path(authority_value).resolve()
+                if authority_value
+                else None
+            )
+            if formal_short_circuit:
+                gates = {
+                    "pass": False,
+                    "status": (
+                        "not_run_due_to_formal_numerical_failure"
+                        if formal_numerical_failure
+                        else "not_run_due_to_formal_lifecycle_failure"
+                    ),
+                    "authority_available": authority_path is not None
+                    and authority_path.is_file(),
+                }
+            else:
+                if authority_path is None:
+                    raise Task041ModePrepError("Task041 consumer authority path is missing")
+                current_stage = "authority_validation"
+                gates = _task041_consumer_authority_gate(
+                    authority_path,
+                    formal_result,
+                    recomputed_identity,
+                    expected_consumer_source_sha=source_sha,
+                )
+                emit("authority_validated", {"gates": gates, "path": str(authority_path)})
+            result["setup"] = _jsonable(setup_result)
+            result["formal"] = _jsonable(formal_result)
+            result["gates"] = gates
+            if authority_path is not None:
+                result["authority_path"] = str(authority_path)
+            result["consumer_scope"] = {
+                "local_systems": "created_and_released",
+                "coupling": "created_and_released",
+                "factor": (
+                    "local_balh_side_inverse_response_schur"
+                    if candidate
+                    else "local_exact_side_only"
+                ),
+                "solve": "right_gmres" if contract["shortwave"] else "right_fgmres",
+                "recovery": "run_v3_7_recovery_runner",
+            }
+            result["matrix_inventory"] = {
+                "qep_calls": qep_release["qep_calls"],
+                "consumer_qep_required": qep_release["consumer_qep_required"],
+                "global_direct_factor_count": 0,
+                "global_coarse_factor_count": 0,
+                "task040_pc": False,
+                "direct_fallback": False,
+                "old_mpi8_packet_loader": False,
+            }
+            if candidate:
+                candidate_inventory = setup_result.get("candidate_inventory", {})
+                result["matrix_inventory"].update(
+                    {
+                        "p4_factor_count_at_setup": candidate_inventory.get(
+                            "p4_factor_count_at_setup"
+                        ),
+                        "p4_factor_count_after_cleanup": candidate_inventory.get(
+                            "p4_factor_count_after_cleanup"
+                        ),
+                        "p6_factor_count": candidate_inventory.get("p6_factor_count"),
+                        "nested_iterative_ksp_count_at_setup": candidate_inventory.get(
+                            "nested_iterative_ksp_count_at_setup"
+                        ),
+                        "nested_iterative_ksp_count_after_cleanup": candidate_inventory.get(
+                            "nested_iterative_ksp_count_after_cleanup"
+                        ),
+                        "preconditioner_identity": candidate_inventory.get(
+                            "modal_block"
+                        ),
+                        "approximate_preconditioner_only": candidate_inventory.get(
+                            "approximate_preconditioner_only"
+                        ),
+                    }
+                )
+                result["setup_cost_probe"] = setup_result.get("cost_probe")
+            if gates["pass"] is not True:
+                if formal_numerical_failure:
+                    result["status"] = str(
+                        formal_result.get("status", "full_formal_numerical_failure")
+                    )
+                    result["classification"] = "TASK041_CONSUMER_NUMERICAL_FAILURE"
+                elif formal_lifecycle_failure:
+                    result["status"] = str(formal_result["status"])
+                    result["classification"] = "TASK041_CONSUMER_LIFECYCLE_FAILURE"
+                else:
+                    result["status"] = "task041_consumer_formal_failure"
+                    result["classification"] = "TASK041_CONSUMER_GATE_FAILURE"
+            else:
+                result["status"] = "task041_consumer_completed"
+                result["classification"] = "TASK041_CONSUMER_PASS"
+            if formal_short_circuit:
+                result["official_rta"] = {
+                    "status": "not_available_due_to_formal_failure"
+                }
+            else:
+                result["official_rta"] = dict(gates["official_rta"])
+                if gates["pass"] is not True and result["official_rta"]["status"] == "measured":
+                    result["official_rta"]["status"] = "measured_candidate"
+            emit(
+                "official_outputs_written",
+                {"status": result["status"], "official_rta": result["official_rta"]},
+            )
     except Exception as exc:  # noqa: BLE001 - preserve worker failure evidence
         error = exc
         result["status"] = "IMPLEMENTATION_FAILURE"
@@ -3354,16 +3982,46 @@ def run_task041_consumer(
             result["failure_evidence"] = {
                 "side_rhs_audits": _jsonable(candidate_failure_evidence),
             }
+            representative_rhs_failures = candidate_failure_evidence.get(
+                "representative_rhs"
+            )
+            representative_gate_evidence = (
+                {
+                    str(ordinal): evidence
+                    for ordinal, evidence in representative_rhs_failures.items()
+                    if isinstance(evidence, Mapping)
+                    and evidence.get("failure_classification")
+                    == "REPRESENTATIVE_RHS_NUMERICAL_GATE"
+                }
+                if isinstance(representative_rhs_failures, Mapping)
+                else {}
+            )
+            if representative_gate_evidence:
+                result["representative_rhs_gate"] = _jsonable(
+                    representative_gate_evidence
+                )
+                result["status"] = (
+                    "task041_consumer_representative_rhs_numerical_gate"
+                )
+                result["classification"] = "TASK041_CONSUMER_NUMERICAL_FAILURE"
+                result["failure_scope"] = "representative_rhs"
+                result["failure_gate"] = "REPRESENTATIVE_RHS_NUMERICAL_GATE"
             failure_classes = {
                 str(audit.get("failure_classification"))
                 for audit in candidate_failure_evidence.values()
             }
-            if "P4_PHYSICAL_RESIDUAL_GATE" in failure_classes:
+            if (
+                not representative_gate_evidence
+                and "P4_PHYSICAL_RESIDUAL_GATE" in failure_classes
+            ):
                 result["status"] = "task041_consumer_p4_gate_failure"
                 result["classification"] = (
                     "TASK041_CONSUMER_P4_PHYSICAL_RESIDUAL_GATE"
                 )
-            elif "BALANCED_CONSTRAINT_REJECTED" in failure_classes:
+            elif (
+                not representative_gate_evidence
+                and "BALANCED_CONSTRAINT_REJECTED" in failure_classes
+            ):
                 result["status"] = "task041_consumer_balanced_constraint_failure"
                 result["classification"] = (
                     "TASK041_CONSUMER_BALANCED_CONSTRAINT_REJECTED"
@@ -3420,7 +4078,24 @@ def run_task041_consumer(
                 .get("pass")
                 is True
             ),
-            "rss_marker_emitted": bool(release_audit.get("rss_marker_emitted")),
+            "rss_marker_emitted": (
+                bool(
+                    any(
+                        marker.get("stage")
+                        in {"bottom_construction_cleanup", "top_construction_cleanup"}
+                        for marker in marker_records
+                    )
+                )
+                if representative_rhs_contract is not None
+                else bool(release_audit.get("rss_marker_emitted"))
+            ),
+            "representative_rhs_cleanup_pass": (
+                result.get("setup", {})
+                .get("candidate_inventory", {})
+                .get("component_cleanup_pass")
+                if representative_rhs_contract is not None
+                else None
+            ),
             "qep_calls": result.get("matrix_inventory", {}).get("qep_calls", 0),
             "factor_count_after_cleanup": result.get("formal", {})
             .get("release_before_recovery", {})

@@ -34,10 +34,27 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="import the explicitly qualified native Task039 V4 packet",
     )
-    parser.add_argument(
+    time_control = parser.add_mutually_exclusive_group()
+    time_control.add_argument(
+        "--task041-performance-profile",
+        choices=("task041_schur_speed_v2",),
+        help="opt into the reviewed Task041 Schur timing profile",
+    )
+    time_control.add_argument(
         "--task041-balh-candidate-disable-time-stop",
         action="store_true",
         help="disable only the time stops for one reused 5 nm BAL_H candidate",
+    )
+    parser.add_argument(
+        "--task041-supervision-record",
+        type=Path,
+        help="absolute V2 outer-supervision launch manifest",
+    )
+    parser.add_argument(
+        "--task041-rhs-probe",
+        type=Path,
+        metavar="MANIFEST",
+        help="fixed V2 representative-RHS probe manifest",
     )
     return parser
 
@@ -60,6 +77,48 @@ def main(argv: list[str] | None = None) -> int:
                 raise InputError(
                     "time-stop override requires the reused 5 nm BAL_H candidate"
                 )
+        if args.task041_performance_profile is not None:
+            from benchmarks.task041_balh_workflow import (
+                task041_schur_speed_v2_contract,
+            )
+            from src.io.input_validation import TASK041_BALH_CANDIDATE_MODEL_IDS
+
+            if (
+                specification.identity.get("model_id")
+                not in TASK041_BALH_CANDIDATE_MODEL_IDS
+                or args.producer_packet_root is None
+                and args.legacy_native_packet_descriptor is None
+            ):
+                raise InputError(
+                    "task041_schur_speed_v2 requires a reused BAL_H candidate packet"
+                )
+            try:
+                task041_schur_speed_v2_contract(
+                    str(specification.identity["model_id"]),
+                    scope=(
+                        "representative_rhs"
+                        if args.task041_rhs_probe is not None
+                        else None
+                    ),
+                )
+            except ValueError as exc:
+                raise InputError(str(exc)) from exc
+        if args.task041_supervision_record is not None:
+            if args.task041_performance_profile != "task041_schur_speed_v2":
+                raise InputError(
+                    "--task041-supervision-record requires task041_schur_speed_v2"
+                )
+            if not args.task041_supervision_record.is_absolute():
+                raise InputError(
+                    "--task041-supervision-record must be an absolute path"
+                )
+        if args.task041_rhs_probe is not None:
+            if args.task041_performance_profile != "task041_schur_speed_v2":
+                raise InputError(
+                    "--task041-rhs-probe requires task041_schur_speed_v2"
+                )
+            if not args.task041_rhs_probe.is_absolute():
+                raise InputError("--task041-rhs-probe must be an absolute path")
         if args.validate_only:
             payload = {
                 "status": "valid",
@@ -86,6 +145,9 @@ def main(argv: list[str] | None = None) -> int:
             producer_packet_root=args.producer_packet_root,
             legacy_native_packet_descriptor=args.legacy_native_packet_descriptor,
             disable_time_stop=args.task041_balh_candidate_disable_time_stop,
+            performance_profile=args.task041_performance_profile,
+            task041_supervision_record=args.task041_supervision_record,
+            task041_rhs_probe_manifest=args.task041_rhs_probe,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3
