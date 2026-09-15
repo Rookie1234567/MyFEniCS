@@ -32,6 +32,7 @@ from .physical_balanced_physical_operator import (
     build_p4_exact_factor,
 )
 from .physical_balanced_same_mesh_transfer import (
+    _TASK041_SCHUR_SPEED_V2_PROFILE,
     _TRANSFER_TIMING_NAMES,
     build_same_mesh_hcurl_owner_transfer,
 )
@@ -1515,10 +1516,13 @@ def build_side_balanced_inverse(
     audit_callback: Callable[[dict[str, Any]], None] | None = None,
     detailed_timing: bool = False,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    performance_profile: str | None = None,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
     _validate_ksp_pair(max_it, rtol)
+    if performance_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
+        raise ValueError("unsupported Task041 performance profile")
     if not isinstance(side_system, HybridLocalDtnActionSystem):
         raise TypeError("BAL_H side inverse requires a HybridLocalDtnActionSystem")
     full_action = None
@@ -1566,6 +1570,7 @@ def build_side_balanced_inverse(
             full_action.floquet_data,
             p4_factor.physical_action.V,
             p4_factor.physical_action.floquet_data,
+            optimization_profile=performance_profile,
         )
         if lifecycle_callback is None:
             emit("transfer_ready")

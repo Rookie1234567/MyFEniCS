@@ -25,6 +25,8 @@ from petsc4py import PETSc
 
 SAME_MESH_TRANSFER_PAIRS = ((6, 4),)
 ROW_CONSISTENCY_LIMIT = 1.0e-11
+_TASK041_SCHUR_SPEED_V2_PROFILE = "task041_schur_speed_v2"
+_OWNER_RESOLUTION_CHUNK_ROWS = 4096
 _TRANSFER_TIMING_NAMES = (
     "local_candidate_generation_seconds",
     "route_sort_index_seconds",
@@ -305,6 +307,132 @@ def _resolve_owner_candidates(
     )
 
 
+def _resolve_owner_candidates_batched(
+    ids: np.ndarray,
+    values: np.ndarray,
+    source_ranks: np.ndarray,
+    owner_rank: int,
+    comm: Any,
+) -> tuple[np.ndarray, np.ndarray, float, int]:
+    """Resolve contiguous owner groups with bounded NumPy scratch arrays.
+
+    ``_alltoallv_candidates`` already orders rows by fine id, source rank, and
+    packet order.  The first row from ``owner_rank`` in each contiguous id
+    group is therefore the same canonical row selected by the legacy resolver.
+    Group discovery and defect evaluation use a fixed-size chunk; only group
+    starts/references and the returned owned packet scale with the number of
+    distinct ids.  No route cache is retained.
+    """
+
+    ids = np.asarray(ids, dtype=np.uint64)
+    values = np.asarray(values, dtype=np.complex128)
+    source_ranks = np.asarray(source_ranks, dtype=np.int32)
+    if (
+        ids.ndim != 1
+        or values.ndim != 1
+        or source_ranks.ndim != 1
+        or ids.size != values.size
+        or ids.size != source_ranks.size
+    ):
+        raise ValueError("owner candidate packet shape is not closed")
+    packet_size = int(ids.size)
+    if packet_size == 0:
+        global_defect = float(comm.allreduce(0.0, op=MPI.MAX))
+        if (
+            not np.isfinite(global_defect)
+            or global_defect > ROW_CONSISTENCY_LIMIT
+        ):
+            raise RuntimeError(
+                "same-mesh owner row candidates disagree: "
+                f"{global_defect} > {ROW_CONSISTENCY_LIMIT}"
+            )
+        return ids.copy(), values.copy(), global_defect, packet_size
+
+    group_starts_list = [0]
+    chunk_rows = min(_OWNER_RESOLUTION_CHUNK_ROWS, packet_size)
+    for chunk_start in range(0, packet_size, chunk_rows):
+        chunk_stop = min(chunk_start + chunk_rows, packet_size)
+        if chunk_start and ids[chunk_start] != ids[chunk_start - 1]:
+            group_starts_list.append(chunk_start)
+        if chunk_stop - chunk_start > 1:
+            boundaries = np.flatnonzero(
+                ids[chunk_start + 1 : chunk_stop]
+                != ids[chunk_start : chunk_stop - 1]
+            )
+            group_starts_list.extend(
+                (boundaries + chunk_start + 1).tolist()
+            )
+    group_starts = np.asarray(group_starts_list, dtype=np.intp)
+    del group_starts_list
+    group_count = int(group_starts.size)
+
+    # packet_size is a valid upper-bound sentinel and cannot be an input row.
+    reference_positions = np.full(
+        group_count, packet_size, dtype=np.intp
+    )
+    for chunk_start in range(0, packet_size, chunk_rows):
+        chunk_stop = min(chunk_start + chunk_rows, packet_size)
+        owner_positions = np.flatnonzero(
+            source_ranks[chunk_start:chunk_stop] == int(owner_rank)
+        )
+        if owner_positions.size:
+            owner_positions += chunk_start
+            owner_groups = np.searchsorted(
+                group_starts, owner_positions, side="right"
+            ) - 1
+            np.minimum.at(reference_positions, owner_groups, owner_positions)
+    if np.any(reference_positions == packet_size):
+        raise ValueError("fine owner rank has no canonical row candidate")
+
+    reference_values = values[reference_positions]
+    expected_values = np.empty(chunk_rows, dtype=np.complex128)
+    absolute_defect = np.empty(chunk_rows, dtype=np.float64)
+    local_defect = 0.0
+    for chunk_start in range(0, packet_size, chunk_rows):
+        chunk_stop = min(chunk_start + chunk_rows, packet_size)
+        count = chunk_stop - chunk_start
+        positions = np.arange(chunk_start, chunk_stop, dtype=np.intp)
+        group_index = np.searchsorted(
+            group_starts, positions, side="right"
+        ) - 1
+        np.take(reference_values, group_index, out=expected_values[:count])
+        np.subtract(
+            values[chunk_start:chunk_stop],
+            expected_values[:count],
+            out=expected_values[:count],
+        )
+        np.abs(
+            expected_values[:count], out=absolute_defect[:count]
+        )
+        chunk_defect = float(np.max(absolute_defect[:count]))
+        if not np.isfinite(chunk_defect):
+            # NaN reduction semantics for MPI.MAX are implementation
+            # dependent.  Normalize every non-finite local defect to +inf;
+            # later finite chunks cannot overwrite this Gate failure.
+            local_defect = float("inf")
+        elif np.isfinite(local_defect):
+            local_defect = max(local_defect, chunk_defect)
+    del expected_values, absolute_defect, positions, group_index
+    global_defect = float(comm.allreduce(local_defect, op=MPI.MAX))
+    if not np.isfinite(global_defect) or global_defect > ROW_CONSISTENCY_LIMIT:
+        raise RuntimeError(
+            "same-mesh owner row candidates disagree: "
+            f"{global_defect} > {ROW_CONSISTENCY_LIMIT}"
+        )
+    resolved_ids = ids[group_starts]
+    del group_starts, reference_positions
+    return resolved_ids, reference_values, global_defect, packet_size
+
+
+def _apply_conjugate_transpose_vector(
+    matrix: np.ndarray,
+    values: np.ndarray,
+) -> np.ndarray:
+    """Apply a complex matrix adjoint without materialising ``matrix.conj()``."""
+
+    return np.conjugate(matrix.T @ np.conjugate(values))
+
+
 def _cell_global_dofs(space: Any, cell: int) -> tuple[np.ndarray, np.ndarray]:
     local = np.asarray(space.dofmap.cell_dofs(int(cell)), dtype=np.int32)
     global_ids = np.asarray(
@@ -407,6 +535,8 @@ class SameMeshHcurlOwnerTransfer:
         coarse_space: Any,
         coarse_floquet: Any,
         local_transfer: SameMeshHcurlTransfer,
+        *,
+        optimization_profile: str | None = None,
     ) -> None:
         pair = (
             int(fine_space.element.basix_element.degree),
@@ -448,6 +578,9 @@ class SameMeshHcurlOwnerTransfer:
         self.mesh = mesh
         self.comm = mesh.comm
         self.local_transfer = local_transfer
+        if optimization_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
+            raise ValueError("unsupported same-mesh transfer optimization profile")
+        self._optimization_profile = optimization_profile
         self._destroyed = False
         self._last_apply_facts: dict[str, object] = {}
         self.fine_ranges = _owner_ranges(fine_space.dofmap.index_map, self.comm)
@@ -561,6 +694,17 @@ class SameMeshHcurlOwnerTransfer:
                 "empty_owner_supported": True,
                 "fine_owned_cells": owned_cell_count,
                 "algebraic_slave_storage": "owned fine/coarse slaves zero",
+                "optimization_profile": optimization_profile,
+                "owner_resolution": (
+                    "numpy_batched"
+                    if optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
+                    else "legacy_python"
+                ),
+                "adjoint_cell_apply": (
+                    "conjugate_transpose_identity"
+                    if optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
+                    else "explicit_conjugate_transpose"
+                ),
             }
         )
 
@@ -650,7 +794,12 @@ class SameMeshHcurlOwnerTransfer:
         )
         started = perf_counter()
         try:
-            owned_ids, owned_values, defect, packet_size = _resolve_owner_candidates(
+            resolver = (
+                _resolve_owner_candidates_batched
+                if self._optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE
+                else _resolve_owner_candidates
+            )
+            owned_ids, owned_values, defect, packet_size = resolver(
                 received_ids,
                 received_values,
                 source_ranks,
@@ -691,6 +840,7 @@ class SameMeshHcurlOwnerTransfer:
             "fine_physical_mpc_constraint_residual": constraint,
             "fine_owned_slaves_zero": True,
             "phase_application": "finalized_floquet_mpc_once",
+            "optimization_profile": self._optimization_profile,
         }
         if timing is not None:
             self._last_apply_facts["timing"] = dict(timing)
@@ -744,9 +894,13 @@ class SameMeshHcurlOwnerTransfer:
                     self._fine_work.x.array[record["fine_local"]],
                     dtype=np.complex128,
                 )
-                contribution = record["matrix"].conj().T @ (
-                    values * record["authority"]
-                )
+                masked_values = values * record["authority"]
+                if self._optimization_profile == _TASK041_SCHUR_SPEED_V2_PROFILE:
+                    contribution = _apply_conjugate_transpose_vector(
+                        record["matrix"], masked_values
+                    )
+                else:
+                    contribution = record["matrix"].conj().T @ masked_values
                 np.add.at(
                     self._coarse_work.x.array,
                     record["coarse_local"],
@@ -804,6 +958,7 @@ class SameMeshHcurlOwnerTransfer:
             "coarse_slave_storage_max": slave_max,
             "coarse_dual_reduction": "C^H_once",
             "phase_application": "fine_dual_homogenize_then_coarse_C^H_once",
+            "optimization_profile": self._optimization_profile,
         }
         if timing is not None:
             self._last_apply_facts["timing"] = dict(timing)
@@ -855,6 +1010,7 @@ def build_same_mesh_hcurl_owner_transfer(
     coarse_floquet: Any,
     *,
     local_transfer: SameMeshHcurlTransfer | None = None,
+    optimization_profile: str | None = None,
 ) -> SameMeshHcurlOwnerTransfer:
     """Build one owner-local same-mesh adapter without a global matrix."""
 
@@ -864,6 +1020,8 @@ def build_same_mesh_hcurl_owner_transfer(
     )
     if pair not in SAME_MESH_TRANSFER_PAIRS:
         raise ValueError("unsupported same-mesh owner transfer pair")
+    if optimization_profile not in {None, _TASK041_SCHUR_SPEED_V2_PROFILE}:
+        raise ValueError("unsupported same-mesh transfer optimization profile")
     if local_transfer is None:
         local_transfer = build_same_mesh_hcurl_transfer(*pair)
     return SameMeshHcurlOwnerTransfer(
@@ -872,6 +1030,7 @@ def build_same_mesh_hcurl_owner_transfer(
         coarse_space,
         coarse_floquet,
         local_transfer,
+        optimization_profile=optimization_profile,
     )
 
 

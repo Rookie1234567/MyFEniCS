@@ -1787,6 +1787,7 @@ def _run_task041_balh_candidate_setup(
     detailed_timing: bool = False,
     representative_rhs_contract: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
+    performance_profile: str | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
@@ -2080,6 +2081,7 @@ def _run_task041_balh_candidate_setup(
             rtol=1.0e-2,
             audit_callback=audit_callback(side),
             detailed_timing=detailed_timing,
+            performance_profile=performance_profile,
             lifecycle_callback=(
                 side_lifecycle_callback(side)
                 if detailed_timing
@@ -4343,6 +4345,11 @@ def run_task041_consumer(
                 detailed_timing=performance_contract is not None,
                 representative_rhs_contract=representative_rhs_contract,
                 side_setup_schedule=side_setup_schedule,
+                performance_profile=(
+                    performance_contract["profile_id"]
+                    if performance_contract is not None
+                    else None
+                ),
             )
         else:
             setup_result = run_v5_h4_exact_side_setup_only(

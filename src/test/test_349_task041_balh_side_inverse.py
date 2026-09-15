@@ -462,9 +462,17 @@ def _install_stub_side_builders(monkeypatch, captured):
         captured["p4"] = factor
         return factor
 
-    def fake_transfer(*_args, **_kwargs):
+    def fake_transfer(
+        _fine_v,
+        _fine_floquet,
+        _coarse_v,
+        _coarse_floquet,
+        *,
+        optimization_profile=None,
+    ):
         transfer = _IdentityTransfer()
         captured["transfer"] = transfer
+        captured["optimization_profile"] = optimization_profile
         return transfer
 
     def fake_h6(_side_system, *, lifecycle_callback=None):
@@ -502,7 +510,15 @@ def _install_stub_side_builders(monkeypatch, captured):
     )
 
 
-def test_side_inverse_builder_default_callback_skips_inventory(monkeypatch):
+@pytest.mark.parametrize(
+    "optimization_profile",
+    [None, "task041_schur_speed_v2"],
+    ids=["legacy", "task041_schur_speed_v2"],
+)
+@pytest.mark.parametrize("detailed_timing", [False, True])
+def test_side_inverse_builder_default_callback_skips_inventory(
+    monkeypatch, optimization_profile, detailed_timing
+):
     captured = {}
     side_system, operator, _operator_context, b = _builder_side_system()
     inventory_calls = []
@@ -529,9 +545,14 @@ def test_side_inverse_builder_default_callback_skips_inventory(monkeypatch):
     )
     inverse = None
     try:
-        inverse = side_inverse_module.build_side_balanced_inverse(side_system)
+        inverse = side_inverse_module.build_side_balanced_inverse(
+            side_system,
+            detailed_timing=detailed_timing,
+            performance_profile=optimization_profile,
+        )
         assert captured["p4_callback"] is None
         assert captured["h6_callback"] is None
+        assert captured["optimization_profile"] == optimization_profile
         assert inventory_calls == []
     finally:
         if inverse is not None:
