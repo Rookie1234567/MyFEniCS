@@ -55,6 +55,7 @@ TASK041_SCHUR_SPEED_V2_LEDGER_NAME = (
     "task041_schur_speed_v2_compute_wall_ledger.json"
 )
 TASK041_REPRESENTATIVE_RHS_SCOPE = "representative_rhs"
+TASK041_SEQUENTIAL_COMPONENT_SCHEDULE = "sequential_component"
 TASK041_REPRESENTATIVE_RHS_SCHEMA = "task041.representative_rhs_manifest.v1"
 TASK041_REPRESENTATIVE_RHS_COUNT = 8
 TASK041_REPRESENTATIVE_RHS_MODE_COUNT = 480
@@ -71,7 +72,10 @@ _TASK041_REPRESENTATIVE_RHS_EXPECTED = (
 
 
 def task041_schur_speed_v2_contract(
-    model_id: str, *, scope: str | None = None
+    model_id: str,
+    *,
+    scope: str | None = None,
+    side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     """Return the explicit S1/S2/S3/S4 budget contract for one candidate."""
 
@@ -80,6 +84,17 @@ def task041_schur_speed_v2_contract(
         raise ValueError("task041_schur_speed_v2 requires a BAL_H candidate")
     if scope not in {None, TASK041_REPRESENTATIVE_RHS_SCOPE}:
         raise ValueError(f"unsupported Task041 performance scope: {scope!r}")
+    if side_setup_schedule not in {None, TASK041_SEQUENTIAL_COMPONENT_SCHEDULE}:
+        raise ValueError(
+            f"unsupported Task041 side setup schedule: {side_setup_schedule!r}"
+        )
+    if (
+        side_setup_schedule is not None
+        and scope != TASK041_REPRESENTATIVE_RHS_SCOPE
+    ):
+        raise ValueError(
+            "sequential_component requires the representative_rhs scope"
+        )
     try:
         memory_cap = int(_TASK041_SCHUR_SPEED_V2_MEMORY_CAPS[str(model_id)])
     except KeyError as exc:
@@ -99,6 +114,7 @@ def task041_schur_speed_v2_contract(
         "profile_id": TASK041_SCHUR_SPEED_V2_PROFILE,
         "model_id": str(model_id),
         "scope": scope or "formal_consumer",
+        "side_setup_schedule": side_setup_schedule,
         "budget_group": active_budget_group,
         "memory_cap_bytes": memory_cap,
         "memory_cap_source": "review_report_v2_section_5_explicit_cap",
@@ -419,6 +435,7 @@ def _mpi8_command(
     disable_time_stop: bool = False,
     performance_profile: str | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
+    side_setup_schedule: str | None = None,
 ) -> list[str]:
     command = [
         "mpiexec",
@@ -478,6 +495,15 @@ def _mpi8_command(
         command.extend(["--task041-performance-profile", performance_profile])
     if task041_rhs_probe_manifest is not None:
         command.extend(["--task041-rhs-probe", str(task041_rhs_probe_manifest)])
+    if side_setup_schedule is not None:
+        if (
+            module != "benchmarks.task041_balh_workflow"
+            or phase != TASK041_BALH_CANDIDATE_PHASE
+        ):
+            raise ValueError(
+                "side setup schedule is limited to the BAL_H candidate worker"
+            )
+        command.extend(["--task041-side-setup-schedule", side_setup_schedule])
     return command
 
 
@@ -553,6 +579,7 @@ def build_task041_balh_candidate_consumer_command(
     disable_time_stop: bool = False,
     performance_profile: str | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
+    side_setup_schedule: str | None = None,
 ) -> list[str]:
     normalized = specification.as_jsonable()
     if task041_balh_route(str(normalized["model_id"])) != "balh":
@@ -576,6 +603,11 @@ def build_task041_balh_candidate_consumer_command(
                 if task041_rhs_probe_manifest is not None
                 else None
             ),
+            side_setup_schedule=side_setup_schedule,
+        )
+    elif side_setup_schedule is not None:
+        raise ValueError(
+            "side setup schedule requires task041_schur_speed_v2"
         )
     if task041_rhs_probe_manifest is not None:
         if (
@@ -604,6 +636,7 @@ def build_task041_balh_candidate_consumer_command(
         disable_time_stop=disable_time_stop,
         performance_profile=performance_profile,
         task041_rhs_probe_manifest=task041_rhs_probe_manifest,
+        side_setup_schedule=side_setup_schedule,
     )
 
 
@@ -998,6 +1031,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-origin")
     parser.add_argument("--legacy-native-binding")
     parser.add_argument("--task041-rhs-probe")
+    parser.add_argument(
+        "--task041-side-setup-schedule",
+        choices=(TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,),
+    )
     time_control = parser.add_mutually_exclusive_group()
     time_control.add_argument(
         "--task041-performance-profile",
@@ -1027,6 +1064,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
         disable_time_stop=args.task041_balh_candidate_disable_time_stop,
         performance_profile=args.task041_performance_profile,
         task041_rhs_probe_manifest=args.task041_rhs_probe,
+        side_setup_schedule=args.task041_side_setup_schedule,
     )
 
 
@@ -1045,6 +1083,7 @@ __all__ = [
     "TASK041_REPRESENTATIVE_RHS_SCOPE",
     "TASK041_SCHUR_SPEED_V2_LEDGER_NAME",
     "TASK041_SCHUR_SPEED_V2_PROFILE",
+    "TASK041_SEQUENTIAL_COMPONENT_SCHEDULE",
     "build_task041_balh_candidate_consumer_command",
     "build_task041_balh_exact_consumer_command",
     "build_task041_balh_mode_prep_command",

@@ -20,7 +20,10 @@ from pathlib import Path
 from typing import Any
 
 from benchmarks.task034_wsl_resources import resource_authority_sample
-from benchmarks.task041_balh_workflow import task041_schur_speed_v2_contract
+from benchmarks.task041_balh_workflow import (
+    TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    task041_schur_speed_v2_contract,
+)
 from src.io.input_validation import task041_balh_phase_limits_for_model
 from src.runners import task041_supervisor as supervisor
 
@@ -99,6 +102,32 @@ def _representative_rhs_probe_binding(
             "formal service command must not bind a representative RHS probe"
         )
     return None
+
+
+def _side_setup_schedule_binding(
+    command: list[str], configured: str | None
+) -> str | None:
+    flag = "--task041-side-setup-schedule"
+    positions = [index for index, value in enumerate(command) if value == flag]
+    if configured not in {None, TASK041_SEQUENTIAL_COMPONENT_SCHEDULE}:
+        raise Task041ServiceError(
+            "unsupported Task041 side setup schedule in service config"
+        )
+    if configured is None:
+        if positions:
+            raise Task041ServiceError(
+                "service config does not bind the public side setup schedule"
+            )
+        return None
+    if (
+        len(positions) != 1
+        or positions[0] + 1 >= len(command)
+        or command[positions[0] + 1] != configured
+    ):
+        raise Task041ServiceError(
+            "public command side setup schedule does not match service config"
+        )
+    return configured
 
 
 def _systemd_identity(unit: str) -> dict[str, str]:
@@ -219,8 +248,13 @@ def _sparse_sample_factory() -> Any:
 
 def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     config = _read_job_config(config_path)
+    side_setup_schedule = _side_setup_schedule_binding(
+        list(config["public_command"]), config.get("side_setup_schedule")
+    )
     contract = task041_schur_speed_v2_contract(
-        str(config["model_id"]), scope=config.get("scope")
+        str(config["model_id"]),
+        scope=config.get("scope"),
+        side_setup_schedule=side_setup_schedule,
     )
     phase_limits = dict(
         task041_balh_phase_limits_for_model(str(config["model_id"]), "consumer")
@@ -256,6 +290,7 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "global_swap_baseline": dict(config["global_swap_baseline"]),
         "profile_id": PROFILE,
         "scope": contract["scope"],
+        "side_setup_schedule": contract["side_setup_schedule"],
         "representative_rhs_probe": probe_binding,
         "ledger_owner": LEDGER_OWNER,
         "service_identity": dict(identity),
@@ -279,6 +314,14 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     public_return = (
         phase.get("returncode") if isinstance(phase, Mapping) else public.get("exit_status")
     )
+    public_termination_reason = (
+        phase.get("termination_reason") if isinstance(phase, Mapping) else None
+    )
+    public_resource_classification = (
+        supervisor._phase_resource_classification(phase)
+        if isinstance(phase, Mapping)
+        else None
+    )
     public_ok = public.get("status") == "completed" and public_return == 0
     membership_ok = members == [int(identity["main_pid"])]
     parent_summary = {
@@ -287,6 +330,8 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "public_supervision_completed": public_ok,
         "public_result_classification": public.get("result_classification"),
         "public_exit_status": public_return,
+        "public_phase_termination_reason": public_termination_reason,
+        "public_phase_resource_classification": public_resource_classification,
         "supervision_root": str(root),
         "ledger_owner": LEDGER_OWNER,
         "ledger_update": "deferred_to_service_finalizer",
@@ -484,8 +529,13 @@ def _run_post_hash(
 
 def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     config = _read_job_config(config_path)
+    side_setup_schedule = _side_setup_schedule_binding(
+        list(config["public_command"]), config.get("side_setup_schedule")
+    )
     contract = task041_schur_speed_v2_contract(
-        str(config["model_id"]), scope=config.get("scope")
+        str(config["model_id"]),
+        scope=config.get("scope"),
+        side_setup_schedule=side_setup_schedule,
     )
     probe_binding = _representative_rhs_probe_binding(
         list(config["public_command"]), contract["scope"]
@@ -560,6 +610,7 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "supervision_root": str(root),
             "profile_id": PROFILE,
             "scope": contract["scope"],
+            "side_setup_schedule": contract["side_setup_schedule"],
             "representative_rhs_probe": probe_binding,
             "ledger_owner": LEDGER_OWNER,
         }
@@ -629,12 +680,40 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
         finalizer_root / "artifact_hashes.json"
     )
     pre_members = None
+    pre_membership = None
     if isinstance(parent, Mapping):
-        pre = parent.get("pre_exit_membership")
-        if isinstance(pre, Mapping):
-            pre_members = pre.get("members")
-    pre_clean = pre_members == [int(launch["parent_pid"])]
+        pre_membership = parent.get("pre_exit_membership")
+        if isinstance(pre_membership, Mapping):
+            pre_members = pre_membership.get("members")
+    parent_pid = int(launch["parent_pid"])
+    pre_clean = pre_members == [parent_pid]
+    pre_membership_record_valid = bool(
+        isinstance(pre_membership, Mapping)
+        and isinstance(pre_members, list)
+        and all(type(member) is int and member > 0 for member in pre_members)
+        and parent_pid in pre_members
+        and pre_membership.get("expected_main_pid") == parent_pid
+        and pre_membership.get("pass") is pre_clean
+    )
     public_phase = public.get("phase_result") if isinstance(public, Mapping) else None
+    public_phase_returncode = (
+        public_phase.get("returncode")
+        if isinstance(public_phase, Mapping)
+        else None
+    )
+    public_termination_reason = (
+        public_phase.get("termination_reason")
+        if isinstance(public_phase, Mapping)
+        else None
+    )
+    public_resource_classification = (
+        supervisor._phase_resource_classification(public_phase)
+        if isinstance(public_phase, Mapping)
+        else None
+    )
+    public_result_classification = (
+        public.get("result_classification") if isinstance(public, Mapping) else None
+    )
     public_ok = bool(
         isinstance(public, Mapping)
         and public.get("status") == "completed"
@@ -652,24 +731,92 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     artifact_ok = bool(
         isinstance(artifacts, Mapping) and artifacts.get("pass") is True
     )
+    ledger_ok = ledger_result is not None and ledger_error is None
     checks = {
         "service_terminal_normal": terminal["normal_exit"],
         "invocation_matches": invocation_matches,
         "parent_summary_present": parent is not None,
+        "pre_exit_membership_record": pre_membership_record_valid,
         "pre_exit_members_clean": pre_clean,
         "public_result_completed": public_ok,
         "post_cgroup_finalizer_only": post_members == [os.getpid()],
         "post_hash_phase_completed": post_ok,
         "closed_artifacts_hashed": artifact_ok,
-        "ledger_written": ledger_result is not None,
+        "ledger_written": ledger_ok,
     }
-    reasons = [name for name, passed in checks.items() if not passed]
+    normal_reasons = [name for name, passed in checks.items() if not passed]
+    controlled_checks = {
+        "service_terminal_captured": terminal["available"],
+        "service_terminal_exit3": (
+            terminal["SERVICE_RESULT"] == "exit-code"
+            and terminal["EXIT_CODE"] == "exited"
+            and terminal["EXIT_STATUS"] == "3"
+        ),
+        "public_failed": (
+            isinstance(public, Mapping) and public.get("status") == "failed"
+        ),
+        "parent_reports_supervision_failure": (
+            isinstance(parent, Mapping)
+            and parent.get("public_supervision_completed") is False
+        ),
+        "public_phase_returncode_present": public_phase_returncode is not None,
+        "parent_phase_result_binding": bool(
+            isinstance(parent, Mapping)
+            and parent.get("public_exit_status") == public_phase_returncode
+            and parent.get("public_result_classification")
+            == public_result_classification
+            and public_phase_returncode is not None
+        ),
+        "pre_exit_membership_record": pre_membership_record_valid,
+        "invocation_matches": invocation_matches,
+        "parent_summary_present": parent is not None,
+        "parent_pre_exit_failed": (
+            isinstance(parent, Mapping)
+            and parent.get("status") == "pre_exit_failed"
+        ),
+        "public_resource_reason": bool(
+            isinstance(public_phase, Mapping)
+            and supervisor._phase_resource_failure(public_phase)
+            and public_termination_reason is not None
+            and public_resource_classification is not None
+        ),
+        "public_classification_matches_reason": bool(
+            public_result_classification == public_resource_classification
+        ),
+        "parent_reason_binding": bool(
+            isinstance(parent, Mapping)
+            and parent.get("public_phase_termination_reason")
+            == public_termination_reason
+            and parent.get("public_phase_resource_classification")
+            == public_resource_classification
+        ),
+        "post_cgroup_finalizer_only": post_members == [os.getpid()],
+        "post_hash_phase_completed": post_ok,
+        "closed_artifacts_hashed": artifact_ok,
+        "ledger_written": ledger_ok,
+    }
+    controlled_stop = all(controlled_checks.values())
+    reasons = [] if controlled_stop else normal_reasons
     result = {
         "schema": FINALIZER_SCHEMA,
         "status": "completed" if not reasons else "failed",
-        "result_classification": "service_complete" if not reasons else "service_boundary_failure",
+        "completion_scope": "service_finalization",
+        "result_classification": (
+            "controlled_stop"
+            if controlled_stop
+            else "service_complete"
+            if not normal_reasons
+            else "service_boundary_failure"
+        ),
         "checks": checks,
         "reasons": reasons,
+        "normal_completion_reasons": normal_reasons,
+        "controlled_stop": {
+            "active": controlled_stop,
+            "termination_reason": public_termination_reason,
+            "classification": public_resource_classification,
+            "checks": controlled_checks,
+        },
         "service_terminal": terminal,
         "launch_manifest": {"path": str(launch_path)},
         "parent_summary": {
@@ -683,6 +830,10 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "present": public is not None,
             "read_error": public_error,
             "completed": public_ok,
+            "returncode": public_phase_returncode,
+            "termination_reason": public_termination_reason,
+            "resource_classification": public_resource_classification,
+            "result_classification": public_result_classification,
         },
         "timing": {
             "unit_start_monotonic_ns": start_ns,

@@ -3652,6 +3652,7 @@ def launch_specification(
     performance_profile: str | None = None,
     task041_supervision_record: str | Path | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
+    task041_side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -3682,6 +3683,10 @@ def launch_specification(
     task041_public_route = (
         not contract_probe and adapter == TASK041_PUBLIC_SUPERVISOR_ADAPTER
     )
+    if task041_side_setup_schedule is not None and not task041_public_route:
+        raise InputError(
+            "--task041-side-setup-schedule requires the Task041 public route"
+        )
     balh_time_stop_override = None
     performance_contract = None
     if task041_public_route and str(
@@ -3748,9 +3753,14 @@ def launch_specification(
                     if task041_rhs_probe_manifest is not None
                     else None
                 ),
+                side_setup_schedule=task041_side_setup_schedule,
             )
         except ValueError as exc:
             raise InputError(str(exc)) from exc
+    elif task041_side_setup_schedule is not None:
+        raise InputError(
+            "--task041-side-setup-schedule requires task041_schur_speed_v2"
+        )
     rhs_probe_path = None
     rhs_probe_binding = None
     if task041_rhs_probe_manifest is not None:
@@ -3846,6 +3856,9 @@ def launch_specification(
     if performance_contract is not None:
         manifest["performance_profile"] = performance_contract
         _write_json(run_directory / "run_manifest.json", manifest)
+    if task041_side_setup_schedule is not None:
+        manifest["side_setup_schedule"] = task041_side_setup_schedule
+        _write_json(run_directory / "run_manifest.json", manifest)
     if rhs_probe_binding is not None:
         manifest["representative_rhs_probe"] = {
             "path": rhs_probe_binding["path"],
@@ -3889,6 +3902,7 @@ def launch_specification(
                 performance_profile=performance_profile,
                 task041_supervision_record=supervision_record_path,
                 task041_rhs_probe_manifest=rhs_probe_path,
+                task041_side_setup_schedule=task041_side_setup_schedule,
             )
         except OSError as exc:
             result = {

@@ -11,8 +11,11 @@ from pathlib import Path
 
 import pytest
 
+from benchmarks import task041_balh_workflow
 from benchmarks.task041_balh_workflow import (
+    TASK041_REPRESENTATIVE_RHS_SCOPE,
     TASK041_SCHUR_SPEED_V2_PROFILE,
+    TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     build_task041_balh_candidate_consumer_command,
     build_task041_balh_exact_consumer_command,
     build_task041_balh_mode_prep_command,
@@ -214,6 +217,115 @@ def test_task041_schur_speed_v2_profile_is_explicit_and_candidate_only(
             "a" * 40,
             performance_profile="not-a-profile",
         )
+
+
+def test_task041_sequential_component_opt_in_is_bound_and_formal_rejected(
+    tmp_path: Path, monkeypatch
+):
+    candidate_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+    )
+    candidate = _specification(candidate_path)
+    candidate_model = str(candidate.identity["model_id"])
+    probe_manifest = (
+        REPOSITORY_ROOT
+        / "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/"
+        "task041_representative_rhs_v1.json"
+    )
+    legacy_descriptor = (
+        REPOSITORY_ROOT
+        / "results/task041_side_balh_component_audit/"
+        "task041_h3b_legacy_native_packet_descriptor.json"
+    )
+    captured = []
+
+    def fake_launch(specification, **kwargs):
+        captured.append((specification, kwargs))
+        return {"result_classification": "worker_exit0"}
+
+    monkeypatch.setattr(
+        "src.runners.task038_launcher.launch_specification", fake_launch
+    )
+    opt_in_argv = [
+        str(candidate_path),
+        "--legacy-native-packet-descriptor",
+        str(legacy_descriptor),
+        "--task041-performance-profile",
+        TASK041_SCHUR_SPEED_V2_PROFILE,
+        "--task041-rhs-probe",
+        str(probe_manifest),
+        "--task041-side-setup-schedule",
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    ]
+    assert run_case.main(opt_in_argv) == 0
+    assert captured[-1][1]["performance_profile"] == (
+        TASK041_SCHUR_SPEED_V2_PROFILE
+    )
+    assert captured[-1][1]["task041_rhs_probe_manifest"] == probe_manifest
+    assert captured[-1][1]["task041_side_setup_schedule"] == (
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    )
+
+    contract = task041_schur_speed_v2_contract(
+        candidate_model,
+        scope=TASK041_REPRESENTATIVE_RHS_SCOPE,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    assert contract["scope"] == TASK041_REPRESENTATIVE_RHS_SCOPE
+    assert contract["side_setup_schedule"] == (
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    )
+    assert contract["budget_group"] == "shared_S0_S1_S3"
+    command = build_task041_balh_candidate_consumer_command(
+        str(Path(sys.executable)),
+        candidate,
+        tmp_path / "packet_manifest.json",
+        tmp_path / "packet_identity.json",
+        "b" * 64,
+        tmp_path / "worker",
+        "c" * 40,
+        "a" * 40,
+        performance_profile=TASK041_SCHUR_SPEED_V2_PROFILE,
+        task041_rhs_probe_manifest=probe_manifest,
+        side_setup_schedule=TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
+    worker_args = command[command.index("--worker") :]
+    parsed = task041_balh_workflow._parser().parse_args(worker_args)
+    assert parsed.task041_performance_profile == TASK041_SCHUR_SPEED_V2_PROFILE
+    assert parsed.task041_rhs_probe == str(probe_manifest)
+    assert parsed.task041_side_setup_schedule == (
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    )
+
+    captured.clear()
+    formal_argv = [
+        str(candidate_path),
+        "--legacy-native-packet-descriptor",
+        str(legacy_descriptor),
+        "--task041-performance-profile",
+        TASK041_SCHUR_SPEED_V2_PROFILE,
+    ]
+    assert run_case.main(formal_argv) == 0
+    assert captured[-1][1]["task041_side_setup_schedule"] is None
+    assert run_case.main(
+        [
+            *formal_argv,
+            "--task041-side-setup-schedule",
+            TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        ]
+    ) == 2
+    assert run_case.main(
+        [
+            str(candidate_path),
+            "--legacy-native-packet-descriptor",
+            str(legacy_descriptor),
+            "--task041-rhs-probe",
+            str(probe_manifest),
+            "--task041-side-setup-schedule",
+            TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        ]
+    ) == 2
 
 
 def test_task041_balh_module_help_executes_public_worker_entrypoint():
@@ -570,16 +682,25 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
         },
     )
     monkeypatch.setattr(task041_balh_workflow, "validate_balh_producer_packet", fake_validate)
-    monkeypatch.setattr(
-        supervisor,
-        "_consumer_result",
-        lambda consumer_root, process_group_gone: {
+    observed_schedules = []
+
+    def fake_consumer_result(
+        consumer_root, process_group_gone, expected_side_setup_schedule=None
+    ):
+        observed_schedules.append(expected_side_setup_schedule)
+        assert expected_side_setup_schedule is None
+        return {
             "complete": True,
             "classification": "worker_exit0",
             "worker_classification": "TASK041_CONSUMER_PASS",
             "process_group_gone": process_group_gone,
             "factor_inventory": {},
-        },
+        }
+
+    monkeypatch.setattr(
+        supervisor,
+        "_consumer_result",
+        fake_consumer_result,
     )
 
     source_sha = "e" * 40
@@ -598,6 +719,7 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     )
     assert result["result_classification"] == "worker_exit0"
     assert len(popen_calls) == 2
+    assert observed_schedules == [None]
     producer_seconds = result["phase_results"]["producer"]["phase_wall_seconds"]
     assert phase_calls[0]["cumulative_compute_used_seconds"] == pytest.approx(10.0)
     assert phase_calls[1]["cumulative_compute_used_seconds"] == pytest.approx(
@@ -795,16 +917,25 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
         "_child_environment",
         lambda: {name: "1" for name in supervisor.TASK041_REQUIRED_THREADS},
     )
-    monkeypatch.setattr(
-        supervisor,
-        "_consumer_result",
-        lambda consumer_root, process_group_gone: {
+    observed_schedules = []
+
+    def fake_consumer_result(
+        consumer_root, process_group_gone, expected_side_setup_schedule=None
+    ):
+        observed_schedules.append(expected_side_setup_schedule)
+        assert expected_side_setup_schedule is None
+        return {
             "complete": True,
             "classification": "worker_exit0",
             "worker_classification": "TASK041_CONSUMER_PASS",
             "process_group_gone": process_group_gone,
             "factor_inventory": {},
-        },
+        }
+
+    monkeypatch.setattr(
+        supervisor,
+        "_consumer_result",
+        fake_consumer_result,
     )
 
     candidate_run = tmp_path / "candidate_public_run"
@@ -840,6 +971,7 @@ def test_task041_balh_reused_public_producer_starts_only_one_consumer(
     )
     assert result["result_classification"] == "worker_exit0"
     assert len(popen_calls) == 1
+    assert observed_schedules == [None]
     assert popen_calls[0][popen_calls[0].index("--phase") + 1] == "candidate-consumer"
     assert result["phase_results"]["producer"]["reused"] is True
     assert result["phase_results"]["producer"]["returncode"] == 0
@@ -1052,7 +1184,158 @@ def _write_representative_result_fixture(tmp_path: Path):
     return root, summary, binding, raw_path
 
 
-@pytest.mark.parametrize("mutation", [None, "residual", "key", "shard", "cleanup"])
+def _sequential_live(side: str, p4: int, nested: int) -> dict[str, object]:
+    by_side = (
+        {side: {"p4_factor_count": p4, "nested_iterative_ksp_count": nested}}
+        if p4 or nested
+        else {}
+    )
+    return {
+        "by_side": by_side,
+        "live_side_count": int(bool(p4 or nested)),
+        "live_component_counts": {
+            "p4_factor": p4,
+            "nested_iterative_ksp": nested,
+        },
+        "live_component_count_sum": p4 + nested,
+    }
+
+
+def _add_sequential_lifecycle_fixture(
+    root: Path, summary: dict[str, object]
+) -> Path:
+    boundaries: list[dict[str, object]] = []
+    identity_checks: dict[str, dict[str, object]] = {}
+    marker_rows: list[dict[str, object]] = []
+    elapsed = 0.0
+
+    for side in ("bottom", "top"):
+        diagnostics = {
+            "destroyed": True,
+            "p4_factor_count": 0,
+            "nested_iterative_ksp_count": 0,
+        }
+        events = (
+            ("identity", "before_build", "system_setup_stage", 0, 0),
+            ("boundary", "before_build", "system_setup_stage", 0, 0),
+            ("boundary", "ready", f"{side}_factor_ready", 1, 1),
+            ("identity", "after_admission", "system_setup_stage", 0, 0),
+            ("identity", "before_release", "system_setup_stage", 0, 0),
+            ("boundary", "before_release", "system_setup_stage", 1, 1),
+            (
+                "boundary",
+                "released",
+                f"{side}_construction_cleanup",
+                0,
+                0,
+            ),
+            ("identity", "after_release", "system_setup_stage", 0, 0),
+        )
+        for kind, event, stage, p4, nested in events:
+            elapsed += 0.1
+            if kind == "identity":
+                label = f"{side}_{event}"
+                check = {
+                    "label": label,
+                    "action_relative": 0.0,
+                    "rhs_relative": 0.0,
+                    "source_unchanged_relative": 0.0,
+                    "pass": True,
+                }
+                identity_checks[label] = check
+                marker_rows.append(
+                    {
+                        "stage": stage,
+                        "wall_seconds": elapsed,
+                        "detail": {
+                            "side": side,
+                            "substage": "global_identity",
+                            "identity_check": check,
+                        },
+                    }
+                )
+                continue
+            boundary: dict[str, object] = {
+                "side": side,
+                "event": event,
+                "schedule": TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+                "clock": "CLOCK_MONOTONIC",
+                "live": _sequential_live(side, p4, nested),
+            }
+            if event == "ready":
+                boundary["created_at_boundary"] = {
+                    "side_inverse": 1,
+                    "p4_factor": 1,
+                    "nested_iterative_ksp": 1,
+                }
+            detail: dict[str, object] = {
+                "side": side,
+                "substage": "side_lifecycle",
+                "lifecycle_boundary": boundary,
+            }
+            if event == "released":
+                detail["diagnostics"] = diagnostics
+            boundaries.append(boundary)
+            marker_rows.append(
+                {"stage": stage, "wall_seconds": elapsed, "detail": detail}
+            )
+
+    marker_path = root / "markers.jsonl"
+    marker_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in marker_rows),
+        encoding="utf-8",
+    )
+    setup_counts = {
+        "p4_factor_created_total": 2,
+        "nested_iterative_ksp_created_total": 2,
+        "total_created": 2,
+        "p4_factor_simultaneously_live_peak": 1,
+        "nested_iterative_ksp_simultaneously_live_peak": 1,
+        "simultaneously_live_peak": 1,
+        "simultaneously_live_component_peak": 2,
+        "component_cleanup_pass": True,
+    }
+    setup = summary["setup"]
+    assert isinstance(setup, dict)
+    setup["side_setup_schedule"] = TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    setup["side_setup"] = {
+        "side_setup_schedule": TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+        "order": ["bottom", "top"],
+        "lifecycle_boundaries": boundaries,
+        "global_identity_checks": identity_checks,
+        **setup_counts,
+    }
+    setup["candidate_inventory"] = dict(setup_counts)
+    setup["side_diagnostics_after_destroy"] = {
+        "bottom": {
+            "destroyed": True,
+            "p4_factor_count": 0,
+            "nested_iterative_ksp_count": 0,
+        },
+        "top": {
+            "destroyed": True,
+            "p4_factor_count": 0,
+            "nested_iterative_ksp_count": 0,
+        },
+    }
+    summary["side_setup_schedule"] = TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    matrix = summary["matrix_inventory"]
+    assert isinstance(matrix, dict)
+    matrix["p4_factor_count_at_setup"] = None
+    matrix["nested_iterative_ksp_count_at_setup"] = None
+    summary["markers"] = {
+        "observed": [
+            "bottom_construction_cleanup",
+            "top_construction_cleanup",
+            "final_cleanup_complete",
+        ]
+    }
+    return marker_path
+
+
+@pytest.mark.parametrize(
+    "mutation", [None, "residual", "nan", "key", "shard", "cleanup"]
+)
 def test_representative_rhs_result_requires_fixed_raw_and_shard_binding(
     tmp_path, mutation
 ):
@@ -1060,6 +1343,18 @@ def test_representative_rhs_result_requires_fixed_raw_and_shard_binding(
     if mutation == "residual":
         rows = [json.loads(line) for line in raw_path.read_text().splitlines()]
         rows[0]["audit"]["residual_norm"] = 0.1
+        rows[0]["audit"]["pass"] = True
+        raw_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        binding["source_audit"]["rhs_audit_sha256"] = hashlib.sha256(
+            raw_path.read_bytes()
+        ).hexdigest()
+    elif mutation == "nan":
+        rows = [json.loads(line) for line in raw_path.read_text().splitlines()]
+        rows[0]["audit"]["residual_norm"] = float("nan")
+        rows[0]["audit"]["pass"] = True
         raw_path.write_text(
             "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
             encoding="utf-8",
@@ -1086,6 +1381,144 @@ def test_representative_rhs_result_requires_fixed_raw_and_shard_binding(
         root, summary, binding, process_group_gone=True
     )
     assert result["pass"] is (mutation is None)
+    if mutation == "residual":
+        assert any(
+            "recomputed_relative_residual" in failure
+            for failure in result["failures"]
+        )
+    elif mutation == "nan":
+        assert any(
+            failure.endswith("residual_norm") for failure in result["failures"]
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        None,
+        "release",
+        "overlap",
+        "order",
+        "summary_counts",
+        "schedule",
+        "identity",
+        "identity_order",
+    ],
+)
+def test_representative_sequential_lifecycle_is_raw_and_bound(tmp_path, mutation):
+    root, summary, binding, _raw_path = _write_representative_result_fixture(tmp_path)
+    marker_path = _add_sequential_lifecycle_fixture(root, summary)
+    if mutation in {"release", "overlap"}:
+        rows = [json.loads(line) for line in marker_path.read_text().splitlines()]
+        for row in rows:
+            boundary = row.get("detail", {}).get("lifecycle_boundary")
+            if not isinstance(boundary, dict):
+                continue
+            if mutation == "release" and (
+                boundary.get("side"), boundary.get("event")
+            ) == ("bottom", "released"):
+                boundary["live"] = _sequential_live("bottom", 1, 1)
+            if mutation == "overlap" and (
+                boundary.get("side"), boundary.get("event")
+            ) == ("top", "ready"):
+                boundary["live"] = {
+                    "by_side": {
+                        "bottom": {
+                            "p4_factor_count": 1,
+                            "nested_iterative_ksp_count": 1,
+                        },
+                        "top": {
+                            "p4_factor_count": 1,
+                            "nested_iterative_ksp_count": 1,
+                        },
+                    },
+                    "live_side_count": 2,
+                    "live_component_counts": {
+                        "p4_factor": 2,
+                        "nested_iterative_ksp": 2,
+                    },
+                    "live_component_count_sum": 4,
+                }
+        marker_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        for row in rows:
+            boundary = row.get("detail", {}).get("lifecycle_boundary")
+            if not isinstance(boundary, dict):
+                continue
+            for expected in summary["setup"]["side_setup"]["lifecycle_boundaries"]:
+                if (
+                    expected["side"], expected["event"]
+                ) == (boundary.get("side"), boundary.get("event")):
+                    expected["live"] = copy.deepcopy(boundary["live"])
+    elif mutation == "order":
+        rows = [json.loads(line) for line in marker_path.read_text().splitlines()]
+        rows[1], rows[2] = rows[2], rows[1]
+        marker_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+    elif mutation == "summary_counts":
+        summary["setup"]["side_setup"]["simultaneously_live_peak"] = 2
+    elif mutation == "identity":
+        rows = [json.loads(line) for line in marker_path.read_text().splitlines()]
+        for row in rows:
+            check = row.get("detail", {}).get("identity_check")
+            if isinstance(check, dict) and check.get("label") == (
+                "bottom_after_admission"
+            ):
+                check["action_relative"] = 2.0e-12
+        marker_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        summary_check = summary["setup"]["side_setup"]["global_identity_checks"][
+            "bottom_after_admission"
+        ]
+        summary_check["action_relative"] = 2.0e-12
+    elif mutation == "identity_order":
+        rows = [json.loads(line) for line in marker_path.read_text().splitlines()]
+        after_release = next(
+            index
+            for index, row in enumerate(rows)
+            if row.get("detail", {}).get("identity_check", {}).get("label")
+            == "bottom_after_release"
+        )
+        rows.insert(
+            next(
+                index
+                for index, row in enumerate(rows)
+                if row.get("stage") == "bottom_construction_cleanup"
+            ),
+            rows.pop(after_release),
+        )
+        marker_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+
+    expected_schedule = (
+        None if mutation == "schedule" else TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    )
+    result = _validate_representative_rhs_result(
+        root,
+        summary,
+        binding,
+        process_group_gone=True,
+        expected_side_setup_schedule=expected_schedule,
+    )
+    assert result["pass"] is (mutation is None)
+    if mutation is None:
+        assert result["checks"]["sequential_lifecycle"] is True
+    elif mutation == "identity":
+        assert result["checks"]["sequential_markers"][
+            "identity_values_and_order"
+        ] is False
+    elif mutation == "identity_order":
+        assert result["checks"]["sequential_markers"][
+            "identity_lifecycle_order"
+        ] is False
 
 
 def test_formal_mode_does_not_accept_representative_summary(tmp_path):

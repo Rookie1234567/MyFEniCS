@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Any
 
@@ -11,6 +12,10 @@ from dolfinx import fem
 from petsc4py import PETSc
 
 from .physical_balanced_mpc_action import FullspaceMpcFormAction
+from .physical_balanced_physical_operator import (
+    _payload_array_inventory,
+    _payload_vector_inventory,
+)
 from .physical_balanced_positive_kernel import (
     IsotropicPartialAssembly,
     build_quadrature_positive_diagonal,
@@ -360,7 +365,125 @@ class FixedH6:
         self._matrix = None
 
 
-def build_balanced_h6(side_system: Any) -> FixedH6:
+def _h6_window_inventory(
+    h6: FixedH6,
+    seed: PETSc.Vec,
+) -> dict[str, Any]:
+    owned = [
+        _payload_vector_inventory(
+            h6.diagonal,
+            label="h6.diagonal",
+            ownership="FixedH6 until destroy",
+        )
+    ]
+    for name in (
+        "_inv_sqrt",
+        "_scaled_input",
+        "_scaled_action",
+        "_rhs_scaled",
+        "_residual",
+        "_direction",
+        "_solution",
+        "_action",
+    ):
+        owned.append(
+            _payload_vector_inventory(
+                getattr(h6, name),
+                label=f"h6.{name[1:]}",
+                ownership="FixedH6 until destroy",
+            )
+        )
+    matrix = h6.matrix
+    return {
+        "stage_scope": "rank_local",
+        "owned_objects": owned,
+        "borrowed_objects": [
+            {
+                **_payload_vector_inventory(
+                    seed,
+                    label="h6.seed_input",
+                    ownership="caller pending destroy after H6 runtime setup",
+                ),
+            }
+        ],
+        "matrix": {
+            "label": "h6.window_matrix",
+            "local_shape": [int(value) for value in matrix.getLocalSize()],
+            "global_shape": [int(value) for value in matrix.getSize()],
+            "payload_bytes_local": "unknown",
+        },
+        "native_workspace_bytes": "unknown",
+    }
+
+
+def _h6_runtime_inventory(h6: FixedH6) -> dict[str, Any]:
+    action = h6.action
+    kernel = getattr(action, "_local_kernel", None)
+    kernel_objects = []
+    if kernel is not None:
+        for name in ("permutations", "dofs", "material_indices", "metrics"):
+            kernel_objects.append(
+                _payload_array_inventory(
+                    getattr(kernel, name, None),
+                    label=f"h6.runtime.kernel.{name}",
+                    ownership="IsotropicPartialAssembly until H6 destroy",
+                )
+            )
+        basis = getattr(kernel, "basis", None)
+        for name in ("values", "curls", "weights", "geometry_derivatives"):
+            kernel_objects.append(
+                _payload_array_inventory(
+                    getattr(basis, name, None),
+                    label=f"h6.runtime.kernel.basis.{name}",
+                    ownership="PositiveCellBasis via IsotropicPartialAssembly",
+                )
+            )
+    return {
+        "stage_scope": "rank_local",
+        "owned_objects": [
+            _payload_vector_inventory(
+                action._output_vector,
+                label="h6.runtime.output_vector",
+                ownership="FullspaceMpcFormAction until H6 destroy",
+            ),
+            _payload_array_inventory(
+                action._coefficient.x.array,
+                label="h6.runtime.coefficient_array",
+                ownership="FullspaceMpcFormAction until H6 destroy",
+            ),
+            _payload_array_inventory(
+                action._constraint_work,
+                label="h6.runtime.constraint_work",
+                ownership="FullspaceMpcFormAction until H6 destroy",
+            ),
+            _payload_array_inventory(
+                action._owned_slave_work,
+                label="h6.runtime.owned_slave_work",
+                ownership="FullspaceMpcFormAction until H6 destroy",
+            ),
+            _payload_array_inventory(
+                action._constants,
+                label="h6.runtime.packed_constants",
+                ownership="FullspaceMpcFormAction until H6 destroy",
+            ),
+            *kernel_objects,
+        ],
+        "borrowed_objects": [
+            {
+                "label": "h6.runtime.mpc_space",
+                "ownership": "borrowed from side system; not destroyed here",
+                "payload_bytes_local": "unknown",
+            }
+        ],
+        "native_workspace_bytes": "unknown",
+    }
+
+
+def build_balanced_h6(
+    side_system: Any,
+    *,
+    lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> FixedH6:
     """Build BAL_H from an existing side mesh, p6 space and finalized MPC."""
 
     cfg = side_system.cfg
@@ -378,6 +501,17 @@ def build_balanced_h6(side_system: Any) -> FixedH6:
     diagonal = seed = None
     original = runtime = None
     h6 = None
+
+    def emit(event: str, detail: Mapping[str, Any] | None = None) -> None:
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                event,
+                {
+                    "scope": "side_local",
+                    **({} if detail is None else dict(detail)),
+                },
+            )
+
     try:
         mu, mass, material_audit = build_positive_material_coefficients(side_system)
         form = same_mesh_positive_form(
@@ -386,8 +520,31 @@ def build_balanced_h6(side_system: Any) -> FixedH6:
             mass_coefficient=mass,
         )
         original = FullspaceMpcFormAction(form, space, mpc=mpc)
+        emit("h6_diagonal_begin", {"source": "quadrature_positive_diagonal"})
         diagonal = build_quadrature_positive_diagonal(space, mu, mass, mpc)
+        if lifecycle_callback is None:
+            emit("h6_diagonal_ready", {"source": "quadrature_positive_diagonal"})
+        else:
+            emit(
+                "h6_diagonal_ready",
+                {
+                    "source": "quadrature_positive_diagonal",
+                    "object_inventory": {
+                        "owned_objects": [
+                            _payload_vector_inventory(
+                                diagonal,
+                                label="h6.diagonal_build_output",
+                                ownership=(
+                                    "build_balanced_h6 until FixedH6 construction"
+                                ),
+                            )
+                        ],
+                        "native_workspace_bytes": "unknown",
+                    },
+                },
+            )
         seed, seed_audit = build_fixed_random_seed(space, floquet_data, cfg)
+        emit("h6_window_begin", {"source": "FixedH6"})
         h6 = FixedH6(
             original,
             diagonal,
@@ -396,6 +553,18 @@ def build_balanced_h6(side_system: Any) -> FixedH6:
             seed_audit,
         )
         diagonal = None
+        original = None
+        if lifecycle_callback is None:
+            emit("h6_window_ready", {"source": "FixedH6"})
+        else:
+            emit(
+                "h6_window_ready",
+                {
+                    "source": "FixedH6",
+                    "object_inventory": _h6_window_inventory(h6, seed),
+                },
+            )
+        emit("h6_runtime_begin", {"source": "FullspaceMpcFormAction"})
         runtime = FullspaceMpcFormAction(
             form,
             space,
@@ -409,7 +578,16 @@ def build_balanced_h6(side_system: Any) -> FixedH6:
         )
         h6._install_runtime_action(runtime)
         runtime = None
-        original = None
+        if lifecycle_callback is None:
+            emit("h6_runtime_ready", {"source": "IsotropicPartialAssembly"})
+        else:
+            emit(
+                "h6_runtime_ready",
+                {
+                    "source": "IsotropicPartialAssembly",
+                    "object_inventory": _h6_runtime_inventory(h6),
+                },
+            )
         seed.destroy()
         seed = None
         h6._audit["side"] = str(getattr(side_system, "side", "unknown"))

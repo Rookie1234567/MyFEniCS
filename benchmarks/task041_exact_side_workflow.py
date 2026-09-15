@@ -1780,15 +1780,20 @@ def _run_task041_balh_candidate_setup(
     timeout_seconds: float,
     audit_path: Path,
     elapsed_seconds: float,
+    workflow_started_monotonic: float | None = None,
     failure_evidence: dict[str, Any],
     identity: Mapping[str, Any] | None = None,
     disable_time_stop: bool = False,
     detailed_timing: bool = False,
     representative_rhs_contract: Mapping[str, Any] | None = None,
+    side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
 
     from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
+    from benchmarks.task041_balh_workflow import (
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
+    )
     from src.solvers.hybrid_fem_modal_augmented_direct import (
         internal_modal_rhs_correction,
     )
@@ -1823,6 +1828,20 @@ def _run_task041_balh_candidate_setup(
     released = False
     side_diagnostics_before: dict[str, dict[str, Any]] = {}
     side_diagnostics_after: dict[str, dict[str, Any]] = {}
+    admission_audits: dict[str, Any] = {}
+    sequential_side_records: dict[str, dict[str, Any]] = {}
+    sequential_lifecycle_boundaries: list[dict[str, Any]] = []
+    sequential_created_totals = {
+        "side_inverse": 0,
+        "p4_factor": 0,
+        "nested_iterative_ksp": 0,
+    }
+    sequential_live_peaks = {
+        "side_inverse": 0,
+        "p4_factor": 0,
+        "nested_iterative_ksp": 0,
+        "owned_component": 0,
+    }
     context_inventory_before: dict[str, Any] | None = None
     audit_path = Path(audit_path)
     audit_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1870,6 +1889,238 @@ def _run_task041_balh_candidate_setup(
                     stream.flush()
 
         return record
+
+    def side_stage_event(
+        side: str,
+        event: str,
+        detail: Mapping[str, Any] | None = None,
+    ) -> None:
+        if not detailed_timing and (
+            side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+        ):
+            return
+        marker_callback(
+            "system_setup_stage",
+            {
+                "side": side,
+                "substage": "side_construction",
+                "event": str(event),
+                "resource_scope": "rank_local",
+                "clock": "CLOCK_MONOTONIC",
+                "workflow_started_monotonic_seconds": (
+                    workflow_started_monotonic
+                ),
+                **({} if detail is None else dict(detail)),
+            },
+        )
+
+    def side_lifecycle_callback(
+        side: str,
+    ) -> Callable[[str, Mapping[str, Any]], None]:
+        def record(event: str, detail: Mapping[str, Any]) -> None:
+            side_stage_event(side, event, detail)
+
+        return record
+
+    def sequential_live_snapshot() -> dict[str, Any]:
+        by_side: dict[str, dict[str, int]] = {}
+        for active_side, inverse in side_inverses.items():
+            diagnostics = inverse.diagnostics
+            by_side[active_side] = {
+                "p4_factor_count": int(
+                    diagnostics.get("p4_factor_count", 0)
+                ),
+                "nested_iterative_ksp_count": int(
+                    diagnostics.get("nested_iterative_ksp_count", 0)
+                ),
+            }
+        p4_live = sum(
+            values["p4_factor_count"] for values in by_side.values()
+        )
+        nested_live = sum(
+            values["nested_iterative_ksp_count"]
+            for values in by_side.values()
+        )
+        return {
+            "by_side": by_side,
+            "live_side_count": sum(
+                1
+                for values in by_side.values()
+                if values["p4_factor_count"] > 0
+                or values["nested_iterative_ksp_count"] > 0
+            ),
+            "live_component_counts": {
+                "p4_factor": p4_live,
+                "nested_iterative_ksp": nested_live,
+            },
+            "live_component_count_sum": p4_live + nested_live,
+        }
+
+    def sequential_boundary(
+        side: str,
+        event: str,
+    ) -> dict[str, Any]:
+        if side_setup_schedule != TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
+            return {
+                "side": side,
+                "event": event,
+                "schedule": side_setup_schedule,
+                "status": "not_recorded",
+            }
+        if event not in {"before_build", "ready", "before_release", "released"}:
+            raise ValueError(f"unsupported sequential lifecycle boundary: {event}")
+        created_at_boundary: dict[str, int] | None = None
+        if event == "ready":
+            inverse = side_inverses.get(side)
+            if inverse is None:
+                raise Task041ModePrepError(
+                    f"sequential BAL_H {side} ready boundary has no inverse"
+                )
+            diagnostics = inverse.diagnostics
+            p4_created = int(diagnostics.get("p4_factor_created_count", 0))
+            nested_created = int(
+                diagnostics.get("nested_ksp_created_count", 0)
+            )
+            if p4_created != 1 or nested_created != 1:
+                failure_evidence["side_lifecycle"] = {
+                    "side": side,
+                    "event": event,
+                    "created_counts": {
+                        "p4_factor": p4_created,
+                        "nested_iterative_ksp": nested_created,
+                    },
+                }
+                raise Task041ModePrepError(
+                    f"sequential BAL_H {side} ready created-count contract failed"
+                )
+            sequential_created_totals["side_inverse"] += 1
+            sequential_created_totals["p4_factor"] += p4_created
+            sequential_created_totals["nested_iterative_ksp"] += nested_created
+            created_at_boundary = {
+                "side_inverse": 1,
+                "p4_factor": p4_created,
+                "nested_iterative_ksp": nested_created,
+            }
+        live = sequential_live_snapshot()
+        sequential_live_peaks["side_inverse"] = max(
+            sequential_live_peaks["side_inverse"], live["live_side_count"]
+        )
+        sequential_live_peaks["p4_factor"] = max(
+            sequential_live_peaks["p4_factor"],
+            live["live_component_counts"]["p4_factor"],
+        )
+        sequential_live_peaks["nested_iterative_ksp"] = max(
+            sequential_live_peaks["nested_iterative_ksp"],
+            live["live_component_counts"]["nested_iterative_ksp"],
+        )
+        sequential_live_peaks["owned_component"] = max(
+            sequential_live_peaks["owned_component"],
+            live["live_component_count_sum"],
+        )
+        record = {
+            "side": side,
+            "event": event,
+            "schedule": side_setup_schedule,
+            "clock": "CLOCK_MONOTONIC",
+            "workflow_started_monotonic_seconds": workflow_started_monotonic,
+            "live": live,
+            "created_total": dict(sequential_created_totals),
+        }
+        if created_at_boundary is not None:
+            record["created_at_boundary"] = created_at_boundary
+        if event in {"before_build", "released"} and (
+            live["live_side_count"] != 0
+            or any(value != 0 for value in live["live_component_counts"].values())
+        ):
+            record["status"] = "invalid_overlap"
+            failure_evidence["side_lifecycle"] = record
+            raise Task041ModePrepError(
+                f"sequential BAL_H {side} {event} requires no live side components"
+            )
+        if event in {"ready", "before_release"}:
+            ready = live["by_side"].get(side)
+            if (
+                live["live_side_count"] != 1
+                or ready is None
+                or ready["p4_factor_count"] != 1
+                or ready["nested_iterative_ksp_count"] != 1
+                or len(live["by_side"]) != 1
+            ):
+                record["status"] = "invalid_ready_inventory"
+                failure_evidence["side_lifecycle"] = record
+                raise Task041ModePrepError(
+                    f"sequential BAL_H {side} {event} did not expose one live p4/KSP"
+                )
+        record["status"] = "measured"
+        sequential_lifecycle_boundaries.append(record)
+        if event in {"before_build", "before_release"}:
+            marker_callback(
+                "system_setup_stage",
+                {
+                    "side": side,
+                    "substage": "side_lifecycle",
+                    "event": event,
+                    "lifecycle_boundary": record,
+                },
+            )
+        return record
+
+    def build_side(side: str, system: Any) -> Any:
+        marker_callback(
+            f"{side}_factor_setup_begin",
+            {
+                "source": "build_side_balanced_inverse",
+                "max_it": 128,
+                "rtol": 1.0e-2,
+            },
+        )
+        inverse = build_side_balanced_inverse(
+            system,
+            max_it=128,
+            rtol=1.0e-2,
+            audit_callback=audit_callback(side),
+            detailed_timing=detailed_timing,
+            lifecycle_callback=(
+                side_lifecycle_callback(side)
+                if detailed_timing
+                or side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+                else None
+            ),
+        )
+        side_inverses[side] = inverse
+        side_diagnostics_before[side] = dict(inverse.diagnostics)
+        lifecycle_boundary = None
+        if side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
+            lifecycle_boundary = sequential_boundary(
+                side,
+                "ready",
+            )
+        marker_callback(
+            f"{side}_F_ready",
+            {"source": "build_fullspace_physical_dtn_action"},
+        )
+        marker_callback(
+            f"{side}_factor_ready",
+            {
+                "source": "build_side_balanced_inverse",
+                "diagnostics": side_diagnostics_before[side],
+                **(
+                    {}
+                    if lifecycle_boundary is None
+                    else {"lifecycle_boundary": lifecycle_boundary}
+                ),
+            },
+        )
+        marker_callback(
+            f"{side}_woodbury_ready",
+            {
+                "source": "BAL_H_side_inverse",
+                "qualification_method": (
+                    "task041_balh_side_inverse_response_fgmres32"
+                ),
+            },
+        )
+        return inverse
 
     def copy_vector(source: PETSc.Vec) -> PETSc.Vec:
         target = source.duplicate()
@@ -2270,6 +2521,170 @@ def _run_task041_balh_candidate_setup(
             },
         }
 
+    def admit_side(side: str) -> Mapping[str, Any]:
+        audit = side_inverses[side].admission_audit(identity=identity)
+        admission_audits[side] = audit
+        partial_payload = {
+            "schema": "task041.h1g2b2b.candidate_side_admission.v1",
+            "identity": dict(identity) if identity is not None else {},
+            "sides": dict(admission_audits),
+            "pass": all(
+                bool(value.get("pass"))
+                for value in admission_audits.values()
+                if isinstance(value, Mapping)
+            ),
+            "status": "partial_sequential_component",
+            "side_setup_schedule": side_setup_schedule,
+        }
+        _write_rank0_json(
+            audit_path.with_name("balh_admission_audit.json"),
+            partial_payload,
+            comm,
+        )
+        marker_callback(
+            f"{side}_admission_audit",
+            {"audit": audit, "pass": audit.get("pass") is True},
+        )
+        if audit.get("pass") is not True:
+            failure_evidence["admission_audit"] = partial_payload
+            raise Task041ModePrepError(
+                f"BAL_H {side} admission audit failed; raw audit was persisted"
+            )
+        return audit
+
+    def global_identity_check(label: str) -> dict[str, Any]:
+        if (
+            operator is None
+            or global_source is None
+            or global_source_before is None
+            or global_action_before is None
+            or global_rhs_before is None
+        ):
+            raise RuntimeError("global identity references are not available")
+        global_action_after = operator.createVecLeft()
+        global_rhs_after = None
+        try:
+            operator.mult(global_source, global_action_after)
+            global_rhs_after = layout.pack(
+                setup.bottom.b,
+                setup.top.b,
+                internal_modal_rhs_correction(setup.coupling),
+            )
+            action_absolute = vector_difference_norm(
+                global_action_before, global_action_after
+            )
+            rhs_absolute = vector_difference_norm(
+                global_rhs_before, global_rhs_after
+            )
+            source_absolute = vector_difference_norm(
+                global_source_before, global_source
+            )
+            action_relative = action_absolute / max(
+                float(global_action_before.norm()), 1.0e-30
+            )
+            rhs_relative = rhs_absolute / max(
+                float(global_rhs_before.norm()), 1.0e-30
+            )
+            source_relative = source_absolute / max(
+                float(global_source_before.norm()), 1.0e-30
+            )
+        finally:
+            global_action_after.destroy()
+            if global_rhs_after is not None:
+                global_rhs_after.destroy()
+        return {
+            "label": label,
+            "action_absolute": action_absolute,
+            "action_relative": action_relative,
+            "rhs_absolute": rhs_absolute,
+            "rhs_relative": rhs_relative,
+            "source_unchanged_absolute": source_absolute,
+            "source_unchanged_relative": source_relative,
+            "threshold": 1.0e-12,
+            "pass": bool(
+                action_relative <= 1.0e-12
+                and rhs_relative <= 1.0e-12
+                and source_relative <= 1.0e-12
+            ),
+        }
+
+    def release_side(side: str) -> Mapping[str, Any]:
+        inverse = side_inverses.get(side)
+        if inverse is None:
+            return {"status": "not_created", "side": side}
+        try:
+            inverse.destroy()
+            diagnostics = dict(inverse.diagnostics)
+        except BaseException as exc:
+            failure_evidence["side_lifecycle"] = {
+                "side": side,
+                "event": "released",
+                "status": "release_exception",
+                "exception_type": type(exc).__name__,
+                "exception": str(exc),
+                "diagnostics": dict(inverse.diagnostics),
+            }
+            raise
+        release_gate = {
+            "destroyed": diagnostics.get("destroyed") is True,
+            "p4_factor_count": diagnostics.get("p4_factor_count"),
+            "nested_iterative_ksp_count": diagnostics.get(
+                "nested_iterative_ksp_count"
+            ),
+        }
+        release_gate["pass"] = bool(
+            release_gate["destroyed"]
+            and isinstance(release_gate["p4_factor_count"], int)
+            and not isinstance(release_gate["p4_factor_count"], bool)
+            and release_gate["p4_factor_count"] == 0
+            and isinstance(release_gate["nested_iterative_ksp_count"], int)
+            and not isinstance(
+                release_gate["nested_iterative_ksp_count"], bool
+            )
+            and release_gate["nested_iterative_ksp_count"] == 0
+        )
+        if not release_gate["pass"]:
+            failure_evidence["side_lifecycle"] = {
+                "side": side,
+                "event": "released",
+                "status": "release_inventory_invalid",
+                "release_gate": release_gate,
+                "diagnostics": diagnostics,
+            }
+            raise Task041ModePrepError(
+                f"sequential BAL_H {side} release inventory failed"
+            )
+        inverse = None
+        side_inverses.pop(side, None)
+        side_diagnostics_after[side] = diagnostics
+        heap_cleanup = collective_heap_cleanup(comm)
+        lifecycle_boundary = sequential_boundary(
+            side,
+            "released",
+        )
+        record = {
+            **sequential_side_records.get(side, {}),
+            "side": side,
+            "status": "destroyed",
+            "release_gate": release_gate,
+            "heap_cleanup": heap_cleanup,
+            "lifecycle_boundary": lifecycle_boundary,
+        }
+        sequential_side_records[side] = record
+        marker_callback(
+            f"{side}_construction_cleanup",
+            {
+                "source": "SideBalancedInverse.destroy",
+                "substage": "side_construction",
+                "event": "released",
+                "owner": "SideBalancedInverse",
+                "release_gate": release_gate,
+                "lifecycle_boundary": lifecycle_boundary,
+                "diagnostics": diagnostics,
+            },
+        )
+        return record
+
     def representative_apply_gate(
         entry: Mapping[str, Any], audit: Mapping[str, Any]
     ) -> None:
@@ -2424,10 +2839,16 @@ def _run_task041_balh_candidate_setup(
                 f"ordinal {entry['ordinal']}: {', '.join(failures)}"
             )
 
-    def run_representative_rhs_probe() -> dict[str, Any]:
+    def run_representative_rhs_probe(
+        entries_override: Sequence[Mapping[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         if representative_rhs_contract is None:
             raise RuntimeError("representative RHS contract is missing")
-        entries = representative_rhs_contract["entries"]
+        entries = (
+            list(representative_rhs_contract["entries"])
+            if entries_override is None
+            else list(entries_override)
+        )
         records: list[dict[str, Any]] = []
         mode_count = int(setup.coupling.mode_count_per_direction)
         if mode_count != int(representative_rhs_contract["mode_count"]):
@@ -2604,6 +3025,112 @@ def _run_task041_balh_candidate_setup(
             "full_formal": "not_run",
         }
 
+    def representative_setup_result(
+        representative: Mapping[str, Any],
+        admission_payload: Mapping[str, Any],
+        cleanup: Mapping[str, Any],
+        *,
+        schedule_summary: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        after_diagnostics = {
+            side: dict(diagnostics)
+            for side, diagnostics in side_diagnostics_after.items()
+        }
+        p4_counts = {
+            side: int(diagnostics.get("p4_factor_count", 0))
+            for side, diagnostics in side_diagnostics_before.items()
+        }
+        nested_counts = {
+            side: int(diagnostics.get("nested_iterative_ksp_count", 0))
+            for side, diagnostics in side_diagnostics_before.items()
+        }
+        shared_inventory = {
+            "p6_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "modal_block": "representative_rhs_only",
+            "approximate_preconditioner_only": True,
+        }
+        if schedule_summary is None:
+            candidate_inventory = {
+                "p4_factor_count_at_setup": sum(p4_counts.values()),
+                "p4_factor_count_after_cleanup": {
+                    side: int(diagnostics.get("p4_factor_count", 0))
+                    for side, diagnostics in side_diagnostics_after.items()
+                },
+                "nested_iterative_ksp_count_at_setup": sum(
+                    nested_counts.values()
+                ),
+                "nested_iterative_ksp_count_after_cleanup": {
+                    side: int(diagnostics.get("nested_iterative_ksp_count", 0))
+                    for side, diagnostics in side_diagnostics_after.items()
+                },
+                "component_cleanup_pass": cleanup.get(
+                    "component_cleanup_pass"
+                ),
+            }
+        else:
+            candidate_inventory = dict(schedule_summary)
+        candidate_inventory.update(shared_inventory)
+        if schedule_summary is not None:
+            candidate_inventory.update(
+                {
+                    "p4_factor_count_after_cleanup": {
+                        side: int(diagnostics.get("p4_factor_count", 0))
+                        for side, diagnostics in side_diagnostics_after.items()
+                    },
+                    "nested_iterative_ksp_count_after_cleanup": {
+                        side: int(diagnostics.get("nested_iterative_ksp_count", 0))
+                        for side, diagnostics in side_diagnostics_after.items()
+                    },
+                    "component_cleanup_pass": cleanup.get("component_cleanup_pass"),
+                }
+            )
+        result = {
+            "schema": "task041.side_balh.representative_rhs_setup.v1",
+            "status": "representative_rhs_completed",
+            "qualification_scope": qualification_scope,
+            "qualification_method": (
+                "task041_balh_side_inverse_response_fgmres32"
+            ),
+            "qualification": "diagnostic_component_only",
+            "admission_audit": dict(admission_payload),
+            "representative_rhs": {
+                **dict(representative),
+                "cleanup": dict(cleanup),
+            },
+            "cost_probe": {
+                "status": "not_run",
+                "reason": "representative_rhs_scope",
+            },
+            "side_rhs_audit_path": str(audit_path),
+            "side_actions": {
+                side: dict(diagnostics)
+                for side, diagnostics in side_diagnostics_before.items()
+            },
+            "side_diagnostics_after_destroy": after_diagnostics,
+            "candidate_inventory": candidate_inventory,
+            "modal_schur": {
+                "status": "not_run",
+                "reason": "representative_rhs_scope",
+            },
+            "outer_ksp": {
+                "status": "not_run",
+                "reason": "representative_rhs_scope",
+            },
+            "full_formal": {
+                "status": "not_run",
+                "reason": "representative_rhs_scope",
+                "solve": {"status": "not_run"},
+                "recovery": {"status": "not_run"},
+            },
+        }
+        if schedule_summary is not None:
+            result["side_setup_schedule"] = schedule_summary[
+                "side_setup_schedule"
+            ]
+            result["side_setup"] = dict(schedule_summary)
+        return result
+
     try:
         operator, operator_context = create_hybrid_assembled_block_action(
             setup.bottom, setup.top, setup.coupling
@@ -2618,40 +3145,207 @@ def _run_task041_balh_candidate_setup(
             setup.top.b,
             internal_modal_rhs_correction(setup.coupling),
         )
-        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
-            marker_callback(
-                f"{side}_factor_setup_begin",
-                {
-                    "source": "build_side_balanced_inverse",
-                    "max_it": 128,
-                    "rtol": 1.0e-2,
+        if side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE:
+            if representative_rhs_contract is None:
+                raise Task041ModePrepError(
+                    "sequential_component requires the representative RHS contract"
+                )
+            representative_entries = list(representative_rhs_contract["entries"])
+            entries_by_side: dict[str, list[Mapping[str, Any]]] = {
+                "bottom": [],
+                "top": [],
+            }
+            for entry in representative_entries:
+                side = str(entry["side"])
+                if side not in entries_by_side:
+                    raise Task041ModePrepError(
+                        f"representative RHS entry has unsupported side: {side}"
+                    )
+                entries_by_side[side].append(entry)
+            if any(len(entries) != 4 for entries in entries_by_side.values()):
+                raise Task041ModePrepError(
+                    "sequential_component requires four fixed entries per side"
+                )
+
+            global_identity_checks: dict[str, dict[str, Any]] = {}
+
+            def require_global_identity(label: str) -> None:
+                check = global_identity_check(label)
+                global_identity_checks[label] = check
+                marker_callback(
+                    "system_setup_stage",
+                    {
+                        "side": label.split("_", 1)[0],
+                        "substage": "global_identity",
+                        "event": label,
+                        "identity_check": check,
+                    },
+                )
+                if not check["pass"]:
+                    failure_evidence["global_operator_identity"] = {
+                        "checks": dict(global_identity_checks),
+                        "failed_at": label,
+                    }
+                    raise Task041ModePrepError(
+                        f"global operator identity failed at {label}"
+                    )
+
+            representative_parts: list[Mapping[str, Any]] = []
+            for side in ("bottom", "top"):
+                require_global_identity(f"{side}_before_build")
+                sequential_boundary(side, "before_build")
+                build_side(side, getattr(setup, side))
+                live_at_build = {
+                    "p4_factor_count": int(
+                        side_diagnostics_before[side].get("p4_factor_count", 0)
+                    ),
+                    "nested_iterative_ksp_count": int(
+                        side_diagnostics_before[side].get(
+                            "nested_iterative_ksp_count", 0
+                        )
+                    ),
+                }
+                admit_side(side)
+                require_global_identity(f"{side}_after_admission")
+                side_result = run_representative_rhs_probe(entries_by_side[side])
+                if side_result["completed_count"] != len(entries_by_side[side]):
+                    raise Task041ModePrepError(
+                        f"sequential_component {side} probe is incomplete"
+                    )
+                sequential_side_records[side] = {
+                    "side": side,
+                    "admission_pass": True,
+                    "probe_expected_count": len(entries_by_side[side]),
+                    "probe_completed_count": int(
+                        side_result["completed_count"]
+                    ),
+                    "live_at_build": live_at_build,
+                }
+                require_global_identity(f"{side}_before_release")
+                sequential_boundary(side, "before_release")
+                release_side(side)
+                require_global_identity(f"{side}_after_release")
+                representative_parts.append(side_result)
+
+            global_operator_identity = {
+                "source": (
+                    "one original assembled global operator/RHS/source checked "
+                    "around each sequential side lifecycle"
+                ),
+                "checks": global_identity_checks,
+                "threshold": 1.0e-12,
+                "pass": all(
+                    bool(check["pass"])
+                    for check in global_identity_checks.values()
+                ),
+            }
+            admission_payload = {
+                "schema": "task041.h1g2b2b.candidate_side_admission.v1",
+                "identity": dict(identity) if identity is not None else {},
+                "sides": dict(admission_audits),
+                "global_operator_identity": global_operator_identity,
+                "side_setup_schedule": side_setup_schedule,
+                "pass": bool(
+                    global_operator_identity["pass"]
+                    and all(
+                        bool(audit.get("pass"))
+                        for audit in admission_audits.values()
+                    )
+                ),
+            }
+            _write_rank0_json(
+                audit_path.with_name("balh_admission_audit.json"),
+                admission_payload,
+                comm,
+            )
+            if not admission_payload["pass"]:
+                failure_evidence["admission_audit"] = admission_payload
+                raise Task041ModePrepError(
+                    "sequential_component admission audit failed"
+                )
+            representative = dict(representative_parts[0])
+            representative["entries"] = [
+                entry
+                for part in representative_parts
+                for entry in part["entries"]
+            ]
+            representative["expected_count"] = len(representative_entries)
+            representative["completed_count"] = len(representative["entries"])
+            p4_live = {
+                side: int(
+                    record["live_at_build"]["p4_factor_count"]
+                )
+                for side, record in sequential_side_records.items()
+            }
+            nested_live = {
+                side: int(
+                    record["live_at_build"]["nested_iterative_ksp_count"]
+                )
+                for side, record in sequential_side_records.items()
+            }
+            cleanup = release_before_recovery()
+            schedule_summary = {
+                "side_setup_schedule": side_setup_schedule,
+                "order": ["bottom", "top"],
+                "side_completion": dict(sequential_side_records),
+                "lifecycle_boundaries": list(sequential_lifecycle_boundaries),
+                "global_identity_checks": global_identity_checks,
+                "p4_factor_created_total": sequential_created_totals[
+                    "p4_factor"
+                ],
+                "nested_iterative_ksp_created_total": sequential_created_totals[
+                    "nested_iterative_ksp"
+                ],
+                "p4_factor_count_at_setup": None,
+                "nested_iterative_ksp_count_at_setup": None,
+                "p4_factor_count_at_setup_by_side": p4_live,
+                "nested_iterative_ksp_count_at_setup_by_side": nested_live,
+                "p4_factor_simultaneously_live_peak": sequential_live_peaks[
+                    "p4_factor"
+                ],
+                "nested_iterative_ksp_simultaneously_live_peak": sequential_live_peaks[
+                    "nested_iterative_ksp"
+                ],
+                "total_created": sequential_created_totals["side_inverse"],
+                "simultaneously_live_peak": sequential_live_peaks[
+                    "side_inverse"
+                ],
+                "simultaneously_live_component_peak": sequential_live_peaks[
+                    "owned_component"
+                ],
+                "side_completed_live": {
+                    side: {
+                        "p4_factor_count": p4_live[side],
+                        "nested_iterative_ksp_count": nested_live[side],
+                    }
+                    for side in p4_live
                 },
-            )
-            side_inverses[side] = build_side_balanced_inverse(
-                system,
-                max_it=128,
-                rtol=1.0e-2,
-                audit_callback=audit_callback(side),
-                detailed_timing=detailed_timing,
-            )
-            marker_callback(
-                f"{side}_F_ready",
-                {"source": "build_fullspace_physical_dtn_action"},
-            )
-            side_diagnostics_before[side] = dict(side_inverses[side].diagnostics)
-            marker_callback(
-                f"{side}_factor_ready",
-                {"source": "build_side_balanced_inverse", "diagnostics": side_diagnostics_before[side]},
-            )
-            marker_callback(
-                f"{side}_woodbury_ready",
-                {
-                    "source": "BAL_H_side_inverse",
-                    "qualification_method": "task041_balh_side_inverse_response_fgmres32",
+                "side_cleaned_live": {
+                    side: {
+                        "p4_factor_count": int(
+                            side_diagnostics_after[side].get(
+                                "p4_factor_count", 0
+                            )
+                        ),
+                        "nested_iterative_ksp_count": int(
+                            side_diagnostics_after[side].get(
+                                "nested_iterative_ksp_count", 0
+                            )
+                        ),
+                    }
+                    for side in side_diagnostics_after
                 },
+            }
+            return representative_setup_result(
+                representative,
+                admission_payload,
+                cleanup,
+                schedule_summary=schedule_summary,
             )
 
-        admission_audits: dict[str, Any] = {}
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            build_side(side, system)
+
         for side, inverse in side_inverses.items():
             admission_audits[side] = inverse.admission_audit(identity=identity)
         admission_payload = {
@@ -2672,52 +3366,7 @@ def _run_task041_balh_candidate_setup(
             raise Task041ModePrepError(
                 "BAL_H side admission audit failed; raw audit was persisted"
             )
-        global_action_after = operator.createVecLeft()
-        global_rhs_after = None
-        try:
-            operator.mult(global_source, global_action_after)
-            global_rhs_after = layout.pack(
-                setup.bottom.b,
-                setup.top.b,
-                internal_modal_rhs_correction(setup.coupling),
-            )
-            action_absolute = vector_difference_norm(
-                global_action_before, global_action_after
-            )
-            rhs_absolute = vector_difference_norm(
-                global_rhs_before, global_rhs_after
-            )
-            source_absolute = vector_difference_norm(
-                global_source_before, global_source
-            )
-            action_relative = action_absolute / max(
-                float(global_action_before.norm()), 1.0e-30
-            )
-            rhs_relative = rhs_absolute / max(
-                float(global_rhs_before.norm()), 1.0e-30
-            )
-            source_relative = source_absolute / max(
-                float(global_source_before.norm()), 1.0e-30
-            )
-        finally:
-            global_action_after.destroy()
-            if global_rhs_after is not None:
-                global_rhs_after.destroy()
-        global_identity = {
-            "source": "one original assembled global operator reused before/after side PC construction",
-            "action_absolute": action_absolute,
-            "action_relative": action_relative,
-            "rhs_absolute": rhs_absolute,
-            "rhs_relative": rhs_relative,
-            "source_unchanged_absolute": source_absolute,
-            "source_unchanged_relative": source_relative,
-            "threshold": 1.0e-12,
-            "pass": bool(
-                action_relative <= 1.0e-12
-                and rhs_relative <= 1.0e-12
-                and source_relative <= 1.0e-12
-            ),
-        }
+        global_identity = global_identity_check("dual_after_admission")
         admission_payload["global_operator_identity"] = global_identity
         admission_payload["pass"] = bool(
             admission_payload["pass"] and global_identity["pass"]
@@ -2779,69 +3428,11 @@ def _run_task041_balh_candidate_setup(
             )
             representative = run_representative_rhs_probe()
             cleanup = release_before_recovery()
-            representative["cleanup"] = cleanup
-            after_diagnostics = {
-                side: dict(diagnostics)
-                for side, diagnostics in side_diagnostics_after.items()
-            }
-            return {
-                "schema": "task041.side_balh.representative_rhs_setup.v1",
-                "status": "representative_rhs_completed",
-                "qualification_scope": qualification_scope,
-                "qualification_method": (
-                    "task041_balh_side_inverse_response_fgmres32"
-                ),
-                "qualification": "diagnostic_component_only",
-                "admission_audit": admission_payload,
-                "representative_rhs": representative,
-                "cost_probe": {
-                    "status": "not_run",
-                    "reason": "representative_rhs_scope",
-                },
-                "side_rhs_audit_path": str(audit_path),
-                "side_actions": {
-                    side: dict(diagnostics)
-                    for side, diagnostics in side_diagnostics_before.items()
-                },
-                "side_diagnostics_after_destroy": after_diagnostics,
-                "candidate_inventory": {
-                    "p4_factor_count_at_setup": sum(
-                        p4_factor_counts_at_setup.values()
-                    ),
-                    "p4_factor_count_after_cleanup": {
-                        side: int(diagnostics.get("p4_factor_count", 0))
-                        for side, diagnostics in side_diagnostics_after.items()
-                    },
-                    "p6_factor_count": 0,
-                    "global_direct_factor_count": 0,
-                    "nested_iterative_ksp_count_at_setup": sum(
-                        nested_ksp_counts_at_setup.values()
-                    ),
-                    "nested_iterative_ksp_count_after_cleanup": {
-                        side: int(diagnostics.get("nested_iterative_ksp_count", 0))
-                        for side, diagnostics in side_diagnostics_after.items()
-                    },
-                    "modal_block": "representative_rhs_only",
-                    "approximate_preconditioner_only": True,
-                    "component_cleanup_pass": cleanup.get(
-                        "component_cleanup_pass"
-                    ),
-                },
-                "modal_schur": {
-                    "status": "not_run",
-                    "reason": "representative_rhs_scope",
-                },
-                "outer_ksp": {
-                    "status": "not_run",
-                    "reason": "representative_rhs_scope",
-                },
-                "full_formal": {
-                    "status": "not_run",
-                    "reason": "representative_rhs_scope",
-                    "solve": {"status": "not_run"},
-                    "recovery": {"status": "not_run"},
-                },
-            }
+            return representative_setup_result(
+                representative,
+                admission_payload,
+                cleanup,
+            )
 
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
             probe_side(side, side_inverses[side], system)
@@ -3000,6 +3591,7 @@ def run_task041_consumer(
     disable_time_stop: bool = False,
     performance_profile: str | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
+    side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -3042,6 +3634,10 @@ def run_task041_consumer(
             )
     performance_contract = None
     representative_rhs_contract: Mapping[str, Any] | None = None
+    if side_setup_schedule is not None and performance_profile is None:
+        raise Task041ModePrepError(
+            "side setup schedule requires task041_schur_speed_v2"
+        )
     if performance_profile is not None:
         if not candidate or not contract["balh"]:
             raise Task041ModePrepError(
@@ -3068,6 +3664,7 @@ def run_task041_consumer(
                     if task041_rhs_probe_manifest is not None
                     else None
                 ),
+                side_setup_schedule=side_setup_schedule,
             )
         except ValueError as exc:
             raise Task041ModePrepError(str(exc)) from exc
@@ -3160,6 +3757,8 @@ def run_task041_consumer(
     }
     if performance_contract is not None:
         result["performance_profile"] = performance_contract
+        if side_setup_schedule is not None:
+            result["side_setup_schedule"] = side_setup_schedule
     if representative_rhs_contract is not None:
         result["representative_rhs_probe"] = {
             "path": representative_rhs_contract["path"],
@@ -3737,11 +4336,13 @@ def run_task041_consumer(
                 timeout_seconds=contract["limits"]["timeout_seconds"],
                 audit_path=candidate_audit_path,
                 elapsed_seconds=time.monotonic() - started,
+                workflow_started_monotonic=started,
                 failure_evidence=candidate_failure_evidence,
                 identity=recomputed_identity,
                 disable_time_stop=disable_time_stop,
                 detailed_timing=performance_contract is not None,
                 representative_rhs_contract=representative_rhs_contract,
+                side_setup_schedule=side_setup_schedule,
             )
         else:
             setup_result = run_v5_h4_exact_side_setup_only(
@@ -3819,6 +4420,22 @@ def run_task041_consumer(
                 ),
                 "nested_iterative_ksp_count_after_cleanup": candidate_inventory.get(
                     "nested_iterative_ksp_count_after_cleanup"
+                ),
+                "side_setup_schedule": candidate_inventory.get(
+                    "side_setup_schedule"
+                ),
+                "p4_factor_created_total": candidate_inventory.get(
+                    "p4_factor_created_total"
+                ),
+                "nested_iterative_ksp_created_total": candidate_inventory.get(
+                    "nested_iterative_ksp_created_total"
+                ),
+                "total_created": candidate_inventory.get("total_created"),
+                "simultaneously_live_peak": candidate_inventory.get(
+                    "simultaneously_live_peak"
+                ),
+                "simultaneously_live_component_peak": candidate_inventory.get(
+                    "simultaneously_live_component_peak"
                 ),
                 "task040_pc": False,
                 "direct_fallback": False,

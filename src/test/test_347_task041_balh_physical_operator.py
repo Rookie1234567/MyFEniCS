@@ -30,6 +30,9 @@ from src.solvers.physical_balanced_physical_operator import (
 from src.solvers.physical_balanced_same_mesh_transfer import (
     build_same_mesh_hcurl_owner_transfer,
 )
+from src.solvers.physical_balanced_side_inverse import (
+    build_side_balanced_inverse,
+)
 from src.solvers.physical_balanced_trace_bridge import (
     extract_full_p6_to_active_trace,
     inject_active_residual_to_full_p6,
@@ -512,6 +515,183 @@ def test_task041_h1c_physical_galerkin_factor_and_alternation(h1c_fixture) -> No
         assert diagnostics["factor_creation_count"] == 1
         assert diagnostics["research_factor"]["direct_factor_count"] == 1
         assert diagnostics["research_factor"]["solve_count"] >= 4
+
+
+@pytest.fixture(scope="module")
+def h1e_real_side_systems():
+    """Build only the borrowed tiny-FE side systems for ownership coverage."""
+
+    comm = MPI.COMM_WORLD
+    cfg = _fixture_config(6, condensed=True)
+    meshes = {}
+    systems = {}
+    try:
+        for side in ("bottom", "top"):
+            meshes[side] = build_hybrid_local_mesh(
+                cfg,
+                side,
+                bottom_interface_z_nm=0.5,
+                top_interface_z_nm=0.5,
+                comm=comm,
+            )
+            systems[side] = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                side,
+                local_mesh_override=meshes[side],
+                comm=comm,
+            )
+        yield systems
+    finally:
+        for system in systems.values():
+            system.destroy()
+
+
+def test_task041_h1e_real_fe_side_inverse_is_sequential_and_owned(
+    h1e_real_side_systems,
+) -> None:
+    """Check real tiny-FE ownership without constructing the old oracle factors."""
+
+    baseline: dict[str, dict[str, object]] = {}
+    live_inverse_count = 0
+    try:
+        # Capture both borrowed operators before either adapter is constructed.
+        for side_index, side in enumerate(("bottom", "top")):
+            operator = h1e_real_side_systems[side].A
+            original_b = h1e_real_side_systems[side].b
+            source = operator.createVecRight()
+            rhs = operator.createVecLeft()
+            _fill_active(source, 1.0 + float(side_index))
+            operator.mult(source, rhs)
+            assert source.norm() > 0.0
+            assert rhs.norm() > 0.0
+            baseline[side] = {
+                "operator": operator,
+                "b": original_b,
+                "source": source,
+                "rhs": rhs,
+                "b_values": np.asarray(
+                    original_b.getArray(readonly=True)
+                ).copy(),
+                "source_values": np.asarray(
+                    source.getArray(readonly=True)
+                ).copy(),
+                "rhs_values": np.asarray(rhs.getArray(readonly=True)).copy(),
+            }
+
+        def assert_borrowed_objects_unchanged() -> None:
+            for record in baseline.values():
+                operator = record["operator"]
+                original_b = record["b"]
+                source = record["source"]
+                rhs = record["rhs"]
+                probe = operator.createVecLeft()
+                try:
+                    operator.mult(source, probe)
+                    np.testing.assert_array_equal(
+                        original_b.getArray(readonly=True), record["b_values"]
+                    )
+                    np.testing.assert_array_equal(
+                        source.getArray(readonly=True), record["source_values"]
+                    )
+                    np.testing.assert_array_equal(
+                        rhs.getArray(readonly=True), record["rhs_values"]
+                    )
+                    np.testing.assert_allclose(
+                        probe.getArray(readonly=True), record["rhs_values"],
+                        atol=1.0e-12,
+                        rtol=1.0e-12,
+                    )
+                finally:
+                    probe.destroy()
+
+        assert_borrowed_objects_unchanged()
+
+        for side in ("bottom", "top"):
+            side_system = h1e_real_side_systems[side]
+            operator = baseline[side]["operator"]
+            rhs = baseline[side]["rhs"]
+            zero_rhs = operator.createVecRight()
+            zero_output = operator.createVecLeft()
+            nonzero_output = operator.createVecLeft()
+            inverse = None
+            events = []
+
+            def record_lifecycle(event, detail, event_log=events):
+                event_log.append((event, dict(detail)))
+
+            try:
+                zero_rhs.set(0.0)
+                zero_rhs.assemble()
+                inverse = build_side_balanced_inverse(
+                    side_system,
+                    lifecycle_callback=record_lifecycle,
+                )
+                # This counter is test bookkeeping only; diagnostics are the
+                # ownership authority below.
+                live_inverse_count += 1
+                assert live_inverse_count == 1
+                diagnostics = inverse.diagnostics
+                assert diagnostics["p4_factor_live"] == 1
+                assert diagnostics["nested_iterative_ksp_count"] == 1
+                assert diagnostics["p4_factor_created_count"] == 1
+                assert diagnostics["nested_ksp_created_count"] == 1
+
+                inverse.apply(zero_rhs, zero_output)
+                assert inverse.diagnostics["last_apply"]["status"] == (
+                    "ZERO_RHS_EXACT"
+                )
+                assert zero_output.norm() == 0.0
+
+                inverse.apply(rhs, nonzero_output)
+                nonzero_audit = inverse.diagnostics["last_apply"]
+                assert nonzero_audit["status"] == "KSP_CONVERGED"
+                assert nonzero_audit["reason"] > 0
+                assert nonzero_audit["explicit_true_target_reached"] is True
+                assert np.isfinite(nonzero_audit["residual_norm"])
+                assert np.isfinite(nonzero_audit["relative_residual"])
+                assert nonzero_audit["relative_residual"] <= 1.0e-2
+                event_names = [event for event, _detail in events]
+                for expected in (
+                    "full_action_begin",
+                    "full_action_ready",
+                    "p4_form_assembly_begin",
+                    "p4_factor_ready",
+                    "transfer_ready",
+                    "h6_diagonal_ready",
+                    "h6_window_ready",
+                    "h6_runtime_ready",
+                    "adapter_ksp_ready",
+                ):
+                    assert expected in event_names
+                assert all(
+                    detail["scope"] == "side_local"
+                    for _event, detail in events
+                )
+            finally:
+                if inverse is not None:
+                    inverse.destroy()
+                    live_inverse_count -= 1
+                    assert live_inverse_count == 0
+                    released = inverse.diagnostics
+                    assert released["destroyed"] is True
+                    assert released["p4_factor_live"] == 0
+                    assert released["nested_iterative_ksp_count"] == 0
+                    assert released["p4_factor_destroy_count"] == 1
+                    assert released["nested_ksp_destroy_count"] == 1
+                zero_output.destroy()
+                nonzero_output.destroy()
+                zero_rhs.destroy()
+
+            # This is deliberately before the top adapter is built, so a
+            # bottom cleanup that damages the borrowed top system is visible.
+            if side == "bottom":
+                assert_borrowed_objects_unchanged()
+
+        assert_borrowed_objects_unchanged()
+    finally:
+        for record in baseline.values():
+            record["rhs"].destroy()
+            record["source"].destroy()
 
 
 def test_task041_h1c_j_jh_inverse_and_nonzero_particular(h1c_fixture) -> None:

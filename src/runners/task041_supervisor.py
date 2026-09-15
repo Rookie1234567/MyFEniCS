@@ -16,6 +16,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable, Mapping
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -198,6 +199,7 @@ def _load_task041_supervision_record(
     source_sha: str,
     scope: str,
     representative_rhs_probe: Mapping[str, Any] | None,
+    side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     path = Path(record_path)
     if not path.is_absolute():
@@ -225,6 +227,8 @@ def _load_task041_supervision_record(
         "parent_pid": parent_pid,
         "invocation_id": invocation_id,
     }
+    if side_setup_schedule is not None:
+        expected["side_setup_schedule"] = side_setup_schedule
     if isinstance(payload.get("parent_pid"), bool) or not isinstance(
         payload.get("parent_pid"), int
     ):
@@ -264,6 +268,7 @@ def _load_task041_supervision_record(
         "source_sha": source_sha,
         "scope": scope,
         "representative_rhs_probe": representative_rhs_probe,
+        "side_setup_schedule": side_setup_schedule,
         "parent_pid": parent_pid,
         "invocation_id": expected["invocation_id"],
         "ledger_path": str(Path(ledger_value).resolve()),
@@ -1872,6 +1877,7 @@ def _validate_representative_rhs_result(
     binding: Mapping[str, Any],
     *,
     process_group_gone: bool | None,
+    expected_side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     """Independently validate the fixed finite-response worker evidence."""
 
@@ -1879,6 +1885,7 @@ def _validate_representative_rhs_result(
         _TASK041_REPRESENTATIVE_RHS_EXPECTED,
         TASK041_REPRESENTATIVE_RHS_COUNT,
         TASK041_REPRESENTATIVE_RHS_SCOPE,
+        TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     )
 
     failures: list[str] = []
@@ -2378,19 +2385,38 @@ def _validate_representative_rhs_result(
                 f"summary_ordinal_{ordinal}_{item}" for item in artifact_failures
             )
 
+    setup_inventory = (
+        setup.get("candidate_inventory") if isinstance(setup, Mapping) else None
+    )
+    setup_schedule = (
+        setup.get("side_setup_schedule") if isinstance(setup, Mapping) else None
+    )
+    summary_schedule = summary.get("side_setup_schedule")
+    sequential_schedule = (
+        expected_side_setup_schedule == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+    )
+    checks["schedule_binding"] = (
+        setup_schedule == expected_side_setup_schedule
+        and summary_schedule == expected_side_setup_schedule
+    )
+    if not checks["schedule_binding"]:
+        failures.append("side_setup_schedule_binding")
+
     matrix = summary.get("matrix_inventory")
-    after_p4 = matrix.get("p4_factor_count_after_cleanup") if isinstance(matrix, Mapping) else None
+    after_p4 = (
+        matrix.get("p4_factor_count_after_cleanup")
+        if isinstance(matrix, Mapping)
+        else None
+    )
     after_nested = (
         matrix.get("nested_iterative_ksp_count_after_cleanup")
         if isinstance(matrix, Mapping)
         else None
     )
-    checks["component_inventory"] = bool(
+    common_inventory = bool(
         isinstance(matrix, Mapping)
         and matrix.get("qep_calls") == 0
         and matrix.get("consumer_qep_required") is False
-        and matrix.get("p4_factor_count_at_setup") == 2
-        and matrix.get("nested_iterative_ksp_count_at_setup") == 2
         and matrix.get("p6_factor_count") == 0
         and matrix.get("global_direct_factor_count") == 0
         and isinstance(after_p4, Mapping)
@@ -2400,6 +2426,431 @@ def _validate_representative_rhs_result(
         and set(after_nested) == {"bottom", "top"}
         and all(value == 0 for value in after_nested.values())
     )
+    if sequential_schedule:
+        side_setup = (
+            setup.get("side_setup") if isinstance(setup, Mapping) else None
+        )
+        summary_boundaries = (
+            side_setup.get("lifecycle_boundaries")
+            if isinstance(side_setup, Mapping)
+            else None
+        )
+        expected_boundary_events = [
+            (side, event)
+            for side in ("bottom", "top")
+            for event in ("before_build", "ready", "before_release", "released")
+        ]
+        marker_lifecycle: list[dict[str, Any]] = []
+        marker_identity: list[dict[str, Any]] = []
+        marker_cleanup: list[dict[str, Any]] = []
+        marker_errors: list[str] = []
+        marker_path = consumer_root / "markers.jsonl"
+        if not marker_path.is_file():
+            marker_errors.append("markers_missing")
+        else:
+            try:
+                with marker_path.open(encoding="utf-8") as stream:
+                    for line_number, line in enumerate(stream, 1):
+                        if not line.strip():
+                            continue
+                        try:
+                            marker = json.loads(line)
+                        except json.JSONDecodeError:
+                            marker_errors.append(
+                                f"marker_line_{line_number}_invalid_json"
+                            )
+                            continue
+                        if not isinstance(marker, Mapping):
+                            marker_errors.append(
+                                f"marker_line_{line_number}_not_object"
+                            )
+                            continue
+                        detail = marker.get("detail")
+                        if not isinstance(detail, Mapping):
+                            continue
+                        stage = marker.get("stage")
+                        boundary = detail.get("lifecycle_boundary")
+                        if isinstance(boundary, Mapping) and (
+                            detail.get("substage") == "side_lifecycle"
+                            or stage
+                            in {
+                                "bottom_factor_ready",
+                                "top_factor_ready",
+                                "bottom_construction_cleanup",
+                                "top_construction_cleanup",
+                            }
+                        ):
+                            marker_lifecycle.append(
+                                {
+                                    "boundary": dict(boundary),
+                                    "line_number": line_number,
+                                    "wall_seconds": marker.get("wall_seconds"),
+                                }
+                            )
+                        if detail.get("substage") == "global_identity":
+                            check = detail.get("identity_check")
+                            if isinstance(check, Mapping):
+                                marker_identity.append(
+                                {
+                                    "check": dict(check),
+                                    "line_number": line_number,
+                                    "wall_seconds": marker.get("wall_seconds"),
+                                }
+                                )
+                        if stage in {
+                            "bottom_construction_cleanup",
+                            "top_construction_cleanup",
+                        }:
+                            diagnostics = detail.get("diagnostics")
+                            if isinstance(diagnostics, Mapping):
+                                marker_cleanup.append(
+                                    {
+                                        "side": detail.get("side")
+                                        or str(stage).split("_", 1)[0],
+                                        "diagnostics": dict(diagnostics),
+                                    }
+                                )
+            except OSError as exc:
+                marker_errors.append(f"markers_read_error:{type(exc).__name__}")
+
+        def boundary_live_counts(
+            boundary: Mapping[str, Any],
+        ) -> dict[str, Any] | None:
+            live = boundary.get("live")
+            by_side = live.get("by_side") if isinstance(live, Mapping) else None
+            if not isinstance(by_side, Mapping):
+                return None
+            p4 = 0
+            nested = 0
+            live_sides = 0
+            for values in by_side.values():
+                if not isinstance(values, Mapping):
+                    return None
+                p4_value = values.get("p4_factor_count")
+                nested_value = values.get("nested_iterative_ksp_count")
+                if (
+                    type(p4_value) is not int
+                    or p4_value < 0
+                    or type(nested_value) is not int
+                    or nested_value < 0
+                ):
+                    return None
+                p4 += p4_value
+                nested += nested_value
+                live_sides += int(p4_value > 0 or nested_value > 0)
+            return {
+                "by_side": by_side,
+                "p4_factor": p4,
+                "nested_iterative_ksp": nested,
+                "live_side_count": live_sides,
+                "component_count": p4 + nested,
+            }
+
+        raw_boundaries = [row["boundary"] for row in marker_lifecycle]
+        raw_boundary_events = [
+            (boundary.get("side"), boundary.get("event"))
+            for boundary in raw_boundaries
+        ]
+        boundary_times = [row.get("wall_seconds") for row in marker_lifecycle]
+        boundary_time_pass = bool(
+            len(boundary_times) == 8
+            and all(
+                isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                and math.isfinite(float(value))
+                and float(value) >= 0.0
+                for value in boundary_times
+            )
+            and all(
+                float(left) <= float(right)
+                for left, right in pairwise(boundary_times)
+            )
+        )
+        raw_created = {
+            "side_inverse": 0,
+            "p4_factor": 0,
+            "nested_iterative_ksp": 0,
+        }
+        raw_peaks = {
+            "side_inverse": 0,
+            "p4_factor": 0,
+            "nested_iterative_ksp": 0,
+            "component": 0,
+        }
+        boundary_counts_pass = len(raw_boundaries) == 8
+        for boundary in raw_boundaries:
+            counts = boundary_live_counts(boundary)
+            if counts is None:
+                boundary_counts_pass = False
+                continue
+            live = boundary.get("live")
+            if (
+                not isinstance(live, Mapping)
+                or live.get("live_side_count") != counts["live_side_count"]
+                or live.get("live_component_counts")
+                != {
+                    "p4_factor": counts["p4_factor"],
+                    "nested_iterative_ksp": counts["nested_iterative_ksp"],
+                }
+                or live.get("live_component_count_sum") != counts["component_count"]
+            ):
+                boundary_counts_pass = False
+            raw_peaks["side_inverse"] = max(
+                raw_peaks["side_inverse"], counts["live_side_count"]
+            )
+            raw_peaks["p4_factor"] = max(
+                raw_peaks["p4_factor"], counts["p4_factor"]
+            )
+            raw_peaks["nested_iterative_ksp"] = max(
+                raw_peaks["nested_iterative_ksp"],
+                counts["nested_iterative_ksp"],
+            )
+            raw_peaks["component"] = max(
+                raw_peaks["component"], counts["component_count"]
+            )
+            event = boundary.get("event")
+            if event == "ready":
+                created = boundary.get("created_at_boundary")
+                if (
+                    not isinstance(created, Mapping)
+                    or any(
+                        type(created.get(name)) is not int
+                        or created.get(name) != 1
+                        for name in (
+                            "side_inverse",
+                            "p4_factor",
+                            "nested_iterative_ksp",
+                        )
+                    )
+                ):
+                    boundary_counts_pass = False
+                else:
+                    for name in raw_created:
+                        raw_created[name] += created[name]
+            if event in {"before_build", "released"} and (
+                counts["live_side_count"] != 0
+                or counts["component_count"] != 0
+            ):
+                boundary_counts_pass = False
+            if event in {"ready", "before_release"} and (
+                counts["live_side_count"] != 1
+                or counts["p4_factor"] != 1
+                or counts["nested_iterative_ksp"] != 1
+                or len(counts["by_side"]) != 1
+                or set(counts["by_side"]) != {boundary.get("side")}
+            ):
+                boundary_counts_pass = False
+
+        expected_identity_labels = [
+            f"{side}_{event}"
+            for side in ("bottom", "top")
+            for event in (
+                "before_build",
+                "after_admission",
+                "before_release",
+                "after_release",
+            )
+        ]
+
+        def identity_values_pass(check: Any) -> bool:
+            if not isinstance(check, Mapping) or check.get("pass") is not True:
+                return False
+            for name in (
+                "action_relative",
+                "rhs_relative",
+                "source_unchanged_relative",
+            ):
+                value = check.get(name)
+                if (
+                    not isinstance(value, (int, float))
+                    or isinstance(value, bool)
+                    or not math.isfinite(float(value))
+                    or not 0.0 <= float(value) <= 1.0e-12
+                ):
+                    return False
+            return True
+
+        summary_identity = (
+            side_setup.get("global_identity_checks")
+            if isinstance(side_setup, Mapping)
+            else None
+        )
+        raw_identity_labels = [
+            row["check"].get("label") for row in marker_identity
+        ]
+        identity_values_and_order_pass = bool(
+            len(marker_identity) == 8
+            and raw_identity_labels == expected_identity_labels
+            and all(
+                identity_values_pass(row["check"]) for row in marker_identity
+            )
+            and isinstance(summary_identity, Mapping)
+            and set(summary_identity) == set(expected_identity_labels)
+            and all(
+                summary_identity.get(label)
+                == marker_identity[index]["check"]
+                for index, label in enumerate(expected_identity_labels)
+            )
+        )
+        lifecycle_lines = {
+            (row["boundary"].get("side"), row["boundary"].get("event")): row[
+                "line_number"
+            ]
+            for row in marker_lifecycle
+        }
+        identity_lines = {
+            row["check"].get("label"): row["line_number"]
+            for row in marker_identity
+        }
+        identity_lifecycle_order_pass = True
+        for side in ("bottom", "top"):
+            lifecycle_before_build = lifecycle_lines.get((side, "before_build"))
+            lifecycle_ready = lifecycle_lines.get((side, "ready"))
+            lifecycle_before_release = lifecycle_lines.get(
+                (side, "before_release")
+            )
+            lifecycle_released = lifecycle_lines.get((side, "released"))
+            identity_before_build = identity_lines.get(f"{side}_before_build")
+            identity_after_admission = identity_lines.get(
+                f"{side}_after_admission"
+            )
+            identity_before_release = identity_lines.get(
+                f"{side}_before_release"
+            )
+            identity_after_release = identity_lines.get(f"{side}_after_release")
+            if not all(
+                isinstance(value, int)
+                for value in (
+                    lifecycle_before_build,
+                    lifecycle_ready,
+                    lifecycle_before_release,
+                    lifecycle_released,
+                    identity_before_build,
+                    identity_after_admission,
+                    identity_before_release,
+                    identity_after_release,
+                )
+            ):
+                identity_lifecycle_order_pass = False
+                continue
+            identity_lifecycle_order_pass = (
+                identity_lifecycle_order_pass
+                and identity_before_build < lifecycle_before_build
+                and lifecycle_before_build < lifecycle_ready
+                and lifecycle_ready < identity_after_admission
+                and identity_after_admission < identity_before_release
+                and identity_before_release < lifecycle_before_release
+                and lifecycle_released < identity_after_release
+            )
+        def summary_counts_match(payload: Any) -> bool:
+            if not isinstance(payload, Mapping):
+                return False
+            return (
+                payload.get("p4_factor_created_total")
+                == raw_created["p4_factor"]
+                and payload.get("nested_iterative_ksp_created_total")
+                == raw_created["nested_iterative_ksp"]
+                and payload.get("total_created") == raw_created["side_inverse"]
+                and payload.get("p4_factor_simultaneously_live_peak")
+                == raw_peaks["p4_factor"]
+                and payload.get("nested_iterative_ksp_simultaneously_live_peak")
+                == raw_peaks["nested_iterative_ksp"]
+                and payload.get("simultaneously_live_peak")
+                == raw_peaks["side_inverse"]
+                and payload.get("simultaneously_live_component_peak")
+                == raw_peaks["component"]
+            )
+
+        summary_counts_pass = bool(
+            summary_counts_match(side_setup)
+            and summary_counts_match(setup_inventory)
+        )
+        cleanup_order = [row.get("side") for row in marker_cleanup]
+        summary_after = (
+            setup.get("side_diagnostics_after_destroy")
+            if isinstance(setup, Mapping)
+            else None
+        )
+        cleanup_values_pass = bool(
+            len(marker_cleanup) == 2
+            and cleanup_order == ["bottom", "top"]
+            and isinstance(summary_after, Mapping)
+            and set(summary_after) == {"bottom", "top"}
+            and all(
+                isinstance(row.get("diagnostics"), Mapping)
+                and row["diagnostics"].get("destroyed") is True
+                and type(row["diagnostics"].get("p4_factor_count")) is int
+                and row["diagnostics"].get("p4_factor_count") == 0
+                and type(
+                    row["diagnostics"].get("nested_iterative_ksp_count")
+                )
+                is int
+                and row["diagnostics"].get("nested_iterative_ksp_count") == 0
+                and summary_after.get(row.get("side"))
+                == row["diagnostics"]
+                for row in marker_cleanup
+            )
+        )
+        checks["sequential_markers"] = {
+            "path": str(marker_path),
+            "errors": marker_errors,
+            "lifecycle_count": len(marker_lifecycle),
+            "identity_count": len(marker_identity),
+            "cleanup_count": len(marker_cleanup),
+            "lifecycle_time_order": boundary_time_pass,
+            "lifecycle_counts": boundary_counts_pass,
+            "created": raw_created,
+            "peaks": raw_peaks,
+            "identity_values_and_order": identity_values_and_order_pass,
+            "identity_lifecycle_order": identity_lifecycle_order_pass,
+            "summary_counts": summary_counts_pass,
+            "cleanup_values": cleanup_values_pass,
+        }
+        checks["sequential_lifecycle"] = bool(
+            not marker_errors
+            and raw_boundary_events == expected_boundary_events
+            and isinstance(summary_boundaries, list)
+            and raw_boundaries == summary_boundaries
+            and boundary_time_pass
+            and boundary_counts_pass
+            and identity_lifecycle_order_pass
+            and summary_counts_pass
+            and raw_created
+            == {
+                "side_inverse": 2,
+                "p4_factor": 2,
+                "nested_iterative_ksp": 2,
+            }
+            and raw_peaks
+            == {
+                "side_inverse": 1,
+                "p4_factor": 1,
+                "nested_iterative_ksp": 1,
+                "component": 2,
+            }
+            and identity_values_and_order_pass
+            and cleanup_values_pass
+            and isinstance(side_setup, Mapping)
+            and side_setup.get("side_setup_schedule")
+            == TASK041_SEQUENTIAL_COMPONENT_SCHEDULE
+            and side_setup.get("order") == ["bottom", "top"]
+        )
+        checks["component_inventory"] = bool(
+            common_inventory
+            and isinstance(matrix, Mapping)
+            and matrix.get("p4_factor_count_at_setup") is None
+            and matrix.get("nested_iterative_ksp_count_at_setup") is None
+            and isinstance(setup_inventory, Mapping)
+            and setup_inventory.get("component_cleanup_pass") is True
+            and checks["sequential_lifecycle"]
+        )
+    else:
+        checks["component_inventory"] = bool(
+            common_inventory
+            and isinstance(matrix, Mapping)
+            and matrix.get("p4_factor_count_at_setup") == 2
+            and matrix.get("nested_iterative_ksp_count_at_setup") == 2
+        )
     if not checks["component_inventory"]:
         failures.append("component_inventory_gate")
 
@@ -2413,6 +2864,10 @@ def _validate_representative_rhs_result(
         and isinstance(observed, list)
         and {"bottom_construction_cleanup", "top_construction_cleanup", "final_cleanup_complete"}
         <= set(observed)
+        and (
+            not sequential_schedule
+            or "both_side_actions_ready" not in set(observed)
+        )
         and process_group_gone is True
         and summary.get("gates", {}).get("pass") is False
         and summary.get("official_rta", {}).get("status") == "not_run"
@@ -2435,6 +2890,7 @@ def _consumer_result(
     *,
     process_group_gone: bool | None = None,
     representative_rhs_binding: Mapping[str, Any] | None = None,
+    expected_side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     summary_path = consumer_root / "consumer_summary.json"
     if not summary_path.is_file():
@@ -2463,6 +2919,7 @@ def _consumer_result(
             summary,
             representative_rhs_binding,
             process_group_gone=process_group_gone,
+            expected_side_setup_schedule=expected_side_setup_schedule,
         )
         if representative_rhs_binding is not None
         else None
@@ -2821,6 +3278,7 @@ def run_task041_public_supervisor(
     performance_profile: str | None = None,
     task041_supervision_record: str | Path | None = None,
     task041_rhs_probe_manifest: str | Path | None = None,
+    task041_side_setup_schedule: str | None = None,
 ) -> dict[str, Any]:
     """Run one Task041 consumer, optionally reusing a completed BAL_H producer."""
 
@@ -2984,6 +3442,7 @@ def run_task041_public_supervisor(
                         if task041_rhs_probe_manifest is not None
                         else None
                     ),
+                    side_setup_schedule=task041_side_setup_schedule,
                 )
             except ValueError as exc:
                 raise Task041SupervisorError(
@@ -2999,6 +3458,12 @@ def run_task041_public_supervisor(
             )
             compute_wall_phase_limit_seconds = float(
                 performance_contract["active_consumer_budget_seconds"]
+            )
+        elif task041_side_setup_schedule is not None:
+            raise Task041SupervisorError(
+                "side setup schedule requires task041_schur_speed_v2",
+                classification="task041_identity_failure",
+                stage="performance_profile",
             )
         if task041_rhs_probe_manifest is not None:
             if (
@@ -3065,6 +3530,9 @@ def run_task041_public_supervisor(
                     }
                     if representative_rhs_binding is not None
                     else None
+                ),
+                side_setup_schedule=performance_contract.get(
+                    "side_setup_schedule"
                 ),
             )
             if compute_wall_ledger_path is not None and Path(
@@ -3133,6 +3601,10 @@ def run_task041_public_supervisor(
             result["limits"] = dict(runtime_limits)
             result["phase_limits"] = phase_limits
             result["performance_profile"] = performance_contract
+            if performance_contract.get("side_setup_schedule") is not None:
+                result["side_setup_schedule"] = performance_contract[
+                    "side_setup_schedule"
+                ]
         if balh:
             if compute_wall_ledger_path is None:
                 raise Task041SupervisorError(
@@ -3623,6 +4095,11 @@ def run_task041_public_supervisor(
                         if representative_rhs_binding is not None
                         else None
                     ),
+                    side_setup_schedule=(
+                        performance_contract.get("side_setup_schedule")
+                        if performance_contract is not None
+                        else None
+                    ),
                 )
             else:
                 consumer_command = producer_command_module["balh_exact_consumer"](
@@ -3761,6 +4238,11 @@ def run_task041_public_supervisor(
                 consumer_status = _consumer_result(
                     consumer_root,
                     process_group_gone=consumer_result.get("process_group_gone") is True,
+                    expected_side_setup_schedule=(
+                        performance_contract.get("side_setup_schedule")
+                        if performance_contract is not None
+                        else None
+                    ),
                     **(
                         {"representative_rhs_binding": representative_rhs_binding}
                         if representative_rhs_binding is not None
@@ -3813,6 +4295,11 @@ def run_task041_public_supervisor(
             consumer_status = _consumer_result(
                 consumer_root,
                 process_group_gone=consumer_result.get("process_group_gone") is True,
+                expected_side_setup_schedule=(
+                    performance_contract.get("side_setup_schedule")
+                    if performance_contract is not None
+                    else None
+                ),
                 **(
                     {"representative_rhs_binding": representative_rhs_binding}
                     if representative_rhs_binding is not None

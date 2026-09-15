@@ -56,6 +56,11 @@ def _parser() -> argparse.ArgumentParser:
         metavar="MANIFEST",
         help="fixed V2 representative-RHS probe manifest",
     )
+    parser.add_argument(
+        "--task041-side-setup-schedule",
+        choices=("sequential_component",),
+        help="use the reviewed sequential representative-side setup schedule",
+    )
     return parser
 
 
@@ -100,9 +105,14 @@ def main(argv: list[str] | None = None) -> int:
                         if args.task041_rhs_probe is not None
                         else None
                     ),
+                    side_setup_schedule=args.task041_side_setup_schedule,
                 )
             except ValueError as exc:
                 raise InputError(str(exc)) from exc
+        elif args.task041_side_setup_schedule is not None:
+            raise InputError(
+                "--task041-side-setup-schedule requires task041_schur_speed_v2"
+            )
         if args.task041_supervision_record is not None:
             if args.task041_performance_profile != "task041_schur_speed_v2":
                 raise InputError(
@@ -148,6 +158,7 @@ def main(argv: list[str] | None = None) -> int:
             performance_profile=args.task041_performance_profile,
             task041_supervision_record=args.task041_supervision_record,
             task041_rhs_probe_manifest=args.task041_rhs_probe,
+            task041_side_setup_schedule=args.task041_side_setup_schedule,
         )
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0 if result["result_classification"] == "worker_exit0" else 3

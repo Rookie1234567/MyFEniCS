@@ -9,6 +9,8 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.solvers import physical_balanced_side_inverse as side_inverse_module
+from src.solvers.hybrid_local_dtn_action import HybridLocalDtnActionSystem
 from src.solvers.physical_balanced_physical_operator import (
     P4ExactFactor,
     P4PhysicalResidualGateError,
@@ -404,6 +406,174 @@ def _build_fixture(
         "h6": h6,
         "side_system": side_system,
     }
+
+
+def _builder_side_system(size: int = 2):
+    operator, operator_context = _scale_matrix(size, 2.0)
+    side_system = object.__new__(HybridLocalDtnActionSystem)
+    side_system.A = operator
+    side_system.cfg = SimpleNamespace(nedelec_degree=6)
+    side_system.static_condensation = SimpleNamespace(
+        condensed=_IdentityCondensed(size)
+    )
+    side_system.side = "bottom"
+    b = operator.createVecLeft()
+    b.set(PETSc.ScalarType(1.0 + 0.5j))
+    b.assemble()
+    side_system.b = b
+    return side_system, operator, operator_context, b
+
+
+def _assert_borrowed_stub_system_works(
+    operator: PETSc.Mat,
+    operator_context: _ScaleContext,
+    b: PETSc.Vec,
+    b_before: np.ndarray,
+) -> None:
+    source = _new_vector(operator, np.asarray([1.0 + 0.2j, -0.4 + 0.7j]))
+    output = operator.createVecLeft()
+    try:
+        operator.mult(source, output)
+        np.testing.assert_allclose(
+            output.getArray(readonly=True),
+            2.0 * source.getArray(readonly=True),
+        )
+        np.testing.assert_array_equal(
+            b.getArray(readonly=True),
+            b_before,
+        )
+        assert operator_context.destroyed is False
+    finally:
+        output.destroy()
+        source.destroy()
+
+
+def _install_stub_side_builders(monkeypatch, captured):
+    def fake_full_action(_side_system):
+        action = _FullAction(2)
+        action.V = object()
+        action.floquet_data = object()
+        captured["full_action"] = action
+        return action
+
+    def fake_p4(_side_system, *, lifecycle_callback=None):
+        captured["p4_callback"] = lifecycle_callback
+        factor = _IdentityP4(2)
+        captured["p4"] = factor
+        return factor
+
+    def fake_transfer(*_args, **_kwargs):
+        transfer = _IdentityTransfer()
+        captured["transfer"] = transfer
+        return transfer
+
+    def fake_h6(_side_system, *, lifecycle_callback=None):
+        captured["h6_callback"] = lifecycle_callback
+        h6 = _IdentityH6()
+        captured["h6"] = h6
+        return h6
+
+    monkeypatch.setattr(
+        side_inverse_module,
+        "build_fullspace_physical_dtn_action",
+        fake_full_action,
+    )
+    monkeypatch.setattr(side_inverse_module, "build_p4_exact_factor", fake_p4)
+    monkeypatch.setattr(
+        side_inverse_module,
+        "build_same_mesh_hcurl_owner_transfer",
+        fake_transfer,
+    )
+    monkeypatch.setattr(side_inverse_module, "build_balanced_h6", fake_h6)
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_full_action_inventory",
+        lambda *_args, **_kwargs: {},
+    )
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_owner_transfer_inventory",
+        lambda *_args, **_kwargs: {},
+    )
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_side_adapter_inventory",
+        lambda *_args, **_kwargs: {},
+    )
+
+
+def test_side_inverse_builder_default_callback_skips_inventory(monkeypatch):
+    captured = {}
+    side_system, operator, _operator_context, b = _builder_side_system()
+    inventory_calls = []
+    _install_stub_side_builders(monkeypatch, captured)
+
+    def forbidden_inventory(*_args, **_kwargs):
+        inventory_calls.append(True)
+        raise AssertionError("default lifecycle callback read inventory")
+
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_full_action_inventory",
+        forbidden_inventory,
+    )
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_owner_transfer_inventory",
+        forbidden_inventory,
+    )
+    monkeypatch.setattr(
+        side_inverse_module,
+        "_side_adapter_inventory",
+        forbidden_inventory,
+    )
+    inverse = None
+    try:
+        inverse = side_inverse_module.build_side_balanced_inverse(side_system)
+        assert captured["p4_callback"] is None
+        assert captured["h6_callback"] is None
+        assert inventory_calls == []
+    finally:
+        if inverse is not None:
+            inverse.destroy()
+        b.destroy()
+        operator.destroy()
+
+
+@pytest.mark.parametrize("failure_event", ["full_action_ready", "adapter_ksp_ready"])
+def test_side_inverse_builder_callback_failure_cleans_owned_only(
+    monkeypatch, failure_event
+):
+    captured = {}
+    side_system, operator, operator_context, b = _builder_side_system()
+    b_before = np.asarray(b.getArray(readonly=True)).copy()
+    _install_stub_side_builders(monkeypatch, captured)
+
+    def failing_callback(event, _detail):
+        if event == failure_event:
+            raise RuntimeError(f"injected {failure_event}")
+
+    try:
+        with pytest.raises(RuntimeError, match=failure_event):
+            side_inverse_module.build_side_balanced_inverse(
+                side_system,
+                lifecycle_callback=failing_callback,
+            )
+        _assert_borrowed_stub_system_works(
+            operator, operator_context, b, b_before
+        )
+        assert captured["full_action"].destroy_count == 1
+        if failure_event == "full_action_ready":
+            assert "p4" not in captured
+            assert "transfer" not in captured
+            assert "h6" not in captured
+        else:
+            assert captured["p4"].destroy_count == 1
+            assert captured["transfer"].destroy_count == 1
+            assert captured["h6"].destroy_count == 1
+    finally:
+        b.destroy()
+        operator.destroy()
 
 
 @pytest.mark.parametrize("detailed_timing", [False, True])

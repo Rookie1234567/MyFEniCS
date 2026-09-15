@@ -26,6 +26,8 @@ from .physical_balanced_coupling import (
 from .physical_balanced_h6 import build_balanced_h6
 from .physical_balanced_physical_operator import (
     P4PhysicalResidualGateError,
+    _full_action_inventory,
+    _payload_array_inventory,
     build_fullspace_physical_dtn_action,
     build_p4_exact_factor,
 )
@@ -113,6 +115,81 @@ _DETAIL_TIMING_SEMANTICS = {
 }
 # Native PETSc names the task's DIVERGED_ITS budget result DIVERGED_MAX_IT.
 _DIVERGED_ITS = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+
+
+def _owner_transfer_inventory(owner_transfer: Any) -> dict[str, Any]:
+    local_map = owner_transfer.local_transfer.matrix
+    return {
+        "stage_scope": "rank_local",
+        "owned_objects": [
+            _payload_array_inventory(
+                owner_transfer._coarse_work.x.array,
+                label="transfer.coarse_work_array",
+                ownership="SameMeshHcurlOwnerTransfer until destroy",
+            ),
+            _payload_array_inventory(
+                owner_transfer._fine_work.x.array,
+                label="transfer.fine_work_array",
+                ownership="SameMeshHcurlOwnerTransfer until destroy",
+            ),
+            _payload_array_inventory(
+                owner_transfer._dual_reduction_work,
+                label="transfer.dual_reduction_work",
+                ownership="SameMeshHcurlOwnerTransfer until destroy",
+            ),
+            _payload_array_inventory(
+                local_map,
+                label="transfer.canonical_reference_map",
+                ownership="local transfer cache until destroy",
+            ),
+        ],
+        "borrowed_objects": [
+            {
+                "label": "transfer.fine_coarse_spaces_mpc",
+                "ownership": "borrowed from side systems; not destroyed here",
+                "payload_bytes_local": "unknown",
+            }
+        ],
+        "row_inventory": {
+            "fine_global_rows": int(owner_transfer.fine_space.dofmap.index_map.size_global),
+            "coarse_global_rows": int(owner_transfer.coarse_space.dofmap.index_map.size_global),
+            "fine_owned_rows": int(owner_transfer._fine_owned_size),
+            "coarse_owned_rows": int(owner_transfer._coarse_owned_size),
+        },
+        "canonical_map_cache": (
+            "only the canonical local map is listed; per-cell cache references "
+            "are not expanded or summed"
+        ),
+        "native_workspace_bytes": "unknown",
+    }
+
+
+def _side_adapter_inventory(inverse: SideBalancedInverse) -> dict[str, Any]:
+    return {
+        "stage_scope": "rank_local",
+        "owned_objects": [
+            {
+                "label": "adapter.ksp",
+                "kind": "PETSc.KSP",
+                "ownership": "SideBalancedInverse until destroy",
+                "payload_bytes_local": "unknown",
+            },
+            {
+                "label": "adapter.full_action_p4_transfer_h6",
+                "kind": "owned component set",
+                "ownership": "SideBalancedInverse until destroy",
+                "payload_bytes_local": "see component ready events; no resumming",
+            },
+        ],
+        "borrowed_objects": [
+            {
+                "label": "adapter.side_system_operator_and_condensed_data",
+                "ownership": "borrowed from side system; not destroyed here",
+                "payload_bytes_local": "unknown",
+            }
+        ],
+        "native_workspace_bytes": "unknown",
+    }
 
 
 def _dense_types(matrix: PETSc.Mat) -> bool:
@@ -1437,6 +1514,7 @@ def build_side_balanced_inverse(
     checkpoint_callback: Callable[[], None] | None = None,
     audit_callback: Callable[[dict[str, Any]], None] | None = None,
     detailed_timing: bool = False,
+    lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> SideBalancedInverse:
     """Build one side adapter and release all partial owned state on failure."""
 
@@ -1447,17 +1525,61 @@ def build_side_balanced_inverse(
     p4_factor = None
     owner_transfer = None
     h6 = None
+    inverse = None
+
+    def emit(event: str, detail: Mapping[str, Any] | None = None) -> None:
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                event,
+                {
+                    "scope": "side_local",
+                    **({} if detail is None else dict(detail)),
+                },
+            )
+
+    nested_lifecycle_callback = (
+        emit if lifecycle_callback is not None else None
+    )
+
     try:
+        emit("full_action_begin")
         full_action = build_fullspace_physical_dtn_action(side_system)
-        p4_factor = build_p4_exact_factor(side_system)
+        if lifecycle_callback is None:
+            emit("full_action_ready")
+        else:
+            emit(
+                "full_action_ready",
+                {
+                    "object_inventory": _full_action_inventory(
+                        full_action,
+                        owner="side.full_action",
+                    )
+                },
+            )
+        p4_factor = build_p4_exact_factor(
+            side_system,
+            lifecycle_callback=nested_lifecycle_callback,
+        )
+        emit("transfer_begin")
         owner_transfer = build_same_mesh_hcurl_owner_transfer(
             full_action.V,
             full_action.floquet_data,
             p4_factor.physical_action.V,
             p4_factor.physical_action.floquet_data,
         )
-        h6 = build_balanced_h6(side_system)
-        return SideBalancedInverse(
+        if lifecycle_callback is None:
+            emit("transfer_ready")
+        else:
+            emit(
+                "transfer_ready",
+                {"object_inventory": _owner_transfer_inventory(owner_transfer)},
+            )
+        h6 = build_balanced_h6(
+            side_system,
+            lifecycle_callback=nested_lifecycle_callback,
+        )
+        emit("adapter_ksp_begin")
+        inverse = SideBalancedInverse(
             side_system,
             full_action,
             p4_factor,
@@ -1469,7 +1591,21 @@ def build_side_balanced_inverse(
             audit_callback=audit_callback,
             detailed_timing=detailed_timing,
         )
+        full_action = None
+        p4_factor = None
+        owner_transfer = None
+        h6 = None
+        if lifecycle_callback is None:
+            emit("adapter_ksp_ready")
+        else:
+            emit(
+                "adapter_ksp_ready",
+                {"object_inventory": _side_adapter_inventory(inverse)},
+            )
+        return inverse
     except BaseException:
+        if inverse is not None:
+            inverse.destroy()
         if h6 is not None:
             h6.destroy()
         if owner_transfer is not None:

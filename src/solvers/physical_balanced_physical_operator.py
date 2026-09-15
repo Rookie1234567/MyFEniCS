@@ -15,7 +15,7 @@ kept until the residual audit and then destroyed by the wrapper.
 from __future__ import annotations
 
 import time
-from collections.abc import Iterable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -376,6 +376,195 @@ class FullSpacePhysicalDtnActionSystem:
         self.matrix.destroy()
         self.action.destroy()
         self._destroyed = True
+
+
+def _payload_vector_inventory(
+    vector: PETSc.Vec,
+    *,
+    label: str,
+    ownership: str,
+) -> dict[str, Any]:
+    dtype = np.dtype(PETSc.ScalarType)
+    owned_entries = int(vector.getLocalSize())
+    return {
+        "label": label,
+        "kind": "PETSc.Vec",
+        "ownership": ownership,
+        "owned_entries": owned_entries,
+        "global_size": int(vector.getSize()),
+        "itemsize": int(dtype.itemsize),
+        "payload_bytes_local": owned_entries * int(dtype.itemsize),
+        "payload_bytes_semantics": "owned entries only",
+        "ghost_native_bytes": "unknown",
+    }
+
+
+def _payload_array_inventory(
+    array: Any,
+    *,
+    label: str,
+    ownership: str,
+) -> dict[str, Any]:
+    if not isinstance(array, np.ndarray):
+        return {
+            "label": label,
+            "kind": "numpy.ndarray",
+            "ownership": ownership,
+            "payload_bytes_local": "unknown",
+            "payload_bytes_semantics": "exposed NumPy buffer; unavailable",
+        }
+    return {
+        "label": label,
+        "kind": "numpy.ndarray",
+        "ownership": ownership,
+        "shape": [int(value) for value in array.shape],
+        "dtype": str(array.dtype),
+        "itemsize": int(array.dtype.itemsize),
+        "payload_bytes_local": int(array.nbytes),
+        "payload_bytes_semantics": "exposed NumPy buffer",
+    }
+
+
+def _full_action_inventory(
+    system: FullSpacePhysicalDtnActionSystem,
+    *,
+    owner: str,
+) -> dict[str, Any]:
+    context = system.action.context
+    mode_payload_bytes = sum(
+        int(array.nbytes)
+        for entry in system.action.modes
+        for array in (
+            entry.projection_rows,
+            entry.projection_values,
+            entry.traction_rows,
+            entry.traction_values,
+        )
+    )
+    matrix_local = tuple(int(value) for value in system.matrix.getLocalSize())
+    matrix_global = tuple(int(value) for value in system.matrix.getSize())
+    p4_owned = owner == "p4.physical_action"
+    owned_objects = [
+        _payload_vector_inventory(
+            context.input_vector,
+            label=f"{owner}.context.input_vector",
+            ownership=owner,
+        ),
+        _payload_vector_inventory(
+            context.action_vector,
+            label=f"{owner}.context.action_vector",
+            ownership=owner,
+        ),
+        _payload_array_inventory(
+            context.owned_slaves,
+            label=f"{owner}.context.owned_slaves",
+            ownership=owner,
+        ),
+        {
+            "label": f"{owner}.mode_projection_traction_arrays",
+            "kind": "numpy.ndarray aggregate",
+            "ownership": owner,
+            "array_count": 4 * len(system.action.modes),
+            "payload_bytes_local": mode_payload_bytes,
+        },
+    ]
+    borrowed_objects = [
+        {
+            "label": f"{owner}.side_mesh",
+            "ownership": "borrowed from side system; not destroyed here",
+            "payload_bytes_local": "unknown",
+        },
+        {
+            "label": f"{owner}.side_external_modes_and_inputs",
+            "ownership": "borrowed from side system; not destroyed here",
+            "payload_bytes_local": "unknown",
+        },
+    ]
+    if p4_owned:
+        owned_objects.extend(
+            [
+                {
+                    "label": f"{owner}.p4_fe_space",
+                    "kind": "dolfinx.FunctionSpace",
+                    "ownership": "created by _build_matching_p4_action; released with wrapper",
+                    "payload_bytes_local": "unknown",
+                },
+                {
+                    "label": f"{owner}.p4_floquet_mpc",
+                    "kind": "Floquet MPC",
+                    "ownership": "created by _build_matching_p4_action; released with wrapper",
+                    "payload_bytes_local": "unknown",
+                },
+            ]
+        )
+    else:
+        borrowed_objects.extend(
+            [
+                {
+                    "label": f"{owner}.side_p6_fe_space",
+                    "kind": "dolfinx.FunctionSpace",
+                    "ownership": "borrowed from side system; not destroyed here",
+                    "payload_bytes_local": "unknown",
+                },
+                {
+                    "label": f"{owner}.side_p6_floquet_mpc",
+                    "kind": "Floquet MPC",
+                    "ownership": "borrowed from side system; not destroyed here",
+                    "payload_bytes_local": "unknown",
+                },
+            ]
+        )
+    return {
+        "stage_scope": "rank_local",
+        "owner": owner,
+        "owned_objects": owned_objects,
+        "borrowed_objects": borrowed_objects,
+        "python_matrix": {
+            "label": f"{owner}.matrix",
+            "local_shape": list(matrix_local),
+            "global_shape": list(matrix_global),
+            "payload_bytes_local": "unknown",
+        },
+        "native_workspace_bytes": "unknown",
+    }
+
+
+def _p4_matrix_inventory(matrix: PETSc.Mat) -> dict[str, Any]:
+    info = matrix.getInfo(PETSc.Mat.InfoType.LOCAL)
+    raw_nnz = info.get("nz_used")
+    raw_memory = info.get("memory")
+    local_nnz = (
+        int(raw_nnz)
+        if isinstance(raw_nnz, (int, float))
+        and not isinstance(raw_nnz, bool)
+        and np.isfinite(float(raw_nnz))
+        else None
+    )
+    local_memory = (
+        float(raw_memory)
+        if isinstance(raw_memory, (int, float))
+        and not isinstance(raw_memory, bool)
+        and np.isfinite(float(raw_memory))
+        else None
+    )
+    estimated_payload = None
+    if local_nnz is not None:
+        estimated_payload = local_nnz * (
+            2 * np.dtype(PETSc.IntType).itemsize
+            + np.dtype(PETSc.ScalarType).itemsize
+        )
+    return {
+        "label": "p4.source_matrix",
+        "kind": "PETSc.Mat",
+        "ownership": "retained by P4ExactFactor until destroy",
+        "local_shape": [int(value) for value in matrix.getLocalSize()],
+        "global_shape": [int(value) for value in matrix.getSize()],
+        "local_nnz_from_getInfo_LOCAL": local_nnz,
+        "local_memory_bytes_from_getInfo_LOCAL": local_memory,
+        "payload_bytes_local": estimated_payload,
+        "payload_bytes_semantics": "estimated from local nnz; not RSS",
+        "native_workspace_bytes": "unknown",
+    }
 
 
 def _wrap_fullspace_action(
@@ -800,6 +989,7 @@ def build_p4_exact_factor(
     side_system: HybridLocalDtnActionSystem,
     *,
     factor_solver_type: str = "mumps",
+    lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> P4ExactFactor:
     """Build one distributed p4 augmented matrix and its single exact factor."""
 
@@ -808,21 +998,94 @@ def build_p4_exact_factor(
     if int(side_system.cfg.nedelec_degree) != 6:
         raise ValueError("p4 exact factor requires a p6 side system")
 
-    physical = _build_matching_p4_action(side_system)
+    physical = None
     matrix = None
+    factor = None
     events: list[str] = []
 
-    def lifecycle(event: str, _details: dict[str, Any]) -> None:
+    def lifecycle(event: str, _details: Mapping[str, Any]) -> None:
         events.append(str(event))
 
     try:
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_form_assembly_begin",
+                {"scope": "side_local", "degree": 4},
+            )
+        physical = _build_matching_p4_action(side_system)
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_form_assembly_ready",
+                {
+                    "scope": "side_local",
+                    "degree": 4,
+                    "object_inventory": _full_action_inventory(
+                        physical,
+                        owner="p4.physical_action",
+                    ),
+                },
+            )
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_matrix_assembly_begin",
+                {"scope": "side_local", "degree": 4},
+            )
         matrix = _assemble_augmented_matrix(physical)
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_matrix_assembly_ready",
+                {
+                    "scope": "side_local",
+                    "degree": 4,
+                    "object_inventory": {
+                        "owned_objects": [_p4_matrix_inventory(matrix)],
+                        "native_workspace_bytes": "unknown",
+                    },
+                },
+            )
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "p4_factor_begin",
+                {
+                    "scope": "side_local",
+                    "factor_solver_type": factor_solver_type,
+                    "backend_lifecycle": "combined",
+                },
+            )
         factor = ResearchExactFactorInverse(
             matrix,
             factor_solver_type=factor_solver_type,
             factor_only_storage=True,
             lifecycle_callback=lifecycle,
         )
+        if lifecycle_callback is not None:
+            factor_inventory = _p4_matrix_inventory(matrix)
+            factor_inventory["ownership"] = (
+                "retained by P4ExactFactor until destroy"
+            )
+            lifecycle_callback(
+                "p4_factor_ready",
+                {
+                    "scope": "side_local",
+                    "factor_solver_type": factor_solver_type,
+                    "backend_lifecycle": "combined",
+                    "backend_events": tuple(events),
+                    "object_inventory": {
+                        "owned_objects": [
+                            factor_inventory,
+                            {
+                                "label": "p4.factor",
+                                "kind": "ResearchExactFactorInverse",
+                                "ownership": (
+                                    "retained by P4ExactFactor until destroy"
+                                ),
+                                "payload_bytes_local": "unknown",
+                            },
+                        ],
+                        "native_workspace_bytes": "unknown",
+                    },
+                },
+            )
         return P4ExactFactor(
             physical_action=physical,
             matrix=matrix,
@@ -830,7 +1093,10 @@ def build_p4_exact_factor(
             factor_events=events,
         )
     except Exception:
+        if factor is not None:
+            factor.destroy()
         if matrix is not None:
             matrix.destroy()
-        physical.destroy()
+        if physical is not None:
+            physical.destroy()
         raise

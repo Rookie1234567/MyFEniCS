@@ -157,6 +157,66 @@ def _patch_post(monkeypatch, *, post_result, post_error=None, captured=None):
     monkeypatch.setattr(service, "_run_post_hash", fake_post)
 
 
+def _controlled_summaries(
+    root: Path,
+    *,
+    parent_members: list[int] | None = None,
+    parent_pass: bool = False,
+    public_status: str = "failed",
+    public_returncode: int = -15,
+    public_classification: str = "process_tree_rss_limit",
+    reason: str = "process_tree_rss_limit",
+) -> None:
+    parent_pid = os.getpid()
+    members = (
+        [parent_pid, parent_pid + 1]
+        if parent_members is None
+        else parent_members
+    )
+    supervisor._write_json(
+        root / "service_parent_summary.json",
+        {
+            "status": "pre_exit_failed",
+            "public_supervision_completed": False,
+            "public_result_classification": public_classification,
+            "public_exit_status": public_returncode,
+            "public_phase_termination_reason": reason,
+            "public_phase_resource_classification": public_classification,
+            "pre_exit_membership": {
+                "members": members,
+                "expected_main_pid": parent_pid,
+                "pass": parent_pass,
+            },
+        },
+    )
+    supervisor._write_json(
+        root / "summary.json",
+        {
+            "status": public_status,
+            "result_classification": public_classification,
+            "phase_result": {
+                "returncode": public_returncode,
+                "termination_reason": reason,
+            },
+        },
+    )
+
+
+def _controlled_terminal(monkeypatch, *, service_result="exit-code") -> None:
+    monkeypatch.setattr(
+        service,
+        "_terminal_capture",
+        lambda: {
+            "SERVICE_RESULT": service_result,
+            "EXIT_CODE": "exited",
+            "EXIT_STATUS": "3",
+            "INVOCATION_ID": INVOCATION_ID,
+            "available": True,
+            "normal_exit": False,
+        },
+    )
+
+
 def test_service_probe_binding_is_fixed_to_scope(tmp_path):
     probe = tmp_path / "representative_rhs.json"
     probe.write_text("{}\n", encoding="utf-8")
@@ -440,3 +500,104 @@ def test_fixed_hash_and_post_command_keep_closed_root_separate(monkeypatch, tmp_
     assert captured["kwargs"]["sample_root_pid"] == os.getpid()
     assert captured["kwargs"]["memory_stages_path"] != root2 / "memory_stages.jsonl"
     assert captured["kwargs"]["enforce_time_stops"] is True
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        None,
+        "terminal-result",
+        "public-status",
+        "parent-completed",
+        "parent-binding",
+        "membership",
+        "post-cgroup",
+    ],
+    ids=(
+        "controlled-stop",
+        "wrong-service-result",
+        "wrong-public-status",
+        "parent-reports-completed",
+        "contradictory-parent",
+        "unknown-pre-exit-membership",
+        "post-cgroup-residual",
+    ),
+)
+def test_finalize_accepts_only_bound_controlled_stop(
+    monkeypatch, tmp_path, mutation
+):
+    config_path, config = _write_config(tmp_path)
+    root = Path(config["supervision_root"])
+    root.mkdir()
+    supervisor._write_json(root / "launch_manifest.json", _launch(config, root))
+    _controlled_summaries(root)
+    _controlled_terminal(
+        monkeypatch,
+        service_result="success" if mutation == "terminal-result" else "exit-code",
+    )
+    if mutation == "public-status":
+        public = supervisor._read_json(root / "summary.json")
+        public["status"] = "completed"
+        supervisor._write_json(root / "summary.json", public)
+    elif mutation == "parent-completed":
+        parent = supervisor._read_json(root / "service_parent_summary.json")
+        parent["public_supervision_completed"] = True
+        supervisor._write_json(root / "service_parent_summary.json", parent)
+    elif mutation == "parent-binding":
+        parent = supervisor._read_json(root / "service_parent_summary.json")
+        parent["public_exit_status"] = -9
+        supervisor._write_json(root / "service_parent_summary.json", parent)
+    elif mutation == "membership":
+        parent = supervisor._read_json(root / "service_parent_summary.json")
+        parent["pre_exit_membership"] = None
+        supervisor._write_json(root / "service_parent_summary.json", parent)
+    _patch_post(
+        monkeypatch,
+        post_result={
+            "returncode": 0,
+            "termination_reason": None,
+            "partial": False,
+            "process_group_gone": True,
+        },
+    )
+    monkeypatch.setattr(
+        service,
+        "_cgroup_members",
+        lambda _group: [os.getpid(), os.getpid() + 2]
+        if mutation == "post-cgroup"
+        else [os.getpid()],
+    )
+    monkeypatch.setattr(service.time, "monotonic_ns", lambda: 6_000_000_000)
+
+    result = service.run_service_finalize(config_path)
+
+    if mutation is None:
+        assert result["status"] == "completed"
+        assert result["result_classification"] == "controlled_stop"
+        assert result["completion_scope"] == "service_finalization"
+        assert result["public_summary"]["completed"] is False
+        assert result["checks"]["pre_exit_members_clean"] is False
+        assert result["checks"]["pre_exit_membership_record"] is True
+        assert result["parent_summary"]["pre_exit_members"] == [
+            os.getpid(),
+            os.getpid() + 1,
+        ]
+        assert result["controlled_stop"]["checks"]["service_terminal_exit3"] is True
+        assert result["controlled_stop"]["checks"]["public_failed"] is True
+        assert (
+            result["controlled_stop"]["checks"][
+                "parent_reports_supervision_failure"
+            ]
+            is True
+        )
+        assert (
+            result["controlled_stop"]["checks"]["parent_phase_result_binding"]
+            is True
+        )
+        assert result["controlled_stop"]["termination_reason"] == (
+            "process_tree_rss_limit"
+        )
+    else:
+        assert result["status"] == "failed"
+        assert result["result_classification"] == "service_boundary_failure"
+        assert result["controlled_stop"]["active"] is False
