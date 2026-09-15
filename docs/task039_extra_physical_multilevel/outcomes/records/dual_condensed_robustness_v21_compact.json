@@ -1,0 +1,201 @@
+{
+  "schema": "task039extra.v21.dual-condensed-robustness.compact.v1",
+  "model_id": "task39extra_v21_z2_notch_h10",
+  "stage": "Z2_NOTCH_H10",
+  "status": "PASS",
+  "official_result": true,
+  "classification": "MATCHED_REFERENCE_PASS",
+  "scope": {
+    "formal_pde": "A only",
+    "pde_rerun_for_checker_repair": false,
+    "B": "not_run",
+    "C": "not_run",
+    "ordinary_default": "unchanged",
+    "master_merge": "NOT_APPROVED"
+  },
+  "identity": {
+    "profile": "physical_p6_trace_p4_condensed_robustness_v21",
+    "method": "full3d_iterative",
+    "geometry_identity": "v21_frozen_notch_h10",
+    "model_id_from_manifest": "euv_grazing1_phi0",
+    "input": "input/task39extra/v21_z2_notch_h10.dat",
+    "input_sha256": "748e1d685e65447f3dce4effa2744cbb24d7ccedf08ed830f65f624553111e87",
+    "physical_model_sha256": "7a4d2a797a274fd4a02955647e91288908dd6a457c37984535fa2db9bfec06ec",
+    "ordered_mode_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "solver_source_sha": "863ec3bcd7eead867795284db11fc39e758a6f08",
+    "checker_source_sha256": "acbad332f35ccf3302fb027335b93ed399941c2a937012c86f2cc51f3beabcb6",
+    "mpi_size": 1,
+    "scalar_type": "complex128",
+    "integer_type": "int32",
+    "run_root": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z",
+    "systemd_unit": "myfenics-case-20260915T053101-474183.service",
+    "launch_command": "bash scripts/run_case_in_user_service.sh input/task39extra/v21_z2_notch_h10.dat --v14-time-policy observe_only"
+  },
+  "checker": {
+    "current_path": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z/v21_checker_result.json",
+    "recheck_path": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z/v21_checker_result.recheck.json",
+    "current_sha256": "149747de773e9cded62898195cc4b1e58d0714cf691e5b7b7c20316619590bce",
+    "checks_passed": 65,
+    "checks_total": 65,
+    "errors": [],
+    "evidence_valid": true,
+    "original_failed_copy": {
+      "path": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z/v21_checker_result.original_failed.json",
+      "sha256": "93a7a7663ad3df38a5cea75449d550d0cdcd29ee613feef54e42b7d0718d8f94",
+      "errors": ["release_timeline", "summary_schema"]
+    }
+  },
+  "summary_schema": {
+    "observed": "task039extra.v14.z2_notch_h10.v2",
+    "expected_native": "task039extra.v21.worker-summary.v1",
+    "native_pass": false,
+    "compatibility_applied": true,
+    "compatibility_scope": {
+      "source_sha": "863ec3bcd7eead867795284db11fc39e758a6f08",
+      "stage": "Z2_NOTCH_H10",
+      "reason": "historical V14 record.update overwrote the V21 adapter schema"
+    },
+    "checker_interpretation": "hash-bound historical compatibility; the raw summary is not relabeled as native V21"
+  },
+  "dimensions": {
+    "owned_cells": 252,
+    "p6_counts_full_active_interior_appended": [173802, 51192, 113400, 80],
+    "p4_counts_full_active_interior_appended": [53084, 21744, 27216, 80],
+    "p6_storage_rows": 173802,
+    "p4_storage_rows": 53084,
+    "retained_global_rows": 51272,
+    "condensed_matrix_shape": [21824, 21824],
+    "condensed_matrix_nnz": 8184464,
+    "dtn_mode_count": 80,
+    "p6_notch_changed_cells": 8
+  },
+  "residuals": {
+    "iterations": 146,
+    "worker_final_explicit_true_residual": 9.756517234801763e-7,
+    "independent_final_A6_before_release": 9.756517234802322e-7,
+    "independent_final_A6_after_release": 9.756517234802322e-7,
+    "L2_relative": 7.179947262584934e-8,
+    "scaled_curl_relative": 6.541279198551157e-8,
+    "residual_gate_limit": 1.0e-6,
+    "independent_residual_identity_relative": 0.0,
+    "reference_authority": "MATCHED_REFERENCE_AVAILABLE",
+    "physical_and_resource_gates": true
+  },
+  "physical_outputs": {
+    "R": 0.3371205735636914,
+    "T": 0.016288676112780145,
+    "A": 0.6465907503235284,
+    "A_volume": 0.6465908230964357,
+    "R00_s": 0.3370796055078396,
+    "R00_p": 6.227478652709841e-18,
+    "R00_total": 0.3370796055078396,
+    "R_plus_T": 0.3534092496764715,
+    "A_minus_A_volume_signed": -7.277290725582475e-8,
+    "abs_A_minus_A_volume": 7.277290725582475e-8,
+    "R_plus_T_plus_A_volume_minus_one_signed": 7.277290725582475e-8,
+    "abs_R_plus_T_plus_A_volume_minus_one": 7.277290725582475e-8,
+    "mode_count": 80,
+    "mode_amplitude_relative_difference": 7.647247714506177e-8,
+    "mode_power_max_absolute_difference": 1.58708358677373e-8,
+    "total_power_max_absolute_difference": 8.629595704690018e-8,
+    "energy_closure_gate": true,
+    "absorption_consistency_gate": true,
+    "finite_field_and_curl_gates": true,
+    "power_source": "dtn_port_modal_amplitudes"
+  },
+  "release_contract": {
+    "raw_inventory_label": "v21_p6_local_caches",
+    "legacy_helper_label": "v20_p6_local_caches",
+    "reserved_bytes": 183282224,
+    "released_bytes": 183282224,
+    "owner_refs_cleared": true,
+    "released_after_final_residual": true,
+    "release_timing_checked": true,
+    "final_inventory_used_bytes": 0,
+    "raw_event_stream_preserved": true
+  },
+  "pc_and_backend_accounting": {
+    "counts_source": "physical_dual_condensed_robustness_v21_summary.json:solver.actual_pc_counts_including_one_setup_call",
+    "BAL_H_calls_including_setup": 147,
+    "H6_calls_including_setup": 147,
+    "p4_mat_solve_calls": 294,
+    "p4_matrix_backend_source": "physical_dual_condensed_robustness_v21_summary.json:interface_stack.factor",
+    "p4_factor_infog19_allocated_bytes_upper": 1463000000,
+    "p4_factor_infog22_used_bytes_upper": 838000000,
+    "p4_matrix_payload_bytes": 232205060,
+    "p4_matrix_preallocated_structural_nnz": 11605888,
+    "p4_matrix_nnz_used": 8184464,
+    "p4_retained_numeric_cache_bytes": 11327040,
+    "p6_cache_after_unique_numpy_bytes": 183282224,
+    "p6_cache_after_array_content_sha256": "c79e781afb4b866db0e38bcaafd92d80f8148c847e1de6bec594ebc4994db62e",
+    "accounting_note": "factor upper/used, matrix payload, matrix NNZ and cache bytes are separate ledgers; none is simultaneous process-tree RSS"
+  },
+  "resources": {
+    "scope": "continuous sampled simultaneous parent process tree; compiler included",
+    "process_tree_rss_peak_bytes": 2297982976,
+    "process_tree_pss_peak_bytes": 2267706368,
+    "swap_peak_bytes": 0,
+    "inventory_peak_bytes": 2013567110,
+    "workspace_peak_bytes": 423441224,
+    "sample_count": 6351,
+    "tree_cap_bytes": 8589934592,
+    "reserve_bytes": 4294967296,
+    "phases": {
+      "pre_factor_preparation": {
+        "rss_peak_bytes": 826789888,
+        "pss_peak_bytes": 796558336,
+        "peak_sample_elapsed_since_workflow_start_seconds": 48.66945533701801,
+        "sample_count": 192
+      },
+      "factor_H6_p6_cache_setup": {
+        "rss_peak_bytes": 2136825856,
+        "pss_peak_bytes": 2106627072,
+        "peak_sample_elapsed_since_workflow_start_seconds": 235.08752146700863,
+        "sample_count": 725
+      },
+      "iteration_final_residual": {
+        "rss_peak_bytes": 2204024832,
+        "pss_peak_bytes": 2173793280,
+        "peak_sample_elapsed_since_workflow_start_seconds": 1635.4865249750146,
+        "sample_count": 5392
+      },
+      "release_recovery_postprocess": {
+        "rss_peak_bytes": 2297982976,
+        "pss_peak_bytes": 2267706368,
+        "peak_sample_elapsed_since_workflow_start_seconds": 1646.631635007012,
+        "sample_count": 42
+      },
+      "full_workflow_watchdog_window": {
+        "rss_peak_bytes": 2297982976,
+        "pss_peak_bytes": 2267706368,
+        "peak_sample_elapsed_since_workflow_start_seconds": 1646.631635007012,
+        "sample_count": 6351
+      }
+    },
+    "cleanup": "systemd inactive/dead; Result=success; MainPID=0; descendants cleared"
+  },
+  "timing": {
+    "full_workflow_monotonic_seconds": 1648.8478095369937,
+    "ksp_solve_monotonic_seconds": 1394.9292688659916,
+    "formal_ledger_conservative_billing_seconds": 1798.8260412538452,
+    "conservative_billing_is_not_measured_runtime": true,
+    "utc_minus_monotonic_seconds": 149.97472047501856,
+    "timing_note": "workflow monotonic, KSP monotonic, and conservative realtime accounting are separate scopes and are not summed"
+  },
+  "repair_semantics": {
+    "commit_sha": "f77393a1eccf0d117d837c8927dcc7aaf314d710",
+    "v21_summary_schema_restore": "opt-in V21 wrapper restoration; V20 default behavior unchanged",
+    "v21_inventory_label": "dynamic V21 label with V20 legacy resolution retained",
+    "checker_alias": "in-memory exact-label alias only; raw v21_events.jsonl is not mutated",
+    "historical_schema_compatibility": "exact source/stage/profile/schema scope only",
+    "original_raw_evidence": "not overwritten"
+  },
+  "evidence": {
+    "worker_summary": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z/physical_dual_condensed_robustness_v21_summary.json",
+    "events": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z/v21_events.jsonl",
+    "manifest": "results/euv_grazing1_phi0/task39extra_v21_z2_notch_h10__full3d_iterative__mpi1__Mna/20260915T053102.148718Z/run_manifest.json",
+    "root_metadata_recheck": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_metadata_recheck.json",
+    "preserved_raw_audit": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_preserved_raw_and_negative_audit.json",
+    "completed_result_audit": "benchmarks/artifacts/task39extra/dual_condensed_robustness_v21/root_engineering/z2_root_completed_result_audit.json"
+  }
+}
