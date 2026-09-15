@@ -63,7 +63,7 @@
       {"from": "reference_symbolic_started", "to": "reference_symbolic_complete", "marker_start_s": 136652.475700321142, "marker_end_s": 136807.348277220037, "marker_elapsed_s": 154.872576898895, "interpretation": "symbolic call"},
       {"from": "reference_symbolic_complete", "to": "reference_symbolic_resource", "marker_start_s": 136807.348277220037, "marker_end_s": 136807.384315821109, "marker_elapsed_s": 0.036038601073, "interpretation": "resource-estimate classification marker; no later stage marker"}
     ],
-    "post_marker_failure_tail": {"from": "reference_symbolic_resource", "to": "watchdog_end", "duration_s": 20.8989187747, "independently_marker_bounded": false}
+    "post_marker_failure_tail": {"from": "reference_symbolic_resource", "to": "watchdog_end", "duration_s": 19.952611960, "start_monotonic": 1612864.847910996, "end_monotonic": 1612884.800522956, "independently_marker_bounded": false, "note": "Absolute run-clock difference; not parent-elapsed minus workflow-elapsed."}
   },
   "pord32_boundary_probe": {
     "stack": "MUMPS 5.5.1 old mixed PORD path",

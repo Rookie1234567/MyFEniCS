@@ -1,7 +1,20 @@
 # h1.5 PORD64 isolated build recipe
 
 This is a compact record of the already executed task-local build, not a new
-build framework.  The old int32/int64 prefix was not modified.
+build framework.  The old int32/int64 prefix was not modified.  The shell
+variables below are the concrete paths used by the recorded archive/link
+commands; `PETSC_EXTERNAL_LIB_BASIC` is extracted from the recorded
+`petscvariables`, rather than being an undefined placeholder.
+
+```sh
+OLD=/tmp/task39extra_para_int64_stack
+NEW=/tmp/task39extra-pord64
+PETSC="$OLD/src/petsc"
+VARS="$PETSC/int64-complex/lib/petsc/conf/petscvariables"
+ARGS="$PETSC/int64-complex/lib/libpetsc.so.3.19.6.args"
+PETSC_EXTERNAL_LIB_BASIC="$(sed -n 's/^PETSC_EXTERNAL_LIB_BASIC = //p' "$VARS")"
+mkdir -p "$NEW/lib" "$NEW/petsc/lib"
+```
 
 ## Inputs and compiler recipes
 
@@ -37,6 +50,7 @@ taskset -c 10-13 /usr/bin/mpicc \
 The exact already-executed replacement sequence was:
 
 ```sh
+cp "$OLD/prefix/petsc/lib/libzmumps.a" "$NEW/lib/"
 cp "$OLD/prefix/petsc/lib/libmumps_common.a" "$NEW/lib/libmumps_common.a"
 cp "$NEW/PORD/lib/libpord.a" "$NEW/lib/"
 /usr/bin/ar d "$NEW/lib/libmumps_common.a" mumps_pord.o
@@ -59,6 +73,8 @@ taskset -c 10-13 bash -c 'cd "$1"; exec /usr/bin/mpicc \
   /tmp/task39extra-pord64 \
   /tmp/task39extra_para_int64_stack/src/petsc/int64-complex/lib/libpetsc.so.3.19.6.args \
   "$PETSC_EXTERNAL_LIB_BASIC"
+ln -sfn libpetsc.so.3.19.6 "$NEW/petsc/lib/libpetsc.so.3.19"
+ln -sfn libpetsc.so.3.19.6 "$NEW/petsc/lib/libpetsc.so"
 ```
 
 The link object list is the 71,895-byte `libpetsc.so.3.19.6.args`; its SHA256

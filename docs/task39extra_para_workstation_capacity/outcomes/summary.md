@@ -27,11 +27,11 @@ run `20260914T061139.551088Z` 在 source `9da01fb0402bc5f7da1cdaf4cc543bb53162de
 
 对 `watchdog/resources.jsonl` 已完成一次流式归并：330197行、坏行0、不可读样本0；整树RSS峰 `277758349312 B`、swap峰0、global pswp delta 0。资源样本的首末跨度与 `stages.jsonl` 相邻 marker wall 已分开记录；其中 `reference_volume_pattern→reference_volume_complete` 为数值体装配 `88431.120501188096 s`，`reference_volume_complete→reference_augmentation_complete` 为增广构造 `239.752949750982 s`，symbolic调用 `154.872576898895 s`。详见 [`2nm_h1p5_pord64_qualification_v1.json`](records/2nm_h1p5_pord64_qualification_v1.json)。
 
-旧混合PORD边界 probe：`NEDGES8=2147483648` 返回 `INFO(1)=-51, INFO(2)=-2147`，预置 `NCMPA` 未写回；旧查询为32位。独立 `/tmp/task39extra-pord64` 仅以 `-DPORD_INTSIZE64` 重编14个PORD对象和 `mumps_pord.c`，不使用全局 `-DINTSIZE64`，复用旧 `libzmumps.a`/PETSc对象并重链任务专属 `libpetsc.so.3.19.6`。最终 activation [`scripts/activate_task39extra_pord64.sh`](../../scripts/activate_task39extra_pord64.sh) 明确同步 `PETSC_DIR`、`PYTHONPATH`、`LD_LIBRARY_PATH`，旧 [`activate_task39extra_int64.sh`](../../scripts/activate_task39extra_int64.sh) 不变；新prefix没有 `.pc` 文件，因此 `PKG_CONFIG_PATH` 明确 unset。完整有效argv、对象参数文件/`petscvariables`哈希、库替换和 cfg 复制步骤见 [`2nm_h1p5_pord64_build_recipe_v1.md`](records/2nm_h1p5_pord64_build_recipe_v1.md)。
+旧混合PORD边界 probe：`NEDGES8=2147483648` 返回 `INFO(1)=-51, INFO(2)=-2147`，预置 `NCMPA` 未写回；旧查询为32位。独立 `/tmp/task39extra-pord64` 仅以 `-DPORD_INTSIZE64` 重编14个PORD对象和 `mumps_pord.c`，不使用全局 `-DINTSIZE64`，复用旧 `libzmumps.a`/PETSc对象并重链任务专属 `libpetsc.so.3.19.6`。最终 activation [`scripts/activate_task39extra_pord64.sh`](../../../scripts/activate_task39extra_pord64.sh) 明确同步 `PETSC_DIR`、`PYTHONPATH`、`LD_LIBRARY_PATH`，旧 [`activate_task39extra_int64.sh`](../../../scripts/activate_task39extra_int64.sh) 不变；新prefix没有 `.pc` 文件，因此 `PKG_CONFIG_PATH` 明确 unset。完整有效argv、对象参数文件/`petscvariables`哈希、库替换和 cfg 复制步骤见 [`2nm_h1p5_pord64_build_recipe_v1.md`](records/2nm_h1p5_pord64_build_recipe_v1.md)。
 
-同一8-cell、1944行、701496-NNZ p4/MPC fixture 在最终入口下通过：`petsc_int=int64`、`complex128`、query=64、唯一新PETSc map，临时 `PETSc.Options()["mat_mumps_icntl_7"]=4` 后 `INFOG(7)=4`、`INFOG(1)=0`，symbolic/numeric/solve各1次，原矩阵相对真残差 `2.922259846318588e-11`。组件资格不等于整张h1.5 symbolic/numeric通过，也不改变正式默认排序或主求解器。
+同一8-cell、1944行、701496-NNZ p4/MPC fixture 在同一新prefix下通过：`petsc_int=int64`、`complex128`、query=64、唯一新PETSc map，临时 `PETSc.Options()["mat_mumps_icntl_7"]=4` 后 `INFOG(7)=4`、`INFOG(1)=0`，symbolic/numeric/solve各1次，原矩阵相对真残差 `2.922259846318588e-11`。最终 activation 另做了 imports/query/maps 轻检；组件资格不等于整张h1.5 symbolic/numeric通过，也不改变正式默认排序或主求解器。
 
-独立 [`scripts/task39extra_2nm_h1p5_pord64_launch.py`](../../scripts/task39extra_2nm_h1p5_pord64_launch.py) 已准备为 `CPU9 + stdin=DEVNULL + start_new_session + 单一run_case入口`，但尚未执行；h1.5正式retry与h2均保持未启动，等待本次diff/记录审核。
+独立 [`scripts/task39extra_2nm_h1p5_pord64_launch.py`](../../../scripts/task39extra_2nm_h1p5_pord64_launch.py) 已准备为 `CPU9 + stdin=DEVNULL + start_new_session + 单一run_case入口`，但尚未执行；h1.5正式retry与h2均保持未启动，等待本次diff/记录审核。
 
 ## 5 nm formal attempt 1（用户授权跳过未通过 R2）
 

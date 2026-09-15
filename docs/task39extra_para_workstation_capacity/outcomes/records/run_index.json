@@ -119,7 +119,7 @@
       "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
       "infog": {"1": -9999, "2": 4, "7": 4, "16": 0},
       "numeric_called": false,
-      "resource_qualification": "STREAMED_BUT_FORMAL_CONTINUITY_NOT_REQUALIFIED",
+      "resource_qualification": "WATCHDOG_COMPLETE_ALL_READABLE_SWAP0_DESCENDANTS_CLEARED",
       "formal_retry": "PENDING_REVIEW"
     },
     {

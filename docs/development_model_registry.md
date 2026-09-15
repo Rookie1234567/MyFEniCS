@@ -1513,7 +1513,7 @@ S6 优化只省掉取得对角项时不需要的计算；A2R 用额外矩阵及�
 
 | Model ID | 身份/离散 | 实测结果 | 状态 | evidence |
 |---|---|---|---|---|
-| `native_2nm_h1p5_formal_attempt2` | source `9da01fb0402bc5f7da1cdaf4cc543bb53162deea`；Si用户输入；p6/h1.5；10604228体行、4752199344体NNZ、10608132增广行、4899800920增广NNZ | symbolic `INFOG(1)=-9999, INFOG(2)=4`；numeric/solve/outer未运行；330197资源样本，树RSS峰277758349312 B，swap0 | `controlled_negative; PORD_MIXED_WIDTH_BLOCK`; 不称OOM/数值失败，正式NEDGES8未记录 | `task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_pord64_qualification_v1.json` |
+| `native_2nm_h1p5_formal_attempt2` | source `9da01fb0402bc5f7da1cdaf4cc543bb53162deea`；Si用户输入；p6/h1.5；10604228体行、4752199344体NNZ、10608132增广行、4899800920增广NNZ | symbolic `INFOG(1)=-9999, INFOG(2)=4`；numeric/solve/outer未运行；330197资源样本，树RSS峰277758349312 B、swap0、descendants清场 | `WORKER_FAILED; PORD_MIXED_WIDTH_BLOCK`; 不称OOM/数值失败，正式NEDGES8未记录 | `task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_pord64_qualification_v1.json` |
 | `native_2nm_h1p5_pord64_fixture` | 同一新PETSc专属prefix；8-cell p4/MPC；1944行、701496 NNZ；int64/complex128 | query=64；`INFOG(7)=4`、`INFOG(1)=0`；symbolic/numeric/solve=1/1/1；真残差2.922259846318588e-11；唯一新PETSc map | `component_qualification_only`; 不代表整张h1.5 numeric通过 | 同上；`scripts/activate_task39extra_pord64.sh` |
 
 # 4. 今后新增模型的登记模板

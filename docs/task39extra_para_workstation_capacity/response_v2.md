@@ -6,11 +6,11 @@
 
 一次流式资源归并得到330197行、坏行0、不可读0，整树RSS峰 `277758349312 B`、swap峰0、global pswp delta 0；资源样本跨度与 `stages.jsonl` 相邻 marker wall 分开保存，其中体装配 `reference_volume_pattern→reference_volume_complete` 为 `88431.120501188096 s`，增广构造为 `239.752949750982 s`，symbolic为 `154.872576898895 s`。详见 [`2nm_h1p5_pord64_qualification_v1.json`](outcomes/records/2nm_h1p5_pord64_qualification_v1.json)。
 
-PORD组件资格已通过：旧32位边界 probe `NEDGES8=2147483648 -> INFO=-51/-2147` 且 `NCMPA`哨兵不变；独立目录仅用 `-DPORD_INTSIZE64` 重编14个PORD对象和 `mumps_pord.c`，未使用全局 `-DINTSIZE64`，任务专属 PETSc 新库/包配置哈希及准确构建/链接 recipe 见 [`2nm_h1p5_pord64_build_recipe_v1.md`](outcomes/records/2nm_h1p5_pord64_build_recipe_v1.md)。最终 opt-in [`scripts/activate_task39extra_pord64.sh`](scripts/activate_task39extra_pord64.sh) 的实际 imports 为新 `petsc4py`、task-local DOLFINx/MPC，`PetscInt=int64`、`complex128`、正确输出参数 query=64，唯一 map 为 `/tmp/task39extra-pord64/petsc/lib/libpetsc.so.3.19.6`；新prefix没有`.pc`，故不伪造 `PKG_CONFIG_PATH`。
+PORD组件资格已通过：旧32位边界 probe `NEDGES8=2147483648 -> INFO=-51/-2147` 且 `NCMPA`哨兵不变；独立目录仅用 `-DPORD_INTSIZE64` 重编14个PORD对象和 `mumps_pord.c`，未使用全局 `-DINTSIZE64`，任务专属 PETSc 新库/包配置哈希及准确构建/链接 recipe 见 [`2nm_h1p5_pord64_build_recipe_v1.md`](outcomes/records/2nm_h1p5_pord64_build_recipe_v1.md)。最终 opt-in [`scripts/activate_task39extra_pord64.sh`](../../scripts/activate_task39extra_pord64.sh) 的实际 imports 为新 `petsc4py`、task-local DOLFINx/MPC，`PetscInt=int64`、`complex128`、正确输出参数 query=64，唯一 map 为 `/tmp/task39extra-pord64/petsc/lib/libpetsc.so.3.19.6`；新prefix没有`.pc`，故不伪造 `PKG_CONFIG_PATH`。
 
 同一8-cell/1944行/701496-NNZ p4/MPC fixture 在 `PETSc.Options()["mat_mumps_icntl_7"]=4` 后取得 `INFOG(7)=4`、`INFOG(1)=0`，symbolic/numeric/solve各1次，原矩阵相对真残差 `2.922259846318588e-11`。这是PORD/MUMPS组件资格，不是整张h1.5 numeric资格；正式默认排序、A/b、PC和Gate未改。
 
-正式retry尚未启动。新的 detached 单入口 launcher [`scripts/task39extra_2nm_h1p5_pord64_launch.py`](scripts/task39extra_2nm_h1p5_pord64_launch.py) 使用 CPU9、`stdin=DEVNULL`、`start_new_session=True`，source新PORD64入口后只调用既有 `scripts/run_case.py`；h2不启动。旧32位入口和旧失败记录保持不变。
+正式retry尚未启动。新的 detached 单入口 launcher [`scripts/task39extra_2nm_h1p5_pord64_launch.py`](../../scripts/task39extra_2nm_h1p5_pord64_launch.py) 使用 CPU9、`stdin=DEVNULL`、`start_new_session=True`，source新PORD64入口后只调用既有 `scripts/run_case.py`；h2不启动。旧32位入口和旧失败记录保持不变。
 
 ## 当前新增：2 nm Si h1.5 formal attempt1 与唯一根因 retry
 
