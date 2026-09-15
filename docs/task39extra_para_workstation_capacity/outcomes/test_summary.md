@@ -23,3 +23,12 @@
 监督分类修复只把`cooperative_stop_identity_and_signal`异常记为MONITORING_FAILED，保留原异常与清场；没有放宽RSS/swap或时间上限。其余监督改动为native PSS约5秒采样，RSS/swap照常读取。FE优化使用严格浮点、禁止FMA contraction，不使用fast-math。逐行诊断与拒绝方案见[kernel evidence](records/kernel_performance.json)，日志hash见[test evidence](records/performance_tests.json)。
 
 checker no-deadline 修复提交为 `d64398cb1fecd90867071688dca94e501235cf7a`；修复后对同一 5 nm run 只读执行独立 recheck，结果 `independent_output_gates_passed=true`、`gate_failures=[]`。原 checker/summary/manifest 与资源连续性缺口未被覆盖或提升。
+
+## 2 nm h1.5 PORD64 收口检查
+
+| 检查 | 实际结果 | 范围 / 限制 |
+|---|---|---|
+| 最终 `activate_task39extra_pord64.sh` imports/query/maps | PASS：petsc4py、DOLFINx、MPC 导入；`PetscInt=int64`、`complex128`、PORD query=64；唯一 PETSc map 为 `/tmp/task39extra-pord64/petsc/lib/libpetsc.so.3.19.6`；新prefix无 `.pc`，`PKG_CONFIG_PATH` 为 unset | 轻量环境检查；未启动FEM |
+| PORD64 MUMPS fixture | PASS：`mat_mumps_icntl_7=4`，`INFOG(7)=4`、`INFOG(1)=0`，symbolic/numeric/solve=1/1/1，relative true residual `2.922259846318588e-11` | 8-cell、1944行、701496 NNZ组件资格；不代表h1.5整网numeric |
+| PORD32 boundary fixture | PASS：`NEDGES8=2147483648` 返回 `-51/-2147`，NCMPA哨兵不变 | 受控边界证据；不是正式图NEDGES实测 |
+| recipe/document JSON validation | PASS：记录JSON可解析、build recipe与新launcher存在、`bash -n` activation通过 | 临时 `/tmp/task39extra-pord64` 构建目录不入Git |

@@ -100,3 +100,27 @@ P0 初次实际网格计数得到 54332 cells、p4 10604228 rows、p6 35594790 r
 最终 357/362 定向检查为 **16 passed、1 skipped，94.21 s**；跳过项是明确的 MPI2 专项，本次合同为 MPI1。p3 装配 MPC 对角参考相对差 `9.14128559598911e-16`，p6 原 FFCx action 与正项/分量/packed 对照均保持原 `1e-11` 容差通过，平移仿射与真实非仿射负例通过。初次裸 `pytest` 命中 `/usr/bin/pytest` 的系统解释器，导致 13 项 CFFI 缺 setuptools；改为已激活 `.venv` 的 `python3 -m pytest` 后通过，未安装包或重建运行环境，保留该测试调用负记录。
 
 批准已审三行修复、现有测试增补、最小通知脚本及本轮失败/验证/回复记录完成 clean 提交并正常推送本执行分支后，直接用同一 h1.5 输入启动一个新的正式 run。无需再次请求许可、重跑 P0 FE 计数或旧完整成功案例。启动仍使用已审 detached launcher、CPU23/MPI1、CPU9 监督、preferred_node1、实际 fresh cap 与原数值/物理/P2 Gate，无时间上限；保留首次失败目录并计入一次该根因迁移重试。只读 observer 同步以 CPU9、独立 session、固定新 run 与 PID/start_ticks 启动，通知本主控线程；启动后核验 watchdog 持续采样及 observer 独立存活，再按实质阶段或异常通知。
+
+## 7. h1.5 第二次正式运行的 PORD 位宽审查
+
+运行 `20260914T061139.551088Z`（clean source `9da01fb0402bc5f7da1cdaf4cc543bb53162deea`）已自然结束，exit4 / `WORKER_FAILED`，总耗时 `136828.3499628841 s`（约 38.008 h）。本次完成 H6 setup 和 p4 装配，实际体矩阵 NNZ 为 `4752199344`，增广矩阵为 `10608132` 行、`4899800920` NNZ。symbolic 调用返回 `INFOG(1)=-9999`、`INFOG(2)=4`，numeric/solve 调用数均为 0；随后因估计值不可用而进入 `REFERENCE_RESOURCE_BLOCKED`。阶段名 `reference_symbolic_complete` 仅表示调用返回，不能视为成功。无 outer residual 或 official R/T/A。
+
+330197 个资源样本记录的同期整树 RSS 峰为 `277758349312 B`，job swap 峰为 0，全局 pswp 增量为 0，子进程已清场。这不是已证实的内存耗尽或数值不收敛。按已有阶段标记与资源时间戳归并每阶段耗时和采样峰，保存原始失败、通知回执、源与库身份；不得覆盖原日志或把采样峰称为连续精确峰。
+
+PORD 是 MUMPS 在 LU 之前使用的矩阵图排序组件。当前 PETSc 为 int64，不代表该组件也使用 64 位索引：实际 `mumps_pord_intsize` 查询为 32，构建仅有 `-Dpord`。本地 MUMPS 5.5.1 的 `INSTALL` 明确支持在保持 MUMPS 混合整数 ABI 时，以 `OPTC` 中的 `-DPORD_INTSIZE64` 同时构建 PORD 和其 C 调用接口；切换位宽必须重新编译旧 PORD 对象。
+
+实际 `MUMPS_PORDF_MIXEDto32` 的有界边界调用以 `NEDGES8=2147483648` 返回 `INFO(1)=-51`、`INFO(2)=-2147`，预置 `NCMPA` 保持不变。源码 `zana_aux.F` 在检查 `INFO` 前检查 `NCMPA`，可把该早退错误覆盖为本次出现的 `-9999/4`。接受已证明的位宽限制与错误覆盖机制；正式运行未记录内部图的 `NEDGES8`，因此其原始 `-51` 属于有强证据支持的解释，不冒充正式日志实测值。
+
+允许执行专用准备同一 PORD 的最小 64 位构建方案：在独立目录重编 PORD C 对象与 `mumps_pord.c`，重链任务专属 PETSc，保留原库及 hash；不得使用全局 `INTSIZE64` 改变 MUMPS/PETSc 接口，不切换排序算法，不重建无关 DOLFINx/MPC。具体命令和链接方案先交主控审核，随后只做实际加载库的 PORD 位宽、PetscInt/complex128、原 p4/MPC 小装配与 MUMPS symbolic/numeric/solve 资格检查。新的库身份和可复现构建选项须进入轻量记录。
+
+本节尚未放行第三次正式 h1.5 或 h2。待兼容修复、小组件资格、最小接线 diff 和 clean 提交审阅后再继续；不以一轮 38 小时正式装配代替组件调试。保留原数值、物理、P2 容量门限和迁移 retry 账，不新增求解算法或防御框架。
+
+后续链接调查确认 MUMPS/PORD 静态归入 PETSc，已有 PETSc 对象和链接参数可复用。批准在独立目录重新编译全部 14 个 PORD C 对象及同宏的 `mumps_pord.c`，仅替换新副本 `libmumps_common.a` 的对应对象，复用原 `libzmumps.a` 和 PETSc 对象重链新的同 SONAME `libpetsc.so.3.19.6`。原 prefix、库 hash 和其他 ABI 组件保留，CPU10–13、最多 4 路编译。执行专用可直接完成该构建及上述小资格，无需再等一轮方案许可；正式运行仍待资格结果审核。
+
+新库已在 `/tmp/task39extra-pord64/petsc` 完成链接。初次只调整动态库搜索路径会同时加载新旧 PETSc：DOLFINx/MPC 的 Python 辅助接口通过 `petsc4py.get_config()` 读取包内 `lib/petsc.cfg`，再按旧 prefix 的绝对路径载入库。接受只在新 prefix 复制原 petsc4py 包/扩展与 headers、修改该副本 `petsc.cfg` 的安装元数据修复；无需重编 DOLFINx/MPC，也不以 `LD_PRELOAD` 或导入顺序绕过双库检查。旧包与旧配置保留。
+
+实际 8-cell、p4、非空复 MPC 小装配为 1944 行、701496 NNZ，CSR 为 int64/complex128，新 PETSc 为唯一实际映射，运行时 PORD 位宽查询为 64。首次自动排序返回 `INFOG(7)=2`，残差 `2.9040599435881406e-11`，仅算通用接线通过。随后仅在临时 probe 的 PETSc options 指定本次需覆盖的 PORD 分支，得到 `INFOG(7)=4`、`INFOG(1)=0`、有效 symbolic 估计 33 MB，symbolic/numeric/solve 各 1 次，原矩阵真残差 `2.922259846318588e-11`，低于原 `1e-10` 门限。直接 setter 曾被 PETSc symbolic 初始化覆盖，其未覆盖 PORD 的负记录也保留；正式默认未改、没有排序参数扫描。接受这项组件资格，不扩大测试；整张 h1.5 的 symbolic 容量和数值结果仍未通过。
+
+主控已审显式薄入口 `scripts/activate_task39extra_pord64.sh` 和独立启动包装 `scripts/task39extra_2nm_h1p5_pord64_launch.py`；后者复用同一 `run_case.py` 和监督生命周期，仅选择新环境，不复制求解流程。独立核验新 `libpetsc.so.3.19.6` 的 SHA-256 为 `cf7fdfff5ce3b4d4ca3037eed646c21f07268483e9bd69bafef637b0e507f79d`，新 `petsc.cfg` 为 `dee2054039c439457a61b8a5f2400a50d85ebb48f53e0ed82f59f09d4df0cb02`，原 h1.5 输入 hash 仍为 `34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f`。
+
+批准以下条件全部满足后直接启动一个新的 h1.5 正式 run，无需再增加许可环节：通过最终激活入口确认唯一新 PETSc 映射、PORD64 与 complex128/int64；把阶段 marker 耗时与资源样本跨度分开，修正准确构建命令并保存本次失败 compact、模型总账、response 和 retry 账；完成相关轻量检查，clean 提交并正常推送本执行分支，记录完整 source SHA。无需重跑 P0 FE 计数或旧完整成功例。新 run 使用已审 PORD64 launcher、原输入、CPU23/MPI1、CPU9 监督、preferred_node1、fresh cap 和原 P2/数值/物理 Gate，无时间上限；小测试的强制排序 option 不得带入正式默认。保留本次失败目录，这将是 h1.5 第 2 次迁移性正式 retry、该 PORD 根因第 1 次 retry；不得超额自动重试。同步启动现有独立 observer 并核验 PID/start_ticks、持续采样和通知路由，源与输入在运行中保持冻结；h2 仍为后续单独尝试。

@@ -107,8 +107,34 @@
       "resolved_config_sha256": "af53c69fb2a5b3b8601fc6a5410b26e67c5142b076ec5fe7224fb132b105e321",
       "mode_count": 3904,
       "resource_qualification": "NOT_STARTED"
+    },
+    {
+      "stage": "2NM_H1P5_FORMAL",
+      "attempt": 2,
+      "run_id": "20260914T061139.551088Z",
+      "record": "2nm_h1p5_pord64_qualification_v1.json",
+      "status": "WORKER_FAILED_PORD_MUMPS_SYMBOLIC_RESOURCE_BLOCK",
+      "source_sha": "9da01fb0402bc5f7da1cdaf4cc543bb53162deea",
+      "input_sha256": "34f33b30463f52fd594797a4104423797c9cae44f4569ffd128037121d6c0d5f",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "infog": {"1": -9999, "2": 4, "7": 4, "16": 0},
+      "numeric_called": false,
+      "resource_qualification": "STREAMED_BUT_FORMAL_CONTINUITY_NOT_REQUALIFIED",
+      "formal_retry": "PENDING_REVIEW"
+    },
+    {
+      "stage": "2NM_PORD64_COMPONENT",
+      "attempt": "fixture",
+      "record": "2nm_h1p5_pord64_qualification_v1.json",
+      "status": "QUALIFIED_COMPONENT_ONLY",
+      "source_sha": "9da01fb0402bc5f7da1cdaf4cc543bb53162deea",
+      "pord_query": 64,
+      "infog1": 0,
+      "infog7": 4,
+      "relative_true_residual": 2.922259846318588e-11,
+      "formal_retry": "NOT_STARTED"
     }
   ],
-  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_P0_PENDING_3NM_LOCKED",
-  "next_gate": "2NM_H1P5_P0_REVIEW_BEFORE_P1"
+  "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_PORD64_COMPONENT_ONLY_3NM_LOCKED",
+  "next_gate": "2NM_H1P5_FORMAL_RETRY_REVIEW_AFTER_PORD64_COMPONENT"
 }
