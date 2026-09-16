@@ -1,0 +1,181 @@
+{
+  "schema": "task041.common_layout_equivalence.v4",
+  "record_status": "BLOCKED_BY_ACTIVE_HEAVY_JOB",
+  "scope": {
+    "new_runs": false,
+    "meaning": "V4-A0 documentation and pre-start gate only; historical R2 baseline and unique R2g optimized runs remain historical",
+    "profile": "task041_schur_speed_v2",
+    "component_scope": "representative_rhs",
+    "comparison_mode": "common_layout_equivalence",
+    "side_setup_schedule": "sequential_component"
+  },
+  "identity": {
+    "repository": "Rookie1234567/MyFEniCS",
+    "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
+    "head": "b5d0a39e8f85a2c63d56df28fb8414836e5aef3b",
+    "review_v4_commit": "b5d0a39e8f85a2c63d56df28fb8414836e5aef3b",
+    "review_v4_base": "59dd5035c9f4ec75949358aed392a8600d9f9d83",
+    "a0_host_snapshot_captured_at_utc": "2026-09-16T02:53:02Z",
+    "a0_source_head_note": "A0 source/head is the synchronized source identity; final document HEAD is not assigned before review and commit",
+    "legacy_source": "3ee452ac0adc0c3c88b9610b6446e93a3c02444a",
+    "optimized_source": "376a6c2e6ff1d13b8c4f182dd97e5ee2629f85ab",
+    "input_sha256": "9e77be901d54a8eb6d4f090588dec26c4913facd7c16c53fb46c0025eb31adb2",
+    "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
+    "fixed_rhs_manifest": "outcomes/records/task041_representative_rhs_v1.json",
+    "fixed_rhs_manifest_sha256": "fb68011ed3e55861c59455d082be549cdd9f6c2d5a569015cf88bdc739f5636a"
+  },
+  "fixed_rhs": {
+    "expected_entries": 8,
+    "entries": [
+      {"ordinal": 0, "side": "bottom", "polarity": "positive", "audit_index": 227, "formal_column": 207},
+      {"ordinal": 1, "side": "bottom", "polarity": "positive", "audit_index": 35, "formal_column": 15},
+      {"ordinal": 2, "side": "bottom", "polarity": "negative", "audit_index": 691, "formal_column": 671},
+      {"ordinal": 3, "side": "bottom", "polarity": "negative", "audit_index": 513, "formal_column": 493},
+      {"ordinal": 4, "side": "top", "polarity": "positive", "audit_index": 330, "formal_column": 310},
+      {"ordinal": 5, "side": "top", "polarity": "positive", "audit_index": 32, "formal_column": 12},
+      {"ordinal": 6, "side": "top", "polarity": "negative", "audit_index": 686, "formal_column": 666},
+      {"ordinal": 7, "side": "top", "polarity": "negative", "audit_index": 513, "formal_column": 493}
+    ]
+  },
+  "comparison": {
+    "implementation_status": "not_implemented",
+    "fixed_interleave": "even ordinal legacy first; odd ordinal optimized first",
+    "expected_primary_solves": 16,
+    "observed_primary_solves": 0,
+    "expected_pairs": 8,
+    "observed_pairs": 0,
+    "initial_guess": "zero",
+    "qep_calls": 0,
+    "full_schur_outer_recovery_rta": "not_run",
+    "layout_identity": "same live side layout required; cross-fresh-run physical row mapping not supplied",
+    "offline_overlap_table": "historical_partial_overlap_analysis",
+    "offline_overlap_note": "Only the existing six-line historical excerpt is linked; native workspace remains unknown and this is not dual-side qualification",
+    "old_positionwise_difference": "diagnostic_only_unverified_numbering"
+  },
+  "planned_execution": {
+    "mpi_ranks": 8,
+    "cpu_set": "0-7",
+    "math_threads_per_rank": 1,
+    "rss_cap_bytes": 53221163008,
+    "c1_duration": "seconds_to_minutes_expected",
+    "c2_c3_duration": "not_estimated_before_execution",
+    "historical_wall_is_only_schedule_reference": true
+  },
+  "gates": {
+    "action_transfer": {"status": "not_run", "threshold": 1.0e-11},
+    "p4_residual": {"status": "not_run", "threshold": 1.0e-10},
+    "balh": {"status": "not_run", "threshold": 1.0e-8},
+    "response_explicit_residual": {"status": "not_run", "threshold": 1.0e-2},
+    "response_reason": {"status": "not_run", "required": "positive"},
+    "same_layout_response_diagnostic": {"status": "not_run", "threshold_e_x": 1.0e-8, "threshold_e_A": 1.0e-8, "measured_e_x": null, "measured_e_A": null},
+    "P_PH_PC_and_original_checks": "not_run"
+  },
+  "resources": {
+    "this_v4_rss_peak_bytes": null,
+    "this_v4_speed_seconds": null,
+    "rss_cap_bytes": 53221163008,
+    "warning_bytes": 47899046707,
+    "job_swap": "not_run",
+    "global_swap": "not_run",
+    "reserve_bytes": 412316860416,
+    "old_s1f_dual_stop": {"rss_peak_bytes": 53331742720, "over_cap_bytes": 110579712, "status": "controlled_resource_stop"},
+    "historical_full_tree_cap_margins": {"r2_baseline": 1245556736, "r2g_optimized": 1424392192}
+  },
+  "historical_memory_excerpt": [
+    {
+      "stage": "public_or_borrowed",
+      "known_inventory": "p6 mesh/FE/MPC and physical inputs borrowed; full-action owned action/input vectors bottom/top 826752/841728 B plus exposed mode/traction arrays",
+      "rss_relation": "rank-local exposed payload only; not full-tree RSS; not additive"
+    },
+    {
+      "stage": "bottom_retained_and_release",
+      "known_inventory": "p4 factor/KSP owned by the side inverse until destroy; p6 objects remain borrowed",
+      "rss_marker_brackets": {
+        "before_release": {"marker_event": "before_release", "marker_line": 51, "memory_line": 8112, "rss_bytes": 37383737344},
+        "bottom_after_release": {"marker_event": "bottom_after_release", "marker_line": 53, "memory_line": 8114, "rss_bytes": 32090693632}
+      },
+      "cap_margin_bytes": {"before_release": 15837425664, "released": 21130469376},
+      "semantics": "approximately 0.3-second full-process-tree RSS samples bracketing markers; not simultaneous marker readings"
+    },
+    {
+      "stage": "top_construction_temporaries",
+      "rss_marker_brackets": {
+        "p4_factor_ready": {"marker_line": 64, "before": {"memory_line": 9881, "rss_bytes": 51259228160}, "after": {"memory_line": 9882, "rss_bytes": 51315433472}},
+        "transfer_ready": {"marker_line": 66, "after": {"memory_line": 10150, "rss_bytes": 51867832320}},
+        "h6_ready": {"marker_line": 72, "after": {"memory_line": 10306, "rss_bytes": 51974172672}}
+      },
+      "cap_margin_bytes": {"p4_factor_ready_before": 1961934848, "p4_factor_ready_after": 1905729536, "transfer_ready_after": 1353330688, "h6_ready_after": 1246990336},
+      "semantics": "approximately 0.3-second full-process-tree RSS samples bracketing markers; not additive and not same-time values"
+    },
+    {
+      "stage": "p4_source_matrix_and_factor",
+      "known_inventory": "bottom/top local shapes 15520^2/15872^2, local nnz 6928418/7130656, estimated payload 166282032/171135744 B; getInfo(LOCAL) native memory reported 0",
+      "unknown": ["MUMPS/native factor workspace", "native bytes beyond local-nnz estimate"]
+    },
+    {
+      "stage": "transfer_and_h6",
+      "known_inventory": "transfer canonical map 4233600 B, fine work 1584288/1596000 B, stage-specific coarse/dual work; H6 basis values/curls 10838016 B each and kernel dofs 275184 B among exposed arrays",
+      "semantics": "known rank-local payload snapshots; do not sum against RSS or across stages"
+    },
+    {
+      "stage": "allocator_and_native_unknown",
+      "unknown": ["PETSc/MUMPS/FFCx/backend workspace", "full-action/H6 matrix bytes", "Vec ghost/native allocation", "allocator retention after destroy"],
+      "semantics": "does not support a leak claim or a memory saving claim"
+    }
+  ],
+  "historical": {
+    "r2_component_apply_seconds": {"baseline": 1680.27495998214, "optimized": 1258.8479048048612},
+    "r2_full_service_seconds": {"baseline": 4015.539370124, "optimized": 3630.563676387},
+    "r2_full_tree_rss_bytes": {"baseline": 51975606272, "optimized": 51796770816},
+    "formal_pairing_status": "PAIRING_IDENTITY_UNPROVEN",
+    "old_h3_resource_status": "RESOURCE_COMPARISON_INCONCLUSIVE"
+  },
+  "evidence": {
+    "review_v4_path": "docs/task041_mpi1_shortwave_hybrid_capacity/review_report_v4.md",
+    "review_v4_sha256": "9315227e9eb5a2a5d194f544fb594e1bae6e637f5cd06e529c2de70ea69a213a",
+    "old_s0_s1_s1f_s5a_compact_path": "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_schur_speed_v2.json",
+    "old_s0_s1_s1f_s5a_compact_sha256": "e23c92bfa27fe38ba5d12219c984893314f69a397f67cfbeb4241b29fc44e260",
+    "old_r2_r2g_compact_path": "docs/task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_setup_recovery_v3.json",
+    "old_r2_r2g_compact_sha256": "7f5d84e6a2a9a6809d9438bbb6e9444a4ffead9d6272728b394d3346401852df",
+    "r2b_analysis_v2_path": "results/task041_side_balh_component_audit/r2_preparation_20260915_3ee452ac/r2b_analysis_v2.json",
+    "r2b_analysis_v2_sha256": "9bac3eaae74911198b656ae75b6a2959b62b6d7ae2130702c219502a02a5c28a",
+    "host_protection_path": "results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/active_heavy_protection.json",
+    "host_protection_sha256": "8b3b1ce344bfcb66ad313db6fd714f01fda53375cbb6509432577b39541ff98d",
+    "ledger_path": "results/task041_side_balh_component_audit/task041_schur_speed_v2_s1a_3890cdd2/task041_schur_speed_v2_compute_wall_ledger.json",
+    "ledger_sha256": "c1c0ef6ab626f3c53b9d252abc43037b341ec73f53cdc93b86fc8626bc338dad",
+    "final_static_check_path": "results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/v4a0_final_json_diff_check.json",
+    "final_static_check_sha256": "6d79e7798567a5f6aa00c83fc42cf46d28ce03dd93ed5600a8d4ce8826f7e682"
+  },
+  "ledger": {
+    "used_compute_wall_seconds": 11145.708812196894,
+    "shared_budget_seconds": 21600.0,
+    "shared_remaining_seconds": 10454.291187803106,
+    "batch_budget_seconds": 201600.0,
+    "S2_used_seconds": 0.0,
+    "S4_used_seconds": 0.0,
+    "updated_in_v4_a0": true,
+    "append_seconds": 0.099701023,
+    "append_status": "measured_static_checks_once; prior reliable static check and final json.tool/diff check combined in one ledger record"
+  },
+  "run_identity": {
+    "service_unit": null,
+    "public_runroot": null,
+    "run_directory": null,
+    "reason_not_started": "BLOCKED_BY_ACTIVE_HEAVY_JOB"
+  },
+  "planned_files": [
+    "benchmarks/task041_exact_side_workflow.py",
+    "src/solvers/physical_balanced_same_mesh_transfer.py",
+    "benchmarks/task041_balh_workflow.py (only if existing binding has a gap)",
+    "src/test/test_346_task041_balh_trace_bridge.py",
+    "src/test/test_347_task041_balh_physical_operator.py",
+    "src/test/test_351_task041_balh_public_workflow.py"
+  ],
+  "not_run": [
+    "C1 lightweight implementation/tests",
+    "C2 MPI8 common-layout component run",
+    "C3 16 primary responses and 8 pairs",
+    "13.5 nm, full 5 nm, full Schur, outer, recovery, official RTA, QEP",
+    "optimized retry or any new service"
+  ]
+}

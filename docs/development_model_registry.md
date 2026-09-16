@@ -1,5 +1,26 @@
 # 开发阶段研究对象与计算结果总账
 
+## Task041 Review V4-A0：共同布局响应等价的启动前 Gate（2026-09-16）
+
+V4 计划在同一侧 setup/layout 中交替运行 legacy 与 V2 transfer 实现：固定八个代表性 RHS，
+每项两次零初值 solve，共 16 项，并保留原 action、P/PH、p4、BAL_H、残差和生命周期检查。
+本次启动前宿主仍有受保护 Full3D heavy 作业，所以 V4 状态为
+`BLOCKED_BY_ACTIVE_HEAVY_JOB`；C1 尚未实现，C2/C3、主响应 `0/16`、pairs `0/8`，以及
+layout/P/PH/PC/response 等价均为 `not_run`。
+
+| 登记项 | 结果/边界 |
+|---|---|
+| branch / HEAD | `codex/20260902-task41-mpi1-shortwave-hybrid-capacity` / `b5d0a39e8f85a2c63d56df28fb8414836e5aef3b` |
+| profile / scope | `task041_schur_speed_v2` / `representative_rhs` |
+| 历史配对 | `PAIRING_IDENTITY_UNPROVEN`；旧 R2/R2g 分侧结果保留 |
+| 历史双侧资源 | S1f `53331742720 B > 53221163008 B`；`process_tree_rss_limit` 受控停止 |
+| 本轮资源/耗时 | `not_measured`；不从旧分侧结果外推 |
+| 证据 | [Response V5](task041_mpi1_shortwave_hybrid_capacity/response_v5.md)、[V4 record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_common_layout_equivalence_v4.json)、[host snapshot](../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/active_heavy_protection.json) |
+| 文档静态收口 | `json.tool` 与 `git diff --check` 均 exit `0`；wall `0.063355920 s`；ledger used `11145.708812196894 s`，shared remaining `10454.291187803106 s` |
+
+本条是 compact evidence/docs 登记，不是 production qualification；ordinary/default 不改变。
+完整 Schur、outer、recovery、official RTA、13.5 nm、QEP 以及任何优化重跑均为 `not_run`。
+
 > **用途。** 本文是项目级“模型—方法—结果—资源—状态”总账。它不替代各 Task 的 `task.md`、`outcomes/summary.md`、`response_vN.md` 和正式 JSON record，而是把分散在不同任务中的重型计算统一登记，便于回答：已经算过什么、使用什么算法、得到什么物理结果、消耗多少资源、哪些结果可作为参考、哪些只是探索或负结果。
 >
 > **维护规则。** 从本文建立起，每次新增正式 PDE、QEP、Hybrid、迭代或自适应模型，都必须在对应 Task 收口时同步更新本文。历史记录没有保存的字段必须写“历史未记录”，当前未执行的字段写 `not_run`，不得猜测。

@@ -1,5 +1,28 @@
 # Test and evidence summary
 
+## V4-A0 启动前阻塞
+
+本阶段只完成安全同步和宿主只读 Gate。另一项 Full3D heavy 仍在运行，因此 V4 C1 尚未实现，
+C1–C3、MPI8 主响应 `0/16`、响应 pairs `0/8`，以及 layout/P/PH/PC/response 等价均为
+`not_run`。本阶段没有运行 pytest、MPI、PDE、service 或 ABI 数值栈探针，也没有新的 RSS/
+speedup 数据；这不改变历史 R1/R2 测试和旧负结果。最终只做了 `python -m json.tool`
+与 `git diff --check`，均 exit `0`，父侧 `CLOCK_MONOTONIC` wall=`0.063355920 s`；
+账本一次追加后 used=`11145.708812196894 s`、shared remaining=`10454.291187803106 s`，
+ledger SHA=`c1c0ef6ab626f3c53b9d252abc43037b341ec73f53cdc93b86fc8626bc338dad`，原始记录见
+[`v4a0_final_json_diff_check.json`](../../../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/v4a0_final_json_diff_check.json)。
+
+| 证据 | 入口 |
+|---|---|
+| V4 compact | [common_layout_equivalence_v4.json](records/task041_common_layout_equivalence_v4.json) |
+| 宿主保护快照 | [active_heavy_protection.json](../../../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/active_heavy_protection.json)，SHA256 `8b3b1ce344bfcb66ad313db6fd714f01fda53375cbb6509432577b39541ff98d` |
+| V4 review | [review_report_v4.md](../review_report_v4.md) |
+
+## V4 计划边界（未执行）
+
+后续获准后才执行 C1 小 fixture、C2 一次 MPI8 同布局组件运行和 C3 八对响应比较；总主响应
+为 16 次，不能把历史 R2/R2g 的 8+8 分侧结果写成 V4 已通过。`PAIRING_IDENTITY_UNPROVEN`
+与 S1f 双侧 RSS 受控停止保留为独立历史状态。
+
 ## S5a S1f 结果整理
 
 S1f 的固定八 RHS baseline 在代表性 RHS 前因 `process_tree_rss_limit` 停止，`0/8`；S5a

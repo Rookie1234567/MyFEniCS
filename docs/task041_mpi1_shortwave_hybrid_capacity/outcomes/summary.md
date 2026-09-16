@@ -1,5 +1,29 @@
 # Task041 outcomes summary
 
+## V4-A0：启动前邻 heavy Gate（2026-09-16）
+
+本轮最新状态置顶为 `BLOCKED_BY_ACTIVE_HEAVY_JOB`：宿主上另一 worktree 的 Full3D
+`original_2nm_si_p6h1p5_native.dat/full3d_iterative` 仍在运行。本阶段没有启动 Task041
+测试、MPI、PDE 或 service；V4 C1 尚未实现，C2/C3 及 16 项主响应均 `not_run`，因此没有
+本轮 RSS、提速或 response 等价数据。
+
+| V4 项目 | 状态/边界 |
+|---|---|
+| 主响应 | `0/16`；8 对 `0/8`；`not_run` |
+| layout、P、PH、PC、response 等价 | `not_run` |
+| 新运行 | `scope.new_runs=false`（仅 V4 文档/启动前阶段；历史 R2 baseline 与唯一 R2g 已运行） |
+| 历史正式配对 | `PAIRING_IDENTITY_UNPROVEN`，保留旧 R2/R2g 结果，不因本轮阻塞改写 |
+| 双侧资源历史 | S1f `53331742720 B > 53221163008 B`，独立的 `process_tree_rss_limit` 受控停止 |
+| 现场证据 | [V4-A0 host snapshot](../../../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/active_heavy_protection.json)；SHA256 `8b3b1ce344bfcb66ad313db6fd714f01fda53375cbb6509432577b39541ff98d` |
+
+完整状态与固定八项见 [V4 common-layout compact](records/task041_common_layout_equivalence_v4.json) 和
+[V4 说明](common_layout_equivalence_v4.md)。本轮不填 runroot，不把旧分侧峰值或旧 apply wall
+冒充 V4 测量；旧 H3 的 `RESOURCE_COMPARISON_INCONCLUSIVE` 继续单列。最终两项文档静态
+命令 exit `0`、父侧 `CLOCK_MONOTONIC` wall `0.063355920 s`，账本一次追加后为
+`11145.708812196894 s`，shared remaining `10454.291187803106 s`，ledger SHA256
+`c1c0ef6ab626f3c53b9d252abc43037b341ec73f53cdc93b86fc8626bc338dad`；原始记录见
+[`v4a0_final_json_diff_check.json`](../../../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/v4a0_final_json_diff_check.json)。
+
 ## S5a：S1f fixed-eight baseline 的资源受控停止（2026-09-15）
 
 本轮唯一新增 heavy 是未优化的固定 8 RHS baseline；它在第一条代表性 RHS 之前的

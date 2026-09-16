@@ -1,5 +1,25 @@
 # 项目开发进度：Task000–Task040
 
+## 2026-09-16：Task041 Review V4-A0 启动前阻塞
+
+V4 的目标是把 legacy 与 V2 owner-transfer/伴随实现放在同一侧、同一 mesh/MPC/凝聚布局和
+同一 p4 factor 中逐项比较，消除旧 R2 fresh-run 凝聚行编号无法对应的配对缺口。当前宿主
+仍有受保护的 Full3D heavy 作业，故启动前 Gate 为 `BLOCKED_BY_ACTIVE_HEAVY_JOB`；C1 尚未
+实现，C2/C3 和 16 项主响应均 `not_run`，没有本轮 RSS、提速或 response 等价结论。
+
+| 维度 | 当前事实 |
+|---|---|
+| source / branch | V4 review commit `b5d0a39e8f85a2c63d56df28fb8414836e5aef3b`；`codex/20260902-task41-mpi1-shortwave-hybrid-capacity`；clean |
+| scope | `representative_rhs`；`common_layout_equivalence` 仅为未实现的显式 opt-in |
+| 主响应 | `0/16`、pairs `0/8`、layout/P/PH/PC/response 等价 `not_run` |
+| 旧配对 | `PAIRING_IDENTITY_UNPROVEN`；不因 V4 阻塞改写 |
+| 旧双侧资源 | S1f `53331742720 B > 53221163008 B`，`process_tree_rss_limit` 受控停止 |
+| 证据 | [Response V5](task041_mpi1_shortwave_hybrid_capacity/response_v5.md)、[V4 compact](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_common_layout_equivalence_v4.json)、[A0 host snapshot](../results/task041_side_balh_component_audit/v4a0_preparation_20260916_b5d0a39e/active_heavy_protection.json) |
+| 文档静态收口 | `json.tool` 与 `git diff --check` 均 exit `0`；wall `0.063355920 s`；ledger used `11145.708812196894 s`，shared remaining `10454.291187803106 s` |
+
+本条只记录 V4-A0 的启动前事实；历史 R1/R2 实现、测试和负结果继续由各自 Task041 outcomes
+保存。未创建新 service/daemon，未改变 ordinary/production default。
+
 ## 2026-09-02：Task040 Review V9 / Response V10 阶段回顾
 
 这次工作从 side-factor 内存与接口风险开始：目标是在不改变裸物理算子、ordinary default、
