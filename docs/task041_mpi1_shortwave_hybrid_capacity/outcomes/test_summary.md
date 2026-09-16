@@ -1,8 +1,35 @@
 # Test and evidence summary
 
-## V4-A0 启动前阻塞
+## C2d：C2 raw 的离线 checker 复核
 
-本阶段只完成安全同步和宿主只读 Gate。另一项 Full3D heavy 仍在运行，因此 V4 C1 尚未实现，
+C2d 没有重新运行 service、MPI、PDE 或 pytest；它只复核已有 C2 raw，并对摘要中的
+`common_layout_equivalence.apply_count` 做了 ignored 派生修正 `8 → 16`。原始 service
+仍是 `PAIRING_SETUP_FAILURE` / `service_boundary_failure`、systemd exit3；离线派生视图
+才是 `COMMON_LAYOUT_EQUIVALENCE_PASS`。结果不是新的 service 成功或 full consumer 资格。
+
+| 项目 | 实际证据 |
+|---|---|
+| raw 完整性 | 16 audits、8 pairs（每侧4）、16 response manifests/128 shards、16 diagnostic manifests/128 shards |
+| 离线 checker | 原 summary SHA `3085fae95fbf1ca198a25f6af743b3b22e054f11e0cbfe2def528137396a74ac`；派生 SHA `8219a9777b866f5d09ebc983eeefc2b392588b8fedb0164ef8154dfe9419a93f`；唯一字段差异为 `apply_count` |
+| 重算响应门 | `max e_x=3.0316012438358734e-9`、`max e_A=8.229180550916894e-9`；bottom residual max `0.009208186034505522/0.009208186034505515`，top `0.009453705395968726/0.009453705395971615`（legacy/optimized） |
+| C2 raw身份 | unit `task041-c1c-common-layout-equivalence-5b57375d.service`，Invocation `a8eac10299194a9a98d0ed18adfdac00`，CPU1–8、数学线程配置1；runroot与完整路径见 compact/index |
+| C2 service 收尾/资源 | public run_summary nested/total wall `6121.790274919942/6124.439315116033 s`；service phase `6125.609746061964 s`、parent-from-unit `6125.770416472 s`、finalizer elapsed `6126.252856925 s`（来源层级分开、不相加）；全树 RSS 峰 `51501744128 B` / cap `53221163008 B`，job/global swap delta `0`，cgroup 清空、post-hash/ledger 完成；原 service 仍 exit3/service_boundary_failure |
+| C2 C3 / P / PH / PC | 原 `consumer_summary.setup.admission_audit.sides.*.balanced_pc` 的 P/PH global relative 均 `0`；PC relative bottom `6.149584203535856e-13`、top `2.2220413770924415e-13`（门 `1e-8`），PC call count `266/298`；C1b/R2e tiny-FE 也有 P/PH=`0` 的独立证据 |
+| C1b serial/MPI2 | test346 v2 alternation serial `1 passed`、MPI2 empty-owner/alternation 每 rank `3 passed`；[serial evidence JSON](../../../results/task041_side_balh_component_audit/c1b_c2_validation/serial_test346_v2_alternation.json) SHA `6317ee2a0f9cfc6e061c1a341d447338d6b3373adb90bb1737b7136c15ee8f32`；[MPI2 evidence JSON](../../../results/task041_side_balh_component_audit/c1b_c2_validation/mpi2_test346_v2_empty_owner.json) SHA `13d0242fc7f32514449ebcbc2e9b6e6e4fda8aa8b38e5d9bb72a2fe73cd242b7` |
+| C2c 轻量复核 | `27 passed, 21 deselected`；[selector log](../../../results/task041_side_balh_component_audit/c2c_validation_20260916_5b57375d/test351_selector.log) SHA `1db9a11707c900a4b2c7a7c1da80b5eb684c88d722f22cb5912f6534cf041a4d`；对应离线复核 wall `2.714138631 s`，未重跑旧 FE/MPI |
+| 通知/采样边界 | 完成通知未通过既有 RPC 唤醒主控是通知事故；sampler 连续，非资源采样断档 |
+| 相关源码 | C2c checker source `5b57375d50c777abb5d0096db843095683f49b5f`；计数修复已提交 `caeb678225d63f16bd95272ba60b08b16caf36af` |
+| 账本 | C2c ABI/static/selector/offline 父侧 wall 合计 `7.820470533 s`，本次文档 JSON/diff 检查另计 `0.066910437 s`；唯一 ledger used `17762.27669256989 s`，shared remaining `3837.723307430111 s`，SHA `e5803851257eabd643be7048e81fae2c8d5e9957c4309c7f433b75ddd3805e27` |
+
+命令、父侧 `CLOCK_MONOTONIC`、返回码、原始日志和 checker 结果见
+[C2c offline index](../../../results/task041_side_balh_component_audit/c2c_validation_20260916_5b57375d/c2c_offline_review_index.json)
+；正确路径为 `results/.../c2c_validation_20260916_5b57375d/c2c_offline_review_index.json`。
+这项离线结果不改变旧 `PAIRING_IDENTITY_UNPROVEN`、S1f 双侧 RSS 受控停止，也不启动
+13.5 nm、full 5 nm、full Schur/outer/recovery/RTA、QEP 或额外/重复 optimized run。
+
+## V4-A0 历史启动前阻塞（保留）
+
+以下仅记录 A0 当时的安全同步和宿主只读 Gate；另一项 Full3D heavy 仍在运行，因此当时 V4 C1 尚未实现，
 C1–C3、MPI8 主响应 `0/16`、响应 pairs `0/8`，以及 layout/P/PH/PC/response 等价均为
 `not_run`。本阶段没有运行 pytest、MPI、PDE、service 或 ABI 数值栈探针，也没有新的 RSS/
 speedup 数据；这不改变历史 R1/R2 测试和旧负结果。最终只做了 `python -m json.tool`

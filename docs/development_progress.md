@@ -1,6 +1,29 @@
 # 项目开发进度：Task000–Task040
 
-## 2026-09-16：Task041 Review V4-A0 启动前阻塞
+## 2026-09-16：Task041 C2d 共同布局离线复核收口
+
+Task041 的 C2 已完成一次共同布局组件运行；C2d 没有重启或重算，而是修正既有摘要的
+`common_layout_equivalence.apply_count`（`8 → 16`）并用原始 artifacts 复核。原 service
+终态保持 `PAIRING_SETUP_FAILURE / service_boundary_failure`、systemd exit3；只有离线
+派生视图判为 `COMMON_LAYOUT_EQUIVALENCE_PASS`。这表示同一次 side layout 下的 8 对/16
+响应检查通过，不是完整 Schur/outer/RTA、跨 fresh-run row identity 或双侧 full 资格。
+
+| 登记项 | 结果与边界 |
+|---|---|
+| 源码 checkpoint | `caeb678225d63f16bd95272ba60b08b16caf36af`；C2c raw/checker 绑定源 `5b57375d50c777abb5d0096db843095683f49b5f` |
+| C2 身份 | `task041-c1c-common-layout-equivalence-5b57375d.service`，Invocation `a8eac10299194a9a98d0ed18adfdac00`，MPI8、CPU1–8、数学线程配置1 |
+| 组件响应 | `16/16` 主响应、`8/8` pairs；`max e_x=3.0316012438358734e-9`、`max e_A=8.229180550916894e-9` |
+| 组件 wall | `1981.6339287383016 → 1454.4546840919647 s`，减少 `26.6033%`；仅同进程诊断，不是完整冷启动提速 |
+| 资源 | 全树 RSS `51501744128 B`，硬 cap `53221163008 B`；不移除旧 S1f 双侧超 cap 证据 |
+| 账本 | used `17762.27669256989 s`，shared remaining `3837.723307430111 s`，SHA `e5803851257eabd643be7048e81fae2c8d5e9957c4309c7f433b75ddd3805e27`；C2d 文档 JSON/diff 检查另计 `0.066910437 s` |
+| 证据 | [Response V5](task041_mpi1_shortwave_hybrid_capacity/response_v5.md)、[C2c index](../results/task041_side_balh_component_audit/c2c_validation_20260916_5b57375d/c2c_offline_review_index.json)、[V4 compact](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_common_layout_equivalence_v4.json) |
+
+旧 R2/R2g 的跨 fresh-run `PAIRING_IDENTITY_UNPROVEN`、S1f 的
+`53331742720 B > 53221163008 B` 资源受控停止、旧 H3 事故和原始 C2 failure 均保留。
+13.5 nm、full 5 nm、full Schur/outer/recovery/RTA、QEP 与额外 optimized run 仍
+`not_run`；后续 2 nm 方向尚未启动。
+
+## 2026-09-16：Task041 Review V4-A0 历史启动前阻塞（保留）
 
 V4 的目标是把 legacy 与 V2 owner-transfer/伴随实现放在同一侧、同一 mesh/MPC/凝聚布局和
 同一 p4 factor 中逐项比较，消除旧 R2 fresh-run 凝聚行编号无法对应的配对缺口。当前宿主

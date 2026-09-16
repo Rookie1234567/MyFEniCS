@@ -1,8 +1,40 @@
 # Task041 outcomes summary
 
-## V4-A0：启动前邻 heavy Gate（2026-09-16）
+## C2d：共同布局离线复核收口（2026-09-16）
 
-本轮最新状态置顶为 `BLOCKED_BY_ACTIVE_HEAVY_JOB`：宿主上另一 worktree 的 Full3D
+本节是当前最新状态。C2c 没有启动新计算，而是对已有 C2 raw 运行做了最小摘要纠正：
+raw 已有两侧各 4 对、每场 8 项，共 8 对/16 主响应；合并摘要把 `apply_count` 写成
+`8`，派生视图仅改为 raw 重算的 `16`。因此离线 checker 可判定同布局响应等价通过，但
+原 service 的 `PAIRING_SETUP_FAILURE` / `service_boundary_failure`、systemd exit3、旧
+summary、run/finalizer/journal 和全部 raw 均保留，不能把原服务改写成成功。
+
+| 维度 | C2d 实际结论 |
+|---|---|
+| scope / mode | `representative_rhs` / `common_layout_equivalence`；仅既有 C2 raw 的离线派生复核 |
+| 主响应 / pairs | `16/16`、`8/8`；每侧 4 对；8 个固定 RHS，两个 variant 均 zero-start |
+| 数值 | `max e_x=3.0316012438358734e-9`、`max e_A=8.229180550916894e-9`；原 reason/residual 逐项通过，inner residual 仍≤`1e-2` |
+| layout/lifecycle | 同一 side 的 mesh/MPC/凝聚布局、A、p4 factor、P/PH/PC 和 bottom release→top 顺序由 raw checker 复核 |
+| 组件耗时 | `1981.6339287383016 → 1454.4546840919647 s`，减少 `26.6033%`；仅同进程诊断，不是完整 cold/service 提速 |
+| 资源 | C2 全树 RSS 峰 `51501744128 B`，硬 cap `53221163008 B`；含 service 采样口径，但不构成双侧 full 资格 |
+| 正式边界 | `COMMON_LAYOUT_EQUIVALENCE_PASS_OFFLINE_DERIVED`；跨 fresh-run physical-row mapping 仍缺，旧 `PAIRING_IDENTITY_UNPROVEN` 不变 |
+
+原始/派生 summary、16 audits、8 pairs、128+128 shards、诊断包及 checker 结果见
+[C2c offline index](../../../results/task041_side_balh_component_audit/c2c_validation_20260916_5b57375d/c2c_offline_review_index.json)
+（SHA `db0f4a1d247f6a75002981db927241d162375a82b425f9c0fe9acce2e3940aca`）。当前源码
+修复已提交为 `caeb678225d63f16bd95272ba60b08b16caf36af`；C2c checker 绑定的运行源码为
+`5b57375d50c777abb5d0096db843095683f49b5f`。唯一 V2 ledger 当前
+`17762.27669256989 s`，shared remaining `3837.723307430111 s`，SHA
+`e5803851257eabd643be7048e81fae2c8d5e9957c4309c7f433b75ddd3805e27`；C2c 追加
+`7.820470533 s`，本次文档 JSON/diff 检查另追加 `0.066910437 s`，没有重复收费。
+
+旧 S1f 双侧 `53331742720 B > 53221163008 B` 的 `process_tree_rss_limit` 受控停止、旧
+H3 `RESOURCE_COMPARISON_INCONCLUSIVE`、旧跨运行编号缺口和所有事故证据均单独保留。
+这次不启动新的 service/MPI/PDE；full Schur/outer/recovery/official RTA、13.5 nm、
+QEP 和额外 optimized run 仍为 `not_run`。
+
+## V4-A0 历史：启动前邻 heavy Gate（2026-09-16，保留）
+
+以下是 A0 当时的历史快照，不覆盖上方已完成 C2 的最新状态：宿主上另一 worktree 的 Full3D
 `original_2nm_si_p6h1p5_native.dat/full3d_iterative` 仍在运行。本阶段没有启动 Task041
 测试、MPI、PDE 或 service；V4 C1 尚未实现，C2/C3 及 16 项主响应均 `not_run`，因此没有
 本轮 RSS、提速或 response 等价数据。

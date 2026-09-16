@@ -1,6 +1,23 @@
 # 开发阶段研究对象与计算结果总账
 
-## Task041 Review V4-A0：共同布局响应等价的启动前 Gate（2026-09-16）
+## 2026-09-16：Task041 C2d 共同布局离线复核
+
+Task041 C2 已有一场共同布局组件运行，C2d 仅将 raw 已确认的 `16` 次主响应回填到
+摘要并运行既有 checker；没有新增 PDE/MPI/service。原 service 的
+`PAIRING_SETUP_FAILURE / service_boundary_failure`、exit3 和 raw 保持不变，离线派生
+视图为 `COMMON_LAYOUT_EQUIVALENCE_PASS`。
+
+| 模型/方法 | 数值与布局 | 资源/时间 | 资格边界与证据 |
+|---|---|---|---|
+| Task041 C2 common-layout `representative_rhs` | 8 pairs/16 responses；同 side mesh/MPC/condensed layout、A、p4 factor、P/PH/PC；`max e_x=3.0316012438358734e-9`、`max e_A=8.229180550916894e-9` | full-tree RSS `51501744128 B`，cap `53221163008 B`；component diagnostic wall `1981.6339287383016→1454.4546840919647 s`，减少 `26.6033%` | `COMMON_LAYOUT_EQUIVALENCE_PASS_OFFLINE_DERIVED`；不是 full consumer/Schur/RTA 或跨 fresh-run row qualification；[Response V5](task041_mpi1_shortwave_hybrid_capacity/response_v5.md)、[compact](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_common_layout_equivalence_v4.json)、[C2c index](../results/task041_side_balh_component_audit/c2c_validation_20260916_5b57375d/c2c_offline_review_index.json) |
+
+源代码 checkpoint 为 `caeb678225d63f16bd95272ba60b08b16caf36af`；C2c 复核绑定运行源
+`5b57375d50c777abb5d0096db843095683f49b5f`。旧 R2/R2g 跨运行
+`PAIRING_IDENTITY_UNPROVEN`、S1f 双侧 RSS 受控停止和原 C2 service failure 不被这项
+离线结果改写。13.5 nm、full 5 nm、full Schur/outer/recovery/RTA、QEP、额外 optimized
+run 及后续 2 nm 均未在本登记中启动。
+
+## Task041 Review V4-A0 历史：共同布局响应等价的启动前 Gate（2026-09-16，保留）
 
 V4 计划在同一侧 setup/layout 中交替运行 legacy 与 V2 transfer 实现：固定八个代表性 RHS，
 每项两次零初值 solve，共 16 项，并保留原 action、P/PH、p4、BAL_H、残差和生命周期检查。
