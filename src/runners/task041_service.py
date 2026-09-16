@@ -25,7 +25,10 @@ from benchmarks.task041_balh_workflow import (
     TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
     task041_schur_speed_v2_contract,
 )
-from src.io.input_validation import task041_balh_phase_limits_for_model
+from src.io.input_validation import (
+    task041_balh_phase_limits_for_model,
+    task041_balh_service_contract,
+)
 from src.runners import task041_supervisor as supervisor
 
 PROFILE = "task041_schur_speed_v2"
@@ -56,6 +59,40 @@ SYSTEMD_FIELDS = (
 
 class Task041ServiceError(RuntimeError):
     """A missing or contradictory fixed service boundary record."""
+
+
+def _service_contract(
+    config: Mapping[str, Any],
+    *,
+    side_setup_schedule: str | None,
+    comparison_mode: str | None,
+) -> dict[str, Any]:
+    """Resolve the registered case contract without widening the V2 profile."""
+
+    model_id = str(config["model_id"])
+    case_contract = task041_balh_service_contract(model_id)
+    if case_contract is not None:
+        if side_setup_schedule is not None or comparison_mode is not None:
+            raise Task041ServiceError(
+                "registered 2 nm case does not accept representative comparison options"
+            )
+        configured_scope = config.get("scope")
+        if configured_scope not in {None, case_contract["scope"]}:
+            raise Task041ServiceError(
+                "registered 2 nm service scope does not match its case contract"
+            )
+        ledger_name = Path(config["ledger_path"]).name
+        if ledger_name != case_contract["ledger"]["filename"]:
+            raise Task041ServiceError(
+                "registered 2 nm case must use its independent compute ledger"
+            )
+        return dict(case_contract)
+    return task041_schur_speed_v2_contract(
+        model_id,
+        scope=config.get("scope"),
+        side_setup_schedule=side_setup_schedule,
+        comparison_mode=comparison_mode,
+    )
 
 
 def _read_job_config(config_path: str | Path) -> dict[str, Any]:
@@ -234,6 +271,19 @@ def _parent_unit_identity(unit: str) -> dict[str, Any]:
 def _budget_and_charged(
     contract: Mapping[str, Any], ledger: Mapping[str, Any], elapsed: float
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    if contract.get("compute_wall_unlimited") is True:
+        used = float(ledger["used_compute_wall_seconds"])
+        snapshot = {
+            "phase_group": contract["active_consumer_phase"],
+            "phase_used_before_seconds": used,
+            "batch_used_before_seconds": used,
+            "phase_limit_seconds": None,
+            "batch_limit_seconds": None,
+            "available_before_unit_seconds": None,
+            "basis": "registered case ledger; no elapsed wall stop",
+            "time_stop_enforced": False,
+        }
+        return snapshot, dict(ledger)
     phase_group = str(contract["active_consumer_phase"])
     phase_used = supervisor._task041_v2_group_used(ledger, phase_group)
     batch_used = float(ledger["batch_used_compute_wall_seconds"])
@@ -279,15 +329,17 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
     comparison_mode = _comparison_mode_binding(
         list(config["public_command"]), config.get("comparison_mode")
     )
-    contract = task041_schur_speed_v2_contract(
-        str(config["model_id"]),
-        scope=config.get("scope"),
+    contract = _service_contract(
+        config,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
     )
     phase_limits = dict(
         task041_balh_phase_limits_for_model(str(config["model_id"]), "consumer")
     )
+    if contract.get("compute_wall_unlimited") is True:
+        phase_limits["timeout_seconds"] = None
+        phase_limits["time_stop_enforced"] = False
     phase_limits["min_cgroup_ancestor_headroom_bytes"] = phase_limits[
         "min_memavailable_bytes"
     ]
@@ -317,7 +369,7 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "ledger_path": str(ledger_path),
         "supervision_root": str(root),
         "global_swap_baseline": dict(config["global_swap_baseline"]),
-        "profile_id": PROFILE,
+        "profile_id": contract["profile_id"],
         "scope": contract["scope"],
         "side_setup_schedule": contract["side_setup_schedule"],
         "comparison_mode": contract["comparison_mode"],
@@ -326,7 +378,15 @@ def run_service_parent(config_path: str | Path) -> dict[str, Any]:
         "service_identity": dict(identity),
         "budget_snapshot_before": dict(snapshot),
         "startup_elapsed_seconds": unit_elapsed,
+        "time_stop_policy": dict(contract["time_stop"]),
     }
+    if contract.get("compute_wall_unlimited") is True:
+        launch.update(
+            {
+                "contract_kind": contract["contract_kind"],
+                "case_id": contract["case_id"],
+            }
+        )
     public = supervisor.run_task041_supervised_public_command(
         list(config["public_command"]),
         root,
@@ -460,9 +520,22 @@ def _record_unit_wall(
             current_seconds=max(0.0, float(seconds)),
             run_directory=root,
             phase_seconds={"service_unit_wall_seconds": max(0.0, float(seconds))},
-            limit_seconds=float(contract["batch_budget_seconds"]),
-            profile_id=PROFILE,
-            phase_group=str(contract["active_consumer_phase"]),
+            limit_seconds=(
+                None
+                if contract.get("compute_wall_unlimited") is True
+                else float(contract["batch_budget_seconds"])
+            ),
+            profile_id=(
+                None
+                if contract.get("compute_wall_unlimited") is True
+                else PROFILE
+            ),
+            phase_group=(
+                None
+                if contract.get("compute_wall_unlimited") is True
+                else str(contract["active_consumer_phase"])
+            ),
+            case_id=contract.get("case_id"),
         )
         return result, None
     except (
@@ -481,9 +554,10 @@ def _run_post_hash(
     contract: Mapping[str, Any],
     phase_limits: Mapping[str, Any],
     launch: Mapping[str, Any],
-    remaining: float,
+    remaining: float | None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    if remaining <= 0.0:
+    unlimited = contract.get("compute_wall_unlimited") is True
+    if not unlimited and (remaining is None or remaining <= 0.0):
         return (
             {
                 "status": "not_started",
@@ -527,18 +601,18 @@ def _run_post_hash(
             hard_memory_bytes=int(phase_limits["hard_memory_bytes"]),
             process_tree_rss_warning_bytes=int(contract["warning_memory_bytes"]),
             process_tree_rss_cap_bytes=int(contract["memory_cap_bytes"]),
-            timeout_seconds=max(1, int(remaining)),
-            phase_elapsed_timeout=True,
+            timeout_seconds=(None if unlimited else max(1, int(remaining))),
+            phase_elapsed_timeout=not unlimited,
             sample_root_pid=os.getpid(),
             min_memavailable_bytes=int(phase_limits["min_memavailable_bytes"]),
             min_cgroup_ancestor_headroom_bytes=int(
                 phase_limits["min_cgroup_ancestor_headroom_bytes"]
             ),
             cumulative_compute_used_seconds=0.0,
-            cumulative_compute_limit_seconds=remaining,
+            cumulative_compute_limit_seconds=None if unlimited else remaining,
             global_swap_baseline=dict(launch["global_swap_baseline"]),
             partial_phase_results=partial,
-            enforce_time_stops=True,
+            enforce_time_stops=not unlimited,
         )
         return result, None
     except supervisor.Task041SupervisorError as exc:
@@ -565,9 +639,8 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     comparison_mode = _comparison_mode_binding(
         list(config["public_command"]), config.get("comparison_mode")
     )
-    contract = task041_schur_speed_v2_contract(
-        str(config["model_id"]),
-        scope=config.get("scope"),
+    contract = _service_contract(
+        config,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
     )
@@ -642,13 +715,20 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "source_sha": config["source_sha"],
             "ledger_path": str(config["ledger_path"]),
             "supervision_root": str(root),
-            "profile_id": PROFILE,
+            "profile_id": contract["profile_id"],
             "scope": contract["scope"],
             "side_setup_schedule": contract["side_setup_schedule"],
             "comparison_mode": contract["comparison_mode"],
             "representative_rhs_probe": probe_binding,
             "ledger_owner": LEDGER_OWNER,
         }
+        if contract.get("compute_wall_unlimited") is True:
+            expected.update(
+                {
+                    "contract_kind": contract["contract_kind"],
+                    "case_id": contract["case_id"],
+                }
+            )
         if any(launch.get(name) != value for name, value in expected.items()):
             raise Task041ServiceError("launch manifest does not match frozen job config")
         if launch.get("global_swap_baseline") != config["global_swap_baseline"]:
@@ -676,6 +756,9 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     phase_limits = dict(
         task041_balh_phase_limits_for_model(str(config["model_id"]), "consumer")
     )
+    if contract.get("compute_wall_unlimited") is True:
+        phase_limits["timeout_seconds"] = None
+        phase_limits["time_stop_enforced"] = False
     phase_limits["min_cgroup_ancestor_headroom_bytes"] = phase_limits[
         "min_memavailable_bytes"
     ]
@@ -683,13 +766,17 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
     public, public_error = _read_closed_json(root / "summary.json")
     invocation_matches = terminal["INVOCATION_ID"] == launch.get("invocation_id")
     unit_elapsed = max(0.0, (time.monotonic_ns() - start_ns) / 1e9)
-    available = min(
-        float(budget["phase_limit_seconds"])
-        - float(budget["phase_used_before_seconds"]),
-        float(budget["batch_limit_seconds"])
-        - float(budget["batch_used_before_seconds"]),
-    )
-    post_remaining = max(0.0, available - unit_elapsed)
+    if contract.get("compute_wall_unlimited") is True:
+        available = None
+        post_remaining = None
+    else:
+        available = min(
+            float(budget["phase_limit_seconds"])
+            - float(budget["phase_used_before_seconds"]),
+            float(budget["batch_limit_seconds"])
+            - float(budget["batch_used_before_seconds"]),
+        )
+        post_remaining = max(0.0, available - unit_elapsed)
     post_result: dict[str, Any] = {"status": "not_started", "returncode": None}
     post_error: dict[str, Any] | None = None
     ledger_result: dict[str, Any] | None = None
@@ -874,7 +961,11 @@ def run_service_finalize(config_path: str | Path) -> dict[str, Any]:
             "unit_start_monotonic_ns": start_ns,
             "unit_elapsed_seconds": full_wall,
             "post_remaining_seconds": post_remaining,
-            "basis": "min(phase_limit-phase_used,batch_limit-batch_used)-unit_elapsed",
+            "basis": (
+                "registered case ledger has no elapsed wall limit"
+                if contract.get("compute_wall_unlimited") is True
+                else "min(phase_limit-phase_used,batch_limit-batch_used)-unit_elapsed"
+            ),
         },
         "post_io": {
             "root": str(finalizer_root),

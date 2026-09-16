@@ -641,12 +641,20 @@ def _copy_replicated_complex_vec(
     return replicated
 
 
+def _finite_owned_vec(vector: PETSc.Vec) -> bool:
+    values = np.asarray(vector.getArray(readonly=True))
+    return bool(np.all(np.isfinite(values)))
+
+
 def _recover_frozen_m10_side(
     side: str,
     setup: FrozenM10Setup,
     linear: FrozenM10LinearSolve,
+    *,
+    allow_unqualified_diagnostic: bool = False,
 ) -> tuple[np.ndarray, Any, dict[str, Any]]:
     system = setup.bottom if side == "bottom" else setup.top
+    comm = system.local_mesh.mesh.comm
     active_solution = (
         linear.bottom_solution if side == "bottom" else linear.top_solution
     )
@@ -715,7 +723,38 @@ def _recover_frozen_m10_side(
             and mode_identity["beta_finite"]
         ),
     }
-    if not q_report["pass"]:
+    q_structure_pass = bool(
+        q_report["shape"] == [expected_count]
+        and q_report["auxiliary_finite"]
+        and np.isfinite(auxiliary_relative)
+        and auxiliary_relative >= 0.0
+        and mode_identity["count"] == expected_count
+        and mode_identity["unique"]
+        and mode_identity["polarization_sp"]
+        and mode_identity["beta_finite"]
+    )
+    q_diagnostic_only = bool(
+        allow_unqualified_diagnostic
+        and not q_report["pass"]
+        and q_structure_pass
+    )
+    if allow_unqualified_diagnostic:
+        q_continue = bool(
+            comm.allreduce(
+                bool(q_report["pass"] or q_structure_pass),
+                op=MPI.LAND,
+            )
+        )
+    else:
+        q_continue = bool(q_report["pass"])
+    q_report.update(
+        {
+            "structure_pass": q_structure_pass,
+            "diagnostic_only": q_diagnostic_only,
+            "collective_continue": q_continue,
+        }
+    )
+    if not q_continue:
         raise RuntimeError(f"Frozen M10 {side} external-q gate failed: {q_report}")
 
     recovered = recover_hybrid_static_local_field(
@@ -805,7 +844,38 @@ def _recover_frozen_m10_side(
         "external_q": q_report,
         "full_fe": full_report,
     }
-    if not full_report["pass"]:
+    full_structure_pass = bool(
+        trace_contract and recovery_contract and streaming_contract
+    )
+    full_finite = bool(
+        residual_finite_nonnegative
+        and np.isfinite(interior_relative)
+        and interior_relative >= 0.0
+    )
+    full_structure_finite = bool(full_structure_pass and full_finite)
+    full_diagnostic_only = bool(
+        allow_unqualified_diagnostic
+        and not full_report["pass"]
+        and full_structure_finite
+    )
+    if allow_unqualified_diagnostic:
+        full_continue = bool(
+            comm.allreduce(
+                bool(full_report["pass"] or full_structure_finite),
+                op=MPI.LAND,
+            )
+        )
+    else:
+        full_continue = bool(full_report["pass"])
+    full_report.update(
+        {
+            "structure_pass": full_structure_pass,
+            "structure_finite_pass": full_structure_finite,
+            "diagnostic_only": full_diagnostic_only,
+            "collective_continue": full_continue,
+        }
+    )
+    if not full_continue:
         raise RuntimeError(f"Frozen M10 {side} full-FE gate failed: {side_report}")
     return auxiliary, recovered, side_report
 
@@ -815,18 +885,38 @@ def recover_frozen_m10(
     linear: FrozenM10LinearSolve,
     *,
     stage_callback: Callable[[str], None] | None = None,
+    allow_unqualified_diagnostic: bool = False,
 ) -> FrozenM10Recovery:
     """Recover bottom then top fields while retaining only later-stage inputs."""
 
-    if (
-        not linear.linear_pass
-        or linear.release.get("pass") is not True
-        or linear.bottom_solution is None
-        or linear.top_solution is None
-        or linear.modal_solution is None
+    comm = setup.bottom.local_mesh.mesh.comm
+    solution_vectors_complete = bool(
+        linear.bottom_solution is not None
+        and linear.top_solution is not None
+        and isinstance(linear.modal_solution, np.ndarray)
+        and linear.modal_solution.ndim == 1
+    )
+    if allow_unqualified_diagnostic:
+        local_recovery_ready = bool(
+            linear.release.get("pass") is True and solution_vectors_complete
+        )
+        if local_recovery_ready:
+            local_recovery_ready = bool(
+                _finite_owned_vec(linear.bottom_solution)
+                and _finite_owned_vec(linear.top_solution)
+                and np.all(np.isfinite(linear.modal_solution))
+            )
+        recovery_ready = bool(comm.allreduce(local_recovery_ready, op=MPI.LAND))
+        if not recovery_ready:
+            raise RuntimeError(
+                "Frozen M10 diagnostic recovery requires complete finite solution fields."
+            )
+    elif (
+        linear.release.get("pass") is not True
+        or not solution_vectors_complete
+        or not linear.linear_pass
     ):
         raise RuntimeError("Frozen M10 recovery requires a passed linear stage.")
-    comm = setup.bottom.local_mesh.mesh.comm
     started = time.perf_counter()
     pre_cleanup = collective_heap_cleanup(comm)
     if not pre_cleanup["collective_call_completed"]:
@@ -834,7 +924,10 @@ def recover_frozen_m10(
     if stage_callback is not None:
         stage_callback("bottom_recovery")
     bottom_q, bottom_recovered, bottom_report = _recover_frozen_m10_side(
-        "bottom", setup, linear
+        "bottom",
+        setup,
+        linear,
+        allow_unqualified_diagnostic=allow_unqualified_diagnostic,
     )
     bottom_cleanup = collective_heap_cleanup(comm)
     if not bottom_cleanup["collective_call_completed"]:
@@ -843,23 +936,34 @@ def recover_frozen_m10(
         stage_callback("inter_side_cleanup")
     if stage_callback is not None:
         stage_callback("top_recovery")
-    top_q, top_recovered, top_report = _recover_frozen_m10_side("top", setup, linear)
+    top_q, top_recovered, top_report = _recover_frozen_m10_side(
+        "top",
+        setup,
+        linear,
+        allow_unqualified_diagnostic=allow_unqualified_diagnostic,
+    )
     top_cleanup = collective_heap_cleanup(comm)
     if not top_cleanup["collective_call_completed"]:
         raise RuntimeError("Frozen M10 top recovery cleanup did not complete.")
     if stage_callback is not None:
         stage_callback("recovery_cleanup")
+    recovery_pass = bool(
+        bottom_report["external_q"]["pass"]
+        and top_report["external_q"]["pass"]
+        and bottom_report["full_fe"]["pass"]
+        and top_report["full_fe"]["pass"]
+    )
     reports = {
         "bottom": bottom_report,
         "top": top_report,
-        "recovery_pass": bool(
-            bottom_report["external_q"]["pass"]
-            and top_report["external_q"]["pass"]
-            and bottom_report["full_fe"]["pass"]
-            and top_report["full_fe"]["pass"]
+        "recovery_pass": recovery_pass,
+        "linear_pass": bool(linear.linear_pass),
+        "diagnostic_only": bool(
+            allow_unqualified_diagnostic
+            and (not linear.linear_pass or not recovery_pass)
         ),
     }
-    if not reports["recovery_pass"]:
+    if not reports["recovery_pass"] and not allow_unqualified_diagnostic:
         raise RuntimeError(f"Frozen M10 recovery gate failed: {reports}")
     return FrozenM10Recovery(
         linear=linear,
@@ -890,7 +994,7 @@ def recover_frozen_m10(
             ),
             "recovery_total_seconds": _max_elapsed(comm, started),
         },
-        recovery_pass=True,
+        recovery_pass=bool(reports["recovery_pass"]),
     )
 
 
@@ -1020,17 +1124,34 @@ def run_frozen_m10_physics(
     comm: MPI.Intracomm,
     *,
     stage_callback: Callable[[str], None] | None = None,
+    allow_unqualified_diagnostic: bool = False,
 ) -> FrozenM10Physics:
     """Run own physics and audited canonical export without final qualification."""
 
-    if (
-        not recovery.recovery_pass
-        or recovery.bottom_q is None
-        or recovery.top_q is None
-        or recovery.bottom_recovered is None
-        or recovery.top_recovered is None
-    ):
+    recovery_state_complete = bool(
+        recovery.bottom_q is not None
+        and recovery.top_q is not None
+        and recovery.bottom_recovered is not None
+        and recovery.top_recovered is not None
+        and isinstance(recovery.modal_solution, np.ndarray)
+        and recovery.modal_solution.ndim == 1
+    )
+    if allow_unqualified_diagnostic:
+        local_physics_ready = recovery_state_complete
+        if local_physics_ready:
+            local_physics_ready = bool(
+                np.all(np.isfinite(recovery.bottom_q))
+                and np.all(np.isfinite(recovery.top_q))
+                and np.all(np.isfinite(recovery.modal_solution))
+            )
+        physics_ready = bool(comm.allreduce(local_physics_ready, op=MPI.LAND))
+        recovery_state_complete = physics_ready
+    elif not recovery.recovery_pass or not recovery_state_complete:
         raise RuntimeError("Frozen M10 physics requires passed two-side recovery.")
+    if not recovery_state_complete:
+        raise RuntimeError(
+            "Frozen M10 diagnostic physics requires complete finite recovery state."
+        )
 
     profile = setup.profile
     solution = SimpleNamespace(
@@ -1163,7 +1284,9 @@ def run_frozen_m10_physics(
     cleanup: dict[str, Any] = {}
     interface_e_projection = dict(validation["interface_e_projection"])
     canonical_pass = False
-    if own_physics_pass:
+    if own_physics_pass or (
+        allow_unqualified_diagnostic and selected_finite
+    ):
         arrays = {
             "x_nm": x_nm,
             "y_nm": y_nm,

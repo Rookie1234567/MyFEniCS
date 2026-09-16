@@ -16,8 +16,10 @@ from pathlib import Path
 from typing import Any
 
 from src.io.input_validation import (
+    TASK041_BALH_2NM_MODEL_ID,
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MPI_SIZE,
+    TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
     task041_balh_case,
     task041_balh_profile_errors,
 )
@@ -34,6 +36,7 @@ TASK041_BALH_CONSUMER_PHASE = "consumer"
 TASK041_BALH_5NM_CANDIDATE_MODEL_ID = (
     "task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8"
 )
+TASK041_BALH_2NM_CANDIDATE_MODEL_ID = TASK041_BALH_2NM_MODEL_ID
 TASK041_BALH_TIME_STOP_OVERRIDE_REASON = (
     "user_authorized_single_candidate_time_override"
 )
@@ -287,6 +290,30 @@ def task041_balh_route(model_id: str) -> str:
     return str(_require_case(model_id)["route"])
 
 
+def task041_balh_transfer_optimization_profile(
+    model_id: str,
+) -> str | None:
+    """Return the case-owned low-level transfer switch, if one is registered.
+
+    This value is consumed only by the side inverse/owner-transfer builder.
+    It is deliberately separate from the public ``task041_schur_speed_v2``
+    budget contract and therefore does not activate that contract by itself.
+    """
+
+    profile = _require_case(model_id).get("transfer_optimization_profile")
+    if profile not in {None, TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE}:
+        raise ValueError(
+            f"unsupported Task041 transfer optimization profile: {profile}"
+        )
+    return profile
+
+
+def task041_balh_cpu_list(model_id: str) -> str:
+    """Return the explicit CPU list for the registered BAL_H case."""
+
+    return str(_require_case(model_id).get("cpu_set", "0-7"))
+
+
 def _physical_contract(normalized: Mapping[str, Any]) -> dict[str, Any]:
     """Project only physical/discrete facts shared by exact and BAL_H lanes."""
 
@@ -453,6 +480,7 @@ def _mpi8_command(
     task041_rhs_probe_manifest: str | Path | None = None,
     side_setup_schedule: str | None = None,
     comparison_mode: str | None = None,
+    cpu_list: str = "0-7",
 ) -> list[str]:
     command = [
         "mpiexec",
@@ -464,7 +492,7 @@ def _mpi8_command(
         (
             "1-8"
             if comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
-            else "0-7"
+            else cpu_list
         ),
         "--report-bindings",
         str(python_executable),
@@ -562,6 +590,7 @@ def build_task041_balh_mode_prep_command(
         source_sha,
         None,
         module="benchmarks.task041_exact_side_workflow",
+        cpu_list=task041_balh_cpu_list(str(normalized["model_id"])),
     )
 
 
@@ -593,6 +622,7 @@ def build_task041_balh_exact_consumer_command(
         module="benchmarks.task041_exact_side_workflow",
         packet_origin=packet_origin,
         legacy_native_binding=legacy_native_binding,
+        cpu_list=task041_balh_cpu_list(str(normalized["model_id"])),
     )
 
 
@@ -671,6 +701,7 @@ def build_task041_balh_candidate_consumer_command(
         task041_rhs_probe_manifest=task041_rhs_probe_manifest,
         side_setup_schedule=side_setup_schedule,
         comparison_mode=comparison_mode,
+        cpu_list=task041_balh_cpu_list(str(normalized["model_id"])),
     )
 
 
@@ -1108,6 +1139,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
 
 
 __all__ = [
+    "TASK041_BALH_2NM_CANDIDATE_MODEL_ID",
     "TASK041_BALH_5NM_CANDIDATE_MODEL_ID",
     "TASK041_BALH_CANDIDATE_CONSUMER_PROFILE",
     "TASK041_BALH_CANDIDATE_CONSUMER_SCHEMA",
@@ -1132,10 +1164,12 @@ __all__ = [
     "task041_balh_candidate_consumer_iterative_config",
     "task041_balh_candidate_consumer_profile",
     "task041_balh_consumer_identity_binding",
+    "task041_balh_cpu_list",
     "task041_balh_exact_consumer_iterative_config",
     "task041_balh_exact_consumer_profile",
     "task041_balh_route",
     "task041_balh_time_stop_override_record",
+    "task041_balh_transfer_optimization_profile",
     "task041_schur_speed_v2_contract",
     "validate_balh_producer_packet",
 ]

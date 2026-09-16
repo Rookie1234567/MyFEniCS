@@ -27,6 +27,7 @@ from benchmarks.watchdog_process_control import (
 )
 from src.io.execution_plan import TASK041_PUBLIC_SUPERVISOR_ADAPTER
 from src.io.input_validation import (
+    TASK041_BALH_2NM_MODEL_ID,
     TASK041_BALH_CANDIDATE_MODEL_IDS,
     TASK041_BALH_MODEL_IDS,
     TASK041_BALH_MPI_SIZE,
@@ -36,8 +37,10 @@ from src.io.input_validation import (
     TASK041_SHORTWAVE_MPI_SIZE,
     TASK041_SHORTWAVE_WORKFLOW_LIMITS,
     task041_balh_case,
+    task041_balh_diagnostic_output_enabled,
     task041_balh_phase_limits_for_model,
     task041_balh_profile_errors,
+    task041_balh_service_contract,
     task041_balh_timeout_scope,
     task041_balh_workflow_limits,
     task041_profile_errors,
@@ -102,7 +105,7 @@ def _valid_sha(value: Any, length: int) -> bool:
     )
 
 
-def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, int]:
+def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
     model_id = identity.get("model_id")
     if model_id == TASK041_MODEL_ID:
         if identity.get("requested_modes") != TASK041_MODE_COUNT or identity.get(
@@ -149,6 +152,23 @@ def _runtime_limits_for_identity(identity: Mapping[str, Any]) -> dict[str, int]:
         f"runtime limits require a validated Task041 identity, got {model_id!r}",
         classification="task041_identity_failure",
         stage="runtime_limits",
+    )
+
+
+def _task041_consumer_time_stop_enforced(
+    *,
+    balh: bool,
+    disable_time_stop: bool,
+    phase_limits: Mapping[str, Any],
+) -> bool:
+    """Combine the legacy BAL_H override with the case phase policy."""
+
+    if not balh:
+        return True
+    consumer_limits = phase_limits.get("consumer", {})
+    return bool(
+        not disable_time_stop
+        and consumer_limits.get("time_stop_enforced", True)
     )
 
 
@@ -581,7 +601,7 @@ def _run_phase(
     hard_memory_bytes: int = TASK041_HARD_MEMORY_BYTES,
     process_tree_rss_warning_bytes: int | None = None,
     process_tree_rss_cap_bytes: int | None = None,
-    timeout_seconds: int = TASK041_TIMEOUT_SECONDS,
+    timeout_seconds: float | None = TASK041_TIMEOUT_SECONDS,
     phase_elapsed_timeout: bool = False,
     sample_root_pid: int | None = None,
     min_memavailable_bytes: int | None = None,
@@ -834,7 +854,7 @@ def _run_phase(
             >= cumulative_compute_limit_seconds
         ):
             return "cumulative_wall_timeout"
-        if enforce_time_stops and (
+        if enforce_time_stops and timeout_seconds is not None and (
             (now - phase_started)
             if phase_elapsed_timeout
             else (now - workflow_started)
@@ -1264,26 +1284,45 @@ def run_task041_supervised_public_command(
 
     profile_id = profile_contract["profile_id"]
     model_id = profile_contract["model_id"]
-    if profile_id != "task041_schur_speed_v2":
+    case_runtime_contract = task041_balh_service_contract(str(model_id))
+    is_case_runtime = bool(
+        case_runtime_contract is not None
+        and profile_contract.get("contract_kind")
+        == "task041_registered_case_service"
+        and profile_id == case_runtime_contract["profile_id"]
+        and profile_contract.get("compute_wall_unlimited") is True
+    )
+    if profile_id != "task041_schur_speed_v2" and not is_case_runtime:
         raise Task041SupervisorError(
-            "Task041 supervised public command requires task041_schur_speed_v2",
+            "Task041 supervised public command has an unsupported contract",
             classification="task041_identity_failure",
             stage="supervised_public_profile",
         )
-    if model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS:
+    if not is_case_runtime and model_id not in TASK041_BALH_CANDIDATE_MODEL_IDS:
         raise Task041SupervisorError(
             "Task041 supervised public command is limited to BAL_H candidates",
             classification="task041_identity_failure",
             stage="supervised_public_profile",
         )
     active_phase = profile_contract["active_consumer_phase"]
-    phase_budget = float(profile_contract["phase_budgets_seconds"][active_phase])
-    batch_budget = float(profile_contract["batch_budget_seconds"])
-    batch_used = float(ledger_snapshot["batch_used_compute_wall_seconds"])
-    phase_used = _task041_v2_group_used(ledger_snapshot, active_phase)
-    phase_remaining = max(0.0, phase_budget - phase_used)
-    batch_remaining = max(0.0, batch_budget - batch_used)
-    effective_remaining = min(phase_remaining, batch_remaining)
+    if is_case_runtime:
+        phase_budget = profile_contract["phase_budgets_seconds"][active_phase]
+        batch_budget = profile_contract["batch_budget_seconds"]
+        phase_used = float(
+            ledger_snapshot.get("used_compute_wall_seconds", 0.0)
+        )
+        batch_used = phase_used
+        phase_remaining = None
+        batch_remaining = None
+        effective_remaining = None
+    else:
+        phase_budget = float(profile_contract["phase_budgets_seconds"][active_phase])
+        batch_budget = float(profile_contract["batch_budget_seconds"])
+        batch_used = float(ledger_snapshot["batch_used_compute_wall_seconds"])
+        phase_used = _task041_v2_group_used(ledger_snapshot, active_phase)
+        phase_remaining = max(0.0, phase_budget - phase_used)
+        batch_remaining = max(0.0, batch_budget - batch_used)
+        effective_remaining = min(phase_remaining, batch_remaining)
 
     warning_memory_bytes = resource_limits["warning_memory_bytes"]
     hard_memory_bytes = resource_limits["hard_memory_bytes"]
@@ -1341,7 +1380,11 @@ def run_task041_supervised_public_command(
             "batch_used_before_seconds": batch_used,
             "batch_remaining_seconds": batch_remaining,
             "effective_remaining_seconds": effective_remaining,
-            "basis": "min(phase_remaining_seconds, batch_remaining_seconds)",
+            "basis": (
+                "registered case ledger; no elapsed wall stop"
+                if is_case_runtime
+                else "min(phase_remaining_seconds, batch_remaining_seconds)"
+            ),
         },
         "limits": {
             "warning_memory_bytes": warning_memory_bytes,
@@ -1369,7 +1412,7 @@ def run_task041_supervised_public_command(
             "outer_owner": launch_manifest.get("outer_owner"),
             "ledger_owner": launch_manifest.get("ledger_owner"),
         }
-    if effective_remaining <= 0.0:
+    if effective_remaining is not None and effective_remaining <= 0.0:
         result.update(
             {
                 "result_classification": "cumulative_wall_timeout",
@@ -1406,17 +1449,22 @@ def run_task041_supervised_public_command(
             process_tree_rss_warning_bytes=rss_warning_bytes,
             process_tree_rss_cap_bytes=rss_cap_bytes,
             timeout_seconds=effective_remaining,
-            phase_elapsed_timeout=True,
+            phase_elapsed_timeout=not is_case_runtime,
             sample_root_pid=os.getpid(),
             min_memavailable_bytes=resource_limits["min_memavailable_bytes"],
             min_cgroup_ancestor_headroom_bytes=resource_limits[
                 "min_cgroup_ancestor_headroom_bytes"
             ],
             cumulative_compute_used_seconds=phase_used,
-            cumulative_compute_limit_seconds=phase_used + effective_remaining,
+            cumulative_compute_limit_seconds=(
+                None if effective_remaining is None else phase_used + effective_remaining
+            ),
             global_swap_baseline=global_swap_baseline,
             partial_phase_results=partial_phase_results,
-            enforce_time_stops=True,
+            enforce_time_stops=(
+                not is_case_runtime
+                or profile_contract["time_stop"]["consumer_enforced"]
+            ),
         )
         resource_failure = _phase_resource_failure(phase_result)
         if resource_failure:
@@ -4769,6 +4817,8 @@ def _consumer_result(
     representative_rhs_binding: Mapping[str, Any] | None = None,
     expected_side_setup_schedule: str | None = None,
     expected_comparison_mode: str | None = None,
+    expected_diagnostic_output: bool = False,
+    expected_diagnostic_model_id: str | None = None,
 ) -> dict[str, Any]:
     summary_path = consumer_root / "consumer_summary.json"
     if not summary_path.is_file():
@@ -4790,6 +4840,10 @@ def _consumer_result(
     lifecycle = summary.get("lifecycle")
     gates = summary.get("gates")
     worker_classification = summary.get("classification")
+    diagnostic_policy = summary.get("diagnostic_output_policy")
+    diagnostic_output = summary.get("diagnostic_output")
+    diagnostic_qualification = summary.get("qualification")
+    official_rta = summary.get("official_rta")
     common_scope = expected_comparison_mode == "common_layout_equivalence"
     common_failure_classes = {
         "PAIRING_SETUP_FAILURE",
@@ -4850,6 +4904,59 @@ def _consumer_result(
         else regular_lifecycle_gate
     )
     marker_gate = isinstance(observed, list) and "final_cleanup_complete" in observed
+    cleanup = summary.get("cleanup")
+    cleanup_gate = isinstance(cleanup, Mapping) and cleanup.get("pass") is True
+    summary_identity = summary.get("identity")
+    diagnostic_model_registered = bool(
+        isinstance(expected_diagnostic_model_id, str)
+        and task041_balh_diagnostic_output_enabled(expected_diagnostic_model_id)
+    )
+    diagnostic_identity_gate = bool(
+        expected_diagnostic_output is True
+        and diagnostic_model_registered
+        and isinstance(summary_identity, Mapping)
+        and summary_identity.get("model_id") == expected_diagnostic_model_id
+        and isinstance(diagnostic_policy, Mapping)
+        and diagnostic_policy.get("enabled") is True
+        and diagnostic_policy.get("model_id") == expected_diagnostic_model_id
+    )
+    diagnostic_gates_gate = bool(
+        isinstance(gates, Mapping)
+        and gates.get("pass") is False
+        and isinstance(gates.get("authority_identity"), Mapping)
+        and gates["authority_identity"].get("pass") is True
+        and gates.get("grid_E_H_evidence_pass") is True
+        and gates.get("external_diffraction_channels_pass") is True
+        and gates.get("external_key_binding_pass") is True
+        and gates.get("external_orders_key_binding_pass") is True
+    )
+    diagnostic_rta_gate = bool(
+        isinstance(official_rta, Mapping)
+        and official_rta.get("status") == "measured_diagnostic"
+        and official_rta.get("qualified") is False
+        and all(
+            isinstance(official_rta.get(name), (int, float))
+            and not isinstance(official_rta.get(name), bool)
+            and math.isfinite(float(official_rta[name]))
+            for name in ("R", "T", "A", "A_volume")
+        )
+    )
+    diagnostic_complete = bool(
+        diagnostic_identity_gate
+        and worker_classification == "DIAGNOSTIC_RESULT_AVAILABLE"
+        and summary.get("status") == "completed_with_diagnostics"
+        and isinstance(diagnostic_output, Mapping)
+        and diagnostic_output.get("result_available") is True
+        and summary.get("qualification_status") == "unqualified"
+        and isinstance(diagnostic_qualification, Mapping)
+        and diagnostic_qualification.get("pass") is False
+        and diagnostic_gates_gate
+        and diagnostic_rta_gate
+        and lifecycle_gate
+        and cleanup_gate
+        and process_group_gone is True
+        and marker_gate
+    )
     representative_complete = bool(
         representative_scope
         and worker_classification == "TASK041_REPRESENTATIVE_RHS_COMPLETED"
@@ -4883,8 +4990,15 @@ def _consumer_result(
         and process_group_gone is True
         and marker_gate
     )
-    complete = representative_complete or common_complete or regular_complete
-    if complete:
+    complete = (
+        representative_complete
+        or common_complete
+        or regular_complete
+        or diagnostic_complete
+    )
+    if diagnostic_complete:
+        classification = "DIAGNOSTIC_RESULT_AVAILABLE"
+    elif complete:
         classification = "worker_exit0"
     elif worker_common_failure:
         classification = str(worker_classification)
@@ -4923,6 +5037,10 @@ def _consumer_result(
         "factor_inventory": factor_inventory,
         "markers": {"observed": observed},
         "official_rta": summary.get("official_rta", {"status": "not_available"}),
+        "diagnostic_result_available": diagnostic_complete,
+        "diagnostic_output": diagnostic_output,
+        "diagnostic_output_policy": diagnostic_policy,
+        "qualification_status": summary.get("qualification_status"),
         "process_group_gone": process_group_gone,
         "lifecycle_gate": lifecycle_gate,
         "representative_validation": representative_validation,
@@ -5043,6 +5161,7 @@ def _write_task041_compute_wall_ledger(
     limit_seconds: float | None = None,
     profile_id: str | None = None,
     phase_group: str | None = None,
+    case_id: str | None = None,
 ) -> dict[str, Any]:
     before = float(used_before["used_compute_wall_seconds"])
     current_seconds = max(0.0, float(current_seconds))
@@ -5167,6 +5286,38 @@ def _write_task041_compute_wall_ledger(
             ),
             current_record,
         ]
+    if case_id is not None:
+        if case_id != TASK041_BALH_2NM_MODEL_ID or profile_id is not None:
+            raise ValueError("unsupported Task041 registered-case ledger identity")
+        current_record["case_id"] = case_id
+        payload = dict(used_before)
+        payload.update(
+            {
+                "schema": used_before.get(
+                    "schema", "task041.compute_wall_ledger.v1"
+                ),
+                "case_id": case_id,
+                "profile_id": None,
+                "limit_seconds": None,
+                "budget_limit_seconds": None,
+                "batch_budget_seconds": None,
+                "used_compute_wall_seconds": total,
+                "used_status": status,
+                "measured": measured,
+                "source_records": [
+                    *list(used_before.get("source_records", [])),
+                    current_record,
+                ],
+                "remaining_budget_seconds": None,
+                "remaining_status": "not_applicable_unlimited_case",
+                "budget_semantics": (
+                    "independent registered 2 nm case accounting; "
+                    "no elapsed wall stop"
+                ),
+            }
+        )
+        _write_json(ledger_path, payload)
+        return payload
     payload = {
         "schema": "task041.compute_wall_ledger.v1",
         "limit_seconds": TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS,
@@ -5251,6 +5402,7 @@ def run_task041_public_supervisor(
     balh = False
     legacy_native = False
     performance_contract: dict[str, Any] | None = None
+    case_runtime_contract: dict[str, Any] | None = None
     representative_rhs_binding: dict[str, Any] | None = None
     compute_wall_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     compute_wall_phase_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
@@ -5258,6 +5410,8 @@ def run_task041_public_supervisor(
     compute_wall_phase_used_seconds = 0.0
     compute_wall_enforced_limit_seconds = TASK041_CUMULATIVE_COMPUTE_WALL_SECONDS
     supervision_binding: dict[str, Any] | None = None
+    expected_diagnostic_output = False
+    expected_diagnostic_model_id: str | None = None
     producer_root = root / "producer"
     try:
         if not root.is_dir():
@@ -5280,10 +5434,30 @@ def run_task041_public_supervisor(
         )
         outer_mpi_size = outer_mpi_identity["mpi_size"]
         identity = _validate_specification(specification, repository_root)
+        expected_diagnostic_output = task041_balh_diagnostic_output_enabled(
+            str(identity["model_id"])
+        )
+        expected_diagnostic_model_id = (
+            str(identity["model_id"]) if expected_diagnostic_output else None
+        )
         runtime_limits = _runtime_limits_for_identity(identity)
         result["limits"] = dict(runtime_limits)
         shortwave = identity["model_id"] in TASK041_SHORTWAVE_MODEL_IDS
         balh = identity["model_id"] in TASK041_BALH_MODEL_IDS
+        if balh and identity["model_id"] == TASK041_BALH_2NM_MODEL_ID:
+            registered_contract = task041_balh_service_contract(
+                str(identity["model_id"])
+            )
+            if registered_contract is None:
+                raise Task041SupervisorError(
+                    "registered 2 nm service contract is unavailable",
+                    classification="task041_identity_failure",
+                    stage="service_contract",
+                )
+            case_runtime_contract = dict(registered_contract)
+            compute_wall_limit_seconds = None
+            compute_wall_phase_limit_seconds = None
+            compute_wall_enforced_limit_seconds = None
         legacy_native = legacy_native_packet_descriptor is not None
         if balh:
             from benchmarks.task041_balh_workflow import (
@@ -5301,15 +5475,28 @@ def run_task041_public_supervisor(
                     classification="task041_identity_failure",
                     stage="time_stop_override",
                 )
-            result["time_stop_override"] = (
-                task041_balh_time_stop_override_record(disable_time_stop)
-                | {
-                    "model_id": identity["model_id"],
-                    "run_id": identity.get("run_id"),
-                    "source_sha": source_sha,
-                    "origin": "run_case_cli",
-                }
-            )
+            if case_runtime_contract is not None:
+                result["time_stop_policy"] = dict(
+                    case_runtime_contract["time_stop"]
+                )
+                result["time_stop_policy"].update(
+                    {
+                        "model_id": identity["model_id"],
+                        "run_id": identity.get("run_id"),
+                        "source_sha": source_sha,
+                        "scope": "registered_2nm_case",
+                    }
+                )
+            else:
+                result["time_stop_override"] = (
+                    task041_balh_time_stop_override_record(disable_time_stop)
+                    | {
+                        "model_id": identity["model_id"],
+                        "run_id": identity.get("run_id"),
+                        "source_sha": source_sha,
+                        "origin": "run_case_cli",
+                    }
+                )
         elif disable_time_stop:
             raise Task041SupervisorError(
                 "time-stop override is limited to Task041 BAL_H profiles",
@@ -5447,18 +5634,19 @@ def run_task041_public_supervisor(
                 "budget_group": performance_contract["budget_group"],
             }
         if task041_supervision_record is not None:
-            if performance_contract is None:
+            supervision_contract = performance_contract or case_runtime_contract
+            if supervision_contract is None:
                 raise Task041SupervisorError(
-                    "supervision record requires task041_schur_speed_v2",
+                    "supervision record requires a registered Task041 contract",
                     classification="task041_identity_failure",
                     stage="supervision_record",
                 )
             supervision_binding = _load_task041_supervision_record(
                 task041_supervision_record,
-                profile_id=performance_contract["profile_id"],
+                profile_id=supervision_contract["profile_id"],
                 model_id=identity["model_id"],
                 source_sha=source_sha,
-                scope=performance_contract["scope"],
+                scope=supervision_contract["scope"],
                 representative_rhs_probe=(
                     {
                         "path": representative_rhs_binding["path"],
@@ -5467,10 +5655,10 @@ def run_task041_public_supervisor(
                     if representative_rhs_binding is not None
                     else None
                 ),
-                side_setup_schedule=performance_contract.get(
+                side_setup_schedule=supervision_contract.get(
                     "side_setup_schedule"
                 ),
-                comparison_mode=performance_contract.get("comparison_mode"),
+                comparison_mode=supervision_contract.get("comparison_mode"),
             )
             if compute_wall_ledger_path is not None and Path(
                 compute_wall_ledger_path
@@ -5546,6 +5734,51 @@ def run_task041_public_supervisor(
                 result["comparison_mode"] = performance_contract[
                     "comparison_mode"
                 ]
+        if case_runtime_contract is not None:
+            runtime_limits = dict(runtime_limits)
+            runtime_limits.update(
+                {
+                    "warning_memory_bytes": int(
+                        case_runtime_contract["warning_memory_bytes"]
+                    ),
+                    "hard_memory_bytes": int(
+                        case_runtime_contract["memory_cap_bytes"]
+                    ),
+                    "swap_limit_bytes": int(
+                        case_runtime_contract["swap_limit_bytes"]
+                    ),
+                    "process_tree_rss_warning_bytes": int(
+                        case_runtime_contract["warning_memory_bytes"]
+                    ),
+                    "process_tree_rss_cap_bytes": int(
+                        case_runtime_contract["memory_cap_bytes"]
+                    ),
+                    "memory_cap_source": case_runtime_contract[
+                        "memory_gate_source"
+                    ],
+                    "timeout_seconds": None,
+                    "time_stop_enforced": False,
+                }
+            )
+            phase_limits["consumer"] = dict(phase_limits["consumer"])
+            phase_limits["consumer"].update(
+                {
+                    "process_tree_rss_warning_bytes": int(
+                        case_runtime_contract["warning_memory_bytes"]
+                    ),
+                    "process_tree_rss_cap_bytes": int(
+                        case_runtime_contract["memory_cap_bytes"]
+                    ),
+                    "memory_cap_source": case_runtime_contract[
+                        "memory_gate_source"
+                    ],
+                    "timeout_seconds": None,
+                    "time_stop_enforced": False,
+                }
+            )
+            result["limits"] = dict(runtime_limits)
+            result["phase_limits"] = phase_limits
+            result["service_contract"] = case_runtime_contract
         if balh:
             if compute_wall_ledger_path is None:
                 raise Task041SupervisorError(
@@ -5561,57 +5794,78 @@ def run_task041_public_supervisor(
             used_before = float(
                 compute_wall_ledger["used_compute_wall_seconds"]
             )
-            if compute_wall_phase_group is not None:
-                compute_wall_phase_used_seconds = _task041_v2_group_used(
-                    compute_wall_ledger, compute_wall_phase_group
-                )
-            else:
+            if case_runtime_contract is not None:
                 compute_wall_phase_used_seconds = used_before
-            batch_remaining = max(
-                0.0, compute_wall_limit_seconds - used_before
-            )
-            phase_remaining = max(
-                0.0,
-                compute_wall_phase_limit_seconds
-                - compute_wall_phase_used_seconds,
-            )
-            remaining = max(
-                0.0,
-                min(batch_remaining, phase_remaining),
-            )
-            compute_wall_enforced_limit_seconds = (
-                compute_wall_phase_used_seconds + remaining
-                if performance_contract is not None
-                else compute_wall_limit_seconds
-            )
-            compute_wall_budget = {
-                "limit_seconds": compute_wall_limit_seconds,
-                "used_before_seconds": used_before,
-                "used_before_status": compute_wall_ledger["used_status"],
-                "remaining_seconds": remaining,
-                "ledger_path": str(compute_wall_ledger_path),
-                "basis": compute_wall_ledger["basis"],
-                "initial_batch_allowance": compute_wall_ledger.get(
-                    "initial_batch_allowance"
-                ),
-                "derived_allowance_margin_seconds": compute_wall_ledger.get(
-                    "derived_allowance_margin_seconds"
-                ),
-            }
-            if performance_contract is not None:
-                compute_wall_budget.update(
-                    {
-                        "phase_limit_seconds": compute_wall_phase_limit_seconds,
-                        "phase_group": compute_wall_phase_group,
-                        "phase_used_before_seconds": compute_wall_phase_used_seconds,
-                        "batch_remaining_seconds": batch_remaining,
-                        "phase_remaining_seconds": phase_remaining,
-                        "enforced_limit_seconds": compute_wall_enforced_limit_seconds,
-                        "remaining_basis": "min(phase_remaining_seconds, batch_remaining_seconds)",
-                    }
+                compute_wall_budget = {
+                    "limit_seconds": None,
+                    "used_before_seconds": used_before,
+                    "used_before_status": compute_wall_ledger["used_status"],
+                    "remaining_seconds": None,
+                    "ledger_path": str(compute_wall_ledger_path),
+                    "basis": compute_wall_ledger.get(
+                        "budget_semantics",
+                        "independent registered 2 nm case ledger; "
+                        "no elapsed wall stop",
+                    ),
+                    "time_stop_enforced": False,
+                    "case_id": case_runtime_contract["case_id"],
+                }
+            else:
+                if compute_wall_phase_group is not None:
+                    compute_wall_phase_used_seconds = _task041_v2_group_used(
+                        compute_wall_ledger, compute_wall_phase_group
+                    )
+                else:
+                    compute_wall_phase_used_seconds = used_before
+                batch_remaining = max(
+                    0.0, compute_wall_limit_seconds - used_before
                 )
+                phase_remaining = max(
+                    0.0,
+                    compute_wall_phase_limit_seconds
+                    - compute_wall_phase_used_seconds,
+                )
+                remaining = max(
+                    0.0,
+                    min(batch_remaining, phase_remaining),
+                )
+                compute_wall_enforced_limit_seconds = (
+                    compute_wall_phase_used_seconds + remaining
+                    if performance_contract is not None
+                    else compute_wall_limit_seconds
+                )
+                compute_wall_budget = {
+                    "limit_seconds": compute_wall_limit_seconds,
+                    "used_before_seconds": used_before,
+                    "used_before_status": compute_wall_ledger["used_status"],
+                    "remaining_seconds": remaining,
+                    "ledger_path": str(compute_wall_ledger_path),
+                    "basis": compute_wall_ledger["basis"],
+                    "initial_batch_allowance": compute_wall_ledger.get(
+                        "initial_batch_allowance"
+                    ),
+                    "derived_allowance_margin_seconds": compute_wall_ledger.get(
+                        "derived_allowance_margin_seconds"
+                    ),
+                }
+                if performance_contract is not None:
+                    compute_wall_budget.update(
+                        {
+                            "phase_limit_seconds": compute_wall_phase_limit_seconds,
+                            "phase_group": compute_wall_phase_group,
+                            "phase_used_before_seconds": compute_wall_phase_used_seconds,
+                            "batch_remaining_seconds": batch_remaining,
+                            "phase_remaining_seconds": phase_remaining,
+                            "enforced_limit_seconds": compute_wall_enforced_limit_seconds,
+                            "remaining_basis": "min(phase_remaining_seconds, batch_remaining_seconds)",
+                        }
+                    )
             result["compute_wall_budget"] = compute_wall_budget
-            if remaining <= 0.0 and not disable_time_stop:
+            if (
+                case_runtime_contract is None
+                and remaining <= 0.0
+                and not disable_time_stop
+            ):
                 raise Task041SupervisorError(
                     "Task041 cumulative compute wall budget is exhausted",
                     classification="cumulative_wall_timeout",
@@ -5620,6 +5874,12 @@ def run_task041_public_supervisor(
         git_identity = _git_identity(repository_root, source_sha)
         environment_snapshot = _environment_snapshot(repository_root)
         result["identity"] = identity
+        if expected_diagnostic_output:
+            result["diagnostic_output_policy"] = {
+                "enabled": True,
+                "model_id": expected_diagnostic_model_id,
+                "source": "validated_public_specification",
+            }
         result["outer_mpi_size"] = outer_mpi_size
         result["outer_mpi_identity"] = outer_mpi_identity
         result["git"] = git_identity
@@ -6119,6 +6379,7 @@ def run_task041_public_supervisor(
                     "process_tree_rss_warning_bytes"
                 )
                 if performance_contract is not None
+                or case_runtime_contract is not None
                 else None
             ),
             process_tree_rss_cap_bytes=(
@@ -6126,12 +6387,15 @@ def run_task041_public_supervisor(
                     "process_tree_rss_cap_bytes"
                 )
                 if performance_contract is not None
+                or case_runtime_contract is not None
                 else None
             ),
             timeout_seconds=(
                 phase_limits.get("consumer", runtime_limits)["timeout_seconds"]
             ),
-            phase_elapsed_timeout=timeout_scope == "phase",
+            phase_elapsed_timeout=(
+                timeout_scope == "phase" and case_runtime_contract is None
+            ),
             sample_root_pid=public_launcher_pid if balh else None,
             min_memavailable_bytes=(
                 phase_limits.get("consumer", {}).get("min_memavailable_bytes")
@@ -6146,6 +6410,7 @@ def run_task041_public_supervisor(
             cumulative_compute_used_seconds=(
                 compute_wall_phase_used_seconds
                 if performance_contract is not None
+                or case_runtime_contract is not None
                 else (
                     (
                         float(compute_wall_ledger["used_compute_wall_seconds"])
@@ -6166,13 +6431,19 @@ def run_task041_public_supervisor(
             cumulative_compute_limit_seconds=(
                 compute_wall_enforced_limit_seconds
                 if performance_contract is not None
+                else None
+                if case_runtime_contract is not None
                 else compute_wall_limit_seconds
                 if balh
                 else None
             ),
             global_swap_baseline=global_swap_baseline if balh else None,
             partial_phase_results=result["phase_results"],
-            enforce_time_stops=not disable_time_stop if balh else True,
+            enforce_time_stops=_task041_consumer_time_stop_enforced(
+                balh=balh,
+                disable_time_stop=disable_time_stop,
+                phase_limits=phase_limits,
+            ),
         )
         consumer_result["rank_pid_affinity"] = _rank_pid_affinity_artifact(
             consumer_root
@@ -6197,6 +6468,14 @@ def run_task041_public_supervisor(
                     **(
                         {"representative_rhs_binding": representative_rhs_binding}
                         if representative_rhs_binding is not None
+                        else {}
+                    ),
+                    **(
+                        {
+                            "expected_diagnostic_output": True,
+                            "expected_diagnostic_model_id": expected_diagnostic_model_id,
+                        }
+                        if expected_diagnostic_output
                         else {}
                     ),
                 )
@@ -6261,6 +6540,14 @@ def run_task041_public_supervisor(
                     if representative_rhs_binding is not None
                     else {}
                 ),
+                **(
+                    {
+                        "expected_diagnostic_output": True,
+                        "expected_diagnostic_model_id": expected_diagnostic_model_id,
+                    }
+                    if expected_diagnostic_output
+                    else {}
+                ),
             )
         except Task041SupervisorError as exc:
             consumer_status = {
@@ -6286,6 +6573,11 @@ def run_task041_public_supervisor(
         result["consumer"] = consumer_status
         representative_completion = (
             consumer_status.get("completion_scope") == "representative_rhs"
+        )
+        diagnostic_completion = bool(
+            consumer_status.get("diagnostic_result_available") is True
+            and consumer_status.get("classification")
+            == "DIAGNOSTIC_RESULT_AVAILABLE"
         )
         if not consumer_status["complete"]:
             result["exit_status"] = consumer_exit
@@ -6313,13 +6605,16 @@ def run_task041_public_supervisor(
                 factor_inventory = {"status": "not_available"}
             _write_json(root / "factor_inventory.json", factor_inventory)
         result["status"] = (
-            "representative_rhs_completed" if representative_completion else "completed"
-        )
-        result["workflow_status"] = (
-            "representative_rhs_completed"
+            "completed_with_diagnostics"
+            if diagnostic_completion
+            else "representative_rhs_completed"
             if representative_completion
             else "completed"
         )
+        result["workflow_status"] = result["status"]
+        if diagnostic_completion:
+            result["qualification_status"] = "unqualified"
+            result["diagnostic_output"] = consumer_status.get("diagnostic_output")
         result["result_classification"] = "worker_exit0"
         result["exit_status"] = 0
     except Task041SupervisorError as exc:
@@ -6567,6 +6862,11 @@ def run_task041_public_supervisor(
                     limit_seconds=compute_wall_limit_seconds,
                     profile_id=performance_profile,
                     phase_group=compute_wall_phase_group,
+                    case_id=(
+                        case_runtime_contract["case_id"]
+                        if case_runtime_contract is not None
+                        else None
+                    ),
                 )
                 budget_update = {
                     "current_invocation_seconds": current_compute_seconds,
@@ -6575,10 +6875,14 @@ def run_task041_public_supervisor(
                         "used_compute_wall_seconds"
                     ],
                     "used_after_status": updated_ledger["used_status"],
-                    "remaining_after_seconds": max(
-                        0.0,
-                        compute_wall_limit_seconds
-                        - updated_ledger["used_compute_wall_seconds"],
+                    "remaining_after_seconds": (
+                        None
+                        if case_runtime_contract is not None
+                        else max(
+                            0.0,
+                            compute_wall_limit_seconds
+                            - updated_ledger["used_compute_wall_seconds"],
+                        )
                     ),
                     "ledger_update": "current_phase_wall_appended",
                 }
@@ -6623,9 +6927,13 @@ def run_task041_public_supervisor(
                     "current_invocation_status": "not_measured_no_phase",
                     "used_after_seconds": used_before,
                     "used_after_status": compute_wall_ledger["used_status"],
-                    "remaining_after_seconds": max(
-                        0.0,
-                        compute_wall_limit_seconds - used_before,
+                    "remaining_after_seconds": (
+                        None
+                        if case_runtime_contract is not None
+                        else max(
+                            0.0,
+                            compute_wall_limit_seconds - used_before,
+                        )
                     ),
                     "ledger_update": "not_appended_no_phase_completed",
                 }

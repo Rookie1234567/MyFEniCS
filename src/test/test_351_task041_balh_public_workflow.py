@@ -15,6 +15,8 @@ import pytest
 
 from benchmarks import task041_balh_workflow
 from benchmarks.task041_balh_workflow import (
+    TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
+    TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
     TASK041_REPRESENTATIVE_RHS_SCOPE,
     TASK041_SCHUR_SPEED_V2_PROFILE,
     TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
@@ -22,6 +24,8 @@ from benchmarks.task041_balh_workflow import (
     build_task041_balh_exact_consumer_command,
     build_task041_balh_mode_prep_command,
     task041_balh_consumer_identity_binding,
+    task041_balh_cpu_list,
+    task041_balh_transfer_optimization_profile,
     task041_schur_speed_v2_contract,
     validate_balh_producer_packet,
 )
@@ -39,7 +43,13 @@ from src.io.execution_plan import (
     method_adapter_identity,
 )
 from src.io.input_loader import InputError
-from src.io.input_validation import load_and_resolve, task041_balh_profile_errors
+from src.io.input_validation import (
+    load_and_resolve,
+    task041_balh_diagnostic_output_enabled,
+    task041_balh_phase_limits_for_model,
+    task041_balh_profile_errors,
+    task041_balh_service_contract,
+)
 from src.io.resolved_config import resolved_config_sha256
 from src.runners import task041_supervisor as supervisor
 from src.runners.task041_supervisor import (
@@ -64,7 +74,7 @@ def _specification(path: Path):
 
 
 def test_task041_balh_dat_contracts_and_public_identity():
-    assert len(BALH_INPUTS) == 4
+    assert len(BALH_INPUTS) == 5
     for path in BALH_INPUTS:
         specification = _specification(path)
         model_id = str(specification.identity["model_id"])
@@ -79,7 +89,7 @@ def test_task041_balh_dat_contracts_and_public_identity():
         )
         assert plan.adapter_identity == TASK041_PUBLIC_SUPERVISOR_ADAPTER
         identity = _validate_specification(specification, REPOSITORY_ROOT)
-        assert identity["requested_modes"] in {120, 480}
+        assert identity["requested_modes"] in {120, 480, 1200}
         assert identity["mpi_size"] == 8
         contract = _task041_case_contract(
             specification.as_jsonable(), 8, phase="consumer"
@@ -87,6 +97,75 @@ def test_task041_balh_dat_contracts_and_public_identity():
         assert contract["balh"] is True
         assert contract["shortwave"] is False
         assert contract["limits"]["swap_limit_bytes"] == 0
+
+
+def test_task041_2nm_balh_case_uses_low_level_profile_without_v2_contract(tmp_path):
+    path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/"
+        "2nm_p6h1p5_m1200_mpi8_balh.dat"
+    )
+    specification = _specification(path)
+    model_id = str(specification.identity["model_id"])
+    assert model_id == TASK041_BALH_2NM_CANDIDATE_MODEL_ID
+    assert specification.as_jsonable()["output"]["diffraction_order_max_m"] == 60
+    contract = _task041_case_contract(
+        specification.as_jsonable(), 8, phase="consumer"
+    )
+    assert contract["transfer_optimization_profile"] == TASK041_SCHUR_SPEED_V2_PROFILE
+    assert task041_balh_transfer_optimization_profile(model_id) == (
+        TASK041_SCHUR_SPEED_V2_PROFILE
+    )
+    assert task041_balh_cpu_list(model_id) == "1-8"
+    command = build_task041_balh_candidate_consumer_command(
+        "python",
+        specification,
+        tmp_path / "manifest.json",
+        tmp_path / "identity.json",
+        "b" * 64,
+        tmp_path / "consumer",
+        "c" * 40,
+        "a" * 40,
+    )
+    assert command[command.index("--cpu-list") + 1] == "1-8"
+    assert "--task041-performance-profile" not in command
+    with pytest.raises(
+        ValueError, match="registered only for the two BAL_H candidates"
+    ):
+        task041_schur_speed_v2_contract(model_id)
+
+    old_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/5nm_p6h4_m480_mpi8_balh.dat"
+    )
+    old_model_id = str(_specification(old_path).identity["model_id"])
+    assert task041_balh_transfer_optimization_profile(old_model_id) is None
+    assert task041_balh_cpu_list(old_model_id) == "0-7"
+    assert (
+        _specification(old_path).as_jsonable()["output"]["diffraction_order_max_m"]
+        == 25
+    )
+
+
+@pytest.mark.parametrize(
+    ("section", "key", "value"),
+    (
+        ("materials", "n_substrate", (0.99880148307, 0.000213688648)),
+        ("method", "requested_modes_per_direction", 1800),
+        ("discretization", "mesh_target_nm", 2.0),
+    ),
+)
+def test_task041_2nm_balh_rejects_physics_or_resolution_mutation(
+    section, key, value
+):
+    path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/"
+        "2nm_p6h1p5_m1200_mpi8_balh.dat"
+    )
+    config = copy.deepcopy(_specification(path).as_jsonable())
+    config[section][key] = value
+    assert task041_balh_profile_errors(config)
 
 
 def test_task041_balh_public_commands_select_one_consumer():
@@ -645,6 +724,36 @@ def test_task041_balh_time_stop_override_is_forwarded_only_to_5nm_candidate(
     ) == 2
 
 
+def test_task041_consumer_time_stop_combines_override_and_case_policy():
+    five_nm_limits = task041_balh_phase_limits_for_model(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID, "consumer"
+    )
+    two_nm_limits = task041_balh_phase_limits_for_model(
+        TASK041_BALH_2NM_CANDIDATE_MODEL_ID, "consumer"
+    )
+
+    assert supervisor._task041_consumer_time_stop_enforced(
+        balh=True,
+        disable_time_stop=True,
+        phase_limits={"consumer": five_nm_limits},
+    ) is False
+    assert supervisor._task041_consumer_time_stop_enforced(
+        balh=True,
+        disable_time_stop=False,
+        phase_limits={"consumer": five_nm_limits},
+    ) is True
+    assert supervisor._task041_consumer_time_stop_enforced(
+        balh=True,
+        disable_time_stop=False,
+        phase_limits={"consumer": two_nm_limits},
+    ) is False
+    assert supervisor._task041_consumer_time_stop_enforced(
+        balh=False,
+        disable_time_stop=False,
+        phase_limits={},
+    ) is True
+
+
 def test_task041_balh_worker_time_override_keeps_memory_and_swap_gates(monkeypatch):
     from benchmarks import task041_exact_side_workflow as worker
 
@@ -690,30 +799,56 @@ def test_task041_balh_early_identity_failure_keeps_error_classification(tmp_path
     assert "UnboundLocalError" not in result["error"]["message"]
 
 
+@pytest.mark.parametrize(
+    ("candidate_filename", "registered_case"),
+    (
+        ("13p5nm_p6h10_m120_mpi8_balh.dat", False),
+        ("2nm_p6h1p5_m1200_mpi8_balh.dat", True),
+    ),
+    ids=("legacy-balh", "registered-2nm"),
+)
 def test_task041_balh_public_fresh_phases_share_cumulative_budget(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, monkeypatch, candidate_filename, registered_case
 ):
     candidate = _specification(
         REPOSITORY_ROOT
-        / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_balh.dat"
+        / "input/official/task041/side_balh"
+        / candidate_filename
     )
     from benchmarks import task041_balh_workflow
     from src.runners import task041_supervisor as supervisor
 
-    ledger_path = tmp_path / "compute_wall_ledger.json"
-    ledger_path.write_text(
-        json.dumps(
+    candidate_model = str(candidate.identity["model_id"])
+    case_contract = (
+        task041_balh_service_contract(candidate_model)
+        if registered_case
+        else None
+    )
+    ledger_path = tmp_path / (
+        case_contract["ledger"]["filename"]
+        if case_contract is not None
+        else "compute_wall_ledger.json"
+    )
+    ledger_payload = {
+        "schema": "task041.compute_wall_ledger.v1",
+        "limit_seconds": 172800.0,
+        "used_compute_wall_seconds": 10.0,
+        "used_status": "measured",
+        "basis": "test-local BALH fresh-phase ledger",
+        "measured": {"status": "measured", "seconds": 10.0, "records": []},
+        "derived": {"status": "not_measured", "seconds": None},
+    }
+    if case_contract is not None:
+        ledger_payload.update(
             {
-                "schema": "task041.compute_wall_ledger.v1",
-                "limit_seconds": 172800.0,
-                "used_compute_wall_seconds": 10.0,
-                "used_status": "measured",
-                "basis": "test-local BALH fresh-phase ledger",
-                "measured": {"status": "measured", "seconds": 10.0, "records": []},
-                "derived": {"status": "not_measured", "seconds": None},
-            },
-            sort_keys=True,
+                "case_id": candidate_model,
+                "profile_id": None,
+                "limit_seconds": None,
+                "budget_semantics": case_contract["budget_semantics"],
+            }
         )
+    ledger_path.write_text(
+        json.dumps(ledger_payload, sort_keys=True)
         + "\n",
         encoding="utf-8",
     )
@@ -769,6 +904,7 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
                 "cumulative_compute_used_seconds": kwargs[
                     "cumulative_compute_used_seconds"
                 ],
+                "enforce_time_stops": kwargs["enforce_time_stops"],
             }
         )
         return real_run_phase(
@@ -841,10 +977,27 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     observed_schedules = []
 
     def fake_consumer_result(
-        consumer_root, process_group_gone, expected_side_setup_schedule=None
+        consumer_root,
+        process_group_gone,
+        expected_side_setup_schedule=None,
+        **kwargs,
     ):
         observed_schedules.append(expected_side_setup_schedule)
         assert expected_side_setup_schedule is None
+        if registered_case:
+            assert kwargs["expected_diagnostic_output"] is True
+            assert kwargs["expected_diagnostic_model_id"] == candidate_model
+            return {
+                "complete": True,
+                "classification": "DIAGNOSTIC_RESULT_AVAILABLE",
+                "worker_classification": "DIAGNOSTIC_RESULT_AVAILABLE",
+                "diagnostic_result_available": True,
+                "completion_scope": "formal",
+                "qualification_status": "unqualified",
+                "diagnostic_output": {"result_available": True},
+                "process_group_gone": process_group_gone,
+                "factor_inventory": {},
+            }
         return {
             "complete": True,
             "classification": "worker_exit0",
@@ -876,16 +1029,48 @@ def test_task041_balh_public_fresh_phases_share_cumulative_budget(
     assert result["result_classification"] == "worker_exit0"
     assert len(popen_calls) == 2
     assert observed_schedules == [None]
-    producer_seconds = result["phase_results"]["producer"]["phase_wall_seconds"]
+    assert [call["enforce_time_stops"] for call in phase_calls] == [
+        True,
+        not registered_case,
+    ]
     assert phase_calls[0]["cumulative_compute_used_seconds"] == pytest.approx(10.0)
-    assert phase_calls[1]["cumulative_compute_used_seconds"] == pytest.approx(
-        10.0 + producer_seconds
-    )
+    producer_seconds = result["phase_results"]["producer"]["phase_wall_seconds"]
     budget = result["compute_wall_budget"]
-    assert budget["used_before_seconds"] == pytest.approx(10.0)
-    assert budget["used_after_seconds"] == pytest.approx(
-        10.0 + result["compute_wall_seconds"]
-    )
+    if registered_case:
+        assert phase_calls[1]["cumulative_compute_used_seconds"] == pytest.approx(
+            10.0
+        )
+        assert result["phase_results"]["producer"]["limits"][
+            "timeout_seconds"
+        ] == 345600
+        assert result["phase_results"]["producer"]["time_stop_enforced"] is True
+        assert result["phase_results"]["consumer"]["limits"][
+            "timeout_seconds"
+        ] is None
+        assert result["phase_results"]["consumer"]["limits"][
+            "cumulative_compute_limit_seconds"
+        ] is None
+        assert result["phase_results"]["consumer"]["time_stop_enforced"] is False
+        assert result["time_stop_policy"]["consumer_enforced"] is False
+        assert result["status"] == "completed_with_diagnostics"
+        assert result["qualification_status"] == "unqualified"
+        assert budget["limit_seconds"] is None
+        assert budget["remaining_after_seconds"] is None
+        updated = supervisor._read_json(ledger_path)
+        assert updated["case_id"] == candidate_model
+        assert updated["profile_id"] is None
+        assert updated["limit_seconds"] is None
+        assert updated["used_compute_wall_seconds"] == pytest.approx(
+            10.0 + result["compute_wall_seconds"]
+        )
+    else:
+        assert phase_calls[1]["cumulative_compute_used_seconds"] == pytest.approx(
+            10.0 + producer_seconds
+        )
+        assert budget["used_before_seconds"] == pytest.approx(10.0)
+        assert budget["used_after_seconds"] == pytest.approx(
+            10.0 + result["compute_wall_seconds"]
+        )
     assert result["phase_results"]["producer"].get("reused") is not True
 
 
@@ -2602,3 +2787,120 @@ def test_formal_mode_does_not_accept_representative_summary(tmp_path):
     result = supervisor._consumer_result(root, process_group_gone=True)
     assert result["complete"] is False
     assert result["completion_scope"] == "formal"
+
+
+def test_public_diagnostic_completion_requires_registered_identity_and_cleanup(
+    tmp_path,
+):
+    model_id = TASK041_BALH_2NM_CANDIDATE_MODEL_ID
+    root = tmp_path / "diagnostic_consumer"
+    root.mkdir()
+    summary = {
+        "schema": "task041.side_balh.exact_side.v1",
+        "status": "completed_with_diagnostics",
+        "classification": "DIAGNOSTIC_RESULT_AVAILABLE",
+        "identity": {"model_id": model_id},
+        "diagnostic_output_policy": {
+            "enabled": True,
+            "model_id": model_id,
+        },
+        "diagnostic_output": {"result_available": True},
+        "qualification_status": "unqualified",
+        "qualification": {"pass": False},
+        "formal": {
+            "solve": {"pass": True},
+            "recovery": {"pass": True, "physics_pass": True},
+            "physics": {"pass": True},
+        },
+        "official_rta": {
+            "status": "measured_diagnostic",
+            "qualified": False,
+            "R": 0.1,
+            "T": 0.8,
+            "A": 0.1,
+            "A_volume": 0.1,
+        },
+        "lifecycle": {
+            "setup_released": True,
+            "rss_marker_emitted": True,
+        },
+        "cleanup": {"pass": True},
+        "markers": {"observed": ["final_cleanup_complete"]},
+        "gates": {
+            "pass": False,
+            "authority_identity": {"pass": True},
+            "grid_E_H_evidence_pass": True,
+            "external_diffraction_channels_pass": True,
+            "external_key_binding_pass": True,
+            "external_orders_key_binding_pass": True,
+            "interface_projection": 1.0e-6,
+            "interface_projection_pass": False,
+        },
+    }
+    supervisor._write_json(root / "consumer_summary.json", summary)
+
+    assert task041_balh_diagnostic_output_enabled(model_id) is True
+    result = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_diagnostic_output=True,
+        expected_diagnostic_model_id=model_id,
+    )
+    assert result["complete"] is True
+    assert result["classification"] == "DIAGNOSTIC_RESULT_AVAILABLE"
+    assert result["completion_scope"] == "formal"
+    assert result["official_rta"]["qualified"] is False
+    assert result["gates"]["interface_projection"] == 1.0e-6
+
+    summary["gates"]["external_key_binding_pass"] = False
+    supervisor._write_json(root / "consumer_summary.json", summary)
+    wrong_key = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_diagnostic_output=True,
+        expected_diagnostic_model_id=model_id,
+    )
+    assert wrong_key["complete"] is False
+    assert wrong_key["gates"]["external_key_binding_pass"] is False
+    summary["gates"]["external_key_binding_pass"] = True
+
+    summary["identity"]["model_id"] = TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    summary["diagnostic_output_policy"]["model_id"] = (
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    )
+    supervisor._write_json(root / "consumer_summary.json", summary)
+    impostor = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_diagnostic_output=True,
+        expected_diagnostic_model_id=TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
+    )
+    assert impostor["complete"] is False
+    summary["identity"]["model_id"] = model_id
+    summary["diagnostic_output_policy"]["model_id"] = model_id
+    supervisor._write_json(root / "consumer_summary.json", summary)
+
+    summary["official_rta"]["R"] = float("nan")
+    supervisor._write_json(root / "consumer_summary.json", summary)
+    nonfinite = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_diagnostic_output=True,
+        expected_diagnostic_model_id=model_id,
+    )
+    assert nonfinite["complete"] is False
+
+    summary["official_rta"]["R"] = 0.1
+    summary["cleanup"]["pass"] = False
+    supervisor._write_json(root / "consumer_summary.json", summary)
+    uncleared = supervisor._consumer_result(
+        root,
+        process_group_gone=True,
+        expected_diagnostic_output=True,
+        expected_diagnostic_model_id=model_id,
+    )
+    assert uncleared["complete"] is False
+
+    assert task041_balh_diagnostic_output_enabled(
+        TASK041_BALH_5NM_CANDIDATE_MODEL_ID
+    ) is False

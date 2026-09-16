@@ -9,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import ClassVar
 
+import numpy as np
 import pytest
 
 from benchmarks import run_task037b_hybrid_iterative as iterative_runner
@@ -152,6 +153,104 @@ def test_task041_external_key_hash_rejects_invalid_or_missing_physical_fields(
 
     with pytest.raises(task041.Task041ModePrepError, match=field):
         task041._task041_canonical_mode_keys_sha256([key])
+
+
+@pytest.mark.parametrize(
+    ("allow_unqualified", "solve_pass", "expected_recovery_calls"),
+    ((True, False, 1), (False, False, 0)),
+)
+def test_v7_opt_in_allows_finite_failed_solve_to_reach_recovery(
+    monkeypatch, tmp_path, allow_unqualified, solve_pass, expected_recovery_calls
+):
+    class Vec:
+        def duplicate(self):
+            return Vec()
+
+        def copy(self, other):
+            del other
+
+        def getArray(self, readonly=True):
+            del readonly
+            return np.asarray([1.0 + 0.0j])
+
+        def destroy(self):
+            return None
+
+    class Comm:
+        rank = 0
+
+        @staticmethod
+        def allreduce(value, op):
+            del op
+            return bool(value)
+
+    class Iterative:
+        def __init__(self):
+            self.solution = Vec()
+            self.postsolve_audit = {
+                "pass": solve_pass,
+                "reported_relative_residual": 1.0e-3,
+                "global_true_relative_residual": 1.0e-3,
+                "bottom_true_relative_residual": 1.0e-3,
+                "top_true_relative_residual": 1.0e-3,
+                "modal_true_relative_residual": 1.0e-3,
+            }
+            self.converged_reason = 1
+            self.iterations = 2
+            self.block_relative_residuals = {"bottom": 1.0e-3, "top": 1.0e-3}
+            self.timing = {}
+            self.inventory = {}
+
+        def destroy(self):
+            return None
+
+    recovery_calls = []
+
+    def fake_recovery(*args, **kwargs):
+        recovery_calls.append({"kwargs": kwargs, "producer": args[-1]})
+        return {"pass": True}
+
+    monkeypatch.setattr(orchestration, "_default_rhs", lambda *args: Vec())
+    monkeypatch.setattr(
+        orchestration,
+        "solve_hybrid_block_ldu_iterative",
+        lambda *args, **kwargs: Iterative(),
+    )
+    release = {
+        "factor_cleanup_pass": True,
+        "actions_destroyed": True,
+        "component_cleanup_pass": True,
+        "collective_heap_cleanup": {"collective_call_completed": True},
+        "factor_count_after_cleanup": {"bottom": 0, "top": 0},
+    }
+    result = orchestration._run_v7_h4_exact_side_full_formal(
+        setup=object(),
+        layout=object(),
+        operator=object(),
+        context=object(),
+        comm=Comm(),
+        marker_callback=lambda *args, **kwargs: None,
+        recovery_runner=fake_recovery,
+        producer={},
+        run_directory=tmp_path,
+        release_before_recovery=lambda: release,
+        retained_solution_checkpoint=lambda *args: {
+            "packet_pass": True,
+            "qualification": "diagnostic-only",
+        },
+        allow_unqualified_diagnostic_recovery=allow_unqualified,
+    )
+    assert len(recovery_calls) == expected_recovery_calls
+    assert result["solve"]["pass"] is solve_pass
+    if allow_unqualified:
+        assert (
+            recovery_calls[0]["producer"]["_task041_allow_unqualified_diagnostic"]
+            is True
+        )
+        assert result["status"] == "full_formal_recovery_failure"
+    else:
+        assert result["recovery"] == "not_run"
+        assert result["status"] == "full_formal_outer_failure"
 
 
 @pytest.mark.parametrize(
@@ -691,17 +790,18 @@ def test_fresh_sampled_contract_is_bound_to_current_manifest(tmp_path):
 
 
 @pytest.mark.parametrize(
-    ("order_case", "mpi_size", "mode_count"),
+    ("order_case", "mpi_size", "mode_count", "interface_projection"),
     (
-        ("valid", 1, 480),
-        ("missing", 1, 480),
-        ("extra", 1, 480),
-        ("duplicate", 1, 480),
-        ("valid", 8, 800),
+        ("valid", 1, 480, 1.0e-9),
+        ("missing", 1, 480, 1.0e-9),
+        ("extra", 1, 480, 1.0e-9),
+        ("duplicate", 1, 480, 1.0e-9),
+        ("valid", 8, 800, 1.0e-9),
+        ("valid", 1, 480, 1.0e-6),
     ),
 )
 def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
-    tmp_path, order_case, mpi_size, mode_count
+    tmp_path, order_case, mpi_size, mode_count, interface_projection
 ):
     authority_path = tmp_path / "v3_7_hybrid_authority.json"
     source_sha = "b" * 40
@@ -774,7 +874,7 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
                         for name in ("E_V_per_m", "H_A_per_m")
                     }
                 },
-                "interface_projection": 1.0e-9,
+                "interface_projection": interface_projection,
                 "traction": {
                     "bottom": {"relative_residual": 1.0e-9},
                     "top": {"relative_residual": 1.0e-9},
@@ -792,6 +892,7 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
     )
     formal = {
         "solve": {
+            "pass": True,
             "converged_reason": 1,
             "postsolve": {
                 key: 1.0e-9
@@ -822,6 +923,7 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
                 "pass": False,
             },
         },
+        "release_before_recovery": {"pass": True},
     }
     gates = task041._task041_consumer_authority_gate(
         authority_path,
@@ -829,17 +931,26 @@ def test_consumer_authority_gate_is_recomputed_from_fresh_authority(
         identity,
         expected_consumer_source_sha=source_sha,
     )
-    expected_pass = order_case == "valid"
+    expected_order_pass = order_case == "valid"
+    expected_pass = expected_order_pass and interface_projection <= 1.0e-8
     assert gates["pass"] is expected_pass
     assert gates["ksp_reason_pass"] is True
     assert gates["authority_identity"]["pass"] is True
     assert gates["external_key_binding_pass"] is True
-    assert gates["external_orders_key_binding_pass"] is expected_pass
+    assert gates["external_orders_key_binding_pass"] is expected_order_pass
     assert gates["external_q_residuals"] == {
         "bottom": 1.0e-12,
         "top": 1.0e-12,
     }
     assert gates["integrated_checker"]["status"] == "not_available"
+    if order_case == "valid" and interface_projection > 1.0e-8:
+        assert gates["official_rta"]["status"] == "measured"
+        assert task041._task041_diagnostic_authority_available(
+            authority_path,
+            formal,
+            gates,
+            policy_enabled=True,
+        ) is True
 
 
 @pytest.mark.parametrize(
@@ -1138,10 +1249,18 @@ def test_run_task041_consumer_full_mock_keeps_release_and_authority_evidence(
     monkeypatch.setattr(task041, "task041_profile_errors", lambda payload: ())
     monkeypatch.setattr(task041, "resolved_config_sha256", lambda spec: "d" * 64)
     monkeypatch.setattr(task041, "build_task041_packet_identity", lambda *args: identity)
+    def fake_sampled_column_contract(
+        identity_arg, manifest_arg, manifest_sha_arg, *, legacy_native=False
+    ):
+        del identity_arg, manifest_arg, manifest_sha_arg
+        if legacy_native:
+            raise AssertionError("unexpected legacy packet in this fixture")
+        return {**fake_sampled_contract, "source": "fresh_packet_contract"}
+
     monkeypatch.setattr(
         task041,
         "_task041_consumer_sampled_column_contract",
-        lambda *args: {**fake_sampled_contract, "source": "fresh_packet_contract"},
+        fake_sampled_column_contract,
     )
     monkeypatch.setattr(task041, "_task041_consumer_profile", lambda: FakeProfile())
     monkeypatch.setattr(
@@ -1351,7 +1470,22 @@ def test_task041_resource_gate_uses_authority_fields():
         )
 
 
-def test_recovery_runner_returns_real_reports(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    ("linear_pass", "recovery_pass", "allow_unqualified", "qualified"),
+    (
+        (True, True, False, True),
+        (False, True, True, False),
+        (True, False, True, False),
+    ),
+)
+def test_recovery_runner_returns_real_reports(
+    monkeypatch,
+    tmp_path,
+    linear_pass,
+    recovery_pass,
+    allow_unqualified,
+    qualified,
+):
     class Comm:
         rank = 0
 
@@ -1383,14 +1517,24 @@ def test_recovery_runner_returns_real_reports(monkeypatch, tmp_path):
         },
     }
     recovery = SimpleNamespace(
-        recovery_pass=True,
+        recovery_pass=recovery_pass,
         reports=reports,
         destroy=lambda: None,
     )
     physics = SimpleNamespace(physics_pass=True)
-    monkeypatch.setattr(orchestration, "recover_frozen_m10", lambda *args, **kwargs: recovery)
+    captured = {}
+
+    def fake_recover(*args, **kwargs):
+        captured["recover_kwargs"] = kwargs
+        return recovery
+
+    def fake_physics(*args, **kwargs):
+        captured["physics_kwargs"] = kwargs
+        return physics
+
+    monkeypatch.setattr(orchestration, "recover_frozen_m10", fake_recover)
     monkeypatch.setattr(
-        orchestration, "run_frozen_m10_physics", lambda *args, **kwargs: physics
+        orchestration, "run_frozen_m10_physics", fake_physics
     )
     monkeypatch.setattr(
         orchestration, "_write_v3_7_candidate_authority", lambda *args: None
@@ -1400,10 +1544,88 @@ def test_recovery_runner_returns_real_reports(monkeypatch, tmp_path):
         Layout(),
         object(),
         tmp_path,
-        {},
+        {
+            "_task041_solve_report": {"pass": linear_pass},
+            "_task041_allow_unqualified_diagnostic": allow_unqualified,
+        },
         run_integrated_checker=False,
     )
     assert result["reports"] is reports
+    assert result["linear_pass"] is linear_pass
+    assert result["recovery_pass"] is recovery_pass
+    assert result["pass"] is qualified
+    assert captured["recover_kwargs"]["allow_unqualified_diagnostic"] is (
+        allow_unqualified
+    )
+    assert captured["physics_kwargs"]["allow_unqualified_diagnostic"] is (
+        allow_unqualified
+    )
+    if not qualified:
+        assert result["qualification"] == "diagnostic_only"
+
+
+@pytest.mark.parametrize("stage", ("recovery", "physics"))
+@pytest.mark.parametrize("bad_state", ("missing", "nonfinite"))
+def test_opted_in_diagnostic_stops_collectively_on_missing_or_nonfinite_state(
+    tmp_path, stage, bad_state
+):
+    class Comm:
+        def __init__(self):
+            self.local_values = []
+
+        def allreduce(self, value, op):
+            del op
+            self.local_values.append(bool(value))
+            return bool(value)
+
+    comm = Comm()
+    mesh = SimpleNamespace(comm=comm)
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(local_mesh=SimpleNamespace(mesh=mesh))
+    )
+    if stage == "recovery":
+        linear = SimpleNamespace(
+            release={"pass": True},
+            bottom_solution=None,
+            top_solution=None,
+            modal_solution=None,
+            linear_pass=False,
+        )
+        if bad_state == "nonfinite":
+            bad_vec = SimpleNamespace(
+                getArray=lambda readonly=True: np.asarray([np.nan + 0.0j])
+            )
+            linear.bottom_solution = bad_vec
+            linear.top_solution = bad_vec
+            linear.modal_solution = np.asarray([1.0 + 0.0j])
+        with pytest.raises(RuntimeError, match="complete finite"):
+            iterative_runner.recover_frozen_m10(
+                setup, linear, allow_unqualified_diagnostic=True
+            )
+    else:
+        recovery = SimpleNamespace(
+            recovery_pass=False,
+            bottom_q=None,
+            top_q=None,
+            bottom_recovered=None,
+            top_recovered=None,
+            modal_solution=None,
+        )
+        if bad_state == "nonfinite":
+            recovery.bottom_q = np.asarray([np.nan + 0.0j])
+            recovery.top_q = np.asarray([1.0 + 0.0j])
+            recovery.bottom_recovered = object()
+            recovery.top_recovered = object()
+            recovery.modal_solution = np.asarray([1.0 + 0.0j])
+        with pytest.raises(RuntimeError, match="complete finite"):
+            iterative_runner.run_frozen_m10_physics(
+                setup,
+                recovery,
+                tmp_path,
+                comm,
+                allow_unqualified_diagnostic=True,
+            )
+    assert comm.local_values == [False]
 
 
 def test_v3_7_negative_authority_persists_without_integrated_checker(
@@ -1500,6 +1722,7 @@ def test_v3_7_negative_authority_persists_without_integrated_checker(
     assert authority["grid_payload"] is None
     assert authority["canonical"] is None
     assert authority["canonical_unavailable_reason"] == "own_physics_pass_false"
+    assert "qualification" not in authority
     assert authority["own_physics_pass"] is False
     assert authority["canonical_pass"] is False
     assert authority["physics_pass"] is False

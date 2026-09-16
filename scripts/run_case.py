@@ -123,9 +123,15 @@ def main(argv: list[str] | None = None) -> int:
                 "Task041 comparison options require task041_schur_speed_v2"
             )
         if args.task041_supervision_record is not None:
-            if args.task041_performance_profile != "task041_schur_speed_v2":
+            from src.io.input_validation import TASK041_BALH_2NM_MODEL_ID
+
+            if (
+                args.task041_performance_profile != "task041_schur_speed_v2"
+                and specification.identity.get("model_id")
+                != TASK041_BALH_2NM_MODEL_ID
+            ):
                 raise InputError(
-                    "--task041-supervision-record requires task041_schur_speed_v2"
+                    "--task041-supervision-record requires a registered Task041 contract"
                 )
             if not args.task041_supervision_record.is_absolute():
                 raise InputError(

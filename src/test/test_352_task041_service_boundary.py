@@ -11,7 +11,11 @@ from pathlib import Path
 import pytest
 
 from benchmarks.task041_balh_workflow import task041_schur_speed_v2_contract
-from src.io.input_validation import task041_balh_phase_limits_for_model
+from src.io.input_validation import (
+    TASK041_BALH_2NM_MODEL_ID,
+    task041_balh_phase_limits_for_model,
+    task041_balh_service_contract,
+)
 from src.runners import task041_service as service
 from src.runners import task041_supervisor as supervisor
 
@@ -57,6 +61,45 @@ def _write_config(tmp_path: Path, *, root: Path | None = None) -> tuple[Path, di
         },
     }
     path = tmp_path / "job_config.json"
+    supervisor._write_json(path, config)
+    return path, config
+
+
+def _write_registered_2nm_config(
+    tmp_path: Path, *, root: Path | None = None
+) -> tuple[Path, dict]:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    root = root or tmp_path / "registered-2nm-supervision"
+    contract = task041_balh_service_contract(TASK041_BALH_2NM_MODEL_ID)
+    ledger = tmp_path / contract["ledger"]["filename"]
+    supervisor._write_json(
+        ledger,
+        {
+            "schema": "task041.compute_wall_ledger.v1",
+            "case_id": TASK041_BALH_2NM_MODEL_ID,
+            "profile_id": None,
+            "limit_seconds": None,
+            "used_compute_wall_seconds": 100.0,
+            "used_status": "measured",
+            "measured": {"status": "measured", "seconds": 100.0, "records": []},
+            "source_records": [],
+            "budget_semantics": contract["budget_semantics"],
+        },
+    )
+    config = {
+        "unit": UNIT,
+        "model_id": TASK041_BALH_2NM_MODEL_ID,
+        "source_sha": SOURCE_SHA,
+        "ledger_path": str(ledger),
+        "supervision_root": str(root),
+        "public_command": [sys.executable, "-m", "tests.non_pde_public"],
+        "global_swap_baseline": {
+            "global_swap_used_bytes": 8192,
+            "global_pswpin_pages": 0,
+            "global_pswpout_pages": 2,
+        },
+    }
+    path = tmp_path / "registered_2nm_job_config.json"
     supervisor._write_json(path, config)
     return path, config
 
@@ -335,6 +378,95 @@ def test_parent_writes_loader_identity_and_forwards_v2_limits(monkeypatch, tmp_p
     assert manifest["scope"] == "formal_consumer"
     assert manifest["representative_rhs_probe"] is None
     assert result["pre_exit_membership"]["pass"] is False
+
+
+def test_registered_2nm_parent_and_finalizer_keep_unlimited_budget(monkeypatch, tmp_path):
+    config_path, config = _write_registered_2nm_config(tmp_path)
+    identity = _identity()
+    observed = {}
+
+    monkeypatch.setattr(service, "_parent_unit_identity", lambda _unit: identity)
+    monkeypatch.setattr(service, "_cgroup_members", lambda _group: [os.getpid()])
+    monkeypatch.setattr(service, "_sparse_sample_factory", lambda: "case-sampler")
+
+    def fake_public(command, root, **kwargs):
+        observed.update(command=command, kwargs=kwargs)
+        launch = kwargs["launch_manifest"]
+        Path(root).mkdir(parents=True, exist_ok=True)
+        supervisor._write_json(Path(root) / "launch_manifest.json", launch)
+        supervisor._write_json(
+            Path(root) / "summary.json",
+            {
+                "status": "completed",
+                "result_classification": "worker_exit0",
+                "phase_result": {"returncode": 0, "wall_seconds": 2.0},
+            },
+        )
+        return {
+            "status": "completed",
+            "result_classification": "worker_exit0",
+            "phase_result": {"returncode": 0, "wall_seconds": 2.0},
+        }
+
+    monkeypatch.setattr(
+        supervisor, "run_task041_supervised_public_command", fake_public
+    )
+    parent = service.run_service_parent(config_path)
+
+    assert parent["status"] == "pre_exit_ok"
+    assert observed["command"] == config["public_command"]
+    assert observed["kwargs"]["profile_contract"]["case_id"] == (
+        TASK041_BALH_2NM_MODEL_ID
+    )
+    limits = observed["kwargs"]["resource_limits"]
+    assert limits["timeout_seconds"] is None
+    assert limits["time_stop_enforced"] is False
+    assert limits["hard_memory_bytes"] == 1759218604442
+    assert observed["kwargs"]["launch_manifest"]["case_id"] == (
+        TASK041_BALH_2NM_MODEL_ID
+    )
+    assert observed["kwargs"]["launch_manifest"]["contract_kind"] == (
+        "task041_registered_case_service"
+    )
+
+    captured = {}
+
+    def fake_post(root, finalizer_root, contract, phase_limits, launch, remaining):
+        captured.update(
+            contract=contract,
+            phase_limits=phase_limits,
+            launch=launch,
+            remaining=remaining,
+        )
+        supervisor._write_json(
+            finalizer_root / "artifact_hashes.json", {"pass": True}
+        )
+        return (
+            {
+                "returncode": 0,
+                "termination_reason": None,
+                "partial": False,
+                "process_group_gone": True,
+            },
+            None,
+        )
+
+    monkeypatch.setattr(service, "_run_post_hash", fake_post)
+    _normal_terminal(monkeypatch)
+    finalizer = service.run_service_finalize(config_path)
+
+    assert captured["remaining"] is None
+    assert captured["phase_limits"]["timeout_seconds"] is None
+    assert captured["phase_limits"]["time_stop_enforced"] is False
+    assert finalizer["status"] == "completed"
+    assert finalizer["checks"]["post_hash_phase_completed"] is True
+    assert finalizer["checks"]["ledger_written"] is True
+    ledger = supervisor._read_json(Path(config["ledger_path"]))
+    assert ledger["case_id"] == TASK041_BALH_2NM_MODEL_ID
+    assert ledger["limit_seconds"] is None
+    assert ledger["profile_id"] is None
+    assert len(ledger["source_records"]) == 1
+    assert ledger["used_compute_wall_seconds"] > 100.0
 
 
 def test_finalize_deducts_unit_wall_once_and_limits_post_time(monkeypatch, tmp_path):

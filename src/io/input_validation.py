@@ -433,6 +433,24 @@ TASK041_BALH_N_13P5 = (0.999002304859, 0.00182649365)
 TASK041_BALH_N_5NM = TASK041_N
 TASK041_BALH_SI_LABEL = "Si / silicon, 13.5 nm Task041 authority"
 TASK041_BALH_W_LABEL = TASK041_MATERIAL_LABEL
+TASK041_BALH_2NM_MODEL_ID = (
+    "task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8"
+)
+TASK041_BALH_2NM_N = (0.99880148307, 0.000213688647)
+TASK041_BALH_2NM_W_LABEL = "W / tungsten, 2 nm"
+TASK041_BALH_2NM_PLANNING_CEILING_BYTES = 1649267441664
+TASK041_BALH_2NM_WARNING_MEMORY_BYTES = 1539316278886
+TASK041_BALH_2NM_RUNTIME_RESERVE_BYTES = 412316860416
+TASK041_BALH_2NM_SERVICE_CONTRACT_ID = (
+    "task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8_service_v1"
+)
+TASK041_BALH_2NM_COMPUTE_WALL_LEDGER_FILENAME = (
+    "task041_2nm_balh_hybrid_iterative_p6h1p5_m1200_mpi8_compute_wall_ledger.json"
+)
+# This is the already validated low-level data-plane switch in the owner
+# transfer.  It is deliberately not a public Task041 V2 budget/profile
+# contract for the 2 nm case.
+TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE = "task041_schur_speed_v2"
 
 TASK041_BALH_CASES = {
     "task041_13p5nm_exact_side_hybrid_iterative_p6h10_m120_mpi8": {
@@ -511,6 +529,38 @@ TASK041_BALH_CASES = {
         "solver_contract": "task041_side_balh_candidate_fgmres32_v1",
         "preconditioner": "hybrid_block_ldu_balh_side_inverse",
     },
+    TASK041_BALH_2NM_MODEL_ID: {
+        "run_id": "task041_2nm_p6h1p5_m1200_mpi8_balh",
+        "scope": "task041_2nm_p6h1p5_m1200_mpi8",
+        "comparison_group": "task041_side_balh_2nm_p6h1p5_m1200",
+        "input": "input/official/task041/side_balh/2nm_p6h1p5_m1200_mpi8_balh.dat",
+        "route": "balh",
+        "wavelength_nm": 2.0,
+        "material_n": TASK041_BALH_2NM_N,
+        "material_label": TASK041_BALH_2NM_W_LABEL,
+        "delta": 0.00119851693,
+        "beta": 0.000213688647,
+        "mesh_target_nm": 1.5,
+        "mode_count": 1200,
+        "planning_ceiling_bytes": TASK041_BALH_2NM_PLANNING_CEILING_BYTES,
+        "warning_memory_gib": 1433.6,
+        "warning_memory_bytes": TASK041_BALH_2NM_WARNING_MEMORY_BYTES,
+        "terminate_memory_gib": 1638.4,
+        "absolute_terminate_memory_bytes": 1759218604442,
+        "producer_timeout_seconds": 345600,
+        "consumer_timeout_seconds": 345600,
+        "producer_time_stop_enforced": True,
+        "consumer_time_stop_enforced": False,
+        "runtime_reserve_bytes": TASK041_BALH_2NM_RUNTIME_RESERVE_BYTES,
+        "service_contract_id": TASK041_BALH_2NM_SERVICE_CONTRACT_ID,
+        "compute_wall_ledger_filename": TASK041_BALH_2NM_COMPUTE_WALL_LEDGER_FILENAME,
+        "solver_contract": "task041_2nm_balh_candidate_fgmres32_v1",
+        "preconditioner": "hybrid_block_ldu_balh_side_inverse",
+        "transfer_optimization_profile": TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE,
+        "diagnostic_output_on_unqualified": True,
+        "cpu_set": "1-8",
+        "reporting_harmonic_bound": 60,
+    },
 }
 TASK041_BALH_MODEL_IDS = frozenset(TASK041_BALH_CASES)
 TASK041_BALH_EXACT_MODEL_IDS = frozenset(
@@ -523,12 +573,22 @@ TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID = MappingProxyType(
     {
         model_id: MappingProxyType(
             {
-                "warning_memory_bytes": int(case["warning_memory_gib"] * 2**30),
+                "warning_memory_bytes": case.get(
+                    "warning_memory_bytes", int(case["warning_memory_gib"] * 2**30)
+                ),
                 "hard_memory_bytes": case["absolute_terminate_memory_bytes"],
                 "swap_limit_bytes": 0,
                 "timeout_seconds": max(
                     case["producer_timeout_seconds"],
                     case["consumer_timeout_seconds"],
+                ),
+                "consumer_time_stop_enforced": case.get(
+                    "consumer_time_stop_enforced", True
+                ),
+                **(
+                    {"planning_ceiling_bytes": case["planning_ceiling_bytes"]}
+                    if "planning_ceiling_bytes" in case
+                    else {}
                 ),
             }
         )
@@ -541,20 +601,64 @@ TASK041_BALH_PHASE_LIMITS_BY_MODEL_ID = MappingProxyType(
             {
                 "producer": MappingProxyType(
                     {
-                        "warning_memory_bytes": int(case["warning_memory_gib"] * 2**30),
+                        "warning_memory_bytes": case.get(
+                            "warning_memory_bytes", int(case["warning_memory_gib"] * 2**30)
+                        ),
                         "hard_memory_bytes": case["absolute_terminate_memory_bytes"],
                         "min_memavailable_bytes": TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES,
                         "swap_limit_bytes": 0,
                         "timeout_seconds": case["producer_timeout_seconds"],
+                        "time_stop_enforced": case.get(
+                            "producer_time_stop_enforced", True
+                        ),
+                        **(
+                            {
+                                "process_tree_rss_warning_bytes": case[
+                                    "warning_memory_bytes"
+                                ],
+                                "process_tree_rss_cap_bytes": case[
+                                    "absolute_terminate_memory_bytes"
+                                ],
+                            }
+                            if "warning_memory_bytes" in case
+                            else {}
+                        ),
+                        **(
+                            {"planning_ceiling_bytes": case["planning_ceiling_bytes"]}
+                            if "planning_ceiling_bytes" in case
+                            else {}
+                        ),
                     }
                 ),
                 "consumer": MappingProxyType(
                     {
-                        "warning_memory_bytes": int(case["warning_memory_gib"] * 2**30),
+                        "warning_memory_bytes": case.get(
+                            "warning_memory_bytes", int(case["warning_memory_gib"] * 2**30)
+                        ),
                         "hard_memory_bytes": case["absolute_terminate_memory_bytes"],
                         "min_memavailable_bytes": TASK041_BALH_MEMAVAILABLE_BASELINE_BYTES,
                         "swap_limit_bytes": 0,
                         "timeout_seconds": case["consumer_timeout_seconds"],
+                        "time_stop_enforced": case.get(
+                            "consumer_time_stop_enforced", True
+                        ),
+                        **(
+                            {
+                                "process_tree_rss_warning_bytes": case[
+                                    "warning_memory_bytes"
+                                ],
+                                "process_tree_rss_cap_bytes": case[
+                                    "absolute_terminate_memory_bytes"
+                                ],
+                            }
+                            if "warning_memory_bytes" in case
+                            else {}
+                        ),
+                        **(
+                            {"planning_ceiling_bytes": case["planning_ceiling_bytes"]}
+                            if "planning_ceiling_bytes" in case
+                            else {}
+                        ),
                     }
                 ),
             }
@@ -571,7 +675,77 @@ def task041_balh_case(model_id: str) -> Mapping[str, Any] | None:
     return None if case is None else dict(case)
 
 
-def task041_balh_workflow_limits(model_id: str) -> Mapping[str, int]:
+def task041_balh_diagnostic_output_enabled(model_id: str) -> bool:
+    """Return the registered opt-in for finite, unqualified field output."""
+
+    case = task041_balh_case(model_id)
+    return bool(case is not None and case.get("diagnostic_output_on_unqualified", False))
+
+
+def task041_balh_service_contract(model_id: str) -> Mapping[str, Any] | None:
+    """Return the explicit service contract for the registered 2 nm run.
+
+    The input file keeps its positive producer timeout as an identity fact.  The
+    consumer's unlimited elapsed-time policy is represented here instead of by
+    a large sentinel or by the V2 research budget contract.
+    """
+
+    case = task041_balh_case(model_id)
+    if case is None or str(model_id) != TASK041_BALH_2NM_MODEL_ID:
+        return None
+    warning_bytes = int(
+        case.get("warning_memory_bytes", case["warning_memory_gib"] * 2**30)
+    )
+    return {
+        "contract_kind": "task041_registered_case_service",
+        "contract_id": case["service_contract_id"],
+        "profile_id": case["service_contract_id"],
+        "case_id": TASK041_BALH_2NM_MODEL_ID,
+        "model_id": TASK041_BALH_2NM_MODEL_ID,
+        "scope": "formal_consumer",
+        "side_setup_schedule": None,
+        "comparison_mode": None,
+        "memory_cap_bytes": int(case["absolute_terminate_memory_bytes"]),
+        "warning_memory_bytes": warning_bytes,
+        "memory_cap_source": "task041_2nm_case_resource_contract",
+        "memory_gate_source": "simultaneous_process_tree_rss",
+        "planning_ceiling_bytes": int(case["planning_ceiling_bytes"]),
+        "runtime_reserve_bytes": int(case["runtime_reserve_bytes"]),
+        "mpi_size": TASK041_BALH_MPI_SIZE,
+        "cpu_set": case["cpu_set"],
+        "math_threads": 1,
+        "swap_limit_bytes": 0,
+        "phase_budgets_seconds": {
+            "producer": float(case["producer_timeout_seconds"]),
+            "consumer": None,
+        },
+        "active_consumer_phase": "consumer",
+        "active_consumer_budget_seconds": None,
+        "batch_budget_seconds": None,
+        "compute_wall_unlimited": True,
+        "producer": {
+            "mode": "fresh",
+            "invocation": "required",
+            "time_stop_enforced": True,
+            "qep": "fresh",
+        },
+        "time_stop": {
+            "producer_enforced": True,
+            "consumer_enforced": False,
+            "consumer_timeout_seconds": None,
+            "semantics": "resource, numerical, identity and iteration gates remain enforced",
+        },
+        "ledger": {
+            "schema": "task041.compute_wall_ledger.v1",
+            "filename": case["compute_wall_ledger_filename"],
+            "limit_seconds": None,
+            "semantics": "independent case ledger; records actual finalizer wall without an elapsed stop",
+        },
+        "budget_semantics": "independent 2 nm case accounting; no V2 batch or phase budget",
+    }
+
+
+def task041_balh_workflow_limits(model_id: str) -> Mapping[str, Any]:
     try:
         return TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID[str(model_id)]
     except KeyError as exc:
@@ -580,7 +754,7 @@ def task041_balh_workflow_limits(model_id: str) -> Mapping[str, int]:
 
 def task041_balh_phase_limits_for_model(
     model_id: str, phase: str
-) -> Mapping[str, int]:
+) -> Mapping[str, Any]:
     try:
         model_limits = TASK041_BALH_PHASE_LIMITS_BY_MODEL_ID[str(model_id)]
     except KeyError as exc:
@@ -910,7 +1084,7 @@ def task041_balh_material_provenance(
         return None
     n = complex(*case["material_n"])
     epsilon = n**2
-    return {
+    provenance = {
         "source": "Task041 side BAL_H parsed input material",
         "authority": "Task041 side BAL_H profile contract",
         "model_id": str(config.get("model_id")),
@@ -924,6 +1098,10 @@ def task041_balh_material_provenance(
         "finite": bool(np.isfinite(epsilon.real) and np.isfinite(epsilon.imag)),
         "imaginary_sign_preserved": True,
     }
+    if "delta" in case:
+        provenance["delta"] = float(case["delta"])
+        provenance["beta"] = float(case["beta"])
+    return provenance
 
 
 def task041_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
@@ -1182,6 +1360,7 @@ def task041_balh_profile_errors(
     case = task041_balh_case(model_id)
     if case is None:
         return [("model_id", "Task041 side BAL_H accepts only registered profiles")]
+    reporting_harmonic_bound = case.get("reporting_harmonic_bound", 25)
     expected: dict[str | None, dict[str, Any]] = {
         None: {
             "model_id": model_id,
@@ -1281,8 +1460,8 @@ def task041_balh_profile_errors(
             "diffraction_sample_count_x": 32,
             "diffraction_sample_count_y": 32,
             "probe_fraction": 0.75,
-            "diffraction_order_max_m": 25,
-            "diffraction_order_max_n": 25,
+            "diffraction_order_max_m": reporting_harmonic_bound,
+            "diffraction_order_max_n": reporting_harmonic_bound,
         },
     }
     errors: list[tuple[str, str]] = []
@@ -3415,6 +3594,14 @@ def load_and_resolve(path: str | Path) -> RunSpecification:
 
 
 __all__ = [
+    "TASK041_BALH_2NM_COMPUTE_WALL_LEDGER_FILENAME",
+    "TASK041_BALH_2NM_MODEL_ID",
+    "TASK041_BALH_2NM_N",
+    "TASK041_BALH_2NM_PLANNING_CEILING_BYTES",
+    "TASK041_BALH_2NM_RUNTIME_RESERVE_BYTES",
+    "TASK041_BALH_2NM_SERVICE_CONTRACT_ID",
+    "TASK041_BALH_2NM_WARNING_MEMORY_BYTES",
+    "TASK041_BALH_2NM_W_LABEL",
     "TASK041_BALH_CANDIDATE_MODEL_IDS",
     "TASK041_BALH_CASES",
     "TASK041_BALH_COMPARISON_GROUP",
@@ -3426,6 +3613,7 @@ __all__ = [
     "TASK041_BALH_N_13P5",
     "TASK041_BALH_PHASE_LIMITS_BY_MODEL_ID",
     "TASK041_BALH_SI_LABEL",
+    "TASK041_BALH_TRANSFER_OPTIMIZATION_PROFILE",
     "TASK041_BALH_WORKFLOW_LIMITS_BY_MODEL_ID",
     "TASK041_BALH_W_LABEL",
     "TASK041_COMPARISON_GROUP",
@@ -3476,9 +3664,11 @@ __all__ = [
     "task039_v3_2d_profile_errors",
     "task039_v3_3d_profile_errors",
     "task041_balh_case",
+    "task041_balh_diagnostic_output_enabled",
     "task041_balh_material_provenance",
     "task041_balh_phase_limits_for_model",
     "task041_balh_profile_errors",
+    "task041_balh_service_contract",
     "task041_balh_timeout_scope",
     "task041_balh_workflow_limits",
     "task041_material_provenance",

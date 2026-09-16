@@ -39,6 +39,7 @@ from src.io.input_validation import (
     load_and_resolve,
     simulation_config_3d_from_normalized,
     task041_balh_case,
+    task041_balh_diagnostic_output_enabled,
     task041_balh_phase_limits_for_model,
     task041_balh_profile_errors,
     task041_balh_workflow_limits,
@@ -655,6 +656,7 @@ def _task041_case_contract(
             TASK041_BALH_EXACT_CONSUMER_PROFILE,
             TASK041_BALH_EXACT_CONSUMER_SCHEMA,
             TASK041_BALH_MODE_PREP_PROFILE,
+            task041_balh_transfer_optimization_profile,
         )
 
         route = str(balh_case["route"])
@@ -679,6 +681,18 @@ def _task041_case_contract(
             ),
             "limits": dict(task041_balh_phase_limits_for_model(model_id, phase)),
             "workflow_limits": dict(task041_balh_workflow_limits(model_id)),
+            "diagnostic_output_on_unqualified": task041_balh_diagnostic_output_enabled(
+                model_id
+            ),
+            "producer_time_stop_enforced": balh_case.get(
+                "producer_time_stop_enforced", True
+            ),
+            "consumer_time_stop_enforced": balh_case.get(
+                "consumer_time_stop_enforced", True
+            ),
+            "transfer_optimization_profile": (
+                task041_balh_transfer_optimization_profile(model_id)
+            ),
         }
 
     failures = tuple(task041_shortwave_profile_errors(normalized))
@@ -2005,6 +2019,44 @@ def _task041_consumer_authority_gate(
     return gates
 
 
+def _task041_diagnostic_authority_available(
+    authority_path: Path | None,
+    formal_result: Mapping[str, Any],
+    gates: Mapping[str, Any],
+    *,
+    policy_enabled: bool,
+) -> bool:
+    """Allow finite diagnostic output only after the structural gates pass."""
+
+    release = formal_result.get("release_before_recovery")
+    official_rta = gates.get("official_rta")
+    rta_finite = bool(
+        isinstance(official_rta, Mapping)
+        and official_rta.get("status") == "measured"
+        and all(
+            isinstance(official_rta.get(name), (int, float))
+            and not isinstance(official_rta.get(name), bool)
+            and np.isfinite(float(official_rta[name]))
+            for name in ("R", "T", "A", "A_volume")
+        )
+    )
+    return bool(
+        policy_enabled
+        and authority_path is not None
+        and authority_path.is_file()
+        and isinstance(release, Mapping)
+        and release.get("pass") is True
+        and gates.get("pass") is False
+        and isinstance(gates.get("authority_identity"), Mapping)
+        and gates["authority_identity"].get("pass") is True
+        and gates.get("grid_E_H_evidence_pass") is True
+        and gates.get("external_diffraction_channels_pass") is True
+        and gates.get("external_key_binding_pass") is True
+        and gates.get("external_orders_key_binding_pass") is True
+        and rta_finite
+    )
+
+
 def _merge_representative_parts(
     representative_parts: Sequence[Mapping[str, Any]],
     representative_entries: Sequence[Mapping[str, Any]],
@@ -2047,6 +2099,7 @@ def _run_task041_balh_candidate_setup(
     representative_rhs_contract: Mapping[str, Any] | None = None,
     side_setup_schedule: str | None = None,
     performance_profile: str | None = None,
+    transfer_optimization_profile: str | None = None,
     comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -2364,7 +2417,11 @@ def _run_task041_balh_candidate_setup(
             record_iteration_history=(
                 comparison_mode == TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE
             ),
-            performance_profile=performance_profile,
+            performance_profile=(
+                transfer_optimization_profile
+                if transfer_optimization_profile is not None
+                else performance_profile
+            ),
             lifecycle_callback=(
                 side_lifecycle_callback(side)
                 if detailed_timing
@@ -5808,6 +5865,16 @@ def run_task041_consumer(
     specification = load_and_resolve(input_path)
     normalized = specification.as_jsonable()
     contract = _task041_case_contract(normalized, comm.size, phase="consumer")
+    case_time_stop_disabled = bool(
+        contract["balh"]
+        and contract.get("consumer_time_stop_enforced", True) is False
+    )
+    time_stop_disabled = bool(disable_time_stop or case_time_stop_disabled)
+    time_stop_enforced = not time_stop_disabled if contract["balh"] else True
+    diagnostic_output_enabled = bool(
+        contract.get("diagnostic_output_on_unqualified", False)
+    )
+    transfer_optimization_profile = contract.get("transfer_optimization_profile")
     if candidate and not (
         contract["balh"] and contract.get("balh_route") == "balh"
     ):
@@ -5939,6 +6006,14 @@ def run_task041_consumer(
         "source_sha": source_sha,
         "status": "IMPLEMENTATION_FAILURE",
         "classification": "IMPLEMENTATION_FAILURE",
+        "diagnostic_output_policy": {
+            "enabled": diagnostic_output_enabled,
+            "model_id": (
+                normalized["model_id"] if diagnostic_output_enabled else None
+            ),
+            "mode": "finite_unqualified_field" if diagnostic_output_enabled else "disabled",
+            "qualification_independent": diagnostic_output_enabled,
+        },
         "official_rta": {"status": "not_run"},
         "limits": contract["limits"],
         "consumer_scope": {
@@ -5970,6 +6045,13 @@ def run_task041_consumer(
             result["side_setup_schedule"] = side_setup_schedule
         if comparison_mode is not None:
             result["comparison_mode"] = comparison_mode
+    if transfer_optimization_profile is not None:
+        result["transfer_optimization"] = {
+            "profile": transfer_optimization_profile,
+            "source": "src.solvers.physical_balanced_same_mesh_transfer",
+            "scope": "candidate side owner transfer and conjugate-transpose apply",
+            "high_level_performance_contract": "not_used",
+        }
     if representative_rhs_contract is not None:
         result["representative_rhs_probe"] = {
             "path": representative_rhs_contract["path"],
@@ -5981,15 +6063,27 @@ def run_task041_consumer(
     if candidate:
         result["side_rhs_audit_path"] = str(candidate_audit_path)
     if contract["balh"]:
-        result["time_stop_override"] = (
-            task041_balh_time_stop_override_record(disable_time_stop)
-            | {
+        if case_time_stop_disabled:
+            result["time_stop_policy"] = {
                 "model_id": normalized["model_id"],
                 "run_id": normalized["run_id"],
-                "source_sha": source_sha,
-                "origin": "public_worker_cli",
+                "producer_enforced": bool(
+                    contract.get("producer_time_stop_enforced", True)
+                ),
+                "consumer_enforced": False,
+                "consumer_timeout_seconds": None,
+                "scope": "registered_2nm_case",
             }
-        )
+        else:
+            result["time_stop_override"] = (
+                task041_balh_time_stop_override_record(disable_time_stop)
+                | {
+                    "model_id": normalized["model_id"],
+                    "run_id": normalized["run_id"],
+                    "source_sha": source_sha,
+                    "origin": "public_worker_cli",
+                }
+            )
     if packet_origin is not None:
         result["packet_origin"] = packet_origin
         result["legacy_native_binding"] = str(legacy_native_binding)
@@ -6015,7 +6109,7 @@ def run_task041_consumer(
             schema=contract["consumer_schema"],
             marker_sequence=TASK041_CONSUMER_MARKER_SEQUENCE,
             limits=contract["limits"],
-            enforce_time_stop=not disable_time_stop if contract["balh"] else True,
+            enforce_time_stop=time_stop_enforced,
         )
         marker_records.append(marker)
 
@@ -6270,6 +6364,7 @@ def run_task041_consumer(
             ),
             "canonical_authority": True,
             "consumer_route": "balh_candidate" if candidate else "balh_exact",
+            "diagnostic_output_policy": result["diagnostic_output_policy"],
         }
         result["identity"] = recomputed_identity
         result["producer_identity"] = packet_identity
@@ -6472,9 +6567,7 @@ def run_task041_consumer(
                     after_sample,
                     started,
                     contract["limits"],
-                    enforce_time_stop=(
-                        not disable_time_stop if contract["balh"] else True
-                    ),
+                    enforce_time_stop=time_stop_enforced,
                 )
                 after_rss = _process_tree_rss(after_sample)
                 after_memory_authority = _memory_authority(after_sample)
@@ -6514,7 +6607,10 @@ def run_task041_consumer(
 
             return _run_v7_h4_exact_side_full_formal(
                 recovery_runner=recovery_runner,
-                producer={**producer, "_stage_callback": callback},
+                producer={
+                    **producer,
+                    "_stage_callback": callback,
+                },
                 run_directory=root,
                 iterative_config=iterative_config,
                 require_rss_drop=not contract["balh"],
@@ -6522,6 +6618,7 @@ def run_task041_consumer(
                     retained_solution_checkpoint if contract["balh"] else None
                 ),
                 release_before_recovery=release_before_recovery,
+                allow_unqualified_diagnostic_recovery=diagnostic_output_enabled,
                 **kwargs,
             )
 
@@ -6550,7 +6647,7 @@ def run_task041_consumer(
                 workflow_started_monotonic=started,
                 failure_evidence=candidate_failure_evidence,
                 identity=recomputed_identity,
-                disable_time_stop=disable_time_stop,
+                disable_time_stop=time_stop_disabled,
                 detailed_timing=performance_contract is not None,
                 representative_rhs_contract=representative_rhs_contract,
                 side_setup_schedule=side_setup_schedule,
@@ -6560,6 +6657,7 @@ def run_task041_consumer(
                     if performance_contract is not None
                     else None
                 ),
+                transfer_optimization_profile=transfer_optimization_profile,
             )
         else:
             setup_result = run_v5_h4_exact_side_setup_only(
@@ -6709,7 +6807,25 @@ def run_task041_consumer(
                 if authority_value
                 else None
             )
-            if formal_short_circuit:
+            formal_diagnostic_output = formal_result.get("diagnostic_output")
+            authority_read_allowed = bool(
+                not formal_short_circuit
+                or (diagnostic_output_enabled and not formal_lifecycle_failure)
+            )
+            if (
+                authority_read_allowed
+                and authority_path is not None
+                and authority_path.is_file()
+            ):
+                current_stage = "authority_validation"
+                gates = _task041_consumer_authority_gate(
+                    authority_path,
+                    formal_result,
+                    recomputed_identity,
+                    expected_consumer_source_sha=source_sha,
+                )
+                emit("authority_validated", {"gates": gates, "path": str(authority_path)})
+            elif formal_short_circuit:
                 gates = {
                     "pass": False,
                     "status": (
@@ -6722,15 +6838,10 @@ def run_task041_consumer(
                 }
             else:
                 if authority_path is None:
-                    raise Task041ModePrepError("Task041 consumer authority path is missing")
-                current_stage = "authority_validation"
-                gates = _task041_consumer_authority_gate(
-                    authority_path,
-                    formal_result,
-                    recomputed_identity,
-                    expected_consumer_source_sha=source_sha,
-                )
-                emit("authority_validated", {"gates": gates, "path": str(authority_path)})
+                    raise Task041ModePrepError(
+                        "Task041 consumer authority path is missing"
+                    )
+                raise Task041ModePrepError("Task041 consumer authority was not written")
             result["setup"] = _jsonable(setup_result)
             result["formal"] = _jsonable(formal_result)
             result["gates"] = gates
@@ -6782,7 +6893,36 @@ def run_task041_consumer(
                     }
                 )
                 result["setup_cost_probe"] = setup_result.get("cost_probe")
-            if gates["pass"] is not True:
+            diagnostic_authority_available = _task041_diagnostic_authority_available(
+                authority_path,
+                formal_result,
+                gates,
+                policy_enabled=diagnostic_output_enabled,
+            )
+            if diagnostic_authority_available:
+                result["status"] = "completed_with_diagnostics"
+                result["classification"] = "DIAGNOSTIC_RESULT_AVAILABLE"
+                result["workflow_status"] = "completed_with_diagnostics"
+                result["qualification_status"] = "unqualified"
+                result["qualification"] = {
+                    "pass": False,
+                    "reason": "formal_or_recovery_or_physics_gate",
+                }
+                diagnostic_output = (
+                    dict(formal_diagnostic_output)
+                    if isinstance(formal_diagnostic_output, Mapping)
+                    else {}
+                )
+                diagnostic_output.update(
+                    {
+                        "result_available": True,
+                        "status": "measured_diagnostic",
+                        "qualification": "unqualified",
+                        "source": "task041_consumer_authority_gate",
+                    }
+                )
+                result["diagnostic_output"] = _jsonable(diagnostic_output)
+            elif gates["pass"] is not True or formal_short_circuit:
                 if formal_numerical_failure:
                     result["status"] = str(
                         formal_result.get("status", "full_formal_numerical_failure")
@@ -6797,7 +6937,11 @@ def run_task041_consumer(
             else:
                 result["status"] = "task041_consumer_completed"
                 result["classification"] = "TASK041_CONSUMER_PASS"
-            if formal_short_circuit:
+            if diagnostic_authority_available:
+                result["official_rta"] = dict(gates["official_rta"])
+                result["official_rta"]["status"] = "measured_diagnostic"
+                result["official_rta"]["qualified"] = False
+            elif formal_short_circuit:
                 result["official_rta"] = {
                     "status": "not_available_due_to_formal_failure"
                 }

@@ -9220,6 +9220,18 @@ def run_v3_7_recovery_runner(
 ) -> dict[str, Any]:
     """Run existing recovery/physics and the reviewed integrated checker."""
 
+    solve_report_value = producer.get("_task041_solve_report")
+    solve_report = (
+        dict(solve_report_value)
+        if isinstance(solve_report_value, Mapping)
+        else None
+    )
+    allow_unqualified_diagnostic = bool(
+        producer.get("_task041_allow_unqualified_diagnostic") is True
+    )
+    linear_pass = bool(
+        True if solve_report is None else solve_report.get("pass") is True
+    )
     bottom_solution, top_solution, modal_solution = layout.split(
         snapshot,
         setup.bottom.b,
@@ -9231,7 +9243,7 @@ def run_v3_7_recovery_runner(
         bottom_solution=bottom_solution,
         top_solution=top_solution,
         modal_solution=modal_solution,
-        linear_pass=True,
+        linear_pass=linear_pass,
         inventory={"source": "v3_7_exact_side_oracle_snapshot"},
         timings={},
         release={"pass": True},
@@ -9248,6 +9260,7 @@ def run_v3_7_recovery_runner(
         setup,
         linear,
         stage_callback=recovery_stage_callback,
+        allow_unqualified_diagnostic=allow_unqualified_diagnostic,
     )
     try:
         physics = run_frozen_m10_physics(
@@ -9256,14 +9269,23 @@ def run_v3_7_recovery_runner(
             run_directory,
             setup.bottom.local_mesh.mesh.comm,
             stage_callback=recovery_stage_callback,
+            allow_unqualified_diagnostic=allow_unqualified_diagnostic,
+        )
+        physics_pass = bool(physics.physics_pass)
+        recovery_pass = bool(recovery.recovery_pass)
+        diagnostic_only = bool(
+            allow_unqualified_diagnostic
+            and (not linear_pass or not recovery_pass or not physics_pass)
         )
         authority_path = _write_v3_7_candidate_authority(
             run_directory,
             physics,
-            producer,
+            {
+                **producer,
+                "_task041_diagnostic_only": diagnostic_only,
+            },
             setup.bottom.local_mesh.mesh.comm,
         )
-        physics_pass = bool(physics.physics_pass)
         if run_integrated_checker and physics_pass:
             integrated_checker = (
                 check_v3_7_integrated_physics(
@@ -9296,7 +9318,6 @@ def run_v3_7_recovery_runner(
         integrated_pass = (
             not run_integrated_checker or integrated_checker.get("pass") is True
         )
-        recovery_pass = bool(recovery.recovery_pass)
         own_physics_pass = bool(
             getattr(physics, "own_physics_pass", physics_pass)
         )
@@ -9317,11 +9338,20 @@ def run_v3_7_recovery_runner(
             if isinstance(authority_path, Path)
             else None
         )
+        diagnostic_only = bool(diagnostic_only or (
+            allow_unqualified_diagnostic and not integrated_pass
+        ))
+        qualified_pass = bool(
+            linear_pass
+            and recovery_pass
+            and physics_pass
+            and integrated_pass
+        )
         return {
-            "pass": bool(
-                physics_pass and recovery_pass and integrated_pass
-            ),
+            "pass": qualified_pass,
             "producer_source_sha": producer.get("producer_source_sha"),
+            "solve_report": solve_report,
+            "linear_pass": linear_pass,
             "recovery_pass": recovery_pass,
             "own_physics_pass": own_physics_pass,
             "canonical_pass": canonical_pass,
@@ -9330,6 +9360,17 @@ def run_v3_7_recovery_runner(
             "physics_metrics": physics_metrics,
             "authority_path": authority_path_value,
             "integrated_checker": integrated_checker,
+            "diagnostic_result_available": bool(
+                diagnostic_only
+                and authority_path_value
+                and physics.own_grid is not None
+            ),
+            "diagnostic_only": diagnostic_only,
+            "qualification": "diagnostic_only"
+            if diagnostic_only
+            else "qualified"
+            if qualified_pass
+            else "not_qualified",
         }
     finally:
         recovery.destroy()
@@ -9345,6 +9386,7 @@ def _write_v3_7_candidate_authority(
 
     physics_pass = getattr(physics, "physics_pass", True)
     negative = physics_pass is not True or physics.own_grid is None
+    diagnostic_only = producer.get("_task041_diagnostic_only") is True
     orders = list(physics.external_orders)
     keys = [
         {
@@ -9401,6 +9443,11 @@ def _write_v3_7_candidate_authority(
                 "interface_e_projection": dict(physics.interface_e_projection),
                 "order_audit": dict(physics.order_audit),
                 "canonical": None,
+                "grid_payload": (
+                    dict(physics.own_grid)
+                    if physics.own_grid is not None
+                    else None
+                ),
                 "canonical_unavailable_reason": (
                     "own_physics_pass_false"
                     if not bool(physics.own_physics_pass)
@@ -9410,6 +9457,14 @@ def _write_v3_7_candidate_authority(
                         else "own_grid_unavailable"
                     )
                 ),
+            }
+        )
+    if diagnostic_only:
+        authority.update(
+            {
+                "pass": False,
+                "qualification": "diagnostic_only",
+                "qualification_reason": "linear_or_recovery_or_physics_gate",
             }
         )
     qualification_scope = producer.get("qualification_scope")
@@ -11195,6 +11250,7 @@ def _run_v7_h4_exact_side_full_formal(
     retained_solution_checkpoint: Callable[
         [PETSc.Vec, PETSc.Vec, Mapping[str, Any]], Mapping[str, Any]
     ] | None = None,
+    allow_unqualified_diagnostic_recovery: bool = False,
 ) -> dict[str, Any]:
     """Run the explicit V7 outer solve, then the existing recovery authority."""
 
@@ -11338,13 +11394,48 @@ def _run_v7_h4_exact_side_full_formal(
             release=release,
             factor_count_after_cleanup=release.get("factor_count_after_cleanup"),
         )
-        if not solve_report["pass"]:
+        snapshot_finite: bool | None = None
+        identity_bound_packet = False
+        if allow_unqualified_diagnostic_recovery:
+            local_snapshot_finite = bool(
+                np.all(np.isfinite(retained_solution.getArray(readonly=True)))
+                and np.all(np.isfinite(rhs.getArray(readonly=True)))
+            )
+            snapshot_finite = bool(
+                comm.allreduce(local_snapshot_finite, op=MPI.LAND)
+            )
+            identity_bound_packet = bool(
+                isinstance(solution_checkpoint, Mapping)
+                and solution_checkpoint.get("packet_pass") is True
+            )
+        diagnostic_recovery_eligible = bool(
+            allow_unqualified_diagnostic_recovery
+            and not solve_report["pass"]
+            and release_pass
+            and snapshot_finite is True
+            and isinstance(solution_checkpoint, Mapping)
+            and identity_bound_packet
+            and solution_checkpoint.get("qualification") == "diagnostic-only"
+        )
+        diagnostic_recovery_detail = {
+            "enabled": bool(allow_unqualified_diagnostic_recovery),
+            "eligible": diagnostic_recovery_eligible,
+            "finite_snapshot": snapshot_finite,
+            "identity_bound_packet": identity_bound_packet,
+            "solve_report_pass": bool(solve_report["pass"]),
+            "release_pass": release_pass,
+            "qualification": "diagnostic-only"
+            if diagnostic_recovery_eligible
+            else "not_eligible",
+        }
+        if not solve_report["pass"] and not diagnostic_recovery_eligible:
             return {
                 "status": "full_formal_outer_failure",
                 "solve": solve_report,
                 "recovery": "not_run",
                 "release_before_recovery": release,
                 "solution_checkpoint": solution_checkpoint,
+                "diagnostic_output": diagnostic_recovery_detail,
             }
         if not release_pass:
             return {
@@ -11365,7 +11456,13 @@ def _run_v7_h4_exact_side_full_formal(
                 layout,
                 retained_solution,
                 Path(run_directory).resolve(),
-                producer,
+                {
+                    **producer,
+                    "_task041_solve_report": solve_report,
+                    "_task041_allow_unqualified_diagnostic": bool(
+                        allow_unqualified_diagnostic_recovery
+                    ),
+                },
             )
         )
         _emit_marker(
@@ -11374,16 +11471,34 @@ def _run_v7_h4_exact_side_full_formal(
             source="run_v3_7_recovery_runner",
             recovery=recovery,
         )
+        diagnostic_result_available = bool(
+            recovery.get("diagnostic_result_available") is True
+        )
+        qualified_pass = bool(
+            solve_report.get("pass") is True and recovery.get("pass") is True
+        )
         return {
             "status": (
-                "full_formal_completed"
-                if recovery.get("pass") is True
-                else "full_formal_recovery_failure"
+                "full_formal_completed_with_diagnostics"
+                if diagnostic_result_available
+                else (
+                    "full_formal_completed"
+                    if qualified_pass
+                    else "full_formal_recovery_failure"
+                )
             ),
+            "pass": qualified_pass,
             "solve": solve_report,
             "recovery": recovery,
             "release_before_recovery": release,
             "solution_checkpoint": solution_checkpoint,
+            "diagnostic_output": {
+                **diagnostic_recovery_detail,
+                "result_available": diagnostic_result_available,
+                "qualification": "unqualified"
+                if diagnostic_result_available
+                else diagnostic_recovery_detail["qualification"],
+            },
             "authority_path": str(
                 Path(run_directory).resolve()
                 / "numerical_output"
