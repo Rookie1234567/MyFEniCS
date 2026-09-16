@@ -1609,3 +1609,21 @@ BAL_H 的可复用接线依赖 `physical_balanced_*` core、side/trace transfer�
 BAL_H numerical core 与计时适配的 research opt-in 路径，但没有 A–D 等价性能优化，
 也未改变 exact/default 的生产行为。证据入口为 Task041 S5a 的[中心报告](task041_mpi1_shortwave_hybrid_capacity/outcomes/schur_speed_v2.md)、[S0/S1 compact JSON](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_schur_speed_v2.json)和
 ignored raw authority；本轮不得登记为 production capacity result。
+
+### Task041 V3：R2 分侧 baseline/optimized 配对边界（2026-09-16）
+
+| model / method | measured component result | measured full-service resource/time | registry status |
+|---|---|---|---|
+| 5 nm BAL_H R2 baseline，sequential component | bottom/top `790.5143905449659/889.7605694371741 s`；total `1680.27495998214 s`；各侧四项 own residual `<=0.01`、reason=2 | wall `4015.539370124 s`；full-tree RSS peak `51975606272 B`；hard cap `53221163008 B` | retained component evidence; not cross-run equivalent |
+| 5 nm BAL_H R2 optimized，A1/A2 profile（唯一 optimized R2g） | bottom/top `592.4704610940535/666.3774437108077 s`；total `1258.8479048048612 s`；各侧四项 own residual `<=0.01`、reason=2 | wall `3630.563676387 s`；full-tree RSS peak `51796770816 B`；hard cap `53221163008 B` | `PAIRING_IDENTITY_UNPROVEN`; not production qualification；额外/重复 optimized run `not_run` |
+
+两次 fresh run 的 `132300` condensed rows 没有稳定的几何/拓扑/方向/MPC
+active-row key，故 PETSc numeric position 的直接差值只作诊断；R2e 的 P/PH
+relative=`0` 仅是独立 action/transfer Gate。R2 分侧的 peak/lifecycle 不能外推为
+完整双侧 capacity 或 `COMPONENT_EQUIVALENT_SPEEDUP_MEMORY_NONINCREASE`。
+证据入口为 [Task041 Response V4](task041_mpi1_shortwave_hybrid_capacity/response_v4.md)、
+[setup/recovery](task041_mpi1_shortwave_hybrid_capacity/outcomes/setup_recovery_v3.md)
+和 [compact record](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_setup_recovery_v3.json)；
+S1f 的双侧超 cap 受控停止仍保留。本条不修改 ordinary/default，未推动
+`task041_schur_speed_v2` 或 A1/A2 进入 production；negative evidence/docs 可保留，
+incident-specific orphan sampler 与大型 raw artifact 仍不合入。

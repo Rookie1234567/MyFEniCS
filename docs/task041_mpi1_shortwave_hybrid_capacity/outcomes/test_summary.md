@@ -134,3 +134,28 @@ M800/M1200 own physics negative 不被测试或 scalar comparison 改写为 pass
 workflow peak=max(producer,consumer)，producer 退出后才启动 consumer。
 当前 M1200 candidate 采用更严格的 224/256 GiB workflow envelope 和
 21600 s consumer phase cap；它不替换 task.md 原 1.50 TiB 历史规划。
+
+## Task041 V3 / Response V4 文档收口（R4a/R4b，2026-09-16）
+
+整轮已经包含 R1 实现、R2c A1/A2 优化、轻量测试和两场分侧八项运行；S5a/R4
+文档阶段未再运行 formal production PDE/MPI。105 focused、6 targeted pytest 与
+静态检查分开记录，不能合称一个“105 个 focused/static”结果；本地检查也不是 CI。
+
+| 阶段 | 实际结果、边界 | hash-bound 入口/命令 |
+|---|---|---|
+| R1 | r1h index 记录 137 passed 发生在后续 `__all__`/`pairwise` 机械修正前；最终受影响 9 passed、静态通过，tiny-FE serial/MPI2 另有独立证据 | [`r1h_validation_index.json`](../../../results/task041_side_balh_component_audit/r1h_validation_20260915/r1h_validation_index.json)，SHA `ca30f4df99d9ab248d2fbbcf21741fefb726b3e4a02389314231a1f7a26234e4`；命令和失败/修复日志在同目录 |
+| R2d pure/接线 | pure346 最终 9 passed，builder349 4 passed，profile351 1 passed；首轮 Ruff import-order 失败后修复，最终静态通过 | `r2d_validation/pytest_346_pure_after_ruff_fix.log` SHA `a60c1c8fa5227a32d0727d957c260099194421dced9082187a2c97f8ca04ce7f`，命令为 `python -m pytest -q src/test/test_346_task041_balh_trace_bridge.py -k 'batched_owner or batched_empty or complex_adjoint_helper'`；`pytest_349_builder.log` SHA `9309c90b7bd0fdee72f5c773c3925ec741748555b3f88373eeeb042aee8f240d`；`pytest_351_profile.log` SHA `f8af2f3de9c2b6b1dd079864c69af6cddfc4c478528abd6071006029d3104203` |
+| R2d static | Ruff/compileall/diff final all pass after local import-order repair | `ruff_final_after_import_fix.log` SHA `faaee09c51ec21a099ed3c303056cc159b800f5f797404521e788b03164ba56d`；`compileall_final_after_import_fix.log` SHA `14a1315b5b6c7da261992052e9ad32d90b8babbd390dc8a9c62362bca7d3093b`；`diff_check_final_after_import_fix.log` SHA `1ee0dda1778ad983cc34adfcb3ff162533f6735d59a7fc6952f8eeb7ba95a7c6`；首轮失败 `ruff_final.log` SHA `a9ad21ff1d80c405c18a1588777a6872ca164172e49674ad5de08347ede24ceb` |
+| R2e serial | 2 passed；R2e source/test 内容仍绑定 pre-commit SHA，未声称 commit 后重跑 | `r2e_validation/pytest_346_serial.log` SHA `4cf89003ce4005b964d42c4acb842c398814448fbb2f745e1392f7ebbcbb6e11`；命令含两个真实 tiny-FE node，outer wall `59.009665886 s` |
+| R2e MPI2 | 每 rank 4 passed；rank0/socket0core0、rank1/socket0core1；数学线程配置1 | `r2e_validation/pytest_346_mpi2.log` SHA `90200a7b7f7102b0d0ce998a847faef8da4372bf7efd48ba2c551967d91c18d1`；`mpiexec -n 2 --bind-to cpu-list:ordered --cpu-list 0,1 --report-bindings ...`；outer wall `63.633586239 s` |
+| R2e static/ABI边界 | static final pass；ABI 探针的计时在同一 Python 进程内，属于 in-process preflight，不是完整 subprocess outer wall | `r2e_validation/static_final.log` SHA `0b69c84a3ab4f936bde557c325dcabd26834906eb1a417cd4625649c900b2883` |
+
+R2 分侧结果不是完整双侧资格：baseline/唯一 optimized R2g 各完成 bottom/top 四项，
+own residual 与生命周期证据保留，但跨 fresh-run condensed-row identity 未证明，最终
+状态为 `PAIRING_IDENTITY_UNPROVEN`。旧 S1f 的 `process_tree_rss_limit`、旧 H3 事故和
+负结果不改写。
+
+本轮唯一 shared ledger 为 `used=11145.609111173893325 s`、shared remaining
+`10454.390888826106675 s`、S2/S4=`0`；R4b 文档合同测试为 15 passed，JSON/路径/hash 自检与 `git diff --check` 均通过。最终 compact 为
+`153382 B` / `7f5d84e6a2a9a6809d9438bbb6e9444a4ffead9d6272728b394d3346401852df`。三份 harness-only 自检失败日志仅记录工具断言错误，不属于文档合同测试失败；其实际外层时间已按一次 shared ledger 记录。
+R2h v1、R2h v2 和 R2g 原 index 均保留；未重跑已绑定测试、FE/MPI、service、PDE 或 QEP。

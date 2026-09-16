@@ -2711,3 +2711,26 @@ unit 六条原始 journal 另存于
 （SHA=`33b847ddf7206e33e876d290cb9130fcff55c90c07c55eb28aa55889694b2d96`）。BAL_H 仍为
 research-only opt-in，未提升普通 production default；用户 04:59 已明确授权 CPU0–7
 与 CPU23 保护作业并行，本轮不把该共存误记为违规。
+
+## 2026-09-16：Task041 V3 执行结果与 Response V4 收口
+
+R1 已实现 sequential component 生命周期入口，R2c 已实现并验证显式 profile 下的 A1
+owner-row 批量路径与 A2 复数共轭临时量；R1/R2d/R2e 的轻量测试和两场 R2 分侧八项
+运行也已完成。R2 baseline source 为 `3ee452ac0adc0c3c88b9610b6446e93a3c02444a`，
+R2g 是唯一 optimized source `376a6c2e6ff1d13b8c4f182dd97e5ee2629f85ab`。两次各完成
+bottom/top 四项，own reason=2、explicit residual `<=0.01`，R2e P/PH global relative
+均为 `0 <= 1e-11`。
+
+组件 apply 为 `1680.27495998214 → 1258.8479048048612 s`，full-service wall 为
+`4015.539370124 → 3630.563676387 s`；全树 RSS 峰为
+`51975606272 → 51796770816 B`。这些是两场分侧运行的实测，不是完整双侧资格。两次
+fresh run 的 132300 condensed rows 缺跨运行稳定 physical key，正式状态为
+`PAIRING_IDENTITY_UNPROVEN`；旧 S1f `process_tree_rss_limit` 负证据继续约束完整双侧准入。
+
+证据入口：[Response V4](task041_mpi1_shortwave_hybrid_capacity/response_v4.md)、
+[setup/recovery](task041_mpi1_shortwave_hybrid_capacity/outcomes/setup_recovery_v3.md)、
+[compact JSON](task041_mpi1_shortwave_hybrid_capacity/outcomes/records/task041_setup_recovery_v3.json)、
+[test summary](task041_mpi1_shortwave_hybrid_capacity/outcomes/test_summary.md)。完整 raw、场、
+矩阵、factor 和 shard 仍留在 ignored results；本次 R4 只做文档/compact 整理，不新增计算。
+`task041_schur_speed_v2`、sequential component 和 A1/A2 仍为显式 opt-in research-only，
+ordinary/default 不变，负结果文档可保留，不表示 production 或 master merge approval。

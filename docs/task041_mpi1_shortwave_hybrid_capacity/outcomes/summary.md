@@ -116,3 +116,57 @@ hard=274877906944 B、envelope=39600 s、swap0；producer=176/192 GiB、
 elapsed，producer 完全退出后才启动 consumer；workflow peak=max，不相加。
 MemAvailable floor=1869169767220 B。该合同不改写 task.md 原 1.50 TiB
 规划历史。
+
+## 2026-09-16：Task041 V3 执行结果 / Response V4 收口
+
+本轮不是“只有文档”的整轮：R1 完成 sequential component 生命周期入口，R2c 完成
+A1 owner-row 批量路径与 A2 复数共轭临时量，随后有 R1/R2d/R2e 轻量测试和两场 R2
+分侧八项运行；当前 R4 只整理已关闭证据，未新增计算。分侧流程先建 bottom、完成
+四项并释放，再建 top 四项；全局方程、RHS、传播因子和原检查未被删除。
+
+| run | source | fixed-eight apply（bottom / top / total） | full service wall | full-tree RSS peak | own result |
+|---|---|---:|---:|---:|---|
+| R2 baseline | `3ee452ac0adc0c3c88b9610b6446e93a3c02444a` | `790.5143905449659 / 889.7605694371741 / 1680.27495998214 s` | `4015.539370124 s` | `51975606272 B` | bottom/top 各4；reason=2，explicit residual `<=0.01` |
+| R2g 唯一 optimized | `376a6c2e6ff1d13b8c4f182dd97e5ee2629f85ab` | `592.4704610940535 / 666.3774437108077 / 1258.8479048048612 s` | `3630.563676387 s` | `51796770816 B` | bottom/top 各4；reason=2，explicit residual `<=0.01` |
+
+组件 apply 比为 `0.7491916113647505`，观测减少 `25.0808388635%`；full-service wall
+减少 `9.587147784%`。优化峰低 `178835456 B = 170.55078125 MiB`，但不是双侧
+内存不增资格；baseline/optimized margin 为 `1245556736/1424392192 B`，硬 cap
+仍为 `53221163008 B`。PSS/USS 是稀疏诊断，不替代 RSS；两次 job swap、global 新增
+swap 和 pswp 增量均为 `0`，global used 的既有 baseline 为 `8192 B`。
+
+构造 marker 已按两份 consumer raw `markers.jsonl` 的 `(side,event)` 配对：全局
+`system_ready` worker wall 为 baseline/optimized `983.0788940798957/1039.0930612850934`；
+side `before_build→after_admission` 是侧构造/准入而非全局 setup；factor setup
+begin→ready 为 bottom `983.5931301249657→1653.4143726038747`、
+`1039.5970036741346→1696.573750832118`，top `2450.2057411340065→3114.250514271902`、
+`2293.303577498067→2954.8940188910346`。完整 line/hash 和 outer-origin 对齐见
+[setup/recovery](setup_recovery_v3.md) 与 [compact](records/task041_setup_recovery_v3.json)。
+
+两次运行各保留 8 个 response manifest 和 64 个 owned rank shard，每次 shard 总计
+`33901312 B`；lifecycle `created_total=2`、simultaneously-live peak=1、每侧释放后
+p4/KSP=0。跨 fresh run 的 `132300` 凝聚行缺稳定几何/拓扑/方向/MPC active-row key，
+正式状态固定为 `PAIRING_IDENTITY_UNPROVEN`；约 `sqrt(2)` 的按位置差只是未验证编号
+诊断，不是 numerical failure 或 pass。
+
+两次 `consumer_summary` 的 physical logical identity 为
+`65bb1e2947604a7efe54b2d6450a63a583714341505c207241f4278bd25b22a4`，resolved logical
+identity 为 `95a155334dacf75d30c005338ff689fd676532b49ae392e6fad868d0eee23e51`；两份
+public root 均实际保存 `resolved_config.json`，compact 分开记录逻辑字段与文件 SHA。
+
+旧 S1f `53331742720 B > 53221163008 B` 的 `process_tree_rss_limit` 受控停止、旧 H3
+`RESOURCE_COMPARISON_INCONCLUSIVE` 以及旧事故均继续保留。新 13.5 nm、完整 5 nm
+双侧、full Schur/outer/recovery/official RTA、producer 和新 QEP 均 `not_run`；
+`qep_calls=0` 是无新 QEP 调用事实，不等同于完整输出已产生。分侧配对的第二场（唯一
+optimized R2g）已完成；整轮实际只有 baseline 一场和这一场 optimized，额外/重复
+optimized run `not_run`。预算尚余不等于准入。
+
+R1/R2c 的实现与测试事实、旧负结果和本轮证据入口见 [Response V4](../response_v4.md)、
+[setup/recovery](setup_recovery_v3.md)、[compact](records/task041_setup_recovery_v3.json)
+和 [test summary](test_summary.md)。ordinary/default 不变；merge 仍按 production
+numerical/core、reusable runner/watchdog、checker/benchmark、compact evidence/docs、
+research-only、do-not-merge 依赖组说明，负结果文档/compact 保留，临时 orphan sampler、
+大型 raw 和未资格化 production promotion 不合入。
+
+<!-- r4b-final-metadata -->
+最终 compact：[task041_setup_recovery_v3.json](records/task041_setup_recovery_v3.json)，153382 B，SHA256 `7f5d84e6a2a9a6809d9438bbb6e9444a4ffead9d6272728b394d3346401852df`；R4b 仅完成文档检查，未新增计算。
